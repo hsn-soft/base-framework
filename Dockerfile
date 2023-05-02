@@ -8,6 +8,7 @@ WORKDIR /build-source
 
 COPY ["./NuGet.Config", "./"]
 COPY ["./common.props", "./"]
+COPY ["./configureawait.props", "./"]
 COPY ["./HsnSoft.Base.sln", "./"]
 
 COPY ["./src/.", "./src/"]
