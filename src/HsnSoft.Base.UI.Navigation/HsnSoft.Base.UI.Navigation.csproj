@@ -14,17 +14,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Volo\Abp\Ui\Navigation\Localization\Resource\*.json" />
-    <Content Remove="Volo\Abp\Ui\Navigation\Localization\Resource\*.json" />
+    <EmbeddedResource Include="HsnSoft\Base\Ui\Navigation\Localization\Resource\*.json" />
+    <Content Remove="HsnSoft\Base\Ui\Navigation\Localization\Resource\*.json" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\HsnSoft.Base.Authorization\HsnSoft.Base.Authorization.csproj" />
     <ProjectReference Include="..\HsnSoft.Base.UI\HsnSoft.Base.UI.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="6.0.16" />
   </ItemGroup>
 
 </Project>

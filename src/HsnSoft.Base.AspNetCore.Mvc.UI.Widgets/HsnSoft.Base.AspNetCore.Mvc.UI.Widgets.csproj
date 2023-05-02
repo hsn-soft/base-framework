@@ -17,13 +17,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <_ContentIncludedByDefault Remove="Volo\Abp\AspNetCore\Mvc\UI\Widgets\Components\WidgetScripts\Default.cshtml" />
-    <_ContentIncludedByDefault Remove="Volo\Abp\AspNetCore\Mvc\UI\Widgets\Components\WidgetStyles\Default.cshtml" />
-    <_ContentIncludedByDefault Remove="Volo\Abp\AspNetCore\Mvc\UI\Widgets\Components\_ViewImports.cshtml" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="6.0.16" />
+    <_ContentIncludedByDefault Remove="HsnSoft\Base\AspNetCore\Mvc\UI\Widgets\Components\WidgetScripts\Default.cshtml" />
+    <_ContentIncludedByDefault Remove="HsnSoft\Base\AspNetCore\Mvc\UI\Widgets\Components\WidgetStyles\Default.cshtml" />
+    <_ContentIncludedByDefault Remove="HsnSoft\Base\AspNetCore\Mvc\UI\Widgets\Components\_ViewImports.cshtml" />
   </ItemGroup>
 
 </Project>

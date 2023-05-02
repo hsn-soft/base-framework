@@ -19,7 +19,6 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="7.0.5" />
-        <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="6.0.16" />
         <PackageReference Include="Oracle.EntityFrameworkCore" Version="7.21.9" />
     </ItemGroup>
 

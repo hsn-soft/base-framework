@@ -15,7 +15,6 @@
 
     <ItemGroup>
         <PackageReference Include="Azure.Messaging.ServiceBus" Version="7.13.1" />
-        <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="6.0.16" />
         <ProjectReference Include="..\HsnSoft.Base.Json\HsnSoft.Base.Json.csproj" />
         <ProjectReference Include="..\HsnSoft.Base.Threading\HsnSoft.Base.Threading.csproj" />
     </ItemGroup>

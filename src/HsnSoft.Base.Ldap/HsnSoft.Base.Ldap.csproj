@@ -15,7 +15,6 @@
 
   <ItemGroup>
     <PackageReference Include="LdapForNet" Version="2.7.15" />
-    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="6.0.16" />
   </ItemGroup>
 
   <ItemGroup>

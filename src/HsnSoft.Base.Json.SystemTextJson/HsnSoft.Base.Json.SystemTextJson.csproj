@@ -16,7 +16,6 @@
     <ItemGroup>
         <ProjectReference Include="..\HsnSoft.Base.Json.Abstractions\HsnSoft.Base.Json.Abstractions.csproj" />
         <ProjectReference Include="..\HsnSoft.Base.Timing\HsnSoft.Base.Timing.csproj" />
-        <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="6.0.16" />
         <PackageReference Include="System.Text.Json" Version="7.0.2" />
     </ItemGroup>
 

@@ -19,7 +19,6 @@
 
     <ItemGroup>
         <PackageReference Include="Devart.Data.Oracle.EFCore" Version="10.1.134.7" />
-        <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="6.0.16" />
     </ItemGroup>
 
 </Project>

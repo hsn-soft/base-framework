@@ -15,7 +15,6 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.AspNetCore.Authorization" Version="6.0.16" />
-        <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="6.0.16" />
     </ItemGroup>
 
     <ItemGroup>

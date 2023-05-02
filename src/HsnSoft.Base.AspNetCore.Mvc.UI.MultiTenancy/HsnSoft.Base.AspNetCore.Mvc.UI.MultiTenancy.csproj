@@ -18,11 +18,11 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Pages\**\*.js" />
-    <EmbeddedResource Include="Volo\Abp\AspNetCore\Mvc\UI\MultiTenancy\Localization\*.json" />
+    <EmbeddedResource Include="HsnSoft\Base\AspNetCore\Mvc\UI\MultiTenancy\Localization\*.json" />
     <EmbeddedResource Include="Components\**\*.js" />
     <EmbeddedResource Include="Components\**\*.css" />
     <Content Remove="Pages\**\*.js" />
-    <Content Remove="Volo\Abp\AspNetCore\Mvc\UI\MultiTenancy\Localization\*.json" />
+    <Content Remove="HsnSoft\Base\AspNetCore\Mvc\UI\MultiTenancy\Localization\*.json" />
     <Content Remove="Components\**\*.js" />
     <Content Remove="Components\**\*.css" />
   </ItemGroup>
@@ -35,33 +35,33 @@
   <ItemGroup>
     <_ContentIncludedByDefault Remove="Pages\Abp\MultiTenancy\TenantSwitchModal.cshtml" />
     <_ContentIncludedByDefault Remove="Pages\Abp\MultiTenancy\_ViewImports.cshtml" />
-    <_ContentIncludedByDefault Remove="Volo\Abp\AspNetCore\Mvc\UI\MultiTenancy\Localization\ar.json" />
-    <_ContentIncludedByDefault Remove="Volo\Abp\AspNetCore\Mvc\UI\MultiTenancy\Localization\cs.json" />
-    <_ContentIncludedByDefault Remove="Volo\Abp\AspNetCore\Mvc\UI\MultiTenancy\Localization\de.json" />
-    <_ContentIncludedByDefault Remove="Volo\Abp\AspNetCore\Mvc\UI\MultiTenancy\Localization\el.json" />
-    <_ContentIncludedByDefault Remove="Volo\Abp\AspNetCore\Mvc\UI\MultiTenancy\Localization\en-GB.json" />
-    <_ContentIncludedByDefault Remove="Volo\Abp\AspNetCore\Mvc\UI\MultiTenancy\Localization\en.json" />
-    <_ContentIncludedByDefault Remove="Volo\Abp\AspNetCore\Mvc\UI\MultiTenancy\Localization\es-mx.json" />
-    <_ContentIncludedByDefault Remove="Volo\Abp\AspNetCore\Mvc\UI\MultiTenancy\Localization\es.json" />
-    <_ContentIncludedByDefault Remove="Volo\Abp\AspNetCore\Mvc\UI\MultiTenancy\Localization\fa.json" />
-    <_ContentIncludedByDefault Remove="Volo\Abp\AspNetCore\Mvc\UI\MultiTenancy\Localization\fi.json" />
-    <_ContentIncludedByDefault Remove="Volo\Abp\AspNetCore\Mvc\UI\MultiTenancy\Localization\fr.json" />
-    <_ContentIncludedByDefault Remove="Volo\Abp\AspNetCore\Mvc\UI\MultiTenancy\Localization\hi.json" />
-    <_ContentIncludedByDefault Remove="Volo\Abp\AspNetCore\Mvc\UI\MultiTenancy\Localization\hr.json" />
-    <_ContentIncludedByDefault Remove="Volo\Abp\AspNetCore\Mvc\UI\MultiTenancy\Localization\hu.json" />
-    <_ContentIncludedByDefault Remove="Volo\Abp\AspNetCore\Mvc\UI\MultiTenancy\Localization\is.json" />
-    <_ContentIncludedByDefault Remove="Volo\Abp\AspNetCore\Mvc\UI\MultiTenancy\Localization\it.json" />
-    <_ContentIncludedByDefault Remove="Volo\Abp\AspNetCore\Mvc\UI\MultiTenancy\Localization\nl.json" />
-    <_ContentIncludedByDefault Remove="Volo\Abp\AspNetCore\Mvc\UI\MultiTenancy\Localization\pl-PL.json" />
-    <_ContentIncludedByDefault Remove="Volo\Abp\AspNetCore\Mvc\UI\MultiTenancy\Localization\pt-BR.json" />
-    <_ContentIncludedByDefault Remove="Volo\Abp\AspNetCore\Mvc\UI\MultiTenancy\Localization\ro-RO.json" />
-    <_ContentIncludedByDefault Remove="Volo\Abp\AspNetCore\Mvc\UI\MultiTenancy\Localization\ru.json" />
-    <_ContentIncludedByDefault Remove="Volo\Abp\AspNetCore\Mvc\UI\MultiTenancy\Localization\sk.json" />
-    <_ContentIncludedByDefault Remove="Volo\Abp\AspNetCore\Mvc\UI\MultiTenancy\Localization\sl.json" />
-    <_ContentIncludedByDefault Remove="Volo\Abp\AspNetCore\Mvc\UI\MultiTenancy\Localization\tr.json" />
-    <_ContentIncludedByDefault Remove="Volo\Abp\AspNetCore\Mvc\UI\MultiTenancy\Localization\vi.json" />
-    <_ContentIncludedByDefault Remove="Volo\Abp\AspNetCore\Mvc\UI\MultiTenancy\Localization\zh-Hans.json" />
-    <_ContentIncludedByDefault Remove="Volo\Abp\AspNetCore\Mvc\UI\MultiTenancy\Localization\zh-Hant.json" />
+    <_ContentIncludedByDefault Remove="HsnSoft\Base\AspNetCore\Mvc\UI\MultiTenancy\Localization\ar.json" />
+    <_ContentIncludedByDefault Remove="HsnSoft\Base\AspNetCore\Mvc\UI\MultiTenancy\Localization\cs.json" />
+    <_ContentIncludedByDefault Remove="HsnSoft\Base\AspNetCore\Mvc\UI\MultiTenancy\Localization\de.json" />
+    <_ContentIncludedByDefault Remove="HsnSoft\Base\AspNetCore\Mvc\UI\MultiTenancy\Localization\el.json" />
+    <_ContentIncludedByDefault Remove="HsnSoft\Base\AspNetCore\Mvc\UI\MultiTenancy\Localization\en-GB.json" />
+    <_ContentIncludedByDefault Remove="HsnSoft\Base\AspNetCore\Mvc\UI\MultiTenancy\Localization\en.json" />
+    <_ContentIncludedByDefault Remove="HsnSoft\Base\AspNetCore\Mvc\UI\MultiTenancy\Localization\es-mx.json" />
+    <_ContentIncludedByDefault Remove="HsnSoft\Base\AspNetCore\Mvc\UI\MultiTenancy\Localization\es.json" />
+    <_ContentIncludedByDefault Remove="HsnSoft\Base\AspNetCore\Mvc\UI\MultiTenancy\Localization\fa.json" />
+    <_ContentIncludedByDefault Remove="HsnSoft\Base\AspNetCore\Mvc\UI\MultiTenancy\Localization\fi.json" />
+    <_ContentIncludedByDefault Remove="HsnSoft\Base\AspNetCore\Mvc\UI\MultiTenancy\Localization\fr.json" />
+    <_ContentIncludedByDefault Remove="HsnSoft\Base\AspNetCore\Mvc\UI\MultiTenancy\Localization\hi.json" />
+    <_ContentIncludedByDefault Remove="HsnSoft\Base\AspNetCore\Mvc\UI\MultiTenancy\Localization\hr.json" />
+    <_ContentIncludedByDefault Remove="HsnSoft\Base\AspNetCore\Mvc\UI\MultiTenancy\Localization\hu.json" />
+    <_ContentIncludedByDefault Remove="HsnSoft\Base\AspNetCore\Mvc\UI\MultiTenancy\Localization\is.json" />
+    <_ContentIncludedByDefault Remove="HsnSoft\Base\AspNetCore\Mvc\UI\MultiTenancy\Localization\it.json" />
+    <_ContentIncludedByDefault Remove="HsnSoft\Base\AspNetCore\Mvc\UI\MultiTenancy\Localization\nl.json" />
+    <_ContentIncludedByDefault Remove="HsnSoft\Base\AspNetCore\Mvc\UI\MultiTenancy\Localization\pl-PL.json" />
+    <_ContentIncludedByDefault Remove="HsnSoft\Base\AspNetCore\Mvc\UI\MultiTenancy\Localization\pt-BR.json" />
+    <_ContentIncludedByDefault Remove="HsnSoft\Base\AspNetCore\Mvc\UI\MultiTenancy\Localization\ro-RO.json" />
+    <_ContentIncludedByDefault Remove="HsnSoft\Base\AspNetCore\Mvc\UI\MultiTenancy\Localization\ru.json" />
+    <_ContentIncludedByDefault Remove="HsnSoft\Base\AspNetCore\Mvc\UI\MultiTenancy\Localization\sk.json" />
+    <_ContentIncludedByDefault Remove="HsnSoft\Base\AspNetCore\Mvc\UI\MultiTenancy\Localization\sl.json" />
+    <_ContentIncludedByDefault Remove="HsnSoft\Base\AspNetCore\Mvc\UI\MultiTenancy\Localization\tr.json" />
+    <_ContentIncludedByDefault Remove="HsnSoft\Base\AspNetCore\Mvc\UI\MultiTenancy\Localization\vi.json" />
+    <_ContentIncludedByDefault Remove="HsnSoft\Base\AspNetCore\Mvc\UI\MultiTenancy\Localization\zh-Hans.json" />
+    <_ContentIncludedByDefault Remove="HsnSoft\Base\AspNetCore\Mvc\UI\MultiTenancy\Localization\zh-Hant.json" />
   </ItemGroup>
 
 </Project>

@@ -17,9 +17,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="AWSSDK.S3" Version="3.7.104.8" />
-      <PackageReference Include="AWSSDK.SecurityToken" Version="3.7.101.58" />
-      <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="6.0.16" />
+      <PackageReference Include="AWSSDK.S3" Version="3.7.104.9" />
+      <PackageReference Include="AWSSDK.SecurityToken" Version="3.7.101.59" />
     </ItemGroup>
 
 </Project>
