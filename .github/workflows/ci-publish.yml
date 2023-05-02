@@ -1,0 +1,29 @@
+name: Publish FeedR to GitHub Nuget
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - dev
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      
+      - name: Get Version
+        uses: kzrnm/get-net-sdk-project-versions-action@v1
+        id: get-version
+        with:
+          proj-path: ./common.props
+      
+      - name: Build & Publish
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./Dockerfile
+          secrets: |
+            "NUGET_SECRET=${{ secrets.REPO_NUGET_USER_SECRET }}"
+            "VERSION_NUMBER=${{ steps.get-version.outputs.version }}"
+            "ACTION_NUMBER=${{ github.run_number }}"
