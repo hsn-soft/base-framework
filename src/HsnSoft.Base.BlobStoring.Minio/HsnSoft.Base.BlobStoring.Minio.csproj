@@ -14,7 +14,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\HsnSoft.Base.BlobStoring\HsnSoft.Base.BlobStoring.csproj" />
-    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="6.0.16" />
     <PackageReference Include="Minio" Version="4.0.7" />
   </ItemGroup>
 

@@ -17,8 +17,4 @@
     <ProjectReference Include="..\HsnSoft.Base.Json.SystemTextJson\HsnSoft.Base.Json.SystemTextJson.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="6.0.16" />
-  </ItemGroup>
-
 </Project>

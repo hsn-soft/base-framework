@@ -6,21 +6,19 @@ USER root
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build-stage
 WORKDIR /build-source
 
-COPY ["./nuget.config", "./"]
+COPY ["./NuGet.Config", "./"]
 COPY ["./common.props", "./"]
-COPY ["./FeedR.Shared.sln", "./"]
+COPY ["./HsnSoft.Base.sln", "./"]
 
-COPY ["./src/FeedR.Shared.Hosting/FeedR.Shared.Hosting.csproj", "./src/FeedR.Shared.Hosting/"]
-COPY ["./src/FeedR.Shared.Hosting.Microservices/FeedR.Shared.Hosting.Microservices.csproj", "./src/FeedR.Shared.Hosting.Microservices/"]
+COPY ["./src/.", "./src/"]
 
-RUN dotnet restore "./FeedR.Shared.sln" --force --no-cache --verbosity normal
+RUN dotnet restore "./HsnSoft.Base.sln"
 
-COPY ["./src/FeedR.Shared.Hosting/.", "./src/FeedR.Shared.Hosting/"]
-COPY ["./src/FeedR.Shared.Hosting.Microservices/.", "./src/FeedR.Shared.Hosting.Microservices/"]
+RUN dotnet build "./HsnSoft.Base.sln" --no-restore --configuration Release
 
-RUN dotnet build "./FeedR.Shared.sln" --no-restore --configuration Release --verbosity normal
+COPY ["./test/.", "./test/"]
 
-RUN dotnet test "./FeedR.Shared.sln" --no-restore --no-build --configuration Release --verbosity normal
+RUN dotnet test "./HsnSoft.Base.sln" --no-restore --no-build --configuration Release
 
 RUN --mount=type=secret,id=VERSION_NUMBER \
     export VERSION_NUMBER=$(cat /run/secrets/VERSION_NUMBER) && \
@@ -30,7 +28,7 @@ RUN --mount=type=secret,id=ACTION_NUMBER \
     export ACTION_NUMBER=$(cat /run/secrets/ACTION_NUMBER) && \
     echo ${ACTION_NUMBER} > ./action_number
 
-RUN dotnet pack "./FeedR.Shared.sln" --no-restore --no-build --configuration Release --output ./packages -p:PackageVersion=$(cat ./version_number)-dev.$(cat ./action_number)
+RUN dotnet pack "./HsnSoft.Base.sln" --no-restore --no-build --configuration Release --output ./packages -p:PackageVersion=$(cat ./version_number)-dev.$(cat ./action_number)
 
 FROM base AS final
 WORKDIR /packages

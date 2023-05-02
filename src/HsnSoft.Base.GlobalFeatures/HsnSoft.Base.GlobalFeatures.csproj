@@ -14,18 +14,14 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <None Remove="Volo\Abp\GlobalFeatures\Localization\*.json" />
-        <EmbeddedResource Include="Volo\Abp\GlobalFeatures\Localization\*.json" />
+        <None Remove="HsnSoft\Base\GlobalFeatures\Localization\*.json" />
+        <EmbeddedResource Include="HsnSoft\Base\GlobalFeatures\Localization\*.json" />
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\HsnSoft.Base.Localization\HsnSoft.Base.Localization.csproj" />
         <ProjectReference Include="..\HsnSoft.Base.VirtualFileSystem\HsnSoft.Base.VirtualFileSystem.csproj" />
         <ProjectReference Include="..\HsnSoft.Base.Authorization.Abstractions\HsnSoft.Base.Authorization.Abstractions.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="6.0.16" />
     </ItemGroup>
 
 </Project>

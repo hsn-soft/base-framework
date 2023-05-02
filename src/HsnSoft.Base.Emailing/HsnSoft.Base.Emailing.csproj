@@ -14,13 +14,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Remove="Volo\Abp\Emailing\Localization\*.json" />
-    <EmbeddedResource Include="Volo\Abp\Emailing\Localization\*.json" />
+    <Content Remove="HsnSoft\Base\Emailing\Localization\*.json" />
+    <EmbeddedResource Include="HsnSoft\Base\Emailing\Localization\*.json" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Remove="Volo\Abp\Emailing\Templates\**\*.tpl" />
-    <EmbeddedResource Include="Volo\Abp\Emailing\Templates\**\*.tpl" />
+    <Content Remove="HsnSoft\Base\Emailing\Templates\**\*.tpl" />
+    <EmbeddedResource Include="HsnSoft\Base\Emailing\Templates\**\*.tpl" />
   </ItemGroup>
 
   <ItemGroup>
@@ -29,10 +29,6 @@
     <ProjectReference Include="..\HsnSoft.Base.Settings\HsnSoft.Base.Settings.csproj" />
     <ProjectReference Include="..\HsnSoft.Base.TextTemplating\HsnSoft.Base.TextTemplating.csproj" />
     <ProjectReference Include="..\HsnSoft.Base.VirtualFileSystem\HsnSoft.Base.VirtualFileSystem.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="6.0.16" />
   </ItemGroup>
 
 </Project>
