@@ -21,10 +21,10 @@ jobs:
           dotnet-version: 6.0.x
           
       - name: Restore dependencies
-        run: dotnet restore --force --no-cache --verbosity normal
+        run: dotnet restore --force --no-cache
         
       - name: Build
-        run: dotnet build --no-restore --no-incremental --verbosity normal
+        run: dotnet build --no-restore --no-incremental
         
       - name: Test
-        run: dotnet test --no-restore --no-build --verbosity normal
+        run: dotnet test --no-restore --no-build
