@@ -5,7 +5,7 @@
         <NoWarn>$(NoWarn);CS1591;CS0436</NoWarn>
         <PackageProjectUrl>https://hhsahin.com/</PackageProjectUrl>
         <!--<PackageIconUrl>https://hhsahin.com/assets/hsn-base.png</PackageIconUrl>-->
-        <PackageIcon>images\hsn-base.png</PackageIcon>
+        <PackageIcon>assets\hsn-base.png</PackageIcon>
         <PackageLicenseExpression>LGPL-3.0-only</PackageLicenseExpression>
         <RepositoryType>git</RepositoryType>
         <RepositoryUrl>https://github.com/hsn-soft/base-framework/</RepositoryUrl>
@@ -22,6 +22,6 @@
         <Product>HsnSoft Base Framework</Product>
     </PropertyGroup>
     <ItemGroup>
-        <None Include="..\..\assests\hsn-base.png" Pack="true" Visible="false" PackagePath="images\hsn-base.png"/>
+        <None Include="..\..\assets\hsn-base.png" Pack="true" Visible="false" PackagePath="assets\hsn-base.png"/>
     </ItemGroup>
 </Project>
