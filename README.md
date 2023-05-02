@@ -1,2 +1,7 @@
-# base-framework
-Open Source Web Application Framework for ASP.NET Core. Offers an opinionated architecture to build enterprise software solutions with best practices on top of the .NET and the ASP.NET Core platforms. Provides the fundamental infrastructure, production-ready startup templates, application modules, UI themes, tooling, guides and documentation.
+# HsnSoft Base Framework
+
+[![.NETCore](https://github.com/hsn-soft/base-framework/actions/workflows/dotnet.yml/badge.svg)](https://github.com/hsn-soft/base-framework/actions/workflows/dotnet.yml)
+[![CodeQL](https://github.com/hsn-soft/base-framework/actions/workflows/codeql.yml/badge.svg)](https://github.com/hsn-soft/base-framework/actions/workflows/codeql.yml)
+[![NuGet Download](https://img.shields.io/nuget/dt/HsnSoft.Base.Core.svg)](https://www.nuget.org/packages/HsnSoft.Base.Core)
+
+HsnSoft Base Framework is a complete **infrastructure** based on the **ASP.NET Core** to create **modern web applications** and **APIs** by following the software development **best practices** and the **latest technologies**.
