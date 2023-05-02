@@ -6,6 +6,7 @@ USER root
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build-stage
 WORKDIR /build-source
 
+COPY ["./assets/hsn-base.png", "./assets/"]
 COPY ["./NuGet.Config", "./"]
 COPY ["./common.props", "./"]
 COPY ["./configureawait.props", "./"]
