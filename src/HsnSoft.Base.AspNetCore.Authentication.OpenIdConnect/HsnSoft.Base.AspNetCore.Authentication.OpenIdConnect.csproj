@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <Import Project="..\..\configureawait.props" />
+    <Import Project="..\..\common.props" />
+
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <RootNamespace />
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="6.0.16" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\HsnSoft.Base.AspNetCore.MultiTenancy\HsnSoft.Base.AspNetCore.MultiTenancy.csproj" />
+      <ProjectReference Include="..\HsnSoft.Base.AspNetCore.Authentication.OAuth\HsnSoft.Base.AspNetCore.Authentication.OAuth.csproj" />
+      <ProjectReference Include="..\HsnSoft.Base.RemoteServices\HsnSoft.Base.RemoteServices.csproj" />
+    </ItemGroup>
+
+</Project>

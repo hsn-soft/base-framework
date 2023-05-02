@@ -1,0 +1,29 @@
+<Project>
+    <PropertyGroup>
+        <LangVersion>latest</LangVersion>
+        <Version>6.0.1</Version>
+        <NoWarn>$(NoWarn);CS1591;CS0436</NoWarn>
+        <PackageProjectUrl>https://hhsahin.com/</PackageProjectUrl>
+        <PackageLicenseExpression>LGPL-3.0-only</PackageLicenseExpression>
+        <RepositoryType>git</RepositoryType>
+        <RepositoryUrl>https://github.com/abpframework/abp/</RepositoryUrl>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <!-- Include symbol files (*.pdb) in the built .nupkg -->
+        <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+        <!--<PackageIconUrl>https://hhsahin.com/assets/hsn-base.png</PackageIconUrl>-->
+        <PackageIcon>images\hsn-base.png</PackageIcon>
+        <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+        <Authors>HsnSoft</Authors>
+        <Copyright>2023</Copyright>
+        <Product>HsnSoft Base Framework</Product>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+    <ItemGroup>
+        <None Include="..\..\assests\hsn-base.png" Pack="true" Visible="false" PackagePath="images\hsn-base.png"/>
+    </ItemGroup>
+</Project>

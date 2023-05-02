@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <Import Project="..\..\configureawait.props" />
+  <Import Project="..\..\common.props" />
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+    <PackageId>HsnSoft.Base.AspNetCore.Mvc.UI</PackageId>
+    <AssetTargetFallback>$(AssetTargetFallback);portable-net45+win8+wp8+wpa81;</AssetTargetFallback>
+    <IsPackable>true</IsPackable>
+    <OutputType>Library</OutputType>
+    <RootNamespace />
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="6.0.16" />
+    <PackageReference Include="NUglify" Version="1.20.6" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\HsnSoft.Base.AspNetCore.Mvc\HsnSoft.Base.AspNetCore.Mvc.csproj" />
+    <ProjectReference Include="..\HsnSoft.Base.UI.Navigation\HsnSoft.Base.UI.Navigation.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <_ContentIncludedByDefault Remove="Volo\Abp\AspNetCore\Mvc\UI\Components\LayoutHook\Default.cshtml" />
+  </ItemGroup>
+
+</Project>

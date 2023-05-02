@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <Import Project="..\..\configureawait.props" />
+  <Import Project="..\..\common.props" />
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+    <PackageId>HsnSoft.Base.AspNetCore.Mvc</PackageId>
+    <AssetTargetFallback>$(AssetTargetFallback);portable-net45+win8+wp8+wpa81;</AssetTargetFallback>
+    <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+    <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+    <IsPackable>true</IsPackable>
+    <OutputType>Library</OutputType>
+    <RootNamespace />
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\HsnSoft.Base.ApiVersioning.Abstractions\HsnSoft.Base.ApiVersioning.Abstractions.csproj" />
+    <ProjectReference Include="..\HsnSoft.Base.AspNetCore.Mvc.Contracts\HsnSoft.Base.AspNetCore.Mvc.Contracts.csproj" />
+    <ProjectReference Include="..\HsnSoft.Base.AspNetCore\HsnSoft.Base.AspNetCore.csproj" />
+    <ProjectReference Include="..\HsnSoft.Base.Ddd.Application\HsnSoft.Base.Ddd.Application.csproj" />
+    <ProjectReference Include="..\HsnSoft.Base.GlobalFeatures\HsnSoft.Base.GlobalFeatures.csproj" />
+    <ProjectReference Include="..\HsnSoft.Base.Localization\HsnSoft.Base.Localization.csproj" />
+    <ProjectReference Include="..\HsnSoft.Base.UI.Navigation\HsnSoft.Base.UI.Navigation.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="6.0.16" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning" Version="5.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="6.0.16" />
+  </ItemGroup>
+
+</Project>
