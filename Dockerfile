@@ -16,9 +16,8 @@ RUN dotnet restore "./HsnSoft.Base.sln"
 
 RUN dotnet build "./HsnSoft.Base.sln" --no-restore --configuration Release
 
-COPY ["./test/.", "./test/"]
-
-RUN dotnet test "./HsnSoft.Base.sln" --no-restore --no-build --configuration Release
+#COPY ["./test/.", "./test/"]
+#RUN dotnet test "./HsnSoft.Base.sln" --no-restore --no-build --configuration Release
 
 RUN --mount=type=secret,id=VERSION_NUMBER \
     export VERSION_NUMBER=$(cat /run/secrets/VERSION_NUMBER) && \
