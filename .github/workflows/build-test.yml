@@ -1,8 +1,8 @@
 name: .NETCore
 on:
   workflow_dispatch:
-  push:
-    branches: [ "feat/*" ]
+#  push:
+#    branches: [ "feat/*" ]
   pull_request:
     branches: [ "dev","rel/*" ]
     types: [opened, synchronize, reopened]
