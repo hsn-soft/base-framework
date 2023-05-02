@@ -1,6 +1,6 @@
 # HsnSoft Base Framework
 
-[![.NETCore](https://github.com/hsn-soft/base-framework/actions/workflows/dotnet.yml/badge.svg)](https://github.com/hsn-soft/base-framework/actions/workflows/dotnet.yml)
+[![.NETCore](https://github.com/hsn-soft/base-framework/actions/workflows/build-test.yml/badge.svg)](https://github.com/hsn-soft/base-framework/actions/workflows/build-test.yml)
 [![CodeQL](https://github.com/hsn-soft/base-framework/actions/workflows/codeql.yml/badge.svg)](https://github.com/hsn-soft/base-framework/actions/workflows/codeql.yml)
 [![NuGet Download](https://img.shields.io/nuget/dt/HsnSoft.Base.Core.svg)](https://www.nuget.org/packages/HsnSoft.Base.Core)
 
