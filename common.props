@@ -4,15 +4,19 @@
         <Version>6.0.1</Version>
         <NoWarn>$(NoWarn);CS1591;CS0436</NoWarn>
         <PackageProjectUrl>https://hhsahin.com/</PackageProjectUrl>
+        <!--<PackageIconUrl>https://hhsahin.com/assets/hsn-base.png</PackageIconUrl>-->
+        <PackageIcon>images\hsn-base.png</PackageIcon>
         <PackageLicenseExpression>LGPL-3.0-only</PackageLicenseExpression>
         <RepositoryType>git</RepositoryType>
-        <RepositoryUrl>https://github.com/abpframework/abp/</RepositoryUrl>
+        <RepositoryUrl>https://github.com/hsn-soft/base-framework/</RepositoryUrl>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <!-- Include symbol files (*.pdb) in the built .nupkg -->
         <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
-        <!--<PackageIconUrl>https://hhsahin.com/assets/hsn-base.png</PackageIconUrl>-->
-        <PackageIcon>images\hsn-base.png</PackageIcon>
         <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+        <GenerateEmbeddedFilesManifest>true</GenerateEmbeddedFilesManifest>
+        <IsPackable>true</IsPackable>
+        <OutputType>Library</OutputType>
+        <NoDefaultLaunchSettingsFile>true</NoDefaultLaunchSettingsFile>
         <Authors>HsnSoft</Authors>
         <Copyright>2023</Copyright>
         <Product>HsnSoft Base Framework</Product>
