@@ -3,7 +3,7 @@ name: "Deploy to Global NuGet"
 on:
   push:
     branches:
-      - rel/*
+      - rel/nuget
 
 env:
   PACKAGE_OUTPUT_DIRECTORY: ${{ github.workspace }}\output
