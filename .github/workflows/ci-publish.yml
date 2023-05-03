@@ -1,4 +1,4 @@
-name: Publish FeedR to GitHub Nuget
+name: Publish Base Framework to GitHub Nuget
 on:
   workflow_dispatch:
   push:
