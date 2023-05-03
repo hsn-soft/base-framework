@@ -3,7 +3,7 @@ name: "Deploy to Global NuGet"
 on:
   push:
     branches:
-      - global/*
+      - rel/*
 
 env:
   PACKAGE_OUTPUT_DIRECTORY: ${{ github.workspace }}\output
@@ -30,9 +30,8 @@ jobs:
       - name: 'Build Project'
         run: dotnet build --no-restore --configuration Release
 
-      # - name: 'Get Version'
-        # id: version
-        # uses: battila7/get-version-action@v2
+#      - name: 'Test Project'
+#        run: dotnet test --no-restore --no-build --configuration Release
 
       - name: 'Pack Package'
         run: dotnet pack --no-restore --no-build --configuration Release --output ${{ env.PACKAGE_OUTPUT_DIRECTORY }}
