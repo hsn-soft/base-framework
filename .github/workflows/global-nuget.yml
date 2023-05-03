@@ -37,4 +37,4 @@ jobs:
         run: dotnet pack --no-restore --no-build --configuration Release --output ${{ env.PACKAGE_OUTPUT_DIRECTORY }}
 
       - name: 'Push package'
-        run: dotnet nuget push ${{ env.PACKAGE_OUTPUT_DIRECTORY }}\*.nupkg -k ${{ secrets.GLOBAL_NUGET_TOKEN }} -s ${{ env.GLOBAL_NUGET_SOURCE_URL }}
+        run: dotnet nuget push ${{ env.PACKAGE_OUTPUT_DIRECTORY }}\*.nupkg --skip-duplicate -k ${{ secrets.GLOBAL_NUGET_TOKEN }} -s ${{ env.GLOBAL_NUGET_SOURCE_URL }}
