@@ -4,7 +4,7 @@ on:
 #  push:
 #    branches: [ "feat/*" ]
   pull_request:
-    branches: [ "dev","rel/*" ]
+    branches: [ "dev" ]
     types: [opened, synchronize, reopened]
 
 jobs:
