@@ -14,12 +14,12 @@ COPY ["./configureawait.props", "./"]
 COPY ["./HsnSoft.Base.sln", "./"]
 
 COPY ["./src/.", "./src/"]
+COPY ["./test/.", "./test/"]
 
 RUN dotnet restore "./HsnSoft.Base.sln" --force
 
 RUN dotnet build "./HsnSoft.Base.sln" --no-restore --configuration Release
 
-COPY ["./test/.", "./test/"]
 RUN dotnet test "./HsnSoft.Base.sln" --no-restore --no-build --configuration Release
 
 RUN --mount=type=secret,id=VERSION_NUMBER \
