@@ -1,7 +1,7 @@
 <Project>
     <PropertyGroup>
         <LangVersion>latest</LangVersion>
-        <Version>6.0.4</Version>
+        <Version>6.0.5</Version>
         <NoWarn>$(NoWarn);CS1591;CS0436</NoWarn>
         <PackageProjectUrl>https://hhsahin.com/</PackageProjectUrl>
         <!--<PackageIconUrl>https://hhsahin.com/assets/hsn-base.png</PackageIconUrl>-->
