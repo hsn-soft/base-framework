@@ -1,4 +1,4 @@
-name: .NETCore CI
+name: .NETCore Build & Test
 
 on:
   workflow_dispatch:
