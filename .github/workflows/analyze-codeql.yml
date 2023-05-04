@@ -4,8 +4,7 @@ on:
   #  push:
   #    branches: [ "dev" ]
   pull_request:
-    #    branches: [ "rel/*" ] TODO
-    branches: [ "global/*" ]
+    branches: [ "rel/*" ]
     types: [ opened, synchronize, reopened ]
   schedule:
     - cron: '24 14 * * 1'
