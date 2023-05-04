@@ -11,11 +11,15 @@ env:
 
 jobs:
   deploy:
-    name: 'Deploy Release JOB'
-    runs-on: 'windows-latest'
+    name: Deploy Release JOB
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+      
     steps:
-      - name: 'Checkout'
-        uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
 
@@ -23,18 +27,27 @@ jobs:
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: 6.0.x
+          
+      - name: Cache Search
+        uses: actions/cache@v3
+        with:
+          path: ~/.nuget/packages
+          # Look to see if there is a cache hit for the corresponding requirements file
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget
 
-      - name: 'Restore Dependencies'
+      - name: Restore dependencies
         run: dotnet restore
 
-      - name: 'Build Project'
+      - name: Build Project
         run: dotnet build --no-restore --configuration Release
 
-#      - name: 'Test Project'
+#      - name: Test Project
 #        run: dotnet test --no-restore --no-build --configuration Release
 
-      - name: 'Pack Package'
+      - name: Pack Package
         run: dotnet pack --no-restore --no-build --configuration Release --output ${{ env.PACKAGE_OUTPUT_DIRECTORY }}
 
-      - name: 'Push package'
+      - name: Push package
         run: dotnet nuget push ${{ env.PACKAGE_OUTPUT_DIRECTORY }}\*.nupkg --skip-duplicate -k ${{ secrets.GLOBAL_NUGET_TOKEN }} -s ${{ env.GLOBAL_NUGET_SOURCE_URL }}
