@@ -1,48 +1,57 @@
-name: Analyze Codecov
+name: 'Analyze Codecov'
 
 on:
-  pull_request:
-    branches: [ "RELEASE/*" ]
-    types: [ opened, synchronize, reopened ]
-  schedule:
-    - cron: '24 14 * * 1'
-      
+  workflow_dispatch:
+  push:
+    branches: [ dev ]
+
 jobs:
-  run:
-    name: Codecov Analyze JOB
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-    env:
-      OS: ${{ matrix.os }}
-      PYTHON: '3.10'
-    
+  build:
+    name: 'Codecov Analyze JOB'
+    runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
         with:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
-      
-      - name: Setup Python
-        uses: actions/setup-python@master
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
         with:
-          python-version: 3.10
-      
-      - name: Generate coverage report
-        run: |
-          pip install pytest
-          pip install pytest-cov
-          pytest --cov=./ --cov-report=xml
-      
-      - name: Upload coverage to Codecov
+          dotnet-version: 6.0.x
+
+      - name: Cache Search
+        uses: actions/cache@v3
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget
+
+      - name: Restore Dependencies
+        run: dotnet restore --force
+
+      - name: Build Project
+        run: dotnet build --no-restore --no-incremental
+
+      - name: Test
+        run: dotnet test --no-restore --no-build --collect:"XPlat Code Coverage" -r ./TestResults --verbosity detailed
+
+      - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          directory: ./coverage/reports/
-          env_vars: OS,PYTHON
-          fail_ci_if_error: true
-          files: ./coverage1.xml,./coverage2.xml,!./cache
-          flags: unittests
+          directory: ./TestResults/
+#          env_vars: OS,PYTHON
+#          fail_ci_if_error: true
+#          files: ./coverage1.xml,./coverage2.xml,!./cache
+#          flags: unittests
           name: codecov-umbrella
           verbose: true
+
+
+
+
+
+

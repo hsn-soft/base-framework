@@ -1,16 +1,14 @@
-name: .NETCore Build & Test
+name: '.NETCore Build & Test'
 
 on:
   workflow_dispatch:
-  push:
-    branches: [ "dev" ]
   pull_request:
     branches: [ "dev" ]
     types: [ opened, synchronize, reopened ]
 
 jobs:
   build:
-    name: Build And Test JOB
+    name: 'Build And Test JOB'
     runs-on: ubuntu-latest
 
     steps:

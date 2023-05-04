@@ -1,4 +1,4 @@
-name: Deploy Global NuGet
+name: 'Deploy Global NuGet'
 
 on:
   push:
@@ -11,7 +11,7 @@ env:
 
 jobs:
   deploy:
-    name: Global NuGet Deploy JOB
+    name: 'Global NuGet Deploy JOB'
     runs-on: ubuntu-latest
     permissions:
       packages: write
