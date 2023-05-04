@@ -1,4 +1,5 @@
 name: Publish Github NuGet
+
 on:
   workflow_dispatch:
   push:
@@ -9,18 +10,19 @@ jobs:
   build:
     name: Github NuGet Publish JOB
     runs-on: ubuntu-latest
+    
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
         with:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
-      
+
       - name: Get Version
         uses: kzrnm/get-net-sdk-project-versions-action@v1
         id: get-version
         with:
           proj-path: ./common.props
-      
+
       - name: Build & Publish
         uses: docker/build-push-action@v4
         with:
