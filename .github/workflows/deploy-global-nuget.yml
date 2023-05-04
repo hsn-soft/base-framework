@@ -1,4 +1,4 @@
-name: Deploy Global NuGet
+name: 'Deploy Global NuGet'
 
 on:
   push:
@@ -11,7 +11,7 @@ env:
 
 jobs:
   deploy:
-    name: Global NuGet Deploy JOB
+    name: 'Global NuGet Deploy JOB'
     runs-on: ubuntu-latest
     permissions:
       packages: write
@@ -36,18 +36,18 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nuget
 
-      - name: Restore dependencies
+      - name: Restore Dependencies
         run: dotnet restore --force
 
-      - name: Build Project
+      - name: Build Solution
         run: dotnet build --no-restore --configuration Release
 
-      - name: Test Project
+      - name: Test Solution
         run: dotnet test --no-restore --no-build --configuration Release
 
-      - name: Pack Package
+      - name: Pack Solution
         run: dotnet pack --no-restore --no-build --configuration Release --output ${{ env.PACKAGE_OUTPUT_DIRECTORY }}
 
-      - name: Push package
+      - name: Push Packages
         run: dotnet nuget push ${{ env.PACKAGE_OUTPUT_DIRECTORY }}/*.nupkg --skip-duplicate -k ${{ secrets.GLOBAL_NUGET_TOKEN }} -s ${{ env.GLOBAL_NUGET_SOURCE_URL }}
     

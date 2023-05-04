@@ -1,18 +1,15 @@
-name: Analyze CodeQL
+name: 'Analyze CodeQL'
 
 on:
-  #  push:
-  #    branches: [ "dev" ]
   pull_request:
-    #    branches: [ "rel/*" ] TODO
-    branches: [ "global/*" ]
+    branches: [ "rel/*" ]
     types: [ opened, synchronize, reopened ]
   schedule:
     - cron: '24 14 * * 1'
 
 jobs:
   analyze:
-    name: CodeQL Analyze JOB
+    name: 'CodeQL Analyze JOB'
     runs-on: ubuntu-latest
     permissions:
       actions: read

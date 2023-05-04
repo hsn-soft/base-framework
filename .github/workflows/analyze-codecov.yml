@@ -1,16 +1,13 @@
-name: .NETCore CI
+name: 'Analyze Codecov'
 
 on:
   workflow_dispatch:
-  #  push:
-  #    branches: [ "feat/*" ]
-  pull_request:
+  push:
     branches: [ "dev" ]
-    types: [ opened, synchronize, reopened ]
 
 jobs:
   build:
-    name: Build And Test JOB
+    name: 'Codecov Analyze JOB'
     runs-on: ubuntu-latest
 
     steps:
@@ -35,8 +32,11 @@ jobs:
       - name: Restore Dependencies
         run: dotnet restore --force
 
-      - name: Build Project
+      - name: Build Solution
         run: dotnet build --no-restore --no-incremental
 
-      - name: Test Project
-        run: dotnet test --no-restore --no-build
+      - name: Test Solution
+        run: dotnet test --no-restore --no-build --collect:"XPlat Code Coverage"
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3

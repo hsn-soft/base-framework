@@ -1,14 +1,13 @@
-name: Publish Github NuGet
+name: 'Publish Github NuGet'
 
 on:
   workflow_dispatch:
   push:
-    branches:
-      - dev
+    branches: [ "dev" ]
 
 jobs:
   build:
-    name: Github NuGet Publish JOB
+    name: 'Github NuGet Publish JOB'
     runs-on: ubuntu-latest
     
     steps:
