@@ -9,7 +9,7 @@
 # the `language` matrix defined below to confirm you have the correct set of
 # supported CodeQL languages.
 #
-name: "CodeQL"
+name: Analyze CodeQL
 
 on:
 #  push:
@@ -24,7 +24,7 @@ on:
 
 jobs:
   analyze:
-    name: Analyze
+    name: CodeQL Analyze JOB
     runs-on: ubuntu-latest
     permissions:
       actions: read
@@ -39,8 +39,10 @@ jobs:
         # Learn more about CodeQL language support at https://aka.ms/codeql-docs/language-support
 
     steps:
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
       
       # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
@@ -57,7 +59,7 @@ jobs:
       
       # Autobuild attempts to build any compiled languages  (C/C++, C#, Go, or Java).
       # If this step fails, then you should remove it and run the build manually (see below)
-      - name: Autobuild
+      - name: Auto Build
         uses: github/codeql-action/autobuild@v2
       
       # ℹ️ Command-line programs to run using the OS shell.
