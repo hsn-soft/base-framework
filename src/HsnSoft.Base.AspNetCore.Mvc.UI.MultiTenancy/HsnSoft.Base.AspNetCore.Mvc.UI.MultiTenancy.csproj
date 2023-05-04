@@ -33,8 +33,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <_ContentIncludedByDefault Remove="Pages\Abp\MultiTenancy\TenantSwitchModal.cshtml" />
-    <_ContentIncludedByDefault Remove="Pages\Abp\MultiTenancy\_ViewImports.cshtml" />
+    <_ContentIncludedByDefault Remove="Pages\Base\MultiTenancy\TenantSwitchModal.cshtml" />
+    <_ContentIncludedByDefault Remove="Pages\Base\MultiTenancy\_ViewImports.cshtml" />
     <_ContentIncludedByDefault Remove="HsnSoft\Base\AspNetCore\Mvc\UI\MultiTenancy\Localization\ar.json" />
     <_ContentIncludedByDefault Remove="HsnSoft\Base\AspNetCore\Mvc\UI\MultiTenancy\Localization\cs.json" />
     <_ContentIncludedByDefault Remove="HsnSoft\Base\AspNetCore\Mvc\UI\MultiTenancy\Localization\de.json" />

@@ -14,8 +14,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="HsnSoft\Base\Application\Localization\Resources\AbpDdd\*.json" />
-    <Content Remove="HsnSoft\Base\Application\Localization\Resources\AbpDdd\*.json" />
+    <EmbeddedResource Include="HsnSoft\Base\Application\Localization\Resources\BaseDdd\*.json" />
+    <Content Remove="HsnSoft\Base\Application\Localization\Resources\BaseDdd\*.json" />
   </ItemGroup>
 
   <ItemGroup>

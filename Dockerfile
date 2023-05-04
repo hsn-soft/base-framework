@@ -7,6 +7,7 @@ FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build-stage
 WORKDIR /build-source
 
 COPY ["./assets/hsn-base.png", "./assets/"]
+COPY ["./README.md", "./"]
 COPY ["./NuGet.Config", "./"]
 COPY ["./common.props", "./"]
 COPY ["./configureawait.props", "./"]
@@ -29,7 +30,9 @@ RUN --mount=type=secret,id=ACTION_NUMBER \
     export ACTION_NUMBER=$(cat /run/secrets/ACTION_NUMBER) && \
     echo ${ACTION_NUMBER} > ./action_number
 
-RUN dotnet pack "./HsnSoft.Base.sln" --no-restore --no-build --configuration Release --output ./packages -p:PackageVersion=$(cat ./version_number)-dev.$(cat ./action_number)
+RUN dotnet pack "./HsnSoft.Base.sln" --no-restore --no-build --configuration Release --output ./packages \
+    -p:PackageVersion=$(cat ./version_number)-dev.$(cat ./action_number) \
+    --verbosity normal
 
 FROM base AS final
 WORKDIR /packages
