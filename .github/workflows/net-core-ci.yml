@@ -2,8 +2,8 @@ name: .NETCore CI
 
 on:
   workflow_dispatch:
-  #  push:
-  #    branches: [ "feat/*" ]
+  push:
+    branches: [ "dev" ]
   pull_request:
     branches: [ "dev" ]
     types: [ opened, synchronize, reopened ]
