@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <PackageReference Include="RabbitMQ.Client" Version="6.5.0" />
+    <PackageReference Include="Polly" Version="7.2.3" />
     <ProjectReference Include="..\HsnSoft.Base.Json\HsnSoft.Base.Json.csproj" />
     <ProjectReference Include="..\HsnSoft.Base.Threading\HsnSoft.Base.Threading.csproj" />
   </ItemGroup>

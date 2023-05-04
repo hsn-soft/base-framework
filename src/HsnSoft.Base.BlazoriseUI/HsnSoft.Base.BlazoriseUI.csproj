@@ -21,7 +21,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <_ContentIncludedByDefault Remove="Components\AbpExtensibleDataGrid.razor" />
+      <_ContentIncludedByDefault Remove="Components\BaseExtensibleDataGrid.razor" />
       <_ContentIncludedByDefault Remove="Components\DataGridEntityActionsColumn.razor" />
       <_ContentIncludedByDefault Remove="Components\EntityAction.razor" />
       <_ContentIncludedByDefault Remove="Components\EntityActions.razor" />
