@@ -3,7 +3,7 @@ name: 'Publish Github NuGet'
 on:
   workflow_dispatch:
   push:
-    branches: [ DEVELOPMENT ]
+    branches: [ "dev" ]
 
 jobs:
   build:

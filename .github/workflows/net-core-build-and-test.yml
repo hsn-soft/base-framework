@@ -33,8 +33,8 @@ jobs:
       - name: Restore Dependencies
         run: dotnet restore --force
 
-      - name: Build Project
+      - name: Build Solution
         run: dotnet build --no-restore --no-incremental
 
-      - name: Test Project
+      - name: Test Solution
         run: dotnet test --no-restore --no-build
