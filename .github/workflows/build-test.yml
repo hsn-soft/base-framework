@@ -4,8 +4,7 @@ on:
 #  push:
 #    branches: [ "feat/*" ]
   pull_request:
-#    branches: [ "dev" ] TODO
-    branches: [ "DEVELOPMENT" ]
+    branches: [ "dev" ]
     types: [opened, synchronize, reopened]
 
 jobs:
