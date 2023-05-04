@@ -1,14 +1,13 @@
-name: '.NETCore Build & Test'
+name: 'Analyze Codecov'
 
 on:
   workflow_dispatch:
-  pull_request:
-    branches: [ "dev" ]
-    types: [ opened, synchronize, reopened ]
+  push:
+    branches: [ dev ]
 
 jobs:
   build:
-    name: 'Build And Test JOB'
+    name: 'Codecov Analyze JOB'
     runs-on: ubuntu-latest
 
     steps:
@@ -36,5 +35,23 @@ jobs:
       - name: Build Project
         run: dotnet build --no-restore --no-incremental
 
-      - name: Test Project
-        run: dotnet test --no-restore --no-build
+      - name: Test
+        run: dotnet test --no-restore --no-build --collect:"XPlat Code Coverage" -r ./TestResults --verbosity detailed
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: ./TestResults/
+#          env_vars: OS,PYTHON
+#          fail_ci_if_error: true
+#          files: ./coverage1.xml,./coverage2.xml,!./cache
+#          flags: unittests
+          name: codecov-umbrella
+          verbose: true
+
+
+
+
+
+
