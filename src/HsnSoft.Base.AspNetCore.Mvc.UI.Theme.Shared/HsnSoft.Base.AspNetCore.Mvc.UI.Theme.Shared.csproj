@@ -32,26 +32,26 @@
   </ItemGroup>
 
   <ItemGroup>
-    <_ContentIncludedByDefault Remove="wwwroot\libs\abp\aspnetcore-mvc-ui-theme-shared\bootstrap\dom-event-handlers.js" />
-    <_ContentIncludedByDefault Remove="wwwroot\libs\abp\aspnetcore-mvc-ui-theme-shared\bootstrap\modal-manager.js" />
-    <_ContentIncludedByDefault Remove="wwwroot\libs\abp\aspnetcore-mvc-ui-theme-shared\datatables\datatables-extensions.js" />
-    <_ContentIncludedByDefault Remove="wwwroot\libs\abp\aspnetcore-mvc-ui-theme-shared\datatables\datatables-styles.css" />
-    <_ContentIncludedByDefault Remove="wwwroot\libs\abp\aspnetcore-mvc-ui-theme-shared\datatables\datatables-styles.min.css" />
-    <_ContentIncludedByDefault Remove="wwwroot\libs\abp\aspnetcore-mvc-ui-theme-shared\datatables\datatables-styles.scss" />
-    <_ContentIncludedByDefault Remove="wwwroot\libs\abp\aspnetcore-mvc-ui-theme-shared\jquery-form\jquery-form-extensions.js" />
-    <_ContentIncludedByDefault Remove="wwwroot\libs\abp\aspnetcore-mvc-ui-theme-shared\jquery\jquery-extensions.js" />
-    <_ContentIncludedByDefault Remove="wwwroot\libs\abp\aspnetcore-mvc-ui-theme-shared\jquery\widget-manager.js" />
-    <_ContentIncludedByDefault Remove="wwwroot\libs\abp\aspnetcore-mvc-ui-theme-shared\sweetalert2\abp-sweetalert2.js" />
-    <_ContentIncludedByDefault Remove="wwwroot\libs\abp\aspnetcore-mvc-ui-theme-shared\toastr\abp-toastr.js" />
-    <_ContentIncludedByDefault Remove="wwwroot\libs\abp\aspnetcore-mvc-ui-theme-shared\ui-extensions.js" />
+    <_ContentIncludedByDefault Remove="wwwroot\libs\base\aspnetcore-mvc-ui-theme-shared\bootstrap\dom-event-handlers.js" />
+    <_ContentIncludedByDefault Remove="wwwroot\libs\base\aspnetcore-mvc-ui-theme-shared\bootstrap\modal-manager.js" />
+    <_ContentIncludedByDefault Remove="wwwroot\libs\base\aspnetcore-mvc-ui-theme-shared\datatables\datatables-extensions.js" />
+    <_ContentIncludedByDefault Remove="wwwroot\libs\base\aspnetcore-mvc-ui-theme-shared\datatables\datatables-styles.css" />
+    <_ContentIncludedByDefault Remove="wwwroot\libs\base\aspnetcore-mvc-ui-theme-shared\datatables\datatables-styles.min.css" />
+    <_ContentIncludedByDefault Remove="wwwroot\libs\base\aspnetcore-mvc-ui-theme-shared\datatables\datatables-styles.scss" />
+    <_ContentIncludedByDefault Remove="wwwroot\libs\base\aspnetcore-mvc-ui-theme-shared\jquery-form\jquery-form-extensions.js" />
+    <_ContentIncludedByDefault Remove="wwwroot\libs\base\aspnetcore-mvc-ui-theme-shared\jquery\jquery-extensions.js" />
+    <_ContentIncludedByDefault Remove="wwwroot\libs\base\aspnetcore-mvc-ui-theme-shared\jquery\widget-manager.js" />
+    <_ContentIncludedByDefault Remove="wwwroot\libs\base\aspnetcore-mvc-ui-theme-shared\sweetalert2\base-sweetalert2.js" />
+    <_ContentIncludedByDefault Remove="wwwroot\libs\base\aspnetcore-mvc-ui-theme-shared\toastr\base-toastr.js" />
+    <_ContentIncludedByDefault Remove="wwwroot\libs\base\aspnetcore-mvc-ui-theme-shared\ui-extensions.js" />
     <_ContentIncludedByDefault Remove="Areas\_ViewStart.cshtml" />
     <_ContentIncludedByDefault Remove="Pages\Account\_ViewStart.cshtml" />
-    <_ContentIncludedByDefault Remove="Pages\Shared\Components\AbpApplicationPath\Default.cshtml" />
-    <_ContentIncludedByDefault Remove="Pages\Shared\Components\AbpPageSearchBox\Default.cshtml" />
-    <_ContentIncludedByDefault Remove="Pages\Shared\Components\AbpPageSearchBox\_ViewImports.cshtml" />
-    <_ContentIncludedByDefault Remove="Pages\Shared\Components\AbpPageToolbar\Button\Default.cshtml" />
-    <_ContentIncludedByDefault Remove="Pages\Shared\Components\AbpPageToolbar\Default.cshtml" />
-    <_ContentIncludedByDefault Remove="Pages\Shared\Components\AbpPageToolbar\_ViewImports.cshtml" />
+    <_ContentIncludedByDefault Remove="Pages\Shared\Components\BaseApplicationPath\Default.cshtml" />
+    <_ContentIncludedByDefault Remove="Pages\Shared\Components\BasePageSearchBox\Default.cshtml" />
+    <_ContentIncludedByDefault Remove="Pages\Shared\Components\BasePageSearchBox\_ViewImports.cshtml" />
+    <_ContentIncludedByDefault Remove="Pages\Shared\Components\BasePageToolbar\Button\Default.cshtml" />
+    <_ContentIncludedByDefault Remove="Pages\Shared\Components\BasePageToolbar\Default.cshtml" />
+    <_ContentIncludedByDefault Remove="Pages\Shared\Components\BasePageToolbar\_ViewImports.cshtml" />
     <_ContentIncludedByDefault Remove="Pages\_ViewStart.cshtml" />
     <_ContentIncludedByDefault Remove="Views\Error\Default.cshtml" />
     <_ContentIncludedByDefault Remove="Views\_ViewStart.cshtml" />
