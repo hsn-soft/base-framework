@@ -5,6 +5,9 @@ on:
   push:
     branches: [ dev ]
 
+env:
+  TEST_OUTPUT_DIRECTORY: ${{ github.workspace }}/output
+  
 jobs:
   build:
     name: 'Codecov Analyze JOB'
@@ -36,18 +39,18 @@ jobs:
         run: dotnet build --no-restore --no-incremental
 
       - name: Test
-        run: dotnet test --no-restore --no-build --collect:"XPlat Code Coverage" -r ./TestResults --verbosity detailed
+        run: dotnet test --no-restore --no-build --collect:"XPlat Code Coverage" -r ${{ env.TEST_OUTPUT_DIRECTORY }} --verbosity normal
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          directory: ./TestResults/
+          directory: ${{ env.TEST_OUTPUT_DIRECTORY }}/
 #          env_vars: OS,PYTHON
 #          fail_ci_if_error: true
 #          files: ./coverage1.xml,./coverage2.xml,!./cache
 #          flags: unittests
-          name: codecov-umbrella
+#          name: codecov-umbrella
           verbose: true
 
 
