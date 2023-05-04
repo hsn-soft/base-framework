@@ -3,7 +3,7 @@ name: 'Analyze Codecov'
 on:
   workflow_dispatch:
   push:
-    branches: [ dev ]
+    branches: [ "dev" ]
 
 jobs:
   build:
@@ -32,20 +32,11 @@ jobs:
       - name: Restore Dependencies
         run: dotnet restore --force
 
-      - name: Build Project
+      - name: Build Solution
         run: dotnet build --no-restore --no-incremental
 
-      - name: Test
-        run: dotnet test --no-restore --no-build --collect:"XPlat Code Coverage" --verbosity normal
+      - name: Test Solution
+        run: dotnet test --no-restore --no-build --collect:"XPlat Code Coverage"
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          verbose: true
-
-
-
-
-
-
