@@ -2,7 +2,7 @@
     <PropertyGroup>
         <LangVersion>latest</LangVersion>
         <Version>6.0.5</Version>
-        <NoWarn>$(NoWarn);CS1591;CS0436</NoWarn>
+        <NoWarn>$(NoWarn);CS1591;CS1998;CS0436</NoWarn>
         <PackageProjectUrl>https://hhsahin.com/</PackageProjectUrl>
         <!--<PackageIconUrl>https://hhsahin.com/assets/hsn-base.png</PackageIconUrl>-->
         <PackageIcon>assets\hsn-base.png</PackageIcon>

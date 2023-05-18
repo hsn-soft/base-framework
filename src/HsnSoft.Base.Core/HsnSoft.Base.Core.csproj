@@ -12,9 +12,8 @@
         <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
         <RootNamespace />
         <Title>HsnSoft Base Framework Core</Title>
-        <Description>HsnSoft Base Framework Core</Description>
-        <PackageTags>HsnSoft Base Framework Core</PackageTags>
         <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageTags>HsnSoft Base Framework Core</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>
