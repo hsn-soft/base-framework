@@ -1,0 +1,7 @@
+{
+  "culture": "fi",
+  "texts": {
+    "DisplayName:Base.Timing.Timezone": "Aikavyöhyke",
+    "Description:Base.Timing.Timezone": "Levityksen aikavyöhyke"
+  }
+}

@@ -1,0 +1,8 @@
+{
+    "culture": "hu",
+    "texts": {
+      "DisplayName:Base.Timing.Timezone": "Időzóna",
+      "Description:Base.Timing.Timezone": "Alkalmazás időzónája"
+    }
+  }
+  
