@@ -1,0 +1,7 @@
+{
+  "culture": "ar",
+  "texts": {
+    "DisplayName:Base.Timing.Timezone": "المنطقة زمنية",
+    "Description:Base.Timing.Timezone": "المنطقة الزمنية للتطبيق"
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "culture": "en-GB",
+  "texts": {
+    "DisplayName:Base.Timing.Timezone": "Timezone",
+    "Description:Base.Timing.Timezone": "Application time zone"
+  }
+}

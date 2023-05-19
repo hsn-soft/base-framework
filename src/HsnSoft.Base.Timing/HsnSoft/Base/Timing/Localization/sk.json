@@ -1,0 +1,7 @@
+{
+  "culture": "sk",
+  "texts": {
+    "DisplayName:Base.Timing.Timezone": "Časové pásmo",
+    "Description:Base.Timing.Timezone": "Časové pásmo aplikácie"
+  }
+}

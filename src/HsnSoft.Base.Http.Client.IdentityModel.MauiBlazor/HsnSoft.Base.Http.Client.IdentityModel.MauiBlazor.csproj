@@ -14,6 +14,7 @@
     </PropertyGroup>
     
     <ItemGroup>
+        <!-- <ProjectReference Include="..\HsnSoft.Base.AspNetCore.Components.MauiBlazor\HsnSoft.Base.AspNetCore.Components.MauiBlazor.csproj" /> -->
         <ProjectReference Include="..\HsnSoft.Base.Http.Client.IdentityModel\HsnSoft.Base.Http.Client.IdentityModel.csproj" />
     </ItemGroup>
 

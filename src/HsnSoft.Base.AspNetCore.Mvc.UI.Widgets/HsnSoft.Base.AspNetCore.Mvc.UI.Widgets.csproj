@@ -6,6 +6,7 @@
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+    <AssemblyName>HsnSoft.Base.AspNetCore.Mvc.UI.Widgets</AssemblyName>
     <PackageId>HsnSoft.Base.AspNetCore.Mvc.UI.Widgets</PackageId>
     <IsPackable>true</IsPackable>
     <OutputType>Library</OutputType>
@@ -14,12 +15,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\HsnSoft.Base.AspNetCore.Mvc.UI.Bundling\HsnSoft.Base.AspNetCore.Mvc.UI.Bundling.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <_ContentIncludedByDefault Remove="HsnSoft\Base\AspNetCore\Mvc\UI\Widgets\Components\WidgetScripts\Default.cshtml" />
-    <_ContentIncludedByDefault Remove="HsnSoft\Base\AspNetCore\Mvc\UI\Widgets\Components\WidgetStyles\Default.cshtml" />
-    <_ContentIncludedByDefault Remove="HsnSoft\Base\AspNetCore\Mvc\UI\Widgets\Components\_ViewImports.cshtml" />
   </ItemGroup>
 
 </Project>

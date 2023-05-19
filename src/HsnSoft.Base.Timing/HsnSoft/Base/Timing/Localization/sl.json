@@ -1,0 +1,7 @@
+{
+  "culture": "sl",
+  "texts": {
+    "DisplayName:Base.Timing.Timezone": "Časovni pas",
+    "Description:Base.Timing.Timezone": "Časovni pas aplikacije"
+  }
+}

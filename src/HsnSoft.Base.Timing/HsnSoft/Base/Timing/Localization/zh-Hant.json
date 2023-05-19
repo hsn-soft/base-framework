@@ -1,0 +1,7 @@
+{
+  "culture": "zh-Hant",
+  "texts": {
+    "DisplayName:Base.Timing.Timezone": "時區",
+    "Description:Base.Timing.Timezone": "應用程序的時區"
+  }
+}

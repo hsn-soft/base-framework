@@ -6,6 +6,7 @@
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+    <AssemblyName>HsnSoft.Base.AspNetCore.Mvc.UI.Packages</AssemblyName>
     <PackageId>HsnSoft.Base.AspNetCore.Mvc.UI.Packages</PackageId>
     <IsPackable>true</IsPackable>
     <OutputType>Library</OutputType>

@@ -6,6 +6,7 @@
     <PropertyGroup>
         <TargetFramework>net6.0</TargetFramework>
         <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+        <AssemblyName>HsnSoft.Base.AspNetCore.Mvc.NewtonsoftJson</AssemblyName>
         <PackageId>HsnSoft.Base.AspNetCore.Mvc.NewtonsoftJson</PackageId>
         <AssetTargetFallback>$(AssetTargetFallback);portable-net45+win8+wp8+wpa81;</AssetTargetFallback>
         <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>

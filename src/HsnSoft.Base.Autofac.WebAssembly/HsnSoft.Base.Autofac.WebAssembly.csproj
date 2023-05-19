@@ -9,6 +9,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <!-- <ProjectReference Include="..\HsnSoft.Base.AspNetCore.Components.WebAssembly\HsnSoft.Base.AspNetCore.Components.WebAssembly.csproj" /> -->
       <ProjectReference Include="..\HsnSoft.Base.Autofac\HsnSoft.Base.Autofac.csproj" />
     </ItemGroup>
 
