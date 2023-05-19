@@ -5,6 +5,7 @@
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
+    <AssemblyName>HsnSoft.Base.AspNetCore.TestBase</AssemblyName>
     <PackageId>HsnSoft.Base.AspNetCore.TestBase</PackageId>
     <AssetTargetFallback>$(AssetTargetFallback);portable-net45+win8+wp8+wpa81;</AssetTargetFallback>
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>

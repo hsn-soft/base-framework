@@ -5,6 +5,7 @@
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
+    <AssemblyName>HsnSoft.Base.AspNetCore.SignalR</AssemblyName>
     <PackageId>HsnSoft.Base.AspNetCore.SignalR</PackageId>
     <AssetTargetFallback>$(AssetTargetFallback);portable-net45+win8+wp8+wpa81;</AssetTargetFallback>
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>

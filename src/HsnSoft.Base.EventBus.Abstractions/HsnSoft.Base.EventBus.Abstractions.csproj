@@ -4,12 +4,18 @@
     <Import Project="..\..\common.props" />
     
     <PropertyGroup>
-        <TargetFramework>netstandard2.0</TargetFramework>
+        <TargetFrameworks>netstandard2.0;netstandard2.1;net6.0</TargetFrameworks>
         <RootNamespace />
     </PropertyGroup>
 
-    <ItemGroup>
+    <!-- <ItemGroup>
+      <ProjectReference Include="..\HsnSoft.Base.ObjectExtending\HsnSoft.Base.ObjectExtending.csproj" />
+    </ItemGroup> -->
+
+<!-- Temporary -->
+        <ItemGroup>
       <ProjectReference Include="..\HsnSoft.Base.Core\HsnSoft.Base.Core.csproj" />
     </ItemGroup>
+    <!-- Temporary -->
 
 </Project>

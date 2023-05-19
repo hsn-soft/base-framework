@@ -2,20 +2,21 @@
 
     <Import Project="..\..\configureawait.props" />
     <Import Project="..\..\common.props" />
-
+    
     <PropertyGroup>
-        <TargetFramework>net6.0</TargetFramework>
-        <PackageId>HsnSoft.Base.Http.Client.IdentityModel.MauiBlazor</PackageId>
+        <TargetFrameworks>netstandard2.0;netstandard2.1;net6.0</TargetFrameworks>
+        <AssemblyName>HsnSoft.Base.Ddd.Domain.Shared</AssemblyName>
+        <PackageId>HsnSoft.Base.Ddd.Domain.Shared</PackageId>
         <AssetTargetFallback>$(AssetTargetFallback);portable-net45+win8+wp8+wpa81;</AssetTargetFallback>
         <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
         <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
         <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
         <RootNamespace />
     </PropertyGroup>
-    
-    <ItemGroup>
-        <!-- <ProjectReference Include="..\HsnSoft.Base.AspNetCore.Components.MauiBlazor\HsnSoft.Base.AspNetCore.Components.MauiBlazor.csproj" /> -->
-        <ProjectReference Include="..\HsnSoft.Base.Http.Client.IdentityModel\HsnSoft.Base.Http.Client.IdentityModel.csproj" />
-    </ItemGroup>
 
+    <ItemGroup>
+        <ProjectReference Include="..\HsnSoft.Base.MultiTenancy\HsnSoft.Base.MultiTenancy.csproj" />
+        <ProjectReference Include="..\HsnSoft.Base.EventBus.Abstractions\HsnSoft.Base.EventBus.Abstractions.csproj" />
+    </ItemGroup>
+    
 </Project>

@@ -6,6 +6,7 @@
     <PropertyGroup>
         <TargetFramework>net6.0</TargetFramework>
         <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+        <AssemblyName>HsnSoft.Base.AspNetCore.Mvc.UI</AssemblyName>
         <PackageId>HsnSoft.Base.AspNetCore.Mvc.UI</PackageId>
         <AssetTargetFallback>$(AssetTargetFallback);portable-net45+win8+wp8+wpa81;</AssetTargetFallback>
         <IsPackable>true</IsPackable>
@@ -14,10 +15,10 @@
     </PropertyGroup>
 
     <!--Temporary-->
-    <ItemGroup>
+    <!-- <ItemGroup>
         <PackageReference Include="AutoMapper" Version="10.1.1" />
         <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="8.1.1" />
-    </ItemGroup>
+    </ItemGroup> -->
     <!--Temporary-->
 
     <ItemGroup>
@@ -27,10 +28,6 @@
     <ItemGroup>
         <ProjectReference Include="..\HsnSoft.Base.AspNetCore.Mvc\HsnSoft.Base.AspNetCore.Mvc.csproj" />
         <ProjectReference Include="..\HsnSoft.Base.UI.Navigation\HsnSoft.Base.UI.Navigation.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <_ContentIncludedByDefault Remove="HsnSoft\Base\AspNetCore\Mvc\UI\Components\LayoutHook\Default.cshtml" />
     </ItemGroup>
 
 </Project>
