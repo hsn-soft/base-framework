@@ -5,6 +5,7 @@
 
     <PropertyGroup>
         <TargetFramework>net6.0</TargetFramework>
+        <AssemblyName>HsnSoft.Base.Http.Client.IdentityModel.WebAssembly</AssemblyName>
         <PackageId>HsnSoft.Base.Http.Client.IdentityModel.WebAssembly</PackageId>
         <AssetTargetFallback>$(AssetTargetFallback);portable-net45+win8+wp8+wpa81;</AssetTargetFallback>
         <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
@@ -18,6 +19,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <!-- <ProjectReference Include="..\HsnSoft.Base.AspNetCore.Components.WebAssembly\HsnSoft.Base.AspNetCore.Components.WebAssembly.csproj" /> -->
       <ProjectReference Include="..\HsnSoft.Base.Http.Client.IdentityModel\HsnSoft.Base.Http.Client.IdentityModel.csproj" />
     </ItemGroup>
 

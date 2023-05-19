@@ -1,22 +1,23 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-    <Import Project="..\..\configureawait.props" />
-    <Import Project="..\..\common.props" />
+    <Import Project="..\..\configureawait.props"/>
+    <Import Project="..\..\common.props"/>
 
     <PropertyGroup>
-        <TargetFramework>netstandard2.0</TargetFramework>
+        <TargetFrameworks>netstandard2.0;netstandard2.1;net6.0</TargetFrameworks>
+        <AssemblyName>HsnSoft.Base.AzureServiceBus</AssemblyName>
         <PackageId>HsnSoft.Base.AzureServiceBus</PackageId>
         <AssetTargetFallback>$(AssetTargetFallback);portable-net45+win8+wp8+wpa81;</AssetTargetFallback>
         <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
         <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
         <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
-        <RootNamespace />
+        <RootNamespace/>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Azure.Messaging.ServiceBus" Version="7.13.1" />
-        <ProjectReference Include="..\HsnSoft.Base.Json\HsnSoft.Base.Json.csproj" />
-        <ProjectReference Include="..\HsnSoft.Base.Threading\HsnSoft.Base.Threading.csproj" />
+        <PackageReference Include="Azure.Messaging.ServiceBus" Version="7.14.0"/>
+        <ProjectReference Include="..\HsnSoft.Base.Json\HsnSoft.Base.Json.csproj"/>
+        <ProjectReference Include="..\HsnSoft.Base.Threading\HsnSoft.Base.Threading.csproj"/>
     </ItemGroup>
 
 </Project>

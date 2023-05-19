@@ -1,44 +1,23 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
 
-  <Import Project="..\..\configureawait.props" />
-  <Import Project="..\..\common.props" />
+    <Import Project="..\..\configureawait.props"/>
+    <Import Project="..\..\common.props"/>
 
-  <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-    <RootNamespace>HsnSoft.Base.BlazoriseUI</RootNamespace>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+    </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\HsnSoft.Base.Authorization\HsnSoft.Base.Authorization.csproj" />
-        <ProjectReference Include="..\HsnSoft.Base.Ddd.Application.Contracts\HsnSoft.Base.Ddd.Application.Contracts.csproj" />
+        <!-- <ProjectReference Include="..\HsnSoft.Base.AspNetCore.Components.Web\HsnSoft.Base.AspNetCore.Components.Web.csproj" /> -->
+        <ProjectReference Include="..\HsnSoft.Base.Authorization\HsnSoft.Base.Authorization.csproj"/>
+        <ProjectReference Include="..\HsnSoft.Base.Ddd.Application.Contracts\HsnSoft.Base.Ddd.Application.Contracts.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Blazorise" Version="1.2.2" />
-        <PackageReference Include="Blazorise.DataGrid" Version="1.2.2" />
-        <PackageReference Include="Blazorise.Snackbar" Version="1.2.2" />
-        <PackageReference Include="Blazorise.Components" Version="1.2.2" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <_ContentIncludedByDefault Remove="Components\BaseExtensibleDataGrid.razor" />
-      <_ContentIncludedByDefault Remove="Components\DataGridEntityActionsColumn.razor" />
-      <_ContentIncludedByDefault Remove="Components\EntityAction.razor" />
-      <_ContentIncludedByDefault Remove="Components\EntityActions.razor" />
-      <_ContentIncludedByDefault Remove="Components\ObjectExtending\CheckExtensionProperty.razor" />
-      <_ContentIncludedByDefault Remove="Components\ObjectExtending\DateTimeExtensionProperty.razor" />
-      <_ContentIncludedByDefault Remove="Components\ObjectExtending\ExtensionProperties.razor" />
-      <_ContentIncludedByDefault Remove="Components\ObjectExtending\LookupExtensionProperty.razor" />
-      <_ContentIncludedByDefault Remove="Components\ObjectExtending\SelectExtensionProperty.razor" />
-      <_ContentIncludedByDefault Remove="Components\ObjectExtending\TextExtensionProperty.razor" />
-      <_ContentIncludedByDefault Remove="Components\ObjectExtending\TimeExtensionProperty.razor" />
-      <_ContentIncludedByDefault Remove="Components\PageAlert.razor" />
-      <_ContentIncludedByDefault Remove="Components\RadarSpinner.razor" />
-      <_ContentIncludedByDefault Remove="Components\SubmitButton.razor" />
-      <_ContentIncludedByDefault Remove="Components\ToolbarButton.razor" />
-      <_ContentIncludedByDefault Remove="Components\UiMessageAlert.razor" />
-      <_ContentIncludedByDefault Remove="Components\UiNotificationAlert.razor" />
-      <_ContentIncludedByDefault Remove="Components\UiPageProgress.razor" />
+        <PackageReference Include="Blazorise" Version="1.2.3"/>
+        <PackageReference Include="Blazorise.DataGrid" Version="1.2.3"/>
+        <PackageReference Include="Blazorise.Snackbar" Version="1.2.3"/>
+        <PackageReference Include="Blazorise.Components" Version="1.2.3"/>
     </ItemGroup>
 
 </Project>

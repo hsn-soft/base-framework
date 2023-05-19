@@ -1,0 +1,7 @@
+{
+  "culture": "hi",
+  "texts": {
+    "DisplayName:Base.Timing.Timezone": "समय क्षेत्र",
+    "Description:Base.Timing.Timezone": "आवेदन समय क्षेत्र"
+  }
+}

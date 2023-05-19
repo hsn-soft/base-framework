@@ -4,7 +4,7 @@
     <Import Project="..\..\common.props" />
 
     <PropertyGroup>
-        <TargetFramework>netstandard2.0</TargetFramework>
+        <TargetFrameworks>netstandard2.0;netstandard2.1;net6.0</TargetFrameworks>
         <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
         <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
         <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
@@ -17,8 +17,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="AWSSDK.S3" Version="3.7.104.9" />
-      <PackageReference Include="AWSSDK.SecurityToken" Version="3.7.101.59" />
+        <PackageReference Include="AWSSDK.S3" Version="3.7.104.17" />
+        <PackageReference Include="AWSSDK.SecurityToken" Version="3.7.103" />
     </ItemGroup>
 
 </Project>

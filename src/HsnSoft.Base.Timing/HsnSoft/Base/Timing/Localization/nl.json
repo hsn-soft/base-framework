@@ -1,0 +1,7 @@
+{
+  "culture": "nl",
+  "texts": {
+    "DisplayName:Base.Timing.Timezone": "Tijdzone",
+    "Description:Base.Timing.Timezone": "Tijdzone van applicatie"
+  }
+}

@@ -6,6 +6,7 @@
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+    <AssemblyName>HsnSoft.Base.AspNetCore.Mvc.UI.Theme.Shared.Demo</AssemblyName>
     <PackageId>HsnSoft.Base.AspNetCore.Mvc.UI.Theme.Shared.Demo</PackageId>
     <AssetTargetFallback>$(AssetTargetFallback);portable-net45+win8+wp8+wpa81;</AssetTargetFallback>
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
@@ -14,7 +15,6 @@
     <GenerateEmbeddedFilesManifest>true</GenerateEmbeddedFilesManifest>
     <IsPackable>true</IsPackable>
     <OutputType>Library</OutputType>
-    <RootNamespace>HsnSoft.Base.AspNetCore.Mvc.UI.Theme.Shared.Demo</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -30,34 +30,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Views\Components\Themes\Shared\**\*.cshtml" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <_ContentIncludedByDefault Remove="Views\Components\Themes\Shared\Demos\AlertsDemo\Default.cshtml" />
-    <_ContentIncludedByDefault Remove="Views\Components\Themes\Shared\Demos\BadgesDemo\Default.cshtml" />
-    <_ContentIncludedByDefault Remove="Views\Components\Themes\Shared\Demos\BordersDemo\Default.cshtml" />
-    <_ContentIncludedByDefault Remove="Views\Components\Themes\Shared\Demos\BreadcrumbsDemo\Default.cshtml" />
-    <_ContentIncludedByDefault Remove="Views\Components\Themes\Shared\Demos\ButtonGroupsDemo\Default.cshtml" />
-    <_ContentIncludedByDefault Remove="Views\Components\Themes\Shared\Demos\ButtonsDemo\Default.cshtml" />
-    <_ContentIncludedByDefault Remove="Views\Components\Themes\Shared\Demos\CardsDemo\Default.cshtml" />
-    <_ContentIncludedByDefault Remove="Views\Components\Themes\Shared\Demos\CarouselDemo\Default.cshtml" />
-    <_ContentIncludedByDefault Remove="Views\Components\Themes\Shared\Demos\CollapseDemo\Default.cshtml" />
-    <_ContentIncludedByDefault Remove="Views\Components\Themes\Shared\Demos\DropdownsDemo\Default.cshtml" />
-    <_ContentIncludedByDefault Remove="Views\Components\Themes\Shared\Demos\DynamicFormsDemo\Default.cshtml" />
-    <_ContentIncludedByDefault Remove="Views\Components\Themes\Shared\Demos\FormElementsDemo\Default.cshtml" />
-    <_ContentIncludedByDefault Remove="Views\Components\Themes\Shared\Demos\GridsDemo\Default.cshtml" />
-    <_ContentIncludedByDefault Remove="Views\Components\Themes\Shared\Demos\ListGroupsDemo\Default.cshtml" />
-    <_ContentIncludedByDefault Remove="Views\Components\Themes\Shared\Demos\ModalsDemo\Default.cshtml" />
-    <_ContentIncludedByDefault Remove="Views\Components\Themes\Shared\Demos\NavbarsDemo\Default.cshtml" />
-    <_ContentIncludedByDefault Remove="Views\Components\Themes\Shared\Demos\NavsDemo\Default.cshtml" />
-    <_ContentIncludedByDefault Remove="Views\Components\Themes\Shared\Demos\PaginatorDemo\Default.cshtml" />
-    <_ContentIncludedByDefault Remove="Views\Components\Themes\Shared\Demos\PopoversDemo\Default.cshtml" />
-    <_ContentIncludedByDefault Remove="Views\Components\Themes\Shared\Demos\ProgressBarsDemo\Default.cshtml" />
-    <_ContentIncludedByDefault Remove="Views\Components\Themes\Shared\Demos\TablesDemo\Default.cshtml" />
-    <_ContentIncludedByDefault Remove="Views\Components\Themes\Shared\Demos\TabsDemo\Default.cshtml" />
-    <_ContentIncludedByDefault Remove="Views\Components\Themes\Shared\Demos\TooltipsDemo\Default.cshtml" />
-    <_ContentIncludedByDefault Remove="Views\Components\Themes\Shared\_ViewImports.cshtml" />
+    <EmbeddedResource Include="Views\Components\Themes\Shared\**\*.cshtml"/>
   </ItemGroup>
 
 </Project>

@@ -6,11 +6,11 @@
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+    <AssemblyName>HsnSoft.Base.AspNetCore.Mvc.UI.Bootstrap</AssemblyName>
     <PackageId>HsnSoft.Base.AspNetCore.Mvc.UI.Bootstrap</PackageId>
     <AssetTargetFallback>$(AssetTargetFallback);portable-net45+win8+wp8+wpa81;</AssetTargetFallback>
     <IsPackable>true</IsPackable>
     <OutputType>Library</OutputType>
-    <RootNamespace>HsnSoft.Base.AspNetCore.Mvc.UI.Bootstrap</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

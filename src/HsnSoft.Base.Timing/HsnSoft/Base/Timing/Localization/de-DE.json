@@ -1,0 +1,7 @@
+{
+  "culture": "de-DE",
+  "texts": {
+    "DisplayName:Base.Timing.Timezone": "Zeitzone",
+    "Description:Base.Timing.Timezone": "Anwendungszeitzone"
+  }
+}
