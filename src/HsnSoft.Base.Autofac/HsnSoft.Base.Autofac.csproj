@@ -1,29 +1,29 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <Import Project="..\..\configureawait.props" />
-  <Import Project="..\..\common.props" />
+    <Import Project="..\..\configureawait.props"/>
+    <Import Project="..\..\common.props"/>
 
-  <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;netstandard2.1;net6.0</TargetFrameworks>
-    <AssemblyName>HsnSoft.Base.Autofac</AssemblyName>
-    <PackageId>HsnSoft.Base.Autofac</PackageId>
-    <AssetTargetFallback>$(AssetTargetFallback);portable-net45+win8+wp8+wpa81;</AssetTargetFallback>
-    <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
-    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
-    <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
-    <RootNamespace />
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;netstandard2.1;net6.0</TargetFrameworks>
+        <AssemblyName>HsnSoft.Base.Autofac</AssemblyName>
+        <PackageId>HsnSoft.Base.Autofac</PackageId>
+        <AssetTargetFallback>$(AssetTargetFallback);portable-net45+win8+wp8+wpa81;</AssetTargetFallback>
+        <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+        <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+        <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+        <RootNamespace/>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Autofac" Version="7.0.1" />
-    <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="8.0.0" />
-    <PackageReference Include="Autofac.Extras.DynamicProxy" Version="6.0.1" />
-    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="6.0.16" />
-    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="6.0.16" />
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Autofac" Version="7.0.1"/>
+        <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="8.0.0"/>
+        <PackageReference Include="Autofac.Extras.DynamicProxy" Version="6.0.1"/>
+        <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="6.0.16"/>
+        <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="7.0.0"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\HsnSoft.Base.Castle.Core\HsnSoft.Base.Castle.Core.csproj" />
-  </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\HsnSoft.Base.Castle.Core\HsnSoft.Base.Castle.Core.csproj"/>
+    </ItemGroup>
 
 </Project>
