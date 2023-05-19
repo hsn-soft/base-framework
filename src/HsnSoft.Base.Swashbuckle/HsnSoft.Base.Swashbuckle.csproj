@@ -19,15 +19,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\HsnSoft.Base.AspNetCore.Mvc\HsnSoft.Base.AspNetCore.Mvc.csproj" />
-      <ProjectReference Include="..\HsnSoft.Base.VirtualFileSystem\HsnSoft.Base.VirtualFileSystem.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <None Remove="wwwroot\swagger\ui\abp.swagger.js" />
-      <EmbeddedResource Include="wwwroot\swagger\ui\abp.swagger.js" />
-      <None Remove="wwwroot\swagger\ui\abp.js" />
-      <EmbeddedResource Include="wwwroot\swagger\ui\abp.js" />
+        <ProjectReference Include="..\HsnSoft.Base.AspNetCore.Mvc\HsnSoft.Base.AspNetCore.Mvc.csproj" />
+        <ProjectReference Include="..\HsnSoft.Base.VirtualFileSystem\HsnSoft.Base.VirtualFileSystem.csproj" />
     </ItemGroup>
 
 </Project>

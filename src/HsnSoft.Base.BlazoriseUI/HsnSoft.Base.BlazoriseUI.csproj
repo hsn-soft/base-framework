@@ -1,23 +1,23 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
 
-  <Import Project="..\..\configureawait.props" />
-  <Import Project="..\..\common.props" />
+    <Import Project="..\..\configureawait.props"/>
+    <Import Project="..\..\common.props"/>
 
-  <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+    </PropertyGroup>
 
     <ItemGroup>
         <!-- <ProjectReference Include="..\HsnSoft.Base.AspNetCore.Components.Web\HsnSoft.Base.AspNetCore.Components.Web.csproj" /> -->
-        <ProjectReference Include="..\HsnSoft.Base.Authorization\HsnSoft.Base.Authorization.csproj" />
-        <ProjectReference Include="..\HsnSoft.Base.Ddd.Application.Contracts\HsnSoft.Base.Ddd.Application.Contracts.csproj" />
+        <ProjectReference Include="..\HsnSoft.Base.Authorization\HsnSoft.Base.Authorization.csproj"/>
+        <ProjectReference Include="..\HsnSoft.Base.Ddd.Application.Contracts\HsnSoft.Base.Ddd.Application.Contracts.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Blazorise" Version="1.2.2" />
-        <PackageReference Include="Blazorise.DataGrid" Version="1.2.2" />
-        <PackageReference Include="Blazorise.Snackbar" Version="1.2.2" />
-        <PackageReference Include="Blazorise.Components" Version="1.2.2" />
+        <PackageReference Include="Blazorise" Version="1.2.3"/>
+        <PackageReference Include="Blazorise.DataGrid" Version="1.2.3"/>
+        <PackageReference Include="Blazorise.Snackbar" Version="1.2.3"/>
+        <PackageReference Include="Blazorise.Components" Version="1.2.3"/>
     </ItemGroup>
 
 </Project>

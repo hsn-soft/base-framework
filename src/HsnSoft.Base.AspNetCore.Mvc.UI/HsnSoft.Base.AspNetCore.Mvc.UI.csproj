@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Razor">
 
-    <Import Project="..\..\configureawait.props" />
-    <Import Project="..\..\common.props" />
+    <Import Project="..\..\configureawait.props"/>
+    <Import Project="..\..\common.props"/>
 
     <PropertyGroup>
         <TargetFramework>net6.0</TargetFramework>
@@ -11,23 +11,24 @@
         <AssetTargetFallback>$(AssetTargetFallback);portable-net45+win8+wp8+wpa81;</AssetTargetFallback>
         <IsPackable>true</IsPackable>
         <OutputType>Library</OutputType>
-        <RootNamespace />
+        <RootNamespace/>
     </PropertyGroup>
 
     <!--Temporary-->
-    <!-- <ItemGroup>
-        <PackageReference Include="AutoMapper" Version="10.1.1" />
-        <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="8.1.1" />
-    </ItemGroup> -->
+    <ItemGroup>
+        <ProjectReference Include="..\HsnSoft.Base.AutoMapper\HsnSoft.Base.AutoMapper.csproj"/>
+        <!--<PackageReference Include="AutoMapper" Version="10.1.1" />-->
+        <!--<PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="8.1.1" />-->
+    </ItemGroup>
     <!--Temporary-->
 
     <ItemGroup>
-        <PackageReference Include="NUglify" Version="1.20.6" />
+        <PackageReference Include="NUglify" Version="1.20.7"/>
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\HsnSoft.Base.AspNetCore.Mvc\HsnSoft.Base.AspNetCore.Mvc.csproj" />
-        <ProjectReference Include="..\HsnSoft.Base.UI.Navigation\HsnSoft.Base.UI.Navigation.csproj" />
+        <ProjectReference Include="..\HsnSoft.Base.AspNetCore.Mvc\HsnSoft.Base.AspNetCore.Mvc.csproj"/>
+        <ProjectReference Include="..\HsnSoft.Base.UI.Navigation\HsnSoft.Base.UI.Navigation.csproj"/>
     </ItemGroup>
 
 </Project>
