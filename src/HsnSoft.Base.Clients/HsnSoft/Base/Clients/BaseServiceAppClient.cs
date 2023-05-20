@@ -72,11 +72,11 @@ public class BaseServiceAppClient
     {
         if (!response.IsSuccessStatusCode)
         {
-            BaseErrorResponse err;
-            try { err = await response.Content.ReadFromJsonAsync<BaseErrorResponse>(); }
+            ErrorDtoResponse err;
+            try { err = await response.Content.ReadFromJsonAsync<ErrorDtoResponse>(); }
             catch (Exception) { err = null; }
 
-            throw new Exception(err == null ? response.ReasonPhrase : String.Join(", ", err.Messages.ToArray()));
+            throw new Exception(err == null ? response.ReasonPhrase : err.StatusMessagesToSingleMessage());
         }
     }
 }
