@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using HsnSoft.Base.Communication;
 
 namespace HsnSoft.Base.ExceptionHandling.Dtos;
@@ -31,6 +32,11 @@ public sealed class ErrorDtoResponse : BaseResponse
     public ErrorDtoResponse(IEnumerable<string> messages, int code = 0) : this(code)
     {
         _statusMessages = messages.Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
+    }
+    
+    public override string ToString()
+    {
+        return JsonSerializer.Serialize(this);
     }
 }
 
@@ -63,5 +69,10 @@ public sealed class ErrorDtoResponse<TPayload> : BaseResponse<TPayload>
     public ErrorDtoResponse(TPayload payload, IEnumerable<string> messages, int code = 0) : this(payload, code)
     {
         _statusMessages = messages.Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
+    }
+    
+    public override string ToString()
+    {
+        return JsonSerializer.Serialize(this);
     }
 }
