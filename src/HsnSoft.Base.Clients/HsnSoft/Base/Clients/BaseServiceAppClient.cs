@@ -72,8 +72,8 @@ public class BaseServiceAppClient
     {
         if (!response.IsSuccessStatusCode)
         {
-            ErrorResultDto err;
-            try { err = await response.Content.ReadFromJsonAsync<ErrorResultDto>(); }
+            BaseErrorResponse err;
+            try { err = await response.Content.ReadFromJsonAsync<BaseErrorResponse>(); }
             catch (Exception) { err = null; }
 
             throw new Exception(err == null ? response.ReasonPhrase : String.Join(", ", err.Messages.ToArray()));
