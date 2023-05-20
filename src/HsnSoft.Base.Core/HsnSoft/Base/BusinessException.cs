@@ -21,8 +21,8 @@ public class BusinessException : Exception,
         LogLevel logLevel = LogLevel.Warning)
         : base(message, innerException)
     {
-        Code = code;
-        Details = details;
+        ErrorCode = code;
+        ErrorDetails = details;
         LogLevel = logLevel;
     }
 
@@ -34,9 +34,9 @@ public class BusinessException : Exception,
     {
     }
 
-    public string Code { get; set; }
+    public string ErrorCode { get; set; }
 
-    public string Details { get; set; }
+    public string ErrorDetails { get; set; }
 
     public LogLevel LogLevel { get; set; }
 

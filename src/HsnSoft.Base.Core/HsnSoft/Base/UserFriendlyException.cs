@@ -23,7 +23,7 @@ public class UserFriendlyException : BusinessException, IUserFriendlyException
             innerException,
             logLevel)
     {
-        Details = details;
+        ErrorDetails = details;
     }
 
     /// <summary>

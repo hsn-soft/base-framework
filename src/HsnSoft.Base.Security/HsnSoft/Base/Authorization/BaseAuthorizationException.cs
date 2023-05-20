@@ -58,14 +58,14 @@ public class BaseAuthorizationException : BaseException, IHasLogLevel, IHasError
     public BaseAuthorizationException(string message = null, string code = null, Exception innerException = null)
         : base(message, innerException)
     {
-        Code = code;
+        ErrorCode = code;
         LogLevel = LogLevel.Warning;
     }
 
     /// <summary>
     /// Error code.
     /// </summary>
-    public string Code { get; }
+    public string ErrorCode { get; }
 
     /// <summary>
     /// Severity of the exception.

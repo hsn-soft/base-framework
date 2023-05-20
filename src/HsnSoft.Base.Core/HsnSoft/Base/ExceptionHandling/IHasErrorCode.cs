@@ -2,5 +2,5 @@ namespace HsnSoft.Base.ExceptionHandling;
 
 public interface IHasErrorCode
 {
-    string Code { get; }
+    string ErrorCode { get; }
 }
