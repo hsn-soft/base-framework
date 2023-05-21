@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Dynamic.Core;
 using System.Runtime.ExceptionServices;
 using HsnSoft.Base.Logging;
 using Microsoft.Extensions.Logging;
@@ -45,6 +47,21 @@ public static class BaseExceptionExtensions
 
             currentExc = currentExc.InnerException;
         } while (currentExc != null);
+
+        return messages;
+    }
+
+    public static IEnumerable<string> GetStringDataList(this Exception ex)
+    {
+        var messages = new List<string>();
+
+        if (ex == null) return messages;
+
+        if (ex.Data is not { Count: > 0 }) return messages;
+      
+        var keys = ex.Data.Keys.ToDynamicList<string>().Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
+
+        messages.AddRange(from key in keys let dataValue = ex.Data[key] as string where !string.IsNullOrWhiteSpace(dataValue) select $"{key}:{dataValue}");
 
         return messages;
     }

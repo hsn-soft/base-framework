@@ -72,12 +72,12 @@ public static class BaseLoggerExtensions
     {
         if (exception is IHasErrorCode exceptionWithErrorCode)
         {
-            logger.LogWithLevel(logLevel, "Code:" + exceptionWithErrorCode.Code);
+            logger.LogWithLevel(logLevel, "ErrorCode:" + exceptionWithErrorCode.ErrorCode);
         }
 
         if (exception is IHasErrorDetails exceptionWithErrorDetails)
         {
-            logger.LogWithLevel(logLevel, "Details:" + exceptionWithErrorDetails.Details);
+            logger.LogWithLevel(logLevel, "ErrorDetails:" + exceptionWithErrorDetails.ErrorDetails);
         }
     }
 

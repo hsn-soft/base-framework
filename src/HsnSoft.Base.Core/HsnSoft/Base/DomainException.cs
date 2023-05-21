@@ -9,12 +9,12 @@ public class DomainException : Exception
     }
 
     public DomainException(string message)
-        : base(message)
+        : base(message ?? string.Empty)
     {
     }
 
     public DomainException(string message, Exception innerException)
-        : base(message, innerException)
+        : base(message ?? string.Empty, innerException)
     {
     }
 }
