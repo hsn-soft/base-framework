@@ -19,7 +19,7 @@ public class BusinessException : Exception,
         string details = null,
         Exception innerException = null,
         LogLevel logLevel = LogLevel.Warning)
-        : base(message, innerException)
+        : base(message ?? string.Empty, innerException)
     {
         ErrorCode = code;
         ErrorDetails = details;

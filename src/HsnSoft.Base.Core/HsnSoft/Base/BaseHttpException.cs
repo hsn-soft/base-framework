@@ -11,14 +11,8 @@ public sealed class BaseHttpException : Exception, IHasHttpStatusCode
     {
     }
 
-    public BaseHttpException(int statusCode, string message = null) : this(message)
+    public BaseHttpException(int statusCode, string message = null) : this(message ?? string.Empty)
     {
         HttpStatusCode = statusCode;
-    }
-
-    public BaseHttpException WithData(string name, object value)
-    {
-        Data[name] = value;
-        return this;
     }
 }
