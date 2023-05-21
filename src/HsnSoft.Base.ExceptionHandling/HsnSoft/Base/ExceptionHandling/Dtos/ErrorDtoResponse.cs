@@ -31,7 +31,7 @@ public sealed class ErrorDtoResponse : BaseResponse
         StatusMessages = messages.Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
     }
 
-    public override string ToString()
+    public string ToJsonString()
     {
         return JsonSerializer.Serialize(this);
     }
