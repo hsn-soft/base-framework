@@ -11,7 +11,7 @@ public sealed class DtoResponse : BaseResponse
     private readonly int _statusCode;
     private readonly IEnumerable<string> _statusMessages;
 
-    public bool Success => _statusCode is >= 200 and <= 299;
+    public bool Success => _statusCode is >= 200 and < 300;
     public override int StatusCode => _statusCode;
     public override IEnumerable<string> StatusMessages => _statusMessages;
 
@@ -42,7 +42,7 @@ public sealed class DtoResponse<TPayload> : BaseResponse<TPayload>
     private readonly IEnumerable<string> _statusMessages;
     private readonly TPayload _payload;
 
-    public bool Success => _statusCode is >= 200 and <= 299;
+    public bool Success => _statusCode is >= 200 and < 300;
     public override int StatusCode => _statusCode;
     public override IEnumerable<string> StatusMessages => _statusMessages;
     public override TPayload Payload => _payload;
