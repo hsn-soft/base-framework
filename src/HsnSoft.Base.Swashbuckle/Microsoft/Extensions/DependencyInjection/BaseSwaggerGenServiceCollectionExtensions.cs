@@ -43,4 +43,42 @@ public static class BaseSwaggerGenServiceCollectionExtensions
                     setupAction?.Invoke(options);
                 });
     }
+
+    public static IServiceCollection AddBaseSwaggerGenWithJwtAuth(
+        this IServiceCollection services,
+        [NotNull] string tokenDescription,
+        Action<SwaggerGenOptions> setupAction = null)
+    {
+        return services
+            .AddBaseSwaggerGen()
+            .AddSwaggerGen(
+                options =>
+                {
+                    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                    {
+                        In = ParameterLocation.Header,
+                        Description = tokenDescription,
+                        Name = "Authorization",
+                        Type = SecuritySchemeType.Http,
+                        BearerFormat = "JWT",
+                        Scheme = "Bearer"
+                    });
+                    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+                    {
+                        {
+                            new OpenApiSecurityScheme
+                            {
+                                Reference = new OpenApiReference
+                                {
+                                    Type = ReferenceType.SecurityScheme,
+                                    Id = "Bearer"
+                                }
+                            },
+                            Array.Empty<string>()
+                        }
+                    });
+
+                    setupAction?.Invoke(options);
+                });
+    }
 }
