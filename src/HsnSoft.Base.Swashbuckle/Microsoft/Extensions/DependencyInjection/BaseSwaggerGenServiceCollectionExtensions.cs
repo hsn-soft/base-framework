@@ -36,15 +36,32 @@ public static class BaseSwaggerGenServiceCollectionExtensions
             .AddSwaggerGen(
                 options =>
                 {
-                    options.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme { Type = SecuritySchemeType.OAuth2, Flows = new OpenApiOAuthFlows { AuthorizationCode = new OpenApiOAuthFlow { AuthorizationUrl = new Uri($"{authority.EnsureEndsWith('/')}connect/authorize"), Scopes = scopes, TokenUrl = new Uri($"{authority.EnsureEndsWith('/')}connect/token") } } });
+                    options.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
+                    {
+                        Type = SecuritySchemeType.OAuth2,
+                        Flows = new OpenApiOAuthFlows { AuthorizationCode = new OpenApiOAuthFlow { AuthorizationUrl = new Uri($"{authority.EnsureEndsWith('/')}connect/authorize"), Scopes = scopes, TokenUrl = new Uri($"{authority.EnsureEndsWith('/')}connect/token") } }
+                    });
 
-                    options.AddSecurityRequirement(new OpenApiSecurityRequirement { { new OpenApiSecurityScheme { Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "oauth2" } }, Array.Empty<string>() } });
+                    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+                    {
+                        {
+                            new OpenApiSecurityScheme
+                            {
+                                Reference = new OpenApiReference
+                                {
+                                    Type = ReferenceType.SecurityScheme,
+                                    Id = "oauth2"
+                                }
+                            },
+                            Array.Empty<string>()
+                        }
+                    });
 
                     setupAction?.Invoke(options);
                 });
     }
 
-    public static IServiceCollection AddBaseSwaggerGenWithJwtAuth(
+    public static IServiceCollection AddBaseSwaggerGenWithBearer(
         this IServiceCollection services,
         [NotNull] string tokenDescription,
         Action<SwaggerGenOptions> setupAction = null)
