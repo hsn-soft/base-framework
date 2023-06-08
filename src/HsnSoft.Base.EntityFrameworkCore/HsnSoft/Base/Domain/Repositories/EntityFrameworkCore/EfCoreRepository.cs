@@ -18,8 +18,11 @@ public class EfCoreRepository<TDbContext, TEntity> : RepositoryBase<TEntity>, IE
 {
     private readonly TDbContext _dbContext;
 
-
     public List<Expression<Func<TEntity, object>>> DefaultPropertySelector = null;
+
+    public virtual IGuidGenerator GuidGenerator => LazyServiceProvider.LazyGetService<IGuidGenerator>(SimpleGuidGenerator.Instance);
+
+    public IEfCoreBulkOperationProvider BulkOperationProvider => LazyServiceProvider.LazyGetService<IEfCoreBulkOperationProvider>();
 
     public EfCoreRepository(IServiceProvider serviceProvider, TDbContext dbContext)
     {
@@ -33,10 +36,6 @@ public class EfCoreRepository<TDbContext, TEntity> : RepositoryBase<TEntity>, IE
         _dbContext = dbContext;
     }
 
-    public virtual IGuidGenerator GuidGenerator => LazyServiceProvider.LazyGetService<IGuidGenerator>(SimpleGuidGenerator.Instance);
-
-    public IEfCoreBulkOperationProvider BulkOperationProvider => LazyServiceProvider.LazyGetService<IEfCoreBulkOperationProvider>();
-
     DbContext IEfCoreRepository<TEntity>.GetDbContext()
     {
         return GetDbContext() as DbContext;
@@ -45,6 +44,83 @@ public class EfCoreRepository<TDbContext, TEntity> : RepositoryBase<TEntity>, IE
     DbSet<TEntity> IEfCoreRepository<TEntity>.GetDbSet()
     {
         return GetDbSet();
+    }
+
+    protected virtual TDbContext GetDbContext()
+    {
+        return _dbContext;
+    }
+
+    protected DbSet<TEntity> GetDbSet()
+    {
+        return GetDbContext().Set<TEntity>();
+    }
+
+    public override async Task<IQueryable<TEntity>> WithDetailsAsync()
+    {
+        if (DefaultPropertySelector == null)
+        {
+            return await base.WithDetailsAsync();
+        }
+
+        return await WithDetailsAsync(DefaultPropertySelector.ToArray());
+    }
+
+    public override async Task<IQueryable<TEntity>> WithDetailsAsync(params Expression<Func<TEntity, object>>[] propertySelectors)
+    {
+        return IncludeDetails(await GetQueryableAsync(), propertySelectors);
+    }
+
+    public override async Task<IQueryable<TEntity>> GetQueryableAsync()
+    {
+        return GetDbSet().AsQueryable();
+    }
+
+    public override async Task<TEntity> FindAsync(Expression<Func<TEntity, bool>> predicate, bool includeDetails = true, CancellationToken cancellationToken = default)
+    {
+        return includeDetails
+            ? await (await WithDetailsAsync())
+                .Where(predicate)
+                .SingleOrDefaultAsync(GetCancellationToken(cancellationToken))
+            : await GetDbSet()
+                .Where(predicate)
+                .SingleOrDefaultAsync(GetCancellationToken(cancellationToken));
+    }
+
+    public override async Task<List<TEntity>> GetListAsync(Expression<Func<TEntity, bool>> predicate, bool includeDetails = false, CancellationToken cancellationToken = default)
+    {
+        return includeDetails
+            ? await (await WithDetailsAsync()).Where(predicate).ToListAsync(GetCancellationToken(cancellationToken))
+            : await GetDbSet().Where(predicate).ToListAsync(GetCancellationToken(cancellationToken));
+    }
+
+    public override async Task<List<TEntity>> GetListAsync(bool includeDetails = false, CancellationToken cancellationToken = default)
+    {
+        return includeDetails
+            ? await (await WithDetailsAsync()).ToListAsync(GetCancellationToken(cancellationToken))
+            : await GetDbSet().ToListAsync(GetCancellationToken(cancellationToken));
+    }
+
+    public override async Task<long> GetCountAsync(CancellationToken cancellationToken = default)
+    {
+        return await GetDbSet().LongCountAsync(GetCancellationToken(cancellationToken));
+    }
+
+    public override async Task<List<TEntity>> GetPagedListAsync(
+        int skipCount,
+        int maxResultCount,
+        string sorting,
+        bool includeDetails = false,
+        CancellationToken cancellationToken = default)
+    {
+        var queryable = includeDetails
+            ? await WithDetailsAsync()
+            : GetDbSet();
+
+        return await queryable
+            .OrderByIf<TEntity, IQueryable<TEntity>>(!sorting.IsNullOrWhiteSpace(), sorting)
+            .PageBy(skipCount, maxResultCount)
+            .ToListAsync(GetCancellationToken(cancellationToken));
     }
 
     public override async Task<TEntity> InsertAsync(TEntity entity, bool autoSave = false, CancellationToken cancellationToken = default)
@@ -163,61 +239,6 @@ public class EfCoreRepository<TDbContext, TEntity> : RepositoryBase<TEntity>, IE
         }
     }
 
-    public override async Task<List<TEntity>> GetListAsync(bool includeDetails = false, CancellationToken cancellationToken = default)
-    {
-        return includeDetails
-            ? await (await WithDetailsAsync()).ToListAsync(GetCancellationToken(cancellationToken))
-            : await GetDbSet().ToListAsync(GetCancellationToken(cancellationToken));
-    }
-
-    public override async Task<List<TEntity>> GetListAsync(Expression<Func<TEntity, bool>> predicate, bool includeDetails = false, CancellationToken cancellationToken = default)
-    {
-        return includeDetails
-            ? await (await WithDetailsAsync()).Where(predicate).ToListAsync(GetCancellationToken(cancellationToken))
-            : await GetDbSet().Where(predicate).ToListAsync(GetCancellationToken(cancellationToken));
-    }
-
-    public override async Task<long> GetCountAsync(CancellationToken cancellationToken = default)
-    {
-        return await GetDbSet().LongCountAsync(GetCancellationToken(cancellationToken));
-    }
-
-    public override async Task<List<TEntity>> GetPagedListAsync(
-        int skipCount,
-        int maxResultCount,
-        string sorting,
-        bool includeDetails = false,
-        CancellationToken cancellationToken = default)
-    {
-        var queryable = includeDetails
-            ? await WithDetailsAsync()
-            : GetDbSet();
-
-        return await queryable
-            .OrderByIf<TEntity, IQueryable<TEntity>>(!sorting.IsNullOrWhiteSpace(), sorting)
-            .PageBy(skipCount, maxResultCount)
-            .ToListAsync(GetCancellationToken(cancellationToken));
-    }
-
-    public override async Task<IQueryable<TEntity>> GetQueryableAsync()
-    {
-        return GetDbSet().AsQueryable();
-    }
-
-    public override async Task<TEntity> FindAsync(
-        Expression<Func<TEntity, bool>> predicate,
-        bool includeDetails = true,
-        CancellationToken cancellationToken = default)
-    {
-        return includeDetails
-            ? await (await WithDetailsAsync())
-                .Where(predicate)
-                .SingleOrDefaultAsync(GetCancellationToken(cancellationToken))
-            : await GetDbSet()
-                .Where(predicate)
-                .SingleOrDefaultAsync(GetCancellationToken(cancellationToken));
-    }
-
     public override async Task DeleteAsync(Expression<Func<TEntity, bool>> predicate, bool autoSave = false, CancellationToken cancellationToken = default)
     {
         var entities = await GetDbSet()
@@ -232,62 +253,14 @@ public class EfCoreRepository<TDbContext, TEntity> : RepositoryBase<TEntity>, IE
         }
     }
 
-    [Obsolete("Use WithDetailsAsync")]
-    public override IQueryable<TEntity> WithDetails()
+    public override async Task DeleteDirectAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
     {
-        if (DefaultPropertySelector == null)
-        {
-            return base.WithDetails();
-        }
-
-        return WithDetails(DefaultPropertySelector.ToArray());
-    }
-
-    public override async Task<IQueryable<TEntity>> WithDetailsAsync()
-    {
-        if (DefaultPropertySelector == null)
-        {
-            return await base.WithDetailsAsync();
-        }
-
-        return await WithDetailsAsync(DefaultPropertySelector.ToArray());
-    }
-
-    [Obsolete("Use WithDetailsAsync method.")]
-    public override IQueryable<TEntity> WithDetails(params Expression<Func<TEntity, object>>[] propertySelectors)
-    {
-        return IncludeDetails(GetQueryable(), propertySelectors);
-    }
-
-    public override async Task<IQueryable<TEntity>> WithDetailsAsync(params Expression<Func<TEntity, object>>[] propertySelectors)
-    {
-        return IncludeDetails(await GetQueryableAsync(), propertySelectors);
-    }
-
-    protected virtual TDbContext GetDbContext()
-    {
-        return _dbContext;
-    }
-
-    protected DbSet<TEntity> GetDbSet()
-    {
-        return GetDbContext().Set<TEntity>();
-    }
-
-    [Obsolete("Use GetQueryableAsync method.")]
-    protected override IQueryable<TEntity> GetQueryable()
-    {
-        return GetDbSet().AsQueryable();
+        await GetDbSet().Where(predicate).ExecuteDeleteAsync(GetCancellationToken(cancellationToken));
     }
 
     protected override async Task SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         await GetDbContext().SaveChangesAsync(cancellationToken);
-    }
-
-    public override async Task DeleteDirectAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
-    {
-        await GetDbSet().Where(predicate).ExecuteDeleteAsync(GetCancellationToken(cancellationToken));
     }
 
     public virtual async Task EnsureCollectionLoadedAsync<TProperty>(
