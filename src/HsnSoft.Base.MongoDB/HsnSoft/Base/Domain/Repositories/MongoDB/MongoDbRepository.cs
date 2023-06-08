@@ -490,12 +490,6 @@ public class MongoDbRepository<TMongoDbContext, TEntity> : RepositoryBase<TEntit
         );
     }
 
-    [Obsolete("Use GetQueryableAsync method.")]
-    protected override IQueryable<TEntity> GetQueryable()
-    {
-        return GetMongoQueryable();
-    }
-
     protected virtual async Task<IMongoQueryable<TOtherEntity>> GetMongoQueryableAsync<TOtherEntity>(CancellationToken cancellationToken = default, AggregateOptions aggregateOptions = null)
     {
         cancellationToken = GetCancellationToken(cancellationToken);
