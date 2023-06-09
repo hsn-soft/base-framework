@@ -34,7 +34,7 @@ public class EventBusServiceBus : IEventBus, IDisposable
         _subsManager = new InMemoryEventBusSubscriptionsManager(TrimEventName);
 
         _sender = _serviceBusPersisterConnection.TopicClient.CreateSender(_eventBusConfig.DefaultTopicName);
-        ServiceBusProcessorOptions options = new ServiceBusProcessorOptions { MaxConcurrentCalls = 10, AutoCompleteMessages = false };
+        var options = new ServiceBusProcessorOptions { MaxConcurrentCalls = 10, AutoCompleteMessages = false };
         _processor = _serviceBusPersisterConnection.TopicClient.CreateProcessor(_eventBusConfig.DefaultTopicName, _eventBusConfig.SubscriberClientAppName, options);
 
         RemoveDefaultRule();
@@ -112,7 +112,7 @@ public class EventBusServiceBus : IEventBus, IDisposable
             async (args) =>
             {
                 var eventName = $"{(_eventBusConfig.EventNamePrefix ?? string.Empty)}{args.Message.Subject}{(_eventBusConfig.EventNameSuffix ?? string.Empty)}";
-                string messageData = args.Message.Body.ToString();
+                var messageData = args.Message.Body.ToString();
 
                 // Complete the message so that it is not received again.
                 if (await ProcessEvent(eventName, messageData))
@@ -188,7 +188,7 @@ public class EventBusServiceBus : IEventBus, IDisposable
                     var eventType = _subsManager.GetEventTypeByName($"{_eventBusConfig.EventNamePrefix}{eventName}{_eventBusConfig.EventNameSuffix}");
                     var integrationEvent = JsonConvert.DeserializeObject(message, eventType);
                     var concreteType = typeof(IIntegrationEventHandler<>).MakeGenericType(eventType);
-                    await (Task)concreteType.GetMethod("Handle").Invoke(handler, new object[] { integrationEvent });
+                    await (Task)concreteType.GetMethod("Handle").Invoke(handler, new[] { integrationEvent });
                 }
             }
 

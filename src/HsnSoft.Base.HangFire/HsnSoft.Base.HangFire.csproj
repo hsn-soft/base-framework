@@ -15,12 +15,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Hangfire.AspNetCore" Version="1.8.1" />
+        <PackageReference Include="Hangfire.AspNetCore" Version="1.8.2" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference
-            Include="..\HsnSoft.Base.Authorization.Abstractions\HsnSoft.Base.Authorization.Abstractions.csproj" />
+        <ProjectReference Include="..\HsnSoft.Base.Authorization.Abstractions\HsnSoft.Base.Authorization.Abstractions.csproj" />
         <ProjectReference Include="..\HsnSoft.Base.Core\HsnSoft.Base.Core.csproj" />
     </ItemGroup>
 

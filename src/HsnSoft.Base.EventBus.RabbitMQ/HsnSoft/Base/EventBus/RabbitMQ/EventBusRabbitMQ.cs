@@ -256,7 +256,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
                     var eventType = _subsManager.GetEventTypeByName($"{_eventBusConfig.EventNamePrefix}{eventName}{_eventBusConfig.EventNameSuffix}");
                     var integrationEvent = JsonConvert.DeserializeObject(message, eventType);
                     var concreteType = typeof(IIntegrationEventHandler<>).MakeGenericType(eventType);
-                    await (Task)concreteType.GetMethod("Handle").Invoke(handler, new object[] { integrationEvent });
+                    await (Task)concreteType.GetMethod("Handle").Invoke(handler, new[] { integrationEvent });
                 }
             }
 

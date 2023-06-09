@@ -21,8 +21,8 @@
     <ItemGroup>
         <PackageReference Include="Rebus" Version="7.1.0" />
         <PackageReference Include="Rebus.ServiceProvider" Version="8.4.0" />
-        <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="7.0.0" />
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="7.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="$(MicrosoftPackageVersion)" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="$(MicrosoftPackageVersion)" />
     </ItemGroup>
 
 </Project>

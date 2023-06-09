@@ -262,7 +262,7 @@ public static class EntityHelper
             x => x.Id,
             idFactory,
             checkForDisableIdGenerationAttribute
-                ? new Type[] { typeof(DisableIdGenerationAttribute) }
+                ? new[] { typeof(DisableIdGenerationAttribute) }
                 : new Type[] { });
     }
 }

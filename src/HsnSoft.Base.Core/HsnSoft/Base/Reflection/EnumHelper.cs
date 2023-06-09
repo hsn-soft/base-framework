@@ -12,7 +12,7 @@ public static class EnumHelper<T> where T : struct, Enum // This constraint requ
     {
         var enumValues = new List<T>();
 
-        foreach (FieldInfo fi in value.GetType().GetFields(BindingFlags.Static | BindingFlags.Public))
+        foreach (var fi in value.GetType().GetFields(BindingFlags.Static | BindingFlags.Public))
         {
             enumValues.Add((T)Enum.Parse(value.GetType(), fi.Name, false));
         }

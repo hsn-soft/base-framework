@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using JetBrains.Annotations;
 
 namespace HsnSoft.Base;
@@ -70,7 +69,7 @@ public static class CheckDomain
         catch (Exception e) { throw new DomainException(e.Message, e.InnerException); }
     }
 
-    public static Int16 Range(Int16 value, [InvokerParameterName] [NotNull] string parameterName, Int16 minimumValue, Int16 maximumValue = Int16.MaxValue)
+    public static short Range(short value, [InvokerParameterName] [NotNull] string parameterName, short minimumValue, short maximumValue = short.MaxValue)
     {
         try
         {
@@ -79,7 +78,7 @@ public static class CheckDomain
         catch (Exception e) { throw new DomainException(e.Message, e.InnerException); }
     }
 
-    public static Int32 Range(Int32 value, [InvokerParameterName] [NotNull] string parameterName, Int32 minimumValue, Int32 maximumValue = Int32.MaxValue)
+    public static int Range(int value, [InvokerParameterName] [NotNull] string parameterName, int minimumValue, int maximumValue = int.MaxValue)
     {
         try
         {
@@ -88,7 +87,7 @@ public static class CheckDomain
         catch (Exception e) { throw new DomainException(e.Message, e.InnerException); }
     }
 
-    public static Int64 Range(Int64 value, [InvokerParameterName] [NotNull] string parameterName, Int64 minimumValue, Int64 maximumValue = Int64.MaxValue)
+    public static long Range(long value, [InvokerParameterName] [NotNull] string parameterName, long minimumValue, long maximumValue = long.MaxValue)
     {
         try
         {

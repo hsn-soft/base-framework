@@ -1,9 +1,8 @@
 using System.Threading.Tasks;
 
-namespace HsnSoft.Base.UI.Navigation
+namespace HsnSoft.Base.UI.Navigation;
+
+public interface IMenuContributor
 {
-    public interface IMenuContributor
-    {
-        Task ConfigureMenuAsync(MenuConfigurationContext context);
-    }
+    Task ConfigureMenuAsync(MenuConfigurationContext context);
 }

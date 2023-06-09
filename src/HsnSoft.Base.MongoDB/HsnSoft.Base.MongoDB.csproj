@@ -1,25 +1,25 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <Import Project="..\..\configureawait.props" />
-  <Import Project="..\..\common.props" />
+    <Import Project="..\..\configureawait.props" />
+    <Import Project="..\..\common.props" />
 
-  <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;netstandard2.1;net6.0</TargetFrameworks>
-    <AssemblyName>HsnSoft.Base.MongoDB</AssemblyName>
-    <PackageId>HsnSoft.Base.MongoDB</PackageId>
-    <AssetTargetFallback>$(AssetTargetFallback);portable-net45+win8+wp8+wpa81;</AssetTargetFallback>
-    <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
-    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
-    <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
-    <RootNamespace />
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;netstandard2.1;net6.0</TargetFrameworks>
+        <AssemblyName>HsnSoft.Base.MongoDB</AssemblyName>
+        <PackageId>HsnSoft.Base.MongoDB</PackageId>
+        <AssetTargetFallback>$(AssetTargetFallback);portable-net45+win8+wp8+wpa81;</AssetTargetFallback>
+        <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+        <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+        <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+        <RootNamespace />
+    </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="MongoDB.Driver" Version="2.19.1" />
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="MongoDB.Driver" Version="2.19.2" />
+    </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\HsnSoft.Base.Ddd.Domain\HsnSoft.Base.Ddd.Domain.csproj" />
-  </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\HsnSoft.Base.Ddd.Domain\HsnSoft.Base.Ddd.Domain.csproj" />
+    </ItemGroup>
 
 </Project>
