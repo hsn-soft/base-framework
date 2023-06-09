@@ -90,7 +90,7 @@ public static class BaseListExtensions
 
     public static void ReplaceWhile<T>(this IList<T> source, Predicate<T> selector, T item)
     {
-        for (int i = 0; i < source.Count; i++)
+        for (var i = 0; i < source.Count; i++)
         {
             if (selector(source[i]))
             {
@@ -101,7 +101,7 @@ public static class BaseListExtensions
 
     public static void ReplaceWhile<T>(this IList<T> source, Predicate<T> selector, Func<T, T> itemFactory)
     {
-        for (int i = 0; i < source.Count; i++)
+        for (var i = 0; i < source.Count; i++)
         {
             var item = source[i];
             if (selector(item))
@@ -113,7 +113,7 @@ public static class BaseListExtensions
 
     public static void ReplaceOne<T>(this IList<T> source, Predicate<T> selector, T item)
     {
-        for (int i = 0; i < source.Count; i++)
+        for (var i = 0; i < source.Count; i++)
         {
             if (selector(source[i]))
             {
@@ -125,7 +125,7 @@ public static class BaseListExtensions
 
     public static void ReplaceOne<T>(this IList<T> source, Predicate<T> selector, Func<T, T> itemFactory)
     {
-        for (int i = 0; i < source.Count; i++)
+        for (var i = 0; i < source.Count; i++)
         {
             var item = source[i];
             if (selector(item))
@@ -138,7 +138,7 @@ public static class BaseListExtensions
 
     public static void ReplaceOne<T>(this IList<T> source, T item, T replaceWith)
     {
-        for (int i = 0; i < source.Count; i++)
+        for (var i = 0; i < source.Count; i++)
         {
             if (Comparer<T>.Default.Compare(source[i], item) == 0)
             {

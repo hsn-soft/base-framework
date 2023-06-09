@@ -15,10 +15,10 @@ public abstract class ValueObject
             return false;
         }
 
-        ValueObject other = (ValueObject)obj;
+        var other = (ValueObject)obj;
 
-        IEnumerator<object> thisValues = GetAtomicValues().GetEnumerator();
-        IEnumerator<object> otherValues = other.GetAtomicValues().GetEnumerator();
+        var thisValues = GetAtomicValues().GetEnumerator();
+        var otherValues = other.GetAtomicValues().GetEnumerator();
 
         while (thisValues.MoveNext() && otherValues.MoveNext())
         {

@@ -16,7 +16,7 @@ public static class BaseSwaggerGenServiceCollectionExtensions
         return services.AddSwaggerGen(
             options =>
             {
-                Func<OpenApiSchema> remoteStreamContentSchemaFactory = () => new OpenApiSchema() { Type = "string", Format = "binary" };
+                var remoteStreamContentSchemaFactory = () => new OpenApiSchema() { Type = "string", Format = "binary" };
 
                 options.MapType<RemoteStreamContent>(remoteStreamContentSchemaFactory);
                 options.MapType<IRemoteStreamContent>(remoteStreamContentSchemaFactory);

@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-    <Import Project="..\..\configureawait.props"/>
-    <Import Project="..\..\common.props"/>
+    <Import Project="..\..\configureawait.props" />
+    <Import Project="..\..\common.props" />
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;netstandard2.1;net6.0</TargetFrameworks>
@@ -11,19 +11,19 @@
         <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
         <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
         <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
-        <RootNamespace/>
+        <RootNamespace />
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Autofac" Version="7.0.1"/>
-        <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="8.0.0"/>
-        <PackageReference Include="Autofac.Extras.DynamicProxy" Version="6.0.1"/>
-        <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="7.0.0"/>
-        <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="7.0.0"/>
+        <PackageReference Include="Autofac" Version="7.0.1" />
+        <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="8.0.0" />
+        <PackageReference Include="Autofac.Extras.DynamicProxy" Version="7.0.0" />
+        <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="$(MicrosoftPackageVersion)" />
+        <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="$(MicrosoftPackageVersion)" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\HsnSoft.Base.Castle.Core\HsnSoft.Base.Castle.Core.csproj"/>
+        <ProjectReference Include="..\HsnSoft.Base.Castle.Core\HsnSoft.Base.Castle.Core.csproj" />
     </ItemGroup>
 
 </Project>

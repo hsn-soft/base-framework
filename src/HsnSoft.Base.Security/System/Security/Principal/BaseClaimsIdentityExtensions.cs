@@ -18,7 +18,7 @@ public static class BaseClaimsIdentityExtensions
             return null;
         }
 
-        if (Guid.TryParse(userIdOrNull.Value, out Guid guid))
+        if (Guid.TryParse(userIdOrNull.Value, out var guid))
         {
             return guid;
         }
