@@ -22,7 +22,7 @@ public class BasePermissionStore : IPermissionStore, ISingletonDependency
 
     public Task<bool> IsGrantedAsync(string name, string providerName, string providerKey)
     {
-        bool validationResult = false;
+        var validationResult = false;
 
         if (!string.IsNullOrWhiteSpace(providerName) && !string.IsNullOrWhiteSpace(providerKey) && !string.IsNullOrWhiteSpace(name))
         {

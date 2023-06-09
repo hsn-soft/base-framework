@@ -567,9 +567,9 @@ public static class BaseStringExtensions
 
     private static bool IsAllUpperCase(string input)
     {
-        for (int i = 0; i < input.Length; i++)
+        for (var i = 0; i < input.Length; i++)
         {
-            if (Char.IsLetter(input[i]) && !Char.IsUpper(input[i]))
+            if (char.IsLetter(input[i]) && !char.IsUpper(input[i]))
             {
                 return false;
             }

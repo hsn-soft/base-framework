@@ -1,4 +1,4 @@
-using System;
+using HsnSoft.Base.Data;
 using HsnSoft.Base.DependencyInjection;
 using HsnSoft.Base.Guids;
 using HsnSoft.Base.Linq;
@@ -13,10 +13,9 @@ public abstract class DomainService : IDomainService
 {
     public IBaseLazyServiceProvider LazyServiceProvider { get; set; }
 
-    [Obsolete("Use LazyServiceProvider instead.")]
-    public IServiceProvider ServiceProvider { get; set; }
-
     protected IClock Clock => LazyServiceProvider.LazyGetRequiredService<IClock>();
+
+    protected IDataFilter DataFilter => LazyServiceProvider.LazyGetRequiredService<IDataFilter>();
 
     protected IGuidGenerator GuidGenerator => LazyServiceProvider.LazyGetService<IGuidGenerator>(SimpleGuidGenerator.Instance);
 

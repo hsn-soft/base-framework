@@ -63,7 +63,7 @@ public class InMemoryEventBusSubscriptionsManager : IEventBusSubscriptionsManage
 
     public string GetEventKey<T>()
     {
-        string eventName = typeof(T).Name;
+        var eventName = typeof(T).Name;
         return eventNameGetter(eventName);
     }
 

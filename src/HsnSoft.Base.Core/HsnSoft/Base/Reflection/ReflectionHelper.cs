@@ -184,7 +184,7 @@ public static class ReflectionHelper
             return;
         }
 
-        for (int i = 0; i < properties.Length - 1; i++)
+        for (var i = 0; i < properties.Length - 1; i++)
         {
             property = currentType.GetProperty(properties[i]);
             obj = property.GetValue(obj, null);
