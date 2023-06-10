@@ -37,19 +37,17 @@ public class TenantConfigurationProvider : ITenantConfigurationProvider, ITransi
             if (tenant == null)
             {
                 throw new BusinessException(
-                    code: "HsnSoft.BaseIo.MultiTenancy:010001",
-                    message: "Tenant not found!",
-                    details: "There is no tenant with the tenant id or name: " + resolveResult.TenantIdOrName
-                );
+                    errorCode: "HsnSoft.BaseIo.MultiTenancy:010001",
+                    errorMessage: "Tenant not found!"
+                ).WithData("reference", resolveResult.TenantIdOrName);
             }
 
             if (!tenant.IsActive)
             {
                 throw new BusinessException(
-                    code: "HsnSoft.BaseIo.MultiTenancy:010002",
-                    message: "Tenant not active!",
-                    details: "The tenant is no active with the tenant id or name: " + resolveResult.TenantIdOrName
-                );
+                    errorCode: "HsnSoft.BaseIo.MultiTenancy:010002",
+                    errorMessage: "Tenant not active!"
+                ).WithData("reference", resolveResult.TenantIdOrName);
             }
         }
 
