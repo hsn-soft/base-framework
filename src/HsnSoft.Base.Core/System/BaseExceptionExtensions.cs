@@ -51,17 +51,32 @@ public static class BaseExceptionExtensions
         return messages;
     }
 
-    public static IEnumerable<string> GetStringDataList(this Exception ex)
+    public static IEnumerable<string> GetDataList(this Exception ex)
     {
         var messages = new List<string>();
 
         if (ex == null) return messages;
 
         if (ex.Data is not { Count: > 0 }) return messages;
-      
+
         var keys = ex.Data.Keys.ToDynamicList<string>().Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
 
-        messages.AddRange(from key in keys let dataValue = ex.Data[key] as string where !string.IsNullOrWhiteSpace(dataValue) select $"{key}:{dataValue}");
+        messages.AddRange(from key in keys where !string.IsNullOrWhiteSpace(key) let dataValue = ex.Data[key] as string where !string.IsNullOrWhiteSpace(dataValue) select $"{key}:{dataValue}");
+
+        return messages;
+    }
+
+    public static List<KeyValuePair<string, string>> GetDictionaryDataList(this Exception ex)
+    {
+        var messages = new List<KeyValuePair<string, string>>();
+
+        if (ex == null) return messages;
+
+        if (ex.Data is not { Count: > 0 }) return messages;
+
+        var keys = ex.Data.Keys.ToDynamicList<string>().Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
+
+        messages.AddRange(from key in keys where !string.IsNullOrWhiteSpace(key) let value = ex.Data[key] as string where !string.IsNullOrWhiteSpace(value) select new KeyValuePair<string, string>(key, value));
 
         return messages;
     }

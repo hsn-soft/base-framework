@@ -10,19 +10,16 @@ namespace HsnSoft.Base;
 public class BusinessException : Exception,
     IBusinessException,
     IHasErrorCode,
-    IHasErrorDetails,
     IHasLogLevel
 {
     public BusinessException(
-        string code = null,
-        string message = null,
-        string details = null,
+        string errorCode = null,
+        string errorMessage = null,
         Exception innerException = null,
         LogLevel logLevel = LogLevel.Warning)
-        : base(message ?? string.Empty, innerException)
+        : base(errorMessage ?? string.Empty, innerException)
     {
-        ErrorCode = code;
-        ErrorDetails = details;
+        ErrorCode = errorCode;
         LogLevel = logLevel;
     }
 
@@ -35,8 +32,6 @@ public class BusinessException : Exception,
     }
 
     public string ErrorCode { get; set; }
-
-    public string ErrorDetails { get; set; }
 
     public LogLevel LogLevel { get; set; }
 

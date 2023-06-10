@@ -17,4 +17,10 @@ public class DomainException : Exception
         : base(message ?? string.Empty, innerException)
     {
     }
+
+    public DomainException WithData(string name, object value)
+    {
+        Data[name] = value;
+        return this;
+    }
 }
