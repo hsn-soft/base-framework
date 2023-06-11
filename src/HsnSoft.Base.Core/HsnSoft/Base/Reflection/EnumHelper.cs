@@ -3,62 +3,67 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Reflection;
+using Microsoft.Extensions.Localization;
 
 namespace HsnSoft.Base.Reflection;
 
-public static class EnumHelper<T> where T : struct, Enum // This constraint requires C# 7.3 or later.
+public static class EnumHelper
 {
-    public static IList<T> GetValues(Enum value)
+    private static IStringLocalizer _localizer;
+
+    public static void Configure(IStringLocalizerFactory localizerFactory, Type resourceType)
+        => _localizer = localizerFactory.Create(resourceType);
+
+    public static IList<T> GetValues<T>() where T : struct, Enum
+        => typeof(T).GetFields(BindingFlags.Static | BindingFlags.Public)
+            .Select(fi => (T)Enum.Parse(typeof(T), fi.Name, false))
+            .ToList();
+
+    public static T Parse<T>(string value) where T : struct, Enum
+        => (T)Enum.Parse(typeof(T), value, true);
+
+    public static IList<string> GetNames<T>() where T : struct, Enum
+        => typeof(T).GetFields(BindingFlags.Static | BindingFlags.Public).Select(fi => fi.Name).ToList();
+
+    public static IList<string> GetDisplayValues<T>() where T : struct, Enum
+        => GetNames<T>().Select(obj => GetDisplayValue(Parse<T>(obj))).ToList();
+
+    public static string GetDisplayValue<T>(T value) where T : struct, Enum
     {
-        var enumValues = new List<T>();
+        var fieldInfo = value.GetType().GetField(value.ToString());
+        if (fieldInfo == null) return value.ToString();
 
-        foreach (var fi in value.GetType().GetFields(BindingFlags.Static | BindingFlags.Public))
-        {
-            enumValues.Add((T)Enum.Parse(value.GetType(), fi.Name, false));
-        }
+        var displayAttributes = (DisplayAttribute[])fieldInfo.GetCustomAttributes(typeof(DisplayAttribute), false);
 
-        return enumValues;
-    }
+        if (displayAttributes is not { Length: > 0 } || string.IsNullOrWhiteSpace(displayAttributes[0].Name)) return value.ToString();
 
-    public static T Parse(string value)
-    {
-        return (T)Enum.Parse(typeof(T), value, true);
-    }
-
-    public static IList<string> GetNames(Enum value)
-    {
-        return value.GetType().GetFields(BindingFlags.Static | BindingFlags.Public).Select(fi => fi.Name).ToList();
-    }
-
-    public static IList<string> GetDisplayValues(Enum value)
-    {
-        return GetNames(value).Select(obj => GetDisplayValue(Parse(obj))).ToList();
+        return displayAttributes[0].ResourceType != null
+            ? LookupResource(displayAttributes[0].ResourceType, displayAttributes[0].Name)
+            : LookupLocalizer<T>(displayAttributes[0].Name);
     }
 
     private static string LookupResource(Type resourceManagerProvider, string resourceKey)
     {
         var resourceKeyProperty = resourceManagerProvider.GetProperty(resourceKey,
             BindingFlags.Static | BindingFlags.Public, null, typeof(string),
-            new Type[0], null);
+            Type.EmptyTypes, null);
         if (resourceKeyProperty != null)
         {
-            return (string)resourceKeyProperty.GetMethod.Invoke(null, null);
+            return (string)resourceKeyProperty.GetMethod?.Invoke(null, null);
         }
 
-        return resourceKey; // Fallback with the key name
+        return resourceKey;
     }
 
-    public static string GetDisplayValue(T value)
+    private static string LookupLocalizer<T>(string resourceValue) where T : struct, Enum
     {
-        var fieldInfo = value.GetType().GetField(value.ToString());
+        if (_localizer == null) return resourceValue ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(resourceValue)) return string.Empty;
 
-        var descriptionAttributes = fieldInfo.GetCustomAttributes(
-            typeof(DisplayAttribute), false) as DisplayAttribute[];
+        var resourceKey = $"Enum:{typeof(T).Name}:{resourceValue}";
+        string desc = _localizer[resourceKey];
+        if (string.IsNullOrWhiteSpace(desc) || desc.Equals(resourceKey)) desc = _localizer[$"Enum:{resourceValue}"];
 
-        if (descriptionAttributes[0].ResourceType != null)
-            return LookupResource(descriptionAttributes[0].ResourceType, descriptionAttributes[0].Name);
-
-        if (descriptionAttributes == null) return string.Empty;
-        return (descriptionAttributes.Length > 0) ? descriptionAttributes[0].Name : value.ToString();
+        return string.IsNullOrWhiteSpace(desc) || desc.Equals(resourceKey) ? resourceValue : desc;
     }
 }

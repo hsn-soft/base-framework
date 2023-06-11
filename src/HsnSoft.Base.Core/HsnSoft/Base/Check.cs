@@ -171,7 +171,8 @@ public static class Check
         {
             throw new ArgumentException($"{parameterName} is equal to zero");
         }
-        else if (value < 0)
+
+        if (value < 0)
         {
             throw new ArgumentException($"{parameterName} is less than zero");
         }
@@ -187,7 +188,8 @@ public static class Check
         {
             throw new ArgumentException($"{parameterName} is equal to zero");
         }
-        else if (value < 0)
+
+        if (value < 0)
         {
             throw new ArgumentException($"{parameterName} is less than zero");
         }
@@ -203,7 +205,8 @@ public static class Check
         {
             throw new ArgumentException($"{parameterName} is equal to zero");
         }
-        else if (value < 0)
+
+        if (value < 0)
         {
             throw new ArgumentException($"{parameterName} is less than zero");
         }
@@ -219,7 +222,8 @@ public static class Check
         {
             throw new ArgumentException($"{parameterName} is equal to zero");
         }
-        else if (value < 0)
+
+        if (value < 0)
         {
             throw new ArgumentException($"{parameterName} is less than zero");
         }
@@ -235,7 +239,8 @@ public static class Check
         {
             throw new ArgumentException($"{parameterName} is equal to zero");
         }
-        else if (value < 0)
+
+        if (value < 0)
         {
             throw new ArgumentException($"{parameterName} is less than zero");
         }
@@ -251,7 +256,8 @@ public static class Check
         {
             throw new ArgumentException($"{parameterName} is equal to zero");
         }
-        else if (value < 0)
+
+        if (value < 0)
         {
             throw new ArgumentException($"{parameterName} is less than zero");
         }

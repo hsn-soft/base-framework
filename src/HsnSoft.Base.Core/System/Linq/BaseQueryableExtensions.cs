@@ -110,7 +110,7 @@ public static class BaseQueryableExtensions
         Check.NotNull(query, nameof(query));
 
         return condition
-            ? (TQueryable)System.Linq.Dynamic.Core.DynamicQueryableExtensions.OrderBy(query, sorting)
+            ? (TQueryable)Dynamic.Core.DynamicQueryableExtensions.OrderBy(query, sorting)
             : query;
     }
 
@@ -119,7 +119,7 @@ public static class BaseQueryableExtensions
         Check.NotNull(query, nameof(query));
 
         return condition
-            ? System.Linq.Dynamic.Core.DynamicQueryableExtensions.OrderBy(query, sorting)
+            ? Dynamic.Core.DynamicQueryableExtensions.OrderBy(query, sorting)
             : query;
     }
 }

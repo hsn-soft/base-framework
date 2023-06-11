@@ -28,9 +28,7 @@ public class StringHelper
         {
             return encoding.GetString(bytes, 3, bytes.Length - 3);
         }
-        else
-        {
-            return encoding.GetString(bytes);
-        }
+
+        return encoding.GetString(bytes);
     }
 }
