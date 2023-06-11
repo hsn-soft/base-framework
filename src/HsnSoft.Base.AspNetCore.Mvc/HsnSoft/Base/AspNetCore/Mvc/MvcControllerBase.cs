@@ -11,7 +11,7 @@ namespace HsnSoft.Base.AspNetCore.Mvc;
 
 public abstract class BaseController : Controller
 {
-    public IBaseLazyServiceProvider LazyServiceProvider { get; set; }
+    protected IBaseLazyServiceProvider LazyServiceProvider { get; set; }
 
     protected IGuidGenerator GuidGenerator => LazyServiceProvider.LazyGetService<IGuidGenerator>(SimpleGuidGenerator.Instance);
 
