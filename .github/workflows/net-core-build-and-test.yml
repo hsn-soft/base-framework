@@ -30,10 +30,10 @@ jobs:
             ${{ runner.os }}-nuget
 
       - name: Restore Dependencies
-        run: dotnet restore --force
+        run: dotnet restore --force --verbosity minimal
 
       - name: Build Solution
-        run: dotnet build --no-restore --no-incremental
+        run: dotnet build --no-restore --no-incremental --verbosity minimal
 
       - name: Test Solution
-        run: dotnet test --no-restore --no-build
+        run: dotnet test --no-restore --no-build --verbosity minimal

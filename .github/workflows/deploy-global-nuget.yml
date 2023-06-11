@@ -37,13 +37,13 @@ jobs:
             ${{ runner.os }}-nuget
 
       - name: Restore Dependencies
-        run: dotnet restore --force
+        run: dotnet restore --force --verbosity minimal
 
       - name: Build Solution
-        run: dotnet build --no-restore --configuration Release
+        run: dotnet build --no-restore --configuration Release --verbosity minimal
 
       - name: Test Solution
-        run: dotnet test --no-restore --no-build --configuration Release
+        run: dotnet test --no-restore --no-build --configuration Release --verbosity minimal
 
       - name: Pack Solution
         run: dotnet pack --no-restore --no-build --configuration Release --output ${{ env.PACKAGE_OUTPUT_DIRECTORY }}
