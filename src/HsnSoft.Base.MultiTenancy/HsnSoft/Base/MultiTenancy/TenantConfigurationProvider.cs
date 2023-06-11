@@ -60,9 +60,7 @@ public class TenantConfigurationProvider : ITenantConfigurationProvider, ITransi
         {
             return await TenantStore.FindAsync(parsedTenantId);
         }
-        else
-        {
-            return await TenantStore.FindAsync(tenantIdOrName);
-        }
+
+        return await TenantStore.FindAsync(tenantIdOrName);
     }
 }

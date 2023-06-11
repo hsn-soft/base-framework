@@ -3,7 +3,6 @@ using System.IO;
 using System.Net.Sockets;
 using Microsoft.Extensions.Logging;
 using Polly;
-using Polly.Retry;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using RabbitMQ.Client.Exceptions;
@@ -70,7 +69,7 @@ public class RabbitMQPersistentConnection : IRabbitMQPersistentConnection
 
         lock (sync_root)
         {
-            var policy = RetryPolicy.Handle<SocketException>()
+            var policy = Policy.Handle<SocketException>()
                 .Or<BrokerUnreachableException>()
                 .WaitAndRetry(_retryCount, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), (ex, time) =>
                     {
@@ -94,12 +93,10 @@ public class RabbitMQPersistentConnection : IRabbitMQPersistentConnection
 
                 return true;
             }
-            else
-            {
-                _logger.LogCritical("FATAL ERROR: RabbitMQ connections could not be created and opened");
 
-                return false;
-            }
+            _logger.LogCritical("FATAL ERROR: RabbitMQ connections could not be created and opened");
+
+            return false;
         }
     }
 

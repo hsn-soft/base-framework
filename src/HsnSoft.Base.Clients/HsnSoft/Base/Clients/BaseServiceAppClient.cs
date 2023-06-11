@@ -47,7 +47,7 @@ public class BaseServiceAppClient
         {
             return await response.Content.ReadFromJsonAsync<T>();
         }
-        catch (Exception e)
+        catch (Exception)
         {
             return null;
         }
@@ -62,7 +62,7 @@ public class BaseServiceAppClient
         {
             return await response.Content.ReadAsStringAsync();
         }
-        catch (Exception e)
+        catch (Exception)
         {
             return null;
         }
