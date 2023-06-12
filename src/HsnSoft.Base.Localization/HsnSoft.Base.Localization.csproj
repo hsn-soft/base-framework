@@ -15,16 +15,19 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <None Remove="HsnSoft\Base\Localization\Resources\**\*.json" />
-        <EmbeddedResource Include="HsnSoft\Base\Localization\Resources\**\*.json" />
+        <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="$(MicrosoftPackageVersion)" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference
-            Include="..\HsnSoft.Base.Localization.Abstractions\HsnSoft.Base.Localization.Abstractions.csproj" />
+        <ProjectReference Include="..\HsnSoft.Base.Localization.Abstractions\HsnSoft.Base.Localization.Abstractions.csproj" />
         <ProjectReference Include="..\HsnSoft.Base.Settings\HsnSoft.Base.Settings.csproj" />
-        <ProjectReference Include="..\HsnSoft.Base.Caching\HsnSoft.Base.Caching.csproj" />
+        <ProjectReference Include="..\HsnSoft.Base.Threading\HsnSoft.Base.Threading.csproj" />
         <ProjectReference Include="..\HsnSoft.Base.VirtualFileSystem\HsnSoft.Base.VirtualFileSystem.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Remove="HsnSoft\Base\Localization\Resources\**\*.json" />
+        <EmbeddedResource Include="HsnSoft\Base\Localization\Resources\**\*.json" />
     </ItemGroup>
 
 </Project>
