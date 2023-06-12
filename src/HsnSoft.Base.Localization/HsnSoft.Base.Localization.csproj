@@ -1,29 +1,30 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <Import Project="..\..\configureawait.props" />
-  <Import Project="..\..\common.props" />
+    <Import Project="..\..\configureawait.props" />
+    <Import Project="..\..\common.props" />
 
-  <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;netstandard2.1;net6.0</TargetFrameworks>
-    <AssemblyName>HsnSoft.Base.Localization</AssemblyName>
-    <PackageId>HsnSoft.Base.Localization</PackageId>
-    <AssetTargetFallback>$(AssetTargetFallback);portable-net45+win8+wp8+wpa81;</AssetTargetFallback>
-    <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
-    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
-    <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
-    <RootNamespace />
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;netstandard2.1;net6.0</TargetFrameworks>
+        <AssemblyName>HsnSoft.Base.Localization</AssemblyName>
+        <PackageId>HsnSoft.Base.Localization</PackageId>
+        <AssetTargetFallback>$(AssetTargetFallback);portable-net45+win8+wp8+wpa81;</AssetTargetFallback>
+        <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+        <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+        <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+        <RootNamespace />
+    </PropertyGroup>
 
-  <ItemGroup>
-    <None Remove="HsnSoft\Base\Localization\Resources\**\*.json" />
-    <EmbeddedResource Include="HsnSoft\Base\Localization\Resources\**\*.json" />
-  </ItemGroup>
+    <ItemGroup>
+        <None Remove="HsnSoft\Base\Localization\Resources\**\*.json" />
+        <EmbeddedResource Include="HsnSoft\Base\Localization\Resources\**\*.json" />
+    </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\HsnSoft.Base.Localization.Abstractions\HsnSoft.Base.Localization.Abstractions.csproj" />
-    <ProjectReference Include="..\HsnSoft.Base.Settings\HsnSoft.Base.Settings.csproj" />
-    <ProjectReference Include="..\HsnSoft.Base.Threading\HsnSoft.Base.Threading.csproj" />
-    <ProjectReference Include="..\HsnSoft.Base.VirtualFileSystem\HsnSoft.Base.VirtualFileSystem.csproj" />
-  </ItemGroup>
-  
+    <ItemGroup>
+        <ProjectReference
+            Include="..\HsnSoft.Base.Localization.Abstractions\HsnSoft.Base.Localization.Abstractions.csproj" />
+        <ProjectReference Include="..\HsnSoft.Base.Settings\HsnSoft.Base.Settings.csproj" />
+        <ProjectReference Include="..\HsnSoft.Base.Caching\HsnSoft.Base.Caching.csproj" />
+        <ProjectReference Include="..\HsnSoft.Base.VirtualFileSystem\HsnSoft.Base.VirtualFileSystem.csproj" />
+    </ItemGroup>
+
 </Project>
