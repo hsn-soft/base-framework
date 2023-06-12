@@ -7,6 +7,7 @@ using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.EventBus.Abstractions;
 using HsnSoft.Base.EventBus.SubManagers;
 using HsnSoft.Base.RabbitMQ;
+using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -133,7 +134,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
         _subsManager.Clear();
     }
 
-    private void SubsManager_OnEventRemoved(object? sender, string eventName)
+    private void SubsManager_OnEventRemoved([CanBeNull] object sender, string eventName)
     {
         if (!_persistentConnection.IsConnected)
         {
@@ -187,7 +188,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
         }
     }
 
-    private async void ConsumerReceived(object? sender, BasicDeliverEventArgs eventArgs)
+    private async void ConsumerReceived([CanBeNull] object sender, BasicDeliverEventArgs eventArgs)
     {
         var eventName = eventArgs.RoutingKey;
         eventName = TrimEventName(eventName);

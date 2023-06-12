@@ -1,0 +1,15 @@
+{
+  "culture": "en",
+  "texts": {
+    "Validation:Required": "This field is required",
+    "Validation:IsNotEmpty": "This field is not empty",
+    "Validation:MinLength": "This field must be a string with a minimum length of {0}",
+    "Validation:MaxLength": "This field must be a string with a maximum length of {0}",
+    "Validation:Range": "This field must be with a minimum length of {0} and a maximum length of {1}",
+    "Validation:Email": "This field is not a valid e-mail address",
+    "Validation:Phone": "This field is not a valid phone number.",
+    "Validation:Credit": "This field is not a valid credit card number",
+    "Validation:ErrorCode": "Error code : {0}",
+    "Validation:ErrorReference": "Error reference"
+  }
+}

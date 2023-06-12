@@ -1,0 +1,15 @@
+{
+  "culture": "tr",
+  "texts": {
+    "Validation:Required": "Bu alan zorunludur",
+    "Validation:IsNotEmpty": "Bu alan boş yada varsayılan bir değer olamaz",
+    "Validation:MinLength": "Bu alanın minimum uzunluğu {0} olmalıdır",
+    "Validation:MaxLength": "Bu alanın maksimum uzunluğu {0} olmalıdır",
+    "Validation:Range": "Bu alanın minimum uzunluğu {0} ve maksimum uzunluğu {1} olmalıdır.",
+    "Validation:Email": "Bu alan geçerli bir e-posta adresi değil",
+    "Validation:Phone": "Bu alan geçerli bir telefon numarası değil",
+    "Validation:Credit": "Bu alan geçerli bir kredi kartı numarası değil",
+    "Validation:ErrorCode": "Hata kodu : {0}",
+    "Validation:ErrorReference": "Hata referansı"
+  }
+}
