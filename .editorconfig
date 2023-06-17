@@ -45,6 +45,9 @@ resharper_place_simple_embedded_block_on_same_line = true
 resharper_qualified_using_at_nested_scope = true
 resharper_wrap_before_arrow_with_expressions = true
 
+# editor global
+ij_xml_space_inside_empty_tag = true
+
 [{*.har,*.jsb2,*.jsb3,*.json,.babelrc,.eslintrc,.stylelintrc,bowerrc,jest.config}]
 indent_style = space
 indent_size = 2
@@ -61,7 +64,7 @@ indent_style = space
 indent_size = 4
 
 # Xml config files
-[*.{props,targets}]
+[*.{xml,props,targets}]
 trim_trailing_whitespace = false
 indent_style = space
 indent_size = 4
