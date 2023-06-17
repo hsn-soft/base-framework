@@ -16,7 +16,7 @@
     <ItemGroup>
         <PackageReference Include="Microsoft.AspNetCore.Authentication" Version="2.2.0" />
         <PackageReference Include="Microsoft.Extensions.Http" Version="$(MicrosoftPackageVersion)" />
-        <PackageReference Include="System.Net.Http.Json" Version="7.0.1" />
+        <PackageReference Include="System.Net.Http.Json" Version="$(MicrosoftPackageVersion)" />
         <PackageReference Include="IdentityModel" Version="6.1.0" />
     </ItemGroup>
 
