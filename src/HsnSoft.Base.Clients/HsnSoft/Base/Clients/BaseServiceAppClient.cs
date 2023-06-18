@@ -4,13 +4,13 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 using System.Web;
-using HsnSoft.Base.ExceptionHandling.Dtos;
+using HsnSoft.Base.Communication;
 using IdentityModel.Client;
 using JetBrains.Annotations;
 
 namespace HsnSoft.Base.Clients;
 
-public class BaseServiceAppClient
+public abstract class BaseServiceAppClient
 {
     private readonly HttpClient _httpClient;
 
@@ -68,12 +68,12 @@ public class BaseServiceAppClient
         }
     }
 
-    protected async Task CheckResult(HttpResponseMessage response)
+    private static async Task CheckResult(HttpResponseMessage response)
     {
         if (!response.IsSuccessStatusCode)
         {
-            ErrorDtoResponse err;
-            try { err = await response.Content.ReadFromJsonAsync<ErrorDtoResponse>(); }
+            DtoResponse err;
+            try { err = await response.Content.ReadFromJsonAsync<DtoResponse>(); }
             catch (Exception) { err = null; }
 
             throw new Exception(err == null ? response.ReasonPhrase : err.StatusMessagesToSingleMessage());

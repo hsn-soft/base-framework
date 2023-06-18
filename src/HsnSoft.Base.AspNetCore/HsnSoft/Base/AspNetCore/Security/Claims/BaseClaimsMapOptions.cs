@@ -10,7 +10,7 @@ public class BaseClaimsMapOptions
 
     public BaseClaimsMapOptions()
     {
-        Maps = new Dictionary<string, Func<string>>()
+        Maps = new Dictionary<string, Func<string>>
         {
             { "sub", () => BaseClaimTypes.UserId },
             { "role", () => BaseClaimTypes.Role },

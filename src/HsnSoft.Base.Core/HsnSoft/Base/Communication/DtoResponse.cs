@@ -1,18 +1,18 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using HsnSoft.Base.Communication;
 
-namespace HsnSoft.Base.Application.Dtos;
+namespace HsnSoft.Base.Communication;
 
 [Serializable]
 public sealed class DtoResponse : BaseResponse
 {
     public override int StatusCode { get; }
-    public override IEnumerable<string> StatusMessages { get; }
+    public override List<string> StatusMessages { get; }
 
-    private DtoResponse()
+    public DtoResponse()
     {
+        StatusMessages = new List<string>();
     }
 
     public DtoResponse(int code = 0) : this()
@@ -22,12 +22,12 @@ public sealed class DtoResponse : BaseResponse
 
     public DtoResponse(string message, int code = 0) : this(code)
     {
-        if (!string.IsNullOrWhiteSpace(message)) StatusMessages = new[] { message };
+        if (!string.IsNullOrWhiteSpace(message)) StatusMessages.Add(message);
     }
 
     public DtoResponse(IEnumerable<string> messages, int code = 0) : this(code)
     {
-        StatusMessages = messages.Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
+        StatusMessages.AddRange(messages.Where(x => !string.IsNullOrWhiteSpace(x)));
     }
 }
 
@@ -35,11 +35,12 @@ public sealed class DtoResponse : BaseResponse
 public sealed class DtoResponse<TPayload> : BaseResponse<TPayload>
 {
     public override int StatusCode { get; }
-    public override IEnumerable<string> StatusMessages { get; }
+    public override List<string> StatusMessages { get; }
     public override TPayload Payload { get; }
 
-    private DtoResponse()
+    public DtoResponse()
     {
+        StatusMessages = new List<string>();
     }
 
     public DtoResponse(TPayload payload, int code = 0) : this()
@@ -50,11 +51,11 @@ public sealed class DtoResponse<TPayload> : BaseResponse<TPayload>
 
     public DtoResponse(TPayload payload, string message, int code = 0) : this(payload, code)
     {
-        if (!string.IsNullOrWhiteSpace(message)) StatusMessages = new[] { message };
+        if (!string.IsNullOrWhiteSpace(message)) StatusMessages.Add(message);
     }
 
-    public DtoResponse(TPayload payload, IEnumerable<string> messages, int code = 0) : this(payload, code)
+    public DtoResponse(TPayload payload, List<string> messages, int code = 0) : this(payload, code)
     {
-        StatusMessages = messages.Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
+        StatusMessages.AddRange(messages.Where(x => !string.IsNullOrWhiteSpace(x)));
     }
 }

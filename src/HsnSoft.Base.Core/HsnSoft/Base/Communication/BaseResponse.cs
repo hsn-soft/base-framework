@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json;
 
 namespace HsnSoft.Base.Communication;
 
@@ -7,11 +8,16 @@ namespace HsnSoft.Base.Communication;
 public abstract class BaseResponse : IBaseResponse
 {
     public abstract int StatusCode { get; }
-    public abstract IEnumerable<string> StatusMessages { get; }
+    public abstract List<string> StatusMessages { get; }
 
     public virtual string StatusMessagesToSingleMessage()
     {
         return StatusMessages.JoinAsString(", ");
+    }
+    
+    public virtual  string ToJsonString()
+    {
+        return JsonSerializer.Serialize(this);
     }
 }
 
