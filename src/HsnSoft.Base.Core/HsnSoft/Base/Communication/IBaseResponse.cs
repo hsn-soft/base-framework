@@ -6,7 +6,7 @@ public interface IBaseResponse
 {
     public int StatusCode { get; }
 
-    public IEnumerable<string> StatusMessages { get; }
+    public List<string> StatusMessages { get; }
 
     string StatusMessagesToSingleMessage();
 }
