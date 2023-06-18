@@ -1,9 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using HsnSoft.Base.Communication;
 
-namespace HsnSoft.Base.Application.Dtos;
+namespace HsnSoft.Base.Communication;
 
 [Serializable]
 public sealed class DtoResponse : BaseResponse
