@@ -65,7 +65,7 @@ public class EventBusServiceBus : IEventBus, IDisposable
         {
             try
             {
-                _serviceBusPersisterConnection.AdministrationClient.CreateRuleAsync(_eventBusConfig.DefaultTopicName, _eventBusConfig.SubscriberClientAppName, new CreateRuleOptions { Filter = new CorrelationRuleFilter() { Subject = eventName }, Name = eventName }).GetAwaiter().GetResult();
+                _serviceBusPersisterConnection.AdministrationClient.CreateRuleAsync(_eventBusConfig.DefaultTopicName, _eventBusConfig.SubscriberClientAppName, new CreateRuleOptions { Filter = new CorrelationRuleFilter { Subject = eventName }, Name = eventName }).GetAwaiter().GetResult();
             }
             catch (ServiceBusException)
             {

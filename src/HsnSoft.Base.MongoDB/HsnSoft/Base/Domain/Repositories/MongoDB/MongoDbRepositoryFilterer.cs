@@ -84,7 +84,7 @@ public class MongoDbRepositoryFilterer<TEntity, TKey> : MongoDbRepositoryFiltere
 
     public virtual async Task<FilterDefinition<TEntity>> CreateEntitiesFilterAsync(IEnumerable<TKey> ids, bool applyFilters = false)
     {
-        var filters = new List<FilterDefinition<TEntity>>() { Builders<TEntity>.Filter.In(e => e.Id, ids), };
+        var filters = new List<FilterDefinition<TEntity>> { Builders<TEntity>.Filter.In(e => e.Id, ids), };
 
         if (applyFilters)
         {
