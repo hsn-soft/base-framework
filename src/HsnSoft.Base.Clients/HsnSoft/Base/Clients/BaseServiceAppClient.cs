@@ -68,7 +68,7 @@ public abstract class BaseServiceAppClient
         }
     }
 
-    private static async Task CheckResult(HttpResponseMessage response)
+    protected async Task CheckResult(HttpResponseMessage response)
     {
         if (!response.IsSuccessStatusCode)
         {
