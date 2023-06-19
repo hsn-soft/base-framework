@@ -1,7 +1,7 @@
 <Project>
     <PropertyGroup>
         <LangVersion>latest</LangVersion>
-        <Version>6.0.62</Version>
+        <Version>6.0.63</Version>
         <MicrosoftPackageVersion>7.0.0</MicrosoftPackageVersion>
         <MicrosoftAspNetCorePackageVersion>6.0.18</MicrosoftAspNetCorePackageVersion>
         <MicrosoftEntityFrameworkCorePackageVersion>7.0.7</MicrosoftEntityFrameworkCorePackageVersion>
