@@ -2,7 +2,8 @@ name: 'Analyze CodeQL'
 
 on:
   pull_request:
-    branches: [ "rel/*" ]
+    branches: [ "RELEASE" ]
+#    branches: [ "rel/*" ]
     types: [ opened, synchronize, reopened ]
   schedule:
     - cron: '24 14 * * 1'
