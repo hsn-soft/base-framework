@@ -4,7 +4,7 @@
     <Import Project="..\..\common.props" />
 
     <PropertyGroup>
-        <TargetFramework>net6.0</TargetFramework>
+        <TargetFramework>net7.0</TargetFramework>
         <AssemblyName>HsnSoft.Base.EntityFrameworkCore.Oracle</AssemblyName>
         <PackageId>HsnSoft.Base.EntityFrameworkCore.Oracle</PackageId>
         <AssetTargetFallback>$(AssetTargetFallback);portable-net45+win8+wp8+wpa81;</AssetTargetFallback>
@@ -20,7 +20,7 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="$(MicrosoftEntityFrameworkCorePackageVersion)" />
-        <PackageReference Include="Oracle.EntityFrameworkCore" Version="7.21.9" />
+        <PackageReference Include="Oracle.EntityFrameworkCore" Version="7.21.12" />
     </ItemGroup>
 
 </Project>
