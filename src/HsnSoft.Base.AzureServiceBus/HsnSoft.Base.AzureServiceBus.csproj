@@ -4,7 +4,7 @@
     <Import Project="..\..\common.props" />
 
     <PropertyGroup>
-        <TargetFrameworks>netstandard2.0;netstandard2.1;net6.0</TargetFrameworks>
+        <TargetFrameworks>netstandard2.0;netstandard2.1;net7.0</TargetFrameworks>
         <AssemblyName>HsnSoft.Base.AzureServiceBus</AssemblyName>
         <PackageId>HsnSoft.Base.AzureServiceBus</PackageId>
         <AssetTargetFallback>$(AssetTargetFallback);portable-net45+win8+wp8+wpa81;</AssetTargetFallback>
@@ -15,7 +15,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Azure.Messaging.ServiceBus" Version="7.15.0" />
+        <PackageReference Include="Azure.Messaging.ServiceBus" Version="7.16.2" />
         <ProjectReference Include="..\HsnSoft.Base.Json\HsnSoft.Base.Json.csproj" />
         <ProjectReference Include="..\HsnSoft.Base.Threading\HsnSoft.Base.Threading.csproj" />
     </ItemGroup>

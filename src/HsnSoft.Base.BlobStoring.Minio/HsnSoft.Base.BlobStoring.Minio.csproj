@@ -3,7 +3,7 @@
     <Import Project="..\..\common.props" />
 
     <PropertyGroup>
-        <TargetFramework>net6.0</TargetFramework>
+        <TargetFramework>net7.0</TargetFramework>
         <AssemblyName>HsnSoft.Base.BlobStoring.Minio</AssemblyName>
         <PackageId>HsnSoft.Base.BlobStoring.Minio</PackageId>
         <AssetTargetFallback>$(AssetTargetFallback);portable-net45+win8+wp8+wpa81;</AssetTargetFallback>
@@ -15,7 +15,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\HsnSoft.Base.BlobStoring\HsnSoft.Base.BlobStoring.csproj" />
-        <PackageReference Include="Minio" Version="5.0.0" />
+        <PackageReference Include="Minio" Version="6.0.0" />
     </ItemGroup>
 
 </Project>

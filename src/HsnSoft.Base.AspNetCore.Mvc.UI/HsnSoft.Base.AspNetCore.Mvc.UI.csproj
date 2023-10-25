@@ -4,7 +4,7 @@
     <Import Project="..\..\common.props"/>
 
     <PropertyGroup>
-        <TargetFramework>net6.0</TargetFramework>
+        <TargetFramework>net7.0</TargetFramework>
         <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
         <AssemblyName>HsnSoft.Base.AspNetCore.Mvc.UI</AssemblyName>
         <PackageId>HsnSoft.Base.AspNetCore.Mvc.UI</PackageId>
@@ -23,7 +23,7 @@
     <!--Temporary-->
 
     <ItemGroup>
-        <PackageReference Include="NUglify" Version="1.20.7"/>
+        <PackageReference Include="NUglify" Version="1.21.0" />
     </ItemGroup>
 
     <ItemGroup>
