@@ -1,9 +1,9 @@
-FROM mcr.microsoft.com/dotnet/sdk:6.0 AS base
+FROM mcr.microsoft.com/dotnet/sdk:7.0 AS base
 WORKDIR /packages
 ENV NUGET_SOURCE='https://nuget.pkg.github.com/hsn-soft/index.json'
 USER root
 
-FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build-stage
+FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build-stage
 WORKDIR /build-source
 
 COPY ["./assets/hsn-base.png", "./assets/"]
