@@ -1,9 +1,9 @@
 <Project>
     <PropertyGroup>
         <LangVersion>latest</LangVersion>
-        <Version>7.0.3</Version>
+        <Version>2024.6.1</Version>
         <MicrosoftPackageVersion>7.0.0</MicrosoftPackageVersion>
-        <MicrosoftAspNetCorePackageVersion>7.0.13</MicrosoftAspNetCorePackageVersion>
+        <MicrosoftAspNetCorePackageVersion>6.0.24</MicrosoftAspNetCorePackageVersion>
         <MicrosoftEntityFrameworkCorePackageVersion>7.0.13</MicrosoftEntityFrameworkCorePackageVersion>
         <NoWarn>$(NoWarn);CS1591;CS1998;CS0436</NoWarn>
         <PackageProjectUrl>https://hhsahin.com/</PackageProjectUrl>

@@ -4,7 +4,7 @@
   <Import Project="..\..\common.props" />
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
     <AssemblyName>HsnSoft.Base.AspNetCore.Mvc.UI.Packages</AssemblyName>
     <PackageId>HsnSoft.Base.AspNetCore.Mvc.UI.Packages</PackageId>
