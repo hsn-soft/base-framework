@@ -1,9 +1,9 @@
-FROM mcr.microsoft.com/dotnet/sdk:7.0 AS base
+FROM mcr.microsoft.com/dotnet/sdk:6.0 AS base
 WORKDIR /packages
 ENV NUGET_SOURCE='https://nuget.pkg.github.com/hsn-soft/index.json'
 USER root
 
-FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build-stage
+FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build-stage
 WORKDIR /build-source
 
 COPY ["./assets/hsn-base.png", "./assets/"]
@@ -24,7 +24,7 @@ RUN dotnet test "./HsnSoft.Base.sln" --no-restore --no-build --configuration Rel
 
 RUN --mount=type=secret,id=VERSION_NUMBER \
     export VERSION_NUMBER=$(cat /run/secrets/VERSION_NUMBER) && \
-    echo ${VERSION_NUMBER} > ./version_number 
+    echo ${VERSION_NUMBER} > ./version_number
 
 RUN --mount=type=secret,id=ACTION_NUMBER \
     export ACTION_NUMBER=$(cat /run/secrets/ACTION_NUMBER) && \
