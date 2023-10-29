@@ -419,7 +419,7 @@ public abstract class BaseDbContext<TDbContext> : DbContext, ITransientDependenc
             expression = e => !IsSoftDeleteFilterEnabled || !EF.Property<bool>(e, "IsDeleted");
         }
 
-        if (typeof(IMultiTenant).IsAssignableFrom(typeof(TEntity)))
+        if (typeof(IMultiTenant).IsAssignableFrom(typeof(TEntity)) && CurrentTenantId.HasValue)
         {
             Expression<Func<TEntity, bool>> multiTenantFilter = e => !IsMultiTenantFilterEnabled || EF.Property<Guid>(e, "TenantId") == CurrentTenantId;
             expression = expression == null ? multiTenantFilter : CombineExpressions(expression, multiTenantFilter);
