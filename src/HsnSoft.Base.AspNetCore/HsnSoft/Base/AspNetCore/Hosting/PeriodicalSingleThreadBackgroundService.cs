@@ -17,30 +17,30 @@ public abstract class PeriodicalSingleThreadBackgroundService<TService> : Backgr
 
     private bool IsProcessing { get; set; }
 
-    protected PeriodicalSingleThreadBackgroundService(TimeSpan periodRange, bool waitContinuousThread = false, ILogger logger = null)
+    protected PeriodicalSingleThreadBackgroundService(TimeSpan periodRange, bool waitContinuousThread = false, ILogger<TService> logger = null)
     {
-        Log = logger ?? LoggerFactory.Create(x => x.AddConsole()).CreateLogger(nameof(TService));
+        Log = logger ?? LoggerFactory.Create(x => x.AddConsole()).CreateLogger(typeof(TService).Name);
         PeriodRange = periodRange;
         WaitContinuousThread = waitContinuousThread;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        Log.LogInformation($"{nameof(TService)} Execute - {DateTime.UtcNow:yyyyMMdd hh:mm:ss}");
+        Log.LogInformation($"{typeof(TService).Name} -> Execute - {DateTime.UtcNow:yyyyMMdd hh:mm:ss}");
 
         await BackgroundProcessing(stoppingToken);
     }
 
     public override Task StopAsync(CancellationToken cancellationToken)
     {
-        Log.LogInformation($"{typeof(TService).Name} Stopping - {DateTime.UtcNow:yyyyMMdd hh:mm:ss}");
+        Log.LogInformation($"{typeof(TService).Name} -> Stopping - {DateTime.UtcNow:yyyyMMdd hh:mm:ss}");
         while (IsProcessing && WaitContinuousThread)
         {
             // Wait is uncompleted tasks
             Task.Delay(500).GetAwaiter().GetResult();
         }
 
-        Log.LogInformation($"{typeof(TService).Name} Stopped - {DateTime.UtcNow:yyyyMMdd hh:mm:ss}");
+        Log.LogInformation($"{typeof(TService).Name} -> Stopped - {DateTime.UtcNow:yyyyMMdd hh:mm:ss}");
         // Send cancellation token
         return base.StopAsync(cancellationToken);
     }
@@ -52,13 +52,13 @@ public abstract class PeriodicalSingleThreadBackgroundService<TService> : Backgr
             IsProcessing = true;
             try
             {
-                Log.LogInformation($"{typeof(TService).Name} Processing Begin - {DateTime.UtcNow:yyyyMMdd hh:mm:ss}");
+                Log.LogInformation($"{typeof(TService).Name} -> Processing Begin - {DateTime.UtcNow:yyyyMMdd hh:mm:ss}");
                 await OperationAsync(stoppingToken);
-                Log.LogInformation($"{typeof(TService).Name} Processing End - {DateTime.UtcNow:yyyyMMdd hh:mm:ss}");
+                Log.LogInformation($"{typeof(TService).Name} -> Processing End - {DateTime.UtcNow:yyyyMMdd hh:mm:ss}");
             }
             catch (Exception ex)
             {
-                Log.LogInformation($"{typeof(TService).Name} Operation Cancelled | {ex.Message}");
+                Log.LogInformation($"{typeof(TService).Name} -> Operation Cancelled | {ex.Message}");
             }
             finally
             {
