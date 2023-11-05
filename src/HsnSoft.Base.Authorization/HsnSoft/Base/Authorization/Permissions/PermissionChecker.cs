@@ -19,7 +19,13 @@ public class PermissionChecker : IPermissionChecker, ITransientDependency
         PrincipalAccessor = principalAccessor;
         PermissionStore = permissionStore;
 
-        _providers = new List<IPermissionValueProvider> { new ClientPermissionValueProvider(PermissionStore, currentTenant), new RolePermissionValueProvider(PermissionStore), new UserPermissionValueProvider(PermissionStore), };
+        _providers = new List<IPermissionValueProvider>
+        {
+            //new ClientPermissionValueProvider(PermissionStore, currentTenant),
+            // client permission checker inside role permission
+            new RolePermissionValueProvider(PermissionStore, currentTenant),
+            new UserPermissionValueProvider(PermissionStore)
+        };
     }
 
     protected ICurrentPrincipalAccessor PrincipalAccessor { get; }
