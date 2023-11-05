@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using HsnSoft.Base.Authorization.Permissions;
@@ -35,24 +34,14 @@ public class BasePermissionStore : IPermissionStore, ISingletonDependency
         return Task.FromResult(validationResult);
     }
 
-    public void SetAllPermissions(IEnumerable<BasePermissionStoreItem> permissions)
+    public Task SetAllPermissions(IEnumerable<BasePermissionStoreItem> permissions)
     {
         _permissions = permissions ?? new List<BasePermissionStoreItem>();
+        return Task.CompletedTask;
     }
 
-    public IEnumerable<BasePermissionStoreItem> GetAllPermissions()
+    public Task<IEnumerable<BasePermissionStoreItem>> GetAllPermissions()
     {
-        return _permissions;
+        return Task.FromResult(_permissions);
     }
-}
-
-public class BasePermissionStoreItem
-{
-    public Guid? TenantId { get; set; }
-
-    public string Name { get; set; }
-
-    public string ProviderName { get; set; }
-
-    public string ProviderKey { get; set; }
 }
