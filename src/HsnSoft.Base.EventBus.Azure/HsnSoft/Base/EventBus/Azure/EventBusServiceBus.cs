@@ -48,7 +48,7 @@ public class EventBusServiceBus : IEventBus, IDisposable
 
         var body = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(@event, @event.GetType(), new JsonSerializerOptions { WriteIndented = true });
 
-        var message = new ServiceBusMessage { MessageId = Guid.NewGuid().ToString(), Body = new BinaryData(body), Subject = eventName, };
+        var message = new ServiceBusMessage { MessageId = Guid.NewGuid().ToString(), Body = new BinaryData(body), Subject = eventName };
 
         _sender.SendMessageAsync(message)
             .GetAwaiter()
