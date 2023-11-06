@@ -39,7 +39,7 @@ public class RolePermissionValueProvider : PermissionValueProvider
 
             using (CurrentTenant.Change(null))
             {
-                return await PermissionStore.IsGrantedAsync(context.Permission.Name, Name, clientId)
+                return await PermissionStore.IsGrantedAsync(context.Permission.Name, "C", clientId)
                     ? PermissionGrantResult.Granted
                     : PermissionGrantResult.Undefined;
             }
