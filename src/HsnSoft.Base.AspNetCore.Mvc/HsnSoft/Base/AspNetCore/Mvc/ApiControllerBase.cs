@@ -1,5 +1,7 @@
 using HsnSoft.Base.DependencyInjection;
 using HsnSoft.Base.Guids;
+using HsnSoft.Base.MultiTenancy;
+using HsnSoft.Base.Users;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
@@ -19,6 +21,9 @@ public abstract class ApiControllerBase : ControllerBase
     protected ILogger Logger => LazyServiceProvider.LazyGetService<ILogger>(provider => LoggerFactory?.CreateLogger(GetType().FullName) ?? NullLogger.Instance);
 
     protected IAuthorizationService AuthorizationService => LazyServiceProvider.LazyGetRequiredService<IAuthorizationService>();
+    protected ICurrentUser CurrentUser => this.LazyServiceProvider.LazyGetRequiredService<ICurrentUser>();
+
+    protected ICurrentTenant CurrentTenant => this.LazyServiceProvider.LazyGetRequiredService<ICurrentTenant>();
 
     protected IStringLocalizerFactory StringLocalizerFactory => LazyServiceProvider.LazyGetRequiredService<IStringLocalizerFactory>();
 }
