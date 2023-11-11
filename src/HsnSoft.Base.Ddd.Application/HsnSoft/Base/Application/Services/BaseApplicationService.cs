@@ -15,10 +15,6 @@ public abstract class BaseApplicationService :
 {
     protected IBaseLazyServiceProvider LazyServiceProvider { get; set; }
 
-    protected ICurrentUser CurrentUser => this.LazyServiceProvider.LazyGetRequiredService<ICurrentUser>();
-
-    protected ICurrentTenant CurrentTenant => this.LazyServiceProvider.LazyGetRequiredService<ICurrentTenant>();
-
     protected IDataFilter DataFilter => this.LazyServiceProvider.LazyGetRequiredService<IDataFilter>();
 
     protected IGuidGenerator GuidGenerator => this.LazyServiceProvider.LazyGetService<IGuidGenerator>((IGuidGenerator)SimpleGuidGenerator.Instance);
