@@ -15,7 +15,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\HsnSoft.Base.BlobStoring\HsnSoft.Base.BlobStoring.csproj" />
-        <PackageReference Include="Minio" Version="6.0.0" />
+        <PackageReference Include="Minio" Version="6.0.1" />
     </ItemGroup>
 
 </Project>
