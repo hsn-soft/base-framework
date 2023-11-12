@@ -18,9 +18,13 @@ public class BasicTenantInfo
     [CanBeNull]
     public string Name { get; }
 
-    public BasicTenantInfo(Guid? tenantId, string name = null)
+    [CanBeNull]
+    public string Domain { get; }
+
+    public BasicTenantInfo(Guid? tenantId, string name = null,string domain = null)
     {
         TenantId = tenantId;
         Name = name;
+        Domain = domain;
     }
 }

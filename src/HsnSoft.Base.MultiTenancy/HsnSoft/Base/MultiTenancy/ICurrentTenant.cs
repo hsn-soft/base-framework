@@ -13,5 +13,8 @@ public interface ICurrentTenant
     [CanBeNull]
     string Name { get; }
 
-    IDisposable Change(Guid? id, string name = null);
+    [CanBeNull]
+    string Domain { get; }
+
+    IDisposable Change(Guid? id, string name = null, string domain = null);
 }

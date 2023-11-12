@@ -84,6 +84,34 @@ public static class BaseClaimsIdentityExtensions
         return null;
     }
 
+    public static string FindTenantDomain([NotNull] this ClaimsPrincipal principal)
+    {
+        Check.NotNull(principal, nameof(principal));
+
+        var tenantDomainOrNull = principal.Claims?.FirstOrDefault(c => c.Type == BaseClaimTypes.TenantDomain);
+        if (tenantDomainOrNull == null || tenantDomainOrNull.Value.IsNullOrWhiteSpace())
+        {
+            return null;
+        }
+
+        return tenantDomainOrNull.Value;
+    }
+
+    public static string FindTenantDomain([NotNull] this IIdentity identity)
+    {
+        Check.NotNull(identity, nameof(identity));
+
+        var claimsIdentity = identity as ClaimsIdentity;
+
+        var tenantDomainOrNull = claimsIdentity?.Claims?.FirstOrDefault(c => c.Type == BaseClaimTypes.TenantDomain);
+        if (tenantDomainOrNull == null || tenantDomainOrNull.Value.IsNullOrWhiteSpace())
+        {
+            return null;
+        }
+
+        return tenantDomainOrNull.Value;
+    }
+
     public static string FindClientId([NotNull] this ClaimsPrincipal principal)
     {
         Check.NotNull(principal, nameof(principal));
