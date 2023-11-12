@@ -57,6 +57,7 @@ public static class BaseClaimTypes
     /// Default: "tenantid".
     /// </summary>
     public static string TenantId { get; set; } = "tenantid";
+    public static string TenantDomain { get; set; } = "tenantdomain";
 
     /// <summary>
     /// Default: "editionid".

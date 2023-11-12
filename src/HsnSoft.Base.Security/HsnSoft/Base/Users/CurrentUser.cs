@@ -37,6 +37,7 @@ public class CurrentUser : ICurrentUser, ITransientDependency
     public virtual bool EmailVerified => string.Equals(this.FindClaimValue(BaseClaimTypes.EmailVerified), "true", StringComparison.InvariantCultureIgnoreCase);
 
     public virtual Guid? TenantId => _principalAccessor.Principal?.FindTenantId();
+    public virtual string TenantDomain => _principalAccessor.Principal?.FindTenantDomain();
 
     public virtual string[] Roles => FindClaims(BaseClaimTypes.Role).Select(c => c.Value).Distinct().ToArray();
 

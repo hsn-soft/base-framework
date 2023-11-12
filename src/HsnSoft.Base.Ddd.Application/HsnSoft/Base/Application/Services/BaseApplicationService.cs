@@ -19,5 +19,9 @@ public abstract class BaseApplicationService :
 
     protected IGuidGenerator GuidGenerator => this.LazyServiceProvider.LazyGetService<IGuidGenerator>((IGuidGenerator)SimpleGuidGenerator.Instance);
 
+    protected ICurrentUser CurrentUser => this.LazyServiceProvider.LazyGetRequiredService<ICurrentUser>();
+
+    protected ICurrentTenant CurrentTenant => this.LazyServiceProvider.LazyGetRequiredService<ICurrentTenant>();
+
     protected IStringLocalizerFactory StringLocalizerFactory => this.LazyServiceProvider.LazyGetRequiredService<IStringLocalizerFactory>();
 }

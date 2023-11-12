@@ -18,15 +18,17 @@ public class CurrentTenant : ICurrentTenant, ITransientDependency
 
     public string Name => _currentTenantAccessor.Current?.Name;
 
-    public IDisposable Change(Guid? id, string name = null)
+    public string Domain => _currentTenantAccessor.Current?.Domain;
+
+    public IDisposable Change(Guid? id, string name = null, string domain = null)
     {
-        return SetCurrent(id, name);
+        return SetCurrent(id, name, domain);
     }
 
-    private IDisposable SetCurrent(Guid? tenantId, string name = null)
+    private IDisposable SetCurrent(Guid? tenantId, string name = null, string domain = null)
     {
         var parentScope = _currentTenantAccessor.Current;
-        _currentTenantAccessor.Current = new BasicTenantInfo(tenantId, name);
+        _currentTenantAccessor.Current = new BasicTenantInfo(tenantId, name, domain);
         return new DisposeAction(() =>
         {
             _currentTenantAccessor.Current = parentScope;
