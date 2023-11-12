@@ -32,6 +32,9 @@ public interface ICurrentUser
 
     Guid? TenantId { get; }
 
+    [CanBeNull]
+    string TenantDomain { get; }
+
     [NotNull]
     string[] Roles { get; }
 
