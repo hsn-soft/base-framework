@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations;
 namespace HsnSoft.Base.Application.Dtos;
 
 [Serializable]
-public class FilterLimitedResultRequestDto : ILimitedResultRequest, IValidatableObject
+public class SearchLimitedResultRequestDto : ILimitedResultRequest, IValidatableObject
 {
     public static int DefaultMaxResultCount { get; set; } = 10;
 
