@@ -16,7 +16,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\HsnSoft.Base.BlobStoring\HsnSoft.Base.BlobStoring.csproj" />
-        <PackageReference Include="Azure.Storage.Blobs" Version="12.19.0" />
+        <PackageReference Include="Azure.Storage.Blobs" Version="12.19.1" />
     </ItemGroup>
 
 </Project>
