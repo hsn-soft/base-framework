@@ -9,38 +9,40 @@ namespace HsnSoft.Base.AspNetCore.Hosting;
 public abstract class PeriodicalSingleThreadBackgroundService<TService> : BackgroundService, IPeriodicalSingleThreadBackgroundService
     where TService : IPeriodicalSingleThreadBackgroundService
 {
+    public bool WaitContinuousThread { get; set; }
+
     private ILogger Log { get; set; }
 
-    public TimeSpan PeriodRange { get; set; }
-
-    public bool WaitContinuousThread { get; set; }
+    private int PeriodRangeSeconds { get; set; }
 
     private bool IsProcessing { get; set; }
 
-    protected PeriodicalSingleThreadBackgroundService(TimeSpan periodRange, bool waitContinuousThread = false, ILogger<TService> logger = null)
+    private bool TriggerIsActive { get; set; }
+
+    protected PeriodicalSingleThreadBackgroundService(int periodRangeSeconds, bool waitContinuousThread = false, ILogger<TService> logger = null)
     {
         Log = logger ?? LoggerFactory.Create(x => x.AddConsole()).CreateLogger(typeof(TService).Name);
-        PeriodRange = periodRange;
+        PeriodRangeSeconds = periodRangeSeconds < 1 ? 60 : periodRangeSeconds;
         WaitContinuousThread = waitContinuousThread;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        Log.LogInformation($"{typeof(TService).Name} -> Execute - {DateTime.UtcNow:yyyyMMdd hh:mm:ss}");
+        Log.LogInformation("{Name} -> Execute - {UtcNow}", typeof(TService).Name, DateTime.UtcNow);
 
         await BackgroundProcessing(stoppingToken);
     }
 
     public override Task StopAsync(CancellationToken cancellationToken)
     {
-        Log.LogInformation($"{typeof(TService).Name} -> Stopping - {DateTime.UtcNow:yyyyMMdd hh:mm:ss}");
+        Log.LogInformation("{Name} -> Stopping - {UtcNow}", typeof(TService).Name, DateTime.UtcNow);
         while (IsProcessing && WaitContinuousThread)
         {
             // Wait is uncompleted tasks
             Task.Delay(500).GetAwaiter().GetResult();
         }
 
-        Log.LogInformation($"{typeof(TService).Name} -> Stopped - {DateTime.UtcNow:yyyyMMdd hh:mm:ss}");
+        Log.LogInformation("{Name} -> Stopped - {UtcNow}", typeof(TService).Name, DateTime.UtcNow);
         // Send cancellation token
         return base.StopAsync(cancellationToken);
     }
@@ -52,22 +54,33 @@ public abstract class PeriodicalSingleThreadBackgroundService<TService> : Backgr
             IsProcessing = true;
             try
             {
-                Log.LogInformation($"{typeof(TService).Name} -> Processing Begin - {DateTime.UtcNow:yyyyMMdd hh:mm:ss}");
+                Log.LogInformation("{Name} -> Processing Begin - {UtcNow}", typeof(TService).Name, DateTime.UtcNow);
                 await OperationAsync(stoppingToken);
-                Log.LogInformation($"{typeof(TService).Name} -> Processing End - {DateTime.UtcNow:yyyyMMdd hh:mm:ss}");
+                Log.LogInformation("{Name} -> Processing End - {UtcNow}", typeof(TService).Name, DateTime.UtcNow);
             }
             catch (Exception ex)
             {
-                Log.LogInformation($"{typeof(TService).Name} -> Operation Cancelled | {ex.Message}");
+                Log.LogInformation("{Name} -> Operation Cancelled | {ExMessage}", typeof(TService).Name, ex.Message);
             }
             finally
             {
                 IsProcessing = false;
             }
 
-            await Task.Delay(PeriodRange, stoppingToken);
+            for (var i = 0; i < PeriodRangeSeconds; i++)
+            {
+                await Task.Delay(1000, stoppingToken);
+                if (!TriggerIsActive) continue;
+                TriggerIsActive = false;
+                break;
+            }
         }
     }
 
     public abstract Task OperationAsync(CancellationToken cancellationToken);
+
+    public void TriggerOperationWithoutDelay()
+    {
+        TriggerIsActive = true;
+    }
 }
