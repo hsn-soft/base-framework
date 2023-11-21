@@ -6,7 +6,8 @@ namespace HsnSoft.Base.AspNetCore.Hosting;
 
 public interface IPeriodicalSingleThreadBackgroundService
 {
-    protected TimeSpan PeriodRange { get; set; }
     protected bool WaitContinuousThread { get; set; }
     protected Task OperationAsync(CancellationToken cancellationToken);
+
+    protected void TriggerOperationWithoutDelay();
 }
