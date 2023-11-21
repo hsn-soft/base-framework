@@ -8,6 +8,5 @@ public interface IPeriodicalSingleThreadBackgroundService
 {
     protected bool WaitContinuousThread { get; set; }
     protected Task OperationAsync(CancellationToken cancellationToken);
-
-    protected void TriggerOperationWithoutDelay();
+    protected void SkipOperationWaitPeriod();
 }

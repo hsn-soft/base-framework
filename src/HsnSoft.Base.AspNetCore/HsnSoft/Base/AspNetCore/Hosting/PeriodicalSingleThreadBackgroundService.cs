@@ -13,16 +13,16 @@ public abstract class PeriodicalSingleThreadBackgroundService<TService> : Backgr
 
     private ILogger Log { get; set; }
 
-    private int PeriodRangeSeconds { get; set; }
+    private int WaitPeriodSeconds { get; set; }
 
     private bool IsProcessing { get; set; }
 
     private bool TriggerIsActive { get; set; }
 
-    protected PeriodicalSingleThreadBackgroundService(int periodRangeSeconds, bool waitContinuousThread = false, ILogger<TService> logger = null)
+    protected PeriodicalSingleThreadBackgroundService(int waitPeriodSeconds = 1, bool waitContinuousThread = false, ILogger<TService> logger = null)
     {
         Log = logger ?? LoggerFactory.Create(x => x.AddConsole()).CreateLogger(typeof(TService).Name);
-        PeriodRangeSeconds = periodRangeSeconds < 1 ? 60 : periodRangeSeconds;
+        WaitPeriodSeconds = waitPeriodSeconds < 1 ? 1 : waitPeriodSeconds;
         WaitContinuousThread = waitContinuousThread;
     }
 
@@ -67,7 +67,7 @@ public abstract class PeriodicalSingleThreadBackgroundService<TService> : Backgr
                 IsProcessing = false;
             }
 
-            for (var i = 0; i < PeriodRangeSeconds; i++)
+            for (var i = 0; i < WaitPeriodSeconds; i++)
             {
                 await Task.Delay(1000, stoppingToken);
                 if (!TriggerIsActive) continue;
@@ -79,8 +79,5 @@ public abstract class PeriodicalSingleThreadBackgroundService<TService> : Backgr
 
     public abstract Task OperationAsync(CancellationToken cancellationToken);
 
-    public void TriggerOperationWithoutDelay()
-    {
-        TriggerIsActive = true;
-    }
+    public void SkipOperationWaitPeriod() => TriggerIsActive = true;
 }
