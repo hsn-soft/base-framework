@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using HsnSoft.Base.Reflection;
 using HsnSoft.Base.Timing;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
@@ -56,7 +57,7 @@ public class MongoModelBuilder : IMongoModelBuilder
     {
         lock (SyncObj)
         {
-            var useBaseClockHandleDateTime = dbContext.LazyServiceProvider.LazyGetRequiredService<IOptions<BaseMongoDbOptions>>().Value.UseBaseClockHandleDateTime;
+            var useBaseClockHandleDateTime = dbContext.ServiceProvider.GetRequiredService<IOptions<BaseMongoDbOptions>>().Value.UseBaseClockHandleDateTime;
 
             var entityModels = _entityModelBuilders
                 .Select(x => x.Value)
@@ -146,7 +147,7 @@ public class MongoModelBuilder : IMongoModelBuilder
 
     private DateTimeKind GetDateTimeKind(BaseMongoDbContext dbContext)
     {
-        return dbContext.LazyServiceProvider.LazyGetRequiredService<IOptions<BaseClockOptions>>().Value.Kind;
+        return dbContext.ServiceProvider.GetRequiredService<IOptions<BaseClockOptions>>().Value.Kind;
     }
 
     protected virtual void CreateCollectionIfNotExists(BaseMongoDbContext dbContext, string collectionName)
