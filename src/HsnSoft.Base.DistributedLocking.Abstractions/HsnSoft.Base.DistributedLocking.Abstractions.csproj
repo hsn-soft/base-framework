@@ -16,7 +16,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\HsnSoft.Base.Core\HsnSoft.Base.Core.csproj" />
-        <PackageReference Include="AsyncKeyedLock" Version="6.2.2" />
+        <PackageReference Include="AsyncKeyedLock" Version="6.2.4" />
         <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="$(MicrosoftPackageVersion)" />
     </ItemGroup>
 
