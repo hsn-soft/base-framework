@@ -18,8 +18,8 @@ using HsnSoft.Base.Timing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 
 namespace HsnSoft.Base.EntityFrameworkCore;
 
@@ -29,11 +29,10 @@ public abstract class BaseDbContext<TDbContext> : DbContext, ITransientDependenc
     protected BaseDbContext(DbContextOptions<TDbContext> options)
         : base(options)
     {
-        //LazyServiceProvider = serviceProvider?.GetRequiredService<IBaseLazyServiceProvider>();
         Initialize();
     }
 
-    public IBaseLazyServiceProvider LazyServiceProvider { get; set; }
+    public IServiceProvider ServiceProvider { get; set; }
 
     protected virtual Guid? CurrentTenantId => CurrentTenant?.Id;
 
@@ -41,20 +40,20 @@ public abstract class BaseDbContext<TDbContext> : DbContext, ITransientDependenc
 
     protected virtual bool IsSoftDeleteFilterEnabled => DataFilter?.IsEnabled<ISoftDelete>() ?? false;
 
-    public ICurrentTenant CurrentTenant => LazyServiceProvider.LazyGetRequiredService<ICurrentTenant>();
+    public ICurrentTenant CurrentTenant => ServiceProvider?.GetService<ICurrentTenant>();
 
-    public IGuidGenerator GuidGenerator => LazyServiceProvider.LazyGetService<IGuidGenerator>(SimpleGuidGenerator.Instance);
+    public IGuidGenerator GuidGenerator => ServiceProvider?.GetService<IGuidGenerator>();
 
-    public IDataFilter DataFilter => LazyServiceProvider.LazyGetRequiredService<IDataFilter>();
+    public IDataFilter DataFilter => ServiceProvider?.GetService<IDataFilter>();
 
-    public IAuditPropertySetter AuditPropertySetter => LazyServiceProvider.LazyGetRequiredService<IAuditPropertySetter>();
+    public IAuditPropertySetter AuditPropertySetter => ServiceProvider?.GetRequiredService<IAuditPropertySetter>();
 
-    public IClock Clock => LazyServiceProvider.LazyGetRequiredService<IClock>();
+    public IClock Clock => ServiceProvider?.GetRequiredService<IClock>();
 
-    // public IDistributedEventBus DistributedEventBus => LazyServiceProvider.LazyGetRequiredService<IDistributedEventBus>();
-    // public ILocalEventBus LocalEventBus => LazyServiceProvider.LazyGetRequiredService<ILocalEventBus>();
+    // public IDistributedEventBus DistributedEventBus => ServiceProvider?.GetRequiredService<IDistributedEventBus>();
+    // public ILocalEventBus LocalEventBus => ServiceProvider?.GetRequiredService<ILocalEventBus>();
 
-    public ILogger<BaseDbContext<TDbContext>> Logger => LazyServiceProvider.LazyGetService<ILogger<BaseDbContext<TDbContext>>>(NullLogger<BaseDbContext<TDbContext>>.Instance);
+    public ILogger<BaseDbContext<TDbContext>> Logger => ServiceProvider?.GetService<ILogger<BaseDbContext<TDbContext>>>();
 
 
     private void Initialize(double timeout = 30000)

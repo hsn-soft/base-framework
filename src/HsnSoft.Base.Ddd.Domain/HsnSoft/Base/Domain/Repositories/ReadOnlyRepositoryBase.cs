@@ -9,25 +9,24 @@ using HsnSoft.Base.DependencyInjection;
 using HsnSoft.Base.Domain.Entities;
 using HsnSoft.Base.MultiTenancy;
 using HsnSoft.Base.Threading;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace HsnSoft.Base.Domain.Repositories;
 
-public abstract class ReadOnlyRepositoryBase<TEntity> : IReadOnlyRepository<TEntity> //, IServiceProviderAccessor
+public abstract class ReadOnlyRepositoryBase<TEntity> : IReadOnlyRepository<TEntity>, IServiceProviderAccessor
     where TEntity : class, IEntity
 {
-    public IBaseLazyServiceProvider LazyServiceProvider { get; set; }
+    public IServiceProvider ServiceProvider { get; set; }
 
-    // public IServiceProvider ServiceProvider { get; set; }
+    public IDataFilter DataFilter => ServiceProvider?.GetRequiredService<IDataFilter>();
 
-    public IDataFilter DataFilter => LazyServiceProvider.LazyGetRequiredService<IDataFilter>();
-
-    public ICurrentTenant CurrentTenant => LazyServiceProvider.LazyGetRequiredService<ICurrentTenant>();
+    public ICurrentTenant CurrentTenant => ServiceProvider?.GetRequiredService<ICurrentTenant>();
 
     // public IAsyncQueryableExecuter AsyncExecuter => LazyServiceProvider.LazyGetRequiredService<IAsyncQueryableExecuter>();
 
     // public IUnitOfWorkManager UnitOfWorkManager => LazyServiceProvider.LazyGetRequiredService<IUnitOfWorkManager>();
 
-    public ICancellationTokenProvider CancellationTokenProvider => LazyServiceProvider.LazyGetService<ICancellationTokenProvider>(NullCancellationTokenProvider.Instance);
+    public ICancellationTokenProvider CancellationTokenProvider => ServiceProvider?.GetService<ICancellationTokenProvider>();
 
     protected ReadOnlyRepositoryBase()
     {
@@ -67,7 +66,7 @@ public abstract class ReadOnlyRepositoryBase<TEntity> : IReadOnlyRepository<TEnt
 
     public abstract Task<List<TEntity>> GetPagedListAsync(int skipCount, int maxResultCount, string sorting, bool includeDetails = false, CancellationToken cancellationToken = default);
 
-    
+
     protected abstract Task SaveChangesAsync(CancellationToken cancellationToken = default);
 
     protected virtual CancellationToken GetCancellationToken(CancellationToken preferredValue = default)
@@ -75,7 +74,7 @@ public abstract class ReadOnlyRepositoryBase<TEntity> : IReadOnlyRepository<TEnt
         // return CancellationTokenProvider.FallbackToProvider(preferredValue);
         return preferredValue;
     }
-    
+
     protected virtual TQueryable ApplyDataFilters<TQueryable>(TQueryable query)
         where TQueryable : IQueryable<TEntity>
     {
