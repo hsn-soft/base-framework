@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using HsnSoft.Base.DependencyInjection;
 using HsnSoft.Base.Domain.Entities;
+using HsnSoft.Base.EntityFrameworkCore;
 using HsnSoft.Base.Guids;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,7 +14,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace HsnSoft.Base.Domain.Repositories.EntityFrameworkCore;
 
 public class EfCoreRepository<TDbContext, TEntity> : RepositoryBase<TEntity>, IEfCoreRepository<TEntity>
-    where TDbContext : DbContext
+    where TDbContext : BaseDbContext<TDbContext>
     where TEntity : class, IEntity
 {
     private readonly TDbContext _dbContext;
@@ -34,6 +35,7 @@ public class EfCoreRepository<TDbContext, TEntity> : RepositoryBase<TEntity>, IE
         LazyServiceProvider = serviceProvider.GetRequiredService<IBaseLazyServiceProvider>();
 
         _dbContext = dbContext;
+        _dbContext.LazyServiceProvider = LazyServiceProvider;
     }
 
     DbContext IEfCoreRepository<TEntity>.GetDbContext()
@@ -326,7 +328,7 @@ public class EfCoreRepository<TDbContext, TEntity> : RepositoryBase<TEntity>, IE
 public class EfCoreRepository<TDbContext, TEntity, TKey> : EfCoreRepository<TDbContext, TEntity>,
     IEfCoreRepository<TEntity, TKey>,
     ISupportsExplicitLoading<TEntity, TKey>
-    where TDbContext : DbContext
+    where TDbContext : BaseDbContext<TDbContext>
     where TEntity : class, IEntity<TKey>
 {
     public EfCoreRepository(IServiceProvider serviceProvider, TDbContext dbContext)
