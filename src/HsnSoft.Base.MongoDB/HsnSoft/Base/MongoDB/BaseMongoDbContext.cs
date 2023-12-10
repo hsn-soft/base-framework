@@ -8,7 +8,7 @@ namespace HsnSoft.Base.MongoDB;
 
 public abstract class BaseMongoDbContext : IBaseMongoDbContext, ITransientDependency
 {
-    public IBaseLazyServiceProvider LazyServiceProvider { get; set; }
+    public IServiceProvider ServiceProvider { get; set; }
 
     public IMongoModelSource ModelSource { get; set; }
 

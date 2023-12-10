@@ -31,7 +31,7 @@ public class MongoDbRepository<TMongoDbContext, TEntity> : RepositoryBase<TEntit
             throw new ArgumentNullException(nameof(serviceProvider), "ServiceProvider can not be null");
         }
 
-        LazyServiceProvider = serviceProvider.GetRequiredService<IBaseLazyServiceProvider>();
+        ServiceProvider = serviceProvider;
 
         _dbContext = dbContext;
     }
@@ -49,11 +49,11 @@ public class MongoDbRepository<TMongoDbContext, TEntity> : RepositoryBase<TEntit
     //
     // public IEntityChangeEventHelper EntityChangeEventHelper => LazyServiceProvider.LazyGetService<IEntityChangeEventHelper>(NullEntityChangeEventHelper.Instance);
 
-    public IGuidGenerator GuidGenerator => LazyServiceProvider.LazyGetService<IGuidGenerator>(SimpleGuidGenerator.Instance);
+    public IGuidGenerator GuidGenerator => ServiceProvider.GetService<IGuidGenerator>();
 
-    public IAuditPropertySetter AuditPropertySetter => LazyServiceProvider.LazyGetRequiredService<IAuditPropertySetter>();
+    public IAuditPropertySetter AuditPropertySetter => ServiceProvider.GetRequiredService<IAuditPropertySetter>();
 
-    public IMongoDbBulkOperationProvider BulkOperationProvider => LazyServiceProvider.LazyGetService<IMongoDbBulkOperationProvider>();
+    public IMongoDbBulkOperationProvider BulkOperationProvider => ServiceProvider.GetService<IMongoDbBulkOperationProvider>();
     public virtual IMongoCollection<TEntity> Collection => DbContext.Collection<TEntity>();
 
     public virtual IMongoDatabase Database => DbContext.Database;

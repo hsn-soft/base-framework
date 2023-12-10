@@ -4,7 +4,6 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
-using HsnSoft.Base.DependencyInjection;
 using HsnSoft.Base.Domain.Entities;
 using HsnSoft.Base.EntityFrameworkCore;
 using HsnSoft.Base.Guids;
@@ -21,9 +20,9 @@ public class EfCoreRepository<TDbContext, TEntity> : RepositoryBase<TEntity>, IE
 
     public List<Expression<Func<TEntity, object>>> DefaultPropertySelector = null;
 
-    public virtual IGuidGenerator GuidGenerator => LazyServiceProvider.LazyGetService<IGuidGenerator>(SimpleGuidGenerator.Instance);
+    public virtual IGuidGenerator GuidGenerator => ServiceProvider.GetService<IGuidGenerator>();
 
-    public IEfCoreBulkOperationProvider BulkOperationProvider => LazyServiceProvider.LazyGetService<IEfCoreBulkOperationProvider>();
+    public IEfCoreBulkOperationProvider BulkOperationProvider => ServiceProvider.GetService<IEfCoreBulkOperationProvider>();
 
     public EfCoreRepository(IServiceProvider serviceProvider, TDbContext dbContext)
     {
@@ -32,10 +31,9 @@ public class EfCoreRepository<TDbContext, TEntity> : RepositoryBase<TEntity>, IE
             throw new ArgumentNullException(nameof(serviceProvider), "ServiceProvider can not be null");
         }
 
-        LazyServiceProvider = serviceProvider.GetRequiredService<IBaseLazyServiceProvider>();
-
+        ServiceProvider = serviceProvider;
+        dbContext.ServiceProvider = serviceProvider;
         _dbContext = dbContext;
-        _dbContext.LazyServiceProvider = LazyServiceProvider;
     }
 
     DbContext IEfCoreRepository<TEntity>.GetDbContext()
