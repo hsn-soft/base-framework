@@ -18,7 +18,6 @@ using HsnSoft.Base.Timing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -27,11 +26,10 @@ namespace HsnSoft.Base.EntityFrameworkCore;
 public abstract class BaseDbContext<TDbContext> : DbContext, ITransientDependency
     where TDbContext : DbContext
 {
-    protected BaseDbContext(IServiceProvider serviceProvider, DbContextOptions<TDbContext> options)
+    protected BaseDbContext(DbContextOptions<TDbContext> options)
         : base(options)
     {
-        LazyServiceProvider = serviceProvider?.GetRequiredService<IBaseLazyServiceProvider>();
-
+        //LazyServiceProvider = serviceProvider?.GetRequiredService<IBaseLazyServiceProvider>();
         Initialize();
     }
 
