@@ -12,8 +12,8 @@ public class IntegrationEventLogEntry
     public IntegrationEventLogEntry(IntegrationEvent @event, Guid transactionId)
     {
         EventId = @event.Id;
-        CreationTime = @event.CreationDate;
-        EventTypeName = @event.GetType().FullName;                     
+        CreationTime = @event.CreationTime;
+        EventTypeName = @event.GetType().FullName;
         Content = JsonSerializer.Serialize(@event, @event.GetType(), new JsonSerializerOptions
         {
             WriteIndented = true
@@ -35,7 +35,7 @@ public class IntegrationEventLogEntry
     public string TransactionId { get; private set; }
 
     public IntegrationEventLogEntry DeserializeJsonContent(Type type)
-    {            
+    {
         IntegrationEvent = JsonSerializer.Deserialize(Content, type, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) as IntegrationEvent;
         return this;
     }

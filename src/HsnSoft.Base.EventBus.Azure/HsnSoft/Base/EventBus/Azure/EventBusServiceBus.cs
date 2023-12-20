@@ -9,6 +9,7 @@ using HsnSoft.Base.EventBus.Abstractions;
 using HsnSoft.Base.EventBus.SubManagers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 
 namespace HsnSoft.Base.EventBus.Azure;
@@ -24,24 +25,27 @@ public class EventBusServiceBus : IEventBus, IDisposable
     private ServiceBusSender _sender;
     private ServiceBusProcessor _processor;
 
-    public EventBusServiceBus(IServiceProvider serviceProvider, IServiceBusPersisterConnection serviceBusPersisterConnection,
-        EventBusConfig eventBusConfig, ILogger<EventBusServiceBus> logger)
+    public EventBusServiceBus(IServiceProvider serviceProvider)
     {
-        _serviceProvider = serviceProvider;
-        _serviceBusPersisterConnection = serviceBusPersisterConnection;
-        _eventBusConfig = eventBusConfig ?? new EventBusConfig();
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+
+        var loggerFactory = _serviceProvider.GetRequiredService<ILoggerFactory>();
+        _logger = loggerFactory.CreateLogger<EventBusServiceBus>();
+
+        _eventBusConfig = _serviceProvider.GetRequiredService<IOptions<EventBusConfig>>().Value;
+        _serviceBusPersisterConnection = _serviceProvider.GetRequiredService<IServiceBusPersisterConnection>();
+
         _subsManager = new InMemoryEventBusSubscriptionsManager(TrimEventName);
 
-        _sender = _serviceBusPersisterConnection.TopicClient.CreateSender(_eventBusConfig.DefaultTopicName);
+        _sender = _serviceBusPersisterConnection.TopicClient.CreateSender(_eventBusConfig.ExchangeName);
         var options = new ServiceBusProcessorOptions { MaxConcurrentCalls = 10, AutoCompleteMessages = false };
-        _processor = _serviceBusPersisterConnection.TopicClient.CreateProcessor(_eventBusConfig.DefaultTopicName, _eventBusConfig.SubscriberClientAppName, options);
+        _processor = _serviceBusPersisterConnection.TopicClient.CreateProcessor(_eventBusConfig.ExchangeName, _eventBusConfig.ClientName, options);
 
         RemoveDefaultRule();
         RegisterSubscriptionClientMessageHandlerAsync().GetAwaiter().GetResult();
     }
 
-    public void Publish(IntegrationEvent @event)
+    public async Task PublishAsync(IntegrationEvent @event)
     {
         var eventName = @event.GetType().Name;
         eventName = TrimEventName(eventName);
@@ -50,32 +54,38 @@ public class EventBusServiceBus : IEventBus, IDisposable
 
         var message = new ServiceBusMessage { MessageId = Guid.NewGuid().ToString(), Body = new BinaryData(body), Subject = eventName };
 
-        _sender.SendMessageAsync(message)
-            .GetAwaiter()
-            .GetResult();
+        await _sender.SendMessageAsync(message);
     }
 
     public void Subscribe<T, TH>() where T : IntegrationEvent where TH : IIntegrationEventHandler<T>
     {
-        var eventName = typeof(T).Name;
+        Subscribe(typeof(T), typeof(TH));
+    }
+
+    public void Subscribe(Type eventType, Type eventHandlerType)
+    {
+        if (!eventType.IsAssignableTo(typeof(IntegrationEvent))) throw new TypeAccessException();
+        if (!eventHandlerType.IsAssignableTo(typeof(IIntegrationEventHandler))) throw new TypeAccessException();
+
+        var eventName = eventType.Name;
         eventName = TrimEventName(eventName);
 
-        var containsKey = _subsManager.HasSubscriptionsForEvent<T>();
+        var containsKey = _subsManager.HasSubscriptionsForEvent(eventName);
         if (!containsKey)
         {
             try
             {
-                _serviceBusPersisterConnection.AdministrationClient.CreateRuleAsync(_eventBusConfig.DefaultTopicName, _eventBusConfig.SubscriberClientAppName, new CreateRuleOptions { Filter = new CorrelationRuleFilter { Subject = eventName }, Name = eventName }).GetAwaiter().GetResult();
+                _serviceBusPersisterConnection.AdministrationClient.CreateRuleAsync(_eventBusConfig.ExchangeName, _eventBusConfig.ClientName, new CreateRuleOptions { Filter = new CorrelationRuleFilter { Subject = eventName }, Name = eventName }).GetAwaiter().GetResult();
             }
             catch (ServiceBusException)
             {
-                _logger.LogWarning("The messaging entity {eventName} already exists.", eventName);
+                _logger.LogWarning("The messaging entity {EventName} already exists", eventName);
             }
         }
 
-        _logger.LogInformation("Subscribing to event {EventName} with {EventHandler}", eventName, typeof(TH).Name);
+        _logger.LogInformation("AzureServiceBus | Subscribing to event {EventName} with {EventHandler}", eventName, eventHandlerType.Name);
 
-        _subsManager.AddSubscription<T, TH>();
+        _subsManager.AddSubscription(eventType, eventHandlerType);
     }
 
     public void Unsubscribe<T, TH>() where T : IntegrationEvent where TH : IIntegrationEventHandler<T>
@@ -86,13 +96,13 @@ public class EventBusServiceBus : IEventBus, IDisposable
         {
             _serviceBusPersisterConnection
                 .AdministrationClient
-                .DeleteRuleAsync(_eventBusConfig.DefaultTopicName, _eventBusConfig.SubscriberClientAppName, eventName)
+                .DeleteRuleAsync(_eventBusConfig.ExchangeName, _eventBusConfig.ClientName, eventName)
                 .GetAwaiter()
                 .GetResult();
         }
         catch (ServiceBusException ex) when (ex.Reason == ServiceBusFailureReason.MessagingEntityNotFound)
         {
-            _logger.LogWarning("The messaging entity {eventName} Could not be found.", eventName);
+            _logger.LogWarning("The messaging entity {EventName} Could not be found", eventName);
         }
 
         _logger.LogInformation("Unsubscribing from event {EventName}", eventName);
@@ -141,13 +151,13 @@ public class EventBusServiceBus : IEventBus, IDisposable
         {
             _serviceBusPersisterConnection
                 .AdministrationClient
-                .DeleteRuleAsync(_eventBusConfig.DefaultTopicName, _eventBusConfig.SubscriberClientAppName, RuleProperties.DefaultRuleName)
+                .DeleteRuleAsync(_eventBusConfig.ExchangeName, _eventBusConfig.ClientName, RuleProperties.DefaultRuleName)
                 .GetAwaiter()
                 .GetResult();
         }
         catch (ServiceBusException ex) when (ex.Reason == ServiceBusFailureReason.MessagingEntityNotFound)
         {
-            _logger.LogWarning("The messaging entity {DefaultRuleName} Could not be found.", RuleProperties.DefaultRuleName);
+            _logger.LogWarning("The messaging entity {DefaultRuleName} Could not be found", RuleProperties.DefaultRuleName);
         }
     }
 
@@ -186,9 +196,9 @@ public class EventBusServiceBus : IEventBus, IDisposable
                     if (handler == null) continue;
 
                     var eventType = _subsManager.GetEventTypeByName($"{_eventBusConfig.EventNamePrefix}{eventName}{_eventBusConfig.EventNameSuffix}");
-                    var integrationEvent = JsonConvert.DeserializeObject(message, eventType);
+                    var integrationEvent = JsonConvert.DeserializeObject(message, eventType!);
                     var concreteType = typeof(IIntegrationEventHandler<>).MakeGenericType(eventType);
-                    await (Task)concreteType.GetMethod("Handle").Invoke(handler, new[] { integrationEvent });
+                    await ((Task)concreteType.GetMethod("Handle")?.Invoke(handler, new[] { integrationEvent }))!;
                 }
             }
 

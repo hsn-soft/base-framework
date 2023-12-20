@@ -7,19 +7,16 @@ namespace HsnSoft.Base.VirtualFileSystem;
 
 public class EmbeddedFileProviderQuery : IEmbeddedFileProviderQuery
 {
-    [CanBeNull]
     public Stream Read<T>(string assemblySubFullPath)
     {
         return ReadInternal(typeof(T).Assembly, assemblySubFullPath);
     }
 
-    [CanBeNull]
     public Stream Read(Assembly assembly, string assemblySubFullPath)
     {
         return ReadInternal(assembly, assemblySubFullPath);
     }
 
-    [CanBeNull]
     public Stream Read(string assemblyName, string assemblySubFullPath)
     {
         var assembly = Assembly.Load(assemblyName);

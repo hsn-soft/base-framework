@@ -1,12 +1,20 @@
+using System;
+using System.Threading.Tasks;
 using HsnSoft.Base.Domain.Entities.Events;
 
 namespace HsnSoft.Base.EventBus.Abstractions;
 
 public interface IEventBus
 {
-    void Publish(IntegrationEvent @event);
+    Task PublishAsync(IntegrationEvent @event);
 
-    void Subscribe<T, TH>() where T : IntegrationEvent where TH : IIntegrationEventHandler<T>;
+    void Subscribe<TEvent, THandler>()
+        where TEvent : IntegrationEvent
+        where THandler : IIntegrationEventHandler<TEvent>;
 
-    void Unsubscribe<T, TH>() where TH : IIntegrationEventHandler<T> where T : IntegrationEvent;
+    void Subscribe(Type eventType, Type eventHandlerType);
+
+    void Unsubscribe<TEvent, THandler>()
+        where TEvent : IntegrationEvent
+        where THandler : IIntegrationEventHandler<TEvent>;
 }

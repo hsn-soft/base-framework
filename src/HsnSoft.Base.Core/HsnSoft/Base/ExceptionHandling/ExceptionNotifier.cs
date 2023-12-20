@@ -20,7 +20,7 @@ public class ExceptionNotifier : IExceptionNotifier, ITransientDependency
 
     protected IServiceScopeFactory ServiceScopeFactory { get; }
 
-    public virtual async Task NotifyAsync([NotNull] ExceptionNotificationContext context)
+    public virtual async Task NotifyAsync(ExceptionNotificationContext context)
     {
         Check.NotNull(context, nameof(context));
 
