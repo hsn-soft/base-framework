@@ -6,7 +6,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using HsnSoft.Base.Auditing;
 using HsnSoft.Base.Data;
-using HsnSoft.Base.DependencyInjection;
 using HsnSoft.Base.Domain.Entities;
 using HsnSoft.Base.Guids;
 using HsnSoft.Base.MongoDB;
@@ -705,7 +704,7 @@ public class MongoDbRepository<TMongoDbContext, TEntity, TKey> : MongoDbReposito
         return DeleteAsync(x => x.Id.Equals(id), autoSave, cancellationToken);
     }
 
-    public virtual async Task DeleteManyAsync([NotNull] IEnumerable<TKey> ids, bool autoSave = false, CancellationToken cancellationToken = default)
+    public virtual async Task DeleteManyAsync(IEnumerable<TKey> ids, bool autoSave = false, CancellationToken cancellationToken = default)
     {
         cancellationToken = GetCancellationToken(cancellationToken);
 

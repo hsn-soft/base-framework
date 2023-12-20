@@ -6,7 +6,6 @@ namespace HsnSoft.Base.VirtualFileSystem;
 
 public class EmbeddedResourceQuery : IEmbeddedResourceQuery
 {
-    [CanBeNull]
     public Stream Read<T>(string resource)
     {
         var assembly = typeof(T).Assembly;
@@ -14,7 +13,6 @@ public class EmbeddedResourceQuery : IEmbeddedResourceQuery
         return ReadInternal(assembly, resourceNamespace, resource);
     }
 
-    [CanBeNull]
     public Stream Read(Assembly assembly, string resource, string resourceNamespace = null)
     {
         if (string.IsNullOrWhiteSpace(resourceNamespace))
@@ -25,7 +23,6 @@ public class EmbeddedResourceQuery : IEmbeddedResourceQuery
         return ReadInternal(assembly, resourceNamespace, resource);
     }
 
-    [CanBeNull]
     public Stream Read(string assemblyName, string resource, string resourceNamespace = null)
     {
         var assembly = Assembly.Load(assemblyName);
