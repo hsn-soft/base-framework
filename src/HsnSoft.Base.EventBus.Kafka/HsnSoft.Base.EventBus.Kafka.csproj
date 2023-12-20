@@ -5,6 +5,12 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;netstandard2.1;net6.0</TargetFrameworks>
+        <AssemblyName>HsnSoft.Base.EventBus.Kafka</AssemblyName>
+        <PackageId>HsnSoft.Base.EventBus.Kafka</PackageId>
+        <AssetTargetFallback>$(AssetTargetFallback);portable-net45+win8+wp8+wpa81;</AssetTargetFallback>
+        <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+        <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+        <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
         <RootNamespace />
     </PropertyGroup>
 
