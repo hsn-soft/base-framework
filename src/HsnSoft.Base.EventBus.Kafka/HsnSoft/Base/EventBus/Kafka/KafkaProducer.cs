@@ -41,7 +41,7 @@ public sealed class KafkaProducer
         };
     }
 
-    public async Task StartSendingMessages<TEvent>(string topicName, TEvent @event) where TEvent : IntegrationEvent
+    public async Task StartSendingMessages<TEventMessage>(string topicName, MessageEnvelope<TEventMessage> @event) where TEventMessage : IIntegrationEventMessage
     {
         using var producer = new ProducerBuilder<long, string>(_producerConfig)
             .SetKeySerializer(Serializers.Int64)
@@ -73,7 +73,7 @@ public sealed class KafkaProducer
 
         try
         {
-            _logger.LogInformation("Kafka | {ClientInfo} PRODUCER [ {EventName} ] => EventId [ {EventId} ] STARTED", _eventBusConfig.ClientInfo, topicName, @event.Id.ToString());
+            _logger.LogDebug("Kafka | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] STARTED", _eventBusConfig.ClientInfo, topicName, @event.MessageId.ToString());
 
             var message = JsonConvert.SerializeObject(@event, _options);
 
@@ -96,15 +96,15 @@ public sealed class KafkaProducer
             }
 
             Thread.Sleep(TimeSpan.FromMilliseconds(50));
-            _logger.LogInformation("Kafka | {ClientInfo} PRODUCER [ {EventName} ] => EventId [ {EventId} ] COMPLETED", _eventBusConfig.ClientInfo, topicName, @event.Id.ToString());
+            _logger.LogDebug("Kafka | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] COMPLETED", _eventBusConfig.ClientInfo, topicName, @event.MessageId.ToString());
         }
         catch (ProduceException<long, string> e)
         {
             // Log this message for manual processing.
-            _logger.LogError("Kafka | {ClientInfo} PRODUCER [ {EventName} ] => EventId [ {EventId} ] ERROR: {ProduceError} for message (value: \'{DeliveryResultValue}\')",
+            _logger.LogError("Kafka | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] ERROR: {ProduceError} for message (value: \'{DeliveryResultValue}\')",
                 _eventBusConfig.ClientInfo,
                 topicName,
-                @event.Id.ToString(),
+                @event.MessageId.ToString(),
                 e.Message,
                 e.DeliveryResult.Value);
         }
