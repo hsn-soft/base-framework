@@ -1,10 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using Confluent.Kafka;
 using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.Kafka;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 
 namespace HsnSoft.Base.EventBus.Kafka;
 
@@ -15,7 +15,7 @@ public sealed class KafkaConsumer
     private readonly EventBusConfig _eventBusConfig;
     private bool KeepConsuming { get; set; }
 
-    public event EventHandler<object> OnMessageReceived;
+    public event EventHandler<KeyValuePair<Type, string>> OnMessageReceived;
 
     public KafkaConsumer(KafkaConnectionSettings connectionSettings, EventBusConfig eventBusConfig, ILogger logger)
     {
@@ -35,14 +35,14 @@ public sealed class KafkaConsumer
         KeepConsuming = true;
     }
 
-    public void StartReceivingMessages<TEvent>(string topicName, CancellationToken stoppingToken) where TEvent : IntegrationEvent
+    public void StartReceivingMessages<TEvent>(string topicName, CancellationToken stoppingToken) where TEvent : IIntegrationEventMessage
     {
         StartReceivingMessages(typeof(TEvent), topicName, stoppingToken);
     }
 
     public void StartReceivingMessages(Type eventType, string topicName, CancellationToken stoppingToken)
     {
-        if (!eventType.IsAssignableTo(typeof(IntegrationEvent))) throw new TypeAccessException();
+        if (!eventType.IsAssignableTo(typeof(IIntegrationEventMessage))) throw new TypeAccessException();
 
         using var consumer = new ConsumerBuilder<long, string>(_consumerConfig)
             .SetKeyDeserializer(Deserializers.Int64)
@@ -99,9 +99,8 @@ public sealed class KafkaConsumer
                     consumer.Commit(result);
                     consumer.StoreOffset(result);
 
-                    var @event = JsonConvert.DeserializeObject(message, eventType);
                     _logger.LogDebug("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Received: {Key}:{Message} from partition: {Partition}", _eventBusConfig.ClientInfo, topicName, result.Message.Key, message, result.Partition.Value);
-                    OnMessageReceived?.Invoke(this, @event);
+                    OnMessageReceived?.Invoke(this, new KeyValuePair<Type, string>(eventType, message));
                 }
                 catch (ConsumeException ce)
                 {

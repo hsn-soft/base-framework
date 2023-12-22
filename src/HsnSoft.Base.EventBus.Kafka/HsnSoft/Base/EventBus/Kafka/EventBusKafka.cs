@@ -10,6 +10,7 @@ using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 
 namespace HsnSoft.Base.EventBus.Kafka;
 
@@ -19,6 +20,7 @@ public class EventBusKafka : IEventBus, IDisposable
     private readonly ILogger<EventBusKafka> _logger;
     private readonly KafkaConnectionSettings _kafkaConnectionSettings;
     private readonly EventBusConfig _eventBusConfig;
+    private readonly IEventBusTraceAccesor _traceAccessor;
 
     private readonly IEventBusSubscriptionsManager _subsManager;
     private readonly CancellationTokenSource _tokenSource;
@@ -30,10 +32,11 @@ public class EventBusKafka : IEventBus, IDisposable
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 
         var loggerFactory = _serviceProvider.GetRequiredService<ILoggerFactory>();
-        _logger = loggerFactory.CreateLogger<EventBusKafka>();
+        _logger = loggerFactory.CreateLogger<EventBusKafka>() ?? throw new ArgumentNullException(nameof(loggerFactory));
 
         _kafkaConnectionSettings = _serviceProvider.GetRequiredService<IOptions<KafkaConnectionSettings>>().Value;
         _eventBusConfig = _serviceProvider.GetRequiredService<IOptions<EventBusConfig>>().Value;
+        _traceAccessor = _serviceProvider.GetService<IEventBusTraceAccesor>();
 
         _subsManager = new InMemoryEventBusSubscriptionsManager(TrimEventName);
 
@@ -42,23 +45,34 @@ public class EventBusKafka : IEventBus, IDisposable
         _messageProcessorTasks = new List<Task>();
     }
 
-    public async Task PublishAsync(IntegrationEvent @event)
+    public async Task PublishAsync<TEventMessage>(TEventMessage eventMessage, Guid? relatedMessageId = null, [CanBeNull] string correlationId = null) where TEventMessage : IIntegrationEventMessage
     {
-        var eventName = @event.GetType().Name;
+        var eventName = eventMessage.GetType().Name;
         eventName = TrimEventName(eventName);
 
         var kafkaProducer = new KafkaProducer(_kafkaConnectionSettings, _eventBusConfig, _logger);
-        await kafkaProducer.StartSendingMessages(eventName, @event);
+
+        var message = new MessageEnvelope<TEventMessage>
+        {
+            RelatedMessageId = relatedMessageId,
+            MessageId = Guid.NewGuid(),
+            MessageTime = DateTime.UtcNow,
+            Message = eventMessage,
+            Producer = _eventBusConfig.ClientInfo,
+            CorrelationId = correlationId ?? _traceAccessor.GetCorrelationId()
+        };
+
+        await kafkaProducer.StartSendingMessages(eventName, message);
     }
 
-    public void Subscribe<T, TH>() where T : IntegrationEvent where TH : IIntegrationEventHandler<T>
+    public void Subscribe<T, TH>() where T : IIntegrationEventMessage where TH : IIntegrationEventHandler<T>
     {
         Subscribe(typeof(T), typeof(TH));
     }
 
     public void Subscribe(Type eventType, Type eventHandlerType)
     {
-        if (!eventType.IsAssignableTo(typeof(IntegrationEvent))) throw new TypeAccessException();
+        if (!eventType.IsAssignableTo(typeof(IIntegrationEventMessage))) throw new TypeAccessException();
         if (!eventHandlerType.IsAssignableTo(typeof(IIntegrationEventHandler))) throw new TypeAccessException();
 
         var eventName = eventType.Name;
@@ -76,7 +90,7 @@ public class EventBusKafka : IEventBus, IDisposable
         }));
     }
 
-    public void Unsubscribe<T, TH>() where T : IntegrationEvent where TH : IIntegrationEventHandler<T>
+    public void Unsubscribe<T, TH>() where T : IIntegrationEventMessage where TH : IIntegrationEventHandler<T>
     {
         var eventName = _subsManager.GetEventKey<T>();
         eventName = TrimEventName(eventName);
@@ -116,11 +130,11 @@ public class EventBusKafka : IEventBus, IDisposable
         _logger.LogInformation("Message Broker Bridge terminated");
     }
 
-    private void OnMessageReceived([CanBeNull] object sender, object message)
+    private void OnMessageReceived([CanBeNull] object sender, KeyValuePair<Type, string> messageObject)
     {
         _messageProcessorTasks.Add(Task.Run(async () =>
         {
-            var eventName = message.GetType().Name;
+            var eventName = messageObject.Key.Name;
             eventName = TrimEventName(eventName);
 
             if (_subsManager.HasSubscriptionsForEvent(eventName))
@@ -139,10 +153,14 @@ public class EventBusKafka : IEventBus, IDisposable
 
                     try
                     {
-                        _logger.LogInformation("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Handling STARTED : EventId [ {EventId} ]", _eventBusConfig.ClientInfo, eventName, ((message as IntegrationEvent)!).Id.ToString());
-                        var concreteType = typeof(IIntegrationEventHandler<>).MakeGenericType(message.GetType());
-                        await ((Task)concreteType.GetMethod("HandleAsync")?.Invoke(handler, new[] { message })!)!;
-                        _logger.LogInformation("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Handling COMPLETED : EventId [ {EventId} ]", _eventBusConfig.ClientInfo, eventName, ((message as IntegrationEvent)!).Id.ToString());
+                        Type genericClass = typeof(MessageEnvelope<>);
+                        Type constructedClass = genericClass.MakeGenericType(messageObject.Key);
+                        var @event = JsonConvert.DeserializeObject(messageObject.Value, constructedClass);
+
+                        _logger.LogDebug("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Handling STARTED : Event [ {Event} ]", _eventBusConfig.ClientInfo, eventName, @event);
+                        var concreteType = typeof(IIntegrationEventHandler<>).MakeGenericType(messageObject.Key);
+                        await (Task)concreteType.GetMethod("HandleAsync")?.Invoke(handler, new[] { @event })!;
+                        _logger.LogDebug("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Handling COMPLETED : Event [ {Event} ]", _eventBusConfig.ClientInfo, eventName, @event);
                     }
                     catch (Exception ex)
                     {

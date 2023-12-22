@@ -25,9 +25,10 @@ public class IntegrationEventLogService : IIntegrationEventLogService, IDisposab
                 .UseNpgsql(_dbConnection)
                 .Options);
 
+        // TODO: new message envelope implementation!
         _eventTypes = Assembly.Load(Assembly.GetEntryAssembly().FullName)
             .GetTypes()
-            .Where(t => t.Name.EndsWith(nameof(IntegrationEvent)))
+            .Where(t => t.Name.EndsWith(nameof(IIntegrationEventMessage)))
             .ToList();
     }
 
@@ -38,16 +39,17 @@ public class IntegrationEventLogService : IIntegrationEventLogService, IDisposab
         var result = await _integrationEventLogContext.IntegrationEventLogs
             .Where(e => e.TransactionId == tid && e.State == EventStateEnum.NotPublished).ToListAsync();
 
-        if (result != null && result.Any())
-        {
-            return result.OrderBy(o => o.CreationTime)
-                .Select(e => e.DeserializeJsonContent(_eventTypes.Find(t => t.Name == e.EventTypeShortName)));
-        }
+        // TODO: new message envelope implementation!
+        // if (result != null && result.Any())
+        // {
+        //     return result.OrderBy(o => o.CreationTime)
+        //         .Select(e => e.DeserializeJsonContent(_eventTypes.Find(t => t.Name == e.EventTypeShortName)));
+        // }
 
         return new List<IntegrationEventLogEntry>();
     }
 
-    public Task SaveEventAsync(IntegrationEvent @event, IDbContextTransaction transaction)
+    public Task SaveEventAsync(MessageEnvelope<IIntegrationEventMessage> @event, IDbContextTransaction transaction)
     {
         if (transaction == null) throw new ArgumentNullException(nameof(transaction));
 

@@ -3,10 +3,10 @@ using HsnSoft.Base.Domain.Entities.Events;
 
 namespace HsnSoft.Base.EventBus.Abstractions;
 
-public interface IIntegrationEventHandler<in TEvent> : IIntegrationEventHandler
-    where TEvent : IntegrationEvent
+public interface IIntegrationEventHandler<TEventMessage> : IIntegrationEventHandler
+    where TEventMessage : IIntegrationEventMessage
 {
-    Task HandleAsync(TEvent @event);
+    Task HandleAsync(MessageEnvelope<TEventMessage> @event);
 }
 
 public interface IIntegrationEventHandler
