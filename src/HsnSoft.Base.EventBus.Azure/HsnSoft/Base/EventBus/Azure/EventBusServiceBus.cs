@@ -7,6 +7,7 @@ using HsnSoft.Base.AzureServiceBus;
 using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.EventBus.Abstractions;
 using HsnSoft.Base.EventBus.SubManagers;
+using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -21,6 +22,7 @@ public class EventBusServiceBus : IEventBus, IDisposable
     private readonly EventBusConfig _eventBusConfig;
     private readonly ILogger<EventBusServiceBus> _logger;
     private readonly IEventBusSubscriptionsManager _subsManager;
+    private readonly IEventBusTraceAccesor _traceAccessor;
 
     private ServiceBusSender _sender;
     private ServiceBusProcessor _processor;
@@ -34,6 +36,7 @@ public class EventBusServiceBus : IEventBus, IDisposable
 
         _eventBusConfig = _serviceProvider.GetRequiredService<IOptions<EventBusConfig>>().Value;
         _serviceBusPersisterConnection = _serviceProvider.GetRequiredService<IServiceBusPersisterConnection>();
+        _traceAccessor = _serviceProvider.GetService<IEventBusTraceAccesor>();
 
         _subsManager = new InMemoryEventBusSubscriptionsManager(TrimEventName);
 
@@ -45,26 +48,40 @@ public class EventBusServiceBus : IEventBus, IDisposable
         RegisterSubscriptionClientMessageHandlerAsync().GetAwaiter().GetResult();
     }
 
-    public async Task PublishAsync(IntegrationEvent @event)
+    public async Task PublishAsync<TEventMessage>(TEventMessage eventMessage, Guid? relatedMessageId = null, [CanBeNull] string correlationId = null) where TEventMessage : IIntegrationEventMessage
     {
-        var eventName = @event.GetType().Name;
+        var eventName = eventMessage.GetType().Name;
         eventName = TrimEventName(eventName);
+
+        var @event = new MessageEnvelope<TEventMessage>
+        {
+            RelatedMessageId = relatedMessageId,
+            MessageId = Guid.NewGuid(),
+            MessageTime = DateTime.UtcNow,
+            Message = eventMessage,
+            Producer = _eventBusConfig.ClientInfo,
+            CorrelationId = correlationId ?? _traceAccessor.GetCorrelationId()
+        };
+
+        _logger.LogDebug("AzureServiceBus | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] STARTED", _eventBusConfig.ClientInfo, eventName, @event.MessageId.ToString());
 
         var body = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(@event, @event.GetType(), new JsonSerializerOptions { WriteIndented = true });
 
         var message = new ServiceBusMessage { MessageId = Guid.NewGuid().ToString(), Body = new BinaryData(body), Subject = eventName };
 
         await _sender.SendMessageAsync(message);
+
+        _logger.LogDebug("AzureServiceBus | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] COMPLETED", _eventBusConfig.ClientInfo, eventName, @event.MessageId.ToString());
     }
 
-    public void Subscribe<T, TH>() where T : IntegrationEvent where TH : IIntegrationEventHandler<T>
+    public void Subscribe<T, TH>() where T : IIntegrationEventMessage where TH : IIntegrationEventHandler<T>
     {
         Subscribe(typeof(T), typeof(TH));
     }
 
     public void Subscribe(Type eventType, Type eventHandlerType)
     {
-        if (!eventType.IsAssignableTo(typeof(IntegrationEvent))) throw new TypeAccessException();
+        if (!eventType.IsAssignableTo(typeof(IIntegrationEventMessage))) throw new TypeAccessException();
         if (!eventHandlerType.IsAssignableTo(typeof(IIntegrationEventHandler))) throw new TypeAccessException();
 
         var eventName = eventType.Name;
@@ -88,7 +105,7 @@ public class EventBusServiceBus : IEventBus, IDisposable
         _subsManager.AddSubscription(eventType, eventHandlerType);
     }
 
-    public void Unsubscribe<T, TH>() where T : IntegrationEvent where TH : IIntegrationEventHandler<T>
+    public void Unsubscribe<T, TH>() where T : IIntegrationEventMessage where TH : IIntegrationEventHandler<T>
     {
         var eventName = typeof(T).Name;
         eventName = TrimEventName(eventName);
@@ -193,12 +210,29 @@ public class EventBusServiceBus : IEventBus, IDisposable
                 foreach (var subscription in subscriptions)
                 {
                     var handler = _serviceProvider.GetService(subscription.HandlerType);
-                    if (handler == null) continue;
+                    if (handler == null)
+                    {
+                        _logger.LogWarning("AzureServiceBus | {ClientInfo} CONSUMER [ {EventName} ] => No HANDLER for event", _eventBusConfig.ClientInfo, eventName);
+                        continue;
+                    }
 
-                    var eventType = _subsManager.GetEventTypeByName($"{_eventBusConfig.EventNamePrefix}{eventName}{_eventBusConfig.EventNameSuffix}");
-                    var integrationEvent = JsonConvert.DeserializeObject(message, eventType!);
-                    var concreteType = typeof(IIntegrationEventHandler<>).MakeGenericType(eventType);
-                    await ((Task)concreteType.GetMethod("Handle")?.Invoke(handler, new[] { integrationEvent }))!;
+                    try
+                    {
+                        var eventType = _subsManager.GetEventTypeByName($"{_eventBusConfig.EventNamePrefix}{eventName}{_eventBusConfig.EventNameSuffix}");
+
+                        Type genericClass = typeof(MessageEnvelope<>);
+                        Type constructedClass = genericClass.MakeGenericType(eventType);
+                        var @event = JsonConvert.DeserializeObject(message, constructedClass);
+
+                        _logger.LogDebug("AzureServiceBus | {ClientInfo} CONSUMER [ {EventName} ] => Handling STARTED : Event [ {Event} ]", _eventBusConfig.ClientInfo, eventName, @event);
+                        var concreteType = typeof(IIntegrationEventHandler<>).MakeGenericType(eventType!);
+                        await (Task)concreteType.GetMethod("HandleAsync")?.Invoke(handler, new[] { @event })!;
+                        _logger.LogDebug("AzureServiceBus | {ClientInfo} CONSUMER [ {EventName} ] => Handling COMPLETED : Event [ {Event} ]", _eventBusConfig.ClientInfo, eventName, @event);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning("AzureServiceBus | {ClientInfo} CONSUMER [ {EventName} ] => Handling ERROR : {HandlingError}", _eventBusConfig.ClientInfo, eventName, ex.Message);
+                    }
                 }
             }
 
@@ -206,7 +240,7 @@ public class EventBusServiceBus : IEventBus, IDisposable
         }
         else
         {
-            _logger.LogWarning("No subscription for AzureServiceBus event: {EventName}", eventName);
+            _logger.LogWarning("AzureServiceBus | {ClientInfo} CONSUMER [ {EventName} ] => No SUBSCRIPTION for event", _eventBusConfig.ClientInfo, eventName);
         }
 
         return processed;

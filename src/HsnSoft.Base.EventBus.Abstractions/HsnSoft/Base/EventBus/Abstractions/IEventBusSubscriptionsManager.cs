@@ -11,22 +11,22 @@ public interface IEventBusSubscriptionsManager
     void Clear();
     event EventHandler<string> OnEventRemoved;
 
-    void AddSubscription<T, TH>() where T : IntegrationEvent where TH : IIntegrationEventHandler<T>;
+    void AddSubscription<T, TH>() where T : IIntegrationEventMessage where TH : IIntegrationEventHandler<T>;
 
     void AddSubscription(Type eventType, Type eventHandlerType);
 
-    void RemoveSubscription<T, TH>() where TH : IIntegrationEventHandler<T> where T : IntegrationEvent;
+    void RemoveSubscription<T, TH>() where T : IIntegrationEventMessage where TH : IIntegrationEventHandler<T>;
 
-    bool HasSubscriptionsForEvent<T>() where T : IntegrationEvent;
+    bool HasSubscriptionsForEvent<T>() where T : IIntegrationEventMessage;
     bool HasSubscriptionsForEvent(string eventName);
 
-    IEnumerable<SubscriptionInfo> GetHandlersForEvent<T>() where T : IntegrationEvent;
+    IEnumerable<SubscriptionInfo> GetHandlersForEvent<T>() where T : IIntegrationEventMessage;
     IEnumerable<SubscriptionInfo> GetHandlersForEvent(string eventName);
 
     [CanBeNull]
     Type GetEventTypeByName(string eventName);
 
-    string GetEventKey<T>() where T : IntegrationEvent;
+    string GetEventKey<T>() where T : IIntegrationEventMessage;
 
     string GetEventKey(Type eventType);
 }
