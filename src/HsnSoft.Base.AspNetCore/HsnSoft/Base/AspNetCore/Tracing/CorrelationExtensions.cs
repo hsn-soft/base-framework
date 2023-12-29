@@ -7,7 +7,7 @@ namespace HsnSoft.Base.AspNetCore.Tracing;
 
 public static class CorrelationExtensions
 {
-    private const string CorrelationIdKey = "correlation-id";
+    private const string CorrelationIdKey = "X-Correlation-Id";
 
     public static IApplicationBuilder UseCorrelationId(this IApplicationBuilder app)
         => app.Use(async (ctx, next) =>

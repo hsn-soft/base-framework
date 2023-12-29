@@ -1,7 +1,7 @@
 using System.Threading.Tasks;
 using HsnSoft.Base.Domain.Entities.Events;
 
-namespace HsnSoft.Base.EventBus.Abstractions;
+namespace HsnSoft.Base.EventBus;
 
 public interface IIntegrationEventHandler<TEventMessage> : IIntegrationEventHandler
     where TEventMessage : IIntegrationEventMessage

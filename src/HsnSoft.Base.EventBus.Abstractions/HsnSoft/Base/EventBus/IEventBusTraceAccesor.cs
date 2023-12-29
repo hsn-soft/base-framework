@@ -1,6 +1,6 @@
 using System;
 
-namespace HsnSoft.Base.EventBus.Abstractions;
+namespace HsnSoft.Base.EventBus;
 
 public interface IEventBusTraceAccesor
 {

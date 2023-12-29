@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using HsnSoft.Base.Domain.Entities.Events;
-using HsnSoft.Base.EventBus.Abstractions;
 using JetBrains.Annotations;
 
 namespace HsnSoft.Base.EventBus.SubManagers;
