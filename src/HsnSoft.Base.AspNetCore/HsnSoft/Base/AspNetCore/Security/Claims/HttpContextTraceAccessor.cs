@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Security.Claims;
 using HsnSoft.Base.AspNetCore.Tracing;
-using HsnSoft.Base.EventBus.Abstractions;
+using HsnSoft.Base.EventBus;
 using Microsoft.AspNetCore.Http;
 
 namespace HsnSoft.Base.AspNetCore.Security.Claims;

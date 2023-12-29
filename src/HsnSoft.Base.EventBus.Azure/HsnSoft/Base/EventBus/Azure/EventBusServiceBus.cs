@@ -5,7 +5,6 @@ using Azure.Messaging.ServiceBus;
 using Azure.Messaging.ServiceBus.Administration;
 using HsnSoft.Base.AzureServiceBus;
 using HsnSoft.Base.Domain.Entities.Events;
-using HsnSoft.Base.EventBus.Abstractions;
 using HsnSoft.Base.EventBus.SubManagers;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
@@ -48,14 +47,14 @@ public class EventBusServiceBus : IEventBus, IDisposable
         RegisterSubscriptionClientMessageHandlerAsync().GetAwaiter().GetResult();
     }
 
-    public async Task PublishAsync<TEventMessage>(TEventMessage eventMessage, Guid? relatedMessageId = null, [CanBeNull] string correlationId = null) where TEventMessage : IIntegrationEventMessage
+    public async Task PublishAsync<TEventMessage>(TEventMessage eventMessage, Guid? parentMessageId = null, [CanBeNull] string correlationId = null) where TEventMessage : IIntegrationEventMessage
     {
         var eventName = eventMessage.GetType().Name;
         eventName = TrimEventName(eventName);
 
         var @event = new MessageEnvelope<TEventMessage>
         {
-            RelatedMessageId = relatedMessageId,
+            ParentMessageId = parentMessageId,
             MessageId = Guid.NewGuid(),
             MessageTime = DateTime.UtcNow,
             Message = eventMessage,
