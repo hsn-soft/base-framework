@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using HsnSoft.Base.Domain.Entities.Events;
 using JetBrains.Annotations;
 
-namespace HsnSoft.Base.EventBus.Abstractions;
+namespace HsnSoft.Base.EventBus;
 
 public interface IEventBusSubscriptionsManager
 {

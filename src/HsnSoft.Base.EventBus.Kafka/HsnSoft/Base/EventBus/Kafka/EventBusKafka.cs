@@ -1,9 +1,9 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿#nullable enable
+using System;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 using HsnSoft.Base.Domain.Entities.Events;
-using HsnSoft.Base.EventBus.Abstractions;
 using HsnSoft.Base.EventBus.SubManagers;
 using HsnSoft.Base.Kafka;
 using JetBrains.Annotations;
@@ -19,7 +19,7 @@ public class EventBusKafka : IEventBus, IDisposable
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<EventBusKafka> _logger;
     private readonly KafkaConnectionSettings _kafkaConnectionSettings;
-    private readonly EventBusConfig _eventBusConfig;
+    private readonly KafkaEventBusConfig _kafkaEventBusConfig;
     private readonly IEventBusTraceAccesor _traceAccessor;
 
     private readonly IEventBusSubscriptionsManager _subsManager;
@@ -35,7 +35,7 @@ public class EventBusKafka : IEventBus, IDisposable
         _logger = loggerFactory.CreateLogger<EventBusKafka>() ?? throw new ArgumentNullException(nameof(loggerFactory));
 
         _kafkaConnectionSettings = _serviceProvider.GetRequiredService<IOptions<KafkaConnectionSettings>>().Value;
-        _eventBusConfig = _serviceProvider.GetRequiredService<IOptions<EventBusConfig>>().Value;
+        _kafkaEventBusConfig = _serviceProvider.GetRequiredService<IOptions<KafkaEventBusConfig>>().Value;
         _traceAccessor = _serviceProvider.GetService<IEventBusTraceAccesor>();
 
         _subsManager = new InMemoryEventBusSubscriptionsManager(TrimEventName);
@@ -45,20 +45,20 @@ public class EventBusKafka : IEventBus, IDisposable
         _messageProcessorTasks = new List<Task>();
     }
 
-    public async Task PublishAsync<TEventMessage>(TEventMessage eventMessage, Guid? relatedMessageId = null, [CanBeNull] string correlationId = null) where TEventMessage : IIntegrationEventMessage
+    public async Task PublishAsync<TEventMessage>(TEventMessage eventMessage, Guid? parentMessageId = null, string? correlationId = null) where TEventMessage : IIntegrationEventMessage
     {
         var eventName = eventMessage.GetType().Name;
         eventName = TrimEventName(eventName);
 
-        var kafkaProducer = new KafkaProducer(_kafkaConnectionSettings, _eventBusConfig, _logger);
+        var kafkaProducer = new KafkaProducer(_kafkaConnectionSettings, _kafkaEventBusConfig, _logger);
 
         var message = new MessageEnvelope<TEventMessage>
         {
-            RelatedMessageId = relatedMessageId,
+            ParentMessageId = parentMessageId,
             MessageId = Guid.NewGuid(),
             MessageTime = DateTime.UtcNow,
             Message = eventMessage,
-            Producer = _eventBusConfig.ClientInfo,
+            Producer = _kafkaEventBusConfig.ClientInfo,
             CorrelationId = correlationId ?? _traceAccessor.GetCorrelationId()
         };
 
@@ -84,7 +84,7 @@ public class EventBusKafka : IEventBus, IDisposable
 
         _consumerTasks.Add(Task.Run(() =>
         {
-            var kafkaConsumer = new KafkaConsumer(_kafkaConnectionSettings, _eventBusConfig, _logger);
+            var kafkaConsumer = new KafkaConsumer(_kafkaConnectionSettings, _kafkaEventBusConfig, _logger);
             kafkaConsumer.OnMessageReceived += OnMessageReceived;
             kafkaConsumer.StartReceivingMessages(eventType, eventName, _tokenSource.Token);
         }));
@@ -147,7 +147,7 @@ public class EventBusKafka : IEventBus, IDisposable
                     var handler = scope.ServiceProvider.GetService(subscription.HandlerType);
                     if (handler == null)
                     {
-                        _logger.LogWarning("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => No HANDLER for event", _eventBusConfig.ClientInfo, eventName);
+                        _logger.LogWarning("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => No HANDLER for event", _kafkaEventBusConfig.ClientInfo, eventName);
                         continue;
                     }
 
@@ -157,34 +157,34 @@ public class EventBusKafka : IEventBus, IDisposable
                         Type constructedClass = genericClass.MakeGenericType(messageObject.Key);
                         var @event = JsonConvert.DeserializeObject(messageObject.Value, constructedClass);
 
-                        _logger.LogDebug("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Handling STARTED : Event [ {Event} ]", _eventBusConfig.ClientInfo, eventName, @event);
+                        _logger.LogDebug("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Handling STARTED : Event [ {Event} ]", _kafkaEventBusConfig.ClientInfo, eventName, @event);
                         var concreteType = typeof(IIntegrationEventHandler<>).MakeGenericType(messageObject.Key);
                         await (Task)concreteType.GetMethod("HandleAsync")?.Invoke(handler, new[] { @event })!;
-                        _logger.LogDebug("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Handling COMPLETED : Event [ {Event} ]", _eventBusConfig.ClientInfo, eventName, @event);
+                        _logger.LogDebug("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Handling COMPLETED : Event [ {Event} ]", _kafkaEventBusConfig.ClientInfo, eventName, @event);
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogWarning("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Handling ERROR : {HandlingError}", _eventBusConfig.ClientInfo, eventName, ex.Message);
+                        _logger.LogWarning("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Handling ERROR : {HandlingError}", _kafkaEventBusConfig.ClientInfo, eventName, ex.Message);
                     }
                 }
             }
             else
             {
-                _logger.LogWarning("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => No SUBSCRIPTION for event", _eventBusConfig.ClientInfo, eventName);
+                _logger.LogWarning("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => No SUBSCRIPTION for event", _kafkaEventBusConfig.ClientInfo, eventName);
             }
         }));
     }
 
     private string TrimEventName(string eventName)
     {
-        if (_eventBusConfig.DeleteEventPrefix && eventName.StartsWith(_eventBusConfig.EventNamePrefix))
+        if (_kafkaEventBusConfig.DeleteEventPrefix && eventName.StartsWith(_kafkaEventBusConfig.EventNamePrefix))
         {
-            eventName = eventName.Substring(_eventBusConfig.EventNamePrefix.Length);
+            eventName = eventName.Substring(_kafkaEventBusConfig.EventNamePrefix.Length);
         }
 
-        if (_eventBusConfig.DeleteEventSuffix && eventName.EndsWith(_eventBusConfig.EventNameSuffix))
+        if (_kafkaEventBusConfig.DeleteEventSuffix && eventName.EndsWith(_kafkaEventBusConfig.EventNameSuffix))
         {
-            eventName = eventName.Substring(0, eventName.Length - _eventBusConfig.EventNameSuffix.Length);
+            eventName = eventName.Substring(0, eventName.Length - _kafkaEventBusConfig.EventNameSuffix.Length);
         }
 
         return eventName;

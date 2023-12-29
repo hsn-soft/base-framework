@@ -2,7 +2,7 @@ using System;
 using System.Linq;
 using JetBrains.Annotations;
 
-namespace HsnSoft.Base.EventBus;
+namespace HsnSoft.Base.EventBus.Attributes;
 
 [AttributeUsage(AttributeTargets.Class)]
 public class EventNameAttribute : Attribute, IEventNameProvider

@@ -2,11 +2,11 @@ using System;
 using System.Threading.Tasks;
 using HsnSoft.Base.Domain.Entities.Events;
 
-namespace HsnSoft.Base.EventBus.Abstractions;
+namespace HsnSoft.Base.EventBus;
 
 public interface IEventBus
 {
-    Task PublishAsync<TEventMessage>(TEventMessage eventMessage, Guid? relatedMessageId = null, string? correlationId = null) where TEventMessage : IIntegrationEventMessage;
+    Task PublishAsync<TEventMessage>(TEventMessage eventMessage, Guid? parentMessageId = null, string? correlationId = null) where TEventMessage : IIntegrationEventMessage;
 
     void Subscribe<TEvent, THandler>()
         where TEvent : IIntegrationEventMessage

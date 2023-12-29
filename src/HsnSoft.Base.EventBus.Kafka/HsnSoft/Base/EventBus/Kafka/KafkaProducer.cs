@@ -16,19 +16,19 @@ public sealed class KafkaProducer
     private readonly ILogger _logger;
     private readonly ProducerConfig _producerConfig;
     private readonly JsonSerializerSettings _options = DefaultJsonOptions.Get();
-    private readonly EventBusConfig _eventBusConfig;
+    private readonly KafkaEventBusConfig _kafkaEventBusConfig;
 
-    public KafkaProducer(KafkaConnectionSettings connectionSettings, EventBusConfig eventBusConfig, ILogger logger)
+    public KafkaProducer(KafkaConnectionSettings connectionSettings, KafkaEventBusConfig kafkaEventBusConfig, ILogger logger)
     {
         _logger = logger;
-        _eventBusConfig = eventBusConfig;
-        _producerConfig = new ProducerConfig
+        _kafkaEventBusConfig = kafkaEventBusConfig;
+        _producerConfig = new ProducerConfig()
         {
+            // mandatory settings
             BootstrapServers = $"{connectionSettings.HostName}:{connectionSettings.Port}",
             EnableDeliveryReports = true,
             ClientId = Dns.GetHostName(),
             Debug = "msg",
-
             // retry settings:
             // Receive acknowledgement from all sync replicas
             Acks = Acks.All,
@@ -37,7 +37,11 @@ public sealed class KafkaProducer
             // Duration to retry before next attempt
             RetryBackoffMs = 1000,
             // Set to true if you don't want to reorder messages on retry
-            EnableIdempotence = true
+            EnableIdempotence = true,
+
+            // other optional settings
+            ReceiveMessageMaxBytes = _kafkaEventBusConfig.KafkaProducerConfig.ReceiveMessageMaxBytes,
+            MessageMaxBytes = _kafkaEventBusConfig.KafkaProducerConfig.MessageMaxBytes
         };
     }
 
@@ -52,28 +56,28 @@ public sealed class KafkaProducer
                 {
                     case SyslogLevel.Emergency or SyslogLevel.Alert or SyslogLevel.Critical or SyslogLevel.Error:
                     {
-                        _logger.LogError("Kafka | {ClientInfo} {Facility} => Message: {Message}", _eventBusConfig.ClientInfo, message.Facility, message.Message);
+                        _logger.LogError("Kafka | {ClientInfo} {Facility} => Message: {Message}", _kafkaEventBusConfig.ClientInfo, message.Facility, message.Message);
 
                         break;
                     }
                     case SyslogLevel.Warning or SyslogLevel.Notice or SyslogLevel.Debug:
                     {
-                        _logger.LogDebug("Kafka | {ClientInfo} {Facility} => Message: {Message}", _eventBusConfig.ClientInfo, message.Facility, message.Message);
+                        _logger.LogDebug("Kafka | {ClientInfo} {Facility} => Message: {Message}", _kafkaEventBusConfig.ClientInfo, message.Facility, message.Message);
                         break;
                     }
                     default:
                     {
-                        _logger.LogInformation("Kafka | {ClientInfo} {Facility} => Message: {Message}", _eventBusConfig.ClientInfo, message.Facility, message.Message);
+                        _logger.LogInformation("Kafka | {ClientInfo} {Facility} => Message: {Message}", _kafkaEventBusConfig.ClientInfo, message.Facility, message.Message);
                         break;
                     }
                 }
             })
-            .SetErrorHandler((_, e) => _logger.LogError("Kafka | {ClientInfo} PRODUCER => Error: {Reason}. Is Fatal: {IsFatal}", _eventBusConfig.ClientInfo, e.Reason, e.IsFatal))
+            .SetErrorHandler((_, e) => _logger.LogError("Kafka | {ClientInfo} PRODUCER => Error: {Reason}. Is Fatal: {IsFatal}", _kafkaEventBusConfig.ClientInfo, e.Reason, e.IsFatal))
             .Build();
 
         try
         {
-            _logger.LogDebug("Kafka | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] STARTED", _eventBusConfig.ClientInfo, topicName, @event.MessageId.ToString());
+            _logger.LogDebug("Kafka | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] STARTED", _kafkaEventBusConfig.ClientInfo, topicName, @event.MessageId.ToString());
 
             var message = JsonConvert.SerializeObject(@event, _options);
 
@@ -96,13 +100,13 @@ public sealed class KafkaProducer
             }
 
             Thread.Sleep(TimeSpan.FromMilliseconds(50));
-            _logger.LogDebug("Kafka | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] COMPLETED", _eventBusConfig.ClientInfo, topicName, @event.MessageId.ToString());
+            _logger.LogDebug("Kafka | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] COMPLETED", _kafkaEventBusConfig.ClientInfo, topicName, @event.MessageId.ToString());
         }
         catch (ProduceException<long, string> e)
         {
             // Log this message for manual processing.
             _logger.LogError("Kafka | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] ERROR: {ProduceError} for message (value: \'{DeliveryResultValue}\')",
-                _eventBusConfig.ClientInfo,
+                _kafkaEventBusConfig.ClientInfo,
                 topicName,
                 @event.MessageId.ToString(),
                 e.Message,

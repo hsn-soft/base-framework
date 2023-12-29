@@ -1,6 +1,6 @@
 using System;
 
-namespace HsnSoft.Base.EventBus;
+namespace HsnSoft.Base.EventBus.Attributes;
 
 [AttributeUsage(AttributeTargets.Class)]
 public class GenericEventNameAttribute : Attribute, IEventNameProvider
