@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.EventBus.SubManagers;
 using HsnSoft.Base.Kafka;
+using HsnSoft.Base.Tracing;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -20,7 +21,7 @@ public class EventBusKafka : IEventBus, IDisposable
     private readonly ILogger<EventBusKafka> _logger;
     private readonly KafkaConnectionSettings _kafkaConnectionSettings;
     private readonly KafkaEventBusConfig _kafkaEventBusConfig;
-    private readonly IEventBusTraceAccesor _traceAccessor;
+    private readonly ITraceAccesor _traceAccessor;
 
     private readonly IEventBusSubscriptionsManager _subsManager;
     private readonly CancellationTokenSource _tokenSource;
@@ -36,7 +37,7 @@ public class EventBusKafka : IEventBus, IDisposable
 
         _kafkaConnectionSettings = _serviceProvider.GetRequiredService<IOptions<KafkaConnectionSettings>>().Value;
         _kafkaEventBusConfig = _serviceProvider.GetRequiredService<IOptions<KafkaEventBusConfig>>().Value;
-        _traceAccessor = _serviceProvider.GetService<IEventBusTraceAccesor>();
+        _traceAccessor = _serviceProvider.GetService<ITraceAccesor>();
 
         _subsManager = new InMemoryEventBusSubscriptionsManager(TrimEventName);
 

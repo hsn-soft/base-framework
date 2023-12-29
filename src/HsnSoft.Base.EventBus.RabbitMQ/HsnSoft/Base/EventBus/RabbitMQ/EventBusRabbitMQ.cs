@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.EventBus.SubManagers;
 using HsnSoft.Base.RabbitMQ;
+using HsnSoft.Base.Tracing;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -26,7 +27,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
     private readonly RabbitMQEventBusConfig _rabbitMqEventBusConfig;
     private readonly RabbitMQConnectionSettings _rabbitMqConnectionSettings;
     private readonly ILogger<EventBusRabbitMQ> _logger;
-    private readonly IEventBusTraceAccesor _traceAccessor;
+    private readonly ITraceAccesor _traceAccessor;
 
     private readonly IEventBusSubscriptionsManager _subsManager;
 
@@ -43,7 +44,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
         _rabbitMqConnectionSettings = _serviceProvider.GetRequiredService<IOptions<RabbitMQConnectionSettings>>().Value;
         _rabbitMqEventBusConfig = _serviceProvider.GetRequiredService<IOptions<RabbitMQEventBusConfig>>().Value;
         _persistentConnection = _serviceProvider.GetRequiredService<IRabbitMQPersistentConnection>();
-        _traceAccessor = _serviceProvider.GetService<IEventBusTraceAccesor>();
+        _traceAccessor = _serviceProvider.GetService<ITraceAccesor>();
 
         _subsManager = new InMemoryEventBusSubscriptionsManager(TrimEventName);
 

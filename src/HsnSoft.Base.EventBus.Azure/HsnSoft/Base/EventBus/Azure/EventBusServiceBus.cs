@@ -6,6 +6,7 @@ using Azure.Messaging.ServiceBus.Administration;
 using HsnSoft.Base.AzureServiceBus;
 using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.EventBus.SubManagers;
+using HsnSoft.Base.Tracing;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -21,7 +22,7 @@ public class EventBusServiceBus : IEventBus, IDisposable
     private readonly EventBusConfig _eventBusConfig;
     private readonly ILogger<EventBusServiceBus> _logger;
     private readonly IEventBusSubscriptionsManager _subsManager;
-    private readonly IEventBusTraceAccesor _traceAccessor;
+    private readonly ITraceAccesor _traceAccessor;
 
     private ServiceBusSender _sender;
     private ServiceBusProcessor _processor;
@@ -35,7 +36,7 @@ public class EventBusServiceBus : IEventBus, IDisposable
 
         _eventBusConfig = _serviceProvider.GetRequiredService<IOptions<EventBusConfig>>().Value;
         _serviceBusPersisterConnection = _serviceProvider.GetRequiredService<IServiceBusPersisterConnection>();
-        _traceAccessor = _serviceProvider.GetService<IEventBusTraceAccesor>();
+        _traceAccessor = _serviceProvider.GetService<ITraceAccesor>();
 
         _subsManager = new InMemoryEventBusSubscriptionsManager(TrimEventName);
 
