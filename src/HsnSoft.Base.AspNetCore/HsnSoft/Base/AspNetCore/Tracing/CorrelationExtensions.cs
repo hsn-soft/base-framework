@@ -1,5 +1,6 @@
 using System;
 using System.Net.Http.Headers;
+using JetBrains.Annotations;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 
@@ -21,7 +22,8 @@ public static class CorrelationExtensions
             await next();
         });
 
-    public static string? GetCorrelationId(this HttpContext context)
+    [CanBeNull]
+    public static string GetCorrelationId(this HttpContext context)
         => context.Items.TryGetValue(CorrelationIdKey, out var correlationId) ? correlationId as string : null;
 
     public static void AddCorrelationId(this HttpRequestHeaders headers, string correlationId)

@@ -1,10 +1,14 @@
+using JetBrains.Annotations;
+
 namespace HsnSoft.Base.Tracing;
 
 public interface ITraceAccesor
 {
-    string? GetCorrelationId();
+    [CanBeNull]
+    string GetCorrelationId();
 
-    string? GetUserId();
+    [CanBeNull]
+    string GetUserId();
 
     string[] GetRoles();
 }

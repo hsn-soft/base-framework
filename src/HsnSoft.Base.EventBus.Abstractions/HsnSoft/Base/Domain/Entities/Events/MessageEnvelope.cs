@@ -1,4 +1,5 @@
 using System;
+using JetBrains.Annotations;
 
 namespace HsnSoft.Base.Domain.Entities.Events;
 
@@ -14,13 +15,18 @@ public sealed record MessageEnvelope<T> where T : IIntegrationEventMessage
 
     public T Message { get; set; }
 
-    public string? CorrelationId { get; set; }
+    [CanBeNull]
+    public string CorrelationId { get; set; }
 
-    public string? UserId { get; set; }
-    public string? UserRoleUniqueName { get; set; }
+    [CanBeNull]
+    public string UserId { get; set; }
+    [CanBeNull]
+    public string UserRoleUniqueName { get; set; }
 
-    public string? Channel { get; set; }
-    public string? Producer { get; set; }
+    [CanBeNull]
+    public string Channel { get; set; }
+    [CanBeNull]
+    public string Producer { get; set; }
 }
 
 // Marker
