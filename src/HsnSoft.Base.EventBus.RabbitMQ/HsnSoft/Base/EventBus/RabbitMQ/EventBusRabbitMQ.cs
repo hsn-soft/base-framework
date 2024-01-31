@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using HsnSoft.Base.Domain.Entities.Events;
+using HsnSoft.Base.EventBus.Logging;
 using HsnSoft.Base.EventBus.SubManagers;
 using HsnSoft.Base.RabbitMQ;
 using HsnSoft.Base.Tracing;
@@ -26,7 +27,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
     private readonly IRabbitMQPersistentConnection _persistentConnection;
     private readonly RabbitMQEventBusConfig _rabbitMqEventBusConfig;
     private readonly RabbitMQConnectionSettings _rabbitMqConnectionSettings;
-    private readonly ILogger<EventBusRabbitMQ> _logger;
+    private readonly IEventBusLogger _logger;
     private readonly ITraceAccesor _traceAccessor;
 
     private readonly IEventBusSubscriptionsManager _subsManager;
@@ -38,8 +39,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
     {
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 
-        var loggerFactory = _serviceProvider.GetRequiredService<ILoggerFactory>();
-        _logger = loggerFactory.CreateLogger<EventBusRabbitMQ>();
+        _logger = _serviceProvider.GetRequiredService<IEventBusLogger>();
 
         _rabbitMqConnectionSettings = _serviceProvider.GetRequiredService<IOptions<RabbitMQConnectionSettings>>().Value;
         _rabbitMqEventBusConfig = _serviceProvider.GetRequiredService<IOptions<RabbitMQEventBusConfig>>().Value;
@@ -52,7 +52,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
         _subsManager.OnEventRemoved += SubsManager_OnEventRemoved;
     }
 
-    public Task PublishAsync<TEventMessage>(TEventMessage eventMessage, Guid? parentMessageId = null, [CanBeNull] string correlationId = null) where TEventMessage : IIntegrationEventMessage
+    public async Task PublishAsync<TEventMessage>(TEventMessage eventMessage, ParentMessageEnvelope parentMessage = null) where TEventMessage : IIntegrationEventMessage
     {
         if (!_persistentConnection.IsConnected)
         {
@@ -63,7 +63,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
             .Or<SocketException>()
             .WaitAndRetry(_rabbitMqConnectionSettings.ConnectionRetryCount, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), (ex, time) =>
             {
-                _logger.LogWarning(ex, "RabbitMQ | Could not publish event message : {Event} after {Timeout}s ({ExceptionMessage})", eventMessage, $"{time.TotalSeconds:n1}", ex.Message);
+                _logger.LogWarning( "RabbitMQ | Could not publish event message : {Event} after {Timeout}s ({ExceptionMessage})", eventMessage, $"{time.TotalSeconds:n1}", ex.Message);
             });
 
         var eventName = eventMessage.GetType().Name;
@@ -79,12 +79,16 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
 
             var @event = new MessageEnvelope<TEventMessage>
             {
-                ParentMessageId = parentMessageId,
+                ParentMessageId = parentMessage?.MessageId,
                 MessageId = Guid.NewGuid(),
                 MessageTime = DateTime.UtcNow,
                 Message = eventMessage,
                 Producer = _rabbitMqEventBusConfig.ClientInfo,
-                CorrelationId = correlationId ?? _traceAccessor.GetCorrelationId()
+                CorrelationId = parentMessage?.CorrelationId ?? _traceAccessor?.GetCorrelationId(),
+                Channel = parentMessage?.Channel ?? _traceAccessor?.GetChannel(),
+                UserId = parentMessage?.UserId,
+                UserRoleUniqueName = parentMessage?.UserRoleUniqueName,
+                HopLevel = parentMessage != null ? parentMessage.HopLevel + 1 : 1
             };
 
             _logger.LogDebug("RabbitMQ | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] STARTED", _rabbitMqEventBusConfig.ClientInfo, eventName, @event.MessageId.ToString());
@@ -108,8 +112,6 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
 
             _logger.LogDebug("RabbitMQ | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] COMPLETED", _rabbitMqEventBusConfig.ClientInfo, eventName, @event.MessageId.ToString());
         }
-
-        return Task.CompletedTask;
     }
 
     public void Subscribe<T, TH>() where T : IIntegrationEventMessage where TH : IIntegrationEventHandler<T>
@@ -291,13 +293,13 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
                     {
                         var eventType = _subsManager.GetEventTypeByName($"{_rabbitMqEventBusConfig.EventNamePrefix}{eventName}{_rabbitMqEventBusConfig.EventNameSuffix}");
 
-                        Type genericClass = typeof(MessageEnvelope<>);
-                        Type constructedClass = genericClass.MakeGenericType(eventType);
+                        var genericClass = typeof(MessageEnvelope<>);
+                        var constructedClass = genericClass.MakeGenericType(eventType);
                         var @event = JsonConvert.DeserializeObject(message, constructedClass);
 
                         _logger.LogDebug("RabbitMQ | {ClientInfo} CONSUMER [ {EventName} ] => Handling STARTED : Event [ {Event} ]", _rabbitMqEventBusConfig.ClientInfo, eventName, @event);
                         var concreteType = typeof(IIntegrationEventHandler<>).MakeGenericType(eventType!);
-                        await (Task)concreteType.GetMethod("HandleAsync")?.Invoke(handler, new[] { @event })!;
+                        (((Task)concreteType.GetMethod("HandleAsync")?.Invoke(handler, new[] { @event }))!).GetAwaiter().GetResult();
                         _logger.LogDebug("RabbitMQ | {ClientInfo} CONSUMER [ {EventName} ] => Handling COMPLETED : Event [ {Event} ]", _rabbitMqEventBusConfig.ClientInfo, eventName, @event);
                     }
                     catch (Exception ex)

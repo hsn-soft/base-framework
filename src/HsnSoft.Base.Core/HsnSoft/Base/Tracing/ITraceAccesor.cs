@@ -10,5 +10,9 @@ public interface ITraceAccesor
     [CanBeNull]
     string GetUserId();
 
+    [CanBeNull]
     string[] GetRoles();
+
+    [CanBeNull]
+    string GetChannel();
 }

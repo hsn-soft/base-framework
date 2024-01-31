@@ -22,24 +22,24 @@ public static class BaseAspNetCoreServiceCollectionExtensions
 {
     public static IServiceCollection AddBaseAspNetCoreServiceCollection(this IServiceCollection services)
     {
-        services.AddTransient<BaseClaimsMapMiddleware>();
-        services.AddTransient<ICurrentPrincipalAccessor, HttpContextCurrentPrincipalAccessor>();
-        services.AddTransient<BaseSecurityHeadersMiddleware>();
-        services.AddTransient<ISecurityLogManager, AspNetCoreSecurityLogManager>();
+        services.AddScoped<BaseClaimsMapMiddleware>();
+        services.AddScoped<ICurrentPrincipalAccessor, HttpContextCurrentPrincipalAccessor>();
+        services.AddScoped<BaseSecurityHeadersMiddleware>();
+        services.AddScoped<ISecurityLogManager, AspNetCoreSecurityLogManager>();
 
-        services.AddTransient<ICancellationTokenProvider, HttpContextCancellationTokenProvider>();
+        services.AddScoped<ICancellationTokenProvider, HttpContextCancellationTokenProvider>();
 
-        services.AddTransient<BaseCorrelationIdMiddleware>();
-        services.AddTransient<ICorrelationIdProvider, AspNetCoreCorrelationIdProvider>();
+        services.AddScoped<BaseCorrelationIdMiddleware>();
+        services.AddScoped<ICorrelationIdProvider, AspNetCoreCorrelationIdProvider>();
 
-        services.AddTransient<IWebClientInfoProvider, HttpContextWebClientInfoProvider>();
+        services.AddScoped<IWebClientInfoProvider, HttpContextWebClientInfoProvider>();
 
         return services;
     }
 
     public static IServiceCollection AddBaseAspNetCoreJsonLocalization(this IServiceCollection services)
     {
-        services.AddTransient<BaseLocalizationMiddleware>();
+        services.AddScoped<BaseLocalizationMiddleware>();
 
         services.Configure<RequestLocalizationOptions>(options =>
         {

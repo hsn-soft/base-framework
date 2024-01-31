@@ -15,10 +15,8 @@ public class HttpContextTraceAccessor : ITraceAccesor
         _httpContextAccessor = httpContextAccessor;
     }
 
-    public string GetCorrelationId()
-    {
-        return _httpContextAccessor.HttpContext?.GetCorrelationId() ?? Guid.NewGuid().ToString("N");
-    }
+    public string GetCorrelationId() => _httpContextAccessor.HttpContext?.GetCorrelationId() ?? Guid.NewGuid().ToString("N");
+    public string GetChannel() => _httpContextAccessor.HttpContext?.GetChannel();
 
     public string GetUserId()
     {
