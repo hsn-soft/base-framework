@@ -6,9 +6,9 @@ public static class BaseMultiTenancyServiceCollectionExtensions
 {
     public static IServiceCollection AddBaseMultiTenancyServiceCollection(this IServiceCollection services)
     {
-        services.AddTransient<ICurrentTenant, CurrentTenant>();
-        // services.AddTransient<ICurrentTenantAccessor>(sp => AsyncLocalCurrentTenantAccessor.Instance);
-        services.AddTransient<ICurrentTenantAccessor>(sp=> new BasicCurrentTenantAccessor(sp));
+        services.AddScoped<ICurrentTenant, CurrentTenant>();
+        // services.AddScoped<ICurrentTenantAccessor>(sp => AsyncLocalCurrentTenantAccessor.Instance);
+        services.AddScoped<ICurrentTenantAccessor>(sp=> new BasicCurrentTenantAccessor(sp));
 
         return services;
     }

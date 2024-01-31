@@ -20,7 +20,7 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="$(MicrosoftEntityFrameworkCorePackageVersion)" />
-        <PackageReference Include="Oracle.EntityFrameworkCore" Version="7.21.12" />
+        <PackageReference Include="Oracle.EntityFrameworkCore" Version="7.21.13" />
     </ItemGroup>
 
 </Project>
