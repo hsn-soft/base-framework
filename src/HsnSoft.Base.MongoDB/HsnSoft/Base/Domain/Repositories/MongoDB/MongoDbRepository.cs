@@ -10,7 +10,6 @@ using HsnSoft.Base.Domain.Entities;
 using HsnSoft.Base.Guids;
 using HsnSoft.Base.MongoDB;
 using HsnSoft.Base.MultiTenancy;
-using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
 using MongoDB.Driver.Linq;

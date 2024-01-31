@@ -10,8 +10,8 @@ public static class BaseSecurityServiceCollectionExtensions
 {
     public static IServiceCollection AddBaseSecurityServiceCollection(this IServiceCollection services)
     {
-        services.AddTransient<ICurrentClient, CurrentClient>();
-        services.AddTransient<ICurrentUser, CurrentUser>();
+        services.AddScoped<ICurrentClient, CurrentClient>();
+        services.AddScoped<ICurrentUser, CurrentUser>();
 
         services.AddTransient<IStringEncryptionService, StringEncryptionService>();
 

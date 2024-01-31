@@ -3,25 +3,25 @@ using System.Collections.Generic;
 using System.Threading;
 using Confluent.Kafka;
 using HsnSoft.Base.Domain.Entities.Events;
+using HsnSoft.Base.EventBus.Logging;
 using HsnSoft.Base.Kafka;
-using Microsoft.Extensions.Logging;
 
 namespace HsnSoft.Base.EventBus.Kafka;
 
 public sealed class KafkaConsumer
 {
-    private readonly ILogger _logger;
+    private readonly IEventBusLogger _logger;
     private readonly ConsumerConfig _consumerConfig;
     private readonly KafkaEventBusConfig _kafkaEventBusConfig;
     private bool KeepConsuming { get; set; }
 
     public event EventHandler<KeyValuePair<Type, string>> OnMessageReceived;
 
-    public KafkaConsumer(KafkaConnectionSettings connectionSettings, KafkaEventBusConfig kafkaEventBusConfig, ILogger logger)
+    public KafkaConsumer(KafkaConnectionSettings connectionSettings, KafkaEventBusConfig kafkaEventBusConfig, IEventBusLogger eventBusLogger)
     {
-        _logger = logger;
+        _logger = eventBusLogger;
         _kafkaEventBusConfig = kafkaEventBusConfig;
-        _consumerConfig = new ConsumerConfig()
+        _consumerConfig = new ConsumerConfig
         {
             // mandatory settings
             BootstrapServers = $"{connectionSettings.HostName}:{connectionSettings.Port}",
@@ -60,17 +60,11 @@ public sealed class KafkaConsumer
                     case SyslogLevel.Emergency or SyslogLevel.Alert or SyslogLevel.Critical or SyslogLevel.Error:
                     {
                         _logger.LogError("Kafka | {ClientInfo} {Facility} => Message: {Message}", _kafkaEventBusConfig.ClientInfo, message.Facility, message.Message);
-
-                        break;
-                    }
-                    case SyslogLevel.Warning or SyslogLevel.Notice or SyslogLevel.Debug:
-                    {
-                        _logger.LogDebug("Kafka | {ClientInfo} {Facility} => Message: {Message}", _kafkaEventBusConfig.ClientInfo, message.Facility, message.Message);
                         break;
                     }
                     default:
                     {
-                        _logger.LogInformation("Kafka | {ClientInfo} {Facility} => Message: {Message}", _kafkaEventBusConfig.ClientInfo, message.Facility, message.Message);
+                        _logger.LogDebug("Kafka | {ClientInfo} {Facility} => Message: {Message}", _kafkaEventBusConfig.ClientInfo, message.Facility, message.Message);
                         break;
                     }
                 }
@@ -85,7 +79,7 @@ public sealed class KafkaConsumer
         try
         {
             consumer.Subscribe(topicName);
-            _logger.LogInformation("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Subscribed", _kafkaEventBusConfig.ClientInfo, topicName);
+            _logger.LogDebug("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Subscribed", _kafkaEventBusConfig.ClientInfo, topicName);
 
             while (KeepConsuming && !stoppingToken.IsCancellationRequested)
             {
@@ -111,7 +105,7 @@ public sealed class KafkaConsumer
                 catch (ConsumeException ce)
                 {
                     if (ce.Error.IsFatal) throw;
-                    _logger.LogWarning("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Consume ERROR : {ConsumeError} | {Time}", _kafkaEventBusConfig.ClientInfo, topicName, ce.Message, DateTime.UtcNow.ToString("yyyy-MM-dd hh:mm:ss zz"));
+                    _logger.LogDebug("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Consume ERROR : {ConsumeError} | {Time}", _kafkaEventBusConfig.ClientInfo, topicName, ce.Message, DateTime.UtcNow.ToString("yyyy-MM-dd hh:mm:ss zz"));
                 }
 
                 // loop wait period
@@ -120,7 +114,7 @@ public sealed class KafkaConsumer
         }
         catch (OperationCanceledException oe)
         {
-            _logger.LogWarning("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Closing... : {CancelledMessage}", _kafkaEventBusConfig.ClientInfo, topicName, oe.Message);
+            _logger.LogDebug("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Closing... : {CancelledMessage}", _kafkaEventBusConfig.ClientInfo, topicName, oe.Message);
         }
         catch (Exception e)
         {
@@ -129,7 +123,7 @@ public sealed class KafkaConsumer
         finally
         {
             consumer.Close();
-            _logger.LogInformation("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Closed", _kafkaEventBusConfig.ClientInfo, topicName);
+            _logger.LogDebug("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Closed", _kafkaEventBusConfig.ClientInfo, topicName);
         }
     }
 }

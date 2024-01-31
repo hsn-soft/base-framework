@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Linq;
 using System.Security.Claims;
-using HsnSoft.Base.AspNetCore.Tracing;
-using HsnSoft.Base.EventBus;
+using HsnSoft.Base.Tracing;
 using Microsoft.AspNetCore.Http;
 
-namespace HsnSoft.Base.AspNetCore.Security.Claims;
+namespace HsnSoft.Base.AspNetCore.Tracing;
 
-public class HttpContextTraceAccessor : IEventBusTraceAccesor
+public class HttpContextTraceAccessor : ITraceAccesor
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
 
@@ -16,10 +15,8 @@ public class HttpContextTraceAccessor : IEventBusTraceAccesor
         _httpContextAccessor = httpContextAccessor;
     }
 
-    public string GetCorrelationId()
-    {
-        return _httpContextAccessor.HttpContext?.GetCorrelationId() ?? Guid.NewGuid().ToString("N");
-    }
+    public string GetCorrelationId() => _httpContextAccessor.HttpContext?.GetCorrelationId() ?? Guid.NewGuid().ToString("N");
+    public string GetChannel() => _httpContextAccessor.HttpContext?.GetChannel();
 
     public string GetUserId()
     {
