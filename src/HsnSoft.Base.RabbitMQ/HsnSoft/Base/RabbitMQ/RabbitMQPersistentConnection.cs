@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Net.Sockets;
+using HsnSoft.Base.EventBus.Logging;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -15,7 +16,7 @@ namespace HsnSoft.Base.RabbitMQ;
 public class RabbitMQPersistentConnection : IRabbitMQPersistentConnection
 {
     private readonly IConnectionFactory _connectionFactory;
-    private readonly ILogger<RabbitMQPersistentConnection> _logger;
+    private readonly IEventBusLogger _logger;
     private readonly int _retryCount;
 
     [CanBeNull]
@@ -29,8 +30,7 @@ public class RabbitMQPersistentConnection : IRabbitMQPersistentConnection
     {
         if (serviceProvider == null) throw new ArgumentNullException(nameof(serviceProvider));
 
-        var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
-        _logger = loggerFactory.CreateLogger<RabbitMQPersistentConnection>() ?? throw new ArgumentNullException(nameof(loggerFactory));
+        _logger = serviceProvider.GetRequiredService<IEventBusLogger>();
 
         var conSettings = serviceProvider.GetRequiredService<IOptions<RabbitMQConnectionSettings>>();
         _connectionFactory = new ConnectionFactory()
@@ -71,7 +71,7 @@ public class RabbitMQPersistentConnection : IRabbitMQPersistentConnection
         }
         catch (IOException ex)
         {
-            _logger.LogCritical(ex.Message);
+            _logger.LogError(ex.Message);
         }
     }
 
@@ -85,7 +85,7 @@ public class RabbitMQPersistentConnection : IRabbitMQPersistentConnection
                 .Or<BrokerUnreachableException>()
                 .WaitAndRetry(_retryCount, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), (ex, time) =>
                     {
-                        _logger.LogWarning(ex, "RabbitMQ Client could not connect after {TimeOut}s ({ExceptionMessage})", $"{time.TotalSeconds:n1}", ex.Message);
+                        _logger.LogWarning("RabbitMQ Client could not connect after {TimeOut}s ({ExceptionMessage})", $"{time.TotalSeconds:n1}", ex.Message);
                     }
                 );
 
@@ -106,7 +106,7 @@ public class RabbitMQPersistentConnection : IRabbitMQPersistentConnection
                 return true;
             }
 
-            _logger.LogCritical("FATAL ERROR: RabbitMQ connections could not be created and opened");
+            _logger.LogError("FATAL ERROR: RabbitMQ connections could not be created and opened");
 
             return false;
         }
