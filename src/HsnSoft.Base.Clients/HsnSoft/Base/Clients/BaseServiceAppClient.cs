@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -7,6 +8,7 @@ using System.Web;
 using HsnSoft.Base.Communication;
 using IdentityModel.Client;
 using JetBrains.Annotations;
+using Newtonsoft.Json;
 
 namespace HsnSoft.Base.Clients;
 
@@ -68,15 +70,42 @@ public abstract class BaseServiceAppClient
         }
     }
 
-    protected async Task CheckResult(HttpResponseMessage response)
+    [ItemCanBeNull]
+    protected async Task<T> CheckBaseResultAndReturnModel<T>(HttpResponseMessage response) where T : class
     {
-        if (!response.IsSuccessStatusCode)
-        {
-            DtoResponse err;
-            try { err = await response.Content.ReadFromJsonAsync<DtoResponse>(); }
-            catch (Exception) { err = null; }
+        await CheckResult(response);
 
-            throw new Exception(err == null ? response.ReasonPhrase : err.StatusMessagesToSingleMessage());
+        try
+        {
+            var responseContentJson = await response.Content.ReadAsStringAsync();
+
+            var baseModel = JsonConvert.DeserializeObject<BaseResponse<T>>(responseContentJson);
+
+            return baseModel.Payload;
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+
+    private async Task CheckResult(HttpResponseMessage response)
+    {
+        if (response.IsSuccessStatusCode) return;
+
+        BaseResponse err;
+        try { err = await response.Content.ReadFromJsonAsync<BaseResponse>(); }
+        catch (Exception) { err = null; }
+
+        err ??= new BaseResponse()
+        {
+            StatusCode = (int)response.StatusCode,
+            StatusMessages = new List<string> { response.ReasonPhrase ?? string.Empty }
+        };
+
+        if (err != null)
+        {
+            throw new Exception($"{err.StatusCode.ToString()}:{err.StatusMessagesToSingleMessage()}");
         }
     }
 }
