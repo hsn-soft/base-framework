@@ -1,9 +1,10 @@
+using System;
 using HsnSoft.Base.Data;
-using HsnSoft.Base.DependencyInjection;
 using HsnSoft.Base.Guids;
 using HsnSoft.Base.Linq;
 using HsnSoft.Base.MultiTenancy;
 using HsnSoft.Base.Timing;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -12,21 +13,21 @@ namespace HsnSoft.Base.Domain.Services;
 
 public abstract class DomainService : IDomainService
 {
-    protected IBaseLazyServiceProvider LazyServiceProvider { get; set; }
+    protected IServiceProvider ServiceProvider { get; set; }
 
-    protected IClock Clock => LazyServiceProvider.LazyGetRequiredService<IClock>();
+    protected IClock Clock => ServiceProvider.GetRequiredService<IClock>();
 
-    protected IDataFilter DataFilter => LazyServiceProvider.LazyGetRequiredService<IDataFilter>();
+    protected IDataFilter DataFilter => ServiceProvider.GetRequiredService<IDataFilter>();
 
-    protected IGuidGenerator GuidGenerator => LazyServiceProvider.LazyGetService<IGuidGenerator>(SimpleGuidGenerator.Instance);
+    protected IGuidGenerator GuidGenerator => SimpleGuidGenerator.Instance;
 
-    protected ILoggerFactory LoggerFactory => LazyServiceProvider.LazyGetRequiredService<ILoggerFactory>();
+    protected ILoggerFactory LoggerFactory => ServiceProvider.GetRequiredService<ILoggerFactory>();
 
-    protected ICurrentTenant CurrentTenant => LazyServiceProvider.LazyGetRequiredService<ICurrentTenant>();
+    protected ICurrentTenant CurrentTenant => ServiceProvider.GetRequiredService<ICurrentTenant>();
 
-    protected IAsyncQueryableExecuter AsyncExecuter => LazyServiceProvider.LazyGetRequiredService<IAsyncQueryableExecuter>();
+    protected IAsyncQueryableExecuter AsyncExecuter => ServiceProvider.GetRequiredService<IAsyncQueryableExecuter>();
 
-    protected IStringLocalizerFactory StringLocalizerFactory => LazyServiceProvider.LazyGetRequiredService<IStringLocalizerFactory>();
+    protected IStringLocalizerFactory StringLocalizerFactory => ServiceProvider.GetRequiredService<IStringLocalizerFactory>();
 
-    protected ILogger Logger => LazyServiceProvider.LazyGetService<ILogger>(provider => LoggerFactory?.CreateLogger(GetType().FullName) ?? NullLogger.Instance);
+    protected ILogger Logger => LoggerFactory?.CreateLogger(GetType().FullName) ?? NullLogger.Instance;
 }

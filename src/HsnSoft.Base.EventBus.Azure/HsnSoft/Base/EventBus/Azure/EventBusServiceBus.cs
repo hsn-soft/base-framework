@@ -8,9 +8,7 @@ using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.EventBus.Logging;
 using HsnSoft.Base.EventBus.SubManagers;
 using HsnSoft.Base.Tracing;
-using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 
