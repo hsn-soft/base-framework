@@ -13,10 +13,10 @@ public static class BaseSecurityServiceCollectionExtensions
         services.AddScoped<ICurrentClient, CurrentClient>();
         services.AddScoped<ICurrentUser, CurrentUser>();
 
-        services.AddTransient<IStringEncryptionService, StringEncryptionService>();
+        services.AddSingleton<IStringEncryptionService, StringEncryptionService>();
 
-        services.AddTransient<ISecurityLogManager, DefaultSecurityLogManager>();
-        services.AddTransient<ISecurityLogStore, SimpleSecurityLogStore>();
+        services.AddSingleton<ISecurityLogManager, DefaultSecurityLogManager>();
+        services.AddScoped<ISecurityLogStore, SimpleSecurityLogStore>();
 
         return services;
     }

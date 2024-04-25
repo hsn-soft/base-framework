@@ -1,10 +1,10 @@
 using System;
-using HsnSoft.Base.DependencyInjection;
 using HsnSoft.Base.Guids;
 using HsnSoft.Base.MultiTenancy;
 using HsnSoft.Base.Users;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -13,21 +13,21 @@ namespace HsnSoft.Base.AspNetCore.Mvc;
 
 public abstract class BaseController : Controller
 {
-    protected IBaseLazyServiceProvider LazyServiceProvider { get; set; }
+    protected IServiceProvider ServiceProvider { get; set; }
 
-    protected IGuidGenerator GuidGenerator => LazyServiceProvider.LazyGetService<IGuidGenerator>(SimpleGuidGenerator.Instance);
+    protected IGuidGenerator GuidGenerator => SimpleGuidGenerator.Instance;
 
-    protected ILoggerFactory LoggerFactory => LazyServiceProvider.LazyGetRequiredService<ILoggerFactory>();
+    protected ILoggerFactory LoggerFactory => ServiceProvider.GetRequiredService<ILoggerFactory>();
 
-    protected ILogger Logger => LazyServiceProvider.LazyGetService<ILogger>(provider => LoggerFactory?.CreateLogger(GetType().FullName) ?? NullLogger.Instance);
+    protected ILogger Logger => LoggerFactory?.CreateLogger(GetType().FullName) ?? NullLogger.Instance;
 
-    protected IAuthorizationService AuthorizationService => LazyServiceProvider.LazyGetRequiredService<IAuthorizationService>();
+    protected IAuthorizationService AuthorizationService => ServiceProvider.GetRequiredService<IAuthorizationService>();
 
-    protected ICurrentUser CurrentUser => this.LazyServiceProvider.LazyGetRequiredService<ICurrentUser>();
+    protected ICurrentUser CurrentUser => this.ServiceProvider.GetRequiredService<ICurrentUser>();
 
-    protected ICurrentTenant CurrentTenant => this.LazyServiceProvider.LazyGetRequiredService<ICurrentTenant>();
+    protected ICurrentTenant CurrentTenant => this.ServiceProvider.GetRequiredService<ICurrentTenant>();
 
-    protected IStringLocalizerFactory StringLocalizerFactory => LazyServiceProvider.LazyGetRequiredService<IStringLocalizerFactory>();
+    protected IStringLocalizerFactory StringLocalizerFactory => ServiceProvider.GetRequiredService<IStringLocalizerFactory>();
 
     protected virtual RedirectResult RedirectSafely(string returnUrl, string returnUrlHash = null)
     {

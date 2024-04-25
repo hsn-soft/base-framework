@@ -1,9 +1,11 @@
+using System;
 using HsnSoft.Base.Auditing;
 using HsnSoft.Base.Data;
 using HsnSoft.Base.DependencyInjection;
 using HsnSoft.Base.Guids;
 using HsnSoft.Base.MultiTenancy;
 using HsnSoft.Base.Users;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Localization;
 
 namespace HsnSoft.Base.Application.Services;
@@ -13,15 +15,15 @@ public abstract class BaseApplicationService :
     IAuditingEnabled,
     ITransientDependency
 {
-    protected IBaseLazyServiceProvider LazyServiceProvider { get; set; }
+    protected IServiceProvider ServiceProvider { get; set; }
 
-    protected IDataFilter DataFilter => this.LazyServiceProvider.LazyGetRequiredService<IDataFilter>();
+    protected IDataFilter DataFilter => this.ServiceProvider.GetRequiredService<IDataFilter>();
 
-    protected IGuidGenerator GuidGenerator => this.LazyServiceProvider.LazyGetService<IGuidGenerator>((IGuidGenerator)SimpleGuidGenerator.Instance);
+    protected IGuidGenerator GuidGenerator => SimpleGuidGenerator.Instance;
 
-    protected ICurrentUser CurrentUser => this.LazyServiceProvider.LazyGetRequiredService<ICurrentUser>();
+    protected ICurrentUser CurrentUser => this.ServiceProvider.GetRequiredService<ICurrentUser>();
 
-    protected ICurrentTenant CurrentTenant => this.LazyServiceProvider.LazyGetRequiredService<ICurrentTenant>();
+    protected ICurrentTenant CurrentTenant => this.ServiceProvider.GetRequiredService<ICurrentTenant>();
 
-    protected IStringLocalizerFactory StringLocalizerFactory => this.LazyServiceProvider.LazyGetRequiredService<IStringLocalizerFactory>();
+    protected IStringLocalizerFactory StringLocalizerFactory => this.ServiceProvider.GetRequiredService<IStringLocalizerFactory>();
 }

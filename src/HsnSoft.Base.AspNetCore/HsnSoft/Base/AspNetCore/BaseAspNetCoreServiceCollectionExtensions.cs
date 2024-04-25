@@ -51,7 +51,7 @@ public static class BaseAspNetCoreServiceCollectionExtensions
 
         services.AddMemoryCache();
         services.AddLocalization();
-        services.AddTransient<IStringLocalizer, CacheStringLocalizer>();
+        services.AddScoped<IStringLocalizer, CacheStringLocalizer>();
         services.AddSingleton<IStringLocalizerFactory, CacheStringLocalizerFactory>();
 
         return services;

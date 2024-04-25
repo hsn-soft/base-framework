@@ -1,5 +1,4 @@
 using System;
-using HsnSoft.Base.DependencyInjection;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Localization;
@@ -8,20 +7,17 @@ namespace HsnSoft.Base.UI.Navigation;
 
 public class MenuConfigurationContext //: IMenuConfigurationContext
 {
-    private readonly IBaseLazyServiceProvider _lazyServiceProvider;
-
     public MenuConfigurationContext(ApplicationMenu menu, IServiceProvider serviceProvider)
     {
         Menu = menu;
         ServiceProvider = serviceProvider;
-        _lazyServiceProvider = ServiceProvider.GetRequiredService<IBaseLazyServiceProvider>();
     }
 
     public IServiceProvider ServiceProvider { get; }
 
     // public IAuthorizationService AuthorizationService => _lazyServiceProvider.LazyGetRequiredService<IAuthorizationService>();
 
-    public IStringLocalizerFactory StringLocalizerFactory => _lazyServiceProvider.LazyGetRequiredService<IStringLocalizerFactory>();
+    public IStringLocalizerFactory StringLocalizerFactory => ServiceProvider.GetRequiredService<IStringLocalizerFactory>();
 
     public ApplicationMenu Menu { get; }
 
