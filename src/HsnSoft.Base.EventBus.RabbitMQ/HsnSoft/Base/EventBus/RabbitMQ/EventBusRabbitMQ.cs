@@ -10,7 +10,6 @@ using HsnSoft.Base.RabbitMQ;
 using HsnSoft.Base.Tracing;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Polly;
@@ -139,6 +138,9 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
                 exclusive: false,
                 autoDelete: false,
                 arguments: null);
+
+            // take 1 message per consumer
+            _consumerChannel.BasicQos(0, 1, false);
 
             _consumerChannel?.QueueBind(queue: GetConsumerQueueName(eventName),
                 exchange: _rabbitMqEventBusConfig.ExchangeName,

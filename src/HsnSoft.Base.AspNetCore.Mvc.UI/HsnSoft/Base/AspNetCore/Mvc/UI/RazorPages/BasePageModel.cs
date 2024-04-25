@@ -1,12 +1,12 @@
 using System;
 using AutoMapper;
 using HsnSoft.Base.AspNetCore.Mvc.Services;
-using HsnSoft.Base.DependencyInjection;
 using HsnSoft.Base.Guids;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -16,23 +16,23 @@ namespace HsnSoft.Base.AspNetCore.Mvc.UI.RazorPages;
 public abstract class BasePageModel : PageModel
 {
     private IStringLocalizer _localizer;
-    public IBaseLazyServiceProvider LazyServiceProvider { get; protected set; }
+    public IServiceProvider ServiceProvider { get; protected set; }
 
 
-    // protected ICurrentUser CurrentUser => LazyServiceProvider.LazyGetRequiredService<ICurrentUser>();
+    // protected ICurrentUser CurrentUser => LazyServiceProvider.GetRequiredService<ICurrentUser>();
     //
-    // protected ICurrentTenant CurrentTenant => LazyServiceProvider.LazyGetRequiredService<ICurrentTenant>();
+    // protected ICurrentTenant CurrentTenant => LazyServiceProvider.GetRequiredService<ICurrentTenant>();
 
-    protected IAuthorizationService AuthorizationService => LazyServiceProvider.LazyGetRequiredService<IAuthorizationService>();
+    protected IAuthorizationService AuthorizationService => ServiceProvider.GetRequiredService<IAuthorizationService>();
 
-    protected IRazorRenderService RazorRenderService => LazyServiceProvider.LazyGetRequiredService<IRazorRenderService>();
-    protected IMapper Mapper => LazyServiceProvider.LazyGetRequiredService<IMapper>();
-    protected IGuidGenerator GuidGenerator => LazyServiceProvider.LazyGetService<IGuidGenerator>(SimpleGuidGenerator.Instance);
+    protected IRazorRenderService RazorRenderService => ServiceProvider.GetRequiredService<IRazorRenderService>();
+    protected IMapper Mapper => ServiceProvider.GetRequiredService<IMapper>();
+    protected IGuidGenerator GuidGenerator => SimpleGuidGenerator.Instance;
 
-    protected ILoggerFactory LoggerFactory => LazyServiceProvider.LazyGetRequiredService<ILoggerFactory>();
-    protected ILogger Logger => LazyServiceProvider.LazyGetService<ILogger>(provider => LoggerFactory?.CreateLogger(GetType().FullName) ?? NullLogger.Instance);
+    protected ILoggerFactory LoggerFactory => ServiceProvider.GetRequiredService<ILoggerFactory>();
+    protected ILogger Logger =>  LoggerFactory?.CreateLogger(GetType().FullName) ?? NullLogger.Instance;
 
-    protected IStringLocalizerFactory StringLocalizerFactory => LazyServiceProvider.LazyGetRequiredService<IStringLocalizerFactory>();
+    protected IStringLocalizerFactory StringLocalizerFactory => ServiceProvider.GetRequiredService<IStringLocalizerFactory>();
 
     protected Type LocalizationResourceType { get; set; }
 

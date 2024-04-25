@@ -4,7 +4,6 @@ using System.Net.Sockets;
 using HsnSoft.Base.EventBus.Logging;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Polly;
 using RabbitMQ.Client;
