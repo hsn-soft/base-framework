@@ -4,7 +4,7 @@ using RabbitMQ.Client;
 
 namespace HsnSoft.Base.RabbitMQ;
 
-public interface IRabbitMQPersistentConnection : IDisposable
+public interface IRabbitMqPersistentConnection : IDisposable
 {
     bool IsConnected { get; }
 

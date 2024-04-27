@@ -7,6 +7,9 @@ public sealed record MessageEnvelope<T> where T : IIntegrationEventMessage
 {
     public int HopLevel { get; set; }
 
+    public bool IsReQueued { get; set; }
+    public int ReQueueCount { get; set; }
+
     public Guid? ParentMessageId { get; set; }
 
     public Guid MessageId { get; set; }
