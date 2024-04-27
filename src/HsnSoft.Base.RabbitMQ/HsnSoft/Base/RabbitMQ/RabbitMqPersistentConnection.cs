@@ -3,7 +3,6 @@ using System.IO;
 using System.Net.Sockets;
 using HsnSoft.Base.EventBus.Logging;
 using JetBrains.Annotations;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Polly;
 using RabbitMQ.Client;
@@ -12,7 +11,7 @@ using RabbitMQ.Client.Exceptions;
 
 namespace HsnSoft.Base.RabbitMQ;
 
-public class RabbitMQPersistentConnection : IRabbitMQPersistentConnection
+public class RabbitMqPersistentConnection : IRabbitMqPersistentConnection
 {
     private readonly IConnectionFactory _connectionFactory;
     private readonly IEventBusLogger _logger;
@@ -25,19 +24,17 @@ public class RabbitMQPersistentConnection : IRabbitMQPersistentConnection
 
     private readonly object _syncRoot = new();
 
-    public RabbitMQPersistentConnection(IServiceProvider serviceProvider)
+    public RabbitMqPersistentConnection(IOptions<RabbitMqConnectionSettings> conSettings, IEventBusLogger logger)
     {
-        if (serviceProvider == null) throw new ArgumentNullException(nameof(serviceProvider));
-
-        _logger = serviceProvider.GetRequiredService<IEventBusLogger>();
-
-        var conSettings = serviceProvider.GetRequiredService<IOptions<RabbitMQConnectionSettings>>();
+        _logger = logger;
         _connectionFactory = new ConnectionFactory()
         {
             HostName = conSettings.Value.HostName,
             Port = conSettings.Value.Port,
             UserName = conSettings.Value.UserName,
             Password = conSettings.Value.Password,
+            VirtualHost = conSettings.Value.VirtualHost,
+            RequestedHeartbeat = TimeSpan.FromSeconds(60)
         };
         _retryCount = conSettings.Value.ConnectionRetryCount;
     }
@@ -66,6 +63,7 @@ public class RabbitMQPersistentConnection : IRabbitMQPersistentConnection
             _connection!.ConnectionShutdown -= OnConnectionShutdown;
             _connection.CallbackException -= OnCallbackException;
             _connection.ConnectionBlocked -= OnConnectionBlocked;
+            _connection.Close();
             _connection.Dispose();
         }
         catch (IOException ex)

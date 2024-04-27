@@ -22,8 +22,10 @@ public static class BaseAspNetCoreServiceCollectionExtensions
 {
     public static IServiceCollection AddBaseAspNetCoreServiceCollection(this IServiceCollection services)
     {
+        services.AddHttpContextAccessor();
+
         services.AddScoped<BaseClaimsMapMiddleware>();
-        services.AddScoped<ICurrentPrincipalAccessor, HttpContextCurrentPrincipalAccessor>();
+        services.AddSingleton<ICurrentPrincipalAccessor, HttpContextCurrentPrincipalAccessor>();
         services.AddScoped<BaseSecurityHeadersMiddleware>();
         services.AddScoped<ISecurityLogManager, AspNetCoreSecurityLogManager>();
 
