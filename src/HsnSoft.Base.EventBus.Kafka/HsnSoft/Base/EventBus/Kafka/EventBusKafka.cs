@@ -7,6 +7,7 @@ using HsnSoft.Base.EventBus.Logging;
 using HsnSoft.Base.EventBus.SubManagers;
 using HsnSoft.Base.Kafka;
 using HsnSoft.Base.Tracing;
+using HsnSoft.Base.Users;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -21,6 +22,7 @@ public class EventBusKafka : IEventBus, IDisposable
     private readonly KafkaConnectionSettings _kafkaConnectionSettings;
     private readonly KafkaEventBusConfig _kafkaEventBusConfig;
     private readonly ITraceAccesor _traceAccessor;
+    private readonly ICurrentUser _currentUser;
 
     private readonly IEventBusSubscriptionsManager _subsManager;
     private readonly CancellationTokenSource _tokenSource;
@@ -36,6 +38,7 @@ public class EventBusKafka : IEventBus, IDisposable
         _kafkaConnectionSettings = _serviceProvider.GetRequiredService<IOptions<KafkaConnectionSettings>>().Value;
         _kafkaEventBusConfig = _serviceProvider.GetRequiredService<IOptions<KafkaEventBusConfig>>().Value;
         _traceAccessor = _serviceProvider.GetService<ITraceAccesor>();
+        _currentUser = _serviceProvider.GetService<ICurrentUser>();
 
         _subsManager = new InMemoryEventBusSubscriptionsManager(TrimEventName);
 
@@ -44,14 +47,14 @@ public class EventBusKafka : IEventBus, IDisposable
         _messageProcessorTasks = new List<Task>();
     }
 
-    public async Task PublishAsync<TEventMessage>(TEventMessage eventMessage, ParentMessageEnvelope parentMessage = null) where TEventMessage : IIntegrationEventMessage
+    public async Task PublishAsync<TEventMessage>(TEventMessage eventMessage, ParentMessageEnvelope parentMessage = null, bool isReQueuePublish = false) where TEventMessage : IIntegrationEventMessage
     {
         var eventName = eventMessage.GetType().Name;
         eventName = TrimEventName(eventName);
 
         var kafkaProducer = new KafkaProducer(_kafkaConnectionSettings, _kafkaEventBusConfig, _logger);
 
-        var message = new MessageEnvelope<TEventMessage>
+        var @event = new MessageEnvelope<TEventMessage>
         {
             ParentMessageId = parentMessage?.MessageId,
             MessageId = Guid.NewGuid(),
@@ -60,12 +63,17 @@ public class EventBusKafka : IEventBus, IDisposable
             Producer = _kafkaEventBusConfig.ClientInfo,
             CorrelationId = parentMessage?.CorrelationId ?? _traceAccessor?.GetCorrelationId(),
             Channel = parentMessage?.Channel ?? _traceAccessor?.GetChannel(),
-            UserId = parentMessage?.UserId,
-            UserRoleUniqueName = parentMessage?.UserRoleUniqueName,
-            HopLevel = parentMessage != null ? parentMessage.HopLevel + 1 : 1
+            UserId = parentMessage?.UserId ?? _currentUser?.Id?.ToString(),
+            UserRoleUniqueName = parentMessage?.UserRoleUniqueName ?? (_currentUser?.Roles is { Length: > 0 } ? _currentUser?.Roles.JoinAsString(",") : null),
+            HopLevel = parentMessage != null ? parentMessage.HopLevel + 1 : 1,
+            IsReQueued = isReQueuePublish || (parentMessage?.IsReQueued ?? false)
         };
+        if (@event.IsReQueued)
+        {
+            @event.ReQueueCount = parentMessage != null ? parentMessage.ReQueueCount + 1 : 0;
+        }
 
-        await kafkaProducer.StartSendingMessages(eventName, message);
+        await kafkaProducer.StartSendingMessages(eventName, @event);
     }
 
     public void Subscribe<T, TH>() where T : IIntegrationEventMessage where TH : IIntegrationEventHandler<T>
@@ -143,11 +151,9 @@ public class EventBusKafka : IEventBus, IDisposable
             if (_subsManager.HasSubscriptionsForEvent(eventName))
             {
                 var subscriptions = _subsManager.GetHandlersForEvent(eventName);
-
-                using var scope = _serviceProvider.CreateScope();
                 foreach (var subscription in subscriptions)
                 {
-                    var handler = scope.ServiceProvider.GetService(subscription.HandlerType);
+                    var handler = _serviceProvider.GetService(subscription.HandlerType);
                     if (handler == null)
                     {
                         _logger.LogWarning("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => No HANDLER for event", _kafkaEventBusConfig.ClientInfo, eventName);
