@@ -64,7 +64,7 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
         _consumerChannel = CreateConsumerChannel();
         _subsManager.OnEventRemoved += SubsManager_OnEventRemoved;
 
-        semaphore = new SemaphoreSlim(_rabbitMqEventBusConfig.ConsumerMaxFetchCount);
+        semaphore = new SemaphoreSlim(_rabbitMqEventBusConfig.ConsumerParallelThreadCount * _rabbitMqEventBusConfig.ConsumerMaxFetchCount);
     }
 
     public async Task PublishAsync<TEventMessage>(TEventMessage eventMessage, ParentMessageEnvelope parentMessage = null, bool isReQueuePublish = false) where TEventMessage : IIntegrationEventMessage
@@ -201,19 +201,24 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
     public void Dispose()
     {
         if (_disposed) return;
+        _logger.LogInformation("Message Broker Bridge shutting down...");
 
         _disposed = true;
         Thread.Sleep(1000); //wait for dispose set
 
-        while (_publishing || _consuming || semaphore.CurrentCount < _rabbitMqEventBusConfig.ConsumerMaxFetchCount)
+        while (_publishing || _consuming || semaphore.CurrentCount < _rabbitMqEventBusConfig.ConsumerParallelThreadCount * _rabbitMqEventBusConfig.ConsumerMaxFetchCount)
         {
-            _logger.LogInformation("RabbitMQ | Publisher and Consumers are waiting...");
+            _logger.LogInformation("Process Count [ {Done}/{All} ] => Publisher and Consumers are waiting...", semaphore.CurrentCount, _rabbitMqEventBusConfig.ConsumerParallelThreadCount * _rabbitMqEventBusConfig.ConsumerMaxFetchCount);
             Thread.Sleep(1000);
         }
+
+        _logger.LogInformation("Process Count [ {Done}/{All} ] => Publisher and Consumers are waiting...", semaphore.CurrentCount, _rabbitMqEventBusConfig.ConsumerParallelThreadCount * _rabbitMqEventBusConfig.ConsumerMaxFetchCount);
 
         semaphore.Dispose();
         _consumerChannel?.Dispose();
         _subsManager.Clear();
+
+        _logger.LogInformation("Message Broker Bridge terminated");
     }
 
     private void SubsManager_OnEventRemoved([CanBeNull] object sender, string eventName)
@@ -255,13 +260,19 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
 
         if (_consumerChannel != null)
         {
-            var consumer = new EventingBasicConsumer(_consumerChannel);
-            consumer.Received += ConsumerReceived;
+            for (var i = 0; i < _rabbitMqEventBusConfig.ConsumerParallelThreadCount; i++)
+            {
+                Task.Run(() =>
+                {
+                    var consumer = new EventingBasicConsumer(_consumerChannel);
+                    consumer.Received += ConsumerReceived;
 
-            _consumerChannel.BasicConsume(
-                queue: GetConsumerQueueName(eventName),
-                autoAck: false,
-                consumer: consumer);
+                    _consumerChannel.BasicConsume(
+                        queue: GetConsumerQueueName(eventName),
+                        autoAck: false,
+                        consumer: consumer);
+                });
+            }
         }
         else
         {
