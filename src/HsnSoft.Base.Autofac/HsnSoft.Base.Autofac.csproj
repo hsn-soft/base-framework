@@ -22,8 +22,4 @@
         <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="$(MicrosoftPackageVersion)" />
     </ItemGroup>
 
-    <ItemGroup>
-        <ProjectReference Include="..\HsnSoft.Base.Castle.Core\HsnSoft.Base.Castle.Core.csproj" />
-    </ItemGroup>
-
 </Project>

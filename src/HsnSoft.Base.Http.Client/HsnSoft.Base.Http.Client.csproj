@@ -4,7 +4,7 @@
     <Import Project="..\..\common.props" />
 
     <PropertyGroup>
-        <TargetFrameworks>netstandard2.0;netstandard2.1;net6.0</TargetFrameworks>
+        <TargetFramework>net6.0</TargetFramework>
         <AssemblyName>HsnSoft.Base.Http.Client</AssemblyName>
         <PackageId>HsnSoft.Base.Http.Client</PackageId>
         <AssetTargetFallback>$(AssetTargetFallback);portable-net45+win8+wp8+wpa81;</AssetTargetFallback>
@@ -15,15 +15,14 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="IdentityModel" Version="6.2.0" />
         <PackageReference Include="Microsoft.Extensions.Http" Version="$(MicrosoftPackageVersion)" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\HsnSoft.Base.Castle.Core\HsnSoft.Base.Castle.Core.csproj" />
+        <ProjectReference Include="..\HsnSoft.Base.AspNetCore.Mvc\HsnSoft.Base.AspNetCore.Mvc.csproj" />
         <ProjectReference Include="..\HsnSoft.Base.ExceptionHandling\HsnSoft.Base.ExceptionHandling.csproj" />
-        <ProjectReference Include="..\HsnSoft.Base.Http\HsnSoft.Base.Http.csproj" />
         <ProjectReference Include="..\HsnSoft.Base.MultiTenancy\HsnSoft.Base.MultiTenancy.csproj" />
-        <ProjectReference Include="..\HsnSoft.Base.RemoteServices\HsnSoft.Base.RemoteServices.csproj" />
         <ProjectReference Include="..\HsnSoft.Base.Threading\HsnSoft.Base.Threading.csproj" />
         <ProjectReference Include="..\HsnSoft.Base.Validation\HsnSoft.Base.Validation.csproj" />
     </ItemGroup>
