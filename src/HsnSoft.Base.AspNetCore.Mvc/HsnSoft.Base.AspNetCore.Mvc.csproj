@@ -19,10 +19,8 @@
 
     <ItemGroup>
         <ProjectReference Include="..\HsnSoft.Base.ApiVersioning.Abstractions\HsnSoft.Base.ApiVersioning.Abstractions.csproj" />
-        <ProjectReference Include="..\HsnSoft.Base.AspNetCore.Mvc.Contracts\HsnSoft.Base.AspNetCore.Mvc.Contracts.csproj" />
         <ProjectReference Include="..\HsnSoft.Base.AspNetCore\HsnSoft.Base.AspNetCore.csproj" />
         <ProjectReference Include="..\HsnSoft.Base.Ddd.Application\HsnSoft.Base.Ddd.Application.csproj" />
-        <ProjectReference Include="..\HsnSoft.Base.GlobalFeatures\HsnSoft.Base.GlobalFeatures.csproj" />
         <ProjectReference Include="..\HsnSoft.Base.Localization\HsnSoft.Base.Localization.csproj" />
         <ProjectReference Include="..\HsnSoft.Base.UI.Navigation\HsnSoft.Base.UI.Navigation.csproj" />
     </ItemGroup>

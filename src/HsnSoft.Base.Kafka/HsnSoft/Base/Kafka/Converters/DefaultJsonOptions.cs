@@ -11,7 +11,7 @@ public static class DefaultJsonOptions
         {
             Converters = new List<JsonConverter>
             {
-                new TimeSpanConverter(),
+                new CustomeTimeSpanConverter(),
             }
         };
         return settings;

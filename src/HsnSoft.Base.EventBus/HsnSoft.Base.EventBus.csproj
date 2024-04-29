@@ -15,7 +15,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\HsnSoft.Base.BackgroundWorkers\HsnSoft.Base.BackgroundWorkers.csproj" />
     <ProjectReference Include="..\HsnSoft.Base.EventBus.Abstractions\HsnSoft.Base.EventBus.Abstractions.csproj" />
     <ProjectReference Include="..\HsnSoft.Base.Guids\HsnSoft.Base.Guids.csproj" />
     <ProjectReference Include="..\HsnSoft.Base.Json\HsnSoft.Base.Json.csproj" />
