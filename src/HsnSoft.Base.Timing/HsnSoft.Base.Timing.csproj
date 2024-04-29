@@ -1,31 +1,33 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <Import Project="..\..\configureawait.props" />
-  <Import Project="..\..\common.props" />
+    <Import Project="..\..\configureawait.props" />
+    <Import Project="..\..\common.props" />
 
-  <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;netstandard2.1;net6.0</TargetFrameworks>
-    <AssemblyName>HsnSoft.Base.Timing</AssemblyName>
-    <PackageId>HsnSoft.Base.Timing</PackageId>
-    <AssetTargetFallback>$(AssetTargetFallback);portable-net45+win8+wp8+wpa81;</AssetTargetFallback>
-    <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
-    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
-    <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
-    <RootNamespace />
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;netstandard2.1;net6.0</TargetFrameworks>
+        <AssemblyName>HsnSoft.Base.Timing</AssemblyName>
+        <PackageId>HsnSoft.Base.Timing</PackageId>
+        <AssetTargetFallback>$(AssetTargetFallback);portable-net45+win8+wp8+wpa81;</AssetTargetFallback>
+        <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+        <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+        <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+        <RootNamespace />
+    </PropertyGroup>
 
-  <ItemGroup>
-    <EmbeddedResource Include="HsnSoft\Base\Timing\Localization\**\*.json" />
-    <Content Remove="HsnSoft\Base\Timing\Localization\**\*.json" />
-  </ItemGroup>
+    <ItemGroup>
+        <EmbeddedResource Include="HsnSoft\Base\Timing\Localization\**\*.json" />
+        <Content Remove="HsnSoft\Base\Timing\Localization\**\*.json" />
+    </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\HsnSoft.Base.Localization\HsnSoft.Base.Localization.csproj" />
-    <ProjectReference Include="..\HsnSoft.Base.Settings\HsnSoft.Base.Settings.csproj" />
-  </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\HsnSoft.Base.Localization\HsnSoft.Base.Localization.csproj" />
+        <ProjectReference Include="..\HsnSoft.Base.Localization.Abstractions\HsnSoft.Base.Localization.Abstractions.csproj" />
+        <ProjectReference Include="..\HsnSoft.Base.MultiTenancy\HsnSoft.Base.MultiTenancy.csproj" />
+        <ProjectReference Include="..\HsnSoft.Base.Security\HsnSoft.Base.Security.csproj" />
+    </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="TimeZoneConverter" Version="6.1.0" />
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="TimeZoneConverter" Version="6.1.0" />
+    </ItemGroup>
 
 </Project>
