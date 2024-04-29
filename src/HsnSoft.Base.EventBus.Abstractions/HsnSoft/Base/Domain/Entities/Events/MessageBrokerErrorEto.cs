@@ -3,7 +3,7 @@ using JetBrains.Annotations;
 
 namespace HsnSoft.Base.Domain.Entities.Events;
 
-public record MessageBrokerError(
+public record MessageBrokerErrorEto(
     DateTime ErrorTime,
     [NotNull] string ErrorMessage,
     [NotNull] string FailedEventName,

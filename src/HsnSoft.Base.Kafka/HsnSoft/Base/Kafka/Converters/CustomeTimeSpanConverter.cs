@@ -3,7 +3,7 @@ using Newtonsoft.Json;
 
 namespace HsnSoft.Base.Kafka.Converters;
 
-public class TimeSpanConverter : JsonConverter<TimeSpan>
+public class CustomeTimeSpanConverter : JsonConverter<TimeSpan>
 {
     public override void WriteJson(JsonWriter writer, TimeSpan value, JsonSerializer serializer)
     {

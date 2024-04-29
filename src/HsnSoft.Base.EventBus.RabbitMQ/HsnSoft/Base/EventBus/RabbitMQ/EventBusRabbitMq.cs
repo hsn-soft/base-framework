@@ -448,12 +448,12 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
         }
         catch (Exception e) { errorMessage += "Failed envelope could not convert:" + e.Message; }
 
-        var @event = new MessageEnvelope<MessageBrokerError>
+        var @event = new MessageEnvelope<MessageBrokerErrorEto>
         {
             ParentMessageId = failedEnvelopeInfo?.MessageId,
             MessageId = Guid.NewGuid(),
             MessageTime = DateTime.UtcNow,
-            Message = new MessageBrokerError(
+            Message = new MessageBrokerErrorEto(
                 ErrorTime: DateTime.UtcNow,
                 ErrorMessage: errorMessage,
                 FailedEventName: failedEventName,

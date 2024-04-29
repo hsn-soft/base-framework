@@ -77,7 +77,7 @@ public sealed class KafkaProducer
             {
                 Converters = new List<JsonConverter>
                 {
-                    new TimeSpanConverter()
+                    new CustomeTimeSpanConverter()
                 }
             });
 
