@@ -18,8 +18,8 @@ public static class BaseAspNetCoreServiceCollectionExtensions
     {
         services.AddOptions();
         services.AddHttpContextAccessor();
-        services.AddScoped<ICurrentPrincipalAccessor, HttpContextCurrentPrincipalAccessor>();
-        services.AddScoped<IWebClientInfoProvider, HttpContextWebClientInfoProvider>();
+        services.AddTransient<ICurrentPrincipalAccessor, HttpContextCurrentPrincipalAccessor>();
+        services.AddTransient<IWebClientInfoProvider, HttpContextWebClientInfoProvider>();
         services.AddScoped<BaseClaimsMapMiddleware>();
         services.AddScoped<BaseSecurityHeadersMiddleware>();
 
@@ -40,7 +40,7 @@ public static class BaseAspNetCoreServiceCollectionExtensions
 
         services.AddMemoryCache();
         services.AddLocalization();
-        services.AddScoped<IStringLocalizer, CacheStringLocalizer>();
+        services.AddTransient<IStringLocalizer, CacheStringLocalizer>();
         services.AddSingleton<IStringLocalizerFactory, CacheStringLocalizerFactory>();
 
         return services;

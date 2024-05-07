@@ -25,7 +25,7 @@ public static class BaseSecurityServiceCollectionExtensions
 
     public static IServiceCollection AddBaseSecurityLogCollection(this IServiceCollection services)
     {
-        services.AddScoped<ISecurityLogStore, SimpleSecurityLogStore>();
+        services.AddTransient<ISecurityLogStore, SimpleSecurityLogStore>();
         services.AddSingleton<ISecurityLogManager, DefaultSecurityLogManager>();
 
 
