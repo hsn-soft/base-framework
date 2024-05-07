@@ -12,7 +12,6 @@ namespace HsnSoft.Base.Application.Services;
 
 public abstract class BaseApplicationService :
     IApplicationService,
-    IAuditingEnabled,
     ITransientDependency
 {
     protected IServiceProvider ServiceProvider { get; set; }

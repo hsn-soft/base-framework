@@ -7,7 +7,6 @@ namespace HsnSoft.Base.Domain.Entities;
 public abstract class AggregateRoot : BasicAggregateRoot,
     IHasConcurrencyStamp
 {
-    [DisableAuditing]
     public virtual string ConcurrencyStamp { get; set; }
 
     protected AggregateRoot()
@@ -20,7 +19,6 @@ public abstract class AggregateRoot : BasicAggregateRoot,
 public abstract class AggregateRoot<TKey> : BasicAggregateRoot<TKey>,
     IHasConcurrencyStamp
 {
-    [DisableAuditing]
     public virtual string ConcurrencyStamp { get; set; }
 
     protected AggregateRoot()
