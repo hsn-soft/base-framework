@@ -97,7 +97,7 @@ public abstract class BaseServiceAppClient
         try { err = await response.Content.ReadFromJsonAsync<BaseResponse>(); }
         catch (Exception) { err = null; }
 
-        err ??= new BaseResponse()
+        err ??= new BaseResponse
         {
             StatusCode = (int)response.StatusCode,
             StatusMessages = new List<string> { response.ReasonPhrase ?? string.Empty }

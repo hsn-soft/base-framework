@@ -27,7 +27,7 @@ public class RabbitMqPersistentConnection : IRabbitMqPersistentConnection
     public RabbitMqPersistentConnection(IOptions<RabbitMqConnectionSettings> conSettings, IEventBusLogger logger)
     {
         _logger = logger;
-        _connectionFactory = new ConnectionFactory()
+        _connectionFactory = new ConnectionFactory
         {
             HostName = conSettings.Value.HostName,
             Port = conSettings.Value.Port,

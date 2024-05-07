@@ -1,7 +1,6 @@
 using System;
 using HsnSoft.Base.Data;
 using HsnSoft.Base.Guids;
-using HsnSoft.Base.Linq;
 using HsnSoft.Base.MultiTenancy;
 using HsnSoft.Base.Timing;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,8 +23,6 @@ public abstract class DomainService : IDomainService
     protected ILoggerFactory LoggerFactory => ServiceProvider.GetRequiredService<ILoggerFactory>();
 
     protected ICurrentTenant CurrentTenant => ServiceProvider.GetRequiredService<ICurrentTenant>();
-
-    protected IAsyncQueryableExecuter AsyncExecuter => ServiceProvider.GetRequiredService<IAsyncQueryableExecuter>();
 
     protected IStringLocalizerFactory StringLocalizerFactory => ServiceProvider.GetRequiredService<IStringLocalizerFactory>();
 

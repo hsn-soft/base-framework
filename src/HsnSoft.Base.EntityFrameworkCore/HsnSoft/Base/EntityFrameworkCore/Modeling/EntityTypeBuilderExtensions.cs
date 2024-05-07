@@ -15,7 +15,6 @@ public static class EntityTypeBuilderExtensions
         // b.TryConfigureExtraProperties();
         // b.TryConfigureObjectExtensions();
         b.TryConfigureMayHaveCreator();
-        b.TryConfigureMustHaveCreator();
         b.TryConfigureSoftDelete();
         b.TryConfigureDeletionTime();
         b.TryConfigureDeletionAudited();
@@ -130,22 +129,6 @@ public static class EntityTypeBuilderExtensions
             b.Property(nameof(IMayHaveCreator.CreatorId))
                 .IsRequired(false)
                 .HasColumnName(nameof(IMayHaveCreator.CreatorId));
-        }
-    }
-
-    public static void ConfigureMustHaveCreator<T>(this EntityTypeBuilder<T> b)
-        where T : class, IMustHaveCreator
-    {
-        b.As<EntityTypeBuilder>().TryConfigureMustHaveCreator();
-    }
-
-    public static void TryConfigureMustHaveCreator(this EntityTypeBuilder b)
-    {
-        if (b.Metadata.ClrType.IsAssignableTo<IMustHaveCreator>())
-        {
-            b.Property(nameof(IMustHaveCreator.CreatorId))
-                .IsRequired()
-                .HasColumnName(nameof(IMustHaveCreator.CreatorId));
         }
     }
 

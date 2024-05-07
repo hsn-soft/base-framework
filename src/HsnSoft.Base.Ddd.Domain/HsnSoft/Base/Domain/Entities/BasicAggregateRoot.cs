@@ -5,29 +5,6 @@ using System.Collections.ObjectModel;
 namespace HsnSoft.Base.Domain.Entities;
 
 [Serializable]
-public abstract class BasicAggregateRoot : Entity,
-    IAggregateRoot,
-    IGeneratesDomainEvents
-{
-    private readonly ICollection<DomainEventRecord> _domainEvents = new Collection<DomainEventRecord>();
-
-    public virtual IEnumerable<DomainEventRecord> GetDomainEvents()
-    {
-        return _domainEvents;
-    }
-
-    public virtual void ClearDomainEvents()
-    {
-        _domainEvents.Clear();
-    }
-
-    protected virtual void AddDomainEvent(object eventData)
-    {
-        _domainEvents.Add(new DomainEventRecord(eventData, EventOrderGenerator.GetNext()));
-    }
-}
-
-[Serializable]
 public abstract class BasicAggregateRoot<TKey> : Entity<TKey>,
     IAggregateRoot<TKey>,
     IGeneratesDomainEvents
@@ -45,17 +22,17 @@ public abstract class BasicAggregateRoot<TKey> : Entity<TKey>,
 
     }
 
-    public virtual IEnumerable<DomainEventRecord> GetDomainEvents()
+    public  IEnumerable<DomainEventRecord> GetDomainEvents()
     {
         return _domainEvents;
     }
 
-    public virtual void ClearDomainEvents()
+    public  void ClearDomainEvents()
     {
         _domainEvents.Clear();
     }
 
-    protected virtual void AddDomainEvent(object eventData)
+    protected  void AddDomainEvent(object eventData)
     {
         _domainEvents.Add(new DomainEventRecord(eventData, EventOrderGenerator.GetNext()));
     }

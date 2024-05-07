@@ -3,15 +3,9 @@ using System.Globalization;
 using HsnSoft.Base.AspNetCore.Localization;
 using HsnSoft.Base.AspNetCore.Security;
 using HsnSoft.Base.AspNetCore.Security.Claims;
-using HsnSoft.Base.AspNetCore.SecurityLog;
-using HsnSoft.Base.AspNetCore.Threading;
-using HsnSoft.Base.AspNetCore.Tracing;
 using HsnSoft.Base.AspNetCore.WebClientInfo;
 using HsnSoft.Base.Localization;
 using HsnSoft.Base.Security.Claims;
-using HsnSoft.Base.SecurityLog;
-using HsnSoft.Base.Threading;
-using HsnSoft.Base.Tracing;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Localization;
@@ -20,21 +14,14 @@ namespace HsnSoft.Base.AspNetCore;
 
 public static class BaseAspNetCoreServiceCollectionExtensions
 {
-    public static IServiceCollection AddBaseAspNetCoreServiceCollection(this IServiceCollection services)
+    public static IServiceCollection AddBaseAspNetCoreContextCollection(this IServiceCollection services)
     {
+        services.AddOptions();
         services.AddHttpContextAccessor();
-
+        services.AddTransient<ICurrentPrincipalAccessor, HttpContextCurrentPrincipalAccessor>();
+        services.AddTransient<IWebClientInfoProvider, HttpContextWebClientInfoProvider>();
         services.AddScoped<BaseClaimsMapMiddleware>();
-        services.AddSingleton<ICurrentPrincipalAccessor, HttpContextCurrentPrincipalAccessor>();
         services.AddScoped<BaseSecurityHeadersMiddleware>();
-        services.AddScoped<ISecurityLogManager, AspNetCoreSecurityLogManager>();
-
-        services.AddScoped<ICancellationTokenProvider, HttpContextCancellationTokenProvider>();
-
-        services.AddScoped<BaseCorrelationIdMiddleware>();
-        services.AddScoped<ICorrelationIdProvider, AspNetCoreCorrelationIdProvider>();
-
-        services.AddScoped<IWebClientInfoProvider, HttpContextWebClientInfoProvider>();
 
         return services;
     }
@@ -53,7 +40,7 @@ public static class BaseAspNetCoreServiceCollectionExtensions
 
         services.AddMemoryCache();
         services.AddLocalization();
-        services.AddScoped<IStringLocalizer, CacheStringLocalizer>();
+        services.AddTransient<IStringLocalizer, CacheStringLocalizer>();
         services.AddSingleton<IStringLocalizerFactory, CacheStringLocalizerFactory>();
 
         return services;

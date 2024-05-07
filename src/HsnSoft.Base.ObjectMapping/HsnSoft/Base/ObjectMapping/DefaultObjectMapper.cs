@@ -108,6 +108,6 @@ public class DefaultObjectMapper : IObjectMapper, ITransientDependency
 
     protected virtual TDestination AutoMap<TSource, TDestination>(TSource source, TDestination destination)
     {
-        return AutoObjectMappingProvider.Map<TSource, TDestination>(source, destination);
+        return AutoObjectMappingProvider.Map(source, destination);
     }
 }
