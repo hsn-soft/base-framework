@@ -1,9 +1,9 @@
-using HsnSoft.Base.MongoDB.Base;
-using HsnSoft.Base.MongoDB.Settings;
+using HsnSoft.Base.MongoDB.Options;
+using HsnSoft.Base.MongoDBOld.Base;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 
-namespace HsnSoft.Base.MongoDB.Repository;
+namespace HsnSoft.Base.MongoDBOld.Repository;
 
 public class MongoRepository<TDocument> : BaseRepository<TDocument>, IMongoRepository<TDocument>
     where TDocument : IBaseDocument

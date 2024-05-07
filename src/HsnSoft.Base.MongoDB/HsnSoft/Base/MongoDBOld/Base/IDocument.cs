@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace HsnSoft.Base.MongoDB.Base;
+namespace HsnSoft.Base.MongoDBOld.Base;
 
 public interface IFullAuditDocument : IBaseDocument
 {

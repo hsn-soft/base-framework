@@ -1,6 +1,6 @@
 using System;
 
-namespace HsnSoft.Base.MongoDB.Common.Models;
+namespace HsnSoft.Base.MongoDBOld;
 
 public class QueryOptions
 {

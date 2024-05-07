@@ -1,6 +1,6 @@
-namespace HsnSoft.Base.MongoDB.Settings;
+﻿namespace HsnSoft.Base.MongoDBOld;
 
-public class DbSettings : IDbSettings
+public class MongoDbSettings
 {
     public string DatabaseName { get; set; }
     public string ConnectionString { get; set; }

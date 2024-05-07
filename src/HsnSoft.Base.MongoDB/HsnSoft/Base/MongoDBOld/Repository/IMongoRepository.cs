@@ -1,6 +1,6 @@
-﻿using HsnSoft.Base.MongoDB.Base;
+﻿using HsnSoft.Base.MongoDBOld.Base;
 
-namespace HsnSoft.Base.MongoDB.Repository;
+namespace HsnSoft.Base.MongoDBOld.Repository;
 
 public interface IMongoRepository<TDocument> : IBaseRepository<TDocument>
     where TDocument : IBaseDocument

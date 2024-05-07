@@ -1,4 +1,4 @@
-namespace HsnSoft.Base.MongoDB.Common.Enums;
+namespace HsnSoft.Base.MongoDB.Options;
 
 public enum ReadOption
 {

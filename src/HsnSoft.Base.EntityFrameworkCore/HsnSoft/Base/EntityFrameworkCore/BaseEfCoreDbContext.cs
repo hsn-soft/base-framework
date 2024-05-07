@@ -7,54 +7,41 @@ using System.Threading;
 using System.Threading.Tasks;
 using HsnSoft.Base.Auditing;
 using HsnSoft.Base.Data;
-using HsnSoft.Base.DependencyInjection;
 using HsnSoft.Base.Domain.Entities;
 using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.EntityFrameworkCore.Modeling;
-using HsnSoft.Base.Guids;
 using HsnSoft.Base.MultiTenancy;
 using HsnSoft.Base.Reflection;
-using HsnSoft.Base.Timing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 
 namespace HsnSoft.Base.EntityFrameworkCore;
 
-public abstract class BaseDbContext<TDbContext> : DbContext, ITransientDependency
+public abstract class BaseEfCoreDbContext<TDbContext> : DbContext
     where TDbContext : DbContext
 {
-    protected BaseDbContext(DbContextOptions<TDbContext> options)
+    private readonly IServiceProvider _serviceProvider;
+
+    protected Guid? CurrentTenantId => CurrentTenant?.Id;
+
+    protected bool IsMultiTenantFilterEnabled => (CurrentTenantId != null) && (DataFilter?.IsEnabled<IMultiTenant>() ?? false);
+
+    protected bool IsSoftDeleteFilterEnabled => DataFilter?.IsEnabled<ISoftDelete>() ?? false;
+
+    public ICurrentTenant CurrentTenant => _serviceProvider?.GetService<ICurrentTenant>();
+
+    public IDataFilter DataFilter => _serviceProvider?.GetService<IDataFilter>();
+
+    public IAuditPropertySetter AuditPropertySetter => _serviceProvider?.GetRequiredService<IAuditPropertySetter>();
+
+    protected BaseEfCoreDbContext(IServiceProvider provider, DbContextOptions<TDbContext> options)
         : base(options)
     {
+        _serviceProvider = provider;
         Initialize();
     }
-
-    public IServiceProvider ServiceProvider { get; set; }
-
-    protected virtual Guid? CurrentTenantId => CurrentTenant?.Id;
-
-    protected virtual bool IsMultiTenantFilterEnabled => (CurrentTenantId != null) && (DataFilter?.IsEnabled<IMultiTenant>() ?? false);
-
-    protected virtual bool IsSoftDeleteFilterEnabled => DataFilter?.IsEnabled<ISoftDelete>() ?? false;
-
-    public ICurrentTenant CurrentTenant => ServiceProvider?.GetService<ICurrentTenant>();
-
-    public IGuidGenerator GuidGenerator => ServiceProvider?.GetService<IGuidGenerator>();
-
-    public IDataFilter DataFilter => ServiceProvider?.GetService<IDataFilter>();
-
-    public IAuditPropertySetter AuditPropertySetter => ServiceProvider?.GetRequiredService<IAuditPropertySetter>();
-
-    public IClock Clock => ServiceProvider?.GetRequiredService<IClock>();
-
-    // public IDistributedEventBus DistributedEventBus => ServiceProvider?.GetRequiredService<IDistributedEventBus>();
-    // public ILocalEventBus LocalEventBus => ServiceProvider?.GetRequiredService<ILocalEventBus>();
-
-    public ILogger<BaseDbContext<TDbContext>> Logger => ServiceProvider?.GetService<ILogger<BaseDbContext<TDbContext>>>();
-
 
     private void Initialize(double timeout = 30000)
     {
@@ -69,12 +56,12 @@ public abstract class BaseDbContext<TDbContext> : DbContext, ITransientDependenc
         ChangeTracker.StateChanged += ChangeTracker_StateChanged;
     }
 
-    protected virtual void ChangeTracker_Tracked(object sender, EntityTrackedEventArgs e)
+    protected void ChangeTracker_Tracked(object sender, EntityTrackedEventArgs e)
     {
         ApplyBaseConceptsForTrackedEntity(e.Entry);
     }
 
-    protected virtual void ChangeTracker_StateChanged(object sender, EntityStateChangedEventArgs e)
+    protected void ChangeTracker_StateChanged(object sender, EntityStateChangedEventArgs e)
     {
         ApplyBaseConceptsForTrackedEntity(e.Entry);
     }
@@ -88,13 +75,6 @@ public abstract class BaseDbContext<TDbContext> : DbContext, ITransientDependenc
                 break;
             case EntityState.Modified:
                 ApplyBaseConceptsForModifiedEntity(entry);
-                if (entry.Properties.Any(x => x.IsModified && x.Metadata.ValueGenerated == ValueGenerated.Never))
-                {
-                    if (entry.Entity is ISoftDelete && entry.Entity.As<ISoftDelete>().IsDeleted)
-                    {
-                    }
-                }
-
                 break;
             case EntityState.Deleted:
                 ApplyBaseConceptsForDeletedEntity(entry);
@@ -106,18 +86,17 @@ public abstract class BaseDbContext<TDbContext> : DbContext, ITransientDependenc
     {
         CheckAndSetId(entry);
         SetConcurrencyStampIfNull(entry);
-        SetCreationAuditProperties(entry);
+        AuditPropertySetter?.SetCreationProperties(entry.Entity);
     }
 
     protected virtual void ApplyBaseConceptsForModifiedEntity(EntityEntry entry)
     {
         if (entry.State == EntityState.Modified && entry.Properties.Any(x => x.IsModified && x.Metadata.ValueGenerated == ValueGenerated.Never))
         {
-            SetModificationAuditProperties(entry);
-
-            if (entry.Entity is ISoftDelete && entry.Entity.As<ISoftDelete>().IsDeleted)
+            AuditPropertySetter?.SetModificationProperties(entry.Entity);
+            if (entry.Entity is ISoftDelete && ((ISoftDelete)entry.Entity).IsDeleted)
             {
-                SetDeletionAuditProperties(entry);
+                AuditPropertySetter?.SetDeletionProperties(entry.Entity);
             }
         }
     }
@@ -131,22 +110,13 @@ public abstract class BaseDbContext<TDbContext> : DbContext, ITransientDependenc
 
         entry.Reload();
         entry.Entity.As<ISoftDelete>().IsDeleted = true;
-        SetDeletionAuditProperties(entry);
-    }
-
-    protected virtual void SetCreationAuditProperties(EntityEntry entry)
-    {
-        AuditPropertySetter?.SetCreationProperties(entry.Entity);
-    }
-
-    protected virtual void SetModificationAuditProperties(EntityEntry entry)
-    {
-        AuditPropertySetter?.SetModificationProperties(entry.Entity);
-    }
-
-    protected virtual void SetDeletionAuditProperties(EntityEntry entry)
-    {
         AuditPropertySetter?.SetDeletionProperties(entry.Entity);
+
+        // SoftDeletion Active and DeletionProperties not found then Set modification properties
+        if (!(entry.Entity is IHasDeletionTime) && !(entry.Entity is IDeletionAuditedObject))
+        {
+            AuditPropertySetter?.SetModificationProperties(entry.Entity);
+        }
     }
 
     protected virtual void SetConcurrencyStampIfNull(EntityEntry entry)
@@ -195,7 +165,7 @@ public abstract class BaseDbContext<TDbContext> : DbContext, ITransientDependenc
 
         EntityHelper.TrySetId(
             entity,
-            () => GuidGenerator.Create(),
+            Guid.NewGuid,
             true
         );
     }
@@ -219,14 +189,14 @@ public abstract class BaseDbContext<TDbContext> : DbContext, ITransientDependenc
     }
 
     private static readonly MethodInfo ConfigureBasePropertiesMethodInfo
-        = typeof(BaseDbContext<TDbContext>)
+        = typeof(BaseEfCoreDbContext<TDbContext>)
             .GetMethod(
                 nameof(ConfigureBaseProperties),
                 BindingFlags.Instance | BindingFlags.NonPublic
             );
 
     private static readonly MethodInfo ConfigureValueGeneratedMethodInfo
-        = typeof(BaseDbContext<TDbContext>)
+        = typeof(BaseEfCoreDbContext<TDbContext>)
             .GetMethod(
                 nameof(ConfigureValueGenerated),
                 BindingFlags.Instance | BindingFlags.NonPublic

@@ -5,18 +5,15 @@ using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 using HsnSoft.Base.MongoDB.Attributes;
-using HsnSoft.Base.MongoDB.Base;
-using HsnSoft.Base.MongoDB.Common.Enums;
-using HsnSoft.Base.MongoDB.Common.Helpers;
-using HsnSoft.Base.MongoDB.Common.Models;
-using HsnSoft.Base.MongoDB.Settings;
+using HsnSoft.Base.MongoDB.Options;
+using HsnSoft.Base.MongoDBOld.Base;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using MongoDB.Driver.Linq;
 using ReadPreference = MongoDB.Driver.ReadPreference;
 
-namespace HsnSoft.Base.MongoDB.Repository;
+namespace HsnSoft.Base.MongoDBOld.Repository;
 
 public abstract class BaseRepository<TDocument> : IBaseRepository<TDocument>
     where TDocument : IBaseDocument
@@ -24,14 +21,14 @@ public abstract class BaseRepository<TDocument> : IBaseRepository<TDocument>
     private readonly IMongoCollection<TDocument> _collection;
     private const int DefaultQueryExecutionMaxSeconds = 60;
     private QueryOptions _queryOptions;
-    protected BaseRepository(IOptions<IDbSettings> settings)
+    protected BaseRepository(IOptions<MongoDbSettings> settings)
     {
         var clientSettings = CreateClientSettings(settings);
         var database = new MongoClient(clientSettings).GetDatabase(settings.Value.DatabaseName);
         _collection = database.GetCollection<TDocument>(GetCollectionName(typeof(TDocument)));
     }
 
-    protected BaseRepository(IMongoClient mongoClient, IOptions<IDbSettings> settings)
+    protected BaseRepository(IMongoClient mongoClient, IOptions<MongoDbSettings> settings)
     {
         var database = mongoClient.GetDatabase(settings.Value.DatabaseName);
         _collection = database.GetCollection<TDocument>(GetCollectionName(typeof(TDocument)));
@@ -42,7 +39,7 @@ public abstract class BaseRepository<TDocument> : IBaseRepository<TDocument>
         };
     }
 
-    private MongoClientSettings CreateClientSettings(IOptions<IDbSettings> settings)
+    private MongoClientSettings CreateClientSettings(IOptions<MongoDbSettings> settings)
     {
         ThreadPool.GetMaxThreads(out var maxWt, out var _);
         var clientSettings = MongoClientSettings.FromConnectionString(settings.Value.ConnectionString);

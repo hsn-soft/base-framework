@@ -1,5 +1,4 @@
 using System;
-using HsnSoft.Base.Auditing;
 using HsnSoft.Base.Data;
 using HsnSoft.Base.DependencyInjection;
 using HsnSoft.Base.Guids;

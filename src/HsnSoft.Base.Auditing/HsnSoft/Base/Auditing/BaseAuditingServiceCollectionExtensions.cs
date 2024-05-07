@@ -1,6 +1,5 @@
 ﻿using HsnSoft.Base.MultiTenancy;
 using HsnSoft.Base.Timing;
-using HsnSoft.Base.Users;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace HsnSoft.Base.Auditing;

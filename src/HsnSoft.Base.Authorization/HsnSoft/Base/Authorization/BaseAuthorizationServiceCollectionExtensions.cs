@@ -1,6 +1,5 @@
 ﻿using HsnSoft.Base.Authorization.Permissions;
 using HsnSoft.Base.MultiTenancy;
-using HsnSoft.Base.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;

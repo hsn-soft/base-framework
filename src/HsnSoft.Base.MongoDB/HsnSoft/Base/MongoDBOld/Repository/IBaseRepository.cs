@@ -3,12 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
-using HsnSoft.Base.MongoDB.Base;
-using HsnSoft.Base.MongoDB.Common.Enums;
-using HsnSoft.Base.MongoDB.Common.Helpers;
+using HsnSoft.Base.MongoDB.Options;
+using HsnSoft.Base.MongoDBOld.Base;
 using MongoDB.Driver;
 
-namespace HsnSoft.Base.MongoDB.Repository;
+namespace HsnSoft.Base.MongoDBOld.Repository;
 
 public interface IBaseRepository<TDocument> where TDocument : IBaseDocument
 {

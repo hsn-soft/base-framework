@@ -4,7 +4,7 @@ using System.Linq;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
-namespace HsnSoft.Base.MongoDB.Base;
+namespace HsnSoft.Base.MongoDBOld.Base;
 
 public abstract class FullAuditDocument : BaseDocument, IFullAuditDocument
 {

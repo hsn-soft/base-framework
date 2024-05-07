@@ -1,6 +1,4 @@
-using HsnSoft.Base.MongoDB.Common.Enums;
-
-namespace HsnSoft.Base.MongoDB.Common.Helpers;
+namespace HsnSoft.Base.MongoDB.Options;
 
 public class FilterOptions
 {
