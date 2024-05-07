@@ -1,5 +1,6 @@
 ﻿using HsnSoft.Base.Json.Newtonsoft;
 using HsnSoft.Base.Json.SystemTextJson;
+using HsnSoft.Base.Timing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
@@ -10,6 +11,7 @@ public static class BaseJsonServiceCollectionExtensions
 {
     public static IServiceCollection AddBaseJsonServiceCollection(this IServiceCollection services)
     {
+        services.AddBaseTimingServiceCollection();
         services.TryAddEnumerable(ServiceDescriptor
             .Transient<IConfigureOptions<BaseSystemTextJsonSerializerOptions>, BaseSystemTextJsonSerializerOptionsSetup>());
 

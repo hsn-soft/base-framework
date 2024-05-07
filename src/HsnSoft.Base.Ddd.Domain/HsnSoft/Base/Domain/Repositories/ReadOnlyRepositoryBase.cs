@@ -8,7 +8,6 @@ using HsnSoft.Base.Data;
 using HsnSoft.Base.DependencyInjection;
 using HsnSoft.Base.Domain.Entities;
 using HsnSoft.Base.MultiTenancy;
-using HsnSoft.Base.Threading;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace HsnSoft.Base.Domain.Repositories;
@@ -25,8 +24,6 @@ public abstract class ReadOnlyRepositoryBase<TEntity> : IReadOnlyRepository<TEnt
     // public IAsyncQueryableExecuter AsyncExecuter => LazyServiceProvider.LazyGetRequiredService<IAsyncQueryableExecuter>();
 
     // public IUnitOfWorkManager UnitOfWorkManager => LazyServiceProvider.LazyGetRequiredService<IUnitOfWorkManager>();
-
-    public ICancellationTokenProvider CancellationTokenProvider => ServiceProvider?.GetService<ICancellationTokenProvider>();
 
     protected ReadOnlyRepositoryBase()
     {

@@ -1,4 +1,5 @@
 ﻿using HsnSoft.Base.Authorization.Permissions;
+using HsnSoft.Base.MultiTenancy;
 using HsnSoft.Base.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,12 +13,11 @@ public static class BaseAuthorizationServiceCollectionExtensions
     {
         services.AddAuthorizationCore();
 
-        services.AddBaseSecurityServiceCollection();
+        services.AddBaseMultiTenancyServiceCollection();
 
-        services.AddSingleton<IAuthorizationHandler, PermissionRequirementHandler>();
         services.AddSingleton<IPermissionStore, BasePermissionStore>();
-
         services.AddScoped<IPermissionChecker, PermissionChecker>();
+        services.AddSingleton<IAuthorizationHandler, PermissionRequirementHandler>();
 
         services.TryAddTransient<DefaultAuthorizationPolicyProvider>();
 

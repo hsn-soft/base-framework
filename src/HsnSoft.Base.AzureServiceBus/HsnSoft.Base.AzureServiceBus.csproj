@@ -17,7 +17,6 @@
     <ItemGroup>
         <PackageReference Include="Azure.Messaging.ServiceBus" Version="7.17.5" />
         <ProjectReference Include="..\HsnSoft.Base.Json\HsnSoft.Base.Json.csproj" />
-        <ProjectReference Include="..\HsnSoft.Base.Threading\HsnSoft.Base.Threading.csproj" />
     </ItemGroup>
 
 </Project>

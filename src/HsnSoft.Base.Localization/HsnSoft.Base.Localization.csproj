@@ -20,7 +20,6 @@
 
     <ItemGroup>
         <ProjectReference Include="..\HsnSoft.Base.Localization.Abstractions\HsnSoft.Base.Localization.Abstractions.csproj" />
-        <ProjectReference Include="..\HsnSoft.Base.Threading\HsnSoft.Base.Threading.csproj" />
         <ProjectReference Include="..\HsnSoft.Base.VirtualFileSystem\HsnSoft.Base.VirtualFileSystem.csproj" />
     </ItemGroup>
 

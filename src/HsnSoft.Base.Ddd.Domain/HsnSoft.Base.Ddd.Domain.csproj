@@ -16,7 +16,6 @@
 
     <ItemGroup>
         <ProjectReference Include="..\HsnSoft.Base.Auditing\HsnSoft.Base.Auditing.csproj" />
-        <ProjectReference Include="..\HsnSoft.Base.Caching\HsnSoft.Base.Caching.csproj" />
         <ProjectReference Include="..\HsnSoft.Base.Data\HsnSoft.Base.Data.csproj" />
         <ProjectReference Include="..\HsnSoft.Base.EventBus\HsnSoft.Base.EventBus.csproj" />
         <ProjectReference Include="..\HsnSoft.Base.ExceptionHandling\HsnSoft.Base.ExceptionHandling.csproj" />
