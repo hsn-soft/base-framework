@@ -1,5 +1,4 @@
 using System;
-using HsnSoft.Base.Auditing;
 using HsnSoft.Base.Data;
 using HsnSoft.Base.DependencyInjection;
 using HsnSoft.Base.Guids;
@@ -12,7 +11,6 @@ namespace HsnSoft.Base.Application.Services;
 
 public abstract class BaseApplicationService :
     IApplicationService,
-    IAuditingEnabled,
     ITransientDependency
 {
     protected IServiceProvider ServiceProvider { get; set; }
