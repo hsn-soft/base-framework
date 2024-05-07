@@ -1,4 +1,3 @@
-using HsnSoft.Base.MongoDB.Options;
 using HsnSoft.Base.MongoDBOld.Base;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;

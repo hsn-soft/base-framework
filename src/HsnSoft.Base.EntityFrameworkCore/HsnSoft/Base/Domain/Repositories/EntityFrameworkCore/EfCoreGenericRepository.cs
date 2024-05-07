@@ -49,20 +49,25 @@ public class EfCoreGenericRepository<TDbContext, TEntity, TKey> : GenericReposit
 
     public override async Task<TEntity> FindAsync(TKey id, bool includeDetails = true, CancellationToken cancellationToken = default)
     {
-        return includeDetails
-            ? await WithDetails().OrderBy(e => e.Id).FirstOrDefaultAsync(e => e.Id.Equals(id), GetCancellationToken(cancellationToken))
-            : await GetDbSet().FindAsync(new object[] { id }, GetCancellationToken(cancellationToken));
+        IEnumerable<TKey> ids = new[] { id };
+        return await FindAsync(x => ids.Contains(x.Id), cancellationToken: GetCancellationToken(cancellationToken));
     }
 
     public override async Task<TEntity> FindAsync(Expression<Func<TEntity, bool>> predicate, bool includeDetails = true, CancellationToken cancellationToken = default)
     {
-        return includeDetails
-            ? await WithDetails()
-                .Where(predicate)
-                .FirstOrDefaultAsync(GetCancellationToken(cancellationToken))
-            : await GetDbSet()
-                .Where(predicate)
-                .FirstOrDefaultAsync(GetCancellationToken(cancellationToken));
+        var query = includeDetails
+            ? WithDetails().Where(predicate)
+            : GetDbSet().Where(predicate);
+
+        var results = await query.ToListAsync(GetCancellationToken(cancellationToken));
+
+        if (results is not { Count: > 0 }) return null;
+        if (results is { Count: > 1 })
+        {
+            throw new EntityDuplicateException(typeof(TEntity));
+        }
+
+        return results.SingleOrDefault();
     }
 
     public override async Task<List<TEntity>> GetListAsync(Expression<Func<TEntity, bool>> predicate, bool includeDetails = false, CancellationToken cancellationToken = default)
@@ -96,6 +101,29 @@ public class EfCoreGenericRepository<TDbContext, TEntity, TKey> : GenericReposit
             : GetDbSet();
 
         return await queryable
+            .OrderByIf<TEntity, IQueryable<TEntity>>(!sorting.IsNullOrWhiteSpace(), sorting)
+            .PageBy(skipCount, maxResultCount)
+            .ToListAsync(GetCancellationToken(cancellationToken));
+    }
+
+    public override async Task<long> GetCountAsync(Expression<Func<TEntity, bool>> predicate,CancellationToken cancellationToken = default)
+    {
+        return await GetDbSet().Where(predicate).LongCountAsync(GetCancellationToken(cancellationToken));
+    }
+
+    public override async Task<List<TEntity>> GetPagedListAsync(
+        Expression<Func<TEntity, bool>> predicate,
+        int skipCount,
+        int maxResultCount,
+        string sorting,
+        bool includeDetails = false,
+        CancellationToken cancellationToken = default)
+    {
+        var queryable = includeDetails
+            ? WithDetails()
+            : GetDbSet();
+
+        return await queryable.Where(predicate)
             .OrderByIf<TEntity, IQueryable<TEntity>>(!sorting.IsNullOrWhiteSpace(), sorting)
             .PageBy(skipCount, maxResultCount)
             .ToListAsync(GetCancellationToken(cancellationToken));

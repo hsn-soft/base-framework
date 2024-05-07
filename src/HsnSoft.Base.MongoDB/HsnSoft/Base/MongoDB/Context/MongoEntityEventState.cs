@@ -1,20 +1,7 @@
-using System;
-
 namespace HsnSoft.Base.MongoDB.Context;
 
-public class MongoEntityEventArgs : EventArgs
+public enum MongoEntityEventState
 {
-    public MongoCommandState CommandState { get; set; }
-    public object EntryEntity { get; set; }
-}
-
-public enum MongoCommandState
-{
-    /// <summary>
-    ///     The entity is not being tracked by the context.
-    /// </summary>
-    Detached = 0,
-
     /// <summary>
     ///     The entity is being tracked by the context and exists in the database. Its property
     ///     values have not changed from the values in the database.

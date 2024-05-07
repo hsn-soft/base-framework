@@ -1,6 +1,5 @@
 using System;
 using System.Threading;
-using System.Threading.Tasks;
 using HsnSoft.Base.Auditing;
 using HsnSoft.Base.Domain.Entities;
 using HsnSoft.Base.MongoDB.Context;
@@ -12,11 +11,11 @@ namespace HsnSoft.Base.MongoDB;
 
 public abstract class BaseMongoDbContext : MongoDbContext
 {
-    public TimeSpan ClientWaitQueueTimeout => Client.Settings.WaitQueueTimeout;
-
     private readonly IServiceProvider _serviceProvider;
 
-    public IAuditPropertySetter AuditPropertySetter => _serviceProvider?.GetRequiredService<IAuditPropertySetter>();
+    private IAuditPropertySetter AuditPropertySetter => _serviceProvider?.GetRequiredService<IAuditPropertySetter>();
+
+    public TimeSpan ClientWaitQueueTimeout => Client.Settings.WaitQueueTimeout;
 
     protected BaseMongoDbContext(IServiceProvider provider, MongoClientSettings clientSettings, string databaseName) : base(clientSettings, databaseName)
     {
@@ -48,15 +47,15 @@ public abstract class BaseMongoDbContext : MongoDbContext
 
     private void CommandTrackerEvent_Tracked(object sender, MongoEntityEventArgs e)
     {
-        switch (e.CommandState)
+        switch (e.EventState)
         {
-            case MongoCommandState.Added:
+            case MongoEntityEventState.Added:
                 ApplyBaseConceptsForAddedEntity(e.EntryEntity);
                 break;
-            case MongoCommandState.Modified:
+            case MongoEntityEventState.Modified:
                 ApplyBaseConceptsForModifiedEntity(e.EntryEntity);
                 break;
-            case MongoCommandState.Deleted:
+            case MongoEntityEventState.Deleted:
                 ApplyBaseConceptsForDeletedEntity(e.EntryEntity);
                 break;
         }
@@ -111,8 +110,8 @@ public abstract class BaseMongoDbContext : MongoDbContext
         }
     }
 
-    public Task<int> SaveSaveEntityCommandsIfExistChangesAsync()
-    {
-        return SaveEntityCommandsAsync();
-    }
+    // public Task<int> SaveSaveEntityCommandsIfExistChangesAsync()
+    // {
+    //     return SaveEntityCommandsAsync();
+    // }
 }

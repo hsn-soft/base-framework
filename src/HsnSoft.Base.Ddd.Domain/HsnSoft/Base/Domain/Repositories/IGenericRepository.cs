@@ -32,6 +32,15 @@ public interface IGenericRepository<TEntity, in TKey> : IRepository
         bool includeDetails = false,
         CancellationToken cancellationToken = default);
 
+    Task<long> GetCountAsync([NotNull] Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default);
+
+    Task<List<TEntity>> GetPagedListAsync([NotNull] Expression<Func<TEntity, bool>> predicate,
+        int skipCount,
+        int maxResultCount,
+        string sorting,
+        bool includeDetails = false,
+        CancellationToken cancellationToken = default);
+
     [NotNull]
     Task<TEntity> InsertAsync([NotNull] TEntity entity, CancellationToken cancellationToken = default);
 
