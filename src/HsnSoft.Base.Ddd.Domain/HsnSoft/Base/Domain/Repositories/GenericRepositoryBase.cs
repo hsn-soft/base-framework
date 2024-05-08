@@ -15,17 +15,16 @@ namespace HsnSoft.Base.Domain.Repositories;
 public abstract class GenericRepositoryBase<TEntity, TKey> : IGenericRepository<TEntity, TKey>
     where TEntity : class, IEntity<TKey>
 {
-    [NotNull]
+    [CanBeNull]
     private IDataFilter DataFilter { get; }
 
-    [NotNull]
+    [CanBeNull]
     private ICurrentTenant CurrentTenant { get; }
 
-    protected GenericRepositoryBase(IServiceProvider provider)
+    protected GenericRepositoryBase(IServiceProvider provider = null)
     {
-        var serviceProvider = provider ?? throw new ArgumentNullException(nameof(provider), "GenericRepositoryBase IServiceProvider is null");
-        DataFilter = serviceProvider.GetRequiredService<IDataFilter>();
-        CurrentTenant = serviceProvider.GetRequiredService<ICurrentTenant>();
+        DataFilter = provider?.GetService<IDataFilter>();
+        CurrentTenant = provider?.GetService<ICurrentTenant>();
     }
 
     public abstract Task<TEntity> FindAsync(TKey id, bool includeDetails = true, CancellationToken cancellationToken = default);
@@ -145,13 +144,13 @@ public abstract class GenericRepositoryBase<TEntity, TKey> : IGenericRepository<
     {
         if (typeof(ISoftDelete).IsAssignableFrom(typeof(TOtherEntity)))
         {
-            query = (TQueryable)query.WhereIf(DataFilter.IsEnabled<ISoftDelete>(), e => ((ISoftDelete)e).IsDeleted == false);
+            query = (TQueryable)query.WhereIf(DataFilter?.IsEnabled<ISoftDelete>() ?? false, e => ((ISoftDelete)e).IsDeleted == false);
         }
 
         if (typeof(IMultiTenant).IsAssignableFrom(typeof(TOtherEntity)))
         {
-            var tenantId = CurrentTenant.Id;
-            query = (TQueryable)query.WhereIf(DataFilter.IsEnabled<IMultiTenant>(), e => ((IMultiTenant)e).TenantId == tenantId);
+            var tenantId = CurrentTenant?.Id;
+            query = (TQueryable)query.WhereIf(DataFilter?.IsEnabled<IMultiTenant>() ?? false, e => ((IMultiTenant)e).TenantId == tenantId);
         }
 
         return query;

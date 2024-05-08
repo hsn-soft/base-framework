@@ -12,19 +12,18 @@ namespace HsnSoft.Base.MongoDB;
 
 public abstract class BaseMongoDbContext : MongoDbContext
 {
-    [NotNull]
+    [CanBeNull]
     private IAuditPropertySetter AuditPropertySetter { get; }
 
     public TimeSpan ClientWaitQueueTimeout => Client.Settings.WaitQueueTimeout;
 
-    protected BaseMongoDbContext(IServiceProvider provider, MongoClientSettings clientSettings, string databaseName) : base(clientSettings, databaseName)
+    protected BaseMongoDbContext(MongoClientSettings clientSettings, string databaseName, IServiceProvider provider = null) : base(clientSettings, databaseName)
     {
-        var serviceProvider = provider ?? throw new ArgumentNullException(nameof(provider), "BaseMongoDbContext IServiceProvider is null");
-        AuditPropertySetter = serviceProvider.GetRequiredService<IAuditPropertySetter>();
+        AuditPropertySetter = provider?.GetService<IAuditPropertySetter>();
         CommandTrackerEvent += CommandTrackerEvent_Tracked;
     }
 
-    protected BaseMongoDbContext(IServiceProvider provider, string connectionString) : this(provider, CreateClientSettings(connectionString), MongoUrl.Create(connectionString).DatabaseName)
+    protected BaseMongoDbContext(string connectionString, IServiceProvider provider = null) : this(CreateClientSettings(connectionString), MongoUrl.Create(connectionString).DatabaseName, provider)
     {
     }
 
