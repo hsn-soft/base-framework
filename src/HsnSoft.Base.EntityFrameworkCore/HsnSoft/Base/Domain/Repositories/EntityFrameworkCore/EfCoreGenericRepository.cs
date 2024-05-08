@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HsnSoft.Base.Domain.Repositories.EntityFrameworkCore;
 
-public class EfCoreGenericRepository<TDbContext, TEntity, TKey> : GenericRepositoryBase<TEntity, TKey>, IEfCoreGenericRepository<TDbContext, TEntity, TKey>
+public class EfCoreGenericRepository<TDbContext, TEntity, TKey> : GenericRepositoryBase<TEntity, TKey>, IEfCoreGenericRepository<TEntity, TKey>
     where TDbContext : BaseEfCoreDbContext<TDbContext>
     where TEntity : class, IEntity<TKey>
 {
@@ -23,9 +23,7 @@ public class EfCoreGenericRepository<TDbContext, TEntity, TKey> : GenericReposit
         _dbContext = dbContext;
     }
 
-    public TDbContext GetDbContext() => _dbContext;
-
-    public DbSet<TEntity> GetDbSet() => GetDbContext().Set<TEntity>();
+    public DbSet<TEntity> GetDbSet() => _dbContext?.Set<TEntity>();
 
     public IQueryable<TEntity> WithDetails()
     {
@@ -106,7 +104,7 @@ public class EfCoreGenericRepository<TDbContext, TEntity, TKey> : GenericReposit
             .ToListAsync(GetCancellationToken(cancellationToken));
     }
 
-    public override async Task<long> GetCountAsync(Expression<Func<TEntity, bool>> predicate,CancellationToken cancellationToken = default)
+    public override async Task<long> GetCountAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
     {
         return await GetDbSet().Where(predicate).LongCountAsync(GetCancellationToken(cancellationToken));
     }
@@ -135,7 +133,7 @@ public class EfCoreGenericRepository<TDbContext, TEntity, TKey> : GenericReposit
 
         var savedEntity = (await GetDbSet().AddAsync(entity, GetCancellationToken(cancellationToken))).Entity;
 
-        await GetDbContext().SaveChangesAsync(GetCancellationToken(cancellationToken));
+        await _dbContext?.SaveChangesAsync(GetCancellationToken(cancellationToken))!;
 
         return savedEntity;
     }
@@ -152,17 +150,16 @@ public class EfCoreGenericRepository<TDbContext, TEntity, TKey> : GenericReposit
 
         await GetDbSet().AddRangeAsync(entityArray, cancellationToken);
 
-        await GetDbContext().SaveChangesAsync(cancellationToken);
+        await _dbContext?.SaveChangesAsync(cancellationToken)!;
     }
 
     public override async Task<TEntity> UpdateAsync(TEntity entity, CancellationToken cancellationToken = default)
     {
-        var dbContext = GetDbContext();
-        dbContext.Attach(entity);
+        _dbContext?.Attach(entity);
 
-        var updatedEntity = dbContext.Update(entity).Entity;
+        var updatedEntity = _dbContext?.Update(entity).Entity;
 
-        await dbContext.SaveChangesAsync(GetCancellationToken(cancellationToken));
+        await _dbContext?.SaveChangesAsync(GetCancellationToken(cancellationToken))!;
 
         return updatedEntity;
     }
@@ -173,7 +170,7 @@ public class EfCoreGenericRepository<TDbContext, TEntity, TKey> : GenericReposit
 
         GetDbSet().UpdateRange(entities);
 
-        await GetDbContext().SaveChangesAsync(cancellationToken);
+        await _dbContext?.SaveChangesAsync(cancellationToken)!;
     }
 
     public override async Task<bool> DeleteAsync(TKey id, CancellationToken cancellationToken = default)
@@ -191,7 +188,7 @@ public class EfCoreGenericRepository<TDbContext, TEntity, TKey> : GenericReposit
     {
         GetDbSet().Remove(entity);
 
-        var resultCount = await GetDbContext().SaveChangesAsync(GetCancellationToken(cancellationToken));
+        var resultCount = await _dbContext?.SaveChangesAsync(GetCancellationToken(cancellationToken))!;
 
         return resultCount > 0;
     }
@@ -204,7 +201,7 @@ public class EfCoreGenericRepository<TDbContext, TEntity, TKey> : GenericReposit
 
         await DeleteManyAsync(entities, cancellationToken);
 
-        var resultCount = await GetDbContext().SaveChangesAsync(GetCancellationToken(cancellationToken));
+        var resultCount = await _dbContext?.SaveChangesAsync(GetCancellationToken(cancellationToken))!;
 
         return resultCount > 0;
     }
@@ -220,14 +217,14 @@ public class EfCoreGenericRepository<TDbContext, TEntity, TKey> : GenericReposit
     {
         cancellationToken = GetCancellationToken(cancellationToken);
 
-        GetDbContext().RemoveRange(entities);
+        _dbContext?.RemoveRange(entities);
 
-        await GetDbContext().SaveChangesAsync(cancellationToken);
+        await _dbContext?.SaveChangesAsync(cancellationToken)!;
     }
 
     protected override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        return await GetDbContext().SaveChangesAsync(cancellationToken);
+        return await _dbContext?.SaveChangesAsync(cancellationToken)!;
     }
 
     private static IQueryable<TEntity> IncludeDetails(IQueryable<TEntity> query, Expression<Func<TEntity, object>>[] propertySelectors)

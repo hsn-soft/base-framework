@@ -3,6 +3,7 @@ using System.Threading;
 using HsnSoft.Base.Auditing;
 using HsnSoft.Base.Domain.Entities;
 using HsnSoft.Base.MongoDB.Context;
+using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
 using MongoDB.Driver.Linq;
@@ -11,15 +12,15 @@ namespace HsnSoft.Base.MongoDB;
 
 public abstract class BaseMongoDbContext : MongoDbContext
 {
-    private readonly IServiceProvider _serviceProvider;
-
-    private IAuditPropertySetter AuditPropertySetter => _serviceProvider?.GetRequiredService<IAuditPropertySetter>();
+    [NotNull]
+    private IAuditPropertySetter AuditPropertySetter { get; }
 
     public TimeSpan ClientWaitQueueTimeout => Client.Settings.WaitQueueTimeout;
 
     protected BaseMongoDbContext(IServiceProvider provider, MongoClientSettings clientSettings, string databaseName) : base(clientSettings, databaseName)
     {
-        _serviceProvider = provider;
+        var serviceProvider = provider ?? throw new ArgumentNullException(nameof(provider), "BaseMongoDbContext IServiceProvider is null");
+        AuditPropertySetter = serviceProvider.GetRequiredService<IAuditPropertySetter>();
         CommandTrackerEvent += CommandTrackerEvent_Tracked;
     }
 

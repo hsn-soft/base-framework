@@ -6,12 +6,14 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using HsnSoft.Base.Auditing;
+using HsnSoft.Base.Context;
 using HsnSoft.Base.Data;
 using HsnSoft.Base.Domain.Entities;
 using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.EntityFrameworkCore.Modeling;
 using HsnSoft.Base.MultiTenancy;
 using HsnSoft.Base.Reflection;
+using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -19,27 +21,32 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace HsnSoft.Base.EntityFrameworkCore;
 
-public abstract class BaseEfCoreDbContext<TDbContext> : DbContext
-    where TDbContext : DbContext
+public abstract class BaseEfCoreDbContext<TDbContext> : ThreadSafeDbContext
+    where TDbContext : ThreadSafeDbContext
 {
-    private readonly IServiceProvider _serviceProvider;
+    private Guid? CurrentTenantId => CurrentTenant.Id;
 
-    protected Guid? CurrentTenantId => CurrentTenant?.Id;
+    private bool IsMultiTenantFilterEnabled => CurrentTenantId != null && DataFilter.IsEnabled<IMultiTenant>();
 
-    protected bool IsMultiTenantFilterEnabled => (CurrentTenantId != null) && (DataFilter?.IsEnabled<IMultiTenant>() ?? false);
+    private bool IsSoftDeleteFilterEnabled => DataFilter.IsEnabled<ISoftDelete>();
 
-    protected bool IsSoftDeleteFilterEnabled => DataFilter?.IsEnabled<ISoftDelete>() ?? false;
+    [NotNull]
+    private IDataFilter DataFilter { get; }
 
-    public ICurrentTenant CurrentTenant => _serviceProvider?.GetService<ICurrentTenant>();
+    [NotNull]
+    private ICurrentTenant CurrentTenant { get; }
 
-    public IDataFilter DataFilter => _serviceProvider?.GetService<IDataFilter>();
-
-    public IAuditPropertySetter AuditPropertySetter => _serviceProvider?.GetRequiredService<IAuditPropertySetter>();
+    [NotNull]
+    private IAuditPropertySetter AuditPropertySetter { get; }
 
     protected BaseEfCoreDbContext(IServiceProvider provider, DbContextOptions<TDbContext> options)
         : base(options)
     {
-        _serviceProvider = provider;
+        var serviceProvider = provider ?? throw new ArgumentNullException(nameof(provider), "BaseEfCoreDbContext IServiceProvider is null");
+        DataFilter = serviceProvider.GetRequiredService<IDataFilter>();
+        CurrentTenant = serviceProvider.GetRequiredService<ICurrentTenant>();
+        AuditPropertySetter = serviceProvider.GetRequiredService<IAuditPropertySetter>();
+
         Initialize();
     }
 
@@ -56,12 +63,12 @@ public abstract class BaseEfCoreDbContext<TDbContext> : DbContext
         ChangeTracker.StateChanged += ChangeTracker_StateChanged;
     }
 
-    protected void ChangeTracker_Tracked(object sender, EntityTrackedEventArgs e)
+    private void ChangeTracker_Tracked(object sender, EntityTrackedEventArgs e)
     {
         ApplyBaseConceptsForTrackedEntity(e.Entry);
     }
 
-    protected void ChangeTracker_StateChanged(object sender, EntityStateChangedEventArgs e)
+    private void ChangeTracker_StateChanged(object sender, EntityStateChangedEventArgs e)
     {
         ApplyBaseConceptsForTrackedEntity(e.Entry);
     }
@@ -94,9 +101,9 @@ public abstract class BaseEfCoreDbContext<TDbContext> : DbContext
         if (entry.State == EntityState.Modified && entry.Properties.Any(x => x.IsModified && x.Metadata.ValueGenerated == ValueGenerated.Never))
         {
             AuditPropertySetter?.SetModificationProperties(entry.Entity);
-            if (entry.Entity is ISoftDelete && ((ISoftDelete)entry.Entity).IsDeleted)
+            if (entry.Entity is ISoftDelete { IsDeleted: true } entity)
             {
-                AuditPropertySetter?.SetDeletionProperties(entry.Entity);
+                AuditPropertySetter?.SetDeletionProperties(entity);
             }
         }
     }
@@ -229,7 +236,7 @@ public abstract class BaseEfCoreDbContext<TDbContext> : DbContext
         }
 
         var idPropertyBuilder = modelBuilder.Entity<TEntity>().Property(x => ((IEntity<Guid>)x).Id);
-        if (idPropertyBuilder.Metadata.PropertyInfo.IsDefined(typeof(DatabaseGeneratedAttribute), true))
+        if (idPropertyBuilder.Metadata.PropertyInfo!.IsDefined(typeof(DatabaseGeneratedAttribute), true))
         {
             return;
         }
@@ -408,7 +415,7 @@ public abstract class BaseEfCoreDbContext<TDbContext> : DbContext
         return Expression.Lambda<Func<T, bool>>(Expression.AndAlso(left, right), parameter);
     }
 
-    class ReplaceExpressionVisitor : ExpressionVisitor
+    private class ReplaceExpressionVisitor : ExpressionVisitor
     {
         private readonly Expression _newValue;
         private readonly Expression _oldValue;
