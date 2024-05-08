@@ -41,7 +41,7 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
     [CanBeNull]
     private readonly IModel _consumerChannel;
 
-    private readonly SemaphoreSlim semaphore;
+    private readonly SemaphoreSlim semaphoreConsumers;
 
     private bool _disposed;
     private bool _publishing;
@@ -64,7 +64,7 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
         _consumerChannel = CreateConsumerChannel();
         _subsManager.OnEventRemoved += SubsManager_OnEventRemoved;
 
-        semaphore = new SemaphoreSlim(_rabbitMqEventBusConfig.ConsumerParallelThreadCount * _rabbitMqEventBusConfig.ConsumerMaxFetchCount);
+        semaphoreConsumers = new SemaphoreSlim(_rabbitMqEventBusConfig.ConsumerParallelThreadCount * _rabbitMqEventBusConfig.ConsumerMaxFetchCount);
     }
 
     public async Task PublishAsync<TEventMessage>(TEventMessage eventMessage, ParentMessageEnvelope parentMessage = null, bool isReQueuePublish = false) where TEventMessage : IIntegrationEventMessage
@@ -206,15 +206,15 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
         _disposed = true;
         Thread.Sleep(1000); //wait for dispose set
 
-        while (_publishing || _consuming || semaphore.CurrentCount < _rabbitMqEventBusConfig.ConsumerParallelThreadCount * _rabbitMqEventBusConfig.ConsumerMaxFetchCount)
+        while (_publishing || _consuming || semaphoreConsumers.CurrentCount < _rabbitMqEventBusConfig.ConsumerParallelThreadCount * _rabbitMqEventBusConfig.ConsumerMaxFetchCount)
         {
-            _logger.LogInformation("Process Count [ {Done}/{All} ] => Publisher and Consumers are waiting...", semaphore.CurrentCount, _rabbitMqEventBusConfig.ConsumerParallelThreadCount * _rabbitMqEventBusConfig.ConsumerMaxFetchCount);
+            _logger.LogInformation("Process Count [ {Done}/{All} ] => Publisher and Consumers are waiting...", semaphoreConsumers.CurrentCount, _rabbitMqEventBusConfig.ConsumerParallelThreadCount * _rabbitMqEventBusConfig.ConsumerMaxFetchCount);
             Thread.Sleep(1000);
         }
 
-        _logger.LogInformation("Process Count [ {Done}/{All} ] => Publisher and Consumers are waiting...", semaphore.CurrentCount, _rabbitMqEventBusConfig.ConsumerParallelThreadCount * _rabbitMqEventBusConfig.ConsumerMaxFetchCount);
+        _logger.LogInformation("Process Count [ {Done}/{All} ] => Publisher and Consumers are waiting...", semaphoreConsumers.CurrentCount, _rabbitMqEventBusConfig.ConsumerParallelThreadCount * _rabbitMqEventBusConfig.ConsumerMaxFetchCount);
 
-        semaphore.Dispose();
+        semaphoreConsumers.Dispose();
         _consumerChannel?.Dispose();
         _subsManager.Clear();
 
@@ -295,7 +295,7 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
 
         _logger.LogDebug("RabbitMQ | {ClientInfo} CONSUMER [ {EventName} ] => Consume STARTED", _rabbitMqEventBusConfig.ClientInfo, eventName);
 
-        semaphore.Wait();
+        semaphoreConsumers.Wait();
         var message = Encoding.UTF8.GetString(eventArgs.Body.ToArray());
         Task.Run(() =>
         {
@@ -337,7 +337,7 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
             }
             finally
             {
-                semaphore.Release();
+                semaphoreConsumers.Release();
             }
         });
 
