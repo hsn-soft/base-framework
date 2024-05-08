@@ -24,28 +24,28 @@ namespace HsnSoft.Base.EntityFrameworkCore;
 public abstract class BaseEfCoreDbContext<TDbContext> : ThreadSafeDbContext
     where TDbContext : ThreadSafeDbContext
 {
-    private Guid? CurrentTenantId => CurrentTenant.Id;
+    private Guid? CurrentTenantId => CurrentTenant?.Id;
 
-    private bool IsMultiTenantFilterEnabled => CurrentTenantId != null && DataFilter.IsEnabled<IMultiTenant>();
+    private bool IsMultiTenantFilterEnabled => CurrentTenantId != null && (DataFilter?.IsEnabled<IMultiTenant>() ?? false);
 
-    private bool IsSoftDeleteFilterEnabled => DataFilter.IsEnabled<ISoftDelete>();
+    private bool IsSoftDeleteFilterEnabled => DataFilter?.IsEnabled<ISoftDelete>() ?? false;
 
-    [NotNull]
+
+    [CanBeNull]
     private IDataFilter DataFilter { get; }
 
-    [NotNull]
+    [CanBeNull]
     private ICurrentTenant CurrentTenant { get; }
 
-    [NotNull]
+    [CanBeNull]
     private IAuditPropertySetter AuditPropertySetter { get; }
 
-    protected BaseEfCoreDbContext(IServiceProvider provider, DbContextOptions<TDbContext> options)
+    protected BaseEfCoreDbContext(DbContextOptions<TDbContext> options, IServiceProvider provider = null)
         : base(options)
     {
-        var serviceProvider = provider ?? throw new ArgumentNullException(nameof(provider), "BaseEfCoreDbContext IServiceProvider is null");
-        DataFilter = serviceProvider.GetRequiredService<IDataFilter>();
-        CurrentTenant = serviceProvider.GetRequiredService<ICurrentTenant>();
-        AuditPropertySetter = serviceProvider.GetRequiredService<IAuditPropertySetter>();
+        DataFilter = provider?.GetService<IDataFilter>();
+        CurrentTenant = provider?.GetService<ICurrentTenant>();
+        AuditPropertySetter = provider?.GetService<IAuditPropertySetter>();
 
         Initialize();
     }
