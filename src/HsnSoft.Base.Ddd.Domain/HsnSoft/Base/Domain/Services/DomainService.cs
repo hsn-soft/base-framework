@@ -13,32 +13,31 @@ namespace HsnSoft.Base.Domain.Services;
 
 public abstract class DomainService : IDomainService, IScopedDependency
 {
-    [NotNull]
+    [CanBeNull]
     protected IClock Clock { get; }
 
-    [NotNull]
+    [CanBeNull]
     protected IDataFilter DataFilter { get; }
 
-    [NotNull]
+    [CanBeNull]
     protected ICurrentUser CurrentUser { get; }
 
-    [NotNull]
+    [CanBeNull]
     protected ICurrentTenant CurrentTenant { get; }
 
-    [NotNull]
+    [CanBeNull]
     protected IStringLocalizerFactory StringLocalizerFactory { get; }
 
-    [NotNull]
+    [CanBeNull]
     protected ILoggerFactory LoggerFactory { get; }
 
-    protected DomainService(IServiceProvider provider)
+    protected DomainService(IServiceProvider provider = null)
     {
-        var serviceProvider = provider ?? throw new ArgumentNullException(nameof(provider), "DomainService IServiceProvider is null");
-        Clock = serviceProvider.GetRequiredService<IClock>();
-        DataFilter = serviceProvider.GetRequiredService<IDataFilter>();
-        CurrentUser = serviceProvider.GetRequiredService<ICurrentUser>();
-        CurrentTenant = serviceProvider.GetRequiredService<ICurrentTenant>();
-        StringLocalizerFactory = serviceProvider.GetRequiredService<IStringLocalizerFactory>();
-        LoggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
+        Clock = provider?.GetService<IClock>();
+        DataFilter = provider?.GetService<IDataFilter>();
+        CurrentUser = provider?.GetService<ICurrentUser>();
+        CurrentTenant = provider?.GetService<ICurrentTenant>();
+        StringLocalizerFactory = provider?.GetService<IStringLocalizerFactory>();
+        LoggerFactory = provider?.GetService<ILoggerFactory>();
     }
 }
