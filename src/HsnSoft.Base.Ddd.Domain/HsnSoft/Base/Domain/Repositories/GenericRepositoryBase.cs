@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using HsnSoft.Base.Data;
 using HsnSoft.Base.Domain.Entities;
 using HsnSoft.Base.MultiTenancy;
-using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace HsnSoft.Base.Domain.Repositories;
@@ -23,7 +22,7 @@ public abstract class GenericRepositoryBase<TEntity, TKey> : IGenericRepository<
 
     protected GenericRepositoryBase(IServiceProvider provider)
     {
-        _serviceProvider = provider;
+        _serviceProvider = provider ?? throw new ArgumentNullException(nameof(provider), "GenericRepositoryBase IServiceProvider is null");
     }
 
     public abstract Task<TEntity> FindAsync(TKey id, bool includeDetails = true, CancellationToken cancellationToken = default);
@@ -62,9 +61,9 @@ public abstract class GenericRepositoryBase<TEntity, TKey> : IGenericRepository<
 
     public abstract Task<List<TEntity>> GetPagedListAsync(int skipCount, int maxResultCount, string sorting, bool includeDetails = false, CancellationToken cancellationToken = default);
 
-    public abstract Task<long> GetCountAsync(Expression<Func<TEntity, bool>> predicate,CancellationToken cancellationToken = default);
+    public abstract Task<long> GetCountAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default);
 
-    public abstract Task<List<TEntity>> GetPagedListAsync(Expression<Func<TEntity, bool>> predicate,int skipCount, int maxResultCount, string sorting, bool includeDetails = false, CancellationToken cancellationToken = default);
+    public abstract Task<List<TEntity>> GetPagedListAsync(Expression<Func<TEntity, bool>> predicate, int skipCount, int maxResultCount, string sorting, bool includeDetails = false, CancellationToken cancellationToken = default);
 
     public abstract Task<TEntity> InsertAsync(TEntity entity, CancellationToken cancellationToken = default);
 

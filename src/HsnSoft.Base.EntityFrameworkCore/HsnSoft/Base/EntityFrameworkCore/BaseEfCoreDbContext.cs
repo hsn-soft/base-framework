@@ -25,22 +25,22 @@ public abstract class BaseEfCoreDbContext<TDbContext> : ThreadSafeDbContext
 {
     private readonly IServiceProvider _serviceProvider;
 
-    protected Guid? CurrentTenantId => CurrentTenant?.Id;
+    private Guid? CurrentTenantId => CurrentTenant?.Id;
 
-    protected bool IsMultiTenantFilterEnabled => (CurrentTenantId != null) && (DataFilter?.IsEnabled<IMultiTenant>() ?? false);
+    private bool IsMultiTenantFilterEnabled => (CurrentTenantId != null) && (DataFilter?.IsEnabled<IMultiTenant>() ?? false);
 
-    protected bool IsSoftDeleteFilterEnabled => DataFilter?.IsEnabled<ISoftDelete>() ?? false;
+    private bool IsSoftDeleteFilterEnabled => DataFilter?.IsEnabled<ISoftDelete>() ?? false;
 
-    public ICurrentTenant CurrentTenant => _serviceProvider?.GetService<ICurrentTenant>();
+    private ICurrentTenant CurrentTenant => _serviceProvider?.GetService<ICurrentTenant>();
 
-    public IDataFilter DataFilter => _serviceProvider?.GetService<IDataFilter>();
+    private IDataFilter DataFilter => _serviceProvider?.GetService<IDataFilter>();
 
-    public IAuditPropertySetter AuditPropertySetter => _serviceProvider?.GetRequiredService<IAuditPropertySetter>();
+    private IAuditPropertySetter AuditPropertySetter => _serviceProvider?.GetRequiredService<IAuditPropertySetter>();
 
     protected BaseEfCoreDbContext(IServiceProvider provider, DbContextOptions<TDbContext> options)
         : base(options)
     {
-        _serviceProvider = provider;
+        _serviceProvider = provider ?? throw new ArgumentNullException(nameof(provider), "BaseEfCoreDbContext IServiceProvider is null");
         Initialize();
     }
 
@@ -57,12 +57,12 @@ public abstract class BaseEfCoreDbContext<TDbContext> : ThreadSafeDbContext
         ChangeTracker.StateChanged += ChangeTracker_StateChanged;
     }
 
-    protected void ChangeTracker_Tracked(object sender, EntityTrackedEventArgs e)
+    private void ChangeTracker_Tracked(object sender, EntityTrackedEventArgs e)
     {
         ApplyBaseConceptsForTrackedEntity(e.Entry);
     }
 
-    protected void ChangeTracker_StateChanged(object sender, EntityStateChangedEventArgs e)
+    private void ChangeTracker_StateChanged(object sender, EntityStateChangedEventArgs e)
     {
         ApplyBaseConceptsForTrackedEntity(e.Entry);
     }
@@ -95,9 +95,9 @@ public abstract class BaseEfCoreDbContext<TDbContext> : ThreadSafeDbContext
         if (entry.State == EntityState.Modified && entry.Properties.Any(x => x.IsModified && x.Metadata.ValueGenerated == ValueGenerated.Never))
         {
             AuditPropertySetter?.SetModificationProperties(entry.Entity);
-            if (entry.Entity is ISoftDelete && ((ISoftDelete)entry.Entity).IsDeleted)
+            if (entry.Entity is ISoftDelete { IsDeleted: true } entity)
             {
-                AuditPropertySetter?.SetDeletionProperties(entry.Entity);
+                AuditPropertySetter?.SetDeletionProperties(entity);
             }
         }
     }
@@ -230,7 +230,7 @@ public abstract class BaseEfCoreDbContext<TDbContext> : ThreadSafeDbContext
         }
 
         var idPropertyBuilder = modelBuilder.Entity<TEntity>().Property(x => ((IEntity<Guid>)x).Id);
-        if (idPropertyBuilder.Metadata.PropertyInfo.IsDefined(typeof(DatabaseGeneratedAttribute), true))
+        if (idPropertyBuilder.Metadata.PropertyInfo!.IsDefined(typeof(DatabaseGeneratedAttribute), true))
         {
             return;
         }
@@ -409,7 +409,7 @@ public abstract class BaseEfCoreDbContext<TDbContext> : ThreadSafeDbContext
         return Expression.Lambda<Func<T, bool>>(Expression.AndAlso(left, right), parameter);
     }
 
-    class ReplaceExpressionVisitor : ExpressionVisitor
+    private class ReplaceExpressionVisitor : ExpressionVisitor
     {
         private readonly Expression _newValue;
         private readonly Expression _oldValue;
