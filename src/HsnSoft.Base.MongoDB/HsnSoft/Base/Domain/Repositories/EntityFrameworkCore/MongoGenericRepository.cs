@@ -8,11 +8,10 @@ using HsnSoft.Base.Domain.Entities;
 using HsnSoft.Base.MongoDB;
 using HsnSoft.Base.MongoDB.Context;
 using MongoDB.Driver;
-using MongoDB.Driver.Linq;
 
 namespace HsnSoft.Base.Domain.Repositories.EntityFrameworkCore;
 
-public class MongoGenericRepository<TDbContext, TEntity, TKey> : GenericRepositoryBase<TEntity, TKey>, IMongoGenericRepository<TDbContext, TEntity, TKey>
+public class MongoGenericRepository<TDbContext, TEntity, TKey> : GenericRepositoryBase<TEntity, TKey>, IMongoGenericRepository<TEntity, TKey>
     where TDbContext : BaseMongoDbContext
     where TEntity : class, IEntity<TKey>
 {
@@ -33,8 +32,6 @@ public class MongoGenericRepository<TDbContext, TEntity, TKey> : GenericReposito
             MaxTime = _dbContext.ClientWaitQueueTimeout
         };
     }
-
-    public TDbContext GetDbContext() => _dbContext;
 
     public IMongoCollection<TEntity> GetCollection(TEntity entity = null, MongoEntityEventState eventState = MongoEntityEventState.Unchanged)
         => _dbContext?.Collection(entity, eventState);

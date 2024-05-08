@@ -15,15 +15,17 @@ namespace HsnSoft.Base.Domain.Repositories;
 public abstract class GenericRepositoryBase<TEntity, TKey> : IGenericRepository<TEntity, TKey>
     where TEntity : class, IEntity<TKey>
 {
-    private readonly IServiceProvider _serviceProvider;
+    [NotNull]
+    private IDataFilter DataFilter { get; }
 
-    private IDataFilter DataFilter => _serviceProvider?.GetRequiredService<IDataFilter>();
-
-    private ICurrentTenant CurrentTenant => _serviceProvider?.GetRequiredService<ICurrentTenant>();
+    [NotNull]
+    private ICurrentTenant CurrentTenant { get; }
 
     protected GenericRepositoryBase(IServiceProvider provider)
     {
-        _serviceProvider = provider;
+        var serviceProvider = provider ?? throw new ArgumentNullException(nameof(provider), "GenericRepositoryBase IServiceProvider is null");
+        DataFilter = serviceProvider.GetRequiredService<IDataFilter>();
+        CurrentTenant = serviceProvider.GetRequiredService<ICurrentTenant>();
     }
 
     public abstract Task<TEntity> FindAsync(TKey id, bool includeDetails = true, CancellationToken cancellationToken = default);
@@ -62,9 +64,9 @@ public abstract class GenericRepositoryBase<TEntity, TKey> : IGenericRepository<
 
     public abstract Task<List<TEntity>> GetPagedListAsync(int skipCount, int maxResultCount, string sorting, bool includeDetails = false, CancellationToken cancellationToken = default);
 
-    public abstract Task<long> GetCountAsync(Expression<Func<TEntity, bool>> predicate,CancellationToken cancellationToken = default);
+    public abstract Task<long> GetCountAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default);
 
-    public abstract Task<List<TEntity>> GetPagedListAsync(Expression<Func<TEntity, bool>> predicate,int skipCount, int maxResultCount, string sorting, bool includeDetails = false, CancellationToken cancellationToken = default);
+    public abstract Task<List<TEntity>> GetPagedListAsync(Expression<Func<TEntity, bool>> predicate, int skipCount, int maxResultCount, string sorting, bool includeDetails = false, CancellationToken cancellationToken = default);
 
     public abstract Task<TEntity> InsertAsync(TEntity entity, CancellationToken cancellationToken = default);
 
