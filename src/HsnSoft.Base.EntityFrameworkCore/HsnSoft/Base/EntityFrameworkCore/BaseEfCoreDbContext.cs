@@ -13,6 +13,7 @@ using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.EntityFrameworkCore.Modeling;
 using HsnSoft.Base.MultiTenancy;
 using HsnSoft.Base.Reflection;
+using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -23,24 +24,29 @@ namespace HsnSoft.Base.EntityFrameworkCore;
 public abstract class BaseEfCoreDbContext<TDbContext> : ThreadSafeDbContext
     where TDbContext : ThreadSafeDbContext
 {
-    private readonly IServiceProvider _serviceProvider;
+    private Guid? CurrentTenantId => CurrentTenant.Id;
 
-    private Guid? CurrentTenantId => CurrentTenant?.Id;
+    private bool IsMultiTenantFilterEnabled => CurrentTenantId != null && DataFilter.IsEnabled<IMultiTenant>();
 
-    private bool IsMultiTenantFilterEnabled => (CurrentTenantId != null) && (DataFilter?.IsEnabled<IMultiTenant>() ?? false);
+    private bool IsSoftDeleteFilterEnabled => DataFilter.IsEnabled<ISoftDelete>();
 
-    private bool IsSoftDeleteFilterEnabled => DataFilter?.IsEnabled<ISoftDelete>() ?? false;
+    [NotNull]
+    private IDataFilter DataFilter { get; }
 
-    private ICurrentTenant CurrentTenant => _serviceProvider?.GetService<ICurrentTenant>();
+    [NotNull]
+    private ICurrentTenant CurrentTenant { get; }
 
-    private IDataFilter DataFilter => _serviceProvider?.GetService<IDataFilter>();
-
-    private IAuditPropertySetter AuditPropertySetter => _serviceProvider?.GetRequiredService<IAuditPropertySetter>();
+    [NotNull]
+    private IAuditPropertySetter AuditPropertySetter { get; }
 
     protected BaseEfCoreDbContext(IServiceProvider provider, DbContextOptions<TDbContext> options)
         : base(options)
     {
-        _serviceProvider = provider ?? throw new ArgumentNullException(nameof(provider), "BaseEfCoreDbContext IServiceProvider is null");
+        var serviceProvider = provider ?? throw new ArgumentNullException(nameof(provider), "BaseEfCoreDbContext IServiceProvider is null");
+        DataFilter = serviceProvider.GetRequiredService<IDataFilter>();
+        CurrentTenant = serviceProvider.GetRequiredService<ICurrentTenant>();
+        AuditPropertySetter = serviceProvider.GetRequiredService<IAuditPropertySetter>();
+
         Initialize();
     }
 

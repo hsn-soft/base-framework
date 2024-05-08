@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using HsnSoft.Base.Data;
 using HsnSoft.Base.Domain.Entities;
 using HsnSoft.Base.MultiTenancy;
+using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace HsnSoft.Base.Domain.Repositories;
@@ -14,15 +15,17 @@ namespace HsnSoft.Base.Domain.Repositories;
 public abstract class GenericRepositoryBase<TEntity, TKey> : IGenericRepository<TEntity, TKey>
     where TEntity : class, IEntity<TKey>
 {
-    private readonly IServiceProvider _serviceProvider;
+    [NotNull]
+    private IDataFilter DataFilter { get; }
 
-    private IDataFilter DataFilter => _serviceProvider?.GetRequiredService<IDataFilter>();
-
-    private ICurrentTenant CurrentTenant => _serviceProvider?.GetRequiredService<ICurrentTenant>();
+    [NotNull]
+    private ICurrentTenant CurrentTenant { get; }
 
     protected GenericRepositoryBase(IServiceProvider provider)
     {
-        _serviceProvider = provider ?? throw new ArgumentNullException(nameof(provider), "GenericRepositoryBase IServiceProvider is null");
+        var serviceProvider = provider ?? throw new ArgumentNullException(nameof(provider), "GenericRepositoryBase IServiceProvider is null");
+        DataFilter = serviceProvider.GetRequiredService<IDataFilter>();
+        CurrentTenant = serviceProvider.GetRequiredService<ICurrentTenant>();
     }
 
     public abstract Task<TEntity> FindAsync(TKey id, bool includeDetails = true, CancellationToken cancellationToken = default);
