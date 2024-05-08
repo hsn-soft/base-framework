@@ -1,6 +1,7 @@
 using System;
 using HsnSoft.Base.Data;
 using HsnSoft.Base.DependencyInjection;
+using HsnSoft.Base.Guids;
 using HsnSoft.Base.MultiTenancy;
 using HsnSoft.Base.Timing;
 using HsnSoft.Base.Users;
@@ -9,9 +10,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 
-namespace HsnSoft.Base.Domain.Services;
+namespace HsnSoft.Base.Application.Services;
 
-public abstract class DomainService : IDomainService, IScopedDependency
+public abstract class ApplicationService : IApplicationService, IScopedDependency
 {
     [NotNull]
     protected IClock Clock { get; }
@@ -31,9 +32,9 @@ public abstract class DomainService : IDomainService, IScopedDependency
     [NotNull]
     protected ILoggerFactory LoggerFactory { get; }
 
-    protected DomainService(IServiceProvider provider)
+    protected ApplicationService(IServiceProvider provider)
     {
-        var serviceProvider = provider ?? throw new ArgumentNullException(nameof(provider), "DomainService IServiceProvider is null");
+        var serviceProvider = provider ?? throw new ArgumentNullException(nameof(provider), "ApplicationService IServiceProvider is null");
         Clock = serviceProvider.GetRequiredService<IClock>();
         DataFilter = serviceProvider.GetRequiredService<IDataFilter>();
         CurrentUser = serviceProvider.GetRequiredService<ICurrentUser>();
