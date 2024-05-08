@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using HsnSoft.Base.Auditing;
+using HsnSoft.Base.Context;
 using HsnSoft.Base.Data;
 using HsnSoft.Base.Domain.Entities;
 using HsnSoft.Base.Domain.Entities.Events;
@@ -19,8 +20,8 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace HsnSoft.Base.EntityFrameworkCore;
 
-public abstract class BaseEfCoreDbContext<TDbContext> : DbContext
-    where TDbContext : DbContext
+public abstract class BaseEfCoreDbContext<TDbContext> : ThreadSafeDbContext
+    where TDbContext : ThreadSafeDbContext
 {
     private readonly IServiceProvider _serviceProvider;
 
