@@ -1,7 +1,7 @@
 using System;
 using Newtonsoft.Json;
 
-namespace HsnSoft.Base.Kafka.Converters;
+namespace HsnSoft.Base.EventBus.Kafka.Converters;
 
 /// <summary>
 /// https://stackoverflow.com/questions/59828937/exclude-an-enum-property-of-a-model-from-using-the-jsonstringenumconverter-which

@@ -2,7 +2,7 @@ using System;
 using JetBrains.Annotations;
 using RabbitMQ.Client;
 
-namespace HsnSoft.Base.RabbitMQ;
+namespace HsnSoft.Base.EventBus.RabbitMQ.Connection;
 
 public interface IRabbitMqPersistentConnection : IDisposable
 {

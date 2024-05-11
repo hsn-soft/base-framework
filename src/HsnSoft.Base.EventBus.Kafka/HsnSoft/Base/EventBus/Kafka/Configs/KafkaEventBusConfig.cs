@@ -1,4 +1,4 @@
-﻿namespace HsnSoft.Base.EventBus.Kafka;
+﻿namespace HsnSoft.Base.EventBus.Kafka.Configs;
 
 public class KafkaEventBusConfig : EventBusConfig
 {

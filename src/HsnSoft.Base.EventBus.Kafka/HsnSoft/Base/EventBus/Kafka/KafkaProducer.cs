@@ -5,9 +5,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Confluent.Kafka;
 using HsnSoft.Base.Domain.Entities.Events;
+using HsnSoft.Base.EventBus.Kafka.Configs;
+using HsnSoft.Base.EventBus.Kafka.Converters;
 using HsnSoft.Base.EventBus.Logging;
-using HsnSoft.Base.Kafka;
-using HsnSoft.Base.Kafka.Converters;
 using Newtonsoft.Json;
 
 namespace HsnSoft.Base.EventBus.Kafka;

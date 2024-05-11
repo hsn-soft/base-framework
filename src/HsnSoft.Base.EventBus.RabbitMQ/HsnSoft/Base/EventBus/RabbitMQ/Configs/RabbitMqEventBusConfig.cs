@@ -1,4 +1,4 @@
-﻿namespace HsnSoft.Base.EventBus.RabbitMQ;
+﻿namespace HsnSoft.Base.EventBus.RabbitMQ.Configs;
 
 public class RabbitMqEventBusConfig : EventBusConfig
 {

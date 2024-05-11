@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Net.Sockets;
 using HsnSoft.Base.EventBus.Logging;
+using HsnSoft.Base.EventBus.RabbitMQ.Configs;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Options;
 using Polly;
@@ -9,7 +10,7 @@ using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using RabbitMQ.Client.Exceptions;
 
-namespace HsnSoft.Base.RabbitMQ;
+namespace HsnSoft.Base.EventBus.RabbitMQ.Connection;
 
 public class RabbitMqPersistentConnection : IRabbitMqPersistentConnection
 {

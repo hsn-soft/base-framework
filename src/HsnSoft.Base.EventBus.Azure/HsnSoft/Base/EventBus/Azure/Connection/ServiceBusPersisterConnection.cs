@@ -1,7 +1,7 @@
 using Azure.Messaging.ServiceBus;
 using Azure.Messaging.ServiceBus.Administration;
 
-namespace HsnSoft.Base.AzureServiceBus;
+namespace HsnSoft.Base.EventBus.Azure.Connection;
 
 public class ServiceBusPersisterConnection : IServiceBusPersisterConnection
 {

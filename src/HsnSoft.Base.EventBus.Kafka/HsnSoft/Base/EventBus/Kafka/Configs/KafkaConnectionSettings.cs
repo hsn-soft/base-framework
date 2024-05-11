@@ -1,4 +1,4 @@
-namespace HsnSoft.Base.Kafka;
+namespace HsnSoft.Base.EventBus.Kafka.Configs;
 
 public sealed class KafkaConnectionSettings
 {

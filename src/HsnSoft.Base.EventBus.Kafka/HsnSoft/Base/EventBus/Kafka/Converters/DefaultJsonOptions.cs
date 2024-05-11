@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
-namespace HsnSoft.Base.Kafka.Converters;
+namespace HsnSoft.Base.EventBus.Kafka.Converters;
 
 public static class DefaultJsonOptions
 {

@@ -1,4 +1,4 @@
-namespace HsnSoft.Base.RabbitMQ;
+namespace HsnSoft.Base.EventBus.RabbitMQ.Configs;
 
 public sealed class RabbitMqConnectionSettings
 {

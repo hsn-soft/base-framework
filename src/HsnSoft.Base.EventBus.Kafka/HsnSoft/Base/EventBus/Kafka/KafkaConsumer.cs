@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Threading;
 using Confluent.Kafka;
 using HsnSoft.Base.Domain.Entities.Events;
+using HsnSoft.Base.EventBus.Kafka.Configs;
 using HsnSoft.Base.EventBus.Logging;
-using HsnSoft.Base.Kafka;
 
 namespace HsnSoft.Base.EventBus.Kafka;
 

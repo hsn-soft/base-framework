@@ -3,8 +3,9 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Azure.Messaging.ServiceBus;
 using Azure.Messaging.ServiceBus.Administration;
-using HsnSoft.Base.AzureServiceBus;
 using HsnSoft.Base.Domain.Entities.Events;
+using HsnSoft.Base.EventBus.Azure.Configs;
+using HsnSoft.Base.EventBus.Azure.Connection;
 using HsnSoft.Base.EventBus.Logging;
 using HsnSoft.Base.EventBus.SubManagers;
 using HsnSoft.Base.Tracing;
@@ -14,7 +15,7 @@ using Newtonsoft.Json;
 
 namespace HsnSoft.Base.EventBus.Azure;
 
-public class EventBusServiceBus : IEventBus, IDisposable
+public class EventBusAzure : IEventBus, IDisposable
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly IServiceBusPersisterConnection _serviceBusPersisterConnection;
@@ -26,13 +27,13 @@ public class EventBusServiceBus : IEventBus, IDisposable
     private ServiceBusSender _sender;
     private ServiceBusProcessor _processor;
 
-    public EventBusServiceBus(IServiceProvider serviceProvider)
+    public EventBusAzure(IServiceProvider serviceProvider)
     {
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 
         _logger = _serviceProvider.GetRequiredService<IEventBusLogger>();
 
-        _eventBusConfig = _serviceProvider.GetRequiredService<IOptions<ServiceBusEventBusConfig>>().Value;
+        _eventBusConfig = _serviceProvider.GetRequiredService<IOptions<AzureEventBusConfig>>().Value;
         _serviceBusPersisterConnection = _serviceProvider.GetRequiredService<IServiceBusPersisterConnection>();
         _traceAccessor = _serviceProvider.GetService<ITraceAccesor>();
 

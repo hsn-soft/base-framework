@@ -1,7 +1,7 @@
 using System;
 using Newtonsoft.Json;
 
-namespace HsnSoft.Base.Kafka.Converters;
+namespace HsnSoft.Base.EventBus.Kafka.Converters;
 
 public class CustomeTimeSpanConverter : JsonConverter<TimeSpan>
 {
