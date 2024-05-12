@@ -10,14 +10,14 @@ namespace HsnSoft.Base.EventBus.Kafka;
 
 public sealed class KafkaConsumer
 {
-    private readonly IEventBusLogger _logger;
+    private readonly IEventBusLogger<EventBusLogger> _logger;
     private readonly ConsumerConfig _consumerConfig;
     private readonly KafkaEventBusConfig _kafkaEventBusConfig;
     private bool KeepConsuming { get; set; }
 
     public event EventHandler<KeyValuePair<Type, string>> OnMessageReceived;
 
-    public KafkaConsumer(KafkaConnectionSettings connectionSettings, KafkaEventBusConfig kafkaEventBusConfig, IEventBusLogger eventBusLogger)
+    public KafkaConsumer(KafkaConnectionSettings connectionSettings, KafkaEventBusConfig kafkaEventBusConfig, IEventBusLogger<EventBusLogger> eventBusLogger)
     {
         _logger = eventBusLogger;
         _kafkaEventBusConfig = kafkaEventBusConfig;

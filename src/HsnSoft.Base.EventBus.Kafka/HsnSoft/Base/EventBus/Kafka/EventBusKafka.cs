@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.EventBus.Kafka.Configs;
 using HsnSoft.Base.EventBus.Logging;
-using HsnSoft.Base.EventBus.SubManagers;
 using HsnSoft.Base.Tracing;
 using HsnSoft.Base.Users;
 using JetBrains.Annotations;
@@ -18,13 +17,13 @@ namespace HsnSoft.Base.EventBus.Kafka;
 public class EventBusKafka : IEventBus, IDisposable
 {
     private readonly IServiceProvider _serviceProvider;
-    private readonly IEventBusLogger _logger;
+    private readonly IEventBusLogger<EventBusLogger> _logger;
     private readonly KafkaConnectionSettings _kafkaConnectionSettings;
     private readonly KafkaEventBusConfig _kafkaEventBusConfig;
     private readonly ITraceAccesor _traceAccessor;
     private readonly ICurrentUser _currentUser;
 
-    private readonly IEventBusSubscriptionsManager _subsManager;
+    private readonly IEventBusSubscriptionManager _subsManager;
     private readonly CancellationTokenSource _tokenSource;
     private readonly List<Task> _consumerTasks;
     private readonly List<Task> _messageProcessorTasks;
@@ -33,14 +32,15 @@ public class EventBusKafka : IEventBus, IDisposable
     {
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 
-        _logger = _serviceProvider.GetRequiredService<IEventBusLogger>();
+        _logger = _serviceProvider.GetRequiredService<IEventBusLogger<EventBusLogger>>();
 
         _kafkaConnectionSettings = _serviceProvider.GetRequiredService<IOptions<KafkaConnectionSettings>>().Value;
         _kafkaEventBusConfig = _serviceProvider.GetRequiredService<IOptions<KafkaEventBusConfig>>().Value;
         _traceAccessor = _serviceProvider.GetService<ITraceAccesor>();
         _currentUser = _serviceProvider.GetService<ICurrentUser>();
 
-        _subsManager = new InMemoryEventBusSubscriptionsManager(TrimEventName);
+        _subsManager = serviceProvider.GetService<IEventBusSubscriptionManager>();
+        _subsManager.EventNameGetter = TrimEventName;
 
         _tokenSource = new CancellationTokenSource();
         _consumerTasks = new List<Task>();
@@ -99,16 +99,6 @@ public class EventBusKafka : IEventBus, IDisposable
             kafkaConsumer.OnMessageReceived += OnMessageReceived;
             kafkaConsumer.StartReceivingMessages(eventType, eventName, _tokenSource.Token);
         }));
-    }
-
-    public void Unsubscribe<T, TH>() where T : IIntegrationEventMessage where TH : IIntegrationEventHandler<T>
-    {
-        var eventName = _subsManager.GetEventKey<T>();
-        eventName = TrimEventName(eventName);
-
-        _logger.LogDebug("Kafka | Unsubscribing from event {EventName}", eventName);
-
-        _subsManager.RemoveSubscription<T, TH>();
     }
 
     public void Dispose()
@@ -191,7 +181,7 @@ public class EventBusKafka : IEventBus, IDisposable
 
                         _logger.LogDebug("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Handling STARTED : MessageId [ {MessageId} ]", _kafkaEventBusConfig.ClientInfo, eventName, messageId.ToString());
                         var concreteType = typeof(IIntegrationEventHandler<>).MakeGenericType(messageObject.Key);
-                        (((Task)concreteType.GetMethod("HandleAsync")?.Invoke(handler, new[] { @event }))!).GetAwaiter().GetResult();
+                        ((Task)concreteType.GetMethod("HandleAsync")?.Invoke(handler, new[] { @event }))!.GetAwaiter().GetResult();
                         _logger.LogDebug("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Handling COMPLETED : MessageId [ {MessageId} ]", _kafkaEventBusConfig.ClientInfo, eventName, messageId.ToString());
 
                         var handleEndTime = DateTimeOffset.UtcNow;

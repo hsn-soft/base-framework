@@ -14,11 +14,11 @@ namespace HsnSoft.Base.EventBus.Kafka;
 
 public sealed class KafkaProducer
 {
-    private readonly IEventBusLogger _logger;
+    private readonly IEventBusLogger<EventBusLogger> _logger;
     private readonly ProducerConfig _producerConfig;
     private readonly KafkaEventBusConfig _kafkaEventBusConfig;
 
-    public KafkaProducer(KafkaConnectionSettings connectionSettings, KafkaEventBusConfig kafkaEventBusConfig, IEventBusLogger eventBusLogger)
+    public KafkaProducer(KafkaConnectionSettings connectionSettings, KafkaEventBusConfig kafkaEventBusConfig, IEventBusLogger<EventBusLogger> eventBusLogger)
     {
         _logger = eventBusLogger;
         _kafkaEventBusConfig = kafkaEventBusConfig;

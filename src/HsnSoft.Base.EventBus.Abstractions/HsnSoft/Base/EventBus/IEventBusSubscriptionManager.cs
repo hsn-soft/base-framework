@@ -5,17 +5,16 @@ using JetBrains.Annotations;
 
 namespace HsnSoft.Base.EventBus;
 
-public interface IEventBusSubscriptionsManager
+public interface IEventBusSubscriptionManager
 {
+    public Func<string, string> EventNameGetter { get; set; }
+
     bool IsEmpty { get; }
     void Clear();
-    event EventHandler<string> OnEventRemoved;
 
     void AddSubscription<T, TH>() where T : IIntegrationEventMessage where TH : IIntegrationEventHandler<T>;
 
     void AddSubscription(Type eventType, Type eventHandlerType);
-
-    void RemoveSubscription<T, TH>() where T : IIntegrationEventMessage where TH : IIntegrationEventHandler<T>;
 
     bool HasSubscriptionsForEvent<T>() where T : IIntegrationEventMessage;
     bool HasSubscriptionsForEvent(string eventName);

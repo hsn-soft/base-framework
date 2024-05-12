@@ -7,7 +7,6 @@ using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.EventBus.Azure.Configs;
 using HsnSoft.Base.EventBus.Azure.Connection;
 using HsnSoft.Base.EventBus.Logging;
-using HsnSoft.Base.EventBus.SubManagers;
 using HsnSoft.Base.Tracing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -20,8 +19,8 @@ public class EventBusAzure : IEventBus, IDisposable
     private readonly IServiceProvider _serviceProvider;
     private readonly IServiceBusPersisterConnection _serviceBusPersisterConnection;
     private readonly EventBusConfig _eventBusConfig;
-    private readonly IEventBusLogger _logger;
-    private readonly IEventBusSubscriptionsManager _subsManager;
+    private readonly IEventBusLogger<EventBusLogger> _logger;
+    private readonly IEventBusSubscriptionManager _subsManager;
     private readonly ITraceAccesor _traceAccessor;
 
     private ServiceBusSender _sender;
@@ -31,13 +30,14 @@ public class EventBusAzure : IEventBus, IDisposable
     {
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 
-        _logger = _serviceProvider.GetRequiredService<IEventBusLogger>();
+        _logger = _serviceProvider.GetRequiredService<IEventBusLogger<EventBusLogger>>();
 
         _eventBusConfig = _serviceProvider.GetRequiredService<IOptions<AzureEventBusConfig>>().Value;
         _serviceBusPersisterConnection = _serviceProvider.GetRequiredService<IServiceBusPersisterConnection>();
         _traceAccessor = _serviceProvider.GetService<ITraceAccesor>();
 
-        _subsManager = new InMemoryEventBusSubscriptionsManager(TrimEventName);
+        _subsManager = serviceProvider.GetService<IEventBusSubscriptionManager>();
+        _subsManager.EventNameGetter = TrimEventName;
 
         _sender = _serviceBusPersisterConnection.TopicClient.CreateSender(_eventBusConfig.ExchangeName);
         var options = new ServiceBusProcessorOptions { MaxConcurrentCalls = 10, AutoCompleteMessages = false };
@@ -108,28 +108,6 @@ public class EventBusAzure : IEventBus, IDisposable
         _subsManager.AddSubscription(eventType, eventHandlerType);
     }
 
-    public void Unsubscribe<T, TH>() where T : IIntegrationEventMessage where TH : IIntegrationEventHandler<T>
-    {
-        var eventName = typeof(T).Name;
-        eventName = TrimEventName(eventName);
-        try
-        {
-            _serviceBusPersisterConnection
-                .AdministrationClient
-                .DeleteRuleAsync(_eventBusConfig.ExchangeName, _eventBusConfig.ClientName, eventName)
-                .GetAwaiter()
-                .GetResult();
-        }
-        catch (ServiceBusException ex) when (ex.Reason == ServiceBusFailureReason.MessagingEntityNotFound)
-        {
-            _logger.LogWarning("The messaging entity {EventName} Could not be found", eventName);
-        }
-
-        _logger.LogInformation("Unsubscribing from event {EventName}", eventName);
-
-        _subsManager.RemoveSubscription<T, TH>();
-    }
-
     public void Dispose()
     {
         _subsManager.Clear();
@@ -141,7 +119,7 @@ public class EventBusAzure : IEventBus, IDisposable
         _processor.ProcessMessageAsync +=
             async (args) =>
             {
-                var eventName = $"{(_eventBusConfig.EventNamePrefix ?? string.Empty)}{args.Message.Subject}{(_eventBusConfig.EventNameSuffix ?? string.Empty)}";
+                var eventName = $"{_eventBusConfig.EventNamePrefix ?? string.Empty}{args.Message.Subject}{_eventBusConfig.EventNameSuffix ?? string.Empty}";
                 var messageData = args.Message.Body.ToString();
 
                 // Complete the message so that it is not received again.
@@ -160,7 +138,7 @@ public class EventBusAzure : IEventBus, IDisposable
         var ex = args.Exception;
         var context = args.ErrorSource;
 
-        _logger.LogError( "ERROR handling message: {ExceptionMessage} - Context: {@ExceptionContext}", ex.Message, context);
+        _logger.LogError("ERROR handling message: {ExceptionMessage} - Context: {@ExceptionContext}", ex.Message, context);
 
         return Task.CompletedTask;
     }
@@ -229,7 +207,7 @@ public class EventBusAzure : IEventBus, IDisposable
 
                         _logger.LogDebug("AzureServiceBus | {ClientInfo} CONSUMER [ {EventName} ] => Handling STARTED : Event [ {Event} ]", _eventBusConfig.ClientInfo, eventName, @event);
                         var concreteType = typeof(IIntegrationEventHandler<>).MakeGenericType(eventType!);
-                        (((Task)concreteType.GetMethod("HandleAsync")?.Invoke(handler, new[] { @event }))!).GetAwaiter().GetResult();
+                        ((Task)concreteType.GetMethod("HandleAsync")?.Invoke(handler, new[] { @event }))!.GetAwaiter().GetResult();
                         _logger.LogDebug("AzureServiceBus | {ClientInfo} CONSUMER [ {EventName} ] => Handling COMPLETED : Event [ {Event} ]", _eventBusConfig.ClientInfo, eventName, @event);
                     }
                     catch (Exception ex)

@@ -14,8 +14,4 @@ public interface IEventBus
         where THandler : IIntegrationEventHandler<TEvent>;
 
     void Subscribe(Type eventType, Type eventHandlerType);
-
-    void Unsubscribe<TEvent, THandler>()
-        where TEvent : IIntegrationEventMessage
-        where THandler : IIntegrationEventHandler<TEvent>;
 }
