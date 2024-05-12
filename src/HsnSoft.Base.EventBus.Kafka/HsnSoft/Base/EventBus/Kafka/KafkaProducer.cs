@@ -5,20 +5,20 @@ using System.Threading;
 using System.Threading.Tasks;
 using Confluent.Kafka;
 using HsnSoft.Base.Domain.Entities.Events;
+using HsnSoft.Base.EventBus.Kafka.Configs;
+using HsnSoft.Base.EventBus.Kafka.Converters;
 using HsnSoft.Base.EventBus.Logging;
-using HsnSoft.Base.Kafka;
-using HsnSoft.Base.Kafka.Converters;
 using Newtonsoft.Json;
 
 namespace HsnSoft.Base.EventBus.Kafka;
 
 public sealed class KafkaProducer
 {
-    private readonly IEventBusLogger _logger;
+    private readonly IEventBusLogger<EventBusLogger> _logger;
     private readonly ProducerConfig _producerConfig;
     private readonly KafkaEventBusConfig _kafkaEventBusConfig;
 
-    public KafkaProducer(KafkaConnectionSettings connectionSettings, KafkaEventBusConfig kafkaEventBusConfig, IEventBusLogger eventBusLogger)
+    public KafkaProducer(KafkaConnectionSettings connectionSettings, KafkaEventBusConfig kafkaEventBusConfig, IEventBusLogger<EventBusLogger> eventBusLogger)
     {
         _logger = eventBusLogger;
         _kafkaEventBusConfig = kafkaEventBusConfig;

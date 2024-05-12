@@ -15,8 +15,11 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Azure.Messaging.ServiceBus" Version="7.17.5" />
+    </ItemGroup>
+    
+    <ItemGroup>
         <ProjectReference Include="..\HsnSoft.Base.EventBus\HsnSoft.Base.EventBus.csproj" />
-        <ProjectReference Include="..\HsnSoft.Base.AzureServiceBus\HsnSoft.Base.AzureServiceBus.csproj" />
     </ItemGroup>
 
 </Project>

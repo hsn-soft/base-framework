@@ -23,16 +23,13 @@ public sealed record MessageEnvelope<T> where T : IIntegrationEventMessage
 
     [CanBeNull]
     public string UserId { get; set; }
+
     [CanBeNull]
     public string UserRoleUniqueName { get; set; }
 
     [CanBeNull]
     public string Channel { get; set; }
+
     [CanBeNull]
     public string Producer { get; set; }
-}
-
-// Marker
-public interface IIntegrationEventMessage
-{
 }
