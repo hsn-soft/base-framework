@@ -42,7 +42,6 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
     {
         if (serviceProvider == null) throw new ArgumentNullException(nameof(serviceProvider));
 
-
         _serviceScopeFactory = serviceProvider.GetRequiredService<IServiceScopeFactory>();
         _logger = serviceProvider.GetRequiredService<IEventBusLogger>();
         _persistentConnection = serviceProvider.GetRequiredService<IRabbitMqPersistentConnection>();
