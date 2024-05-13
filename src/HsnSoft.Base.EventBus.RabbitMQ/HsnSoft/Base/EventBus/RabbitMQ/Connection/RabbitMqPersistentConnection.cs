@@ -15,7 +15,7 @@ namespace HsnSoft.Base.EventBus.RabbitMQ.Connection;
 public class RabbitMqPersistentConnection : IRabbitMqPersistentConnection
 {
     private readonly IConnectionFactory _connectionFactory;
-    private readonly IEventBusLogger<IEventBusLog> _logger;
+    private readonly IEventBusLogger _logger;
     private const int RetryCount = 5;
 
     [CanBeNull]
@@ -25,7 +25,7 @@ public class RabbitMqPersistentConnection : IRabbitMqPersistentConnection
 
     private readonly object _syncRoot = new();
 
-    public RabbitMqPersistentConnection(IOptions<RabbitMqConnectionSettings> conSettings, IEventBusLogger<IEventBusLog> logger)
+    public RabbitMqPersistentConnection(IOptions<RabbitMqConnectionSettings> conSettings, IEventBusLogger logger)
     {
         _logger = logger;
         _connectionFactory = new ConnectionFactory
