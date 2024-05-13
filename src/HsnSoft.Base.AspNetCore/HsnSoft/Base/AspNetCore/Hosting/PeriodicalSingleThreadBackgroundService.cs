@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using HsnSoft.Base.Logging;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -11,7 +12,7 @@ public abstract class PeriodicalSingleThreadBackgroundService<TService> : Backgr
 {
     public bool WaitContinuousThread { get; set; }
 
-    private ILogger Log { get; set; }
+    private IBaseLogger Log { get; set; }
 
     private int WaitPeriodSeconds { get; set; }
 
@@ -19,9 +20,9 @@ public abstract class PeriodicalSingleThreadBackgroundService<TService> : Backgr
 
     private bool TriggerIsActive { get; set; }
 
-    protected PeriodicalSingleThreadBackgroundService(int waitPeriodSeconds = 1, bool waitContinuousThread = false, ILogger<TService> logger = null)
+    protected PeriodicalSingleThreadBackgroundService(IBaseLogger logger, int waitPeriodSeconds = 1, bool waitContinuousThread = false)
     {
-        Log = logger ?? LoggerFactory.Create(x => x.AddConsole()).CreateLogger(typeof(TService).Name);
+        Log = logger;
         WaitPeriodSeconds = waitPeriodSeconds < 1 ? 1 : waitPeriodSeconds;
         WaitContinuousThread = waitContinuousThread;
     }
