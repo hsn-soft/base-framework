@@ -17,7 +17,7 @@ namespace HsnSoft.Base.EventBus.Kafka;
 public class EventBusKafka : IEventBus, IDisposable
 {
     private readonly IServiceProvider _serviceProvider;
-    private readonly IEventBusLogger<EventBusLogger> _logger;
+    private readonly IEventBusLogger<IEventBusLog> _logger;
     private readonly KafkaConnectionSettings _kafkaConnectionSettings;
     private readonly KafkaEventBusConfig _kafkaEventBusConfig;
     private readonly ITraceAccesor _traceAccessor;
@@ -32,7 +32,7 @@ public class EventBusKafka : IEventBus, IDisposable
     {
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 
-        _logger = _serviceProvider.GetRequiredService<IEventBusLogger<EventBusLogger>>();
+        _logger = _serviceProvider.GetRequiredService<IEventBusLogger<IEventBusLog>>();
 
         _kafkaConnectionSettings = _serviceProvider.GetRequiredService<IOptions<KafkaConnectionSettings>>().Value;
         _kafkaEventBusConfig = _serviceProvider.GetRequiredService<IOptions<KafkaEventBusConfig>>().Value;
@@ -160,7 +160,7 @@ public class EventBusKafka : IEventBus, IDisposable
 
                         Guid messageId = ((dynamic)@event)?.MessageId;
 
-                        _logger.EventBusInfoLog(new ConsumeMessageLogModel(
+                        _logger.PersistentInfoLog(new ConsumeMessageLogModel(
                             LogId: Guid.NewGuid().ToString(),
                             CorrelationId: ((dynamic)@event)?.CorrelationId,
                             Facility: EventBusLogFacility.CONSUME_EVENT_HANDLING_STARTED.ToString(),
@@ -185,7 +185,7 @@ public class EventBusKafka : IEventBus, IDisposable
                         _logger.LogDebug("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Handling COMPLETED : MessageId [ {MessageId} ]", _kafkaEventBusConfig.ClientInfo, eventName, messageId.ToString());
 
                         var handleEndTime = DateTimeOffset.UtcNow;
-                        _logger.EventBusInfoLog(new ConsumeMessageLogModel(
+                        _logger.PersistentInfoLog(new ConsumeMessageLogModel(
                             LogId: Guid.NewGuid().ToString(),
                             CorrelationId: ((dynamic)@event)?.CorrelationId,
                             Facility: EventBusLogFacility.CONSUME_EVENT_HANDLING_FINISHED.ToString(),
@@ -209,7 +209,7 @@ public class EventBusKafka : IEventBus, IDisposable
                         _logger.LogError("Kafka | CorrelationId: {CorrelationId} {ClientInfo} CONSUMER [ {EventName} ] => Handling ERROR : {HandlingError}", ((dynamic)@event)?.CorrelationId, _kafkaEventBusConfig.ClientInfo, eventName, ex.Message);
 
                         var handleEndTime = DateTimeOffset.UtcNow;
-                        _logger.EventBusErrorLog(new ConsumeMessageLogModel(
+                        _logger.PersistentErrorLog(new ConsumeMessageLogModel(
                             LogId: Guid.NewGuid().ToString(),
                             CorrelationId: ((dynamic)@event)?.CorrelationId,
                             Facility: EventBusLogFacility.CONSUME_EVENT_HANDLING_ERROR.ToString(),

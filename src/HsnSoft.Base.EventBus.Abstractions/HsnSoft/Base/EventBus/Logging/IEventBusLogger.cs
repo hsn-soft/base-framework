@@ -2,8 +2,6 @@ using HsnSoft.Base.Logging;
 
 namespace HsnSoft.Base.EventBus.Logging;
 
-public interface IEventBusLogger<T> : IBaseLogger<T>
+public interface IEventBusLogger<in T> : IPersistentLogger<T> where T : IEventBusLog
 {
-    public void EventBusInfoLog<TLog>(TLog t) where TLog : IEventBusLog;
-    public void EventBusErrorLog<TLog>(TLog t) where TLog : IEventBusLog;
 }
