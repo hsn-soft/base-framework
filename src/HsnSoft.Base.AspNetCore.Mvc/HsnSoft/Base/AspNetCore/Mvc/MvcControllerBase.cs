@@ -1,13 +1,12 @@
 using System;
 using HsnSoft.Base.Guids;
+using HsnSoft.Base.Logging;
 using HsnSoft.Base.MultiTenancy;
 using HsnSoft.Base.Users;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Localization;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 
 namespace HsnSoft.Base.AspNetCore.Mvc;
 
@@ -17,9 +16,7 @@ public abstract class BaseController : Controller
 
     protected IGuidGenerator GuidGenerator => SimpleGuidGenerator.Instance;
 
-    protected ILoggerFactory LoggerFactory => ServiceProvider.GetRequiredService<ILoggerFactory>();
-
-    protected ILogger Logger => LoggerFactory?.CreateLogger(GetType().FullName) ?? NullLogger.Instance;
+    protected IBaseLogger Logger => ServiceProvider.GetRequiredService<IBaseLogger>();
 
     protected IAuthorizationService AuthorizationService => ServiceProvider.GetRequiredService<IAuthorizationService>();
 

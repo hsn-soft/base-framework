@@ -2,14 +2,13 @@ using System;
 using AutoMapper;
 using HsnSoft.Base.AspNetCore.Mvc.Services;
 using HsnSoft.Base.Guids;
+using HsnSoft.Base.Logging;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Localization;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 
 namespace HsnSoft.Base.AspNetCore.Mvc.UI.RazorPages;
 
@@ -29,8 +28,7 @@ public abstract class BasePageModel : PageModel
     protected IMapper Mapper => ServiceProvider.GetRequiredService<IMapper>();
     protected IGuidGenerator GuidGenerator => SimpleGuidGenerator.Instance;
 
-    protected ILoggerFactory LoggerFactory => ServiceProvider.GetRequiredService<ILoggerFactory>();
-    protected ILogger Logger =>  LoggerFactory?.CreateLogger(GetType().FullName) ?? NullLogger.Instance;
+    protected IBaseLogger Logger => ServiceProvider.GetRequiredService<IBaseLogger>();
 
     protected IStringLocalizerFactory StringLocalizerFactory => ServiceProvider.GetRequiredService<IStringLocalizerFactory>();
 
