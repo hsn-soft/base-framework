@@ -3,11 +3,11 @@ using Serilog.Events;
 
 namespace HsnSoft.Base.AspNetCore.Serilog.Persistent;
 
-public sealed class EventBusLogger : SerilogBaseLogger, IEventBusLogger
+public sealed class EventBusLogger : BaseLogger, IEventBusLogger
 {
     public void EventBusInfoLog<T>(T t) where T : IEventBusLog => Write(LogEventLevel.Verbose, t);
 
     public void EventBusErrorLog<T>(T t) where T : IEventBusLog => Write(LogEventLevel.Fatal, t);
 
-    private void Write<T>(LogEventLevel logLevel, T log) => BaseLogger.Write(logLevel, "{@Log}", log);
+    private void Write<T>(LogEventLevel logLevel, T log) => Logger.Write(logLevel, "{@Log}", log);
 }
