@@ -25,6 +25,7 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.Extensions.Localization" Version="$(MicrosoftAspNetCorePackageVersion)" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
         <PackageReference Include="System.Collections.Immutable" Version="$(MicrosoftPackageVersion)" />
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="$(MicrosoftPackageVersion)" />
         <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="$(MicrosoftPackageVersion)" />

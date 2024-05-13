@@ -1,5 +1,4 @@
 using System;
-using HsnSoft.Base.Logging;
 using JetBrains.Annotations;
 
 namespace HsnSoft.Base.EventBus.Logging;
@@ -85,9 +84,4 @@ public sealed record EventUserDetail([CanBeNull] string UserId, [CanBeNull] stri
 
     [CanBeNull]
     public string Role { get; } = Role;
-}
-
-// Marker
-public interface IEventBusLog: IPersistentLog
-{
 }

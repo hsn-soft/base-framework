@@ -5,7 +5,7 @@ namespace HsnSoft.Base.Logging;
 
 public class DefaultBaseLogger : IBaseLogger
 {
-    protected readonly ILogger Logger;
+    protected readonly ILogger BaseLogger;
 
     public DefaultBaseLogger()
     {
@@ -24,14 +24,14 @@ public class DefaultBaseLogger : IBaseLogger
             });
         });
 
-        Logger = loggerFactory.CreateLogger(GetType().Name);
+        BaseLogger = loggerFactory.CreateLogger(GetType().FullName);
     }
 
-    public void LogDebug(string messageTemplate, params object[] args) => Logger.LogDebug(messageTemplate, args);
+    public void LogDebug(string messageTemplate, params object[] args) => BaseLogger.LogDebug(messageTemplate, args);
 
-    public void LogError(string messageTemplate, params object[] args) => Logger.LogError(messageTemplate, args);
+    public void LogError(string messageTemplate, params object[] args) => BaseLogger.LogError(messageTemplate, args);
 
-    public void LogWarning(string messageTemplate, params object[] args) => Logger.LogWarning(messageTemplate, args);
+    public void LogWarning(string messageTemplate, params object[] args) => BaseLogger.LogWarning(messageTemplate, args);
 
-    public void LogInformation(string messageTemplate, params object[] args) => Logger.LogInformation(messageTemplate, args);
+    public void LogInformation(string messageTemplate, params object[] args) => BaseLogger.LogInformation(messageTemplate, args);
 }
