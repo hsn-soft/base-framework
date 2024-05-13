@@ -32,7 +32,7 @@ public sealed class RabbitMqConsumer : IDisposable
     private readonly IRabbitMqPersistentConnection _persistentConnection;
     private readonly IEventBusSubscriptionManager _subscriptionsManager;
     private readonly RabbitMqEventBusConfig _rabbitMqEventBusConfig;
-    private readonly IEventBusLogger<EventBusLogger> _logger;
+    private readonly IEventBusLogger<IEventBusLog> _logger;
 
     private static readonly object ChannelAckResourceLock = new();
     private readonly SemaphoreSlim _consumerPrefetchSemaphore;
@@ -46,7 +46,7 @@ public sealed class RabbitMqConsumer : IDisposable
         IRabbitMqPersistentConnection persistentConnection,
         IEventBusSubscriptionManager subscriptionsManager,
         RabbitMqEventBusConfig rabbitMqEventBusConfig,
-        IEventBusLogger<EventBusLogger> logger)
+        IEventBusLogger<IEventBusLog> logger)
     {
         _serviceScopeFactory = serviceScopeFactory ?? throw new ArgumentNullException(nameof(serviceScopeFactory), "MessageBroker ServiceScopeFactory is null");
         _persistentConnection = persistentConnection;
@@ -84,7 +84,7 @@ public sealed class RabbitMqConsumer : IDisposable
     {
         if (_disposed)
         {
-            // don't use semaphore count until disposed function semaphore count check 
+            // don't use semaphore count until disposed function semaphore count check
             while (_consumerPrefetchSemaphore.CurrentCount < _rabbitMqEventBusConfig.ConsumerMaxFetchCount)
             {
                 Thread.Sleep(1000);

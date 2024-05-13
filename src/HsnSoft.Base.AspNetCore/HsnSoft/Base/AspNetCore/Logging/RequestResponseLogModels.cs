@@ -1,4 +1,5 @@
 using System;
+using HsnSoft.Base.Logging;
 using JetBrains.Annotations;
 
 namespace HsnSoft.Base.AspNetCore.Logging;
@@ -111,6 +112,6 @@ public sealed record RequestUserDetail(
 }
 
 // Marker
-public interface IRequestResponseLog
+public interface IRequestResponseLog : IPersistentLog
 {
 }
