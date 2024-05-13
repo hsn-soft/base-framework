@@ -10,9 +10,16 @@ public static class SerilogConfigurationHelper
     public static ILogger ConfigureConsoleLogger()
     {
         ILogger logger = new LoggerConfiguration()
+#if DEBUG
+            .MinimumLevel.Verbose()
+#else
+             .MinimumLevel.Information()
+#endif
+            .MinimumLevel.Override("System", LogEventLevel.Information)
+            .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+            .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning)
             .Enrich.FromLogContext()
             .Enrich.WithProperty("Assembly", AppDomain.CurrentDomain.FriendlyName)
-            .MinimumLevel.Verbose()
             .WriteTo.Async(c => c.Console // All logs , Verbose,Debug,Information, Warning, Error, Fatal
             (
                 outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message}{NewLine}{Exception}{NewLine}",
@@ -26,9 +33,16 @@ public static class SerilogConfigurationHelper
     internal static ILogger ConfigureFilePersistentLogger()
     {
         ILogger logger = new LoggerConfiguration()
+#if DEBUG
+            .MinimumLevel.Verbose()
+#else
+             .MinimumLevel.Information()
+#endif
+            .MinimumLevel.Override("System", LogEventLevel.Information)
+            .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+            .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning)
             .Enrich.FromLogContext()
             .Enrich.WithProperty("Assembly", AppDomain.CurrentDomain.FriendlyName)
-            .MinimumLevel.Verbose()
             .WriteTo.Conditional(logEvent => logEvent is { Level: LogEventLevel.Verbose or LogEventLevel.Fatal },
                 sinkConfiguration => sinkConfiguration.File("Logs/logs.txt")
             )
@@ -42,4 +56,3 @@ public static class SerilogConfigurationHelper
         return logger;
     }
 }
-
