@@ -14,11 +14,11 @@ namespace HsnSoft.Base.EventBus.Kafka;
 
 public sealed class KafkaProducer
 {
-    private readonly IEventBusLogger<IEventBusLog> _logger;
+    private readonly IEventBusLogger _logger;
     private readonly ProducerConfig _producerConfig;
     private readonly KafkaEventBusConfig _kafkaEventBusConfig;
 
-    public KafkaProducer(KafkaConnectionSettings connectionSettings, KafkaEventBusConfig kafkaEventBusConfig, IEventBusLogger<IEventBusLog> eventBusLogger)
+    public KafkaProducer(KafkaConnectionSettings connectionSettings, KafkaEventBusConfig kafkaEventBusConfig, IEventBusLogger eventBusLogger)
     {
         _logger = eventBusLogger;
         _kafkaEventBusConfig = kafkaEventBusConfig;
@@ -95,7 +95,7 @@ public sealed class KafkaProducer
                 // delivery might have failed after retries. This message requires manual processing.
                 _logger.LogError("Kafka | CorrelationId: {CorrelationId} Message not ack\'d by all brokers (value: \'{Message}\'). Delivery status: {DeliveryReportStatus}", @event.CorrelationId, message, deliveryReport.Status);
 
-                _logger.PersistentErrorLog(new ProduceMessageLogModel(
+                _logger.EventBusErrorLog(new ProduceMessageLogModel(
                     LogId: Guid.NewGuid().ToString(),
                     CorrelationId: @event.CorrelationId,
                     Facility: EventBusLogFacility.PRODUCE_EVENT_ERROR.ToString(),
