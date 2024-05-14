@@ -328,7 +328,7 @@ public sealed class RabbitMqConsumer : IDisposable
 
             failedMessageObject = dynamicObject.Message;
         }
-        catch (Exception e) { errorMessage += "Failed envelope could not convert:" + e.Message; }
+        catch (Exception e) { errorMessage += ". FailedMessageContent convert operation error: " + e.Message; }
 
         var @event = new MessageEnvelope<MessageBrokerErrorEto>
         {
