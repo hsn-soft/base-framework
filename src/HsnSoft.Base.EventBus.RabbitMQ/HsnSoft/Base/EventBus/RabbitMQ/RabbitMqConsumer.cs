@@ -8,6 +8,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using HsnSoft.Base.Domain.Entities.Events;
+using HsnSoft.Base.EventBus.Extensions;
 using HsnSoft.Base.EventBus.Logging;
 using HsnSoft.Base.EventBus.RabbitMQ.Configs;
 using HsnSoft.Base.EventBus.RabbitMQ.Connection;
@@ -145,7 +146,7 @@ public sealed class RabbitMqConsumer : IDisposable
             }
             catch (Exception ex)
             {
-                _logger.LogWarning("RabbitMQ | {ConsumerQueue} => ConsumerChannel[ {ChannelNo} ][ {ConsumerId} ] FetcherId [ {FetcherId} ]: ERROR ( {ConsumeError} ) | {Time}",
+                _logger.LogError("RabbitMQ | {ConsumerQueue} => ConsumerChannel[ {ChannelNo} ][ {ConsumerId} ] FetcherId [ {FetcherId} ]: ERROR ( {ConsumeError} ) | {Time}",
                     consumerQueueName, consumerChannelNumber, _currentConsumerTag, fetcherId, ex.Message, DateTime.UtcNow.ToString("yyyy-MM-dd hh:mm:ss zz"));
                 try
                 {
@@ -311,22 +312,21 @@ public sealed class RabbitMqConsumer : IDisposable
                 _logger.LogError("RabbitMQ | Could not publish failed event message : {Event} after {Timeout}s ({ExceptionMessage})", failedMessageContent, $"{time.TotalSeconds:n1}", ex.Message);
             });
 
-        Type failedMessageType = null;
-        dynamic failedMessageObject = null;
         ParentMessageEnvelope failedEnvelopeInfo = null;
-        DateTimeOffset? failedMessageEnvelopeTime = null;
+        Type failedEventEnvelopeMessageType = null;
+        IIntegrationEventMessage failedMessageObject = null;
         try
         {
-            failedMessageType = _subscriptionsManager.GetEventTypeByName($"{_rabbitMqEventBusConfig.EventNamePrefix}{failedEventName}{_rabbitMqEventBusConfig.EventNameSuffix}");
             var failedEnvelope = JsonConvert.DeserializeObject<dynamic>(failedMessageContent);
             failedEnvelopeInfo = ((JObject)failedEnvelope)?.ToObject<ParentMessageEnvelope>();
 
-            dynamic dynamicObject = JsonConvert.DeserializeObject<ExpandoObject>(failedMessageContent)!;
+            failedEventEnvelopeMessageType = _subscriptionsManager.GetEventTypeByName(failedEventName);
 
-            failedMessageEnvelopeTime = dynamicObject.MessageTime;
-            failedMessageEnvelopeTime = failedMessageEnvelopeTime?.UtcDateTime;
+            var genericClass = typeof(MessageEnvelope<>);
+            var constructedClass = genericClass.MakeGenericType(failedEventEnvelopeMessageType!);
+            var @failedEventEnvelope = JsonSerializer.Deserialize(failedMessageContent, constructedClass);
 
-            failedMessageObject = dynamicObject.Message;
+            failedMessageObject = ((dynamic)failedEventEnvelope)?.Message;
         }
         catch (Exception e) { errorMessage += ". FailedMessageContent convert operation error: " + e.Message; }
 
@@ -339,9 +339,9 @@ public sealed class RabbitMqConsumer : IDisposable
                 ErrorTime: DateTime.UtcNow,
                 ErrorMessage: errorMessage,
                 FailedEventName: failedEventName,
-                FailedMessageTypeName: failedMessageType?.Name,
+                FailedMessageTypeName: failedEventEnvelopeMessageType?.Name,
                 FailedMessageObject: failedMessageObject,
-                FailedMessageEnvelopeTime: failedMessageEnvelopeTime
+                FailedMessageEnvelopeTime: failedEnvelopeInfo?.MessageTime.ToUniversalTime()
             ),
             Producer = _rabbitMqEventBusConfig.ClientInfo,
             CorrelationId = failedEnvelopeInfo?.CorrelationId,
