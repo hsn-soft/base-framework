@@ -11,7 +11,6 @@ using HsnSoft.Base.EventBus.RabbitMQ.Configs;
 using HsnSoft.Base.EventBus.RabbitMQ.Connection;
 using HsnSoft.Base.Tracing;
 using HsnSoft.Base.Users;
-using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Polly;
@@ -219,21 +218,6 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
         }
 
         _logger.LogInformation("RabbitMQ | Terminated");
-    }
-
-    [CanBeNull]
-    private IModel CreateConsumerChannel()
-    {
-        if (!_persistentConnection.IsConnected)
-        {
-            _persistentConnection.TryConnect();
-        }
-
-        var channel = _persistentConnection.CreateModel();
-
-        channel?.ExchangeDeclare(exchange: _rabbitMqEventBusConfig.ExchangeName, type: "direct");
-
-        return channel;
     }
 
     private string GetConsumerQueueName(string eventName)
