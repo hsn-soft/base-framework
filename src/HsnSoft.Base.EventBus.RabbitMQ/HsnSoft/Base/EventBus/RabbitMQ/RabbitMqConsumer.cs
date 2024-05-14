@@ -275,7 +275,6 @@ public sealed class RabbitMqConsumer : IDisposable
 
     private void TryEnqueueMessageAgainAsync(BasicDeliverEventArgs eventArgs, string taskId)
     {
-        if (_disposed) return;
         var consumerChannelNumber = _consumerChannel?.ChannelNumber.ToString() ?? "0";
 
         _logger.LogWarning("RabbitMQ | {ConsumerQueue} => ConsumerChannel[ {ChannelNo} ][ {ConsumerId} ] FetcherId [ {FetcherId} ]: Adding message to queue again with {Time} seconds delay...",
