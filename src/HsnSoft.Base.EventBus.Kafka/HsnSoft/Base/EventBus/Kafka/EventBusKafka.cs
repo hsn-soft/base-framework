@@ -60,7 +60,7 @@ public class EventBusKafka : IEventBus, IDisposable
             MessageId = Guid.NewGuid(),
             MessageTime = DateTime.UtcNow,
             Message = eventMessage,
-            Producer = _kafkaEventBusConfig.ClientInfo,
+            Producer = _kafkaEventBusConfig.ConsumerClientInfo,
             CorrelationId = parentMessage?.CorrelationId ?? _traceAccessor?.GetCorrelationId(),
             Channel = parentMessage?.Channel ?? _traceAccessor?.GetChannel(),
             UserId = parentMessage?.UserId ?? _currentUser?.Id?.ToString(),
@@ -146,7 +146,7 @@ public class EventBusKafka : IEventBus, IDisposable
                     var handler = _serviceProvider.GetService(subscription.HandlerType);
                     if (handler == null)
                     {
-                        _logger.LogWarning("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => No HANDLER for event", _kafkaEventBusConfig.ClientInfo, eventName);
+                        _logger.LogWarning("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => No HANDLER for event", _kafkaEventBusConfig.ConsumerClientInfo, eventName);
                         continue;
                     }
 
@@ -179,10 +179,10 @@ public class EventBusKafka : IEventBus, IDisposable
                             ConsumeDetails: "Message handling started",
                             ConsumeHandleWorkingTime: "-"));
 
-                        _logger.LogDebug("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Handling STARTED : MessageId [ {MessageId} ]", _kafkaEventBusConfig.ClientInfo, eventName, messageId.ToString());
+                        _logger.LogDebug("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Handling STARTED : MessageId [ {MessageId} ]", _kafkaEventBusConfig.ConsumerClientInfo, eventName, messageId.ToString());
                         var concreteType = typeof(IIntegrationEventHandler<>).MakeGenericType(messageObject.Key);
                         ((Task)concreteType.GetMethod("HandleAsync")?.Invoke(handler, new[] { @event }))!.GetAwaiter().GetResult();
-                        _logger.LogDebug("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Handling COMPLETED : MessageId [ {MessageId} ]", _kafkaEventBusConfig.ClientInfo, eventName, messageId.ToString());
+                        _logger.LogDebug("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Handling COMPLETED : MessageId [ {MessageId} ]", _kafkaEventBusConfig.ConsumerClientInfo, eventName, messageId.ToString());
 
                         var handleEndTime = DateTimeOffset.UtcNow;
                         _logger.EventBusInfoLog(new ConsumeMessageLogModel(
@@ -206,7 +206,7 @@ public class EventBusKafka : IEventBus, IDisposable
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError("Kafka | CorrelationId: {CorrelationId} {ClientInfo} CONSUMER [ {EventName} ] => Handling ERROR : {HandlingError}", ((dynamic)@event)?.CorrelationId, _kafkaEventBusConfig.ClientInfo, eventName, ex.Message);
+                        _logger.LogError("Kafka | CorrelationId: {CorrelationId} {ClientInfo} CONSUMER [ {EventName} ] => Handling ERROR : {HandlingError}", ((dynamic)@event)?.CorrelationId, _kafkaEventBusConfig.ConsumerClientInfo, eventName, ex.Message);
 
                         var handleEndTime = DateTimeOffset.UtcNow;
                         _logger.EventBusErrorLog(new ConsumeMessageLogModel(
@@ -232,7 +232,7 @@ public class EventBusKafka : IEventBus, IDisposable
             }
             else
             {
-                _logger.LogWarning("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => No SUBSCRIPTION for event", _kafkaEventBusConfig.ClientInfo, eventName);
+                _logger.LogWarning("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => No SUBSCRIPTION for event", _kafkaEventBusConfig.ConsumerClientInfo, eventName);
             }
         }));
     }
