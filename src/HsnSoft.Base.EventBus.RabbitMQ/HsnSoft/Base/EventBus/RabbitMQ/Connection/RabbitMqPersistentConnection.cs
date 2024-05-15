@@ -12,7 +12,7 @@ using RabbitMQ.Client.Exceptions;
 
 namespace HsnSoft.Base.EventBus.RabbitMQ.Connection;
 
-public class RabbitMqPersistentConnection : IRabbitMqPersistentConnection
+public sealed class RabbitMqPersistentConnection : IRabbitMqPersistentConnection
 {
     private readonly IConnectionFactory _connectionFactory;
     private readonly IEventBusLogger _logger;

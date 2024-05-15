@@ -56,22 +56,22 @@ public sealed class KafkaProducer
                 {
                     case SyslogLevel.Emergency or SyslogLevel.Alert or SyslogLevel.Critical or SyslogLevel.Error:
                     {
-                        _logger.LogError("Kafka | {ClientInfo} {Facility} {CorrelationId} => Message: {Message}", _kafkaEventBusConfig.ClientInfo, message.Facility, @event.CorrelationId, message.Message);
+                        _logger.LogError("Kafka | {ClientInfo} {Facility} {CorrelationId} => Message: {Message}", _kafkaEventBusConfig.ConsumerClientInfo, message.Facility, @event.CorrelationId, message.Message);
                         break;
                     }
                     default:
                     {
-                        _logger.LogDebug("Kafka | {ClientInfo} {Facility} => Message: {Message}", _kafkaEventBusConfig.ClientInfo, message.Facility, message.Message);
+                        _logger.LogDebug("Kafka | {ClientInfo} {Facility} => Message: {Message}", _kafkaEventBusConfig.ConsumerClientInfo, message.Facility, message.Message);
                         break;
                     }
                 }
             })
-            .SetErrorHandler((_, e) => _logger.LogError("Kafka | {ClientInfo} {CorrelationId} PRODUCER => Error: {Reason}. Is Fatal: {IsFatal}", _kafkaEventBusConfig.ClientInfo, @event.CorrelationId, e.Reason, e.IsFatal))
+            .SetErrorHandler((_, e) => _logger.LogError("Kafka | {ClientInfo} {CorrelationId} PRODUCER => Error: {Reason}. Is Fatal: {IsFatal}", _kafkaEventBusConfig.ConsumerClientInfo, @event.CorrelationId, e.Reason, e.IsFatal))
             .Build();
 
         try
         {
-            _logger.LogDebug("Kafka | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] STARTED", _kafkaEventBusConfig.ClientInfo, topicName, @event.MessageId.ToString());
+            _logger.LogDebug("Kafka | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] STARTED", _kafkaEventBusConfig.ConsumerClientInfo, topicName, @event.MessageId.ToString());
 
             var message = JsonConvert.SerializeObject(@event, new JsonSerializerSettings
             {
@@ -119,14 +119,14 @@ public sealed class KafkaProducer
             }
 
             Thread.Sleep(TimeSpan.FromMilliseconds(50));
-            _logger.LogDebug("Kafka | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] COMPLETED", _kafkaEventBusConfig.ClientInfo, topicName, @event.MessageId.ToString());
+            _logger.LogDebug("Kafka | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] COMPLETED", _kafkaEventBusConfig.ConsumerClientInfo, topicName, @event.MessageId.ToString());
         }
         catch (ProduceException<long, string> e)
         {
             // Log this message for manual processing.
             _logger.LogError("Kafka | CorrelationId: {CorrelationId} {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] ERROR: {ProduceError} for message (value: \'{DeliveryResultValue}\')",
                 @event.CorrelationId,
-                _kafkaEventBusConfig.ClientInfo,
+                _kafkaEventBusConfig.ConsumerClientInfo,
                 topicName,
                 @event.MessageId.ToString(),
                 e.Message,

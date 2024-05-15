@@ -90,7 +90,7 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
             MessageId = Guid.NewGuid(),
             MessageTime = DateTime.UtcNow,
             Message = eventMessage,
-            Producer = _rabbitMqEventBusConfig.ClientInfo,
+            Producer = _rabbitMqEventBusConfig.ConsumerClientInfo,
             CorrelationId = parentMessage?.CorrelationId ?? _traceAccessor?.GetCorrelationId(),
             Channel = parentMessage?.Channel ?? _traceAccessor?.GetChannel(),
             UserId = parentMessage?.UserId ?? _currentUser?.Id?.ToString(),
@@ -103,13 +103,15 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
             @event.ReQueueCount = parentMessage != null ? parentMessage.ReQueueCount + 1 : 0;
         }
 
-        _logger.LogDebug("RabbitMQ | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] STARTED", _rabbitMqEventBusConfig.ClientInfo, eventName, @event.MessageId.ToString());
+        _logger.LogDebug("RabbitMQ | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] STARTED", _rabbitMqEventBusConfig.ConsumerClientInfo, eventName, @event.MessageId.ToString());
 
-        var body = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(@event, @event.GetType(), new JsonSerializerOptions { WriteIndented = true });
+        var body = JsonSerializer.SerializeToUtf8Bytes(@event, @event.GetType(), new JsonSerializerOptions { WriteIndented = true });
 
         policy.Execute(() =>
         {
             using var publisherChannel = _persistentConnection.CreateModel();
+
+            var rePublishQueueName = EventNameHelper.GetConsumerClientEventQueueName(_rabbitMqEventBusConfig, eventName);
 
             if (!isReQueuePublish)
             {
@@ -118,7 +120,7 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
             else
             {
                 // Direct re-queue, no-exchange
-                publisherChannel?.QueueDeclare(queue: GetConsumerQueueName(eventName),
+                publisherChannel?.QueueDeclare(queue: rePublishQueueName,
                     durable: true,
                     exclusive: false,
                     autoDelete: false,
@@ -130,14 +132,14 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
 
             publisherChannel.BasicPublish(
                 exchange: isReQueuePublish ? "" : _rabbitMqEventBusConfig.ExchangeName,
-                routingKey: isReQueuePublish ? GetConsumerQueueName(eventName) : eventName,
+                routingKey: isReQueuePublish ? rePublishQueueName : eventName,
                 mandatory: true,
                 basicProperties: properties,
                 body: body);
         });
 
         Thread.Sleep(TimeSpan.FromMilliseconds(50));
-        _logger.LogDebug("RabbitMQ | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] COMPLETED", _rabbitMqEventBusConfig.ClientInfo, eventName, @event.MessageId.ToString());
+        _logger.LogDebug("RabbitMQ | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] COMPLETED", _rabbitMqEventBusConfig.ConsumerClientInfo, eventName, @event.MessageId.ToString());
         _publishing = false;
     }
 
@@ -161,17 +163,18 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
                 _persistentConnection.TryConnect();
             }
 
+            var consumerQueueName = EventNameHelper.GetConsumerClientEventQueueName(_rabbitMqEventBusConfig, eventName);
             using (var channel = _persistentConnection.CreateModel())
             {
                 channel.ExchangeDeclare(exchange: _rabbitMqEventBusConfig.ExchangeName, type: "direct");
 
-                channel.QueueDeclare(queue: GetConsumerQueueName(eventName), //Ensure queue exists while consuming
+                channel.QueueDeclare(queue: consumerQueueName, //Ensure queue exists while consuming
                     durable: true,
                     exclusive: false,
                     autoDelete: false,
                     arguments: null);
 
-                channel.QueueBind(queue: GetConsumerQueueName(eventName),
+                channel.QueueBind(queue: consumerQueueName,
                     exchange: _rabbitMqEventBusConfig.ExchangeName,
                     routingKey: eventName);
             }
@@ -220,23 +223,5 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
         _logger.LogInformation("RabbitMQ | Terminated");
     }
 
-    private string GetConsumerQueueName(string eventName)
-    {
-        return $"{_rabbitMqEventBusConfig.ClientInfo}_{TrimEventName(eventName)}";
-    }
-
-    private string TrimEventName(string eventName)
-    {
-        if (_rabbitMqEventBusConfig.DeleteEventPrefix && eventName.StartsWith(_rabbitMqEventBusConfig.EventNamePrefix))
-        {
-            eventName = eventName.Substring(_rabbitMqEventBusConfig.EventNamePrefix.Length);
-        }
-
-        if (_rabbitMqEventBusConfig.DeleteEventSuffix && eventName.EndsWith(_rabbitMqEventBusConfig.EventNameSuffix))
-        {
-            eventName = eventName.Substring(0, eventName.Length - _rabbitMqEventBusConfig.EventNameSuffix.Length);
-        }
-
-        return eventName;
-    }
+    private string TrimEventName(string eventName) => EventNameHelper.TrimEventName(_rabbitMqEventBusConfig, eventName);
 }
