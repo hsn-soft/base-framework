@@ -17,7 +17,7 @@ public record FailedEventEto(
     public DateTimeOffset? FailedMessageEnvelopeTime { get; } = FailedMessageEnvelopeTime;
 
     [CanBeNull]
-    public dynamic FailedMessageObject { get; } = FailedMessageObject;
+    public object FailedMessageObject { get; } = FailedMessageObject;
 
     [CanBeNull]
     public string FailedMessageTypeName { get; } = FailedMessageTypeName;

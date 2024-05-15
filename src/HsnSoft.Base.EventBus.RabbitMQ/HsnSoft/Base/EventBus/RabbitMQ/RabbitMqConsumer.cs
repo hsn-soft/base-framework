@@ -180,14 +180,23 @@ public sealed class RabbitMqConsumer : IDisposable
                     consumerQueueName, consumerChannelNumber, _currentConsumerTag, fetcherId, ex.Message, DateTime.UtcNow.ToString("yyyy-MM-dd hh:mm:ss zz"));
                 try
                 {
-                    ConsumeErrorPublish(ex.Message, eventName, message);
+                    if (eventName.Equals(EventNameHelper.TrimEventName(_rabbitMqEventBusConfig, nameof(FailedEventEto))))
+                    {
+                        // FATAL ERROR: event error handling loop
+                        _logger.LogError("RabbitMQ | {ConsumerQueue} => ConsumerChannel[ {ChannelNo} ][ {ConsumerId} ] FetcherId [ {FetcherId} ]: FailedEvent {FailedEvent} Handling error, {Error}",
+                            consumerQueueName, consumerChannelNumber, _currentConsumerTag, fetcherId, message, ex.Message);
+                    }
+                    else
+                    {
+                        ConsumeErrorPublish(ex.Message, eventName, message);
+                        _logger.LogDebug("RabbitMQ | {ConsumerQueue} => ConsumerChannel[ {ChannelNo} ][ {ConsumerId} ] FetcherId [ {FetcherId} ]: Message moved to ErrorHandlerQueue",
+                            consumerQueueName, consumerChannelNumber, _currentConsumerTag, fetcherId);
+                    }
 
                     // remove from old queue
                     lock (ChannelAckResourceLock)
                     {
                         _consumerChannel?.BasicAck(eventArgs.DeliveryTag, multiple: false);
-                        _logger.LogDebug("RabbitMQ | {ConsumerQueue} => ConsumerChannel[ {ChannelNo} ][ {ConsumerId} ] FetcherId [ {FetcherId} ]: Message moved to ErrorHandlerQueue",
-                            consumerQueueName, consumerChannelNumber, _currentConsumerTag, fetcherId);
                     }
                 }
                 catch (Exception)
@@ -309,7 +318,7 @@ public sealed class RabbitMqConsumer : IDisposable
             Channel = failedEnvelopeInfo?.Channel,
             UserId = failedEnvelopeInfo?.UserId,
             UserRoleUniqueName = failedEnvelopeInfo?.UserRoleUniqueName,
-            HopLevel = failedEnvelopeInfo != null ? failedEnvelopeInfo.HopLevel + 1 : 1,
+            HopLevel = failedEnvelopeInfo != null ? (ushort)(failedEnvelopeInfo.HopLevel + 1) : (ushort)1,
             IsReQueued = failedEnvelopeInfo?.IsReQueued ?? false
         };
         if (@event.IsReQueued)
