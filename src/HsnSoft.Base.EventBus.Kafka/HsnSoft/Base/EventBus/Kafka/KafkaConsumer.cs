@@ -28,7 +28,7 @@ public sealed class KafkaConsumer
             EnableAutoCommit = false,
             EnableAutoOffsetStore = false,
             MaxPollIntervalMs = 300000,
-            GroupId = _kafkaEventBusConfig.ClientInfo,
+            GroupId = _kafkaEventBusConfig.ConsumerClientInfo,
             // Read messages from start if no commit exists.
             AutoOffsetReset = AutoOffsetReset.Earliest,
 
@@ -59,19 +59,19 @@ public sealed class KafkaConsumer
                 {
                     case SyslogLevel.Emergency or SyslogLevel.Alert or SyslogLevel.Critical or SyslogLevel.Error:
                     {
-                        _logger.LogError("Kafka | {ClientInfo} {Facility} => Message: {Message}", _kafkaEventBusConfig.ClientInfo, message.Facility, message.Message);
+                        _logger.LogError("Kafka | {ClientInfo} {Facility} => Message: {Message}", _kafkaEventBusConfig.ConsumerClientInfo, message.Facility, message.Message);
                         break;
                     }
                     default:
                     {
-                        _logger.LogDebug("Kafka | {ClientInfo} {Facility} => Message: {Message}", _kafkaEventBusConfig.ClientInfo, message.Facility, message.Message);
+                        _logger.LogDebug("Kafka | {ClientInfo} {Facility} => Message: {Message}", _kafkaEventBusConfig.ConsumerClientInfo, message.Facility, message.Message);
                         break;
                     }
                 }
             })
             .SetErrorHandler((_, e) =>
             {
-                _logger.LogError("Kafka | {ClientInfo} CONSUMER => Error: {Reason}. Is Fatal: {IsFatal}", _kafkaEventBusConfig.ClientInfo, e.Reason, e.IsFatal);
+                _logger.LogError("Kafka | {ClientInfo} CONSUMER => Error: {Reason}. Is Fatal: {IsFatal}", _kafkaEventBusConfig.ConsumerClientInfo, e.Reason, e.IsFatal);
                 KeepConsuming = !e.IsFatal;
             })
             .Build();
@@ -79,7 +79,7 @@ public sealed class KafkaConsumer
         try
         {
             consumer.Subscribe(topicName);
-            _logger.LogDebug("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Subscribed", _kafkaEventBusConfig.ClientInfo, topicName);
+            _logger.LogDebug("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Subscribed", _kafkaEventBusConfig.ConsumerClientInfo, topicName);
 
             while (KeepConsuming && !stoppingToken.IsCancellationRequested)
             {
@@ -90,22 +90,22 @@ public sealed class KafkaConsumer
                     var message = result?.Message?.Value;
                     if (message == null)
                     {
-                        _logger.LogDebug("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Loop [ {Time} ]", _kafkaEventBusConfig.ClientInfo, topicName, DateTime.UtcNow.ToString("yyyy-MM-dd hh:mm:ss zz"));
+                        _logger.LogDebug("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Loop [ {Time} ]", _kafkaEventBusConfig.ConsumerClientInfo, topicName, DateTime.UtcNow.ToString("yyyy-MM-dd hh:mm:ss zz"));
                         continue;
                     }
 
-                    _logger.LogDebug("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Consume STARTED", _kafkaEventBusConfig.ClientInfo, topicName);
+                    _logger.LogDebug("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Consume STARTED", _kafkaEventBusConfig.ConsumerClientInfo, topicName);
 
                     consumer.Commit(result);
                     consumer.StoreOffset(result);
 
-                    _logger.LogDebug("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Received: {Key}:{Message} from partition: {Partition}", _kafkaEventBusConfig.ClientInfo, topicName, result.Message.Key, message, result.Partition.Value);
+                    _logger.LogDebug("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Received: {Key}:{Message} from partition: {Partition}", _kafkaEventBusConfig.ConsumerClientInfo, topicName, result.Message.Key, message, result.Partition.Value);
                     OnMessageReceived?.Invoke(this, new KeyValuePair<Type, string>(eventType, message));
                 }
                 catch (ConsumeException ce)
                 {
                     if (ce.Error.IsFatal) throw;
-                    _logger.LogDebug("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Consume ERROR : {ConsumeError} | {Time}", _kafkaEventBusConfig.ClientInfo, topicName, ce.Message, DateTime.UtcNow.ToString("yyyy-MM-dd hh:mm:ss zz"));
+                    _logger.LogDebug("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Consume ERROR : {ConsumeError} | {Time}", _kafkaEventBusConfig.ConsumerClientInfo, topicName, ce.Message, DateTime.UtcNow.ToString("yyyy-MM-dd hh:mm:ss zz"));
                 }
 
                 // loop wait period
@@ -114,16 +114,16 @@ public sealed class KafkaConsumer
         }
         catch (OperationCanceledException oe)
         {
-            _logger.LogDebug("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Closing... : {CancelledMessage}", _kafkaEventBusConfig.ClientInfo, topicName, oe.Message);
+            _logger.LogDebug("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Closing... : {CancelledMessage}", _kafkaEventBusConfig.ConsumerClientInfo, topicName, oe.Message);
         }
         catch (Exception e)
         {
-            _logger.LogError("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => FatalError : {FatalError}", _kafkaEventBusConfig.ClientInfo, topicName, e.Message);
+            _logger.LogError("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => FatalError : {FatalError}", _kafkaEventBusConfig.ConsumerClientInfo, topicName, e.Message);
         }
         finally
         {
             consumer.Close();
-            _logger.LogDebug("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Closed", _kafkaEventBusConfig.ClientInfo, topicName);
+            _logger.LogDebug("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Closed", _kafkaEventBusConfig.ConsumerClientInfo, topicName);
         }
     }
 }

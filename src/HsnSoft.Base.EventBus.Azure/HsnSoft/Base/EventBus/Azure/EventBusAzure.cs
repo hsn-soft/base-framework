@@ -41,7 +41,7 @@ public class EventBusAzure : IEventBus, IDisposable
 
         _sender = _serviceBusPersisterConnection.TopicClient.CreateSender(_eventBusConfig.ExchangeName);
         var options = new ServiceBusProcessorOptions { MaxConcurrentCalls = 10, AutoCompleteMessages = false };
-        _processor = _serviceBusPersisterConnection.TopicClient.CreateProcessor(_eventBusConfig.ExchangeName, _eventBusConfig.ClientName, options);
+        _processor = _serviceBusPersisterConnection.TopicClient.CreateProcessor(_eventBusConfig.ExchangeName, _eventBusConfig.ConsumerClientName, options);
 
         RemoveDefaultRule();
         RegisterSubscriptionClientMessageHandlerAsync().GetAwaiter().GetResult();
@@ -58,7 +58,7 @@ public class EventBusAzure : IEventBus, IDisposable
             MessageId = Guid.NewGuid(),
             MessageTime = DateTime.UtcNow,
             Message = eventMessage,
-            Producer = _eventBusConfig.ClientInfo,
+            Producer = _eventBusConfig.ConsumerClientInfo,
             CorrelationId = parentMessage?.CorrelationId ?? _traceAccessor?.GetCorrelationId(),
             Channel = parentMessage?.Channel ?? _traceAccessor?.GetChannel(),
             UserId = parentMessage?.UserId,
@@ -66,7 +66,7 @@ public class EventBusAzure : IEventBus, IDisposable
             HopLevel = parentMessage != null ? parentMessage.HopLevel + 1 : 1
         };
 
-        _logger.LogDebug("AzureServiceBus | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] STARTED", _eventBusConfig.ClientInfo, eventName, @event.MessageId.ToString());
+        _logger.LogDebug("AzureServiceBus | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] STARTED", _eventBusConfig.ConsumerClientInfo, eventName, @event.MessageId.ToString());
 
         var body = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(@event, @event.GetType(), new JsonSerializerOptions { WriteIndented = true });
 
@@ -74,7 +74,7 @@ public class EventBusAzure : IEventBus, IDisposable
 
         await _sender.SendMessageAsync(message);
 
-        _logger.LogDebug("AzureServiceBus | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] COMPLETED", _eventBusConfig.ClientInfo, eventName, @event.MessageId.ToString());
+        _logger.LogDebug("AzureServiceBus | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] COMPLETED", _eventBusConfig.ConsumerClientInfo, eventName, @event.MessageId.ToString());
     }
 
     public void Subscribe<T, TH>() where T : IIntegrationEventMessage where TH : IIntegrationEventHandler<T>
@@ -95,7 +95,7 @@ public class EventBusAzure : IEventBus, IDisposable
         {
             try
             {
-                _serviceBusPersisterConnection.AdministrationClient.CreateRuleAsync(_eventBusConfig.ExchangeName, _eventBusConfig.ClientName, new CreateRuleOptions { Filter = new CorrelationRuleFilter { Subject = eventName }, Name = eventName }).GetAwaiter().GetResult();
+                _serviceBusPersisterConnection.AdministrationClient.CreateRuleAsync(_eventBusConfig.ExchangeName, _eventBusConfig.ConsumerClientName, new CreateRuleOptions { Filter = new CorrelationRuleFilter { Subject = eventName }, Name = eventName }).GetAwaiter().GetResult();
             }
             catch (ServiceBusException)
             {
@@ -149,7 +149,7 @@ public class EventBusAzure : IEventBus, IDisposable
         {
             _serviceBusPersisterConnection
                 .AdministrationClient
-                .DeleteRuleAsync(_eventBusConfig.ExchangeName, _eventBusConfig.ClientName, RuleProperties.DefaultRuleName)
+                .DeleteRuleAsync(_eventBusConfig.ExchangeName, _eventBusConfig.ConsumerClientName, RuleProperties.DefaultRuleName)
                 .GetAwaiter()
                 .GetResult();
         }
@@ -193,7 +193,7 @@ public class EventBusAzure : IEventBus, IDisposable
                     var handler = _serviceProvider.GetService(subscription.HandlerType);
                     if (handler == null)
                     {
-                        _logger.LogWarning("AzureServiceBus | {ClientInfo} CONSUMER [ {EventName} ] => No HANDLER for event", _eventBusConfig.ClientInfo, eventName);
+                        _logger.LogWarning("AzureServiceBus | {ClientInfo} CONSUMER [ {EventName} ] => No HANDLER for event", _eventBusConfig.ConsumerClientInfo, eventName);
                         continue;
                     }
 
@@ -205,14 +205,14 @@ public class EventBusAzure : IEventBus, IDisposable
                         Type constructedClass = genericClass.MakeGenericType(eventType);
                         var @event = JsonConvert.DeserializeObject(message, constructedClass);
 
-                        _logger.LogDebug("AzureServiceBus | {ClientInfo} CONSUMER [ {EventName} ] => Handling STARTED : Event [ {Event} ]", _eventBusConfig.ClientInfo, eventName, @event);
+                        _logger.LogDebug("AzureServiceBus | {ClientInfo} CONSUMER [ {EventName} ] => Handling STARTED : Event [ {Event} ]", _eventBusConfig.ConsumerClientInfo, eventName, @event);
                         var concreteType = typeof(IIntegrationEventHandler<>).MakeGenericType(eventType!);
                         ((Task)concreteType.GetMethod("HandleAsync")?.Invoke(handler, new[] { @event }))!.GetAwaiter().GetResult();
-                        _logger.LogDebug("AzureServiceBus | {ClientInfo} CONSUMER [ {EventName} ] => Handling COMPLETED : Event [ {Event} ]", _eventBusConfig.ClientInfo, eventName, @event);
+                        _logger.LogDebug("AzureServiceBus | {ClientInfo} CONSUMER [ {EventName} ] => Handling COMPLETED : Event [ {Event} ]", _eventBusConfig.ConsumerClientInfo, eventName, @event);
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogWarning("AzureServiceBus | {ClientInfo} CONSUMER [ {EventName} ] => Handling ERROR : {HandlingError}", _eventBusConfig.ClientInfo, eventName, ex.Message);
+                        _logger.LogWarning("AzureServiceBus | {ClientInfo} CONSUMER [ {EventName} ] => Handling ERROR : {HandlingError}", _eventBusConfig.ConsumerClientInfo, eventName, ex.Message);
                     }
                 }
             }
@@ -221,7 +221,7 @@ public class EventBusAzure : IEventBus, IDisposable
         }
         else
         {
-            _logger.LogWarning("AzureServiceBus | {ClientInfo} CONSUMER [ {EventName} ] => No SUBSCRIPTION for event", _eventBusConfig.ClientInfo, eventName);
+            _logger.LogWarning("AzureServiceBus | {ClientInfo} CONSUMER [ {EventName} ] => No SUBSCRIPTION for event", _eventBusConfig.ConsumerClientInfo, eventName);
         }
 
         return processed;
