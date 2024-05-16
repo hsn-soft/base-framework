@@ -3,12 +3,12 @@ using JetBrains.Annotations;
 
 namespace HsnSoft.Base.Domain.Entities.Events;
 
-public sealed class ParentMessageEnvelope
+public record ParentMessageEnvelope
 {
-    public int HopLevel { get; set; }
+    public ushort HopLevel { get; set; }
 
     public bool IsReQueued { get; set; }
-    public int ReQueueCount { get; set; }
+    public ushort ReQueueCount { get; set; }
 
     public Guid MessageId { get; set; }
 

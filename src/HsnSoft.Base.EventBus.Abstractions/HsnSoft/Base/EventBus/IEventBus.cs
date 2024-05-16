@@ -7,7 +7,12 @@ namespace HsnSoft.Base.EventBus;
 
 public interface IEventBus
 {
-    Task PublishAsync<TEventMessage>([NotNull] TEventMessage eventMessage, [CanBeNull] ParentMessageEnvelope parentMessage = null, bool isReQueuePublish = false) where TEventMessage : IIntegrationEventMessage;
+    Task PublishAsync<TEventMessage>(
+        [NotNull] TEventMessage eventMessage,
+        [CanBeNull] ParentMessageEnvelope parentMessage = null,
+        bool isExchangeEvent = true,
+        bool isReQueuePublish = false
+    ) where TEventMessage : IIntegrationEventMessage;
 
     void Subscribe<TEvent, THandler>()
         where TEvent : IIntegrationEventMessage
