@@ -3,7 +3,7 @@ using JetBrains.Annotations;
 
 namespace HsnSoft.Base.Domain.Entities.Events;
 
-public sealed class ParentMessageEnvelope
+public record ParentMessageEnvelope
 {
     public ushort HopLevel { get; set; }
 
