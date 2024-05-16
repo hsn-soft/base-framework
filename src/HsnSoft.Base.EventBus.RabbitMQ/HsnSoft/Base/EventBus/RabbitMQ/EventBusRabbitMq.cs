@@ -64,7 +64,7 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
         _consumers = new List<RabbitMqConsumer>();
     }
 
-    public async Task PublishAsync<TEventMessage>(TEventMessage eventMessage, ParentMessageEnvelope parentMessage = null, bool isReQueuePublish = false) where TEventMessage : IIntegrationEventMessage
+    public async Task PublishAsync<TEventMessage>(TEventMessage eventMessage, ParentMessageEnvelope parentMessage = null, bool isExchangeEvent = true, bool isReQueuePublish = false) where TEventMessage : IIntegrationEventMessage
     {
         if (!_persistentConnection.IsConnected)
         {
@@ -95,12 +95,12 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
             Channel = parentMessage?.Channel ?? _traceAccessor?.GetChannel(),
             UserId = parentMessage?.UserId ?? _currentUser?.Id?.ToString(),
             UserRoleUniqueName = parentMessage?.UserRoleUniqueName ?? (_currentUser?.Roles is { Length: > 0 } ? _currentUser?.Roles.JoinAsString(",") : null),
-            HopLevel = parentMessage != null ? parentMessage.HopLevel + 1 : 1,
+            HopLevel = parentMessage != null ? (ushort)(parentMessage.HopLevel + 1) : (ushort)1,
             IsReQueued = isReQueuePublish || (parentMessage?.IsReQueued ?? false)
         };
         if (@event.IsReQueued)
         {
-            @event.ReQueueCount = parentMessage != null ? parentMessage.ReQueueCount + 1 : 0;
+            @event.ReQueueCount = parentMessage != null ? (ushort)(parentMessage.ReQueueCount + 1) : (ushort)0;
         }
 
         _logger.LogDebug("RabbitMQ | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] STARTED", _rabbitMqEventBusConfig.ConsumerClientInfo, eventName, @event.MessageId.ToString());
@@ -111,16 +111,16 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
         {
             using var publisherChannel = _persistentConnection.CreateModel();
 
-            var rePublishQueueName = EventNameHelper.GetConsumerClientEventQueueName(_rabbitMqEventBusConfig, eventName);
+            var publishQueueName = EventNameHelper.GetConsumerClientEventQueueName(_rabbitMqEventBusConfig, eventName);
 
-            if (!isReQueuePublish)
+            if (!isReQueuePublish && isExchangeEvent)
             {
                 publisherChannel.ExchangeDeclare(exchange: _rabbitMqEventBusConfig.ExchangeName, type: "direct"); //Ensure exchange exists while publishing
             }
             else
             {
                 // Direct re-queue, no-exchange
-                publisherChannel?.QueueDeclare(queue: rePublishQueueName,
+                publisherChannel?.QueueDeclare(queue: publishQueueName,
                     durable: true,
                     exclusive: false,
                     autoDelete: false,
@@ -131,8 +131,8 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
             properties!.DeliveryMode = (int)DeliveryMode.Persistent;
 
             publisherChannel.BasicPublish(
-                exchange: isReQueuePublish ? "" : _rabbitMqEventBusConfig.ExchangeName,
-                routingKey: isReQueuePublish ? rePublishQueueName : eventName,
+                exchange: !isReQueuePublish && isExchangeEvent ? _rabbitMqEventBusConfig.ExchangeName : "",
+                routingKey: !isReQueuePublish && isExchangeEvent ? eventName : publishQueueName,
                 mandatory: true,
                 basicProperties: properties,
                 body: body);

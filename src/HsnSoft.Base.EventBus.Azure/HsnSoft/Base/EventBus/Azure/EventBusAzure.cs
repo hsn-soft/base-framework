@@ -47,7 +47,7 @@ public class EventBusAzure : IEventBus, IDisposable
         RegisterSubscriptionClientMessageHandlerAsync().GetAwaiter().GetResult();
     }
 
-    public async Task PublishAsync<TEventMessage>(TEventMessage eventMessage, ParentMessageEnvelope parentMessage = null, bool isReQueuePublish = false) where TEventMessage : IIntegrationEventMessage
+    public async Task PublishAsync<TEventMessage>(TEventMessage eventMessage, ParentMessageEnvelope parentMessage = null, bool isExchangeEvent = true, bool isReQueuePublish = false) where TEventMessage : IIntegrationEventMessage
     {
         var eventName = eventMessage.GetType().Name;
         eventName = TrimEventName(eventName);
@@ -63,7 +63,7 @@ public class EventBusAzure : IEventBus, IDisposable
             Channel = parentMessage?.Channel ?? _traceAccessor?.GetChannel(),
             UserId = parentMessage?.UserId,
             UserRoleUniqueName = parentMessage?.UserRoleUniqueName,
-            HopLevel = parentMessage != null ? parentMessage.HopLevel + 1 : 1
+            HopLevel = parentMessage != null ? (ushort)(parentMessage.HopLevel + 1) : (ushort)1
         };
 
         _logger.LogDebug("AzureServiceBus | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] STARTED", _eventBusConfig.ConsumerClientInfo, eventName, @event.MessageId.ToString());

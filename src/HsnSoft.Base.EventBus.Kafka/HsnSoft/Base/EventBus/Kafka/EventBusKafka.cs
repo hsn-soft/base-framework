@@ -47,7 +47,7 @@ public class EventBusKafka : IEventBus, IDisposable
         _messageProcessorTasks = new List<Task>();
     }
 
-    public async Task PublishAsync<TEventMessage>(TEventMessage eventMessage, ParentMessageEnvelope parentMessage = null, bool isReQueuePublish = false) where TEventMessage : IIntegrationEventMessage
+    public async Task PublishAsync<TEventMessage>(TEventMessage eventMessage, ParentMessageEnvelope parentMessage = null, bool isExchangeEvent = true, bool isReQueuePublish = false) where TEventMessage : IIntegrationEventMessage
     {
         var eventName = eventMessage.GetType().Name;
         eventName = TrimEventName(eventName);
@@ -65,12 +65,12 @@ public class EventBusKafka : IEventBus, IDisposable
             Channel = parentMessage?.Channel ?? _traceAccessor?.GetChannel(),
             UserId = parentMessage?.UserId ?? _currentUser?.Id?.ToString(),
             UserRoleUniqueName = parentMessage?.UserRoleUniqueName ?? (_currentUser?.Roles is { Length: > 0 } ? _currentUser?.Roles.JoinAsString(",") : null),
-            HopLevel = parentMessage != null ? parentMessage.HopLevel + 1 : 1,
+            HopLevel = parentMessage != null ? (ushort)(parentMessage.HopLevel + 1) : (ushort)1,
             IsReQueued = isReQueuePublish || (parentMessage?.IsReQueued ?? false)
         };
         if (@event.IsReQueued)
         {
-            @event.ReQueueCount = parentMessage != null ? parentMessage.ReQueueCount + 1 : 0;
+            @event.ReQueueCount = parentMessage != null ? (ushort)(parentMessage.ReQueueCount + 1) : (ushort)0;
         }
 
         await kafkaProducer.StartSendingMessages(eventName, @event);
