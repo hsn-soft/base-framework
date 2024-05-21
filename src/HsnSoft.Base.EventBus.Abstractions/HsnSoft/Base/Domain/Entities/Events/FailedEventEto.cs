@@ -5,7 +5,7 @@ namespace HsnSoft.Base.Domain.Entities.Events;
 
 public record FailedEventEto(
     [NotNull] string FailedReason,
-    [CanBeNull] DateTimeOffset? FailedMessageEnvelopeTime,
+    [CanBeNull] DateTime? FailedMessageEnvelopeTime,
     [CanBeNull] dynamic FailedMessageObject,
     [CanBeNull] string FailedMessageTypeName
 ) : IIntegrationEventMessage
@@ -14,7 +14,7 @@ public record FailedEventEto(
     public string FailedReason { get; } = FailedReason;
 
     [CanBeNull]
-    public DateTimeOffset? FailedMessageEnvelopeTime { get; } = FailedMessageEnvelopeTime;
+    public DateTime? FailedMessageEnvelopeTime { get; } = FailedMessageEnvelopeTime;
 
     [CanBeNull]
     public object FailedMessageObject { get; } = FailedMessageObject;

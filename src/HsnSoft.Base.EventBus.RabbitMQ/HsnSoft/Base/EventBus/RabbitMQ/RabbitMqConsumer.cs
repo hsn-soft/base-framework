@@ -91,7 +91,7 @@ public sealed class RabbitMqConsumer : IDisposable
         var waitCounter = 0;
         while (waitCounter * 1000 < MaxWaitDisposeTime && _consumerPrefetchSemaphore.CurrentCount < _rabbitMqEventBusConfig.ConsumerMaxFetchCount)
         {
-            _logger.LogInformation("RabbitMQ | {ConsumerQueue} => ConsumerChannel[ {ChannelNo} ][ {ConsumerId} ]: Consumer Fetcher [ {Done}/{All} ] wait processing...",
+            _logger.LogDebug("RabbitMQ | {ConsumerQueue} => ConsumerChannel[ {ChannelNo} ][ {ConsumerId} ]: Consumer Fetcher [ {Done}/{All} ] wait processing...",
                 consumerQueueName, consumerChannelNumber, _currentConsumerTag, _consumerPrefetchSemaphore.CurrentCount, _rabbitMqEventBusConfig.ConsumerMaxFetchCount);
             Thread.Sleep(1000);
             waitCounter++;
@@ -99,7 +99,7 @@ public sealed class RabbitMqConsumer : IDisposable
 
         if (waitCounter > 0)
         {
-            _logger.LogInformation("RabbitMQ | {ConsumerQueue} => ConsumerChannel[ {ChannelNo} ][ {ConsumerId} ]: Consumer Fetcher [ {Done}/{All} ] processed",
+            _logger.LogDebug("RabbitMQ | {ConsumerQueue} => ConsumerChannel[ {ChannelNo} ][ {ConsumerId} ]: Consumer Fetcher [ {Done}/{All} ] processed",
                 consumerQueueName, consumerChannelNumber, _currentConsumerTag, _consumerPrefetchSemaphore.CurrentCount, _rabbitMqEventBusConfig.ConsumerMaxFetchCount);
         }
 
@@ -143,7 +143,7 @@ public sealed class RabbitMqConsumer : IDisposable
 #pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
         {
             var fetcherId = Task.CurrentId?.ToString() ?? "0";
-            _logger.LogInformation("RabbitMQ | {ConsumerQueue} => ConsumerChannel[ {ChannelNo} ][ {ConsumerId} ] FetcherId [ {FetcherId} ]: STARTED",
+            _logger.LogDebug("RabbitMQ | {ConsumerQueue} => ConsumerChannel[ {ChannelNo} ][ {ConsumerId} ] FetcherId [ {FetcherId} ]: STARTED",
                 consumerQueueName, consumerChannelNumber, _currentConsumerTag, fetcherId);
 
             try
@@ -163,7 +163,7 @@ public sealed class RabbitMqConsumer : IDisposable
                     _consumerChannel?.BasicAck(eventArgs.DeliveryTag, multiple: false);
                 }
 
-                _logger.LogInformation("RabbitMQ | {ConsumerQueue} => ConsumerChannel[ {ChannelNo} ][ {ConsumerId} ] FetcherId [ {FetcherId} ]: COMPLETED [ {ConsumeHandleWorkingTime}sn ]",
+                _logger.LogDebug("RabbitMQ | {ConsumerQueue} => ConsumerChannel[ {ChannelNo} ][ {ConsumerId} ] FetcherId [ {FetcherId} ]: COMPLETED [ {ConsumeHandleWorkingTime}sn ]",
                     consumerQueueName, consumerChannelNumber, _currentConsumerTag, fetcherId, timespan.TotalSeconds.ToString("0.###"));
             }
             catch (TimeoutException timeProblem)
@@ -189,7 +189,7 @@ public sealed class RabbitMqConsumer : IDisposable
                     else
                     {
                         ConsumeErrorPublish(ex.Message, eventName, message);
-                        _logger.LogDebug("RabbitMQ | {ConsumerQueue} => ConsumerChannel[ {ChannelNo} ][ {ConsumerId} ] FetcherId [ {FetcherId} ]: Message moved to ErrorHandlerQueue",
+                        _logger.LogWarning("RabbitMQ | {ConsumerQueue} => ConsumerChannel[ {ChannelNo} ][ {ConsumerId} ] FetcherId [ {FetcherId} ]: Message moved to ErrorHandlerQueue",
                             consumerQueueName, consumerChannelNumber, _currentConsumerTag, fetcherId);
                     }
 
@@ -260,7 +260,7 @@ public sealed class RabbitMqConsumer : IDisposable
                 _consumerChannel?.BasicNack(eventArgs.DeliveryTag, false, true);
             }
 
-            _logger.LogDebug("RabbitMQ | {ConsumerQueue} => ConsumerChannel[ {ChannelNo} ][ {ConsumerId} ] FetcherId [ {FetcherId} ]: Message added to queue again",
+            _logger.LogWarning("RabbitMQ | {ConsumerQueue} => ConsumerChannel[ {ChannelNo} ][ {ConsumerId} ] FetcherId [ {FetcherId} ]: Message added to queue again",
                 consumerQueueName, consumerChannelNumber, _currentConsumerTag, taskId ?? "0");
         }
         catch (Exception ex)
@@ -330,7 +330,7 @@ public sealed class RabbitMqConsumer : IDisposable
         eventName = EventNameHelper.TrimEventName(_rabbitMqEventBusConfig, eventName);
         consumerErrorQueueName = $"{_rabbitMqEventBusConfig.ErrorClientInfo}_{eventName}";
 
-        _logger.LogDebug("RabbitMQ | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] STARTED", _rabbitMqEventBusConfig.ConsumerClientInfo, eventName, @event.MessageId.ToString());
+        _logger.LogWarning("RabbitMQ | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] STARTED", _rabbitMqEventBusConfig.ConsumerClientInfo, eventName, @event.MessageId.ToString());
 
         var body = JsonSerializer.SerializeToUtf8Bytes(@event, @event.GetType(), new JsonSerializerOptions { WriteIndented = true });
 
@@ -355,7 +355,7 @@ public sealed class RabbitMqConsumer : IDisposable
                 body: body);
         });
 
-        _logger.LogDebug("RabbitMQ | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] COMPLETED", _rabbitMqEventBusConfig.ConsumerClientInfo, eventName, @event.MessageId.ToString());
+        _logger.LogWarning("RabbitMQ | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] COMPLETED", _rabbitMqEventBusConfig.ConsumerClientInfo, eventName, @event.MessageId.ToString());
     }
 
     private IModel CreateConsumerChannel()

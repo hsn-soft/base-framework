@@ -7,10 +7,10 @@ using System.Threading;
 
 namespace HsnSoft.Base.Context.QueryProviders;
 
-internal class ThreadSafeQueryable : IOrderedQueryable
+public class ThreadSafeQueryable : IOrderedQueryable
 {
     protected readonly SemaphoreSlim SemaphoreSlim;
-    protected readonly IQueryable Set;
+    public readonly IQueryable Set;
 
     public ThreadSafeQueryable(IQueryable set, SemaphoreSlim semaphoreSlim)
     {
@@ -31,7 +31,7 @@ internal class ThreadSafeQueryable : IOrderedQueryable
     public IQueryProvider Provider => new ThreadSafeQueryProvider(Set.Provider, SemaphoreSlim);
 }
 
-internal class ThreadSafeQueryable<T> : ThreadSafeQueryable, IOrderedQueryable<T>
+public class ThreadSafeQueryable<T> : ThreadSafeQueryable, IOrderedQueryable<T>
 {
     public ThreadSafeQueryable(IQueryable<T> set, SemaphoreSlim semaphoreSlim)
         : base(set, semaphoreSlim)
@@ -44,7 +44,7 @@ internal class ThreadSafeQueryable<T> : ThreadSafeQueryable, IOrderedQueryable<T
     }
 }
 
-internal sealed class ThreadSafeAsyncQueryable<T> : ThreadSafeQueryable<T>, IAsyncEnumerable<T>
+public sealed class ThreadSafeAsyncQueryable<T> : ThreadSafeQueryable<T>, IAsyncEnumerable<T>
 {
     public ThreadSafeAsyncQueryable(IQueryable<T> set, SemaphoreSlim semaphoreSlim)
         : base(set, semaphoreSlim)

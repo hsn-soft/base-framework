@@ -12,7 +12,7 @@ public record ParentMessageEnvelope
 
     public Guid MessageId { get; set; }
 
-    public DateTimeOffset MessageTime { get; set; }
+    public DateTime MessageTime { get; set; }
 
     [CanBeNull]
     public string CorrelationId { get; set; }

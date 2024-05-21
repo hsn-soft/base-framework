@@ -1,3 +1,4 @@
+using System;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
@@ -14,6 +15,17 @@ public class DefaultBaseLogger : IBaseLogger
         {
             builder.ClearProviders();
             builder.AddConfiguration(configuration);
+
+            try
+            {
+                var loglevel = (LogLevel)Enum.Parse(typeof(LogLevel), configuration["Logging:LogLevel:Default"] ?? throw new InvalidOperationException());
+                builder.SetMinimumLevel(loglevel);
+            }
+            catch (Exception)
+            {
+                // no config
+                builder.SetMinimumLevel(LogLevel.Information);
+            }
 
             // Clear Microsoft's default providers (like event logs and others)
             builder.AddSimpleConsole(options =>

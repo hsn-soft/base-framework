@@ -21,6 +21,7 @@ public abstract class BaseRepository<TDocument> : IBaseRepository<TDocument>
     private readonly IMongoCollection<TDocument> _collection;
     private const int DefaultQueryExecutionMaxSeconds = 60;
     private QueryOptions _queryOptions;
+
     protected BaseRepository(IOptions<MongoDbSettings> settings)
     {
         var clientSettings = CreateClientSettings(settings);
@@ -222,11 +223,11 @@ public abstract class BaseRepository<TDocument> : IBaseRepository<TDocument>
         ProjectionDefinition<TDocument, TProjected> projectionDefinition =
             PrepareProjectDefinition<TProjected>(include, exclude);
         var result = await _collection.FindAsync(filterExpression, new FindOptions<TDocument, TProjected>
-            {
-                Projection = projectionDefinition,
-                MaxAwaitTime = _queryOptions.MaxAwaitTime,
-                MaxTime = _queryOptions.MaxTime
-            });
+        {
+            Projection = projectionDefinition,
+            MaxAwaitTime = _queryOptions.MaxAwaitTime,
+            MaxTime = _queryOptions.MaxTime
+        });
         return result.ToEnumerable();
     }
 
@@ -418,7 +419,7 @@ public abstract class BaseRepository<TDocument> : IBaseRepository<TDocument>
     public async Task<TDocument> FindByIdAsync(string id)
     {
         var filter = Builders<TDocument>.Filter.Eq(doc => doc.Id, id);
-        return await _collection.Find(filter,new FindOptions
+        return await _collection.Find(filter, new FindOptions
         {
             MaxAwaitTime = _queryOptions.MaxAwaitTime,
             MaxTime = _queryOptions.MaxTime
@@ -428,7 +429,7 @@ public abstract class BaseRepository<TDocument> : IBaseRepository<TDocument>
     public async Task<TDocument> FindByIdAsync(string id, ReadOption readOption)
     {
         var filter = Builders<TDocument>.Filter.Eq(doc => doc.Id, id);
-        return await _collection.WithReadPreference(DecideReadPreference(readOption)).Find(filter,new FindOptions
+        return await _collection.WithReadPreference(DecideReadPreference(readOption)).Find(filter, new FindOptions
             {
                 MaxAwaitTime = _queryOptions.MaxAwaitTime,
                 MaxTime = _queryOptions.MaxTime
@@ -562,7 +563,7 @@ public abstract class BaseRepository<TDocument> : IBaseRepository<TDocument>
         ReadOption readOption)
     {
         return await _collection.WithReadPreference(DecideReadPreference(readOption))
-            .CountDocumentsAsync(filterExpression,new CountOptions
+            .CountDocumentsAsync(filterExpression, new CountOptions
             {
                 MaxTime = _queryOptions.MaxTime
             });
@@ -827,7 +828,7 @@ public abstract class BaseRepository<TDocument> : IBaseRepository<TDocument>
 
     public async Task<IEnumerable<TDocument>> FilterByTextAsync(List<string> searchTerms, string defaultTextIndexLanguage = "en")
     {
-        var searchText = string.Join(' ', (searchTerms ?? new List<string>())).Trim();
+        var searchText = string.Join(' ', searchTerms ?? new List<string>()).Trim();
 
         var filter = Builders<TDocument>.Filter.Text(searchText, new TextSearchOptions
         {
