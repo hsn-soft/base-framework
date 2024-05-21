@@ -44,7 +44,7 @@ public sealed class RabbitMqPersistentConnection : IRabbitMqPersistentConnection
 
     public bool TryConnect()
     {
-        _logger.LogInformation("RabbitMQ | Client is trying to connect");
+        _logger.LogDebug("RabbitMQ | Client is trying to connect");
 
         lock (_syncRoot)
         {
@@ -68,7 +68,7 @@ public sealed class RabbitMqPersistentConnection : IRabbitMqPersistentConnection
                 _connection!.ConnectionBlocked += OnConnectionBlocked;
                 _connection!.ConnectionUnblocked += OnConnectionUnblocked;
 
-                _logger.LogInformation("RabbitMQ | Client acquired a persistent connection to '{HostName}'", _connection?.Endpoint?.HostName);
+                _logger.LogDebug("RabbitMQ | Client acquired a persistent connection to '{HostName}'", _connection?.Endpoint?.HostName);
 
                 return true;
             }
@@ -106,12 +106,12 @@ public sealed class RabbitMqPersistentConnection : IRabbitMqPersistentConnection
                 if (_connection.IsOpen)
                 {
                     _connection.Close();
-                    _logger.LogInformation("RabbitMQ | Client connection is closed");
+                    _logger.LogDebug("RabbitMQ | Client connection is closed");
                 }
             }
 
             _connection?.Dispose();
-            _logger.LogInformation("RabbitMQ | Client is terminated");
+            _logger.LogDebug("RabbitMQ | Client is terminated");
         }
         catch (IOException ex)
         {
@@ -149,7 +149,7 @@ public sealed class RabbitMqPersistentConnection : IRabbitMqPersistentConnection
     {
         if (_disposed)
         {
-            _logger.LogInformation("RabbitMQ | Client is terminating. No action will be taken.");
+            _logger.LogDebug("RabbitMQ | Client is terminating. No action will be taken.");
             return;
         }
 

@@ -180,7 +180,7 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
             }
         }
 
-        _logger.LogInformation("RabbitMQ | Subscribing to event {EventName} with {EventHandler}", eventName, eventHandlerType.Name);
+        _logger.LogDebug("RabbitMQ | Subscribing to event {EventName} with {EventHandler}", eventName, eventHandlerType.Name);
 
         _subsManager.AddSubscription(eventType, eventHandlerType);
 
@@ -199,18 +199,18 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
         _disposed = true;
         _logger.LogInformation("RabbitMQ | Terminating...");
 
-        _logger.LogInformation("RabbitMQ | Consumers terminating...");
+        _logger.LogDebug("RabbitMQ | Consumers terminating...");
         Task.WaitAll(_consumers.Select(consumer => Task.Run(consumer.Dispose)).ToArray());
-        _logger.LogInformation("RabbitMQ | Consumers terminated");
+        _logger.LogDebug("RabbitMQ | Consumers terminated");
 
-        _logger.LogInformation("RabbitMQ | Publisher terminating...");
+        _logger.LogDebug("RabbitMQ | Publisher terminating...");
         while (_publishing)
         {
-            _logger.LogInformation("RabbitMQ | Publisher wait processing...");
+            _logger.LogDebug("RabbitMQ | Publisher wait processing...");
             Thread.Sleep(1000);
         }
 
-        _logger.LogInformation("RabbitMQ | Publisher terminated");
+        _logger.LogDebug("RabbitMQ | Publisher terminated");
 
         _subsManager.Clear();
         _consumers.Clear();

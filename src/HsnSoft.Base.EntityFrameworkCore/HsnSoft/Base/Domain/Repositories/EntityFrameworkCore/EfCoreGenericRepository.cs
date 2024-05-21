@@ -4,6 +4,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
+using HsnSoft.Base.Context.QueryProviders;
 using HsnSoft.Base.Domain.Entities;
 using HsnSoft.Base.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -40,9 +41,14 @@ public class EfCoreGenericRepository<TDbContext, TEntity, TKey> : GenericReposit
         return IncludeDetails(GetQueryable(), propertySelectors);
     }
 
-    public IQueryable<TEntity> GetQueryable()
+    public IQueryable<TEntity> GetQueryable(bool isThreadSafe = false)
     {
-        return GetDbSet().AsQueryable();
+        var queryable = GetDbSet().AsQueryable();
+
+        if (!isThreadSafe && queryable is ThreadSafeAsyncQueryable<TEntity> entities)
+            return (IQueryable<TEntity>)entities.Set;
+
+        return queryable;
     }
 
     public override async Task<TEntity> FindAsync(TKey id, bool includeDetails = true, CancellationToken cancellationToken = default)

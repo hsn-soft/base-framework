@@ -11,8 +11,8 @@ public sealed class DefaultPersistentLogger : DefaultBaseLogger, IPersistentLogg
     {
     }
 
-    public void PersistentInfoLog<T>(T t) where T : IPersistentLog => Write(LogLevel.Trace, t);
-    public void PersistentErrorLog<T>(T t) where T : IPersistentLog => Write(LogLevel.Critical, t);
+    public void PersistentInfoLog<T>(T t) where T : IPersistentLog => Write(LogLevel.Information, t);
+    public void PersistentErrorLog<T>(T t) where T : IPersistentLog => Write(LogLevel.Error, t);
 
     private void Write<T>(LogLevel logLevel, T log) => Logger.Log(logLevel, "{@Log}", JsonConvert.SerializeObject(log));
 }

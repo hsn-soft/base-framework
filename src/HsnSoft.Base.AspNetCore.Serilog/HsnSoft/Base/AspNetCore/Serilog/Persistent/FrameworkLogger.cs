@@ -1,10 +1,15 @@
 using HsnSoft.Base.Logging;
+using Microsoft.Extensions.Configuration;
 using Serilog.Events;
 
 namespace HsnSoft.Base.AspNetCore.Serilog.Persistent;
 
 public sealed class FrameworkLogger : BaseLogger, IPersistentLogger
 {
+    public FrameworkLogger(IConfiguration configuration) : base(configuration)
+    {
+    }
+
     public void PersistentInfoLog<T>(T t) where T : IPersistentLog => Write(LogEventLevel.Verbose, t);
     public void PersistentErrorLog<T>(T t) where T : IPersistentLog => Write(LogEventLevel.Fatal, t);
 
