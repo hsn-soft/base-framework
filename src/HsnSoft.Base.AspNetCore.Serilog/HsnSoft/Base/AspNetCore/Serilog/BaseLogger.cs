@@ -1,5 +1,6 @@
 using System;
 using HsnSoft.Base.Logging;
+using Microsoft.Extensions.Configuration;
 using Serilog;
 using Serilog.Events;
 
@@ -9,11 +10,11 @@ public class BaseLogger : IBaseLogger
 {
     protected readonly ILogger Logger;
 
-    public BaseLogger()
+    public BaseLogger(IConfiguration configuration)
     {
         try
         {
-            Logger = SerilogConfigurationHelper.ConfigureFilePersistentLogger();
+            Logger = SerilogConfigurationHelper.ConfigureFilePersistentLogger(configuration);
         }
         catch (Exception exception)
         {

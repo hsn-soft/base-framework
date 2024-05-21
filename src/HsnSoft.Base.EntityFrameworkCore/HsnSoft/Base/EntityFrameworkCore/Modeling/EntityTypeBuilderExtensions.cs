@@ -256,7 +256,7 @@ public static class EntityTypeBuilderExtensions
         if (b.Metadata.ClrType.IsAssignableTo<IMultiTenant>())
         {
             b.Property(nameof(IMultiTenant.TenantId))
-                .IsRequired(false)
+                .IsRequired()
                 .HasColumnName(nameof(IMultiTenant.TenantId));
         }
     }

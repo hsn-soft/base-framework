@@ -11,9 +11,9 @@ public interface IEfCoreGenericRepository<TEntity, in TKey> : IGenericRepository
 {
     DbSet<TEntity> GetDbSet();
 
-    IQueryable<TEntity> WithDetails(); //TODO: CancellationToken
+    IQueryable<TEntity> WithDetails();
 
-    IQueryable<TEntity> WithDetails(params Expression<Func<TEntity, object>>[] propertySelectors); //TODO: CancellationToken
+    IQueryable<TEntity> WithDetails(params Expression<Func<TEntity, object>>[] propertySelectors);
 
-    IQueryable<TEntity> GetQueryable(); //TODO: CancellationToken
+    IQueryable<TEntity> GetQueryable(bool isThreadSafe = false);
 }
