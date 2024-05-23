@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <Import Project="..\..\configureawait.props" />
+    <Import Project="..\..\common.props" />
+
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <AssemblyName>HsnSoft.Base.PuppeTeer</AssemblyName>
+        <PackageId>HsnSoft.Base.PuppeTeer</PackageId>
+        <AssetTargetFallback>$(AssetTargetFallback);portable-net45+win8+wp8+wpa81;</AssetTargetFallback>
+        <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+        <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+        <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+        <RootNamespace />
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="PuppeteerSharp" Version="17.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\HsnSoft.Base.Core\HsnSoft.Base.Core.csproj" />
+    </ItemGroup>
+
+</Project>
+
+
+
