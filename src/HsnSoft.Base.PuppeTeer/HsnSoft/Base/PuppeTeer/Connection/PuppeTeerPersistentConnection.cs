@@ -27,7 +27,7 @@ public sealed class PuppeTeerPersistentConnection : IPuppeTeerPersistentConnecti
         return await Puppeteer.LaunchAsync(new LaunchOptions
         {
             //ExecutablePath = _puppeTeerExecutablePath,
-            Headless = false,
+            Headless = true,
             LogProcess = true,
             Args = new[]
             {
