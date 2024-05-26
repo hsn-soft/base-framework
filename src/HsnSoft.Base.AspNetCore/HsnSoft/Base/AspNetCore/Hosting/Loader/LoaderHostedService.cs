@@ -5,7 +5,7 @@ using HsnSoft.Base.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-namespace HsnSoft.Base.AspNetCore.Hosting;
+namespace HsnSoft.Base.AspNetCore.Hosting.Loader;
 
 public class LoaderHostedService : IHostedService
 {
