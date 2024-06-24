@@ -12,17 +12,17 @@ public static class ClientExtensions
 
     [CanBeNull]
     public static string GetChannel(this HttpContext context)
-        => context.Items.TryGetValue(Channel, out var channel) ? channel as string : null;
+        => context.Request.Headers.TryGetValue(Channel, out var channel) ? channel.ToString() : null;
 
     [CanBeNull]
     public static string GetClientRequestLat(this HttpContext context)
-        => context.Items.TryGetValue(ClientRequestLat, out var clientRequestLat) ? clientRequestLat as string : null;
+        => context.Request.Headers.TryGetValue(ClientRequestLat, out var clientRequestLat) ? clientRequestLat.ToString() : null;
 
     [CanBeNull]
     public static string GetClientRequestLong(this HttpContext context)
-        => context.Items.TryGetValue(ClientRequestLong, out var clientRequestLong) ? clientRequestLong as string : null;
+        => context.Request.Headers.TryGetValue(ClientRequestLong, out var clientRequestLong) ? clientRequestLong.ToString() : null;
 
     [CanBeNull]
     public static string GetClientVersion(this HttpContext context)
-        => context.Items.TryGetValue(ClientVersion, out var clientVersion) ? clientVersion as string : null;
+        => context.Request.Headers.TryGetValue(ClientVersion, out var clientVersion) ? clientVersion.ToString() : null;
 }

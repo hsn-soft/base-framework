@@ -16,15 +16,15 @@ public static class CorrelationExtensions
             if (!ctx.Request.Headers.TryGetValue(CorrelationIdKey, out var correlationId))
             {
                 correlationId = Guid.NewGuid().ToString("N");
+                ctx.Request.Headers[CorrelationIdKey] = correlationId.ToString();
             }
 
-            ctx.Items[CorrelationIdKey] = correlationId.ToString();
             await next();
         });
 
     [CanBeNull]
     public static string GetCorrelationId(this HttpContext context)
-        => context.Items.TryGetValue(CorrelationIdKey, out var correlationId) ? correlationId as string : null;
+        => context.Request.Headers.TryGetValue(CorrelationIdKey, out var correlationId) ? correlationId.ToString() : null;
 
     public static void AddCorrelationId(this HttpRequestHeaders headers, string correlationId)
         => headers.TryAddWithoutValidation(CorrelationIdKey, correlationId);
