@@ -28,6 +28,9 @@
         <PackageReference Include="Serilog.Sinks.Async" Version="1.5.0" />
         <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
         <PackageReference Include="Serilog.Sinks.Console" Version="5.0.1" />
+        <PackageReference Include="Serilog.Sinks.Graylog" Version="3.1.1" />
+        <PackageReference Include="Destructurama.JsonNet" Version="2.0.1" />
+        <PackageReference Include="Serilog.Formatting.Compact" Version="2.0.0" />
     </ItemGroup>
 
 </Project>
