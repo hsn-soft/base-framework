@@ -56,17 +56,35 @@ public static class SerilogConfigurationHelper
 
     internal static ILogger ConfigureFilePersistentLogger(IConfiguration configuration)
     {
+        LogEventLevel loglevel;
+        try
+        {
+            loglevel = (LogEventLevel)Enum.Parse(typeof(LogEventLevel), configuration["FrameworkLogger:LogLevel"] ?? throw new InvalidOperationException());
+        }
+        catch (Exception)
+        {
+            loglevel = LogEventLevel.Verbose;
+        }
+
+        LogEventLevel dependencyAssemblyLogLevel;
+        if (loglevel is LogEventLevel.Verbose)
+        {
+            dependencyAssemblyLogLevel = LogEventLevel.Debug;
+        }
+        else if (loglevel is LogEventLevel.Debug)
+        {
+            dependencyAssemblyLogLevel = LogEventLevel.Information;
+        }
+        else
+        {
+            dependencyAssemblyLogLevel = LogEventLevel.Warning;
+        }
+
         var loggerConfiguration = new LoggerConfiguration()
             .MinimumLevel.Verbose()
-#if DEBUG
-            .MinimumLevel.Override("System", LogEventLevel.Information)
-            .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Information)
-            .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Information)
-#else
-            .MinimumLevel.Override("System", LogEventLevel.Warning)
-            .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
-            .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning)
-#endif
+            .MinimumLevel.Override("System", dependencyAssemblyLogLevel)
+            .MinimumLevel.Override("Microsoft.AspNetCore", dependencyAssemblyLogLevel)
+            .MinimumLevel.Override("Microsoft.EntityFrameworkCore", dependencyAssemblyLogLevel)
             .Destructure.JsonNetTypes()
             .Enrich.FromLogContext()
             .Enrich.WithProperty("Assembly", AppDomain.CurrentDomain.FriendlyName);
@@ -106,7 +124,6 @@ public static class SerilogConfigurationHelper
 
         try
         {
-            var loglevel = (LogEventLevel)Enum.Parse(typeof(LogEventLevel), configuration["FrameworkLogger:LogLevel"] ?? throw new InvalidOperationException());
             loggerConfiguration = loggerConfiguration
                 .WriteTo.Conditional(logEvent => (byte)logEvent.Level >= (byte)loglevel, sinkConfiguration =>
                 {
