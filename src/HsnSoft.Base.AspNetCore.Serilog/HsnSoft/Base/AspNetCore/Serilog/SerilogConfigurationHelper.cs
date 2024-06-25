@@ -14,44 +14,40 @@ public static class SerilogConfigurationHelper
 {
     public static ILogger ConfigureConsoleLogger(IConfiguration configuration)
     {
-        var loggerConfiguration = new LoggerConfiguration()
-            .MinimumLevel.Verbose()
-#if DEBUG
-            .MinimumLevel.Override("System", LogEventLevel.Information)
-            .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Information)
-            .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Information)
-#else
-            .MinimumLevel.Override("System", LogEventLevel.Warning)
-            .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
-            .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning)
-#endif
-            .Enrich.FromLogContext()
-            .Enrich.WithProperty("Assembly", AppDomain.CurrentDomain.FriendlyName);
-
+        LogEventLevel loglevel;
         try
         {
-            var loglevel = (LogEventLevel)Enum.Parse(typeof(LogEventLevel), configuration["FrameworkLogger:LogLevel"] ?? throw new InvalidOperationException());
-            loggerConfiguration = loggerConfiguration
-                .WriteTo.Conditional(logEvent => (byte)logEvent.Level >= (byte)loglevel, sinkConfiguration =>
-                {
-                    sinkConfiguration.Console(
-                        outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}{NewLine}",
-                        theme: AnsiConsoleTheme.Sixteen
-                    );
-                });
+            loglevel = (LogEventLevel)Enum.Parse(typeof(LogEventLevel), configuration["FrameworkLogger:LogLevel"] ?? throw new InvalidOperationException());
         }
         catch (Exception)
         {
-            // no config
-            loggerConfiguration = loggerConfiguration
-                .WriteTo.Async(c => c.Console // All logs , Verbose,Debug,Information, Warning, Error, Fatal
-                (
-                    outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}{NewLine}",
-                    theme: AnsiConsoleTheme.Sixteen
-                ));
+            loglevel = LogEventLevel.Verbose;
         }
 
-        return loggerConfiguration.CreateLogger();
+        var dependencyAssemblyLogLevel = loglevel switch
+        {
+            LogEventLevel.Verbose => LogEventLevel.Debug,
+            LogEventLevel.Debug => LogEventLevel.Information,
+            _ => LogEventLevel.Warning
+        };
+
+        var loggerConfiguration = new LoggerConfiguration()
+            .MinimumLevel.Verbose()
+            .MinimumLevel.Override("System", dependencyAssemblyLogLevel)
+            .MinimumLevel.Override("Microsoft.AspNetCore", dependencyAssemblyLogLevel)
+            .MinimumLevel.Override("Microsoft.EntityFrameworkCore", dependencyAssemblyLogLevel)
+            .Destructure.JsonNetTypes()
+            .Enrich.FromLogContext()
+            .Enrich.WithProperty("Assembly", AppDomain.CurrentDomain.FriendlyName);
+
+
+        return loggerConfiguration.WriteTo.Conditional(logEvent => (byte)logEvent.Level >= (byte)loglevel, sinkConfiguration =>
+        {
+            sinkConfiguration.Console(
+                outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}{NewLine}",
+                theme: AnsiConsoleTheme.Sixteen
+            );
+        }).CreateLogger();
     }
 
     internal static ILogger ConfigureFilePersistentLogger(IConfiguration configuration)
@@ -66,19 +62,12 @@ public static class SerilogConfigurationHelper
             loglevel = LogEventLevel.Verbose;
         }
 
-        LogEventLevel dependencyAssemblyLogLevel;
-        if (loglevel is LogEventLevel.Verbose)
+        var dependencyAssemblyLogLevel = loglevel switch
         {
-            dependencyAssemblyLogLevel = LogEventLevel.Debug;
-        }
-        else if (loglevel is LogEventLevel.Debug)
-        {
-            dependencyAssemblyLogLevel = LogEventLevel.Information;
-        }
-        else
-        {
-            dependencyAssemblyLogLevel = LogEventLevel.Warning;
-        }
+            LogEventLevel.Verbose => LogEventLevel.Debug,
+            LogEventLevel.Debug => LogEventLevel.Information,
+            _ => LogEventLevel.Warning
+        };
 
         var loggerConfiguration = new LoggerConfiguration()
             .MinimumLevel.Verbose()
@@ -122,28 +111,12 @@ public static class SerilogConfigurationHelper
                 );
         }
 
-        try
+        return loggerConfiguration.WriteTo.Conditional(logEvent => (byte)logEvent.Level >= (byte)loglevel, sinkConfiguration =>
         {
-            loggerConfiguration = loggerConfiguration
-                .WriteTo.Conditional(logEvent => (byte)logEvent.Level >= (byte)loglevel, sinkConfiguration =>
-                {
-                    sinkConfiguration.Console(
-                        outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}{NewLine}",
-                        theme: AnsiConsoleTheme.Sixteen
-                    );
-                });
-        }
-        catch (Exception)
-        {
-            // no config
-            loggerConfiguration = loggerConfiguration
-                .WriteTo.Async(c => c.Console // All logs , Verbose,Debug,Information, Warning, Error, Fatal
-                (
-                    outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}{NewLine}",
-                    theme: AnsiConsoleTheme.Sixteen
-                ));
-        }
-
-        return loggerConfiguration.CreateLogger();
+            sinkConfiguration.Console(
+                outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}{NewLine}",
+                theme: AnsiConsoleTheme.Sixteen
+            );
+        }).CreateLogger();
     }
 }
