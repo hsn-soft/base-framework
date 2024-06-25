@@ -73,22 +73,15 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
 
         _publishing = true;
 
-        var policy = Policy.Handle<BrokerUnreachableException>()
-            .Or<SocketException>()
-            .WaitAndRetry(_publishRetryCount, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), (ex, time) =>
-            {
-                _publishing = false;
-                _logger.LogError("RabbitMQ | Could not publish event message : {Event} after {Timeout}s ({ExceptionMessage})", eventMessage, $"{time.TotalSeconds:n1}", ex.Message);
-            });
-
         var eventName = eventMessage.GetType().Name;
         eventName = TrimEventName(eventName);
 
+        var produceTime = DateTime.UtcNow;
         var @event = new MessageEnvelope<TEventMessage>
         {
             ParentMessageId = parentMessage?.MessageId,
             MessageId = Guid.NewGuid(),
-            MessageTime = DateTime.UtcNow,
+            MessageTime = produceTime,
             Message = eventMessage,
             Producer = _rabbitMqEventBusConfig.ConsumerClientInfo,
             CorrelationId = parentMessage?.CorrelationId ?? _traceAccessor?.GetCorrelationId(),
@@ -104,6 +97,33 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
         }
 
         _logger.LogDebug("RabbitMQ | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] STARTED", _rabbitMqEventBusConfig.ConsumerClientInfo, eventName, @event.MessageId.ToString());
+
+        var policy = Policy.Handle<BrokerUnreachableException>()
+            .Or<SocketException>()
+            .WaitAndRetry(_publishRetryCount, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), (ex, time) =>
+            {
+                _publishing = false;
+                _logger.LogError("RabbitMQ | Could not publish event message : {Event} after {Timeout}s ({ExceptionMessage})", eventMessage, $"{time.TotalSeconds:n1}", ex.Message);
+
+                // Persistent Log
+                _logger.EventBusErrorLog(new ProduceMessageLogModel(
+                    LogId: Guid.NewGuid().ToString(),
+                    CorrelationId: @event.CorrelationId,
+                    Facility: EventBusLogFacility.PRODUCE_EVENT_ERROR.ToString(),
+                    ProduceDateTimeUtc: produceTime,
+                    MessageLog: new MessageLogDetail(
+                        EventType: eventName,
+                        HopLevel: @event.HopLevel,
+                        ParentMessageId: @event.ParentMessageId,
+                        MessageId: @event.MessageId,
+                        MessageTime: @event.MessageTime,
+                        Message: @event.Message,
+                        UserInfo: new EventUserDetail(
+                            UserId: @event.UserId,
+                            Role: @event.UserRoleUniqueName
+                        )),
+                    ProduceDetails: $"Message publish error: {ex.Message}"));
+            });
 
         var body = JsonSerializer.SerializeToUtf8Bytes(@event, @event.GetType(), new JsonSerializerOptions { WriteIndented = true });
 
