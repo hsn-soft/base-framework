@@ -235,37 +235,20 @@ public sealed class RabbitMqConsumer : IDisposable
                     continue;
                 }
 
+                var watch = new Stopwatch();
+                watch.Start();
                 var handleStartTime = DateTimeOffset.UtcNow;
                 try
                 {
-                    _logger.EventBusInfoLog(new ConsumeMessageLogModel(
-                        LogId: Guid.NewGuid().ToString(),
-                        CorrelationId: ((dynamic)@event)?.CorrelationId,
-                        Facility: EventBusLogFacility.CONSUME_EVENT_HANDLING_STARTED.ToString(),
-                        ConsumeDateTimeUtc: handleStartTime,
-                        MessageLog: new MessageLogDetail(
-                            EventType: eventName,
-                            HopLevel: ((dynamic)@event)?.HopLevel,
-                            ParentMessageId: ((dynamic)@event)?.ParentMessageId,
-                            MessageId: ((dynamic)@event)?.MessageId,
-                            MessageTime: ((dynamic)@event)?.MessageTime,
-                            Message: ((dynamic)@event)?.Message,
-                            UserInfo: new EventUserDetail(
-                                UserId: ((dynamic)@event)?.UserId,
-                                Role: ((dynamic)@event)?.UserRoleUniqueName
-                            )),
-                        ConsumeDetails: "Message handling started",
-                        ConsumeHandleWorkingTime: "-"));
-
                     var eventHandlerType = typeof(IIntegrationEventHandler<>).MakeGenericType(eventType);
                     await Task.Yield();
                     await ((Task)eventHandlerType.GetMethod(nameof(IIntegrationEventHandler<IIntegrationEventMessage>.HandleAsync))?.Invoke(handler, new[] { @event }))!;
 
-                    var handleEndTime = DateTimeOffset.UtcNow;
+                    watch.Stop();
                     _logger.EventBusInfoLog(new ConsumeMessageLogModel(
                         LogId: Guid.NewGuid().ToString(),
                         CorrelationId: ((dynamic)@event)?.CorrelationId,
-                        Facility: EventBusLogFacility.CONSUME_EVENT_HANDLING_FINISHED.ToString(),
+                        Facility: EventBusLogFacility.CONSUME_EVENT_SUCCESS.ToString(),
                         ConsumeDateTimeUtc: handleStartTime,
                         MessageLog: new MessageLogDetail(
                             EventType: eventName,
@@ -279,15 +262,15 @@ public sealed class RabbitMqConsumer : IDisposable
                                 Role: ((dynamic)@event)?.UserRoleUniqueName
                             )),
                         ConsumeDetails: "Message handling successfully completed",
-                        ConsumeHandleWorkingTime: $"{(handleEndTime - handleStartTime).TotalMilliseconds:0.####}ms"));
+                        ConsumeHandleWorkingTime: $"{watch.ElapsedMilliseconds:0.####}ms"));
                 }
                 catch (Exception ex)
                 {
-                    var handleEndTime = DateTimeOffset.UtcNow;
+                    watch.Stop();
                     _logger.EventBusErrorLog(new ConsumeMessageLogModel(
                         LogId: Guid.NewGuid().ToString(),
                         CorrelationId: ((dynamic)@event)?.CorrelationId,
-                        Facility: EventBusLogFacility.CONSUME_EVENT_HANDLING_ERROR.ToString(),
+                        Facility: EventBusLogFacility.CONSUME_EVENT_ERROR.ToString(),
                         ConsumeDateTimeUtc: handleStartTime,
                         MessageLog: new MessageLogDetail(
                             EventType: eventName,
@@ -301,7 +284,7 @@ public sealed class RabbitMqConsumer : IDisposable
                                 Role: ((dynamic)@event)?.UserRoleUniqueName
                             )),
                         ConsumeDetails: $"Handle Error: {ex.Message}",
-                        ConsumeHandleWorkingTime: $"{(handleEndTime - handleStartTime).TotalMilliseconds:0.####}ms"));
+                        ConsumeHandleWorkingTime: $"{watch.ElapsedMilliseconds:0.####}ms"));
 
                     throw ex;
                 }
