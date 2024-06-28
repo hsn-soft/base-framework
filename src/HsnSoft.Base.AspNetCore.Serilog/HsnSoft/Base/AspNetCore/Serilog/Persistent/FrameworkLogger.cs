@@ -14,5 +14,6 @@ public sealed class FrameworkLogger : BaseLogger, IPersistentLogger
     public void PersistentInfoLog<T>(T t) where T : IPersistentLog => Write(LogEventLevel.Verbose, t);
     public void PersistentErrorLog<T>(T t) where T : IPersistentLog => Write(LogEventLevel.Fatal, t);
 
-    private void Write<T>(LogEventLevel logLevel, T log) => Logger.Write(logLevel, JsonConvert.SerializeObject(log));
+    private void Write<T>(LogEventLevel logLevel, T log)
+        => Logger.ForContext("LogType", "FrameworkLog").Write(logLevel, JsonConvert.SerializeObject(log));
 }

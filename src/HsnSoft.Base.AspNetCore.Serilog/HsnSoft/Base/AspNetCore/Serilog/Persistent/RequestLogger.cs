@@ -14,5 +14,6 @@ public sealed class RequestLogger : BaseLogger, IRequestResponseLogger
     public void RequestResponseInfoLog<T>(T t) where T : IRequestResponseLog => Write(LogEventLevel.Verbose, t);
     public void RequestResponseErrorLog<T>(T t) where T : IRequestResponseLog => Write(LogEventLevel.Fatal, t);
 
-    private void Write<T>(LogEventLevel logLevel, T log) => Logger.Write(logLevel, JsonConvert.SerializeObject(log));
+    private void Write<T>(LogEventLevel logLevel, T log)
+        => Logger.ForContext("LogType", "RequestResponseLog").Write(logLevel, JsonConvert.SerializeObject(log));
 }

@@ -15,5 +15,6 @@ public sealed class EventBusLogger : BaseLogger, IEventBusLogger
 
     public void EventBusErrorLog<T>(T t) where T : IEventBusLog => Write(LogEventLevel.Fatal, t);
 
-    private void Write<T>(LogEventLevel logLevel, T log) => Logger.Write(logLevel, JsonConvert.SerializeObject(log));
+    private void Write<T>(LogEventLevel logLevel, T log)
+        => Logger.ForContext("LogType", "EventBusLog").Write(logLevel, JsonConvert.SerializeObject(log));
 }
