@@ -10,6 +10,7 @@ public interface IEventBus
     Task PublishAsync<TEventMessage>(
         [NotNull] TEventMessage eventMessage,
         [CanBeNull] ParentMessageEnvelope parentMessage = null,
+        [CanBeNull] string correlationId = null,
         bool isExchangeEvent = true,
         bool isReQueuePublish = false
     ) where TEventMessage : IIntegrationEventMessage;

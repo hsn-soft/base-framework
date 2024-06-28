@@ -47,7 +47,7 @@ public class EventBusAzure : IEventBus, IDisposable
         RegisterSubscriptionClientMessageHandlerAsync().GetAwaiter().GetResult();
     }
 
-    public async Task PublishAsync<TEventMessage>(TEventMessage eventMessage, ParentMessageEnvelope parentMessage = null, bool isExchangeEvent = true, bool isReQueuePublish = false) where TEventMessage : IIntegrationEventMessage
+    public async Task PublishAsync<TEventMessage>(TEventMessage eventMessage, ParentMessageEnvelope parentMessage = null, string correlationId = null, bool isExchangeEvent = true, bool isReQueuePublish = false) where TEventMessage : IIntegrationEventMessage
     {
         var eventName = eventMessage.GetType().Name;
         eventName = TrimEventName(eventName);
@@ -59,7 +59,7 @@ public class EventBusAzure : IEventBus, IDisposable
             MessageTime = DateTime.UtcNow,
             Message = eventMessage,
             Producer = _eventBusConfig.ConsumerClientInfo,
-            CorrelationId = parentMessage?.CorrelationId ?? _traceAccessor?.GetCorrelationId(),
+            CorrelationId = (correlationId ?? parentMessage?.CorrelationId) ?? _traceAccessor?.GetCorrelationId(),
             Channel = parentMessage?.Channel ?? _traceAccessor?.GetChannel(),
             UserId = parentMessage?.UserId,
             UserRoleUniqueName = parentMessage?.UserRoleUniqueName,
