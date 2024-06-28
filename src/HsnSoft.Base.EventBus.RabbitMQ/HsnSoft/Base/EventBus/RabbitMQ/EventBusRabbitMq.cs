@@ -64,7 +64,7 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
         _consumers = new List<RabbitMqConsumer>();
     }
 
-    public async Task PublishAsync<TEventMessage>(TEventMessage eventMessage, ParentMessageEnvelope parentMessage = null, bool isExchangeEvent = true, bool isReQueuePublish = false) where TEventMessage : IIntegrationEventMessage
+    public async Task PublishAsync<TEventMessage>(TEventMessage eventMessage, ParentMessageEnvelope parentMessage = null, string correlationId = null, bool isExchangeEvent = true, bool isReQueuePublish = false) where TEventMessage : IIntegrationEventMessage
     {
         if (!_persistentConnection.IsConnected)
         {
@@ -84,7 +84,7 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
             MessageTime = produceTime,
             Message = eventMessage,
             Producer = _rabbitMqEventBusConfig.ConsumerClientInfo,
-            CorrelationId = parentMessage?.CorrelationId ?? _traceAccessor?.GetCorrelationId(),
+            CorrelationId = (correlationId ?? parentMessage?.CorrelationId) ?? _traceAccessor?.GetCorrelationId(),
             Channel = parentMessage?.Channel ?? _traceAccessor?.GetChannel(),
             UserId = parentMessage?.UserId ?? _currentUser?.Id?.ToString(),
             UserRoleUniqueName = parentMessage?.UserRoleUniqueName ?? (_currentUser?.Roles is { Length: > 0 } ? _currentUser?.Roles.JoinAsString(",") : null),
