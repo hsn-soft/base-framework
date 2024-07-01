@@ -31,10 +31,12 @@ public sealed class PuppeTeerPersistentConnection : IPuppeTeerPersistentConnecti
             LogProcess = true,
             Args = new[]
             {
+                "--no-sandbox",
                 "--disable-gpu",
                 "--disable-dev-shm-usage",
                 "--disable-setuid-sandbox",
-                "--no-sandbox"
+                "--disable-web-security",
+                "--disable-features=IsolateOrigins,site-per-process"
             }
         });
     }
