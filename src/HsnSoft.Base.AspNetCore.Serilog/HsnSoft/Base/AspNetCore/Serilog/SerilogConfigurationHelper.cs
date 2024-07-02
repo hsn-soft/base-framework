@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Destructurama;
 using Microsoft.Extensions.Configuration;
 using Serilog;
@@ -38,6 +39,7 @@ public static class SerilogConfigurationHelper
             .MinimumLevel.Override("Microsoft.EntityFrameworkCore", dependencyAssemblyLogLevel)
             .Destructure.JsonNetTypes()
             .Enrich.FromLogContext()
+            .Enrich.WithProperty("Solution", AppDomain.CurrentDomain.FriendlyName.Split('.').First())
             .Enrich.WithProperty("Assembly", AppDomain.CurrentDomain.FriendlyName);
 
 
@@ -76,6 +78,7 @@ public static class SerilogConfigurationHelper
             .MinimumLevel.Override("Microsoft.EntityFrameworkCore", dependencyAssemblyLogLevel)
             .Destructure.JsonNetTypes()
             .Enrich.FromLogContext()
+            .Enrich.WithProperty("Solution", AppDomain.CurrentDomain.FriendlyName.Split('.').First())
             .Enrich.WithProperty("Assembly", AppDomain.CurrentDomain.FriendlyName);
 
         var isGrayLogActive = false;
