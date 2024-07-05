@@ -9,11 +9,11 @@ namespace HsnSoft.Base.AspNetCore.Hosting.Loader;
 
 public class LoaderHostedService : IHostedService
 {
-    private readonly IBaseLogger _logger;
+    private readonly IPersistentLogger _logger;
 
     private readonly IServiceScopeFactory _scopeFactory;
 
-    public LoaderHostedService(IServiceScopeFactory scopeFactory, IBaseLogger logger)
+    public LoaderHostedService(IServiceScopeFactory scopeFactory, IPersistentLogger logger)
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
