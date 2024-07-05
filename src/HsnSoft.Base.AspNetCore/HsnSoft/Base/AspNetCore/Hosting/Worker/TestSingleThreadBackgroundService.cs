@@ -9,7 +9,7 @@ public sealed class TestSingleThreadBackgroundService : BaseSingleThreadBackgrou
 {
     private readonly IServiceScopeFactory _serviceScopeFactory;
 
-    public TestSingleThreadBackgroundService(IBaseLogger logger,
+    public TestSingleThreadBackgroundService(IPersistentLogger logger,
         IServiceScopeFactory serviceScopeFactory
     ) : base(logger, waitPeriodSeconds: 30, waitContinuousThread: true)
     {
