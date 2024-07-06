@@ -13,15 +13,26 @@ public class LoaderHostedService : IHostedService
 
     private readonly IServiceScopeFactory _scopeFactory;
 
+    private readonly Guid _instanceId;
+
     public LoaderHostedService(IServiceScopeFactory scopeFactory, IPersistentLogger logger)
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
+        _instanceId = Guid.NewGuid();
     }
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
         _logger.LogInformation("LoaderHostedService | Started");
+
+        _logger.PersistentInfoLog(LogHelper.Generate(
+            message: "LoaderHostedService | Started",
+            reference: null,
+            facility: "APPLICATION_LOADER_STARTED",
+            correlationId: _instanceId.ToString(),
+            exception: null
+        ));
 
         while (!cancellationToken.IsCancellationRequested)
         {
@@ -34,6 +45,14 @@ public class LoaderHostedService : IHostedService
             catch (OperationCanceledException) { }
 
             _logger.LogError($"LoaderHostedService | Failed - {DateTime.UtcNow:yyyyMMdd hh:mm:ss}");
+
+            _logger.PersistentErrorLog(LogHelper.Generate(
+                message: "LoaderHostedService | Failed",
+                reference: null,
+                facility: "APPLICATION_LOADER_FAILED",
+                correlationId: _instanceId.ToString(),
+                exception: null
+            ));
             break;
         }
     }
@@ -41,6 +60,15 @@ public class LoaderHostedService : IHostedService
     public Task StopAsync(CancellationToken cancellationToken)
     {
         _logger.LogInformation("LoaderHostedService | Stopped");
+
+        _logger.PersistentInfoLog(LogHelper.Generate(
+            message: "LoaderHostedService | Stopped",
+            reference: null,
+            facility: "APPLICATION_LOADER_STOPPED",
+            correlationId: _instanceId.ToString(),
+            exception: null
+        ));
+
         return Task.CompletedTask;
     }
 

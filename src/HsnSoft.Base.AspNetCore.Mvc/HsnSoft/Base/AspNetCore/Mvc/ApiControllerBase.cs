@@ -19,9 +19,9 @@ public abstract class ApiControllerBase : ControllerBase
     protected IBaseLogger Logger => ServiceProvider.GetRequiredService<IBaseLogger>();
 
     protected IAuthorizationService AuthorizationService => ServiceProvider.GetRequiredService<IAuthorizationService>();
-    protected ICurrentUser CurrentUser => this.ServiceProvider.GetRequiredService<ICurrentUser>();
+    protected ICurrentUser CurrentUser => ServiceProvider.GetRequiredService<ICurrentUser>();
 
-    protected ICurrentTenant CurrentTenant => this.ServiceProvider.GetRequiredService<ICurrentTenant>();
+    protected ICurrentTenant CurrentTenant => ServiceProvider.GetRequiredService<ICurrentTenant>();
 
     protected IStringLocalizerFactory StringLocalizerFactory => ServiceProvider.GetRequiredService<IStringLocalizerFactory>();
 }
