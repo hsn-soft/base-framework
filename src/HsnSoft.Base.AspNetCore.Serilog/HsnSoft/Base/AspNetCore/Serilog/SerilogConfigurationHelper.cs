@@ -58,10 +58,12 @@ public static class SerilogConfigurationHelper
         try
         {
             loglevel = (LogEventLevel)Enum.Parse(typeof(LogEventLevel), configuration["FrameworkLogger:LogLevel"] ?? throw new InvalidOperationException());
+            Console.WriteLine($"=== FRAMEWORK LOG LEVEL : {loglevel.ToString()} ===");
         }
         catch (Exception)
         {
             loglevel = LogEventLevel.Verbose;
+            Console.WriteLine($"=== FRAMEWORK LOG LEVEL : UNKNOWN ===");
         }
 
         var dependencyAssemblyLogLevel = loglevel switch
@@ -99,11 +101,13 @@ public static class SerilogConfigurationHelper
                                 Port = grayLogPort
                             });
                     });
+
+                Console.WriteLine("=== SERILOG GRAYLOG SINK ACTIVE ===");
             }
         }
         catch (Exception)
         {
-            // ignored
+            Console.WriteLine("=== SERILOG GRAYLOG SINK ERROR ===");
         }
 
         if (!isGrayLogActive)
@@ -112,6 +116,8 @@ public static class SerilogConfigurationHelper
                 .WriteTo.Conditional(logEvent => logEvent is { Level: LogEventLevel.Verbose or LogEventLevel.Fatal },
                     sinkConfiguration => sinkConfiguration.File("Logs/logs.txt")
                 );
+
+            Console.WriteLine("=== SERILOG FILE SINK ACTIVE ===");
         }
 
         return loggerConfiguration.WriteTo.Conditional(logEvent => (byte)logEvent.Level >= (byte)loglevel, sinkConfiguration =>
