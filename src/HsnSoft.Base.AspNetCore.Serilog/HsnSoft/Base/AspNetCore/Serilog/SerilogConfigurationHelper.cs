@@ -46,7 +46,7 @@ public static class SerilogConfigurationHelper
         return loggerConfiguration.WriteTo.Conditional(logEvent => (byte)logEvent.Level >= (byte)loglevel, sinkConfiguration =>
         {
             sinkConfiguration.Console(
-                outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}{NewLine}",
+                outputTemplate: "[{Timestamp:HH:mm:ss.fff zzz} {Level:u3}] {Message:lj}{NewLine}{Exception}{NewLine}",
                 theme: AnsiConsoleTheme.Sixteen
             );
         }).CreateLogger();
@@ -117,7 +117,7 @@ public static class SerilogConfigurationHelper
         return loggerConfiguration.WriteTo.Conditional(logEvent => (byte)logEvent.Level >= (byte)loglevel, sinkConfiguration =>
         {
             sinkConfiguration.Console(
-                outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}{NewLine}",
+                outputTemplate: "[{Timestamp:HH:mm:ss.fff zzz} {Level:u3}] {Message:lj}{NewLine}{Exception}{NewLine}",
                 theme: AnsiConsoleTheme.Sixteen
             );
         }).CreateLogger();
