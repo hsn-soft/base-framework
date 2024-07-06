@@ -17,7 +17,7 @@ public sealed class BaseLocalizationMiddleware : IMiddleware, ITransientDependen
         {
             if (DoesCultureExist(cultureKey))
             {
-                var culture = new System.Globalization.CultureInfo(cultureKey);
+                var culture = new CultureInfo(cultureKey);
                 Thread.CurrentThread.CurrentCulture = culture;
                 Thread.CurrentThread.CurrentUICulture = culture;
             }
