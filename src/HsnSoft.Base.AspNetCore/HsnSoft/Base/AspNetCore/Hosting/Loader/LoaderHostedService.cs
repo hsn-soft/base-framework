@@ -9,13 +9,13 @@ namespace HsnSoft.Base.AspNetCore.Hosting.Loader;
 
 public class LoaderHostedService : IHostedService
 {
-    private readonly IPersistentLogger _logger;
+    private readonly IFrameworkLogger _logger;
 
     private readonly IServiceScopeFactory _scopeFactory;
 
     private readonly Guid _instanceId;
 
-    public LoaderHostedService(IServiceScopeFactory scopeFactory, IPersistentLogger logger)
+    public LoaderHostedService(IServiceScopeFactory scopeFactory, IFrameworkLogger logger)
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
@@ -26,7 +26,7 @@ public class LoaderHostedService : IHostedService
     {
         _logger.LogInformation("LoaderHostedService | Started");
 
-        _logger.PersistentInfoLog(LogHelper.Generate(
+        _logger.FrameworkInfoLog(LogHelper.Generate(
             message: "LoaderHostedService | Started",
             reference: null,
             facility: "APPLICATION_LOADER_STARTED",
@@ -46,7 +46,7 @@ public class LoaderHostedService : IHostedService
 
             _logger.LogError($"LoaderHostedService | Failed - {DateTime.UtcNow:yyyyMMdd hh:mm:ss}");
 
-            _logger.PersistentErrorLog(LogHelper.Generate(
+            _logger.FrameworkErrorLog(LogHelper.Generate(
                 message: "LoaderHostedService | Failed",
                 reference: null,
                 facility: "APPLICATION_LOADER_FAILED",
@@ -61,7 +61,7 @@ public class LoaderHostedService : IHostedService
     {
         _logger.LogInformation("LoaderHostedService | Stopped");
 
-        _logger.PersistentInfoLog(LogHelper.Generate(
+        _logger.FrameworkInfoLog(LogHelper.Generate(
             message: "LoaderHostedService | Stopped",
             reference: null,
             facility: "APPLICATION_LOADER_STOPPED",
