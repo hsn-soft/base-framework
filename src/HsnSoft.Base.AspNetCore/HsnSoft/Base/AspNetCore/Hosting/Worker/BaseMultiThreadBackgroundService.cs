@@ -12,7 +12,7 @@ public abstract class BaseMultiThreadBackgroundService<TService> : BackgroundSer
     where TService : IBaseThreadBackgroundService
 {
     protected ushort MultiThreadCount { get; }
-    protected IPersistentLogger Logger { get; }
+    protected IFrameworkLogger Logger { get; }
 
     private bool WaitContinuousThread { get; }
 
@@ -23,7 +23,7 @@ public abstract class BaseMultiThreadBackgroundService<TService> : BackgroundSer
     private readonly List<Task> _workers = new();
     private const int MaxWaitPeriodSecondsForTerminating = 30;
 
-    protected BaseMultiThreadBackgroundService(IPersistentLogger logger, ushort multiThreadCount = 1, int waitPeriodSeconds = 1, bool waitContinuousThread = false)
+    protected BaseMultiThreadBackgroundService(IFrameworkLogger logger, ushort multiThreadCount = 1, int waitPeriodSeconds = 1, bool waitContinuousThread = false)
     {
         Logger = logger;
         MultiThreadCount = (ushort)(multiThreadCount < 1 ? 1 : multiThreadCount);

@@ -3,7 +3,7 @@ using JetBrains.Annotations;
 
 namespace HsnSoft.Base.Logging;
 
-public sealed class FrameworkLogModel : IPersistentLog
+public sealed class FrameworkLogModel : IFrameworkLog
 {
     [NotNull]
     public string LogId { get; set; } = Guid.NewGuid().ToString();
