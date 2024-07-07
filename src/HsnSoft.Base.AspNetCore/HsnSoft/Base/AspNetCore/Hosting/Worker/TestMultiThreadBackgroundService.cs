@@ -9,7 +9,7 @@ public sealed class TestMultiThreadBackgroundService : BaseMultiThreadBackground
 {
     private readonly IServiceScopeFactory _serviceScopeFactory;
 
-    public TestMultiThreadBackgroundService(IPersistentLogger logger,
+    public TestMultiThreadBackgroundService(IFrameworkLogger logger,
         IServiceScopeFactory serviceScopeFactory
     ) : base(logger, multiThreadCount: 5, waitPeriodSeconds: 10, waitContinuousThread: true)
     {

@@ -10,7 +10,7 @@ namespace HsnSoft.Base.AspNetCore.Hosting.Worker;
 public abstract class BaseSingleThreadBackgroundService<TService> : BackgroundService, IBaseThreadBackgroundService
     where TService : IBaseThreadBackgroundService
 {
-    protected readonly IPersistentLogger Logger;
+    protected readonly IFrameworkLogger Logger;
 
     private bool WaitContinuousThread { get; }
 
@@ -20,7 +20,7 @@ public abstract class BaseSingleThreadBackgroundService<TService> : BackgroundSe
 
     private bool SkipWaitPeriod { get; set; }
 
-    protected BaseSingleThreadBackgroundService(IPersistentLogger logger, int waitPeriodSeconds = 1, bool waitContinuousThread = false)
+    protected BaseSingleThreadBackgroundService(IFrameworkLogger logger, int waitPeriodSeconds = 1, bool waitContinuousThread = false)
     {
         Logger = logger;
         WaitPeriodSeconds = waitPeriodSeconds < 1 ? 1 : waitPeriodSeconds;
