@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HsnSoft.Base.Domain.Repositories.EntityFrameworkCore;
 
-public class EfCoreGenericRepository<TDbContext, TEntity, TKey> : GenericRepositoryBase<TEntity, TKey>, IEfCoreGenericRepository<TEntity, TKey>
+public class EfCoreGenericRepository<TDbContext, TEntity, TKey> : GenericRepositoryBase<TEntity, TKey>, IEfCoreGenericRepository<TDbContext, TEntity, TKey>
     where TDbContext : BaseEfCoreDbContext<TDbContext>
     where TEntity : class, IEntity<TKey>
 {
@@ -23,6 +23,8 @@ public class EfCoreGenericRepository<TDbContext, TEntity, TKey> : GenericReposit
     {
         _dbContext = dbContext;
     }
+
+    public TDbContext GetDbContext() => _dbContext;
 
     public DbSet<TEntity> GetDbSet() => _dbContext?.Set<TEntity>();
 
