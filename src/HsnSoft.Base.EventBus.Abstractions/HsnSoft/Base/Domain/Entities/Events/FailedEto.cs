@@ -3,7 +3,7 @@ using JetBrains.Annotations;
 
 namespace HsnSoft.Base.Domain.Entities.Events;
 
-public record FailedEventEto(
+public record FailedEto(
     [NotNull] string FailedReason,
     [CanBeNull] DateTime? FailedMessageEnvelopeTime,
     [CanBeNull] dynamic FailedMessageObject,

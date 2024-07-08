@@ -7,8 +7,7 @@ public record ParentMessageEnvelope
 {
     public ushort HopLevel { get; set; }
 
-    public bool IsReQueued { get; set; }
-    public ushort ReQueueCount { get; set; }
+    public ushort ReQueuedCount { get; set; }
 
     public Guid MessageId { get; set; }
 
