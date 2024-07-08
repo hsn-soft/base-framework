@@ -63,8 +63,13 @@ public class EventBusAzure : IEventBus, IDisposable
             Channel = parentMessage?.Channel ?? _traceAccessor?.GetChannel(),
             UserId = parentMessage?.UserId,
             UserRoleUniqueName = parentMessage?.UserRoleUniqueName,
-            HopLevel = parentMessage != null ? (ushort)(parentMessage.HopLevel + 1) : (ushort)1
+            HopLevel = parentMessage != null ? (ushort)(parentMessage.HopLevel + 1) : (ushort)1,
+            ReQueuedCount = parentMessage?.ReQueuedCount ?? 0
         };
+        if (isReQueuePublish)
+        {
+            @event.ReQueuedCount++;
+        }
 
         _logger.LogDebug("AzureServiceBus | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] STARTED", _eventBusConfig.ConsumerClientInfo, eventName, @event.MessageId.ToString());
 

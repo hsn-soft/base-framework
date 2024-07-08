@@ -353,7 +353,6 @@ public sealed class RabbitMqConsumer : IDisposable
             MessageTime = produceTime,
             Message = new FailedEto(
                 FailedReason: errorMessage,
-                FailedMessageEnvelopeProducer: failedEnvelopeInfo?.Producer,
                 FailedMessageEnvelopeTime: failedEnvelopeInfo?.MessageTime.ToUniversalTime(),
                 FailedMessageObject: failedMessageObject,
                 FailedMessageTypeName: failedEventEnvelopeMessageType?.Name
@@ -364,12 +363,8 @@ public sealed class RabbitMqConsumer : IDisposable
             UserId = failedEnvelopeInfo?.UserId,
             UserRoleUniqueName = failedEnvelopeInfo?.UserRoleUniqueName,
             HopLevel = failedEnvelopeInfo != null ? (ushort)(failedEnvelopeInfo.HopLevel + 1) : (ushort)1,
-            IsReQueued = failedEnvelopeInfo?.IsReQueued ?? false
+            ReQueuedCount = failedEnvelopeInfo?.ReQueuedCount ?? 0
         };
-        if (@event.IsReQueued)
-        {
-            @event.ReQueueCount = failedEnvelopeInfo?.ReQueueCount ?? 0;
-        }
 
         var eventName = @event.Message.GetType().Name;
         eventName = EventNameHelper.TrimEventName(_rabbitMqEventBusConfig, eventName);

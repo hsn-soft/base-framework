@@ -89,11 +89,11 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
             UserId = parentMessage?.UserId ?? _currentUser?.Id?.ToString(),
             UserRoleUniqueName = parentMessage?.UserRoleUniqueName ?? (_currentUser?.Roles is { Length: > 0 } ? _currentUser?.Roles.JoinAsString(",") : null),
             HopLevel = parentMessage != null ? (ushort)(parentMessage.HopLevel + 1) : (ushort)1,
-            IsReQueued = isReQueuePublish || (parentMessage?.IsReQueued ?? false)
+            ReQueuedCount = parentMessage?.ReQueuedCount ?? 0
         };
-        if (@event.IsReQueued)
+        if (isReQueuePublish)
         {
-            @event.ReQueueCount = parentMessage != null ? (ushort)(parentMessage.ReQueueCount + 1) : (ushort)0;
+            @event.ReQueuedCount++;
         }
 
         _logger.LogDebug("RabbitMQ | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] STARTED", _rabbitMqEventBusConfig.ConsumerClientInfo, eventName, @event.MessageId.ToString());
@@ -131,14 +131,17 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
         {
             using var publisherChannel = _persistentConnection.CreateModel();
 
-            var publishQueueName = EventNameHelper.GetConsumerClientEventQueueName(_rabbitMqEventBusConfig, eventName);
-
+            var publishQueueName = string.Empty;
             if (!isReQueuePublish && isExchangeEvent)
             {
                 publisherChannel.ExchangeDeclare(exchange: _rabbitMqEventBusConfig.ExchangeName, type: "direct"); //Ensure exchange exists while publishing
             }
             else
             {
+                publishQueueName = eventName.Equals("ReQueued")
+                    ? EventNameHelper.GetConsumerReQueuedEventQueueName((eventMessage as ReQueuedEto).ReQueuedMessageEnvelopeConsumer, eventName)
+                    : EventNameHelper.GetConsumerClientEventQueueName(_rabbitMqEventBusConfig, eventName);
+
                 // Direct re-queue, no-exchange
                 publisherChannel?.QueueDeclare(queue: publishQueueName,
                     durable: true,

@@ -4,6 +4,10 @@ namespace HsnSoft.Base.EventBus.RabbitMQ;
 
 internal static class EventNameHelper
 {
+    internal static string GetConsumerReQueuedEventQueueName(string reQueuedConsumer, string eventName)
+    {
+        return $"{reQueuedConsumer}_{eventName}";
+    }
     internal static string GetConsumerClientEventQueueName(RabbitMqEventBusConfig rabbitMqEventBusConfig, string eventName)
     {
         return $"{rabbitMqEventBusConfig.ConsumerClientInfo}_{TrimEventName(rabbitMqEventBusConfig, eventName)}";
