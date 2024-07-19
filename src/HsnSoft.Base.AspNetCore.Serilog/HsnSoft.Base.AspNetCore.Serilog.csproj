@@ -29,6 +29,7 @@
         <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
         <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
         <PackageReference Include="Serilog.Sinks.Graylog" Version="3.1.1" />
+        <PackageReference Include="Destructurama.Attributed" Version="4.0.0" />
         <PackageReference Include="Destructurama.JsonNet" Version="3.0.0" />
         <PackageReference Include="Serilog.Formatting.Compact" Version="3.0.0" />
     </ItemGroup>

@@ -33,11 +33,12 @@ public static class SerilogConfigurationHelper
         };
 
         var loggerConfiguration = new LoggerConfiguration()
+            .Destructure.JsonNetTypes()
+            .Destructure.UsingAttributes()
             .MinimumLevel.Verbose()
             .MinimumLevel.Override("System", dependencyAssemblyLogLevel)
             .MinimumLevel.Override("Microsoft.AspNetCore", dependencyAssemblyLogLevel)
             .MinimumLevel.Override("Microsoft.EntityFrameworkCore", dependencyAssemblyLogLevel)
-            .Destructure.JsonNetTypes()
             .Enrich.FromLogContext()
             .Enrich.WithProperty("Solution", AppDomain.CurrentDomain.FriendlyName.Split('.').First())
             .Enrich.WithProperty("Assembly", AppDomain.CurrentDomain.FriendlyName);
