@@ -5,7 +5,7 @@ using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
-namespace HsnSoft.Base.Json.Newtonsoft;
+namespace HsnSoft.Base.Json.Newtonsoft.Converters;
 
 public class BaseJsonIsoDateTimeConverter : IsoDateTimeConverter, ITransientDependency
 {

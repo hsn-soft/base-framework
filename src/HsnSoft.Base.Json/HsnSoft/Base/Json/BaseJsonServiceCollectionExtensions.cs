@@ -1,4 +1,5 @@
 ﻿using HsnSoft.Base.Json.Newtonsoft;
+using HsnSoft.Base.Json.Newtonsoft.Converters;
 using HsnSoft.Base.Json.SystemTextJson;
 using HsnSoft.Base.Timing;
 using Microsoft.Extensions.DependencyInjection;

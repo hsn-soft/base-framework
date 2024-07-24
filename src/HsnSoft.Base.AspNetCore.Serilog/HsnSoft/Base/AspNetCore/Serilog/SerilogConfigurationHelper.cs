@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using Destructurama;
+using HsnSoft.Base.AspNetCore.Serilog.LogMask;
 using Microsoft.Extensions.Configuration;
 using Serilog;
 using Serilog.Events;
@@ -34,7 +35,8 @@ public static class SerilogConfigurationHelper
 
         var loggerConfiguration = new LoggerConfiguration()
             .Destructure.JsonNetTypes()
-            .Destructure.UsingAttributes()
+            // .Destructure.UsingAttributes()
+            .Destructure.With<MaskDestructuringPolicy>()
             .MinimumLevel.Verbose()
             .MinimumLevel.Override("System", dependencyAssemblyLogLevel)
             .MinimumLevel.Override("Microsoft.AspNetCore", dependencyAssemblyLogLevel)
@@ -75,11 +77,13 @@ public static class SerilogConfigurationHelper
         };
 
         var loggerConfiguration = new LoggerConfiguration()
+            .Destructure.JsonNetTypes()
+            // .Destructure.UsingAttributes()
+            .Destructure.With<MaskDestructuringPolicy>()
             .MinimumLevel.Verbose()
             .MinimumLevel.Override("System", dependencyAssemblyLogLevel)
             .MinimumLevel.Override("Microsoft.AspNetCore", dependencyAssemblyLogLevel)
             .MinimumLevel.Override("Microsoft.EntityFrameworkCore", dependencyAssemblyLogLevel)
-            .Destructure.JsonNetTypes()
             .Enrich.FromLogContext()
             .Enrich.WithProperty("Solution", AppDomain.CurrentDomain.FriendlyName.Split('.').First())
             .Enrich.WithProperty("Assembly", AppDomain.CurrentDomain.FriendlyName);
