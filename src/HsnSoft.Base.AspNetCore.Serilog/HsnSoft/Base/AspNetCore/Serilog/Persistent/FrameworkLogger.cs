@@ -1,6 +1,6 @@
+using HsnSoft.Base.Json.Newtonsoft.Mask;
 using HsnSoft.Base.Logging;
 using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json;
 using Serilog.Events;
 
 namespace HsnSoft.Base.AspNetCore.Serilog.Persistent;
@@ -15,5 +15,5 @@ public sealed class FrameworkLogger : BaseLogger, IFrameworkLogger
     public void FrameworkErrorLog<T>(T t) where T : IFrameworkLog => Write(LogEventLevel.Fatal, t);
 
     private void Write<T>(LogEventLevel logLevel, T log)
-        => Logger.ForContext("LogType", "FrameworkLog").Write(logLevel, JsonConvert.SerializeObject(log));
+        => Logger.ForContext("LogType", "FrameworkLog").Write(logLevel, MaskedSerializationHelper.SerializeWithMasking(log));
 }
