@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Text.Json;
 
 namespace HsnSoft.Base.Communication;
 
@@ -13,11 +12,6 @@ public class BaseResponse : IBaseResponse
     public virtual string StatusMessagesToSingleMessage()
     {
         return StatusMessages.JoinAsString(", ");
-    }
-
-    public virtual string ToJsonString()
-    {
-        return JsonSerializer.Serialize(this);
     }
 }
 
