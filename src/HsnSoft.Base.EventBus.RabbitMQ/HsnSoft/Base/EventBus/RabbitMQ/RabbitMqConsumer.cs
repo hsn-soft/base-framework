@@ -143,7 +143,7 @@ public sealed class RabbitMqConsumer : IDisposable
 #pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
         {
             var fetcherId = Task.CurrentId?.ToString() ?? "0";
-            _logger.LogDebug("RabbitMQ | {ConsumerQueue} => ConsumerChannel[ {ChannelNo} ][ {ConsumerId} ] FetcherId [ {FetcherId} ]: STARTED",
+            _logger.LogInformation("RabbitMQ | {ConsumerQueue} => ConsumerChannel[ {ChannelNo} ][ {ConsumerId} ] FetcherId [ {FetcherId} ]: STARTED",
                 consumerQueueName, consumerChannelNumber, _currentConsumerTag, fetcherId);
 
             try
@@ -163,7 +163,7 @@ public sealed class RabbitMqConsumer : IDisposable
                     _consumerChannel?.BasicAck(eventArgs.DeliveryTag, multiple: false);
                 }
 
-                _logger.LogDebug("RabbitMQ | {ConsumerQueue} => ConsumerChannel[ {ChannelNo} ][ {ConsumerId} ] FetcherId [ {FetcherId} ]: COMPLETED [ {ConsumeHandleWorkingTime}sn ]",
+                _logger.LogInformation("RabbitMQ | {ConsumerQueue} => ConsumerChannel[ {ChannelNo} ][ {ConsumerId} ] FetcherId [ {FetcherId} ]: COMPLETED [ {ConsumeHandleWorkingTime}sn ]",
                     consumerQueueName, consumerChannelNumber, _currentConsumerTag, fetcherId, timespan.TotalSeconds.ToString("0.###"));
             }
             catch (TimeoutException timeProblem)
@@ -231,7 +231,7 @@ public sealed class RabbitMqConsumer : IDisposable
                 var handler = scope.ServiceProvider.GetService(subscription.HandlerType);
                 if (handler == null)
                 {
-                    _logger.LogWarning("RabbitMQ | {ClientInfo} CONSUMER [ {EventName} ] => No HANDLER for event", _rabbitMqEventBusConfig.ConsumerClientInfo, eventName);
+                    _logger.LogWarning("RabbitMQ | CONSUMER {ClientInfo} EVENT [ {EventName} ] => No HANDLER for event", _rabbitMqEventBusConfig.ConsumerClientInfo, eventName);
                     continue;
                 }
 
@@ -292,7 +292,7 @@ public sealed class RabbitMqConsumer : IDisposable
         }
         else
         {
-            _logger.LogWarning("RabbitMQ | {ClientInfo} CONSUMER [ {EventName} ] => No SUBSCRIPTION for event", _rabbitMqEventBusConfig.ConsumerClientInfo, eventName);
+            _logger.LogWarning("RabbitMQ | CONSUMER {ClientInfo} EVENT [ {EventName} ] => No SUBSCRIPTION for event", _rabbitMqEventBusConfig.ConsumerClientInfo, eventName);
         }
     }
 
@@ -370,7 +370,7 @@ public sealed class RabbitMqConsumer : IDisposable
         eventName = EventNameHelper.TrimEventName(_rabbitMqEventBusConfig, eventName);
         consumerErrorQueueName = $"{_rabbitMqEventBusConfig.ErrorClientInfo}_{eventName}";
 
-        _logger.LogWarning("RabbitMQ | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] STARTED", _rabbitMqEventBusConfig.ConsumerClientInfo, eventName, @event.MessageId.ToString());
+        _logger.LogWarning("RabbitMQ | PRODUCER {ClientInfo} EVENT [ {EventName} ] => MessageId [ {MessageId} ] STARTED", _rabbitMqEventBusConfig.ConsumerClientInfo, eventName, @event.MessageId.ToString());
 
         var policy = Policy.Handle<BrokerUnreachableException>()
             .Or<SocketException>()
@@ -421,7 +421,7 @@ public sealed class RabbitMqConsumer : IDisposable
                 body: body);
         });
 
-        _logger.LogWarning("RabbitMQ | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] COMPLETED", _rabbitMqEventBusConfig.ConsumerClientInfo, eventName, @event.MessageId.ToString());
+        _logger.LogWarning("RabbitMQ | PRODUCER {ClientInfo} EVENT [ {EventName} ] => MessageId [ {MessageId} ] COMPLETED", _rabbitMqEventBusConfig.ConsumerClientInfo, eventName, @event.MessageId.ToString());
     }
 
     private IModel CreateConsumerChannel()

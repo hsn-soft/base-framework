@@ -31,7 +31,7 @@ namespace HsnSoft.Base.Json.Mask.MaskingInfo;
 
         private static PropertyMaskingInfo GetPropertyMaskingInfo(PropertyInfo propertyInfo)
         {
-            var maskedAttribute = propertyInfo.GetCustomAttribute<MaskedAttribute>();
+            var maskedAttribute = propertyInfo.GetCustomAttribute<SensitiveDataAttribute>();
             var isMasked = maskedAttribute != null;
             return new PropertyMaskingInfo(propertyInfo, isMasked);
         }

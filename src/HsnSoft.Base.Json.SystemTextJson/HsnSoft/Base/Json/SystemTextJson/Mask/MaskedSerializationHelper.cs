@@ -30,7 +30,7 @@ public static class MaskedSerializationHelper
         foreach (var propertyInfo in typeInfo.Properties)
         {
             if (propertyInfo.AttributeProvider is { } provider &&
-                provider.IsDefined(typeof(MaskedAttribute), inherit: true))
+                provider.IsDefined(typeof(SensitiveDataAttribute), inherit: true))
             {
                 propertyInfo.CustomConverter = new MaskedConverterFactory();
             }
