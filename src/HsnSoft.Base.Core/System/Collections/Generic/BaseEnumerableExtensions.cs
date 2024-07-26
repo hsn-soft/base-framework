@@ -2,7 +2,7 @@ using System.Linq;
 
 namespace System.Collections.Generic;
 
-/// <summary> 
+/// <summary>
 /// Extension methods for <see cref="IEnumerable{T}"/>.
 /// </summary>
 public static class BaseEnumerableExtensions
@@ -58,5 +58,16 @@ public static class BaseEnumerableExtensions
         return condition
             ? source.Where(predicate)
             : source;
+    }
+
+    /// <summary>
+    /// Convert a <c>IEnumerable</c> from any type to a generic type <c>T</c>.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="items"></param>
+    /// <returns><c>IEnumerable</c> with the specified type <c>T</c></returns>
+    public static IEnumerable<T> ConvertToGenericType<T>(this IEnumerable items)
+    {
+        return items.Cast<object>().Select(value => (T)Convert.ChangeType(value, typeof(T))).ToList();
     }
 }
