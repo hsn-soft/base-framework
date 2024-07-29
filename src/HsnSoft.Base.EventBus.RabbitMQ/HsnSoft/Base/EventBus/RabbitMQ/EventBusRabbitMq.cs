@@ -96,7 +96,7 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
             @event.ReQueuedCount++;
         }
 
-        _logger.LogInformation("RabbitMQ | PRODUCER {ClientInfo} EVENT [ {EventName} ] => MessageId [ {MessageId} ] STARTED", _rabbitMqEventBusConfig.ConsumerClientInfo, eventName, @event.MessageId.ToString());
+        _logger.LogDebug("RabbitMQ | PRODUCER {ClientInfo} EVENT [ {EventName} ] => MessageId [ {MessageId} ] STARTED", _rabbitMqEventBusConfig.ConsumerClientInfo, eventName, @event.MessageId.ToString());
 
         var policy = Policy.Handle<BrokerUnreachableException>()
             .Or<SocketException>()
@@ -162,7 +162,7 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
         });
 
         Thread.Sleep(TimeSpan.FromMilliseconds(50));
-        _logger.LogInformation("RabbitMQ | PRODUCER {ClientInfo} EVENT [ {EventName} ] => MessageId [ {MessageId} ] COMPLETED", _rabbitMqEventBusConfig.ConsumerClientInfo, eventName, @event.MessageId.ToString());
+        _logger.LogDebug("RabbitMQ | PRODUCER {ClientInfo} EVENT [ {EventName} ] => MessageId [ {MessageId} ] COMPLETED", _rabbitMqEventBusConfig.ConsumerClientInfo, eventName, @event.MessageId.ToString());
         _publishing = false;
     }
 
