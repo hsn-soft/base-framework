@@ -7,5 +7,5 @@ public interface IPuppeTeerPersistentConnection : IDisposable
 {
     IBrowser GetBrowser();
 
-    public string InitResult { get; internal set; }
+    public string InitResult { get; set; }
 }
