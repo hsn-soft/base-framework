@@ -58,14 +58,17 @@ public sealed class PuppeTeerPersistentConnection : IPuppeTeerPersistentConnecti
 
                 var browserFetcher = new BrowserFetcher();
                 var installedBrowsers = browserFetcher.GetInstalledBrowsers();
-                var browserInfo = installedBrowsers.FirstOrDefault();
+
+                var browserInfo = _launchSettings.Headless
+                    ? installedBrowsers.FirstOrDefault(x => x.Browser == SupportedBrowser.ChromeHeadlessShell)
+                    : installedBrowsers.FirstOrDefault(x => x.Browser != SupportedBrowser.ChromeHeadlessShell);
 
                 if (browserInfo == null)
                 {
                     _logger.LogWarning("Puppeteer | Installed browser not found");
                     _logger.LogDebug("Puppeteer | Chromium download START");
                     await browserFetcher.DownloadAsync();
-                    _logger.LogDebug("Puppeteer | Chromium download COMPLETED");
+
                     installedBrowsers = browserFetcher.GetInstalledBrowsers();
                     browserInfo = installedBrowsers.First();
                     if (browserInfo == null)
@@ -73,14 +76,27 @@ public sealed class PuppeTeerPersistentConnection : IPuppeTeerPersistentConnecti
                         _logger.LogError("Puppeteer | Chromium download FAILED");
                         throw new InvalidOperationException("Puppeteer | Installed browser not found");
                     }
+
+                    _logger.LogDebug("Puppeteer | Chromium download COMPLETED");
                 }
+                else
+                {
+                    _logger.LogDebug("Puppeteer | Chromium download SKIPPED => Browser is already installed");
+                }
+
+                _logger.LogDebug("Puppeteer | Browser [" + browserInfo.BuildId + "] founded");
+                launchOptions.ExecutablePath = browserInfo.GetExecutablePath();
             }
             else
             {
-                _logger.LogDebug("Puppeteer | Chromium download skipped: RUNNING_IN_CONTAINER => " + inContainer + ", EXECUTABLE_PATH => /usr/bin/chromium");
-                launchOptions.ExecutablePath = "/usr/bin/chromium";
+                // override headless mode for container
                 launchOptions.Headless = true;
+                _logger.LogDebug("Puppeteer | Chromium download SKIPPED => Container Mode is Active");
+
+                launchOptions.ExecutablePath = "/usr/bin/chromium";
             }
+
+            _logger.LogDebug("Puppeteer | EXECUTABLE_PATH => " + launchOptions.ExecutablePath);
 
             PtBrowser = await Puppeteer.LaunchAsync(launchOptions);
 
