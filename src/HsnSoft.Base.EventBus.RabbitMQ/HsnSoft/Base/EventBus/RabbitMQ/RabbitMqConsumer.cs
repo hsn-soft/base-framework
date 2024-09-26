@@ -143,7 +143,7 @@ public sealed class RabbitMqConsumer : IDisposable
 #pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
         {
             var fetcherId = Task.CurrentId?.ToString() ?? "0";
-            _logger.LogInformation("RabbitMQ | {ConsumerQueue} => ConsumerChannel[ {ChannelNo} ][ {ConsumerId} ] FetcherId [ {FetcherId} ]: STARTED",
+            _logger.LogDebug("RabbitMQ | {ConsumerQueue} => ConsumerChannel[ {ChannelNo} ][ {ConsumerId} ] FetcherId [ {FetcherId} ]: STARTED",
                 consumerQueueName, consumerChannelNumber, _currentConsumerTag, fetcherId);
 
             try
