@@ -52,7 +52,7 @@ public abstract class BaseRepository<TDocument> : IBaseRepository<TDocument>
 
         // In version 2.19, MongoDB team upgraded to LinqProvider.V3, rolling back to V2 until LinQ is stable...
         // https://www.mongodb.com/community/forums/t/issue-with-2-18-to-2-19-nuget-upgrade-of-mongodb-c-driver/211894/2
-        clientSettings.LinqProvider = LinqProvider.V2;
+        //clientSettings.LinqProvider = LinqProvider.V2;
         clientSettings.WaitQueueTimeout = queryExecutionMaxSeconds;
 
         _queryOptions = new QueryOptions
