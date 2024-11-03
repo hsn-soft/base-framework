@@ -32,6 +32,7 @@ public sealed record ConsumeMessageLogModel(
     string LogId,
     [CanBeNull] string CorrelationId,
     string Facility,
+    string Producer,
     DateTimeOffset ConsumeDateTimeUtc,
     MessageLogDetail MessageLog,
     [CanBeNull] string ConsumeDetails,
