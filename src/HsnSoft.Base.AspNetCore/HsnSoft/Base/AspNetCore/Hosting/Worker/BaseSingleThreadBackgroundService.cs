@@ -29,25 +29,25 @@ public abstract class BaseSingleThreadBackgroundService<TService> : BackgroundSe
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        Logger.LogDebug("{Worker} | STARTED", typeof(TService).Name);
+        Logger.LogDebug("{Worker} | {OperationStatus}", typeof(TService).Name, "STARTED");
 
         while (!stoppingToken.IsCancellationRequested)
         {
             IsProcessing = true;
             try
             {
-                Logger.LogDebug("{Worker} | BEGIN", typeof(TService).Name);
+                Logger.LogDebug("{Worker} | {OperationStatus}", typeof(TService).Name, "BEGIN");
                 var stopWatch = Stopwatch.StartNew();
 
                 OperationAsync(stoppingToken).GetAwaiter().GetResult(); // WAIT OPERATION COMPLETED
 
                 stopWatch.Stop();
                 var timespan = stopWatch.Elapsed;
-                Logger.LogDebug("{Worker} | END ({ProcessTime})sn", typeof(TService).Name, timespan.TotalSeconds.ToString("0.###"));
+                Logger.LogDebug("{Worker} | {OperationStatus} | ({ProcessTime})sn", typeof(TService).Name, "END", timespan.TotalSeconds.ToString("0.###"));
             }
             catch (Exception ex)
             {
-                Logger.LogError("{Worker} | FAILED: {ExMessage}", typeof(TService).Name, ex.Message);
+                Logger.LogError("{Worker} | {OperationStatus} | {ExMessage}", typeof(TService).Name, "FAILED", ex.Message);
             }
             finally
             {
@@ -66,14 +66,14 @@ public abstract class BaseSingleThreadBackgroundService<TService> : BackgroundSe
 
     public override Task StopAsync(CancellationToken cancellationToken)
     {
-        Logger.LogDebug("{Worker} | STOPPING...", typeof(TService).Name);
+        Logger.LogDebug("{Worker} | {OperationStatus}", typeof(TService).Name, "TERMINATING");
         while (IsProcessing && WaitContinuousThread)
         {
             // Wait is uncompleted tasks
             Thread.Sleep(500);
         }
 
-        Logger.LogDebug("{Worker} | STOPPED", typeof(TService).Name);
+        Logger.LogDebug("{Worker} | {OperationStatus}", typeof(TService).Name, "TERMINATED");
         // Send cancellation token
         return base.StopAsync(cancellationToken);
     }

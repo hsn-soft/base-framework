@@ -24,10 +24,10 @@ public class LoaderHostedService : IHostedService
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        _logger.LogInformation("LoaderHostedService | Started");
+        _logger.LogDebug("{Loader} | {OperationStatus} | {OperationTime}", nameof(LoaderHostedService), "STARTED", $"{DateTime.UtcNow:yyyyMMdd hh:mm:ss}");
 
         _logger.FrameworkInfoLog(LogHelper.Generate(
-            message: "LoaderHostedService | Started",
+            message: "{Loader} | Started",
             reference: null,
             facility: "APPLICATION_LOADER_STARTED",
             correlationId: _instanceId.ToString(),
@@ -39,15 +39,15 @@ public class LoaderHostedService : IHostedService
             try
             {
                 await LoadConfiguration(cancellationToken);
-                _logger.LogInformation($"LoaderHostedService | Successfully completed - {DateTime.UtcNow:yyyyMMdd hh:mm:ss}");
+                _logger.LogDebug("{Loader} | {OperationStatus} | {OperationTime}", nameof(LoaderHostedService), "COMPLETED", $"{DateTime.UtcNow:yyyyMMdd hh:mm:ss}");
                 break;
             }
             catch (OperationCanceledException) { }
 
-            _logger.LogError($"LoaderHostedService | Failed - {DateTime.UtcNow:yyyyMMdd hh:mm:ss}");
+            _logger.LogError("{Loader} | {OperationStatus} | {OperationTime}", nameof(LoaderHostedService), "FAILED", $"{DateTime.UtcNow:yyyyMMdd hh:mm:ss}");
 
             _logger.FrameworkErrorLog(LogHelper.Generate(
-                message: "LoaderHostedService | Failed",
+                message: "{Loader} | Failed",
                 reference: null,
                 facility: "APPLICATION_LOADER_FAILED",
                 correlationId: _instanceId.ToString(),
@@ -59,10 +59,10 @@ public class LoaderHostedService : IHostedService
 
     public Task StopAsync(CancellationToken cancellationToken)
     {
-        _logger.LogInformation("LoaderHostedService | Stopped");
+        _logger.LogDebug("{Loader} | {OperationStatus} | {OperationTime}", nameof(LoaderHostedService), "STOPPED", $"{DateTime.UtcNow:yyyyMMdd hh:mm:ss}");
 
         _logger.FrameworkInfoLog(LogHelper.Generate(
-            message: "LoaderHostedService | Stopped",
+            message: "{Loader} | Stopped",
             reference: null,
             facility: "APPLICATION_LOADER_STOPPED",
             correlationId: _instanceId.ToString(),
