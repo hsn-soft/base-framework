@@ -45,6 +45,7 @@ public sealed record ConsumeMessageLogModel(
     public string CorrelationId { get; } = CorrelationId;
 
     public string Facility { get; } = Facility;
+    public string Producer { get; } = Producer;
 
     public DateTimeOffset ConsumeDateTimeUtc { get; } = ConsumeDateTimeUtc;
 
