@@ -173,6 +173,7 @@ public class EventBusKafka : IEventBus, IDisposable
                             LogId: Guid.NewGuid().ToString(),
                             CorrelationId: ((dynamic)@event)?.CorrelationId,
                             Facility: EventBusLogFacility.CONSUME_EVENT_SUCCESS.ToString(),
+                            Producer:((dynamic)@event)?.Producer,
                             ConsumeDateTimeUtc: handleStartTime,
                             MessageLog: new MessageLogDetail(
                                 EventType: eventName,
@@ -197,6 +198,7 @@ public class EventBusKafka : IEventBus, IDisposable
                             LogId: Guid.NewGuid().ToString(),
                             CorrelationId: ((dynamic)@event)?.CorrelationId,
                             Facility: EventBusLogFacility.CONSUME_EVENT_ERROR.ToString(),
+                            Producer:((dynamic)@event)?.Producer,
                             ConsumeDateTimeUtc: handleStartTime,
                             MessageLog: new MessageLogDetail(
                                 EventType: eventName,

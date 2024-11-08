@@ -33,7 +33,7 @@ public sealed class PuppeTeerPersistentConnection : IPuppeTeerPersistentConnecti
 
         try
         {
-            var launchOptions = new LaunchOptions()
+            var launchOptions = new LaunchOptions
             {
                 Headless = _launchSettings.Headless,
                 LogProcess = _launchSettings.LogProcess,
