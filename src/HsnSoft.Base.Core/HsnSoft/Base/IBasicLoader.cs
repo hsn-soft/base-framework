@@ -1,7 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace HsnSoft.Base.AspNetCore.Hosting.Loader;
+namespace HsnSoft.Base;
 
 public interface IBasicLoader
 {

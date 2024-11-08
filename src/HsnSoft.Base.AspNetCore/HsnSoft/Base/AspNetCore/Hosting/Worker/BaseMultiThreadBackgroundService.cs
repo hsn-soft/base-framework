@@ -33,7 +33,7 @@ public abstract class BaseMultiThreadBackgroundService<TService> : BackgroundSer
 
     protected override async Task ExecuteAsync(CancellationToken stopToken)
     {
-        Logger.LogDebug("{Worker} | STARTED | WORKER COUNT [{WorkerCount}]", typeof(TService).Name, MultiThreadCount);
+        Logger.LogDebug("{Worker} | {OperationStatus} | WORKER COUNT [{WorkerCount}]", typeof(TService).Name, "STARTED", MultiThreadCount);
 
         while (!stopToken.IsCancellationRequested)
         {
@@ -45,18 +45,18 @@ public abstract class BaseMultiThreadBackgroundService<TService> : BackgroundSer
                         var processId = (o as ProcessModel)?.ProcessId ?? 0;
                         try
                         {
-                            Logger.LogDebug("{Worker} | WORKER[{WorkerId}] | BEGIN", typeof(TService).Name, processId);
+                            Logger.LogDebug("{Worker} | WORKER[{WorkerId}] | {OperationStatus}", typeof(TService).Name, processId, "BEGIN");
                             var stopWatch = Stopwatch.StartNew();
 
                             OperationAsync(stopToken).GetAwaiter().GetResult(); // WAIT OPERATION COMPLETED
 
                             stopWatch.Stop();
                             var timespan = stopWatch.Elapsed;
-                            Logger.LogDebug("{Worker} | WORKER[{WorkerId}] | END ({ProcessTime})sn", typeof(TService).Name, processId, timespan.TotalSeconds.ToString("0.###"));
+                            Logger.LogDebug("{Worker} | WORKER[{WorkerId}] | {OperationStatus} ({ProcessTime})sn", typeof(TService).Name, processId, "END", timespan.TotalSeconds.ToString("0.###"));
                         }
                         catch (Exception ex)
                         {
-                            Logger.LogError("{Worker} | WORKER[{WorkerId}] | FAILED: {ExMessage}", typeof(TService).Name, processId, ex.Message);
+                            Logger.LogError("{Worker} | WORKER[{WorkerId}] | {OperationStatus} | {ExMessage}", typeof(TService).Name, processId, "FAILED", ex.Message);
                         }
                     },
                     state: new ProcessModel { ProcessId = i },
@@ -92,7 +92,7 @@ public abstract class BaseMultiThreadBackgroundService<TService> : BackgroundSer
 
     public override void Dispose()
     {
-        Logger.LogDebug("{Worker} | TERMINATING...", typeof(TService).Name);
+        Logger.LogDebug("{Worker} | {OperationStatus}", typeof(TService).Name, "TERMINATING");
 
         var waitCounter = 0;
         _workers.RemoveAll(x => x.IsCompleted);
@@ -106,6 +106,6 @@ public abstract class BaseMultiThreadBackgroundService<TService> : BackgroundSer
         }
 
         base.Dispose();
-        Logger.LogDebug("{Worker} | TERMINATED", typeof(TService).Name);
+        Logger.LogDebug("{Worker} | {OperationStatus}", typeof(TService).Name, "TERMINATED");
     }
 }
