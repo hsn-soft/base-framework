@@ -44,7 +44,7 @@ public sealed class RabbitMqPersistentConnection : IRabbitMqPersistentConnection
 
     public bool TryConnect()
     {
-        _logger.LogDebug("RabbitMQ | Client is trying to connect");
+        _logger.LogDebug("{BrokerName} | Client is trying to connect", "RabbitMQ");
 
         lock (_syncRoot)
         {
@@ -52,7 +52,7 @@ public sealed class RabbitMqPersistentConnection : IRabbitMqPersistentConnection
                 .Or<BrokerUnreachableException>()
                 .WaitAndRetry(RetryCount, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), (ex, time) =>
                     {
-                        _logger.LogWarning("RabbitMQ | Client could not connect after {TimeOut}s ({ExceptionMessage})", $"{time.TotalSeconds:n1}", ex.Message);
+                        _logger.LogWarning("{BrokerName} | Client could not connect after {TimeOut}s ({ExceptionMessage})", "RabbitMQ", $"{time.TotalSeconds:n1}", ex.Message);
                     }
                 );
 
@@ -68,12 +68,12 @@ public sealed class RabbitMqPersistentConnection : IRabbitMqPersistentConnection
                 _connection!.ConnectionBlocked += OnConnectionBlocked;
                 _connection!.ConnectionUnblocked += OnConnectionUnblocked;
 
-                _logger.LogDebug("RabbitMQ | Client acquired a persistent connection to '{HostName}'", _connection?.Endpoint?.HostName);
+                _logger.LogDebug("{BrokerName} | Client acquired a persistent connection to '{HostName}'", "RabbitMQ", _connection?.Endpoint?.HostName);
 
                 return true;
             }
 
-            _logger.LogError("RabbitMQ | Connections could not be created and opened");
+            _logger.LogError("{BrokerName} | Connections could not be created and opened", "RabbitMQ");
 
             return false;
         }
@@ -106,28 +106,28 @@ public sealed class RabbitMqPersistentConnection : IRabbitMqPersistentConnection
                 if (_connection.IsOpen)
                 {
                     _connection.Close();
-                    _logger.LogDebug("RabbitMQ | Client connection is closed");
+                    _logger.LogDebug("{BrokerName} | Client connection is closed", "RabbitMQ");
                 }
             }
 
             _connection?.Dispose();
-            _logger.LogDebug("RabbitMQ | Client is terminated");
+            _logger.LogDebug("{BrokerName} | Client is terminated", "RabbitMQ");
         }
         catch (IOException ex)
         {
-            _logger.LogError(ex.Message);
+            _logger.LogError("{BrokerName} | {ConnectionError}", "RabbitMQ", ex.Message);
         }
     }
 
     private void OnCallbackException(object sender, CallbackExceptionEventArgs args)
     {
-        _logger.LogWarning("RabbitMQ | Connection throw exception. Trying to re-connect...");
+        _logger.LogWarning("{BrokerName} | Connection throw exception. Trying to re-connect...", "RabbitMQ");
         TryConnectIfNotDisposed();
     }
 
     private void OnConnectionShutdown(object sender, ShutdownEventArgs args)
     {
-        _logger.LogWarning("RabbitMQ | Connection is on shutdown. Trying to re-connect...");
+        _logger.LogWarning("{BrokerName} | Connection is on shutdown. Trying to re-connect...", "RabbitMQ");
         TryConnectIfNotDisposed();
     }
 
@@ -135,13 +135,13 @@ public sealed class RabbitMqPersistentConnection : IRabbitMqPersistentConnection
     {
         if (_disposed) return;
 
-        _logger.LogWarning("RabbitMQ | Connection is blocked. Trying to re-connect...");
+        _logger.LogWarning("{BrokerName} | Connection is blocked. Trying to re-connect...", "RabbitMQ");
         TryConnectIfNotDisposed();
     }
 
     private void OnConnectionUnblocked(object sender, EventArgs args)
     {
-        _logger.LogWarning("RabbitMQ | Connection is unblocked. Trying to re-connect...");
+        _logger.LogWarning("{BrokerName} | Connection is unblocked. Trying to re-connect...", "RabbitMQ");
         TryConnectIfNotDisposed();
     }
 
@@ -149,7 +149,7 @@ public sealed class RabbitMqPersistentConnection : IRabbitMqPersistentConnection
     {
         if (_disposed)
         {
-            _logger.LogDebug("RabbitMQ | Client is terminating. No action will be taken.");
+            _logger.LogDebug("{BrokerName} | Client is terminating. No action will be taken.", "RabbitMQ");
             return;
         }
 
