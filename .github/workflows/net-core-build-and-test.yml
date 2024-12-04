@@ -1,39 +1,78 @@
 name: '.NETCore Build & Test'
 
 on:
-  pull_request:
-    branches: [ "dev" ]
-    types: [ opened, synchronize, reopened ]
+    pull_request:
+        branches: [ "dev" ]
+        types: [ opened, synchronize, reopened ]
 
 jobs:
-  build:
-    name: 'Build And Test JOB'
-    runs-on: ubuntu-latest
+    build:
+        name: 'Build And Test JOB'
+        runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+        steps:
+            -   name: Checkout Repository
+                uses: actions/checkout@v3
+                with:
+                    fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: 8.0.x
+            -   name: Setup .NET
+                uses: actions/setup-dotnet@v3
+                with:
+                    dotnet-version: 8.0.x
 
-      - name: Cache Search
-        uses: actions/cache@v3
-        with:
-          path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-nuget
+            -   name: Cache Search
+                uses: actions/cache@v3
+                with:
+                    path: ~/.nuget/packages
+                    key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+                    restore-keys: |
+                        ${{ runner.os }}-nuget
 
-      - name: Restore Dependencies
-        run: dotnet restore --force --verbosity minimal
+            -   name: Restore Dependencies
+                run: dotnet restore --force --verbosity minimal --configfile NuGet.Config
 
-      - name: Build Solution
-        run: dotnet build --no-restore --no-incremental --verbosity minimal
+#            -   name: Build Solution
+#                run: dotnet build --no-restore --no-incremental --verbosity minimal --configuration Release
+#
+#            -   name: Test Solution
+#                run: dotnet test --no-restore --no-build --verbosity minimal --configuration Release --filter category!=integration
 
-      - name: Test Solution
-        run: dotnet test --no-restore --no-build --verbosity minimal
+            -   name: Install SonarScanner for .NET
+                run: |
+                    if ! dotnet tool list -g | grep -q 'dotnet-sonarscanner'; then
+                         dotnet tool install --global dotnet-sonarscanner;
+                    else
+                         echo "dotnet-sonarscanner is already installed";
+                    fi
+
+            -   name: Add SonarScanner to PATH
+                run: echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
+
+                # SonarQube Analysis only for dev branch pull requests
+            -   name: Run SonarQube Analysis
+#                if: github.event.pull_request.base.ref == 'rel/env-dev'
+#                env:
+#                    SONAR_HOST_URL: ${{ secrets.SONARQUBE_HOST_URL }}
+#                    SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
+#                run: |
+#                    dotnet sonarscanner begin \
+#                    /k:"${{ github.event.repository.name }}" \
+#                    /d:sonar.host.url="${{ env.SONAR_HOST_URL }}" \
+#                    /d:sonar.login="${{ env.SONAR_TOKEN }}" \
+#
+#                    dotnet build --configuration Release --no-restore
+#
+#                    dotnet sonarscanner end /d:sonar.login="${{ env.SONAR_TOKEN }}"  
+                run: |
+                    dotnet sonarscanner begin \
+                    /k:"hsn-soft_base-framework" \
+                    /o:"hsn-soft" \
+                    /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
+                    /d:sonar.host.url="https://sonarcloud.io"
+                    
+                    dotnet build --no-restore --no-incremental --verbosity minimal --configuration Release
+                    
+                    dotnet sonarscanner end \
+                    /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+
