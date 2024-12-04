@@ -51,7 +51,7 @@ jobs:
                 #                    /d:sonar.host.url="${{ env.SONAR_HOST_URL }}" \
                 #                    /d:sonar.login="${{ env.SONAR_TOKEN }}" \
                 #
-                #                    dotnet build --configuration Release --no-restore
+                #                    dotnet build --no-incremental --verbosity minimal --configuration Release
                 #
                 #                    dotnet sonarscanner end /d:sonar.login="${{ env.SONAR_TOKEN }}"  
                 run: |
