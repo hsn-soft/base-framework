@@ -15,12 +15,21 @@ public sealed class BaseLocalizationMiddleware : IMiddleware, ITransientDependen
         var cultureKey = context.Request.Headers["Accept-Language"];
         if (!string.IsNullOrEmpty(cultureKey))
         {
-            if (DoesCultureExist(cultureKey))
+            if (cultureKey.ToString().ToLower().Split("-").Length > 1)
             {
-                var culture = new CultureInfo(cultureKey);
-                Thread.CurrentThread.CurrentCulture = culture;
-                Thread.CurrentThread.CurrentUICulture = culture;
+                cultureKey = cultureKey.ToString().ToLower().Split("-")[0];
             }
+        }
+        else
+        {
+            cultureKey = "en";
+        }
+
+        if (DoesCultureExist(cultureKey))
+        {
+            var culture = new CultureInfo(cultureKey);
+            Thread.CurrentThread.CurrentCulture = culture;
+            Thread.CurrentThread.CurrentUICulture = culture;
         }
 
         await next(context);
