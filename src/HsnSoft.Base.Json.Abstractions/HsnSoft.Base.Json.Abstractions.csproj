@@ -16,7 +16,7 @@
     <ItemGroup>
         <PackageReference Include="DeepCloner" Version="0.10.4" />
     </ItemGroup>
-    
+
     <ItemGroup>
         <ProjectReference Include="..\HsnSoft.Base.Core\HsnSoft.Base.Core.csproj" />
     </ItemGroup>
