@@ -4,7 +4,7 @@
     <Import Project="..\..\common.props" />
 
     <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFramework>net9.0</TargetFramework>
         <AssemblyName>HsnSoft.Base.Json.SystemTextJson</AssemblyName>
         <PackageId>HsnSoft.Base.Json.SystemTextJson</PackageId>
         <AssetTargetFallback>$(AssetTargetFallback);portable-net45+win8+wp8+wpa81;</AssetTargetFallback>
@@ -17,7 +17,7 @@
     <ItemGroup>
         <ProjectReference Include="..\HsnSoft.Base.Json.Abstractions\HsnSoft.Base.Json.Abstractions.csproj" />
         <ProjectReference Include="..\HsnSoft.Base.Timing\HsnSoft.Base.Timing.csproj" />
-        <PackageReference Include="System.Text.Json" Version="8.0.5" />
+        <PackageReference Include="System.Text.Json" Version="$(MicrosoftAspNetCorePackageVersion)" />
     </ItemGroup>
 
 </Project>
