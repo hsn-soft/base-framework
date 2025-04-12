@@ -1,24 +1,24 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <Import Project="..\..\configureawait.props" />
-  <Import Project="..\..\common.props" />
+    <Import Project="..\..\configureawait.props" />
+    <Import Project="..\..\common.props" />
 
-  <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <AssemblyName>HsnSoft.Base.EventBus</AssemblyName>
-    <PackageId>HsnSoft.Base.EventBus</PackageId>
-    <AssetTargetFallback>$(AssetTargetFallback);portable-net45+win8+wp8+wpa81;</AssetTargetFallback>
-    <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
-    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
-    <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
-    <RootNamespace />
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <AssemblyName>HsnSoft.Base.EventBus</AssemblyName>
+        <PackageId>HsnSoft.Base.EventBus</PackageId>
+        <AssetTargetFallback>$(AssetTargetFallback);portable-net45+win8+wp8+wpa81;</AssetTargetFallback>
+        <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+        <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+        <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+        <RootNamespace />
+    </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\HsnSoft.Base.EventBus.Abstractions\HsnSoft.Base.EventBus.Abstractions.csproj" />
-    <ProjectReference Include="..\HsnSoft.Base.Guids\HsnSoft.Base.Guids.csproj" />
-    <ProjectReference Include="..\HsnSoft.Base.Json\HsnSoft.Base.Json.csproj" />
-    <ProjectReference Include="..\HsnSoft.Base.MultiTenancy\HsnSoft.Base.MultiTenancy.csproj" />
-  </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\HsnSoft.Base.EventBus.Abstractions\HsnSoft.Base.EventBus.Abstractions.csproj" />
+        <ProjectReference Include="..\HsnSoft.Base.Guids\HsnSoft.Base.Guids.csproj" />
+        <ProjectReference Include="..\HsnSoft.Base.Json\HsnSoft.Base.Json.csproj" />
+        <ProjectReference Include="..\HsnSoft.Base.MultiTenancy\HsnSoft.Base.MultiTenancy.csproj" />
+    </ItemGroup>
 
 </Project>

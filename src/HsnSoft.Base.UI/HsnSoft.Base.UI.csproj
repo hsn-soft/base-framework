@@ -1,26 +1,26 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <Import Project="..\..\configureawait.props" />
-  <Import Project="..\..\common.props" />
+    <Import Project="..\..\configureawait.props" />
+    <Import Project="..\..\common.props" />
 
-  <PropertyGroup>
-     <TargetFramework>net8.0</TargetFramework>
-    <AssemblyName>HsnSoft.Base.UI</AssemblyName>
-    <PackageId>HsnSoft.Base.UI</PackageId>
-    <AssetTargetFallback>$(AssetTargetFallback);portable-net45+win8+wp8+wpa81;</AssetTargetFallback>
-    <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
-    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
-    <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
-    <RootNamespace />
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <AssemblyName>HsnSoft.Base.UI</AssemblyName>
+        <PackageId>HsnSoft.Base.UI</PackageId>
+        <AssetTargetFallback>$(AssetTargetFallback);portable-net45+win8+wp8+wpa81;</AssetTargetFallback>
+        <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+        <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+        <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+        <RootNamespace />
+    </PropertyGroup>
 
-  <ItemGroup>
-    <EmbeddedResource Include="Localization\**\*.json" />
-    <Content Remove="Localization\**\*.json" />
-  </ItemGroup>
+    <ItemGroup>
+        <EmbeddedResource Include="Localization\**\*.json" />
+        <Content Remove="Localization\**\*.json" />
+    </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\HsnSoft.Base.ExceptionHandling\HsnSoft.Base.ExceptionHandling.csproj" />
-  </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\HsnSoft.Base.ExceptionHandling\HsnSoft.Base.ExceptionHandling.csproj" />
+    </ItemGroup>
 
 </Project>
