@@ -1,27 +1,27 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <Import Project="..\..\configureawait.props" />
-  <Import Project="..\..\common.props" />
+    <Import Project="..\..\configureawait.props" />
+    <Import Project="..\..\common.props" />
 
-  <PropertyGroup>
-     <TargetFramework>net8.0</TargetFramework>
-    <AssemblyName>HsnSoft.Base.Ddd.Application</AssemblyName>
-    <PackageId>HsnSoft.Base.Ddd.Application</PackageId>
-    <AssetTargetFallback>$(AssetTargetFallback);portable-net45+win8+wp8+wpa81;</AssetTargetFallback>
-    <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
-    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
-    <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
-    <RootNamespace />
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <AssemblyName>HsnSoft.Base.Ddd.Application</AssemblyName>
+        <PackageId>HsnSoft.Base.Ddd.Application</PackageId>
+        <AssetTargetFallback>$(AssetTargetFallback);portable-net45+win8+wp8+wpa81;</AssetTargetFallback>
+        <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+        <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+        <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+        <RootNamespace />
+    </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\HsnSoft.Base.Authorization\HsnSoft.Base.Authorization.csproj" />
-    <ProjectReference Include="..\HsnSoft.Base.Ddd.Application.Contracts\HsnSoft.Base.Ddd.Application.Contracts.csproj" />
-    <ProjectReference Include="..\HsnSoft.Base.Ddd.Domain\HsnSoft.Base.Ddd.Domain.csproj" />
-    <ProjectReference Include="..\HsnSoft.Base.Localization\HsnSoft.Base.Localization.csproj" />
-    <ProjectReference Include="..\HsnSoft.Base.ObjectMapping\HsnSoft.Base.ObjectMapping.csproj" />
-    <ProjectReference Include="..\HsnSoft.Base.Security\HsnSoft.Base.Security.csproj" />
-    <ProjectReference Include="..\HsnSoft.Base.Validation\HsnSoft.Base.Validation.csproj" />
-  </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\HsnSoft.Base.Authorization\HsnSoft.Base.Authorization.csproj" />
+        <ProjectReference Include="..\HsnSoft.Base.Ddd.Application.Contracts\HsnSoft.Base.Ddd.Application.Contracts.csproj" />
+        <ProjectReference Include="..\HsnSoft.Base.Ddd.Domain\HsnSoft.Base.Ddd.Domain.csproj" />
+        <ProjectReference Include="..\HsnSoft.Base.Localization\HsnSoft.Base.Localization.csproj" />
+        <ProjectReference Include="..\HsnSoft.Base.ObjectMapping\HsnSoft.Base.ObjectMapping.csproj" />
+        <ProjectReference Include="..\HsnSoft.Base.Security\HsnSoft.Base.Security.csproj" />
+        <ProjectReference Include="..\HsnSoft.Base.Validation\HsnSoft.Base.Validation.csproj" />
+    </ItemGroup>
 
 </Project>
