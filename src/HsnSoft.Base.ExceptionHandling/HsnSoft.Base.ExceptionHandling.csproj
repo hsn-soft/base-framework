@@ -4,7 +4,7 @@
     <Import Project="..\..\common.props" />
 
     <PropertyGroup>
-         <TargetFramework>net8.0</TargetFramework>
+        <TargetFramework>net9.0</TargetFramework>
         <GenerateEmbeddedFilesManifest>true</GenerateEmbeddedFilesManifest>
         <RootNamespace />
     </PropertyGroup>
@@ -21,5 +21,5 @@
         <EmbeddedResource Include="HsnSoft\Base\ExceptionHandling\Localization\**\*.json" />
         <Content Remove="HsnSoft\Base\ExceptionHandling\Localization\**\*.json" />
     </ItemGroup>
-    
+
 </Project>

@@ -1,22 +1,22 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-    <Import Project="..\..\configureawait.props"/>
-    <Import Project="..\..\common.props"/>
+    <Import Project="..\..\configureawait.props" />
+    <Import Project="..\..\common.props" />
 
     <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFramework>net9.0</TargetFramework>
         <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
         <AssemblyName>HsnSoft.Base.AspNetCore.Mvc.UI</AssemblyName>
         <PackageId>HsnSoft.Base.AspNetCore.Mvc.UI</PackageId>
         <AssetTargetFallback>$(AssetTargetFallback);portable-net45+win8+wp8+wpa81;</AssetTargetFallback>
         <IsPackable>true</IsPackable>
         <OutputType>Library</OutputType>
-        <RootNamespace/>
+        <RootNamespace />
     </PropertyGroup>
 
     <!--Temporary-->
     <ItemGroup>
-        <ProjectReference Include="..\HsnSoft.Base.AutoMapper\HsnSoft.Base.AutoMapper.csproj"/>
+        <ProjectReference Include="..\HsnSoft.Base.AutoMapper\HsnSoft.Base.AutoMapper.csproj" />
         <!--<PackageReference Include="AutoMapper" Version="10.1.1" />-->
         <!--<PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="8.1.1" />-->
     </ItemGroup>
@@ -27,8 +27,8 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\HsnSoft.Base.AspNetCore.Mvc\HsnSoft.Base.AspNetCore.Mvc.csproj"/>
-        <ProjectReference Include="..\HsnSoft.Base.UI.Navigation\HsnSoft.Base.UI.Navigation.csproj"/>
+        <ProjectReference Include="..\HsnSoft.Base.AspNetCore.Mvc\HsnSoft.Base.AspNetCore.Mvc.csproj" />
+        <ProjectReference Include="..\HsnSoft.Base.UI.Navigation\HsnSoft.Base.UI.Navigation.csproj" />
     </ItemGroup>
 
 </Project>

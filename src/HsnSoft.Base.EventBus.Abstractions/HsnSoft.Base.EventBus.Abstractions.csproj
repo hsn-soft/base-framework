@@ -2,9 +2,9 @@
 
     <Import Project="..\..\configureawait.props" />
     <Import Project="..\..\common.props" />
-    
+
     <PropertyGroup>
-         <TargetFramework>net8.0</TargetFramework>
+        <TargetFramework>net9.0</TargetFramework>
         <RootNamespace />
     </PropertyGroup>
 
@@ -12,9 +12,9 @@
       <ProjectReference Include="..\HsnSoft.Base.ObjectExtending\HsnSoft.Base.ObjectExtending.csproj" />
     </ItemGroup> -->
 
-<!-- Temporary -->
-        <ItemGroup>
-      <ProjectReference Include="..\HsnSoft.Base.Core\HsnSoft.Base.Core.csproj" />
+    <!-- Temporary -->
+    <ItemGroup>
+        <ProjectReference Include="..\HsnSoft.Base.Core\HsnSoft.Base.Core.csproj" />
     </ItemGroup>
     <!-- Temporary -->
 

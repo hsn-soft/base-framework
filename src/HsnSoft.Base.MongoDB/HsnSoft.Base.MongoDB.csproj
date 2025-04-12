@@ -4,7 +4,7 @@
     <Import Project="..\..\common.props" />
 
     <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFramework>net9.0</TargetFramework>
         <AssemblyName>HsnSoft.Base.MongoDB</AssemblyName>
         <PackageId>HsnSoft.Base.MongoDB</PackageId>
         <AssetTargetFallback>$(AssetTargetFallback);portable-net45+win8+wp8+wpa81;</AssetTargetFallback>
@@ -17,7 +17,7 @@
     <ItemGroup>
         <PackageReference Include="MongoDB.Driver" Version="3.3.0" />
     </ItemGroup>
-    
+
     <ItemGroup>
         <ProjectReference Include="..\HsnSoft.Base.Ddd.Domain\HsnSoft.Base.Ddd.Domain.csproj" />
         <ProjectReference Include="..\HsnSoft.Base.Json\HsnSoft.Base.Json.csproj" />

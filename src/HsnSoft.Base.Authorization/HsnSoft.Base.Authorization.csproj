@@ -1,31 +1,31 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <Import Project="..\..\configureawait.props" />
-  <Import Project="..\..\common.props" />
+    <Import Project="..\..\configureawait.props" />
+    <Import Project="..\..\common.props" />
 
-  <PropertyGroup>
-     <TargetFramework>net8.0</TargetFramework>
-    <AssemblyName>HsnSoft.Base.Authorization</AssemblyName>
-    <PackageId>HsnSoft.Base.Authorization</PackageId>
-    <AssetTargetFallback>$(AssetTargetFallback);portable-net45+win8+wp8+wpa81;</AssetTargetFallback>
-    <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
-    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
-    <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
-    <RootNamespace />
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <AssemblyName>HsnSoft.Base.Authorization</AssemblyName>
+        <PackageId>HsnSoft.Base.Authorization</PackageId>
+        <AssetTargetFallback>$(AssetTargetFallback);portable-net45+win8+wp8+wpa81;</AssetTargetFallback>
+        <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+        <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+        <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+        <RootNamespace />
+    </PropertyGroup>
 
-  <ItemGroup>
-    <None Remove="HsnSoft\Base\Authorization\Localization\*.json" />
-    <EmbeddedResource Include="HsnSoft\Base\Authorization\Localization\*.json" />
-  </ItemGroup>
+    <ItemGroup>
+        <None Remove="HsnSoft\Base\Authorization\Localization\*.json" />
+        <EmbeddedResource Include="HsnSoft\Base\Authorization\Localization\*.json" />
+    </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\HsnSoft.Base.Authorization.Abstractions\HsnSoft.Base.Authorization.Abstractions.csproj" />
-  </ItemGroup>
-  
-  <ItemGroup>
-    <ProjectReference Include="..\HsnSoft.Base.Localization\HsnSoft.Base.Localization.csproj" />
-    <ProjectReference Include="..\HsnSoft.Base.Security\HsnSoft.Base.Security.csproj" />
-  </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\HsnSoft.Base.Authorization.Abstractions\HsnSoft.Base.Authorization.Abstractions.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\HsnSoft.Base.Localization\HsnSoft.Base.Localization.csproj" />
+        <ProjectReference Include="..\HsnSoft.Base.Security\HsnSoft.Base.Security.csproj" />
+    </ItemGroup>
 
 </Project>
