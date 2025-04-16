@@ -47,7 +47,8 @@ public class EventBusAzure : IEventBus, IDisposable
         RegisterSubscriptionClientMessageHandlerAsync().GetAwaiter().GetResult();
     }
 
-    public async Task PublishAsync<TEventMessage>(TEventMessage eventMessage, ParentMessageEnvelope parentMessage = null, string correlationId = null, bool isExchangeEvent = true, bool isReQueuePublish = false) where TEventMessage : IIntegrationEventMessage
+    public async Task PublishAsync<TEventMessage>(TEventMessage eventMessage, ParentMessageEnvelope parentMessage = null, string correlationId = null, bool isExchangeEvent = true, bool isReQueuePublish = false)
+        where TEventMessage : IIntegrationEventMessage
     {
         var eventName = eventMessage.GetType().Name;
         eventName = TrimEventName(eventName);
@@ -82,12 +83,12 @@ public class EventBusAzure : IEventBus, IDisposable
         _logger.LogDebug("AzureServiceBus | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] COMPLETED", _eventBusConfig.ConsumerClientInfo, eventName, @event.MessageId.ToString());
     }
 
-    public void Subscribe<T, TH>() where T : IIntegrationEventMessage where TH : IIntegrationEventHandler<T>
+    public void Subscribe<T, TH>(ushort fetchCount = 1) where T : IIntegrationEventMessage where TH : IIntegrationEventHandler<T>
     {
-        Subscribe(typeof(T), typeof(TH));
+        Subscribe(typeof(T), typeof(TH), fetchCount);
     }
 
-    public void Subscribe(Type eventType, Type eventHandlerType)
+    public void Subscribe(Type eventType, Type eventHandlerType, ushort fetchCount = 1)
     {
         if (!eventType.IsAssignableTo(typeof(IIntegrationEventMessage))) throw new TypeAccessException();
         if (!eventHandlerType.IsAssignableTo(typeof(IIntegrationEventHandler))) throw new TypeAccessException();
@@ -100,7 +101,8 @@ public class EventBusAzure : IEventBus, IDisposable
         {
             try
             {
-                _serviceBusPersisterConnection.AdministrationClient.CreateRuleAsync(_eventBusConfig.ExchangeName, _eventBusConfig.ConsumerClientName, new CreateRuleOptions { Filter = new CorrelationRuleFilter { Subject = eventName }, Name = eventName }).GetAwaiter().GetResult();
+                _serviceBusPersisterConnection.AdministrationClient
+                    .CreateRuleAsync(_eventBusConfig.ExchangeName, _eventBusConfig.ConsumerClientName, new CreateRuleOptions { Filter = new CorrelationRuleFilter { Subject = eventName }, Name = eventName }).GetAwaiter().GetResult();
             }
             catch (ServiceBusException)
             {
@@ -204,10 +206,10 @@ public class EventBusAzure : IEventBus, IDisposable
 
                     try
                     {
-                        var eventType = _subsManager.GetEventTypeByName($"{_eventBusConfig.EventNamePrefix}{eventName}{_eventBusConfig.EventNameSuffix}");
+                        var eventType = _subsManager.GetEventInfoByName($"{_eventBusConfig.EventNamePrefix}{eventName}{_eventBusConfig.EventNameSuffix}")?.EventType;
 
                         Type genericClass = typeof(MessageEnvelope<>);
-                        Type constructedClass = genericClass.MakeGenericType(eventType);
+                        Type constructedClass = genericClass.MakeGenericType(eventType!);
                         var @event = JsonConvert.DeserializeObject(message, constructedClass);
 
                         _logger.LogDebug("AzureServiceBus | {ClientInfo} CONSUMER [ {EventName} ] => Handling STARTED : Event [ {Event} ]", _eventBusConfig.ConsumerClientInfo, eventName, @event);

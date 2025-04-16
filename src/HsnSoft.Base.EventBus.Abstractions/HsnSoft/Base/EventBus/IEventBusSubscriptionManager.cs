@@ -12,18 +12,18 @@ public interface IEventBusSubscriptionManager
     bool IsEmpty { get; }
     void Clear();
 
-    void AddSubscription<T, TH>() where T : IIntegrationEventMessage where TH : IIntegrationEventHandler<T>;
+    void AddSubscription<T, TH>(ushort fetchCount = 1) where T : IIntegrationEventMessage where TH : IIntegrationEventHandler<T>;
 
-    void AddSubscription(Type eventType, Type eventHandlerType);
+    void AddSubscription(Type eventType, Type eventHandlerType, ushort fetchCount = 1);
 
     bool HasSubscriptionsForEvent<T>() where T : IIntegrationEventMessage;
     bool HasSubscriptionsForEvent(string eventName);
 
-    IEnumerable<SubscriptionInfo> GetHandlersForEvent<T>() where T : IIntegrationEventMessage;
-    IEnumerable<SubscriptionInfo> GetHandlersForEvent(string eventName);
+    IEnumerable<IntegrationEventHandlerInfo> GetHandlersForEvent<T>() where T : IIntegrationEventMessage;
+    IEnumerable<IntegrationEventHandlerInfo> GetHandlersForEvent(string eventName);
 
     [CanBeNull]
-    Type GetEventTypeByName(string eventName);
+    IntegrationEventInfo GetEventInfoByName(string eventName);
 
     string GetEventKey<T>() where T : IIntegrationEventMessage;
 

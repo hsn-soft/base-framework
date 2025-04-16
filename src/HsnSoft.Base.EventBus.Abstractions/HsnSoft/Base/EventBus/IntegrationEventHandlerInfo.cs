@@ -2,14 +2,14 @@ using System;
 
 namespace HsnSoft.Base.EventBus;
 
-public class SubscriptionInfo
+public class IntegrationEventHandlerInfo
 {
     public Type HandlerType { get; }
 
-    private SubscriptionInfo(Type handlerType)
+    private IntegrationEventHandlerInfo(Type handlerType)
     {
         HandlerType = handlerType ?? throw new ArgumentNullException(nameof(handlerType));
     }
 
-    public static SubscriptionInfo Typed(Type handlerType) => new(handlerType);
+    public static IntegrationEventHandlerInfo Typed(Type handlerType) => new(handlerType);
 }
