@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using JetBrains.Annotations;
 using RabbitMQ.Client;
 
@@ -8,8 +9,8 @@ public interface IRabbitMqPersistentConnection : IDisposable
 {
     bool IsConnected { get; }
 
-    bool TryConnect();
+    Task<bool> TryConnectAsync();
 
     [CanBeNull]
-    IModel CreateModel();
+    Task<IChannel> CreateModelAsync();
 }

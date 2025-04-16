@@ -8,12 +8,9 @@ public record ReQueuedEto(
     [NotNull] string ReQueuedMessageTypeName
 ) : IIntegrationEventMessage
 {
-    [NotNull]
-    public string ReQueuedMessageEnvelopeConsumer { get; } = ReQueuedMessageEnvelopeConsumer;
+    [NotNull] public string ReQueuedMessageEnvelopeConsumer { get; } = ReQueuedMessageEnvelopeConsumer;
 
-    [NotNull]
-    public object ReQueuedMessageObject { get; } = ReQueuedMessageObject;
+    [NotNull] public object ReQueuedMessageObject { get; } = ReQueuedMessageObject;
 
-    [NotNull]
-    public string ReQueuedMessageTypeName { get; } = ReQueuedMessageTypeName;
+    [NotNull] public string ReQueuedMessageTypeName { get; } = ReQueuedMessageTypeName;
 }

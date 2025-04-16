@@ -30,8 +30,8 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
     private readonly ICurrentUser _currentUser;
     private readonly IEventBusSubscriptionManager _subsManager;
 
-    private static ushort MaxConsumerParallelThreadCount { get; set; } = 5;
-    private static ushort MaxConsumerMaxFetchCount { get; set; } = 10;
+    private static ushort MaxChannelParallelThreadCount = 5;
+    private static ushort MaxConsumerMaxFetchCount = 10;
     private readonly int _publishRetryCount = 5;
     private readonly List<RabbitMqConsumer> _consumers;
     private bool _disposed;
@@ -48,14 +48,9 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
         _currentUser = serviceProvider.GetService<ICurrentUser>();
 
         _rabbitMqEventBusConfig = serviceProvider.GetRequiredService<IOptions<RabbitMqEventBusConfig>>().Value;
-        if (_rabbitMqEventBusConfig.ConsumerParallelThreadCount > MaxConsumerParallelThreadCount)
+        if (_rabbitMqEventBusConfig.ChannelParallelThreadCount > MaxChannelParallelThreadCount)
         {
-            _rabbitMqEventBusConfig.ConsumerParallelThreadCount = MaxConsumerParallelThreadCount;
-        }
-
-        if (_rabbitMqEventBusConfig.ConsumerMaxFetchCount > MaxConsumerMaxFetchCount)
-        {
-            _rabbitMqEventBusConfig.ConsumerMaxFetchCount = MaxConsumerMaxFetchCount;
+            _rabbitMqEventBusConfig.ChannelParallelThreadCount = MaxChannelParallelThreadCount;
         }
 
         _subsManager = serviceProvider.GetService<IEventBusSubscriptionManager>();
@@ -64,11 +59,12 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
         _consumers = new List<RabbitMqConsumer>();
     }
 
-    public async Task PublishAsync<TEventMessage>(TEventMessage eventMessage, ParentMessageEnvelope parentMessage = null, string correlationId = null, bool isExchangeEvent = true, bool isReQueuePublish = false) where TEventMessage : IIntegrationEventMessage
+    public async Task PublishAsync<TEventMessage>(TEventMessage eventMessage, ParentMessageEnvelope parentMessage = null, string correlationId = null, bool isExchangeEvent = true, bool isReQueuePublish = false)
+        where TEventMessage : IIntegrationEventMessage
     {
         if (!_persistentConnection.IsConnected)
         {
-            _persistentConnection.TryConnect();
+            await _persistentConnection.TryConnectAsync();
         }
 
         _publishing = true;
@@ -96,7 +92,8 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
             @event.ReQueuedCount++;
         }
 
-        _logger.LogDebug("{BrokerName} | PRODUCER {ClientInfo} EVENT [ {EventName} ] => MessageId [ {MessageId} ] {OperationStatus}", "RabbitMQ", _rabbitMqEventBusConfig.ConsumerClientInfo, eventName, @event.MessageId.ToString(), "STARTED");
+        _logger.LogDebug("{BrokerName} | PRODUCER {ClientInfo} EVENT [ {EventName} ] => MessageId [ {MessageId} ] {OperationStatus}", "RabbitMQ", _rabbitMqEventBusConfig.ConsumerClientInfo, eventName, @event.MessageId.ToString(),
+            "STARTED");
 
         var policy = Policy.Handle<BrokerUnreachableException>()
             .Or<SocketException>()
@@ -127,51 +124,51 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
 
         var body = JsonSerializer.SerializeToUtf8Bytes(@event, @event.GetType(), new JsonSerializerOptions { WriteIndented = true });
 
-        policy.Execute(() =>
+        await policy.Execute(async () =>
         {
-            using var publisherChannel = _persistentConnection.CreateModel();
+            await using var publisherChannel = await _persistentConnection.CreateModelAsync()!;
 
             var publishQueueName = string.Empty;
             if (!isReQueuePublish && isExchangeEvent)
             {
-                publisherChannel.ExchangeDeclare(exchange: _rabbitMqEventBusConfig.ExchangeName, type: "direct"); //Ensure exchange exists while publishing
+                await publisherChannel.ExchangeDeclareAsync(exchange: _rabbitMqEventBusConfig.ExchangeName, type: "direct"); //Ensure exchange exists while publishing
             }
             else
             {
                 publishQueueName = eventName.Equals("ReQueued")
-                    ? EventNameHelper.GetConsumerReQueuedEventQueueName((eventMessage as ReQueuedEto).ReQueuedMessageEnvelopeConsumer, eventName)
+                    ? EventNameHelper.GetConsumerReQueuedEventQueueName((eventMessage as ReQueuedEto)?.ReQueuedMessageEnvelopeConsumer, eventName)
                     : EventNameHelper.GetConsumerClientEventQueueName(_rabbitMqEventBusConfig, eventName);
 
                 // Direct re-queue, no-exchange
-                publisherChannel?.QueueDeclare(queue: publishQueueName,
+                await publisherChannel?.QueueDeclareAsync(queue: publishQueueName,
                     durable: true,
                     exclusive: false,
                     autoDelete: false,
-                    arguments: null);
+                    arguments: null)!;
             }
 
-            var properties = publisherChannel?.CreateBasicProperties();
-            properties!.DeliveryMode = (int)DeliveryMode.Persistent;
-
-            publisherChannel.BasicPublish(
+            await publisherChannel!.BasicPublishAsync(
                 exchange: !isReQueuePublish && isExchangeEvent ? _rabbitMqEventBusConfig.ExchangeName : "",
                 routingKey: !isReQueuePublish && isExchangeEvent ? eventName : publishQueueName,
                 mandatory: true,
-                basicProperties: properties,
+                basicProperties: new BasicProperties { DeliveryMode = DeliveryModes.Persistent },
                 body: body);
         });
 
         Thread.Sleep(TimeSpan.FromMilliseconds(50));
-        _logger.LogDebug("{BrokerName} | PRODUCER {ClientInfo} EVENT [ {EventName} ] => MessageId [ {MessageId} ] {OperationStatus}", "RabbitMQ", _rabbitMqEventBusConfig.ConsumerClientInfo, eventName, @event.MessageId.ToString(), "COMPLETED");
+        _logger.LogDebug("{BrokerName} | PRODUCER {ClientInfo} EVENT [ {EventName} ] => MessageId [ {MessageId} ] {OperationStatus}", "RabbitMQ", _rabbitMqEventBusConfig.ConsumerClientInfo, eventName, @event.MessageId.ToString(),
+            "COMPLETED");
         _publishing = false;
     }
 
-    public void Subscribe<T, TH>() where T : IIntegrationEventMessage where TH : IIntegrationEventHandler<T>
+    public void Subscribe<TEvent, THandler>(ushort fetchCount = 1)
+        where TEvent : IIntegrationEventMessage
+        where THandler : IIntegrationEventHandler<TEvent>
     {
-        Subscribe(typeof(T), typeof(TH));
+        Subscribe(typeof(TEvent), typeof(THandler), fetchCount);
     }
 
-    public void Subscribe(Type eventType, Type eventHandlerType)
+    public void Subscribe(Type eventType, Type eventHandlerType, ushort fetchCount = 1)
     {
         if (!eventType.IsAssignableTo(typeof(IIntegrationEventMessage))) throw new TypeAccessException();
         if (!eventHandlerType.IsAssignableTo(typeof(IIntegrationEventHandler))) throw new TypeAccessException();
@@ -179,48 +176,57 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
         var eventName = eventType.Name;
         eventName = TrimEventName(eventName);
 
-        if (!_subsManager.HasSubscriptionsForEvent(eventName))
-        {
-            if (!_persistentConnection.IsConnected)
-            {
-                _persistentConnection.TryConnect();
-            }
-
-            var consumerQueueName = EventNameHelper.GetConsumerClientEventQueueName(_rabbitMqEventBusConfig, eventName);
-            using (var channel = _persistentConnection.CreateModel())
-            {
-                channel.ExchangeDeclare(exchange: _rabbitMqEventBusConfig.ExchangeName, type: "direct");
-
-                channel.QueueDeclare(queue: consumerQueueName, //Ensure queue exists while consuming
-                    durable: true,
-                    exclusive: false,
-                    autoDelete: false,
-                    arguments: null);
-
-                channel.QueueBind(queue: consumerQueueName,
-                    exchange: _rabbitMqEventBusConfig.ExchangeName,
-                    routingKey: eventName);
-            }
-        }
+        AddQueueBindForEventSubscriptionAsync(eventName).GetAwaiter().GetResult();
 
         _logger.LogDebug("{BrokerName} | Subscribing to event {EventName} with {EventHandler}", "RabbitMQ", eventName, eventHandlerType.Name);
 
-        _subsManager.AddSubscription(eventType, eventHandlerType);
+        _subsManager.AddSubscription(eventType, eventHandlerType, fetchCount);
 
-        for (int i = 0; i < _rabbitMqEventBusConfig.ConsumerParallelThreadCount; i++)
+        for (int i = 0; i < _rabbitMqEventBusConfig.ChannelParallelThreadCount; i++)
         {
-            var rabbitMqConsumer = new RabbitMqConsumer(_serviceScopeFactory, _persistentConnection, _subsManager, _rabbitMqEventBusConfig, _logger);
-            rabbitMqConsumer.StartBasicConsume(eventName);
+            var rabbitMqConsumer = new RabbitMqConsumer(_serviceScopeFactory, _persistentConnection, _subsManager, _rabbitMqEventBusConfig, _logger, eventName);
+            rabbitMqConsumer.StartBasicConsume();
 
             _consumers.Add(rabbitMqConsumer);
         }
+    }
+
+    private async Task AddQueueBindForEventSubscriptionAsync(string eventName)
+    {
+        var containsKey = _subsManager.HasSubscriptionsForEvent(eventName);
+        if (containsKey)
+        {
+            return;
+        }
+
+        if (!_persistentConnection.IsConnected)
+        {
+            await _persistentConnection.TryConnectAsync();
+        }
+
+        var consumerQueueName = EventNameHelper.GetConsumerClientEventQueueName(_rabbitMqEventBusConfig, eventName);
+        await using var channel = await _persistentConnection.CreateModelAsync()!;
+
+        //Ensure exchange exists while consuming
+        await channel.ExchangeDeclareAsync(exchange: _rabbitMqEventBusConfig.ExchangeName, type: "direct");
+
+        //Ensure queue exists while consuming
+        await channel.QueueDeclareAsync(queue: consumerQueueName,
+            durable: true,
+            exclusive: false,
+            autoDelete: false,
+            arguments: null);
+
+        await channel.QueueBindAsync(queue: consumerQueueName,
+            exchange: _rabbitMqEventBusConfig.ExchangeName,
+            routingKey: eventName);
     }
 
     public void Dispose()
     {
         if (_disposed) return;
         _disposed = true;
-        _logger.LogInformation("{BrokerName} | {OperationStatus}", "RabbitMQ","TERMINATING");
+        _logger.LogInformation("{BrokerName} | {OperationStatus}", "RabbitMQ", "TERMINATING");
 
         _logger.LogDebug("{BrokerName} | Consumers terminating...", "RabbitMQ");
         Task.WaitAll(_consumers.Select(consumer => Task.Run(consumer.Dispose)).ToArray());
@@ -243,7 +249,7 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
             _persistentConnection?.Dispose();
         }
 
-        _logger.LogInformation("{BrokerName} | {OperationStatus}", "RabbitMQ","TERMINATED");
+        _logger.LogInformation("{BrokerName} | {OperationStatus}", "RabbitMQ", "TERMINATED");
     }
 
     private string TrimEventName(string eventName) => EventNameHelper.TrimEventName(_rabbitMqEventBusConfig, eventName);

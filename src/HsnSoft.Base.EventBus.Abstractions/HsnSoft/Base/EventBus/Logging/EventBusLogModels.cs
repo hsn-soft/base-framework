@@ -14,18 +14,15 @@ public sealed record ProduceMessageLogModel(
 {
     public string LogId { get; } = LogId;
 
-    [CanBeNull]
-    public string CorrelationId { get; } = CorrelationId;
+    [CanBeNull] public string CorrelationId { get; } = CorrelationId;
 
     public string Facility { get; } = Facility;
 
     public DateTimeOffset ProduceDateTimeUtc { get; } = ProduceDateTimeUtc;
 
-    [CanBeNull]
-    public MessageLogDetail MessageLog { get; } = MessageLog;
+    [CanBeNull] public MessageLogDetail MessageLog { get; } = MessageLog;
 
-    [CanBeNull]
-    public string ProduceDetails { get; } = ProduceDetails;
+    [CanBeNull] public string ProduceDetails { get; } = ProduceDetails;
 }
 
 public sealed record ConsumeMessageLogModel(
@@ -41,22 +38,18 @@ public sealed record ConsumeMessageLogModel(
 {
     public string LogId { get; } = LogId;
 
-    [CanBeNull]
-    public string CorrelationId { get; } = CorrelationId;
+    [CanBeNull] public string CorrelationId { get; } = CorrelationId;
 
     public string Facility { get; } = Facility;
     public string Producer { get; } = Producer;
 
     public DateTimeOffset ConsumeDateTimeUtc { get; } = ConsumeDateTimeUtc;
 
-    [CanBeNull]
-    public MessageLogDetail MessageLog { get; } = MessageLog;
+    [CanBeNull] public MessageLogDetail MessageLog { get; } = MessageLog;
 
-    [CanBeNull]
-    public string ConsumeDetails { get; } = ConsumeDetails;
+    [CanBeNull] public string ConsumeDetails { get; } = ConsumeDetails;
 
-    [CanBeNull]
-    public string ConsumeHandleWorkingTime { get; } = ConsumeHandleWorkingTime;
+    [CanBeNull] public string ConsumeHandleWorkingTime { get; } = ConsumeHandleWorkingTime;
 }
 
 public sealed record MessageLogDetail(
@@ -75,15 +68,12 @@ public sealed record MessageLogDetail(
     public DateTimeOffset MessageTime { get; } = MessageTime;
     public dynamic Message { get; } = Message;
 
-    [CanBeNull]
-    public EventUserDetail UserInfo { get; } = UserInfo;
+    [CanBeNull] public EventUserDetail UserInfo { get; } = UserInfo;
 }
 
 public sealed record EventUserDetail([CanBeNull] string UserId, [CanBeNull] string Role)
 {
-    [CanBeNull]
-    public string UserId { get; } = UserId;
+    [CanBeNull] public string UserId { get; } = UserId;
 
-    [CanBeNull]
-    public string Role { get; } = Role;
+    [CanBeNull] public string Role { get; } = Role;
 }

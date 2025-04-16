@@ -99,13 +99,15 @@ public sealed class KafkaConsumer
                     consumer.Commit(result);
                     consumer.StoreOffset(result);
 
-                    _logger.LogDebug("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Received: {Key}:{Message} from partition: {Partition}", _kafkaEventBusConfig.ConsumerClientInfo, topicName, result.Message.Key, message, result.Partition.Value);
+                    _logger.LogDebug("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Received: {Key}:{Message} from partition: {Partition}", _kafkaEventBusConfig.ConsumerClientInfo, topicName, result.Message.Key, message,
+                        result.Partition.Value);
                     OnMessageReceived?.Invoke(this, new KeyValuePair<Type, string>(eventType, message));
                 }
                 catch (ConsumeException ce)
                 {
                     if (ce.Error.IsFatal) throw;
-                    _logger.LogDebug("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Consume ERROR : {ConsumeError} | {Time}", _kafkaEventBusConfig.ConsumerClientInfo, topicName, ce.Message, DateTime.UtcNow.ToString("yyyy-MM-dd hh:mm:ss zz"));
+                    _logger.LogDebug("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Consume ERROR : {ConsumeError} | {Time}", _kafkaEventBusConfig.ConsumerClientInfo, topicName, ce.Message,
+                        DateTime.UtcNow.ToString("yyyy-MM-dd hh:mm:ss zz"));
                 }
 
                 // loop wait period

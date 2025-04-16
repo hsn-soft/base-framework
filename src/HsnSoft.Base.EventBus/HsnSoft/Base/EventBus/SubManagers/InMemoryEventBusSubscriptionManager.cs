@@ -7,19 +7,19 @@ namespace HsnSoft.Base.EventBus.SubManagers;
 
 public class InMemoryEventBusSubscriptionManager : IEventBusSubscriptionManager
 {
-    private readonly Dictionary<string, List<SubscriptionInfo>> _handlers = new();
-    private readonly Dictionary<string, Type> _eventTypes = new();
+    private readonly Dictionary<string, List<IntegrationEventHandlerInfo>> _subsHandlerList = new();
+    private readonly Dictionary<string, IntegrationEventInfo> _eventList = new();
 
     public Func<string, string> EventNameGetter { get; set; }
-    public bool IsEmpty => _handlers is { Count: 0 };
-    public void Clear() => _handlers.Clear();
+    public bool IsEmpty => _subsHandlerList is { Count: 0 };
+    public void Clear() => _subsHandlerList.Clear();
 
-    public void AddSubscription<T, TH>() where T : IIntegrationEventMessage where TH : IIntegrationEventHandler<T>
+    public void AddSubscription<T, TH>(ushort fetchCount = 1) where T : IIntegrationEventMessage where TH : IIntegrationEventHandler<T>
     {
-        AddSubscription(typeof(T), typeof(TH));
+        AddSubscription(typeof(T), typeof(TH), fetchCount);
     }
 
-    public void AddSubscription(Type eventType, Type eventHandlerType)
+    public void AddSubscription(Type eventType, Type eventHandlerType, ushort fetchCount = 1)
     {
         if (!eventType.IsAssignableTo(typeof(IIntegrationEventMessage))) throw new TypeAccessException();
         if (!eventHandlerType.IsAssignableTo(typeof(IIntegrationEventHandler))) throw new TypeAccessException();
@@ -28,9 +28,9 @@ public class InMemoryEventBusSubscriptionManager : IEventBusSubscriptionManager
 
         DoAddSubscription(eventHandlerType, eventName);
 
-        if (!_eventTypes.ContainsKey(eventName))
+        if (!_eventList.ContainsKey(eventName))
         {
-            _eventTypes[eventName] = eventType;
+            _eventList[eventName] = IntegrationEventInfo.Typed(eventType, fetchCount);
         }
     }
 
@@ -40,17 +40,17 @@ public class InMemoryEventBusSubscriptionManager : IEventBusSubscriptionManager
         return HasSubscriptionsForEvent(key);
     }
 
-    public bool HasSubscriptionsForEvent(string eventName) => _handlers.ContainsKey(eventName);
+    public bool HasSubscriptionsForEvent(string eventName) => _subsHandlerList.ContainsKey(eventName);
 
-    public IEnumerable<SubscriptionInfo> GetHandlersForEvent<T>() where T : IIntegrationEventMessage
+    public IEnumerable<IntegrationEventHandlerInfo> GetHandlersForEvent<T>() where T : IIntegrationEventMessage
     {
         var key = GetEventKey<T>();
         return GetHandlersForEvent(key);
     }
 
-    public IEnumerable<SubscriptionInfo> GetHandlersForEvent(string eventName) => _handlers[eventName];
+    public IEnumerable<IntegrationEventHandlerInfo> GetHandlersForEvent(string eventName) => _subsHandlerList[eventName];
 
-    public Type GetEventTypeByName(string eventName) => _eventTypes[eventName];
+    public IntegrationEventInfo GetEventInfoByName(string eventName) => _eventList[eventName];
 
     public string GetEventKey<T>() where T : IIntegrationEventMessage
     {
@@ -69,15 +69,14 @@ public class InMemoryEventBusSubscriptionManager : IEventBusSubscriptionManager
     {
         if (!HasSubscriptionsForEvent(eventName))
         {
-            _handlers.Add(eventName, new List<SubscriptionInfo>());
+            _subsHandlerList.Add(eventName, new List<IntegrationEventHandlerInfo>());
         }
 
-        if (_handlers[eventName].Any(s => s.HandlerType == handlerType))
+        if (_subsHandlerList[eventName].Any(s => s.HandlerType == handlerType))
         {
-            throw new ArgumentException(
-                $"Handler Type {handlerType.Name} already registered for '{eventName}'", nameof(handlerType));
+            throw new ArgumentException($"Handler Type {handlerType.Name} already registered for '{eventName}'", nameof(handlerType));
         }
 
-        _handlers[eventName].Add(SubscriptionInfo.Typed(handlerType));
+        _subsHandlerList[eventName].Add(IntegrationEventHandlerInfo.Typed(handlerType));
     }
 }
