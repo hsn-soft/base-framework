@@ -48,7 +48,8 @@ public class EventBusKafka : IEventBus, IDisposable
         _messageProcessorTasks = new List<Task>();
     }
 
-    public async Task PublishAsync<TEventMessage>(TEventMessage eventMessage, ParentMessageEnvelope parentMessage = null, string correlationId = null, bool isExchangeEvent = true, bool isReQueuePublish = false) where TEventMessage : IIntegrationEventMessage
+    public async Task PublishAsync<TEventMessage>(TEventMessage eventMessage, ParentMessageEnvelope parentMessage = null, string correlationId = null, bool isExchangeEvent = true, bool isReQueuePublish = false)
+        where TEventMessage : IIntegrationEventMessage
     {
         var eventName = eventMessage.GetType().Name;
         eventName = TrimEventName(eventName);
@@ -77,12 +78,12 @@ public class EventBusKafka : IEventBus, IDisposable
         await kafkaProducer.StartSendingMessages(eventName, @event);
     }
 
-    public void Subscribe<T, TH>() where T : IIntegrationEventMessage where TH : IIntegrationEventHandler<T>
+    public void Subscribe<T, TH>(ushort fetchCount = 1) where T : IIntegrationEventMessage where TH : IIntegrationEventHandler<T>
     {
-        Subscribe(typeof(T), typeof(TH));
+        Subscribe(typeof(T), typeof(TH), fetchCount);
     }
 
-    public void Subscribe(Type eventType, Type eventHandlerType)
+    public void Subscribe(Type eventType, Type eventHandlerType, ushort fetchCount = 1)
     {
         if (!eventType.IsAssignableTo(typeof(IIntegrationEventMessage))) throw new TypeAccessException();
         if (!eventHandlerType.IsAssignableTo(typeof(IIntegrationEventHandler))) throw new TypeAccessException();
@@ -173,7 +174,7 @@ public class EventBusKafka : IEventBus, IDisposable
                             LogId: Guid.NewGuid().ToString(),
                             CorrelationId: ((dynamic)@event)?.CorrelationId,
                             Facility: EventBusLogFacility.CONSUME_EVENT_SUCCESS.ToString(),
-                            Producer:((dynamic)@event)?.Producer,
+                            Producer: ((dynamic)@event)?.Producer,
                             ConsumeDateTimeUtc: handleStartTime,
                             MessageLog: new MessageLogDetail(
                                 EventType: eventName,
@@ -191,14 +192,15 @@ public class EventBusKafka : IEventBus, IDisposable
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError("Kafka | CorrelationId: {CorrelationId} {ClientInfo} CONSUMER [ {EventName} ] => Handling ERROR : {HandlingError}", ((dynamic)@event)?.CorrelationId, _kafkaEventBusConfig.ConsumerClientInfo, eventName, ex.Message);
+                        _logger.LogError("Kafka | CorrelationId: {CorrelationId} {ClientInfo} CONSUMER [ {EventName} ] => Handling ERROR : {HandlingError}", ((dynamic)@event)?.CorrelationId, _kafkaEventBusConfig.ConsumerClientInfo,
+                            eventName, ex.Message);
 
                         watch.Stop();
                         _logger.EventBusErrorLog(new ConsumeMessageLogModel(
                             LogId: Guid.NewGuid().ToString(),
                             CorrelationId: ((dynamic)@event)?.CorrelationId,
                             Facility: EventBusLogFacility.CONSUME_EVENT_ERROR.ToString(),
-                            Producer:((dynamic)@event)?.Producer,
+                            Producer: ((dynamic)@event)?.Producer,
                             ConsumeDateTimeUtc: handleStartTime,
                             MessageLog: new MessageLogDetail(
                                 EventType: eventName,

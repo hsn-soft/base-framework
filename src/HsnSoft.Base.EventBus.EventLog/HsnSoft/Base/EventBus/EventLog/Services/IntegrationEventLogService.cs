@@ -19,25 +19,25 @@ public class IntegrationEventLogService : IIntegrationEventLogService, IDisposab
 
     public IntegrationEventLogService(DbConnection dbConnection)
     {
-        _dbConnection = dbConnection ?? throw new ArgumentNullException(nameof(dbConnection));
-        _integrationEventLogContext = new IntegrationEventLogContext(
-            new DbContextOptionsBuilder<IntegrationEventLogContext>()
-                .UseNpgsql(_dbConnection)
-                .Options);
+        // _dbConnection = dbConnection ?? throw new ArgumentNullException(nameof(dbConnection));
+        // _integrationEventLogContext = new IntegrationEventLogContext(
+        //     new DbContextOptionsBuilder<IntegrationEventLogContext>()
+        //         .UseNpgsql(_dbConnection)
+        //         .Options);
 
         // TODO: new message envelope implementation!
-        _eventTypes = Assembly.Load(Assembly.GetEntryAssembly().FullName)
-            .GetTypes()
-            .Where(t => t.Name.EndsWith(nameof(IIntegrationEventMessage)))
-            .ToList();
+        // _eventTypes = Assembly.Load(Assembly.GetEntryAssembly().FullName)
+        //     .GetTypes()
+        //     .Where(t => t.Name.EndsWith(nameof(IIntegrationEventMessage)))
+        //     .ToList();
     }
 
     public async Task<IEnumerable<IntegrationEventLogEntry>> RetrieveEventLogsPendingToPublishAsync(Guid transactionId)
     {
-        var tid = transactionId.ToString();
+        // var tid = transactionId.ToString();
 
-        var result = await _integrationEventLogContext.IntegrationEventLogs
-            .Where(e => e.TransactionId == tid && e.State == EventStateEnum.NotPublished).ToListAsync();
+        // var result = await _integrationEventLogContext.IntegrationEventLogs
+        //     .Where(e => e.TransactionId == tid && e.State == EventStateEnum.NotPublished).ToListAsync();
 
         // TODO: new message envelope implementation!
         // if (result != null && result.Any())

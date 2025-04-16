@@ -15,9 +15,9 @@ public interface IEventBus
         bool isReQueuePublish = false
     ) where TEventMessage : IIntegrationEventMessage;
 
-    void Subscribe<TEvent, THandler>()
+    void Subscribe<TEvent, THandler>(ushort fetchCount = 1)
         where TEvent : IIntegrationEventMessage
         where THandler : IIntegrationEventHandler<TEvent>;
 
-    void Subscribe(Type eventType, Type eventHandlerType);
+    void Subscribe(Type eventType, Type eventHandlerType, ushort fetchCount = 1);
 }
