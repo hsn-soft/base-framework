@@ -10,15 +10,11 @@ public record FailedEto(
     [CanBeNull] string FailedMessageTypeName
 ) : IIntegrationEventMessage
 {
-    [NotNull]
-    public string FailedReason { get; } = FailedReason;
+    [NotNull] public string FailedReason { get; } = FailedReason;
 
-    [CanBeNull]
-    public DateTime? FailedMessageEnvelopeTime { get; } = FailedMessageEnvelopeTime;
+    [CanBeNull] public DateTime? FailedMessageEnvelopeTime { get; } = FailedMessageEnvelopeTime;
 
-    [CanBeNull]
-    public object FailedMessageObject { get; } = FailedMessageObject;
+    [CanBeNull] public object FailedMessageObject { get; } = FailedMessageObject;
 
-    [CanBeNull]
-    public string FailedMessageTypeName { get; } = FailedMessageTypeName;
+    [CanBeNull] public string FailedMessageTypeName { get; } = FailedMessageTypeName;
 }

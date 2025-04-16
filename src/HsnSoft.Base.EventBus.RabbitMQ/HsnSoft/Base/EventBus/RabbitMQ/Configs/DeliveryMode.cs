@@ -2,5 +2,5 @@
 
 public enum DeliveryMode : byte
 {
-	Persistent = 2
+    Persistent = 2
 }

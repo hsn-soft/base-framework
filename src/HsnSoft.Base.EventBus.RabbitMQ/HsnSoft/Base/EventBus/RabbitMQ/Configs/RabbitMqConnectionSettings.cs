@@ -8,4 +8,6 @@ public sealed class RabbitMqConnectionSettings
     public string Password { get; set; } = "guest";
 
     public string VirtualHost { get; set; } = "/";
+
+    public int ConnectionRetryCount { get; set; } = 5;
 }

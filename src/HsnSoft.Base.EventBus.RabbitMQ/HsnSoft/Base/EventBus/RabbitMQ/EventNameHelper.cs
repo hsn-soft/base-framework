@@ -8,6 +8,7 @@ internal static class EventNameHelper
     {
         return $"{reQueuedConsumer}_{eventName}";
     }
+
     internal static string GetConsumerClientEventQueueName(RabbitMqEventBusConfig rabbitMqEventBusConfig, string eventName)
     {
         return $"{rabbitMqEventBusConfig.ConsumerClientInfo}_{TrimEventName(rabbitMqEventBusConfig, eventName)}";

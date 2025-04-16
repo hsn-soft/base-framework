@@ -13,18 +13,13 @@ public record ParentMessageEnvelope
 
     public DateTime MessageTime { get; set; }
 
-    [CanBeNull]
-    public string CorrelationId { get; set; }
+    [CanBeNull] public string CorrelationId { get; set; }
 
-    [CanBeNull]
-    public string UserId { get; set; }
+    [CanBeNull] public string UserId { get; set; }
 
-    [CanBeNull]
-    public string UserRoleUniqueName { get; set; }
+    [CanBeNull] public string UserRoleUniqueName { get; set; }
 
-    [CanBeNull]
-    public string Channel { get; set; }
+    [CanBeNull] public string Channel { get; set; }
 
-    [CanBeNull]
-    public string Producer { get; set; }
+    [CanBeNull] public string Producer { get; set; }
 }
