@@ -70,6 +70,7 @@ public class MongoGenericRepository<TDbContext, TEntity, TKey> : GenericReposito
 
         return results.SingleOrDefault();
     }
+
     public override async Task<TEntity> FindAsync(Expression<Func<TEntity, bool>> predicate, bool includeDetails = true, CancellationToken cancellationToken = default)
     {
         var asyncCursor = await GetCollection().WithReadPreference(ReadPreference.Primary)
