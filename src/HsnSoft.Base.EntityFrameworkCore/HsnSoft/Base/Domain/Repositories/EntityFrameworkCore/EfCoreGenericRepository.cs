@@ -76,6 +76,23 @@ public class EfCoreGenericRepository<TDbContext, TEntity, TKey> : GenericReposit
         return results.SingleOrDefault();
     }
 
+    public override async Task<TEntity> FindFirstAsync(TKey id, bool includeDetails = true, CancellationToken cancellationToken = default)
+    {
+        IEnumerable<TKey> ids = new[] { id };
+        return await FindFirstAsync(x => ids.Contains(x.Id), cancellationToken: GetCancellationToken(cancellationToken));
+    }
+
+    public override async Task<TEntity> FindFirstAsync(Expression<Func<TEntity, bool>> predicate, bool includeDetails = true, CancellationToken cancellationToken = default)
+    {
+        var query = includeDetails
+            ? WithDetails().Where(predicate)
+            : GetDbSet().Where(predicate);
+
+        var results = await query.ToListAsync(GetCancellationToken(cancellationToken));
+
+        return results is not { Count: > 0 } ? null : results.SingleOrDefault();
+    }
+
     public override async Task<List<TEntity>> GetListAsync(Expression<Func<TEntity, bool>> predicate, bool includeDetails = false, CancellationToken cancellationToken = default)
     {
         return includeDetails

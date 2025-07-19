@@ -14,6 +14,9 @@ public interface IReadOnlyGenericRepository<TEntity, in TKey> : IRepository
     Task<TEntity> FindAsync(TKey id, bool includeDetails = true, CancellationToken cancellationToken = default);
     Task<TEntity> FindAsync([NotNull] Expression<Func<TEntity, bool>> predicate, bool includeDetails = true, CancellationToken cancellationToken = default);
 
+    Task<TEntity> FindFirstAsync(TKey id, bool includeDetails = true, CancellationToken cancellationToken = default);
+    Task<TEntity> FindFirstAsync([NotNull] Expression<Func<TEntity, bool>> predicate, bool includeDetails = true, CancellationToken cancellationToken = default);
+
     [NotNull]
     Task<TEntity> GetAsync(TKey id, bool includeDetails = true, CancellationToken cancellationToken = default);
 
