@@ -37,8 +37,6 @@ public sealed class RabbitMqPersistentConnection(IOptions<RabbitMqConnectionSett
 
     private readonly Lock _syncRoot = new();
 
-    //DispatchConsumersAsync = true,
-
     public bool IsConnected => _connection is { IsOpen: true } && !_disposed;
 
     public async Task<bool> TryConnectAsync()
@@ -107,6 +105,34 @@ public sealed class RabbitMqPersistentConnection(IOptions<RabbitMqConnectionSett
         return _connection?.CreateChannelAsync();
     }
 
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+
+        try
+        {
+            if (_connection != null)
+            {
+                _connection!.ConnectionShutdownAsync -= OnConnectionShutdownAsync;
+                _connection!.CallbackExceptionAsync -= OnCallbackExceptionAsync;
+                _connection!.ConnectionBlockedAsync -= OnConnectionBlockedAsync;
+                _connection!.ConnectionUnblockedAsync -= OnConnectionUnblockedAsync;
+                if (_connection.IsOpen)
+                {
+                    _connection.CloseAsync().GetAwaiter().GetResult();
+                    logger.LogDebug("RabbitMQ | Client connection is closed");
+                }
+            }
+
+            _connection?.Dispose();
+        }
+        catch (IOException ex)
+        {
+            logger.LogError(ex.Message);
+        }
+    }
+
     public async Task<int> GetRabbitMqConnectionCountAsync()
     {
         var connections = new List<object>();
@@ -135,36 +161,6 @@ public sealed class RabbitMqPersistentConnection(IOptions<RabbitMqConnectionSett
         }
 
         return connections.Count;
-    }
-
-    public void Dispose()
-    {
-        if (_disposed) return;
-
-        _disposed = true;
-
-        try
-        {
-            if (_connection != null)
-            {
-                _connection.ConnectionShutdown -= OnConnectionShutdown;
-                _connection.CallbackException -= OnCallbackException;
-                _connection.ConnectionBlocked -= OnConnectionBlocked;
-                _connection.ConnectionUnblocked -= OnConnectionUnblocked;
-                if (_connection.IsOpen)
-                {
-                    _connection.Close();
-                    _logger.LogDebug("{BrokerName} | Client connection is closed", "RabbitMQ");
-                }
-            }
-
-            _connection?.Dispose();
-            _logger.LogDebug("{BrokerName} | Client is terminated", "RabbitMQ");
-        }
-        catch (IOException ex)
-        {
-            _logger.LogError("{BrokerName} | {ConnectionError}", "RabbitMQ", ex.Message);
-        }
     }
 
     private Task OnCallbackExceptionAsync(object sender, CallbackExceptionEventArgs @event)
@@ -197,35 +193,5 @@ public sealed class RabbitMqPersistentConnection(IOptions<RabbitMqConnectionSett
 
         logger.LogInformation("RabbitMQ client is disposed. No action will be taken.");
         return Task.CompletedTask;
-    }
-
-    public async Task<int> GetRabbitMqConnectionCountAsync()
-    {
-        var connections = new List<object>();
-        try
-        {
-            using var httpClient = new HttpClient();
-
-            var request = new HttpRequestMessage(HttpMethod.Get, $"http://{conSettings.Value.HostName}:{conSettings.Value.Port}/api/connections");
-            var byteArray = System.Text.Encoding.ASCII.GetBytes($"{conSettings.Value.UserName}:{conSettings.Value.Password}");
-            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
-
-            using var response = await httpClient.SendAsync(request);
-            response.EnsureSuccessStatusCode();
-
-            var json = await response.Content.ReadAsStringAsync();
-
-            connections = System.Text.Json.JsonSerializer.Deserialize<List<object>>(json);
-        }
-        catch (Exception)
-        {
-            // Ignore
-        }
-        finally
-        {
-            connections ??= [];
-        }
-
-        return connections.Count;
     }
 }
