@@ -54,6 +54,23 @@ public class MongoGenericRepository<TDbContext, TEntity, TKey> : GenericReposito
         return GetCollection().WithReadPreference(ReadPreference.Primary).AsQueryable();
     }
 
+    public override async Task<TEntity> FindAsync(TKey id, bool includeDetails = true, CancellationToken cancellationToken = default)
+    {
+        var filter = Builders<TEntity>.Filter.Eq(doc => doc.Id, id);
+        var asyncCursor = await GetCollection().WithReadPreference(ReadPreference.Primary)
+            .FindAsync(filter, _findOptions, cancellationToken: GetCancellationToken(cancellationToken));
+
+        var results = await asyncCursor.ToListAsync(GetCancellationToken(cancellationToken));
+
+        if (results is not { Count: > 0 }) return null;
+        if (results is { Count: > 1 })
+        {
+            throw new EntityDuplicateException(typeof(TEntity));
+        }
+
+        return results.SingleOrDefault();
+    }
+
     public override async Task<TEntity> FindAsync(Expression<Func<TEntity, bool>> predicate, bool includeDetails = true, CancellationToken cancellationToken = default)
     {
         var asyncCursor = await GetCollection().WithReadPreference(ReadPreference.Primary)
@@ -70,7 +87,7 @@ public class MongoGenericRepository<TDbContext, TEntity, TKey> : GenericReposito
         return results.SingleOrDefault();
     }
 
-    public override async Task<TEntity> FindAsync(TKey id, bool includeDetails = true, CancellationToken cancellationToken = default)
+    public override async Task<TEntity> FindFirstAsync(TKey id, bool includeDetails = true, CancellationToken cancellationToken = default)
     {
         var filter = Builders<TEntity>.Filter.Eq(doc => doc.Id, id);
         var asyncCursor = await GetCollection().WithReadPreference(ReadPreference.Primary)
@@ -78,13 +95,17 @@ public class MongoGenericRepository<TDbContext, TEntity, TKey> : GenericReposito
 
         var results = await asyncCursor.ToListAsync(GetCancellationToken(cancellationToken));
 
-        if (results is not { Count: > 0 }) return null;
-        if (results is { Count: > 1 })
-        {
-            throw new EntityDuplicateException(typeof(TEntity));
-        }
+        return results is not { Count: > 0 } ? null : results.SingleOrDefault();
+    }
 
-        return results.SingleOrDefault();
+    public override async Task<TEntity> FindFirstAsync(Expression<Func<TEntity, bool>> predicate, bool includeDetails = true, CancellationToken cancellationToken = default)
+    {
+        var asyncCursor = await GetCollection().WithReadPreference(ReadPreference.Primary)
+            .FindAsync(predicate, _findOptions, cancellationToken);
+
+        var results = await asyncCursor.ToListAsync(GetCancellationToken(cancellationToken));
+
+        return results is not { Count: > 0 } ? null : results.SingleOrDefault();
     }
 
     public override async Task<List<TEntity>> GetListAsync(Expression<Func<TEntity, bool>> predicate, bool includeDetails = false, CancellationToken cancellationToken = default)

@@ -13,4 +13,6 @@ public interface IRabbitMqPersistentConnection : IDisposable
 
     [CanBeNull]
     Task<IChannel> CreateModelAsync();
+
+    Task<int> GetRabbitMqConnectionCountAsync();
 }

@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Net.Http;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,7 +15,7 @@ using RabbitMQ.Client.Exceptions;
 
 namespace HsnSoft.Base.EventBus.RabbitMQ.Connection;
 
-public class RabbitMqPersistentConnection(IOptions<RabbitMqConnectionSettings> conSettings, IEventBusLogger logger) : IRabbitMqPersistentConnection
+public sealed class RabbitMqPersistentConnection(IOptions<RabbitMqConnectionSettings> conSettings, IEventBusLogger logger) : IRabbitMqPersistentConnection
 {
     private readonly IConnectionFactory _connectionFactory = new ConnectionFactory
     {
@@ -22,8 +24,10 @@ public class RabbitMqPersistentConnection(IOptions<RabbitMqConnectionSettings> c
         UserName = conSettings.Value.UserName,
         Password = conSettings.Value.Password,
         VirtualHost = conSettings.Value.VirtualHost,
-        RequestedHeartbeat = TimeSpan.FromSeconds(60),
+        RequestedHeartbeat = TimeSpan.FromSeconds(30),
         //DispatchConsumersAsync = true,
+        AutomaticRecoveryEnabled = true,
+        NetworkRecoveryInterval = TimeSpan.FromSeconds(10)
     };
 
     private readonly int _retryCount = conSettings.Value.ConnectionRetryCount;
@@ -33,16 +37,37 @@ public class RabbitMqPersistentConnection(IOptions<RabbitMqConnectionSettings> c
 
     private readonly Lock _syncRoot = new();
 
-    //DispatchConsumersAsync = true,
-
     public bool IsConnected => _connection is { IsOpen: true } && !_disposed;
 
-    public Task<bool> TryConnectAsync()
+    public async Task<bool> TryConnectAsync()
     {
+        var conCount = await GetRabbitMqConnectionCountAsync();
+        logger.LogInformation("RabbitMQ Connection Count [{Count}]", conCount);
         logger.LogInformation("RabbitMQ Client is trying to connect");
 
         lock (_syncRoot)
         {
+            try
+            {
+                if (_connection != null)
+                {
+                    _connection!.ConnectionShutdownAsync -= OnConnectionShutdownAsync;
+                    _connection!.CallbackExceptionAsync -= OnCallbackExceptionAsync;
+                    _connection!.ConnectionBlockedAsync -= OnConnectionBlockedAsync;
+                    _connection!.ConnectionUnblockedAsync -= OnConnectionUnblockedAsync;
+
+                    _connection.CloseAsync().GetAwaiter().GetResult();
+                }
+            }
+            catch (IOException ex)
+            {
+                logger.LogError(ex.Message);
+            }
+            finally
+            {
+                _connection?.Dispose();
+            }
+
             var policy = Policy.Handle<SocketException>()
                 .Or<BrokerUnreachableException>()
                 .WaitAndRetry(_retryCount, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
@@ -60,12 +85,12 @@ public class RabbitMqPersistentConnection(IOptions<RabbitMqConnectionSettings> c
 
                 logger.LogInformation("RabbitMQ Client acquired a persistent connection to '{HostName}'", _connection?.Endpoint.HostName);
 
-                return Task.FromResult(IsConnected);
+                return IsConnected;
             }
 
             logger.LogError("FATAL ERROR: RabbitMQ connections could not be created and opened");
 
-            return Task.FromResult(IsConnected);
+            return IsConnected;
         }
     }
 
@@ -83,21 +108,20 @@ public class RabbitMqPersistentConnection(IOptions<RabbitMqConnectionSettings> c
     public void Dispose()
     {
         if (_disposed) return;
-
         _disposed = true;
 
         try
         {
-            if (IsConnected)
+            if (_connection != null)
             {
-                if (_connection != null)
+                _connection!.ConnectionShutdownAsync -= OnConnectionShutdownAsync;
+                _connection!.CallbackExceptionAsync -= OnCallbackExceptionAsync;
+                _connection!.ConnectionBlockedAsync -= OnConnectionBlockedAsync;
+                _connection!.ConnectionUnblockedAsync -= OnConnectionUnblockedAsync;
+                if (_connection.IsOpen)
                 {
-                    _connection!.ConnectionShutdownAsync -= OnConnectionShutdownAsync;
-                    _connection!.CallbackExceptionAsync -= OnCallbackExceptionAsync;
-                    _connection!.ConnectionBlockedAsync -= OnConnectionBlockedAsync;
-                    _connection!.ConnectionUnblockedAsync -= OnConnectionUnblockedAsync;
-
                     _connection.CloseAsync().GetAwaiter().GetResult();
+                    logger.LogDebug("RabbitMQ | Client connection is closed");
                 }
             }
 
@@ -107,6 +131,36 @@ public class RabbitMqPersistentConnection(IOptions<RabbitMqConnectionSettings> c
         {
             logger.LogError(ex.Message);
         }
+    }
+
+    public async Task<int> GetRabbitMqConnectionCountAsync()
+    {
+        var connections = new List<object>();
+        try
+        {
+            using var httpClient = new HttpClient();
+
+            var request = new HttpRequestMessage(HttpMethod.Get, $"http://{conSettings.Value.HostName}:{conSettings.Value.Port}/api/connections");
+            var byteArray = System.Text.Encoding.ASCII.GetBytes($"{conSettings.Value.UserName}:{conSettings.Value.Password}");
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
+
+            using var response = await httpClient.SendAsync(request);
+            response.EnsureSuccessStatusCode();
+
+            var json = await response.Content.ReadAsStringAsync();
+
+            connections = System.Text.Json.JsonSerializer.Deserialize<List<object>>(json);
+        }
+        catch (Exception)
+        {
+            // Ignore
+        }
+        finally
+        {
+            connections ??= [];
+        }
+
+        return connections.Count;
     }
 
     private Task OnCallbackExceptionAsync(object sender, CallbackExceptionEventArgs @event)
