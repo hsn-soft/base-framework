@@ -10,7 +10,6 @@ using HsnSoft.Base.MongoDBOld.Base;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
-using MongoDB.Driver.Linq;
 using ReadPreference = MongoDB.Driver.ReadPreference;
 
 namespace HsnSoft.Base.MongoDBOld.Repository;

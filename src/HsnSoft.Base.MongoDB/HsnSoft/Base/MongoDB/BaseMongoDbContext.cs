@@ -1,12 +1,12 @@
 using System;
-using System.Threading;
 using HsnSoft.Base.Auditing;
 using HsnSoft.Base.Domain.Entities;
 using HsnSoft.Base.MongoDB.Context;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
-using MongoDB.Driver.Linq;
+using MongoDB.Driver.Core.Configuration;
 
 namespace HsnSoft.Base.MongoDB;
 
@@ -23,21 +23,28 @@ public abstract class BaseMongoDbContext : MongoDbContext
         CommandTrackerEvent += CommandTrackerEvent_Tracked;
     }
 
-    protected BaseMongoDbContext(string connectionString, IServiceProvider provider = null) : this(CreateClientSettings(connectionString), MongoUrl.Create(connectionString).DatabaseName, provider)
+    protected BaseMongoDbContext(string connectionString, IServiceProvider provider = null)
+        : this(CreateClientSettings(connectionString), MongoUrl.Create(connectionString).DatabaseName, provider)
     {
     }
 
-    private static MongoClientSettings CreateClientSettings(string connectionString, int queryExecutionMaxSeconds = 60)
+    private static MongoClientSettings CreateClientSettings(string connectionString, int queryExecutionMaxSeconds = 60, IServiceProvider provider = null)
     {
-        ThreadPool.GetMaxThreads(out var maxWt, out var _);
+        // ThreadPool.GetMaxThreads(out var maxWt, out var _);
 
         var mongoUrl = MongoUrl.Create(connectionString);
         var clientSettings = MongoClientSettings.FromConnectionString(mongoUrl.Url);
-        clientSettings.MaxConnectionPoolSize = maxWt * 2;
+        clientSettings.MaxConnectionPoolSize = 1000; //maxWt * 2;
 
         // In version 2.19, MongoDB team upgraded to LinqProvider.V3, rolling back to V2 until LinQ is stable...
         // https://www.mongodb.com/community/forums/t/issue-with-2-18-to-2-19-nuget-upgrade-of-mongodb-c-driver/211894/2
         //clientSettings.LinqProvider = LinqProvider.V2;
+
+        var LoggerFactory = provider?.GetService<ILoggerFactory>();
+        if (LoggerFactory != null)
+        {
+            clientSettings.LoggingSettings = new LoggingSettings(LoggerFactory);
+        }
 
         if (queryExecutionMaxSeconds < 1) queryExecutionMaxSeconds = 60;
         clientSettings.WaitQueueTimeout = TimeSpan.FromSeconds(queryExecutionMaxSeconds);
