@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
-using System.Reflection;
 using System.Threading.Tasks;
 using HsnSoft.Base.Domain.Entities.Events;
 using Microsoft.EntityFrameworkCore;

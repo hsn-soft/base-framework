@@ -40,7 +40,7 @@
         <PackageReference Include="System.Runtime.Loader" Version="4.3.0" />
         <PackageReference Include="System.Linq.Dynamic.Core" Version="1.6.7" />
         <PackageReference Include="System.Linq.Queryable" Version="4.3.0" />
-        <PackageReference Include="JetBrains.Annotations" Version="2025.2.0" />
+        <PackageReference Include="JetBrains.Annotations" Version="2025.2.2" />
         <PackageReference Include="Nito.AsyncEx.Coordination" Version="5.1.2" />
         <PackageReference Include="Nito.AsyncEx.Context" Version="5.1.2" />
         <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
