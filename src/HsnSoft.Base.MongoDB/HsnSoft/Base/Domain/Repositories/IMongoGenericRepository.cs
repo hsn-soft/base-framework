@@ -1,20 +1,12 @@
-﻿using System;
-using System.Linq;
-using System.Linq.Expressions;
+﻿using System.Linq;
 using HsnSoft.Base.Domain.Entities;
-using HsnSoft.Base.MongoDB.Context;
 using MongoDB.Driver;
 
 namespace HsnSoft.Base.Domain.Repositories;
 
-public interface IMongoGenericRepository<TEntity, in TKey> : IGenericRepository<TEntity, TKey>
+public interface IMongoGenericRepository< TEntity, in TKey> : IGenericRepository<TEntity, TKey>
     where TEntity : class, IEntity<TKey>
 {
-    IMongoCollection<TEntity> GetCollection(TEntity entity = null, MongoEntityEventState eventState = MongoEntityEventState.Unchanged);
-
-    IQueryable<TEntity> WithDetails(); //TODO: CancellationToken
-
-    IQueryable<TEntity> WithDetails(params Expression<Func<TEntity, object>>[] propertySelectors); //TODO: CancellationToken
-
-    IQueryable<TEntity> GetQueryable(); //TODO: CancellationToken
+    IMongoCollection<TEntity> GetCollection();
+    IQueryable<TEntity> GetQueryable();
 }

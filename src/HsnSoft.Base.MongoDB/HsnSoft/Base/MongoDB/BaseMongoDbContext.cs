@@ -2,49 +2,24 @@ using System;
 using HsnSoft.Base.Auditing;
 using HsnSoft.Base.Domain.Entities;
 using HsnSoft.Base.MongoDB.Context;
-using JetBrains.Annotations;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
-using MongoDB.Driver.Core.Configuration;
 
 namespace HsnSoft.Base.MongoDB;
 
-public abstract class BaseMongoDbContext : MongoDbContext
+public abstract class BaseMongoDbContext(MongoClientSettings clientSettings, string databaseName) : MongoDbContext(clientSettings, databaseName)
 {
-    [CanBeNull]
-    private IAuditPropertySetter AuditPropertySetter { get; }
-
-    public TimeSpan ClientWaitQueueTimeout => Client.Settings.WaitQueueTimeout;
-
-    protected BaseMongoDbContext(MongoClientSettings clientSettings, string databaseName, IServiceProvider provider = null) : base(clientSettings, databaseName)
+    protected BaseMongoDbContext(string connectionString) : this(CreateClientSettings(connectionString), MongoUrl.Create(connectionString).DatabaseName)
     {
-        AuditPropertySetter = provider?.GetService<IAuditPropertySetter>();
         CommandTrackerEvent += CommandTrackerEvent_Tracked;
     }
 
-    protected BaseMongoDbContext(string connectionString, IServiceProvider provider = null)
-        : this(CreateClientSettings(connectionString), MongoUrl.Create(connectionString).DatabaseName, provider)
+    private static MongoClientSettings CreateClientSettings(string connectionString, int queryExecutionMaxSeconds = 60)
     {
-    }
-
-    private static MongoClientSettings CreateClientSettings(string connectionString, int queryExecutionMaxSeconds = 60, IServiceProvider provider = null)
-    {
-        // ThreadPool.GetMaxThreads(out var maxWt, out var _);
-
         var mongoUrl = MongoUrl.Create(connectionString);
         var clientSettings = MongoClientSettings.FromConnectionString(mongoUrl.Url);
-        clientSettings.MaxConnectionPoolSize = 1000; //maxWt * 2;
 
-        // In version 2.19, MongoDB team upgraded to LinqProvider.V3, rolling back to V2 until LinQ is stable...
-        // https://www.mongodb.com/community/forums/t/issue-with-2-18-to-2-19-nuget-upgrade-of-mongodb-c-driver/211894/2
-        //clientSettings.LinqProvider = LinqProvider.V2;
-
-        var LoggerFactory = provider?.GetService<ILoggerFactory>();
-        if (LoggerFactory != null)
-        {
-            clientSettings.LoggingSettings = new LoggingSettings(LoggerFactory);
-        }
+        clientSettings.MaxConnectionPoolSize = 1000;
+        clientSettings.MinConnectionPoolSize = 5;
 
         if (queryExecutionMaxSeconds < 1) queryExecutionMaxSeconds = 60;
         clientSettings.WaitQueueTimeout = TimeSpan.FromSeconds(queryExecutionMaxSeconds);
@@ -52,7 +27,7 @@ public abstract class BaseMongoDbContext : MongoDbContext
         return clientSettings;
     }
 
-    private void CommandTrackerEvent_Tracked(object sender, MongoEntityEventArgs e)
+    private static void CommandTrackerEvent_Tracked(object sender, MongoEntityEventArgs e)
     {
         switch (e.EventState)
         {
@@ -63,48 +38,47 @@ public abstract class BaseMongoDbContext : MongoDbContext
                 ApplyBaseConceptsForModifiedEntity(e.EntryEntity);
                 break;
             case MongoEntityEventState.Deleted:
-                ApplyBaseConceptsForDeletedEntity(e.EntryEntity);
+            case MongoEntityEventState.Unchanged:
+            default:
                 break;
         }
     }
 
-    private void ApplyBaseConceptsForAddedEntity(object entity)
+    private static void ApplyBaseConceptsForAddedEntity(object entity)
     {
         CheckAndSetId(entity);
-        AuditPropertySetter?.SetCreationProperties(entity);
-    }
-
-    private void ApplyBaseConceptsForModifiedEntity(object entity)
-    {
-        AuditPropertySetter?.SetModificationProperties(entity);
-        if (entity is ISoftDelete && ((ISoftDelete)entity).IsDeleted)
-        {
-            AuditPropertySetter?.SetDeletionProperties(entity);
-        }
-    }
-
-    private void ApplyBaseConceptsForDeletedEntity(object entity)
-    {
-        if (!(entity is ISoftDelete))
+        if (entity is not IAuditedObject objectWithCreationTime)
         {
             return;
         }
 
-        ((ISoftDelete)entity).IsDeleted = true;
-        AuditPropertySetter?.SetDeletionProperties(entity);
-
-        // SoftDeletion Active and DeletionProperties not found then Set modification properties
-        if (!(entity is IHasDeletionTime) && !(entity is IDeletionAuditedObject))
+        if (objectWithCreationTime.CreationTime != default)
         {
-            AuditPropertySetter?.SetModificationProperties(entity);
+            return;
+        }
+
+        ObjectHelper.TrySetProperty(objectWithCreationTime, x => x.CreationTime, () => DateTime.UtcNow);
+        ObjectHelper.TrySetProperty(objectWithCreationTime, x => x.LastModificationTime, () => objectWithCreationTime.CreationTime);
+    }
+
+    private static void ApplyBaseConceptsForModifiedEntity(object entity)
+    {
+        if (entity is not IAuditedObject objectWithCreationTime)
+        {
+            return;
+        }
+
+        if (objectWithCreationTime.LastModificationTime == default)
+        {
+            ObjectHelper.TrySetProperty(objectWithCreationTime, x => x.LastModificationTime, () => DateTime.UtcNow);
         }
     }
 
-    private void CheckAndSetId(object targetObject)
+    private static void CheckAndSetId(object targetObject)
     {
         if (targetObject is IEntity<Guid> entityWithGuidId)
         {
-            if (entityWithGuidId.Id != default)
+            if (entityWithGuidId.Id != Guid.Empty)
             {
                 return;
             }
@@ -116,9 +90,4 @@ public abstract class BaseMongoDbContext : MongoDbContext
             );
         }
     }
-
-    // public Task<int> SaveSaveEntityCommandsIfExistChangesAsync()
-    // {
-    //     return SaveEntityCommandsAsync();
-    // }
 }

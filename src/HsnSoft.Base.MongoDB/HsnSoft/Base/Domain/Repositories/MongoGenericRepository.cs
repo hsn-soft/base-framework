@@ -1,316 +1,231 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Dynamic.Core;
 using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 using HsnSoft.Base.Domain.Entities;
+using HsnSoft.Base.Domain.Models;
 using HsnSoft.Base.MongoDB;
-using HsnSoft.Base.MongoDB.Context;
+using LinqKit.Core;
 using MongoDB.Driver;
 
 namespace HsnSoft.Base.Domain.Repositories;
 
-public class MongoGenericRepository<TDbContext, TEntity, TKey> : GenericRepositoryBase<TEntity, TKey>, IMongoGenericRepository<TEntity, TKey>
-    where TDbContext : BaseMongoDbContext
+public class MongoGenericRepository<TEntity, TKey>(BaseMongoDbContext context) :
+    GenericRepositoryBase<TEntity, TKey>,
+    IMongoGenericRepository<TEntity, TKey>
     where TEntity : class, IEntity<TKey>
 {
-    private readonly TDbContext _dbContext;
-    private readonly FindOptions<TEntity> _findOptions;
-    private readonly CountOptions _countOptions;
+    private readonly BaseMongoDbContext _context = context ?? throw new ArgumentNullException(nameof(context));
 
-    public MongoGenericRepository(IServiceProvider provider, TDbContext dbContext) : base(provider)
-    {
-        _dbContext = dbContext;
-        _findOptions = new FindOptions<TEntity>
-        {
-            MaxAwaitTime = _dbContext.ClientWaitQueueTimeout,
-            MaxTime = _dbContext.ClientWaitQueueTimeout
-        };
-        _countOptions = new CountOptions
-        {
-            MaxTime = _dbContext.ClientWaitQueueTimeout
-        };
-    }
+    public IMongoCollection<TEntity> GetCollection() => _context?.GetCollection<TEntity>();
+    public IQueryable<TEntity> GetQueryable() => GetCollection().AsQueryable().AsExpandable();
 
-    public IMongoCollection<TEntity> GetCollection(TEntity entity = null, MongoEntityEventState eventState = MongoEntityEventState.Unchanged)
-        => _dbContext?.Collection(entity, eventState);
-
-    public IMongoCollection<TEntity> GetCollections(IEnumerable<TEntity> entities = null, MongoEntityEventState eventState = MongoEntityEventState.Unchanged)
-        => _dbContext?.Collections(entities, eventState);
-
-    public IQueryable<TEntity> WithDetails()
-    {
-        return GetQueryable();
-    }
-
-    public IQueryable<TEntity> WithDetails(params Expression<Func<TEntity, object>>[] propertySelectors)
-    {
-        return GetQueryable();
-    }
-
-    public IQueryable<TEntity> GetQueryable()
-    {
-        return GetCollection().WithReadPreference(ReadPreference.Primary).AsQueryable();
-    }
-
-    public override async Task<TEntity> FindAsync(TKey id, bool includeDetails = true, CancellationToken cancellationToken = default)
-    {
-        var filter = Builders<TEntity>.Filter.Eq(doc => doc.Id, id);
-        var asyncCursor = await GetCollection().WithReadPreference(ReadPreference.Primary)
-            .FindAsync(filter, _findOptions, cancellationToken: GetCancellationToken(cancellationToken));
-
-        var results = await asyncCursor.ToListAsync(GetCancellationToken(cancellationToken));
-
-        if (results is not { Count: > 0 }) return null;
-        if (results is { Count: > 1 })
-        {
-            throw new EntityDuplicateException(typeof(TEntity));
-        }
-
-        return results.SingleOrDefault();
-    }
-
-    public override async Task<TEntity> FindAsync(Expression<Func<TEntity, bool>> predicate, bool includeDetails = true, CancellationToken cancellationToken = default)
-    {
-        var asyncCursor = await GetCollection().WithReadPreference(ReadPreference.Primary)
-            .FindAsync(predicate, _findOptions, cancellationToken);
-
-        var results = await asyncCursor.ToListAsync(GetCancellationToken(cancellationToken));
-
-        if (results is not { Count: > 0 }) return null;
-        if (results is { Count: > 1 })
-        {
-            throw new EntityDuplicateException(typeof(TEntity));
-        }
-
-        return results.SingleOrDefault();
-    }
-
-    public override async Task<TEntity> FindFirstAsync(TKey id, bool includeDetails = true, CancellationToken cancellationToken = default)
-    {
-        var filter = Builders<TEntity>.Filter.Eq(doc => doc.Id, id);
-        var asyncCursor = await GetCollection().WithReadPreference(ReadPreference.Primary)
-            .FindAsync(filter, _findOptions, cancellationToken: GetCancellationToken(cancellationToken));
-
-        var results = await asyncCursor.ToListAsync(GetCancellationToken(cancellationToken));
-
-        return results is not { Count: > 0 } ? null : results.SingleOrDefault();
-    }
-
-    public override async Task<TEntity> FindFirstAsync(Expression<Func<TEntity, bool>> predicate, bool includeDetails = true, CancellationToken cancellationToken = default)
-    {
-        var asyncCursor = await GetCollection().WithReadPreference(ReadPreference.Primary)
-            .FindAsync(predicate, _findOptions, cancellationToken);
-
-        var results = await asyncCursor.ToListAsync(GetCancellationToken(cancellationToken));
-
-        return results is not { Count: > 0 } ? null : results.SingleOrDefault();
-    }
-
-    public override async Task<List<TEntity>> GetListAsync(Expression<Func<TEntity, bool>> predicate, bool includeDetails = false, CancellationToken cancellationToken = default)
-    {
-        var asyncCursor = await GetCollection().WithReadPreference(ReadPreference.Primary)
-            .FindAsync(predicate, _findOptions, cancellationToken: GetCancellationToken(cancellationToken));
-
-        return asyncCursor != null ? await asyncCursor.ToListAsync(GetCancellationToken(cancellationToken)) : null;
-    }
-
-    public override async Task<List<TEntity>> GetListAsync(bool includeDetails = false, CancellationToken cancellationToken = default)
-    {
-        var asyncCursor = await GetCollection().WithReadPreference(ReadPreference.Primary)
-            .FindAsync(Builders<TEntity>.Filter.Empty, _findOptions, cancellationToken: GetCancellationToken(cancellationToken));
-
-        return asyncCursor != null ? await asyncCursor.ToListAsync(GetCancellationToken(cancellationToken)) : null;
-    }
-
-    public override async Task<long> GetCountAsync(CancellationToken cancellationToken = default)
-    {
-        return await GetCollection().WithReadPreference(ReadPreference.Primary).EstimatedDocumentCountAsync(new EstimatedDocumentCountOptions
-        {
-            MaxTime = _countOptions.MaxTime
-        }, GetCancellationToken(cancellationToken));
-    }
-
-    public override async Task<List<TEntity>> GetPagedListAsync(
-        int skipCount,
-        int maxResultCount,
-        string sorting,
-        bool includeDetails = false,
+    public override async Task<TResult> GetByIdAsync<TResult>(
+        TKey id,
+        Expression<Func<TEntity, TResult>> selector,
         CancellationToken cancellationToken = default)
     {
-        var find = GetCollection().WithReadPreference(ReadPreference.Primary)
-            .Find(Builders<TEntity>.Filter.Empty, new FindOptions
-            {
-                MaxAwaitTime = _findOptions.MaxAwaitTime,
-                MaxTime = _findOptions.MaxTime
-            });
-
-        return find.ToEnumerable().AsQueryable() // GetQueryable()
-            .OrderByIf<TEntity, IQueryable<TEntity>>(!sorting.IsNullOrWhiteSpace(), sorting)
-            .PageBy(skipCount, maxResultCount)
-            .ToList();
+        var filter = Builders<TEntity>.Filter.Eq(doc => doc.Id, id);
+        var results = await GetCollection().Find(filter).Limit(2).Project(selector).ToListAsync(cancellationToken);
+        return results.Count switch
+        {
+            0 => throw new EntityNotFoundException(typeof(TEntity)),
+            > 1 => throw new EntityDuplicateException(typeof(TEntity)),
+            _ => results[0]
+        };
     }
 
-    public override async Task<long> GetCountAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
+    public override async Task<TResult> GetByIdOrDefaultAsync<TResult>(
+        TKey id,
+        Expression<Func<TEntity, TResult>> selector,
+        CancellationToken cancellationToken = default)
     {
-        return await GetCollection().WithReadPreference(ReadPreference.Primary).CountDocumentsAsync(predicate, _countOptions, GetCancellationToken(cancellationToken));
+        var filter = Builders<TEntity>.Filter.Eq(doc => doc.Id, id);
+        var results = await GetCollection().Find(filter).Limit(2).Project(selector).ToListAsync(cancellationToken);
+        return results.Count switch
+        {
+            0 => null,
+            > 1 => throw new EntityDuplicateException(typeof(TEntity)),
+            _ => results[0]
+        };
     }
 
-    public override async Task<List<TEntity>> GetPagedListAsync(
+    public override Task<TResult> GetSingleOrDefaultAsync<TResult>(
         Expression<Func<TEntity, bool>> predicate,
-        int skipCount,
-        int maxResultCount,
-        string sorting,
-        bool includeDetails = false,
+        Expression<Func<TEntity, TResult>> selector,
         CancellationToken cancellationToken = default)
     {
-        var query = GetCollection().WithReadPreference(ReadPreference.Primary)
-            .Find(predicate, new FindOptions
-            {
-                MaxAwaitTime = _findOptions.MaxAwaitTime,
-                MaxTime = _findOptions.MaxTime
-            });
-
-        return query.ToEnumerable().AsQueryable() // GetQueryable()
-            .OrderByIf<TEntity, IQueryable<TEntity>>(!sorting.IsNullOrWhiteSpace(), sorting)
-            .PageBy(skipCount, maxResultCount)
+        var results = GetQueryable().Where(predicate)
+            .Take(2)
+            .Select(selector)
             .ToList();
+
+        return Task.FromResult(results.Count switch
+        {
+            0 => null,
+            > 1 => throw new EntityDuplicateException(typeof(TEntity)),
+            _ => results[0]
+        });
     }
 
-    public override async Task<TEntity> InsertAsync(TEntity entity, CancellationToken cancellationToken = default)
+    public override Task<TResult> GetFirstOrDefaultAsync<TResult>(
+        Expression<Func<TEntity, bool>> predicate,
+        Expression<Func<TEntity, TResult>> selector,
+        Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderByEntity = null,
+        CancellationToken cancellationToken = default)
     {
-        CheckAndSetId(entity);
+        var query = GetQueryable().Where(predicate);
 
-        await GetCollection(entity, MongoEntityEventState.Added).InsertOneAsync(entity, new InsertOneOptions
-        {
-            BypassDocumentValidation = false
-        }, GetCancellationToken(cancellationToken));
+        if (orderByEntity != null) query = orderByEntity(query);
+
+        return Task.FromResult(query.Select(selector).FirstOrDefault());
+    }
+
+    public override Task<List<TResult>> GetListAsync<TResult>(
+        ListQueryOptions<TEntity> options,
+        Expression<Func<TEntity, TResult>> selector,
+        CancellationToken cancellationToken = default)
+    {
+        var query = GetQueryable();
+
+        if (options.Filter != null) query = query.Where(options.Filter);
+
+        if (!string.IsNullOrWhiteSpace(options.OrderByDynamic))
+            query = query.OrderBy(options.OrderByDynamic);
+        else if (options.OrderByEntity != null)
+            query = options.OrderByEntity(query);
+
+        if (options.ListLength.HasValue)
+            query = query.Take((int)options.ListLength.Value);
+
+        return Task.FromResult(query.Select(selector).ToList());
+    }
+
+    public override Task<PaginationResult<TResult>> GetPageListAsync<TResult>(
+        PaginationQueryOptions<TEntity> options,
+        Expression<Func<TEntity, TResult>> selector,
+        CancellationToken cancellationToken = default)
+    {
+        var query = GetQueryable();
+
+        if (options.Filter != null) query = query.Where(options.Filter);
+
+        var totalCount = query.Count();
+
+        if (!string.IsNullOrWhiteSpace(options.OrderByDynamic))
+            query = query.OrderBy(options.OrderByDynamic);
+        else if (options.OrderByEntity != null)
+            query = options.OrderByEntity(query);
+
+        query = query
+            .Skip(((int)options.PageNumber - 1) * (int)options.PageSize)
+            .Take((int)options.PageSize);
+
+        var items = query.Select(selector).ToList();
+
+        return Task.FromResult(new PaginationResult<TResult> { Items = items, TotalCount = (uint)totalCount, PageNumber = options.PageNumber, PageSize = options.PageSize });
+    }
+
+    public override async Task<long> GetCountAsync(
+        Expression<Func<TEntity, bool>> filter = null,
+        CancellationToken cancellationToken = default)
+    {
+        return filter == null
+            ? await GetCollection().CountDocumentsAsync(_ => true, cancellationToken: cancellationToken)
+            : await Task.FromResult(GetQueryable().Count(filter));
+    }
+
+    public override Task<bool> ExistsAsync(
+        Expression<Func<TEntity, bool>> filter,
+        CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(GetQueryable().Any(filter));
+    }
+
+    public override async Task<int> InsertManyAsync(
+        IEnumerable<TEntity> entities,
+        CancellationToken cancellationToken = default)
+    {
+        // GetDbContext().SetEntityEventState(entities, MongoEntityEventState.Added);
+        IEnumerable<TEntity> enumerable = entities.ToList();
+        await GetCollection().InsertManyAsync(enumerable, cancellationToken: cancellationToken);
+        return enumerable.Count();
+    }
+
+    public override async Task<TEntity> UpdateByIdAsync(
+        TKey id,
+        Action<TEntity> updateAction,
+        CancellationToken cancellationToken = default)
+    {
+        var tmpCollection = GetCollection();
+        var filter = Builders<TEntity>.Filter.Eq(doc => doc.Id, id);
+        var entity = await tmpCollection.Find(filter).FirstOrDefaultAsync(cancellationToken);
+        if (entity == null) throw new EntityNotFoundException(typeof(TEntity), id);
+
+        updateAction(entity);
+
+        // GetDbContext().SetEntityEventState([entity], MongoEntityEventState.Modified);
+        await tmpCollection.ReplaceOneAsync(filter, entity, cancellationToken: cancellationToken);
 
         return entity;
     }
 
-    public override async Task InsertManyAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
+    public override async Task<int> UpdateManyAsync(
+        IEnumerable<TEntity> entities,
+        CancellationToken cancellationToken = default)
     {
-        var enumerable = entities.ToList();
-        foreach (var entity in enumerable)
-        {
-            CheckAndSetId(entity);
-        }
+        var updated = 0;
+        var tmpCollection = GetCollection();
 
-        await GetCollections(enumerable, MongoEntityEventState.Added).InsertManyAsync(enumerable, new InsertManyOptions
-        {
-            BypassDocumentValidation = false
-        }, cancellationToken: cancellationToken);
-    }
-
-    public override async Task<TEntity> UpdateAsync(TEntity entity, CancellationToken cancellationToken = default)
-    {
-        var filter = Builders<TEntity>.Filter.Eq(doc => doc.Id, entity.Id);
-        var replaceResult = await GetCollection(entity, MongoEntityEventState.Modified).ReplaceOneAsync(filter, entity, cancellationToken: GetCancellationToken(cancellationToken));
-        if (!replaceResult.IsAcknowledged) throw new Exception($"Update error: {replaceResult}");
-        return entity;
-    }
-
-    public override async Task UpdateManyAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
-    {
-        var enumerable = entities.ToList();
-        var models = PrepareModelsForReplaceMany(enumerable);
-        await GetCollections(enumerable, MongoEntityEventState.Modified).BulkWriteAsync(models, new BulkWriteOptions { IsOrdered = false }, GetCancellationToken(cancellationToken));
-    }
-
-    private static IEnumerable<WriteModel<TEntity>> PrepareModelsForReplaceMany(IEnumerable<TEntity> entities)
-    {
-        var models = new List<WriteModel<TEntity>>();
+        // GetDbContext().SetEntityEventState(entities, MongoEntityEventState.Modified);
         foreach (var entity in entities)
         {
-            var filter = Builders<TEntity>.Filter.Eq(doc => doc.Id, entity.Id);
-            models.Add(new ReplaceOneModel<TEntity>(filter, entity));
+            var result = await tmpCollection.ReplaceOneAsync(
+                x => x.Id.Equals(entity.Id),
+                entity,
+                new ReplaceOptions { IsUpsert = false },
+                cancellationToken);
+
+            if (result.ModifiedCount == 0)
+                throw new EntityNotFoundException(typeof(TEntity), entity.Id);
+
+            updated++;
         }
 
-        return models;
+        return updated;
     }
 
-    public override async Task<bool> DeleteAsync(TEntity entity, CancellationToken cancellationToken = default)
+    public override async Task<int> DeleteByIdListAsync(
+        IEnumerable<TKey> ids,
+        CancellationToken cancellationToken = default)
     {
-        var filter = Builders<TEntity>.Filter.Eq(doc => doc.Id, entity.Id);
-        if (typeof(ISoftDelete).IsAssignableFrom(typeof(TEntity)))
-        {
-            // Soft delete
-            var replaceResult = await GetCollection(entity, MongoEntityEventState.Deleted)
-                .ReplaceOneAsync(filter, entity, cancellationToken: GetCancellationToken(cancellationToken));
+        var result = await GetCollection().DeleteManyAsync(
+            x => ids.Contains(x.Id),
+            cancellationToken);
 
-            return replaceResult.IsAcknowledged && (int)replaceResult.ModifiedCount > 0;
-        }
+        if (result.DeletedCount == 0)
+            throw new EntityNotFoundException(typeof(TEntity));
 
-        // Hard Delete
-        var deleteResult = await GetCollection().DeleteOneAsync(filter, GetCancellationToken(cancellationToken));
-
-        return deleteResult.IsAcknowledged && (int)deleteResult.DeletedCount > 0;
+        return (int)result.DeletedCount;
     }
 
-    public override async Task<bool> DeleteAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
+    public override async Task<int> DeleteManyAsync(
+        Expression<Func<TEntity, bool>> predicate,
+        CancellationToken cancellationToken = default)
     {
-        var entities = await GetListAsync(predicate, cancellationToken: cancellationToken);
-        if (entities is not { Count: > 0 }) return false;
-        await DeleteManyAsync(entities, cancellationToken);
-        return true;
+        var entities = await GetListAsync(new ListQueryOptions<TEntity> { Filter = predicate }, cancellationToken);
+        if (entities.Count == 0) throw new EntityNotFoundException(typeof(TEntity));
+        return await DeleteManyAsync(entities, cancellationToken);
     }
 
-    public override async Task DeleteManyAsync(IEnumerable<TKey> ids, CancellationToken cancellationToken = default)
+    public override async Task<int> DeleteManyAsync(
+        IEnumerable<TEntity> entities,
+        CancellationToken cancellationToken = default)
     {
-        foreach (var id in ids)
-        {
-            await DeleteAsync(id, cancellationToken: cancellationToken);
-        }
-
-        var entities = await GetListAsync(x => ids.Contains(x.Id), cancellationToken: cancellationToken);
-        if (entities is not { Count: > 0 }) return;
-        await DeleteManyAsync(entities, cancellationToken);
-    }
-
-    public override async Task DeleteManyAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
-    {
-        if (typeof(ISoftDelete).IsAssignableFrom(typeof(TEntity)))
-        {
-            // Soft delete
-            var enumerable = entities.ToList();
-            var models = PrepareModelsForReplaceMany(enumerable);
-            await GetCollections(enumerable, MongoEntityEventState.Deleted).BulkWriteAsync(models, new BulkWriteOptions { IsOrdered = false }, GetCancellationToken(cancellationToken));
-            return;
-        }
-
-        // Hard Delete
-        foreach (var entity in entities)
-        {
-            await DeleteAsync(entity, cancellationToken: cancellationToken);
-        }
-    }
-
-    protected override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
-    {
-        return 0;
-    }
-
-    private void CheckAndSetId(TEntity entity)
-    {
-        if (entity is IEntity<Guid> entityWithGuidId)
-        {
-            TrySetGuidId(entityWithGuidId);
-        }
-    }
-
-    private static void TrySetGuidId(IEntity<Guid> entity)
-    {
-        if (entity.Id != default)
-        {
-            return;
-        }
-
-        EntityHelper.TrySetId(
-            entity,
-            Guid.NewGuid,
-            true
-        );
+        var ids = entities.Select(x => x.Id).ToList();
+        return await DeleteByIdListAsync(ids, cancellationToken);
     }
 }

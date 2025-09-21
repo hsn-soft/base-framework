@@ -1,8 +1,9 @@
 using FluentAssertions;
 using HsnSoft.Base.Domain.Entities;
+using HsnSoft.Base.Domain.Models;
+using HsnSoft.Base.Domain.Repositories;
 using HsnSoft.Base.Test.Unit.Fixtures;
 using HsnSoft.Base.Test.Unit.Models;
-using HsnSoft.Base.Domain.Repositories;
 using HsnSoft.Base.Test.Unit.Utils;
 
 namespace HsnSoft.Base.Test.Unit.Repositories;
@@ -20,7 +21,7 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
         using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
         var expected = new TestEntity(Guid.NewGuid(), "Tester", 61);
         await context.TestEntities.InsertOneAsync(expected);
-        var repo = new MongoGenericRepository<TestMongoDbContext, TestEntity, Guid>(null, context);
+        var repo = new MongoGenericRepository<TestEntity, Guid>(context);
 
         // Act
         var actual = await repo.GetByIdAsync(expected.Id);
@@ -35,7 +36,7 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
     {
         // Arrange
         using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
-        var repo = new MongoGenericRepository<TestMongoDbContext, TestEntity, Guid>(null, context);
+        var repo = new MongoGenericRepository<TestEntity, Guid>(context);
 
         // Throw Act & Assert
         await FluentActions
@@ -55,7 +56,7 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
         using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
         var expected = new TestEntity(Guid.NewGuid(), "Tester", 61);
         await context.TestEntities.InsertOneAsync(expected);
-        var repo = new MongoGenericRepository<TestMongoDbContext, TestEntity, Guid>(null, context);
+        var repo = new MongoGenericRepository<TestEntity, Guid>(context);
 
         // Act
         var actual = await repo.GetByIdOrDefaultAsync(expected.Id);
@@ -70,7 +71,7 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
     {
         // Arrange
         using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
-        var repo = new MongoGenericRepository<TestMongoDbContext, TestEntity, Guid>(null, context);
+        var repo = new MongoGenericRepository<TestEntity, Guid>(context);
 
         // Act
         var actual = await repo.GetByIdOrDefaultAsync(Guid.NewGuid());
@@ -90,7 +91,7 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
         using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
         var expected = new TestEntity(Guid.NewGuid(), "Tester", 61);
         await context.TestEntities.InsertOneAsync(expected);
-        var repo = new MongoGenericRepository<TestMongoDbContext, TestEntity, Guid>(null, context);
+        var repo = new MongoGenericRepository<TestEntity, Guid>(context);
 
         // Act
         var actual = await repo.GetSingleAsync(x => x.Id == expected.Id);
@@ -117,7 +118,7 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
     {
         // Arrange
         using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
-        var repo = new MongoGenericRepository<TestMongoDbContext, TestEntity, Guid>(null, context);
+        var repo = new MongoGenericRepository<TestEntity, Guid>(context);
 
         // Throw Act & Assert
         await FluentActions
@@ -133,7 +134,7 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
         using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
         await context.TestEntities.InsertManyAsync(new List<TestEntity> { new(Guid.NewGuid(), "Tester", 61), new(Guid.NewGuid(), "Tester", 61) }.AsReadOnly()
         );
-        var repo = new MongoGenericRepository<TestMongoDbContext, TestEntity, Guid>(null, context);
+        var repo = new MongoGenericRepository<TestEntity, Guid>(context);
 
         // Throw Act & Assert
         await FluentActions
@@ -153,7 +154,7 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
         using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
         var expected = new TestEntity(Guid.NewGuid(), "Tester", 61);
         await context.TestEntities.InsertOneAsync(expected);
-        var repo = new MongoGenericRepository<TestMongoDbContext, TestEntity, Guid>(null, context);
+        var repo = new MongoGenericRepository<TestEntity, Guid>(context);
 
         // Act
         var actual = await repo.GetSingleOrDefaultAsync(x => x.Id == expected.Id);
@@ -180,7 +181,7 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
     {
         // Arrange
         using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
-        var repo = new MongoGenericRepository<TestMongoDbContext, TestEntity, Guid>(null, context);
+        var repo = new MongoGenericRepository<TestEntity, Guid>(context);
 
         // Act
         var actual = await repo.GetSingleOrDefaultAsync(e => e.Id == Guid.NewGuid());
@@ -197,7 +198,7 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
         await context.TestEntities.InsertManyAsync(new List<TestEntity> { new(Guid.NewGuid(), "Tester", 61), new(Guid.NewGuid(), "Tester", 61) }.AsReadOnly()
         );
 
-        var repo = new MongoGenericRepository<TestMongoDbContext, TestEntity, Guid>(null, context);
+        var repo = new MongoGenericRepository<TestEntity, Guid>(context);
 
         // Throw Act & Assert
         await FluentActions
@@ -217,7 +218,7 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
         using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
         var expected = new TestEntity(Guid.NewGuid(), "Tester", 61);
         await context.TestEntities.InsertManyAsync(new List<TestEntity> { new(Guid.NewGuid(), "Tester", 18), expected }.AsReadOnly());
-        var repo = new MongoGenericRepository<TestMongoDbContext, TestEntity, Guid>(null, context);
+        var repo = new MongoGenericRepository<TestEntity, Guid>(context);
 
         // Act
         var actual = await repo.GetFirstOrDefaultAsync(
@@ -250,7 +251,7 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
     {
         // Arrange
         using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
-        var repo = new MongoGenericRepository<TestMongoDbContext, TestEntity, Guid>(null, context);
+        var repo = new MongoGenericRepository<TestEntity, Guid>(context);
 
         // Act
         var actual = await repo.GetFirstOrDefaultAsync(e => e.Id == Guid.NewGuid());
@@ -268,7 +269,7 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
     {
         // Arrange
         using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
-        var repo = new MongoGenericRepository<TestMongoDbContext, TestEntity, Guid>(null, context);
+        var repo = new MongoGenericRepository<TestEntity, Guid>(context);
 
         // Act
         var actual = await repo.GetListAsync(new ListQueryOptions<TestEntity>());
@@ -286,7 +287,7 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
         var expectedList = new List<TestEntity> { new(Guid.NewGuid(), "TesterA", 11), new(Guid.NewGuid(), "TesterA", 12) };
         await context.TestEntities.InsertManyAsync(expectedList);
         await context.TestEntities.InsertManyAsync(new List<TestEntity> { new(Guid.NewGuid(), "TesterB", 21), new(Guid.NewGuid(), "TesterC", 22), new(Guid.NewGuid(), "TesterD", 23) });
-        var repo = new MongoGenericRepository<TestMongoDbContext, TestEntity, Guid>(null, context);
+        var repo = new MongoGenericRepository<TestEntity, Guid>(context);
 
         // Act
         var noFilterList = await repo.GetListAsync(new ListQueryOptions<TestEntity>());
@@ -351,17 +352,17 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
     {
         // Arrange
         using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
-        var repo = new MongoGenericRepository<TestMongoDbContext, TestEntity, Guid>(null, context);
+        var repo = new MongoGenericRepository<TestEntity, Guid>(context);
 
         // Act
-        var actual = await repo.GetPageListAsync(new PageQueryOptions<TestEntity>());
+        var actual = await repo.GetPageListAsync(new PaginationQueryOptions<TestEntity>());
 
         // Assert
         actual.Should().NotBeNull();
         actual.Items.Should().BeEmpty();
         actual.TotalCount.Should().Be(0);
         actual.PageNumber.Should().Be(1);
-        actual.PageSize.Should().Be(new PageQueryOptions<TestEntity>().PageSize);
+        actual.PageSize.Should().Be(new PaginationQueryOptions<TestEntity>().PageSize);
     }
 
     [Fact]
@@ -372,21 +373,21 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
         var expectedList = new List<TestEntity> { new(Guid.NewGuid(), "TesterA", 11), new(Guid.NewGuid(), "TesterA", 12) };
         await context.TestEntities.InsertManyAsync(expectedList);
         await context.TestEntities.InsertManyAsync(new List<TestEntity> { new(Guid.NewGuid(), "TesterB", 21), new(Guid.NewGuid(), "TesterC", 22), new(Guid.NewGuid(), "TesterD", 23) });
-        var repo = new MongoGenericRepository<TestMongoDbContext, TestEntity, Guid>(null, context);
+        var repo = new MongoGenericRepository<TestEntity, Guid>(context);
 
         // Act
-        var noFilterPageList = await repo.GetPageListAsync(new PageQueryOptions<TestEntity>());
+        var noFilterPageList = await repo.GetPageListAsync(new PaginationQueryOptions<TestEntity>());
 
         // Assert
         noFilterPageList.Should().NotBeNull();
         noFilterPageList.Items.Should().HaveCount(5);
         noFilterPageList.TotalCount.Should().Be(5);
         noFilterPageList.PageNumber.Should().Be(1);
-        noFilterPageList.PageSize.Should().Be(new PageQueryOptions<TestEntity>().PageSize);
+        noFilterPageList.PageSize.Should().Be(new PaginationQueryOptions<TestEntity>().PageSize);
 
 
         // Act
-        var limitedPageList = await repo.GetPageListAsync(options: new PageQueryOptions<TestEntity> { PageNumber = 3, PageSize = 2 });
+        var limitedPageList = await repo.GetPageListAsync(options: new PaginationQueryOptions<TestEntity> { PageNumber = 3, PageSize = 2 });
 
         // Assert
         limitedPageList.Should().NotBeNull();
@@ -396,14 +397,14 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
         limitedPageList.PageSize.Should().Be(2);
 
         // Act
-        var filterPageList = await repo.GetPageListAsync(options: new PageQueryOptions<TestEntity> { Filter = u => u.Name.Equals("TesterA") });
+        var filterPageList = await repo.GetPageListAsync(options: new PaginationQueryOptions<TestEntity> { Filter = u => u.Name.Equals("TesterA") });
 
         // Assert
         filterPageList.Should().NotBeNull();
         filterPageList.Items.Should().HaveCount(2);
         filterPageList.TotalCount.Should().Be(2);
         filterPageList.PageNumber.Should().Be(1);
-        filterPageList.PageSize.Should().Be(new PageQueryOptions<TestEntity>().PageSize);
+        filterPageList.PageSize.Should().Be(new PaginationQueryOptions<TestEntity>().PageSize);
         filterPageList.Items.ShouldBeEquivalentToWithMilliseconds(expectedList);
 
         // Arrange
@@ -412,18 +413,18 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
             .Build();
 
         // Act
-        filterPageList = await repo.GetPageListAsync(options: new PageQueryOptions<TestEntity> { Filter = filter });
+        filterPageList = await repo.GetPageListAsync(options: new PaginationQueryOptions<TestEntity> { Filter = filter });
 
         // Assert
         filterPageList.Should().NotBeNull();
         filterPageList.Items.Should().HaveCount(2);
         filterPageList.TotalCount.Should().Be(2);
         filterPageList.PageNumber.Should().Be(1);
-        filterPageList.PageSize.Should().Be(new PageQueryOptions<TestEntity>().PageSize);
+        filterPageList.PageSize.Should().Be(new PaginationQueryOptions<TestEntity>().PageSize);
         filterPageList.Items.ShouldBeEquivalentToWithMilliseconds(expectedList);
 
         // Act
-        var dynamicOrderedPageList = await repo.GetPageListAsync(options: new PageQueryOptions<TestEntity> { OrderByDynamic = $"{nameof(TestEntity.Name)} asc, {nameof(TestEntity.Age)} desc", PageSize = 1 });
+        var dynamicOrderedPageList = await repo.GetPageListAsync(options: new PaginationQueryOptions<TestEntity> { OrderByDynamic = $"{nameof(TestEntity.Name)} asc, {nameof(TestEntity.Age)} desc", PageSize = 1 });
 
         // Assert
         dynamicOrderedPageList.Should().NotBeNull();
@@ -435,7 +436,7 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
         dynamicOrderedPageList.PageSize.Should().Be(1);
 
         // Act
-        var orderedPageList = await repo.GetPageListAsync(options: new PageQueryOptions<TestEntity> { OrderByEntity = o => o.OrderBy(e => e.Name).ThenByDescending(a => a.Age), PageSize = 1 });
+        var orderedPageList = await repo.GetPageListAsync(options: new PaginationQueryOptions<TestEntity> { OrderByEntity = o => o.OrderBy(e => e.Name).ThenByDescending(a => a.Age), PageSize = 1 });
 
         // Assert
         orderedPageList.Should().NotBeNull();
@@ -456,7 +457,7 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
     {
         // Arrange
         using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
-        var repo = new MongoGenericRepository<TestMongoDbContext, TestEntity, Guid>(null, context);
+        var repo = new MongoGenericRepository<TestEntity, Guid>(context);
 
         // Act
         long? actual = await repo.GetCountAsync();
@@ -474,7 +475,7 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
         var expectedList = new List<TestEntity> { new(Guid.NewGuid(), "TesterA", 34), new(Guid.NewGuid(), "TesterA", 61) };
         await context.TestEntities.InsertManyAsync(expectedList);
         await context.TestEntities.InsertManyAsync(new List<TestEntity> { new(Guid.NewGuid(), "TesterB", 1), new(Guid.NewGuid(), "TesterC", 2), new(Guid.NewGuid(), "TesterD", 3) });
-        var repo = new MongoGenericRepository<TestMongoDbContext, TestEntity, Guid>(null, context);
+        var repo = new MongoGenericRepository<TestEntity, Guid>(context);
 
         // Act
         long? noFilterListCount = await repo.GetCountAsync();
@@ -512,7 +513,7 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
     {
         // Arrange
         using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
-        var repo = new MongoGenericRepository<TestMongoDbContext, TestEntity, Guid>(null, context);
+        var repo = new MongoGenericRepository<TestEntity, Guid>(context);
 
         // Act
         bool? actual = await repo.ExistsAsync(x => x.Id == Guid.NewGuid());
@@ -528,7 +529,7 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
         // Arrange
         using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
         await context.TestEntities.InsertOneAsync(new TestEntity(Guid.NewGuid(), "TesterA", 34));
-        var repo = new MongoGenericRepository<TestMongoDbContext, TestEntity, Guid>(null, context);
+        var repo = new MongoGenericRepository<TestEntity, Guid>(context);
 
         // Act
         bool? actual = await repo.ExistsAsync(filter: u => u.Name.Equals("TesterA"));
@@ -560,7 +561,7 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
         // Arrange
         using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
         var expectedEntity = new TestEntity(Guid.NewGuid(), "TesterA", 10);
-        var repo = new MongoGenericRepository<TestMongoDbContext, TestEntity, Guid>(null, context);
+        var repo = new MongoGenericRepository<TestEntity, Guid>(context);
 
         // Act
         int? actual = await repo.InsertAsync(expectedEntity);
@@ -583,7 +584,7 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
         // Arrange
         using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
         var expectedList = new List<TestEntity> { new(Guid.NewGuid(), "TesterA", 11), new(Guid.NewGuid(), "TesterA", 12) };
-        var repo = new MongoGenericRepository<TestMongoDbContext, TestEntity, Guid>(null, context);
+        var repo = new MongoGenericRepository<TestEntity, Guid>(context);
 
         // Act
         int? actualCout = await repo.InsertManyAsync(expectedList);
@@ -607,7 +608,7 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
         using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
         var placedEntity = new TestEntity(Guid.NewGuid(), "TesterA", 10);
         await context.TestEntities.InsertOneAsync(placedEntity);
-        var repo = new MongoGenericRepository<TestMongoDbContext, TestEntity, Guid>(null, context);
+        var repo = new MongoGenericRepository<TestEntity, Guid>(context);
 
         // Act
         var actual = await repo.UpdateByIdAsync(placedEntity.Id, e => e.Name = "Updated");
@@ -622,7 +623,7 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
     {
         // Arrange
         using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
-        var repo = new MongoGenericRepository<TestMongoDbContext, TestEntity, Guid>(null, context);
+        var repo = new MongoGenericRepository<TestEntity, Guid>(context);
 
         // Throw Act & Assert
         await FluentActions
@@ -642,7 +643,7 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
         using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
         var placedEntity = new TestEntity(Guid.NewGuid(), "TesterA", 10);
         await context.TestEntities.InsertOneAsync(placedEntity);
-        var repo = new MongoGenericRepository<TestMongoDbContext, TestEntity, Guid>(null, context);
+        var repo = new MongoGenericRepository<TestEntity, Guid>(context);
 
         // Act
         int? actual = await repo.UpdateAsync(new TestEntity(placedEntity.Id, "Updated", 10));
@@ -658,7 +659,7 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
     {
         // Arrange
         using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
-        var repo = new MongoGenericRepository<TestMongoDbContext, TestEntity, Guid>(null, context);
+        var repo = new MongoGenericRepository<TestEntity, Guid>(context);
 
         // Throw Act & Assert
         await FluentActions
@@ -680,7 +681,7 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
         await context.TestEntities.InsertManyAsync(placedEntities);
 
         var updatedEntities = new List<TestEntity> { new(placedEntities[0].Id, "Updated", 20), new(placedEntities[1].Id, "Updated", 21) };
-        var repo = new MongoGenericRepository<TestMongoDbContext, TestEntity, Guid>(null, context);
+        var repo = new MongoGenericRepository<TestEntity, Guid>(context);
 
         // Act
         int? actual = await repo.UpdateManyAsync(updatedEntities);
@@ -696,7 +697,7 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
     {
         // Arrange
         using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
-        var repo = new MongoGenericRepository<TestMongoDbContext, TestEntity, Guid>(null, context);
+        var repo = new MongoGenericRepository<TestEntity, Guid>(context);
 
         // Throw Act & Assert
         await FluentActions
@@ -716,7 +717,7 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
         using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
         var placedEntity = new TestEntity(Guid.NewGuid(), "TesterA", 10);
         await context.TestEntities.InsertOneAsync(placedEntity);
-        var repo = new MongoGenericRepository<TestMongoDbContext, TestEntity, Guid>(null, context);
+        var repo = new MongoGenericRepository<TestEntity, Guid>(context);
 
         // Act
         int? actual = await repo.DeleteByIdAsync(placedEntity.Id);
@@ -732,7 +733,7 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
     {
         // Arrange
         using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
-        var repo = new MongoGenericRepository<TestMongoDbContext, TestEntity, Guid>(null, context);
+        var repo = new MongoGenericRepository<TestEntity, Guid>(context);
 
         // Throw Act & Assert
         await FluentActions
@@ -752,7 +753,7 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
         using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
         var placedEntities = new List<TestEntity> { new(Guid.NewGuid(), "TesterA", 10), new(Guid.NewGuid(), "TesterA", 11) };
         await context.TestEntities.InsertManyAsync(placedEntities);
-        var repo = new MongoGenericRepository<TestMongoDbContext, TestEntity, Guid>(null, context);
+        var repo = new MongoGenericRepository<TestEntity, Guid>(context);
 
         // Act
         int? actual = await repo.DeleteByIdListAsync(placedEntities.Select(s => s.Id).ToList());
@@ -768,7 +769,7 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
     {
         // Arrange
         using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
-        var repo = new MongoGenericRepository<TestMongoDbContext, TestEntity, Guid>(null, context);
+        var repo = new MongoGenericRepository<TestEntity, Guid>(context);
 
         // Throw Act & Assert
         await FluentActions
@@ -788,7 +789,7 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
         using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
         var placedEntity = new TestEntity(Guid.NewGuid(), "TesterA", 10);
         await context.TestEntities.InsertOneAsync(placedEntity);
-        var repo = new MongoGenericRepository<TestMongoDbContext, TestEntity, Guid>(null, context);
+        var repo = new MongoGenericRepository<TestEntity, Guid>(context);
 
         // Act
         int? actual = await repo.DeleteAsync(placedEntity);
@@ -804,7 +805,7 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
     {
         // Arrange
         using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
-        var repo = new MongoGenericRepository<TestMongoDbContext, TestEntity, Guid>(null, context);
+        var repo = new MongoGenericRepository<TestEntity, Guid>(context);
 
         // Throw Act & Assert
         await FluentActions
@@ -824,7 +825,7 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
         using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
         var placedEntities = new List<TestEntity> { new(Guid.NewGuid(), "TesterA", 10), new(Guid.NewGuid(), "TesterA", 11) };
         await context.TestEntities.InsertManyAsync(placedEntities);
-        var repo = new MongoGenericRepository<TestMongoDbContext, TestEntity, Guid>(null, context);
+        var repo = new MongoGenericRepository<TestEntity, Guid>(context);
 
         // Act
         int? actual = await repo.DeleteManyAsync(placedEntities);
@@ -867,7 +868,7 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
     {
         // Arrange
         using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
-        var repo = new MongoGenericRepository<TestMongoDbContext, TestEntity, Guid>(null, context);
+        var repo = new MongoGenericRepository<TestEntity, Guid>(context);
 
         // Throw Act & Assert
         await FluentActions
