@@ -27,7 +27,8 @@ public class EfCoreGenericRepository<TEntity, TKey>(DbContext context) :
         CancellationToken cancellationToken = default)
     {
         var results = await GetDbSet()
-            .Where(predicate).Take(2)
+            .Where(predicate)
+            .Take(2)
             .Select(selector)
             .ToListAsync(cancellationToken);
 
@@ -45,7 +46,7 @@ public class EfCoreGenericRepository<TEntity, TKey>(DbContext context) :
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderByEntity = null,
         CancellationToken cancellationToken = default)
     {
-        IQueryable<TEntity> query = DynamicQueryableExtensions.Where(GetDbSet(), predicate);
+        IQueryable<TEntity> query = GetDbSet().Where(predicate);
         if (orderByEntity != null) query = orderByEntity(query);
 
         return await query.Select(selector).FirstOrDefaultAsync(cancellationToken);
@@ -188,7 +189,7 @@ public class EfCoreGenericRepository<TEntity, TKey>(DbContext context) :
         Expression<Func<TEntity, bool>> predicate,
         CancellationToken cancellationToken = default)
     {
-        var entities = await DynamicQueryableExtensions.Where(GetDbSet(), predicate).ToListAsync(cancellationToken);
+        var entities = await GetDbSet().Where(predicate).ToListAsync(cancellationToken);
         if (entities.Count == 0) throw new EntityNotFoundException(typeof(TEntity));
         return await DeleteManyAsync(entities, cancellationToken);
     }
