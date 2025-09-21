@@ -17,9 +17,24 @@ public class TrackingMongoCollection<TEntity>(IMongoCollection<TEntity> inner, [
     [CanBeNull] private event EventHandler<MongoEntityEventArgs> CommandTrackerEventHandler = commandTrackerEventHandler;
 
     private static UpdateDefinition<TEntity> CheckAndSetModification(UpdateDefinition<TEntity> update)
-        => typeof(TEntity).GetMember(nameof(IAuditedObject.LastModificationTime)) is { Length: > 0 }
-            ? update.Set(nameof(IAuditedObject.LastModificationTime), DateTime.UtcNow)
-            : update;
+    {
+        if (typeof(TEntity).GetMember(nameof(IHasModificationTime.LastModificationTime)) is { Length: > 0 })
+        {
+            update = update.Set(nameof(IHasModificationTime.LastModificationTime), DateTime.UtcNow);
+        }
+
+        if (typeof(TEntity).GetMember(nameof(IModificationAuditedObject.LastModifierId)) is { Length: > 0 })
+        {
+            update = update.Set(nameof(IModificationAuditedObject.LastModifierId), BsonNull.Value);
+        }
+
+        if (typeof(TEntity).GetMember(nameof(IDeletionAuditedObject.DeleterId)) is { Length: > 0 })
+        {
+            update = update.Set(nameof(IDeletionAuditedObject.DeleterId), BsonNull.Value);
+        }
+
+        return update;
+    }
 
     public IAsyncCursor<TResult> Aggregate<TResult>(PipelineDefinition<TEntity, TResult> pipeline, AggregateOptions options = null, CancellationToken cancellationToken = new())
         => inner.Aggregate(pipeline, options, cancellationToken);

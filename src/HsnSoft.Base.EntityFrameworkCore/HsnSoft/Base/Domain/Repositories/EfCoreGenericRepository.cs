@@ -11,8 +11,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HsnSoft.Base.Domain.Repositories;
 
-public class EfCoreGenericRepository<TEntity, TKey>(DbContext context) :
-    GenericRepositoryBase<TEntity, TKey>,
+public class EfCoreGenericRepository<TEntity, TKey>(IServiceProvider provider, DbContext context) : GenericRepositoryBase<TEntity, TKey>(provider),
     IEfCoreGenericRepository<TEntity, TKey>
     where TEntity : class, IEntity<TKey>
 {

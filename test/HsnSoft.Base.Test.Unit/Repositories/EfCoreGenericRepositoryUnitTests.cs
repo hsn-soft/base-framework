@@ -24,7 +24,7 @@ public class EfCoreGenericRepositoryUnitTests
         var expected = new TestEntity(Guid.NewGuid(), "Tester", 61);
         await context.TestEntities.AddAsync(expected);
         await context.SaveChangesAsync();
-        var repo = new EfCoreGenericRepository<TestEntity, Guid>(context);
+        var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
         var actual = await repo.GetByIdAsync(expected.Id);
@@ -39,7 +39,7 @@ public class EfCoreGenericRepositoryUnitTests
     {
         // Arrange
         await using var context = new TestEfCoreDbContext(_dbContextOptions);
-        var repo = new EfCoreGenericRepository<TestEntity, Guid>(context);
+        var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Throw Act & Assert
         await FluentActions
@@ -60,7 +60,7 @@ public class EfCoreGenericRepositoryUnitTests
         var expected = new TestEntity(Guid.NewGuid(), "Tester", 61);
         await context.TestEntities.AddAsync(expected);
         await context.SaveChangesAsync();
-        var repo = new EfCoreGenericRepository<TestEntity, Guid>(context);
+        var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
         var actual = await repo.GetByIdOrDefaultAsync(expected.Id);
@@ -75,7 +75,7 @@ public class EfCoreGenericRepositoryUnitTests
     {
         // Arrange
         await using var context = new TestEfCoreDbContext(_dbContextOptions);
-        var repo = new EfCoreGenericRepository<TestEntity, Guid>(context);
+        var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
         var actual = await repo.GetByIdOrDefaultAsync(Guid.NewGuid());
@@ -96,7 +96,7 @@ public class EfCoreGenericRepositoryUnitTests
         var expected = new TestEntity(Guid.NewGuid(), "Tester", 61);
         await context.TestEntities.AddAsync(expected);
         await context.SaveChangesAsync();
-        var repo = new EfCoreGenericRepository<TestEntity, Guid>(context);
+        var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
         var actual = await repo.GetSingleAsync(x => x.Id == expected.Id);
@@ -123,7 +123,7 @@ public class EfCoreGenericRepositoryUnitTests
     {
         // Arrange
         await using var context = new TestEfCoreDbContext(_dbContextOptions);
-        var repo = new EfCoreGenericRepository<TestEntity, Guid>(context);
+        var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Throw Act & Assert
         await FluentActions
@@ -139,7 +139,7 @@ public class EfCoreGenericRepositoryUnitTests
         await using var context = new TestEfCoreDbContext(_dbContextOptions);
         await context.TestEntities.AddRangeAsync(new TestEntity(Guid.NewGuid(), "Tester", 61), new TestEntity(Guid.NewGuid(), "Tester", 61));
         await context.SaveChangesAsync();
-        var repo = new EfCoreGenericRepository<TestEntity, Guid>(context);
+        var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Throw Act & Assert
         await FluentActions
@@ -160,7 +160,7 @@ public class EfCoreGenericRepositoryUnitTests
         var expected = new TestEntity(Guid.NewGuid(), "Tester", 61);
         await context.TestEntities.AddAsync(expected);
         await context.SaveChangesAsync();
-        var repo = new EfCoreGenericRepository<TestEntity, Guid>(context);
+        var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
         var actual = await repo.GetSingleOrDefaultAsync(x => x.Id == expected.Id);
@@ -187,7 +187,7 @@ public class EfCoreGenericRepositoryUnitTests
     {
         // Arrange
         await using var context = new TestEfCoreDbContext(_dbContextOptions);
-        var repo = new EfCoreGenericRepository<TestEntity, Guid>(context);
+        var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
         var actual = await repo.GetSingleOrDefaultAsync(e => e.Id == Guid.NewGuid());
@@ -203,7 +203,7 @@ public class EfCoreGenericRepositoryUnitTests
         await using var context = new TestEfCoreDbContext(_dbContextOptions);
         await context.TestEntities.AddRangeAsync(new TestEntity(Guid.NewGuid(), "Tester", 61), new TestEntity(Guid.NewGuid(), "Tester", 61));
         await context.SaveChangesAsync();
-        var repo = new EfCoreGenericRepository<TestEntity, Guid>(context);
+        var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Throw Act & Assert
         await FluentActions
@@ -224,7 +224,7 @@ public class EfCoreGenericRepositoryUnitTests
         var expected = new TestEntity(Guid.NewGuid(), "Tester", 61);
         await context.TestEntities.AddRangeAsync(new TestEntity(Guid.NewGuid(), "Tester", 18), expected);
         await context.SaveChangesAsync();
-        var repo = new EfCoreGenericRepository<TestEntity, Guid>(context);
+        var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
         var actual = await repo.GetFirstOrDefaultAsync(
@@ -257,7 +257,7 @@ public class EfCoreGenericRepositoryUnitTests
     {
         // Arrange
         await using var context = new TestEfCoreDbContext(_dbContextOptions);
-        var repo = new EfCoreGenericRepository<TestEntity, Guid>(context);
+        var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
         var actual = await repo.GetFirstOrDefaultAsync(e => e.Id == Guid.NewGuid());
@@ -275,7 +275,7 @@ public class EfCoreGenericRepositoryUnitTests
     {
         // Arrange
         await using var context = new TestEfCoreDbContext(_dbContextOptions);
-        var repo = new EfCoreGenericRepository<TestEntity, Guid>(context);
+        var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
         var actual = await repo.GetListAsync(new ListQueryOptions<TestEntity>());
@@ -294,7 +294,7 @@ public class EfCoreGenericRepositoryUnitTests
         await context.TestEntities.AddRangeAsync(expectedList);
         await context.TestEntities.AddRangeAsync(new List<TestEntity> { new(Guid.NewGuid(), "TesterB", 21), new(Guid.NewGuid(), "TesterC", 22), new(Guid.NewGuid(), "TesterD", 23) });
         await context.SaveChangesAsync();
-        var repo = new EfCoreGenericRepository<TestEntity, Guid>(context);
+        var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
         var noFilterList = await repo.GetListAsync(new ListQueryOptions<TestEntity>());
@@ -359,7 +359,7 @@ public class EfCoreGenericRepositoryUnitTests
     {
         // Arrange
         await using var context = new TestEfCoreDbContext(_dbContextOptions);
-        var repo = new EfCoreGenericRepository<TestEntity, Guid>(context);
+        var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
         var actual = await repo.GetPageListAsync(new PagedQueryOptions<TestEntity>());
@@ -381,7 +381,7 @@ public class EfCoreGenericRepositoryUnitTests
         await context.TestEntities.AddRangeAsync(expectedList);
         await context.TestEntities.AddRangeAsync(new List<TestEntity> { new(Guid.NewGuid(), "TesterB", 21), new(Guid.NewGuid(), "TesterC", 22), new(Guid.NewGuid(), "TesterD", 23) });
         await context.SaveChangesAsync();
-        var repo = new EfCoreGenericRepository<TestEntity, Guid>(context);
+        var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
         var noFilterPageList = await repo.GetPageListAsync(new PagedQueryOptions<TestEntity>());
@@ -465,7 +465,7 @@ public class EfCoreGenericRepositoryUnitTests
     {
         // Arrange
         await using var context = new TestEfCoreDbContext(_dbContextOptions);
-        var repo = new EfCoreGenericRepository<TestEntity, Guid>(context);
+        var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
         long? actual = await repo.GetCountAsync();
@@ -484,7 +484,7 @@ public class EfCoreGenericRepositoryUnitTests
         await context.TestEntities.AddRangeAsync(expectedList);
         await context.TestEntities.AddRangeAsync(new List<TestEntity> { new(Guid.NewGuid(), "TesterB", 1), new(Guid.NewGuid(), "TesterC", 2), new(Guid.NewGuid(), "TesterD", 3) });
         await context.SaveChangesAsync();
-        var repo = new EfCoreGenericRepository<TestEntity, Guid>(context);
+        var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
         long? noFilterListCount = await repo.GetCountAsync();
@@ -522,7 +522,7 @@ public class EfCoreGenericRepositoryUnitTests
     {
         // Arrange
         await using var context = new TestEfCoreDbContext(_dbContextOptions);
-        var repo = new EfCoreGenericRepository<TestEntity, Guid>(context);
+        var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
         bool? actual = await repo.ExistsAsync(x => x.Id == Guid.NewGuid());
@@ -539,7 +539,7 @@ public class EfCoreGenericRepositoryUnitTests
         await using var context = new TestEfCoreDbContext(_dbContextOptions);
         await context.TestEntities.AddAsync(new TestEntity(Guid.NewGuid(), "TesterA", 34));
         await context.SaveChangesAsync();
-        var repo = new EfCoreGenericRepository<TestEntity, Guid>(context);
+        var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
         bool? actual = await repo.ExistsAsync(filter: u => u.Name.Equals("TesterA"));
@@ -571,7 +571,7 @@ public class EfCoreGenericRepositoryUnitTests
         // Arrange
         await using var context = new TestEfCoreDbContext(_dbContextOptions);
         var expectedEntity = new TestEntity(Guid.NewGuid(), "TesterA", 10);
-        var repo = new EfCoreGenericRepository<TestEntity, Guid>(context);
+        var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
         int? actual = await repo.InsertAsync(expectedEntity);
@@ -594,7 +594,7 @@ public class EfCoreGenericRepositoryUnitTests
         // Arrange
         await using var context = new TestEfCoreDbContext(_dbContextOptions);
         var expectedList = new List<TestEntity> { new(Guid.NewGuid(), "TesterA", 11), new(Guid.NewGuid(), "TesterA", 12) };
-        var repo = new EfCoreGenericRepository<TestEntity, Guid>(context);
+        var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
         int? actualCout = await repo.InsertManyAsync(expectedList);
@@ -619,7 +619,7 @@ public class EfCoreGenericRepositoryUnitTests
         var placedEntity = new TestEntity(Guid.NewGuid(), "TesterA", 10);
         await context.TestEntities.AddAsync(placedEntity);
         await context.SaveChangesAsync();
-        var repo = new EfCoreGenericRepository<TestEntity, Guid>(context);
+        var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
         var actual = await repo.UpdateByIdAsync(placedEntity.Id, e => e.Name = "Updated");
@@ -634,7 +634,7 @@ public class EfCoreGenericRepositoryUnitTests
     {
         // Arrange
         await using var context = new TestEfCoreDbContext(_dbContextOptions);
-        var repo = new EfCoreGenericRepository<TestEntity, Guid>(context);
+        var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Throw Act & Assert
         await FluentActions
@@ -655,7 +655,7 @@ public class EfCoreGenericRepositoryUnitTests
         var placedEntity = new TestEntity(Guid.NewGuid(), "TesterA", 10);
         await context.TestEntities.AddAsync(placedEntity);
         await context.SaveChangesAsync();
-        var repo = new EfCoreGenericRepository<TestEntity, Guid>(context);
+        var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
         int? actual = await repo.UpdateAsync(new TestEntity(placedEntity.Id, "Updated", 10));
@@ -671,7 +671,7 @@ public class EfCoreGenericRepositoryUnitTests
     {
         // Arrange
         await using var context = new TestEfCoreDbContext(_dbContextOptions);
-        var repo = new EfCoreGenericRepository<TestEntity, Guid>(context);
+        var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Throw Act & Assert
         await FluentActions
@@ -693,7 +693,7 @@ public class EfCoreGenericRepositoryUnitTests
         await context.TestEntities.AddRangeAsync(placedEntities);
         await context.SaveChangesAsync();
         var updatedEntities = new List<TestEntity> { new(placedEntities[0].Id, "Updated", 20), new(placedEntities[1].Id, "Updated", 21) };
-        var repo = new EfCoreGenericRepository<TestEntity, Guid>(context);
+        var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
         int? actual = await repo.UpdateManyAsync(updatedEntities);
@@ -709,7 +709,7 @@ public class EfCoreGenericRepositoryUnitTests
     {
         // Arrange
         await using var context = new TestEfCoreDbContext(_dbContextOptions);
-        var repo = new EfCoreGenericRepository<TestEntity, Guid>(context);
+        var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Throw Act & Assert
         await FluentActions
@@ -730,7 +730,7 @@ public class EfCoreGenericRepositoryUnitTests
         var placedEntity = new TestEntity(Guid.NewGuid(), "TesterA", 10);
         await context.TestEntities.AddAsync(placedEntity);
         await context.SaveChangesAsync();
-        var repo = new EfCoreGenericRepository<TestEntity, Guid>(context);
+        var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
         int? actual = await repo.DeleteByIdAsync(placedEntity.Id);
@@ -746,7 +746,7 @@ public class EfCoreGenericRepositoryUnitTests
     {
         // Arrange
         await using var context = new TestEfCoreDbContext(_dbContextOptions);
-        var repo = new EfCoreGenericRepository<TestEntity, Guid>(context);
+        var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Throw Act & Assert
         await FluentActions
@@ -767,7 +767,7 @@ public class EfCoreGenericRepositoryUnitTests
         var placedEntities = new List<TestEntity> { new(Guid.NewGuid(), "TesterA", 10), new(Guid.NewGuid(), "TesterA", 11) };
         await context.TestEntities.AddRangeAsync(placedEntities);
         await context.SaveChangesAsync();
-        var repo = new EfCoreGenericRepository<TestEntity, Guid>(context);
+        var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
         int? actual = await repo.DeleteByIdListAsync(placedEntities.Select(s => s.Id).ToList());
@@ -783,7 +783,7 @@ public class EfCoreGenericRepositoryUnitTests
     {
         // Arrange
         await using var context = new TestEfCoreDbContext(_dbContextOptions);
-        var repo = new EfCoreGenericRepository<TestEntity, Guid>(context);
+        var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Throw Act & Assert
         await FluentActions
@@ -804,7 +804,7 @@ public class EfCoreGenericRepositoryUnitTests
         var placedEntity = new TestEntity(Guid.NewGuid(), "TesterA", 10);
         await context.TestEntities.AddAsync(placedEntity);
         await context.SaveChangesAsync();
-        var repo = new EfCoreGenericRepository<TestEntity, Guid>(context);
+        var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
         int? actual = await repo.DeleteAsync(placedEntity);
@@ -820,7 +820,7 @@ public class EfCoreGenericRepositoryUnitTests
     {
         // Arrange
         await using var context = new TestEfCoreDbContext(_dbContextOptions);
-        var repo = new EfCoreGenericRepository<TestEntity, Guid>(context);
+        var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Throw Act & Assert
         await FluentActions
@@ -841,7 +841,7 @@ public class EfCoreGenericRepositoryUnitTests
         var placedEntities = new List<TestEntity> { new(Guid.NewGuid(), "TesterA", 10), new(Guid.NewGuid(), "TesterA", 11) };
         await context.TestEntities.AddRangeAsync(placedEntities);
         await context.SaveChangesAsync();
-        var repo = new EfCoreGenericRepository<TestEntity, Guid>(context);
+        var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
         int? actual = await repo.DeleteManyAsync(placedEntities);
@@ -884,7 +884,7 @@ public class EfCoreGenericRepositoryUnitTests
     {
         // Arrange
         await using var context = new TestEfCoreDbContext(_dbContextOptions);
-        var repo = new EfCoreGenericRepository<TestEntity, Guid>(context);
+        var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Throw Act & Assert
         await FluentActions

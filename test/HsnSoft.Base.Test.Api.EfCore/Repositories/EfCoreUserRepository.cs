@@ -13,7 +13,7 @@ namespace HsnSoft.Base.Test.Api.EfCore.Repositories;
 
 // public sealed class MyGenericRepository<TEntity>(AppDbContext context) : EfCoreGenericRepository<AppDbContext, TEntity, Guid>(context), IMyGenericRepository<TEntity> where TEntity : class, IEntity<Guid>;
 
-public sealed class EfCoreUserRepository(AppEfCoreDbContext context) : EfCoreGenericRepository<User, Guid>(context), IEfCoreUserRepository
+public sealed class EfCoreUserRepository(AppEfCoreDbContext context, IServiceProvider provider) : EfCoreGenericRepository<User, Guid>(provider, context), IEfCoreUserRepository
 {
     public async Task<List<TResult>> GetListWithMapperAsync<TResult>(
         ListQueryOptions<User> options,

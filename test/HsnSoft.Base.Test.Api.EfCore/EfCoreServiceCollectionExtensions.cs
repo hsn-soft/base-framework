@@ -1,3 +1,5 @@
+using HsnSoft.Base.Auditing;
+using HsnSoft.Base.Data;
 using HsnSoft.Base.Domain.Repositories;
 using HsnSoft.Base.Domain.Services;
 using HsnSoft.Base.EntityFrameworkCore;
@@ -16,6 +18,9 @@ public static class EfCoreServiceCollectionExtensions
 {
     public static void AddServiceEfCoreDatabaseConfiguration(this IServiceCollection services, IConfiguration configuration)
     {
+        services.AddBaseAuditingServiceCollection();
+        services.AddBaseDataServiceCollection();
+
         // DbContext
         services.AddDbContext<AppEfCoreDbContext>(options =>
             {

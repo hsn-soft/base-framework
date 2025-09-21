@@ -4,14 +4,22 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
+using HsnSoft.Base.Data;
 using HsnSoft.Base.Domain.Entities;
 using HsnSoft.Base.Domain.Models;
+using HsnSoft.Base.MultiTenancy;
+using JetBrains.Annotations;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace HsnSoft.Base.Domain.Repositories;
 
-public abstract class GenericRepositoryBase<TEntity, TKey> : IGenericRepository<TEntity, TKey>
+public abstract class GenericRepositoryBase<TEntity, TKey>(IServiceProvider provider = null) : IGenericRepository<TEntity, TKey>
     where TEntity : class, IEntity<TKey>
 {
+    [CanBeNull] private IDataFilter DataFilter { get; } = provider?.GetService<IDataFilter>();
+
+    [CanBeNull] private ICurrentTenant CurrentTenant { get; } = provider?.GetService<ICurrentTenant>();
+
     #region GetById / Single / First
 
     public Task<TEntity> GetByIdAsync(TKey id, CancellationToken cancellationToken = default)
@@ -124,6 +132,31 @@ public abstract class GenericRepositoryBase<TEntity, TKey> : IGenericRepository<
 
     public abstract Task<int> DeleteManyAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default);
     public abstract Task<int> DeleteManyAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default);
+
+    #endregion
+
+    #region Filter Functions
+
+    protected TQueryable ApplyDataFilters<TQueryable>(TQueryable query) where TQueryable : IQueryable<TEntity>
+    {
+        return ApplyDataFilters<TQueryable, TEntity>(query);
+    }
+
+    protected virtual TQueryable ApplyDataFilters<TQueryable, TOtherEntity>(TQueryable query) where TQueryable : IQueryable<TOtherEntity>
+    {
+        if (typeof(ISoftDelete).IsAssignableFrom(typeof(TOtherEntity)))
+        {
+            query = (TQueryable)query.WhereIf(DataFilter?.IsEnabled<ISoftDelete>() ?? false, e => ((ISoftDelete)e).IsDeleted == false);
+        }
+
+        if (typeof(IMultiTenant).IsAssignableFrom(typeof(TOtherEntity)))
+        {
+            var tenantId = CurrentTenant?.Id;
+            query = (TQueryable)query.WhereIf(DataFilter?.IsEnabled<IMultiTenant>() ?? false, e => ((IMultiTenant)e).TenantId == tenantId);
+        }
+
+        return query;
+    }
 
     #endregion
 }

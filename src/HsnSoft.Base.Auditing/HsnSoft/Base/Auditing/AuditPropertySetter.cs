@@ -1,4 +1,5 @@
-﻿using HsnSoft.Base.DependencyInjection;
+﻿using System;
+using HsnSoft.Base.DependencyInjection;
 using HsnSoft.Base.MultiTenancy;
 using HsnSoft.Base.Timing;
 using HsnSoft.Base.Users;
@@ -7,18 +8,13 @@ namespace HsnSoft.Base.Auditing;
 
 public class AuditPropertySetter : IAuditPropertySetter, ITransientDependency
 {
-    public AuditPropertySetter(
-        ICurrentUser currentUser,
-        ICurrentTenant currentTenant,
-        IClock clock)
+    public AuditPropertySetter(ICurrentUser currentUser, IClock clock)
     {
         CurrentUser = currentUser;
-        CurrentTenant = currentTenant;
         Clock = clock;
     }
 
     protected ICurrentUser CurrentUser { get; }
-    protected ICurrentTenant CurrentTenant { get; }
     protected IClock Clock { get; }
 
     public void SetCreationProperties(object targetObject)
@@ -41,7 +37,7 @@ public class AuditPropertySetter : IAuditPropertySetter, ITransientDependency
 
     private void SetCreationTime(object targetObject)
     {
-        if (!(targetObject is IHasCreationTime objectWithCreationTime))
+        if (targetObject is not IHasCreationTime objectWithCreationTime)
         {
             return;
         }
@@ -54,8 +50,14 @@ public class AuditPropertySetter : IAuditPropertySetter, ITransientDependency
 
     private void SetCreatorId(object targetObject)
     {
+        if (targetObject is not IMayHaveCreator mayHaveCreatorObject)
+        {
+            return;
+        }
+
         if (!CurrentUser.Id.HasValue)
         {
+            ObjectHelper.TrySetProperty(mayHaveCreatorObject, x => x.CreatorId, () => null);
             return;
         }
 
@@ -63,27 +65,17 @@ public class AuditPropertySetter : IAuditPropertySetter, ITransientDependency
         {
             if (multiTenantEntity.TenantId != CurrentUser.TenantId)
             {
+                ObjectHelper.TrySetProperty(mayHaveCreatorObject, x => x.CreatorId, () => null);
                 return;
             }
         }
 
-        /* TODO: The code below is from old Base, not implemented yet
-            if (tenantId.HasValue && MultiTenancyHelper.IsHostEntity(entity))
-            {
-                //Tenant user created a host entity
-                return;
-            }
-             */
-
-        if (targetObject is IMayHaveCreator mayHaveCreatorObject)
+        if (mayHaveCreatorObject.CreatorId.HasValue && mayHaveCreatorObject.CreatorId.Value != Guid.Empty)
         {
-            if (mayHaveCreatorObject.CreatorId.HasValue && mayHaveCreatorObject.CreatorId.Value != default)
-            {
-                return;
-            }
-
-            ObjectHelper.TrySetProperty(mayHaveCreatorObject, x => x.CreatorId, () => CurrentUser.Id);
+            return;
         }
+
+        ObjectHelper.TrySetProperty(mayHaveCreatorObject, x => x.CreatorId, () => CurrentUser.Id);
     }
 
     private void SetLastModificationTime(object targetObject)
@@ -96,7 +88,7 @@ public class AuditPropertySetter : IAuditPropertySetter, ITransientDependency
 
     private void SetLastModifierId(object targetObject)
     {
-        if (!(targetObject is IModificationAuditedObject modificationAuditedObject))
+        if (targetObject is not IModificationAuditedObject modificationAuditedObject)
         {
             return;
         }
@@ -107,7 +99,7 @@ public class AuditPropertySetter : IAuditPropertySetter, ITransientDependency
             return;
         }
 
-        if (modificationAuditedObject is IMultiTenant multiTenantEntity)
+        if (targetObject is IMultiTenant multiTenantEntity)
         {
             if (multiTenantEntity.TenantId != CurrentUser.TenantId)
             {
@@ -116,14 +108,10 @@ public class AuditPropertySetter : IAuditPropertySetter, ITransientDependency
             }
         }
 
-        /* TODO: The code below is from old Base, not implemented yet
-        if (tenantId.HasValue && MultiTenancyHelper.IsHostEntity(entity))
+        if (modificationAuditedObject.LastModifierId.HasValue && modificationAuditedObject.LastModifierId.Value != Guid.Empty)
         {
-            //Tenant user modified a host entity
-            modificationAuditedObject.LastModifierId = null;
             return;
         }
-         */
 
         ObjectHelper.TrySetProperty(modificationAuditedObject, x => x.LastModifierId, () => CurrentUser.Id);
     }
@@ -141,12 +129,7 @@ public class AuditPropertySetter : IAuditPropertySetter, ITransientDependency
 
     private void SetDeleterId(object targetObject)
     {
-        if (!(targetObject is IDeletionAuditedObject deletionAuditedObject))
-        {
-            return;
-        }
-
-        if (deletionAuditedObject.DeleterId != null)
+        if (targetObject is not IDeletionAuditedObject deletionAuditedObject)
         {
             return;
         }
@@ -157,13 +140,18 @@ public class AuditPropertySetter : IAuditPropertySetter, ITransientDependency
             return;
         }
 
-        if (deletionAuditedObject is IMultiTenant multiTenantEntity)
+        if (targetObject is IMultiTenant multiTenantEntity)
         {
             if (multiTenantEntity.TenantId != CurrentUser.TenantId)
             {
                 ObjectHelper.TrySetProperty(deletionAuditedObject, x => x.DeleterId, () => null);
                 return;
             }
+        }
+
+        if (deletionAuditedObject.DeleterId.HasValue && deletionAuditedObject.DeleterId.Value != Guid.Empty)
+        {
+            return;
         }
 
         ObjectHelper.TrySetProperty(deletionAuditedObject, x => x.DeleterId, () => CurrentUser.Id);

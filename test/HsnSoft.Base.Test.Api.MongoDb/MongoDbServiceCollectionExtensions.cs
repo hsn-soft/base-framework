@@ -1,3 +1,5 @@
+using HsnSoft.Base.Auditing;
+using HsnSoft.Base.Data;
 using HsnSoft.Base.Domain.Repositories;
 using HsnSoft.Base.Test.Api.Domain;
 using HsnSoft.Base.Test.Api.Domain.Repositories;
@@ -17,8 +19,8 @@ public static class MongoDbServiceCollectionExtensions
 {
     public static IServiceCollection AddServiceMongoDbDatabaseConfiguration(this IServiceCollection services, IConfiguration configuration)
     {
-        // services.AddBaseAuditingServiceCollection();
-        // services.AddBaseDataServiceCollection();
+        services.AddBaseAuditingServiceCollection();
+        services.AddBaseDataServiceCollection();
 
         MongoConfigure();
         RegisterClassMaps();

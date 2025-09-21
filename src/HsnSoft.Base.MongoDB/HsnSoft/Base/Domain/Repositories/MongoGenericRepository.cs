@@ -13,15 +13,24 @@ using MongoDB.Driver;
 
 namespace HsnSoft.Base.Domain.Repositories;
 
-public class MongoGenericRepository<TEntity, TKey>(BaseMongoDbContext context) :
+public class MongoGenericRepository<TEntity, TKey> :
     GenericRepositoryBase<TEntity, TKey>,
     IMongoGenericRepository<TEntity, TKey>
     where TEntity : class, IEntity<TKey>
 {
-    private readonly BaseMongoDbContext _context = context ?? throw new ArgumentNullException(nameof(context));
+    private readonly BaseMongoDbContext _context;
+    private readonly FindOptions<TEntity> _findOptions;
+    private readonly CountOptions _countOptions;
+
+    public MongoGenericRepository(IServiceProvider provider, BaseMongoDbContext context) : base(provider)
+    {
+        _context = context ?? throw new ArgumentNullException(nameof(context));
+        _findOptions = new FindOptions<TEntity> { MaxAwaitTime = _context.ClientWaitQueueTimeout, MaxTime = _context.ClientWaitQueueTimeout };
+        _countOptions = new CountOptions { MaxTime = _context.ClientWaitQueueTimeout };
+    }
 
     public IMongoCollection<TEntity> GetCollection() => _context?.GetCollection<TEntity>();
-    public IQueryable<TEntity> GetQueryable() => GetCollection().AsQueryable().AsExpandable();
+    public IQueryable<TEntity> GetQueryable() => GetCollection().WithReadPreference(ReadPreference.Primary).AsQueryable().AsExpandable();
 
     public override async Task<TResult> GetByIdAsync<TResult>(
         TKey id,
@@ -29,7 +38,11 @@ public class MongoGenericRepository<TEntity, TKey>(BaseMongoDbContext context) :
         CancellationToken cancellationToken = default)
     {
         var filter = Builders<TEntity>.Filter.Eq(doc => doc.Id, id);
-        var results = await GetCollection().Find(filter).Limit(2).Project(selector).ToListAsync(cancellationToken);
+        var results = await GetCollection().WithReadPreference(ReadPreference.Primary)
+            .Find(filter, new FindOptions { MaxAwaitTime = _findOptions.MaxAwaitTime, MaxTime = _findOptions.MaxTime })
+            .Limit(2)
+            .Project(selector)
+            .ToListAsync(cancellationToken);
         return results.Count switch
         {
             0 => throw new EntityNotFoundException(typeof(TEntity)),
@@ -44,7 +57,11 @@ public class MongoGenericRepository<TEntity, TKey>(BaseMongoDbContext context) :
         CancellationToken cancellationToken = default)
     {
         var filter = Builders<TEntity>.Filter.Eq(doc => doc.Id, id);
-        var results = await GetCollection().Find(filter).Limit(2).Project(selector).ToListAsync(cancellationToken);
+        var results = await GetCollection().WithReadPreference(ReadPreference.Primary)
+            .Find(filter, new FindOptions { MaxAwaitTime = _findOptions.MaxAwaitTime, MaxTime = _findOptions.MaxTime })
+            .Limit(2)
+            .Project(selector)
+            .ToListAsync(cancellationToken);
         return results.Count switch
         {
             0 => null,
@@ -134,7 +151,7 @@ public class MongoGenericRepository<TEntity, TKey>(BaseMongoDbContext context) :
         CancellationToken cancellationToken = default)
     {
         return filter == null
-            ? await GetCollection().CountDocumentsAsync(_ => true, cancellationToken: cancellationToken)
+            ? await GetCollection().WithReadPreference(ReadPreference.Primary).CountDocumentsAsync(_ => true, _countOptions, cancellationToken: cancellationToken)
             : await Task.FromResult(GetQueryable().Count(filter));
     }
 
@@ -168,9 +185,8 @@ public class MongoGenericRepository<TEntity, TKey>(BaseMongoDbContext context) :
         updateAction(entity);
 
         // GetDbContext().SetEntityEventState([entity], MongoEntityEventState.Modified);
-        await tmpCollection.ReplaceOneAsync(filter, entity, cancellationToken: cancellationToken);
-
-        return entity;
+        var replaceResult = await tmpCollection.ReplaceOneAsync(filter, entity, cancellationToken: cancellationToken);
+        return !replaceResult.IsAcknowledged ? throw new Exception($"Update error: {replaceResult}") : entity;
     }
 
     public override async Task<int> UpdateManyAsync(

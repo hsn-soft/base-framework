@@ -3,17 +3,14 @@ using System.Linq;
 using System.Reflection;
 using HsnSoft.Base.MongoDB.Attributes;
 using JetBrains.Annotations;
-using Microsoft.Extensions.Logging;
-using MongoDB.Bson;
 using MongoDB.Driver;
-using MongoDB.Driver.Core.Events;
 
 namespace HsnSoft.Base.MongoDB.Context;
 
 public abstract class MongoDbContext : IDisposable
 {
-    public IMongoClient Client { get; }
-    public IMongoDatabase Database { get; }
+    protected IMongoClient Client { get; }
+    protected IMongoDatabase Database { get; }
 
     [CanBeNull] protected event EventHandler<MongoEntityEventArgs> CommandTrackerEvent;
     private bool _disposed;
@@ -22,18 +19,6 @@ public abstract class MongoDbContext : IDisposable
     {
         ArgumentNullException.ThrowIfNull(clientSettings);
         ArgumentException.ThrowIfNullOrWhiteSpace(databaseName);
-
-        var logger = LoggerFactory.Create(builder =>
-        {
-            builder.AddConsole();
-            builder.SetMinimumLevel(LogLevel.Debug);
-        }).CreateLogger<MongoDbContext>();
-        clientSettings.ClusterConfigurator = cb =>
-        {
-            cb.Subscribe<CommandStartedEvent>(e => { logger.LogDebug("Mongo Command Started: {CommandName} - {Command}", e.CommandName, e.Command.ToJson()); });
-            cb.Subscribe<CommandSucceededEvent>(e => { logger.LogDebug("Mongo Command Succeeded: {CommandName} - Duration: {Duration}ms", e.CommandName, e.Duration.TotalMilliseconds); });
-            cb.Subscribe<CommandFailedEvent>(e => { logger.LogError(e.Failure, "Mongo Command Failed: {CommandName}", e.CommandName); });
-        };
 
         Client = new MongoClient(clientSettings);
         Database = Client.GetDatabase(databaseName);
