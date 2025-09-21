@@ -5,15 +5,12 @@ namespace HsnSoft.Base.Test.Unit.Models;
 
 public class TestEntity : AuditedEntity<Guid>
 {
-    public bool IsActive { get; private set; }
-
     [NotNull] public string Name { get; set; }
 
     public int Age { get; set; }
 
     private TestEntity(Guid id) : base(id)
     {
-        IsActive = true;
         Name = string.Empty;
     }
 

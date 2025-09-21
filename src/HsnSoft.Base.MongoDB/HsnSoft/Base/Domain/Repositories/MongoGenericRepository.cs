@@ -29,8 +29,8 @@ public class MongoGenericRepository<TEntity, TKey> :
         _countOptions = new CountOptions { MaxTime = _context.ClientWaitQueueTimeout };
     }
 
-    public IMongoCollection<TEntity> GetCollection() => _context?.GetCollection<TEntity>();
-    public IQueryable<TEntity> GetQueryable() => GetCollection().WithReadPreference(ReadPreference.Primary).AsQueryable().AsExpandable();
+    public IMongoCollection<TEntity> GetCollection() => _context?.GetCollection<TEntity>().WithReadPreference(ReadPreference.Primary);
+    public IQueryable<TEntity> GetQueryable() => GetCollection().AsQueryable().AsExpandable();
 
     public override async Task<TResult> GetByIdAsync<TResult>(
         TKey id,
@@ -38,7 +38,7 @@ public class MongoGenericRepository<TEntity, TKey> :
         CancellationToken cancellationToken = default)
     {
         var filter = Builders<TEntity>.Filter.Eq(doc => doc.Id, id);
-        var results = await GetCollection().WithReadPreference(ReadPreference.Primary)
+        var results = await GetCollection()
             .Find(filter, new FindOptions { MaxAwaitTime = _findOptions.MaxAwaitTime, MaxTime = _findOptions.MaxTime })
             .Limit(2)
             .Project(selector)
@@ -57,7 +57,7 @@ public class MongoGenericRepository<TEntity, TKey> :
         CancellationToken cancellationToken = default)
     {
         var filter = Builders<TEntity>.Filter.Eq(doc => doc.Id, id);
-        var results = await GetCollection().WithReadPreference(ReadPreference.Primary)
+        var results = await GetCollection()
             .Find(filter, new FindOptions { MaxAwaitTime = _findOptions.MaxAwaitTime, MaxTime = _findOptions.MaxTime })
             .Limit(2)
             .Project(selector)
@@ -151,7 +151,7 @@ public class MongoGenericRepository<TEntity, TKey> :
         CancellationToken cancellationToken = default)
     {
         return filter == null
-            ? await GetCollection().WithReadPreference(ReadPreference.Primary).CountDocumentsAsync(_ => true, _countOptions, cancellationToken: cancellationToken)
+            ? await GetCollection().CountDocumentsAsync(_ => true, _countOptions, cancellationToken: cancellationToken)
             : await Task.FromResult(GetQueryable().Count(filter));
     }
 

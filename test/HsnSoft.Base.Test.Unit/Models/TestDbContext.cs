@@ -18,7 +18,7 @@ public class TestEfCoreDbContext(DbContextOptions<TestEfCoreDbContext> options) 
 
             b.Property(x => x.Name).HasColumnName(nameof(TestEntity.Name)).IsRequired().HasMaxLength(100);
 
-            b.HasIndex(x => new { x.IsActive });
+            // b.HasIndex(x => new { x.IsActive });
         });
     }
 }
