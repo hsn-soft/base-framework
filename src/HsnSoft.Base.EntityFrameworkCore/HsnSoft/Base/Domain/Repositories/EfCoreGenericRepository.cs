@@ -9,7 +9,7 @@ using HsnSoft.Base.Domain.Entities;
 using HsnSoft.Base.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-namespace HsnSoft.Base.Domain.Repositories.EntityFrameworkCore;
+namespace HsnSoft.Base.Domain.Repositories;
 
 public class EfCoreGenericRepository<TDbContext, TEntity, TKey> : GenericRepositoryBase<TEntity, TKey>, IEfCoreGenericRepository<TDbContext, TEntity, TKey>
     where TDbContext : BaseEfCoreDbContext<TDbContext>

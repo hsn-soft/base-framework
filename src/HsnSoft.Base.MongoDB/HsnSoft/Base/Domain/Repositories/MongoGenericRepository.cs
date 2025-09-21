@@ -9,7 +9,7 @@ using HsnSoft.Base.MongoDB;
 using HsnSoft.Base.MongoDB.Context;
 using MongoDB.Driver;
 
-namespace HsnSoft.Base.Domain.Repositories.EntityFrameworkCore;
+namespace HsnSoft.Base.Domain.Repositories;
 
 public class MongoGenericRepository<TDbContext, TEntity, TKey> : GenericRepositoryBase<TEntity, TKey>, IMongoGenericRepository<TEntity, TKey>
     where TDbContext : BaseMongoDbContext

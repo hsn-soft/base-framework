@@ -5,7 +5,7 @@ using HsnSoft.Base.Domain.Entities;
 using HsnSoft.Base.MongoDB.Context;
 using MongoDB.Driver;
 
-namespace HsnSoft.Base.Domain.Repositories.EntityFrameworkCore;
+namespace HsnSoft.Base.Domain.Repositories;
 
 public interface IMongoGenericRepository<TEntity, in TKey> : IGenericRepository<TEntity, TKey>
     where TEntity : class, IEntity<TKey>

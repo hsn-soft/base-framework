@@ -5,7 +5,7 @@ using HsnSoft.Base.Domain.Entities;
 using HsnSoft.Base.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-namespace HsnSoft.Base.Domain.Repositories.EntityFrameworkCore;
+namespace HsnSoft.Base.Domain.Repositories;
 
 public interface IEfCoreGenericRepository<TDbContext, TEntity, in TKey> : IGenericRepository<TEntity, TKey>
     where TDbContext : BaseEfCoreDbContext<TDbContext>
