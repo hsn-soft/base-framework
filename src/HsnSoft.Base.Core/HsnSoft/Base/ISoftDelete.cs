@@ -9,7 +9,7 @@ namespace HsnSoft.Base;
 public interface ISoftDelete
 {
     /// <summary>
-    /// Used to mark an Entity as 'Deleted'. 
+    /// Used to mark an Entity as 'Deleted'.
     /// </summary>
-    bool IsDeleted { get; set; }
+    bool IsDeleted { get; }
 }

@@ -4,5 +4,5 @@ namespace HsnSoft.Base.Auditing;
 
 public interface IModificationAuditedObject : IHasModificationTime
 {
-    Guid? LastModifierId { get; set; }
+    Guid? LastModifierId { get; }
 }

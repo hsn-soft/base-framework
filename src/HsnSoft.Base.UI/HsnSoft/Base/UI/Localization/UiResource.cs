@@ -3,6 +3,4 @@
 namespace HsnSoft.Base.UI.Localization;
 
 [LocalizationResourceName("UiResources")]
-public class BaseUiResource
-{
-}
+public class BaseUiResource;

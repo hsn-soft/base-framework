@@ -112,6 +112,4 @@ public sealed record RequestUserDetail(
 }
 
 // Marker
-public interface IRequestResponseLog : IPersistentLog
-{
-}
+public interface IRequestResponseLog : IPersistentLog;

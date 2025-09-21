@@ -6,9 +6,9 @@ namespace HsnSoft.Base.Domain.Entities.Auditing;
 [Serializable]
 public abstract class AuditedEntity<TKey> : CreationAuditedEntity<TKey>, IAuditedObject
 {
-    public DateTime? LastModificationTime { get; set; }
+    public DateTime LastModificationTime { get; protected set; }
 
-    public Guid? LastModifierId { get; set; }
+    public Guid? LastModifierId { get; protected set; }
 
     protected AuditedEntity()
     {

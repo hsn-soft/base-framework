@@ -9,6 +9,4 @@ public interface IIntegrationEventHandler<TEventMessage> : IIntegrationEventHand
     Task HandleAsync(MessageEnvelope<TEventMessage> @event);
 }
 
-public interface IIntegrationEventHandler
-{
-}
+public interface IIntegrationEventHandler;
