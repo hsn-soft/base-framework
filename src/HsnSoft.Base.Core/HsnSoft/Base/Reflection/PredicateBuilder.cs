@@ -1,6 +1,7 @@
+using System;
 using System.Linq.Expressions;
 
-namespace HsnSoft.Base.Test.Unit.Utils;
+namespace HsnSoft.Base.Reflection;
 
 public static class PredicateBuilder
 {

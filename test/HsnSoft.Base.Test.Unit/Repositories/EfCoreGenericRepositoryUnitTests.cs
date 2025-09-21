@@ -2,8 +2,8 @@ using FluentAssertions;
 using HsnSoft.Base.Domain.Entities;
 using HsnSoft.Base.Domain.Models;
 using HsnSoft.Base.Domain.Repositories;
+using HsnSoft.Base.Reflection;
 using HsnSoft.Base.Test.Unit.Models;
-using HsnSoft.Base.Test.Unit.Utils;
 using Microsoft.EntityFrameworkCore;
 
 namespace HsnSoft.Base.Test.Unit.Repositories;
