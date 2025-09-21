@@ -71,8 +71,8 @@ public class EfCoreGenericRepository<TEntity, TKey>(DbContext context) :
         return await query.Select(selector).ToListAsync(cancellationToken);
     }
 
-    public override async Task<PaginationResult<TResult>> GetPageListAsync<TResult>(
-        PaginationQueryOptions<TEntity> options,
+    public override async Task<PagedQueryResult<TResult>> GetPageListAsync<TResult>(
+        PagedQueryOptions<TEntity> options,
         Expression<Func<TEntity, TResult>> selector,
         CancellationToken cancellationToken = default)
     {
@@ -100,7 +100,7 @@ public class EfCoreGenericRepository<TEntity, TKey>(DbContext context) :
 
         var items = await query.Select(selector).ToListAsync(cancellationToken);
 
-        return new PaginationResult<TResult> { Items = items, TotalCount = (uint)totalCount, PageNumber = options.PageNumber, PageSize = options.PageSize };
+        return new PagedQueryResult<TResult> { Items = items, TotalCount = (uint)totalCount, PageNumber = options.PageNumber, PageSize = options.PageSize };
     }
 
     public override async Task<long> GetCountAsync(

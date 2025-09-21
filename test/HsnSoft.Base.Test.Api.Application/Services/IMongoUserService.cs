@@ -17,7 +17,7 @@ public interface IMongoUserService
 
     Task<long> GetUserCountAsync(GetUserFilterDto input, CancellationToken cancellationToken = default);
 
-    Task<PaginationResult<UserDto>> GetPagingUsersAsync(GetPagingUserFilterDto input, CancellationToken cancellationToken = default);
+    Task<PagedQueryResult<UserDto>> GetPagingUsersAsync(GetPagingUserFilterDto input, CancellationToken cancellationToken = default);
 
     Task<int> InsertUserAsync(CreateUserDto input, CancellationToken cancellationToken = default);
     Task<int> UpdateUserAsync(UpdateUserDto input, CancellationToken cancellationToken = default);

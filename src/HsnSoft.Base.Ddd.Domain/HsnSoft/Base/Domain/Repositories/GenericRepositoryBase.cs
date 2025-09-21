@@ -80,13 +80,13 @@ public abstract class GenericRepositoryBase<TEntity, TKey> : IGenericRepository<
         Expression<Func<TEntity, TResult>> selector,
         CancellationToken cancellationToken = default) where TResult : class;
 
-    public Task<PaginationResult<TEntity>> GetPageListAsync(
-        PaginationQueryOptions<TEntity> options,
+    public Task<PagedQueryResult<TEntity>> GetPageListAsync(
+        PagedQueryOptions<TEntity> options,
         CancellationToken cancellationToken = default)
         => GetPageListAsync(options, s => s, cancellationToken);
 
-    public abstract Task<PaginationResult<TResult>> GetPageListAsync<TResult>(
-        PaginationQueryOptions<TEntity> options,
+    public abstract Task<PagedQueryResult<TResult>> GetPageListAsync<TResult>(
+        PagedQueryOptions<TEntity> options,
         Expression<Func<TEntity, TResult>> selector,
         CancellationToken cancellationToken = default) where TResult : class;
 

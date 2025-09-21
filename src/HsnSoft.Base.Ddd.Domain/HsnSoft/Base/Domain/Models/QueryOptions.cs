@@ -5,17 +5,6 @@ using JetBrains.Annotations;
 
 namespace HsnSoft.Base.Domain.Models;
 
-public class ListQueryOptions<T> : OrderQueryOptions<T>
-{
-    public uint? ListLength { get; init; }
-}
-
-public class PaginationQueryOptions<T> : OrderQueryOptions<T>
-{
-    public uint PageNumber { get; init; } = 1;
-    public uint PageSize { get; init; } = 5;
-}
-
 public class OrderQueryOptions<T>
 {
     [CanBeNull] public Expression<Func<T, bool>> Filter { get; init; }

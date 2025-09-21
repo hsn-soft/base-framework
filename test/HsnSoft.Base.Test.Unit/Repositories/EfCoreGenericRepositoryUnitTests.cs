@@ -362,14 +362,14 @@ public class EfCoreGenericRepositoryUnitTests
         var repo = new EfCoreGenericRepository<TestEntity, Guid>(context);
 
         // Act
-        var actual = await repo.GetPageListAsync(new PaginationQueryOptions<TestEntity>());
+        var actual = await repo.GetPageListAsync(new PagedQueryOptions<TestEntity>());
 
         // Assert
         actual.Should().NotBeNull();
         actual.Items.Should().BeEmpty();
         actual.TotalCount.Should().Be(0);
         actual.PageNumber.Should().Be(1);
-        actual.PageSize.Should().Be(new PaginationQueryOptions<TestEntity>().PageSize);
+        actual.PageSize.Should().Be(new PagedQueryOptions<TestEntity>().PageSize);
     }
 
     [Fact]
@@ -384,18 +384,18 @@ public class EfCoreGenericRepositoryUnitTests
         var repo = new EfCoreGenericRepository<TestEntity, Guid>(context);
 
         // Act
-        var noFilterPageList = await repo.GetPageListAsync(new PaginationQueryOptions<TestEntity>());
+        var noFilterPageList = await repo.GetPageListAsync(new PagedQueryOptions<TestEntity>());
 
         // Assert
         noFilterPageList.Should().NotBeNull();
         noFilterPageList.Items.Should().HaveCount(5);
         noFilterPageList.TotalCount.Should().Be(5);
         noFilterPageList.PageNumber.Should().Be(1);
-        noFilterPageList.PageSize.Should().Be(new PaginationQueryOptions<TestEntity>().PageSize);
+        noFilterPageList.PageSize.Should().Be(new PagedQueryOptions<TestEntity>().PageSize);
 
 
         // Act
-        var limitedPageList = await repo.GetPageListAsync(options: new PaginationQueryOptions<TestEntity> { PageNumber = 3, PageSize = 2 });
+        var limitedPageList = await repo.GetPageListAsync(options: new PagedQueryOptions<TestEntity> { PageNumber = 3, PageSize = 2 });
 
         // Assert
         limitedPageList.Should().NotBeNull();
@@ -405,14 +405,14 @@ public class EfCoreGenericRepositoryUnitTests
         limitedPageList.PageSize.Should().Be(2);
 
         // Act
-        var filterPageList = await repo.GetPageListAsync(options: new PaginationQueryOptions<TestEntity> { Filter = u => u.Name.Equals("TesterA") });
+        var filterPageList = await repo.GetPageListAsync(options: new PagedQueryOptions<TestEntity> { Filter = u => u.Name.Equals("TesterA") });
 
         // Assert
         filterPageList.Should().NotBeNull();
         filterPageList.Items.Should().HaveCount(2);
         filterPageList.TotalCount.Should().Be(2);
         filterPageList.PageNumber.Should().Be(1);
-        filterPageList.PageSize.Should().Be(new PaginationQueryOptions<TestEntity>().PageSize);
+        filterPageList.PageSize.Should().Be(new PagedQueryOptions<TestEntity>().PageSize);
         filterPageList.Items.ShouldBeEquivalentToWithMilliseconds(expectedList);
 
         // Arrange
@@ -421,18 +421,18 @@ public class EfCoreGenericRepositoryUnitTests
             .Build();
 
         // Act
-        filterPageList = await repo.GetPageListAsync(options: new PaginationQueryOptions<TestEntity> { Filter = filter });
+        filterPageList = await repo.GetPageListAsync(options: new PagedQueryOptions<TestEntity> { Filter = filter });
 
         // Assert
         filterPageList.Should().NotBeNull();
         filterPageList.Items.Should().HaveCount(2);
         filterPageList.TotalCount.Should().Be(2);
         filterPageList.PageNumber.Should().Be(1);
-        filterPageList.PageSize.Should().Be(new PaginationQueryOptions<TestEntity>().PageSize);
+        filterPageList.PageSize.Should().Be(new PagedQueryOptions<TestEntity>().PageSize);
         filterPageList.Items.ShouldBeEquivalentToWithMilliseconds(expectedList);
 
         // Act
-        var dynamicOrderedPageList = await repo.GetPageListAsync(options: new PaginationQueryOptions<TestEntity> { OrderByDynamic = $"{nameof(TestEntity.Name)} asc, {nameof(TestEntity.Age)} desc", PageSize = 1 });
+        var dynamicOrderedPageList = await repo.GetPageListAsync(options: new PagedQueryOptions<TestEntity> { OrderByDynamic = $"{nameof(TestEntity.Name)} asc, {nameof(TestEntity.Age)} desc", PageSize = 1 });
 
         // Assert
         dynamicOrderedPageList.Should().NotBeNull();
@@ -444,7 +444,7 @@ public class EfCoreGenericRepositoryUnitTests
         dynamicOrderedPageList.PageSize.Should().Be(1);
 
         // Act
-        var orderedPageList = await repo.GetPageListAsync(options: new PaginationQueryOptions<TestEntity> { OrderByEntity = o => o.OrderBy(e => e.Name).ThenByDescending(a => a.Age), PageSize = 1 });
+        var orderedPageList = await repo.GetPageListAsync(options: new PagedQueryOptions<TestEntity> { OrderByEntity = o => o.OrderBy(e => e.Name).ThenByDescending(a => a.Age), PageSize = 1 });
 
         // Assert
         orderedPageList.Should().NotBeNull();

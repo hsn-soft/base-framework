@@ -117,7 +117,7 @@ public class EfCoreUserService(IEfCoreUserRepository userRepository, IUnitOfWork
         throw new NotImplementedException();
     }
 
-    public async Task<PaginationResult<UserDto>> GetPagingUsersAsync(GetPagingUserFilterDto input, CancellationToken cancellationToken = default)
+    public async Task<PagedQueryResult<UserDto>> GetPagingUsersAsync(GetPagingUserFilterDto input, CancellationToken cancellationToken = default)
     {
         input ??= new GetPagingUserFilterDto();
         if (input.MaxAge.HasValue) input.MaxAge = input.MaxAge.Value + 1;
@@ -131,7 +131,7 @@ public class EfCoreUserService(IEfCoreUserRepository userRepository, IUnitOfWork
 
         var result = await userRepository.GetPageListAsync(
             selector: u => new UserDto { Id = u.Id, FullName = u.FirstName + " " + u.LastName, Email = u.Email },
-            options: new PaginationQueryOptions<User>
+            options: new PagedQueryOptions<User>
             {
                 Filter = filter,
                 OrderByDynamic = string.IsNullOrWhiteSpace(input.OrderByText)

@@ -43,7 +43,7 @@ public class EfCoreUsersController(IEfCoreUserService userService) : ControllerB
 
     [HttpPost("get-paging-users")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<PaginationResult<UserDto>> GetPagingUsersAsync([FromBody] GetPagingUserFilterDto input, CancellationToken cancellationToken)
+    public async Task<PagedQueryResult<UserDto>> GetPagingUsersAsync([FromBody] GetPagingUserFilterDto input, CancellationToken cancellationToken)
     {
         return await userService.GetPagingUsersAsync(input, cancellationToken);
     }

@@ -87,13 +87,13 @@ public interface IReadOnlyGenericRepository<TEntity, in TKey> : IRepository wher
     ) where TResult : class;
 
 
-    Task<PaginationResult<TEntity>> GetPageListAsync(
-        PaginationQueryOptions<TEntity> options,
+    Task<PagedQueryResult<TEntity>> GetPageListAsync(
+        PagedQueryOptions<TEntity> options,
         CancellationToken cancellationToken = default
     );
 
-    Task<PaginationResult<TResult>> GetPageListAsync<TResult>(
-        PaginationQueryOptions<TEntity> options,
+    Task<PagedQueryResult<TResult>> GetPageListAsync<TResult>(
+        PagedQueryOptions<TEntity> options,
         Expression<Func<TEntity, TResult>> selector,
         CancellationToken cancellationToken = default
     ) where TResult : class;

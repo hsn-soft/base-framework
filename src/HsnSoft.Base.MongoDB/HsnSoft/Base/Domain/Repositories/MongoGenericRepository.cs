@@ -104,8 +104,8 @@ public class MongoGenericRepository<TEntity, TKey>(BaseMongoDbContext context) :
         return Task.FromResult(query.Select(selector).ToList());
     }
 
-    public override Task<PaginationResult<TResult>> GetPageListAsync<TResult>(
-        PaginationQueryOptions<TEntity> options,
+    public override Task<PagedQueryResult<TResult>> GetPageListAsync<TResult>(
+        PagedQueryOptions<TEntity> options,
         Expression<Func<TEntity, TResult>> selector,
         CancellationToken cancellationToken = default)
     {
@@ -126,7 +126,7 @@ public class MongoGenericRepository<TEntity, TKey>(BaseMongoDbContext context) :
 
         var items = query.Select(selector).ToList();
 
-        return Task.FromResult(new PaginationResult<TResult> { Items = items, TotalCount = (uint)totalCount, PageNumber = options.PageNumber, PageSize = options.PageSize });
+        return Task.FromResult(new PagedQueryResult<TResult> { Items = items, TotalCount = (uint)totalCount, PageNumber = options.PageNumber, PageSize = options.PageSize });
     }
 
     public override async Task<long> GetCountAsync(
