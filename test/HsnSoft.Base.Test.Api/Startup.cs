@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using HsnSoft.Base.AspNetCore;
 using HsnSoft.Base.Test.Api.Application;
 using HsnSoft.Base.Test.Api.EfCore;
 using HsnSoft.Base.Test.Api.MongoDb;
@@ -14,6 +15,7 @@ public sealed class Startup(IConfiguration configuration, IWebHostEnvironment en
 
     public void ConfigureServices(IServiceCollection services)
     {
+        services.AddBaseAspNetCoreContextCollection();
         services.AddOptions();
 
         services.AddControllers()
@@ -43,6 +45,7 @@ public sealed class Startup(IConfiguration configuration, IWebHostEnvironment en
         }
 
         app.UseRouting();
+        app.UseMiddleware<FakeUserMiddleware>();
         app.UseAuthorization();
         app.UseEndpoints(endpoints => endpoints.MapControllers());
 

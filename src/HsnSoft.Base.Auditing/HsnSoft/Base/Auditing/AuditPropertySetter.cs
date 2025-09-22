@@ -42,9 +42,11 @@ public class AuditPropertySetter : IAuditPropertySetter, ITransientDependency
             return;
         }
 
-        if (objectWithCreationTime.CreationTime == default)
+        var now = Clock.Now;
+        ObjectHelper.TrySetProperty(objectWithCreationTime, x => x.CreationTime, () => now);
+        if (targetObject is IHasModificationTime objectWithModificationTime)
         {
-            ObjectHelper.TrySetProperty(objectWithCreationTime, x => x.CreationTime, () => Clock.Now);
+            ObjectHelper.TrySetProperty(objectWithModificationTime, x => x.LastModificationTime, () => now);
         }
     }
 
@@ -61,21 +63,22 @@ public class AuditPropertySetter : IAuditPropertySetter, ITransientDependency
             return;
         }
 
-        if (targetObject is IMultiTenant multiTenantEntity)
-        {
-            if (multiTenantEntity.TenantId != CurrentUser.TenantId)
-            {
-                ObjectHelper.TrySetProperty(mayHaveCreatorObject, x => x.CreatorId, () => null);
-                return;
-            }
-        }
+        // if (targetObject is IMultiTenant multiTenantEntity)
+        // {
+        //     if (multiTenantEntity.TenantId != CurrentUser.TenantId)
+        //     {
+        //         ObjectHelper.TrySetProperty(mayHaveCreatorObject, x => x.CreatorId, () => null);
+        //         return;
+        //     }
+        // }
 
-        if (mayHaveCreatorObject.CreatorId.HasValue && mayHaveCreatorObject.CreatorId.Value != Guid.Empty)
-        {
-            return;
-        }
+        // if (mayHaveCreatorObject.CreatorId.HasValue && mayHaveCreatorObject.CreatorId.Value != Guid.Empty)
+        // {
+        //     return;
+        // }
 
         ObjectHelper.TrySetProperty(mayHaveCreatorObject, x => x.CreatorId, () => CurrentUser.Id);
+        SetLastModifierId(targetObject);
     }
 
     private void SetLastModificationTime(object targetObject)
@@ -99,19 +102,19 @@ public class AuditPropertySetter : IAuditPropertySetter, ITransientDependency
             return;
         }
 
-        if (targetObject is IMultiTenant multiTenantEntity)
-        {
-            if (multiTenantEntity.TenantId != CurrentUser.TenantId)
-            {
-                ObjectHelper.TrySetProperty(modificationAuditedObject, x => x.LastModifierId, () => null);
-                return;
-            }
-        }
+        // if (targetObject is IMultiTenant multiTenantEntity)
+        // {
+        //     if (multiTenantEntity.TenantId != CurrentUser.TenantId)
+        //     {
+        //         ObjectHelper.TrySetProperty(modificationAuditedObject, x => x.LastModifierId, () => null);
+        //         return;
+        //     }
+        // }
 
-        if (modificationAuditedObject.LastModifierId.HasValue && modificationAuditedObject.LastModifierId.Value != Guid.Empty)
-        {
-            return;
-        }
+        // if (modificationAuditedObject.LastModifierId.HasValue && modificationAuditedObject.LastModifierId.Value != Guid.Empty)
+        // {
+        //     return;
+        // }
 
         ObjectHelper.TrySetProperty(modificationAuditedObject, x => x.LastModifierId, () => CurrentUser.Id);
     }
@@ -140,19 +143,19 @@ public class AuditPropertySetter : IAuditPropertySetter, ITransientDependency
             return;
         }
 
-        if (targetObject is IMultiTenant multiTenantEntity)
-        {
-            if (multiTenantEntity.TenantId != CurrentUser.TenantId)
-            {
-                ObjectHelper.TrySetProperty(deletionAuditedObject, x => x.DeleterId, () => null);
-                return;
-            }
-        }
+        // if (targetObject is IMultiTenant multiTenantEntity)
+        // {
+        //     if (multiTenantEntity.TenantId != CurrentUser.TenantId)
+        //     {
+        //         ObjectHelper.TrySetProperty(deletionAuditedObject, x => x.DeleterId, () => null);
+        //         return;
+        //     }
+        // }
 
-        if (deletionAuditedObject.DeleterId.HasValue && deletionAuditedObject.DeleterId.Value != Guid.Empty)
-        {
-            return;
-        }
+        // if (deletionAuditedObject.DeleterId.HasValue && deletionAuditedObject.DeleterId.Value != Guid.Empty)
+        // {
+        //     return;
+        // }
 
         ObjectHelper.TrySetProperty(deletionAuditedObject, x => x.DeleterId, () => CurrentUser.Id);
     }

@@ -12,8 +12,6 @@ public static class BaseAuthorizationServiceCollectionExtensions
     {
         services.AddAuthorizationCore();
 
-        services.AddBaseMultiTenancyServiceCollection();
-
         services.AddSingleton<IPermissionStore, BasePermissionStore>();
         services.AddScoped<IPermissionChecker, PermissionChecker>();
         services.AddSingleton<IAuthorizationHandler, PermissionRequirementHandler>();

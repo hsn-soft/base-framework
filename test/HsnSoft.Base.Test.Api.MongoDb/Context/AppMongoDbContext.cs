@@ -5,7 +5,7 @@ using MongoDB.Driver;
 
 namespace HsnSoft.Base.Test.Api.MongoDb.Context;
 
-public class AppMongoDbContext(IConfiguration configuration) : BaseMongoDbContext(configuration.GetConnectionString(MongoDbProperties.ConnectionStringName))
+public class AppMongoDbContext(IConfiguration configuration, IServiceProvider provider = null) : BaseMongoDbContext(configuration.GetConnectionString(MongoDbProperties.ConnectionStringName), provider)
 {
     public IMongoCollection<User> Users => GetCollection<User>();
 }

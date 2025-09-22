@@ -6,6 +6,7 @@ using HsnSoft.Base.Test.Api.Domain.Repositories;
 using HsnSoft.Base.Test.Api.MongoDb.Configurations;
 using HsnSoft.Base.Test.Api.MongoDb.Context;
 using HsnSoft.Base.Test.Api.MongoDb.Repositories;
+using HsnSoft.Base.Timing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Bson;
@@ -19,7 +20,8 @@ public static class MongoDbServiceCollectionExtensions
 {
     public static IServiceCollection AddServiceMongoDbDatabaseConfiguration(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddBaseAuditingServiceCollection();
+        services.AddBaseTimingServiceCollection();
+        services.AddTransient<IAuditPropertySetter, AuditPropertySetter>();
         services.AddBaseDataServiceCollection();
 
         MongoConfigure();

@@ -153,7 +153,7 @@ public class EfCoreUserService(IEfCoreUserRepository userRepository, IUnitOfWork
         //     users.Add(new User(Guid.NewGuid(), "test") { FirstName = (i + 1).ToString() });
         // }
 
-        return await userRepository.InsertAsync(new User(Guid.NewGuid(), "test") { FirstName = input.FullName }, cancellationToken: cancellationToken);
+        return await userRepository.InsertAsync(new User(Guid.NewGuid(), Guid.Empty, "test"+Guid.NewGuid().ToString("N")) { FirstName = input.FullName }, cancellationToken: cancellationToken);
     }
 
     public async Task<int> UpdateUserAsync(UpdateUserDto input, CancellationToken cancellationToken = default)
@@ -181,7 +181,7 @@ public class EfCoreUserService(IEfCoreUserRepository userRepository, IUnitOfWork
 
     public async Task<int> DeleteUserAsync(DeleteUserDto input, CancellationToken cancellationToken = default)
     {
-        return await userRepository.DeleteAsync(new User(Guid.NewGuid(), "test"), cancellationToken: cancellationToken);
+        return await userRepository.DeleteAsync(new User(Guid.NewGuid(), Guid.NewGuid(), "test"), cancellationToken: cancellationToken);
     }
 
     public async Task<int> UnitOfWorkTestAsync(CancellationToken cancellationToken = default)

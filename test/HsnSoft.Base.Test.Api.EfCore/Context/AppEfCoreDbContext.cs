@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HsnSoft.Base.Test.Api.EfCore.Context;
 
-public class AppEfCoreDbContext(DbContextOptions<AppEfCoreDbContext> options) : BaseEfCoreDbContext<AppEfCoreDbContext>(options)
+public class AppEfCoreDbContext(DbContextOptions<AppEfCoreDbContext> options, IServiceProvider provider = null) : BaseEfCoreDbContext<AppEfCoreDbContext>(options, provider)
 {
     public DbSet<User> Users { get; set; }
 

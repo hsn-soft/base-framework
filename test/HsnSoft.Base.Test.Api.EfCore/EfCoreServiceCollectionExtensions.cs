@@ -6,6 +6,7 @@ using HsnSoft.Base.EntityFrameworkCore;
 using HsnSoft.Base.Test.Api.Domain.Repositories;
 using HsnSoft.Base.Test.Api.EfCore.Context;
 using HsnSoft.Base.Test.Api.EfCore.Repositories;
+using HsnSoft.Base.Timing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,7 +19,8 @@ public static class EfCoreServiceCollectionExtensions
 {
     public static void AddServiceEfCoreDatabaseConfiguration(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddBaseAuditingServiceCollection();
+        services.AddBaseTimingServiceCollection();
+        services.AddTransient<IAuditPropertySetter, AuditPropertySetter>();
         services.AddBaseDataServiceCollection();
 
         // DbContext

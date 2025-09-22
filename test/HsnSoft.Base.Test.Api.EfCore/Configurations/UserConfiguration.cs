@@ -15,7 +15,8 @@ public static class UserConfiguration
 
             b.Property(x => x.Email).HasColumnName(nameof(User.Email)).IsRequired().HasMaxLength(UserConsts.EmailMaxLength);
 
-            // b.HasIndex(x => new { x.IsDeleted });
+            b.HasIndex(x => new { x.IsDeleted });
+            b.HasIndex(x => new { x.TenantId });
             b.HasIndex(m => m.Email).IsUnique();
         });
     }

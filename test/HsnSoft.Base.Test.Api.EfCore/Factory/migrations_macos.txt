@@ -1,12 +1,12 @@
 dotnet tool update --global dotnet-ef
 
-cd src/DataPerformanceWorks.EfCore/
+cd test/HsnSoft.Base.Test.Api.EfCore/
 
-dotnet ef migrations add InitialCreate --context DataPerformanceWorks.EfCore.Context.AppEfCoreDbContext -o Migrations
-dotnet ef database update --context DataPerformanceWorks.EfCore.Context.AppEfCoreDbContext
-
-
-dotnet ef database remove --context DataPerformanceWorks.EfCore.Context.AppEfCoreDbContext
+dotnet ef migrations add InitialCreate --context HsnSoft.Base.Test.Api.EfCore.Context.AppEfCoreDbContext -o Migrations
+dotnet ef database update --context HsnSoft.Base.Test.Api.EfCore.Context.AppEfCoreDbContext
 
 
-dotnet ef migrations add IndexChange --context DataPerformanceWorks.EfCore.Context.AppEfCoreDbContext -o Migrations
+dotnet ef database remove --context HsnSoft.Base.Test.Api.EfCore.Context.AppEfCoreDbContext
+
+
+dotnet ef migrations add IndexChange --context HsnSoft.Base.Test.Api.EfCore.Context.AppEfCoreDbContext -o Migrations

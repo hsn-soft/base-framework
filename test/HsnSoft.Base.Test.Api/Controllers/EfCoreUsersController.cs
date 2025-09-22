@@ -1,13 +1,14 @@
 using HsnSoft.Base.Domain.Models;
 using HsnSoft.Base.Test.Api.Application.Contracts;
 using HsnSoft.Base.Test.Api.Application.Services;
+using HsnSoft.Base.Users;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HsnSoft.Base.Test.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class EfCoreUsersController(IEfCoreUserService userService) : ControllerBase
+public class EfCoreUsersController(IEfCoreUserService userService, ICurrentUser currentUser) : ControllerBase
 {
     [HttpGet("{id}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -52,6 +53,7 @@ public class EfCoreUsersController(IEfCoreUserService userService) : ControllerB
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<int> InsertUserAsync([FromBody] CreateUserDto input, CancellationToken cancellationToken)
     {
+        var test = currentUser.Id;
         return await userService.InsertUserAsync(input, cancellationToken);
     }
 
