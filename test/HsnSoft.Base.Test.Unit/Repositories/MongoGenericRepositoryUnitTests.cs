@@ -8,6 +8,7 @@ using HsnSoft.Base.Test.Unit.Models;
 
 namespace HsnSoft.Base.Test.Unit.Repositories;
 
+[Trait("category", "integration")]
 public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixture<MongoFixture>
 {
     private readonly string _connectionString = fixture.Runner.ConnectionString;
