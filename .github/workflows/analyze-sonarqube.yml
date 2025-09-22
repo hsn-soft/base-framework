@@ -60,8 +60,9 @@ jobs:
                     /o:"hsn-soft" \
                     /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
                     /d:sonar.host.url="https://sonarcloud.io"
-                    
-                    dotnet build --no-incremental --verbosity minimal --configuration Release
+                  
+                    dotnet restore --force --verbosity minimal --configfile NuGet.Config
+                    dotnet build --no-restore --no-incremental --verbosity minimal --configuration Release
                     
                     dotnet sonarscanner end \
                     /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
