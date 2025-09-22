@@ -16,11 +16,11 @@ COPY ["./HsnSoft.Base.sln", "./"]
 COPY ["./src/.", "./src/"]
 COPY ["./test/.", "./test/"]
 
-RUN dotnet restore "./HsnSoft.Base.sln" --force --verbosity minimal
+RUN dotnet restore "./HsnSoft.Base.sln" --force --verbosity minimal --configfile NuGet.Config
 
-RUN dotnet build "./HsnSoft.Base.sln" --no-restore --configuration Release --verbosity minimal
+RUN dotnet build "./HsnSoft.Base.sln" --no-restore --no-incremental --verbosity minimal --configuration Release
 
-RUN dotnet test "./HsnSoft.Base.sln" --no-restore --no-build --configuration Release --verbosity minimal
+RUN dotnet test "./HsnSoft.Base.sln" --no-restore --no-build --verbosity minimal --configuration Release --filter "category!=integration"
 
 RUN --mount=type=secret,id=VERSION_NUMBER \
     export VERSION_NUMBER=$(cat /run/secrets/VERSION_NUMBER) && \

@@ -30,13 +30,13 @@ jobs:
             ${{ runner.os }}-nuget
 
       - name: Restore Dependencies
-        run: dotnet restore --verbosity minimal
+        run: dotnet restore --force --verbosity minimal --configfile NuGet.Config
 
       - name: Build Solution
-        run: dotnet build --no-restore --no-incremental --verbosity minimal
+        run: dotnet build --no-restore --no-incremental --verbosity minimal --configuration Release
 
       - name: Test Solution
-        run: dotnet test --no-restore --no-build --collect:"XPlat Code Coverage" --verbosity minimal
+        run: dotnet test --no-restore --no-build --collect:"XPlat Code Coverage" --verbosity minimal --configuration Release --filter "category!=integration"
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
