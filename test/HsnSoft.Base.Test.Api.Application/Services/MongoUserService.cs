@@ -50,7 +50,10 @@ public class MongoUserService(IMongoUserRepository userRepository, IMapper mappe
         return result;
     }
 
-    public Task<int> InsertUserAsync(CreateUserDto input, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+    public async Task<int> InsertUserAsync(CreateUserDto input, CancellationToken cancellationToken = default)
+    {
+        return await userRepository.InsertAsync(new User(Guid.NewGuid(), Guid.Empty, "test" + Guid.NewGuid().ToString("N")) { FirstName = input.FullName }, cancellationToken: cancellationToken);
+    }
 
     public Task<int> UpdateUserAsync(UpdateUserDto input, CancellationToken cancellationToken = default) => throw new NotImplementedException();
 

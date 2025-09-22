@@ -12,7 +12,9 @@ using MongoDB.Driver.Search;
 
 namespace HsnSoft.Base.MongoDB.Context;
 
-public class TrackingMongoCollection<TEntity>(IMongoCollection<TEntity> inner, [CanBeNull] EventHandler<MongoEntityEventArgs> commandTrackerEventHandler) : IMongoCollection<TEntity>
+public interface ITrackingMongoCollection<TEntity> : IMongoCollection<TEntity>;
+
+public class TrackingMongoCollection<TEntity>(IMongoCollection<TEntity> inner, [CanBeNull] EventHandler<MongoEntityEventArgs> commandTrackerEventHandler) : ITrackingMongoCollection<TEntity>
 {
     [CanBeNull] private event EventHandler<MongoEntityEventArgs> CommandTrackerEventHandler = commandTrackerEventHandler;
 
@@ -408,13 +410,14 @@ public class TrackingMongoCollection<TEntity>(IMongoCollection<TEntity> inner, [
         => inner.WatchAsync(session, pipeline, options, cancellationToken);
 
     public IMongoCollection<TEntity> WithReadConcern(ReadConcern readConcern)
-        => inner.WithReadConcern(readConcern);
+        => new TrackingMongoCollection<TEntity>(inner.WithReadConcern(readConcern), commandTrackerEventHandler);
 
     public IMongoCollection<TEntity> WithReadPreference(ReadPreference readPreference)
-        => inner.WithReadPreference(readPreference);
+
+        => new TrackingMongoCollection<TEntity>(inner.WithReadPreference(readPreference), commandTrackerEventHandler);
 
     public IMongoCollection<TEntity> WithWriteConcern(WriteConcern writeConcern)
-        => inner.WithWriteConcern(writeConcern);
+        => new TrackingMongoCollection<TEntity>(inner.WithWriteConcern(writeConcern), commandTrackerEventHandler);
 
     public CollectionNamespace CollectionNamespace => inner.CollectionNamespace;
 

@@ -24,7 +24,7 @@ public abstract class MongoDbContext : IDisposable
         Database = Client.GetDatabase(databaseName);
     }
 
-    public IMongoCollection<TEntity> GetCollection<TEntity>()
+    public ITrackingMongoCollection<TEntity> GetCollection<TEntity>()
         => new TrackingMongoCollection<TEntity>(Database.GetCollection<TEntity>(GetCollectionName(typeof(TEntity))), CommandTrackerEvent);
 
     private static string GetCollectionName(MemberInfo entityType)

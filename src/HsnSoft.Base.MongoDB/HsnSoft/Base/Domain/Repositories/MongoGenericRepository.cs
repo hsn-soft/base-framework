@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using HsnSoft.Base.Domain.Entities;
 using HsnSoft.Base.Domain.Models;
 using HsnSoft.Base.MongoDB;
+using HsnSoft.Base.MongoDB.Context;
 using LinqKit.Core;
 using MongoDB.Driver;
 
@@ -29,7 +30,9 @@ public class MongoGenericRepository<TEntity, TKey> :
         _countOptions = new CountOptions { MaxTime = _context.ClientWaitQueueTimeout };
     }
 
-    public IMongoCollection<TEntity> GetCollection() => _context?.GetCollection<TEntity>().WithReadPreference(ReadPreference.Primary);
+    public ITrackingMongoCollection<TEntity> GetCollection()
+        => _context?.GetCollection<TEntity>().WithReadPreference(ReadPreference.Primary) as ITrackingMongoCollection<TEntity>;
+
     public IQueryable<TEntity> GetQueryable() => GetCollection().AsQueryable().AsExpandable();
 
     public override async Task<TResult> GetByIdAsync<TResult>(
