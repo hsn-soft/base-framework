@@ -4,8 +4,11 @@ using HsnSoft.Base.AspNetCore.Localization;
 using HsnSoft.Base.AspNetCore.Security;
 using HsnSoft.Base.AspNetCore.Security.Claims;
 using HsnSoft.Base.AspNetCore.WebClientInfo;
+using HsnSoft.Base.Clients;
 using HsnSoft.Base.Localization;
+using HsnSoft.Base.MultiTenancy;
 using HsnSoft.Base.Security.Claims;
+using HsnSoft.Base.Users;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Localization;
@@ -19,6 +22,13 @@ public static class BaseAspNetCoreServiceCollectionExtensions
         services.AddOptions();
         services.AddHttpContextAccessor();
         services.AddTransient<ICurrentPrincipalAccessor, HttpContextCurrentPrincipalAccessor>();
+        services.AddTransient<ICurrentClient, CurrentClient>();
+        services.AddTransient<ICurrentUser, CurrentUser>();
+
+        services.AddTransient<ICurrentTenantAccessor>(sp=> new BasicCurrentTenantAccessor(sp));
+
+        services.AddTransient<ICurrentTenant, CurrentTenant>();
+
         services.AddTransient<IWebClientInfoProvider, HttpContextWebClientInfoProvider>();
         services.AddScoped<BaseClaimsMapMiddleware>();
         services.AddScoped<BaseSecurityHeadersMiddleware>();

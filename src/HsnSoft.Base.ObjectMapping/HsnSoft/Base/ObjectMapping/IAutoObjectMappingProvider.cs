@@ -7,7 +7,4 @@ public interface IAutoObjectMappingProvider
     TDestination Map<TSource, TDestination>(TSource source, TDestination destination);
 }
 
-public interface IAutoObjectMappingProvider<TContext> : IAutoObjectMappingProvider
-{
-
-}
+public interface IAutoObjectMappingProvider<TContext> : IAutoObjectMappingProvider;

@@ -5,49 +5,58 @@ using HsnSoft.Base.MongoDB.Context;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using MongoDB.Driver.Core.Configuration;
+using MongoDB.Driver.Core.Events;
 
 namespace HsnSoft.Base.MongoDB;
 
 public abstract class BaseMongoDbContext : MongoDbContext
 {
-    [CanBeNull]
-    private IAuditPropertySetter AuditPropertySetter { get; }
+    [CanBeNull] private IAuditPropertySetter AuditPropertySetter { get; }
 
     public TimeSpan ClientWaitQueueTimeout => Client.Settings.WaitQueueTimeout;
 
-    protected BaseMongoDbContext(MongoClientSettings clientSettings, string databaseName, IServiceProvider provider = null) : base(clientSettings, databaseName)
+    protected BaseMongoDbContext(MongoClientSettings clientSettings, [NotNull] string databaseName, [CanBeNull] IServiceProvider provider = null) : base(clientSettings, databaseName)
     {
         AuditPropertySetter = provider?.GetService<IAuditPropertySetter>();
         CommandTrackerEvent += CommandTrackerEvent_Tracked;
     }
 
-    protected BaseMongoDbContext(string connectionString, IServiceProvider provider = null)
-        : this(CreateClientSettings(connectionString), MongoUrl.Create(connectionString).DatabaseName, provider)
+    protected BaseMongoDbContext([NotNull] string connectionString, [CanBeNull] IServiceProvider provider = null) : this(CreateClientSettings(connectionString), MongoUrl.Create(connectionString).DatabaseName, provider)
     {
     }
 
-    private static MongoClientSettings CreateClientSettings(string connectionString, int queryExecutionMaxSeconds = 60, IServiceProvider provider = null)
+    private static MongoClientSettings CreateClientSettings([NotNull] string connectionString, int queryExecutionMaxSeconds = 60, IServiceProvider provider = null)
     {
-        // ThreadPool.GetMaxThreads(out var maxWt, out var _);
+        ArgumentException.ThrowIfNullOrWhiteSpace(connectionString);
 
         var mongoUrl = MongoUrl.Create(connectionString);
         var clientSettings = MongoClientSettings.FromConnectionString(mongoUrl.Url);
-        clientSettings.MaxConnectionPoolSize = 1000; //maxWt * 2;
 
-        // In version 2.19, MongoDB team upgraded to LinqProvider.V3, rolling back to V2 until LinQ is stable...
-        // https://www.mongodb.com/community/forums/t/issue-with-2-18-to-2-19-nuget-upgrade-of-mongodb-c-driver/211894/2
-        //clientSettings.LinqProvider = LinqProvider.V2;
-
-        var LoggerFactory = provider?.GetService<ILoggerFactory>();
-        if (LoggerFactory != null)
-        {
-            clientSettings.LoggingSettings = new LoggingSettings(LoggerFactory);
-        }
+        clientSettings.MaxConnectionPoolSize = 1000;
+        clientSettings.MinConnectionPoolSize = 5;
 
         if (queryExecutionMaxSeconds < 1) queryExecutionMaxSeconds = 60;
         clientSettings.WaitQueueTimeout = TimeSpan.FromSeconds(queryExecutionMaxSeconds);
+
+
+        var loggerFactory = provider?.GetService<ILoggerFactory>() ?? LoggerFactory.Create(builder =>
+        {
+            builder.AddConsole();
+            builder.SetMinimumLevel(LogLevel.Debug);
+        });
+
+        clientSettings.LoggingSettings = new LoggingSettings(loggerFactory);
+
+        var logger = loggerFactory.CreateLogger<MongoDbContext>();
+        clientSettings.ClusterConfigurator = cb =>
+        {
+            cb.Subscribe<CommandStartedEvent>(e => { logger.LogDebug("Mongo Command Started: {CommandName} - {Command}", e.CommandName, e.Command.ToJson()); });
+            cb.Subscribe<CommandSucceededEvent>(e => { logger.LogDebug("Mongo Command Succeeded: {CommandName} - Duration: {Duration}ms", e.CommandName, e.Duration.TotalMilliseconds); });
+            cb.Subscribe<CommandFailedEvent>(e => { logger.LogError(e.Failure, "Mongo Command Failed: {CommandName}", e.CommandName); });
+        };
 
         return clientSettings;
     }
@@ -65,6 +74,9 @@ public abstract class BaseMongoDbContext : MongoDbContext
             case MongoEntityEventState.Deleted:
                 ApplyBaseConceptsForDeletedEntity(e.EntryEntity);
                 break;
+            case MongoEntityEventState.Unchanged:
+            default:
+                break;
         }
     }
 
@@ -77,48 +89,45 @@ public abstract class BaseMongoDbContext : MongoDbContext
     private void ApplyBaseConceptsForModifiedEntity(object entity)
     {
         AuditPropertySetter?.SetModificationProperties(entity);
-        if (entity is ISoftDelete && ((ISoftDelete)entity).IsDeleted)
+        if (entity is ISoftDelete { IsDeleted: true } softDelete)
         {
-            AuditPropertySetter?.SetDeletionProperties(entity);
+            AuditPropertySetter?.SetDeletionProperties(softDelete);
         }
     }
 
     private void ApplyBaseConceptsForDeletedEntity(object entity)
     {
-        if (!(entity is ISoftDelete))
+        if (entity is not ISoftDelete softDelete)
         {
             return;
         }
 
-        ((ISoftDelete)entity).IsDeleted = true;
-        AuditPropertySetter?.SetDeletionProperties(entity);
+        ObjectHelper.TrySetProperty(softDelete, x => x.IsDeleted, () => true);
+        AuditPropertySetter?.SetDeletionProperties(softDelete);
 
         // SoftDeletion Active and DeletionProperties not found then Set modification properties
-        if (!(entity is IHasDeletionTime) && !(entity is IDeletionAuditedObject))
+        if (softDelete is not IHasDeletionTime)
         {
-            AuditPropertySetter?.SetModificationProperties(entity);
+            AuditPropertySetter?.SetModificationProperties(softDelete);
         }
     }
 
-    private void CheckAndSetId(object targetObject)
+    private static void CheckAndSetId(object targetObject)
     {
-        if (targetObject is IEntity<Guid> entityWithGuidId)
+        if (targetObject is not IEntity<Guid> entityWithGuidId)
         {
-            if (entityWithGuidId.Id != default)
-            {
-                return;
-            }
-
-            EntityHelper.TrySetId(
-                entityWithGuidId,
-                Guid.NewGuid,
-                true
-            );
+            return;
         }
-    }
 
-    // public Task<int> SaveSaveEntityCommandsIfExistChangesAsync()
-    // {
-    //     return SaveEntityCommandsAsync();
-    // }
+        if (entityWithGuidId.Id != Guid.Empty)
+        {
+            return;
+        }
+
+        EntityHelper.TrySetId(
+            entityWithGuidId,
+            Guid.NewGuid,
+            true
+        );
+    }
 }

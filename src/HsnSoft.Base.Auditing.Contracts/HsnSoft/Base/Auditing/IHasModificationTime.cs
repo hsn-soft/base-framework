@@ -4,5 +4,5 @@ namespace HsnSoft.Base.Auditing;
 
 public interface IHasModificationTime
 {
-    DateTime? LastModificationTime { get; set; }
+    DateTime LastModificationTime { get;  }
 }

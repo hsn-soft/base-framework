@@ -1,5 +1,3 @@
 namespace HsnSoft.Base.Logging;
 
-public interface IPersistentLog
-{
-}
+public interface IPersistentLog;

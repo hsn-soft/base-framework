@@ -36,4 +36,4 @@ jobs:
                 run: dotnet build --no-restore --no-incremental --verbosity minimal --configuration Release
 
             -   name: Test Solution
-                run: dotnet test --no-restore --no-build --verbosity minimal --configuration Release --filter category!=integration
+                run: dotnet test --no-restore --no-build --verbosity minimal --configuration Release --filter "category!=integration"

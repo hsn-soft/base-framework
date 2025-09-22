@@ -3,6 +3,4 @@
 namespace HsnSoft.Base.MongoDBOld.Repository;
 
 public interface IMongoRepository<TDocument> : IBaseRepository<TDocument>
-    where TDocument : IBaseDocument
-{
-}
+    where TDocument : IBaseDocument;

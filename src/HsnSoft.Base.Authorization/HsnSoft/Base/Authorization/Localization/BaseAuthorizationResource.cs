@@ -3,7 +3,4 @@
 namespace HsnSoft.Base.Authorization.Localization;
 
 [LocalizationResourceName("Resources")]
-public class BaseAuthorizationResource
-{
-
-}
+public class BaseAuthorizationResource;

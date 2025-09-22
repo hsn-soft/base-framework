@@ -1,4 +1,5 @@
 ﻿using HsnSoft.Base.Clients;
+using HsnSoft.Base.Security.Claims;
 using HsnSoft.Base.Security.Encryption;
 using HsnSoft.Base.SecurityLog;
 using HsnSoft.Base.Users;
@@ -8,14 +9,6 @@ namespace HsnSoft.Base.Security;
 
 public static class BaseSecurityServiceCollectionExtensions
 {
-    public static IServiceCollection AddBaseSecurityServiceCollection(this IServiceCollection services)
-    {
-        services.AddTransient<ICurrentClient, CurrentClient>();
-        services.AddTransient<ICurrentUser, CurrentUser>();
-
-        return services;
-    }
-
     public static IServiceCollection AddBaseSecurityEncryptionCollection(this IServiceCollection services)
     {
         services.AddSingleton<IStringEncryptionService, StringEncryptionService>();

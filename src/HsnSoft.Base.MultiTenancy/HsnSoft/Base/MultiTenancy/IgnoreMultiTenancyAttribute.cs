@@ -3,7 +3,4 @@
 namespace HsnSoft.Base.MultiTenancy;
 
 [AttributeUsage(AttributeTargets.All)]
-public class IgnoreMultiTenancyAttribute : Attribute
-{
-
-}
+public class IgnoreMultiTenancyAttribute : Attribute;

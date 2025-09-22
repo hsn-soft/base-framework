@@ -1,5 +1,3 @@
 ﻿namespace HsnSoft.Base.EventBus.Azure.Configs;
 
-public class AzureEventBusConfig : EventBusConfig
-{
-}
+public class AzureEventBusConfig : EventBusConfig;

@@ -6,142 +6,143 @@ using System.Threading;
 using System.Threading.Tasks;
 using HsnSoft.Base.Data;
 using HsnSoft.Base.Domain.Entities;
+using HsnSoft.Base.Domain.Models;
 using HsnSoft.Base.MultiTenancy;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace HsnSoft.Base.Domain.Repositories;
 
-public abstract class GenericRepositoryBase<TEntity, TKey> : IGenericRepository<TEntity, TKey>
+public abstract class GenericRepositoryBase<TEntity, TKey>(IServiceProvider provider = null) : IGenericRepository<TEntity, TKey>
     where TEntity : class, IEntity<TKey>
 {
-    [CanBeNull]
-    private IDataFilter DataFilter { get; }
+    [CanBeNull] private IDataFilter DataFilter { get; } = provider?.GetService<IDataFilter>();
 
-    [CanBeNull]
-    private ICurrentTenant CurrentTenant { get; }
+    [CanBeNull] private ICurrentTenant CurrentTenant { get; } = provider?.GetService<ICurrentTenant>();
 
-    protected GenericRepositoryBase(IServiceProvider provider = null)
+    #region GetById / Single / First
+
+    public Task<TEntity> GetByIdAsync(TKey id, CancellationToken cancellationToken = default)
+        => GetByIdAsync(id, s => s, cancellationToken);
+
+    public virtual Task<TResult> GetByIdAsync<TResult>(
+        TKey id,
+        Expression<Func<TEntity, TResult>> selector,
+        CancellationToken cancellationToken = default) where TResult : class
+        => GetSingleAsync(e => EqualityComparer<TKey>.Default.Equals(e.Id, id), selector, cancellationToken);
+
+    public Task<TEntity> GetByIdOrDefaultAsync(TKey id, CancellationToken cancellationToken = default)
+        => GetByIdOrDefaultAsync(id, s => s, cancellationToken);
+
+    public virtual Task<TResult> GetByIdOrDefaultAsync<TResult>(
+        TKey id,
+        Expression<Func<TEntity, TResult>> selector,
+        CancellationToken cancellationToken = default) where TResult : class
+        => GetSingleOrDefaultAsync(e => EqualityComparer<TKey>.Default.Equals(e.Id, id), selector, cancellationToken);
+
+    public Task<TEntity> GetSingleAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
+        => GetSingleAsync(predicate, s => s, cancellationToken);
+
+    public async Task<TResult> GetSingleAsync<TResult>(
+        Expression<Func<TEntity, bool>> predicate,
+        Expression<Func<TEntity, TResult>> selector,
+        CancellationToken cancellationToken = default) where TResult : class
     {
-        DataFilter = provider?.GetService<IDataFilter>();
-        CurrentTenant = provider?.GetService<ICurrentTenant>();
+        var entity = await GetSingleOrDefaultAsync(predicate, selector, cancellationToken);
+        return entity ?? throw new EntityNotFoundException(typeof(TEntity));
     }
 
-    public abstract Task<TEntity> FindAsync(TKey id, bool includeDetails = true, CancellationToken cancellationToken = default);
-    public abstract Task<TEntity> FindAsync(Expression<Func<TEntity, bool>> predicate, bool includeDetails = true, CancellationToken cancellationToken = default);
-    public abstract Task<TEntity> FindFirstAsync(TKey id, bool includeDetails = true, CancellationToken cancellationToken = default);
-    public abstract Task<TEntity> FindFirstAsync(Expression<Func<TEntity, bool>> predicate, bool includeDetails = true, CancellationToken cancellationToken = default);
+    public Task<TEntity> GetSingleOrDefaultAsync(
+        Expression<Func<TEntity, bool>> predicate,
+        CancellationToken cancellationToken = default)
+        => GetSingleOrDefaultAsync(predicate, s => s, cancellationToken);
 
-    public async Task<TEntity> GetAsync(TKey id, bool includeDetails = true, CancellationToken cancellationToken = default)
-    {
-        var entity = await FindAsync(id, includeDetails, cancellationToken);
+    public abstract Task<TResult> GetSingleOrDefaultAsync<TResult>(
+        Expression<Func<TEntity, bool>> predicate,
+        Expression<Func<TEntity, TResult>> selector,
+        CancellationToken cancellationToken = default) where TResult : class;
 
-        if (entity == null)
-        {
-            throw new EntityNotFoundException(typeof(TEntity), id);
-        }
+    public Task<TEntity> GetFirstOrDefaultAsync(
+        Expression<Func<TEntity, bool>> predicate,
+        Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderByEntity = null,
+        CancellationToken cancellationToken = default)
+        => GetFirstOrDefaultAsync(predicate, s => s, orderByEntity, cancellationToken);
 
-        return entity;
-    }
+    public abstract Task<TResult> GetFirstOrDefaultAsync<TResult>(
+        Expression<Func<TEntity, bool>> predicate,
+        Expression<Func<TEntity, TResult>> selector,
+        Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderByEntity = null,
+        CancellationToken cancellationToken = default) where TResult : class;
 
-    public async Task<TEntity> GetAsync(Expression<Func<TEntity, bool>> predicate, bool includeDetails = true, CancellationToken cancellationToken = default)
-    {
-        var entity = await FindAsync(predicate, includeDetails, cancellationToken);
+    #endregion
 
-        if (entity == null)
-        {
-            throw new EntityNotFoundException(typeof(TEntity));
-        }
+    #region List / Paging / Count
 
-        return entity;
-    }
+    public Task<List<TEntity>> GetListAsync(
+        ListQueryOptions<TEntity> options,
+        CancellationToken cancellationToken = default)
+        => GetListAsync(options, s => s, cancellationToken);
 
-    public abstract Task<List<TEntity>> GetListAsync(bool includeDetails = false, CancellationToken cancellationToken = default);
+    public abstract Task<List<TResult>> GetListAsync<TResult>(
+        ListQueryOptions<TEntity> options,
+        Expression<Func<TEntity, TResult>> selector,
+        CancellationToken cancellationToken = default) where TResult : class;
 
-    public abstract Task<List<TEntity>> GetListAsync(Expression<Func<TEntity, bool>> predicate, bool includeDetails = false, CancellationToken cancellationToken = default);
+    public Task<PagedQueryResult<TEntity>> GetPageListAsync(
+        PagedQueryOptions<TEntity> options,
+        CancellationToken cancellationToken = default)
+        => GetPageListAsync(options, s => s, cancellationToken);
 
-    public abstract Task<long> GetCountAsync(CancellationToken cancellationToken = default);
+    public abstract Task<PagedQueryResult<TResult>> GetPageListAsync<TResult>(
+        PagedQueryOptions<TEntity> options,
+        Expression<Func<TEntity, TResult>> selector,
+        CancellationToken cancellationToken = default) where TResult : class;
 
-    public abstract Task<List<TEntity>> GetPagedListAsync(int skipCount, int maxResultCount, string sorting, bool includeDetails = false, CancellationToken cancellationToken = default);
+    public abstract Task<long> GetCountAsync(
+        Expression<Func<TEntity, bool>> filter = null,
+        CancellationToken cancellationToken = default);
 
-    public abstract Task<long> GetCountAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default);
+    public abstract Task<bool> ExistsAsync(
+        Expression<Func<TEntity, bool>> filter,
+        CancellationToken cancellationToken = default);
 
-    public abstract Task<List<TEntity>> GetPagedListAsync(Expression<Func<TEntity, bool>> predicate, int skipCount, int maxResultCount, string sorting, bool includeDetails = false, CancellationToken cancellationToken = default);
+    #endregion
 
-    public abstract Task<TEntity> InsertAsync(TEntity entity, CancellationToken cancellationToken = default);
+    #region Insert / Update / Delete
 
-    public virtual async Task InsertManyAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
-    {
-        foreach (var entity in entities)
-        {
-            await InsertAsync(entity, cancellationToken: cancellationToken);
-        }
+    public Task<int> InsertAsync(TEntity entity, CancellationToken cancellationToken = default)
+        => InsertManyAsync([entity], cancellationToken);
 
-        await SaveChangesAsync(cancellationToken);
-    }
+    public abstract Task<int> InsertManyAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default);
 
-    public abstract Task<TEntity> UpdateAsync(TEntity entity, CancellationToken cancellationToken = default);
+    public Task<int> UpdateAsync(TEntity entity, CancellationToken cancellationToken = default)
+        => UpdateManyAsync([entity], cancellationToken);
 
-    public virtual async Task UpdateManyAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
-    {
-        foreach (var entity in entities)
-        {
-            await UpdateAsync(entity, cancellationToken: cancellationToken);
-        }
+    public abstract Task<int> UpdateManyAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default);
 
-        await SaveChangesAsync(cancellationToken);
-    }
+    public abstract Task<TEntity> UpdateByIdAsync(TKey id, Action<TEntity> updateAction, CancellationToken cancellationToken = default);
 
-    public virtual async Task<bool> DeleteAsync(TKey id, CancellationToken cancellationToken = default)
-    {
-        var entity = await FindAsync(id, cancellationToken: cancellationToken);
-        if (entity == null)
-        {
-            return false;
-        }
+    public Task<int> DeleteByIdAsync(TKey id, CancellationToken cancellationToken = default)
+        => DeleteByIdListAsync([id], cancellationToken);
 
-        return await DeleteAsync(entity, cancellationToken);
-    }
+    public abstract Task<int> DeleteByIdListAsync(IEnumerable<TKey> ids, CancellationToken cancellationToken = default);
 
-    public abstract Task<bool> DeleteAsync(TEntity entity, CancellationToken cancellationToken = default);
-    public abstract Task<bool> DeleteAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default);
+    public Task<int> DeleteAsync(TEntity entity, CancellationToken cancellationToken = default)
+        => DeleteManyAsync([entity], cancellationToken);
 
-    public virtual async Task DeleteManyAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
-    {
-        foreach (var entity in entities)
-        {
-            await DeleteAsync(entity, cancellationToken: cancellationToken);
-        }
+    public abstract Task<int> DeleteManyAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default);
+    public abstract Task<int> DeleteManyAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default);
 
-        await SaveChangesAsync(cancellationToken);
-    }
+    #endregion
 
-    public virtual async Task DeleteManyAsync(IEnumerable<TKey> ids, CancellationToken cancellationToken = default)
-    {
-        foreach (var id in ids)
-        {
-            await DeleteAsync(id, cancellationToken: cancellationToken);
-        }
+    #region Filter Functions
 
-        await SaveChangesAsync(cancellationToken);
-    }
-
-    protected abstract Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
-
-    protected virtual CancellationToken GetCancellationToken(CancellationToken preferredValue = default)
-    {
-        // return CancellationTokenProvider.FallbackToProvider(preferredValue);
-        return preferredValue;
-    }
-
-    protected TQueryable ApplyDataFilters<TQueryable>(TQueryable query)
-        where TQueryable : IQueryable<TEntity>
+    protected TQueryable ApplyDataFilters<TQueryable>(TQueryable query) where TQueryable : IQueryable<TEntity>
     {
         return ApplyDataFilters<TQueryable, TEntity>(query);
     }
 
-    protected virtual TQueryable ApplyDataFilters<TQueryable, TOtherEntity>(TQueryable query)
-        where TQueryable : IQueryable<TOtherEntity>
+    protected virtual TQueryable ApplyDataFilters<TQueryable, TOtherEntity>(TQueryable query) where TQueryable : IQueryable<TOtherEntity>
     {
         if (typeof(ISoftDelete).IsAssignableFrom(typeof(TOtherEntity)))
         {
@@ -156,4 +157,6 @@ public abstract class GenericRepositoryBase<TEntity, TKey> : IGenericRepository<
 
         return query;
     }
+
+    #endregion
 }

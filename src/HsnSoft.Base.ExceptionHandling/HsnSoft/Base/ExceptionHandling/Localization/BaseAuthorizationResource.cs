@@ -3,7 +3,4 @@
 namespace HsnSoft.Base.ExceptionHandling.Localization;
 
 [LocalizationResourceName("Resources")]
-public class BaseAuthorizationResource
-{
-
-}
+public class BaseAuthorizationResource;

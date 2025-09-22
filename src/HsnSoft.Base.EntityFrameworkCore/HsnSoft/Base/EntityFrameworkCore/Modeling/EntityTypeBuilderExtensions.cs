@@ -192,7 +192,7 @@ public static class EntityTypeBuilderExtensions
         if (b.Metadata.ClrType.IsAssignableTo<IHasModificationTime>())
         {
             b.Property(nameof(IHasModificationTime.LastModificationTime))
-                .IsRequired(false)
+                .IsRequired()
                 .HasColumnName(nameof(IHasModificationTime.LastModificationTime));
         }
     }
