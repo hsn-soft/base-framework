@@ -3,7 +3,4 @@
 namespace HsnSoft.Base.Timing.Localization;
 
 [LocalizationResourceName("BaseTiming")]
-public class BaseTimingResource
-{
-
-}
+public class BaseTimingResource;

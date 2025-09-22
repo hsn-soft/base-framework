@@ -1,105 +1,63 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using HsnSoft.Base.Domain.Entities;
 using HsnSoft.Base.MongoDB.Attributes;
 using JetBrains.Annotations;
 using MongoDB.Driver;
 
 namespace HsnSoft.Base.MongoDB.Context;
 
-public abstract class MongoDbContext
+public abstract class MongoDbContext : IDisposable
 {
-    // private static readonly object DbResourceLock = new();
-    // private readonly List<Func<object, Task<object>>> _commands;
-    protected IMongoClient Client { get; private set; }
+    protected IMongoClient Client { get; }
+    protected IMongoDatabase Database { get; }
 
-    protected IMongoDatabase Database { get; private set; }
-
-    [CanBeNull]
-    protected event EventHandler<MongoEntityEventArgs> CommandTrackerEvent;
+    [CanBeNull] protected event EventHandler<MongoEntityEventArgs> CommandTrackerEvent;
+    private bool _disposed;
 
     protected MongoDbContext(MongoClientSettings clientSettings, string databaseName)
     {
+        ArgumentNullException.ThrowIfNull(clientSettings);
+        ArgumentException.ThrowIfNullOrWhiteSpace(databaseName);
+
         Client = new MongoClient(clientSettings);
         Database = Client.GetDatabase(databaseName);
-
-        // // Every command will be stored and it'll be processed at SaveChanges
-        // _commands = new List<Func<object?, Task<object?>>>();
     }
 
-    public IMongoCollection<TEntity> Collection<TEntity>(TEntity entity = null, MongoEntityEventState eventState = MongoEntityEventState.Unchanged)
-        where TEntity : class, IEntity
-        => entity != null ? Collections(new List<TEntity> { entity }, eventState) : Collections(new List<TEntity>(), MongoEntityEventState.Unchanged);
-
-    public IMongoCollection<TEntity> Collections<TEntity>(IEnumerable<TEntity> entities, MongoEntityEventState eventState)
-        where TEntity : class, IEntity
-    {
-        if (entities.Any() && eventState is MongoEntityEventState.Added or MongoEntityEventState.Modified or MongoEntityEventState.Deleted)
-        {
-            foreach (var entity in entities)
-            {
-                CommandTrackerEvent?.Invoke(this, new MongoEntityEventArgs { EventState = eventState, EntryEntity = entity });
-            }
-        }
-
-        return Database.GetCollection<TEntity>(GetCollectionName(typeof(TEntity)));
-    }
-
-    // public Task AddEntityCommandAsync(Func<object?, Task<object?>> func)
-    // {
-    //     lock (DbResourceLock)
-    //     {
-    //         _commands.Add(func);
-    //
-    //         return Task.CompletedTask;
-    //     }
-    // }
-
-    // protected int SaveEntityCommands() => SaveEntityCommandsAsync().GetAwaiter().GetResult();
-    //
-    // protected Task<int> SaveEntityCommandsAsync()
-    // {
-    //     lock (DbResourceLock)
-    //     {
-    //         return Task.FromResult(SaveEntityCommandsAsync(_commands).GetAwaiter().GetResult());
-    //     }
-    // }
-    //
-    // private async Task<int> SaveEntityCommandsAsync(IEnumerable<Func<object?, Task<object?>>> commands)
-    // {
-    //     var requestCommandCount = commands.Count();
-    //     if (requestCommandCount < 1) return int.MaxValue; // for success result
-    //
-    //     using var session = await Client.StartSessionAsync();
-    //     var isServerSupportTransaction = true;
-    //     try
-    //     {
-    //         session.StartTransaction();
-    //     }
-    //     catch (NotSupportedException e)
-    //     {
-    //         isServerSupportTransaction = false;
-    //     }
-    //
-    //     var commandTasks = commands.Select(c => c(null));
-    //
-    //     await Task.WhenAll(commandTasks);
-    //
-    //     if (isServerSupportTransaction)
-    //     {
-    //         await session.CommitTransactionAsync();
-    //     }
-    //
-    //     var resultCommandCount = commands.Count();
-    //     _commands.Clear();
-    //
-    //     return resultCommandCount;
-    // }
+    public ITrackingMongoCollection<TEntity> GetCollection<TEntity>()
+        => new TrackingMongoCollection<TEntity>(Database.GetCollection<TEntity>(GetCollectionName(typeof(TEntity))), CommandTrackerEvent);
 
     private static string GetCollectionName(MemberInfo entityType)
         => ((BsonCollectionAttribute)entityType.GetCustomAttributes(typeof(BsonCollectionAttribute), true)
                .FirstOrDefault())?.CollectionName
            ?? entityType.Name;
+
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    // ReSharper disable once VirtualMemberNeverOverridden.Global
+    protected virtual void Dispose(bool disposing)
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        if (disposing)
+        {
+            // managed resources cleanup
+            Client?.Dispose();
+        }
+
+        // unmanaged resources cleanup
+        _disposed = true;
+    }
+
+    ~MongoDbContext()
+    {
+        Dispose(false);
+    }
 }

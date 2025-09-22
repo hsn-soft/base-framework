@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <IsPackable>false</IsPackable>
+        <RootNamespace>HsnSoft.Base.Test.Api.Domain</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\src\HsnSoft.Base.Ddd.Domain\HsnSoft.Base.Ddd.Domain.csproj" />
+        <ProjectReference Include="..\..\src\HsnSoft.Base.AutoMapper\HsnSoft.Base.AutoMapper.csproj" />
+        <ProjectReference Include="..\HsnSoft.Base.Test.Api.Helper\HsnSoft.Base.Test.Api.Helper.csproj" />
+    </ItemGroup>
+
+</Project>

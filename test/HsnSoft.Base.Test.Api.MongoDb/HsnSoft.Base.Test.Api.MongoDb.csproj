@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <IsPackable>false</IsPackable>
+        <RootNamespace>HsnSoft.Base.Test.Api.MongoDb</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\src\HsnSoft.Base.MongoDB\HsnSoft.Base.MongoDB.csproj" />
+        <ProjectReference Include="..\HsnSoft.Base.Test.Api.Domain\HsnSoft.Base.Test.Api.Domain.csproj" />
+    </ItemGroup>
+
+</Project>

@@ -6,11 +6,11 @@ namespace HsnSoft.Base.Domain.Entities.Auditing;
 [Serializable]
 public abstract class FullAuditedEntity<TKey> : AuditedEntity<TKey>, IFullAuditedObject
 {
-    public bool IsDeleted { get; set; }
+    public bool IsDeleted { get; protected set; }
 
-    public Guid? DeleterId { get; set; }
+    public Guid? DeleterId { get; protected set; }
 
-    public DateTime? DeletionTime { get; set; }
+    public DateTime? DeletionTime { get; protected set; }
 
     protected FullAuditedEntity()
     {

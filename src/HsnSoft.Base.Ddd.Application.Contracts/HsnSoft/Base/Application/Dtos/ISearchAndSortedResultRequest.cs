@@ -1,6 +1,3 @@
 namespace HsnSoft.Base.Application.Dtos;
 
-public interface ISearchAndSortedResultRequest : ISearchResultRequest, ISortedResultRequest
-{
-
-}
+public interface ISearchAndSortedResultRequest : ISearchResultRequest, ISortedResultRequest;

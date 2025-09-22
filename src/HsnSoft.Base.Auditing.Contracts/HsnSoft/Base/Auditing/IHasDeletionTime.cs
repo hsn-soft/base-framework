@@ -4,5 +4,5 @@ namespace HsnSoft.Base.Auditing;
 
 public interface IHasDeletionTime : ISoftDelete
 {
-    DateTime? DeletionTime { get; set; }
+    DateTime? DeletionTime { get;  }
 }

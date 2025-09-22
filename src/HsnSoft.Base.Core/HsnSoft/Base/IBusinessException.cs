@@ -1,5 +1,3 @@
 namespace HsnSoft.Base;
 
-public interface IBusinessException
-{
-}
+public interface IBusinessException;

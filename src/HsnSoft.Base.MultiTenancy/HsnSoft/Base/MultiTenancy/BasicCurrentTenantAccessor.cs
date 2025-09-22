@@ -15,7 +15,7 @@ public class BasicCurrentTenantAccessor : ICurrentTenantAccessor
 
     private readonly AsyncLocal<BasicTenantInfo> _currentScope;
 
-    internal BasicCurrentTenantAccessor(IServiceProvider provider)
+    public BasicCurrentTenantAccessor(IServiceProvider provider)
     {
         var currentUser = provider.GetRequiredService<ICurrentUser>();
         _currentScope = new AsyncLocal<BasicTenantInfo>

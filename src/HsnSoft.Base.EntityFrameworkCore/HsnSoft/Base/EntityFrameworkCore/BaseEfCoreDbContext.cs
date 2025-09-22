@@ -6,7 +6,6 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using HsnSoft.Base.Auditing;
-using HsnSoft.Base.Context;
 using HsnSoft.Base.Data;
 using HsnSoft.Base.Domain.Entities;
 using HsnSoft.Base.Domain.Entities.Events;
@@ -21,8 +20,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace HsnSoft.Base.EntityFrameworkCore;
 
-public abstract class BaseEfCoreDbContext<TDbContext> : ThreadSafeDbContext
-    where TDbContext : ThreadSafeDbContext
+public abstract class BaseEfCoreDbContext<TDbContext> : DbContext where TDbContext : DbContext
 {
     private Guid? CurrentTenantId => CurrentTenant?.Id;
 
@@ -116,7 +114,12 @@ public abstract class BaseEfCoreDbContext<TDbContext> : ThreadSafeDbContext
         }
 
         entry.Reload();
-        entry.Entity.As<ISoftDelete>().IsDeleted = true;
+
+        if (entry.Entity is  ISoftDelete mayHaveCreatorObject)
+        {
+            ObjectHelper.TrySetProperty(mayHaveCreatorObject, x => x.IsDeleted, () => true);
+        }
+
         AuditPropertySetter?.SetDeletionProperties(entry.Entity);
 
         // SoftDeletion Active and DeletionProperties not found then Set modification properties
@@ -152,7 +155,7 @@ public abstract class BaseEfCoreDbContext<TDbContext> : ThreadSafeDbContext
 
     protected virtual void TrySetGuidId(EntityEntry entry, IEntity<Guid> entity)
     {
-        if (entity.Id != default)
+        if (entity.Id != Guid.Empty)
         {
             return;
         }

@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <IsPackable>false</IsPackable>
+        <RootNamespace>HsnSoft.Base.Test.Api.Application</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\src\HsnSoft.Base.Authorization\HsnSoft.Base.Authorization.csproj" />
+        <ProjectReference Include="..\..\src\HsnSoft.Base.Ddd.Application\HsnSoft.Base.Ddd.Application.csproj" />
+        <ProjectReference Include="..\HsnSoft.Base.Test.Api.Domain\HsnSoft.Base.Test.Api.Domain.csproj" />
+    </ItemGroup>
+
+</Project>

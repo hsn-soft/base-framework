@@ -1,5 +1,3 @@
 namespace HsnSoft.Base.Logging;
 
-public interface IFrameworkLog : IPersistentLog
-{
-}
+public interface IFrameworkLog : IPersistentLog;

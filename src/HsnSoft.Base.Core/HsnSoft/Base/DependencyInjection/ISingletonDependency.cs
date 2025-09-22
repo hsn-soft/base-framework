@@ -1,5 +1,3 @@
 namespace HsnSoft.Base.DependencyInjection;
 
-public interface ISingletonDependency
-{
-}
+public interface ISingletonDependency;

@@ -243,6 +243,7 @@ ClientBin/
 *.dbproj.schemaview
 *.jfm
 *.pfx
+!localhost.pfx
 *.publishsettings
 orleans.codegen.cs
 
@@ -457,3 +458,8 @@ $RECYCLE.BIN/
 !.vscode/extensions.json
 
 logs/
+
+# SonarQube
+.sonarqube/
+
+*.env

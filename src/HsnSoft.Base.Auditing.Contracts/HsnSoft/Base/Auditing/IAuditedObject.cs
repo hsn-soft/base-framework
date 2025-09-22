@@ -1,6 +1,3 @@
 namespace HsnSoft.Base.Auditing;
 
-public interface IAuditedObject : ICreationAuditedObject, IModificationAuditedObject
-{
-
-}
+public interface IAuditedObject : ICreationAuditedObject, IModificationAuditedObject;

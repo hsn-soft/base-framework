@@ -2,6 +2,4 @@
 
 namespace HsnSoft.Base.Data;
 
-public class DataSeedContributorList : TypeList<IDataSeedContributor>
-{
-}
+public class DataSeedContributorList : TypeList<IDataSeedContributor>;
