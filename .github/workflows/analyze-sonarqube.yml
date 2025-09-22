@@ -2,7 +2,7 @@ name: 'SonarQube Cloud Analysis'
 on:
     workflow_dispatch:
     push:
-        branches: [ "dev" ]
+        branches: [ "RELEASE" ]
         
 jobs:
     build:
