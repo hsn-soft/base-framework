@@ -20,6 +20,7 @@ public static class EfCoreServiceCollectionExtensions
     public static void AddServiceEfCoreDatabaseConfiguration(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddBaseTimingServiceCollection();
+        services.Configure<BaseClockOptions>(o => o.Kind = DateTimeKind.Utc);
         services.AddTransient<IAuditPropertySetter, AuditPropertySetter>();
         services.AddBaseDataServiceCollection();
 
@@ -36,12 +37,13 @@ public static class EfCoreServiceCollectionExtensions
                     sqlOptions.MaxBatchSize(100);
                 });
 
-                options.EnableSensitiveDataLogging(true);
+                options.EnableSensitiveDataLogging();
                 options.UseLoggerFactory(LoggerFactory.Create(builder =>
                 {
                     builder.AddConsole();
                     builder.SetMinimumLevel(LogLevel.Information);
                 }));
+                // options.EnableSensitiveDataLogging(false);
             }
             , contextLifetime: ServiceLifetime.Scoped // Must be Scoped => Cannot consume any scoped service and CurrentUser object creation on constructor
             , optionsLifetime: ServiceLifetime.Singleton
