@@ -1,7 +1,6 @@
 ﻿using System.Linq;
 using HsnSoft.Base.Domain.Entities;
 using HsnSoft.Base.MongoDB.Context;
-using MongoDB.Driver;
 
 namespace HsnSoft.Base.Domain.Repositories;
 

@@ -21,6 +21,7 @@ public static class MongoDbServiceCollectionExtensions
     public static IServiceCollection AddServiceMongoDbDatabaseConfiguration(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddBaseTimingServiceCollection();
+        services.Configure<BaseClockOptions>(o => o.Kind = DateTimeKind.Utc);
         services.AddTransient<IAuditPropertySetter, AuditPropertySetter>();
         services.AddBaseDataServiceCollection();
 

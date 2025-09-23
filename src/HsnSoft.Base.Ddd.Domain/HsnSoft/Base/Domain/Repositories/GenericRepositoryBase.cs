@@ -86,7 +86,7 @@ public abstract class GenericRepositoryBase<TEntity, TKey>(IServiceProvider prov
     public abstract Task<List<TResult>> GetListAsync<TResult>(
         ListQueryOptions<TEntity> options,
         Expression<Func<TEntity, TResult>> selector,
-        CancellationToken cancellationToken = default) where TResult : class;
+        CancellationToken cancellationToken = default);
 
     public Task<PagedQueryResult<TEntity>> GetPageListAsync(
         PagedQueryOptions<TEntity> options,
@@ -96,7 +96,7 @@ public abstract class GenericRepositoryBase<TEntity, TKey>(IServiceProvider prov
     public abstract Task<PagedQueryResult<TResult>> GetPageListAsync<TResult>(
         PagedQueryOptions<TEntity> options,
         Expression<Func<TEntity, TResult>> selector,
-        CancellationToken cancellationToken = default) where TResult : class;
+        CancellationToken cancellationToken = default);
 
     public abstract Task<long> GetCountAsync(
         Expression<Func<TEntity, bool>> filter = null,

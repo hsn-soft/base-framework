@@ -3,6 +3,7 @@ using HsnSoft.Base.AspNetCore;
 using HsnSoft.Base.Test.Api.Application;
 using HsnSoft.Base.Test.Api.EfCore;
 using HsnSoft.Base.Test.Api.MongoDb;
+using HsnSoft.Base.Tracing;
 using Microsoft.OpenApi.Models;
 using Serilog;
 
@@ -28,11 +29,18 @@ public sealed class Startup(IConfiguration configuration, IWebHostEnvironment en
             });
 
         services.AddEndpointsApiExplorer();
-        services.AddSwaggerGen(c => { c.SwaggerDoc("v1", new OpenApiInfo { Title = $"{AppService.AppName} API", Version = "v1" }); });
+        services.AddSwaggerGen(c => { c.SwaggerDoc("v1", new OpenApiInfo { Title = $"{ApplicationIdentifier.AppName} API", Version = "v1" }); });
 
         services.AddServiceApplicationConfiguration(Configuration);
         services.AddServiceEfCoreDatabaseConfiguration(Configuration);
         services.AddServiceMongoDbDatabaseConfiguration(Configuration);
+
+        // Workers
+        // services.AddHostedService<EfCoreWriterWorker>();
+        // services.AddHostedService<EfCoreCleanerWorker>();
+
+        // services.AddHostedService<MongoWriterWorker>();
+        // services.AddHostedService<MongoCleanerWorker>();
     }
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IHostApplicationLifetime hostApplicationLifetime)
@@ -41,7 +49,7 @@ public sealed class Startup(IConfiguration configuration, IWebHostEnvironment en
         {
             app.UseDeveloperExceptionPage();
             app.UseSwagger();
-            app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", $"{AppService.AppName} API"));
+            app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", $"{ApplicationIdentifier.AppName} API"));
         }
 
         app.UseRouting();
@@ -53,5 +61,5 @@ public sealed class Startup(IConfiguration configuration, IWebHostEnvironment en
     }
 
 
-    private static void OnShutdown() => Log.Information("Stopping web host ({ApplicationContext})...", AppService.AppName);
+    private static void OnShutdown() => Log.Information("Stopping web host ({ApplicationContext})...", ApplicationIdentifier.AppName);
 }

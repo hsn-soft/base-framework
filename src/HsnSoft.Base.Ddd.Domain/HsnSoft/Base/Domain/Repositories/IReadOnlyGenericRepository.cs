@@ -84,7 +84,7 @@ public interface IReadOnlyGenericRepository<TEntity, in TKey> : IRepository wher
         ListQueryOptions<TEntity> options,
         Expression<Func<TEntity, TResult>> selector,
         CancellationToken cancellationToken = default
-    ) where TResult : class;
+    );
 
 
     Task<PagedQueryResult<TEntity>> GetPageListAsync(
@@ -96,7 +96,7 @@ public interface IReadOnlyGenericRepository<TEntity, in TKey> : IRepository wher
         PagedQueryOptions<TEntity> options,
         Expression<Func<TEntity, TResult>> selector,
         CancellationToken cancellationToken = default
-    ) where TResult : class;
+    );
 
     Task<long> GetCountAsync(
         [CanBeNull] Expression<Func<TEntity, bool>> filter = null,
