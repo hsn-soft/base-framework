@@ -1,6 +1,4 @@
-﻿using System;
-using HsnSoft.Base.DependencyInjection;
-using HsnSoft.Base.MultiTenancy;
+﻿using HsnSoft.Base.DependencyInjection;
 using HsnSoft.Base.Timing;
 using HsnSoft.Base.Users;
 

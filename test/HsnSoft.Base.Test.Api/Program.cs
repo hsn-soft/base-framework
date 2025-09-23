@@ -1,31 +1,26 @@
 using HsnSoft.Base.AspNetCore.Serilog;
 using HsnSoft.Base.Test.Api.EfCore.Context;
 using HsnSoft.Base.Test.Api.MongoDb.Context;
+using HsnSoft.Base.Tracing;
 using Microsoft.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 
 namespace HsnSoft.Base.Test.Api;
 
-public static class AppService
-{
-    public static string AppId { get; set; }
-    public static string AppName { get; set; }
-}
-
 public static class Program
 {
     public static async Task<int> Main(string[] args)
     {
         string workspace = typeof(Startup).Namespace;
-        AppService.AppId = Guid.NewGuid().ToString("N");
-        AppService.AppName = workspace?[(workspace.IndexOf('.') + 1)..];
+        ApplicationIdentifier.AppId = Guid.NewGuid().ToString("N");
+        ApplicationIdentifier.AppName = workspace?[(workspace.IndexOf('.') + 1)..];
 
         Log.Logger = SerilogConfigurationHelper.ConfigureConsoleLogger(GetConfiguration());
 
         try
         {
-            Log.Information("Configuring web host ({ApplicationContext})...", AppService.AppName);
+            Log.Information("Configuring web host ({ApplicationContext})...", ApplicationIdentifier.AppName);
             var host = CreateHostBuilder(args);
 
             // Seed Data
@@ -66,7 +61,7 @@ public static class Program
                 {
                     if (!efCoreDbContext.Users.Any())
                     {
-                        efCoreDbContext.Users.AddRange(SeedData.GenerateUserData(10));
+                        efCoreDbContext.Users.AddRange(SeedData.GenerateUserData(5));
                         await efCoreDbContext.SaveChangesAsync();
                     }
                 }
@@ -78,7 +73,7 @@ public static class Program
                     long estimatedUserDocCount = await mongoDbContext.Users.EstimatedDocumentCountAsync();
                     if (estimatedUserDocCount < 1)
                     {
-                        await mongoDbContext.Users.InsertManyAsync(SeedData.GenerateUserData(10));
+                        await mongoDbContext.Users.InsertManyAsync(SeedData.GenerateUserData(5));
                     }
                 }
                 catch (Exception e)
@@ -87,15 +82,15 @@ public static class Program
                 }
             }
 
-            Log.Information("Starting web host ({ApplicationContext})...", AppService.AppName);
+            Log.Information("Starting web host ({ApplicationContext})...", ApplicationIdentifier.AppName);
             await host.RunAsync();
 
-            Log.Information("Program terminated successfully ({ApplicationContext}).", AppService.AppName);
+            Log.Information("Program terminated successfully ({ApplicationContext}).", ApplicationIdentifier.AppName);
             return 0;
         }
         catch (Exception ex)
         {
-            Log.Fatal(ex, "Program terminated unexpectedly ({ApplicationContext})!", AppService.AppName);
+            Log.Fatal(ex, "Program terminated unexpectedly ({ApplicationContext})!", ApplicationIdentifier.AppName);
             return 1;
         }
         finally

@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Reflection;
 using HsnSoft.Base.MongoDB.Attributes;
+using HsnSoft.Base.Tracing;
 using JetBrains.Annotations;
 using MongoDB.Driver;
 
@@ -19,6 +20,23 @@ public abstract class MongoDbContext : IDisposable
     {
         ArgumentNullException.ThrowIfNull(clientSettings);
         ArgumentException.ThrowIfNullOrWhiteSpace(databaseName);
+
+        if (!string.IsNullOrWhiteSpace(ApplicationIdentifier.AppName))
+        {
+            if (!string.IsNullOrWhiteSpace(clientSettings.ApplicationName))
+            {
+                clientSettings.ApplicationName += "_" + ApplicationIdentifier.AppName;
+            }
+            else
+            {
+                clientSettings.ApplicationName = ApplicationIdentifier.AppName;
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(clientSettings.ApplicationName))
+        {
+            clientSettings.ApplicationName = "UnknownApp";
+        }
 
         Client = new MongoClient(clientSettings);
         Database = Client.GetDatabase(databaseName);
