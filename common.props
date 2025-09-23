@@ -1,7 +1,7 @@
 <Project>
     <PropertyGroup>
         <LangVersion>latest</LangVersion>
-        <Version>2025.9.10</Version>
+        <Version>2025.9.11</Version>
         <MicrosoftAspNetCorePackageVersion>9.0.9</MicrosoftAspNetCorePackageVersion>
         <MicrosoftEntityFrameworkCorePackageVersion>9.0.9</MicrosoftEntityFrameworkCorePackageVersion>
         <NoWarn>$(NoWarn);CS1591;CS1998;CS0436</NoWarn>
