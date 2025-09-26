@@ -298,7 +298,7 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
         noFilterList.Should().HaveCount(5);
 
         // Act
-        var limitedList = await repo.GetListAsync(options: new ListQueryOptions<TestEntity> { ListLength = 3 });
+        var limitedList = await repo.GetListAsync(options: new ListQueryOptions<TestEntity> { MaxResultCount = 3 });
 
         // Assert
         limitedList.Should().NotBeNull();
@@ -342,7 +342,7 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
         filterObjectList.Should().BeEquivalentTo(expectedList.Select(x => new { x.Id, x.Name }));
 
         // Act
-        var dynamicOrderedList = await repo.GetListAsync(options: new ListQueryOptions<TestEntity> { OrderByDynamic = $"{nameof(TestEntity.Name)} asc, {nameof(TestEntity.Age)} desc", ListLength = 1 });
+        var dynamicOrderedList = await repo.GetListAsync(options: new ListQueryOptions<TestEntity> { OrderByDynamic = $"{nameof(TestEntity.Name)} asc, {nameof(TestEntity.Age)} desc", MaxResultCount = 1 });
 
         // Assert
         dynamicOrderedList.Should().NotBeNull();
@@ -351,7 +351,7 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
         dynamicOrderedList[0].Age.Should().Be(12);
 
         // Act
-        var orderedList = await repo.GetListAsync(options: new ListQueryOptions<TestEntity> { OrderByEntity = o => o.OrderBy(e => e.Name).ThenByDescending(a => a.Age), ListLength = 1 });
+        var orderedList = await repo.GetListAsync(options: new ListQueryOptions<TestEntity> { OrderByEntity = o => o.OrderBy(e => e.Name).ThenByDescending(a => a.Age), MaxResultCount = 1 });
 
         // Assert
         orderedList.Should().NotBeNull();
@@ -378,8 +378,8 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
         actual.Should().NotBeNull();
         actual.Items.Should().BeEmpty();
         actual.TotalCount.Should().Be(0);
-        actual.PageNumber.Should().Be(1);
-        actual.PageSize.Should().Be(new PagedQueryOptions<TestEntity>().PageSize);
+        actual.ResultPageNumber.Should().Be(1);
+        actual.MaxResultCount.Should().Be(new PagedQueryOptions<TestEntity>().MaxResultCount);
     }
 
     [Fact]
@@ -399,18 +399,18 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
         noFilterPageList.Should().NotBeNull();
         noFilterPageList.Items.Should().HaveCount(5);
         noFilterPageList.TotalCount.Should().Be(5);
-        noFilterPageList.PageNumber.Should().Be(1);
-        noFilterPageList.PageSize.Should().Be(new PagedQueryOptions<TestEntity>().PageSize);
+        noFilterPageList.ResultPageNumber.Should().Be(1);
+        noFilterPageList.MaxResultCount.Should().Be(new PagedQueryOptions<TestEntity>().MaxResultCount);
 
         // Act
-        var limitedPageList = await repo.GetPageListAsync(options: new PagedQueryOptions<TestEntity> { PageNumber = 3, PageSize = 2 });
+        var limitedPageList = await repo.GetPageListAsync(options: new PagedQueryOptions<TestEntity> { ResultPageNumber = 3, MaxResultCount = 2 });
 
         // Assert
         limitedPageList.Should().NotBeNull();
         limitedPageList.Items.Should().HaveCount(1);
         limitedPageList.TotalCount.Should().Be(5);
-        limitedPageList.PageNumber.Should().Be(3);
-        limitedPageList.PageSize.Should().Be(2);
+        limitedPageList.ResultPageNumber.Should().Be(3);
+        limitedPageList.MaxResultCount.Should().Be(2);
 
         // Act
         var filterPageList = await repo.GetPageListAsync(options: new PagedQueryOptions<TestEntity> { Filter = u => u.Name.Equals("TesterA") });
@@ -419,8 +419,8 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
         filterPageList.Should().NotBeNull();
         filterPageList.Items.Should().HaveCount(2);
         filterPageList.TotalCount.Should().Be(2);
-        filterPageList.PageNumber.Should().Be(1);
-        filterPageList.PageSize.Should().Be(new PagedQueryOptions<TestEntity>().PageSize);
+        filterPageList.ResultPageNumber.Should().Be(1);
+        filterPageList.MaxResultCount.Should().Be(new PagedQueryOptions<TestEntity>().MaxResultCount);
         filterPageList.Items.ShouldBeEquivalentToWithMilliseconds(expectedList);
 
         // Arrange
@@ -435,8 +435,8 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
         filterPageList.Should().NotBeNull();
         filterPageList.Items.Should().HaveCount(2);
         filterPageList.TotalCount.Should().Be(2);
-        filterPageList.PageNumber.Should().Be(1);
-        filterPageList.PageSize.Should().Be(new PagedQueryOptions<TestEntity>().PageSize);
+        filterPageList.ResultPageNumber.Should().Be(1);
+        filterPageList.MaxResultCount.Should().Be(new PagedQueryOptions<TestEntity>().MaxResultCount);
         filterPageList.Items.ShouldBeEquivalentToWithMilliseconds(expectedList);
 
         // Act
@@ -446,8 +446,8 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
         filterPageIdList.Should().NotBeNull();
         filterPageIdList.Items.Should().HaveCount(2);
         filterPageIdList.TotalCount.Should().Be(2);
-        filterPageIdList.PageNumber.Should().Be(1);
-        filterPageIdList.PageSize.Should().Be(new PagedQueryOptions<TestEntity>().PageSize);
+        filterPageIdList.ResultPageNumber.Should().Be(1);
+        filterPageIdList.MaxResultCount.Should().Be(new PagedQueryOptions<TestEntity>().MaxResultCount);
         filterPageIdList.Items.Should().BeEquivalentTo(expectedList.Select(x => x.Id));
 
         // Act
@@ -457,12 +457,12 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
         filterPageObjectList.Should().NotBeNull();
         filterPageObjectList.Items.Should().HaveCount(2);
         filterPageObjectList.TotalCount.Should().Be(2);
-        filterPageObjectList.PageNumber.Should().Be(1);
-        filterPageObjectList.PageSize.Should().Be(new PagedQueryOptions<TestEntity>().PageSize);
+        filterPageObjectList.ResultPageNumber.Should().Be(1);
+        filterPageObjectList.MaxResultCount.Should().Be(new PagedQueryOptions<TestEntity>().MaxResultCount);
         filterPageObjectList.Items.Should().BeEquivalentTo(expectedList.Select(x => new { x.Id, x.Name }));
 
         // Act
-        var dynamicOrderedPageList = await repo.GetPageListAsync(options: new PagedQueryOptions<TestEntity> { OrderByDynamic = $"{nameof(TestEntity.Name)} asc, {nameof(TestEntity.Age)} desc", PageSize = 1 });
+        var dynamicOrderedPageList = await repo.GetPageListAsync(options: new PagedQueryOptions<TestEntity> { OrderByDynamic = $"{nameof(TestEntity.Name)} asc, {nameof(TestEntity.Age)} desc", MaxResultCount = 1 });
 
         // Assert
         dynamicOrderedPageList.Should().NotBeNull();
@@ -470,11 +470,11 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
         dynamicOrderedPageList.Items[0].Name.Should().Be("TesterA");
         dynamicOrderedPageList.Items[0].Age.Should().Be(12);
         dynamicOrderedPageList.TotalCount.Should().Be(5);
-        dynamicOrderedPageList.PageNumber.Should().Be(1);
-        dynamicOrderedPageList.PageSize.Should().Be(1);
+        dynamicOrderedPageList.ResultPageNumber.Should().Be(1);
+        dynamicOrderedPageList.MaxResultCount.Should().Be(1);
 
         // Act
-        var orderedPageList = await repo.GetPageListAsync(options: new PagedQueryOptions<TestEntity> { OrderByEntity = o => o.OrderBy(e => e.Name).ThenByDescending(a => a.Age), PageSize = 1 });
+        var orderedPageList = await repo.GetPageListAsync(options: new PagedQueryOptions<TestEntity> { OrderByEntity = o => o.OrderBy(e => e.Name).ThenByDescending(a => a.Age), MaxResultCount = 1 });
 
         // Assert
         orderedPageList.Should().NotBeNull();
@@ -482,8 +482,8 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
         orderedPageList.Items[0].Name.Should().Be("TesterA");
         orderedPageList.Items[0].Age.Should().Be(12);
         orderedPageList.TotalCount.Should().Be(5);
-        orderedPageList.PageNumber.Should().Be(1);
-        orderedPageList.PageSize.Should().Be(1);
+        orderedPageList.ResultPageNumber.Should().Be(1);
+        orderedPageList.MaxResultCount.Should().Be(1);
     }
 
     #endregion GetPageListAsync

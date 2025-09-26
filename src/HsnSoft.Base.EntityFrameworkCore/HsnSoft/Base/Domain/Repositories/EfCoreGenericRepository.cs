@@ -66,7 +66,7 @@ public class EfCoreGenericRepository<TEntity, TKey>(IServiceProvider provider, D
         else if (options.OrderByEntity != null)
             query = options.OrderByEntity(query);
 
-        if (options.ListLength.HasValue) query = query.Take((int)options.ListLength.Value);
+        if (options.MaxResultCount.HasValue) query = query.Take(options.MaxResultCount.Value);
 
         return await query.Select(selector).ToListAsync(cancellationToken);
     }
@@ -81,26 +81,26 @@ public class EfCoreGenericRepository<TEntity, TKey>(IServiceProvider provider, D
         query = query.AsNoTracking();
         if (options.Filter != null) query = query.Where(options.Filter);
 
-        int totalCount = await query.CountAsync(cancellationToken);
+        long totalCount = await query.LongCountAsync(cancellationToken);
 
         if (!string.IsNullOrWhiteSpace(options.OrderByDynamic))
             query = query.OrderBy(options.OrderByDynamic);
         else if (options.OrderByEntity != null)
             query = options.OrderByEntity(query);
 
-        if (options.PageNumber > 1)
+        if (options.ResultPageNumber > 1)
         {
-            query = query.Skip(((int)options.PageNumber - 1) * (int)options.PageSize)
-                .Take((int)options.PageSize);
+            query = query.Skip((options.ResultPageNumber - 1) * options.MaxResultCount)
+                .Take(options.MaxResultCount);
         }
         else
         {
-            query = query.Take((int)options.PageSize);
+            query = query.Take(options.MaxResultCount);
         }
 
         var items = await query.Select(selector).ToListAsync(cancellationToken);
 
-        return new PagedQueryResult<TResult> { Items = items, TotalCount = (uint)totalCount, PageNumber = options.PageNumber, PageSize = options.PageSize };
+        return new PagedQueryResult<TResult> { Items = items, TotalCount = totalCount, ResultPageNumber = options.ResultPageNumber, MaxResultCount = options.MaxResultCount };
     }
 
     public override async Task<long> GetCountAsync(

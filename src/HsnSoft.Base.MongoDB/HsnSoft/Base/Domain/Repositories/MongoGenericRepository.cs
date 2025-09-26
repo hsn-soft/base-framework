@@ -118,8 +118,8 @@ public class MongoGenericRepository<TEntity, TKey> :
         else if (options.OrderByEntity != null)
             query = options.OrderByEntity(query);
 
-        if (options.ListLength.HasValue)
-            query = query.Take((int)options.ListLength.Value);
+        if (options.MaxResultCount.HasValue)
+            query = query.Take((int)options.MaxResultCount.Value);
 
         return Task.FromResult(query.Select(selector).ToList());
     }
@@ -133,7 +133,7 @@ public class MongoGenericRepository<TEntity, TKey> :
 
         if (options.Filter != null) query = query.Where(options.Filter);
 
-        var totalCount = query.Count();
+        int totalCount = query.Count();
 
         if (!string.IsNullOrWhiteSpace(options.OrderByDynamic))
             query = query.OrderBy(options.OrderByDynamic);
@@ -141,12 +141,12 @@ public class MongoGenericRepository<TEntity, TKey> :
             query = options.OrderByEntity(query);
 
         query = query
-            .Skip(((int)options.PageNumber - 1) * (int)options.PageSize)
-            .Take((int)options.PageSize);
+            .Skip((options.ResultPageNumber - 1) * options.MaxResultCount)
+            .Take(options.MaxResultCount);
 
         var items = query.Select(selector).ToList();
 
-        return Task.FromResult(new PagedQueryResult<TResult> { Items = items, TotalCount = (uint)totalCount, PageNumber = options.PageNumber, PageSize = options.PageSize });
+        return Task.FromResult(new PagedQueryResult<TResult> { Items = items, TotalCount = totalCount, ResultPageNumber = options.ResultPageNumber, MaxResultCount = options.MaxResultCount });
     }
 
     public override async Task<long> GetCountAsync(

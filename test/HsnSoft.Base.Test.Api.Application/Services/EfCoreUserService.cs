@@ -137,8 +137,8 @@ public class EfCoreUserService(IEfCoreUserRepository userRepository, IUnitOfWork
                 OrderByDynamic = string.IsNullOrWhiteSpace(input.OrderByText)
                     ? UserConsts.GetDefaultSorting()
                     : input.OrderByText,
-                PageNumber = input.PageNumber ?? 1,
-                PageSize = input.PageSize ?? 10
+                ResultPageNumber = input.PageNumber ?? 1,
+                MaxResultCount = input.PageSize ?? 10
             }, cancellationToken: cancellationToken);
 
         return result;
@@ -162,7 +162,7 @@ public class EfCoreUserService(IEfCoreUserRepository userRepository, IUnitOfWork
         test.SetEmail("mail_" + Guid.NewGuid().ToString("N").ToLower());
         _ = await userRepository.UpdateAsync(test, cancellationToken: cancellationToken);
 
-        var testList = await userRepository.GetListAsync(new ListQueryOptions<User> { Filter = x => x.FirstName == "Ahmet", ListLength = 10 }, cancellationToken: cancellationToken);
+        var testList = await userRepository.GetListAsync(new ListQueryOptions<User> { Filter = x => x.FirstName == "Ahmet", MaxResultCount = 10 }, cancellationToken: cancellationToken);
         foreach (var item in testList)
         {
             item.SetEmail("mail_" + Guid.NewGuid().ToString("N").ToLower());
