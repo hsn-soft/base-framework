@@ -8,5 +8,5 @@ namespace HsnSoft.Base.Application.Dtos;
 [Serializable]
 public class PagedAndSortedResultRequestDto : PagedResultRequestDto, IPagedAndSortedResultRequest
 {
-    public virtual string Sorting { get; set; }
+    public virtual string SortingText { get; set; }
 }

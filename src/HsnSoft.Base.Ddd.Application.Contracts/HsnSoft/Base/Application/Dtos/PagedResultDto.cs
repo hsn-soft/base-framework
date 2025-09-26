@@ -3,7 +3,6 @@ using System.Collections.Generic;
 
 namespace HsnSoft.Base.Application.Dtos;
 
-
 /// <summary>
 /// Implements <see cref="IPagedResult{T}"/>.
 /// </summary>
@@ -12,14 +11,16 @@ namespace HsnSoft.Base.Application.Dtos;
 public class PagedResultDto<T> : ListResultDto<T>, IPagedResult<T>
 {
     /// <inheritdoc />
-    public long TotalCount { get; set; } //TODO: Can be a long value..?
+    public long TotalCount { get; set; }
+
+    public int ResultPageNumber { get; set; }
+    public int MaxResultCount { get; set; }
 
     /// <summary>
     /// Creates a new <see cref="PagedResultDto{T}"/> object.
     /// </summary>
     public PagedResultDto()
     {
-
     }
 
     /// <summary>
