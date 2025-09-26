@@ -1,6 +1,8 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace HsnSoft.Base.Domain.Models;
 
 public class ListQueryOptions<T> : OrderQueryOptions<T>
 {
-    public uint? ListLength { get; init; }
+    [Range(1, int.MaxValue)] public int? MaxResultCount { get; init; } = 5;
 }

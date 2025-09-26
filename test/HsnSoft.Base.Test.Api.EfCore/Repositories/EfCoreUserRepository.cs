@@ -30,7 +30,7 @@ public sealed class EfCoreUserRepository(AppEfCoreDbContext context, IServicePro
         else if (options.OrderByEntity != null)
             query = options.OrderByEntity(query);
 
-        if (options.ListLength.HasValue) query = query.Take((int)options.ListLength.Value);
+        if (options.MaxResultCount.HasValue) query = query.Take((int)options.MaxResultCount.Value);
 
         return await query.ProjectTo<TResult>(configuration).ToListAsync(cancellationToken: cancellationToken);
     }
