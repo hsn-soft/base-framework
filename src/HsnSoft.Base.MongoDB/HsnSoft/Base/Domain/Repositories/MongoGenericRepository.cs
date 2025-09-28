@@ -5,6 +5,8 @@ using System.Linq.Dynamic.Core;
 using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
+using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using HsnSoft.Base.Domain.Entities;
 using HsnSoft.Base.Domain.Models;
 using HsnSoft.Base.MongoDB;
@@ -78,11 +80,7 @@ public class MongoGenericRepository<TEntity, TKey> :
         Expression<Func<TEntity, TResult>> selector,
         CancellationToken cancellationToken = default)
     {
-        var results = GetQueryable().Where(predicate)
-            .Take(2)
-            .Select(selector)
-            .ToList();
-
+        var results = QueryGetSingleOrDefault(predicate).Select(selector).ToList();
         return Task.FromResult(results.Count switch
         {
             0 => null,
@@ -91,23 +89,59 @@ public class MongoGenericRepository<TEntity, TKey> :
         });
     }
 
+    public override Task<TResult> GetSingleOrDefaultAsync<TResult>(
+        Expression<Func<TEntity, bool>> predicate,
+        IConfigurationProvider configuration,
+        CancellationToken cancellationToken = default)
+    {
+        var results = QueryGetSingleOrDefault(predicate).ProjectTo<TResult>(configuration).ToList();
+        return Task.FromResult(results.Count switch
+        {
+            0 => null,
+            > 1 => throw new EntityDuplicateException(typeof(TEntity)),
+            _ => results[0]
+        });
+    }
+
+    private IQueryable<TEntity> QueryGetSingleOrDefault(Expression<Func<TEntity, bool>> predicate) => GetQueryable().Where(predicate).Take(2);
+
     public override Task<TResult> GetFirstOrDefaultAsync<TResult>(
         Expression<Func<TEntity, bool>> predicate,
         Expression<Func<TEntity, TResult>> selector,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderByEntity = null,
         CancellationToken cancellationToken = default)
+        => Task.FromResult(QueryGetFirstOrDefault(predicate, orderByEntity).Select(selector).FirstOrDefault());
+
+    public override Task<TResult> GetFirstOrDefaultAsync<TResult>(
+        Expression<Func<TEntity, bool>> predicate,
+        IConfigurationProvider configuration,
+        Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderByEntity = null,
+        CancellationToken cancellationToken = default)
+        => Task.FromResult(QueryGetFirstOrDefault(predicate, orderByEntity).ProjectTo<TResult>(configuration).FirstOrDefault());
+
+    private IQueryable<TEntity> QueryGetFirstOrDefault(
+        Expression<Func<TEntity, bool>> predicate,
+        Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderByEntity = null
+    )
     {
         var query = GetQueryable().Where(predicate);
-
         if (orderByEntity != null) query = orderByEntity(query);
-
-        return Task.FromResult(query.Select(selector).FirstOrDefault());
+        return query;
     }
 
     public override Task<List<TResult>> GetListAsync<TResult>(
         ListQueryOptions<TEntity> options,
         Expression<Func<TEntity, TResult>> selector,
         CancellationToken cancellationToken = default)
+        => Task.FromResult(QueryGetList(options).Select(selector).ToList());
+
+    public override Task<List<TResult>> GetListAsync<TResult>(
+        ListQueryOptions<TEntity> options,
+        IConfigurationProvider configuration,
+        CancellationToken cancellationToken = default)
+        => Task.FromResult(QueryGetList(options).ProjectTo<TResult>(configuration).ToList());
+
+    private IQueryable<TEntity> QueryGetList(ListQueryOptions<TEntity> options)
     {
         var query = GetQueryable();
 
@@ -118,16 +152,34 @@ public class MongoGenericRepository<TEntity, TKey> :
         else if (options.OrderByEntity != null)
             query = options.OrderByEntity(query);
 
-        if (options.MaxResultCount.HasValue)
-            query = query.Take((int)options.MaxResultCount.Value);
+        if (options.MaxResultCount.HasValue) query = query.Take(options.MaxResultCount.Value);
 
-        return Task.FromResult(query.Select(selector).ToList());
+        return query;
     }
 
     public override Task<PagedQueryResult<TResult>> GetPageListAsync<TResult>(
         PagedQueryOptions<TEntity> options,
         Expression<Func<TEntity, TResult>> selector,
         CancellationToken cancellationToken = default)
+    {
+        var result = QueryGetPageList(options);
+        var items = result.query.Select(selector).ToList();
+
+        return Task.FromResult(new PagedQueryResult<TResult> { Items = items, TotalCount = result.totalCount, ResultPageNumber = options.ResultPageNumber, MaxResultCount = options.MaxResultCount });
+    }
+
+    public override Task<PagedQueryResult<TResult>> GetPageListAsync<TResult>(
+        PagedQueryOptions<TEntity> options,
+        IConfigurationProvider configuration,
+        CancellationToken cancellationToken = default)
+    {
+        var result = QueryGetPageList(options);
+        var items = result.query.ProjectTo<TResult>(configuration).ToList();
+
+        return Task.FromResult(new PagedQueryResult<TResult> { Items = items, TotalCount = result.totalCount, ResultPageNumber = options.ResultPageNumber, MaxResultCount = options.MaxResultCount });
+    }
+
+    private (IQueryable<TEntity> query, long totalCount) QueryGetPageList(PagedQueryOptions<TEntity> options)
     {
         var query = GetQueryable();
 
@@ -140,13 +192,17 @@ public class MongoGenericRepository<TEntity, TKey> :
         else if (options.OrderByEntity != null)
             query = options.OrderByEntity(query);
 
-        query = query
-            .Skip((options.ResultPageNumber - 1) * options.MaxResultCount)
-            .Take(options.MaxResultCount);
+        if (options.ResultPageNumber > 1)
+        {
+            query = query.Skip((options.ResultPageNumber - 1) * options.MaxResultCount)
+                .Take(options.MaxResultCount);
+        }
+        else
+        {
+            query = query.Take(options.MaxResultCount);
+        }
 
-        var items = query.Select(selector).ToList();
-
-        return Task.FromResult(new PagedQueryResult<TResult> { Items = items, TotalCount = totalCount, ResultPageNumber = options.ResultPageNumber, MaxResultCount = options.MaxResultCount });
+        return (query, totalCount);
     }
 
     public override async Task<long> GetCountAsync(
