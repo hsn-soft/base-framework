@@ -5,6 +5,8 @@ using System.Linq.Dynamic.Core;
 using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
+using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using HsnSoft.Base.Domain.Entities;
 using HsnSoft.Base.Domain.Models;
 using Microsoft.EntityFrameworkCore;
@@ -25,12 +27,7 @@ public class EfCoreGenericRepository<TEntity, TKey>(IServiceProvider provider, D
         Expression<Func<TEntity, TResult>> selector,
         CancellationToken cancellationToken = default)
     {
-        var results = await GetDbSet()
-            .Where(predicate)
-            .Take(2)
-            .Select(selector)
-            .ToListAsync(cancellationToken);
-
+        var results = await QueryGetSingleOrDefault(predicate).Select(selector).ToListAsync(cancellationToken);
         return results.Count switch
         {
             0 => null,
@@ -39,22 +36,59 @@ public class EfCoreGenericRepository<TEntity, TKey>(IServiceProvider provider, D
         };
     }
 
+    public override async Task<TResult> GetSingleOrDefaultAsync<TResult>(
+        Expression<Func<TEntity, bool>> predicate,
+        IConfigurationProvider configuration,
+        CancellationToken cancellationToken = default)
+    {
+        var results = await QueryGetSingleOrDefault(predicate).ProjectTo<TResult>(configuration).ToListAsync(cancellationToken);
+        return results.Count switch
+        {
+            0 => null,
+            > 1 => throw new EntityDuplicateException(typeof(TEntity)),
+            _ => results[0]
+        };
+    }
+
+    private IQueryable<TEntity> QueryGetSingleOrDefault(Expression<Func<TEntity, bool>> predicate) => GetDbSet().Where(predicate).Take(2);
+
     public override async Task<TResult> GetFirstOrDefaultAsync<TResult>(
         Expression<Func<TEntity, bool>> predicate,
         Expression<Func<TEntity, TResult>> selector,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderByEntity = null,
         CancellationToken cancellationToken = default)
+        => await QueryGetFirstOrDefault(predicate, orderByEntity).Select(selector).FirstOrDefaultAsync(cancellationToken);
+
+    public override async Task<TResult> GetFirstOrDefaultAsync<TResult>(
+        Expression<Func<TEntity, bool>> predicate,
+        IConfigurationProvider configuration,
+        Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderByEntity = null,
+        CancellationToken cancellationToken = default)
+        => await QueryGetFirstOrDefault(predicate, orderByEntity).ProjectTo<TResult>(configuration).FirstOrDefaultAsync(cancellationToken);
+
+    private IQueryable<TEntity> QueryGetFirstOrDefault(
+        Expression<Func<TEntity, bool>> predicate,
+        Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderByEntity = null
+    )
     {
         IQueryable<TEntity> query = GetDbSet().Where(predicate);
         if (orderByEntity != null) query = orderByEntity(query);
-
-        return await query.Select(selector).FirstOrDefaultAsync(cancellationToken);
+        return query;
     }
 
     public override async Task<List<TResult>> GetListAsync<TResult>(
         ListQueryOptions<TEntity> options,
         Expression<Func<TEntity, TResult>> selector,
         CancellationToken cancellationToken = default)
+        => await QueryGetList(options).Select(selector).ToListAsync(cancellationToken);
+
+    public override async Task<List<TResult>> GetListAsync<TResult>(
+        ListQueryOptions<TEntity> options,
+        IConfigurationProvider configuration,
+        CancellationToken cancellationToken = default)
+        => await QueryGetList(options).ProjectTo<TResult>(configuration).ToListAsync(cancellationToken);
+
+    private IQueryable<TEntity> QueryGetList(ListQueryOptions<TEntity> options)
     {
         IQueryable<TEntity> query = GetDbSet();
 
@@ -68,13 +102,32 @@ public class EfCoreGenericRepository<TEntity, TKey>(IServiceProvider provider, D
 
         if (options.MaxResultCount.HasValue) query = query.Take(options.MaxResultCount.Value);
 
-        return await query.Select(selector).ToListAsync(cancellationToken);
+        return query;
     }
 
     public override async Task<PagedQueryResult<TResult>> GetPageListAsync<TResult>(
         PagedQueryOptions<TEntity> options,
         Expression<Func<TEntity, TResult>> selector,
         CancellationToken cancellationToken = default)
+    {
+        var result = await QueryGetPageListAsync(options, cancellationToken);
+        var items = await result.query.Select(selector).ToListAsync(cancellationToken);
+
+        return new PagedQueryResult<TResult> { Items = items, TotalCount = result.totalCount, ResultPageNumber = options.ResultPageNumber, MaxResultCount = options.MaxResultCount };
+    }
+
+    public override async Task<PagedQueryResult<TResult>> GetPageListAsync<TResult>(
+        PagedQueryOptions<TEntity> options,
+        IConfigurationProvider configuration,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await QueryGetPageListAsync(options, cancellationToken);
+        var items = await result.query.ProjectTo<TResult>(configuration).ToListAsync(cancellationToken);
+
+        return new PagedQueryResult<TResult> { Items = items, TotalCount = result.totalCount, ResultPageNumber = options.ResultPageNumber, MaxResultCount = options.MaxResultCount };
+    }
+
+    private async Task<(IQueryable<TEntity> query, long totalCount)> QueryGetPageListAsync(PagedQueryOptions<TEntity> options, CancellationToken cancellationToken = default)
     {
         IQueryable<TEntity> query = GetDbSet();
 
@@ -98,9 +151,7 @@ public class EfCoreGenericRepository<TEntity, TKey>(IServiceProvider provider, D
             query = query.Take(options.MaxResultCount);
         }
 
-        var items = await query.Select(selector).ToListAsync(cancellationToken);
-
-        return new PagedQueryResult<TResult> { Items = items, TotalCount = totalCount, ResultPageNumber = options.ResultPageNumber, MaxResultCount = options.MaxResultCount };
+        return (query, totalCount);
     }
 
     public override async Task<long> GetCountAsync(

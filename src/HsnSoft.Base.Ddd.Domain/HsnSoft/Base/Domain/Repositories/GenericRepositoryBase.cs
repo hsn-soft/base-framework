@@ -4,6 +4,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
+using AutoMapper;
 using HsnSoft.Base.Data;
 using HsnSoft.Base.Domain.Entities;
 using HsnSoft.Base.Domain.Models;
@@ -31,6 +32,12 @@ public abstract class GenericRepositoryBase<TEntity, TKey>(IServiceProvider prov
         CancellationToken cancellationToken = default) where TResult : class
         => GetSingleAsync(e => EqualityComparer<TKey>.Default.Equals(e.Id, id), selector, cancellationToken);
 
+    public virtual Task<TResult> GetByIdAsync<TResult>(
+        TKey id,
+        IConfigurationProvider configuration,
+        CancellationToken cancellationToken = default) where TResult : class
+        => GetSingleAsync<TResult>(e => EqualityComparer<TKey>.Default.Equals(e.Id, id), configuration, cancellationToken);
+
     public Task<TEntity> GetByIdOrDefaultAsync(TKey id, CancellationToken cancellationToken = default)
         => GetByIdOrDefaultAsync(id, s => s, cancellationToken);
 
@@ -39,6 +46,12 @@ public abstract class GenericRepositoryBase<TEntity, TKey>(IServiceProvider prov
         Expression<Func<TEntity, TResult>> selector,
         CancellationToken cancellationToken = default) where TResult : class
         => GetSingleOrDefaultAsync(e => EqualityComparer<TKey>.Default.Equals(e.Id, id), selector, cancellationToken);
+
+    public virtual Task<TResult> GetByIdOrDefaultAsync<TResult>(
+        TKey id,
+        IConfigurationProvider configuration,
+        CancellationToken cancellationToken = default) where TResult : class
+        => GetSingleOrDefaultAsync<TResult>(e => EqualityComparer<TKey>.Default.Equals(e.Id, id), configuration, cancellationToken);
 
     public Task<TEntity> GetSingleAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
         => GetSingleAsync(predicate, s => s, cancellationToken);
@@ -52,6 +65,15 @@ public abstract class GenericRepositoryBase<TEntity, TKey>(IServiceProvider prov
         return entity ?? throw new EntityNotFoundException(typeof(TEntity));
     }
 
+    public async Task<TResult> GetSingleAsync<TResult>(
+        Expression<Func<TEntity, bool>> predicate,
+        IConfigurationProvider configuration,
+        CancellationToken cancellationToken = default) where TResult : class
+    {
+        var entity = await GetSingleOrDefaultAsync<TResult>(predicate, configuration, cancellationToken);
+        return entity ?? throw new EntityNotFoundException(typeof(TEntity));
+    }
+
     public Task<TEntity> GetSingleOrDefaultAsync(
         Expression<Func<TEntity, bool>> predicate,
         CancellationToken cancellationToken = default)
@@ -60,6 +82,11 @@ public abstract class GenericRepositoryBase<TEntity, TKey>(IServiceProvider prov
     public abstract Task<TResult> GetSingleOrDefaultAsync<TResult>(
         Expression<Func<TEntity, bool>> predicate,
         Expression<Func<TEntity, TResult>> selector,
+        CancellationToken cancellationToken = default) where TResult : class;
+
+    public abstract Task<TResult> GetSingleOrDefaultAsync<TResult>(
+        Expression<Func<TEntity, bool>> predicate,
+        IConfigurationProvider configuration,
         CancellationToken cancellationToken = default) where TResult : class;
 
     public Task<TEntity> GetFirstOrDefaultAsync(
@@ -71,6 +98,12 @@ public abstract class GenericRepositoryBase<TEntity, TKey>(IServiceProvider prov
     public abstract Task<TResult> GetFirstOrDefaultAsync<TResult>(
         Expression<Func<TEntity, bool>> predicate,
         Expression<Func<TEntity, TResult>> selector,
+        Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderByEntity = null,
+        CancellationToken cancellationToken = default) where TResult : class;
+
+    public abstract Task<TResult> GetFirstOrDefaultAsync<TResult>(
+        Expression<Func<TEntity, bool>> predicate,
+        IConfigurationProvider configuration,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderByEntity = null,
         CancellationToken cancellationToken = default) where TResult : class;
 
@@ -88,6 +121,11 @@ public abstract class GenericRepositoryBase<TEntity, TKey>(IServiceProvider prov
         Expression<Func<TEntity, TResult>> selector,
         CancellationToken cancellationToken = default);
 
+    public abstract Task<List<TResult>> GetListAsync<TResult>(
+        ListQueryOptions<TEntity> options,
+        IConfigurationProvider configuration,
+        CancellationToken cancellationToken = default);
+
     public Task<PagedQueryResult<TEntity>> GetPageListAsync(
         PagedQueryOptions<TEntity> options,
         CancellationToken cancellationToken = default)
@@ -96,6 +134,11 @@ public abstract class GenericRepositoryBase<TEntity, TKey>(IServiceProvider prov
     public abstract Task<PagedQueryResult<TResult>> GetPageListAsync<TResult>(
         PagedQueryOptions<TEntity> options,
         Expression<Func<TEntity, TResult>> selector,
+        CancellationToken cancellationToken = default);
+
+    public abstract Task<PagedQueryResult<TResult>> GetPageListAsync<TResult>(
+        PagedQueryOptions<TEntity> options,
+        IConfigurationProvider configuration,
         CancellationToken cancellationToken = default);
 
     public abstract Task<long> GetCountAsync(

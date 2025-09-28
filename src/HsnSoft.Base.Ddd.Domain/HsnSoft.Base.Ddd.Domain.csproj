@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-    <Import Project="..\..\configureawait.props" />
-    <Import Project="..\..\common.props" />
+    <Import Project="..\..\configureawait.props"/>
+    <Import Project="..\..\common.props"/>
 
     <PropertyGroup>
         <TargetFramework>net9.0</TargetFramework>
@@ -11,18 +11,17 @@
         <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
         <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
         <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
-        <RootNamespace />
+        <RootNamespace/>
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\HsnSoft.Base.Auditing\HsnSoft.Base.Auditing.csproj" />
-        <ProjectReference Include="..\HsnSoft.Base.Data\HsnSoft.Base.Data.csproj" />
-        <ProjectReference Include="..\HsnSoft.Base.EventBus\HsnSoft.Base.EventBus.csproj" />
-        <ProjectReference Include="..\HsnSoft.Base.ExceptionHandling\HsnSoft.Base.ExceptionHandling.csproj" />
-        <ProjectReference Include="..\HsnSoft.Base.Guids\HsnSoft.Base.Guids.csproj" />
-        <ProjectReference Include="..\HsnSoft.Base.ObjectMapping\HsnSoft.Base.ObjectMapping.csproj" />
-        <ProjectReference Include="..\HsnSoft.Base.Timing\HsnSoft.Base.Timing.csproj" />
-        <ProjectReference Include="..\HsnSoft.Base.MultiTenancy\HsnSoft.Base.MultiTenancy.csproj" />
+        <ProjectReference Include="..\HsnSoft.Base.AutoMapper\HsnSoft.Base.AutoMapper.csproj"/>
+        <ProjectReference Include="..\HsnSoft.Base.Data\HsnSoft.Base.Data.csproj"/>
+        <ProjectReference Include="..\HsnSoft.Base.EventBus\HsnSoft.Base.EventBus.csproj"/>
+        <ProjectReference Include="..\HsnSoft.Base.ExceptionHandling\HsnSoft.Base.ExceptionHandling.csproj"/>
+        <ProjectReference Include="..\HsnSoft.Base.Guids\HsnSoft.Base.Guids.csproj"/>
+        <ProjectReference Include="..\HsnSoft.Base.Timing\HsnSoft.Base.Timing.csproj"/>
+        <ProjectReference Include="..\HsnSoft.Base.MultiTenancy\HsnSoft.Base.MultiTenancy.csproj"/>
     </ItemGroup>
 
 </Project>

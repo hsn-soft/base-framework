@@ -23,6 +23,12 @@ public interface IReadOnlyGenericRepository<TEntity, in TKey> : IRepository wher
         CancellationToken cancellationToken = default
     ) where TResult : class;
 
+    Task<TResult> GetByIdAsync<TResult>(
+        TKey id,
+        AutoMapper.IConfigurationProvider configuration,
+        CancellationToken cancellationToken = default
+    ) where TResult : class;
+
     [ItemCanBeNull]
     Task<TEntity> GetByIdOrDefaultAsync(
         TKey id,
@@ -33,6 +39,13 @@ public interface IReadOnlyGenericRepository<TEntity, in TKey> : IRepository wher
     Task<TResult> GetByIdOrDefaultAsync<TResult>(
         TKey id,
         Expression<Func<TEntity, TResult>> selector,
+        CancellationToken cancellationToken = default
+    ) where TResult : class;
+
+    [ItemCanBeNull]
+    Task<TResult> GetByIdOrDefaultAsync<TResult>(
+        TKey id,
+        AutoMapper.IConfigurationProvider configuration,
         CancellationToken cancellationToken = default
     ) where TResult : class;
 
@@ -47,6 +60,12 @@ public interface IReadOnlyGenericRepository<TEntity, in TKey> : IRepository wher
         CancellationToken cancellationToken = default
     ) where TResult : class;
 
+    Task<TResult> GetSingleAsync<TResult>(
+        Expression<Func<TEntity, bool>> predicate,
+        AutoMapper.IConfigurationProvider configuration,
+        CancellationToken cancellationToken = default
+    ) where TResult : class;
+
     [ItemCanBeNull]
     Task<TEntity> GetSingleOrDefaultAsync(
         Expression<Func<TEntity, bool>> predicate,
@@ -57,6 +76,13 @@ public interface IReadOnlyGenericRepository<TEntity, in TKey> : IRepository wher
     Task<TResult> GetSingleOrDefaultAsync<TResult>(
         Expression<Func<TEntity, bool>> predicate,
         Expression<Func<TEntity, TResult>> selector,
+        CancellationToken cancellationToken = default
+    ) where TResult : class;
+
+    [ItemCanBeNull]
+    Task<TResult> GetSingleOrDefaultAsync<TResult>(
+        Expression<Func<TEntity, bool>> predicate,
+        AutoMapper.IConfigurationProvider configuration,
         CancellationToken cancellationToken = default
     ) where TResult : class;
 
@@ -75,6 +101,14 @@ public interface IReadOnlyGenericRepository<TEntity, in TKey> : IRepository wher
         CancellationToken cancellationToken = default
     ) where TResult : class;
 
+    [ItemCanBeNull]
+    Task<TResult> GetFirstOrDefaultAsync<TResult>(
+        Expression<Func<TEntity, bool>> predicate,
+        AutoMapper.IConfigurationProvider configuration,
+        [CanBeNull] Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderByEntity = null,
+        CancellationToken cancellationToken = default
+    ) where TResult : class;
+
     Task<List<TEntity>> GetListAsync(
         ListQueryOptions<TEntity> options,
         CancellationToken cancellationToken = default
@@ -86,6 +120,11 @@ public interface IReadOnlyGenericRepository<TEntity, in TKey> : IRepository wher
         CancellationToken cancellationToken = default
     );
 
+    Task<List<TResult>> GetListAsync<TResult>(
+        ListQueryOptions<TEntity> options,
+        AutoMapper.IConfigurationProvider configuration,
+        CancellationToken cancellationToken = default
+    );
 
     Task<PagedQueryResult<TEntity>> GetPageListAsync(
         PagedQueryOptions<TEntity> options,
@@ -95,6 +134,12 @@ public interface IReadOnlyGenericRepository<TEntity, in TKey> : IRepository wher
     Task<PagedQueryResult<TResult>> GetPageListAsync<TResult>(
         PagedQueryOptions<TEntity> options,
         Expression<Func<TEntity, TResult>> selector,
+        CancellationToken cancellationToken = default
+    );
+
+    Task<PagedQueryResult<TResult>> GetPageListAsync<TResult>(
+        PagedQueryOptions<TEntity> options,
+        AutoMapper.IConfigurationProvider configuration,
         CancellationToken cancellationToken = default
     );
 
