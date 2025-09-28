@@ -110,14 +110,14 @@ public class MongoGenericRepository<TEntity, TKey> :
         Expression<Func<TEntity, TResult>> selector,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderByEntity = null,
         CancellationToken cancellationToken = default)
-        => Task.FromResult(QueryGetFirstOrDefault(predicate).Select(selector).FirstOrDefault());
+        => Task.FromResult(QueryGetFirstOrDefault(predicate, orderByEntity).Select(selector).FirstOrDefault());
 
     public override Task<TResult> GetFirstOrDefaultAsync<TResult>(
         Expression<Func<TEntity, bool>> predicate,
         IConfigurationProvider configuration,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderByEntity = null,
         CancellationToken cancellationToken = default)
-        => Task.FromResult(QueryGetFirstOrDefault(predicate).ProjectTo<TResult>(configuration).FirstOrDefault());
+        => Task.FromResult(QueryGetFirstOrDefault(predicate, orderByEntity).ProjectTo<TResult>(configuration).FirstOrDefault());
 
     private IQueryable<TEntity> QueryGetFirstOrDefault(
         Expression<Func<TEntity, bool>> predicate,
