@@ -30,13 +30,13 @@ public abstract class GenericRepositoryBase<TEntity, TKey>(IServiceProvider prov
         TKey id,
         Expression<Func<TEntity, TResult>> selector,
         CancellationToken cancellationToken = default) where TResult : class
-        => GetSingleAsync(e => EqualityComparer<TKey>.Default.Equals(e.Id, id), selector, cancellationToken);
+        => GetSingleAsync(e => Equals(e.Id, id), selector, cancellationToken);
 
     public virtual Task<TResult> GetByIdAsync<TResult>(
         TKey id,
         IConfigurationProvider configuration,
         CancellationToken cancellationToken = default) where TResult : class
-        => GetSingleAsync<TResult>(e => EqualityComparer<TKey>.Default.Equals(e.Id, id), configuration, cancellationToken);
+        => GetSingleAsync<TResult>(e => Equals(e.Id, id), configuration, cancellationToken);
 
     public Task<TEntity> GetByIdOrDefaultAsync(TKey id, CancellationToken cancellationToken = default)
         => GetByIdOrDefaultAsync(id, s => s, cancellationToken);
@@ -45,13 +45,13 @@ public abstract class GenericRepositoryBase<TEntity, TKey>(IServiceProvider prov
         TKey id,
         Expression<Func<TEntity, TResult>> selector,
         CancellationToken cancellationToken = default) where TResult : class
-        => GetSingleOrDefaultAsync(e => EqualityComparer<TKey>.Default.Equals(e.Id, id), selector, cancellationToken);
+        => GetSingleOrDefaultAsync(e => Equals(e.Id, id), selector, cancellationToken);
 
     public virtual Task<TResult> GetByIdOrDefaultAsync<TResult>(
         TKey id,
         IConfigurationProvider configuration,
         CancellationToken cancellationToken = default) where TResult : class
-        => GetSingleOrDefaultAsync<TResult>(e => EqualityComparer<TKey>.Default.Equals(e.Id, id), configuration, cancellationToken);
+        => GetSingleOrDefaultAsync<TResult>(e => Equals(e.Id, id), configuration, cancellationToken);
 
     public Task<TEntity> GetSingleAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
         => GetSingleAsync(predicate, s => s, cancellationToken);

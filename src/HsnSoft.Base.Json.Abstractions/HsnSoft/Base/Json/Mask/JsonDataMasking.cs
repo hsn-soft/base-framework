@@ -164,7 +164,7 @@ public static class JsonDataMasking
     };
 
     private static bool AreFirstAndLastParametersInValidRange(int propertySize, SensitiveDataAttribute attribute) =>
-        attribute.ShowFirst <= propertySize && attribute.ShowLast <= propertySize && (attribute.ShowFirst + attribute.ShowLast) <= propertySize;
+        attribute.ShowFirst <= propertySize && attribute.ShowLast <= propertySize && attribute.ShowFirst + attribute.ShowLast <= propertySize;
 
     private static bool IsClassReferenceType(Type type)
     {

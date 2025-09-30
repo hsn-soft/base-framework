@@ -165,11 +165,11 @@ public class RedisRepository<T> : IRedisRepository<T> where T : class, new()
     }
 
     public async Task<T> GetIncrementalDataAsync(string dataKey, int index)
-        => (index >= 1) ? await GetDataAsync($"{dataKey}:{index}") : null;
+        => index >= 1 ? await GetDataAsync($"{dataKey}:{index}") : null;
 
     public async Task<bool> SetIncrementalDataAsync(string dataKey, int index, T dataValue, TimeSpan? expiry = null)
-        => (index >= 1) && await SetDataAsync($"{dataKey}:{index}", dataValue, expiry);
+        => index >= 1 && await SetDataAsync($"{dataKey}:{index}", dataValue, expiry);
 
     public async Task<bool> RemoveIncrementalDataAsync(string dataKey, int index)
-        => (index >= 1) && await RemoveDataAsync($"{dataKey}:{index}");
+        => index >= 1 && await RemoveDataAsync($"{dataKey}:{index}");
 }

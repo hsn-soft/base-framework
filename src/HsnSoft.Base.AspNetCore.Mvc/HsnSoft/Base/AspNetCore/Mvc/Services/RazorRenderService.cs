@@ -74,7 +74,7 @@ public class RazorRenderService : IRazorRenderService
                 sw,
                 new HtmlHelperOptions()
             );
-            var page = (result.Page);
+            var page = result.Page;
             page.ViewContext = viewContext;
             _activator.Activate(page, viewContext);
             await page.ExecuteAsync();
