@@ -29,7 +29,11 @@ public static class MongoDbServiceCollectionExtensions
         RegisterClassMaps();
 
         // DbContext
-        services.AddSingleton<AppMongoDbContext>();
+        services.AddSingleton(sp =>
+        {
+            var configuration = sp.GetRequiredService<IConfiguration>();
+            return new AppMongoDbContext(configuration, sp);
+        });
 
         // Repositories
         services.AddScoped(typeof(IMongoGenericRepository<,>), typeof(MongoGenericRepository<,>));

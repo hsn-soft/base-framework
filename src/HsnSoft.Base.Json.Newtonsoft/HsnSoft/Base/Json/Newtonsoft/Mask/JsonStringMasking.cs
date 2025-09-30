@@ -125,8 +125,8 @@ public static class JsonStringMasking
                 var value = prop.Value.ToString();
                 try
                 {
-                    var valueMasked = (maskFunc != null) ? maskFunc(value) : mask;
-                    prop.Value = (valueMasked != value) ? valueMasked : mask;
+                    var valueMasked = maskFunc != null ? maskFunc(value) : mask;
+                    prop.Value = valueMasked != value ? valueMasked : mask;
                 }
                 catch (Exception ex)
                 {
