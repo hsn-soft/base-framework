@@ -24,7 +24,7 @@ public abstract class BaseMongoDbContext : MongoDbContext
         CommandTrackerEvent += CommandTrackerEvent_Tracked;
     }
 
-    protected BaseMongoDbContext([NotNull] string connectionString, [CanBeNull] IServiceProvider provider = null) : this(CreateClientSettings(connectionString), MongoUrl.Create(connectionString).DatabaseName, provider)
+    protected BaseMongoDbContext([NotNull] string connectionString, [CanBeNull] IServiceProvider provider = null) : this(CreateClientSettings(connectionString, provider: provider), MongoUrl.Create(connectionString).DatabaseName, provider)
     {
     }
 
@@ -42,19 +42,37 @@ public abstract class BaseMongoDbContext : MongoDbContext
         clientSettings.WaitQueueTimeout = TimeSpan.FromSeconds(queryExecutionMaxSeconds);
 
 
-        var loggerFactory = provider?.GetService<ILoggerFactory>() ?? LoggerFactory.Create(builder =>
+        bool isDefaultLoggerActive = false;
+        var loggerFactory = provider?.GetService<ILoggerFactory>();
+        if (loggerFactory == null)
         {
-            builder.AddConsole();
-            builder.SetMinimumLevel(LogLevel.Debug);
-        });
+            loggerFactory = LoggerFactory.Create(builder =>
+            {
+                builder.AddConsole();
+                builder.SetMinimumLevel(LogLevel.Information);
+            });
+            isDefaultLoggerActive = true;
+        }
 
         clientSettings.LoggingSettings = new LoggingSettings(loggerFactory);
 
         var logger = loggerFactory.CreateLogger<MongoDbContext>();
         clientSettings.ClusterConfigurator = cb =>
         {
-            cb.Subscribe<CommandStartedEvent>(e => { logger.LogDebug("Mongo Command Started: {CommandName} - {Command}", e.CommandName, e.Command.ToJson()); });
-            cb.Subscribe<CommandSucceededEvent>(e => { logger.LogDebug("Mongo Command Succeeded: {CommandName} - Duration: {Duration}ms", e.CommandName, e.Duration.TotalMilliseconds); });
+            cb.Subscribe<CommandStartedEvent>(e =>
+            {
+                if (isDefaultLoggerActive)
+                    logger.LogInformation("Mongo Command Started: {CommandName} - {Command}", e.CommandName, e.Command.ToJson());
+                else
+                    logger.LogDebug("Mongo Command Started: {CommandName} - {Command}", e.CommandName, e.Command.ToJson());
+            });
+            cb.Subscribe<CommandSucceededEvent>(e =>
+            {
+                if (isDefaultLoggerActive)
+                    logger.LogInformation("Mongo Command Succeeded: {CommandName} - Duration: {Duration}ms", e.CommandName, e.Duration.TotalMilliseconds);
+                else
+                    logger.LogDebug("Mongo Command Succeeded: {CommandName} - Duration: {Duration}ms", e.CommandName, e.Duration.TotalMilliseconds);
+            });
             cb.Subscribe<CommandFailedEvent>(e => { logger.LogError(e.Failure, "Mongo Command Failed: {CommandName}", e.CommandName); });
         };
 

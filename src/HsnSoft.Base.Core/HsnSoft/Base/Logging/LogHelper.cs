@@ -19,7 +19,7 @@ public static class LogHelper
 
         if (exception == null) return result;
 
-        var stackFrame = (new StackTrace(exception, true)).GetFrame(0);
+        var stackFrame = new StackTrace(exception, true).GetFrame(0);
         result.StackTrace = new StackTraceLogDetail
         {
             StackFileName = stackFrame?.GetFileName(),

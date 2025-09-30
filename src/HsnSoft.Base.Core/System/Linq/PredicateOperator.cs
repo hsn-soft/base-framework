@@ -126,7 +126,7 @@ public class ExpressionStarter<T>
 
     /// <summary>The actual Predicate. It can only be set by calling Start.</summary>
     private Expression<Func<T, bool>> Predicate =>
-        (IsStarted || !UseDefaultExpression) ? _predicate : DefaultExpression;
+        IsStarted || !UseDefaultExpression ? _predicate : DefaultExpression;
 
     private Expression<Func<T, bool>> _predicate;
 
@@ -154,13 +154,13 @@ public class ExpressionStarter<T>
     /// <summary>Or</summary>
     public Expression<Func<T, bool>> Or([NotNull] Expression<Func<T, bool>> expr2)
     {
-        return (IsStarted) ? _predicate = Predicate.Or(expr2) : Start(expr2);
+        return IsStarted ? _predicate = Predicate.Or(expr2) : Start(expr2);
     }
 
     /// <summary>And</summary>
     public Expression<Func<T, bool>> And([NotNull] Expression<Func<T, bool>> expr2)
     {
-        return (IsStarted) ? _predicate = Predicate.And(expr2) : Start(expr2);
+        return IsStarted ? _predicate = Predicate.And(expr2) : Start(expr2);
     }
 
     /// <summary> Show predicate string </summary>
@@ -187,7 +187,7 @@ public class ExpressionStarter<T>
     public static implicit operator Func<T, bool>(ExpressionStarter<T> right)
     {
         return right == null ? null :
-            (right.IsStarted || right.UseDefaultExpression) ? right.Predicate.Compile() : null;
+            right.IsStarted || right.UseDefaultExpression ? right.Predicate.Compile() : null;
     }
 
     /// <summary>
