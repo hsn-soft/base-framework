@@ -5,27 +5,20 @@ using HsnSoft.Base.Domain.Repositories;
 using HsnSoft.Base.Reflection;
 using HsnSoft.Base.Test.Unit.Fixtures;
 using HsnSoft.Base.Test.Unit.Models;
-using Microsoft.EntityFrameworkCore;
 
 namespace HsnSoft.Base.Test.Unit.Repositories;
 
-public class EfCoreGenericRepositoryTests : IClassFixture<PostgresFixture>
+[Trait("category", "integration")]
+public class EfCoreGenericRepositoryTests(PostgresFixture fixture) : IClassFixture<PostgresFixture>
 {
-    private readonly PostgresFixture _fixture;
-
-    public EfCoreGenericRepositoryTests(PostgresFixture fixture)
-    {
-        _fixture = fixture;
-    }
-
     #region GetByIdAsync
 
     [Fact]
     public async Task GetByIdAsync_ShouldReturn_WhenEntityExists()
     {
         // Arrange
-        var context = _fixture.Context;
-        await _fixture.CleanDatabase();
+        var context = fixture.Context;
+        await fixture.CleanDatabase();
         var expected = new TestEntity(Guid.NewGuid(), "Tester", 61);
         await context.TestEntities.AddAsync(expected);
         await context.SaveChangesAsync();
@@ -43,8 +36,8 @@ public class EfCoreGenericRepositoryTests : IClassFixture<PostgresFixture>
     public async Task GetByIdAsync_ShouldThrow_WhenEntityNotFound()
     {
         // Arrange
-        var context = _fixture.Context;
-        await _fixture.CleanDatabase();
+        var context = fixture.Context;
+        await fixture.CleanDatabase();
         var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Throw Act & Assert
@@ -62,8 +55,8 @@ public class EfCoreGenericRepositoryTests : IClassFixture<PostgresFixture>
     public async Task GetByIdOrDefaultAsync_ShouldReturn_WhenEntityExists()
     {
         // Arrange
-        var context = _fixture.Context;
-        await _fixture.CleanDatabase();
+        var context = fixture.Context;
+        await fixture.CleanDatabase();
         var expected = new TestEntity(Guid.NewGuid(), "Tester", 61);
         await context.TestEntities.AddAsync(expected);
         await context.SaveChangesAsync();
@@ -81,8 +74,8 @@ public class EfCoreGenericRepositoryTests : IClassFixture<PostgresFixture>
     public async Task GetByIdOrDefaultAsync_ShouldReturnNull_WhenNoEntityExists()
     {
         // Arrange
-        var context = _fixture.Context;
-        await _fixture.CleanDatabase();
+        var context = fixture.Context;
+        await fixture.CleanDatabase();
         var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
@@ -100,8 +93,8 @@ public class EfCoreGenericRepositoryTests : IClassFixture<PostgresFixture>
     public async Task GetSingleAsync_ShouldReturn_WhenEntityExists()
     {
         // Arrange
-        var context = _fixture.Context;
-        await _fixture.CleanDatabase();
+        var context = fixture.Context;
+        await fixture.CleanDatabase();
         var expected = new TestEntity(Guid.NewGuid(), "Tester", 61);
         await context.TestEntities.AddAsync(expected);
         await context.SaveChangesAsync();
@@ -131,8 +124,8 @@ public class EfCoreGenericRepositoryTests : IClassFixture<PostgresFixture>
     public async Task GetSingleAsync_ShouldThrow_WhenEntityNotFound()
     {
         // Arrange
-        var context = _fixture.Context;
-        await _fixture.CleanDatabase();
+        var context = fixture.Context;
+        await fixture.CleanDatabase();
         var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Throw Act & Assert
@@ -146,8 +139,8 @@ public class EfCoreGenericRepositoryTests : IClassFixture<PostgresFixture>
     public async Task GetSingleAsync_ShouldThrow_WhenEntityDuplicate()
     {
         // Arrange
-        var context = _fixture.Context;
-        await _fixture.CleanDatabase();
+        var context = fixture.Context;
+        await fixture.CleanDatabase();
         await context.TestEntities.AddRangeAsync(new TestEntity(Guid.NewGuid(), "Tester", 61), new TestEntity(Guid.NewGuid(), "Tester", 61));
         await context.SaveChangesAsync();
         var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
@@ -167,8 +160,8 @@ public class EfCoreGenericRepositoryTests : IClassFixture<PostgresFixture>
     public async Task GetSingleOrDefaultAsync_ShouldReturn_WhenEntityExists()
     {
         // Arrange
-        var context = _fixture.Context;
-        await _fixture.CleanDatabase();
+        var context = fixture.Context;
+        await fixture.CleanDatabase();
         var expected = new TestEntity(Guid.NewGuid(), "Tester", 61);
         await context.TestEntities.AddAsync(expected);
         await context.SaveChangesAsync();
@@ -198,8 +191,8 @@ public class EfCoreGenericRepositoryTests : IClassFixture<PostgresFixture>
     public async Task GetSingleOrDefaultAsync_ShouldReturnNull_WhenNoEntityExists()
     {
         // Arrange
-        var context = _fixture.Context;
-        await _fixture.CleanDatabase();
+        var context = fixture.Context;
+        await fixture.CleanDatabase();
         var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
@@ -213,8 +206,8 @@ public class EfCoreGenericRepositoryTests : IClassFixture<PostgresFixture>
     public async Task GetSingleOrDefaultAsync_ShouldThrow_WhenEntityDuplicate()
     {
         // Arrange
-        var context = _fixture.Context;
-        await _fixture.CleanDatabase();
+        var context = fixture.Context;
+        await fixture.CleanDatabase();
         await context.TestEntities.AddRangeAsync(new TestEntity(Guid.NewGuid(), "Tester", 61), new TestEntity(Guid.NewGuid(), "Tester", 61));
         await context.SaveChangesAsync();
         var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
@@ -234,8 +227,8 @@ public class EfCoreGenericRepositoryTests : IClassFixture<PostgresFixture>
     public async Task GetFirstOrDefaultAsync_ShouldReturnOrderFirst_WhenEntityDuplicateExists()
     {
         // Arrange
-        var context = _fixture.Context;
-        await _fixture.CleanDatabase();
+        var context = fixture.Context;
+        await fixture.CleanDatabase();
         var expected = new TestEntity(Guid.NewGuid(), "Tester", 61);
         await context.TestEntities.AddRangeAsync(new TestEntity(Guid.NewGuid(), "Tester", 18), expected);
         await context.SaveChangesAsync();
@@ -271,8 +264,8 @@ public class EfCoreGenericRepositoryTests : IClassFixture<PostgresFixture>
     public async Task GetFirstOrDefaultAsync_ShouldReturnNull_WhenNoEntityExists()
     {
         // Arrange
-        var context = _fixture.Context;
-        await _fixture.CleanDatabase();
+        var context = fixture.Context;
+        await fixture.CleanDatabase();
         var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
@@ -290,8 +283,8 @@ public class EfCoreGenericRepositoryTests : IClassFixture<PostgresFixture>
     public async Task GetListAsync_ShouldReturnEmptyList_WhenNoEntityExists()
     {
         // Arrange
-        var context = _fixture.Context;
-        await _fixture.CleanDatabase();
+        var context = fixture.Context;
+        await fixture.CleanDatabase();
         var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
@@ -306,8 +299,8 @@ public class EfCoreGenericRepositoryTests : IClassFixture<PostgresFixture>
     public async Task GetListAsync_ShouldReturnList_WhenEntityExists()
     {
         // Arrange
-        var context = _fixture.Context;
-        await _fixture.CleanDatabase();
+        var context = fixture.Context;
+        await fixture.CleanDatabase();
         var expectedList = new List<TestEntity> { new(Guid.NewGuid(), "TesterA", 11), new(Guid.NewGuid(), "TesterA", 12) };
         await context.TestEntities.AddRangeAsync(expectedList);
         await context.TestEntities.AddRangeAsync(new List<TestEntity> { new(Guid.NewGuid(), "TesterB", 21), new(Guid.NewGuid(), "TesterC", 22), new(Guid.NewGuid(), "TesterD", 23) });
@@ -392,8 +385,8 @@ public class EfCoreGenericRepositoryTests : IClassFixture<PostgresFixture>
     public async Task GetPageListAsync_ShouldReturnEmptyList_WhenNoEntityExists()
     {
         // Arrange
-        var context = _fixture.Context;
-        await _fixture.CleanDatabase();
+        var context = fixture.Context;
+        await fixture.CleanDatabase();
         var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
@@ -411,8 +404,8 @@ public class EfCoreGenericRepositoryTests : IClassFixture<PostgresFixture>
     public async Task GetPageListAsync_ShouldReturnList_WhenEntityExists()
     {
         // Arrange
-        var context = _fixture.Context;
-        await _fixture.CleanDatabase();
+        var context = fixture.Context;
+        await fixture.CleanDatabase();
         var expectedList = new List<TestEntity> { new(Guid.NewGuid(), "TesterA", 11), new(Guid.NewGuid(), "TesterA", 12) };
         await context.TestEntities.AddRangeAsync(expectedList);
         await context.TestEntities.AddRangeAsync(new List<TestEntity> { new(Guid.NewGuid(), "TesterB", 21), new(Guid.NewGuid(), "TesterC", 22), new(Guid.NewGuid(), "TesterD", 23) });
@@ -521,8 +514,8 @@ public class EfCoreGenericRepositoryTests : IClassFixture<PostgresFixture>
     public async Task GetCountAsync_ShouldReturnZero_WhenNoEntityExists()
     {
         // Arrange
-        var context = _fixture.Context;
-        await _fixture.CleanDatabase();
+        var context = fixture.Context;
+        await fixture.CleanDatabase();
         var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
@@ -537,8 +530,8 @@ public class EfCoreGenericRepositoryTests : IClassFixture<PostgresFixture>
     public async Task GetCountAsync_ShouldReturnCount_WhenEntityExists()
     {
         // Arrange
-        var context = _fixture.Context;
-        await _fixture.CleanDatabase();
+        var context = fixture.Context;
+        await fixture.CleanDatabase();
         var expectedList = new List<TestEntity> { new(Guid.NewGuid(), "TesterA", 34), new(Guid.NewGuid(), "TesterA", 61) };
         await context.TestEntities.AddRangeAsync(expectedList);
         await context.TestEntities.AddRangeAsync(new List<TestEntity> { new(Guid.NewGuid(), "TesterB", 1), new(Guid.NewGuid(), "TesterC", 2), new(Guid.NewGuid(), "TesterD", 3) });
@@ -580,8 +573,8 @@ public class EfCoreGenericRepositoryTests : IClassFixture<PostgresFixture>
     public async Task ExistsAsync_ShouldReturnFalse_WhenNoEntityExists()
     {
         // Arrange
-        var context = _fixture.Context;
-        await _fixture.CleanDatabase();
+        var context = fixture.Context;
+        await fixture.CleanDatabase();
         var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
@@ -596,8 +589,8 @@ public class EfCoreGenericRepositoryTests : IClassFixture<PostgresFixture>
     public async Task ExistsAsync_ShouldReturnCount_WhenEntityExists()
     {
         // Arrange
-        var context = _fixture.Context;
-        await _fixture.CleanDatabase();
+        var context = fixture.Context;
+        await fixture.CleanDatabase();
         await context.TestEntities.AddAsync(new TestEntity(Guid.NewGuid(), "TesterA", 34));
         await context.SaveChangesAsync();
         var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
@@ -630,8 +623,8 @@ public class EfCoreGenericRepositoryTests : IClassFixture<PostgresFixture>
     public async Task InsertAsync_ShouldReturnCount_WhenInserted()
     {
         // Arrange
-        var context = _fixture.Context;
-        await _fixture.CleanDatabase();
+        var context = fixture.Context;
+        await fixture.CleanDatabase();
         var expectedEntity = new TestEntity(Guid.NewGuid(), "TesterA", 10);
         var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
@@ -654,8 +647,8 @@ public class EfCoreGenericRepositoryTests : IClassFixture<PostgresFixture>
     public async Task InsertManyAsync_ShouldReturnCount_WhenInserted()
     {
         // Arrange
-        var context = _fixture.Context;
-        await _fixture.CleanDatabase();
+        var context = fixture.Context;
+        await fixture.CleanDatabase();
         var expectedList = new List<TestEntity> { new(Guid.NewGuid(), "TesterA", 11), new(Guid.NewGuid(), "TesterA", 12) };
         var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
@@ -678,8 +671,8 @@ public class EfCoreGenericRepositoryTests : IClassFixture<PostgresFixture>
     public async Task UpdateByIdAsync_ShouldReturnUpdated_WhenEntityExists()
     {
         // Arrange
-        var context = _fixture.Context;
-        await _fixture.CleanDatabase();
+        var context = fixture.Context;
+        await fixture.CleanDatabase();
         var placedEntity = new TestEntity(Guid.NewGuid(), "TesterA", 10);
         await context.TestEntities.AddAsync(placedEntity);
         await context.SaveChangesAsync();
@@ -697,8 +690,8 @@ public class EfCoreGenericRepositoryTests : IClassFixture<PostgresFixture>
     public async Task UpdateByIdAsync_ShouldThrow_WhenEntityNotFound()
     {
         // Arrange
-        var context = _fixture.Context;
-        await _fixture.CleanDatabase();
+        var context = fixture.Context;
+        await fixture.CleanDatabase();
         var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Throw Act & Assert
@@ -716,8 +709,8 @@ public class EfCoreGenericRepositoryTests : IClassFixture<PostgresFixture>
     public async Task UpdateAsync_ShouldReturnCount_WhenEntityExists()
     {
         // Arrange
-        var context = _fixture.Context;
-        await _fixture.CleanDatabase();
+        var context = fixture.Context;
+        await fixture.CleanDatabase();
         var placedEntity = new TestEntity(Guid.NewGuid(), "TesterA", 10);
         await context.TestEntities.AddAsync(placedEntity);
         await context.SaveChangesAsync();
@@ -736,8 +729,8 @@ public class EfCoreGenericRepositoryTests : IClassFixture<PostgresFixture>
     public async Task UpdateAsync_ShouldThrow_WhenEntityNotFound()
     {
         // Arrange
-        var context = _fixture.Context;
-        await _fixture.CleanDatabase();
+        var context = fixture.Context;
+        await fixture.CleanDatabase();
         var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Throw Act & Assert
@@ -755,8 +748,8 @@ public class EfCoreGenericRepositoryTests : IClassFixture<PostgresFixture>
     public async Task UpdateManyAsync_ShouldReturnCount_WhenEntitiesExists()
     {
         // Arrange
-        var context = _fixture.Context;
-        await _fixture.CleanDatabase();
+        var context = fixture.Context;
+        await fixture.CleanDatabase();
         var placedEntities = new List<TestEntity> { new(Guid.NewGuid(), "TesterA", 10), new(Guid.NewGuid(), "TesterA", 11) };
         await context.TestEntities.AddRangeAsync(placedEntities);
         await context.SaveChangesAsync();
@@ -776,8 +769,8 @@ public class EfCoreGenericRepositoryTests : IClassFixture<PostgresFixture>
     public async Task UpdateManyAsync_ShouldThrow_WhenEntityNotFound()
     {
         // Arrange
-        var context = _fixture.Context;
-        await _fixture.CleanDatabase();
+        var context = fixture.Context;
+        await fixture.CleanDatabase();
         var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Throw Act & Assert
@@ -795,8 +788,8 @@ public class EfCoreGenericRepositoryTests : IClassFixture<PostgresFixture>
     public async Task DeleteByIdAsync_ShouldReturnCount_WhenEntityExists()
     {
         // Arrange
-        var context = _fixture.Context;
-        await _fixture.CleanDatabase();
+        var context = fixture.Context;
+        await fixture.CleanDatabase();
         var placedEntity = new TestEntity(Guid.NewGuid(), "TesterA", 10);
         await context.TestEntities.AddAsync(placedEntity);
         await context.SaveChangesAsync();
@@ -815,8 +808,8 @@ public class EfCoreGenericRepositoryTests : IClassFixture<PostgresFixture>
     public async Task DeleteByIdAsync_ShouldThrow_WhenEntityNotFound()
     {
         // Arrange
-        var context = _fixture.Context;
-        await _fixture.CleanDatabase();
+        var context = fixture.Context;
+        await fixture.CleanDatabase();
         var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Throw Act & Assert
@@ -834,8 +827,8 @@ public class EfCoreGenericRepositoryTests : IClassFixture<PostgresFixture>
     public async Task DeleteByIdListAsync_ShouldReturnCount_WhenEntitiesExists()
     {
         // Arrange
-        var context = _fixture.Context;
-        await _fixture.CleanDatabase();
+        var context = fixture.Context;
+        await fixture.CleanDatabase();
         var placedEntities = new List<TestEntity> { new(Guid.NewGuid(), "TesterA", 10), new(Guid.NewGuid(), "TesterA", 11) };
         await context.TestEntities.AddRangeAsync(placedEntities);
         await context.SaveChangesAsync();
@@ -854,8 +847,8 @@ public class EfCoreGenericRepositoryTests : IClassFixture<PostgresFixture>
     public async Task DeleteByIdListAsync_ShouldThrow_WhenEntityNotFound()
     {
         // Arrange
-        var context = _fixture.Context;
-        await _fixture.CleanDatabase();
+        var context = fixture.Context;
+        await fixture.CleanDatabase();
         var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Throw Act & Assert
@@ -873,8 +866,8 @@ public class EfCoreGenericRepositoryTests : IClassFixture<PostgresFixture>
     public async Task DeleteAsync_ShouldReturnCount_WhenEntityExists()
     {
         // Arrange
-        var context = _fixture.Context;
-        await _fixture.CleanDatabase();
+        var context = fixture.Context;
+        await fixture.CleanDatabase();
         var placedEntity = new TestEntity(Guid.NewGuid(), "TesterA", 10);
         await context.TestEntities.AddAsync(placedEntity);
         await context.SaveChangesAsync();
@@ -893,8 +886,8 @@ public class EfCoreGenericRepositoryTests : IClassFixture<PostgresFixture>
     public async Task DeleteAsync_ShouldThrow_WhenEntityNotFound()
     {
         // Arrange
-        var context = _fixture.Context;
-        await _fixture.CleanDatabase();
+        var context = fixture.Context;
+        await fixture.CleanDatabase();
         var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Throw Act & Assert
@@ -912,8 +905,8 @@ public class EfCoreGenericRepositoryTests : IClassFixture<PostgresFixture>
     public async Task DeleteManyAsync_ShouldReturnCount_WhenEntitiesExists()
     {
         // Arrange
-        var context = _fixture.Context;
-        await _fixture.CleanDatabase();
+        var context = fixture.Context;
+        await fixture.CleanDatabase();
         var placedEntities = new List<TestEntity> { new(Guid.NewGuid(), "TesterA", 10), new(Guid.NewGuid(), "TesterA", 11) };
         await context.TestEntities.AddRangeAsync(placedEntities);
         await context.SaveChangesAsync();
@@ -959,8 +952,8 @@ public class EfCoreGenericRepositoryTests : IClassFixture<PostgresFixture>
     public async Task DeleteManyAsync_ShouldThrow_WhenEntityNotFound()
     {
         // Arrange
-        var context = _fixture.Context;
-        await _fixture.CleanDatabase();
+        var context = fixture.Context;
+        await fixture.CleanDatabase();
         var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Throw Act & Assert
