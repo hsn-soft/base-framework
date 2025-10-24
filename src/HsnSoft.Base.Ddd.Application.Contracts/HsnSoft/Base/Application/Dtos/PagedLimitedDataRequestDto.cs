@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations;
 namespace HsnSoft.Base.Application.Dtos;
 
 [Serializable]
-public class PagedLimitedResultRequestDto : ILimitedResultRequest, IValidatableObject
+public class PagedLimitedDataRequestDto : ILimitedDataRequest, IValidatableObject
 {
     public static int DefaultMaxResultCount { get; set; } = 10;
 
@@ -18,7 +18,7 @@ public class PagedLimitedResultRequestDto : ILimitedResultRequest, IValidatableO
     {
         if (MaxResultCount > MaxMaxResultCount)
         {
-            yield return new ValidationResult("MaxResultCountExceededExceptionMessage", new[] { nameof(MaxResultCount) });
+            yield return new ValidationResult("MaxResultCountExceededExceptionMessage", [nameof(MaxResultCount)]);
         }
     }
 }

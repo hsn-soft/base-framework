@@ -1,6 +1,6 @@
 namespace HsnSoft.Base.Application.Dtos;
 
-public interface ISearchResultRequest
+public interface ISearchDataRequest
 {
     string SearchText { get; set; }
 }

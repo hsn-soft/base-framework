@@ -4,7 +4,7 @@ using HsnSoft.Base.Application.Dtos;
 namespace HsnSoft.Base.Application.Services;
 
 public interface IReadOnlyAppService<TEntityDto, in TKey>
-    : IReadOnlyAppService<TEntityDto, TEntityDto, TKey, PagedAndSortedResultRequestDto>;
+    : IReadOnlyAppService<TEntityDto, TEntityDto, TKey, PagedAndSortedDataRequestDto>;
 
 public interface IReadOnlyAppService<TEntityDto, in TKey, in TGetListInput>
     : IReadOnlyAppService<TEntityDto, TEntityDto, TKey, TGetListInput>;
@@ -14,5 +14,5 @@ public interface IReadOnlyAppService<TGetOutputDto, TGetListOutputDto, in TKey, 
 {
     Task<TGetOutputDto> GetAsync(TKey id);
 
-    Task<PagedResultDto<TGetListOutputDto>> GetListAsync(TGetListInput input);
+    Task<PagedDataResultDto<TGetListOutputDto>> GetListAsync(TGetListInput input);
 }
