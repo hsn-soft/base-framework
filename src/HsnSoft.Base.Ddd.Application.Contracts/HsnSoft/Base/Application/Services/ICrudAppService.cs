@@ -3,7 +3,7 @@ using HsnSoft.Base.Application.Dtos;
 namespace HsnSoft.Base.Application.Services;
 
 public interface ICrudAppService<TEntityDto, in TKey>
-    : ICrudAppService<TEntityDto, TKey, PagedAndSortedResultRequestDto>;
+    : ICrudAppService<TEntityDto, TKey, PagedDataRequestDto>;
 
 public interface ICrudAppService<TEntityDto, in TKey, in TGetListInput>
     : ICrudAppService<TEntityDto, TKey, TGetListInput, TEntityDto>;
