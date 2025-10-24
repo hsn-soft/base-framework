@@ -1,6 +1,6 @@
 namespace HsnSoft.Base.Application.Dtos;
 
-public interface IPagedDataRequest : ILimitedDataRequest
+public interface IPagedDataRequest : ISearchDataRequest
 {
-    int ResultPageNumber { get; set; }
+    int PageNumber { get; set; }
 }

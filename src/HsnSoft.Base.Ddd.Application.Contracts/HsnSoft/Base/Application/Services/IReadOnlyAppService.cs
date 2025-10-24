@@ -4,7 +4,7 @@ using HsnSoft.Base.Application.Dtos;
 namespace HsnSoft.Base.Application.Services;
 
 public interface IReadOnlyAppService<TEntityDto, in TKey>
-    : IReadOnlyAppService<TEntityDto, TEntityDto, TKey, PagedAndSortedDataRequestDto>;
+    : IReadOnlyAppService<TEntityDto, TEntityDto, TKey, PagedDataRequestDto>;
 
 public interface IReadOnlyAppService<TEntityDto, in TKey, in TGetListInput>
     : IReadOnlyAppService<TEntityDto, TEntityDto, TKey, TGetListInput>;
