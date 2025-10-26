@@ -43,7 +43,7 @@ public class MongoUserService(IMongoUserRepository userRepository, IMapper mappe
                 OrderByDynamic = string.IsNullOrWhiteSpace(input.OrderByText)
                     ? UserConsts.GetDefaultSorting()
                     : input.OrderByText,
-                ResultPageNumber = input.PageNumber ?? 1,
+                PageNumber = input.PageNumber ?? 1,
                 MaxResultCount = input.PageSize ?? 10
             }, cancellationToken: cancellationToken);
 

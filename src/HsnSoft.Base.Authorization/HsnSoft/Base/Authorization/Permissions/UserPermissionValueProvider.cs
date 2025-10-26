@@ -15,7 +15,7 @@ public class UserPermissionValueProvider : PermissionValueProvider
 
     public override async Task<PermissionGrantResult> CheckAsync(PermissionValueCheckContext context)
     {
-        var userId = context.Principal?.FindFirst(BaseClaimTypes.UserId)?.Value ?? context.Principal?.FindFirst("sub")?.Value;
+        string userId = context.Principal?.FindFirst(BaseClaimTypes.UserId)?.Value ?? context.Principal?.FindFirst("sub")?.Value;
 
         if (userId == null)
         {

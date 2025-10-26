@@ -26,7 +26,7 @@ public static class JsonStringMasking
             return json;
         }
 
-        var deserilizedObject = JsonConvert.DeserializeObject(json);
+        object deserilizedObject = JsonConvert.DeserializeObject(json);
 
         if (deserilizedObject is JArray)
         {
@@ -65,7 +65,7 @@ public static class JsonStringMasking
         {
             if (jtoken is JProperty prop)
             {
-                var matching = blacklist.Any(item =>
+                bool matching = blacklist.Any(item =>
                 {
                     return IsMatch(prop.Path, item);
                 });
@@ -101,7 +101,7 @@ public static class JsonStringMasking
         {
             if (jtoken is JProperty prop)
             {
-                var matching = blacklist.Any(item =>
+                bool matching = blacklist.Any(item =>
                 {
                     return IsMatch(prop.Path, item);
                 });
@@ -122,10 +122,10 @@ public static class JsonStringMasking
 
             if (blacklistPartial.TryGetValue(blacklistPartial.GetKey(prop.Path), out var maskFunc))
             {
-                var value = prop.Value.ToString();
+                string value = prop.Value.ToString();
                 try
                 {
-                    var valueMasked = maskFunc != null ? maskFunc(value) : mask;
+                    string valueMasked = maskFunc != null ? maskFunc(value) : mask;
                     prop.Value = valueMasked != value ? valueMasked : mask;
                 }
                 catch (Exception ex)
@@ -143,7 +143,7 @@ public static class JsonStringMasking
 
     private static string GetKey(this Dictionary<string, Func<string, string>> blacklistPartial, string key)
     {
-        var result = blacklistPartial.Keys.FirstOrDefault(dictionaryKey =>
+        string result = blacklistPartial.Keys.FirstOrDefault(dictionaryKey =>
         {
             return IsMatch(key, dictionaryKey);
         });

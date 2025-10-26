@@ -165,7 +165,7 @@ public class MongoGenericRepository<TEntity, TKey> :
         var result = QueryGetPageList(options);
         var items = result.query.Select(selector).ToList();
 
-        return Task.FromResult(new PagedQueryResult<TResult> { Items = items, TotalCount = result.totalCount, ResultPageNumber = options.ResultPageNumber, MaxResultCount = options.MaxResultCount });
+        return Task.FromResult(new PagedQueryResult<TResult> { Items = items, TotalCount = result.totalCount });
     }
 
     public override Task<PagedQueryResult<TResult>> GetPageListAsync<TResult>(
@@ -176,7 +176,7 @@ public class MongoGenericRepository<TEntity, TKey> :
         var result = QueryGetPageList(options);
         var items = result.query.ProjectTo<TResult>(configuration).ToList();
 
-        return Task.FromResult(new PagedQueryResult<TResult> { Items = items, TotalCount = result.totalCount, ResultPageNumber = options.ResultPageNumber, MaxResultCount = options.MaxResultCount });
+        return Task.FromResult(new PagedQueryResult<TResult> { Items = items, TotalCount = result.totalCount });
     }
 
     private (IQueryable<TEntity> query, long totalCount) QueryGetPageList(PagedQueryOptions<TEntity> options)
@@ -192,9 +192,9 @@ public class MongoGenericRepository<TEntity, TKey> :
         else if (options.OrderByEntity != null)
             query = options.OrderByEntity(query);
 
-        if (options.ResultPageNumber > 1)
+        if (options.PageNumber > 1)
         {
-            query = query.Skip((options.ResultPageNumber - 1) * options.MaxResultCount)
+            query = query.Skip((options.PageNumber - 1) * options.MaxResultCount)
                 .Take(options.MaxResultCount);
         }
         else
@@ -252,7 +252,7 @@ public class MongoGenericRepository<TEntity, TKey> :
         IEnumerable<TEntity> entities,
         CancellationToken cancellationToken = default)
     {
-        var updated = 0;
+        int updated = 0;
         var tmpCollection = GetCollection();
 
         // GetDbContext().SetEntityEventState(entities, MongoEntityEventState.Modified);

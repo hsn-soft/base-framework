@@ -30,7 +30,7 @@ public class SequentialGuidGenerator : IGuidGenerator, ITransientDependency
     public Guid Create(SequentialGuidType guidType)
     {
         // We start with 16 bytes of cryptographically strong random data.
-        var randomBytes = new byte[10];
+        byte[] randomBytes = new byte[10];
         RandomNumberGenerator.GetBytes(randomBytes);
 
         // An alternate method: use a normally-created GUID to get our initial
@@ -52,10 +52,10 @@ public class SequentialGuidGenerator : IGuidGenerator, ITransientDependency
         // Using millisecond resolution for our 48-bit timestamp gives us
         // about 5900 years before the timestamp overflows and cycles.
         // Hopefully this should be sufficient for most purposes. :)
-        var timestamp = DateTime.UtcNow.Ticks / 10000L;
+        long timestamp = DateTime.UtcNow.Ticks / 10000L;
 
         // Then get the bytes
-        var timestampBytes = BitConverter.GetBytes(timestamp);
+        byte[] timestampBytes = BitConverter.GetBytes(timestamp);
 
         // Since we're converting from an Int64, we have to reverse on
         // little-endian systems.
@@ -64,7 +64,7 @@ public class SequentialGuidGenerator : IGuidGenerator, ITransientDependency
             Array.Reverse(timestampBytes);
         }
 
-        var guidBytes = new byte[16];
+        byte[] guidBytes = new byte[16];
 
         switch (guidType)
         {

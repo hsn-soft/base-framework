@@ -20,7 +20,7 @@ public class BaseDbConnectionOptions
         bool fallbackToDatabaseMappings = true,
         bool fallbackToDefault = true)
     {
-        var connectionString = ConnectionStrings.GetOrDefault(connectionStringName);
+        string connectionString = ConnectionStrings.GetOrDefault(connectionStringName);
         if (!connectionString.IsNullOrEmpty())
         {
             return connectionString;

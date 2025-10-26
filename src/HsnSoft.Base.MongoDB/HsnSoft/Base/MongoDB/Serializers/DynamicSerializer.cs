@@ -10,17 +10,17 @@ public class DynamicSerializer : SerializerBase<dynamic>
     public override dynamic Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
     {
         var serializer = BsonSerializer.LookupSerializer(typeof(BsonDocument));
-        var document = serializer.Deserialize(context, args);
+        object document = serializer.Deserialize(context, args);
         var bsonDocument = document.ToBsonDocument();
-        var result = bsonDocument.ToJson();
+        string result = bsonDocument.ToJson();
         return JsonConvert.DeserializeObject<dynamic>(result);
     }
 
 
     public override void Serialize(BsonSerializationContext context, BsonSerializationArgs args, dynamic value)
     {
-        var jsonDocument = JsonConvert.SerializeObject(value);
-        var bsonDocument = BsonSerializer.Deserialize<BsonDocument>(jsonDocument);
+        dynamic jsonDocument = JsonConvert.SerializeObject(value);
+        dynamic bsonDocument = BsonSerializer.Deserialize<BsonDocument>(jsonDocument);
         var serializer = BsonSerializer.LookupSerializer(typeof(BsonDocument));
         serializer.Serialize(context, args, bsonDocument);
     }

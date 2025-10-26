@@ -217,8 +217,8 @@ public sealed class PuppeteerBrowser : IPuppeteerBrowser
                 ]
         };
 
-        var inContainer = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER");
-        var skipDownloadOperation = !string.IsNullOrWhiteSpace(inContainer) && inContainer == "true";
+        string inContainer = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER");
+        bool skipDownloadOperation = !string.IsNullOrWhiteSpace(inContainer) && inContainer == "true";
         if (!skipDownloadOperation)
         {
             _logger.LogDebug($"{nameof(PuppeteerBrowser)} | RUNNING_IN_CONTAINER => false");
@@ -274,7 +274,7 @@ public sealed class PuppeteerBrowser : IPuppeteerBrowser
         try
         {
             const int maxRetries = 3;
-            for (var attempt = 1; attempt <= maxRetries; attempt++)
+            for (int attempt = 1; attempt <= maxRetries; attempt++)
             {
                 try
                 {

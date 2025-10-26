@@ -19,7 +19,7 @@ public class RolePermissionValueProvider : PermissionValueProvider
 
     public override async Task<PermissionGrantResult> CheckAsync(PermissionValueCheckContext context)
     {
-        var roles = context.Principal?.FindAll(BaseClaimTypes.Role).Select(c => c.Value).ToArray();
+        string[] roles = context.Principal?.FindAll(BaseClaimTypes.Role).Select(c => c.Value).ToArray();
 
         if (roles == null || !roles.Any())
         {
@@ -30,7 +30,7 @@ public class RolePermissionValueProvider : PermissionValueProvider
         {
             //return PermissionGrantResult.Undefined;
 
-            var clientId = context.Principal?.FindFirst(BaseClaimTypes.ClientId)?.Value ?? context.Principal?.FindFirst("client_id")?.Value;
+            string clientId = context.Principal?.FindFirst(BaseClaimTypes.ClientId)?.Value ?? context.Principal?.FindFirst("client_id")?.Value;
 
             if (clientId == null)
             {
@@ -45,7 +45,7 @@ public class RolePermissionValueProvider : PermissionValueProvider
             }
         }
 
-        foreach (var role in roles.Distinct())
+        foreach (string role in roles.Distinct())
         {
             if (await PermissionStore.IsGrantedAsync(context.Permission.Name, Name, role))
             {

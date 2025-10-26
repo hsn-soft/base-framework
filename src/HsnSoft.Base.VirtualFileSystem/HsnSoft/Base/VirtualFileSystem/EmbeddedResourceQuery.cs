@@ -9,7 +9,7 @@ public class EmbeddedResourceQuery : IEmbeddedResourceQuery
     public Stream Read<T>(string resource)
     {
         var assembly = typeof(T).Assembly;
-        var resourceNamespace = typeof(T).Namespace;
+        string resourceNamespace = typeof(T).Namespace;
         return ReadInternal(assembly, resourceNamespace, resource);
     }
 

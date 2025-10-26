@@ -74,7 +74,7 @@ public static class DirectoryHelper
 
     public static IDisposable ChangeCurrentDirectory(string targetDirectory)
     {
-        var currentDirectory = Directory.GetCurrentDirectory();
+        string currentDirectory = Directory.GetCurrentDirectory();
 
         if (currentDirectory.Equals(targetDirectory, StringComparison.OrdinalIgnoreCase))
         {

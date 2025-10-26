@@ -90,7 +90,7 @@ public static class BaseLoggerExtensions
 
         var exceptionData = new StringBuilder();
         exceptionData.AppendLine("---------- Exception Data ----------");
-        foreach (var key in exception.Data.Keys)
+        foreach (object key in exception.Data.Keys)
         {
             exceptionData.AppendLine($"{key} = {exception.Data[key]}");
         }

@@ -27,9 +27,9 @@ public static class ObjectHelper
         Func<TObject, TValue> valueFactory,
         params Type[] ignoreAttributeTypes)
     {
-        var cacheKey = $"{obj.GetType().FullName}-" +
-                       $"{propertySelector}-" +
-                       $"{(ignoreAttributeTypes != null ? "-" + string.Join("-", ignoreAttributeTypes.Select(x => x.FullName)) : "")}";
+        string cacheKey = $"{obj.GetType().FullName}-" +
+                          $"{propertySelector}-" +
+                          $"{(ignoreAttributeTypes != null ? "-" + string.Join("-", ignoreAttributeTypes.Select(x => x.FullName)) : "")}";
 
         var property = CachedObjectProperties.GetOrAdd(cacheKey, () =>
         {

@@ -22,7 +22,7 @@ namespace HsnSoft.Base.Json.Mask.MaskingInfo;
             var propertyInfos = GetGetablePropertiesRecursively(type).ToArray();
             var cacheEntryProperties = propertyInfos.Select(GetPropertyMaskingInfo).ToArray();
 
-            var hasMaskedProperties = cacheEntryProperties.Any(i => i.IsMasked);
+            bool hasMaskedProperties = cacheEntryProperties.Any(i => i.IsMasked);
             if (hasMaskedProperties)
                 return TypeMaskingInfo.ForTypesWithMaskedProperties(type, cacheEntryProperties);
 
@@ -32,7 +32,7 @@ namespace HsnSoft.Base.Json.Mask.MaskingInfo;
         private static PropertyMaskingInfo GetPropertyMaskingInfo(PropertyInfo propertyInfo)
         {
             var maskedAttribute = propertyInfo.GetCustomAttribute<SensitiveDataAttribute>();
-            var isMasked = maskedAttribute != null;
+            bool isMasked = maskedAttribute != null;
             return new PropertyMaskingInfo(propertyInfo, isMasked);
         }
 
