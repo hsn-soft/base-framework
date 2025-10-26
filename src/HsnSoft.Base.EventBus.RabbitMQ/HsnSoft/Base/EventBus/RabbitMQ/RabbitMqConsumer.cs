@@ -164,9 +164,6 @@ public sealed class RabbitMqConsumer : IDisposable
             "RabbitMQ", _consumerQueueName, channelNo, _currentConsumerTag, "TERMINATED");
     }
 
-
-    // ============== CONSUME ==============
-
     private async Task ConsumerReceivedAsync([CanBeNull] object sender, BasicDeliverEventArgs eventArgs)
     {
         if (_disposed)
@@ -368,7 +365,7 @@ public sealed class RabbitMqConsumer : IDisposable
     private async Task ConsumeErrorPublishAsync([NotNull] string errorMessage, [NotNull] string failedEventName, [NotNull] string failedMessageContent)
     {
         if (!_persistentConnection.IsConnected) await _persistentConnection.TryConnectAsync();
-        if (!_persistentConnection.IsConnected) throw new ConnectFailureException("",new Exception("Connection fail"));
+        if (!_persistentConnection.IsConnected) throw new ConnectFailureException("", new Exception("Connection fail"));
 
         ParentMessageEnvelope failedEnvelopeInfo = null;
         Type failedEventEnvelopeMessageType = null;
@@ -506,7 +503,7 @@ public sealed class RabbitMqConsumer : IDisposable
             try
             {
                 if (!_persistentConnection.IsConnected) await _persistentConnection.TryConnectAsync();
-                if (!_persistentConnection.IsConnected) throw new ConnectFailureException("",new Exception("Connection fail"));
+                if (!_persistentConnection.IsConnected) throw new ConnectFailureException("", new Exception("Connection fail"));
 
                 var channel = _consumerChannel;
                 if (channel == null || channel.IsClosed)
