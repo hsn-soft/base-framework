@@ -190,12 +190,8 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
             return;
         }
 
-        if (!_persistentConnection.IsConnected)
-        {
-            await _persistentConnection.TryConnectAsync();
-        }
-
-        if (!_persistentConnection.IsConnected) throw new ConnectFailureException("Connection fail", null);
+        if (!_persistentConnection.IsConnected) await _persistentConnection.TryConnectAsync();
+        if (!_persistentConnection.IsConnected) throw new ConnectFailureException("", new Exception("Connection fail"));
 
         string consumerQueueName = EventNameHelper.GetConsumerClientEventQueueName(_rabbitMqEventBusConfig, eventName);
         await using var channel = await _persistentConnection.CreateModelAsync()!;

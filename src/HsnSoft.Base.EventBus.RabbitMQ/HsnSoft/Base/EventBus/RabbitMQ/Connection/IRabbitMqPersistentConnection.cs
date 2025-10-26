@@ -11,7 +11,6 @@ public interface IRabbitMqPersistentConnection : IDisposable
 
     Task<bool> TryConnectAsync();
 
-    [CanBeNull]
     Task<IChannel> CreateModelAsync();
 
     Task<int> GetRabbitMqConnectionCountAsync();

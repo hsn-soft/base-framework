@@ -24,10 +24,14 @@ public sealed class RabbitMqPersistentConnection(IOptions<RabbitMqConnectionSett
         UserName = conSettings.Value.UserName,
         Password = conSettings.Value.Password,
         VirtualHost = conSettings.Value.VirtualHost,
-        RequestedHeartbeat = TimeSpan.FromSeconds(30),
+
         //DispatchConsumersAsync = true,
         AutomaticRecoveryEnabled = true,
-        NetworkRecoveryInterval = TimeSpan.FromSeconds(10)
+        TopologyRecoveryEnabled = true,
+        NetworkRecoveryInterval = TimeSpan.FromSeconds(10),
+        RequestedHeartbeat = TimeSpan.FromSeconds(60),
+        HandshakeContinuationTimeout = TimeSpan.FromMinutes(2),
+        ContinuationTimeout = TimeSpan.FromMinutes(2)
     };
 
     private readonly int _retryCount = conSettings.Value.ConnectionRetryCount;
@@ -95,15 +99,9 @@ public sealed class RabbitMqPersistentConnection(IOptions<RabbitMqConnectionSett
     }
 
 
-    public Task<IChannel> CreateModelAsync()
-    {
-        if (!IsConnected)
-        {
-            throw new InvalidOperationException("No RabbitMQ connections are available to perform this action");
-        }
-
-        return _connection?.CreateChannelAsync();
-    }
+    public Task<IChannel> CreateModelAsync() => !IsConnected
+        ? throw new InvalidOperationException("No RabbitMQ connections are available to perform this action")
+        : _connection?.CreateChannelAsync();
 
     public void Dispose()
     {
