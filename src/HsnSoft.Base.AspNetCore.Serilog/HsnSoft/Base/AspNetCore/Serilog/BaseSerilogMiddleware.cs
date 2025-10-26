@@ -54,7 +54,7 @@ public class BaseSerilogMiddleware : IMiddleware, ITransientDependency
             enrichers.Add(new PropertyEnricher(_options.EnricherPropertyNames.ClientId, _currentClient.Id));
         }
 
-        var correlationId = _correlationIdProvider.Get();
+        string correlationId = _correlationIdProvider.Get();
         if (!string.IsNullOrEmpty(correlationId))
         {
             enrichers.Add(new PropertyEnricher(_options.EnricherPropertyNames.CorrelationId, correlationId));

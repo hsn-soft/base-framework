@@ -41,7 +41,7 @@ public abstract class BaseRepository<TDocument> : IBaseRepository<TDocument>
 
     private MongoClientSettings CreateClientSettings(IOptions<MongoDbSettings> settings)
     {
-        ThreadPool.GetMaxThreads(out var maxWt, out var _);
+        ThreadPool.GetMaxThreads(out int maxWt, out int _);
         var clientSettings = MongoClientSettings.FromConnectionString(settings.Value.ConnectionString);
         clientSettings.MaxConnectionPoolSize = maxWt * 2;
 
@@ -264,8 +264,8 @@ public abstract class BaseRepository<TDocument> : IBaseRepository<TDocument>
             return null;
         }
 
-        var firstInclude = include?.FirstOrDefault();
-        var firstExclude = exclude?.FirstOrDefault();
+        string firstInclude = include?.FirstOrDefault();
+        string firstExclude = exclude?.FirstOrDefault();
 
         if (!string.IsNullOrEmpty(firstInclude))
         {
@@ -645,7 +645,7 @@ public abstract class BaseRepository<TDocument> : IBaseRepository<TDocument>
         var filter = filterBuilder.And(filterExpression) &
                      filterBuilder.ElemMatch(filterField, filterObject);
 
-        foreach (var (key, value) in updateValues)
+        foreach ((Expression<Func<TDocument, object>> key, object value) in updateValues)
         {
             updates.Add(Builders<TDocument>.Update.Set(key, value));
         }
@@ -727,7 +727,7 @@ public abstract class BaseRepository<TDocument> : IBaseRepository<TDocument>
             return null;
         }
 
-        foreach (var (key, value) in updateValues)
+        foreach ((string key, dynamic value) in updateValues)
         {
             updates.Add(Builders<TDocument>.Update.Set(key, value));
         }
@@ -750,7 +750,7 @@ public abstract class BaseRepository<TDocument> : IBaseRepository<TDocument>
             return null;
         }
 
-        foreach (var (key, value) in updateValues)
+        foreach ((Expression<Func<TDocument, object>> key, object value) in updateValues)
         {
             updates.Add(Builders<TDocument>.Update.Set(key, value));
         }
@@ -827,7 +827,7 @@ public abstract class BaseRepository<TDocument> : IBaseRepository<TDocument>
 
     public async Task<IEnumerable<TDocument>> FilterByTextAsync(List<string> searchTerms, string defaultTextIndexLanguage = "en")
     {
-        var searchText = string.Join(' ', searchTerms ?? new List<string>()).Trim();
+        string searchText = string.Join(' ', searchTerms ?? new List<string>()).Trim();
 
         var filter = Builders<TDocument>.Filter.Text(searchText, new TextSearchOptions
         {
@@ -843,7 +843,7 @@ public abstract class BaseRepository<TDocument> : IBaseRepository<TDocument>
         if (textIndexlist is { Count: > 0 } && ifExistReCreate)
         {
             // drop text index because each collection can have one text search index
-            foreach (var index in textIndexlist)
+            foreach (string index in textIndexlist)
             {
                 await _collection.Indexes.DropOneAsync(index);
             }

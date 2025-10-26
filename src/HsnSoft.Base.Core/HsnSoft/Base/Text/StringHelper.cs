@@ -17,7 +17,7 @@ public static class StringHelper
             encoding = Encoding.UTF8;
         }
 
-        var hasBom = bytes.Length >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF;
+        bool hasBom = bytes.Length >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF;
 
         if (hasBom)
         {
@@ -29,13 +29,13 @@ public static class StringHelper
 
     public static string ReplaceInvalidChars(string text, bool isEmail = false, string replaceInvalidChar = "")
     {
-        var result = string.Empty;
+        string result = string.Empty;
         if (string.IsNullOrWhiteSpace(text)) return result;
 
-        var upperText = text.ToUpper();
-        for (var i = 0; i < text.Length; i++)
+        string upperText = text.ToUpper();
+        for (int i = 0; i < text.Length; i++)
         {
-            var charCode = (byte)upperText[i];
+            byte charCode = (byte)upperText[i];
             if (
                 charCode is > 64 and < 91 // A-Z
                 || charCode is > 47 and < 58 // 0-9
@@ -60,14 +60,14 @@ public static class StringHelper
 
     public static string FirstCharCapitalize(string text, string[] defaultDelimeters = null)
     {
-        var capitalizeRoleName = string.Empty;
+        string capitalizeRoleName = string.Empty;
         if (string.IsNullOrWhiteSpace(text)) return capitalizeRoleName;
         defaultDelimeters ??= new[] { "-", "_" };
 
-        var clearedText = text.ToUpper();
+        string clearedText = text.ToUpper();
         clearedText = defaultDelimeters.Aggregate(clearedText, (current, delimeter) => current.Replace(delimeter, " "));
 
-        foreach (var item in clearedText.Split(' '))
+        foreach (string item in clearedText.Split(' '))
         {
             switch (item.Length)
             {
@@ -88,13 +88,13 @@ public static class StringHelper
 
     public static string Base64Encode(string plainText)
     {
-        var plainTextBytes = Encoding.UTF8.GetBytes(plainText);
+        byte[] plainTextBytes = Encoding.UTF8.GetBytes(plainText);
         return System.Convert.ToBase64String(plainTextBytes);
     }
 
     public static string Base64Decode(string base64EncodedData)
     {
-        var base64EncodedBytes = System.Convert.FromBase64String(base64EncodedData);
+        byte[] base64EncodedBytes = System.Convert.FromBase64String(base64EncodedData);
         return Encoding.UTF8.GetString(base64EncodedBytes);
     }
 }

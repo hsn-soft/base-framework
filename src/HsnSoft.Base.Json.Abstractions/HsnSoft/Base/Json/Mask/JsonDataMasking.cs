@@ -31,7 +31,7 @@ public static class JsonDataMasking
 
         foreach (PropertyInfo property in typeProperties)
         {
-            var propertyValue = property.GetValue(data);
+            object propertyValue = property.GetValue(data);
             if (propertyValue is null)
                 continue;
 
@@ -52,7 +52,7 @@ public static class JsonDataMasking
             }
             else if (propertyAttribute != null && IsSupportedBaseType(property.PropertyType))
             {
-                var maskedPropertyValue = GetMaskedPropertyValue(propertyValue?.ToString(), propertyAttribute);
+                string maskedPropertyValue = GetMaskedPropertyValue(propertyValue?.ToString(), propertyAttribute);
                 property.SetValue(data, maskedPropertyValue);
             }
         }
@@ -68,8 +68,8 @@ public static class JsonDataMasking
 
         if (maskedPropertyValueBuilder.Length == 0)
         {
-            var propertySize = currentPropertyValue?.Length ?? 0;
-            var maskSize = attribute.PreserveLength
+            int propertySize = currentPropertyValue?.Length ?? 0;
+            int maskSize = attribute.PreserveLength
                 ? propertySize - (attribute.ShowFirst + attribute.ShowLast)
                 : DefaultMaskSize;
 
@@ -86,7 +86,7 @@ public static class JsonDataMasking
 
     private static void MaskClassProperty<T>(T data, PropertyInfo property)
     {
-        var maskedNestedPropertyValue = MaskPropertiesWithSensitiveDataAttribute(property.GetValue(data));
+        object maskedNestedPropertyValue = MaskPropertiesWithSensitiveDataAttribute(property.GetValue(data));
         if (!IsPropertyTypeEqualsToAnonymousType(property))
             property.SetValue(data, maskedNestedPropertyValue);
     }
@@ -98,7 +98,7 @@ public static class JsonDataMasking
         Type? collectionType = null;
         var propertyAttribute = property.GetCustomAttribute<SensitiveDataAttribute>();
 
-        foreach (var value in collection)
+        foreach (object value in collection)
         {
             if (collectionType is null) collectionType = value.GetType();
 
@@ -130,7 +130,7 @@ public static class JsonDataMasking
 
         foreach (var pair in collection)
         {
-            var maskedCollectionValue = GetMaskedPropertyValue(pair.Value, propertyAttribute);
+            string maskedCollectionValue = GetMaskedPropertyValue(pair.Value, propertyAttribute);
             maskedCollection.Add(pair.Key, maskedCollectionValue);
         }
 

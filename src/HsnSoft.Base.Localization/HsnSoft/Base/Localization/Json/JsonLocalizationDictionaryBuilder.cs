@@ -42,7 +42,7 @@ public static class JsonLocalizationDictionaryBuilder
             throw new BaseException("Can not parse json string. " + ex.Message);
         }
 
-        var cultureCode = jsonFile.Culture;
+        string cultureCode = jsonFile.Culture;
         if (string.IsNullOrEmpty(cultureCode))
         {
             throw new BaseException("Culture is empty in language json file.");

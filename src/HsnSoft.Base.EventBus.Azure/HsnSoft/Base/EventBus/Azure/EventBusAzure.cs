@@ -50,7 +50,7 @@ public class EventBusAzure : IEventBus, IDisposable
     public async Task PublishAsync<TEventMessage>(TEventMessage eventMessage, ParentMessageEnvelope parentMessage = null, string correlationId = null, bool isExchangeEvent = true, bool isReQueuePublish = false)
         where TEventMessage : IIntegrationEventMessage
     {
-        var eventName = eventMessage.GetType().Name;
+        string eventName = eventMessage.GetType().Name;
         eventName = TrimEventName(eventName);
 
         var @event = new MessageEnvelope<TEventMessage>
@@ -74,7 +74,7 @@ public class EventBusAzure : IEventBus, IDisposable
 
         _logger.LogDebug("AzureServiceBus | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] STARTED", _eventBusConfig.ConsumerClientInfo, eventName, @event.MessageId.ToString());
 
-        var body = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(@event, @event.GetType(), new JsonSerializerOptions { WriteIndented = true });
+        byte[] body = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(@event, @event.GetType(), new JsonSerializerOptions { WriteIndented = true });
 
         var message = new ServiceBusMessage { MessageId = Guid.NewGuid().ToString(), Body = new BinaryData(body), Subject = eventName };
 
@@ -93,10 +93,10 @@ public class EventBusAzure : IEventBus, IDisposable
         if (!eventType.IsAssignableTo(typeof(IIntegrationEventMessage))) throw new TypeAccessException();
         if (!eventHandlerType.IsAssignableTo(typeof(IIntegrationEventHandler))) throw new TypeAccessException();
 
-        var eventName = eventType.Name;
+        string eventName = eventType.Name;
         eventName = TrimEventName(eventName);
 
-        var containsKey = _subsManager.HasSubscriptionsForEvent(eventName);
+        bool containsKey = _subsManager.HasSubscriptionsForEvent(eventName);
         if (!containsKey)
         {
             try
@@ -126,8 +126,8 @@ public class EventBusAzure : IEventBus, IDisposable
         _processor.ProcessMessageAsync +=
             async (args) =>
             {
-                var eventName = $"{_eventBusConfig.EventNamePrefix ?? string.Empty}{args.Message.Subject}{_eventBusConfig.EventNameSuffix ?? string.Empty}";
-                var messageData = args.Message.Body.ToString();
+                string eventName = $"{_eventBusConfig.EventNamePrefix ?? string.Empty}{args.Message.Subject}{_eventBusConfig.EventNameSuffix ?? string.Empty}";
+                string messageData = args.Message.Body.ToString();
 
                 // Complete the message so that it is not received again.
                 if (await ProcessEvent(eventName, messageData))
@@ -185,7 +185,7 @@ public class EventBusAzure : IEventBus, IDisposable
     {
         eventName = TrimEventName(eventName);
 
-        var processed = false;
+        bool processed = false;
 
         _logger.LogDebug("Processing AzureServiceBus event: {EventName}", eventName);
 
@@ -197,7 +197,7 @@ public class EventBusAzure : IEventBus, IDisposable
             {
                 foreach (var subscription in subscriptions)
                 {
-                    var handler = _serviceProvider.GetService(subscription.HandlerType);
+                    object handler = _serviceProvider.GetService(subscription.HandlerType);
                     if (handler == null)
                     {
                         _logger.LogWarning("AzureServiceBus | {ClientInfo} CONSUMER [ {EventName} ] => No HANDLER for event", _eventBusConfig.ConsumerClientInfo, eventName);
@@ -210,7 +210,7 @@ public class EventBusAzure : IEventBus, IDisposable
 
                         Type genericClass = typeof(MessageEnvelope<>);
                         Type constructedClass = genericClass.MakeGenericType(eventType!);
-                        var @event = JsonConvert.DeserializeObject(message, constructedClass);
+                        object @event = JsonConvert.DeserializeObject(message, constructedClass);
 
                         _logger.LogDebug("AzureServiceBus | {ClientInfo} CONSUMER [ {EventName} ] => Handling STARTED : Event [ {Event} ]", _eventBusConfig.ConsumerClientInfo, eventName, @event);
                         var concreteType = typeof(IIntegrationEventHandler<>).MakeGenericType(eventType!);

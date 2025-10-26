@@ -40,7 +40,7 @@ public static class FileHelper
     {
         Check.NotNull(fileNameWithExtension, nameof(fileNameWithExtension));
 
-        var lastDotIndex = fileNameWithExtension.LastIndexOf('.');
+        int lastDotIndex = fileNameWithExtension.LastIndexOf('.');
         if (lastDotIndex < 0)
         {
             return null;
@@ -71,7 +71,7 @@ public static class FileHelper
     {
         using (var stream = File.Open(path, FileMode.Open))
         {
-            var result = new byte[stream.Length];
+            byte[] result = new byte[stream.Length];
             await stream.ReadAsync(result, 0, (int)stream.Length);
             return result;
         }
@@ -131,7 +131,7 @@ public static class FileHelper
     /// <returns>A string containing all lines of the file.</returns>
     public static async Task<string> ReadFileWithoutBomAsync(string path)
     {
-        var content = await ReadAllBytesAsync(path);
+        byte[] content = await ReadAllBytesAsync(path);
 
         return StringHelper.ConvertFromBytesWithoutBom(content);
     }

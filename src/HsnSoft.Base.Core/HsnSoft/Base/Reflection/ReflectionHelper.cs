@@ -130,16 +130,16 @@ public static class ReflectionHelper
     /// </summary>
     public static object GetValueByPath(object obj, Type objectType, string propertyPath)
     {
-        var value = obj;
+        object value = obj;
         var currentType = objectType;
-        var objectPath = currentType.FullName;
-        var absolutePropertyPath = propertyPath;
+        string objectPath = currentType.FullName;
+        string absolutePropertyPath = propertyPath;
         if (objectPath != null && absolutePropertyPath.StartsWith(objectPath))
         {
             absolutePropertyPath = absolutePropertyPath.Replace(objectPath + ".", "");
         }
 
-        foreach (var propertyName in absolutePropertyPath.Split('.'))
+        foreach (string propertyName in absolutePropertyPath.Split('.'))
         {
             var property = currentType.GetProperty(propertyName);
             if (property != null)
@@ -168,14 +168,14 @@ public static class ReflectionHelper
     {
         var currentType = objectType;
         PropertyInfo property;
-        var objectPath = currentType.FullName;
-        var absolutePropertyPath = propertyPath;
+        string objectPath = currentType.FullName;
+        string absolutePropertyPath = propertyPath;
         if (absolutePropertyPath.StartsWith(objectPath))
         {
             absolutePropertyPath = absolutePropertyPath.Replace(objectPath + ".", "");
         }
 
-        var properties = absolutePropertyPath.Split('.');
+        string[] properties = absolutePropertyPath.Split('.');
 
         if (properties.Length == 1)
         {
@@ -184,7 +184,7 @@ public static class ReflectionHelper
             return;
         }
 
-        for (var i = 0; i < properties.Length - 1; i++)
+        for (int i = 0; i < properties.Length - 1; i++)
         {
             property = currentType.GetProperty(properties[i]);
             obj = property.GetValue(obj, null);

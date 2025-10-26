@@ -87,7 +87,7 @@ public sealed class KafkaConsumer
                 {
                     var result = consumer.Consume(stoppingToken);
                     // var result = consumer.Consume(TimeSpan.FromMilliseconds(_consumerConfig.MaxPollIntervalMs - 1000 ?? 250000));
-                    var message = result?.Message?.Value;
+                    string message = result?.Message?.Value;
                     if (message == null)
                     {
                         _logger.LogDebug("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => Loop [ {Time} ]", _kafkaEventBusConfig.ConsumerClientInfo, topicName, DateTime.UtcNow.ToString("yyyy-MM-dd hh:mm:ss zz"));

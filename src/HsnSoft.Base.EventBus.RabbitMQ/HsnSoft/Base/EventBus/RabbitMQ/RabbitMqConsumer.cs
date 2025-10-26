@@ -32,7 +32,6 @@ public sealed class RabbitMqConsumer : IDisposable
     private readonly RabbitMqEventBusConfig _rabbitMqEventBusConfig;
     private readonly IEventBusLogger _logger;
 
-    private static readonly Lock ChannelAckResourceLock = new();
     private readonly SemaphoreSlim _consumerPrefetchSemaphore;
     private readonly IChannel _consumerChannel;
     private bool _disposed;
@@ -61,7 +60,7 @@ public sealed class RabbitMqConsumer : IDisposable
         _consumerPrefetchSemaphore = new SemaphoreSlim(_consumerEventInfo?.FetchCount ?? 1);
     }
 
-    public void StartBasicConsume()
+    public async Task StartBasicConsume()
     {
         if (_consumerChannel == null)
         {
@@ -69,18 +68,15 @@ public sealed class RabbitMqConsumer : IDisposable
             return;
         }
 
-        lock (ChannelAckResourceLock)
-        {
-            _consumerQueueName = EventNameHelper.GetConsumerClientEventQueueName(_rabbitMqEventBusConfig, _consumerEventName);
-            _consumerChannel?.BasicQosAsync(0, _consumerEventInfo?.FetchCount ?? 1, false).GetAwaiter().GetResult();
+        _consumerQueueName = EventNameHelper.GetConsumerClientEventQueueName(_rabbitMqEventBusConfig, _consumerEventName);
+        await _consumerChannel.BasicQosAsync(0, _consumerEventInfo?.FetchCount ?? 1, false);
 
-            var consumer = new AsyncEventingBasicConsumer(_consumerChannel ?? throw new InvalidOperationException());
-            consumer.ReceivedAsync += ConsumerReceivedAsync;
+        var consumer = new AsyncEventingBasicConsumer(_consumerChannel ?? throw new InvalidOperationException());
+        consumer.ReceivedAsync += ConsumerReceivedAsync;
 
-            _consumerChannel?.BasicConsumeAsync(queue: _consumerQueueName, autoAck: false, consumer: consumer).GetAwaiter().GetResult();
-        }
+        await _consumerChannel.BasicConsumeAsync(queue: _consumerQueueName, autoAck: false, consumer: consumer);
 
-        var consumerChannelNumber = _consumerChannel?.ChannelNumber.ToString() ?? "0";
+        string consumerChannelNumber = _consumerChannel?.ChannelNumber.ToString() ?? "0";
         _logger.LogInformation("{BrokerName} | {ConsumerQueue} => ConsumerChannel[ {ChannelNo} ]: {OperationStatus}", "RabbitMQ",
             _consumerQueueName, consumerChannelNumber, "SUBSCRIBED");
     }
@@ -89,12 +85,12 @@ public sealed class RabbitMqConsumer : IDisposable
     {
         if (_disposed) return;
         _disposed = true;
-        var consumerChannelNumber = _consumerChannel?.ChannelNumber.ToString() ?? "0";
+        string consumerChannelNumber = _consumerChannel?.ChannelNumber.ToString() ?? "0";
 
         _logger.LogInformation("{BrokerName} | {ConsumerQueue} => ConsumerChannel[ {ChannelNo} ][ {ConsumerId} ]: {OperationStatus}", "RabbitMQ",
             _consumerQueueName, consumerChannelNumber, _currentConsumerTag, "TERMINATING");
 
-        var waitCounter = 0;
+        int waitCounter = 0;
         while (waitCounter * 1000 < MaxWaitDisposeTime && _consumerPrefetchSemaphore.CurrentCount < (_consumerEventInfo?.FetchCount ?? 1))
         {
             _logger.LogDebug("{BrokerName} | {ConsumerQueue} => ConsumerChannel[ {ChannelNo} ][ {ConsumerId} ]: Consumer Fetcher [ {Done}/{All} ] wait processing...", "RabbitMQ",
@@ -134,22 +130,22 @@ public sealed class RabbitMqConsumer : IDisposable
 
         _currentConsumerTag = (sender as AsyncEventingBasicConsumer)?.ConsumerTags.FirstOrDefault();
         _currentConsumerTag = string.IsNullOrWhiteSpace(_currentConsumerTag) ? "no-active-consumer" : _currentConsumerTag;
-        var consumerChannelNumber = _consumerChannel?.ChannelNumber.ToString() ?? "0";
+        string consumerChannelNumber = _consumerChannel?.ChannelNumber.ToString() ?? "0";
 
-        var eventName = eventArgs.RoutingKey;
+        string eventName = eventArgs.RoutingKey;
         if (string.IsNullOrWhiteSpace(eventArgs.Exchange)) // No-Fan-out-Exchange direct queue
         {
             eventName = eventArgs.RoutingKey.Split("_").Last();
         }
 
-        var message = Encoding.UTF8.GetString(eventArgs.Body.Span);
+        string message = Encoding.UTF8.GetString(eventArgs.Body.Span);
 
 #pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
         // Do not using AWAIT , run asynchronously
         Task.Run(async () =>
 #pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
         {
-            var fetcherId = Task.CurrentId?.ToString() ?? "0";
+            string fetcherId = Task.CurrentId?.ToString() ?? "0";
             _logger.LogDebug("{BrokerName} | {ConsumerQueue} => ConsumerChannel[ {ChannelNo} ][ {ConsumerId} ] FetcherId [ {FetcherId} ]: {OperationStatus}", "RabbitMQ",
                 _consumerQueueName, consumerChannelNumber, _currentConsumerTag, fetcherId, "STARTED");
 
@@ -165,10 +161,9 @@ public sealed class RabbitMqConsumer : IDisposable
                 stopWatch.Stop();
                 var timespan = stopWatch.Elapsed;
 
-                lock (ChannelAckResourceLock)
-                {
-                    _consumerChannel?.BasicAckAsync(eventArgs.DeliveryTag, multiple: false).GetAwaiter().GetResult();
-                }
+
+                _consumerChannel?.BasicAckAsync(eventArgs.DeliveryTag, multiple: false).GetAwaiter().GetResult();
+
 
                 _logger.LogInformation("{BrokerName} | {ConsumerQueue} => ConsumerChannel[ {ChannelNo} ][ {ConsumerId} ] FetcherId [ {FetcherId} ]: {OperationStatus} [ {ConsumeHandleWorkingTime}sn ]", "RabbitMQ",
                     _consumerQueueName, consumerChannelNumber, _currentConsumerTag, fetcherId, "COMPLETED", timespan.TotalSeconds.ToString("0.###"));
@@ -201,10 +196,7 @@ public sealed class RabbitMqConsumer : IDisposable
                     }
 
                     // remove from old queue
-                    lock (ChannelAckResourceLock)
-                    {
-                        _consumerChannel?.BasicAckAsync(eventArgs.DeliveryTag, multiple: false).GetAwaiter().GetResult();
-                    }
+                    _consumerChannel?.BasicAckAsync(eventArgs.DeliveryTag, multiple: false).GetAwaiter().GetResult();
                 }
                 catch (Exception)
                 {
@@ -227,7 +219,7 @@ public sealed class RabbitMqConsumer : IDisposable
 
             var genericClass = typeof(MessageEnvelope<>);
             var constructedClass = genericClass.MakeGenericType(eventInfo?.EventType!);
-            var @event = System.Text.Json.JsonSerializer.Deserialize(message, constructedClass);
+            object @event = System.Text.Json.JsonSerializer.Deserialize(message, constructedClass);
             //Guid messageId = ((dynamic)@event)?.MessageId;
 
             var subscriptions = _subscriptionsManager.GetHandlersForEvent(eventName);
@@ -235,7 +227,7 @@ public sealed class RabbitMqConsumer : IDisposable
             foreach (var subscription in subscriptions)
             {
                 using var scope = _serviceScopeFactory.CreateScope(); // because handler type scoped service
-                var handler = scope.ServiceProvider.GetService(subscription.HandlerType);
+                object handler = scope.ServiceProvider.GetService(subscription.HandlerType);
                 if (handler == null)
                 {
                     _logger.LogWarning("{BrokerName} | CONSUMER {ClientInfo} EVENT [ {EventName} ] => {OperationStatus} for event", "RabbitMQ",
@@ -256,7 +248,7 @@ public sealed class RabbitMqConsumer : IDisposable
                     _logger.EventBusInfoLog(new ConsumeMessageLogModel(
                         LogId: Guid.NewGuid().ToString(),
                         CorrelationId: ((dynamic)@event)?.CorrelationId,
-                        Facility: EventBusLogFacility.CONSUME_EVENT_SUCCESS.ToString(),
+                        Facility: nameof(EventBusLogFacility.CONSUME_EVENT_SUCCESS),
                         Producer: ((dynamic)@event)?.Producer,
                         ConsumeDateTimeUtc: handleStartTime,
                         MessageLog: new MessageLogDetail(
@@ -279,7 +271,7 @@ public sealed class RabbitMqConsumer : IDisposable
                     _logger.EventBusErrorLog(new ConsumeMessageLogModel(
                         LogId: Guid.NewGuid().ToString(),
                         CorrelationId: ((dynamic)@event)?.CorrelationId,
-                        Facility: EventBusLogFacility.CONSUME_EVENT_ERROR.ToString(),
+                        Facility: nameof(EventBusLogFacility.CONSUME_EVENT_ERROR),
                         Producer: ((dynamic)@event)?.Producer,
                         ConsumeDateTimeUtc: handleStartTime,
                         MessageLog: new MessageLogDetail(
@@ -309,17 +301,14 @@ public sealed class RabbitMqConsumer : IDisposable
 
     private void TryEnqueueMessageAgain(BasicDeliverEventArgs eventArgs, string taskId)
     {
-        var consumerChannelNumber = _consumerChannel?.ChannelNumber.ToString() ?? "0";
+        string consumerChannelNumber = _consumerChannel?.ChannelNumber.ToString() ?? "0";
 
         _logger.LogWarning("{BrokerName} | {ConsumerQueue} => ConsumerChannel[ {ChannelNo} ][ {ConsumerId} ] FetcherId [ {FetcherId} ]: Adding message to queue again with {Time} seconds delay...", "RabbitMQ",
             _consumerQueueName, consumerChannelNumber, _currentConsumerTag, taskId ?? "0", $"{_subscribeRetryTime.TotalSeconds:n1}");
         Thread.Sleep(_subscribeRetryTime);
         try
         {
-            lock (ChannelAckResourceLock)
-            {
-                _consumerChannel?.BasicNackAsync(eventArgs.DeliveryTag, false, true).GetAwaiter().GetResult();
-            }
+            _consumerChannel?.BasicNackAsync(eventArgs.DeliveryTag, false, true).GetAwaiter().GetResult();
 
             _logger.LogWarning("{BrokerName} | {ConsumerQueue} => ConsumerChannel[ {ChannelNo} ][ {ConsumerId} ] FetcherId [ {FetcherId} ]: Message added to queue again", "RabbitMQ",
                 _consumerQueueName, consumerChannelNumber, _currentConsumerTag, taskId ?? "0");
@@ -343,14 +332,14 @@ public sealed class RabbitMqConsumer : IDisposable
         IIntegrationEventMessage failedMessageObject = null;
         try
         {
-            var failedEnvelope = JsonConvert.DeserializeObject<dynamic>(failedMessageContent);
+            dynamic failedEnvelope = JsonConvert.DeserializeObject<dynamic>(failedMessageContent);
             failedEnvelopeInfo = ((JObject)failedEnvelope)?.ToObject<ParentMessageEnvelope>();
 
             failedEventEnvelopeMessageType = _subscriptionsManager.GetEventInfoByName(failedEventName)?.EventType;
 
             var genericClass = typeof(MessageEnvelope<>);
             var constructedClass = genericClass.MakeGenericType(failedEventEnvelopeMessageType!);
-            var @failedEventEnvelope = System.Text.Json.JsonSerializer.Deserialize(failedMessageContent, constructedClass);
+            object @failedEventEnvelope = System.Text.Json.JsonSerializer.Deserialize(failedMessageContent, constructedClass);
 
             failedMessageObject = ((dynamic)failedEventEnvelope)?.Message;
         }
@@ -380,7 +369,7 @@ public sealed class RabbitMqConsumer : IDisposable
             ReQueuedCount = failedEnvelopeInfo?.ReQueuedCount ?? 0
         };
 
-        var eventName = @event.Message.GetType().Name;
+        string eventName = @event.Message.GetType().Name;
         eventName = EventNameHelper.TrimEventName(_rabbitMqEventBusConfig, eventName);
         _consumerErrorQueueName = $"{_rabbitMqEventBusConfig.ErrorClientInfo}_{eventName}";
 
@@ -398,7 +387,7 @@ public sealed class RabbitMqConsumer : IDisposable
                 _logger.EventBusErrorLog(new ProduceMessageLogModel(
                     LogId: Guid.NewGuid().ToString(),
                     CorrelationId: @event.CorrelationId,
-                    Facility: EventBusLogFacility.PRODUCE_EVENT_ERROR.ToString(),
+                    Facility: nameof(EventBusLogFacility.PRODUCE_EVENT_ERROR),
                     ProduceDateTimeUtc: produceTime,
                     MessageLog: new MessageLogDetail(
                         EventType: eventName,
@@ -414,7 +403,7 @@ public sealed class RabbitMqConsumer : IDisposable
                     ProduceDetails: $"Message publish error: {ex.Message}"));
             });
 
-        var body = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(@event, @event.GetType(), new JsonSerializerOptions { WriteIndented = true });
+        byte[] body = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(@event, @event.GetType(), new JsonSerializerOptions { WriteIndented = true });
 
         await policy.Execute(async () =>
         {
@@ -445,6 +434,7 @@ public sealed class RabbitMqConsumer : IDisposable
         {
             await _persistentConnection.TryConnectAsync();
         }
+        if (!_persistentConnection.IsConnected) return null;
 
         var channel = await _persistentConnection.CreateModelAsync()!;
 

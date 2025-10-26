@@ -37,12 +37,12 @@ public abstract class BaseMultiThreadBackgroundService<TService> : BackgroundSer
 
         while (!stopToken.IsCancellationRequested)
         {
-            for (var i = 1; i <= MultiThreadCount; i++)
+            for (int i = 1; i <= MultiThreadCount; i++)
             {
                 _workers.Add(new Task(
                     action: o =>
                     {
-                        var processId = (o as ProcessModel)?.ProcessId ?? 0;
+                        int processId = (o as ProcessModel)?.ProcessId ?? 0;
                         try
                         {
                             Logger.LogDebug("{Worker} | WORKER[{WorkerId}] | {OperationStatus}", typeof(TService).Name, processId, "BEGIN");
@@ -76,7 +76,7 @@ public abstract class BaseMultiThreadBackgroundService<TService> : BackgroundSer
 
             Logger.LogDebug("{Worker} | ALL WORKER IS AVAILABLE", typeof(TService).Name);
 
-            for (var i = 0; i < WaitPeriodSeconds; i++)
+            for (int i = 0; i < WaitPeriodSeconds; i++)
             {
                 await Task.Delay(1000, stopToken);
                 if (!SkipWaitPeriod) continue;
@@ -94,7 +94,7 @@ public abstract class BaseMultiThreadBackgroundService<TService> : BackgroundSer
     {
         Logger.LogDebug("{Worker} | {OperationStatus}", typeof(TService).Name, "TERMINATING");
 
-        var waitCounter = 0;
+        int waitCounter = 0;
         _workers.RemoveAll(x => x.IsCompleted);
         while (WaitContinuousThread && _workers.Count > 0 && waitCounter < MaxWaitPeriodSecondsForTerminating)
         {

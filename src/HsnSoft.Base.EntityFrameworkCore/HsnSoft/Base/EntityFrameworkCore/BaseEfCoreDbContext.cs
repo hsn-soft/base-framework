@@ -267,7 +267,7 @@ public abstract class BaseEfCoreDbContext<TDbContext> : DbContext where TDbConte
 
             var eventReport = CreateEventReport();
 
-            var result = await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+            int result = await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
 
             PublishEntityEvents(eventReport);
 

@@ -33,7 +33,7 @@ public class DefaultConnectionStringResolver : IConnectionStringResolver, ITrans
             return Options.ConnectionStrings.Default;
         }
 
-        var connectionString = Options.GetConnectionStringOrNull(connectionStringName);
+        string connectionString = Options.GetConnectionStringOrNull(connectionStringName);
 
         if (!connectionString.IsNullOrEmpty())
         {

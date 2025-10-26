@@ -41,7 +41,7 @@ public class BaseDatabaseInfoDictionary : Dictionary<string, BaseDatabaseInfo>
 
         foreach (var databaseInfo in Values)
         {
-            foreach (var mappedConnection in databaseInfo.MappedConnections)
+            foreach (string mappedConnection in databaseInfo.MappedConnections)
             {
                 if (ConnectionIndex.ContainsKey(mappedConnection))
                 {

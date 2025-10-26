@@ -113,7 +113,7 @@ public class EfCoreGenericRepository<TEntity, TKey>(IServiceProvider provider, D
         var result = await QueryGetPageListAsync(options, cancellationToken);
         var items = await result.query.Select(selector).ToListAsync(cancellationToken);
 
-        return new PagedQueryResult<TResult> { Items = items, TotalCount = result.totalCount, ResultPageNumber = options.ResultPageNumber, MaxResultCount = options.MaxResultCount };
+        return new PagedQueryResult<TResult> { Items = items, TotalCount = result.totalCount};
     }
 
     public override async Task<PagedQueryResult<TResult>> GetPageListAsync<TResult>(
@@ -124,7 +124,7 @@ public class EfCoreGenericRepository<TEntity, TKey>(IServiceProvider provider, D
         var result = await QueryGetPageListAsync(options, cancellationToken);
         var items = await result.query.ProjectTo<TResult>(configuration).ToListAsync(cancellationToken);
 
-        return new PagedQueryResult<TResult> { Items = items, TotalCount = result.totalCount, ResultPageNumber = options.ResultPageNumber, MaxResultCount = options.MaxResultCount };
+        return new PagedQueryResult<TResult> { Items = items, TotalCount = result.totalCount};
     }
 
     private async Task<(IQueryable<TEntity> query, long totalCount)> QueryGetPageListAsync(PagedQueryOptions<TEntity> options, CancellationToken cancellationToken = default)
@@ -141,9 +141,9 @@ public class EfCoreGenericRepository<TEntity, TKey>(IServiceProvider provider, D
         else if (options.OrderByEntity != null)
             query = options.OrderByEntity(query);
 
-        if (options.ResultPageNumber > 1)
+        if (options.PageNumber > 1)
         {
-            query = query.Skip((options.ResultPageNumber - 1) * options.MaxResultCount)
+            query = query.Skip((options.PageNumber - 1) * options.MaxResultCount)
                 .Take(options.MaxResultCount);
         }
         else

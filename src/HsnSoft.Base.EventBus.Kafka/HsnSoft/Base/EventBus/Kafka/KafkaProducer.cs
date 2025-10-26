@@ -73,7 +73,7 @@ public sealed class KafkaProducer
         {
             _logger.LogDebug("Kafka | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] STARTED", _kafkaEventBusConfig.ConsumerClientInfo, topicName, @event.MessageId.ToString());
 
-            var message = JsonConvert.SerializeObject(@event, new JsonSerializerSettings
+            string message = JsonConvert.SerializeObject(@event, new JsonSerializerSettings
             {
                 Converters = new List<JsonConverter>
                 {

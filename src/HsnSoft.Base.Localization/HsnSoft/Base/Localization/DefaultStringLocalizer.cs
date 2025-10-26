@@ -43,7 +43,7 @@ public sealed class DefaultStringLocalizer : IStringLocalizer
     private ILocalizationDictionary GetLocalizationDictionary()
     {
         // string test = CultureInfo.CurrentUICulture.Name;
-        var cultureName = Thread.CurrentThread.CurrentCulture.Name;
+        string cultureName = Thread.CurrentThread.CurrentCulture.Name;
 
         //Try to get from same language dictionary (without country code)
         if (cultureName.Contains('-')) //Example: "tr-TR" (length=5)

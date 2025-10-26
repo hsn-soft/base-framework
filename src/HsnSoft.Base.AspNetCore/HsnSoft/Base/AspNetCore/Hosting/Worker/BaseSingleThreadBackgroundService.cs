@@ -54,7 +54,7 @@ public abstract class BaseSingleThreadBackgroundService<TService> : BackgroundSe
                 IsProcessing = false;
             }
 
-            for (var i = 0; i < WaitPeriodSeconds; i++)
+            for (int i = 0; i < WaitPeriodSeconds; i++)
             {
                 await Task.Delay(1000, stoppingToken);
                 if (!SkipWaitPeriod) continue;

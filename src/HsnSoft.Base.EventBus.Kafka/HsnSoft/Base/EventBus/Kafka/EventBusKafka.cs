@@ -51,7 +51,7 @@ public class EventBusKafka : IEventBus, IDisposable
     public async Task PublishAsync<TEventMessage>(TEventMessage eventMessage, ParentMessageEnvelope parentMessage = null, string correlationId = null, bool isExchangeEvent = true, bool isReQueuePublish = false)
         where TEventMessage : IIntegrationEventMessage
     {
-        var eventName = eventMessage.GetType().Name;
+        string eventName = eventMessage.GetType().Name;
         eventName = TrimEventName(eventName);
 
         var kafkaProducer = new KafkaProducer(_kafkaConnectionSettings, _kafkaEventBusConfig, _logger);
@@ -88,7 +88,7 @@ public class EventBusKafka : IEventBus, IDisposable
         if (!eventType.IsAssignableTo(typeof(IIntegrationEventMessage))) throw new TypeAccessException();
         if (!eventHandlerType.IsAssignableTo(typeof(IIntegrationEventHandler))) throw new TypeAccessException();
 
-        var eventName = eventType.Name;
+        string eventName = eventType.Name;
         eventName = TrimEventName(eventName);
 
         _logger.LogDebug("Kafka | Subscribing to event {EventName} with {EventHandler}", eventName, eventHandlerType.Name);
@@ -137,7 +137,7 @@ public class EventBusKafka : IEventBus, IDisposable
     {
         _messageProcessorTasks.Add(Task.Run(() =>
         {
-            var eventName = messageObject.Key.Name;
+            string eventName = messageObject.Key.Name;
             eventName = TrimEventName(eventName);
 
             if (_subsManager.HasSubscriptionsForEvent(eventName))
@@ -145,7 +145,7 @@ public class EventBusKafka : IEventBus, IDisposable
                 var subscriptions = _subsManager.GetHandlersForEvent(eventName);
                 foreach (var subscription in subscriptions)
                 {
-                    var handler = _serviceProvider.GetService(subscription.HandlerType);
+                    object handler = _serviceProvider.GetService(subscription.HandlerType);
                     if (handler == null)
                     {
                         _logger.LogWarning("Kafka | {ClientInfo} CONSUMER [ {EventName} ] => No HANDLER for event", _kafkaEventBusConfig.ConsumerClientInfo, eventName);

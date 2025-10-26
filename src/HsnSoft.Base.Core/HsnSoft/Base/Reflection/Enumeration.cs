@@ -30,8 +30,8 @@ public abstract class Enumeration : IComparable
             return false;
         }
 
-        var typeMatches = GetType().Equals(obj.GetType());
-        var valueMatches = Id.Equals(otherValue.Id);
+        bool typeMatches = GetType().Equals(obj.GetType());
+        bool valueMatches = Id.Equals(otherValue.Id);
 
         return typeMatches && valueMatches;
     }
@@ -40,7 +40,7 @@ public abstract class Enumeration : IComparable
 
     public static int AbsoluteDifference(Enumeration firstValue, Enumeration secondValue)
     {
-        var absoluteDifference = Math.Abs(firstValue.Id - secondValue.Id);
+        int absoluteDifference = Math.Abs(firstValue.Id - secondValue.Id);
         return absoluteDifference;
     }
 

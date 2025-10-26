@@ -22,7 +22,7 @@ public static class BaseMemberInfoExtensions
             throw new ArgumentNullException(nameof(memberInfo));
         }
 
-        var attrs = memberInfo.GetCustomAttributes(typeof(TAttribute), inherit).ToArray();
+        object[] attrs = memberInfo.GetCustomAttributes(typeof(TAttribute), inherit).ToArray();
         if (attrs.Length > 0)
         {
             return (TAttribute)attrs[0];

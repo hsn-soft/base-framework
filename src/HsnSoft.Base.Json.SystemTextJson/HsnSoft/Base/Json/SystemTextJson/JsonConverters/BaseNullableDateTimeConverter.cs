@@ -25,7 +25,7 @@ public class BaseNullableDateTimeConverter : JsonConverter<DateTime?>, ITransien
         {
             if (reader.TokenType == JsonTokenType.String)
             {
-                var s = reader.GetString();
+                string s = reader.GetString();
                 if (DateTime.TryParseExact(s, _options.DefaultDateTimeFormat, CultureInfo.CurrentUICulture, DateTimeStyles.None, out var d1))
                 {
                     return _clock.Normalize(d1);

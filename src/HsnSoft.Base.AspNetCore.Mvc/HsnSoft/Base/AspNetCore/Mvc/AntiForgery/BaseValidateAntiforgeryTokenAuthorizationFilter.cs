@@ -54,7 +54,7 @@ public class BaseValidateAntiforgeryTokenAuthorizationFilter : IAsyncAuthorizati
 
     protected virtual bool ShouldValidate(AuthorizationFilterContext context)
     {
-        var authCookieName = _antiForgeryCookieNameProvider.GetAuthCookieNameOrNull();
+        string authCookieName = _antiForgeryCookieNameProvider.GetAuthCookieNameOrNull();
 
         //Always perform antiforgery validation when request contains authentication cookie
         if (authCookieName != null &&
@@ -63,7 +63,7 @@ public class BaseValidateAntiforgeryTokenAuthorizationFilter : IAsyncAuthorizati
             return true;
         }
 
-        var antiForgeryCookieName = _antiForgeryCookieNameProvider.GetAntiForgeryCookieNameOrNull();
+        string antiForgeryCookieName = _antiForgeryCookieNameProvider.GetAntiForgeryCookieNameOrNull();
 
         //No need to validate if antiforgery cookie is not sent.
         //That means the request is sent from a non-browser client.

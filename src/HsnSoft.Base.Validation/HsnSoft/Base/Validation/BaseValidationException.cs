@@ -93,7 +93,7 @@ public class BaseValidationException : BaseException,
         validationErrors.AppendLine("There are " + ValidationErrors.Count + " validation errors:");
         foreach (var validationResult in ValidationErrors)
         {
-            var memberNames = "";
+            string memberNames = "";
             if (validationResult.MemberNames != null && validationResult.MemberNames.Any())
             {
                 memberNames = " (" + string.Join(", ", validationResult.MemberNames) + ")";
