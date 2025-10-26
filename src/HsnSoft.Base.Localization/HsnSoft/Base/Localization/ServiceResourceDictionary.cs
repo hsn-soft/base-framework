@@ -19,14 +19,14 @@ public sealed class ServiceResourceDictionary : StaticLocalizationDictionary
         // var resource = $"Localization.{GetLocalizationResourceName(typeof(T))}.{CultureName}.json";
         // var sut = new EmbeddedFileProviderQuery();
 
-        var resource = $"{GetLocalizationResourceName(resourceType)}.{CultureName}.json";
+        string resource = $"{GetLocalizationResourceName(resourceType)}.{CultureName}.json";
         var sut = new EmbeddedResourceQuery();
         // var resources = typeof(T).Assembly.GetManifestResourceNames();
 
         // using var stream = sut.Read<T>(resource);
         using var stream = sut.Read(Assembly.GetAssembly(resourceType), resource, resourceType.Namespace);
         if (stream == null) return;
-        var json = new StreamReader(stream).ReadToEnd();
+        string json = new StreamReader(stream).ReadToEnd();
 
         // Create static localization dictionary and fill current dictionary
         JsonLocalizationDictionaryBuilder.BuildFromJsonString(json).Fill(Dictionary);

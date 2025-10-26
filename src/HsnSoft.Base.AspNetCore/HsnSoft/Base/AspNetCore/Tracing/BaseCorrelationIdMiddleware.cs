@@ -20,7 +20,7 @@ public class BaseCorrelationIdMiddleware : IMiddleware, ITransientDependency
 
     public async Task InvokeAsync(HttpContext context, RequestDelegate next)
     {
-        var correlationId = _correlationIdProvider.Get();
+        string correlationId = _correlationIdProvider.Get();
 
         try
         {

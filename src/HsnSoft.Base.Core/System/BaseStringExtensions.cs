@@ -96,8 +96,8 @@ public static class BaseStringExtensions
     {
         Check.NotNull(str, nameof(str));
 
-        var count = 0;
-        for (var i = 0; i < str.Length; i++)
+        int count = 0;
+        for (int i = 0; i < str.Length; i++)
         {
             if (str[i] != c)
             {
@@ -145,7 +145,7 @@ public static class BaseStringExtensions
             return str;
         }
 
-        foreach (var postFix in postFixes)
+        foreach (string postFix in postFixes)
         {
             if (str.EndsWith(postFix, comparisonType))
             {
@@ -188,7 +188,7 @@ public static class BaseStringExtensions
             return str;
         }
 
-        foreach (var preFix in preFixes)
+        foreach (string preFix in preFixes)
         {
             if (str.StartsWith(preFix, comparisonType))
             {
@@ -203,7 +203,7 @@ public static class BaseStringExtensions
     {
         Check.NotNull(str, nameof(str));
 
-        var pos = str.IndexOf(search, comparisonType);
+        int pos = str.IndexOf(search, comparisonType);
         if (pos < 0)
         {
             return str;
@@ -345,9 +345,9 @@ public static class BaseStringExtensions
         var builder = new StringBuilder(str.Length + Math.Min(2, str.Length / 5));
         var previousCategory = default(UnicodeCategory?);
 
-        for (var currentIndex = 0; currentIndex < str.Length; currentIndex++)
+        for (int currentIndex = 0; currentIndex < str.Length; currentIndex++)
         {
-            var currentChar = str[currentIndex];
+            char currentChar = str[currentIndex];
             if (currentChar == '_')
             {
                 builder.Append('_');
@@ -430,11 +430,11 @@ public static class BaseStringExtensions
     {
         using (var md5 = MD5.Create())
         {
-            var inputBytes = Encoding.UTF8.GetBytes(str);
-            var hashBytes = md5.ComputeHash(inputBytes);
+            byte[] inputBytes = Encoding.UTF8.GetBytes(str);
+            byte[] hashBytes = md5.ComputeHash(inputBytes);
 
             var sb = new StringBuilder();
-            foreach (var hashByte in hashBytes)
+            foreach (byte hashByte in hashBytes)
             {
                 sb.Append(hashByte.ToString("X2"));
             }
@@ -567,7 +567,7 @@ public static class BaseStringExtensions
 
     private static bool IsAllUpperCase(string input)
     {
-        for (var i = 0; i < input.Length; i++)
+        for (int i = 0; i < input.Length; i++)
         {
             if (char.IsLetter(input[i]) && !char.IsUpper(input[i]))
             {

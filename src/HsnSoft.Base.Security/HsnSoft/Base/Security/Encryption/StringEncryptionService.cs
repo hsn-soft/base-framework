@@ -36,10 +36,10 @@ public class StringEncryptionService : IStringEncryptionService, ITransientDepen
             salt = Options.DefaultSalt;
         }
 
-        var plainTextBytes = Encoding.UTF8.GetBytes(plainText);
+        byte[] plainTextBytes = Encoding.UTF8.GetBytes(plainText);
         using (var password = new Rfc2898DeriveBytes(passPhrase, salt))
         {
-            var keyBytes = password.GetBytes(Options.Keysize / 8);
+            byte[] keyBytes = password.GetBytes(Options.Keysize / 8);
             using (var symmetricKey = Aes.Create())
             {
                 symmetricKey.Mode = CipherMode.CBC;
@@ -51,7 +51,7 @@ public class StringEncryptionService : IStringEncryptionService, ITransientDepen
                         {
                             cryptoStream.Write(plainTextBytes, 0, plainTextBytes.Length);
                             cryptoStream.FlushFinalBlock();
-                            var cipherTextBytes = memoryStream.ToArray();
+                            byte[] cipherTextBytes = memoryStream.ToArray();
                             return Convert.ToBase64String(cipherTextBytes);
                         }
                     }
@@ -77,10 +77,10 @@ public class StringEncryptionService : IStringEncryptionService, ITransientDepen
             salt = Options.DefaultSalt;
         }
 
-        var cipherTextBytes = Convert.FromBase64String(cipherText);
+        byte[] cipherTextBytes = Convert.FromBase64String(cipherText);
         using (var password = new Rfc2898DeriveBytes(passPhrase, salt))
         {
-            var keyBytes = password.GetBytes(Options.Keysize / 8);
+            byte[] keyBytes = password.GetBytes(Options.Keysize / 8);
             using (var symmetricKey = Aes.Create())
             {
                 symmetricKey.Mode = CipherMode.CBC;
@@ -90,18 +90,18 @@ public class StringEncryptionService : IStringEncryptionService, ITransientDepen
                     {
                         using (var cryptoStream = new CryptoStream(memoryStream, decryptor, CryptoStreamMode.Read))
                         {
-                            var plainTextBytes = new byte[cipherTextBytes.Length];
-                            var totalReadCount = 0;
+                            byte[] plainTextBytes = new byte[cipherTextBytes.Length];
+                            int totalReadCount = 0;
                             while (totalReadCount < cipherTextBytes.Length)
                             {
-                                var buffer = new byte[cipherTextBytes.Length];
-                                var readCount = cryptoStream.Read(buffer, 0, buffer.Length);
+                                byte[] buffer = new byte[cipherTextBytes.Length];
+                                int readCount = cryptoStream.Read(buffer, 0, buffer.Length);
                                 if (readCount == 0)
                                 {
                                     break;
                                 }
 
-                                for (var i = 0; i < readCount; i++)
+                                for (int i = 0; i < readCount; i++)
                                 {
                                     plainTextBytes[i + totalReadCount] = buffer[i];
                                 }

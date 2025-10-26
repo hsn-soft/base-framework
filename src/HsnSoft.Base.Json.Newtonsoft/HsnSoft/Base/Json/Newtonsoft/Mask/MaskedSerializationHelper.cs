@@ -24,7 +24,7 @@ public static class MaskedSerializationHelper
     public static string SerializeWithMasking(object? value)
     {
         var settings = GetSettingsForMaskedSerialization();
-        var serialized = JsonConvert.SerializeObject(value, settings);
+        string serialized = JsonConvert.SerializeObject(value, settings);
 
         return serialized;
     }

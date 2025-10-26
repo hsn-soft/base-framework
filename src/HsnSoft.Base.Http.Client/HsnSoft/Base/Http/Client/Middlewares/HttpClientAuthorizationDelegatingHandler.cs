@@ -30,7 +30,7 @@ public class HttpClientAuthorizationDelegatingHandler : DelegatingHandler
                 request.Headers.Add("Authorization", new List<string> { authorizationHeader });
             }
 
-            var token = await GetToken();
+            string token = await GetToken();
             if (token == null)
             {
                 token = GetTokenFromClaims();

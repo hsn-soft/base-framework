@@ -16,7 +16,7 @@ public static class CurrentUserExtensions
     public static T FindClaimValue<T>(this ICurrentUser currentUser, string claimType)
         where T : struct
     {
-        var value = currentUser.FindClaimValue(claimType);
+        string value = currentUser.FindClaimValue(claimType);
         if (value == null)
         {
             return default;
@@ -34,7 +34,7 @@ public static class CurrentUserExtensions
 
     public static Guid? FindImpersonatorTenantId([NotNull] this ICurrentUser currentUser)
     {
-        var impersonatorTenantId = currentUser.FindClaimValue(BaseClaimTypes.ImpersonatorTenantId);
+        string impersonatorTenantId = currentUser.FindClaimValue(BaseClaimTypes.ImpersonatorTenantId);
         if (impersonatorTenantId.IsNullOrWhiteSpace())
         {
             return null;
@@ -49,7 +49,7 @@ public static class CurrentUserExtensions
 
     public static Guid? FindImpersonatorUserId([NotNull] this ICurrentUser currentUser)
     {
-        var impersonatorUserId = currentUser.FindClaimValue(BaseClaimTypes.ImpersonatorUserId);
+        string impersonatorUserId = currentUser.FindClaimValue(BaseClaimTypes.ImpersonatorUserId);
         if (impersonatorUserId.IsNullOrWhiteSpace())
         {
             return null;

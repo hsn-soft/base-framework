@@ -19,7 +19,7 @@ public static class BaseListExtensions
 
     public static int FindIndex<T>(this IList<T> source, Predicate<T> selector)
     {
-        for (var i = 0; i < source.Count; ++i)
+        for (int i = 0; i < source.Count; ++i)
         {
             if (selector(source[i]))
             {
@@ -42,7 +42,7 @@ public static class BaseListExtensions
 
     public static void InsertAfter<T>(this IList<T> source, T existingItem, T item)
     {
-        var index = source.IndexOf(existingItem);
+        int index = source.IndexOf(existingItem);
         if (index < 0)
         {
             source.AddFirst(item);
@@ -54,7 +54,7 @@ public static class BaseListExtensions
 
     public static void InsertAfter<T>(this IList<T> source, Predicate<T> selector, T item)
     {
-        var index = source.FindIndex(selector);
+        int index = source.FindIndex(selector);
         if (index < 0)
         {
             source.AddFirst(item);
@@ -66,7 +66,7 @@ public static class BaseListExtensions
 
     public static void InsertBefore<T>(this IList<T> source, T existingItem, T item)
     {
-        var index = source.IndexOf(existingItem);
+        int index = source.IndexOf(existingItem);
         if (index < 0)
         {
             source.AddLast(item);
@@ -78,7 +78,7 @@ public static class BaseListExtensions
 
     public static void InsertBefore<T>(this IList<T> source, Predicate<T> selector, T item)
     {
-        var index = source.FindIndex(selector);
+        int index = source.FindIndex(selector);
         if (index < 0)
         {
             source.AddLast(item);
@@ -90,7 +90,7 @@ public static class BaseListExtensions
 
     public static void ReplaceWhile<T>(this IList<T> source, Predicate<T> selector, T item)
     {
-        for (var i = 0; i < source.Count; i++)
+        for (int i = 0; i < source.Count; i++)
         {
             if (selector(source[i]))
             {
@@ -101,7 +101,7 @@ public static class BaseListExtensions
 
     public static void ReplaceWhile<T>(this IList<T> source, Predicate<T> selector, Func<T, T> itemFactory)
     {
-        for (var i = 0; i < source.Count; i++)
+        for (int i = 0; i < source.Count; i++)
         {
             var item = source[i];
             if (selector(item))
@@ -113,7 +113,7 @@ public static class BaseListExtensions
 
     public static void ReplaceOne<T>(this IList<T> source, Predicate<T> selector, T item)
     {
-        for (var i = 0; i < source.Count; i++)
+        for (int i = 0; i < source.Count; i++)
         {
             if (selector(source[i]))
             {
@@ -125,7 +125,7 @@ public static class BaseListExtensions
 
     public static void ReplaceOne<T>(this IList<T> source, Predicate<T> selector, Func<T, T> itemFactory)
     {
-        for (var i = 0; i < source.Count; i++)
+        for (int i = 0; i < source.Count; i++)
         {
             var item = source[i];
             if (selector(item))
@@ -138,7 +138,7 @@ public static class BaseListExtensions
 
     public static void ReplaceOne<T>(this IList<T> source, T item, T replaceWith)
     {
-        for (var i = 0; i < source.Count; i++)
+        for (int i = 0; i < source.Count; i++)
         {
             if (Comparer<T>.Default.Compare(source[i], item) == 0)
             {
@@ -155,7 +155,7 @@ public static class BaseListExtensions
             throw new IndexOutOfRangeException("targetIndex should be between 0 and " + (source.Count - 1));
         }
 
-        var currentIndex = source.FindIndex(0, selector);
+        int currentIndex = source.FindIndex(0, selector);
         if (currentIndex == targetIndex)
         {
             return;
@@ -225,7 +225,7 @@ public static class BaseListExtensions
         Dictionary<T, bool> visited)
     {
         bool inProcess;
-        var alreadyVisited = visited.TryGetValue(item, out inProcess);
+        bool alreadyVisited = visited.TryGetValue(item, out inProcess);
 
         if (alreadyVisited)
         {

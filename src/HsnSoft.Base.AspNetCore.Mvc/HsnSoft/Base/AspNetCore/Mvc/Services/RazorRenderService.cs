@@ -97,7 +97,7 @@ public class RazorRenderService : IRazorRenderService
         }
 
         var searchedLocations = getPageResult.SearchedLocations.Concat(findPageResult.SearchedLocations);
-        var errorMessage = string.Join(
+        string errorMessage = string.Join(
             Environment.NewLine,
             new[] { $"Unable to find page '{pageName}'. The following locations were searched:" }.Concat(searchedLocations));
         throw new InvalidOperationException(errorMessage);

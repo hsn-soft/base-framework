@@ -41,7 +41,7 @@ public sealed class RabbitMqPersistentConnection(IOptions<RabbitMqConnectionSett
 
     public async Task<bool> TryConnectAsync()
     {
-        var conCount = await GetRabbitMqConnectionCountAsync();
+        int conCount = await GetRabbitMqConnectionCountAsync();
         logger.LogInformation("RabbitMQ Connection Count [{Count}]", conCount);
         logger.LogInformation("RabbitMQ Client is trying to connect");
 
@@ -141,13 +141,13 @@ public sealed class RabbitMqPersistentConnection(IOptions<RabbitMqConnectionSett
             using var httpClient = new HttpClient();
 
             var request = new HttpRequestMessage(HttpMethod.Get, $"http://{conSettings.Value.HostName}:{conSettings.Value.Port}/api/connections");
-            var byteArray = System.Text.Encoding.ASCII.GetBytes($"{conSettings.Value.UserName}:{conSettings.Value.Password}");
+            byte[] byteArray = System.Text.Encoding.ASCII.GetBytes($"{conSettings.Value.UserName}:{conSettings.Value.Password}");
             request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
 
             using var response = await httpClient.SendAsync(request);
             response.EnsureSuccessStatusCode();
 
-            var json = await response.Content.ReadAsStringAsync();
+            string json = await response.Content.ReadAsStringAsync();
 
             connections = System.Text.Json.JsonSerializer.Deserialize<List<object>>(json);
         }

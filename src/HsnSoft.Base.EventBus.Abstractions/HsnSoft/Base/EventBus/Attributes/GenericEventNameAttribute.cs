@@ -22,7 +22,7 @@ public class GenericEventNameAttribute : Attribute, IEventNameProvider
             throw new BaseException($"Given type has more than one generic argument: {eventType.AssemblyQualifiedName}");
         }
 
-        var eventName = EventNameAttribute.GetNameOrDefault(genericArguments[0]);
+        string eventName = EventNameAttribute.GetNameOrDefault(genericArguments[0]);
 
         if (!Prefix.IsNullOrEmpty())
         {

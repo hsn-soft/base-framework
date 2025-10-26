@@ -15,12 +15,12 @@ public class BaseStringToBooleanConverter : JsonConverter<bool>
         if (reader.TokenType == JsonTokenType.String)
         {
             var span = reader.HasValueSequence ? reader.ValueSequence.ToArray() : reader.ValueSpan;
-            if (Utf8Parser.TryParse(span, out bool b1, out var bytesConsumed) && span.Length == bytesConsumed)
+            if (Utf8Parser.TryParse(span, out bool b1, out int bytesConsumed) && span.Length == bytesConsumed)
             {
                 return b1;
             }
 
-            if (bool.TryParse(reader.GetString(), out var b2))
+            if (bool.TryParse(reader.GetString(), out bool b2))
             {
                 return b2;
             }

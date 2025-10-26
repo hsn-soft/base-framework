@@ -101,7 +101,7 @@ public class RedisRepository<T> : IRedisRepository<T> where T : class, new()
 
         try
         {
-            var data = JsonConvert.SerializeObject(dataValue);
+            string data = JsonConvert.SerializeObject(dataValue);
             await _database.ListRightPushAsync(listKey, data);
             return true;
         }
@@ -118,7 +118,7 @@ public class RedisRepository<T> : IRedisRepository<T> where T : class, new()
 
         try
         {
-            var data = JsonConvert.SerializeObject(dataValue);
+            string data = JsonConvert.SerializeObject(dataValue);
             await _database.ListRemoveAsync(listKey, data);
             return true;
         }
@@ -152,7 +152,7 @@ public class RedisRepository<T> : IRedisRepository<T> where T : class, new()
 
         try
         {
-            var incrementalKey = $"{dataKey}:_index";
+            string incrementalKey = $"{dataKey}:_index";
 
             return (int)_database.StringIncrement(new RedisKey(incrementalKey), 1);
         }

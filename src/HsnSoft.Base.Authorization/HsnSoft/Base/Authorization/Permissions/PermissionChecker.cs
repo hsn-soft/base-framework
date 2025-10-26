@@ -40,7 +40,7 @@ public class PermissionChecker : IPermissionChecker, ITransientDependency
     {
         Check.NotNull(name, nameof(name));
 
-        var isGranted = false;
+        bool isGranted = false;
         var context = new PermissionValueCheckContext(name, claimsPrincipal);
         foreach (var provider in _providers)
         {

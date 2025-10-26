@@ -38,7 +38,7 @@ namespace HsnSoft.Base.AspNetCore.Serilog.LogMask;
                 return new LogEventProperty(propertyMaskingInfo.PropertyInfo.Name,
                     propertyValueFactory.CreatePropertyValue(MaskStrings.Default));
 
-            var propertyValue = SafeGetPropertyValue(value, propertyMaskingInfo.PropertyInfo);
+            object propertyValue = SafeGetPropertyValue(value, propertyMaskingInfo.PropertyInfo);
             return new LogEventProperty(propertyMaskingInfo.PropertyInfo.Name,
                 propertyValueFactory.CreatePropertyValue(propertyValue, true));
         }

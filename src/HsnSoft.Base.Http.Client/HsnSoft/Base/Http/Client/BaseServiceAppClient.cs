@@ -77,7 +77,7 @@ public abstract class BaseServiceAppClient
 
         try
         {
-            var responseContentJson = await response.Content.ReadAsStringAsync();
+            string responseContentJson = await response.Content.ReadAsStringAsync();
 
             var baseModel = JsonConvert.DeserializeObject<BaseResponse<T>>(responseContentJson);
 

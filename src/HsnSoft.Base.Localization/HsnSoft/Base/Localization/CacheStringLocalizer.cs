@@ -51,7 +51,7 @@ public sealed class CacheStringLocalizer : IStringLocalizer
     private ILocalizationDictionary GetLocalizationDictionary()
     {
         // string test = CultureInfo.CurrentUICulture.Name;
-        var cultureName = Thread.CurrentThread.CurrentCulture.Name;
+        string cultureName = Thread.CurrentThread.CurrentCulture.Name;
 
         //Try to get from same language dictionary (without country code)
         if (cultureName.Contains('-')) //Example: "tr-TR" (length=5)
@@ -59,7 +59,7 @@ public sealed class CacheStringLocalizer : IStringLocalizer
             cultureName = CultureHelper.GetBaseCultureName(cultureName);
         }
 
-        var cacheKey = $"locale_{cultureName}_{_resourceTypes.First().Name}";
+        string cacheKey = $"locale_{cultureName}_{_resourceTypes.First().Name}";
 
         // If found in cache, return cached data
         if (_cache.TryGetValue(cacheKey, out ServiceResourceDictionary localizationDictionary))

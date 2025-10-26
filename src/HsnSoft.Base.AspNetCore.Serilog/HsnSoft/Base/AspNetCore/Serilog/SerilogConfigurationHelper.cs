@@ -88,13 +88,13 @@ public static class SerilogConfigurationHelper
             .Enrich.WithProperty("Solution", AppDomain.CurrentDomain.FriendlyName.Split('.').First())
             .Enrich.WithProperty("Assembly", AppDomain.CurrentDomain.FriendlyName);
 
-        var isGrayLogActive = false;
+        bool isGrayLogActive = false;
         try
         {
             if (bool.Parse(configuration["FrameworkLogger:IsGrayLogActive"] ?? throw new InvalidOperationException()))
             {
                 isGrayLogActive = true;
-                int.TryParse(configuration["FrameworkLogger:GrayLog:Port"], out var grayLogPort);
+                int.TryParse(configuration["FrameworkLogger:GrayLog:Port"], out int grayLogPort);
                 loggerConfiguration = loggerConfiguration
                     .WriteTo.Conditional(logEvent => logEvent is { Level: LogEventLevel.Verbose or LogEventLevel.Fatal }, sinkConfiguration =>
                     {

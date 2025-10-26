@@ -60,7 +60,7 @@ public static class EnumHelper
         if (_localizer == null) return resourceValue ?? string.Empty;
         if (string.IsNullOrWhiteSpace(resourceValue)) return string.Empty;
 
-        var resourceKey = $"Enum:{typeof(T).Name}:{resourceValue}";
+        string resourceKey = $"Enum:{typeof(T).Name}:{resourceValue}";
         string desc = _localizer[resourceKey];
         if (string.IsNullOrWhiteSpace(desc) || desc.Equals(resourceKey)) desc = _localizer[$"Enum:{resourceValue}"];
 
