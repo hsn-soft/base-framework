@@ -11,29 +11,29 @@ namespace HsnSoft.Base.Domain.Repositories;
 public class RedisRepository<T> : IRedisRepository<T> where T : class, new()
 {
     private readonly IBaseLogger _logger;
-    private readonly IDatabase _database;
+    protected readonly IDatabase Database;
 
-    public RedisRepository(IBaseLogger logger, IConnectionMultiplexer redis)
+    protected RedisRepository(IBaseLogger logger, IConnectionMultiplexer redis)
     {
         _logger = logger;
-        _database = redis.GetDatabase();
+        Database = redis.GetDatabase();
     }
 
     public async Task<T> GetDataAsync(string dataKey)
     {
-        if (string.IsNullOrWhiteSpace(dataKey)) return default;
+        if (string.IsNullOrWhiteSpace(dataKey)) return null;
 
-        var data = await _database.StringGetAsync(new RedisKey(dataKey));
+        var data = await Database.StringGetAsync(new RedisKey(dataKey));
 
         T result;
         try
         {
-            result = data.IsNullOrEmpty ? default : JsonConvert.DeserializeObject<T>(data);
+            result = data.IsNullOrEmpty ? null : JsonConvert.DeserializeObject<T>(data);
         }
         catch (Exception e)
         {
             _logger.LogError($"Redis Error: {e.Message}");
-            result = default;
+            result = null;
         }
 
         return result;
@@ -46,7 +46,7 @@ public class RedisRepository<T> : IRedisRepository<T> where T : class, new()
         bool result;
         try
         {
-            result = await _database.StringSetAsync(new RedisKey(dataKey), new RedisValue(JsonConvert.SerializeObject(dataValue)), expiry);
+            result = await Database.StringSetAsync(new RedisKey(dataKey), new RedisValue(JsonConvert.SerializeObject(dataValue)), expiry);
         }
         catch (Exception e)
         {
@@ -64,7 +64,7 @@ public class RedisRepository<T> : IRedisRepository<T> where T : class, new()
         bool result;
         try
         {
-            result = await _database.KeyDeleteAsync(new RedisKey(dataKey));
+            result = await Database.KeyDeleteAsync(new RedisKey(dataKey));
         }
         catch (Exception e)
         {
@@ -77,12 +77,12 @@ public class RedisRepository<T> : IRedisRepository<T> where T : class, new()
 
     public async Task<IEnumerable<T>> GetDataListAsync(string listKey)
     {
-        if (string.IsNullOrWhiteSpace(listKey)) return Enumerable.Empty<T>();
+        if (string.IsNullOrWhiteSpace(listKey)) return [];
 
         try
         {
-            var values = await _database.ListRangeAsync(listKey);
-            if (values.Length == 0) return Enumerable.Empty<T>();
+            var values = await Database.ListRangeAsync(listKey);
+            if (values.Length == 0) return [];
 
             var dataList = values.Select(value => JsonConvert.DeserializeObject<T>(value));
 
@@ -91,7 +91,7 @@ public class RedisRepository<T> : IRedisRepository<T> where T : class, new()
         catch (Exception e)
         {
             _logger.LogError($"Redis Error: {e.Message}");
-            return Enumerable.Empty<T>();
+            return [];
         }
     }
 
@@ -102,7 +102,7 @@ public class RedisRepository<T> : IRedisRepository<T> where T : class, new()
         try
         {
             string data = JsonConvert.SerializeObject(dataValue);
-            await _database.ListRightPushAsync(listKey, data);
+            await Database.ListRightPushAsync(listKey, data);
             return true;
         }
         catch (Exception e)
@@ -119,7 +119,7 @@ public class RedisRepository<T> : IRedisRepository<T> where T : class, new()
         try
         {
             string data = JsonConvert.SerializeObject(dataValue);
-            await _database.ListRemoveAsync(listKey, data);
+            await Database.ListRemoveAsync(listKey, data);
             return true;
         }
         catch (Exception e)
@@ -135,7 +135,7 @@ public class RedisRepository<T> : IRedisRepository<T> where T : class, new()
 
         try
         {
-            var dataValue = await _database.ListLeftPopAsync(listKey);
+            var dataValue = await Database.ListLeftPopAsync(listKey);
             var data = JsonConvert.DeserializeObject<T>(dataValue);
             return data;
         }
@@ -154,7 +154,7 @@ public class RedisRepository<T> : IRedisRepository<T> where T : class, new()
         {
             string incrementalKey = $"{dataKey}:_index";
 
-            return (int)_database.StringIncrement(new RedisKey(incrementalKey), 1);
+            return (int)Database.StringIncrement(new RedisKey(incrementalKey));
         }
         catch (Exception e)
         {
