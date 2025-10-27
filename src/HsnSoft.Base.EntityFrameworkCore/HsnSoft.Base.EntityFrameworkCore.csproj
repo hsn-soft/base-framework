@@ -20,6 +20,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Include="EFCore.BulkExtensions" Version="9.0.2" />
         <PackageReference Include="Microsoft.EntityFrameworkCore" Version="$(MicrosoftEntityFrameworkCorePackageVersion)" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="$(MicrosoftEntityFrameworkCorePackageVersion)" />
     </ItemGroup>
