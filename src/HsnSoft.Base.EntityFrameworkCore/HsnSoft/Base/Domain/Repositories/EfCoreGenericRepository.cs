@@ -7,13 +7,16 @@ using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
+using EFCore.BulkExtensions;
 using HsnSoft.Base.Domain.Entities;
 using HsnSoft.Base.Domain.Models;
+using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 
 namespace HsnSoft.Base.Domain.Repositories;
 
-public class EfCoreGenericRepository<TEntity, TKey>(IServiceProvider provider, DbContext context) : GenericRepositoryBase<TEntity, TKey>(provider),
+public class EfCoreGenericRepository<TEntity, TKey>(IServiceProvider provider, DbContext context) :
+    GenericRepositoryBase<TEntity, TKey>(provider),
     IEfCoreGenericRepository<TEntity, TKey>
     where TEntity : class, IEntity<TKey>
 {
@@ -113,7 +116,7 @@ public class EfCoreGenericRepository<TEntity, TKey>(IServiceProvider provider, D
         var result = await QueryGetPageListAsync(options, cancellationToken);
         var items = await result.query.Select(selector).ToListAsync(cancellationToken);
 
-        return new PagedQueryResult<TResult> { Items = items, TotalCount = result.totalCount};
+        return new PagedQueryResult<TResult> { Items = items, TotalCount = result.totalCount };
     }
 
     public override async Task<PagedQueryResult<TResult>> GetPageListAsync<TResult>(
@@ -124,7 +127,7 @@ public class EfCoreGenericRepository<TEntity, TKey>(IServiceProvider provider, D
         var result = await QueryGetPageListAsync(options, cancellationToken);
         var items = await result.query.ProjectTo<TResult>(configuration).ToListAsync(cancellationToken);
 
-        return new PagedQueryResult<TResult> { Items = items, TotalCount = result.totalCount};
+        return new PagedQueryResult<TResult> { Items = items, TotalCount = result.totalCount };
     }
 
     private async Task<(IQueryable<TEntity> query, long totalCount)> QueryGetPageListAsync(PagedQueryOptions<TEntity> options, CancellationToken cancellationToken = default)
@@ -254,4 +257,46 @@ public class EfCoreGenericRepository<TEntity, TKey>(IServiceProvider provider, D
 
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         => _context.SaveChangesAsync(cancellationToken);
+
+    #region Raw SQL
+
+    public virtual async Task<int> ExecuteSqlAsync(
+        string sql, object[] parameters = null,
+        CancellationToken cancellationToken = default)
+        => await _context.Database.ExecuteSqlRawAsync(sql, parameters ?? [], cancellationToken);
+
+    public virtual IQueryable<TEntity> FromSql(string sql, params object[] parameters)
+        => _context.Set<TEntity>().FromSqlRaw(sql, parameters);
+
+    #endregion
+
+    public async Task BulkInsertAsync(IEnumerable<TEntity> entities, Action<BulkConfig> configAction = null, CancellationToken cancellationToken = default)
+        => await _context.BulkInsertAsync(entities, cfg => ApplyDefaults(cfg, configAction), cancellationToken: cancellationToken);
+
+    public async Task BulkUpdateAsync(IEnumerable<TEntity> entities, Action<BulkConfig> configAction = null, CancellationToken cancellationToken = default)
+        => await _context.BulkUpdateAsync(entities, cfg => ApplyDefaults(cfg, configAction), cancellationToken: cancellationToken);
+
+    public async Task BulkDeleteAsync(IEnumerable<TEntity> entities, Action<BulkConfig> configAction = null, CancellationToken cancellationToken = default)
+        => await _context.BulkDeleteAsync(entities, cfg => ApplyDefaults(cfg, configAction), cancellationToken: cancellationToken);
+
+    public async Task BulkMergeAsync(IEnumerable<TEntity> entities, Action<BulkConfig> configAction = null, CancellationToken cancellationToken = default)
+        => await _context.BulkInsertOrUpdateAsync(entities, cfg => ApplyDefaults(cfg, configAction), cancellationToken: cancellationToken);
+
+    public async Task BulkSyncAsync(IEnumerable<TEntity> entities, Action<BulkConfig> configAction = null, CancellationToken cancellationToken = default)
+        => await _context.BulkInsertOrUpdateOrDeleteAsync(entities, cfg => ApplyDefaults(cfg, configAction), cancellationToken: cancellationToken);
+
+    public async Task BulkReadAsync(IEnumerable<TEntity> entities, Action<BulkConfig> configAction = null, CancellationToken cancellationToken = default)
+        => await _context.BulkReadAsync(entities, cfg => ApplyDefaults(cfg, configAction), cancellationToken: cancellationToken);
+
+    public async Task BulkTruncateAsync(Action<BulkConfig> configAction = null, CancellationToken cancellationToken = default)
+        => await _context.TruncateAsync<TEntity>(cfg => ApplyDefaults(cfg, configAction), cancellationToken: cancellationToken);
+
+    private static void ApplyDefaults(BulkConfig bulkConfig, [CanBeNull] Action<BulkConfig> userConfig)
+    {
+        bulkConfig.BatchSize = 5000;
+        bulkConfig.UseTempDB = true;
+        bulkConfig.PreserveInsertOrder = false;
+        bulkConfig.SetOutputIdentity = true;
+        userConfig?.Invoke(bulkConfig);
+    }
 }
