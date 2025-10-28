@@ -255,7 +255,7 @@ public class EfCoreGenericRepository<TEntity, TKey>(IServiceProvider provider, D
         return await DeleteByIdListAsync(ids, cancellationToken);
     }
 
-    public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    private Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         => _context.SaveChangesAsync(cancellationToken);
 
     #region Raw SQL
@@ -271,25 +271,116 @@ public class EfCoreGenericRepository<TEntity, TKey>(IServiceProvider provider, D
     #endregion
 
     public async Task BulkInsertAsync(IEnumerable<TEntity> entities, Action<BulkConfig> configAction = null, CancellationToken cancellationToken = default)
-        => await _context.BulkInsertAsync(entities, cfg => ApplyDefaults(cfg, configAction), cancellationToken: cancellationToken);
+    {
+        var defaultConfig = new BulkConfig();
+        ApplyDefaults(defaultConfig, configAction);
+
+        if (defaultConfig.UseTempDB) // use transaction for tempDb
+        {
+            await using var trx = await _context.Database.BeginTransactionAsync(cancellationToken);
+            await _context.BulkInsertAsync(entities, cfg => ApplyDefaults(cfg, configAction), cancellationToken: cancellationToken);
+            await trx.CommitAsync(cancellationToken);
+            return;
+        }
+
+        await _context.BulkInsertAsync(entities, cfg => ApplyDefaults(cfg, configAction), cancellationToken: cancellationToken);
+    }
 
     public async Task BulkUpdateAsync(IEnumerable<TEntity> entities, Action<BulkConfig> configAction = null, CancellationToken cancellationToken = default)
-        => await _context.BulkUpdateAsync(entities, cfg => ApplyDefaults(cfg, configAction), cancellationToken: cancellationToken);
+    {
+        var defaultConfig = new BulkConfig();
+        ApplyDefaults(defaultConfig, configAction);
+
+        if (defaultConfig.UseTempDB) // use transaction for tempDb
+        {
+            await using var trx = await _context.Database.BeginTransactionAsync(cancellationToken);
+            await _context.BulkUpdateAsync(entities, cfg => ApplyDefaults(cfg, configAction), cancellationToken: cancellationToken);
+            await trx.CommitAsync(cancellationToken);
+            return;
+        }
+
+        await _context.BulkUpdateAsync(entities, cfg => ApplyDefaults(cfg, configAction), cancellationToken: cancellationToken);
+    }
 
     public async Task BulkDeleteAsync(IEnumerable<TEntity> entities, Action<BulkConfig> configAction = null, CancellationToken cancellationToken = default)
-        => await _context.BulkDeleteAsync(entities, cfg => ApplyDefaults(cfg, configAction), cancellationToken: cancellationToken);
+    {
+        var defaultConfig = new BulkConfig();
+        ApplyDefaults(defaultConfig, configAction);
+
+        if (defaultConfig.UseTempDB) // use transaction for tempDb
+        {
+            await using var trx = await _context.Database.BeginTransactionAsync(cancellationToken);
+            await _context.BulkDeleteAsync(entities, defaultConfig, cancellationToken: cancellationToken);
+            await trx.CommitAsync(cancellationToken);
+            return;
+        }
+
+        await _context.BulkDeleteAsync(entities, defaultConfig, cancellationToken: cancellationToken);
+    }
 
     public async Task BulkMergeAsync(IEnumerable<TEntity> entities, Action<BulkConfig> configAction = null, CancellationToken cancellationToken = default)
-        => await _context.BulkInsertOrUpdateAsync(entities, cfg => ApplyDefaults(cfg, configAction), cancellationToken: cancellationToken);
+    {
+        var defaultConfig = new BulkConfig();
+        ApplyDefaults(defaultConfig, configAction);
+
+        if (defaultConfig.UseTempDB) // use transaction for tempDb
+        {
+            await using var trx = await _context.Database.BeginTransactionAsync(cancellationToken);
+            await _context.BulkInsertOrUpdateAsync(entities, cfg => ApplyDefaults(cfg, configAction), cancellationToken: cancellationToken);
+            await trx.CommitAsync(cancellationToken);
+            return;
+        }
+
+        await _context.BulkInsertOrUpdateAsync(entities, cfg => ApplyDefaults(cfg, configAction), cancellationToken: cancellationToken);
+    }
 
     public async Task BulkSyncAsync(IEnumerable<TEntity> entities, Action<BulkConfig> configAction = null, CancellationToken cancellationToken = default)
-        => await _context.BulkInsertOrUpdateOrDeleteAsync(entities, cfg => ApplyDefaults(cfg, configAction), cancellationToken: cancellationToken);
+    {
+        var defaultConfig = new BulkConfig();
+        ApplyDefaults(defaultConfig, configAction);
+
+        if (defaultConfig.UseTempDB) // use transaction for tempDb
+        {
+            await using var trx = await _context.Database.BeginTransactionAsync(cancellationToken);
+            await _context.BulkInsertOrUpdateOrDeleteAsync(entities, cfg => ApplyDefaults(cfg, configAction), cancellationToken: cancellationToken);
+            await trx.CommitAsync(cancellationToken);
+            return;
+        }
+
+        await _context.BulkInsertOrUpdateOrDeleteAsync(entities, cfg => ApplyDefaults(cfg, configAction), cancellationToken: cancellationToken);
+    }
 
     public async Task BulkReadAsync(IEnumerable<TEntity> entities, Action<BulkConfig> configAction = null, CancellationToken cancellationToken = default)
-        => await _context.BulkReadAsync(entities, cfg => ApplyDefaults(cfg, configAction), cancellationToken: cancellationToken);
+    {
+        var defaultConfig = new BulkConfig();
+        ApplyDefaults(defaultConfig, configAction);
+
+        if (defaultConfig.UseTempDB) // use transaction for tempDb
+        {
+            await using var trx = await _context.Database.BeginTransactionAsync(cancellationToken);
+            await _context.BulkReadAsync(entities, cfg => ApplyDefaults(cfg, configAction), cancellationToken: cancellationToken);
+            await trx.CommitAsync(cancellationToken);
+            return;
+        }
+
+        await _context.BulkReadAsync(entities, cfg => ApplyDefaults(cfg, configAction), cancellationToken: cancellationToken);
+    }
 
     public async Task BulkTruncateAsync(Action<BulkConfig> configAction = null, CancellationToken cancellationToken = default)
-        => await _context.TruncateAsync<TEntity>(cfg => ApplyDefaults(cfg, configAction), cancellationToken: cancellationToken);
+    {
+        var defaultConfig = new BulkConfig();
+        ApplyDefaults(defaultConfig, configAction);
+
+        if (defaultConfig.UseTempDB) // use transaction for tempDb
+        {
+            await using var trx = await _context.Database.BeginTransactionAsync(cancellationToken);
+            await _context.TruncateAsync<TEntity>(cfg => ApplyDefaults(cfg, configAction), cancellationToken: cancellationToken);
+            await trx.CommitAsync(cancellationToken);
+            return;
+        }
+
+        await _context.TruncateAsync<TEntity>(cfg => ApplyDefaults(cfg, configAction), cancellationToken: cancellationToken);
+    }
 
     private static void ApplyDefaults(BulkConfig bulkConfig, [CanBeNull] Action<BulkConfig> userConfig)
     {
