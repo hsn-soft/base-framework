@@ -226,11 +226,13 @@ public sealed class PuppeteerBrowser : IPuppeteerBrowser
             if (!string.IsNullOrWhiteSpace(proxyHost) && !string.IsNullOrWhiteSpace(proxyPort))
             {
                 checkedArgs.Add($"--proxy-server=http://{proxyHost}:{proxyPort}");
+                _logger.LogDebug($"{nameof(PuppeteerBrowser)} | PROXY_SERVER_ADDED => http://{proxyHost}:{proxyPort}");
             }
+            _logger.LogDebug($"{nameof(PuppeteerBrowser)} | PROXY_SERVER_DEFINITION_SKIPPED");
         }
         catch (Exception)
         {
-            // ignore
+            _logger.LogWarning($"{nameof(PuppeteerBrowser)} | PROXY_SERVER_DEFINITION_FAILED");
         }
 
         var launchOptions = new LaunchOptions { Headless = _browserSettings.Headless, LogProcess = _browserSettings.LogProcess, Args = checkedArgs.ToArray() };
