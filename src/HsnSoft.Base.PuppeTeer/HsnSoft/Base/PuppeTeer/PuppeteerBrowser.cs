@@ -260,10 +260,7 @@ public sealed class PuppeteerBrowser : IPuppeteerBrowser
         }
         else
         {
-            // override headless mode for container
-            launchOptions.Headless = true;
             _logger.LogDebug($"{nameof(PuppeteerBrowser)} | Chromium download SKIPPED => Container Mode is Active");
-
             launchOptions.ExecutablePath = "/usr/bin/chromium";
         }
 
