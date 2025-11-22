@@ -19,11 +19,9 @@ public sealed class PuppeteerBrowser : IPuppeteerBrowser
     private readonly CancellationToken _applicationStoppingToken;
 
     // initialization
-    [CanBeNull]
-    private IBrowser _ptBrowser;
+    [CanBeNull] private IBrowser _ptBrowser;
 
-    [CanBeNull]
-    private Task _initializationTask;
+    [CanBeNull] private Task _initializationTask;
 
     private bool _disposed;
 
@@ -37,8 +35,7 @@ public sealed class PuppeteerBrowser : IPuppeteerBrowser
     private readonly TimeSpan _freePageWaitTimeout;
 
     // cleanup fields
-    [CanBeNull]
-    private readonly Task _cleanupTask;
+    [CanBeNull] private readonly Task _cleanupTask;
 
     private readonly TimeSpan _cleanupInterval; // check idle pages in one minute
     private readonly TimeSpan _pageMaxIdleTime; // page max lifetime
@@ -200,27 +197,45 @@ public sealed class PuppeteerBrowser : IPuppeteerBrowser
 
     private async Task<LaunchOptions> CheckAndGetLaunchOptions()
     {
-        var launchOptions = new LaunchOptions
+        List<string> defaultArgs =
+        [
+            "--no-sandbox",
+            "--disable-gpu",
+            "--disable-dev-shm-usage",
+            "--disable-setuid-sandbox",
+            "--single-process",
+            "--disable-web-security",
+            "--disable-features=IsolateOrigins,site-per-process",
+            "--disable-extensions", // adblock extension closer
+            "--disable-blink-features=AutomationControlled", // stealth
+            "--ignore-certificate-errors",
+            "--allow-insecure-localhost",
+            "--disable-client-side-phishing-detection"
+        ];
+
+        // Check external arguments
+        List<string> checkedArgs = _browserSettings.Args is { Length: > 0 }
+            ? _browserSettings.Args.Where(arg => !arg.ToLower().StartsWith("--proxy-server")).ToList()
+            : defaultArgs;
+
+        // Check proxy server
+        try
         {
-            Headless = _browserSettings.Headless,
-            LogProcess = _browserSettings.LogProcess,
-            Args = _browserSettings.Args is { Length: > 0 }
-                ? _browserSettings.Args
-                :
-                [
-                    "--no-sandbox",
-                    "--disable-gpu",
-                    "--disable-dev-shm-usage",
-                    "--disable-setuid-sandbox",
-                    "--disable-web-security",
-                    "--disable-features=IsolateOrigins,site-per-process",
-                    "--disable-extensions",          // adblock extension closer
-                    "--disable-blink-features=AutomationControlled", // stealth
-                    "--ignore-certificate-errors",
-                    "--allow-insecure-localhost",
-                    "--disable-client-side-phishing-detection"
-                ]
-        };
+            string proxyHost = Environment.GetEnvironmentVariable("PUPPETEER_PROXY_HOST");
+            string proxyPort = Environment.GetEnvironmentVariable("PUPPETEER_PROXY_PORT");
+            if (!string.IsNullOrWhiteSpace(proxyHost) && !string.IsNullOrWhiteSpace(proxyPort))
+            {
+                checkedArgs.Add($"--proxy-server=http://{proxyHost}:{proxyPort}");
+                _logger.LogDebug($"{nameof(PuppeteerBrowser)} | PROXY_SERVER_ADDED => http://{proxyHost}:{proxyPort}");
+            }
+            _logger.LogDebug($"{nameof(PuppeteerBrowser)} | PROXY_SERVER_DEFINITION_SKIPPED");
+        }
+        catch (Exception)
+        {
+            _logger.LogWarning($"{nameof(PuppeteerBrowser)} | PROXY_SERVER_DEFINITION_FAILED");
+        }
+
+        var launchOptions = new LaunchOptions { Headless = _browserSettings.Headless, LogProcess = _browserSettings.LogProcess, Args = checkedArgs.ToArray() };
 
         string inContainer = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER");
         bool skipDownloadOperation = !string.IsNullOrWhiteSpace(inContainer) && inContainer == "true";
@@ -260,7 +275,10 @@ public sealed class PuppeteerBrowser : IPuppeteerBrowser
         }
         else
         {
+            // override headless mode for container
+            launchOptions.Headless = true;
             _logger.LogDebug($"{nameof(PuppeteerBrowser)} | Chromium download SKIPPED => Container Mode is Active");
+
             launchOptions.ExecutablePath = "/usr/bin/chromium";
         }
 
