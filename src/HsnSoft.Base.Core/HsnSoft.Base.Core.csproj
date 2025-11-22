@@ -38,7 +38,7 @@
         <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="$(MicrosoftAspNetCorePackageVersion)" />
         <PackageReference Include="System.Text.Encodings.Web" Version="$(MicrosoftAspNetCorePackageVersion)" />
         <PackageReference Include="System.Runtime.Loader" Version="4.3.0" />
-        <PackageReference Include="System.Linq.Dynamic.Core" Version="1.6.9" />
+        <PackageReference Include="System.Linq.Dynamic.Core" Version="1.7.0" />
         <PackageReference Include="System.Linq.Queryable" Version="4.3.0" />
         <PackageReference Include="JetBrains.Annotations" Version="2025.2.2" />
         <PackageReference Include="Nito.AsyncEx.Coordination" Version="5.1.2" />

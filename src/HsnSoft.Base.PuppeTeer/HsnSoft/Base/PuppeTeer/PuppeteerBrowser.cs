@@ -213,7 +213,12 @@ public sealed class PuppeteerBrowser : IPuppeteerBrowser
                     "--disable-dev-shm-usage",
                     "--disable-setuid-sandbox",
                     "--disable-web-security",
-                    "--disable-features=IsolateOrigins,site-per-process"
+                    "--disable-features=IsolateOrigins,site-per-process",
+                    "--disable-extensions",          // adblock extension closer
+                    "--disable-blink-features=AutomationControlled", // stealth
+                    "--ignore-certificate-errors",
+                    "--allow-insecure-localhost",
+                    "--disable-client-side-phishing-detection"
                 ]
         };
 
