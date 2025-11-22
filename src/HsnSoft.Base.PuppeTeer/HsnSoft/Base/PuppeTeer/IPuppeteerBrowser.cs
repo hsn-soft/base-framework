@@ -8,10 +8,12 @@ namespace HsnSoft.Base.PuppeTeer;
 
 public interface IPuppeteerBrowser : IDisposable
 {
-    public int ActivePagesCount { get; }
-    public int PooledPagesCount { get; }
-    public int MaxPagesCount { get; }
-    public string InitializationResult { get; }
+    int ActivePagesCount { get; }
+    int PooledPagesCount { get; }
+    int MaxPagesCount { get; }
+    string InitializationResult { get; }
+    bool HasProxyServer { get; }
+    string[] Args { get; }
 
     [ItemCanBeNull]
     Task<IBrowser> GetBrowserSafelyAsync(CancellationToken cancellationToken = default);

@@ -45,6 +45,8 @@ public sealed class PuppeteerBrowser : IPuppeteerBrowser
     public int PooledPagesCount => _pages.Count;
     public int MaxPagesCount => _browserSettings.PageMaxCount;
     public string InitializationResult { get; private set; } = string.Empty;
+    public bool HasProxyServer { get; private set; }
+    public string[] Args { get; private set; } = [];
 
     public PuppeteerBrowser(
         IBaseLogger logger,
@@ -215,7 +217,7 @@ public sealed class PuppeteerBrowser : IPuppeteerBrowser
 
         // Check external arguments
         List<string> checkedArgs = _browserSettings.Args is { Length: > 0 }
-            ? _browserSettings.Args.Where(arg => !arg.ToLower().StartsWith("--proxy-server")).ToList()
+            ? _browserSettings.Args.Where(arg => !arg.StartsWith("--proxy-server", StringComparison.CurrentCultureIgnoreCase)).ToList()
             : defaultArgs;
 
         // Check proxy server
@@ -228,6 +230,7 @@ public sealed class PuppeteerBrowser : IPuppeteerBrowser
                 checkedArgs.Add($"--proxy-server=http://{proxyHost}:{proxyPort}");
                 _logger.LogDebug($"{nameof(PuppeteerBrowser)} | PROXY_SERVER_ADDED => http://{proxyHost}:{proxyPort}");
             }
+
             _logger.LogDebug($"{nameof(PuppeteerBrowser)} | PROXY_SERVER_DEFINITION_SKIPPED");
         }
         catch (Exception)
@@ -235,7 +238,9 @@ public sealed class PuppeteerBrowser : IPuppeteerBrowser
             _logger.LogWarning($"{nameof(PuppeteerBrowser)} | PROXY_SERVER_DEFINITION_FAILED");
         }
 
-        var launchOptions = new LaunchOptions { Headless = _browserSettings.Headless, LogProcess = _browserSettings.LogProcess, Args = checkedArgs.ToArray() };
+        Args = checkedArgs.ToArray();
+        HasProxyServer = checkedArgs.Any(x => x.StartsWith("--proxy-server", StringComparison.CurrentCultureIgnoreCase));
+        var launchOptions = new LaunchOptions { Headless = _browserSettings.Headless, LogProcess = _browserSettings.LogProcess, Args = Args };
 
         string inContainer = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER");
         bool skipDownloadOperation = !string.IsNullOrWhiteSpace(inContainer) && inContainer == "true";
