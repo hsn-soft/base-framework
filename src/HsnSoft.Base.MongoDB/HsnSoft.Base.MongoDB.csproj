@@ -16,7 +16,7 @@
 
     <ItemGroup>
         <PackageReference Include="LinqKit" Version="1.3.9" />
-        <PackageReference Include="MongoDB.Driver" Version="3.5.1" />
+        <PackageReference Include="MongoDB.Driver" Version="3.5.2" />
     </ItemGroup>
 
     <ItemGroup>
