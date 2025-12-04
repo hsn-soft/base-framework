@@ -16,7 +16,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\HsnSoft.Base.BlobStoring\HsnSoft.Base.BlobStoring.csproj" />
-        <PackageReference Include="AWSSDK.S3" Version="4.0.13.1" />
+        <PackageReference Include="AWSSDK.S3" Version="4.0.14" />
     </ItemGroup>
 
 </Project>
