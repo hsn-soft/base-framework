@@ -4,7 +4,7 @@
     <Import Project="..\..\common.props" />
 
     <PropertyGroup>
-        <TargetFramework>net9.0</TargetFramework>
+        <TargetFramework>net10.0</TargetFramework>
         <AssemblyName>HsnSoft.Base.PuppeTeer</AssemblyName>
         <PackageId>HsnSoft.Base.PuppeTeer</PackageId>
         <AssetTargetFallback>$(AssetTargetFallback);portable-net45+win8+wp8+wpa81;</AssetTargetFallback>
@@ -15,7 +15,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="PuppeteerSharp" Version="20.2.4" />
+        <PackageReference Include="PuppeteerSharp" Version="20.2.5" />
     </ItemGroup>
 
     <ItemGroup>
