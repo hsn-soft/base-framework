@@ -4,7 +4,7 @@ using HsnSoft.Base.Test.Api.Application;
 using HsnSoft.Base.Test.Api.EfCore;
 using HsnSoft.Base.Test.Api.MongoDb;
 using HsnSoft.Base.Tracing;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using Serilog;
 
 namespace HsnSoft.Base.Test.Api;

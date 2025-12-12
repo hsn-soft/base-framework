@@ -4,7 +4,7 @@
     <Import Project="..\..\common.props" />
 
     <PropertyGroup>
-        <TargetFramework>net9.0</TargetFramework>
+        <TargetFramework>net10.0</TargetFramework>
         <AssemblyName>HsnSoft.Base.BlobStoring.Aws</AssemblyName>
         <PackageId>HsnSoft.Base.BlobStoring.Aws</PackageId>
         <AssetTargetFallback>$(AssetTargetFallback);portable-net45+win8+wp8+wpa81;</AssetTargetFallback>
@@ -16,7 +16,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\HsnSoft.Base.BlobStoring\HsnSoft.Base.BlobStoring.csproj" />
-        <PackageReference Include="AWSSDK.S3" Version="4.0.14" />
+        <PackageReference Include="AWSSDK.S3" Version="4.0.14.3" />
     </ItemGroup>
 
 </Project>
