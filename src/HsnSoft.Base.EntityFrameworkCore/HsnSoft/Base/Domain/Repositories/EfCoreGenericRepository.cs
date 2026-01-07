@@ -12,6 +12,7 @@ using HsnSoft.Base.Domain.Entities;
 using HsnSoft.Base.Domain.Models;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query;
 
 namespace HsnSoft.Base.Domain.Repositories;
 
@@ -199,6 +200,16 @@ public class EfCoreGenericRepository<TEntity, TKey>(IServiceProvider provider, D
         await SaveChangesAsync(cancellationToken);
 
         return entity;
+    }
+
+    public async Task<int> UpdateByExpressionAsync(
+        Expression<Func<TEntity, bool>> predicate,
+        Action<UpdateSettersBuilder<TEntity>> setPropertyCalls,
+        CancellationToken cancellationToken = default)
+    {
+        return await GetDbSet()
+            .Where(predicate)
+            .ExecuteUpdateAsync(setPropertyCalls, cancellationToken);
     }
 
     public override async Task<int> UpdateManyAsync(
