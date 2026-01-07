@@ -273,6 +273,25 @@ public class MongoGenericRepository<TEntity, TKey> :
         return updated;
     }
 
+    public async Task<long> UpdateByExpressionAsync(
+        Expression<Func<TEntity, bool>> predicate,
+        Func<UpdateDefinitionBuilder<TEntity>, UpdateDefinition<TEntity>> set,
+        CancellationToken cancellationToken = default)
+    {
+        var collection = GetCollection();
+
+        var builder = Builders<TEntity>.Update;
+        var update = set(builder);
+
+        var result = await collection.UpdateManyAsync(
+            predicate,
+            update,
+            cancellationToken: cancellationToken
+        );
+
+        return result.ModifiedCount;
+    }
+
     public override async Task<int> DeleteByIdListAsync(
         IEnumerable<TKey> ids,
         CancellationToken cancellationToken = default)

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using HsnSoft.Base.Content;
 using JetBrains.Annotations;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace Microsoft.Extensions.DependencyInjection;
@@ -13,16 +13,15 @@ public static class BaseSwaggerGenServiceCollectionExtensions
         this IServiceCollection services,
         Action<SwaggerGenOptions> setupAction = null)
     {
-        return services.AddSwaggerGen(
-            options =>
-            {
-                var remoteStreamContentSchemaFactory = () => new OpenApiSchema { Type = "string", Format = "binary" };
+        return services.AddSwaggerGen(options =>
+        {
+            var remoteStreamContentSchemaFactory = () => new OpenApiSchema { Type = JsonSchemaType.String, Format = "binary" };
 
-                options.MapType<RemoteStreamContent>(remoteStreamContentSchemaFactory);
-                options.MapType<IRemoteStreamContent>(remoteStreamContentSchemaFactory);
+            options.MapType<RemoteStreamContent>(remoteStreamContentSchemaFactory);
+            options.MapType<IRemoteStreamContent>(remoteStreamContentSchemaFactory);
 
-                setupAction?.Invoke(options);
-            });
+            setupAction?.Invoke(options);
+        });
     }
 
     public static IServiceCollection AddBaseSwaggerGenWithOAuth(
@@ -33,32 +32,35 @@ public static class BaseSwaggerGenServiceCollectionExtensions
     {
         return services
             .AddBaseSwaggerGen()
-            .AddSwaggerGen(
-                options =>
-                {
-                    options.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
+            .AddSwaggerGen(options =>
+            {
+                options.AddSecurityDefinition("oauth2",
+                    new OpenApiSecurityScheme
                     {
                         Type = SecuritySchemeType.OAuth2,
-                        Flows = new OpenApiOAuthFlows { AuthorizationCode = new OpenApiOAuthFlow { AuthorizationUrl = new Uri($"{authority.EnsureEndsWith('/')}connect/authorize"), Scopes = scopes, TokenUrl = new Uri($"{authority.EnsureEndsWith('/')}connect/token") } }
-                    });
-
-                    options.AddSecurityRequirement(new OpenApiSecurityRequirement
-                    {
+                        Flows = new OpenApiOAuthFlows
                         {
-                            new OpenApiSecurityScheme
+                            AuthorizationCode = new OpenApiOAuthFlow
                             {
-                                Reference = new OpenApiReference
-                                {
-                                    Type = ReferenceType.SecurityScheme,
-                                    Id = "oauth2"
-                                }
-                            },
-                            Array.Empty<string>()
+                                AuthorizationUrl = new Uri($"{authority.EnsureEndsWith('/')}connect/authorize"), Scopes = scopes, TokenUrl = new Uri($"{authority.EnsureEndsWith('/')}connect/token")
+                            }
                         }
                     });
 
-                    setupAction?.Invoke(options);
-                });
+                options.AddSecurityRequirement(doc =>
+                    new OpenApiSecurityRequirement
+                    {
+                        {
+                            new OpenApiSecuritySchemeReference(
+                                referenceId: "oauth2",
+                                hostDocument: doc
+                            ),
+                            []
+                        }
+                    });
+
+                setupAction?.Invoke(options);
+            });
     }
 
     public static IServiceCollection AddBaseSwaggerGenWithBearer(
@@ -68,34 +70,30 @@ public static class BaseSwaggerGenServiceCollectionExtensions
     {
         return services
             .AddBaseSwaggerGen()
-            .AddSwaggerGen(
-                options =>
+            .AddSwaggerGen(options =>
+            {
+                options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
-                    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-                    {
-                        In = ParameterLocation.Header,
-                        Description = tokenDescription,
-                        Name = "Authorization",
-                        Type = SecuritySchemeType.Http,
-                        BearerFormat = "JWT",
-                        Scheme = "Bearer"
-                    });
-                    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+                    In = ParameterLocation.Header,
+                    Description = tokenDescription,
+                    Name = "Authorization",
+                    Type = SecuritySchemeType.Http,
+                    BearerFormat = "JWT",
+                    Scheme = "Bearer"
+                });
+                options.AddSecurityRequirement(doc =>
+                    new OpenApiSecurityRequirement
                     {
                         {
-                            new OpenApiSecurityScheme
-                            {
-                                Reference = new OpenApiReference
-                                {
-                                    Type = ReferenceType.SecurityScheme,
-                                    Id = "Bearer"
-                                }
-                            },
-                            Array.Empty<string>()
+                            new OpenApiSecuritySchemeReference(
+                                referenceId: "Bearer",
+                                hostDocument: doc
+                            ),
+                            []
                         }
                     });
 
-                    setupAction?.Invoke(options);
-                });
+                setupAction?.Invoke(options);
+            });
     }
 }
