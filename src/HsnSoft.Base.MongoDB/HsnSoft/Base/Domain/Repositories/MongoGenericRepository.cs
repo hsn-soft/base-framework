@@ -264,9 +264,6 @@ public class MongoGenericRepository<TEntity, TKey> :
                 new ReplaceOptions { IsUpsert = false },
                 cancellationToken);
 
-            if (result.ModifiedCount == 0)
-                throw new EntityNotFoundException(typeof(TEntity), entity.Id);
-
             updated++;
         }
 

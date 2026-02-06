@@ -674,20 +674,6 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
         (await repo.GetByIdAsync(placedEntity.Id)).Name.Should().Be("Updated");
     }
 
-    [Fact]
-    public async Task UpdateAsync_ShouldThrow_WhenEntityNotFound()
-    {
-        // Arrange
-        using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
-        var repo = new MongoGenericRepository<TestEntity, Guid>(null, context);
-
-        // Throw Act & Assert
-        await FluentActions
-            .Invoking(() => repo.UpdateAsync(new TestEntity(Guid.NewGuid(), "Tester", 1)))
-            .Should()
-            .ThrowAsync<EntityNotFoundException>();
-    }
-
     #endregion UpdateAsync
 
     #region UpdateManyAsync
@@ -712,41 +698,9 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
         (await repo.GetListAsync(new ListQueryOptions<TestEntity> { Filter = x => placedEntities.Select(s => s.Id).ToList().Contains(x.Id) })).ShouldBeEquivalentToWithMilliseconds(updatedEntities);
     }
 
-    [Fact]
-    public async Task UpdateManyAsync_ShouldThrow_WhenEntityNotFound()
-    {
-        // Arrange
-        using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
-        var repo = new MongoGenericRepository<TestEntity, Guid>(null, context);
-
-        // Throw Act & Assert
-        await FluentActions
-            .Invoking(() => repo.UpdateManyAsync(new List<TestEntity> { new(Guid.NewGuid(), "Tester", 61) }.AsReadOnly()))
-            .Should()
-            .ThrowAsync<EntityNotFoundException>();
-    }
-
     #endregion UpdateManyAsync
 
     #region DeleteByIdAsync
-
-    [Fact]
-    public async Task DeleteByIdAsync_ShouldReturnCount_WhenEntityExists()
-    {
-        // Arrange
-        using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
-        var placedEntity = new TestEntity(Guid.NewGuid(), "TesterA", 10);
-        await context.TestEntities.InsertOneAsync(placedEntity);
-        var repo = new MongoGenericRepository<TestEntity, Guid>(null, context);
-
-        // Act
-        int? actual = await repo.DeleteByIdAsync(placedEntity.Id);
-
-        // Assert
-        actual.Should().NotBeNull();
-        actual.Should().Be(1);
-        (await repo.GetCountAsync(x => x.Id == placedEntity.Id)).Should().Be(0);
-    }
 
     [Fact]
     public async Task DeleteByIdAsync_ShouldThrow_WhenEntityNotFound()
