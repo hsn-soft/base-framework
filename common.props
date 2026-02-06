@@ -1,9 +1,9 @@
 <Project>
     <PropertyGroup>
         <LangVersion>latest</LangVersion>
-        <Version>2025.10.2</Version>
-        <MicrosoftAspNetCorePackageVersion>10.0.1</MicrosoftAspNetCorePackageVersion>
-        <MicrosoftEntityFrameworkCorePackageVersion>10.0.1</MicrosoftEntityFrameworkCorePackageVersion>
+        <Version>2026.10.2</Version>
+        <MicrosoftAspNetCorePackageVersion>10.0.2</MicrosoftAspNetCorePackageVersion>
+        <MicrosoftEntityFrameworkCorePackageVersion>10.0.2</MicrosoftEntityFrameworkCorePackageVersion>
         <NoWarn>$(NoWarn);CS1591;CS1998;CS0436</NoWarn>
         <PackageProjectUrl>https://hhsahin.com/</PackageProjectUrl>
         <!--<PackageIconUrl>https://hhsahin.com/assets/hsn-base.png</PackageIconUrl>-->
