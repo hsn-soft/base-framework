@@ -293,12 +293,12 @@ public sealed class PuppeteerBrowser : IPuppeteerBrowser
 
         var launchOptions = new LaunchOptions { Headless = _browserSettings.Headless, LogProcess = _browserSettings.LogProcess, Args = Args };
 
-        string inContainer = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER");
-        bool skipDownloadOperation = !string.IsNullOrWhiteSpace(inContainer) && inContainer == "true";
+        string downloadEnvironment = Environment.GetEnvironmentVariable("PUPPETEER_SKIP_CHROMIUM_DOWNLOAD");
+        bool skipDownloadOperation = !string.IsNullOrWhiteSpace(downloadEnvironment) && downloadEnvironment == "true";
 
         if (!skipDownloadOperation)
         {
-            _logger.LogDebug($"{nameof(PuppeteerBrowser)} | RUNNING_IN_CONTAINER => false");
+            _logger.LogDebug($"{nameof(PuppeteerBrowser)} | PUPPETEER_SKIP_CHROMIUM_DOWNLOAD => false");
 
             var browserFetcher = new BrowserFetcher();
             var installedBrowsers = browserFetcher.GetInstalledBrowsers();
@@ -333,10 +333,13 @@ public sealed class PuppeteerBrowser : IPuppeteerBrowser
         }
         else
         {
+            _logger.LogDebug($"{nameof(PuppeteerBrowser)} | PUPPETEER_SKIP_CHROMIUM_DOWNLOAD => true");
+
             // override headless mode for container
             launchOptions.Headless = true;
-            _logger.LogDebug($"{nameof(PuppeteerBrowser)} | Chromium download SKIPPED => Container Mode is Active");
-            launchOptions.ExecutablePath = "/usr/bin/chromium";
+
+            // launchOptions.ExecutablePath = "/usr/bin/chromium";
+            launchOptions.ExecutablePath = Environment.GetEnvironmentVariable("PUPPETEER_EXECUTABLE_PATH");
         }
 
         _logger.LogDebug($"{nameof(PuppeteerBrowser)} | EXECUTABLE_PATH => " + launchOptions.ExecutablePath);
