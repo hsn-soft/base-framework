@@ -40,6 +40,8 @@ public abstract class MongoDbContext : IDisposable
 
         Client = new MongoClient(clientSettings);
         Database = Client.GetDatabase(databaseName);
+
+        Client.StartSessionAsync();
     }
 
     public ITrackingMongoCollection<TEntity> GetCollection<TEntity>()

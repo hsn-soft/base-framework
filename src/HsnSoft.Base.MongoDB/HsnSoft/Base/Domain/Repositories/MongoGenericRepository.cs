@@ -32,10 +32,28 @@ public class MongoGenericRepository<TEntity, TKey> :
         _countOptions = new CountOptions { MaxTime = _context.ClientWaitQueueTimeout };
     }
 
-    public ITrackingMongoCollection<TEntity> GetCollection()
-        => _context?.GetCollection<TEntity>().WithReadPreference(ReadPreference.Primary) as ITrackingMongoCollection<TEntity>;
+    public ITrackingMongoCollection<TEntity> GetCollection() => _context?.GetCollection<TEntity>().WithReadPreference(ReadPreference.Primary) as ITrackingMongoCollection<TEntity>;
 
     public IQueryable<TEntity> GetQueryable() => GetCollection().AsQueryable().AsExpandable();
+
+    public IClientSessionHandle StartSession(ClientSessionOptions options = null, CancellationToken cancellationToken = default) => StartSessionAsync(options, cancellationToken).GetAwaiter().GetResult();
+
+    public async Task<IClientSessionHandle> StartSessionAsync(ClientSessionOptions options = null, CancellationToken cancellationToken = default) => await _context.StartSessionAsync(options, cancellationToken);
+
+    public async Task<TEntity> GetByIdAsync(IClientSessionHandle session, TKey id, CancellationToken cancellationToken = default)
+    {
+        var filter = Builders<TEntity>.Filter.Eq(doc => doc.Id, id);
+        var results = await GetCollection()
+            .Find(session, filter, new FindOptions { MaxAwaitTime = _findOptions.MaxAwaitTime, MaxTime = _findOptions.MaxTime })
+            .Limit(2)
+            .ToListAsync(cancellationToken);
+        return results.Count switch
+        {
+            0 => throw new EntityNotFoundException(typeof(TEntity)),
+            > 1 => throw new EntityDuplicateException(typeof(TEntity)),
+            _ => results[0]
+        };
+    }
 
     public override async Task<TResult> GetByIdAsync<TResult>(
         TKey id,
@@ -109,15 +127,13 @@ public class MongoGenericRepository<TEntity, TKey> :
         Expression<Func<TEntity, bool>> predicate,
         Expression<Func<TEntity, TResult>> selector,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderByEntity = null,
-        CancellationToken cancellationToken = default)
-        => Task.FromResult(QueryGetFirstOrDefault(predicate, orderByEntity).Select(selector).FirstOrDefault());
+        CancellationToken cancellationToken = default) => Task.FromResult(QueryGetFirstOrDefault(predicate, orderByEntity).Select(selector).FirstOrDefault());
 
     public override Task<TResult> GetFirstOrDefaultAsync<TResult>(
         Expression<Func<TEntity, bool>> predicate,
         IConfigurationProvider configuration,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderByEntity = null,
-        CancellationToken cancellationToken = default)
-        => Task.FromResult(QueryGetFirstOrDefault(predicate, orderByEntity).ProjectTo<TResult>(configuration).FirstOrDefault());
+        CancellationToken cancellationToken = default) => Task.FromResult(QueryGetFirstOrDefault(predicate, orderByEntity).ProjectTo<TResult>(configuration).FirstOrDefault());
 
     private IQueryable<TEntity> QueryGetFirstOrDefault(
         Expression<Func<TEntity, bool>> predicate,
@@ -132,14 +148,12 @@ public class MongoGenericRepository<TEntity, TKey> :
     public override Task<List<TResult>> GetListAsync<TResult>(
         ListQueryOptions<TEntity> options,
         Expression<Func<TEntity, TResult>> selector,
-        CancellationToken cancellationToken = default)
-        => Task.FromResult(QueryGetList(options).Select(selector).ToList());
+        CancellationToken cancellationToken = default) => Task.FromResult(QueryGetList(options).Select(selector).ToList());
 
     public override Task<List<TResult>> GetListAsync<TResult>(
         ListQueryOptions<TEntity> options,
         IConfigurationProvider configuration,
-        CancellationToken cancellationToken = default)
-        => Task.FromResult(QueryGetList(options).ProjectTo<TResult>(configuration).ToList());
+        CancellationToken cancellationToken = default) => Task.FromResult(QueryGetList(options).ProjectTo<TResult>(configuration).ToList());
 
     private IQueryable<TEntity> QueryGetList(ListQueryOptions<TEntity> options)
     {
@@ -221,6 +235,14 @@ public class MongoGenericRepository<TEntity, TKey> :
         return Task.FromResult(GetQueryable().Any(filter));
     }
 
+    public Task InsertAsync(IClientSessionHandle session, TEntity entity, CancellationToken cancellationToken = default) => InsertManyAsync(session, [entity], cancellationToken);
+
+    public async Task InsertManyAsync(IClientSessionHandle session, IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
+    {
+        IEnumerable<TEntity> enumerable = entities.ToList();
+        await GetCollection().InsertManyAsync(session, enumerable, cancellationToken: cancellationToken);
+    }
+
     public override async Task<int> InsertManyAsync(
         IEnumerable<TEntity> entities,
         CancellationToken cancellationToken = default)
@@ -246,6 +268,23 @@ public class MongoGenericRepository<TEntity, TKey> :
         // GetDbContext().SetEntityEventState([entity], MongoEntityEventState.Modified);
         var replaceResult = await tmpCollection.ReplaceOneAsync(filter, entity, cancellationToken: cancellationToken);
         return !replaceResult.IsAcknowledged ? throw new Exception($"Update error: {replaceResult}") : entity;
+    }
+
+    public Task UpdateAsync(IClientSessionHandle session, TEntity entity, CancellationToken cancellationToken = default) => UpdateManyAsync(session, [entity], cancellationToken);
+
+    public async Task UpdateManyAsync(IClientSessionHandle session, IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
+    {
+        var tmpCollection = GetCollection();
+
+        foreach (var entity in entities)
+        {
+            await tmpCollection.ReplaceOneAsync(
+                session,
+                x => x.Id.Equals(entity.Id),
+                entity,
+                new ReplaceOptions { IsUpsert = false },
+                cancellationToken);
+        }
     }
 
     public override async Task<int> UpdateManyAsync(
@@ -281,6 +320,23 @@ public class MongoGenericRepository<TEntity, TKey> :
         var update = set(builder);
 
         var result = await collection.UpdateManyAsync(
+            predicate,
+            update,
+            cancellationToken: cancellationToken
+        );
+
+        return result.ModifiedCount;
+    }
+
+    public async Task<long> UpdateByExpressionAsync(IClientSessionHandle session, Expression<Func<TEntity, bool>> predicate, Func<UpdateDefinitionBuilder<TEntity>, UpdateDefinition<TEntity>> set, CancellationToken cancellationToken = default)
+    {
+        var collection = GetCollection();
+
+        var builder = Builders<TEntity>.Update;
+        var update = set(builder);
+
+        var result = await collection.UpdateManyAsync(
+            session,
             predicate,
             update,
             cancellationToken: cancellationToken

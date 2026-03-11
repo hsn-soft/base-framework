@@ -1,4 +1,6 @@
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using HsnSoft.Base.Auditing;
 using HsnSoft.Base.Domain.Entities;
 using HsnSoft.Base.MongoDB.Context;
@@ -27,6 +29,12 @@ public abstract class BaseMongoDbContext : MongoDbContext
     protected BaseMongoDbContext([NotNull] string connectionString, [CanBeNull] IServiceProvider provider = null) : this(CreateClientSettings(connectionString, provider: provider), MongoUrl.Create(connectionString).DatabaseName, provider)
     {
     }
+
+    public  IClientSessionHandle StartSession(ClientSessionOptions options = null, CancellationToken cancellationToken = default)
+        => StartSessionAsync(options, cancellationToken).GetAwaiter().GetResult();
+
+    public async  Task<IClientSessionHandle> StartSessionAsync(ClientSessionOptions options = null, CancellationToken cancellationToken = default)
+        => await Client.StartSessionAsync(options, cancellationToken);
 
     private static MongoClientSettings CreateClientSettings([NotNull] string connectionString, int queryExecutionMaxSeconds = 60, IServiceProvider provider = null)
     {
