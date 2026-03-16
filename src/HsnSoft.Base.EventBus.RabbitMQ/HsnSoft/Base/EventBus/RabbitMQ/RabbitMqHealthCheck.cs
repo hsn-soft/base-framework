@@ -37,6 +37,6 @@ public class RabbitMqHealthCheck(RabbitMqConnectionSettings conSettings) : IHeal
             errorMessage = ex.Message;
         }
 
-        return connectionOpened ? HealthCheckResult.Healthy() : HealthCheckResult.Unhealthy(errorMessage);
+        return connectionOpened ? HealthCheckResult.Healthy(description: "RabbitMQ is ready") : HealthCheckResult.Unhealthy(description: errorMessage);
     }
 }
