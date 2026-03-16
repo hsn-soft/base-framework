@@ -9,296 +9,555 @@ using JetBrains.Annotations;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using PuppeteerSharp;
+using PuppeteerSharp.Helpers;
 
 namespace HsnSoft.Base.PuppeTeer;
 
 public sealed class PuppeteerBrowser : IPuppeteerBrowser
 {
     private readonly IBaseLogger _logger;
-    private readonly PuppeteerBrowserSettings _browserSettings;
-    private readonly CancellationToken _applicationStoppingToken;
+    private readonly PuppeteerBrowserSettings _settings;
+    private readonly CancellationTokenSource _serviceCts;
 
-    // initialization
-    [CanBeNull] private IBrowser _ptBrowser;
-    [CanBeNull] private Task _initializationTask;
+    // browser init / replace / dispose gate
+    private readonly SemaphoreSlim _lifecycleGate = new(1, 1);
+
+    // max concurrent page limit
+    private readonly SemaphoreSlim _pageLimiter;
+
+    // browser state
+    private IBrowser? _browser;
+    private Task? _initializationTask;
+
+    // shutdown / dispose state
+    private int _shutdownRequested;
+    private int _disposeStarted;
     private bool _disposed;
 
-    // browser limit control
-    private readonly SemaphoreSlim _browserSessionSemaphore;
-    private readonly SemaphoreSlim _pageSemaphore;
+    // active pages
+    private int _activePages;
 
-    // Page pool
-    private readonly ConcurrentQueue<(IPage Page, DateTime LastUsed)> _pages = new();
-    private int _currentPageCount;
-    private readonly TimeSpan _freePageWaitTimeout;
+    // graceful drain
+    private TaskCompletionSource<bool> _drainedTcs = NewDrainedTcs();
 
-    // cleanup fields
-    [CanBeNull] private readonly Task _cleanupTask;
-
-    private readonly TimeSpan _cleanupInterval; // check idle pages in one minute
-    private readonly TimeSpan _pageMaxIdleTime; // page max lifetime
-
-    // public fields
-    public int ActivePagesCount => Interlocked.CompareExchange(ref _currentPageCount, 0, 0);
-    public int PooledPagesCount => _pages.Count;
-    public int MaxPagesCount => _browserSettings.PageMaxCount;
+    public int ActivePagesCount => Volatile.Read(ref _activePages);
+    public int MaxPagesCount => _settings.PageMaxCount;
     public string InitializationResult { get; private set; } = string.Empty;
     public bool HasProxyServer { get; private set; }
     public string[] Args { get; private set; } = [];
+    public bool IsStopping => Volatile.Read(ref _shutdownRequested) == 1 || _serviceCts.IsCancellationRequested || _disposed;
 
     public PuppeteerBrowser(
         IBaseLogger logger,
-        IOptions<PuppeteerBrowserSettings> settings,
+        IOptions<PuppeteerBrowserSettings>? settings,
         IHostApplicationLifetime appLifetime)
     {
-        _logger = logger;
-        _browserSettings = settings?.Value ?? new PuppeteerBrowserSettings();
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _settings = settings?.Value ?? new PuppeteerBrowserSettings();
 
-        // cancellation operation
-        _applicationStoppingToken = appLifetime.ApplicationStopping;
+        _serviceCts = CancellationTokenSource.CreateLinkedTokenSource(appLifetime.ApplicationStopping);
+
+        _pageLimiter = new SemaphoreSlim(_settings.PageMaxCount, _settings.PageMaxCount);
+
+        TaskHelper.DefaultTimeout = 30 * 60 * 1000;
+
+        // eager init
+        _initializationTask = EnsureBrowserInitializedCoreAsync(_serviceCts.Token);
+
         appLifetime.ApplicationStopping.Register(() =>
         {
-            _logger.LogDebug($"{nameof(PuppeteerBrowser)} | Application stopping, disposing browser...");
-            Dispose();
-        });
-
-        // initialize
-        _browserSessionSemaphore = new SemaphoreSlim(1, 1);
-        _pageSemaphore = new SemaphoreSlim(_browserSettings.PageMaxCount, _browserSettings.PageMaxCount);
-        _freePageWaitTimeout = TimeSpan.FromMilliseconds(_browserSettings.WaitFreePageTimeoutMs);
-        _initializationTask = InitializeAsync(_applicationStoppingToken);
-
-        // Cleanup worker
-        if (_browserSettings.CleanIdlePages)
-        {
-            _cleanupInterval = TimeSpan.FromMilliseconds(_browserSettings.CleanUpIntervalMs); // check idle pages in one minute
-            _pageMaxIdleTime = TimeSpan.FromMilliseconds(_browserSettings.CleaningPageMaxIdleTimeMs); // page max lifetime
-            _cleanupTask = Task.Run(() => CleanupIdlePagesLoopAsync(_applicationStoppingToken));
-        }
-    }
-
-    public async Task<IBrowser> GetBrowserSafelyAsync(CancellationToken cancellationToken = default)
-    {
-        if (_disposed || _applicationStoppingToken.IsCancellationRequested)
-        {
-            _logger.LogWarning($"{nameof(PuppeteerBrowser)} | GetBrowserSafelyAsync requested but browser is disposing/stopping.");
-            return null;
-        }
-
-        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(_applicationStoppingToken, cancellationToken);
-
-        await _browserSessionSemaphore.WaitAsync(linkedCts.Token).ConfigureAwait(false);
-        try
-        {
-            if (_initializationTask != null)
-            {
-                await _initializationTask.ConfigureAwait(false);
-            }
-
-            if (linkedCts.IsCancellationRequested)
-            {
-                _logger.LogWarning($"{nameof(PuppeteerBrowser)} | Cannot return browser, application is stopping.");
-                return null;
-            }
-
-            if (_ptBrowser is { IsConnected: true, IsClosed: false })
-            {
-                return _ptBrowser;
-            }
-
-            SafeDisposeBrowser();
-
-            if (linkedCts.IsCancellationRequested)
-            {
-                _logger.LogWarning($"{nameof(PuppeteerBrowser)} | Cancellation requested before re-initializing browser.");
-                return null;
-            }
-
-            _initializationTask = InitializeAsync(linkedCts.Token);
-            if (_initializationTask != null)
-                await _initializationTask.ConfigureAwait(false);
-
-            return _ptBrowser is { IsConnected: true, IsClosed: false } ? _ptBrowser : null;
-        }
-        finally
-        {
-            _browserSessionSemaphore.Release();
-        }
-    }
-
-    public async Task<IPage> GetPoolPageAsync(CancellationToken cancellationToken = default)
-    {
-        if (_disposed || _applicationStoppingToken.IsCancellationRequested)
-            throw new OperationCanceledException($"{nameof(PuppeteerBrowser)} is disposed or application stopping.");
-
-        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(_applicationStoppingToken, cancellationToken);
-
-        if (!await _pageSemaphore.WaitAsync(_freePageWaitTimeout, linkedCts.Token).ConfigureAwait(false))
-            throw new TimeoutException($"Timeout waiting for a free Puppeteer page (max {_browserSettings.PageMaxCount})");
-
-        var browser = await GetBrowserSafelyAsync(linkedCts.Token).ConfigureAwait(false);
-        if (browser == null)
-        {
-            _pageSemaphore.Release();
-            throw new OperationCanceledException("Browser is not available or shutting down");
-        }
-
-        // Has ready page on queue?
-        while (_pages.TryDequeue(out var tuple))
-        {
-            if (!tuple.Page.IsClosed)
-                return tuple.Page;
-
-            SafeDisposePage(tuple.Page);
-        }
-
-        var page = await browser.NewPageAsync().ConfigureAwait(false);
-        page.DefaultTimeout = _browserSettings.PageDefaultTimeoutMs;
-        page.DefaultNavigationTimeout = _browserSettings.PageDefaultNavigationTimeoutMs;
-
-        Interlocked.Increment(ref _currentPageCount);
-
-        page.Close += (_, _) => { Interlocked.Decrement(ref _currentPageCount); };
-
-        return page;
-    }
-
-    public void ReturnPoolPage(IPage page)
-    {
-        if (page == null)
-            return;
-
-        if (_disposed || _applicationStoppingToken.IsCancellationRequested || page.IsClosed)
-        {
-            SafeDisposePage(page);
-            return;
-        }
-
-        _pages.Enqueue((page, DateTime.UtcNow));
-        _pageSemaphore.Release();
-    }
-
-    public void Dispose()
-    {
-        if (_disposed) return;
-        _disposed = true;
-
-        try
-        {
-            _logger.LogDebug($"{nameof(PuppeteerBrowser)} | Browser terminating...");
-
-            if (_cleanupTask != null)
+            _logger.LogInformation("{Service} | ApplicationStopping received", nameof(PuppeteerBrowser));
+            _ = Task.Run(async () =>
             {
                 try
                 {
-                    using var timeoutCts = new CancellationTokenSource(5000);
-                    Task.WhenAny(_cleanupTask, Task.Delay(Timeout.Infinite, timeoutCts.Token))
-                        .GetAwaiter()
-                        .GetResult();
+                    await RequestShutdownAsync().ConfigureAwait(false);
                 }
                 catch
                 {
                     // ignore
                 }
+            });
+        });
+    }
+
+    public async Task<IBrowser?> GetBrowserSafelyAsync(CancellationToken cancellationToken = default)
+    {
+        if (IsStopping)
+        {
+            _logger.LogWarning("{Service} | GetBrowserSafelyAsync requested but service is stopping/disposed", nameof(PuppeteerBrowser));
+            return null;
+        }
+
+        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _serviceCts.Token);
+
+        Task? initTaskToAwait;
+
+        await _lifecycleGate.WaitAsync(linkedCts.Token).ConfigureAwait(false);
+        try
+        {
+            if (IsStopping)
+                return null;
+
+            if (_browser is { IsConnected: true, IsClosed: false })
+                return _browser;
+
+            if (_initializationTask == null || _initializationTask.IsCompleted)
+                _initializationTask = EnsureBrowserInitializedCoreAsync(_serviceCts.Token);
+
+            initTaskToAwait = _initializationTask;
+        }
+        finally
+        {
+            _lifecycleGate.Release();
+        }
+
+        await initTaskToAwait.ConfigureAwait(false);
+
+        await _lifecycleGate.WaitAsync(linkedCts.Token).ConfigureAwait(false);
+        try
+        {
+            if (IsStopping)
+                return null;
+
+            return _browser is { IsConnected: true, IsClosed: false } ? _browser : null;
+        }
+        finally
+        {
+            _lifecycleGate.Release();
+        }
+    }
+
+    public async Task<PuppeteerPageLease> AcquirePageAsync(
+        Func<IPage, CancellationToken, Task>? configurePage = null,
+        CancellationToken cancellationToken = default)
+    {
+        ThrowIfDisposed();
+
+        if (IsStopping)
+            throw new OperationCanceledException($"{nameof(PuppeteerBrowser)} shutdown requested. No new page lease accepted.");
+
+        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _serviceCts.Token);
+
+        var waitTimeout = TimeSpan.FromMilliseconds(_settings.WaitFreePageTimeoutMs);
+        var limiterAcquired = false;
+        IPage? page = null;
+
+        try
+        {
+            if (!await _pageLimiter.WaitAsync(waitTimeout, linkedCts.Token).ConfigureAwait(false))
+                throw new TimeoutException($"Timeout waiting for a free Puppeteer page slot. Max concurrent pages: {_settings.PageMaxCount}");
+
+            limiterAcquired = true;
+
+            if (IsStopping)
+                throw new OperationCanceledException($"{nameof(PuppeteerBrowser)} shutdown requested. No new page lease accepted.");
+
+            var browser = await GetBrowserSafelyAsync(linkedCts.Token).ConfigureAwait(false);
+            if (browser == null)
+                throw new InvalidOperationException("Puppeteer browser is not available.");
+
+            page = await browser.NewPageAsync().ConfigureAwait(false);
+
+            page.DefaultTimeout = _settings.DefaultPageTimeoutMs;
+            page.DefaultNavigationTimeout = _settings.DefaultNavigationTimeoutMs;
+
+            Interlocked.Increment(ref _activePages);
+
+            if (configurePage != null)
+                await configurePage(page, linkedCts.Token).ConfigureAwait(false);
+
+            _logger.LogDebug("{Service} | Page leased | ActivePages={ActivePages}", nameof(PuppeteerBrowser), ActivePagesCount);
+
+            return new PuppeteerPageLease(page, ReleasePageInternalAsync);
+        }
+        catch
+        {
+            if (page != null)
+                await SafeClosePageAsync(page).ConfigureAwait(false);
+
+            if (limiterAcquired)
+                _pageLimiter.Release();
+
+            throw;
+        }
+    }
+
+    public Task RequestShutdownAsync()
+    {
+        RequestShutdown();
+        return Task.CompletedTask;
+    }
+
+    public async Task<bool> RequestShutdownAndDrainAsync(TimeSpan timeout, CancellationToken cancellationToken = default)
+    {
+        RequestShutdown();
+
+        var active = ActivePagesCount;
+        _logger.LogWarning(
+            "{Service} | Drain requested | ActivePages={ActivePages} | Timeout={TimeoutSeconds}s",
+            nameof(PuppeteerBrowser),
+            active,
+            timeout.TotalSeconds);
+
+        if (active <= 0)
+        {
+            _drainedTcs.TrySetResult(true);
+            return true;
+        }
+
+        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        linkedCts.CancelAfter(timeout);
+
+        try
+        {
+            await _drainedTcs.Task.WaitAsync(linkedCts.Token).ConfigureAwait(false);
+
+            _logger.LogWarning("{Service} | Drain completed", nameof(PuppeteerBrowser));
+            return true;
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning(
+                "{Service} | Drain timeout | ActivePages={ActivePages}",
+                nameof(PuppeteerBrowser),
+                ActivePagesCount);
+
+            return false;
+        }
+    }
+
+    public void Dispose() { DisposeAsync().AsTask().GetAwaiter().GetResult(); }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (Interlocked.Exchange(ref _disposeStarted, 1) == 1)
+            return;
+
+        RequestShutdown();
+
+        try
+        {
+            _logger.LogInformation("{Service} | DisposeAsync starting", nameof(PuppeteerBrowser));
+
+            IBrowser? browserToClose;
+
+            await _lifecycleGate.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                if (_disposed)
+                    return;
+
+                _disposed = true;
+                browserToClose = _browser;
+                _browser = null;
+                _initializationTask = null;
+            }
+            finally
+            {
+                _lifecycleGate.Release();
             }
 
-            while (_pages.TryDequeue(out var tuple))
+            if (browserToClose != null)
+                await SafeDisposeBrowserAsync(browserToClose).ConfigureAwait(false);
+
+            _logger.LogInformation("{Service} | DisposeAsync completed", nameof(PuppeteerBrowser));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("{Service} | DisposeAsync failed: {Error}", nameof(PuppeteerBrowser), ex.Message);
+        }
+        finally
+        {
+            try
             {
-                SafeDisposePage(tuple.Page);
+                _serviceCts.Dispose();
+            }
+            catch
+            {
+                /* ignore */
             }
 
             try
             {
-                _browserSessionSemaphore.Wait(2000);
+                _lifecycleGate.Dispose();
+            }
+            catch
+            {
+                /* ignore */
+            }
+
+            try
+            {
+                _pageLimiter.Dispose();
+            }
+            catch
+            {
+                /* ignore */
+            }
+        }
+    }
+
+    private void ThrowIfDisposed()
+    {
+        if (_disposed)
+            throw new ObjectDisposedException(nameof(PuppeteerBrowser));
+    }
+
+    private static TaskCompletionSource<bool> NewDrainedTcs() => new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+    private void RequestShutdown()
+    {
+        if (Interlocked.Exchange(ref _shutdownRequested, 1) == 1)
+            return;
+
+        _logger.LogInformation("{Service} | Shutdown requested", nameof(PuppeteerBrowser));
+
+        try
+        {
+            _serviceCts.Cancel();
+        }
+        catch
+        {
+            // ignore
+        }
+
+        if (ActivePagesCount <= 0)
+            _drainedTcs.TrySetResult(true);
+    }
+
+    private async Task ReleasePageInternalAsync(IPage page)
+    {
+        try
+        {
+            await SafeClosePageAsync(page).ConfigureAwait(false);
+        }
+        finally
+        {
+            var left = Interlocked.Decrement(ref _activePages);
+
+            if (left < 0)
+            {
+                Interlocked.Exchange(ref _activePages, 0);
+                left = 0;
+                _logger.LogWarning("{Service} | Active page counter went below zero", nameof(PuppeteerBrowser));
+            }
+
+            try
+            {
+                _pageLimiter.Release();
             }
             catch
             {
                 // ignore
             }
 
-            SafeDisposeBrowser();
+            _logger.LogDebug("{Service} | Page released | ActivePages={ActivePages}", nameof(PuppeteerBrowser), left);
 
-            _browserSessionSemaphore.Dispose();
-            _pageSemaphore.Dispose();
+            if (IsStopping && left <= 0)
+                _drainedTcs.TrySetResult(true);
+        }
+    }
 
-            _logger.LogDebug($"{nameof(PuppeteerBrowser)} | Browser terminated");
+    private async Task EnsureBrowserInitializedCoreAsync(CancellationToken cancellationToken)
+    {
+        if (IsStopping)
+            return;
+
+        _logger.LogDebug("{Service} | Browser initializing...", nameof(PuppeteerBrowser));
+
+        IBrowser? launchedBrowser = null;
+
+        try
+        {
+            var maxRetries = Math.Max(1, _settings.BrowserLaunchRetryCount);
+
+            for (var attempt = 1; attempt <= maxRetries; attempt++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                try
+                {
+                    _logger.LogDebug("{Service} | Launch attempt {Attempt}", nameof(PuppeteerBrowser), attempt);
+
+                    var launchOptions = await CheckAndGetLaunchOptionsAsync().ConfigureAwait(false);
+                    launchedBrowser = await Puppeteer.LaunchAsync(launchOptions).ConfigureAwait(false);
+
+                    if (launchedBrowser is { IsConnected: true, IsClosed: false })
+                        break;
+
+                    await SafeDisposeBrowserAsync(launchedBrowser).ConfigureAwait(false);
+                    launchedBrowser = null;
+
+                    throw new InvalidOperationException("Puppeteer browser unavailable after launch.");
+                }
+                catch (Exception ex) when (attempt < maxRetries && !cancellationToken.IsCancellationRequested)
+                {
+                    _logger.LogWarning(
+                        "{Service} | Launch attempt {Attempt} failed: {Error}. Retrying...",
+                        nameof(PuppeteerBrowser),
+                        attempt,
+                        ex.Message);
+
+                    var delaySec = Math.Max(1, _settings.BrowserLaunchRetryDelaySeconds) * attempt;
+                    await Task.Delay(TimeSpan.FromSeconds(delaySec), cancellationToken).ConfigureAwait(false);
+                }
+            }
+
+            if (launchedBrowser == null)
+            {
+                InitializationResult = "Browser initialize error: max retry exceeded";
+                _logger.LogError("{Service} | {Result}", nameof(PuppeteerBrowser), InitializationResult);
+                return;
+            }
+
+            await _lifecycleGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+            try
+            {
+                if (IsStopping)
+                {
+                    _logger.LogWarning("{Service} | Browser launched during shutdown; closing without publish", nameof(PuppeteerBrowser));
+                }
+                else
+                {
+                    _browser = launchedBrowser;
+
+                    _browser.Disconnected += (_, _) =>
+                    {
+                        _logger.LogWarning("{Service} | Browser disconnected", nameof(PuppeteerBrowser));
+
+                        _ = Task.Run(async () =>
+                        {
+                            try
+                            {
+                                await _lifecycleGate.WaitAsync().ConfigureAwait(false);
+                                try
+                                {
+                                    if (ReferenceEquals(_browser, launchedBrowser))
+                                    {
+                                        _browser = null;
+                                        _initializationTask = null;
+                                        InitializationResult = "Browser disconnected";
+                                    }
+                                }
+                                finally
+                                {
+                                    _lifecycleGate.Release();
+                                }
+                            }
+                            catch
+                            {
+                                // ignore
+                            }
+                        });
+                    };
+
+                    InitializationResult = "Browser successfully initialized";
+                    _logger.LogInformation("{Service} | {Result}", nameof(PuppeteerBrowser), InitializationResult);
+                    return;
+                }
+            }
+            finally
+            {
+                _lifecycleGate.Release();
+            }
+
+            await SafeDisposeBrowserAsync(launchedBrowser).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            InitializationResult = "Browser initialize canceled";
+            _logger.LogWarning("{Service} | {Result}", nameof(PuppeteerBrowser), InitializationResult);
+
+            if (launchedBrowser != null)
+                await SafeDisposeBrowserAsync(launchedBrowser).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError($"{nameof(PuppeteerBrowser)} | Error while disposing browser, {ex.Message}");
-        }
+            InitializationResult = "Browser initialize error: " + ex.Message;
+            _logger.LogError("{Service} | {Result}", nameof(PuppeteerBrowser), InitializationResult);
 
-        // Force memory clean and wait finalizers
-        GC.Collect();
-        GC.WaitForPendingFinalizers();
+            if (launchedBrowser != null)
+                await SafeDisposeBrowserAsync(launchedBrowser).ConfigureAwait(false);
+        }
+        finally
+        {
+            await _lifecycleGate.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                if (_browser == null || !_browser.IsConnected || _browser.IsClosed)
+                    _initializationTask = null;
+            }
+            finally
+            {
+                _lifecycleGate.Release();
+            }
+        }
     }
 
-    #region Private Methods
-
-    private async Task<LaunchOptions> CheckAndGetLaunchOptions()
+    private async Task<LaunchOptions> CheckAndGetLaunchOptionsAsync()
     {
         List<string> defaultArgs =
         [
+            "--headless=new",
             "--no-sandbox",
             "--disable-gpu",
             "--disable-dev-shm-usage",
             "--disable-setuid-sandbox",
-
             "--disable-extensions",
             "--disable-blink-features=AutomationControlled",
             "--ignore-certificate-errors",
             "--allow-insecure-localhost",
-
             "--disable-infobars",
             "--window-size=1920,1080",
             "--start-maximized",
-
             "--no-default-browser-check",
             "--disable-background-networking",
             "--disable-webgl"
         ];
 
         // Check external arguments
-        List<string> checkedArgs = _browserSettings.Args is { Length: > 0 }
-            ? _browserSettings.Args
-                .Where(arg => !arg.StartsWith("--proxy-server", StringComparison.CurrentCultureIgnoreCase))
+        var checkedArgs = _settings.Args is { Length: > 0 }
+            ? _settings.Args
+                .Where(arg => !arg.StartsWith("--proxy-server", StringComparison.OrdinalIgnoreCase))
                 .ToList()
             : defaultArgs;
 
         // Check proxy server
-        bool proxyAdded = false;
+        var proxyAdded = false;
         try
         {
-            string proxyHost = Environment.GetEnvironmentVariable("PUPPETEER_PROXY_HOST");
-            string proxyPort = Environment.GetEnvironmentVariable("PUPPETEER_PROXY_PORT");
+            var proxyHost = Environment.GetEnvironmentVariable("PUPPETEER_PROXY_HOST");
+            var proxyPort = Environment.GetEnvironmentVariable("PUPPETEER_PROXY_PORT");
             if (!string.IsNullOrWhiteSpace(proxyHost) && !string.IsNullOrWhiteSpace(proxyPort))
             {
-                checkedArgs.Add($"--proxy-server=http://{proxyHost}:{proxyPort}");
+                checkedArgs.Add($"--proxy-server=https://{proxyHost}:{proxyPort}");
                 proxyAdded = true;
-                _logger.LogDebug($"{nameof(PuppeteerBrowser)} | PROXY_SERVER_ADDED => http://{proxyHost}:{proxyPort}");
+
+                _logger.LogDebug("{Service} | PROXY_SERVER_ADDED => https://{ProxyHost}:{ProxyPort}", nameof(PuppeteerBrowser), proxyHost, proxyPort);
             }
         }
-        catch (Exception)
+        catch
         {
-            _logger.LogWarning($"{nameof(PuppeteerBrowser)} | PROXY_SERVER_DEFINITION_FAILED");
+            _logger.LogWarning("{Service} | PROXY_SERVER_DEFINITION_FAILED", nameof(PuppeteerBrowser));
         }
 
         if (!proxyAdded)
         {
-            _logger.LogDebug($"{nameof(PuppeteerBrowser)} | PROXY_SERVER_DEFINITION_SKIPPED");
+            _logger.LogDebug("{Service} | PROXY_SERVER_DEFINITION_SKIPPED", nameof(PuppeteerBrowser));
         }
 
         Args = checkedArgs.ToArray();
-        HasProxyServer = Args.Any(x => x.StartsWith("--proxy-server", StringComparison.CurrentCultureIgnoreCase));
+        HasProxyServer = Args.Any(x => x.StartsWith("--proxy-server", StringComparison.OrdinalIgnoreCase));
 
-        var launchOptions = new LaunchOptions { Headless = _browserSettings.Headless, LogProcess = _browserSettings.LogProcess, Args = Args };
+        var launchOptions = new LaunchOptions { Headless = _settings.Headless, Args = Args };
 
-        string downloadEnvironment = Environment.GetEnvironmentVariable("PUPPETEER_SKIP_CHROMIUM_DOWNLOAD");
-        bool skipDownloadOperation = !string.IsNullOrWhiteSpace(downloadEnvironment) && downloadEnvironment == "true";
+        var downloadEnvironment = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER");
+        var skipDownloadOperation = !string.IsNullOrWhiteSpace(downloadEnvironment) && downloadEnvironment == "true";
 
         if (!skipDownloadOperation)
         {
-            _logger.LogDebug($"{nameof(PuppeteerBrowser)} | PUPPETEER_SKIP_CHROMIUM_DOWNLOAD => false");
+            _logger.LogDebug("{Service} | DOTNET_RUNNING_IN_CONTAINER => false", nameof(PuppeteerBrowser));
 
             var browserFetcher = new BrowserFetcher();
             var installedBrowsers = browserFetcher.GetInstalledBrowsers();
@@ -309,210 +568,98 @@ public sealed class PuppeteerBrowser : IPuppeteerBrowser
 
             if (browserInfo == null)
             {
-                _logger.LogWarning($"{nameof(PuppeteerBrowser)} | Installed browser not found");
-                _logger.LogWarning($"{nameof(PuppeteerBrowser)} | Chromium download START");
+                _logger.LogWarning("{Service} | Installed browser not found", nameof(PuppeteerBrowser));
+                _logger.LogWarning("{Service} | Chromium download START", nameof(PuppeteerBrowser));
                 await browserFetcher.DownloadAsync().ConfigureAwait(false);
                 installedBrowsers = browserFetcher.GetInstalledBrowsers();
                 browserInfo = installedBrowsers.FirstOrDefault();
 
                 if (browserInfo == null)
                 {
-                    _logger.LogError($"{nameof(PuppeteerBrowser)} | Chromium download FAILED");
+                    _logger.LogError("{Service} | Chromium download FAILED", nameof(PuppeteerBrowser));
                     throw new InvalidOperationException("Puppeteer | Installed browser not found");
                 }
 
-                _logger.LogWarning($"{nameof(PuppeteerBrowser)} | Chromium download COMPLETED");
+                _logger.LogWarning("{Service} | Chromium download COMPLETED", nameof(PuppeteerBrowser));
             }
             else
             {
-                _logger.LogDebug($"{nameof(PuppeteerBrowser)} | Chromium download SKIPPED => Browser is already installed");
+                _logger.LogDebug("{Service} | Chromium download SKIPPED => Browser is already installed", nameof(PuppeteerBrowser));
             }
 
-            _logger.LogDebug($"{nameof(PuppeteerBrowser)} | Browser [" + browserInfo.BuildId + "] founded");
+            _logger.LogDebug("{Service} | Browser [" + browserInfo.BuildId + "] founded", nameof(PuppeteerBrowser));
             launchOptions.ExecutablePath = browserInfo.GetExecutablePath();
         }
         else
         {
-            _logger.LogDebug($"{nameof(PuppeteerBrowser)} | PUPPETEER_SKIP_CHROMIUM_DOWNLOAD => true");
+            _logger.LogDebug("{Service} | DOTNET_RUNNING_IN_CONTAINER => true", nameof(PuppeteerBrowser));
 
             // override headless mode for container
             launchOptions.Headless = true;
-
-            // launchOptions.ExecutablePath = "/usr/bin/chromium";
-            launchOptions.ExecutablePath = Environment.GetEnvironmentVariable("PUPPETEER_EXECUTABLE_PATH");
+            launchOptions.ExecutablePath = Environment.GetEnvironmentVariable("PUPPETEER_EXECUTABLE_PATH") ?? string.Empty;
         }
 
-        _logger.LogDebug($"{nameof(PuppeteerBrowser)} | EXECUTABLE_PATH => " + launchOptions.ExecutablePath);
+        _logger.LogDebug("{Service} | HEADLESS => " + (launchOptions.Headless ? "true" : "false"), nameof(PuppeteerBrowser));
+
+        if (string.IsNullOrWhiteSpace(launchOptions.ExecutablePath))
+        {
+            _logger.LogWarning("{Service} | EXECUTABLE_PATH => UNKNOWN", nameof(PuppeteerBrowser));
+        }
+        else
+        {
+            _logger.LogDebug("{Service} | EXECUTABLE_PATH => " + launchOptions.ExecutablePath, nameof(PuppeteerBrowser));
+        }
 
         return launchOptions;
     }
 
-    private async Task InitializeAsync(CancellationToken cancellationToken)
+    private static async Task SafeClosePageAsync(IPage? page)
     {
-        _logger.LogDebug($"{nameof(PuppeteerBrowser)} | Browser is initializing ...");
-
-        try
-        {
-            const int maxRetries = 3;
-            for (int attempt = 1; attempt <= maxRetries; attempt++)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                _logger.LogDebug($"{nameof(PuppeteerBrowser)} | Launch attempt {attempt}");
-
-                try
-                {
-                    var launchOptions = await CheckAndGetLaunchOptions().ConfigureAwait(false);
-                    _ptBrowser = await Puppeteer.LaunchAsync(launchOptions).ConfigureAwait(false);
-
-                    if (_ptBrowser is { IsConnected: true, IsClosed: false })
-                    {
-                        // in Browser crash / disconnect, self-healing handler
-                        _ptBrowser.Disconnected += (_, _) =>
-                        {
-                            _logger.LogWarning($"{nameof(PuppeteerBrowser)} | Browser disconnected, will re-initialize on next request.");
-                            _ptBrowser = null;
-                            InitializationResult = "Browser disconnected";
-                        };
-
-                        InitializationResult = "Browser successfully initialized";
-                        _logger.LogInformation($"{nameof(PuppeteerBrowser)} | {InitializationResult}");
-                        return;
-                    }
-
-                    throw new Exception("Puppeteer browser unavailable");
-                }
-                catch (Exception ex) when (attempt < maxRetries)
-                {
-                    _logger.LogWarning($"{nameof(PuppeteerBrowser)} | Launch attempt {attempt} failed, retrying... ({ex.Message})");
-                    await Task.Delay(TimeSpan.FromSeconds(2 * attempt), cancellationToken).ConfigureAwait(false);
-                }
-            }
-
-            InitializationResult = "Browser initialize error: max retry exceeded";
-        }
-        catch (OperationCanceledException)
-        {
-            InitializationResult = "Browser initialize canceled";
-        }
-        catch (Exception e)
-        {
-            InitializationResult = "Browser initialize error: " + e.Message;
-        }
-        finally
-        {
-            if (!string.IsNullOrEmpty(InitializationResult) &&
-                !InitializationResult.StartsWith("Browser successfully", StringComparison.OrdinalIgnoreCase))
-            {
-                _logger.LogError($"{nameof(PuppeteerBrowser)} | {InitializationResult}");
-            }
-
-            if (_ptBrowser == null || !_ptBrowser.IsConnected || _ptBrowser.IsClosed)
-            {
-                _initializationTask = null;
-            }
-        }
-    }
-
-    private async Task CleanupIdlePagesLoopAsync(CancellationToken cancellationToken)
-    {
-        while (!cancellationToken.IsCancellationRequested && !_disposed)
-        {
-            try
-            {
-                await Task.Delay(_cleanupInterval, cancellationToken).ConfigureAwait(false);
-                _logger.LogDebug($"{nameof(PuppeteerBrowser)} | Page Cleanup | START");
-
-                var now = DateTime.UtcNow;
-                var tempList = new List<(IPage Page, DateTime LastUsed)>();
-
-                while (_pages.TryDequeue(out var tuple))
-                {
-                    if (tuple.Page.IsClosed || now - tuple.LastUsed > _pageMaxIdleTime)
-                    {
-                        _logger.LogWarning($"{nameof(PuppeteerBrowser)} | Page Cleanup | idle page is founded, closing page...");
-                        SafeDisposePage(tuple.Page);
-                        _logger.LogWarning($"{nameof(PuppeteerBrowser)} | Page Cleanup | idle page is closed");
-                    }
-                    else
-                    {
-                        tempList.Add(tuple);
-                    }
-                }
-
-                foreach (var item in tempList)
-                    _pages.Enqueue(item);
-            }
-            catch (OperationCanceledException)
-            {
-                // normal shutdown
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"{nameof(PuppeteerBrowser)} | Page Cleanup | Error, {ex.Message}");
-            }
-            finally
-            {
-                // After clean operation, call light garbage collector
-                GC.Collect();
-
-                _logger.LogDebug($"{nameof(PuppeteerBrowser)} | Page Cleanup | END");
-            }
-        }
-    }
-
-    private static void SafeDisposePage(IPage page)
-    {
-        if (page == null) return;
+        if (page == null)
+            return;
 
         try
         {
             if (!page.IsClosed)
-            {
-                page.CloseAsync().GetAwaiter().GetResult();
-            }
+                await page.CloseAsync().ConfigureAwait(false);
         }
         catch
         {
-            // ignored
+            // ignore
         }
 
         try
         {
-            page.Dispose();
+            await page.DisposeAsync().ConfigureAwait(false);
         }
         catch
         {
-            // ignored
+            // ignore
         }
     }
 
-    private void SafeDisposeBrowser()
+    private static async Task SafeDisposeBrowserAsync(IBrowser? browser)
     {
-        if (_ptBrowser == null) return;
+        if (browser == null)
+            return;
 
         try
         {
-            if (!_ptBrowser.IsClosed)
-            {
-                _ptBrowser.CloseAsync().GetAwaiter().GetResult();
-            }
+            if (!browser.IsClosed)
+                await browser.CloseAsync().ConfigureAwait(false);
         }
         catch
         {
-            // ignored
+            // ignore
         }
 
         try
         {
-            _ptBrowser.Dispose();
+            browser.Dispose();
         }
         catch
         {
-            // ignored
+            // ignore
         }
-
-        _ptBrowser = null;
     }
-
-    #endregion
 }
