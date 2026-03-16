@@ -6,18 +6,20 @@ using PuppeteerSharp;
 
 namespace HsnSoft.Base.PuppeTeer;
 
-public interface IPuppeteerBrowser : IDisposable
+public interface IPuppeteerBrowser : IAsyncDisposable, IDisposable
 {
     int ActivePagesCount { get; }
-    int PooledPagesCount { get; }
     int MaxPagesCount { get; }
     string InitializationResult { get; }
     bool HasProxyServer { get; }
     string[] Args { get; }
+    bool IsStopping { get; }
 
     [ItemCanBeNull]
     Task<IBrowser> GetBrowserSafelyAsync(CancellationToken cancellationToken = default);
 
-    Task<IPage> GetPoolPageAsync(CancellationToken cancellationToken = default);
-    void ReturnPoolPage(IPage page);
+    Task<PuppeteerPageLease> AcquirePageAsync(Func<IPage, CancellationToken, Task>? configurePage = null, CancellationToken cancellationToken = default);
+
+    Task RequestShutdownAsync();
+    Task<bool> RequestShutdownAndDrainAsync(TimeSpan timeout, CancellationToken cancellationToken = default);
 }
