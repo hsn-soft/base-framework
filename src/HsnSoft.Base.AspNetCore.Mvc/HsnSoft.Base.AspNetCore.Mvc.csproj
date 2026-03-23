@@ -18,7 +18,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\HsnSoft.Base.ApiVersioning.Abstractions\HsnSoft.Base.ApiVersioning.Abstractions.csproj" />
+        <ProjectReference Include="..\HsnSoft.Base.Security\HsnSoft.Base.Security.csproj" />
         <ProjectReference Include="..\HsnSoft.Base.AspNetCore\HsnSoft.Base.AspNetCore.csproj" />
         <ProjectReference Include="..\HsnSoft.Base.Ddd.Application\HsnSoft.Base.Ddd.Application.csproj" />
         <ProjectReference Include="..\HsnSoft.Base.Localization\HsnSoft.Base.Localization.csproj" />
