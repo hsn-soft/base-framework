@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using JetBrains.Annotations;
 
 namespace HsnSoft.Base.Communication;
 
@@ -13,5 +14,5 @@ public interface IBaseResponse
 
 public interface IBaseResponse<out TPayload> : IBaseResponse
 {
-    TPayload Payload { get; }
+    [CanBeNull] TPayload Payload { get; }
 }

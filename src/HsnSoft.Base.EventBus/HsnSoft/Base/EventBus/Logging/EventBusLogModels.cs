@@ -33,7 +33,7 @@ public sealed record ConsumeMessageLogModel(
     DateTimeOffset ConsumeDateTimeUtc,
     MessageLogDetail MessageLog,
     [CanBeNull] string ConsumeDetails,
-    [CanBeNull] string ConsumeHandleWorkingTime
+    long ConsumeHandleWorkingTimeMs
 ) : IEventBusLog
 {
     public string LogId { get; } = LogId;
@@ -49,7 +49,7 @@ public sealed record ConsumeMessageLogModel(
 
     [CanBeNull] public string ConsumeDetails { get; } = ConsumeDetails;
 
-    [CanBeNull] public string ConsumeHandleWorkingTime { get; } = ConsumeHandleWorkingTime;
+    public long ConsumeHandleWorkingTimeMs { get; } = ConsumeHandleWorkingTimeMs;
 }
 
 public sealed record MessageLogDetail(
@@ -59,7 +59,13 @@ public sealed record MessageLogDetail(
     Guid MessageId,
     DateTimeOffset MessageTime,
     dynamic Message,
-    [CanBeNull] EventUserDetail UserInfo)
+    [CanBeNull] string UserId,
+    [CanBeNull] string UserRoles,
+    [CanBeNull] string ClientLat,
+    [CanBeNull] string ClientLong,
+    [CanBeNull] string ClientChannel,
+    [CanBeNull] string ClientVersion
+)
 {
     public string EventType { get; } = EventType;
     public int HopLevel { get; } = HopLevel;
@@ -68,12 +74,10 @@ public sealed record MessageLogDetail(
     public DateTimeOffset MessageTime { get; } = MessageTime;
     public dynamic Message { get; } = Message;
 
-    [CanBeNull] public EventUserDetail UserInfo { get; } = UserInfo;
-}
-
-public sealed record EventUserDetail([CanBeNull] string UserId, [CanBeNull] string Role)
-{
     [CanBeNull] public string UserId { get; } = UserId;
-
-    [CanBeNull] public string Role { get; } = Role;
+    [CanBeNull] public string UserRoles { get; } = UserRoles;
+    [CanBeNull] public string ClientLat { get; set; } = ClientLat;
+    [CanBeNull] public string ClientLong { get; set; } = ClientLong;
+    [CanBeNull] public string ClientChannel { get; set; } = ClientChannel;
+    [CanBeNull] public string ClientVersion { get; set; } = ClientVersion;
 }

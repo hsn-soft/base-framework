@@ -1,5 +1,5 @@
 using System;
-using HsnSoft.Base.Logging;
+using HsnSoft.Base.Logging.Abstracts;
 using HsnSoft.Base.MultiTenancy;
 using HsnSoft.Base.Users;
 using Microsoft.AspNetCore.Authorization;

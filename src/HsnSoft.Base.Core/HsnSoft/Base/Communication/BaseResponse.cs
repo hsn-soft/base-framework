@@ -1,18 +1,21 @@
 using System;
 using System.Collections.Generic;
+using JetBrains.Annotations;
 
 namespace HsnSoft.Base.Communication;
 
 [Serializable]
-public class BaseResponse : IBaseResponse
+public class BaseResponse
 {
     public int StatusCode { get; set; }
-    public List<string> StatusMessages { get; set; }
 
-    public virtual string StatusMessagesToSingleMessage()
-    {
-        return StatusMessages.JoinAsString(", ");
-    }
+    public List<string> StatusMessages { get; set; } = [];
+
+    [CanBeNull] public string TraceId { get; set; }
+
+    [CanBeNull] public string ErrorCode { get; set; }
+
+    public virtual string StatusMessagesToSingleMessage() => string.Join(", ", StatusMessages);
 }
 
 [Serializable]

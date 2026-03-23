@@ -16,10 +16,11 @@ public record ParentMessageEnvelope
     [CanBeNull] public string CorrelationId { get; set; }
 
     [CanBeNull] public string UserId { get; set; }
-
-    [CanBeNull] public string UserRoleUniqueName { get; set; }
-
-    [CanBeNull] public string Channel { get; set; }
+    [CanBeNull] public string UserRoles { get; set; }
+    [CanBeNull] public string ClientLat { get; set; }
+    [CanBeNull] public string ClientLong { get; set; }
+    [CanBeNull] public string ClientChannel { get; set; }
+    [CanBeNull] public string ClientVersion { get; set; }
 
     [CanBeNull] public string Producer { get; set; }
 }

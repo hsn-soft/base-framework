@@ -1,7 +1,7 @@
 using System;
 using System.Runtime.Serialization;
 using HsnSoft.Base.ExceptionHandling;
-using HsnSoft.Base.Logging;
+using HsnSoft.Base.Logging.Abstracts;
 using Microsoft.Extensions.Logging;
 
 namespace HsnSoft.Base;

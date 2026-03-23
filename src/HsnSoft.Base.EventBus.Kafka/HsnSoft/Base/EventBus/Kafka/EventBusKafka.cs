@@ -64,9 +64,12 @@ public class EventBusKafka : IEventBus, IDisposable
             Message = eventMessage,
             Producer = _kafkaEventBusConfig.ConsumerClientInfo,
             CorrelationId = (correlationId ?? parentMessage?.CorrelationId) ?? _traceAccessor?.GetCorrelationId(),
-            Channel = parentMessage?.Channel ?? _traceAccessor?.GetChannel(),
             UserId = parentMessage?.UserId ?? _currentUser?.Id?.ToString(),
-            UserRoleUniqueName = parentMessage?.UserRoleUniqueName ?? (_currentUser?.Roles is { Length: > 0 } ? _currentUser?.Roles.JoinAsString(",") : null),
+            UserRoles = parentMessage?.UserRoles ?? (_currentUser?.Roles is { Length: > 0 } ? _currentUser?.Roles.JoinAsString(",") : null),
+            ClientLat = parentMessage?.ClientLat ?? _traceAccessor?.GetClientLat(),
+            ClientLong = parentMessage?.ClientLong ?? _traceAccessor?.GetClientLong(),
+            ClientChannel = parentMessage?.ClientChannel ?? _traceAccessor?.GetClientChannel(),
+            ClientVersion = parentMessage?.ClientVersion ?? _traceAccessor?.GetClientVersion(),
             HopLevel = parentMessage != null ? (ushort)(parentMessage.HopLevel + 1) : (ushort)1,
             ReQueuedCount = parentMessage?.ReQueuedCount ?? 0
         };
@@ -78,10 +81,7 @@ public class EventBusKafka : IEventBus, IDisposable
         await kafkaProducer.StartSendingMessages(eventName, @event);
     }
 
-    public void Subscribe<T, TH>(ushort fetchCount = 1) where T : IIntegrationEventMessage where TH : IIntegrationEventHandler<T>
-    {
-        Subscribe(typeof(T), typeof(TH), fetchCount);
-    }
+    public void Subscribe<T, TH>(ushort fetchCount = 1) where T : IIntegrationEventMessage where TH : IIntegrationEventHandler<T> { Subscribe(typeof(T), typeof(TH), fetchCount); }
 
     public void Subscribe(Type eventType, Type eventHandlerType, ushort fetchCount = 1)
     {
@@ -183,12 +183,16 @@ public class EventBusKafka : IEventBus, IDisposable
                                 MessageId: ((dynamic)@event)?.MessageId,
                                 MessageTime: ((dynamic)@event)?.MessageTime,
                                 Message: ((dynamic)@event)?.Message,
-                                UserInfo: new EventUserDetail(
-                                    UserId: ((dynamic)@event)?.UserId,
-                                    Role: ((dynamic)@event)?.UserRoleUniqueName
-                                )),
+                                UserId: ((dynamic)@event)?.UserId,
+                                UserRoles: ((dynamic)@event)?.UserRoles,
+                                ClientLat: ((dynamic)@event)?.ClientLat,
+                                ClientLong: ((dynamic)@event)?.ClientLong,
+                                ClientChannel: ((dynamic)@event)?.ClientChannel,
+                                ClientVersion: ((dynamic)@event)?.ClientVersion
+                            ),
                             ConsumeDetails: "Message handling successfully completed",
-                            ConsumeHandleWorkingTime: $"{watch.ElapsedMilliseconds:0.####}ms"));
+                            ConsumeHandleWorkingTimeMs: watch.ElapsedMilliseconds
+                        ));
                     }
                     catch (Exception ex)
                     {
@@ -209,12 +213,16 @@ public class EventBusKafka : IEventBus, IDisposable
                                 MessageId: ((dynamic)@event)?.MessageId,
                                 MessageTime: ((dynamic)@event)?.MessageTime,
                                 Message: ((dynamic)@event)?.Message,
-                                UserInfo: new EventUserDetail(
-                                    UserId: ((dynamic)@event)?.UserId,
-                                    Role: ((dynamic)@event)?.UserRoleUniqueName
-                                )),
+                                UserId: ((dynamic)@event)?.UserId,
+                                UserRoles: ((dynamic)@event)?.UserRoles,
+                                ClientLat: ((dynamic)@event)?.ClientLat,
+                                ClientLong: ((dynamic)@event)?.ClientLong,
+                                ClientChannel: ((dynamic)@event)?.ClientChannel,
+                                ClientVersion: ((dynamic)@event)?.ClientVersion
+                            ),
                             ConsumeDetails: $"Handle Error: {ex.Message}",
-                            ConsumeHandleWorkingTime: $"{watch.ElapsedMilliseconds:0.####}ms"));
+                            ConsumeHandleWorkingTimeMs: watch.ElapsedMilliseconds
+                        ));
                     }
                 }
             }

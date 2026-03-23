@@ -297,12 +297,16 @@ public sealed class RabbitMqConsumer : IDisposable
                             MessageId: ((dynamic)@event)?.MessageId,
                             MessageTime: ((dynamic)@event)?.MessageTime,
                             Message: ((dynamic)@event)?.Message,
-                            UserInfo: new EventUserDetail(
-                                UserId: ((dynamic)@event)?.UserId,
-                                Role: ((dynamic)@event)?.UserRoleUniqueName
-                            )),
+                            UserId: ((dynamic)@event)?.UserId,
+                            UserRoles: ((dynamic)@event)?.UserRoles,
+                            ClientLat: ((dynamic)@event)?.ClientLat,
+                            ClientLong: ((dynamic)@event)?.ClientLong,
+                            ClientChannel: ((dynamic)@event)?.ClientChannel,
+                            ClientVersion: ((dynamic)@event)?.ClientVersion
+                        ),
                         ConsumeDetails: "Message handling successfully completed",
-                        ConsumeHandleWorkingTime: $"{watch.ElapsedMilliseconds:0.####}ms"));
+                        ConsumeHandleWorkingTimeMs: watch.ElapsedMilliseconds
+                    ));
                 }
                 catch (Exception ex)
                 {
@@ -320,12 +324,16 @@ public sealed class RabbitMqConsumer : IDisposable
                             MessageId: ((dynamic)@event)?.MessageId,
                             MessageTime: ((dynamic)@event)?.MessageTime,
                             Message: ((dynamic)@event)?.Message,
-                            UserInfo: new EventUserDetail(
-                                UserId: ((dynamic)@event)?.UserId,
-                                Role: ((dynamic)@event)?.UserRoleUniqueName
-                            )),
+                            UserId: ((dynamic)@event)?.UserId,
+                            UserRoles: ((dynamic)@event)?.UserRoles,
+                            ClientLat: ((dynamic)@event)?.ClientLat,
+                            ClientLong: ((dynamic)@event)?.ClientLong,
+                            ClientChannel: ((dynamic)@event)?.ClientChannel,
+                            ClientVersion: ((dynamic)@event)?.ClientVersion
+                        ),
                         ConsumeDetails: $"Handle Error: {ex.Message}",
-                        ConsumeHandleWorkingTime: $"{watch.ElapsedMilliseconds:0.####}ms"));
+                        ConsumeHandleWorkingTimeMs: watch.ElapsedMilliseconds
+                    ));
 
                     throw;
                 }
@@ -402,9 +410,12 @@ public sealed class RabbitMqConsumer : IDisposable
             ),
             Producer = _rabbitMqEventBusConfig.ConsumerClientInfo,
             CorrelationId = failedEnvelopeInfo?.CorrelationId,
-            Channel = failedEnvelopeInfo?.Channel,
             UserId = failedEnvelopeInfo?.UserId,
-            UserRoleUniqueName = failedEnvelopeInfo?.UserRoleUniqueName,
+            UserRoles = failedEnvelopeInfo?.UserRoles,
+            ClientLat = failedEnvelopeInfo?.ClientLat,
+            ClientLong = failedEnvelopeInfo?.ClientLong,
+            ClientChannel = failedEnvelopeInfo?.ClientChannel,
+            ClientVersion = failedEnvelopeInfo?.ClientVersion,
             HopLevel = failedEnvelopeInfo != null ? (ushort)(failedEnvelopeInfo.HopLevel + 1) : (ushort)1,
             ReQueuedCount = failedEnvelopeInfo?.ReQueuedCount ?? 0
         };
@@ -435,10 +446,13 @@ public sealed class RabbitMqConsumer : IDisposable
                         MessageId: @event.MessageId,
                         MessageTime: @event.MessageTime,
                         Message: @event.Message,
-                        UserInfo: new EventUserDetail(
-                            UserId: @event.UserId,
-                            Role: @event.UserRoleUniqueName
-                        )),
+                        UserId: @event.UserId,
+                        UserRoles: @event.UserRoles,
+                        ClientLat: @event.ClientLat,
+                        ClientLong: @event.ClientLong,
+                        ClientChannel: @event.ClientChannel,
+                        ClientVersion: @event.ClientVersion
+                    ),
                     ProduceDetails: $"Message publish error: {ex.Message}"));
             });
 

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Azure.Messaging.ServiceBus;
@@ -61,9 +62,12 @@ public class EventBusAzure : IEventBus, IDisposable
             Message = eventMessage,
             Producer = _eventBusConfig.ConsumerClientInfo,
             CorrelationId = (correlationId ?? parentMessage?.CorrelationId) ?? _traceAccessor?.GetCorrelationId(),
-            Channel = parentMessage?.Channel ?? _traceAccessor?.GetChannel(),
-            UserId = parentMessage?.UserId,
-            UserRoleUniqueName = parentMessage?.UserRoleUniqueName,
+            UserId = parentMessage?.UserId ?? _traceAccessor?.GetUserId(),
+            UserRoles = parentMessage?.UserRoles ?? (_traceAccessor?.GetUserRoles() is { Length: > 0 } ? _traceAccessor?.GetUserRoles().JoinAsString(",") : null),
+            ClientLat = parentMessage?.ClientLat ?? _traceAccessor?.GetClientLat(),
+            ClientLong = parentMessage?.ClientLong ?? _traceAccessor?.GetClientLong(),
+            ClientChannel = parentMessage?.ClientChannel ?? _traceAccessor?.GetClientChannel(),
+            ClientVersion = parentMessage?.ClientVersion ?? _traceAccessor?.GetClientVersion(),
             HopLevel = parentMessage != null ? (ushort)(parentMessage.HopLevel + 1) : (ushort)1,
             ReQueuedCount = parentMessage?.ReQueuedCount ?? 0
         };
@@ -83,10 +87,7 @@ public class EventBusAzure : IEventBus, IDisposable
         _logger.LogDebug("AzureServiceBus | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] COMPLETED", _eventBusConfig.ConsumerClientInfo, eventName, @event.MessageId.ToString());
     }
 
-    public void Subscribe<T, TH>(ushort fetchCount = 1) where T : IIntegrationEventMessage where TH : IIntegrationEventHandler<T>
-    {
-        Subscribe(typeof(T), typeof(TH), fetchCount);
-    }
+    public void Subscribe<T, TH>(ushort fetchCount = 1) where T : IIntegrationEventMessage where TH : IIntegrationEventHandler<T> { Subscribe(typeof(T), typeof(TH), fetchCount); }
 
     public void Subscribe(Type eventType, Type eventHandlerType, ushort fetchCount = 1)
     {

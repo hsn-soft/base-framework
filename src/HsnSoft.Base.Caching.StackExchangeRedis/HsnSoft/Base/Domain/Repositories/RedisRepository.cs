@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using HsnSoft.Base.Logging;
+using HsnSoft.Base.Logging.Abstracts;
 using Newtonsoft.Json;
 using StackExchange.Redis;
 

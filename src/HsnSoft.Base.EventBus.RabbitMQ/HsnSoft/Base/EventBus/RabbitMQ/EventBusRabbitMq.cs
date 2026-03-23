@@ -71,11 +71,15 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
             MessageTime = produceTime,
             Message = eventMessage,
             Producer = _rabbitMqEventBusConfig.ConsumerClientInfo,
+
             CorrelationId = (correlationId ?? parentMessage?.CorrelationId) ?? _traceAccessor?.GetCorrelationId(),
-            Channel = parentMessage?.Channel ?? _traceAccessor?.GetChannel(),
             UserId = parentMessage?.UserId ?? _currentUser?.Id?.ToString(),
-            UserRoleUniqueName = parentMessage?.UserRoleUniqueName ??
-                                 (_currentUser?.Roles is { Length: > 0 } ? _currentUser?.Roles.JoinAsString(",") : null),
+            UserRoles = parentMessage?.UserRoles ?? (_currentUser?.Roles is { Length: > 0 } ? _currentUser?.Roles.JoinAsString(",") : null),
+            ClientLat = parentMessage?.ClientLat ?? _traceAccessor?.GetClientLat(),
+            ClientLong = parentMessage?.ClientLong ?? _traceAccessor?.GetClientLong(),
+            ClientChannel = parentMessage?.ClientChannel ?? _traceAccessor?.GetClientChannel(),
+            ClientVersion = parentMessage?.ClientVersion ?? _traceAccessor?.GetClientVersion(),
+
             HopLevel = parentMessage != null ? (ushort)(parentMessage.HopLevel + 1) : (ushort)1,
             ReQueuedCount = (ushort)((parentMessage?.ReQueuedCount ?? 0) + (isReQueuePublish ? 1 : 0))
         };
@@ -105,10 +109,14 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
                             MessageId: @event.MessageId,
                             MessageTime: @event.MessageTime,
                             Message: @event.Message,
-                            UserInfo: new EventUserDetail(
-                                UserId: @event.UserId,
-                                Role: @event.UserRoleUniqueName
-                            )),
+
+                            UserId: @event.UserId,
+                            UserRoles: @event.UserRoles,
+                            ClientLat: @event.ClientLat,
+                            ClientLong: @event.ClientLong,
+                            ClientChannel: @event.ClientChannel,
+                            ClientVersion: @event.ClientVersion
+                        ),
                         ProduceDetails: $"Message publish error: {ex.Message}"));
                 });
 

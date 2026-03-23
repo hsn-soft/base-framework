@@ -1,4 +1,5 @@
 using System;
+using HsnSoft.Base.Logging.Abstracts;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
@@ -9,7 +10,7 @@ public class DefaultBaseLogger : IBaseLogger
 {
     protected readonly ILogger Logger;
 
-    public DefaultBaseLogger(IConfiguration configuration)
+    protected DefaultBaseLogger(IConfiguration configuration)
     {
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
@@ -42,9 +43,11 @@ public class DefaultBaseLogger : IBaseLogger
 
     public void LogDebug(string messageTemplate, params object[] args) => Logger.LogDebug(messageTemplate, args);
 
-    public void LogError(string messageTemplate, params object[] args) => Logger.LogError(messageTemplate, args);
+    public void LogInformation(string messageTemplate, params object[] args) => Logger.LogInformation(messageTemplate, args);
 
     public void LogWarning(string messageTemplate, params object[] args) => Logger.LogWarning(messageTemplate, args);
 
-    public void LogInformation(string messageTemplate, params object[] args) => Logger.LogInformation(messageTemplate, args);
+    public void LogError(string messageTemplate, params object[] args) => Logger.LogError(messageTemplate, args);
+
+    public void LogError(Exception exception, string messageTemplate, params object[] args) => Logger.LogError(exception, messageTemplate, args);
 }

@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Logging;
 
-namespace HsnSoft.Base.Logging;
+namespace HsnSoft.Base.Logging.Abstracts;
 
 /// <summary>
 /// Interface to define a <see cref="LogLevel"/> property (see <see cref="LogLevel"/>).

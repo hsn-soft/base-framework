@@ -2,7 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-using HsnSoft.Base.Logging;
+using HsnSoft.Base.Logging.Abstracts;
 using Microsoft.Extensions.Hosting;
 
 namespace HsnSoft.Base.AspNetCore.Hosting.Worker;

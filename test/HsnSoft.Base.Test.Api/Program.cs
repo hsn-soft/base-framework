@@ -16,7 +16,7 @@ public static class Program
         ApplicationIdentifier.AppId = Guid.NewGuid().ToString("N");
         ApplicationIdentifier.AppName = workspace?[(workspace.IndexOf('.') + 1)..];
 
-        Log.Logger = SerilogConfigurationHelper.ConfigureConsoleLogger(GetConfiguration());
+        Log.Logger = SerilogConfigurationHelper.ConfigureConsoleLogger(GetConfiguration(),"Host");
 
         try
         {

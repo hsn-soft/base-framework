@@ -32,4 +32,8 @@
         <PackageReference Include="Serilog.Formatting.Compact" Version="3.0.0" />
     </ItemGroup>
 
+    <ItemGroup>
+        <PackageReference Include="DeepCloner" Version="0.10.4" />
+    </ItemGroup>
+
 </Project>

@@ -1,7 +1,7 @@
 using System;
 using AutoMapper;
 using HsnSoft.Base.AspNetCore.Mvc.Services;
-using HsnSoft.Base.Logging;
+using HsnSoft.Base.Logging.Abstracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
