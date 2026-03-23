@@ -16,7 +16,6 @@
 
     <ItemGroup>
         <ProjectReference Include="..\HsnSoft.Base.Data\HsnSoft.Base.Data.csproj" />
-        <ProjectReference Include="..\HsnSoft.Base.EventBus.Abstractions\HsnSoft.Base.EventBus.Abstractions.csproj" />
         <ProjectReference Include="..\HsnSoft.Base.Security\HsnSoft.Base.Security.csproj" />
     </ItemGroup>
 

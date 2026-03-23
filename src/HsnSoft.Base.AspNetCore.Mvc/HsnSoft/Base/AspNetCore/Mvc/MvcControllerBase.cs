@@ -1,5 +1,4 @@
 using System;
-using HsnSoft.Base.Guids;
 using HsnSoft.Base.Logging;
 using HsnSoft.Base.MultiTenancy;
 using HsnSoft.Base.Users;
@@ -13,8 +12,6 @@ namespace HsnSoft.Base.AspNetCore.Mvc;
 public abstract class BaseController : Controller
 {
     protected IServiceProvider ServiceProvider { get; set; }
-
-    protected IGuidGenerator GuidGenerator => SimpleGuidGenerator.Instance;
 
     protected IBaseLogger Logger => ServiceProvider.GetRequiredService<IBaseLogger>();
 
