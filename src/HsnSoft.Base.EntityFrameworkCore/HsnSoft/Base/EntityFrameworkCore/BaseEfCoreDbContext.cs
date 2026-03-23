@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using HsnSoft.Base.Auditing;
+using HsnSoft.Base.Auditing.Contracts;
 using HsnSoft.Base.Data;
 using HsnSoft.Base.Domain.Entities;
 using HsnSoft.Base.Domain.Entities.Events;

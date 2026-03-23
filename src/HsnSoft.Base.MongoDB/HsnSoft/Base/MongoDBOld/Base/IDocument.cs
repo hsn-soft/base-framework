@@ -4,11 +4,11 @@ namespace HsnSoft.Base.MongoDBOld.Base;
 
 public interface IFullAuditDocument : IBaseDocument
 {
-    public bool IsDeleted { get; set; }
-    public DateTime CreationTime { get; set; }
-    public string CreatorId { get; set; }
-    public DateTime? LastModificationTime { get; set; }
-    public string LastModifierId { get; set; }
+    bool IsDeleted { get; set; }
+    DateTime CreationTime { get; set; }
+    string CreatorId { get; set; }
+    DateTime? LastModificationTime { get; set; }
+    string LastModifierId { get; set; }
 }
 
 public interface IBaseDocument

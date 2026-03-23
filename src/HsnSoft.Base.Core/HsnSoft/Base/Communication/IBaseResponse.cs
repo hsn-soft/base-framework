@@ -1,17 +1,18 @@
 using System.Collections.Generic;
+using JetBrains.Annotations;
 
 namespace HsnSoft.Base.Communication;
 
 public interface IBaseResponse
 {
-    public int StatusCode { get; }
+    int StatusCode { get; }
 
-    public List<string> StatusMessages { get; }
+    List<string> StatusMessages { get; }
 
     string StatusMessagesToSingleMessage();
 }
 
 public interface IBaseResponse<out TPayload> : IBaseResponse
 {
-    public TPayload Payload { get; }
+    [CanBeNull] TPayload Payload { get; }
 }

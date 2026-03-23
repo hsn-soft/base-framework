@@ -18,7 +18,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\HsnSoft.Base.ApiVersioning.Abstractions\HsnSoft.Base.ApiVersioning.Abstractions.csproj" />
+        <ProjectReference Include="..\HsnSoft.Base.Security\HsnSoft.Base.Security.csproj" />
         <ProjectReference Include="..\HsnSoft.Base.AspNetCore\HsnSoft.Base.AspNetCore.csproj" />
         <ProjectReference Include="..\HsnSoft.Base.Ddd.Application\HsnSoft.Base.Ddd.Application.csproj" />
         <ProjectReference Include="..\HsnSoft.Base.Localization\HsnSoft.Base.Localization.csproj" />
@@ -28,7 +28,7 @@
     <ItemGroup>
         <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="$(MicrosoftAspNetCorePackageVersion)" />
         <PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning" Version="5.1.0" />
-        <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="$(MicrosoftAspNetCorePackageVersion)" />
+ 
     </ItemGroup>
 
 </Project>

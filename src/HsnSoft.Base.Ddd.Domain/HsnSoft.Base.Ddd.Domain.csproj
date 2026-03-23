@@ -19,7 +19,6 @@
         <ProjectReference Include="..\HsnSoft.Base.Data\HsnSoft.Base.Data.csproj"/>
         <ProjectReference Include="..\HsnSoft.Base.EventBus\HsnSoft.Base.EventBus.csproj"/>
         <ProjectReference Include="..\HsnSoft.Base.ExceptionHandling\HsnSoft.Base.ExceptionHandling.csproj"/>
-        <ProjectReference Include="..\HsnSoft.Base.Guids\HsnSoft.Base.Guids.csproj"/>
         <ProjectReference Include="..\HsnSoft.Base.Timing\HsnSoft.Base.Timing.csproj"/>
         <ProjectReference Include="..\HsnSoft.Base.MultiTenancy\HsnSoft.Base.MultiTenancy.csproj"/>
     </ItemGroup>

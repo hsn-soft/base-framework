@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Dynamic.Core;
 using System.Runtime.ExceptionServices;
-using HsnSoft.Base.Logging;
+using HsnSoft.Base.Logging.Abstracts;
 using Microsoft.Extensions.Logging;
 
 namespace System;

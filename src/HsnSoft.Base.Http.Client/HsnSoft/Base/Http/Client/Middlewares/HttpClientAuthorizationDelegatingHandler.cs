@@ -10,7 +10,7 @@ namespace HsnSoft.Base.Http.Client.Middlewares;
 
 public class HttpClientAuthorizationDelegatingHandler : DelegatingHandler
 {
-    const string ACCESS_TOKEN = "access_token";
+    private const string ACCESS_TOKEN = "access_token";
     private readonly IHttpContextAccessor _httpContextAccessor;
 
     public HttpClientAuthorizationDelegatingHandler(IHttpContextAccessor httpContextAccessor)

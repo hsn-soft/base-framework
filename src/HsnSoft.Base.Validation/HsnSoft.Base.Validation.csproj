@@ -15,13 +15,12 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <None Remove="HsnSoft\Base\Validation\Localization\Validation\*.json" />
-        <EmbeddedResource Include="HsnSoft\Base\Validation\Localization\Validation\*.json" />
+        <None Remove="HsnSoft\Base\Validation\Localization\**\*.json" />
+        <EmbeddedResource Include="HsnSoft\Base\Validation\Localization\**\*.json" />
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\HsnSoft.Base.Localization\HsnSoft.Base.Localization.csproj" />
-        <ProjectReference Include="..\HsnSoft.Base.Validation.Abstractions\HsnSoft.Base.Validation.Abstractions.csproj" />
     </ItemGroup>
 
 </Project>

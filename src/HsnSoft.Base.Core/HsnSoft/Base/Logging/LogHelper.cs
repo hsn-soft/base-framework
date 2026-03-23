@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using HsnSoft.Base.Logging.Models;
 using JetBrains.Annotations;
 
 namespace HsnSoft.Base.Logging;
@@ -12,7 +13,7 @@ public static class LogHelper
         {
             CorrelationId = correlationId,
             Facility = facility,
-            Description = message,
+            Message = message,
             Reference = reference,
             StackTrace = null
         };

@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using HsnSoft.Base.Auditing;
+using HsnSoft.Base.Auditing.Contracts;
 using HsnSoft.Base.Domain.Entities;
 using HsnSoft.Base.MongoDB.Context;
 using JetBrains.Annotations;

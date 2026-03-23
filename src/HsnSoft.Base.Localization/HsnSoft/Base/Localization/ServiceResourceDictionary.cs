@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using HsnSoft.Base.Localization.Abstractions;
 using HsnSoft.Base.Localization.Json;
 using HsnSoft.Base.VirtualFileSystem;
 using Microsoft.Extensions.Localization;

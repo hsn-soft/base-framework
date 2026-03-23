@@ -1,5 +1,5 @@
 using System;
-using HsnSoft.Base.Auditing;
+using HsnSoft.Base.Auditing.Contracts;
 
 namespace HsnSoft.Base.Domain.Entities.Auditing;
 

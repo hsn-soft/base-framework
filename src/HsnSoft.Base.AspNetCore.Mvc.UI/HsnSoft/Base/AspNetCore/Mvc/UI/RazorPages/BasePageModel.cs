@@ -1,8 +1,7 @@
 using System;
 using AutoMapper;
 using HsnSoft.Base.AspNetCore.Mvc.Services;
-using HsnSoft.Base.Guids;
-using HsnSoft.Base.Logging;
+using HsnSoft.Base.Logging.Abstracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -26,7 +25,6 @@ public abstract class BasePageModel : PageModel
 
     protected IRazorRenderService RazorRenderService => ServiceProvider.GetRequiredService<IRazorRenderService>();
     protected IMapper Mapper => ServiceProvider.GetRequiredService<IMapper>();
-    protected IGuidGenerator GuidGenerator => SimpleGuidGenerator.Instance;
 
     protected IBaseLogger Logger => ServiceProvider.GetRequiredService<IBaseLogger>();
 
