@@ -15,8 +15,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <None Remove="HsnSoft\Base\Authorization\Localization\*.json" />
-        <EmbeddedResource Include="HsnSoft\Base\Authorization\Localization\*.json" />
+        <None Remove="HsnSoft\Base\Authorization\Localization\**\*.json" />
+        <EmbeddedResource Include="HsnSoft\Base\Authorization\Localization\**\*.json" />
     </ItemGroup>
 
     <ItemGroup>

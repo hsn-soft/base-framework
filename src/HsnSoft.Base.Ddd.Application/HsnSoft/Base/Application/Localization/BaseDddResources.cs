@@ -2,5 +2,5 @@ using HsnSoft.Base.Localization;
 
 namespace HsnSoft.Base.Application.Localization;
 
-[LocalizationResourceName("DddResources")]
+[LocalizationResourceName("Resources")]
 public class BaseDddResources;
