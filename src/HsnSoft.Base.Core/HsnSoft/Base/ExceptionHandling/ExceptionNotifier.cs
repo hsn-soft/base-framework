@@ -37,7 +37,6 @@ public class ExceptionNotifier : IExceptionNotifier, ITransientDependency
                 catch (Exception e)
                 {
                     Logger.LogWarning($"Exception subscriber of type {exceptionSubscriber.GetType().AssemblyQualifiedName} has thrown an exception!");
-                    Logger.LogException(e, LogLevel.Warning);
                 }
             }
         }

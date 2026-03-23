@@ -5,6 +5,6 @@ namespace HsnSoft.Base.AspNetCore.Logging;
 
 public interface IRequestResponseLogger : IBaseLogger
 {
-    public void RequestResponseInfoLog<T>([NotNull] T t) where T : IRequestResponseLog;
-    public void RequestResponseErrorLog<T>([NotNull] T t) where T : IRequestResponseLog;
+    void RequestResponseInfoLog<T>([NotNull] T t) where T : IRequestResponseLog;
+    void RequestResponseErrorLog<T>([NotNull] T t) where T : IRequestResponseLog;
 }

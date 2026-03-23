@@ -4,7 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Serilog;
 using Serilog.Events;
 
-namespace HsnSoft.Base.AspNetCore.Serilog;
+namespace HsnSoft.Base.Serilog;
 
 public class BaseLogger : IBaseLogger
 {

@@ -1,4 +1,4 @@
-using HsnSoft.Base.AspNetCore.Serilog;
+using HsnSoft.Base.Serilog;
 using HsnSoft.Base.Test.Api.EfCore.Context;
 using HsnSoft.Base.Test.Api.MongoDb.Context;
 using HsnSoft.Base.Tracing;

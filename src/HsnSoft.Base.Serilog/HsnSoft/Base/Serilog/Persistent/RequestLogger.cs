@@ -1,9 +1,7 @@
-using HsnSoft.Base.AspNetCore.Logging;
-using HsnSoft.Base.Json.Newtonsoft.Mask;
 using Microsoft.Extensions.Configuration;
 using Serilog.Events;
 
-namespace HsnSoft.Base.AspNetCore.Serilog.Persistent;
+namespace HsnSoft.Base.Serilog.Persistent;
 
 public sealed class RequestLogger : BaseLogger, IRequestResponseLogger
 {

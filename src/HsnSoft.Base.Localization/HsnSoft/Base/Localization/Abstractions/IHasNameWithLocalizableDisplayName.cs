@@ -4,9 +4,7 @@ namespace HsnSoft.Base.Localization.Abstractions;
 
 public interface IHasNameWithLocalizableDisplayName
 {
-    [NotNull]
-    public string Name { get; }
+    [NotNull] string Name { get; }
 
-    [CanBeNull]
-    public ILocalizableString DisplayName { get; }
+    [CanBeNull] ILocalizableString DisplayName { get; }
 }

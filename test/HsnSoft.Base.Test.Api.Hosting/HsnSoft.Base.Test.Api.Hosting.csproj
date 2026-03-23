@@ -12,7 +12,8 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\src\HsnSoft.Base.AspNetCore.Serilog\HsnSoft.Base.AspNetCore.Serilog.csproj" />
+        <ProjectReference Include="..\..\src\HsnSoft.Base.AspNetCore\HsnSoft.Base.AspNetCore.csproj" />
+        <ProjectReference Include="..\..\src\HsnSoft.Base.Serilog\HsnSoft.Base.Serilog.csproj" />
         <ProjectReference Include="..\HsnSoft.Base.Test.Api.Helper\HsnSoft.Base.Test.Api.Helper.csproj" />
     </ItemGroup>
 

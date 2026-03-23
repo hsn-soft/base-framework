@@ -7,7 +7,7 @@ namespace HsnSoft.Base.EventBus;
 
 public interface IEventBusSubscriptionManager
 {
-    public Func<string, string> EventNameGetter { get; set; }
+    Func<string, string> EventNameGetter { get; set; }
 
     bool IsEmpty { get; }
     void Clear();

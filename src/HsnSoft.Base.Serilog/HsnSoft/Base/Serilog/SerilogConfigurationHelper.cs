@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
 using Destructurama;
-using HsnSoft.Base.AspNetCore.Serilog.LogMask;
+using HsnSoft.Base.Serilog.LogMask;
 using Microsoft.Extensions.Configuration;
 using Serilog;
 using Serilog.Events;
@@ -10,7 +10,7 @@ using Serilog.Sinks.Graylog.Core.Transport;
 using Serilog.Sinks.SystemConsole.Themes;
 using ILogger = Serilog.ILogger;
 
-namespace HsnSoft.Base.AspNetCore.Serilog;
+namespace HsnSoft.Base.Serilog;
 
 public static class SerilogConfigurationHelper
 {

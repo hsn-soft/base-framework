@@ -1,12 +1,9 @@
-using System.Linq;
 using System.Reflection;
-using HsnSoft.Base.Json.Mask.Consts;
-using HsnSoft.Base.Json.Mask.MaskingInfo;
 using Serilog.Core;
 using Serilog.Debugging;
 using Serilog.Events;
 
-namespace HsnSoft.Base.AspNetCore.Serilog.LogMask;
+namespace HsnSoft.Base.Serilog.LogMask;
 
     public class MaskDestructuringPolicy : IDestructuringPolicy
     {

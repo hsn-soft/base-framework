@@ -67,7 +67,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HsnSoft.Base", "src\HsnSoft
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HsnSoft.Base.EntityFrameworkCore.Sqlite", "src\HsnSoft.Base.EntityFrameworkCore.Sqlite\HsnSoft.Base.EntityFrameworkCore.Sqlite.csproj", "{58CF8957-5045-4F81-884D-72DF48F721CC}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HsnSoft.Base.AspNetCore.Serilog", "src\HsnSoft.Base.AspNetCore.Serilog\HsnSoft.Base.AspNetCore.Serilog.csproj", "{3B801003-BE74-49ED-9749-DA5E99F45EBF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HsnSoft.Base.Serilog", "src\HsnSoft.Base.Serilog\HsnSoft.Base.Serilog.csproj", "{3B801003-BE74-49ED-9749-DA5E99F45EBF}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HsnSoft.Base.BlobStoring", "src\HsnSoft.Base.BlobStoring\HsnSoft.Base.BlobStoring.csproj", "{A0CFBDD6-A3CB-438C-83F1-5025F12E2D42}"
 EndProject

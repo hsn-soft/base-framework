@@ -9,7 +9,7 @@ public class ServiceBusPersisterConnection : IServiceBusPersisterConnection
     private ServiceBusClient _topicClient;
     private ServiceBusAdministrationClient _subscriptionClient;
 
-    bool _disposed;
+    private bool _disposed;
 
     public ServiceBusPersisterConnection(string serviceBusConnectionString)
     {
