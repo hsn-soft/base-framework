@@ -16,7 +16,6 @@
 
     <ItemGroup>
         <ProjectReference Include="..\HsnSoft.Base.Core\HsnSoft.Base.Core.csproj" />
-        <ProjectReference Include="..\HsnSoft.Base.MultiTenancy\HsnSoft.Base.MultiTenancy.csproj" />
     </ItemGroup>
 
 </Project>
