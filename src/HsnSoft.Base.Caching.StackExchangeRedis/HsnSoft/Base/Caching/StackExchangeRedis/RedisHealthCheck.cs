@@ -68,12 +68,12 @@ public class CustomRedisHealthCheck : IHealthCheck
 
             if (!standAloneServerFound)
             {
-                return HealthCheckResult.Healthy();
+                return HealthCheckResult.Healthy(description:"Redis is ready");
             }
 
             if (!isActiveConnectionFound) throw new Exception("Connection not available");
 
-            return HealthCheckResult.Healthy();
+            return HealthCheckResult.Healthy(description:"Redis is ready");
         }
         catch (Exception ex)
         {

@@ -15,7 +15,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\HsnSoft.Base.Auditing.Contracts\HsnSoft.Base.Auditing.Contracts.csproj" />
         <ProjectReference Include="..\HsnSoft.Base.Data\HsnSoft.Base.Data.csproj" />
         <ProjectReference Include="..\HsnSoft.Base.Json\HsnSoft.Base.Json.csproj" />
         <ProjectReference Include="..\HsnSoft.Base.MultiTenancy\HsnSoft.Base.MultiTenancy.csproj" />

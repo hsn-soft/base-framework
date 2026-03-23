@@ -35,7 +35,7 @@ public class HttpContextWebClientInfoProvider : IWebClientInfoProvider, ITransie
         }
         catch (Exception ex)
         {
-            Logger.LogException(ex, LogLevel.Warning);
+            Logger.LogError(ex.Message);
             return null;
         }
     }

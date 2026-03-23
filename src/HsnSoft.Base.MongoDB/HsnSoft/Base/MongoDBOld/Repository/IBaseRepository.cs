@@ -130,7 +130,7 @@ public interface IBaseRepository<TDocument> where TDocument : IBaseDocument
     /// </summary>
     /// <param name="documents"></param>
     /// <param name="isOrdered">if true, then when a write fails, return without performing the remaining writes.</param>
-    public void ReplaceMany(List<TDocument> documents, bool isOrdered = false);
+    void ReplaceMany(List<TDocument> documents, bool isOrdered = false);
 
     /// <summary>
     /// Replaces given documents by id
@@ -205,16 +205,16 @@ public interface IBaseRepository<TDocument> where TDocument : IBaseDocument
     /// <param name="filterExpression"></param>
     /// <param name="readOption"></param>
     /// <returns>number of documents matches with filter expression</returns>
-    public long Count(Expression<Func<TDocument, bool>> filterExpression,
+    long Count(Expression<Func<TDocument, bool>> filterExpression,
         ReadOption readOption);
 
-    public long Count(Expression<Func<TDocument, bool>> filterExpression);
+    long Count(Expression<Func<TDocument, bool>> filterExpression);
 
     /// <summary>
     /// Gives the estimated document count for entire collection
     /// </summary>
     /// <returns></returns>
-    public long EstimatedDocumentCount();
+    long EstimatedDocumentCount();
 
     /// <summary>
     /// Counts documents for given filter expression
@@ -243,7 +243,7 @@ public interface IBaseRepository<TDocument> where TDocument : IBaseDocument
     /// <param name="filterExpression"></param>
     /// <param name="updateValues">key,dynamic dictionary</param>
     /// <returns>update operation acknowledge</returns>
-    public bool Update(Expression<Func<TDocument, bool>> filterExpression,
+    bool Update(Expression<Func<TDocument, bool>> filterExpression,
         Dictionary<string, dynamic> updateValues);
 
     /// <summary>
@@ -260,7 +260,7 @@ public interface IBaseRepository<TDocument> where TDocument : IBaseDocument
     /// <param name="filterExpression"></param>
     /// <param name="updateValues">key,dynamic dictionary</param>
     /// <returns>update operation acknowledge</returns>
-    public bool UpdateMany(Expression<Func<TDocument, bool>> filterExpression,
+    bool UpdateMany(Expression<Func<TDocument, bool>> filterExpression,
         Dictionary<string, dynamic> updateValues);
 
     /// <summary>

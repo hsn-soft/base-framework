@@ -10,13 +10,17 @@ public class HttpContextTraceAccessor : ITraceAccesor
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public HttpContextTraceAccessor(IHttpContextAccessor httpContextAccessor)
-    {
-        _httpContextAccessor = httpContextAccessor;
-    }
+    public HttpContextTraceAccessor(IHttpContextAccessor httpContextAccessor) { _httpContextAccessor = httpContextAccessor; }
 
     public string GetCorrelationId() => _httpContextAccessor.HttpContext?.GetCorrelationId() ?? Guid.NewGuid().ToString("N");
-    public string GetChannel() => _httpContextAccessor.HttpContext?.GetChannel();
+
+    public string GetClientChannel() => _httpContextAccessor.HttpContext?.GetChannel();
+
+    public string GetClientLat() => _httpContextAccessor.HttpContext?.GetClientRequestLat();
+
+    public string GetClientLong() => _httpContextAccessor.HttpContext?.GetClientRequestLong();
+
+    public string GetClientVersion() => _httpContextAccessor.HttpContext?.GetClientVersion();
 
     public string GetUserId()
     {
@@ -33,13 +37,13 @@ public class HttpContextTraceAccessor : ITraceAccesor
         return userIdOrNull.Value;
     }
 
-    public string[] GetRoles()
+    public string[] GetUserRoles()
     {
         var principal = _httpContextAccessor.HttpContext?.User;
 
         Check.NotNull(principal, nameof(principal));
 
-        var roles = principal?.Claims.Where(c => c.Type == ClaimTypes.Role).ToArray() ?? Array.Empty<Claim>();
+        var roles = principal.Claims.Where(c => c.Type == ClaimTypes.Role).ToArray();
 
         return roles.Select(c => c.Value).Distinct().ToArray();
     }

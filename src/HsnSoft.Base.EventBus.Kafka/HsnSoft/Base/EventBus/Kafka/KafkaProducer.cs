@@ -55,15 +55,15 @@ public sealed class KafkaProducer
                 switch (message.Level)
                 {
                     case SyslogLevel.Emergency or SyslogLevel.Alert or SyslogLevel.Critical or SyslogLevel.Error:
-                    {
-                        _logger.LogError("Kafka | {ClientInfo} {Facility} {CorrelationId} => Message: {Message}", _kafkaEventBusConfig.ConsumerClientInfo, message.Facility, @event.CorrelationId, message.Message);
-                        break;
-                    }
+                        {
+                            _logger.LogError("Kafka | {ClientInfo} {Facility} {CorrelationId} => Message: {Message}", _kafkaEventBusConfig.ConsumerClientInfo, message.Facility, @event.CorrelationId, message.Message);
+                            break;
+                        }
                     default:
-                    {
-                        _logger.LogDebug("Kafka | {ClientInfo} {Facility} => Message: {Message}", _kafkaEventBusConfig.ConsumerClientInfo, message.Facility, message.Message);
-                        break;
-                    }
+                        {
+                            _logger.LogDebug("Kafka | {ClientInfo} {Facility} => Message: {Message}", _kafkaEventBusConfig.ConsumerClientInfo, message.Facility, message.Message);
+                            break;
+                        }
                 }
             })
             .SetErrorHandler((_, e) => _logger.LogError("Kafka | {ClientInfo} {CorrelationId} PRODUCER => Error: {Reason}. Is Fatal: {IsFatal}", _kafkaEventBusConfig.ConsumerClientInfo, @event.CorrelationId, e.Reason, e.IsFatal))
@@ -73,21 +73,11 @@ public sealed class KafkaProducer
         {
             _logger.LogDebug("Kafka | {ClientInfo} PRODUCER [ {EventName} ] => MessageId [ {MessageId} ] STARTED", _kafkaEventBusConfig.ConsumerClientInfo, topicName, @event.MessageId.ToString());
 
-            string message = JsonConvert.SerializeObject(@event, new JsonSerializerSettings
-            {
-                Converters = new List<JsonConverter>
-                {
-                    new CustomeTimeSpanConverter()
-                }
-            });
+            string message = JsonConvert.SerializeObject(@event, new JsonSerializerSettings { Converters = new List<JsonConverter> { new CustomeTimeSpanConverter() } });
 
             var produceTime = DateTime.UtcNow;
             var deliveryReport = await producer.ProduceAsync(topicName,
-                new Message<long, string>
-                {
-                    Key = produceTime.Ticks,
-                    Value = message
-                });
+                new Message<long, string> { Key = produceTime.Ticks, Value = message });
 
             producer.Flush(new TimeSpan(0, 0, 10));
             if (deliveryReport.Status != PersistenceStatus.Persisted)
@@ -107,10 +97,13 @@ public sealed class KafkaProducer
                         MessageId: @event.MessageId,
                         MessageTime: @event.MessageTime,
                         Message: @event.Message,
-                        UserInfo: new EventUserDetail(
-                            UserId: @event.UserId,
-                            Role: @event.UserRoleUniqueName
-                        )),
+                        UserId: @event.UserId,
+                        UserRoles: @event.UserRoles,
+                        ClientLat: @event.ClientLat,
+                        ClientLong: @event.ClientLong,
+                        ClientChannel: @event.ClientChannel,
+                        ClientVersion: @event.ClientVersion
+                    ),
                     ProduceDetails: $"Message not ack\'d by all brokers, {deliveryReport.Status}"));
             }
             else

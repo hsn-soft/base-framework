@@ -1,115 +1,82 @@
 using System;
-using HsnSoft.Base.Logging;
+using System.Collections.Generic;
+using HsnSoft.Base.Logging.Abstracts;
 using JetBrains.Annotations;
 
 namespace HsnSoft.Base.AspNetCore.Logging;
 
-public sealed record RequestLogModel(
-    string LogId,
-    [CanBeNull] string TraceId,
-    [CanBeNull] string CorrelationId,
-    string Facility,
-    DateTime RequestDateTimeUtc,
-    RequestLogDetail Request
-) : IRequestResponseLog
+public sealed class RequestResponseLogModel : IRequestResponseLog
 {
-    public string LogId { get; } = LogId;
+    [CanBeNull] public string TraceId { get; set; }
+    [CanBeNull] public string CorrelationId { get; set; }
+    public RequestResponseLogFacility Facility => RequestResponseLogFacility.HTTP_REQUEST_RESPONSE_LOG;
 
-    [CanBeNull]
-    public string TraceId { get; } = TraceId;
+    public ClientInfoLogDetail ClientInfo { get; set; } = new();
+    public RequestInfoLogDetail RequestInfo { get; set; } = new();
+    public ResponseInfoLogDetail ResponseInfo { get; set; } = new();
 
-    [CanBeNull]
-    public string CorrelationId { get; } = CorrelationId;
-
-    public string Facility { get; } = Facility;
-
-    public DateTime RequestDateTimeUtc { get; } = RequestDateTimeUtc;
-
-    public RequestLogDetail Request { get; } = Request;
+    public long RequestResponseWorkingTime { get; set; }
 }
 
-public sealed record ResponseLogModel(
-    string LogId,
-    [CanBeNull] string TraceId,
-    [CanBeNull] string CorrelationId,
-    string Facility,
-    DateTime ResponseDateTimeUtc,
-    [CanBeNull] ResponseLogDetail Response,
-    [CanBeNull] string RequestResponseWorkingTime
-) : IRequestResponseLog
+public sealed class RequestLogModel : IRequestResponseLog
 {
-    public string LogId { get; } = LogId;
+    [CanBeNull] public string TraceId { get; set; }
+    [CanBeNull] public string CorrelationId { get; set; }
+    public RequestResponseLogFacility Facility => RequestResponseLogFacility.HTTP_REQUEST_LOG;
 
-    [CanBeNull]
-    public string TraceId { get; } = TraceId;
-
-    [CanBeNull]
-    public string CorrelationId { get; } = CorrelationId;
-
-    public string Facility { get; } = Facility;
-    public DateTime ResponseDateTimeUtc { get; } = ResponseDateTimeUtc;
-
-    [CanBeNull]
-    public ResponseLogDetail Response { get; } = Response;
-
-    [CanBeNull]
-    public string RequestResponseWorkingTime { get; } = RequestResponseWorkingTime;
+    public ClientInfoLogDetail ClientInfo { get; set; } = new();
+    public RequestInfoLogDetail RequestInfo { get; set; } = new();
 }
 
-public sealed record RequestLogDetail(
-    [CanBeNull] string ClientIp,
-    [CanBeNull] string RequestHost,
-    [CanBeNull] string RequestLat,
-    [CanBeNull] string RequestLong,
-    [CanBeNull] string ClientVersion,
-    [CanBeNull] RequestUserDetail UserInfo,
-    string RequestPath,
-    [CanBeNull] string RequestBody)
+public sealed class ResponseLogModel : IRequestResponseLog
 {
-    [CanBeNull]
-    public string ClientIp { get; } = ClientIp;
+    [CanBeNull] public string TraceId { get; set; }
+    [CanBeNull] public string CorrelationId { get; set; }
+    public RequestResponseLogFacility Facility => RequestResponseLogFacility.HTTP_RESPONSE_LOG;
 
-    [CanBeNull]
-    public string RequestHost { get; } = RequestHost;
+    public ResponseInfoLogDetail ResponseInfo { get; set; } = new();
 
-    [CanBeNull]
-    public string RequestLat { get; } = RequestLat;
-
-    [CanBeNull]
-    public string RequestLong { get; } = RequestLong;
-
-    [CanBeNull]
-    public string ClientVersion { get; } = ClientVersion;
-
-    [CanBeNull]
-    public RequestUserDetail UserInfo { get; } = UserInfo;
-
-    public string RequestPath { get; } = RequestPath;
-
-    [CanBeNull]
-    public string RequestBody { get; } = RequestBody;
+    public long RequestResponseWorkingTime { get; set; }
 }
 
-public sealed record ResponseLogDetail(
-    int ResponseStatus,
-    [CanBeNull] string ResponseBody)
+public sealed class ClientInfoLogDetail
 {
-    public int ResponseStatus { get; } = ResponseStatus;
+    [CanBeNull] public string RemoteIp { get; set; }
+    [CanBeNull] public string ForwardedFor { get; set; }
+    [CanBeNull] public string UserAgent { get; set; }
+    [CanBeNull] public string DeviceType { get; set; }
+    [CanBeNull] public string AcceptLanguage { get; set; }
+    [CanBeNull] public string Origin { get; set; }
+    [CanBeNull] public string Referer { get; set; }
 
-    [CanBeNull]
-    public string ResponseBody { get; } = ResponseBody;
+    [CanBeNull] public string UserId { get; set; }
+    [CanBeNull] public string UserRoles { get; set; }
+    [CanBeNull] public string ClientLat { get; set; }
+    [CanBeNull] public string ClientLong { get; set; }
+    [CanBeNull] public string ClientChannel { get; set; }
+    [CanBeNull] public string ClientVersion { get; set; }
 }
 
-public sealed record RequestUserDetail(
-    [CanBeNull] string UserId,
-    [CanBeNull] string Role)
+public sealed class RequestInfoLogDetail
 {
-    [CanBeNull]
-    public string UserId { get; } = UserId;
-
-    [CanBeNull]
-    public string Role { get; } = Role;
+    public DateTime RequestDateTimeUtc { get; set; }= DateTime.UtcNow;
+    [CanBeNull] public string RequestMethod { get; set; }
+    [CanBeNull] public string RequestPath { get; set; }
+    [CanBeNull] public string RequestQuery { get; set; }
+    [CanBeNull] public string RequestScheme { get; set; }
+    [CanBeNull] public string RequestHost { get; set; }
+    [CanBeNull] public string RequestContentType { get; set; }
+    public long RequestContentLength { get; set; }
+    [CanBeNull] public Dictionary<string, string> RequestHeaders { get; set; }
+    [CanBeNull] public string RequestBody { get; set; }
 }
 
-// Marker
-public interface IRequestResponseLog : IPersistentLog;
+public sealed class ResponseInfoLogDetail
+{
+    public DateTime ResponseDateTimeUtc { get; set; }= DateTime.UtcNow;
+    public int ResponseStatus { get; set; }
+    [CanBeNull] public string ResponseContentType { get; set; }
+    public long ResponseContentLength { get; set; }
+    [CanBeNull] public Dictionary<string, string> ResponseHeaders { get; set; }
+    [CanBeNull] public string ResponseBody { get; set; }
+}

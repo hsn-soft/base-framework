@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Collections.Immutable;
-using HsnSoft.Base.Localization;
+using HsnSoft.Base.Localization.Abstractions;
 using HsnSoft.Base.MultiTenancy;
 using JetBrains.Annotations;
 

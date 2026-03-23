@@ -1,4 +1,5 @@
-﻿using HsnSoft.Base.DependencyInjection;
+﻿using HsnSoft.Base.Auditing.Contracts;
+using HsnSoft.Base.DependencyInjection;
 using HsnSoft.Base.Timing;
 using HsnSoft.Base.Users;
 

@@ -11,8 +11,16 @@ public interface ITraceAccesor
     string GetUserId();
 
     [CanBeNull]
-    string[] GetRoles();
+    string[] GetUserRoles();
 
     [CanBeNull]
-    string GetChannel();
+    string GetClientLat();
+
+    [CanBeNull]
+    string GetClientLong();
+    [CanBeNull]
+    string GetClientChannel();
+
+    [CanBeNull]
+    string GetClientVersion();
 }

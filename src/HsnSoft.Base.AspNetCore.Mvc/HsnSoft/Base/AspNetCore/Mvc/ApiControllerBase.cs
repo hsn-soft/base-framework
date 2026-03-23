@@ -1,6 +1,5 @@
 using System;
-using HsnSoft.Base.Guids;
-using HsnSoft.Base.Logging;
+using HsnSoft.Base.Logging.Abstracts;
 using HsnSoft.Base.MultiTenancy;
 using HsnSoft.Base.Users;
 using Microsoft.AspNetCore.Authorization;
@@ -13,8 +12,6 @@ namespace HsnSoft.Base.AspNetCore.Mvc;
 public abstract class ApiControllerBase : ControllerBase
 {
     protected IServiceProvider ServiceProvider { get; set; }
-
-    protected IGuidGenerator GuidGenerator => SimpleGuidGenerator.Instance;
 
     protected IBaseLogger Logger => ServiceProvider.GetRequiredService<IBaseLogger>();
 

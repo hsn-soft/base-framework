@@ -14,13 +14,9 @@
         <RootNamespace />
     </PropertyGroup>
 
-    <!--Temporary-->
     <ItemGroup>
         <ProjectReference Include="..\HsnSoft.Base.AutoMapper\HsnSoft.Base.AutoMapper.csproj" />
-        <!--<PackageReference Include="AutoMapper" Version="10.1.1" />-->
-        <!--<PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="8.1.1" />-->
     </ItemGroup>
-    <!--Temporary-->
 
     <ItemGroup>
         <PackageReference Include="NUglify" Version="1.21.17" />
