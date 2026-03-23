@@ -1,3 +1,3 @@
-namespace HsnSoft.Base.Auditing;
+namespace HsnSoft.Base.Auditing.Contracts;
 
 public interface ICreationAuditedObject : IHasCreationTime, IMayHaveCreator;

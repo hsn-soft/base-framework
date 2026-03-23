@@ -21,7 +21,6 @@
 
     <ItemGroup>
         <ProjectReference Include="..\HsnSoft.Base.Localization\HsnSoft.Base.Localization.csproj" />
-        <ProjectReference Include="..\HsnSoft.Base.Validation.Abstractions\HsnSoft.Base.Validation.Abstractions.csproj" />
     </ItemGroup>
 
 </Project>

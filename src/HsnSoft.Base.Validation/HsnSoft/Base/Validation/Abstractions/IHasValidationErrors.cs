@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace HsnSoft.Base.Validation;
+namespace HsnSoft.Base.Validation.Abstractions;
 
 public interface IHasValidationErrors
 {

@@ -1,5 +1,6 @@
 using System;
 using HsnSoft.Base.Auditing;
+using HsnSoft.Base.Auditing.Contracts;
 using HsnSoft.Base.Domain.Entities;
 using HsnSoft.Base.MultiTenancy;
 using Microsoft.EntityFrameworkCore;

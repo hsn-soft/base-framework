@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
 
-namespace HsnSoft.Base.Localization;
+namespace HsnSoft.Base.Localization.Abstractions;
 
 public class LocalizationResourceNameAttribute : Attribute
 {

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
 using HsnSoft.Base.Logging;
+using HsnSoft.Base.Validation.Abstractions;
 using Microsoft.Extensions.Logging;
 
 namespace HsnSoft.Base.Validation;

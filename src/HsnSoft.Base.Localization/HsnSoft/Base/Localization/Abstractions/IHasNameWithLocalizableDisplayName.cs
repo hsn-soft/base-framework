@@ -1,6 +1,6 @@
 ﻿using JetBrains.Annotations;
 
-namespace HsnSoft.Base.Localization;
+namespace HsnSoft.Base.Localization.Abstractions;
 
 public interface IHasNameWithLocalizableDisplayName
 {

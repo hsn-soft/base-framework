@@ -2,7 +2,7 @@
 using JetBrains.Annotations;
 using Microsoft.Extensions.Localization;
 
-namespace HsnSoft.Base.Localization;
+namespace HsnSoft.Base.Localization.Abstractions;
 
 public class LocalizableString : ILocalizableString
 {
