@@ -26,7 +26,7 @@ public abstract class BasePageModel : PageModel
     protected IRazorRenderService RazorRenderService => ServiceProvider.GetRequiredService<IRazorRenderService>();
     protected IMapper Mapper => ServiceProvider.GetRequiredService<IMapper>();
 
-    protected IBaseLogger Logger => ServiceProvider.GetRequiredService<IBaseLogger>();
+    protected IAppConsoleLogger Logger => ServiceProvider.GetRequiredService<IAppConsoleLogger>();
 
     protected IStringLocalizerFactory StringLocalizerFactory => ServiceProvider.GetRequiredService<IStringLocalizerFactory>();
 

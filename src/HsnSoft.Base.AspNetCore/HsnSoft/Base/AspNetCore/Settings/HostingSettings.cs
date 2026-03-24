@@ -1,6 +1,6 @@
 namespace HsnSoft.Base.AspNetCore.Settings;
 
-public sealed class HostingSettings
+public abstract class HostingSettings
 {
     public bool IsEnabledRequestResponseLogger { get; set; } = true;
     public bool IsEnabledHealthCheckRequestLogger { get; set; } = false;

@@ -13,7 +13,7 @@ namespace HsnSoft.Base.PuppeTeer;
 
 public sealed class PuppeteerBrowser : IPuppeteerBrowser
 {
-    private readonly IBaseLogger _logger;
+    private readonly IAppConsoleLogger _logger;
     private readonly PuppeteerBrowserSettings _settings;
     private readonly CancellationTokenSource _serviceCts;
 
@@ -46,7 +46,7 @@ public sealed class PuppeteerBrowser : IPuppeteerBrowser
     public bool IsStopping => Volatile.Read(ref _shutdownRequested) == 1 || _serviceCts.IsCancellationRequested || _disposed;
 
     public PuppeteerBrowser(
-        IBaseLogger logger,
+        IAppConsoleLogger logger,
         IOptions<PuppeteerBrowserSettings>? settings,
         IHostApplicationLifetime appLifetime)
     {
