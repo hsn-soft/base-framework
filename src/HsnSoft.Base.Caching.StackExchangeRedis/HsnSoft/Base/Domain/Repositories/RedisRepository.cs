@@ -10,10 +10,10 @@ namespace HsnSoft.Base.Domain.Repositories;
 
 public class RedisRepository<T> : IRedisRepository<T> where T : class, new()
 {
-    private readonly IBaseLogger _logger;
+    private readonly IAppConsoleLogger _logger;
     protected readonly IDatabase Database;
 
-    protected RedisRepository(IBaseLogger logger, IConnectionMultiplexer redis)
+    protected RedisRepository(IAppConsoleLogger logger, IConnectionMultiplexer redis)
     {
         _logger = logger;
         Database = redis.GetDatabase();

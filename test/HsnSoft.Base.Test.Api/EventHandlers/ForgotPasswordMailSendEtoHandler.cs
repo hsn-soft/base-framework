@@ -6,10 +6,10 @@ namespace HsnSoft.Base.Test.Api.EventHandlers;
 
 public sealed class ForgotPasswordMailSendEtoHandler : IIntegrationEventHandler<ForgotPasswordMailSendEto>
 {
-    // private readonly IBaseLogger _logger;
+    // private readonly IAppConsoleLogger _logger;
     // private readonly IAuthAppService _authAppService;
     //
-    // public ForgotPasswordMailSendEtoHandler(IBaseLogger logger, IAuthAppService authAppService)
+    // public ForgotPasswordMailSendEtoHandler(IAppConsoleLogger logger, IAuthAppService authAppService)
     // {
     //     _logger = logger;
     //     _authAppService = authAppService;

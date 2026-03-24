@@ -13,7 +13,7 @@ public abstract class BaseController : Controller
 {
     protected IServiceProvider ServiceProvider { get; set; }
 
-    protected IBaseLogger Logger => ServiceProvider.GetRequiredService<IBaseLogger>();
+    protected IAppConsoleLogger Logger => ServiceProvider.GetRequiredService<IAppConsoleLogger>();
 
     protected IAuthorizationService AuthorizationService => ServiceProvider.GetRequiredService<IAuthorizationService>();
 
