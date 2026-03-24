@@ -15,7 +15,7 @@ public sealed class RequestResponseLogModel : IRequestResponseLog
     public RequestInfoLogDetail RequestInfo { get; set; } = new();
     public ResponseInfoLogDetail ResponseInfo { get; set; } = new();
 
-    public long RequestResponseWorkingTime { get; set; }
+    public long RequestResponseWorkingTimeMs { get; set; }
 }
 
 public sealed class RequestLogModel : IRequestResponseLog

@@ -18,6 +18,12 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.5"/>
+        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.16.0"/>
+    </ItemGroup>
+    
+    <ItemGroup>
         <ProjectReference Include="..\HsnSoft.Base.Auditing\HsnSoft.Base.Auditing.csproj" />
         <ProjectReference Include="..\HsnSoft.Base.Authorization\HsnSoft.Base.Authorization.csproj" />
         <ProjectReference Include="..\HsnSoft.Base.ExceptionHandling\HsnSoft.Base.ExceptionHandling.csproj" />
