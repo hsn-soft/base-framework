@@ -40,17 +40,22 @@ public static class BaseAspNetCoreServiceCollectionExtensions
     {
         services.AddScoped<BaseLocalizationMiddleware>();
 
+        // Configure supported cultures
         services.Configure<RequestLocalizationOptions>(options =>
         {
-            var cultures = new List<CultureInfo> { new("en"), new("ru"), new("tr") };
+            var supportedCultures = new List<CultureInfo> { new("en"), new("tr"), new("ru") };
             options.DefaultRequestCulture = new Microsoft.AspNetCore.Localization.RequestCulture("en");
-            options.SupportedCultures = cultures;
-            options.SupportedUICultures = cultures;
+            options.SupportedCultures = supportedCultures;
+            options.SupportedUICultures = supportedCultures;
         });
 
+        // Memory cache
         services.AddMemoryCache();
+
+        // Localization services
         services.AddLocalization();
-        services.AddTransient<IStringLocalizer, CacheStringLocalizer>();
+
+        // Custom CacheStringLocalizerFactory
         services.AddSingleton<IStringLocalizerFactory, CacheStringLocalizerFactory>();
 
         return services;
