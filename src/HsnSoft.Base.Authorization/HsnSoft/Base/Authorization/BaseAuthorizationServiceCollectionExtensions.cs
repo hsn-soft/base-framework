@@ -13,7 +13,7 @@ public static class BaseAuthorizationServiceCollectionExtensions
 
         services.AddSingleton<IPermissionStore, BasePermissionStore>();
         services.AddScoped<IPermissionChecker, PermissionChecker>();
-        services.AddSingleton<IAuthorizationHandler, PermissionRequirementHandler>();
+        services.AddScoped<IAuthorizationHandler, PermissionRequirementHandler>();
 
         services.TryAddTransient<DefaultAuthorizationPolicyProvider>();
 

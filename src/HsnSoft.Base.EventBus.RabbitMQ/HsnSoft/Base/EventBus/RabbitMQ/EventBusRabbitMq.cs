@@ -20,12 +20,10 @@ namespace HsnSoft.Base.EventBus.RabbitMQ;
 
 public sealed class EventBusRabbitMq : IEventBus, IDisposable
 {
-    private readonly IServiceScopeFactory _serviceScopeFactory;
+    private readonly IServiceProvider _serviceProvider;
     private readonly IRabbitMqPersistentConnection _persistentConnection;
     private readonly RabbitMqEventBusConfig _rabbitMqEventBusConfig;
     private readonly IEventBusLogger _logger;
-    private readonly ITraceAccesor _traceAccessor;
-    private readonly ICurrentUser _currentUser;
     private readonly IEventBusSubscriptionManager _subsManager;
 
     private readonly int _publishRetryCount = 5;
@@ -38,11 +36,9 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
     {
         ArgumentNullException.ThrowIfNull(serviceProvider);
 
-        _serviceScopeFactory = serviceProvider.GetRequiredService<IServiceScopeFactory>();
+        _serviceProvider = serviceProvider;
         _logger = serviceProvider.GetRequiredService<IEventBusLogger>();
         _persistentConnection = serviceProvider.GetRequiredService<IRabbitMqPersistentConnection>();
-        _traceAccessor = serviceProvider.GetService<ITraceAccesor>();
-        _currentUser = serviceProvider.GetService<ICurrentUser>();
         _rabbitMqEventBusConfig = serviceProvider.GetRequiredService<IOptions<RabbitMqEventBusConfig>>().Value;
         _subsManager = serviceProvider.GetRequiredService<IEventBusSubscriptionManager>();
         _subsManager.EventNameGetter = TrimEventName;
@@ -57,6 +53,10 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
         bool isReQueuePublish = false)
         where TEventMessage : IIntegrationEventMessage
     {
+        using var scope = _serviceProvider.CreateScope(); // ✅ scope for scoped services
+        var currentUser = scope.ServiceProvider.GetService<ICurrentUser>();
+        var traceAccessor = scope.ServiceProvider.GetService<ITraceAccesor>();
+
         await EnsureConnectedAsync();
 
         Interlocked.Exchange(ref _isPublishing, 1);
@@ -72,13 +72,13 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
             Message = eventMessage,
             Producer = _rabbitMqEventBusConfig.ConsumerClientInfo,
 
-            CorrelationId = (correlationId ?? parentMessage?.CorrelationId) ?? _traceAccessor?.GetCorrelationId(),
-            UserId = parentMessage?.UserId ?? _currentUser?.Id?.ToString(),
-            UserRoles = parentMessage?.UserRoles ?? (_currentUser?.Roles is { Length: > 0 } ? _currentUser?.Roles.JoinAsString(",") : null),
-            ClientLat = parentMessage?.ClientLat ?? _traceAccessor?.GetClientLat(),
-            ClientLong = parentMessage?.ClientLong ?? _traceAccessor?.GetClientLong(),
-            ClientChannel = parentMessage?.ClientChannel ?? _traceAccessor?.GetClientChannel(),
-            ClientVersion = parentMessage?.ClientVersion ?? _traceAccessor?.GetClientVersion(),
+            CorrelationId = (correlationId ?? parentMessage?.CorrelationId) ?? traceAccessor?.GetCorrelationId(),
+            UserId = parentMessage?.UserId ?? currentUser?.Id?.ToString(),
+            UserRoles = parentMessage?.UserRoles ?? (currentUser?.Roles is { Length: > 0 } ? currentUser?.Roles.JoinAsString(",") : null),
+            ClientLat = parentMessage?.ClientLat ?? traceAccessor?.GetClientLat(),
+            ClientLong = parentMessage?.ClientLong ?? traceAccessor?.GetClientLong(),
+            ClientChannel = parentMessage?.ClientChannel ?? traceAccessor?.GetClientChannel(),
+            ClientVersion = parentMessage?.ClientVersion ?? traceAccessor?.GetClientVersion(),
 
             HopLevel = parentMessage != null ? (ushort)(parentMessage.HopLevel + 1) : (ushort)1,
             ReQueuedCount = (ushort)((parentMessage?.ReQueuedCount ?? 0) + (isReQueuePublish ? 1 : 0))
@@ -189,7 +189,7 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
         _subsManager.AddSubscription(eventType, eventHandlerType, fetchCount);
 
         var consumer = new RabbitMqConsumer(
-            _serviceScopeFactory,
+            _serviceProvider.GetRequiredService<IServiceScopeFactory>(),
             _persistentConnection,
             _subsManager,
             _rabbitMqEventBusConfig,
