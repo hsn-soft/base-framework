@@ -1,6 +1,6 @@
 namespace HsnSoft.Base.AspNetCore.Responses;
 
-public interface IFrameworkStatusMessageProvider
+public interface IStatusMessageProvider
 {
     string GetMessage(int statusCode);
 }

@@ -1,6 +1,6 @@
 namespace HsnSoft.Base.AspNetCore.Responses;
 
-public sealed class FrameworkStatusMessageProvider : IFrameworkStatusMessageProvider
+public sealed class StatusMessageProvider : IStatusMessageProvider
 {
     public string GetMessage(int statusCode) => statusCode switch
     {

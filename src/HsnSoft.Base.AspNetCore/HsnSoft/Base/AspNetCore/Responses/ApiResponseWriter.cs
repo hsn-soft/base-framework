@@ -10,7 +10,7 @@ namespace HsnSoft.Base.AspNetCore.Responses;
 
 public sealed class ApiResponseWriter : IApiResponseWriter
 {
-    private static readonly JsonSerializerOptions JsonOptions = new()
+    private static readonly JsonSerializerOptions s_jsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase, PropertyNameCaseInsensitive = true, DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull, Converters = { new JsonStringEnumConverter() }
     };
@@ -22,7 +22,7 @@ public sealed class ApiResponseWriter : IApiResponseWriter
 
         var body = new BaseResponse { StatusCode = statusCode, StatusMessages = messages.Distinct().ToList(), TraceId = context.TraceIdentifier, ErrorCode = errorCode };
 
-        await context.Response.WriteAsync(JsonSerializer.Serialize(body, JsonOptions));
+        await context.Response.WriteAsync(JsonSerializer.Serialize(body, s_jsonOptions));
     }
 
     public async Task WriteSuccessAsync<T>(HttpContext context, int statusCode, T? payload, IEnumerable<string> messages)
@@ -32,6 +32,6 @@ public sealed class ApiResponseWriter : IApiResponseWriter
 
         var body = new BaseResponse<T> { StatusCode = statusCode, StatusMessages = messages.Distinct().ToList(), TraceId = context.TraceIdentifier, Payload = payload };
 
-        await context.Response.WriteAsync(JsonSerializer.Serialize(body, JsonOptions));
+        await context.Response.WriteAsync(JsonSerializer.Serialize(body, s_jsonOptions));
     }
 }
