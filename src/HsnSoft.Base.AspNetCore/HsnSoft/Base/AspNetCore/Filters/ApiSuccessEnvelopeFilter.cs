@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
 using HsnSoft.Base.Communication;
@@ -24,42 +26,74 @@ public sealed class ApiSuccessEnvelopeFilter : IAsyncResultFilter
                 return;
         }
 
-        if (context.Result is ObjectResult objectResult)
+        object? value;
+        int statusCode = StatusCodes.Status200OK;
+
+        switch (context.Result)
         {
-            if (objectResult.Value is BaseResponse)
-            {
-                await next();
-                return;
-            }
+            case ObjectResult obj:
+                value = obj.Value;
+                statusCode = obj.StatusCode ?? StatusCodes.Status200OK;
+                break;
 
-            var statusCode = objectResult.StatusCode ?? StatusCodes.Status200OK;
+            case JsonResult json:
+                value = json.Value;
+                break;
 
-            objectResult.Value = new BaseResponse<object>
-            {
-                StatusCode = statusCode,
-                StatusMessages = [GetDefaultMessage(statusCode)],
-                TraceId = context.HttpContext.TraceIdentifier,
-                Payload = objectResult.Value
-            };
+            case EmptyResult:
+                value = null;
+                break;
 
+            default:
+                value = context.Result;
+                break;
+        }
+
+        if (value != null && IsBaseResponse(value.GetType()))
+        {
             await next();
             return;
         }
 
-        if (context.Result is EmptyResult)
+        string traceId = context.HttpContext.TraceIdentifier;
+
+        object response;
+
+        if (value == null)
         {
-            context.Result = new ObjectResult(new BaseResponse
-            {
-                StatusCode = StatusCodes.Status200OK,
-                StatusMessages = ["Success"],
-                TraceId = context.HttpContext.TraceIdentifier
-            })
-            {
-                StatusCode = StatusCodes.Status200OK
-            };
+            response = new BaseResponse { StatusCode = statusCode, StatusMessages = [GetDefaultMessage(statusCode)], TraceId = traceId };
+        }
+        else
+        {
+            var responseType = typeof(BaseResponse<>).MakeGenericType(value.GetType());
+            object instance = Activator.CreateInstance(responseType)!;
+
+            responseType.GetProperty(nameof(BaseResponse.StatusCode))!
+                .SetValue(instance, statusCode);
+
+            responseType.GetProperty(nameof(BaseResponse.StatusMessages))!
+                .SetValue(instance, new List<string> { GetDefaultMessage(statusCode) });
+
+            responseType.GetProperty(nameof(BaseResponse.TraceId))!
+                .SetValue(instance, traceId);
+
+            responseType.GetProperty("Payload")!
+                .SetValue(instance, value);
+
+            response = instance;
         }
 
+        context.Result = new ObjectResult(response) { StatusCode = statusCode };
+
         await next();
+    }
+
+    private static bool IsBaseResponse(Type type)
+    {
+        if (type == typeof(BaseResponse))
+            return true;
+
+        return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(BaseResponse<>);
     }
 
     private static string GetDefaultMessage(int statusCode) => statusCode switch
