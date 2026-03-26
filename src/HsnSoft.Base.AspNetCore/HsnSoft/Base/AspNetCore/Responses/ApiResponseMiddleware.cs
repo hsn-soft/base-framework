@@ -14,7 +14,7 @@ public class ApiResponseMiddleware
         _next = next;
     }
 
-    public async Task Invoke(HttpContext context, IApiResponseWriter writer)
+    public async Task Invoke(HttpContext context, IApiResponseWriter writer, IStatusMessageProvider messageProvider)
     {
         var originalBody = context.Response.Body;
 
@@ -31,12 +31,12 @@ public class ApiResponseMiddleware
 
             if (string.IsNullOrWhiteSpace(body))
             {
-                await writer.WriteSuccessAsync<object>(context, context.Response.StatusCode, null, ["Success"]);
+                await writer.WriteSuccessAsync<object>(context, context.Response.StatusCode, null, [messageProvider.GetMessage(context.Response.StatusCode)]);
             }
             else
             {
                 object json = JsonSerializer.Deserialize<object>(body);
-                await writer.WriteSuccessAsync(context, context.Response.StatusCode, json, ["Success"]);
+                await writer.WriteSuccessAsync(context, context.Response.StatusCode, json, [messageProvider.GetMessage(context.Response.StatusCode)]);
             }
         }
         else
