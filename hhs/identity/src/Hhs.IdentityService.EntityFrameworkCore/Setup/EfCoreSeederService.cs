@@ -1,11 +1,11 @@
-using Hhs.IdentityService.Domain.AuthDomain.Entities;
 using Hhs.IdentityService.EntityFrameworkCore.Context;
+using Hhs.Shared.Helper.Utils;
 using HsnSoft.Base.Data;
 using HsnSoft.Base.Logging.Abstracts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Hhs.IdentityService.EntityFrameworkCore;
+namespace Hhs.IdentityService.EntityFrameworkCore.Setup;
 
 public sealed class EfCoreSeederService(IServiceScopeFactory serviceScopeFactory) : IBasicDataSeeder
 {
@@ -20,6 +20,7 @@ public sealed class EfCoreSeederService(IServiceScopeFactory serviceScopeFactory
 
         bool isReadyDatabase = false;
         var dbContext = scope.ServiceProvider.GetRequiredService<AuthServiceDbContext>();
+        var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
         try
         {
             if (dbContext.Database.CanConnectAsync(cancellationToken).GetAwaiter().GetResult())
@@ -53,100 +54,7 @@ public sealed class EfCoreSeederService(IServiceScopeFactory serviceScopeFactory
         {
             try
             {
-                const string systemTenantName = "system";
-
-                var systemTenant = await dbContext.AuthTenants
-                    .FirstOrDefaultAsync(x => x.NormalizedName == systemTenantName.ToUpperInvariant(), cancellationToken: cancellationToken);
-
-                if (systemTenant is null)
-                {
-                    systemTenant = new AuthTenant
-                    {
-                        Name = systemTenantName,
-                        NormalizedName = systemTenantName.ToUpperInvariant(),
-                        IsSystemTenant = true
-                    };
-
-                    dbContext.AuthTenants.Add(systemTenant);
-                    await dbContext.SaveChangesAsync(cancellationToken);
-                }
-
-                if (!await dbContext.AuthRoles.AnyAsync(x => x.TenantId == systemTenant.Id && x.NormalizedName == "REGISTERED", cancellationToken: cancellationToken))
-                {
-                    dbContext.AuthRoles.Add(new AuthRole
-                    {
-                        TenantId = systemTenant.Id,
-                        Name = "registered",
-                        NormalizedName = "REGISTERED"
-                    });
-                }
-
-                if (!await dbContext.AuthPasswordPolicies.AnyAsync(x => x.TenantId == systemTenant.Id, cancellationToken: cancellationToken))
-                {
-                    dbContext.AuthPasswordPolicies.Add(new AuthPasswordPolicy
-                    {
-                        TenantId = systemTenant.Id,
-                        MinLength = 8,
-                        RequireDigit = true,
-                        RequireLowercase = true,
-                        RequireUppercase = true,
-                        RequireNonAlphanumeric = false,
-                        MaxFailedLoginCount = 5,
-                        LockoutMinutes = 15
-                    });
-                }
-
-                await dbContext.SaveChangesAsync(cancellationToken);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                // var managerRole = new AuthRole
-                // {
-                //     Name = "Manager",
-                //     NormalizedName = "MANAGER"
-                // };
-                //
-                // dbContext.AuthRoles.Add(managerRole);
-                //
-                // dbContext.AuthRoleClaims.AddRange(
-                //     new AuthRoleClaim
-                //     {
-                //         Role = managerRole,
-                //         ClaimType = "permission",
-                //         ClaimValue = "invoice.create"
-                //     },
-                //     new AuthRoleClaim
-                //     {
-                //         Role = managerRole,
-                //         ClaimType = "permission",
-                //         ClaimValue = "invoice.update"
-                //     },
-                //     new AuthRoleClaim
-                //     {
-                //         Role = managerRole,
-                //         ClaimType = "permission",
-                //         ClaimValue = "invoice.delete"
-                //     },
-                //     new AuthRoleClaim
-                //     {
-                //         Role = managerRole,
-                //         ClaimType = "permission",
-                //         ClaimValue = "invoice.price.view"
-                //     }
-                // );
-                //
-                // await dbContext.SaveChangesAsync();
+                await AuthSeeder.SeedAsync(dbContext, passwordHasher);
 
                 // if (!dbContext.Roles.Any())
                 // {

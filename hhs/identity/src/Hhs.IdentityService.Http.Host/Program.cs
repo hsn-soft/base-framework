@@ -3,6 +3,7 @@ using Hhs.IdentityService.Application;
 using Hhs.IdentityService.Application.Contracts.AuthDomain.Interfaces;
 using Hhs.IdentityService.Domain.Localization;
 using Hhs.IdentityService.EntityFrameworkCore;
+using Hhs.IdentityService.EntityFrameworkCore.Setup;
 using Hhs.Shared.Contracts.Cache;
 using Hhs.Shared.Contracts.Cache.ServicePermissions;
 using Hhs.Shared.Contracts.Events;
