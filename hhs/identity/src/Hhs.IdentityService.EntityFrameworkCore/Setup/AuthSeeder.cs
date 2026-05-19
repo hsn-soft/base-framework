@@ -201,7 +201,7 @@ public static class AuthSeeder
         tenantId ??= Guid.CreateVersion7();
         string normalizedAccessPath = parentId == null
             ? isSystemTenant ? "/" : $"/{normalizedName}"
-            : $"/{parentPath}/{normalizedName}";
+            : $"{parentPath}/{normalizedName}";
 
         tenant = new AuthTenant
         {
