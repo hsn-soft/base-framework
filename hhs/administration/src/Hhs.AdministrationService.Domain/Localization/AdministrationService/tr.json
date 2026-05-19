@@ -1,0 +1,16 @@
+{
+  "culture": "tr",
+  "texts": {
+    "Error:AdministrationService:000101": "İzin bulunamadı",
+    "Error:AdministrationService:000102": "İzin daha önceden kayıt edilmiş",
+    "Error:AdministrationService:000103": "İzin filtre hatası",
+    "Enum:Unknown": "-Seçiniz-",
+    "Enum:PermissionProviderNameType:User": "Kullanıcı",
+    "Enum:PermissionProviderNameType:Role": "Rol",
+    "Enum:PermissionProviderNameType:Client": "Uygulama",
+    "PermissionGrant:Name": "İzin Adı",
+    "PermissionGrant:ProviderName": "İzin Sahibi",
+    "PermissionGrant:ProviderKey": "İzin Anahtarı",
+    "RolePermission:RoleUniqueName": "Rol Adı"
+  }
+}

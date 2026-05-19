@@ -1,0 +1,15 @@
+{
+  "culture": "tr",
+  "texts": {
+    "Message:ViewSuccessResult": "{0} kayıt bulundu",
+    "InvalidModelStateErrorMessage": "Geçersiz parametre girişi. Parametrelerin formatlarını ve gerekliliklerini kontrol ediniz.",
+    "UnauthorizedRequest": "Bu alana erişim yetkiniz yok",
+    "ForbiddenRequest": "Bu alana erişim izniniz yok",
+    "NotFoundRequest": "Kriterlere uygun kayıt bulunamadı",
+    "MethodNotAllowed": "Yönteme izin verilmiyor",
+    "RequestTimeout": "Veriler yüklenirken hata oluştu, lütfen tekrar deneyiniz",
+    "UnsupportedRequestContentType": "İstek içerik tipi geçersiz",
+    "SuccessRequest": "İstek başarıyla tamamlandı",
+    "Error:UnknownField":"{0} bilinmiyor"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "culture": "ru",
+  "texts": {
+    "Error:AdministrationService:000101": "Предоставление разрешения не найдено",
+    "Error:AdministrationService:000102": "Ошибка дублирования разрешения",
+    "Error:AdministrationService:000103": "Ошибка фильтра предоставления разрешений",
+    "Enum:Unknown": "-Выбрать-",
+    "Enum:PermissionProviderNameType:User": "Пользователь",
+    "Enum:PermissionProviderNameType:Role": "Роль",
+    "Enum:PermissionProviderNameType:Client": "Клиент",
+    "PermissionGrant:Name": "Имя разрешения",
+    "PermissionGrant:ProviderName": "Имя поставщика",
+    "PermissionGrant:ProviderKey": "Ключ поставщика",
+    "RolePermission:RoleUniqueName": "Имя роли"
+  }
+}
