@@ -1,13 +1,13 @@
 using Hhs.IdentityService;
 using Hhs.IdentityService.Application;
-using Hhs.IdentityService.Domain.AppRoleDomain.Entities;
-using Hhs.IdentityService.Domain.AppUserDomain.Entities;
+using Hhs.IdentityService.Application.Contracts.AuthDomain.Interfaces;
 using Hhs.IdentityService.Domain.Localization;
 using Hhs.IdentityService.EntityFrameworkCore;
-using Hhs.IdentityService.EntityFrameworkCore.Context;
+using Hhs.Shared.Contracts.Cache;
 using Hhs.Shared.Contracts.Cache.ServicePermissions;
 using Hhs.Shared.Contracts.Events;
 using Hhs.Shared.Helper.Consts;
+using Hhs.Shared.Helper.Utils;
 using Hhs.Shared.Hosting.Extensions;
 using Hhs.Shared.Hosting.Helpers;
 using Hhs.Shared.Hosting.Microservices.Extensions;
@@ -16,7 +16,6 @@ using HsnSoft.Base.Data;
 using HsnSoft.Base.Serilog;
 using HsnSoft.Base.Swashbuckle;
 using HsnSoft.Base.Tracing;
-using Microsoft.AspNetCore.Identity;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -60,28 +59,22 @@ builder.Services.AddMicroserviceHosting(builder.Configuration, typeof(Program))
         checkRedis: true,
         checkBroker: true,
         checkPostgresql: true,
-        postgresqlConnectionName: EfCoreDbProperties.ConnectionStringName)
-    .AddServiceApplicationConfiguration(builder.Configuration)
-    .AddServiceEfCoreDatabaseConfiguration(builder.Configuration, !builder.Environment.IsHostProduction());
+        postgresqlConnectionName: EfCoreDbProperties.ConnectionStringName);
+
+// app services
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddSingleton<IServicePermissionProvider, ApplicationPermissionProvider>();
+
+builder.Services.AddScoped<ICurrentUser, CurrentUser>();
+builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
+builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+
+// database services
+builder.Services.AddServiceEfCoreDatabaseConfiguration(builder.Configuration, !builder.Environment.IsHostProduction());
 
 // override DefaultBasicDataSeeder
 builder.Services.AddTransient<IBasicDataSeeder, EfCoreSeederService>();
-
-builder.Services.AddIdentity<AppUser, AppRole>(options =>
-    {
-        options.SignIn.RequireConfirmedAccount = false;
-        options.User.RequireUniqueEmail = true;
-        options.Password.RequiredLength = 6;
-        options.Password.RequiredUniqueChars = 0;
-        options.Password.RequireLowercase = false;
-        options.Password.RequireUppercase = false;
-        options.Password.RequireDigit = false;
-        options.Password.RequireNonAlphanumeric = false;
-        options.User.AllowedUserNameCharacters =
-            "abcçdefghiıjklmnoöpqrsştuüvwxyzABCÇDEFGHIİJKLMNOÖPQRSŞTUÜVWXYZ0123456789-._@+'#!/^%{}*";
-    })
-    .AddEntityFrameworkStores<IdentityAppDbContext>()
-    .AddDefaultTokenProviders();
 
 // Swagger
 if (!builder.Environment.IsHostProduction())

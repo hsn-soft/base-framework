@@ -2,7 +2,6 @@ using Hhs.Shared.Contracts;
 using Hhs.Shared.Contracts.Events;
 using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.EventBus;
-using HsnSoft.Base.EventBus.Logging;
 using HsnSoft.Base.Logging.Abstracts;
 
 namespace Hhs.ContentService.EventHandlers;

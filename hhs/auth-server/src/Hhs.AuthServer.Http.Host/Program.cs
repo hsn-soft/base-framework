@@ -2,10 +2,7 @@ using Hhs.AuthServer;
 using Hhs.AuthServer.Application;
 using Hhs.AuthServer.Application.Localization;
 using Hhs.AuthServer.Options;
-using Hhs.IdentityService.Domain.AppRoleDomain.Entities;
-using Hhs.IdentityService.Domain.AppUserDomain.Entities;
 using Hhs.IdentityService.EntityFrameworkCore;
-using Hhs.IdentityService.EntityFrameworkCore.Context;
 using Hhs.Shared.Contracts.Cache.ServicePermissions;
 using Hhs.Shared.Helper.Consts;
 using Hhs.Shared.Hosting.Extensions;
@@ -19,7 +16,6 @@ using HsnSoft.Base.Serilog;
 using HsnSoft.Base.Swashbuckle;
 using HsnSoft.Base.Tracing;
 using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using Serilog;
 
@@ -146,29 +142,29 @@ builder.Services.AddMicroserviceHosting(builder.Configuration, typeof(Program))
 
 builder.Services.AddServiceApplicationConfiguration(builder.Configuration);
 
-builder.Services.AddAuthServerJwtDatabaseConfiguration(builder.Configuration);
-if (!builder.Environment.IsHostProduction())
-{
-    builder.Services.AddDatabaseDeveloperPageExceptionFilter();
-}
-
-builder.Services.AddIdentity<AppUser, AppRole>(options =>
-    {
-        options.SignIn.RequireConfirmedAccount = false;
-        options.User.RequireUniqueEmail = true;
-        options.Password.RequiredLength = 6;
-        options.Password.RequiredUniqueChars = 0;
-        options.Password.RequireLowercase = false;
-        options.Password.RequireUppercase = false;
-        options.Password.RequireDigit = false;
-        options.Password.RequireNonAlphanumeric = false;
-        options.User.AllowedUserNameCharacters = "abcçdefghiıjklmnoöpqrsştuüvwxyzABCÇDEFGHIİJKLMNOÖPQRSŞTUÜVWXYZ0123456789-._@+'#!/^%{}*";
-    })
-    .AddEntityFrameworkStores<IdentityAppDbContext>()
-    .AddDefaultTokenProviders();
-
-builder.Services.AddScoped<TokenService>();
-builder.Services.AddScoped<RedisService>();
+// builder.Services.AddAuthServerJwtDatabaseConfiguration(builder.Configuration);
+// if (!builder.Environment.IsHostProduction())
+// {
+//     builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+// }
+//
+// builder.Services.AddIdentity<AppUser, AppRole>(options =>
+//     {
+//         options.SignIn.RequireConfirmedAccount = false;
+//         options.User.RequireUniqueEmail = true;
+//         options.Password.RequiredLength = 6;
+//         options.Password.RequiredUniqueChars = 0;
+//         options.Password.RequireLowercase = false;
+//         options.Password.RequireUppercase = false;
+//         options.Password.RequireDigit = false;
+//         options.Password.RequireNonAlphanumeric = false;
+//         options.User.AllowedUserNameCharacters = "abcçdefghiıjklmnoöpqrsştuüvwxyzABCÇDEFGHIİJKLMNOÖPQRSŞTUÜVWXYZ0123456789-._@+'#!/^%{}*";
+//     })
+//     .AddEntityFrameworkStores<IdentityAppDbContext>()
+//     .AddDefaultTokenProviders();
+//
+// builder.Services.AddScoped<TokenService>();
+// builder.Services.AddScoped<RedisService>();
 
 // Swagger
 if (!builder.Environment.IsHostProduction())

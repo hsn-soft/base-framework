@@ -120,22 +120,66 @@ public static class ServiceCollectionExtensions
                 .AddJwtBearer(options =>
                 {
                     options.RequireHttpsMetadata = env.IsHostProduction() && Convert.ToBoolean(configuration["AuthServer:RequireHttpsMetadata"]);
-                    options.Audience = audience; // Api audience
+                    options.SaveToken = false;
                     options.IncludeErrorDetails = !env.IsHostProduction();
+
+                    options.Audience = audience; // Api audience
+
                     options.TokenValidationParameters = new TokenValidationParameters
                     {
                         ValidateAudience = true, // JWTs are required to have "aud" property set for Api audience
                         ValidAudience = audience,
+
                         ValidateIssuer = env.IsHostProduction(),
                         ValidIssuer = configuration["AuthServer:Authority"],
+
                         RequireExpirationTime = true, // JWTs are required to have "exp" property set
                         ValidateLifetime = true, // The "exp" will be validated
                         ClockSkew = TimeSpan.Zero,
                         RequireSignedTokens = true,
+
                         ValidateIssuerSigningKey = true,
                         IssuerSigningKey = signingKey,
+
                         ValidTypes = ["JWT"]
                     };
+
+                    // options.Events = new JwtBearerEvents
+                    // {
+                    //     OnTokenValidated = async context =>
+                    //     {
+                    //         var db = context.HttpContext.RequestServices.GetRequiredService<AuthServiceDbContext>();
+                    //
+                    //         var userId = context.Principal?.FindFirstValue(ClaimTypes.NameIdentifier);
+                    //         var securityStamp = context.Principal?.FindFirstValue("security_stamp");
+                    //         var jti = context.Principal?.FindFirstValue(JwtRegisteredClaimNames.Jti);
+                    //
+                    //         if (!Guid.TryParse(userId, out var parsedUserId))
+                    //         {
+                    //             context.Fail("Invalid user id.");
+                    //             return;
+                    //         }
+                    //
+                    //         var user = await db.AuthUsers.FirstOrDefaultAsync(x => x.Id == parsedUserId);
+                    //
+                    //         if (user is null || !user.IsActive || user.SecurityStamp != securityStamp)
+                    //         {
+                    //             context.Fail("Invalid security stamp.");
+                    //             return;
+                    //         }
+                    //
+                    //         if (!string.IsNullOrWhiteSpace(jti))
+                    //         {
+                    //             bool revoked = await db.AuthTokenRevocations.AnyAsync(x => x.Jti == jti);
+                    //
+                    //             if (revoked)
+                    //             {
+                    //                 context.Fail("Token revoked.");
+                    //                 return;
+                    //             }
+                    //         }
+                    //     }
+                    // };
                 });
 
             return services;
