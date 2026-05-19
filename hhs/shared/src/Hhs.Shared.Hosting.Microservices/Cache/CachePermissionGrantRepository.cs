@@ -8,7 +8,7 @@ namespace Hhs.Shared.Hosting.Microservices.Cache;
 
 public class CachePermissionGrantRepository : ICachePermissionGrantRepository
 {
-    private const string PermissionGrantStoreKey = $"{IdentityConsts.SolutionName}-permission-grant-store";
+    private const string PermissionGrantStoreKey = $"{NameConsts.SolutionName}-permission-grant-store";
     private readonly IAppConsoleLogger _logger;
     private readonly IConnectionMultiplexer _redis;
     private readonly IDatabase _database;

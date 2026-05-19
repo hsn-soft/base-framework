@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
 {
     [DbContext(typeof(AuthServiceDbContext))]
-    [Migration("20260519161650_InitialCreate")]
+    [Migration("20260519203856_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -182,6 +182,12 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsStatic")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -251,15 +257,34 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<string>("NormalizedAccessPath")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
                     b.Property<string>("NormalizedName")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<Guid?>("ParentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("IsSystemTenant");
+
+                    b.HasIndex("NormalizedAccessPath");
 
                     b.HasIndex("NormalizedName")
                         .IsUnique();
+
+                    b.HasIndex("ParentId");
 
                     b.ToTable("AuthTenants", (string)null);
                 });
@@ -315,6 +340,9 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                         .HasColumnType("integer");
 
                     b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsStatic")
                         .HasColumnType("boolean");
 
                     b.Property<DateTime?>("LastLoginAt")
@@ -459,6 +487,16 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                     b.Navigation("Role");
                 });
 
+            modelBuilder.Entity("Hhs.IdentityService.Domain.AuthDomain.Entities.AuthTenant", b =>
+                {
+                    b.HasOne("Hhs.IdentityService.Domain.AuthDomain.Entities.AuthTenant", "Parent")
+                        .WithMany("Children")
+                        .HasForeignKey("ParentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Parent");
+                });
+
             modelBuilder.Entity("Hhs.IdentityService.Domain.AuthDomain.Entities.AuthUser", b =>
                 {
                     b.HasOne("Hhs.IdentityService.Domain.AuthDomain.Entities.AuthTenant", "Tenant")
@@ -509,6 +547,8 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
 
             modelBuilder.Entity("Hhs.IdentityService.Domain.AuthDomain.Entities.AuthTenant", b =>
                 {
+                    b.Navigation("Children");
+
                     b.Navigation("Roles");
 
                     b.Navigation("Users");

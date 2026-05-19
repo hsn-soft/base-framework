@@ -30,16 +30,34 @@ public sealed class AuthServiceDbContext : BaseEfCoreDbContext<AuthServiceDbCont
             b.ToTable("AuthTenants");
             b.HasKey(x => x.Id);
 
+            b.Property(x => x.IsActive).IsRequired();
+            b.Property(x => x.CreatedAt).IsRequired();
+
+            b.Property(x => x.Title).HasMaxLength(200).IsRequired();
             b.Property(x => x.Name).HasMaxLength(100).IsRequired();
             b.Property(x => x.NormalizedName).HasMaxLength(100).IsRequired();
+            b.Property(x => x.NormalizedAccessPath).HasMaxLength(1000).IsRequired();
+            b.Property(x => x.IsSystemTenant).IsRequired();
 
-            b.HasIndex(x => x.NormalizedName).IsUnique();
+            b.HasOne(x => x.Parent)
+                .WithMany(x => x.Children)
+                .HasForeignKey(x => x.ParentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            b.HasIndex(x => x.NormalizedName)
+                .IsUnique();
+            b.HasIndex(x => x.ParentId);
+            b.HasIndex(x => x.NormalizedAccessPath);
+            b.HasIndex(x => x.IsSystemTenant);
         });
 
         builder.Entity<AuthUser>(b =>
         {
             b.ToTable("AuthUsers");
             b.HasKey(x => x.Id);
+
+            b.Property(x => x.IsActive).IsRequired();
+            b.Property(x => x.CreatedAt).IsRequired();
 
             b.Property(x => x.UserName).HasMaxLength(100).IsRequired();
             b.Property(x => x.NormalizedUserName).HasMaxLength(100).IsRequired();
@@ -49,6 +67,13 @@ public sealed class AuthServiceDbContext : BaseEfCoreDbContext<AuthServiceDbCont
 
             b.Property(x => x.PasswordHash).IsRequired();
             b.Property(x => x.SecurityStamp).HasMaxLength(64).IsRequired();
+
+            b.Property(x => x.IsStatic).IsRequired();
+            b.Property(x => x.EmailConfirmed).IsRequired();
+            b.Property(x => x.FailedLoginCount).IsRequired();
+
+            b.Property(x => x.LockoutEndAt);
+            b.Property(x => x.LastLoginAt);
 
             b.HasOne(x => x.Tenant)
                 .WithMany(x => x.Users)
@@ -65,6 +90,8 @@ public sealed class AuthServiceDbContext : BaseEfCoreDbContext<AuthServiceDbCont
 
             b.Property(x => x.Name).HasMaxLength(100).IsRequired();
             b.Property(x => x.NormalizedName).HasMaxLength(100).IsRequired();
+            b.Property(x => x.IsStatic).IsRequired();
+            b.Property(x => x.IsDefault).IsRequired();
 
             b.HasOne(x => x.Tenant)
                 .WithMany(x => x.Roles)

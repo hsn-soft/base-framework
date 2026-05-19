@@ -34,12 +34,12 @@ public sealed class UserTenantCheckerMiddleware : IMiddleware
                 throw new BaseHttpException((int)HttpStatusCode.Forbidden, string.Format(_localizer?["Error:UnknownField"].ToString() ?? "", nameof(_currentUser.TenantDomain)));
             }
 
-            if (!_currentUser.TenantDomain.Equals(DefaultDomainNames.System) && _currentUser.TenantId is null)
+            if (!_currentUser.TenantDomain.Equals(NameConsts.System) && _currentUser.TenantId is null)
             {
                 throw new BaseHttpException((int)HttpStatusCode.Forbidden, string.Format(_localizer?["Error:UnknownField"].ToString() ?? "", nameof(_currentUser.TenantId)));
             }
 
-            if (_currentUser.TenantDomain.Equals(DefaultDomainNames.System))
+            if (_currentUser.TenantDomain.Equals(NameConsts.System))
             {
                 using (_dataFilter.Disable<IMultiTenant>())
                 {

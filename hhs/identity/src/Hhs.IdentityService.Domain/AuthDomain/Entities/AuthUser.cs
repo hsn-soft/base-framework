@@ -4,6 +4,10 @@ public sealed class AuthUser
 {
     public Guid Id { get; set; } = Guid.NewGuid();
 
+    public bool IsActive { get; set; } = true;
+
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
     public Guid TenantId { get; set; }
     public AuthTenant Tenant { get; set; } = null!;
 
@@ -17,13 +21,13 @@ public sealed class AuthUser
 
     public string SecurityStamp { get; set; } = Guid.NewGuid().ToString("N");
 
-    public bool IsActive { get; set; } = true;
+    public bool IsStatic { get; set; }  // can't delete
+
     public bool EmailConfirmed { get; set; }
 
     public int FailedLoginCount { get; set; }
     public DateTime? LockoutEndAt { get; set; }
 
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? LastLoginAt { get; set; }
 
     public ICollection<AuthUserRole> UserRoles { get; set; } = [];

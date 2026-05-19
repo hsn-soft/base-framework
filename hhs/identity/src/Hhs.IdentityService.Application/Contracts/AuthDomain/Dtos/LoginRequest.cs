@@ -10,9 +10,8 @@ public sealed class RegisterRequest
 
 public sealed class LoginRequest
 {
-    public Guid TenantId { get; set; }
-    public string UserNameOrEmail { get; set; } = null!;
-    public string Password { get; set; } = null!;
+    public string UserEmail { get; set; } = null!;
+    public string UserPassword { get; set; } = null!;
 }
 
 public sealed class LoginResponse

@@ -1,5 +1,6 @@
 using Hhs.IdentityService.Domain.AuthDomain.Entities;
 using Hhs.IdentityService.EntityFrameworkCore.Context;
+using Hhs.Shared.Helper.Consts;
 using Hhs.Shared.Helper.Utils;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,117 +12,208 @@ public static class AuthSeeder
 
     public static async Task SeedAsync(AuthServiceDbContext db, IPasswordHasher passwordHasher)
     {
-        var systemTenant = await GetOrCreateTenantAsync(db, "system", true);
+        var systemTenant = await GetOrCreateTenantAsync(db,
+            title: TenantConsts.SystemTenantName,
+            name: TenantConsts.SystemTenantName,
+            isSystemTenant: true,
+            tenantId: Guid.Parse(TenantConsts.SystemTenantId),
+            parentId: null,
+            parentPath: null);
 
-        var aaTenant = await GetOrCreateTenantAsync(db, "AA", false);
-        var bbTenant = await GetOrCreateTenantAsync(db, "BB", false);
-        var xxxTenant = await GetOrCreateTenantAsync(db, "XXX", false);
-        var yyyTenant = await GetOrCreateTenantAsync(db, "YYY", false);
+        // system   Parent: null   Path: /
+        // A   Parent: null   Path: /A
+        // DD  Parent: A      Path: /A/DD
+        // CC  Parent: A      Path: /A/CC
+        // E   Parent: CC     Path: /A/CC/E
+        // F   Parent: E      Path: /A/CC/E/F
 
-        await EnsureSystemRolesAsync(db, systemTenant.Id);
-        await EnsureBusinessTenantRolesAsync(db, aaTenant.Id);
-        await EnsureBusinessTenantRolesAsync(db, bbTenant.Id);
-        await EnsureBusinessTenantRolesAsync(db, xxxTenant.Id);
-        await EnsureBusinessTenantRolesAsync(db, yyyTenant.Id);
+        var resellerTenant = await GetOrCreateTenantAsync(db,
+            title: "Reseller A.Ş.",
+            name: "reseller",
+            isSystemTenant: false,
+            tenantId: Guid.Parse("D729556C-93C4-4A1B-A550-2CE4794A28E7"),
+            parentId: null,
+            parentPath: null);
 
+        var gazeteTenant = await GetOrCreateTenantAsync(db,
+            title: "Gazete A.Ş.",
+            name: "gazete",
+            isSystemTenant: false,
+            tenantId: Guid.Parse("C35FD197-E1FE-455D-B118-38404A69931E"),
+            parentId: resellerTenant.Id,
+            parentPath: resellerTenant.NormalizedAccessPath);
+
+        var sporTenant = await GetOrCreateTenantAsync(db,
+            title: "Spor A.Ş.",
+            name: "spor",
+            isSystemTenant: false,
+            tenantId: Guid.Parse("B109FAF7-5AA2-451C-AC3A-51682D6C06E6"),
+            parentId: resellerTenant.Id,
+            parentPath: resellerTenant.NormalizedAccessPath);
+
+        // ================ TECHSUMMUS TENATS ================
+
+        var techsummusTenant = await GetOrCreateTenantAsync(db,
+            title: "Tech Summus A.Ş.",
+            name: "techsummus",
+            isSystemTenant: false,
+            tenantId: Guid.Parse("97422b81-74da-4532-a230-9e4fb0c0dede"),
+            parentId: null,
+            parentPath: null);
+
+        var dunyaTenant = await GetOrCreateTenantAsync(db,
+            title: "Dünya A.Ş.",
+            name: "dunya",
+            isSystemTenant: false,
+            tenantId: Guid.Parse("8c2420c0-3cef-43fc-a8bf-71e22afee1f5"),
+            parentId: null,
+            parentPath: null);
+
+        var kisadalgaTenant = await GetOrCreateTenantAsync(db,
+            title: "Kısa Dalga A.Ş.",
+            name: "kisadalga",
+            isSystemTenant: false,
+            tenantId: Guid.Parse("54a50c2d-3ad0-41f2-99a2-3df95f508395"),
+            parentId: null,
+            parentPath: null);
+
+        var tamindirTenant = await GetOrCreateTenantAsync(db,
+            title: "Tam İndir A.Ş.",
+            name: "tamindir",
+            isSystemTenant: false,
+            tenantId: Guid.Parse("23389012-8c70-4d64-9d7f-7a0420b00c17"),
+            parentId: null,
+            parentPath: null);
+
+        var technotodayTenant = await GetOrCreateTenantAsync(db,
+            title: "Techno Today A.Ş.",
+            name: "technotoday",
+            isSystemTenant: false,
+            tenantId: Guid.Parse("f25a1a33-8fd9-4652-98e1-c354a4201717"),
+            parentId: null,
+            parentPath: null);
+
+        var sondakikaTenant = await GetOrCreateTenantAsync(db,
+            title: "Son Dakika A.Ş.",
+            name: "sondakika",
+            isSystemTenant: false,
+            tenantId: Guid.Parse("59e368a4-7d4a-419b-9e74-2f517ed65af7"),
+            parentId: null,
+            parentPath: null);
+
+        var t24Tenant = await GetOrCreateTenantAsync(db,
+            title: "T24 A.Ş.",
+            name: "t24",
+            isSystemTenant: false,
+            tenantId: Guid.Parse("f05ad9c0-52c7-4ad8-8349-1f4bcc1b9bf9"),
+            parentId: null,
+            parentPath: null);
+
+        var cnbceTenant = await GetOrCreateTenantAsync(db,
+            title: "Cnbce",
+            name: "cnbce",
+            isSystemTenant: false,
+            tenantId: Guid.Parse("fe3078f2-ab3a-49a4-96b1-8eb9069afe4a"),
+            parentId: null,
+            parentPath: null);
+
+        var boxofficeturkiyeTenant = await GetOrCreateTenantAsync(db,
+            title: "Box Office Turkiye",
+            name: "boxofficeturkiye",
+            isSystemTenant: false,
+            tenantId: Guid.Parse("6f3727b8-019d-4de0-8c0a-00758e04ae1c"),
+            parentId: null,
+            parentPath: null);
+
+        // EnsureSystemRoles
+        await EnsureRoleAsync(db, systemTenant.Id, DefaultRoleNames.SystemAdmin,true,false);
+        await EnsureRoleAsync(db, systemTenant.Id, DefaultRoleNames.SystemUser,true,false);
+        await EnsureRoleAsync(db, systemTenant.Id, DefaultRoleNames.RegisteredUser,true,true);
+
+        // EnsureBusinessTenantRoles
+        await EnsureRoleAsync(db, resellerTenant.Id, DefaultRoleNames.TenantAdmin,true,true);
+        await EnsureRoleAsync(db, gazeteTenant.Id, DefaultRoleNames.TenantAdmin,true,true);
+        await EnsureRoleAsync(db, sporTenant.Id, DefaultRoleNames.TenantAdmin,true,true);
+        await EnsureRoleAsync(db, techsummusTenant.Id, DefaultRoleNames.TenantAdmin,true,true);
+        await EnsureRoleAsync(db, dunyaTenant.Id, DefaultRoleNames.TenantAdmin,true,true);
+        await EnsureRoleAsync(db, kisadalgaTenant.Id, DefaultRoleNames.TenantAdmin,true,true);
+        await EnsureRoleAsync(db, tamindirTenant.Id, DefaultRoleNames.TenantAdmin,true,true);
+        await EnsureRoleAsync(db, technotodayTenant.Id, DefaultRoleNames.TenantAdmin,true,true);
+        await EnsureRoleAsync(db, sondakikaTenant.Id, DefaultRoleNames.TenantAdmin,true,true);
+        await EnsureRoleAsync(db, t24Tenant.Id, DefaultRoleNames.TenantAdmin,true,true);
+        await EnsureRoleAsync(db, cnbceTenant.Id, DefaultRoleNames.TenantAdmin,true,true);
+        await EnsureRoleAsync(db, boxofficeturkiyeTenant.Id, DefaultRoleNames.TenantAdmin,true,true);
+
+        // EnsureDefaultPasswordPolicies
         await EnsureDefaultPasswordPolicyAsync(db, systemTenant.Id);
-        await EnsureDefaultPasswordPolicyAsync(db, aaTenant.Id);
-        await EnsureDefaultPasswordPolicyAsync(db, bbTenant.Id);
-        await EnsureDefaultPasswordPolicyAsync(db, xxxTenant.Id);
-        await EnsureDefaultPasswordPolicyAsync(db, yyyTenant.Id);
+        await EnsureDefaultPasswordPolicyAsync(db, resellerTenant.Id);
+        await EnsureDefaultPasswordPolicyAsync(db, gazeteTenant.Id);
+        await EnsureDefaultPasswordPolicyAsync(db, sporTenant.Id);
+        await EnsureDefaultPasswordPolicyAsync(db, techsummusTenant.Id);
+        await EnsureDefaultPasswordPolicyAsync(db, dunyaTenant.Id);
+        await EnsureDefaultPasswordPolicyAsync(db, kisadalgaTenant.Id);
+        await EnsureDefaultPasswordPolicyAsync(db, tamindirTenant.Id);
+        await EnsureDefaultPasswordPolicyAsync(db, technotodayTenant.Id);
+        await EnsureDefaultPasswordPolicyAsync(db, sondakikaTenant.Id);
+        await EnsureDefaultPasswordPolicyAsync(db, t24Tenant.Id);
+        await EnsureDefaultPasswordPolicyAsync(db, cnbceTenant.Id);
+        await EnsureDefaultPasswordPolicyAsync(db, boxofficeturkiyeTenant.Id);
 
-        // await EnsureTenantAccessAsync(db, systemTenant.Id, systemTenant.Id);
-        // await EnsureTenantAccessAsync(db, systemTenant.Id, aaTenant.Id);
-        // await EnsureTenantAccessAsync(db, systemTenant.Id, bbTenant.Id);
-        // await EnsureTenantAccessAsync(db, systemTenant.Id, xxxTenant.Id);
-        // await EnsureTenantAccessAsync(db, systemTenant.Id, yyyTenant.Id);
-        //
-        // await EnsureTenantAccessAsync(db, aaTenant.Id, aaTenant.Id);
-        // await EnsureTenantAccessAsync(db, aaTenant.Id, xxxTenant.Id);
-        // await EnsureTenantAccessAsync(db, aaTenant.Id, yyyTenant.Id);
-        //
-        // await EnsureTenantAccessAsync(db, bbTenant.Id, bbTenant.Id);
-        // await EnsureTenantAccessAsync(db, xxxTenant.Id, xxxTenant.Id);
-        // await EnsureTenantAccessAsync(db, yyyTenant.Id, yyyTenant.Id);
+        // EnsureSystemUsers
+        await EnsureUserAsync(db, passwordHasher, systemTenant.Id, DefaultUserNames.SystemAdmin, $"{DefaultUserNames.Admin}@local.dev", DefaultRoleNames.SystemAdmin);
+        await EnsureUserAsync(db, passwordHasher, systemTenant.Id, DefaultUserNames.SystemUser, $"{DefaultUserNames.User}@local.dev", DefaultRoleNames.SystemUser);
+        await EnsureUserAsync(db, passwordHasher, systemTenant.Id, "hsnsh", "hsnsh@outlook.com", DefaultRoleNames.RegisteredUser);
 
-        await EnsureUserAsync(
-            db,
-            passwordHasher,
-            systemTenant.Id,
-            "admin",
-            "system-admin@local.dev",
-            "system-admin");
+        // EnsureTenantAdminUsers
+        await EnsureUserAsync(db, passwordHasher, resellerTenant.Id, DefaultUserNames.TenantAdmin, $"{DefaultUserNames.Admin}@{resellerTenant.NormalizedName.ToLower()}.com", DefaultRoleNames.TenantAdmin);
+        await EnsureUserAsync(db, passwordHasher, gazeteTenant.Id, DefaultUserNames.TenantAdmin, $"{DefaultUserNames.Admin}@{gazeteTenant.NormalizedName.ToLower()}.com", DefaultRoleNames.TenantAdmin);
+        await EnsureUserAsync(db, passwordHasher, sporTenant.Id, DefaultUserNames.TenantAdmin, $"{DefaultUserNames.Admin}@{sporTenant.NormalizedName.ToLower()}.com", DefaultRoleNames.TenantAdmin);
+        await EnsureUserAsync(db, passwordHasher, techsummusTenant.Id, DefaultUserNames.TenantAdmin, $"{DefaultUserNames.Admin}@{techsummusTenant.NormalizedName.ToLower()}.com", DefaultRoleNames.TenantAdmin);
+        await EnsureUserAsync(db, passwordHasher, dunyaTenant.Id, DefaultUserNames.TenantAdmin, $"{DefaultUserNames.Admin}@{dunyaTenant.NormalizedName.ToLower()}.com", DefaultRoleNames.TenantAdmin);
+        await EnsureUserAsync(db, passwordHasher, kisadalgaTenant.Id, DefaultUserNames.TenantAdmin, $"{DefaultUserNames.Admin}@{kisadalgaTenant.NormalizedName.ToLower()}.com", DefaultRoleNames.TenantAdmin);
+        await EnsureUserAsync(db, passwordHasher, tamindirTenant.Id, DefaultUserNames.TenantAdmin, $"{DefaultUserNames.Admin}@{tamindirTenant.NormalizedName.ToLower()}.com", DefaultRoleNames.TenantAdmin);
+        await EnsureUserAsync(db, passwordHasher, technotodayTenant.Id, DefaultUserNames.TenantAdmin, $"{DefaultUserNames.Admin}@{technotodayTenant.NormalizedName.ToLower()}.com", DefaultRoleNames.TenantAdmin);
+        await EnsureUserAsync(db, passwordHasher, sondakikaTenant.Id, DefaultUserNames.TenantAdmin, $"{DefaultUserNames.Admin}@{sondakikaTenant.NormalizedName.ToLower()}.com", DefaultRoleNames.TenantAdmin);
+        await EnsureUserAsync(db, passwordHasher, t24Tenant.Id, DefaultUserNames.TenantAdmin, $"{DefaultUserNames.Admin}@{t24Tenant.NormalizedName.ToLower()}.com", DefaultRoleNames.TenantAdmin);
+        await EnsureUserAsync(db, passwordHasher, cnbceTenant.Id, DefaultUserNames.TenantAdmin, $"{DefaultUserNames.Admin}@{cnbceTenant.NormalizedName.ToLower()}.com", DefaultRoleNames.TenantAdmin);
+        await EnsureUserAsync(db, passwordHasher, boxofficeturkiyeTenant.Id, DefaultUserNames.TenantAdmin, $"{DefaultUserNames.Admin}@{boxofficeturkiyeTenant.NormalizedName.ToLower()}.com", DefaultRoleNames.TenantAdmin);
 
-        await EnsureUserAsync(
-            db,
-            passwordHasher,
-            systemTenant.Id,
-            "operator",
-            "system-operator@local.dev",
-            "system-user");
-
-        await EnsureUserAsync(
-            db,
-            passwordHasher,
-            systemTenant.Id,
-            "hsnsh",
-            "hsnsh@local.dev",
-            "registered");
-
-        await EnsureUserAsync(
-            db,
-            passwordHasher,
-            aaTenant.Id,
-            "admin",
-            "aa-admin@local.dev",
-            "manager");
-
-        await EnsureUserAsync(
-            db,
-            passwordHasher,
-            bbTenant.Id,
-            "admin",
-            "bb-admin@local.dev",
-            "manager");
-
-        await EnsureUserAsync(
-            db,
-            passwordHasher,
-            xxxTenant.Id,
-            "admin",
-            "xxx-admin@local.dev",
-            "manager");
-
-        await EnsureUserAsync(
-            db,
-            passwordHasher,
-            yyyTenant.Id,
-            "admin",
-            "yyy-admin@local.dev",
-            "manager");
-
+        // update changes
         await db.SaveChangesAsync();
     }
 
-    private static async Task<AuthTenant> GetOrCreateTenantAsync(
-        AuthServiceDbContext db,
-        string name,
-        bool isSystemTenant)
+    private static async Task<AuthTenant> GetOrCreateTenantAsync(AuthServiceDbContext db, string title, string name, bool isSystemTenant, Guid? tenantId = null, Guid? parentId = null, string parentPath = null)
     {
-        var normalizedName = Normalize(name);
+        string normalizedName = Normalize(name);
 
-        var tenant = await db.AuthTenants
-            .FirstOrDefaultAsync(x => x.NormalizedName == normalizedName);
+        var tenant = await db.AuthTenants.FirstOrDefaultAsync(x => x.NormalizedName == normalizedName);
 
         if (tenant is not null)
             return tenant;
 
+        // system   Parent: null   Path: /
+        // A   Parent: null   Path: /A
+        // DD  Parent: A      Path: /A/DD
+        // CC  Parent: A      Path: /A/CC
+        // E   Parent: CC     Path: /A/CC/E
+        // F   Parent: E      Path: /A/CC/E/F
+
+        tenantId ??= Guid.CreateVersion7();
+        string normalizedAccessPath = parentId == null
+            ? isSystemTenant ? "/" : $"/{normalizedName}"
+            : $"/{parentPath}/{normalizedName}";
+
         tenant = new AuthTenant
         {
+            Id = tenantId.Value,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow,
+            ParentId = parentId,
+            Title = title,
             Name = name,
             NormalizedName = normalizedName,
+            NormalizedAccessPath = normalizedAccessPath,
             IsSystemTenant = isSystemTenant,
-            IsActive = true
         };
 
         db.AuthTenants.Add(tenant);
@@ -130,105 +222,34 @@ public static class AuthSeeder
         return tenant;
     }
 
-    private static async Task EnsureSystemRolesAsync(
-        AuthServiceDbContext db,
-        Guid tenantId)
+    private static async Task EnsureRoleAsync(AuthServiceDbContext db, Guid tenantId, string roleName, bool isStatic, bool isDefault)
     {
-        await EnsureRoleAsync(db, tenantId, "system-admin");
-        await EnsureRoleAsync(db, tenantId, "system-user");
-        await EnsureRoleAsync(db, tenantId, "registered");
-
-        await EnsureRoleClaimAsync(db, tenantId, "system-admin", "permission", "tenant.full_access");
-        await EnsureRoleClaimAsync(db, tenantId, "system-admin", "permission", "user.manage");
-        await EnsureRoleClaimAsync(db, tenantId, "system-admin", "permission", "role.manage");
-
-        await EnsureRoleClaimAsync(db, tenantId, "system-user", "permission", "user.read");
-
-        await EnsureRoleClaimAsync(db, tenantId, "registered", "permission", "profile.read");
-    }
-
-    private static async Task EnsureBusinessTenantRolesAsync(
-        AuthServiceDbContext db,
-        Guid tenantId)
-    {
-        await EnsureRoleAsync(db, tenantId, "manager");
-        await EnsureRoleAsync(db, tenantId, "operator");
-        await EnsureRoleAsync(db, tenantId, "registered");
-
-        await EnsureRoleClaimAsync(db, tenantId, "manager", "permission", "tenant.manage");
-        await EnsureRoleClaimAsync(db, tenantId, "manager", "permission", "user.manage");
-        await EnsureRoleClaimAsync(db, tenantId, "manager", "permission", "role.manage");
-
-        await EnsureRoleClaimAsync(db, tenantId, "operator", "permission", "user.read");
-
-        await EnsureRoleClaimAsync(db, tenantId, "registered", "permission", "profile.read");
-    }
-
-    private static async Task<AuthRole> EnsureRoleAsync(
-        AuthServiceDbContext db,
-        Guid tenantId,
-        string roleName)
-    {
-        var normalizedRoleName = Normalize(roleName);
+        string normalizedRoleName = Normalize(roleName);
 
         var role = await db.AuthRoles.FirstOrDefaultAsync(x =>
             x.TenantId == tenantId &&
             x.NormalizedName == normalizedRoleName);
 
-        if (role is not null)
-            return role;
+        if (role is not null) return;
 
         role = new AuthRole
         {
             TenantId = tenantId,
             Name = roleName,
-            NormalizedName = normalizedRoleName
+            NormalizedName = normalizedRoleName,
+            IsStatic = isStatic,
+            IsDefault = isDefault
         };
 
         db.AuthRoles.Add(role);
         await db.SaveChangesAsync();
-
-        return role;
     }
 
-    private static async Task EnsureRoleClaimAsync(
-        AuthServiceDbContext db,
-        Guid tenantId,
-        string roleName,
-        string claimType,
-        string claimValue)
+    private static async Task EnsureUserAsync(AuthServiceDbContext db, IPasswordHasher passwordHasher, Guid tenantId, string userName, string email, string roleName)
     {
-        var role = await EnsureRoleAsync(db, tenantId, roleName);
-
-        bool exists = await db.AuthRoleClaims.AnyAsync(x =>
-            x.RoleId == role.Id &&
-            x.ClaimType == claimType &&
-            x.ClaimValue == claimValue);
-
-        if (exists)
-            return;
-
-        db.AuthRoleClaims.Add(new AuthRoleClaim
-        {
-            RoleId = role.Id,
-            ClaimType = claimType,
-            ClaimValue = claimValue
-        });
-
-        await db.SaveChangesAsync();
-    }
-
-    private static async Task EnsureUserAsync(
-        AuthServiceDbContext db,
-        IPasswordHasher passwordHasher,
-        Guid tenantId,
-        string userName,
-        string email,
-        string roleName)
-    {
-        var normalizedUserName = Normalize(userName);
-        var normalizedEmail = Normalize(email);
-        var normalizedRoleName = Normalize(roleName);
+        string normalizedUserName = Normalize(userName);
+        string normalizedEmail = Normalize(email);
+        string normalizedRoleName = Normalize(roleName);
 
         var user = await db.AuthUsers.FirstOrDefaultAsync(x =>
             x.TenantId == tenantId &&
@@ -238,6 +259,8 @@ public static class AuthSeeder
         {
             user = new AuthUser
             {
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow,
                 TenantId = tenantId,
                 UserName = userName,
                 NormalizedUserName = normalizedUserName,
@@ -245,9 +268,11 @@ public static class AuthSeeder
                 NormalizedEmail = normalizedEmail,
                 PasswordHash = passwordHasher.Hash(DefaultPassword),
                 SecurityStamp = Guid.NewGuid().ToString("N"),
-                IsActive = true,
+                IsStatic = true,
                 EmailConfirmed = true,
-                CreatedAt = DateTime.UtcNow
+                FailedLoginCount = 0,
+                LockoutEndAt = null,
+                LastLoginAt = null,
             };
 
             db.AuthUsers.Add(user);
@@ -264,19 +289,13 @@ public static class AuthSeeder
 
         if (!hasRole)
         {
-            db.AuthUserRoles.Add(new AuthUserRole
-            {
-                UserId = user.Id,
-                RoleId = role.Id
-            });
+            db.AuthUserRoles.Add(new AuthUserRole { UserId = user.Id, RoleId = role.Id });
 
             await db.SaveChangesAsync();
         }
     }
 
-    private static async Task EnsureDefaultPasswordPolicyAsync(
-        AuthServiceDbContext db,
-        Guid tenantId)
+    private static async Task EnsureDefaultPasswordPolicyAsync(AuthServiceDbContext db, Guid tenantId)
     {
         bool exists = await db.AuthPasswordPolicies.AnyAsync(x => x.TenantId == tenantId);
 
@@ -298,29 +317,5 @@ public static class AuthSeeder
         await db.SaveChangesAsync();
     }
 
-    // private static async Task EnsureTenantAccessAsync(
-    //     AuthServiceDbContext db,
-    //     Guid sourceTenantId,
-    //     Guid targetTenantId)
-    // {
-    //     bool exists = await db.AuthTenantAccesses.AnyAsync(x =>
-    //         x.SourceTenantId == sourceTenantId &&
-    //         x.TargetTenantId == targetTenantId);
-    //
-    //     if (exists)
-    //         return;
-    //
-    //     db.AuthTenantAccesses.Add(new AuthTenantAccess
-    //     {
-    //         SourceTenantId = sourceTenantId,
-    //         TargetTenantId = targetTenantId
-    //     });
-    //
-    //     await db.SaveChangesAsync();
-    // }
-
-    private static string Normalize(string value)
-    {
-        return value.Trim().ToUpperInvariant();
-    }
+    private static string Normalize(string value) => value.Trim().ToUpperInvariant();
 }

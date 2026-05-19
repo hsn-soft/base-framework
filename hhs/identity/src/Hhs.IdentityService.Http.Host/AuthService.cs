@@ -75,38 +75,40 @@ public sealed class AuthService : IAuthService
 
     public async Task<LoginResponse> LoginAsync(LoginRequest request, string? ipAddress, string? userAgent)
     {
-        string normalized = Normalize(request.UserNameOrEmail);
+        string normalized = Normalize(request.UserEmail);
 
         var user = await _db.AuthUsers
-            .Include(x => x.Tenant)
-            .FirstOrDefaultAsync(x =>
-                x.TenantId == request.TenantId &&
-                (x.NormalizedUserName == normalized || x.NormalizedEmail == normalized));
+            // .Include(x => x.Tenant)
+            // .FirstOrDefaultAsync(x =>
+            //     x.TenantId == request.TenantId &&
+            //     (x.NormalizedUserName == normalized || x.NormalizedEmail == normalized));
+            .FirstOrDefaultAsync(x => x.NormalizedEmail == normalized);
 
         if (user is null)
         {
-            await AddLoginAuditAsync(request.TenantId, null, request.UserNameOrEmail, false, "USER_NOT_FOUND", ipAddress, userAgent);
+            // await AddLoginAuditAsync(request.TenantId, null, request.UserEmail, false, "USER_NOT_FOUND", ipAddress, userAgent);
+            await AddLoginAuditAsync(null, null, request.UserEmail, false, "USER_NOT_FOUND", ipAddress, userAgent);
             throw new UnauthorizedAccessException("Kullanıcı adı/email veya şifre hatalı.");
         }
 
         if (!user.IsActive)
         {
-            await AddLoginAuditAsync(user.TenantId, user.Id, request.UserNameOrEmail, false, "USER_PASSIVE", ipAddress, userAgent);
+            await AddLoginAuditAsync(user.TenantId, user.Id, request.UserEmail, false, "USER_PASSIVE", ipAddress, userAgent);
             throw new UnauthorizedAccessException("Kullanıcı pasif.");
         }
 
         if (user.LockoutEndAt.HasValue && user.LockoutEndAt > DateTime.UtcNow)
         {
-            await AddLoginAuditAsync(user.TenantId, user.Id, request.UserNameOrEmail, false, "USER_LOCKED", ipAddress, userAgent);
+            await AddLoginAuditAsync(user.TenantId, user.Id, request.UserEmail, false, "USER_LOCKED", ipAddress, userAgent);
             throw new UnauthorizedAccessException("Kullanıcı kilitli.");
         }
 
-        bool passwordValid = _passwordHasher.Verify(request.Password, user.PasswordHash);
+        bool passwordValid = _passwordHasher.Verify(request.UserPassword, user.PasswordHash);
 
         if (!passwordValid)
         {
             await IncreaseFailedLoginAsync(user);
-            await AddLoginAuditAsync(user.TenantId, user.Id, request.UserNameOrEmail, false, "INVALID_PASSWORD", ipAddress, userAgent);
+            await AddLoginAuditAsync(user.TenantId, user.Id, request.UserEmail, false, "INVALID_PASSWORD", ipAddress, userAgent);
             throw new UnauthorizedAccessException("Kullanıcı adı/email veya şifre hatalı.");
         }
 
@@ -116,7 +118,7 @@ public sealed class AuthService : IAuthService
 
         var response = await _jwtTokenService.CreateTokenAsync(user);
 
-        var refreshTokenHash = TokenHelper.Sha256(response.RefreshToken);
+        string refreshTokenHash = TokenHelper.Sha256(response.RefreshToken);
 
         _db.AuthRefreshTokens.Add(new AuthRefreshToken
         {
@@ -125,7 +127,7 @@ public sealed class AuthService : IAuthService
             ExpiresAt = DateTime.UtcNow.AddDays(30)
         });
 
-        await AddLoginAuditAsync(user.TenantId, user.Id, request.UserNameOrEmail, true, null, ipAddress, userAgent);
+        await AddLoginAuditAsync(user.TenantId, user.Id, request.UserEmail, true, null, ipAddress, userAgent);
 
         await _db.SaveChangesAsync();
 

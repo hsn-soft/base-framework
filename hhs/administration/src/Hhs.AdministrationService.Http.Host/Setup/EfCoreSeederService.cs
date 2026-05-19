@@ -56,60 +56,60 @@ public sealed class EfCoreSeederService : IBasicDataSeeder
                         providerName: "R",
                         providerKey: DefaultRoleNames.SystemAdmin)
                     );
-                    dbContext.PermissionGrants.Add(new PermissionGrant(
-                        id: Guid.NewGuid(),
-                        name: permissionName,
-                        providerName: "R",
-                        providerKey: $"{IdentityConsts.Admin}#techsummus")
-                    );
-                    dbContext.PermissionGrants.Add(new PermissionGrant(
-                        id: Guid.NewGuid(),
-                        name: permissionName,
-                        providerName: "R",
-                        providerKey: $"{IdentityConsts.Admin}#dunya")
-                    );
-                    dbContext.PermissionGrants.Add(new PermissionGrant(
-                        id: Guid.NewGuid(),
-                        name: permissionName,
-                        providerName: "R",
-                        providerKey: $"{IdentityConsts.Admin}#kisadalga")
-                    );
-                    dbContext.PermissionGrants.Add(new PermissionGrant(
-                        id: Guid.NewGuid(),
-                        name: permissionName,
-                        providerName: "R",
-                        providerKey: $"{IdentityConsts.Admin}#tamindir")
-                    );
-                    dbContext.PermissionGrants.Add(new PermissionGrant(
-                        id: Guid.NewGuid(),
-                        name: permissionName,
-                        providerName: "R",
-                        providerKey: $"{IdentityConsts.Admin}#technotoday")
-                    );
-                    dbContext.PermissionGrants.Add(new PermissionGrant(
-                        id: Guid.NewGuid(),
-                        name: permissionName,
-                        providerName: "R",
-                        providerKey: $"{IdentityConsts.Admin}#sondakika")
-                    );
-                    dbContext.PermissionGrants.Add(new PermissionGrant(
-                        id: Guid.NewGuid(),
-                        name: permissionName,
-                        providerName: "R",
-                        providerKey: $"{IdentityConsts.Admin}#t24")
-                    );
-                    dbContext.PermissionGrants.Add(new PermissionGrant(
-                        id: Guid.NewGuid(),
-                        name: permissionName,
-                        providerName: "R",
-                        providerKey: $"{IdentityConsts.Admin}#cnbce")
-                    );
-                    dbContext.PermissionGrants.Add(new PermissionGrant(
-                        id: Guid.NewGuid(),
-                        name: permissionName,
-                        providerName: "R",
-                        providerKey: $"{IdentityConsts.Admin}#boxofficeturkiye")
-                    );
+                    // dbContext.PermissionGrants.Add(new PermissionGrant(
+                    //     id: Guid.NewGuid(),
+                    //     name: permissionName,
+                    //     providerName: "R",
+                    //     providerKey: $"{NameConsts.Admin}#techsummus")
+                    // );
+                    // dbContext.PermissionGrants.Add(new PermissionGrant(
+                    //     id: Guid.NewGuid(),
+                    //     name: permissionName,
+                    //     providerName: "R",
+                    //     providerKey: $"{NameConsts.Admin}#dunya")
+                    // );
+                    // dbContext.PermissionGrants.Add(new PermissionGrant(
+                    //     id: Guid.NewGuid(),
+                    //     name: permissionName,
+                    //     providerName: "R",
+                    //     providerKey: $"{NameConsts.Admin}#kisadalga")
+                    // );
+                    // dbContext.PermissionGrants.Add(new PermissionGrant(
+                    //     id: Guid.NewGuid(),
+                    //     name: permissionName,
+                    //     providerName: "R",
+                    //     providerKey: $"{NameConsts.Admin}#tamindir")
+                    // );
+                    // dbContext.PermissionGrants.Add(new PermissionGrant(
+                    //     id: Guid.NewGuid(),
+                    //     name: permissionName,
+                    //     providerName: "R",
+                    //     providerKey: $"{NameConsts.Admin}#technotoday")
+                    // );
+                    // dbContext.PermissionGrants.Add(new PermissionGrant(
+                    //     id: Guid.NewGuid(),
+                    //     name: permissionName,
+                    //     providerName: "R",
+                    //     providerKey: $"{NameConsts.Admin}#sondakika")
+                    // );
+                    // dbContext.PermissionGrants.Add(new PermissionGrant(
+                    //     id: Guid.NewGuid(),
+                    //     name: permissionName,
+                    //     providerName: "R",
+                    //     providerKey: $"{NameConsts.Admin}#t24")
+                    // );
+                    // dbContext.PermissionGrants.Add(new PermissionGrant(
+                    //     id: Guid.NewGuid(),
+                    //     name: permissionName,
+                    //     providerName: "R",
+                    //     providerKey: $"{NameConsts.Admin}#cnbce")
+                    // );
+                    // dbContext.PermissionGrants.Add(new PermissionGrant(
+                    //     id: Guid.NewGuid(),
+                    //     name: permissionName,
+                    //     providerName: "R",
+                    //     providerKey: $"{NameConsts.Admin}#boxofficeturkiye")
+                    // );
                 }
 
                 await dbContext.SaveChangesAsync(cancellationToken);

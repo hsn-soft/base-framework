@@ -116,7 +116,7 @@ try
 
     string buildNumber = Environment.GetEnvironmentVariable("BUILD_NUMBER");
     string appVersion = !string.IsNullOrWhiteSpace(buildNumber) ? $"v1.0.{buildNumber}" : "v1.0.0";
-    app.MapGet("/", () => Results.Text($"{IdentityConsts.SolutionName.ToUpper()} | {ApplicationIdentifier.AppName} | {ApplicationIdentifier.AppId} | {builder.Environment.EnvironmentName} | {appVersion}"))
+    app.MapGet("/", () => Results.Text($"{NameConsts.SolutionName.ToUpper()} | {ApplicationIdentifier.AppName} | {ApplicationIdentifier.AppId} | {builder.Environment.EnvironmentName} | {appVersion}"))
         .AllowAnonymous();
 
     app.MapControllers();

@@ -37,15 +37,24 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    ParentId = table.Column<Guid>(type: "uuid", nullable: true),
+                    Title = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     NormalizedName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    IsSystemTenant = table.Column<bool>(type: "boolean", nullable: false),
-                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    NormalizedAccessPath = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: false),
+                    IsSystemTenant = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_AuthTenants", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_AuthTenants_AuthTenants_ParentId",
+                        column: x => x.ParentId,
+                        principalTable: "AuthTenants",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -95,7 +104,9 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     TenantId = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    NormalizedName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false)
+                    NormalizedName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    IsStatic = table.Column<bool>(type: "boolean", nullable: false),
+                    IsDefault = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -113,6 +124,8 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     TenantId = table.Column<Guid>(type: "uuid", nullable: false),
                     UserName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     NormalizedUserName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
@@ -120,11 +133,10 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                     NormalizedEmail = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     PasswordHash = table.Column<string>(type: "text", nullable: false),
                     SecurityStamp = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
-                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    IsStatic = table.Column<bool>(type: "boolean", nullable: false),
                     EmailConfirmed = table.Column<bool>(type: "boolean", nullable: false),
                     FailedLoginCount = table.Column<int>(type: "integer", nullable: false),
                     LockoutEndAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     LastLoginAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
@@ -294,10 +306,25 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_AuthTenants_IsSystemTenant",
+                table: "AuthTenants",
+                column: "IsSystemTenant");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AuthTenants_NormalizedAccessPath",
+                table: "AuthTenants",
+                column: "NormalizedAccessPath");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_AuthTenants_NormalizedName",
                 table: "AuthTenants",
                 column: "NormalizedName",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AuthTenants_ParentId",
+                table: "AuthTenants",
+                column: "ParentId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_AuthTokenRevocations_Jti",
