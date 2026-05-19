@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Linq.Expressions;
@@ -25,19 +26,22 @@ public abstract class BaseEfCoreDbContext<TDbContext> : DbContext where TDbConte
 {
     private Guid? CurrentTenantId => CurrentTenant?.Id;
 
-    private bool IsMultiTenantFilterEnabled => CurrentTenantId != null && (DataFilter?.IsEnabled<IMultiTenant>() ?? false);
+    private bool IsSystemTenant => CurrentTenant?.IsSystemTenant ?? false;
+
+    private bool IsMultiTenantFilterEnabled => DataFilter?.IsEnabled<IMultiTenant>() ?? false;
+
+    private IReadOnlyList<Guid> AllowedTenantIds => CurrentTenant?.AllowedTenantIds ?? [];
+
+    // private bool IsMultiTenantFilterEnabled => CurrentTenantId != null && !IsSystemTenant && (DataFilter?.IsEnabled<IMultiTenant>() ?? false);
 
     private bool IsSoftDeleteFilterEnabled => DataFilter?.IsEnabled<ISoftDelete>() ?? false;
 
 
-    [CanBeNull]
-    private IDataFilter DataFilter { get; }
+    [CanBeNull] private IDataFilter DataFilter { get; }
 
-    [CanBeNull]
-    private ICurrentTenant CurrentTenant { get; }
+    [CanBeNull] private ICurrentTenant CurrentTenant { get; }
 
-    [CanBeNull]
-    private IAuditPropertySetter AuditPropertySetter { get; }
+    [CanBeNull] private IAuditPropertySetter AuditPropertySetter { get; }
 
     protected BaseEfCoreDbContext(DbContextOptions<TDbContext> options, IServiceProvider provider = null)
         : base(options)
@@ -91,6 +95,7 @@ public abstract class BaseEfCoreDbContext<TDbContext> : DbContext where TDbConte
     protected virtual void ApplyBaseConceptsForAddedEntity(EntityEntry entry)
     {
         CheckAndSetId(entry);
+        SetTenantIdIfNeeded(entry);
         SetConcurrencyStampIfNull(entry);
         AuditPropertySetter?.SetCreationProperties(entry.Entity);
     }
@@ -116,7 +121,7 @@ public abstract class BaseEfCoreDbContext<TDbContext> : DbContext where TDbConte
 
         entry.Reload();
 
-        if (entry.Entity is  ISoftDelete mayHaveCreatorObject)
+        if (entry.Entity is ISoftDelete mayHaveCreatorObject)
         {
             ObjectHelper.TrySetProperty(mayHaveCreatorObject, x => x.IsDeleted, () => true);
         }
@@ -179,6 +184,27 @@ public abstract class BaseEfCoreDbContext<TDbContext> : DbContext where TDbConte
             Guid.NewGuid,
             true
         );
+    }
+
+    protected virtual void SetTenantIdIfNeeded(EntityEntry entry)
+    {
+        if (entry.Entity is not IMultiTenant)
+        {
+            return;
+        }
+
+        if (CurrentTenantId == null || IsSystemTenant)
+        {
+            return;
+        }
+
+        var tenantIdProperty = entry.Property("TenantId");
+
+        if (tenantIdProperty.CurrentValue == null ||
+            tenantIdProperty.CurrentValue.Equals(Guid.Empty))
+        {
+            tenantIdProperty.CurrentValue = CurrentTenantId.Value;
+        }
     }
 
     #region Model Creating Base
@@ -323,8 +349,7 @@ public abstract class BaseEfCoreDbContext<TDbContext> : DbContext where TDbConte
             if (localEvents != null && localEvents.Any())
             {
                 eventReport.DomainEvents.AddRange(
-                    localEvents.Select(
-                        eventRecord => new DomainEventEntry(
+                    localEvents.Select(eventRecord => new DomainEventEntry(
                             entry.Entity,
                             eventRecord.EventData,
                             eventRecord.EventOrder
@@ -394,13 +419,24 @@ public abstract class BaseEfCoreDbContext<TDbContext> : DbContext where TDbConte
 
         if (typeof(ISoftDelete).IsAssignableFrom(typeof(TEntity)))
         {
-            expression = e => !IsSoftDeleteFilterEnabled || !EF.Property<bool>(e, "IsDeleted");
+            expression = e =>
+                !IsSoftDeleteFilterEnabled ||
+                !EF.Property<bool>(e, "IsDeleted");
         }
 
         if (typeof(IMultiTenant).IsAssignableFrom(typeof(TEntity)))
         {
-            Expression<Func<TEntity, bool>> multiTenantFilter = e => !IsMultiTenantFilterEnabled || EF.Property<Guid>(e, "TenantId") == CurrentTenantId;
-            expression = expression == null ? multiTenantFilter : CombineExpressions(expression, multiTenantFilter);
+            Expression<Func<TEntity, bool>> multiTenantFilter = e =>
+                !IsMultiTenantFilterEnabled
+                || IsSystemTenant
+                || (
+                    CurrentTenantId != null &&
+                    AllowedTenantIds.Contains(EF.Property<Guid>(e, "TenantId"))
+                );
+
+            expression = expression == null
+                ? multiTenantFilter
+                : CombineExpressions(expression, multiTenantFilter);
         }
 
         return expression;
