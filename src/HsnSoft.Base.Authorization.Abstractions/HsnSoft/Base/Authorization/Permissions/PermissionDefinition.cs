@@ -15,12 +15,10 @@ public class PermissionDefinition
     protected internal PermissionDefinition(
         [NotNull] string name,
         ILocalizableString displayName = null,
-        MultiTenancySides multiTenancySide = MultiTenancySides.Both,
         bool isEnabled = true)
     {
         Name = Check.NotNull(name, nameof(name));
         DisplayName = displayName ?? new FixedLocalizableString(name);
-        MultiTenancySide = multiTenancySide;
         IsEnabled = isEnabled;
 
         Properties = new Dictionary<string, object>();
@@ -37,12 +35,6 @@ public class PermissionDefinition
     /// If set, this permission can be granted only if parent is granted.
     /// </summary>
     public PermissionDefinition Parent { get; private set; }
-
-    /// <summary>
-    /// MultiTenancy side.
-    /// Default: <see cref="MultiTenancySides.Both"/>
-    /// </summary>
-    public MultiTenancySides MultiTenancySide { get; set; }
 
     public ILocalizableString DisplayName
     {
@@ -87,13 +79,11 @@ public class PermissionDefinition
     public virtual PermissionDefinition AddChild(
         [NotNull] string name,
         ILocalizableString displayName = null,
-        MultiTenancySides multiTenancySide = MultiTenancySides.Both,
         bool isEnabled = true)
     {
         var child = new PermissionDefinition(
             name,
             displayName,
-            multiTenancySide,
             isEnabled) { Parent = this };
 
         _children.Add(child);
