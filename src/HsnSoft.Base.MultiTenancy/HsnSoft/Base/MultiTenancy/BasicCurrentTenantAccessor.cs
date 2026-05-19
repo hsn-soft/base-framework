@@ -18,9 +18,6 @@ public class BasicCurrentTenantAccessor : ICurrentTenantAccessor
     public BasicCurrentTenantAccessor(IServiceProvider provider)
     {
         var currentUser = provider.GetRequiredService<ICurrentUser>();
-        _currentScope = new AsyncLocal<BasicTenantInfo>
-        {
-            Value = new BasicTenantInfo(currentUser?.TenantId, domain: currentUser?.TenantDomain)
-        };
+        _currentScope = new AsyncLocal<BasicTenantInfo> { Value = new BasicTenantInfo(currentUser?.TenantId, currentUser?.IsSystemTenant ?? false, currentUser?.AllowedTenantIds ?? [], currentUser?.TenantNormalized) };
     }
 }

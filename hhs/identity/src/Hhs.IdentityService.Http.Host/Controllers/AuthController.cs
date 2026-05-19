@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Hhs.IdentityService.Application.Contracts.AuthDomain.Dtos;
 using Hhs.IdentityService.Application.Contracts.AuthDomain.Interfaces;
+using HsnSoft.Base.Users;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,10 +12,12 @@ namespace Hhs.IdentityService.Controllers;
 public sealed class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
+    private readonly ICurrentUser _currentUser;
 
-    public AuthController(IAuthService authService)
+    public AuthController(IAuthService authService, ICurrentUser currentUser)
     {
         _authService = authService;
+        _currentUser = currentUser;
     }
 
     [HttpPost("register")]
@@ -61,6 +64,8 @@ public sealed class AuthController : ControllerBase
     [Authorize]
     public IActionResult Me()
     {
+        var test = _currentUser.Id;
+
         return Ok(new
         {
             UserId = User.FindFirstValue(ClaimTypes.NameIdentifier),
@@ -70,11 +75,7 @@ public sealed class AuthController : ControllerBase
             Email = User.FindFirstValue(ClaimTypes.Email),
             SecurityStamp = User.FindFirstValue("security_stamp"),
             Roles = User.FindAll(ClaimTypes.Role).Select(x => x.Value),
-            Claims = User.Claims.Select(x => new
-            {
-                x.Type,
-                x.Value
-            })
+            Claims = User.Claims.Select(x => new { x.Type, x.Value })
         });
     }
 

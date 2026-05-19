@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using HsnSoft.Base.DependencyInjection;
+using JetBrains.Annotations;
 
 namespace HsnSoft.Base.MultiTenancy;
 
@@ -14,24 +16,22 @@ public class CurrentTenant : ICurrentTenant, ITransientDependency
 
     public virtual bool IsAvailable => Id.HasValue;
 
+
     public virtual Guid? Id => _currentTenantAccessor.Current?.TenantId;
+    public virtual string Normalized => _currentTenantAccessor.Current?.TenantNormalized;
+    public virtual bool IsSystemTenant => _currentTenantAccessor.Current?.IsSystemTenant ?? false;
+    public virtual List<Guid> AllowedTenantIds => _currentTenantAccessor.Current?.AllowedTenantIds ?? [];
 
-    public string Name => _currentTenantAccessor.Current?.Name;
 
-    public string Domain => _currentTenantAccessor.Current?.Domain;
-
-    public IDisposable Change(Guid? id, string name = null, string domain = null)
+    public IDisposable Change(Guid? id, bool isSystemTenant, List<Guid> allowedTenantIds, string normalized = null)
     {
-        return SetCurrent(id, name, domain);
+        return SetCurrent(id, isSystemTenant, allowedTenantIds, normalized);
     }
 
-    private IDisposable SetCurrent(Guid? tenantId, string name = null, string domain = null)
+    private IDisposable SetCurrent(Guid? tenantId, bool isSystemTenant, [CanBeNull] List<Guid> allowedTenantIds, string normalized = null)
     {
         var parentScope = _currentTenantAccessor.Current;
-        _currentTenantAccessor.Current = new BasicTenantInfo(tenantId, name, domain);
-        return new DisposeAction(() =>
-        {
-            _currentTenantAccessor.Current = parentScope;
-        });
+        _currentTenantAccessor.Current = new BasicTenantInfo(tenantId, isSystemTenant, allowedTenantIds, normalized);
+        return new DisposeAction(() => { _currentTenantAccessor.Current = parentScope; });
     }
 }

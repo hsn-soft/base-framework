@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Security.Claims;
 using JetBrains.Annotations;
 
@@ -8,35 +9,33 @@ public interface ICurrentUser
 {
     bool IsAuthenticated { get; }
 
-    [CanBeNull]
-    Guid? Id { get; }
+    [CanBeNull] Guid? Id { get; }
 
-    [CanBeNull]
-    string UserName { get; }
+    [CanBeNull] string UserName { get; }
 
-    [CanBeNull]
-    string Name { get; }
+    [CanBeNull] string Name { get; }
 
-    [CanBeNull]
-    string SurName { get; }
+    [CanBeNull] string SurName { get; }
 
-    [CanBeNull]
-    string PhoneNumber { get; }
+    [CanBeNull] string PhoneNumber { get; }
 
     bool PhoneNumberVerified { get; }
 
-    [CanBeNull]
-    string Email { get; }
+    [CanBeNull] string Email { get; }
 
     bool EmailVerified { get; }
 
+    [CanBeNull] string SecurityStamp { get; }
     Guid? TenantId { get; }
 
-    [CanBeNull]
-    string TenantDomain { get; }
+    [CanBeNull] string TenantNormalized { get; }
 
-    [NotNull]
-    string[] Roles { get; }
+    bool IsSystemTenant { get; }
+
+    [NotNull] List<Guid> AllowedTenantIds { get; }
+
+
+    [NotNull] string[] Roles { get; }
 
     [CanBeNull]
     Claim FindClaim(string claimType);

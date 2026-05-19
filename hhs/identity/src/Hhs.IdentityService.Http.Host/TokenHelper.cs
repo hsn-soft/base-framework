@@ -19,36 +19,36 @@ public static class TokenHelper
 }
 
 
-
-public interface ICurrentUser
-{
-    Guid? UserId { get; }
-    Guid? TenantId { get; }
-    bool IsSystemTenant { get; }
-}
-
-public sealed class CurrentUser : ICurrentUser
-{
-    private readonly IHttpContextAccessor _httpContextAccessor;
-
-    public CurrentUser(IHttpContextAccessor httpContextAccessor)
-    {
-        _httpContextAccessor = httpContextAccessor;
-    }
-
-    public Guid? UserId =>
-        Guid.TryParse(_httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier), out var id)
-            ? id
-            : null;
-
-    public Guid? TenantId =>
-        Guid.TryParse(_httpContextAccessor.HttpContext?.User.FindFirstValue("tenant_id"), out var id)
-            ? id
-            : null;
-
-    public bool IsSystemTenant =>
-        string.Equals(
-            _httpContextAccessor.HttpContext?.User.FindFirstValue("is_system_tenant"),
-            "true",
-            StringComparison.OrdinalIgnoreCase);
-}
+//
+// public interface ICurrentUser
+// {
+//     Guid? UserId { get; }
+//     Guid? TenantId { get; }
+//     bool IsSystemTenant { get; }
+// }
+//
+// public sealed class CurrentUser : ICurrentUser
+// {
+//     private readonly IHttpContextAccessor _httpContextAccessor;
+//
+//     public CurrentUser(IHttpContextAccessor httpContextAccessor)
+//     {
+//         _httpContextAccessor = httpContextAccessor;
+//     }
+//
+//     public Guid? UserId =>
+//         Guid.TryParse(_httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier), out var id)
+//             ? id
+//             : null;
+//
+//     public Guid? TenantId =>
+//         Guid.TryParse(_httpContextAccessor.HttpContext?.User.FindFirstValue("tenant_id"), out var id)
+//             ? id
+//             : null;
+//
+//     public bool IsSystemTenant =>
+//         string.Equals(
+//             _httpContextAccessor.HttpContext?.User.FindFirstValue("is_system_tenant"),
+//             "true",
+//             StringComparison.OrdinalIgnoreCase);
+// }

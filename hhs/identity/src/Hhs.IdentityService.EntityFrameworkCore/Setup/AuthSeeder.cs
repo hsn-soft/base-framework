@@ -8,7 +8,7 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Setup;
 
 public static class AuthSeeder
 {
-    private const string DefaultPassword = "Admin1234";
+    private const string DefaultPassword = "Passw0rd!";
 
     public static async Task SeedAsync(AuthServiceDbContext db, IPasswordHasher passwordHasher)
     {

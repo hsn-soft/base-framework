@@ -1,34 +1,26 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using Hhs.IdentityService.Application.Contracts.AuthDomain.Dtos;
 using Hhs.IdentityService.Application.Contracts.AuthDomain.Interfaces;
 using Hhs.IdentityService.Domain.AuthDomain.Entities;
 using Hhs.IdentityService.EntityFrameworkCore.Context;
+using HsnSoft.Base.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Hhs.IdentityService;
 
-
-public sealed class JwtOptions
-{
-    public string Issuer { get; set; } = null!;
-    public string Audience { get; set; } = null!;
-    public string SecretKey { get; set; } = null!;
-    public int ExpireMinutes { get; set; } = 60;
-}
-
 public sealed class JwtTokenService : IJwtTokenService
 {
+    private const string TokenHeaderId = "ODc2MjE3MTIxOQ";
     private readonly AuthServiceDbContext _db;
-    private readonly JwtOptions _options;
 
-    public JwtTokenService(AuthServiceDbContext db, IOptions<JwtOptions> options)
+    public JwtTokenService(AuthServiceDbContext db)
     {
         _db = db;
-        _options = options.Value;
     }
 
     public async Task<LoginResponse> CreateTokenAsync(AuthUser user)
@@ -38,7 +30,7 @@ public sealed class JwtTokenService : IJwtTokenService
             .FirstAsync(x => x.Id == user.Id);
 
         var now = DateTime.UtcNow;
-        var expires = now.AddMinutes(_options.ExpireMinutes);
+        var expires = now.AddMinutes(5);
         var jti = Guid.NewGuid().ToString("N");
 
         var claims = new List<Claim>
@@ -48,10 +40,24 @@ public sealed class JwtTokenService : IJwtTokenService
             new(ClaimTypes.NameIdentifier, dbUser.Id.ToString()),
             new(ClaimTypes.Name, dbUser.UserName),
             new(ClaimTypes.Email, dbUser.Email),
-            new("tenant_id", dbUser.TenantId.ToString()),
-            new("is_system_tenant", dbUser.Tenant.IsSystemTenant.ToString().ToLowerInvariant()),
-            new("security_stamp", dbUser.SecurityStamp)
+            new(BaseClaimTypes.SecurityStamp, dbUser.SecurityStamp),
+            new(BaseClaimTypes.TenantId, dbUser.TenantId.ToString()),
+            new(BaseClaimTypes.TenantNormalized, dbUser.Tenant.NormalizedName),
+            new(BaseClaimTypes.IsSystemTenant, dbUser.Tenant.IsSystemTenant.ToString().ToLowerInvariant()),
         };
+
+        if (!dbUser.Tenant.IsSystemTenant)
+        {
+            var allowedTenantIds = await _db.AuthTenants
+                .Where(x => x.NormalizedAccessPath.StartsWith(dbUser.Tenant.NormalizedAccessPath))
+                .Select(x => x.Id)
+                .ToListAsync();
+
+            if (allowedTenantIds is { Count: > 0 })
+            {
+                claims.AddRange(allowedTenantIds.Select(allowedTenantId => new Claim(BaseClaimTypes.AllowedTenantId, allowedTenantId.ToString())));
+            }
+        }
 
         var roles = await _db.AuthUserRoles
             .Where(x => x.UserId == dbUser.Id)
@@ -77,22 +83,35 @@ public sealed class JwtTokenService : IJwtTokenService
         foreach (var userClaim in userClaims)
             claims.Add(new Claim(userClaim.ClaimType, userClaim.ClaimValue));
 
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.SecretKey));
-        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+        // var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.SecretKey));
+        // var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var jwt = new JwtSecurityToken(
-            issuer: _options.Issuer,
-            audience: _options.Audience,
+            issuer: "https://localhost:7101",
+            // audience: _options.Audience,
             claims: claims,
             notBefore: now,
             expires: expires,
-            signingCredentials: credentials);
+            signingCredentials: CreateAsymetricSigningCredentials());
 
-        return new LoginResponse
+        return new LoginResponse { AccessToken = new JwtSecurityTokenHandler().WriteToken(jwt), RefreshToken = TokenHelper.CreateRawToken(), ExpiresAt = expires };
+    }
+
+    private static SigningCredentials CreateAsymetricSigningCredentials()
+    {
+        var rsa = RSA.Create();
+
+        try
         {
-            AccessToken = new JwtSecurityTokenHandler().WriteToken(jwt),
-            RefreshToken = TokenHelper.CreateRawToken(),
-            ExpiresAt = expires
-        };
+            rsa.FromXmlString(File.ReadAllText(AppContext.BaseDirectory + "/private_key.xml"));
+        }
+        catch (IOException ioException)
+        {
+            throw new Exception("You need to provide private_key.xml to use auth", ioException);
+        }
+
+        var securityKey = new RsaSecurityKey(rsa) { KeyId = TokenHeaderId };
+
+        return new SigningCredentials(key: securityKey, algorithm: SecurityAlgorithms.RsaSha256); // Important to use RSA version of the SHA algo
     }
 }

@@ -127,10 +127,10 @@ public static class ServiceCollectionExtensions
 
                     options.TokenValidationParameters = new TokenValidationParameters
                     {
-                        ValidateAudience = true, // JWTs are required to have "aud" property set for Api audience
+                        ValidateAudience = false, // JWTs are required to have "aud" property set for Api audience
                         ValidAudience = audience,
 
-                        ValidateIssuer = env.IsHostProduction(),
+                        ValidateIssuer = false, // env.IsHostProduction(),
                         ValidIssuer = configuration["AuthServer:Authority"],
 
                         RequireExpirationTime = true, // JWTs are required to have "exp" property set

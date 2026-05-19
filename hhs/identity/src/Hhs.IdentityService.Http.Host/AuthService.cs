@@ -3,6 +3,7 @@ using Hhs.IdentityService.Application.Contracts.AuthDomain.Interfaces;
 using Hhs.IdentityService.Domain.AuthDomain.Entities;
 using Hhs.IdentityService.EntityFrameworkCore.Context;
 using Hhs.Shared.Helper.Utils;
+using HsnSoft.Base.Users;
 
 namespace Hhs.IdentityService;
 

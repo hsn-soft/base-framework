@@ -17,6 +17,7 @@ using HsnSoft.Base.Data;
 using HsnSoft.Base.Serilog;
 using HsnSoft.Base.Swashbuckle;
 using HsnSoft.Base.Tracing;
+using HsnSoft.Base.Users;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
