@@ -1,17 +1,17 @@
 using HsnSoft.Base.Domain.Entities.Auditing;
+using JetBrains.Annotations;
 
 namespace Hhs.IdentityService.Domain.AuthDomain.Entities;
 
-public sealed class AuthLoginAudit: CreationAuditedEntity<Guid>
+public sealed class AuthLoginAudit : CreationAuditedEntity<Guid>
 {
     public Guid? TenantId { get; set; }
     public Guid? UserId { get; set; }
 
-    public string UserNameOrEmail { get; set; } = null!;
+    [NotNull] public string UserNameOrEmail { get; set; } = null!;
     public bool IsSuccess { get; set; }
 
-    public string? FailureReason { get; set; }
-    public string? IpAddress { get; set; }
-    public string? UserAgent { get; set; }
-
+    [CanBeNull] public string FailureReason { get; set; }
+    [CanBeNull] public string IpAddress { get; set; }
+    [CanBeNull] public string UserAgent { get; set; }
 }

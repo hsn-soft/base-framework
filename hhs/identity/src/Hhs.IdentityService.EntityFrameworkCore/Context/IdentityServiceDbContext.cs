@@ -12,9 +12,9 @@ public sealed class IdentityServiceDbContext : BaseEfCoreDbContext<IdentityServi
     public DbSet<Tenant> Tenants => Set<Tenant>();
     public DbSet<AppUser> AppUsers => Set<AppUser>();
     public DbSet<AppRole> AppRoles => Set<AppRole>();
-    public DbSet<AuthUserRole> AuthUserRoles => Set<AuthUserRole>();
-    public DbSet<AuthUserClaim> AuthUserClaims => Set<AuthUserClaim>();
-    public DbSet<AuthRoleClaim> AuthRoleClaims => Set<AuthRoleClaim>();
+    public DbSet<AppUserRole> AppUserRoles => Set<AppUserRole>();
+    public DbSet<AppUserClaim> AppUserClaims => Set<AppUserClaim>();
+    public DbSet<AppRoleClaim> AppRoleClaims => Set<AppRoleClaim>();
     public DbSet<AuthRefreshToken> AuthRefreshTokens => Set<AuthRefreshToken>();
     public DbSet<AuthLoginAudit> AuthLoginAudits => Set<AuthLoginAudit>();
     public DbSet<AuthPasswordPolicy> AuthPasswordPolicies => Set<AuthPasswordPolicy>();
@@ -37,9 +37,9 @@ public sealed class IdentityServiceDbContext : BaseEfCoreDbContext<IdentityServi
         builder.ConfigureAppUserEntity();
         builder.ConfigureAppRoleEntity();
 
-        builder.Entity<AuthUserRole>(b =>
+        builder.Entity<AppUserRole>(b =>
         {
-            b.ToTable("AuthUserRoles");
+            b.ToTable("AppUserRoles");
             b.HasKey(x => x.Id);
 
             b.HasOne(x => x.User)
@@ -53,11 +53,12 @@ public sealed class IdentityServiceDbContext : BaseEfCoreDbContext<IdentityServi
             b.HasIndex(x => new { x.UserId, x.RoleId });
         });
 
-        builder.Entity<AuthUserClaim>(b =>
+        builder.Entity<AppUserClaim>(b =>
         {
-            b.ToTable("AuthUserClaims");
+            b.ToTable("AppUserClaims");
             b.HasKey(x => x.Id);
 
+            b.Property(x => x.UserId).IsRequired();
             b.Property(x => x.ClaimType).HasMaxLength(200).IsRequired();
             b.Property(x => x.ClaimValue).HasMaxLength(500).IsRequired();
 
@@ -68,11 +69,12 @@ public sealed class IdentityServiceDbContext : BaseEfCoreDbContext<IdentityServi
             b.HasIndex(x => new { x.UserId, x.ClaimType });
         });
 
-        builder.Entity<AuthRoleClaim>(b =>
+        builder.Entity<AppRoleClaim>(b =>
         {
-            b.ToTable("AuthRoleClaims");
+            b.ToTable("AppRoleClaims");
             b.HasKey(x => x.Id);
 
+            b.Property(x => x.RoleId).IsRequired();
             b.Property(x => x.ClaimType).HasMaxLength(200).IsRequired();
             b.Property(x => x.ClaimValue).HasMaxLength(500).IsRequired();
 
@@ -102,6 +104,10 @@ public sealed class IdentityServiceDbContext : BaseEfCoreDbContext<IdentityServi
             b.ToTable("AuthLoginAudits");
             b.HasKey(x => x.Id);
 
+            b.Property(x => x.TenantId);
+            b.Property(x => x.UserId);
+            b.Property(x => x.IsSuccess).IsRequired();
+
             b.Property(x => x.UserNameOrEmail).HasMaxLength(255).IsRequired();
             b.Property(x => x.FailureReason).HasMaxLength(500);
             b.Property(x => x.IpAddress).HasMaxLength(100);
@@ -127,7 +133,10 @@ public sealed class IdentityServiceDbContext : BaseEfCoreDbContext<IdentityServi
             b.ToTable("AuthEmailConfirmationTokens");
             b.HasKey(x => x.Id);
 
+            b.Property(x => x.UserId).IsRequired();
             b.Property(x => x.TokenHash).HasMaxLength(500).IsRequired();
+            b.Property(x => x.ExpiresAt).IsRequired();
+            b.Property(x => x.UsedAt);
 
             b.HasOne(x => x.User)
                 .WithMany()

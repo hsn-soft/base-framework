@@ -60,7 +60,7 @@ public sealed class JwtTokenService : IJwtTokenService
             }
         }
 
-        var roles = await _db.AuthUserRoles
+        var roles = await _db.AppUserRoles
             .Where(x => x.UserId == user.Id)
             .Select(x => x.Role)
             .ToListAsync();
@@ -69,7 +69,7 @@ public sealed class JwtTokenService : IJwtTokenService
         {
             claims.Add(new Claim(ClaimTypes.Role, role.Name));
 
-            var roleClaims = await _db.AuthRoleClaims
+            var roleClaims = await _db.AppRoleClaims
                 .Where(x => x.RoleId == role.Id)
                 .ToListAsync();
 
@@ -77,7 +77,7 @@ public sealed class JwtTokenService : IJwtTokenService
                 claims.Add(new Claim(roleClaim.ClaimType, roleClaim.ClaimValue));
         }
 
-        var userClaims = await _db.AuthUserClaims
+        var userClaims = await _db.AppUserClaims
             .Where(x => x.UserId == user.Id)
             .ToListAsync();
 

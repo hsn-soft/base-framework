@@ -267,13 +267,13 @@ public static class AuthSeeder
             x.TenantId == tenantId &&
             x.NormalizedName == normalizedRoleName);
 
-        bool hasRole = await db.AuthUserRoles.AnyAsync(x =>
+        bool hasRole = await db.AppUserRoles.AnyAsync(x =>
             x.UserId == user.Id &&
             x.RoleId == role.Id);
 
         if (!hasRole)
         {
-            db.AuthUserRoles.Add(new AuthUserRole { UserId = user.Id, RoleId = role.Id });
+            db.AppUserRoles.Add(new AppUserRole { UserId = user.Id, RoleId = role.Id });
 
             await db.SaveChangesAsync();
         }

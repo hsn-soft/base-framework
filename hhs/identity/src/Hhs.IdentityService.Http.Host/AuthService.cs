@@ -64,7 +64,7 @@ public sealed class AuthService : IAuthService
 
         _db.AppUsers.Add(user);
 
-        _db.AuthUserRoles.Add(new AuthUserRole { User = user, Role = registeredRole });
+        _db.AppUserRoles.Add(new AppUserRole { User = user, Role = registeredRole });
 
         await _db.SaveChangesAsync();
 
@@ -291,7 +291,7 @@ public sealed class AuthService : IAuthService
 
         foreach (var role in roles)
         {
-            _db.AuthUserRoles.Add(new AuthUserRole { User = user, Role = role });
+            _db.AppUserRoles.Add(new AppUserRole { User = user, Role = role });
         }
 
         await _db.SaveChangesAsync();
@@ -318,7 +318,7 @@ public sealed class AuthService : IAuthService
         user.SetEmail(request.Email.Trim());
         user.SetSecurityStamp();
 
-        _db.AuthUserRoles.RemoveRange(user.UserRoles);
+        _db.AppUserRoles.RemoveRange(user.UserRoles);
 
         var roles = await _db.AppRoles
             .Where(x => x.TenantId == user.TenantId && request.RoleIds.Contains(x.Id))
@@ -329,7 +329,7 @@ public sealed class AuthService : IAuthService
 
         foreach (var role in roles)
         {
-            _db.AuthUserRoles.Add(new AuthUserRole { UserId = user.Id, RoleId = role.Id });
+            _db.AppUserRoles.Add(new AppUserRole { UserId = user.Id, RoleId = role.Id });
         }
 
         await _db.SaveChangesAsync();

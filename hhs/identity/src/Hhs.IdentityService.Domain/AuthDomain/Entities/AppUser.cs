@@ -45,8 +45,8 @@ public sealed class AppUser : AuditedEntity<Guid>, ISoftDelete, IMultiTenant
 
     public DateTime? LastLoginAt { get; set; }
 
-    public ICollection<AuthUserRole> UserRoles { get; set; }
-    public ICollection<AuthUserClaim> Claims { get; set; }
+    public ICollection<AppUserRole> UserRoles { get; set; }
+    public ICollection<AppUserClaim> Claims { get; set; }
     public ICollection<AuthRefreshToken> RefreshTokens { get; set; }
 
     private AppUser()

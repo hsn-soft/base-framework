@@ -24,8 +24,8 @@ public sealed class AppRole : AuditedEntity<Guid>, ISoftDelete, IMultiTenant
     public bool IsStatic { get; set; } // can't delete
     public bool IsDefault { get; set; } // register screen user
 
-    public ICollection<AuthUserRole> UserRoles { get; set; }
-    public ICollection<AuthRoleClaim> Claims { get; set; }
+    public ICollection<AppUserRole> UserRoles { get; set; }
+    public ICollection<AppRoleClaim> Claims { get; set; }
 
     private AppRole()
     {
