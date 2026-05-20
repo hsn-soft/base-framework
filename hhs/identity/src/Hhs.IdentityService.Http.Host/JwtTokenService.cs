@@ -1,14 +1,12 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
-using System.Text;
 using Hhs.IdentityService.Application.Contracts.AuthDomain.Dtos;
 using Hhs.IdentityService.Application.Contracts.AuthDomain.Interfaces;
 using Hhs.IdentityService.Domain.AuthDomain.Entities;
 using Hhs.IdentityService.EntityFrameworkCore.Context;
 using HsnSoft.Base.Security.Claims;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Hhs.IdentityService;

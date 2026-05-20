@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
 {
     [DbContext(typeof(AuthServiceDbContext))]
-    [Migration("20260519203856_InitialCreate")]
+    [Migration("20260520003704_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -31,8 +31,11 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTime>("CreationTime")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("ExpiresAt")
                         .HasColumnType("timestamp with time zone");
@@ -60,14 +63,15 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
 
             modelBuilder.Entity("Hhs.IdentityService.Domain.AuthDomain.Entities.AuthLoginAudit", b =>
                 {
-                    b.Property<long>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+                        .HasColumnType("uuid");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTime>("CreationTime")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("FailureReason")
                         .HasMaxLength(500)
@@ -97,7 +101,7 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
 
                     b.HasKey("Id");
 
-                    b.HasIndex("TenantId", "UserId", "CreatedAt");
+                    b.HasIndex("TenantId", "UserId", "CreationTime");
 
                     b.ToTable("AuthLoginAudits", (string)null);
                 });
@@ -146,8 +150,11 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTime>("CreationTime")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("ExpiresAt")
                         .HasColumnType("timestamp with time zone");
@@ -182,11 +189,26 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uuid");
+
                     b.Property<bool>("IsDefault")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
                     b.Property<bool>("IsStatic")
                         .HasColumnType("boolean");
+
+                    b.Property<DateTime>("LastModificationTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("LastModifierId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -211,11 +233,9 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
 
             modelBuilder.Entity("Hhs.IdentityService.Domain.AuthDomain.Entities.AuthRoleClaim", b =>
                 {
-                    b.Property<long>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+                        .HasColumnType("uuid");
 
                     b.Property<string>("ClaimType")
                         .IsRequired()
@@ -243,14 +263,23 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTime>("CreationTime")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<bool>("IsActive")
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
                     b.Property<bool>("IsSystemTenant")
                         .HasColumnType("boolean");
+
+                    b.Property<DateTime>("LastModificationTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("LastModifierId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -325,8 +354,11 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTime>("CreationTime")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -339,7 +371,7 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                     b.Property<int>("FailedLoginCount")
                         .HasColumnType("integer");
 
-                    b.Property<bool>("IsActive")
+                    b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
                     b.Property<bool>("IsStatic")
@@ -347,6 +379,12 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
 
                     b.Property<DateTime?>("LastLoginAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("LastModificationTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("LastModifierId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime?>("LockoutEndAt")
                         .HasColumnType("timestamp with time zone");
@@ -391,11 +429,9 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
 
             modelBuilder.Entity("Hhs.IdentityService.Domain.AuthDomain.Entities.AuthUserClaim", b =>
                 {
-                    b.Property<long>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+                        .HasColumnType("uuid");
 
                     b.Property<string>("ClaimType")
                         .IsRequired()

@@ -1,6 +1,5 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
@@ -16,8 +15,7 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                 name: "AuthLoginAudits",
                 columns: table => new
                 {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
                     TenantId = table.Column<Guid>(type: "uuid", nullable: true),
                     UserId = table.Column<Guid>(type: "uuid", nullable: true),
                     UserNameOrEmail = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
@@ -25,7 +23,8 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                     FailureReason = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     IpAddress = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     UserAgent = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    CreationTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CreatorId = table.Column<Guid>(type: "uuid", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -37,14 +36,17 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
                     ParentId = table.Column<Guid>(type: "uuid", nullable: true),
                     Title = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     NormalizedName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     NormalizedAccessPath = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: false),
-                    IsSystemTenant = table.Column<bool>(type: "boolean", nullable: false)
+                    IsSystemTenant = table.Column<bool>(type: "boolean", nullable: false),
+                    CreationTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CreatorId = table.Column<Guid>(type: "uuid", nullable: true),
+                    LastModificationTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    LastModifierId = table.Column<Guid>(type: "uuid", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -102,11 +104,16 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
                     TenantId = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     NormalizedName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     IsStatic = table.Column<bool>(type: "boolean", nullable: false),
-                    IsDefault = table.Column<bool>(type: "boolean", nullable: false)
+                    IsDefault = table.Column<bool>(type: "boolean", nullable: false),
+                    CreationTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CreatorId = table.Column<Guid>(type: "uuid", nullable: true),
+                    LastModificationTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    LastModifierId = table.Column<Guid>(type: "uuid", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -124,8 +131,7 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
                     TenantId = table.Column<Guid>(type: "uuid", nullable: false),
                     UserName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     NormalizedUserName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
@@ -137,7 +143,11 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                     EmailConfirmed = table.Column<bool>(type: "boolean", nullable: false),
                     FailedLoginCount = table.Column<int>(type: "integer", nullable: false),
                     LockoutEndAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    LastLoginAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    LastLoginAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    CreationTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CreatorId = table.Column<Guid>(type: "uuid", nullable: true),
+                    LastModificationTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    LastModifierId = table.Column<Guid>(type: "uuid", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -154,8 +164,7 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                 name: "AuthRoleClaims",
                 columns: table => new
                 {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
                     RoleId = table.Column<Guid>(type: "uuid", nullable: false),
                     ClaimType = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     ClaimValue = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false)
@@ -179,8 +188,9 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
                     TokenHash = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
                     ExpiresAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    UsedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    UsedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    CreationTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CreatorId = table.Column<Guid>(type: "uuid", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -201,9 +211,10 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
                     TokenHash = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
                     ExpiresAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     RevokedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    ReplacedByTokenHash = table.Column<string>(type: "text", nullable: true)
+                    ReplacedByTokenHash = table.Column<string>(type: "text", nullable: true),
+                    CreationTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CreatorId = table.Column<Guid>(type: "uuid", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -220,8 +231,7 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                 name: "AuthUserClaims",
                 columns: table => new
                 {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
                     ClaimType = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     ClaimValue = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false)
@@ -273,9 +283,9 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_AuthLoginAudits_TenantId_UserId_CreatedAt",
+                name: "IX_AuthLoginAudits_TenantId_UserId_CreationTime",
                 table: "AuthLoginAudits",
-                columns: new[] { "TenantId", "UserId", "CreatedAt" });
+                columns: new[] { "TenantId", "UserId", "CreationTime" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_AuthPasswordPolicies_TenantId",

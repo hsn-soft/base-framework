@@ -1,14 +1,12 @@
+using HsnSoft.Base;
+using HsnSoft.Base.Domain.Entities.Auditing;
 using JetBrains.Annotations;
 
 namespace Hhs.IdentityService.Domain.AuthDomain.Entities;
 
-public sealed class AuthTenant
+public sealed class AuthTenant: AuditedEntity<Guid>, ISoftDelete
 {
-    public Guid Id { get; set; } = Guid.NewGuid();
-
-    public bool IsActive { get; set; } = true;
-
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public bool IsDeleted { get; set; }
 
     public Guid? ParentId { get; set; }
     [CanBeNull] public AuthTenant Parent { get; set; }
@@ -25,4 +23,9 @@ public sealed class AuthTenant
 
     public ICollection<AuthUser> Users { get; set; } = [];
     public ICollection<AuthRole> Roles { get; set; } = [];
+
+    public AuthTenant(Guid id) : base(id)
+    {
+
+    }
 }

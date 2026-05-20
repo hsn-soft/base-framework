@@ -1,10 +1,14 @@
+using HsnSoft.Base;
+using HsnSoft.Base.Domain.Entities.Auditing;
+using HsnSoft.Base.MultiTenancy;
+
 namespace Hhs.IdentityService.Domain.AuthDomain.Entities;
 
-public sealed class AuthRole
+public sealed class AuthRole: AuditedEntity<Guid>, ISoftDelete, IMultiTenant
 {
-    public Guid Id { get; set; } = Guid.NewGuid();
+    public bool IsDeleted { get; set; }
 
-    public Guid TenantId { get; set; }
+    public Guid TenantId { get;  set; }
     public AuthTenant Tenant { get; set; } = null!;
 
     public string Name { get; set; } = null!;

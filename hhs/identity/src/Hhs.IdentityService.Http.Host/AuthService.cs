@@ -32,7 +32,7 @@ public sealed class AuthService : IAuthService
 
     public async Task<Guid> RegisterAsync(RegisterRequest request, string? ipAddress, string? userAgent)
     {
-        var tenant = await _db.AuthTenants.FirstOrDefaultAsync(x => x.Id == request.TenantId && x.IsActive);
+        var tenant = await _db.AuthTenants.FirstOrDefaultAsync(x => x.Id == request.TenantId);
         if (tenant is null)
             throw new Exception("Tenant bulunamadı.");
 
@@ -63,11 +63,7 @@ public sealed class AuthService : IAuthService
 
         _db.AuthUsers.Add(user);
 
-        _db.AuthUserRoles.Add(new AuthUserRole
-        {
-            User = user,
-            Role = registeredRole
-        });
+        _db.AuthUserRoles.Add(new AuthUserRole { User = user, Role = registeredRole });
 
         await _db.SaveChangesAsync();
 
@@ -92,7 +88,7 @@ public sealed class AuthService : IAuthService
             throw new UnauthorizedAccessException("Kullanıcı adı/email veya şifre hatalı.");
         }
 
-        if (!user.IsActive)
+        if (user.IsDeleted)
         {
             await AddLoginAuditAsync(user.TenantId, user.Id, request.UserEmail, false, "USER_PASSIVE", ipAddress, userAgent);
             throw new UnauthorizedAccessException("Kullanıcı pasif.");
@@ -121,12 +117,7 @@ public sealed class AuthService : IAuthService
 
         string refreshTokenHash = TokenHelper.Sha256(response.RefreshToken);
 
-        _db.AuthRefreshTokens.Add(new AuthRefreshToken
-        {
-            UserId = user.Id,
-            TokenHash = refreshTokenHash,
-            ExpiresAt = DateTime.UtcNow.AddDays(30)
-        });
+        _db.AuthRefreshTokens.Add(new AuthRefreshToken { UserId = user.Id, TokenHash = refreshTokenHash, ExpiresAt = DateTime.UtcNow.AddDays(30) });
 
         await AddLoginAuditAsync(user.TenantId, user.Id, request.UserEmail, true, null, ipAddress, userAgent);
 
@@ -149,7 +140,7 @@ public sealed class AuthService : IAuthService
 
         var user = refreshToken.User;
 
-        if (!user.IsActive)
+        if (user.IsDeleted)
             throw new UnauthorizedAccessException("Kullanıcı pasif.");
 
         var response = await _jwtTokenService.CreateTokenAsync(user);
@@ -157,12 +148,7 @@ public sealed class AuthService : IAuthService
         refreshToken.RevokedAt = DateTime.UtcNow;
         refreshToken.ReplacedByTokenHash = TokenHelper.Sha256(response.RefreshToken);
 
-        _db.AuthRefreshTokens.Add(new AuthRefreshToken
-        {
-            UserId = user.Id,
-            TokenHash = TokenHelper.Sha256(response.RefreshToken),
-            ExpiresAt = DateTime.UtcNow.AddDays(30)
-        });
+        _db.AuthRefreshTokens.Add(new AuthRefreshToken { UserId = user.Id, TokenHash = TokenHelper.Sha256(response.RefreshToken), ExpiresAt = DateTime.UtcNow.AddDays(30) });
 
         await _db.SaveChangesAsync();
 
@@ -196,11 +182,12 @@ public sealed class AuthService : IAuthService
             if (_currentUser.TenantId is null)
                 throw new UnauthorizedAccessException();
 
-            query = query.Where(x => x.TenantId == _currentUser.TenantId);
+            // query = query.Where(x => x.TenantId == _currentUser.TenantId);
+            query = query.Where(x => _currentUser.AllowedTenantIds.Contains(x.TenantId));
         }
 
         return await query
-            .OrderByDescending(x => x.CreatedAt)
+            .OrderByDescending(x => x.CreationTime)
             .Select(x => new
             {
                 x.Id,
@@ -208,11 +195,11 @@ public sealed class AuthService : IAuthService
                 TenantName = x.Tenant.Name,
                 x.UserName,
                 x.Email,
-                x.IsActive,
+                x.IsDeleted,
                 x.EmailConfirmed,
                 x.FailedLoginCount,
                 x.LockoutEndAt,
-                x.CreatedAt,
+                x.CreationTime,
                 x.LastLoginAt,
                 Roles = x.UserRoles.Select(r => r.Role.Name).ToList()
             })
@@ -243,17 +230,13 @@ public sealed class AuthService : IAuthService
             TenantName = user.Tenant.Name,
             user.UserName,
             user.Email,
-            user.IsActive,
+            user.IsDeleted,
             user.EmailConfirmed,
             user.FailedLoginCount,
             user.LockoutEndAt,
-            user.CreatedAt,
+            user.CreationTime,
             user.LastLoginAt,
-            Roles = user.UserRoles.Select(x => new
-            {
-                x.Role.Id,
-                x.Role.Name
-            })
+            Roles = user.UserRoles.Select(x => new { x.Role.Id, x.Role.Name })
         };
     }
 
@@ -299,11 +282,7 @@ public sealed class AuthService : IAuthService
 
         foreach (var role in roles)
         {
-            _db.AuthUserRoles.Add(new AuthUserRole
-            {
-                User = user,
-                Role = role
-            });
+            _db.AuthUserRoles.Add(new AuthUserRole { User = user, Role = role });
         }
 
         await _db.SaveChangesAsync();
@@ -330,7 +309,6 @@ public sealed class AuthService : IAuthService
         user.NormalizedUserName = Normalize(request.UserName);
         user.Email = request.Email.Trim();
         user.NormalizedEmail = Normalize(request.Email);
-        user.IsActive = request.IsActive;
         user.SecurityStamp = Guid.NewGuid().ToString("N");
 
         _db.AuthUserRoles.RemoveRange(user.UserRoles);
@@ -344,11 +322,7 @@ public sealed class AuthService : IAuthService
 
         foreach (var role in roles)
         {
-            _db.AuthUserRoles.Add(new AuthUserRole
-            {
-                UserId = user.Id,
-                RoleId = role.Id
-            });
+            _db.AuthUserRoles.Add(new AuthUserRole { UserId = user.Id, RoleId = role.Id });
         }
 
         await _db.SaveChangesAsync();
@@ -378,12 +352,7 @@ public sealed class AuthService : IAuthService
         if (role is not null)
             return role;
 
-        role = new AuthRole
-        {
-            TenantId = tenantId,
-            Name = RegisteredRoleName,
-            NormalizedName = normalized
-        };
+        role = new AuthRole { TenantId = tenantId, Name = RegisteredRoleName, NormalizedName = normalized };
 
         _db.AuthRoles.Add(role);
 

@@ -1,14 +1,14 @@
+using HsnSoft.Base;
+using HsnSoft.Base.Domain.Entities.Auditing;
+using HsnSoft.Base.MultiTenancy;
+
 namespace Hhs.IdentityService.Domain.AuthDomain.Entities;
 
-public sealed class AuthUser
+public sealed class AuthUser: AuditedEntity<Guid>, ISoftDelete, IMultiTenant
 {
-    public Guid Id { get; set; } = Guid.NewGuid();
+    public bool IsDeleted { get; set; }
 
-    public bool IsActive { get; set; } = true;
-
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
-    public Guid TenantId { get; set; }
+    public Guid TenantId { get;  set; }
     public AuthTenant Tenant { get; set; } = null!;
 
     public string UserName { get; set; } = null!;

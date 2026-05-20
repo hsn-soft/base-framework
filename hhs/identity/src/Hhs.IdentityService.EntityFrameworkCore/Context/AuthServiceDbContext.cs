@@ -30,9 +30,6 @@ public sealed class AuthServiceDbContext : BaseEfCoreDbContext<AuthServiceDbCont
             b.ToTable("AuthTenants");
             b.HasKey(x => x.Id);
 
-            b.Property(x => x.IsActive).IsRequired();
-            b.Property(x => x.CreatedAt).IsRequired();
-
             b.Property(x => x.Title).HasMaxLength(200).IsRequired();
             b.Property(x => x.Name).HasMaxLength(100).IsRequired();
             b.Property(x => x.NormalizedName).HasMaxLength(100).IsRequired();
@@ -55,9 +52,6 @@ public sealed class AuthServiceDbContext : BaseEfCoreDbContext<AuthServiceDbCont
         {
             b.ToTable("AuthUsers");
             b.HasKey(x => x.Id);
-
-            b.Property(x => x.IsActive).IsRequired();
-            b.Property(x => x.CreatedAt).IsRequired();
 
             b.Property(x => x.UserName).HasMaxLength(100).IsRequired();
             b.Property(x => x.NormalizedUserName).HasMaxLength(100).IsRequired();
@@ -168,7 +162,7 @@ public sealed class AuthServiceDbContext : BaseEfCoreDbContext<AuthServiceDbCont
             b.Property(x => x.IpAddress).HasMaxLength(100);
             b.Property(x => x.UserAgent).HasMaxLength(500);
 
-            b.HasIndex(x => new { x.TenantId, x.UserId, x.CreatedAt });
+            b.HasIndex(x => new { x.TenantId, x.UserId, x.CreationTime });
         });
 
         builder.Entity<AuthPasswordPolicy>(b =>

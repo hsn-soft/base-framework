@@ -203,11 +203,8 @@ public static class AuthSeeder
             ? isSystemTenant ? "/" : $"/{normalizedName}"
             : $"{parentPath}/{normalizedName}";
 
-        tenant = new AuthTenant
+        tenant = new AuthTenant(tenantId.Value)
         {
-            Id = tenantId.Value,
-            IsActive = true,
-            CreatedAt = DateTime.UtcNow,
             ParentId = parentId,
             Title = title,
             Name = name,
@@ -259,8 +256,6 @@ public static class AuthSeeder
         {
             user = new AuthUser
             {
-                IsActive = true,
-                CreatedAt = DateTime.UtcNow,
                 TenantId = tenantId,
                 UserName = userName,
                 NormalizedUserName = normalizedUserName,

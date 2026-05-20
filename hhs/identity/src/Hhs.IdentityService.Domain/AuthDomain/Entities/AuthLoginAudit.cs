@@ -1,9 +1,9 @@
+using HsnSoft.Base.Domain.Entities.Auditing;
+
 namespace Hhs.IdentityService.Domain.AuthDomain.Entities;
 
-public sealed class AuthLoginAudit
+public sealed class AuthLoginAudit: CreationAuditedEntity<Guid>
 {
-    public long Id { get; set; }
-
     public Guid? TenantId { get; set; }
     public Guid? UserId { get; set; }
 
@@ -14,5 +14,4 @@ public sealed class AuthLoginAudit
     public string? IpAddress { get; set; }
     public string? UserAgent { get; set; }
 
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

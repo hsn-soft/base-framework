@@ -1,9 +1,9 @@
+using HsnSoft.Base.Domain.Entities;
+
 namespace Hhs.IdentityService.Domain.AuthDomain.Entities;
 
-public sealed class AuthTokenRevocation
+public sealed class AuthTokenRevocation: Entity<Guid>
 {
-    public Guid Id { get; set; } = Guid.NewGuid();
-
     public Guid UserId { get; set; }
 
     public string Jti { get; set; } = null!;
