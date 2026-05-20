@@ -37,13 +37,18 @@ public sealed class JwtTokenService : IJwtTokenService
         {
             new(JwtRegisteredClaimNames.Sub, dbUser.Id.ToString()),
             new(JwtRegisteredClaimNames.Jti, jti),
-            new(ClaimTypes.NameIdentifier, dbUser.Id.ToString()),
-            new(ClaimTypes.Name, dbUser.UserName),
-            new(ClaimTypes.Email, dbUser.Email),
             new(BaseClaimTypes.SecurityStamp, dbUser.SecurityStamp),
+
+            new(ClaimTypes.NameIdentifier, dbUser.Id.ToString()), //TODO : ENCRYPT
+
             new(BaseClaimTypes.TenantId, dbUser.TenantId.ToString()),
-            new(BaseClaimTypes.TenantNormalized, dbUser.Tenant.NormalizedName),
+            new(BaseClaimTypes.TenantNormalized, dbUser.Tenant.NormalizedName), //TODO : ENCRYPT
             new(BaseClaimTypes.IsSystemTenant, dbUser.Tenant.IsSystemTenant.ToString().ToLowerInvariant()),
+
+
+            // TODO:Bu user için, yada role une ait claim var ise token a eklenecek.
+            new(ClaimTypes.Name, dbUser.UserName), //TODO : ENCRYPT
+            new(ClaimTypes.Email, dbUser.Email), //TODO : ENCRYPT
         };
 
         if (!dbUser.Tenant.IsSystemTenant)
