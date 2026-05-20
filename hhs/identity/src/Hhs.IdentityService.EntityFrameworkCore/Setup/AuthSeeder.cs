@@ -187,7 +187,7 @@ public static class AuthSeeder
     {
         string normalizedName = StringOperations.Normalize(name);
 
-        var tenant = await db.AuthTenants.FirstOrDefaultAsync(x => x.NormalizedName == normalizedName);
+        var tenant = await db.Tenants.FirstOrDefaultAsync(x => x.NormalizedName == normalizedName);
 
         if (tenant is not null)
             return tenant;
@@ -213,7 +213,7 @@ public static class AuthSeeder
             parentId: parentId
         );
 
-        db.AuthTenants.Add(tenant);
+        db.Tenants.Add(tenant);
         await db.SaveChangesAsync();
 
         return tenant;
@@ -223,7 +223,7 @@ public static class AuthSeeder
     {
         string normalizedRoleName = StringOperations.Normalize(roleName);
 
-        var role = await db.AuthRoles.FirstOrDefaultAsync(x =>
+        var role = await db.AppRoles.FirstOrDefaultAsync(x =>
             x.TenantId == tenantId &&
             x.NormalizedName == normalizedRoleName);
 
@@ -231,7 +231,7 @@ public static class AuthSeeder
 
         role = new AppRole(tenantId: tenantId, name: roleName, isDefault: isDefault, isStatic: isStatic);
 
-        db.AuthRoles.Add(role);
+        db.AppRoles.Add(role);
         await db.SaveChangesAsync();
     }
 
@@ -241,7 +241,7 @@ public static class AuthSeeder
         string normalizedEmail = StringOperations.Normalize(email);
         string normalizedRoleName = StringOperations.Normalize(roleName);
 
-        var user = await db.AuthUsers.FirstOrDefaultAsync(x =>
+        var user = await db.AppUsers.FirstOrDefaultAsync(x =>
             x.TenantId == tenantId &&
             x.NormalizedUserName == normalizedUserName);
 
@@ -259,11 +259,11 @@ public static class AuthSeeder
                 languageCode: null
             ) { EmailConfirmed = true };
 
-            db.AuthUsers.Add(user);
+            db.AppUsers.Add(user);
             await db.SaveChangesAsync();
         }
 
-        var role = await db.AuthRoles.FirstAsync(x =>
+        var role = await db.AppRoles.FirstAsync(x =>
             x.TenantId == tenantId &&
             x.NormalizedName == normalizedRoleName);
 

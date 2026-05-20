@@ -23,7 +23,7 @@ public sealed class JwtTokenService : IJwtTokenService
 
     public async Task<LoginResponse> CreateTokenAsync(AppUser user)
     {
-        var dbTenant = await _db.AuthTenants.FirstAsync(x => x.Id == user.TenantId);
+        var dbTenant = await _db.Tenants.FirstAsync(x => x.Id == user.TenantId);
 
         var now = DateTime.UtcNow;
         var expires = now.AddMinutes(5);
@@ -49,7 +49,7 @@ public sealed class JwtTokenService : IJwtTokenService
 
         if (!dbTenant.IsSystemTenant)
         {
-            var allowedTenantIds = await _db.AuthTenants
+            var allowedTenantIds = await _db.Tenants
                 .Where(x => x.NormalizedAccessPath.StartsWith(dbTenant.NormalizedAccessPath))
                 .Select(x => x.Id)
                 .ToListAsync();

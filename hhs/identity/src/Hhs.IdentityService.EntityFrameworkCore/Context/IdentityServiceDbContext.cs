@@ -9,9 +9,9 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Context;
 
 public sealed class IdentityServiceDbContext : BaseEfCoreDbContext<IdentityServiceDbContext>
 {
-    public DbSet<Tenant> AuthTenants => Set<Tenant>();
-    public DbSet<AppUser> AuthUsers => Set<AppUser>();
-    public DbSet<AppRole> AuthRoles => Set<AppRole>();
+    public DbSet<Tenant> Tenants => Set<Tenant>();
+    public DbSet<AppUser> AppUsers => Set<AppUser>();
+    public DbSet<AppRole> AppRoles => Set<AppRole>();
     public DbSet<AuthUserRole> AuthUserRoles => Set<AuthUserRole>();
     public DbSet<AuthUserClaim> AuthUserClaims => Set<AuthUserClaim>();
     public DbSet<AuthRoleClaim> AuthRoleClaims => Set<AuthRoleClaim>();

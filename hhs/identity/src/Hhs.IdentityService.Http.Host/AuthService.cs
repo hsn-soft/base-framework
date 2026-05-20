@@ -37,7 +37,7 @@ public sealed class AuthService : IAuthService
 
     public async Task<Guid> RegisterAsync(RegisterRequest request, string? ipAddress, string? userAgent)
     {
-        var tenant = await _db.AuthTenants.FirstOrDefaultAsync(x => x.Id == request.TenantId);
+        var tenant = await _db.Tenants.FirstOrDefaultAsync(x => x.Id == request.TenantId);
         if (tenant is null)
             throw new Exception("Tenant bulunamadı.");
 
@@ -46,7 +46,7 @@ public sealed class AuthService : IAuthService
         string normalizedUserName = Normalize(request.UserName);
         string normalizedEmail = Normalize(request.Email);
 
-        bool exists = await _db.AuthUsers.AnyAsync(x =>
+        bool exists = await _db.AppUsers.AnyAsync(x =>
             x.TenantId == request.TenantId &&
             (x.NormalizedUserName == normalizedUserName || x.NormalizedEmail == normalizedEmail));
 
@@ -62,7 +62,7 @@ public sealed class AuthService : IAuthService
             passwordHash: _passwordHasher.Hash(request.Password)
         );
 
-        _db.AuthUsers.Add(user);
+        _db.AppUsers.Add(user);
 
         _db.AuthUserRoles.Add(new AuthUserRole { User = user, Role = registeredRole });
 
@@ -78,7 +78,7 @@ public sealed class AuthService : IAuthService
         AppUser user;
         using (_dataFilter.Disable<IMultiTenant>()) // anonymous user , unknown tenant
         {
-            user = await _db.AuthUsers
+            user = await _db.AppUsers
                 // .Include(x => x.Tenant)
                 // .FirstOrDefaultAsync(x =>
                 //     x.TenantId == request.TenantId &&
@@ -183,7 +183,7 @@ public sealed class AuthService : IAuthService
 
     public async Task<List<object>> GetUsersAsync()
     {
-        var query = _db.AuthUsers
+        var query = _db.AppUsers
             .Include(x => x.Tenant)
             .Include(x => x.UserRoles)
             .ThenInclude(x => x.Role)
@@ -222,7 +222,7 @@ public sealed class AuthService : IAuthService
 
     public async Task<object> GetUserAsync(Guid id)
     {
-        var query = _db.AuthUsers
+        var query = _db.AppUsers
             .Include(x => x.Tenant)
             .Include(x => x.UserRoles)
             .ThenInclude(x => x.Role)
@@ -266,14 +266,14 @@ public sealed class AuthService : IAuthService
         string normalizedUserName = Normalize(request.UserName);
         string normalizedEmail = Normalize(request.Email);
 
-        bool exists = await _db.AuthUsers.AnyAsync(x =>
+        bool exists = await _db.AppUsers.AnyAsync(x =>
             x.TenantId == request.TenantId &&
             (x.NormalizedUserName == normalizedUserName || x.NormalizedEmail == normalizedEmail));
 
         if (exists)
             throw new Exception("UserName veya Email zaten kullanılıyor.");
 
-        var roles = await _db.AuthRoles
+        var roles = await _db.AppRoles
             .Where(x => x.TenantId == request.TenantId && request.RoleIds.Contains(x.Id))
             .ToListAsync();
 
@@ -287,7 +287,7 @@ public sealed class AuthService : IAuthService
             passwordHash: _passwordHasher.Hash(request.Password)
         );
 
-        _db.AuthUsers.Add(user);
+        _db.AppUsers.Add(user);
 
         foreach (var role in roles)
         {
@@ -301,7 +301,7 @@ public sealed class AuthService : IAuthService
 
     public async Task UpdateUserAsync(Guid id, UpdateUserRequest request)
     {
-        var user = await _db.AuthUsers
+        var user = await _db.AppUsers
             .Include(x => x.UserRoles)
             .FirstOrDefaultAsync(x => x.Id == id);
 
@@ -320,7 +320,7 @@ public sealed class AuthService : IAuthService
 
         _db.AuthUserRoles.RemoveRange(user.UserRoles);
 
-        var roles = await _db.AuthRoles
+        var roles = await _db.AppRoles
             .Where(x => x.TenantId == user.TenantId && request.RoleIds.Contains(x.Id))
             .ToListAsync();
 
@@ -337,7 +337,7 @@ public sealed class AuthService : IAuthService
 
     public async Task DeleteUserAsync(Guid id)
     {
-        var user = await _db.AuthUsers.FirstOrDefaultAsync(x => x.Id == id);
+        var user = await _db.AppUsers.FirstOrDefaultAsync(x => x.Id == id);
 
         if (user is null)
             return;
@@ -345,7 +345,7 @@ public sealed class AuthService : IAuthService
         if (!_currentUser.IsSystemTenant && user.TenantId != _currentUser.TenantId)
             throw new UnauthorizedAccessException();
 
-        _db.AuthUsers.Remove(user);
+        _db.AppUsers.Remove(user);
         await _db.SaveChangesAsync();
     }
 
@@ -353,7 +353,7 @@ public sealed class AuthService : IAuthService
     {
         string normalized = Normalize(RegisteredRoleName);
 
-        var role = await _db.AuthRoles
+        var role = await _db.AppRoles
             .FirstOrDefaultAsync(x => x.TenantId == tenantId && x.NormalizedName == normalized);
 
         if (role is not null)
@@ -361,7 +361,7 @@ public sealed class AuthService : IAuthService
 
         role = new AppRole(tenantId: tenantId, name: RegisteredRoleName);
 
-        _db.AuthRoles.Add(role);
+        _db.AppRoles.Add(role);
 
         return role;
     }
