@@ -23,9 +23,7 @@ public sealed class JwtTokenService : IJwtTokenService
 
     public async Task<LoginResponse> CreateTokenAsync(AuthUser user)
     {
-        var dbUser = await _db.AuthUsers
-            .Include(x => x.Tenant)
-            .FirstAsync(x => x.Id == user.Id);
+        var dbTenant = await _db.AuthTenants.FirstAsync(x => x.Id == user.TenantId);
 
         var now = DateTime.UtcNow;
         var expires = now.AddMinutes(5);
@@ -33,26 +31,26 @@ public sealed class JwtTokenService : IJwtTokenService
 
         var claims = new List<Claim>
         {
-            new(JwtRegisteredClaimNames.Sub, dbUser.Id.ToString()),
+            new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new(JwtRegisteredClaimNames.Jti, jti),
-            new(BaseClaimTypes.SecurityStamp, dbUser.SecurityStamp),
+            new(BaseClaimTypes.SecurityStamp, user.SecurityStamp),
 
-            new(ClaimTypes.NameIdentifier, dbUser.Id.ToString()), //TODO : ENCRYPT
+            new(ClaimTypes.NameIdentifier, user.Id.ToString()), //TODO : ENCRYPT
 
-            new(BaseClaimTypes.TenantId, dbUser.TenantId.ToString()),
-            new(BaseClaimTypes.TenantNormalized, dbUser.Tenant.NormalizedName), //TODO : ENCRYPT
-            new(BaseClaimTypes.IsSystemTenant, dbUser.Tenant.IsSystemTenant.ToString().ToLowerInvariant()),
+            new(BaseClaimTypes.TenantId, dbTenant.Id.ToString()),
+            new(BaseClaimTypes.TenantNormalized, dbTenant.NormalizedName), //TODO : ENCRYPT
+            new(BaseClaimTypes.IsSystemTenant, dbTenant.IsSystemTenant.ToString().ToLowerInvariant()),
 
 
             // TODO:Bu user için, yada role une ait claim var ise token a eklenecek.
-            new(ClaimTypes.Name, dbUser.UserName), //TODO : ENCRYPT
-            new(ClaimTypes.Email, dbUser.Email), //TODO : ENCRYPT
+            new(ClaimTypes.Name, user.UserName), //TODO : ENCRYPT
+            new(ClaimTypes.Email, user.Email), //TODO : ENCRYPT
         };
 
-        if (!dbUser.Tenant.IsSystemTenant)
+        if (!dbTenant.IsSystemTenant)
         {
             var allowedTenantIds = await _db.AuthTenants
-                .Where(x => x.NormalizedAccessPath.StartsWith(dbUser.Tenant.NormalizedAccessPath))
+                .Where(x => x.NormalizedAccessPath.StartsWith(dbTenant.NormalizedAccessPath))
                 .Select(x => x.Id)
                 .ToListAsync();
 
@@ -63,7 +61,7 @@ public sealed class JwtTokenService : IJwtTokenService
         }
 
         var roles = await _db.AuthUserRoles
-            .Where(x => x.UserId == dbUser.Id)
+            .Where(x => x.UserId == user.Id)
             .Select(x => x.Role)
             .ToListAsync();
 
@@ -80,7 +78,7 @@ public sealed class JwtTokenService : IJwtTokenService
         }
 
         var userClaims = await _db.AuthUserClaims
-            .Where(x => x.UserId == dbUser.Id)
+            .Where(x => x.UserId == user.Id)
             .ToListAsync();
 
         foreach (var userClaim in userClaims)

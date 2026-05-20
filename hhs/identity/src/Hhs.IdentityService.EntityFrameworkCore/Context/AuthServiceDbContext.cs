@@ -25,6 +25,8 @@ public sealed class AuthServiceDbContext : BaseEfCoreDbContext<AuthServiceDbCont
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
+        base.OnModelCreating(builder);
+
         builder.Entity<AuthTenant>(b =>
         {
             b.ToTable("AuthTenants");
@@ -97,7 +99,7 @@ public sealed class AuthServiceDbContext : BaseEfCoreDbContext<AuthServiceDbCont
         builder.Entity<AuthUserRole>(b =>
         {
             b.ToTable("AuthUserRoles");
-            b.HasKey(x => new { x.UserId, x.RoleId });
+            b.HasKey(x => x.Id);
 
             b.HasOne(x => x.User)
                 .WithMany(x => x.UserRoles)
@@ -106,6 +108,8 @@ public sealed class AuthServiceDbContext : BaseEfCoreDbContext<AuthServiceDbCont
             b.HasOne(x => x.Role)
                 .WithMany(x => x.UserRoles)
                 .HasForeignKey(x => x.RoleId);
+
+            b.HasIndex(x => new { x.UserId, x.RoleId });
         });
 
         builder.Entity<AuthUserClaim>(b =>

@@ -24,18 +24,19 @@ namespace HsnSoft.Base.EntityFrameworkCore;
 
 public abstract class BaseEfCoreDbContext<TDbContext> : DbContext where TDbContext : DbContext
 {
+    private bool IsMultiTenantFilterEnabled => DataFilter?.IsEnabled<IMultiTenant>() ?? true;
+
     private Guid? CurrentTenantId => CurrentTenant?.Id;
+
+    private bool HasTenantContext => CurrentTenantId.HasValue;
 
     private bool IsSystemTenant => CurrentTenant?.IsSystemTenant ?? false;
 
-    private bool IsMultiTenantFilterEnabled => DataFilter?.IsEnabled<IMultiTenant>() ?? false;
-
     private IReadOnlyList<Guid> AllowedTenantIds => CurrentTenant?.AllowedTenantIds ?? [];
+    private bool HasAllowedTenantIds => AllowedTenantIds.Count > 0;
 
-    // private bool IsMultiTenantFilterEnabled => CurrentTenantId != null && !IsSystemTenant && (DataFilter?.IsEnabled<IMultiTenant>() ?? false);
 
     private bool IsSoftDeleteFilterEnabled => DataFilter?.IsEnabled<ISoftDelete>() ?? false;
-
 
     [CanBeNull] private IDataFilter DataFilter { get; }
 
@@ -430,7 +431,8 @@ public abstract class BaseEfCoreDbContext<TDbContext> : DbContext where TDbConte
                 !IsMultiTenantFilterEnabled
                 || IsSystemTenant
                 || (
-                    CurrentTenantId != null &&
+                    HasTenantContext &&
+                    HasAllowedTenantIds &&
                     AllowedTenantIds.Contains(EF.Property<Guid>(e, "TenantId"))
                 );
 

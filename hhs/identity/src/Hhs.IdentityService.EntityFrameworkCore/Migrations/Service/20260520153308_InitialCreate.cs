@@ -1,5 +1,4 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -36,7 +35,7 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
                     ParentId = table.Column<Guid>(type: "uuid", nullable: true),
                     Title = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
@@ -104,7 +103,7 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
                     TenantId = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     NormalizedName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
@@ -131,7 +130,7 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
                     TenantId = table.Column<Guid>(type: "uuid", nullable: false),
                     UserName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     NormalizedUserName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
@@ -251,12 +250,13 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                 name: "AuthUserRoles",
                 columns: table => new
                 {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
                     RoleId = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_AuthUserRoles", x => new { x.UserId, x.RoleId });
+                    table.PrimaryKey("PK_AuthUserRoles", x => x.Id);
                     table.ForeignKey(
                         name: "FK_AuthUserRoles_AuthRoles_RoleId",
                         column: x => x.RoleId,
@@ -351,6 +351,11 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                 name: "IX_AuthUserRoles_RoleId",
                 table: "AuthUserRoles",
                 column: "RoleId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AuthUserRoles_UserId_RoleId",
+                table: "AuthUserRoles",
+                columns: new[] { "UserId", "RoleId" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_AuthUsers_TenantId_NormalizedEmail",

@@ -3,6 +3,8 @@ using Hhs.IdentityService.Application.Contracts.AuthDomain.Interfaces;
 using Hhs.IdentityService.Domain.AuthDomain.Entities;
 using Hhs.IdentityService.EntityFrameworkCore.Context;
 using Hhs.Shared.Helper.Utils;
+using HsnSoft.Base.Data;
+using HsnSoft.Base.MultiTenancy;
 using HsnSoft.Base.Users;
 
 namespace Hhs.IdentityService;
@@ -17,17 +19,20 @@ public sealed class AuthService : IAuthService
     private readonly IPasswordHasher _passwordHasher;
     private readonly IJwtTokenService _jwtTokenService;
     private readonly ICurrentUser _currentUser;
+    private readonly IDataFilter _dataFilter;
 
     public AuthService(
         AuthServiceDbContext db,
         IPasswordHasher passwordHasher,
         IJwtTokenService jwtTokenService,
-        ICurrentUser currentUser)
+        ICurrentUser currentUser,
+        IDataFilter dataFilter)
     {
         _db = db;
         _passwordHasher = passwordHasher;
         _jwtTokenService = jwtTokenService;
         _currentUser = currentUser;
+        _dataFilter = dataFilter;
     }
 
     public async Task<Guid> RegisterAsync(RegisterRequest request, string? ipAddress, string? userAgent)
@@ -74,12 +79,16 @@ public sealed class AuthService : IAuthService
     {
         string normalized = Normalize(request.UserEmail);
 
-        var user = await _db.AuthUsers
-            // .Include(x => x.Tenant)
-            // .FirstOrDefaultAsync(x =>
-            //     x.TenantId == request.TenantId &&
-            //     (x.NormalizedUserName == normalized || x.NormalizedEmail == normalized));
-            .FirstOrDefaultAsync(x => x.NormalizedEmail == normalized);
+        AuthUser user;
+        using (_dataFilter.Disable<IMultiTenant>()) // anonymous user , unknown tenant
+        {
+             user = await _db.AuthUsers
+                // .Include(x => x.Tenant)
+                // .FirstOrDefaultAsync(x =>
+                //     x.TenantId == request.TenantId &&
+                //     (x.NormalizedUserName == normalized || x.NormalizedEmail == normalized));
+                .FirstOrDefaultAsync(x => x.NormalizedEmail == normalized);
+        }
 
         if (user is null)
         {
@@ -130,10 +139,14 @@ public sealed class AuthService : IAuthService
     {
         string refreshTokenHash = TokenHelper.Sha256(request.RefreshToken);
 
-        var refreshToken = await _db.AuthRefreshTokens
-            .Include(x => x.User)
-            .ThenInclude(x => x.Tenant)
-            .FirstOrDefaultAsync(x => x.TokenHash == refreshTokenHash);
+        AuthRefreshToken refreshToken = null;
+        using (_dataFilter.Disable<IMultiTenant>()) // anonymous user , unknown tenant
+        {
+            refreshToken =await _db.AuthRefreshTokens
+                .Include(x => x.User)
+                .ThenInclude(x => x.Tenant)
+                .FirstOrDefaultAsync(x => x.TokenHash == refreshTokenHash);
+        }
 
         if (refreshToken is null || !refreshToken.IsActive)
             throw new UnauthorizedAccessException("Refresh token geçersiz.");
@@ -159,8 +172,11 @@ public sealed class AuthService : IAuthService
     {
         string refreshTokenHash = TokenHelper.Sha256(refreshToken);
 
-        var entity = await _db.AuthRefreshTokens
-            .FirstOrDefaultAsync(x => x.TokenHash == refreshTokenHash);
+        AuthRefreshToken entity = null;
+        using (_dataFilter.Disable<IMultiTenant>()) // anonymous user , unknown tenant
+        {
+             entity = await _db.AuthRefreshTokens.FirstOrDefaultAsync(x => x.TokenHash == refreshTokenHash);
+        }
 
         if (entity is null)
             return;
@@ -177,14 +193,15 @@ public sealed class AuthService : IAuthService
             .ThenInclude(x => x.Role)
             .AsQueryable();
 
-        if (!_currentUser.IsSystemTenant)
-        {
-            if (_currentUser.TenantId is null)
-                throw new UnauthorizedAccessException();
-
-            // query = query.Where(x => x.TenantId == _currentUser.TenantId);
-            query = query.Where(x => _currentUser.AllowedTenantIds.Contains(x.TenantId));
-        }
+        // middleware e eklendi !!!!!!!!!!!!!!!!!!
+        // if (!_currentUser.IsSystemTenant)
+        // {
+        //     if (_currentUser.TenantId is null)
+        //         throw new UnauthorizedAccessException();
+        //
+        //     // query = query.Where(x => x.TenantId == _currentUser.TenantId);
+        //     query = query.Where(x => _currentUser.AllowedTenantIds.Contains(x.TenantId));
+        // }
 
         return await query
             .OrderByDescending(x => x.CreationTime)

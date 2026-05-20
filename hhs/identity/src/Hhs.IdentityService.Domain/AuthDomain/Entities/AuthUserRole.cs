@@ -1,6 +1,8 @@
+using HsnSoft.Base.Domain.Entities;
+
 namespace Hhs.IdentityService.Domain.AuthDomain.Entities;
 
-public sealed class AuthUserRole
+public sealed class AuthUserRole: Entity<Guid>
 {
     public Guid UserId { get; set; }
     public AuthUser User { get; set; } = null!;

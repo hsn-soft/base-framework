@@ -2,6 +2,7 @@ using Hhs.IdentityService.EntityFrameworkCore.Context;
 using Hhs.Shared.Helper.Utils;
 using HsnSoft.Base.Data;
 using HsnSoft.Base.Logging.Abstracts;
+using HsnSoft.Base.MultiTenancy;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -20,6 +21,7 @@ public sealed class EfCoreSeederService(IServiceScopeFactory serviceScopeFactory
 
         bool isReadyDatabase = false;
         var dbContext = scope.ServiceProvider.GetRequiredService<AuthServiceDbContext>();
+        var dataFilter = scope.ServiceProvider.GetRequiredService<IDataFilter>();
         var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
         try
         {
@@ -54,7 +56,11 @@ public sealed class EfCoreSeederService(IServiceScopeFactory serviceScopeFactory
         {
             try
             {
-                await AuthSeeder.SeedAsync(dbContext, passwordHasher);
+                using (dataFilter.Disable<IMultiTenant>())
+                {
+                    await AuthSeeder.SeedAsync(dbContext, passwordHasher);
+                }
+
 
                 // if (!dbContext.Roles.Any())
                 // {
