@@ -1,3 +1,4 @@
+using Hhs.IdentityService.Domain.TenantDomain.Entities;
 using HsnSoft.Base.Domain.Entities;
 using HsnSoft.Base.MultiTenancy;
 
@@ -6,7 +7,7 @@ namespace Hhs.IdentityService.Domain.AuthDomain.Entities;
 public sealed class AuthPasswordPolicy: Entity<Guid>,  IMultiTenant
 {
     public Guid TenantId { get;  set; }
-    public AuthTenant Tenant { get; set; } = null!;
+    public Tenant Tenant { get; set; } = null!;
 
     public int MinLength { get; set; } = 8;
     public bool RequireDigit { get; set; } = true;

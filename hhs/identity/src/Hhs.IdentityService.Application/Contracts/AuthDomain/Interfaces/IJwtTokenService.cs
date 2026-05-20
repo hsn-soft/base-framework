@@ -5,5 +5,5 @@ namespace Hhs.IdentityService.Application.Contracts.AuthDomain.Interfaces;
 
 public interface IJwtTokenService
 {
-    Task<LoginResponse> CreateTokenAsync(AuthUser user);
+    Task<LoginResponse> CreateTokenAsync(AppUser user);
 }

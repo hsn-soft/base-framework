@@ -1,4 +1,7 @@
+using Hhs.IdentityService.Domain.AuthDomain.Repositories;
+using Hhs.IdentityService.Domain.TenantDomain.Repositories;
 using Hhs.IdentityService.EntityFrameworkCore.Context;
+using Hhs.IdentityService.EntityFrameworkCore.Repositories;
 using HsnSoft.Base.Auditing;
 using HsnSoft.Base.Data;
 using HsnSoft.Base.Domain.Repositories;
@@ -21,12 +24,12 @@ public static class EfCoreServiceCollectionExtensions
         services.AddTransient<IAuditPropertySetter, AuditPropertySetter>();
         services.AddBaseDataServiceCollection();
 
-        services.AddDbContext<AuthServiceDbContext>(options =>
+        services.AddDbContext<IdentityServiceDbContext>(options =>
             {
                 options.UseNpgsql(configuration.GetConnectionString(EfCoreDbProperties.ConnectionStringName), sqlOptions =>
                 {
                     sqlOptions.MigrationsHistoryTable("__EFMigrationsHistory");
-                    sqlOptions.MigrationsAssembly(typeof(AuthServiceDbContext).Assembly.GetName().Name);
+                    sqlOptions.MigrationsAssembly(typeof(IdentityServiceDbContext).Assembly.GetName().Name);
                     sqlOptions.EnableRetryOnFailure(10, TimeSpan.FromSeconds(6), errorCodesToAdd: null);
                     sqlOptions.CommandTimeout(30000);
                     sqlOptions.MaxBatchSize(100);
@@ -46,11 +49,13 @@ public static class EfCoreServiceCollectionExtensions
         );
 
         // unit of work
-        services.AddScoped<IUnitOfWork, UnitOfWork<AuthServiceDbContext>>();
+        services.AddScoped<IUnitOfWork, UnitOfWork<IdentityServiceDbContext>>();
 
         // Must be Scoped => Cannot consume any scoped service and CurrentUser object creation on constructor
         services.AddScoped(typeof(IEfCoreGenericRepository<,>), typeof(EfCoreGenericRepository<,>));
-        // services.AddScoped<IFakeRepository, EfCoreFakeRepository>();
+        services.AddScoped<ITenantRepository, EfCoreTenantRepository>();
+        services.AddScoped<IAppRoleRepository, EfCoreAppRoleRepository>();
+        services.AddScoped<IAppUserRepository, EfCoreAppUserRepository>();
 
         return services;
     }

@@ -14,14 +14,14 @@ namespace Hhs.IdentityService;
 public sealed class JwtTokenService : IJwtTokenService
 {
     private const string TokenHeaderId = "ODc2MjE3MTIxOQ";
-    private readonly AuthServiceDbContext _db;
+    private readonly IdentityServiceDbContext _db;
 
-    public JwtTokenService(AuthServiceDbContext db)
+    public JwtTokenService(IdentityServiceDbContext db)
     {
         _db = db;
     }
 
-    public async Task<LoginResponse> CreateTokenAsync(AuthUser user)
+    public async Task<LoginResponse> CreateTokenAsync(AppUser user)
     {
         var dbTenant = await _db.AuthTenants.FirstAsync(x => x.Id == user.TenantId);
 

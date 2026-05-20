@@ -1,14 +1,17 @@
 using Hhs.IdentityService.Domain.AuthDomain.Entities;
+using Hhs.IdentityService.Domain.TenantDomain.Entities;
+using Hhs.IdentityService.EntityFrameworkCore.Configurations;
+using HsnSoft.Base;
 using HsnSoft.Base.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace Hhs.IdentityService.EntityFrameworkCore.Context;
 
-public sealed class AuthServiceDbContext : BaseEfCoreDbContext<AuthServiceDbContext>
+public sealed class IdentityServiceDbContext : BaseEfCoreDbContext<IdentityServiceDbContext>
 {
-    public DbSet<AuthTenant> AuthTenants => Set<AuthTenant>();
-    public DbSet<AuthUser> AuthUsers => Set<AuthUser>();
-    public DbSet<AuthRole> AuthRoles => Set<AuthRole>();
+    public DbSet<Tenant> AuthTenants => Set<Tenant>();
+    public DbSet<AppUser> AuthUsers => Set<AppUser>();
+    public DbSet<AppRole> AuthRoles => Set<AppRole>();
     public DbSet<AuthUserRole> AuthUserRoles => Set<AuthUserRole>();
     public DbSet<AuthUserClaim> AuthUserClaims => Set<AuthUserClaim>();
     public DbSet<AuthRoleClaim> AuthRoleClaims => Set<AuthRoleClaim>();
@@ -18,83 +21,21 @@ public sealed class AuthServiceDbContext : BaseEfCoreDbContext<AuthServiceDbCont
     public DbSet<AuthEmailConfirmationToken> AuthEmailConfirmationTokens => Set<AuthEmailConfirmationToken>();
     public DbSet<AuthTokenRevocation> AuthTokenRevocations => Set<AuthTokenRevocation>();
 
-    public AuthServiceDbContext(IServiceProvider provider, DbContextOptions<AuthServiceDbContext> options)
+    public IdentityServiceDbContext(IServiceProvider provider, DbContextOptions<IdentityServiceDbContext> options)
         : base(options, provider)
     {
     }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
+        Check.NotNull(builder, nameof(builder));
+
         base.OnModelCreating(builder);
 
-        builder.Entity<AuthTenant>(b =>
-        {
-            b.ToTable("AuthTenants");
-            b.HasKey(x => x.Id);
+        builder.ConfigureTenantEntity();
 
-            b.Property(x => x.Title).HasMaxLength(200).IsRequired();
-            b.Property(x => x.Name).HasMaxLength(100).IsRequired();
-            b.Property(x => x.NormalizedName).HasMaxLength(100).IsRequired();
-            b.Property(x => x.NormalizedAccessPath).HasMaxLength(1000).IsRequired();
-            b.Property(x => x.IsSystemTenant).IsRequired();
-
-            b.HasOne(x => x.Parent)
-                .WithMany(x => x.Children)
-                .HasForeignKey(x => x.ParentId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            b.HasIndex(x => x.NormalizedName)
-                .IsUnique();
-            b.HasIndex(x => x.ParentId);
-            b.HasIndex(x => x.NormalizedAccessPath);
-            b.HasIndex(x => x.IsSystemTenant);
-        });
-
-        builder.Entity<AuthUser>(b =>
-        {
-            b.ToTable("AuthUsers");
-            b.HasKey(x => x.Id);
-
-            b.Property(x => x.UserName).HasMaxLength(100).IsRequired();
-            b.Property(x => x.NormalizedUserName).HasMaxLength(100).IsRequired();
-
-            b.Property(x => x.Email).HasMaxLength(255).IsRequired();
-            b.Property(x => x.NormalizedEmail).HasMaxLength(255).IsRequired();
-
-            b.Property(x => x.PasswordHash).IsRequired();
-            b.Property(x => x.SecurityStamp).HasMaxLength(64).IsRequired();
-
-            b.Property(x => x.IsStatic).IsRequired();
-            b.Property(x => x.EmailConfirmed).IsRequired();
-            b.Property(x => x.FailedLoginCount).IsRequired();
-
-            b.Property(x => x.LockoutEndAt);
-            b.Property(x => x.LastLoginAt);
-
-            b.HasOne(x => x.Tenant)
-                .WithMany(x => x.Users)
-                .HasForeignKey(x => x.TenantId);
-
-            b.HasIndex(x => new { x.TenantId, x.NormalizedUserName }).IsUnique();
-            b.HasIndex(x => new { x.TenantId, x.NormalizedEmail }).IsUnique();
-        });
-
-        builder.Entity<AuthRole>(b =>
-        {
-            b.ToTable("AuthRoles");
-            b.HasKey(x => x.Id);
-
-            b.Property(x => x.Name).HasMaxLength(100).IsRequired();
-            b.Property(x => x.NormalizedName).HasMaxLength(100).IsRequired();
-            b.Property(x => x.IsStatic).IsRequired();
-            b.Property(x => x.IsDefault).IsRequired();
-
-            b.HasOne(x => x.Tenant)
-                .WithMany(x => x.Roles)
-                .HasForeignKey(x => x.TenantId);
-
-            b.HasIndex(x => new { x.TenantId, x.NormalizedName }).IsUnique();
-        });
+        builder.ConfigureAppUserEntity();
+        builder.ConfigureAppRoleEntity();
 
         builder.Entity<AuthUserRole>(b =>
         {

@@ -20,7 +20,7 @@ public sealed class EfCoreSeederService(IServiceScopeFactory serviceScopeFactory
 
 
         bool isReadyDatabase = false;
-        var dbContext = scope.ServiceProvider.GetRequiredService<AuthServiceDbContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IdentityServiceDbContext>();
         var dataFilter = scope.ServiceProvider.GetRequiredService<IDataFilter>();
         var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
         try

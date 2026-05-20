@@ -5,7 +5,7 @@ namespace Hhs.IdentityService.Domain.AuthDomain.Entities;
 public sealed class AuthRefreshToken: CreationAuditedEntity<Guid>
 {
     public Guid UserId { get; set; }
-    public AuthUser User { get; set; } = null!;
+    public AppUser User { get; set; } = null!;
 
     public string TokenHash { get; set; } = null!;
 

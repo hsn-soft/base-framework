@@ -13,7 +13,8 @@ using Microsoft.Extensions.Localization;
 
 namespace Hhs.ContentService.EntityFrameworkCore.Repositories;
 
-public sealed class EfCoreClientRepository(IServiceProvider provider, IStringLocalizerFactory stringLocalizerFactory, ContentServiceDbContext dbContext) : EfCoreGenericRepository<Client, Guid>(provider, dbContext), IClientRepository
+public sealed class EfCoreClientRepository(IServiceProvider provider, IStringLocalizerFactory stringLocalizerFactory, ContentServiceDbContext dbContext)
+    : EfCoreGenericRepository<Client, Guid>(provider, dbContext), IClientRepository
 {
     [NotNull] protected IStringLocalizer L { get; } = stringLocalizerFactory.CreateMultiple([typeof(ContentServiceResource), typeof(ValidationResource), typeof(SharedResource)]);
 

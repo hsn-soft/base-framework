@@ -15,14 +15,14 @@ public sealed class AuthService : IAuthService
 {
     private const string RegisteredRoleName = "registered";
 
-    private readonly AuthServiceDbContext _db;
+    private readonly IdentityServiceDbContext _db;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IJwtTokenService _jwtTokenService;
     private readonly ICurrentUser _currentUser;
     private readonly IDataFilter _dataFilter;
 
     public AuthService(
-        AuthServiceDbContext db,
+        IdentityServiceDbContext db,
         IPasswordHasher passwordHasher,
         IJwtTokenService jwtTokenService,
         ICurrentUser currentUser,
@@ -55,16 +55,12 @@ public sealed class AuthService : IAuthService
 
         var registeredRole = await GetOrCreateRegisteredRoleAsync(request.TenantId);
 
-        var user = new AuthUser
-        {
-            TenantId = request.TenantId,
-            UserName = request.UserName.Trim(),
-            NormalizedUserName = normalizedUserName,
-            Email = request.Email.Trim(),
-            NormalizedEmail = normalizedEmail,
-            PasswordHash = _passwordHasher.Hash(request.Password),
-            SecurityStamp = Guid.NewGuid().ToString("N")
-        };
+        var user = new AppUser(
+            tenantId: request.TenantId,
+            userName: request.UserName.Trim(),
+            email: request.Email.Trim(),
+            passwordHash: _passwordHasher.Hash(request.Password)
+        );
 
         _db.AuthUsers.Add(user);
 
@@ -79,10 +75,10 @@ public sealed class AuthService : IAuthService
     {
         string normalized = Normalize(request.UserEmail);
 
-        AuthUser user;
+        AppUser user;
         using (_dataFilter.Disable<IMultiTenant>()) // anonymous user , unknown tenant
         {
-             user = await _db.AuthUsers
+            user = await _db.AuthUsers
                 // .Include(x => x.Tenant)
                 // .FirstOrDefaultAsync(x =>
                 //     x.TenantId == request.TenantId &&
@@ -142,7 +138,7 @@ public sealed class AuthService : IAuthService
         AuthRefreshToken refreshToken = null;
         using (_dataFilter.Disable<IMultiTenant>()) // anonymous user , unknown tenant
         {
-            refreshToken =await _db.AuthRefreshTokens
+            refreshToken = await _db.AuthRefreshTokens
                 .Include(x => x.User)
                 .ThenInclude(x => x.Tenant)
                 .FirstOrDefaultAsync(x => x.TokenHash == refreshTokenHash);
@@ -175,7 +171,7 @@ public sealed class AuthService : IAuthService
         AuthRefreshToken entity = null;
         using (_dataFilter.Disable<IMultiTenant>()) // anonymous user , unknown tenant
         {
-             entity = await _db.AuthRefreshTokens.FirstOrDefaultAsync(x => x.TokenHash == refreshTokenHash);
+            entity = await _db.AuthRefreshTokens.FirstOrDefaultAsync(x => x.TokenHash == refreshTokenHash);
         }
 
         if (entity is null)
@@ -284,16 +280,12 @@ public sealed class AuthService : IAuthService
         if (roles.Count != request.RoleIds.Count)
             throw new Exception("Geçersiz rol seçimi.");
 
-        var user = new AuthUser
-        {
-            TenantId = request.TenantId,
-            UserName = request.UserName.Trim(),
-            NormalizedUserName = normalizedUserName,
-            Email = request.Email.Trim(),
-            NormalizedEmail = normalizedEmail,
-            PasswordHash = _passwordHasher.Hash(request.Password),
-            SecurityStamp = Guid.NewGuid().ToString("N")
-        };
+        var user = new AppUser(
+            tenantId: request.TenantId,
+            userName: request.UserName.Trim(),
+            email: request.Email.Trim(),
+            passwordHash: _passwordHasher.Hash(request.Password)
+        );
 
         _db.AuthUsers.Add(user);
 
@@ -322,11 +314,9 @@ public sealed class AuthService : IAuthService
         if (request.RoleIds.Count == 0)
             throw new Exception("Kullanıcının en az bir rolü olmalıdır.");
 
-        user.UserName = request.UserName.Trim();
-        user.NormalizedUserName = Normalize(request.UserName);
-        user.Email = request.Email.Trim();
-        user.NormalizedEmail = Normalize(request.Email);
-        user.SecurityStamp = Guid.NewGuid().ToString("N");
+        user.SetUserName(request.UserName.Trim());
+        user.SetEmail(request.Email.Trim());
+        user.SetSecurityStamp();
 
         _db.AuthUserRoles.RemoveRange(user.UserRoles);
 
@@ -359,7 +349,7 @@ public sealed class AuthService : IAuthService
         await _db.SaveChangesAsync();
     }
 
-    private async Task<AuthRole> GetOrCreateRegisteredRoleAsync(Guid tenantId)
+    private async Task<AppRole> GetOrCreateRegisteredRoleAsync(Guid tenantId)
     {
         string normalized = Normalize(RegisteredRoleName);
 
@@ -369,7 +359,7 @@ public sealed class AuthService : IAuthService
         if (role is not null)
             return role;
 
-        role = new AuthRole { TenantId = tenantId, Name = RegisteredRoleName, NormalizedName = normalized };
+        role = new AppRole(tenantId: tenantId, name: RegisteredRoleName);
 
         _db.AuthRoles.Add(role);
 
@@ -399,7 +389,7 @@ public sealed class AuthService : IAuthService
             throw new Exception("Şifre en az bir özel karakter içermelidir.");
     }
 
-    private async Task IncreaseFailedLoginAsync(AuthUser user)
+    private async Task IncreaseFailedLoginAsync(AppUser user)
     {
         var policy = await _db.AuthPasswordPolicies
             .FirstOrDefaultAsync(x => x.TenantId == user.TenantId);

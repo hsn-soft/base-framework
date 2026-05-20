@@ -1,3 +1,6 @@
+using System.Globalization;
+using System.Text;
+
 namespace Hhs.Shared.Helper.Utils;
 
 public static class StringOperations
@@ -79,4 +82,10 @@ public static class StringOperations
         byte[] base64EncodedBytes = System.Convert.FromBase64String(base64EncodedData);
         return System.Text.Encoding.UTF8.GetString(base64EncodedBytes);
     }
+
+    public static string Normalize(string value) => string.Join("", value.Trim().ToUpperInvariant().Normalize(NormalizationForm.FormD)
+        .Where(c => char.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark));
+
+    public static string Minimize(string value) => string.Join("", value.Trim().ToLowerInvariant().Normalize(NormalizationForm.FormD)
+        .Where(c => char.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark));
 }
