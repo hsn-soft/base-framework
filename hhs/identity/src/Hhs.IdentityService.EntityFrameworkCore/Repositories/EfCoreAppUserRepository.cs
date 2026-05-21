@@ -24,4 +24,12 @@ public class EfCoreAppUserRepository : EfCoreGenericRepository<AppUser, Guid>, I
 
         L = stringLocalizerFactory.CreateMultiple([typeof(IdentityServiceResource), typeof(ValidationResource), typeof(SharedResource)]);
     }
+
+    public Task<AppUser> CreateAsync(Guid tenantId, string tenantDomain, string userName, string email, string phone, string name, string surname, string defaultLanguage, string avatarSuffixUrl, ICollection<string> roles = null, string plainPassword = null) => throw new NotImplementedException();
+
+    public Task<AppUser> CreateAsync(Guid id, Guid tenantId, string tenantDomain, string userName, string email, string phone, string name, string surname, string defaultLanguage, string avatarSuffixUrl, ICollection<string> roles = null, string plainPassword = null) => throw new NotImplementedException();
+
+    public Task<AppUser> UpdateAsync(Guid id, string userName, string email, string phone, string name, string surname, string defaultLanguage, ICollection<string> roles = null) => throw new NotImplementedException();
+
+    public Task DeleteAsync(Guid id) => throw new NotImplementedException();
 }

@@ -4,7 +4,6 @@ using Hhs.IdentityService.Application.Contracts.AuthDomain.Interfaces;
 using Hhs.IdentityService.Domain.Localization;
 using Hhs.IdentityService.EntityFrameworkCore;
 using Hhs.IdentityService.EntityFrameworkCore.Setup;
-using Hhs.Shared.Contracts.Cache;
 using Hhs.Shared.Contracts.Cache.ServicePermissions;
 using Hhs.Shared.Contracts.Events;
 using Hhs.Shared.Helper.Consts;
@@ -61,19 +60,16 @@ builder.Services.AddMicroserviceHosting(builder.Configuration, typeof(Program))
         checkRedis: true,
         checkBroker: true,
         checkPostgresql: true,
-        postgresqlConnectionName: EfCoreDbProperties.ConnectionStringName);
+        postgresqlConnectionName: EfCoreDbProperties.ConnectionStringName)
+    .AddServiceApplicationConfiguration(builder.Configuration)
+    .AddServiceEfCoreDatabaseConfiguration(builder.Configuration, !builder.Environment.IsHostProduction());
 
-// app services
+// auth services
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddSingleton<IServicePermissionProvider, ApplicationPermissionProvider>();
-
 builder.Services.AddScoped<ICurrentUser, CurrentUser>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
-
-// database services
-builder.Services.AddServiceEfCoreDatabaseConfiguration(builder.Configuration, !builder.Environment.IsHostProduction());
 
 // override DefaultBasicDataSeeder
 builder.Services.AddTransient<IBasicDataSeeder, EfCoreSeederService>();

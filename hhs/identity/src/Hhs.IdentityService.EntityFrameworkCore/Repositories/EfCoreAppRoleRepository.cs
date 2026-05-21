@@ -24,4 +24,12 @@ public class EfCoreAppRoleRepository : EfCoreGenericRepository<AppRole, Guid>, I
 
         L = stringLocalizerFactory.CreateMultiple([typeof(IdentityServiceResource), typeof(ValidationResource), typeof(SharedResource)]);
     }
+
+    public Task<AppRole> CreateAsync(Guid tenantId, string tenantDomain, string name, bool isDefault, bool isStatic, bool isPublic) => throw new NotImplementedException();
+
+    public Task<AppRole> CreateAsync(Guid id, Guid tenantId, string tenantDomain, string name, bool isDefault, bool isStatic, bool isPublic) => throw new NotImplementedException();
+
+    public Task<AppRole> UpdateAsync(Guid id, string name, bool isDefault, bool isStatic, bool isPublic) => throw new NotImplementedException();
+
+    public Task DeleteAsync(Guid id) => throw new NotImplementedException();
 }
