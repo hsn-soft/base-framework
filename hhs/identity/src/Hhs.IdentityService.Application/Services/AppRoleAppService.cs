@@ -53,9 +53,11 @@ public sealed class AppRoleAppService : ApplicationServiceBase, IAppRoleAppServi
             throw new BaseHttpException((int)HttpStatusCode.BadRequest);
         }
 
+        pagedInput.SearchText = StringOperations.Normalize(pagedInput.SearchText);
         pagedInput.Name = StringOperations.Normalize(pagedInput.Name);
 
         var filter = new FilterBuilder<AppRole>()
+            .And(!string.IsNullOrWhiteSpace(pagedInput.SearchText) ? e => e.NormalizedName.Contains(pagedInput.SearchText) : null)
             .And(pagedInput.TenantId.HasValue ? e => e.TenantId == pagedInput.TenantId.Value : null)
             .And(!string.IsNullOrWhiteSpace(pagedInput.Name) ? e => e.NormalizedName.Contains(pagedInput.Name) : null)
             .And(pagedInput.IsDefault.HasValue ? e => e.IsDefault == pagedInput.IsDefault.Value : null)

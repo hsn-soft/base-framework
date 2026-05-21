@@ -57,10 +57,14 @@ public sealed class AppUserAppService : ApplicationServiceBase, IAppUserAppServi
             throw new BaseHttpException((int)HttpStatusCode.BadRequest);
         }
 
+        pagedInput.SearchText = StringOperations.Normalize(pagedInput.SearchText);
         pagedInput.UserName = StringOperations.Normalize(pagedInput.UserName);
         pagedInput.Email = StringOperations.Normalize(pagedInput.Email);
 
         var filter = new FilterBuilder<AppUser>()
+            .And(!string.IsNullOrWhiteSpace(pagedInput.SearchText)
+                ? e => e.NormalizedUserName.Contains(pagedInput.SearchText) || e.NormalizedEmail.Contains(pagedInput.SearchText)
+                : null)
             .And(pagedInput.TenantId.HasValue ? e => e.TenantId == pagedInput.TenantId.Value : null)
             .And(!string.IsNullOrWhiteSpace(pagedInput.UserName) ? e => e.NormalizedUserName.Contains(pagedInput.UserName) : null)
             .And(!string.IsNullOrWhiteSpace(pagedInput.Email) ? e => e.NormalizedEmail.Contains(pagedInput.Email) : null)
