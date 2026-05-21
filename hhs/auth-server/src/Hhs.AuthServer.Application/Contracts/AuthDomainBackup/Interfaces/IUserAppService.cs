@@ -1,4 +1,4 @@
-namespace Hhs.AuthServer.Application.Contracts.AuthDomain.Interfaces;
+namespace Hhs.AuthServer.Application.Contracts.AuthDomainBackup.Interfaces;
 
 public interface IUserAppService
 {

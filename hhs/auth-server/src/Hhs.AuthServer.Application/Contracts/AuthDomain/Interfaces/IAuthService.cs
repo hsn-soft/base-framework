@@ -1,6 +1,6 @@
-using Hhs.IdentityService.Application.Contracts.AuthDomain.Dtos;
+using Hhs.AuthServer.Application.Contracts.AuthDomain.Dtos;
 
-namespace Hhs.IdentityService.Application.Contracts.AuthDomain.Interfaces;
+namespace Hhs.AuthServer.Application.Contracts.AuthDomain.Interfaces;
 
 public interface IAuthService
 {

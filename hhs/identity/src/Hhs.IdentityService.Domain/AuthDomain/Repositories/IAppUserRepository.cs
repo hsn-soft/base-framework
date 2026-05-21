@@ -6,38 +6,36 @@ namespace Hhs.IdentityService.Domain.AuthDomain.Repositories;
 
 public interface IAppUserRepository : IReadOnlyGenericRepository<AppUser, Guid>
 {
-    Task<AppUser> CreateAsync(Guid tenantId, [NotNull] string tenantDomain,
+    Task<AppUser> CreateAsync(Guid tenantId,
         [NotNull] string userName,
         [NotNull] string email,
-        string phone,
-        string name,
-        string surname,
-        string defaultLanguage,
-        string avatarSuffixUrl,
-        ICollection<string> roles = null,
-        string plainPassword = null
+        [NotNull] string passwordHash,
+        bool isStatic = false,
+        [CanBeNull] string displayName = null,
+        [CanBeNull] string avatarSuffixUrl = null,
+        [CanBeNull] string phoneNumber = null,
+        [CanBeNull] string languageCode = null
     );
 
-    Task<AppUser> CreateAsync(Guid id, Guid tenantId, [NotNull] string tenantDomain,
+    Task<AppUser> CreateAsync(Guid id, Guid tenantId,
         [NotNull] string userName,
         [NotNull] string email,
-        string phone,
-        string name,
-        string surname,
-        string defaultLanguage,
-        string avatarSuffixUrl,
-        ICollection<string> roles = null,
-        string plainPassword = null
+        [NotNull] string passwordHash,
+        bool isStatic = false,
+        [CanBeNull] string displayName = null,
+        [CanBeNull] string avatarSuffixUrl = null,
+        [CanBeNull] string phoneNumber = null,
+        [CanBeNull] string languageCode = null
     );
 
     Task<AppUser> UpdateAsync(Guid id,
-        string userName,
-        string email,
-        string phone,
-        string name,
-        string surname,
-        string defaultLanguage,
-        ICollection<string> roles = null);
+        [NotNull] string userName,
+        [NotNull] string email,
+        bool isStatic = false,
+        [CanBeNull] string displayName = null,
+        [CanBeNull] string avatarSuffixUrl = null,
+        [CanBeNull] string phoneNumber = null,
+        [CanBeNull] string languageCode = null);
 
     Task DeleteAsync(Guid id);
 }

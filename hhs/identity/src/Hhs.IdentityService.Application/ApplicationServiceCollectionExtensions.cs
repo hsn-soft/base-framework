@@ -2,6 +2,7 @@ using Hhs.IdentityService.Application.Contracts.AppRoleDomain.Services;
 using Hhs.IdentityService.Application.Contracts.AppUserDomain.Services;
 using Hhs.IdentityService.Application.Services;
 using Hhs.Shared.Contracts.Cache;
+using Hhs.Shared.Helper.Utils;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -14,6 +15,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddAutoMapper(typeof(ApplicationAutoMapperProfile));
 
         services.AddSingleton<IServicePermissionProvider, ApplicationPermissionProvider>();
+        services.AddSingleton<IPasswordHasher, PasswordHasher>();
 
         // Must be Scoped or Transient => Cannot consume any scoped service
         services.AddScoped<IAppUserAppService, AppUserAppService>();

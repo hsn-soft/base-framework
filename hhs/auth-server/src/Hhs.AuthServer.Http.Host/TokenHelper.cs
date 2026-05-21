@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Hhs.IdentityService;
+namespace Hhs.AuthServer;
 
 public static class TokenHelper
 {

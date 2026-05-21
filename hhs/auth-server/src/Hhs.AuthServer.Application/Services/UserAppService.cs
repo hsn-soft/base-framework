@@ -1,4 +1,4 @@
-﻿using Hhs.AuthServer.Application.Contracts.AuthDomain.Interfaces;
+﻿using Hhs.AuthServer.Application.Contracts.AuthDomainBackup.Interfaces;
 
 namespace Hhs.AuthServer.Application.Services;
 

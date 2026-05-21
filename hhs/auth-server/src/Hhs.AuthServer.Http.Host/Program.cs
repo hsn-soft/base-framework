@@ -1,10 +1,12 @@
 using Hhs.AuthServer;
 using Hhs.AuthServer.Application;
+using Hhs.AuthServer.Application.Contracts.AuthDomain.Interfaces;
 using Hhs.AuthServer.Application.Localization;
 using Hhs.AuthServer.Options;
 using Hhs.IdentityService.EntityFrameworkCore;
 using Hhs.Shared.Contracts.Cache.ServicePermissions;
 using Hhs.Shared.Helper.Consts;
+using Hhs.Shared.Helper.Utils;
 using Hhs.Shared.Hosting.Extensions;
 using Hhs.Shared.Hosting.Helpers;
 using Hhs.Shared.Hosting.Microservices.Extensions;
@@ -15,6 +17,7 @@ using HsnSoft.Base.AspNetCore.Tracing;
 using HsnSoft.Base.Serilog;
 using HsnSoft.Base.Swashbuckle;
 using HsnSoft.Base.Tracing;
+using HsnSoft.Base.Users;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Options;
 using Serilog;
@@ -142,6 +145,9 @@ builder.Services.AddMicroserviceHosting(builder.Configuration, typeof(Program))
 
 builder.Services.AddServiceApplicationConfiguration(builder.Configuration);
 
+
+builder.Services .AddServiceEfCoreDatabaseConfiguration(builder.Configuration, !builder.Environment.IsHostProduction());
+
 // builder.Services.AddAuthServerJwtDatabaseConfiguration(builder.Configuration);
 // if (!builder.Environment.IsHostProduction())
 // {
@@ -162,9 +168,18 @@ builder.Services.AddServiceApplicationConfiguration(builder.Configuration);
 //     })
 //     .AddEntityFrameworkStores<IdentityAppDbContext>()
 //     .AddDefaultTokenProviders();
-//
+
 // builder.Services.AddScoped<TokenService>();
 // builder.Services.AddScoped<RedisService>();
+
+builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>();
+
+// auth services
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUser, CurrentUser>();
+builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+
 
 // Swagger
 if (!builder.Environment.IsHostProduction())

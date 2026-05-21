@@ -6,24 +6,21 @@ namespace Hhs.IdentityService.Domain.AuthDomain.Repositories;
 
 public interface IAppRoleRepository: IReadOnlyGenericRepository<AppRole, Guid>
 {
-    Task<AppRole> CreateAsync(Guid tenantId, [NotNull] string tenantDomain,
+    Task<AppRole> CreateAsync(Guid tenantId,
         [NotNull] string name,
-        bool isDefault,
-        bool isStatic,
-        bool isPublic);
+        bool isDefault = false,
+        bool isStatic = false);
 
-    Task<AppRole> CreateAsync(Guid id, Guid tenantId, [NotNull] string tenantDomain,
+    Task<AppRole> CreateAsync(Guid id, Guid tenantId,
         [NotNull] string name,
-        bool isDefault,
-        bool isStatic,
-        bool isPublic);
+        bool isDefault = false,
+        bool isStatic = false);
 
 
     Task<AppRole> UpdateAsync(Guid id,
         [NotNull] string name,
-        bool isDefault,
-        bool isStatic,
-        bool isPublic);
+        bool isDefault = false,
+        bool isStatic = false);
 
     Task DeleteAsync(Guid id);
 }

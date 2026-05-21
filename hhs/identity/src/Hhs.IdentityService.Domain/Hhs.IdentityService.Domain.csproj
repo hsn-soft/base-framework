@@ -30,4 +30,8 @@
         <Content Remove="Localization\IdentityService\*.json" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Compile Remove="AuthDomain\Entities\AppUserLogin.cs" />
+    </ItemGroup>
+
 </Project>

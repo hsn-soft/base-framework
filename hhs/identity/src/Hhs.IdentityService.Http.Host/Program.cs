@@ -1,13 +1,11 @@
 using Hhs.IdentityService;
 using Hhs.IdentityService.Application;
-using Hhs.IdentityService.Application.Contracts.AuthDomain.Interfaces;
 using Hhs.IdentityService.Domain.Localization;
 using Hhs.IdentityService.EntityFrameworkCore;
 using Hhs.IdentityService.EntityFrameworkCore.Setup;
 using Hhs.Shared.Contracts.Cache.ServicePermissions;
 using Hhs.Shared.Contracts.Events;
 using Hhs.Shared.Helper.Consts;
-using Hhs.Shared.Helper.Utils;
 using Hhs.Shared.Hosting.Extensions;
 using Hhs.Shared.Hosting.Helpers;
 using Hhs.Shared.Hosting.Microservices.Extensions;
@@ -16,7 +14,6 @@ using HsnSoft.Base.Data;
 using HsnSoft.Base.Serilog;
 using HsnSoft.Base.Swashbuckle;
 using HsnSoft.Base.Tracing;
-using HsnSoft.Base.Users;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -63,13 +60,6 @@ builder.Services.AddMicroserviceHosting(builder.Configuration, typeof(Program))
         postgresqlConnectionName: EfCoreDbProperties.ConnectionStringName)
     .AddServiceApplicationConfiguration(builder.Configuration)
     .AddServiceEfCoreDatabaseConfiguration(builder.Configuration, !builder.Environment.IsHostProduction());
-
-// auth services
-builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<ICurrentUser, CurrentUser>();
-builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
-builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
-builder.Services.AddScoped<IAuthService, AuthService>();
 
 // override DefaultBasicDataSeeder
 builder.Services.AddTransient<IBasicDataSeeder, EfCoreSeederService>();

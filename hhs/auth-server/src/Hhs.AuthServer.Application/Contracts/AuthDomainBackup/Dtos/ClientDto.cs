@@ -1,7 +1,7 @@
 using HsnSoft.Base.Application.Dtos;
 using JetBrains.Annotations;
 
-namespace Hhs.AuthServer.Application.Contracts.AuthDomain.Dtos;
+namespace Hhs.AuthServer.Application.Contracts.AuthDomainBackup.Dtos;
 
 public sealed class ClientDto : EntityDto<Guid>
 {

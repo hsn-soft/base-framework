@@ -127,9 +127,57 @@ public sealed class AppRoleAppService : ApplicationServiceBase, IAppRoleAppServi
             }, Mapper.ConfigurationProvider, cancellationToken: cancellationToken);
     }
 
-    public Task<AppRoleDto> CreateAsync(AppRoleCreateDto input) => throw new NotImplementedException();
+    public async Task<AppRoleDto> CreateAsync(AppRoleCreateDto input)
+    {
+        if (input == null)
+        {
+            throw new BaseHttpException((int)HttpStatusCode.BadRequest);
+        }
 
-    public Task UpdateAsync(AppRoleUpdateDto input) => throw new NotImplementedException();
+        var appRole = await _appRoleRepository.CreateAsync(
+            tenantId: input.TenantId ?? Guid.Empty,
+            name: input.Name ?? string.Empty,
+            isDefault: input.IsDefault,
+            isStatic: input.IsStatic
+        );
 
-    public Task DeleteAsync(Guid id) => throw new NotImplementedException();
+        //INTEGRATION EVENT TRIGGER
+        //
+        //
+
+        return Mapper.Map<AppRole, AppRoleDto>(appRole);
+    }
+
+    public async Task UpdateAsync(AppRoleUpdateDto input)
+    {
+        if (input == null || input.Id == Guid.Empty)
+        {
+            throw new BaseHttpException((int)HttpStatusCode.BadRequest);
+        }
+
+        await _appRoleRepository.UpdateAsync(
+            id: input.Id,
+            name: input.Name ?? string.Empty,
+            isDefault: input.IsDefault,
+            isStatic: input.IsStatic
+        );
+
+        //INTEGRATION EVENT TRIGGER
+        //
+        //
+    }
+
+    public async Task DeleteAsync(Guid id)
+    {
+        if (id == Guid.Empty)
+        {
+            throw new BaseHttpException((int)HttpStatusCode.BadRequest);
+        }
+
+        await _appRoleRepository.DeleteAsync(id);
+
+        //INTEGRATION EVENT TRIGGER
+        // TODO: Create ROLE_DELETED event for AdminService PermissionGrant synch service !!!
+        //
+    }
 }

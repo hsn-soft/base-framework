@@ -18,18 +18,21 @@ namespace Hhs.IdentityService.Application.Services;
 
 public sealed class AppUserAppService : ApplicationServiceBase, IAppUserAppService
 {
+    private const string DefaultPass = "Passw0rd!";
     private readonly IAppConsoleLogger _logger;
     private readonly IAppUserRepository _appUserRepository;
+    private readonly IPasswordHasher _passwordHasher;
 
     public AppUserAppService(IServiceProvider provider,
-        IAppUserRepository appUserRepository
+        IAppUserRepository appUserRepository,
+        IPasswordHasher passwordHasher
     ) : base(provider)
     {
         _logger = provider.GetRequiredService<IAppConsoleLogger>();
 
         _appUserRepository = appUserRepository;
+        _passwordHasher = passwordHasher;
     }
-
 
     public async Task<AppUserDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
     {
@@ -61,7 +64,7 @@ public sealed class AppUserAppService : ApplicationServiceBase, IAppUserAppServi
             .And(pagedInput.TenantId.HasValue ? e => e.TenantId == pagedInput.TenantId.Value : null)
             .And(!string.IsNullOrWhiteSpace(pagedInput.UserName) ? e => e.NormalizedUserName.Contains(pagedInput.UserName) : null)
             .And(!string.IsNullOrWhiteSpace(pagedInput.Email) ? e => e.NormalizedEmail.Contains(pagedInput.Email) : null)
-            .And(!string.IsNullOrWhiteSpace(pagedInput.PhoneNumber) ? e => e.PhoneNumber!=null && e.PhoneNumber.Contains(pagedInput.PhoneNumber) : null)
+            .And(!string.IsNullOrWhiteSpace(pagedInput.PhoneNumber) ? e => e.PhoneNumber != null && e.PhoneNumber.Contains(pagedInput.PhoneNumber) : null)
             .And(pagedInput.EmailConfirmed.HasValue ? e => e.EmailConfirmed == pagedInput.EmailConfirmed.Value : null)
             .And(pagedInput.PhoneNumberConfirmed.HasValue ? e => e.PhoneNumberConfirmed == pagedInput.PhoneNumberConfirmed.Value : null)
             .Build();
@@ -94,7 +97,7 @@ public sealed class AppUserAppService : ApplicationServiceBase, IAppUserAppServi
             .And(filterInput.TenantId.HasValue ? e => e.TenantId == filterInput.TenantId.Value : null)
             .And(!string.IsNullOrWhiteSpace(filterInput.UserName) ? e => e.NormalizedUserName.Contains(filterInput.UserName) : null)
             .And(!string.IsNullOrWhiteSpace(filterInput.Email) ? e => e.NormalizedEmail.Contains(filterInput.Email) : null)
-            .And(!string.IsNullOrWhiteSpace(filterInput.PhoneNumber) ? e => e.PhoneNumber!=null && e.PhoneNumber.Contains(filterInput.PhoneNumber) : null)
+            .And(!string.IsNullOrWhiteSpace(filterInput.PhoneNumber) ? e => e.PhoneNumber != null && e.PhoneNumber.Contains(filterInput.PhoneNumber) : null)
             .And(filterInput.EmailConfirmed.HasValue ? e => e.EmailConfirmed == filterInput.EmailConfirmed.Value : null)
             .And(filterInput.PhoneNumberConfirmed.HasValue ? e => e.PhoneNumberConfirmed == filterInput.PhoneNumberConfirmed.Value : null)
             .Build();
@@ -121,7 +124,7 @@ public sealed class AppUserAppService : ApplicationServiceBase, IAppUserAppServi
 
         var filter = new FilterBuilder<AppUser>()
             .And(!string.IsNullOrWhiteSpace(searchInput.SearchText)
-                ? e => e.NormalizedUserName.Contains(searchInput.SearchText) ||  e.NormalizedEmail.Contains(searchInput.SearchText)
+                ? e => e.NormalizedUserName.Contains(searchInput.SearchText) || e.NormalizedEmail.Contains(searchInput.SearchText)
                 : null)
             .Build();
 
@@ -136,9 +139,66 @@ public sealed class AppUserAppService : ApplicationServiceBase, IAppUserAppServi
             }, Mapper.ConfigurationProvider, cancellationToken: cancellationToken);
     }
 
-    public Task<AppUserDto> CreateAsync(AppUserCreateDto input) => throw new NotImplementedException();
+    public async Task<AppUserDto> CreateAsync(AppUserCreateDto input)
+    {
+        if (input == null)
+        {
+            throw new BaseHttpException((int)HttpStatusCode.BadRequest);
+        }
 
-    public Task UpdateAsync(AppUserUpdateDto input) => throw new NotImplementedException();
+        var appUser = await _appUserRepository.CreateAsync(
+            tenantId: input.TenantId ?? Guid.Empty,
+            userName: input.UserName ?? string.Empty,
+            email: input.Email ?? string.Empty,
+            passwordHash: _passwordHasher.Hash(DefaultPass),
+            isStatic: false,
+            displayName: input.DisplayName,
+            avatarSuffixUrl: input.AvatarSuffixUrl,
+            phoneNumber: input.PhoneNumber,
+            languageCode: input.LanguageCode
+        );
 
-    public Task DeleteAsync(Guid id) => throw new NotImplementedException();
+        //INTEGRATION EVENT TRIGGER
+        //
+        //
+
+        return Mapper.Map<AppUser, AppUserDto>(appUser);
+    }
+
+    public async Task UpdateAsync(AppUserUpdateDto input)
+    {
+        if (input == null || input.Id == Guid.Empty)
+        {
+            throw new BaseHttpException((int)HttpStatusCode.BadRequest);
+        }
+
+        await _appUserRepository.UpdateAsync(
+            id: input.Id,
+            userName: input.UserName ?? string.Empty,
+            email: input.Email ?? string.Empty,
+            isStatic: false,
+            displayName: input.DisplayName,
+            avatarSuffixUrl: input.AvatarSuffixUrl,
+            phoneNumber: input.PhoneNumber,
+            languageCode: input.LanguageCode
+        );
+
+        //INTEGRATION EVENT TRIGGER
+        //
+        //
+    }
+
+    public async Task DeleteAsync(Guid id)
+    {
+        if (id == Guid.Empty)
+        {
+            throw new BaseHttpException((int)HttpStatusCode.BadRequest);
+        }
+
+        await _appUserRepository.DeleteAsync(id);
+
+        //INTEGRATION EVENT TRIGGER
+        //
+        //
+    }
 }

@@ -1,4 +1,4 @@
-namespace Hhs.IdentityService.Application.Contracts.AuthDomain.Dtos;
+namespace Hhs.AuthServer.Application.Contracts.AuthDomain.Dtos;
 
 public sealed class RegisterRequest
 {

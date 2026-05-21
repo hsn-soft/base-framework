@@ -1,9 +1,9 @@
 using HsnSoft.Base.Application.Dtos;
 using JetBrains.Annotations;
 
-namespace Hhs.AuthServer.Application.Contracts.AuthDomain.Dtos.Filters;
+namespace Hhs.AuthServer.Application.Contracts.AuthDomainBackup.Dtos.Filters;
 
-public sealed class GetClientsFilter : SortedAndLimitedDataRequestDto
+public sealed class GetClientsPaged : PagedDataRequestDto
 {
     public Guid? TenantId { get; set; }
 

@@ -2,6 +2,7 @@
   "culture": "ru",
   "texts": {
     "Error:IdentityService:000010": "Неавторизованный клиент",
+    "Error:IdentityService:000011": "Неверный домен клиента",
     "Error:IdentityService:000100": "Ошибка идентификации пользователя",
     "Error:IdentityService:000101": "Пользователь не найден",
     "Error:IdentityService:000102": "Дубликат имени пользователя",
