@@ -20,8 +20,6 @@ public class EfCoreTenantRepository : EfCoreGenericRepository<Tenant, Guid>, ITe
         IdentityServiceDbContext dbContext
     ) : base(provider, dbContext)
     {
-        // DefaultPropertySelector = new List<Expression<Func<AppContent, object>>> { x => x.Client };
-
         L = stringLocalizerFactory.CreateMultiple([typeof(IdentityServiceResource), typeof(ValidationResource), typeof(SharedResource)]);
     }
 }

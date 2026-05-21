@@ -2,7 +2,9 @@ using Hhs.Shared.Contracts;
 using Hhs.Shared.Contracts.Cache;
 using HsnSoft.Base.AspNetCore.Hosting.Worker;
 using HsnSoft.Base.Authorization.Permissions;
+using HsnSoft.Base.Data;
 using HsnSoft.Base.Logging.Abstracts;
+using HsnSoft.Base.MultiTenancy;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
@@ -33,19 +35,20 @@ public class SynchServicePermissionStoreBackgroundService : BaseSingleThreadBack
         var servicePermissionProvider = scope.ServiceProvider.GetRequiredService<IServicePermissionProvider>();
         var cachePermissionGrantRepository = scope.ServiceProvider.GetRequiredService<ICachePermissionGrantRepository>();
         var permissionStore = scope.ServiceProvider.GetRequiredService<IPermissionStore>();
+        var dataFilter = scope.ServiceProvider.GetRequiredService<IDataFilter>();
 
-        var servicePermissionKeys = await servicePermissionProvider.GetServicePermissionKeysAsync();
-        servicePermissionKeys ??= [];
-
-        var cachePermissions = await cachePermissionGrantRepository.GetServicePermissionsAsync(servicePermissionKeys);
-        cachePermissions ??= [];
-
-        await permissionStore.SetAllPermissions(cachePermissions.Select(x => new BasePermissionStoreItem
+        using (dataFilter.Disable<IMultiTenant>())
         {
-            Name = x.Name, ProviderName = x.ProviderName, ProviderKey = x.ProviderKey
-        }));
+            var servicePermissionKeys = await servicePermissionProvider.GetServicePermissionKeysAsync();
+            servicePermissionKeys ??= [];
 
-        Logger.LogInformation("{WorkerName} | Permission store successfully updated [{CachePermissionsCount}]", nameof(SynchServicePermissionStoreBackgroundService), cachePermissions.Count);
+            var cachePermissions = await cachePermissionGrantRepository.GetServicePermissionsAsync(servicePermissionKeys);
+            cachePermissions ??= [];
+
+            await permissionStore.SetAllPermissions(cachePermissions.Select(x => new BasePermissionStoreItem { Name = x.Name, ProviderName = x.ProviderName, ProviderKey = x.ProviderKey }));
+
+            Logger.LogInformation("{WorkerName} | Permission store successfully updated [{CachePermissionsCount}]", nameof(SynchServicePermissionStoreBackgroundService), cachePermissions.Count);
+        }
     }
 
     private void TriggerOperation(CancellationToken token)
