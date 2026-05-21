@@ -42,5 +42,5 @@ public class SearchDataRequestDto : SortedAndLimitedDataRequestDto, ISearchDataR
 [Serializable]
 public class PagedDataRequestDto : SearchDataRequestDto, IPagedDataRequest
 {
-    [Range(1, int.MaxValue)] public int PageNumber { get; set; }
+    [Range(1, int.MaxValue)] public int PageNumber { get; set; } = 1;
 }

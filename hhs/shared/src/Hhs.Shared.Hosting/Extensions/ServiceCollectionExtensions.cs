@@ -68,6 +68,7 @@ public static class ServiceCollectionExtensions
             services.AddSingleton<IApiResponseWriter, ApiResponseWriter>();
             services.AddSingleton<IStatusMessageProvider, StatusMessageProvider>();
 
+            // Register Global exception filter -> Global try/catch
             services.AddExceptionHandler<GlobalApiExceptionHandler>();
             services.AddProblemDetails();
         }

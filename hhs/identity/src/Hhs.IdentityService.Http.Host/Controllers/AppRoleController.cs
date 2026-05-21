@@ -22,19 +22,23 @@ public sealed class AppRoleController : BaseServiceController
 
     [HttpGet("{id}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<AppRoleDto> GetAsync(Guid id) => await _appRoleAppService.GetAsync(id);
+    public async Task<AppRoleDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
+        => await _appRoleAppService.GetAsync(id, cancellationToken);
 
     [HttpPost("paged-list")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<PagedDataResultDto<AppRoleDto>> GetPagedListAsync([FromBody] GetAppRolesPaged pagedInput) => await _appRoleAppService.GetPagedListAsync(pagedInput);
+    public async Task<PagedDataResultDto<AppRoleDto>> GetPagedListAsync([FromBody] GetAppRolesPaged pagedInput, CancellationToken cancellationToken = default)
+        => await _appRoleAppService.GetPagedListAsync(pagedInput, cancellationToken);
 
     [HttpPost("filter-list")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<List<AppRoleDto>> GetFilterListAsync([FromBody] GetAppRolesFilter filterInput) => await _appRoleAppService.GetFilterListAsync(filterInput);
+    public async Task<List<AppRoleDto>> GetFilterListAsync([FromBody] GetAppRolesFilter filterInput, CancellationToken cancellationToken = default)
+        => await _appRoleAppService.GetFilterListAsync(filterInput, cancellationToken);
 
     [HttpPost("search-list")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<List<AppRoleDto>> GetSearchListAsync([FromBody] GetAppRolesSearch searchInput) => await _appRoleAppService.GetSearchListAsync(searchInput);
+    public async Task<List<AppRoleDto>> GetSearchListAsync([FromBody] GetAppRolesSearch searchInput, CancellationToken cancellationToken = default)
+        => await _appRoleAppService.GetSearchListAsync(searchInput, cancellationToken);
 
     [Authorize(IdentityServicePermissions.AppRoles.Create)]
     [HttpPost("create")]

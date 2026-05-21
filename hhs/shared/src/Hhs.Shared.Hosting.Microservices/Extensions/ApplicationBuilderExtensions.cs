@@ -13,11 +13,16 @@ public static class ApplicationBuilderExtensions
         {
             app.UseForwardedHeaders();
 
+            // FILTER 04 : Registered GlobalApiExceptionHandler in service collections
             app.UseExceptionHandler();
 
+            // FILTER 01 : not-found body -> add body ( No method, wrong route )
             app.UseStatusCodePages(async statusCodeContext =>
             {
                 var http = statusCodeContext.HttpContext;
+
+                if (http.Response.HasStarted)
+                    return;
 
                 if (http.Response.ContentLength > 0)
                     return;
@@ -38,7 +43,8 @@ public static class ApplicationBuilderExtensions
                 await writer.WriteErrorAsync(
                     http,
                     http.Response.StatusCode,
-                    [statusProvider.GetMessage(http.Response.StatusCode)]);
+                    [statusProvider.GetMessage(http.Response.StatusCode)],
+                    $"http_{http.Response.StatusCode}");
             });
         }
 

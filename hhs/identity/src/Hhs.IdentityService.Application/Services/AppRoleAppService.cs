@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Net;
 using Hhs.IdentityService.Application.Contracts.AppRoleDomain.Dtos;
 using Hhs.IdentityService.Application.Contracts.AppRoleDomain.Dtos.Filters;
@@ -30,7 +29,6 @@ public sealed class AppRoleAppService : ApplicationServiceBase, IAppRoleAppServi
 
         _appRoleRepository = appRoleRepository;
     }
-
 
     public async Task<AppRoleDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
     {
@@ -100,7 +98,8 @@ public sealed class AppRoleAppService : ApplicationServiceBase, IAppRoleAppServi
                 Filter = filter,
                 OrderByDynamic = string.IsNullOrWhiteSpace(filterInput.SortingText)
                     ? AppRoleConsts.GetDefaultSorting()
-                    : filterInput.SortingText
+                    : filterInput.SortingText,
+                MaxResultCount = filterInput.MaxResultCount
             }, Mapper.ConfigurationProvider, cancellationToken: cancellationToken);
     }
 

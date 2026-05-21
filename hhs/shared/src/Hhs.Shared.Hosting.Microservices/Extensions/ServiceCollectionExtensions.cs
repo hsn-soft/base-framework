@@ -11,6 +11,7 @@ using HsnSoft.Base.Application.Dtos;
 using HsnSoft.Base.AspNetCore;
 using HsnSoft.Base.AspNetCore.Hosting.Loader;
 using HsnSoft.Base.AspNetCore.Responses;
+using HsnSoft.Base.Communication;
 using HsnSoft.Base.Data;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -38,7 +39,7 @@ public static class ServiceCollectionExtensions
 
             services.AddControllers(options =>
                 {
-                    options.Filters.Add<UnifiedApiResponseFilter>();
+                    options.Filters.Add<UnifiedApiResponseFilter>(); // FILTER 03 : controller operation end -> action result filter
                     options.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true;
                 })
                 .AddApplicationPart(type.Assembly)
@@ -54,10 +55,8 @@ public static class ServiceCollectionExtensions
 
             services.Configure<ApiBehaviorOptions>(options =>
             {
-                options.InvalidModelStateResponseFactory = context =>
+                options.InvalidModelStateResponseFactory = context => // FILTER 02 : before controller start -> model validation filter
                 {
-                    var writer = context.HttpContext.RequestServices.GetRequiredService<IApiResponseWriter>();
-
                     var env = context.HttpContext.RequestServices.GetRequiredService<IHostEnvironment>();
 
                     var messages = new List<string> { "Validation failed." };
@@ -67,17 +66,25 @@ public static class ServiceCollectionExtensions
                         messages.AddRange(
                             context.ModelState
                                 .Where(x => x.Value?.Errors.Count > 0)
-                                .SelectMany(x => x.Value!.Errors.Select(e => $"{x.Key}: {e.ErrorMessage}")));
+                                .SelectMany(x => x.Value!.Errors.Select(e =>
+                                {
+                                    var message = string.IsNullOrWhiteSpace(e.ErrorMessage)
+                                        ? "Invalid value."
+                                        : e.ErrorMessage;
+
+                                    return $"{x.Key}: {message}";
+                                })));
                     }
 
-                    writer.WriteErrorAsync(
-                        context.HttpContext,
-                        StatusCodes.Status400BadRequest,
-                        messages,
-                        "validation_error"
-                    ).GetAwaiter().GetResult();
+                    var response = new BaseResponse
+                    {
+                        StatusCode = StatusCodes.Status400BadRequest,
+                        StatusMessages = messages.Distinct().ToList(),
+                        TraceId = context.HttpContext.TraceIdentifier,
+                        ErrorCode = "validation_error"
+                    };
 
-                    return new EmptyResult();
+                    return new BadRequestObjectResult(response);
                 };
             });
 
