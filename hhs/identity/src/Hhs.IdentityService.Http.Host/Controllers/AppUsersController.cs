@@ -22,19 +22,23 @@ public sealed class AppUsersController : BaseServiceController
 
     [HttpGet("{id}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<AppUserDto> GetAsync(Guid id) => await _appUserAppService.GetAsync(id);
+    public async Task<AppUserDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
+        => await _appUserAppService.GetAsync(id, cancellationToken);
 
     [HttpPost("paged-list")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<PagedDataResultDto<AppUserDto>> GetPagedListAsync([FromBody] GetAppUsersPaged pagedInput) => await _appUserAppService.GetPagedListAsync(pagedInput);
+    public async Task<PagedDataResultDto<AppUserDto>> GetPagedListAsync([FromBody] GetAppUsersPaged pagedInput, CancellationToken cancellationToken = default)
+        => await _appUserAppService.GetPagedListAsync(pagedInput, cancellationToken);
 
     [HttpPost("filter-list")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<List<AppUserDto>> GetFilterListAsync([FromBody] GetAppUsersFilter filterInput) => await _appUserAppService.GetFilterListAsync(filterInput);
+    public async Task<List<AppUserDto>> GetFilterListAsync([FromBody] GetAppUsersFilter filterInput, CancellationToken cancellationToken = default)
+        => await _appUserAppService.GetFilterListAsync(filterInput, cancellationToken);
 
     [HttpPost("search-list")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<List<AppUserDto>> GetSearchListAsync([FromBody] GetAppUsersSearch searchInput) => await _appUserAppService.GetSearchListAsync(searchInput);
+    public async Task<List<AppUserDto>> GetSearchListAsync([FromBody] GetAppUsersSearch searchInput, CancellationToken cancellationToken = default)
+        => await _appUserAppService.GetSearchListAsync(searchInput, cancellationToken);
 
     [Authorize(IdentityServicePermissions.AppUsers.Create)]
     [HttpPost("create")]

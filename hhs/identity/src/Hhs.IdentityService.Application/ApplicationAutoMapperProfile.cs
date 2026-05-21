@@ -10,13 +10,13 @@ public class ApplicationAutoMapperProfile : Profile
     public ApplicationAutoMapperProfile()
     {
         CreateMap<AppUser, AppUserDto>()
-            .ForMember(dest => dest.UserName,
-                opt => opt.MapFrom(source => source.UserName))
-            .ForMember(dest => dest.Email,
-                opt => opt.MapFrom(source => source.Email));
+            .ForMember(dest => dest.TenantName,
+                opt => opt.MapFrom(source => source.Tenant.Name))
+            .ForMember(dest => dest.Roles,
+                opt => opt.MapFrom(source => source.UserRoles.Select(ur => ur.Role.Name)));
 
         CreateMap<AppRole, AppRoleDto>()
-            .ForMember(dest => dest.Name,
-                opt => opt.MapFrom(source => source.Name));
+            .ForMember(dest => dest.TenantName,
+                opt => opt.MapFrom(source => source.Tenant.Name));
     }
 }

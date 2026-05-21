@@ -7,11 +7,11 @@ namespace Hhs.IdentityService.Application.Contracts.AppUserDomain.Services;
 
 public interface IAppUserAppService
 {
-    Task<AppUserDto> GetAsync(Guid id);
+    Task<AppUserDto> GetAsync(Guid id, CancellationToken cancellationToken = default);
 
     Task<PagedDataResultDto<AppUserDto>> GetPagedListAsync(GetAppUsersPaged pagedInput, CancellationToken cancellationToken = default);
     Task<List<AppUserDto>> GetFilterListAsync(GetAppUsersFilter filterInput, CancellationToken cancellationToken = default);
-    Task<List<AppUserDto>> GetSearchListAsync(GetAppUsersSearch searchInput);
+    Task<List<AppUserDto>> GetSearchListAsync(GetAppUsersSearch searchInput, CancellationToken cancellationToken = default);
 
     Task<AppUserDto> CreateAsync(AppUserCreateDto input);
 
