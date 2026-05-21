@@ -24,7 +24,6 @@ public sealed class AppRoleController : BaseServiceController
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<AppRoleDto> GetAsync(Guid id) => await _appRoleAppService.GetAsync(id);
 
-    [Authorize(IdentityServicePermissions.AppRoles.PageView)]
     [HttpPost("paged-list")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<PagedDataResultDto<AppRoleDto>> GetPagedListAsync([FromBody] GetAppRolesPaged pagedInput) => await _appRoleAppService.GetPagedListAsync(pagedInput);

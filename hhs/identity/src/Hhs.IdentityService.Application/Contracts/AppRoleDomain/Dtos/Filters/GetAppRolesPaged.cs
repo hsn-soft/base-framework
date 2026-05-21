@@ -12,5 +12,4 @@ public sealed class GetAppRolesPaged : PagedDataRequestDto
 
     public bool? IsDefault { get; set; } = null;
     public bool? IsStatic { get; set; } = null;
-    public bool? IsPublic { get; set; } = null;
 }

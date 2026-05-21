@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using JetBrains.Annotations;
 
 namespace Hhs.Shared.Helper.Utils;
 
@@ -83,9 +84,19 @@ public static class StringOperations
         return System.Text.Encoding.UTF8.GetString(base64EncodedBytes);
     }
 
-    public static string Normalize(string value) => string.Join("", value.Trim().ToUpperInvariant().Normalize(NormalizationForm.FormD)
-        .Where(c => char.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark));
+    public static string Normalize([CanBeNull] string value)
+    {
+        value??= string.Empty;
 
-    public static string Minimize(string value) => string.Join("", value.Trim().ToLowerInvariant().Normalize(NormalizationForm.FormD)
-        .Where(c => char.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark));
+        return string.Join("", value.Trim().ToUpperInvariant().Normalize(NormalizationForm.FormD)
+            .Where(c => char.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark));
+    }
+
+    public static string Minimize([CanBeNull] string value)
+    {
+        value??= string.Empty;
+
+        return string.Join("", value.Trim().ToLowerInvariant().Normalize(NormalizationForm.FormD)
+            .Where(c => char.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark));
+    }
 }

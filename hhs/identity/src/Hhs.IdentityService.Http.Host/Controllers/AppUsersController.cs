@@ -24,7 +24,6 @@ public sealed class AppUsersController : BaseServiceController
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<AppUserDto> GetAsync(Guid id) => await _appUserAppService.GetAsync(id);
 
-    [Authorize(IdentityServicePermissions.AppUsers.PageView)]
     [HttpPost("paged-list")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<PagedDataResultDto<AppUserDto>> GetPagedListAsync([FromBody] GetAppUsersPaged pagedInput) => await _appUserAppService.GetPagedListAsync(pagedInput);

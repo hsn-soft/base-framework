@@ -7,11 +7,11 @@ namespace Hhs.IdentityService.Application.Contracts.AppRoleDomain.Services;
 
 public interface IAppRoleAppService
 {
-    Task<AppRoleDto> GetAsync(Guid id);
+    Task<AppRoleDto> GetAsync(Guid id, CancellationToken cancellationToken = default);
 
-    Task<PagedDataResultDto<AppRoleDto>> GetPagedListAsync(GetAppRolesPaged pagedInput);
-    Task<List<AppRoleDto>> GetFilterListAsync(GetAppRolesFilter filterInput);
-    Task<List<AppRoleDto>> GetSearchListAsync(GetAppRolesSearch searchInput);
+    Task<PagedDataResultDto<AppRoleDto>> GetPagedListAsync(GetAppRolesPaged pagedInput, CancellationToken cancellationToken = default);
+    Task<List<AppRoleDto>> GetFilterListAsync(GetAppRolesFilter filterInput, CancellationToken cancellationToken = default);
+    Task<List<AppRoleDto>> GetSearchListAsync(GetAppRolesSearch searchInput, CancellationToken cancellationToken = default);
 
     Task<AppRoleDto> CreateAsync(AppRoleCreateDto input);
 

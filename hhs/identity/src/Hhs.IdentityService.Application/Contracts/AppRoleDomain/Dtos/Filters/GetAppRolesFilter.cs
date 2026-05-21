@@ -12,5 +12,4 @@ public sealed class GetAppRolesFilter : SortedAndLimitedDataRequestDto
 
     public bool? IsDefault { get; set; } = null;
     public bool? IsStatic { get; set; } = null;
-    public bool? IsPublic { get; set; } = null;
 }
