@@ -144,34 +144,14 @@ builder.Services.AddMicroserviceHosting(builder.Configuration, typeof(Program))
         checkPostgresql: true, postgresqlConnectionName: EfCoreDbProperties.ConnectionStringName);
 
 builder.Services.AddServiceApplicationConfiguration(builder.Configuration);
-
-
 builder.Services .AddServiceEfCoreDatabaseConfiguration(builder.Configuration, !builder.Environment.IsHostProduction());
 
-// builder.Services.AddAuthServerJwtDatabaseConfiguration(builder.Configuration);
-// if (!builder.Environment.IsHostProduction())
-// {
-//     builder.Services.AddDatabaseDeveloperPageExceptionFilter();
-// }
-//
-// builder.Services.AddIdentity<AppUser, AppRole>(options =>
-//     {
-//         options.SignIn.RequireConfirmedAccount = false;
-//         options.User.RequireUniqueEmail = true;
-//         options.Password.RequiredLength = 6;
-//         options.Password.RequiredUniqueChars = 0;
-//         options.Password.RequireLowercase = false;
-//         options.Password.RequireUppercase = false;
-//         options.Password.RequireDigit = false;
-//         options.Password.RequireNonAlphanumeric = false;
-//         options.User.AllowedUserNameCharacters = "abcçdefghiıjklmnoöpqrsştuüvwxyzABCÇDEFGHIİJKLMNOÖPQRSŞTUÜVWXYZ0123456789-._@+'#!/^%{}*";
-//     })
-//     .AddEntityFrameworkStores<IdentityAppDbContext>()
-//     .AddDefaultTokenProviders();
 
-// builder.Services.AddScoped<TokenService>();
-// builder.Services.AddScoped<RedisService>();
+// old services
+builder.Services.AddScoped<TokenService>();
+builder.Services.AddScoped<RedisService>();
 
+// new services
 builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>();
 
 // auth services

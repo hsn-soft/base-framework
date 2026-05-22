@@ -1,27 +1,30 @@
 using System.Security.Claims;
 using Hhs.AuthServer.Application.Contracts.AuthDomain.Dtos;
 using Hhs.AuthServer.Application.Contracts.AuthDomain.Interfaces;
+using Hhs.AuthServer.Controllers.Base;
 using HsnSoft.Base.Users;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Hhs.AuthServer.Controllers;
 
-[ApiController]
-[Route("api/auth")]
-public sealed class AuthController : ControllerBase
+// [SecurityHeaders]
+[ControllerName("Auth")]
+[Route("api/auth-server/v2/auth")]
+public sealed class AuthV2Controller : BaseServiceController //, IAuthAppService
 {
     private readonly IAuthService _authService;
     private readonly ICurrentUser _currentUser;
 
-    public AuthController(IAuthService authService, ICurrentUser currentUser)
+    public AuthV2Controller(IServiceProvider provider, IAuthService authService, ICurrentUser currentUser) : base(provider)
     {
         _authService = authService;
         _currentUser = currentUser;
     }
 
-    [HttpPost("register")]
     [AllowAnonymous]
+    [HttpPost("register")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> Register(RegisterRequest request)
     {
         var userId = await _authService.RegisterAsync(
@@ -32,8 +35,9 @@ public sealed class AuthController : ControllerBase
         return Ok(new { userId });
     }
 
-    [HttpPost("login")]
     [AllowAnonymous]
+    [HttpPost("login")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> Login(LoginRequest request)
     {
         var result = await _authService.LoginAsync(
@@ -44,16 +48,18 @@ public sealed class AuthController : ControllerBase
         return Ok(result);
     }
 
-    [HttpPost("refresh-token")]
     [AllowAnonymous]
+    [HttpPost("refresh-token")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> RefreshToken(RefreshTokenRequest request)
     {
         var result = await _authService.RefreshTokenAsync(request);
         return Ok(result);
     }
 
-    [HttpPost("logout")]
     [AllowAnonymous]
+    [HttpPost("logout")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> Logout(RefreshTokenRequest request)
     {
         await _authService.LogoutAsync(request.RefreshToken);
@@ -61,7 +67,6 @@ public sealed class AuthController : ControllerBase
     }
 
     [HttpGet("me")]
-    [Authorize]
     public IActionResult Me()
     {
         var test = _currentUser.Id;
@@ -80,7 +85,6 @@ public sealed class AuthController : ControllerBase
     }
 
     [HttpGet("users")]
-    [Authorize]
     public async Task<IActionResult> GetUsers()
     {
         var result = await _authService.GetUsersAsync();
