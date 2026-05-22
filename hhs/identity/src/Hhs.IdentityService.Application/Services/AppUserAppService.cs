@@ -5,7 +5,10 @@ using Hhs.IdentityService.Application.Contracts.AppUserDomain.Dtos.Submits;
 using Hhs.IdentityService.Application.Contracts.AppUserDomain.Services;
 using Hhs.IdentityService.Domain.AuthDomain.Consts;
 using Hhs.IdentityService.Domain.AuthDomain.Entities;
+using Hhs.IdentityService.Domain.AuthDomain.Exceptions;
 using Hhs.IdentityService.Domain.AuthDomain.Repositories;
+using Hhs.IdentityService.Domain.TenantDomain.Exceptions;
+using Hhs.IdentityService.Domain.TenantDomain.Repositories;
 using Hhs.Shared.Helper.Utils;
 using HsnSoft.Base;
 using HsnSoft.Base.Application.Dtos;
@@ -22,16 +25,24 @@ public sealed class AppUserAppService : ApplicationServiceBase, IAppUserAppServi
     private readonly IAppConsoleLogger _logger;
     private readonly IAppUserRepository _appUserRepository;
     private readonly IPasswordHasher _passwordHasher;
+    private readonly ITenantRepository _tenantRepository;
+    private readonly IAppRoleRepository _appRoleRepository;
+    private readonly IAppUserRoleRepository _appUserRoleRepository;
 
-    public AppUserAppService(IServiceProvider provider,
+    public AppUserAppService(
+        IServiceProvider provider,
         IAppUserRepository appUserRepository,
-        IPasswordHasher passwordHasher
-    ) : base(provider)
+        IPasswordHasher passwordHasher,
+        ITenantRepository tenantRepository,
+        IAppRoleRepository appRoleRepository, IAppUserRoleRepository appUserRoleRepository) : base(provider)
     {
         _logger = provider.GetRequiredService<IAppConsoleLogger>();
 
         _appUserRepository = appUserRepository;
         _passwordHasher = passwordHasher;
+        _tenantRepository = tenantRepository;
+        _appRoleRepository = appRoleRepository;
+        _appUserRoleRepository = appUserRoleRepository;
     }
 
     public async Task<AppUserDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
@@ -150,6 +161,31 @@ public sealed class AppUserAppService : ApplicationServiceBase, IAppUserAppServi
             throw new BaseHttpException((int)HttpStatusCode.BadRequest);
         }
 
+        if (!await _tenantRepository.ExistsAsync(x => x.Id == input.TenantId))
+        {
+            throw new TenantNotFoundException(L, input.TenantId.ToString());
+        }
+
+        List<string> normalizedRoles = input.Roles
+            .Select(role => StringOperations.Normalize(StringOperations.ReplaceInvalidChars(role)))
+            .Where(checkRoleName => !string.IsNullOrWhiteSpace(checkRoleName))
+            .Distinct()
+            .ToList();
+
+        if (normalizedRoles.Count == 0)
+        {
+            throw new AppRoleNotFoundException(L, "N/A");
+        }
+
+        var checkRoles = await _appRoleRepository.GetListAsync(
+            options: new ListQueryOptions<AppRole> { Filter = x => x.TenantId == input.TenantId && normalizedRoles.Contains(x.NormalizedName) },
+            selector: r => r.Id
+        );
+        if (checkRoles.Count != normalizedRoles.Count)
+        {
+            throw new AppRoleNotFoundException(L, "N/A");
+        }
+
         var appUser = await _appUserRepository.CreateAsync(
             tenantId: input.TenantId ?? Guid.Empty,
             userName: input.UserName ?? string.Empty,
@@ -162,11 +198,22 @@ public sealed class AppUserAppService : ApplicationServiceBase, IAppUserAppServi
             languageCode: input.LanguageCode
         );
 
+        // Create draft AppUser
+        await _appUserRoleRepository.CreateManyAsync(appUser.Id, checkRoles);
+
         //INTEGRATION EVENT TRIGGER
         //
         //
 
-        return Mapper.Map<AppUser, AppUserDto>(appUser);
+        var placed = await _appUserRepository.GetByIdAsync(appUser.Id);
+
+        var response = Mapper.Map<AppUser, AppUserDto>(placed);
+
+        response.Roles = normalizedRoles
+            .Select(StringOperations.Minimize)
+            .ToList();
+
+        return response;
     }
 
     public async Task UpdateAsync(AppUserUpdateDto input)
@@ -176,16 +223,44 @@ public sealed class AppUserAppService : ApplicationServiceBase, IAppUserAppServi
             throw new BaseHttpException((int)HttpStatusCode.BadRequest);
         }
 
+        var oldAppUser = await _appUserRepository.GetSingleOrDefaultAsync(x => x.Id == input.Id);
+        if (oldAppUser == null)
+        {
+            throw new AppUserNotFoundException(L, input.Id.ToString());
+        }
+
+        List<string> normalizedRoles = input.Roles
+            .Select(role => StringOperations.Normalize(StringOperations.ReplaceInvalidChars(role)))
+            .Where(checkRoleName => !string.IsNullOrWhiteSpace(checkRoleName))
+            .Distinct()
+            .ToList();
+
+        if (normalizedRoles.Count == 0)
+        {
+            throw new AppRoleNotFoundException(L, "N/A");
+        }
+
+        var checkedRoleIds = await _appRoleRepository.GetListAsync(
+            options: new ListQueryOptions<AppRole> { Filter = x => x.TenantId == oldAppUser.TenantId && normalizedRoles.Contains(x.NormalizedName) },
+            selector: r => r.Id
+        );
+        if (checkedRoleIds.Count != normalizedRoles.Count)
+        {
+            throw new AppRoleNotFoundException(L, "N/A");
+        }
+
         await _appUserRepository.UpdateAsync(
             id: input.Id,
             userName: input.UserName ?? string.Empty,
             email: input.Email ?? string.Empty,
-            isStatic: false,
             displayName: input.DisplayName,
             avatarSuffixUrl: input.AvatarSuffixUrl,
             phoneNumber: input.PhoneNumber,
             languageCode: input.LanguageCode
         );
+
+        await _appUserRoleRepository.RemoveManyWithUserId(oldAppUser.Id);
+        await _appUserRoleRepository.CreateManyAsync(oldAppUser.Id, checkedRoleIds);
 
         //INTEGRATION EVENT TRIGGER
         //

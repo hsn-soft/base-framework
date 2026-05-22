@@ -50,7 +50,7 @@ public sealed class IdentityServiceDbContext : BaseEfCoreDbContext<IdentityServi
                 .WithMany(x => x.UserRoles)
                 .HasForeignKey(x => x.RoleId);
 
-            b.HasIndex(x => new { x.UserId, x.RoleId });
+            b.HasKey(x => new { x.UserId, x.RoleId });
         });
 
         builder.Entity<AppUserClaim>(b =>

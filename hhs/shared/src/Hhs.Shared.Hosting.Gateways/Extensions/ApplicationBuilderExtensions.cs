@@ -12,11 +12,16 @@ public static class ApplicationBuilderExtensions
         {
             app.UseForwardedHeaders();
 
+            // FILTER 04 : Registered GlobalApiExceptionHandler in service collections
             app.UseExceptionHandler();
 
+            // FILTER 01 : not-found body -> add body ( No method, wrong route )
             app.UseStatusCodePages(async statusCodeContext =>
             {
                 var http = statusCodeContext.HttpContext;
+
+                if (http.Response.HasStarted)
+                    return;
 
                 if (http.Response.ContentLength > 0)
                     return;
@@ -31,13 +36,21 @@ public static class ApplicationBuilderExtensions
                     return;
                 }
 
+                if (contentType.Contains("multipart/", StringComparison.OrdinalIgnoreCase) ||
+                    contentType.Contains("application/pdf", StringComparison.OrdinalIgnoreCase) ||
+                    contentType.Contains("application/zip", StringComparison.OrdinalIgnoreCase))
+                {
+                    return;
+                }
+
                 var writer = http.RequestServices.GetRequiredService<IApiResponseWriter>();
                 var statusProvider = http.RequestServices.GetRequiredService<IStatusMessageProvider>();
 
                 await writer.WriteErrorAsync(
                     http,
                     http.Response.StatusCode,
-                    [statusProvider.GetMessage(http.Response.StatusCode)]);
+                    [statusProvider.GetMessage(http.Response.StatusCode)],
+                    $"http_{http.Response.StatusCode}");
             });
         }
     }

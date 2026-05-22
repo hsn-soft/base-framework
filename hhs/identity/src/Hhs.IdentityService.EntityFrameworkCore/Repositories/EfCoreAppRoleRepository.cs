@@ -3,10 +3,13 @@ using Hhs.IdentityService.Domain.AuthDomain.Entities;
 using Hhs.IdentityService.Domain.AuthDomain.Exceptions;
 using Hhs.IdentityService.Domain.AuthDomain.Repositories;
 using Hhs.IdentityService.Domain.Localization;
+using Hhs.IdentityService.Domain.TenantDomain.Exceptions;
 using Hhs.IdentityService.EntityFrameworkCore.Context;
 using Hhs.Shared.Helper.Utils;
 using Hhs.Shared.Localization;
+using HsnSoft.Base.Data;
 using HsnSoft.Base.Domain.Repositories;
+using HsnSoft.Base.MultiTenancy;
 using HsnSoft.Base.Validation.Localization;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Localization;
@@ -15,22 +18,26 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Repositories;
 
 public class EfCoreAppRoleRepository : EfCoreGenericRepository<AppRole, Guid>, IAppRoleRepository
 {
-    [NotNull] protected IStringLocalizer L { get; }
+    [NotNull] private IStringLocalizer L { get; }
+
+    private readonly IDataFilter _dataFilter;
+    private readonly ICurrentTenant _currentTenant;
 
     public EfCoreAppRoleRepository(
         IServiceProvider provider,
         IStringLocalizerFactory stringLocalizerFactory,
-        IdentityServiceDbContext dbContext
-    ) : base(provider, dbContext)
+        IdentityServiceDbContext dbContext, IDataFilter dataFilter, ICurrentTenant currentTenant) : base(provider, dbContext)
     {
         L = stringLocalizerFactory.CreateMultiple([typeof(IdentityServiceResource), typeof(ValidationResource), typeof(SharedResource)]);
+        _dataFilter = dataFilter;
+        _currentTenant = currentTenant;
     }
 
     public async Task<AppRole> CreateAsync(Guid tenantId,
         string name,
         bool isDefault = false,
         bool isStatic = false)
-        => await CreateAsync(Guid.NewGuid(), tenantId,
+        => await CreateAsync(Guid.CreateVersion7(), tenantId,
             name,
             isDefault,
             isStatic);
@@ -40,7 +47,7 @@ public class EfCoreAppRoleRepository : EfCoreGenericRepository<AppRole, Guid>, I
         bool isDefault = false,
         bool isStatic = false)
     {
-        if (id == Guid.Empty) id = Guid.NewGuid();
+        if (id == Guid.Empty) id = Guid.CreateVersion7();
 
         // Create draft AppRole
         var draftAppRole = new AppRole(
@@ -50,6 +57,9 @@ public class EfCoreAppRoleRepository : EfCoreGenericRepository<AppRole, Guid>, I
             isDefault: isDefault,
             isStatic: isStatic
         );
+
+        //Domain Rule -> Tenant Management Access
+        TenantCrudControl(draftAppRole.TenantId);
 
         //Domain Rule -> AppRole must be unique
         await DuplicateControlAsync(draftAppRole);
@@ -106,6 +116,16 @@ public class EfCoreAppRoleRepository : EfCoreGenericRepository<AppRole, Guid>, I
         await UpdateAsync(appRole);
     }
 
+    private void TenantCrudControl(Guid targetTenantId)
+    {
+        if (!_dataFilter.IsEnabled<IMultiTenant>()) return;
+
+        if (_currentTenant.IsSystemTenant) return;
+
+        if (_currentTenant.AllowedTenantIds.Contains(targetTenantId)) return;
+
+        throw new UnauthorizedTenantException(L, targetTenantId.ToString());
+    }
 
     private async Task DuplicateControlAsync(AppRole newAppRole)
     {

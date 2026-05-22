@@ -39,7 +39,7 @@ public static class ServiceCollectionExtensions
 
             services.AddControllers(options =>
                 {
-                    options.Filters.Add<UnifiedApiResponseFilter>(); // FILTER 03 : controller operation end -> action result filter
+                    options.Filters.Add<UnifiedApiResponseFilter>(); // FILTER 03 : controller operation end -> action result filter, don't use in gateway
                     options.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true;
                 })
                 .AddApplicationPart(type.Assembly)

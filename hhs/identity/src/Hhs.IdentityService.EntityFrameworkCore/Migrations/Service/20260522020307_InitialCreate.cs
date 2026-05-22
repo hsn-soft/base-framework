@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -208,13 +209,13 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                 name: "AppUserRoles",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
-                    RoleId = table.Column<Guid>(type: "uuid", nullable: false)
+                    RoleId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_AppUserRoles", x => x.Id);
+                    table.PrimaryKey("PK_AppUserRoles", x => new { x.UserId, x.RoleId });
                     table.ForeignKey(
                         name: "FK_AppUserRoles_AppRoles_RoleId",
                         column: x => x.RoleId,
@@ -296,11 +297,6 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                 name: "IX_AppUserRoles_RoleId",
                 table: "AppUserRoles",
                 column: "RoleId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_AppUserRoles_UserId_RoleId",
-                table: "AppUserRoles",
-                columns: new[] { "UserId", "RoleId" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_AppUsers_TenantId_NormalizedEmail",

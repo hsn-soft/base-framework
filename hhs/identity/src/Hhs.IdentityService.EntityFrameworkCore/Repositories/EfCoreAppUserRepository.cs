@@ -3,9 +3,12 @@ using Hhs.IdentityService.Domain.AuthDomain.Entities;
 using Hhs.IdentityService.Domain.AuthDomain.Exceptions;
 using Hhs.IdentityService.Domain.AuthDomain.Repositories;
 using Hhs.IdentityService.Domain.Localization;
+using Hhs.IdentityService.Domain.TenantDomain.Exceptions;
 using Hhs.IdentityService.EntityFrameworkCore.Context;
 using Hhs.Shared.Localization;
+using HsnSoft.Base.Data;
 using HsnSoft.Base.Domain.Repositories;
+using HsnSoft.Base.MultiTenancy;
 using HsnSoft.Base.Validation.Localization;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Localization;
@@ -14,15 +17,22 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Repositories;
 
 public class EfCoreAppUserRepository : EfCoreGenericRepository<AppUser, Guid>, IAppUserRepository
 {
-    [NotNull] protected IStringLocalizer L { get; }
+    [NotNull] private IStringLocalizer L { get; }
+
+    private readonly IDataFilter _dataFilter;
+    private readonly ICurrentTenant _currentTenant;
 
     public EfCoreAppUserRepository(
         IServiceProvider provider,
         IStringLocalizerFactory stringLocalizerFactory,
-        IdentityServiceDbContext dbContext
+        IdentityServiceDbContext dbContext,
+        IDataFilter dataFilter,
+        ICurrentTenant currentTenant
     ) : base(provider, dbContext)
     {
         L = stringLocalizerFactory.CreateMultiple([typeof(IdentityServiceResource), typeof(ValidationResource), typeof(SharedResource)]);
+        _dataFilter = dataFilter;
+        _currentTenant = currentTenant;
     }
 
     public async Task<AppUser> CreateAsync(Guid tenantId,
@@ -35,7 +45,7 @@ public class EfCoreAppUserRepository : EfCoreGenericRepository<AppUser, Guid>, I
         string phoneNumber = null,
         string languageCode = null
     )
-        => await CreateAsync(Guid.NewGuid(), tenantId,
+        => await CreateAsync(Guid.CreateVersion7(), tenantId,
             userName,
             email,
             passwordHash,
@@ -57,7 +67,7 @@ public class EfCoreAppUserRepository : EfCoreGenericRepository<AppUser, Guid>, I
         string languageCode = null
     )
     {
-        if (id == Guid.Empty) id = Guid.NewGuid();
+        if (id == Guid.Empty) id = Guid.CreateVersion7();
 
         // Create draft AppUser
         var draftAppUser = new AppUser(
@@ -73,6 +83,9 @@ public class EfCoreAppUserRepository : EfCoreGenericRepository<AppUser, Guid>, I
             languageCode: languageCode
         );
 
+        //Domain Rule -> Tenant Management Access
+        TenantCrudControl(draftAppUser.TenantId);
+
         //Domain Rule -> AppUser must be unique
         await DuplicateControlAsync(draftAppUser);
 
@@ -83,7 +96,6 @@ public class EfCoreAppUserRepository : EfCoreGenericRepository<AppUser, Guid>, I
     public async Task<AppUser> UpdateAsync(Guid id,
         string userName,
         string email,
-        bool isStatic = false,
         string displayName = null,
         string avatarSuffixUrl = null,
         string phoneNumber = null,
@@ -97,7 +109,6 @@ public class EfCoreAppUserRepository : EfCoreGenericRepository<AppUser, Guid>, I
 
         oldAppUser.SetUserName(userName);
         oldAppUser.SetEmail(email);
-        oldAppUser.IsStatic = isStatic;
         oldAppUser.SetDisplayName(displayName);
         oldAppUser.SetAvatarSuffixUrl(avatarSuffixUrl);
         oldAppUser.SetPhoneNumber(phoneNumber);
@@ -140,6 +151,17 @@ public class EfCoreAppUserRepository : EfCoreGenericRepository<AppUser, Guid>, I
         appUser.IsDeleted = true;
 
         await UpdateAsync(appUser);
+    }
+
+    private void TenantCrudControl(Guid targetTenantId)
+    {
+        if (!_dataFilter.IsEnabled<IMultiTenant>()) return;
+
+        if (_currentTenant.IsSystemTenant) return;
+
+        if (_currentTenant.AllowedTenantIds.Contains(targetTenantId)) return;
+
+        throw new UnauthorizedTenantException(L, targetTenantId.ToString());
     }
 
     private async Task DuplicateControlAsync(AppUser newAppUser)

@@ -3,9 +3,7 @@ using Hhs.IdentityService.Application.Contracts.AppUserDomain.Dtos.Filters;
 using Hhs.IdentityService.Application.Contracts.AppUserDomain.Dtos.Submits;
 using Hhs.IdentityService.Application.Contracts.AppUserDomain.Services;
 using Hhs.IdentityService.Controllers.Base;
-using Hhs.Shared.Contracts.Cache.ServicePermissions;
 using HsnSoft.Base.Application.Dtos;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Hhs.IdentityService.Controllers;
@@ -25,6 +23,7 @@ public sealed class AppUsersController : BaseServiceController
     public async Task<AppUserDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
         => await _appUserAppService.GetAsync(id, cancellationToken);
 
+    // [Authorize(IdentityServicePermissions.AppUsers.PageView)]
     [HttpPost("paged-list")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<PagedDataResultDto<AppUserDto>> GetPagedListAsync([FromBody] GetAppUsersPaged pagedInput, CancellationToken cancellationToken = default)
@@ -40,18 +39,18 @@ public sealed class AppUsersController : BaseServiceController
     public async Task<List<AppUserDto>> GetSearchListAsync([FromBody] GetAppUsersSearch searchInput, CancellationToken cancellationToken = default)
         => await _appUserAppService.GetSearchListAsync(searchInput, cancellationToken);
 
-    [Authorize(IdentityServicePermissions.AppUsers.Create)]
+    // [Authorize(IdentityServicePermissions.AppUsers.Create)]
     [HttpPost("create")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<AppUserDto> CreateAsync([FromBody] AppUserCreateDto input) => await _appUserAppService.CreateAsync(input);
 
-    [Authorize(IdentityServicePermissions.AppUsers.Update)]
+    // [Authorize(IdentityServicePermissions.AppUsers.Update)]
     [HttpPut]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task UpdateAsync([FromBody] AppUserUpdateDto input) => await _appUserAppService.UpdateAsync(input);
 
-    [Authorize(IdentityServicePermissions.AppUsers.Delete)]
+    // [Authorize(IdentityServicePermissions.AppUsers.Delete)]
     [HttpDelete("{id}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task DeleteAsync(Guid id) => await _appUserAppService.DeleteAsync(id);
 }

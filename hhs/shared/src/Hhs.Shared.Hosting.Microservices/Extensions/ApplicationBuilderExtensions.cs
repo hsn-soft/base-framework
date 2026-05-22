@@ -37,6 +37,13 @@ public static class ApplicationBuilderExtensions
                     return;
                 }
 
+                if (contentType.Contains("multipart/", StringComparison.OrdinalIgnoreCase) ||
+                    contentType.Contains("application/pdf", StringComparison.OrdinalIgnoreCase) ||
+                    contentType.Contains("application/zip", StringComparison.OrdinalIgnoreCase))
+                {
+                    return;
+                }
+
                 var writer = http.RequestServices.GetRequiredService<IApiResponseWriter>();
                 var statusProvider = http.RequestServices.GetRequiredService<IStatusMessageProvider>();
 

@@ -6,6 +6,8 @@ using Hhs.IdentityService.Application.Contracts.AppRoleDomain.Services;
 using Hhs.IdentityService.Domain.AuthDomain.Consts;
 using Hhs.IdentityService.Domain.AuthDomain.Entities;
 using Hhs.IdentityService.Domain.AuthDomain.Repositories;
+using Hhs.IdentityService.Domain.TenantDomain.Exceptions;
+using Hhs.IdentityService.Domain.TenantDomain.Repositories;
 using Hhs.Shared.Helper.Utils;
 using HsnSoft.Base;
 using HsnSoft.Base.Application.Dtos;
@@ -20,14 +22,15 @@ public sealed class AppRoleAppService : ApplicationServiceBase, IAppRoleAppServi
 {
     private readonly IAppConsoleLogger _logger;
     private readonly IAppRoleRepository _appRoleRepository;
+    private readonly ITenantRepository _tenantRepository;
 
     public AppRoleAppService(IServiceProvider provider,
-        IAppRoleRepository appRoleRepository
-    ) : base(provider)
+        IAppRoleRepository appRoleRepository, ITenantRepository tenantRepository) : base(provider)
     {
         _logger = provider.GetRequiredService<IAppConsoleLogger>();
 
         _appRoleRepository = appRoleRepository;
+        _tenantRepository = tenantRepository;
     }
 
     public async Task<AppRoleDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
@@ -134,6 +137,11 @@ public sealed class AppRoleAppService : ApplicationServiceBase, IAppRoleAppServi
         if (input == null)
         {
             throw new BaseHttpException((int)HttpStatusCode.BadRequest);
+        }
+
+        if (!await _tenantRepository.ExistsAsync(x => x.Id == input.TenantId))
+        {
+            throw new TenantNotFoundException(L, input.TenantId.ToString());
         }
 
         var appRole = await _appRoleRepository.CreateAsync(

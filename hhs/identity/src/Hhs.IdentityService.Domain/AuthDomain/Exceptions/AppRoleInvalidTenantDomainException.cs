@@ -7,9 +7,9 @@ namespace Hhs.IdentityService.Domain.AuthDomain.Exceptions;
 internal sealed class AppRoleInvalidTenantDomainException : BusinessException
 {
     public AppRoleInvalidTenantDomainException(IStringLocalizer localizer, string tenantDomain)
-        : base(errorMessage: localizer[DomainErrorCodes.InvalidTenantDomainError])
+        : base(errorMessage: localizer[DomainErrorCodes.TenantNotFound])
     {
-        ErrorCode = DomainErrorCodes.InvalidTenantDomainError.Split(':').LastOrDefault();
+        ErrorCode = DomainErrorCodes.TenantNotFound.Split(':').LastOrDefault();
         WithData(localizer["TenantDomain"], tenantDomain ?? string.Empty);
     }
 }

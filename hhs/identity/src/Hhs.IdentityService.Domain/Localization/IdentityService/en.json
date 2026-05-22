@@ -2,7 +2,7 @@
   "culture": "en",
   "texts": {
     "Error:IdentityService:000010": "Unauthorized Tenant",
-    "Error:IdentityService:000011": "Invalid Tenant Domain",
+    "Error:IdentityService:000011": "Tenant Not Found",
     "Error:IdentityService:000100": "User Identity Error",
     "Error:IdentityService:000101": "User Not Found",
     "Error:IdentityService:000102": "User Username Duplicate",

@@ -62,7 +62,8 @@ public sealed class AppRole : AuditedEntity<Guid>, ISoftDelete, IMultiTenant
 
     internal void SetName(string name)
     {
-        Name = LocalizedModelValidator.NotNullOrWhiteSpace(name, $"{nameof(AppRole)}:{nameof(Name)}", AppRoleConsts.NameMaxLength);
+        string checkRoleName = LocalizedModelValidator.NotNullOrWhiteSpace(name, $"{nameof(AppRole)}:{nameof(Name)}", AppRoleConsts.NameMaxLength);
+        Name = StringOperations.Minimize(StringOperations.ReplaceInvalidChars(checkRoleName));
         NormalizedName = StringOperations.Normalize(Name);
     }
 }

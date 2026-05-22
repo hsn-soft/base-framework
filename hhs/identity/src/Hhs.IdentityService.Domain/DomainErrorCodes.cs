@@ -5,7 +5,7 @@ public static class DomainErrorCodes
     public const string FakeNotFound = "Error:IdentityService:000311";
 
     public const string UnauthorizedTenantError = "Error:IdentityService:000010";
-    public const string InvalidTenantDomainError = "Error:IdentityService:000011";
+    public const string TenantNotFound = "Error:IdentityService:000011";
 
     public const string AppUserIdentityError = "Error:IdentityService:000100";
     public const string AppUserNotFound = "Error:IdentityService:000101";

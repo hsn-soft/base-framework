@@ -1,4 +1,3 @@
-using System.Globalization;
 using Hhs.IdentityService.Domain.AuthDomain.Consts;
 using Hhs.IdentityService.Domain.TenantDomain.Entities;
 using Hhs.Shared.Helper.Utils;
@@ -120,14 +119,14 @@ public sealed class AppUser : AuditedEntity<Guid>, ISoftDelete, IMultiTenant
     internal void SetUserName(string userName)
     {
         string checkUserName = LocalizedModelValidator.NotNullOrWhiteSpace(userName, $"{nameof(AppRole)}:{nameof(UserName)}", AppUserConsts.UserNameMaxLength);
-        UserName = StringOperations.Minimize(checkUserName);
+        UserName = StringOperations.Minimize(StringOperations.ReplaceInvalidChars(checkUserName));
         NormalizedUserName = StringOperations.Normalize(UserName);
     }
 
     internal void SetEmail(string email)
     {
         string checkEmail = LocalizedModelValidator.NotNullOrWhiteSpace(email, $"{nameof(AppRole)}:{nameof(Email)}", AppUserConsts.EmailMaxLength);
-        Email = StringOperations.Minimize(checkEmail);
+        Email = StringOperations.Minimize(StringOperations.ReplaceInvalidChars(checkEmail, isEmail: true));
         NormalizedEmail = StringOperations.Normalize(Email);
     }
 
@@ -145,10 +144,11 @@ public sealed class AppUser : AuditedEntity<Guid>, ISoftDelete, IMultiTenant
     {
         if (!string.IsNullOrWhiteSpace(defaultLanguage))
         {
-            LanguageCode = LocalizedModelValidator.Length(defaultLanguage, $"{nameof(AppUser)}:{nameof(LanguageCode)}", AppUserConsts.LanguageCodeMaxLength);
+            string checkCode = LocalizedModelValidator.Length(defaultLanguage, $"{nameof(AppUser)}:{nameof(LanguageCode)}", AppUserConsts.LanguageCodeMaxLength);
+            LanguageCode = StringOperations.Minimize(StringOperations.ReplaceInvalidChars(checkCode));
 
             string[] acceptableLanguages = ["en", "ru", "tr"];
-            if (!acceptableLanguages.Contains((LanguageCode ?? "").ToLower(new CultureInfo("en-US"))))
+            if (!acceptableLanguages.Contains((LanguageCode ?? "")))
             {
                 LanguageCode = null;
             }

@@ -235,20 +235,18 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
 
             modelBuilder.Entity("Hhs.IdentityService.Domain.AuthDomain.Entities.AppUserRole", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("RoleId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("UserId")
+                    b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
-                    b.HasKey("Id");
+                    b.HasKey("UserId", "RoleId");
 
                     b.HasIndex("RoleId");
-
-                    b.HasIndex("UserId", "RoleId");
 
                     b.ToTable("AppUserRoles", (string)null);
                 });

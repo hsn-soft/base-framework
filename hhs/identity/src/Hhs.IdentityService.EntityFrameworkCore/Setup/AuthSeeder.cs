@@ -273,7 +273,7 @@ public static class AuthSeeder
 
         if (!hasRole)
         {
-            db.AppUserRoles.Add(new AppUserRole { UserId = user.Id, RoleId = role.Id });
+            db.AppUserRoles.Add(new AppUserRole(user.Id, role.Id));
 
             await db.SaveChangesAsync();
         }

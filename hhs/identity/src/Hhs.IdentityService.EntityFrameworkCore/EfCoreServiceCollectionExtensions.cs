@@ -56,6 +56,7 @@ public static class EfCoreServiceCollectionExtensions
         services.AddScoped<ITenantRepository, EfCoreTenantRepository>();
         services.AddScoped<IAppRoleRepository, EfCoreAppRoleRepository>();
         services.AddScoped<IAppUserRepository, EfCoreAppUserRepository>();
+        services.AddScoped<IAppUserRoleRepository, EfCoreAppUserRoleRepository>();
 
         return services;
     }

@@ -31,7 +31,6 @@ public interface IAppUserRepository : IReadOnlyGenericRepository<AppUser, Guid>
     Task<AppUser> UpdateAsync(Guid id,
         [NotNull] string userName,
         [NotNull] string email,
-        bool isStatic = false,
         [CanBeNull] string displayName = null,
         [CanBeNull] string avatarSuffixUrl = null,
         [CanBeNull] string phoneNumber = null,

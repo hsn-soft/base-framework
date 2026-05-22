@@ -5,7 +5,7 @@ using Microsoft.Extensions.Localization;
 namespace Hhs.IdentityService.Domain.AuthDomain.Exceptions;
 
 [Serializable]
-internal sealed class AppUserNotFoundException : BusinessException
+public sealed class AppUserNotFoundException : BusinessException
 {
     public AppUserNotFoundException(IStringLocalizer localizer, string referenceCode)
         : base(errorMessage: localizer[DomainErrorCodes.AppUserNotFound])

@@ -13,7 +13,11 @@ public class ApplicationAutoMapperProfile : Profile
             .ForMember(dest => dest.TenantName,
                 opt => opt.MapFrom(source => source.Tenant.Name))
             .ForMember(dest => dest.Roles,
-                opt => opt.MapFrom(source => source.UserRoles.Select(ur => ur.Role.Name)));
+                opt => opt.MapFrom(source =>
+                    source.UserRoles
+                        .Where(ur => ur.Role != null)
+                        .Select(ur => ur.Role.Name)
+                        .ToList()));
 
         CreateMap<AppRole, AppRoleDto>()
             .ForMember(dest => dest.TenantName,

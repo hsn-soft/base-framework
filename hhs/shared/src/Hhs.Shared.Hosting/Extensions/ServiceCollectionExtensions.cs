@@ -29,6 +29,7 @@ using JetBrains.Annotations;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -145,42 +146,68 @@ public static class ServiceCollectionExtensions
                         ValidTypes = ["JWT"]
                     };
 
-                    // options.Events = new JwtBearerEvents
-                    // {
-                    //     OnTokenValidated = async context =>
-                    //     {
-                    //         var db = context.HttpContext.RequestServices.GetRequiredService<AuthServiceDbContext>();
-                    //
-                    //         var userId = context.Principal?.FindFirstValue(ClaimTypes.NameIdentifier);
-                    //         var securityStamp = context.Principal?.FindFirstValue("security_stamp");
-                    //         var jti = context.Principal?.FindFirstValue(JwtRegisteredClaimNames.Jti);
-                    //
-                    //         if (!Guid.TryParse(userId, out var parsedUserId))
-                    //         {
-                    //             context.Fail("Invalid user id.");
-                    //             return;
-                    //         }
-                    //
-                    //         var user = await db.AuthUsers.FirstOrDefaultAsync(x => x.Id == parsedUserId);
-                    //
-                    //         if (user is null || !user.IsActive || user.SecurityStamp != securityStamp)
-                    //         {
-                    //             context.Fail("Invalid security stamp.");
-                    //             return;
-                    //         }
-                    //
-                    //         if (!string.IsNullOrWhiteSpace(jti))
-                    //         {
-                    //             bool revoked = await db.AuthTokenRevocations.AnyAsync(x => x.Jti == jti);
-                    //
-                    //             if (revoked)
-                    //             {
-                    //                 context.Fail("Token revoked.");
-                    //                 return;
-                    //             }
-                    //         }
-                    //     }
-                    // };
+                    options.Events = new JwtBearerEvents
+                    {
+                        OnChallenge = async context =>
+                        {
+                            context.HandleResponse();
+
+                            var writer = context.HttpContext.RequestServices.GetRequiredService<IApiResponseWriter>();
+                            var statusProvider = context.HttpContext.RequestServices.GetRequiredService<IStatusMessageProvider>();
+
+                            await writer.WriteErrorAsync(
+                                context.HttpContext,
+                                StatusCodes.Status401Unauthorized,
+                                [statusProvider.GetMessage(StatusCodes.Status401Unauthorized)],
+                                "unauthorized");
+                        },
+
+                        OnForbidden = async context =>
+                        {
+                            var writer = context.HttpContext.RequestServices.GetRequiredService<IApiResponseWriter>();
+                            var statusProvider = context.HttpContext.RequestServices.GetRequiredService<IStatusMessageProvider>();
+
+                            await writer.WriteErrorAsync(
+                                context.HttpContext,
+                                StatusCodes.Status403Forbidden,
+                                [statusProvider.GetMessage(StatusCodes.Status403Forbidden)],
+                                "forbidden");
+                        },
+
+                        // OnTokenValidated = async context =>
+                        // {
+                        //     // var db = context.HttpContext.RequestServices.GetRequiredService<AuthServiceDbContext>();
+                        //
+                        //     var userId = context.Principal?.FindFirstValue(ClaimTypes.NameIdentifier);
+                        //     // var securityStamp = context.Principal?.FindFirstValue("security_stamp");
+                        //     var jti = context.Principal?.FindFirstValue(JwtRegisteredClaimNames.Jti);
+                        //
+                        //     if (!Guid.TryParse(userId, out var parsedUserId))
+                        //     {
+                        //         context.Fail("Invalid user id.");
+                        //         return;
+                        //     }
+                        //
+                        //     var user = await db.AuthUsers.FirstOrDefaultAsync(x => x.Id == parsedUserId);
+                        //
+                        //     if (user is null || !user.IsActive || user.SecurityStamp != securityStamp)
+                        //     {
+                        //         context.Fail("Invalid security stamp.");
+                        //         return;
+                        //     }
+                        //
+                        //     if (!string.IsNullOrWhiteSpace(jti))
+                        //     {
+                        //         bool revoked = await db.AuthTokenRevocations.AnyAsync(x => x.Jti == jti);
+                        //
+                        //         if (revoked)
+                        //         {
+                        //             context.Fail("Token revoked.");
+                        //             return;
+                        //         }
+                        //     }
+                        // }
+                    };
                 });
 
             return services;

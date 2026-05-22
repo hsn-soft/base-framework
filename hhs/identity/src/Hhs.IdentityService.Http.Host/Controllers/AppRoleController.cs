@@ -3,9 +3,7 @@ using Hhs.IdentityService.Application.Contracts.AppRoleDomain.Dtos.Filters;
 using Hhs.IdentityService.Application.Contracts.AppRoleDomain.Dtos.Submits;
 using Hhs.IdentityService.Application.Contracts.AppRoleDomain.Services;
 using Hhs.IdentityService.Controllers.Base;
-using Hhs.Shared.Contracts.Cache.ServicePermissions;
 using HsnSoft.Base.Application.Dtos;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Hhs.IdentityService.Controllers;
@@ -25,6 +23,7 @@ public sealed class AppRoleController : BaseServiceController
     public async Task<AppRoleDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
         => await _appRoleAppService.GetAsync(id, cancellationToken);
 
+    // [Authorize(IdentityServicePermissions.AppRoles.PageView)]
     [HttpPost("paged-list")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<PagedDataResultDto<AppRoleDto>> GetPagedListAsync([FromBody] GetAppRolesPaged pagedInput, CancellationToken cancellationToken = default)
@@ -40,18 +39,18 @@ public sealed class AppRoleController : BaseServiceController
     public async Task<List<AppRoleDto>> GetSearchListAsync([FromBody] GetAppRolesSearch searchInput, CancellationToken cancellationToken = default)
         => await _appRoleAppService.GetSearchListAsync(searchInput, cancellationToken);
 
-    [Authorize(IdentityServicePermissions.AppRoles.Create)]
+    // [Authorize(IdentityServicePermissions.AppRoles.Create)]
     [HttpPost("create")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<AppRoleDto> CreateAsync([FromBody] AppRoleCreateDto input) => await _appRoleAppService.CreateAsync(input);
 
-    [Authorize(IdentityServicePermissions.AppRoles.Update)]
+    // [Authorize(IdentityServicePermissions.AppRoles.Update)]
     [HttpPut]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task UpdateAsync([FromBody] AppRoleUpdateDto input) => await _appRoleAppService.UpdateAsync(input);
 
-    [Authorize(IdentityServicePermissions.AppRoles.Delete)]
+    // [Authorize(IdentityServicePermissions.AppRoles.Delete)]
     [HttpDelete("{id}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task DeleteAsync(Guid id) => await _appRoleAppService.DeleteAsync(id);
 }

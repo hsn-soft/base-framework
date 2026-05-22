@@ -2,7 +2,7 @@
   "culture": "tr",
   "texts": {
     "Error:IdentityService:000010": "Firma Erişim Yetkisi Hatası",
-    "Error:IdentityService:000011": "Geçersiz Firma Profili",
+    "Error:IdentityService:000011": "Firma bulunamadı",
     "Error:IdentityService:000100": "Kullanıcı Kimlik Hatası",
     "Error:IdentityService:000101": "Kullanıcı Bulunamadı",
     "Error:IdentityService:000102": "Kullanıcı daha önceden oluşturulmuş",

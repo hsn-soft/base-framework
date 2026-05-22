@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
 {
     [DbContext(typeof(IdentityServiceDbContext))]
-    [Migration("20260521154446_InitialCreate")]
+    [Migration("20260522020307_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -238,20 +238,18 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
 
             modelBuilder.Entity("Hhs.IdentityService.Domain.AuthDomain.Entities.AppUserRole", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("RoleId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("UserId")
+                    b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
-                    b.HasKey("Id");
+                    b.HasKey("UserId", "RoleId");
 
                     b.HasIndex("RoleId");
-
-                    b.HasIndex("UserId", "RoleId");
 
                     b.ToTable("AppUserRoles", (string)null);
                 });
