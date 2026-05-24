@@ -14,6 +14,7 @@ using HsnSoft.Base.Application.Dtos;
 using HsnSoft.Base.Domain.Models;
 using HsnSoft.Base.Logging.Abstracts;
 using HsnSoft.Base.Reflection;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Hhs.IdentityService.Application.Services;
@@ -71,6 +72,7 @@ public sealed class AppRoleAppService : ApplicationServiceBase, IAppRoleAppServi
             options: new PagedQueryOptions<AppRole>
             {
                 Filter = filter,
+                IncludeEntity = q => q.Include(x => x.Tenant),
                 OrderByDynamic = string.IsNullOrWhiteSpace(pagedInput.SortingText)
                     ? AppRoleConsts.GetDefaultSorting()
                     : pagedInput.SortingText,
@@ -101,6 +103,7 @@ public sealed class AppRoleAppService : ApplicationServiceBase, IAppRoleAppServi
             options: new ListQueryOptions<AppRole>
             {
                 Filter = filter,
+                IncludeEntity = q => q.Include(x => x.Tenant),
                 OrderByDynamic = string.IsNullOrWhiteSpace(filterInput.SortingText)
                     ? AppRoleConsts.GetDefaultSorting()
                     : filterInput.SortingText,
@@ -125,6 +128,7 @@ public sealed class AppRoleAppService : ApplicationServiceBase, IAppRoleAppServi
             options: new ListQueryOptions<AppRole>
             {
                 Filter = filter,
+                IncludeEntity = q => q.Include(x => x.Tenant),
                 OrderByDynamic = string.IsNullOrWhiteSpace(searchInput.SortingText)
                     ? AppRoleConsts.GetDefaultSorting()
                     : searchInput.SortingText,

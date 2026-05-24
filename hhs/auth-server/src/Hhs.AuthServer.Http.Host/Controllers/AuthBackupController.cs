@@ -15,6 +15,7 @@ using HsnSoft.Base.Domain.Models;
 using HsnSoft.Base.MultiTenancy;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Hhs.AuthServer.Controllers;
 
@@ -118,7 +119,14 @@ public sealed class AuthController : BaseServiceController //, IAuthAppService
             Tenant checkedTenant = null;
             using (_dataFilter.Disable<IMultiTenant>()) // anonymous user , unknown tenant
             {
-                mailList = await _appUserRepository.GetListAsync(new ListQueryOptions<AppUser>() { Filter = x => x.NormalizedEmail == input.Email });
+                mailList = await _appUserRepository.GetListAsync(new ListQueryOptions<AppUser>()
+                {
+                    Filter = x => x.NormalizedEmail == input.Email,
+                    IncludeEntity = q => q
+                        .Include(x => x.Tenant)
+                        .Include(x => x.UserRoles)
+                        .ThenInclude(x => x.Role)
+                });
             }
 
             if (mailList is { Count: > 0 })

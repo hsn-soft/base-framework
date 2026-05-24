@@ -13,7 +13,7 @@ public class EfCoreUserService(IEfCoreUserRepository userRepository, IUnitOfWork
 {
     public async Task<UserDto> GetUserByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var user = await userRepository.GetByIdAsync(id, cancellationToken);
+        var user = await userRepository.GetByIdAsync(id, cancellationToken: cancellationToken);
         return mapper.Map<UserDto>(user);
     }
 
@@ -21,7 +21,8 @@ public class EfCoreUserService(IEfCoreUserRepository userRepository, IUnitOfWork
     {
         var user = await userRepository.GetFirstOrDefaultAsync(
             x => x.FirstName == input.FirstName,
-            s => new UserDto { Id = s.Id, FullName = s.FirstName + " " + s.LastName, Email = s.Email },
+            selector: s => new UserDto { Id = s.Id, FullName = s.FirstName + " " + s.LastName, Email = s.Email },
+            includeEntity: null,
             o => o.OrderByDescending(n => n.Email),
             cancellationToken);
 
@@ -153,7 +154,7 @@ public class EfCoreUserService(IEfCoreUserRepository userRepository, IUnitOfWork
         //     users.Add(new User(Guid.NewGuid(), "test") { FirstName = (i + 1).ToString() });
         // }
 
-        return await userRepository.InsertAsync(new User(Guid.NewGuid(), Guid.Empty, "test"+Guid.NewGuid().ToString("N")) { FirstName = input.FullName }, cancellationToken: cancellationToken);
+        return await userRepository.InsertAsync(new User(Guid.NewGuid(), Guid.Empty, "test" + Guid.NewGuid().ToString("N")) { FirstName = input.FullName }, cancellationToken: cancellationToken);
     }
 
     public async Task<int> UpdateUserAsync(UpdateUserDto input, CancellationToken cancellationToken = default)

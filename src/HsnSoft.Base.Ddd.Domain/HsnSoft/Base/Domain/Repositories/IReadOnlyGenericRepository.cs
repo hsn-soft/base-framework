@@ -14,24 +14,33 @@ public interface IReadOnlyGenericRepository<TEntity, in TKey> : IRepository wher
 {
     Task<TEntity> GetByIdAsync(
         TKey id,
+        [CanBeNull] Func<IQueryable<TEntity>, IQueryable<TEntity>> includeEntity  = null,
         CancellationToken cancellationToken = default
     );
 
     Task<TResult> GetByIdAsync<TResult>(
         TKey id,
         Expression<Func<TEntity, TResult>> selector,
+        [CanBeNull] Func<IQueryable<TEntity>, IQueryable<TEntity>> includeEntity  = null,
         CancellationToken cancellationToken = default
     ) where TResult : class;
 
     Task<TResult> GetByIdAsync<TResult>(
         TKey id,
         AutoMapper.IConfigurationProvider configuration,
+        [CanBeNull] Func<IQueryable<TEntity>, IQueryable<TEntity>> includeEntity  = null,
         CancellationToken cancellationToken = default
     ) where TResult : class;
+
+
+
+
+
 
     [ItemCanBeNull]
     Task<TEntity> GetByIdOrDefaultAsync(
         TKey id,
+        [CanBeNull] Func<IQueryable<TEntity>, IQueryable<TEntity>> includeEntity  = null,
         CancellationToken cancellationToken = default
     );
 
@@ -39,6 +48,7 @@ public interface IReadOnlyGenericRepository<TEntity, in TKey> : IRepository wher
     Task<TResult> GetByIdOrDefaultAsync<TResult>(
         TKey id,
         Expression<Func<TEntity, TResult>> selector,
+        [CanBeNull] Func<IQueryable<TEntity>, IQueryable<TEntity>> includeEntity  = null,
         CancellationToken cancellationToken = default
     ) where TResult : class;
 
@@ -46,29 +56,46 @@ public interface IReadOnlyGenericRepository<TEntity, in TKey> : IRepository wher
     Task<TResult> GetByIdOrDefaultAsync<TResult>(
         TKey id,
         AutoMapper.IConfigurationProvider configuration,
+        [CanBeNull] Func<IQueryable<TEntity>, IQueryable<TEntity>> includeEntity  = null,
         CancellationToken cancellationToken = default
     ) where TResult : class;
+
+
+
+
+
+
 
     Task<TEntity> GetSingleAsync(
         Expression<Func<TEntity, bool>> predicate,
+        [CanBeNull] Func<IQueryable<TEntity>, IQueryable<TEntity>> includeEntity  = null,
         CancellationToken cancellationToken = default
     );
 
     Task<TResult> GetSingleAsync<TResult>(
         Expression<Func<TEntity, bool>> predicate,
         Expression<Func<TEntity, TResult>> selector,
+        [CanBeNull] Func<IQueryable<TEntity>, IQueryable<TEntity>> includeEntity  = null,
         CancellationToken cancellationToken = default
     ) where TResult : class;
 
     Task<TResult> GetSingleAsync<TResult>(
         Expression<Func<TEntity, bool>> predicate,
         AutoMapper.IConfigurationProvider configuration,
+        [CanBeNull] Func<IQueryable<TEntity>, IQueryable<TEntity>> includeEntity  = null,
         CancellationToken cancellationToken = default
     ) where TResult : class;
+
+
+
+
+
+
 
     [ItemCanBeNull]
     Task<TEntity> GetSingleOrDefaultAsync(
         Expression<Func<TEntity, bool>> predicate,
+        [CanBeNull] Func<IQueryable<TEntity>, IQueryable<TEntity>> includeEntity  = null,
         CancellationToken cancellationToken = default
     );
 
@@ -76,6 +103,7 @@ public interface IReadOnlyGenericRepository<TEntity, in TKey> : IRepository wher
     Task<TResult> GetSingleOrDefaultAsync<TResult>(
         Expression<Func<TEntity, bool>> predicate,
         Expression<Func<TEntity, TResult>> selector,
+        [CanBeNull] Func<IQueryable<TEntity>, IQueryable<TEntity>> includeEntity  = null,
         CancellationToken cancellationToken = default
     ) where TResult : class;
 
@@ -83,13 +111,22 @@ public interface IReadOnlyGenericRepository<TEntity, in TKey> : IRepository wher
     Task<TResult> GetSingleOrDefaultAsync<TResult>(
         Expression<Func<TEntity, bool>> predicate,
         AutoMapper.IConfigurationProvider configuration,
+        [CanBeNull] Func<IQueryable<TEntity>, IQueryable<TEntity>> includeEntity  = null,
         CancellationToken cancellationToken = default
     ) where TResult : class;
+
+
+
+
+
+
 
     [ItemCanBeNull]
     Task<TEntity> GetFirstOrDefaultAsync(
         Expression<Func<TEntity, bool>> predicate,
+        [CanBeNull] Func<IQueryable<TEntity>, IQueryable<TEntity>> includeEntity  = null,
         [CanBeNull] Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderByEntity = null,
+
         CancellationToken cancellationToken = default
     );
 
@@ -97,7 +134,9 @@ public interface IReadOnlyGenericRepository<TEntity, in TKey> : IRepository wher
     Task<TResult> GetFirstOrDefaultAsync<TResult>(
         Expression<Func<TEntity, bool>> predicate,
         Expression<Func<TEntity, TResult>> selector,
+        [CanBeNull] Func<IQueryable<TEntity>, IQueryable<TEntity>> includeEntity  = null,
         [CanBeNull] Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderByEntity = null,
+
         CancellationToken cancellationToken = default
     ) where TResult : class;
 
@@ -105,9 +144,16 @@ public interface IReadOnlyGenericRepository<TEntity, in TKey> : IRepository wher
     Task<TResult> GetFirstOrDefaultAsync<TResult>(
         Expression<Func<TEntity, bool>> predicate,
         AutoMapper.IConfigurationProvider configuration,
+        [CanBeNull] Func<IQueryable<TEntity>, IQueryable<TEntity>> includeEntity  = null,
         [CanBeNull] Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderByEntity = null,
+
         CancellationToken cancellationToken = default
     ) where TResult : class;
+
+
+
+
+
 
     Task<List<TEntity>> GetListAsync(
         ListQueryOptions<TEntity> options,
@@ -126,6 +172,11 @@ public interface IReadOnlyGenericRepository<TEntity, in TKey> : IRepository wher
         CancellationToken cancellationToken = default
     );
 
+
+
+
+
+
     Task<PagedQueryResult<TEntity>> GetPageListAsync(
         PagedQueryOptions<TEntity> options,
         CancellationToken cancellationToken = default
@@ -142,6 +193,11 @@ public interface IReadOnlyGenericRepository<TEntity, in TKey> : IRepository wher
         AutoMapper.IConfigurationProvider configuration,
         CancellationToken cancellationToken = default
     );
+
+
+
+
+
 
     Task<long> GetCountAsync(
         [CanBeNull] Expression<Func<TEntity, bool>> filter = null,

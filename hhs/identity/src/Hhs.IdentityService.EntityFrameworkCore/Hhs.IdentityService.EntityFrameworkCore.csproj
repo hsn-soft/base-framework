@@ -16,8 +16,6 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="$(MicrosoftEntityFrameworkCorePackageVersion)" />
-        <!--        <PackageReference Include="HsnSoft.Base.EntityFrameworkCore.PostgreSql" Version="$(HsnSoftFrameworkVersion)" />-->
-        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.EntityFrameworkCore.PostgreSql\HsnSoft.Base.EntityFrameworkCore.PostgreSql.csproj" />
    </ItemGroup>
 
     <ItemGroup>

@@ -58,6 +58,7 @@ public class MongoGenericRepository<TEntity, TKey> :
     public override async Task<TResult> GetByIdAsync<TResult>(
         TKey id,
         Expression<Func<TEntity, TResult>> selector,
+        Func<IQueryable<TEntity>, IQueryable<TEntity>> includeEntity = null,
         CancellationToken cancellationToken = default)
     {
         var filter = Builders<TEntity>.Filter.Eq(doc => doc.Id, id);
@@ -77,6 +78,7 @@ public class MongoGenericRepository<TEntity, TKey> :
     public override async Task<TResult> GetByIdOrDefaultAsync<TResult>(
         TKey id,
         Expression<Func<TEntity, TResult>> selector,
+        Func<IQueryable<TEntity>, IQueryable<TEntity>> includeEntity = null,
         CancellationToken cancellationToken = default)
     {
         var filter = Builders<TEntity>.Filter.Eq(doc => doc.Id, id);
@@ -96,6 +98,7 @@ public class MongoGenericRepository<TEntity, TKey> :
     public override Task<TResult> GetSingleOrDefaultAsync<TResult>(
         Expression<Func<TEntity, bool>> predicate,
         Expression<Func<TEntity, TResult>> selector,
+        Func<IQueryable<TEntity>, IQueryable<TEntity>> includeEntity = null,
         CancellationToken cancellationToken = default)
     {
         var results = QueryGetSingleOrDefault(predicate).Select(selector).ToList();
@@ -110,6 +113,7 @@ public class MongoGenericRepository<TEntity, TKey> :
     public override Task<TResult> GetSingleOrDefaultAsync<TResult>(
         Expression<Func<TEntity, bool>> predicate,
         IConfigurationProvider configuration,
+        Func<IQueryable<TEntity>, IQueryable<TEntity>> includeEntity = null,
         CancellationToken cancellationToken = default)
     {
         var results = QueryGetSingleOrDefault(predicate).ProjectTo<TResult>(configuration).ToList();
@@ -126,12 +130,14 @@ public class MongoGenericRepository<TEntity, TKey> :
     public override Task<TResult> GetFirstOrDefaultAsync<TResult>(
         Expression<Func<TEntity, bool>> predicate,
         Expression<Func<TEntity, TResult>> selector,
+        Func<IQueryable<TEntity>, IQueryable<TEntity>> includeEntity = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderByEntity = null,
         CancellationToken cancellationToken = default) => Task.FromResult(QueryGetFirstOrDefault(predicate, orderByEntity).Select(selector).FirstOrDefault());
 
     public override Task<TResult> GetFirstOrDefaultAsync<TResult>(
         Expression<Func<TEntity, bool>> predicate,
         IConfigurationProvider configuration,
+        Func<IQueryable<TEntity>, IQueryable<TEntity>> includeEntity = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderByEntity = null,
         CancellationToken cancellationToken = default) => Task.FromResult(QueryGetFirstOrDefault(predicate, orderByEntity).ProjectTo<TResult>(configuration).FirstOrDefault());
 
@@ -144,6 +150,8 @@ public class MongoGenericRepository<TEntity, TKey> :
         if (orderByEntity != null) query = orderByEntity(query);
         return query;
     }
+
+
 
     public override Task<List<TResult>> GetListAsync<TResult>(
         ListQueryOptions<TEntity> options,

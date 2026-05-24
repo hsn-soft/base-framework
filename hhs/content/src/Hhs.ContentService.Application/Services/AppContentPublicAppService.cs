@@ -94,10 +94,7 @@ public sealed class AppContentPublicAppService(
             result = contentStatusModel.OperationStatus switch
             {
                 AppContentOperationStates.OperationFail => new GetOrCreateAppContentResponseDto { ContentType = AppContentPublicType.APP_CONTENT, ContentId = contentStatusModel.AppContentId, ContentStatus = AppContentPublicStatus.FAILED },
-                AppContentOperationStates.OperationSuccess => new GetOrCreateAppContentResponseDto
-                {
-                    ContentType = AppContentPublicType.APP_CONTENT, ContentId = contentStatusModel.AppContentId, ContentStatus = AppContentPublicStatus.READY, ContentVideoUrl = contentStatusModel.StorageVideoUrl
-                },
+                AppContentOperationStates.OperationSuccess => new GetOrCreateAppContentResponseDto { ContentType = AppContentPublicType.APP_CONTENT, ContentId = contentStatusModel.AppContentId, ContentStatus = AppContentPublicStatus.READY, ContentVideoUrl = contentStatusModel.StorageVideoUrl },
                 _ => new GetOrCreateAppContentResponseDto { ContentType = AppContentPublicType.APP_CONTENT, ContentId = contentStatusModel.AppContentId, ContentStatus = AppContentPublicStatus.PROCESSING }
             };
 
@@ -117,10 +114,7 @@ public sealed class AppContentPublicAppService(
 
                 if (analysisContent != null)
                 {
-                    result = new GetOrCreateAppContentResponseDto
-                    {
-                        ContentType = AppContentPublicType.ANALYSIS_CONTENT, ContentId = analysisContent.Id, ContentStatus = AppContentPublicStatus.READY, ContentVideoUrl = analysisContent.StorageVideoUrl
-                    };
+                    result = new GetOrCreateAppContentResponseDto { ContentType = AppContentPublicType.ANALYSIS_CONTENT, ContentId = analysisContent.Id, ContentStatus = AppContentPublicStatus.READY, ContentVideoUrl = analysisContent.StorageVideoUrl };
                 }
                 else
                 {
@@ -136,10 +130,7 @@ public sealed class AppContentPublicAppService(
 
                     if (analysisContent != null)
                     {
-                        result = new GetOrCreateAppContentResponseDto
-                        {
-                            ContentType = AppContentPublicType.ANALYSIS_CONTENT, ContentId = analysisContent.Id, ContentStatus = AppContentPublicStatus.READY, ContentVideoUrl = analysisContent.StorageVideoUrl
-                        };
+                        result = new GetOrCreateAppContentResponseDto { ContentType = AppContentPublicType.ANALYSIS_CONTENT, ContentId = analysisContent.Id, ContentStatus = AppContentPublicStatus.READY, ContentVideoUrl = analysisContent.StorageVideoUrl };
                     }
                 }
             }
@@ -283,7 +274,7 @@ public sealed class AppContentPublicAppService(
             return;
         }
 
-        string clientDomain = await clientRepository.GetSingleOrDefaultAsync(x => x.Id == input.CustomerId && x.IsBlocked == false, s => s.DomainName, cancellationToken);
+        string clientDomain = await clientRepository.GetSingleOrDefaultAsync(x => x.Id == input.CustomerId && x.IsBlocked == false, selector: s => s.DomainName, cancellationToken: cancellationToken);
         if (clientDomain == null)
         {
             throw new ClientInvalidDomainException(L, input.CustomerId.ToString())

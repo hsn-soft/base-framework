@@ -13,7 +13,7 @@
         <Description>TechSummus Hhs Identity Service Application</Description>
         <PackageTags>TechSummus Hhs Identity Service Application</PackageTags>
     </PropertyGroup>
-
+    
     <ItemGroup>
 <!--        <PackageReference Include="HsnSoft.Base.Ddd.Application" Version="$(HsnSoftFrameworkVersion)" />-->
 <!--        <PackageReference Include="HsnSoft.Base.Authorization" Version="$(HsnSoftFrameworkVersion)" />-->
@@ -31,5 +31,7 @@
     <ItemGroup>
         <ProjectReference Include="..\Hhs.IdentityService.Domain\Hhs.IdentityService.Domain.csproj" />
     </ItemGroup>
+
+
 
 </Project>

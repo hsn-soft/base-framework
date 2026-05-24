@@ -13,8 +13,10 @@
         <Description>TechSummus Hhs Identity Service Domain</Description>
         <PackageTags>TechSummus Hhs Identity Service Domain</PackageTags>
     </PropertyGroup>
-
+    
     <ItemGroup>
+        <!--        <PackageReference Include="HsnSoft.Base.EntityFrameworkCore.PostgreSql" Version="$(HsnSoftFrameworkVersion)" />-->
+        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.EntityFrameworkCore.PostgreSql\HsnSoft.Base.EntityFrameworkCore.PostgreSql.csproj" />
         <!--        <PackageReference Include="HsnSoft.Base.Ddd.Domain" Version="$(HsnSoftFrameworkVersion)" />-->
         <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.Ddd.Domain\HsnSoft.Base.Ddd.Domain.csproj" />
 
