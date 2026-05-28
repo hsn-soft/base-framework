@@ -19,8 +19,8 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
     public async Task GetByIdAsync_ShouldReturn_WhenEntityExists()
     {
         // Arrange
-        using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
-        var expected = new TestEntity(Guid.NewGuid(), "Tester", 61);
+        using var context = new TestMongoDbContext($"{_connectionString}{Guid.CreateVersion7():N}");
+        var expected = new TestEntity(Guid.CreateVersion7(), "Tester", 61);
         await context.TestEntities.InsertOneAsync(expected);
         var repo = new MongoGenericRepository<TestEntity, Guid>(null, context);
 
@@ -36,12 +36,12 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
     public async Task GetByIdAsync_ShouldThrow_WhenEntityNotFound()
     {
         // Arrange
-        using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
+        using var context = new TestMongoDbContext($"{_connectionString}{Guid.CreateVersion7():N}");
         var repo = new MongoGenericRepository<TestEntity, Guid>(null, context);
 
         // Throw Act & Assert
         await FluentActions
-            .Invoking(() => repo.GetByIdAsync(Guid.NewGuid()))
+            .Invoking(() => repo.GetByIdAsync(Guid.CreateVersion7()))
             .Should()
             .ThrowAsync<EntityNotFoundException>();
     }
@@ -54,8 +54,8 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
     public async Task GetByIdOrDefaultAsync_ShouldReturn_WhenEntityExists()
     {
         // Arrange
-        using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
-        var expected = new TestEntity(Guid.NewGuid(), "Tester", 61);
+        using var context = new TestMongoDbContext($"{_connectionString}{Guid.CreateVersion7():N}");
+        var expected = new TestEntity(Guid.CreateVersion7(), "Tester", 61);
         await context.TestEntities.InsertOneAsync(expected);
         var repo = new MongoGenericRepository<TestEntity, Guid>(null, context);
 
@@ -71,11 +71,11 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
     public async Task GetByIdOrDefaultAsync_ShouldReturnNull_WhenNoEntityExists()
     {
         // Arrange
-        using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
+        using var context = new TestMongoDbContext($"{_connectionString}{Guid.CreateVersion7():N}");
         var repo = new MongoGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
-        var actual = await repo.GetByIdOrDefaultAsync(Guid.NewGuid());
+        var actual = await repo.GetByIdOrDefaultAsync(Guid.CreateVersion7());
 
         // Assert
         actual.Should().BeNull();
@@ -89,8 +89,8 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
     public async Task GetSingleAsync_ShouldReturn_WhenEntityExists()
     {
         // Arrange
-        using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
-        var expected = new TestEntity(Guid.NewGuid(), "Tester", 61);
+        using var context = new TestMongoDbContext($"{_connectionString}{Guid.CreateVersion7():N}");
+        var expected = new TestEntity(Guid.CreateVersion7(), "Tester", 61);
         await context.TestEntities.InsertOneAsync(expected);
         var repo = new MongoGenericRepository<TestEntity, Guid>(null, context);
 
@@ -118,12 +118,12 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
     public async Task GetSingleAsync_ShouldThrow_WhenEntityNotFound()
     {
         // Arrange
-        using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
+        using var context = new TestMongoDbContext($"{_connectionString}{Guid.CreateVersion7():N}");
         var repo = new MongoGenericRepository<TestEntity, Guid>(null, context);
 
         // Throw Act & Assert
         await FluentActions
-            .Invoking(() => repo.GetSingleAsync(x => x.Id == Guid.NewGuid()))
+            .Invoking(() => repo.GetSingleAsync(x => x.Id == Guid.CreateVersion7()))
             .Should()
             .ThrowAsync<EntityNotFoundException>();
     }
@@ -132,8 +132,8 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
     public async Task GetSingleAsync_ShouldThrow_WhenEntityDuplicate()
     {
         // Arrange
-        using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
-        await context.TestEntities.InsertManyAsync(new List<TestEntity> { new(Guid.NewGuid(), "Tester", 61), new(Guid.NewGuid(), "Tester", 61) }.AsReadOnly()
+        using var context = new TestMongoDbContext($"{_connectionString}{Guid.CreateVersion7():N}");
+        await context.TestEntities.InsertManyAsync(new List<TestEntity> { new(Guid.CreateVersion7(), "Tester", 61), new(Guid.CreateVersion7(), "Tester", 61) }.AsReadOnly()
         );
         var repo = new MongoGenericRepository<TestEntity, Guid>(null, context);
 
@@ -152,8 +152,8 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
     public async Task GetSingleOrDefaultAsync_ShouldReturn_WhenEntityExists()
     {
         // Arrange
-        using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
-        var expected = new TestEntity(Guid.NewGuid(), "Tester", 61);
+        using var context = new TestMongoDbContext($"{_connectionString}{Guid.CreateVersion7():N}");
+        var expected = new TestEntity(Guid.CreateVersion7(), "Tester", 61);
         await context.TestEntities.InsertOneAsync(expected);
         var repo = new MongoGenericRepository<TestEntity, Guid>(null, context);
 
@@ -181,11 +181,11 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
     public async Task GetSingleOrDefaultAsync_ShouldReturnNull_WhenNoEntityExists()
     {
         // Arrange
-        using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
+        using var context = new TestMongoDbContext($"{_connectionString}{Guid.CreateVersion7():N}");
         var repo = new MongoGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
-        var actual = await repo.GetSingleOrDefaultAsync(e => e.Id == Guid.NewGuid());
+        var actual = await repo.GetSingleOrDefaultAsync(e => e.Id == Guid.CreateVersion7());
 
         // Assert
         actual.Should().BeNull();
@@ -195,8 +195,8 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
     public async Task GetSingleOrDefaultAsync_ShouldThrow_WhenEntityDuplicate()
     {
         // Arrange
-        using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
-        await context.TestEntities.InsertManyAsync(new List<TestEntity> { new(Guid.NewGuid(), "Tester", 61), new(Guid.NewGuid(), "Tester", 61) }.AsReadOnly()
+        using var context = new TestMongoDbContext($"{_connectionString}{Guid.CreateVersion7():N}");
+        await context.TestEntities.InsertManyAsync(new List<TestEntity> { new(Guid.CreateVersion7(), "Tester", 61), new(Guid.CreateVersion7(), "Tester", 61) }.AsReadOnly()
         );
 
         var repo = new MongoGenericRepository<TestEntity, Guid>(null, context);
@@ -216,9 +216,9 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
     public async Task GetFirstOrDefaultAsync_ShouldReturnOrderFirst_WhenEntityDuplicateExists()
     {
         // Arrange
-        using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
-        var expected = new TestEntity(Guid.NewGuid(), "Tester", 61);
-        await context.TestEntities.InsertManyAsync(new List<TestEntity> { new(Guid.NewGuid(), "Tester", 18), expected }.AsReadOnly());
+        using var context = new TestMongoDbContext($"{_connectionString}{Guid.CreateVersion7():N}");
+        var expected = new TestEntity(Guid.CreateVersion7(), "Tester", 61);
+        await context.TestEntities.InsertManyAsync(new List<TestEntity> { new(Guid.CreateVersion7(), "Tester", 18), expected }.AsReadOnly());
         var repo = new MongoGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
@@ -251,11 +251,11 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
     public async Task GetFirstOrDefaultAsync_ShouldReturnNull_WhenNoEntityExists()
     {
         // Arrange
-        using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
+        using var context = new TestMongoDbContext($"{_connectionString}{Guid.CreateVersion7():N}");
         var repo = new MongoGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
-        var actual = await repo.GetFirstOrDefaultAsync(e => e.Id == Guid.NewGuid());
+        var actual = await repo.GetFirstOrDefaultAsync(e => e.Id == Guid.CreateVersion7());
 
         // Assert
         actual.Should().BeNull();
@@ -269,7 +269,7 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
     public async Task GetListAsync_ShouldReturnEmptyList_WhenNoEntityExists()
     {
         // Arrange
-        using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
+        using var context = new TestMongoDbContext($"{_connectionString}{Guid.CreateVersion7():N}");
         var repo = new MongoGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
@@ -284,10 +284,10 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
     public async Task GetListAsync_ShouldReturnList_WhenEntityExists()
     {
         // Arrange
-        using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
-        var expectedList = new List<TestEntity> { new(Guid.NewGuid(), "TesterA", 11), new(Guid.NewGuid(), "TesterA", 12) };
+        using var context = new TestMongoDbContext($"{_connectionString}{Guid.CreateVersion7():N}");
+        var expectedList = new List<TestEntity> { new(Guid.CreateVersion7(), "TesterA", 11), new(Guid.CreateVersion7(), "TesterA", 12) };
         await context.TestEntities.InsertManyAsync(expectedList);
-        await context.TestEntities.InsertManyAsync(new List<TestEntity> { new(Guid.NewGuid(), "TesterB", 21), new(Guid.NewGuid(), "TesterC", 22), new(Guid.NewGuid(), "TesterD", 23) });
+        await context.TestEntities.InsertManyAsync(new List<TestEntity> { new(Guid.CreateVersion7(), "TesterB", 21), new(Guid.CreateVersion7(), "TesterC", 22), new(Guid.CreateVersion7(), "TesterD", 23) });
         var repo = new MongoGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
@@ -368,7 +368,7 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
     public async Task GetPageListAsync_ShouldReturnEmptyList_WhenNoEntityExists()
     {
         // Arrange
-        using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
+        using var context = new TestMongoDbContext($"{_connectionString}{Guid.CreateVersion7():N}");
         var repo = new MongoGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
@@ -384,10 +384,10 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
     public async Task GetPageListAsync_ShouldReturnList_WhenEntityExists()
     {
         // Arrange
-        using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
-        var expectedList = new List<TestEntity> { new(Guid.NewGuid(), "TesterA", 11), new(Guid.NewGuid(), "TesterA", 12) };
+        using var context = new TestMongoDbContext($"{_connectionString}{Guid.CreateVersion7():N}");
+        var expectedList = new List<TestEntity> { new(Guid.CreateVersion7(), "TesterA", 11), new(Guid.CreateVersion7(), "TesterA", 12) };
         await context.TestEntities.InsertManyAsync(expectedList);
-        await context.TestEntities.InsertManyAsync(new List<TestEntity> { new(Guid.NewGuid(), "TesterB", 21), new(Guid.NewGuid(), "TesterC", 22), new(Guid.NewGuid(), "TesterD", 23) });
+        await context.TestEntities.InsertManyAsync(new List<TestEntity> { new(Guid.CreateVersion7(), "TesterB", 21), new(Guid.CreateVersion7(), "TesterC", 22), new(Guid.CreateVersion7(), "TesterD", 23) });
         var repo = new MongoGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
@@ -476,7 +476,7 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
     public async Task GetCountAsync_ShouldReturnZero_WhenNoEntityExists()
     {
         // Arrange
-        using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
+        using var context = new TestMongoDbContext($"{_connectionString}{Guid.CreateVersion7():N}");
         var repo = new MongoGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
@@ -491,10 +491,10 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
     public async Task GetCountAsync_ShouldReturnCount_WhenEntityExists()
     {
         // Arrange
-        using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
-        var expectedList = new List<TestEntity> { new(Guid.NewGuid(), "TesterA", 34), new(Guid.NewGuid(), "TesterA", 61) };
+        using var context = new TestMongoDbContext($"{_connectionString}{Guid.CreateVersion7():N}");
+        var expectedList = new List<TestEntity> { new(Guid.CreateVersion7(), "TesterA", 34), new(Guid.CreateVersion7(), "TesterA", 61) };
         await context.TestEntities.InsertManyAsync(expectedList);
-        await context.TestEntities.InsertManyAsync(new List<TestEntity> { new(Guid.NewGuid(), "TesterB", 1), new(Guid.NewGuid(), "TesterC", 2), new(Guid.NewGuid(), "TesterD", 3) });
+        await context.TestEntities.InsertManyAsync(new List<TestEntity> { new(Guid.CreateVersion7(), "TesterB", 1), new(Guid.CreateVersion7(), "TesterC", 2), new(Guid.CreateVersion7(), "TesterD", 3) });
         var repo = new MongoGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
@@ -532,11 +532,11 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
     public async Task ExistsAsync_ShouldReturnFalse_WhenNoEntityExists()
     {
         // Arrange
-        using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
+        using var context = new TestMongoDbContext($"{_connectionString}{Guid.CreateVersion7():N}");
         var repo = new MongoGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
-        bool? actual = await repo.ExistsAsync(x => x.Id == Guid.NewGuid());
+        bool? actual = await repo.ExistsAsync(x => x.Id == Guid.CreateVersion7());
 
         // Assert
         actual.Should().NotBeNull();
@@ -547,8 +547,8 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
     public async Task ExistsAsync_ShouldReturnCount_WhenEntityExists()
     {
         // Arrange
-        using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
-        await context.TestEntities.InsertOneAsync(new TestEntity(Guid.NewGuid(), "TesterA", 34));
+        using var context = new TestMongoDbContext($"{_connectionString}{Guid.CreateVersion7():N}");
+        await context.TestEntities.InsertOneAsync(new TestEntity(Guid.CreateVersion7(), "TesterA", 34));
         var repo = new MongoGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
@@ -579,8 +579,8 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
     public async Task InsertAsync_ShouldReturnCount_WhenInserted()
     {
         // Arrange
-        using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
-        var expectedEntity = new TestEntity(Guid.NewGuid(), "TesterA", 10);
+        using var context = new TestMongoDbContext($"{_connectionString}{Guid.CreateVersion7():N}");
+        var expectedEntity = new TestEntity(Guid.CreateVersion7(), "TesterA", 10);
         var repo = new MongoGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
@@ -602,8 +602,8 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
     public async Task InsertManyAsync_ShouldReturnCount_WhenInserted()
     {
         // Arrange
-        using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
-        var expectedList = new List<TestEntity> { new(Guid.NewGuid(), "TesterA", 11), new(Guid.NewGuid(), "TesterA", 12) };
+        using var context = new TestMongoDbContext($"{_connectionString}{Guid.CreateVersion7():N}");
+        var expectedList = new List<TestEntity> { new(Guid.CreateVersion7(), "TesterA", 11), new(Guid.CreateVersion7(), "TesterA", 12) };
         var repo = new MongoGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
@@ -625,8 +625,8 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
     public async Task UpdateByIdAsync_ShouldReturnUpdated_WhenEntityExists()
     {
         // Arrange
-        using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
-        var placedEntity = new TestEntity(Guid.NewGuid(), "TesterA", 10);
+        using var context = new TestMongoDbContext($"{_connectionString}{Guid.CreateVersion7():N}");
+        var placedEntity = new TestEntity(Guid.CreateVersion7(), "TesterA", 10);
         await context.TestEntities.InsertOneAsync(placedEntity);
         var repo = new MongoGenericRepository<TestEntity, Guid>(null, context);
 
@@ -642,12 +642,12 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
     public async Task UpdateByIdAsync_ShouldThrow_WhenEntityNotFound()
     {
         // Arrange
-        using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
+        using var context = new TestMongoDbContext($"{_connectionString}{Guid.CreateVersion7():N}");
         var repo = new MongoGenericRepository<TestEntity, Guid>(null, context);
 
         // Throw Act & Assert
         await FluentActions
-            .Invoking(() => repo.UpdateByIdAsync(Guid.NewGuid(), e => e.Name = "Updated"))
+            .Invoking(() => repo.UpdateByIdAsync(Guid.CreateVersion7(), e => e.Name = "Updated"))
             .Should()
             .ThrowAsync<EntityNotFoundException>();
     }
@@ -660,8 +660,8 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
     public async Task UpdateAsync_ShouldReturnCount_WhenEntityExists()
     {
         // Arrange
-        using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
-        var placedEntity = new TestEntity(Guid.NewGuid(), "TesterA", 10);
+        using var context = new TestMongoDbContext($"{_connectionString}{Guid.CreateVersion7():N}");
+        var placedEntity = new TestEntity(Guid.CreateVersion7(), "TesterA", 10);
         await context.TestEntities.InsertOneAsync(placedEntity);
         var repo = new MongoGenericRepository<TestEntity, Guid>(null, context);
 
@@ -682,8 +682,8 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
     public async Task UpdateManyAsync_ShouldReturnCount_WhenEntitiesExists()
     {
         // Arrange
-        using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
-        var placedEntities = new List<TestEntity> { new(Guid.NewGuid(), "TesterA", 10), new(Guid.NewGuid(), "TesterA", 11) };
+        using var context = new TestMongoDbContext($"{_connectionString}{Guid.CreateVersion7():N}");
+        var placedEntities = new List<TestEntity> { new(Guid.CreateVersion7(), "TesterA", 10), new(Guid.CreateVersion7(), "TesterA", 11) };
         await context.TestEntities.InsertManyAsync(placedEntities);
 
         var updatedEntities = new List<TestEntity> { new(placedEntities[0].Id, "Updated", 20), new(placedEntities[1].Id, "Updated", 21) };
@@ -706,12 +706,12 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
     public async Task DeleteByIdAsync_ShouldThrow_WhenEntityNotFound()
     {
         // Arrange
-        using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
+        using var context = new TestMongoDbContext($"{_connectionString}{Guid.CreateVersion7():N}");
         var repo = new MongoGenericRepository<TestEntity, Guid>(null, context);
 
         // Throw Act & Assert
         await FluentActions
-            .Invoking(() => repo.DeleteByIdAsync(Guid.NewGuid()))
+            .Invoking(() => repo.DeleteByIdAsync(Guid.CreateVersion7()))
             .Should()
             .ThrowAsync<EntityNotFoundException>();
     }
@@ -724,8 +724,8 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
     public async Task DeleteByIdListAsync_ShouldReturnCount_WhenEntitiesExists()
     {
         // Arrange
-        using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
-        var placedEntities = new List<TestEntity> { new(Guid.NewGuid(), "TesterA", 10), new(Guid.NewGuid(), "TesterA", 11) };
+        using var context = new TestMongoDbContext($"{_connectionString}{Guid.CreateVersion7():N}");
+        var placedEntities = new List<TestEntity> { new(Guid.CreateVersion7(), "TesterA", 10), new(Guid.CreateVersion7(), "TesterA", 11) };
         await context.TestEntities.InsertManyAsync(placedEntities);
         var repo = new MongoGenericRepository<TestEntity, Guid>(null, context);
 
@@ -742,12 +742,12 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
     public async Task DeleteByIdListAsync_ShouldThrow_WhenEntityNotFound()
     {
         // Arrange
-        using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
+        using var context = new TestMongoDbContext($"{_connectionString}{Guid.CreateVersion7():N}");
         var repo = new MongoGenericRepository<TestEntity, Guid>(null, context);
 
         // Throw Act & Assert
         await FluentActions
-            .Invoking(() => repo.DeleteByIdListAsync(new List<Guid> { Guid.NewGuid() }.AsReadOnly()))
+            .Invoking(() => repo.DeleteByIdListAsync(new List<Guid> { Guid.CreateVersion7() }.AsReadOnly()))
             .Should()
             .ThrowAsync<EntityNotFoundException>();
     }
@@ -760,8 +760,8 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
     public async Task DeleteAsync_ShouldReturnCount_WhenEntityExists()
     {
         // Arrange
-        using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
-        var placedEntity = new TestEntity(Guid.NewGuid(), "TesterA", 10);
+        using var context = new TestMongoDbContext($"{_connectionString}{Guid.CreateVersion7():N}");
+        var placedEntity = new TestEntity(Guid.CreateVersion7(), "TesterA", 10);
         await context.TestEntities.InsertOneAsync(placedEntity);
         var repo = new MongoGenericRepository<TestEntity, Guid>(null, context);
 
@@ -778,12 +778,12 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
     public async Task DeleteAsync_ShouldThrow_WhenEntityNotFound()
     {
         // Arrange
-        using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
+        using var context = new TestMongoDbContext($"{_connectionString}{Guid.CreateVersion7():N}");
         var repo = new MongoGenericRepository<TestEntity, Guid>(null, context);
 
         // Throw Act & Assert
         await FluentActions
-            .Invoking(() => repo.DeleteAsync(new TestEntity(Guid.NewGuid(), "Tester", 1)))
+            .Invoking(() => repo.DeleteAsync(new TestEntity(Guid.CreateVersion7(), "Tester", 1)))
             .Should()
             .ThrowAsync<EntityNotFoundException>();
     }
@@ -796,8 +796,8 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
     public async Task DeleteManyAsync_ShouldReturnCount_WhenEntitiesExists()
     {
         // Arrange
-        using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
-        var placedEntities = new List<TestEntity> { new(Guid.NewGuid(), "TesterA", 10), new(Guid.NewGuid(), "TesterA", 11) };
+        using var context = new TestMongoDbContext($"{_connectionString}{Guid.CreateVersion7():N}");
+        var placedEntities = new List<TestEntity> { new(Guid.CreateVersion7(), "TesterA", 10), new(Guid.CreateVersion7(), "TesterA", 11) };
         await context.TestEntities.InsertManyAsync(placedEntities);
         var repo = new MongoGenericRepository<TestEntity, Guid>(null, context);
 
@@ -841,18 +841,18 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
     public async Task DeleteManyAsync_ShouldThrow_WhenEntityNotFound()
     {
         // Arrange
-        using var context = new TestMongoDbContext($"{_connectionString}{Guid.NewGuid():N}");
+        using var context = new TestMongoDbContext($"{_connectionString}{Guid.CreateVersion7():N}");
         var repo = new MongoGenericRepository<TestEntity, Guid>(null, context);
 
         // Throw Act & Assert
         await FluentActions
-            .Invoking(() => repo.DeleteManyAsync(new List<TestEntity> { new(Guid.NewGuid(), "Tester", 61) }.AsReadOnly()))
+            .Invoking(() => repo.DeleteManyAsync(new List<TestEntity> { new(Guid.CreateVersion7(), "Tester", 61) }.AsReadOnly()))
             .Should()
             .ThrowAsync<EntityNotFoundException>();
 
         // Throw Act & Assert
         await FluentActions
-            .Invoking(() => repo.DeleteManyAsync(x => x.Id == Guid.NewGuid()))
+            .Invoking(() => repo.DeleteManyAsync(x => x.Id == Guid.CreateVersion7()))
             .Should()
             .ThrowAsync<EntityNotFoundException>();
     }

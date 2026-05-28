@@ -23,7 +23,7 @@ public static class SeedData
             // email için duplicate olmasın diye i ekledim
             string email = $"{firstName.ToLower()}.{lastName.ToLower()}{i}@mail.com";
 
-            users.Add(new User(Guid.NewGuid(), Guid.Empty, email, firstName, lastName, age));
+            users.Add(new User(Guid.CreateVersion7(), Guid.Empty, email, firstName, lastName, age));
         }
 
         return users;

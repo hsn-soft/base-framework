@@ -10,12 +10,12 @@ public abstract class AggregateRoot<TKey> : BasicAggregateRoot<TKey>,
 
     protected AggregateRoot()
     {
-        ConcurrencyStamp = Guid.NewGuid().ToString("N");
+        ConcurrencyStamp = Guid.CreateVersion7().ToString("N");
     }
 
     protected AggregateRoot(TKey id)
         : base(id)
     {
-        ConcurrencyStamp = Guid.NewGuid().ToString("N");
+        ConcurrencyStamp = Guid.CreateVersion7().ToString("N");
     }
 }

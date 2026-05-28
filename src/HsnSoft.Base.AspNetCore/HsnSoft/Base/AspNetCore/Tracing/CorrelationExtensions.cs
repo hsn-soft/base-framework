@@ -15,7 +15,7 @@ public static class CorrelationExtensions
         {
             if (!ctx.Request.Headers.TryGetValue(CorrelationIdKey, out var correlationId))
             {
-                correlationId = Guid.NewGuid().ToString("N");
+                correlationId = Guid.CreateVersion7().ToString("N");
                 ctx.Request.Headers[CorrelationIdKey] = correlationId.ToString();
             }
 

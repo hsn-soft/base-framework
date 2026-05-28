@@ -36,7 +36,7 @@ public sealed class AppRoleController : BaseServiceController
 
     [HttpPost("search-list")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<List<AppRoleDto>> GetSearchListAsync([FromBody] GetAppRolesSearch searchInput, CancellationToken cancellationToken = default)
+    public async Task<List<AppRoleSearchDto>> GetSearchListAsync([FromBody] GetAppRolesSearch searchInput, CancellationToken cancellationToken = default)
         => await _appRoleAppService.GetSearchListAsync(searchInput, cancellationToken);
 
     // [Authorize(IdentityServicePermissions.AppRoles.Create)]

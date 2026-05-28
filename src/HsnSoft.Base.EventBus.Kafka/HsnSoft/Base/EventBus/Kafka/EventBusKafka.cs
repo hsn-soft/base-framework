@@ -59,7 +59,7 @@ public class EventBusKafka : IEventBus, IDisposable
         var @event = new MessageEnvelope<TEventMessage>
         {
             ParentMessageId = parentMessage?.MessageId,
-            MessageId = Guid.NewGuid(),
+            MessageId = Guid.CreateVersion7(),
             MessageTime = DateTime.UtcNow,
             Message = eventMessage,
             Producer = _kafkaEventBusConfig.ConsumerClientInfo,
@@ -171,7 +171,7 @@ public class EventBusKafka : IEventBus, IDisposable
 
                         watch.Stop();
                         _logger.EventBusInfoLog(new ConsumeMessageLogModel(
-                            LogId: Guid.NewGuid().ToString(),
+                            LogId: Guid.CreateVersion7().ToString(),
                             CorrelationId: ((dynamic)@event)?.CorrelationId,
                             Facility: EventBusLogFacility.CONSUME_EVENT_SUCCESS.ToString(),
                             Producer: ((dynamic)@event)?.Producer,
@@ -201,7 +201,7 @@ public class EventBusKafka : IEventBus, IDisposable
 
                         watch.Stop();
                         _logger.EventBusErrorLog(new ConsumeMessageLogModel(
-                            LogId: Guid.NewGuid().ToString(),
+                            LogId: Guid.CreateVersion7().ToString(),
                             CorrelationId: ((dynamic)@event)?.CorrelationId,
                             Facility: EventBusLogFacility.CONSUME_EVENT_ERROR.ToString(),
                             Producer: ((dynamic)@event)?.Producer,

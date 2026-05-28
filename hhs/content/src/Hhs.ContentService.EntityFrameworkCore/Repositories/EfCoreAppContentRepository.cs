@@ -36,7 +36,7 @@ public sealed class EfCoreAppContentRepository : EfCoreGenericRepository<AppCont
         Guid? videoRequestId = null,
         string storageVideoUrl = null,
         string correlationId = null)
-        => await CreateAsync(id: Guid.NewGuid(),
+        => await CreateAsync(id: Guid.CreateVersion7(),
             tenantId: tenantId,
             clientId: clientId,
             slugKey: slugKey,
@@ -61,7 +61,7 @@ public sealed class EfCoreAppContentRepository : EfCoreGenericRepository<AppCont
         string storageVideoUrl = null,
         string correlationId = null)
     {
-        if (id == Guid.Empty) id = Guid.NewGuid();
+        if (id == Guid.Empty) id = Guid.CreateVersion7();
 
         // Create draft
         var draft = new AppContent(
@@ -233,7 +233,7 @@ public sealed class EfCoreAppContentRepository : EfCoreGenericRepository<AppCont
         //Domain Rule -> Content Dependency Control for Delete
         // Rule01
 
-        string guidGenerated = Guid.NewGuid().ToString("N").ToUpper();
+        string guidGenerated = Guid.CreateVersion7().ToString("N").ToUpper();
         string uniqueField = guidGenerated + "_" + entity.SlugKey;
         if (uniqueField.Length > AppContentConsts.SlugKeyMaxLength)
         {

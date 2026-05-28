@@ -24,5 +24,10 @@ public class ApplicationAutoMapperProfile : Profile
         CreateMap<AppRole, AppRoleDto>()
             .ForMember(dest => dest.TenantName,
                 opt => opt.MapFrom(source => source.Tenant != null ? source.Tenant.Name : string.Empty));
+
+        CreateMap<AppRole, AppRoleSearchDto>()
+            .ForMember(dest => dest.TenantName,
+                opt => opt.MapFrom(source => source.Tenant != null ? source.Tenant.Name : string.Empty));
+
     }
 }

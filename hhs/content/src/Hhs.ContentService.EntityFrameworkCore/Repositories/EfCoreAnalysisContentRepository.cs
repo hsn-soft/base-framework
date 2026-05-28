@@ -86,7 +86,7 @@ public sealed class EfCoreAnalysisContentRepository : EfCoreGenericRepository<An
         Guid? videoRequestId = null,
         string storageVideoUrl = null,
         string correlationId = null)
-        => await CreateAsync(id: Guid.NewGuid(),
+        => await CreateAsync(id: Guid.CreateVersion7(),
             tenantId: tenantId,
             clientId: clientId,
             analysisDate: analysisDate,
@@ -109,7 +109,7 @@ public sealed class EfCoreAnalysisContentRepository : EfCoreGenericRepository<An
         string storageVideoUrl = null,
         string correlationId = null)
     {
-        if (id == Guid.Empty) id = Guid.NewGuid();
+        if (id == Guid.Empty) id = Guid.CreateVersion7();
 
         // Create draft
         var draft = new AnalysisContent(

@@ -12,7 +12,7 @@ public class HttpContextTraceAccessor : ITraceAccesor
 
     public HttpContextTraceAccessor(IHttpContextAccessor httpContextAccessor) { _httpContextAccessor = httpContextAccessor; }
 
-    public string GetCorrelationId() => _httpContextAccessor.HttpContext?.GetCorrelationId() ?? Guid.NewGuid().ToString("N");
+    public string GetCorrelationId() => _httpContextAccessor.HttpContext?.GetCorrelationId() ?? Guid.CreateVersion7().ToString("N");
 
     public string GetClientChannel() => _httpContextAccessor.HttpContext?.GetChannel();
 

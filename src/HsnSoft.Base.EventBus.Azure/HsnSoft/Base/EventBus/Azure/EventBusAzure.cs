@@ -57,7 +57,7 @@ public class EventBusAzure : IEventBus, IDisposable
         var @event = new MessageEnvelope<TEventMessage>
         {
             ParentMessageId = parentMessage?.MessageId,
-            MessageId = Guid.NewGuid(),
+            MessageId = Guid.CreateVersion7(),
             MessageTime = DateTime.UtcNow,
             Message = eventMessage,
             Producer = _eventBusConfig.ConsumerClientInfo,
@@ -80,7 +80,7 @@ public class EventBusAzure : IEventBus, IDisposable
 
         byte[] body = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(@event, @event.GetType(), new JsonSerializerOptions { WriteIndented = true });
 
-        var message = new ServiceBusMessage { MessageId = Guid.NewGuid().ToString(), Body = new BinaryData(body), Subject = eventName };
+        var message = new ServiceBusMessage { MessageId = Guid.CreateVersion7().ToString(), Body = new BinaryData(body), Subject = eventName };
 
         await _sender.SendMessageAsync(message);
 

@@ -111,7 +111,7 @@ public sealed class AppRoleAppService : ApplicationServiceBase, IAppRoleAppServi
             }, Mapper.ConfigurationProvider, cancellationToken: cancellationToken);
     }
 
-    public async Task<List<AppRoleDto>> GetSearchListAsync(GetAppRolesSearch searchInput, CancellationToken cancellationToken = default)
+    public async Task<List<AppRoleSearchDto>> GetSearchListAsync(GetAppRolesSearch searchInput, CancellationToken cancellationToken = default)
     {
         if (searchInput == null)
         {
@@ -124,7 +124,7 @@ public sealed class AppRoleAppService : ApplicationServiceBase, IAppRoleAppServi
             .And(!string.IsNullOrWhiteSpace(searchInput.SearchText) ? e => e.NormalizedName.Contains(searchInput.SearchText) : null)
             .Build();
 
-        return await _appRoleRepository.GetListAsync<AppRoleDto>(
+        return await _appRoleRepository.GetListAsync<AppRoleSearchDto>(
             options: new ListQueryOptions<AppRole>
             {
                 Filter = filter,

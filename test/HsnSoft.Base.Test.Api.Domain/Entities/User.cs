@@ -24,7 +24,7 @@ public class User : FullAuditedEntity<Guid>, IMultiTenant
         Status = UserOperationStates.None;
     }
 
-    public User() : this(Guid.NewGuid())
+    public User() : this(Guid.CreateVersion7())
     {
     }
 

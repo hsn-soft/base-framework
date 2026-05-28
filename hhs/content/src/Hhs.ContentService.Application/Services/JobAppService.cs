@@ -107,6 +107,6 @@ public sealed class JobAppService : ApplicationServiceBase, IJobAppService
             exception: null
         ));
 
-        await EventBus.PublishAsync(eventMessage: new TestQueryRequestedEto(AppClientId: Guid.NewGuid()), correlationId: correlationId);
+        await EventBus.PublishAsync(eventMessage: new TestQueryRequestedEto(AppClientId: Guid.CreateVersion7()), correlationId: correlationId);
     }
 }

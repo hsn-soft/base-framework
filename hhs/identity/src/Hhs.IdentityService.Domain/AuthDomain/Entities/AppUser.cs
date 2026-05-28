@@ -138,7 +138,7 @@ public sealed class AppUser : AuditedEntity<Guid>, ISoftDelete, IMultiTenant
     internal void SetPasswordHash(string passwordHash) =>
         PasswordHash = LocalizedModelValidator.NotNullOrWhiteSpace(passwordHash, $"{nameof(AppUser)}:{nameof(PasswordHash)}", AppUserConsts.PasswordHashMaxLength);
 
-    internal void SetSecurityStamp() => SecurityStamp = Guid.NewGuid().ToString("N");
+    internal void SetSecurityStamp() => SecurityStamp = Guid.CreateVersion7().ToString("N");
 
     internal void SetLanguageCode(string defaultLanguage)
     {

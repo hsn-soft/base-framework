@@ -20,7 +20,7 @@ public class LoaderHostedService : IHostedService
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
-        _instanceId = Guid.NewGuid();
+        _instanceId = Guid.CreateVersion7();
     }
 
     public async Task StartAsync(CancellationToken cancellationToken)

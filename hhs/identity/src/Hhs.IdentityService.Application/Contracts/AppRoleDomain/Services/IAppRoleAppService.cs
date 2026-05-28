@@ -11,7 +11,7 @@ public interface IAppRoleAppService
 
     Task<PagedDataResultDto<AppRoleDto>> GetPagedListAsync(GetAppRolesPaged pagedInput, CancellationToken cancellationToken = default);
     Task<List<AppRoleDto>> GetFilterListAsync(GetAppRolesFilter filterInput, CancellationToken cancellationToken = default);
-    Task<List<AppRoleDto>> GetSearchListAsync(GetAppRolesSearch searchInput, CancellationToken cancellationToken = default);
+    Task<List<AppRoleSearchDto>> GetSearchListAsync(GetAppRolesSearch searchInput, CancellationToken cancellationToken = default);
 
     Task<AppRoleDto> CreateAsync(AppRoleCreateDto input);
 

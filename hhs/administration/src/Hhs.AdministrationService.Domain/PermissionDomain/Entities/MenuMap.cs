@@ -28,7 +28,7 @@ public sealed class MenuMap : Entity<Guid>
     public MenuMap(string clientId, string clientMenuType, string parentUniqueName, string uniqueName, MenuMapType mapType, string url, string icon,
         byte orderNo, string hierarchy, bool onlyAccessSystemUsers = false)
     {
-        Id = Guid.NewGuid();
+        Id = Guid.CreateVersion7();
         ClientId = clientId;
         ClientMenuType = clientMenuType;
         ParentUniqueName = parentUniqueName;

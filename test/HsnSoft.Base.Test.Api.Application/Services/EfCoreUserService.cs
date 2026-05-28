@@ -147,33 +147,33 @@ public class EfCoreUserService(IEfCoreUserRepository userRepository, IUnitOfWork
 
     public async Task<int> InsertUserAsync(CreateUserDto input, CancellationToken cancellationToken = default)
     {
-        // int s = await userRepository.InsertAsync(new User(Guid.NewGuid(), "test"), true, cancellationToken: cancellationToken);
+        // int s = await userRepository.InsertAsync(new User(Guid.CreateVersion7(), "test"), true, cancellationToken: cancellationToken);
         // List<User> users = [];
         // for (int i = 0; i < 10; i++)
         // {
-        //     users.Add(new User(Guid.NewGuid(), "test") { FirstName = (i + 1).ToString() });
+        //     users.Add(new User(Guid.CreateVersion7(), "test") { FirstName = (i + 1).ToString() });
         // }
 
-        return await userRepository.InsertAsync(new User(Guid.NewGuid(), Guid.Empty, "test" + Guid.NewGuid().ToString("N")) { FirstName = input.FullName }, cancellationToken: cancellationToken);
+        return await userRepository.InsertAsync(new User(Guid.CreateVersion7(), Guid.Empty, "test" + Guid.CreateVersion7().ToString("N")) { FirstName = input.FullName }, cancellationToken: cancellationToken);
     }
 
     public async Task<int> UpdateUserAsync(UpdateUserDto input, CancellationToken cancellationToken = default)
     {
         var test = await userRepository.GetFirstOrDefaultAsync(x => x.FirstName == "Ahmet", cancellationToken: cancellationToken);
-        test.SetEmail("mail_" + Guid.NewGuid().ToString("N").ToLower());
+        test.SetEmail("mail_" + Guid.CreateVersion7().ToString("N").ToLower());
         _ = await userRepository.UpdateAsync(test, cancellationToken: cancellationToken);
 
         var testList = await userRepository.GetListAsync(new ListQueryOptions<User> { Filter = x => x.FirstName == "Ahmet", MaxResultCount = 10 }, cancellationToken: cancellationToken);
         foreach (var item in testList)
         {
-            item.SetEmail("mail_" + Guid.NewGuid().ToString("N").ToLower());
+            item.SetEmail("mail_" + Guid.CreateVersion7().ToString("N").ToLower());
         }
 
         _ = await userRepository.UpdateManyAsync(testList, cancellationToken: cancellationToken);
 
         var res2 = await userRepository.UpdateByIdAsync(test.Id, x =>
         {
-            x.SetEmail("mail_" + Guid.NewGuid().ToString("N").ToLower());
+            x.SetEmail("mail_" + Guid.CreateVersion7().ToString("N").ToLower());
             x.LastName = "dene";
         }, cancellationToken: cancellationToken);
 
@@ -182,7 +182,7 @@ public class EfCoreUserService(IEfCoreUserRepository userRepository, IUnitOfWork
 
     public async Task<int> DeleteUserAsync(DeleteUserDto input, CancellationToken cancellationToken = default)
     {
-        return await userRepository.DeleteAsync(new User(Guid.NewGuid(), Guid.NewGuid(), "test"), cancellationToken: cancellationToken);
+        return await userRepository.DeleteAsync(new User(Guid.CreateVersion7(), Guid.CreateVersion7(), "test"), cancellationToken: cancellationToken);
     }
 
     public async Task<int> UnitOfWorkTestAsync(CancellationToken cancellationToken = default)

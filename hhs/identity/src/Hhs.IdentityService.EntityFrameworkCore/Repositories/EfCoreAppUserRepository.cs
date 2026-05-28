@@ -132,7 +132,7 @@ public class EfCoreAppUserRepository : EfCoreGenericRepository<AppUser, Guid>, I
             throw new AppUserNotFoundException(L, id.ToString());
         }
 
-        string guidGenerated = Guid.NewGuid().ToString("N").ToUpper();
+        string guidGenerated = Guid.CreateVersion7().ToString("N").ToUpper();
 
         string uniqueUserName = guidGenerated + "_" + appUser.UserName;
         if (uniqueUserName.Length > AppUserConsts.UserNameMaxLength)

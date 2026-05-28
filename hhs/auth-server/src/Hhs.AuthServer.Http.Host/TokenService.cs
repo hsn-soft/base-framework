@@ -47,7 +47,7 @@ public sealed class TokenService
 
     private static IEnumerable<Claim> CreateClaims(Client client, List<string> clientReturnScopes, [CanBeNull] AppUser user, [CanBeNull] List<string> roles, [CanBeNull] Tenant tenant = null, List<string> allowedTenantIds = null)
     {
-        var claims = new List<Claim> { new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString("N")) };
+        var claims = new List<Claim> { new(JwtRegisteredClaimNames.Jti, Guid.CreateVersion7().ToString("N")) };
 
         if (user != null)
         {

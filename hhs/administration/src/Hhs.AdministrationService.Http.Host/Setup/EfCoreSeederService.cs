@@ -51,61 +51,61 @@ public sealed class EfCoreSeederService : IBasicDataSeeder
                 foreach (string permissionName in StaticData.AllPermissions())
                 {
                     dbContext.PermissionGrants.Add(new PermissionGrant(
-                        id: Guid.NewGuid(),
+                        id: Guid.CreateVersion7(),
                         name: permissionName,
                         providerName: "R",
                         providerKey: DefaultRoleNames.SystemAdmin)
                     );
                     // dbContext.PermissionGrants.Add(new PermissionGrant(
-                    //     id: Guid.NewGuid(),
+                    //     id: Guid.CreateVersion7(),
                     //     name: permissionName,
                     //     providerName: "R",
                     //     providerKey: $"{NameConsts.Admin}#techsummus")
                     // );
                     // dbContext.PermissionGrants.Add(new PermissionGrant(
-                    //     id: Guid.NewGuid(),
+                    //     id: Guid.CreateVersion7(),
                     //     name: permissionName,
                     //     providerName: "R",
                     //     providerKey: $"{NameConsts.Admin}#dunya")
                     // );
                     // dbContext.PermissionGrants.Add(new PermissionGrant(
-                    //     id: Guid.NewGuid(),
+                    //     id: Guid.CreateVersion7(),
                     //     name: permissionName,
                     //     providerName: "R",
                     //     providerKey: $"{NameConsts.Admin}#kisadalga")
                     // );
                     // dbContext.PermissionGrants.Add(new PermissionGrant(
-                    //     id: Guid.NewGuid(),
+                    //     id: Guid.CreateVersion7(),
                     //     name: permissionName,
                     //     providerName: "R",
                     //     providerKey: $"{NameConsts.Admin}#tamindir")
                     // );
                     // dbContext.PermissionGrants.Add(new PermissionGrant(
-                    //     id: Guid.NewGuid(),
+                    //     id: Guid.CreateVersion7(),
                     //     name: permissionName,
                     //     providerName: "R",
                     //     providerKey: $"{NameConsts.Admin}#technotoday")
                     // );
                     // dbContext.PermissionGrants.Add(new PermissionGrant(
-                    //     id: Guid.NewGuid(),
+                    //     id: Guid.CreateVersion7(),
                     //     name: permissionName,
                     //     providerName: "R",
                     //     providerKey: $"{NameConsts.Admin}#sondakika")
                     // );
                     // dbContext.PermissionGrants.Add(new PermissionGrant(
-                    //     id: Guid.NewGuid(),
+                    //     id: Guid.CreateVersion7(),
                     //     name: permissionName,
                     //     providerName: "R",
                     //     providerKey: $"{NameConsts.Admin}#t24")
                     // );
                     // dbContext.PermissionGrants.Add(new PermissionGrant(
-                    //     id: Guid.NewGuid(),
+                    //     id: Guid.CreateVersion7(),
                     //     name: permissionName,
                     //     providerName: "R",
                     //     providerKey: $"{NameConsts.Admin}#cnbce")
                     // );
                     // dbContext.PermissionGrants.Add(new PermissionGrant(
-                    //     id: Guid.NewGuid(),
+                    //     id: Guid.CreateVersion7(),
                     //     name: permissionName,
                     //     providerName: "R",
                     //     providerKey: $"{NameConsts.Admin}#boxofficeturkiye")
@@ -117,7 +117,7 @@ public sealed class EfCoreSeederService : IBasicDataSeeder
                 foreach (string permissionName in StaticData.DefaultUserPermissions())
                 {
                     dbContext.PermissionGrants.Add(new PermissionGrant(
-                        id: Guid.NewGuid(),
+                        id: Guid.CreateVersion7(),
                         name: permissionName,
                         providerName: "R",
                         providerKey: DefaultRoleNames.SystemUser)

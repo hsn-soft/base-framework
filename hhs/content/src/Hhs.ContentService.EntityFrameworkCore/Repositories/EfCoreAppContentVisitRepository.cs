@@ -20,7 +20,7 @@ public sealed class EfCoreAppContentVisitRepository : EfCoreGenericRepository<Ap
     public async Task<AppContentVisit> CreateAsync(Guid clientId, Guid appContentId, string visitResponse)
     {
         var newEntity = new AppContentVisit(
-            id: Guid.NewGuid(),
+            id: Guid.CreateVersion7(),
             clientId: clientId,
             appContentId: appContentId,
             visitResponse: visitResponse

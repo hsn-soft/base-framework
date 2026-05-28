@@ -30,6 +30,6 @@ public static class AppInfoResolver
             return hostName;
 
         // 4. fallback
-        return Guid.NewGuid().ToString("N");
+        return Guid.CreateVersion7().ToString("N");
     }
 }

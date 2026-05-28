@@ -25,7 +25,7 @@ public sealed class EfCoreResponseStatisticRepository : EfCoreGenericRepository<
     }
 
     public async Task<ResponseStatistic> CreateAsync(Guid tenantId, Guid clientId, string responseStatus, ulong responseTime, ulong responseCount)
-        => await CreateAsync(id: Guid.NewGuid(),
+        => await CreateAsync(id: Guid.CreateVersion7(),
             tenantId: tenantId,
             clientId: clientId,
             responseStatus: responseStatus,
@@ -35,7 +35,7 @@ public sealed class EfCoreResponseStatisticRepository : EfCoreGenericRepository<
 
     public async Task<ResponseStatistic> CreateAsync(Guid id, Guid tenantId, Guid clientId, string responseStatus, ulong responseTime, ulong responseCount)
     {
-        if (id == Guid.Empty) id = Guid.NewGuid();
+        if (id == Guid.Empty) id = Guid.CreateVersion7();
 
         // Create draft
         var draft = new ResponseStatistic(

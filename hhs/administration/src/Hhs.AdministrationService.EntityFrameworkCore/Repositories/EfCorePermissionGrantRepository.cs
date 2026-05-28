@@ -58,14 +58,14 @@ public sealed class EfCorePermissionGrantRepository(
     }
 
     public async Task<PermissionGrant> CreateAsync(string name, string providerName, string providerKey)
-        => await CreateAsync(id: Guid.NewGuid(),
+        => await CreateAsync(id: Guid.CreateVersion7(),
             name: name,
             providerName: providerName,
             providerKey: providerKey);
 
     public async Task<PermissionGrant> CreateAsync(Guid id, string name, string providerName, string providerKey)
     {
-        if (id == Guid.Empty) id = Guid.NewGuid();
+        if (id == Guid.Empty) id = Guid.CreateVersion7();
 
         // Create draft
         var draft = new PermissionGrant(
@@ -126,7 +126,7 @@ public sealed class EfCorePermissionGrantRepository(
         {
             // Create new Permission list
             var permissionGrants = names.Select(x => new PermissionGrant(
-                Guid.NewGuid(),
+                Guid.CreateVersion7(),
                 name: x,
                 providerName,
                 providerKey)

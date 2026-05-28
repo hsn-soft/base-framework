@@ -21,7 +21,7 @@ public sealed class EfCoreClientVideoGenerationHistoryRepository : EfCoreGeneric
     public async Task<ClientVideoGenerationHistory> CreateAsync(Guid clientId, DateTime videoGenerationDate, VideoGenerationTypes videoGenerationType, string contentReferenceIds)
     {
         var newEntity = new ClientVideoGenerationHistory(
-            id: Guid.NewGuid(),
+            id: Guid.CreateVersion7(),
             clientId: clientId,
             videoGenerationDate: videoGenerationDate,
             videoGenerationType: videoGenerationType,

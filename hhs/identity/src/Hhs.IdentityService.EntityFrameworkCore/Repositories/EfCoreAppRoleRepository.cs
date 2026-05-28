@@ -103,7 +103,7 @@ public class EfCoreAppRoleRepository : EfCoreGenericRepository<AppRole, Guid>, I
             throw new AppRoleNotFoundException(L, id.ToString());
         }
 
-        string guidGenerated = Guid.NewGuid().ToString("N").ToUpper();
+        string guidGenerated = Guid.CreateVersion7().ToString("N").ToUpper();
         string uniqueRoleName = guidGenerated + "_" + appRole.Name;
         if (uniqueRoleName.Length > AppRoleConsts.NameMaxLength)
         {

@@ -186,7 +186,7 @@ public sealed class RabbitMqConsumer : IDisposable
             string eventName = ResolveEventName(eventArgs);
             string message = Encoding.UTF8.GetString(eventArgs.Body.Span);
 
-            string fetcherId = Task.CurrentId?.ToString() ?? Guid.NewGuid().ToString("N");
+            string fetcherId = Task.CurrentId?.ToString() ?? Guid.CreateVersion7().ToString("N");
             _logger.LogDebug("{BrokerName} | {ConsumerQueue} => ConsumerChannel[ {ChannelNo} ][ {ConsumerId} ] FetcherId [ {FetcherId} ]: {OperationStatus}",
                 "RabbitMQ", _consumerQueueName, consumerChannelNumber, _currentConsumerTag, fetcherId, "STARTED");
 
@@ -291,7 +291,7 @@ public sealed class RabbitMqConsumer : IDisposable
 
                     watch.Stop();
                     _logger.EventBusInfoLog(new ConsumeMessageLogModel(
-                        LogId: Guid.NewGuid().ToString(),
+                        LogId: Guid.CreateVersion7().ToString(),
                         CorrelationId: ((dynamic)@event)?.CorrelationId,
                         Facility: nameof(EventBusLogFacility.CONSUME_EVENT_SUCCESS),
                         Producer: ((dynamic)@event)?.Producer,
@@ -318,7 +318,7 @@ public sealed class RabbitMqConsumer : IDisposable
                 {
                     watch.Stop();
                     _logger.EventBusErrorLog(new ConsumeMessageLogModel(
-                        LogId: Guid.NewGuid().ToString(),
+                        LogId: Guid.CreateVersion7().ToString(),
                         CorrelationId: ((dynamic)@event)?.CorrelationId,
                         Facility: nameof(EventBusLogFacility.CONSUME_EVENT_ERROR),
                         Producer: ((dynamic)@event)?.Producer,
@@ -406,7 +406,7 @@ public sealed class RabbitMqConsumer : IDisposable
         var @event = new MessageEnvelope<FailedEto>
         {
             ParentMessageId = failedEnvelopeInfo?.MessageId,
-            MessageId = Guid.NewGuid(),
+            MessageId = Guid.CreateVersion7(),
             MessageTime = produceTime,
             Message = new FailedEto(
                 FailedReason: errorMessage,
@@ -441,7 +441,7 @@ public sealed class RabbitMqConsumer : IDisposable
 
                 // Persistent Log
                 _logger.EventBusErrorLog(new ProduceMessageLogModel(
-                    LogId: Guid.NewGuid().ToString(),
+                    LogId: Guid.CreateVersion7().ToString(),
                     CorrelationId: @event.CorrelationId,
                     Facility: nameof(EventBusLogFacility.PRODUCE_EVENT_ERROR),
                     ProduceDateTimeUtc: produceTime,

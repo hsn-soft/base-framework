@@ -149,7 +149,7 @@ public abstract class BaseEfCoreDbContext<TDbContext> : DbContext where TDbConte
             return;
         }
 
-        entity.ConcurrencyStamp = Guid.NewGuid().ToString("N");
+        entity.ConcurrencyStamp = Guid.CreateVersion7().ToString("N");
     }
 
     protected virtual void CheckAndSetId(EntityEntry entry)
@@ -331,7 +331,7 @@ public abstract class BaseEfCoreDbContext<TDbContext> : DbContext where TDbConte
         }
 
         Entry(entity).Property(x => x.ConcurrencyStamp).OriginalValue = entity.ConcurrencyStamp;
-        entity.ConcurrencyStamp = Guid.NewGuid().ToString("N");
+        entity.ConcurrencyStamp = Guid.CreateVersion7().ToString("N");
     }
 
     protected virtual EntityEventReport CreateEventReport()

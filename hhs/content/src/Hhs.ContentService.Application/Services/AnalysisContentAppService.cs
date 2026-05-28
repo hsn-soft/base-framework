@@ -208,10 +208,10 @@ public sealed class AnalysisContentAppService : ApplicationServiceBase, IAnalysi
                 {
                     bool operationSuccess;
                     string errorMessage = string.Empty;
-                    var analysisContentId = Guid.NewGuid();
+                    var analysisContentId = Guid.CreateVersion7();
                     if (string.IsNullOrWhiteSpace(correlationId))
                     {
-                        correlationId = Guid.NewGuid().ToString("N");
+                        correlationId = Guid.CreateVersion7().ToString("N");
                     }
 
                     try

@@ -27,7 +27,7 @@ public sealed class JwtTokenService : IJwtTokenService
 
         var now = DateTime.UtcNow;
         var expires = now.AddMinutes(5);
-        var jti = Guid.NewGuid().ToString("N");
+        var jti = Guid.CreateVersion7().ToString("N");
 
         var claims = new List<Claim>
         {

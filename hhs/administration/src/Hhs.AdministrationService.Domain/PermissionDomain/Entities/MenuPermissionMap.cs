@@ -17,7 +17,7 @@ public sealed class LeafMenuPermissionMap : Entity<Guid>
 
     public LeafMenuPermissionMap(string clientId, string leafMenuUniqueName, PermissionTypes permissionType, string permissionUniqueName, byte orderNo)
     {
-        Id = Guid.NewGuid();
+        Id = Guid.CreateVersion7();
         ClientId = clientId;
         LeafMenuUniqueName = leafMenuUniqueName;
         PermissionType = permissionType;

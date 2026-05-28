@@ -24,7 +24,7 @@ public sealed class EfCoreClientRepository(IServiceProvider provider, IStringLoc
         string subdomainName = null,
         List<string> includePathFilters = null,
         List<string> excludePathFilters = null)
-        => await CreateAsync(id: Guid.NewGuid(),
+        => await CreateAsync(id: Guid.CreateVersion7(),
             tenantId: tenantId,
             domainName: domainName,
             subdomainName: subdomainName,
@@ -39,7 +39,7 @@ public sealed class EfCoreClientRepository(IServiceProvider provider, IStringLoc
         List<string> includePathFilters = null,
         List<string> excludePathFilters = null)
     {
-        if (id == Guid.Empty) id = Guid.NewGuid();
+        if (id == Guid.Empty) id = Guid.CreateVersion7();
 
         // Create draft
         var draft = new Client(
@@ -52,12 +52,12 @@ public sealed class EfCoreClientRepository(IServiceProvider provider, IStringLoc
         var filters = new List<ClientPathFilter>();
         if (includePathFilters is { Count: > 0 })
         {
-            filters.AddRange(includePathFilters.Select(x => new ClientPathFilter(id: Guid.NewGuid(), clientId: id, pathFilterName: x, clientFilterType: ClientFilterTypes.IncludeFilter)).ToList());
+            filters.AddRange(includePathFilters.Select(x => new ClientPathFilter(id: Guid.CreateVersion7(), clientId: id, pathFilterName: x, clientFilterType: ClientFilterTypes.IncludeFilter)).ToList());
         }
 
         if (excludePathFilters is { Count: > 0 })
         {
-            filters.AddRange(excludePathFilters.Select(x => new ClientPathFilter(id: Guid.NewGuid(), clientId: id, pathFilterName: x, clientFilterType: ClientFilterTypes.ExcludeFilter)).ToList());
+            filters.AddRange(excludePathFilters.Select(x => new ClientPathFilter(id: Guid.CreateVersion7(), clientId: id, pathFilterName: x, clientFilterType: ClientFilterTypes.ExcludeFilter)).ToList());
         }
 
         if (filters is { Count: > 0 })
@@ -92,12 +92,12 @@ public sealed class EfCoreClientRepository(IServiceProvider provider, IStringLoc
         var filters = new List<ClientPathFilter>();
         if (includePathFilters is { Count: > 0 })
         {
-            filters.AddRange(includePathFilters.Select(x => new ClientPathFilter(id: Guid.NewGuid(), clientId: id, pathFilterName: x, clientFilterType: ClientFilterTypes.IncludeFilter)).ToList());
+            filters.AddRange(includePathFilters.Select(x => new ClientPathFilter(id: Guid.CreateVersion7(), clientId: id, pathFilterName: x, clientFilterType: ClientFilterTypes.IncludeFilter)).ToList());
         }
 
         if (excludePathFilters is { Count: > 0 })
         {
-            filters.AddRange(excludePathFilters.Select(x => new ClientPathFilter(id: Guid.NewGuid(), clientId: id, pathFilterName: x, clientFilterType: ClientFilterTypes.ExcludeFilter)).ToList());
+            filters.AddRange(excludePathFilters.Select(x => new ClientPathFilter(id: Guid.CreateVersion7(), clientId: id, pathFilterName: x, clientFilterType: ClientFilterTypes.ExcludeFilter)).ToList());
         }
 
         oldEntity.SetPathFilters(filters is { Count: > 0 } ? filters : []);
@@ -120,7 +120,7 @@ public sealed class EfCoreClientRepository(IServiceProvider provider, IStringLoc
         // Domain Rule -> Client Dependency Control for Delete
         //  Rule01
 
-        string guidGenerated = Guid.NewGuid().ToString("N").ToUpper();
+        string guidGenerated = Guid.CreateVersion7().ToString("N").ToUpper();
         string uniqueField = guidGenerated + "_" + entity.DomainName;
         if (uniqueField.Length > ClientConsts.DomainNameMaxLength)
         {

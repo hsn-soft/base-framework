@@ -91,11 +91,11 @@ public sealed class EfCoreSeederService : IBasicDataSeeder
                 demoTechSummusEntity.DailyAnalysisVideoGenerationStartedUtcHour = 0;
 
                 dbContext.Clients.Add(demoTechSummusEntity);
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), demoTechSummusClientId, "son-dakika", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), demoTechSummusClientId, "dunya", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), demoTechSummusClientId, "ekonomi", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), demoTechSummusClientId, "magazin", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), demoTechSummusClientId, "spor", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), demoTechSummusClientId, "son-dakika", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), demoTechSummusClientId, "dunya", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), demoTechSummusClientId, "ekonomi", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), demoTechSummusClientId, "magazin", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), demoTechSummusClientId, "spor", ClientFilterTypes.IncludeFilter));
                 logger.LogDebug("{WorkerName} | demo.techsummus.com CLIENT DATA ADDED: ClientId [ {ClientId} ], TenantId [ {TenantId} ]", nameof(EfCoreSeederService),
                     demoTechSummusClientId.ToString(),
                     defaultTenantId.ToString()
@@ -112,19 +112,19 @@ public sealed class EfCoreSeederService : IBasicDataSeeder
 
                 dbContext.Clients.Add(kisaDalgaEntity);
                 // include filters
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), kisaDalgaClientId, "haber/gundem", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), kisaDalgaClientId, "haber/ekonomi", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), kisaDalgaClientId, "haber/dunya", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), kisaDalgaClientId, "haber/teknoloji", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), kisaDalgaClientId, "haber/yasam", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), kisaDalgaClientId, "haber/politika", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), kisaDalgaClientId, "haber/saglik", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), kisaDalgaClientId, "haber/otomobil", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), kisaDalgaClientId, "haber/detay", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), kisaDalgaClientId, "haber/magazin", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), kisaDalgaClientId, "haber/kadin", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), kisaDalgaClientId, "haber/kultur-sanat", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), kisaDalgaClientId, "haber/spor", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), kisaDalgaClientId, "haber/gundem", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), kisaDalgaClientId, "haber/ekonomi", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), kisaDalgaClientId, "haber/dunya", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), kisaDalgaClientId, "haber/teknoloji", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), kisaDalgaClientId, "haber/yasam", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), kisaDalgaClientId, "haber/politika", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), kisaDalgaClientId, "haber/saglik", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), kisaDalgaClientId, "haber/otomobil", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), kisaDalgaClientId, "haber/detay", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), kisaDalgaClientId, "haber/magazin", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), kisaDalgaClientId, "haber/kadin", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), kisaDalgaClientId, "haber/kultur-sanat", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), kisaDalgaClientId, "haber/spor", ClientFilterTypes.IncludeFilter));
                 logger.LogDebug("{WorkerName} | www.kisadalga.net CLIENT DATA ADDED: ClientId [ {ClientId} ], TenantId [ {TenantId} ]", nameof(EfCoreSeederService),
                     kisaDalgaClientId.ToString(),
                     kisaDalgaTenantId.ToString()
@@ -151,13 +151,13 @@ public sealed class EfCoreSeederService : IBasicDataSeeder
                 dunyaEntity.DailyAnalysisVideoGenerationStartedUtcHour = 6;
 
                 dbContext.Clients.Add(dunyaEntity);
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), dunyaClientId, "dunya", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), dunyaClientId, "gundem", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), dunyaClientId, "sektorler", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), dunyaClientId, "ekonomi", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), dunyaClientId, "is-dunyasi", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), dunyaClientId, "ihracat", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), dunyaClientId, "kriptopara", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), dunyaClientId, "dunya", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), dunyaClientId, "gundem", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), dunyaClientId, "sektorler", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), dunyaClientId, "ekonomi", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), dunyaClientId, "is-dunyasi", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), dunyaClientId, "ihracat", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), dunyaClientId, "kriptopara", ClientFilterTypes.IncludeFilter));
                 logger.LogDebug("{WorkerName} | www.dunya.com CLIENT DATA ADDED: ClientId [ {ClientId} ], TenantId [ {TenantId} ]", nameof(EfCoreSeederService),
                     dunyaClientId.ToString(),
                     dunyaTenantId.ToString()
@@ -184,7 +184,7 @@ public sealed class EfCoreSeederService : IBasicDataSeeder
                 tamindirEntity.DailyAnalysisVideoGenerationStartedUtcHour = 6;
 
                 dbContext.Clients.Add(tamindirEntity);
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), tamindirClientId, "haber", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), tamindirClientId, "haber", ClientFilterTypes.IncludeFilter));
                 logger.LogDebug("{WorkerName} | www.tamindir.com CLIENT DATA ADDED: ClientId [ {ClientId} ], TenantId [ {TenantId} ]", nameof(EfCoreSeederService),
                     tamindirClientId.ToString(),
                     tamIndirTenantId.ToString()
@@ -211,7 +211,7 @@ public sealed class EfCoreSeederService : IBasicDataSeeder
                 technoToDayEntity.DailyAnalysisVideoGenerationStartedUtcHour = 6;
 
                 dbContext.Clients.Add(technoToDayEntity);
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), technoToDayClientId, "kategori", ClientFilterTypes.ExcludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), technoToDayClientId, "kategori", ClientFilterTypes.ExcludeFilter));
                 logger.LogDebug("{WorkerName} | www.technotoday.com.tr CLIENT DATA ADDED: ClientId [ {ClientId} ], TenantId [ {TenantId} ]", nameof(EfCoreSeederService),
                     technoToDayClientId.ToString(),
                     technoToDayTenantId.ToString()
@@ -238,23 +238,23 @@ public sealed class EfCoreSeederService : IBasicDataSeeder
                 sondakikaEntity.DailyAnalysisVideoGenerationStartedUtcHour = 6;
 
                 dbContext.Clients.Add(sondakikaEntity);
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), sondakikaClientId, "guncel", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), sondakikaClientId, "dunya", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), sondakikaClientId, "ekonomi", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), sondakikaClientId, "spor", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), sondakikaClientId, "magazin", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), sondakikaClientId, "politika", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), sondakikaClientId, "finans", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), sondakikaClientId, "teknoloji", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), sondakikaClientId, "kultur-sanat", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), sondakikaClientId, "kadin", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), sondakikaClientId, "moda", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), sondakikaClientId, "otomobil", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), sondakikaClientId, "yasam", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), sondakikaClientId, "saglik", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), sondakikaClientId, "turizm", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), sondakikaClientId, "egitim", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), sondakikaClientId, "3-sayfa", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), sondakikaClientId, "guncel", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), sondakikaClientId, "dunya", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), sondakikaClientId, "ekonomi", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), sondakikaClientId, "spor", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), sondakikaClientId, "magazin", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), sondakikaClientId, "politika", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), sondakikaClientId, "finans", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), sondakikaClientId, "teknoloji", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), sondakikaClientId, "kultur-sanat", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), sondakikaClientId, "kadin", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), sondakikaClientId, "moda", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), sondakikaClientId, "otomobil", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), sondakikaClientId, "yasam", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), sondakikaClientId, "saglik", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), sondakikaClientId, "turizm", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), sondakikaClientId, "egitim", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), sondakikaClientId, "3-sayfa", ClientFilterTypes.IncludeFilter));
                 logger.LogDebug("{WorkerName} | www.sondakika.com CLIENT DATA ADDED: ClientId [ {ClientId} ], TenantId [ {TenantId} ]", nameof(EfCoreSeederService),
                     sondakikaClientId.ToString(),
                     sondakikaTenantId.ToString()
@@ -281,7 +281,7 @@ public sealed class EfCoreSeederService : IBasicDataSeeder
                 t24Entity.DailyAnalysisVideoGenerationStartedUtcHour = 6;
 
                 dbContext.Clients.Add(t24Entity);
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), t24ClientId, "haber", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), t24ClientId, "haber", ClientFilterTypes.IncludeFilter));
                 logger.LogDebug("{WorkerName} | www.t24.com.tr CLIENT DATA ADDED: ClientId [ {ClientId} ], TenantId [ {TenantId} ]", nameof(EfCoreSeederService),
                     t24ClientId.ToString(),
                     t24TenantId.ToString()
@@ -308,26 +308,26 @@ public sealed class EfCoreSeederService : IBasicDataSeeder
                 cnbceEntity.DailyAnalysisVideoGenerationStartedUtcHour = 6;
 
                 dbContext.Clients.Add(cnbceEntity);
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), cnbceClientId, "piyasalar", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), cnbceClientId, "veriler", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), cnbceClientId, "is-dunyasi", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), cnbceClientId, "enerji", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), cnbceClientId, "girisim", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), cnbceClientId, "fuar", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), cnbceClientId, "dijital-varliklar", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), cnbceClientId, "kripto", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), cnbceClientId, "savunma-sanayii", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), cnbceClientId, "borsa", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), cnbceClientId, "sigorta", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), cnbceClientId, "teknoloji", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), cnbceClientId, "haberler", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), cnbceClientId, "gayrimenkul", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), cnbceClientId, "otomotiv", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), cnbceClientId, "gundem", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), cnbceClientId, "sirket-haberleri", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), cnbceClientId, "doviz", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), cnbceClientId, "altin", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), cnbceClientId, "emtia", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), cnbceClientId, "piyasalar", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), cnbceClientId, "veriler", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), cnbceClientId, "is-dunyasi", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), cnbceClientId, "enerji", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), cnbceClientId, "girisim", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), cnbceClientId, "fuar", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), cnbceClientId, "dijital-varliklar", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), cnbceClientId, "kripto", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), cnbceClientId, "savunma-sanayii", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), cnbceClientId, "borsa", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), cnbceClientId, "sigorta", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), cnbceClientId, "teknoloji", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), cnbceClientId, "haberler", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), cnbceClientId, "gayrimenkul", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), cnbceClientId, "otomotiv", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), cnbceClientId, "gundem", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), cnbceClientId, "sirket-haberleri", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), cnbceClientId, "doviz", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), cnbceClientId, "altin", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), cnbceClientId, "emtia", ClientFilterTypes.IncludeFilter));
                 logger.LogDebug("{WorkerName} | www.cnbce.com CLIENT DATA ADDED: ClientId [ {ClientId} ], TenantId [ {TenantId} ]", nameof(EfCoreSeederService),
                     cnbceClientId.ToString(),
                     cnbceTenantId.ToString()
@@ -354,7 +354,7 @@ public sealed class EfCoreSeederService : IBasicDataSeeder
                 boxOfficeTurkiyeEntity.DailyAnalysisVideoGenerationStartedUtcHour = 6;
 
                 dbContext.Clients.Add(boxOfficeTurkiyeEntity);
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), boxOfficeTurkiyeClientId, "haber", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), boxOfficeTurkiyeClientId, "haber", ClientFilterTypes.IncludeFilter));
                 logger.LogDebug("{WorkerName} | www.boxofficeturkiye.com CLIENT DATA ADDED: ClientId [ {ClientId} ], TenantId [ {TenantId} ]", nameof(EfCoreSeederService),
                     boxOfficeTurkiyeClientId.ToString(),
                     boxOfficeTurkiyeTenantId.ToString()
@@ -381,8 +381,8 @@ public sealed class EfCoreSeederService : IBasicDataSeeder
                 diyetkolikEntity.DailyAnalysisVideoGenerationStartedUtcHour = 6;
 
                 dbContext.Clients.Add(diyetkolikEntity);
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), diyetkolikClientId, "icerik", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), diyetkolikClientId, "icerik/kategori", ClientFilterTypes.ExcludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), diyetkolikClientId, "icerik", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), diyetkolikClientId, "icerik/kategori", ClientFilterTypes.ExcludeFilter));
                 logger.LogDebug("{WorkerName} | www.diyetkolik.com CLIENT DATA ADDED: ClientId [ {ClientId} ], TenantId [ {TenantId} ]", nameof(EfCoreSeederService),
                     diyetkolikClientId.ToString(),
                     diyetkolikTenantId.ToString()
@@ -409,11 +409,11 @@ public sealed class EfCoreSeederService : IBasicDataSeeder
                 inStyleEntity.DailyAnalysisVideoGenerationStartedUtcHour = 6;
 
                 dbContext.Clients.Add(inStyleEntity);
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), inStyleClientId, "pop-kultur", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), inStyleClientId, "moda", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), inStyleClientId, "guzellik-welness", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), inStyleClientId, "astroloji", ClientFilterTypes.IncludeFilter));
-                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.NewGuid(), inStyleClientId, "kadin", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), inStyleClientId, "pop-kultur", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), inStyleClientId, "moda", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), inStyleClientId, "guzellik-welness", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), inStyleClientId, "astroloji", ClientFilterTypes.IncludeFilter));
+                dbContext.ClientPathFilters.Add(new ClientPathFilter(Guid.CreateVersion7(), inStyleClientId, "kadin", ClientFilterTypes.IncludeFilter));
                 logger.LogDebug("{WorkerName} | www.instyle.com.tr CLIENT DATA ADDED: ClientId [ {ClientId} ], TenantId [ {TenantId} ]", nameof(EfCoreSeederService),
                     inStyleClientId.ToString(),
                     inStyleTenantId.ToString()
