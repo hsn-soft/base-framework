@@ -1,4 +1,4 @@
-namespace Hhs.AuthServer.Application;
+namespace Hhs.AuthServer;
 
 public static class ApplicationErrorCodes
 {

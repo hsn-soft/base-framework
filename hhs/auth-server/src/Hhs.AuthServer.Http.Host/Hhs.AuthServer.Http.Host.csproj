@@ -16,19 +16,13 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="AspNetCore.HealthChecks.Uris" Version="9.0.0"/>
-        <PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="9.0.0"/>
-        <PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="9.0.0"/>
-        <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="$(MicrosoftAspNetCorePackageVersion)"/>
+        <!--        <PackageReference Include="Hhs.IdentityService.EntityFrameworkCore" Version="$(HhsIdentityVersion)" />-->
+        <ProjectReference Include="..\..\..\identity\src\Hhs.IdentityService.EntityFrameworkCore\Hhs.IdentityService.EntityFrameworkCore.csproj" />
     </ItemGroup>
 
     <ItemGroup>
         <!--        <PackageReference Include="Hhs.Shared.Hosting.Microservices" Version="$(HhsSharedVersion)" />-->
         <ProjectReference Include="..\..\..\shared\src\Hhs.Shared.Hosting.Microservices\Hhs.Shared.Hosting.Microservices.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <ProjectReference Include="..\Hhs.AuthServer.Application\Hhs.AuthServer.Application.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -50,7 +44,11 @@
         <Content Remove="Logs\**"/>
         <EmbeddedResource Remove="Logs\**"/>
         <None Remove="Logs\**"/>
+    </ItemGroup>
 
+    <ItemGroup>
+        <EmbeddedResource Include="Localization\AuthServer\*.json" />
+        <Content Remove="Localization\AuthServer\*.json" />
     </ItemGroup>
 
 </Project>

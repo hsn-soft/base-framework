@@ -1,6 +1,6 @@
 using StackExchange.Redis;
 
-namespace Hhs.AuthServer;
+namespace Hhs.AuthServer.Services;
 
 public class RedisService
 {

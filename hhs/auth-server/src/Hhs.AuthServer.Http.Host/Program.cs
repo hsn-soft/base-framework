@@ -1,8 +1,7 @@
 using Hhs.AuthServer;
-using Hhs.AuthServer.Application;
-using Hhs.AuthServer.Application.Contracts.AuthDomain.Interfaces;
-using Hhs.AuthServer.Application.Localization;
+using Hhs.AuthServer.Localization;
 using Hhs.AuthServer.Options;
+using Hhs.AuthServer.Services;
 using Hhs.IdentityService.EntityFrameworkCore;
 using Hhs.Shared.Contracts.Cache.ServicePermissions;
 using Hhs.Shared.Helper.Consts;
@@ -17,7 +16,6 @@ using HsnSoft.Base.AspNetCore.Tracing;
 using HsnSoft.Base.Serilog;
 using HsnSoft.Base.Swashbuckle;
 using HsnSoft.Base.Tracing;
-using HsnSoft.Base.Users;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Options;
 using Serilog;
@@ -140,23 +138,12 @@ builder.Services.AddMicroserviceHosting(builder.Configuration, typeof(Program))
     .AddHostingHealthChecks(builder.Configuration, "auth-server", checkRedis: true,
         checkPostgresql: true, postgresqlConnectionName: EfCoreDbProperties.ConnectionStringName);
 
-builder.Services.AddServiceApplicationConfiguration(builder.Configuration);
 builder.Services.AddServiceEfCoreDatabaseConfiguration(builder.Configuration, !builder.Environment.IsHostProduction());
 
-
-// old services
+// app services
+builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<TokenService>();
 builder.Services.AddScoped<RedisService>();
-
-// new services
-builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>();
-
-// auth services
-builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<ICurrentUser, CurrentUser>();
-builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
-builder.Services.AddScoped<IAuthService, AuthService>();
-
 
 // Swagger
 if (!builder.Environment.IsHostProduction())

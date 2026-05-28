@@ -1,4 +1,4 @@
-﻿using Hhs.AuthServer.Application.Localization;
+﻿using Hhs.AuthServer.Localization;
 using Hhs.IdentityService.Domain.Localization;
 using Hhs.Shared.Localization;
 using HsnSoft.Base.AspNetCore.Mvc;

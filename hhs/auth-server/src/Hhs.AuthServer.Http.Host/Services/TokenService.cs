@@ -9,7 +9,7 @@ using HsnSoft.Base.Security.Claims;
 using JetBrains.Annotations;
 using Microsoft.IdentityModel.Tokens;
 
-namespace Hhs.AuthServer;
+namespace Hhs.AuthServer.Services;
 
 public sealed class TokenService
 {
@@ -75,6 +75,29 @@ public sealed class TokenService
             {
                 claims.AddRange(roles.Select(role => new Claim("role", role)));
             }
+
+            // foreach (var role in roles)
+            // {
+            //     claims.Add(new Claim(ClaimTypes.Role, role.Name));
+            //
+            //     var roleClaims = await _db.AppRoleClaims
+            //         .Where(x => x.RoleId == role.Id)
+            //         .ToListAsync();
+            //
+            //     foreach (var roleClaim in roleClaims)
+            //         claims.Add(new Claim(roleClaim.ClaimType, roleClaim.ClaimValue));
+            // }
+            //
+            // var userClaims = await _db.AppUserClaims
+            //     .Where(x => x.UserId == user.Id)
+            //     .ToListAsync();
+            //
+            // foreach (var userClaim in userClaims)
+            //     claims.Add(new Claim(userClaim.ClaimType, userClaim.ClaimValue));
+
+
+
+
         }
 
         if (tenant != null)

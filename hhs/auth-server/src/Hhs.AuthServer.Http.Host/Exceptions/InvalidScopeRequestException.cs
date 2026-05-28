@@ -2,7 +2,7 @@ using HsnSoft.Base;
 using HsnSoft.Base.Validation.Localization;
 using Microsoft.Extensions.Localization;
 
-namespace Hhs.AuthServer.Application.Exceptions;
+namespace Hhs.AuthServer.Exceptions;
 
 [Serializable]
 public class InvalidScopeRequestException : BusinessException
