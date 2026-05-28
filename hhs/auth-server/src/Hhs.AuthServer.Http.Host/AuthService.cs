@@ -122,7 +122,6 @@ public sealed class AuthService : IAuthService
         var response = await _jwtTokenService.CreateTokenAsync(user);
 
         string refreshTokenHash = TokenHelper.Sha256(response.RefreshToken);
-
         _db.AuthRefreshTokens.Add(new AuthRefreshToken { UserId = user.Id, TokenHash = refreshTokenHash, ExpiresAt = DateTime.UtcNow.AddDays(30) });
 
         await AddLoginAuditAsync(user.TenantId, user.Id, request.UserEmail, true, null, ipAddress, userAgent);

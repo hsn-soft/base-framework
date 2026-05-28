@@ -11,6 +11,7 @@ using HsnSoft.Base.Domain.Repositories;
 using HsnSoft.Base.MultiTenancy;
 using HsnSoft.Base.Validation.Localization;
 using JetBrains.Annotations;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 
 namespace Hhs.IdentityService.EntityFrameworkCore.Repositories;
@@ -22,17 +23,19 @@ public class EfCoreAppUserRepository : EfCoreGenericRepository<AppUser, Guid>, I
     private readonly IDataFilter _dataFilter;
     private readonly ICurrentTenant _currentTenant;
 
+    private readonly IAuthPasswordPolicyRepository _authPasswordPolicyRepository;
+
     public EfCoreAppUserRepository(
         IServiceProvider provider,
         IStringLocalizerFactory stringLocalizerFactory,
         IdentityServiceDbContext dbContext,
         IDataFilter dataFilter,
-        ICurrentTenant currentTenant
-    ) : base(provider, dbContext)
+        ICurrentTenant currentTenant, IAuthPasswordPolicyRepository authPasswordPolicyRepository) : base(provider, dbContext)
     {
         L = stringLocalizerFactory.CreateMultiple([typeof(IdentityServiceResource), typeof(ValidationResource), typeof(SharedResource)]);
         _dataFilter = dataFilter;
         _currentTenant = currentTenant;
+        _authPasswordPolicyRepository = authPasswordPolicyRepository;
     }
 
     public async Task<AppUser> CreateAsync(Guid tenantId,
@@ -122,6 +125,45 @@ public class EfCoreAppUserRepository : EfCoreGenericRepository<AppUser, Guid>, I
         // Rule02
         _ = await UpdateAsync(oldAppUser);
         return oldAppUser;
+    }
+
+    public async Task SetLoginFailureStatesAsync(Guid tenantId, Guid appUserId, int failedLoginCount)
+    {
+        var policy = await _authPasswordPolicyRepository.GetSingleOrDefaultAsync(x => x.TenantId == tenantId);
+        policy ??= new AuthPasswordPolicy { TenantId = tenantId };
+
+        failedLoginCount++;
+
+        DateTime? lockoutEndAt = null;
+        if (failedLoginCount >= policy.MaxFailedLoginCount)
+        {
+            lockoutEndAt = DateTime.UtcNow.AddMinutes(policy.LockoutMinutes);
+        }
+
+        int affectedCount = await GetDbSet().Where(b => b.Id == appUserId).ExecuteUpdateAsync(s => s
+            .SetProperty(a => a.FailedLoginCount, failedLoginCount)
+            .SetProperty(a => a.LockoutEndAt, lockoutEndAt)
+        );
+
+        if (affectedCount < 1)
+        {
+            throw new AppUserNotFoundException(L, appUserId.ToString());
+        }
+    }
+
+    public async Task SetLoginSuccessStatesAsync(Guid appUserId)
+    {
+        DateTime? lockoutEndAt = null;
+        int affectedCount = await GetDbSet().Where(b => b.Id == appUserId).ExecuteUpdateAsync(s => s
+            .SetProperty(a => a.FailedLoginCount, 0)
+            .SetProperty(a => a.LockoutEndAt, lockoutEndAt)
+            .SetProperty(a => a.LastLoginAt, DateTime.UtcNow)
+        );
+
+        if (affectedCount < 1)
+        {
+            throw new AppUserNotFoundException(L, appUserId.ToString());
+        }
     }
 
     public async Task DeleteAsync(Guid id)

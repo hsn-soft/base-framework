@@ -53,10 +53,22 @@ public static class EfCoreServiceCollectionExtensions
 
         // Must be Scoped => Cannot consume any scoped service and CurrentUser object creation on constructor
         services.AddScoped(typeof(IEfCoreGenericRepository<,>), typeof(EfCoreGenericRepository<,>));
+
         services.AddScoped<ITenantRepository, EfCoreTenantRepository>();
+
         services.AddScoped<IAppRoleRepository, EfCoreAppRoleRepository>();
+        services.AddScoped<IAppRoleClaimRepository, EfCoreAppRoleClaimRepository>();
+
         services.AddScoped<IAppUserRepository, EfCoreAppUserRepository>();
+        services.AddScoped<IAppUserClaimRepository, EfCoreAppUserClaimRepository>();
+
         services.AddScoped<IAppUserRoleRepository, EfCoreAppUserRoleRepository>();
+
+        services.AddScoped<IAuthEmailConfirmationTokenRepository, EfCoreAuthEmailConfirmationTokenRepository>();
+        services.AddScoped<IAuthLoginAuditRepository, EfCoreAuthLoginAuditRepository>();
+        services.AddScoped<IAuthPasswordPolicyRepository, EfCoreAuthPasswordPolicyRepository>();
+        services.AddScoped<IAuthRefreshTokenRepository, EfCoreAuthRefreshTokenRepository>();
+        services.AddScoped<IAuthTokenRevocationRepository, EfCoreAuthTokenRevocationRepository>();
 
         return services;
     }

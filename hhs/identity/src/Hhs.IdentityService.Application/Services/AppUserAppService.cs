@@ -29,13 +29,17 @@ public sealed class AppUserAppService : ApplicationServiceBase, IAppUserAppServi
     private readonly ITenantRepository _tenantRepository;
     private readonly IAppRoleRepository _appRoleRepository;
     private readonly IAppUserRoleRepository _appUserRoleRepository;
+    private readonly IAuthPasswordPolicyRepository _authPasswordPolicyRepository;
 
     public AppUserAppService(
         IServiceProvider provider,
         IAppUserRepository appUserRepository,
         IPasswordHasher passwordHasher,
         ITenantRepository tenantRepository,
-        IAppRoleRepository appRoleRepository, IAppUserRoleRepository appUserRoleRepository) : base(provider)
+        IAppRoleRepository appRoleRepository,
+        IAppUserRoleRepository appUserRoleRepository,
+        IAuthPasswordPolicyRepository authPasswordPolicyRepository
+    ) : base(provider)
     {
         _logger = provider.GetRequiredService<IAppConsoleLogger>();
 
@@ -44,6 +48,7 @@ public sealed class AppUserAppService : ApplicationServiceBase, IAppUserAppServi
         _tenantRepository = tenantRepository;
         _appRoleRepository = appRoleRepository;
         _appUserRoleRepository = appUserRoleRepository;
+        _authPasswordPolicyRepository = authPasswordPolicyRepository;
     }
 
     public async Task<AppUserDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
@@ -53,13 +58,19 @@ public sealed class AppUserAppService : ApplicationServiceBase, IAppUserAppServi
             throw new BaseHttpException((int)HttpStatusCode.BadRequest);
         }
 
-        var item = await _appUserRepository.GetSingleOrDefaultAsync(x => x.Id == id, cancellationToken: cancellationToken);
+        var item = await _appUserRepository.GetSingleOrDefaultAsync<AppUserDto>(
+            predicate: x => x.Id == id,
+            includeEntity: q => q
+                .Include(x => x.Tenant)
+                .Include(x => x.UserRoles)
+                .ThenInclude(x => x.Role),
+            configuration: Mapper.ConfigurationProvider, cancellationToken: cancellationToken);
         if (item == null)
         {
             throw new BaseHttpException((int)HttpStatusCode.NotFound);
         }
 
-        return Mapper.Map<AppUser, AppUserDto>(item);
+        return item;
     }
 
     public async Task<PagedDataResultDto<AppUserDto>> GetPagedListAsync(GetAppUsersPaged pagedInput, CancellationToken cancellationToken = default)
@@ -166,15 +177,18 @@ public sealed class AppUserAppService : ApplicationServiceBase, IAppUserAppServi
 
     public async Task<AppUserDto> CreateAsync(AppUserCreateDto input)
     {
-        if (input == null)
+        if (input == null || CurrentUser == null)
         {
             throw new BaseHttpException((int)HttpStatusCode.BadRequest);
         }
 
-        if (!await _tenantRepository.ExistsAsync(x => x.Id == input.TenantId))
+        input.TenantId ??= Guid.Empty;
+        if (!CurrentUser.IsSystemTenant && !CurrentUser.AllowedTenantIds.Contains(input.TenantId.Value))
         {
-            throw new TenantNotFoundException(L, input.TenantId.ToString());
+            throw new BaseHttpException((int)HttpStatusCode.Forbidden);
         }
+
+        #region Role Control
 
         List<string> normalizedRoles = input.Roles
             .Select(role => StringOperations.Normalize(StringOperations.ReplaceInvalidChars(role)))
@@ -196,12 +210,16 @@ public sealed class AppUserAppService : ApplicationServiceBase, IAppUserAppServi
             throw new AppRoleNotFoundException(L, "N/A");
         }
 
+        #endregion
+
+        // Password Rule Control
+        // await ValidatePasswordAsync(input.TenantId.Value, plainPassword);
+
         var appUser = await _appUserRepository.CreateAsync(
             tenantId: input.TenantId ?? Guid.Empty,
             userName: input.UserName ?? string.Empty,
             email: input.Email ?? string.Empty,
             passwordHash: _passwordHasher.Hash(DefaultPass),
-            isStatic: false,
             displayName: input.DisplayName,
             avatarSuffixUrl: input.AvatarSuffixUrl,
             phoneNumber: input.PhoneNumber,
@@ -215,15 +233,7 @@ public sealed class AppUserAppService : ApplicationServiceBase, IAppUserAppServi
         //
         //
 
-        var placed = await _appUserRepository.GetByIdAsync(appUser.Id);
-
-        var response = Mapper.Map<AppUser, AppUserDto>(placed);
-
-        response.Roles = normalizedRoles
-            .Select(StringOperations.Minimize)
-            .ToList();
-
-        return response;
+        return await GetAsync(appUser.Id);
     }
 
     public async Task UpdateAsync(AppUserUpdateDto input)
@@ -290,4 +300,26 @@ public sealed class AppUserAppService : ApplicationServiceBase, IAppUserAppServi
         //
         //
     }
+
+    // private async Task ValidatePasswordAsync(Guid tenantId, string password)
+    // {
+    //     var policy = await  _authPasswordPolicyRepository.GetSingleOrDefaultAsync(x => x.TenantId == tenantId);
+    //
+    //     policy ??= new AuthPasswordPolicy { TenantId = tenantId };
+    //
+    //     if (password.Length < policy.MinLength)
+    //         throw new Exception($"Şifre en az {policy.MinLength} karakter olmalıdır.");
+    //
+    //     if (policy.RequireDigit && !password.Any(char.IsDigit))
+    //         throw new Exception("Şifre en az bir rakam içermelidir.");
+    //
+    //     if (policy.RequireLowercase && !password.Any(char.IsLower))
+    //         throw new Exception("Şifre en az bir küçük harf içermelidir.");
+    //
+    //     if (policy.RequireUppercase && !password.Any(char.IsUpper))
+    //         throw new Exception("Şifre en az bir büyük harf içermelidir.");
+    //
+    //     if (policy.RequireNonAlphanumeric && password.All(char.IsLetterOrDigit))
+    //         throw new Exception("Şifre en az bir özel karakter içermelidir.");
+    // }
 }

@@ -36,5 +36,8 @@ public interface IAppUserRepository : IReadOnlyGenericRepository<AppUser, Guid>
         [CanBeNull] string phoneNumber = null,
         [CanBeNull] string languageCode = null);
 
+    Task SetLoginFailureStatesAsync(Guid tenantId, Guid appUserId, int failedLoginCount);
+    Task SetLoginSuccessStatesAsync(Guid appUserId);
+
     Task DeleteAsync(Guid id);
 }

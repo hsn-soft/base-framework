@@ -135,12 +135,4 @@ public sealed class TokenService
 
         return new SigningCredentials(key: securityKey, algorithm: SecurityAlgorithms.RsaSha256); // Important to use RSA version of the SHA algo
     }
-
-    public string CreateRefreshToken()
-    {
-        byte[] number = new byte[32];
-        using var random = RandomNumberGenerator.Create();
-        random.GetBytes(number);
-        return Convert.ToBase64String(number);
-    }
 }
