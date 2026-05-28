@@ -67,7 +67,7 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
         var @event = new MessageEnvelope<TEventMessage>
         {
             ParentMessageId = parentMessage?.MessageId,
-            MessageId = Guid.NewGuid(),
+            MessageId = Guid.CreateVersion7(),
             MessageTime = produceTime,
             Message = eventMessage,
             Producer = _rabbitMqEventBusConfig.ConsumerClientInfo,
@@ -98,7 +98,7 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
 
                     // Persistent Log
                     _logger.EventBusErrorLog(new ProduceMessageLogModel(
-                        LogId: Guid.NewGuid().ToString(),
+                        LogId: Guid.CreateVersion7().ToString(),
                         CorrelationId: @event.CorrelationId,
                         Facility: nameof(EventBusLogFacility.PRODUCE_EVENT_ERROR),
                         ProduceDateTimeUtc: produceTime,

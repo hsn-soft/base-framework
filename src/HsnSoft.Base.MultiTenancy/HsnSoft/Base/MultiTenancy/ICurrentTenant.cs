@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using JetBrains.Annotations;
 
 namespace HsnSoft.Base.MultiTenancy;
@@ -7,14 +8,13 @@ public interface ICurrentTenant
 {
     bool IsAvailable { get; }
 
-    [CanBeNull]
-    Guid? Id { get; }
+    [CanBeNull] Guid? Id { get; }
 
-    [CanBeNull]
-    string Name { get; }
+    [CanBeNull] string Normalized { get; }
 
-    [CanBeNull]
-    string Domain { get; }
+    bool IsSystemTenant { get; }
 
-    IDisposable Change(Guid? id, string name = null, string domain = null);
+    [NotNull] List<Guid> AllowedTenantIds { get; }
+
+    IDisposable Change(Guid? id, bool isSystemTenant, [CanBeNull] List<Guid> allowedTenantIds, [CanBeNull] string normalized = null);
 }

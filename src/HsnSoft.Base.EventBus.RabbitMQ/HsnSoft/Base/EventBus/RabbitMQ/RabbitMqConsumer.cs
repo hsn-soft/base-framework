@@ -6,10 +6,12 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using HsnSoft.Base.Data;
 using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.EventBus.Logging;
 using HsnSoft.Base.EventBus.RabbitMQ.Configs;
 using HsnSoft.Base.EventBus.RabbitMQ.Connection;
+using HsnSoft.Base.MultiTenancy;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
@@ -184,7 +186,7 @@ public sealed class RabbitMqConsumer : IDisposable
             string eventName = ResolveEventName(eventArgs);
             string message = Encoding.UTF8.GetString(eventArgs.Body.Span);
 
-            string fetcherId = Task.CurrentId?.ToString() ?? Guid.NewGuid().ToString("N");
+            string fetcherId = Task.CurrentId?.ToString() ?? Guid.CreateVersion7().ToString("N");
             _logger.LogDebug("{BrokerName} | {ConsumerQueue} => ConsumerChannel[ {ChannelNo} ][ {ConsumerId} ] FetcherId [ {FetcherId} ]: {OperationStatus}",
                 "RabbitMQ", _consumerQueueName, consumerChannelNumber, _currentConsumerTag, fetcherId, "STARTED");
 
@@ -277,15 +279,19 @@ public sealed class RabbitMqConsumer : IDisposable
 
                 try
                 {
-                    var eventHandlerType = typeof(IIntegrationEventHandler<>).MakeGenericType(eventInfo.EventType!);
-                    await Task.Yield();
+                    var dataFilter = scope.ServiceProvider.GetService<IDataFilter>();
+                    using (dataFilter.Disable<IMultiTenant>()) // disable tenant filter
+                    {
+                        var eventHandlerType = typeof(IIntegrationEventHandler<>).MakeGenericType(eventInfo.EventType!);
+                        await Task.Yield();
 
-                    var method = eventHandlerType.GetMethod(nameof(IIntegrationEventHandler<IIntegrationEventMessage>.HandleAsync));
-                    await ((Task)method!.Invoke(handler, [@event]))!;
+                        var method = eventHandlerType.GetMethod(nameof(IIntegrationEventHandler<IIntegrationEventMessage>.HandleAsync));
+                        await ((Task)method!.Invoke(handler, [@event]))!;
+                    }
 
                     watch.Stop();
                     _logger.EventBusInfoLog(new ConsumeMessageLogModel(
-                        LogId: Guid.NewGuid().ToString(),
+                        LogId: Guid.CreateVersion7().ToString(),
                         CorrelationId: ((dynamic)@event)?.CorrelationId,
                         Facility: nameof(EventBusLogFacility.CONSUME_EVENT_SUCCESS),
                         Producer: ((dynamic)@event)?.Producer,
@@ -312,7 +318,7 @@ public sealed class RabbitMqConsumer : IDisposable
                 {
                     watch.Stop();
                     _logger.EventBusErrorLog(new ConsumeMessageLogModel(
-                        LogId: Guid.NewGuid().ToString(),
+                        LogId: Guid.CreateVersion7().ToString(),
                         CorrelationId: ((dynamic)@event)?.CorrelationId,
                         Facility: nameof(EventBusLogFacility.CONSUME_EVENT_ERROR),
                         Producer: ((dynamic)@event)?.Producer,
@@ -400,7 +406,7 @@ public sealed class RabbitMqConsumer : IDisposable
         var @event = new MessageEnvelope<FailedEto>
         {
             ParentMessageId = failedEnvelopeInfo?.MessageId,
-            MessageId = Guid.NewGuid(),
+            MessageId = Guid.CreateVersion7(),
             MessageTime = produceTime,
             Message = new FailedEto(
                 FailedReason: errorMessage,
@@ -435,7 +441,7 @@ public sealed class RabbitMqConsumer : IDisposable
 
                 // Persistent Log
                 _logger.EventBusErrorLog(new ProduceMessageLogModel(
-                    LogId: Guid.NewGuid().ToString(),
+                    LogId: Guid.CreateVersion7().ToString(),
                     CorrelationId: @event.CorrelationId,
                     Facility: nameof(EventBusLogFacility.PRODUCE_EVENT_ERROR),
                     ProduceDateTimeUtc: produceTime,

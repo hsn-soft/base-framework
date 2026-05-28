@@ -19,7 +19,7 @@ public class EfCoreGenericRepositoryTests(PostgresFixture fixture) : IClassFixtu
         // Arrange
         var context = fixture.Context;
         await fixture.CleanDatabase();
-        var expected = new TestEntity(Guid.NewGuid(), "Tester", 61);
+        var expected = new TestEntity(Guid.CreateVersion7(), "Tester", 61);
         await context.TestEntities.AddAsync(expected);
         await context.SaveChangesAsync();
         var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
@@ -42,7 +42,7 @@ public class EfCoreGenericRepositoryTests(PostgresFixture fixture) : IClassFixtu
 
         // Throw Act & Assert
         await FluentActions
-            .Invoking(() => repo.GetByIdAsync(Guid.NewGuid()))
+            .Invoking(() => repo.GetByIdAsync(Guid.CreateVersion7()))
             .Should()
             .ThrowAsync<EntityNotFoundException>();
     }
@@ -57,7 +57,7 @@ public class EfCoreGenericRepositoryTests(PostgresFixture fixture) : IClassFixtu
         // Arrange
         var context = fixture.Context;
         await fixture.CleanDatabase();
-        var expected = new TestEntity(Guid.NewGuid(), "Tester", 61);
+        var expected = new TestEntity(Guid.CreateVersion7(), "Tester", 61);
         await context.TestEntities.AddAsync(expected);
         await context.SaveChangesAsync();
         var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
@@ -79,7 +79,7 @@ public class EfCoreGenericRepositoryTests(PostgresFixture fixture) : IClassFixtu
         var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
-        var actual = await repo.GetByIdOrDefaultAsync(Guid.NewGuid());
+        var actual = await repo.GetByIdOrDefaultAsync(Guid.CreateVersion7());
 
         // Assert
         actual.Should().BeNull();
@@ -95,7 +95,7 @@ public class EfCoreGenericRepositoryTests(PostgresFixture fixture) : IClassFixtu
         // Arrange
         var context = fixture.Context;
         await fixture.CleanDatabase();
-        var expected = new TestEntity(Guid.NewGuid(), "Tester", 61);
+        var expected = new TestEntity(Guid.CreateVersion7(), "Tester", 61);
         await context.TestEntities.AddAsync(expected);
         await context.SaveChangesAsync();
         var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
@@ -130,7 +130,7 @@ public class EfCoreGenericRepositoryTests(PostgresFixture fixture) : IClassFixtu
 
         // Throw Act & Assert
         await FluentActions
-            .Invoking(() => repo.GetSingleAsync(x => x.Id == Guid.NewGuid()))
+            .Invoking(() => repo.GetSingleAsync(x => x.Id == Guid.CreateVersion7()))
             .Should()
             .ThrowAsync<EntityNotFoundException>();
     }
@@ -141,7 +141,7 @@ public class EfCoreGenericRepositoryTests(PostgresFixture fixture) : IClassFixtu
         // Arrange
         var context = fixture.Context;
         await fixture.CleanDatabase();
-        await context.TestEntities.AddRangeAsync(new TestEntity(Guid.NewGuid(), "Tester", 61), new TestEntity(Guid.NewGuid(), "Tester", 61));
+        await context.TestEntities.AddRangeAsync(new TestEntity(Guid.CreateVersion7(), "Tester", 61), new TestEntity(Guid.CreateVersion7(), "Tester", 61));
         await context.SaveChangesAsync();
         var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
@@ -162,7 +162,7 @@ public class EfCoreGenericRepositoryTests(PostgresFixture fixture) : IClassFixtu
         // Arrange
         var context = fixture.Context;
         await fixture.CleanDatabase();
-        var expected = new TestEntity(Guid.NewGuid(), "Tester", 61);
+        var expected = new TestEntity(Guid.CreateVersion7(), "Tester", 61);
         await context.TestEntities.AddAsync(expected);
         await context.SaveChangesAsync();
         var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
@@ -196,7 +196,7 @@ public class EfCoreGenericRepositoryTests(PostgresFixture fixture) : IClassFixtu
         var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
-        var actual = await repo.GetSingleOrDefaultAsync(e => e.Id == Guid.NewGuid());
+        var actual = await repo.GetSingleOrDefaultAsync(e => e.Id == Guid.CreateVersion7());
 
         // Assert
         actual.Should().BeNull();
@@ -208,7 +208,7 @@ public class EfCoreGenericRepositoryTests(PostgresFixture fixture) : IClassFixtu
         // Arrange
         var context = fixture.Context;
         await fixture.CleanDatabase();
-        await context.TestEntities.AddRangeAsync(new TestEntity(Guid.NewGuid(), "Tester", 61), new TestEntity(Guid.NewGuid(), "Tester", 61));
+        await context.TestEntities.AddRangeAsync(new TestEntity(Guid.CreateVersion7(), "Tester", 61), new TestEntity(Guid.CreateVersion7(), "Tester", 61));
         await context.SaveChangesAsync();
         var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
@@ -229,8 +229,8 @@ public class EfCoreGenericRepositoryTests(PostgresFixture fixture) : IClassFixtu
         // Arrange
         var context = fixture.Context;
         await fixture.CleanDatabase();
-        var expected = new TestEntity(Guid.NewGuid(), "Tester", 61);
-        await context.TestEntities.AddRangeAsync(new TestEntity(Guid.NewGuid(), "Tester", 18), expected);
+        var expected = new TestEntity(Guid.CreateVersion7(), "Tester", 61);
+        await context.TestEntities.AddRangeAsync(new TestEntity(Guid.CreateVersion7(), "Tester", 18), expected);
         await context.SaveChangesAsync();
         var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
@@ -269,7 +269,7 @@ public class EfCoreGenericRepositoryTests(PostgresFixture fixture) : IClassFixtu
         var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
-        var actual = await repo.GetFirstOrDefaultAsync(e => e.Id == Guid.NewGuid());
+        var actual = await repo.GetFirstOrDefaultAsync(e => e.Id == Guid.CreateVersion7());
 
         // Assert
         actual.Should().BeNull();
@@ -301,9 +301,9 @@ public class EfCoreGenericRepositoryTests(PostgresFixture fixture) : IClassFixtu
         // Arrange
         var context = fixture.Context;
         await fixture.CleanDatabase();
-        var expectedList = new List<TestEntity> { new(Guid.NewGuid(), "TesterA", 11), new(Guid.NewGuid(), "TesterA", 12) };
+        var expectedList = new List<TestEntity> { new(Guid.CreateVersion7(), "TesterA", 11), new(Guid.CreateVersion7(), "TesterA", 12) };
         await context.TestEntities.AddRangeAsync(expectedList);
-        await context.TestEntities.AddRangeAsync(new List<TestEntity> { new(Guid.NewGuid(), "TesterB", 21), new(Guid.NewGuid(), "TesterC", 22), new(Guid.NewGuid(), "TesterD", 23) });
+        await context.TestEntities.AddRangeAsync(new List<TestEntity> { new(Guid.CreateVersion7(), "TesterB", 21), new(Guid.CreateVersion7(), "TesterC", 22), new(Guid.CreateVersion7(), "TesterD", 23) });
         await context.SaveChangesAsync();
         var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
@@ -404,9 +404,9 @@ public class EfCoreGenericRepositoryTests(PostgresFixture fixture) : IClassFixtu
         // Arrange
         var context = fixture.Context;
         await fixture.CleanDatabase();
-        var expectedList = new List<TestEntity> { new(Guid.NewGuid(), "TesterA", 11), new(Guid.NewGuid(), "TesterA", 12) };
+        var expectedList = new List<TestEntity> { new(Guid.CreateVersion7(), "TesterA", 11), new(Guid.CreateVersion7(), "TesterA", 12) };
         await context.TestEntities.AddRangeAsync(expectedList);
-        await context.TestEntities.AddRangeAsync(new List<TestEntity> { new(Guid.NewGuid(), "TesterB", 21), new(Guid.NewGuid(), "TesterC", 22), new(Guid.NewGuid(), "TesterD", 23) });
+        await context.TestEntities.AddRangeAsync(new List<TestEntity> { new(Guid.CreateVersion7(), "TesterB", 21), new(Guid.CreateVersion7(), "TesterC", 22), new(Guid.CreateVersion7(), "TesterD", 23) });
         await context.SaveChangesAsync();
         var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
@@ -514,9 +514,9 @@ public class EfCoreGenericRepositoryTests(PostgresFixture fixture) : IClassFixtu
         // Arrange
         var context = fixture.Context;
         await fixture.CleanDatabase();
-        var expectedList = new List<TestEntity> { new(Guid.NewGuid(), "TesterA", 34), new(Guid.NewGuid(), "TesterA", 61) };
+        var expectedList = new List<TestEntity> { new(Guid.CreateVersion7(), "TesterA", 34), new(Guid.CreateVersion7(), "TesterA", 61) };
         await context.TestEntities.AddRangeAsync(expectedList);
-        await context.TestEntities.AddRangeAsync(new List<TestEntity> { new(Guid.NewGuid(), "TesterB", 1), new(Guid.NewGuid(), "TesterC", 2), new(Guid.NewGuid(), "TesterD", 3) });
+        await context.TestEntities.AddRangeAsync(new List<TestEntity> { new(Guid.CreateVersion7(), "TesterB", 1), new(Guid.CreateVersion7(), "TesterC", 2), new(Guid.CreateVersion7(), "TesterD", 3) });
         await context.SaveChangesAsync();
         var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
@@ -560,7 +560,7 @@ public class EfCoreGenericRepositoryTests(PostgresFixture fixture) : IClassFixtu
         var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
-        bool? actual = await repo.ExistsAsync(x => x.Id == Guid.NewGuid());
+        bool? actual = await repo.ExistsAsync(x => x.Id == Guid.CreateVersion7());
 
         // Assert
         actual.Should().NotBeNull();
@@ -573,7 +573,7 @@ public class EfCoreGenericRepositoryTests(PostgresFixture fixture) : IClassFixtu
         // Arrange
         var context = fixture.Context;
         await fixture.CleanDatabase();
-        await context.TestEntities.AddAsync(new TestEntity(Guid.NewGuid(), "TesterA", 34));
+        await context.TestEntities.AddAsync(new TestEntity(Guid.CreateVersion7(), "TesterA", 34));
         await context.SaveChangesAsync();
         var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
@@ -607,7 +607,7 @@ public class EfCoreGenericRepositoryTests(PostgresFixture fixture) : IClassFixtu
         // Arrange
         var context = fixture.Context;
         await fixture.CleanDatabase();
-        var expectedEntity = new TestEntity(Guid.NewGuid(), "TesterA", 10);
+        var expectedEntity = new TestEntity(Guid.CreateVersion7(), "TesterA", 10);
         var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
@@ -631,7 +631,7 @@ public class EfCoreGenericRepositoryTests(PostgresFixture fixture) : IClassFixtu
         // Arrange
         var context = fixture.Context;
         await fixture.CleanDatabase();
-        var expectedList = new List<TestEntity> { new(Guid.NewGuid(), "TesterA", 11), new(Guid.NewGuid(), "TesterA", 12) };
+        var expectedList = new List<TestEntity> { new(Guid.CreateVersion7(), "TesterA", 11), new(Guid.CreateVersion7(), "TesterA", 12) };
         var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
 
         // Act
@@ -655,7 +655,7 @@ public class EfCoreGenericRepositoryTests(PostgresFixture fixture) : IClassFixtu
         // Arrange
         var context = fixture.Context;
         await fixture.CleanDatabase();
-        var placedEntity = new TestEntity(Guid.NewGuid(), "TesterA", 10);
+        var placedEntity = new TestEntity(Guid.CreateVersion7(), "TesterA", 10);
         await context.TestEntities.AddAsync(placedEntity);
         await context.SaveChangesAsync();
         var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
@@ -678,7 +678,7 @@ public class EfCoreGenericRepositoryTests(PostgresFixture fixture) : IClassFixtu
 
         // Throw Act & Assert
         await FluentActions
-            .Invoking(() => repo.UpdateByIdAsync(Guid.NewGuid(), e => e.Name = "Updated"))
+            .Invoking(() => repo.UpdateByIdAsync(Guid.CreateVersion7(), e => e.Name = "Updated"))
             .Should()
             .ThrowAsync<EntityNotFoundException>();
     }
@@ -693,7 +693,7 @@ public class EfCoreGenericRepositoryTests(PostgresFixture fixture) : IClassFixtu
         // Arrange
         var context = fixture.Context;
         await fixture.CleanDatabase();
-        var placedEntity = new TestEntity(Guid.NewGuid(), "TesterA", 10);
+        var placedEntity = new TestEntity(Guid.CreateVersion7(), "TesterA", 10);
         await context.TestEntities.AddAsync(placedEntity);
         await context.SaveChangesAsync();
         var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
@@ -717,7 +717,7 @@ public class EfCoreGenericRepositoryTests(PostgresFixture fixture) : IClassFixtu
 
         // Throw Act & Assert
         await FluentActions
-            .Invoking(() => repo.UpdateAsync(new TestEntity(Guid.NewGuid(), "Tester", 1)))
+            .Invoking(() => repo.UpdateAsync(new TestEntity(Guid.CreateVersion7(), "Tester", 1)))
             .Should()
             .ThrowAsync<EntityNotFoundException>();
     }
@@ -732,7 +732,7 @@ public class EfCoreGenericRepositoryTests(PostgresFixture fixture) : IClassFixtu
         // Arrange
         var context = fixture.Context;
         await fixture.CleanDatabase();
-        var placedEntities = new List<TestEntity> { new(Guid.NewGuid(), "TesterA", 10), new(Guid.NewGuid(), "TesterA", 11) };
+        var placedEntities = new List<TestEntity> { new(Guid.CreateVersion7(), "TesterA", 10), new(Guid.CreateVersion7(), "TesterA", 11) };
         await context.TestEntities.AddRangeAsync(placedEntities);
         await context.SaveChangesAsync();
         var updatedEntities = new List<TestEntity> { new(placedEntities[0].Id, "Updated", 20), new(placedEntities[1].Id, "Updated", 21) };
@@ -757,7 +757,7 @@ public class EfCoreGenericRepositoryTests(PostgresFixture fixture) : IClassFixtu
 
         // Throw Act & Assert
         await FluentActions
-            .Invoking(() => repo.UpdateManyAsync(new List<TestEntity> { new(Guid.NewGuid(), "Tester", 61) }.AsReadOnly()))
+            .Invoking(() => repo.UpdateManyAsync(new List<TestEntity> { new(Guid.CreateVersion7(), "Tester", 61) }.AsReadOnly()))
             .Should()
             .ThrowAsync<EntityNotFoundException>();
     }
@@ -772,7 +772,7 @@ public class EfCoreGenericRepositoryTests(PostgresFixture fixture) : IClassFixtu
         // Arrange
         var context = fixture.Context;
         await fixture.CleanDatabase();
-        var placedEntity = new TestEntity(Guid.NewGuid(), "TesterA", 10);
+        var placedEntity = new TestEntity(Guid.CreateVersion7(), "TesterA", 10);
         await context.TestEntities.AddAsync(placedEntity);
         await context.SaveChangesAsync();
         var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
@@ -796,7 +796,7 @@ public class EfCoreGenericRepositoryTests(PostgresFixture fixture) : IClassFixtu
 
         // Throw Act & Assert
         await FluentActions
-            .Invoking(() => repo.DeleteByIdAsync(Guid.NewGuid()))
+            .Invoking(() => repo.DeleteByIdAsync(Guid.CreateVersion7()))
             .Should()
             .ThrowAsync<EntityNotFoundException>();
     }
@@ -811,7 +811,7 @@ public class EfCoreGenericRepositoryTests(PostgresFixture fixture) : IClassFixtu
         // Arrange
         var context = fixture.Context;
         await fixture.CleanDatabase();
-        var placedEntities = new List<TestEntity> { new(Guid.NewGuid(), "TesterA", 10), new(Guid.NewGuid(), "TesterA", 11) };
+        var placedEntities = new List<TestEntity> { new(Guid.CreateVersion7(), "TesterA", 10), new(Guid.CreateVersion7(), "TesterA", 11) };
         await context.TestEntities.AddRangeAsync(placedEntities);
         await context.SaveChangesAsync();
         var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
@@ -835,7 +835,7 @@ public class EfCoreGenericRepositoryTests(PostgresFixture fixture) : IClassFixtu
 
         // Throw Act & Assert
         await FluentActions
-            .Invoking(() => repo.DeleteByIdListAsync(new List<Guid> { Guid.NewGuid() }.AsReadOnly()))
+            .Invoking(() => repo.DeleteByIdListAsync(new List<Guid> { Guid.CreateVersion7() }.AsReadOnly()))
             .Should()
             .ThrowAsync<EntityNotFoundException>();
     }
@@ -850,7 +850,7 @@ public class EfCoreGenericRepositoryTests(PostgresFixture fixture) : IClassFixtu
         // Arrange
         var context = fixture.Context;
         await fixture.CleanDatabase();
-        var placedEntity = new TestEntity(Guid.NewGuid(), "TesterA", 10);
+        var placedEntity = new TestEntity(Guid.CreateVersion7(), "TesterA", 10);
         await context.TestEntities.AddAsync(placedEntity);
         await context.SaveChangesAsync();
         var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
@@ -874,7 +874,7 @@ public class EfCoreGenericRepositoryTests(PostgresFixture fixture) : IClassFixtu
 
         // Throw Act & Assert
         await FluentActions
-            .Invoking(() => repo.DeleteAsync(new TestEntity(Guid.NewGuid(), "Tester", 1)))
+            .Invoking(() => repo.DeleteAsync(new TestEntity(Guid.CreateVersion7(), "Tester", 1)))
             .Should()
             .ThrowAsync<EntityNotFoundException>();
     }
@@ -889,7 +889,7 @@ public class EfCoreGenericRepositoryTests(PostgresFixture fixture) : IClassFixtu
         // Arrange
         var context = fixture.Context;
         await fixture.CleanDatabase();
-        var placedEntities = new List<TestEntity> { new(Guid.NewGuid(), "TesterA", 10), new(Guid.NewGuid(), "TesterA", 11) };
+        var placedEntities = new List<TestEntity> { new(Guid.CreateVersion7(), "TesterA", 10), new(Guid.CreateVersion7(), "TesterA", 11) };
         await context.TestEntities.AddRangeAsync(placedEntities);
         await context.SaveChangesAsync();
         var repo = new EfCoreGenericRepository<TestEntity, Guid>(null, context);
@@ -940,13 +940,13 @@ public class EfCoreGenericRepositoryTests(PostgresFixture fixture) : IClassFixtu
 
         // Throw Act & Assert
         await FluentActions
-            .Invoking(() => repo.DeleteManyAsync(new List<TestEntity> { new(Guid.NewGuid(), "Tester", 61) }.AsReadOnly()))
+            .Invoking(() => repo.DeleteManyAsync(new List<TestEntity> { new(Guid.CreateVersion7(), "Tester", 61) }.AsReadOnly()))
             .Should()
             .ThrowAsync<EntityNotFoundException>();
 
         // Throw Act & Assert
         await FluentActions
-            .Invoking(() => repo.DeleteManyAsync(x => x.Id == Guid.NewGuid()))
+            .Invoking(() => repo.DeleteManyAsync(x => x.Id == Guid.CreateVersion7()))
             .Should()
             .ThrowAsync<EntityNotFoundException>();
     }

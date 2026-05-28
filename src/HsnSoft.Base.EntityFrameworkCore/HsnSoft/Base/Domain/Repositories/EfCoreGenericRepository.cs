@@ -29,9 +29,10 @@ public class EfCoreGenericRepository<TEntity, TKey>(IServiceProvider provider, D
     public override async Task<TResult> GetSingleOrDefaultAsync<TResult>(
         Expression<Func<TEntity, bool>> predicate,
         Expression<Func<TEntity, TResult>> selector,
+        Func<IQueryable<TEntity>, IQueryable<TEntity>> includeEntity = null,
         CancellationToken cancellationToken = default)
     {
-        var results = await QueryGetSingleOrDefault(predicate).Select(selector).ToListAsync(cancellationToken);
+        var results = await QueryGetSingleOrDefault(predicate,includeEntity).Select(selector).ToListAsync(cancellationToken);
         return results.Count switch
         {
             0 => null,
@@ -43,9 +44,10 @@ public class EfCoreGenericRepository<TEntity, TKey>(IServiceProvider provider, D
     public override async Task<TResult> GetSingleOrDefaultAsync<TResult>(
         Expression<Func<TEntity, bool>> predicate,
         IConfigurationProvider configuration,
+        Func<IQueryable<TEntity>, IQueryable<TEntity>> includeEntity = null,
         CancellationToken cancellationToken = default)
     {
-        var results = await QueryGetSingleOrDefault(predicate).ProjectTo<TResult>(configuration).ToListAsync(cancellationToken);
+        var results = await QueryGetSingleOrDefault(predicate,includeEntity).ProjectTo<TResult>(configuration).ToListAsync(cancellationToken);
         return results.Count switch
         {
             0 => null,
@@ -54,29 +56,57 @@ public class EfCoreGenericRepository<TEntity, TKey>(IServiceProvider provider, D
         };
     }
 
-    private IQueryable<TEntity> QueryGetSingleOrDefault(Expression<Func<TEntity, bool>> predicate) => GetDbSet().Where(predicate).Take(2);
+    private IQueryable<TEntity> QueryGetSingleOrDefault(
+        Expression<Func<TEntity, bool>> predicate,
+        Func<IQueryable<TEntity>, IQueryable<TEntity>> includeEntity = null
+        )
+    {
+        IQueryable<TEntity> query = GetQueryable();
+
+        if (predicate != null)
+            query = query.Where(predicate);
+
+        if (includeEntity != null)
+            query = includeEntity(query);
+
+        return query.Take(2);
+    }
 
     public override async Task<TResult> GetFirstOrDefaultAsync<TResult>(
         Expression<Func<TEntity, bool>> predicate,
         Expression<Func<TEntity, TResult>> selector,
+        Func<IQueryable<TEntity>, IQueryable<TEntity>> includeEntity = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderByEntity = null,
+
         CancellationToken cancellationToken = default)
-        => await QueryGetFirstOrDefault(predicate, orderByEntity).Select(selector).FirstOrDefaultAsync(cancellationToken);
+        => await QueryGetFirstOrDefault(predicate,includeEntity, orderByEntity).Select(selector).FirstOrDefaultAsync(cancellationToken);
 
     public override async Task<TResult> GetFirstOrDefaultAsync<TResult>(
         Expression<Func<TEntity, bool>> predicate,
         IConfigurationProvider configuration,
+        Func<IQueryable<TEntity>, IQueryable<TEntity>> includeEntity = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderByEntity = null,
+
         CancellationToken cancellationToken = default)
-        => await QueryGetFirstOrDefault(predicate, orderByEntity).ProjectTo<TResult>(configuration).FirstOrDefaultAsync(cancellationToken);
+        => await QueryGetFirstOrDefault(predicate,includeEntity, orderByEntity).ProjectTo<TResult>(configuration).FirstOrDefaultAsync(cancellationToken);
 
     private IQueryable<TEntity> QueryGetFirstOrDefault(
         Expression<Func<TEntity, bool>> predicate,
+        Func<IQueryable<TEntity>, IQueryable<TEntity>> includeEntity = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderByEntity = null
     )
     {
-        IQueryable<TEntity> query = GetDbSet().Where(predicate);
-        if (orderByEntity != null) query = orderByEntity(query);
+        IQueryable<TEntity> query = GetQueryable();
+
+        if (predicate != null)
+            query = query.Where(predicate);
+
+        if (includeEntity != null)
+            query = includeEntity(query);
+
+        if (orderByEntity != null)
+            query = orderByEntity(query);
+
         return query;
     }
 
@@ -98,6 +128,9 @@ public class EfCoreGenericRepository<TEntity, TKey>(IServiceProvider provider, D
 
         query = query.AsNoTracking();
         if (options.Filter != null) query = query.Where(options.Filter);
+
+        if (options.IncludeEntity != null)
+            query = options.IncludeEntity(query);
 
         if (!string.IsNullOrWhiteSpace(options.OrderByDynamic))
             query = query.OrderBy(options.OrderByDynamic);
@@ -140,6 +173,9 @@ public class EfCoreGenericRepository<TEntity, TKey>(IServiceProvider provider, D
 
         long totalCount = await query.LongCountAsync(cancellationToken);
 
+        if (options.IncludeEntity != null)
+            query = options.IncludeEntity(query);
+
         if (!string.IsNullOrWhiteSpace(options.OrderByDynamic))
             query = query.OrderBy(options.OrderByDynamic);
         else if (options.OrderByEntity != null)
@@ -157,6 +193,39 @@ public class EfCoreGenericRepository<TEntity, TKey>(IServiceProvider provider, D
 
         return (query, totalCount);
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     public override async Task<long> GetCountAsync(
         Expression<Func<TEntity, bool>> filter = null,

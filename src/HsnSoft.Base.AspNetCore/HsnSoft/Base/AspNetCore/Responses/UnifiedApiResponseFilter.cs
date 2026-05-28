@@ -1,6 +1,3 @@
-#nullable enable
-using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using HsnSoft.Base.Communication;
 using Microsoft.AspNetCore.Http;
@@ -9,71 +6,89 @@ using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace HsnSoft.Base.AspNetCore.Responses;
 
-public sealed class UnifiedApiResponseFilter(IApiResponseWriter writer, IStatusMessageProvider statusMessages) : IAsyncResultFilter
+public sealed class UnifiedApiResponseFilter : IAsyncResultFilter
 {
-    public async Task OnResultExecutionAsync(ResultExecutingContext context, ResultExecutionDelegate next)
+    private readonly IStatusMessageProvider _statusMessageProvider;
+
+    public UnifiedApiResponseFilter(IStatusMessageProvider statusMessageProvider)
     {
-        switch (context.Result)
-        {
-            case FileResult:
-            case ChallengeResult:
-            case ForbidResult:
-            case RedirectResult:
-            case RedirectToActionResult:
-            case RedirectToRouteResult:
-            case RedirectToPageResult:
-                await next();
-                return;
-        }
+        _statusMessageProvider = statusMessageProvider;
+    }
 
-        object? value;
-        int statusCode = StatusCodes.Status200OK;
-
-        switch (context.Result)
-        {
-            case ObjectResult obj:
-                value = obj.Value;
-                statusCode = obj.StatusCode ?? StatusCodes.Status200OK;
-                break;
-
-            case JsonResult json:
-                value = json.Value;
-                break;
-
-            case EmptyResult:
-                value = null;
-                break;
-
-            default:
-                value = context.Result;
-                break;
-        }
-
-        if (value != null && IsBaseResponse(value.GetType()))
+    public async Task OnResultExecutionAsync(
+        ResultExecutingContext context,
+        ResultExecutionDelegate next)
+    {
+        if (context.HttpContext.Response.HasStarted)
         {
             await next();
             return;
         }
 
-        if (statusCode is >= 200 and < 300)
+        switch (context.Result)
         {
-            await writer.WriteSuccessAsync(
-                context.HttpContext,
-                statusCode,
-                value,
-                new List<string> { statusMessages.GetMessage(statusCode) }
-            );
-        }
-        else
-        {
-            await writer.WriteErrorAsync(
-                context.HttpContext,
-                statusCode,
-                new List<string> { statusMessages.GetMessage(statusCode) }
-            );
-        }
-    }
+            case ObjectResult objectResult:
+                {
+                    if (objectResult.Value is BaseResponse)
+                    {
+                        await next();
+                        return;
+                    }
 
-    private static bool IsBaseResponse(Type type)
-        => type == typeof(BaseResponse) || (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(BaseResponse<>));
+                    if (objectResult.Value is ProblemDetails or ValidationProblemDetails)
+                    {
+                        await next();
+                        return;
+                    }
+
+                    var statusCode = objectResult.StatusCode ?? StatusCodes.Status200OK;
+
+                    context.Result = new ObjectResult(new BaseResponse<object> { StatusCode = statusCode, StatusMessages = [_statusMessageProvider.GetMessage(statusCode)], TraceId = context.HttpContext.TraceIdentifier, Payload = objectResult.Value }) { StatusCode = statusCode };
+
+                    break;
+                }
+
+            case JsonResult jsonResult:
+                {
+                    if (jsonResult.Value is BaseResponse)
+                    {
+                        await next();
+                        return;
+                    }
+
+                    var statusCode = jsonResult.StatusCode ?? StatusCodes.Status200OK;
+
+                    context.Result = new ObjectResult(new BaseResponse<object> { StatusCode = statusCode, StatusMessages = [_statusMessageProvider.GetMessage(statusCode)], TraceId = context.HttpContext.TraceIdentifier, Payload = jsonResult.Value }) { StatusCode = statusCode };
+
+                    break;
+                }
+
+            case StatusCodeResult statusCodeResult:
+                {
+                    var statusCode = statusCodeResult.StatusCode;
+
+                    context.Result = new ObjectResult(new BaseResponse { StatusCode = statusCode, StatusMessages = [_statusMessageProvider.GetMessage(statusCode)], TraceId = context.HttpContext.TraceIdentifier }) { StatusCode = statusCode };
+
+                    break;
+                }
+
+            case EmptyResult:
+                {
+                    context.Result = new ObjectResult(new BaseResponse
+                    {
+                        StatusCode = StatusCodes.Status204NoContent, StatusMessages = [_statusMessageProvider.GetMessage(StatusCodes.Status204NoContent)], TraceId = context.HttpContext.TraceIdentifier
+                    }) { StatusCode = StatusCodes.Status204NoContent };
+
+                    break;
+                }
+
+            case FileResult:
+            case RedirectResult:
+            case RedirectToActionResult:
+            case RedirectToRouteResult:
+                break;
+        }
+
+        await next();
+    }
 }

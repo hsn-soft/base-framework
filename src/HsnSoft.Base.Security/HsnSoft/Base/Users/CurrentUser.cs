@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Security.Principal;
@@ -22,22 +23,27 @@ public class CurrentUser : ICurrentUser, ITransientDependency
 
     public virtual Guid? Id => _principalAccessor.Principal?.FindUserId();
 
-    public virtual string UserName => this.FindClaimValue(BaseClaimTypes.UserName);
+    public virtual string UserName => FindClaim(BaseClaimTypes.UserName)?.Value;
 
-    public virtual string Name => this.FindClaimValue(BaseClaimTypes.Name);
+    public virtual string Name => FindClaim(BaseClaimTypes.Name)?.Value;
+    public virtual string SurName => FindClaim(BaseClaimTypes.SurName)?.Value;
 
-    public virtual string SurName => this.FindClaimValue(BaseClaimTypes.SurName);
+    public virtual string PhoneNumber => FindClaim(BaseClaimTypes.PhoneNumber)?.Value;
 
-    public virtual string PhoneNumber => this.FindClaimValue(BaseClaimTypes.PhoneNumber);
+    public virtual bool PhoneNumberVerified => string.Equals(FindClaim(BaseClaimTypes.PhoneNumberVerified)?.Value, "true", StringComparison.InvariantCultureIgnoreCase);
 
-    public virtual bool PhoneNumberVerified => string.Equals(this.FindClaimValue(BaseClaimTypes.PhoneNumberVerified), "true", StringComparison.InvariantCultureIgnoreCase);
+    public virtual string Email => FindClaim(BaseClaimTypes.Email)?.Value;
 
-    public virtual string Email => this.FindClaimValue(BaseClaimTypes.Email);
+    public virtual bool EmailVerified => string.Equals(FindClaim(BaseClaimTypes.EmailVerified)?.Value, "true", StringComparison.InvariantCultureIgnoreCase);
 
-    public virtual bool EmailVerified => string.Equals(this.FindClaimValue(BaseClaimTypes.EmailVerified), "true", StringComparison.InvariantCultureIgnoreCase);
+    public virtual string SecurityStamp => FindClaim(BaseClaimTypes.SecurityStamp)?.Value;
+
 
     public virtual Guid? TenantId => _principalAccessor.Principal?.FindTenantId();
-    public virtual string TenantDomain => _principalAccessor.Principal?.FindTenantDomain();
+    public virtual string TenantNormalized => FindClaim(BaseClaimTypes.TenantNormalized)?.Value;
+    public virtual bool IsSystemTenant => string.Equals(FindClaim(BaseClaimTypes.IsSystemTenant)?.Value, "true", StringComparison.InvariantCultureIgnoreCase);
+    public virtual List<Guid> AllowedTenantIds => _principalAccessor?.Principal?.FindAllowedTenantIds() ?? [];
+
 
     public virtual string[] Roles => FindClaims(BaseClaimTypes.Role).Select(c => c.Value).Distinct().ToArray();
 

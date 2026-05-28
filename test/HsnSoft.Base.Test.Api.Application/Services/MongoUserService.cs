@@ -52,7 +52,7 @@ public class MongoUserService(IMongoUserRepository userRepository, IMapper mappe
 
     public async Task<int> InsertUserAsync(CreateUserDto input, CancellationToken cancellationToken = default)
     {
-        return await userRepository.InsertAsync(new User(Guid.NewGuid(), Guid.Empty, "test" + Guid.NewGuid().ToString("N")) { FirstName = input.FullName }, cancellationToken: cancellationToken);
+        return await userRepository.InsertAsync(new User(Guid.CreateVersion7(), Guid.Empty, "test" + Guid.CreateVersion7().ToString("N")) { FirstName = input.FullName }, cancellationToken: cancellationToken);
     }
 
     public Task<int> UpdateUserAsync(UpdateUserDto input, CancellationToken cancellationToken = default) => throw new NotImplementedException();

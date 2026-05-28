@@ -17,7 +17,7 @@ public class HttpClientRequestIdDelegatingHandler : DelegatingHandler
         {
             if (!request.Headers.Contains("x-requestid"))
             {
-                request.Headers.Add("x-requestid", Guid.NewGuid().ToString());
+                request.Headers.Add("x-requestid", Guid.CreateVersion7().ToString());
             }
         }
 

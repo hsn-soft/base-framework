@@ -14,7 +14,7 @@ public class TestEntity : AuditedEntity<Guid>
         Name = string.Empty;
     }
 
-    public TestEntity() : this(Guid.NewGuid())
+    public TestEntity() : this(Guid.CreateVersion7())
     {
     }
 

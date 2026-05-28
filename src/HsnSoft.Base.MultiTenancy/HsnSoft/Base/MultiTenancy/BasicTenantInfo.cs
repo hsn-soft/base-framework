@@ -1,30 +1,25 @@
 ﻿using System;
+using System.Collections.Generic;
 using JetBrains.Annotations;
 
 namespace HsnSoft.Base.MultiTenancy;
 
 public class BasicTenantInfo
 {
-    /// <summary>
-    /// Null indicates the host.
-    /// Not null value for a tenant.
-    /// </summary>
-    [CanBeNull]
-    public Guid? TenantId { get; }
+    [CanBeNull] public Guid? TenantId { get; }
 
-    /// <summary>
-    /// Name of the tenant if <see cref="TenantId"/> is not null.
-    /// </summary>
-    [CanBeNull]
-    public string Name { get; }
+    [CanBeNull] public string TenantNormalized { get; }
 
-    [CanBeNull]
-    public string Domain { get; }
+    public bool IsSystemTenant { get; } = false;
 
-    public BasicTenantInfo(Guid? tenantId, string name = null,string domain = null)
+    public List<Guid> AllowedTenantIds { get; }
+
+
+    public BasicTenantInfo(Guid? tenantId, bool isSystemTenant, [CanBeNull] List<Guid> allowedTenantIds, [CanBeNull] string tenantNormalized = null)
     {
         TenantId = tenantId;
-        Name = name;
-        Domain = domain;
+        TenantNormalized = tenantNormalized;
+        IsSystemTenant = isSystemTenant;
+        AllowedTenantIds = allowedTenantIds ?? [];
     }
 }
