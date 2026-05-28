@@ -5,6 +5,7 @@
     "Error:AuthServer:100002": "Geçersiz istemci kimlik bilgileri",
     "Error:AuthServer:100003": "Geçersiz kullanıcı kimlik bilgileri",
     "Error:AuthServer:100004": "Geçersiz kapsam isteği",
+    "Error:AuthServer:100005": "Kullanıcı pasif",
     "ClientId":"İstemci Kimliği",
     "GrantType":"Kapsam Tipi",
     "UserName":"Kullanıcı Adı",

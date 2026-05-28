@@ -1,5 +1,4 @@
 using System.Net;
-using System.Security.Claims;
 using Hhs.AuthServer.Application.Exceptions;
 using Hhs.AuthServer.Controllers.Base;
 using Hhs.AuthServer.Models;
@@ -63,7 +62,7 @@ public sealed class AuthController : BaseServiceController //, IAuthAppService
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<JwtTokenResponseDto> TokenAsync([FromBody] JwtPasswordTokenRequestDto input)
     {
-        if (input == null)
+        if (input == null || input.GrantType == null)
         {
             throw new BaseHttpException((int)HttpStatusCode.BadRequest);
         }
@@ -129,12 +128,11 @@ public sealed class AuthController : BaseServiceController //, IAuthAppService
         }
 
         string accessToken;
-        Guid userId;
         if (input.GrantType.Equals(Constants.GrantTypes.Password))
         {
             input.Email = StringOperations.Normalize(input.Email);
 
-            List<AppUser> mailList = null;
+            List<AppUser> mailList;
             AppUser managedUser = null;
             Tenant checkedTenant = null;
             bool hasUserCredentialErrors = false;
@@ -160,10 +158,13 @@ public sealed class AuthController : BaseServiceController //, IAuthAppService
                         hasUserCredentialErrors = true;
                     }
 
-                    managedUser = mailList.FirstOrDefault(x => x.TenantId == checkedTenant.Id);
-                    if (managedUser == null)
+                    if (checkedTenant != null)
                     {
-                        hasUserCredentialErrors = true;
+                        managedUser = mailList.FirstOrDefault(x => x.TenantId == checkedTenant.Id);
+                        if (managedUser == null)
+                        {
+                            hasUserCredentialErrors = true;
+                        }
                     }
                 }
             }
@@ -178,13 +179,17 @@ public sealed class AuthController : BaseServiceController //, IAuthAppService
             if (managedUser.LockoutEndAt.HasValue && managedUser.LockoutEndAt > DateTime.UtcNow)
             {
                 await AddLoginAuditAsync(managedUser.TenantId, managedUser.Id, input.Email, false, "USER_LOCKED");
-                throw new InvalidUserCredentialsException(L, input.Email);
+                throw new UserDisabledException(L, input.Email);
             }
 
             bool isPasswordValid = _passwordHasher.Verify(input.Password, managedUser.PasswordHash);
             if (!isPasswordValid)
             {
-                await _appUserRepository.SetLoginFailureStatesAsync(managedUser.TenantId, managedUser.Id, managedUser.FailedLoginCount);
+                using (_dataFilter.Disable<IMultiTenant>()) // anonymous user , unknown tenant
+                {
+                    await _appUserRepository.SetLoginFailureStatesAsync(managedUser.TenantId, managedUser.Id, managedUser.FailedLoginCount);
+                }
+
                 await AddLoginAuditAsync(managedUser.TenantId, managedUser.Id, input.Email, false, "INVALID_PASSWORD");
                 throw new InvalidUserCredentialsException(L, input.Email);
             }
@@ -231,7 +236,10 @@ public sealed class AuthController : BaseServiceController //, IAuthAppService
                 });
             }
 
-            await _appUserRepository.SetLoginSuccessStatesAsync(managedUser.Id);
+            using (_dataFilter.Disable<IMultiTenant>()) // anonymous user , unknown tenant
+            {
+                await _appUserRepository.SetLoginSuccessStatesAsync(managedUser.Id);
+            }
 
             await AddLoginAuditAsync(managedUser.TenantId, managedUser.Id, input.Email, true, null);
         }
@@ -255,7 +263,7 @@ public sealed class AuthController : BaseServiceController //, IAuthAppService
 
         string refreshTokenHash = TokenHelper.Sha256(refreshTokenStr);
 
-        AuthRefreshToken refreshToken = null;
+        AuthRefreshToken refreshToken;
         using (_dataFilter.Disable<IMultiTenant>()) // anonymous user , unknown tenant
         {
             refreshToken = await _authRefreshTokenRepository.GetSingleOrDefaultAsync(
@@ -291,7 +299,6 @@ public sealed class AuthController : BaseServiceController //, IAuthAppService
         // bool isValid = await _redis.IsRefreshTokenValidAsync(managedUser.Id, refreshToken);
         // if (!isValid)
         //     throw new BaseHttpException((int)HttpStatusCode.Unauthorized, "INVALID_REFRESH_TOKEN");
-
 
         var client = JwtClients.Clients.FirstOrDefault(x => x.ClientId == input.ClientId);
         if (client == null)
@@ -357,35 +364,23 @@ public sealed class AuthController : BaseServiceController //, IAuthAppService
 
     [Authorize]
     [HttpPost("token-logout")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task TokenLogoutAsync()
     {
         // Cookie'den refresh token al
-        if (Request.Cookies.TryGetValue("refreshToken", out var refreshToken))
+        if (Request.Cookies.TryGetValue("refreshToken", out string refreshToken))
         {
-            // TODO: BURASI REDISDEN CALISIYOR ŞU AN
-            // string refreshTokenHash = TokenHelper.Sha256(refreshToken);
-            //
-            // AuthRefreshToken entity = null;
-            // using (_dataFilter.Disable<IMultiTenant>()) // anonymous user , unknown tenant
+            string refreshTokenHash = TokenHelper.Sha256(refreshToken);
+
+            await _authRefreshTokenRepository.RevokeRefreshTokenAsync(refreshTokenHash, null);
+
+            // // JWT içinden userId al
+            // var userId = User?.Claims?.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+            // if (!string.IsNullOrEmpty(userId))
             // {
-            //     entity = await _db.AuthRefreshTokens.FirstOrDefaultAsync(x => x.TokenHash == refreshTokenHash);
+            //     // Redis'ten bu token'ı kaldır
+            //     await _redis.RemoveRefreshTokenAsync(Guid.Parse(userId), refreshToken);
             // }
-            //
-            // if (entity is null)
-            //     return;
-            //
-            // entity.RevokedAt = DateTime.UtcNow;
-            // await _db.SaveChangesAsync();
-
-
-            // JWT içinden userId al
-            var userId = User?.Claims?.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
-            if (!string.IsNullOrEmpty(userId))
-            {
-                // Redis'ten bu token'ı kaldır
-                await _redis.RemoveRefreshTokenAsync(Guid.Parse(userId), refreshToken);
-            }
 
             // Cookie'yi temizle
             Response.Cookies.Append("refreshToken", "", new CookieOptions { HttpOnly = true, Secure = true, SameSite = SameSiteMode.Strict, Expires = DateTimeOffset.UtcNow.AddDays(-1) });

@@ -7,7 +7,6 @@ using Hhs.IdentityService.Domain.AuthDomain.Consts;
 using Hhs.IdentityService.Domain.AuthDomain.Entities;
 using Hhs.IdentityService.Domain.AuthDomain.Exceptions;
 using Hhs.IdentityService.Domain.AuthDomain.Repositories;
-using Hhs.IdentityService.Domain.TenantDomain.Exceptions;
 using Hhs.IdentityService.Domain.TenantDomain.Repositories;
 using Hhs.Shared.Helper.Utils;
 using HsnSoft.Base;

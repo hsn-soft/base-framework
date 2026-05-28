@@ -96,7 +96,9 @@ public sealed class ApiRequestResponseLoggingMiddleware
                 try
                 {
                     captureStream.Position = 0;
+
                     using var reader = new StreamReader(captureStream, leaveOpen: true);
+
                     responseBody = await reader.ReadToEndAsync();
 
                     if (!string.IsNullOrWhiteSpace(responseBody))
@@ -109,8 +111,16 @@ public sealed class ApiRequestResponseLoggingMiddleware
                         responseBody = TruncateText(responseBody, _settings.MaxLoggedResponseBodySizeBytes);
                     }
 
-                    captureStream.Position = 0;
-                    await captureStream.CopyToAsync(originalBody);
+                    bool canHaveBody =
+                        response.StatusCode != StatusCodes.Status204NoContent &&
+                        response.StatusCode != StatusCodes.Status304NotModified &&
+                        request.Method != HttpMethods.Head;
+
+                    if (canHaveBody)
+                    {
+                        captureStream.Position = 0;
+                        await captureStream.CopyToAsync(originalBody);
+                    }
                 }
                 finally
                 {

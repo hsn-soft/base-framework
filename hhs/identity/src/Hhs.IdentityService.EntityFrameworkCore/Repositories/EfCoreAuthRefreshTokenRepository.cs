@@ -1,11 +1,9 @@
 using Hhs.IdentityService.Domain.AuthDomain.Entities;
-using Hhs.IdentityService.Domain.AuthDomain.Exceptions;
 using Hhs.IdentityService.Domain.AuthDomain.Repositories;
 using Hhs.IdentityService.Domain.Localization;
 using Hhs.IdentityService.EntityFrameworkCore.Context;
 using Hhs.Shared.Localization;
 using HsnSoft.Base.Data;
-using HsnSoft.Base.Domain.Entities;
 using HsnSoft.Base.Domain.Repositories;
 using HsnSoft.Base.MultiTenancy;
 using HsnSoft.Base.Validation.Localization;
@@ -32,16 +30,9 @@ public class EfCoreAuthRefreshTokenRepository : EfCoreGenericRepository<AuthRefr
         _currentTenant = currentTenant;
     }
 
-    public async Task RevokeRefreshTokenAsync(string refreshTokenHash, string replacedByTokenHash)
-    {
-        int affectedCount = await GetDbSet().Where(b => b.TokenHash == refreshTokenHash).ExecuteUpdateAsync(s => s
+    public async Task RevokeRefreshTokenAsync(string refreshTokenHash, string replacedByTokenHash) =>
+        await GetDbSet().Where(b => b.TokenHash == refreshTokenHash).ExecuteUpdateAsync(s => s
             .SetProperty(a => a.RevokedAt, DateTime.UtcNow)
             .SetProperty(a => a.ReplacedByTokenHash, replacedByTokenHash)
         );
-
-        if (affectedCount < 1)
-        {
-            throw new EntityNotFoundException();
-        }
-    }
 }

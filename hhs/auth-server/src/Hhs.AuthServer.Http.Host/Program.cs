@@ -58,10 +58,7 @@ builder.WebHost.ConfigureKestrel((_, options) =>
     if (!builder.Environment.IsDevelopment()) return;
 
     options.ListenAnyIP(7100);
-    options.ListenAnyIP(7101, listenOptions =>
-    {
-        listenOptions.UseHttps("../../etc/dev-cert/localhost.pfx", "e8202f07-66e5-4619-be07-72ba76fde97f");
-    });
+    options.ListenAnyIP(7101, listenOptions => { listenOptions.UseHttps("../../etc/dev-cert/localhost.pfx", "e8202f07-66e5-4619-be07-72ba76fde97f"); });
 });
 builder.Services.AddCors(options =>
 {
@@ -144,7 +141,7 @@ builder.Services.AddMicroserviceHosting(builder.Configuration, typeof(Program))
         checkPostgresql: true, postgresqlConnectionName: EfCoreDbProperties.ConnectionStringName);
 
 builder.Services.AddServiceApplicationConfiguration(builder.Configuration);
-builder.Services .AddServiceEfCoreDatabaseConfiguration(builder.Configuration, !builder.Environment.IsHostProduction());
+builder.Services.AddServiceEfCoreDatabaseConfiguration(builder.Configuration, !builder.Environment.IsHostProduction());
 
 
 // old services
@@ -221,8 +218,28 @@ try
     {
         var http = statusCodeContext.HttpContext;
 
+        if (http.Response.HasStarted)
+            return;
+
         if (http.Response.ContentLength > 0)
             return;
+
+        string contentType = http.Response.ContentType ?? string.Empty;
+
+        if (contentType.StartsWith("application/octet-stream", StringComparison.OrdinalIgnoreCase) ||
+            contentType.StartsWith("video/", StringComparison.OrdinalIgnoreCase) ||
+            contentType.StartsWith("audio/", StringComparison.OrdinalIgnoreCase) ||
+            contentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        if (contentType.Contains("multipart/", StringComparison.OrdinalIgnoreCase) ||
+            contentType.Contains("application/pdf", StringComparison.OrdinalIgnoreCase) ||
+            contentType.Contains("application/zip", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
 
         var writer = http.RequestServices.GetRequiredService<IApiResponseWriter>();
         var statusProvider = http.RequestServices.GetRequiredService<IStatusMessageProvider>();
@@ -230,7 +247,8 @@ try
         await writer.WriteErrorAsync(
             http,
             http.Response.StatusCode,
-            [statusProvider.GetMessage(http.Response.StatusCode)]);
+            [statusProvider.GetMessage(http.Response.StatusCode)],
+            $"http_{http.Response.StatusCode}");
     });
 
     app.UseCors("AuthServerCorsPolicy");

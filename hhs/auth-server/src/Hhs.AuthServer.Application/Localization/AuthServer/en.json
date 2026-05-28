@@ -5,6 +5,7 @@
     "Error:AuthServer:100002": "Invalid client credentials",
     "Error:AuthServer:100003": "Invalid user credentials",
     "Error:AuthServer:100004": "Invalid scope request",
+    "Error:AuthServer:100005": "User disabled",
     "ClientId":"ClientId",
     "GrantType":"GrantType",
     "UserName":"UserName",
