@@ -36,7 +36,7 @@ public sealed class AppUsersController : BaseServiceController
 
     [HttpPost("search-list")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<List<AppUserDto>> GetSearchListAsync([FromBody] GetAppUsersSearch searchInput, CancellationToken cancellationToken = default)
+    public async Task<List<AppUserSearchDto>> GetSearchListAsync([FromBody] GetAppUsersSearch searchInput, CancellationToken cancellationToken = default)
         => await _appUserAppService.GetSearchListAsync(searchInput, cancellationToken);
 
     // [Authorize(IdentityServicePermissions.AppUsers.Create)]

@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Hhs.AuthServer.Store;
 using Hhs.IdentityService.Domain.AuthDomain.Entities;
+using Hhs.IdentityService.Domain.TenantDomain.Entities;
 using HsnSoft.Base.Security.Claims;
 using JetBrains.Annotations;
 using Microsoft.IdentityModel.Tokens;
@@ -23,13 +24,13 @@ public sealed class TokenService
     public string CreateM2MToken(Client client, List<string> clientReturnScopes, int expirationSeconds, string clientSecretKey)
         => BaseCreateToken(client, clientReturnScopes, expirationSeconds, clientSecretKey);
 
-    public string CreateUserToken(AppUser user, List<string> roles, Client client, List<string> clientReturnScopes, int expirationSeconds, string clientSecretKey)
-        => BaseCreateToken(client, clientReturnScopes, expirationSeconds, clientSecretKey, user, roles);
+    public string CreateUserToken(AppUser user, List<string> roles, Tenant tenant, List<string> allowedTenantIds, Client client, List<string> clientReturnScopes, int expirationSeconds, string clientSecretKey)
+        => BaseCreateToken(client, clientReturnScopes, expirationSeconds, clientSecretKey, user, roles, tenant, allowedTenantIds);
 
-    private string BaseCreateToken(Client client, List<string> clientReturnScopes, int expirationSeconds, string clientSecretKey, AppUser user = null, List<string> roles = null)
+    private string BaseCreateToken(Client client, List<string> clientReturnScopes, int expirationSeconds, string clientSecretKey, AppUser user = null, List<string> roles = null, [CanBeNull] Tenant tenant = null, List<string> allowedTenantIds = null)
         => new JwtSecurityTokenHandler()
             .WriteToken(CreateJwtToken(
-                CreateClaims(client, clientReturnScopes, user, roles),
+                CreateClaims(client, clientReturnScopes, user, roles, tenant, allowedTenantIds),
                 // CreateSymetricSigningCredentials(clientSecretKey),
                 CreateAsymetricSigningCredentials(),
                 expirationSeconds
@@ -44,24 +45,30 @@ public sealed class TokenService
         claims: claims
     );
 
-    private static IEnumerable<Claim> CreateClaims(Client client, List<string> clientReturnScopes, [CanBeNull] AppUser user, [CanBeNull] List<string> roles)
+    private static IEnumerable<Claim> CreateClaims(Client client, List<string> clientReturnScopes, [CanBeNull] AppUser user, [CanBeNull] List<string> roles, [CanBeNull] Tenant tenant = null, List<string> allowedTenantIds = null)
     {
-        var claims = new List<Claim> { new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString("N").ToUpper()) };
+        var claims = new List<Claim> { new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString("N")) };
 
         if (user != null)
         {
             claims.AddRange(new List<Claim>
             {
+                // static claims
                 new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-                new(JwtRegisteredClaimNames.Name, user.DisplayName ?? string.Empty),
+
+                // db reference claims
                 new(JwtRegisteredClaimNames.UniqueName, user.UserName),
                 new(JwtRegisteredClaimNames.Email, user.Email),
-                new("user_lg", user.LanguageCode ?? string.Empty),
 
-                new(BaseClaimTypes.TenantId, user.TenantId.ToString()),
-                // new(BaseClaimTypes.TenantDomain, user.TenantDomain ?? string.Empty),
-                // new("user_s", user.IsSystemUser.ToString(), ClaimValueTypes.Boolean),
-                // new("user_t", user.IsTenantUser.ToString(), ClaimValueTypes.Boolean),
+                new(BaseClaimTypes.EmailVerified, user.EmailConfirmed.ToString()),
+                new(BaseClaimTypes.PhoneNumber, user.PhoneNumber ?? string.Empty),
+                new(BaseClaimTypes.PhoneNumberVerified, user.PhoneNumberConfirmed.ToString()),
+
+                new(JwtRegisteredClaimNames.GivenName, user.DisplayName ?? string.Empty),
+                new(JwtRegisteredClaimNames.FamilyName, user.DisplayName ?? string.Empty),
+
+                new(BaseClaimTypes.SecurityStamp, user.SecurityStamp),
+                new(BaseClaimTypes.UserLanguage, user.LanguageCode ?? "en"),
             });
 
             if (roles is { Count: > 0 })
@@ -70,16 +77,31 @@ public sealed class TokenService
             }
         }
 
-        if (client == null) return claims;
-        claims.AddRange(new List<Claim> { new("client_id", client.ClientId) });
-
-        if (clientReturnScopes is not { Count: > 0 }) return claims;
-        foreach (string scope in clientReturnScopes)
+        if (tenant != null)
         {
-            claims.Add(new Claim("scope", scope));
-            // add scope resources
-            var scopeResources = JwtClients.Scopes.FirstOrDefault(x => x.Name.Equals(scope));
-            if (scopeResources?.Resources is { Count: > 0 })
+            claims.AddRange(new List<Claim>
+            {
+                new(BaseClaimTypes.TenantId, tenant.Id.ToString()),
+                new(BaseClaimTypes.TenantNormalized, tenant.NormalizedName), //TODO : ENCRYPT
+                new(BaseClaimTypes.IsSystemTenant, tenant.IsSystemTenant.ToString().ToLowerInvariant()),
+            });
+
+            if (!tenant.IsSystemTenant)
+            {
+                if (allowedTenantIds is { Count: > 0 })
+                {
+                    claims.AddRange(allowedTenantIds.Select(allowedTenantId => new Claim(BaseClaimTypes.AllowedTenantId, allowedTenantId.ToString())));
+                }
+            }
+        }
+
+        if (client != null)
+        {
+            claims.AddRange(new List<Claim> { new(BaseClaimTypes.ClientId, client.ClientId) });
+
+            if (clientReturnScopes is not { Count: > 0 }) return claims;
+            foreach (var scopeResources in clientReturnScopes.Select(scope => JwtClients.Scopes.FirstOrDefault(x => x.Name.Equals(scope)))
+                         .Where(scopeResources => scopeResources?.Resources is { Count: > 0 }))
             {
                 claims.AddRange(scopeResources.Resources.Select(resource =>
                     new Claim(JwtRegisteredClaimNames.Aud, resource)));

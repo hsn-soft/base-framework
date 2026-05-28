@@ -29,4 +29,6 @@ public static class BaseClaimTypes
     public static string AllowedTenantId { get; set; } = "allowed_tenant_id";
 
     public static string ClientId { get; set; } = "client_id";
+
+    public static string UserLanguage { get; set; } = "user_lg";
 }

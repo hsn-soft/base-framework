@@ -137,7 +137,7 @@ public sealed class AppUserAppService : ApplicationServiceBase, IAppUserAppServi
             }, Mapper.ConfigurationProvider, cancellationToken: cancellationToken);
     }
 
-    public async Task<List<AppUserDto>> GetSearchListAsync(GetAppUsersSearch searchInput, CancellationToken cancellationToken = default)
+    public async Task<List<AppUserSearchDto>> GetSearchListAsync(GetAppUsersSearch searchInput, CancellationToken cancellationToken = default)
     {
         if (searchInput == null)
         {
@@ -152,7 +152,7 @@ public sealed class AppUserAppService : ApplicationServiceBase, IAppUserAppServi
                 : null)
             .Build();
 
-        return await _appUserRepository.GetListAsync<AppUserDto>(
+        return await _appUserRepository.GetListAsync<AppUserSearchDto>(
             options: new ListQueryOptions<AppUser>
             {
                 Filter = filter,

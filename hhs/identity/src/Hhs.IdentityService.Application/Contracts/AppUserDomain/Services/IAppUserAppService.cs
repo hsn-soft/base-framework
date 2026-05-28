@@ -11,7 +11,7 @@ public interface IAppUserAppService
 
     Task<PagedDataResultDto<AppUserDto>> GetPagedListAsync(GetAppUsersPaged pagedInput, CancellationToken cancellationToken = default);
     Task<List<AppUserDto>> GetFilterListAsync(GetAppUsersFilter filterInput, CancellationToken cancellationToken = default);
-    Task<List<AppUserDto>> GetSearchListAsync(GetAppUsersSearch searchInput, CancellationToken cancellationToken = default);
+    Task<List<AppUserSearchDto>> GetSearchListAsync(GetAppUsersSearch searchInput, CancellationToken cancellationToken = default);
 
     Task<AppUserDto> CreateAsync(AppUserCreateDto input);
 

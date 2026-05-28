@@ -11,8 +11,8 @@ public sealed class AppUserDto : EntityDto<Guid>
 
     public bool IsStatic { get; set; }
 
-    [NotNull] public string UserName { get; set; }
-    [NotNull] public string Email { get; set; }
+    [NotNull] public string UserName { get; set; } = string.Empty;
+    [NotNull] public string Email { get; set; } = string.Empty;
 
     public bool EmailConfirmed { get; set; }
 

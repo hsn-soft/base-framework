@@ -176,6 +176,17 @@ public sealed class AuthController : BaseServiceController //, IAuthAppService
                 throw new InvalidUserCredentialsException(L, input.Email);
             }
 
+            // Get Tenant Info for Claims
+            checkedTenant ??= await _tenantRepository.GetByIdAsync(managedUser.TenantId);
+            List<string> allowedTenantIds = [];
+            if (!checkedTenant.IsSystemTenant)
+            {
+                allowedTenantIds = await _tenantRepository.GetListAsync(
+                    options: new ListQueryOptions<Tenant> { Filter = x => x.NormalizedAccessPath.StartsWith(checkedTenant.NormalizedAccessPath), },
+                    selector: x => x.Id.ToString());
+            }
+
+            // Get roles for claims
             List<string> roleNames = [];
             var userRoleIds = await _appUserRoleRepository.GetListAsync(new ListQueryOptions<AppUserRole>() { Filter = x => x.UserId == managedUser.Id }, s => s.RoleId);
             if (userRoleIds is { Count: > 0 })
@@ -186,7 +197,7 @@ public sealed class AuthController : BaseServiceController //, IAuthAppService
                 }
             }
 
-            accessToken = _tokenService.CreateUserToken(managedUser, roleNames, client, clientReturnScopes, tokenExpireSeconds, input.ClientSecret);
+            accessToken = _tokenService.CreateUserToken(managedUser, roleNames, checkedTenant, allowedTenantIds, client, clientReturnScopes, tokenExpireSeconds, input.ClientSecret);
 
             if (hasOfflineAccess)
             {
@@ -226,11 +237,15 @@ public sealed class AuthController : BaseServiceController //, IAuthAppService
             throw new BaseHttpException((int)HttpStatusCode.Unauthorized, "USER_NOT_FOUND");
         }
 
-        // Kullanıcıyı bul
-        var managedUser = await _appUserRepository.GetByIdOrDefaultAsync(userId.Value);
-        if (managedUser == null)
+        AppUser managedUser;
+        using (_dataFilter.Disable<IMultiTenant>()) // anonymous user , unknown tenant
         {
-            throw new BaseHttpException((int)HttpStatusCode.Unauthorized, "USER_NOT_FOUND");
+            // Kullanıcıyı bul
+            managedUser = await _appUserRepository.GetByIdOrDefaultAsync(userId.Value);
+            if (managedUser == null)
+            {
+                throw new BaseHttpException((int)HttpStatusCode.Unauthorized, "USER_NOT_FOUND");
+            }
         }
 
         // Redis'te refresh token geçerli mi?
@@ -241,6 +256,17 @@ public sealed class AuthController : BaseServiceController //, IAuthAppService
         var client = JwtClients.Clients.FirstOrDefault(x => x.ClientId == input.ClientId);
         if (client == null)
             throw new BaseHttpException((int)HttpStatusCode.Unauthorized, "CLIENT_NOT_FOUND");
+
+
+        // Get Tenant Info for Claims
+        Tenant checkedTenant = await _tenantRepository.GetByIdAsync(managedUser.TenantId);
+        List<string> allowedTenantIds = [];
+        if (!checkedTenant.IsSystemTenant)
+        {
+            allowedTenantIds = await _tenantRepository.GetListAsync(
+                options: new ListQueryOptions<Tenant> { Filter = x => x.NormalizedAccessPath.StartsWith(checkedTenant.NormalizedAccessPath), },
+                selector: x => x.Id.ToString());
+        }
 
 
         List<string> roleNames = [];
@@ -260,6 +286,8 @@ public sealed class AuthController : BaseServiceController //, IAuthAppService
         string newAccessToken = _tokenService.CreateUserToken(
             managedUser,
             roleNames,
+            checkedTenant,
+            allowedTenantIds,
             client,
             scopes,
             tokenExpireSeconds,
