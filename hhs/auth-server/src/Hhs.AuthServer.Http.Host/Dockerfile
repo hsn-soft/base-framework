@@ -48,7 +48,6 @@ COPY ["./common.version.props", "./"]
 COPY ["./private_key.xml", "./"]
 COPY ["./public_key.xml", "./"]
 
-COPY ["./src/Hhs.AuthServer.Application/Hhs.AuthServer.Application.csproj", "./src/Hhs.AuthServer.Application/"]
 COPY ["./src/Hhs.AuthServer.Http.Host/Hhs.AuthServer.Http.Host.csproj", "./src/Hhs.AuthServer.Http.Host/"]
 
 ENV NUGET_CERT_REVOCATION_MODE=offline
@@ -66,7 +65,6 @@ RUN dotnet restore "./src/Hhs.AuthServer.Http.Host/Hhs.AuthServer.Http.Host.cspr
 
 
 # Copy source code
-COPY --chown=1001:1001 ["./src/Hhs.AuthServer.Application/.", "./src/Hhs.AuthServer.Application/"]
 COPY --chown=1001:1001 ["./src/Hhs.AuthServer.Http.Host/.", "./src/Hhs.AuthServer.Http.Host/"]
 
 # Build
