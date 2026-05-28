@@ -86,7 +86,7 @@ public sealed class KafkaProducer
                 _logger.LogError("Kafka | CorrelationId: {CorrelationId} Message not ack\'d by all brokers (value: \'{Message}\'). Delivery status: {DeliveryReportStatus}", @event.CorrelationId, message, deliveryReport.Status);
 
                 _logger.EventBusErrorLog(new ProduceMessageLogModel(
-                    LogId: Guid.NewGuid().ToString(),
+                    LogId: Guid.CreateVersion7().ToString(),
                     CorrelationId: @event.CorrelationId,
                     Facility: EventBusLogFacility.PRODUCE_EVENT_ERROR.ToString(),
                     ProduceDateTimeUtc: produceTime,

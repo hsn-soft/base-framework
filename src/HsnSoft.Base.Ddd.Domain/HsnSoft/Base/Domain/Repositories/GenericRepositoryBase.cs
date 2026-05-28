@@ -23,87 +23,109 @@ public abstract class GenericRepositoryBase<TEntity, TKey>(IServiceProvider prov
 
     #region GetById / Single / First
 
-    public Task<TEntity> GetByIdAsync(TKey id, CancellationToken cancellationToken = default)
-        => GetByIdAsync(id, s => s, cancellationToken);
+    public Task<TEntity> GetByIdAsync(TKey id,
+        Func<IQueryable<TEntity>, IQueryable<TEntity>> includeEntity = null,
+        CancellationToken cancellationToken = default)
+        => GetByIdAsync(id, s => s, includeEntity, cancellationToken);
 
     public virtual Task<TResult> GetByIdAsync<TResult>(
         TKey id,
         Expression<Func<TEntity, TResult>> selector,
+        Func<IQueryable<TEntity>, IQueryable<TEntity>> includeEntity = null,
         CancellationToken cancellationToken = default) where TResult : class
-        => GetSingleAsync(e => Equals(e.Id, id), selector, cancellationToken);
+        => GetSingleAsync(e => Equals(e.Id, id), selector, includeEntity, cancellationToken);
 
     public virtual Task<TResult> GetByIdAsync<TResult>(
         TKey id,
         IConfigurationProvider configuration,
+        Func<IQueryable<TEntity>, IQueryable<TEntity>> includeEntity = null,
         CancellationToken cancellationToken = default) where TResult : class
-        => GetSingleAsync<TResult>(e => Equals(e.Id, id), configuration, cancellationToken);
+        => GetSingleAsync<TResult>(e => Equals(e.Id, id), configuration, includeEntity, cancellationToken);
 
-    public Task<TEntity> GetByIdOrDefaultAsync(TKey id, CancellationToken cancellationToken = default)
-        => GetByIdOrDefaultAsync(id, s => s, cancellationToken);
+    public Task<TEntity> GetByIdOrDefaultAsync(TKey id,
+        Func<IQueryable<TEntity>, IQueryable<TEntity>> includeEntity = null,
+        CancellationToken cancellationToken = default)
+        => GetByIdOrDefaultAsync(id, s => s, includeEntity, cancellationToken);
 
     public virtual Task<TResult> GetByIdOrDefaultAsync<TResult>(
         TKey id,
         Expression<Func<TEntity, TResult>> selector,
+        Func<IQueryable<TEntity>, IQueryable<TEntity>> includeEntity = null,
         CancellationToken cancellationToken = default) where TResult : class
-        => GetSingleOrDefaultAsync(e => Equals(e.Id, id), selector, cancellationToken);
+        => GetSingleOrDefaultAsync(e => Equals(e.Id, id), selector, includeEntity, cancellationToken);
 
     public virtual Task<TResult> GetByIdOrDefaultAsync<TResult>(
         TKey id,
         IConfigurationProvider configuration,
+        Func<IQueryable<TEntity>, IQueryable<TEntity>> includeEntity = null,
         CancellationToken cancellationToken = default) where TResult : class
-        => GetSingleOrDefaultAsync<TResult>(e => Equals(e.Id, id), configuration, cancellationToken);
+        => GetSingleOrDefaultAsync<TResult>(e => Equals(e.Id, id), configuration, includeEntity, cancellationToken);
 
-    public Task<TEntity> GetSingleAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
-        => GetSingleAsync(predicate, s => s, cancellationToken);
+    public Task<TEntity> GetSingleAsync(
+        Expression<Func<TEntity, bool>> predicate,
+        Func<IQueryable<TEntity>, IQueryable<TEntity>> includeEntity = null,
+        CancellationToken cancellationToken = default)
+        => GetSingleAsync(predicate, s => s, includeEntity, cancellationToken);
 
     public async Task<TResult> GetSingleAsync<TResult>(
         Expression<Func<TEntity, bool>> predicate,
         Expression<Func<TEntity, TResult>> selector,
+        Func<IQueryable<TEntity>, IQueryable<TEntity>> includeEntity = null,
         CancellationToken cancellationToken = default) where TResult : class
     {
-        var entity = await GetSingleOrDefaultAsync(predicate, selector, cancellationToken);
+        var entity = await GetSingleOrDefaultAsync(predicate, selector, includeEntity, cancellationToken);
         return entity ?? throw new EntityNotFoundException(typeof(TEntity));
     }
 
     public async Task<TResult> GetSingleAsync<TResult>(
         Expression<Func<TEntity, bool>> predicate,
         IConfigurationProvider configuration,
+        Func<IQueryable<TEntity>, IQueryable<TEntity>> includeEntity = null,
         CancellationToken cancellationToken = default) where TResult : class
     {
-        var entity = await GetSingleOrDefaultAsync<TResult>(predicate, configuration, cancellationToken);
+        var entity = await GetSingleOrDefaultAsync<TResult>(predicate, configuration, includeEntity, cancellationToken);
         return entity ?? throw new EntityNotFoundException(typeof(TEntity));
     }
 
     public Task<TEntity> GetSingleOrDefaultAsync(
         Expression<Func<TEntity, bool>> predicate,
+        Func<IQueryable<TEntity>, IQueryable<TEntity>> includeEntity = null,
         CancellationToken cancellationToken = default)
-        => GetSingleOrDefaultAsync(predicate, s => s, cancellationToken);
+        => GetSingleOrDefaultAsync(predicate, s => s, includeEntity, cancellationToken);
 
     public abstract Task<TResult> GetSingleOrDefaultAsync<TResult>(
         Expression<Func<TEntity, bool>> predicate,
         Expression<Func<TEntity, TResult>> selector,
+        Func<IQueryable<TEntity>, IQueryable<TEntity>> includeEntity = null,
         CancellationToken cancellationToken = default) where TResult : class;
 
     public abstract Task<TResult> GetSingleOrDefaultAsync<TResult>(
         Expression<Func<TEntity, bool>> predicate,
         IConfigurationProvider configuration,
+        Func<IQueryable<TEntity>, IQueryable<TEntity>> includeEntity = null,
         CancellationToken cancellationToken = default) where TResult : class;
 
     public Task<TEntity> GetFirstOrDefaultAsync(
         Expression<Func<TEntity, bool>> predicate,
+
+        Func<IQueryable<TEntity>, IQueryable<TEntity>> includeEntity = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderByEntity = null,
         CancellationToken cancellationToken = default)
-        => GetFirstOrDefaultAsync(predicate, s => s, orderByEntity, cancellationToken);
+        => GetFirstOrDefaultAsync(predicate, s => s,includeEntity, orderByEntity,  cancellationToken);
 
     public abstract Task<TResult> GetFirstOrDefaultAsync<TResult>(
         Expression<Func<TEntity, bool>> predicate,
         Expression<Func<TEntity, TResult>> selector,
+
+        Func<IQueryable<TEntity>, IQueryable<TEntity>> includeEntity = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderByEntity = null,
         CancellationToken cancellationToken = default) where TResult : class;
 
     public abstract Task<TResult> GetFirstOrDefaultAsync<TResult>(
         Expression<Func<TEntity, bool>> predicate,
         IConfigurationProvider configuration,
+
+        Func<IQueryable<TEntity>, IQueryable<TEntity>> includeEntity = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderByEntity = null,
         CancellationToken cancellationToken = default) where TResult : class;
 

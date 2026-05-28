@@ -7,7 +7,7 @@ public class FakeUserMiddleware(RequestDelegate next)
 {
     public async Task InvokeAsync(HttpContext context)
     {
-        string fakeUserId = Guid.NewGuid().ToString();
+        string fakeUserId = Guid.CreateVersion7().ToString();
         const string fakeUserName = "TestUser";
 
         var claims = new List<Claim>

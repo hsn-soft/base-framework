@@ -29,7 +29,7 @@ public class EfCoreWriterWorker(IServiceScopeFactory scopeFactory, ILogger<EfCor
             for (int i = 0; i < 100; i++)
             {
                 var user = new User { FirstName = $"Hasan{i}", LastName = $"Tester{i}" };
-                user.SetEmail($"{user.FirstName.ToLower()}_{Guid.NewGuid().ToString("N").ToLower()}@test.com");
+                user.SetEmail($"{user.FirstName.ToLower()}_{Guid.CreateVersion7().ToString("N").ToLower()}@test.com");
                 dbContext.Users.Add(user);
                 await dbContext.SaveChangesAsync(stoppingToken);
 

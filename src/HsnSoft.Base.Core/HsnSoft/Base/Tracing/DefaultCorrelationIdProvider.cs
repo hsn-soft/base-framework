@@ -12,6 +12,6 @@ public class DefaultCorrelationIdProvider : ICorrelationIdProvider, ISingletonDe
 
     protected virtual string CreateNewCorrelationId()
     {
-        return Guid.NewGuid().ToString("N");
+        return Guid.CreateVersion7().ToString("N");
     }
 }

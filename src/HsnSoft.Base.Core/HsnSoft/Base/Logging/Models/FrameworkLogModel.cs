@@ -7,7 +7,7 @@ namespace HsnSoft.Base.Logging.Models;
 public sealed class FrameworkLogModel : IFrameworkLog
 {
     [NotNull]
-    public string LogId { get; set; } = Guid.NewGuid().ToString();
+    public string LogId { get; set; } = Guid.CreateVersion7().ToString();
 
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
 
