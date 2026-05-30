@@ -15,11 +15,13 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="HsnSoft.Base.Ddd.Domain" Version="$(HsnSoftFrameworkVersion)"/>
+        <!--<PackageReference Include="HsnSoft.Base.Ddd.Domain" Version="$(HsnSoftFrameworkVersion)"/>-->
+        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.Ddd.Domain\HsnSoft.Base.Ddd.Domain.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Hhs.Shared.Helper" Version="$(HhsSharedVersion)"/>
+        <!--<PackageReference Include="Hhs.Shared.Helper" Version="$(HhsSharedVersion)"/>-->
+        <ProjectReference Include="..\..\..\shared\src\Hhs.Shared.Helper\Hhs.Shared.Helper.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

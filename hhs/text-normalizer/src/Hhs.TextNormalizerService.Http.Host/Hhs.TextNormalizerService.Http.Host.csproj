@@ -17,7 +17,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Hhs.Shared.Hosting.Microservices" Version="$(HhsSharedVersion)"/>
+        <!--<PackageReference Include="Hhs.Shared.Hosting.Microservices" Version="$(HhsSharedVersion)"/>-->
+        <ProjectReference Include="..\..\..\shared\src\Hhs.Shared.Hosting.Microservices\Hhs.Shared.Hosting.Microservices.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

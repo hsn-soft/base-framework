@@ -15,12 +15,15 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="HsnSoft.Base.Ddd.Domain" Version="$(HsnSoftFrameworkVersion)"/>
-        <PackageReference Include="HsnSoft.Base.EntityFrameworkCore.PostgreSql" Version="$(HsnSoftFrameworkVersion)"/>
+        <!--<PackageReference Include="HsnSoft.Base.Ddd.Domain" Version="$(HsnSoftFrameworkVersion)"/>-->
+        <!--<PackageReference Include="HsnSoft.Base.EntityFrameworkCore.PostgreSql" Version="$(HsnSoftFrameworkVersion)"/>-->
+        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.Ddd.Domain\HsnSoft.Base.Ddd.Domain.csproj"/>
+        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.EntityFrameworkCore.PostgreSql\HsnSoft.Base.EntityFrameworkCore.PostgreSql.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Hhs.Shared.Helper" Version="$(HhsSharedVersion)"/>
+        <!--<PackageReference Include="Hhs.Shared.Helper" Version="$(HhsSharedVersion)"/>-->
+        <ProjectReference Include="..\..\..\shared\src\Hhs.Shared.Helper\Hhs.Shared.Helper.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

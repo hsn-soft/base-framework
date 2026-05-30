@@ -15,13 +15,17 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="HsnSoft.Base.Ddd.Application" Version="$(HsnSoftFrameworkVersion)"/>
-        <PackageReference Include="HsnSoft.Base.Authorization" Version="$(HsnSoftFrameworkVersion)"/>
-        <PackageReference Include="HsnSoft.Base.AutoMapper" Version="$(HsnSoftFrameworkVersion)"/>
+        <!--<PackageReference Include="HsnSoft.Base.Ddd.Application" Version="$(HsnSoftFrameworkVersion)"/>-->
+        <!--<PackageReference Include="HsnSoft.Base.Authorization" Version="$(HsnSoftFrameworkVersion)"/>-->
+        <!--<PackageReference Include="HsnSoft.Base.AutoMapper" Version="$(HsnSoftFrameworkVersion)"/>-->
+        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.Authorization\HsnSoft.Base.Authorization.csproj"/>
+        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.AutoMapper\HsnSoft.Base.AutoMapper.csproj"/>
+        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.Ddd.Application\HsnSoft.Base.Ddd.Application.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Hhs.Shared.Contracts" Version="$(HhsSharedVersion)"/>
+        <!--<PackageReference Include="Hhs.Shared.Contracts" Version="$(HhsSharedVersion)"/>-->
+        <ProjectReference Include="..\..\..\shared\src\Hhs.Shared.Contracts\Hhs.Shared.Contracts.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
