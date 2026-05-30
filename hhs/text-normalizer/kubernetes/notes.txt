@@ -1,0 +1,50 @@
+--PODS
+kubectl get pods -n ns-hhs-prod-apps -owide --watch
+
+kubectl logs -n ns-hhs-prod-apps -f hhs-service-text-normalizer-deployment-798f98cd96-jpcgt
+kubectl logs -n ns-hhs-prod-apps -f hhs-service-text-normalizer-deployment-798f98cd96-m2tvl
+kubectl describe pod -n ns-hhs-prod-apps hhs-service-text-normalizer-deployment-5fdb9fb4dc-9tddk | grep -i oom
+kubectl top pod -n ns-hhs-prod-apps hhs-service-text-normalizer-deployment-5fdb9fb4dc-9tddk
+
+
+-- KUBERNETES EVENT LOGS
+kubectl get events -n ns-hhs-prod-apps --sort-by='.metadata.creationTimestamp'
+
+-- DEPLOYMENT DESCRIBE
+kubectl get deployments -n ns-hhs-prod-apps
+kubectl describe deployments -n ns-hhs-prod-apps hhs-service-text-normalizer-deployment
+
+-- SERVICE DESCRIBE
+kubectl get svc -n ns-hhs-prod-apps -owide
+kubectl describe service -n ns-hhs-prod-apps hhs-service-text-normalizer-service
+
+-- TERMINAL POD
+kubectl exec -it hhs-service-text-normalizer-deployment-74c98cdd77-jhrcl -n ns-hhs-prod-apps -- sh
+
+kubectl exec -it hhs-service-text-normalizer-deployment-86cf459b89-xdrtz -n ns-hhs-prod-apps -- sh
+kubectl exec -it hhs-service-text-normalizer-deployment-84bf9d69cf-h7q7f -n ns-hhs-prod-apps -- sh
+kubectl exec -it hhs-service-text-normalizer-deployment-84bf9d69cf-smhzk -n ns-hhs-prod-apps -- sh
+
+-- CLOUDFLARE BAN CONTROL
+
+$ curl https://ifconfig.me
+172.189.22.188
+
+$ curl -I https://www.t24.com.tr
+
+HTTP/2 403
+date: Sat, 22 Nov 2025 15:53:42 GMT
+content-type: text/html; charset=UTF-8
+content-length: 7000
+cf-mitigated: challenge
+server: cloudflare
+
+
+
+ kubectl create secret generic iproyal-proxy-secret \
+  -n ns-hhs-prod-apps \
+  --from-literal=PROXY_HOST=geo.iproyal.com \
+  --from-literal=PROXY_PORT=12321 \
+  --from-literal=PROXY_USERNAME=username12345 \
+  --from-literal=PROXY_PASSWORD=mypassword67890
+secret/iproyal-proxy-secret created

@@ -1,0 +1,15 @@
+{
+  "culture": "ru",
+  "texts": {
+    "Message:ViewSuccessResult": "Найдено {0} записей",
+    "InvalidModelStateErrorMessage": "Текстовые шаблоны. Текстовые шаблоны. Текстовые шаблоны",
+    "UnauthorizedRequest": "Текстовые шаблоны, Текстовые шаблоны",
+    "ForbiddenRequest": "шаблоны, Текстовые",
+    "NotFoundRequest": "Записи, соответствующие критериям, не найдены",
+    "MethodNotAllowed": "Метод не разрешен",
+    "RequestTimeout": "шаблоны шаблоны шаблоны, шаблоны шаблоны шаблоны",
+    "UnsupportedRequestContentType": "шаблоны шаблоны",
+    "SuccessRequest": "Текстовые шаблоны Текстовые",
+    "Error:UnknownField":"{0} неизвестен"
+  }
+}
