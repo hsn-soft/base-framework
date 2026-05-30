@@ -18,7 +18,8 @@ public sealed class AppLogger : IAppConsoleLogger
         {
             _logger = SerilogConfigurationHelper
                 .ConfigureConsoleLogger(configuration, loggerName)
-                .ForContext("IsCustomLogger", true);
+                .ForContext("IsPersistentLogger", false)
+                .ForContext("UsePropertyConsole", false);
         }
         catch (Exception exception)
         {
@@ -26,10 +27,10 @@ public sealed class AppLogger : IAppConsoleLogger
 
             _logger = new LoggerConfiguration()
                 .WriteTo.Console(
-                    outputTemplate: "[{Timestamp:HH:mm:ss.fff zzz} {Level:u3}] {LoggerName} | {Message:lj}{NewLine}{Exception}{NewLine}")
+                    outputTemplate: "[{Timestamp:HH:mm:ss.fff zzz} {Level:u3}] {LoggerName} [{SourceContext}] | {Message:lj}{NewLine}{Exception}{NewLine}")
                 .CreateLogger()
                 .ForContext("LoggerName", loggerName)
-                .ForContext("IsCustomLogger", true);
+                .ForContext("IsPersistentLogger", false);
         }
     }
 
