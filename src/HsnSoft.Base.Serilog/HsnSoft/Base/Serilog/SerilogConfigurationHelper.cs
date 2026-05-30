@@ -14,17 +14,43 @@ namespace HsnSoft.Base.Serilog;
 
 public static class SerilogConfigurationHelper
 {
-    private const string CustomConsoleTemplate =
-        "[{Timestamp:HH:mm:ss.fff zzz} {Level:u3}] {LoggerName} | {Message:lj} {Properties:j}{NewLine}{Exception}{NewLine}";
+    private static string GetConsoleTemplate(bool includeSourceContext = false, bool includeProperties = false, bool includeYearInTimestamp = false, bool extraEmptyLine = false)
+    {
+        string template = "[";
 
-    private const string DefaultConsoleTemplate =
-        "[{Timestamp:HH:mm:ss.fff zzz} {Level:u3}] {LoggerName} [{SourceContext}] | {Message:lj}{NewLine}{Exception}{NewLine}";
+        if (includeYearInTimestamp)
+        {
+            template += "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} ";
+        }
+        else
+        {
+            template += "{Timestamp:HH:mm:ss.fff zzz} ";
+        }
 
-    private const string CustomFileTemplate =
-        "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {LoggerName} | {Message:lj} {Properties:j}{NewLine}{Exception}";
+        template += "{Level:u3}] {LoggerName} ";
 
-    private const string DefaultFileTemplate =
-        "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {LoggerName} [{SourceContext}] | {Message:lj}{NewLine}{Exception}";
+        if (includeSourceContext)
+        {
+            template += "[{SourceContext}] ";
+        }
+
+        template += "| {Message:lj}";
+
+        if (includeProperties)
+        {
+            template += " {Properties:j}";
+        }
+
+        template += "{NewLine}{Exception}";
+
+        if (extraEmptyLine)
+        {
+            template += "{NewLine}";
+        }
+
+        return template;
+    }
+
 
     public static ILogger ConfigureConsoleWithPersistentLogger(IConfiguration configuration, string loggerName)
         => BaseConfigureLogger(configuration, loggerName, isEnabledPersistent: true);
@@ -56,7 +82,7 @@ public static class SerilogConfigurationHelper
 
         if (isEnabledPersistent)
         {
-            loggerConfiguration = ConfigurePersistentSink(loggerName,loggerConfiguration, configuration);
+            loggerConfiguration = ConfigurePersistentSink(loggerName, loggerConfiguration, configuration);
         }
 
         loggerConfiguration = ConfigureConsoleSink(loggerConfiguration, configuredLevel);
@@ -74,7 +100,11 @@ public static class SerilogConfigurationHelper
             sinkConfiguration =>
             {
                 sinkConfiguration.Console(
-                    outputTemplate: CustomConsoleTemplate,
+                    outputTemplate: GetConsoleTemplate(
+                        includeYearInTimestamp: false,
+                        includeSourceContext: false,
+                        includeProperties: true,
+                        extraEmptyLine: true),
                     theme: AnsiConsoleTheme.Sixteen
                 );
             });
@@ -85,7 +115,11 @@ public static class SerilogConfigurationHelper
             sinkConfiguration =>
             {
                 sinkConfiguration.Console(
-                    outputTemplate: DefaultConsoleTemplate,
+                    outputTemplate: GetConsoleTemplate(
+                        includeYearInTimestamp: false,
+                        includeSourceContext: false,
+                        includeProperties: false,
+                        extraEmptyLine: true),
                     theme: AnsiConsoleTheme.Sixteen
                 );
             });
@@ -147,7 +181,11 @@ public static class SerilogConfigurationHelper
                     rollingInterval: RollingInterval.Day,
                     retainedFileCountLimit: 30,
                     shared: true,
-                    outputTemplate: CustomFileTemplate);
+                    outputTemplate: GetConsoleTemplate(
+                        includeYearInTimestamp: true,
+                        includeSourceContext: true,
+                        includeProperties: true,
+                        extraEmptyLine: false));
             });
 
         // Framework / host file
@@ -160,7 +198,11 @@ public static class SerilogConfigurationHelper
                     rollingInterval: RollingInterval.Day,
                     retainedFileCountLimit: 30,
                     shared: true,
-                    outputTemplate: DefaultFileTemplate);
+                    outputTemplate: GetConsoleTemplate(
+                        includeYearInTimestamp: true,
+                        includeSourceContext: true,
+                        includeProperties: false,
+                        extraEmptyLine: false));
             });
 
         Console.WriteLine("");
