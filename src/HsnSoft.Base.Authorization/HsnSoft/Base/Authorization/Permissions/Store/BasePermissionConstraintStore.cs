@@ -1,8 +1,8 @@
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Globalization;
 using System.Linq;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using HsnSoft.Base.DependencyInjection;
 
@@ -10,9 +10,10 @@ namespace HsnSoft.Base.Authorization.Permissions.Store;
 
 public class BasePermissionConstraintStore : IPermissionConstraintStore, ISingletonDependency
 {
-    private readonly Lock _lock = new();
-    private Dictionary<string, string> _constraintValues = new();
-    private IReadOnlyCollection<PermissionConstraintAssignment> _constraints = new List<PermissionConstraintAssignment>();
+    private ImmutableDictionary<string, string> _constraintValues =
+        ImmutableDictionary<string, string>.Empty;
+
+    private IReadOnlyCollection<PermissionConstraintAssignment> _constraints = [];
 
     private static string BuildKey(string constraint, string providerName, string providerKey)
     {
@@ -22,13 +23,19 @@ public class BasePermissionConstraintStore : IPermissionConstraintStore, ISingle
 
         string value = $"{providerName}|{providerKey}|{constraint}";
 
-        return string.Join("", value.Trim().ToLowerInvariant().Normalize(NormalizationForm.FormD)
-            .Where(c => char.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark));
+        return string.Join(
+            "",
+            value.Trim()
+                .ToLowerInvariant()
+                .Normalize(NormalizationForm.FormD)
+                .Where(c => char.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark));
     }
 
     public Task<string?> GetValueAsync(string constraint, string providerName, string providerKey)
     {
-        if (string.IsNullOrWhiteSpace(constraint) || string.IsNullOrWhiteSpace(providerName) || string.IsNullOrWhiteSpace(providerKey))
+        if (string.IsNullOrWhiteSpace(constraint) ||
+            string.IsNullOrWhiteSpace(providerName) ||
+            string.IsNullOrWhiteSpace(providerKey))
         {
             return Task.FromResult<string?>(null);
         }
@@ -46,18 +53,15 @@ public class BasePermissionConstraintStore : IPermissionConstraintStore, ISingle
 
         var constraintList = constraints.ToList();
 
-        var values = constraintList.ToDictionary(
-            x => BuildKey(
-                x.Constraint,
-                x.ProviderName,
-                x.ProviderKey),
-            x => x.Value);
+        _constraints = constraintList;
 
-        lock (_lock)
-        {
-            _constraints = constraintList;
-            _constraintValues = values;
-        }
+        _constraintValues = constraintList
+            .ToImmutableDictionary(
+                x => BuildKey(
+                    x.Constraint,
+                    x.ProviderName,
+                    x.ProviderKey),
+                x => x.Value);
 
         return Task.CompletedTask;
     }

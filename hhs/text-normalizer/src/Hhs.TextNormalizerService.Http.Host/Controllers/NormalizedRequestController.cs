@@ -3,7 +3,6 @@ using Hhs.TextNormalizerService.Application.Contracts.ContentDomain.Dtos.Filters
 using Hhs.TextNormalizerService.Application.Contracts.ContentDomain.Interfaces;
 using Hhs.TextNormalizerService.Controllers.Base;
 using HsnSoft.Base.Application.Dtos;
-using HsnSoft.Base.Authorization.Permissions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Hhs.TextNormalizerService.Controllers;
@@ -16,8 +15,8 @@ public sealed class NormalizedRequestController(IServiceProvider provider, INorm
     public async Task<NormalizedRequestDto> GetNormalizedRequestAsync(Guid id, CancellationToken cancellationToken = default)
         => await normalizedRequestAppService.GetAsync(id, cancellationToken);
 
-    [PermissionAuthorize("invoice.read")]
-    // [Authorize(TextNormalizerServicePermissions.NormalizedRequests.PageView)]
+    // [PermissionAuthorize(TextNormalizerServicePermissions.NormalizedRequests.PageView)]
+    // [Authorize(Policy = $"Permission:{TextNormalizerServicePermissions.NormalizedRequests.PageView}")]
     [HttpPost("paged-list")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<PagedDataResultDto<NormalizedRequestDto>> GetPagedListAsync([FromBody] GetNormalizedRequestsPaged pagedInput, CancellationToken cancellationToken = default)

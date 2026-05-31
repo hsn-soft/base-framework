@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Globalization;
 using System.Linq;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using HsnSoft.Base.DependencyInjection;
 
@@ -10,9 +10,8 @@ namespace HsnSoft.Base.Authorization.Permissions.Store;
 
 public class BasePermissionStore : IPermissionStore, ISingletonDependency
 {
-    private readonly Lock _lock = new();
-    private HashSet<string> _permissionKeys = new();
-    private IReadOnlyCollection<PermissionAssignment> _permissions = new List<PermissionAssignment>();
+    private ImmutableHashSet<string> _permissionKeys = ImmutableHashSet<string>.Empty;
+    private IReadOnlyCollection<PermissionAssignment> _permissions = [];
 
     private static string BuildKey(string permission, string providerName, string providerKey)
     {
@@ -22,22 +21,26 @@ public class BasePermissionStore : IPermissionStore, ISingletonDependency
 
         string value = $"{providerName}|{providerKey}|{permission}";
 
-        return string.Join("", value.Trim().ToLowerInvariant().Normalize(NormalizationForm.FormD)
-            .Where(c => char.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark));
+        return string.Join(
+            "",
+            value.Trim()
+                .ToLowerInvariant()
+                .Normalize(NormalizationForm.FormD)
+                .Where(c => char.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark));
     }
 
     public Task<bool> IsGrantedAsync(string permission, string providerName, string providerKey)
     {
-        if (string.IsNullOrWhiteSpace(permission) || string.IsNullOrWhiteSpace(providerName) || string.IsNullOrWhiteSpace(providerKey))
+        if (string.IsNullOrWhiteSpace(permission) ||
+            string.IsNullOrWhiteSpace(providerName) ||
+            string.IsNullOrWhiteSpace(providerKey))
         {
             return Task.FromResult(false);
         }
 
         string key = BuildKey(permission, providerName, providerKey);
 
-        bool granted = _permissionKeys.Contains(key);
-
-        return Task.FromResult(granted);
+        return Task.FromResult(_permissionKeys.Contains(key));
     }
 
     public Task SetAllPermissions(IEnumerable<PermissionAssignment> permissions)
@@ -46,18 +49,14 @@ public class BasePermissionStore : IPermissionStore, ISingletonDependency
 
         var permissionList = permissions.ToList();
 
-        var permissionKeys = permissionList
+        _permissions = permissionList;
+
+        _permissionKeys = permissionList
             .Select(x => BuildKey(
                 x.Permission,
                 x.ProviderName,
                 x.ProviderKey))
-            .ToHashSet();
-
-        lock (_lock)
-        {
-            _permissions = permissionList;
-            _permissionKeys = permissionKeys;
-        }
+            .ToImmutableHashSet();
 
         return Task.CompletedTask;
     }

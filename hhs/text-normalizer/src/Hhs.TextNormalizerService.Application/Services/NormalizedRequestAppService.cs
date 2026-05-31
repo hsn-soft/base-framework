@@ -20,6 +20,7 @@ using Hhs.TextNormalizerService.Domain.Enums;
 using Hhs.TextNormalizerService.Domain.Settings;
 using HsnSoft.Base;
 using HsnSoft.Base.Application.Dtos;
+using HsnSoft.Base.Authorization.Permissions;
 using HsnSoft.Base.Domain.Models;
 using HsnSoft.Base.Logging;
 using HsnSoft.Base.Logging.Abstracts;
@@ -39,18 +40,21 @@ public sealed class NormalizedRequestAppService : ApplicationServiceBase, INorma
     private readonly IScrapingProvider _scrapingProvider;
     private readonly TextNormalizerSettings _serviceSettings;
     private readonly ICustomerConfigurationRepository _customerSettingsRepository;
+    private readonly IPermissionChecker _permissionChecker;
+    private readonly IPermissionConstraintChecker _permissionConstraintChecker;
 
     public NormalizedRequestAppService(IServiceProvider provider,
         IOptions<TextNormalizerSettings> serviceSettings,
         INormalizedRequestRepository normalizedRequestRepository,
         IOutlineProvider outlineProvider,
         IScrapingProvider scrapingProvider,
-        ICustomerConfigurationRepository customerConfigurationRepository
-    ) : base(provider)
+        ICustomerConfigurationRepository customerConfigurationRepository, IPermissionChecker permissionChecker, IPermissionConstraintChecker permissionConstraintChecker) : base(provider)
     {
         _logger = provider.GetRequiredService<IFrameworkLogger>();
         _serviceSettings = serviceSettings?.Value ?? throw new ArgumentNullException(nameof(serviceSettings));
         _customerSettingsRepository = customerConfigurationRepository;
+        _permissionChecker = permissionChecker;
+        _permissionConstraintChecker = permissionConstraintChecker;
         _normalizedRequestRepository = normalizedRequestRepository;
         _outlineProvider = outlineProvider;
         _scrapingProvider = scrapingProvider;
@@ -76,6 +80,26 @@ public sealed class NormalizedRequestAppService : ApplicationServiceBase, INorma
 
     public async Task<PagedDataResultDto<NormalizedRequestDto>> GetPagedListAsync(GetNormalizedRequestsPaged pagedInput, CancellationToken cancellationToken = default)
     {
+
+        // // dependency permission sample
+        // if (!await _permissionChecker.IsGrantedAsync("service.invoice.read"))
+        // {
+        //     throw new UnauthorizedAccessException("service.invoice.read");
+        // }
+        //
+        // // data permission sample
+        // if (await _permissionChecker.IsGrantedAsync("data.invoice-report.price.view"))
+        // {
+        //     dto.Price = entity.Price;
+        // }
+        // else
+        // {
+        //     dto.Price = null;
+        // }
+
+        // // contraint permission sample
+        // int maxDays = await _permissionConstraintChecker.GetIntAsync("constraint.invoice-report.fiscal.max-days") ?? 0;
+
         if (pagedInput == null)
         {
             throw new BaseHttpException((int)HttpStatusCode.BadRequest);
