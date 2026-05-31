@@ -1,6 +1,5 @@
 using System.Globalization;
 using System.Net;
-using AutoMapper;
 using Hhs.ContentService.Application.Contracts.ClientDomain.Dtos;
 using Hhs.ContentService.Application.Contracts.ContentDomain.Dtos;
 using Hhs.ContentService.Application.Contracts.ContentDomain.Interfaces;

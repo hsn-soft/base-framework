@@ -1,61 +1,41 @@
 ﻿using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using HsnSoft.Base.DependencyInjection;
-using HsnSoft.Base.MultiTenancy;
+using HsnSoft.Base.Authorization.Permissions.ValueProviders;
 using HsnSoft.Base.Security.Claims;
 
 namespace HsnSoft.Base.Authorization.Permissions;
 
-public class PermissionChecker : IPermissionChecker, ITransientDependency
+public sealed class PermissionChecker(IEnumerable<IPermissionValueProvider> providers, ICurrentPrincipalAccessor principalAccessor) : IPermissionChecker
 {
-    private readonly List<IPermissionValueProvider> _providers;
+    private ICurrentPrincipalAccessor PrincipalAccessor { get; } = principalAccessor;
 
-    public PermissionChecker(
-        ICurrentPrincipalAccessor principalAccessor,
-        ICurrentTenant currentTenant,
-        IPermissionStore permissionStore)
+    public Task<bool> IsGrantedAsync(string name)
     {
-        PrincipalAccessor = principalAccessor;
-        PermissionStore = permissionStore;
-
-        _providers = new List<IPermissionValueProvider>
-        {
-            //new ClientPermissionValueProvider(PermissionStore, currentTenant),
-            // client permission checker inside role permission
-            new RolePermissionValueProvider(PermissionStore, currentTenant),
-            new UserPermissionValueProvider(PermissionStore)
-        };
+        return IsGrantedAsync(PrincipalAccessor.Principal, name);
     }
 
-    protected ICurrentPrincipalAccessor PrincipalAccessor { get; }
-    protected IPermissionStore PermissionStore { get; }
-
-    public virtual async Task<bool> IsGrantedAsync(string name)
+    public async Task<bool> IsGrantedAsync(ClaimsPrincipal principal, string name)
     {
-        return await IsGrantedAsync(PrincipalAccessor.Principal, name);
-    }
+        bool granted = false;
 
-    public virtual async Task<bool> IsGrantedAsync(ClaimsPrincipal claimsPrincipal, string name)
-    {
-        Check.NotNull(name, nameof(name));
-
-        bool isGranted = false;
-        var context = new PermissionValueCheckContext(name, claimsPrincipal);
-        foreach (var provider in _providers)
+        foreach (var provider in providers)
         {
-            var result = await provider.CheckAsync(context);
+            var result = await provider.CheckAsync(new PermissionValueCheckContext(name, principal));
 
-            if (result == PermissionGrantResult.Granted)
-            {
-                isGranted = true;
-            }
-            else if (result == PermissionGrantResult.Prohibited)
-            {
+            if (result == PermissionGrantResult.Prohibited)
                 return false;
+
+            if (result != PermissionGrantResult.Granted)
+            {
+                continue;
             }
+
+            granted = true;
+            break;
+
         }
 
-        return isGranted;
+        return granted;
     }
 }

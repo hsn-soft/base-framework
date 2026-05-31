@@ -1,17 +1,12 @@
 ﻿using System.Threading.Tasks;
+using HsnSoft.Base.Authorization.Permissions.Store;
 using HsnSoft.Base.Security.Claims;
 
-namespace HsnSoft.Base.Authorization.Permissions;
+namespace HsnSoft.Base.Authorization.Permissions.ValueProviders;
 
-public class UserPermissionValueProvider : PermissionValueProvider
+public class UserPermissionValueProvider(IPermissionStore permissionStore) : PermissionValueProvider(permissionStore)
 {
-    public const string ProviderName = "U";
-
-    public override string Name => ProviderName;
-
-    public UserPermissionValueProvider(IPermissionStore permissionStore) : base(permissionStore)
-    {
-    }
+    public override string Name => PermissionProviders.User;
 
     public override async Task<PermissionGrantResult> CheckAsync(PermissionValueCheckContext context)
     {
@@ -22,7 +17,7 @@ public class UserPermissionValueProvider : PermissionValueProvider
             return PermissionGrantResult.Undefined;
         }
 
-        return await PermissionStore.IsGrantedAsync(context.Permission.Name, Name, userId)
+        return await PermissionStore.IsGrantedAsync(context.Permission, Name, userId)
             ? PermissionGrantResult.Granted
             : PermissionGrantResult.Undefined;
     }

@@ -1,7 +1,7 @@
 using Hhs.Shared.Contracts;
 using Hhs.Shared.Contracts.Cache;
 using HsnSoft.Base.AspNetCore.Hosting.Worker;
-using HsnSoft.Base.Authorization.Permissions;
+using HsnSoft.Base.Authorization.Permissions.Store;
 using HsnSoft.Base.Data;
 using HsnSoft.Base.Logging.Abstracts;
 using HsnSoft.Base.MultiTenancy;
@@ -39,13 +39,16 @@ public class SynchServicePermissionStoreBackgroundService : BaseSingleThreadBack
 
         using (dataFilter.Disable<IMultiTenant>())
         {
+            // get microservice endpoint permission keys
             var servicePermissionKeys = await servicePermissionProvider.GetServicePermissionKeysAsync();
             servicePermissionKeys ??= [];
 
+            // get user or role permissions equal microservice permission keys
             var cachePermissions = await cachePermissionGrantRepository.GetServicePermissionsAsync(servicePermissionKeys);
             cachePermissions ??= [];
 
-            await permissionStore.SetAllPermissions(cachePermissions.Select(x => new BasePermissionStoreItem { Name = x.Name, ProviderName = x.ProviderName, ProviderKey = x.ProviderKey }));
+            await permissionStore.SetAllPermissions(cachePermissions.Select(x
+                => new PermissionAssignment { Permission = x.Name, ProviderName = x.ProviderName, ProviderKey = x.ProviderKey }));
 
             Logger.LogInformation("{WorkerName} | Permission store successfully updated [{CachePermissionsCount}]", nameof(SynchServicePermissionStoreBackgroundService), cachePermissions.Count);
         }

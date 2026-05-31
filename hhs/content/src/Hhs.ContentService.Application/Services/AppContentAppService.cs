@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Net;
 using Hhs.ContentService.Application.Contracts.ContentDomain.Dtos;
 using Hhs.ContentService.Application.Contracts.ContentDomain.Dtos.Filters;

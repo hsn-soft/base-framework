@@ -3,7 +3,6 @@ using Hhs.ContentService.Application;
 using Hhs.ContentService.Domain.Localization;
 using Hhs.ContentService.EntityFrameworkCore;
 using Hhs.ContentService.EntityFrameworkCore.Setup;
-using Hhs.Shared.Contracts.Cache.ServicePermissions;
 using Hhs.Shared.Contracts.Events.Content;
 using Hhs.Shared.Helper.Consts;
 using Hhs.Shared.Hosting.Extensions;
@@ -50,7 +49,7 @@ builder.WebHost.ConfigureKestrel((_, options) =>
 
 builder.Services.AddMicroserviceHosting(builder.Configuration, typeof(Program))
     .AddJwtServerAuthentication(builder.Configuration, builder.Environment, "audience-service-content")
-    .AddCustomAuthorization(ContentServicePermissions.GetAll())
+    .AddPermissionAuthorization()
     .AddMicroserviceUserTenantChecker()
     .AddEventBus(builder.Configuration, typeof(EventHandlersAssemblyMarker).Assembly)
     .AddHostingHealthChecks(builder.Configuration, "content",

@@ -1,4 +1,3 @@
-using Hhs.Shared.Contracts.Cache.ServicePermissions;
 using Hhs.Shared.Contracts.Events.TextNormalizer;
 using Hhs.Shared.Helper.Consts;
 using Hhs.Shared.Hosting.Extensions;
@@ -53,7 +52,7 @@ builder.WebHost.ConfigureKestrel((_, options) =>
 
 builder.Services.AddMicroserviceHosting(builder.Configuration, typeof(Program))
     .AddJwtServerAuthentication(builder.Configuration, builder.Environment, "audience-service-text-normalizer")
-    .AddCustomAuthorization(TextNormalizerServicePermissions.GetAll())
+    .AddPermissionAuthorization()
     .AddMicroserviceUserTenantChecker()
     .AddEventBus(builder.Configuration, typeof(EventHandlersAssemblyMarker).Assembly)
     .AddHostingHealthChecks(builder.Configuration, "text-normalizer",

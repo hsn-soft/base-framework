@@ -212,22 +212,11 @@ public static class ServiceCollectionExtensions
             return services;
         }
 
-        public IServiceCollection AddCustomAuthorization(string[] servicePermissions)
+        public IServiceCollection AddPermissionAuthorization()
         {
             services.AddBaseAuthorizationServiceCollection();
 
-            services.AddAuthorization(options =>
-            {
-                foreach (string permissionPolicyName in servicePermissions)
-                {
-                    options.AddPolicy(permissionPolicyName, policyBuilder =>
-                    {
-                        // policyBuilder.RequireAuthenticatedUser();
-                        // policyBuilder.RequireClaim("role");
-                        policyBuilder.RequireUserPermission(permissionPolicyName);
-                    });
-                }
-            });
+            services.AddAuthorization();
 
             return services;
         }
