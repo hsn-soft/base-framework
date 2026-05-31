@@ -11,6 +11,7 @@ using HsnSoft.Base.Domain.Entities;
 using HsnSoft.Base.Domain.Models;
 using HsnSoft.Base.MongoDB;
 using HsnSoft.Base.MongoDB.Context;
+using HsnSoft.Base.MultiTenancy;
 using LinqKit.Core;
 using MongoDB.Driver;
 
@@ -34,17 +35,91 @@ public class MongoGenericRepository<TEntity, TKey> :
 
     public ITrackingMongoCollection<TEntity> GetCollection() => _context?.GetCollection<TEntity>().WithReadPreference(ReadPreference.Primary) as ITrackingMongoCollection<TEntity>;
 
-    public IQueryable<TEntity> GetQueryable() => GetCollection().AsQueryable().AsExpandable();
+    public IQueryable<TEntity> GetQueryable()
+    {
+        var query = GetCollection()
+            .AsQueryable()
+            .AsExpandable();
+
+        return ApplyDataFilters(query);
+    }
 
     public IClientSessionHandle StartSession(ClientSessionOptions options = null, CancellationToken cancellationToken = default) => StartSessionAsync(options, cancellationToken).GetAwaiter().GetResult();
 
     public async Task<IClientSessionHandle> StartSessionAsync(ClientSessionOptions options = null, CancellationToken cancellationToken = default) => await _context.StartSessionAsync(options, cancellationToken);
 
+    private FilterDefinition<TEntity> BuildSoftDeleteFilter()
+    {
+        if (!(DataFilter?.IsEnabled<ISoftDelete>() ?? false))
+        {
+            return Builders<TEntity>.Filter.Empty;
+        }
+
+        if (!typeof(ISoftDelete).IsAssignableFrom(typeof(TEntity)))
+        {
+            return Builders<TEntity>.Filter.Empty;
+        }
+
+        return Builders<TEntity>.Filter.Eq(nameof(ISoftDelete.IsDeleted), false);
+    }
+
+    private FilterDefinition<TEntity> BuildTenantFilter()
+    {
+        if (!(DataFilter?.IsEnabled<IMultiTenant>() ?? false))
+        {
+            return Builders<TEntity>.Filter.Empty;
+        }
+
+        if (!typeof(IMultiTenant).IsAssignableFrom(typeof(TEntity)))
+        {
+            return Builders<TEntity>.Filter.Empty;
+        }
+
+        if (CurrentTenant?.IsSystemTenant ?? false)
+        {
+            return Builders<TEntity>.Filter.Empty;
+        }
+
+        var allowedTenantIds = CurrentTenant?.AllowedTenantIds ?? [];
+        if (allowedTenantIds.Count == 0)
+        {
+            return Builders<TEntity>.Filter.Where(_ => false);
+        }
+
+        return Builders<TEntity>.Filter.In(nameof(IMultiTenant.TenantId), allowedTenantIds);
+    }
+
+    private FilterDefinition<TEntity> BuildGlobalFilter()
+    {
+        var filters = new List<FilterDefinition<TEntity>>();
+
+        var tenantFilter = BuildTenantFilter();
+        var softDeleteFilter = BuildSoftDeleteFilter();
+
+        if (tenantFilter != Builders<TEntity>.Filter.Empty)
+            filters.Add(tenantFilter);
+
+        if (softDeleteFilter != Builders<TEntity>.Filter.Empty)
+            filters.Add(softDeleteFilter);
+
+        return filters.Count switch
+        {
+            0 => Builders<TEntity>.Filter.Empty,
+            1 => filters[0],
+            _ => Builders<TEntity>.Filter.And(filters)
+        };
+    }
+
     public async Task<TEntity> GetByIdAsync(IClientSessionHandle session, TKey id, CancellationToken cancellationToken = default)
     {
-        var filter = Builders<TEntity>.Filter.Eq(doc => doc.Id, id);
+        var idFilter = Builders<TEntity>.Filter.Eq(doc => doc.Id, id);
+        var globalFilter = Builders<TEntity>.Filter.And
+        (
+            idFilter,
+            BuildGlobalFilter()
+        );
         var results = await GetCollection()
-            .Find(session, filter, new FindOptions { MaxAwaitTime = _findOptions.MaxAwaitTime, MaxTime = _findOptions.MaxTime })
+            .Find(session, globalFilter, new FindOptions { MaxAwaitTime = _findOptions.MaxAwaitTime, MaxTime = _findOptions.MaxTime })
             .Limit(2)
             .ToListAsync(cancellationToken);
         return results.Count switch
@@ -61,9 +136,14 @@ public class MongoGenericRepository<TEntity, TKey> :
         Func<IQueryable<TEntity>, IQueryable<TEntity>> includeEntity = null,
         CancellationToken cancellationToken = default)
     {
-        var filter = Builders<TEntity>.Filter.Eq(doc => doc.Id, id);
+        var idFilter = Builders<TEntity>.Filter.Eq(doc => doc.Id, id);
+        var globalFilter = Builders<TEntity>.Filter.And
+        (
+            idFilter,
+            BuildGlobalFilter()
+        );
         var results = await GetCollection()
-            .Find(filter, new FindOptions { MaxAwaitTime = _findOptions.MaxAwaitTime, MaxTime = _findOptions.MaxTime })
+            .Find(globalFilter, new FindOptions { MaxAwaitTime = _findOptions.MaxAwaitTime, MaxTime = _findOptions.MaxTime })
             .Limit(2)
             .Project(selector)
             .ToListAsync(cancellationToken);
@@ -81,9 +161,14 @@ public class MongoGenericRepository<TEntity, TKey> :
         Func<IQueryable<TEntity>, IQueryable<TEntity>> includeEntity = null,
         CancellationToken cancellationToken = default)
     {
-        var filter = Builders<TEntity>.Filter.Eq(doc => doc.Id, id);
+        var idFilter = Builders<TEntity>.Filter.Eq(doc => doc.Id, id);
+        var globalFilter = Builders<TEntity>.Filter.And
+        (
+            idFilter,
+            BuildGlobalFilter()
+        );
         var results = await GetCollection()
-            .Find(filter, new FindOptions { MaxAwaitTime = _findOptions.MaxAwaitTime, MaxTime = _findOptions.MaxTime })
+            .Find(globalFilter, new FindOptions { MaxAwaitTime = _findOptions.MaxAwaitTime, MaxTime = _findOptions.MaxTime })
             .Limit(2)
             .Project(selector)
             .ToListAsync(cancellationToken);
@@ -150,7 +235,6 @@ public class MongoGenericRepository<TEntity, TKey> :
         if (orderByEntity != null) query = orderByEntity(query);
         return query;
     }
-
 
 
     public override Task<List<TResult>> GetListAsync<TResult>(
@@ -231,9 +315,18 @@ public class MongoGenericRepository<TEntity, TKey> :
         Expression<Func<TEntity, bool>> filter = null,
         CancellationToken cancellationToken = default)
     {
-        return filter == null
-            ? await GetCollection().CountDocumentsAsync(_ => true, _countOptions, cancellationToken: cancellationToken)
-            : await Task.FromResult(GetQueryable().Count(filter));
+        if (filter != null)
+        {
+            return GetQueryable().LongCount(filter);
+        }
+
+        var globalFilter = BuildGlobalFilter();
+
+        return await GetCollection()
+            .CountDocumentsAsync(
+                globalFilter,
+                _countOptions,
+                cancellationToken);
     }
 
     public override Task<bool> ExistsAsync(
@@ -267,14 +360,19 @@ public class MongoGenericRepository<TEntity, TKey> :
         CancellationToken cancellationToken = default)
     {
         var tmpCollection = GetCollection();
-        var filter = Builders<TEntity>.Filter.Eq(doc => doc.Id, id);
-        var entity = await tmpCollection.Find(filter).FirstOrDefaultAsync(cancellationToken);
+        var idFilter = Builders<TEntity>.Filter.Eq(doc => doc.Id, id);
+        var globalFilter = Builders<TEntity>.Filter.And
+        (
+            idFilter,
+            BuildGlobalFilter()
+        );
+        var entity = await tmpCollection.Find(globalFilter).FirstOrDefaultAsync(cancellationToken);
         if (entity == null) throw new EntityNotFoundException(typeof(TEntity), id);
 
         updateAction(entity);
 
         // GetDbContext().SetEntityEventState([entity], MongoEntityEventState.Modified);
-        var replaceResult = await tmpCollection.ReplaceOneAsync(filter, entity, cancellationToken: cancellationToken);
+        var replaceResult = await tmpCollection.ReplaceOneAsync(globalFilter, entity, cancellationToken: cancellationToken);
         return !replaceResult.IsAcknowledged ? throw new Exception($"Update error: {replaceResult}") : entity;
     }
 
@@ -286,11 +384,20 @@ public class MongoGenericRepository<TEntity, TKey> :
 
         foreach (var entity in entities)
         {
+            var filter = Builders<TEntity>.Filter.And(
+                Builders<TEntity>.Filter.Eq(
+                    x => x.Id,
+                    entity.Id),
+                BuildGlobalFilter());
+
             await tmpCollection.ReplaceOneAsync(
                 session,
-                x => x.Id.Equals(entity.Id),
+                filter,
                 entity,
-                new ReplaceOptions { IsUpsert = false },
+                new ReplaceOptions
+                {
+                    IsUpsert = false
+                },
                 cancellationToken);
         }
     }
@@ -305,10 +412,19 @@ public class MongoGenericRepository<TEntity, TKey> :
         // GetDbContext().SetEntityEventState(entities, MongoEntityEventState.Modified);
         foreach (var entity in entities)
         {
-            var result = await tmpCollection.ReplaceOneAsync(
-                x => x.Id.Equals(entity.Id),
+            var filter = Builders<TEntity>.Filter.And(
+                Builders<TEntity>.Filter.Eq(
+                    x => x.Id,
+                    entity.Id),
+                BuildGlobalFilter());
+
+            await tmpCollection.ReplaceOneAsync(
+                filter,
                 entity,
-                new ReplaceOptions { IsUpsert = false },
+                new ReplaceOptions
+                {
+                    IsUpsert = false
+                },
                 cancellationToken);
 
             updated++;
@@ -327,11 +443,17 @@ public class MongoGenericRepository<TEntity, TKey> :
         var builder = Builders<TEntity>.Update;
         var update = set(builder);
 
-        var result = await collection.UpdateManyAsync(
-            predicate,
+        var filter = Builders<TEntity>.Filter.And(
+            BuildGlobalFilter(),
+            Builders<TEntity>.Filter.Where(predicate));
+
+        var result =   await collection.UpdateManyAsync(
+            filter,
             update,
             cancellationToken: cancellationToken
         );
+
+
 
         return result.ModifiedCount;
     }
@@ -343,9 +465,13 @@ public class MongoGenericRepository<TEntity, TKey> :
         var builder = Builders<TEntity>.Update;
         var update = set(builder);
 
+        var filter = Builders<TEntity>.Filter.And(
+            BuildGlobalFilter(),
+            Builders<TEntity>.Filter.Where(predicate));
+
         var result = await collection.UpdateManyAsync(
             session,
-            predicate,
+            filter,
             update,
             cancellationToken: cancellationToken
         );
@@ -357,8 +483,14 @@ public class MongoGenericRepository<TEntity, TKey> :
         IEnumerable<TKey> ids,
         CancellationToken cancellationToken = default)
     {
-        var result = await GetCollection().DeleteManyAsync(
-            x => ids.Contains(x.Id),
+      var filter = Builders<TEntity>.Filter.And(
+            Builders<TEntity>.Filter.In(
+                x => x.Id,
+                ids),
+            BuildGlobalFilter());
+
+      var result =  await GetCollection().DeleteManyAsync(
+            filter,
             cancellationToken);
 
         if (result.DeletedCount == 0)

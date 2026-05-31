@@ -5,7 +5,7 @@ using Serilog.Events;
 
 namespace HsnSoft.Base.AspNetCore.Logging;
 
-public sealed class RequestLogger(IConfiguration configuration, ILogMasker masker) : PersistentLogger(configuration, "RequestLogger"), IRequestResponseLogger
+public sealed class RequestLogger(IConfiguration configuration, ILogMasker masker) : PersistentLogger(configuration, "RequestLogger",true), IRequestResponseLogger
 {
     public void RequestResponseInfoLog<T>(T log) where T : IRequestResponseLog => Write(LogEventLevel.Information, "RequestResponseLog", log);
 

@@ -1,7 +1,8 @@
 ﻿using HsnSoft.Base.Authorization.Permissions;
+using HsnSoft.Base.Authorization.Permissions.Store;
+using HsnSoft.Base.Authorization.Permissions.ValueProviders;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace HsnSoft.Base.Authorization;
 
@@ -11,11 +12,23 @@ public static class BaseAuthorizationServiceCollectionExtensions
     {
         services.AddAuthorizationCore();
 
-        services.AddSingleton<IPermissionStore, BasePermissionStore>();
-        services.AddScoped<IPermissionChecker, PermissionChecker>();
+        // 1 - Add all policies to authorizations (microservice permissions)
+        services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+
+        // 2 - Authorization permission requirement handler
         services.AddScoped<IAuthorizationHandler, PermissionRequirementHandler>();
 
-        services.TryAddTransient<DefaultAuthorizationPolicyProvider>();
+        // 3 - Permission checkers
+        services.AddScoped<IPermissionChecker, PermissionChecker>();
+        services.AddScoped<IPermissionConstraintChecker, PermissionConstraintChecker>();
+
+        // 4 - Authorization permission value control providers
+        services.AddScoped<IPermissionValueProvider, RolePermissionValueProvider>();
+        services.AddScoped<IPermissionValueProvider, UserPermissionValueProvider>();
+
+        // 5 - Permission stores for context user,role or client permissions
+        services.AddSingleton<IPermissionStore, BasePermissionStore>();
+        services.AddSingleton<IPermissionConstraintStore, BasePermissionConstraintStore>();
 
         return services;
     }

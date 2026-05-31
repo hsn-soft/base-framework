@@ -5,7 +5,7 @@ using Serilog.Events;
 
 namespace HsnSoft.Base.EventBus.Logging;
 
-public sealed class EventBusLogger(IConfiguration configuration, ILogMasker masker) : PersistentLogger(configuration, "EventBusLogger"), IEventBusLogger
+public sealed class EventBusLogger(IConfiguration configuration, ILogMasker masker) : PersistentLogger(configuration, "EventBusLogger",true), IEventBusLogger
 {
     public void EventBusInfoLog<T>(T log) where T : IEventBusLog => Write(LogEventLevel.Information, "EventBusLog", log);
 

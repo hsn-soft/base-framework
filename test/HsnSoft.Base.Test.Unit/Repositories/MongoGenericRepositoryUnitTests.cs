@@ -223,8 +223,8 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
 
         // Act
         var actual = await repo.GetFirstOrDefaultAsync(
-            x => x.Name == "Tester",
-            o => o.OrderByDescending(e => e.Age)
+        predicate:    x => x.Name == "Tester",
+        orderByEntity:    o => o.OrderByDescending(e => e.Age)
         );
 
         // Assert
@@ -238,8 +238,8 @@ public class MongoGenericRepositoryUnitTests(MongoFixture fixture) : IClassFixtu
 
         // Act
         actual = await repo.GetFirstOrDefaultAsync(
-            filter,
-            o => o.OrderByDescending(e => e.Age)
+         predicate:   filter,
+         orderByEntity:   o => o.OrderByDescending(e => e.Age)
         );
 
         // Assert

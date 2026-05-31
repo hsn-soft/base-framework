@@ -17,9 +17,9 @@ namespace HsnSoft.Base.Domain.Repositories;
 public abstract class GenericRepositoryBase<TEntity, TKey>(IServiceProvider provider = null) : IGenericRepository<TEntity, TKey>
     where TEntity : class, IEntity<TKey>
 {
-    [CanBeNull] private IDataFilter DataFilter { get; } = provider?.GetService<IDataFilter>();
+    [CanBeNull] protected IDataFilter DataFilter { get; } = provider?.GetService<IDataFilter>();
 
-    [CanBeNull] private ICurrentTenant CurrentTenant { get; } = provider?.GetService<ICurrentTenant>();
+    [CanBeNull] protected ICurrentTenant CurrentTenant { get; } = provider?.GetService<ICurrentTenant>();
 
     #region GetById / Single / First
 
@@ -216,8 +216,22 @@ public abstract class GenericRepositoryBase<TEntity, TKey>(IServiceProvider prov
 
         if (typeof(IMultiTenant).IsAssignableFrom(typeof(TOtherEntity)))
         {
-            var tenantId = CurrentTenant?.Id;
-            query = (TQueryable)query.WhereIf(DataFilter?.IsEnabled<IMultiTenant>() ?? false, e => ((IMultiTenant)e).TenantId == tenantId);
+            if (DataFilter?.IsEnabled<IMultiTenant>() ?? false)
+            {
+                if (!(CurrentTenant?.IsSystemTenant ?? false))
+                {
+                    var allowedTenantIds = CurrentTenant?.AllowedTenantIds ?? [];
+
+                    if (allowedTenantIds.Count == 0)
+                    {
+                        query = (TQueryable)query.Where(_ => false);
+                    }
+                    else
+                    {
+                        query = (TQueryable)query.Where(e => allowedTenantIds.Contains(((IMultiTenant)e).TenantId));
+                    }
+                }
+            }
         }
 
         return query;

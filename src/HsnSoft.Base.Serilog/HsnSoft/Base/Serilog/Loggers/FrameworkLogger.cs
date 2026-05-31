@@ -5,7 +5,7 @@ using Serilog.Events;
 
 namespace HsnSoft.Base.Serilog.Loggers;
 
-public sealed class FrameworkLogger(IConfiguration configuration, ILogMasker masker) : PersistentLogger(configuration, "FrameworkLogger"), IFrameworkLogger
+public sealed class FrameworkLogger(IConfiguration configuration, ILogMasker masker) : PersistentLogger(configuration, "FrameworkLogger",true), IFrameworkLogger
 {
     public void FrameworkInfoLog<T>(T log) where T : IFrameworkLog => Write(LogEventLevel.Information, "FrameworkLog", log);
 
