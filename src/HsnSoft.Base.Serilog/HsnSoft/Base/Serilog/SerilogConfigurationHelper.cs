@@ -14,17 +14,43 @@ namespace HsnSoft.Base.Serilog;
 
 public static class SerilogConfigurationHelper
 {
-    private const string CustomConsoleTemplate =
-        "[{Timestamp:HH:mm:ss.fff zzz} {Level:u3}] {LoggerName} | {Message:lj} {Properties:j}{NewLine}{Exception}{NewLine}";
+    private static string GetConsoleTemplate(bool includeSourceContext = false, bool includeProperties = false, bool includeYearInTimestamp = false, bool extraEmptyLine = false)
+    {
+        string template = "[";
 
-    private const string DefaultConsoleTemplate =
-        "[{Timestamp:HH:mm:ss.fff zzz} {Level:u3}] {LoggerName} | {Message:lj}{NewLine}{Exception}{NewLine}";
+        if (includeYearInTimestamp)
+        {
+            template += "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} ";
+        }
+        else
+        {
+            template += "{Timestamp:HH:mm:ss.fff zzz} ";
+        }
 
-    private const string CustomFileTemplate =
-        "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {LoggerName} | {Message:lj} {Properties:j}{NewLine}{Exception}";
+        template += "{Level:u3}] {LoggerName} ";
 
-    private const string DefaultFileTemplate =
-        "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {LoggerName} | {Message:lj}{NewLine}{Exception}";
+        if (includeSourceContext)
+        {
+            template += "[{SourceContext}] ";
+        }
+
+        template += "| {Message:lj}";
+
+        if (includeProperties)
+        {
+            template += " {Properties:j}";
+        }
+
+        template += "{NewLine}{Exception}";
+
+        if (extraEmptyLine)
+        {
+            template += "{NewLine}";
+        }
+
+        return template;
+    }
+
 
     public static ILogger ConfigureConsoleWithPersistentLogger(IConfiguration configuration, string loggerName)
         => BaseConfigureLogger(configuration, loggerName, isEnabledPersistent: true);
@@ -43,8 +69,12 @@ public static class SerilogConfigurationHelper
             .MinimumLevel.Verbose()
             .MinimumLevel.Override("System", dependencyAssemblyLogLevel)
             .MinimumLevel.Override("Microsoft", dependencyAssemblyLogLevel)
+            .MinimumLevel.Override("Microsoft.Hosting", dependencyAssemblyLogLevel)
             .MinimumLevel.Override("Microsoft.AspNetCore", dependencyAssemblyLogLevel)
             .MinimumLevel.Override("Microsoft.EntityFrameworkCore", dependencyAssemblyLogLevel)
+            .MinimumLevel.Override("HsnSoft.Base.EntityFrameworkCore", dependencyAssemblyLogLevel)
+            .MinimumLevel.Override("MongoDB", dependencyAssemblyLogLevel)
+            .MinimumLevel.Override("HsnSoft.Base.MongoDB", dependencyAssemblyLogLevel)
             .Enrich.FromLogContext()
             .Enrich.WithProperty("Solution", AppDomain.CurrentDomain.FriendlyName.Split('.').FirstOrDefault() ?? "Unknown")
             .Enrich.WithProperty("Assembly", AppDomain.CurrentDomain.FriendlyName)
@@ -52,7 +82,7 @@ public static class SerilogConfigurationHelper
 
         if (isEnabledPersistent)
         {
-            loggerConfiguration = ConfigurePersistentSink(loggerConfiguration, configuration);
+            loggerConfiguration = ConfigurePersistentSink(loggerName, loggerConfiguration, configuration);
         }
 
         loggerConfiguration = ConfigureConsoleSink(loggerConfiguration, configuredLevel);
@@ -66,22 +96,30 @@ public static class SerilogConfigurationHelper
     {
         // Custom logger console
         loggerConfiguration = loggerConfiguration.WriteTo.Conditional(
-            logEvent => (byte)logEvent.Level >= (byte)configuredLevel && IsCustomLogger(logEvent),
+            logEvent => (byte)logEvent.Level >= (byte)configuredLevel && UsePropertyConsoleTemplate(logEvent),
             sinkConfiguration =>
             {
                 sinkConfiguration.Console(
-                    outputTemplate: CustomConsoleTemplate,
+                    outputTemplate: GetConsoleTemplate(
+                        includeYearInTimestamp: false,
+                        includeSourceContext: false,
+                        includeProperties: true,
+                        extraEmptyLine: true),
                     theme: AnsiConsoleTheme.Sixteen
                 );
             });
 
         // Framework / host console
         loggerConfiguration = loggerConfiguration.WriteTo.Conditional(
-            logEvent => (byte)logEvent.Level >= (byte)configuredLevel && !IsCustomLogger(logEvent),
+            logEvent => (byte)logEvent.Level >= (byte)configuredLevel && !UsePropertyConsoleTemplate(logEvent),
             sinkConfiguration =>
             {
                 sinkConfiguration.Console(
-                    outputTemplate: DefaultConsoleTemplate,
+                    outputTemplate: GetConsoleTemplate(
+                        includeYearInTimestamp: false,
+                        includeSourceContext: false,
+                        includeProperties: false,
+                        extraEmptyLine: true),
                     theme: AnsiConsoleTheme.Sixteen
                 );
             });
@@ -90,6 +128,7 @@ public static class SerilogConfigurationHelper
     }
 
     private static LoggerConfiguration ConfigurePersistentSink(
+        string loggerName,
         LoggerConfiguration loggerConfiguration,
         IConfiguration configuration)
     {
@@ -108,21 +147,25 @@ public static class SerilogConfigurationHelper
                 if (!int.TryParse(portText, out int grayLogPort))
                     throw new InvalidOperationException("FrameworkLogger:GrayLog:Port invalid.");
 
-                // SADECE custom logger'lar Graylog'a gitsin
+                // SADECE persistent logger'lar Graylog'a gitsin
                 loggerConfiguration = loggerConfiguration.WriteTo.Conditional(
-                    IsCustomLogger,
+                    IsPersistentLogger,
                     sinkConfiguration =>
                     {
                         sinkConfiguration.Graylog(
                             new GraylogSinkOptions { HostnameOrAddress = address, Port = grayLogPort, TransportType = TransportType.Http });
                     });
 
-                Console.WriteLine("=== SERILOG GRAYLOG SINK ACTIVE (CUSTOM LOGGERS ONLY) ===");
+                Console.WriteLine("");
+                Console.WriteLine($"=== SERILOG GRAYLOG SINK ACTIVE (CUSTOM LOGGERS ONLY) | [ {loggerName} ] ===");
+                Console.WriteLine("");
                 return loggerConfiguration;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"=== SERILOG GRAYLOG SINK ERROR === {ex.Message}");
+                Console.WriteLine("");
+                Console.WriteLine($"=== SERILOG GRAYLOG SINK ERROR | [ {loggerName} ] === {ex.Message}");
+                Console.WriteLine("");
             }
         }
 
@@ -130,7 +173,7 @@ public static class SerilogConfigurationHelper
 
         // Custom logger file
         loggerConfiguration = loggerConfiguration.WriteTo.Conditional(
-            IsCustomLogger,
+            UsePropertyConsoleTemplate,
             sinkConfiguration =>
             {
                 sinkConfiguration.File(
@@ -138,12 +181,16 @@ public static class SerilogConfigurationHelper
                     rollingInterval: RollingInterval.Day,
                     retainedFileCountLimit: 30,
                     shared: true,
-                    outputTemplate: CustomFileTemplate);
+                    outputTemplate: GetConsoleTemplate(
+                        includeYearInTimestamp: true,
+                        includeSourceContext: true,
+                        includeProperties: true,
+                        extraEmptyLine: false));
             });
 
         // Framework / host file
         loggerConfiguration = loggerConfiguration.WriteTo.Conditional(
-            logEvent => !IsCustomLogger(logEvent),
+            logEvent => !UsePropertyConsoleTemplate(logEvent),
             sinkConfiguration =>
             {
                 sinkConfiguration.File(
@@ -151,16 +198,31 @@ public static class SerilogConfigurationHelper
                     rollingInterval: RollingInterval.Day,
                     retainedFileCountLimit: 30,
                     shared: true,
-                    outputTemplate: DefaultFileTemplate);
+                    outputTemplate: GetConsoleTemplate(
+                        includeYearInTimestamp: true,
+                        includeSourceContext: true,
+                        includeProperties: false,
+                        extraEmptyLine: false));
             });
 
-        Console.WriteLine("=== SERILOG FILE SINK ACTIVE ===");
+        Console.WriteLine("");
+        Console.WriteLine($"=== SERILOG FILE SINK ACTIVE | [ {loggerName} ] ===");
+        Console.WriteLine("");
+
         return loggerConfiguration;
     }
 
-    private static bool IsCustomLogger(global::Serilog.Events.LogEvent logEvent)
+    private static bool UsePropertyConsoleTemplate(LogEvent logEvent)
     {
-        if (!logEvent.Properties.TryGetValue("IsCustomLogger", out var value))
+        if (!logEvent.Properties.TryGetValue("UsePropertyConsole", out var value))
+            return false;
+
+        return value.ToString().Equals("true", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsPersistentLogger(LogEvent logEvent)
+    {
+        if (!logEvent.Properties.TryGetValue("IsPersistentLogger", out var value))
             return false;
 
         return value.ToString().Equals("true", StringComparison.OrdinalIgnoreCase);

@@ -1,7 +1,7 @@
 ﻿using JetBrains.Annotations;
 using Microsoft.AspNetCore.Authorization;
 
-namespace HsnSoft.Base.Authorization;
+namespace HsnSoft.Base.Authorization.Permissions;
 
 public class PermissionRequirement : IAuthorizationRequirement
 {

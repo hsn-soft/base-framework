@@ -10,13 +10,14 @@ public abstract class PersistentLogger : IBaseLogger
 {
     protected readonly ILogger Logger;
 
-    protected PersistentLogger(IConfiguration configuration, string loggerName)
+    protected PersistentLogger(IConfiguration configuration, string loggerName,bool usePropertyConsoleTemplate)
     {
         try
         {
             Logger = SerilogConfigurationHelper
                 .ConfigureConsoleWithPersistentLogger(configuration, loggerName)
-                .ForContext("IsCustomLogger", true);
+                .ForContext("IsPersistentLogger", true)
+                .ForContext("UsePropertyConsole", usePropertyConsoleTemplate);
         }
         catch (Exception exception)
         {
@@ -24,10 +25,10 @@ public abstract class PersistentLogger : IBaseLogger
 
             Logger = new LoggerConfiguration()
                 .WriteTo.Console(
-                    outputTemplate: "[{Timestamp:HH:mm:ss.fff zzz} {Level:u3}] {LoggerName} | {Message:lj}{NewLine}{Exception}{NewLine}")
+                    outputTemplate: "[{Timestamp:HH:mm:ss.fff zzz} {Level:u3}] {LoggerName} [{SourceContext}] | {Message:lj}{NewLine}{Exception}{NewLine}")
                 .CreateLogger()
                 .ForContext("LoggerName", loggerName)
-                .ForContext("IsCustomLogger", true);
+                .ForContext("IsPersistentLogger", true);
         }
     }
 
