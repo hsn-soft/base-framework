@@ -28,7 +28,7 @@ public class LoaderHostedService : IHostedService
         _logger.LogDebug("{Loader} | {OperationStatus} | {OperationTime}", nameof(LoaderHostedService), "STARTED", $"{DateTime.UtcNow:yyyyMMdd hh:mm:ss}");
 
         _logger.FrameworkInfoLog(LogHelper.Generate(
-            message: "{Loader} | Started",
+            message: $"{nameof(LoaderHostedService)} | Started",
             reference: null,
             facility: "APPLICATION_LOADER_STARTED",
             correlationId: _instanceId.ToString(),
@@ -48,7 +48,7 @@ public class LoaderHostedService : IHostedService
             _logger.LogError("{Loader} | {OperationStatus} | {OperationTime}", nameof(LoaderHostedService), "FAILED", $"{DateTime.UtcNow:yyyyMMdd hh:mm:ss}");
 
             _logger.FrameworkErrorLog(LogHelper.Generate(
-                message: "{Loader} | Failed",
+                message: $"{nameof(LoaderHostedService)} | Failed",
                 reference: null,
                 facility: "APPLICATION_LOADER_FAILED",
                 correlationId: _instanceId.ToString(),
@@ -63,7 +63,7 @@ public class LoaderHostedService : IHostedService
         _logger.LogDebug("{Loader} | {OperationStatus} | {OperationTime}", nameof(LoaderHostedService), "STOPPED", $"{DateTime.UtcNow:yyyyMMdd hh:mm:ss}");
 
         _logger.FrameworkInfoLog(LogHelper.Generate(
-            message: "{Loader} | Stopped",
+            message: $"{nameof(LoaderHostedService)} | Stopped",
             reference: null,
             facility: "APPLICATION_LOADER_STOPPED",
             correlationId: _instanceId.ToString(),
