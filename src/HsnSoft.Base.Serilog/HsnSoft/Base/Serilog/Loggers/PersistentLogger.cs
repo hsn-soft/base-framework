@@ -1,5 +1,6 @@
 using System;
 using HsnSoft.Base.Logging.Abstracts;
+using JetBrains.Annotations;
 using Microsoft.Extensions.Configuration;
 using Serilog;
 using Serilog.Events;
@@ -32,13 +33,17 @@ public abstract class PersistentLogger : IBaseLogger
         }
     }
 
-    public void LogDebug(string messageTemplate, params object[] args) => Logger.Write(LogEventLevel.Debug, messageTemplate, args);
 
-    public void LogInformation(string messageTemplate, params object[] args) => Logger.Write(LogEventLevel.Information, messageTemplate, args);
+    protected abstract void Write(LogEventLevel logLevel,[CanBeNull] Exception exception, [NotNull] string messageTemplate, [ItemCanBeNull] params object[] args);
 
-    public void LogWarning(string messageTemplate, params object[] args) => Logger.Write(LogEventLevel.Warning, messageTemplate, args);
 
-    public void LogError(string messageTemplate, params object[] args) => Logger.Write(LogEventLevel.Error, messageTemplate, args);
+    public void LogDebug(string messageTemplate, params object[] args) => Write(LogEventLevel.Debug,null, messageTemplate, args);
 
-    public void LogError(Exception exception, string messageTemplate, params object[] args) => Logger.Write(LogEventLevel.Error, exception, messageTemplate, args);
+    public void LogInformation(string messageTemplate, params object[] args) => Write(LogEventLevel.Information,null, messageTemplate, args);
+
+    public void LogWarning(string messageTemplate, params object[] args) => Write(LogEventLevel.Warning,null, messageTemplate, args);
+
+    public void LogError(string messageTemplate, params object[] args) => Write(LogEventLevel.Error,null, messageTemplate, args);
+
+    public void LogError(Exception exception, string messageTemplate, params object[] args) => Write(LogEventLevel.Error, exception, messageTemplate, args);
 }
