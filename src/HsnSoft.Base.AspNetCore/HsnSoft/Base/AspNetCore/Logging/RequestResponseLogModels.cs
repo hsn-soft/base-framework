@@ -8,7 +8,7 @@ public sealed class RequestResponseLogModel : IRequestResponseLog
 {
     [CanBeNull] public string TraceId { get; set; }
     [CanBeNull] public string CorrelationId { get; set; }
-    public RequestResponseLogFacility Facility => RequestResponseLogFacility.HTTP_REQUEST_RESPONSE_LOG;
+    [NotNull] public string Facility => nameof(RequestResponseLogFacility.HTTP_REQUEST_RESPONSE_LOG);
 
     public ClientInfoLogDetail ClientInfo { get; set; } = new();
     public RequestInfoLogDetail RequestInfo { get; set; } = new();
@@ -21,7 +21,7 @@ public sealed class RequestLogModel : IRequestResponseLog
 {
     [CanBeNull] public string TraceId { get; set; }
     [CanBeNull] public string CorrelationId { get; set; }
-    public RequestResponseLogFacility Facility => RequestResponseLogFacility.HTTP_REQUEST_LOG;
+    [NotNull] public string Facility => nameof(RequestResponseLogFacility.HTTP_REQUEST_LOG);
 
     public ClientInfoLogDetail ClientInfo { get; set; } = new();
     public RequestInfoLogDetail RequestInfo { get; set; } = new();
@@ -31,7 +31,7 @@ public sealed class ResponseLogModel : IRequestResponseLog
 {
     [CanBeNull] public string TraceId { get; set; }
     [CanBeNull] public string CorrelationId { get; set; }
-    public RequestResponseLogFacility Facility => RequestResponseLogFacility.HTTP_RESPONSE_LOG;
+    [NotNull] public string Facility => nameof(RequestResponseLogFacility.HTTP_RESPONSE_LOG);
 
     public ResponseInfoLogDetail ResponseInfo { get; set; } = new();
 
@@ -58,7 +58,7 @@ public sealed class ClientInfoLogDetail
 
 public sealed class RequestInfoLogDetail
 {
-    public DateTime RequestDateTimeUtc { get; set; }= DateTime.UtcNow;
+    public DateTime RequestDateTimeUtc { get; set; } = DateTime.UtcNow;
     [CanBeNull] public string RequestMethod { get; set; }
     [CanBeNull] public string RequestPath { get; set; }
     [CanBeNull] public string RequestQuery { get; set; }
@@ -72,7 +72,7 @@ public sealed class RequestInfoLogDetail
 
 public sealed class ResponseInfoLogDetail
 {
-    public DateTime ResponseDateTimeUtc { get; set; }= DateTime.UtcNow;
+    public DateTime ResponseDateTimeUtc { get; set; } = DateTime.UtcNow;
     public int ResponseStatus { get; set; }
     [CanBeNull] public string ResponseContentType { get; set; }
     public long ResponseContentLength { get; set; }

@@ -5,7 +5,7 @@ using Serilog.Events;
 
 namespace HsnSoft.Base.AspNetCore.Logging;
 
-public sealed class RequestLogger(IConfiguration configuration, ILogMasker masker) : PersistentLogger(configuration, "RequestLogger",true), IRequestResponseLogger
+public sealed class RequestResponseLogger(IConfiguration configuration, ILogMasker masker) : PersistentLogger(configuration, nameof(RequestResponseLogger),true), IRequestResponseLogger
 {
     public void RequestResponseInfoLog<T>(T log) where T : IRequestResponseLog => Write(LogEventLevel.Information, "RequestResponseLog", log);
 
@@ -15,11 +15,17 @@ public sealed class RequestLogger(IConfiguration configuration, ILogMasker maske
 
     private void Write<T>(LogEventLevel logLevel, string logType, T log)
     {
-        object masked = masker.MaskObject(log);
+        // object masked = masker.MaskObject(log);
+        //
+        // // birinci yöntem
+        // Logger
+        //     .ForContext("LogType", logType)
+        //     .ForContext("Log", masked, destructureObjects: true)
+        //     .Write(logLevel, "{logLevel} | {LogType} created", logLevel.ToString(),logType);
 
+        // ikinci yöntem, serilog konfigurasyonunda maskeleme ekleniyor zaten
         Logger
             .ForContext("LogType", logType)
-            .ForContext("Payload", masked, destructureObjects: true)
-            .Write(logLevel, "{LogType} created", logType);
+            .Write(logLevel, "{@Log}", log);
     }
 }
