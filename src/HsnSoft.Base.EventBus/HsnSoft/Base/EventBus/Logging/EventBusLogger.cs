@@ -1,31 +1,25 @@
-using HsnSoft.Base.Logging.Masking;
+using System;
 using HsnSoft.Base.Serilog.Loggers;
 using Microsoft.Extensions.Configuration;
 using Serilog.Events;
 
 namespace HsnSoft.Base.EventBus.Logging;
 
-public sealed class EventBusLogger(IConfiguration configuration, ILogMasker masker) : PersistentLogger(configuration, nameof(EventBusLogger),true), IEventBusLogger
+public sealed class EventBusLogger(IConfiguration configuration) : PersistentLogger(configuration, nameof(EventBusLogger), true), IEventBusLogger
 {
-    public void EventBusInfoLog<T>(T log) where T : IEventBusLog => Write(LogEventLevel.Information, "EventBusLog", log);
+    public void EventBusInfoLog<T>(T log) where T : IEventBusLog => Write(LogEventLevel.Information, log);
 
-    public void EventBusWarnLog<T>(T log) where T : IEventBusLog => Write(LogEventLevel.Warning, "EventBusLog", log);
+    public void EventBusWarnLog<T>(T log) where T : IEventBusLog => Write(LogEventLevel.Warning, log);
 
-    public void EventBusErrorLog<T>(T log) where T : IEventBusLog => Write(LogEventLevel.Error, "EventBusLog", log);
+    public void EventBusErrorLog<T>(T log) where T : IEventBusLog => Write(LogEventLevel.Error, log);
 
-    private void Write<T>(LogEventLevel logLevel, string logType, T log)
-    {
-        // object masked = masker.MaskObject(log);
-        //
-        // // birinci yöntem
-        // Logger
-        //     .ForContext("LogType", logType)
-        //     .ForContext("Log", masked, destructureObjects: true)
-        //     .Write(logLevel, "{logLevel} | {LogType} created", logLevel.ToString(),logType);
-
-        // ikinci yöntem, serilog konfigurasyonunda maskeleme ekleniyor zaten
-        Logger
-            .ForContext("LogType", logType)
+    private void Write<T>(LogEventLevel logLevel, T log)
+        => Logger
+            .ForContext("LogType", "EventBusLog")
             .Write(logLevel, "{@Log}", log);
-    }
+
+    protected override void Write(LogEventLevel logLevel, Exception exception, string messageTemplate, params object[] args)
+        => Logger
+            .ForContext("LogType", "EventBusLog")
+            .Write(LogEventLevel.Debug, exception, messageTemplate, args);
 }
