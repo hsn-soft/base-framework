@@ -5,7 +5,7 @@ using Serilog.Events;
 
 namespace HsnSoft.Base.EventBus.Logging;
 
-public sealed class EventBusLogger(IConfiguration configuration, ILogMasker masker) : PersistentLogger(configuration, "EventBusLogger",true), IEventBusLogger
+public sealed class EventBusLogger(IConfiguration configuration, ILogMasker masker) : PersistentLogger(configuration, nameof(EventBusLogger),true), IEventBusLogger
 {
     public void EventBusInfoLog<T>(T log) where T : IEventBusLog => Write(LogEventLevel.Information, "EventBusLog", log);
 
@@ -15,11 +15,17 @@ public sealed class EventBusLogger(IConfiguration configuration, ILogMasker mask
 
     private void Write<T>(LogEventLevel logLevel, string logType, T log)
     {
-        object masked = masker.MaskObject(log);
+        // object masked = masker.MaskObject(log);
+        //
+        // // birinci yöntem
+        // Logger
+        //     .ForContext("LogType", logType)
+        //     .ForContext("Log", masked, destructureObjects: true)
+        //     .Write(logLevel, "{logLevel} | {LogType} created", logLevel.ToString(),logType);
 
+        // ikinci yöntem, serilog konfigurasyonunda maskeleme ekleniyor zaten
         Logger
             .ForContext("LogType", logType)
-            .ForContext("Payload", masked, destructureObjects: true)
-            .Write(logLevel, "{LogType} created", logType);
+            .Write(logLevel, "{@Log}", log);
     }
 }

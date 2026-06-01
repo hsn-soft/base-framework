@@ -5,7 +5,7 @@ using Serilog.Events;
 
 namespace HsnSoft.Base.Serilog.Loggers;
 
-public sealed class FrameworkLogger(IConfiguration configuration, ILogMasker masker) : PersistentLogger(configuration, "FrameworkLogger",true), IFrameworkLogger
+public sealed class FrameworkLogger(IConfiguration configuration, ILogMasker masker) : PersistentLogger(configuration, nameof(FrameworkLogger),true), IFrameworkLogger
 {
     public void FrameworkInfoLog<T>(T log) where T : IFrameworkLog => Write(LogEventLevel.Information, "FrameworkLog", log);
 
@@ -15,11 +15,17 @@ public sealed class FrameworkLogger(IConfiguration configuration, ILogMasker mas
 
     private void Write<T>(LogEventLevel logLevel, string logType, T log)
     {
-        object masked = masker.MaskObject(log);
+        // object masked = masker.MaskObject(log);
+        //
+        // // birinci yöntem
+        // Logger
+        //     .ForContext("LogType", logType)
+        //     .ForContext("Log", masked, destructureObjects: true)
+        //     .Write(logLevel, "{logLevel} | {LogType} created", logLevel.ToString(),logType);
 
+        // ikinci yöntem, serilog konfigurasyonunda maskeleme ekleniyor zaten
         Logger
             .ForContext("LogType", logType)
-            .ForContext("Payload", masked, destructureObjects: true)
-            .Write(logLevel, "{LogType} created", logType);
+            .Write(logLevel, "{@Log}", log);
     }
 }
