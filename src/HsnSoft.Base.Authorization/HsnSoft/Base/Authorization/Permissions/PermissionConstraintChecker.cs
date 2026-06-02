@@ -1,26 +1,27 @@
+using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using System.Threading.Tasks;
-using HsnSoft.Base.Authorization.Permissions.Store;
 using HsnSoft.Base.Authorization.Permissions.ValueProviders;
 using HsnSoft.Base.Security.Claims;
 
 namespace HsnSoft.Base.Authorization.Permissions;
 
-public class PermissionConstraintChecker(IPermissionConstraintStore store, ICurrentPrincipalAccessor principalAccessor) : IPermissionConstraintChecker
+public class PermissionConstraintChecker(
+    IEnumerable<IPermissionConstraintValueProvider> providers,
+    ICurrentPrincipalAccessor principalAccessor
+) : IPermissionConstraintChecker
 {
     public async Task<string> GetValueAsync(string constraint)
     {
         var principal = principalAccessor.Principal;
 
-        string[] roles = principal?.FindAll(BaseClaimTypes.Role).Select(x => x.Value).ToArray() ?? [];
-
-        foreach (string role in roles)
+        foreach (var provider in providers)
         {
-            string value = await store.GetValueAsync(constraint, PermissionProviders.Role, role);
-            if (!string.IsNullOrWhiteSpace(value))
+            var result = await provider.CheckAsync(new PermissionConstraintCheckContext(constraint, principal));
+
+            if (result.HasValue)
             {
-                return value;
+                return result.Value;
             }
         }
 

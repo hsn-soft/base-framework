@@ -25,6 +25,8 @@ public static class BaseAuthorizationServiceCollectionExtensions
         // 4 - Authorization permission value control providers
         services.AddScoped<IPermissionValueProvider, RolePermissionValueProvider>();
         services.AddScoped<IPermissionValueProvider, UserPermissionValueProvider>();
+        services.AddScoped<IPermissionConstraintValueProvider, UserConstraintValueProvider>();
+        services.AddScoped<IPermissionConstraintValueProvider, RoleConstraintValueProvider>();
 
         // 5 - Permission stores for context user,role or client permissions
         services.AddSingleton<IPermissionStore, BasePermissionStore>();

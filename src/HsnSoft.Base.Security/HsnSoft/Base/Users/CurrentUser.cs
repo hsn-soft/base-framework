@@ -8,62 +8,55 @@ using HsnSoft.Base.Security.Claims;
 
 namespace HsnSoft.Base.Users;
 
-public class CurrentUser : ICurrentUser, ITransientDependency
+public sealed class CurrentUser(ICurrentPrincipalAccessor principalAccessor) : ICurrentUser, ITransientDependency
 {
-    private static readonly Claim[] EmptyClaimsArray = new Claim[0];
+    private static readonly Claim[] s_emptyClaimsArray = [];
 
-    private readonly ICurrentPrincipalAccessor _principalAccessor;
+    public bool IsAuthenticated => Id.HasValue;
 
-    public CurrentUser(ICurrentPrincipalAccessor principalAccessor)
+    public Guid? Id => principalAccessor.Principal?.FindUserId();
+
+    public string UserName => FindClaim(BaseClaimTypes.UserName)?.Value;
+
+    public string Name => FindClaim(BaseClaimTypes.Name)?.Value;
+    public string SurName => FindClaim(BaseClaimTypes.SurName)?.Value;
+
+    public string PhoneNumber => FindClaim(BaseClaimTypes.PhoneNumber)?.Value;
+
+    public bool PhoneNumberVerified => string.Equals(FindClaim(BaseClaimTypes.PhoneNumberVerified)?.Value, "true", StringComparison.InvariantCultureIgnoreCase);
+
+    public string Email => FindClaim(BaseClaimTypes.Email)?.Value;
+
+    public bool EmailVerified => string.Equals(FindClaim(BaseClaimTypes.EmailVerified)?.Value, "true", StringComparison.InvariantCultureIgnoreCase);
+
+    public string SecurityStamp => FindClaim(BaseClaimTypes.SecurityStamp)?.Value;
+
+
+    public Guid? TenantId => principalAccessor.Principal?.FindTenantId();
+    public string TenantNormalized => FindClaim(BaseClaimTypes.TenantNormalized)?.Value;
+    public bool IsSystemTenant => string.Equals(FindClaim(BaseClaimTypes.IsSystemTenant)?.Value, "true", StringComparison.InvariantCultureIgnoreCase);
+    public List<Guid> AllowedTenantIds => principalAccessor?.Principal?.FindAllowedTenantIds() ?? [];
+
+
+    public string[] RoleKeys => FindClaims(BaseClaimTypes.Role).Select(c => c.Value).Distinct().ToArray();
+
+    public Claim FindClaim(string claimType)
     {
-        _principalAccessor = principalAccessor;
+        return principalAccessor.Principal?.Claims.FirstOrDefault(c => c.Type == claimType);
     }
 
-    public virtual bool IsAuthenticated => Id.HasValue;
-
-    public virtual Guid? Id => _principalAccessor.Principal?.FindUserId();
-
-    public virtual string UserName => FindClaim(BaseClaimTypes.UserName)?.Value;
-
-    public virtual string Name => FindClaim(BaseClaimTypes.Name)?.Value;
-    public virtual string SurName => FindClaim(BaseClaimTypes.SurName)?.Value;
-
-    public virtual string PhoneNumber => FindClaim(BaseClaimTypes.PhoneNumber)?.Value;
-
-    public virtual bool PhoneNumberVerified => string.Equals(FindClaim(BaseClaimTypes.PhoneNumberVerified)?.Value, "true", StringComparison.InvariantCultureIgnoreCase);
-
-    public virtual string Email => FindClaim(BaseClaimTypes.Email)?.Value;
-
-    public virtual bool EmailVerified => string.Equals(FindClaim(BaseClaimTypes.EmailVerified)?.Value, "true", StringComparison.InvariantCultureIgnoreCase);
-
-    public virtual string SecurityStamp => FindClaim(BaseClaimTypes.SecurityStamp)?.Value;
-
-
-    public virtual Guid? TenantId => _principalAccessor.Principal?.FindTenantId();
-    public virtual string TenantNormalized => FindClaim(BaseClaimTypes.TenantNormalized)?.Value;
-    public virtual bool IsSystemTenant => string.Equals(FindClaim(BaseClaimTypes.IsSystemTenant)?.Value, "true", StringComparison.InvariantCultureIgnoreCase);
-    public virtual List<Guid> AllowedTenantIds => _principalAccessor?.Principal?.FindAllowedTenantIds() ?? [];
-
-
-    public virtual string[] Roles => FindClaims(BaseClaimTypes.Role).Select(c => c.Value).Distinct().ToArray();
-
-    public virtual Claim FindClaim(string claimType)
+    public Claim[] FindClaims(string claimType)
     {
-        return _principalAccessor.Principal?.Claims.FirstOrDefault(c => c.Type == claimType);
+        return principalAccessor.Principal?.Claims.Where(c => c.Type == claimType).ToArray() ?? s_emptyClaimsArray;
     }
 
-    public virtual Claim[] FindClaims(string claimType)
+    public Claim[] GetAllClaims()
     {
-        return _principalAccessor.Principal?.Claims.Where(c => c.Type == claimType).ToArray() ?? EmptyClaimsArray;
+        return principalAccessor.Principal?.Claims.ToArray() ?? s_emptyClaimsArray;
     }
 
-    public virtual Claim[] GetAllClaims()
+    public bool IsInRole(string roleKey)
     {
-        return _principalAccessor.Principal?.Claims.ToArray() ?? EmptyClaimsArray;
-    }
-
-    public virtual bool IsInRole(string roleName)
-    {
-        return FindClaims(BaseClaimTypes.Role).Any(c => c.Value == roleName);
+        return FindClaims(BaseClaimTypes.Role).Any(c => c.Value == roleKey);
     }
 }

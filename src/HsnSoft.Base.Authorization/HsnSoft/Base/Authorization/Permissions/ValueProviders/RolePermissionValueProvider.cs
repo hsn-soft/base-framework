@@ -21,7 +21,7 @@ public class RolePermissionValueProvider(IPermissionStore permissionStore) : Per
         if (roles == null || roles.Length == 0)
         {
             string clientId = context.Principal?.FindFirst(BaseClaimTypes.ClientId)?.Value;
-            if (clientId == null)
+            if (string.IsNullOrWhiteSpace(clientId))
             {
                 return PermissionGrantResult.Undefined;
             }
