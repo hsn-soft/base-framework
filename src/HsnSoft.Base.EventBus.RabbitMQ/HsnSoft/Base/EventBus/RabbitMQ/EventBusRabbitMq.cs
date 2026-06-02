@@ -74,7 +74,7 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
 
             CorrelationId = (correlationId ?? parentMessage?.CorrelationId) ?? traceAccessor?.GetCorrelationId(),
             UserId = parentMessage?.UserId ?? currentUser?.Id?.ToString(),
-            UserRoles = parentMessage?.UserRoles ?? (currentUser?.Roles is { Length: > 0 } ? currentUser?.Roles.JoinAsString(",") : null),
+            UserRoles = parentMessage?.UserRoles ?? (currentUser?.RoleKeys is { Length: > 0 } ? currentUser?.RoleKeys.JoinAsString(",") : null),
             ClientLat = parentMessage?.ClientLat ?? traceAccessor?.GetClientLat(),
             ClientLong = parentMessage?.ClientLong ?? traceAccessor?.GetClientLong(),
             ClientChannel = parentMessage?.ClientChannel ?? traceAccessor?.GetClientChannel(),
