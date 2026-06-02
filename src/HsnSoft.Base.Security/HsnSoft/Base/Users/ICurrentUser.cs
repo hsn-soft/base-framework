@@ -35,7 +35,7 @@ public interface ICurrentUser
     [NotNull] List<Guid> AllowedTenantIds { get; }
 
 
-    [NotNull] string[] Roles { get; }
+    [NotNull] string[] RoleKeys { get; }
 
     [CanBeNull]
     Claim FindClaim(string claimType);
@@ -46,5 +46,5 @@ public interface ICurrentUser
     [NotNull]
     Claim[] GetAllClaims();
 
-    bool IsInRole(string roleName);
+    bool IsInRole(string roleKey);
 }

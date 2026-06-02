@@ -65,7 +65,7 @@ public class EventBusKafka : IEventBus, IDisposable
             Producer = _kafkaEventBusConfig.ConsumerClientInfo,
             CorrelationId = (correlationId ?? parentMessage?.CorrelationId) ?? _traceAccessor?.GetCorrelationId(),
             UserId = parentMessage?.UserId ?? _currentUser?.Id?.ToString(),
-            UserRoles = parentMessage?.UserRoles ?? (_currentUser?.Roles is { Length: > 0 } ? _currentUser?.Roles.JoinAsString(",") : null),
+            UserRoles = parentMessage?.UserRoles ?? (_currentUser?.RoleKeys is { Length: > 0 } ? _currentUser?.RoleKeys.JoinAsString(",") : null),
             ClientLat = parentMessage?.ClientLat ?? _traceAccessor?.GetClientLat(),
             ClientLong = parentMessage?.ClientLong ?? _traceAccessor?.GetClientLong(),
             ClientChannel = parentMessage?.ClientChannel ?? _traceAccessor?.GetClientChannel(),

@@ -1,5 +1,7 @@
+using System.Globalization;
 using System.Linq;
 using System.Text;
+using JetBrains.Annotations;
 
 namespace HsnSoft.Base.Text;
 
@@ -12,19 +14,11 @@ public static class StringHelper
             return null;
         }
 
-        if (encoding == null)
-        {
-            encoding = Encoding.UTF8;
-        }
+        encoding ??= Encoding.UTF8;
 
         bool hasBom = bytes.Length >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF;
 
-        if (hasBom)
-        {
-            return encoding.GetString(bytes, 3, bytes.Length - 3);
-        }
-
-        return encoding.GetString(bytes);
+        return hasBom ? encoding.GetString(bytes, 3, bytes.Length - 3) : encoding.GetString(bytes);
     }
 
     public static string ReplaceInvalidChars(string text, bool isEmail = false, string replaceInvalidChar = "")
@@ -62,12 +56,12 @@ public static class StringHelper
     {
         string capitalizeRoleName = string.Empty;
         if (string.IsNullOrWhiteSpace(text)) return capitalizeRoleName;
-        defaultDelimeters ??= new[] { "-", "_" };
+        defaultDelimeters ??= ["-", "_"];
 
         string clearedText = text.ToUpper();
         clearedText = defaultDelimeters.Aggregate(clearedText, (current, delimeter) => current.Replace(delimeter, " "));
 
-        foreach (string item in clearedText.Split(' '))
+        foreach (string item in clearedText.Split(" "))
         {
             switch (item.Length)
             {
@@ -86,6 +80,13 @@ public static class StringHelper
         return capitalizeRoleName.Trim();
     }
 
+    public static string SplitFirstValue(string text, string delimeter)
+    {
+        if (string.IsNullOrWhiteSpace(text) || string.IsNullOrWhiteSpace(delimeter)) return text;
+
+        return text.Contains(delimeter) ? text.Split(delimeter)[0] : text;
+    }
+
     public static string Base64Encode(string plainText)
     {
         byte[] plainTextBytes = Encoding.UTF8.GetBytes(plainText);
@@ -97,4 +98,23 @@ public static class StringHelper
         byte[] base64EncodedBytes = System.Convert.FromBase64String(base64EncodedData);
         return Encoding.UTF8.GetString(base64EncodedBytes);
     }
+
+    public static string Normalize([CanBeNull] string value)
+    {
+        value ??= string.Empty;
+
+        return string.Join("", value.Trim().ToUpperInvariant().Normalize(NormalizationForm.FormD)
+            .Where(c => char.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark));
+    }
+
+    public static string Minimize([CanBeNull] string value)
+    {
+        value ??= string.Empty;
+
+        return string.Join("", value.Trim().ToLowerInvariant().Normalize(NormalizationForm.FormD)
+            .Where(c => char.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark));
+    }
+
+    public static string SlugKeyNormalize([CanBeNull] string value, [NotNull] char key = '_')
+        => Minimize(ReplaceInvalidChars(value, false, key.ToString())).Trim(key);
 }
