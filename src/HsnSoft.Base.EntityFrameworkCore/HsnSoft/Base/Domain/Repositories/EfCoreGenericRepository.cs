@@ -32,7 +32,7 @@ public class EfCoreGenericRepository<TEntity, TKey>(IServiceProvider provider, D
         Func<IQueryable<TEntity>, IQueryable<TEntity>> includeEntity = null,
         CancellationToken cancellationToken = default)
     {
-        var results = await QueryGetSingleOrDefault(predicate,includeEntity).Select(selector).ToListAsync(cancellationToken);
+        var results = await QueryGetSingleOrDefault(predicate, includeEntity).Select(selector).ToListAsync(cancellationToken);
         return results.Count switch
         {
             0 => null,
@@ -47,7 +47,7 @@ public class EfCoreGenericRepository<TEntity, TKey>(IServiceProvider provider, D
         Func<IQueryable<TEntity>, IQueryable<TEntity>> includeEntity = null,
         CancellationToken cancellationToken = default)
     {
-        var results = await QueryGetSingleOrDefault(predicate,includeEntity).ProjectTo<TResult>(configuration).ToListAsync(cancellationToken);
+        var results = await QueryGetSingleOrDefault(predicate, includeEntity).ProjectTo<TResult>(configuration).ToListAsync(cancellationToken);
         return results.Count switch
         {
             0 => null,
@@ -59,7 +59,7 @@ public class EfCoreGenericRepository<TEntity, TKey>(IServiceProvider provider, D
     private IQueryable<TEntity> QueryGetSingleOrDefault(
         Expression<Func<TEntity, bool>> predicate,
         Func<IQueryable<TEntity>, IQueryable<TEntity>> includeEntity = null
-        )
+    )
     {
         IQueryable<TEntity> query = GetQueryable();
 
@@ -77,18 +77,16 @@ public class EfCoreGenericRepository<TEntity, TKey>(IServiceProvider provider, D
         Expression<Func<TEntity, TResult>> selector,
         Func<IQueryable<TEntity>, IQueryable<TEntity>> includeEntity = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderByEntity = null,
-
         CancellationToken cancellationToken = default)
-        => await QueryGetFirstOrDefault(predicate,includeEntity, orderByEntity).Select(selector).FirstOrDefaultAsync(cancellationToken);
+        => await QueryGetFirstOrDefault(predicate, includeEntity, orderByEntity).Select(selector).FirstOrDefaultAsync(cancellationToken);
 
     public override async Task<TResult> GetFirstOrDefaultAsync<TResult>(
         Expression<Func<TEntity, bool>> predicate,
         IConfigurationProvider configuration,
         Func<IQueryable<TEntity>, IQueryable<TEntity>> includeEntity = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderByEntity = null,
-
         CancellationToken cancellationToken = default)
-        => await QueryGetFirstOrDefault(predicate,includeEntity, orderByEntity).ProjectTo<TResult>(configuration).FirstOrDefaultAsync(cancellationToken);
+        => await QueryGetFirstOrDefault(predicate, includeEntity, orderByEntity).ProjectTo<TResult>(configuration).FirstOrDefaultAsync(cancellationToken);
 
     private IQueryable<TEntity> QueryGetFirstOrDefault(
         Expression<Func<TEntity, bool>> predicate,
@@ -193,38 +191,6 @@ public class EfCoreGenericRepository<TEntity, TKey>(IServiceProvider provider, D
 
         return (query, totalCount);
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
     public override async Task<long> GetCountAsync(
