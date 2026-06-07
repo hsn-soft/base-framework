@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <Import Project="..\..\common.version.props"/>
+    <Import Project="..\..\common.props"/>
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <PackageId>Hhs.Shared.Hosting.Microservices</PackageId>
+        <RootNamespace>Hhs.Shared.Hosting.Microservices</RootNamespace>
+        <Title>TechSummus HHS Shared Hosting Microservices</Title>
+        <Description>TechSummus HHS Shared Hosting Microservices</Description>
+        <PackageTags>TechSummus HHS Shared Hosting Microservices</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Hhs.Shared.Contracts\Hhs.Shared.Contracts.csproj"/>
+        <ProjectReference Include="..\Hhs.Shared.Hosting\Hhs.Shared.Hosting.csproj"/>
+    </ItemGroup>
+</Project>

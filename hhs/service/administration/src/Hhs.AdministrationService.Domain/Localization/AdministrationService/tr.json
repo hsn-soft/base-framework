@@ -1,0 +1,22 @@
+{
+  "culture": "tr",
+  "texts": {
+    "Error:AdministrationService:000101": "İzin bulunamadı",
+    "Error:AdministrationService:000102": "İzin daha önceden kayıt edilmiş",
+    "Error:AdministrationService:000103": "İzin filtre hatası",
+    "Error:AdministrationService:000201": "Menu bulunamadı",
+    "Error:AdministrationService:000301": "İzin bulunamadı",
+    "Error:AdministrationService:000302": "Menu izni bulunamadı",
+    "Error:AdministrationService:000303": "Rol izni bulunamadı",
+    "Error:AdministrationService:000304": "Rol izni değeri bulunamadı",
+    "Error:AdministrationService:000305": "İzin bağımlılığı bulunamadı",
+    "Enum:Unknown": "-Seçiniz-",
+    "Enum:PermissionProviderNameType:User": "Kullanıcı",
+    "Enum:PermissionProviderNameType:Role": "Rol",
+    "Enum:PermissionProviderNameType:Client": "Uygulama",
+    "PermissionGrant:Name": "İzin Adı",
+    "PermissionGrant:ProviderName": "İzin Sahibi",
+    "PermissionGrant:ProviderKey": "İzin Anahtarı",
+    "RolePermission:RoleUniqueName": "Rol Adı"
+  }
+}

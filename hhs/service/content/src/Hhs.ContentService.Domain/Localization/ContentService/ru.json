@@ -1,0 +1,25 @@
+{
+  "culture": "ru",
+  "texts": {
+    "Error:ContentService:100001": "Неизвестный исходный адрес",
+    "Error:ContentService:100002": "Недопустимый исходный адрес",
+    "Error:ContentService:100003": "Недопустимый адрес домена",
+    "Error:ContentService:100004": "Несовместимый адрес домена",
+    "Error:ContentService:000021": "Контент приложения не найден",
+    "Error:ContentService:000022": "Дубликат контента приложения",
+    "Error:ContentService:000023": "Ошибка состояния контента приложения",
+    "Error:ContentService:000051": "Контент анализа не найден",
+    "Error:ContentService:000052": "Ошибка состояния контента анализа",
+    "Error:ContentService:000031": "Клиент не найден",
+    "Error:ContentService:000032": "Клиентский дубликат",
+    "Error:ContentService:000033": "Клиентский недействительный домен",
+    "Error:ContentService:000034": "Клиентский домен заблокирован",
+    "Error:ContentService:000041": "Фильтр клиентского пути не найден",
+    "CREATED": "СОЗДАН",
+    "SKIPPED_PATH": "ПРОПУЩЕН",
+    "PROCESSING": "ОБРАБОТКА",
+    "READY": "ГОТОВО",
+    "NO_ANALYSIS_VIDEO": "НЕТ ВИДЕО",
+    "FAILED": "СБОЙ"
+  }
+}

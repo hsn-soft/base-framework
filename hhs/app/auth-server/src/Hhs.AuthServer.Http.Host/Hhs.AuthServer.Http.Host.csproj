@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <Import Project="..\..\common.version.props"/>
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+        <RootNamespace>Hhs.AuthServer</RootNamespace>
+        <Title>TechSummus Hhs AuthServer</Title>
+        <Product>TechSummus Hhs AuthServer</Product>
+        <Description>TechSummus Hhs AuthServer</Description>
+        <Authors>TechSummus</Authors>
+        <Copyright>2023</Copyright>
+        <NoWarn>$(NoWarn);CS1591;CS1998;</NoWarn>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\..\service\identity\src\Hhs.IdentityService.EntityFrameworkCore\Hhs.IdentityService.EntityFrameworkCore.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\..\shared\src\Hhs.Shared.Hosting.Microservices\Hhs.Shared.Hosting.Microservices.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Content Include="..\..\private_key.xml">
+            <Link>private_key.xml</Link>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        <Content Include="..\..\public_key.xml">
+            <Link>public_key.xml</Link>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        <Content Include="..\..\.dockerignore">
+            <Link>.dockerignore</Link>
+        </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Remove="Logs\**"/>
+        <Content Remove="Logs\**"/>
+        <EmbeddedResource Remove="Logs\**"/>
+        <None Remove="Logs\**"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <EmbeddedResource Include="Localization\AuthServer\*.json"/>
+        <Content Remove="Localization\AuthServer\*.json"/>
+    </ItemGroup>
+
+</Project>

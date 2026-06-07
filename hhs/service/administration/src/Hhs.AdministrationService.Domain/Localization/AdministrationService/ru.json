@@ -1,0 +1,22 @@
+{
+  "culture": "ru",
+  "texts": {
+    "Error:AdministrationService:000101": "Предоставление разрешения не найдено",
+    "Error:AdministrationService:000102": "Ошибка дублирования разрешения",
+    "Error:AdministrationService:000103": "Ошибка фильтра предоставления разрешений",
+    "Error:AdministrationService:000201": "Меню приложения не найдено",
+    "Error:AdministrationService:000301": "Разрешение не найдено",
+    "Error:AdministrationService:000302": "Разрешение на использование меню не найдено",
+    "Error:AdministrationService:000303": "Разрешение на использование роли не найдено",
+    "Error:AdministrationService:000304": "Ограничение прав доступа роли не найдено",
+    "Error:AdministrationService:000305": "Зависимость разрешений не найдена",
+    "Enum:Unknown": "-Выбрать-",
+    "Enum:PermissionProviderNameType:User": "Пользователь",
+    "Enum:PermissionProviderNameType:Role": "Роль",
+    "Enum:PermissionProviderNameType:Client": "Клиент",
+    "PermissionGrant:Name": "Имя разрешения",
+    "PermissionGrant:ProviderName": "Имя поставщика",
+    "PermissionGrant:ProviderKey": "Ключ поставщика",
+    "RolePermission:RoleUniqueName": "Имя роли"
+  }
+}
