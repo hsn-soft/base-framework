@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using HsnSoft.Base.Subscribe;
 using JetBrains.Annotations;
 
 namespace HsnSoft.Base.MultiTenancy;
@@ -14,12 +15,20 @@ public class BasicTenantInfo
 
     public List<Guid> AllowedTenantIds { get; }
 
+    public List<Subscription> AllowedSubscriptions { get; }
 
-    public BasicTenantInfo(Guid? tenantId, bool isSystemTenant, [CanBeNull] List<Guid> allowedTenantIds, [CanBeNull] string tenantNormalized = null)
+
+    public BasicTenantInfo(
+        Guid? tenantId,
+        bool isSystemTenant,
+        [CanBeNull] List<Guid> allowedTenantIds,
+        [CanBeNull] List<Subscription> allowedSubscriptions,
+        [CanBeNull] string tenantNormalized = null)
     {
         TenantId = tenantId;
         TenantNormalized = tenantNormalized;
         IsSystemTenant = isSystemTenant;
         AllowedTenantIds = allowedTenantIds ?? [];
+        AllowedSubscriptions = allowedSubscriptions ?? [];
     }
 }

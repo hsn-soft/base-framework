@@ -14,6 +14,7 @@ using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.EntityFrameworkCore.Modeling;
 using HsnSoft.Base.MultiTenancy;
 using HsnSoft.Base.Reflection;
+using HsnSoft.Base.Subscribe;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
@@ -35,6 +36,8 @@ public abstract class BaseEfCoreDbContext<TDbContext> : DbContext where TDbConte
     private IReadOnlyList<Guid> AllowedTenantIds => CurrentTenant?.AllowedTenantIds ?? [];
     private bool HasAllowedTenantIds => AllowedTenantIds.Count > 0;
 
+    private IReadOnlyList<Subscription> AllowedSubscriptions => CurrentTenant?.AllowedSubscriptions ?? [];
+    private bool HasAllowedSubscriptionScopes => AllowedSubscriptions.Count > 0;
 
     private bool IsSoftDeleteFilterEnabled => DataFilter?.IsEnabled<ISoftDelete>() ?? false;
 
@@ -405,6 +408,11 @@ public abstract class BaseEfCoreDbContext<TDbContext> : DbContext where TDbConte
             return true;
         }
 
+        if (typeof(ISubscription).IsAssignableFrom(typeof(TEntity)))
+        {
+            return true;
+        }
+
         if (typeof(ISoftDelete).IsAssignableFrom(typeof(TEntity)))
         {
             return true;
@@ -439,6 +447,24 @@ public abstract class BaseEfCoreDbContext<TDbContext> : DbContext where TDbConte
             expression = expression == null
                 ? multiTenantFilter
                 : CombineExpressions(expression, multiTenantFilter);
+        }
+
+        if (typeof(ISubscription).IsAssignableFrom(typeof(TEntity)))
+        {
+            // TODO: ScopeKey = ClientId + ":" + ProductTypeId -> same logic TenantId's
+            //  Expression<Func<TEntity, bool>> multiTenantFilter = e =>
+            //     !IsSubscriptionFilterEnabled
+            //     || IsSystemTenant
+            //     || (
+            //         HasAllowedSubscriptionScopes &&
+            //         AllowedSubscriptions.Contains(EF.Property<string>(e, "ScopeKey"))
+            //     );
+
+            var subscriptionFilter = BuildSubscriptionFilter<TEntity>();
+
+            expression = expression == null
+                ? subscriptionFilter
+                : CombineExpressions(expression, subscriptionFilter);
         }
 
         return expression;
@@ -477,6 +503,43 @@ public abstract class BaseEfCoreDbContext<TDbContext> : DbContext where TDbConte
 
             return base.Visit(node);
         }
+    }
+
+    protected virtual Expression<Func<TEntity, bool>> BuildSubscriptionFilter<TEntity>() where TEntity : class
+    {
+        var entityParam = Expression.Parameter(typeof(TEntity), "e");
+
+        Expression body = Expression.Constant(!DataFilter.IsEnabled<ISubscription>() || IsSystemTenant);
+
+        if (HasAllowedSubscriptionScopes)
+        {
+            Expression scopeExpression = null;
+
+            foreach (var scope in AllowedSubscriptions)
+            {
+                var customerExpr = Expression.Equal(
+                    Expression.Property(
+                        entityParam,
+                        nameof(ISubscription.CustomerId)),
+                    Expression.Constant(scope.CustomerId));
+
+                var productExpr = Expression.Equal(
+                    Expression.Property(
+                        entityParam,
+                        nameof(ISubscription.ProductTypeId)),
+                    Expression.Constant(scope.ProductTypeId));
+
+                var pairExpr = Expression.AndAlso(customerExpr, productExpr);
+
+                scopeExpression = scopeExpression == null
+                        ? pairExpr
+                        : Expression.OrElse(scopeExpression, pairExpr);
+            }
+
+            body = Expression.OrElse(body, scopeExpression);
+        }
+
+        return Expression.Lambda<Func<TEntity, bool>>(body, entityParam);
     }
 
     #endregion

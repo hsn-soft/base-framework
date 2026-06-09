@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Security.Claims;
+using HsnSoft.Base.Subscribe;
 using JetBrains.Annotations;
 
 namespace HsnSoft.Base.Users;
@@ -34,6 +35,7 @@ public interface ICurrentUser
 
     [NotNull] List<Guid> AllowedTenantIds { get; }
 
+    [NotNull] List<Subscription> AllowedSubscriptions { get; }
 
     [NotNull] string[] RoleKeys { get; }
 
