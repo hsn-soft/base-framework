@@ -112,6 +112,51 @@ public sealed class TokenService
                     claims.AddRange(allowedTenantIds.Select(allowedTenantId => new Claim(BaseClaimTypes.AllowedTenantId, allowedTenantId.ToString())));
                 }
             }
+
+
+            // {
+            //     "tenant_id": "RESELLER-A",
+            //     "allowed_tenant_id": ["RESELLER-A"],
+            //     "allowed_contents": [
+            //     {
+            //         "clientId": "haberturk-client-id",
+            //         "productTypeId": "web-platform-id"
+            //     },
+            //     {
+            //         "clientId": "bloomberght-client-id",
+            //         "productTypeId": "web-platform-id"
+            //     },
+            //     {
+            //         "clientId": "bloomberght-client-id",
+            //         "productTypeId": "podcast-id"
+            //     }
+            //     ]
+            // }
+            //
+            // Buradaki allowed_contents ayrı tablodan gelmek zorunda değil.
+            //     ProductSubscription tablosundan üretilebilir.
+
+
+            // var allowedSubscriptions = await dbContext.Set<UserAccessGrant>()
+            //     .AsNoTracking()
+            //     .Where(x =>
+            //         x.UserId == user.Id &&
+            //         x.TenantId == tenant.Id &&
+            //         x.IsActive)
+            //     .Where(x =>
+            //         x.ProductSubscription.IsActive &&
+            //         x.ProductSubscription.TenantId == tenant.Id)
+            //     .Select(x => new Subscription(
+            //         CustomerId: x.ProductSubscription.ClientId,
+            //         ProductTypeId: x.ProductSubscription.ProductTypeId
+            //     ))
+            //     .Distinct()
+            //     .ToListAsync(cancellationToken);
+            //
+            // claims.Add(new Claim(
+            //     BaseClaimTypes.AllowedSubscription,
+            //     JsonSerializer.Serialize(allowedSubscriptions)
+            // ));
         }
 
         if (client != null)

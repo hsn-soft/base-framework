@@ -4,7 +4,6 @@ using Hhs.AdministrationService.Application.Contracts.PermissionDomain.Dtos.Filt
 using Hhs.AdministrationService.Application.Contracts.PermissionDomain.Services;
 using Hhs.AdministrationService.Controllers.Base;
 using HsnSoft.Base;
-using HsnSoft.Base.Clients;
 using HsnSoft.Base.Users;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,18 +12,15 @@ namespace Hhs.AdministrationService.Controllers;
 [Route("api/administration-service/v1/commercial/session-permissions")]
 public sealed class SessionPermissionController : BaseServiceController
 {
-    private readonly ICurrentClient _currentClient;
     private readonly ICurrentUser _currentUser;
     private readonly ISessionPermissionAppService _sessionPermissionAppService;
 
     public SessionPermissionController(IServiceProvider provider,
         ISessionPermissionAppService sessionPermissionAppService,
-        ICurrentClient currentClient,
         ICurrentUser currentUser
     ) : base(provider)
     {
         _sessionPermissionAppService = sessionPermissionAppService;
-        _currentClient = currentClient;
         _currentUser = currentUser;
     }
 
@@ -34,7 +30,7 @@ public sealed class SessionPermissionController : BaseServiceController
     {
         var filter = new GetSessionPermissionsFilter
         {
-            ClientKey = _currentClient?.Id,
+            ClientKey = "", // current client silindi
             RoleKeys = _currentUser?.RoleKeys,
             UserKey = _currentUser?.UserName
         };

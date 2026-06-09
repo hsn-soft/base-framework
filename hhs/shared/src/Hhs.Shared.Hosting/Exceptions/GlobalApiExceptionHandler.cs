@@ -1,7 +1,5 @@
 using HsnSoft.Base.AspNetCore.Responses;
-using HsnSoft.Base.AspNetCore.Tracing;
 using HsnSoft.Base.Logging.Abstracts;
-using HsnSoft.Base.Logging.Models;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Hosting;

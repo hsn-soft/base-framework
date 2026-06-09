@@ -1,19 +1,20 @@
+using System.Security.Principal;
 using Hhs.AdministrationService.Application.Contracts.PermissionDomain.Data;
 using Hhs.AdministrationService.Application.Contracts.PermissionDomain.Dtos;
 using Hhs.AdministrationService.Application.Contracts.PermissionDomain.Dtos.Filters;
 using Hhs.AdministrationService.Application.Contracts.PermissionDomain.Services;
 using Hhs.AdministrationService.Domain.PermissionDomain.Entities;
-using HsnSoft.Base.Clients;
+using HsnSoft.Base.Security.Claims;
 
 namespace Hhs.AdministrationService.Application.Services;
 
 public sealed class MenuPermissionAppService : ApplicationServiceBase, IMenuPermissionAppService
 {
-    private readonly ICurrentClient _currentClient;
+    private readonly ICurrentPrincipalAccessor _principalAccessor;
 
-    public MenuPermissionAppService(IServiceProvider provider, ICurrentClient currentClient) : base(provider)
+    public MenuPermissionAppService(IServiceProvider provider, ICurrentPrincipalAccessor principalAccessor) : base(provider)
     {
-        _currentClient = currentClient ?? throw new ArgumentNullException(nameof(currentClient), "MenuPermissionAppService currentClient is null");
+        _principalAccessor = principalAccessor ?? throw new ArgumentNullException(nameof(principalAccessor), "MenuPermissionAppService principalAccessor is null");
     }
 
     // public async Task<List<MenuMapDto>> GetAllMenuListAsync(GetMenuMapsFilter filter)
@@ -36,7 +37,7 @@ public sealed class MenuPermissionAppService : ApplicationServiceBase, IMenuPerm
     {
         filter ??= new GetMenuMapsFilter();
 
-        var items = StaticData.MenuMapDatas.Where(x => x.ClientId.Equals(_currentClient.Id)).ToList();
+        var items = StaticData.MenuMapDatas.Where(x => x.ClientId.Equals(_principalAccessor.Principal?.FindClientId())).ToList();
 
         if (filter.ClientMenuType is not null)
         {

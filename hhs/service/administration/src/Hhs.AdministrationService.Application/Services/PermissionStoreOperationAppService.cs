@@ -1,14 +1,8 @@
-using System.Net;
-using Hhs.AdministrationService.Application.Contracts.PermissionDomain.Data;
-using Hhs.AdministrationService.Application.Contracts.PermissionDomain.Dtos;
-using Hhs.AdministrationService.Application.Contracts.PermissionDomain.Dtos.Filters;
 using Hhs.AdministrationService.Application.Contracts.PermissionDomain.Services;
-using Hhs.AdministrationService.Domain.old;
 using Hhs.AdministrationService.Domain.PermissionDomain.Entities;
 using Hhs.AdministrationService.Domain.PermissionDomain.Repositories;
 using Hhs.Shared.Contracts.Cache;
 using Hhs.Shared.Contracts.Events;
-using HsnSoft.Base;
 using HsnSoft.Base.Authorization.Permissions.ValueProviders;
 using HsnSoft.Base.Domain.Models;
 using HsnSoft.Base.Logging.Abstracts;
