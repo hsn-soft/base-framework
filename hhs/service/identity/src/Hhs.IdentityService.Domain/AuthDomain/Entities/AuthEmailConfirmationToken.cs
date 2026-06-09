@@ -1,4 +1,3 @@
-using Hhs.IdentityService.Domain.AppUserDomain.Entities;
 using HsnSoft.Base.Domain.Entities.Auditing;
 using JetBrains.Annotations;
 
