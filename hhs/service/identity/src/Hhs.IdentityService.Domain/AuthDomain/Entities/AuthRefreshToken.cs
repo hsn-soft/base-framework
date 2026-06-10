@@ -1,10 +1,11 @@
 using Hhs.IdentityService.Domain.AppUserDomain.Entities;
 using HsnSoft.Base.Domain.Entities.Auditing;
+using HsnSoft.Base.MultiTenancy;
 using JetBrains.Annotations;
 
 namespace Hhs.IdentityService.Domain.AuthDomain.Entities;
 
-public sealed class AuthRefreshToken: CreationAuditedEntity<Guid>
+public sealed class AuthRefreshToken: CreationAuditedEntity<Guid>, IMultiTenant
 {
     public Guid TenantId { get; set; }
 

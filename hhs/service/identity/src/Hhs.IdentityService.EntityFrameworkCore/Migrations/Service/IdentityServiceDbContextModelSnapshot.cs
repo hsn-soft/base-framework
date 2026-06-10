@@ -108,6 +108,38 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                     b.ToTable("AppRoleClaims", (string)null);
                 });
 
+            modelBuilder.Entity("Hhs.IdentityService.Domain.AppRoleDomain.Entities.AppRoleSubscription", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsBlocked")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("SubscriptionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("TenantId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoleId");
+
+                    b.HasIndex("SubscriptionId");
+
+                    b.HasIndex("TenantId", "RoleId", "IsBlocked");
+
+                    b.HasIndex("TenantId", "RoleId", "SubscriptionId")
+                        .IsUnique();
+
+                    b.ToTable("AppRoleSubscriptions", (string)null);
+                });
+
             modelBuilder.Entity("Hhs.IdentityService.Domain.AppUserDomain.Entities.AppUser", b =>
                 {
                     b.Property<Guid>("Id")
@@ -417,7 +449,8 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid>("TenantId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("TenantId");
 
                     b.Property<string>("TokenHash")
                         .IsRequired()
@@ -468,7 +501,7 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                     b.ToTable("AuthTokenRevocations", (string)null);
                 });
 
-            modelBuilder.Entity("Hhs.IdentityService.Domain.TenantDomain.Entities.Tenant", b =>
+            modelBuilder.Entity("Hhs.IdentityService.Domain.TenantDomain.Entities.Company", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
@@ -487,8 +520,213 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                         .HasDefaultValue(false)
                         .HasColumnName("IsDeleted");
 
-                    b.Property<bool>("IsSystemTenant")
+                    b.Property<DateTime>("LastModificationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("LastModificationTime");
+
+                    b.Property<Guid?>("LastModifierId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("LastModifierId");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("NormalizedName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedName")
+                        .IsUnique();
+
+                    b.ToTable("Companies", (string)null);
+                });
+
+            modelBuilder.Entity("Hhs.IdentityService.Domain.TenantDomain.Entities.Customer", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreationTime");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("CreatorId");
+
+                    b.Property<string>("Domain")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("IsDeleted");
+
+                    b.Property<DateTime>("LastModificationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("LastModificationTime");
+
+                    b.Property<Guid?>("LastModifierId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("LastModifierId");
+
+                    b.Property<string>("NormalizedDomain")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompanyId");
+
+                    b.HasIndex("NormalizedDomain")
+                        .IsUnique();
+
+                    b.ToTable("Customers", (string)null);
+                });
+
+            modelBuilder.Entity("Hhs.IdentityService.Domain.TenantDomain.Entities.ProductType", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("IsDeleted");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("NormalizedCode")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("NormalizedName")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedCode")
+                        .IsUnique();
+
+                    b.HasIndex("NormalizedName")
+                        .IsUnique();
+
+                    b.ToTable("ProductTypes", (string)null);
+                });
+
+            modelBuilder.Entity("Hhs.IdentityService.Domain.TenantDomain.Entities.Subscription", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreationTime");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("CreatorId");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsBlocked")
                         .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("IsDeleted");
+
+                    b.Property<DateTime>("LastModificationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("LastModificationTime");
+
+                    b.Property<Guid?>("LastModifierId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("LastModifierId");
+
+                    b.Property<Guid>("ProductTypeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ResellerTenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("SettingsJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTime>("ValidFrom")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("ValidTo")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompanyId");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("ProductTypeId");
+
+                    b.HasIndex("ResellerTenantId", "CompanyId", "CustomerId", "ProductTypeId")
+                        .IsUnique();
+
+                    b.ToTable("Subscriptions", (string)null);
+                });
+
+            modelBuilder.Entity("Hhs.IdentityService.Domain.TenantDomain.Entities.Tenant", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreationTime");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("CreatorId");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("IsDeleted");
 
                     b.Property<DateTime>("LastModificationTime")
                         .HasColumnType("timestamp with time zone")
@@ -516,14 +754,15 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                     b.Property<Guid?>("ParentId")
                         .HasColumnType("uuid");
 
+                    b.Property<int>("TenantType")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("IsSystemTenant");
 
                     b.HasIndex("NormalizedAccessPath");
 
@@ -531,6 +770,8 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                         .IsUnique();
 
                     b.HasIndex("ParentId");
+
+                    b.HasIndex("TenantType");
 
                     b.ToTable("Tenants", (string)null);
                 });
@@ -555,6 +796,25 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                         .IsRequired();
 
                     b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("Hhs.IdentityService.Domain.AppRoleDomain.Entities.AppRoleSubscription", b =>
+                {
+                    b.HasOne("Hhs.IdentityService.Domain.AppRoleDomain.Entities.AppRole", "Role")
+                        .WithMany("Subscriptions")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Hhs.IdentityService.Domain.TenantDomain.Entities.Subscription", "Subscription")
+                        .WithMany()
+                        .HasForeignKey("SubscriptionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Role");
+
+                    b.Navigation("Subscription");
                 });
 
             modelBuilder.Entity("Hhs.IdentityService.Domain.AppUserDomain.Entities.AppUser", b =>
@@ -624,6 +884,44 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Hhs.IdentityService.Domain.TenantDomain.Entities.Customer", b =>
+                {
+                    b.HasOne("Hhs.IdentityService.Domain.TenantDomain.Entities.Company", "Company")
+                        .WithMany("Customers")
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Company");
+                });
+
+            modelBuilder.Entity("Hhs.IdentityService.Domain.TenantDomain.Entities.Subscription", b =>
+                {
+                    b.HasOne("Hhs.IdentityService.Domain.TenantDomain.Entities.Company", "Company")
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Hhs.IdentityService.Domain.TenantDomain.Entities.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Hhs.IdentityService.Domain.TenantDomain.Entities.ProductType", "ProductType")
+                        .WithMany()
+                        .HasForeignKey("ProductTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Company");
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("ProductType");
+                });
+
             modelBuilder.Entity("Hhs.IdentityService.Domain.TenantDomain.Entities.Tenant", b =>
                 {
                     b.HasOne("Hhs.IdentityService.Domain.TenantDomain.Entities.Tenant", "Parent")
@@ -638,6 +936,8 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                 {
                     b.Navigation("Claims");
 
+                    b.Navigation("Subscriptions");
+
                     b.Navigation("UserRoles");
                 });
 
@@ -648,6 +948,11 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                     b.Navigation("RefreshTokens");
 
                     b.Navigation("UserRoles");
+                });
+
+            modelBuilder.Entity("Hhs.IdentityService.Domain.TenantDomain.Entities.Company", b =>
+                {
+                    b.Navigation("Customers");
                 });
 
             modelBuilder.Entity("Hhs.IdentityService.Domain.TenantDomain.Entities.Tenant", b =>

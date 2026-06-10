@@ -124,6 +124,32 @@ public static class AuthDomainConfiguration
                 b.HasIndex(x => new { x.TenantId, x.RoleId, x.ClaimType });
             });
 
+        public void ConfigureAppRoleSubscriptionEntity() =>
+            builder.Entity<AppRoleSubscription>(b =>
+            {
+                b.ToTable("AppRoleSubscriptions");
+                b.HasKey(x => x.Id);
+
+                b.Property(x => x.TenantId).IsRequired();
+                b.Property(x => x.RoleId).IsRequired();
+                b.Property(x => x.SubscriptionId).IsRequired();
+                b.Property(x => x.IsBlocked).IsRequired();
+
+                b.HasOne(x => x.Role)
+                    .WithMany(x => x.Subscriptions)
+                    .HasForeignKey(x => x.RoleId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                b.HasOne(x => x.Subscription)
+                    .WithMany()
+                    .HasForeignKey(x => x.SubscriptionId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                b.HasIndex(x => new { x.TenantId, x.RoleId, x.SubscriptionId }).IsUnique();
+
+                b.HasIndex(x => new { x.TenantId, x.RoleId, x.IsBlocked });
+            });
+
         public void ConfigureAuthRefreshTokenEntity() =>
             builder.Entity<AuthRefreshToken>(b =>
             {

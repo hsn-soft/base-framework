@@ -1,29 +1,61 @@
+using Hhs.IdentityService.Domain.TenantDomain.Consts;
+using Hhs.Shared.Localization;
 using HsnSoft.Base;
-using HsnSoft.Base.Domain.Entities.Auditing;
+using HsnSoft.Base.Domain.Entities;
+using HsnSoft.Base.Text;
+using JetBrains.Annotations;
 
 namespace Hhs.IdentityService.Domain.TenantDomain.Entities;
 
-/// <summary>
-/// WEB_PLATFORM
-/// PODCAST
-/// EFATURA
-/// </summary>
-public sealed class ProductType : AuditedEntity<Guid>, ISoftDelete
+
+public sealed class ProductType : Entity<Guid>, ISoftDelete
 {
     public bool IsDeleted { get; internal set; }
 
-    public string Code { get; private set; } = string.Empty;
+    [NotNull] public string Code { get; private set; }
 
-    public string Name { get; private set; } = string.Empty;
+    [NotNull] public string NormalizedCode { get; private set; }
+
+    [NotNull] public string Name { get; private set; }
+
+    [NotNull] public string NormalizedName { get; private set; }
 
     private ProductType()
     {
+        // Not-Null string fields
+        Code = string.Empty;
+        NormalizedCode = string.Empty;
+        Name = string.Empty;
+        NormalizedName = string.Empty;
     }
 
-    public ProductType(Guid id, string code, string name)
+    internal ProductType(
+        [NotNull]  string code,
+        [NotNull]  string name
+    ) : this(Guid.CreateVersion7(),  code: code, name: name)
+    {
+    }
+
+    internal ProductType(Guid id,
+        [NotNull]  string code,
+        [NotNull]  string name
+    ) : this()
     {
         Id = id;
-        Code = code;
-        Name = name;
+
+        SetCode(code);
+        SetName(name);
+    }
+
+    internal void SetCode(string code)
+    {
+        Code = LocalizedModelValidator.NotNullOrWhiteSpace(code, $"{nameof(Tenant)}:{nameof(Name)}", ProductTypeConsts.CodeMaxLength);
+        NormalizedCode = StringHelper.Normalize(StringHelper.ReplaceInvalidChars(code));
+    }
+
+    internal void SetName(string name)
+    {
+        Name = LocalizedModelValidator.NotNullOrWhiteSpace(name, $"{nameof(Tenant)}:{nameof(Name)}", ProductTypeConsts.NameMaxLength);
+        NormalizedName = StringHelper.Normalize(StringHelper.ReplaceInvalidChars(name));
     }
 }

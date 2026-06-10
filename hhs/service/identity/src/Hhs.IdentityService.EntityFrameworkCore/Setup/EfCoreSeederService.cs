@@ -59,6 +59,8 @@ public sealed class EfCoreSeederService(IServiceScopeFactory serviceScopeFactory
                 using (dataFilter.Disable<IMultiTenant>())
                 {
                     await AuthSeeder.SeedAsync(dbContext, logger, passwordHasher);
+
+                    await SubscriptionSeeder.SeedAsync(dbContext, logger, passwordHasher);
                 }
             }
             catch (Exception e)

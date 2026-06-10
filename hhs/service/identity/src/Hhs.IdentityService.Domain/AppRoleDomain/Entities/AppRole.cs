@@ -28,6 +28,8 @@ public sealed class AppRole : AuditedEntity<Guid>, ISoftDelete, IMultiTenant
     public ICollection<AppUserRole> UserRoles { get; set; }
     public ICollection<AppRoleClaim> Claims { get; set; }
 
+    public ICollection<AppRoleSubscription> Subscriptions { get; set; }
+
     private AppRole()
     {
         // Not-Null string fields
@@ -37,6 +39,7 @@ public sealed class AppRole : AuditedEntity<Guid>, ISoftDelete, IMultiTenant
         // include arrays
         UserRoles = [];
         Claims = [];
+        Subscriptions = [];
     }
 
     internal AppRole(Guid tenantId,

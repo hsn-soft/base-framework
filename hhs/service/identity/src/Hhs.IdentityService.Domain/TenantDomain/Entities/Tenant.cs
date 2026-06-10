@@ -1,5 +1,6 @@
 using Hhs.IdentityService.Domain.AppRoleDomain.Entities;
 using Hhs.IdentityService.Domain.AppUserDomain.Entities;
+using Hhs.IdentityService.Domain.Enums;
 using Hhs.IdentityService.Domain.TenantDomain.Consts;
 using Hhs.Shared.Localization;
 using HsnSoft.Base;
@@ -13,11 +14,11 @@ public sealed class Tenant : AuditedEntity<Guid>, ISoftDelete
 {
     public bool IsDeleted { get; internal set; }
 
-    public bool IsSystemTenant { get; internal set; }
-
     public Guid? ParentId { get; set; }
     [CanBeNull] public Tenant Parent { get; set; }
     public ICollection<Tenant> Children { get; set; }
+
+    public TenantTypes TenantType { get; internal set; }
 
     [NotNull] public string Title { get; private set; }
 
@@ -33,37 +34,39 @@ public sealed class Tenant : AuditedEntity<Guid>, ISoftDelete
     private Tenant()
     {
         // Not-Null string fields
+        TenantType = TenantTypes.Unknown;
         Title = string.Empty;
         Name = string.Empty;
         NormalizedName = string.Empty;
         NormalizedAccessPath = string.Empty;
 
-        // include arrays
+        // navigation fields
+        Parent = null;
         Children = [];
         Users = [];
         Roles = [];
     }
 
     internal Tenant(
+        TenantTypes tenantType,
         [NotNull] string title,
         [NotNull] string name,
         [NotNull] string path,
-        bool isSystemTenant = false,
         Guid? parentId = null
-    ) : this(Guid.CreateVersion7(), title: title, name: name, path: path, isSystemTenant: isSystemTenant, parentId: parentId)
+    ) : this(Guid.CreateVersion7(), tenantType: tenantType, title: title, name: name, path: path, parentId: parentId)
     {
     }
 
     internal Tenant(Guid id,
-        string title,
-        string name,
-        string path,
-        bool isSystemTenant = false,
+        TenantTypes tenantType,
+        [NotNull] string title,
+        [NotNull] string name,
+        [NotNull] string path,
         Guid? parentId = null
     ) : this()
     {
         Id = id;
-        IsSystemTenant = isSystemTenant;
+        TenantType = tenantType;
         ParentId = parentId;
 
         SetTitle(title);
@@ -77,7 +80,7 @@ public sealed class Tenant : AuditedEntity<Guid>, ISoftDelete
     internal void SetName(string name)
     {
         Name = LocalizedModelValidator.NotNullOrWhiteSpace(name, $"{nameof(Tenant)}:{nameof(Name)}", TenantConsts.NameMaxLength);
-        NormalizedName = StringHelper.Normalize(Name);
+        NormalizedName = StringHelper.Normalize(StringHelper.ReplaceInvalidChars(name));
     }
 
     internal void SetPath(string path)

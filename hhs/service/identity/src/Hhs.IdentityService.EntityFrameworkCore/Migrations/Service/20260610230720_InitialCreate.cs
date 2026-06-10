@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -63,14 +64,49 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                 });
 
             migrationBuilder.CreateTable(
+                name: "Companies",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                    Title = table.Column<string>(type: "character varying(250)", maxLength: 250, nullable: false),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    NormalizedName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    CreationTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CreatorId = table.Column<Guid>(type: "uuid", nullable: true),
+                    LastModificationTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    LastModifierId = table.Column<Guid>(type: "uuid", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Companies", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ProductTypes",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                    Code = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
+                    NormalizedCode = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
+                    Name = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
+                    NormalizedName = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ProductTypes", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Tenants",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     IsDeleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
-                    IsSystemTenant = table.Column<bool>(type: "boolean", nullable: false),
                     ParentId = table.Column<Guid>(type: "uuid", nullable: true),
-                    Title = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    TenantType = table.Column<int>(type: "integer", nullable: false),
+                    Title = table.Column<string>(type: "character varying(250)", maxLength: 250, nullable: false),
                     Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     NormalizedName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     NormalizedAccessPath = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: false),
@@ -86,6 +122,31 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                         name: "FK_Tenants_Tenants_ParentId",
                         column: x => x.ParentId,
                         principalTable: "Tenants",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Customers",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                    CompanyId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Domain = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
+                    NormalizedDomain = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
+                    CreationTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CreatorId = table.Column<Guid>(type: "uuid", nullable: true),
+                    LastModificationTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    LastModifierId = table.Column<Guid>(type: "uuid", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Customers", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Customers_Companies_CompanyId",
+                        column: x => x.CompanyId,
+                        principalTable: "Companies",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -179,6 +240,48 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                         principalTable: "Tenants",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Subscriptions",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                    ResellerTenantId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CompanyId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CustomerId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ProductTypeId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ValidFrom = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    IsBlocked = table.Column<bool>(type: "boolean", nullable: false),
+                    ValidTo = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    SettingsJson = table.Column<string>(type: "jsonb", nullable: false),
+                    CreationTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CreatorId = table.Column<Guid>(type: "uuid", nullable: true),
+                    LastModificationTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    LastModifierId = table.Column<Guid>(type: "uuid", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Subscriptions", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Subscriptions_Companies_CompanyId",
+                        column: x => x.CompanyId,
+                        principalTable: "Companies",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Subscriptions_Customers_CustomerId",
+                        column: x => x.CustomerId,
+                        principalTable: "Customers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Subscriptions_ProductTypes_ProductTypeId",
+                        column: x => x.ProductTypeId,
+                        principalTable: "ProductTypes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -280,6 +383,33 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "AppRoleSubscriptions",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uuid", nullable: false),
+                    RoleId = table.Column<Guid>(type: "uuid", nullable: false),
+                    SubscriptionId = table.Column<Guid>(type: "uuid", nullable: false),
+                    IsBlocked = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AppRoleSubscriptions", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_AppRoleSubscriptions_AppRoles_RoleId",
+                        column: x => x.RoleId,
+                        principalTable: "AppRoles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_AppRoleSubscriptions_Subscriptions_SubscriptionId",
+                        column: x => x.SubscriptionId,
+                        principalTable: "Subscriptions",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_AppRoleClaims_RoleId",
                 table: "AppRoleClaims",
@@ -294,6 +424,27 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                 name: "IX_AppRoles_TenantId_NormalizedName",
                 table: "AppRoles",
                 columns: new[] { "TenantId", "NormalizedName" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AppRoleSubscriptions_RoleId",
+                table: "AppRoleSubscriptions",
+                column: "RoleId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AppRoleSubscriptions_SubscriptionId",
+                table: "AppRoleSubscriptions",
+                column: "SubscriptionId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AppRoleSubscriptions_TenantId_RoleId_IsBlocked",
+                table: "AppRoleSubscriptions",
+                columns: new[] { "TenantId", "RoleId", "IsBlocked" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AppRoleSubscriptions_TenantId_RoleId_SubscriptionId",
+                table: "AppRoleSubscriptions",
+                columns: new[] { "TenantId", "RoleId", "SubscriptionId" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -374,9 +525,54 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Tenants_IsSystemTenant",
-                table: "Tenants",
-                column: "IsSystemTenant");
+                name: "IX_Companies_NormalizedName",
+                table: "Companies",
+                column: "NormalizedName",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Customers_CompanyId",
+                table: "Customers",
+                column: "CompanyId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Customers_NormalizedDomain",
+                table: "Customers",
+                column: "NormalizedDomain",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ProductTypes_NormalizedCode",
+                table: "ProductTypes",
+                column: "NormalizedCode",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ProductTypes_NormalizedName",
+                table: "ProductTypes",
+                column: "NormalizedName",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Subscriptions_CompanyId",
+                table: "Subscriptions",
+                column: "CompanyId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Subscriptions_CustomerId",
+                table: "Subscriptions",
+                column: "CustomerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Subscriptions_ProductTypeId",
+                table: "Subscriptions",
+                column: "ProductTypeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Subscriptions_ResellerTenantId_CompanyId_CustomerId_Product~",
+                table: "Subscriptions",
+                columns: new[] { "ResellerTenantId", "CompanyId", "CustomerId", "ProductTypeId" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Tenants_NormalizedAccessPath",
@@ -393,6 +589,11 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                 name: "IX_Tenants_ParentId",
                 table: "Tenants",
                 column: "ParentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Tenants_TenantType",
+                table: "Tenants",
+                column: "TenantType");
         }
 
         /// <inheritdoc />
@@ -400,6 +601,9 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
         {
             migrationBuilder.DropTable(
                 name: "AppRoleClaims");
+
+            migrationBuilder.DropTable(
+                name: "AppRoleSubscriptions");
 
             migrationBuilder.DropTable(
                 name: "AppUserClaims");
@@ -423,13 +627,25 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                 name: "AuthTokenRevocations");
 
             migrationBuilder.DropTable(
+                name: "Subscriptions");
+
+            migrationBuilder.DropTable(
                 name: "AppRoles");
 
             migrationBuilder.DropTable(
                 name: "AppUsers");
 
             migrationBuilder.DropTable(
+                name: "Customers");
+
+            migrationBuilder.DropTable(
+                name: "ProductTypes");
+
+            migrationBuilder.DropTable(
                 name: "Tenants");
+
+            migrationBuilder.DropTable(
+                name: "Companies");
         }
     }
 }
