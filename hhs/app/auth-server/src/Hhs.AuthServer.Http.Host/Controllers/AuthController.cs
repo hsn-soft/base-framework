@@ -10,6 +10,7 @@ using Hhs.IdentityService.Domain.AppUserDomain.Entities;
 using Hhs.IdentityService.Domain.AppUserDomain.Repositories;
 using Hhs.IdentityService.Domain.AuthDomain.Entities;
 using Hhs.IdentityService.Domain.AuthDomain.Repositories;
+using Hhs.IdentityService.Domain.Enums;
 using Hhs.IdentityService.Domain.TenantDomain.Entities;
 using Hhs.IdentityService.Domain.TenantDomain.Repositories;
 using Hhs.Shared.Helper.Utils;
@@ -200,7 +201,7 @@ public sealed class AuthController : BaseServiceController
             // Get Tenant Info for Claims
             checkedTenant ??= await _tenantRepository.GetByIdAsync(managedUser.TenantId);
             List<string> allowedTenantIds = [];
-            if (!checkedTenant.IsSystemTenant)
+            if (checkedTenant.TenantType != TenantTypes.System)
             {
                 allowedTenantIds = await _tenantRepository.GetListAsync(
                     options: new ListQueryOptions<Tenant> { Filter = x => x.NormalizedAccessPath.StartsWith(checkedTenant.NormalizedAccessPath), },
@@ -311,7 +312,7 @@ public sealed class AuthController : BaseServiceController
         // Get Tenant Info for Claims
         Tenant checkedTenant = await _tenantRepository.GetByIdAsync(managedUser.TenantId);
         List<string> allowedTenantIds = [];
-        if (!checkedTenant.IsSystemTenant)
+        if (checkedTenant.TenantType != TenantTypes.System)
         {
             allowedTenantIds = await _tenantRepository.GetListAsync(
                 options: new ListQueryOptions<Tenant> { Filter = x => x.NormalizedAccessPath.StartsWith(checkedTenant.NormalizedAccessPath), },

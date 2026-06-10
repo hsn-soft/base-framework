@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Hhs.AuthServer.Store;
 using Hhs.IdentityService.Domain.AppUserDomain.Entities;
+using Hhs.IdentityService.Domain.Enums;
 using Hhs.IdentityService.Domain.TenantDomain.Entities;
 using HsnSoft.Base.Security.Claims;
 using JetBrains.Annotations;
@@ -98,14 +99,15 @@ public sealed class TokenService
 
         if (tenant != null)
         {
+            bool isSystemTenant = tenant.TenantType == TenantTypes.System;
             claims.AddRange(new List<Claim>
             {
                 new(BaseClaimTypes.TenantId, tenant.Id.ToString()),
                 new(BaseClaimTypes.TenantNormalized, tenant.NormalizedName), //TODO : ENCRYPT
-                new(BaseClaimTypes.IsSystemTenant, tenant.IsSystemTenant.ToString().ToLowerInvariant()),
+                new(BaseClaimTypes.IsSystemTenant, isSystemTenant.ToString().ToLowerInvariant()),
             });
 
-            if (!tenant.IsSystemTenant)
+            if (!isSystemTenant)
             {
                 if (allowedTenantIds is { Count: > 0 })
                 {
