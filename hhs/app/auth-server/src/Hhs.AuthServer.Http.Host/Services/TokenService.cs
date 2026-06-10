@@ -2,7 +2,9 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using Hhs.AuthServer.Store;
+using Hhs.IdentityService.Domain.AppRoleDomain.Entities;
 using Hhs.IdentityService.Domain.AppUserDomain.Entities;
 using Hhs.IdentityService.Domain.Enums;
 using Hhs.IdentityService.Domain.TenantDomain.Entities;
@@ -25,13 +27,16 @@ public sealed class TokenService
     public string CreateM2MToken(Client client, List<string> clientReturnScopes, int expirationSeconds, string clientSecretKey)
         => BaseCreateToken(client, clientReturnScopes, expirationSeconds, clientSecretKey);
 
-    public string CreateUserToken(AppUser user, List<string> roleKeys, Tenant tenant, List<string> allowedTenantIds, Client client, List<string> clientReturnScopes, int expirationSeconds, string clientSecretKey)
-        => BaseCreateToken(client, clientReturnScopes, expirationSeconds, clientSecretKey, user, roleKeys, tenant, allowedTenantIds);
+    public string CreateUserToken(AppUser user, List<AppRole> roles, Tenant tenant, List<string> allowedTenantIds,
+        Client client, List<string> clientReturnScopes, int expirationSeconds, string clientSecretKey)
+        => BaseCreateToken(client, clientReturnScopes, expirationSeconds, clientSecretKey, user, roles, tenant, allowedTenantIds);
 
-    private string BaseCreateToken(Client client, List<string> clientReturnScopes, int expirationSeconds, string clientSecretKey, AppUser user = null, List<string> roleKeys = null, [CanBeNull] Tenant tenant = null, List<string> allowedTenantIds = null)
+    private string BaseCreateToken(Client client, List<string> clientReturnScopes, int expirationSeconds, string clientSecretKey,
+        AppUser user = null,
+        List<AppRole> roles = null, [CanBeNull] Tenant tenant = null, List<string> allowedTenantIds = null)
         => new JwtSecurityTokenHandler()
             .WriteToken(CreateJwtToken(
-                CreateClaims(client, clientReturnScopes, user, roleKeys, tenant, allowedTenantIds),
+                CreateClaims(client, clientReturnScopes, user, roles, tenant, allowedTenantIds),
                 // CreateSymetricSigningCredentials(clientSecretKey),
                 CreateAsymetricSigningCredentials(),
                 expirationSeconds
@@ -46,7 +51,11 @@ public sealed class TokenService
         claims: claims
     );
 
-    private static IEnumerable<Claim> CreateClaims(Client client, List<string> clientReturnScopes, [CanBeNull] AppUser user, [CanBeNull] List<string> roleKeys, [CanBeNull] Tenant tenant = null, List<string> allowedTenantIds = null)
+    private static IEnumerable<Claim> CreateClaims(Client client, List<string> clientReturnScopes,
+        [CanBeNull] AppUser user,
+        [CanBeNull] List<AppRole> roles = null,
+        [CanBeNull] Tenant tenant = null,
+        List<string> allowedTenantIds = null)
     {
         var claims = new List<Claim> { new(JwtRegisteredClaimNames.Jti, Guid.CreateVersion7().ToString("N")) };
 
@@ -72,9 +81,9 @@ public sealed class TokenService
                 new(BaseClaimTypes.UserLanguage, user.LanguageCode ?? "en"),
             });
 
-            if (roleKeys is { Count: > 0 })
+            if (roles is { Count: > 0 })
             {
-                claims.AddRange(roleKeys.Select(role => new Claim("role", role)));
+                claims.AddRange(roles.Select(role => new Claim("role", role.Id.ToString("N"))));
             }
 
             // foreach (var role in roles)
@@ -113,52 +122,60 @@ public sealed class TokenService
                 {
                     claims.AddRange(allowedTenantIds.Select(allowedTenantId => new Claim(BaseClaimTypes.AllowedTenantId, allowedTenantId.ToString())));
                 }
+
+                if (roles is { Count: > 0 })
+                {
+                    var allowedSubscriptions = new List<HsnSoft.Base.Subscribe.Subscription>();
+                    foreach (var role in roles)
+                    {
+                        allowedSubscriptions.AddRange(role.Subscriptions.Select(s
+                            => new HsnSoft.Base.Subscribe.Subscription(
+                                CustomerId: s.Subscription.CustomerId,
+                                ProductTypeId: s.Subscription.ProductTypeId
+                            )));
+                    }
+
+                    // var allowedSubscriptions = await dbContext.Set<UserAccessGrant>()
+                    //     .AsNoTracking()
+                    //     .Where(x =>
+                    //         x.UserId == user.Id &&
+                    //         x.TenantId == tenant.Id &&
+                    //         x.IsActive)
+                    //     .Where(x =>
+                    //         x.ProductSubscription.IsActive &&
+                    //         x.ProductSubscription.TenantId == tenant.Id)
+                    //     .Select(x => new Subscription(
+                    //         CustomerId: x.ProductSubscription.ClientId,
+                    //         ProductTypeId: x.ProductSubscription.ProductTypeId
+                    //     ))
+                    //     .Distinct()
+                    //     .ToListAsync(cancellationToken);
+                    //
+                    claims.Add(new Claim(BaseClaimTypes.AllowedSubscription, JsonSerializer.Serialize(allowedSubscriptions)));
+
+                    // {
+                    //     "tenant_id": "RESELLER-A",
+                    //     "allowed_tenant_id": ["RESELLER-A"],
+                    //     "allowed_contents": [
+                    //     {
+                    //         "clientId": "haberturk-client-id",
+                    //         "productTypeId": "web-platform-id"
+                    //     },
+                    //     {
+                    //         "clientId": "bloomberght-client-id",
+                    //         "productTypeId": "web-platform-id"
+                    //     },
+                    //     {
+                    //         "clientId": "bloomberght-client-id",
+                    //         "productTypeId": "podcast-id"
+                    //     }
+                    //     ]
+                    // }
+                    //
+                    // Buradaki allowed_contents ayrı tablodan gelmek zorunda değil.
+                    //     ProductSubscription tablosundan üretilebilir.
+                }
             }
-
-
-            // {
-            //     "tenant_id": "RESELLER-A",
-            //     "allowed_tenant_id": ["RESELLER-A"],
-            //     "allowed_contents": [
-            //     {
-            //         "clientId": "haberturk-client-id",
-            //         "productTypeId": "web-platform-id"
-            //     },
-            //     {
-            //         "clientId": "bloomberght-client-id",
-            //         "productTypeId": "web-platform-id"
-            //     },
-            //     {
-            //         "clientId": "bloomberght-client-id",
-            //         "productTypeId": "podcast-id"
-            //     }
-            //     ]
-            // }
-            //
-            // Buradaki allowed_contents ayrı tablodan gelmek zorunda değil.
-            //     ProductSubscription tablosundan üretilebilir.
-
-
-            // var allowedSubscriptions = await dbContext.Set<UserAccessGrant>()
-            //     .AsNoTracking()
-            //     .Where(x =>
-            //         x.UserId == user.Id &&
-            //         x.TenantId == tenant.Id &&
-            //         x.IsActive)
-            //     .Where(x =>
-            //         x.ProductSubscription.IsActive &&
-            //         x.ProductSubscription.TenantId == tenant.Id)
-            //     .Select(x => new Subscription(
-            //         CustomerId: x.ProductSubscription.ClientId,
-            //         ProductTypeId: x.ProductSubscription.ProductTypeId
-            //     ))
-            //     .Distinct()
-            //     .ToListAsync(cancellationToken);
-            //
-            // claims.Add(new Claim(
-            //     BaseClaimTypes.AllowedSubscription,
-            //     JsonSerializer.Serialize(allowedSubscriptions)
-            // ));
         }
 
         if (client != null)

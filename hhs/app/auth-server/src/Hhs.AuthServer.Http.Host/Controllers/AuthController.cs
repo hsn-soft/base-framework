@@ -5,6 +5,7 @@ using Hhs.AuthServer.Helpers;
 using Hhs.AuthServer.Models;
 using Hhs.AuthServer.Services;
 using Hhs.AuthServer.Store;
+using Hhs.IdentityService.Domain.AppRoleDomain.Entities;
 using Hhs.IdentityService.Domain.AppRoleDomain.Repositories;
 using Hhs.IdentityService.Domain.AppUserDomain.Entities;
 using Hhs.IdentityService.Domain.AppUserDomain.Repositories;
@@ -209,17 +210,20 @@ public sealed class AuthController : BaseServiceController
             }
 
             // Get roles for claims
-            List<string> roleKeys = [];
+            List<AppRole> roles = [];
             using (_dataFilter.Disable<IMultiTenant>()) // anonymous user , unknown tenant
             {
-                var userRoleIds = await _appUserRoleRepository.GetListAsync(new ListQueryOptions<AppUserRole>() { Filter = x => x.UserId == managedUser.Id }, s => s.RoleId);
-                if (userRoleIds is { Count: > 0 })
+                roles = await _appUserRoleRepository.GetListAsync(new ListQueryOptions<AppUserRole>()
                 {
-                    roleKeys = userRoleIds.Select(x => x.ToString("N")).ToList();
-                }
+                    Filter = x => x.UserId == managedUser.Id,
+                    IncludeEntity = x =>
+                        x.Include(r => r.Role)
+                            .ThenInclude(t => t.Subscriptions)
+                            .ThenInclude(s => s.Subscription)
+                }, s => s.Role);
             }
 
-            accessToken = _tokenService.CreateUserToken(managedUser, roleKeys, checkedTenant, allowedTenantIds, client, clientReturnScopes, tokenExpireSeconds, input.ClientSecret);
+            accessToken = _tokenService.CreateUserToken(managedUser, roles, checkedTenant, allowedTenantIds, client, clientReturnScopes, tokenExpireSeconds, input.ClientSecret);
 
             if (hasOfflineAccess)
             {
@@ -320,14 +324,16 @@ public sealed class AuthController : BaseServiceController
         }
 
         // Get roles for claims
-        List<string> roleKeys = [];
+        List<AppRole> roles = [];
         using (_dataFilter.Disable<IMultiTenant>()) // anonymous user , unknown tenant
         {
-            var userRoleIds = await _appUserRoleRepository.GetListAsync(new ListQueryOptions<AppUserRole>() { Filter = x => x.UserId == managedUser.Id }, s => s.RoleId);
-            if (userRoleIds is { Count: > 0 })
+            roles = await _appUserRoleRepository.GetListAsync(new ListQueryOptions<AppUserRole>()
             {
-                roleKeys = userRoleIds.Select(x => x.ToString("N")).ToList();
-            }
+                Filter = x => x.UserId == managedUser.Id,
+                IncludeEntity = x =>
+                    x.Include(r => r.Role)
+                        .ThenInclude(t => t.Subscriptions)
+            }, s => s.Role);
         }
 
         int tokenExpireSeconds = client.AccessTokenLifetime > 0 ? client.AccessTokenLifetime : ExpirationSeconds;
@@ -336,7 +342,7 @@ public sealed class AuthController : BaseServiceController
         // Yeni Access Token oluştur
         string newAccessToken = _tokenService.CreateUserToken(
             managedUser,
-            roleKeys,
+            roles,
             checkedTenant,
             allowedTenantIds,
             client,
