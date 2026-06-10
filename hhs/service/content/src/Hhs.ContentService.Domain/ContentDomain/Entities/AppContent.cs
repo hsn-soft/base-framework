@@ -1,23 +1,21 @@
-using Hhs.ContentService.Domain.ClientDomain.Entities;
 using Hhs.ContentService.Domain.ContentDomain.Consts;
 using Hhs.ContentService.Domain.Enums;
 using Hhs.Shared.Localization;
 using HsnSoft.Base;
 using HsnSoft.Base.Domain.Entities.Auditing;
-using HsnSoft.Base.MultiTenancy;
+using HsnSoft.Base.Subscribe;
 using HsnSoft.Base.Text;
 using JetBrains.Annotations;
 
 namespace Hhs.ContentService.Domain.ContentDomain.Entities;
 
-public sealed class AppContent : AuditedEntity<Guid>, ISoftDelete, IMultiTenant
+public sealed class AppContent : AuditedEntity<Guid>, ISoftDelete, ISubscription
 {
     public bool IsDeleted { get; internal set; }
 
-    public Guid TenantId { get; private set; }
+    public Guid CustomerId { get; private set; }
 
-    public Guid ClientId { get; set; }
-    [CanBeNull] public Client Client { get; set; }
+    public Guid ProductTypeId { get; private set; }
 
     [NotNull] public string SlugKey { get; private set; }
 
@@ -40,23 +38,20 @@ public sealed class AppContent : AuditedEntity<Guid>, ISoftDelete, IMultiTenant
     {
         // Not-Null string fields
         SlugKey = string.Empty;
-
-        // Navigation fields
-        Client = null;
     }
 
-    internal AppContent(Guid tenantId, Guid clientId, [NotNull] string slugKey,
+    internal AppContent(Guid customerId, Guid productTypeId, [NotNull] string slugKey,
         AppContentOperationStates operationStatus, [CanBeNull] string correlationId = null)
-        : this(Guid.CreateVersion7(), tenantId, clientId, slugKey, operationStatus, correlationId)
+        : this(Guid.CreateVersion7(), customerId, productTypeId, slugKey, operationStatus, correlationId)
     {
     }
 
-    internal AppContent(Guid id, Guid tenantId, Guid clientId, [NotNull] string slugKey,
+    internal AppContent(Guid id, Guid customerId, Guid productTypeId, [NotNull] string slugKey,
         AppContentOperationStates operationStatus, [CanBeNull] string correlationId = null) : this()
     {
         Id = id;
-        TenantId = tenantId;
-        ClientId = clientId;
+        CustomerId = customerId;
+        ProductTypeId = productTypeId;
 
         SetSlugKey(slugKey);
 

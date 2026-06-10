@@ -1,9 +1,9 @@
 using System.Net;
 using Hhs.ContentService.Application.Contracts.ContentDomain.Interfaces;
 using Hhs.ContentService.Application.Contracts.Events;
-using Hhs.ContentService.Domain.ClientDomain.Repositories;
 using Hhs.ContentService.Domain.ContentDomain.Consts;
 using Hhs.ContentService.Domain.ContentDomain.Repositories;
+using Hhs.ContentService.Domain.CustomerDomain.Repositories;
 using Hhs.ContentService.Domain.Enums;
 using Hhs.Shared.Contracts.Events.TextNormalizer;
 using Hhs.Shared.Helper.Enums;
@@ -18,15 +18,15 @@ public sealed class AnalysisContentAppService : ApplicationServiceBase, IAnalysi
 {
     private readonly IFrameworkLogger _logger;
     private readonly IAnalysisContentRepository _analysisContentRepository;
-    private readonly IClientVideoGenerationHistoryRepository _clientVideoGenerationHistoryRepository;
-    private readonly IClientRepository _clientRepository;
+    private readonly ICustomerVideoGenerationHistory _clientVideoGenerationHistoryRepository;
+    private readonly ICustomerContentSettingRepository _clientRepository;
     private readonly IAppContentRepository _appContentRepository;
     private readonly IAppContentVisitRepository _appContentVisitRepository;
 
     public AnalysisContentAppService(IServiceProvider provider,
         IAnalysisContentRepository analysisContentRepository,
-        IClientVideoGenerationHistoryRepository clientVideoGenerationHistoryRepository,
-        IClientRepository clientRepository,
+        ICustomerVideoGenerationHistory clientVideoGenerationHistoryRepository,
+        ICustomerContentSettingRepository clientRepository,
         IAppContentRepository appContentRepository,
         IAppContentVisitRepository appContentVisitRepository
     ) : base(provider)
@@ -73,7 +73,7 @@ public sealed class AnalysisContentAppService : ApplicationServiceBase, IAnalysi
             ));
 
             // Add video generation history for client quote control
-            await _clientVideoGenerationHistoryRepository.CreateAsync(tenantId: placed.TenantId, clientId: placed.ClientId,
+            await _clientVideoGenerationHistoryRepository.CreateAsync(tenantId: placed.TenantId, customerId: placed.ClientId,
                 videoGenerationDate: placed.AnalysisDate.Date,
                 videoGenerationType: VideoGenerationTypes.AnalysisVideoGeneration,
                 contentReferenceIds: placed.Id.ToString());
@@ -196,7 +196,7 @@ public sealed class AnalysisContentAppService : ApplicationServiceBase, IAnalysi
             : new KeyValuePair<bool, string>(true, AppContentOperationFacilities.APP_CONTENT_VIDEO_GENERATION_APPROVED);
         if (clientQuoteResult.Key)
         {
-            var contentIds = await _appContentRepository.GetClientDailyAnalysisContentIdsAsync(client.Id);
+            var contentIds = await _appContentRepository.GetCustomerDailyAnalysisContentIdsAsync(client.Id);
             if (contentIds is { Count: > 0 })
             {
                 var contentVisitList = await _appContentVisitRepository.GetContentIdsVisitCountsAsync(contentIds: contentIds,

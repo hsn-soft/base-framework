@@ -3,15 +3,13 @@ using Hhs.ContentService.Application.Contracts.ContentDomain.Dtos;
 using Hhs.ContentService.Application.Contracts.ContentDomain.Dtos.Filters;
 using Hhs.ContentService.Application.Contracts.ContentDomain.Interfaces;
 using Hhs.ContentService.Application.Contracts.Events;
-using Hhs.ContentService.Domain.ClientDomain.Exceptions;
-using Hhs.ContentService.Domain.ClientDomain.Repositories;
 using Hhs.ContentService.Domain.ContentDomain.Consts;
 using Hhs.ContentService.Domain.ContentDomain.Entities;
 using Hhs.ContentService.Domain.ContentDomain.Repositories;
+using Hhs.ContentService.Domain.CustomerDomain.Exceptions;
+using Hhs.ContentService.Domain.CustomerDomain.Repositories;
 using Hhs.ContentService.Domain.Enums;
 using Hhs.ContentService.Domain.Settings;
-using Hhs.Shared.Contracts.Events.TextNormalizer;
-using Hhs.Shared.Helper.Enums;
 using HsnSoft.Base;
 using HsnSoft.Base.Application.Dtos;
 using HsnSoft.Base.Domain.Models;
@@ -20,7 +18,6 @@ using HsnSoft.Base.Logging.Abstracts;
 using HsnSoft.Base.Reflection;
 using HsnSoft.Base.Text;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
 namespace Hhs.ContentService.Application.Services;
@@ -30,15 +27,15 @@ public sealed class AppContentAppService : ApplicationServiceBase, IAppContentAp
     private readonly IFrameworkLogger _logger;
     private readonly ContentOperationSettings _serviceSettings;
     private readonly IAppContentRepository _appContentRepository;
-    private readonly IClientRepository _clientRepository;
-    private readonly IClientVideoGenerationHistoryRepository _clientVideoGenerationHistoryRepository;
+    private readonly ICustomerContentSettingRepository _clientRepository;
+    private readonly ICustomerVideoGenerationHistory _clientVideoGenerationHistoryRepository;
     private readonly IAppContentVisitRepository _appContentVisitRepository;
 
     public AppContentAppService(IServiceProvider provider,
         IOptions<ContentOperationSettings> serviceSettings,
         IAppContentRepository appContentRepository,
-        IClientRepository clientRepository,
-        IClientVideoGenerationHistoryRepository clientVideoGenerationHistoryRepository,
+        ICustomerContentSettingRepository clientRepository,
+        ICustomerVideoGenerationHistory clientVideoGenerationHistoryRepository,
         IAppContentVisitRepository appContentVisitRepository
     ) : base(provider)
     {
@@ -59,7 +56,7 @@ public sealed class AppContentAppService : ApplicationServiceBase, IAppContentAp
 
         var item = await _appContentRepository.GetSingleOrDefaultAsync<AppContentDto>(
             predicate: x => x.Id == id,
-            includeEntity: q => q.Include(x => x.Client),
+            // includeEntity: q => q.Include(x => x.Client),
             configuration: Mapper.ConfigurationProvider, cancellationToken: cancellationToken);
         if (item == null)
         {
@@ -91,7 +88,7 @@ public sealed class AppContentAppService : ApplicationServiceBase, IAppContentAp
 
         var filter = new FilterBuilder<AppContent>()
             .And(!string.IsNullOrWhiteSpace(pagedInput.SearchText) ? e => e.SlugKey.Contains(pagedInput.SearchText) : null)
-            .And(pagedInput.ClientId.HasValue ? e => e.ClientId == pagedInput.ClientId.Value : null)
+            .And(pagedInput.CustomerId.HasValue ? e => e.CustomerId == pagedInput.CustomerId.Value : null)
             .And(pagedInput.CreationTimeStart.HasValue ? e => e.CreationTime >= pagedInput.CreationTimeStart.Value : null)
             .And(pagedInput.CreationTimeEnd.HasValue ? e => e.CreationTime < pagedInput.CreationTimeEnd.Value : null)
             .And(!string.IsNullOrWhiteSpace(pagedInput.SlugKey) ? e => e.SlugKey == pagedInput.SlugKey : null)
@@ -104,7 +101,7 @@ public sealed class AppContentAppService : ApplicationServiceBase, IAppContentAp
             options: new PagedQueryOptions<AppContent>
             {
                 Filter = filter,
-                IncludeEntity = q => q.Include(x => x.Client),
+                // IncludeEntity = q => q.Include(x => x.Client),
                 OrderByDynamic = string.IsNullOrWhiteSpace(pagedInput.SortingText)
                     ? AppContentConsts.GetDefaultSorting()
                     : pagedInput.SortingText,
@@ -135,7 +132,7 @@ public sealed class AppContentAppService : ApplicationServiceBase, IAppContentAp
         }
 
         var filter = new FilterBuilder<AppContent>()
-            .And(filterInput.ClientId.HasValue ? e => e.ClientId == filterInput.ClientId.Value : null)
+            .And(filterInput.CustomerId.HasValue ? e => e.CustomerId == filterInput.CustomerId.Value : null)
             .And(filterInput.CreationTimeStart.HasValue ? e => e.CreationTime >= filterInput.CreationTimeStart.Value : null)
             .And(filterInput.CreationTimeEnd.HasValue ? e => e.CreationTime < filterInput.CreationTimeEnd.Value : null)
             .And(!string.IsNullOrWhiteSpace(filterInput.SlugKey) ? e => e.SlugKey == filterInput.SlugKey : null)
@@ -148,7 +145,7 @@ public sealed class AppContentAppService : ApplicationServiceBase, IAppContentAp
             options: new ListQueryOptions<AppContent>
             {
                 Filter = filter,
-                IncludeEntity = q => q.Include(x => x.Client),
+                // IncludeEntity = q => q.Include(x => x.Client),
                 OrderByDynamic = string.IsNullOrWhiteSpace(filterInput.SortingText)
                     ? AppContentConsts.GetDefaultSorting()
                     : filterInput.SortingText,
@@ -173,7 +170,7 @@ public sealed class AppContentAppService : ApplicationServiceBase, IAppContentAp
             options: new ListQueryOptions<AppContent>
             {
                 Filter = filter,
-                IncludeEntity = q => q.Include(x => x.Client),
+                // IncludeEntity = q => q.Include(x => x.Client),
                 OrderByDynamic = string.IsNullOrWhiteSpace(searchInput.SortingText)
                     ? AppContentConsts.GetDefaultSorting()
                     : searchInput.SortingText,
@@ -209,39 +206,39 @@ public sealed class AppContentAppService : ApplicationServiceBase, IAppContentAp
         {
             _logger.FrameworkInfoLog(LogHelper.Generate(
                 message: "AppContent normalized success",
-                reference: new { placed.TenantId, placed.ClientId, RefContentId = placed.Id, placed.NormalizedRequestId },
+                reference: new { placed.CustomerId, placed.ProductTypeId, RefContentId = placed.Id, placed.NormalizedRequestId },
                 facility: AppContentOperationFacilities.APP_CONTENT_NORMALIZED_SUCCESS,
                 correlationId: correlationId,
                 exception: null
             ));
 
-            var checkResult = await CheckVideoGenerationApproveRules(placed.TenantId, placed.ClientId, placed.ReleaseTime);
+            var checkResult = await CheckVideoGenerationApproveRules(placed.CustomerId, placed.ProductTypeId, placed.ReleaseTime);
             if (checkResult.Key)
             {
                 await _appContentRepository.SetVideoGenerationApprovedAsync(id: appContentId);
 
                 _logger.FrameworkInfoLog(LogHelper.Generate(
                     message: "AppContent video generation approved",
-                    reference: new { placed.TenantId, placed.ClientId, RefContentId = placed.Id, placed.NormalizedRequestId },
+                    reference: new { placed.CustomerId, placed.ProductTypeId, RefContentId = placed.Id, placed.NormalizedRequestId },
                     facility: AppContentOperationFacilities.APP_CONTENT_VIDEO_GENERATION_APPROVED,
                     correlationId: correlationId,
                     exception: null
                 ));
 
                 // Add video generation history for client quote control
-                await _clientVideoGenerationHistoryRepository.CreateAsync(tenantId: placed.TenantId, clientId: placed.ClientId,
+                await _clientVideoGenerationHistoryRepository.CreateAsync(tenantId: placed.CustomerId, customerId: placed.ProductTypeId,
                     videoGenerationDate: placed.ReleaseTime?.Date ?? DateTime.UtcNow.Date,
                     videoGenerationType: VideoGenerationTypes.DirectVideoGeneration,
                     contentReferenceIds: placed.Id.ToString());
 
-                // Integration Event for VideoGeneratorService
-                await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
-                    eventMessage: new VideoGenerationApprovedEto(
-                        TenantId: placed.TenantId,
-                        ClientId: placed.ClientId,
-                        ReferenceContentType: ReferenceContentTypes.APP_REQUEST_CONTENT,
-                        ReferenceContentId: placed.Id
-                    ));
+                // // Integration Event for VideoGeneratorService
+                // await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+                //     eventMessage: new VideoGenerationApprovedEto(
+                //         TenantId: placed.TenantId,
+                //         ClientId: placed.ClientId,
+                //         ReferenceContentType: ReferenceContentTypes.APP_REQUEST_CONTENT,
+                //         ReferenceContentId: placed.Id
+                //     ));
             }
             else
             {
@@ -249,7 +246,7 @@ public sealed class AppContentAppService : ApplicationServiceBase, IAppContentAp
 
                 _logger.FrameworkInfoLog(LogHelper.Generate(
                     message: "AppContent video generation rejected",
-                    reference: new { placed.TenantId, placed.ClientId, RefContentId = placed.Id, placed.NormalizedRequestId },
+                    reference: new { placed.CustomerId, placed.ProductTypeId, RefContentId = placed.Id, placed.NormalizedRequestId },
                     facility: checkResult.Value,
                     correlationId: correlationId,
                     exception: null
@@ -260,7 +257,7 @@ public sealed class AppContentAppService : ApplicationServiceBase, IAppContentAp
         {
             _logger.FrameworkErrorLog(LogHelper.Generate(
                 message: "AppContent normalized fail",
-                reference: new { placed.TenantId, placed.ClientId, RefContentId = placed.Id, placed.NormalizedRequestId },
+                reference: new { placed.CustomerId, placed.ProductTypeId, RefContentId = placed.Id, placed.NormalizedRequestId },
                 facility: AppContentOperationFacilities.APP_CONTENT_NORMALIZED_FAIL,
                 correlationId: correlationId,
                 exception: null
@@ -295,7 +292,7 @@ public sealed class AppContentAppService : ApplicationServiceBase, IAppContentAp
         {
             _logger.FrameworkInfoLog(LogHelper.Generate(
                 message: "Video generation success",
-                reference: new { placed.TenantId, placed.ClientId, RefContentId = placed.Id, placed.VideoRequestId },
+                reference: new { placed.CustomerId, placed.ProductTypeId, RefContentId = placed.Id, placed.VideoRequestId },
                 facility: AppContentOperationFacilities.APP_CONTENT_VIDEO_GENERATION_SUCCESS,
                 correlationId: correlationId,
                 exception: null
@@ -305,7 +302,7 @@ public sealed class AppContentAppService : ApplicationServiceBase, IAppContentAp
         {
             _logger.FrameworkErrorLog(LogHelper.Generate(
                 message: "Video generation fail",
-                reference: new { placed.TenantId, placed.ClientId, RefContentId = placed.Id, placed.VideoRequestId },
+                reference: new { placed.CustomerId, placed.ProductTypeId, RefContentId = placed.Id, placed.VideoRequestId },
                 facility: AppContentOperationFacilities.APP_CONTENT_VIDEO_GENERATION_FAIL,
                 correlationId: correlationId,
                 exception: null
@@ -324,7 +321,7 @@ public sealed class AppContentAppService : ApplicationServiceBase, IAppContentAp
 
         _logger.FrameworkErrorLog(LogHelper.Generate(
             message: $"AppContent status fail: {failedReason ?? string.Empty}",
-            reference: new { placed.TenantId, placed.ClientId, RefContentId = placed.Id },
+            reference: new { placed.CustomerId, placed.ProductTypeId, RefContentId = placed.Id },
             facility: AppContentOperationFacilities.APP_CONTENT_STATUS_FAIL,
             correlationId: correlationId,
             exception: null
@@ -356,7 +353,7 @@ public sealed class AppContentAppService : ApplicationServiceBase, IAppContentAp
         }
 
         // check client trend video generation quote available
-        long clientDailyTrendVideoHistoryCount = await _clientVideoGenerationHistoryRepository.GetClientVideoHistoryCountAsync(client.Id,
+        long clientDailyTrendVideoHistoryCount = await _clientVideoGenerationHistoryRepository.GetCustomerVideoHistoryCountAsync(client.Id,
             DateTime.UtcNow.Date, VideoGenerationTypes.TrendVideoGeneration);
 
         long clientDailyTrendVideoGenerationLimit = client.DailyTrendVideoGenerationLimit - clientDailyTrendVideoHistoryCount;
@@ -365,7 +362,7 @@ public sealed class AppContentAppService : ApplicationServiceBase, IAppContentAp
             : new KeyValuePair<bool, string>(true, AppContentOperationFacilities.APP_CONTENT_VIDEO_GENERATION_APPROVED);
         if (clientQuoteResult.Key)
         {
-            var contentIds = await _appContentRepository.GetClientDailyTrendContentIdsAsync(client.Id, client.DailyTrendVideoWaitStatisticHour);
+            var contentIds = await _appContentRepository.GetCustomerDailyTrendContentIdsAsync(client.Id, client.DailyTrendVideoWaitStatisticHour);
             if (contentIds is { Count: > 0 })
             {
                 var contentVisitList = await _appContentVisitRepository.GetContentIdsVisitCountsAsync(contentIds: contentIds,
@@ -388,26 +385,26 @@ public sealed class AppContentAppService : ApplicationServiceBase, IAppContentAp
 
                                 _logger.FrameworkInfoLog(LogHelper.Generate(
                                     message: "Trend content video generation approved",
-                                    reference: new { placed.TenantId, placed.ClientId, AppContentId = placed.Id, placed.NormalizedRequestId },
+                                    reference: new { placed.CustomerId, placed.ProductTypeId, AppContentId = placed.Id, placed.NormalizedRequestId },
                                     facility: AppContentOperationFacilities.APP_CONTENT_VIDEO_GENERATION_APPROVED,
                                     correlationId: placed.CorrelationId,
                                     exception: null
                                 ));
 
-                                // Add video generation history for client quote control
-                                await _clientVideoGenerationHistoryRepository.CreateAsync(tenantId: placed.TenantId, clientId: placed.ClientId,
-                                    videoGenerationDate: placed.ReleaseTime?.Date ?? DateTime.UtcNow.Date,
-                                    videoGenerationType: VideoGenerationTypes.TrendVideoGeneration,
-                                    contentReferenceIds: placed.Id.ToString());
-
-                                // Integration Event for TextNormalizerGeneratorService
-                                await EventBus.PublishAsync(correlationId: placed.CorrelationId,
-                                    eventMessage: new VideoGenerationApprovedEto(
-                                        TenantId: placed.TenantId,
-                                        ClientId: placed.ClientId,
-                                        ReferenceContentType: ReferenceContentTypes.APP_REQUEST_CONTENT,
-                                        ReferenceContentId: placed.Id
-                                    ));
+                                // // Add video generation history for client quote control
+                                // await _clientVideoGenerationHistoryRepository.CreateAsync(tenantId: placed.TenantId, customerId: placed.ClientId,
+                                //     videoGenerationDate: placed.ReleaseTime?.Date ?? DateTime.UtcNow.Date,
+                                //     videoGenerationType: VideoGenerationTypes.TrendVideoGeneration,
+                                //     contentReferenceIds: placed.Id.ToString());
+                                //
+                                // // Integration Event for TextNormalizerGeneratorService
+                                // await EventBus.PublishAsync(correlationId: placed.CorrelationId,
+                                //     eventMessage: new VideoGenerationApprovedEto(
+                                //         TenantId: placed.TenantId,
+                                //         ClientId: placed.ClientId,
+                                //         ReferenceContentType: ReferenceContentTypes.APP_REQUEST_CONTENT,
+                                //         ReferenceContentId: placed.Id
+                                //     ));
 
                                 operationSuccess = true;
                             }
@@ -429,7 +426,7 @@ public sealed class AppContentAppService : ApplicationServiceBase, IAppContentAp
 
                                 _logger.FrameworkErrorLog(LogHelper.Generate(
                                     message: $"Trend content video generation rejected: {errorMessage}",
-                                    reference: new { placed.TenantId, placed.ClientId, AppContentId = placed.Id, placed.NormalizedRequestId },
+                                    reference: new { placed.CustomerId, placed.ProductTypeId, AppContentId = placed.Id, placed.NormalizedRequestId },
                                     facility: AppContentOperationFacilities.VIDEO_GENERATION_SKIPPED_REGENERATION_FAILED,
                                     correlationId: placed.CorrelationId,
                                     exception: null
@@ -493,7 +490,7 @@ public sealed class AppContentAppService : ApplicationServiceBase, IAppContentAp
         var client = await _clientRepository.GetSingleOrDefaultAsync(x => x.TenantId == tenantId && x.Id == clientId);
         if (client == null)
         {
-            throw new ClientNotFoundException(L, clientId.ToString());
+            throw new CustomerContentSettingNotFoundException(L, clientId.ToString());
         }
 
         // Check client video generation started settings
@@ -512,7 +509,7 @@ public sealed class AppContentAppService : ApplicationServiceBase, IAppContentAp
         }
 
         // Check client direct video generation available
-        long clientDailyDirectVideoHistoryCount = await _clientVideoGenerationHistoryRepository.GetClientVideoHistoryCountAsync(clientId,
+        long clientDailyDirectVideoHistoryCount = await _clientVideoGenerationHistoryRepository.GetCustomerVideoHistoryCountAsync(clientId,
             releaseTime.Value.ToUniversalTime().Date, VideoGenerationTypes.DirectVideoGeneration);
 
         return client.DailyDirectVideoGenerationLimit - clientDailyDirectVideoHistoryCount <= 0

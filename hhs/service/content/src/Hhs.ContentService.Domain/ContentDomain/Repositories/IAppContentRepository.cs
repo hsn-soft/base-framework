@@ -8,16 +8,16 @@ namespace Hhs.ContentService.Domain.ContentDomain.Repositories;
 public interface IAppContentRepository : IReadOnlyGenericRepository<AppContent, Guid>
 {
     Task<AppContent> CreateAsync(
-        Guid tenantId,
-        Guid clientId,
+        Guid customerId,
+        Guid productTypeId,
         [NotNull] string slugKey,
         AppContentOperationStates operationStatus,
         [CanBeNull] string correlationId = null);
 
     Task<AppContent> CreateAsync(
         Guid id,
-        Guid tenantId,
-        Guid clientId,
+        Guid customerId,
+        Guid productTypeId,
         [NotNull] string slugKey,
         AppContentOperationStates operationStatus,
         [CanBeNull] string correlationId = null);
@@ -40,7 +40,7 @@ public interface IAppContentRepository : IReadOnlyGenericRepository<AppContent, 
 
     Task RemoveAsync(Guid id);
 
-    Task<List<Guid>> GetClientDailyTrendContentIdsAsync(Guid clientId, ushort dailyTrendVideoWaitStatisticHour, CancellationToken cancellationToken = default);
+    Task<List<Guid>> GetCustomerDailyTrendContentIdsAsync(Guid customerId, ushort dailyTrendVideoWaitStatisticHour, CancellationToken cancellationToken = default);
 
-    Task<List<Guid>> GetClientDailyAnalysisContentIdsAsync(Guid clientId, CancellationToken cancellationToken = default);
+    Task<List<Guid>> GetCustomerDailyAnalysisContentIdsAsync(Guid customerId, CancellationToken cancellationToken = default);
 }

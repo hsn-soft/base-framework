@@ -1,8 +1,8 @@
 using AutoMapper;
-using Hhs.ContentService.Application.Contracts.ClientDomain.Dtos;
 using Hhs.ContentService.Application.Contracts.ContentDomain.Dtos;
-using Hhs.ContentService.Domain.ClientDomain.Entities;
+using Hhs.ContentService.Application.Contracts.CustomerDomain.Dtos;
 using Hhs.ContentService.Domain.ContentDomain.Entities;
+using Hhs.ContentService.Domain.CustomerDomain.Entities;
 using Hhs.ContentService.Domain.Enums;
 
 namespace Hhs.ContentService.Application;
@@ -11,30 +11,24 @@ public class ApplicationAutoMapperProfile : Profile
 {
     public ApplicationAutoMapperProfile()
     {
-        CreateMap<Client, ClientDto>()
+        CreateMap<CustomerContentSetting, CustomerContentSettingDto>()
             .ForMember(dest => dest.PathFilters,
                 opt => opt.MapFrom(source => source.PathFilters
                     .Where(cpf => cpf.PathFilterName != null)
                     .Select(cpf => cpf.PathFilterName)
                     .ToList()));
-        CreateMap<Client, ClientCheckDto>()
+        CreateMap<CustomerContentSetting, CustomerContentSettingCheckDto>()
             .ForMember(dest => dest.PathFilters,
                 opt => opt.MapFrom(source => source.PathFilters
                     .Where(cpf => cpf.PathFilterName != null)
-                    .Select(x => new KeyValuePair<ClientFilterTypes, string>(x.ClientFilterType, x.PathFilterName))
+                    .Select(x => new KeyValuePair<CustomerSettingFilterTypes, string>(x.CustomerSettingFilterType, x.PathFilterName))
                     .ToList()));
-        CreateMap<Client, ClientSearchDto>();
+        CreateMap<CustomerContentSetting, CustomerContentSettingSearchDto>();
 
-        CreateMap<AppContent, AppContentDto>()
-            .ForMember(dest => dest.ClientDomainName,
-                opt => opt.MapFrom(source
-                    => source.Client != null ? source.Client.DomainName : string.Empty));
+        CreateMap<AppContent, AppContentDto>();
         CreateMap<AppContent, AppContentStatusDto>()
             .ForMember(dest => dest.AppContentId, opt =>
                 opt.MapFrom(source => source.Id));
-        CreateMap<AppContent, AppContentSearchDto>()
-            .ForMember(dest => dest.ClientDomainName,
-                opt => opt.MapFrom(source
-                    => source.Client != null ? source.Client.DomainName : string.Empty));
+        CreateMap<AppContent, AppContentSearchDto>();
     }
 }

@@ -3,10 +3,10 @@ using System.Net;
 using Hhs.ContentService.Application.Contracts.DashboardDomain.Dtos;
 using Hhs.ContentService.Application.Contracts.DashboardDomain.Interfaces;
 using Hhs.ContentService.Application.Contracts.Events;
-using Hhs.ContentService.Domain.ClientDomain.Repositories;
 using Hhs.ContentService.Domain.ContentDomain.Consts;
 using Hhs.ContentService.Domain.ContentDomain.Entities;
 using Hhs.ContentService.Domain.ContentDomain.Repositories;
+using Hhs.ContentService.Domain.CustomerDomain.Repositories;
 using Hhs.ContentService.Domain.DashboardDomain.Entities;
 using Hhs.ContentService.Domain.DashboardDomain.Repositories;
 using HsnSoft.Base;
@@ -21,12 +21,12 @@ public sealed class DashboardAppService : ApplicationServiceBase, IDashboardAppS
     private readonly IAppConsoleLogger _logger;
     private readonly IResponseStatisticRepository _responseStatisticRepository;
     private readonly IAppContentVisitRepository _appContentVisitRepository;
-    private readonly IClientRepository _clientRepository;
+    private readonly ICustomerContentSettingRepository _clientRepository;
 
     public DashboardAppService(IServiceProvider provider,
         IResponseStatisticRepository responseStatisticRepository,
         IAppContentVisitRepository appContentVisitRepository,
-        IClientRepository clientRepository
+        ICustomerContentSettingRepository clientRepository
     ) : base(provider)
     {
         _logger = provider.GetRequiredService<IAppConsoleLogger>();

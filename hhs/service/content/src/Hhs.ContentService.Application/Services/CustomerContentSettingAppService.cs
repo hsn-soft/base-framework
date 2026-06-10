@@ -1,0 +1,195 @@
+using System.Net;
+using Hhs.ContentService.Application.Contracts.CustomerDomain.Dtos;
+using Hhs.ContentService.Application.Contracts.CustomerDomain.Dtos.Filters;
+using Hhs.ContentService.Application.Contracts.CustomerDomain.Dtos.Submits;
+using Hhs.ContentService.Application.Contracts.CustomerDomain.Interfaces;
+using Hhs.ContentService.Domain.CustomerDomain.Consts;
+using Hhs.ContentService.Domain.CustomerDomain.Entities;
+using Hhs.ContentService.Domain.CustomerDomain.Repositories;
+using HsnSoft.Base;
+using HsnSoft.Base.Application.Dtos;
+using HsnSoft.Base.Domain.Models;
+using HsnSoft.Base.Logging.Abstracts;
+using HsnSoft.Base.Reflection;
+using HsnSoft.Base.Text;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
+
+namespace Hhs.ContentService.Application.Services;
+
+public sealed class CustomerContentSettingAppService : ApplicationServiceBase, ICustomerContentSettingAppService
+{
+    private readonly IAppConsoleLogger _logger;
+    private readonly ICustomerContentSettingRepository _customerContentSettingRepository;
+
+    public CustomerContentSettingAppService(IServiceProvider provider,
+        ICustomerContentSettingRepository customerContentSettingRepository
+    ) : base(provider)
+    {
+        _logger = provider.GetRequiredService<IAppConsoleLogger>();
+        _customerContentSettingRepository = customerContentSettingRepository;
+    }
+
+    public async Task<CustomerContentSettingDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        if (id == Guid.Empty)
+        {
+            throw new BaseHttpException((int)HttpStatusCode.BadRequest);
+        }
+
+        var item = await _customerContentSettingRepository.GetSingleOrDefaultAsync<CustomerContentSettingDto>(
+            predicate: x => x.Id == id,
+            includeEntity: q => q.Include(x => x.PathFilters),
+            configuration: Mapper.ConfigurationProvider, cancellationToken: cancellationToken);
+        if (item == null)
+        {
+            throw new BaseHttpException((int)HttpStatusCode.NotFound);
+        }
+
+        return item;
+    }
+
+    public async Task<PagedDataResultDto<CustomerContentSettingDto>> GetPagedListAsync(GetCustomerContentSettingsPaged pagedInput, CancellationToken cancellationToken = default)
+    {
+        if (pagedInput == null)
+        {
+            throw new BaseHttpException((int)HttpStatusCode.BadRequest);
+        }
+
+        pagedInput.SearchText = StringHelper.Minimize(StringHelper.ReplaceInvalidChars(pagedInput.SearchText));
+        pagedInput.DomainName = StringHelper.Minimize(StringHelper.ReplaceInvalidChars(pagedInput.DomainName));
+
+        var filter = new FilterBuilder<CustomerContentSetting>()
+            .And(!string.IsNullOrWhiteSpace(pagedInput.SearchText) ? e => e.DomainName.Contains(pagedInput.SearchText) : null)
+            .And(pagedInput.TenantId.HasValue ? e => e.TenantId == pagedInput.TenantId.Value : null)
+            .And(!string.IsNullOrWhiteSpace(pagedInput.DomainName) ? e => e.DomainName.Contains(pagedInput.DomainName) : null)
+            .And(pagedInput.IsBlocked.HasValue ? e => e.IsBlocked == pagedInput.IsBlocked.Value : null)
+            .Build();
+
+        var result = await _customerContentSettingRepository.GetPageListAsync<CustomerContentSettingDto>(
+            options: new PagedQueryOptions<CustomerContentSetting>
+            {
+                Filter = filter,
+                IncludeEntity = q => q.Include(x => x.PathFilters),
+                OrderByDynamic = string.IsNullOrWhiteSpace(pagedInput.SortingText)
+                    ? CustomerContentSettingConsts.GetDefaultSorting()
+                    : pagedInput.SortingText,
+                PageNumber = pagedInput.PageNumber,
+                MaxResultCount = pagedInput.MaxResultCount
+            }, Mapper.ConfigurationProvider, cancellationToken: cancellationToken);
+
+        return new PagedDataResultDto<CustomerContentSettingDto>(result.TotalCount, pagedInput.PageNumber, pagedInput.MaxResultCount, result.Items);
+    }
+
+    public async Task<List<CustomerContentSettingDto>> GetFilterListAsync(GetCustomerContentSettingsFilter filterInput, CancellationToken cancellationToken = default)
+    {
+        if (filterInput == null)
+        {
+            throw new BaseHttpException((int)HttpStatusCode.BadRequest);
+        }
+
+        filterInput.DomainName = StringHelper.Minimize(StringHelper.ReplaceInvalidChars(filterInput.DomainName));
+
+        var filter = new FilterBuilder<CustomerContentSetting>()
+            .And(filterInput.TenantId.HasValue ? e => e.TenantId == filterInput.TenantId.Value : null)
+            .And(!string.IsNullOrWhiteSpace(filterInput.DomainName) ? e => e.DomainName.Contains(filterInput.DomainName) : null)
+            .And(filterInput.IsBlocked.HasValue ? e => e.IsBlocked == filterInput.IsBlocked.Value : null)
+            .Build();
+
+        return await _customerContentSettingRepository.GetListAsync<CustomerContentSettingDto>(
+            options: new ListQueryOptions<CustomerContentSetting>
+            {
+                Filter = filter,
+                IncludeEntity = q => q.Include(x => x.PathFilters),
+                OrderByDynamic = string.IsNullOrWhiteSpace(filterInput.SortingText)
+                    ? CustomerContentSettingConsts.GetDefaultSorting()
+                    : filterInput.SortingText,
+                MaxResultCount = filterInput.MaxResultCount
+            }, Mapper.ConfigurationProvider, cancellationToken: cancellationToken);
+    }
+
+    public async Task<List<CustomerContentSettingSearchDto>> GetSearchListAsync(GetCustomerContentSettingsSearch searchInput, CancellationToken cancellationToken = default)
+    {
+        if (searchInput == null)
+        {
+            throw new BaseHttpException((int)HttpStatusCode.BadRequest);
+        }
+
+        searchInput.SearchText = StringHelper.Minimize(StringHelper.ReplaceInvalidChars(searchInput.SearchText));
+
+        var filter = new FilterBuilder<CustomerContentSetting>()
+            .And(!string.IsNullOrWhiteSpace(searchInput.SearchText) ? e => e.DomainName.Contains(searchInput.SearchText) : null)
+            .Build();
+
+        return await _customerContentSettingRepository.GetListAsync<CustomerContentSettingSearchDto>(
+            options: new ListQueryOptions<CustomerContentSetting>
+            {
+                Filter = filter,
+                OrderByDynamic = string.IsNullOrWhiteSpace(searchInput.SortingText)
+                    ? CustomerContentSettingConsts.GetDefaultSorting()
+                    : searchInput.SortingText,
+                MaxResultCount = searchInput.MaxResultCount
+            }, Mapper.ConfigurationProvider, cancellationToken: cancellationToken);
+    }
+
+    public async Task<CustomerContentSettingDto> CreateAsync(CustomerContentSettingCreateDto input)
+    {
+        if (input == null)
+        {
+            throw new BaseHttpException((int)HttpStatusCode.BadRequest);
+        }
+
+        var placed = await _customerContentSettingRepository.CreateAsync(
+            tenantId: input.TenantId ?? Guid.Empty,
+            domainName: input.DomainName ?? string.Empty,
+            includePathFilters: input.IncludePathFilters,
+            excludePathFilters: input.ExcludePathFilters
+        );
+
+        _logger.LogDebug("{EntityTypeName} created [{EntityTypeId}]", nameof(CustomerContentSetting), placed.Id);
+
+        //INTEGRATION EVENT TRIGGER
+        //
+        //
+
+        return Mapper.Map<CustomerContentSetting, CustomerContentSettingDto>(placed);
+    }
+
+    public async Task UpdateAsync(CustomerContentSettingUpdateDto input)
+    {
+        if (input?.Id == null || input.Id == Guid.Empty)
+        {
+            throw new BaseHttpException((int)HttpStatusCode.BadRequest);
+        }
+
+        var updated = await _customerContentSettingRepository.UpdateAsync(
+            id: input.Id.Value,
+            domainName: input.DomainName ?? string.Empty,
+            isBlocked: input.IsBlocked,
+            includePathFilters: input.IncludePathFilters,
+            excludePathFilters: input.ExcludePathFilters
+        );
+
+        _logger.LogDebug("{EntityTypeName} updated [{EntityTypeId}]", nameof(CustomerContentSetting), updated.Id);
+
+        //INTEGRATION EVENT TRIGGER
+        //
+        //
+    }
+
+    public async Task DeleteAsync(Guid id)
+    {
+        if (id == Guid.Empty)
+        {
+            throw new BaseHttpException((int)HttpStatusCode.BadRequest);
+        }
+
+        await _customerContentSettingRepository.RemoveAsync(id);
+
+        _logger.LogDebug("{EntityTypeName} removed [{EntityTypeId}]", nameof(CustomerContentSetting), id);
+
+        //INTEGRATION EVENT TRIGGER
+        //
+        //
+    }
+}

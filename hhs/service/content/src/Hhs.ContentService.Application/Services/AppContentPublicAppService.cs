@@ -1,19 +1,17 @@
 using System.Globalization;
 using System.Net;
-using Hhs.ContentService.Application.Contracts.ClientDomain.Dtos;
 using Hhs.ContentService.Application.Contracts.ContentDomain.Dtos;
 using Hhs.ContentService.Application.Contracts.ContentDomain.Interfaces;
-using Hhs.ContentService.Domain.ClientDomain.Exceptions;
-using Hhs.ContentService.Domain.ClientDomain.Repositories;
+using Hhs.ContentService.Application.Contracts.CustomerDomain.Dtos;
 using Hhs.ContentService.Domain.ContentDomain.Consts;
 using Hhs.ContentService.Domain.ContentDomain.Entities;
 using Hhs.ContentService.Domain.ContentDomain.Exceptions;
 using Hhs.ContentService.Domain.ContentDomain.Repositories;
+using Hhs.ContentService.Domain.CustomerDomain.Exceptions;
+using Hhs.ContentService.Domain.CustomerDomain.Repositories;
 using Hhs.ContentService.Domain.Enums;
-using Hhs.Shared.Contracts.Events.TextNormalizer;
 using HsnSoft.Base;
 using HsnSoft.Base.Data;
-using HsnSoft.Base.Logging;
 using HsnSoft.Base.Logging.Abstracts;
 using HsnSoft.Base.MultiTenancy;
 using HsnSoft.Base.Text;
@@ -28,7 +26,7 @@ public sealed class AppContentPublicAppService(
     IAppContentRepository appContentRepository,
     IAppContentVisitRepository contentVisitRepository,
     IAnalysisContentRepository analysisContentRepository,
-    IClientRepository clientRepository,
+    ICustomerContentSettingRepository clientRepository,
     ITraceAccesor traceAccessor,
     IDataFilter dataFilter
 ) : ApplicationServiceBase(provider), IAppContentPublicAppService
@@ -72,7 +70,7 @@ public sealed class AppContentPublicAppService(
 
         if (!clientCheckResult)
         {
-            throw new ClientInvalidDomainException(L, input.CustomerId.ToString())
+            throw new CustomerContentSettingInvalidDomainException(L, input.CustomerId.ToString())
                 .WithData(nameof(input.DomainName), input.DomainName);
         }
 
@@ -81,7 +79,7 @@ public sealed class AppContentPublicAppService(
         using (dataFilter.Disable<IMultiTenant>()) // anonymous user , unknown tenant
         {
             contentStatusModel = await appContentRepository.GetFirstOrDefaultAsync<AppContentStatusDto>(
-                x => x.ClientId == input.CustomerId.Value && x.SlugKey.Equals(normalizedSlugKey),
+                x => x.CustomerId == input.CustomerId.Value && x.SlugKey.Equals(normalizedSlugKey),
                 Mapper.ConfigurationProvider, cancellationToken: cancellationToken);
         }
 
@@ -141,10 +139,10 @@ public sealed class AppContentPublicAppService(
         else
         {
             // Get Client Details
-            ClientCheckDto clientCheck = null;
+            CustomerContentSettingCheckDto clientCheck = null;
             using (dataFilter.Disable<IMultiTenant>()) // anonymous user , unknown tenant
             {
-                clientCheck = await clientRepository.GetSingleOrDefaultAsync<ClientCheckDto>(
+                clientCheck = await clientRepository.GetSingleOrDefaultAsync<CustomerContentSettingCheckDto>(
                     predicate: x => x.Id == input.CustomerId.Value,
                     includeEntity: q => q.Include(x => x.PathFilters),
                     configuration: Mapper.ConfigurationProvider,
@@ -153,18 +151,18 @@ public sealed class AppContentPublicAppService(
 
             if (clientCheck == null)
             {
-                throw new ClientNotFoundException(L, input.CustomerId.ToString());
+                throw new CustomerContentSettingNotFoundException(L, input.CustomerId.ToString());
             }
 
             // Check Client IncludePathFilter exist
-            if (clientCheck.PathFilters.Where(x => x.Key == ClientFilterTypes.IncludeFilter).ToList() is { Count: > 0 })
+            if (clientCheck.PathFilters.Where(x => x.Key == CustomerSettingFilterTypes.IncludeFilter).ToList() is { Count: > 0 })
             {
                 bool isFilterSuccess = false;
                 var currentPathFilterArray = input.ContentKey.ToLower(new CultureInfo("en-US")).Split("/").Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
                 if (currentPathFilterArray is { Count: > 0 })
                 {
                     string currentPathText = "/" + string.Join("/", currentPathFilterArray);
-                    var includeFilterList = clientCheck.PathFilters.Where(x => x.Key == ClientFilterTypes.IncludeFilter).Select(x => x.Value).ToList();
+                    var includeFilterList = clientCheck.PathFilters.Where(x => x.Key == CustomerSettingFilterTypes.IncludeFilter).Select(x => x.Value).ToList();
                     if (includeFilterList
                         .Select(filter => filter.ToLower(new CultureInfo("en-US")).Split("/").Where(x => !string.IsNullOrWhiteSpace(x)).ToList())
                         .Select(filterArray => "/" + string.Join("/", filterArray))
@@ -186,13 +184,13 @@ public sealed class AppContentPublicAppService(
             }
 
             // Check Client ExcludePathFilter exist
-            if (clientCheck.PathFilters.Where(x => x.Key == ClientFilterTypes.ExcludeFilter).ToList() is { Count: > 0 })
+            if (clientCheck.PathFilters.Where(x => x.Key == CustomerSettingFilterTypes.ExcludeFilter).ToList() is { Count: > 0 })
             {
                 var currentPathFilterArray = input.ContentKey.ToLower(new CultureInfo("en-US")).Split("/").Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
                 if (currentPathFilterArray is { Count: > 0 })
                 {
                     string currentPathText = "/" + string.Join("/", currentPathFilterArray);
-                    var excludeFilterList = clientCheck.PathFilters.Where(x => x.Key == ClientFilterTypes.ExcludeFilter).Select(x => x.Value).ToList();
+                    var excludeFilterList = clientCheck.PathFilters.Where(x => x.Key == CustomerSettingFilterTypes.ExcludeFilter).Select(x => x.Value).ToList();
                     if (excludeFilterList
                         .Select(filter => filter.ToLower(new CultureInfo("en-US")).Split("/").Where(x => !string.IsNullOrWhiteSpace(x)).ToList())
                         .Select(filterArray => "/" + string.Join("/", filterArray))
@@ -210,41 +208,41 @@ public sealed class AppContentPublicAppService(
 
             // Add appContent record
             var placed = await appContentRepository.CreateAsync(
-                tenantId: clientCheck.TenantId,
-                clientId: clientCheck.Id,
+                customerId: clientCheck.TenantId,
+                productTypeId: clientCheck.Id,
                 slugKey: normalizedSlugKey,
                 operationStatus: AppContentOperationStates.CreatedWaitForNormalize,
                 correlationId: traceAccessor?.GetCorrelationId());
 
-            _logger.FrameworkInfoLog(LogHelper.Generate(
-                message: $"AppContent created {input.ContentKey}",
-                reference: new
-                {
-                    placed.TenantId,
-                    placed.ClientId,
-                    ClientDomain = clientCheck.DomainName,
-                    input.ContentKey,
-                    RefContentId = placed.Id
-                },
-                facility: AppContentOperationFacilities.APP_CONTENT_CREATED,
-                correlationId: placed.CorrelationId,
-                exception: null
-            ));
+            // _logger.FrameworkInfoLog(LogHelper.Generate(
+            //     message: $"AppContent created {input.ContentKey}",
+            //     reference: new
+            //     {
+            //         placed.TenantId,
+            //         placed.ClientId,
+            //         ClientDomain = clientCheck.DomainName,
+            //         input.ContentKey,
+            //         RefContentId = placed.Id
+            //     },
+            //     facility: AppContentOperationFacilities.APP_CONTENT_CREATED,
+            //     correlationId: placed.CorrelationId,
+            //     exception: null
+            // ));
 
             result = new GetOrCreateAppContentResponseDto { ContentType = AppContentPublicType.APP_CONTENT, ContentId = placed.Id, ContentStatus = AppContentPublicStatus.CREATED };
 
             // Add statistic record
-            await contentVisitRepository.CreateAsync(clientId: placed.ClientId, appContentId: placed.Id, visitResponse: result.ContentStatus);
+            await contentVisitRepository.CreateAsync(clientId: placed.CustomerId, appContentId: placed.Id, visitResponse: result.ContentStatus);
 
-            // Integration Event for TextNormalizerService
-            await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
-                eventMessage: new AppContentNormalizedStartedEto(
-                    TenantId: placed.TenantId,
-                    ClientId: placed.ClientId,
-                    AppContentId: placed.Id,
-                    DomainName: clientCheck.DomainName,
-                    DomainPath: input.ContentKey
-                ));
+            // // Integration Event for TextNormalizerService
+            // await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+            //     eventMessage: new AppContentNormalizedStartedEto(
+            //         TenantId: placed.TenantId,
+            //         ClientId: placed.ClientId,
+            //         AppContentId: placed.Id,
+            //         DomainName: clientCheck.DomainName,
+            //         DomainPath: input.ContentKey
+            //     ));
         }
 
         if (result.ContentStatus == AppContentPublicStatus.READY)
@@ -289,7 +287,7 @@ public sealed class AppContentPublicAppService(
 
         if (clientDomain == null)
         {
-            throw new ClientInvalidDomainException(L, input.CustomerId.ToString())
+            throw new CustomerContentSettingInvalidDomainException(L, input.CustomerId.ToString())
                 .WithData(nameof(input.CustomerId), input.CustomerId);
         }
 

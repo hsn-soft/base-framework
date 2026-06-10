@@ -9,10 +9,10 @@ public static class DomainErrorCodes
     public const string AnalysisContentNotFound = "Error:ContentService:000051";
     public const string AnalysisContentStateError = "Error:ContentService:000052";
 
-    public const string ClientNotFound = "Error:ContentService:000031";
-    public const string ClientDuplicate = "Error:ContentService:000032";
-    public const string ClientInvalidDomain = "Error:ContentService:000033";
-    public const string ClientDomainBlocked = "Error:ContentService:000034";
+    public const string CustomerContentSettingNotFound = "Error:ContentService:000031";
+    public const string CustomerContentSettingDuplicate = "Error:ContentService:000032";
+    public const string CustomerContentSettingInvalidDomain = "Error:ContentService:000033";
+    public const string CustomerContentSettingDomainBlocked = "Error:ContentService:000034";
 
-    public const string ClientPathFilterNotFound = "Error:ContentService:000041";
+    public const string CustomerContentSettingPathFilterNotFound = "Error:ContentService:000041";
 }

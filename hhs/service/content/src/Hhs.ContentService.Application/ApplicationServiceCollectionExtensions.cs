@@ -1,6 +1,6 @@
 using Hhs.ContentService.Application.Contracts;
-using Hhs.ContentService.Application.Contracts.ClientDomain.Interfaces;
 using Hhs.ContentService.Application.Contracts.ContentDomain.Interfaces;
+using Hhs.ContentService.Application.Contracts.CustomerDomain.Interfaces;
 using Hhs.ContentService.Application.Contracts.DashboardDomain.Interfaces;
 using Hhs.ContentService.Application.Contracts.JobDomain;
 using Hhs.ContentService.Application.Services;
@@ -25,7 +25,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<IJobAppService, JobAppService>();
         services.AddScoped<IEventManagerAppService, EventManagerAppService>();
         services.AddScoped<IDashboardAppService, DashboardAppService>();
-        services.AddScoped<IClientAppService, ClientAppService>();
+        services.AddScoped<ICustomerContentSettingAppService, CustomerContentSettingAppService>();
         services.AddScoped<IAppContentPublicAppService, AppContentPublicAppService>();
         services.AddScoped<IAppContentAppService, AppContentAppService>();
         services.AddScoped<IAnalysisContentAppService, AnalysisContentAppService>();

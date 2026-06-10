@@ -1,5 +1,5 @@
-using Hhs.ContentService.Domain.ClientDomain.Entities;
 using Hhs.ContentService.Domain.ContentDomain.Entities;
+using Hhs.ContentService.Domain.CustomerDomain.Entities;
 using Hhs.ContentService.Domain.DashboardDomain.Entities;
 using Hhs.ContentService.EntityFrameworkCore.Configurations;
 using HsnSoft.Base;
@@ -10,9 +10,9 @@ namespace Hhs.ContentService.EntityFrameworkCore.Context;
 
 public sealed class ContentServiceDbContext : BaseEfCoreDbContext<ContentServiceDbContext>
 {
-    public DbSet<Client> Clients => Set<Client>();
-    public DbSet<ClientPathFilter> ClientPathFilters => Set<ClientPathFilter>();
-    public DbSet<ClientVideoGenerationHistory> ClientVideoGenerationHistories => Set<ClientVideoGenerationHistory>();
+    public DbSet<CustomerContentSetting> CustomerContentSettings => Set<CustomerContentSetting>();
+    public DbSet<CustomerContentSettingPathFilter> CustomerContentSettingPathFilters => Set<CustomerContentSettingPathFilter>();
+    public DbSet<CustomerVideoGenerationHistory> CustomerVideoGenerationHistories => Set<CustomerVideoGenerationHistory>();
 
     public DbSet<AppContent> AppContents => Set<AppContent>();
     public DbSet<AppContentVisit> AppContentVisits => Set<AppContentVisit>();
@@ -30,9 +30,9 @@ public sealed class ContentServiceDbContext : BaseEfCoreDbContext<ContentService
 
         base.OnModelCreating(builder);
 
-        builder.ConfigureClientEntity();
-        builder.ConfigureClientPathFilterEntity();
-        builder.ConfigureClientVideoGenerationHistoryEntity();
+        builder.ConfigureCustomerContentSettingEntity();
+        builder.ConfigureCustomerContentSettingPathFilterEntity();
+        builder.ConfigureCustomerVideoGenerationHistoryEntity();
 
         builder.ConfigureAppContentEntity();
         builder.ConfigureAppContentVisitEntity();

@@ -30,8 +30,7 @@ public sealed class EfCoreAnalysisContentRepository : EfCoreGenericRepository<An
     public async Task<List<AnalysisContent>> GetPagedListWithFiltersAsync(Guid? clientId = null, DateTime? analysisStartDate = null, DateTime? analysisEndDate = null, AnalysisContentOperationStates? status = null, string sorting = null,
         int maxResultCount = int.MaxValue, int skipCount = 0, CancellationToken cancellationToken = default)
     {
-        var queryable = GetQueryable()
-            .Include(x => x.Client);
+        var queryable = GetQueryable();
 
         var query = ApplyFilter(queryable,
             clientId: clientId,
@@ -61,8 +60,7 @@ public sealed class EfCoreAnalysisContentRepository : EfCoreGenericRepository<An
     public async Task<List<AnalysisContent>> GetFilterListAsync(Guid? clientId = null, DateTime? analysisStartDate = null, DateTime? analysisEndDate = null, AnalysisContentOperationStates? status = null, string sorting = null,
         CancellationToken cancellationToken = default)
     {
-        var queryable = GetQueryable()
-            .Include(x => x.Client);
+        var queryable = GetQueryable();
 
         var query = ApplyFilter(queryable,
             clientId: clientId,

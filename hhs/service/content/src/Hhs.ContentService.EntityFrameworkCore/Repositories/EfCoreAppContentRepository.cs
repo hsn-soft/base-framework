@@ -26,22 +26,22 @@ public sealed class EfCoreAppContentRepository : EfCoreGenericRepository<AppCont
     }
 
     public async Task<AppContent> CreateAsync(
-        Guid tenantId,
-        Guid clientId,
+        Guid customerId,
+        Guid productTypeId,
         string slugKey,
         AppContentOperationStates operationStatus,
         string correlationId = null)
         => await CreateAsync(id: Guid.CreateVersion7(),
-            tenantId: tenantId,
-            clientId: clientId,
+            customerId: customerId,
+            productTypeId: productTypeId,
             slugKey: slugKey,
             operationStatus: operationStatus,
             correlationId: correlationId);
 
     public async Task<AppContent> CreateAsync(
         Guid id,
-        Guid tenantId,
-        Guid clientId,
+        Guid customerId,
+        Guid productTypeId,
         string slugKey,
         AppContentOperationStates operationStatus,
         string correlationId = null)
@@ -51,15 +51,15 @@ public sealed class EfCoreAppContentRepository : EfCoreGenericRepository<AppCont
         // Create draft
         var draft = new AppContent(
             id: id,
-            tenantId: tenantId,
-            clientId: clientId,
+            customerId: customerId,
+            productTypeId: productTypeId,
             slugKey: slugKey,
             operationStatus: operationStatus,
             correlationId: correlationId
         );
 
         //Domain Rules
-        await ContentDuplicateControlAsync(draft.ClientId, draft.SlugKey);
+        await ContentDuplicateControlAsync(draft.CustomerId, draft.SlugKey);
         _ = await InsertAsync(draft);
         return draft;
     }
@@ -225,24 +225,24 @@ public sealed class EfCoreAppContentRepository : EfCoreGenericRepository<AppCont
         await UpdateAsync(entity);
     }
 
-    public async Task<List<Guid>> GetClientDailyTrendContentIdsAsync(Guid clientId, ushort dailyTrendVideoWaitStatisticHour, CancellationToken cancellationToken = default)
+    public async Task<List<Guid>> GetCustomerDailyTrendContentIdsAsync(Guid customerId, ushort dailyTrendVideoWaitStatisticHour, CancellationToken cancellationToken = default)
     {
         var statisticMinTime = DateTime.UtcNow.AddHours(-1 * dailyTrendVideoWaitStatisticHour);
         var releaseMinDate = DateTime.UtcNow.Date;
         var releaseMaxDate = DateTime.UtcNow.Date.AddDays(1);
         return await GetDbSet().Where(x =>
-            x.ClientId == clientId
+            x.CustomerId == customerId
             && x.OperationStatus == AppContentOperationStates.VideoGenerationRejectedReturnAnalysisVideo
             && x.CreationTime < statisticMinTime // min one day waited on system
             && x.ReleaseTime != null && x.ReleaseTime < releaseMaxDate && x.ReleaseTime >= releaseMinDate).Select(x => x.Id).ToListAsync(cancellationToken);
     }
 
-    public async Task<List<Guid>> GetClientDailyAnalysisContentIdsAsync(Guid clientId, CancellationToken cancellationToken = default)
+    public async Task<List<Guid>> GetCustomerDailyAnalysisContentIdsAsync(Guid customerId, CancellationToken cancellationToken = default)
     {
         var releaseMinDate = DateTime.UtcNow.Date;
         var releaseMaxDate = DateTime.UtcNow.Date.AddDays(1);
         return await GetDbSet().Where(x =>
-            x.ClientId == clientId
+            x.CustomerId == customerId
             && x.OperationStatus != AppContentOperationStates.CreatedWaitForNormalize
             && x.OperationStatus != AppContentOperationStates.OperationFail
             && x.ReleaseTime != null && x.ReleaseTime < releaseMaxDate && x.ReleaseTime >= releaseMinDate).Select(x => x.Id).ToListAsync(cancellationToken);

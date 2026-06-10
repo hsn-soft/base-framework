@@ -1,4 +1,3 @@
-using Hhs.ContentService.Domain.ClientDomain.Entities;
 using Hhs.ContentService.Domain.Enums;
 using HsnSoft.Base;
 using HsnSoft.Base.Domain.Entities.Auditing;
@@ -14,7 +13,6 @@ public sealed class AnalysisContent : AuditedEntity<Guid>, ISoftDelete, IMultiTe
     public Guid TenantId { get; private set; }
 
     public Guid ClientId { get; set; }
-    [CanBeNull] public Client Client { get; set; }
 
     public DateTime AnalysisDate { get; set; }
 
@@ -35,9 +33,6 @@ public sealed class AnalysisContent : AuditedEntity<Guid>, ISoftDelete, IMultiTe
     {
         // Not-Null string fields
         AnalysisDate = DateTime.UtcNow.Date;
-
-        // Navigation fields
-        Client = null;
     }
 
     internal AnalysisContent(Guid tenantId, Guid clientId, DateTime analysisDate,

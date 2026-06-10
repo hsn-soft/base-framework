@@ -55,7 +55,7 @@ public sealed class EfCoreSeederService(IServiceScopeFactory serviceScopeFactory
             {
                 using (dataFilter.Disable<IMultiTenant>())
                 {
-                    await ClientSeeder.SeedAsync(dbContext, logger);
+                    await CustomerContentSettingSeeder.SeedAsync(dbContext, logger);
                 }
             }
             catch (Exception e)

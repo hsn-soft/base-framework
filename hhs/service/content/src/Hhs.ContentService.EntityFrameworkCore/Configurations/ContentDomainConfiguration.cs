@@ -16,27 +16,21 @@ public static class ContentDomainConfiguration
             b.ToTable(EfCoreDbProperties.DbTablePrefix + AppContentConsts.TableName, EfCoreDbProperties.DbSchema);
             b.HasKey(ci => ci.Id);
 
-            b.Property(x => x.ClientId).IsRequired();
-            b.Property(x => x.SlugKey).IsRequired().HasMaxLength(AppContentConsts.SlugKeyMaxLength);
+            b.Property(x => x.CustomerId).IsRequired();
+            b.Property(x => x.ProductTypeId).IsRequired();
+            b.Property(x => x.SlugKey).HasMaxLength(AppContentConsts.SlugKeyMaxLength).IsRequired();
             b.Property(x => x.OperationStatus).IsRequired();
-            b.Property(x => x.OperationStatusDescription);
+            b.Property(x => x.OperationStatusDescription).HasMaxLength(AppContentConsts.OperationStatusDescriptionMaxLength);
             b.Property(x => x.NormalizedRequestId);
             b.Property(x => x.ReleaseTime);
             b.Property(x => x.VideoRequestId);
-            b.Property(x => x.StorageVideoUrl);
-            b.Property(x => x.CorrelationId);
+            b.Property(x => x.StorageVideoUrl).HasMaxLength(AppContentConsts.StorageVideoUrlMaxLength);
+            b.Property(x => x.CorrelationId).HasMaxLength(AppContentConsts.CorrelationIdMaxLength);
 
             b.HasIndex(x => new { x.IsDeleted });
-            b.HasIndex(x => new { x.TenantId });
 
             b.HasIndex(x => new { x.OperationStatus });
-            b.HasIndex(x => new { x.IsDeleted, x.ClientId, x.SlugKey }).IsUnique();
-
-            b.HasOne(s => s.Client)
-                .WithMany()
-                .HasForeignKey(s => s.ClientId)
-                .OnDelete(deleteBehavior: DeleteBehavior.Restrict) //no cascade delete
-                .IsRequired();
+            b.HasIndex(x => new { x.IsDeleted, x.CustomerId, x.ProductTypeId, x.SlugKey }).IsUnique();
         });
     }
 
@@ -83,12 +77,6 @@ public static class ContentDomainConfiguration
 
             b.HasIndex(x => new { x.OperationStatus });
             b.HasIndex(x => new { x.ClientId });
-
-            b.HasOne(s => s.Client)
-                .WithMany()
-                .HasForeignKey(s => s.ClientId)
-                .OnDelete(deleteBehavior: DeleteBehavior.Restrict) //no cascade delete
-                .IsRequired();
         });
     }
 }

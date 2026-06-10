@@ -1,5 +1,5 @@
-using Hhs.ContentService.Domain.ClientDomain.Repositories;
 using Hhs.ContentService.Domain.ContentDomain.Repositories;
+using Hhs.ContentService.Domain.CustomerDomain.Repositories;
 using Hhs.ContentService.Domain.DashboardDomain.Repositories;
 using Hhs.ContentService.EntityFrameworkCore.Context;
 using Hhs.ContentService.EntityFrameworkCore.Repositories;
@@ -49,8 +49,8 @@ public static class EfCoreServiceCollectionExtensions
         // Must be Scoped => Cannot consume any scoped service and CurrentUser object creation on constructor
         services.AddScoped(typeof(IEfCoreGenericRepository<,>), typeof(EfCoreGenericRepository<,>));
 
-        services.AddScoped<IClientRepository, EfCoreClientRepository>();
-        services.AddScoped<IClientVideoGenerationHistoryRepository, EfCoreClientVideoGenerationHistoryRepository>();
+        services.AddScoped<ICustomerContentSettingRepository, EfCoreCustomerContentSettingRepository>();
+        services.AddScoped<ICustomerVideoGenerationHistory, EfCoreCustomerVideoGenerationHistoryRepository>();
 
         services.AddScoped<IAppContentRepository, EfCoreAppContentRepository>();
         services.AddScoped<IAppContentVisitRepository, EfCoreAppContentVisitRepository>();

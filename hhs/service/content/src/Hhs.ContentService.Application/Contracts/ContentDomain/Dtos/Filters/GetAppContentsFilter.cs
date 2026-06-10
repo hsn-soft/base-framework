@@ -6,7 +6,7 @@ namespace Hhs.ContentService.Application.Contracts.ContentDomain.Dtos.Filters;
 
 public sealed class GetAppContentsFilter : SortedAndLimitedDataRequestDto
 {
-    public Guid? ClientId { get; set; }
+    public Guid? CustomerId { get; set; }
 
     public DateTime? CreationTimeStart { get; set; }
     public DateTime? CreationTimeEnd { get; set; }
