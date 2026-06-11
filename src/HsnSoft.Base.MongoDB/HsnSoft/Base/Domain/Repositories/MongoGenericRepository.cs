@@ -12,6 +12,7 @@ using HsnSoft.Base.Domain.Models;
 using HsnSoft.Base.MongoDB;
 using HsnSoft.Base.MongoDB.Context;
 using HsnSoft.Base.MultiTenancy;
+using HsnSoft.Base.Subscribe;
 using LinqKit.Core;
 using MongoDB.Driver;
 
@@ -89,15 +90,75 @@ public class MongoGenericRepository<TEntity, TKey> :
         return Builders<TEntity>.Filter.In(nameof(IMultiTenant.TenantId), allowedTenantIds);
     }
 
+    private FilterDefinition<TEntity> BuildCustomerFilter()
+    {
+        if (!(DataFilter?.IsEnabled<ICustomerSubscription>() ?? false))
+        {
+            return Builders<TEntity>.Filter.Empty;
+        }
+
+        if (!typeof(ICustomerSubscription).IsAssignableFrom(typeof(TEntity)))
+        {
+            return Builders<TEntity>.Filter.Empty;
+        }
+
+        if (CurrentTenant?.IsSystemTenant ?? false)
+        {
+            return Builders<TEntity>.Filter.Empty;
+        }
+
+        var allowedCustomerIds = CurrentTenant?.AllowedCustomerIds ?? [];
+        if (allowedCustomerIds.Count == 0)
+        {
+            return Builders<TEntity>.Filter.Where(_ => false);
+        }
+
+        return Builders<TEntity>.Filter.In(nameof(ICustomerSubscription.CustomerId), allowedCustomerIds);
+    }
+
+    private FilterDefinition<TEntity> BuildScopeKeyFilter()
+    {
+        if (!(DataFilter?.IsEnabled<IScopeSubscription>() ?? false))
+        {
+            return Builders<TEntity>.Filter.Empty;
+        }
+
+        if (!typeof(IScopeSubscription).IsAssignableFrom(typeof(TEntity)))
+        {
+            return Builders<TEntity>.Filter.Empty;
+        }
+
+        if (CurrentTenant?.IsSystemTenant ?? false)
+        {
+            return Builders<TEntity>.Filter.Empty;
+        }
+
+        var allowedScopeKeys = CurrentTenant?.AllowedScopeKeys ?? [];
+        if (allowedScopeKeys.Count == 0)
+        {
+            return Builders<TEntity>.Filter.Where(_ => false);
+        }
+
+        return Builders<TEntity>.Filter.In(nameof(IScopeSubscription.ScopeKey), allowedScopeKeys);
+    }
+
     private FilterDefinition<TEntity> BuildGlobalFilter()
     {
         var filters = new List<FilterDefinition<TEntity>>();
 
         var tenantFilter = BuildTenantFilter();
+        var customerFilter = BuildCustomerFilter();
+        var scopeKeyFilter = BuildScopeKeyFilter();
         var softDeleteFilter = BuildSoftDeleteFilter();
 
         if (tenantFilter != Builders<TEntity>.Filter.Empty)
             filters.Add(tenantFilter);
+
+        if (customerFilter != Builders<TEntity>.Filter.Empty)
+            filters.Add(customerFilter);
+
+        if (scopeKeyFilter != Builders<TEntity>.Filter.Empty)
+            filters.Add(scopeKeyFilter);
 
         if (softDeleteFilter != Builders<TEntity>.Filter.Empty)
             filters.Add(softDeleteFilter);

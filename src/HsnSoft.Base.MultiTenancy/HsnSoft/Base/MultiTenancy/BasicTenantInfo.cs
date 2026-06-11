@@ -15,20 +15,23 @@ public class BasicTenantInfo
 
     public List<Guid> AllowedTenantIds { get; }
 
-    public List<Subscription> AllowedSubscriptions { get; }
+    public List<Guid> AllowedCustomerIds { get; }
 
+    public List<string> AllowedScopeKeys { get; }
 
     public BasicTenantInfo(
         Guid? tenantId,
         bool isSystemTenant,
         [CanBeNull] List<Guid> allowedTenantIds,
-        [CanBeNull] List<Subscription> allowedSubscriptions,
+        [CanBeNull] List<Guid> allowedCustomerIds,
+        [CanBeNull] List<string> allowedScopeKeys,
         [CanBeNull] string tenantNormalized = null)
     {
         TenantId = tenantId;
         TenantNormalized = tenantNormalized;
         IsSystemTenant = isSystemTenant;
         AllowedTenantIds = allowedTenantIds ?? [];
-        AllowedSubscriptions = allowedSubscriptions ?? [];
+        AllowedCustomerIds = allowedCustomerIds ?? [];
+        AllowedScopeKeys = allowedScopeKeys ?? [];
     }
 }

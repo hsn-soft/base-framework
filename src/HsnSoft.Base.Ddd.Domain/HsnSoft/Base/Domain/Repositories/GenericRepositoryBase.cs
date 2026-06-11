@@ -235,64 +235,47 @@ public abstract class GenericRepositoryBase<TEntity, TKey>(IServiceProvider prov
             }
         }
 
-        if (typeof(ISubscription).IsAssignableFrom(typeof(TOtherEntity)))
+        if (typeof(ICustomerSubscription).IsAssignableFrom(typeof(TOtherEntity)))
         {
-            if (DataFilter?.IsEnabled<ISubscription>() ?? false)
+            if (DataFilter?.IsEnabled<ICustomerSubscription>() ?? false)
             {
                 if (!(CurrentTenant?.IsSystemTenant ?? false))
                 {
-                    var scopes = CurrentTenant?.AllowedSubscriptions ?? [];
+                    var allowedCustomerIds = CurrentTenant?.AllowedCustomerIds ?? [];
 
-                    if (scopes.Count == 0)
+                    if (allowedCustomerIds.Count == 0)
                     {
                         query = (TQueryable)query.Where(_ => false);
                     }
                     else
                     {
-                        // TODO: ScopeKey = ClientId + ":" + ProductTypeId -> same logic TenantId's
-                        //  query = (TQueryable)query.Where(e => allowedScopes.Contains(((ISubscriptionScope)e).ScopeKey));
+                        query = (TQueryable)query.Where(e => allowedCustomerIds.Contains(((ICustomerSubscription)e).CustomerId));
+                    }
+                }
+            }
+        }
 
-                        var predicate = BuildSubscriptionScopePredicate<TOtherEntity>(scopes);
-                        query = (TQueryable)query.Where(predicate);
+        if (typeof(IScopeSubscription).IsAssignableFrom(typeof(TOtherEntity)))
+        {
+            if (DataFilter?.IsEnabled<IScopeSubscription>() ?? false)
+            {
+                if (!(CurrentTenant?.IsSystemTenant ?? false))
+                {
+                    var allowedScopeKeys = CurrentTenant?.AllowedScopeKeys ?? [];
+
+                    if (allowedScopeKeys.Count == 0)
+                    {
+                        query = (TQueryable)query.Where(_ => false);
+                    }
+                    else
+                    {
+                        query = (TQueryable)query.Where(e => allowedScopeKeys.Contains(((IScopeSubscription)e).ScopeKey));
                     }
                 }
             }
         }
 
         return query;
-    }
-
-    private static Expression<Func<TOtherEntity, bool>> BuildSubscriptionScopePredicate<TOtherEntity>(IReadOnlyCollection<Subscription> scopes)
-    {
-        var parameter = Expression.Parameter(typeof(TOtherEntity), "e");
-
-        var converted = Expression.Convert(parameter, typeof(ISubscription));
-
-        var customerIdProperty = Expression.Property(converted, nameof(ISubscription.CustomerId));
-        var productTypeIdProperty = Expression.Property(converted, nameof(ISubscription.ProductTypeId));
-
-        Expression body = null;
-
-        foreach (var scope in scopes)
-        {
-            var customerEquals = Expression.Equal(
-                customerIdProperty,
-                Expression.Constant(scope.CustomerId));
-
-            var productEquals = Expression.Equal(
-                productTypeIdProperty,
-                Expression.Constant(scope.ProductTypeId));
-
-            var pairEquals = Expression.AndAlso(customerEquals, productEquals);
-
-            body = body == null
-                ? pairEquals
-                : Expression.OrElse(body, pairEquals);
-        }
-
-        body ??= Expression.Constant(false);
-
-        return Expression.Lambda<Func<TOtherEntity, bool>>(body, parameter);
     }
 
     #endregion

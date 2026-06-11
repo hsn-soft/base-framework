@@ -38,19 +38,8 @@ public sealed class CurrentUser(ICurrentPrincipalAccessor principalAccessor) : I
     public string TenantNormalized => FindClaim(BaseClaimTypes.TenantNormalized)?.Value;
     public bool IsSystemTenant => string.Equals(FindClaim(BaseClaimTypes.IsSystemTenant)?.Value, "true", StringComparison.InvariantCultureIgnoreCase);
     public List<Guid> AllowedTenantIds => principalAccessor?.Principal?.FindAllowedTenantIds() ?? [];
-
-    public List<Subscription> AllowedSubscriptions
-    {
-        get
-        {
-            var claim = FindClaim(BaseClaimTypes.AllowedSubscription);
-
-            if (claim == null || string.IsNullOrWhiteSpace(claim.Value))
-                return [];
-
-            return JsonSerializer.Deserialize<List<Subscription>>(claim.Value) ?? [];
-        }
-    }
+    public List<Guid> AllowedCustomerIds => principalAccessor?.Principal?.FindAllowedCustomerIds() ?? [];
+    public List<string> AllowedScopeKeys => principalAccessor?.Principal?.FindAllowedScopeKeys() ?? [];
 
 
     public string[] RoleKeys => FindClaims(BaseClaimTypes.Role).Select(c => c.Value).Distinct().ToArray();

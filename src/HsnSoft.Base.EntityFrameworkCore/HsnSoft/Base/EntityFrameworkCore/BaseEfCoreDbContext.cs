@@ -25,7 +25,11 @@ namespace HsnSoft.Base.EntityFrameworkCore;
 
 public abstract class BaseEfCoreDbContext<TDbContext> : DbContext where TDbContext : DbContext
 {
-    private bool IsMultiTenantFilterEnabled => DataFilter?.IsEnabled<IMultiTenant>() ?? true;
+    private bool IsMultiTenantFilterEnabled2 => DataFilter?.IsEnabled<IMultiTenant>() ?? true;
+    private bool IsSoftDeleteFilterEnabled => DataFilter?.IsEnabled<ISoftDelete>() ?? false;
+    private bool IsCustomerSubscriptionFilterEnabled => DataFilter?.IsEnabled<ICustomerSubscription>() ?? false;
+    private bool IsScopeSubscriptionFilterEnabled => DataFilter?.IsEnabled<IScopeSubscription>() ?? false;
+
 
     private Guid? CurrentTenantId => CurrentTenant?.Id;
 
@@ -33,13 +37,16 @@ public abstract class BaseEfCoreDbContext<TDbContext> : DbContext where TDbConte
 
     private bool IsSystemTenant => CurrentTenant?.IsSystemTenant ?? false;
 
-    private IReadOnlyList<Guid> AllowedTenantIds => CurrentTenant?.AllowedTenantIds ?? [];
-    private bool HasAllowedTenantIds => AllowedTenantIds.Count > 0;
+    private IReadOnlyList<Guid> AllowedTenantIds2 => CurrentTenant?.AllowedTenantIds ?? [];
+    private bool HasAllowedTenantIds2 => AllowedTenantIds2.Count > 0;
 
-    private IReadOnlyList<Subscription> AllowedSubscriptions => CurrentTenant?.AllowedSubscriptions ?? [];
-    private bool HasAllowedSubscriptionScopes => AllowedSubscriptions.Count > 0;
+    private IReadOnlyList<Guid> AllowedCustomerIds => CurrentTenant?.AllowedCustomerIds ?? [];
+    private bool HasAllowedCustomerIds => AllowedCustomerIds.Count > 0;
 
-    private bool IsSoftDeleteFilterEnabled => DataFilter?.IsEnabled<ISoftDelete>() ?? false;
+    private IReadOnlyList<string> AllowedScopeKeys => CurrentTenant?.AllowedScopeKeys ?? [];
+    private bool HasAllowedScopeKeys => AllowedScopeKeys.Count > 0;
+
+
 
     [CanBeNull] private IDataFilter DataFilter { get; }
 
@@ -408,7 +415,12 @@ public abstract class BaseEfCoreDbContext<TDbContext> : DbContext where TDbConte
             return true;
         }
 
-        if (typeof(ISubscription).IsAssignableFrom(typeof(TEntity)))
+        if (typeof(ICustomerSubscription).IsAssignableFrom(typeof(TEntity)))
+        {
+            return true;
+        }
+
+        if (typeof(IScopeSubscription).IsAssignableFrom(typeof(TEntity)))
         {
             return true;
         }
@@ -436,12 +448,12 @@ public abstract class BaseEfCoreDbContext<TDbContext> : DbContext where TDbConte
         if (typeof(IMultiTenant).IsAssignableFrom(typeof(TEntity)))
         {
             Expression<Func<TEntity, bool>> multiTenantFilter = e =>
-                !IsMultiTenantFilterEnabled
+                !IsMultiTenantFilterEnabled2
                 || IsSystemTenant
                 || (
                     HasTenantContext &&
-                    HasAllowedTenantIds &&
-                    AllowedTenantIds.Contains(EF.Property<Guid>(e, "TenantId"))
+                    HasAllowedTenantIds2 &&
+                    AllowedTenantIds2.Contains(EF.Property<Guid>(e, "TenantId"))
                 );
 
             expression = expression == null
@@ -449,22 +461,34 @@ public abstract class BaseEfCoreDbContext<TDbContext> : DbContext where TDbConte
                 : CombineExpressions(expression, multiTenantFilter);
         }
 
-        if (typeof(ISubscription).IsAssignableFrom(typeof(TEntity)))
+        if (typeof(ICustomerSubscription).IsAssignableFrom(typeof(TEntity)))
         {
-            // TODO: ScopeKey = ClientId + ":" + ProductTypeId -> same logic TenantId's
-            //  Expression<Func<TEntity, bool>> multiTenantFilter = e =>
-            //     !IsSubscriptionFilterEnabled
-            //     || IsSystemTenant
-            //     || (
-            //         HasAllowedSubscriptionScopes &&
-            //         AllowedSubscriptions.Contains(EF.Property<string>(e, "ScopeKey"))
-            //     );
-
-            var subscriptionFilter = BuildSubscriptionFilter<TEntity>();
+            Expression<Func<TEntity, bool>> multiCustomerFilter = e =>
+                !IsCustomerSubscriptionFilterEnabled
+                || IsSystemTenant
+                || (
+                    HasAllowedCustomerIds &&
+                    AllowedCustomerIds.Contains(EF.Property<Guid>(e, "CustomerId"))
+                );
 
             expression = expression == null
-                ? subscriptionFilter
-                : CombineExpressions(expression, subscriptionFilter);
+                ? multiCustomerFilter
+                : CombineExpressions(expression, multiCustomerFilter);
+        }
+
+        if (typeof(IScopeSubscription).IsAssignableFrom(typeof(TEntity)))
+        {
+            Expression<Func<TEntity, bool>> multiScopeKeyFilter = e =>
+                !IsScopeSubscriptionFilterEnabled
+                || IsSystemTenant
+                || (
+                    HasAllowedScopeKeys &&
+                    AllowedScopeKeys.Contains(EF.Property<string>(e, "ScopeKey"))
+                );
+
+            expression = expression == null
+                ? multiScopeKeyFilter
+                : CombineExpressions(expression, multiScopeKeyFilter);
         }
 
         return expression;
@@ -503,43 +527,6 @@ public abstract class BaseEfCoreDbContext<TDbContext> : DbContext where TDbConte
 
             return base.Visit(node);
         }
-    }
-
-    protected virtual Expression<Func<TEntity, bool>> BuildSubscriptionFilter<TEntity>() where TEntity : class
-    {
-        var entityParam = Expression.Parameter(typeof(TEntity), "e");
-
-        Expression body = Expression.Constant(!DataFilter.IsEnabled<ISubscription>() || IsSystemTenant);
-
-        if (HasAllowedSubscriptionScopes)
-        {
-            Expression scopeExpression = null;
-
-            foreach (var scope in AllowedSubscriptions)
-            {
-                var customerExpr = Expression.Equal(
-                    Expression.Property(
-                        entityParam,
-                        nameof(ISubscription.CustomerId)),
-                    Expression.Constant(scope.CustomerId));
-
-                var productExpr = Expression.Equal(
-                    Expression.Property(
-                        entityParam,
-                        nameof(ISubscription.ProductTypeId)),
-                    Expression.Constant(scope.ProductTypeId));
-
-                var pairExpr = Expression.AndAlso(customerExpr, productExpr);
-
-                scopeExpression = scopeExpression == null
-                        ? pairExpr
-                        : Expression.OrElse(scopeExpression, pairExpr);
-            }
-
-            body = Expression.OrElse(body, scopeExpression);
-        }
-
-        return Expression.Lambda<Func<TEntity, bool>>(body, entityParam);
     }
 
     #endregion
