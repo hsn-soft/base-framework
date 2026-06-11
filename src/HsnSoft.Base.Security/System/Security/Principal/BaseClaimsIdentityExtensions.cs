@@ -68,28 +68,28 @@ public static class BaseClaimsIdentityExtensions
         return results;
     }
 
-    public static List<Guid> FindAllowedCustomerIds([NotNull] this ClaimsPrincipal principal)
-    {
-        Check.NotNull(principal, nameof(principal));
-
-        var idList = principal?.Claims?.Where(c => c.Type == BaseClaimTypes.AllowedCustomerId).ToList();
-        if (idList is not { Count: > 0 })
-        {
-            return [];
-        }
-
-        List<Guid> results = [];
-        var checkedList = idList.Where(x => !string.IsNullOrEmpty(x.Value)).ToList();
-        foreach (var checkedId in checkedList)
-        {
-            if (Guid.TryParse(checkedId.Value, out var guid) && !results.Contains(guid))
-            {
-                results.Add(guid);
-            }
-        }
-
-        return results;
-    }
+    // public static List<Guid> FindAllowedCustomerIds([NotNull] this ClaimsPrincipal principal)
+    // {
+    //     Check.NotNull(principal, nameof(principal));
+    //
+    //     var idList = principal?.Claims?.Where(c => c.Type == BaseClaimTypes.AllowedCustomerId).ToList();
+    //     if (idList is not { Count: > 0 })
+    //     {
+    //         return [];
+    //     }
+    //
+    //     List<Guid> results = [];
+    //     var checkedList = idList.Where(x => !string.IsNullOrEmpty(x.Value)).ToList();
+    //     foreach (var checkedId in checkedList)
+    //     {
+    //         if (Guid.TryParse(checkedId.Value, out var guid) && !results.Contains(guid))
+    //         {
+    //             results.Add(guid);
+    //         }
+    //     }
+    //
+    //     return results;
+    // }
 
     public static List<string> FindAllowedScopeKeys([NotNull] this ClaimsPrincipal principal)
     {

@@ -235,25 +235,25 @@ public abstract class GenericRepositoryBase<TEntity, TKey>(IServiceProvider prov
             }
         }
 
-        if (typeof(ICustomerSubscription).IsAssignableFrom(typeof(TOtherEntity)))
-        {
-            if (DataFilter?.IsEnabled<ICustomerSubscription>() ?? false)
-            {
-                if (!(CurrentTenant?.IsSystemTenant ?? false))
-                {
-                    var allowedCustomerIds = CurrentTenant?.AllowedCustomerIds ?? [];
-
-                    if (allowedCustomerIds.Count == 0)
-                    {
-                        query = (TQueryable)query.Where(_ => false);
-                    }
-                    else
-                    {
-                        query = (TQueryable)query.Where(e => allowedCustomerIds.Contains(((ICustomerSubscription)e).CustomerId));
-                    }
-                }
-            }
-        }
+        // if (typeof(ICustomerSubscription).IsAssignableFrom(typeof(TOtherEntity)))
+        // {
+        //     if (DataFilter?.IsEnabled<ICustomerSubscription>() ?? false)
+        //     {
+        //         if (!(CurrentTenant?.IsSystemTenant ?? false))
+        //         {
+        //             var allowedCustomerIds = CurrentTenant?.AllowedCustomerIds ?? [];
+        //
+        //             if (allowedCustomerIds.Count == 0)
+        //             {
+        //                 query = (TQueryable)query.Where(_ => false);
+        //             }
+        //             else
+        //             {
+        //                 query = (TQueryable)query.Where(e => allowedCustomerIds.Contains(((ICustomerSubscription)e).CustomerId));
+        //             }
+        //         }
+        //     }
+        // }
 
         if (typeof(IScopeSubscription).IsAssignableFrom(typeof(TOtherEntity)))
         {

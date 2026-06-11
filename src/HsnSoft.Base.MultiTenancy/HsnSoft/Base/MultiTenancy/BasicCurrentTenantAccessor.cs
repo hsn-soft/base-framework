@@ -24,7 +24,7 @@ public class BasicCurrentTenantAccessor : ICurrentTenantAccessor
                 tenantId: currentUser?.TenantId,
                 isSystemTenant: currentUser?.IsSystemTenant ?? false,
                 allowedTenantIds: currentUser?.AllowedTenantIds ?? [],
-                allowedCustomerIds: currentUser?.AllowedCustomerIds ?? [],
+                // allowedCustomerIds: currentUser?.AllowedCustomerIds ?? [],
                 allowedScopeKeys: currentUser?.AllowedScopeKeys ?? [],
                 tenantNormalized: currentUser?.TenantNormalized
             )

@@ -15,7 +15,7 @@ public class BasicTenantInfo
 
     public List<Guid> AllowedTenantIds { get; }
 
-    public List<Guid> AllowedCustomerIds { get; }
+    // public List<Guid> AllowedCustomerIds { get; }
 
     public List<string> AllowedScopeKeys { get; }
 
@@ -23,7 +23,7 @@ public class BasicTenantInfo
         Guid? tenantId,
         bool isSystemTenant,
         [CanBeNull] List<Guid> allowedTenantIds,
-        [CanBeNull] List<Guid> allowedCustomerIds,
+        // [CanBeNull] List<Guid> allowedCustomerIds,
         [CanBeNull] List<string> allowedScopeKeys,
         [CanBeNull] string tenantNormalized = null)
     {
@@ -31,7 +31,7 @@ public class BasicTenantInfo
         TenantNormalized = tenantNormalized;
         IsSystemTenant = isSystemTenant;
         AllowedTenantIds = allowedTenantIds ?? [];
-        AllowedCustomerIds = allowedCustomerIds ?? [];
+        // AllowedCustomerIds = allowedCustomerIds ?? [];
         AllowedScopeKeys = allowedScopeKeys ?? [];
     }
 }

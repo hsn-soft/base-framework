@@ -90,31 +90,31 @@ public class MongoGenericRepository<TEntity, TKey> :
         return Builders<TEntity>.Filter.In(nameof(IMultiTenant.TenantId), allowedTenantIds);
     }
 
-    private FilterDefinition<TEntity> BuildCustomerFilter()
-    {
-        if (!(DataFilter?.IsEnabled<ICustomerSubscription>() ?? false))
-        {
-            return Builders<TEntity>.Filter.Empty;
-        }
-
-        if (!typeof(ICustomerSubscription).IsAssignableFrom(typeof(TEntity)))
-        {
-            return Builders<TEntity>.Filter.Empty;
-        }
-
-        if (CurrentTenant?.IsSystemTenant ?? false)
-        {
-            return Builders<TEntity>.Filter.Empty;
-        }
-
-        var allowedCustomerIds = CurrentTenant?.AllowedCustomerIds ?? [];
-        if (allowedCustomerIds.Count == 0)
-        {
-            return Builders<TEntity>.Filter.Where(_ => false);
-        }
-
-        return Builders<TEntity>.Filter.In(nameof(ICustomerSubscription.CustomerId), allowedCustomerIds);
-    }
+    // private FilterDefinition<TEntity> BuildCustomerFilter()
+    // {
+    //     if (!(DataFilter?.IsEnabled<ICustomerSubscription>() ?? false))
+    //     {
+    //         return Builders<TEntity>.Filter.Empty;
+    //     }
+    //
+    //     if (!typeof(ICustomerSubscription).IsAssignableFrom(typeof(TEntity)))
+    //     {
+    //         return Builders<TEntity>.Filter.Empty;
+    //     }
+    //
+    //     if (CurrentTenant?.IsSystemTenant ?? false)
+    //     {
+    //         return Builders<TEntity>.Filter.Empty;
+    //     }
+    //
+    //     var allowedCustomerIds = CurrentTenant?.AllowedCustomerIds ?? [];
+    //     if (allowedCustomerIds.Count == 0)
+    //     {
+    //         return Builders<TEntity>.Filter.Where(_ => false);
+    //     }
+    //
+    //     return Builders<TEntity>.Filter.In(nameof(ICustomerSubscription.CustomerId), allowedCustomerIds);
+    // }
 
     private FilterDefinition<TEntity> BuildScopeKeyFilter()
     {
@@ -147,19 +147,18 @@ public class MongoGenericRepository<TEntity, TKey> :
         var filters = new List<FilterDefinition<TEntity>>();
 
         var tenantFilter = BuildTenantFilter();
-        var customerFilter = BuildCustomerFilter();
-        var scopeKeyFilter = BuildScopeKeyFilter();
-        var softDeleteFilter = BuildSoftDeleteFilter();
-
         if (tenantFilter != Builders<TEntity>.Filter.Empty)
             filters.Add(tenantFilter);
 
-        if (customerFilter != Builders<TEntity>.Filter.Empty)
-            filters.Add(customerFilter);
+        // var customerFilter = BuildCustomerFilter();
+        // if (customerFilter != Builders<TEntity>.Filter.Empty)
+        //     filters.Add(customerFilter);
 
+        var scopeKeyFilter = BuildScopeKeyFilter();
         if (scopeKeyFilter != Builders<TEntity>.Filter.Empty)
             filters.Add(scopeKeyFilter);
 
+        var softDeleteFilter = BuildSoftDeleteFilter();
         if (softDeleteFilter != Builders<TEntity>.Filter.Empty)
             filters.Add(softDeleteFilter);
 

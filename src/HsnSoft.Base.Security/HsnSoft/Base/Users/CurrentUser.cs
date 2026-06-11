@@ -38,7 +38,7 @@ public sealed class CurrentUser(ICurrentPrincipalAccessor principalAccessor) : I
     public string TenantNormalized => FindClaim(BaseClaimTypes.TenantNormalized)?.Value;
     public bool IsSystemTenant => string.Equals(FindClaim(BaseClaimTypes.IsSystemTenant)?.Value, "true", StringComparison.InvariantCultureIgnoreCase);
     public List<Guid> AllowedTenantIds => principalAccessor?.Principal?.FindAllowedTenantIds() ?? [];
-    public List<Guid> AllowedCustomerIds => principalAccessor?.Principal?.FindAllowedCustomerIds() ?? [];
+    // public List<Guid> AllowedCustomerIds => principalAccessor?.Principal?.FindAllowedCustomerIds() ?? [];
     public List<string> AllowedScopeKeys => principalAccessor?.Principal?.FindAllowedScopeKeys() ?? [];
 
 

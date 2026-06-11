@@ -17,7 +17,7 @@ public interface ICurrentTenant
 
     [NotNull] List<Guid> AllowedTenantIds { get; }
 
-    [NotNull] List<Guid> AllowedCustomerIds { get; }
+    // [NotNull] List<Guid> AllowedCustomerIds { get; }
 
     [NotNull] List<string> AllowedScopeKeys { get; }
 
@@ -25,7 +25,7 @@ public interface ICurrentTenant
         Guid? id,
         bool isSystemTenant,
         [CanBeNull] List<Guid> allowedTenantIds,
-        [CanBeNull] List<Guid> allowedCustomerIds,
+        // [CanBeNull] List<Guid> allowedCustomerIds,
         [CanBeNull] List<string> allowedScopeKeys,
         [CanBeNull] string normalized = null
     );
