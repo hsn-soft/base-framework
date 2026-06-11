@@ -126,25 +126,25 @@ public sealed class TokenService
 
                 if (roles is { Count: > 0 })
                 {
-                    foreach (var role in roles)
-                    {
-                        claims.AddRange(role.Subscriptions.Select(s
-                            => new Claim(
-                                BaseClaimTypes.AllowedCustomerId,
-                                s.Subscription.CustomerId.ToString()
-                            )
-                        ));
-                    }
-
                     // foreach (var role in roles)
                     // {
                     //     claims.AddRange(role.Subscriptions.Select(s
                     //         => new Claim(
-                    //             BaseClaimTypes.AllowedScopeKey,
-                    //             $"{s.Subscription.CustomerId:N}:{s.Subscription.ProductType.ToPrompt()}"
+                    //             BaseClaimTypes.AllowedCustomerId,
+                    //             s.Subscription.CustomerId.ToString()
                     //         )
                     //     ));
                     // }
+
+                    foreach (var role in roles)
+                    {
+                        claims.AddRange(role.Subscriptions.Select(s
+                            => new Claim(
+                                BaseClaimTypes.AllowedScopeKey,
+                                $"{s.Subscription.CustomerId:N}:{s.Subscription.ProductType.ToPrompt()}"
+                            )
+                        ));
+                    }
                 }
             }
         }
