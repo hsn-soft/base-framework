@@ -1,4 +1,4 @@
-using Hhs.IdentityService.Domain.Enums;
+using Hhs.Shared.Helper.Enums;
 using Hhs.Shared.Localization;
 using HsnSoft.Base;
 using HsnSoft.Base.Domain.Entities.Auditing;
