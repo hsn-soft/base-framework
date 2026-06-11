@@ -9,7 +9,6 @@ public interface IAppContentRepository : IReadOnlyGenericRepository<AppContent, 
 {
     Task<AppContent> CreateAsync(
         Guid customerId,
-        Guid productTypeId,
         [NotNull] string slugKey,
         AppContentOperationStates operationStatus,
         [CanBeNull] string correlationId = null);
@@ -17,7 +16,6 @@ public interface IAppContentRepository : IReadOnlyGenericRepository<AppContent, 
     Task<AppContent> CreateAsync(
         Guid id,
         Guid customerId,
-        Guid productTypeId,
         [NotNull] string slugKey,
         AppContentOperationStates operationStatus,
         [CanBeNull] string correlationId = null);

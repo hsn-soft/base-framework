@@ -208,8 +208,7 @@ public sealed class AppContentPublicAppService(
 
             // Add appContent record
             var placed = await appContentRepository.CreateAsync(
-                customerId: clientCheck.TenantId,
-                productTypeId: clientCheck.Id,
+                customerId: clientCheck.Id,
                 slugKey: normalizedSlugKey,
                 operationStatus: AppContentOperationStates.CreatedWaitForNormalize,
                 correlationId: traceAccessor?.GetCorrelationId());

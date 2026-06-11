@@ -27,13 +27,11 @@ public sealed class EfCoreAppContentRepository : EfCoreGenericRepository<AppCont
 
     public async Task<AppContent> CreateAsync(
         Guid customerId,
-        Guid productTypeId,
         string slugKey,
         AppContentOperationStates operationStatus,
         string correlationId = null)
         => await CreateAsync(id: Guid.CreateVersion7(),
             customerId: customerId,
-            productTypeId: productTypeId,
             slugKey: slugKey,
             operationStatus: operationStatus,
             correlationId: correlationId);
@@ -41,7 +39,6 @@ public sealed class EfCoreAppContentRepository : EfCoreGenericRepository<AppCont
     public async Task<AppContent> CreateAsync(
         Guid id,
         Guid customerId,
-        Guid productTypeId,
         string slugKey,
         AppContentOperationStates operationStatus,
         string correlationId = null)
@@ -52,7 +49,6 @@ public sealed class EfCoreAppContentRepository : EfCoreGenericRepository<AppCont
         var draft = new AppContent(
             id: id,
             customerId: customerId,
-            productTypeId: productTypeId,
             slugKey: slugKey,
             operationStatus: operationStatus,
             correlationId: correlationId
@@ -92,7 +88,7 @@ public sealed class EfCoreAppContentRepository : EfCoreGenericRepository<AppCont
             throw new AppContentStateException(L, id.ToString());
         }
 
-        oldEntity.NormalizedRequestId=normalizedRequestId;
+        oldEntity.NormalizedRequestId = normalizedRequestId;
         if (isNormalizedSuccess)
         {
             oldEntity.OperationStatus = AppContentOperationStates.NormalizedWaitForVideoGenerationApprove;
@@ -167,7 +163,7 @@ public sealed class EfCoreAppContentRepository : EfCoreGenericRepository<AppCont
             throw new AppContentStateException(L, id.ToString());
         }
 
-        oldEntity.VideoRequestId=videoRequestId;
+        oldEntity.VideoRequestId = videoRequestId;
         if (isGenerateSuccess)
         {
             oldEntity.OperationStatus = AppContentOperationStates.OperationSuccess;

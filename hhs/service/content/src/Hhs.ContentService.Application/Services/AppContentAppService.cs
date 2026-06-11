@@ -27,14 +27,14 @@ public sealed class AppContentAppService : ApplicationServiceBase, IAppContentAp
     private readonly IFrameworkLogger _logger;
     private readonly ContentOperationSettings _serviceSettings;
     private readonly IAppContentRepository _appContentRepository;
-    private readonly ICustomerContentSettingRepository _clientRepository;
+    private readonly ICustomerContentSettingRepository _customerContentSettingRepository;
     private readonly ICustomerVideoGenerationHistory _clientVideoGenerationHistoryRepository;
     private readonly IAppContentVisitRepository _appContentVisitRepository;
 
     public AppContentAppService(IServiceProvider provider,
         IOptions<ContentOperationSettings> serviceSettings,
         IAppContentRepository appContentRepository,
-        ICustomerContentSettingRepository clientRepository,
+        ICustomerContentSettingRepository customerContentSettingRepository,
         ICustomerVideoGenerationHistory clientVideoGenerationHistoryRepository,
         IAppContentVisitRepository appContentVisitRepository
     ) : base(provider)
@@ -42,7 +42,7 @@ public sealed class AppContentAppService : ApplicationServiceBase, IAppContentAp
         _logger = provider.GetRequiredService<IFrameworkLogger>();
         _serviceSettings = serviceSettings?.Value ?? throw new ArgumentNullException(nameof(serviceSettings));
         _appContentRepository = appContentRepository;
-        _clientRepository = clientRepository;
+        _customerContentSettingRepository = customerContentSettingRepository;
         _clientVideoGenerationHistoryRepository = clientVideoGenerationHistoryRepository;
         _appContentVisitRepository = appContentVisitRepository;
     }
@@ -206,27 +206,27 @@ public sealed class AppContentAppService : ApplicationServiceBase, IAppContentAp
         {
             _logger.FrameworkInfoLog(LogHelper.Generate(
                 message: "AppContent normalized success",
-                reference: new { placed.CustomerId, placed.ProductTypeId, RefContentId = placed.Id, placed.NormalizedRequestId },
+                reference: new { placed.CustomerId, RefContentId = placed.Id, placed.NormalizedRequestId },
                 facility: AppContentOperationFacilities.APP_CONTENT_NORMALIZED_SUCCESS,
                 correlationId: correlationId,
                 exception: null
             ));
 
-            var checkResult = await CheckVideoGenerationApproveRules(placed.CustomerId, placed.ProductTypeId, placed.ReleaseTime);
+            var checkResult = await CheckVideoGenerationApproveRules(placed.CustomerId, placed.CustomerId, placed.ReleaseTime);
             if (checkResult.Key)
             {
                 await _appContentRepository.SetVideoGenerationApprovedAsync(id: appContentId);
 
                 _logger.FrameworkInfoLog(LogHelper.Generate(
                     message: "AppContent video generation approved",
-                    reference: new { placed.CustomerId, placed.ProductTypeId, RefContentId = placed.Id, placed.NormalizedRequestId },
+                    reference: new { placed.CustomerId, RefContentId = placed.Id, placed.NormalizedRequestId },
                     facility: AppContentOperationFacilities.APP_CONTENT_VIDEO_GENERATION_APPROVED,
                     correlationId: correlationId,
                     exception: null
                 ));
 
                 // Add video generation history for client quote control
-                await _clientVideoGenerationHistoryRepository.CreateAsync(tenantId: placed.CustomerId, customerId: placed.ProductTypeId,
+                await _clientVideoGenerationHistoryRepository.CreateAsync(tenantId: placed.CustomerId, customerId: placed.CustomerId,
                     videoGenerationDate: placed.ReleaseTime?.Date ?? DateTime.UtcNow.Date,
                     videoGenerationType: VideoGenerationTypes.DirectVideoGeneration,
                     contentReferenceIds: placed.Id.ToString());
@@ -246,7 +246,7 @@ public sealed class AppContentAppService : ApplicationServiceBase, IAppContentAp
 
                 _logger.FrameworkInfoLog(LogHelper.Generate(
                     message: "AppContent video generation rejected",
-                    reference: new { placed.CustomerId, placed.ProductTypeId, RefContentId = placed.Id, placed.NormalizedRequestId },
+                    reference: new { placed.CustomerId, RefContentId = placed.Id, placed.NormalizedRequestId },
                     facility: checkResult.Value,
                     correlationId: correlationId,
                     exception: null
@@ -257,7 +257,7 @@ public sealed class AppContentAppService : ApplicationServiceBase, IAppContentAp
         {
             _logger.FrameworkErrorLog(LogHelper.Generate(
                 message: "AppContent normalized fail",
-                reference: new { placed.CustomerId, placed.ProductTypeId, RefContentId = placed.Id, placed.NormalizedRequestId },
+                reference: new { placed.CustomerId, RefContentId = placed.Id, placed.NormalizedRequestId },
                 facility: AppContentOperationFacilities.APP_CONTENT_NORMALIZED_FAIL,
                 correlationId: correlationId,
                 exception: null
@@ -292,7 +292,7 @@ public sealed class AppContentAppService : ApplicationServiceBase, IAppContentAp
         {
             _logger.FrameworkInfoLog(LogHelper.Generate(
                 message: "Video generation success",
-                reference: new { placed.CustomerId, placed.ProductTypeId, RefContentId = placed.Id, placed.VideoRequestId },
+                reference: new { placed.CustomerId, RefContentId = placed.Id, placed.VideoRequestId },
                 facility: AppContentOperationFacilities.APP_CONTENT_VIDEO_GENERATION_SUCCESS,
                 correlationId: correlationId,
                 exception: null
@@ -302,7 +302,7 @@ public sealed class AppContentAppService : ApplicationServiceBase, IAppContentAp
         {
             _logger.FrameworkErrorLog(LogHelper.Generate(
                 message: "Video generation fail",
-                reference: new { placed.CustomerId, placed.ProductTypeId, RefContentId = placed.Id, placed.VideoRequestId },
+                reference: new { placed.CustomerId, RefContentId = placed.Id, placed.VideoRequestId },
                 facility: AppContentOperationFacilities.APP_CONTENT_VIDEO_GENERATION_FAIL,
                 correlationId: correlationId,
                 exception: null
@@ -321,7 +321,7 @@ public sealed class AppContentAppService : ApplicationServiceBase, IAppContentAp
 
         _logger.FrameworkErrorLog(LogHelper.Generate(
             message: $"AppContent status fail: {failedReason ?? string.Empty}",
-            reference: new { placed.CustomerId, placed.ProductTypeId, RefContentId = placed.Id },
+            reference: new { placed.CustomerId, RefContentId = placed.Id },
             facility: AppContentOperationFacilities.APP_CONTENT_STATUS_FAIL,
             correlationId: correlationId,
             exception: null
@@ -335,7 +335,7 @@ public sealed class AppContentAppService : ApplicationServiceBase, IAppContentAp
             throw new BaseHttpException((int)HttpStatusCode.BadRequest);
         }
 
-        var client = await _clientRepository.GetSingleOrDefaultAsync(x => x.Id == input.AppClientId);
+        var client = await _customerContentSettingRepository.GetSingleOrDefaultAsync(x => x.Id == input.AppClientId);
         if (client == null)
         {
             throw new BaseHttpException((int)HttpStatusCode.NotFound);
@@ -385,7 +385,7 @@ public sealed class AppContentAppService : ApplicationServiceBase, IAppContentAp
 
                                 _logger.FrameworkInfoLog(LogHelper.Generate(
                                     message: "Trend content video generation approved",
-                                    reference: new { placed.CustomerId, placed.ProductTypeId, AppContentId = placed.Id, placed.NormalizedRequestId },
+                                    reference: new { placed.CustomerId, AppContentId = placed.Id, placed.NormalizedRequestId },
                                     facility: AppContentOperationFacilities.APP_CONTENT_VIDEO_GENERATION_APPROVED,
                                     correlationId: placed.CorrelationId,
                                     exception: null
@@ -426,7 +426,7 @@ public sealed class AppContentAppService : ApplicationServiceBase, IAppContentAp
 
                                 _logger.FrameworkErrorLog(LogHelper.Generate(
                                     message: $"Trend content video generation rejected: {errorMessage}",
-                                    reference: new { placed.CustomerId, placed.ProductTypeId, AppContentId = placed.Id, placed.NormalizedRequestId },
+                                    reference: new { placed.CustomerId, AppContentId = placed.Id, placed.NormalizedRequestId },
                                     facility: AppContentOperationFacilities.VIDEO_GENERATION_SKIPPED_REGENERATION_FAILED,
                                     correlationId: placed.CorrelationId,
                                     exception: null
@@ -473,7 +473,7 @@ public sealed class AppContentAppService : ApplicationServiceBase, IAppContentAp
             ));
     }
 
-    private async Task<KeyValuePair<bool, string>> CheckVideoGenerationApproveRules(Guid tenantId, Guid clientId, DateTime? releaseTime)
+    private async Task<KeyValuePair<bool, string>> CheckVideoGenerationApproveRules(Guid tenantId, Guid customerContentSettingId, DateTime? releaseTime)
     {
         if (_serviceSettings.SkipContentCheckOperation)
         {
@@ -487,10 +487,10 @@ public sealed class AppContentAppService : ApplicationServiceBase, IAppContentAp
         }
 
         // Get Client Details
-        var client = await _clientRepository.GetSingleOrDefaultAsync(x => x.TenantId == tenantId && x.Id == clientId);
+        var client = await _customerContentSettingRepository.GetSingleOrDefaultAsync(x => x.TenantId == tenantId && x.Id == customerContentSettingId);
         if (client == null)
         {
-            throw new CustomerContentSettingNotFoundException(L, clientId.ToString());
+            throw new CustomerContentSettingNotFoundException(L, customerContentSettingId.ToString());
         }
 
         // Check client video generation started settings
@@ -509,7 +509,7 @@ public sealed class AppContentAppService : ApplicationServiceBase, IAppContentAp
         }
 
         // Check client direct video generation available
-        long clientDailyDirectVideoHistoryCount = await _clientVideoGenerationHistoryRepository.GetCustomerVideoHistoryCountAsync(clientId,
+        long clientDailyDirectVideoHistoryCount = await _clientVideoGenerationHistoryRepository.GetCustomerVideoHistoryCountAsync(customerContentSettingId,
             releaseTime.Value.ToUniversalTime().Date, VideoGenerationTypes.DirectVideoGeneration);
 
         return client.DailyDirectVideoGenerationLimit - clientDailyDirectVideoHistoryCount <= 0

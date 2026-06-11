@@ -9,13 +9,11 @@ using JetBrains.Annotations;
 
 namespace Hhs.ContentService.Domain.ContentDomain.Entities;
 
-public sealed class AppContent : AuditedEntity<Guid>, ISoftDelete, ISubscription
+public sealed class AppContent : AuditedEntity<Guid>, ISoftDelete, ICustomerSubscription
 {
     public bool IsDeleted { get; internal set; }
 
     public Guid CustomerId { get; private set; }
-
-    public Guid ProductTypeId { get; private set; }
 
     [NotNull] public string SlugKey { get; private set; }
 
@@ -40,18 +38,17 @@ public sealed class AppContent : AuditedEntity<Guid>, ISoftDelete, ISubscription
         SlugKey = string.Empty;
     }
 
-    internal AppContent(Guid customerId, Guid productTypeId, [NotNull] string slugKey,
+    internal AppContent(Guid customerId, [NotNull] string slugKey,
         AppContentOperationStates operationStatus, [CanBeNull] string correlationId = null)
-        : this(Guid.CreateVersion7(), customerId, productTypeId, slugKey, operationStatus, correlationId)
+        : this(Guid.CreateVersion7(), customerId, slugKey, operationStatus, correlationId)
     {
     }
 
-    internal AppContent(Guid id, Guid customerId, Guid productTypeId, [NotNull] string slugKey,
+    internal AppContent(Guid id, Guid customerId, [NotNull] string slugKey,
         AppContentOperationStates operationStatus, [CanBeNull] string correlationId = null) : this()
     {
         Id = id;
         CustomerId = customerId;
-        ProductTypeId = productTypeId;
 
         SetSlugKey(slugKey);
 

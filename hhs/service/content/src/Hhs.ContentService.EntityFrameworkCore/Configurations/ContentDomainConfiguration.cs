@@ -17,7 +17,6 @@ public static class ContentDomainConfiguration
             b.HasKey(ci => ci.Id);
 
             b.Property(x => x.CustomerId).IsRequired();
-            b.Property(x => x.ProductTypeId).IsRequired();
             b.Property(x => x.SlugKey).HasMaxLength(AppContentConsts.SlugKeyMaxLength).IsRequired();
             b.Property(x => x.OperationStatus).IsRequired();
             b.Property(x => x.OperationStatusDescription).HasMaxLength(AppContentConsts.OperationStatusDescriptionMaxLength);
@@ -30,7 +29,7 @@ public static class ContentDomainConfiguration
             b.HasIndex(x => new { x.IsDeleted });
 
             b.HasIndex(x => new { x.OperationStatus });
-            b.HasIndex(x => new { x.IsDeleted, x.CustomerId, x.ProductTypeId, x.SlugKey }).IsUnique();
+            b.HasIndex(x => new { x.IsDeleted, x.CustomerId, x.SlugKey }).IsUnique();
         });
     }
 
