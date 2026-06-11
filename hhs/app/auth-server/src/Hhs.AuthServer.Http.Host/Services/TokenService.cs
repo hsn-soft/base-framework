@@ -8,6 +8,7 @@ using Hhs.IdentityService.Domain.AppRoleDomain.Entities;
 using Hhs.IdentityService.Domain.AppUserDomain.Entities;
 using Hhs.IdentityService.Domain.Enums;
 using Hhs.IdentityService.Domain.TenantDomain.Entities;
+using Hhs.Shared.Helper.Utils;
 using HsnSoft.Base.Security.Claims;
 using JetBrains.Annotations;
 using Microsoft.IdentityModel.Tokens;
@@ -125,55 +126,25 @@ public sealed class TokenService
 
                 if (roles is { Count: > 0 })
                 {
-                    var allowedSubscriptions = new List<HsnSoft.Base.Subscribe.Subscription>();
                     foreach (var role in roles)
                     {
-                        allowedSubscriptions.AddRange(role.Subscriptions.Select(s
-                            => new HsnSoft.Base.Subscribe.Subscription(
-                                CustomerId: s.Subscription.CustomerId,
-                                ProductTypeId: s.Subscription.ProductTypeId
-                            )));
+                        claims.AddRange(role.Subscriptions.Select(s
+                            => new Claim(
+                                BaseClaimTypes.AllowedCustomerId,
+                                s.Subscription.CustomerId.ToString()
+                            )
+                        ));
                     }
 
-                    // var allowedSubscriptions = await dbContext.Set<UserAccessGrant>()
-                    //     .AsNoTracking()
-                    //     .Where(x =>
-                    //         x.UserId == user.Id &&
-                    //         x.TenantId == tenant.Id &&
-                    //         x.IsActive)
-                    //     .Where(x =>
-                    //         x.ProductSubscription.IsActive &&
-                    //         x.ProductSubscription.TenantId == tenant.Id)
-                    //     .Select(x => new Subscription(
-                    //         CustomerId: x.ProductSubscription.ClientId,
-                    //         ProductTypeId: x.ProductSubscription.ProductTypeId
-                    //     ))
-                    //     .Distinct()
-                    //     .ToListAsync(cancellationToken);
-                    //
-                    claims.Add(new Claim(BaseClaimTypes.AllowedSubscription, JsonSerializer.Serialize(allowedSubscriptions)));
-
+                    // foreach (var role in roles)
                     // {
-                    //     "tenant_id": "RESELLER-A",
-                    //     "allowed_tenant_id": ["RESELLER-A"],
-                    //     "allowed_contents": [
-                    //     {
-                    //         "clientId": "haberturk-client-id",
-                    //         "productTypeId": "web-platform-id"
-                    //     },
-                    //     {
-                    //         "clientId": "bloomberght-client-id",
-                    //         "productTypeId": "web-platform-id"
-                    //     },
-                    //     {
-                    //         "clientId": "bloomberght-client-id",
-                    //         "productTypeId": "podcast-id"
-                    //     }
-                    //     ]
+                    //     claims.AddRange(role.Subscriptions.Select(s
+                    //         => new Claim(
+                    //             BaseClaimTypes.AllowedScopeKey,
+                    //             $"{s.Subscription.CustomerId:N}:{s.Subscription.ProductType.ToPrompt()}"
+                    //         )
+                    //     ));
                     // }
-                    //
-                    // Buradaki allowed_contents ayrı tablodan gelmek zorunda değil.
-                    //     ProductSubscription tablosundan üretilebilir.
                 }
             }
         }
