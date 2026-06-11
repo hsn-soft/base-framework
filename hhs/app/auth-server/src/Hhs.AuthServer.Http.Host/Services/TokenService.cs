@@ -2,7 +2,6 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using System.Text.Json;
 using Hhs.AuthServer.Store;
 using Hhs.IdentityService.Domain.AppRoleDomain.Entities;
 using Hhs.IdentityService.Domain.AppUserDomain.Entities;
@@ -141,7 +140,7 @@ public sealed class TokenService
                         claims.AddRange(role.Subscriptions.Select(s
                             => new Claim(
                                 BaseClaimTypes.AllowedScopeKey,
-                                $"{s.Subscription.CustomerId:N}:{s.Subscription.ProductType.ToPrompt()}"
+                                ScopeKeyHelper.Generate(s.Subscription.CustomerId, s.Subscription.ProductType)
                             )
                         ));
                     }
