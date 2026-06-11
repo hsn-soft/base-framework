@@ -48,35 +48,27 @@ public static class SubscriptionSeeder
         var customerDiyetKolik = await GetOrCreateCustomerAsync(db, logger, companyId: companyDiyetKolik.Id, domain: "diyetkolik.com", customerId: Guid.Parse(CustomerIds.DiyetKolikCustomerId));
         var customerInStyle = await GetOrCreateCustomerAsync(db, logger, companyId: companyInStyle.Id, domain: "instyle.com.tr", customerId: Guid.Parse(CustomerIds.InStyleCustomerId));
 
-        // EnsureProductTypes
-        _ = await GetOrCreateProductTypeAsync(db, logger, code: "VP", name: "Video Platform", productTypeId: Guid.Parse(ProductTypeIds.VideoPlatform));
-        _ = await GetOrCreateProductTypeAsync(db, logger, code: "VV", name: "Vertical Video", productTypeId: Guid.Parse(ProductTypeIds.VerticalVideo));
-        _ = await GetOrCreateProductTypeAsync(db, logger, code: "PC", name: "PodCast", productTypeId: Guid.Parse(ProductTypeIds.PodCast));
-        _ = await GetOrCreateProductTypeAsync(db, logger, code: "AW", name: "AdWall", productTypeId: Guid.Parse(ProductTypeIds.AdWall));
-        _ = await GetOrCreateProductTypeAsync(db, logger, code: "BT", name: "Bidding Tech", productTypeId: Guid.Parse(ProductTypeIds.BiddingTech));
-        _ = await GetOrCreateProductTypeAsync(db, logger, code: "EI", name: "EInvoice", productTypeId: Guid.Parse(ProductTypeIds.EFatura));
-
         // EnsureSubscriptions
-        var subAudio1 = await GetOrCreateSubscriptionAsync(db, logger, resellerTenantId: Guid.Parse(TenantIds.AudioTimeTenantId), customer: customerHaberturk, productTypeId: Guid.Parse(ProductTypeIds.VideoPlatform));
-        var subAudio2 = await GetOrCreateSubscriptionAsync(db, logger, resellerTenantId: Guid.Parse(TenantIds.AudioTimeTenantId), customer: customerHaberturk, productTypeId: Guid.Parse(ProductTypeIds.PodCast));
-        var subAudio3 = await GetOrCreateSubscriptionAsync(db, logger, resellerTenantId: Guid.Parse(TenantIds.AudioTimeTenantId), customer: customerBloomberght, productTypeId: Guid.Parse(ProductTypeIds.VideoPlatform));
-        var subAudio4 = await GetOrCreateSubscriptionAsync(db, logger, resellerTenantId: Guid.Parse(TenantIds.AudioTimeTenantId), customer: customerBloomberght, productTypeId: Guid.Parse(ProductTypeIds.PodCast));
-        var subAudio5 = await GetOrCreateSubscriptionAsync(db, logger, resellerTenantId: Guid.Parse(TenantIds.AudioTimeTenantId), customer: customerCnbce, productTypeId: Guid.Parse(ProductTypeIds.VideoPlatform));
+        var subAudio1 = await GetOrCreateSubscriptionAsync(db, logger, resellerTenantId: Guid.Parse(TenantIds.AudioTimeTenantId), customer: customerHaberturk, productType: ProductTypes.VideoPlatform);
+        var subAudio2 = await GetOrCreateSubscriptionAsync(db, logger, resellerTenantId: Guid.Parse(TenantIds.AudioTimeTenantId), customer: customerHaberturk, productType: ProductTypes.Podcast);
+        var subAudio3 = await GetOrCreateSubscriptionAsync(db, logger, resellerTenantId: Guid.Parse(TenantIds.AudioTimeTenantId), customer: customerBloomberght, productType: ProductTypes.VideoPlatform);
+        var subAudio4 = await GetOrCreateSubscriptionAsync(db, logger, resellerTenantId: Guid.Parse(TenantIds.AudioTimeTenantId), customer: customerBloomberght, productType: ProductTypes.Podcast);
+        var subAudio5 = await GetOrCreateSubscriptionAsync(db, logger, resellerTenantId: Guid.Parse(TenantIds.AudioTimeTenantId), customer: customerCnbce, productType: ProductTypes.VideoPlatform);
 
-        var subTech1 = await GetOrCreateSubscriptionAsync(db, logger, resellerTenantId: Guid.Parse(TenantIds.TechsummusTenantId), customer: customerCnbce, productTypeId: Guid.Parse(ProductTypeIds.PodCast));
-        var subTech2 = await GetOrCreateSubscriptionAsync(db, logger, resellerTenantId: Guid.Parse(TenantIds.TechsummusTenantId), customer: customerTechSummus, productTypeId: Guid.Parse(ProductTypeIds.VideoPlatform));
-        var subTech3 = await GetOrCreateSubscriptionAsync(db, logger, resellerTenantId: Guid.Parse(TenantIds.TechsummusTenantId), customer: customerT24, productTypeId: Guid.Parse(ProductTypeIds.VideoPlatform));
-        var subTech4 = await GetOrCreateSubscriptionAsync(db, logger, resellerTenantId: Guid.Parse(TenantIds.TechsummusTenantId), customer: customerTamIndir, productTypeId: Guid.Parse(ProductTypeIds.VideoPlatform));
-        var subTech5 = await GetOrCreateSubscriptionAsync(db, logger, resellerTenantId: Guid.Parse(TenantIds.TechsummusTenantId), customer: customerSonDakika, productTypeId: Guid.Parse(ProductTypeIds.VideoPlatform));
-        var subTech6 = await GetOrCreateSubscriptionAsync(db, logger, resellerTenantId: Guid.Parse(TenantIds.TechsummusTenantId), customer: customerTechnoToday, productTypeId: Guid.Parse(ProductTypeIds.VideoPlatform));
-        var subTech7 = await GetOrCreateSubscriptionAsync(db, logger, resellerTenantId: Guid.Parse(TenantIds.TechsummusTenantId), customer: customerKisaDalga, productTypeId: Guid.Parse(ProductTypeIds.VideoPlatform));
-        var subTech8 = await GetOrCreateSubscriptionAsync(db, logger, resellerTenantId: Guid.Parse(TenantIds.TechsummusTenantId), customer: customerDunya, productTypeId: Guid.Parse(ProductTypeIds.VideoPlatform));
-        var subTech9 = await GetOrCreateSubscriptionAsync(db, logger, resellerTenantId: Guid.Parse(TenantIds.TechsummusTenantId), customer: customerBoxoffice, productTypeId: Guid.Parse(ProductTypeIds.VideoPlatform));
-        var subTech10 = await GetOrCreateSubscriptionAsync(db, logger, resellerTenantId: Guid.Parse(TenantIds.TechsummusTenantId), customer: customerDiyetKolik, productTypeId: Guid.Parse(ProductTypeIds.VideoPlatform));
-        var subTech11 = await GetOrCreateSubscriptionAsync(db, logger, resellerTenantId: Guid.Parse(TenantIds.TechsummusTenantId), customer: customerInStyle, productTypeId: Guid.Parse(ProductTypeIds.VideoPlatform));
+        var subTech1 = await GetOrCreateSubscriptionAsync(db, logger, resellerTenantId: Guid.Parse(TenantIds.TechsummusTenantId), customer: customerCnbce, productType: ProductTypes.Podcast);
+        var subTech2 = await GetOrCreateSubscriptionAsync(db, logger, resellerTenantId: Guid.Parse(TenantIds.TechsummusTenantId), customer: customerTechSummus, productType: ProductTypes.VideoPlatform);
+        var subTech3 = await GetOrCreateSubscriptionAsync(db, logger, resellerTenantId: Guid.Parse(TenantIds.TechsummusTenantId), customer: customerT24, productType: ProductTypes.VideoPlatform);
+        var subTech4 = await GetOrCreateSubscriptionAsync(db, logger, resellerTenantId: Guid.Parse(TenantIds.TechsummusTenantId), customer: customerTamIndir, productType: ProductTypes.VideoPlatform);
+        var subTech5 = await GetOrCreateSubscriptionAsync(db, logger, resellerTenantId: Guid.Parse(TenantIds.TechsummusTenantId), customer: customerSonDakika, productType: ProductTypes.VideoPlatform);
+        var subTech6 = await GetOrCreateSubscriptionAsync(db, logger, resellerTenantId: Guid.Parse(TenantIds.TechsummusTenantId), customer: customerTechnoToday, productType: ProductTypes.VideoPlatform);
+        var subTech7 = await GetOrCreateSubscriptionAsync(db, logger, resellerTenantId: Guid.Parse(TenantIds.TechsummusTenantId), customer: customerKisaDalga, productType: ProductTypes.VideoPlatform);
+        var subTech8 = await GetOrCreateSubscriptionAsync(db, logger, resellerTenantId: Guid.Parse(TenantIds.TechsummusTenantId), customer: customerDunya, productType: ProductTypes.VideoPlatform);
+        var subTech9 = await GetOrCreateSubscriptionAsync(db, logger, resellerTenantId: Guid.Parse(TenantIds.TechsummusTenantId), customer: customerBoxoffice, productType: ProductTypes.VideoPlatform);
+        var subTech10 = await GetOrCreateSubscriptionAsync(db, logger, resellerTenantId: Guid.Parse(TenantIds.TechsummusTenantId), customer: customerDiyetKolik, productType: ProductTypes.VideoPlatform);
+        var subTech11 = await GetOrCreateSubscriptionAsync(db, logger, resellerTenantId: Guid.Parse(TenantIds.TechsummusTenantId), customer: customerInStyle, productType: ProductTypes.VideoPlatform);
 
-        var subEpartner1 = await GetOrCreateSubscriptionAsync(db, logger, resellerTenantId: Guid.Parse(TenantIds.EfaturaPartnerTenantId), customer: customerVeribanIst, productTypeId: Guid.Parse(ProductTypeIds.EFatura));
-        var subEpartner2 = await GetOrCreateSubscriptionAsync(db, logger, resellerTenantId: Guid.Parse(TenantIds.EfaturaPartnerTenantId), customer: customerVeribanAnk, productTypeId: Guid.Parse(ProductTypeIds.EFatura));
+        var subEpartner1 = await GetOrCreateSubscriptionAsync(db, logger, resellerTenantId: Guid.Parse(TenantIds.EfaturaPartnerTenantId), customer: customerVeribanIst, productType: ProductTypes.EInvoice);
+        var subEpartner2 = await GetOrCreateSubscriptionAsync(db, logger, resellerTenantId: Guid.Parse(TenantIds.EfaturaPartnerTenantId), customer: customerVeribanAnk, productType: ProductTypes.EInvoice);
 
         // EnsureAppRoleSubscriptions
         _ = await GetOrCreateAppRoleSubscriptionAsync(db, logger, tenantId: Guid.Parse(TenantIds.AudioTimeTenantId), roleId: Guid.Parse(TenantRoleIds.AudioTimeTenantRoleId), subscriptionId: subAudio1.Id);
@@ -154,40 +146,14 @@ public static class SubscriptionSeeder
         return customer;
     }
 
-    private static async Task<ProductType> GetOrCreateProductTypeAsync(IdentityServiceDbContext db, IAppConsoleLogger logger,
-        string code, string name, Guid? productTypeId)
-    {
-        string normalizedName = StringHelper.Normalize(StringHelper.ReplaceInvalidChars(name));
-
-        var productType = await db.ProductTypes.FirstOrDefaultAsync(x => x.NormalizedName == normalizedName);
-
-        if (productType is not null)
-            return productType;
-
-        productTypeId ??= Guid.CreateVersion7();
-
-        productType = new ProductType(
-            id: productTypeId.Value,
-            code: code,
-            name: name
-        );
-
-        db.ProductTypes.Add(productType);
-        await db.SaveChangesAsync();
-
-        logger.LogDebug("{WorkerName} | SEED PRODUCT_TYPE -> {ProductTypeName} added", nameof(EfCoreSeederService), normalizedName);
-
-        return productType;
-    }
-
     private static async Task<Subscription> GetOrCreateSubscriptionAsync(IdentityServiceDbContext db, IAppConsoleLogger logger,
-        Guid resellerTenantId, Customer customer, Guid productTypeId)
+        Guid resellerTenantId, Customer customer, ProductTypes productType)
     {
         var subscription = await db.Subscriptions.FirstOrDefaultAsync(x =>
             x.ResellerTenantId == resellerTenantId
             && x.CompanyId == customer.CompanyId
             && x.CustomerId == customer.Id
-            && x.ProductTypeId == productTypeId
+            && x.ProductType == productType
         );
 
         if (subscription is not null)
@@ -197,7 +163,7 @@ public static class SubscriptionSeeder
             resellerTenantId: resellerTenantId,
             companyId: customer.CompanyId,
             customerId: customer.Id,
-            productTypeId: productTypeId
+            productType: productType
         );
 
         db.Subscriptions.Add(subscription);
@@ -206,7 +172,7 @@ public static class SubscriptionSeeder
         logger.LogDebug("{WorkerName} | SEED SUBSCRIPTION -> {CustomerDomain}, ProductTypeId : {ProductTypeId} added",
             nameof(EfCoreSeederService),
             customer.NormalizedDomain,
-            productTypeId.ToString());
+            productType.ToString());
 
         return subscription;
     }

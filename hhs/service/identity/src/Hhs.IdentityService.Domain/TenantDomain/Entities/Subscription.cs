@@ -1,3 +1,4 @@
+using Hhs.IdentityService.Domain.Enums;
 using Hhs.Shared.Localization;
 using HsnSoft.Base;
 using HsnSoft.Base.Domain.Entities.Auditing;
@@ -19,9 +20,7 @@ public sealed class Subscription : AuditedEntity<Guid>, ISoftDelete
 
     public Customer Customer { get; private set; }
 
-    public Guid ProductTypeId { get; private set; }
-
-    public ProductType ProductType { get; private set; }
+    public ProductTypes ProductType { get; private set; }
 
     public DateTime ValidFrom { get; set; }
 
@@ -40,20 +39,19 @@ public sealed class Subscription : AuditedEntity<Guid>, ISoftDelete
         // navigation fields
         Company = null;
         Customer = null;
-        ProductType = null;
     }
 
     internal Subscription(
         Guid resellerTenantId,
         Guid companyId,
         Guid customerId,
-        Guid productTypeId,
+        ProductTypes productType,
         [NotNull] string settingsJson = "{}"
     ) : this(Guid.CreateVersion7(),
         resellerTenantId: resellerTenantId,
         companyId: companyId,
         customerId: customerId,
-        productTypeId: productTypeId,
+        productType: productType,
         settingsJson: settingsJson)
     {
     }
@@ -62,7 +60,7 @@ public sealed class Subscription : AuditedEntity<Guid>, ISoftDelete
         Guid resellerTenantId,
         Guid companyId,
         Guid customerId,
-        Guid productTypeId,
+        ProductTypes productType,
         [NotNull] string settingsJson = "{}"
     ) : this()
     {
@@ -71,7 +69,7 @@ public sealed class Subscription : AuditedEntity<Guid>, ISoftDelete
         ResellerTenantId = resellerTenantId;
         CompanyId = companyId;
         CustomerId = customerId;
-        ProductTypeId = productTypeId;
+        ProductType = productType;
 
         ValidFrom = DateTime.UtcNow;
 

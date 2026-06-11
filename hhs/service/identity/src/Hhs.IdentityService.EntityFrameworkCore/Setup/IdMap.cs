@@ -34,13 +34,3 @@ public static class CustomerIds
     public const string DiyetKolikCustomerId = "23a70bfe-af27-490b-b936-72d2e1e5b7db";
     public const string InStyleCustomerId = "5153eac5-5dd4-41b7-93ad-268eac8a948a";
 }
-
-public static class ProductTypeIds
-{
-    public const string VideoPlatform = "D3EE04C6-F1AF-4BED-9262-DEF876F2F457";
-    public const string VerticalVideo = "0149B0FF-43D4-469B-81D5-C9CA8496EB5D";
-    public const string PodCast = "734D5B58-D7DA-4029-A031-DA732E3C9F9C";
-    public const string AdWall = "5672EBFF-6DC2-4169-B981-150B25C37181";
-    public const string BiddingTech = "BA67F639-B103-4150-BD80-8EDD8928275D";
-    public const string EFatura = "22B2C06A-530B-4199-B03A-B05E083FC6A5";
-}

@@ -17,7 +17,6 @@ public sealed class IdentityServiceDbContext(
     public DbSet<Tenant> Tenants => Set<Tenant>();
     public DbSet<Company> Companies => Set<Company>();
     public DbSet<Customer> Customers => Set<Customer>();
-    public DbSet<ProductType> ProductTypes => Set<ProductType>();
     public DbSet<Subscription> Subscriptions => Set<Subscription>();
 
     public DbSet<AppUser> AppUsers => Set<AppUser>();
@@ -41,7 +40,6 @@ public sealed class IdentityServiceDbContext(
         builder.ConfigureTenantEntity();
         builder.ConfigureCompanyEntity();
         builder.ConfigureCustomerEntity();
-        builder.ConfigureProductTypeEntity();
         builder.ConfigureSubscriptionEntity();
 
         builder.ConfigureAppUserEntity();

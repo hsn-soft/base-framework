@@ -601,48 +601,6 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                     b.ToTable("Customers", (string)null);
                 });
 
-            modelBuilder.Entity("Hhs.IdentityService.Domain.TenantDomain.Entities.ProductType", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)");
-
-                    b.Property<bool>("IsDeleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false)
-                        .HasColumnName("IsDeleted");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)");
-
-                    b.Property<string>("NormalizedCode")
-                        .IsRequired()
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)");
-
-                    b.Property<string>("NormalizedName")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("NormalizedCode")
-                        .IsUnique();
-
-                    b.HasIndex("NormalizedName")
-                        .IsUnique();
-
-                    b.ToTable("ProductTypes", (string)null);
-                });
-
             modelBuilder.Entity("Hhs.IdentityService.Domain.TenantDomain.Entities.Subscription", b =>
                 {
                     b.Property<Guid>("Id")
@@ -679,8 +637,8 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                         .HasColumnType("uuid")
                         .HasColumnName("LastModifierId");
 
-                    b.Property<Guid>("ProductTypeId")
-                        .HasColumnType("uuid");
+                    b.Property<int>("ProductType")
+                        .HasColumnType("integer");
 
                     b.Property<Guid>("ResellerTenantId")
                         .HasColumnType("uuid");
@@ -701,9 +659,7 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
 
                     b.HasIndex("CustomerId");
 
-                    b.HasIndex("ProductTypeId");
-
-                    b.HasIndex("ResellerTenantId", "CompanyId", "CustomerId", "ProductTypeId")
+                    b.HasIndex("ResellerTenantId", "CompanyId", "CustomerId", "ProductType")
                         .IsUnique();
 
                     b.ToTable("Subscriptions", (string)null);
@@ -909,17 +865,9 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Hhs.IdentityService.Domain.TenantDomain.Entities.ProductType", "ProductType")
-                        .WithMany()
-                        .HasForeignKey("ProductTypeId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.Navigation("Company");
 
                     b.Navigation("Customer");
-
-                    b.Navigation("ProductType");
                 });
 
             modelBuilder.Entity("Hhs.IdentityService.Domain.TenantDomain.Entities.Tenant", b =>

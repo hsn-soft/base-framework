@@ -65,24 +65,6 @@ public static class TenantDomainConfiguration
                 .IsUnique();
         });
 
-    public static void ConfigureProductTypeEntity(this ModelBuilder builder) =>
-        builder.Entity<ProductType>(b =>
-        {
-            b.ToTable(EfCoreDbProperties.DbTablePrefix + ProductTypeConsts.TableName, EfCoreDbProperties.DbSchema);
-            b.HasKey(x => x.Id);
-
-            b.Property(x => x.Code).HasMaxLength(ProductTypeConsts.CodeMaxLength).IsRequired();
-            b.Property(x => x.NormalizedCode).HasMaxLength(ProductTypeConsts.CodeMaxLength).IsRequired();
-            b.Property(x => x.Name).HasMaxLength(ProductTypeConsts.NameMaxLength).IsRequired();
-            b.Property(x => x.NormalizedName).HasMaxLength(ProductTypeConsts.NameMaxLength).IsRequired();
-
-            b.HasIndex(x => x.NormalizedCode)
-                .IsUnique();
-
-            b.HasIndex(x => x.NormalizedName)
-                .IsUnique();
-        });
-
     public static void ConfigureSubscriptionEntity(this ModelBuilder builder) =>
         builder.Entity<Subscription>(b =>
         {
@@ -92,7 +74,7 @@ public static class TenantDomainConfiguration
             b.Property(x => x.ResellerTenantId).IsRequired();
             b.Property(x => x.CompanyId).IsRequired();
             b.Property(x => x.CustomerId).IsRequired();
-            b.Property(x => x.ProductTypeId).IsRequired();
+            b.Property(x => x.ProductType).IsRequired();
 
             b.Property(x => x.ValidFrom).IsRequired();
             b.Property(x => x.IsBlocked).IsRequired();
@@ -110,12 +92,7 @@ public static class TenantDomainConfiguration
                 .HasForeignKey(x => x.CustomerId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            b.HasOne(x => x.ProductType)
-                .WithMany()
-                .HasForeignKey(x => x.ProductTypeId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            b.HasIndex(x => new { x.ResellerTenantId, x.CompanyId, x.CustomerId, x.ProductTypeId })
+            b.HasIndex(x => new { x.ResellerTenantId, x.CompanyId, x.CustomerId, x.ProductType })
                 .IsUnique();
         });
 }

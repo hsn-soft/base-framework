@@ -83,22 +83,6 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                 });
 
             migrationBuilder.CreateTable(
-                name: "ProductTypes",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
-                    Code = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
-                    NormalizedCode = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
-                    Name = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
-                    NormalizedName = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ProductTypes", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Tenants",
                 columns: table => new
                 {
@@ -251,7 +235,7 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                     ResellerTenantId = table.Column<Guid>(type: "uuid", nullable: false),
                     CompanyId = table.Column<Guid>(type: "uuid", nullable: false),
                     CustomerId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ProductTypeId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ProductType = table.Column<int>(type: "integer", nullable: false),
                     ValidFrom = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     IsBlocked = table.Column<bool>(type: "boolean", nullable: false),
                     ValidTo = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
@@ -274,12 +258,6 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                         name: "FK_Subscriptions_Customers_CustomerId",
                         column: x => x.CustomerId,
                         principalTable: "Customers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_Subscriptions_ProductTypes_ProductTypeId",
-                        column: x => x.ProductTypeId,
-                        principalTable: "ProductTypes",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -542,18 +520,6 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_ProductTypes_NormalizedCode",
-                table: "ProductTypes",
-                column: "NormalizedCode",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ProductTypes_NormalizedName",
-                table: "ProductTypes",
-                column: "NormalizedName",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Subscriptions_CompanyId",
                 table: "Subscriptions",
                 column: "CompanyId");
@@ -564,14 +530,9 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                 column: "CustomerId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Subscriptions_ProductTypeId",
-                table: "Subscriptions",
-                column: "ProductTypeId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Subscriptions_ResellerTenantId_CompanyId_CustomerId_Product~",
                 table: "Subscriptions",
-                columns: new[] { "ResellerTenantId", "CompanyId", "CustomerId", "ProductTypeId" },
+                columns: new[] { "ResellerTenantId", "CompanyId", "CustomerId", "ProductType" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -637,9 +598,6 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
 
             migrationBuilder.DropTable(
                 name: "Customers");
-
-            migrationBuilder.DropTable(
-                name: "ProductTypes");
 
             migrationBuilder.DropTable(
                 name: "Tenants");
