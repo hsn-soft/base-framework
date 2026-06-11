@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Hhs.IdentityService.Domain.Enums;
+namespace Hhs.Shared.Helper.Enums;
 
 public enum ProductTypes
 {
