@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using HsnSoft.Base.Subscribe;
 using JetBrains.Annotations;
 
 namespace HsnSoft.Base.MultiTenancy;
