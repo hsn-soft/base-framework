@@ -16,7 +16,7 @@ public static class ContentDomainConfiguration
             b.ToTable(EfCoreDbProperties.DbTablePrefix + AppContentConsts.TableName, EfCoreDbProperties.DbSchema);
             b.HasKey(ci => ci.Id);
 
-            b.Property(x => x.CustomerId).IsRequired();
+            b.Property(x => x.ScopeKey).HasMaxLength(AppContentConsts.ScopeKeyMaxLength).IsRequired();
             b.Property(x => x.SlugKey).HasMaxLength(AppContentConsts.SlugKeyMaxLength).IsRequired();
             b.Property(x => x.OperationStatus).IsRequired();
             b.Property(x => x.OperationStatusDescription).HasMaxLength(AppContentConsts.OperationStatusDescriptionMaxLength);
@@ -26,10 +26,9 @@ public static class ContentDomainConfiguration
             b.Property(x => x.StorageVideoUrl).HasMaxLength(AppContentConsts.StorageVideoUrlMaxLength);
             b.Property(x => x.CorrelationId).HasMaxLength(AppContentConsts.CorrelationIdMaxLength);
 
-            b.HasIndex(x => new { x.IsDeleted });
-
             b.HasIndex(x => new { x.OperationStatus });
-            b.HasIndex(x => new { x.IsDeleted, x.CustomerId, x.SlugKey }).IsUnique();
+            b.HasIndex(x => new { x.ScopeKey, x.SlugKey, x.IsDeleted })
+                .IsUnique();
         });
     }
 
@@ -42,14 +41,15 @@ public static class ContentDomainConfiguration
             b.ToTable(EfCoreDbProperties.DbTablePrefix + AppContentVisitConsts.TableName, EfCoreDbProperties.DbSchema);
             b.HasKey(ci => ci.Id);
 
-            b.Property(x => x.ClientId).IsRequired();
+            b.Property(x => x.ScopeKey).HasMaxLength(AppContentVisitConsts.ScopeKeyMaxLength).IsRequired();
             b.Property(x => x.AppContentId).IsRequired();
-            b.Property(x => x.VisitTimeLine).IsRequired();
+            b.Property(x => x.VisitTime).IsRequired();
             b.Property(x => x.VisitResponse).IsRequired().HasMaxLength(AppContentVisitConsts.VisitResponseMaxLength);
 
-            b.HasIndex(x => new { x.ClientId, x.AppContentId });
-            b.HasIndex(x => new { x.ClientId, x.VisitTimeLine });
-            b.HasIndex(x => new { x.ClientId, x.VisitResponse });
+            b.HasIndex(x => x.ScopeKey);
+            b.HasIndex(x => x.AppContentId);
+            b.HasIndex(x => x.VisitTime);
+            b.HasIndex(x => x.VisitResponse);
         });
     }
 

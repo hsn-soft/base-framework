@@ -362,7 +362,11 @@ public sealed class AppContentAppService : ApplicationServiceBase, IAppContentAp
             : new KeyValuePair<bool, string>(true, AppContentOperationFacilities.APP_CONTENT_VIDEO_GENERATION_APPROVED);
         if (clientQuoteResult.Key)
         {
-            var contentIds = await _appContentRepository.GetCustomerDailyTrendContentIdsAsync(client.Id, client.DailyTrendVideoWaitStatisticHour);
+            var contentIds = await _appContentRepository.GetCustomerDailyTrendContentIdsAsync
+            (
+                customerId: client.CustomerId,
+                dailyTrendVideoWaitStatisticHour: client.DailyTrendVideoWaitStatisticHour
+            );
             if (contentIds is { Count: > 0 })
             {
                 var contentVisitList = await _appContentVisitRepository.GetContentIdsVisitCountsAsync(contentIds: contentIds,

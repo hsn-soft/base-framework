@@ -1,5 +1,6 @@
 using Hhs.ContentService.Domain.ContentDomain.Entities;
 using Hhs.ContentService.Domain.Enums;
+using Hhs.Shared.Helper.Enums;
 using HsnSoft.Base.Domain.Repositories;
 using JetBrains.Annotations;
 
@@ -8,14 +9,14 @@ namespace Hhs.ContentService.Domain.ContentDomain.Repositories;
 public interface IAppContentRepository : IReadOnlyGenericRepository<AppContent, Guid>
 {
     Task<AppContent> CreateAsync(
-        Guid customerId,
+        Guid customerId, ProductTypes productType,
         [NotNull] string slugKey,
         AppContentOperationStates operationStatus,
         [CanBeNull] string correlationId = null);
 
     Task<AppContent> CreateAsync(
         Guid id,
-        Guid customerId,
+        Guid customerId, ProductTypes productType,
         [NotNull] string slugKey,
         AppContentOperationStates operationStatus,
         [CanBeNull] string correlationId = null);

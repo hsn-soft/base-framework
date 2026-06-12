@@ -196,7 +196,7 @@ public sealed class AnalysisContentAppService : ApplicationServiceBase, IAnalysi
             : new KeyValuePair<bool, string>(true, AppContentOperationFacilities.APP_CONTENT_VIDEO_GENERATION_APPROVED);
         if (clientQuoteResult.Key)
         {
-            var contentIds = await _appContentRepository.GetCustomerDailyAnalysisContentIdsAsync(client.Id);
+            var contentIds = await _appContentRepository.GetCustomerDailyAnalysisContentIdsAsync(customerId: client.CustomerId);
             if (contentIds is { Count: > 0 })
             {
                 var contentVisitList = await _appContentVisitRepository.GetContentIdsVisitCountsAsync(contentIds: contentIds,

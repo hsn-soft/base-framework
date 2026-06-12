@@ -10,5 +10,6 @@ public static class AppContentVisitConsts
     }
 
     public const string TableName = "AppContentVisits";
+    public const int ScopeKeyMaxLength = 128;
     public const int VisitResponseMaxLength = 30;
 }

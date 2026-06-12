@@ -10,8 +10,12 @@ using Hhs.ContentService.Domain.ContentDomain.Repositories;
 using Hhs.ContentService.Domain.CustomerDomain.Exceptions;
 using Hhs.ContentService.Domain.CustomerDomain.Repositories;
 using Hhs.ContentService.Domain.Enums;
+using Hhs.Shared.Contracts.Events.TextNormalizer;
+using Hhs.Shared.Helper.Enums;
+using Hhs.Shared.Helper.Utils;
 using HsnSoft.Base;
 using HsnSoft.Base.Data;
+using HsnSoft.Base.Logging;
 using HsnSoft.Base.Logging.Abstracts;
 using HsnSoft.Base.MultiTenancy;
 using HsnSoft.Base.Text;
@@ -52,7 +56,12 @@ public sealed class AppContentPublicAppService(
             _logger.LogDebug("DomainName: {DomainName}, ContentKey: {ContentKey} GET OR CREATE FINISHED ContentStatus {ContentStatus}", input.DomainName, input.ContentKey, AppContentPublicStatus.SKIPPED_PATH);
 
             // Add statistic record
-            await contentVisitRepository.CreateAsync(clientId: input.CustomerId.Value, appContentId: Guid.Empty, visitResponse: AppContentPublicStatus.SKIPPED_PATH);
+            await contentVisitRepository.CreateAsync(
+                customerId: input.CustomerId.Value,
+                productType: ProductTypes.VideoPlatform,
+                appContentId: Guid.Empty,
+                visitResponse: AppContentPublicStatus.SKIPPED_PATH
+            );
 
             return new GetOrCreateAppContentResponseDto { ContentType = AppContentPublicType.SKIPPED_CONTENT, ContentStatus = AppContentPublicStatus.SKIPPED_PATH };
         }
@@ -78,8 +87,9 @@ public sealed class AppContentPublicAppService(
         AppContentStatusDto contentStatusModel = null;
         using (dataFilter.Disable<IMultiTenant>()) // anonymous user , unknown tenant
         {
+            string scopeKey = ScopeKeyHelper.Generate(input.CustomerId.Value, ProductTypes.VideoPlatform);
             contentStatusModel = await appContentRepository.GetFirstOrDefaultAsync<AppContentStatusDto>(
-                x => x.CustomerId == input.CustomerId.Value && x.SlugKey.Equals(normalizedSlugKey),
+                x => x.ScopeKey == scopeKey && x.SlugKey.Equals(normalizedSlugKey),
                 Mapper.ConfigurationProvider, cancellationToken: cancellationToken);
         }
 
@@ -134,7 +144,12 @@ public sealed class AppContentPublicAppService(
             }
 
             // Add statistic record
-            await contentVisitRepository.CreateAsync(clientId: input.CustomerId.Value, appContentId: contentStatusModel.AppContentId, visitResponse: result.ContentStatus);
+            await contentVisitRepository.CreateAsync(
+                customerId: input.CustomerId.Value,
+                productType: ProductTypes.VideoPlatform,
+                appContentId: contentStatusModel.AppContentId,
+                visitResponse: result.ContentStatus
+            );
         }
         else
         {
@@ -143,7 +158,7 @@ public sealed class AppContentPublicAppService(
             using (dataFilter.Disable<IMultiTenant>()) // anonymous user , unknown tenant
             {
                 clientCheck = await clientRepository.GetSingleOrDefaultAsync<CustomerContentSettingCheckDto>(
-                    predicate: x => x.Id == input.CustomerId.Value,
+                    predicate: x => x.CustomerId == input.CustomerId.Value,
                     includeEntity: q => q.Include(x => x.PathFilters),
                     configuration: Mapper.ConfigurationProvider,
                     cancellationToken: cancellationToken);
@@ -177,7 +192,12 @@ public sealed class AppContentPublicAppService(
                     _logger.LogDebug("DomainName: {DomainName}, ContentKey: {ContentKey} GET OR CREATE FINISHED ContentStatus {ContentStatus}", input.DomainName, input.ContentKey, AppContentPublicStatus.SKIPPED_PATH);
 
                     // Add statistic record
-                    await contentVisitRepository.CreateAsync(clientId: input.CustomerId.Value, appContentId: Guid.Empty, visitResponse: AppContentPublicStatus.SKIPPED_PATH);
+                    await contentVisitRepository.CreateAsync(
+                        customerId: input.CustomerId.Value,
+                        productType: ProductTypes.VideoPlatform,
+                        appContentId: Guid.Empty,
+                        visitResponse: AppContentPublicStatus.SKIPPED_PATH
+                    );
 
                     return new GetOrCreateAppContentResponseDto { ContentType = AppContentPublicType.SKIPPED_CONTENT, ContentStatus = AppContentPublicStatus.SKIPPED_PATH };
                 }
@@ -199,7 +219,12 @@ public sealed class AppContentPublicAppService(
                         _logger.LogDebug("DomainName: {DomainName}, ContentKey: {ContentKey} GET OR CREATE FINISHED ContentStatus {ContentStatus}", input.DomainName, input.ContentKey, AppContentPublicStatus.SKIPPED_PATH);
 
                         // Add statistic record
-                        await contentVisitRepository.CreateAsync(clientId: input.CustomerId.Value, appContentId: Guid.Empty, visitResponse: AppContentPublicStatus.SKIPPED_PATH);
+                        await contentVisitRepository.CreateAsync(
+                            customerId: input.CustomerId.Value,
+                            productType: ProductTypes.VideoPlatform,
+                            appContentId: Guid.Empty,
+                            visitResponse: AppContentPublicStatus.SKIPPED_PATH
+                        );
 
                         return new GetOrCreateAppContentResponseDto { ContentType = AppContentPublicType.SKIPPED_CONTENT, ContentStatus = AppContentPublicStatus.SKIPPED_PATH };
                     }
@@ -208,40 +233,37 @@ public sealed class AppContentPublicAppService(
 
             // Add appContent record
             var placed = await appContentRepository.CreateAsync(
-                customerId: clientCheck.Id,
+                customerId: input.CustomerId.Value,
+                productType: ProductTypes.VideoPlatform,
                 slugKey: normalizedSlugKey,
                 operationStatus: AppContentOperationStates.CreatedWaitForNormalize,
                 correlationId: traceAccessor?.GetCorrelationId());
 
-            // _logger.FrameworkInfoLog(LogHelper.Generate(
-            //     message: $"AppContent created {input.ContentKey}",
-            //     reference: new
-            //     {
-            //         placed.TenantId,
-            //         placed.ClientId,
-            //         ClientDomain = clientCheck.DomainName,
-            //         input.ContentKey,
-            //         RefContentId = placed.Id
-            //     },
-            //     facility: AppContentOperationFacilities.APP_CONTENT_CREATED,
-            //     correlationId: placed.CorrelationId,
-            //     exception: null
-            // ));
+            _logger.FrameworkInfoLog(LogHelper.Generate(
+                message: $"AppContent created {input.ContentKey}",
+                reference: new { placed.ScopeKey, ClientDomain = clientCheck.DomainName, input.ContentKey, RefContentId = placed.Id },
+                facility: AppContentOperationFacilities.APP_CONTENT_CREATED,
+                correlationId: placed.CorrelationId,
+                exception: null
+            ));
 
             result = new GetOrCreateAppContentResponseDto { ContentType = AppContentPublicType.APP_CONTENT, ContentId = placed.Id, ContentStatus = AppContentPublicStatus.CREATED };
 
             // Add statistic record
-            await contentVisitRepository.CreateAsync(clientId: placed.CustomerId, appContentId: placed.Id, visitResponse: result.ContentStatus);
+            await contentVisitRepository.CreateAsync(
+                customerId: input.CustomerId.Value,
+                productType: ProductTypes.VideoPlatform,
+                appContentId: placed.Id,
+                visitResponse: result.ContentStatus);
 
-            // // Integration Event for TextNormalizerService
-            // await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
-            //     eventMessage: new AppContentNormalizedStartedEto(
-            //         TenantId: placed.TenantId,
-            //         ClientId: placed.ClientId,
-            //         AppContentId: placed.Id,
-            //         DomainName: clientCheck.DomainName,
-            //         DomainPath: input.ContentKey
-            //     ));
+            // Integration Event for TextNormalizerService
+            await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+                eventMessage: new AppContentNormalizedStartedEto(
+                    ScopeKey: placed.ScopeKey,
+                    AppContentId: placed.Id,
+                    DomainName: clientCheck.DomainName,
+                    DomainPath: input.ContentKey
+                ));
         }
 
         if (result.ContentStatus == AppContentPublicStatus.READY)

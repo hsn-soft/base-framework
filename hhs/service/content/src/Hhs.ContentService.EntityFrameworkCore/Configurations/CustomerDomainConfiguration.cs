@@ -33,9 +33,10 @@ public static class CustomerDomainConfiguration
                 .OnDelete(DeleteBehavior.Cascade)
                 .IsRequired();
 
-            b.HasIndex(x => x.IsDeleted);
-            b.HasIndex(x => new { x.TenantId, x.DomainName })
-                .IsUnique();
+            b.HasIndex(x => new { x.TenantId, x.IsDeleted });
+
+            b.HasIndex(x => x.CustomerId).IsUnique();
+            b.HasIndex(x => x.DomainName).IsUnique();
         });
     }
 

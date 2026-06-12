@@ -5,6 +5,8 @@ using Hhs.ContentService.Domain.ContentDomain.Repositories;
 using Hhs.ContentService.Domain.Enums;
 using Hhs.ContentService.Domain.Localization;
 using Hhs.ContentService.EntityFrameworkCore.Context;
+using Hhs.Shared.Helper.Enums;
+using Hhs.Shared.Helper.Utils;
 using Hhs.Shared.Localization;
 using HsnSoft.Base.Domain.Repositories;
 using HsnSoft.Base.Validation.Localization;
@@ -14,31 +16,37 @@ using Microsoft.Extensions.Localization;
 
 namespace Hhs.ContentService.EntityFrameworkCore.Repositories;
 
-public sealed class EfCoreAppContentRepository : EfCoreGenericRepository<AppContent, Guid>, IAppContentRepository
+public sealed class EfCoreAppContentRepository(
+    IServiceProvider provider,
+    IStringLocalizerFactory stringLocalizerFactory,
+    ContentServiceDbContext dbContext
+) : EfCoreGenericRepository<AppContent, Guid>(provider, dbContext), IAppContentRepository
 {
-    [NotNull] protected IStringLocalizer L { get; }
-
-    public EfCoreAppContentRepository(IServiceProvider provider, IStringLocalizerFactory stringLocalizerFactory, ContentServiceDbContext dbContext) : base(provider, dbContext)
-    {
-        // DefaultPropertySelector = new List<Expression<Func<AppContent, object>>> { x => x.Client };
-
-        L = stringLocalizerFactory.CreateMultiple([typeof(ContentServiceResource), typeof(ValidationResource), typeof(SharedResource)]);
-    }
+    [NotNull]
+    protected IStringLocalizer L { get; } = stringLocalizerFactory.CreateMultiple
+    (
+        [
+            typeof(ContentServiceResource),
+            typeof(ValidationResource),
+            typeof(SharedResource)
+        ]
+    );
 
     public async Task<AppContent> CreateAsync(
-        Guid customerId,
+        Guid customerId, ProductTypes productType,
         string slugKey,
         AppContentOperationStates operationStatus,
         string correlationId = null)
         => await CreateAsync(id: Guid.CreateVersion7(),
             customerId: customerId,
+            productType: productType,
             slugKey: slugKey,
             operationStatus: operationStatus,
             correlationId: correlationId);
 
     public async Task<AppContent> CreateAsync(
         Guid id,
-        Guid customerId,
+        Guid customerId, ProductTypes productType,
         string slugKey,
         AppContentOperationStates operationStatus,
         string correlationId = null)
@@ -49,13 +57,14 @@ public sealed class EfCoreAppContentRepository : EfCoreGenericRepository<AppCont
         var draft = new AppContent(
             id: id,
             customerId: customerId,
+            productType: productType,
             slugKey: slugKey,
             operationStatus: operationStatus,
             correlationId: correlationId
         );
 
         //Domain Rules
-        await ContentDuplicateControlAsync(draft.CustomerId, draft.SlugKey);
+        await ContentDuplicateControlAsync(scopeKey: draft.ScopeKey, draft.SlugKey);
         _ = await InsertAsync(draft);
         return draft;
     }
@@ -226,8 +235,9 @@ public sealed class EfCoreAppContentRepository : EfCoreGenericRepository<AppCont
         var statisticMinTime = DateTime.UtcNow.AddHours(-1 * dailyTrendVideoWaitStatisticHour);
         var releaseMinDate = DateTime.UtcNow.Date;
         var releaseMaxDate = DateTime.UtcNow.Date.AddDays(1);
+        string scopeKey = ScopeKeyHelper.Generate(customerId, ProductTypes.VideoPlatform);
         return await GetDbSet().Where(x =>
-            x.CustomerId == customerId
+            x.ScopeKey == scopeKey
             && x.OperationStatus == AppContentOperationStates.VideoGenerationRejectedReturnAnalysisVideo
             && x.CreationTime < statisticMinTime // min one day waited on system
             && x.ReleaseTime != null && x.ReleaseTime < releaseMaxDate && x.ReleaseTime >= releaseMinDate).Select(x => x.Id).ToListAsync(cancellationToken);
@@ -237,19 +247,22 @@ public sealed class EfCoreAppContentRepository : EfCoreGenericRepository<AppCont
     {
         var releaseMinDate = DateTime.UtcNow.Date;
         var releaseMaxDate = DateTime.UtcNow.Date.AddDays(1);
+        string scopeKey = ScopeKeyHelper.Generate(customerId, ProductTypes.VideoPlatform);
         return await GetDbSet().Where(x =>
-            x.CustomerId == customerId
+            x.ScopeKey == scopeKey
             && x.OperationStatus != AppContentOperationStates.CreatedWaitForNormalize
             && x.OperationStatus != AppContentOperationStates.OperationFail
             && x.ReleaseTime != null && x.ReleaseTime < releaseMaxDate && x.ReleaseTime >= releaseMinDate).Select(x => x.Id).ToListAsync(cancellationToken);
     }
 
-    private async Task ContentDuplicateControlAsync(Guid clientId, [NotNull] string slugKey)
+    private async Task ContentDuplicateControlAsync([NotNull] string scopeKey, [NotNull] string slugKey)
     {
-        var old = await GetSingleOrDefaultAsync(x => x.Id == clientId && x.SlugKey == slugKey);
+        var old = await GetSingleOrDefaultAsync(x => x.ScopeKey == scopeKey && x.SlugKey == slugKey);
         if (old != null)
         {
-            throw new AppContentDuplicateException(L, old.Id.ToString()).WithData(nameof(slugKey), slugKey);
+            throw new AppContentDuplicateException(L, old.Id.ToString())
+                .WithData(nameof(scopeKey), scopeKey)
+                .WithData(nameof(slugKey), slugKey);
         }
     }
 }

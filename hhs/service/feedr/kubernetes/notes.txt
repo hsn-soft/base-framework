@@ -1,0 +1,15 @@
+--PODS
+kubectl get pods -n ns-hhs-prod-apps -owide --watch
+kubectl logs -n ns-hhs-prod-apps -f hhs-service-feedr-admanager-deployment-7587c6c8d9-9nvx6
+kubectl logs -n ns-hhs-prod-apps -f hhs-service-feedr-admanager-deployment-7587c6c8d9-wbjzn
+kubectl describe pods -n ns-hhs-prod-apps hhs-service-feedr-admanager-deployment-7f55c7bdd9-4w9zp
+-- KUBERNETES EVENT LOGS
+kubectl get events -n ns-hhs-prod-apps --sort-by='.metadata.creationTimestamp'
+
+-- DEPLOYMENT DESCRIBE
+kubectl get deployments -n ns-hhs-prod-apps
+kubectl describe deployments -n ns-hhs-prod-apps hhs-service-feedr-admanager-deployment
+
+-- SERVICE DESCRIBE
+kubectl get svc -n ns-hhs-prod-apps -owide
+kubectl describe service -n ns-hhs-prod-apps hhs-service-feedr-admanager-service

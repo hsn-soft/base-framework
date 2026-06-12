@@ -10,6 +10,7 @@ public static class AppContentConsts
     }
 
     public const string TableName = "AppContents";
+    public const int ScopeKeyMaxLength = 128;
     public const int SlugKeyMaxLength = 512;
     public const int OperationStatusDescriptionMaxLength = 1024;
     public const int StorageVideoUrlMaxLength = 2048;

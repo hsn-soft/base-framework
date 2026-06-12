@@ -1,0 +1,10 @@
+<Project>
+    <PropertyGroup>
+        <LangVersion>latest</LangVersion>
+        <Version>2026.10</Version>
+        <HhsSharedVersion>2026.10.80</HhsSharedVersion>
+        <HsnSoftFrameworkVersion>2026.10.36</HsnSoftFrameworkVersion>
+        <MicrosoftAspNetCorePackageVersion>10.0.5</MicrosoftAspNetCorePackageVersion>
+        <MicrosoftEntityFrameworkCorePackageVersion>10.0.5</MicrosoftEntityFrameworkCorePackageVersion>
+    </PropertyGroup>
+</Project>

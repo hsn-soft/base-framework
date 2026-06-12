@@ -1,27 +1,26 @@
-using System.Globalization;
 using System.Linq.Expressions;
 using Hhs.ContentService.Domain.ContentDomain.Entities;
 using Hhs.ContentService.Domain.ContentDomain.Models;
 using Hhs.ContentService.Domain.ContentDomain.Repositories;
 using Hhs.ContentService.EntityFrameworkCore.Context;
+using Hhs.Shared.Helper.Enums;
 using HsnSoft.Base.Domain.Repositories;
-using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 
 namespace Hhs.ContentService.EntityFrameworkCore.Repositories;
 
-public sealed class EfCoreAppContentVisitRepository : EfCoreGenericRepository<AppContentVisit, Guid>, IAppContentVisitRepository
+public sealed class EfCoreAppContentVisitRepository(
+    IServiceProvider provider,
+    ContentServiceDbContext dbContext
+) : EfCoreGenericRepository<AppContentVisit, Guid>(provider, dbContext),
+    IAppContentVisitRepository
 {
-    public EfCoreAppContentVisitRepository(IServiceProvider provider, ContentServiceDbContext dbContext) : base(provider, dbContext)
-    {
-        // DefaultPropertySelector = null;
-    }
-
-    public async Task<AppContentVisit> CreateAsync(Guid clientId, Guid appContentId, string visitResponse)
+    public async Task<AppContentVisit> CreateAsync(Guid customerId, ProductTypes productType, Guid appContentId, string visitResponse)
     {
         var newEntity = new AppContentVisit(
             id: Guid.CreateVersion7(),
-            clientId: clientId,
+            customerId: customerId,
+            productType: productType,
             appContentId: appContentId,
             visitResponse: visitResponse
         );
@@ -71,43 +70,5 @@ public sealed class EfCoreAppContentVisitRepository : EfCoreGenericRepository<Ap
         }
 
         return await query.ToListAsync(cancellationToken);
-    }
-
-    private IQueryable<AppContentVisit> ApplyFilter(
-        IQueryable<AppContentVisit> query,
-        [CanBeNull] string searchText = null,
-        Guid? clientId = null,
-        uint? visitStartTime = null,
-        uint? visitEndTime = null,
-        [CanBeNull] string visitResponse = null
-    )
-    {
-        searchText = searchText?.ToLower(new CultureInfo("en-US"));
-        visitResponse = visitResponse?.ToLower(new CultureInfo("en-US"));
-
-        // check start and end date value
-        if (visitStartTime != null && visitEndTime != null && visitStartTime.Value > visitEndTime.Value)
-        {
-            uint tmp = visitStartTime.Value;
-            visitStartTime = visitEndTime.Value;
-            visitEndTime = tmp;
-        }
-
-        if (visitEndTime != null)
-        {
-            // limit end date
-            query = query.Where(x => x.VisitTimeLine < visitEndTime.Value + 1);
-        }
-
-        if (visitStartTime != null)
-        {
-            // limit start date
-            query = query.Where(x => x.VisitTimeLine >= visitStartTime.Value);
-        }
-
-        return query
-            .WhereIf(!string.IsNullOrWhiteSpace(searchText), e => e.VisitResponse.Contains(searchText))
-            .WhereIf(clientId.HasValue, e => e.ClientId == clientId.Value)
-            .WhereIf(!string.IsNullOrWhiteSpace(visitResponse), e => e.VisitResponse.Equals(visitResponse));
     }
 }

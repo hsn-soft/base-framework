@@ -1,0 +1,11 @@
+{
+  "culture": "tr",
+  "texts": {
+    "CREATED": "YENI",
+    "SKIPPED_PATH": "ISLEM DISI",
+    "PROCESSING": "ISLENIYOR",
+    "READY": "HAZIR",
+    "NO_ANALYSIS_VIDEO": "VIDEO YOK",
+    "FAILED": "HATALI"
+  }
+}

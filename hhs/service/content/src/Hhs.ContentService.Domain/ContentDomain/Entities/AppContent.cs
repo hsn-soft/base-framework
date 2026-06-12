@@ -1,5 +1,7 @@
 using Hhs.ContentService.Domain.ContentDomain.Consts;
 using Hhs.ContentService.Domain.Enums;
+using Hhs.Shared.Helper.Enums;
+using Hhs.Shared.Helper.Utils;
 using Hhs.Shared.Localization;
 using HsnSoft.Base;
 using HsnSoft.Base.Domain.Entities.Auditing;
@@ -9,11 +11,11 @@ using JetBrains.Annotations;
 
 namespace Hhs.ContentService.Domain.ContentDomain.Entities;
 
-public sealed class AppContent : AuditedEntity<Guid>, ISoftDelete, ICustomerSubscription
+public sealed class AppContent : AuditedEntity<Guid>, ISoftDelete, IScopeSubscription
 {
     public bool IsDeleted { get; internal set; }
 
-    public Guid CustomerId { get; private set; }
+    [NotNull] public string ScopeKey { get; private set; }
 
     [NotNull] public string SlugKey { get; private set; }
 
@@ -35,26 +37,33 @@ public sealed class AppContent : AuditedEntity<Guid>, ISoftDelete, ICustomerSubs
     private AppContent()
     {
         // Not-Null string fields
+        ScopeKey = string.Empty;
         SlugKey = string.Empty;
     }
 
-    internal AppContent(Guid customerId, [NotNull] string slugKey,
+    internal AppContent(Guid customerId, ProductTypes productType, [NotNull] string slugKey,
         AppContentOperationStates operationStatus, [CanBeNull] string correlationId = null)
-        : this(Guid.CreateVersion7(), customerId, slugKey, operationStatus, correlationId)
+        : this(Guid.CreateVersion7(), customerId, productType, slugKey, operationStatus, correlationId)
     {
     }
 
-    internal AppContent(Guid id, Guid customerId, [NotNull] string slugKey,
+    internal AppContent(Guid id, Guid customerId, ProductTypes productType, [NotNull] string slugKey,
         AppContentOperationStates operationStatus, [CanBeNull] string correlationId = null) : this()
     {
         Id = id;
-        CustomerId = customerId;
-
+        SetScopeKey(customerId, productType);
         SetSlugKey(slugKey);
 
         OperationStatus = operationStatus;
         CorrelationId = correlationId;
     }
+
+    private void SetScopeKey(Guid customerId, ProductTypes productType)
+        => ScopeKey = LocalizedModelValidator.NotNullOrWhiteSpace(
+            ScopeKeyHelper.Generate(customerId, productType),
+            $"{nameof(AppContent)}:{nameof(ScopeKey)}",
+            AppContentConsts.ScopeKeyMaxLength
+        );
 
     internal void SetSlugKey(string slugKey)
     {
