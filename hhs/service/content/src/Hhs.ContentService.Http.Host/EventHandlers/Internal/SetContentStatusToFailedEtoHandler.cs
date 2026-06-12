@@ -10,11 +10,11 @@ namespace Hhs.ContentService.EventHandlers.Internal;
 public class SetContentStatusToFailedEtoHandler : IIntegrationEventHandler<SetContentStatusToFailedEto>
 {
     private readonly IAppConsoleLogger _logger;
-    private readonly IAppContentAppService _appContentAppService;
+    private readonly ICustomerContentAppService _appContentAppService;
     private readonly IAnalysisContentAppService _analysisContentAppService;
 
     public SetContentStatusToFailedEtoHandler(IAppConsoleLogger logger,
-        IAppContentAppService appContentAppService,
+        ICustomerContentAppService appContentAppService,
         IAnalysisContentAppService analysisContentAppService)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -32,16 +32,16 @@ public class SetContentStatusToFailedEtoHandler : IIntegrationEventHandler<SetCo
 
         switch (@event.Message.ReferenceContentType)
         {
-            case ReferenceContentTypes.APP_REQUEST_CONTENT:
+            case ReferenceContentTypes.CUSTOMER_CONTENT:
             {
                 _appContentAppService.SetParentIntegrationEvent(@event);
-                await _appContentAppService.SetStatusToFailedAsync(@event.Message.ReferenceContentId, @event.Message.FailedReason, @event.CorrelationId);
+                await _appContentAppService.SetCustomerContentStatusToFailedAsync(@event.Message.ReferenceContentId, @event.Message.FailedReason, @event.CorrelationId);
                 break;
             }
             case ReferenceContentTypes.ANALYSIS_CONTENT:
             {
                 _analysisContentAppService.SetParentIntegrationEvent(@event);
-                await _analysisContentAppService.SetStatusToFailedAsync(@event.Message.ReferenceContentId, @event.Message.FailedReason, @event.CorrelationId);
+                await _analysisContentAppService.SetAnalysisContentStatusToFailedAsync(@event.Message.ReferenceContentId, @event.Message.FailedReason, @event.CorrelationId);
                 break;
             }
             default: throw new ArgumentOutOfRangeException();

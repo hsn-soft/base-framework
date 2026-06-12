@@ -1,5 +1,5 @@
 using Hhs.ContentService.Domain.ContentDomain.Entities;
-using Hhs.ContentService.Domain.CustomerDomain.Entities;
+using Hhs.ContentService.Domain.SettingDomain.Entities;
 using Hhs.ContentService.EntityFrameworkCore.Configurations;
 using HsnSoft.Base;
 using HsnSoft.Base.EntityFrameworkCore;
@@ -7,21 +7,19 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Hhs.ContentService.EntityFrameworkCore.Context;
 
-public sealed class ContentServiceDbContext : BaseEfCoreDbContext<ContentServiceDbContext>
+public sealed class ContentServiceDbContext(
+    IServiceProvider provider,
+    DbContextOptions<ContentServiceDbContext> options
+) : BaseEfCoreDbContext<ContentServiceDbContext>(options, provider)
 {
-    public DbSet<CustomerContentSetting> CustomerContentSettings => Set<CustomerContentSetting>();
-    public DbSet<CustomerContentSettingPathFilter> CustomerContentSettingPathFilters => Set<CustomerContentSettingPathFilter>();
-    public DbSet<CustomerVideoGenerationHistory> CustomerVideoGenerationHistories => Set<CustomerVideoGenerationHistory>();
+    public DbSet<CustomerVpSetting> CustomerVpSettings => Set<CustomerVpSetting>();
 
-    public DbSet<AppContent> AppContents => Set<AppContent>();
-    public DbSet<AppContentVisit> AppContentVisits => Set<AppContentVisit>();
+    public DbSet<CustomerContent> CustomerContents => Set<CustomerContent>();
+    public DbSet<CustomerContentVisit> CustomerContentVisits => Set<CustomerContentVisit>();
     public DbSet<AnalysisContent> AnalysisContents => Set<AnalysisContent>();
 
+    public DbSet<ContentVideoGenerationLimit> ContentVideoGenerationLimits => Set<ContentVideoGenerationLimit>();
     // public DbSet<ResponseStatistic> ResponseStatistics => Set<ResponseStatistic>();
-
-    public ContentServiceDbContext(IServiceProvider provider, DbContextOptions<ContentServiceDbContext> options) : base(options, provider)
-    {
-    }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -29,14 +27,13 @@ public sealed class ContentServiceDbContext : BaseEfCoreDbContext<ContentService
 
         base.OnModelCreating(builder);
 
-        builder.ConfigureCustomerContentSettingEntity();
-        builder.ConfigureCustomerContentSettingPathFilterEntity();
-        builder.ConfigureCustomerVideoGenerationHistoryEntity();
+        builder.ConfigureCustomerVpSettingEntity();
 
-        builder.ConfigureAppContentEntity();
-        builder.ConfigureAppContentVisitEntity();
+        builder.ConfigureCustomerContentEntity();
+        builder.ConfigureCustomerContentVisitEntity();
         builder.ConfigureAnalysisContentEntity();
 
+        builder.ConfigureContentVideoGenerationLimitEntity();
         // builder.ConfigureResponseStatisticEntity();
     }
 }

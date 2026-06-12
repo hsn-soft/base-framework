@@ -9,10 +9,10 @@ namespace Hhs.ContentService.EventHandlers.Internal;
 public class TrendVideoGenerationQueryEtoHandler : IIntegrationEventHandler<TrendVideoGenerationQueryEto>
 {
     private readonly IAppConsoleLogger _logger;
-    private readonly IAppContentAppService _appContentAppService;
+    private readonly ICustomerContentAppService _appContentAppService;
 
     public TrendVideoGenerationQueryEtoHandler(IAppConsoleLogger logger,
-        IAppContentAppService appContentAppService)
+        ICustomerContentAppService appContentAppService)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _appContentAppService = appContentAppService ?? throw new ArgumentNullException(nameof(appContentAppService));

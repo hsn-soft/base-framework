@@ -37,25 +37,25 @@ public static class AuthSeeder
             tenantType: TenantTypes.Reseller,
             title: "Tech Summus A.Ş.",
             name: "Tech Summus",
-            tenantId: Guid.Parse(TenantIds.TechsummusTenantId));
+            tenantId: Guid.Parse(TenantSeedIds.TechsummusTenantId));
 
         var audioTimeTenant = await GetOrCreateTenantAsync(db, logger,
             tenantType: TenantTypes.Reseller,
             title: "Audio Time A.Ş.",
             name: "Audio Time",
-            tenantId: Guid.Parse(TenantIds.AudioTimeTenantId));
+            tenantId: Guid.Parse(TenantSeedIds.AudioTimeTenantId));
 
         var efaturaPartnerTenant = await GetOrCreateTenantAsync(db, logger,
             tenantType: TenantTypes.Reseller,
             title: "Efatura Partner A.Ş.",
             name: "ePartner",
-            tenantId: Guid.Parse(TenantIds.EfaturaPartnerTenantId));
+            tenantId: Guid.Parse(TenantSeedIds.EfaturaPartnerTenantId));
 
         var ilbakAccountTenant = await GetOrCreateTenantAsync(db, logger,
             tenantType: TenantTypes.Account,
             title: "Ilbak Account Tenant",
             name: "Ilbak",
-            tenantId: Guid.Parse(TenantIds.IlbakAccountTenantId));
+            tenantId: Guid.Parse(TenantSeedIds.IlbakAccountTenantId));
 
         // EnsureSystemRoles
         await EnsureRoleAsync(db, logger, systemTenant.Id, DefaultRoleNames.SystemAdmin, true, false, roleId: Guid.Parse(TenantConsts.SystemTenantRoleId));
@@ -63,10 +63,10 @@ public static class AuthSeeder
         await EnsureRoleAsync(db, logger, systemTenant.Id, DefaultRoleNames.RegisteredUser, true, true);
 
         // EnsureBusinessTenantRoles
-        await EnsureRoleAsync(db, logger, techsummusTenant.Id, DefaultRoleNames.TenantAdmin, true, true, roleId: Guid.Parse(TenantRoleIds.TechsummusTenantRoleId));
-        await EnsureRoleAsync(db, logger, audioTimeTenant.Id, DefaultRoleNames.TenantAdmin, true, true, roleId: Guid.Parse(TenantRoleIds.AudioTimeTenantRoleId));
-        await EnsureRoleAsync(db, logger, efaturaPartnerTenant.Id, DefaultRoleNames.TenantAdmin, true, true, roleId: Guid.Parse(TenantRoleIds.EfaturaPartnerTenantRoleId));
-        await EnsureRoleAsync(db, logger, ilbakAccountTenant.Id, DefaultRoleNames.TenantAdmin, true, true, roleId: Guid.Parse(TenantRoleIds.IlbakAccountTenantRoleId));
+        await EnsureRoleAsync(db, logger, techsummusTenant.Id, DefaultRoleNames.TenantAdmin, true, true, roleId: Guid.Parse(TenantRoleSeedIds.TechsummusTenantRoleId));
+        await EnsureRoleAsync(db, logger, audioTimeTenant.Id, DefaultRoleNames.TenantAdmin, true, true, roleId: Guid.Parse(TenantRoleSeedIds.AudioTimeTenantRoleId));
+        await EnsureRoleAsync(db, logger, efaturaPartnerTenant.Id, DefaultRoleNames.TenantAdmin, true, true, roleId: Guid.Parse(TenantRoleSeedIds.EfaturaPartnerTenantRoleId));
+        await EnsureRoleAsync(db, logger, ilbakAccountTenant.Id, DefaultRoleNames.TenantAdmin, true, true, roleId: Guid.Parse(TenantRoleSeedIds.IlbakAccountTenantRoleId));
 
         // EnsureDefaultPasswordPolicies
         await EnsureDefaultPasswordPolicyAsync(db, logger, systemTenant.Id);

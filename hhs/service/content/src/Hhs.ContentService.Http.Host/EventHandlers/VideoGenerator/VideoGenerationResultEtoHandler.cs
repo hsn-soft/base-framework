@@ -10,11 +10,11 @@ namespace Hhs.ContentService.EventHandlers.VideoGenerator;
 public class VideoGenerationResultEtoHandler : IIntegrationEventHandler<VideoGenerationResultEto>
 {
     private readonly IAppConsoleLogger _logger;
-    private readonly IAppContentAppService _appContentAppService;
+    private readonly ICustomerContentAppService _appContentAppService;
     private readonly IAnalysisContentAppService _analysisContentAppService;
 
     public VideoGenerationResultEtoHandler(IAppConsoleLogger logger,
-        IAppContentAppService appContentAppService,
+        ICustomerContentAppService appContentAppService,
         IAnalysisContentAppService analysisContentAppService)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -33,16 +33,16 @@ public class VideoGenerationResultEtoHandler : IIntegrationEventHandler<VideoGen
 
         switch (@event.Message.ReferenceContentType)
         {
-            case ReferenceContentTypes.APP_REQUEST_CONTENT:
+            case ReferenceContentTypes.CUSTOMER_CONTENT:
             {
                 _appContentAppService.SetParentIntegrationEvent(@event);
-                await _appContentAppService.SetVideoGenerationResultAsync(@event.Message.ReferenceContentId, @event.Message.VideoRequestId, @event.Message.IsGenerateSuccess, @event.Message.StorageVideoUrl, @event.CorrelationId);
+                await _appContentAppService.SetCustomerContentVideoResultAsync(@event.Message.ReferenceContentId, @event.Message.VideoRequestId, @event.Message.IsGenerateSuccess, @event.Message.StorageVideoUrl, @event.CorrelationId);
                 break;
             }
             case ReferenceContentTypes.ANALYSIS_CONTENT:
             {
                 _analysisContentAppService.SetParentIntegrationEvent(@event);
-                await _analysisContentAppService.SetVideoGenerationResultAsync(@event.Message.ReferenceContentId, @event.Message.VideoRequestId, @event.Message.IsGenerateSuccess, @event.Message.StorageVideoUrl, @event.CorrelationId);
+                await _analysisContentAppService.SetAnalysisContentVideoResultAsync(@event.Message.ReferenceContentId, @event.Message.VideoRequestId, @event.Message.IsGenerateSuccess, @event.Message.StorageVideoUrl, @event.CorrelationId);
                 break;
             }
             default: throw new ArgumentOutOfRangeException();

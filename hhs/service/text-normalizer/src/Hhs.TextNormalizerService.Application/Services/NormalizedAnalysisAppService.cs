@@ -291,14 +291,14 @@ public sealed class NormalizedAnalysisAppService : ApplicationServiceBase, INorm
                     introResponse = await _outlineProvider.OutlineAsync(new OutlineRequestDto
                     {
                         OutlinePrompt = clientSettings.NormalizerSetting.AnalysisOutlineIntroPrompt,
-                        RefContentType = ReferenceContentTypes.APP_REQUEST_CONTENT,
+                        RefContentType = ReferenceContentTypes.CUSTOMER_CONTENT,
                         RefContentId = Guid.CreateVersion7(), // Fake content id
                         OutlineInput = "."
                     }, "gpt-4.1-mini");
                     outroResponse = await _outlineProvider.OutlineAsync(new OutlineRequestDto
                     {
                         OutlinePrompt = clientSettings.NormalizerSetting.AnalysisOutlineOutroPrompt,
-                        RefContentType = ReferenceContentTypes.APP_REQUEST_CONTENT,
+                        RefContentType = ReferenceContentTypes.CUSTOMER_CONTENT,
                         RefContentId = Guid.CreateVersion7(), // Fake content id
                         OutlineInput = "."
                     }, "gpt-4.1-mini");

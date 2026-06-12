@@ -52,7 +52,7 @@ public sealed class EventManagerAppService : ApplicationServiceBase, IEventManag
                 if (skipReQueueOperation)
                 {
                     await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent, eventMessage: new SetContentStatusToFailedEto(
-                        ReferenceContentType: ReferenceContentTypes.APP_REQUEST_CONTENT,
+                        ReferenceContentType: ReferenceContentTypes.CUSTOMER_CONTENT,
                         ReferenceContentId: ((dynamic)originalEvent)?.AppContentId,
                         FailedReason: EventManagerOperationFacilities.EVENT_REQUEUED_FAILED + ": ReQueue Limit Error")
                     );

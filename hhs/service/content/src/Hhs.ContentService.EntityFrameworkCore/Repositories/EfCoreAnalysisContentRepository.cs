@@ -1,12 +1,11 @@
-using System.Globalization;
-using System.Linq.Dynamic.Core;
-using Hhs.ContentService.Domain.ContentDomain.Consts;
+using Hhs.ContentService.Domain.ContentDomain.Consts.Facilities;
 using Hhs.ContentService.Domain.ContentDomain.Entities;
 using Hhs.ContentService.Domain.ContentDomain.Exceptions;
 using Hhs.ContentService.Domain.ContentDomain.Repositories;
 using Hhs.ContentService.Domain.Enums;
 using Hhs.ContentService.Domain.Localization;
 using Hhs.ContentService.EntityFrameworkCore.Context;
+using Hhs.Shared.Helper.Enums;
 using Hhs.Shared.Localization;
 using HsnSoft.Base.Domain.Repositories;
 using HsnSoft.Base.Validation.Localization;
@@ -16,81 +15,37 @@ using Microsoft.Extensions.Localization;
 
 namespace Hhs.ContentService.EntityFrameworkCore.Repositories;
 
-public sealed class EfCoreAnalysisContentRepository : EfCoreGenericRepository<AnalysisContent, Guid>, IAnalysisContentRepository
+public sealed class EfCoreAnalysisContentRepository(
+    IServiceProvider provider,
+    IStringLocalizerFactory stringLocalizerFactory,
+    ContentServiceDbContext dbContext
+) : EfCoreGenericRepository<AnalysisContent, Guid>(provider, dbContext), IAnalysisContentRepository
 {
-    [NotNull] protected IStringLocalizer L { get; }
-
-    public EfCoreAnalysisContentRepository(IServiceProvider provider, IStringLocalizerFactory stringLocalizerFactory, ContentServiceDbContext dbContext) : base(provider, dbContext)
-    {
-        // DefaultPropertySelector = new List<Expression<Func<AnalysisContent, object>>> { x => x.Client };
-
-        L = stringLocalizerFactory.CreateMultiple([typeof(ContentServiceResource), typeof(ValidationResource), typeof(SharedResource)]);
-    }
-
-    public async Task<List<AnalysisContent>> GetPagedListWithFiltersAsync(Guid? clientId = null, DateTime? analysisStartDate = null, DateTime? analysisEndDate = null, AnalysisContentOperationStates? status = null, string sorting = null,
-        int maxResultCount = int.MaxValue, int skipCount = 0, CancellationToken cancellationToken = default)
-    {
-        var queryable = GetQueryable();
-
-        var query = ApplyFilter(queryable,
-            clientId: clientId,
-            analysisStartDate: analysisStartDate,
-            analysisEndDate: analysisEndDate,
-            status: status,
-            searchText: null);
-
-        return await query
-            .OrderBy(string.IsNullOrWhiteSpace(sorting) ? AnalysisContentConsts.GetDefaultSorting() : sorting)
-            .PageBy(skipCount, maxResultCount)
-            .ToListAsync(cancellationToken);
-    }
-
-    public async Task<long> GetCountWithFiltersAsync(Guid? clientId = null, DateTime? analysisStartDate = null, DateTime? analysisEndDate = null, AnalysisContentOperationStates? status = null, CancellationToken cancellationToken = default)
-    {
-        var query = ApplyFilter(GetQueryable(),
-            clientId: clientId,
-            analysisStartDate: analysisStartDate,
-            analysisEndDate: analysisEndDate,
-            status: status,
-            searchText: null);
-
-        return await query.LongCountAsync(cancellationToken);
-    }
-
-    public async Task<List<AnalysisContent>> GetFilterListAsync(Guid? clientId = null, DateTime? analysisStartDate = null, DateTime? analysisEndDate = null, AnalysisContentOperationStates? status = null, string sorting = null,
-        CancellationToken cancellationToken = default)
-    {
-        var queryable = GetQueryable();
-
-        var query = ApplyFilter(queryable,
-            clientId: clientId,
-            analysisStartDate: analysisStartDate,
-            analysisEndDate: analysisEndDate,
-            status: status,
-            searchText: null);
-
-        return await query
-            .OrderBy(string.IsNullOrWhiteSpace(sorting) ? AnalysisContentConsts.GetDefaultSorting() : sorting)
-            .ToListAsync(cancellationToken);
-    }
+    [NotNull]
+    protected IStringLocalizer L { get; } = stringLocalizerFactory.CreateMultiple
+    (
+        [
+            typeof(ContentServiceResource),
+            typeof(ValidationResource),
+            typeof(SharedResource)
+        ]
+    );
 
     public async Task<AnalysisContent> CreateAsync(
-        Guid tenantId,
-        Guid clientId,
+        Guid customerId, ProductTypes productType,
         DateTime analysisDate,
         AnalysisContentOperationStates operationStatus,
         string correlationId = null)
         => await CreateAsync(id: Guid.CreateVersion7(),
-            tenantId: tenantId,
-            clientId: clientId,
+            customerId: customerId,
+            productType: productType,
             analysisDate: analysisDate,
             operationStatus: operationStatus,
             correlationId: correlationId);
 
     public async Task<AnalysisContent> CreateAsync(
         Guid id,
-        Guid tenantId,
-        Guid clientId,
+        Guid customerId, ProductTypes productType,
         DateTime analysisDate,
         AnalysisContentOperationStates operationStatus,
         string correlationId = null)
@@ -100,8 +55,8 @@ public sealed class EfCoreAnalysisContentRepository : EfCoreGenericRepository<An
         // Create draft
         var draft = new AnalysisContent(
             id: id,
-            tenantId: tenantId,
-            clientId: clientId,
+            customerId: customerId,
+            productType: productType,
             analysisDate: analysisDate,
             operationStatus: operationStatus,
             correlationId: correlationId
@@ -114,10 +69,10 @@ public sealed class EfCoreAnalysisContentRepository : EfCoreGenericRepository<An
         return draft;
     }
 
-    public async Task SetNormalizedAnalysisReferenceAsync(Guid id, Guid normalizedAnalysisId)
+    public async Task SetAnalysisContentNormalizedReferenceAsync(Guid id, Guid normalizedRequestId)
     {
         int affectedCount = await GetDbSet().Where(b => b.Id == id).ExecuteUpdateAsync(s =>
-            s.SetProperty(a => a.NormalizedAnalysisId, normalizedAnalysisId)
+            s.SetProperty(a => a.NormalizedRequestId, normalizedRequestId)
         );
 
         if (affectedCount < 1)
@@ -126,7 +81,7 @@ public sealed class EfCoreAnalysisContentRepository : EfCoreGenericRepository<An
         }
     }
 
-    public async Task<AnalysisContent> SetNormalizedContentResultAsync(Guid id, bool isNormalizedSuccess, Guid normalizedAnalysisId)
+    public async Task<AnalysisContent> SetAnalysisContentNormalizedResultAsync(Guid id, bool isNormalizedSuccess, Guid normalizedRequestId)
     {
         var oldEntity = await GetSingleOrDefaultAsync(x => x.Id == id);
         if (oldEntity == null)
@@ -139,7 +94,7 @@ public sealed class EfCoreAnalysisContentRepository : EfCoreGenericRepository<An
             throw new AnalysisContentStateException(L, id.ToString());
         }
 
-        oldEntity.NormalizedAnalysisId = normalizedAnalysisId;
+        oldEntity.NormalizedRequestId = normalizedRequestId;
         if (isNormalizedSuccess)
         {
             oldEntity.OperationStatus = AnalysisContentOperationStates.NormalizedWaitForVideoGeneration;
@@ -158,7 +113,7 @@ public sealed class EfCoreAnalysisContentRepository : EfCoreGenericRepository<An
         return oldEntity;
     }
 
-    public async Task SetVideoRequestReferenceAsync(Guid id, Guid videoRequestId)
+    public async Task SetAnalysisContentVideoReferenceAsync(Guid id, Guid videoRequestId)
     {
         int affectedCount = await GetDbSet().Where(b => b.Id == id).ExecuteUpdateAsync(s =>
             s.SetProperty(a => a.VideoRequestId, videoRequestId)
@@ -170,7 +125,7 @@ public sealed class EfCoreAnalysisContentRepository : EfCoreGenericRepository<An
         }
     }
 
-    public async Task<AnalysisContent> SetVideoGenerationResultAsync(Guid id, bool isGenerateSuccess, Guid videoRequestId, string storageVideoUrl)
+    public async Task<AnalysisContent> SetAnalysisContentVideoResultAsync(Guid id, bool isGenerateSuccess, Guid videoRequestId, string storageVideoUrl)
     {
         var oldEntity = await GetSingleOrDefaultAsync(x => x.Id == id);
         if (oldEntity == null)
@@ -204,7 +159,7 @@ public sealed class EfCoreAnalysisContentRepository : EfCoreGenericRepository<An
         return oldEntity;
     }
 
-    public async Task<AnalysisContent> SetStatusToFailedAsync(Guid id, string failedReason)
+    public async Task<AnalysisContent> SetAnalysisContentStatusToFailedAsync(Guid id, string failedReason)
     {
         var oldEntity = await GetSingleOrDefaultAsync(x => x.Id == id);
         if (oldEntity == null)
@@ -216,41 +171,5 @@ public sealed class EfCoreAnalysisContentRepository : EfCoreGenericRepository<An
         oldEntity.OperationStatusDescription = failedReason;
         _ = await UpdateAsync(oldEntity);
         return oldEntity;
-    }
-
-    private IQueryable<AnalysisContent> ApplyFilter(
-        IQueryable<AnalysisContent> query,
-        [CanBeNull] string searchText = null,
-        Guid? clientId = null,
-        DateTime? analysisStartDate = null,
-        DateTime? analysisEndDate = null,
-        AnalysisContentOperationStates? status = null
-    )
-    {
-        searchText = searchText?.ToLower(new CultureInfo("en-US"));
-
-        // check start and end date value
-        if (analysisStartDate != null && analysisEndDate != null && analysisStartDate.Value.Date > analysisEndDate.Value.Date)
-        {
-            var tmp = analysisStartDate.Value;
-            analysisStartDate = analysisEndDate.Value;
-            analysisEndDate = tmp;
-        }
-
-        if (analysisEndDate != null)
-        {
-            // limit end date
-            query = query.Where(x => x.AnalysisDate < analysisEndDate.Value.AddDays(1).Date);
-        }
-        else if (analysisStartDate != null)
-        {
-            // limit start date
-            query = query.Where(x => x.AnalysisDate >= analysisStartDate.Value.Date);
-        }
-
-        return query
-            .WhereIf(!string.IsNullOrWhiteSpace(searchText), e => e.CorrelationId.Contains(searchText))
-            .WhereIf(clientId.HasValue, e => e.ClientId == clientId.Value)
-            .WhereIf(status.HasValue, e => e.OperationStatus == status.Value);
     }
 }

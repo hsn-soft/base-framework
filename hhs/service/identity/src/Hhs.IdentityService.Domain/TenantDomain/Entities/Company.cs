@@ -49,11 +49,11 @@ public sealed class Company : AuditedEntity<Guid>, ISoftDelete
     }
 
     internal void SetTitle(string title)
-        => Title = LocalizedModelValidator.NotNullOrWhiteSpace(title, $"{nameof(Tenant)}:{nameof(Title)}", CompanyConsts.TitleMaxLength);
+        => Title = LocalizedModelValidator.NotNullOrWhiteSpace(title, $"{nameof(Company)}:{nameof(Title)}", CompanyConsts.TitleMaxLength);
 
     internal void SetName(string name)
     {
-        Name = LocalizedModelValidator.NotNullOrWhiteSpace(name, $"{nameof(Tenant)}:{nameof(Name)}", CompanyConsts.NameMaxLength);
+        Name = LocalizedModelValidator.NotNullOrWhiteSpace(name, $"{nameof(Company)}:{nameof(Name)}", CompanyConsts.NameMaxLength);
         NormalizedName = StringHelper.Normalize(StringHelper.ReplaceInvalidChars(name));
     }
 }

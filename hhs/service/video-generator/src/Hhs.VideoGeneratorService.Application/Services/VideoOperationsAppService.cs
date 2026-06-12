@@ -555,7 +555,7 @@ public sealed class VideoOperationsAppService : ApplicationServiceBase, IVideoOp
             {
                 if (clientSettings.IsEnabledVideoGeneration)
                 {
-                    if (videoRequestItem.RefContentType != ReferenceContentTypes.APP_REQUEST_CONTENT && videoRequestItem.RefContentType != ReferenceContentTypes.ANALYSIS_CONTENT)
+                    if (videoRequestItem.RefContentType != ReferenceContentTypes.CUSTOMER_CONTENT && videoRequestItem.RefContentType != ReferenceContentTypes.ANALYSIS_CONTENT)
                     {
                         _logger.LogError("VideoRequest[{VideoRequestReferenceId}] RefContentType is invalid", videoRequestItem.Id.ToString());
                         throw new Exception($"VideoRequest[{videoRequestItem.Id.ToString()}] RefContentType is invalid");

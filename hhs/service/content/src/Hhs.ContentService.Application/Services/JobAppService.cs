@@ -1,7 +1,7 @@
 using Hhs.ContentService.Application.Contracts.Events;
 using Hhs.ContentService.Application.Contracts.JobDomain;
 using Hhs.ContentService.Application.Contracts.JobDomain.Dtos;
-using Hhs.ContentService.Domain.CustomerDomain.Repositories;
+using Hhs.ContentService.Domain.SettingDomain.Repositories;
 using HsnSoft.Base.Logging;
 using HsnSoft.Base.Logging.Abstracts;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,11 +11,11 @@ namespace Hhs.ContentService.Application.Services;
 public sealed class JobAppService : ApplicationServiceBase, IJobAppService
 {
     private readonly IFrameworkLogger _logger;
-    private readonly ICustomerContentSettingRepository _clientRepository;
+    private readonly ICustomerVpSettingRepository _clientRepository;
 
     public JobAppService(
         IServiceProvider provider,
-        ICustomerContentSettingRepository clientRepository
+        ICustomerVpSettingRepository clientRepository
     ) : base(provider)
     {
         _logger = provider.GetRequiredService<IFrameworkLogger>();
@@ -105,6 +105,6 @@ public sealed class JobAppService : ApplicationServiceBase, IJobAppService
             exception: null
         ));
 
-        await EventBus.PublishAsync(eventMessage: new TestQueryRequestedEto(AppClientId: Guid.CreateVersion7()), correlationId: correlationId);
+        await EventBus.PublishAsync(eventMessage: new TestQueryRequestedEto(CustomerId: Guid.CreateVersion7()), correlationId: correlationId);
     }
 }

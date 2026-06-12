@@ -32,7 +32,7 @@ public class SetNormalizedStatusToFailedEtoHandler : IIntegrationEventHandler<Se
 
         switch (@event.Message.ReferenceNormalizedType)
         {
-            case ReferenceContentTypes.APP_REQUEST_CONTENT:
+            case ReferenceContentTypes.CUSTOMER_CONTENT:
             {
                 _normalizedRequestAppService.SetParentIntegrationEvent(@event);
                 await _normalizedRequestAppService.SetStatusToFailedAsync(@event.Message.ReferenceNormalizedId, @event.Message.FailedReason, @event.CorrelationId);

@@ -1,5 +1,5 @@
 using Hhs.ContentService.Domain.ContentDomain.Repositories;
-using Hhs.ContentService.Domain.CustomerDomain.Repositories;
+using Hhs.ContentService.Domain.SettingDomain.Repositories;
 using Hhs.ContentService.EntityFrameworkCore.Context;
 using Hhs.ContentService.EntityFrameworkCore.Repositories;
 using HsnSoft.Base.Auditing;
@@ -48,13 +48,13 @@ public static class EfCoreServiceCollectionExtensions
         // Must be Scoped => Cannot consume any scoped service and CurrentUser object creation on constructor
         services.AddScoped(typeof(IEfCoreGenericRepository<,>), typeof(EfCoreGenericRepository<,>));
 
-        services.AddScoped<ICustomerContentSettingRepository, EfCoreCustomerContentSettingRepository>();
-        services.AddScoped<ICustomerVideoGenerationHistory, EfCoreCustomerVideoGenerationHistoryRepository>();
+        services.AddScoped<ICustomerVpSettingRepository, EfCoreCustomerVpSettingRepository>();
 
-        services.AddScoped<IAppContentRepository, EfCoreAppContentRepository>();
-        services.AddScoped<IAppContentVisitRepository, EfCoreAppContentVisitRepository>();
+        services.AddScoped<ICustomerContentRepository, EfCoreCustomerContentRepository>();
+        services.AddScoped<ICustomerContentVisitRepository, EfCoreCustomerContentVisitRepository>();
         services.AddScoped<IAnalysisContentRepository, EfCoreAnalysisContentRepository>();
 
+        services.AddScoped<IContentVideoGenerationLimitRepository, EfCoreContentVideoGenerationLimitRepository>();
         // services.AddScoped<IResponseStatisticRepository, EfCoreResponseStatisticRepository>();
 
         return services;

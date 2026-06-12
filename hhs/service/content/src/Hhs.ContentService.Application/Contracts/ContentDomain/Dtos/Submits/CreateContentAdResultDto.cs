@@ -1,0 +1,13 @@
+using JetBrains.Annotations;
+
+namespace Hhs.ContentService.Application.Contracts.ContentDomain.Dtos.Submits;
+
+public sealed class CreateContentAdResultDto
+{
+    public Guid ReferenceContentId { get; set; }
+
+    [NotNull] public string ReferenceContentType { get; set; }
+
+    [NotNull] public string FeedKey { get; set; }
+    [CanBeNull] public string FeedMessage { get; set; }
+}

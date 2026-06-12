@@ -51,7 +51,7 @@ public sealed class EventManagerAppService : ApplicationServiceBase, IEventManag
                 if (skipReQueueOperation)
                 {
                     await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent, eventMessage: new SetNormalizedStatusToFailedEto(
-                        ReferenceNormalizedType: ReferenceContentTypes.APP_REQUEST_CONTENT,
+                        ReferenceNormalizedType: ReferenceContentTypes.CUSTOMER_CONTENT,
                         ReferenceNormalizedId: ((dynamic)originalEvent)?.NormalizedRequestId,
                         FailedReason: EventManagerOperationFacilities.EVENT_REQUEUED_FAILED + ": ReQueue Limit Error")
                     );
@@ -68,7 +68,7 @@ public sealed class EventManagerAppService : ApplicationServiceBase, IEventManag
                 if (skipReQueueOperation)
                 {
                     await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent, eventMessage: new SetNormalizedStatusToFailedEto(
-                        ReferenceNormalizedType: ReferenceContentTypes.APP_REQUEST_CONTENT,
+                        ReferenceNormalizedType: ReferenceContentTypes.CUSTOMER_CONTENT,
                         ReferenceNormalizedId: ((dynamic)originalEvent)?.NormalizedRequestId,
                         FailedReason: EventManagerOperationFacilities.EVENT_REQUEUED_FAILED + ": ReQueue Limit Error")
                     );

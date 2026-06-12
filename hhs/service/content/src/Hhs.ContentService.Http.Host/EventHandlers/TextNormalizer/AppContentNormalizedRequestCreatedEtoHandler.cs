@@ -9,10 +9,10 @@ namespace Hhs.ContentService.EventHandlers.TextNormalizer;
 public class AppContentNormalizedRequestCreatedEtoHandler : IIntegrationEventHandler<AppContentNormalizedRequestCreatedEto>
 {
     private readonly IAppConsoleLogger _logger;
-    private readonly IAppContentAppService _appContentAppService;
+    private readonly ICustomerContentAppService _appContentAppService;
 
     public AppContentNormalizedRequestCreatedEtoHandler(IAppConsoleLogger logger,
-        IAppContentAppService appContentAppService)
+        ICustomerContentAppService appContentAppService)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _appContentAppService = appContentAppService ?? throw new ArgumentNullException(nameof(appContentAppService));
@@ -27,6 +27,6 @@ public class AppContentNormalizedRequestCreatedEtoHandler : IIntegrationEventHan
             @event.ParentMessageId != null ? @event.ParentMessageId.Value.ToString() : string.Empty);
 
         _appContentAppService.SetParentIntegrationEvent(@event);
-        await _appContentAppService.SetNormalizedRequestReferenceAsync(@event.Message.AppContentId, @event.Message.NormalizedRequestId);
+        await _appContentAppService.SetCustomerContentNormalizedReferenceAsync(@event.Message.AppContentId, @event.Message.NormalizedRequestId);
     }
 }

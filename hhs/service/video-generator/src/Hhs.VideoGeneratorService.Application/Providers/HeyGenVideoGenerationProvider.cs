@@ -334,7 +334,7 @@ public class HeyGenVideoGenerationProvider : IHeyGenVideoGenerationProvider
             variablesJsonData += CreateGenericModelContent(publisherLogoObject) + ",";
         }
 
-        if (input.RefContentType == ReferenceContentTypes.APP_REQUEST_CONTENT)
+        if (input.RefContentType == ReferenceContentTypes.CUSTOMER_CONTENT)
         {
             InnerVariable voiceObject;
             var bgObject = new InnerVariable { Name = "bg_image", Type = "image", Properties = new Properties { Url = clientHeyGenSettings.BackgroundImageUrl, Fit = "cover" } };

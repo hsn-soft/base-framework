@@ -10,11 +10,11 @@ namespace Hhs.ContentService.EventHandlers.VideoGenerator;
 public class VideoGenerationRequestCreatedEtoHandler : IIntegrationEventHandler<VideoGenerationRequestCreatedEto>
 {
     private readonly IAppConsoleLogger _logger;
-    private readonly IAppContentAppService _appContentAppService;
+    private readonly ICustomerContentAppService _appContentAppService;
     private readonly IAnalysisContentAppService _analysisContentAppService;
 
     public VideoGenerationRequestCreatedEtoHandler(IAppConsoleLogger logger,
-        IAppContentAppService appContentAppService,
+        ICustomerContentAppService appContentAppService,
         IAnalysisContentAppService analysisContentAppService)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -33,16 +33,16 @@ public class VideoGenerationRequestCreatedEtoHandler : IIntegrationEventHandler<
 
         switch (@event.Message.ReferenceContentType)
         {
-            case ReferenceContentTypes.APP_REQUEST_CONTENT:
+            case ReferenceContentTypes.CUSTOMER_CONTENT:
             {
                 _appContentAppService.SetParentIntegrationEvent(@event);
-                await _appContentAppService.SetVideoGenerationRequestReferenceAsync(@event.Message.ReferenceContentId, @event.Message.VideoRequestId);
+                await _appContentAppService.SetCustomerContentVideoReferenceAsync(@event.Message.ReferenceContentId, @event.Message.VideoRequestId);
                 break;
             }
             case ReferenceContentTypes.ANALYSIS_CONTENT:
             {
                 _analysisContentAppService.SetParentIntegrationEvent(@event);
-                await _analysisContentAppService.SetVideoGenerationRequestReferenceAsync(@event.Message.ReferenceContentId, @event.Message.VideoRequestId);
+                await _analysisContentAppService.SetAnalysisContentVideoReferenceAsync(@event.Message.ReferenceContentId, @event.Message.VideoRequestId);
                 break;
             }
             default: throw new ArgumentOutOfRangeException();

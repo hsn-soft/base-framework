@@ -27,6 +27,6 @@ public class AnalysisContentNormalizedAnalysisCreatedEtoHandler : IIntegrationEv
             @event.ParentMessageId != null ? @event.ParentMessageId.Value.ToString() : string.Empty);
 
         _analysisContentAppService.SetParentIntegrationEvent(@event);
-        await _analysisContentAppService.SetNormalizedAnalysisReferenceAsync(@event.Message.AnalysisContentId, @event.Message.NormalizedAnalysisId);
+        await _analysisContentAppService.SetAnalysisContentNormalizedReferenceAsync(@event.Message.AnalysisContentId, @event.Message.NormalizedAnalysisId);
     }
 }

@@ -2,7 +2,7 @@ using HsnSoft.Base.Domain.Entities.Events;
 
 namespace Hhs.ContentService.Application.Contracts.Events;
 
-public sealed record TestQueryRequestedEto(Guid AppClientId) : IIntegrationEventMessage
+public sealed record TestQueryRequestedEto(Guid CustomerId) : IIntegrationEventMessage
 {
-    public Guid AppClientId { get; } = AppClientId;
+    public Guid CustomerId { get; } = CustomerId;
 }

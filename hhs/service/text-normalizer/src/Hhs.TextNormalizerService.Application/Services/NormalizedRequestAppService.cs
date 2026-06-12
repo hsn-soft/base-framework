@@ -217,20 +217,20 @@ public sealed class NormalizedRequestAppService : ApplicationServiceBase, INorma
 
     public async Task CreateAsync(AppContentNormalizedStartedEto input, string correlationId = null)
     {
-        if (input == null || input.TenantId == Guid.Empty || input.ClientId == Guid.Empty || input.AppContentId == Guid.Empty
+        if (input == null || input.TenantId == Guid.Empty || input.ClientId == Guid.Empty || input.CustomerContentId == Guid.Empty
             || string.IsNullOrWhiteSpace(input.DomainName) || string.IsNullOrWhiteSpace(input.DomainPath))
         {
             throw new BaseHttpException((int)HttpStatusCode.BadRequest);
         }
 
-        var contentEntity = await _normalizedRequestRepository.FindByUniqueKeysAsync(input.ClientId, input.AppContentId);
+        var contentEntity = await _normalizedRequestRepository.FindByUniqueKeysAsync(input.ClientId, input.CustomerContentId);
         if (contentEntity != null) return;
 
         var placed = await _normalizedRequestRepository.CreateAsync(
             tenantId: input.TenantId,
             clientId: input.ClientId,
             domainName: StringHelper.Minimize(input.DomainName),
-            appContentId: input.AppContentId,
+            appContentId: input.CustomerContentId,
             domainPath: StringHelper.Minimize(input.DomainPath),
             operationStatus: NormalizedRequestStates.CreatedWaitForScraping,
             correlationId: correlationId);
@@ -450,7 +450,7 @@ public sealed class NormalizedRequestAppService : ApplicationServiceBase, INorma
                 OutlineResponseDto response;
                 if (!_serviceSettings.SkipOutlineOperation && clientSettings.NormalizerSetting.IsOutlineOperationActive)
                 {
-                    var outlineRequest = new OutlineRequestDto { OutlinePrompt = clientSettings.NormalizerSetting.ContentOutlinePrompt, RefContentType = ReferenceContentTypes.APP_REQUEST_CONTENT, RefContentId = normalizedRequestItem.AppContentId, OutlineInput = outlineInput };
+                    var outlineRequest = new OutlineRequestDto { OutlinePrompt = clientSettings.NormalizerSetting.ContentOutlinePrompt, RefContentType = ReferenceContentTypes.CUSTOMER_CONTENT, RefContentId = normalizedRequestItem.AppContentId, OutlineInput = outlineInput };
                     response = await _outlineProvider.OutlineAsync(outlineRequest, null, _serviceSettings.UseStructuredOutput);
                 }
                 else
@@ -564,7 +564,7 @@ public sealed class NormalizedRequestAppService : ApplicationServiceBase, INorma
                     TenantId: normalizedRequestItem.TenantId,
                     ClientId: normalizedRequestItem.ClientId,
                     DomainName: normalizedRequestItem.DomainName,
-                    ReferenceContentType: ReferenceContentTypes.APP_REQUEST_CONTENT,
+                    ReferenceContentType: ReferenceContentTypes.CUSTOMER_CONTENT,
                     ReferenceContentId: normalizedRequestItem.AppContentId,
                     EncodedNormalizedContentDatas: new List<EncodedNormalizedContentData>
                     {

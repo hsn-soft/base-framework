@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Net;
 using Hhs.ContentService.Application;
 using Hhs.ContentService.Application.Contracts.ContentDomain.Dtos;
+using Hhs.ContentService.Application.Contracts.ContentDomain.Dtos.Submits;
 using Hhs.ContentService.Application.Contracts.ContentDomain.Interfaces;
 using Hhs.ContentService.Controllers.Base;
 using Hhs.Shared.Hosting.Extensions;
@@ -23,7 +24,7 @@ public sealed class PublicCustomerContentsController(
     [AllowAnonymous]
     [HttpPost("get-or-create")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<GetOrCreateAppContentResponseDto> GetOrCreateAsync([FromBody] GetOrCreateAppContentRequestDto input, CancellationToken cancellationToken = default)
+    public async Task<GetOrCreateCustomerContentResponseDto> GetOrCreateAsync([FromBody] GetOrCreateCustomerContentRequestDto input, CancellationToken cancellationToken = default)
     {
         // Check domain reference is correct
         CheckDomain(ref input);
@@ -34,7 +35,7 @@ public sealed class PublicCustomerContentsController(
     [AllowAnonymous]
     [HttpPost("get-or-create-test")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<GetOrCreateAppContentResponseDto> GetOrCreateTestAsync([FromBody] GetOrCreateAppContentRequestDto input, CancellationToken cancellationToken = default)
+    public async Task<GetOrCreateCustomerContentResponseDto> GetOrCreateTestAsync([FromBody] GetOrCreateCustomerContentRequestDto input, CancellationToken cancellationToken = default)
     {
         if (environment.IsHostProduction())
         {
@@ -70,7 +71,7 @@ public sealed class PublicCustomerContentsController(
     #region Private methods
 
     [NonAction]
-    private void CheckDomain(ref GetOrCreateAppContentRequestDto input)
+    private void CheckDomain(ref GetOrCreateCustomerContentRequestDto input)
     {
         if (input.CustomerId == null || string.IsNullOrWhiteSpace(input.DomainName) || string.IsNullOrWhiteSpace(input.ContentKey))
         {

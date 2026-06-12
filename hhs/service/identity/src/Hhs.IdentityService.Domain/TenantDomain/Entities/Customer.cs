@@ -49,7 +49,8 @@ public sealed class Customer : AuditedEntity<Guid>, ISoftDelete
 
     internal void SetDomain(string domain)
     {
-        Domain = LocalizedModelValidator.NotNullOrWhiteSpace(domain, $"{nameof(Tenant)}:{nameof(Domain)}", CustomerConsts.DomainMaxLength);
-        NormalizedDomain = StringHelper.Normalize(StringHelper.ReplaceInvalidChars(domain));
+        string checkDomain = LocalizedModelValidator.NotNullOrWhiteSpace(domain, $"{nameof(Customer)}:{nameof(Domain)}", CustomerConsts.DomainMaxLength);
+        Domain = StringHelper.Minimize(StringHelper.ReplaceInvalidChars(checkDomain));
+        NormalizedDomain = StringHelper.Normalize(Domain);
     }
 }

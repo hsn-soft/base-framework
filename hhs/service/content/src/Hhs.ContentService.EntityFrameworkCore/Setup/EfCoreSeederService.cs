@@ -2,6 +2,7 @@ using Hhs.ContentService.EntityFrameworkCore.Context;
 using HsnSoft.Base.Data;
 using HsnSoft.Base.Logging.Abstracts;
 using HsnSoft.Base.MultiTenancy;
+using HsnSoft.Base.Subscribe;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -53,9 +54,9 @@ public sealed class EfCoreSeederService(IServiceScopeFactory serviceScopeFactory
         {
             try
             {
-                using (dataFilter.Disable<IMultiTenant>())
+                using (dataFilter.Disable<IScopeSubscription>())
                 {
-                    await CustomerContentSettingSeeder.SeedAsync(dbContext, logger);
+                    await CustomerVpSettingSeeder.SeedAsync(dbContext, logger);
                 }
             }
             catch (Exception e)

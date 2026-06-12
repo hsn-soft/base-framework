@@ -1,12 +1,13 @@
 using System.Net;
 using Hhs.ContentService.Application.Contracts.ContentDomain.Interfaces;
 using Hhs.ContentService.Application.Contracts.Events;
-using Hhs.ContentService.Domain.ContentDomain.Consts;
+using Hhs.ContentService.Domain.ContentDomain.Consts.Facilities;
 using Hhs.ContentService.Domain.ContentDomain.Repositories;
-using Hhs.ContentService.Domain.CustomerDomain.Repositories;
 using Hhs.ContentService.Domain.Enums;
+using Hhs.ContentService.Domain.SettingDomain.Repositories;
 using Hhs.Shared.Contracts.Events.TextNormalizer;
 using Hhs.Shared.Helper.Enums;
+using Hhs.Shared.Helper.Utils;
 using HsnSoft.Base;
 using HsnSoft.Base.Logging;
 using HsnSoft.Base.Logging.Abstracts;
@@ -14,84 +15,69 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Hhs.ContentService.Application.Services;
 
-public sealed class AnalysisContentAppService : ApplicationServiceBase, IAnalysisContentAppService
+public sealed class AnalysisContentAppService(
+    IServiceProvider provider,
+    IAnalysisContentRepository analysisContentRepository,
+    IContentVideoGenerationLimitRepository contentVideoGenerationLimitRepository,
+    ICustomerVpSettingRepository customerVpSettingRepository,
+    ICustomerContentRepository customerContentRepository,
+    ICustomerContentVisitRepository customerContentVisitRepository)
+    : ApplicationServiceBase(provider), IAnalysisContentAppService
 {
-    private readonly IFrameworkLogger _logger;
-    private readonly IAnalysisContentRepository _analysisContentRepository;
-    private readonly ICustomerVideoGenerationHistory _clientVideoGenerationHistoryRepository;
-    private readonly ICustomerContentSettingRepository _clientRepository;
-    private readonly IAppContentRepository _appContentRepository;
-    private readonly IAppContentVisitRepository _appContentVisitRepository;
+    private readonly IFrameworkLogger _logger = provider.GetRequiredService<IFrameworkLogger>();
 
-    public AnalysisContentAppService(IServiceProvider provider,
-        IAnalysisContentRepository analysisContentRepository,
-        ICustomerVideoGenerationHistory clientVideoGenerationHistoryRepository,
-        ICustomerContentSettingRepository clientRepository,
-        IAppContentRepository appContentRepository,
-        IAppContentVisitRepository appContentVisitRepository
-    ) : base(provider)
+    public async Task SetAnalysisContentNormalizedReferenceAsync(Guid analysisContentId, Guid normalizedRequestId)
     {
-        _logger = provider.GetRequiredService<IFrameworkLogger>();
-        _analysisContentRepository = analysisContentRepository;
-        _clientVideoGenerationHistoryRepository = clientVideoGenerationHistoryRepository;
-        _clientRepository = clientRepository;
-        _appContentRepository = appContentRepository;
-        _appContentVisitRepository = appContentVisitRepository;
-    }
-
-    public async Task SetNormalizedAnalysisReferenceAsync(Guid analysisContentId, Guid normalizedAnalysisId)
-    {
-        if (analysisContentId == Guid.Empty || normalizedAnalysisId == Guid.Empty)
+        if (analysisContentId == Guid.Empty || normalizedRequestId == Guid.Empty)
         {
             throw new BaseHttpException((int)HttpStatusCode.BadRequest);
         }
 
-        await _analysisContentRepository.SetNormalizedAnalysisReferenceAsync(id: analysisContentId, normalizedAnalysisId: normalizedAnalysisId);
+        await analysisContentRepository.SetAnalysisContentNormalizedReferenceAsync(id: analysisContentId, normalizedRequestId: normalizedRequestId);
     }
 
-    public async Task SetNormalizedResultAsync(Guid analysisContentId, Guid normalizedAnalysisId, bool isNormalizedSuccess, string correlationId = null)
+    public async Task SetAnalysisContentNormalizedResultAsync(Guid analysisContentId, Guid normalizedRequestId, bool isNormalizedSuccess, string correlationId = null)
     {
-        if (analysisContentId == Guid.Empty || normalizedAnalysisId == Guid.Empty)
+        if (analysisContentId == Guid.Empty || normalizedRequestId == Guid.Empty)
         {
             throw new BaseHttpException((int)HttpStatusCode.BadRequest);
         }
 
-        var placed = await _analysisContentRepository.SetNormalizedContentResultAsync(
+        var placedAnanlysisContent = await analysisContentRepository.SetAnalysisContentNormalizedResultAsync(
             id: analysisContentId,
             isNormalizedSuccess: isNormalizedSuccess,
-            normalizedAnalysisId: normalizedAnalysisId
+            normalizedRequestId: normalizedRequestId
         );
 
-        if (placed.OperationStatus == AnalysisContentOperationStates.NormalizedWaitForVideoGeneration)
+        if (placedAnanlysisContent.OperationStatus == AnalysisContentOperationStates.NormalizedWaitForVideoGeneration)
         {
             _logger.FrameworkInfoLog(LogHelper.Generate(
                 message: "Analysis Content normalized success",
-                reference: new { placed.TenantId, placed.ClientId, RefContentId = placed.Id, placed.NormalizedAnalysisId },
+                reference: new { placedAnanlysisContent.ScopeKey, RefContentId = placedAnanlysisContent.Id, NormalizedAnalysisId = placedAnanlysisContent.NormalizedRequestId },
                 facility: AnalysisContentOperationFacilities.ANALYSIS_CONTENT_NORMALIZED_SUCCESS,
                 correlationId: correlationId,
                 exception: null
             ));
 
             // Add video generation history for client quote control
-            await _clientVideoGenerationHistoryRepository.CreateAsync(tenantId: placed.TenantId, customerId: placed.ClientId,
-                videoGenerationDate: placed.AnalysisDate.Date,
+            await contentVideoGenerationLimitRepository.CreateAsync(scopeKey: placedAnanlysisContent.ScopeKey,
+                videoGenerationDate: placedAnanlysisContent.AnalysisDate.Date,
                 videoGenerationType: VideoGenerationTypes.AnalysisVideoGeneration,
-                contentReferenceIds: placed.Id.ToString());
+                contentReferenceIds: placedAnanlysisContent.Id.ToString());
 
             // Integration Event for VideoGeneratorService
             await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
                 eventMessage: new VideoGenerationApprovedEto(
-                    TenantId: placed.TenantId,
-                    ClientId: placed.ClientId,
+                    ScopeKey: placedAnanlysisContent.ScopeKey,
                     ReferenceContentType: ReferenceContentTypes.ANALYSIS_CONTENT,
-                    ReferenceContentId: placed.Id
+                    ReferenceContentId: placedAnanlysisContent.Id
                 ));
         }
         else
         {
             _logger.FrameworkErrorLog(LogHelper.Generate(
                 message: "Analysis Content normalized fail",
-                reference: new { placed.TenantId, placed.ClientId, RefContentId = placed.Id, placed.NormalizedAnalysisId },
+                reference: new { placedAnanlysisContent.ScopeKey, RefContentId = placedAnanlysisContent.Id, NormalizedAnalysisId = placedAnanlysisContent.NormalizedRequestId },
                 facility: AnalysisContentOperationFacilities.ANALYSIS_CONTENT_NORMALIZED_FAIL,
                 correlationId: correlationId,
                 exception: null
@@ -99,24 +85,24 @@ public sealed class AnalysisContentAppService : ApplicationServiceBase, IAnalysi
         }
     }
 
-    public async Task SetVideoGenerationRequestReferenceAsync(Guid analysisContentId, Guid videoRequestId)
+    public async Task SetAnalysisContentVideoReferenceAsync(Guid analysisContentId, Guid videoRequestId)
     {
         if (analysisContentId == Guid.Empty || videoRequestId == Guid.Empty)
         {
             throw new BaseHttpException((int)HttpStatusCode.BadRequest);
         }
 
-        await _analysisContentRepository.SetVideoRequestReferenceAsync(id: analysisContentId, videoRequestId: videoRequestId);
+        await analysisContentRepository.SetAnalysisContentVideoReferenceAsync(id: analysisContentId, videoRequestId: videoRequestId);
     }
 
-    public async Task SetVideoGenerationResultAsync(Guid analysisContentId, Guid videoRequestId, bool isGenerateSuccess, string storageVideoUrl = null, string correlationId = null)
+    public async Task SetAnalysisContentVideoResultAsync(Guid analysisContentId, Guid videoRequestId, bool isGenerateSuccess, string storageVideoUrl = null, string correlationId = null)
     {
         if (analysisContentId == Guid.Empty || videoRequestId == Guid.Empty || (isGenerateSuccess && string.IsNullOrWhiteSpace(storageVideoUrl)))
         {
             throw new BaseHttpException((int)HttpStatusCode.BadRequest);
         }
 
-        var placed = await _analysisContentRepository.SetVideoGenerationResultAsync(
+        var placed = await analysisContentRepository.SetAnalysisContentVideoResultAsync(
             id: analysisContentId,
             isGenerateSuccess: isGenerateSuccess,
             videoRequestId: videoRequestId,
@@ -126,7 +112,7 @@ public sealed class AnalysisContentAppService : ApplicationServiceBase, IAnalysi
         {
             _logger.FrameworkInfoLog(LogHelper.Generate(
                 message: "Video generation success",
-                reference: new { placed.TenantId, placed.ClientId, RefContentId = placed.Id, placed.VideoRequestId },
+                reference: new { placed.ScopeKey, RefContentId = placed.Id, placed.VideoRequestId },
                 facility: AnalysisContentOperationFacilities.ANALYSIS_CONTENT_VIDEO_GENERATION_SUCCESS,
                 correlationId: correlationId,
                 exception: null
@@ -136,7 +122,7 @@ public sealed class AnalysisContentAppService : ApplicationServiceBase, IAnalysi
         {
             _logger.FrameworkErrorLog(LogHelper.Generate(
                 message: "Video generation fail",
-                reference: new { placed.TenantId, placed.ClientId, RefContentId = placed.Id, placed.VideoRequestId },
+                reference: new { placed.ScopeKey, RefContentId = placed.Id, placed.VideoRequestId },
                 facility: AnalysisContentOperationFacilities.ANALYSIS_CONTENT_VIDEO_GENERATION_FAIL,
                 correlationId: correlationId,
                 exception: null
@@ -144,18 +130,18 @@ public sealed class AnalysisContentAppService : ApplicationServiceBase, IAnalysi
         }
     }
 
-    public async Task SetStatusToFailedAsync(Guid analysisContentId, string failedReason, string correlationId = null)
+    public async Task SetAnalysisContentStatusToFailedAsync(Guid analysisContentId, string failedReason, string correlationId = null)
     {
         if (analysisContentId == Guid.Empty)
         {
             throw new BaseHttpException((int)HttpStatusCode.BadRequest);
         }
 
-        var placed = await _analysisContentRepository.SetStatusToFailedAsync(id: analysisContentId, failedReason: failedReason);
+        var placed = await analysisContentRepository.SetAnalysisContentStatusToFailedAsync(id: analysisContentId, failedReason: failedReason);
 
         _logger.FrameworkErrorLog(LogHelper.Generate(
             message: $"Analysis Content status fail: {failedReason ?? string.Empty}",
-            reference: new { placed.TenantId, placed.ClientId, RefContentId = placed.Id },
+            reference: new { placed.ScopeKey, RefContentId = placed.Id },
             facility: AnalysisContentOperationFacilities.ANALYSIS_CONTENT_STATUS_FAIL,
             correlationId: correlationId,
             exception: null
@@ -169,40 +155,41 @@ public sealed class AnalysisContentAppService : ApplicationServiceBase, IAnalysi
             throw new BaseHttpException((int)HttpStatusCode.BadRequest);
         }
 
-        var client = await _clientRepository.GetSingleOrDefaultAsync(x => x.Id == input.AppClientId);
-        if (client == null)
+        string scopeKey = ScopeKeyHelper.Generate(input.AppClientId, ProductTypes.VideoPlatform);
+        var customerVpSetting = await customerVpSettingRepository.GetSingleOrDefaultAsync(x => x.ScopeKey == scopeKey);
+        if (customerVpSetting == null)
         {
             throw new BaseHttpException((int)HttpStatusCode.NotFound);
         }
 
-        _logger.LogInformation("Client[{ClientDomain}] | {OperationStatus}", client.DomainName, "BEGIN");
+        _logger.LogInformation("Client[{ClientDomain}] | {OperationStatus}", customerVpSetting.DomainName, "BEGIN");
 
         // Check client video generation started settings
-        if (DateTime.UtcNow.Hour < client.DailyAnalysisVideoGenerationStartedUtcHour)
+        if (DateTime.UtcNow.Hour < customerVpSetting.DailyAnalysisVideoGenerationStartedUtcHour)
         {
             _logger.LogWarning("Client[{ClientDomain}] | {OperationStatus} => {QueryResult}",
-                client.DomainName, "SKIPPED", AppContentOperationFacilities.VIDEO_GENERATION_SKIPPED_EARLY_TIME);
-            _logger.LogInformation("Client[{ClientDomain}] | {OperationStatus}", client.DomainName, "END");
+                customerVpSetting.DomainName, "SKIPPED", CustomerContentOperationFacilities.CUSTOMER_CONTENT_VIDEO_GENERATION_SKIPPED_EARLY_TIME);
+            _logger.LogInformation("Client[{ClientDomain}] | {OperationStatus}", customerVpSetting.DomainName, "END");
             return;
         }
 
         var analysisDate = DateTime.UtcNow.Date;
 
         // check client Analysis video generation quote available
-        long clientDailyAnalysisContentCount = await _analysisContentRepository.GetCountAsync(x => x.ClientId == client.Id && x.AnalysisDate == analysisDate);
-        long clientDailyAnalysisVideoGenerationLimit = client.DailyAnalysisVideoGenerationLimit - clientDailyAnalysisContentCount;
+        long clientDailyAnalysisContentCount = await analysisContentRepository.GetCountAsync(x => x.ScopeKey == customerVpSetting.ScopeKey && x.AnalysisDate == analysisDate);
+        long clientDailyAnalysisVideoGenerationLimit = customerVpSetting.DailyAnalysisVideoGenerationLimit - clientDailyAnalysisContentCount;
         var clientQuoteResult = clientDailyAnalysisVideoGenerationLimit <= 0
-            ? new KeyValuePair<bool, string>(false, AppContentOperationFacilities.VIDEO_GENERATION_SKIPPED_DAILY_LIMIT)
-            : new KeyValuePair<bool, string>(true, AppContentOperationFacilities.APP_CONTENT_VIDEO_GENERATION_APPROVED);
+            ? new KeyValuePair<bool, string>(false, CustomerContentOperationFacilities.CUSTOMER_CONTENT_VIDEO_GENERATION_SKIPPED_DAILY_LIMIT)
+            : new KeyValuePair<bool, string>(true, CustomerContentOperationFacilities.CUSTOMER_CONTENT_VIDEO_GENERATION_APPROVED);
         if (clientQuoteResult.Key)
         {
-            var contentIds = await _appContentRepository.GetCustomerDailyAnalysisContentIdsAsync(customerId: client.CustomerId);
-            if (contentIds is { Count: > 0 })
+            var customerContentIds = await customerContentRepository.GetCustomerDailyAnalysisContentIdsAsync(scopeKey);
+            if (customerContentIds is { Count: > 0 })
             {
-                var contentVisitList = await _appContentVisitRepository.GetContentIdsVisitCountsAsync(contentIds: contentIds,
+                var contentVisitList = await customerContentVisitRepository.GetContentIdsVisitCountsAsync(customerContentIds: customerContentIds,
                     isMaxCountOrdered: true,
-                    contentOrderedLimit: 5, // TODO: Get value from settings -> max 5 take
-                    contentVisitedCountLimit: 3); // TODO: Get value from settings
+                    customerContentOrderedLimit: 5, // TODO: Get value from settings -> max 5 take
+                    customerContentVisitedCountLimit: 3); // TODO: Get value from settings
 
                 if (contentVisitList is { Count: >= 5 }) // TODO: Get value from settings
                 {
@@ -217,17 +204,17 @@ public sealed class AnalysisContentAppService : ApplicationServiceBase, IAnalysi
                     try
                     {
                         // Add analysis content record
-                        var placed = await _analysisContentRepository.CreateAsync(
+                        var placed = await analysisContentRepository.CreateAsync(
                             id: analysisContentId,
-                            tenantId: client.TenantId,
-                            clientId: client.Id,
+                            customerId: input.AppClientId,
+                            productType: ProductTypes.VideoPlatform,
                             analysisDate: analysisDate,
                             operationStatus: AnalysisContentOperationStates.CreatedWaitForNormalize,
                             correlationId: correlationId);
 
                         _logger.FrameworkInfoLog(LogHelper.Generate(
                             message: $"Analysis Content created",
-                            reference: new { placed.TenantId, placed.ClientId, AnalysisContentId = analysisContentId },
+                            reference: new { placed.ScopeKey, AnalysisContentId = analysisContentId },
                             facility: AnalysisContentOperationFacilities.ANALYSIS_CONTENT_CREATED,
                             correlationId: correlationId,
                             exception: null
@@ -236,11 +223,10 @@ public sealed class AnalysisContentAppService : ApplicationServiceBase, IAnalysi
                         // Integration Event for TextNormalizerService
                         await EventBus.PublishAsync(correlationId: correlationId,
                             eventMessage: new AnalysisContentNormalizedStartedEto(
-                                TenantId: placed.TenantId,
-                                ClientId: placed.ClientId,
-                                DomainName: client.DomainName,
+                                ScopeKey: customerVpSetting.ScopeKey,
+                                DomainName: customerVpSetting.DomainName,
                                 AnalysisContentId: analysisContentId,
-                                AppContentIdList: contentVisitList.Select(x => x.AppContentId).ToList(),
+                                AppContentIdList: contentVisitList.Select(x => x.CustomerContentId).ToList(),
                                 AnalysisDate: placed.AnalysisDate
                             ));
 
@@ -254,16 +240,16 @@ public sealed class AnalysisContentAppService : ApplicationServiceBase, IAnalysi
 
                     if (operationSuccess)
                     {
-                        _logger.LogInformation("Client[{ClientDomain}] | ANALYSIS CONTENT CREATED", client.DomainName);
+                        _logger.LogInformation("Client[{ClientDomain}] | ANALYSIS CONTENT CREATED", customerVpSetting.DomainName);
                     }
                     else
                     {
-                        _logger.LogError("Client[{ClientDomain}] | ANALYSIS CONTENT CREATION FAIL: {FailReason}", client.DomainName, errorMessage);
+                        _logger.LogError("Client[{ClientDomain}] | ANALYSIS CONTENT CREATION FAIL: {FailReason}", customerVpSetting.DomainName, errorMessage);
 
                         _logger.FrameworkErrorLog(LogHelper.Generate(
                             message: $"Analysis content video generation rejected: {errorMessage}",
-                            reference: new { client.TenantId, ClientId = client.Id, AnalysisContentId = analysisContentId },
-                            facility: AppContentOperationFacilities.VIDEO_GENERATION_SKIPPED_REGENERATION_FAILED,
+                            reference: new { customerVpSetting.ScopeKey, AnalysisContentId = analysisContentId },
+                            facility: CustomerContentOperationFacilities.CUSTOMER_CONTENT_VIDEO_GENERATION_SKIPPED_REGENERATION_FAILED,
                             correlationId: correlationId,
                             exception: null
                         ));
@@ -271,20 +257,20 @@ public sealed class AnalysisContentAppService : ApplicationServiceBase, IAnalysi
                 }
                 else
                 {
-                    _logger.LogWarning("Client[{ClientDomain}] | {OperationStatus} => {QueryResult}", client.DomainName, "SKIPPED",
+                    _logger.LogWarning("Client[{ClientDomain}] | {OperationStatus} => {QueryResult}", customerVpSetting.DomainName, "SKIPPED",
                         "NOT_ENOUGH_VISIT_FOR_DAILY_ANALYSIS");
                 }
             }
             else
             {
-                _logger.LogWarning("Client[{ClientDomain}] | {OperationStatus} => {QueryResult}", client.DomainName, "SKIPPED", "NO_DAILY_ANALYSIS_CONTENT");
+                _logger.LogWarning("Client[{ClientDomain}] | {OperationStatus} => {QueryResult}", customerVpSetting.DomainName, "SKIPPED", "NO_DAILY_ANALYSIS_CONTENT");
             }
         }
         else
         {
-            _logger.LogWarning("Client[{ClientDomain}] | {OperationStatus} => {QueryResult}", client.DomainName, "SKIPPED", clientQuoteResult.Value);
+            _logger.LogWarning("Client[{ClientDomain}] | {OperationStatus} => {QueryResult}", customerVpSetting.DomainName, "SKIPPED", clientQuoteResult.Value);
         }
 
-        _logger.LogInformation("Client[{ClientDomain}] | {OperationStatus}", client.DomainName, "END");
+        _logger.LogInformation("Client[{ClientDomain}] | {OperationStatus}", customerVpSetting.DomainName, "END");
     }
 }

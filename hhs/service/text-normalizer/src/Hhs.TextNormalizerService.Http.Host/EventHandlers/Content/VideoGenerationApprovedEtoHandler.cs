@@ -32,7 +32,7 @@ public class VideoGenerationApprovedEtoHandler : IIntegrationEventHandler<VideoG
 
         switch (@event.Message.ReferenceContentType)
         {
-            case ReferenceContentTypes.APP_REQUEST_CONTENT:
+            case ReferenceContentTypes.CUSTOMER_CONTENT:
             {
                 _normalizedRequestAppService.SetParentIntegrationEvent(@event);
                 await _normalizedRequestAppService.VideoGenerationApprovedAsync(@event.Message);

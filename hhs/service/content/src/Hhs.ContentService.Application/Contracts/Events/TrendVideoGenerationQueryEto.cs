@@ -2,7 +2,7 @@ using HsnSoft.Base.Domain.Entities.Events;
 
 namespace Hhs.ContentService.Application.Contracts.Events;
 
-public sealed record TrendVideoGenerationQueryEto(Guid AppClientId) : IIntegrationEventMessage
+public sealed record TrendVideoGenerationQueryEto(Guid CustomerId) : IIntegrationEventMessage
 {
-    public Guid AppClientId { get; } = AppClientId;
+    public Guid CustomerId { get; } = CustomerId;
 }

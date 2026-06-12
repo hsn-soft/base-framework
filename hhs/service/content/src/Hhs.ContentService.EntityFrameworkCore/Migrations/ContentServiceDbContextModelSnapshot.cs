@@ -22,7 +22,212 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("Hhs.ContentService.Domain.ClientDomain.Entities.Client", b =>
+            modelBuilder.Entity("Hhs.ContentService.Domain.ContentDomain.Entities.AnalysisContent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("AnalysisDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CorrelationId")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreationTime");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("CreatorId");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("IsDeleted");
+
+                    b.Property<DateTime>("LastModificationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("LastModificationTime");
+
+                    b.Property<Guid?>("LastModifierId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("LastModifierId");
+
+                    b.Property<Guid?>("NormalizedRequestId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("OperationStatus")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("OperationStatusDescription")
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)");
+
+                    b.Property<string>("ScopeKey")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("StorageVideoUrl")
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)");
+
+                    b.Property<Guid?>("VideoRequestId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AnalysisDate");
+
+                    b.HasIndex("OperationStatus");
+
+                    b.HasIndex("ScopeKey");
+
+                    b.ToTable("AnalysisContents", (string)null);
+                });
+
+            modelBuilder.Entity("Hhs.ContentService.Domain.ContentDomain.Entities.ContentVideoGenerationLimit", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ContentReferenceIds")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<Guid?>("CustomerVpSettingId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ScopeKey")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<DateTime>("VideoGenerationDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("VideoGenerationType")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerVpSettingId");
+
+                    b.HasIndex("ScopeKey", "VideoGenerationType");
+
+                    b.ToTable("ContentVideoGenerationLimits", (string)null);
+                });
+
+            modelBuilder.Entity("Hhs.ContentService.Domain.ContentDomain.Entities.CustomerContent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CorrelationId")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreationTime");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("CreatorId");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("IsDeleted");
+
+                    b.Property<DateTime>("LastModificationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("LastModificationTime");
+
+                    b.Property<Guid?>("LastModifierId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("LastModifierId");
+
+                    b.Property<Guid?>("NormalizedRequestId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("OperationStatus")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("OperationStatusDescription")
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)");
+
+                    b.Property<DateTime?>("ReleaseTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ScopeKey")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("SlugKey")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<string>("StorageVideoUrl")
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)");
+
+                    b.Property<Guid?>("VideoRequestId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OperationStatus");
+
+                    b.HasIndex("ScopeKey", "SlugKey", "IsDeleted")
+                        .IsUnique();
+
+                    b.ToTable("CustomerContents", (string)null);
+                });
+
+            modelBuilder.Entity("Hhs.ContentService.Domain.ContentDomain.Entities.CustomerContentVisit", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerContentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ScopeKey")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("VisitResponse")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<DateTime>("VisitTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerContentId");
+
+                    b.HasIndex("ScopeKey");
+
+                    b.HasIndex("VisitResponse");
+
+                    b.HasIndex("VisitTime");
+
+                    b.ToTable("CustomerContentVisits", (string)null);
+                });
+
+            modelBuilder.Entity("Hhs.ContentService.Domain.SettingDomain.Entities.CustomerVpSetting", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
@@ -64,6 +269,12 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<string>("ExcludePathFilters")
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("IncludePathFilters")
+                        .HasColumnType("jsonb");
+
                     b.Property<bool>("IsBlocked")
                         .HasColumnType("boolean");
 
@@ -81,337 +292,31 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("LastModifierId");
 
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("TenantId");
+                    b.Property<string>("ScopeKey")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("IsDeleted");
-
-                    b.HasIndex("TenantId", "DomainName")
+                    b.HasIndex("DomainName")
                         .IsUnique();
 
-                    b.ToTable("Clients", (string)null);
-                });
-
-            modelBuilder.Entity("Hhs.ContentService.Domain.ClientDomain.Entities.ClientPathFilter", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("ClientFilterType")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("ClientId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("PathFilterName")
-                        .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("character varying(150)");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("TenantId");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ClientId");
-
-                    b.ToTable("ClientPathFilters", (string)null);
-                });
-
-            modelBuilder.Entity("Hhs.ContentService.Domain.ClientDomain.Entities.ClientVideoGenerationHistory", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("ClientId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("ContentReferenceIds")
-                        .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("TenantId");
-
-                    b.Property<DateTime>("VideoGenerationDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("VideoGenerationType")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ClientId", "VideoGenerationType");
-
-                    b.ToTable("ClientVideoGenerationHistories", (string)null);
-                });
-
-            modelBuilder.Entity("Hhs.ContentService.Domain.ContentDomain.Entities.AnalysisContent", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("AnalysisDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("ClientId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("CorrelationId")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreationTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("CreationTime");
-
-                    b.Property<Guid?>("CreatorId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("CreatorId");
-
-                    b.Property<bool>("IsDeleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false)
-                        .HasColumnName("IsDeleted");
-
-                    b.Property<DateTime>("LastModificationTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("LastModificationTime");
-
-                    b.Property<Guid?>("LastModifierId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("LastModifierId");
-
-                    b.Property<Guid?>("NormalizedAnalysisId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("OperationStatus")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("OperationStatusDescription")
-                        .HasColumnType("text");
-
-                    b.Property<string>("StorageVideoUrl")
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("TenantId");
-
-                    b.Property<Guid?>("VideoRequestId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ClientId");
-
-                    b.HasIndex("IsDeleted");
-
-                    b.HasIndex("OperationStatus");
-
-                    b.HasIndex("TenantId");
-
-                    b.ToTable("AnalysisContents", (string)null);
-                });
-
-            modelBuilder.Entity("Hhs.ContentService.Domain.ContentDomain.Entities.AppContent", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("ClientId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("CorrelationId")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreationTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("CreationTime");
-
-                    b.Property<Guid?>("CreatorId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("CreatorId");
-
-                    b.Property<bool>("IsDeleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false)
-                        .HasColumnName("IsDeleted");
-
-                    b.Property<DateTime>("LastModificationTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("LastModificationTime");
-
-                    b.Property<Guid?>("LastModifierId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("LastModifierId");
-
-                    b.Property<Guid?>("NormalizedRequestId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("OperationStatus")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("OperationStatusDescription")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("ReleaseTime")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("SlugKey")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<string>("StorageVideoUrl")
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("TenantId");
-
-                    b.Property<Guid?>("VideoRequestId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ClientId");
-
-                    b.HasIndex("IsDeleted");
-
-                    b.HasIndex("OperationStatus");
-
-                    b.HasIndex("TenantId");
-
-                    b.HasIndex("IsDeleted", "ClientId", "SlugKey")
+                    b.HasIndex("ScopeKey")
                         .IsUnique();
 
-                    b.ToTable("AppContents", (string)null);
+                    b.ToTable("CustomerVpSettings", (string)null);
                 });
 
-            modelBuilder.Entity("Hhs.ContentService.Domain.ContentDomain.Entities.AppContentVisit", b =>
+            modelBuilder.Entity("Hhs.ContentService.Domain.ContentDomain.Entities.ContentVideoGenerationLimit", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("AppContentId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("ClientId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("VisitResponse")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("character varying(30)");
-
-                    b.Property<long>("VisitTimeLine")
-                        .HasColumnType("bigint");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ClientId", "AppContentId");
-
-                    b.HasIndex("ClientId", "VisitResponse");
-
-                    b.HasIndex("ClientId", "VisitTimeLine");
-
-                    b.ToTable("AppContentVisits", (string)null);
-                });
-
-            modelBuilder.Entity("Hhs.ContentService.Domain.DashboardDomain.Entities.ResponseStatistic", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("ClientId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("ClientId");
-
-                    b.Property<decimal>("ResponseCount")
-                        .HasColumnType("numeric(20,0)")
-                        .HasColumnName("ResponseCount");
-
-                    b.Property<string>("ResponseStatus")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("character varying(30)")
-                        .HasColumnName("ResponseStatus");
-
-                    b.Property<decimal>("ResponseTime")
-                        .HasColumnType("numeric(20,0)")
-                        .HasColumnName("ResponseTime");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("TenantId");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TenantId");
-
-                    b.HasIndex("ClientId", "ResponseStatus");
-
-                    b.HasIndex("ClientId", "ResponseTime");
-
-                    b.ToTable("ResponseStatistics", (string)null);
-                });
-
-            modelBuilder.Entity("Hhs.ContentService.Domain.ClientDomain.Entities.ClientPathFilter", b =>
-                {
-                    b.HasOne("Hhs.ContentService.Domain.ClientDomain.Entities.Client", "Client")
-                        .WithMany("PathFilters")
-                        .HasForeignKey("ClientId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Client");
-                });
-
-            modelBuilder.Entity("Hhs.ContentService.Domain.ClientDomain.Entities.ClientVideoGenerationHistory", b =>
-                {
-                    b.HasOne("Hhs.ContentService.Domain.ClientDomain.Entities.Client", "Client")
+                    b.HasOne("Hhs.ContentService.Domain.SettingDomain.Entities.CustomerVpSetting", null)
                         .WithMany("VideoGenerationHistories")
-                        .HasForeignKey("ClientId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Client");
+                        .HasForeignKey("CustomerVpSettingId");
                 });
 
-            modelBuilder.Entity("Hhs.ContentService.Domain.ContentDomain.Entities.AnalysisContent", b =>
+            modelBuilder.Entity("Hhs.ContentService.Domain.SettingDomain.Entities.CustomerVpSetting", b =>
                 {
-                    b.HasOne("Hhs.ContentService.Domain.ClientDomain.Entities.Client", "Client")
-                        .WithMany()
-                        .HasForeignKey("ClientId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Client");
-                });
-
-            modelBuilder.Entity("Hhs.ContentService.Domain.ContentDomain.Entities.AppContent", b =>
-                {
-                    b.HasOne("Hhs.ContentService.Domain.ClientDomain.Entities.Client", "Client")
-                        .WithMany()
-                        .HasForeignKey("ClientId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Client");
-                });
-
-            modelBuilder.Entity("Hhs.ContentService.Domain.ClientDomain.Entities.Client", b =>
-                {
-                    b.Navigation("PathFilters");
-
                     b.Navigation("VideoGenerationHistories");
                 });
 #pragma warning restore 612, 618
