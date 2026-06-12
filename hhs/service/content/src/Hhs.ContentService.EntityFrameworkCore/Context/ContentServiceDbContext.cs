@@ -1,6 +1,5 @@
 using Hhs.ContentService.Domain.ContentDomain.Entities;
 using Hhs.ContentService.Domain.CustomerDomain.Entities;
-using Hhs.ContentService.Domain.DashboardDomain.Entities;
 using Hhs.ContentService.EntityFrameworkCore.Configurations;
 using HsnSoft.Base;
 using HsnSoft.Base.EntityFrameworkCore;
@@ -18,7 +17,7 @@ public sealed class ContentServiceDbContext : BaseEfCoreDbContext<ContentService
     public DbSet<AppContentVisit> AppContentVisits => Set<AppContentVisit>();
     public DbSet<AnalysisContent> AnalysisContents => Set<AnalysisContent>();
 
-    public DbSet<ResponseStatistic> ResponseStatistics => Set<ResponseStatistic>();
+    // public DbSet<ResponseStatistic> ResponseStatistics => Set<ResponseStatistic>();
 
     public ContentServiceDbContext(IServiceProvider provider, DbContextOptions<ContentServiceDbContext> options) : base(options, provider)
     {
@@ -38,6 +37,6 @@ public sealed class ContentServiceDbContext : BaseEfCoreDbContext<ContentService
         builder.ConfigureAppContentVisitEntity();
         builder.ConfigureAnalysisContentEntity();
 
-        builder.ConfigureResponseStatisticEntity();
+        // builder.ConfigureResponseStatisticEntity();
     }
 }

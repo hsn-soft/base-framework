@@ -1,6 +1,5 @@
 using Hhs.ContentService.Domain.ContentDomain.Repositories;
 using Hhs.ContentService.Domain.CustomerDomain.Repositories;
-using Hhs.ContentService.Domain.DashboardDomain.Repositories;
 using Hhs.ContentService.EntityFrameworkCore.Context;
 using Hhs.ContentService.EntityFrameworkCore.Repositories;
 using HsnSoft.Base.Auditing;
@@ -56,7 +55,7 @@ public static class EfCoreServiceCollectionExtensions
         services.AddScoped<IAppContentVisitRepository, EfCoreAppContentVisitRepository>();
         services.AddScoped<IAnalysisContentRepository, EfCoreAnalysisContentRepository>();
 
-        services.AddScoped<IResponseStatisticRepository, EfCoreResponseStatisticRepository>();
+        // services.AddScoped<IResponseStatisticRepository, EfCoreResponseStatisticRepository>();
 
         return services;
     }

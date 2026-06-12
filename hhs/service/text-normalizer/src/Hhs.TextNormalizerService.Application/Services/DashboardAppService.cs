@@ -1,5 +1,5 @@
-using Hhs.TextNormalizerService.Application.Contracts.DashboardDomain;
-using Hhs.TextNormalizerService.Application.Contracts.DashboardDomain.Dtos;
+using Hhs.TextNormalizerService.Application.Contracts.DasbhoardDomain;
+using Hhs.TextNormalizerService.Application.Contracts.DasbhoardDomain.Dtos;
 using Hhs.TextNormalizerService.Domain.ContentDomain.Entities;
 using Hhs.TextNormalizerService.Domain.ContentDomain.Repositories;
 using HsnSoft.Base.Domain.Models;

@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Hhs.FeedRService.Application.Contracts.DashboardDomain;
 using Hhs.FeedRService.Application.ReportingDomain;
 using Hhs.FeedRService.Domain.ConfigurationDomain.Repositories;

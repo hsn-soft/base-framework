@@ -2,11 +2,9 @@ using Hhs.FeedRService.Application.Contracts.Events;
 using Hhs.FeedRService.Application.Contracts.Events.Reporting;
 using Hhs.FeedRService.Application.Contracts.JobDomain;
 using Hhs.FeedRService.Application.Contracts.JobDomain.Dtos;
-using Hhs.FeedRService.Application.Contracts.JobDomain.Dtos.Reporting;
 using HsnSoft.Base.Logging;
 using HsnSoft.Base.Logging.Abstracts;
 using Microsoft.Extensions.DependencyInjection;
-using System.Text.Json;
 using Hhs.FeedRService.Application.Contracts.DashboardDomain;
 
 namespace Hhs.FeedRService.Application.Services;

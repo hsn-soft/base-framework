@@ -25,7 +25,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Hhs.ContentService.Application.Services;
 
-public sealed class AppContentPublicAppService(
+public sealed class CustomerContentPublicAppService(
     IServiceProvider provider,
     IAppContentRepository appContentRepository,
     IAppContentVisitRepository contentVisitRepository,
@@ -33,7 +33,7 @@ public sealed class AppContentPublicAppService(
     ICustomerContentSettingRepository clientRepository,
     ITraceAccesor traceAccessor,
     IDataFilter dataFilter
-) : ApplicationServiceBase(provider), IAppContentPublicAppService
+) : ApplicationServiceBase(provider), ICustomerContentPublicAppService
 {
     private readonly IFrameworkLogger _logger = provider.GetRequiredService<IFrameworkLogger>();
 

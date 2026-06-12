@@ -1,6 +1,6 @@
-using Hhs.ContentService.Domain.CustomerDomain.Entities;
+using Hhs.ContentService.Domain.ContentDomain.Entities;
 
-namespace Hhs.ContentService.Domain.CustomerDomain.Consts;
+namespace Hhs.ContentService.Domain.ContentDomain.Consts;
 
 public static class CustomerVideoGenerationHistoryConsts
 {

@@ -1,7 +1,6 @@
 using Hhs.ContentService.Application.Contracts;
 using Hhs.ContentService.Application.Contracts.ContentDomain.Interfaces;
 using Hhs.ContentService.Application.Contracts.CustomerDomain.Interfaces;
-using Hhs.ContentService.Application.Contracts.DashboardDomain.Interfaces;
 using Hhs.ContentService.Application.Contracts.JobDomain;
 using Hhs.ContentService.Application.Services;
 using Hhs.ContentService.Domain.Settings;
@@ -24,9 +23,9 @@ public static class ApplicationServiceCollectionExtensions
         // Must be Scoped or Transient => Cannot consume any scoped service
         services.AddScoped<IJobAppService, JobAppService>();
         services.AddScoped<IEventManagerAppService, EventManagerAppService>();
-        services.AddScoped<IDashboardAppService, DashboardAppService>();
+        // services.AddScoped<IDashboardAppService, DashboardAppService>();
         services.AddScoped<ICustomerContentSettingAppService, CustomerContentSettingAppService>();
-        services.AddScoped<IAppContentPublicAppService, AppContentPublicAppService>();
+        services.AddScoped<ICustomerContentPublicAppService, CustomerContentPublicAppService>();
         services.AddScoped<IAppContentAppService, AppContentAppService>();
         services.AddScoped<IAnalysisContentAppService, AnalysisContentAppService>();
 

@@ -1,10 +1,6 @@
-using Azure.Core;
 using Hhs.FeedRService.AdManager.Controllers.Base;
 using Hhs.FeedRService.Application.Contracts.DashboardDomain;
 using Hhs.FeedRService.Application.Contracts.DashboardDomain.Dtos;
-using Hhs.Shared.Hosting.Attributes;
-using HsnSoft.Base.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Hhs.FeedRService.AdManager.Controllers;

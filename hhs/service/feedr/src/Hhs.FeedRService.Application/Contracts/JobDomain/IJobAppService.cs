@@ -1,5 +1,4 @@
 using Hhs.FeedRService.Application.Contracts.JobDomain.Dtos;
-using Hhs.FeedRService.Application.Contracts.JobDomain.Dtos.Reporting;
 using JetBrains.Annotations;
 
 namespace Hhs.FeedRService.Application.Contracts.JobDomain;

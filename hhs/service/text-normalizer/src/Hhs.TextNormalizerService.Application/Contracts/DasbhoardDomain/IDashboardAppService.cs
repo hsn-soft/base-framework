@@ -1,7 +1,7 @@
-using Hhs.TextNormalizerService.Application.Contracts.DashboardDomain.Dtos;
+using Hhs.TextNormalizerService.Application.Contracts.DasbhoardDomain.Dtos;
 using JetBrains.Annotations;
 
-namespace Hhs.TextNormalizerService.Application.Contracts.DashboardDomain;
+namespace Hhs.TextNormalizerService.Application.Contracts.DasbhoardDomain;
 
 public interface IDashboardAppService
 {

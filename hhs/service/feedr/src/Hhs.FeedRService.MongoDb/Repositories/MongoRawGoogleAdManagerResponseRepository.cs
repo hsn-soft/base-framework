@@ -2,7 +2,6 @@ using Hhs.FeedRService.Domain.ReportingDomain.Entities;
 using Hhs.FeedRService.Domain.ReportingDomain.Enums;
 using Hhs.FeedRService.Domain.ReportingDomain.Repositories;
 using Hhs.FeedRService.MongoDb.Context;
-using HsnSoft.Base.Domain.Models;
 using HsnSoft.Base.Domain.Repositories;
 using MongoDB.Driver;
 using System.Reflection;

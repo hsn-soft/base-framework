@@ -1,4 +1,4 @@
-using Hhs.ContentService.Domain.CustomerDomain.Consts;
+using Hhs.ContentService.Domain.ContentDomain.Consts;
 using Hhs.ContentService.Domain.Enums;
 using Hhs.Shared.Localization;
 using HsnSoft.Base.Domain.Entities;
@@ -6,7 +6,7 @@ using HsnSoft.Base.MultiTenancy;
 using HsnSoft.Base.Text;
 using JetBrains.Annotations;
 
-namespace Hhs.ContentService.Domain.CustomerDomain.Entities;
+namespace Hhs.ContentService.Domain.ContentDomain.Entities;
 
 public sealed class CustomerVideoGenerationHistory : Entity<Guid>, IMultiTenant
 {

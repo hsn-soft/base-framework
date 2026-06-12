@@ -1,6 +1,5 @@
 using Hhs.FeedRService.Application.Contracts.DashboardDomain;
 using Hhs.FeedRService.Application.Contracts.Events.Reporting;
-using Hhs.FeedRService.Application.Contracts.JobDomain;
 using HsnSoft.Base.Caching.StackExchangeRedis;
 using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.EventBus;

@@ -1,3 +1,4 @@
+using Hhs.ContentService.Domain.ContentDomain.Entities;
 using Hhs.ContentService.Domain.CustomerDomain.Consts;
 using Hhs.Shared.Localization;
 using HsnSoft.Base;

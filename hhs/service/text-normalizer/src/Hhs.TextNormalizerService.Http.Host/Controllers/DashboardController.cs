@@ -1,11 +1,9 @@
-using Hhs.TextNormalizerService.Application.Contracts.DashboardDomain;
-using Hhs.TextNormalizerService.Application.Contracts.DashboardDomain.Dtos;
+using Hhs.TextNormalizerService.Application.Contracts.DasbhoardDomain;
+using Hhs.TextNormalizerService.Application.Contracts.DasbhoardDomain.Dtos;
 using Hhs.TextNormalizerService.Controllers.Base;
-using HsnSoft.Base.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Hhs.TextNormalizerService.Http.Host.Controllers;
+namespace Hhs.TextNormalizerService.Controllers;
 
 [Produces("application/json")]
 [Area("text-normalizer-service")]

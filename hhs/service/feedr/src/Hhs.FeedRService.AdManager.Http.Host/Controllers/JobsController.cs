@@ -1,4 +1,3 @@
-using Hhs.FeedRService.AdManager.Controllers.Base;
 using Hhs.FeedRService.Application.Contracts.JobDomain;
 using Hhs.FeedRService.Application.Contracts.JobDomain.Dtos;
 using Hhs.Shared.Hosting.Attributes;

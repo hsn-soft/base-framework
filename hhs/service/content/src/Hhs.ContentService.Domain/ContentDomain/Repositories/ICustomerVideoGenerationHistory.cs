@@ -1,9 +1,9 @@
-using Hhs.ContentService.Domain.CustomerDomain.Entities;
+using Hhs.ContentService.Domain.ContentDomain.Entities;
 using Hhs.ContentService.Domain.Enums;
 using HsnSoft.Base.Domain.Repositories;
 using JetBrains.Annotations;
 
-namespace Hhs.ContentService.Domain.CustomerDomain.Repositories;
+namespace Hhs.ContentService.Domain.ContentDomain.Repositories;
 
 public interface ICustomerVideoGenerationHistory : IReadOnlyGenericRepository<CustomerVideoGenerationHistory, Guid>
 {

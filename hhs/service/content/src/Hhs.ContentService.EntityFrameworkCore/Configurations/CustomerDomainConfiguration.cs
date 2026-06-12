@@ -1,3 +1,5 @@
+using Hhs.ContentService.Domain.ContentDomain.Consts;
+using Hhs.ContentService.Domain.ContentDomain.Entities;
 using Hhs.ContentService.Domain.CustomerDomain.Consts;
 using Hhs.ContentService.Domain.CustomerDomain.Entities;
 using Microsoft.EntityFrameworkCore;

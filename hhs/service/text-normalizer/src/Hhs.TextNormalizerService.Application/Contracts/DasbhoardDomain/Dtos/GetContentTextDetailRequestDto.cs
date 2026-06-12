@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Hhs.TextNormalizerService.Application.Contracts.DashboardDomain.Dtos;
+namespace Hhs.TextNormalizerService.Application.Contracts.DasbhoardDomain.Dtos;
 
 public sealed class GetContentTextDetailRequestDto
 {

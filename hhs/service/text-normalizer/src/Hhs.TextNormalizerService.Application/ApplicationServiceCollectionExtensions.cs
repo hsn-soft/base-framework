@@ -1,7 +1,7 @@
 using Hhs.Shared.Contracts.Cache;
 using Hhs.TextNormalizerService.Application.Contracts;
 using Hhs.TextNormalizerService.Application.Contracts.ContentDomain.Interfaces;
-using Hhs.TextNormalizerService.Application.Contracts.DashboardDomain;
+using Hhs.TextNormalizerService.Application.Contracts.DasbhoardDomain;
 using Hhs.TextNormalizerService.Application.Contracts.Providers;
 using Hhs.TextNormalizerService.Application.Contracts.Providers.Dtos.Outline.OpenAI;
 using Hhs.TextNormalizerService.Application.Providers;

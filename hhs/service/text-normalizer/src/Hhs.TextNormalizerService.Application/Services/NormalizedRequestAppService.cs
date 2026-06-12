@@ -3,7 +3,6 @@ using Hhs.Shared.Contracts.Events.Content;
 using Hhs.Shared.Contracts.Events.TextNormalizer;
 using Hhs.Shared.Contracts.Events.VideoGenerator;
 using Hhs.Shared.Helper.Enums;
-using Hhs.Shared.Helper.Utils;
 using Hhs.TextNormalizerService.Application.Contracts.ContentDomain.Dtos;
 using Hhs.TextNormalizerService.Application.Contracts.ContentDomain.Dtos.Filters;
 using Hhs.TextNormalizerService.Application.Contracts.ContentDomain.Interfaces;
