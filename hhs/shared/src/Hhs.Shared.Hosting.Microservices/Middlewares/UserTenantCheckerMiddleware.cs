@@ -3,6 +3,7 @@ using Hhs.Shared.Localization;
 using HsnSoft.Base;
 using HsnSoft.Base.Data;
 using HsnSoft.Base.MultiTenancy;
+using HsnSoft.Base.Subscribe;
 using HsnSoft.Base.Users;
 using HsnSoft.Base.Validation.Localization;
 using Microsoft.AspNetCore.Http;
@@ -31,8 +32,11 @@ public sealed class UserTenantCheckerMiddleware : IMiddleware
         {
             using (_dataFilter.Disable<IMultiTenant>())
             {
-                await next(context);
-                return;
+                using (_dataFilter.Disable<IScopeSubscription>())
+                {
+                    await next(context);
+                    return;
+                }
             }
         }
 
