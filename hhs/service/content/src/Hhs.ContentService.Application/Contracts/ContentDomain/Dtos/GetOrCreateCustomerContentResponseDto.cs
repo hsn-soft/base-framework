@@ -5,10 +5,10 @@ namespace Hhs.ContentService.Application.Contracts.ContentDomain.Dtos;
 public sealed class GetOrCreateCustomerContentResponseDto
 {
     [CanBeNull]
-    public Guid? ReferenceContentId { get; set; }
+    public Guid? ContentId { get; set; }
 
     [NotNull]
-    public string ReferenceContentType { get; set; }
+    public string ContentType { get; set; }
 
     [NotNull]
     public string ContentStatus { get; set; }

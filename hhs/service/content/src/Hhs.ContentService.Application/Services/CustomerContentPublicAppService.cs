@@ -67,7 +67,7 @@ public sealed class CustomerContentPublicAppService(
                 visitResponse: PublicContentStatus.SKIPPED_PATH
             );
 
-            return new GetOrCreateCustomerContentResponseDto { ReferenceContentType = PublicContentType.SKIPPED_CONTENT, ContentStatus = PublicContentStatus.SKIPPED_PATH };
+            return new GetOrCreateCustomerContentResponseDto { ContentType = PublicContentType.SKIPPED_CONTENT, ContentStatus = PublicContentStatus.SKIPPED_PATH };
         }
 
         // Check Client
@@ -101,17 +101,17 @@ public sealed class CustomerContentPublicAppService(
         {
             result = customerContentStatusModel.OperationStatus switch
             {
-                CustomerContentOperationStates.OperationFail => new GetOrCreateCustomerContentResponseDto { ReferenceContentType = PublicContentType.CUSTOMER_CONTENT, ReferenceContentId = customerContentStatusModel.CustomerContentId, ContentStatus = PublicContentStatus.FAILED },
+                CustomerContentOperationStates.OperationFail => new GetOrCreateCustomerContentResponseDto { ContentType = PublicContentType.CUSTOMER_CONTENT, ContentId = customerContentStatusModel.CustomerContentId, ContentStatus = PublicContentStatus.FAILED },
                 CustomerContentOperationStates.OperationSuccess => new GetOrCreateCustomerContentResponseDto
                 {
-                    ReferenceContentType = PublicContentType.CUSTOMER_CONTENT, ReferenceContentId = customerContentStatusModel.CustomerContentId, ContentStatus = PublicContentStatus.READY, ContentVideoUrl = customerContentStatusModel.StorageVideoUrl
+                    ContentType = PublicContentType.CUSTOMER_CONTENT, ContentId = customerContentStatusModel.CustomerContentId, ContentStatus = PublicContentStatus.READY, ContentVideoUrl = customerContentStatusModel.StorageVideoUrl
                 },
-                _ => new GetOrCreateCustomerContentResponseDto { ReferenceContentType = PublicContentType.CUSTOMER_CONTENT, ReferenceContentId = customerContentStatusModel.CustomerContentId, ContentStatus = PublicContentStatus.PROCESSING }
+                _ => new GetOrCreateCustomerContentResponseDto { ContentType = PublicContentType.CUSTOMER_CONTENT, ContentId = customerContentStatusModel.CustomerContentId, ContentStatus = PublicContentStatus.PROCESSING }
             };
 
             if (customerContentStatusModel.OperationStatus != CustomerContentOperationStates.OperationSuccess)
             {
-                result = new GetOrCreateCustomerContentResponseDto { ReferenceContentType = PublicContentType.ANALYSIS_CONTENT, ContentStatus = PublicContentStatus.NO_ANALYSIS_VIDEO };
+                result = new GetOrCreateCustomerContentResponseDto { ContentType = PublicContentType.ANALYSIS_CONTENT, ContentStatus = PublicContentStatus.NO_ANALYSIS_VIDEO };
 
                 using (dataFilter.Disable<IScopeSubscription>()) // anonymous user , unknown tenant
                 {
@@ -127,7 +127,7 @@ public sealed class CustomerContentPublicAppService(
 
                     if (analysisContent != null)
                     {
-                        result = new GetOrCreateCustomerContentResponseDto { ReferenceContentType = PublicContentType.ANALYSIS_CONTENT, ReferenceContentId = analysisContent.Id, ContentStatus = PublicContentStatus.READY, ContentVideoUrl = analysisContent.StorageVideoUrl };
+                        result = new GetOrCreateCustomerContentResponseDto { ContentType = PublicContentType.ANALYSIS_CONTENT, ContentId = analysisContent.Id, ContentStatus = PublicContentStatus.READY, ContentVideoUrl = analysisContent.StorageVideoUrl };
                     }
                     else
                     {
@@ -143,7 +143,7 @@ public sealed class CustomerContentPublicAppService(
 
                         if (analysisContent != null)
                         {
-                            result = new GetOrCreateCustomerContentResponseDto { ReferenceContentType = PublicContentType.ANALYSIS_CONTENT, ReferenceContentId = analysisContent.Id, ContentStatus = PublicContentStatus.READY, ContentVideoUrl = analysisContent.StorageVideoUrl };
+                            result = new GetOrCreateCustomerContentResponseDto { ContentType = PublicContentType.ANALYSIS_CONTENT, ContentId = analysisContent.Id, ContentStatus = PublicContentStatus.READY, ContentVideoUrl = analysisContent.StorageVideoUrl };
                         }
                     }
                 }
@@ -204,7 +204,7 @@ public sealed class CustomerContentPublicAppService(
                         visitResponse: PublicContentStatus.SKIPPED_PATH
                     );
 
-                    return new GetOrCreateCustomerContentResponseDto { ReferenceContentType = PublicContentType.SKIPPED_CONTENT, ContentStatus = PublicContentStatus.SKIPPED_PATH };
+                    return new GetOrCreateCustomerContentResponseDto { ContentType = PublicContentType.SKIPPED_CONTENT, ContentStatus = PublicContentStatus.SKIPPED_PATH };
                 }
             }
 
@@ -229,7 +229,7 @@ public sealed class CustomerContentPublicAppService(
                             visitResponse: PublicContentStatus.SKIPPED_PATH
                         );
 
-                        return new GetOrCreateCustomerContentResponseDto { ReferenceContentType = PublicContentType.SKIPPED_CONTENT, ContentStatus = PublicContentStatus.SKIPPED_PATH };
+                        return new GetOrCreateCustomerContentResponseDto { ContentType = PublicContentType.SKIPPED_CONTENT, ContentStatus = PublicContentStatus.SKIPPED_PATH };
                     }
                 }
             }
@@ -250,7 +250,7 @@ public sealed class CustomerContentPublicAppService(
                 exception: null
             ));
 
-            result = new GetOrCreateCustomerContentResponseDto { ReferenceContentType = PublicContentType.CUSTOMER_CONTENT, ReferenceContentId = placedCustomerContent.Id, ContentStatus = PublicContentStatus.CREATED };
+            result = new GetOrCreateCustomerContentResponseDto { ContentType = PublicContentType.CUSTOMER_CONTENT, ContentId = placedCustomerContent.Id, ContentStatus = PublicContentStatus.CREATED };
 
             // Add statistic record
             await customerContentVisitRepository.CreateAsync(
@@ -282,17 +282,17 @@ public sealed class CustomerContentPublicAppService(
 
     public async Task CreateAdResultAsync(CreateContentAdResultDto input, CancellationToken cancellationToken = default)
     {
-        if (input.ReferenceContentId == Guid.Empty
-            || string.IsNullOrWhiteSpace(input.ReferenceContentType)
+        if (input.ContentId == Guid.Empty
+            || string.IsNullOrWhiteSpace(input.ContentType)
             || string.IsNullOrWhiteSpace(input.FeedKey)
-            || input.ReferenceContentType is not (PublicContentType.CUSTOMER_CONTENT or PublicContentType.ANALYSIS_CONTENT))
+            || input.ContentType is not (PublicContentType.CUSTOMER_CONTENT or PublicContentType.ANALYSIS_CONTENT))
         {
             throw new BaseHttpException((int)HttpStatusCode.BadRequest);
         }
 
         _logger.LogDebug("ReferenceContentId: {ReferenceContentId}, ReferenceContentType: {ReferenceContentType}, FeedKey: {FeedKey}, FeedMessage: {FeedMessage} CREATE AD RESULT",
-            input.ReferenceContentId,
-            input.ReferenceContentType,
+            input.ContentId,
+            input.ContentType,
             input.FeedKey,
             input.FeedMessage
         );
@@ -305,7 +305,7 @@ public sealed class CustomerContentPublicAppService(
             return;
         }
 
-        switch (input.ReferenceContentType)
+        switch (input.ContentType)
         {
             case PublicContentType.CUSTOMER_CONTENT:
                 {
@@ -313,12 +313,12 @@ public sealed class CustomerContentPublicAppService(
                     using (dataFilter.Disable<IScopeSubscription>()) // anonymous user , unknown tenant
                     {
                         customerContent = await customerContentRepository.GetSingleOrDefaultAsync(x
-                            => x.Id == input.ReferenceContentId, cancellationToken: cancellationToken);
+                            => x.Id == input.ContentId, cancellationToken: cancellationToken);
                     }
 
                     if (customerContent == null)
                     {
-                        throw new CustomerContentNotFoundException(L, input.ReferenceContentId.ToString());
+                        throw new CustomerContentNotFoundException(L, input.ContentId.ToString());
                     }
 
                     // TODO: Save statistics to event manager
@@ -330,12 +330,12 @@ public sealed class CustomerContentPublicAppService(
                     using (dataFilter.Disable<IScopeSubscription>()) // anonymous user , unknown tenant
                     {
                         analysisContent = await analysisContentRepository.GetSingleOrDefaultAsync(x
-                            => x.Id == input.ReferenceContentId, cancellationToken: cancellationToken);
+                            => x.Id == input.ContentId, cancellationToken: cancellationToken);
                     }
 
                     if (analysisContent == null)
                     {
-                        throw new AnalysisContentNotFoundException(L, input.ReferenceContentId.ToString());
+                        throw new AnalysisContentNotFoundException(L, input.ContentId.ToString());
                     }
 
                     // TODO: Save statistics to event manager
