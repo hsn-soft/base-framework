@@ -398,7 +398,9 @@ public sealed class ContentNormalizedRequestAppService(
         {
             if (contentNormalizedRequest.ScrapingContentData != null)
             {
-                if (contentNormalizedRequest.ScrapingContentData.ReleaseTime != null && contentNormalizedRequest.ScrapingContentData.ReleaseTime < DateTime.UtcNow.AddDays(-3))
+                if (contentNormalizedRequest.ScrapingContentData.ReleaseTime != null
+                    && contentNormalizedRequest.ScrapingContentData.ReleaseTime < DateTime.UtcNow.AddDays(-3)
+                    && !_serviceSettings.UseReleaseTimeOldContentOutlineOperation)
                 {
                     _logger.FrameworkInfoLog(LogHelper.Generate(
                         message: "Content Normalized request outline skipped",
