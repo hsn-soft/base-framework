@@ -32,8 +32,8 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<IScrapingProvider, PuppeTeerScrapingProvider>();
         services.AddScoped<IOutlineProvider, OpenAiOutlineProvider>();
 
-        services.AddScoped<INormalizedRequestAppService, NormalizedRequestAppService>();
-        services.AddScoped<INormalizedAnalysisAppService, NormalizedAnalysisAppService>();
+        services.AddScoped<IContentNormalizedRequestAppService, ContentNormalizedRequestAppService>();
+        services.AddScoped<IAnalysisNormalizedRequestAppService, AnalysisNormalizedRequestAppService>();
         services.AddScoped<IDashboardAppService, DashboardAppService>();
 
         return services;

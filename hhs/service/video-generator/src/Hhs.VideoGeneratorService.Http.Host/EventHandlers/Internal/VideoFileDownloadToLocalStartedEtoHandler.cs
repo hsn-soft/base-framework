@@ -6,17 +6,13 @@ using HsnSoft.Base.Logging.Abstracts;
 
 namespace Hhs.VideoGeneratorService.EventHandlers.Internal;
 
-public class VideoFileDownloadToLocalStartedEtoHandler : IIntegrationEventHandler<VideoFileDownloadToLocalStartedEto>
+public class VideoFileDownloadToLocalStartedEtoHandler(
+    IAppConsoleLogger logger,
+    IVideoOperationsAppService videoOperationsAppService
+) : IIntegrationEventHandler<VideoFileDownloadToLocalStartedEto>
 {
-    private readonly IAppConsoleLogger _logger;
-    private readonly IVideoOperationsAppService _videoOperationsAppService;
-
-    public VideoFileDownloadToLocalStartedEtoHandler(IAppConsoleLogger logger,
-        IVideoOperationsAppService videoOperationsAppService)
-    {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _videoOperationsAppService = videoOperationsAppService ?? throw new ArgumentNullException(nameof(videoOperationsAppService));
-    }
+    private readonly IAppConsoleLogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    private readonly IVideoOperationsAppService _videoOperationsAppService = videoOperationsAppService ?? throw new ArgumentNullException(nameof(videoOperationsAppService));
 
     public async Task HandleAsync(MessageEnvelope<VideoFileDownloadToLocalStartedEto> @event)
     {

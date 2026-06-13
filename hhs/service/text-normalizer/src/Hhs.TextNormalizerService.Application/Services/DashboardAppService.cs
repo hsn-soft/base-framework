@@ -8,11 +8,11 @@ namespace Hhs.TextNormalizerService.Application.Services;
 
 public sealed class DashboardAppService : ApplicationServiceBase, IDashboardAppService
 {
-    private readonly INormalizedRequestRepository _normalizedRequestRepository;
+    private readonly IContentNormalizedRequestRepository _normalizedRequestRepository;
 
     public DashboardAppService(
         IServiceProvider provider,
-        INormalizedRequestRepository normalizedRequestRepository
+        IContentNormalizedRequestRepository normalizedRequestRepository
     ) : base(provider)
     {
         _normalizedRequestRepository = normalizedRequestRepository;
@@ -23,7 +23,7 @@ public sealed class DashboardAppService : ApplicationServiceBase, IDashboardAppS
         var hasSearchKeyword = !string.IsNullOrWhiteSpace(input.SearchKeyword);
         var searchKeyword = input.SearchKeyword?.Trim().ToLowerInvariant();
 
-        var items = await _normalizedRequestRepository.GetListAsync(new ListQueryOptions<NormalizedRequest>
+        var items = await _normalizedRequestRepository.GetListAsync(new ListQueryOptions<ContentNormalizedRequest>
             {
                 Filter = x =>
                     x.CreationTime >= input.StartDate
@@ -31,7 +31,7 @@ public sealed class DashboardAppService : ApplicationServiceBase, IDashboardAppS
                     && (!hasSearchKeyword
                         || (x.ScrapingContentData != null && x.ScrapingContentData.Title != null && x.ScrapingContentData.Title.ToLower().Contains(searchKeyword))
                         || (x.OutlineContentData != null && x.OutlineContentData.ToLower().Contains(searchKeyword))),
-                OrderByDynamic = $"{nameof(NormalizedRequest.CreationTime)} desc"
+                OrderByDynamic = $"{nameof(ContentNormalizedRequest.CreationTime)} desc"
             });
 
         return new GetContentTextDetailResultDto
@@ -39,7 +39,7 @@ public sealed class DashboardAppService : ApplicationServiceBase, IDashboardAppS
             TotalCount = items?.Count ?? 0,
             Items = items?.Select(x => new ContentItemDto
             {
-                Id = x.AppContentId,
+                Id = x.CustomerContentId,
                 Title = x.ScrapingContentData?.Title,
                 Spot = x.ScrapingContentData?.Spot,
                 OperationStatus = x.OperationStatus.ToString(),

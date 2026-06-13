@@ -6,17 +6,13 @@ using HsnSoft.Base.Logging.Abstracts;
 
 namespace Hhs.ContentService.EventHandlers.Internal;
 
-public class AnalysisVideoGenerationQueryEtoHandler : IIntegrationEventHandler<AnalysisVideoGenerationQueryEto>
+public class AnalysisVideoGenerationQueryEtoHandler(
+    IAppConsoleLogger logger,
+    IAnalysisContentAppService analysisContentAppService
+) : IIntegrationEventHandler<AnalysisVideoGenerationQueryEto>
 {
-    private readonly IAppConsoleLogger _logger;
-    private readonly IAnalysisContentAppService _analysisContentAppService;
-
-    public AnalysisVideoGenerationQueryEtoHandler(IAppConsoleLogger logger,
-        IAnalysisContentAppService analysisContentAppService)
-    {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _analysisContentAppService = analysisContentAppService ?? throw new ArgumentNullException(nameof(analysisContentAppService));
-    }
+    private readonly IAppConsoleLogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    private readonly IAnalysisContentAppService _analysisContentAppService = analysisContentAppService ?? throw new ArgumentNullException(nameof(analysisContentAppService));
 
     public async Task HandleAsync(MessageEnvelope<AnalysisVideoGenerationQueryEto> @event)
     {

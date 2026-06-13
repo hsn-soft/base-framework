@@ -260,7 +260,7 @@ public sealed class CustomerContentPublicAppService(
 
             // Integration Event for TextNormalizerService
             await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
-                eventMessage: new AppContentNormalizedStartedEto(
+                eventMessage: new CustomerContentNormalizedStartedEto(
                     ScopeKey: placedCustomerContent.ScopeKey,
                     CustomerContentId: placedCustomerContent.Id,
                     DomainName: customerVpSettingCheck.DomainName,

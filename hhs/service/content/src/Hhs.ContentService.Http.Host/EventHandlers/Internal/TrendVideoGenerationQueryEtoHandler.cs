@@ -6,17 +6,13 @@ using HsnSoft.Base.Logging.Abstracts;
 
 namespace Hhs.ContentService.EventHandlers.Internal;
 
-public class TrendVideoGenerationQueryEtoHandler : IIntegrationEventHandler<TrendVideoGenerationQueryEto>
+public class TrendVideoGenerationQueryEtoHandler(
+    IAppConsoleLogger logger,
+    ICustomerContentAppService customerContentAppService
+) : IIntegrationEventHandler<TrendVideoGenerationQueryEto>
 {
-    private readonly IAppConsoleLogger _logger;
-    private readonly ICustomerContentAppService _appContentAppService;
-
-    public TrendVideoGenerationQueryEtoHandler(IAppConsoleLogger logger,
-        ICustomerContentAppService appContentAppService)
-    {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _appContentAppService = appContentAppService ?? throw new ArgumentNullException(nameof(appContentAppService));
-    }
+    private readonly IAppConsoleLogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    private readonly ICustomerContentAppService _customerContentAppService = customerContentAppService ?? throw new ArgumentNullException(nameof(customerContentAppService));
 
     public async Task HandleAsync(MessageEnvelope<TrendVideoGenerationQueryEto> @event)
     {
@@ -26,7 +22,7 @@ public class TrendVideoGenerationQueryEtoHandler : IIntegrationEventHandler<Tren
             @event.MessageId.ToString(),
             @event.ParentMessageId != null ? @event.ParentMessageId.Value.ToString() : string.Empty);
 
-        _appContentAppService.SetParentIntegrationEvent(@event);
-        await _appContentAppService.TrendVideoGenerationQueryAsync(@event.Message);
+        _customerContentAppService.SetParentIntegrationEvent(@event);
+        await _customerContentAppService.TrendVideoGenerationQueryAsync(@event.Message);
     }
 }

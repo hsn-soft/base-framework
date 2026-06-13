@@ -131,7 +131,7 @@ try
     app.UseEventBus(typeof(EventHandlersAssemblyMarker).Assembly, new Dictionary<string, ushort>
     {
         { nameof(AnalysisContentNormalizedResultEto), 5 }, // This event fetch count more than one
-        { nameof(AppContentNormalizedResultEto), 5 }, // This event fetch count more than one
+        { nameof(CustomerContentNormalizedResultEto), 5 }, // This event fetch count more than one
         { nameof(VideoGenerationResultEto), 5 } // This event fetch count more than one
     });
 

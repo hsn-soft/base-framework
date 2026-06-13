@@ -7,20 +7,15 @@ using HsnSoft.Base.Logging.Abstracts;
 
 namespace Hhs.ContentService.EventHandlers.VideoGenerator;
 
-public class VideoGenerationResultEtoHandler : IIntegrationEventHandler<VideoGenerationResultEto>
+public class VideoGenerationResultEtoHandler(
+    IAppConsoleLogger logger,
+    ICustomerContentAppService customerContentAppService,
+    IAnalysisContentAppService analysisContentAppService
+) : IIntegrationEventHandler<VideoGenerationResultEto>
 {
-    private readonly IAppConsoleLogger _logger;
-    private readonly ICustomerContentAppService _appContentAppService;
-    private readonly IAnalysisContentAppService _analysisContentAppService;
-
-    public VideoGenerationResultEtoHandler(IAppConsoleLogger logger,
-        ICustomerContentAppService appContentAppService,
-        IAnalysisContentAppService analysisContentAppService)
-    {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _appContentAppService = appContentAppService ?? throw new ArgumentNullException(nameof(appContentAppService));
-        _analysisContentAppService = analysisContentAppService ?? throw new ArgumentNullException(nameof(analysisContentAppService));
-    }
+    private readonly IAppConsoleLogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    private readonly ICustomerContentAppService _customerContentAppService = customerContentAppService ?? throw new ArgumentNullException(nameof(customerContentAppService));
+    private readonly IAnalysisContentAppService _analysisContentAppService = analysisContentAppService ?? throw new ArgumentNullException(nameof(analysisContentAppService));
 
     public async Task HandleAsync(MessageEnvelope<VideoGenerationResultEto> @event)
     {
@@ -34,17 +29,17 @@ public class VideoGenerationResultEtoHandler : IIntegrationEventHandler<VideoGen
         switch (@event.Message.ReferenceContentType)
         {
             case ReferenceContentTypes.CUSTOMER_CONTENT:
-            {
-                _appContentAppService.SetParentIntegrationEvent(@event);
-                await _appContentAppService.SetCustomerContentVideoResultAsync(@event.Message.ReferenceContentId, @event.Message.VideoRequestId, @event.Message.IsGenerateSuccess, @event.Message.StorageVideoUrl, @event.CorrelationId);
-                break;
-            }
+                {
+                    _customerContentAppService.SetParentIntegrationEvent(@event);
+                    await _customerContentAppService.SetCustomerContentVideoResultAsync(@event.Message.ReferenceContentId, @event.Message.VideoRequestId, @event.Message.IsGenerateSuccess, @event.Message.StorageVideoUrl, @event.CorrelationId);
+                    break;
+                }
             case ReferenceContentTypes.ANALYSIS_CONTENT:
-            {
-                _analysisContentAppService.SetParentIntegrationEvent(@event);
-                await _analysisContentAppService.SetAnalysisContentVideoResultAsync(@event.Message.ReferenceContentId, @event.Message.VideoRequestId, @event.Message.IsGenerateSuccess, @event.Message.StorageVideoUrl, @event.CorrelationId);
-                break;
-            }
+                {
+                    _analysisContentAppService.SetParentIntegrationEvent(@event);
+                    await _analysisContentAppService.SetAnalysisContentVideoResultAsync(@event.Message.ReferenceContentId, @event.Message.VideoRequestId, @event.Message.IsGenerateSuccess, @event.Message.StorageVideoUrl, @event.CorrelationId);
+                    break;
+                }
             default: throw new ArgumentOutOfRangeException();
         }
     }

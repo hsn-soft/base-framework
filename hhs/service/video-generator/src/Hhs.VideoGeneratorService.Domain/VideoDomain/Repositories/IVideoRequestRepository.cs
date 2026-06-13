@@ -9,8 +9,7 @@ namespace Hhs.VideoGeneratorService.Domain.VideoDomain.Repositories;
 public interface IVideoRequestRepository : IReadOnlyGenericRepository<VideoRequest, Guid>
 {
     Task<VideoRequest> CreateAsync(
-        Guid tenantId,
-        Guid clientId,
+        [NotNull] string scopeKey,
         [NotNull] string domainName,
         ReferenceContentTypes refContentType,
         Guid refContentId,
@@ -25,8 +24,7 @@ public interface IVideoRequestRepository : IReadOnlyGenericRepository<VideoReque
 
     Task<VideoRequest> CreateAsync(
         Guid id,
-        Guid tenantId,
-        Guid clientId,
+        [NotNull] string scopeKey,
         [NotNull] string domainName,
         ReferenceContentTypes refContentType,
         Guid refContentId,
@@ -62,6 +60,4 @@ public interface IVideoRequestRepository : IReadOnlyGenericRepository<VideoReque
     Task<VideoRequest> SetVideoFileStorageUploadResultAsync(Guid id, bool isUploadSuccess, [CanBeNull] string errorMessage, [CanBeNull] string storageVideoTraceId, [CanBeNull] string storageVideoUrl);
 
     Task<VideoRequest> SetStatusToFailedAsync(Guid id, [CanBeNull] string failedReason);
-
-    Task<VideoRequest> FindByUniqueKeysAsync(Guid clientId, Guid refContentId, CancellationToken cancellationToken = default);
 }

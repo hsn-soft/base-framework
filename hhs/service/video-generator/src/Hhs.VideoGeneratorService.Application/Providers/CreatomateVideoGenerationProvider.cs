@@ -11,7 +11,7 @@ using Hhs.VideoGeneratorService.Application.Contracts.Providers.Dtos.Storage.Bun
 using Hhs.VideoGeneratorService.Application.Contracts.Providers.Dtos.VideoGenerate;
 using Hhs.VideoGeneratorService.Application.Contracts.Providers.Dtos.VideoGenerate.Creatomoate;
 using Hhs.VideoGeneratorService.Application.Contracts.Providers.Dtos.VideoGenerate.HeyGen;
-using Hhs.VideoGeneratorService.Domain.CustomerDomain.Entities;
+using Hhs.VideoGeneratorService.Domain.SettingDomain.Entities;
 using HsnSoft.Base.Logging.Abstracts;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;

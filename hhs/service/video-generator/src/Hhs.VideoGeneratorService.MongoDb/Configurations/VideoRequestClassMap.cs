@@ -11,6 +11,7 @@ public static class VideoRequestClassMap
         {
             map.AutoMap();
             map.SetIgnoreExtraElements(true);
+            map.MapMember(x => x.ScopeKey).SetIsRequired(true);
             map.MapMember(x => x.DomainName).SetIsRequired(true);
         });
     }

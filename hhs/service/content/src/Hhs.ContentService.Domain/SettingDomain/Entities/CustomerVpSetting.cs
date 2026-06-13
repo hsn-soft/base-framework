@@ -78,7 +78,7 @@ public sealed class CustomerVpSetting : AuditedEntity<Guid>, ISoftDelete, IScope
     private void SetScopeKey(Guid customerId)
         => ScopeKey = LocalizedModelValidator.NotNullOrWhiteSpace(
             ScopeKeyHelper.Generate(customerId, ProductTypes.VideoPlatform),
-            $"{nameof(CustomerContent)}:{nameof(ScopeKey)}",
+            $"{nameof(CustomerVpSetting)}:{nameof(ScopeKey)}",
             CustomerVpSettingConsts.ScopeKeyMaxLength
         );
 

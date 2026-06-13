@@ -5,17 +5,13 @@ using HsnSoft.Base.Logging.Abstracts;
 
 namespace Hhs.TextNormalizerService.EventHandlers;
 
-public class ReQueuedEtoHandler : IIntegrationEventHandler<ReQueuedEto>
+public class ReQueuedEtoHandler(
+    IAppConsoleLogger logger,
+    IEventManagerAppService eventManagerAppService
+) : IIntegrationEventHandler<ReQueuedEto>
 {
-    private readonly IAppConsoleLogger _logger;
-    private readonly IEventManagerAppService _eventManagerAppService;
-
-    public ReQueuedEtoHandler(IAppConsoleLogger logger,
-        IEventManagerAppService eventManagerAppService)
-    {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _eventManagerAppService = eventManagerAppService ?? throw new ArgumentNullException(nameof(eventManagerAppService));
-    }
+    private readonly IAppConsoleLogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    private readonly IEventManagerAppService _eventManagerAppService = eventManagerAppService ?? throw new ArgumentNullException(nameof(eventManagerAppService));
 
     public async Task HandleAsync(MessageEnvelope<ReQueuedEto> @event)
     {

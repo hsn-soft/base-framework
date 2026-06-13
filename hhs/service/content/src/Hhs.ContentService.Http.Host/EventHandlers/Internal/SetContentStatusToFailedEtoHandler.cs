@@ -7,20 +7,15 @@ using HsnSoft.Base.Logging.Abstracts;
 
 namespace Hhs.ContentService.EventHandlers.Internal;
 
-public class SetContentStatusToFailedEtoHandler : IIntegrationEventHandler<SetContentStatusToFailedEto>
+public class SetContentStatusToFailedEtoHandler(
+    IAppConsoleLogger logger,
+    ICustomerContentAppService customerContentAppService,
+    IAnalysisContentAppService analysisContentAppService
+) : IIntegrationEventHandler<SetContentStatusToFailedEto>
 {
-    private readonly IAppConsoleLogger _logger;
-    private readonly ICustomerContentAppService _appContentAppService;
-    private readonly IAnalysisContentAppService _analysisContentAppService;
-
-    public SetContentStatusToFailedEtoHandler(IAppConsoleLogger logger,
-        ICustomerContentAppService appContentAppService,
-        IAnalysisContentAppService analysisContentAppService)
-    {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _appContentAppService = appContentAppService ?? throw new ArgumentNullException(nameof(appContentAppService));
-        _analysisContentAppService = analysisContentAppService ?? throw new ArgumentNullException(nameof(analysisContentAppService));
-    }
+    private readonly IAppConsoleLogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    private readonly ICustomerContentAppService _customerContentAppService = customerContentAppService ?? throw new ArgumentNullException(nameof(customerContentAppService));
+    private readonly IAnalysisContentAppService _analysisContentAppService = analysisContentAppService ?? throw new ArgumentNullException(nameof(analysisContentAppService));
 
     public async Task HandleAsync(MessageEnvelope<SetContentStatusToFailedEto> @event)
     {
@@ -33,17 +28,17 @@ public class SetContentStatusToFailedEtoHandler : IIntegrationEventHandler<SetCo
         switch (@event.Message.ReferenceContentType)
         {
             case ReferenceContentTypes.CUSTOMER_CONTENT:
-            {
-                _appContentAppService.SetParentIntegrationEvent(@event);
-                await _appContentAppService.SetCustomerContentStatusToFailedAsync(@event.Message.ReferenceContentId, @event.Message.FailedReason, @event.CorrelationId);
-                break;
-            }
+                {
+                    _customerContentAppService.SetParentIntegrationEvent(@event);
+                    await _customerContentAppService.SetCustomerContentStatusToFailedAsync(@event.Message.ReferenceContentId, @event.Message.FailedReason, @event.CorrelationId);
+                    break;
+                }
             case ReferenceContentTypes.ANALYSIS_CONTENT:
-            {
-                _analysisContentAppService.SetParentIntegrationEvent(@event);
-                await _analysisContentAppService.SetAnalysisContentStatusToFailedAsync(@event.Message.ReferenceContentId, @event.Message.FailedReason, @event.CorrelationId);
-                break;
-            }
+                {
+                    _analysisContentAppService.SetParentIntegrationEvent(@event);
+                    await _analysisContentAppService.SetAnalysisContentStatusToFailedAsync(@event.Message.ReferenceContentId, @event.Message.FailedReason, @event.CorrelationId);
+                    break;
+                }
             default: throw new ArgumentOutOfRangeException();
         }
     }

@@ -7,20 +7,15 @@ using HsnSoft.Base.Logging.Abstracts;
 
 namespace Hhs.TextNormalizerService.EventHandlers.Content;
 
-public class VideoGenerationApprovedEtoHandler : IIntegrationEventHandler<VideoGenerationApprovedEto>
+public class VideoGenerationApprovedEtoHandler(
+    IAppConsoleLogger logger,
+    IContentNormalizedRequestAppService contentNormalizedRequestAppService,
+    IAnalysisNormalizedRequestAppService analysisNormalizedRequestAppService
+) : IIntegrationEventHandler<VideoGenerationApprovedEto>
 {
-    private readonly IAppConsoleLogger _logger;
-    private readonly INormalizedRequestAppService _normalizedRequestAppService;
-    private readonly INormalizedAnalysisAppService _normalizedAnalysisAppService;
-
-    public VideoGenerationApprovedEtoHandler(IAppConsoleLogger logger,
-        INormalizedRequestAppService normalizedRequestAppService,
-        INormalizedAnalysisAppService normalizedAnalysisAppService)
-    {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _normalizedRequestAppService = normalizedRequestAppService ?? throw new ArgumentNullException(nameof(normalizedRequestAppService));
-        _normalizedAnalysisAppService = normalizedAnalysisAppService ?? throw new ArgumentNullException(nameof(normalizedAnalysisAppService));
-    }
+    private readonly IAppConsoleLogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    private readonly IContentNormalizedRequestAppService _contentNormalizedRequestAppService = contentNormalizedRequestAppService ?? throw new ArgumentNullException(nameof(contentNormalizedRequestAppService));
+    private readonly IAnalysisNormalizedRequestAppService _analysisNormalizedRequestAppService = analysisNormalizedRequestAppService ?? throw new ArgumentNullException(nameof(analysisNormalizedRequestAppService));
 
     public async Task HandleAsync(MessageEnvelope<VideoGenerationApprovedEto> @event)
     {
@@ -33,17 +28,17 @@ public class VideoGenerationApprovedEtoHandler : IIntegrationEventHandler<VideoG
         switch (@event.Message.ReferenceContentType)
         {
             case ReferenceContentTypes.CUSTOMER_CONTENT:
-            {
-                _normalizedRequestAppService.SetParentIntegrationEvent(@event);
-                await _normalizedRequestAppService.VideoGenerationApprovedAsync(@event.Message);
-                break;
-            }
+                {
+                    _contentNormalizedRequestAppService.SetParentIntegrationEvent(@event);
+                    await _contentNormalizedRequestAppService.VideoGenerationApprovedAsync(@event.Message.ScopeKey, @event.Message.ReferenceContentId);
+                    break;
+                }
             case ReferenceContentTypes.ANALYSIS_CONTENT:
-            {
-                _normalizedAnalysisAppService.SetParentIntegrationEvent(@event);
-                await _normalizedAnalysisAppService.VideoGenerationApprovedAsync(@event.Message);
-                break;
-            }
+                {
+                    _analysisNormalizedRequestAppService.SetParentIntegrationEvent(@event);
+                    await _analysisNormalizedRequestAppService.VideoGenerationApprovedAsync(@event.Message.ScopeKey, @event.Message.ReferenceContentId);
+                    break;
+                }
             default: throw new ArgumentOutOfRangeException();
         }
     }

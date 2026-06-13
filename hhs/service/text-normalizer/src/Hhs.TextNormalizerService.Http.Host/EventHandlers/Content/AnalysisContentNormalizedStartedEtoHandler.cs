@@ -6,17 +6,13 @@ using HsnSoft.Base.Logging.Abstracts;
 
 namespace Hhs.TextNormalizerService.EventHandlers.Content;
 
-public class AnalysisContentNormalizedStartedEtoHandler : IIntegrationEventHandler<AnalysisContentNormalizedStartedEto>
+public class AnalysisContentNormalizedStartedEtoHandler(
+    IAppConsoleLogger logger,
+    IAnalysisNormalizedRequestAppService analysisNormalizedRequestAppService
+) : IIntegrationEventHandler<AnalysisContentNormalizedStartedEto>
 {
-    private readonly IAppConsoleLogger _logger;
-    private readonly INormalizedAnalysisAppService _normalizedAnalysisAppService;
-
-    public AnalysisContentNormalizedStartedEtoHandler(IAppConsoleLogger logger,
-        INormalizedAnalysisAppService normalizedAnalysisAppService)
-    {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _normalizedAnalysisAppService = normalizedAnalysisAppService ?? throw new ArgumentNullException(nameof(normalizedAnalysisAppService));
-    }
+    private readonly IAppConsoleLogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    private readonly IAnalysisNormalizedRequestAppService _analysisNormalizedRequestAppService = analysisNormalizedRequestAppService ?? throw new ArgumentNullException(nameof(analysisNormalizedRequestAppService));
 
     public async Task HandleAsync(MessageEnvelope<AnalysisContentNormalizedStartedEto> @event)
     {
@@ -26,7 +22,7 @@ public class AnalysisContentNormalizedStartedEtoHandler : IIntegrationEventHandl
             @event.MessageId.ToString(),
             @event.ParentMessageId != null ? @event.ParentMessageId.Value.ToString() : string.Empty);
 
-        _normalizedAnalysisAppService.SetParentIntegrationEvent(@event);
-        await _normalizedAnalysisAppService.CreateAsync(@event.Message, @event.CorrelationId);
+        _analysisNormalizedRequestAppService.SetParentIntegrationEvent(@event);
+        await _analysisNormalizedRequestAppService.CreateAsync(@event.Message, @event.CorrelationId);
     }
 }

@@ -1,6 +1,6 @@
 using Hhs.TextNormalizerService.Domain;
 using Hhs.TextNormalizerService.Domain.ContentDomain.Repositories;
-using Hhs.TextNormalizerService.Domain.CustomerDomain.Repositories;
+using Hhs.TextNormalizerService.Domain.SettingDomain.Repositories;
 using Hhs.TextNormalizerService.MongoDb.Configurations;
 using Hhs.TextNormalizerService.MongoDb.Context;
 using Hhs.TextNormalizerService.MongoDb.Repositories;
@@ -40,9 +40,11 @@ public static class MongoDbServiceCollectionExtensions
 
         // Must be Scoped => Cannot consume any scoped service and CurrentUser object creation on constructor
         services.AddScoped(typeof(IMongoGenericRepository<,>), typeof(MongoGenericRepository<,>));
-        services.AddScoped<INormalizedRequestRepository, MongoNormalizedRequestRepository>();
-        services.AddScoped<INormalizedAnalysisRepository, MongoNormalizedAnalysisRepository>();
-        services.AddScoped<ICustomerConfigurationRepository, MongoCustomerConfigurationRepository>();
+
+        services.AddScoped<ICustomerVpSettingRepository, MongoCustomerVpSettingRepository>();
+
+        services.AddScoped<IContentNormalizedRequestRepository, MongoContentNormalizedRequestRepository>();
+        services.AddScoped<IAnalysisNormalizedRequestRepository, MongoAnalysisNormalizedRequestRepository>();
 
         return services;
     }
@@ -88,8 +90,8 @@ public static class MongoDbServiceCollectionExtensions
     private static void RegisterClassMaps()
     {
         EntityClassMap.Register();
-        NormalizedRequestClassMap.Register();
-        NormalizedAnalysisClassMap.Register();
-        CustomerConfigurationClassMap.Register();
+        ContentNormalizedRequestClassMap.Register();
+        AnalysisNormalizedRequestClassMap.Register();
+        CustomerVpSettingClassMap.Register();
     }
 }

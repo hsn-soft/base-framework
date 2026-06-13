@@ -226,7 +226,7 @@ public sealed class AnalysisContentAppService(
                                 ScopeKey: customerVpSetting.ScopeKey,
                                 DomainName: customerVpSetting.DomainName,
                                 AnalysisContentId: analysisContentId,
-                                AppContentIdList: contentVisitList.Select(x => x.CustomerContentId).ToList(),
+                                CustomerContentIdList: contentVisitList.Select(x => x.CustomerContentId).ToList(),
                                 AnalysisDate: placed.AnalysisDate
                             ));
 

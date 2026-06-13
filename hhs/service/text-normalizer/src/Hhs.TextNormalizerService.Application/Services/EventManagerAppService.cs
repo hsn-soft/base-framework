@@ -46,7 +46,7 @@ public sealed class EventManagerAppService : ApplicationServiceBase, IEventManag
         bool isFoundTriggerEvent = true;
         switch (@event?.Message?.ReQueuedMessageTypeName)
         {
-            case nameof(NormalizedRequestScrapingStartedEto):
+            case nameof(ContentNormalizedRequestScrapingStartedEto):
             {
                 if (skipReQueueOperation)
                 {
@@ -58,12 +58,12 @@ public sealed class EventManagerAppService : ApplicationServiceBase, IEventManag
                 }
                 else
                 {
-                    await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent, eventMessage: originalEvent as NormalizedRequestScrapingStartedEto);
+                    await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent, eventMessage: originalEvent as ContentNormalizedRequestScrapingStartedEto);
                 }
 
                 break;
             }
-            case nameof(NormalizedRequestOutlineStartedEto):
+            case nameof(ContentNormalizedRequestOutlineStartedEto):
             {
                 if (skipReQueueOperation)
                 {
@@ -75,12 +75,12 @@ public sealed class EventManagerAppService : ApplicationServiceBase, IEventManag
                 }
                 else
                 {
-                    await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent, eventMessage: originalEvent as NormalizedRequestOutlineStartedEto);
+                    await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent, eventMessage: originalEvent as ContentNormalizedRequestOutlineStartedEto);
                 }
 
                 break;
             }
-            case nameof(NormalizedAnalysisOutlineStartedEto):
+            case nameof(AnalysisNormalizedRequestOutlineStartedEto):
             {
                 if (skipReQueueOperation)
                 {
@@ -92,7 +92,7 @@ public sealed class EventManagerAppService : ApplicationServiceBase, IEventManag
                 }
                 else
                 {
-                    await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent, eventMessage: originalEvent as NormalizedAnalysisOutlineStartedEto);
+                    await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent, eventMessage: originalEvent as AnalysisNormalizedRequestOutlineStartedEto);
                 }
 
                 break;

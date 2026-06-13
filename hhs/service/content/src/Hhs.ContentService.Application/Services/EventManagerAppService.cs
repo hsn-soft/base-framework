@@ -47,7 +47,7 @@ public sealed class EventManagerAppService : ApplicationServiceBase, IEventManag
         bool isFoundTriggerEvent = true;
         switch (@event?.Message?.ReQueuedMessageTypeName)
         {
-            case nameof(AppContentNormalizedResultEto):
+            case nameof(CustomerContentNormalizedResultEto):
             {
                 if (skipReQueueOperation)
                 {
@@ -59,7 +59,7 @@ public sealed class EventManagerAppService : ApplicationServiceBase, IEventManag
                 }
                 else
                 {
-                    await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent, eventMessage: originalEvent as AppContentNormalizedResultEto);
+                    await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent, eventMessage: originalEvent as CustomerContentNormalizedResultEto);
                 }
 
                 break;

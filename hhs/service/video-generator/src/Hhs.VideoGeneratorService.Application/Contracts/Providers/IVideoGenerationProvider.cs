@@ -1,6 +1,6 @@
 using Hhs.VideoGeneratorService.Application.Contracts.Providers.Dtos.Storage.Bunny;
 using Hhs.VideoGeneratorService.Application.Contracts.Providers.Dtos.VideoGenerate;
-using Hhs.VideoGeneratorService.Domain.CustomerDomain.Entities;
+using Hhs.VideoGeneratorService.Domain.SettingDomain.Entities;
 
 namespace Hhs.VideoGeneratorService.Application.Contracts.Providers;
 

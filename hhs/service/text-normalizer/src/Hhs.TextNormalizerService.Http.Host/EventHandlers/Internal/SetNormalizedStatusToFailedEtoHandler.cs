@@ -7,20 +7,15 @@ using HsnSoft.Base.Logging.Abstracts;
 
 namespace Hhs.TextNormalizerService.EventHandlers.Internal;
 
-public class SetNormalizedStatusToFailedEtoHandler : IIntegrationEventHandler<SetNormalizedStatusToFailedEto>
+public class SetNormalizedStatusToFailedEtoHandler(
+    IAppConsoleLogger logger,
+    IContentNormalizedRequestAppService contentNormalizedRequestAppService,
+    IAnalysisNormalizedRequestAppService analysisNormalizedRequestAppService
+) : IIntegrationEventHandler<SetNormalizedStatusToFailedEto>
 {
-    private readonly IAppConsoleLogger _logger;
-    private readonly INormalizedRequestAppService _normalizedRequestAppService;
-    private readonly INormalizedAnalysisAppService _normalizedAnalysisAppService;
-
-    public SetNormalizedStatusToFailedEtoHandler(IAppConsoleLogger logger,
-        INormalizedRequestAppService normalizedRequestAppService,
-        INormalizedAnalysisAppService normalizedAnalysisAppService)
-    {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _normalizedRequestAppService = normalizedRequestAppService ?? throw new ArgumentNullException(nameof(normalizedRequestAppService));
-        _normalizedAnalysisAppService = normalizedAnalysisAppService ?? throw new ArgumentNullException(nameof(normalizedAnalysisAppService));
-    }
+    private readonly IAppConsoleLogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    private readonly IContentNormalizedRequestAppService _contentNormalizedRequestAppService = contentNormalizedRequestAppService ?? throw new ArgumentNullException(nameof(contentNormalizedRequestAppService));
+    private readonly IAnalysisNormalizedRequestAppService _analysisNormalizedRequestAppService = analysisNormalizedRequestAppService ?? throw new ArgumentNullException(nameof(analysisNormalizedRequestAppService));
 
     public async Task HandleAsync(MessageEnvelope<SetNormalizedStatusToFailedEto> @event)
     {
@@ -33,17 +28,17 @@ public class SetNormalizedStatusToFailedEtoHandler : IIntegrationEventHandler<Se
         switch (@event.Message.ReferenceNormalizedType)
         {
             case ReferenceContentTypes.CUSTOMER_CONTENT:
-            {
-                _normalizedRequestAppService.SetParentIntegrationEvent(@event);
-                await _normalizedRequestAppService.SetStatusToFailedAsync(@event.Message.ReferenceNormalizedId, @event.Message.FailedReason, @event.CorrelationId);
-                break;
-            }
+                {
+                    _contentNormalizedRequestAppService.SetParentIntegrationEvent(@event);
+                    await _contentNormalizedRequestAppService.SetStatusToFailedAsync(@event.Message.ReferenceNormalizedId, @event.Message.FailedReason, @event.CorrelationId);
+                    break;
+                }
             case ReferenceContentTypes.ANALYSIS_CONTENT:
-            {
-                _normalizedAnalysisAppService.SetParentIntegrationEvent(@event);
-                await _normalizedAnalysisAppService.SetStatusToFailedAsync(@event.Message.ReferenceNormalizedId, @event.Message.FailedReason, @event.CorrelationId);
-                break;
-            }
+                {
+                    _analysisNormalizedRequestAppService.SetParentIntegrationEvent(@event);
+                    await _analysisNormalizedRequestAppService.SetStatusToFailedAsync(@event.Message.ReferenceNormalizedId, @event.Message.FailedReason, @event.CorrelationId);
+                    break;
+                }
             default: throw new ArgumentOutOfRangeException();
         }
     }

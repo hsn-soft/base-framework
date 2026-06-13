@@ -6,18 +6,14 @@ using HsnSoft.Base.Logging.Abstracts;
 
 namespace Hhs.ContentService.EventHandlers.Internal;
 
-public class TestQueryCompletedEtoHandler : IIntegrationEventHandler<TestQueryCompletedEto>
+public class TestQueryCompletedEtoHandler(
+    IAppConsoleLogger logger,
+    IRequestLimitStore limitStore
+) : IIntegrationEventHandler<TestQueryCompletedEto>
 {
-    private readonly IAppConsoleLogger _logger;
-    private readonly IRequestLimitStore _limitStore;
+    private readonly IAppConsoleLogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    private readonly IRequestLimitStore _limitStore = limitStore ?? throw new ArgumentNullException(nameof(limitStore));
     private const string EndpointKey = "content:jobs:test-query";
-
-    public TestQueryCompletedEtoHandler(IAppConsoleLogger logger,
-        IRequestLimitStore limitStore)
-    {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _limitStore = limitStore ?? throw new ArgumentNullException(nameof(limitStore));
-    }
 
     public async Task HandleAsync(MessageEnvelope<TestQueryCompletedEto> @event)
     {

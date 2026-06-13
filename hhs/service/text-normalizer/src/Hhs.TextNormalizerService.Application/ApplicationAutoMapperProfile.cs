@@ -10,10 +10,10 @@ public class ApplicationAutoMapperProfile : Profile
 {
     public ApplicationAutoMapperProfile()
     {
-        CreateMap<NormalizedRequest, NormalizedRequestDto>();
-        CreateMap<NormalizedRequest, NormalizedRequestSearchDto>();
+        CreateMap<ContentNormalizedRequest, ContentNormalizedRequestDto>();
+        CreateMap<ContentNormalizedRequest, ContentNormalizedRequestSearchDto>();
 
-        CreateMap<NormalizedAnalysis, NormalizedAnalysisDto>();
+        CreateMap<AnalysisNormalizedRequest, AnalysisNormalizedRequestDto>();
 
         CreateMap<ScrapingContentDataModel, AnalysisDataModel>();
 

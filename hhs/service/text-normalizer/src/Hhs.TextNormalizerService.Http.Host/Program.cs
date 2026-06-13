@@ -146,8 +146,8 @@ try
     // EventBus
     app.UseEventBus(typeof(EventHandlersAssemblyMarker).Assembly, new Dictionary<string, ushort>
     {
-        { nameof(NormalizedRequestScrapingStartedEto), 5 }, // This event fetch count more than one
-        { nameof(AppContentNormalizedStartedEto), 5 }, // This event fetch count more than one
+        { nameof(ContentNormalizedRequestScrapingStartedEto), 5 }, // This event fetch count more than one
+        { nameof(CustomerContentNormalizedStartedEto), 5 }, // This event fetch count more than one
         { nameof(AnalysisContentNormalizedStartedEto), 5 } // This event fetch count more than one
     });
 

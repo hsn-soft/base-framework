@@ -6,17 +6,13 @@ using HsnSoft.Base.Logging.Abstracts;
 
 namespace Hhs.VideoGeneratorService.EventHandlers.TextNormalizer;
 
-public class VideoGenerationStartedEtoHandler : IIntegrationEventHandler<VideoGenerationStartedEto>
+public class VideoGenerationStartedEtoHandler(
+    IAppConsoleLogger logger,
+    IVideoOperationsAppService videoOperationsAppService
+    ) : IIntegrationEventHandler<VideoGenerationStartedEto>
 {
-    private readonly IAppConsoleLogger _logger;
-    private readonly IVideoOperationsAppService _videoOperationsAppService;
-
-    public VideoGenerationStartedEtoHandler(IAppConsoleLogger logger,
-        IVideoOperationsAppService videoOperationsAppService)
-    {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _videoOperationsAppService = videoOperationsAppService ?? throw new ArgumentNullException(nameof(videoOperationsAppService));
-    }
+    private readonly IAppConsoleLogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    private readonly IVideoOperationsAppService _videoOperationsAppService = videoOperationsAppService ?? throw new ArgumentNullException(nameof(videoOperationsAppService));
 
     public async Task HandleAsync(MessageEnvelope<VideoGenerationStartedEto> @event)
     {

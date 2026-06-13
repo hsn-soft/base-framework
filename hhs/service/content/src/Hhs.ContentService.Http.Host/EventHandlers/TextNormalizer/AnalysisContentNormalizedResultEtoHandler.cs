@@ -6,17 +6,13 @@ using HsnSoft.Base.Logging.Abstracts;
 
 namespace Hhs.ContentService.EventHandlers.TextNormalizer;
 
-public class AnalysisContentNormalizedResultEtoHandler : IIntegrationEventHandler<AnalysisContentNormalizedResultEto>
+public class AnalysisContentNormalizedResultEtoHandler(
+    IAppConsoleLogger logger,
+    IAnalysisContentAppService analysisContentAppService
+) : IIntegrationEventHandler<AnalysisContentNormalizedResultEto>
 {
-    private readonly IAppConsoleLogger _logger;
-    private readonly IAnalysisContentAppService _analysisContentAppService;
-
-    public AnalysisContentNormalizedResultEtoHandler(IAppConsoleLogger logger,
-        IAnalysisContentAppService analysisContentAppService)
-    {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _analysisContentAppService = analysisContentAppService ?? throw new ArgumentNullException(nameof(analysisContentAppService));
-    }
+    private readonly IAppConsoleLogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    private readonly IAnalysisContentAppService _analysisContentAppService = analysisContentAppService ?? throw new ArgumentNullException(nameof(analysisContentAppService));
 
     public async Task HandleAsync(MessageEnvelope<AnalysisContentNormalizedResultEto> @event)
     {
@@ -27,7 +23,7 @@ public class AnalysisContentNormalizedResultEtoHandler : IIntegrationEventHandle
             @event.ParentMessageId != null ? @event.ParentMessageId.Value.ToString() : string.Empty);
 
         _analysisContentAppService.SetParentIntegrationEvent(@event);
-        await _analysisContentAppService.SetAnalysisContentNormalizedResultAsync(@event.Message.AnalysisContentId, @event.Message.NormalizedAnalysisId,
+        await _analysisContentAppService.SetAnalysisContentNormalizedResultAsync(@event.Message.AnalysisContentId, @event.Message.AnalysisNormalizedRequestId,
             @event.Message.IsNormalizedSuccess, @event.CorrelationId);
     }
 }

@@ -8,27 +8,27 @@ using Microsoft.AspNetCore.Mvc;
 namespace Hhs.TextNormalizerService.Controllers;
 
 [Route("api/text-normalizer-service/v1/commercial/normalized-requests")]
-public sealed class NormalizedRequestController(IServiceProvider provider, INormalizedRequestAppService normalizedRequestAppService) : BaseServiceController(provider)
+public sealed class NormalizedRequestController(IServiceProvider provider, IContentNormalizedRequestAppService normalizedRequestAppService) : BaseServiceController(provider)
 {
     [HttpGet("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<NormalizedRequestDto> GetNormalizedRequestAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<ContentNormalizedRequestDto> GetNormalizedRequestAsync(Guid id, CancellationToken cancellationToken = default)
         => await normalizedRequestAppService.GetAsync(id, cancellationToken);
 
     // [PermissionAuthorize(TextNormalizerServicePermissions.NormalizedRequests.PageView)]
     // [Authorize(Policy = $"Permission:{TextNormalizerServicePermissions.NormalizedRequests.PageView}")]
     [HttpPost("paged-list")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<PagedDataResultDto<NormalizedRequestDto>> GetPagedListAsync([FromBody] GetNormalizedRequestsPaged pagedInput, CancellationToken cancellationToken = default)
+    public async Task<PagedDataResultDto<ContentNormalizedRequestDto>> GetPagedListAsync([FromBody] GetContentNormalizedRequestsPaged pagedInput, CancellationToken cancellationToken = default)
         => await normalizedRequestAppService.GetPagedListAsync(pagedInput, cancellationToken);
 
     [HttpPost("filter-list")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<List<NormalizedRequestDto>> GetFilterListAsync([FromBody] GetNormalizedRequestsFilter filterInput, CancellationToken cancellationToken = default)
+    public async Task<List<ContentNormalizedRequestDto>> GetFilterListAsync([FromBody] GetContentNormalizedRequestsFilter filterInput, CancellationToken cancellationToken = default)
         => await normalizedRequestAppService.GetFilterListAsync(filterInput, cancellationToken);
 
     [HttpPost("search-list")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<List<NormalizedRequestSearchDto>> GetSearchListAsync([FromBody] GetNormalizedRequestsSearch searchInput, CancellationToken cancellationToken = default)
+    public async Task<List<ContentNormalizedRequestSearchDto>> GetSearchListAsync([FromBody] GetContentNormalizedRequestsSearch searchInput, CancellationToken cancellationToken = default)
         => await normalizedRequestAppService.GetSearchListAsync(searchInput, cancellationToken);
 }

@@ -4,7 +4,7 @@ using Hhs.VideoGeneratorService.Application.Contracts.Providers;
 using Hhs.VideoGeneratorService.Application.Contracts.Providers.Dtos.Storage.Bunny;
 using Hhs.VideoGeneratorService.Application.Contracts.Providers.Dtos.VideoGenerate;
 using Hhs.VideoGeneratorService.Application.Contracts.Providers.Dtos.VideoGenerate.Colossyan;
-using Hhs.VideoGeneratorService.Domain.CustomerDomain.Entities;
+using Hhs.VideoGeneratorService.Domain.SettingDomain.Entities;
 using HsnSoft.Base.Logging.Abstracts;
 using Newtonsoft.Json;
 

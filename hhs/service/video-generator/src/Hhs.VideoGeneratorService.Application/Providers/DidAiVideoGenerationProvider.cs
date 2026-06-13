@@ -10,8 +10,8 @@ using Hhs.VideoGeneratorService.Application.Contracts.Providers.Dtos.Storage.Bun
 using Hhs.VideoGeneratorService.Application.Contracts.Providers.Dtos.VideoGenerate;
 using Hhs.VideoGeneratorService.Application.Contracts.Providers.Dtos.VideoGenerate.Did;
 using Hhs.VideoGeneratorService.Application.Contracts.Providers.Dtos.VideoGenerate.Yepic;
-using Hhs.VideoGeneratorService.Domain.CustomerDomain.Entities;
 using Hhs.VideoGeneratorService.Domain.Enums;
+using Hhs.VideoGeneratorService.Domain.SettingDomain.Entities;
 using HsnSoft.Base.Logging.Abstracts;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;

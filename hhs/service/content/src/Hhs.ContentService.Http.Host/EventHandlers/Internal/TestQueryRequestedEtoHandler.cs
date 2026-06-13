@@ -6,17 +6,13 @@ using HsnSoft.Base.Logging.Abstracts;
 
 namespace Hhs.ContentService.EventHandlers.Internal;
 
-public class TestQueryRequestedEtoHandler : IIntegrationEventHandler<TestQueryRequestedEto>
+public class TestQueryRequestedEtoHandler(
+    IAppConsoleLogger logger,
+    ICustomerContentAppService customerContentAppService
+) : IIntegrationEventHandler<TestQueryRequestedEto>
 {
-    private readonly IAppConsoleLogger _logger;
-    private readonly ICustomerContentAppService _appContentAppService;
-
-    public TestQueryRequestedEtoHandler(IAppConsoleLogger logger,
-        ICustomerContentAppService appContentAppService)
-    {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _appContentAppService = appContentAppService ?? throw new ArgumentNullException(nameof(appContentAppService));
-    }
+    private readonly IAppConsoleLogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    private readonly ICustomerContentAppService _customerContentAppService = customerContentAppService ?? throw new ArgumentNullException(nameof(customerContentAppService));
 
     public async Task HandleAsync(MessageEnvelope<TestQueryRequestedEto> @event)
     {
@@ -26,7 +22,7 @@ public class TestQueryRequestedEtoHandler : IIntegrationEventHandler<TestQueryRe
             @event.MessageId.ToString(),
             @event.ParentMessageId != null ? @event.ParentMessageId.Value.ToString() : string.Empty);
 
-        _appContentAppService.SetParentIntegrationEvent(@event);
-        await _appContentAppService.TestQueryRequestedAsync(@event.Message);
+        _customerContentAppService.SetParentIntegrationEvent(@event);
+        await _customerContentAppService.TestQueryRequestedAsync(@event.Message);
     }
 }

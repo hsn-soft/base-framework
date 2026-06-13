@@ -7,7 +7,6 @@ using Hhs.ContentService.Domain.Enums;
 using Hhs.ContentService.Domain.Localization;
 using Hhs.ContentService.EntityFrameworkCore.Context;
 using Hhs.Shared.Helper.Enums;
-using Hhs.Shared.Helper.Utils;
 using Hhs.Shared.Localization;
 using HsnSoft.Base.Domain.Repositories;
 using HsnSoft.Base.Validation.Localization;

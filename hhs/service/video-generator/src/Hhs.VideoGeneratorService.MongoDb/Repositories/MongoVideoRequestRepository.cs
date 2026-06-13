@@ -11,18 +11,16 @@ using Microsoft.Extensions.Options;
 
 namespace Hhs.VideoGeneratorService.MongoDb.Repositories;
 
-public sealed class MongoVideoRequestRepository : MongoGenericRepository<VideoRequest, Guid>, IVideoRequestRepository
+public sealed class MongoVideoRequestRepository(
+    IServiceProvider provider,
+    VideoGeneratorServiceDbContext dbContext,
+    IOptions<VideoRequestQuerySettings> settings
+) : MongoGenericRepository<VideoRequest, Guid>(provider, dbContext), IVideoRequestRepository
 {
-    private readonly VideoRequestQuerySettings _settings;
-
-    public MongoVideoRequestRepository(IServiceProvider provider, VideoGeneratorServiceDbContext dbContext, IOptions<VideoRequestQuerySettings> settings) : base(provider, dbContext)
-    {
-        _settings = settings?.Value ?? throw new ArgumentNullException(nameof(settings));
-    }
+    private readonly VideoRequestQuerySettings _settings = settings?.Value ?? throw new ArgumentNullException(nameof(settings));
 
     public async Task<VideoRequest> CreateAsync(
-        Guid tenantId,
-        Guid clientId,
+         string scopeKey,
         string domainName,
         ReferenceContentTypes refContentType,
         Guid refContentId,
@@ -35,8 +33,7 @@ public sealed class MongoVideoRequestRepository : MongoGenericRepository<VideoRe
         string storageVideoUrl = null,
         string correlationId = null)
         => await CreateAsync(id: Guid.NewGuid(),
-            tenantId: tenantId,
-            clientId: clientId,
+            scopeKey: scopeKey,
             domainName: domainName,
             refContentType: refContentType,
             refContentId: refContentId,
@@ -52,8 +49,7 @@ public sealed class MongoVideoRequestRepository : MongoGenericRepository<VideoRe
 
     public async Task<VideoRequest> CreateAsync(
         Guid id,
-        Guid tenantId,
-        Guid clientId,
+        string scopeKey,
         string domainName,
         ReferenceContentTypes refContentType,
         Guid refContentId,
@@ -70,8 +66,7 @@ public sealed class MongoVideoRequestRepository : MongoGenericRepository<VideoRe
 
         var draft = new VideoRequest(
             id: id,
-            tenantId: tenantId,
-            clientId: clientId,
+            scopeKey: scopeKey,
             domainName: domainName,
             refContentType: refContentType,
             refContentId: refContentId,
@@ -387,10 +382,5 @@ public sealed class MongoVideoRequestRepository : MongoGenericRepository<VideoRe
         oldEntity.OperationStatusDescription = failedReason;
         _ = await UpdateAsync(oldEntity);
         return oldEntity;
-    }
-
-    public async Task<VideoRequest> FindByUniqueKeysAsync(Guid clientId, Guid refContentId, CancellationToken cancellationToken = default)
-    {
-        return await GetSingleOrDefaultAsync(x => x.ClientId == clientId && x.RefContentId == refContentId, cancellationToken: cancellationToken);
     }
 }
