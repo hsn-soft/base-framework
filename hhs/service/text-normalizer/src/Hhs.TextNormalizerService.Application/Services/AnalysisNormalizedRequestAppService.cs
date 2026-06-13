@@ -399,9 +399,10 @@ public sealed class AnalysisNormalizedRequestAppService(
                     DomainName: analysisNormalizedRequest.DomainName,
                     ReferenceContentType: ReferenceContentTypes.ANALYSIS_CONTENT,
                     ReferenceContentId: analysisNormalizedRequest.AnalysisContentId,
-                    EncodedNormalizedContentDatas: Mapper
-                        .Map<List<AnalysisReferenceModel>, List<EncodedNormalizedContentData>>(analysisNormalizedRequest
-                            .AnalysisReferenceList)
+                    EncodedNormalizedContentDatas: Mapper.Map<List<AnalysisReferenceModel>, List<EncodedNormalizedContentData>>
+                    (
+                        analysisNormalizedRequest.AnalysisReferenceList
+                    )
                 ));
         }
         else

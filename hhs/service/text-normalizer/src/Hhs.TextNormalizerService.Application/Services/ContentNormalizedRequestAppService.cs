@@ -555,16 +555,18 @@ public sealed class ContentNormalizedRequestAppService(
                     DomainName: contentNormalizedRequest.DomainName,
                     ReferenceContentType: ReferenceContentTypes.CUSTOMER_CONTENT,
                     ReferenceContentId: contentNormalizedRequest.CustomerContentId,
-                    EncodedNormalizedContentDatas: new List<EncodedNormalizedContentData>
-                    {
-                        new()
+                    EncodedNormalizedContentDatas:
+                    [
+                        new EncodedNormalizedContentData
                         {
-                            EncodedNormalizedContent = StringHelper.Base64Encode(
+                            EncodedNormalizedContent = StringHelper.Base64Encode
+                            (
                                 _serviceSettings.UseStructuredOutput
                                     ? JsonConvert.DeserializeObject<StructuredOutput>(contentNormalizedRequest.OutlineContentData).Summary
-                                    : contentNormalizedRequest.OutlineContentData)
+                                    : contentNormalizedRequest.OutlineContentData
+                            )
                         }
-                    }
+                    ]
                 ));
         }
         else
