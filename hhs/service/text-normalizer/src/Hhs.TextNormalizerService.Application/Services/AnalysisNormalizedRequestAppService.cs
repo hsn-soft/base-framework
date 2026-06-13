@@ -179,12 +179,18 @@ public sealed class AnalysisNormalizedRequestAppService(
             throw new BaseHttpException((int)HttpStatusCode.NotFound);
         }
 
-        contentNormalizedRequests = contentNormalizedRequests
-            .OrderBy(x => input.CustomerContentIdList.IndexOf(x.CustomerContentId))
-            .ToList();
+        // contentNormalizedRequests = contentNormalizedRequests
+        //     .OrderBy(x => input.CustomerContentIdList.IndexOf(x.CustomerContentId))
+        //     .ToList();
 
         var analysisReferenceList = contentNormalizedRequests.Select(x =>
-            new AnalysisReferenceModel { CustomerContentId = x.CustomerContentId, ContentNormalizedRequestId = x.Id, AnalysisDataModel = StructuredOutputWithScrapingDateMapper(x.ScrapingContentData, x.OutlineContentData) }).ToList();
+            new AnalysisReferenceModel
+            {
+                CustomerContentId = x.CustomerContentId,
+                ContentNormalizedRequestId = x.Id,
+                // AnalysisDataModel = StructuredOutputWithScrapingDateMapper(x.ScrapingContentData, x.OutlineContentData)
+                AnalysisDataModel = Mapper.Map<ScrapingContentDataModel, AnalysisDataModel>(x.ScrapingContentData)
+            }).ToList();
 
         var placedAnalysisNormalizedRequest = await analysisNormalizedRequestRepository.CreateAsync(
             scopeKey: input.ScopeKey,
