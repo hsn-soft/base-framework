@@ -150,13 +150,12 @@ public sealed class AnalysisContentAppService(
 
     public async Task AnalysisVideoGenerationQueryAsync(AnalysisVideoGenerationQueryEto input, string correlationId = null)
     {
-        if (input?.AppClientId == null)
+        if (input?.ScopeKey == null)
         {
             throw new BaseHttpException((int)HttpStatusCode.BadRequest);
         }
 
-        string scopeKey = ScopeKeyHelper.Generate(input.AppClientId, ProductTypes.VideoPlatform);
-        var customerVpSetting = await customerVpSettingRepository.GetSingleOrDefaultAsync(x => x.ScopeKey == scopeKey);
+        var customerVpSetting = await customerVpSettingRepository.GetSingleOrDefaultAsync(x => x.ScopeKey == input.ScopeKey);
         if (customerVpSetting == null)
         {
             throw new BaseHttpException((int)HttpStatusCode.NotFound);
@@ -183,7 +182,7 @@ public sealed class AnalysisContentAppService(
             : new KeyValuePair<bool, string>(true, CustomerContentOperationFacilities.CUSTOMER_CONTENT_VIDEO_GENERATION_APPROVED);
         if (clientQuoteResult.Key)
         {
-            var customerContentIds = await customerContentRepository.GetCustomerDailyAnalysisContentIdsAsync(scopeKey);
+            var customerContentIds = await customerContentRepository.GetCustomerDailyAnalysisContentIdsAsync(customerVpSetting.ScopeKey);
             if (customerContentIds is { Count: > 0 })
             {
                 var contentVisitList = await customerContentVisitRepository.GetContentIdsVisitCountsAsync(customerContentIds: customerContentIds,
@@ -206,7 +205,7 @@ public sealed class AnalysisContentAppService(
                         // Add analysis content record
                         var placed = await analysisContentRepository.CreateAsync(
                             id: analysisContentId,
-                            customerId: input.AppClientId,
+                            customerId: Guid.Parse(input.ScopeKey.Split(":")[0]),
                             productType: ProductTypes.VideoPlatform,
                             analysisDate: analysisDate,
                             operationStatus: AnalysisContentOperationStates.CreatedWaitForNormalize,

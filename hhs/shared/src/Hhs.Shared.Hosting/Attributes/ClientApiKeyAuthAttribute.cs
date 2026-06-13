@@ -1,5 +1,8 @@
 using System.Net;
 using HsnSoft.Base;
+using HsnSoft.Base.Data;
+using HsnSoft.Base.MultiTenancy;
+using HsnSoft.Base.Subscribe;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,7 +14,9 @@ public class ClientApiKeyAuthAttribute : ActionFilterAttribute
 {
     public string KeyLabel { get; set; }
 
-    public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
+    public override async Task OnActionExecutionAsync(
+        ActionExecutingContext context,
+        ActionExecutionDelegate next)
     {
         if (string.IsNullOrWhiteSpace(KeyLabel))
         {
@@ -24,8 +29,11 @@ public class ClientApiKeyAuthAttribute : ActionFilterAttribute
         }
 
         var serviceProvider = context.HttpContext.RequestServices;
-        var config = serviceProvider.GetService<IConfiguration>();
+
+        var config = serviceProvider.GetRequiredService<IConfiguration>();
+
         string apiKeySettingValue = config.GetValue<string>(KeyLabel);
+
         if (string.IsNullOrWhiteSpace(apiKeySettingValue))
         {
             throw new ArgumentNullException(nameof(apiKeySettingValue));
@@ -36,6 +44,14 @@ public class ClientApiKeyAuthAttribute : ActionFilterAttribute
             throw new BaseHttpException((int)HttpStatusCode.Unauthorized, "API Key is not authorized!");
         }
 
-        await base.OnActionExecutionAsync(context, next);
+        var dataFilter = serviceProvider.GetRequiredService<IDataFilter>();
+
+        using (dataFilter.Disable<IMultiTenant>())
+        {
+            using (dataFilter.Disable<IScopeSubscription>())
+            {
+                await next();
+            }
+        }
     }
 }

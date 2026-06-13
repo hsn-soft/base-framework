@@ -1,8 +1,9 @@
+using System.Diagnostics.CodeAnalysis;
 using HsnSoft.Base.Domain.Entities.Events;
 
 namespace Hhs.ContentService.Application.Contracts.Events;
 
-public sealed record AnalysisVideoGenerationQueryEto(Guid AppClientId) : IIntegrationEventMessage
+public sealed record AnalysisVideoGenerationQueryEto([NotNull] string ScopeKey) : IIntegrationEventMessage
 {
-    public Guid AppClientId { get; } = AppClientId;
+    [NotNull] public string ScopeKey { get; } = ScopeKey;
 }

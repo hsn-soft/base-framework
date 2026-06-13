@@ -329,12 +329,12 @@ public sealed class CustomerContentAppService(
 
     public async Task TrendVideoGenerationQueryAsync(TrendVideoGenerationQueryEto input, string correlationId = null)
     {
-        if (input?.CustomerId == null)
+        if (input?.ScopeKey == null)
         {
             throw new BaseHttpException((int)HttpStatusCode.BadRequest);
         }
 
-        var customerVpSetting = await customerVpSettingRepository.GetSingleOrDefaultAsync(x => x.Id == input.CustomerId);
+        var customerVpSetting = await customerVpSettingRepository.GetSingleOrDefaultAsync(x => x.ScopeKey == input.ScopeKey);
         if (customerVpSetting == null)
         {
             throw new BaseHttpException((int)HttpStatusCode.NotFound);
