@@ -5,6 +5,7 @@ using HsnSoft.Base.Authorization.Permissions.Store;
 using HsnSoft.Base.Data;
 using HsnSoft.Base.Logging.Abstracts;
 using HsnSoft.Base.MultiTenancy;
+using HsnSoft.Base.Subscribe;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
@@ -38,26 +39,26 @@ public class SynchServicePermissionConstraintStoreBackgroundService
         var permissionConstraintStore = scope.ServiceProvider.GetRequiredService<IPermissionConstraintStore>();
         var dataFilter = scope.ServiceProvider.GetRequiredService<IDataFilter>();
 
-        using (dataFilter.Disable<IMultiTenant>())
+        using (dataFilter.Disable<IMultiTenant>()) // disable tenant filter
         {
-            // get microservice endpoint permission keys
-            var servicePermissionConstraintKeys = await servicePermissionProvider.GetPermissionConstraintKeysAsync();
-            servicePermissionConstraintKeys ??= [];
+            using (dataFilter.Disable<IScopeSubscription>()) // disable scope key filter
+            {
+                // get microservice endpoint permission keys
+                var servicePermissionConstraintKeys = await servicePermissionProvider.GetPermissionConstraintKeysAsync();
+                servicePermissionConstraintKeys ??= [];
 
-            // get user or role permissions equal microservice permission keys
-            var cachePermissionConstraints = await cachePermissionConstraintAssignmentRepository.GetPermissionsAsync(servicePermissionConstraintKeys);
-            cachePermissionConstraints ??= [];
+                // get user or role permissions equal microservice permission keys
+                var cachePermissionConstraints = await cachePermissionConstraintAssignmentRepository.GetPermissionsAsync(servicePermissionConstraintKeys);
+                cachePermissionConstraints ??= [];
 
-            await permissionConstraintStore.SetAllConstraints(cachePermissionConstraints.Select(x
-                => new PermissionConstraintAssignment
-                {
-                    Constraint = x.Constraint,
-                    ProviderName = x.ProviderName,
-                    ProviderKey = x.ProviderKey,
-                    Value = x.Value,
-                }));
+                await permissionConstraintStore.SetAllConstraints(cachePermissionConstraints.Select(x
+                    => new PermissionConstraintAssignment
+                    {
+                        Constraint = x.Constraint, ProviderName = x.ProviderName, ProviderKey = x.ProviderKey, Value = x.Value,
+                    }));
 
-            Logger.LogInformation("{WorkerName} | PermissionConstraint store successfully updated [{CachePermissionsCount}]", nameof(SynchServicePermissionConstraintStoreBackgroundService), cachePermissionConstraints.Count);
+                Logger.LogInformation("{WorkerName} | PermissionConstraint store successfully updated [{CachePermissionsCount}]", nameof(SynchServicePermissionConstraintStoreBackgroundService), cachePermissionConstraints.Count);
+            }
         }
     }
 

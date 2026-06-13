@@ -12,6 +12,7 @@ using HsnSoft.Base.EventBus.Logging;
 using HsnSoft.Base.EventBus.RabbitMQ.Configs;
 using HsnSoft.Base.EventBus.RabbitMQ.Connection;
 using HsnSoft.Base.MultiTenancy;
+using HsnSoft.Base.Subscribe;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
@@ -282,11 +283,14 @@ public sealed class RabbitMqConsumer : IDisposable
                     var dataFilter = scope.ServiceProvider.GetService<IDataFilter>();
                     using (dataFilter.Disable<IMultiTenant>()) // disable tenant filter
                     {
-                        var eventHandlerType = typeof(IIntegrationEventHandler<>).MakeGenericType(eventInfo.EventType!);
-                        await Task.Yield();
+                        using (dataFilter.Disable<IScopeSubscription>()) // disable scope key filter
+                        {
+                            var eventHandlerType = typeof(IIntegrationEventHandler<>).MakeGenericType(eventInfo.EventType!);
+                            await Task.Yield();
 
-                        var method = eventHandlerType.GetMethod(nameof(IIntegrationEventHandler<IIntegrationEventMessage>.HandleAsync));
-                        await ((Task)method!.Invoke(handler, [@event]))!;
+                            var method = eventHandlerType.GetMethod(nameof(IIntegrationEventHandler<IIntegrationEventMessage>.HandleAsync));
+                            await ((Task)method!.Invoke(handler, [@event]))!;
+                        }
                     }
 
                     watch.Stop();

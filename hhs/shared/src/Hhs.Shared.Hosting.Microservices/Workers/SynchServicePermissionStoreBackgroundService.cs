@@ -5,6 +5,7 @@ using HsnSoft.Base.Authorization.Permissions.Store;
 using HsnSoft.Base.Data;
 using HsnSoft.Base.Logging.Abstracts;
 using HsnSoft.Base.MultiTenancy;
+using HsnSoft.Base.Subscribe;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
@@ -38,25 +39,23 @@ public class SynchServicePermissionStoreBackgroundService
         var permissionStore = scope.ServiceProvider.GetRequiredService<IPermissionStore>();
         var dataFilter = scope.ServiceProvider.GetRequiredService<IDataFilter>();
 
-        using (dataFilter.Disable<IMultiTenant>())
+        using (dataFilter.Disable<IMultiTenant>()) // disable tenant filter
         {
-            // get microservice endpoint permission keys
-            var servicePermissionKeys = await servicePermissionProvider.GetPermissionKeysAsync();
-            servicePermissionKeys ??= [];
+            using (dataFilter.Disable<IScopeSubscription>()) // disable scope key filter
+            {
+                // get microservice endpoint permission keys
+                var servicePermissionKeys = await servicePermissionProvider.GetPermissionKeysAsync();
+                servicePermissionKeys ??= [];
 
-            // get user or role permissions equal microservice permission keys
-            var cachePermissions = await cachePermissionAssignmentRepository.GetPermissionsAsync(servicePermissionKeys);
-            cachePermissions ??= [];
+                // get user or role permissions equal microservice permission keys
+                var cachePermissions = await cachePermissionAssignmentRepository.GetPermissionsAsync(servicePermissionKeys);
+                cachePermissions ??= [];
 
-            await permissionStore.SetAllPermissions(cachePermissions.Select(x
-                => new PermissionAssignment
-                {
-                    Permission = x.Permission,
-                    ProviderName = x.ProviderName,
-                    ProviderKey = x.ProviderKey
-                }));
+                await permissionStore.SetAllPermissions(cachePermissions.Select(x
+                    => new PermissionAssignment { Permission = x.Permission, ProviderName = x.ProviderName, ProviderKey = x.ProviderKey }));
 
-            Logger.LogInformation("{WorkerName} | Permission store successfully updated [{CachePermissionsCount}]", nameof(SynchServicePermissionStoreBackgroundService), cachePermissions.Count);
+                Logger.LogInformation("{WorkerName} | Permission store successfully updated [{CachePermissionsCount}]", nameof(SynchServicePermissionStoreBackgroundService), cachePermissions.Count);
+            }
         }
     }
 
