@@ -14,12 +14,23 @@ public class BasicTenantInfo
 
     public List<Guid> AllowedTenantIds { get; }
 
+    // public List<Guid> AllowedCustomerIds { get; }
 
-    public BasicTenantInfo(Guid? tenantId, bool isSystemTenant, [CanBeNull] List<Guid> allowedTenantIds, [CanBeNull] string tenantNormalized = null)
+    public List<string> AllowedScopeKeys { get; }
+
+    public BasicTenantInfo(
+        Guid? tenantId,
+        bool isSystemTenant,
+        [CanBeNull] List<Guid> allowedTenantIds,
+        // [CanBeNull] List<Guid> allowedCustomerIds,
+        [CanBeNull] List<string> allowedScopeKeys,
+        [CanBeNull] string tenantNormalized = null)
     {
         TenantId = tenantId;
         TenantNormalized = tenantNormalized;
         IsSystemTenant = isSystemTenant;
         AllowedTenantIds = allowedTenantIds ?? [];
+        // AllowedCustomerIds = allowedCustomerIds ?? [];
+        AllowedScopeKeys = allowedScopeKeys ?? [];
     }
 }

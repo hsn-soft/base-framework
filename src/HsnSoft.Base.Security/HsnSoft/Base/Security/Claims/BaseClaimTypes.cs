@@ -27,6 +27,8 @@ public static class BaseClaimTypes
     public static string TenantNormalized { get; set; } = "tenant_normalized";
     public static string IsSystemTenant { get; set; } = "is_system_tenant";
     public static string AllowedTenantId { get; set; } = "allowed_tenant_id";
+    public static string AllowedCustomerId { get; set; } = "allowed_customer_id";
+    public static string AllowedScopeKey { get; set; } = "allowed_scope_key";
 
     public static string ClientId { get; set; } = "client_id";
 

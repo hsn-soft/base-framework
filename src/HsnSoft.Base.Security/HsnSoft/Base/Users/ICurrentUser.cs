@@ -34,6 +34,9 @@ public interface ICurrentUser
 
     [NotNull] List<Guid> AllowedTenantIds { get; }
 
+    // [NotNull] List<Guid> AllowedCustomerIds { get; }
+
+    [NotNull] List<string> AllowedScopeKeys { get; }
 
     [NotNull] string[] RoleKeys { get; }
 

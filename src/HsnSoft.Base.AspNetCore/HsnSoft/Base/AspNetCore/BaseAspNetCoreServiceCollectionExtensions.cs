@@ -4,7 +4,6 @@ using HsnSoft.Base.AspNetCore.Localization;
 using HsnSoft.Base.AspNetCore.Security;
 using HsnSoft.Base.AspNetCore.Security.Claims;
 using HsnSoft.Base.AspNetCore.WebClientInfo;
-using HsnSoft.Base.Clients;
 using HsnSoft.Base.Localization;
 using HsnSoft.Base.MultiTenancy;
 using HsnSoft.Base.Security.Claims;
@@ -22,7 +21,6 @@ public static class BaseAspNetCoreServiceCollectionExtensions
         services.AddOptions();
         services.AddHttpContextAccessor();
         services.AddTransient<ICurrentPrincipalAccessor, HttpContextCurrentPrincipalAccessor>();
-        services.AddTransient<ICurrentClient, CurrentClient>();
         services.AddTransient<ICurrentUser, CurrentUser>();
 
         services.AddTransient<ICurrentTenantAccessor>(sp=> new BasicCurrentTenantAccessor(sp));

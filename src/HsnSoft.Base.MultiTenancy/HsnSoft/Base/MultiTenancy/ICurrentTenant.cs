@@ -16,5 +16,16 @@ public interface ICurrentTenant
 
     [NotNull] List<Guid> AllowedTenantIds { get; }
 
-    IDisposable Change(Guid? id, bool isSystemTenant, [CanBeNull] List<Guid> allowedTenantIds, [CanBeNull] string normalized = null);
+    // [NotNull] List<Guid> AllowedCustomerIds { get; }
+
+    [NotNull] List<string> AllowedScopeKeys { get; }
+
+    IDisposable Change(
+        Guid? id,
+        bool isSystemTenant,
+        [CanBeNull] List<Guid> allowedTenantIds,
+        // [CanBeNull] List<Guid> allowedCustomerIds,
+        [CanBeNull] List<string> allowedScopeKeys,
+        [CanBeNull] string normalized = null
+    );
 }
