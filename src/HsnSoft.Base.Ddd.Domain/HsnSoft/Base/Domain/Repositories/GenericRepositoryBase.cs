@@ -9,6 +9,7 @@ using HsnSoft.Base.Data;
 using HsnSoft.Base.Domain.Entities;
 using HsnSoft.Base.Domain.Models;
 using HsnSoft.Base.MultiTenancy;
+using HsnSoft.Base.Subscribe;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -229,6 +230,46 @@ public abstract class GenericRepositoryBase<TEntity, TKey>(IServiceProvider prov
                     else
                     {
                         query = (TQueryable)query.Where(e => allowedTenantIds.Contains(((IMultiTenant)e).TenantId));
+                    }
+                }
+            }
+        }
+
+        // if (typeof(ICustomerSubscription).IsAssignableFrom(typeof(TOtherEntity)))
+        // {
+        //     if (DataFilter?.IsEnabled<ICustomerSubscription>() ?? false)
+        //     {
+        //         if (!(CurrentTenant?.IsSystemTenant ?? false))
+        //         {
+        //             var allowedCustomerIds = CurrentTenant?.AllowedCustomerIds ?? [];
+        //
+        //             if (allowedCustomerIds.Count == 0)
+        //             {
+        //                 query = (TQueryable)query.Where(_ => false);
+        //             }
+        //             else
+        //             {
+        //                 query = (TQueryable)query.Where(e => allowedCustomerIds.Contains(((ICustomerSubscription)e).CustomerId));
+        //             }
+        //         }
+        //     }
+        // }
+
+        if (typeof(IScopeSubscription).IsAssignableFrom(typeof(TOtherEntity)))
+        {
+            if (DataFilter?.IsEnabled<IScopeSubscription>() ?? false)
+            {
+                if (!(CurrentTenant?.IsSystemTenant ?? false))
+                {
+                    var allowedScopeKeys = CurrentTenant?.AllowedScopeKeys ?? [];
+
+                    if (allowedScopeKeys.Count == 0)
+                    {
+                        query = (TQueryable)query.Where(_ => false);
+                    }
+                    else
+                    {
+                        query = (TQueryable)query.Where(e => allowedScopeKeys.Contains(((IScopeSubscription)e).ScopeKey));
                     }
                 }
             }
