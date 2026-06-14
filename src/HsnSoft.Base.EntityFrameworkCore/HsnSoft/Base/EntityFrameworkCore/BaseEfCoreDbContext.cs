@@ -38,7 +38,7 @@ public abstract class BaseEfCoreDbContext<TDbContext> : DbContext where TDbConte
     private bool IsSystemTenant => CurrentTenant?.IsSystemTenant ?? false;
 
     private IReadOnlyList<Guid> AllowedTenantIds => CurrentTenant?.AllowedTenantIds ?? [];
-    private bool HasAllowedTenantIds2 => AllowedTenantIds.Count > 0;
+    private bool HasAllowedTenantIds => AllowedTenantIds.Count > 0;
 
     // private IReadOnlyList<Guid> AllowedCustomerIds => CurrentTenant?.AllowedCustomerIds ?? [];
     // private bool HasAllowedCustomerIds => AllowedCustomerIds.Count > 0;
@@ -452,7 +452,7 @@ public abstract class BaseEfCoreDbContext<TDbContext> : DbContext where TDbConte
                 || IsSystemTenant
                 || (
                     HasTenantContext &&
-                    HasAllowedTenantIds2 &&
+                    HasAllowedTenantIds &&
                     AllowedTenantIds.Contains(EF.Property<Guid>(e, "TenantId"))
                 );
 
