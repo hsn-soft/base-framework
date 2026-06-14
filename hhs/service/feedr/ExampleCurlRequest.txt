@@ -1,9 +1,0 @@
-curl -X POST 'localhost:7490/api/feedradmanager-service/v1/jobs/generate-summary-report' \
-  -H 'SchedulerApiKey: f05ad9c0-52c7-4ad8-8349-1f4bcc1b9bf9' \
-  -H 'SchedulerJobId: postman' \
-  -H 'SchedulerJobName: generate-summary-report' \
-  -H 'Content-Type: application/json' \
-  -d '{
-  "jobName": "GenerateSummaryReport",
-  "clientId": "46f859a8-0737-452a-8fd6-258156fdf901"
-}'
