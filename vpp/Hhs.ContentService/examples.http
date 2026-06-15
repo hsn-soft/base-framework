@@ -1,0 +1,13 @@
+@ContentService_HostAddress = http://localhost:5192
+
+# curl -X POST http://localhost:5000/customer-contents
+#  -H "Content-Type: application/json"
+#  -d '{"url":"https://example.com/news/1"}'
+POST {{ContentService_HostAddress}}/customer-contents
+Content-Type: application/json
+
+{
+    "url": "https://example.com/news/1"
+}
+
+###
