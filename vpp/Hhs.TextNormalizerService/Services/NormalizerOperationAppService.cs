@@ -391,13 +391,8 @@ public sealed class NormalizerOperationAppService(
             update,
             cancellationToken);
 
-        analysis = await GetAnalysisAsync(analysis.AnalysisContentId, cancellationToken);
-
-        string parentStatus = CalculateAnalysisParentStatus(analysis);
-
-        await UpdateAnalysisParentAsync(
+        await RecalculateAndUpdateAnalysisParentAsync(
             analysis.Id,
-            parentStatus,
             EventNames.AnalysisItemOutlineCompleted,
             null,
             cancellationToken);
@@ -1027,6 +1022,40 @@ public sealed class NormalizerOperationAppService(
                 i => i.CustomerContentId == customerContentId));
 
         return context.AnalysisRequests.UpdateOneAsync(
+            filter,
+            update,
+            cancellationToken: cancellationToken);
+    }
+
+    private async Task RecalculateAndUpdateAnalysisParentAsync(
+        Guid analysisRequestId,
+        string currentStep,
+        string? lastError,
+        CancellationToken cancellationToken)
+    {
+        var analysis = await context.AnalysisRequests
+            .Find(x => x.Id == analysisRequestId)
+            .FirstAsync(cancellationToken);
+
+        var status = CalculateAnalysisParentStatus(analysis);
+
+        var filter = status == "OUTLINE_COMPLETED"
+            ? Builders<AnalysisContentNormalizedRequest>.Filter.And(
+                Builders<AnalysisContentNormalizedRequest>.Filter.Eq(x => x.Id, analysisRequestId),
+                Builders<AnalysisContentNormalizedRequest>.Filter.Ne(x => x.Status, "COMPLETED"))
+            : Builders<AnalysisContentNormalizedRequest>.Filter.And(
+                Builders<AnalysisContentNormalizedRequest>.Filter.Eq(x => x.Id, analysisRequestId),
+                Builders<AnalysisContentNormalizedRequest>.Filter.Nin(
+                    x => x.Status,
+                    new[] { "COMPLETED", "OUTLINE_COMPLETED" }));
+
+        var update = Builders<AnalysisContentNormalizedRequest>.Update
+            .Set(x => x.Status, status)
+            .Set(x => x.CurrentStep, currentStep)
+            .Set(x => x.LastError, lastError)
+            .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);
+
+        await context.AnalysisRequests.UpdateOneAsync(
             filter,
             update,
             cancellationToken: cancellationToken);

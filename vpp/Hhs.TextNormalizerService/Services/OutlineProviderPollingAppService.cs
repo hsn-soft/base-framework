@@ -203,6 +203,21 @@ public sealed class OutlineProviderPollingAppService
             {
                 try
                 {
+                    var claimUpdate = Builders<AnalysisContentNormalizedRequest>.Update
+                        .Set("Items.$.NextOutlinePollAtUtc", DateTime.UtcNow.AddMinutes(1))
+                        .Set("Items.$.UpdatedAtUtc", DateTime.UtcNow)
+                        .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);
+
+                    var claimResult = await UpdateDuePollingAnalysisItemAsync(
+                        request.Id,
+                        item.CustomerContentId,
+                        now,
+                        claimUpdate,
+                        cancellationToken);
+
+                    if (claimResult.ModifiedCount == 0)
+                        continue;
+
                     if (item.OutlinePollingCount >= item.MaxOutlinePollingCount)
                     {
                         await FailAnalysisPollingItemAsync(
@@ -330,6 +345,30 @@ public sealed class OutlineProviderPollingAppService
                 }
             }
         }
+    }
+
+    private Task<UpdateResult> UpdateDuePollingAnalysisItemAsync(
+        Guid analysisRequestId,
+        Guid customerContentId,
+        DateTime now,
+        UpdateDefinition<AnalysisContentNormalizedRequest> update,
+        CancellationToken cancellationToken)
+    {
+        var filter = Builders<AnalysisContentNormalizedRequest>.Filter.And(
+            Builders<AnalysisContentNormalizedRequest>.Filter.Eq(x => x.Id, analysisRequestId),
+            Builders<AnalysisContentNormalizedRequest>.Filter.ElemMatch(
+                x => x.Items,
+                i =>
+                    i.CustomerContentId == customerContentId &&
+                    i.OutlineStatus == "POLLING" &&
+                    i.NextOutlinePollAtUtc != null &&
+                    i.NextOutlinePollAtUtc <= now &&
+                    i.OutlineProviderTrackId != null));
+
+        return _context.AnalysisRequests.UpdateOneAsync(
+            filter,
+            update,
+            cancellationToken: cancellationToken);
     }
 
     private async Task FailAnalysisPollingItemAsync(

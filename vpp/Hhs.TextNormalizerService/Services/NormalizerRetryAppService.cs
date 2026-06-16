@@ -167,12 +167,15 @@ public sealed class NormalizerRetryAppService(
                             .Set(x => x.LastError, null)
                             .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);
 
-                        await UpdateDueRetryAnalysisItemAsync(
+                        var result = await UpdateDueRetryAnalysisItemAsync(
                             request.Id,
                             item.CustomerContentId,
                             now,
                             pollingClaim,
                             cancellationToken);
+
+                        if (result.ModifiedCount == 0)
+                            continue;
 
                         continue;
                     }
