@@ -5,30 +5,47 @@ using Hhs.TextNormalizerService.Services;
 
 namespace Hhs.TextNormalizerService.Handlers;
 
-public abstract class NormalizerEventHandlerBase<TEvent>(NormalizerInboxStore inboxStore) : IIntegrationEventHandler<TEvent>
+public abstract class NormalizerEventHandlerBase<TEvent>(
+    NormalizerInboxStore inboxStore)
+    : IIntegrationEventHandler<TEvent>
     where TEvent : IntegrationEvent
 {
-    public async Task HandleAsync(TEvent @event, CancellationToken cancellationToken)
+    public async Task HandleAsync(
+        TEvent @event,
+        CancellationToken cancellationToken)
     {
-        if (await inboxStore.IsProcessedAsync(@event.EventId, cancellationToken))
-            return;
+        bool started =
+            await inboxStore.StartAsync(
+                @event,
+                cancellationToken);
 
-        await inboxStore.StartAsync(@event, cancellationToken);
+        if (!started)
+            return;
 
         try
         {
-            await ExecuteAsync(@event, cancellationToken);
+            await ExecuteAsync(
+                @event,
+                cancellationToken);
 
-            await inboxStore.CompleteAsync(@event.EventId, cancellationToken);
+            await inboxStore.CompleteAsync(
+                @event.EventId,
+                cancellationToken);
         }
         catch (Exception ex)
         {
-            await inboxStore.FailAsync(@event.EventId, ex, cancellationToken);
+            await inboxStore.FailAsync(
+                @event.EventId,
+                ex,
+                cancellationToken);
+
             throw;
         }
     }
 
-    protected abstract Task ExecuteAsync(TEvent @event, CancellationToken cancellationToken);
+    protected abstract Task ExecuteAsync(
+        TEvent @event,
+        CancellationToken cancellationToken);
 }
 
 public sealed class CustomerNormalizeRequestCreatedEventHandler(NormalizerInboxStore inboxStore, NormalizerOperationAppService appService) : NormalizerEventHandlerBase<CustomerNormalizeRequestCreatedEvent>(inboxStore)

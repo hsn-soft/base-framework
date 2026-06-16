@@ -141,19 +141,22 @@ public sealed class NormalizerOperationAppService(
         }
     }
 
-    public async Task StartOutlineProviderRequestAsync(
-        OutlineProviderRequestStartedEvent @event,
-        CancellationToken cancellationToken)
+public async Task StartOutlineProviderRequestAsync(
+    OutlineProviderRequestStartedEvent @event,
+    CancellationToken cancellationToken)
+{
+    try
     {
         var provider = outlineProviderResolver.Resolve(@event.ProviderKey);
 
-        var response = await provider.CreateAsync(new OutlineCreateRequest { InputText = @event.InputText }, cancellationToken);
+        var response = await provider.CreateAsync(
+            new OutlineCreateRequest { InputText = @event.InputText },
+            cancellationToken);
 
         if (provider.Capabilities.ExecutionMode == ProviderExecutionMode.ImmediateResult)
         {
             if (string.IsNullOrWhiteSpace(response.Script))
                 throw new InvalidOperationException("Script is required for immediate outline provider.");
-
 
             await eventBus.PublishAsync(new OutlineProviderCompletedEvent
             {
@@ -164,7 +167,7 @@ public sealed class NormalizerOperationAppService(
                 NormalizedRequestId = @event.NormalizedRequestId,
                 CustomerContentIdForItem = @event.CustomerContentIdForItem,
                 SortOrder = @event.SortOrder,
-                Script = response.Script!
+                Script = response.Script
             }, cancellationToken);
 
             return;
@@ -173,7 +176,7 @@ public sealed class NormalizerOperationAppService(
         if (string.IsNullOrWhiteSpace(response.ProviderTrackId))
             throw new InvalidOperationException("ProviderTrackId is required for async outline provider.");
 
-        await SaveOutlinePollingStateAsync(@event, response.ProviderTrackId!, cancellationToken);
+        await SaveOutlinePollingStateAsync(@event, response.ProviderTrackId, cancellationToken);
 
         await eventBus.PublishAsync(new OutlineProviderPollingStartedEvent
         {
@@ -185,9 +188,50 @@ public sealed class NormalizerOperationAppService(
             NormalizedRequestId = @event.NormalizedRequestId,
             CustomerContentIdForItem = @event.CustomerContentIdForItem,
             SortOrder = @event.SortOrder,
-            ProviderTrackId = response.ProviderTrackId!
+            ProviderTrackId = response.ProviderTrackId
         }, cancellationToken);
     }
+    catch (Exception ex)
+    {
+        await HandleOutlineProviderRequestExceptionAsync(@event, ex, cancellationToken);
+    }
+}
+private async Task HandleOutlineProviderRequestExceptionAsync(
+    OutlineProviderRequestStartedEvent @event,
+    Exception ex,
+    CancellationToken cancellationToken)
+{
+    if (@event.ContentProcessType == ContentProcessTypes.CustomerContent)
+    {
+        var request = await context.CustomerRequests
+            .Find(x => x.Id == @event.NormalizedRequestId)
+            .FirstAsync(cancellationToken);
+
+        await HandleCustomerExceptionAsync(
+            request,
+            EventNames.OutlineProviderRequestStarted,
+            ex,
+            cancellationToken);
+
+        return;
+    }
+
+    var analysis = await context.AnalysisRequests
+        .Find(x => x.Id == @event.NormalizedRequestId)
+        .FirstAsync(cancellationToken);
+
+    if (@event.CustomerContentIdForItem is null)
+        throw new InvalidOperationException("CustomerContentIdForItem is required.");
+
+    var item = analysis.Items.First(x => x.CustomerContentId == @event.CustomerContentIdForItem);
+
+    await HandleAnalysisItemExceptionAsync(
+        analysis,
+        item,
+        EventNames.OutlineProviderRequestStarted,
+        ex,
+        cancellationToken);
+}
 
     private async Task SaveOutlinePollingStateAsync(
         OutlineProviderRequestStartedEvent @event,
@@ -355,6 +399,7 @@ public sealed class NormalizerOperationAppService(
 
         await eventBus.PublishAsync(new NormalizerResultPublishedEvent
             {
+                NormalizeRequestId = request.Id,
                 CustomerContentId = request.CustomerContentId,
                 CorrelationId = @event.CorrelationId,
                 ContentProcessType = ContentProcessTypes.CustomerContent,
@@ -408,8 +453,11 @@ public sealed class NormalizerOperationAppService(
 
         try
         {
+            item.Status = "SCRAPING";
+            item.CurrentStep = EventNames.AnalysisItemScrapingStarted;
             item.ScrapingStatus = "STARTED";
             item.UpdatedAtUtc = DateTime.UtcNow;
+
             request.Status = "SCRAPING";
             request.CurrentStep = EventNames.AnalysisItemScrapingStarted;
             request.UpdatedAtUtc = DateTime.UtcNow;
@@ -418,6 +466,8 @@ public sealed class NormalizerOperationAppService(
 
             var result = await scraper.ScrapeAsync(item.Url, cancellationToken);
 
+            item.Status = "SCRAPING_COMPLETED";
+            item.CurrentStep = EventNames.AnalysisItemScrapingCompleted;
             item.ScrapingStatus = "COMPLETED";
             item.ScrapingResult = new ScrapingResult { Title = result.Title, Text = result.Text, ReleaseTimeUtc = result.ReleaseTimeUtc };
             item.LastError = null;
@@ -467,77 +517,82 @@ public sealed class NormalizerOperationAppService(
         }, cancellationToken);
     }
 
-public async Task StartAnalysisItemOutlineAsync(
-    AnalysisItemOutlineStartedEvent @event,
-    CancellationToken cancellationToken)
-{
-    var request = await GetAnalysisAsync(@event.AnalysisContentId!.Value, cancellationToken);
-    var item = request.Items.First(x => x.CustomerContentId == @event.CustomerContentId);
-
-    try
+    public async Task StartAnalysisItemOutlineAsync(
+        AnalysisItemOutlineStartedEvent @event,
+        CancellationToken cancellationToken)
     {
-        if (item.ScrapingStatus != "COMPLETED" || item.ScrapingResult is null)
+        var request = await GetAnalysisAsync(@event.AnalysisContentId!.Value, cancellationToken);
+        var item = request.Items.First(x => x.CustomerContentId == @event.CustomerContentId);
+
+        try
         {
-            item.Status = "WAITING_RETRY";
+            if (item.ScrapingStatus != "COMPLETED" || item.ScrapingResult is null)
+            {
+                item.Status = "WAITING_RETRY";
+                item.CurrentStep = EventNames.AnalysisItemOutlineStarted;
+                item.OutlineStatus = "WAITING_SCRAPING";
+                item.LastError = "ScrapingResult is required before outline.";
+                item.NextRetryAtUtc = DateTime.UtcNow.AddMinutes(1);
+                item.UpdatedAtUtc = DateTime.UtcNow;
+
+                request.Status = "WAITING_RETRY";
+                request.CurrentStep = EventNames.AnalysisItemOutlineStarted;
+                request.LastError = item.LastError;
+                request.UpdatedAtUtc = DateTime.UtcNow;
+
+                await ReplaceAnalysisAsync(request, cancellationToken);
+                return;
+            }
+
+            item.OutlineStatus = "STARTED";
             item.CurrentStep = EventNames.AnalysisItemOutlineStarted;
-            item.OutlineStatus = "WAITING_SCRAPING";
-            item.LastError = "ScrapingResult is required before outline.";
-            item.NextRetryAtUtc = DateTime.UtcNow.AddMinutes(1);
             item.UpdatedAtUtc = DateTime.UtcNow;
 
-            request.Status = "WAITING_RETRY";
-            request.CurrentStep = EventNames.AnalysisItemOutlineStarted;
-            request.LastError = item.LastError;
+            request.Status = "OUTLINE_PROVIDER_REQUEST_STARTED";
+            request.CurrentStep = EventNames.OutlineProviderRequestStarted;
             request.UpdatedAtUtc = DateTime.UtcNow;
 
             await ReplaceAnalysisAsync(request, cancellationToken);
+
+            if (string.IsNullOrWhiteSpace(request.OutlineProviderKey))
+                throw new InvalidOperationException("OutlineProviderKey is required.");
+
+            await eventBus.PublishAsync(new OutlineProviderRequestStartedEvent
+            {
+                AnalysisContentId = request.AnalysisContentId,
+                CustomerContentId = item.CustomerContentId,
+                CustomerContentIdForItem = item.CustomerContentId,
+                ContentProcessType = ContentProcessTypes.AnalysisContent,
+                CorrelationId = @event.CorrelationId,
+                NormalizedRequestId = request.Id,
+                ProviderKey = request.OutlineProviderKey,
+                SortOrder = item.SortOrder,
+                InputText = item.ScrapingResult.Text
+            }, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            await HandleAnalysisItemExceptionAsync(
+                request,
+                item,
+                EventNames.AnalysisItemOutlineStarted,
+                ex,
+                cancellationToken);
+
             return;
         }
-
-        item.OutlineStatus = "STARTED";
-        item.CurrentStep = EventNames.AnalysisItemOutlineStarted;
-        item.UpdatedAtUtc = DateTime.UtcNow;
-
-        request.Status = "OUTLINE_PROVIDER_REQUEST_STARTED";
-        request.CurrentStep = EventNames.OutlineProviderRequestStarted;
-        request.UpdatedAtUtc = DateTime.UtcNow;
-
-        await ReplaceAnalysisAsync(request, cancellationToken);
-
-        if (string.IsNullOrWhiteSpace(request.OutlineProviderKey))
-            throw new InvalidOperationException("OutlineProviderKey is required.");
-
-        await eventBus.PublishAsync(new OutlineProviderRequestStartedEvent
-        {
-            AnalysisContentId = request.AnalysisContentId,
-            CustomerContentId = item.CustomerContentId,
-            CustomerContentIdForItem = item.CustomerContentId,
-            ContentProcessType = ContentProcessTypes.AnalysisContent,
-            CorrelationId = @event.CorrelationId,
-            NormalizedRequestId = request.Id,
-            ProviderKey = request.OutlineProviderKey,
-            SortOrder = item.SortOrder,
-            InputText = item.ScrapingResult.Text
-        }, cancellationToken);
     }
-    catch (Exception ex)
-    {
-        await HandleAnalysisItemExceptionAsync(
-            request,
-            item,
-            EventNames.AnalysisItemOutlineStarted,
-            ex,
-            cancellationToken);
-
-        return;
-    }
-}
 
     public async Task CompleteAnalysisItemOutlineAsync(
         AnalysisItemOutlineCompletedEvent @event,
         CancellationToken cancellationToken)
     {
         var request = await GetAnalysisAsync(@event.AnalysisContentId!.Value, cancellationToken);
+
+        if (request is { Status: "COMPLETED", CurrentStep: EventNames.NormalizerResultPublished })
+        {
+            return;
+        }
 
         if (request.Items.Any(x => x.OutlineStatus != "COMPLETED"))
             return;
@@ -560,6 +615,7 @@ public async Task StartAnalysisItemOutlineAsync(
 
         await eventBus.PublishAsync(new NormalizerResultPublishedEvent
         {
+            NormalizeRequestId = request.Id,
             AnalysisContentId = request.AnalysisContentId,
             CorrelationId = @event.CorrelationId,
             ContentProcessType = ContentProcessTypes.AnalysisContent,

@@ -93,7 +93,7 @@ public sealed class OutlineProviderPollingAppService
                         ContentProcessType = ContentProcessTypes.CustomerContent,
                         Step = EventNames.OutlineProviderPollingStarted,
                         ErrorMessage = request.LastError,
-                        Retryable = true
+                        Retryable = false
                     }, cancellationToken);
 
                     continue;
@@ -228,7 +228,7 @@ public sealed class OutlineProviderPollingAppService
                             ContentProcessType = ContentProcessTypes.AnalysisContent,
                             Step = EventNames.OutlineProviderPollingStarted,
                             ErrorMessage = item.LastError,
-                            Retryable = true
+                            Retryable = false
                         }, cancellationToken);
 
                         continue;

@@ -51,6 +51,7 @@ public sealed class NormalizerRetryAppService(
                     }, cancellationToken);
                 }
 
+                request.Status = "RETRY_PUBLISHED";
                 request.NextRetryAtUtc = null;
                 request.UpdatedAtUtc = DateTime.UtcNow;
 
@@ -136,6 +137,7 @@ public sealed class NormalizerRetryAppService(
                         }, cancellationToken);
                     }
 
+                    item.Status = "RETRY_PUBLISHED";
                     item.NextRetryAtUtc = null;
                     item.UpdatedAtUtc = DateTime.UtcNow;
 
