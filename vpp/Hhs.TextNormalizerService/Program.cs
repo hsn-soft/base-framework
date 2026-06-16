@@ -14,7 +14,7 @@ builder.Services.Configure<RabbitMqOptions>(builder.Configuration.GetSection("Ra
 
 BsonRegisterTools.MongoConfigure();
 builder.Services.AddSingleton<NormalizerMongoContext>();
-builder.Services.AddScoped<NormalizerMongoIndexInitializer>();
+builder.Services.AddSingleton<NormalizerMongoIndexInitializer>();
 
 builder.Services.AddSingleton<IEventBus, RabbitMqEventBus>();
 
@@ -63,7 +63,6 @@ builder.Services.AddHostedService<OutlineProviderPollingWorker>();
 
 builder.Services.AddScoped<NormalizerRetryAppService>();
 builder.Services.AddHostedService<NormalizerRetryWorker>();
-
 
 
 var app = builder.Build();

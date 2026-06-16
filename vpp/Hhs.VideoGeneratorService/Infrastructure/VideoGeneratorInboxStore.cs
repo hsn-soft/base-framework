@@ -16,24 +16,36 @@ public sealed class VideoGeneratorInboxStore(VideoMongoContext context)
             .AnyAsync(cancellationToken);
     }
 
-    public async Task StartAsync<TEvent>(TEvent @event, CancellationToken cancellationToken)
+    public async Task<bool> StartAsync<TEvent>(TEvent @event, CancellationToken cancellationToken)
         where TEvent : IntegrationEvent
     {
+        if (await IsProcessedAsync(@event.EventId, cancellationToken))
+            return false;
+
         var existing = await context.InboxMessages
             .Find(x => x.EventId == @event.EventId)
             .FirstOrDefaultAsync(cancellationToken);
 
         if (existing is not null)
-            return;
+            return false;
 
-        await context.InboxMessages.InsertOneAsync(new VideoGeneratorInboxMessage
+        try
         {
-            EventId = @event.EventId,
-            EventName = @event.EventName,
-            Payload = JsonSerializer.Serialize(@event, @event.GetType()),
-            Status = InboxStatuses.Started,
-            CreatedAtUtc = DateTime.UtcNow
-        }, cancellationToken: cancellationToken);
+            await context.InboxMessages.InsertOneAsync(new VideoGeneratorInboxMessage
+            {
+                EventId = @event.EventId,
+                EventName = @event.EventName,
+                Payload = JsonSerializer.Serialize(@event, @event.GetType()),
+                Status = InboxStatuses.Started,
+                CreatedAtUtc = DateTime.UtcNow
+            }, cancellationToken: cancellationToken);
+
+            return true;
+        }
+        catch (MongoWriteException)
+        {
+            return false;
+        }
     }
 
     public async Task CompleteAsync(Guid eventId, CancellationToken cancellationToken)

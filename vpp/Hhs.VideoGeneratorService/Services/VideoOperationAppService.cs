@@ -578,7 +578,7 @@ public sealed class VideoOperationAppService(
         {
             CustomerContentId = audio.CustomerContentId,
             AnalysisContentId = audio.AnalysisContentId,
-            ContentProcessType = input.ContentProcessType,
+            ContentProcessType = audio.ContentProcessType,
             CorrelationId = input.CorrelationId,
             VideoRequestId = audio.VideoRequestId,
             AudioRequestId = audio.Id,

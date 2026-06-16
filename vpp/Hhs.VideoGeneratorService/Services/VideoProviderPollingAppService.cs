@@ -74,7 +74,7 @@ public sealed class VideoProviderPollingAppService(
                         CorrelationId = request.CorrelationId,
                         Step = EventNames.VideoProviderPollingStarted,
                         ErrorMessage = request.LastError,
-                        Retryable = true
+                        Retryable = false
                     }, cancellationToken);
 
                     continue;

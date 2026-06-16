@@ -75,7 +75,7 @@ public sealed class AudioProviderPollingAppService(
                         CorrelationId = request.CorrelationId,
                         Step = EventNames.AudioProviderPollingStarted,
                         ErrorMessage = request.LastError,
-                        Retryable = true
+                        Retryable = false
                     }, cancellationToken);
 
                     continue;

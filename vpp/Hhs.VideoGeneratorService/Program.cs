@@ -14,6 +14,8 @@ builder.Services.Configure<RabbitMqOptions>(builder.Configuration.GetSection("Ra
 
 BsonRegisterTools.MongoConfigure();
 builder.Services.AddSingleton<VideoMongoContext>();
+builder.Services.AddSingleton<VideoMongoIndexInitializer>();
+
 builder.Services.AddSingleton<IEventBus, RabbitMqEventBus>();
 
 builder.Services.AddScoped<VideoGeneratorInboxStore>();
@@ -71,6 +73,14 @@ builder.Services.AddScoped<VideoRetryAppService>();
 builder.Services.AddHostedService<VideoRetryWorker>();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var indexInitializer = scope.ServiceProvider
+        .GetRequiredService<VideoMongoIndexInitializer>();
+
+    await indexInitializer.CreateIndexesAsync();
+}
 
 app.MapPost("/admin/audio-requests/{audioRequestId:guid}/upload/complete-manual",
     async (

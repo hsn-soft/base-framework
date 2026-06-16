@@ -36,6 +36,8 @@ public sealed class VideoRetryAppService(
         {
             try
             {
+                var pollingRetry = false;
+
                 if (request.CurrentStep == EventNames.AudioProviderRequestStarted)
                 {
                     await eventBus.PublishAsync(new AudioProviderRequestStartedEvent
@@ -78,7 +80,22 @@ public sealed class VideoRetryAppService(
                                         ?? throw new InvalidOperationException("LocalAudioFilePath is required.")
                     }, cancellationToken);
                 }
+                else if (request.CurrentStep == EventNames.AudioProviderPollingStarted)
+                {
+                    request.Status = "AUDIO_PROVIDER_POLLING";
+                    request.NextProviderPollAtUtc = DateTime.UtcNow;
+                    pollingRetry = true;
+                }
+                else
+                {
+                    throw new InvalidOperationException(
+                        $"Unsupported audio retry step: {request.CurrentStep}");
+                }
 
+                if (!pollingRetry)
+                {
+                    request.Status = "RETRY_PUBLISHED";
+                }
                 request.NextRetryAtUtc = null;
                 request.UpdatedAtUtc = DateTime.UtcNow;
 
@@ -118,6 +135,8 @@ public sealed class VideoRetryAppService(
         {
             try
             {
+                var pollingRetry = false;
+
                 if (request.CurrentStep == EventNames.VideoProviderRequestStarted)
                 {
                     var videoProvider = videoProviderResolver.Resolve(request.VideoProviderKey);
@@ -171,7 +190,22 @@ public sealed class VideoRetryAppService(
                                         ?? throw new InvalidOperationException("LocalVideoFilePath is required.")
                     }, cancellationToken);
                 }
+                else if (request.CurrentStep == EventNames.VideoProviderPollingStarted)
+                {
+                    request.Status = "VIDEO_PROVIDER_POLLING";
+                    request.NextProviderPollAtUtc = DateTime.UtcNow;
+                    pollingRetry = true;
+                }
+                else
+                {
+                    throw new InvalidOperationException(
+                        $"Unsupported video retry step: {request.CurrentStep}");
+                }
 
+                if (!pollingRetry)
+                {
+                    request.Status = "RETRY_PUBLISHED";
+                }
                 request.NextRetryAtUtc = null;
                 request.UpdatedAtUtc = DateTime.UtcNow;
 
