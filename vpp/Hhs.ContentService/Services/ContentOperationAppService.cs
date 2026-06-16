@@ -76,26 +76,14 @@ public sealed class ContentOperationAppService
 
         foreach (var contentId in customerContentIds)
         {
-            analysis.Items.Add(new AnalysisContentItem
-            {
-                Id = Guid.NewGuid(),
-                AnalysisContentId = analysisId,
-                CustomerContentId = contentId,
-                SortOrder = sort++
-            });
+            analysis.Items.Add(new AnalysisContentItem { Id = Guid.NewGuid(), AnalysisContentId = analysisId, CustomerContentId = contentId, SortOrder = sort++ });
         }
 
         _db.AnalysisContents.Add(analysis);
         await _db.SaveChangesAsync(cancellationToken);
 
         var items = contents
-            .Select((x, index) => new AnalysisNormalizeItem
-            {
-                CustomerContentId = x.Id,
-                Url = x.Url,
-                Path = x.Path,
-                SortOrder = index + 1
-            })
+            .Select((x, index) => new AnalysisNormalizeItem { CustomerContentId = x.Id, Url = x.Url, Path = x.Path, SortOrder = index + 1 })
             .ToList();
 
         await _eventBus.PublishAsync(new AnalysisNormalizeRequestCreatedEvent
@@ -138,8 +126,8 @@ public sealed class ContentOperationAppService
             ContentProcessType = @event.ContentProcessType,
             VideoInputJson = @event.VideoInputJson,
             CorrelationId = @event.CorrelationId,
-            VideoProviderKey =  @event.VideoProviderKey,
-            AudioProviderKey =  @event.AudioProviderKey,
+            VideoProviderKey = @event.VideoProviderKey,
+            AudioProviderKey = @event.AudioProviderKey,
         }, cancellationToken);
     }
 
@@ -166,5 +154,63 @@ public sealed class ContentOperationAppService
         }
 
         await _db.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task HandleStepFailedAsync(
+        StepFailedEvent @event,
+        CancellationToken cancellationToken)
+    {
+        if (@event.CustomerContentId.HasValue)
+        {
+            var entity = await _db.CustomerContents
+                .FirstAsync(x => x.Id == @event.CustomerContentId.Value, cancellationToken);
+
+            entity.LastFacility = @event.Facility;
+            entity.LastError = @event.ErrorMessage;
+            entity.UpdatedAtUtc = DateTime.UtcNow;
+
+            if (!@event.Retryable)
+            {
+                if (IsNormalizeStep(@event.Step))
+                    entity.NormalizeStatus = "FAILED";
+
+                if (IsVideoStep(@event.Step))
+                    entity.VideoStatus = "FAILED";
+            }
+        }
+
+        if (@event.AnalysisContentId.HasValue)
+        {
+            var entity = await _db.AnalysisContents
+                .FirstAsync(x => x.Id == @event.AnalysisContentId.Value, cancellationToken);
+
+            entity.LastFacility = @event.Facility;
+            entity.LastError = @event.ErrorMessage;
+            entity.UpdatedAtUtc = DateTime.UtcNow;
+
+            if (!@event.Retryable)
+            {
+                if (IsNormalizeStep(@event.Step))
+                    entity.NormalizeStatus = "FAILED";
+
+                if (IsVideoStep(@event.Step))
+                    entity.VideoStatus = "FAILED";
+            }
+        }
+
+        await _db.SaveChangesAsync(cancellationToken);
+    }
+
+    private static bool IsNormalizeStep(string step)
+    {
+        return step.Contains("SCRAPING", StringComparison.OrdinalIgnoreCase)
+               || step.Contains("OUTLINE", StringComparison.OrdinalIgnoreCase)
+               || step.Contains("NORMALIZE", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsVideoStep(string step)
+    {
+        return step.Contains("AUDIO", StringComparison.OrdinalIgnoreCase)
+               || step.Contains("VIDEO", StringComparison.OrdinalIgnoreCase);
     }
 }

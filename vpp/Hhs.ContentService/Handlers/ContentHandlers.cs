@@ -44,3 +44,14 @@ public sealed class VideoGenerationResultPublishedEventHandler(ContentInboxStore
     protected override Task ExecuteAsync(VideoGenerationResultPublishedEvent @event, CancellationToken cancellationToken)
         => appService.HandleVideoResultAsync(@event, cancellationToken);
 }
+
+public sealed class StepFailedEventHandler(
+    ContentInboxStore inboxStore,
+    ContentOperationAppService appService)
+    : ContentEventHandlerBase<StepFailedEvent>(inboxStore)
+{
+    protected override Task ExecuteAsync(
+        StepFailedEvent @event,
+        CancellationToken cancellationToken)
+        => appService.HandleStepFailedAsync(@event, cancellationToken);
+}

@@ -4,8 +4,7 @@ namespace Hhs.TextNormalizerService.Entities;
 
 public sealed class CustomerContentNormalizedRequest
 {
-    [BsonId]
-    public Guid Id { get; set; }
+    [BsonId] public Guid Id { get; set; }
     public Guid CorrelationId { get; set; }
 
     public Guid CustomerContentId { get; set; }
@@ -40,8 +39,7 @@ public sealed class CustomerContentNormalizedRequest
 
 public sealed class AnalysisContentNormalizedRequest
 {
-    [BsonId]
-    public Guid Id { get; set; }
+    [BsonId] public Guid Id { get; set; }
     public Guid CorrelationId { get; set; }
 
     public Guid AnalysisContentId { get; set; }
@@ -62,8 +60,6 @@ public sealed class AnalysisContentNormalizedRequest
     public string OutlineProviderKey { get; set; } = default!;
     public string VideoProviderKey { get; set; } = default!;
     public string? AudioProviderKey { get; set; }
-
-
 }
 
 public sealed class AnalysisNormalizedItem
@@ -86,6 +82,13 @@ public sealed class AnalysisNormalizedItem
     public DateTime? NextOutlinePollAtUtc { get; set; }
     public int OutlinePollingCount { get; set; }
     public int MaxOutlinePollingCount { get; set; } = 60;
+
+    public string Status { get; set; } = "CREATED";
+    public string CurrentStep { get; set; } = "CREATED";
+
+    public int RetryCount { get; set; }
+    public int MaxRetryCount { get; set; } = 5;
+    public DateTime? NextRetryAtUtc { get; set; }
 }
 
 public sealed class ScrapingResult
@@ -104,8 +107,7 @@ public sealed class OutlineResult
 
 public sealed class NormalizerInboxMessage
 {
-    [BsonId]
-    public Guid EventId { get; set; }
+    [BsonId] public Guid EventId { get; set; }
 
     public string EventName { get; set; } = default!;
     public string Payload { get; set; } = default!;

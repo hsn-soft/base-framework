@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Hhs.Shared.Events;
+using Hhs.Shared.Inbox;
 using Hhs.TextNormalizerService.Entities;
 using Hhs.TextNormalizerService.Mongo;
 using MongoDB.Driver;
@@ -11,7 +12,7 @@ public sealed class NormalizerInboxStore(NormalizerMongoContext context)
     public async Task<bool> IsProcessedAsync(Guid eventId, CancellationToken cancellationToken)
     {
         return await context.InboxMessages
-            .Find(x => x.EventId == eventId && x.Status == "PROCESSED")
+            .Find(x => x.EventId == eventId && x.Status == InboxStatuses.Completed)
             .AnyAsync(cancellationToken);
     }
 
@@ -30,7 +31,7 @@ public sealed class NormalizerInboxStore(NormalizerMongoContext context)
             EventId = @event.EventId,
             EventName = @event.EventName,
             Payload = JsonSerializer.Serialize(@event, @event.GetType()),
-            Status = "STARTED",
+            Status = InboxStatuses.Started,
             CreatedAtUtc = DateTime.UtcNow
         }, cancellationToken: cancellationToken);
     }
@@ -40,7 +41,7 @@ public sealed class NormalizerInboxStore(NormalizerMongoContext context)
         await context.InboxMessages.UpdateOneAsync(
             x => x.EventId == eventId,
             Builders<NormalizerInboxMessage>.Update
-                .Set(x => x.Status, "PROCESSED")
+                .Set(x => x.Status, InboxStatuses.Completed)
                 .Set(x => x.ProcessedAtUtc, DateTime.UtcNow)
                 .Set(x => x.ErrorMessage, null),
             cancellationToken: cancellationToken);
@@ -51,7 +52,7 @@ public sealed class NormalizerInboxStore(NormalizerMongoContext context)
         await context.InboxMessages.UpdateOneAsync(
             x => x.EventId == eventId,
             Builders<NormalizerInboxMessage>.Update
-                .Set(x => x.Status, "FAILED")
+                .Set(x => x.Status, InboxStatuses.Failed)
                 .Set(x => x.ErrorMessage, ex.Message),
             cancellationToken: cancellationToken);
     }

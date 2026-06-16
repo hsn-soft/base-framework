@@ -6,6 +6,7 @@ using Hhs.VideoGeneratorService.Entities;
 using Hhs.VideoGeneratorService.Mongo;
 using Hhs.VideoGeneratorService.Providers;
 using MongoDB.Driver;
+using Hhs.Shared.Retry;
 
 namespace Hhs.VideoGeneratorService.Services;
 
@@ -212,7 +213,12 @@ public sealed class VideoOperationAppService(
         }
         catch (Exception ex)
         {
-            await FailAudioAsync(audioRequest, EventNames.AudioProviderRequestStarted, ex, cancellationToken);
+            await HandleAudioExceptionAsync(
+                audioRequest,
+                EventNames.AudioProviderRequestStarted,
+                ex,
+                cancellationToken);
+
             return;
         }
     }
@@ -252,6 +258,7 @@ public sealed class VideoOperationAppService(
 
             audioRequest.LocalAudioFilePath = localPath;
             audioRequest.Status = "DOWNLOADED";
+            audioRequest.CurrentStep = EventNames.AudioFileDownloadCompleted;
             audioRequest.UpdatedAtUtc = DateTime.UtcNow;
 
             await ReplaceAudioAsync(audioRequest, cancellationToken);
@@ -269,7 +276,12 @@ public sealed class VideoOperationAppService(
         }
         catch (Exception ex)
         {
-            await FailAudioAsync(audioRequest, EventNames.AudioFileDownloadStarted, ex, cancellationToken);
+            await HandleAudioExceptionAsync(
+                audioRequest,
+                EventNames.AudioFileDownloadStarted,
+                ex,
+                cancellationToken);
+
             return;
         }
     }
@@ -310,7 +322,12 @@ public sealed class VideoOperationAppService(
         }
         catch (Exception ex)
         {
-            await FailAudioAsync(audioRequest, EventNames.AudioFileUploadStarted, ex, cancellationToken);
+            await HandleAudioExceptionAsync(
+                audioRequest,
+                EventNames.AudioFileUploadStarted,
+                ex,
+                cancellationToken);
+
             return;
         }
     }
@@ -426,7 +443,12 @@ public sealed class VideoOperationAppService(
         }
         catch (Exception ex)
         {
-            await FailVideoAsync(videoRequest, EventNames.VideoProviderRequestStarted, ex, cancellationToken);
+            await HandleVideoExceptionAsync(
+                videoRequest,
+                EventNames.VideoProviderRequestStarted,
+                ex,
+                cancellationToken);
+
             return;
         }
     }
@@ -465,6 +487,7 @@ public sealed class VideoOperationAppService(
 
             videoRequest.LocalVideoFilePath = localPath;
             videoRequest.Status = "VIDEO_DOWNLOADED";
+            videoRequest.CurrentStep = EventNames.VideoFileDownloadCompleted;
             videoRequest.UpdatedAtUtc = DateTime.UtcNow;
 
             await ReplaceVideoAsync(videoRequest, cancellationToken);
@@ -481,7 +504,12 @@ public sealed class VideoOperationAppService(
         }
         catch (Exception ex)
         {
-            await FailVideoAsync(videoRequest, EventNames.VideoFileDownloadStarted, ex, cancellationToken);
+            await HandleVideoExceptionAsync(
+                videoRequest,
+                EventNames.VideoFileDownloadStarted,
+                ex,
+                cancellationToken);
+
             return;
         }
     }
@@ -521,7 +549,12 @@ public sealed class VideoOperationAppService(
         }
         catch (Exception ex)
         {
-            await FailVideoAsync(videoRequest, EventNames.VideoFileUploadStarted, ex, cancellationToken);
+            await HandleVideoExceptionAsync(
+                videoRequest,
+                EventNames.VideoFileUploadStarted,
+                ex,
+                cancellationToken);
+
             return;
         }
     }
@@ -636,17 +669,57 @@ public sealed class VideoOperationAppService(
         return context.AudioRequests.ReplaceOneAsync(x => x.Id == request.Id, request, cancellationToken: cancellationToken);
     }
 
-    private async Task FailAudioAsync(
+    private async Task HandleAudioExceptionAsync(
         AudioRequest request,
         string step,
         Exception ex,
         CancellationToken cancellationToken)
     {
+        if (ExceptionClassifier.IsRetryable(ex))
+        {
+            await ScheduleAudioRetryAsync(request, step, ex, cancellationToken);
+            return;
+        }
+
+        await FailAudioAsync(request, step, ex, false, cancellationToken);
+    }
+
+    private async Task ScheduleAudioRetryAsync(
+        AudioRequest request,
+        string step,
+        Exception ex,
+        CancellationToken cancellationToken)
+    {
+        request.RetryCount++;
+
+        if (request.RetryCount >= request.MaxRetryCount)
+        {
+            await FailAudioAsync(request, step, ex, false, cancellationToken);
+            return;
+        }
+
+        request.Status = "WAITING_RETRY";
+        request.CurrentStep = step;
+        request.LastError = ex.Message;
+        request.NextRetryAtUtc = DateTime.UtcNow.Add(
+            RetryDelayCalculator.Calculate(request.RetryCount));
+
+        request.UpdatedAtUtc = DateTime.UtcNow;
+
+        await ReplaceAudioAsync(request, cancellationToken);
+    }
+
+    private async Task FailAudioAsync(
+        AudioRequest request,
+        string step,
+        Exception ex,
+        bool retryable,
+        CancellationToken cancellationToken)
+    {
         request.Status = "FAILED";
         request.CurrentStep = step;
         request.LastError = ex.Message;
-        request.RetryCount++;
-        request.NextRetryAtUtc = DateTime.UtcNow.AddMinutes(1);
+        request.NextRetryAtUtc = null;
         request.UpdatedAtUtc = DateTime.UtcNow;
 
         await ReplaceAudioAsync(request, cancellationToken);
@@ -659,21 +732,61 @@ public sealed class VideoOperationAppService(
             CorrelationId = request.CorrelationId,
             Step = step,
             ErrorMessage = ex.Message,
-            Retryable = true
+            Retryable = retryable
         }, cancellationToken);
+    }
+
+    private async Task HandleVideoExceptionAsync(
+        VideoRequest request,
+        string step,
+        Exception ex,
+        CancellationToken cancellationToken)
+    {
+        if (ExceptionClassifier.IsRetryable(ex))
+        {
+            await ScheduleVideoRetryAsync(request, step, ex, cancellationToken);
+            return;
+        }
+
+        await FailVideoAsync(request, step, ex, false, cancellationToken);
+    }
+
+    private async Task ScheduleVideoRetryAsync(
+        VideoRequest request,
+        string step,
+        Exception ex,
+        CancellationToken cancellationToken)
+    {
+        request.RetryCount++;
+
+        if (request.RetryCount >= request.MaxRetryCount)
+        {
+            await FailVideoAsync(request, step, ex, false, cancellationToken);
+            return;
+        }
+
+        request.Status = "WAITING_RETRY";
+        request.CurrentStep = step;
+        request.LastError = ex.Message;
+        request.NextRetryAtUtc = DateTime.UtcNow.Add(
+            RetryDelayCalculator.Calculate(request.RetryCount));
+
+        request.UpdatedAtUtc = DateTime.UtcNow;
+
+        await ReplaceVideoAsync(request, cancellationToken);
     }
 
     private async Task FailVideoAsync(
         VideoRequest request,
         string step,
         Exception ex,
+        bool retryable,
         CancellationToken cancellationToken)
     {
         request.Status = "FAILED";
         request.CurrentStep = step;
         request.LastError = ex.Message;
-        request.RetryCount++;
-        request.NextRetryAtUtc = DateTime.UtcNow.AddMinutes(1);
+        request.NextRetryAtUtc = null;
         request.UpdatedAtUtc = DateTime.UtcNow;
 
         await ReplaceVideoAsync(request, cancellationToken);
@@ -686,7 +799,7 @@ public sealed class VideoOperationAppService(
             CorrelationId = request.CorrelationId,
             Step = step,
             ErrorMessage = ex.Message,
-            Retryable = true
+            Retryable = retryable
         }, cancellationToken);
     }
 }

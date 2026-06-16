@@ -62,10 +62,13 @@ builder.Services.AddHostedService<RabbitMqConsumerHostedService<VideoFileDownloa
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<VideoFileUploadStartedEvent, VideoFileUploadStartedEventHandler>>();
 
 builder.Services.AddScoped<AudioProviderPollingAppService>();
-builder.Services.AddScoped<VideoProviderPollingAppService>();
-
 builder.Services.AddHostedService<AudioProviderPollingWorker>();
+
+builder.Services.AddScoped<VideoProviderPollingAppService>();
 builder.Services.AddHostedService<VideoProviderPollingWorker>();
+
+builder.Services.AddScoped<VideoRetryAppService>();
+builder.Services.AddHostedService<VideoRetryWorker>();
 
 var app = builder.Build();
 

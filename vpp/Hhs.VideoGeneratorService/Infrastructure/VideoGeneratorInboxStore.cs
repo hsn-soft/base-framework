@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Hhs.Shared.Events;
+using Hhs.Shared.Inbox;
 using Hhs.VideoGeneratorService.Entities;
 using Hhs.VideoGeneratorService.Mongo;
 using MongoDB.Driver;
@@ -11,7 +12,7 @@ public sealed class VideoGeneratorInboxStore(VideoMongoContext context)
     public async Task<bool> IsProcessedAsync(Guid eventId, CancellationToken cancellationToken)
     {
         return await context.InboxMessages
-            .Find(x => x.EventId == eventId && x.Status == "PROCESSED")
+            .Find(x => x.EventId == eventId && x.Status == InboxStatuses.Completed)
             .AnyAsync(cancellationToken);
     }
 
@@ -30,7 +31,7 @@ public sealed class VideoGeneratorInboxStore(VideoMongoContext context)
             EventId = @event.EventId,
             EventName = @event.EventName,
             Payload = JsonSerializer.Serialize(@event, @event.GetType()),
-            Status = "STARTED",
+            Status = InboxStatuses.Started,
             CreatedAtUtc = DateTime.UtcNow
         }, cancellationToken: cancellationToken);
     }
@@ -40,7 +41,7 @@ public sealed class VideoGeneratorInboxStore(VideoMongoContext context)
         await context.InboxMessages.UpdateOneAsync(
             x => x.EventId == eventId,
             Builders<VideoGeneratorInboxMessage>.Update
-                .Set(x => x.Status, "PROCESSED")
+                .Set(x => x.Status, InboxStatuses.Completed)
                 .Set(x => x.ProcessedAtUtc, DateTime.UtcNow)
                 .Set(x => x.ErrorMessage, null),
             cancellationToken: cancellationToken);
@@ -51,7 +52,7 @@ public sealed class VideoGeneratorInboxStore(VideoMongoContext context)
         await context.InboxMessages.UpdateOneAsync(
             x => x.EventId == eventId,
             Builders<VideoGeneratorInboxMessage>.Update
-                .Set(x => x.Status, "FAILED")
+                .Set(x => x.Status, InboxStatuses.Failed)
                 .Set(x => x.ErrorMessage, ex.Message),
             cancellationToken: cancellationToken);
     }

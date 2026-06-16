@@ -2,6 +2,7 @@ using System.Text.Json;
 using Hhs.ContentService.Data;
 using Hhs.Shared.Events;
 using Hhs.ContentService.Entities;
+using Hhs.Shared.Inbox;
 using Microsoft.EntityFrameworkCore;
 
 namespace Hhs.ContentService.Infrastructure;
@@ -11,7 +12,8 @@ public sealed class ContentInboxStore(ContentDbContext context)
     public async Task<bool> IsProcessedAsync(Guid eventId, CancellationToken cancellationToken)
     {
         return await context.InboxMessages
-            .AnyAsync(x => x.EventId == eventId && x.Status == "PROCESSED", cancellationToken: cancellationToken);
+            .AnyAsync(x => x.EventId == eventId && x.Status == InboxStatuses.Completed,
+                cancellationToken: cancellationToken);
     }
 
     public async Task StartAsync<TEvent>(TEvent @event, CancellationToken cancellationToken)
@@ -28,7 +30,7 @@ public sealed class ContentInboxStore(ContentDbContext context)
             EventId = @event.EventId,
             EventName = @event.EventName,
             Payload = JsonSerializer.Serialize(@event, @event.GetType()),
-            Status = "STARTED",
+            Status = InboxStatuses.Started,
             CreatedAtUtc = DateTime.UtcNow
         });
         await context.SaveChangesAsync(cancellationToken);
@@ -36,26 +38,24 @@ public sealed class ContentInboxStore(ContentDbContext context)
 
     public async Task CompleteAsync(Guid eventId, CancellationToken cancellationToken)
     {
-        int affectedCount = await context.InboxMessages
+        await context.InboxMessages
             .Where(x => x.EventId == eventId)
-            .ExecuteUpdateAsync
-            (s => s
-                    .SetProperty(a => a.Status, "PROCESSED")
+            .ExecuteUpdateAsync(
+                s => s
+                    .SetProperty(a => a.Status, InboxStatuses.Completed)
                     .SetProperty(a => a.ProcessedAtUtc, DateTime.UtcNow)
-                    .SetProperty(a => a.ErrorMessage, string.Empty)
-                , cancellationToken: cancellationToken
-            );
+                    .SetProperty(a => a.ErrorMessage, string.Empty),
+                cancellationToken: cancellationToken);
     }
 
     public async Task FailAsync(Guid eventId, Exception ex, CancellationToken cancellationToken)
     {
-        int affectedCount = await context.InboxMessages
+        await context.InboxMessages
             .Where(x => x.EventId == eventId)
-            .ExecuteUpdateAsync
-            (s => s
-                    .SetProperty(a => a.Status, "FAILED")
-                    .SetProperty(a => a.ErrorMessage, ex.Message)
-                , cancellationToken: cancellationToken
-            );
+            .ExecuteUpdateAsync(
+                s => s
+                    .SetProperty(a => a.Status, InboxStatuses.Failed)
+                    .SetProperty(a => a.ErrorMessage, ex.Message),
+                cancellationToken: cancellationToken);
     }
 }

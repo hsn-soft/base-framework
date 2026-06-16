@@ -5,6 +5,7 @@ using Hhs.TextNormalizerService.Entities;
 using Hhs.TextNormalizerService.Mongo;
 using Hhs.TextNormalizerService.Providers;
 using MongoDB.Driver;
+using Hhs.Shared.Retry;
 
 namespace Hhs.TextNormalizerService.Services;
 
@@ -81,7 +82,12 @@ public sealed class NormalizerOperationAppService(
         }
         catch (Exception ex)
         {
-            await FailCustomerAsync(request, EventNames.CustomerScrapingStarted, ex, cancellationToken);
+            await HandleCustomerExceptionAsync(
+                request,
+                EventNames.CustomerScrapingStarted,
+                ex,
+                cancellationToken);
+
             return;
         }
     }
@@ -101,25 +107,38 @@ public sealed class NormalizerOperationAppService(
             .Find(x => x.CustomerContentId == @event.CustomerContentId)
             .FirstAsync(cancellationToken);
 
-        request.Status = "OUTLINE_PROVIDER_REQUEST_STARTED";
-        request.OutlineStatus = "STARTED";
-        request.CurrentStep = EventNames.OutlineProviderRequestStarted;
-        request.UpdatedAtUtc = DateTime.UtcNow;
-
-        await ReplaceCustomerAsync(request, cancellationToken);
-
-        if (request.ScrapingResult is null)
-            throw new InvalidOperationException("ScrapingResult is required before outline.");
-
-        await eventBus.PublishAsync(new OutlineProviderRequestStartedEvent
+        try
         {
-            CustomerContentId = request.CustomerContentId,
-            ContentProcessType = ContentProcessTypes.CustomerContent,
-            CorrelationId = @event.CorrelationId,
-            NormalizedRequestId = request.Id,
-            ProviderKey = request.OutlineProviderKey,
-            InputText = request.ScrapingResult.Text
-        }, cancellationToken);
+            request.Status = "OUTLINE_PROVIDER_REQUEST_STARTED";
+            request.OutlineStatus = "STARTED";
+            request.CurrentStep = EventNames.OutlineProviderRequestStarted;
+            request.UpdatedAtUtc = DateTime.UtcNow;
+
+            await ReplaceCustomerAsync(request, cancellationToken);
+
+            if (request.ScrapingResult is null)
+                throw new InvalidOperationException("ScrapingResult is required before outline.");
+
+            await eventBus.PublishAsync(new OutlineProviderRequestStartedEvent
+            {
+                CustomerContentId = request.CustomerContentId,
+                ContentProcessType = ContentProcessTypes.CustomerContent,
+                CorrelationId = @event.CorrelationId,
+                NormalizedRequestId = request.Id,
+                ProviderKey = request.OutlineProviderKey,
+                InputText = request.ScrapingResult.Text
+            }, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            await HandleCustomerExceptionAsync(
+                request,
+                EventNames.OutlineProviderRequestStarted,
+                ex,
+                cancellationToken);
+
+            return;
+        }
     }
 
     public async Task StartOutlineProviderRequestAsync(
@@ -423,21 +442,12 @@ public sealed class NormalizerOperationAppService(
         }
         catch (Exception ex)
         {
-            item.ScrapingStatus = "FAILED";
-            item.LastError = ex.Message;
-            request.LastError = ex.Message;
-            await ReplaceAnalysisAsync(request, cancellationToken);
-
-            await eventBus.PublishAsync(new StepFailedEvent
-            {
-                CorrelationId = request.CorrelationId,
-                AnalysisContentId = request.AnalysisContentId,
-                CustomerContentId = item.CustomerContentId,
-                ContentProcessType = ContentProcessTypes.AnalysisContent,
-                Step = request.CurrentStep,
-                ErrorMessage = ex.Message,
-                Retryable = true
-            }, cancellationToken);
+            await HandleAnalysisItemExceptionAsync(
+                request,
+                item,
+                EventNames.AnalysisItemScrapingStarted,
+                ex,
+                cancellationToken);
 
             return;
         }
@@ -457,67 +467,71 @@ public sealed class NormalizerOperationAppService(
         }, cancellationToken);
     }
 
-    public async Task StartAnalysisItemOutlineAsync(
-        AnalysisItemOutlineStartedEvent @event,
-        CancellationToken cancellationToken)
+public async Task StartAnalysisItemOutlineAsync(
+    AnalysisItemOutlineStartedEvent @event,
+    CancellationToken cancellationToken)
+{
+    var request = await GetAnalysisAsync(@event.AnalysisContentId!.Value, cancellationToken);
+    var item = request.Items.First(x => x.CustomerContentId == @event.CustomerContentId);
+
+    try
     {
-        var request = await GetAnalysisAsync(@event.AnalysisContentId!.Value, cancellationToken);
-        var item = request.Items.First(x => x.CustomerContentId == @event.CustomerContentId);
-
-        try
+        if (item.ScrapingStatus != "COMPLETED" || item.ScrapingResult is null)
         {
-            if (item.ScrapingResult is null)
-                throw new InvalidOperationException("ScrapingResult is required before outline.");
-
-            item.OutlineStatus = "STARTED";
+            item.Status = "WAITING_RETRY";
+            item.CurrentStep = EventNames.AnalysisItemOutlineStarted;
+            item.OutlineStatus = "WAITING_SCRAPING";
+            item.LastError = "ScrapingResult is required before outline.";
+            item.NextRetryAtUtc = DateTime.UtcNow.AddMinutes(1);
             item.UpdatedAtUtc = DateTime.UtcNow;
 
-            request.Status = "OUTLINE_PROVIDER_REQUEST_STARTED";
-            request.CurrentStep = EventNames.OutlineProviderRequestStarted;
-            request.UpdatedAtUtc = DateTime.UtcNow;
-
-            await ReplaceAnalysisAsync(request, cancellationToken);
-
-            if (string.IsNullOrWhiteSpace(request.OutlineProviderKey))
-                throw new InvalidOperationException("OutlineProviderKey is required.");
-
-            await eventBus.PublishAsync(new OutlineProviderRequestStartedEvent
-            {
-                AnalysisContentId = request.AnalysisContentId,
-                CustomerContentId = item.CustomerContentId,
-                CustomerContentIdForItem = item.CustomerContentId,
-                ContentProcessType = ContentProcessTypes.AnalysisContent,
-                CorrelationId = @event.CorrelationId,
-                NormalizedRequestId = request.Id,
-                ProviderKey = request.OutlineProviderKey,
-                SortOrder = item.SortOrder,
-                InputText = item.ScrapingResult.Text
-            }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            item.OutlineStatus = "FAILED";
-            item.LastError = ex.Message;
-            request.LastError = ex.Message;
+            request.Status = "WAITING_RETRY";
             request.CurrentStep = EventNames.AnalysisItemOutlineStarted;
+            request.LastError = item.LastError;
             request.UpdatedAtUtc = DateTime.UtcNow;
 
             await ReplaceAnalysisAsync(request, cancellationToken);
-
-            await eventBus.PublishAsync(new StepFailedEvent
-            {
-                CorrelationId = request.CorrelationId,
-                AnalysisContentId = request.AnalysisContentId,
-                CustomerContentId = item.CustomerContentId,
-                ContentProcessType = ContentProcessTypes.AnalysisContent,
-                Step = EventNames.AnalysisItemOutlineStarted,
-                ErrorMessage = ex.Message,
-                Retryable = true
-            }, cancellationToken);
-
             return;
         }
+
+        item.OutlineStatus = "STARTED";
+        item.CurrentStep = EventNames.AnalysisItemOutlineStarted;
+        item.UpdatedAtUtc = DateTime.UtcNow;
+
+        request.Status = "OUTLINE_PROVIDER_REQUEST_STARTED";
+        request.CurrentStep = EventNames.OutlineProviderRequestStarted;
+        request.UpdatedAtUtc = DateTime.UtcNow;
+
+        await ReplaceAnalysisAsync(request, cancellationToken);
+
+        if (string.IsNullOrWhiteSpace(request.OutlineProviderKey))
+            throw new InvalidOperationException("OutlineProviderKey is required.");
+
+        await eventBus.PublishAsync(new OutlineProviderRequestStartedEvent
+        {
+            AnalysisContentId = request.AnalysisContentId,
+            CustomerContentId = item.CustomerContentId,
+            CustomerContentIdForItem = item.CustomerContentId,
+            ContentProcessType = ContentProcessTypes.AnalysisContent,
+            CorrelationId = @event.CorrelationId,
+            NormalizedRequestId = request.Id,
+            ProviderKey = request.OutlineProviderKey,
+            SortOrder = item.SortOrder,
+            InputText = item.ScrapingResult.Text
+        }, cancellationToken);
     }
+    catch (Exception ex)
+    {
+        await HandleAnalysisItemExceptionAsync(
+            request,
+            item,
+            EventNames.AnalysisItemOutlineStarted,
+            ex,
+            cancellationToken);
+
+        return;
+    }
+}
 
     public async Task CompleteAnalysisItemOutlineAsync(
         AnalysisItemOutlineCompletedEvent @event,
@@ -612,13 +626,13 @@ public sealed class NormalizerOperationAppService(
         CustomerContentNormalizedRequest request,
         string step,
         Exception ex,
+        bool retryable,
         CancellationToken cancellationToken)
     {
         request.Status = "FAILED";
         request.CurrentStep = step;
         request.LastError = ex.Message;
-        request.RetryCount++;
-        request.NextRetryAtUtc = DateTime.UtcNow.AddMinutes(1);
+        request.NextRetryAtUtc = null;
         request.UpdatedAtUtc = DateTime.UtcNow;
 
         await ReplaceCustomerAsync(request, cancellationToken);
@@ -630,7 +644,134 @@ public sealed class NormalizerOperationAppService(
             ContentProcessType = ContentProcessTypes.CustomerContent,
             Step = step,
             ErrorMessage = ex.Message,
-            Retryable = true
+            Retryable = retryable
+        }, cancellationToken);
+    }
+
+    private async Task HandleCustomerExceptionAsync(
+        CustomerContentNormalizedRequest request,
+        string step,
+        Exception ex,
+        CancellationToken cancellationToken)
+    {
+        if (ExceptionClassifier.IsRetryable(ex))
+        {
+            await ScheduleCustomerRetryAsync(request, step, ex, cancellationToken);
+            return;
+        }
+
+        await FailCustomerAsync(request, step, ex, false, cancellationToken);
+    }
+
+    private async Task ScheduleCustomerRetryAsync(
+        CustomerContentNormalizedRequest request,
+        string step,
+        Exception ex,
+        CancellationToken cancellationToken)
+    {
+        request.RetryCount++;
+
+        if (request.RetryCount >= request.MaxRetryCount)
+        {
+            await FailCustomerAsync(request, step, ex, false, cancellationToken);
+            return;
+        }
+
+        request.Status = "WAITING_RETRY";
+        request.CurrentStep = step;
+        request.LastError = ex.Message;
+        request.NextRetryAtUtc = DateTime.UtcNow.Add(
+            RetryDelayCalculator.Calculate(request.RetryCount));
+
+        request.UpdatedAtUtc = DateTime.UtcNow;
+
+        await ReplaceCustomerAsync(request, cancellationToken);
+    }
+
+    private async Task HandleAnalysisItemExceptionAsync(
+        AnalysisContentNormalizedRequest request,
+        AnalysisNormalizedItem item,
+        string step,
+        Exception ex,
+        CancellationToken cancellationToken)
+    {
+        if (ExceptionClassifier.IsRetryable(ex))
+        {
+            await ScheduleAnalysisItemRetryAsync(request, item, step, ex, cancellationToken);
+            return;
+        }
+
+        await FailAnalysisItemAsync(request, item, step, ex, false, cancellationToken);
+    }
+
+    private async Task ScheduleAnalysisItemRetryAsync(
+        AnalysisContentNormalizedRequest request,
+        AnalysisNormalizedItem item,
+        string step,
+        Exception ex,
+        CancellationToken cancellationToken)
+    {
+        item.RetryCount++;
+
+        if (item.RetryCount >= item.MaxRetryCount)
+        {
+            await FailAnalysisItemAsync(request, item, step, ex, false, cancellationToken);
+            return;
+        }
+
+        item.Status = "WAITING_RETRY";
+        item.CurrentStep = step;
+        item.LastError = ex.Message;
+        item.NextRetryAtUtc = DateTime.UtcNow.Add(
+            RetryDelayCalculator.Calculate(item.RetryCount));
+        item.UpdatedAtUtc = DateTime.UtcNow;
+
+        request.Status = "WAITING_RETRY";
+        request.CurrentStep = step;
+        request.LastError = ex.Message;
+        request.UpdatedAtUtc = DateTime.UtcNow;
+
+        await ReplaceAnalysisAsync(request, cancellationToken);
+    }
+
+    private async Task FailAnalysisItemAsync(
+        AnalysisContentNormalizedRequest request,
+        AnalysisNormalizedItem item,
+        string step,
+        Exception ex,
+        bool retryable,
+        CancellationToken cancellationToken)
+    {
+        item.Status = "FAILED";
+        item.CurrentStep = step;
+        item.LastError = ex.Message;
+        item.NextRetryAtUtc = null;
+        item.UpdatedAtUtc = DateTime.UtcNow;
+
+        if (step == EventNames.AnalysisItemScrapingStarted)
+            item.ScrapingStatus = "FAILED";
+
+        if (step is EventNames.AnalysisItemOutlineStarted
+            or EventNames.OutlineProviderRequestStarted
+            or EventNames.OutlineProviderPollingStarted)
+            item.OutlineStatus = "FAILED";
+
+        request.Status = "FAILED";
+        request.CurrentStep = step;
+        request.LastError = ex.Message;
+        request.UpdatedAtUtc = DateTime.UtcNow;
+
+        await ReplaceAnalysisAsync(request, cancellationToken);
+
+        await eventBus.PublishAsync(new StepFailedEvent
+        {
+            CorrelationId = request.CorrelationId,
+            AnalysisContentId = request.AnalysisContentId,
+            CustomerContentId = item.CustomerContentId,
+            ContentProcessType = ContentProcessTypes.AnalysisContent,
+            Step = step,
+            ErrorMessage = ex.Message,
+            Retryable = retryable
         }, cancellationToken);
     }
 }

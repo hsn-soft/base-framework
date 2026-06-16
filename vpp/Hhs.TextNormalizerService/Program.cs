@@ -59,6 +59,9 @@ builder.Services.AddHostedService<RabbitMqConsumerHostedService<AnalysisItemOutl
 builder.Services.AddScoped<OutlineProviderPollingAppService>();
 builder.Services.AddHostedService<OutlineProviderPollingWorker>();
 
+builder.Services.AddScoped<NormalizerRetryAppService>();
+builder.Services.AddHostedService<NormalizerRetryWorker>();
+
 var app = builder.Build();
 
 app.MapPost("/admin/customer-contents/{customerContentId:guid}/scraping/complete-manual",
