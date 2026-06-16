@@ -285,7 +285,6 @@ public sealed class NormalizerOperationAppService(
         if (@event.CustomerContentIdForItem is null)
             throw new InvalidOperationException("CustomerContentIdForItem is required for analysis outline completion.");
 
-
         var item = analysis.Items.First(x => x.CustomerContentId == @event.CustomerContentIdForItem);
 
         item.OutlineStatus = "COMPLETED";
@@ -300,6 +299,16 @@ public sealed class NormalizerOperationAppService(
             : "OUTLINE_PARTIALLY_COMPLETED";
 
         await ReplaceAnalysisAsync(analysis, cancellationToken);
+
+        await eventBus.PublishAsync(new AnalysisItemOutlineCompletedEvent
+        {
+            AnalysisContentId = analysis.AnalysisContentId,
+            CustomerContentId = item.CustomerContentId,
+            ContentProcessType = ContentProcessTypes.AnalysisContent,
+            CorrelationId = @event.CorrelationId,
+            SortOrder = item.SortOrder,
+            Script = @event.Script
+        }, cancellationToken);
     }
 
     public async Task CompleteCustomerOutlineAsync(
