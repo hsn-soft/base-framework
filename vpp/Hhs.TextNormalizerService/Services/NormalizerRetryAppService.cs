@@ -33,9 +33,15 @@ public sealed class NormalizerRetryAppService(
         {
             try
             {
+                var retryHandledByPolling = false;
+
                 if (request.CurrentStep == EventNames.CustomerScrapingStarted)
                 {
                     await eventBus.PublishAsync(new CustomerScrapingStartedEvent { CustomerContentId = request.CustomerContentId, ContentProcessType = ContentProcessTypes.CustomerContent, CorrelationId = request.CorrelationId }, cancellationToken);
+                }
+                else if (request.CurrentStep == EventNames.CustomerOutlineStarted)
+                {
+                    await eventBus.PublishAsync(new CustomerOutlineStartedEvent { CustomerContentId = request.CustomerContentId, ContentProcessType = ContentProcessTypes.CustomerContent, CorrelationId = request.CorrelationId }, cancellationToken);
                 }
                 else if (request.CurrentStep == EventNames.OutlineProviderRequestStarted)
                 {
@@ -50,24 +56,25 @@ public sealed class NormalizerRetryAppService(
                                     ?? throw new InvalidOperationException("ScrapingResult.Text is required.")
                     }, cancellationToken);
                 }
-                else if (request.CurrentStep == EventNames.CustomerOutlineStarted)
-                {
-                    await eventBus.PublishAsync(new CustomerOutlineStartedEvent
-                    {
-                        CustomerContentId = request.CustomerContentId,
-                        ContentProcessType = ContentProcessTypes.CustomerContent,
-                        CorrelationId = request.CorrelationId
-                    }, cancellationToken);
-                }
                 else if (request.CurrentStep == EventNames.OutlineProviderPollingStarted)
                 {
                     request.Status = "OUTLINE_PROVIDER_POLLING";
                     request.OutlineStatus = "POLLING";
                     request.NextOutlinePollAtUtc = DateTime.UtcNow;
+                    retryHandledByPolling = true;
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Unsupported customer retry step: {request.CurrentStep}");
                 }
 
-                request.Status = "RETRY_PUBLISHED";
+                if (!retryHandledByPolling)
+                {
+                    request.Status = "RETRY_PUBLISHED";
+                }
+
                 request.NextRetryAtUtc = null;
+                request.LastError = null;
                 request.UpdatedAtUtc = DateTime.UtcNow;
 
                 await context.CustomerRequests.ReplaceOneAsync(
@@ -113,6 +120,8 @@ public sealed class NormalizerRetryAppService(
             {
                 try
                 {
+                    var retryHandledByPolling = false;
+
                     if (item.CurrentStep == EventNames.AnalysisItemScrapingStarted)
                     {
                         await eventBus.PublishAsync(new AnalysisItemScrapingStartedEvent
@@ -159,11 +168,33 @@ public sealed class NormalizerRetryAppService(
 
                         request.Status = "OUTLINE_PROVIDER_POLLING";
                         request.CurrentStep = EventNames.OutlineProviderPollingStarted;
+
+                        retryHandledByPolling = true;
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException($"Unsupported analysis retry step: {item.CurrentStep}");
                     }
 
-                    item.Status = "RETRY_PUBLISHED";
+                    if (!retryHandledByPolling)
+                    {
+                        item.Status = "RETRY_PUBLISHED";
+                    }
+
                     item.NextRetryAtUtc = null;
+                    item.LastError = null;
                     item.UpdatedAtUtc = DateTime.UtcNow;
+
+                    if (request.Items.All(x =>
+                            x.Status is "RETRY_PUBLISHED" or "OUTLINE_PROVIDER_POLLING" or "COMPLETED" or "OUTLINE_COMPLETED"))
+                    {
+                        request.Status = request.Items.Any(x => x.Status == "OUTLINE_PROVIDER_POLLING")
+                            ? "OUTLINE_PROVIDER_POLLING"
+                            : "RETRY_PUBLISHED";
+                    }
+
+                    request.LastError = null;
+                    request.UpdatedAtUtc = DateTime.UtcNow;
 
                     await context.AnalysisRequests.ReplaceOneAsync(
                         x => x.Id == request.Id,
