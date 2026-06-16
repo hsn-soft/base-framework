@@ -45,7 +45,10 @@ public sealed class ContentOperationAppService
         {
             CustomerContentId = id,
             Url = url,
-            CorrelationId = Guid.NewGuid()
+            CorrelationId = Guid.NewGuid(),
+            OutlineProviderKey = entity.OutlineProviderKey,
+            VideoProviderKey = entity.VideoProviderKey,
+            AudioProviderKey = entity.AudioProviderKey,
         }, cancellationToken);
 
         return id;
@@ -132,7 +135,9 @@ public sealed class ContentOperationAppService
             AnalysisContentId = @event.AnalysisContentId,
             ContentProcessType = @event.ContentProcessType,
             VideoInputJson = @event.VideoInputJson,
-            CorrelationId = @event.CorrelationId
+            CorrelationId = @event.CorrelationId,
+            VideoProviderKey =  @event.VideoProviderKey,
+            AudioProviderKey =  @event.AudioProviderKey,
         }, cancellationToken);
     }
 
