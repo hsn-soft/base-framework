@@ -90,8 +90,28 @@ public sealed class VideoRetryAppService(
                 }
                 else
                 {
-                    throw new InvalidOperationException(
-                        $"Unsupported audio retry step: {request.CurrentStep}");
+                    request.Status = "FAILED";
+                    request.LastError = $"Unsupported audio retry step: {request.CurrentStep}";
+                    request.NextRetryAtUtc = null;
+                    request.UpdatedAtUtc = DateTime.UtcNow;
+
+                    await context.AudioRequests.ReplaceOneAsync(
+                        x => x.Id == request.Id,
+                        request,
+                        cancellationToken: cancellationToken);
+
+                    await eventBus.PublishAsync(new StepFailedEvent
+                    {
+                        CustomerContentId = request.CustomerContentId,
+                        AnalysisContentId = request.AnalysisContentId,
+                        ContentProcessType = request.ContentProcessType,
+                        CorrelationId = request.CorrelationId,
+                        Step = request.CurrentStep,
+                        ErrorMessage = request.LastError,
+                        Retryable = false
+                    }, cancellationToken);
+
+                    continue;
                 }
 
                 if (!pollingRetry)
@@ -200,13 +220,33 @@ public sealed class VideoRetryAppService(
                 }
                 else
                 {
-                    throw new InvalidOperationException(
-                        $"Unsupported video retry step: {request.CurrentStep}");
+                    request.Status = "FAILED";
+                    request.LastError = $"Unsupported video retry step: {request.CurrentStep}";
+                    request.NextRetryAtUtc = null;
+                    request.UpdatedAtUtc = DateTime.UtcNow;
+
+                    await context.VideoRequests.ReplaceOneAsync(
+                        x => x.Id == request.Id,
+                        request,
+                        cancellationToken: cancellationToken);
+
+                    await eventBus.PublishAsync(new StepFailedEvent
+                    {
+                        CustomerContentId = request.CustomerContentId,
+                        AnalysisContentId = request.AnalysisContentId,
+                        ContentProcessType = request.ContentProcessType,
+                        CorrelationId = request.CorrelationId,
+                        Step = request.CurrentStep,
+                        ErrorMessage = request.LastError,
+                        Retryable = false
+                    }, cancellationToken);
+
+                    continue;
                 }
 
                 if (!pollingRetry)
                 {
-                    request.Status = "RETRY_PUBLISHED";
+                    request.Status = "RETRY_EVENT_PUBLISHED";
                 }
                 request.NextRetryAtUtc = null;
                 request.UpdatedAtUtc = DateTime.UtcNow;

@@ -8,6 +8,7 @@ public sealed class VideoRequest
     [BsonId]
     public Guid Id { get; set; }
     public Guid CorrelationId { get; set; }
+    public Guid SourceEventId { get; set; }
 
     public Guid? CustomerContentId { get; set; }
     public Guid? AnalysisContentId { get; set; }

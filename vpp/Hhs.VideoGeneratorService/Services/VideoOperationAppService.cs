@@ -18,47 +18,68 @@ public sealed class VideoOperationAppService(
     IVideoProviderResolver videoProviderResolver,
     IAudioProviderResolver audioProviderResolver)
 {
-    public async Task CreateVideoRequestAsync(
-        VideoGenerationApprovedEvent @event,
-        CancellationToken cancellationToken)
+public async Task CreateVideoRequestAsync(
+    VideoGenerationApprovedEvent @event,
+    CancellationToken cancellationToken)
+{
+    var existing = await context.VideoRequests
+        .Find(x => x.SourceEventId == @event.EventId)
+        .FirstOrDefaultAsync(cancellationToken);
+
+    if (existing is not null)
     {
-        var videoProvider = videoProviderResolver.Resolve(@event.VideoProviderKey);
-
-        var videoRequestId = Guid.NewGuid();
-
-        var videoRequest = new VideoRequest
-        {
-            Id = videoRequestId,
-            CorrelationId = @event.CorrelationId,
-            CustomerContentId = @event.CustomerContentId,
-            AnalysisContentId = @event.AnalysisContentId,
-            ContentProcessType = @event.ContentProcessType,
-            Status = "CREATED",
-            CurrentStep = EventNames.VideoRequestCreated,
-            VideoInputJson = @event.VideoInputJson,
-            VideoProviderKey = @event.VideoProviderKey,
-            AudioProviderKey = @event.AudioProviderKey,
-            AudioInputMode = videoProvider.Capabilities.AudioInputMode.ToString(),
-            ExternalAudioRequired =
-                videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioUrlListRequired ||
-                videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioFileRequired,
-            CreatedAtUtc = DateTime.UtcNow,
-            UpdatedAtUtc = DateTime.UtcNow
-        };
-
-        await context.VideoRequests.InsertOneAsync(videoRequest, cancellationToken: cancellationToken);
-
         await eventBus.PublishAsync(new VideoRequestCreatedEvent
         {
-            CustomerContentId = @event.CustomerContentId,
-            AnalysisContentId = @event.AnalysisContentId,
-            ContentProcessType = @event.ContentProcessType,
-            CorrelationId = @event.CorrelationId,
-            VideoRequestId = videoRequestId,
-            IsAnalysis = @event.AnalysisContentId.HasValue,
-            ExternalAudioRequired = videoRequest.ExternalAudioRequired
+            CustomerContentId = existing.CustomerContentId,
+            AnalysisContentId = existing.AnalysisContentId,
+            ContentProcessType = existing.ContentProcessType,
+            CorrelationId = existing.CorrelationId,
+            VideoRequestId = existing.Id,
+            IsAnalysis = existing.AnalysisContentId.HasValue,
+            ExternalAudioRequired = existing.ExternalAudioRequired
         }, cancellationToken);
+
+        return;
     }
+
+    var videoProvider = videoProviderResolver.Resolve(@event.VideoProviderKey);
+
+    var videoRequestId = Guid.NewGuid();
+
+    var videoRequest = new VideoRequest
+    {
+        Id = videoRequestId,
+        SourceEventId = @event.EventId,
+        CorrelationId = @event.CorrelationId,
+        CustomerContentId = @event.CustomerContentId,
+        AnalysisContentId = @event.AnalysisContentId,
+        ContentProcessType = @event.ContentProcessType,
+        Status = "CREATED",
+        CurrentStep = EventNames.VideoRequestCreated,
+        VideoInputJson = @event.VideoInputJson,
+        VideoProviderKey = @event.VideoProviderKey,
+        AudioProviderKey = @event.AudioProviderKey,
+        AudioInputMode = videoProvider.Capabilities.AudioInputMode.ToString(),
+        ExternalAudioRequired =
+            videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioUrlListRequired ||
+            videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioFileRequired,
+        CreatedAtUtc = DateTime.UtcNow,
+        UpdatedAtUtc = DateTime.UtcNow
+    };
+
+    await context.VideoRequests.InsertOneAsync(videoRequest, cancellationToken: cancellationToken);
+
+    await eventBus.PublishAsync(new VideoRequestCreatedEvent
+    {
+        CustomerContentId = @event.CustomerContentId,
+        AnalysisContentId = @event.AnalysisContentId,
+        ContentProcessType = @event.ContentProcessType,
+        CorrelationId = @event.CorrelationId,
+        VideoRequestId = videoRequestId,
+        IsAnalysis = @event.AnalysisContentId.HasValue,
+        ExternalAudioRequired = videoRequest.ExternalAudioRequired
+    }, cancellationToken);
+}
 
     public async Task StartVideoOperationAsync(VideoRequestCreatedEvent @event, CancellationToken cancellationToken)
     {
@@ -108,6 +129,29 @@ public sealed class VideoOperationAppService(
 
         foreach (var item in audioItems)
         {
+            var existingAudio = await context.AudioRequests
+                .Find(x => x.VideoRequestId == videoRequest.Id && x.SortOrder == item.SortOrder)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (existingAudio is not null)
+            {
+                await eventBus.PublishAsync(new AudioProviderRequestStartedEvent
+                {
+                    CustomerContentId = existingAudio.CustomerContentId,
+                    AnalysisContentId = existingAudio.AnalysisContentId,
+                    ContentProcessType = existingAudio.ContentProcessType,
+                    CorrelationId = existingAudio.CorrelationId,
+                    VideoRequestId = existingAudio.VideoRequestId,
+                    AudioRequestId = existingAudio.Id,
+                    SortOrder = existingAudio.SortOrder,
+                    InputText = existingAudio.InputText
+                }, cancellationToken);
+
+                continue;
+            }
+
+
+
             var audioRequestId = Guid.NewGuid();
 
             var audioRequest = new AudioRequest
@@ -622,6 +666,9 @@ public async Task HandleAudioUploadCompletedAsync(
         AudioProviderPollingStartedEvent @event,
         CancellationToken cancellationToken)
     {
+        if (string.IsNullOrWhiteSpace(@event.ProviderKey))
+            throw new InvalidOperationException("ProviderKey is required for polling.");
+
         var audioRequest = await GetAudioAsync(@event.AudioRequestId, cancellationToken);
 
         if (audioRequest.Status is "AUDIO_PROVIDER_COMPLETED" or "UPLOADED" or "FAILED")
@@ -644,6 +691,9 @@ public async Task HandleAudioUploadCompletedAsync(
         VideoProviderPollingStartedEvent @event,
         CancellationToken cancellationToken)
     {
+        if (string.IsNullOrWhiteSpace(@event.ProviderKey))
+            throw new InvalidOperationException("ProviderKey is required for polling.");
+
         var videoRequest = await GetVideoAsync(@event.VideoRequestId, cancellationToken);
 
         if (videoRequest.Status is "VIDEO_PROVIDER_COMPLETED" or "COMPLETED" or "FAILED")
