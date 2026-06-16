@@ -1,42 +1,86 @@
-@ContentService_HostAddress = http://localhost:5192
+@ContentService_HostAddress = http://localhost:5000
 
-# curl -X POST http://localhost:5000/customer-contents
-#  -H "Content-Type: application/json"
-#  -d '{"url":"https://example.com/news/1"}'
+### ============================================
+### SENARYO 1: OUTLINE=ABC, AUDIO=DEF, VIDEO=EXTERNAL
+### Pattern: Immediate Outline (5s) + Immediate Audio (3s) + Polling Video (120s)
+### Total Time: ~128s
+### ============================================
 POST {{ContentService_HostAddress}}/customer-contents
 Content-Type: application/json
 
 {
-    "url": "https://example.com/news/5"
+  "url": "https://example.com/news/senaryo1",
+  "outlineProviderKey": "openai",
+  "audioProviderKey": "audio-def",
+  "videoProviderKey": "video-external"
+}
+
+### ============================================
+### SENARYO 2: OUTLINE=ABC, AUDIO=GHJ, VIDEO=EXTERNAL
+### Pattern: Immediate Outline (5s) + Polling Audio (60s) + Polling Video (120s)
+### Total Time: ~185s
+### ============================================
+POST {{ContentService_HostAddress}}/customer-contents
+Content-Type: application/json
+
+{
+  "url": "https://example.com/news/senaryo2",
+  "outlineProviderKey": "openai",
+  "audioProviderKey": "audio-ghj",
+  "videoProviderKey": "video-external"
+}
+
+### ============================================
+### SENARYO 3: OUTLINE=XYZ, AUDIO=GHJ, VIDEO=EXTERNAL
+### Pattern: Polling Outline (30s) + Polling Audio (60s) + Polling Video (120s)
+### Total Time: ~210s
+### ============================================
+POST {{ContentService_HostAddress}}/customer-contents
+Content-Type: application/json
+
+{
+  "url": "https://example.com/news/senaryo3",
+  "outlineProviderKey": "custom-xyz",
+  "audioProviderKey": "audio-ghj",
+  "videoProviderKey": "video-external"
+}
+
+### ============================================
+### SENARYO 4: OUTLINE=ABC, AUDIO=NONE, VIDEO=INTERNAL
+### Pattern: Immediate Outline (5s) + No Audio + Polling Video with Internal Audio (120s)
+### Total Time: ~125s
+### Notes: VideoInternalAudio generates its own audio internally
+### ============================================
+POST {{ContentService_HostAddress}}/customer-contents
+Content-Type: application/json
+
+{
+  "url": "https://example.com/news/senaryo4",
+  "outlineProviderKey": "openai",
+  "audioProviderKey": null,
+  "videoProviderKey": "video-internal"
 }
 
 ###
 
-
-# curl -X POST http://localhost:5000/analysis-contents
-#  -H "Content-Type: application/json"
-#  -d '{
-#    "title":"Kolaj video",
-#    "customerContentIds":[
-#      "GUID-1",
-#      "GUID-2",
-#      "GUID-3",
-#      "GUID-4",
-#      "GUID-5"
-#    ]
-#  }'
+### ============================================
+### ANALYSIS CONTENT - Multiple customer contents (5li paket)
+### ============================================
 POST {{ContentService_HostAddress}}/analysis-contents
 Content-Type: application/json
 
 {
-    "title": "Kolaj video",
+    "title": "Kolaj video - 5 adet content",
     "customerContentIds": [
         "8cc08703-a89e-4f32-b63e-463b6c2fcfa9",
         "ae1156eb-8d3a-4ad6-b14c-37d9c68c8a69",
         "cfed04eb-d0a9-49cc-9c3f-ab82ff422789",
         "16ada8dd-5fb0-4a45-ae4b-77df7b09255d",
         "a566ded4-3a59-4fce-bd60-10ff73ef1534"
-    ]
+    ],
+    "outlineProviderKey": "openai",
+    "audioProviderKey": "audio-def",
+    "videoProviderKey": "video-external"
 }
 
 ###

@@ -94,9 +94,9 @@ namespace Hhs.ContentService
 {
     public sealed record CreateCustomerContentRequest(
         string Url,
-        string OutlineProviderKey = "openai",
-        string VideoProviderKey = "video-a",
-        string? AudioProviderKey = "audio-a");
+        string? OutlineProviderKey = "openai",
+        string? VideoProviderKey = "video-external",
+        string? AudioProviderKey = "audio-def");
 
     public sealed record CreateAnalysisContentRequest(
         string Title,
