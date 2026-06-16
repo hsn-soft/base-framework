@@ -66,6 +66,31 @@ app.MapPost("/analysis-contents", async (
     return Results.Ok(new { id });
 });
 
+app.MapGet("/analysis-contents/{id}", async (
+    Guid id,
+    ContentDbContext dbContext,
+    CancellationToken cancellationToken) =>
+{
+    var content = await dbContext.AnalysisContents
+        .Include(x => x.Items)
+        .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+    if (content == null)
+        return Results.NotFound();
+
+    return Results.Ok(new
+    {
+        id = content.Id,
+        status = content.NormalizeStatus == "COMPLETED" && content.VideoStatus == "COMPLETED" ? "COMPLETED" : "PROCESSING",
+        normalizeStatus = content.NormalizeStatus,
+        videoStatus = content.VideoStatus,
+        title = content.Title,
+        customerContentIds = content.Items.OrderBy(x => x.SortOrder).Select(x => x.CustomerContentId).ToList(),
+        createdAt = content.CreatedAtUtc,
+        updatedAt = content.UpdatedAtUtc
+    });
+});
+
 app.MapPost("/demo/customer1/openai", async (
     CreateCustomerContentRequest request,
     ContentOperationAppService appService,
