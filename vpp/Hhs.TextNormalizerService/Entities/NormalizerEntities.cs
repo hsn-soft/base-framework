@@ -6,6 +6,7 @@ public sealed class CustomerContentNormalizedRequest
 {
     [BsonId]
     public Guid Id { get; set; }
+    public Guid CorrelationId { get; set; }
 
     public Guid CustomerContentId { get; set; }
     public string Url { get; set; } = default!;
@@ -26,12 +27,22 @@ public sealed class CustomerContentNormalizedRequest
 
     public DateTime CreatedAtUtc { get; set; }
     public DateTime UpdatedAtUtc { get; set; }
+
+    public string OutlineProviderKey { get; set; } = default!;
+    public string VideoProviderKey { get; set; } = default!;
+    public string? AudioProviderKey { get; set; }
+
+    public string? OutlineProviderTrackId { get; set; }
+    public DateTime? NextOutlinePollAtUtc { get; set; }
+    public int OutlinePollingCount { get; set; }
+    public int MaxOutlinePollingCount { get; set; } = 60;
 }
 
 public sealed class AnalysisContentNormalizedRequest
 {
     [BsonId]
     public Guid Id { get; set; }
+    public Guid CorrelationId { get; set; }
 
     public Guid AnalysisContentId { get; set; }
 
@@ -47,6 +58,12 @@ public sealed class AnalysisContentNormalizedRequest
 
     public DateTime CreatedAtUtc { get; set; }
     public DateTime UpdatedAtUtc { get; set; }
+
+    public string OutlineProviderKey { get; set; } = default!;
+    public string VideoProviderKey { get; set; } = default!;
+    public string? AudioProviderKey { get; set; }
+
+
 }
 
 public sealed class AnalysisNormalizedItem
@@ -64,6 +81,11 @@ public sealed class AnalysisNormalizedItem
 
     public string? LastError { get; set; }
     public DateTime? UpdatedAtUtc { get; set; }
+
+    public string? OutlineProviderTrackId { get; set; }
+    public DateTime? NextOutlinePollAtUtc { get; set; }
+    public int OutlinePollingCount { get; set; }
+    public int MaxOutlinePollingCount { get; set; } = 60;
 }
 
 public sealed class ScrapingResult

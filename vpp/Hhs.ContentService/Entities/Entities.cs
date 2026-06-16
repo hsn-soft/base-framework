@@ -20,6 +20,11 @@ public sealed class CustomerContent
 
     public DateTime CreatedAtUtc { get; set; }
     public DateTime UpdatedAtUtc { get; set; }
+
+
+    public string OutlineProviderKey { get; set; } = "openai";
+    public string VideoProviderKey { get; set; } = "video-a";
+    public string? AudioProviderKey { get; set; } = "audio-a";
 }
 
 public sealed class AnalysisContent
@@ -41,6 +46,11 @@ public sealed class AnalysisContent
 
     public DateTime CreatedAtUtc { get; set; }
     public DateTime UpdatedAtUtc { get; set; }
+
+
+    public string OutlineProviderKey { get; set; } = "openai";
+    public string VideoProviderKey { get; set; } = "video-a";
+    public string? AudioProviderKey { get; set; } = "audio-a";
 }
 
 public sealed class AnalysisContentItem

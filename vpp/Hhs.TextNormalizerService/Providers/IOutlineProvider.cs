@@ -1,14 +1,37 @@
+using Hhs.Shared.Providers;
+
 namespace Hhs.TextNormalizerService.Providers;
+
+public sealed class OutlineCreateRequest
+{
+    public string InputText { get; set; } = default!;
+}
+
+public sealed class OutlineCreateResponse
+{
+    public bool IsCompleted { get; set; }
+    public string? Script { get; set; }
+    public string? ProviderTrackId { get; set; }
+}
+
+public sealed class OutlineStatusResponse
+{
+    public bool IsCompleted { get; set; }
+    public bool IsFailed { get; set; }
+    public string? Script { get; set; }
+    public string? ErrorMessage { get; set; }
+}
 
 public interface IOutlineProvider
 {
-    Task<string> CreateOutlineAsync(string text, CancellationToken cancellationToken);
-}
+    string ProviderKey { get; }
+    OutlineProviderCapabilities Capabilities { get; }
 
-public sealed class DummyOutlineProvider : IOutlineProvider
-{
-    public Task<string> CreateOutlineAsync(string text, CancellationToken cancellationToken)
-    {
-        return Task.FromResult($"Dummy video script from text: {text[..Math.Min(text.Length, 80)]}");
-    }
+    Task<OutlineCreateResponse> CreateAsync(
+        OutlineCreateRequest request,
+        CancellationToken cancellationToken);
+
+    Task<OutlineStatusResponse> GetStatusAsync(
+        string providerTrackId,
+        CancellationToken cancellationToken);
 }

@@ -79,3 +79,21 @@ public sealed class AnalysisItemOutlineCompletedEventHandler(NormalizerInboxStor
     protected override Task ExecuteAsync(AnalysisItemOutlineCompletedEvent @event, CancellationToken cancellationToken)
         => appService.CompleteAnalysisItemOutlineAsync(@event, cancellationToken);
 }
+
+public sealed class OutlineProviderRequestStartedEventHandler(NormalizerInboxStore inboxStore, NormalizerOperationAppService appService) : NormalizerEventHandlerBase<OutlineProviderRequestStartedEvent>(inboxStore)
+{
+    protected override Task ExecuteAsync(OutlineProviderRequestStartedEvent @event, CancellationToken cancellationToken)
+        => appService.StartOutlineProviderRequestAsync(@event, cancellationToken);
+}
+
+public sealed class OutlineProviderPollingStartedEventHandler(NormalizerInboxStore inboxStore, NormalizerOperationAppService appService) : NormalizerEventHandlerBase<OutlineProviderPollingStartedEvent>(inboxStore)
+{
+    protected override Task ExecuteAsync(OutlineProviderPollingStartedEvent @event, CancellationToken cancellationToken)
+        => appService.ScheduleOutlinePollingAsync(@event, cancellationToken);
+}
+
+public sealed class OutlineProviderCompletedEventHandler(NormalizerInboxStore inboxStore, NormalizerOperationAppService appService) : NormalizerEventHandlerBase<OutlineProviderCompletedEvent>(inboxStore)
+{
+    protected override Task ExecuteAsync(OutlineProviderCompletedEvent @event, CancellationToken cancellationToken)
+        => appService.CompleteOutlineProviderAsync(@event, cancellationToken);
+}

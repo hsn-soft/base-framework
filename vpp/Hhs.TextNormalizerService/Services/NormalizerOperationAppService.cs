@@ -1,4 +1,5 @@
 using Hhs.Shared.Events;
+using Hhs.Shared.Providers;
 using Hhs.Shared.RabbitMQ;
 using Hhs.TextNormalizerService.Entities;
 using Hhs.TextNormalizerService.Mongo;
@@ -7,27 +8,14 @@ using MongoDB.Driver;
 
 namespace Hhs.TextNormalizerService.Services;
 
-public sealed class NormalizerOperationAppService
+public sealed class NormalizerOperationAppService(
+    NormalizerMongoContext context,
+    IContentScraper scraper,
+    IEventBus eventBus,
+    ILogger<NormalizerOperationAppService> logger,
+    IOutlineProviderResolver outlineProviderResolver)
 {
-    private readonly NormalizerMongoContext _context;
-    private readonly IContentScraper _scraper;
-    private readonly IOutlineProvider _outlineProvider;
-    private readonly IEventBus _eventBus;
-    private readonly ILogger<NormalizerOperationAppService> _logger;
-
-    public NormalizerOperationAppService(
-        NormalizerMongoContext context,
-        IContentScraper scraper,
-        IOutlineProvider outlineProvider,
-        IEventBus eventBus,
-        ILogger<NormalizerOperationAppService> logger)
-    {
-        _context = context;
-        _scraper = scraper;
-        _outlineProvider = outlineProvider;
-        _eventBus = eventBus;
-        _logger = logger;
-    }
+    private readonly ILogger<NormalizerOperationAppService> _logger = logger;
 
     public async Task CreateCustomerNormalizeRequestAsync(
         CustomerNormalizeRequestCreatedEvent @event,
@@ -35,29 +23,29 @@ public sealed class NormalizerOperationAppService
     {
         var requestId = Guid.NewGuid();
 
-        await _context.CustomerRequests.InsertOneAsync(new CustomerContentNormalizedRequest
+        await context.CustomerRequests.InsertOneAsync(new CustomerContentNormalizedRequest
         {
             Id = requestId,
+            CorrelationId = @event.CorrelationId,
             CustomerContentId = @event.CustomerContentId!.Value,
+            OutlineProviderKey = @event.OutlineProviderKey,
+            VideoProviderKey = @event.VideoProviderKey,
+            AudioProviderKey = @event.AudioProviderKey,
             Url = @event.Url,
             Status = "CREATED",
             CurrentStep = EventNames.CustomerNormalizeRequestCreated,
             CreatedAtUtc = DateTime.UtcNow,
-            UpdatedAtUtc = DateTime.UtcNow
+            UpdatedAtUtc = DateTime.UtcNow,
         }, cancellationToken: cancellationToken);
 
-        await _eventBus.PublishAsync(new CustomerScrapingStartedEvent
-        {
-            CustomerContentId = @event.CustomerContentId,
-            CorrelationId = @event.CorrelationId
-        }, cancellationToken);
+        await eventBus.PublishAsync(new CustomerScrapingStartedEvent { ContentProcessType = ContentProcessTypes.CustomerContent, CustomerContentId = @event.CustomerContentId, CorrelationId = @event.CorrelationId }, cancellationToken);
     }
 
     public async Task StartCustomerScrapingAsync(
         CustomerScrapingStartedEvent @event,
         CancellationToken cancellationToken)
     {
-        var request = await _context.CustomerRequests
+        var request = await context.CustomerRequests
             .Find(x => x.CustomerContentId == @event.CustomerContentId)
             .FirstAsync(cancellationToken);
 
@@ -70,24 +58,20 @@ public sealed class NormalizerOperationAppService
 
             await ReplaceCustomerAsync(request, cancellationToken);
 
-            var result = await _scraper.ScrapeAsync(request.Url, cancellationToken);
+            var result = await scraper.ScrapeAsync(request.Url, cancellationToken);
 
             request.Status = "SCRAPING_COMPLETED";
             request.ScrapingStatus = "COMPLETED";
             request.CurrentStep = EventNames.CustomerScrapingCompleted;
-            request.ScrapingResult = new ScrapingResult
-            {
-                Title = result.Title,
-                Text = result.Text,
-                ReleaseTimeUtc = result.ReleaseTimeUtc
-            };
+            request.ScrapingResult = new ScrapingResult { Title = result.Title, Text = result.Text, ReleaseTimeUtc = result.ReleaseTimeUtc };
             request.LastError = null;
             request.UpdatedAtUtc = DateTime.UtcNow;
 
             await ReplaceCustomerAsync(request, cancellationToken);
 
-            await _eventBus.PublishAsync(new CustomerScrapingCompletedEvent
+            await eventBus.PublishAsync(new CustomerScrapingCompletedEvent
             {
+                ContentProcessType = ContentProcessTypes.CustomerContent,
                 CustomerContentId = request.CustomerContentId,
                 CorrelationId = @event.CorrelationId,
                 Title = result.Title,
@@ -98,7 +82,7 @@ public sealed class NormalizerOperationAppService
         catch (Exception ex)
         {
             await FailCustomerAsync(request, EventNames.CustomerScrapingStarted, ex, cancellationToken);
-            throw;
+            return;
         }
     }
 
@@ -106,65 +90,223 @@ public sealed class NormalizerOperationAppService
         CustomerScrapingCompletedEvent @event,
         CancellationToken cancellationToken)
     {
-        await _eventBus.PublishAsync(new CustomerOutlineStartedEvent
-        {
-            CustomerContentId = @event.CustomerContentId,
-            CorrelationId = @event.CorrelationId
-        }, cancellationToken);
+        await eventBus.PublishAsync(new CustomerOutlineStartedEvent { ContentProcessType = ContentProcessTypes.CustomerContent, CustomerContentId = @event.CustomerContentId, CorrelationId = @event.CorrelationId }, cancellationToken);
     }
 
     public async Task StartCustomerOutlineAsync(
         CustomerOutlineStartedEvent @event,
         CancellationToken cancellationToken)
     {
-        var request = await _context.CustomerRequests
+        var request = await context.CustomerRequests
             .Find(x => x.CustomerContentId == @event.CustomerContentId)
             .FirstAsync(cancellationToken);
 
-        try
+        request.Status = "OUTLINE_PROVIDER_REQUEST_STARTED";
+        request.OutlineStatus = "STARTED";
+        request.CurrentStep = EventNames.OutlineProviderRequestStarted;
+        request.UpdatedAtUtc = DateTime.UtcNow;
+
+        await ReplaceCustomerAsync(request, cancellationToken);
+
+        if (request.ScrapingResult is null)
+            throw new InvalidOperationException("ScrapingResult is required before outline.");
+
+        await eventBus.PublishAsync(new OutlineProviderRequestStartedEvent
         {
-            request.Status = "OUTLINE";
-            request.OutlineStatus = "STARTED";
-            request.CurrentStep = EventNames.CustomerOutlineStarted;
+            CustomerContentId = request.CustomerContentId,
+            ContentProcessType = ContentProcessTypes.CustomerContent,
+            CorrelationId = @event.CorrelationId,
+            NormalizedRequestId = request.Id,
+            ProviderKey = request.OutlineProviderKey,
+            InputText = request.ScrapingResult.Text
+        }, cancellationToken);
+    }
+
+    public async Task StartOutlineProviderRequestAsync(
+        OutlineProviderRequestStartedEvent @event,
+        CancellationToken cancellationToken)
+    {
+        var provider = outlineProviderResolver.Resolve(@event.ProviderKey);
+
+        var response = await provider.CreateAsync(new OutlineCreateRequest { InputText = @event.InputText }, cancellationToken);
+
+        if (provider.Capabilities.ExecutionMode == ProviderExecutionMode.ImmediateResult)
+        {
+            if (string.IsNullOrWhiteSpace(response.Script))
+                throw new InvalidOperationException("Script is required for immediate outline provider.");
+
+
+            await eventBus.PublishAsync(new OutlineProviderCompletedEvent
+            {
+                CustomerContentId = @event.CustomerContentId,
+                AnalysisContentId = @event.AnalysisContentId,
+                ContentProcessType = @event.ContentProcessType,
+                CorrelationId = @event.CorrelationId,
+                NormalizedRequestId = @event.NormalizedRequestId,
+                CustomerContentIdForItem = @event.CustomerContentIdForItem,
+                SortOrder = @event.SortOrder,
+                Script = response.Script!
+            }, cancellationToken);
+
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(response.ProviderTrackId))
+            throw new InvalidOperationException("ProviderTrackId is required for async outline provider.");
+
+        await SaveOutlinePollingStateAsync(@event, response.ProviderTrackId!, cancellationToken);
+
+        await eventBus.PublishAsync(new OutlineProviderPollingStartedEvent
+        {
+            CustomerContentId = @event.CustomerContentId,
+            AnalysisContentId = @event.AnalysisContentId,
+            ContentProcessType = @event.ContentProcessType,
+            CorrelationId = @event.CorrelationId,
+            ProviderKey = @event.ProviderKey,
+            NormalizedRequestId = @event.NormalizedRequestId,
+            CustomerContentIdForItem = @event.CustomerContentIdForItem,
+            SortOrder = @event.SortOrder,
+            ProviderTrackId = response.ProviderTrackId!
+        }, cancellationToken);
+    }
+
+    private async Task SaveOutlinePollingStateAsync(
+        OutlineProviderRequestStartedEvent @event,
+        string providerTrackId,
+        CancellationToken cancellationToken)
+    {
+        if (@event.ContentProcessType == ContentProcessTypes.CustomerContent)
+        {
+            var request = await context.CustomerRequests
+                .Find(x => x.Id == @event.NormalizedRequestId)
+                .FirstAsync(cancellationToken);
+
+            request.OutlineProviderTrackId = providerTrackId;
+            request.Status = "OUTLINE_PROVIDER_POLLING";
+            request.OutlineStatus = "POLLING";
+            request.CurrentStep = EventNames.OutlineProviderPollingStarted;
+            request.NextOutlinePollAtUtc = DateTime.UtcNow.AddMinutes(5);
             request.UpdatedAtUtc = DateTime.UtcNow;
 
             await ReplaceCustomerAsync(request, cancellationToken);
+            return;
+        }
 
-            var script = await _outlineProvider.CreateOutlineAsync(
-                request.ScrapingResult!.Text,
-                cancellationToken);
+        var analysis = await context.AnalysisRequests
+            .Find(x => x.Id == @event.NormalizedRequestId)
+            .FirstAsync(cancellationToken);
+
+        if (@event.CustomerContentIdForItem is null)
+            throw new InvalidOperationException("CustomerContentIdForItem is required for analysis outline polling.");
+
+        var item = analysis.Items.First(x => x.CustomerContentId == @event.CustomerContentIdForItem);
+
+        item.OutlineProviderTrackId = providerTrackId;
+        item.OutlineStatus = "POLLING";
+        item.NextOutlinePollAtUtc = DateTime.UtcNow.AddMinutes(5);
+        item.UpdatedAtUtc = DateTime.UtcNow;
+
+        analysis.Status = "OUTLINE_PROVIDER_POLLING";
+        analysis.CurrentStep = EventNames.OutlineProviderPollingStarted;
+        analysis.UpdatedAtUtc = DateTime.UtcNow;
+
+        await ReplaceAnalysisAsync(analysis, cancellationToken);
+    }
+
+    public async Task ScheduleOutlinePollingAsync(
+        OutlineProviderPollingStartedEvent @event,
+        CancellationToken cancellationToken)
+    {
+        if (@event.ContentProcessType == ContentProcessTypes.CustomerContent)
+        {
+            var request = await context.CustomerRequests
+                .Find(x => x.Id == @event.NormalizedRequestId)
+                .FirstAsync(cancellationToken);
+
+            request.OutlineProviderTrackId = @event.ProviderTrackId;
+            request.Status = "OUTLINE_PROVIDER_POLLING";
+            request.OutlineStatus = "POLLING";
+            request.CurrentStep = EventNames.OutlineProviderPollingStarted;
+            request.NextOutlinePollAtUtc = DateTime.UtcNow.AddMinutes(5);
+            request.UpdatedAtUtc = DateTime.UtcNow;
+
+            await ReplaceCustomerAsync(request, cancellationToken);
+            return;
+        }
+
+        var analysis = await context.AnalysisRequests
+            .Find(x => x.Id == @event.NormalizedRequestId)
+            .FirstAsync(cancellationToken);
+
+        if (@event.CustomerContentIdForItem is null)
+            throw new InvalidOperationException("CustomerContentIdForItem is required for analysis outline polling.");
+
+        var item = analysis.Items.First(x => x.CustomerContentId == @event.CustomerContentIdForItem);
+
+        item.OutlineProviderTrackId = @event.ProviderTrackId;
+        item.OutlineStatus = "POLLING";
+        item.NextOutlinePollAtUtc = DateTime.UtcNow.AddMinutes(5);
+        item.UpdatedAtUtc = DateTime.UtcNow;
+
+        analysis.Status = "OUTLINE_PROVIDER_POLLING";
+        analysis.CurrentStep = EventNames.OutlineProviderPollingStarted;
+        analysis.UpdatedAtUtc = DateTime.UtcNow;
+
+        await ReplaceAnalysisAsync(analysis, cancellationToken);
+    }
+
+    public async Task CompleteOutlineProviderAsync(
+        OutlineProviderCompletedEvent @event,
+        CancellationToken cancellationToken)
+    {
+        if (@event.ContentProcessType == ContentProcessTypes.CustomerContent)
+        {
+            var request = await context.CustomerRequests
+                .Find(x => x.Id == @event.NormalizedRequestId)
+                .FirstAsync(cancellationToken);
 
             request.Status = "OUTLINE_COMPLETED";
             request.OutlineStatus = "COMPLETED";
             request.CurrentStep = EventNames.CustomerOutlineCompleted;
-            request.OutlineResult = new OutlineResult
-            {
-                Script = script
-            };
-            request.LastError = null;
+            request.OutlineResult = new OutlineResult { Script = @event.Script };
             request.UpdatedAtUtc = DateTime.UtcNow;
 
             await ReplaceCustomerAsync(request, cancellationToken);
 
-            await _eventBus.PublishAsync(new CustomerOutlineCompletedEvent
-            {
-                CustomerContentId = request.CustomerContentId,
-                CorrelationId = @event.CorrelationId,
-                Script = script
-            }, cancellationToken);
+            await eventBus.PublishAsync(new CustomerOutlineCompletedEvent { CustomerContentId = request.CustomerContentId, ContentProcessType = ContentProcessTypes.CustomerContent, CorrelationId = @event.CorrelationId, Script = @event.Script }, cancellationToken);
+
+            return;
         }
-        catch (Exception ex)
-        {
-            await FailCustomerAsync(request, EventNames.CustomerOutlineStarted, ex, cancellationToken);
-            throw;
-        }
+
+        var analysis = await context.AnalysisRequests
+            .Find(x => x.Id == @event.NormalizedRequestId)
+            .FirstAsync(cancellationToken);
+
+        if (@event.CustomerContentIdForItem is null)
+            throw new InvalidOperationException("CustomerContentIdForItem is required for analysis outline completion.");
+
+
+        var item = analysis.Items.First(x => x.CustomerContentId == @event.CustomerContentIdForItem);
+
+        item.OutlineStatus = "COMPLETED";
+        item.OutlineResult = new OutlineResult { Script = @event.Script };
+        item.UpdatedAtUtc = DateTime.UtcNow;
+
+        analysis.CurrentStep = EventNames.AnalysisItemOutlineCompleted;
+        analysis.UpdatedAtUtc = DateTime.UtcNow;
+
+        analysis.Status = analysis.Items.All(x => x.OutlineStatus == "COMPLETED")
+            ? "OUTLINE_COMPLETED"
+            : "OUTLINE_PARTIALLY_COMPLETED";
+
+        await ReplaceAnalysisAsync(analysis, cancellationToken);
     }
 
     public async Task CompleteCustomerOutlineAsync(
         CustomerOutlineCompletedEvent @event,
         CancellationToken cancellationToken)
     {
-        var request = await _context.CustomerRequests
+        var request = await context.CustomerRequests
             .Find(x => x.CustomerContentId == @event.CustomerContentId)
             .FirstAsync(cancellationToken);
 
@@ -174,15 +316,7 @@ public sealed class NormalizerOperationAppService
             customerContentId = request.CustomerContentId,
             title = request.ScrapingResult?.Title,
             script = request.OutlineResult?.Script,
-            audioItems = new[]
-            {
-                new
-                {
-                    customerContentId = request.CustomerContentId,
-                    sortOrder = 1,
-                    text = request.OutlineResult?.Script
-                }
-            }
+            audioItems = new[] { new { customerContentId = request.CustomerContentId, sortOrder = 1, text = request.OutlineResult?.Script } }
         };
 
         request.Status = "COMPLETED";
@@ -191,13 +325,16 @@ public sealed class NormalizerOperationAppService
 
         await ReplaceCustomerAsync(request, cancellationToken);
 
-        await _eventBus.PublishAsync(new NormalizerResultPublishedEvent
-        {
-            CustomerContentId = request.CustomerContentId,
-            CorrelationId = @event.CorrelationId,
-            ContentProcessType = ContentProcessTypes.CustomerContent,
-            VideoInputJson = System.Text.Json.JsonSerializer.Serialize(videoInput)
-        }, cancellationToken);
+        await eventBus.PublishAsync(new NormalizerResultPublishedEvent
+            {
+                CustomerContentId = request.CustomerContentId,
+                CorrelationId = @event.CorrelationId,
+                ContentProcessType = ContentProcessTypes.CustomerContent,
+                VideoInputJson = System.Text.Json.JsonSerializer.Serialize(videoInput),
+                VideoProviderKey = request.VideoProviderKey,
+                AudioProviderKey = request.AudioProviderKey
+            },
+            cancellationToken);
     }
 
     public async Task CreateAnalysisNormalizeRequestAsync(
@@ -207,26 +344,25 @@ public sealed class NormalizerOperationAppService
         var request = new AnalysisContentNormalizedRequest
         {
             Id = Guid.NewGuid(),
+            CorrelationId = @event.CorrelationId,
             AnalysisContentId = @event.AnalysisContentId!.Value,
+            OutlineProviderKey = @event.OutlineProviderKey,
+            VideoProviderKey = @event.VideoProviderKey,
+            AudioProviderKey = @event.AudioProviderKey,
             Status = "CREATED",
             CurrentStep = EventNames.AnalysisNormalizeRequestCreated,
-            Items = @event.Items.Select(x => new AnalysisNormalizedItem
-            {
-                CustomerContentId = x.CustomerContentId,
-                SortOrder = x.SortOrder,
-                Url = x.Url,
-                Path = x.Path
-            }).ToList(),
+            Items = @event.Items.Select(x => new AnalysisNormalizedItem { CustomerContentId = x.CustomerContentId, SortOrder = x.SortOrder, Url = x.Url, Path = x.Path }).ToList(),
             CreatedAtUtc = DateTime.UtcNow,
             UpdatedAtUtc = DateTime.UtcNow
         };
 
-        await _context.AnalysisRequests.InsertOneAsync(request, cancellationToken: cancellationToken);
+        await context.AnalysisRequests.InsertOneAsync(request, cancellationToken: cancellationToken);
 
         foreach (var item in request.Items.OrderBy(x => x.SortOrder))
         {
-            await _eventBus.PublishAsync(new AnalysisItemScrapingStartedEvent
+            await eventBus.PublishAsync(new AnalysisItemScrapingStartedEvent
             {
+                ContentProcessType = ContentProcessTypes.AnalysisContent,
                 AnalysisContentId = request.AnalysisContentId,
                 CustomerContentId = item.CustomerContentId,
                 SortOrder = item.SortOrder,
@@ -252,15 +388,10 @@ public sealed class NormalizerOperationAppService
 
             await ReplaceAnalysisAsync(request, cancellationToken);
 
-            var result = await _scraper.ScrapeAsync(item.Url, cancellationToken);
+            var result = await scraper.ScrapeAsync(item.Url, cancellationToken);
 
             item.ScrapingStatus = "COMPLETED";
-            item.ScrapingResult = new ScrapingResult
-            {
-                Title = result.Title,
-                Text = result.Text,
-                ReleaseTimeUtc = result.ReleaseTimeUtc
-            };
+            item.ScrapingResult = new ScrapingResult { Title = result.Title, Text = result.Text, ReleaseTimeUtc = result.ReleaseTimeUtc };
             item.LastError = null;
             item.UpdatedAtUtc = DateTime.UtcNow;
 
@@ -269,8 +400,9 @@ public sealed class NormalizerOperationAppService
 
             await ReplaceAnalysisAsync(request, cancellationToken);
 
-            await _eventBus.PublishAsync(new AnalysisItemScrapingCompletedEvent
+            await eventBus.PublishAsync(new AnalysisItemScrapingCompletedEvent
             {
+                ContentProcessType = ContentProcessTypes.AnalysisContent,
                 AnalysisContentId = request.AnalysisContentId,
                 CustomerContentId = item.CustomerContentId,
                 SortOrder = item.SortOrder,
@@ -286,7 +418,19 @@ public sealed class NormalizerOperationAppService
             item.LastError = ex.Message;
             request.LastError = ex.Message;
             await ReplaceAnalysisAsync(request, cancellationToken);
-            throw;
+
+            await eventBus.PublishAsync(new StepFailedEvent
+            {
+                CorrelationId = request.CorrelationId,
+                AnalysisContentId = request.AnalysisContentId,
+                CustomerContentId = item.CustomerContentId,
+                ContentProcessType = ContentProcessTypes.AnalysisContent,
+                Step = request.CurrentStep,
+                ErrorMessage = ex.Message,
+                Retryable = true
+            }, cancellationToken);
+
+            return;
         }
     }
 
@@ -294,8 +438,9 @@ public sealed class NormalizerOperationAppService
         AnalysisItemScrapingCompletedEvent @event,
         CancellationToken cancellationToken)
     {
-        await _eventBus.PublishAsync(new AnalysisItemOutlineStartedEvent
+        await eventBus.PublishAsync(new AnalysisItemOutlineStartedEvent
         {
+            ContentProcessType = ContentProcessTypes.AnalysisContent,
             AnalysisContentId = @event.AnalysisContentId,
             CustomerContentId = @event.CustomerContentId,
             SortOrder = @event.SortOrder,
@@ -312,34 +457,32 @@ public sealed class NormalizerOperationAppService
 
         try
         {
+            if (item.ScrapingResult is null)
+                throw new InvalidOperationException("ScrapingResult is required before outline.");
+
             item.OutlineStatus = "STARTED";
             item.UpdatedAtUtc = DateTime.UtcNow;
-            request.Status = "OUTLINE";
-            request.CurrentStep = EventNames.AnalysisItemOutlineStarted;
 
-            await ReplaceAnalysisAsync(request, cancellationToken);
-
-            var script = await _outlineProvider.CreateOutlineAsync(
-                item.ScrapingResult!.Text,
-                cancellationToken);
-
-            item.OutlineStatus = "COMPLETED";
-            item.OutlineResult = new OutlineResult { Script = script };
-            item.LastError = null;
-            item.UpdatedAtUtc = DateTime.UtcNow;
-
-            request.CurrentStep = EventNames.AnalysisItemOutlineCompleted;
+            request.Status = "OUTLINE_PROVIDER_REQUEST_STARTED";
+            request.CurrentStep = EventNames.OutlineProviderRequestStarted;
             request.UpdatedAtUtc = DateTime.UtcNow;
 
             await ReplaceAnalysisAsync(request, cancellationToken);
 
-            await _eventBus.PublishAsync(new AnalysisItemOutlineCompletedEvent
+            if (string.IsNullOrWhiteSpace(request.OutlineProviderKey))
+                throw new InvalidOperationException("OutlineProviderKey is required.");
+
+            await eventBus.PublishAsync(new OutlineProviderRequestStartedEvent
             {
                 AnalysisContentId = request.AnalysisContentId,
                 CustomerContentId = item.CustomerContentId,
-                SortOrder = item.SortOrder,
+                CustomerContentIdForItem = item.CustomerContentId,
+                ContentProcessType = ContentProcessTypes.AnalysisContent,
                 CorrelationId = @event.CorrelationId,
-                Script = script
+                NormalizedRequestId = request.Id,
+                ProviderKey = request.OutlineProviderKey,
+                SortOrder = item.SortOrder,
+                InputText = item.ScrapingResult.Text
             }, cancellationToken);
         }
         catch (Exception ex)
@@ -347,8 +490,23 @@ public sealed class NormalizerOperationAppService
             item.OutlineStatus = "FAILED";
             item.LastError = ex.Message;
             request.LastError = ex.Message;
+            request.CurrentStep = EventNames.AnalysisItemOutlineStarted;
+            request.UpdatedAtUtc = DateTime.UtcNow;
+
             await ReplaceAnalysisAsync(request, cancellationToken);
-            throw;
+
+            await eventBus.PublishAsync(new StepFailedEvent
+            {
+                CorrelationId = request.CorrelationId,
+                AnalysisContentId = request.AnalysisContentId,
+                CustomerContentId = item.CustomerContentId,
+                ContentProcessType = ContentProcessTypes.AnalysisContent,
+                Step = EventNames.AnalysisItemOutlineStarted,
+                ErrorMessage = ex.Message,
+                Retryable = true
+            }, cancellationToken);
+
+            return;
         }
     }
 
@@ -359,9 +517,7 @@ public sealed class NormalizerOperationAppService
         var request = await GetAnalysisAsync(@event.AnalysisContentId!.Value, cancellationToken);
 
         if (request.Items.Any(x => x.OutlineStatus != "COMPLETED"))
-        {
             return;
-        }
 
         var videoInput = new
         {
@@ -369,13 +525,7 @@ public sealed class NormalizerOperationAppService
             analysisContentId = request.AnalysisContentId,
             audioItems = request.Items
                 .OrderBy(x => x.SortOrder)
-                .Select(x => new
-                {
-                    customerContentId = x.CustomerContentId,
-                    sortOrder = x.SortOrder,
-                    title = x.ScrapingResult?.Title,
-                    text = x.OutlineResult?.Script
-                })
+                .Select(x => new { customerContentId = x.CustomerContentId, sortOrder = x.SortOrder, title = x.ScrapingResult?.Title, text = x.OutlineResult?.Script })
                 .ToList()
         };
 
@@ -385,12 +535,14 @@ public sealed class NormalizerOperationAppService
 
         await ReplaceAnalysisAsync(request, cancellationToken);
 
-        await _eventBus.PublishAsync(new NormalizerResultPublishedEvent
+        await eventBus.PublishAsync(new NormalizerResultPublishedEvent
         {
             AnalysisContentId = request.AnalysisContentId,
             CorrelationId = @event.CorrelationId,
             ContentProcessType = ContentProcessTypes.AnalysisContent,
-            VideoInputJson = System.Text.Json.JsonSerializer.Serialize(videoInput)
+            VideoInputJson = System.Text.Json.JsonSerializer.Serialize(videoInput),
+            VideoProviderKey = request.VideoProviderKey,
+            AudioProviderKey = request.AudioProviderKey
         }, cancellationToken);
     }
 
@@ -399,27 +551,22 @@ public sealed class NormalizerOperationAppService
         ManualScrapingInput input,
         CancellationToken cancellationToken)
     {
-        var request = await _context.CustomerRequests
+        var request = await context.CustomerRequests
             .Find(x => x.CustomerContentId == customerContentId)
             .FirstAsync(cancellationToken);
 
         request.ScrapingStatus = "COMPLETED";
         request.Status = "SCRAPING_COMPLETED";
         request.CurrentStep = EventNames.CustomerScrapingCompleted;
-        request.ScrapingResult = new ScrapingResult
-        {
-            Title = input.Title,
-            Text = input.Text,
-            ReleaseTimeUtc = input.ReleaseTimeUtc,
-            Source = "MANUAL"
-        };
+        request.ScrapingResult = new ScrapingResult { Title = input.Title, Text = input.Text, ReleaseTimeUtc = input.ReleaseTimeUtc, Source = "MANUAL" };
         request.LastError = null;
         request.UpdatedAtUtc = DateTime.UtcNow;
 
         await ReplaceCustomerAsync(request, cancellationToken);
 
-        await _eventBus.PublishAsync(new CustomerScrapingCompletedEvent
+        await eventBus.PublishAsync(new CustomerScrapingCompletedEvent
         {
+            ContentProcessType = ContentProcessTypes.CustomerContent,
             CustomerContentId = customerContentId,
             CorrelationId = input.CorrelationId,
             Title = input.Title,
@@ -431,7 +578,7 @@ public sealed class NormalizerOperationAppService
 
     private Task ReplaceCustomerAsync(CustomerContentNormalizedRequest request, CancellationToken cancellationToken)
     {
-        return _context.CustomerRequests.ReplaceOneAsync(
+        return context.CustomerRequests.ReplaceOneAsync(
             x => x.Id == request.Id,
             request,
             cancellationToken: cancellationToken);
@@ -439,7 +586,7 @@ public sealed class NormalizerOperationAppService
 
     private Task ReplaceAnalysisAsync(AnalysisContentNormalizedRequest request, CancellationToken cancellationToken)
     {
-        return _context.AnalysisRequests.ReplaceOneAsync(
+        return context.AnalysisRequests.ReplaceOneAsync(
             x => x.Id == request.Id,
             request,
             cancellationToken: cancellationToken);
@@ -447,7 +594,7 @@ public sealed class NormalizerOperationAppService
 
     private Task<AnalysisContentNormalizedRequest> GetAnalysisAsync(Guid analysisContentId, CancellationToken cancellationToken)
     {
-        return _context.AnalysisRequests
+        return context.AnalysisRequests
             .Find(x => x.AnalysisContentId == analysisContentId)
             .FirstAsync(cancellationToken);
     }
@@ -467,8 +614,9 @@ public sealed class NormalizerOperationAppService
 
         await ReplaceCustomerAsync(request, cancellationToken);
 
-        await _eventBus.PublishAsync(new StepFailedEvent
+        await eventBus.PublishAsync(new StepFailedEvent
         {
+            CorrelationId = request.CorrelationId,
             CustomerContentId = request.CustomerContentId,
             ContentProcessType = ContentProcessTypes.CustomerContent,
             Step = step,

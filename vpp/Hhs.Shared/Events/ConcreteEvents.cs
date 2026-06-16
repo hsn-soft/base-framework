@@ -10,6 +10,10 @@ public sealed record CustomerNormalizeRequestCreatedEvent : IntegrationEvent
         Facility = EventNames.CustomerNormalizeRequestCreated;
         ContentProcessType = ContentProcessTypes.CustomerContent;
     }
+
+    public string OutlineProviderKey { get; init; } = default!;
+    public string VideoProviderKey { get; init; } = default!;
+    public string? AudioProviderKey { get; init; }
 }
 
 public sealed record AnalysisNormalizeRequestCreatedEvent : IntegrationEvent
@@ -22,6 +26,10 @@ public sealed record AnalysisNormalizeRequestCreatedEvent : IntegrationEvent
         Facility = EventNames.AnalysisNormalizeRequestCreated;
         ContentProcessType = ContentProcessTypes.AnalysisContent;
     }
+
+    public string OutlineProviderKey { get; init; } = default!;
+    public string VideoProviderKey { get; init; } = default!;
+    public string? AudioProviderKey { get; init; }
 }
 
 public sealed record AnalysisNormalizeItem
@@ -117,6 +125,50 @@ public sealed record AnalysisItemOutlineStartedEvent : IntegrationEvent
     }
 }
 
+public sealed record OutlineProviderRequestStartedEvent : IntegrationEvent
+{
+    public string ProviderKey { get; init; } = default!;
+    public Guid NormalizedRequestId { get; init; }
+    public Guid? CustomerContentIdForItem { get; init; }
+    public int? SortOrder { get; init; }
+    public string InputText { get; init; } = default!;
+
+    public OutlineProviderRequestStartedEvent()
+    {
+        EventName = EventNames.OutlineProviderRequestStarted;
+        Facility = EventNames.OutlineProviderRequestStarted;
+    }
+}
+
+public sealed record OutlineProviderPollingStartedEvent : IntegrationEvent
+{
+    public string ProviderKey { get; init; } = default!;
+    public Guid NormalizedRequestId { get; init; }
+    public Guid? CustomerContentIdForItem { get; init; }
+    public int? SortOrder { get; init; }
+    public string ProviderTrackId { get; init; } = default!;
+
+    public OutlineProviderPollingStartedEvent()
+    {
+        EventName = EventNames.OutlineProviderPollingStarted;
+        Facility = EventNames.OutlineProviderPollingStarted;
+    }
+}
+
+public sealed record OutlineProviderCompletedEvent : IntegrationEvent
+{
+    public Guid NormalizedRequestId { get; init; }
+    public Guid? CustomerContentIdForItem { get; init; }
+    public int? SortOrder { get; init; }
+    public string Script { get; init; } = default!;
+
+    public OutlineProviderCompletedEvent()
+    {
+        EventName = EventNames.OutlineProviderCompleted;
+        Facility = EventNames.OutlineProviderCompleted;
+    }
+}
+
 public sealed record AnalysisItemOutlineCompletedEvent : IntegrationEvent
 {
     public int SortOrder { get; init; }
@@ -139,6 +191,9 @@ public sealed record NormalizerResultPublishedEvent : IntegrationEvent
         EventName = EventNames.NormalizerResultPublished;
         Facility = EventNames.NormalizerResultPublished;
     }
+
+    public string VideoProviderKey { get; init; } = default!;
+    public string? AudioProviderKey { get; init; }
 }
 
 public sealed record VideoGenerationApprovedEvent : IntegrationEvent
@@ -150,6 +205,9 @@ public sealed record VideoGenerationApprovedEvent : IntegrationEvent
         EventName = EventNames.VideoGenerationApproved;
         Facility = EventNames.VideoGenerationApproved;
     }
+
+    public string VideoProviderKey { get; init; } = default!;
+    public string? AudioProviderKey { get; init; }
 }
 
 public sealed record VideoRequestCreatedEvent : IntegrationEvent
@@ -188,6 +246,20 @@ public sealed record AudioProviderRequestStartedEvent : IntegrationEvent
     {
         EventName = EventNames.AudioProviderRequestStarted;
         Facility = EventNames.AudioProviderRequestStarted;
+    }
+}
+
+public sealed record AudioProviderPollingStartedEvent : IntegrationEvent
+{
+    public Guid VideoRequestId { get; init; }
+    public Guid AudioRequestId { get; init; }
+    public string ProviderKey { get; init; } = default!;
+    public string ProviderTrackId { get; init; } = default!;
+
+    public AudioProviderPollingStartedEvent()
+    {
+        EventName = EventNames.AudioProviderPollingStarted;
+        Facility = EventNames.AudioProviderPollingStarted;
     }
 }
 
@@ -247,11 +319,25 @@ public sealed record VideoProviderRequestStartedEvent : IntegrationEvent
 {
     public Guid VideoRequestId { get; init; }
     public List<string> AudioUrls { get; init; } = [];
+    public List<string> AudioFilePaths { get; init; } = [];
 
     public VideoProviderRequestStartedEvent()
     {
         EventName = EventNames.VideoProviderRequestStarted;
         Facility = EventNames.VideoProviderRequestStarted;
+    }
+}
+
+public sealed record VideoProviderPollingStartedEvent : IntegrationEvent
+{
+    public Guid VideoRequestId { get; init; }
+    public string ProviderKey { get; init; } = default!;
+    public string ProviderTrackId { get; init; } = default!;
+
+    public VideoProviderPollingStartedEvent()
+    {
+        EventName = EventNames.VideoProviderPollingStarted;
+        Facility = EventNames.VideoProviderPollingStarted;
     }
 }
 

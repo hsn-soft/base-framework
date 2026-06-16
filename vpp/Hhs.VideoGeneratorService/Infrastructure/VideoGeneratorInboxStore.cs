@@ -6,31 +6,53 @@ using MongoDB.Driver;
 
 namespace Hhs.VideoGeneratorService.Infrastructure;
 
-public sealed class VideoGeneratorInboxStore
+public sealed class VideoGeneratorInboxStore(VideoMongoContext context)
 {
-    private readonly VideoMongoContext _context;
-
-    public VideoGeneratorInboxStore(VideoMongoContext context)
+    public async Task<bool> IsProcessedAsync(Guid eventId, CancellationToken cancellationToken)
     {
-        _context = context;
-    }
-
-    public async Task<bool> ExistsAsync(Guid eventId, CancellationToken cancellationToken)
-    {
-        return await _context.InboxMessages
-            .Find(x => x.EventId == eventId)
+        return await context.InboxMessages
+            .Find(x => x.EventId == eventId && x.Status == "PROCESSED")
             .AnyAsync(cancellationToken);
     }
 
-    public async Task SaveAsync<TEvent>(TEvent @event, CancellationToken cancellationToken)
+    public async Task StartAsync<TEvent>(TEvent @event, CancellationToken cancellationToken)
         where TEvent : IntegrationEvent
     {
-        await _context.InboxMessages.InsertOneAsync(new VideoGeneratorInboxMessage
+        var existing = await context.InboxMessages
+            .Find(x => x.EventId == @event.EventId)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (existing is not null)
+            return;
+
+        await context.InboxMessages.InsertOneAsync(new VideoGeneratorInboxMessage
         {
             EventId = @event.EventId,
             EventName = @event.EventName,
             Payload = JsonSerializer.Serialize(@event, @event.GetType()),
-            ProcessedAtUtc = DateTime.UtcNow
+            Status = "STARTED",
+            CreatedAtUtc = DateTime.UtcNow
         }, cancellationToken: cancellationToken);
+    }
+
+    public async Task CompleteAsync(Guid eventId, CancellationToken cancellationToken)
+    {
+        await context.InboxMessages.UpdateOneAsync(
+            x => x.EventId == eventId,
+            Builders<VideoGeneratorInboxMessage>.Update
+                .Set(x => x.Status, "PROCESSED")
+                .Set(x => x.ProcessedAtUtc, DateTime.UtcNow)
+                .Set(x => x.ErrorMessage, null),
+            cancellationToken: cancellationToken);
+    }
+
+    public async Task FailAsync(Guid eventId, Exception ex, CancellationToken cancellationToken)
+    {
+        await context.InboxMessages.UpdateOneAsync(
+            x => x.EventId == eventId,
+            Builders<VideoGeneratorInboxMessage>.Update
+                .Set(x => x.Status, "FAILED")
+                .Set(x => x.ErrorMessage, ex.Message),
+            cancellationToken: cancellationToken);
     }
 }

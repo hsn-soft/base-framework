@@ -5,6 +5,7 @@ using Hhs.TextNormalizerService.Infrastructure;
 using Hhs.TextNormalizerService.Mongo;
 using Hhs.TextNormalizerService.Providers;
 using Hhs.TextNormalizerService.Services;
+using Hhs.TextNormalizerService.Workers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,7 +20,9 @@ builder.Services.AddScoped<NormalizerInboxStore>();
 builder.Services.AddScoped<NormalizerOperationAppService>();
 
 builder.Services.AddScoped<IContentScraper, DummyContentScraper>();
-builder.Services.AddScoped<IOutlineProvider, DummyOutlineProvider>();
+builder.Services.AddScoped<IOutlineProvider, OpenAiOutlineProvider>();
+builder.Services.AddScoped<IOutlineProvider, CustomXyzOutlineProvider>();
+builder.Services.AddScoped<IOutlineProviderResolver, OutlineProviderResolver>();
 
 builder.Services.AddScoped<CustomerNormalizeRequestCreatedEventHandler>();
 builder.Services.AddScoped<CustomerScrapingStartedEventHandler>();
@@ -33,6 +36,14 @@ builder.Services.AddScoped<AnalysisItemScrapingCompletedEventHandler>();
 builder.Services.AddScoped<AnalysisItemOutlineStartedEventHandler>();
 builder.Services.AddScoped<AnalysisItemOutlineCompletedEventHandler>();
 
+builder.Services.AddScoped<OutlineProviderRequestStartedEventHandler>();
+builder.Services.AddScoped<OutlineProviderPollingStartedEventHandler>();
+builder.Services.AddScoped<OutlineProviderCompletedEventHandler>();
+
+builder.Services.AddHostedService<RabbitMqConsumerHostedService<OutlineProviderRequestStartedEvent, OutlineProviderRequestStartedEventHandler>>();
+builder.Services.AddHostedService<RabbitMqConsumerHostedService<OutlineProviderPollingStartedEvent, OutlineProviderPollingStartedEventHandler>>();
+builder.Services.AddHostedService<RabbitMqConsumerHostedService<OutlineProviderCompletedEvent, OutlineProviderCompletedEventHandler>>();
+
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<CustomerNormalizeRequestCreatedEvent, CustomerNormalizeRequestCreatedEventHandler>>();
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<CustomerScrapingStartedEvent, CustomerScrapingStartedEventHandler>>();
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<CustomerScrapingCompletedEvent, CustomerScrapingCompletedEventHandler>>();
@@ -44,6 +55,9 @@ builder.Services.AddHostedService<RabbitMqConsumerHostedService<AnalysisItemScra
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<AnalysisItemScrapingCompletedEvent, AnalysisItemScrapingCompletedEventHandler>>();
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<AnalysisItemOutlineStartedEvent, AnalysisItemOutlineStartedEventHandler>>();
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<AnalysisItemOutlineCompletedEvent, AnalysisItemOutlineCompletedEventHandler>>();
+
+builder.Services.AddScoped<OutlineProviderPollingAppService>();
+builder.Services.AddHostedService<OutlineProviderPollingWorker>();
 
 var app = builder.Build();
 
