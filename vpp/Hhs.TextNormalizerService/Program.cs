@@ -3,6 +3,7 @@ using Hhs.Shared.RabbitMQ;
 using Hhs.TextNormalizerService.Entities;
 using Hhs.TextNormalizerService.Handlers;
 using Hhs.TextNormalizerService.Infrastructure;
+using Hhs.TextNormalizerService.Models;
 using Hhs.TextNormalizerService.Mongo;
 using Hhs.TextNormalizerService.Providers;
 using Hhs.TextNormalizerService.Services;
@@ -25,6 +26,10 @@ builder.Services.AddScoped<NormalizerOperationAppService>();
 builder.Services.AddScoped<IContentScraper, DummyContentScraper>();
 builder.Services.AddScoped<IOutlineProvider, OpenAiOutlineProvider>();
 builder.Services.AddScoped<IOutlineProvider, CustomXyzOutlineProvider>();
+builder.Services.AddSingleton<OutlineProviderAbc>();
+builder.Services.AddScoped<IOutlineProvider>(sp => sp.GetRequiredService<OutlineProviderAbc>());
+builder.Services.AddSingleton<OutlineProviderXyz>();
+builder.Services.AddScoped<IOutlineProvider>(sp => sp.GetRequiredService<OutlineProviderXyz>());
 builder.Services.AddScoped<IOutlineProviderResolver, OutlineProviderResolver>();
 
 builder.Services.AddScoped<CustomerNormalizeRequestCreatedEventHandler>();
@@ -78,6 +83,74 @@ app.MapPost("/admin/customer-contents/{customerContentId:guid}/scraping/complete
         await appService.CompleteCustomerScrapingManuallyAsync(customerContentId, input, cancellationToken);
         return Results.Ok();
     });
+
+app.MapPost("/demo/outline/abc",
+    async (
+        DemoOutlineRequest request,
+        OutlineProviderAbc providerAbc,
+        CancellationToken cancellationToken) =>
+    {
+        var result = await providerAbc.CreateAsync(
+            new OutlineCreateRequest { InputText = request.Text },
+            cancellationToken);
+        return Results.Ok(new { provider = "outline-abc", script = result.Script, delayMs = 5000 });
+    });
+
+app.MapPost("/demo/outline/xyz",
+    async (
+        DemoOutlineRequest request,
+        OutlineProviderXyz providerXyz,
+        CancellationToken cancellationToken) =>
+    {
+        var result = await providerXyz.CreateAsync(
+            new OutlineCreateRequest { InputText = request.Text },
+            cancellationToken);
+        return Results.Ok(new { provider = "outline-xyz", trackingId = result.ProviderTrackId, pollingWindowSec = 30 });
+    });
+
+app.MapGet("/demo/outline/xyz/{trackingId}",
+    async (
+        string trackingId,
+        OutlineProviderXyz providerXyz,
+        CancellationToken cancellationToken) =>
+    {
+        var status = await providerXyz.GetStatusAsync(trackingId, cancellationToken);
+        return Results.Ok(new
+        {
+            provider = "outline-xyz",
+            trackingId = trackingId,
+            isCompleted = status.IsCompleted,
+            isFailed = status.IsFailed,
+            script = status.Script,
+            errorMessage = status.ErrorMessage
+        });
+    });
+
+app.MapGet("/demo/outline/xyz/store/list",
+    () =>
+    {
+        var store = OutlineProviderXyz.GetStore();
+        return Results.Ok(new
+        {
+            count = store.Count,
+            entries = store.Values.Select(e => new
+            {
+                e.TrackingId,
+                e.CreatedAtUtc,
+                elapsedSeconds = (DateTime.UtcNow - e.CreatedAtUtc).TotalSeconds,
+                hasResult = e.Result != null,
+                e.Result
+            }).ToList()
+        });
+    });
+
+app.MapPost("/demo/outline/xyz/store/clear",
+    () =>
+    {
+        OutlineProviderXyz.ClearStore();
+        return Results.Ok(new { message = "Store cleared." });
+    });
+
 
 app.MapPost("/scheduler/outline-polling",
     async (
