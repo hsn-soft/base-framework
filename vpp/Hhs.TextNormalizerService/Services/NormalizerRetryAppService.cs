@@ -57,8 +57,7 @@ public sealed class NormalizerRetryAppService(
                         x.NextRetryAtUtc != null &&
                         x.NextRetryAtUtc <= now,
                     Builders<CustomerContentNormalizedRequest>.Update
-                        .Set(x => x.Status, "RETRY_PUBLISHED")
-                        .Set(x => x.NextRetryAtUtc, (DateTime?)null)
+                        .Set(x => x.NextRetryAtUtc, DateTime.UtcNow.AddMinutes(1))
                         .Set(x => x.LastError, null)
                         .Set(x => x.UpdatedAtUtc, DateTime.UtcNow),
                     cancellationToken: cancellationToken);
@@ -156,7 +155,7 @@ public sealed class NormalizerRetryAppService(
                 {
                     if (item.CurrentStep == EventNames.OutlineProviderPollingStarted)
                     {
-                        var pollingUpdate = Builders<AnalysisContentNormalizedRequest>.Update
+                        var pollingClaim = Builders<AnalysisContentNormalizedRequest>.Update
                             .Set("Items.$.Status", "OUTLINE_PROVIDER_POLLING")
                             .Set("Items.$.OutlineStatus", "POLLING")
                             .Set("Items.$.NextOutlinePollAtUtc", DateTime.UtcNow)
@@ -168,20 +167,25 @@ public sealed class NormalizerRetryAppService(
                             .Set(x => x.LastError, null)
                             .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);
 
-                        await UpdateAnalysisItemAsync(request.Id, item.CustomerContentId, pollingUpdate, cancellationToken);
+                        await UpdateDueRetryAnalysisItemAsync(
+                            request.Id,
+                            item.CustomerContentId,
+                            now,
+                            pollingClaim,
+                            cancellationToken);
+
                         continue;
                     }
 
                     var claimUpdate = Builders<AnalysisContentNormalizedRequest>.Update
-                        .Set("Items.$.Status", "RETRY_PUBLISHED")
-                        .Set("Items.$.NextRetryAtUtc", (DateTime?)null)
-                        .Set("Items.$.LastError", (string?)null)
+                        .Set("Items.$.NextRetryAtUtc", DateTime.UtcNow.AddMinutes(1))
                         .Set("Items.$.UpdatedAtUtc", DateTime.UtcNow)
                         .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);
 
-                    var claimResult = await UpdateAnalysisItemAsync(
+                    var claimResult = await UpdateDueRetryAnalysisItemAsync(
                         request.Id,
                         item.CustomerContentId,
+                        now,
                         claimUpdate,
                         cancellationToken);
 
@@ -237,7 +241,11 @@ public sealed class NormalizerRetryAppService(
                             .Set(x => x.LastError, $"Unsupported analysis retry step: {item.CurrentStep}")
                             .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);
 
-                        await UpdateAnalysisItemAsync(request.Id, item.CustomerContentId, failUpdate, cancellationToken);
+                        await UpdateAnalysisItemAsync(
+                            request.Id,
+                            item.CustomerContentId,
+                            failUpdate,
+                            cancellationToken);
                     }
                 }
                 catch
@@ -249,11 +257,39 @@ public sealed class NormalizerRetryAppService(
                         .Set(x => x.Status, "WAITING_RETRY")
                         .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);
 
-                    await UpdateAnalysisItemAsync(request.Id, item.CustomerContentId, retryAgainUpdate, cancellationToken);
+                    await UpdateAnalysisItemAsync(
+                        request.Id,
+                        item.CustomerContentId,
+                        retryAgainUpdate,
+                        cancellationToken);
+
                     throw;
                 }
             }
         }
+    }
+
+    private Task<UpdateResult> UpdateDueRetryAnalysisItemAsync(
+        Guid analysisRequestId,
+        Guid customerContentId,
+        DateTime now,
+        UpdateDefinition<AnalysisContentNormalizedRequest> update,
+        CancellationToken cancellationToken)
+    {
+        var filter = Builders<AnalysisContentNormalizedRequest>.Filter.And(
+            Builders<AnalysisContentNormalizedRequest>.Filter.Eq(x => x.Id, analysisRequestId),
+            Builders<AnalysisContentNormalizedRequest>.Filter.ElemMatch(
+                x => x.Items,
+                i =>
+                    i.CustomerContentId == customerContentId &&
+                    i.Status == "WAITING_RETRY" &&
+                    i.NextRetryAtUtc != null &&
+                    i.NextRetryAtUtc <= now));
+
+        return context.AnalysisRequests.UpdateOneAsync(
+            filter,
+            update,
+            cancellationToken: cancellationToken);
     }
 
     private Task<UpdateResult> UpdateAnalysisItemAsync(
