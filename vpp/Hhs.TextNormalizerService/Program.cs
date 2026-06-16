@@ -14,7 +14,6 @@ builder.Services.Configure<RabbitMqOptions>(builder.Configuration.GetSection("Ra
 
 BsonRegisterTools.MongoConfigure();
 builder.Services.AddSingleton<NormalizerMongoContext>();
-builder.Services.AddSingleton<NormalizerMongoIndexInitializer>();
 
 builder.Services.AddSingleton<IEventBus, RabbitMqEventBus>();
 
@@ -66,12 +65,6 @@ builder.Services.AddHostedService<NormalizerRetryWorker>();
 
 
 var app = builder.Build();
-
-using (var scope = app.Services.CreateScope())
-{
-    var initializer = scope.ServiceProvider.GetRequiredService<NormalizerMongoIndexInitializer>();
-    await initializer.CreateIndexesAsync(CancellationToken.None);
-}
 
 app.MapPost("/admin/customer-contents/{customerContentId:guid}/scraping/complete-manual",
     async (

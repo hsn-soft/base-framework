@@ -52,9 +52,6 @@ public sealed class AnalysisContentNormalizedRequest
 
     public List<AnalysisNormalizedItem> Items { get; set; } = [];
 
-    public int RetryCount { get; set; }
-    public int MaxRetryCount { get; set; } = 5;
-    public DateTime? NextRetryAtUtc { get; set; }
     public string? LastError { get; set; }
 
     public DateTime CreatedAtUtc { get; set; }
