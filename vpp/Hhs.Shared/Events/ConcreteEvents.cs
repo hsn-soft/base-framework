@@ -184,7 +184,11 @@ public sealed record AnalysisItemOutlineCompletedEvent : IntegrationEvent
 
 public sealed record NormalizerResultPublishedEvent : IntegrationEvent
 {
+    public Guid NormalizeRequestId { get; init; }
     public string VideoInputJson { get; init; } = default!;
+
+    public string VideoProviderKey { get; init; } = default!;
+    public string? AudioProviderKey { get; init; }
 
     public NormalizerResultPublishedEvent()
     {
@@ -192,8 +196,7 @@ public sealed record NormalizerResultPublishedEvent : IntegrationEvent
         Facility = EventNames.NormalizerResultPublished;
     }
 
-    public string VideoProviderKey { get; init; } = default!;
-    public string? AudioProviderKey { get; init; }
+
 }
 
 public sealed record VideoGenerationApprovedEvent : IntegrationEvent

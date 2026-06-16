@@ -10,15 +10,14 @@ public abstract class ContentEventHandlerBase<TEvent>(ContentInboxStore inboxSto
 {
     public async Task HandleAsync(TEvent @event, CancellationToken cancellationToken)
     {
-        if (await inboxStore.IsProcessedAsync(@event.EventId, cancellationToken))
-            return;
+        bool started = await inboxStore.StartAsync(@event, cancellationToken);
 
-        await inboxStore.StartAsync(@event, cancellationToken);
+        if (!started)
+            return;
 
         try
         {
             await ExecuteAsync(@event, cancellationToken);
-
             await inboxStore.CompleteAsync(@event.EventId, cancellationToken);
         }
         catch (Exception ex)

@@ -16,14 +16,17 @@ public sealed class ContentInboxStore(ContentDbContext context)
                 cancellationToken: cancellationToken);
     }
 
-    public async Task StartAsync<TEvent>(TEvent @event, CancellationToken cancellationToken)
+    public async Task<bool> StartAsync<TEvent>(TEvent @event, CancellationToken cancellationToken)
         where TEvent : IntegrationEvent
     {
-        var existing = await context.InboxMessages
-            .FirstOrDefaultAsync(x => x.EventId == @event.EventId, cancellationToken: cancellationToken);
+        if (await IsProcessedAsync(@event.EventId, cancellationToken))
+            return false;
 
-        if (existing is not null)
-            return;
+        var exists = await context.InboxMessages
+            .AnyAsync(x => x.EventId == @event.EventId, cancellationToken);
+
+        if (exists)
+            return false;
 
         context.InboxMessages.Add(new ContentInboxMessage
         {
@@ -33,7 +36,16 @@ public sealed class ContentInboxStore(ContentDbContext context)
             Status = InboxStatuses.Started,
             CreatedAtUtc = DateTime.UtcNow
         });
-        await context.SaveChangesAsync(cancellationToken);
+
+        try
+        {
+            await context.SaveChangesAsync(cancellationToken);
+            return true;
+        }
+        catch (DbUpdateException)
+        {
+            return false;
+        }
     }
 
     public async Task CompleteAsync(Guid eventId, CancellationToken cancellationToken)
@@ -44,7 +56,7 @@ public sealed class ContentInboxStore(ContentDbContext context)
                 s => s
                     .SetProperty(a => a.Status, InboxStatuses.Completed)
                     .SetProperty(a => a.ProcessedAtUtc, DateTime.UtcNow)
-                    .SetProperty(a => a.ErrorMessage, string.Empty),
+                    .SetProperty(a => a.ErrorMessage, (string?)null),
                 cancellationToken: cancellationToken);
     }
 

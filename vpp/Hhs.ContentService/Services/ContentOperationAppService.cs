@@ -22,14 +22,16 @@ public sealed class ContentOperationAppService
         _logger = logger;
     }
 
-    public async Task<Guid> CreateCustomerContentAsync(string url, CancellationToken cancellationToken)
+    public async Task<Guid> CreateCustomerContentAsync(
+        CreateCustomerContentRequest request,
+        CancellationToken cancellationToken)
     {
         var id = Guid.NewGuid();
 
         var entity = new CustomerContent
         {
             Id = id,
-            Url = url,
+            Url = request.Url,
             NormalizeStatus = "CREATED",
             VideoStatus = "NOT_STARTED",
             LastFacility = "CUSTOMER_CONTENT_CREATED",
@@ -43,28 +45,32 @@ public sealed class ContentOperationAppService
         await _eventBus.PublishAsync(new CustomerNormalizeRequestCreatedEvent
         {
             CustomerContentId = id,
-            Url = url,
+            Url = entity.Url,
             CorrelationId = Guid.NewGuid(),
             OutlineProviderKey = entity.OutlineProviderKey,
             VideoProviderKey = entity.VideoProviderKey,
-            AudioProviderKey = entity.AudioProviderKey,
+            AudioProviderKey = entity.AudioProviderKey
         }, cancellationToken);
 
         return id;
     }
 
-    public async Task<Guid> CreateAnalysisContentAsync(string title, List<Guid> customerContentIds, CancellationToken cancellationToken)
+    public async Task<Guid> CreateAnalysisContentAsync(
+        CreateAnalysisContentRequest request,
+        CancellationToken cancellationToken)
     {
         var analysisId = Guid.NewGuid();
 
         var contents = await _db.CustomerContents
-            .Where(x => customerContentIds.Contains(x.Id))
+            .Where(x => request.CustomerContentIds.Contains(x.Id))
             .ToListAsync(cancellationToken);
+
+        var contentMap = contents.ToDictionary(x => x.Id);
 
         var analysis = new AnalysisContent
         {
             Id = analysisId,
-            Title = title,
+            Title = request.Title,
             NormalizeStatus = "CREATED",
             VideoStatus = "NOT_STARTED",
             LastFacility = "ANALYSIS_CONTENT_CREATED",
@@ -74,16 +80,24 @@ public sealed class ContentOperationAppService
 
         var sort = 1;
 
-        foreach (var contentId in customerContentIds)
+        foreach (var customerContentId in request.CustomerContentIds)
         {
-            analysis.Items.Add(new AnalysisContentItem { Id = Guid.NewGuid(), AnalysisContentId = analysisId, CustomerContentId = contentId, SortOrder = sort++ });
+            if (!contentMap.ContainsKey(customerContentId))
+                throw new InvalidOperationException($"CustomerContent not found: {customerContentId}");
+
+            analysis.Items.Add(new AnalysisContentItem { Id = Guid.NewGuid(), AnalysisContentId = analysisId, CustomerContentId = customerContentId, SortOrder = sort++ });
         }
 
         _db.AnalysisContents.Add(analysis);
         await _db.SaveChangesAsync(cancellationToken);
 
-        var items = contents
-            .Select((x, index) => new AnalysisNormalizeItem { CustomerContentId = x.Id, Url = x.Url, Path = x.Path, SortOrder = index + 1 })
+        var items = request.CustomerContentIds
+            .Select((id, index) =>
+            {
+                var content = contentMap[id];
+
+                return new AnalysisNormalizeItem { CustomerContentId = content.Id, Url = content.Url, Path = content.Path, SortOrder = index + 1 };
+            })
             .ToList();
 
         await _eventBus.PublishAsync(new AnalysisNormalizeRequestCreatedEvent
@@ -104,16 +118,22 @@ public sealed class ContentOperationAppService
         if (@event.CustomerContentId.HasValue)
         {
             var entity = await _db.CustomerContents.FirstAsync(x => x.Id == @event.CustomerContentId, cancellationToken);
+            entity.NormalizeRequestId = @event.NormalizeRequestId;
             entity.NormalizeStatus = "COMPLETED";
+            entity.VideoStatus = "APPROVED";
             entity.LastFacility = @event.Facility;
+            entity.LastError = null;
             entity.UpdatedAtUtc = DateTime.UtcNow;
         }
 
         if (@event.AnalysisContentId.HasValue)
         {
             var entity = await _db.AnalysisContents.FirstAsync(x => x.Id == @event.AnalysisContentId, cancellationToken);
+            entity.NormalizeRequestId = @event.NormalizeRequestId;
             entity.NormalizeStatus = "COMPLETED";
+            entity.VideoStatus = "APPROVED";
             entity.LastFacility = @event.Facility;
+            entity.LastError = null;
             entity.UpdatedAtUtc = DateTime.UtcNow;
         }
 

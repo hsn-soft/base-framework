@@ -33,7 +33,7 @@ app.MapPost("/customer-contents", async (
     ContentOperationAppService appService,
     CancellationToken cancellationToken) =>
 {
-    var id = await appService.CreateCustomerContentAsync(request.Url, cancellationToken);
+    var id = await appService.CreateCustomerContentAsync(request, cancellationToken);
     return Results.Ok(new { id });
 });
 
@@ -42,7 +42,7 @@ app.MapPost("/analysis-contents", async (
     ContentOperationAppService appService,
     CancellationToken cancellationToken) =>
 {
-    var id = await appService.CreateAnalysisContentAsync(request.Title, request.CustomerContentIds, cancellationToken);
+    var id = await appService.CreateAnalysisContentAsync(request, cancellationToken);
     return Results.Ok(new { id });
 });
 
