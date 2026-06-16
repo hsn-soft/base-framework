@@ -1,6 +1,0 @@
-@Hhs.MockApi.OutlineXyz_HostAddress = http://localhost:5197
-
-GET {{Hhs.MockApi.OutlineXyz_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###

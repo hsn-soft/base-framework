@@ -1,6 +1,0 @@
-@Hhs.MockApi.AudioDef_HostAddress = http://localhost:5038
-
-GET {{Hhs.MockApi.AudioDef_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
