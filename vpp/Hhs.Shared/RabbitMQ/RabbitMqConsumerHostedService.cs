@@ -32,15 +32,45 @@ public sealed class RabbitMqConsumerHostedService<TEvent, THandler> : Background
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var factory = new ConnectionFactory
+        try
         {
-            HostName = _options.HostName,
-            Port = _options.Port,
-            UserName = _options.UserName,
-            Password = _options.Password
-        };
+            var factory = new ConnectionFactory
+            {
+                HostName = _options.HostName,
+                Port = _options.Port,
+                UserName = _options.UserName,
+                Password = _options.Password
+            };
 
-        _connection = await factory.CreateConnectionAsync(stoppingToken);
+            // Retry connection 3 times with delays: 10s, 20s, 30s
+            var delays = new[] { 10, 20, 30 };
+            Exception lastException = null;
+
+            for (int attempt = 0; attempt < delays.Length; attempt++)
+            {
+                try
+                {
+                    _connection = await factory.CreateConnectionAsync(stoppingToken);
+                    _logger.LogInformation("RabbitMQ connection established on attempt {Attempt}", attempt + 1);
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    lastException = ex;
+                    if (attempt < delays.Length - 1)
+                    {
+                        _logger.LogWarning("RabbitMQ connection attempt {Attempt} failed, retrying in {DelaySeconds}s: {Error}",
+                            attempt + 1, delays[attempt], ex.Message);
+                        await Task.Delay(TimeSpan.FromSeconds(delays[attempt]), stoppingToken);
+                    }
+                    else
+                    {
+                        _logger.LogError(ex, "RabbitMQ connection failed after {Attempts} attempts", delays.Length);
+                        throw;
+                    }
+                }
+            }
+
         _channel = await _connection.CreateChannelAsync(cancellationToken: stoppingToken);
 
         await _channel.ExchangeDeclareAsync(
@@ -112,6 +142,12 @@ public sealed class RabbitMqConsumerHostedService<TEvent, THandler> : Background
             autoAck: false,
             consumer: consumer,
             cancellationToken: stoppingToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "RabbitMQ consumer service failed");
+            throw;
+        }
     }
 
     private static string ResolveEventName(Type eventType)

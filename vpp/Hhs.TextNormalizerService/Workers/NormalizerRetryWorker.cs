@@ -30,7 +30,7 @@ public sealed class NormalizerRetryWorker(
                 logger.LogError(ex, "Normalizer retry worker failed.");
             }
 
-            await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+            await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
         }
     }
 }

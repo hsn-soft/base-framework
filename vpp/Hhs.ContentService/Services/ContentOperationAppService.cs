@@ -123,78 +123,85 @@ public sealed class ContentOperationAppService
         NormalizerResultPublishedEvent @event,
         CancellationToken cancellationToken)
     {
+        var shouldPublishEvent = false;
+
         if (@event.CustomerContentId.HasValue)
         {
             var entity = await _db.CustomerContents
-                .FirstAsync(x => x.Id == @event.CustomerContentId.Value, cancellationToken);
+                .FirstOrDefaultAsync(x => x.Id == @event.CustomerContentId.Value, cancellationToken);
 
-            if (entity.VideoStatus is "APPROVED" or "COMPLETED" or "FAILED" &&
-                entity.NormalizeRequestId == @event.NormalizeRequestId)
+            if (entity != null && entity.NormalizeRequestId == null)
             {
-                return;
+                entity.NormalizeRequestId = @event.NormalizeRequestId;
+                entity.NormalizeStatus = "COMPLETED";
+                entity.VideoStatus = "APPROVED";
+                entity.LastFacility = @event.Facility;
+                entity.LastError = null;
+                entity.UpdatedAtUtc = DateTime.UtcNow;
+                shouldPublishEvent = true;
             }
-
-            entity.NormalizeRequestId = @event.NormalizeRequestId;
-            entity.NormalizeStatus = "COMPLETED";
-            entity.VideoStatus = "APPROVED";
-            entity.LastFacility = @event.Facility;
-            entity.LastError = null;
-            entity.UpdatedAtUtc = DateTime.UtcNow;
         }
 
         if (@event.AnalysisContentId.HasValue)
         {
             var entity = await _db.AnalysisContents
-                .FirstAsync(x => x.Id == @event.AnalysisContentId.Value, cancellationToken);
+                .FirstOrDefaultAsync(x => x.Id == @event.AnalysisContentId.Value, cancellationToken);
 
-            if (entity.VideoStatus is "APPROVED" or "COMPLETED" or "FAILED" &&
-                entity.NormalizeRequestId == @event.NormalizeRequestId)
+            if (entity != null && entity.NormalizeRequestId == null)
             {
-                return;
+                entity.NormalizeRequestId = @event.NormalizeRequestId;
+                entity.NormalizeStatus = "COMPLETED";
+                entity.VideoStatus = "APPROVED";
+                entity.LastFacility = @event.Facility;
+                entity.LastError = null;
+                entity.UpdatedAtUtc = DateTime.UtcNow;
+                shouldPublishEvent = true;
             }
-
-            entity.NormalizeRequestId = @event.NormalizeRequestId;
-            entity.NormalizeStatus = "COMPLETED";
-            entity.VideoStatus = "APPROVED";
-            entity.LastFacility = @event.Facility;
-            entity.LastError = null;
-            entity.UpdatedAtUtc = DateTime.UtcNow;
         }
 
-        await _db.SaveChangesAsync(cancellationToken);
-
-        await _eventBus.PublishAsync(new VideoGenerationApprovedEvent
+        if (shouldPublishEvent)
         {
-            CustomerContentId = @event.CustomerContentId,
-            AnalysisContentId = @event.AnalysisContentId,
-            ContentProcessType = @event.ContentProcessType,
-            VideoInputJson = @event.VideoInputJson,
-            CorrelationId = @event.CorrelationId,
-            VideoProviderKey = @event.VideoProviderKey,
-            AudioProviderKey = @event.AudioProviderKey
-        }, cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken);
+
+            await _eventBus.PublishAsync(new VideoGenerationApprovedEvent
+            {
+                CustomerContentId = @event.CustomerContentId,
+                AnalysisContentId = @event.AnalysisContentId,
+                ContentProcessType = @event.ContentProcessType,
+                VideoInputJson = @event.VideoInputJson,
+                CorrelationId = @event.CorrelationId,
+                VideoProviderKey = @event.VideoProviderKey,
+                AudioProviderKey = @event.AudioProviderKey
+            }, cancellationToken);
+        }
     }
 
     public async Task HandleVideoResultAsync(VideoGenerationResultPublishedEvent @event, CancellationToken cancellationToken)
     {
         if (@event.CustomerContentId.HasValue)
         {
-            var entity = await _db.CustomerContents.FirstAsync(x => x.Id == @event.CustomerContentId, cancellationToken);
-            entity.VideoStatus = "COMPLETED";
-            entity.VideoRequestId = @event.VideoRequestId;
-            entity.FinalVideoUrl = @event.FinalVideoUrl;
-            entity.LastFacility = @event.Facility;
-            entity.UpdatedAtUtc = DateTime.UtcNow;
+            var entity = await _db.CustomerContents.FirstOrDefaultAsync(x => x.Id == @event.CustomerContentId, cancellationToken);
+            if (entity != null)
+            {
+                entity.VideoStatus = "COMPLETED";
+                entity.VideoRequestId = @event.VideoRequestId;
+                entity.FinalVideoUrl = @event.FinalVideoUrl;
+                entity.LastFacility = @event.Facility;
+                entity.UpdatedAtUtc = DateTime.UtcNow;
+            }
         }
 
         if (@event.AnalysisContentId.HasValue)
         {
-            var entity = await _db.AnalysisContents.FirstAsync(x => x.Id == @event.AnalysisContentId, cancellationToken);
-            entity.VideoStatus = "COMPLETED";
-            entity.VideoRequestId = @event.VideoRequestId;
-            entity.FinalVideoUrl = @event.FinalVideoUrl;
-            entity.LastFacility = @event.Facility;
-            entity.UpdatedAtUtc = DateTime.UtcNow;
+            var entity = await _db.AnalysisContents.FirstOrDefaultAsync(x => x.Id == @event.AnalysisContentId, cancellationToken);
+            if (entity != null)
+            {
+                entity.VideoStatus = "COMPLETED";
+                entity.VideoRequestId = @event.VideoRequestId;
+                entity.FinalVideoUrl = @event.FinalVideoUrl;
+                entity.LastFacility = @event.Facility;
+                entity.UpdatedAtUtc = DateTime.UtcNow;
+            }
         }
 
         await _db.SaveChangesAsync(cancellationToken);

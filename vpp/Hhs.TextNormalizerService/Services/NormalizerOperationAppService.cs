@@ -261,7 +261,7 @@ public sealed class NormalizerOperationAppService(
             request.Status = "OUTLINE_PROVIDER_POLLING";
             request.OutlineStatus = "POLLING";
             request.CurrentStep = EventNames.OutlineProviderPollingStarted;
-            request.NextOutlinePollAtUtc = DateTime.UtcNow.AddMinutes(5);
+            request.NextOutlinePollAtUtc = DateTime.UtcNow.AddSeconds(5);
             request.UpdatedAtUtc = DateTime.UtcNow;
 
             await ReplaceCustomerAsync(request, cancellationToken);
@@ -276,7 +276,7 @@ public sealed class NormalizerOperationAppService(
             .Set("Items.$.CurrentStep", EventNames.OutlineProviderPollingStarted)
             .Set("Items.$.OutlineProviderTrackId", providerTrackId)
             .Set("Items.$.OutlineStatus", "POLLING")
-            .Set("Items.$.NextOutlinePollAtUtc", DateTime.UtcNow.AddMinutes(5))
+            .Set("Items.$.NextOutlinePollAtUtc", DateTime.UtcNow.AddSeconds(5))
             .Set("Items.$.UpdatedAtUtc", DateTime.UtcNow)
             .Set(x => x.Status, "OUTLINE_PROVIDER_POLLING")
             .Set(x => x.CurrentStep, EventNames.OutlineProviderPollingStarted)
@@ -306,7 +306,7 @@ public sealed class NormalizerOperationAppService(
             request.Status = "OUTLINE_PROVIDER_POLLING";
             request.OutlineStatus = "POLLING";
             request.CurrentStep = EventNames.OutlineProviderPollingStarted;
-            request.NextOutlinePollAtUtc = DateTime.UtcNow.AddMinutes(5);
+            request.NextOutlinePollAtUtc = DateTime.UtcNow.AddSeconds(5);
             request.UpdatedAtUtc = DateTime.UtcNow;
 
             await ReplaceCustomerAsync(request, cancellationToken);
@@ -321,7 +321,7 @@ public sealed class NormalizerOperationAppService(
             .Set("Items.$.CurrentStep", EventNames.OutlineProviderPollingStarted)
             .Set("Items.$.OutlineProviderTrackId", @event.ProviderTrackId)
             .Set("Items.$.OutlineStatus", "POLLING")
-            .Set("Items.$.NextOutlinePollAtUtc", DateTime.UtcNow.AddMinutes(5))
+            .Set("Items.$.NextOutlinePollAtUtc", DateTime.UtcNow.AddSeconds(5))
             .Set("Items.$.UpdatedAtUtc", DateTime.UtcNow)
             .Set(x => x.Status, "OUTLINE_PROVIDER_POLLING")
             .Set(x => x.CurrentStep, EventNames.OutlineProviderPollingStarted)
@@ -606,7 +606,7 @@ public sealed class NormalizerOperationAppService(
                     .Set("Items.$.CurrentStep", EventNames.AnalysisItemOutlineStarted)
                     .Set("Items.$.OutlineStatus", "WAITING_SCRAPING")
                     .Set("Items.$.LastError", "ScrapingResult is required before outline.")
-                    .Set("Items.$.NextRetryAtUtc", DateTime.UtcNow.AddMinutes(1))
+                    .Set("Items.$.NextRetryAtUtc", DateTime.UtcNow.AddSeconds(5))
                     .Set("Items.$.UpdatedAtUtc", DateTime.UtcNow)
                     .Set(x => x.Status, "WAITING_RETRY")
                     .Set(x => x.CurrentStep, EventNames.AnalysisItemOutlineStarted)

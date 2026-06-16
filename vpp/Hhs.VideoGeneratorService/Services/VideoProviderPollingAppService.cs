@@ -91,7 +91,7 @@ public sealed class VideoProviderPollingAppService(
                 if (!status.IsCompleted)
                 {
                     request.ProviderPollingCount++;
-                    request.NextProviderPollAtUtc = DateTime.UtcNow.AddMinutes(5);
+                    request.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(5);
                     request.UpdatedAtUtc = DateTime.UtcNow;
 
                     await ReplaceVideoAsync(request, cancellationToken);
@@ -147,7 +147,7 @@ public sealed class VideoProviderPollingAppService(
                 }
                 else
                 {
-                    request.NextProviderPollAtUtc = DateTime.UtcNow.AddMinutes(5);
+                    request.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(5);
                     await ReplaceVideoAsync(request, cancellationToken);
                 }
 
@@ -172,7 +172,7 @@ public sealed class VideoProviderPollingAppService(
                 x.NextProviderPollAtUtc <= now &&
                 x.VideoProviderTrackId != null,
             Builders<VideoRequest>.Update
-                .Set(x => x.NextProviderPollAtUtc, DateTime.UtcNow.AddMinutes(1))
+                .Set(x => x.NextProviderPollAtUtc, DateTime.UtcNow.AddSeconds(5))
                 .Set(x => x.UpdatedAtUtc, DateTime.UtcNow),
             cancellationToken: cancellationToken);
     }

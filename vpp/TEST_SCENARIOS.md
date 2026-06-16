@@ -1,133 +1,252 @@
-# Content Service Test Scenarios
+# Test Scenarios - 8 Provider Matrix
 
-## Overview
-4 different provider combinations to test the complete microservice ecosystem.
+## Provider Definitions
 
-## Senaryo 1: Fast Outline + Fast Audio + External Video
-```
-OUTLINE: openai (ABC) - Immediate (5s)
-AUDIO: audio-def (DEF) - Immediate (3s)  
-VIDEO: video-external - Polling (120s)
-```
+### Outline Providers (2)
+| Key | Type | Execution | Response Time |
+|-----|------|-----------|----------------|
+| outline-fast | ImmediateResult | Synchronous | ~5s |
+| outline-detailed | AsyncPolling | Polling | ~30s window |
 
-**Expected Flow:**
-1. POST /customer-contents with senaryo1 config
-2. ContentService creates content
-3. Publishes CustomerNormalizeRequestCreated event
-4. TextNormalizer receives, calls OutlineAbc MockAPI (waits 5s)
-5. Gets outline immediately, publishes NormalizerResultPublished
-6. ContentService approves and sends to VideoGenerator
-7. VideoGenerator initiates audio generation (3s)
-8. Audio file downloaded and stored
-9. VideoGenerator calls VideoExternalAudio MockAPI
-10. Returns tracking ID, VideoGenerator polls (every 5s until 120s)
-11. Video complete, downloaded, stored
-12. ContentService receives final video URL
+### Audio Providers (2)
+| Key | Type | Execution | Response Time |
+|-----|------|-----------|----------------|
+| audio-quick | ImmediateResult | Synchronous | ~3s |
+| audio-hq | AsyncPolling | Polling | ~60s window |
 
-**Total Time:** ~128 seconds
+### Video Providers (4)
+| Key | Type | Execution | Audio Input | Response Time |
+|-----|------|-----------|-------------|----------------|
+| video-fast | ImmediateResult | Sync | AudioUrlListRequired | ~5s |
+| video-sync | ImmediateResult | Sync | AudioFileRequired | ~5s |
+| video-cloud | AsyncPolling | Polling | AudioUrlListRequired | ~120s window |
+| video-pro | AsyncPolling | Polling | AudioFileRequired | ~120s window |
 
 ---
 
-## Senaryo 2: Fast Outline + Slow Audio + External Video
-```
-OUTLINE: openai (ABC) - Immediate (5s)
-AUDIO: audio-ghj (GHJ) - Polling (60s)
-VIDEO: video-external - Polling (120s)
-```
+## Test Scenarios (8 Total)
 
-**Expected Flow:**
-- Same as Senaryo 1 but AudioGhj takes 60s to process
-- VideoGenerator waits for audio completion before triggering video
-
-**Total Time:** ~185 seconds
-
----
-
-## Senaryo 3: Slow Outline + Slow Audio + External Video
-```
-OUTLINE: custom-xyz (XYZ) - Polling (30s)
-AUDIO: audio-ghj (GHJ) - Polling (60s)
-VIDEO: video-external - Polling (120s)
-```
-
-**Expected Flow:**
-- TextNormalizer gets tracking ID from OutlineXyz, polls
-- After 30s gets outline
-- Then proceeds with audio & video (same as Senaryo 2)
-
-**Total Time:** ~210 seconds
+### SCENARIO 1: All Immediate (Fast Path)
+**Providers**: outline-fast + audio-quick + video-fast
+- **Flow**: Immediate → Immediate → Immediate
+- **Audio Input**: URLs (quick generates file, fast accepts URLs)
+- **Expected Total**: ~13s
+- **Key Test**: All synchronous operations, database state immediate
+- **Database Check**:
+  - ContentService: All statuses should be completed
+  - TextNormalizer: Outline result should be ready
+  - VideoGenerator: Audio and video results ready
 
 ---
 
-## Senaryo 4: Fast Outline + No Audio + Internal Video
-```
-OUTLINE: openai (ABC) - Immediate (5s)
-AUDIO: null (No external audio)
-VIDEO: video-internal - Polling (120s)
-```
-
-**Expected Flow:**
-1. POST /customer-contents with senaryo4 config
-2. ContentService creates content
-3. TextNormalizer gets outline from OutlineAbc (5s)
-4. NormalizerResultPublished (no audio generation needed)
-5. ContentService sends to VideoGenerator with outline data ONLY
-6. VideoGenerator skips audio generation step
-7. Calls VideoInternalAudio MockAPI with outline data
-8. VideoInternalAudio generates both outline-based audio AND video internally
-9. Returns tracking ID, VideoGenerator polls (every 5s until 120s)
-10. Video complete with internal audio
-
-**Total Time:** ~125 seconds
-**Key Difference:** AudioProviderKey is null, VideoGenerator detects this and skips audio steps
+### SCENARIO 2: Fast Outline + Quick Audio + Sync Video (Files)
+**Providers**: outline-fast + audio-quick + video-sync
+- **Flow**: Immediate → Immediate → Immediate
+- **Audio Input**: Files (quick generates file, sync requires files)
+- **Expected Total**: ~13s
+- **Key Test**: File passing between services
+- **Database Check**:
+  - AudioRequestId referenced in customer_contents
+  - Audio file URL in database
 
 ---
 
-## Testing Instructions
-
-### Start All Services
-```bash
-# Terminal 1: Content Service
-cd vpp
-dotnet run --project Hhs.ContentService/Hhs.ContentService.csproj
-
-# Terminal 2: Text Normalizer
-ASPNETCORE_URLS=http://localhost:5001 dotnet run --project Hhs.TextNormalizerService/Hhs.TextNormalizerService.csproj
-
-# Terminal 3: Video Generator
-ASPNETCORE_URLS=http://localhost:5002 dotnet run --project Hhs.VideoGeneratorService/Hhs.VideoGeneratorService.csproj
-
-# Terminal 4-9: Mock APIs (in separate terminals)
-ASPNETCORE_URLS=http://localhost:5010 dotnet run --project Hhs.MockApi.OutlineAbc/Hhs.MockApi.OutlineAbc.csproj
-ASPNETCORE_URLS=http://localhost:5011 dotnet run --project Hhs.MockApi.OutlineXyz/Hhs.MockApi.OutlineXyz.csproj
-ASPNETCORE_URLS=http://localhost:5020 dotnet run --project Hhs.MockApi.AudioDef/Hhs.MockApi.AudioDef.csproj
-ASPNETCORE_URLS=http://localhost:5021 dotnet run --project Hhs.MockApi.AudioGhj/Hhs.MockApi.AudioGhj.csproj
-ASPNETCORE_URLS=http://localhost:5030 dotnet run --project Hhs.MockApi.VideoInternalAudio/Hhs.MockApi.VideoInternalAudio.csproj
-ASPNETCORE_URLS=http://localhost:5031 dotnet run --project Hhs.MockApi.VideoExternalAudio/Hhs.MockApi.VideoExternalAudio.csproj
-```
-
-### Run Tests
-In VS Code, open `Hhs.ContentService/examples.http` and:
-1. Click "Send Request" on Senaryo 1 to Senaryo 4
-2. Get contentId from response
-3. Monitor logs in each service to see the flow
-4. After expected time, check ContentService for completion
-
-### Verification
-- Monitor event flow through RabbitMQ logs
-- Check final status with GET endpoints (if available)
-- Verify content status transitions
-- Confirm video URL in final response
+### SCENARIO 3: Fast Outline + Quick Audio + Cloud Video
+**Providers**: outline-fast + audio-quick + video-cloud
+- **Flow**: Immediate → Immediate → Polling
+- **Audio Input**: URLs (immediate ready, cloud accepts URLs)
+- **Expected Total**: ~128s
+- **Key Test**: Transition from immediate to polling
+- **Database Check**:
+  - VideoStatus tracks progress
+  - VideoRequestId with ProviderTrackId
 
 ---
 
-## Key Testing Points
+### SCENARIO 4: Fast Outline + Quick Audio + Pro Video
+**Providers**: outline-fast + audio-quick + video-pro
+- **Flow**: Immediate → Immediate → Polling
+- **Audio Input**: Files (quick generates file, pro requires files)
+- **Expected Total**: ~128s
+- **Key Test**: File passing + polling orchestration
+- **Database Check**:
+  - Audio file URL stored
+  - Video polling progress tracked
 
-✅ **Provider Selection** - Correct provider called based on request
-✅ **Event Flow** - Events published in correct order
-✅ **Polling** - Background schedulers poll at correct intervals
-✅ **Timeout Handling** - Proper timeout after max retries
-✅ **Idempotency** - No duplicate processing on event retries
-✅ **State Management** - Content status reflects current operation
-✅ **Error Handling** - Graceful failure with error messages
-✅ **Concurrency** - Multiple requests can run simultaneously
+---
+
+### SCENARIO 5: Fast Outline + HQ Audio + Cloud Video
+**Providers**: outline-fast + audio-hq + video-cloud
+- **Flow**: Immediate → Polling → Polling
+- **Audio Input**: URLs (polling generates, cloud accepts URLs)
+- **Expected Total**: ~188s
+- **Key Test**: Parallel polling for audio and video
+- **Database Check**:
+  - NormalizeStatus + VideoStatus both polling
+  - Audio file ready before video starts
+
+---
+
+### SCENARIO 6: Fast Outline + HQ Audio + Pro Video
+**Providers**: outline-fast + audio-hq + video-pro
+- **Flow**: Immediate → Polling → Polling
+- **Audio Input**: Files (polling generates, pro requires files)
+- **Expected Total**: ~188s
+- **Key Test**: Audio file passing from polling to next polling
+- **Database Check**:
+  - Dependent polling: video waits for audio completion
+
+---
+
+### SCENARIO 7: Detailed Outline + HQ Audio + Cloud Video
+**Providers**: outline-detailed + audio-hq + video-cloud
+- **Flow**: Polling → Polling → Polling
+- **Audio Input**: URLs
+- **Expected Total**: ~210s
+- **Key Test**: All async operations with proper sequencing
+- **Database Check**:
+  - All three statuses in polling state
+  - Proper dependency ordering
+
+---
+
+### SCENARIO 8: Detailed Outline + HQ Audio + Pro Video
+**Providers**: outline-detailed + audio-hq + video-pro
+- **Flow**: Polling → Polling → Polling
+- **Audio Input**: Files
+- **Expected Total**: ~210s
+- **Key Test**: Full async pipeline with file passing
+- **Database Check**:
+  - Complete async workflow with all dependencies
+
+---
+
+## Event Flow & Retry Testing
+
+### Expected Event Sequence (Scenario 1 - All Immediate)
+1. **ContentService**: CreateCustomerContentRequest → CustomerNormalizeRequested
+2. **TextNormalizerService**: Receives event → OutlineProviderRequested
+3. **OutlineFastProvider**: Immediate response → NormalizerResultPublished
+4. **ContentService**: Receives result → VideoGenerationApproved
+5. **VideoGeneratorService**: Receives event → AudioProviderRequested (if audio needed)
+6. **AudioQuickProvider**: Immediate response → AudioProviderCompleted (or directly video)
+7. **VideoGeneratorService**: → VideoProviderRequested
+8. **VideoFastProvider**: Immediate response → VideoGenerationResultPublished
+9. **ContentService**: Receives result → Complete
+
+### Retry Points to Test
+- **Event Processing Failures**: 
+  - What if TextNormalizer is down when event arrives?
+  - What if VideoGenerator is down during audio operation?
+  - Check ContentService inbox table for retry logic
+
+- **Provider Failures**:
+  - What if provider times out?
+  - What if provider returns error?
+  - Check for StepFailedEvent handling
+
+- **State Inconsistencies**:
+  - What if NormalizerResultPublished arrives but video request is already failed?
+  - What if duplicate events arrive?
+  - Check event idempotency (EventId in inbox)
+
+---
+
+## Database Consistency Checks
+
+### PostgreSQL (ContentService)
+**Table: customer_contents**
+- ✓ Id: UUID primary key
+- ✓ Url: Original source URL
+- ✓ NormalizeStatus: NotStarted → InProgress → Completed/Failed
+- ✓ NormalizeRequestId: Links to outline request
+- ✓ VideoStatus: NotStarted → InProgress → Completed/Failed
+- ✓ VideoRequestId: Links to video request
+- ✓ AudioRequestId: Links to audio request (if applicable)
+- ✓ OutlineProviderKey, AudioProviderKey, VideoProviderKey: Provider selection
+- ✓ CreatedAtUtc, UpdatedAtUtc: Timestamps
+
+**Consistency Rules to Validate**:
+- VideoStatus should not be "Completed" if NormalizeStatus is "NotStarted"
+- If OutlineProviderKey is null, NormalizeStatus should be "Skipped" or handled
+- UpdatedAtUtc should advance with each operation
+
+**Table: content_inbox_messages**
+- ✓ EventId: Unique event identifier (idempotency key)
+- ✓ EventName: Type of event
+- ✓ Status: Unprocessed → Processed / Failed
+- ✓ ProcessedAtUtc: When event was handled
+- Should have retry mechanism for "Failed" status
+
+### MongoDB (TextNormalizerService)
+**Collection: outline_requests**
+- ✓ _id: ObjectId
+- ✓ CustomerId / ContentId: Reference to customer_contents
+- ✓ ProviderKey: Which provider generated this
+- ✓ Status: Pending / Completed / Failed
+- ✓ ProviderTrackId: For polling providers
+- ✓ CreatedAt: Timestamp
+
+**Collection: outline_results**
+- ✓ _id: ObjectId
+- ✓ OutlineRequestId: Reference to outline_requests
+- ✓ Script: Generated outline text
+- ✓ CompletedAt: Timestamp
+
+### MongoDB (VideoGeneratorService)
+**Collection: audio_requests**
+- ✓ _id: ObjectId
+- ✓ ProviderKey: audio-quick or audio-hq
+- ✓ Status: Pending / Completed / Failed
+- ✓ ProviderTrackId: For audio-hq polling
+- ✓ CreatedAt: Timestamp
+
+**Collection: audio_results**
+- ✓ _id: ObjectId
+- ✓ AudioRequestId: Reference
+- ✓ FileUrl: Generated audio file URL
+- ✓ CompletedAt: Timestamp
+
+**Collection: video_requests**
+- ✓ _id: ObjectId
+- ✓ ProviderKey: video-fast/sync/cloud/pro
+- ✓ AudioUrls / AudioFilePaths: Input from audio phase
+- ✓ Status: Pending / Completed / Failed
+- ✓ ProviderTrackId: For polling providers
+- ✓ CreatedAt: Timestamp
+
+**Collection: video_results**
+- ✓ _id: ObjectId
+- ✓ VideoRequestId: Reference
+- ✓ FileUrl: Generated video file URL
+- ✓ CompletedAt: Timestamp
+
+---
+
+## Test Execution Checklist
+
+For each scenario:
+1. ✓ Send request to ContentService
+2. ✓ Check ContentService database record created
+3. ✓ Wait for all providers to complete
+4. ✓ Verify final statuses in all databases
+5. ✓ Check event inbox for proper processing
+6. ✓ Validate state consistency across services
+7. ✓ Test retry behavior by simulating failures
+
+---
+
+## Mock API Ports
+- OutlineFast: 5040
+- OutlineDetailed: 5041
+- AudioQuick: 5050
+- AudioHQ: 5051
+- VideoFast: 5060
+- VideoSync: 5063
+- VideoCloud: 5062
+- VideoPro: 5061
+
+Core Services:
+- ContentService: 5000
+- TextNormalizerService: 5001
+- VideoGeneratorService: 5002

@@ -30,7 +30,7 @@ public sealed class AudioProviderPollingWorker(
                 logger.LogError(ex, "Audio polling worker failed.");
             }
 
-            await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+            await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
         }
     }
 }

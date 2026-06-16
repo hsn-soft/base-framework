@@ -57,7 +57,7 @@ public sealed class NormalizerRetryAppService(
                         x.NextRetryAtUtc != null &&
                         x.NextRetryAtUtc <= now,
                     Builders<CustomerContentNormalizedRequest>.Update
-                        .Set(x => x.NextRetryAtUtc, DateTime.UtcNow.AddMinutes(1))
+                        .Set(x => x.NextRetryAtUtc, DateTime.UtcNow.AddSeconds(10))
                         .Set(x => x.LastError, null)
                         .Set(x => x.UpdatedAtUtc, DateTime.UtcNow),
                     cancellationToken: cancellationToken);
@@ -114,7 +114,7 @@ public sealed class NormalizerRetryAppService(
                     x => x.Id == request.Id,
                     Builders<CustomerContentNormalizedRequest>.Update
                         .Set(x => x.Status, "WAITING_RETRY")
-                        .Set(x => x.NextRetryAtUtc, DateTime.UtcNow.AddMinutes(1))
+                        .Set(x => x.NextRetryAtUtc, DateTime.UtcNow.AddSeconds(10))
                         .Set(x => x.UpdatedAtUtc, DateTime.UtcNow),
                     cancellationToken: cancellationToken);
 
@@ -181,7 +181,7 @@ public sealed class NormalizerRetryAppService(
                     }
 
                     var claimUpdate = Builders<AnalysisContentNormalizedRequest>.Update
-                        .Set("Items.$.NextRetryAtUtc", DateTime.UtcNow.AddMinutes(1))
+                        .Set("Items.$.NextRetryAtUtc", DateTime.UtcNow.AddSeconds(10))
                         .Set("Items.$.UpdatedAtUtc", DateTime.UtcNow)
                         .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);
 
@@ -255,7 +255,7 @@ public sealed class NormalizerRetryAppService(
                 {
                     var retryAgainUpdate = Builders<AnalysisContentNormalizedRequest>.Update
                         .Set("Items.$.Status", "WAITING_RETRY")
-                        .Set("Items.$.NextRetryAtUtc", DateTime.UtcNow.AddMinutes(1))
+                        .Set("Items.$.NextRetryAtUtc", DateTime.UtcNow.AddSeconds(10))
                         .Set("Items.$.UpdatedAtUtc", DateTime.UtcNow)
                         .Set(x => x.Status, "WAITING_RETRY")
                         .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);

@@ -30,7 +30,7 @@ public sealed class VideoRetryWorker(
                 logger.LogError(ex, "Video retry worker failed.");
             }
 
-            await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+            await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
         }
     }
 }

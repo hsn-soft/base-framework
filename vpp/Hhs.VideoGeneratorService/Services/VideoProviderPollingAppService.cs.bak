@@ -7,22 +7,22 @@ using MongoDB.Driver;
 
 namespace Hhs.VideoGeneratorService.Services;
 
-public sealed class AudioProviderPollingAppService(
+public sealed class VideoProviderPollingAppService(
     VideoMongoContext context,
-    IAudioProviderResolver audioProviderResolver,
+    IVideoProviderResolver videoProviderResolver,
     IEventBus eventBus,
-    ILogger<AudioProviderPollingAppService> logger)
+    ILogger<VideoProviderPollingAppService> logger)
 {
-    public async Task PollDueAudioRequestsAsync(CancellationToken cancellationToken)
+    public async Task PollDueVideoRequestsAsync(CancellationToken cancellationToken)
     {
         var now = DateTime.UtcNow;
 
-        var requests = await context.AudioRequests
+        var requests = await context.VideoRequests
             .Find(x =>
-                x.Status == "AUDIO_PROVIDER_POLLING" &&
+                x.Status == "VIDEO_PROVIDER_POLLING" &&
                 x.NextProviderPollAtUtc != null &&
                 x.NextProviderPollAtUtc <= now &&
-                x.AudioProviderTrackId != null)
+                x.VideoProviderTrackId != null)
             .Limit(50)
             .ToListAsync(cancellationToken);
 
@@ -30,7 +30,7 @@ public sealed class AudioProviderPollingAppService(
         {
             try
             {
-                var claimResult = await ClaimDueAudioPollingAsync(
+                var claimResult = await ClaimDueVideoPollingAsync(
                     request.Id,
                     now,
                     cancellationToken);
@@ -41,19 +41,18 @@ public sealed class AudioProviderPollingAppService(
                 if (request.ProviderPollingCount >= request.MaxProviderPollingCount)
                 {
                     request.Status = "FAILED";
-                    request.LastError = "Audio provider polling timeout.";
+                    request.LastError = "Video provider polling timeout.";
                     request.UpdatedAtUtc = DateTime.UtcNow;
 
-                    await ReplaceAudioAsync(request, cancellationToken);
+                    await ReplaceVideoAsync(request, cancellationToken);
 
                     await eventBus.PublishAsync(new StepFailedEvent
                     {
-
                         CustomerContentId = request.CustomerContentId,
                         AnalysisContentId = request.AnalysisContentId,
                         ContentProcessType = request.ContentProcessType,
                         CorrelationId = request.CorrelationId,
-                        Step = EventNames.AudioProviderPollingStarted,
+                        Step = EventNames.VideoProviderPollingStarted,
                         ErrorMessage = request.LastError,
                         Retryable = false
                     }, cancellationToken);
@@ -61,19 +60,19 @@ public sealed class AudioProviderPollingAppService(
                     continue;
                 }
 
-                var provider = audioProviderResolver.Resolve(request.AudioProviderKey);
+                var provider = videoProviderResolver.Resolve(request.VideoProviderKey);
 
                 var status = await provider.GetStatusAsync(
-                    request.AudioProviderTrackId!,
+                    request.VideoProviderTrackId!,
                     cancellationToken);
 
                 if (status.IsFailed)
                 {
                     request.Status = "FAILED";
-                    request.LastError = status.ErrorMessage ?? "Audio provider failed.";
+                    request.LastError = status.ErrorMessage ?? "Video provider failed.";
                     request.UpdatedAtUtc = DateTime.UtcNow;
 
-                    await ReplaceAudioAsync(request, cancellationToken);
+                    await ReplaceVideoAsync(request, cancellationToken);
 
                     await eventBus.PublishAsync(new StepFailedEvent
                     {
@@ -81,7 +80,7 @@ public sealed class AudioProviderPollingAppService(
                         AnalysisContentId = request.AnalysisContentId,
                         ContentProcessType = request.ContentProcessType,
                         CorrelationId = request.CorrelationId,
-                        Step = EventNames.AudioProviderPollingStarted,
+                        Step = EventNames.VideoProviderPollingStarted,
                         ErrorMessage = request.LastError,
                         Retryable = false
                     }, cancellationToken);
@@ -92,34 +91,33 @@ public sealed class AudioProviderPollingAppService(
                 if (!status.IsCompleted)
                 {
                     request.ProviderPollingCount++;
-                    request.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(5);
+                    request.NextProviderPollAtUtc = DateTime.UtcNow.AddMinutes(5);
                     request.UpdatedAtUtc = DateTime.UtcNow;
 
-                    await ReplaceAudioAsync(request, cancellationToken);
+                    await ReplaceVideoAsync(request, cancellationToken);
                     continue;
                 }
 
                 if (string.IsNullOrWhiteSpace(status.ProviderFileUrl))
-                    throw new InvalidOperationException("Audio provider completed but file url is empty.");
+                    throw new InvalidOperationException("Video provider completed but file url is empty.");
 
                 request.ProviderPollingCount++;
                 request.NextProviderPollAtUtc = null;
-                request.ProviderAudioFileUrl = status.ProviderFileUrl;
-                request.Status = "AUDIO_PROVIDER_COMPLETED";
-                request.CurrentStep = EventNames.AudioProviderCompleted;
+                request.ProviderVideoFileUrl = status.ProviderFileUrl;
+                request.Status = "VIDEO_PROVIDER_COMPLETED";
+                request.CurrentStep = EventNames.VideoProviderCompleted;
                 request.LastError = null;
                 request.UpdatedAtUtc = DateTime.UtcNow;
 
-                await ReplaceAudioAsync(request, cancellationToken);
+                await ReplaceVideoAsync(request, cancellationToken);
 
-                await eventBus.PublishAsync(new AudioProviderCompletedEvent
+                await eventBus.PublishAsync(new VideoProviderCompletedEvent
                 {
                     CustomerContentId = request.CustomerContentId,
                     AnalysisContentId = request.AnalysisContentId,
                     ContentProcessType = request.ContentProcessType,
                     CorrelationId = request.CorrelationId,
-                    VideoRequestId = request.VideoRequestId,
-                    AudioRequestId = request.Id,
+                    VideoRequestId = request.Id,
                     ProviderFileUrl = status.ProviderFileUrl
                 }, cancellationToken);
             }
@@ -134,7 +132,7 @@ public sealed class AudioProviderPollingAppService(
                     request.Status = "FAILED";
                     request.NextProviderPollAtUtc = null;
 
-                    await ReplaceAudioAsync(request, cancellationToken);
+                    await ReplaceVideoAsync(request, cancellationToken);
 
                     await eventBus.PublishAsync(new StepFailedEvent
                     {
@@ -142,47 +140,46 @@ public sealed class AudioProviderPollingAppService(
                         AnalysisContentId = request.AnalysisContentId,
                         ContentProcessType = request.ContentProcessType,
                         CorrelationId = request.CorrelationId,
-                        Step = EventNames.AudioProviderPollingStarted,
+                        Step = EventNames.VideoProviderPollingStarted,
                         ErrorMessage = ex.Message,
                         Retryable = false
                     }, cancellationToken);
                 }
                 else
                 {
-                    request.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(5);
-                    await ReplaceAudioAsync(request, cancellationToken);
+                    request.NextProviderPollAtUtc = DateTime.UtcNow.AddMinutes(5);
+                    await ReplaceVideoAsync(request, cancellationToken);
                 }
 
                 logger.LogError(
                     ex,
-                    "Audio provider polling failed. AudioRequestId: {AudioRequestId}",
+                    "Video provider polling failed. VideoRequestId: {VideoRequestId}",
                     request.Id);
             }
         }
-
     }
 
-    private Task<UpdateResult> ClaimDueAudioPollingAsync(
-        Guid audioRequestId,
+    private Task<UpdateResult> ClaimDueVideoPollingAsync(
+        Guid videoRequestId,
         DateTime now,
         CancellationToken cancellationToken)
     {
-        return context.AudioRequests.UpdateOneAsync(
+        return context.VideoRequests.UpdateOneAsync(
             x =>
-                x.Id == audioRequestId &&
-                x.Status == "AUDIO_PROVIDER_POLLING" &&
+                x.Id == videoRequestId &&
+                x.Status == "VIDEO_PROVIDER_POLLING" &&
                 x.NextProviderPollAtUtc != null &&
                 x.NextProviderPollAtUtc <= now &&
-                x.AudioProviderTrackId != null,
-            Builders<AudioRequest>.Update
-                .Set(x => x.NextProviderPollAtUtc, DateTime.UtcNow.AddSeconds(5))
+                x.VideoProviderTrackId != null,
+            Builders<VideoRequest>.Update
+                .Set(x => x.NextProviderPollAtUtc, DateTime.UtcNow.AddMinutes(1))
                 .Set(x => x.UpdatedAtUtc, DateTime.UtcNow),
             cancellationToken: cancellationToken);
     }
 
-    private Task ReplaceAudioAsync(AudioRequest request, CancellationToken cancellationToken)
+    private Task ReplaceVideoAsync(VideoRequest request, CancellationToken cancellationToken)
     {
-        return context.AudioRequests.ReplaceOneAsync(
+        return context.VideoRequests.ReplaceOneAsync(
             x => x.Id == request.Id,
             request,
             cancellationToken: cancellationToken);

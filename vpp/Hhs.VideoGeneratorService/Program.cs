@@ -17,17 +17,20 @@ builder.Services.Configure<RabbitMqOptions>(builder.Configuration.GetSection("Ra
 BsonRegisterTools.MongoConfigure();
 builder.Services.AddSingleton<VideoMongoContext>();
 
+builder.Services.AddHttpClient();
 builder.Services.AddSingleton<IEventBus, RabbitMqEventBus>();
 
 builder.Services.AddScoped<VideoGeneratorInboxStore>();
 builder.Services.AddScoped<VideoOperationAppService>();
 
-builder.Services.AddScoped<IAudioProvider, AudioProviderA>();
+builder.Services.AddScoped<IAudioProvider, AudioQuickProvider>();
+builder.Services.AddScoped<IAudioProvider, AudioHQProvider>();
 builder.Services.AddScoped<IAudioProviderResolver, AudioProviderResolver>();
 
-builder.Services.AddScoped<IVideoProvider, VideoProviderA>();
-builder.Services.AddScoped<IVideoProvider, VideoProviderB>();
-builder.Services.AddScoped<IVideoProvider, VideoProviderC>();
+builder.Services.AddScoped<IVideoProvider, VideoFastProvider>();
+builder.Services.AddScoped<IVideoProvider, VideoSyncProvider>();
+builder.Services.AddScoped<IVideoProvider, VideoCloudProvider>();
+builder.Services.AddScoped<IVideoProvider, VideoProProvider>();
 builder.Services.AddScoped<IVideoProviderResolver, VideoProviderResolver>();
 builder.Services.AddScoped<IFileDownloader, DummyFileDownloader>();
 builder.Services.AddScoped<IStorageService, DummyStorageService>();
@@ -116,7 +119,7 @@ app.MapPost("/scheduler/audio-polling",
                     x.NextProviderPollAtUtc <= now &&
                     x.AudioProviderTrackId != null,
                 Builders<AudioRequest>.Update
-                    .Set(x => x.NextProviderPollAtUtc, DateTime.UtcNow.AddMinutes(1))
+                    .Set(x => x.NextProviderPollAtUtc, DateTime.UtcNow.AddSeconds(5))
                     .Set(x => x.UpdatedAtUtc, DateTime.UtcNow),
                 cancellationToken: cancellationToken);
 
@@ -161,7 +164,7 @@ app.MapPost("/scheduler/video-polling",
                     x.NextProviderPollAtUtc <= now &&
                     x.VideoProviderTrackId != null,
                 Builders<VideoRequest>.Update
-                    .Set(x => x.NextProviderPollAtUtc, DateTime.UtcNow.AddMinutes(1))
+                    .Set(x => x.NextProviderPollAtUtc, DateTime.UtcNow.AddSeconds(5))
                     .Set(x => x.UpdatedAtUtc, DateTime.UtcNow),
                 cancellationToken: cancellationToken);
 

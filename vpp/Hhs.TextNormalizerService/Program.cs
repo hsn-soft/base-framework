@@ -17,14 +17,15 @@ builder.Services.Configure<RabbitMqOptions>(builder.Configuration.GetSection("Ra
 BsonRegisterTools.MongoConfigure();
 builder.Services.AddSingleton<NormalizerMongoContext>();
 
+builder.Services.AddHttpClient();
 builder.Services.AddSingleton<IEventBus, RabbitMqEventBus>();
 
 builder.Services.AddScoped<NormalizerInboxStore>();
 builder.Services.AddScoped<NormalizerOperationAppService>();
 
 builder.Services.AddScoped<IContentScraper, DummyContentScraper>();
-builder.Services.AddScoped<IOutlineProvider, OpenAiOutlineProvider>();
-builder.Services.AddScoped<IOutlineProvider, CustomXyzOutlineProvider>();
+builder.Services.AddScoped<IOutlineProvider, OutlineFastProvider>();
+builder.Services.AddScoped<IOutlineProvider, OutlineDetailedProvider>();
 builder.Services.AddScoped<IOutlineProviderResolver, OutlineProviderResolver>();
 
 builder.Services.AddScoped<CustomerNormalizeRequestCreatedEventHandler>();
@@ -110,7 +111,7 @@ app.MapPost("/scheduler/outline-polling",
                     x.NextOutlinePollAtUtc <= now &&
                     x.OutlineProviderTrackId != null,
                 Builders<CustomerContentNormalizedRequest>.Update
-                    .Set(x => x.NextOutlinePollAtUtc, DateTime.UtcNow.AddMinutes(1))
+                    .Set(x => x.NextOutlinePollAtUtc, DateTime.UtcNow.AddSeconds(5))
                     .Set(x => x.UpdatedAtUtc, DateTime.UtcNow),
                 cancellationToken: cancellationToken);
 
@@ -152,7 +153,7 @@ app.MapPost("/scheduler/outline-polling",
             foreach (var item in pollingItems)
             {
                 var claimUpdate = Builders<AnalysisContentNormalizedRequest>.Update
-                    .Set("Items.$.NextOutlinePollAtUtc", DateTime.UtcNow.AddMinutes(1))
+                    .Set("Items.$.NextOutlinePollAtUtc", DateTime.UtcNow.AddSeconds(5))
                     .Set("Items.$.UpdatedAtUtc", DateTime.UtcNow)
                     .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);
 

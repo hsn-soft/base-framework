@@ -1,0 +1,124 @@
+@ContentService_HostAddress = http://localhost:5000
+
+### ============================================
+### ANALYSIS CONTENT TEST SCENARIOS - Collage Video Creation
+### ============================================
+### Combining first 5 customer-contents into collage videos
+### ============================================
+
+### ============================================
+### ANALYSIS SCENARIO 1: Fast Pipeline Collage
+### Combines customer-contents with all immediate providers
+### outline-fast + audio-quick + video-fast
+### Expected: Fast collage creation
+### ============================================
+POST {{ContentService_HostAddress}}/analysis-contents
+Content-Type: application/json
+
+{
+  "title": "Fast Pipeline Collage - Immediate Providers",
+  "customerContentIds": [
+    "34a1c457-c049-4a39-a98e-c4e415c25fbe",
+    "a4c51e12-d787-436b-bdb1-8fbeec737bb6",
+    "1b00b3bd-fcad-464c-8c5d-5ab2fdb46477",
+    "43ae351a-9602-424f-a9d4-9830ab67d158",
+    "2e29fa83-9599-40ea-84f5-404077f021d6"
+  ],
+  "outlineProviderKey": "outline-fast",
+  "audioProviderKey": "audio-quick",
+  "videoProviderKey": "video-fast"
+}
+
+### ============================================
+### ANALYSIS SCENARIO 2: Mixed Fast + Cloud Collage
+### Combines with cloud video polling
+### outline-fast + audio-quick + video-cloud
+### Expected: ~128s + collage overhead
+### ============================================
+POST {{ContentService_HostAddress}}/analysis-contents
+Content-Type: application/json
+
+{
+  "title": "Fast + Cloud Collage - With Video Polling",
+  "customerContentIds": [
+    "34a1c457-c049-4a39-a98e-c4e415c25fbe",
+    "a4c51e12-d787-436b-bdb1-8fbeec737bb6",
+    "1b00b3bd-fcad-464c-8c5d-5ab2fdb46477",
+    "43ae351a-9602-424f-a9d4-9830ab67d158",
+    "2e29fa83-9599-40ea-84f5-404077f021d6"
+  ],
+  "outlineProviderKey": "outline-fast",
+  "audioProviderKey": "audio-quick",
+  "videoProviderKey": "video-cloud"
+}
+
+### ============================================
+### ANALYSIS SCENARIO 3: Professional Async Collage
+### Combines with HQ audio + professional video
+### outline-fast + audio-hq + video-pro
+### Expected: ~188s + collage overhead
+### ============================================
+POST {{ContentService_HostAddress}}/analysis-contents
+Content-Type: application/json
+
+{
+  "title": "Professional Async Collage - HQ Audio + Pro Video",
+  "customerContentIds": [
+    "34a1c457-c049-4a39-a98e-c4e415c25fbe",
+    "a4c51e12-d787-436b-bdb1-8fbeec737bb6",
+    "1b00b3bd-fcad-464c-8c5d-5ab2fdb46477",
+    "43ae351a-9602-424f-a9d4-9830ab67d158",
+    "2e29fa83-9599-40ea-84f5-404077f021d6"
+  ],
+  "outlineProviderKey": "outline-fast",
+  "audioProviderKey": "audio-hq",
+  "videoProviderKey": "video-pro"
+}
+
+### ============================================
+### ANALYSIS SCENARIO 4: Full Async Collage
+### All polling providers
+### outline-detailed + audio-hq + video-cloud
+### Expected: ~210s + collage overhead
+### ============================================
+POST {{ContentService_HostAddress}}/analysis-contents
+Content-Type: application/json
+
+{
+  "title": "Full Async Collage - All Polling Providers",
+  "customerContentIds": [
+    "34a1c457-c049-4a39-a98e-c4e415c25fbe",
+    "a4c51e12-d787-436b-bdb1-8fbeec737bb6",
+    "1b00b3bd-fcad-464c-8c5d-5ab2fdb46477",
+    "43ae351a-9602-424f-a9d4-9830ab67d158",
+    "2e29fa83-9599-40ea-84f5-404077f021d6"
+  ],
+  "outlineProviderKey": "outline-detailed",
+  "audioProviderKey": "audio-hq",
+  "videoProviderKey": "video-cloud"
+}
+
+### ============================================
+### ANALYSIS SCENARIO 5: Maximum Quality Collage
+### All async with file-based processing
+### outline-detailed + audio-hq + video-pro
+### Expected: ~210s + collage overhead
+### ============================================
+POST {{ContentService_HostAddress}}/analysis-contents
+Content-Type: application/json
+
+{
+  "title": "Maximum Quality Collage - All Async Files",
+  "customerContentIds": [
+    "34a1c457-c049-4a39-a98e-c4e415c25fbe",
+    "a4c51e12-d787-436b-bdb1-8fbeec737bb6",
+    "1b00b3bd-fcad-464c-8c5d-5ab2fdb46477",
+    "43ae351a-9602-424f-a9d4-9830ab67d158",
+    "2e29fa83-9599-40ea-84f5-404077f021d6"
+  ],
+  "outlineProviderKey": "outline-detailed",
+  "audioProviderKey": "audio-hq",
+  "videoProviderKey": "video-pro"
+}
+
+###

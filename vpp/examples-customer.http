@@ -1,123 +1,134 @@
 @ContentService_HostAddress = http://localhost:5000
 
 ### ============================================
+### CUSTOMER CONTENT TEST SCENARIOS - All 8 Provider Combinations
+### ============================================
+### Testing all outline (2) × audio (2) × video (4) combinations
+### ============================================
+
+### ============================================
 ### SCENARIO 1: All Immediate (Fast Path)
-### Providers: outline-fast + audio-quick + video-fast
-### Total Time: ~13s
+### outline-fast (5s) + audio-quick (3s) + video-fast (5s)
+### Expected: ~13s | Flow: All synchronous
 ### ============================================
 POST {{ContentService_HostAddress}}/customer-contents
 Content-Type: application/json
 
 {
-  "url": "https://example.com/scenario1-all-immediate",
+  "url": "https://example.com/s1-all-immediate",
   "outlineProviderKey": "outline-fast",
   "audioProviderKey": "audio-quick",
   "videoProviderKey": "video-fast"
 }
 
 ### ============================================
-### SCENARIO 2: Immediate + Immediate + Sync (Files)
-### Providers: outline-fast + audio-quick + video-sync
-### Total Time: ~13s
+### SCENARIO 2: Immediate (Fast) + Immediate + Sync Files
+### outline-fast (5s) + audio-quick (3s) + video-sync (5s)
+### Expected: ~13s | Flow: All synchronous with file passing
 ### ============================================
 POST {{ContentService_HostAddress}}/customer-contents
 Content-Type: application/json
 
 {
-  "url": "https://example.com/scenario2-sync-files",
+  "url": "https://example.com/s2-immediate-sync",
   "outlineProviderKey": "outline-fast",
   "audioProviderKey": "audio-quick",
   "videoProviderKey": "video-sync"
 }
 
 ### ============================================
-### SCENARIO 3: Fast + Quick + Cloud (Polling)
-### Providers: outline-fast + audio-quick + video-cloud
-### Total Time: ~128s
+### SCENARIO 3: Immediate + Immediate + Cloud Polling
+### outline-fast (5s) + audio-quick (3s) + video-cloud (120s polling)
+### Expected: ~128s | Flow: Immediate→Immediate→Polling
 ### ============================================
 POST {{ContentService_HostAddress}}/customer-contents
 Content-Type: application/json
 
 {
-  "url": "https://example.com/scenario3-fast-cloud",
+  "url": "https://example.com/s3-fast-cloud",
   "outlineProviderKey": "outline-fast",
   "audioProviderKey": "audio-quick",
   "videoProviderKey": "video-cloud"
 }
 
 ### ============================================
-### SCENARIO 4: Fast + Quick + Pro (Polling Files)
-### Providers: outline-fast + audio-quick + video-pro
-### Total Time: ~128s
+### SCENARIO 4: Immediate + Immediate + Pro Polling (Files)
+### outline-fast (5s) + audio-quick (3s) + video-pro (120s polling)
+### Expected: ~128s | Flow: Immediate→Immediate→Polling with file passing
 ### ============================================
 POST {{ContentService_HostAddress}}/customer-contents
 Content-Type: application/json
 
 {
-  "url": "https://example.com/scenario4-fast-pro",
+  "url": "https://example.com/s4-fast-pro",
   "outlineProviderKey": "outline-fast",
   "audioProviderKey": "audio-quick",
   "videoProviderKey": "video-pro"
 }
 
 ### ============================================
-### SCENARIO 5: Fast + HQ + Cloud (Audio Polling)
-### Providers: outline-fast + audio-hq + video-cloud
-### Total Time: ~188s
+### SCENARIO 5: Immediate + HQ Polling + Cloud Polling
+### outline-fast (5s) + audio-hq (60s polling) + video-cloud (120s polling)
+### Expected: ~188s | Flow: Immediate→Polling→Polling (parallel audio+video)
 ### ============================================
 POST {{ContentService_HostAddress}}/customer-contents
 Content-Type: application/json
 
 {
-  "url": "https://example.com/scenario5-fast-hq-cloud",
+  "url": "https://example.com/s5-fast-hq-cloud",
   "outlineProviderKey": "outline-fast",
   "audioProviderKey": "audio-hq",
   "videoProviderKey": "video-cloud"
 }
 
 ### ============================================
-### SCENARIO 6: Fast + HQ + Pro (Full Async Files)
-### Providers: outline-fast + audio-hq + video-pro
-### Total Time: ~188s
+### SCENARIO 6: Immediate + HQ Polling + Pro Polling (Files)
+### outline-fast (5s) + audio-hq (60s polling) + video-pro (120s polling)
+### Expected: ~188s | Flow: Immediate→Polling→Polling with file dependent flow
 ### ============================================
 POST {{ContentService_HostAddress}}/customer-contents
 Content-Type: application/json
 
 {
-  "url": "https://example.com/scenario6-fast-hq-pro",
+  "url": "https://example.com/s6-fast-hq-pro",
   "outlineProviderKey": "outline-fast",
   "audioProviderKey": "audio-hq",
   "videoProviderKey": "video-pro"
 }
 
 ### ============================================
-### SCENARIO 7: Detailed + HQ + Cloud (All Polling)
-### Providers: outline-detailed + audio-hq + video-cloud
-### Total Time: ~210s
+### SCENARIO 7: Detailed Polling + HQ Polling + Cloud Polling
+### outline-detailed (30s polling) + audio-hq (60s polling) + video-cloud (120s polling)
+### Expected: ~210s | Flow: All AsyncPolling with proper sequencing
 ### ============================================
 POST {{ContentService_HostAddress}}/customer-contents
 Content-Type: application/json
 
 {
-  "url": "https://example.com/scenario7-detailed-hq-cloud",
+  "url": "https://example.com/s7-detailed-hq-cloud",
   "outlineProviderKey": "outline-detailed",
   "audioProviderKey": "audio-hq",
   "videoProviderKey": "video-cloud"
 }
 
 ### ============================================
-### SCENARIO 8: Detailed + HQ + Pro (Full Async)
-### Providers: outline-detailed + audio-hq + video-pro
-### Total Time: ~210s
+### SCENARIO 8: Full Async Pipeline (All Polling)
+### outline-detailed (30s polling) + audio-hq (60s polling) + video-pro (120s polling)
+### Expected: ~210s | Flow: Complete async with file dependency management
 ### ============================================
 POST {{ContentService_HostAddress}}/customer-contents
 Content-Type: application/json
 
 {
-  "url": "https://example.com/scenario8-detailed-hq-pro",
+  "url": "https://example.com/s8-detailed-hq-pro",
   "outlineProviderKey": "outline-detailed",
   "audioProviderKey": "audio-hq",
   "videoProviderKey": "video-pro"
 }
 
 ###
+### ============================================
+### HELPER: Get all customer contents
+### ============================================
+### GET {{ContentService_HostAddress}}/customer-contents
+### ============================================

@@ -37,6 +37,26 @@ app.MapPost("/customer-contents", async (
     return Results.Ok(new { id });
 });
 
+app.MapGet("/customer-contents/{id}", async (
+    Guid id,
+    ContentDbContext dbContext,
+    CancellationToken cancellationToken) =>
+{
+    var content = await dbContext.CustomerContents.FindAsync(new object[] { id }, cancellationToken: cancellationToken);
+    if (content == null)
+        return Results.NotFound();
+    return Results.Ok(new
+    {
+        id = content.Id,
+        status = content.NormalizeStatus,
+        normalizeStatus = content.NormalizeStatus,
+        videoStatus = content.VideoStatus,
+        url = content.Url,
+        createdAt = content.CreatedAtUtc,
+        updatedAt = content.UpdatedAtUtc
+    });
+});
+
 app.MapPost("/analysis-contents", async (
     CreateAnalysisContentRequest request,
     ContentOperationAppService appService,

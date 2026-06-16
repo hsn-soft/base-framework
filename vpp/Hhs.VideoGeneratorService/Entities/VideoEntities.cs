@@ -26,7 +26,7 @@ public sealed class VideoRequest
     public string? FinalVideoStorageUrl { get; set; }
 
     public int RetryCount { get; set; }
-    public int MaxRetryCount { get; set; } = 5;
+    public int MaxRetryCount { get; set; } = 30;
     public DateTime? NextRetryAtUtc { get; set; }
     public string? LastError { get; set; }
 
@@ -68,7 +68,7 @@ public sealed class AudioRequest
     public string? AudioStorageUrl { get; set; }
 
     public int RetryCount { get; set; }
-    public int MaxRetryCount { get; set; } = 5;
+    public int MaxRetryCount { get; set; } = 30;
     public DateTime? NextRetryAtUtc { get; set; }
     public string? LastError { get; set; }
 

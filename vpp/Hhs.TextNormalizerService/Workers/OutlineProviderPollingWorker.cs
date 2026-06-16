@@ -30,7 +30,7 @@ public sealed class OutlineProviderPollingWorker(
                 logger.LogError(ex, "Outline polling worker failed.");
             }
 
-            await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+            await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
         }
     }
 }

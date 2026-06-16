@@ -128,7 +128,7 @@ public sealed class VideoRetryAppService(
             }
             catch
             {
-                request.NextRetryAtUtc = DateTime.UtcNow.AddSeconds(10);
+                request.NextRetryAtUtc = DateTime.UtcNow.AddMinutes(1);
                 request.UpdatedAtUtc = DateTime.UtcNow;
 
                 await context.AudioRequests.ReplaceOneAsync(
@@ -258,7 +258,7 @@ public sealed class VideoRetryAppService(
             }
             catch
             {
-                request.NextRetryAtUtc = DateTime.UtcNow.AddSeconds(10);
+                request.NextRetryAtUtc = DateTime.UtcNow.AddMinutes(1);
                 request.UpdatedAtUtc = DateTime.UtcNow;
 
                 await context.VideoRequests.ReplaceOneAsync(
