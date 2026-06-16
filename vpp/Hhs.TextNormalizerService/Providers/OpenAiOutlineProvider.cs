@@ -1,9 +1,12 @@
 using Hhs.Shared.Providers;
+using Hhs.TextNormalizerService.MockApis;
 
 namespace Hhs.TextNormalizerService.Providers;
 
 public sealed class OpenAiOutlineProvider : IOutlineProvider
 {
+    private readonly MockOpenAiOutlineApi _mockApi;
+
     public string ProviderKey => "openai";
 
     public OutlineProviderCapabilities Capabilities => new()
@@ -12,15 +15,22 @@ public sealed class OpenAiOutlineProvider : IOutlineProvider
         ExecutionMode = ProviderExecutionMode.ImmediateResult
     };
 
-    public Task<OutlineCreateResponse> CreateAsync(
+    public OpenAiOutlineProvider()
+    {
+        _mockApi = new MockOpenAiOutlineApi();
+    }
+
+    public async Task<OutlineCreateResponse> CreateAsync(
         OutlineCreateRequest request,
         CancellationToken cancellationToken)
     {
-        return Task.FromResult(new OutlineCreateResponse
+        var script = await _mockApi.GenerateOutlineAsync(request.InputText, cancellationToken);
+
+        return new OutlineCreateResponse
         {
             IsCompleted = true,
-            Script = $"OpenAI script: {request.InputText[..Math.Min(80, request.InputText.Length)]}"
-        });
+            Script = script
+        };
     }
 
     public Task<OutlineStatusResponse> GetStatusAsync(
