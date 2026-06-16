@@ -50,6 +50,21 @@ public sealed class NormalizerRetryAppService(
                                     ?? throw new InvalidOperationException("ScrapingResult.Text is required.")
                     }, cancellationToken);
                 }
+                else if (request.CurrentStep == EventNames.CustomerOutlineStarted)
+                {
+                    await eventBus.PublishAsync(new CustomerOutlineStartedEvent
+                    {
+                        CustomerContentId = request.CustomerContentId,
+                        ContentProcessType = ContentProcessTypes.CustomerContent,
+                        CorrelationId = request.CorrelationId
+                    }, cancellationToken);
+                }
+                else if (request.CurrentStep == EventNames.OutlineProviderPollingStarted)
+                {
+                    request.Status = "OUTLINE_PROVIDER_POLLING";
+                    request.OutlineStatus = "POLLING";
+                    request.NextOutlinePollAtUtc = DateTime.UtcNow;
+                }
 
                 request.Status = "RETRY_PUBLISHED";
                 request.NextRetryAtUtc = null;
@@ -135,6 +150,15 @@ public sealed class NormalizerRetryAppService(
                             InputText = item.ScrapingResult?.Text
                                         ?? throw new InvalidOperationException("ScrapingResult.Text is required.")
                         }, cancellationToken);
+                    }
+                    else if (item.CurrentStep == EventNames.OutlineProviderPollingStarted)
+                    {
+                        item.Status = "OUTLINE_PROVIDER_POLLING";
+                        item.OutlineStatus = "POLLING";
+                        item.NextOutlinePollAtUtc = DateTime.UtcNow;
+
+                        request.Status = "OUTLINE_PROVIDER_POLLING";
+                        request.CurrentStep = EventNames.OutlineProviderPollingStarted;
                     }
 
                     item.Status = "RETRY_PUBLISHED";

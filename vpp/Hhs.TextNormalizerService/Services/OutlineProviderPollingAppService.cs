@@ -132,6 +132,9 @@ public sealed class OutlineProviderPollingAppService
             }
             catch (Exception ex)
             {
+                request.Status = "OUTLINE_PROVIDER_POLLING";
+                request.OutlineStatus = "POLLING";
+                request.CurrentStep = EventNames.OutlineProviderPollingStarted;
                 request.OutlinePollingCount++;
                 request.NextOutlinePollAtUtc = DateTime.UtcNow.AddMinutes(5);
                 request.LastError = ex.Message;
@@ -279,11 +282,16 @@ public sealed class OutlineProviderPollingAppService
                 }
                 catch (Exception ex)
                 {
+                    item.OutlineStatus = "POLLING";
+                    item.CurrentStep = EventNames.OutlineProviderPollingStarted;
+                    item.Status = "OUTLINE_PROVIDER_POLLING";
                     item.OutlinePollingCount++;
                     item.NextOutlinePollAtUtc = DateTime.UtcNow.AddMinutes(5);
                     item.LastError = ex.Message;
                     item.UpdatedAtUtc = DateTime.UtcNow;
 
+                    request.Status = "OUTLINE_PROVIDER_POLLING";
+                    request.CurrentStep = EventNames.OutlineProviderPollingStarted;
                     request.LastError = ex.Message;
                     request.UpdatedAtUtc = DateTime.UtcNow;
 

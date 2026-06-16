@@ -350,8 +350,12 @@ private async Task HandleOutlineProviderRequestExceptionAsync(
 
         var item = analysis.Items.First(x => x.CustomerContentId == @event.CustomerContentIdForItem);
 
+        item.Status = "OUTLINE_COMPLETED";
+        item.CurrentStep = EventNames.AnalysisItemOutlineCompleted;
         item.OutlineStatus = "COMPLETED";
         item.OutlineResult = new OutlineResult { Script = @event.Script };
+        item.LastError = null;
+        item.NextRetryAtUtc = null;
         item.UpdatedAtUtc = DateTime.UtcNow;
 
         analysis.CurrentStep = EventNames.AnalysisItemOutlineCompleted;
