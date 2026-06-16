@@ -109,5 +109,10 @@ public sealed class NormalizerInboxMessage
 
     public string EventName { get; set; } = default!;
     public string Payload { get; set; } = default!;
-    public DateTime ProcessedAtUtc { get; set; }
+    public string Status { get; set; } = "STARTED";
+
+    public DateTime CreatedAtUtc { get; set; }
+    public DateTime? ProcessedAtUtc { get; set; }
+
+    public string? ErrorMessage { get; set; }
 }

@@ -1,6 +1,7 @@
 using Hhs.ContentService;
 using Hhs.ContentService.Data;
 using Hhs.ContentService.Handlers;
+using Hhs.ContentService.Infrastructure;
 using Hhs.ContentService.Services;
 using Hhs.Shared.Events;
 using Hhs.Shared.RabbitMQ;
@@ -14,6 +15,7 @@ builder.Services.AddDbContext<ContentDbContext>(opt =>
 builder.Services.Configure<RabbitMqOptions>(builder.Configuration.GetSection("RabbitMq"));
 builder.Services.AddSingleton<IEventBus, RabbitMqEventBus>();
 
+builder.Services.AddScoped<ContentInboxStore>();
 builder.Services.AddScoped<ContentOperationAppService>();
 
 builder.Services.AddScoped<NormalizerResultPublishedEventHandler>();

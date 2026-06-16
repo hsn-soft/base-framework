@@ -10,11 +10,22 @@ public abstract class NormalizerEventHandlerBase<TEvent>(NormalizerInboxStore in
 {
     public async Task HandleAsync(TEvent @event, CancellationToken cancellationToken)
     {
-        if (await inboxStore.ExistsAsync(@event.EventId, cancellationToken))
+        if (await inboxStore.IsProcessedAsync(@event.EventId, cancellationToken))
             return;
 
-        await inboxStore.SaveAsync(@event, cancellationToken);
-        await ExecuteAsync(@event, cancellationToken);
+        await inboxStore.StartAsync(@event, cancellationToken);
+
+        try
+        {
+            await ExecuteAsync(@event, cancellationToken);
+
+            await inboxStore.CompleteAsync(@event.EventId, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            await inboxStore.FailAsync(@event.EventId, ex, cancellationToken);
+            throw;
+        }
     }
 
     protected abstract Task ExecuteAsync(TEvent @event, CancellationToken cancellationToken);

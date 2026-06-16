@@ -1,4 +1,4 @@
-using Hhs.TextNormalizerService.Providers;
+namespace Hhs.TextNormalizerService.Providers;
 
 public interface IOutlineProviderResolver
 {

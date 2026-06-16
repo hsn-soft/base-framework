@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Hhs.ContentService.Data;
 using Hhs.ContentService.Entities;
 using Hhs.Shared.Events;
@@ -103,6 +102,9 @@ public sealed class ContentOperationAppService
         {
             AnalysisContentId = analysisId,
             Items = items,
+            OutlineProviderKey = analysis.OutlineProviderKey,
+            VideoProviderKey = analysis.VideoProviderKey,
+            AudioProviderKey = analysis.AudioProviderKey,
             CorrelationId = Guid.NewGuid()
         }, cancellationToken);
 

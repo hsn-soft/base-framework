@@ -1,67 +1,46 @@
-using System.Text.Json;
-using Hhs.ContentService.Data;
-using Hhs.ContentService.Entities;
+using Hhs.ContentService.Infrastructure;
 using Hhs.ContentService.Services;
 using Hhs.Shared.Events;
 using Hhs.Shared.RabbitMQ;
 
 namespace Hhs.ContentService.Handlers;
 
-public abstract class ContentEventHandlerBase<TEvent> : IIntegrationEventHandler<TEvent>
+public abstract class ContentEventHandlerBase<TEvent>(ContentInboxStore inboxStore) : IIntegrationEventHandler<TEvent>
     where TEvent : IntegrationEvent
 {
-    private readonly ContentDbContext _db;
-
-    protected ContentEventHandlerBase(ContentDbContext db)
-    {
-        _db = db;
-    }
-
     public async Task HandleAsync(TEvent @event, CancellationToken cancellationToken)
     {
-        if (await _db.InboxMessages.FindAsync([@event.EventId], cancellationToken) is not null)
+        if (await inboxStore.IsProcessedAsync(@event.EventId, cancellationToken))
             return;
 
-        _db.InboxMessages.Add(new InboxMessage
+        await inboxStore.StartAsync(@event, cancellationToken);
+
+        try
         {
-            EventId = @event.EventId,
-            EventName = @event.EventName,
-            Payload = JsonSerializer.Serialize(@event, @event.GetType()),
-            ProcessedAtUtc = DateTime.UtcNow
-        });
+            await ExecuteAsync(@event, cancellationToken);
 
-        await _db.SaveChangesAsync(cancellationToken);
-
-        await ExecuteAsync(@event, cancellationToken);
+            await inboxStore.CompleteAsync(@event.EventId, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            await inboxStore.FailAsync(@event.EventId, ex, cancellationToken);
+            throw;
+        }
     }
 
     protected abstract Task ExecuteAsync(TEvent @event, CancellationToken cancellationToken);
 }
 
-public sealed class NormalizerResultPublishedEventHandler
-    : ContentEventHandlerBase<NormalizerResultPublishedEvent>
+public sealed class NormalizerResultPublishedEventHandler(ContentInboxStore inboxStore, ContentOperationAppService appService)
+    : ContentEventHandlerBase<NormalizerResultPublishedEvent>(inboxStore)
 {
-    private readonly ContentOperationAppService _appService;
-
-    public NormalizerResultPublishedEventHandler(ContentDbContext db, ContentOperationAppService appService) : base(db)
-    {
-        _appService = appService;
-    }
-
     protected override Task ExecuteAsync(NormalizerResultPublishedEvent @event, CancellationToken cancellationToken)
-        => _appService.HandleNormalizerResultAsync(@event, cancellationToken);
+        => appService.HandleNormalizerResultAsync(@event, cancellationToken);
 }
 
-public sealed class VideoGenerationResultPublishedEventHandler
-    : ContentEventHandlerBase<VideoGenerationResultPublishedEvent>
+public sealed class VideoGenerationResultPublishedEventHandler(ContentInboxStore inboxStore, ContentOperationAppService appService)
+    : ContentEventHandlerBase<VideoGenerationResultPublishedEvent>(inboxStore)
 {
-    private readonly ContentOperationAppService _appService;
-
-    public VideoGenerationResultPublishedEventHandler(ContentDbContext db, ContentOperationAppService appService) : base(db)
-    {
-        _appService = appService;
-    }
-
     protected override Task ExecuteAsync(VideoGenerationResultPublishedEvent @event, CancellationToken cancellationToken)
-        => _appService.HandleVideoResultAsync(@event, cancellationToken);
+        => appService.HandleVideoResultAsync(@event, cancellationToken);
 }

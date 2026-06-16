@@ -12,7 +12,7 @@ public sealed class ContentDbContext : DbContext
     public DbSet<CustomerContent> CustomerContents => Set<CustomerContent>();
     public DbSet<AnalysisContent> AnalysisContents => Set<AnalysisContent>();
     public DbSet<AnalysisContentItem> AnalysisContentItems => Set<AnalysisContentItem>();
-    public DbSet<InboxMessage> InboxMessages => Set<InboxMessage>();
+    public DbSet<ContentInboxMessage> InboxMessages => Set<ContentInboxMessage>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -50,7 +50,7 @@ public sealed class ContentDbContext : DbContext
                 .HasForeignKey(x => x.CustomerContentId);
         });
 
-        builder.Entity<InboxMessage>(b =>
+        builder.Entity<ContentInboxMessage>(b =>
         {
             b.ToTable("inbox_messages");
             b.HasKey(x => x.EventId);

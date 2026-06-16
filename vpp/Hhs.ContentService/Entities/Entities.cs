@@ -65,10 +65,16 @@ public sealed class AnalysisContentItem
     public int SortOrder { get; set; }
 }
 
-public sealed class InboxMessage
+public sealed class ContentInboxMessage
 {
     public Guid EventId { get; set; }
+
     public string EventName { get; set; } = default!;
-    public DateTime ProcessedAtUtc { get; set; }
     public string Payload { get; set; } = default!;
+    public string Status { get; set; } = "STARTED";
+
+    public DateTime CreatedAtUtc { get; set; }
+    public DateTime? ProcessedAtUtc { get; set; }
+
+    public string? ErrorMessage { get; set; }
 }
