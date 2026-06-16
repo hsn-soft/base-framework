@@ -307,6 +307,17 @@ public async Task CreateVideoRequestAsync(
 
             await ReplaceAudioAsync(audioRequest, cancellationToken);
 
+            await eventBus.PublishAsync(new AudioFileDownloadCompletedEvent
+            {
+                CustomerContentId = audioRequest.CustomerContentId,
+                AnalysisContentId = audioRequest.AnalysisContentId,
+                ContentProcessType = @event.ContentProcessType,
+                CorrelationId = @event.CorrelationId,
+                VideoRequestId = audioRequest.VideoRequestId,
+                AudioRequestId = audioRequest.Id,
+                LocalFilePath = localPath
+            }, cancellationToken);
+
             await eventBus.PublishAsync(new AudioFileUploadStartedEvent
             {
                 CustomerContentId = audioRequest.CustomerContentId,
@@ -426,6 +437,8 @@ public async Task HandleAudioUploadCompletedAsync(
 
         if (lockResult.ModifiedCount == 0)
             return;
+
+        videoRequest.Status = "VIDEO_PROVIDER_REQUEST_STARTING";
 
         await eventBus.PublishAsync(new VideoProviderRequestStartedEvent
         {

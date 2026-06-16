@@ -51,6 +51,14 @@ public sealed class OutlineProviderPollingAppService
         {
             try
             {
+                var claimResult = await ClaimDueCustomerPollingAsync(
+                    request.Id,
+                    now,
+                    cancellationToken);
+
+                if (claimResult.ModifiedCount == 0)
+                    continue;
+
                 if (request.OutlinePollingCount >= request.MaxOutlinePollingCount)
                 {
                     request.Status = "FAILED";
@@ -433,6 +441,24 @@ public sealed class OutlineProviderPollingAppService
         return _context.CustomerRequests.ReplaceOneAsync(
             x => x.Id == request.Id,
             request,
+            cancellationToken: cancellationToken);
+    }
+
+    private Task<UpdateResult> ClaimDueCustomerPollingAsync(
+        Guid customerRequestId,
+        DateTime now,
+        CancellationToken cancellationToken)
+    {
+        return _context.CustomerRequests.UpdateOneAsync(
+            x =>
+                x.Id == customerRequestId &&
+                x.Status == "OUTLINE_PROVIDER_POLLING" &&
+                x.NextOutlinePollAtUtc != null &&
+                x.NextOutlinePollAtUtc <= now &&
+                x.OutlineProviderTrackId != null,
+            Builders<CustomerContentNormalizedRequest>.Update
+                .Set(x => x.NextOutlinePollAtUtc, DateTime.UtcNow.AddMinutes(1))
+                .Set(x => x.UpdatedAtUtc, DateTime.UtcNow),
             cancellationToken: cancellationToken);
     }
 }

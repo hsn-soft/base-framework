@@ -67,6 +67,12 @@ public sealed class AudioFileDownloadStartedEventHandler(VideoGeneratorInboxStor
         => appService.DownloadAudioFileAsync(@event, cancellationToken);
 }
 
+public sealed class AudioFileDownloadCompletedEventHandler(VideoGeneratorInboxStore inboxStore) : VideoEventHandlerBase<AudioFileDownloadCompletedEvent>(inboxStore)
+{
+    protected override Task ExecuteAsync(AudioFileDownloadCompletedEvent @event, CancellationToken cancellationToken)
+        => Task.CompletedTask;
+}
+
 public sealed class AudioFileUploadStartedEventHandler(VideoGeneratorInboxStore inboxStore, VideoOperationAppService appService) : VideoEventHandlerBase<AudioFileUploadStartedEvent>(inboxStore)
 {
     protected override Task ExecuteAsync(AudioFileUploadStartedEvent @event, CancellationToken cancellationToken)

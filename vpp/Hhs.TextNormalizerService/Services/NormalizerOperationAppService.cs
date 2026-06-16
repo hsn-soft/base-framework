@@ -697,6 +697,17 @@ public sealed class NormalizerOperationAppService(
             return;
         }
 
+        if (request.Items.Any(x => x.Status == "FAILED"))
+        {
+            await UpdateAnalysisParentAsync(
+                request.Id,
+                "FAILED",
+                EventNames.AnalysisItemOutlineCompleted,
+                "One or more items failed during processing.",
+                cancellationToken);
+            return;
+        }
+
         if (request.Items.Any(x => x.OutlineStatus != "COMPLETED"))
             return;
 

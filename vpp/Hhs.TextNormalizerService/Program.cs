@@ -1,11 +1,13 @@
 using Hhs.Shared.Events;
 using Hhs.Shared.RabbitMQ;
+using Hhs.TextNormalizerService.Entities;
 using Hhs.TextNormalizerService.Handlers;
 using Hhs.TextNormalizerService.Infrastructure;
 using Hhs.TextNormalizerService.Mongo;
 using Hhs.TextNormalizerService.Providers;
 using Hhs.TextNormalizerService.Services;
 using Hhs.TextNormalizerService.Workers;
+using MongoDB.Driver;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -75,6 +77,115 @@ app.MapPost("/admin/customer-contents/{customerContentId:guid}/scraping/complete
     {
         await appService.CompleteCustomerScrapingManuallyAsync(customerContentId, input, cancellationToken);
         return Results.Ok();
+    });
+
+app.MapPost("/scheduler/outline-polling",
+    async (
+        NormalizerMongoContext mongoContext,
+        IEventBus eventBus,
+        IOutlineProviderResolver outlineProviderResolver,
+        CancellationToken cancellationToken) =>
+    {
+        var now = DateTime.UtcNow;
+
+        var customerRequests = await mongoContext.CustomerRequests
+            .Find(x =>
+                x.Status == "OUTLINE_PROVIDER_POLLING" &&
+                x.NextOutlinePollAtUtc != null &&
+                x.NextOutlinePollAtUtc <= now &&
+                x.OutlineProviderTrackId != null)
+            .Limit(10)
+            .ToListAsync(cancellationToken);
+
+        var processedCount = 0;
+
+        foreach (var request in customerRequests)
+        {
+            var claimResult = await mongoContext.CustomerRequests.UpdateOneAsync(
+                x =>
+                    x.Id == request.Id &&
+                    x.Status == "OUTLINE_PROVIDER_POLLING" &&
+                    x.NextOutlinePollAtUtc != null &&
+                    x.NextOutlinePollAtUtc <= now &&
+                    x.OutlineProviderTrackId != null,
+                Builders<CustomerContentNormalizedRequest>.Update
+                    .Set(x => x.NextOutlinePollAtUtc, DateTime.UtcNow.AddMinutes(1))
+                    .Set(x => x.UpdatedAtUtc, DateTime.UtcNow),
+                cancellationToken: cancellationToken);
+
+            if (claimResult.ModifiedCount == 0)
+                continue;
+
+            await eventBus.PublishAsync(new OutlineProviderPollingStartedEvent
+            {
+                ProviderKey = request.OutlineProviderKey,
+                NormalizedRequestId = request.Id,
+                ProviderTrackId = request.OutlineProviderTrackId
+            }, cancellationToken);
+
+            processedCount++;
+        }
+
+        var analysisRequests = await mongoContext.AnalysisRequests
+            .Find(x =>
+                x.Items.Any(i =>
+                    i.OutlineStatus == "POLLING" &&
+                    i.NextOutlinePollAtUtc != null &&
+                    i.NextOutlinePollAtUtc <= now &&
+                    i.OutlineProviderTrackId != null))
+            .Limit(10)
+            .ToListAsync(cancellationToken);
+
+        foreach (var request in analysisRequests)
+        {
+            var pollingItems = request.Items
+                .Where(i =>
+                    i.OutlineStatus == "POLLING" &&
+                    i.NextOutlinePollAtUtc != null &&
+                    i.NextOutlinePollAtUtc <= now &&
+                    i.OutlineProviderTrackId != null)
+                .OrderBy(i => i.SortOrder)
+                .Take(10)
+                .ToList();
+
+            foreach (var item in pollingItems)
+            {
+                var claimUpdate = Builders<AnalysisContentNormalizedRequest>.Update
+                    .Set("Items.$.NextOutlinePollAtUtc", DateTime.UtcNow.AddMinutes(1))
+                    .Set("Items.$.UpdatedAtUtc", DateTime.UtcNow)
+                    .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);
+
+                var claimResult = await mongoContext.AnalysisRequests.UpdateOneAsync(
+                    Builders<AnalysisContentNormalizedRequest>.Filter.And(
+                        Builders<AnalysisContentNormalizedRequest>.Filter.Eq(x => x.Id, request.Id),
+                        Builders<AnalysisContentNormalizedRequest>.Filter.ElemMatch(
+                            x => x.Items,
+                            i =>
+                                i.CustomerContentId == item.CustomerContentId &&
+                                i.OutlineStatus == "POLLING" &&
+                                i.NextOutlinePollAtUtc != null &&
+                                i.NextOutlinePollAtUtc <= now &&
+                                i.OutlineProviderTrackId != null)),
+                    claimUpdate,
+                    cancellationToken: cancellationToken);
+
+                if (claimResult.ModifiedCount == 0)
+                    continue;
+
+                await eventBus.PublishAsync(new OutlineProviderPollingStartedEvent
+                {
+                    ProviderKey = request.OutlineProviderKey,
+                    NormalizedRequestId = request.Id,
+                    CustomerContentIdForItem = item.CustomerContentId,
+                    SortOrder = item.SortOrder,
+                    ProviderTrackId = item.OutlineProviderTrackId
+                }, cancellationToken);
+
+                processedCount++;
+            }
+        }
+
+        return Results.Ok(new { processed = processedCount });
     });
 
 app.Run();

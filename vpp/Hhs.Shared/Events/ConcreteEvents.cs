@@ -292,6 +292,19 @@ public sealed record AudioFileDownloadStartedEvent : IntegrationEvent
     }
 }
 
+public sealed record AudioFileDownloadCompletedEvent : IntegrationEvent
+{
+    public Guid VideoRequestId { get; init; }
+    public Guid AudioRequestId { get; init; }
+    public string LocalFilePath { get; init; } = default!;
+
+    public AudioFileDownloadCompletedEvent()
+    {
+        EventName = EventNames.AudioFileDownloadCompleted;
+        Facility = EventNames.AudioFileDownloadCompleted;
+    }
+}
+
 public sealed record AudioFileUploadStartedEvent : IntegrationEvent
 {
     public Guid VideoRequestId { get; init; }

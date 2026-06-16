@@ -1,11 +1,13 @@
 using Hhs.Shared.Events;
 using Hhs.Shared.RabbitMQ;
+using Hhs.VideoGeneratorService.Entities;
 using Hhs.VideoGeneratorService.Handlers;
 using Hhs.VideoGeneratorService.Infrastructure;
 using Hhs.VideoGeneratorService.Mongo;
 using Hhs.VideoGeneratorService.Providers;
 using Hhs.VideoGeneratorService.Services;
 using Hhs.VideoGeneratorService.Workers;
+using MongoDB.Driver;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,6 +38,7 @@ builder.Services.AddScoped<VideoOperationStartedEventHandler>();
 builder.Services.AddScoped<AudioProviderRequestStartedEventHandler>();
 builder.Services.AddScoped<AudioProviderCompletedEventHandler>();
 builder.Services.AddScoped<AudioFileDownloadStartedEventHandler>();
+builder.Services.AddScoped<AudioFileDownloadCompletedEventHandler>();
 builder.Services.AddScoped<AudioFileUploadStartedEventHandler>();
 builder.Services.AddScoped<AudioFileUploadCompletedEventHandler>();
 builder.Services.AddScoped<VideoProviderRequestStartedEventHandler>();
@@ -55,6 +58,7 @@ builder.Services.AddHostedService<RabbitMqConsumerHostedService<VideoOperationSt
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<AudioProviderRequestStartedEvent, AudioProviderRequestStartedEventHandler>>();
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<AudioProviderCompletedEvent, AudioProviderCompletedEventHandler>>();
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<AudioFileDownloadStartedEvent, AudioFileDownloadStartedEventHandler>>();
+builder.Services.AddHostedService<RabbitMqConsumerHostedService<AudioFileDownloadCompletedEvent, AudioFileDownloadCompletedEventHandler>>();
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<AudioFileUploadStartedEvent, AudioFileUploadStartedEventHandler>>();
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<AudioFileUploadCompletedEvent, AudioFileUploadCompletedEventHandler>>();
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<VideoProviderRequestStartedEvent, VideoProviderRequestStartedEventHandler>>();
@@ -82,6 +86,96 @@ app.MapPost("/admin/audio-requests/{audioRequestId:guid}/upload/complete-manual"
     {
         await appService.CompleteAudioUploadManuallyAsync(audioRequestId, input, cancellationToken);
         return Results.Ok();
+    });
+
+app.MapPost("/scheduler/audio-polling",
+    async (
+        VideoMongoContext mongoContext,
+        IEventBus eventBus,
+        IAudioProviderResolver audioProviderResolver,
+        CancellationToken cancellationToken) =>
+    {
+        var now = DateTime.UtcNow;
+        var requests = await mongoContext.AudioRequests
+            .Find(x =>
+                x.Status == "AUDIO_PROVIDER_POLLING" &&
+                x.NextProviderPollAtUtc != null &&
+                x.NextProviderPollAtUtc <= now &&
+                x.AudioProviderTrackId != null)
+            .Limit(10)
+            .ToListAsync(cancellationToken);
+
+        foreach (var request in requests)
+        {
+            var claimResult = await mongoContext.AudioRequests.UpdateOneAsync(
+                x =>
+                    x.Id == request.Id &&
+                    x.Status == "AUDIO_PROVIDER_POLLING" &&
+                    x.NextProviderPollAtUtc != null &&
+                    x.NextProviderPollAtUtc <= now &&
+                    x.AudioProviderTrackId != null,
+                Builders<AudioRequest>.Update
+                    .Set(x => x.NextProviderPollAtUtc, DateTime.UtcNow.AddMinutes(1))
+                    .Set(x => x.UpdatedAtUtc, DateTime.UtcNow),
+                cancellationToken: cancellationToken);
+
+            if (claimResult.ModifiedCount == 0)
+                continue;
+
+            await eventBus.PublishAsync(new AudioProviderPollingStartedEvent
+            {
+                VideoRequestId = request.VideoRequestId,
+                AudioRequestId = request.Id,
+                ProviderKey = request.AudioProviderKey,
+                ProviderTrackId = request.AudioProviderTrackId
+            }, cancellationToken);
+        }
+
+        return Results.Ok(new { processed = requests.Count });
+    });
+
+app.MapPost("/scheduler/video-polling",
+    async (
+        VideoMongoContext mongoContext,
+        IEventBus eventBus,
+        CancellationToken cancellationToken) =>
+    {
+        var now = DateTime.UtcNow;
+        var requests = await mongoContext.VideoRequests
+            .Find(x =>
+                x.Status == "VIDEO_PROVIDER_POLLING" &&
+                x.NextProviderPollAtUtc != null &&
+                x.NextProviderPollAtUtc <= now &&
+                x.VideoProviderTrackId != null)
+            .Limit(10)
+            .ToListAsync(cancellationToken);
+
+        foreach (var request in requests)
+        {
+            var claimResult = await mongoContext.VideoRequests.UpdateOneAsync(
+                x =>
+                    x.Id == request.Id &&
+                    x.Status == "VIDEO_PROVIDER_POLLING" &&
+                    x.NextProviderPollAtUtc != null &&
+                    x.NextProviderPollAtUtc <= now &&
+                    x.VideoProviderTrackId != null,
+                Builders<VideoRequest>.Update
+                    .Set(x => x.NextProviderPollAtUtc, DateTime.UtcNow.AddMinutes(1))
+                    .Set(x => x.UpdatedAtUtc, DateTime.UtcNow),
+                cancellationToken: cancellationToken);
+
+            if (claimResult.ModifiedCount == 0)
+                continue;
+
+            await eventBus.PublishAsync(new VideoProviderPollingStartedEvent
+            {
+                VideoRequestId = request.Id,
+                ProviderKey = request.VideoProviderKey,
+                ProviderTrackId = request.VideoProviderTrackId
+            }, cancellationToken);
+        }
+
+        return Results.Ok(new { processed = requests.Count });
     });
 
 app.Run();
