@@ -46,6 +46,48 @@ app.MapPost("/analysis-contents", async (
     return Results.Ok(new { id });
 });
 
+app.MapPost("/demo/customer1/outline-abc", async (
+    DemoCustomerContentRequest request,
+    ContentOperationAppService appService,
+    CancellationToken cancellationToken) =>
+{
+    var id = await appService.CreateCustomerContentAsync(new CreateCustomerContentRequest(
+        Url: request.Url,
+        OutlineProviderKey: "outline-abc",
+        VideoProviderKey: request.VideoProviderKey,
+        AudioProviderKey: request.AudioProviderKey
+    ), cancellationToken);
+
+    return Results.Ok(new
+    {
+        message = "Customer1 created with outline-abc (immediate result provider)",
+        contentId = id,
+        providerKey = "outline-abc",
+        processingMs = 5000
+    });
+});
+
+app.MapPost("/demo/customer2/outline-xyz", async (
+    DemoCustomerContentRequest request,
+    ContentOperationAppService appService,
+    CancellationToken cancellationToken) =>
+{
+    var id = await appService.CreateCustomerContentAsync(new CreateCustomerContentRequest(
+        Url: request.Url,
+        OutlineProviderKey: "outline-xyz",
+        VideoProviderKey: request.VideoProviderKey,
+        AudioProviderKey: request.AudioProviderKey
+    ), cancellationToken);
+
+    return Results.Ok(new
+    {
+        message = "Customer2 created with outline-xyz (polling provider)",
+        contentId = id,
+        providerKey = "outline-xyz",
+        pollingWindowSec = 30
+    });
+});
+
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ContentDbContext>();
@@ -66,6 +108,11 @@ namespace Hhs.ContentService
         string Title,
         List<Guid> CustomerContentIds,
         string OutlineProviderKey = "openai",
+        string VideoProviderKey = "video-a",
+        string? AudioProviderKey = "audio-a");
+
+    public sealed record DemoCustomerContentRequest(
+        string Url,
         string VideoProviderKey = "video-a",
         string? AudioProviderKey = "audio-a");
 }
