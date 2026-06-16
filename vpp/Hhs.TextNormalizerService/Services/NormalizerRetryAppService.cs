@@ -1,5 +1,6 @@
 using Hhs.Shared.Events;
 using Hhs.Shared.RabbitMQ;
+using Hhs.TextNormalizerService.Entities;
 using Hhs.TextNormalizerService.Mongo;
 using MongoDB.Driver;
 
@@ -121,8 +122,15 @@ public sealed class NormalizerRetryAppService(
         DateTime now,
         CancellationToken cancellationToken)
     {
+        var filter = Builders<AnalysisContentNormalizedRequest>.Filter.ElemMatch(
+            x => x.Items,
+            i =>
+                i.Status == "WAITING_RETRY" &&
+                i.NextRetryAtUtc != null &&
+                i.NextRetryAtUtc <= now);
+
         var requests = await context.AnalysisRequests
-            .Find(x => x.Status == "WAITING_RETRY")
+            .Find(filter)
             .Limit(50)
             .ToListAsync(cancellationToken);
 
@@ -182,30 +190,42 @@ public sealed class NormalizerRetryAppService(
                     }
                     else if (item.CurrentStep == EventNames.OutlineProviderPollingStarted)
                     {
-                        item.Status = "OUTLINE_PROVIDER_POLLING";
-                        item.OutlineStatus = "POLLING";
-                        item.NextOutlinePollAtUtc = DateTime.UtcNow;
+                        var pollingUpdate = Builders<AnalysisContentNormalizedRequest>.Update
+                            .Set("Items.$.Status", "OUTLINE_PROVIDER_POLLING")
+                            .Set("Items.$.OutlineStatus", "POLLING")
+                            .Set("Items.$.NextOutlinePollAtUtc", DateTime.UtcNow)
+                            .Set("Items.$.NextRetryAtUtc", (DateTime?)null)
+                            .Set("Items.$.LastError", (string?)null)
+                            .Set("Items.$.UpdatedAtUtc", DateTime.UtcNow)
+                            .Set(x => x.Status, "OUTLINE_PROVIDER_POLLING")
+                            .Set(x => x.CurrentStep, EventNames.OutlineProviderPollingStarted)
+                            .Set(x => x.LastError, null)
+                            .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);
 
-                        request.Status = "OUTLINE_PROVIDER_POLLING";
-                        request.CurrentStep = EventNames.OutlineProviderPollingStarted;
+                        await UpdateAnalysisItemAsync(
+                            request.Id,
+                            item.CustomerContentId,
+                            pollingUpdate,
+                            cancellationToken);
 
                         retryHandledByPolling = true;
                     }
                     else
                     {
-                        item.Status = "FAILED";
-                        item.LastError = $"Unsupported analysis retry step: {item.CurrentStep}";
-                        item.NextRetryAtUtc = null;
-                        item.UpdatedAtUtc = DateTime.UtcNow;
+                        var failUpdate = Builders<AnalysisContentNormalizedRequest>.Update
+                            .Set("Items.$.Status", "FAILED")
+                            .Set("Items.$.LastError", $"Unsupported analysis retry step: {item.CurrentStep}")
+                            .Set("Items.$.NextRetryAtUtc", (DateTime?)null)
+                            .Set("Items.$.UpdatedAtUtc", DateTime.UtcNow)
+                            .Set(x => x.Status, "FAILED")
+                            .Set(x => x.LastError, $"Unsupported analysis retry step: {item.CurrentStep}")
+                            .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);
 
-                        request.Status = "FAILED";
-                        request.LastError = item.LastError;
-                        request.UpdatedAtUtc = DateTime.UtcNow;
-
-                        await context.AnalysisRequests.ReplaceOneAsync(
-                            x => x.Id == request.Id,
-                            request,
-                            cancellationToken: cancellationToken);
+                        await UpdateAnalysisItemAsync(
+                            request.Id,
+                            item.CustomerContentId,
+                            failUpdate,
+                            cancellationToken);
 
                         await eventBus.PublishAsync(new StepFailedEvent
                         {
@@ -214,7 +234,7 @@ public sealed class NormalizerRetryAppService(
                             CustomerContentId = item.CustomerContentId,
                             ContentProcessType = ContentProcessTypes.AnalysisContent,
                             Step = item.CurrentStep,
-                            ErrorMessage = item.LastError,
+                            ErrorMessage = $"Unsupported analysis retry step: {item.CurrentStep}",
                             Retryable = false
                         }, cancellationToken);
 
@@ -223,42 +243,54 @@ public sealed class NormalizerRetryAppService(
 
                     if (!retryHandledByPolling)
                     {
-                        item.Status = "RETRY_PUBLISHED";
+                        var publishedUpdate = Builders<AnalysisContentNormalizedRequest>.Update
+                            .Set("Items.$.Status", "RETRY_PUBLISHED")
+                            .Set("Items.$.NextRetryAtUtc", (DateTime?)null)
+                            .Set("Items.$.LastError", (string?)null)
+                            .Set("Items.$.UpdatedAtUtc", DateTime.UtcNow)
+                            .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);
+
+                        await UpdateAnalysisItemAsync(
+                            request.Id,
+                            item.CustomerContentId,
+                            publishedUpdate,
+                            cancellationToken);
                     }
-
-                    item.NextRetryAtUtc = null;
-                    item.LastError = null;
-                    item.UpdatedAtUtc = DateTime.UtcNow;
-
-                    if (request.Items.All(x =>
-                            x.Status is "RETRY_PUBLISHED" or "OUTLINE_PROVIDER_POLLING" or "COMPLETED" or "OUTLINE_COMPLETED"))
-                    {
-                        request.Status = request.Items.Any(x => x.Status == "OUTLINE_PROVIDER_POLLING")
-                            ? "OUTLINE_PROVIDER_POLLING"
-                            : "RETRY_PUBLISHED";
-                    }
-
-                    request.LastError = null;
-                    request.UpdatedAtUtc = DateTime.UtcNow;
-
-                    await context.AnalysisRequests.ReplaceOneAsync(
-                        x => x.Id == request.Id,
-                        request,
-                        cancellationToken: cancellationToken);
                 }
                 catch
                 {
-                    item.NextRetryAtUtc = DateTime.UtcNow.AddMinutes(1);
-                    item.UpdatedAtUtc = DateTime.UtcNow;
+                    var retryAgainUpdate = Builders<AnalysisContentNormalizedRequest>.Update
+                        .Set("Items.$.NextRetryAtUtc", DateTime.UtcNow.AddMinutes(1))
+                        .Set("Items.$.UpdatedAtUtc", DateTime.UtcNow)
+                        .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);
 
-                    await context.AnalysisRequests.ReplaceOneAsync(
-                        x => x.Id == request.Id,
-                        request,
-                        cancellationToken: cancellationToken);
+                    await UpdateAnalysisItemAsync(
+                        request.Id,
+                        item.CustomerContentId,
+                        retryAgainUpdate,
+                        cancellationToken);
 
                     throw;
                 }
             }
         }
+    }
+
+    private Task UpdateAnalysisItemAsync(
+        Guid analysisRequestId,
+        Guid customerContentId,
+        UpdateDefinition<AnalysisContentNormalizedRequest> update,
+        CancellationToken cancellationToken)
+    {
+        var filter = Builders<AnalysisContentNormalizedRequest>.Filter.And(
+            Builders<AnalysisContentNormalizedRequest>.Filter.Eq(x => x.Id, analysisRequestId),
+            Builders<AnalysisContentNormalizedRequest>.Filter.ElemMatch(
+                x => x.Items,
+                i => i.CustomerContentId == customerContentId));
+
+        return context.AnalysisRequests.UpdateOneAsync(
+            filter,
+            update,
+            cancellationToken: cancellationToken);
     }
 }

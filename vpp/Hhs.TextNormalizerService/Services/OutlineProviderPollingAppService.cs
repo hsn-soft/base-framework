@@ -177,13 +177,12 @@ public sealed class OutlineProviderPollingAppService
         DateTime now,
         CancellationToken cancellationToken)
     {
-        var filter = Builders<AnalysisContentNormalizedRequest>.Filter.And(
-            Builders<AnalysisContentNormalizedRequest>.Filter.Eq(x => x.Status, "OUTLINE_PROVIDER_POLLING"),
-            Builders<AnalysisContentNormalizedRequest>.Filter.ElemMatch(x => x.Items,
-                i => i.OutlineStatus == "POLLING" &&
-                     i.NextOutlinePollAtUtc <= now &&
-                     i.OutlineProviderTrackId != null)
-        );
+        var filter = Builders<AnalysisContentNormalizedRequest>.Filter.ElemMatch(
+            x => x.Items,
+            i =>
+                i.OutlineStatus == "POLLING" &&
+                i.NextOutlinePollAtUtc <= now &&
+                i.OutlineProviderTrackId != null);
 
         var requests = await _context.AnalysisRequests
             .Find(filter)
@@ -206,25 +205,12 @@ public sealed class OutlineProviderPollingAppService
                 {
                     if (item.OutlinePollingCount >= item.MaxOutlinePollingCount)
                     {
-                        item.OutlineStatus = "FAILED";
-                        item.LastError = "Outline provider polling timeout.";
-                        item.UpdatedAtUtc = DateTime.UtcNow;
-
-                        request.LastError = item.LastError;
-                        request.UpdatedAtUtc = DateTime.UtcNow;
-
-                        await ReplaceAnalysisAsync(request, cancellationToken);
-
-                        await _eventBus.PublishAsync(new StepFailedEvent
-                        {
-                            CorrelationId = request.CorrelationId,
-                            AnalysisContentId = request.AnalysisContentId,
-                            CustomerContentId = item.CustomerContentId,
-                            ContentProcessType = ContentProcessTypes.AnalysisContent,
-                            Step = EventNames.OutlineProviderPollingStarted,
-                            ErrorMessage = item.LastError,
-                            Retryable = false
-                        }, cancellationToken);
+                        await FailAnalysisPollingItemAsync(
+                            request,
+                            item,
+                            "Outline provider polling timeout.",
+                            false,
+                            cancellationToken);
 
                         continue;
                     }
@@ -237,59 +223,51 @@ public sealed class OutlineProviderPollingAppService
 
                     if (status.IsFailed)
                     {
-                        item.OutlineStatus = "FAILED";
-                        item.LastError = status.ErrorMessage ?? "Outline provider failed.";
-                        item.UpdatedAtUtc = DateTime.UtcNow;
-
-                        request.LastError = item.LastError;
-                        request.UpdatedAtUtc = DateTime.UtcNow;
-
-                        await ReplaceAnalysisAsync(request, cancellationToken);
-
-                        await _eventBus.PublishAsync(new StepFailedEvent
-                        {
-                            CorrelationId = request.CorrelationId,
-                            AnalysisContentId = request.AnalysisContentId,
-                            CustomerContentId = item.CustomerContentId,
-                            ContentProcessType = ContentProcessTypes.AnalysisContent,
-                            Step = EventNames.OutlineProviderPollingStarted,
-                            ErrorMessage = item.LastError,
-                            Retryable = false
-                        }, cancellationToken);
+                        await FailAnalysisPollingItemAsync(
+                            request,
+                            item,
+                            status.ErrorMessage ?? "Outline provider failed.",
+                            false,
+                            cancellationToken);
 
                         continue;
                     }
 
                     if (!status.IsCompleted)
                     {
-                        item.OutlinePollingCount++;
-                        item.NextOutlinePollAtUtc = DateTime.UtcNow.AddMinutes(5);
-                        item.UpdatedAtUtc = DateTime.UtcNow;
+                        var update = Builders<AnalysisContentNormalizedRequest>.Update
+                            .Inc("Items.$.OutlinePollingCount", 1)
+                            .Set("Items.$.NextOutlinePollAtUtc", DateTime.UtcNow.AddMinutes(5))
+                            .Set("Items.$.UpdatedAtUtc", DateTime.UtcNow)
+                            .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);
 
-                        request.UpdatedAtUtc = DateTime.UtcNow;
+                        await UpdateAnalysisItemAsync(
+                            request.Id,
+                            item.CustomerContentId,
+                            update,
+                            cancellationToken);
 
-                        await ReplaceAnalysisAsync(request, cancellationToken);
                         continue;
                     }
 
-                    item.OutlinePollingCount++;
-                    item.NextOutlinePollAtUtc = null;
-                    item.OutlineStatus = "PROVIDER_COMPLETED";
-                    item.UpdatedAtUtc = DateTime.UtcNow;
-
-                    request.CurrentStep = EventNames.OutlineProviderCompleted;
-                    request.UpdatedAtUtc = DateTime.UtcNow;
-
-                    if (request.Items.All(x =>
-                            x.OutlineStatus is "PROVIDER_COMPLETED" or "COMPLETED"))
-                    {
-                        request.Status = "OUTLINE_PROVIDER_COMPLETED";
-                    }
-
-                    await ReplaceAnalysisAsync(request, cancellationToken);
-
                     if (string.IsNullOrWhiteSpace(status.Script))
                         throw new InvalidOperationException("Outline provider completed but script is empty.");
+
+                    var completedUpdate = Builders<AnalysisContentNormalizedRequest>.Update
+                        .Inc("Items.$.OutlinePollingCount", 1)
+                        .Set("Items.$.Status", "OUTLINE_PROVIDER_COMPLETED")
+                        .Set("Items.$.CurrentStep", EventNames.OutlineProviderCompleted)
+                        .Set("Items.$.NextOutlinePollAtUtc", (DateTime?)null)
+                        .Set("Items.$.OutlineStatus", "PROVIDER_COMPLETED")
+                        .Set("Items.$.UpdatedAtUtc", DateTime.UtcNow)
+                        .Set(x => x.CurrentStep, EventNames.OutlineProviderCompleted)
+                        .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);
+
+                    await UpdateAnalysisItemAsync(
+                        request.Id,
+                        item.CustomerContentId,
+                        completedUpdate,
+                        cancellationToken);
 
                     await _eventBus.PublishAsync(new OutlineProviderCompletedEvent
                     {
@@ -305,49 +283,44 @@ public sealed class OutlineProviderPollingAppService
                 }
                 catch (Exception ex)
                 {
-                    item.OutlinePollingCount++;
-                    item.LastError = ex.Message;
-                    item.UpdatedAtUtc = DateTime.UtcNow;
+                    var nextCount = item.OutlinePollingCount + 1;
 
-                    if (item.OutlinePollingCount >= item.MaxOutlinePollingCount)
+                    if (nextCount >= item.MaxOutlinePollingCount)
                     {
-                        item.Status = "FAILED";
-                        item.CurrentStep = EventNames.OutlineProviderPollingStarted;
-                        item.OutlineStatus = "FAILED";
-                        item.NextOutlinePollAtUtc = null;
+                        await FailAnalysisPollingItemAsync(
+                            request,
+                            item,
+                            ex.Message,
+                            false,
+                            cancellationToken);
 
-                        request.Status = "FAILED";
-                        request.CurrentStep = EventNames.OutlineProviderPollingStarted;
-                        request.LastError = ex.Message;
-                        request.UpdatedAtUtc = DateTime.UtcNow;
+                        _logger.LogError(
+                            ex,
+                            "Analysis outline item polling failed permanently. AnalysisContentId: {AnalysisContentId}, CustomerContentId: {CustomerContentId}",
+                            request.AnalysisContentId,
+                            item.CustomerContentId);
 
-                        await ReplaceAnalysisAsync(request, cancellationToken);
-
-                        await _eventBus.PublishAsync(new StepFailedEvent
-                        {
-                            CorrelationId = request.CorrelationId,
-                            AnalysisContentId = request.AnalysisContentId,
-                            CustomerContentId = item.CustomerContentId,
-                            ContentProcessType = ContentProcessTypes.AnalysisContent,
-                            Step = EventNames.OutlineProviderPollingStarted,
-                            ErrorMessage = ex.Message,
-                            Retryable = false
-                        }, cancellationToken);
+                        continue;
                     }
-                    else
-                    {
-                        item.OutlineStatus = "POLLING";
-                        item.CurrentStep = EventNames.OutlineProviderPollingStarted;
-                        item.Status = "OUTLINE_PROVIDER_POLLING";
-                        item.NextOutlinePollAtUtc = DateTime.UtcNow.AddMinutes(5);
 
-                        request.Status = "OUTLINE_PROVIDER_POLLING";
-                        request.CurrentStep = EventNames.OutlineProviderPollingStarted;
-                        request.LastError = ex.Message;
-                        request.UpdatedAtUtc = DateTime.UtcNow;
+                    var update = Builders<AnalysisContentNormalizedRequest>.Update
+                        .Set("Items.$.OutlinePollingCount", nextCount)
+                        .Set("Items.$.Status", "OUTLINE_PROVIDER_POLLING")
+                        .Set("Items.$.CurrentStep", EventNames.OutlineProviderPollingStarted)
+                        .Set("Items.$.OutlineStatus", "POLLING")
+                        .Set("Items.$.LastError", ex.Message)
+                        .Set("Items.$.NextOutlinePollAtUtc", DateTime.UtcNow.AddMinutes(5))
+                        .Set("Items.$.UpdatedAtUtc", DateTime.UtcNow)
+                        .Set(x => x.Status, "OUTLINE_PROVIDER_POLLING")
+                        .Set(x => x.CurrentStep, EventNames.OutlineProviderPollingStarted)
+                        .Set(x => x.LastError, ex.Message)
+                        .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);
 
-                        await ReplaceAnalysisAsync(request, cancellationToken);
-                    }
+                    await UpdateAnalysisItemAsync(
+                        request.Id,
+                        item.CustomerContentId,
+                        update,
+                        cancellationToken);
 
                     _logger.LogError(
                         ex,
@@ -359,21 +332,66 @@ public sealed class OutlineProviderPollingAppService
         }
     }
 
+    private async Task FailAnalysisPollingItemAsync(
+        AnalysisContentNormalizedRequest request,
+        AnalysisNormalizedItem item,
+        string errorMessage,
+        bool retryable,
+        CancellationToken cancellationToken)
+    {
+        var update = Builders<AnalysisContentNormalizedRequest>.Update
+            .Set("Items.$.Status", "FAILED")
+            .Set("Items.$.CurrentStep", EventNames.OutlineProviderPollingStarted)
+            .Set("Items.$.OutlineStatus", "FAILED")
+            .Set("Items.$.LastError", errorMessage)
+            .Set("Items.$.NextOutlinePollAtUtc", (DateTime?)null)
+            .Set("Items.$.UpdatedAtUtc", DateTime.UtcNow)
+            .Set(x => x.Status, "FAILED")
+            .Set(x => x.CurrentStep, EventNames.OutlineProviderPollingStarted)
+            .Set(x => x.LastError, errorMessage)
+            .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);
+
+        await UpdateAnalysisItemAsync(
+            request.Id,
+            item.CustomerContentId,
+            update,
+            cancellationToken);
+
+        await _eventBus.PublishAsync(new StepFailedEvent
+        {
+            CorrelationId = request.CorrelationId,
+            AnalysisContentId = request.AnalysisContentId,
+            CustomerContentId = item.CustomerContentId,
+            ContentProcessType = ContentProcessTypes.AnalysisContent,
+            Step = EventNames.OutlineProviderPollingStarted,
+            ErrorMessage = errorMessage,
+            Retryable = retryable
+        }, cancellationToken);
+    }
+
+    private Task UpdateAnalysisItemAsync(
+        Guid analysisRequestId,
+        Guid customerContentId,
+        UpdateDefinition<AnalysisContentNormalizedRequest> update,
+        CancellationToken cancellationToken)
+    {
+        var filter = Builders<AnalysisContentNormalizedRequest>.Filter.And(
+            Builders<AnalysisContentNormalizedRequest>.Filter.Eq(x => x.Id, analysisRequestId),
+            Builders<AnalysisContentNormalizedRequest>.Filter.ElemMatch(
+                x => x.Items,
+                i => i.CustomerContentId == customerContentId));
+
+        return _context.AnalysisRequests.UpdateOneAsync(
+            filter,
+            update,
+            cancellationToken: cancellationToken);
+    }
+
     private Task ReplaceCustomerAsync(
         CustomerContentNormalizedRequest request,
         CancellationToken cancellationToken)
     {
         return _context.CustomerRequests.ReplaceOneAsync(
-            x => x.Id == request.Id,
-            request,
-            cancellationToken: cancellationToken);
-    }
-
-    private Task ReplaceAnalysisAsync(
-        AnalysisContentNormalizedRequest request,
-        CancellationToken cancellationToken)
-    {
-        return _context.AnalysisRequests.ReplaceOneAsync(
             x => x.Id == request.Id,
             request,
             cancellationToken: cancellationToken);

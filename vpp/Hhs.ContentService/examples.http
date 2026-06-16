@@ -7,7 +7,7 @@ POST {{ContentService_HostAddress}}/customer-contents
 Content-Type: application/json
 
 {
-    "url": "https://example.com/news/1"
+    "url": "https://example.com/news/5"
 }
 
 ###
@@ -31,11 +31,11 @@ Content-Type: application/json
 {
     "title": "Kolaj video",
     "customerContentIds": [
-        "96e011ff-8e26-4c77-a71b-4dc7df2e0d09",
-        "95920c7a-d92f-4ead-9ce0-7d7a9b6e3b23",
-        "a23d0065-a358-4cae-b0c5-6ab7bd16d4d1",
-        "e8f61a96-9487-40d6-b400-e68d7cf3028b",
-        "21134dc2-e841-4029-aded-ff69505aab8a"
+        "8cc08703-a89e-4f32-b63e-463b6c2fcfa9",
+        "ae1156eb-8d3a-4ad6-b14c-37d9c68c8a69",
+        "cfed04eb-d0a9-49cc-9c3f-ab82ff422789",
+        "16ada8dd-5fb0-4a45-ae4b-77df7b09255d",
+        "a566ded4-3a59-4fce-bd60-10ff73ef1534"
     ]
 }
 
