@@ -132,15 +132,38 @@ public sealed class OutlineProviderPollingAppService
             }
             catch (Exception ex)
             {
-                request.Status = "OUTLINE_PROVIDER_POLLING";
-                request.OutlineStatus = "POLLING";
-                request.CurrentStep = EventNames.OutlineProviderPollingStarted;
                 request.OutlinePollingCount++;
-                request.NextOutlinePollAtUtc = DateTime.UtcNow.AddMinutes(5);
                 request.LastError = ex.Message;
                 request.UpdatedAtUtc = DateTime.UtcNow;
 
-                await ReplaceCustomerAsync(request, cancellationToken);
+                if (request.OutlinePollingCount >= request.MaxOutlinePollingCount)
+                {
+                    request.Status = "FAILED";
+                    request.OutlineStatus = "FAILED";
+                    request.CurrentStep = EventNames.OutlineProviderPollingStarted;
+                    request.NextOutlinePollAtUtc = null;
+
+                    await ReplaceCustomerAsync(request, cancellationToken);
+
+                    await _eventBus.PublishAsync(new StepFailedEvent
+                    {
+                        CorrelationId = request.CorrelationId,
+                        CustomerContentId = request.CustomerContentId,
+                        ContentProcessType = ContentProcessTypes.CustomerContent,
+                        Step = EventNames.OutlineProviderPollingStarted,
+                        ErrorMessage = ex.Message,
+                        Retryable = false
+                    }, cancellationToken);
+                }
+                else
+                {
+                    request.Status = "OUTLINE_PROVIDER_POLLING";
+                    request.OutlineStatus = "POLLING";
+                    request.CurrentStep = EventNames.OutlineProviderPollingStarted;
+                    request.NextOutlinePollAtUtc = DateTime.UtcNow.AddMinutes(5);
+
+                    await ReplaceCustomerAsync(request, cancellationToken);
+                }
 
                 _logger.LogError(
                     ex,
@@ -282,20 +305,49 @@ public sealed class OutlineProviderPollingAppService
                 }
                 catch (Exception ex)
                 {
-                    item.OutlineStatus = "POLLING";
-                    item.CurrentStep = EventNames.OutlineProviderPollingStarted;
-                    item.Status = "OUTLINE_PROVIDER_POLLING";
                     item.OutlinePollingCount++;
-                    item.NextOutlinePollAtUtc = DateTime.UtcNow.AddMinutes(5);
                     item.LastError = ex.Message;
                     item.UpdatedAtUtc = DateTime.UtcNow;
 
-                    request.Status = "OUTLINE_PROVIDER_POLLING";
-                    request.CurrentStep = EventNames.OutlineProviderPollingStarted;
-                    request.LastError = ex.Message;
-                    request.UpdatedAtUtc = DateTime.UtcNow;
+                    if (item.OutlinePollingCount >= item.MaxOutlinePollingCount)
+                    {
+                        item.Status = "FAILED";
+                        item.CurrentStep = EventNames.OutlineProviderPollingStarted;
+                        item.OutlineStatus = "FAILED";
+                        item.NextOutlinePollAtUtc = null;
 
-                    await ReplaceAnalysisAsync(request, cancellationToken);
+                        request.Status = "FAILED";
+                        request.CurrentStep = EventNames.OutlineProviderPollingStarted;
+                        request.LastError = ex.Message;
+                        request.UpdatedAtUtc = DateTime.UtcNow;
+
+                        await ReplaceAnalysisAsync(request, cancellationToken);
+
+                        await _eventBus.PublishAsync(new StepFailedEvent
+                        {
+                            CorrelationId = request.CorrelationId,
+                            AnalysisContentId = request.AnalysisContentId,
+                            CustomerContentId = item.CustomerContentId,
+                            ContentProcessType = ContentProcessTypes.AnalysisContent,
+                            Step = EventNames.OutlineProviderPollingStarted,
+                            ErrorMessage = ex.Message,
+                            Retryable = false
+                        }, cancellationToken);
+                    }
+                    else
+                    {
+                        item.OutlineStatus = "POLLING";
+                        item.CurrentStep = EventNames.OutlineProviderPollingStarted;
+                        item.Status = "OUTLINE_PROVIDER_POLLING";
+                        item.NextOutlinePollAtUtc = DateTime.UtcNow.AddMinutes(5);
+
+                        request.Status = "OUTLINE_PROVIDER_POLLING";
+                        request.CurrentStep = EventNames.OutlineProviderPollingStarted;
+                        request.LastError = ex.Message;
+                        request.UpdatedAtUtc = DateTime.UtcNow;
+
+                        await ReplaceAnalysisAsync(request, cancellationToken);
+                    }
 
                     _logger.LogError(
                         ex,

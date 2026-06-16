@@ -65,7 +65,27 @@ public sealed class NormalizerRetryAppService(
                 }
                 else
                 {
-                    throw new InvalidOperationException($"Unsupported customer retry step: {request.CurrentStep}");
+                    request.Status = "FAILED";
+                    request.LastError = $"Unsupported customer retry step: {request.CurrentStep}";
+                    request.NextRetryAtUtc = null;
+                    request.UpdatedAtUtc = DateTime.UtcNow;
+
+                    await context.CustomerRequests.ReplaceOneAsync(
+                        x => x.Id == request.Id,
+                        request,
+                        cancellationToken: cancellationToken);
+
+                    await eventBus.PublishAsync(new StepFailedEvent
+                    {
+                        CorrelationId = request.CorrelationId,
+                        CustomerContentId = request.CustomerContentId,
+                        ContentProcessType = ContentProcessTypes.CustomerContent,
+                        Step = request.CurrentStep,
+                        ErrorMessage = request.LastError,
+                        Retryable = false
+                    }, cancellationToken);
+
+                    continue;
                 }
 
                 if (!retryHandledByPolling)
@@ -173,7 +193,32 @@ public sealed class NormalizerRetryAppService(
                     }
                     else
                     {
-                        throw new InvalidOperationException($"Unsupported analysis retry step: {item.CurrentStep}");
+                        item.Status = "FAILED";
+                        item.LastError = $"Unsupported analysis retry step: {item.CurrentStep}";
+                        item.NextRetryAtUtc = null;
+                        item.UpdatedAtUtc = DateTime.UtcNow;
+
+                        request.Status = "FAILED";
+                        request.LastError = item.LastError;
+                        request.UpdatedAtUtc = DateTime.UtcNow;
+
+                        await context.AnalysisRequests.ReplaceOneAsync(
+                            x => x.Id == request.Id,
+                            request,
+                            cancellationToken: cancellationToken);
+
+                        await eventBus.PublishAsync(new StepFailedEvent
+                        {
+                            CorrelationId = request.CorrelationId,
+                            AnalysisContentId = request.AnalysisContentId,
+                            CustomerContentId = item.CustomerContentId,
+                            ContentProcessType = ContentProcessTypes.AnalysisContent,
+                            Step = item.CurrentStep,
+                            ErrorMessage = item.LastError,
+                            Retryable = false
+                        }, cancellationToken);
+
+                        continue;
                     }
 
                     if (!retryHandledByPolling)

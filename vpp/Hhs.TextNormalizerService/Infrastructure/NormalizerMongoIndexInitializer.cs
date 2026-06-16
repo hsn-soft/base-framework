@@ -8,6 +8,26 @@ public sealed class NormalizerMongoIndexInitializer(NormalizerMongoContext conte
 {
     public async Task CreateIndexesAsync(CancellationToken cancellationToken)
     {
+        await context.CustomerRequests.Indexes.CreateOneAsync(
+            new CreateIndexModel<CustomerContentNormalizedRequest>(
+                Builders<CustomerContentNormalizedRequest>.IndexKeys.Ascending(x => x.SourceEventId),
+                new CreateIndexOptions
+                {
+                    Name = "ux_customer_normalized_source_event_id",
+                    Unique = true
+                }),
+            cancellationToken: cancellationToken);
+
+        await context.AnalysisRequests.Indexes.CreateOneAsync(
+            new CreateIndexModel<AnalysisContentNormalizedRequest>(
+                Builders<AnalysisContentNormalizedRequest>.IndexKeys.Ascending(x => x.SourceEventId),
+                new CreateIndexOptions
+                {
+                    Name = "ux_analysis_normalized_source_event_id",
+                    Unique = true
+                }),
+            cancellationToken: cancellationToken);
+
         await context.InboxMessages.Indexes.CreateOneAsync(
             new CreateIndexModel<NormalizerInboxMessage>(
                 Builders<NormalizerInboxMessage>.IndexKeys.Ascending(x => x.EventId),
