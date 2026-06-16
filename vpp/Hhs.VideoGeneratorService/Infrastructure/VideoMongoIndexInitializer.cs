@@ -76,7 +76,11 @@ public sealed class VideoMongoIndexInitializer(VideoMongoContext context)
                 Builders<AudioRequest>.IndexKeys
                     .Ascending(x => x.VideoRequestId)
                     .Ascending(x => x.SortOrder),
-                new CreateIndexOptions { Name = "ix_audio_requests_video_request_sort_order" }
+                new CreateIndexOptions
+                {
+                    Name = "ux_audio_requests_video_request_sort_order",
+                    Unique = true
+                }
             ),
 
             new(

@@ -332,48 +332,55 @@ public sealed class VideoOperationAppService(
         }
     }
 
-    public async Task HandleAudioUploadCompletedAsync(
-        AudioFileUploadCompletedEvent @event,
-        CancellationToken cancellationToken)
+public async Task HandleAudioUploadCompletedAsync(
+    AudioFileUploadCompletedEvent @event,
+    CancellationToken cancellationToken)
+{
+    var videoRequest = await GetVideoAsync(@event.VideoRequestId, cancellationToken);
+    var videoProvider = videoProviderResolver.Resolve(videoRequest.VideoProviderKey);
+
+    var allAudios = await context.AudioRequests
+        .Find(x => x.VideoRequestId == @event.VideoRequestId)
+        .ToListAsync(cancellationToken);
+
+    if (allAudios.Any(x => x.Status != "UPLOADED"))
+        return;
+
+    var lockResult = await context.VideoRequests.UpdateOneAsync(
+        x => x.Id == @event.VideoRequestId &&
+             x.Status != "VIDEO_PROVIDER_REQUEST_STARTING" &&
+             x.Status != "VIDEO_PROVIDER_REQUEST_STARTED" &&
+             x.Status != "VIDEO_PROVIDER_POLLING" &&
+             x.Status != "VIDEO_PROVIDER_COMPLETED" &&
+             x.Status != "VIDEO_DOWNLOADING" &&
+             x.Status != "VIDEO_UPLOADING" &&
+             x.Status != "COMPLETED",
+        Builders<VideoRequest>.Update
+            .Set(x => x.Status, "VIDEO_PROVIDER_REQUEST_STARTING")
+            .Set(x => x.CurrentStep, EventNames.VideoProviderRequestStarted)
+            .Set(x => x.UpdatedAtUtc, DateTime.UtcNow),
+        cancellationToken: cancellationToken);
+
+    if (lockResult.ModifiedCount == 0)
+        return;
+
+    var orderedAudios = allAudios.OrderBy(x => x.SortOrder).ToList();
+
+    await eventBus.PublishAsync(new VideoProviderRequestStartedEvent
     {
-        var videoRequest = await GetVideoAsync(@event.VideoRequestId, cancellationToken);
-
-        if (videoRequest.Status is "VIDEO_PROVIDER_REQUEST_STARTED"
-            or "VIDEO_PROVIDER_POLLING"
-            or "VIDEO_PROVIDER_COMPLETED"
-            or "VIDEO_DOWNLOADING"
-            or "VIDEO_UPLOADING"
-            or "COMPLETED")
-        {
-            return;
-        }
-
-        var videoProvider = videoProviderResolver.Resolve(videoRequest.VideoProviderKey);
-
-        var allAudios = await context.AudioRequests
-            .Find(x => x.VideoRequestId == @event.VideoRequestId)
-            .ToListAsync(cancellationToken);
-
-        if (allAudios.Any(x => x.Status != "UPLOADED"))
-            return;
-
-        var orderedAudios = allAudios.OrderBy(x => x.SortOrder).ToList();
-
-        await eventBus.PublishAsync(new VideoProviderRequestStartedEvent
-        {
-            CustomerContentId = videoRequest.CustomerContentId,
-            AnalysisContentId = videoRequest.AnalysisContentId,
-            ContentProcessType = videoRequest.ContentProcessType,
-            CorrelationId = @event.CorrelationId,
-            VideoRequestId = videoRequest.Id,
-            AudioUrls = videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioUrlListRequired
-                ? orderedAudios.Select(x => x.AudioStorageUrl!).ToList()
-                : [],
-            AudioFilePaths = videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioFileRequired
-                ? orderedAudios.Select(x => x.LocalAudioFilePath!).ToList()
-                : []
-        }, cancellationToken);
-    }
+        CustomerContentId = videoRequest.CustomerContentId,
+        AnalysisContentId = videoRequest.AnalysisContentId,
+        ContentProcessType = videoRequest.ContentProcessType,
+        CorrelationId = @event.CorrelationId,
+        VideoRequestId = videoRequest.Id,
+        AudioUrls = videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioUrlListRequired
+            ? orderedAudios.Select(x => x.AudioStorageUrl!).ToList()
+            : [],
+        AudioFilePaths = videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioFileRequired
+            ? orderedAudios.Select(x => x.LocalAudioFilePath!).ToList()
+            : []
+    }, cancellationToken);
+}
 
 
     public async Task StartVideoProviderRequestAsync(
@@ -707,6 +714,17 @@ public sealed class VideoOperationAppService(
         request.UpdatedAtUtc = DateTime.UtcNow;
 
         await ReplaceAudioAsync(request, cancellationToken);
+
+        await eventBus.PublishAsync(new StepFailedEvent
+        {
+            CustomerContentId = request.CustomerContentId,
+            AnalysisContentId = request.AnalysisContentId,
+            ContentProcessType = request.ContentProcessType,
+            CorrelationId = request.CorrelationId,
+            Step = step,
+            ErrorMessage = ex.Message,
+            Retryable = true
+        }, cancellationToken);
     }
 
     private async Task FailAudioAsync(
@@ -774,6 +792,17 @@ public sealed class VideoOperationAppService(
         request.UpdatedAtUtc = DateTime.UtcNow;
 
         await ReplaceVideoAsync(request, cancellationToken);
+
+        await eventBus.PublishAsync(new StepFailedEvent
+        {
+            CustomerContentId = request.CustomerContentId,
+            AnalysisContentId = request.AnalysisContentId,
+            ContentProcessType = request.ContentProcessType,
+            CorrelationId = request.CorrelationId,
+            Step = step,
+            ErrorMessage = ex.Message,
+            Retryable = true
+        }, cancellationToken);
     }
 
     private async Task FailVideoAsync(
