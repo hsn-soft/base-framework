@@ -56,7 +56,16 @@ app.Run();
 
 namespace Hhs.ContentService
 {
-    public sealed record CreateCustomerContentRequest(string Url);
+    public sealed record CreateCustomerContentRequest(
+        string Url,
+        string OutlineProviderKey = "openai",
+        string VideoProviderKey = "video-a",
+        string? AudioProviderKey = "audio-a");
 
-    public sealed record CreateAnalysisContentRequest(string Title, List<Guid> CustomerContentIds);
+    public sealed record CreateAnalysisContentRequest(
+        string Title,
+        List<Guid> CustomerContentIds,
+        string OutlineProviderKey = "openai",
+        string VideoProviderKey = "video-a",
+        string? AudioProviderKey = "audio-a");
 }

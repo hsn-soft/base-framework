@@ -35,6 +35,9 @@ public sealed class ContentOperationAppService
             NormalizeStatus = "CREATED",
             VideoStatus = "NOT_STARTED",
             LastFacility = "CUSTOMER_CONTENT_CREATED",
+            OutlineProviderKey = request.OutlineProviderKey,
+            VideoProviderKey = request.VideoProviderKey,
+            AudioProviderKey = request.AudioProviderKey,
             CreatedAtUtc = DateTime.UtcNow,
             UpdatedAtUtc = DateTime.UtcNow
         };
@@ -74,6 +77,9 @@ public sealed class ContentOperationAppService
             NormalizeStatus = "CREATED",
             VideoStatus = "NOT_STARTED",
             LastFacility = "ANALYSIS_CONTENT_CREATED",
+            OutlineProviderKey = request.OutlineProviderKey,
+            VideoProviderKey = request.VideoProviderKey,
+            AudioProviderKey = request.AudioProviderKey,
             CreatedAtUtc = DateTime.UtcNow,
             UpdatedAtUtc = DateTime.UtcNow
         };
@@ -113,11 +119,21 @@ public sealed class ContentOperationAppService
         return analysisId;
     }
 
-    public async Task HandleNormalizerResultAsync(NormalizerResultPublishedEvent @event, CancellationToken cancellationToken)
+    public async Task HandleNormalizerResultAsync(
+        NormalizerResultPublishedEvent @event,
+        CancellationToken cancellationToken)
     {
         if (@event.CustomerContentId.HasValue)
         {
-            var entity = await _db.CustomerContents.FirstAsync(x => x.Id == @event.CustomerContentId, cancellationToken);
+            var entity = await _db.CustomerContents
+                .FirstAsync(x => x.Id == @event.CustomerContentId.Value, cancellationToken);
+
+            if (entity.VideoStatus is "APPROVED" or "COMPLETED" or "FAILED" &&
+                entity.NormalizeRequestId == @event.NormalizeRequestId)
+            {
+                return;
+            }
+
             entity.NormalizeRequestId = @event.NormalizeRequestId;
             entity.NormalizeStatus = "COMPLETED";
             entity.VideoStatus = "APPROVED";
@@ -128,7 +144,15 @@ public sealed class ContentOperationAppService
 
         if (@event.AnalysisContentId.HasValue)
         {
-            var entity = await _db.AnalysisContents.FirstAsync(x => x.Id == @event.AnalysisContentId, cancellationToken);
+            var entity = await _db.AnalysisContents
+                .FirstAsync(x => x.Id == @event.AnalysisContentId.Value, cancellationToken);
+
+            if (entity.VideoStatus is "APPROVED" or "COMPLETED" or "FAILED" &&
+                entity.NormalizeRequestId == @event.NormalizeRequestId)
+            {
+                return;
+            }
+
             entity.NormalizeRequestId = @event.NormalizeRequestId;
             entity.NormalizeStatus = "COMPLETED";
             entity.VideoStatus = "APPROVED";
@@ -147,7 +171,7 @@ public sealed class ContentOperationAppService
             VideoInputJson = @event.VideoInputJson,
             CorrelationId = @event.CorrelationId,
             VideoProviderKey = @event.VideoProviderKey,
-            AudioProviderKey = @event.AudioProviderKey,
+            AudioProviderKey = @event.AudioProviderKey
         }, cancellationToken);
     }
 
