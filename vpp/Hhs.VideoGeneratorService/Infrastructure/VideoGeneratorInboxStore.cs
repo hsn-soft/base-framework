@@ -27,7 +27,20 @@ public sealed class VideoGeneratorInboxStore(VideoMongoContext context)
             .FirstOrDefaultAsync(cancellationToken);
 
         if (existing is not null)
-            return false;
+        {
+            if (existing.Status != InboxStatuses.Failed)
+                return false;
+
+            await context.InboxMessages.UpdateOneAsync(
+                x => x.EventId == @event.EventId && x.Status == InboxStatuses.Failed,
+                Builders<VideoGeneratorInboxMessage>.Update
+                    .Set(x => x.Status, InboxStatuses.Started)
+                    .Set(x => x.ErrorMessage, null)
+                    .Set(x => x.CreatedAtUtc, DateTime.UtcNow),
+                cancellationToken: cancellationToken);
+
+            return true;
+        }
 
         try
         {
@@ -42,7 +55,8 @@ public sealed class VideoGeneratorInboxStore(VideoMongoContext context)
 
             return true;
         }
-        catch (MongoWriteException)
+        catch (MongoWriteException ex)
+            when (ex.WriteError.Category == ServerErrorCategory.DuplicateKey)
         {
             return false;
         }

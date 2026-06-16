@@ -40,6 +40,8 @@ public sealed class VideoRetryAppService(
 
                 if (request.CurrentStep == EventNames.AudioProviderRequestStarted)
                 {
+                    request.Status = "AUDIO_PROVIDER_REQUEST_RETRYING";
+
                     await eventBus.PublishAsync(new AudioProviderRequestStartedEvent
                     {
                         CustomerContentId = request.CustomerContentId,
@@ -94,7 +96,7 @@ public sealed class VideoRetryAppService(
 
                 if (!pollingRetry)
                 {
-                    request.Status = "RETRY_PUBLISHED";
+                    request.Status = "RETRY_EVENT_PUBLISHED";
                 }
                 request.NextRetryAtUtc = null;
                 request.UpdatedAtUtc = DateTime.UtcNow;

@@ -118,11 +118,32 @@ public sealed class AudioProviderPollingAppService(
             catch (Exception ex)
             {
                 request.ProviderPollingCount++;
-                request.NextProviderPollAtUtc = DateTime.UtcNow.AddMinutes(5);
                 request.LastError = ex.Message;
                 request.UpdatedAtUtc = DateTime.UtcNow;
 
-                await ReplaceAudioAsync(request, cancellationToken);
+                if (request.ProviderPollingCount >= request.MaxProviderPollingCount)
+                {
+                    request.Status = "FAILED";
+                    request.NextProviderPollAtUtc = null;
+
+                    await ReplaceAudioAsync(request, cancellationToken);
+
+                    await eventBus.PublishAsync(new StepFailedEvent
+                    {
+                        CustomerContentId = request.CustomerContentId,
+                        AnalysisContentId = request.AnalysisContentId,
+                        ContentProcessType = request.ContentProcessType,
+                        CorrelationId = request.CorrelationId,
+                        Step = EventNames.AudioProviderPollingStarted,
+                        ErrorMessage = ex.Message,
+                        Retryable = false
+                    }, cancellationToken);
+                }
+                else
+                {
+                    request.NextProviderPollAtUtc = DateTime.UtcNow.AddMinutes(5);
+                    await ReplaceAudioAsync(request, cancellationToken);
+                }
 
                 logger.LogError(
                     ex,

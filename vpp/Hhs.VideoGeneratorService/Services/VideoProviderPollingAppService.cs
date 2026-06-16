@@ -116,11 +116,32 @@ public sealed class VideoProviderPollingAppService(
             catch (Exception ex)
             {
                 request.ProviderPollingCount++;
-                request.NextProviderPollAtUtc = DateTime.UtcNow.AddMinutes(5);
                 request.LastError = ex.Message;
                 request.UpdatedAtUtc = DateTime.UtcNow;
 
-                await ReplaceVideoAsync(request, cancellationToken);
+                if (request.ProviderPollingCount >= request.MaxProviderPollingCount)
+                {
+                    request.Status = "FAILED";
+                    request.NextProviderPollAtUtc = null;
+
+                    await ReplaceVideoAsync(request, cancellationToken);
+
+                    await eventBus.PublishAsync(new StepFailedEvent
+                    {
+                        CustomerContentId = request.CustomerContentId,
+                        AnalysisContentId = request.AnalysisContentId,
+                        ContentProcessType = request.ContentProcessType,
+                        CorrelationId = request.CorrelationId,
+                        Step = EventNames.VideoProviderPollingStarted,
+                        ErrorMessage = ex.Message,
+                        Retryable = false
+                    }, cancellationToken);
+                }
+                else
+                {
+                    request.NextProviderPollAtUtc = DateTime.UtcNow.AddMinutes(5);
+                    await ReplaceVideoAsync(request, cancellationToken);
+                }
 
                 logger.LogError(
                     ex,

@@ -29,6 +29,26 @@ public sealed class NormalizerInboxStore(
         if (await IsProcessedAsync(@event.EventId, cancellationToken))
             return false;
 
+        var existing = await context.InboxMessages
+            .Find(x => x.EventId == @event.EventId)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (existing is not null)
+        {
+            if (existing.Status != InboxStatuses.Failed)
+                return false;
+
+            await context.InboxMessages.UpdateOneAsync(
+                x => x.EventId == @event.EventId && x.Status == InboxStatuses.Failed,
+                Builders<NormalizerInboxMessage>.Update
+                    .Set(x => x.Status, InboxStatuses.Started)
+                    .Set(x => x.ErrorMessage, null)
+                    .Set(x => x.CreatedAtUtc, DateTime.UtcNow),
+                cancellationToken: cancellationToken);
+
+            return true;
+        }
+
         try
         {
             await context.InboxMessages.InsertOneAsync(

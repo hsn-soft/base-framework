@@ -22,11 +22,25 @@ public sealed class ContentInboxStore(ContentDbContext context)
         if (await IsProcessedAsync(@event.EventId, cancellationToken))
             return false;
 
-        var exists = await context.InboxMessages
-            .AnyAsync(x => x.EventId == @event.EventId, cancellationToken);
+        var existing = await context.InboxMessages
+            .FirstOrDefaultAsync(x => x.EventId == @event.EventId, cancellationToken);
 
-        if (exists)
-            return false;
+        if (existing is not null)
+        {
+            if (existing.Status != InboxStatuses.Failed)
+                return false;
+
+            await context.InboxMessages
+                .Where(x => x.EventId == @event.EventId && x.Status == InboxStatuses.Failed)
+                .ExecuteUpdateAsync(
+                    s => s
+                        .SetProperty(a => a.Status, InboxStatuses.Started)
+                        .SetProperty(a => a.ErrorMessage, (string?)null)
+                        .SetProperty(a => a.CreatedAtUtc, DateTime.UtcNow),
+                    cancellationToken: cancellationToken);
+
+            return true;
+        }
 
         context.InboxMessages.Add(new ContentInboxMessage
         {
