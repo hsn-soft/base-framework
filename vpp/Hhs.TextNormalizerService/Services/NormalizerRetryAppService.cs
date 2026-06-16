@@ -34,7 +34,37 @@ public sealed class NormalizerRetryAppService(
         {
             try
             {
-                var retryHandledByPolling = false;
+                if (request.CurrentStep == EventNames.OutlineProviderPollingStarted)
+                {
+                    await context.CustomerRequests.UpdateOneAsync(
+                        x => x.Id == request.Id && x.Status == "WAITING_RETRY",
+                        Builders<CustomerContentNormalizedRequest>.Update
+                            .Set(x => x.Status, "OUTLINE_PROVIDER_POLLING")
+                            .Set(x => x.OutlineStatus, "POLLING")
+                            .Set(x => x.NextOutlinePollAtUtc, DateTime.UtcNow)
+                            .Set(x => x.NextRetryAtUtc, (DateTime?)null)
+                            .Set(x => x.LastError, null)
+                            .Set(x => x.UpdatedAtUtc, DateTime.UtcNow),
+                        cancellationToken: cancellationToken);
+
+                    continue;
+                }
+
+                var claimResult = await context.CustomerRequests.UpdateOneAsync(
+                    x =>
+                        x.Id == request.Id &&
+                        x.Status == "WAITING_RETRY" &&
+                        x.NextRetryAtUtc != null &&
+                        x.NextRetryAtUtc <= now,
+                    Builders<CustomerContentNormalizedRequest>.Update
+                        .Set(x => x.Status, "RETRY_PUBLISHED")
+                        .Set(x => x.NextRetryAtUtc, (DateTime?)null)
+                        .Set(x => x.LastError, null)
+                        .Set(x => x.UpdatedAtUtc, DateTime.UtcNow),
+                    cancellationToken: cancellationToken);
+
+                if (claimResult.ModifiedCount == 0)
+                    continue;
 
                 if (request.CurrentStep == EventNames.CustomerScrapingStarted)
                 {
@@ -57,23 +87,15 @@ public sealed class NormalizerRetryAppService(
                                     ?? throw new InvalidOperationException("ScrapingResult.Text is required.")
                     }, cancellationToken);
                 }
-                else if (request.CurrentStep == EventNames.OutlineProviderPollingStarted)
-                {
-                    request.Status = "OUTLINE_PROVIDER_POLLING";
-                    request.OutlineStatus = "POLLING";
-                    request.NextOutlinePollAtUtc = DateTime.UtcNow;
-                    retryHandledByPolling = true;
-                }
                 else
                 {
-                    request.Status = "FAILED";
-                    request.LastError = $"Unsupported customer retry step: {request.CurrentStep}";
-                    request.NextRetryAtUtc = null;
-                    request.UpdatedAtUtc = DateTime.UtcNow;
-
-                    await context.CustomerRequests.ReplaceOneAsync(
+                    await context.CustomerRequests.UpdateOneAsync(
                         x => x.Id == request.Id,
-                        request,
+                        Builders<CustomerContentNormalizedRequest>.Update
+                            .Set(x => x.Status, "FAILED")
+                            .Set(x => x.LastError, $"Unsupported customer retry step: {request.CurrentStep}")
+                            .Set(x => x.NextRetryAtUtc, (DateTime?)null)
+                            .Set(x => x.UpdatedAtUtc, DateTime.UtcNow),
                         cancellationToken: cancellationToken);
 
                     await eventBus.PublishAsync(new StepFailedEvent
@@ -82,35 +104,19 @@ public sealed class NormalizerRetryAppService(
                         CustomerContentId = request.CustomerContentId,
                         ContentProcessType = ContentProcessTypes.CustomerContent,
                         Step = request.CurrentStep,
-                        ErrorMessage = request.LastError,
+                        ErrorMessage = $"Unsupported customer retry step: {request.CurrentStep}",
                         Retryable = false
                     }, cancellationToken);
-
-                    continue;
                 }
-
-                if (!retryHandledByPolling)
-                {
-                    request.Status = "RETRY_PUBLISHED";
-                }
-
-                request.NextRetryAtUtc = null;
-                request.LastError = null;
-                request.UpdatedAtUtc = DateTime.UtcNow;
-
-                await context.CustomerRequests.ReplaceOneAsync(
-                    x => x.Id == request.Id,
-                    request,
-                    cancellationToken: cancellationToken);
             }
             catch
             {
-                request.NextRetryAtUtc = DateTime.UtcNow.AddMinutes(1);
-                request.UpdatedAtUtc = DateTime.UtcNow;
-
-                await context.CustomerRequests.ReplaceOneAsync(
+                await context.CustomerRequests.UpdateOneAsync(
                     x => x.Id == request.Id,
-                    request,
+                    Builders<CustomerContentNormalizedRequest>.Update
+                        .Set(x => x.Status, "WAITING_RETRY")
+                        .Set(x => x.NextRetryAtUtc, DateTime.UtcNow.AddMinutes(1))
+                        .Set(x => x.UpdatedAtUtc, DateTime.UtcNow),
                     cancellationToken: cancellationToken);
 
                 throw;
@@ -148,7 +154,39 @@ public sealed class NormalizerRetryAppService(
             {
                 try
                 {
-                    var retryHandledByPolling = false;
+                    if (item.CurrentStep == EventNames.OutlineProviderPollingStarted)
+                    {
+                        var pollingUpdate = Builders<AnalysisContentNormalizedRequest>.Update
+                            .Set("Items.$.Status", "OUTLINE_PROVIDER_POLLING")
+                            .Set("Items.$.OutlineStatus", "POLLING")
+                            .Set("Items.$.NextOutlinePollAtUtc", DateTime.UtcNow)
+                            .Set("Items.$.NextRetryAtUtc", (DateTime?)null)
+                            .Set("Items.$.LastError", (string?)null)
+                            .Set("Items.$.UpdatedAtUtc", DateTime.UtcNow)
+                            .Set(x => x.Status, "OUTLINE_PROVIDER_POLLING")
+                            .Set(x => x.CurrentStep, EventNames.OutlineProviderPollingStarted)
+                            .Set(x => x.LastError, null)
+                            .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);
+
+                        await UpdateAnalysisItemAsync(request.Id, item.CustomerContentId, pollingUpdate, cancellationToken);
+                        continue;
+                    }
+
+                    var claimUpdate = Builders<AnalysisContentNormalizedRequest>.Update
+                        .Set("Items.$.Status", "RETRY_PUBLISHED")
+                        .Set("Items.$.NextRetryAtUtc", (DateTime?)null)
+                        .Set("Items.$.LastError", (string?)null)
+                        .Set("Items.$.UpdatedAtUtc", DateTime.UtcNow)
+                        .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);
+
+                    var claimResult = await UpdateAnalysisItemAsync(
+                        request.Id,
+                        item.CustomerContentId,
+                        claimUpdate,
+                        cancellationToken);
+
+                    if (claimResult.ModifiedCount == 0)
+                        continue;
 
                     if (item.CurrentStep == EventNames.AnalysisItemScrapingStarted)
                     {
@@ -188,28 +226,6 @@ public sealed class NormalizerRetryAppService(
                                         ?? throw new InvalidOperationException("ScrapingResult.Text is required.")
                         }, cancellationToken);
                     }
-                    else if (item.CurrentStep == EventNames.OutlineProviderPollingStarted)
-                    {
-                        var pollingUpdate = Builders<AnalysisContentNormalizedRequest>.Update
-                            .Set("Items.$.Status", "OUTLINE_PROVIDER_POLLING")
-                            .Set("Items.$.OutlineStatus", "POLLING")
-                            .Set("Items.$.NextOutlinePollAtUtc", DateTime.UtcNow)
-                            .Set("Items.$.NextRetryAtUtc", (DateTime?)null)
-                            .Set("Items.$.LastError", (string?)null)
-                            .Set("Items.$.UpdatedAtUtc", DateTime.UtcNow)
-                            .Set(x => x.Status, "OUTLINE_PROVIDER_POLLING")
-                            .Set(x => x.CurrentStep, EventNames.OutlineProviderPollingStarted)
-                            .Set(x => x.LastError, null)
-                            .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);
-
-                        await UpdateAnalysisItemAsync(
-                            request.Id,
-                            item.CustomerContentId,
-                            pollingUpdate,
-                            cancellationToken);
-
-                        retryHandledByPolling = true;
-                    }
                     else
                     {
                         var failUpdate = Builders<AnalysisContentNormalizedRequest>.Update
@@ -221,62 +237,26 @@ public sealed class NormalizerRetryAppService(
                             .Set(x => x.LastError, $"Unsupported analysis retry step: {item.CurrentStep}")
                             .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);
 
-                        await UpdateAnalysisItemAsync(
-                            request.Id,
-                            item.CustomerContentId,
-                            failUpdate,
-                            cancellationToken);
-
-                        await eventBus.PublishAsync(new StepFailedEvent
-                        {
-                            CorrelationId = request.CorrelationId,
-                            AnalysisContentId = request.AnalysisContentId,
-                            CustomerContentId = item.CustomerContentId,
-                            ContentProcessType = ContentProcessTypes.AnalysisContent,
-                            Step = item.CurrentStep,
-                            ErrorMessage = $"Unsupported analysis retry step: {item.CurrentStep}",
-                            Retryable = false
-                        }, cancellationToken);
-
-                        continue;
-                    }
-
-                    if (!retryHandledByPolling)
-                    {
-                        var publishedUpdate = Builders<AnalysisContentNormalizedRequest>.Update
-                            .Set("Items.$.Status", "RETRY_PUBLISHED")
-                            .Set("Items.$.NextRetryAtUtc", (DateTime?)null)
-                            .Set("Items.$.LastError", (string?)null)
-                            .Set("Items.$.UpdatedAtUtc", DateTime.UtcNow)
-                            .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);
-
-                        await UpdateAnalysisItemAsync(
-                            request.Id,
-                            item.CustomerContentId,
-                            publishedUpdate,
-                            cancellationToken);
+                        await UpdateAnalysisItemAsync(request.Id, item.CustomerContentId, failUpdate, cancellationToken);
                     }
                 }
                 catch
                 {
                     var retryAgainUpdate = Builders<AnalysisContentNormalizedRequest>.Update
+                        .Set("Items.$.Status", "WAITING_RETRY")
                         .Set("Items.$.NextRetryAtUtc", DateTime.UtcNow.AddMinutes(1))
                         .Set("Items.$.UpdatedAtUtc", DateTime.UtcNow)
+                        .Set(x => x.Status, "WAITING_RETRY")
                         .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);
 
-                    await UpdateAnalysisItemAsync(
-                        request.Id,
-                        item.CustomerContentId,
-                        retryAgainUpdate,
-                        cancellationToken);
-
+                    await UpdateAnalysisItemAsync(request.Id, item.CustomerContentId, retryAgainUpdate, cancellationToken);
                     throw;
                 }
             }
         }
     }
 
-    private Task UpdateAnalysisItemAsync(
+    private Task<UpdateResult> UpdateAnalysisItemAsync(
         Guid analysisRequestId,
         Guid customerContentId,
         UpdateDefinition<AnalysisContentNormalizedRequest> update,
