@@ -30,6 +30,14 @@ public sealed class VideoProviderPollingAppService(
         {
             try
             {
+                var claimResult = await ClaimDueVideoPollingAsync(
+                    request.Id,
+                    now,
+                    cancellationToken);
+
+                if (claimResult.ModifiedCount == 0)
+                    continue;
+
                 if (request.ProviderPollingCount >= request.MaxProviderPollingCount)
                 {
                     request.Status = "FAILED";
@@ -149,6 +157,24 @@ public sealed class VideoProviderPollingAppService(
                     request.Id);
             }
         }
+    }
+
+    private Task<UpdateResult> ClaimDueVideoPollingAsync(
+        Guid videoRequestId,
+        DateTime now,
+        CancellationToken cancellationToken)
+    {
+        return context.VideoRequests.UpdateOneAsync(
+            x =>
+                x.Id == videoRequestId &&
+                x.Status == "VIDEO_PROVIDER_POLLING" &&
+                x.NextProviderPollAtUtc != null &&
+                x.NextProviderPollAtUtc <= now &&
+                x.VideoProviderTrackId != null,
+            Builders<VideoRequest>.Update
+                .Set(x => x.NextProviderPollAtUtc, DateTime.UtcNow.AddMinutes(1))
+                .Set(x => x.UpdatedAtUtc, DateTime.UtcNow),
+            cancellationToken: cancellationToken);
     }
 
     private Task ReplaceVideoAsync(VideoRequest request, CancellationToken cancellationToken)

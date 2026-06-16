@@ -30,6 +30,14 @@ public sealed class AudioProviderPollingAppService(
         {
             try
             {
+                var claimResult = await ClaimDueAudioPollingAsync(
+                    request.Id,
+                    now,
+                    cancellationToken);
+
+                if (claimResult.ModifiedCount == 0)
+                    continue;
+
                 if (request.ProviderPollingCount >= request.MaxProviderPollingCount)
                 {
                     request.Status = "FAILED";
@@ -151,6 +159,25 @@ public sealed class AudioProviderPollingAppService(
                     request.Id);
             }
         }
+
+    }
+
+    private Task<UpdateResult> ClaimDueAudioPollingAsync(
+        Guid audioRequestId,
+        DateTime now,
+        CancellationToken cancellationToken)
+    {
+        return context.AudioRequests.UpdateOneAsync(
+            x =>
+                x.Id == audioRequestId &&
+                x.Status == "AUDIO_PROVIDER_POLLING" &&
+                x.NextProviderPollAtUtc != null &&
+                x.NextProviderPollAtUtc <= now &&
+                x.AudioProviderTrackId != null,
+            Builders<AudioRequest>.Update
+                .Set(x => x.NextProviderPollAtUtc, DateTime.UtcNow.AddMinutes(1))
+                .Set(x => x.UpdatedAtUtc, DateTime.UtcNow),
+            cancellationToken: cancellationToken);
     }
 
     private Task ReplaceAudioAsync(AudioRequest request, CancellationToken cancellationToken)
