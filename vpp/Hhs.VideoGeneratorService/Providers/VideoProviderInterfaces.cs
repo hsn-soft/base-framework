@@ -12,6 +12,7 @@ public sealed class AudioCreateResponse
     public bool IsCompleted { get; set; }
     public string? ProviderTrackId { get; set; }
     public string? ProviderFileUrl { get; set; }
+    public string? FileName { get; set; }
 }
 
 public sealed class AudioStatusResponse
@@ -20,6 +21,7 @@ public sealed class AudioStatusResponse
     public bool IsFailed { get; set; }
     public string? ProviderFileUrl { get; set; }
     public string? ErrorMessage { get; set; }
+    public string? FileName { get; set; }
 }
 
 public interface IAudioProvider
@@ -48,6 +50,7 @@ public sealed class VideoCreateResponse
     public bool IsCompleted { get; set; }
     public string? ProviderTrackId { get; set; }
     public string? ProviderFileUrl { get; set; }
+    public string? FileName { get; set; }
 }
 
 public sealed class VideoStatusResponse
@@ -56,6 +59,7 @@ public sealed class VideoStatusResponse
     public bool IsFailed { get; set; }
     public string? ProviderFileUrl { get; set; }
     public string? ErrorMessage { get; set; }
+    public string? FileName { get; set; }
 }
 
 public interface IVideoProvider

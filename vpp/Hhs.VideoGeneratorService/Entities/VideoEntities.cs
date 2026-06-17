@@ -22,6 +22,7 @@ public sealed class VideoRequest
 
     public string? VideoProviderRequestId { get; set; }
     public string? ProviderVideoFileUrl { get; set; }
+    public string? ProviderFileName { get; set; }
     public string? LocalVideoFilePath { get; set; }
     public string? FinalVideoStorageUrl { get; set; }
 
@@ -64,6 +65,7 @@ public sealed class AudioRequest
 
     public string? AudioProviderRequestId { get; set; }
     public string? ProviderAudioFileUrl { get; set; }
+    public string? ProviderFileName { get; set; }
     public string? LocalAudioFilePath { get; set; }
     public string? AudioStorageUrl { get; set; }
 

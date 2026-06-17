@@ -103,10 +103,15 @@ public sealed class AudioProviderPollingAppService(
                 if (string.IsNullOrWhiteSpace(status.ProviderFileUrl))
                     throw new InvalidOperationException("Audio provider completed but file url is empty.");
 
+                request.ProviderFileName = status.FileName;
+
                 // Download file from provider and upload to mock storage
+                var localFileName = !string.IsNullOrWhiteSpace(status.FileName)
+                    ? $"local_{status.FileName}"
+                    : $"local_audio_{request.Id:N}.mp3";
                 var mockStorageUrl = await DownloadAndUploadToStorageAsync(
                     status.ProviderFileUrl,
-                    $"local_audio_{request.Id:N}",
+                    localFileName,
                     cancellationToken);
 
                 request.ProviderPollingCount++;

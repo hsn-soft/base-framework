@@ -271,6 +271,7 @@ public sealed record AudioProviderCompletedEvent : IntegrationEvent
     public Guid VideoRequestId { get; init; }
     public Guid AudioRequestId { get; init; }
     public string ProviderFileUrl { get; init; } = default!;
+    public string? FileName { get; init; }
 
     public AudioProviderCompletedEvent()
     {
@@ -284,6 +285,7 @@ public sealed record AudioFileDownloadStartedEvent : IntegrationEvent
     public Guid VideoRequestId { get; init; }
     public Guid AudioRequestId { get; init; }
     public string ProviderFileUrl { get; init; } = default!;
+    public string? FileName { get; init; }
 
     public AudioFileDownloadStartedEvent()
     {
@@ -361,6 +363,7 @@ public sealed record VideoProviderCompletedEvent : IntegrationEvent
 {
     public Guid VideoRequestId { get; init; }
     public string ProviderFileUrl { get; init; } = default!;
+    public string? FileName { get; init; }
 
     public VideoProviderCompletedEvent()
     {
@@ -373,6 +376,7 @@ public sealed record VideoFileDownloadStartedEvent : IntegrationEvent
 {
     public Guid VideoRequestId { get; init; }
     public string ProviderFileUrl { get; init; } = default!;
+    public string? FileName { get; init; }
 
     public VideoFileDownloadStartedEvent()
     {

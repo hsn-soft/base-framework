@@ -48,10 +48,11 @@ app.MapGet("/customer-contents/{id}", async (
     return Results.Ok(new
     {
         id = content.Id,
-        status = content.NormalizeStatus,
+        status = content.NormalizeStatus == "COMPLETED" && content.VideoStatus == "COMPLETED" ? "COMPLETED" : "PROCESSING",
         normalizeStatus = content.NormalizeStatus,
         videoStatus = content.VideoStatus,
         url = content.Url,
+        finalVideoUrl = content.FinalVideoUrl,
         createdAt = content.CreatedAtUtc,
         updatedAt = content.UpdatedAtUtc
     });

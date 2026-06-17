@@ -102,10 +102,15 @@ public sealed class VideoProviderPollingAppService(
                 if (string.IsNullOrWhiteSpace(status.ProviderFileUrl))
                     throw new InvalidOperationException("Video provider completed but file url is empty.");
 
+                request.ProviderFileName = status.FileName;
+
                 // Download file from provider and upload to mock storage
+                var localFileName = !string.IsNullOrWhiteSpace(status.FileName)
+                    ? $"local_{status.FileName}"
+                    : $"local_video_{request.Id:N}.mp4";
                 var mockStorageUrl = await DownloadAndUploadToStorageAsync(
                     status.ProviderFileUrl,
-                    $"local_video_{request.Id:N}",
+                    localFileName,
                     cancellationToken);
 
                 request.ProviderPollingCount++;

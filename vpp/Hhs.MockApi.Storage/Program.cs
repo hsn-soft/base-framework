@@ -3,7 +3,7 @@ var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
 
 // Storage directory for uploaded files
-var storageDir = Path.Combine(AppContext.BaseDirectory, "storage");
+var storageDir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "media");
 Directory.CreateDirectory(storageDir);
 
 // Upload endpoint - accept multipart form data with file
@@ -51,14 +51,8 @@ app.MapPost("/storage/upload-binary", async (HttpRequest request) =>
     {
         var localFileName = request.Query["fileName"].ToString();
 
-        // Generate storage filename based on content type
-        var ext = ".bin";
-        if (localFileName.Contains("audio"))
-            ext = ".mp3.txt";
-        else if (localFileName.Contains("video"))
-            ext = ".mp4.txt";
-
-        var storageFileName = $"storage_{Guid.NewGuid():N}{ext}";
+        // Generate storage filename by prefixing local filename with 'storage_'
+        var storageFileName = $"storage_{localFileName}";
         var filePath = Path.Combine(storageDir, storageFileName);
 
         using (var stream = System.IO.File.Create(filePath))

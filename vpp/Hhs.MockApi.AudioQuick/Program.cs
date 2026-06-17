@@ -4,7 +4,7 @@ builder.Services.AddSingleton<AudioQuickService>();
 
 var app = builder.Build();
 
-var mockFilesDir = Path.Combine(Path.GetTempPath(), "mock-provider-files");
+var mockFilesDir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "media");
 Directory.CreateDirectory(mockFilesDir);
 
 app.MapPost("/audio/generate", async (AudioRequest request, CancellationToken ct) =>
@@ -21,6 +21,22 @@ app.MapGet("/audio/download/{trackingId}", async (string trackingId) =>
 
     var fileContent = await System.IO.File.ReadAllBytesAsync(filePath);
     return Results.File(fileContent, "application/octet-stream", Path.GetFileName(filePath));
+});
+
+app.MapGet("/audio/status/{trackingId}", async (string trackingId) =>
+{
+    var filePath = AudioQuickService.GetFilePath(trackingId, mockFilesDir);
+    if (!System.IO.File.Exists(filePath))
+        return Results.NotFound();
+
+    var fileName = Path.GetFileName(filePath);
+    var downloadUrl = $"http://localhost:5042/audio/download/{trackingId}";
+    return Results.Ok(new
+    {
+        status = "completed",
+        remoteFileUrl = downloadUrl,
+        fileName
+    });
 });
 
 app.Run();

@@ -35,9 +35,9 @@ public sealed class ContentOperationAppService
             NormalizeStatus = "CREATED",
             VideoStatus = "NOT_STARTED",
             LastFacility = "CUSTOMER_CONTENT_CREATED",
-            OutlineProviderKey = request.OutlineProviderKey,
-            VideoProviderKey = request.VideoProviderKey,
-            AudioProviderKey = request.AudioProviderKey,
+            OutlineProviderKey = NormalizeProviderKey(request.OutlineProviderKey),
+            VideoProviderKey = NormalizeProviderKey(request.VideoProviderKey),
+            AudioProviderKey = request.AudioProviderKey != null ? NormalizeProviderKey(request.AudioProviderKey) : null,
             CreatedAtUtc = DateTime.UtcNow,
             UpdatedAtUtc = DateTime.UtcNow
         };
@@ -77,9 +77,9 @@ public sealed class ContentOperationAppService
             NormalizeStatus = "CREATED",
             VideoStatus = "NOT_STARTED",
             LastFacility = "ANALYSIS_CONTENT_CREATED",
-            OutlineProviderKey = request.OutlineProviderKey,
-            VideoProviderKey = request.VideoProviderKey,
-            AudioProviderKey = request.AudioProviderKey,
+            OutlineProviderKey = NormalizeProviderKey(request.OutlineProviderKey),
+            VideoProviderKey = NormalizeProviderKey(request.VideoProviderKey),
+            AudioProviderKey = request.AudioProviderKey != null ? NormalizeProviderKey(request.AudioProviderKey) : null,
             CreatedAtUtc = DateTime.UtcNow,
             UpdatedAtUtc = DateTime.UtcNow
         };
@@ -263,5 +263,13 @@ public sealed class ContentOperationAppService
     {
         return step.Contains("AUDIO", StringComparison.OrdinalIgnoreCase)
                || step.Contains("VIDEO", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string NormalizeProviderKey(string key)
+    {
+        if (string.IsNullOrWhiteSpace(key))
+            return key;
+
+        return System.Text.RegularExpressions.Regex.Replace(key, "([a-z])([A-Z])", "$1-$2").ToLowerInvariant();
     }
 }

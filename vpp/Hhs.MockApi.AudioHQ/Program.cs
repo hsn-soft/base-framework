@@ -7,7 +7,7 @@ builder.Services.AddSingleton<AudioHQService>();
 var app = builder.Build();
 
 // Create local storage directory for mock files
-var mockFilesDir = Path.Combine(Path.GetTempPath(), "mock-provider-files");
+var mockFilesDir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "media");
 Directory.CreateDirectory(mockFilesDir);
 
 app.MapPost("/audio/generate", (AudioRequest request, AudioHQService service) =>

@@ -212,10 +212,15 @@ public async Task CreateVideoRequestAsync(
                 if (string.IsNullOrWhiteSpace(response.ProviderFileUrl))
                     throw new InvalidOperationException("Audio provider completed but file url is empty.");
 
+                audioRequest.ProviderFileName = response.FileName;
+
                 // Download file from provider and upload to mock storage
+                var localFileName = !string.IsNullOrWhiteSpace(response.FileName)
+                    ? $"local_{response.FileName}"
+                    : $"local_audio_{audioRequest.Id:N}.mp3";
                 var mockStorageUrl = await DownloadAndUploadToStorageAsync(
                     response.ProviderFileUrl,
-                    $"local_audio_{audioRequest.Id:N}",
+                    localFileName,
                     cancellationToken);
 
                 audioRequest.ProviderAudioFileUrl = mockStorageUrl;
@@ -306,7 +311,7 @@ public async Task CreateVideoRequestAsync(
 
             await ReplaceAudioAsync(audioRequest, cancellationToken);
 
-            var localPath = await fileDownloader.DownloadAsync(@event.ProviderFileUrl, "mp3", cancellationToken);
+            var localPath = await fileDownloader.DownloadAsync(@event.ProviderFileUrl, "mp3", audioRequest.ProviderFileName, cancellationToken);
 
             audioRequest.LocalAudioFilePath = localPath;
             audioRequest.Status = "DOWNLOADED";
@@ -494,10 +499,15 @@ public async Task HandleAudioUploadCompletedAsync(
                 if (string.IsNullOrWhiteSpace(response.ProviderFileUrl))
                     throw new InvalidOperationException("Video provider completed but file url is empty.");
 
+                videoRequest.ProviderFileName = response.FileName;
+
                 // Download file from provider and upload to mock storage
+                var localFileName = !string.IsNullOrWhiteSpace(response.FileName)
+                    ? $"local_{response.FileName}"
+                    : $"local_video_{videoRequest.Id:N}.mp4";
                 var mockStorageUrl = await DownloadAndUploadToStorageAsync(
                     response.ProviderFileUrl,
-                    $"local_video_{videoRequest.Id:N}",
+                    localFileName,
                     cancellationToken);
 
                 videoRequest.ProviderVideoFileUrl = mockStorageUrl;
@@ -585,7 +595,7 @@ public async Task HandleAudioUploadCompletedAsync(
 
             await ReplaceVideoAsync(videoRequest, cancellationToken);
 
-            var localPath = await fileDownloader.DownloadAsync(@event.ProviderFileUrl, "mp4", cancellationToken);
+            var localPath = await fileDownloader.DownloadAsync(@event.ProviderFileUrl, "mp4", videoRequest.ProviderFileName, cancellationToken);
 
             videoRequest.LocalVideoFilePath = localPath;
             videoRequest.Status = "VIDEO_DOWNLOADED";

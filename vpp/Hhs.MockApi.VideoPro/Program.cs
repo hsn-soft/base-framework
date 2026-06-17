@@ -4,7 +4,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 var app = builder.Build();
 
-var mockFilesDir = Path.Combine(Path.GetTempPath(), "mock-provider-files");
+var mockFilesDir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "media");
 Directory.CreateDirectory(mockFilesDir);
 
 app.MapPost("/video/generate", (VideoRequest request) =>

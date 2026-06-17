@@ -50,11 +50,13 @@ public sealed class AudioHQProvider : IAudioProvider
         var json = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken);
         var status = json.GetProperty("status").GetString();
         var fileUrl = status == "completed" ? json.GetProperty("remoteFileUrl").GetString() : null;
+        var fileName = status == "completed" && json.TryGetProperty("fileName", out var fnProp) ? fnProp.GetString() : null;
 
         return new AudioStatusResponse
         {
             IsCompleted = status == "completed",
-            ProviderFileUrl = fileUrl
+            ProviderFileUrl = fileUrl,
+            FileName = fileName
         };
     }
 }

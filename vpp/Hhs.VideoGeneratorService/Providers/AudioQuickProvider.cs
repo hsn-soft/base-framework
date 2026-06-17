@@ -31,11 +31,13 @@ public sealed class AudioQuickProvider : IAudioProvider
 
         var json = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken);
         var fileUrl = json.GetProperty("remoteFileUrl").GetString();
+        var fileName = json.TryGetProperty("fileName", out var fnProp) ? fnProp.GetString() : null;
 
         return new AudioCreateResponse
         {
             IsCompleted = true,
-            ProviderFileUrl = fileUrl
+            ProviderFileUrl = fileUrl,
+            FileName = fileName
         };
     }
 
@@ -52,7 +54,8 @@ public sealed class AudioQuickProvider : IAudioProvider
         return new AudioStatusResponse
         {
             IsCompleted = true,
-            ProviderFileUrl = json.GetProperty("remoteFileUrl").GetString()
+            ProviderFileUrl = json.GetProperty("remoteFileUrl").GetString(),
+            FileName = json.TryGetProperty("fileName", out var fnProp) ? fnProp.GetString() : null
         };
     }
 }
