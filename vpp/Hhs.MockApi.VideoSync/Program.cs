@@ -38,7 +38,7 @@ static async Task<(string TrackingId, string FileUrl)> GenerateVideoAsync(List<s
 
 static string GetFilePath(string trackingId, string mockFilesDir)
 {
-    return Path.Combine(mockFilesDir, $"video-sync-{trackingId}.mp4.txt");
+    return Path.Combine(mockFilesDir, $"mock_video_sync_{trackingId}.mp4.txt");
 }
 
 public sealed record VideoRequest(List<string> AudioUrls);

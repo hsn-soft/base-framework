@@ -67,7 +67,7 @@ public sealed class VideoCloudService
 
     public static string GetFilePath(string trackingId, string mockFilesDir)
     {
-        return Path.Combine(mockFilesDir, $"video-cloud-{trackingId}.mp4.txt");
+        return Path.Combine(mockFilesDir, $"mock_video_cloud_{trackingId}.mp4.txt");
     }
 }
 

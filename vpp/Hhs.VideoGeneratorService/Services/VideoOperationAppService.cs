@@ -215,7 +215,7 @@ public async Task CreateVideoRequestAsync(
                 // Download file from provider and upload to mock storage
                 var mockStorageUrl = await DownloadAndUploadToStorageAsync(
                     response.ProviderFileUrl,
-                    $"audio-{audioRequest.Id:N}.mp3.txt",
+                    $"local_audio_{audioRequest.Id:N}",
                     cancellationToken);
 
                 audioRequest.ProviderAudioFileUrl = mockStorageUrl;
@@ -497,7 +497,7 @@ public async Task HandleAudioUploadCompletedAsync(
                 // Download file from provider and upload to mock storage
                 var mockStorageUrl = await DownloadAndUploadToStorageAsync(
                     response.ProviderFileUrl,
-                    $"video-{videoRequest.Id:N}.mp4.txt",
+                    $"local_video_{videoRequest.Id:N}",
                     cancellationToken);
 
                 videoRequest.ProviderVideoFileUrl = mockStorageUrl;

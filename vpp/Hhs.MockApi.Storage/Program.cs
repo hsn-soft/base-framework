@@ -44,26 +44,33 @@ app.MapPost("/storage/upload", async (HttpRequest request) =>
     }
 });
 
-// Alternative upload endpoint - accept raw binary data with query parameter
+// Alternative upload endpoint - accept raw binary data with optional local filename
 app.MapPost("/storage/upload-binary", async (HttpRequest request) =>
 {
     try
     {
-        var fileName = request.Query["fileName"].ToString();
-        if (string.IsNullOrEmpty(fileName))
-            return Results.BadRequest(new { error = "Missing fileName query parameter" });
+        var localFileName = request.Query["fileName"].ToString();
 
-        var filePath = Path.Combine(storageDir, fileName);
+        // Generate storage filename based on content type
+        var ext = ".bin";
+        if (localFileName.Contains("audio"))
+            ext = ".mp3.txt";
+        else if (localFileName.Contains("video"))
+            ext = ".mp4.txt";
+
+        var storageFileName = $"storage_{Guid.NewGuid():N}{ext}";
+        var filePath = Path.Combine(storageDir, storageFileName);
 
         using (var stream = System.IO.File.Create(filePath))
         {
             await request.Body.CopyToAsync(stream);
         }
 
-        var fakeRemoteUrl = $"https://fake-storage.internal/files/{fileName}";
+        var fakeRemoteUrl = $"https://fake-storage.internal/files/{storageFileName}";
         return Results.Ok(new
         {
-            fileName,
+            localFileName,
+            fileName = storageFileName,
             url = fakeRemoteUrl,
             storagePath = filePath
         });

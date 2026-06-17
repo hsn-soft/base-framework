@@ -41,7 +41,7 @@ public sealed class AudioQuickService
 
     public static string GetFilePath(string trackingId, string mockFilesDir)
     {
-        return Path.Combine(mockFilesDir, $"audio-quick-{trackingId}.mp3.txt");
+        return Path.Combine(mockFilesDir, $"mock_audio_quick_{trackingId}.mp3.txt");
     }
 }
 

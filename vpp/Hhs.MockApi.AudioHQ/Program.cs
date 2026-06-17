@@ -71,7 +71,7 @@ public sealed class AudioHQService
 
     public static string GetFilePath(string trackingId, string mockFilesDir)
     {
-        return Path.Combine(mockFilesDir, $"audio-hq-{trackingId}.mp3.txt");
+        return Path.Combine(mockFilesDir, $"mock_audio_hq_{trackingId}.mp3.txt");
     }
 }
 

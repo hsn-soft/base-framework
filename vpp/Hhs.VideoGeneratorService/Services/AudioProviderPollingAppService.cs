@@ -106,7 +106,7 @@ public sealed class AudioProviderPollingAppService(
                 // Download file from provider and upload to mock storage
                 var mockStorageUrl = await DownloadAndUploadToStorageAsync(
                     status.ProviderFileUrl,
-                    $"audio-{request.Id:N}.mp3.txt",
+                    $"local_audio_{request.Id:N}",
                     cancellationToken);
 
                 request.ProviderPollingCount++;

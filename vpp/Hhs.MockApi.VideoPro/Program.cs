@@ -66,7 +66,7 @@ public sealed class VideoProService
 
     public static string GetFilePath(string trackingId, string mockFilesDir)
     {
-        return Path.Combine(mockFilesDir, $"video-pro-{trackingId}.mp4.txt");
+        return Path.Combine(mockFilesDir, $"mock_video_pro_{trackingId}.mp4.txt");
     }
 }
 

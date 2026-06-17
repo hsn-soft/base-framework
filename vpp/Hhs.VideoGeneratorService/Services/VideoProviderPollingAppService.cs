@@ -105,7 +105,7 @@ public sealed class VideoProviderPollingAppService(
                 // Download file from provider and upload to mock storage
                 var mockStorageUrl = await DownloadAndUploadToStorageAsync(
                     status.ProviderFileUrl,
-                    $"video-{request.Id:N}.mp4.txt",
+                    $"local_video_{request.Id:N}",
                     cancellationToken);
 
                 request.ProviderPollingCount++;
