@@ -16,7 +16,9 @@ public sealed class VideoOperationAppService(
     IStorageService storageService,
     IEventBus eventBus,
     IVideoProviderResolver videoProviderResolver,
-    IAudioProviderResolver audioProviderResolver)
+    IAudioProviderResolver audioProviderResolver,
+    HttpClient httpClient,
+    ILogger<VideoOperationAppService> logger)
 {
 public async Task CreateVideoRequestAsync(
     VideoGenerationApprovedEvent @event,
@@ -210,7 +212,13 @@ public async Task CreateVideoRequestAsync(
                 if (string.IsNullOrWhiteSpace(response.ProviderFileUrl))
                     throw new InvalidOperationException("Audio provider completed but file url is empty.");
 
-                audioRequest.ProviderAudioFileUrl = response.ProviderFileUrl;
+                // Download file from provider and upload to mock storage
+                var mockStorageUrl = await DownloadAndUploadToStorageAsync(
+                    response.ProviderFileUrl,
+                    $"audio-{audioRequest.Id:N}.mp3.txt",
+                    cancellationToken);
+
+                audioRequest.ProviderAudioFileUrl = mockStorageUrl;
                 audioRequest.Status = "AUDIO_PROVIDER_COMPLETED";
                 audioRequest.CurrentStep = EventNames.AudioProviderCompleted;
                 audioRequest.UpdatedAtUtc = DateTime.UtcNow;
@@ -225,7 +233,7 @@ public async Task CreateVideoRequestAsync(
                     CorrelationId = @event.CorrelationId,
                     VideoRequestId = audioRequest.VideoRequestId,
                     AudioRequestId = audioRequest.Id,
-                    ProviderFileUrl = response.ProviderFileUrl
+                    ProviderFileUrl = mockStorageUrl
                 }, cancellationToken);
 
                 return;
@@ -486,7 +494,13 @@ public async Task HandleAudioUploadCompletedAsync(
                 if (string.IsNullOrWhiteSpace(response.ProviderFileUrl))
                     throw new InvalidOperationException("Video provider completed but file url is empty.");
 
-                videoRequest.ProviderVideoFileUrl = response.ProviderFileUrl;
+                // Download file from provider and upload to mock storage
+                var mockStorageUrl = await DownloadAndUploadToStorageAsync(
+                    response.ProviderFileUrl,
+                    $"video-{videoRequest.Id:N}.mp4.txt",
+                    cancellationToken);
+
+                videoRequest.ProviderVideoFileUrl = mockStorageUrl;
                 videoRequest.Status = "VIDEO_PROVIDER_COMPLETED";
                 videoRequest.CurrentStep = EventNames.VideoProviderCompleted;
                 videoRequest.UpdatedAtUtc = DateTime.UtcNow;
@@ -500,7 +514,7 @@ public async Task HandleAudioUploadCompletedAsync(
                     ContentProcessType = videoRequest.ContentProcessType,
                     CorrelationId = @event.CorrelationId,
                     VideoRequestId = videoRequest.Id,
-                    ProviderFileUrl = response.ProviderFileUrl
+                    ProviderFileUrl = mockStorageUrl
                 }, cancellationToken);
 
                 return;
@@ -917,6 +931,41 @@ public async Task HandleAudioUploadCompletedAsync(
             ErrorMessage = ex.Message,
             Retryable = retryable
         }, cancellationToken);
+    }
+
+    private async Task<string> DownloadAndUploadToStorageAsync(
+        string downloadUrl,
+        string fileName,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Download file from provider
+            var fileContent = await httpClient.GetByteArrayAsync(downloadUrl, cancellationToken);
+
+            // Upload to mock storage
+            var storageUrl = "http://localhost:5048/storage/upload-binary";
+            using (var content = new ByteArrayContent(fileContent))
+            {
+                var response = await httpClient.PostAsync(
+                    $"{storageUrl}?fileName={fileName}",
+                    content,
+                    cancellationToken);
+
+                response.EnsureSuccessStatusCode();
+
+                var responseJson = await response.Content.ReadAsStringAsync(cancellationToken);
+                var jsonDoc = JsonDocument.Parse(responseJson);
+                var remoteUrl = jsonDoc.RootElement.GetProperty("url").GetString();
+
+                return remoteUrl ?? throw new InvalidOperationException("No URL in storage response");
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to download and upload file from {DownloadUrl}", downloadUrl);
+            throw;
+        }
     }
 }
 

@@ -11,7 +11,8 @@ public sealed class AudioProviderPollingAppService(
     VideoMongoContext context,
     IAudioProviderResolver audioProviderResolver,
     IEventBus eventBus,
-    ILogger<AudioProviderPollingAppService> logger)
+    ILogger<AudioProviderPollingAppService> logger,
+    HttpClient httpClient)
 {
     public async Task PollDueAudioRequestsAsync(CancellationToken cancellationToken)
     {
@@ -102,9 +103,15 @@ public sealed class AudioProviderPollingAppService(
                 if (string.IsNullOrWhiteSpace(status.ProviderFileUrl))
                     throw new InvalidOperationException("Audio provider completed but file url is empty.");
 
+                // Download file from provider and upload to mock storage
+                var mockStorageUrl = await DownloadAndUploadToStorageAsync(
+                    status.ProviderFileUrl,
+                    $"audio-{request.Id:N}.mp3.txt",
+                    cancellationToken);
+
                 request.ProviderPollingCount++;
                 request.NextProviderPollAtUtc = null;
-                request.ProviderAudioFileUrl = status.ProviderFileUrl;
+                request.ProviderAudioFileUrl = mockStorageUrl;
                 request.Status = "AUDIO_PROVIDER_COMPLETED";
                 request.CurrentStep = EventNames.AudioProviderCompleted;
                 request.LastError = null;
@@ -120,7 +127,7 @@ public sealed class AudioProviderPollingAppService(
                     CorrelationId = request.CorrelationId,
                     VideoRequestId = request.VideoRequestId,
                     AudioRequestId = request.Id,
-                    ProviderFileUrl = status.ProviderFileUrl
+                    ProviderFileUrl = mockStorageUrl
                 }, cancellationToken);
             }
             catch (Exception ex)
@@ -186,5 +193,40 @@ public sealed class AudioProviderPollingAppService(
             x => x.Id == request.Id,
             request,
             cancellationToken: cancellationToken);
+    }
+
+    private async Task<string> DownloadAndUploadToStorageAsync(
+        string downloadUrl,
+        string fileName,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Download file from provider
+            var fileContent = await httpClient.GetByteArrayAsync(downloadUrl, cancellationToken);
+
+            // Upload to mock storage
+            var storageUrl = "http://localhost:5048/storage/upload-binary";
+            using (var content = new ByteArrayContent(fileContent))
+            {
+                var response = await httpClient.PostAsync(
+                    $"{storageUrl}?fileName={fileName}",
+                    content,
+                    cancellationToken);
+
+                response.EnsureSuccessStatusCode();
+
+                var responseJson = await response.Content.ReadAsStringAsync(cancellationToken);
+                var jsonDoc = System.Text.Json.JsonDocument.Parse(responseJson);
+                var remoteUrl = jsonDoc.RootElement.GetProperty("url").GetString();
+
+                return remoteUrl ?? throw new InvalidOperationException("No URL in storage response");
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to download and upload audio file from {DownloadUrl}", downloadUrl);
+            throw;
+        }
     }
 }
