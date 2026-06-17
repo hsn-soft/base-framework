@@ -15,10 +15,10 @@ app.MapPost("/video/generate", (VideoRequest request) =>
 
 app.MapGet("/video/status/{trackingId}", async (string trackingId, CancellationToken ct) =>
 {
-    var (isReady, fileUrl, error) = await VideoProService.GetStatusAsync(trackingId, mockFilesDir, ct);
+    var (isReady, fileUrl, error, fileName) = await VideoProService.GetStatusAsync(trackingId, mockFilesDir, ct);
     if (!isReady)
         return Results.Ok(new { provider = "video-pro", trackingId, status = "processing", error });
-    return Results.Ok(new { provider = "video-pro", trackingId, status = "completed", remoteFileUrl = fileUrl });
+    return Results.Ok(new { provider = "video-pro", trackingId, status = "completed", remoteFileUrl = fileUrl, fileName });
 });
 
 app.MapGet("/video/download/{trackingId}", async (string trackingId) =>
@@ -44,16 +44,18 @@ public sealed class VideoProService
         return trackingId;
     }
 
-    public static async Task<(bool IsReady, string? FileUrl, string? Error)> GetStatusAsync(string trackingId, string mockFilesDir, CancellationToken cancellationToken)
+    public static async Task<(bool IsReady, string? FileUrl, string? Error, string? FileName)> GetStatusAsync(string trackingId, string mockFilesDir, CancellationToken cancellationToken)
     {
         if (!Store.TryGetValue(trackingId, out var entry))
-            return (false, null, "Not found");
+            return (false, null, "Not found", null);
 
         var elapsed = DateTime.UtcNow - entry.CreatedAt;
         if (elapsed.TotalSeconds < 20)
-            return (false, null, null);
+            return (false, null, null, null);
 
         var filePath = GetFilePath(trackingId, mockFilesDir);
+        var fileName = Path.GetFileName(filePath);
+
         if (!System.IO.File.Exists(filePath))
         {
             var audioInfo = entry.AudioUrls?.Count > 0 ? $"Audio URLs: {string.Join(", ", entry.AudioUrls)}" : "No audio";
@@ -61,7 +63,7 @@ public sealed class VideoProService
         }
 
         var downloadUrl = $"http://localhost:5047/video/download/{trackingId}";
-        return (true, downloadUrl, null);
+        return (true, downloadUrl, null, fileName);
     }
 
     public static string GetFilePath(string trackingId, string mockFilesDir)
