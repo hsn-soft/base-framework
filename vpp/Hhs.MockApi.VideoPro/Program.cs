@@ -2,22 +2,33 @@ using System.Collections.Concurrent;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddSingleton<VideoProService>();
-
 var app = builder.Build();
 
-app.MapPost("/video/generate", (VideoRequest request, VideoProService service) =>
+var mockFilesDir = Path.Combine(Path.GetTempPath(), "mock-provider-files");
+Directory.CreateDirectory(mockFilesDir);
+
+app.MapPost("/video/generate", (VideoRequest request) =>
 {
-    var trackingId = service.CreateRequest(request.AudioFilePaths);
+    var trackingId = VideoProService.CreateRequest(request.AudioUrls);
     return Results.Ok(new { provider = "video-pro", trackingId, pollingWindowSec = 120 });
 });
 
-app.MapGet("/video/status/{trackingId}", async (string trackingId, VideoProService service, CancellationToken ct) =>
+app.MapGet("/video/status/{trackingId}", async (string trackingId, CancellationToken ct) =>
 {
-    var (isReady, fileUrl, error) = await service.GetStatusAsync(trackingId, ct);
+    var (isReady, fileUrl, error) = await VideoProService.GetStatusAsync(trackingId, mockFilesDir, ct);
     if (!isReady)
         return Results.Ok(new { provider = "video-pro", trackingId, status = "processing", error });
     return Results.Ok(new { provider = "video-pro", trackingId, status = "completed", remoteFileUrl = fileUrl });
+});
+
+app.MapGet("/video/download/{trackingId}", async (string trackingId) =>
+{
+    var filePath = VideoProService.GetFilePath(trackingId, mockFilesDir);
+    if (!System.IO.File.Exists(filePath))
+        return Results.NotFound();
+
+    var fileContent = await System.IO.File.ReadAllBytesAsync(filePath);
+    return Results.File(fileContent, "application/octet-stream", Path.GetFileName(filePath));
 });
 
 app.Run();
@@ -26,15 +37,14 @@ public sealed class VideoProService
 {
     private static readonly ConcurrentDictionary<string, VideoProEntry> Store = new();
 
-    public string CreateRequest(List<string> audioFilePaths)
+    public static string CreateRequest(List<string> audioUrls)
     {
         var trackingId = Guid.NewGuid().ToString("N");
-        var createdAt = DateTime.UtcNow;
-        Store[trackingId] = new VideoProEntry { AudioFilePaths = audioFilePaths, CreatedAt = createdAt };
+        Store[trackingId] = new VideoProEntry { AudioUrls = audioUrls, CreatedAt = DateTime.UtcNow };
         return trackingId;
     }
 
-    public async Task<(bool IsReady, string? FileUrl, string? Error)> GetStatusAsync(string trackingId, CancellationToken cancellationToken)
+    public static async Task<(bool IsReady, string? FileUrl, string? Error)> GetStatusAsync(string trackingId, string mockFilesDir, CancellationToken cancellationToken)
     {
         if (!Store.TryGetValue(trackingId, out var entry))
             return (false, null, "Not found");
@@ -43,15 +53,27 @@ public sealed class VideoProService
         if (elapsed.TotalSeconds < 20)
             return (false, null, null);
 
-        var audioInfo = entry.AudioFilePaths?.Count > 0 ? $" (with {entry.AudioFilePaths.Count} audio file(s))" : "";
-        return (true, $"https://video-pro-api.internal/video/{trackingId}/output-pro.mp4{audioInfo}", null);
+        var filePath = GetFilePath(trackingId, mockFilesDir);
+        if (!System.IO.File.Exists(filePath))
+        {
+            var audioInfo = entry.AudioUrls?.Count > 0 ? $"Audio URLs: {string.Join(", ", entry.AudioUrls)}" : "No audio";
+            await System.IO.File.WriteAllTextAsync(filePath, $"Mock Video File\nTracking ID: {trackingId}\n{audioInfo}\nCreated: {DateTime.UtcNow:O}", cancellationToken);
+        }
+
+        var downloadUrl = $"http://localhost:5047/video/download/{trackingId}";
+        return (true, downloadUrl, null);
+    }
+
+    public static string GetFilePath(string trackingId, string mockFilesDir)
+    {
+        return Path.Combine(mockFilesDir, $"video-pro-{trackingId}.mp4.txt");
     }
 }
 
 public sealed class VideoProEntry
 {
-    public List<string> AudioFilePaths { get; set; } = new();
+    public List<string> AudioUrls { get; set; } = new();
     public DateTime CreatedAt { get; set; }
 }
 
-public sealed record VideoRequest(List<string> AudioFilePaths);
+public sealed record VideoRequest(List<string> AudioUrls);

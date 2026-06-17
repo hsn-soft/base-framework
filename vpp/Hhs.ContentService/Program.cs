@@ -127,6 +127,36 @@ app.MapPost("/demo/customer2/custom-xyz", async (
     });
 });
 
+// Mock Storage Endpoints
+var mockStorageDir = Path.Combine(Path.GetTempPath(), "mock-storage");
+Directory.CreateDirectory(mockStorageDir);
+
+app.MapPost("/mock-storage/upload", async (HttpRequest httpRequest) =>
+{
+    var fileName = httpRequest.Query["fileName"];
+    if (string.IsNullOrEmpty(fileName))
+        return Results.BadRequest("Missing fileName query parameter");
+
+    var filePath = Path.Combine(mockStorageDir, fileName);
+    using (var fileStream = System.IO.File.Create(filePath))
+    {
+        await httpRequest.Body.CopyToAsync(fileStream);
+    }
+
+    var fakeRemoteUrl = $"https://fake-storage.internal/files/{fileName}";
+    return Results.Ok(new { url = fakeRemoteUrl, fileName });
+});
+
+app.MapGet("/mock-storage/files/{fileName}", async (string fileName) =>
+{
+    var filePath = Path.Combine(mockStorageDir, fileName);
+    if (!System.IO.File.Exists(filePath))
+        return Results.NotFound();
+
+    var fileContent = await System.IO.File.ReadAllBytesAsync(filePath);
+    return Results.File(fileContent, "application/octet-stream", fileName);
+});
+
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ContentDbContext>();

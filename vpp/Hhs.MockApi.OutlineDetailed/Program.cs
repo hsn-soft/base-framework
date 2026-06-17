@@ -2,19 +2,17 @@ using System.Collections.Concurrent;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddSingleton<OutlineDetailedService>();
-
 var app = builder.Build();
 
-app.MapPost("/outline/generate", (OutlineRequest request, OutlineDetailedService service) =>
+app.MapPost("/outline/generate", (OutlineRequest request) =>
 {
-    var trackingId = service.CreateRequest(request.InputText);
+    var trackingId = OutlineDetailedService.CreateRequest(request.InputText);
     return Results.Ok(new { provider = "outline-detailed", trackingId, pollingWindowSec = 30 });
 });
 
-app.MapGet("/outline/status/{trackingId}", async (string trackingId, OutlineDetailedService service, CancellationToken ct) =>
+app.MapGet("/outline/status/{trackingId}", async (string trackingId, CancellationToken ct) =>
 {
-    var (isReady, script, error) = await service.GetStatusAsync(trackingId, ct);
+    var (isReady, script, error) = await OutlineDetailedService.GetStatusAsync(trackingId, ct);
     if (!isReady)
         return Results.Ok(new { provider = "outline-detailed", trackingId, status = "processing", error });
     return Results.Ok(new { provider = "outline-detailed", trackingId, status = "completed", script });
@@ -26,15 +24,14 @@ public sealed class OutlineDetailedService
 {
     private static readonly ConcurrentDictionary<string, DetailedOutlineEntry> Store = new();
 
-    public string CreateRequest(string inputText)
+    public static string CreateRequest(string inputText)
     {
         var trackingId = Guid.NewGuid().ToString("N");
-        var createdAt = DateTime.UtcNow;
-        Store[trackingId] = new DetailedOutlineEntry { InputText = inputText, CreatedAt = createdAt };
+        Store[trackingId] = new DetailedOutlineEntry { InputText = inputText, CreatedAt = DateTime.UtcNow };
         return trackingId;
     }
 
-    public async Task<(bool IsReady, string? Script, string? Error)> GetStatusAsync(string trackingId, CancellationToken cancellationToken)
+    public static async Task<(bool IsReady, string? Script, string? Error)> GetStatusAsync(string trackingId, CancellationToken cancellationToken)
     {
         if (!Store.TryGetValue(trackingId, out var entry))
             return (false, null, "Not found");
