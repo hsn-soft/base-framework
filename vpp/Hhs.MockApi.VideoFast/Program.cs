@@ -1,3 +1,5 @@
+using Hhs.MockApi.VideoFast;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSingleton<VideoFastService>();
@@ -41,26 +43,29 @@ app.MapGet("/video/status/{trackingId}", async (string trackingId) =>
 
 app.Run();
 
-public sealed class VideoFastService
+namespace Hhs.MockApi.VideoFast
 {
-    public static async Task<(string TrackingId, string FileUrl, string FileName)> GenerateVideoAsync(List<string> audioUrls, string mockFilesDir, CancellationToken cancellationToken)
+    public sealed class VideoFastService
     {
-        await Task.Delay(5000, cancellationToken);
-        var trackingId = Guid.NewGuid().ToString("N");
+        public static async Task<(string TrackingId, string FileUrl, string FileName)> GenerateVideoAsync(List<string> audioUrls, string mockFilesDir, CancellationToken cancellationToken)
+        {
+            await Task.Delay(5000, cancellationToken);
+            var trackingId = Guid.NewGuid().ToString("N");
 
-        var filePath = GetFilePath(trackingId, mockFilesDir);
-        var fileName = Path.GetFileName(filePath);
-        var audioInfo = audioUrls.Count > 0 ? $"Audio URLs: {string.Join(", ", audioUrls)}" : "No audio";
-        await System.IO.File.WriteAllTextAsync(filePath, $"Mock Video File\nTracking ID: {trackingId}\n{audioInfo}\nCreated: {DateTime.UtcNow:O}", cancellationToken);
+            var filePath = GetFilePath(trackingId, mockFilesDir);
+            var fileName = Path.GetFileName(filePath);
+            var audioInfo = audioUrls.Count > 0 ? $"Audio URLs: {string.Join(", ", audioUrls)}" : "No audio";
+            await System.IO.File.WriteAllTextAsync(filePath, $"Mock Video File\nTracking ID: {trackingId}\n{audioInfo}\nCreated: {DateTime.UtcNow:O}", cancellationToken);
 
-        var downloadUrl = $"http://localhost:5044/video/download/{trackingId}";
-        return (trackingId, downloadUrl, fileName);
+            var downloadUrl = $"http://localhost:5044/video/download/{trackingId}";
+            return (trackingId, downloadUrl, fileName);
+        }
+
+        public static string GetFilePath(string trackingId, string mockFilesDir)
+        {
+            return Path.Combine(mockFilesDir, $"mock_video_fast_{trackingId}.mp4.txt");
+        }
     }
 
-    public static string GetFilePath(string trackingId, string mockFilesDir)
-    {
-        return Path.Combine(mockFilesDir, $"mock_video_fast_{trackingId}.mp4.txt");
-    }
+    public sealed record VideoRequest(List<string> AudioUrls);
 }
-
-public sealed record VideoRequest(List<string> AudioUrls);

@@ -45,7 +45,7 @@ public sealed class ContentOperationAppService
         _db.CustomerContents.Add(entity);
         await _db.SaveChangesAsync(cancellationToken);
 
-        await _eventBus.PublishAsync(new CustomerNormalizeRequestCreatedEvent
+        await _eventBus.PublishAsync(new CustomerContentCreatedEto
         {
             CustomerContentId = id,
             Url = entity.Url,
@@ -106,7 +106,7 @@ public sealed class ContentOperationAppService
             })
             .ToList();
 
-        await _eventBus.PublishAsync(new AnalysisNormalizeRequestCreatedEvent
+        await _eventBus.PublishAsync(new AnalysisContentCreatedEvent
         {
             AnalysisContentId = analysisId,
             Items = items,
@@ -120,7 +120,7 @@ public sealed class ContentOperationAppService
     }
 
     public async Task HandleNormalizerResultAsync(
-        NormalizerResultPublishedEvent @event,
+        NormalizerResultPublishedEto @event,
         CancellationToken cancellationToken)
     {
         var shouldPublishEvent = false;

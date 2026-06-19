@@ -5,40 +5,25 @@ using Hhs.TextNormalizerService.Services;
 
 namespace Hhs.TextNormalizerService.Handlers;
 
-public abstract class NormalizerEventHandlerBase<TEvent>(
-    NormalizerInboxStore inboxStore)
-    : IIntegrationEventHandler<TEvent>
+public abstract class NormalizerEventHandlerBase<TEvent>(NormalizerInboxStore inboxStore) : IIntegrationEventHandler<TEvent>
     where TEvent : IntegrationEvent
 {
-    public async Task HandleAsync(
-        TEvent @event,
-        CancellationToken cancellationToken)
+    public async Task HandleAsync(TEvent @event, CancellationToken cancellationToken)
     {
-        bool started =
-            await inboxStore.StartAsync(
-                @event,
-                cancellationToken);
+        bool started = await inboxStore.StartAsync(@event, cancellationToken);
 
         if (!started)
             return;
 
         try
         {
-            await ExecuteAsync(
-                @event,
-                cancellationToken);
+            await ExecuteAsync(@event, cancellationToken);
 
-            await inboxStore.CompleteAsync(
-                @event.EventId,
-                cancellationToken);
+            await inboxStore.CompleteAsync(@event.EventId, cancellationToken);
         }
         catch (Exception ex)
         {
-            await inboxStore.FailAsync(
-                @event.EventId,
-                ex,
-                cancellationToken);
-
+            await inboxStore.FailAsync(@event.EventId, ex, cancellationToken);
             throw;
         }
     }
@@ -48,39 +33,74 @@ public abstract class NormalizerEventHandlerBase<TEvent>(
         CancellationToken cancellationToken);
 }
 
-public sealed class CustomerNormalizeRequestCreatedEventHandler(NormalizerInboxStore inboxStore, NormalizerOperationAppService appService) : NormalizerEventHandlerBase<CustomerNormalizeRequestCreatedEvent>(inboxStore)
+public sealed class CustomerContentCreatedEtoHandler(NormalizerInboxStore inboxStore, NormalizerOperationAppService appService)
+    : NormalizerEventHandlerBase<CustomerContentCreatedEto>(inboxStore)
 {
-    protected override Task ExecuteAsync(CustomerNormalizeRequestCreatedEvent @event, CancellationToken cancellationToken)
-        => appService.CreateCustomerNormalizeRequestAsync(@event, cancellationToken);
+    protected override Task ExecuteAsync(CustomerContentCreatedEto @event, CancellationToken cancellationToken)
+        => appService.CreateCustomerContentNormalizeRequestAsync(@event, cancellationToken);
 }
 
-public sealed class CustomerScrapingStartedEventHandler(NormalizerInboxStore inboxStore, NormalizerOperationAppService appService) : NormalizerEventHandlerBase<CustomerScrapingStartedEvent>(inboxStore)
+public sealed class CustomerContentNormalizeRequestCreatedEtoHandler(NormalizerInboxStore inboxStore, NormalizerOperationAppService appService)
+    : NormalizerEventHandlerBase<CustomerContentNormalizeRequestCreatedEto>(inboxStore)
 {
-    protected override Task ExecuteAsync(CustomerScrapingStartedEvent @event, CancellationToken cancellationToken)
-        => appService.StartCustomerScrapingAsync(@event, cancellationToken);
+    protected override Task ExecuteAsync(CustomerContentNormalizeRequestCreatedEto @event, CancellationToken cancellationToken)
+        => appService.StartCustomerContentNormalizeAsync(@event, cancellationToken);
 }
 
-public sealed class CustomerScrapingCompletedEventHandler(NormalizerInboxStore inboxStore, NormalizerOperationAppService appService) : NormalizerEventHandlerBase<CustomerScrapingCompletedEvent>(inboxStore)
+public sealed class CustomerContentScrapingStartedEtoHandler(NormalizerInboxStore inboxStore, NormalizerOperationAppService appService)
+    : NormalizerEventHandlerBase<CustomerContentScrapingStartedEto>(inboxStore)
 {
-    protected override Task ExecuteAsync(CustomerScrapingCompletedEvent @event, CancellationToken cancellationToken)
-        => appService.CompleteCustomerScrapingAsync(@event, cancellationToken);
+    protected override Task ExecuteAsync(CustomerContentScrapingStartedEto @event, CancellationToken cancellationToken)
+        => appService.StartCustomerContentScrapingAsync(@event, cancellationToken);
 }
 
-public sealed class CustomerOutlineStartedEventHandler(NormalizerInboxStore inboxStore, NormalizerOperationAppService appService) : NormalizerEventHandlerBase<CustomerOutlineStartedEvent>(inboxStore)
+public sealed class CustomerContentScrapingCompletedEtoHandler(NormalizerInboxStore inboxStore, NormalizerOperationAppService appService)
+    : NormalizerEventHandlerBase<CustomerContentScrapingCompletedEto>(inboxStore)
 {
-    protected override Task ExecuteAsync(CustomerOutlineStartedEvent @event, CancellationToken cancellationToken)
-        => appService.StartCustomerOutlineAsync(@event, cancellationToken);
+    protected override Task ExecuteAsync(CustomerContentScrapingCompletedEto @event, CancellationToken cancellationToken)
+        => appService.CompleteCustomerContentScrapingAsync(@event, cancellationToken);
 }
 
-public sealed class CustomerOutlineCompletedEventHandler(NormalizerInboxStore inboxStore, NormalizerOperationAppService appService) : NormalizerEventHandlerBase<CustomerOutlineCompletedEvent>(inboxStore)
+public sealed class CustomerContentOutlineStartedEtoHandler(NormalizerInboxStore inboxStore, NormalizerOperationAppService appService)
+    : NormalizerEventHandlerBase<CustomerContentOutlineStartedEto>(inboxStore)
 {
-    protected override Task ExecuteAsync(CustomerOutlineCompletedEvent @event, CancellationToken cancellationToken)
-        => appService.CompleteCustomerOutlineAsync(@event, cancellationToken);
+    protected override Task ExecuteAsync(CustomerContentOutlineStartedEto @event, CancellationToken cancellationToken)
+        => appService.StartCustomerContentOutlineAsync(@event, cancellationToken);
 }
 
-public sealed class AnalysisNormalizeRequestCreatedEventHandler(NormalizerInboxStore inboxStore, NormalizerOperationAppService appService) : NormalizerEventHandlerBase<AnalysisNormalizeRequestCreatedEvent>(inboxStore)
+public sealed class OutlineProviderRequestStartedEtoHandler(NormalizerInboxStore inboxStore, NormalizerOperationAppService appService)
+    : NormalizerEventHandlerBase<OutlineProviderRequestStartedEto>(inboxStore)
 {
-    protected override Task ExecuteAsync(AnalysisNormalizeRequestCreatedEvent @event, CancellationToken cancellationToken)
+    protected override Task ExecuteAsync(OutlineProviderRequestStartedEto @event, CancellationToken cancellationToken)
+        => appService.StartOutlineProviderRequestAsync(@event, cancellationToken);
+}
+
+public sealed class OutlineProviderPollingStartedEtoHandler(NormalizerInboxStore inboxStore, NormalizerOperationAppService appService)
+    : NormalizerEventHandlerBase<OutlineProviderPollingStartedEto>(inboxStore)
+{
+    protected override Task ExecuteAsync(OutlineProviderPollingStartedEto @event, CancellationToken cancellationToken)
+        => appService.ScheduleOutlineProviderPollingAsync(@event, cancellationToken);
+}
+
+public sealed class OutlineProviderCompletedEtoHandler(NormalizerInboxStore inboxStore, NormalizerOperationAppService appService)
+    : NormalizerEventHandlerBase<OutlineProviderCompletedEto>(inboxStore)
+{
+    protected override Task ExecuteAsync(OutlineProviderCompletedEto @event, CancellationToken cancellationToken)
+        => appService.CompleteOutlineProviderAsync(@event, cancellationToken);
+}
+
+public sealed class CustomerContentOutlineCompletedEtoHandler(NormalizerInboxStore inboxStore, NormalizerOperationAppService appService)
+    : NormalizerEventHandlerBase<CustomerContentOutlineCompletedEto>(inboxStore)
+{
+    protected override Task ExecuteAsync(CustomerContentOutlineCompletedEto @event, CancellationToken cancellationToken)
+        => appService.CompleteCustomerContentOutlineAsync(@event, cancellationToken);
+}
+
+
+
+public sealed class AnalysisNormalizeRequestCreatedEventHandler(NormalizerInboxStore inboxStore, NormalizerOperationAppService appService) : NormalizerEventHandlerBase<AnalysisContentCreatedEvent>(inboxStore)
+{
+    protected override Task ExecuteAsync(AnalysisContentCreatedEvent @event, CancellationToken cancellationToken)
         => appService.CreateAnalysisNormalizeRequestAsync(@event, cancellationToken);
 }
 
@@ -108,20 +128,3 @@ public sealed class AnalysisItemOutlineCompletedEventHandler(NormalizerInboxStor
         => appService.CompleteAnalysisItemOutlineAsync(@event, cancellationToken);
 }
 
-public sealed class OutlineProviderRequestStartedEventHandler(NormalizerInboxStore inboxStore, NormalizerOperationAppService appService) : NormalizerEventHandlerBase<OutlineProviderRequestStartedEvent>(inboxStore)
-{
-    protected override Task ExecuteAsync(OutlineProviderRequestStartedEvent @event, CancellationToken cancellationToken)
-        => appService.StartOutlineProviderRequestAsync(@event, cancellationToken);
-}
-
-public sealed class OutlineProviderPollingStartedEventHandler(NormalizerInboxStore inboxStore, NormalizerOperationAppService appService) : NormalizerEventHandlerBase<OutlineProviderPollingStartedEvent>(inboxStore)
-{
-    protected override Task ExecuteAsync(OutlineProviderPollingStartedEvent @event, CancellationToken cancellationToken)
-        => appService.ScheduleOutlinePollingAsync(@event, cancellationToken);
-}
-
-public sealed class OutlineProviderCompletedEventHandler(NormalizerInboxStore inboxStore, NormalizerOperationAppService appService) : NormalizerEventHandlerBase<OutlineProviderCompletedEvent>(inboxStore)
-{
-    protected override Task ExecuteAsync(OutlineProviderCompletedEvent @event, CancellationToken cancellationToken)
-        => appService.CompleteOutlineProviderAsync(@event, cancellationToken);
-}

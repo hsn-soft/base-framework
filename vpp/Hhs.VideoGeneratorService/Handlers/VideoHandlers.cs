@@ -30,8 +30,7 @@ public abstract class VideoEventHandlerBase<TEvent>(VideoGeneratorInboxStore inb
     protected abstract Task ExecuteAsync(TEvent @event, CancellationToken cancellationToken);
 }
 
-public sealed class VideoGenerationApprovedEventHandler(VideoGeneratorInboxStore inboxStore, VideoOperationAppService appService)
-    : VideoEventHandlerBase<VideoGenerationApprovedEvent>(inboxStore)
+public sealed class VideoGenerationApprovedEventHandler(VideoGeneratorInboxStore inboxStore, VideoOperationAppService appService) : VideoEventHandlerBase<VideoGenerationApprovedEvent>(inboxStore)
 {
     protected override Task ExecuteAsync(VideoGenerationApprovedEvent @event, CancellationToken cancellationToken)
         => appService.CreateVideoRequestAsync(@event, cancellationToken);
@@ -109,24 +108,14 @@ public sealed class VideoFileUploadStartedEventHandler(VideoGeneratorInboxStore 
         => appService.UploadVideoFileAsync(@event, cancellationToken);
 }
 
-public sealed class AudioProviderPollingStartedEventHandler(
-    VideoGeneratorInboxStore inboxStore,
-    VideoOperationAppService appService)
-    : VideoEventHandlerBase<AudioProviderPollingStartedEvent>(inboxStore)
+public sealed class AudioProviderPollingStartedEventHandler(VideoGeneratorInboxStore inboxStore, VideoOperationAppService appService) : VideoEventHandlerBase<AudioProviderPollingStartedEvent>(inboxStore)
 {
-    protected override Task ExecuteAsync(
-        AudioProviderPollingStartedEvent @event,
-        CancellationToken cancellationToken)
+    protected override Task ExecuteAsync(AudioProviderPollingStartedEvent @event, CancellationToken cancellationToken)
         => appService.ScheduleAudioProviderPollingAsync(@event, cancellationToken);
 }
 
-public sealed class VideoProviderPollingStartedEventHandler(
-    VideoGeneratorInboxStore inboxStore,
-    VideoOperationAppService appService)
-    : VideoEventHandlerBase<VideoProviderPollingStartedEvent>(inboxStore)
+public sealed class VideoProviderPollingStartedEventHandler(VideoGeneratorInboxStore inboxStore, VideoOperationAppService appService) : VideoEventHandlerBase<VideoProviderPollingStartedEvent>(inboxStore)
 {
-    protected override Task ExecuteAsync(
-        VideoProviderPollingStartedEvent @event,
-        CancellationToken cancellationToken)
+    protected override Task ExecuteAsync(VideoProviderPollingStartedEvent @event, CancellationToken cancellationToken)
         => appService.ScheduleVideoProviderPollingAsync(@event, cancellationToken);
 }

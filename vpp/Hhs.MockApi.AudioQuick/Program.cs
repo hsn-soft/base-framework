@@ -1,3 +1,5 @@
+using Hhs.MockApi.AudioQuick;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSingleton<AudioQuickService>();
@@ -41,26 +43,29 @@ app.MapGet("/audio/status/{trackingId}", async (string trackingId) =>
 
 app.Run();
 
-public sealed class AudioQuickService
+namespace Hhs.MockApi.AudioQuick
 {
-    public static async Task<(string TrackingId, string FileUrl, string FileName)> GenerateAudioAsync(string inputText, string mockFilesDir, CancellationToken cancellationToken)
+    public sealed class AudioQuickService
     {
-        await Task.Delay(3000, cancellationToken);
-        var trackingId = Guid.NewGuid().ToString("N");
+        public static async Task<(string TrackingId, string FileUrl, string FileName)> GenerateAudioAsync(string inputText, string mockFilesDir, CancellationToken cancellationToken)
+        {
+            await Task.Delay(3000, cancellationToken);
+            var trackingId = Guid.NewGuid().ToString("N");
 
-        var filePath = GetFilePath(trackingId, mockFilesDir);
-        var fileName = Path.GetFileName(filePath);
+            var filePath = GetFilePath(trackingId, mockFilesDir);
+            var fileName = Path.GetFileName(filePath);
 
-        await System.IO.File.WriteAllTextAsync(filePath, $"Mock Audio File\nTracking ID: {trackingId}\nCreated: {DateTime.UtcNow:O}", cancellationToken);
+            await System.IO.File.WriteAllTextAsync(filePath, $"Mock Audio File\nTracking ID: {trackingId}\nCreated: {DateTime.UtcNow:O}", cancellationToken);
 
-        var downloadUrl = $"http://localhost:5042/audio/download/{trackingId}";
-        return (trackingId, downloadUrl, fileName);
+            var downloadUrl = $"http://localhost:5042/audio/download/{trackingId}";
+            return (trackingId, downloadUrl, fileName);
+        }
+
+        public static string GetFilePath(string trackingId, string mockFilesDir)
+        {
+            return Path.Combine(mockFilesDir, $"mock_audio_quick_{trackingId}.mp3.txt");
+        }
     }
 
-    public static string GetFilePath(string trackingId, string mockFilesDir)
-    {
-        return Path.Combine(mockFilesDir, $"mock_audio_quick_{trackingId}.mp3.txt");
-    }
+    public sealed record AudioRequest(string InputText);
 }
-
-public sealed record AudioRequest(string InputText);

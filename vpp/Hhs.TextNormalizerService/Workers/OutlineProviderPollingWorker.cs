@@ -16,8 +16,7 @@ public sealed class OutlineProviderPollingWorker(
             {
                 using var scope = serviceProvider.CreateScope();
 
-                var appService = scope.ServiceProvider
-                    .GetRequiredService<OutlineProviderPollingAppService>();
+                var appService = scope.ServiceProvider.GetRequiredService<OutlineProviderPollingAppService>();
 
                 await appService.PollDueOutlineRequestsAsync(stoppingToken);
             }

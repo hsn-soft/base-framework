@@ -8,18 +8,21 @@ public static class ContentProcessTypes
 
 public static class EventNames
 {
-    public const string CustomerNormalizeRequestCreated = "CUSTOMER_NORMALIZE_REQUEST_CREATED";
-    public const string AnalysisNormalizeRequestCreated = "ANALYSIS_NORMALIZE_REQUEST_CREATED";
+    public const string CustomerContentCreated = "CUSTOMER_CONTENT_CREATED";
+    public const string AnalysisContentCreated = "ANALYSIS_CONTENT_CREATED";
 
-    public const string CustomerScrapingStarted = "CUSTOMER_SCRAPING_STARTED";
-    public const string CustomerScrapingCompleted = "CUSTOMER_SCRAPING_COMPLETED";
-    public const string CustomerOutlineStarted = "CUSTOMER_OUTLINE_STARTED";
+    public const string CustomerContentNormalizeRequestCreated = "CUSTOMER_CONTENT_NORMALIZE_REQUEST_CREATED";
+
+    public const string CustomerContentScrapingStarted = "CUSTOMER_CONTENT_SCRAPING_STARTED";
+    public const string CustomerContentScrapingCompleted = "CUSTOMER_CONTENT_SCRAPING_COMPLETED";
+
+    public const string CustomerContentOutlineStarted = "CUSTOMER_CONTENT_OUTLINE_STARTED";
 
     public const string OutlineProviderRequestStarted = "OUTLINE_PROVIDER_REQUEST_STARTED";
     public const string OutlineProviderPollingStarted = "OUTLINE_PROVIDER_POLLING_STARTED";
     public const string OutlineProviderCompleted = "OUTLINE_PROVIDER_COMPLETED";
 
-    public const string CustomerOutlineCompleted = "CUSTOMER_OUTLINE_COMPLETED";
+    public const string CustomerContentOutlineCompleted = "CUSTOMER_CONTENT_OUTLINE_COMPLETED";
 
     public const string AnalysisItemScrapingStarted = "ANALYSIS_ITEM_SCRAPING_STARTED";
     public const string AnalysisItemScrapingCompleted = "ANALYSIS_ITEM_SCRAPING_COMPLETED";

@@ -30,27 +30,20 @@ public abstract class ContentEventHandlerBase<TEvent>(ContentInboxStore inboxSto
     protected abstract Task ExecuteAsync(TEvent @event, CancellationToken cancellationToken);
 }
 
-public sealed class NormalizerResultPublishedEventHandler(ContentInboxStore inboxStore, ContentOperationAppService appService)
-    : ContentEventHandlerBase<NormalizerResultPublishedEvent>(inboxStore)
+public sealed class NormalizerResultPublishedEventHandler(ContentInboxStore inboxStore, ContentOperationAppService appService) : ContentEventHandlerBase<NormalizerResultPublishedEto>(inboxStore)
 {
-    protected override Task ExecuteAsync(NormalizerResultPublishedEvent @event, CancellationToken cancellationToken)
+    protected override Task ExecuteAsync(NormalizerResultPublishedEto @event, CancellationToken cancellationToken)
         => appService.HandleNormalizerResultAsync(@event, cancellationToken);
 }
 
-public sealed class VideoGenerationResultPublishedEventHandler(ContentInboxStore inboxStore, ContentOperationAppService appService)
-    : ContentEventHandlerBase<VideoGenerationResultPublishedEvent>(inboxStore)
+public sealed class VideoGenerationResultPublishedEventHandler(ContentInboxStore inboxStore, ContentOperationAppService appService) : ContentEventHandlerBase<VideoGenerationResultPublishedEvent>(inboxStore)
 {
     protected override Task ExecuteAsync(VideoGenerationResultPublishedEvent @event, CancellationToken cancellationToken)
         => appService.HandleVideoResultAsync(@event, cancellationToken);
 }
 
-public sealed class StepFailedEventHandler(
-    ContentInboxStore inboxStore,
-    ContentOperationAppService appService)
-    : ContentEventHandlerBase<StepFailedEvent>(inboxStore)
+public sealed class StepFailedEventHandler(ContentInboxStore inboxStore, ContentOperationAppService appService) : ContentEventHandlerBase<StepFailedEvent>(inboxStore)
 {
-    protected override Task ExecuteAsync(
-        StepFailedEvent @event,
-        CancellationToken cancellationToken)
+    protected override Task ExecuteAsync(StepFailedEvent @event, CancellationToken cancellationToken)
         => appService.HandleStepFailedAsync(@event, cancellationToken);
 }

@@ -1,3 +1,5 @@
+using Hhs.MockApi.OutlineFast;
+
 var builder = WebApplication.CreateBuilder(args);
 
 var app = builder.Build();
@@ -18,4 +20,7 @@ static async Task<string> GenerateOutlineAsync(string inputText, CancellationTok
     return outline;
 }
 
-public sealed record OutlineRequest(string InputText);
+namespace Hhs.MockApi.OutlineFast
+{
+    public sealed record OutlineRequest(string InputText);
+}

@@ -65,17 +65,17 @@ public sealed class NormalizerRetryAppService(
                 if (claimResult.ModifiedCount == 0)
                     continue;
 
-                if (request.CurrentStep == EventNames.CustomerScrapingStarted)
+                if (request.CurrentStep == EventNames.CustomerContentScrapingStarted)
                 {
-                    await eventBus.PublishAsync(new CustomerScrapingStartedEvent { CustomerContentId = request.CustomerContentId, ContentProcessType = ContentProcessTypes.CustomerContent, CorrelationId = request.CorrelationId }, cancellationToken);
+                    await eventBus.PublishAsync(new CustomerContentScrapingStartedEto { CustomerContentId = request.CustomerContentId, ContentProcessType = ContentProcessTypes.CustomerContent, CorrelationId = request.CorrelationId }, cancellationToken);
                 }
-                else if (request.CurrentStep == EventNames.CustomerOutlineStarted)
+                else if (request.CurrentStep == EventNames.CustomerContentOutlineStarted)
                 {
-                    await eventBus.PublishAsync(new CustomerOutlineStartedEvent { CustomerContentId = request.CustomerContentId, ContentProcessType = ContentProcessTypes.CustomerContent, CorrelationId = request.CorrelationId }, cancellationToken);
+                    await eventBus.PublishAsync(new CustomerContentOutlineStartedEto { CustomerContentId = request.CustomerContentId, ContentProcessType = ContentProcessTypes.CustomerContent, CorrelationId = request.CorrelationId }, cancellationToken);
                 }
                 else if (request.CurrentStep == EventNames.OutlineProviderRequestStarted)
                 {
-                    await eventBus.PublishAsync(new OutlineProviderRequestStartedEvent
+                    await eventBus.PublishAsync(new OutlineProviderRequestStartedEto
                     {
                         CustomerContentId = request.CustomerContentId,
                         ContentProcessType = ContentProcessTypes.CustomerContent,
@@ -219,7 +219,7 @@ public sealed class NormalizerRetryAppService(
                     }
                     else if (item.CurrentStep == EventNames.OutlineProviderRequestStarted)
                     {
-                        await eventBus.PublishAsync(new OutlineProviderRequestStartedEvent
+                        await eventBus.PublishAsync(new OutlineProviderRequestStartedEto
                         {
                             AnalysisContentId = request.AnalysisContentId,
                             CustomerContentId = item.CustomerContentId,

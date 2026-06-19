@@ -7,25 +7,12 @@ using MongoDB.Driver;
 
 namespace Hhs.TextNormalizerService.Services;
 
-public sealed class OutlineProviderPollingAppService
+public sealed class OutlineProviderPollingAppService(
+    NormalizerMongoContext context,
+    IOutlineProviderResolver outlineProviderResolver,
+    IEventBus eventBus,
+    ILogger<OutlineProviderPollingAppService> logger)
 {
-    private readonly NormalizerMongoContext _context;
-    private readonly IOutlineProviderResolver _outlineProviderResolver;
-    private readonly IEventBus _eventBus;
-    private readonly ILogger<OutlineProviderPollingAppService> _logger;
-
-    public OutlineProviderPollingAppService(
-        NormalizerMongoContext context,
-        IOutlineProviderResolver outlineProviderResolver,
-        IEventBus eventBus,
-        ILogger<OutlineProviderPollingAppService> logger)
-    {
-        _context = context;
-        _outlineProviderResolver = outlineProviderResolver;
-        _eventBus = eventBus;
-        _logger = logger;
-    }
-
     public async Task PollDueOutlineRequestsAsync(CancellationToken cancellationToken)
     {
         var now = DateTime.UtcNow;
@@ -38,7 +25,7 @@ public sealed class OutlineProviderPollingAppService
         DateTime now,
         CancellationToken cancellationToken)
     {
-        var requests = await _context.CustomerRequests
+        var requests = await context.CustomerRequests
             .Find(x =>
                 x.Status == "OUTLINE_PROVIDER_POLLING" &&
                 x.NextOutlinePollAtUtc != null &&
@@ -67,7 +54,7 @@ public sealed class OutlineProviderPollingAppService
 
                     await ReplaceCustomerAsync(request, cancellationToken);
 
-                    await _eventBus.PublishAsync(new StepFailedEvent
+                    await eventBus.PublishAsync(new StepFailedEvent
                     {
                         CorrelationId = request.CorrelationId,
                         CustomerContentId = request.CustomerContentId,
@@ -80,11 +67,9 @@ public sealed class OutlineProviderPollingAppService
                     continue;
                 }
 
-                var provider = _outlineProviderResolver.Resolve(request.OutlineProviderKey);
+                var provider = outlineProviderResolver.Resolve(request.OutlineProviderKey);
 
-                var status = await provider.GetStatusAsync(
-                    request.OutlineProviderTrackId!,
-                    cancellationToken);
+                var status = await provider.GetStatusAsync(request.OutlineProviderTrackId!, cancellationToken);
 
                 if (status.IsFailed)
                 {
@@ -94,7 +79,7 @@ public sealed class OutlineProviderPollingAppService
 
                     await ReplaceCustomerAsync(request, cancellationToken);
 
-                    await _eventBus.PublishAsync(new StepFailedEvent
+                    await eventBus.PublishAsync(new StepFailedEvent
                     {
                         CorrelationId = request.CorrelationId,
                         CustomerContentId = request.CustomerContentId,
@@ -129,7 +114,7 @@ public sealed class OutlineProviderPollingAppService
                 if (string.IsNullOrWhiteSpace(status.Script))
                     throw new InvalidOperationException("Outline provider completed but script is empty.");
 
-                await _eventBus.PublishAsync(new OutlineProviderCompletedEvent
+                await eventBus.PublishAsync(new OutlineProviderCompletedEto
                 {
                     CustomerContentId = request.CustomerContentId,
                     ContentProcessType = ContentProcessTypes.CustomerContent,
@@ -153,7 +138,7 @@ public sealed class OutlineProviderPollingAppService
 
                     await ReplaceCustomerAsync(request, cancellationToken);
 
-                    await _eventBus.PublishAsync(new StepFailedEvent
+                    await eventBus.PublishAsync(new StepFailedEvent
                     {
                         CorrelationId = request.CorrelationId,
                         CustomerContentId = request.CustomerContentId,
@@ -173,7 +158,7 @@ public sealed class OutlineProviderPollingAppService
                     await ReplaceCustomerAsync(request, cancellationToken);
                 }
 
-                _logger.LogError(
+                logger.LogError(
                     ex,
                     "Customer outline polling failed. CustomerContentId: {CustomerContentId}",
                     request.CustomerContentId);
@@ -192,7 +177,7 @@ public sealed class OutlineProviderPollingAppService
                 i.NextOutlinePollAtUtc <= now &&
                 i.OutlineProviderTrackId != null);
 
-        var requests = await _context.AnalysisRequests
+        var requests = await context.AnalysisRequests
             .Find(filter)
             .Limit(50)
             .ToListAsync(cancellationToken);
@@ -238,7 +223,7 @@ public sealed class OutlineProviderPollingAppService
                         continue;
                     }
 
-                    var provider = _outlineProviderResolver.Resolve(request.OutlineProviderKey);
+                    var provider = outlineProviderResolver.Resolve(request.OutlineProviderKey);
 
                     var status = await provider.GetStatusAsync(
                         item.OutlineProviderTrackId!,
@@ -292,7 +277,7 @@ public sealed class OutlineProviderPollingAppService
                         completedUpdate,
                         cancellationToken);
 
-                    await _eventBus.PublishAsync(new OutlineProviderCompletedEvent
+                    await eventBus.PublishAsync(new OutlineProviderCompletedEto
                     {
                         AnalysisContentId = request.AnalysisContentId,
                         CustomerContentId = item.CustomerContentId,
@@ -317,7 +302,7 @@ public sealed class OutlineProviderPollingAppService
                             false,
                             cancellationToken);
 
-                        _logger.LogError(
+                        logger.LogError(
                             ex,
                             "Analysis outline item polling failed permanently. AnalysisContentId: {AnalysisContentId}, CustomerContentId: {CustomerContentId}",
                             request.AnalysisContentId,
@@ -345,7 +330,7 @@ public sealed class OutlineProviderPollingAppService
                         update,
                         cancellationToken);
 
-                    _logger.LogError(
+                    logger.LogError(
                         ex,
                         "Analysis outline item polling failed. AnalysisContentId: {AnalysisContentId}, CustomerContentId: {CustomerContentId}",
                         request.AnalysisContentId,
@@ -373,7 +358,7 @@ public sealed class OutlineProviderPollingAppService
                     i.NextOutlinePollAtUtc <= now &&
                     i.OutlineProviderTrackId != null));
 
-        return _context.AnalysisRequests.UpdateOneAsync(
+        return context.AnalysisRequests.UpdateOneAsync(
             filter,
             update,
             cancellationToken: cancellationToken);
@@ -404,7 +389,7 @@ public sealed class OutlineProviderPollingAppService
             update,
             cancellationToken);
 
-        await _eventBus.PublishAsync(new StepFailedEvent
+        await eventBus.PublishAsync(new StepFailedEvent
         {
             CorrelationId = request.CorrelationId,
             AnalysisContentId = request.AnalysisContentId,
@@ -428,7 +413,7 @@ public sealed class OutlineProviderPollingAppService
                 x => x.Items,
                 i => i.CustomerContentId == customerContentId));
 
-        return _context.AnalysisRequests.UpdateOneAsync(
+        return context.AnalysisRequests.UpdateOneAsync(
             filter,
             update,
             cancellationToken: cancellationToken);
@@ -438,7 +423,7 @@ public sealed class OutlineProviderPollingAppService
         CustomerContentNormalizedRequest request,
         CancellationToken cancellationToken)
     {
-        return _context.CustomerRequests.ReplaceOneAsync(
+        return context.CustomerRequests.ReplaceOneAsync(
             x => x.Id == request.Id,
             request,
             cancellationToken: cancellationToken);
@@ -449,7 +434,7 @@ public sealed class OutlineProviderPollingAppService
         DateTime now,
         CancellationToken cancellationToken)
     {
-        return _context.CustomerRequests.UpdateOneAsync(
+        return context.CustomerRequests.UpdateOneAsync(
             x =>
                 x.Id == customerRequestId &&
                 x.Status == "OUTLINE_PROVIDER_POLLING" &&

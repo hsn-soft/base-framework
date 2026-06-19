@@ -1,13 +1,13 @@
 namespace Hhs.Shared.Events;
 
-public sealed record CustomerNormalizeRequestCreatedEvent : IntegrationEvent
+public sealed record CustomerContentCreatedEto : IntegrationEvent
 {
     public string Url { get; init; } = default!;
 
-    public CustomerNormalizeRequestCreatedEvent()
+    public CustomerContentCreatedEto()
     {
-        EventName = EventNames.CustomerNormalizeRequestCreated;
-        Facility = EventNames.CustomerNormalizeRequestCreated;
+        EventName = EventNames.CustomerContentCreated;
+        Facility = EventNames.CustomerContentCreated;
         ContentProcessType = ContentProcessTypes.CustomerContent;
     }
 
@@ -16,14 +16,14 @@ public sealed record CustomerNormalizeRequestCreatedEvent : IntegrationEvent
     public string? AudioProviderKey { get; init; }
 }
 
-public sealed record AnalysisNormalizeRequestCreatedEvent : IntegrationEvent
+public sealed record AnalysisContentCreatedEvent : IntegrationEvent
 {
     public List<AnalysisNormalizeItem> Items { get; init; } = [];
 
-    public AnalysisNormalizeRequestCreatedEvent()
+    public AnalysisContentCreatedEvent()
     {
-        EventName = EventNames.AnalysisNormalizeRequestCreated;
-        Facility = EventNames.AnalysisNormalizeRequestCreated;
+        EventName = EventNames.AnalysisContentCreated;
+        Facility = EventNames.AnalysisContentCreated;
         ContentProcessType = ContentProcessTypes.AnalysisContent;
     }
 
@@ -40,48 +40,58 @@ public sealed record AnalysisNormalizeItem
     public string? Path { get; init; }
 }
 
-public sealed record CustomerScrapingStartedEvent : IntegrationEvent
+public sealed record CustomerContentScrapingStartedEto : IntegrationEvent
 {
-    public CustomerScrapingStartedEvent()
+    public CustomerContentScrapingStartedEto()
     {
-        EventName = EventNames.CustomerScrapingStarted;
-        Facility = EventNames.CustomerScrapingStarted;
+        EventName = EventNames.CustomerContentScrapingStarted;
+        Facility = EventNames.CustomerContentScrapingStarted;
         ContentProcessType = ContentProcessTypes.CustomerContent;
     }
 }
 
-public sealed record CustomerScrapingCompletedEvent : IntegrationEvent
+public sealed record CustomerContentNormalizeRequestCreatedEto : IntegrationEvent
+{
+    public CustomerContentNormalizeRequestCreatedEto()
+    {
+        EventName = EventNames.CustomerContentNormalizeRequestCreated;
+        Facility = EventNames.CustomerContentNormalizeRequestCreated;
+        ContentProcessType = ContentProcessTypes.CustomerContent;
+    }
+}
+
+public sealed record CustomerContentScrapingCompletedEto : IntegrationEvent
 {
     public string Title { get; init; } = default!;
     public string Text { get; init; } = default!;
     public DateTime? ReleaseTimeUtc { get; init; }
 
-    public CustomerScrapingCompletedEvent()
+    public CustomerContentScrapingCompletedEto()
     {
-        EventName = EventNames.CustomerScrapingCompleted;
-        Facility = EventNames.CustomerScrapingCompleted;
+        EventName = EventNames.CustomerContentScrapingCompleted;
+        Facility = EventNames.CustomerContentScrapingCompleted;
         ContentProcessType = ContentProcessTypes.CustomerContent;
     }
 }
 
-public sealed record CustomerOutlineStartedEvent : IntegrationEvent
+public sealed record CustomerContentOutlineStartedEto : IntegrationEvent
 {
-    public CustomerOutlineStartedEvent()
+    public CustomerContentOutlineStartedEto()
     {
-        EventName = EventNames.CustomerOutlineStarted;
-        Facility = EventNames.CustomerOutlineStarted;
+        EventName = EventNames.CustomerContentOutlineStarted;
+        Facility = EventNames.CustomerContentOutlineStarted;
         ContentProcessType = ContentProcessTypes.CustomerContent;
     }
 }
 
-public sealed record CustomerOutlineCompletedEvent : IntegrationEvent
+public sealed record CustomerContentOutlineCompletedEto : IntegrationEvent
 {
     public string Script { get; init; } = default!;
 
-    public CustomerOutlineCompletedEvent()
+    public CustomerContentOutlineCompletedEto()
     {
-        EventName = EventNames.CustomerOutlineCompleted;
-        Facility = EventNames.CustomerOutlineCompleted;
+        EventName = EventNames.CustomerContentOutlineCompleted;
+        Facility = EventNames.CustomerContentOutlineCompleted;
         ContentProcessType = ContentProcessTypes.CustomerContent;
     }
 }
@@ -125,7 +135,7 @@ public sealed record AnalysisItemOutlineStartedEvent : IntegrationEvent
     }
 }
 
-public sealed record OutlineProviderRequestStartedEvent : IntegrationEvent
+public sealed record OutlineProviderRequestStartedEto : IntegrationEvent
 {
     public string ProviderKey { get; init; } = default!;
     public Guid NormalizedRequestId { get; init; }
@@ -133,14 +143,14 @@ public sealed record OutlineProviderRequestStartedEvent : IntegrationEvent
     public int? SortOrder { get; init; }
     public string InputText { get; init; } = default!;
 
-    public OutlineProviderRequestStartedEvent()
+    public OutlineProviderRequestStartedEto()
     {
         EventName = EventNames.OutlineProviderRequestStarted;
         Facility = EventNames.OutlineProviderRequestStarted;
     }
 }
 
-public sealed record OutlineProviderPollingStartedEvent : IntegrationEvent
+public sealed record OutlineProviderPollingStartedEto : IntegrationEvent
 {
     public string ProviderKey { get; init; } = default!;
     public Guid NormalizedRequestId { get; init; }
@@ -148,21 +158,21 @@ public sealed record OutlineProviderPollingStartedEvent : IntegrationEvent
     public int? SortOrder { get; init; }
     public string ProviderTrackId { get; init; } = default!;
 
-    public OutlineProviderPollingStartedEvent()
+    public OutlineProviderPollingStartedEto()
     {
         EventName = EventNames.OutlineProviderPollingStarted;
         Facility = EventNames.OutlineProviderPollingStarted;
     }
 }
 
-public sealed record OutlineProviderCompletedEvent : IntegrationEvent
+public sealed record OutlineProviderCompletedEto : IntegrationEvent
 {
     public Guid NormalizedRequestId { get; init; }
     public Guid? CustomerContentIdForItem { get; init; }
     public int? SortOrder { get; init; }
     public string Script { get; init; } = default!;
 
-    public OutlineProviderCompletedEvent()
+    public OutlineProviderCompletedEto()
     {
         EventName = EventNames.OutlineProviderCompleted;
         Facility = EventNames.OutlineProviderCompleted;
@@ -182,7 +192,7 @@ public sealed record AnalysisItemOutlineCompletedEvent : IntegrationEvent
     }
 }
 
-public sealed record NormalizerResultPublishedEvent : IntegrationEvent
+public sealed record NormalizerResultPublishedEto : IntegrationEvent
 {
     public Guid NormalizeRequestId { get; init; }
     public string VideoInputJson { get; init; } = default!;
@@ -190,7 +200,7 @@ public sealed record NormalizerResultPublishedEvent : IntegrationEvent
     public string VideoProviderKey { get; init; } = default!;
     public string? AudioProviderKey { get; init; }
 
-    public NormalizerResultPublishedEvent()
+    public NormalizerResultPublishedEto()
     {
         EventName = EventNames.NormalizerResultPublished;
         Facility = EventNames.NormalizerResultPublished;

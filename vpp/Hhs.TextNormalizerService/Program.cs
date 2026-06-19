@@ -3,6 +3,7 @@ using Hhs.Shared.RabbitMQ;
 using Hhs.TextNormalizerService.Entities;
 using Hhs.TextNormalizerService.Handlers;
 using Hhs.TextNormalizerService.Infrastructure;
+using Hhs.TextNormalizerService.Models;
 using Hhs.TextNormalizerService.Mongo;
 using Hhs.TextNormalizerService.Providers;
 using Hhs.TextNormalizerService.Services;
@@ -28,11 +29,12 @@ builder.Services.AddScoped<IOutlineProvider, OutlineFastProvider>();
 builder.Services.AddScoped<IOutlineProvider, OutlineDetailedProvider>();
 builder.Services.AddScoped<IOutlineProviderResolver, OutlineProviderResolver>();
 
-builder.Services.AddScoped<CustomerNormalizeRequestCreatedEventHandler>();
-builder.Services.AddScoped<CustomerScrapingStartedEventHandler>();
-builder.Services.AddScoped<CustomerScrapingCompletedEventHandler>();
-builder.Services.AddScoped<CustomerOutlineStartedEventHandler>();
-builder.Services.AddScoped<CustomerOutlineCompletedEventHandler>();
+builder.Services.AddScoped<CustomerContentCreatedEtoHandler>();
+builder.Services.AddScoped<CustomerContentNormalizeRequestCreatedEtoHandler>();
+builder.Services.AddScoped<CustomerContentScrapingStartedEtoHandler>();
+builder.Services.AddScoped<CustomerContentScrapingCompletedEtoHandler>();
+builder.Services.AddScoped<CustomerContentOutlineStartedEtoHandler>();
+builder.Services.AddScoped<CustomerContentOutlineCompletedEtoHandler>();
 
 builder.Services.AddScoped<AnalysisNormalizeRequestCreatedEventHandler>();
 builder.Services.AddScoped<AnalysisItemScrapingStartedEventHandler>();
@@ -40,21 +42,22 @@ builder.Services.AddScoped<AnalysisItemScrapingCompletedEventHandler>();
 builder.Services.AddScoped<AnalysisItemOutlineStartedEventHandler>();
 builder.Services.AddScoped<AnalysisItemOutlineCompletedEventHandler>();
 
-builder.Services.AddScoped<OutlineProviderRequestStartedEventHandler>();
-builder.Services.AddScoped<OutlineProviderPollingStartedEventHandler>();
-builder.Services.AddScoped<OutlineProviderCompletedEventHandler>();
+builder.Services.AddScoped<OutlineProviderRequestStartedEtoHandler>();
+builder.Services.AddScoped<OutlineProviderPollingStartedEtoHandler>();
+builder.Services.AddScoped<OutlineProviderCompletedEtoHandler>();
 
-builder.Services.AddHostedService<RabbitMqConsumerHostedService<OutlineProviderRequestStartedEvent, OutlineProviderRequestStartedEventHandler>>();
-builder.Services.AddHostedService<RabbitMqConsumerHostedService<OutlineProviderPollingStartedEvent, OutlineProviderPollingStartedEventHandler>>();
-builder.Services.AddHostedService<RabbitMqConsumerHostedService<OutlineProviderCompletedEvent, OutlineProviderCompletedEventHandler>>();
+builder.Services.AddHostedService<RabbitMqConsumerHostedService<OutlineProviderRequestStartedEto, OutlineProviderRequestStartedEtoHandler>>();
+builder.Services.AddHostedService<RabbitMqConsumerHostedService<OutlineProviderPollingStartedEto, OutlineProviderPollingStartedEtoHandler>>();
+builder.Services.AddHostedService<RabbitMqConsumerHostedService<OutlineProviderCompletedEto, OutlineProviderCompletedEtoHandler>>();
 
-builder.Services.AddHostedService<RabbitMqConsumerHostedService<CustomerNormalizeRequestCreatedEvent, CustomerNormalizeRequestCreatedEventHandler>>();
-builder.Services.AddHostedService<RabbitMqConsumerHostedService<CustomerScrapingStartedEvent, CustomerScrapingStartedEventHandler>>();
-builder.Services.AddHostedService<RabbitMqConsumerHostedService<CustomerScrapingCompletedEvent, CustomerScrapingCompletedEventHandler>>();
-builder.Services.AddHostedService<RabbitMqConsumerHostedService<CustomerOutlineStartedEvent, CustomerOutlineStartedEventHandler>>();
-builder.Services.AddHostedService<RabbitMqConsumerHostedService<CustomerOutlineCompletedEvent, CustomerOutlineCompletedEventHandler>>();
+builder.Services.AddHostedService<RabbitMqConsumerHostedService<CustomerContentCreatedEto, CustomerContentCreatedEtoHandler>>();
+builder.Services.AddHostedService<RabbitMqConsumerHostedService<CustomerContentNormalizeRequestCreatedEto, CustomerContentNormalizeRequestCreatedEtoHandler>>();
+builder.Services.AddHostedService<RabbitMqConsumerHostedService<CustomerContentScrapingStartedEto, CustomerContentScrapingStartedEtoHandler>>();
+builder.Services.AddHostedService<RabbitMqConsumerHostedService<CustomerContentScrapingCompletedEto, CustomerContentScrapingCompletedEtoHandler>>();
+builder.Services.AddHostedService<RabbitMqConsumerHostedService<CustomerContentOutlineStartedEto, CustomerContentOutlineStartedEtoHandler>>();
+builder.Services.AddHostedService<RabbitMqConsumerHostedService<CustomerContentOutlineCompletedEto, CustomerContentOutlineCompletedEtoHandler>>();
 
-builder.Services.AddHostedService<RabbitMqConsumerHostedService<AnalysisNormalizeRequestCreatedEvent, AnalysisNormalizeRequestCreatedEventHandler>>();
+builder.Services.AddHostedService<RabbitMqConsumerHostedService<AnalysisContentCreatedEvent, AnalysisNormalizeRequestCreatedEventHandler>>();
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<AnalysisItemScrapingStartedEvent, AnalysisItemScrapingStartedEventHandler>>();
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<AnalysisItemScrapingCompletedEvent, AnalysisItemScrapingCompletedEventHandler>>();
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<AnalysisItemOutlineStartedEvent, AnalysisItemOutlineStartedEventHandler>>();
@@ -118,7 +121,7 @@ app.MapPost("/scheduler/outline-polling",
             if (claimResult.ModifiedCount == 0)
                 continue;
 
-            await eventBus.PublishAsync(new OutlineProviderPollingStartedEvent
+            await eventBus.PublishAsync(new OutlineProviderPollingStartedEto
             {
                 ProviderKey = request.OutlineProviderKey,
                 NormalizedRequestId = request.Id,
@@ -174,7 +177,7 @@ app.MapPost("/scheduler/outline-polling",
                 if (claimResult.ModifiedCount == 0)
                     continue;
 
-                await eventBus.PublishAsync(new OutlineProviderPollingStartedEvent
+                await eventBus.PublishAsync(new OutlineProviderPollingStartedEto
                 {
                     ProviderKey = request.OutlineProviderKey,
                     NormalizedRequestId = request.Id,

@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using Hhs.MockApi.AudioHQ;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,51 +37,54 @@ app.MapGet("/audio/download/{trackingId}", async (string trackingId) =>
 
 app.Run();
 
-public sealed class AudioHQService
+namespace Hhs.MockApi.AudioHQ
 {
-    private static readonly ConcurrentDictionary<string, AudioHQEntry> Store = new();
-
-    public string CreateRequest(string inputText)
+    public sealed class AudioHQService
     {
-        var trackingId = Guid.NewGuid().ToString("N");
-        var createdAt = DateTime.UtcNow;
-        Store[trackingId] = new AudioHQEntry { InputText = inputText, CreatedAt = createdAt };
-        return trackingId;
-    }
+        private static readonly ConcurrentDictionary<string, AudioHQEntry> Store = new();
 
-    public static async Task<(bool IsReady, string? FileUrl, string? Error, string? FileName)> GetStatusAsync(string trackingId, string mockFilesDir, CancellationToken cancellationToken)
-    {
-        if (!Store.TryGetValue(trackingId, out var entry))
-            return (false, null, "Not found", null);
-
-        var elapsed = DateTime.UtcNow - entry.CreatedAt;
-        if (elapsed.TotalSeconds < 20)
-            return (false, null, null, null);
-
-        // Create mock file if it doesn't exist
-        var filePath = GetFilePath(trackingId, mockFilesDir);
-        var fileName = Path.GetFileName(filePath);
-
-        if (!File.Exists(filePath))
+        public string CreateRequest(string inputText)
         {
-            await File.WriteAllTextAsync(filePath, $"Mock Audio File\nTracking ID: {trackingId}\nCreated: {DateTime.UtcNow:O}", cancellationToken);
+            var trackingId = Guid.NewGuid().ToString("N");
+            var createdAt = DateTime.UtcNow;
+            Store[trackingId] = new AudioHQEntry { InputText = inputText, CreatedAt = createdAt };
+            return trackingId;
         }
 
-        // Return download URL that points to our endpoint
-        var downloadUrl = $"http://localhost:5043/audio/download/{trackingId}";
-        return (true, downloadUrl, null, fileName);
+        public static async Task<(bool IsReady, string? FileUrl, string? Error, string? FileName)> GetStatusAsync(string trackingId, string mockFilesDir, CancellationToken cancellationToken)
+        {
+            if (!Store.TryGetValue(trackingId, out var entry))
+                return (false, null, "Not found", null);
+
+            var elapsed = DateTime.UtcNow - entry.CreatedAt;
+            if (elapsed.TotalSeconds < 20)
+                return (false, null, null, null);
+
+            // Create mock file if it doesn't exist
+            var filePath = GetFilePath(trackingId, mockFilesDir);
+            var fileName = Path.GetFileName(filePath);
+
+            if (!File.Exists(filePath))
+            {
+                await File.WriteAllTextAsync(filePath, $"Mock Audio File\nTracking ID: {trackingId}\nCreated: {DateTime.UtcNow:O}", cancellationToken);
+            }
+
+            // Return download URL that points to our endpoint
+            var downloadUrl = $"http://localhost:5043/audio/download/{trackingId}";
+            return (true, downloadUrl, null, fileName);
+        }
+
+        public static string GetFilePath(string trackingId, string mockFilesDir)
+        {
+            return Path.Combine(mockFilesDir, $"mock_audio_hq_{trackingId}.mp3.txt");
+        }
     }
 
-    public static string GetFilePath(string trackingId, string mockFilesDir)
+    public sealed class AudioHQEntry
     {
-        return Path.Combine(mockFilesDir, $"mock_audio_hq_{trackingId}.mp3.txt");
+        public string InputText { get; set; } = string.Empty;
+        public DateTime CreatedAt { get; set; }
     }
-}
 
-public sealed class AudioHQEntry
-{
-    public string InputText { get; set; } = string.Empty;
-    public DateTime CreatedAt { get; set; }
+    public sealed record AudioRequest(string InputText);
 }
-
-public sealed record AudioRequest(string InputText);

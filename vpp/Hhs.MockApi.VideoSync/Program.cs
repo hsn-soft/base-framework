@@ -1,3 +1,5 @@
+using Hhs.MockApi.VideoSync;
+
 var builder = WebApplication.CreateBuilder(args);
 
 var app = builder.Build();
@@ -58,4 +60,7 @@ static string GetFilePath(string trackingId, string mockFilesDir)
     return Path.Combine(mockFilesDir, $"mock_video_sync_{trackingId}.mp4.txt");
 }
 
-public sealed record VideoRequest(List<string> AudioUrls);
+namespace Hhs.MockApi.VideoSync
+{
+    public sealed record VideoRequest(List<string> AudioUrls);
+}
