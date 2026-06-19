@@ -54,7 +54,7 @@ public sealed class OutlineProviderPollingAppService(
 
                     await ReplaceCustomerAsync(request, cancellationToken);
 
-                    await eventBus.PublishAsync(new StepFailedEvent
+                    await eventBus.PublishAsync(new StepFailedEto
                     {
                         CorrelationId = request.CorrelationId,
                         CustomerContentId = request.CustomerContentId,
@@ -79,7 +79,7 @@ public sealed class OutlineProviderPollingAppService(
 
                     await ReplaceCustomerAsync(request, cancellationToken);
 
-                    await eventBus.PublishAsync(new StepFailedEvent
+                    await eventBus.PublishAsync(new StepFailedEto
                     {
                         CorrelationId = request.CorrelationId,
                         CustomerContentId = request.CustomerContentId,
@@ -138,7 +138,7 @@ public sealed class OutlineProviderPollingAppService(
 
                     await ReplaceCustomerAsync(request, cancellationToken);
 
-                    await eventBus.PublishAsync(new StepFailedEvent
+                    await eventBus.PublishAsync(new StepFailedEto
                     {
                         CorrelationId = request.CorrelationId,
                         CustomerContentId = request.CustomerContentId,
@@ -389,7 +389,7 @@ public sealed class OutlineProviderPollingAppService(
             update,
             cancellationToken);
 
-        await eventBus.PublishAsync(new StepFailedEvent
+        await eventBus.PublishAsync(new StepFailedEto
         {
             CorrelationId = request.CorrelationId,
             AnalysisContentId = request.AnalysisContentId,

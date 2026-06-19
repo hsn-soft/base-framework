@@ -22,9 +22,9 @@ builder.Services.AddScoped<NormalizerResultPublishedEventHandler>();
 builder.Services.AddScoped<VideoGenerationResultPublishedEventHandler>();
 builder.Services.AddScoped<StepFailedEventHandler>();
 
-builder.Services.AddHostedService<RabbitMqConsumerHostedService<StepFailedEvent, StepFailedEventHandler>>();
+builder.Services.AddHostedService<RabbitMqConsumerHostedService<StepFailedEto, StepFailedEventHandler>>();
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<NormalizerResultPublishedEto, NormalizerResultPublishedEventHandler>>();
-builder.Services.AddHostedService<RabbitMqConsumerHostedService<VideoGenerationResultPublishedEvent, VideoGenerationResultPublishedEventHandler>>();
+builder.Services.AddHostedService<RabbitMqConsumerHostedService<VideoGenerationResultPublishedEto, VideoGenerationResultPublishedEventHandler>>();
 
 var app = builder.Build();
 

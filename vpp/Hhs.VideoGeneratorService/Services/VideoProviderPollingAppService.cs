@@ -47,7 +47,7 @@ public sealed class VideoProviderPollingAppService(
 
                     await ReplaceVideoAsync(request, cancellationToken);
 
-                    await eventBus.PublishAsync(new StepFailedEvent
+                    await eventBus.PublishAsync(new StepFailedEto
                     {
                         CustomerContentId = request.CustomerContentId,
                         AnalysisContentId = request.AnalysisContentId,
@@ -75,7 +75,7 @@ public sealed class VideoProviderPollingAppService(
 
                     await ReplaceVideoAsync(request, cancellationToken);
 
-                    await eventBus.PublishAsync(new StepFailedEvent
+                    await eventBus.PublishAsync(new StepFailedEto
                     {
                         CustomerContentId = request.CustomerContentId,
                         AnalysisContentId = request.AnalysisContentId,
@@ -123,7 +123,7 @@ public sealed class VideoProviderPollingAppService(
 
                 await ReplaceVideoAsync(request, cancellationToken);
 
-                await eventBus.PublishAsync(new VideoProviderCompletedEvent
+                await eventBus.PublishAsync(new VideoProviderCompletedEto
                 {
                     CustomerContentId = request.CustomerContentId,
                     AnalysisContentId = request.AnalysisContentId,
@@ -146,7 +146,7 @@ public sealed class VideoProviderPollingAppService(
 
                     await ReplaceVideoAsync(request, cancellationToken);
 
-                    await eventBus.PublishAsync(new StepFailedEvent
+                    await eventBus.PublishAsync(new StepFailedEto
                     {
                         CustomerContentId = request.CustomerContentId,
                         AnalysisContentId = request.AnalysisContentId,

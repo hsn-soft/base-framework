@@ -16,11 +16,11 @@ public sealed record CustomerContentCreatedEto : IntegrationEvent
     public string? AudioProviderKey { get; init; }
 }
 
-public sealed record AnalysisContentCreatedEvent : IntegrationEvent
+public sealed record AnalysisContentCreatedEto : IntegrationEvent
 {
     public List<AnalysisNormalizeItem> Items { get; init; } = [];
 
-    public AnalysisContentCreatedEvent()
+    public AnalysisContentCreatedEto()
     {
         EventName = EventNames.AnalysisContentCreated;
         Facility = EventNames.AnalysisContentCreated;
@@ -40,22 +40,32 @@ public sealed record AnalysisNormalizeItem
     public string? Path { get; init; }
 }
 
-public sealed record CustomerContentScrapingStartedEto : IntegrationEvent
-{
-    public CustomerContentScrapingStartedEto()
-    {
-        EventName = EventNames.CustomerContentScrapingStarted;
-        Facility = EventNames.CustomerContentScrapingStarted;
-        ContentProcessType = ContentProcessTypes.CustomerContent;
-    }
-}
-
 public sealed record CustomerContentNormalizeRequestCreatedEto : IntegrationEvent
 {
     public CustomerContentNormalizeRequestCreatedEto()
     {
         EventName = EventNames.CustomerContentNormalizeRequestCreated;
         Facility = EventNames.CustomerContentNormalizeRequestCreated;
+        ContentProcessType = ContentProcessTypes.CustomerContent;
+    }
+}
+
+public sealed record AnalysisContentNormalizeRequestCreatedEto : IntegrationEvent
+{
+    public AnalysisContentNormalizeRequestCreatedEto()
+    {
+        EventName = EventNames.AnalysisContentNormalizeRequestCreated;
+        Facility = EventNames.AnalysisContentNormalizeRequestCreated;
+        ContentProcessType = ContentProcessTypes.AnalysisContent;
+    }
+}
+
+public sealed record CustomerContentScrapingStartedEto : IntegrationEvent
+{
+    public CustomerContentScrapingStartedEto()
+    {
+        EventName = EventNames.CustomerContentScrapingStarted;
+        Facility = EventNames.CustomerContentScrapingStarted;
         ContentProcessType = ContentProcessTypes.CustomerContent;
     }
 }
@@ -96,11 +106,11 @@ public sealed record CustomerContentOutlineCompletedEto : IntegrationEvent
     }
 }
 
-public sealed record AnalysisItemScrapingStartedEvent : IntegrationEvent
+public sealed record AnalysisItemScrapingStartedEto : IntegrationEvent
 {
     public int SortOrder { get; init; }
 
-    public AnalysisItemScrapingStartedEvent()
+    public AnalysisItemScrapingStartedEto()
     {
         EventName = EventNames.AnalysisItemScrapingStarted;
         Facility = EventNames.AnalysisItemScrapingStarted;
@@ -108,14 +118,14 @@ public sealed record AnalysisItemScrapingStartedEvent : IntegrationEvent
     }
 }
 
-public sealed record AnalysisItemScrapingCompletedEvent : IntegrationEvent
+public sealed record AnalysisItemScrapingCompletedEto : IntegrationEvent
 {
     public int SortOrder { get; init; }
     public string Title { get; init; } = default!;
     public string Text { get; init; } = default!;
     public DateTime? ReleaseTimeUtc { get; init; }
 
-    public AnalysisItemScrapingCompletedEvent()
+    public AnalysisItemScrapingCompletedEto()
     {
         EventName = EventNames.AnalysisItemScrapingCompleted;
         Facility = EventNames.AnalysisItemScrapingCompleted;
@@ -123,11 +133,11 @@ public sealed record AnalysisItemScrapingCompletedEvent : IntegrationEvent
     }
 }
 
-public sealed record AnalysisItemOutlineStartedEvent : IntegrationEvent
+public sealed record AnalysisItemOutlineStartedEto : IntegrationEvent
 {
     public int SortOrder { get; init; }
 
-    public AnalysisItemOutlineStartedEvent()
+    public AnalysisItemOutlineStartedEto()
     {
         EventName = EventNames.AnalysisItemOutlineStarted;
         Facility = EventNames.AnalysisItemOutlineStarted;
@@ -179,12 +189,12 @@ public sealed record OutlineProviderCompletedEto : IntegrationEvent
     }
 }
 
-public sealed record AnalysisItemOutlineCompletedEvent : IntegrationEvent
+public sealed record AnalysisItemOutlineCompletedEto : IntegrationEvent
 {
     public int SortOrder { get; init; }
     public string Script { get; init; } = default!;
 
-    public AnalysisItemOutlineCompletedEvent()
+    public AnalysisItemOutlineCompletedEto()
     {
         EventName = EventNames.AnalysisItemOutlineCompleted;
         Facility = EventNames.AnalysisItemOutlineCompleted;
@@ -205,15 +215,13 @@ public sealed record NormalizerResultPublishedEto : IntegrationEvent
         EventName = EventNames.NormalizerResultPublished;
         Facility = EventNames.NormalizerResultPublished;
     }
-
-
 }
 
-public sealed record VideoGenerationApprovedEvent : IntegrationEvent
+public sealed record VideoGenerationApprovedEto : IntegrationEvent
 {
     public string VideoInputJson { get; init; } = default!;
 
-    public VideoGenerationApprovedEvent()
+    public VideoGenerationApprovedEto()
     {
         EventName = EventNames.VideoGenerationApproved;
         Facility = EventNames.VideoGenerationApproved;
@@ -223,209 +231,209 @@ public sealed record VideoGenerationApprovedEvent : IntegrationEvent
     public string? AudioProviderKey { get; init; }
 }
 
-public sealed record VideoRequestCreatedEvent : IntegrationEvent
+public sealed record VideoRequestCreatedEto : IntegrationEvent
 {
     public Guid VideoRequestId { get; init; }
     public bool IsAnalysis { get; init; }
     public bool ExternalAudioRequired { get; init; }
 
-    public VideoRequestCreatedEvent()
+    public VideoRequestCreatedEto()
     {
         EventName = EventNames.VideoRequestCreated;
         Facility = EventNames.VideoRequestCreated;
     }
 }
 
-public sealed record VideoOperationStartedEvent : IntegrationEvent
+public sealed record VideoOperationStartedEto : IntegrationEvent
 {
     public Guid VideoRequestId { get; init; }
     public bool ExternalAudioRequired { get; init; }
 
-    public VideoOperationStartedEvent()
+    public VideoOperationStartedEto()
     {
         EventName = EventNames.VideoOperationStarted;
         Facility = EventNames.VideoOperationStarted;
     }
 }
 
-public sealed record AudioProviderRequestStartedEvent : IntegrationEvent
+public sealed record AudioProviderRequestStartedEto : IntegrationEvent
 {
     public Guid VideoRequestId { get; init; }
     public Guid AudioRequestId { get; init; }
     public int SortOrder { get; init; }
     public string InputText { get; init; } = default!;
 
-    public AudioProviderRequestStartedEvent()
+    public AudioProviderRequestStartedEto()
     {
         EventName = EventNames.AudioProviderRequestStarted;
         Facility = EventNames.AudioProviderRequestStarted;
     }
 }
 
-public sealed record AudioProviderPollingStartedEvent : IntegrationEvent
+public sealed record AudioProviderPollingStartedEto : IntegrationEvent
 {
     public Guid VideoRequestId { get; init; }
     public Guid AudioRequestId { get; init; }
     public string ProviderKey { get; init; } = default!;
     public string ProviderTrackId { get; init; } = default!;
 
-    public AudioProviderPollingStartedEvent()
+    public AudioProviderPollingStartedEto()
     {
         EventName = EventNames.AudioProviderPollingStarted;
         Facility = EventNames.AudioProviderPollingStarted;
     }
 }
 
-public sealed record AudioProviderCompletedEvent : IntegrationEvent
+public sealed record AudioProviderCompletedEto : IntegrationEvent
 {
     public Guid VideoRequestId { get; init; }
     public Guid AudioRequestId { get; init; }
     public string ProviderFileUrl { get; init; } = default!;
     public string? FileName { get; init; }
 
-    public AudioProviderCompletedEvent()
+    public AudioProviderCompletedEto()
     {
         EventName = EventNames.AudioProviderCompleted;
         Facility = EventNames.AudioProviderCompleted;
     }
 }
 
-public sealed record AudioFileDownloadStartedEvent : IntegrationEvent
+public sealed record AudioFileDownloadStartedEto : IntegrationEvent
 {
     public Guid VideoRequestId { get; init; }
     public Guid AudioRequestId { get; init; }
     public string ProviderFileUrl { get; init; } = default!;
     public string? FileName { get; init; }
 
-    public AudioFileDownloadStartedEvent()
+    public AudioFileDownloadStartedEto()
     {
         EventName = EventNames.AudioFileDownloadStarted;
         Facility = EventNames.AudioFileDownloadStarted;
     }
 }
 
-public sealed record AudioFileDownloadCompletedEvent : IntegrationEvent
+public sealed record AudioFileDownloadCompletedEto : IntegrationEvent
 {
     public Guid VideoRequestId { get; init; }
     public Guid AudioRequestId { get; init; }
     public string LocalFilePath { get; init; } = default!;
 
-    public AudioFileDownloadCompletedEvent()
+    public AudioFileDownloadCompletedEto()
     {
         EventName = EventNames.AudioFileDownloadCompleted;
         Facility = EventNames.AudioFileDownloadCompleted;
     }
 }
 
-public sealed record AudioFileUploadStartedEvent : IntegrationEvent
+public sealed record AudioFileUploadStartedEto : IntegrationEvent
 {
     public Guid VideoRequestId { get; init; }
     public Guid AudioRequestId { get; init; }
     public string LocalFilePath { get; init; } = default!;
 
-    public AudioFileUploadStartedEvent()
+    public AudioFileUploadStartedEto()
     {
         EventName = EventNames.AudioFileUploadStarted;
         Facility = EventNames.AudioFileUploadStarted;
     }
 }
 
-public sealed record AudioFileUploadCompletedEvent : IntegrationEvent
+public sealed record AudioFileUploadCompletedEto : IntegrationEvent
 {
     public Guid VideoRequestId { get; init; }
     public Guid AudioRequestId { get; init; }
     public string StorageUrl { get; init; } = default!;
 
-    public AudioFileUploadCompletedEvent()
+    public AudioFileUploadCompletedEto()
     {
         EventName = EventNames.AudioFileUploadCompleted;
         Facility = EventNames.AudioFileUploadCompleted;
     }
 }
 
-public sealed record VideoProviderRequestStartedEvent : IntegrationEvent
+public sealed record VideoProviderRequestStartedEto : IntegrationEvent
 {
     public Guid VideoRequestId { get; init; }
     public List<string> AudioUrls { get; init; } = [];
     public List<string> AudioFilePaths { get; init; } = [];
 
-    public VideoProviderRequestStartedEvent()
+    public VideoProviderRequestStartedEto()
     {
         EventName = EventNames.VideoProviderRequestStarted;
         Facility = EventNames.VideoProviderRequestStarted;
     }
 }
 
-public sealed record VideoProviderPollingStartedEvent : IntegrationEvent
+public sealed record VideoProviderPollingStartedEto : IntegrationEvent
 {
     public Guid VideoRequestId { get; init; }
     public string ProviderKey { get; init; } = default!;
     public string ProviderTrackId { get; init; } = default!;
 
-    public VideoProviderPollingStartedEvent()
+    public VideoProviderPollingStartedEto()
     {
         EventName = EventNames.VideoProviderPollingStarted;
         Facility = EventNames.VideoProviderPollingStarted;
     }
 }
 
-public sealed record VideoProviderCompletedEvent : IntegrationEvent
+public sealed record VideoProviderCompletedEto : IntegrationEvent
 {
     public Guid VideoRequestId { get; init; }
     public string ProviderFileUrl { get; init; } = default!;
     public string? FileName { get; init; }
 
-    public VideoProviderCompletedEvent()
+    public VideoProviderCompletedEto()
     {
         EventName = EventNames.VideoProviderCompleted;
         Facility = EventNames.VideoProviderCompleted;
     }
 }
 
-public sealed record VideoFileDownloadStartedEvent : IntegrationEvent
+public sealed record VideoFileDownloadStartedEto : IntegrationEvent
 {
     public Guid VideoRequestId { get; init; }
     public string ProviderFileUrl { get; init; } = default!;
     public string? FileName { get; init; }
 
-    public VideoFileDownloadStartedEvent()
+    public VideoFileDownloadStartedEto()
     {
         EventName = EventNames.VideoFileDownloadStarted;
         Facility = EventNames.VideoFileDownloadStarted;
     }
 }
 
-public sealed record VideoFileUploadStartedEvent : IntegrationEvent
+public sealed record VideoFileUploadStartedEto : IntegrationEvent
 {
     public Guid VideoRequestId { get; init; }
     public string LocalFilePath { get; init; } = default!;
 
-    public VideoFileUploadStartedEvent()
+    public VideoFileUploadStartedEto()
     {
         EventName = EventNames.VideoFileUploadStarted;
         Facility = EventNames.VideoFileUploadStarted;
     }
 }
 
-public sealed record VideoGenerationResultPublishedEvent : IntegrationEvent
+public sealed record VideoGenerationResultPublishedEto : IntegrationEvent
 {
     public Guid VideoRequestId { get; init; }
     public string FinalVideoUrl { get; init; } = default!;
 
-    public VideoGenerationResultPublishedEvent()
+    public VideoGenerationResultPublishedEto()
     {
         EventName = EventNames.VideoGenerationResultPublished;
         Facility = EventNames.VideoGenerationResultPublished;
     }
 }
 
-public sealed record StepFailedEvent : IntegrationEvent
+public sealed record StepFailedEto : IntegrationEvent
 {
     public string Step { get; init; } = default!;
     public string ErrorMessage { get; init; } = default!;
     public bool Retryable { get; init; }
 
-    public StepFailedEvent()
+    public StepFailedEto()
     {
         EventName = EventNames.StepFailed;
         Facility = EventNames.StepFailed;

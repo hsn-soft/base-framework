@@ -97,7 +97,7 @@ public sealed class NormalizerRetryAppService(
                             .Set(x => x.UpdatedAtUtc, DateTime.UtcNow),
                         cancellationToken: cancellationToken);
 
-                    await eventBus.PublishAsync(new StepFailedEvent
+                    await eventBus.PublishAsync(new StepFailedEto
                     {
                         CorrelationId = request.CorrelationId,
                         CustomerContentId = request.CustomerContentId,
@@ -197,7 +197,7 @@ public sealed class NormalizerRetryAppService(
 
                     if (item.CurrentStep == EventNames.AnalysisItemScrapingStarted)
                     {
-                        await eventBus.PublishAsync(new AnalysisItemScrapingStartedEvent
+                        await eventBus.PublishAsync(new AnalysisItemScrapingStartedEto
                         {
                             AnalysisContentId = request.AnalysisContentId,
                             CustomerContentId = item.CustomerContentId,
@@ -208,7 +208,7 @@ public sealed class NormalizerRetryAppService(
                     }
                     else if (item.CurrentStep == EventNames.AnalysisItemOutlineStarted)
                     {
-                        await eventBus.PublishAsync(new AnalysisItemOutlineStartedEvent
+                        await eventBus.PublishAsync(new AnalysisItemOutlineStartedEto
                         {
                             AnalysisContentId = request.AnalysisContentId,
                             CustomerContentId = item.CustomerContentId,

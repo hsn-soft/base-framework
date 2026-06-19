@@ -47,7 +47,7 @@ public sealed class AudioProviderPollingAppService(
 
                     await ReplaceAudioAsync(request, cancellationToken);
 
-                    await eventBus.PublishAsync(new StepFailedEvent
+                    await eventBus.PublishAsync(new StepFailedEto
                     {
 
                         CustomerContentId = request.CustomerContentId,
@@ -76,7 +76,7 @@ public sealed class AudioProviderPollingAppService(
 
                     await ReplaceAudioAsync(request, cancellationToken);
 
-                    await eventBus.PublishAsync(new StepFailedEvent
+                    await eventBus.PublishAsync(new StepFailedEto
                     {
                         CustomerContentId = request.CustomerContentId,
                         AnalysisContentId = request.AnalysisContentId,
@@ -124,7 +124,7 @@ public sealed class AudioProviderPollingAppService(
 
                 await ReplaceAudioAsync(request, cancellationToken);
 
-                await eventBus.PublishAsync(new AudioProviderCompletedEvent
+                await eventBus.PublishAsync(new AudioProviderCompletedEto
                 {
                     CustomerContentId = request.CustomerContentId,
                     AnalysisContentId = request.AnalysisContentId,
@@ -148,7 +148,7 @@ public sealed class AudioProviderPollingAppService(
 
                     await ReplaceAudioAsync(request, cancellationToken);
 
-                    await eventBus.PublishAsync(new StepFailedEvent
+                    await eventBus.PublishAsync(new StepFailedEto
                     {
                         CustomerContentId = request.CustomerContentId,
                         AnalysisContentId = request.AnalysisContentId,

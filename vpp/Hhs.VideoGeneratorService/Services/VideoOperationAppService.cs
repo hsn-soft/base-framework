@@ -21,7 +21,7 @@ public sealed class VideoOperationAppService(
     ILogger<VideoOperationAppService> logger)
 {
 public async Task CreateVideoRequestAsync(
-    VideoGenerationApprovedEvent @event,
+    VideoGenerationApprovedEto @event,
     CancellationToken cancellationToken)
 {
     var existing = await context.VideoRequests
@@ -30,7 +30,7 @@ public async Task CreateVideoRequestAsync(
 
     if (existing is not null)
     {
-        await eventBus.PublishAsync(new VideoRequestCreatedEvent
+        await eventBus.PublishAsync(new VideoRequestCreatedEto
         {
             CustomerContentId = existing.CustomerContentId,
             AnalysisContentId = existing.AnalysisContentId,
@@ -71,7 +71,7 @@ public async Task CreateVideoRequestAsync(
 
     await context.VideoRequests.InsertOneAsync(videoRequest, cancellationToken: cancellationToken);
 
-    await eventBus.PublishAsync(new VideoRequestCreatedEvent
+    await eventBus.PublishAsync(new VideoRequestCreatedEto
     {
         CustomerContentId = @event.CustomerContentId,
         AnalysisContentId = @event.AnalysisContentId,
@@ -83,7 +83,7 @@ public async Task CreateVideoRequestAsync(
     }, cancellationToken);
 }
 
-    public async Task StartVideoOperationAsync(VideoRequestCreatedEvent @event, CancellationToken cancellationToken)
+    public async Task StartVideoOperationAsync(VideoRequestCreatedEto @event, CancellationToken cancellationToken)
     {
         var videoRequest = await GetVideoAsync(@event.VideoRequestId, cancellationToken);
 
@@ -93,7 +93,7 @@ public async Task CreateVideoRequestAsync(
 
         await ReplaceVideoAsync(videoRequest, cancellationToken);
 
-        await eventBus.PublishAsync(new VideoOperationStartedEvent
+        await eventBus.PublishAsync(new VideoOperationStartedEto
         {
             CustomerContentId = videoRequest.CustomerContentId,
             AnalysisContentId = videoRequest.AnalysisContentId,
@@ -105,7 +105,7 @@ public async Task CreateVideoRequestAsync(
     }
 
     public async Task HandleVideoOperationStartedAsync(
-        VideoOperationStartedEvent @event,
+        VideoOperationStartedEto @event,
         CancellationToken cancellationToken)
     {
         var videoRequest = await GetVideoAsync(@event.VideoRequestId, cancellationToken);
@@ -114,7 +114,7 @@ public async Task CreateVideoRequestAsync(
         if (videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.ProviderCreatesAudio ||
             videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.NoAudio)
         {
-            await eventBus.PublishAsync(new VideoProviderRequestStartedEvent
+            await eventBus.PublishAsync(new VideoProviderRequestStartedEto
             {
                 CustomerContentId = videoRequest.CustomerContentId,
                 AnalysisContentId = videoRequest.AnalysisContentId,
@@ -137,7 +137,7 @@ public async Task CreateVideoRequestAsync(
 
             if (existingAudio is not null)
             {
-                await eventBus.PublishAsync(new AudioProviderRequestStartedEvent
+                await eventBus.PublishAsync(new AudioProviderRequestStartedEto
                 {
                     CustomerContentId = existingAudio.CustomerContentId,
                     AnalysisContentId = existingAudio.AnalysisContentId,
@@ -176,7 +176,7 @@ public async Task CreateVideoRequestAsync(
 
             await context.AudioRequests.InsertOneAsync(audioRequest, cancellationToken: cancellationToken);
 
-            await eventBus.PublishAsync(new AudioProviderRequestStartedEvent
+            await eventBus.PublishAsync(new AudioProviderRequestStartedEto
             {
                 CustomerContentId = audioRequest.CustomerContentId,
                 AnalysisContentId = audioRequest.AnalysisContentId,
@@ -191,7 +191,7 @@ public async Task CreateVideoRequestAsync(
     }
 
     public async Task StartAudioProviderRequestAsync(
-        AudioProviderRequestStartedEvent @event,
+        AudioProviderRequestStartedEto @event,
         CancellationToken cancellationToken)
     {
         var audioRequest = await GetAudioAsync(@event.AudioRequestId, cancellationToken);
@@ -230,7 +230,7 @@ public async Task CreateVideoRequestAsync(
 
                 await ReplaceAudioAsync(audioRequest, cancellationToken);
 
-                await eventBus.PublishAsync(new AudioProviderCompletedEvent
+                await eventBus.PublishAsync(new AudioProviderCompletedEto
                 {
                     CustomerContentId = audioRequest.CustomerContentId,
                     AnalysisContentId = audioRequest.AnalysisContentId,
@@ -256,7 +256,7 @@ public async Task CreateVideoRequestAsync(
 
             await ReplaceAudioAsync(audioRequest, cancellationToken);
 
-            await eventBus.PublishAsync(new AudioProviderPollingStartedEvent
+            await eventBus.PublishAsync(new AudioProviderPollingStartedEto
             {
                 CustomerContentId = audioRequest.CustomerContentId,
                 AnalysisContentId = audioRequest.AnalysisContentId,
@@ -282,10 +282,10 @@ public async Task CreateVideoRequestAsync(
 
 
     public async Task HandleAudioProviderCompletedAsync(
-        AudioProviderCompletedEvent @event,
+        AudioProviderCompletedEto @event,
         CancellationToken cancellationToken)
     {
-        await eventBus.PublishAsync(new AudioFileDownloadStartedEvent
+        await eventBus.PublishAsync(new AudioFileDownloadStartedEto
         {
             CustomerContentId = @event.CustomerContentId,
             AnalysisContentId = @event.AnalysisContentId,
@@ -298,7 +298,7 @@ public async Task CreateVideoRequestAsync(
     }
 
     public async Task DownloadAudioFileAsync(
-        AudioFileDownloadStartedEvent @event,
+        AudioFileDownloadStartedEto @event,
         CancellationToken cancellationToken)
     {
         var audioRequest = await GetAudioAsync(@event.AudioRequestId, cancellationToken);
@@ -320,7 +320,7 @@ public async Task CreateVideoRequestAsync(
 
             await ReplaceAudioAsync(audioRequest, cancellationToken);
 
-            await eventBus.PublishAsync(new AudioFileDownloadCompletedEvent
+            await eventBus.PublishAsync(new AudioFileDownloadCompletedEto
             {
                 CustomerContentId = audioRequest.CustomerContentId,
                 AnalysisContentId = audioRequest.AnalysisContentId,
@@ -331,7 +331,7 @@ public async Task CreateVideoRequestAsync(
                 LocalFilePath = localPath
             }, cancellationToken);
 
-            await eventBus.PublishAsync(new AudioFileUploadStartedEvent
+            await eventBus.PublishAsync(new AudioFileUploadStartedEto
             {
                 CustomerContentId = audioRequest.CustomerContentId,
                 AnalysisContentId = audioRequest.AnalysisContentId,
@@ -355,7 +355,7 @@ public async Task CreateVideoRequestAsync(
     }
 
     public async Task UploadAudioFileAsync(
-        AudioFileUploadStartedEvent @event,
+        AudioFileUploadStartedEto @event,
         CancellationToken cancellationToken)
     {
         var audioRequest = await GetAudioAsync(@event.AudioRequestId, cancellationToken);
@@ -377,7 +377,7 @@ public async Task CreateVideoRequestAsync(
 
             await ReplaceAudioAsync(audioRequest, cancellationToken);
 
-            await eventBus.PublishAsync(new AudioFileUploadCompletedEvent
+            await eventBus.PublishAsync(new AudioFileUploadCompletedEto
             {
                 CustomerContentId = audioRequest.CustomerContentId,
                 AnalysisContentId = audioRequest.AnalysisContentId,
@@ -401,7 +401,7 @@ public async Task CreateVideoRequestAsync(
     }
 
 public async Task HandleAudioUploadCompletedAsync(
-    AudioFileUploadCompletedEvent @event,
+    AudioFileUploadCompletedEto @event,
     CancellationToken cancellationToken)
 {
     var videoRequest = await GetVideoAsync(@event.VideoRequestId, cancellationToken);
@@ -453,7 +453,7 @@ public async Task HandleAudioUploadCompletedAsync(
 
         videoRequest.Status = "VIDEO_PROVIDER_REQUEST_STARTING";
 
-        await eventBus.PublishAsync(new VideoProviderRequestStartedEvent
+        await eventBus.PublishAsync(new VideoProviderRequestStartedEto
         {
             CustomerContentId = videoRequest.CustomerContentId,
             AnalysisContentId = videoRequest.AnalysisContentId,
@@ -478,7 +478,7 @@ public async Task HandleAudioUploadCompletedAsync(
     }
 }
     public async Task StartVideoProviderRequestAsync(
-        VideoProviderRequestStartedEvent @event,
+        VideoProviderRequestStartedEto @event,
         CancellationToken cancellationToken)
     {
         var videoRequest = await GetVideoAsync(@event.VideoRequestId, cancellationToken);
@@ -517,7 +517,7 @@ public async Task HandleAudioUploadCompletedAsync(
 
                 await ReplaceVideoAsync(videoRequest, cancellationToken);
 
-                await eventBus.PublishAsync(new VideoProviderCompletedEvent
+                await eventBus.PublishAsync(new VideoProviderCompletedEto
                 {
                     CustomerContentId = videoRequest.CustomerContentId,
                     AnalysisContentId = videoRequest.AnalysisContentId,
@@ -542,7 +542,7 @@ public async Task HandleAudioUploadCompletedAsync(
 
             await ReplaceVideoAsync(videoRequest, cancellationToken);
 
-            await eventBus.PublishAsync(new VideoProviderPollingStartedEvent
+            await eventBus.PublishAsync(new VideoProviderPollingStartedEto
             {
                 CustomerContentId = videoRequest.CustomerContentId,
                 AnalysisContentId = videoRequest.AnalysisContentId,
@@ -567,10 +567,10 @@ public async Task HandleAudioUploadCompletedAsync(
 
 
     public async Task HandleVideoProviderCompletedAsync(
-        VideoProviderCompletedEvent @event,
+        VideoProviderCompletedEto @event,
         CancellationToken cancellationToken)
     {
-        await eventBus.PublishAsync(new VideoFileDownloadStartedEvent
+        await eventBus.PublishAsync(new VideoFileDownloadStartedEto
         {
             CustomerContentId = @event.CustomerContentId,
             AnalysisContentId = @event.AnalysisContentId,
@@ -582,7 +582,7 @@ public async Task HandleAudioUploadCompletedAsync(
     }
 
     public async Task DownloadVideoFileAsync(
-        VideoFileDownloadStartedEvent @event,
+        VideoFileDownloadStartedEto @event,
         CancellationToken cancellationToken)
     {
         var videoRequest = await GetVideoAsync(@event.VideoRequestId, cancellationToken);
@@ -604,7 +604,7 @@ public async Task HandleAudioUploadCompletedAsync(
 
             await ReplaceVideoAsync(videoRequest, cancellationToken);
 
-            await eventBus.PublishAsync(new VideoFileUploadStartedEvent
+            await eventBus.PublishAsync(new VideoFileUploadStartedEto
             {
                 CustomerContentId = videoRequest.CustomerContentId,
                 AnalysisContentId = videoRequest.AnalysisContentId,
@@ -627,7 +627,7 @@ public async Task HandleAudioUploadCompletedAsync(
     }
 
     public async Task UploadVideoFileAsync(
-        VideoFileUploadStartedEvent @event,
+        VideoFileUploadStartedEto @event,
         CancellationToken cancellationToken)
     {
         var videoRequest = await GetVideoAsync(@event.VideoRequestId, cancellationToken);
@@ -649,7 +649,7 @@ public async Task HandleAudioUploadCompletedAsync(
 
             await ReplaceVideoAsync(videoRequest, cancellationToken);
 
-            await eventBus.PublishAsync(new VideoGenerationResultPublishedEvent
+            await eventBus.PublishAsync(new VideoGenerationResultPublishedEto
             {
                 CustomerContentId = videoRequest.CustomerContentId,
                 AnalysisContentId = videoRequest.AnalysisContentId,
@@ -686,7 +686,7 @@ public async Task HandleAudioUploadCompletedAsync(
 
         await ReplaceAudioAsync(audio, cancellationToken);
 
-        await eventBus.PublishAsync(new AudioFileUploadCompletedEvent
+        await eventBus.PublishAsync(new AudioFileUploadCompletedEto
         {
             CustomerContentId = audio.CustomerContentId,
             AnalysisContentId = audio.AnalysisContentId,
@@ -700,7 +700,7 @@ public async Task HandleAudioUploadCompletedAsync(
     }
 
     public async Task ScheduleAudioProviderPollingAsync(
-        AudioProviderPollingStartedEvent @event,
+        AudioProviderPollingStartedEto @event,
         CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(@event.ProviderKey))
@@ -725,7 +725,7 @@ public async Task HandleAudioUploadCompletedAsync(
     }
 
     public async Task ScheduleVideoProviderPollingAsync(
-        VideoProviderPollingStartedEvent @event,
+        VideoProviderPollingStartedEto @event,
         CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(@event.ProviderKey))
@@ -826,7 +826,7 @@ public async Task HandleAudioUploadCompletedAsync(
 
         await ReplaceAudioAsync(request, cancellationToken);
 
-        await eventBus.PublishAsync(new StepFailedEvent
+        await eventBus.PublishAsync(new StepFailedEto
         {
             CustomerContentId = request.CustomerContentId,
             AnalysisContentId = request.AnalysisContentId,
@@ -853,7 +853,7 @@ public async Task HandleAudioUploadCompletedAsync(
 
         await ReplaceAudioAsync(request, cancellationToken);
 
-        await eventBus.PublishAsync(new StepFailedEvent
+        await eventBus.PublishAsync(new StepFailedEto
         {
             CustomerContentId = request.CustomerContentId,
             AnalysisContentId = request.AnalysisContentId,
@@ -904,7 +904,7 @@ public async Task HandleAudioUploadCompletedAsync(
 
         await ReplaceVideoAsync(request, cancellationToken);
 
-        await eventBus.PublishAsync(new StepFailedEvent
+        await eventBus.PublishAsync(new StepFailedEto
         {
             CustomerContentId = request.CustomerContentId,
             AnalysisContentId = request.AnalysisContentId,
@@ -931,7 +931,7 @@ public async Task HandleAudioUploadCompletedAsync(
 
         await ReplaceVideoAsync(request, cancellationToken);
 
-        await eventBus.PublishAsync(new StepFailedEvent
+        await eventBus.PublishAsync(new StepFailedEto
         {
             CustomerContentId = request.CustomerContentId,
             AnalysisContentId = request.AnalysisContentId,

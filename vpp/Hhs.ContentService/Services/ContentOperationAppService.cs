@@ -106,7 +106,7 @@ public sealed class ContentOperationAppService
             })
             .ToList();
 
-        await _eventBus.PublishAsync(new AnalysisContentCreatedEvent
+        await _eventBus.PublishAsync(new AnalysisContentCreatedEto
         {
             AnalysisContentId = analysisId,
             Items = items,
@@ -163,7 +163,7 @@ public sealed class ContentOperationAppService
         {
             await _db.SaveChangesAsync(cancellationToken);
 
-            await _eventBus.PublishAsync(new VideoGenerationApprovedEvent
+            await _eventBus.PublishAsync(new VideoGenerationApprovedEto
             {
                 CustomerContentId = @event.CustomerContentId,
                 AnalysisContentId = @event.AnalysisContentId,
@@ -176,7 +176,7 @@ public sealed class ContentOperationAppService
         }
     }
 
-    public async Task HandleVideoResultAsync(VideoGenerationResultPublishedEvent @event, CancellationToken cancellationToken)
+    public async Task HandleVideoResultAsync(VideoGenerationResultPublishedEto @event, CancellationToken cancellationToken)
     {
         if (@event.CustomerContentId.HasValue)
         {
@@ -208,7 +208,7 @@ public sealed class ContentOperationAppService
     }
 
     public async Task HandleStepFailedAsync(
-        StepFailedEvent @event,
+        StepFailedEto @event,
         CancellationToken cancellationToken)
     {
         if (@event.CustomerContentId.HasValue)

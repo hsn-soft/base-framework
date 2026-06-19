@@ -36,11 +36,12 @@ builder.Services.AddScoped<CustomerContentScrapingCompletedEtoHandler>();
 builder.Services.AddScoped<CustomerContentOutlineStartedEtoHandler>();
 builder.Services.AddScoped<CustomerContentOutlineCompletedEtoHandler>();
 
-builder.Services.AddScoped<AnalysisNormalizeRequestCreatedEventHandler>();
-builder.Services.AddScoped<AnalysisItemScrapingStartedEventHandler>();
-builder.Services.AddScoped<AnalysisItemScrapingCompletedEventHandler>();
-builder.Services.AddScoped<AnalysisItemOutlineStartedEventHandler>();
-builder.Services.AddScoped<AnalysisItemOutlineCompletedEventHandler>();
+builder.Services.AddScoped<AnalysisContentCreatedEtoHandler>();
+builder.Services.AddScoped<AnalysisContentNormalizeRequestCreatedEtoHandler>();
+builder.Services.AddScoped<AnalysisItemScrapingStartedEtoHandler>();
+builder.Services.AddScoped<AnalysisItemScrapingCompletedEtoHandler>();
+builder.Services.AddScoped<AnalysisItemOutlineStartedEtoHandler>();
+builder.Services.AddScoped<AnalysisItemOutlineCompletedEtoHandler>();
 
 builder.Services.AddScoped<OutlineProviderRequestStartedEtoHandler>();
 builder.Services.AddScoped<OutlineProviderPollingStartedEtoHandler>();
@@ -57,11 +58,12 @@ builder.Services.AddHostedService<RabbitMqConsumerHostedService<CustomerContentS
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<CustomerContentOutlineStartedEto, CustomerContentOutlineStartedEtoHandler>>();
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<CustomerContentOutlineCompletedEto, CustomerContentOutlineCompletedEtoHandler>>();
 
-builder.Services.AddHostedService<RabbitMqConsumerHostedService<AnalysisContentCreatedEvent, AnalysisNormalizeRequestCreatedEventHandler>>();
-builder.Services.AddHostedService<RabbitMqConsumerHostedService<AnalysisItemScrapingStartedEvent, AnalysisItemScrapingStartedEventHandler>>();
-builder.Services.AddHostedService<RabbitMqConsumerHostedService<AnalysisItemScrapingCompletedEvent, AnalysisItemScrapingCompletedEventHandler>>();
-builder.Services.AddHostedService<RabbitMqConsumerHostedService<AnalysisItemOutlineStartedEvent, AnalysisItemOutlineStartedEventHandler>>();
-builder.Services.AddHostedService<RabbitMqConsumerHostedService<AnalysisItemOutlineCompletedEvent, AnalysisItemOutlineCompletedEventHandler>>();
+builder.Services.AddHostedService<RabbitMqConsumerHostedService<AnalysisContentCreatedEto, AnalysisContentCreatedEtoHandler>>();
+builder.Services.AddHostedService<RabbitMqConsumerHostedService<AnalysisContentNormalizeRequestCreatedEto, AnalysisContentNormalizeRequestCreatedEtoHandler>>();
+builder.Services.AddHostedService<RabbitMqConsumerHostedService<AnalysisItemScrapingStartedEto, AnalysisItemScrapingStartedEtoHandler>>();
+builder.Services.AddHostedService<RabbitMqConsumerHostedService<AnalysisItemScrapingCompletedEto, AnalysisItemScrapingCompletedEtoHandler>>();
+builder.Services.AddHostedService<RabbitMqConsumerHostedService<AnalysisItemOutlineStartedEto, AnalysisItemOutlineStartedEtoHandler>>();
+builder.Services.AddHostedService<RabbitMqConsumerHostedService<AnalysisItemOutlineCompletedEto, AnalysisItemOutlineCompletedEtoHandler>>();
 
 builder.Services.AddScoped<OutlineProviderPollingAppService>();
 builder.Services.AddHostedService<OutlineProviderPollingWorker>();

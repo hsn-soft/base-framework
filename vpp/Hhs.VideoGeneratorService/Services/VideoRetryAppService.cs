@@ -42,7 +42,7 @@ public sealed class VideoRetryAppService(
                 {
                     request.Status = "AUDIO_PROVIDER_REQUEST_RETRYING";
 
-                    await eventBus.PublishAsync(new AudioProviderRequestStartedEvent
+                    await eventBus.PublishAsync(new AudioProviderRequestStartedEto
                     {
                         CustomerContentId = request.CustomerContentId,
                         AnalysisContentId = request.AnalysisContentId,
@@ -56,7 +56,7 @@ public sealed class VideoRetryAppService(
                 }
                 else if (request.CurrentStep == EventNames.AudioFileDownloadStarted)
                 {
-                    await eventBus.PublishAsync(new AudioFileDownloadStartedEvent
+                    await eventBus.PublishAsync(new AudioFileDownloadStartedEto
                     {
                         CustomerContentId = request.CustomerContentId,
                         AnalysisContentId = request.AnalysisContentId,
@@ -70,7 +70,7 @@ public sealed class VideoRetryAppService(
                 }
                 else if (request.CurrentStep == EventNames.AudioFileUploadStarted)
                 {
-                    await eventBus.PublishAsync(new AudioFileUploadStartedEvent
+                    await eventBus.PublishAsync(new AudioFileUploadStartedEto
                     {
                         CustomerContentId = request.CustomerContentId,
                         AnalysisContentId = request.AnalysisContentId,
@@ -100,7 +100,7 @@ public sealed class VideoRetryAppService(
                         request,
                         cancellationToken: cancellationToken);
 
-                    await eventBus.PublishAsync(new StepFailedEvent
+                    await eventBus.PublishAsync(new StepFailedEto
                     {
                         CustomerContentId = request.CustomerContentId,
                         AnalysisContentId = request.AnalysisContentId,
@@ -171,7 +171,7 @@ public sealed class VideoRetryAppService(
                         .OrderBy(x => x.SortOrder)
                         .ToList();
 
-                    await eventBus.PublishAsync(new VideoProviderRequestStartedEvent
+                    await eventBus.PublishAsync(new VideoProviderRequestStartedEto
                     {
                         CustomerContentId = request.CustomerContentId,
                         AnalysisContentId = request.AnalysisContentId,
@@ -188,7 +188,7 @@ public sealed class VideoRetryAppService(
                 }
                 else if (request.CurrentStep == EventNames.VideoFileDownloadStarted)
                 {
-                    await eventBus.PublishAsync(new VideoFileDownloadStartedEvent
+                    await eventBus.PublishAsync(new VideoFileDownloadStartedEto
                     {
                         CustomerContentId = request.CustomerContentId,
                         AnalysisContentId = request.AnalysisContentId,
@@ -201,7 +201,7 @@ public sealed class VideoRetryAppService(
                 }
                 else if (request.CurrentStep == EventNames.VideoFileUploadStarted)
                 {
-                    await eventBus.PublishAsync(new VideoFileUploadStartedEvent
+                    await eventBus.PublishAsync(new VideoFileUploadStartedEto
                     {
                         CustomerContentId = request.CustomerContentId,
                         AnalysisContentId = request.AnalysisContentId,
@@ -230,7 +230,7 @@ public sealed class VideoRetryAppService(
                         request,
                         cancellationToken: cancellationToken);
 
-                    await eventBus.PublishAsync(new StepFailedEvent
+                    await eventBus.PublishAsync(new StepFailedEto
                     {
                         CustomerContentId = request.CustomerContentId,
                         AnalysisContentId = request.AnalysisContentId,

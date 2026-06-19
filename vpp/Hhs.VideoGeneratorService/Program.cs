@@ -52,22 +52,22 @@ builder.Services.AddScoped<VideoFileUploadStartedEventHandler>();
 builder.Services.AddScoped<AudioProviderPollingStartedEventHandler>();
 builder.Services.AddScoped<VideoProviderPollingStartedEventHandler>();
 
-builder.Services.AddHostedService<RabbitMqConsumerHostedService<AudioProviderPollingStartedEvent, AudioProviderPollingStartedEventHandler>>();
-builder.Services.AddHostedService<RabbitMqConsumerHostedService<VideoProviderPollingStartedEvent, VideoProviderPollingStartedEventHandler>>();
+builder.Services.AddHostedService<RabbitMqConsumerHostedService<AudioProviderPollingStartedEto, AudioProviderPollingStartedEventHandler>>();
+builder.Services.AddHostedService<RabbitMqConsumerHostedService<VideoProviderPollingStartedEto, VideoProviderPollingStartedEventHandler>>();
 
-builder.Services.AddHostedService<RabbitMqConsumerHostedService<VideoGenerationApprovedEvent, VideoGenerationApprovedEventHandler>>();
-builder.Services.AddHostedService<RabbitMqConsumerHostedService<VideoRequestCreatedEvent, VideoRequestCreatedEventHandler>>();
-builder.Services.AddHostedService<RabbitMqConsumerHostedService<VideoOperationStartedEvent, VideoOperationStartedEventHandler>>();
-builder.Services.AddHostedService<RabbitMqConsumerHostedService<AudioProviderRequestStartedEvent, AudioProviderRequestStartedEventHandler>>();
-builder.Services.AddHostedService<RabbitMqConsumerHostedService<AudioProviderCompletedEvent, AudioProviderCompletedEventHandler>>();
-builder.Services.AddHostedService<RabbitMqConsumerHostedService<AudioFileDownloadStartedEvent, AudioFileDownloadStartedEventHandler>>();
-builder.Services.AddHostedService<RabbitMqConsumerHostedService<AudioFileDownloadCompletedEvent, AudioFileDownloadCompletedEventHandler>>();
-builder.Services.AddHostedService<RabbitMqConsumerHostedService<AudioFileUploadStartedEvent, AudioFileUploadStartedEventHandler>>();
-builder.Services.AddHostedService<RabbitMqConsumerHostedService<AudioFileUploadCompletedEvent, AudioFileUploadCompletedEventHandler>>();
-builder.Services.AddHostedService<RabbitMqConsumerHostedService<VideoProviderRequestStartedEvent, VideoProviderRequestStartedEventHandler>>();
-builder.Services.AddHostedService<RabbitMqConsumerHostedService<VideoProviderCompletedEvent, VideoProviderCompletedEventHandler>>();
-builder.Services.AddHostedService<RabbitMqConsumerHostedService<VideoFileDownloadStartedEvent, VideoFileDownloadStartedEventHandler>>();
-builder.Services.AddHostedService<RabbitMqConsumerHostedService<VideoFileUploadStartedEvent, VideoFileUploadStartedEventHandler>>();
+builder.Services.AddHostedService<RabbitMqConsumerHostedService<VideoGenerationApprovedEto, VideoGenerationApprovedEventHandler>>();
+builder.Services.AddHostedService<RabbitMqConsumerHostedService<VideoRequestCreatedEto, VideoRequestCreatedEventHandler>>();
+builder.Services.AddHostedService<RabbitMqConsumerHostedService<VideoOperationStartedEto, VideoOperationStartedEventHandler>>();
+builder.Services.AddHostedService<RabbitMqConsumerHostedService<AudioProviderRequestStartedEto, AudioProviderRequestStartedEventHandler>>();
+builder.Services.AddHostedService<RabbitMqConsumerHostedService<AudioProviderCompletedEto, AudioProviderCompletedEventHandler>>();
+builder.Services.AddHostedService<RabbitMqConsumerHostedService<AudioFileDownloadStartedEto, AudioFileDownloadStartedEventHandler>>();
+builder.Services.AddHostedService<RabbitMqConsumerHostedService<AudioFileDownloadCompletedEto, AudioFileDownloadCompletedEventHandler>>();
+builder.Services.AddHostedService<RabbitMqConsumerHostedService<AudioFileUploadStartedEto, AudioFileUploadStartedEventHandler>>();
+builder.Services.AddHostedService<RabbitMqConsumerHostedService<AudioFileUploadCompletedEto, AudioFileUploadCompletedEventHandler>>();
+builder.Services.AddHostedService<RabbitMqConsumerHostedService<VideoProviderRequestStartedEto, VideoProviderRequestStartedEventHandler>>();
+builder.Services.AddHostedService<RabbitMqConsumerHostedService<VideoProviderCompletedEto, VideoProviderCompletedEventHandler>>();
+builder.Services.AddHostedService<RabbitMqConsumerHostedService<VideoFileDownloadStartedEto, VideoFileDownloadStartedEventHandler>>();
+builder.Services.AddHostedService<RabbitMqConsumerHostedService<VideoFileUploadStartedEto, VideoFileUploadStartedEventHandler>>();
 
 builder.Services.AddScoped<AudioProviderPollingAppService>();
 builder.Services.AddHostedService<AudioProviderPollingWorker>();
@@ -126,7 +126,7 @@ app.MapPost("/scheduler/audio-polling",
             if (claimResult.ModifiedCount == 0)
                 continue;
 
-            await eventBus.PublishAsync(new AudioProviderPollingStartedEvent
+            await eventBus.PublishAsync(new AudioProviderPollingStartedEto
             {
                 VideoRequestId = request.VideoRequestId,
                 AudioRequestId = request.Id,
@@ -171,7 +171,7 @@ app.MapPost("/scheduler/video-polling",
             if (claimResult.ModifiedCount == 0)
                 continue;
 
-            await eventBus.PublishAsync(new VideoProviderPollingStartedEvent
+            await eventBus.PublishAsync(new VideoProviderPollingStartedEto
             {
                 VideoRequestId = request.Id,
                 ProviderKey = request.VideoProviderKey,
