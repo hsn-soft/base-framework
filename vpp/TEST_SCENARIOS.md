@@ -6,7 +6,7 @@
 | Key | Type | Execution | Response Time |
 |-----|------|-----------|----------------|
 | outline-fast | ImmediateResult | Synchronous | ~5s |
-| outline-detailed | AsyncPolling | Polling | ~30s window |
+| outline-queue | AsyncPolling | Polling | ~30s window |
 
 ### Audio Providers (2)
 | Key | Type | Execution | Response Time |
@@ -99,7 +99,7 @@
 ---
 
 ### SCENARIO 7: Detailed Outline + HQ Audio + Cloud Video
-**Providers**: outline-detailed + audio-hq + video-cloud
+**Providers**: outline-queue + audio-hq + video-cloud
 - **Flow**: Polling → Polling → Polling
 - **Audio Input**: URLs
 - **Expected Total**: ~210s
@@ -111,7 +111,7 @@
 ---
 
 ### SCENARIO 8: Detailed Outline + HQ Audio + Pro Video
-**Providers**: outline-detailed + audio-hq + video-pro
+**Providers**: outline-queue + audio-hq + video-pro
 - **Flow**: Polling → Polling → Polling
 - **Audio Input**: Files
 - **Expected Total**: ~210s

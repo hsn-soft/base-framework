@@ -98,7 +98,7 @@ Content-Type: application/json
 
 ### ============================================
 ### SCENARIO 7: Detailed Polling + HQ Polling + Cloud Polling
-### outline-detailed (30s polling) + audio-hq (60s polling) + video-cloud (120s polling)
+### outline-queue (30s polling) + audio-hq (60s polling) + video-cloud (120s polling)
 ### Expected: ~210s | Flow: All AsyncPolling with proper sequencing
 ### ============================================
 POST {{ContentService_HostAddress}}/customer-contents
@@ -106,14 +106,14 @@ Content-Type: application/json
 
 {
   "url": "https://example.com/s7-detailed-hq-cloud",
-  "outlineProviderKey": "outline-detailed",
+  "outlineProviderKey": "outline-queue",
   "audioProviderKey": "audio-hq",
   "videoProviderKey": "video-cloud"
 }
 
 ### ============================================
 ### SCENARIO 8: Full Async Pipeline (All Polling)
-### outline-detailed (30s polling) + audio-hq (60s polling) + video-pro (120s polling)
+### outline-queue (30s polling) + audio-hq (60s polling) + video-pro (120s polling)
 ### Expected: ~210s | Flow: Complete async with file dependency management
 ### ============================================
 POST {{ContentService_HostAddress}}/customer-contents
@@ -121,7 +121,7 @@ Content-Type: application/json
 
 {
   "url": "https://example.com/s8-detailed-hq-pro",
-  "outlineProviderKey": "outline-detailed",
+  "outlineProviderKey": "outline-queue",
   "audioProviderKey": "audio-hq",
   "videoProviderKey": "video-pro"
 }

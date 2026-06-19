@@ -23,8 +23,8 @@ This guide documents the comprehensive testing of all 8 provider combinations (2
 | 4 | outline-fast (5s) | audio-quick (3s) | video-pro (120s) | Immediate→Polling (files) | ~128s |
 | 5 | outline-fast (5s) | audio-hq (60s) | video-cloud (120s) | Immediate→Polling→Polling | ~188s |
 | 6 | outline-fast (5s) | audio-hq (60s) | video-pro (120s) | Immediate→Polling→Polling (files) | ~188s |
-| 7 | outline-detailed (30s) | audio-hq (60s) | video-cloud (120s) | All Polling | ~210s |
-| 8 | outline-detailed (30s) | audio-hq (60s) | video-pro (120s) | All Polling (files) | ~210s |
+| 7 | outline-queue (30s) | audio-hq (60s) | video-cloud (120s) | All Polling | ~210s |
+| 8 | outline-queue (30s) | audio-hq (60s) | video-pro (120s) | All Polling (files) | ~210s |
 
 ### Test Results
 
@@ -40,7 +40,7 @@ This guide documents the comprehensive testing of all 8 provider combinations (2
 - Polling requests tracked with ProviderTrackId
 
 ⚠️ **DETAILED OUTLINE PENDING (7-8)**
-- Scenarios 7-8: CREATED (outline-detailed polling not yet started)
+- Scenarios 7-8: CREATED (outline-queue polling not yet started)
 - Requires longer wait time for outline polling phase
 - Expected to complete after ~30s outline polling + audio + video
 
@@ -149,7 +149,7 @@ EOF
 - Status: COMPLETED immediately after operation
 
 **AsyncPolling Providers**
-- outline-detailed: Returns ProviderTrackId, requires polling
+- outline-queue: Returns ProviderTrackId, requires polling
 - audio-hq: Returns ProviderTrackId, requires polling
 - video-cloud, video-pro: Returns ProviderTrackId, requires polling
 - Status: APPROVED after creation, COMPLETED after polling completes

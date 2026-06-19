@@ -78,7 +78,7 @@ Content-Type: application/json
 ### ============================================
 ### ANALYSIS SCENARIO 4: Full Async Collage
 ### All polling providers
-### outline-detailed + audio-hq + video-cloud
+### outline-queue + audio-hq + video-cloud
 ### Expected: ~210s + collage overhead
 ### ============================================
 POST {{ContentService_HostAddress}}/analysis-contents
@@ -93,7 +93,7 @@ Content-Type: application/json
     "43ae351a-9602-424f-a9d4-9830ab67d158",
     "2e29fa83-9599-40ea-84f5-404077f021d6"
   ],
-  "outlineProviderKey": "outline-detailed",
+  "outlineProviderKey": "outline-queue",
   "audioProviderKey": "audio-hq",
   "videoProviderKey": "video-cloud"
 }
@@ -101,7 +101,7 @@ Content-Type: application/json
 ### ============================================
 ### ANALYSIS SCENARIO 5: Maximum Quality Collage
 ### All async with file-based processing
-### outline-detailed + audio-hq + video-pro
+### outline-queue + audio-hq + video-pro
 ### Expected: ~210s + collage overhead
 ### ============================================
 POST {{ContentService_HostAddress}}/analysis-contents
@@ -116,7 +116,7 @@ Content-Type: application/json
     "43ae351a-9602-424f-a9d4-9830ab67d158",
     "2e29fa83-9599-40ea-84f5-404077f021d6"
   ],
-  "outlineProviderKey": "outline-detailed",
+  "outlineProviderKey": "outline-queue",
   "audioProviderKey": "audio-hq",
   "videoProviderKey": "video-pro"
 }
