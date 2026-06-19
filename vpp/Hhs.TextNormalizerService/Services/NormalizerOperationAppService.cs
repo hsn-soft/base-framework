@@ -238,19 +238,6 @@ public sealed class NormalizerOperationAppService(
                 throw new InvalidOperationException("ProviderTrackId is required for async outline provider.");
 
             await SaveOutlinePollingStateAsync(@event, response.ProviderTrackId, cancellationToken);
-
-            await eventBus.PublishAsync(new OutlineProviderPollingStartedEto
-            {
-                CustomerContentId = @event.CustomerContentId,
-                AnalysisContentId = @event.AnalysisContentId,
-                ContentProcessType = @event.ContentProcessType,
-                CorrelationId = @event.CorrelationId,
-                ProviderKey = @event.ProviderKey,
-                NormalizedRequestId = @event.NormalizedRequestId,
-                CustomerContentIdForItem = @event.CustomerContentIdForItem,
-                SortOrder = @event.SortOrder,
-                ProviderTrackId = response.ProviderTrackId
-            }, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -323,39 +310,6 @@ public sealed class NormalizerOperationAppService(
             .Set("Items.$.UpdatedAtUtc", DateTime.UtcNow)
             .Set(x => x.Status, "OUTLINE_PROVIDER_POLLING")
             .Set(x => x.CurrentStep, EventNames.OutlineProviderPollingStarted)
-            .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);
-
-        await UpdateAnalysisItemAsync(
-            @event.NormalizedRequestId,
-            @event.CustomerContentIdForItem.Value,
-            update,
-            cancellationToken);
-    }
-
-    public async Task ScheduleOutlineProviderPollingAsync(OutlineProviderPollingStartedEto @event, CancellationToken cancellationToken)
-    {
-        if (@event.ContentProcessType == ContentProcessTypes.CustomerContent)
-        {
-            var request = await context.CustomerRequests
-                .Find(x => x.Id == @event.NormalizedRequestId)
-                .FirstAsync(cancellationToken);
-
-            if (request.Status is "COMPLETED" or "FAILED" or "OUTLINE_COMPLETED")
-                return;
-
-            request.NextOutlinePollAtUtc = DateTime.UtcNow.AddSeconds(5);
-            request.UpdatedAtUtc = DateTime.UtcNow;
-
-            await ReplaceCustomerAsync(request, cancellationToken);
-            return;
-        }
-
-        if (@event.CustomerContentIdForItem is null)
-            throw new InvalidOperationException("CustomerContentIdForItem is required for analysis outline polling.");
-
-        var update = Builders<AnalysisContentNormalizedRequest>.Update
-            .Set("Items.$.NextOutlinePollAtUtc", DateTime.UtcNow.AddSeconds(5))
-            .Set("Items.$.UpdatedAtUtc", DateTime.UtcNow)
             .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);
 
         await UpdateAnalysisItemAsync(

@@ -160,21 +160,6 @@ public sealed record OutlineProviderRequestStartedEto : IntegrationEvent
     }
 }
 
-public sealed record OutlineProviderPollingStartedEto : IntegrationEvent
-{
-    public string ProviderKey { get; init; } = default!;
-    public Guid NormalizedRequestId { get; init; }
-    public Guid? CustomerContentIdForItem { get; init; }
-    public int? SortOrder { get; init; }
-    public string ProviderTrackId { get; init; } = default!;
-
-    public OutlineProviderPollingStartedEto()
-    {
-        EventName = EventNames.OutlineProviderPollingStarted;
-        Facility = EventNames.OutlineProviderPollingStarted;
-    }
-}
-
 public sealed record OutlineProviderCompletedEto : IntegrationEvent
 {
     public Guid NormalizedRequestId { get; init; }

@@ -44,11 +44,9 @@ builder.Services.AddScoped<AnalysisItemOutlineStartedEtoHandler>();
 builder.Services.AddScoped<AnalysisItemOutlineCompletedEtoHandler>();
 
 builder.Services.AddScoped<OutlineProviderRequestStartedEtoHandler>();
-builder.Services.AddScoped<OutlineProviderPollingStartedEtoHandler>();
 builder.Services.AddScoped<OutlineProviderCompletedEtoHandler>();
 
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<OutlineProviderRequestStartedEto, OutlineProviderRequestStartedEtoHandler>>();
-builder.Services.AddHostedService<RabbitMqConsumerHostedService<OutlineProviderPollingStartedEto, OutlineProviderPollingStartedEtoHandler>>();
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<OutlineProviderCompletedEto, OutlineProviderCompletedEtoHandler>>();
 
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<CustomerContentCreatedEto, CustomerContentCreatedEtoHandler>>();
@@ -123,13 +121,6 @@ app.MapPost("/scheduler/outline-polling",
             if (claimResult.ModifiedCount == 0)
                 continue;
 
-            await eventBus.PublishAsync(new OutlineProviderPollingStartedEto
-            {
-                ProviderKey = request.OutlineProviderKey,
-                NormalizedRequestId = request.Id,
-                ProviderTrackId = request.OutlineProviderTrackId
-            }, cancellationToken);
-
             processedCount++;
         }
 
@@ -178,15 +169,6 @@ app.MapPost("/scheduler/outline-polling",
 
                 if (claimResult.ModifiedCount == 0)
                     continue;
-
-                await eventBus.PublishAsync(new OutlineProviderPollingStartedEto
-                {
-                    ProviderKey = request.OutlineProviderKey,
-                    NormalizedRequestId = request.Id,
-                    CustomerContentIdForItem = item.CustomerContentId,
-                    SortOrder = item.SortOrder,
-                    ProviderTrackId = item.OutlineProviderTrackId
-                }, cancellationToken);
 
                 processedCount++;
             }

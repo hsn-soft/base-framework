@@ -75,13 +75,6 @@ public sealed class OutlineProviderRequestStartedEtoHandler(NormalizerInboxStore
         => appService.StartOutlineProviderRequestAsync(@event, cancellationToken);
 }
 
-public sealed class OutlineProviderPollingStartedEtoHandler(NormalizerInboxStore inboxStore, NormalizerOperationAppService appService)
-    : NormalizerEventHandlerBase<OutlineProviderPollingStartedEto>(inboxStore)
-{
-    protected override Task ExecuteAsync(OutlineProviderPollingStartedEto @event, CancellationToken cancellationToken)
-        => appService.ScheduleOutlineProviderPollingAsync(@event, cancellationToken);
-}
-
 public sealed class OutlineProviderCompletedEtoHandler(NormalizerInboxStore inboxStore, NormalizerOperationAppService appService)
     : NormalizerEventHandlerBase<OutlineProviderCompletedEto>(inboxStore)
 {
