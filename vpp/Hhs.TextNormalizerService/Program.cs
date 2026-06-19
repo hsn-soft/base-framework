@@ -2,6 +2,7 @@ using Hhs.Shared.Events;
 using Hhs.Shared.RabbitMQ;
 using Hhs.Shared.Configuration;
 using Hhs.Shared.Retry;
+using Hhs.TextNormalizerService.Configuration;
 using Hhs.TextNormalizerService.Entities;
 using Hhs.TextNormalizerService.Handlers;
 using Hhs.TextNormalizerService.Infrastructure;
@@ -16,6 +17,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.Configure<MongoOptions>(builder.Configuration.GetSection("MongoDb"));
 builder.Services.Configure<RabbitMqOptions>(builder.Configuration.GetSection("RabbitMq"));
+builder.Services.Configure<OutlineProviderEndpointsOptions>(builder.Configuration.GetSection("OutlineProviders"));
 
 var pollingOptions = builder.Configuration.GetSection(PollingOptions.SectionName).Get<PollingOptions>() ?? new PollingOptions();
 builder.Services.AddSingleton(pollingOptions);

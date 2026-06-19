@@ -65,6 +65,9 @@ public sealed class RabbitMqEventBus : IEventBus, IAsyncDisposable
     {
         var name = eventType.Name;
 
+        if (name.EndsWith("Eto"))
+            return name[..^"Eto".Length];
+
         return name.EndsWith("Event")
             ? name[..^"Event".Length]
             : name;

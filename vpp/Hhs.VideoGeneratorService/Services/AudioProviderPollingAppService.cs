@@ -1,8 +1,10 @@
 using Hhs.Shared.Events;
 using Hhs.Shared.RabbitMQ;
+using Hhs.VideoGeneratorService.Configuration;
 using Hhs.VideoGeneratorService.Entities;
 using Hhs.VideoGeneratorService.Mongo;
 using Hhs.VideoGeneratorService.Providers;
+using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 
 namespace Hhs.VideoGeneratorService.Services;
@@ -12,7 +14,8 @@ public sealed class AudioProviderPollingAppService(
     IAudioProviderResolver audioProviderResolver,
     IEventBus eventBus,
     ILogger<AudioProviderPollingAppService> logger,
-    HttpClient httpClient)
+    HttpClient httpClient,
+    IOptions<ProviderEndpointsOptions> options)
 {
     public async Task PollDueAudioRequestsAsync(CancellationToken cancellationToken)
     {
@@ -211,7 +214,7 @@ public sealed class AudioProviderPollingAppService(
             var fileContent = await httpClient.GetByteArrayAsync(downloadUrl, cancellationToken);
 
             // Upload to mock storage
-            var storageUrl = "http://localhost:5048/storage/upload-binary";
+            var storageUrl = $"{options.Value.StorageBaseUrl}/storage/upload-binary";
             using (var content = new ByteArrayContent(fileContent))
             {
                 var response = await httpClient.PostAsync(

@@ -1,4 +1,6 @@
 using Hhs.Shared.Providers;
+using Hhs.VideoGeneratorService.Configuration;
+using Microsoft.Extensions.Options;
 using System.Text.Json;
 
 namespace Hhs.VideoGeneratorService.Providers;
@@ -6,10 +8,12 @@ namespace Hhs.VideoGeneratorService.Providers;
 public sealed class VideoCloudProvider : IVideoProvider
 {
     private readonly HttpClient _httpClient;
+    private readonly string _baseUrl;
 
-    public VideoCloudProvider(HttpClient httpClient)
+    public VideoCloudProvider(HttpClient httpClient, IOptions<ProviderEndpointsOptions> options)
     {
         _httpClient = httpClient;
+        _baseUrl = options.Value.VideoProviders.CloudBaseUrl;
     }
 
     public string ProviderKey => "video-cloud";
@@ -29,7 +33,7 @@ public sealed class VideoCloudProvider : IVideoProvider
             throw new InvalidOperationException("VideoProviderB requires audio urls.");
 
         var response = await _httpClient.PostAsJsonAsync(
-            "http://localhost:5046/video/generate",
+            $"{_baseUrl}/video/generate",
             request,
             cancellationToken);
 
@@ -48,7 +52,7 @@ public sealed class VideoCloudProvider : IVideoProvider
         CancellationToken cancellationToken)
     {
         var response = await _httpClient.GetAsync(
-            $"http://localhost:5046/video/status/{providerTrackId}",
+            $"{_baseUrl}/video/status/{providerTrackId}",
             cancellationToken);
 
         var json = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken);

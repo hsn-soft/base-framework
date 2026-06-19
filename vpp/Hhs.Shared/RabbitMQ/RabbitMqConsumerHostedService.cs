@@ -154,8 +154,8 @@ public sealed class RabbitMqConsumerHostedService<TEvent, THandler> : Background
     {
         string name = eventType.Name;
 
-        return name.EndsWith("Event")
-            ? name[..^"Event".Length]
+        return name.EndsWith("Eto")
+            ? name[..^"Eto".Length]
             : name;
     }
 

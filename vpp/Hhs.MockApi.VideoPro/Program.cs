@@ -1,22 +1,26 @@
 using System.Collections.Concurrent;
 using Hhs.MockApi.VideoPro;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.Configure<MockApiOptions>(builder.Configuration.GetSection("MockApi"));
+builder.Services.AddSingleton<VideoProService>();
 
 var app = builder.Build();
 
 var mockFilesDir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "media");
 Directory.CreateDirectory(mockFilesDir);
 
-app.MapPost("/video/generate", (VideoRequest request) =>
+app.MapPost("/video/generate", (VideoRequest request, VideoProService service) =>
 {
-    var trackingId = VideoProService.CreateRequest(request.AudioUrls);
+    var trackingId = service.CreateRequest(request.AudioUrls);
     return Results.Ok(new { provider = "video-pro", trackingId, pollingWindowSec = 120 });
 });
 
-app.MapGet("/video/status/{trackingId}", async (string trackingId, CancellationToken ct) =>
+app.MapGet("/video/status/{trackingId}", async (string trackingId, VideoProService service, CancellationToken ct) =>
 {
-    var (isReady, fileUrl, error, fileName) = await VideoProService.GetStatusAsync(trackingId, mockFilesDir, ct);
+    var (isReady, fileUrl, error, fileName) = await service.GetStatusAsync(trackingId, mockFilesDir, ct);
     if (!isReady)
         return Results.Ok(new { provider = "video-pro", trackingId, status = "processing", error });
     return Results.Ok(new { provider = "video-pro", trackingId, status = "completed", remoteFileUrl = fileUrl, fileName });
@@ -36,18 +40,29 @@ app.Run();
 
 namespace Hhs.MockApi.VideoPro
 {
+    public sealed class MockApiOptions
+    {
+        public string SelfBaseUrl { get; set; } = string.Empty;
+    }
+
     public sealed class VideoProService
     {
         private static readonly ConcurrentDictionary<string, VideoProEntry> Store = new();
+        private readonly IOptions<MockApiOptions> _options;
 
-        public static string CreateRequest(List<string> audioUrls)
+        public VideoProService(IOptions<MockApiOptions> options)
+        {
+            _options = options;
+        }
+
+        public string CreateRequest(List<string> audioUrls)
         {
             var trackingId = Guid.NewGuid().ToString("N");
             Store[trackingId] = new VideoProEntry { AudioUrls = audioUrls, CreatedAt = DateTime.UtcNow };
             return trackingId;
         }
 
-        public static async Task<(bool IsReady, string? FileUrl, string? Error, string? FileName)> GetStatusAsync(string trackingId, string mockFilesDir, CancellationToken cancellationToken)
+        public async Task<(bool IsReady, string? FileUrl, string? Error, string? FileName)> GetStatusAsync(string trackingId, string mockFilesDir, CancellationToken cancellationToken)
         {
             if (!Store.TryGetValue(trackingId, out var entry))
                 return (false, null, "Not found", null);
@@ -65,7 +80,7 @@ namespace Hhs.MockApi.VideoPro
                 await System.IO.File.WriteAllTextAsync(filePath, $"Mock Video File\nTracking ID: {trackingId}\n{audioInfo}\nCreated: {DateTime.UtcNow:O}", cancellationToken);
             }
 
-            var downloadUrl = $"http://localhost:5047/video/download/{trackingId}";
+            var downloadUrl = $"{_options.Value.SelfBaseUrl}/video/download/{trackingId}";
             return (true, downloadUrl, null, fileName);
         }
 

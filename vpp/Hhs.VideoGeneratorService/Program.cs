@@ -2,6 +2,7 @@ using Hhs.Shared.Events;
 using Hhs.Shared.RabbitMQ;
 using Hhs.Shared.Configuration;
 using Hhs.Shared.Retry;
+using Hhs.VideoGeneratorService.Configuration;
 using Hhs.VideoGeneratorService.Entities;
 using Hhs.VideoGeneratorService.Handlers;
 using Hhs.VideoGeneratorService.Infrastructure;
@@ -15,6 +16,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.Configure<MongoOptions>(builder.Configuration.GetSection("MongoDb"));
 builder.Services.Configure<RabbitMqOptions>(builder.Configuration.GetSection("RabbitMq"));
+builder.Services.Configure<ProviderEndpointsOptions>(builder.Configuration.GetSection("ProviderEndpoints"));
 
 var retryOptions = builder.Configuration.GetSection(RetryOptions.SectionName).Get<RetryOptions>() ?? new RetryOptions();
 builder.Services.AddSingleton(_ => new RetryDelayCalculator(retryOptions.DelaySeconds));

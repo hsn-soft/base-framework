@@ -1,4 +1,6 @@
 using Hhs.Shared.Providers;
+using Hhs.VideoGeneratorService.Configuration;
+using Microsoft.Extensions.Options;
 using System.Text.Json;
 
 namespace Hhs.VideoGeneratorService.Providers;
@@ -6,10 +8,12 @@ namespace Hhs.VideoGeneratorService.Providers;
 public sealed class VideoFastProvider : IVideoProvider
 {
     private readonly HttpClient _httpClient;
+    private readonly string _baseUrl;
 
-    public VideoFastProvider(HttpClient httpClient)
+    public VideoFastProvider(HttpClient httpClient, IOptions<ProviderEndpointsOptions> options)
     {
         _httpClient = httpClient;
+        _baseUrl = options.Value.VideoProviders.FastBaseUrl;
     }
 
     public string ProviderKey => "video-fast";
@@ -26,7 +30,7 @@ public sealed class VideoFastProvider : IVideoProvider
         CancellationToken cancellationToken)
     {
         var response = await _httpClient.PostAsJsonAsync(
-            "http://localhost:5044/video/generate",
+            $"{_baseUrl}/video/generate",
             request,
             cancellationToken);
 
@@ -45,7 +49,7 @@ public sealed class VideoFastProvider : IVideoProvider
     public async Task<VideoStatusResponse> GetStatusAsync(string providerTrackId, CancellationToken cancellationToken)
     {
         var response = await _httpClient.GetAsync(
-            $"http://localhost:5044/video/status/{providerTrackId}",
+            $"{_baseUrl}/video/status/{providerTrackId}",
             cancellationToken);
 
         var json = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken);

@@ -3,9 +3,11 @@ using Hhs.Shared.Events;
 using Hhs.Shared.Providers;
 using Hhs.Shared.RabbitMQ;
 using Hhs.Shared.Retry;
+using Hhs.VideoGeneratorService.Configuration;
 using Hhs.VideoGeneratorService.Entities;
 using Hhs.VideoGeneratorService.Mongo;
 using Hhs.VideoGeneratorService.Providers;
+using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 
 namespace Hhs.VideoGeneratorService.Services;
@@ -19,7 +21,8 @@ public sealed class VideoOperationAppService(
     IAudioProviderResolver audioProviderResolver,
     HttpClient httpClient,
     ILogger<VideoOperationAppService> logger,
-    RetryDelayCalculator retryDelayCalculator)
+    RetryDelayCalculator retryDelayCalculator,
+    IOptions<ProviderEndpointsOptions> options)
 {
     private readonly RetryDelayCalculator _retryDelayCalculator = retryDelayCalculator;
 public async Task CreateVideoRequestAsync(
@@ -956,7 +959,7 @@ public async Task HandleAudioUploadCompletedAsync(
             var fileContent = await httpClient.GetByteArrayAsync(downloadUrl, cancellationToken);
 
             // Upload to mock storage
-            var storageUrl = "http://localhost:5048/storage/upload-binary";
+            var storageUrl = $"{options.Value.StorageBaseUrl}/storage/upload-binary";
             using (var content = new ByteArrayContent(fileContent))
             {
                 var response = await httpClient.PostAsync(

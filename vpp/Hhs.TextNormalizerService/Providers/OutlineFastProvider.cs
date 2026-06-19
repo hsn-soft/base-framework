@@ -1,4 +1,6 @@
 using Hhs.Shared.Providers;
+using Hhs.TextNormalizerService.Configuration;
+using Microsoft.Extensions.Options;
 using System.Text.Json;
 
 namespace Hhs.TextNormalizerService.Providers;
@@ -6,6 +8,7 @@ namespace Hhs.TextNormalizerService.Providers;
 public sealed class OutlineFastProvider : IOutlineProvider
 {
     private readonly HttpClient _httpClient;
+    private readonly string _baseUrl;
 
     public string ProviderKey => "outline-fast";
 
@@ -15,9 +18,10 @@ public sealed class OutlineFastProvider : IOutlineProvider
         ExecutionMode = ProviderExecutionMode.ImmediateResult
     };
 
-    public OutlineFastProvider(HttpClient httpClient)
+    public OutlineFastProvider(HttpClient httpClient, IOptions<OutlineProviderEndpointsOptions> options)
     {
         _httpClient = httpClient;
+        _baseUrl = options.Value.FastBaseUrl;
     }
 
     public async Task<OutlineCreateResponse> CreateAsync(
@@ -25,7 +29,7 @@ public sealed class OutlineFastProvider : IOutlineProvider
         CancellationToken cancellationToken)
     {
         var response = await _httpClient.PostAsJsonAsync(
-            "http://localhost:5040/outline/generate",
+            $"{_baseUrl}/outline/generate",
             request,
             cancellationToken);
 

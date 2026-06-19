@@ -1,4 +1,6 @@
 using Hhs.Shared.Providers;
+using Hhs.TextNormalizerService.Configuration;
+using Microsoft.Extensions.Options;
 using System.Text.Json;
 
 namespace Hhs.TextNormalizerService.Providers;
@@ -6,6 +8,7 @@ namespace Hhs.TextNormalizerService.Providers;
 public sealed class OutlineDetailedProvider : IOutlineProvider
 {
     private readonly HttpClient _httpClient;
+    private readonly string _baseUrl;
 
     public string ProviderKey => "outline-detailed";
 
@@ -15,9 +18,10 @@ public sealed class OutlineDetailedProvider : IOutlineProvider
         ExecutionMode = ProviderExecutionMode.AsyncPolling
     };
 
-    public OutlineDetailedProvider(HttpClient httpClient)
+    public OutlineDetailedProvider(HttpClient httpClient, IOptions<OutlineProviderEndpointsOptions> options)
     {
         _httpClient = httpClient;
+        _baseUrl = options.Value.DetailedBaseUrl;
     }
 
     public async Task<OutlineCreateResponse> CreateAsync(
@@ -25,7 +29,7 @@ public sealed class OutlineDetailedProvider : IOutlineProvider
         CancellationToken cancellationToken)
     {
         var response = await _httpClient.PostAsJsonAsync(
-            "http://localhost:5041/outline/generate",
+            $"{_baseUrl}/outline/generate",
             request,
             cancellationToken);
 
@@ -44,7 +48,7 @@ public sealed class OutlineDetailedProvider : IOutlineProvider
         CancellationToken cancellationToken)
     {
         var response = await _httpClient.GetAsync(
-            $"http://localhost:5041/outline/status/{providerTrackId}",
+            $"{_baseUrl}/outline/status/{providerTrackId}",
             cancellationToken);
 
         var json = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken);

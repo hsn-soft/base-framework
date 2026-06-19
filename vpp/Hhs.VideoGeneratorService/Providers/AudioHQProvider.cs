@@ -1,4 +1,6 @@
 using Hhs.Shared.Providers;
+using Hhs.VideoGeneratorService.Configuration;
+using Microsoft.Extensions.Options;
 using System.Text.Json;
 
 namespace Hhs.VideoGeneratorService.Providers;
@@ -6,10 +8,12 @@ namespace Hhs.VideoGeneratorService.Providers;
 public sealed class AudioHQProvider : IAudioProvider
 {
     private readonly HttpClient _httpClient;
+    private readonly string _baseUrl;
 
-    public AudioHQProvider(HttpClient httpClient)
+    public AudioHQProvider(HttpClient httpClient, IOptions<ProviderEndpointsOptions> options)
     {
         _httpClient = httpClient;
+        _baseUrl = options.Value.AudioProviders.HQBaseUrl;
     }
 
     public string ProviderKey => "audio-hq";
@@ -25,7 +29,7 @@ public sealed class AudioHQProvider : IAudioProvider
         CancellationToken cancellationToken)
     {
         var response = await _httpClient.PostAsJsonAsync(
-            "http://localhost:5043/audio/generate",
+            $"{_baseUrl}/audio/generate",
             request,
             cancellationToken);
 
@@ -44,7 +48,7 @@ public sealed class AudioHQProvider : IAudioProvider
         CancellationToken cancellationToken)
     {
         var response = await _httpClient.GetAsync(
-            $"http://localhost:5043/audio/status/{providerTrackId}",
+            $"{_baseUrl}/audio/status/{providerTrackId}",
             cancellationToken);
 
         var json = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken);

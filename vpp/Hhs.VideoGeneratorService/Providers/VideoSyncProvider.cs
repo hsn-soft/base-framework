@@ -1,4 +1,6 @@
 using Hhs.Shared.Providers;
+using Hhs.VideoGeneratorService.Configuration;
+using Microsoft.Extensions.Options;
 using System.Text.Json;
 
 namespace Hhs.VideoGeneratorService.Providers;
@@ -6,10 +8,12 @@ namespace Hhs.VideoGeneratorService.Providers;
 public sealed class VideoSyncProvider : IVideoProvider
 {
     private readonly HttpClient _httpClient;
+    private readonly string _baseUrl;
 
-    public VideoSyncProvider(HttpClient httpClient)
+    public VideoSyncProvider(HttpClient httpClient, IOptions<ProviderEndpointsOptions> options)
     {
         _httpClient = httpClient;
+        _baseUrl = options.Value.VideoProviders.SyncBaseUrl;
     }
 
     public string ProviderKey => "video-sync";
@@ -29,7 +33,7 @@ public sealed class VideoSyncProvider : IVideoProvider
             throw new InvalidOperationException("VideoSyncProvider requires audio file paths.");
 
         var response = await _httpClient.PostAsJsonAsync(
-            "http://localhost:5045/video/generate",
+            $"{_baseUrl}/video/generate",
             request,
             cancellationToken);
 
@@ -48,7 +52,7 @@ public sealed class VideoSyncProvider : IVideoProvider
     public async Task<VideoStatusResponse> GetStatusAsync(string providerTrackId, CancellationToken cancellationToken)
     {
         var response = await _httpClient.GetAsync(
-            $"http://localhost:5045/video/status/{providerTrackId}",
+            $"{_baseUrl}/video/status/{providerTrackId}",
             cancellationToken);
 
         var json = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken);

@@ -1,8 +1,10 @@
 using System.Collections.Concurrent;
 using Hhs.MockApi.AudioHQ;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.Configure<MockApiOptions>(builder.Configuration.GetSection("MockApi"));
 builder.Services.AddSingleton<AudioHQService>();
 
 var app = builder.Build();
@@ -17,9 +19,9 @@ app.MapPost("/audio/generate", (AudioRequest request, AudioHQService service) =>
     return Results.Ok(new { provider = "audio-hq", trackingId, pollingWindowSec = 60 });
 });
 
-app.MapGet("/audio/status/{trackingId}", async (string trackingId, CancellationToken ct) =>
+app.MapGet("/audio/status/{trackingId}", async (string trackingId, AudioHQService service, CancellationToken ct) =>
 {
-    var (isReady, fileUrl, error, fileName) = await AudioHQService.GetStatusAsync(trackingId, mockFilesDir, ct);
+    var (isReady, fileUrl, error, fileName) = await service.GetStatusAsync(trackingId, mockFilesDir, ct);
     if (!isReady)
         return Results.Ok(new { provider = "audio-hq", trackingId, status = "processing", error });
     return Results.Ok(new { provider = "audio-hq", trackingId, status = "completed", remoteFileUrl = fileUrl, fileName });
@@ -39,9 +41,20 @@ app.Run();
 
 namespace Hhs.MockApi.AudioHQ
 {
+    public sealed class MockApiOptions
+    {
+        public string SelfBaseUrl { get; set; } = string.Empty;
+    }
+
     public sealed class AudioHQService
     {
         private static readonly ConcurrentDictionary<string, AudioHQEntry> Store = new();
+        private readonly IOptions<MockApiOptions> _options;
+
+        public AudioHQService(IOptions<MockApiOptions> options)
+        {
+            _options = options;
+        }
 
         public string CreateRequest(string inputText)
         {
@@ -51,7 +64,7 @@ namespace Hhs.MockApi.AudioHQ
             return trackingId;
         }
 
-        public static async Task<(bool IsReady, string? FileUrl, string? Error, string? FileName)> GetStatusAsync(string trackingId, string mockFilesDir, CancellationToken cancellationToken)
+        public async Task<(bool IsReady, string? FileUrl, string? Error, string? FileName)> GetStatusAsync(string trackingId, string mockFilesDir, CancellationToken cancellationToken)
         {
             if (!Store.TryGetValue(trackingId, out var entry))
                 return (false, null, "Not found", null);
@@ -70,7 +83,7 @@ namespace Hhs.MockApi.AudioHQ
             }
 
             // Return download URL that points to our endpoint
-            var downloadUrl = $"http://localhost:5043/audio/download/{trackingId}";
+            var downloadUrl = $"{_options.Value.SelfBaseUrl}/audio/download/{trackingId}";
             return (true, downloadUrl, null, fileName);
         }
 

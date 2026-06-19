@@ -1,7 +1,9 @@
 using Hhs.MockApi.VideoFast;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.Configure<MockApiOptions>(builder.Configuration.GetSection("MockApi"));
 builder.Services.AddSingleton<VideoFastService>();
 
 var app = builder.Build();
@@ -9,9 +11,9 @@ var app = builder.Build();
 var mockFilesDir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "media");
 Directory.CreateDirectory(mockFilesDir);
 
-app.MapPost("/video/generate", async (VideoRequest request, CancellationToken ct) =>
+app.MapPost("/video/generate", async (VideoRequest request, VideoFastService service, CancellationToken ct) =>
 {
-    var (trackingId, fileUrl, fileName) = await VideoFastService.GenerateVideoAsync(request.AudioUrls, mockFilesDir, ct);
+    var (trackingId, fileUrl, fileName) = await service.GenerateVideoAsync(request.AudioUrls, mockFilesDir, ct);
     return Results.Ok(new { provider = "video-fast", remoteFileUrl = fileUrl, fileName, processingMs = 5000, trackingId });
 });
 
@@ -25,14 +27,14 @@ app.MapGet("/video/download/{trackingId}", async (string trackingId) =>
     return Results.File(fileContent, "application/octet-stream", Path.GetFileName(filePath));
 });
 
-app.MapGet("/video/status/{trackingId}", async (string trackingId) =>
+app.MapGet("/video/status/{trackingId}", async (string trackingId, VideoFastService service) =>
 {
     var filePath = VideoFastService.GetFilePath(trackingId, mockFilesDir);
     if (!System.IO.File.Exists(filePath))
         return Results.NotFound();
 
     var fileName = Path.GetFileName(filePath);
-    var downloadUrl = $"http://localhost:5044/video/download/{trackingId}";
+    var downloadUrl = $"{service.GetBaseUrl()}/video/download/{trackingId}";
     return Results.Ok(new
     {
         status = "completed",
@@ -45,9 +47,23 @@ app.Run();
 
 namespace Hhs.MockApi.VideoFast
 {
+    public sealed class MockApiOptions
+    {
+        public string SelfBaseUrl { get; set; } = string.Empty;
+    }
+
     public sealed class VideoFastService
     {
-        public static async Task<(string TrackingId, string FileUrl, string FileName)> GenerateVideoAsync(List<string> audioUrls, string mockFilesDir, CancellationToken cancellationToken)
+        private readonly IOptions<MockApiOptions> _options;
+
+        public VideoFastService(IOptions<MockApiOptions> options)
+        {
+            _options = options;
+        }
+
+        public string GetBaseUrl() => _options.Value.SelfBaseUrl;
+
+        public async Task<(string TrackingId, string FileUrl, string FileName)> GenerateVideoAsync(List<string> audioUrls, string mockFilesDir, CancellationToken cancellationToken)
         {
             await Task.Delay(5000, cancellationToken);
             var trackingId = Guid.NewGuid().ToString("N");
@@ -57,7 +73,7 @@ namespace Hhs.MockApi.VideoFast
             var audioInfo = audioUrls.Count > 0 ? $"Audio URLs: {string.Join(", ", audioUrls)}" : "No audio";
             await System.IO.File.WriteAllTextAsync(filePath, $"Mock Video File\nTracking ID: {trackingId}\n{audioInfo}\nCreated: {DateTime.UtcNow:O}", cancellationToken);
 
-            var downloadUrl = $"http://localhost:5044/video/download/{trackingId}";
+            var downloadUrl = $"{_options.Value.SelfBaseUrl}/video/download/{trackingId}";
             return (trackingId, downloadUrl, fileName);
         }
 
