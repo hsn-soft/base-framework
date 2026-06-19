@@ -25,12 +25,12 @@ namespace Hhs.MockApi.OutlineQueue
 {
     public sealed class OutlineQueueService
     {
-        private static readonly ConcurrentDictionary<string, DetailedOutlineEntry> Store = new();
+        private static readonly ConcurrentDictionary<string, QueueOutlineEntry> Store = new();
 
         public static string CreateRequest(string inputText)
         {
             var trackingId = Guid.NewGuid().ToString("N");
-            Store[trackingId] = new DetailedOutlineEntry { InputText = inputText, CreatedAt = DateTime.UtcNow };
+            Store[trackingId] = new QueueOutlineEntry { InputText = inputText, CreatedAt = DateTime.UtcNow };
             return trackingId;
         }
 
@@ -49,7 +49,7 @@ namespace Hhs.MockApi.OutlineQueue
         }
     }
 
-    public sealed class DetailedOutlineEntry
+    public sealed class QueueOutlineEntry
     {
         public string InputText { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }

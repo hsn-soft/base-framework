@@ -7,7 +7,7 @@ namespace Hhs.TextNormalizerService.Providers;
 
 public sealed class OutlineQueueProvider(HttpClient httpClient, IOptions<OutlineProviderEndpointsOptions> options) : IOutlineProvider
 {
-    private readonly string _baseUrl = options == null ? throw new ArgumentNullException(nameof(options)) : options.Value.DetailedBaseUrl;
+    private readonly string _baseUrl = options == null ? throw new ArgumentNullException(nameof(options)) : options.Value.QueueBaseUrl;
 
     public string ProviderKey => ProviderKeys.OutlineQueue;
 

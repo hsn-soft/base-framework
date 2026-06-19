@@ -39,7 +39,7 @@ This guide documents the comprehensive testing of all 8 provider combinations (2
 - Database state: NormalizeStatus=COMPLETED, VideoStatus=APPROVED
 - Polling requests tracked with ProviderTrackId
 
-⚠️ **DETAILED OUTLINE PENDING (7-8)**
+⚠️ **queue OUTLINE PENDING (7-8)**
 - Scenarios 7-8: CREATED (outline-queue polling not yet started)
 - Requires longer wait time for outline polling phase
 - Expected to complete after ~30s outline polling + audio + video
@@ -91,8 +91,8 @@ db.video_results.countDocuments()     -- Results for completed videos
 | 1 | fast+quick+fast | Fast collage from immediate contents | ~15s |
 | 2 | fast+quick+cloud | Fast outline/audio + cloud collage | ~128s |
 | 3 | fast+hq+pro | Professional quality collage | ~188s |
-| 4 | detailed+hq+cloud | Detailed analysis + cloud collage | ~210s |
-| 5 | detailed+hq+pro | Maximum quality collage | ~210s |
+| 4 | queue+hq+cloud | queue analysis + cloud collage | ~210s |
+| 5 | queue+hq+pro | Maximum quality collage | ~210s |
 
 ### Running Tests
 

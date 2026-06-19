@@ -98,7 +98,7 @@
 
 ---
 
-### SCENARIO 7: Detailed Outline + HQ Audio + Cloud Video
+### SCENARIO 7: queue Outline + HQ Audio + Cloud Video
 **Providers**: outline-queue + audio-hq + video-cloud
 - **Flow**: Polling → Polling → Polling
 - **Audio Input**: URLs
@@ -110,7 +110,7 @@
 
 ---
 
-### SCENARIO 8: Detailed Outline + HQ Audio + Pro Video
+### SCENARIO 8: queue Outline + HQ Audio + Pro Video
 **Providers**: outline-queue + audio-hq + video-pro
 - **Flow**: Polling → Polling → Polling
 - **Audio Input**: Files
@@ -238,7 +238,7 @@ For each scenario:
 
 ## Mock API Ports
 - OutlineFast: 5040
-- OutlineDetailed: 5041
+- OutlineQueue: 5041
 - AudioQuick: 5050
 - AudioHQ: 5051
 - VideoFast: 5060
