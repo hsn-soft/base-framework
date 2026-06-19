@@ -16,7 +16,7 @@ public sealed class VideoSyncProvider : IVideoProvider
         _baseUrl = options.Value.VideoProviders.SyncBaseUrl;
     }
 
-    public string ProviderKey => "video-sync";
+    public string ProviderKey => ProviderKeys.VideoSync;
 
     public VideoProviderCapabilities Capabilities => new()
     {

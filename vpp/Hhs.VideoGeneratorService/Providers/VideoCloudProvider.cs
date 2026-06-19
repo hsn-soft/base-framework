@@ -16,7 +16,7 @@ public sealed class VideoCloudProvider : IVideoProvider
         _baseUrl = options.Value.VideoProviders.CloudBaseUrl;
     }
 
-    public string ProviderKey => "video-cloud";
+    public string ProviderKey => ProviderKeys.VideoCloud;
 
     public VideoProviderCapabilities Capabilities => new()
     {

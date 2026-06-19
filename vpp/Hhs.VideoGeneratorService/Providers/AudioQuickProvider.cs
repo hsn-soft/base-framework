@@ -16,7 +16,7 @@ public sealed class AudioQuickProvider : IAudioProvider
         _baseUrl = options.Value.AudioProviders.QuickBaseUrl;
     }
 
-    public string ProviderKey => "audio-quick";
+    public string ProviderKey => ProviderKeys.AudioQuick;
 
     public AudioProviderCapabilities Capabilities => new()
     {

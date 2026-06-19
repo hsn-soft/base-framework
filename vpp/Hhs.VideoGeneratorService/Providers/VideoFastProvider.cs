@@ -16,7 +16,7 @@ public sealed class VideoFastProvider : IVideoProvider
         _baseUrl = options.Value.VideoProviders.FastBaseUrl;
     }
 
-    public string ProviderKey => "video-fast";
+    public string ProviderKey => ProviderKeys.VideoFast;
 
     public VideoProviderCapabilities Capabilities => new()
     {

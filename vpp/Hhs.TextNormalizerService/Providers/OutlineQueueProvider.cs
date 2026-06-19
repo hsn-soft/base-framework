@@ -5,12 +5,12 @@ using System.Text.Json;
 
 namespace Hhs.TextNormalizerService.Providers;
 
-public sealed class OutlineDetailedProvider : IOutlineProvider
+public sealed class OutlineQueueProvider : IOutlineProvider
 {
     private readonly HttpClient _httpClient;
     private readonly string _baseUrl;
 
-    public string ProviderKey => "outline-detailed";
+    public string ProviderKey => ProviderKeys.OutlineQueue;
 
     public OutlineProviderCapabilities Capabilities => new()
     {
@@ -18,7 +18,7 @@ public sealed class OutlineDetailedProvider : IOutlineProvider
         ExecutionMode = ProviderExecutionMode.AsyncPolling
     };
 
-    public OutlineDetailedProvider(HttpClient httpClient, IOptions<OutlineProviderEndpointsOptions> options)
+    public OutlineQueueProvider(HttpClient httpClient, IOptions<OutlineProviderEndpointsOptions> options)
     {
         _httpClient = httpClient;
         _baseUrl = options.Value.DetailedBaseUrl;

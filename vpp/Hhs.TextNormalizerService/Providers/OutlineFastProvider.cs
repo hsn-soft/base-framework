@@ -10,7 +10,7 @@ public sealed class OutlineFastProvider : IOutlineProvider
     private readonly HttpClient _httpClient;
     private readonly string _baseUrl;
 
-    public string ProviderKey => "outline-fast";
+    public string ProviderKey => ProviderKeys.OutlineFast;
 
     public OutlineProviderCapabilities Capabilities => new()
     {

@@ -36,7 +36,7 @@ builder.Services.AddScoped<NormalizerOperationAppService>();
 
 builder.Services.AddScoped<IContentScraper, DummyContentScraper>();
 builder.Services.AddScoped<IOutlineProvider, OutlineFastProvider>();
-builder.Services.AddScoped<IOutlineProvider, OutlineDetailedProvider>();
+builder.Services.AddScoped<IOutlineProvider, OutlineQueueProvider>();
 builder.Services.AddScoped<IOutlineProviderResolver, OutlineProviderResolver>();
 
 builder.Services.AddScoped<CustomerContentCreatedEtoHandler>();

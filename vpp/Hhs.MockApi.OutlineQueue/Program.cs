@@ -1,5 +1,5 @@
 using System.Collections.Concurrent;
-using Hhs.MockApi.OutlineDetailed;
+using Hhs.MockApi.OutlineQueue;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,23 +7,23 @@ var app = builder.Build();
 
 app.MapPost("/outline/generate", (OutlineRequest request) =>
 {
-    var trackingId = OutlineDetailedService.CreateRequest(request.InputText);
-    return Results.Ok(new { provider = "outline-detailed", trackingId, pollingWindowSec = 30 });
+    var trackingId = OutlineQueueService.CreateRequest(request.InputText);
+    return Results.Ok(new { provider = "outline-queue", trackingId, pollingWindowSec = 30 });
 });
 
 app.MapGet("/outline/status/{trackingId}", async (string trackingId, CancellationToken ct) =>
 {
-    var (isReady, script, error) = await OutlineDetailedService.GetStatusAsync(trackingId, ct);
+    var (isReady, script, error) = await OutlineQueueService.GetStatusAsync(trackingId, ct);
     if (!isReady)
-        return Results.Ok(new { provider = "outline-detailed", trackingId, status = "processing", error });
-    return Results.Ok(new { provider = "outline-detailed", trackingId, status = "completed", script });
+        return Results.Ok(new { provider = "outline-queue", trackingId, status = "processing", error });
+    return Results.Ok(new { provider = "outline-queue", trackingId, status = "completed", script });
 });
 
 app.Run();
 
-namespace Hhs.MockApi.OutlineDetailed
+namespace Hhs.MockApi.OutlineQueue
 {
-    public sealed class OutlineDetailedService
+    public sealed class OutlineQueueService
     {
         private static readonly ConcurrentDictionary<string, DetailedOutlineEntry> Store = new();
 
@@ -44,7 +44,7 @@ namespace Hhs.MockApi.OutlineDetailed
                 return (false, null, null);
 
             var lines = entry.InputText.Split(new[] { '.', '!', '?' }, StringSplitOptions.RemoveEmptyEntries);
-            var outline = string.Join("\n", lines.Select((line, i) => $"[Detailed] Point {i + 1}: {line.Trim()} (analyzed)"));
+            var outline = string.Join("\n", lines.Select((line, i) => $"[Queue] Point {i + 1}: {line.Trim()} (analyzed)"));
             return (true, outline, null);
         }
     }

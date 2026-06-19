@@ -16,7 +16,7 @@ public sealed class VideoProProvider : IVideoProvider
         _baseUrl = options.Value.VideoProviders.ProBaseUrl;
     }
 
-    public string ProviderKey => "video-pro";
+    public string ProviderKey => ProviderKeys.VideoPro;
 
     public VideoProviderCapabilities Capabilities => new()
     {

@@ -16,7 +16,7 @@ public sealed class AudioHQProvider : IAudioProvider
         _baseUrl = options.Value.AudioProviders.HQBaseUrl;
     }
 
-    public string ProviderKey => "audio-hq";
+    public string ProviderKey => ProviderKeys.AudioHQ;
 
     public AudioProviderCapabilities Capabilities => new()
     {
