@@ -1,25 +1,38 @@
+using System.Diagnostics.CodeAnalysis;
 using Hhs.Shared.Providers;
 
 namespace Hhs.TextNormalizerService.Providers;
 
 public sealed class OutlineCreateRequest
 {
-    public string InputText { get; set; } = default!;
+    public string OutlinePrompt { get; set; } = string.Empty;
+    public string OutlineInput { get; set; } = string.Empty;
+
+    public string EngineModel { get; set; } = string.Empty;
+
+    public bool UseStructuredOutput { get; set; } = false;
 }
 
-public sealed class OutlineCreateResponse
+public sealed class OutlineCreateResponse : OutlineStatusResponse
 {
-    public bool IsCompleted { get; set; }
-    public string? Script { get; set; }
+    // Pooling Track Id
     public string? ProviderTrackId { get; set; }
 }
 
-public sealed class OutlineStatusResponse
+public sealed class OutlineStatusRequest
 {
-    public bool IsCompleted { get; set; }
-    public bool IsFailed { get; set; }
-    public string? Script { get; set; }
+    public string ProviderTrackId { get; set; } = string.Empty;
+}
+
+public class OutlineStatusResponse
+{
+    public bool IsProcessed { get; set; }
+    public bool IsProcessFailed => !string.IsNullOrWhiteSpace(OutlinedData);
     public string? ErrorMessage { get; set; }
+
+    public string? OutlinedData { get; set; }
+    public List<string>? Categories { get; set; }
+    public List<string>? Tags { get; set; }
 }
 
 public interface IOutlineProvider
@@ -27,11 +40,7 @@ public interface IOutlineProvider
     string ProviderKey { get; }
     OutlineProviderCapabilities Capabilities { get; }
 
-    Task<OutlineCreateResponse> CreateAsync(
-        OutlineCreateRequest request,
-        CancellationToken cancellationToken);
+    Task<OutlineCreateResponse> CreateAsync(OutlineCreateRequest request, CancellationToken cancellationToken);
 
-    Task<OutlineStatusResponse> GetStatusAsync(
-        string providerTrackId,
-        CancellationToken cancellationToken);
+    Task<OutlineStatusResponse> GetStatusAsync(OutlineStatusRequest request, CancellationToken cancellationToken);
 }

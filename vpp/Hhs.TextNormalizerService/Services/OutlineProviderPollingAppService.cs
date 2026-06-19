@@ -73,9 +73,16 @@ public sealed class OutlineProviderPollingAppService(
 
                 var provider = outlineProviderResolver.Resolve(request.OutlineProviderKey);
 
-                var status = await provider.GetStatusAsync(request.OutlineProviderTrackId!, cancellationToken);
+                var status = await provider.GetStatusAsync
+                (
+                    new OutlineStatusRequest
+                    {
+                        ProviderTrackId = request.OutlineProviderTrackId
+                                          ?? throw new InvalidOperationException()
+                    }, cancellationToken
+                );
 
-                if (status.IsFailed)
+                if (status.IsProcessFailed)
                 {
                     request.Status = "FAILED";
                     request.LastError = status.ErrorMessage ?? "Outline provider failed.";
@@ -96,7 +103,7 @@ public sealed class OutlineProviderPollingAppService(
                     continue;
                 }
 
-                if (!status.IsCompleted)
+                if (!status.IsProcessed)
                 {
                     request.OutlinePollingCount++;
                     request.NextOutlinePollAtUtc = DateTime.UtcNow.AddSeconds(_pollingOptions.OutlinePollingIntervalSeconds);
@@ -115,7 +122,7 @@ public sealed class OutlineProviderPollingAppService(
 
                 await ReplaceCustomerAsync(request, cancellationToken);
 
-                if (string.IsNullOrWhiteSpace(status.Script))
+                if (string.IsNullOrWhiteSpace(status.OutlinedData))
                     throw new InvalidOperationException("Outline provider completed but script is empty.");
 
                 await eventBus.PublishAsync(new OutlineProviderCompletedEto
@@ -124,7 +131,7 @@ public sealed class OutlineProviderPollingAppService(
                     ContentProcessType = ContentProcessTypes.CustomerContent,
                     CorrelationId = request.CorrelationId,
                     NormalizedRequestId = request.Id,
-                    Script = status.Script!
+                    Script = status.OutlinedData!
                 }, cancellationToken);
             }
             catch (Exception ex)
@@ -229,11 +236,16 @@ public sealed class OutlineProviderPollingAppService(
 
                     var provider = outlineProviderResolver.Resolve(request.OutlineProviderKey);
 
-                    var status = await provider.GetStatusAsync(
-                        item.OutlineProviderTrackId!,
-                        cancellationToken);
+                    var status = await provider.GetStatusAsync
+                    (
+                        new OutlineStatusRequest
+                        {
+                            ProviderTrackId = item.OutlineProviderTrackId
+                                              ?? throw new InvalidOperationException()
+                        }, cancellationToken
+                    );
 
-                    if (status.IsFailed)
+                    if (status.IsProcessFailed)
                     {
                         await FailAnalysisPollingItemAsync(
                             request,
@@ -245,7 +257,7 @@ public sealed class OutlineProviderPollingAppService(
                         continue;
                     }
 
-                    if (!status.IsCompleted)
+                    if (!status.IsProcessed)
                     {
                         var update = Builders<AnalysisContentNormalizedRequest>.Update
                             .Inc("Items.$.OutlinePollingCount", 1)
@@ -262,7 +274,7 @@ public sealed class OutlineProviderPollingAppService(
                         continue;
                     }
 
-                    if (string.IsNullOrWhiteSpace(status.Script))
+                    if (string.IsNullOrWhiteSpace(status.OutlinedData))
                         throw new InvalidOperationException("Outline provider completed but script is empty.");
 
                     var completedUpdate = Builders<AnalysisContentNormalizedRequest>.Update
@@ -290,12 +302,12 @@ public sealed class OutlineProviderPollingAppService(
                         CorrelationId = request.CorrelationId,
                         NormalizedRequestId = request.Id,
                         SortOrder = item.SortOrder,
-                        Script = status.Script!
+                        Script = status.OutlinedData!
                     }, cancellationToken);
                 }
                 catch (Exception ex)
                 {
-                    var nextCount = item.OutlinePollingCount + 1;
+                    int nextCount = item.OutlinePollingCount + 1;
 
                     if (nextCount >= item.MaxOutlinePollingCount)
                     {

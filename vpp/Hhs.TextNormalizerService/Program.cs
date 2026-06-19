@@ -35,6 +35,7 @@ builder.Services.AddScoped<NormalizerInboxStore>();
 builder.Services.AddScoped<NormalizerOperationAppService>();
 
 builder.Services.AddScoped<IContentScraper, DummyContentScraper>();
+
 builder.Services.AddScoped<IOutlineProvider, OutlineFastProvider>();
 builder.Services.AddScoped<IOutlineProvider, OutlineQueueProvider>();
 builder.Services.AddScoped<IOutlineProviderResolver, OutlineProviderResolver>();
@@ -112,7 +113,7 @@ app.MapPost("/scheduler/outline-polling",
             .Limit(10)
             .ToListAsync(cancellationToken);
 
-        var processedCount = 0;
+        int processedCount = 0;
 
         foreach (var request in customerRequests)
         {

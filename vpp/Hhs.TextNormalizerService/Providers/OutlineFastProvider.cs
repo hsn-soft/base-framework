@@ -5,48 +5,33 @@ using System.Text.Json;
 
 namespace Hhs.TextNormalizerService.Providers;
 
-public sealed class OutlineFastProvider : IOutlineProvider
+public sealed class OutlineFastProvider(HttpClient httpClient, IOptions<OutlineProviderEndpointsOptions> options) : IOutlineProvider
 {
-    private readonly HttpClient _httpClient;
-    private readonly string _baseUrl;
+    private readonly string _baseUrl = options == null ? throw new ArgumentNullException(nameof(options)) : options.Value.FastBaseUrl;
 
     public string ProviderKey => ProviderKeys.OutlineFast;
 
-    public OutlineProviderCapabilities Capabilities => new()
-    {
-        ProviderKey = ProviderKey,
-        ExecutionMode = ProviderExecutionMode.ImmediateResult
-    };
+    public OutlineProviderCapabilities Capabilities => new() { ProviderKey = ProviderKey, ExecutionMode = ProviderExecutionMode.ImmediateResult };
 
-    public OutlineFastProvider(HttpClient httpClient, IOptions<OutlineProviderEndpointsOptions> options)
+    public async Task<OutlineCreateResponse> CreateAsync(OutlineCreateRequest request, CancellationToken cancellationToken)
     {
-        _httpClient = httpClient;
-        _baseUrl = options.Value.FastBaseUrl;
-    }
+        var inputText = string.IsNullOrWhiteSpace(request.OutlineInput) ? request.OutlinePrompt : request.OutlineInput;
+        if (string.IsNullOrWhiteSpace(inputText))
+            inputText = "Default outline content";
 
-    public async Task<OutlineCreateResponse> CreateAsync(
-        OutlineCreateRequest request,
-        CancellationToken cancellationToken)
-    {
-        var response = await _httpClient.PostAsJsonAsync(
+        var mockRequest = new { InputText = inputText };
+        var response = await httpClient.PostAsJsonAsync(
             $"{_baseUrl}/outline/generate",
-            request,
+            mockRequest,
             cancellationToken);
 
+        response.EnsureSuccessStatusCode();
         var json = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken);
-        var script = json.GetProperty("script").GetString();
+        string? script = json.GetProperty("script").GetString();
 
-        return new OutlineCreateResponse
-        {
-            IsCompleted = true,
-            Script = script
-        };
+        return new OutlineCreateResponse { IsProcessed = true, OutlinedData = script };
     }
 
-    public Task<OutlineStatusResponse> GetStatusAsync(
-        string providerTrackId,
-        CancellationToken cancellationToken)
-    {
-        throw new NotSupportedException("OpenAI outline provider does not support polling.");
-    }
+    public Task<OutlineStatusResponse> GetStatusAsync(OutlineStatusRequest request, CancellationToken cancellationToken)
+        => throw new NotSupportedException($"{ProviderKey} outline provider does not support tracking.");
 }

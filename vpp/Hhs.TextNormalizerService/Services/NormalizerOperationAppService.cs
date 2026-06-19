@@ -217,11 +217,11 @@ public sealed class NormalizerOperationAppService(
         {
             var provider = outlineProviderResolver.Resolve(@event.ProviderKey);
 
-            var response = await provider.CreateAsync(new OutlineCreateRequest { InputText = @event.InputText }, cancellationToken);
+            var response = await provider.CreateAsync(new OutlineCreateRequest { OutlineInput = @event.InputText }, cancellationToken);
 
             if (provider.Capabilities.ExecutionMode == ProviderExecutionMode.ImmediateResult)
             {
-                if (string.IsNullOrWhiteSpace(response.Script))
+                if (string.IsNullOrWhiteSpace(response.OutlinedData))
                     throw new InvalidOperationException("Script is required for immediate outline provider.");
 
                 await eventBus.PublishAsync(new OutlineProviderCompletedEto
@@ -233,7 +233,7 @@ public sealed class NormalizerOperationAppService(
                     NormalizedRequestId = @event.NormalizedRequestId,
                     CustomerContentIdForItem = @event.CustomerContentIdForItem,
                     SortOrder = @event.SortOrder,
-                    Script = response.Script
+                    Script = response.OutlinedData
                 }, cancellationToken);
 
                 return;
@@ -969,7 +969,7 @@ public sealed class NormalizerOperationAppService(
             .Find(x => x.Id == analysisRequestId)
             .FirstAsync(cancellationToken);
 
-        var status = CalculateAnalysisParentStatus(analysis);
+        string status = CalculateAnalysisParentStatus(analysis);
 
         var filter = status == "OUTLINE_COMPLETED"
             ? Builders<AnalysisContentNormalizedRequest>.Filter.And(
