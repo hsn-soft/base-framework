@@ -18,13 +18,13 @@ builder.Services.AddSingleton<IEventBus, RabbitMqEventBus>();
 builder.Services.AddScoped<ContentInboxStore>();
 builder.Services.AddScoped<ContentOperationAppService>();
 
-builder.Services.AddScoped<NormalizerResultPublishedEventHandler>();
-builder.Services.AddScoped<VideoGenerationResultPublishedEventHandler>();
-builder.Services.AddScoped<StepFailedEventHandler>();
+builder.Services.AddScoped<NormalizerResultPublishedEtoHandler>();
+builder.Services.AddScoped<VideoGenerationResultPublishedEtoHandler>();
+builder.Services.AddScoped<StepFailedEtoHandler>();
 
-builder.Services.AddHostedService<RabbitMqConsumerHostedService<StepFailedEto, StepFailedEventHandler>>();
-builder.Services.AddHostedService<RabbitMqConsumerHostedService<NormalizerResultPublishedEto, NormalizerResultPublishedEventHandler>>();
-builder.Services.AddHostedService<RabbitMqConsumerHostedService<VideoGenerationResultPublishedEto, VideoGenerationResultPublishedEventHandler>>();
+builder.Services.AddHostedService<RabbitMqConsumerHostedService<StepFailedEto, StepFailedEtoHandler>>();
+builder.Services.AddHostedService<RabbitMqConsumerHostedService<NormalizerResultPublishedEto, NormalizerResultPublishedEtoHandler>>();
+builder.Services.AddHostedService<RabbitMqConsumerHostedService<VideoGenerationResultPublishedEto, VideoGenerationResultPublishedEtoHandler>>();
 
 var app = builder.Build();
 
