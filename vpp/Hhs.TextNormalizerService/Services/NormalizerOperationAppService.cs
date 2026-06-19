@@ -7,6 +7,7 @@ using Hhs.TextNormalizerService.Providers;
 using MongoDB.Driver;
 using Hhs.Shared.Retry;
 using Hhs.TextNormalizerService.Models;
+using Hhs.Shared.Configuration;
 
 namespace Hhs.TextNormalizerService.Services;
 
@@ -15,9 +16,11 @@ public sealed class NormalizerOperationAppService(
     IContentScraper scraper,
     IEventBus eventBus,
     ILogger<NormalizerOperationAppService> logger,
-    IOutlineProviderResolver outlineProviderResolver)
+    IOutlineProviderResolver outlineProviderResolver,
+    PollingOptions pollingOptions)
 {
     private readonly ILogger<NormalizerOperationAppService> _logger = logger;
+    private readonly PollingOptions _pollingOptions = pollingOptions;
 
     public async Task CreateCustomerContentNormalizeRequestAsync(CustomerContentCreatedEto @event, CancellationToken cancellationToken)
     {
@@ -58,7 +61,7 @@ public sealed class NormalizerOperationAppService(
             OutlineProviderTrackId = null,
             NextOutlinePollAtUtc = null,
             OutlinePollingCount = 0,
-            MaxOutlinePollingCount = 0,
+            MaxOutlinePollingCount = _pollingOptions.MaxOutlinePollingAttempts,
             // event retry mechanism
             RetryCount = 0,
             MaxRetryCount = 0,
@@ -256,7 +259,7 @@ public sealed class NormalizerOperationAppService(
             request.Status = "OUTLINE_PROVIDER_POLLING";
             request.OutlineStatus = "POLLING";
             request.CurrentStep = EventNames.OutlineProviderPollingStarted;
-            request.NextOutlinePollAtUtc = DateTime.UtcNow.AddSeconds(5);
+            request.NextOutlinePollAtUtc = DateTime.UtcNow.AddSeconds(_pollingOptions.OutlinePollingIntervalSeconds);
             request.UpdatedAtUtc = DateTime.UtcNow;
 
             await ReplaceCustomerAsync(request, cancellationToken);
@@ -271,7 +274,7 @@ public sealed class NormalizerOperationAppService(
             .Set("Items.$.CurrentStep", EventNames.OutlineProviderPollingStarted)
             .Set("Items.$.OutlineProviderTrackId", providerTrackId)
             .Set("Items.$.OutlineStatus", "POLLING")
-            .Set("Items.$.NextOutlinePollAtUtc", DateTime.UtcNow.AddSeconds(5))
+            .Set("Items.$.NextOutlinePollAtUtc", DateTime.UtcNow.AddSeconds(_pollingOptions.OutlinePollingIntervalSeconds))
             .Set("Items.$.UpdatedAtUtc", DateTime.UtcNow)
             .Set(x => x.Status, "OUTLINE_PROVIDER_POLLING")
             .Set(x => x.CurrentStep, EventNames.OutlineProviderPollingStarted)

@@ -4,6 +4,7 @@ using Hhs.TextNormalizerService.Entities;
 using Hhs.TextNormalizerService.Mongo;
 using Hhs.TextNormalizerService.Providers;
 using MongoDB.Driver;
+using Hhs.Shared.Configuration;
 
 namespace Hhs.TextNormalizerService.Services;
 
@@ -11,7 +12,10 @@ public sealed class OutlineProviderPollingAppService(
     NormalizerMongoContext context,
     IOutlineProviderResolver outlineProviderResolver,
     IEventBus eventBus,
-    ILogger<OutlineProviderPollingAppService> logger)
+    ILogger<OutlineProviderPollingAppService> logger,
+    PollingOptions pollingOptions)
+{
+    private readonly PollingOptions _pollingOptions = pollingOptions;
 {
     public async Task PollDueOutlineRequestsAsync(CancellationToken cancellationToken)
     {
@@ -95,7 +99,7 @@ public sealed class OutlineProviderPollingAppService(
                 if (!status.IsCompleted)
                 {
                     request.OutlinePollingCount++;
-                    request.NextOutlinePollAtUtc = DateTime.UtcNow.AddSeconds(5);
+                    request.NextOutlinePollAtUtc = DateTime.UtcNow.AddSeconds(_pollingOptions.OutlinePollingIntervalSeconds);
                     request.UpdatedAtUtc = DateTime.UtcNow;
 
                     await ReplaceCustomerAsync(request, cancellationToken);

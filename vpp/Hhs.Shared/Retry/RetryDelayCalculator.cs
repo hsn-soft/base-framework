@@ -1,15 +1,24 @@
 namespace Hhs.Shared.Retry;
 
-public static class RetryDelayCalculator
+public sealed class RetryDelayCalculator
 {
-    public static TimeSpan Calculate(int retryCount)
+    private readonly int[] _delaySeconds;
+
+    public RetryDelayCalculator(int[] delaySeconds)
     {
-        return retryCount switch
-        {
-            <= 1 => TimeSpan.FromMinutes(1),
-            2 => TimeSpan.FromMinutes(5),
-            3 => TimeSpan.FromMinutes(15),
-            _ => TimeSpan.FromMinutes(30)
-        };
+        _delaySeconds = delaySeconds ?? [60, 120, 300, 900];
+    }
+
+    public TimeSpan Calculate(int retryCount)
+    {
+        if (retryCount < 0) retryCount = 0;
+        int index = Math.Min(retryCount, _delaySeconds.Length - 1);
+        return TimeSpan.FromSeconds(_delaySeconds[index]);
+    }
+
+    public static TimeSpan CalculateDefault(int retryCount)
+    {
+        var calculator = new RetryDelayCalculator([60, 120, 300, 900]);
+        return calculator.Calculate(retryCount);
     }
 }
