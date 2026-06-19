@@ -343,10 +343,6 @@ public sealed class NormalizerOperationAppService(
             if (request.Status is "COMPLETED" or "FAILED" or "OUTLINE_COMPLETED")
                 return;
 
-            request.OutlineProviderTrackId = @event.ProviderTrackId;
-            request.Status = "OUTLINE_PROVIDER_POLLING";
-            request.OutlineStatus = "POLLING";
-            request.CurrentStep = EventNames.OutlineProviderPollingStarted;
             request.NextOutlinePollAtUtc = DateTime.UtcNow.AddSeconds(5);
             request.UpdatedAtUtc = DateTime.UtcNow;
 
@@ -358,14 +354,8 @@ public sealed class NormalizerOperationAppService(
             throw new InvalidOperationException("CustomerContentIdForItem is required for analysis outline polling.");
 
         var update = Builders<AnalysisContentNormalizedRequest>.Update
-            .Set("Items.$.Status", "OUTLINE_PROVIDER_POLLING")
-            .Set("Items.$.CurrentStep", EventNames.OutlineProviderPollingStarted)
-            .Set("Items.$.OutlineProviderTrackId", @event.ProviderTrackId)
-            .Set("Items.$.OutlineStatus", "POLLING")
             .Set("Items.$.NextOutlinePollAtUtc", DateTime.UtcNow.AddSeconds(5))
             .Set("Items.$.UpdatedAtUtc", DateTime.UtcNow)
-            .Set(x => x.Status, "OUTLINE_PROVIDER_POLLING")
-            .Set(x => x.CurrentStep, EventNames.OutlineProviderPollingStarted)
             .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);
 
         await UpdateAnalysisItemAsync(
