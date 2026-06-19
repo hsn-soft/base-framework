@@ -244,41 +244,6 @@ public sealed class NormalizerOperationAppService(
             await HandleOutlineProviderRequestExceptionAsync(@event, ex, cancellationToken);
         }
     }
-
-    private async Task HandleOutlineProviderRequestExceptionAsync(OutlineProviderRequestStartedEto @event, Exception ex, CancellationToken cancellationToken)
-    {
-        if (@event.ContentProcessType == ContentProcessTypes.CustomerContent)
-        {
-            var request = await context.CustomerRequests
-                .Find(x => x.Id == @event.NormalizedRequestId)
-                .FirstAsync(cancellationToken);
-
-            await HandleCustomerExceptionAsync(
-                request,
-                EventNames.OutlineProviderRequestStarted,
-                ex,
-                cancellationToken);
-
-            return;
-        }
-
-        var analysis = await context.AnalysisRequests
-            .Find(x => x.Id == @event.NormalizedRequestId)
-            .FirstAsync(cancellationToken);
-
-        if (@event.CustomerContentIdForItem is null)
-            throw new InvalidOperationException("CustomerContentIdForItem is required.");
-
-        var item = analysis.Items.First(x => x.CustomerContentId == @event.CustomerContentIdForItem);
-
-        await HandleAnalysisItemExceptionAsync(
-            analysis,
-            item,
-            EventNames.OutlineProviderRequestStarted,
-            ex,
-            cancellationToken);
-    }
-
     private async Task SaveOutlinePollingStateAsync(OutlineProviderRequestStartedEto @event, string providerTrackId, CancellationToken cancellationToken)
     {
         if (@event.ContentProcessType == ContentProcessTypes.CustomerContent)
@@ -319,6 +284,40 @@ public sealed class NormalizerOperationAppService(
             cancellationToken);
     }
 
+    private async Task HandleOutlineProviderRequestExceptionAsync(OutlineProviderRequestStartedEto @event, Exception ex, CancellationToken cancellationToken)
+    {
+        if (@event.ContentProcessType == ContentProcessTypes.CustomerContent)
+        {
+            var request = await context.CustomerRequests
+                .Find(x => x.Id == @event.NormalizedRequestId)
+                .FirstAsync(cancellationToken);
+
+            await HandleCustomerExceptionAsync(
+                request,
+                EventNames.OutlineProviderRequestStarted,
+                ex,
+                cancellationToken);
+
+            return;
+        }
+
+        var analysis = await context.AnalysisRequests
+            .Find(x => x.Id == @event.NormalizedRequestId)
+            .FirstAsync(cancellationToken);
+
+        if (@event.CustomerContentIdForItem is null)
+            throw new InvalidOperationException("CustomerContentIdForItem is required.");
+
+        var item = analysis.Items.First(x => x.CustomerContentId == @event.CustomerContentIdForItem);
+
+        await HandleAnalysisItemExceptionAsync(
+            analysis,
+            item,
+            EventNames.OutlineProviderRequestStarted,
+            ex,
+            cancellationToken);
+    }
+ 
     public async Task CompleteOutlineProviderAsync(OutlineProviderCompletedEto @event, CancellationToken cancellationToken)
     {
         if (@event.ContentProcessType == ContentProcessTypes.CustomerContent)
