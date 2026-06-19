@@ -1,0 +1,20 @@
+# Build directories
+bin/
+obj/
+
+# IDE
+.vs/
+.vscode/
+*.swp
+*.swo
+
+# Runtime files
+*.db
+*.log
+
+# Mock/test data
+media/
+downloads/
+
+# Generated
+node_modules/
