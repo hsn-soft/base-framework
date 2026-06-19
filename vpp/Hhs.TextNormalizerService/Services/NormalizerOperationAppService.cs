@@ -17,10 +17,12 @@ public sealed class NormalizerOperationAppService(
     IEventBus eventBus,
     ILogger<NormalizerOperationAppService> logger,
     IOutlineProviderResolver outlineProviderResolver,
-    PollingOptions pollingOptions)
+    PollingOptions pollingOptions,
+    RetryDelayCalculator retryDelayCalculator)
 {
     private readonly ILogger<NormalizerOperationAppService> _logger = logger;
     private readonly PollingOptions _pollingOptions = pollingOptions;
+    private readonly RetryDelayCalculator _retryDelayCalculator = retryDelayCalculator;
 
     public async Task CreateCustomerContentNormalizeRequestAsync(CustomerContentCreatedEto @event, CancellationToken cancellationToken)
     {
@@ -811,7 +813,7 @@ public sealed class NormalizerOperationAppService(
         request.CurrentStep = step;
         request.LastError = ex.Message;
         request.NextRetryAtUtc = DateTime.UtcNow.Add(
-            RetryDelayCalculator.Calculate(request.RetryCount));
+            _retryDelayCalculator.Calculate(request.RetryCount));
 
         request.UpdatedAtUtc = DateTime.UtcNow;
 
@@ -850,7 +852,7 @@ public sealed class NormalizerOperationAppService(
         }
 
         var nextRetryAtUtc = DateTime.UtcNow.Add(
-            RetryDelayCalculator.Calculate(retryCount));
+            _retryDelayCalculator.Calculate(retryCount));
 
         var update = Builders<AnalysisContentNormalizedRequest>.Update
             .Set("Items.$.Status", "WAITING_RETRY")

@@ -16,7 +16,7 @@ public sealed class OutlineProviderPollingAppService(
     PollingOptions pollingOptions)
 {
     private readonly PollingOptions _pollingOptions = pollingOptions;
-{
+
     public async Task PollDueOutlineRequestsAsync(CancellationToken cancellationToken)
     {
         var now = DateTime.UtcNow;

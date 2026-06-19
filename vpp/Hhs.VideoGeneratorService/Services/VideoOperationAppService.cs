@@ -2,11 +2,11 @@ using System.Text.Json;
 using Hhs.Shared.Events;
 using Hhs.Shared.Providers;
 using Hhs.Shared.RabbitMQ;
+using Hhs.Shared.Retry;
 using Hhs.VideoGeneratorService.Entities;
 using Hhs.VideoGeneratorService.Mongo;
 using Hhs.VideoGeneratorService.Providers;
 using MongoDB.Driver;
-using Hhs.Shared.Retry;
 
 namespace Hhs.VideoGeneratorService.Services;
 
@@ -18,8 +18,10 @@ public sealed class VideoOperationAppService(
     IVideoProviderResolver videoProviderResolver,
     IAudioProviderResolver audioProviderResolver,
     HttpClient httpClient,
-    ILogger<VideoOperationAppService> logger)
+    ILogger<VideoOperationAppService> logger,
+    RetryDelayCalculator retryDelayCalculator)
 {
+    private readonly RetryDelayCalculator _retryDelayCalculator = retryDelayCalculator;
 public async Task CreateVideoRequestAsync(
     VideoGenerationApprovedEto @event,
     CancellationToken cancellationToken)
@@ -820,7 +822,7 @@ public async Task HandleAudioUploadCompletedAsync(
         request.CurrentStep = step;
         request.LastError = ex.Message;
         request.NextRetryAtUtc = DateTime.UtcNow.Add(
-            RetryDelayCalculator.Calculate(request.RetryCount));
+            _retryDelayCalculator.Calculate(request.RetryCount));
 
         request.UpdatedAtUtc = DateTime.UtcNow;
 
@@ -898,7 +900,7 @@ public async Task HandleAudioUploadCompletedAsync(
         request.CurrentStep = step;
         request.LastError = ex.Message;
         request.NextRetryAtUtc = DateTime.UtcNow.Add(
-            RetryDelayCalculator.Calculate(request.RetryCount));
+            _retryDelayCalculator.Calculate(request.RetryCount));
 
         request.UpdatedAtUtc = DateTime.UtcNow;
 

@@ -1,6 +1,7 @@
 using Hhs.Shared.Events;
 using Hhs.Shared.RabbitMQ;
 using Hhs.Shared.Configuration;
+using Hhs.Shared.Retry;
 using Hhs.TextNormalizerService.Entities;
 using Hhs.TextNormalizerService.Handlers;
 using Hhs.TextNormalizerService.Infrastructure;
