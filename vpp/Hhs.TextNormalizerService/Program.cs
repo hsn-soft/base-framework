@@ -137,7 +137,7 @@ app.MapPost("/scheduler/outline-polling",
                     x.NextOutlinePollAtUtc <= now &&
                     x.OutlineProviderTrackId != null,
                 Builders<CustomerContentNormalizedRequest>.Update
-                    .Set(x => x.NextOutlinePollAtUtc, DateTime.UtcNow.AddSeconds(5))
+                    .Set(x => x.NextOutlinePollAtUtc, DateTime.UtcNow.AddSeconds(outlinePollingSettings.ErrorRescheduleDelaySeconds))
                     .Set(x => x.UpdatedAtUtc, DateTime.UtcNow),
                 cancellationToken: cancellationToken);
 
@@ -172,7 +172,7 @@ app.MapPost("/scheduler/outline-polling",
             foreach (var item in pollingItems)
             {
                 var claimUpdate = Builders<AnalysisContentNormalizedRequest>.Update
-                    .Set("Items.$.NextOutlinePollAtUtc", DateTime.UtcNow.AddSeconds(5))
+                    .Set("Items.$.NextOutlinePollAtUtc", DateTime.UtcNow.AddSeconds(outlinePollingSettings.ErrorRescheduleDelaySeconds))
                     .Set("Items.$.UpdatedAtUtc", DateTime.UtcNow)
                     .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);
 

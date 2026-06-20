@@ -32,9 +32,11 @@ public sealed class VideoOperationAppService(
     VideoFastInternalProviderSettings videoFastInternalSettings,
     VideoQueueExternalProviderSettings videoQueueExternalSettings,
     VideoQueueInternalProviderSettings videoQueueInternalSettings,
-    StorageProviderSettings storageSettings)
+    StorageProviderSettings storageSettings,
+    VideoPollingSettings videoPollingSettings)
 {
     private readonly RetryDelayCalculator _retryDelayCalculator = retryDelayCalculator;
+    private readonly VideoPollingSettings _videoPollingSettings = videoPollingSettings;
 public async Task CreateVideoRequestAsync(
     VideoGenerationApprovedEto @event,
     CancellationToken cancellationToken)
@@ -289,7 +291,7 @@ public async Task CreateVideoRequestAsync(
             audioRequest.AudioProviderTrackingId = response.ProviderTrackId;
             audioRequest.Status = "AUDIO_PROVIDER_POLLING";
             audioRequest.CurrentStep = EventNames.AudioProviderPollingStarted;
-            audioRequest.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(5);
+            audioRequest.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(_videoPollingSettings.ErrorRescheduleDelaySeconds);
             audioRequest.ProviderPollingCount = 0;
             audioRequest.UpdatedAtUtc = DateTime.UtcNow;
 
@@ -576,7 +578,7 @@ public async Task HandleAudioUploadCompletedAsync(
             videoRequest.VideoProviderTrackingId = response.ProviderTrackId;
             videoRequest.Status = "VIDEO_PROVIDER_POLLING";
             videoRequest.CurrentStep = EventNames.VideoProviderPollingStarted;
-            videoRequest.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(5);
+            videoRequest.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(_videoPollingSettings.ErrorRescheduleDelaySeconds);
             videoRequest.ProviderPollingCount = 0;
             videoRequest.UpdatedAtUtc = DateTime.UtcNow;
 
@@ -763,7 +765,7 @@ public async Task HandleAudioUploadCompletedAsync(
         audioRequest.CurrentStep = EventNames.AudioProviderPollingStarted;
 
         if (audioRequest.NextProviderPollAtUtc is null)
-            audioRequest.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(5);
+            audioRequest.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(_videoPollingSettings.ErrorRescheduleDelaySeconds);
 
         audioRequest.LastError = null;
         audioRequest.UpdatedAtUtc = DateTime.UtcNow;
@@ -788,7 +790,7 @@ public async Task HandleAudioUploadCompletedAsync(
         videoRequest.CurrentStep = EventNames.VideoProviderPollingStarted;
 
         if (videoRequest.NextProviderPollAtUtc is null)
-            videoRequest.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(5);
+            videoRequest.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(_videoPollingSettings.ErrorRescheduleDelaySeconds);
 
         videoRequest.LastError = null;
         videoRequest.UpdatedAtUtc = DateTime.UtcNow;

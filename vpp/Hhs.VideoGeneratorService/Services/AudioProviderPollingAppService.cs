@@ -187,7 +187,7 @@ public sealed class AudioProviderPollingAppService(
                 x.NextProviderPollAtUtc <= now &&
                 x.AudioProviderTrackingId != null,
             Builders<AudioRequest>.Update
-                .Set(x => x.NextProviderPollAtUtc, DateTime.UtcNow.AddSeconds(5))
+                .Set(x => x.NextProviderPollAtUtc, DateTime.UtcNow.AddSeconds(_pollingSettings.ErrorRescheduleDelaySeconds))
                 .Set(x => x.UpdatedAtUtc, DateTime.UtcNow),
             cancellationToken: cancellationToken);
     }

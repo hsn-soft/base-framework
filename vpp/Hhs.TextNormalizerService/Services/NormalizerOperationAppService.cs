@@ -590,7 +590,7 @@ public sealed class NormalizerOperationAppService(
                     .Set("Items.$.CurrentStep", EventNames.AnalysisItemOutlineStarted)
                     .Set("Items.$.OutlineStatus", "WAITING_SCRAPING")
                     .Set("Items.$.LastError", "ScrapingResult is required before outline.")
-                    .Set("Items.$.NextRetryAtUtc", DateTime.UtcNow.AddSeconds(5))
+                    .Set("Items.$.NextRetryAtUtc", DateTime.UtcNow.AddSeconds(_outlinePollingSettings.ErrorRescheduleDelaySeconds))
                     .Set("Items.$.UpdatedAtUtc", DateTime.UtcNow)
                     .Set(x => x.Status, "WAITING_RETRY")
                     .Set(x => x.CurrentStep, EventNames.AnalysisItemOutlineStarted)

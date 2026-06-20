@@ -219,7 +219,7 @@ app.MapPost("/scheduler/audio-polling",
                     x.NextProviderPollAtUtc <= now &&
                     x.AudioProviderTrackingId != null,
                 Builders<AudioRequest>.Update
-                    .Set(x => x.NextProviderPollAtUtc, DateTime.UtcNow.AddSeconds(5))
+                    .Set(x => x.NextProviderPollAtUtc, DateTime.UtcNow.AddSeconds(audioPollingSettings.ErrorRescheduleDelaySeconds))
                     .Set(x => x.UpdatedAtUtc, DateTime.UtcNow),
                 cancellationToken: cancellationToken);
 
@@ -264,7 +264,7 @@ app.MapPost("/scheduler/video-polling",
                     x.NextProviderPollAtUtc <= now &&
                     x.VideoProviderTrackingId != null,
                 Builders<VideoRequest>.Update
-                    .Set(x => x.NextProviderPollAtUtc, DateTime.UtcNow.AddSeconds(5))
+                    .Set(x => x.NextProviderPollAtUtc, DateTime.UtcNow.AddSeconds(videoPollingSettings.ErrorRescheduleDelaySeconds))
                     .Set(x => x.UpdatedAtUtc, DateTime.UtcNow),
                 cancellationToken: cancellationToken);
 
