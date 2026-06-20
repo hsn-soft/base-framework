@@ -1,13 +1,13 @@
 using Hhs.Shared.Events;
 using Hhs.Shared.Providers;
 using Hhs.Shared.RabbitMQ;
+using Hhs.TextNormalizerService.Configuration;
 using Hhs.TextNormalizerService.Entities;
 using Hhs.TextNormalizerService.Mongo;
 using Hhs.TextNormalizerService.Providers;
 using MongoDB.Driver;
 using Hhs.Shared.Retry;
 using Hhs.TextNormalizerService.Models;
-using Hhs.Shared.Configuration;
 
 namespace Hhs.TextNormalizerService.Services;
 
@@ -17,11 +17,11 @@ public sealed class NormalizerOperationAppService(
     IEventBus eventBus,
     ILogger<NormalizerOperationAppService> logger,
     IOutlineProviderResolver outlineProviderResolver,
-    PollingOptions pollingOptions,
+    OutlinePollingSettings outlinePollingSettings,
     RetryDelayCalculator retryDelayCalculator)
 {
     private readonly ILogger<NormalizerOperationAppService> _logger = logger;
-    private readonly PollingOptions _pollingOptions = pollingOptions;
+    private readonly OutlinePollingSettings _outlinePollingSettings = outlinePollingSettings;
     private readonly RetryDelayCalculator _retryDelayCalculator = retryDelayCalculator;
 
     public async Task CreateCustomerContentNormalizeRequestAsync(CustomerContentCreatedEto @event, CancellationToken cancellationToken)
@@ -63,7 +63,7 @@ public sealed class NormalizerOperationAppService(
             OutlineProviderTrackId = null,
             NextOutlinePollAtUtc = null,
             OutlinePollingCount = 0,
-            MaxOutlinePollingCount = _pollingOptions.MaxOutlinePollingAttempts,
+            MaxOutlinePollingCount = _outlinePollingSettings.MaxAttempts,
             // event retry mechanism
             RetryCount = 0,
             MaxRetryCount = 0,
@@ -261,7 +261,7 @@ public sealed class NormalizerOperationAppService(
             request.Status = "OUTLINE_PROVIDER_POLLING";
             request.OutlineStatus = "POLLING";
             request.CurrentStep = EventNames.OutlineProviderPollingStarted;
-            request.NextOutlinePollAtUtc = DateTime.UtcNow.AddSeconds(_pollingOptions.OutlinePollingIntervalSeconds);
+            request.NextOutlinePollAtUtc = DateTime.UtcNow.AddSeconds(_outlinePollingSettings.IntervalSeconds);
             request.UpdatedAtUtc = DateTime.UtcNow;
 
             await ReplaceCustomerAsync(request, cancellationToken);
@@ -276,7 +276,7 @@ public sealed class NormalizerOperationAppService(
             .Set("Items.$.CurrentStep", EventNames.OutlineProviderPollingStarted)
             .Set("Items.$.OutlineProviderTrackId", providerTrackId)
             .Set("Items.$.OutlineStatus", "POLLING")
-            .Set("Items.$.NextOutlinePollAtUtc", DateTime.UtcNow.AddSeconds(_pollingOptions.OutlinePollingIntervalSeconds))
+            .Set("Items.$.NextOutlinePollAtUtc", DateTime.UtcNow.AddSeconds(_outlinePollingSettings.IntervalSeconds))
             .Set("Items.$.UpdatedAtUtc", DateTime.UtcNow)
             .Set(x => x.Status, "OUTLINE_PROVIDER_POLLING")
             .Set(x => x.CurrentStep, EventNames.OutlineProviderPollingStarted)
