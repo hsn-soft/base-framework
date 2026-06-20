@@ -1,9 +1,10 @@
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using Hhs.Shared.Configuration;
+using Hhs.Shared.Configuration.Providers.Storage;
 using Hhs.Shared.Providers;
 
-namespace Hhs.Shared.Providers;
+namespace Hhs.Shared.Providers.Storage;
 
 /// <summary>
 /// S3-compatible CDN storage provider implementation.

@@ -1,8 +1,9 @@
 using Microsoft.Extensions.Logging;
 using Hhs.Shared.Configuration;
+using Hhs.Shared.Configuration.Providers.Storage;
 using Hhs.Shared.Providers;
 
-namespace Hhs.Shared.Providers;
+namespace Hhs.Shared.Providers.Storage;
 
 /// <summary>
 /// Local file system CDN storage provider implementation.

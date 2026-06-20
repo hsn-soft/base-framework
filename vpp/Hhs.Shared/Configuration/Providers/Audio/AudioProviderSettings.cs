@@ -1,4 +1,4 @@
-namespace Hhs.Shared.Configuration;
+namespace Hhs.Shared.Configuration.Providers.Audio;
 
 public abstract class AudioProviderSettings : ProviderSettingsBase
 {
