@@ -41,9 +41,6 @@ public sealed class ContentOperationAppService
             NormalizeStatus = StatusNames.Created,
             VideoStatus = StatusNames.NotStarted,
             LastFacility = EventNames.CustomerContentCreated,
-            OutlineProviderKey = NormalizeProviderKey(request.OutlineProviderKey),
-            VideoProviderKey = NormalizeProviderKey(request.VideoProviderKey),
-            AudioProviderKey = request.AudioProviderKey != null ? NormalizeProviderKey(request.AudioProviderKey) : null,
             CreatedAtUtc = DateTime.UtcNow,
             UpdatedAtUtc = DateTime.UtcNow,
             CorrelationId = correlationId
@@ -86,9 +83,6 @@ public sealed class ContentOperationAppService
             NormalizeStatus = StatusNames.Created,
             VideoStatus = StatusNames.NotStarted,
             LastFacility = EventNames.AnalysisContentCreated,
-            OutlineProviderKey = NormalizeProviderKey(request.OutlineProviderKey),
-            VideoProviderKey = NormalizeProviderKey(request.VideoProviderKey),
-            AudioProviderKey = request.AudioProviderKey != null ? NormalizeProviderKey(request.AudioProviderKey) : null,
             CreatedAtUtc = DateTime.UtcNow,
             UpdatedAtUtc = DateTime.UtcNow,
             CorrelationId = correlationId
@@ -178,8 +172,6 @@ public sealed class ContentOperationAppService
                 RefContentType = @event.RefContentType,
                 VideoInputJson = @event.VideoInputJson,
                 CorrelationId = @event.CorrelationId,
-                VideoProviderKey = @event.VideoProviderKey,
-                AudioProviderKey = @event.AudioProviderKey
             }, cancellationToken);
         }
     }
@@ -273,11 +265,4 @@ public sealed class ContentOperationAppService
                || step.Contains(StepKeywords.Video, StringComparison.OrdinalIgnoreCase);
     }
 
-    private static string NormalizeProviderKey(string key)
-    {
-        if (string.IsNullOrWhiteSpace(key))
-            return key;
-
-        return System.Text.RegularExpressions.Regex.Replace(key, "([a-z])([A-Z])", "$1-$2").ToLowerInvariant();
-    }
 }

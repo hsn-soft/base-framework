@@ -34,7 +34,4 @@ public sealed class AnalysisContent
     public List<AnalysisContentItem> Items { get; set; } = [];
 
     // Provider Configuration
-    public string OutlineProviderKey { get; set; } = "openai";
-    public string VideoProviderKey { get; set; } = "video-a";
-    public string? AudioProviderKey { get; set; } = "audio-a";
 }

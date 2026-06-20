@@ -28,9 +28,6 @@ public sealed class ContentDbContext : DbContext
             b.Property(x => x.VideoStatus).HasMaxLength(80);
             b.Property(x => x.LastFacility).HasMaxLength(120);
 
-            b.Property(x => x.OutlineProviderKey).HasMaxLength(100).IsRequired();
-            b.Property(x => x.VideoProviderKey).HasMaxLength(100).IsRequired();
-            b.Property(x => x.AudioProviderKey).HasMaxLength(100);
         });
 
         builder.Entity<AnalysisContent>(b =>
@@ -44,9 +41,6 @@ public sealed class ContentDbContext : DbContext
             b.Property(x => x.VideoStatus).HasMaxLength(80);
             b.Property(x => x.LastFacility).HasMaxLength(120);
 
-            b.Property(x => x.OutlineProviderKey).HasMaxLength(100).IsRequired();
-            b.Property(x => x.VideoProviderKey).HasMaxLength(100).IsRequired();
-            b.Property(x => x.AudioProviderKey).HasMaxLength(100);
         });
 
         builder.Entity<AnalysisContentItem>(b =>

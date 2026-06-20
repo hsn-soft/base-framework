@@ -33,7 +33,4 @@ public sealed class CustomerContent
     public string? LastError { get; set; }
 
     // Provider Configuration
-    public string OutlineProviderKey { get; set; } = "openai";
-    public string VideoProviderKey { get; set; } = "video-a";
-    public string? AudioProviderKey { get; set; } = "audio-a";
 }
