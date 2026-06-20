@@ -1,9 +1,3 @@
-using Microsoft.Extensions.Logging;
-using Hhs.Shared.Configuration;
-using Hhs.Shared.Configuration.Providers;
-using Hhs.Shared.Providers;
-using Hhs.VideoGeneratorService.Configuration;
-using Hhs.VideoGeneratorService.Configuration.Providers.Cdn;
 using Hhs.VideoGeneratorService.Configuration.Providers.Storage;
 
 namespace Hhs.VideoGeneratorService.Providers.Cdn;
@@ -40,32 +34,32 @@ public sealed class CdnProviderFactory
 
         var cdnSettings = _cdnProviderResolver.Resolve(cdnProviderKey);
         var storageSettings = cdnSettings.Storage;
-        var logger = _loggerFactory.CreateLogger(typeof(LocalCdnProvider));
+        var logger = _loggerFactory.CreateLogger(typeof(CdnLocalProvider));
 
         return storageSettings.Type?.ToLowerInvariant() switch
         {
-            "local" => new LocalCdnProvider(
+            "local" => new CdnLocalProvider(
                 cdnSettings,
                 storageSettings as LocalStorageSettings ?? throw new InvalidOperationException("Expected LocalStorageSettings"),
-                logger as dynamic ?? _loggerFactory.CreateLogger<LocalCdnProvider>()),
+                logger as dynamic ?? _loggerFactory.CreateLogger<CdnLocalProvider>()),
 
-            "s3" => new S3CdnProvider(
+            "s3" => new CdnS3Provider(
                 cdnSettings,
                 storageSettings as S3StorageSettings ?? throw new InvalidOperationException("Expected S3StorageSettings"),
                 _httpClient,
-                _loggerFactory.CreateLogger<S3CdnProvider>()),
+                _loggerFactory.CreateLogger<CdnS3Provider>()),
 
-            "azure" => new AzureCdnProvider(
+            "azure" => new CdnAzureProvider(
                 cdnSettings,
                 storageSettings as AzureBlobStorageSettings ?? throw new InvalidOperationException("Expected AzureBlobStorageSettings"),
                 _httpClient,
-                _loggerFactory.CreateLogger<AzureCdnProvider>()),
+                _loggerFactory.CreateLogger<CdnAzureProvider>()),
 
-            "cloudflarer2" => new CloudflareR2CdnProvider(
+            "cloudflarer2" => new CdnCloudflareR2Provider(
                 cdnSettings,
                 storageSettings as CloudflareR2StorageSettings ?? throw new InvalidOperationException("Expected CloudflareR2StorageSettings"),
                 _httpClient,
-                _loggerFactory.CreateLogger<CloudflareR2CdnProvider>()),
+                _loggerFactory.CreateLogger<CdnCloudflareR2Provider>()),
 
             _ => throw new InvalidOperationException(
                 $"Unsupported storage type '{storageSettings.Type}' for CDN provider '{cdnProviderKey}'. " +

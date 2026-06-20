@@ -1,7 +1,6 @@
-using System.Diagnostics.CodeAnalysis;
 using Hhs.Shared.Providers;
 
-namespace Hhs.TextNormalizerService.Providers;
+namespace Hhs.TextNormalizerService.Providers.Outline;
 
 public sealed class OutlineCreateRequest
 {

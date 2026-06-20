@@ -9,6 +9,9 @@ using Hhs.VideoGeneratorService.Configuration.Providers.Video;
 using Hhs.VideoGeneratorService.Entities;
 using Hhs.VideoGeneratorService.Mongo;
 using Hhs.VideoGeneratorService.Providers;
+using Hhs.VideoGeneratorService.Providers.Audio;
+using Hhs.VideoGeneratorService.Providers.FileDownloader;
+using Hhs.VideoGeneratorService.Providers.Video;
 using MongoDB.Driver;
 
 namespace Hhs.VideoGeneratorService.Services;

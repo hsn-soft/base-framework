@@ -1,29 +1,24 @@
-using Microsoft.Extensions.Logging;
-using System.Text.Json;
-using Hhs.Shared.Configuration;
 using Hhs.Shared.Configuration.Providers;
-using Hhs.Shared.Providers;
-using Hhs.VideoGeneratorService.Configuration;
 using Hhs.VideoGeneratorService.Configuration.Providers.Storage;
 
 namespace Hhs.VideoGeneratorService.Providers.Cdn;
 
 /// <summary>
-/// S3-compatible CDN storage provider implementation.
-/// Supports AWS S3, MinIO, and other S3-compatible services.
+/// Azure Blob Storage CDN provider implementation.
+/// Stores files in Azure Blob Storage and constructs CDN URLs.
 /// </summary>
-public sealed class S3CdnProvider : ICdnProvider
+public sealed class CdnAzureProvider : ICdnProvider
 {
     private readonly IHasCdnBaseUrl _cdnSettings;
-    private readonly S3StorageSettings _storageSettings;
+    private readonly AzureBlobStorageSettings _storageSettings;
     private readonly HttpClient _httpClient;
-    private readonly ILogger<S3CdnProvider> _logger;
+    private readonly ILogger<CdnAzureProvider> _logger;
 
-    public S3CdnProvider(
+    public CdnAzureProvider(
         IHasCdnBaseUrl cdnSettings,
-        S3StorageSettings storageSettings,
+        AzureBlobStorageSettings storageSettings,
         HttpClient httpClient,
-        ILogger<S3CdnProvider> logger)
+        ILogger<CdnAzureProvider> logger)
     {
         _cdnSettings = cdnSettings;
         _storageSettings = storageSettings;
@@ -38,16 +33,16 @@ public sealed class S3CdnProvider : ICdnProvider
     {
         try
         {
-            var bucketName = _storageSettings.BucketOrContainer ?? "default-bucket";
-            var endpoint = _storageSettings.Url ?? "http://localhost:9000";
+            var containerName = _storageSettings.BucketOrContainer ?? "default-container";
+            var accountName = _storageSettings.Url?.Replace("https://", "").Replace(".blob.core.windows.net", "") ?? "storageaccount";
 
             if (_logger.IsEnabled(LogLevel.Information))
             {
                 _logger.LogInformation(
-                    "Uploading file to S3 storage. Filename: {Filename}, Bucket: {Bucket}, Endpoint: {Endpoint}",
+                    "Uploading file to Azure Blob Storage. Filename: {Filename}, Container: {Container}, Account: {Account}",
                     filename,
-                    bucketName,
-                    endpoint);
+                    containerName,
+                    accountName);
             }
 
             // Generate unique filename
@@ -55,38 +50,43 @@ public sealed class S3CdnProvider : ICdnProvider
             var fileExtension = Path.GetExtension(filename);
             var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(filename);
             var uniqueFilename = $"{fileNameWithoutExtension}_{Guid.NewGuid():N}{fileExtension}";
-            var objectKey = $"{dateFolder}/{uniqueFilename}";
+            var blobName = $"{dateFolder}/{uniqueFilename}";
 
             // Read stream into bytes
             var memoryStream = new MemoryStream();
             await fileStream.CopyToAsync(memoryStream, cancellationToken);
             var fileBytes = memoryStream.ToArray();
 
-            // Upload to S3-compatible endpoint
-            var uploadUrl = $"{endpoint.TrimEnd('/')}/{bucketName}/{objectKey}";
+            // Upload to Azure Blob Storage
+            var storageUrl = $"https://{accountName}.blob.core.windows.net/{containerName}/{blobName}";
             using (var content = new ByteArrayContent(fileBytes))
             {
-                var response = await _httpClient.PutAsync(uploadUrl, content, cancellationToken);
+                // Add Azure-specific headers
+                content.Headers.Add("x-ms-blob-type", "BlockBlob");
+
+                var request = new HttpRequestMessage(HttpMethod.Put, storageUrl)
+                {
+                    Content = content
+                };
+
+                var response = await _httpClient.SendAsync(request, cancellationToken);
 
                 if (!response.IsSuccessStatusCode)
                 {
                     throw new InvalidOperationException(
-                        $"S3 upload failed with status {response.StatusCode}: {await response.Content.ReadAsStringAsync(cancellationToken)}");
+                        $"Azure upload failed with status {response.StatusCode}: {await response.Content.ReadAsStringAsync(cancellationToken)}");
                 }
             }
 
-            // Create storage URL
-            var storageUrl = uploadUrl;
-
             // Create CDN URL
-            var cdnUrl = $"{_cdnSettings.BaseUrl.TrimEnd('/')}/{_cdnSettings.ZonePath.Trim('/')}/{_cdnSettings.PathPrefix.Trim('/')}/{objectKey}"
+            var cdnUrl = $"{_cdnSettings.BaseUrl.TrimEnd('/')}/{_cdnSettings.ZonePath.Trim('/')}/{_cdnSettings.PathPrefix.Trim('/')}/{blobName}"
                 .Replace("//", "/")
                 .Replace(":///", "://");
 
             if (_logger.IsEnabled(LogLevel.Information))
             {
                 _logger.LogInformation(
-                    "File uploaded to S3 successfully. StorageUrl: {StorageUrl}, CdnUrl: {CdnUrl}",
+                    "File uploaded to Azure successfully. StorageUrl: {StorageUrl}, CdnUrl: {CdnUrl}",
                     storageUrl,
                     cdnUrl);
             }
@@ -95,7 +95,7 @@ public sealed class S3CdnProvider : ICdnProvider
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to upload file '{Filename}' to S3 storage", filename);
+            _logger.LogError(ex, "Failed to upload file '{Filename}' to Azure Blob Storage", filename);
             throw;
         }
     }
@@ -109,7 +109,7 @@ public sealed class S3CdnProvider : ICdnProvider
             if (_logger.IsEnabled(LogLevel.Information))
             {
                 _logger.LogInformation(
-                    "Downloading file from S3 storage. StorageUrl: {StorageUrl}",
+                    "Downloading file from Azure Blob Storage. StorageUrl: {StorageUrl}",
                     storageUrl);
             }
 
@@ -118,14 +118,14 @@ public sealed class S3CdnProvider : ICdnProvider
             if (!response.IsSuccessStatusCode)
             {
                 throw new InvalidOperationException(
-                    $"S3 download failed with status {response.StatusCode}");
+                    $"Azure download failed with status {response.StatusCode}");
             }
 
             return await response.Content.ReadAsStreamAsync(cancellationToken);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to download file from S3 storage URL '{StorageUrl}'", storageUrl);
+            _logger.LogError(ex, "Failed to download file from Azure storage URL '{StorageUrl}'", storageUrl);
             throw;
         }
     }

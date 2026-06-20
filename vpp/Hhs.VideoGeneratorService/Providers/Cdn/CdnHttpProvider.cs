@@ -1,7 +1,4 @@
-using Microsoft.Extensions.Logging;
-using Hhs.Shared.Configuration;
 using Hhs.Shared.Configuration.Providers;
-using Hhs.Shared.Providers;
 
 namespace Hhs.VideoGeneratorService.Providers.Cdn;
 
@@ -9,16 +6,16 @@ namespace Hhs.VideoGeneratorService.Providers.Cdn;
 /// Generic HTTP-based CDN storage provider.
 /// Can work with any HTTP endpoint that supports /upload and /download operations.
 /// </summary>
-public sealed class HttpCdnProvider : ICdnProvider
+public sealed class CdnHttpProvider : ICdnProvider
 {
     private readonly IHasCdnBaseUrl _cdnSettings;
     private readonly HttpClient _httpClient;
-    private readonly ILogger<HttpCdnProvider> _logger;
+    private readonly ILogger<CdnHttpProvider> _logger;
 
-    public HttpCdnProvider(
+    public CdnHttpProvider(
         IHasCdnBaseUrl cdnSettings,
         HttpClient httpClient,
-        ILogger<HttpCdnProvider> logger)
+        ILogger<CdnHttpProvider> logger)
     {
         _cdnSettings = cdnSettings;
         _httpClient = httpClient;

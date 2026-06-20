@@ -1,4 +1,3 @@
-using Hhs.Shared.Configuration;
 using Hhs.Shared.Events;
 using Hhs.Shared.RabbitMQ;
 using Hhs.TextNormalizerService.Configuration;

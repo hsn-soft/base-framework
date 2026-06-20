@@ -1,6 +1,4 @@
-using Hhs.Shared.Configuration;
 using Hhs.Shared.Configuration.Providers;
-using Hhs.Shared.Providers;
 
 namespace Hhs.VideoGeneratorService.Providers.Cdn;
 

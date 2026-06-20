@@ -1,10 +1,4 @@
-namespace Hhs.VideoGeneratorService.Providers;
-
-public interface IFileDownloader
-{
-    Task<string> DownloadAsync(string fileUrl, string extension, CancellationToken cancellationToken);
-    Task<string> DownloadAsync(string fileUrl, string extension, string? providerFileName, CancellationToken cancellationToken);
-}
+namespace Hhs.VideoGeneratorService.Providers.FileDownloader;
 
 public sealed class DummyFileDownloader : IFileDownloader
 {

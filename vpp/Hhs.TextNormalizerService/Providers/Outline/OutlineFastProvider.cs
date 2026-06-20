@@ -1,9 +1,8 @@
-using Hhs.Shared.Providers;
-using Hhs.TextNormalizerService.Configuration;
-using Hhs.TextNormalizerService.Configuration.Providers.Outline;
 using System.Text.Json;
+using Hhs.Shared.Providers;
+using Hhs.TextNormalizerService.Configuration.Providers.Outline;
 
-namespace Hhs.TextNormalizerService.Providers;
+namespace Hhs.TextNormalizerService.Providers.Outline;
 
 public sealed class OutlineFastProvider(HttpClient httpClient, OutlineFastProviderSettings outlineSettings) : IOutlineProvider
 {

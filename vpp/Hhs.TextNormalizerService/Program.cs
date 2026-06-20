@@ -1,7 +1,5 @@
 using Hhs.Shared.Events;
 using Hhs.Shared.RabbitMQ;
-using Hhs.Shared.Configuration;
-using Hhs.Shared.Providers;
 using Hhs.Shared.Retry;
 using Hhs.TextNormalizerService.Configuration;
 using Hhs.TextNormalizerService.Configuration.Providers.Outline;
@@ -11,6 +9,8 @@ using Hhs.TextNormalizerService.Infrastructure;
 using Hhs.TextNormalizerService.Models;
 using Hhs.TextNormalizerService.Mongo;
 using Hhs.TextNormalizerService.Providers;
+using Hhs.TextNormalizerService.Providers.Outline;
+using Hhs.TextNormalizerService.Providers.Scraping;
 using Hhs.TextNormalizerService.Services;
 using Hhs.TextNormalizerService.Workers;
 using MongoDB.Driver;

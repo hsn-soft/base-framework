@@ -1,35 +1,35 @@
-using Hhs.Shared.Providers;
-using Hhs.VideoGeneratorService.Configuration;
-using Hhs.VideoGeneratorService.Configuration.Providers.Audio;
 using System.Text.Json;
+using Hhs.Shared.Providers;
+using Hhs.VideoGeneratorService.Configuration.Providers.Video;
 
-namespace Hhs.VideoGeneratorService.Providers;
+namespace Hhs.VideoGeneratorService.Providers.Video;
 
-public sealed class AudioQuickProvider : IAudioProvider
+public sealed class VideoFastInternalProvider : IVideoProvider
 {
     private readonly HttpClient _httpClient;
     private readonly string _baseUrl;
 
-    public AudioQuickProvider(HttpClient httpClient, AudioFastProviderSettings audioSettings)
+    public VideoFastInternalProvider(HttpClient httpClient, VideoFastInternalProviderSettings videoSettings)
     {
         _httpClient = httpClient;
-        _baseUrl = audioSettings.BaseUrl;
+        _baseUrl = videoSettings.BaseUrl;
     }
 
-    public string ProviderKey => ProviderKeys.AudioQuick;
+    public string ProviderKey => ProviderKeys.VideoFastInternal;
 
-    public AudioProviderCapabilities Capabilities => new()
+    public VideoProviderCapabilities Capabilities => new()
     {
         ProviderKey = ProviderKey,
-        ExecutionMode = ProviderExecutionMode.ImmediateResult
+        ExecutionMode = ProviderExecutionMode.ImmediateResult,
+        AudioInputMode = VideoAudioInputMode.AudioUrlListRequired
     };
 
-    public async Task<AudioCreateResponse> CreateAsync(
-        AudioCreateRequest request,
+    public async Task<VideoCreateResponse> CreateAsync(
+        VideoCreateRequest request,
         CancellationToken cancellationToken)
     {
         var response = await _httpClient.PostAsJsonAsync(
-            $"{_baseUrl}/audio/generate",
+            $"{_baseUrl}/video/generate",
             request,
             cancellationToken);
 
@@ -37,7 +37,7 @@ public sealed class AudioQuickProvider : IAudioProvider
         var fileUrl = json.GetProperty("remoteFileUrl").GetString();
         var fileName = json.TryGetProperty("fileName", out var fnProp) ? fnProp.GetString() : null;
 
-        return new AudioCreateResponse
+        return new VideoCreateResponse
         {
             IsCompleted = true,
             ProviderFileUrl = fileUrl,
@@ -45,17 +45,15 @@ public sealed class AudioQuickProvider : IAudioProvider
         };
     }
 
-    public async Task<AudioStatusResponse> GetStatusAsync(
-        string providerTrackId,
-        CancellationToken cancellationToken)
+    public async Task<VideoStatusResponse> GetStatusAsync(string providerTrackId, CancellationToken cancellationToken)
     {
         var response = await _httpClient.GetAsync(
-            $"{_baseUrl}/audio/status/{providerTrackId}",
+            $"{_baseUrl}/video/status/{providerTrackId}",
             cancellationToken);
 
         var json = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken);
 
-        return new AudioStatusResponse
+        return new VideoStatusResponse
         {
             IsCompleted = true,
             ProviderFileUrl = json.GetProperty("remoteFileUrl").GetString(),

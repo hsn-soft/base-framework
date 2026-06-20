@@ -1,8 +1,6 @@
-using Hhs.Shared.Configuration;
-using Hhs.Shared.Providers;
 using Hhs.VideoGeneratorService.Providers.Cdn;
 
-namespace Hhs.VideoGeneratorService.Providers;
+namespace Hhs.VideoGeneratorService.Services;
 
 public interface IStorageService
 {

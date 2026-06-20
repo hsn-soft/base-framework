@@ -1,8 +1,4 @@
-using Microsoft.Extensions.Logging;
-using Hhs.Shared.Configuration;
 using Hhs.Shared.Configuration.Providers;
-using Hhs.Shared.Providers;
-using Hhs.VideoGeneratorService.Configuration;
 using Hhs.VideoGeneratorService.Configuration.Providers.Storage;
 
 namespace Hhs.VideoGeneratorService.Providers.Cdn;
@@ -11,16 +7,16 @@ namespace Hhs.VideoGeneratorService.Providers.Cdn;
 /// Local file system CDN storage provider implementation.
 /// Stores files on the local disk and constructs CDN URLs for public access.
 /// </summary>
-public sealed class LocalCdnProvider : ICdnProvider
+public sealed class CdnLocalProvider : ICdnProvider
 {
     private readonly IHasCdnBaseUrl _cdnSettings;
     private readonly LocalStorageSettings _storageSettings;
-    private readonly ILogger<LocalCdnProvider> _logger;
+    private readonly ILogger<CdnLocalProvider> _logger;
 
-    public LocalCdnProvider(
+    public CdnLocalProvider(
         IHasCdnBaseUrl cdnSettings,
         LocalStorageSettings storageSettings,
-        ILogger<LocalCdnProvider> logger)
+        ILogger<CdnLocalProvider> logger)
     {
         _cdnSettings = cdnSettings;
         _storageSettings = storageSettings;

@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using Hhs.MockApi.Storage;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -55,74 +56,77 @@ app.MapGet("/health", () => Results.Ok(new { status = "healthy", provider = "sto
 
 app.Run();
 
-public sealed class StorageService
+namespace Hhs.MockApi.Storage
 {
-    private static readonly ConcurrentDictionary<string, StorageFileEntry> FileStore = new();
-    private readonly ILogger<StorageService> _logger;
-
-    public StorageService(ILogger<StorageService> logger)
+    public sealed class StorageService
     {
-        _logger = logger;
-    }
+        private static readonly ConcurrentDictionary<string, StorageFileEntry> FileStore = new();
+        private readonly ILogger<StorageService> _logger;
 
-    public async Task<string> UploadAsync(IFormFile file, string storageDir, CancellationToken ct)
-    {
-        var fileId = Guid.NewGuid().ToString("N");
-        var dateFolder = DateTime.UtcNow.ToString("yyyy/MM/dd");
-        var uploadDir = Path.Combine(storageDir, dateFolder);
-        Directory.CreateDirectory(uploadDir);
-
-        var filePath = Path.Combine(uploadDir, $"{fileId}_{file.FileName}");
-
-        await using (var stream = file.OpenReadStream())
+        public StorageService(ILogger<StorageService> logger)
         {
-            await using var fileStream = File.Create(filePath);
-            await stream.CopyToAsync(fileStream, ct);
+            _logger = logger;
         }
 
-        FileStore[fileId] = new StorageFileEntry
+        public async Task<string> UploadAsync(IFormFile file, string storageDir, CancellationToken ct)
         {
-            OriginalFileName = file.FileName,
-            FilePath = filePath,
-            FileSize = file.Length,
-            UploadedAtUtc = DateTime.UtcNow
-        };
+            var fileId = Guid.NewGuid().ToString("N");
+            var dateFolder = DateTime.UtcNow.ToString("yyyy/MM/dd");
+            var uploadDir = Path.Combine(storageDir, dateFolder);
+            Directory.CreateDirectory(uploadDir);
 
-        _logger.LogInformation("File stored: {FileId}, OriginalName: {FileName}, Size: {Size}",
-            fileId, file.FileName, file.Length);
+            var filePath = Path.Combine(uploadDir, $"{fileId}_{file.FileName}");
 
-        return fileId;
-    }
+            await using (var stream = file.OpenReadStream())
+            {
+                await using var fileStream = File.Create(filePath);
+                await stream.CopyToAsync(fileStream, ct);
+            }
 
-    public string GetFilePath(string fileId, string storageDir)
-    {
-        if (FileStore.TryGetValue(fileId, out var entry))
-            return entry.FilePath;
+            FileStore[fileId] = new StorageFileEntry
+            {
+                OriginalFileName = file.FileName,
+                FilePath = filePath,
+                FileSize = file.Length,
+                UploadedAtUtc = DateTime.UtcNow
+            };
 
-        // Fallback: try to find in directory
-        var files = Directory.GetFiles(storageDir, $"{fileId}_*", SearchOption.AllDirectories);
-        if (files.Length > 0)
-            return files[0];
+            _logger.LogInformation("File stored: {FileId}, OriginalName: {FileName}, Size: {Size}",
+                fileId, file.FileName, file.Length);
 
-        return Path.Combine(storageDir, fileId);
-    }
+            return fileId;
+        }
 
-    public List<object> GetAllFiles(string storageDir)
-    {
-        return FileStore.Select(kvp => new
+        public string GetFilePath(string fileId, string storageDir)
         {
-            fileId = kvp.Key,
-            fileName = kvp.Value.OriginalFileName,
-            size = kvp.Value.FileSize,
-            uploadedAt = kvp.Value.UploadedAtUtc
-        }).Cast<object>().ToList();
-    }
-}
+            if (FileStore.TryGetValue(fileId, out var entry))
+                return entry.FilePath;
 
-public sealed class StorageFileEntry
-{
-    public string OriginalFileName { get; set; } = string.Empty;
-    public string FilePath { get; set; } = string.Empty;
-    public long FileSize { get; set; }
-    public DateTime UploadedAtUtc { get; set; }
+            // Fallback: try to find in directory
+            var files = Directory.GetFiles(storageDir, $"{fileId}_*", SearchOption.AllDirectories);
+            if (files.Length > 0)
+                return files[0];
+
+            return Path.Combine(storageDir, fileId);
+        }
+
+        public List<object> GetAllFiles(string storageDir)
+        {
+            return FileStore.Select(kvp => new
+            {
+                fileId = kvp.Key,
+                fileName = kvp.Value.OriginalFileName,
+                size = kvp.Value.FileSize,
+                uploadedAt = kvp.Value.UploadedAtUtc
+            }).Cast<object>().ToList();
+        }
+    }
+
+    public sealed class StorageFileEntry
+    {
+        public string OriginalFileName { get; set; } = string.Empty;
+        public string FilePath { get; set; } = string.Empty;
+        public long FileSize { get; set; }
+        public DateTime UploadedAtUtc { get; set; }
+    }
 }
