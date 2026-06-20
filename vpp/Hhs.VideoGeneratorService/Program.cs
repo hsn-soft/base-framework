@@ -5,6 +5,7 @@ using Hhs.Shared.Retry;
 using Hhs.VideoGeneratorService.Configuration;
 using Hhs.VideoGeneratorService.Configuration.Providers.Audio;
 using Hhs.VideoGeneratorService.Configuration.Providers.Video;
+using Hhs.VideoGeneratorService.Configuration.Providers.Cdn;
 using Hhs.VideoGeneratorService.Providers.Cdn;
 using Hhs.VideoGeneratorService.Entities;
 using Hhs.VideoGeneratorService.Handlers;
@@ -66,10 +67,27 @@ builder.Services.AddSingleton<ICdnProviderResolver>(sp =>
     {
         foreach (var child in cdnSection.GetChildren())
         {
-            var settings = child.Get<CdnProviderSettingsBase>();
+            var key = child.Key;
+            CdnProviderSettingsBase? settings = null;
+
+            // Try concrete implementations in order
+            if (key.Equals("CdnLocalMinio", StringComparison.OrdinalIgnoreCase))
+                settings = child.Get<LocalMinioCdnSettings>();
+            else if (key.Equals("CdnBunnySelf", StringComparison.OrdinalIgnoreCase))
+                settings = child.Get<BunnyCdnSettings>();
+            else if (key.Equals("CdnBunnyS3", StringComparison.OrdinalIgnoreCase))
+                settings = child.Get<CdnBunnyS3Settings>();
+            else if (key.StartsWith("CdnAbc", StringComparison.OrdinalIgnoreCase) ||
+                     key.StartsWith("CdnCloudflare", StringComparison.OrdinalIgnoreCase))
+                settings = child.Get<CloudflareCdnSettings>();
+            else if (key.StartsWith("CdnAzure", StringComparison.OrdinalIgnoreCase))
+                settings = child.Get<AzureCdnSettings>();
+            else if (key.StartsWith("CdnAws", StringComparison.OrdinalIgnoreCase))
+                settings = child.Get<AwsCloudFrontCdnSettings>();
+
             if (settings != null)
             {
-                cdnProviders[child.Key] = settings;
+                cdnProviders[key] = settings;
             }
         }
     }

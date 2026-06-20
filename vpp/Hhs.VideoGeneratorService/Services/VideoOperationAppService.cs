@@ -1027,7 +1027,7 @@ public async Task HandleAudioUploadCompletedAsync(
             var fileContent = await httpClient.GetByteArrayAsync(downloadUrl, cancellationToken);
 
             // Upload to mock storage
-            var storageUrl = $"{storageSettings.BaseUrl}/storage/upload-binary";
+            var storageUrl = $"{storageSettings.BaseUrl}/upload";
             using (var content = new ByteArrayContent(fileContent))
             {
                 var response = await httpClient.PostAsync(
@@ -1039,9 +1039,12 @@ public async Task HandleAudioUploadCompletedAsync(
 
                 var responseJson = await response.Content.ReadAsStringAsync(cancellationToken);
                 var jsonDoc = JsonDocument.Parse(responseJson);
-                var remoteUrl = jsonDoc.RootElement.GetProperty("url").GetString();
+                var fileId = jsonDoc.RootElement.GetProperty("fileId").GetString()
+                    ?? throw new InvalidOperationException("No fileId in storage response");
 
-                return remoteUrl ?? throw new InvalidOperationException("No URL in storage response");
+                // Construct download URL from storage service
+                var storageDownloadUrl = $"{storageSettings.BaseUrl}/download/{fileId}";
+                return storageDownloadUrl;
             }
         }
         catch (Exception ex)

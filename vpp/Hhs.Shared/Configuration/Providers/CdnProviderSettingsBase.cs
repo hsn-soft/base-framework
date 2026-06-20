@@ -1,6 +1,6 @@
 namespace Hhs.Shared.Configuration.Providers;
 
-public abstract class CdnProviderSettingsBase : IHasCdnBaseUrl
+public class CdnProviderSettingsBase : IHasCdnBaseUrl
 {
     // Base CDN Settings (Common to all CDN providers)
     public string BaseUrl { get; set; } = default!;
@@ -8,7 +8,7 @@ public abstract class CdnProviderSettingsBase : IHasCdnBaseUrl
     public string? ApiSecret { get; set; }
     public string ZonePath { get; set; } = "media";
     public string PathPrefix { get; set; } = "prod";
-    public StorageProviderSettingsBase Storage { get; set; } = default!;
+    public object? Storage { get; set; }
 }
 
 /// <summary>

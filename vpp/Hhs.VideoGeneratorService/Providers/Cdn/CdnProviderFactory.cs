@@ -1,3 +1,4 @@
+using Hhs.Shared.Configuration.Providers;
 using Hhs.VideoGeneratorService.Configuration.Providers.Storage;
 
 namespace Hhs.VideoGeneratorService.Providers.Cdn;
@@ -33,7 +34,7 @@ public sealed class CdnProviderFactory
             throw new ArgumentException("CDN provider key cannot be null or empty.", nameof(cdnProviderKey));
 
         var cdnSettings = _cdnProviderResolver.Resolve(cdnProviderKey);
-        var storageSettings = cdnSettings.Storage;
+        var storageSettings = cdnSettings.Storage as StorageProviderSettingsBase ?? throw new InvalidOperationException($"Storage settings not found for CDN provider '{cdnProviderKey}'");
         var logger = _loggerFactory.CreateLogger(typeof(CdnLocalProvider));
 
         return storageSettings.Type?.ToLowerInvariant() switch
