@@ -10,7 +10,7 @@ public sealed class NormalizerInboxMessage
     public Guid EventId { get; set; }
 
     // Correlation & Tracing
-    public Guid? CorrelationId { get; set; }
+    public string? CorrelationId { get; set; }
 
     // Event Data
     public string EventName { get; set; } = default!;

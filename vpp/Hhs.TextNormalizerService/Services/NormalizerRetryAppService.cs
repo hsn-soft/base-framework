@@ -5,6 +5,8 @@ using Hhs.TextNormalizerService.Entities;
 using Hhs.TextNormalizerService.Mongo;
 using MongoDB.Driver;
 
+using Hhs.Shared.Configuration;
+
 namespace Hhs.TextNormalizerService.Services;
 
 public sealed class NormalizerRetryAppService(
@@ -85,7 +87,7 @@ public sealed class NormalizerRetryAppService(
                         RefContentType = ContentType.CustomerContent,
                         CorrelationId = request.CorrelationId,
                         NormalizedRequestId = request.Id,
-                        ProviderKey = request.OutlineProviderKey,
+                        ProviderKey = SubscriptionScopeRegistry.GetOutlineProviderKey(request.ScopeKey),
                         InputText = request.ScrapingResult?.Text
                                     ?? throw new InvalidOperationException("ScrapingResult.Text is required.")
                     }, cancellationToken);
@@ -230,7 +232,7 @@ public sealed class NormalizerRetryAppService(
                             RefContentType = ContentType.AnalysisContent,
                             CorrelationId = request.CorrelationId,
                             NormalizedRequestId = request.Id,
-                            ProviderKey = request.OutlineProviderKey,
+                            ProviderKey = SubscriptionScopeRegistry.GetOutlineProviderKey(request.ScopeKey),
                             SortOrder = item.SortOrder,
                             InputText = item.ScrapingResult?.Text
                                         ?? throw new InvalidOperationException("ScrapingResult.Text is required.")

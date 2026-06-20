@@ -11,6 +11,8 @@ using Hhs.TextNormalizerService.Models;
 using Hhs.TextNormalizerService.Providers.Outline;
 using Hhs.TextNormalizerService.Providers.Scraping;
 
+using Hhs.Shared.Configuration;
+
 namespace Hhs.TextNormalizerService.Services;
 
 public sealed class NormalizerOperationAppService(
@@ -48,7 +50,6 @@ public sealed class NormalizerOperationAppService(
             CorrelationId = @event.CorrelationId,
             SourceEventId = @event.EventId,
             CustomerContentId = @event.RefContentId,
-            Url = @event.Url,
             Status = StatusNames.Created,
             CurrentStep = EventNames.CustomerContentCreated,
             LastError = null,
@@ -114,7 +115,7 @@ public sealed class NormalizerOperationAppService(
 
         try
         {
-            var result = await scraper.ScrapeAsync(request.Url, cancellationToken);
+            var result = await scraper.ScrapeAsync((request.DomainName + request.ContentKey), cancellationToken);
 
             request.Status = StatusNames.ScrapingCompleted;
             request.ScrapingStatus = StatusNames.Completed;
@@ -197,7 +198,7 @@ public sealed class NormalizerOperationAppService(
                 RefContentType = ContentType.CustomerContent,
                 CorrelationId = @event.CorrelationId,
                 NormalizedRequestId = request.Id,
-                ProviderKey = request.OutlineProviderKey,
+                ProviderKey = SubscriptionScopeRegistry.GetOutlineProviderKey(request.ScopeKey),
                 InputText = request.ScrapingResult.Text
             }, cancellationToken);
         }
@@ -455,10 +456,18 @@ public sealed class NormalizerOperationAppService(
             Id = Guid.NewGuid(),
             SourceEventId = @event.EventId,
             CorrelationId = @event.CorrelationId,
+            ScopeKey = @event.ScopeKey,
+            DomainName = @event.DomainName,
             AnalysisContentId = @event.RefContentId,
             Status = StatusNames.Created,
             CurrentStep = EventNames.AnalysisContentCreated,
-            Items = @event.Items.Select(x => new AnalysisNormalizedItem { CustomerContentId = x.CustomerContentId, SortOrder = x.SortOrder, Url = x.Url, Path = x.Path }).ToList(),
+            Items = @event.Items.Select(x => new AnalysisNormalizedItem 
+            { 
+                CustomerContentId = x.CustomerContentId, 
+                SortOrder = x.SortOrder, 
+                DomainName = @event.DomainName,
+                ContentKey = x.ContentKey 
+            }).ToList(),
             CreatedAtUtc = DateTime.UtcNow,
             UpdatedAtUtc = DateTime.UtcNow
         };
@@ -515,7 +524,7 @@ public sealed class NormalizerOperationAppService(
                 startUpdate,
                 cancellationToken);
 
-            var result = await scraper.ScrapeAsync(item.Url, cancellationToken);
+            var result = await scraper.ScrapeAsync((item.DomainName + item.ContentKey), cancellationToken);
 
             var completeUpdate = Builders<AnalysisContentNormalizedRequest>.Update
                 .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", StatusNames.ScrapingCompleted)
@@ -593,7 +602,7 @@ public sealed class NormalizerOperationAppService(
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(request.OutlineProviderKey))
+            if (string.IsNullOrWhiteSpace(SubscriptionScopeRegistry.GetOutlineProviderKey(request.ScopeKey)))
                 throw new InvalidOperationException("OutlineProviderKey is required.");
 
             var startUpdate = Builders<AnalysisContentNormalizedRequest>.Update
@@ -615,7 +624,7 @@ public sealed class NormalizerOperationAppService(
                 RefContentType = ContentType.AnalysisContent,
                 CorrelationId = @event.CorrelationId,
                 NormalizedRequestId = request.Id,
-                ProviderKey = request.OutlineProviderKey,
+                ProviderKey = SubscriptionScopeRegistry.GetOutlineProviderKey(request.ScopeKey),
                 SortOrder = item.SortOrder,
                 InputText = item.ScrapingResult.Text
             }, cancellationToken);

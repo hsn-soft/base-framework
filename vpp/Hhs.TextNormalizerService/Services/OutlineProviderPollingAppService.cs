@@ -7,6 +7,8 @@ using Hhs.TextNormalizerService.Providers;
 using Hhs.TextNormalizerService.Providers.Outline;
 using MongoDB.Driver;
 
+using Hhs.Shared.Configuration;
+
 namespace Hhs.TextNormalizerService.Services;
 
 public sealed class OutlineProviderPollingAppService(
@@ -72,7 +74,7 @@ public sealed class OutlineProviderPollingAppService(
                     continue;
                 }
 
-                var provider = outlineProviderResolver.Resolve(request.OutlineProviderKey);
+                var provider = outlineProviderResolver.Resolve(SubscriptionScopeRegistry.GetOutlineProviderKey(request.ScopeKey));
 
                 var status = await provider.GetStatusAsync
                 (
@@ -235,7 +237,7 @@ public sealed class OutlineProviderPollingAppService(
                         continue;
                     }
 
-                    var provider = outlineProviderResolver.Resolve(request.OutlineProviderKey);
+                    var provider = outlineProviderResolver.Resolve(SubscriptionScopeRegistry.GetOutlineProviderKey(request.ScopeKey));
 
                     var status = await provider.GetStatusAsync
                     (
