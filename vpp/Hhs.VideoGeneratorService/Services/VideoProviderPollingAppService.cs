@@ -15,8 +15,11 @@ public sealed class VideoProviderPollingAppService(
     IEventBus eventBus,
     ILogger<VideoProviderPollingAppService> logger,
     HttpClient httpClient,
-    IOptions<ProviderEndpointsOptions> options)
+    IOptions<ProviderEndpointsOptions> options,
+    VideoPollingSettings pollingSettings)
 {
+    private readonly VideoPollingSettings _pollingSettings = pollingSettings;
+
     public async Task PollDueVideoRequestsAsync(CancellationToken cancellationToken)
     {
         var now = DateTime.UtcNow;
@@ -95,7 +98,7 @@ public sealed class VideoProviderPollingAppService(
                 if (!status.IsCompleted)
                 {
                     request.ProviderPollingCount++;
-                    request.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(5);
+                    request.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(_pollingSettings.IntervalSeconds);
                     request.UpdatedAtUtc = DateTime.UtcNow;
 
                     await ReplaceVideoAsync(request, cancellationToken);
@@ -162,7 +165,7 @@ public sealed class VideoProviderPollingAppService(
                 }
                 else
                 {
-                    request.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(5);
+                    request.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(_pollingSettings.BackoffIntervalSeconds);
                     await ReplaceVideoAsync(request, cancellationToken);
                 }
 

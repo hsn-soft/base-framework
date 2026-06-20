@@ -1,14 +1,17 @@
+using Hhs.VideoGeneratorService.Configuration;
 using Hhs.VideoGeneratorService.Services;
 
 namespace Hhs.VideoGeneratorService.Workers;
 
 public sealed class AudioProviderPollingWorker(
     IServiceProvider serviceProvider,
+    AudioPollingSettings pollingSettings,
     ILogger<AudioProviderPollingWorker> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        logger.LogInformation("Audio provider polling worker started.");
+        logger.LogInformation("Audio provider polling worker started. Interval: {IntervalSeconds}s, Max Attempts: {MaxAttempts}",
+            pollingSettings.IntervalSeconds, pollingSettings.MaxAttempts);
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -30,7 +33,7 @@ public sealed class AudioProviderPollingWorker(
                 logger.LogError(ex, "Audio polling worker failed.");
             }
 
-            await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+            await Task.Delay(TimeSpan.FromSeconds(pollingSettings.IntervalSeconds), stoppingToken);
         }
     }
 }

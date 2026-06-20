@@ -1,14 +1,17 @@
+using Hhs.TextNormalizerService.Configuration;
 using Hhs.TextNormalizerService.Services;
 
 namespace Hhs.TextNormalizerService.Workers;
 
 public sealed class NormalizerRetryWorker(
     IServiceProvider serviceProvider,
+    NormalizerRetrySettings retrySettings,
     ILogger<NormalizerRetryWorker> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        logger.LogInformation("Normalizer retry worker started.");
+        logger.LogInformation("Normalizer retry worker started. Interval: {IntervalSeconds}s, Max Retries: {MaxRetryCount}",
+            retrySettings.RetryWorkerIntervalSeconds, retrySettings.MaxRetryCount);
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -30,7 +33,7 @@ public sealed class NormalizerRetryWorker(
                 logger.LogError(ex, "Normalizer retry worker failed.");
             }
 
-            await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
+            await Task.Delay(TimeSpan.FromSeconds(retrySettings.RetryWorkerIntervalSeconds), stoppingToken);
         }
     }
 }

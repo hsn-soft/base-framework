@@ -19,11 +19,14 @@ builder.Services.Configure<MongoOptions>(builder.Configuration.GetSection("Mongo
 builder.Services.Configure<RabbitMqOptions>(builder.Configuration.GetSection("RabbitMq"));
 builder.Services.Configure<OutlineProviderEndpointsOptions>(builder.Configuration.GetSection("OutlineProviders"));
 
-var pollingOptions = builder.Configuration.GetSection(PollingOptions.SectionName).Get<PollingOptions>() ?? new PollingOptions();
-builder.Services.AddSingleton(pollingOptions);
+var outlinePollingSettings = builder.Configuration.GetSection(OutlinePollingSettings.SectionName)
+    .Get<OutlinePollingSettings>() ?? new OutlinePollingSettings();
+builder.Services.AddSingleton(outlinePollingSettings);
 
-var retryOptions = builder.Configuration.GetSection(RetryOptions.SectionName).Get<RetryOptions>() ?? new RetryOptions();
-builder.Services.AddSingleton(_ => new RetryDelayCalculator(retryOptions.DelaySeconds));
+var normalizerRetrySettings = builder.Configuration.GetSection(NormalizerRetrySettings.SectionName)
+    .Get<NormalizerRetrySettings>() ?? new NormalizerRetrySettings();
+builder.Services.AddSingleton(normalizerRetrySettings);
+builder.Services.AddSingleton(_ => new RetryDelayCalculator(normalizerRetrySettings.DelaySeconds));
 
 BsonRegisterTools.MongoConfigure();
 builder.Services.AddSingleton<NormalizerMongoContext>();

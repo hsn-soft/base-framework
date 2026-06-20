@@ -3,6 +3,7 @@ using Hhs.Shared.RabbitMQ;
 using Hhs.Shared.Configuration;
 using Hhs.Shared.Retry;
 using Hhs.VideoGeneratorService.Configuration;
+using Hhs.VideoGeneratorService.Workers;
 using Hhs.VideoGeneratorService.Entities;
 using Hhs.VideoGeneratorService.Handlers;
 using Hhs.VideoGeneratorService.Infrastructure;
@@ -18,8 +19,18 @@ builder.Services.Configure<MongoOptions>(builder.Configuration.GetSection("Mongo
 builder.Services.Configure<RabbitMqOptions>(builder.Configuration.GetSection("RabbitMq"));
 builder.Services.Configure<ProviderEndpointsOptions>(builder.Configuration.GetSection("ProviderEndpoints"));
 
-var retryOptions = builder.Configuration.GetSection(RetryOptions.SectionName).Get<RetryOptions>() ?? new RetryOptions();
-builder.Services.AddSingleton(_ => new RetryDelayCalculator(retryOptions.DelaySeconds));
+var audioPollingSettings = builder.Configuration.GetSection(AudioPollingSettings.SectionName)
+    .Get<AudioPollingSettings>() ?? new AudioPollingSettings();
+builder.Services.AddSingleton(audioPollingSettings);
+
+var videoPollingSettings = builder.Configuration.GetSection(VideoPollingSettings.SectionName)
+    .Get<VideoPollingSettings>() ?? new VideoPollingSettings();
+builder.Services.AddSingleton(videoPollingSettings);
+
+var videoRetrySettings = builder.Configuration.GetSection(VideoRetrySettings.SectionName)
+    .Get<VideoRetrySettings>() ?? new VideoRetrySettings();
+builder.Services.AddSingleton(videoRetrySettings);
+builder.Services.AddSingleton(_ => new RetryDelayCalculator(videoRetrySettings.DelaySeconds));
 
 BsonRegisterTools.MongoConfigure();
 builder.Services.AddSingleton<VideoMongoContext>();

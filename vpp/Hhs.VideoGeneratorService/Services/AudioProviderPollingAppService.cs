@@ -15,8 +15,11 @@ public sealed class AudioProviderPollingAppService(
     IEventBus eventBus,
     ILogger<AudioProviderPollingAppService> logger,
     HttpClient httpClient,
-    IOptions<ProviderEndpointsOptions> options)
+    IOptions<ProviderEndpointsOptions> options,
+    AudioPollingSettings pollingSettings)
 {
+    private readonly AudioPollingSettings _pollingSettings = pollingSettings;
+
     public async Task PollDueAudioRequestsAsync(CancellationToken cancellationToken)
     {
         var now = DateTime.UtcNow;
@@ -96,7 +99,7 @@ public sealed class AudioProviderPollingAppService(
                 if (!status.IsCompleted)
                 {
                     request.ProviderPollingCount++;
-                    request.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(5);
+                    request.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(_pollingSettings.IntervalSeconds);
                     request.UpdatedAtUtc = DateTime.UtcNow;
 
                     await ReplaceAudioAsync(request, cancellationToken);
@@ -164,7 +167,7 @@ public sealed class AudioProviderPollingAppService(
                 }
                 else
                 {
-                    request.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(5);
+                    request.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(_pollingSettings.BackoffIntervalSeconds);
                     await ReplaceAudioAsync(request, cancellationToken);
                 }
 

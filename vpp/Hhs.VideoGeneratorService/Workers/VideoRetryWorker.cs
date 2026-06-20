@@ -1,14 +1,17 @@
+using Hhs.VideoGeneratorService.Configuration;
 using Hhs.VideoGeneratorService.Services;
 
 namespace Hhs.VideoGeneratorService.Workers;
 
 public sealed class VideoRetryWorker(
     IServiceProvider serviceProvider,
+    VideoRetrySettings retrySettings,
     ILogger<VideoRetryWorker> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        logger.LogInformation("Video retry worker started.");
+        logger.LogInformation("Video retry worker started. Interval: {IntervalSeconds}s, Max Retries: {MaxRetryCount}",
+            retrySettings.RetryWorkerIntervalSeconds, retrySettings.MaxRetryCount);
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -30,7 +33,7 @@ public sealed class VideoRetryWorker(
                 logger.LogError(ex, "Video retry worker failed.");
             }
 
-            await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
+            await Task.Delay(TimeSpan.FromSeconds(retrySettings.RetryWorkerIntervalSeconds), stoppingToken);
         }
     }
 }

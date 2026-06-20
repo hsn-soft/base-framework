@@ -1,14 +1,17 @@
+using Hhs.TextNormalizerService.Configuration;
 using Hhs.TextNormalizerService.Services;
 
 namespace Hhs.TextNormalizerService.Workers;
 
 public sealed class OutlineProviderPollingWorker(
     IServiceProvider serviceProvider,
+    OutlinePollingSettings pollingSettings,
     ILogger<OutlineProviderPollingWorker> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        logger.LogInformation("Outline provider polling worker started.");
+        logger.LogInformation("Outline provider polling worker started. Interval: {IntervalSeconds}s, Max Attempts: {MaxAttempts}",
+            pollingSettings.IntervalSeconds, pollingSettings.MaxAttempts);
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -29,7 +32,7 @@ public sealed class OutlineProviderPollingWorker(
                 logger.LogError(ex, "Outline polling worker failed.");
             }
 
-            await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+            await Task.Delay(TimeSpan.FromSeconds(pollingSettings.IntervalSeconds), stoppingToken);
         }
     }
 }

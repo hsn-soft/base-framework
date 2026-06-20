@@ -1,10 +1,10 @@
 using Hhs.Shared.Events;
 using Hhs.Shared.RabbitMQ;
+using Hhs.TextNormalizerService.Configuration;
 using Hhs.TextNormalizerService.Entities;
 using Hhs.TextNormalizerService.Mongo;
 using Hhs.TextNormalizerService.Providers;
 using MongoDB.Driver;
-using Hhs.Shared.Configuration;
 
 namespace Hhs.TextNormalizerService.Services;
 
@@ -13,9 +13,9 @@ public sealed class OutlineProviderPollingAppService(
     IOutlineProviderResolver outlineProviderResolver,
     IEventBus eventBus,
     ILogger<OutlineProviderPollingAppService> logger,
-    PollingOptions pollingOptions)
+    OutlinePollingSettings pollingSettings)
 {
-    private readonly PollingOptions _pollingOptions = pollingOptions;
+    private readonly OutlinePollingSettings _pollingSettings = pollingSettings;
 
     public async Task PollDueOutlineRequestsAsync(CancellationToken cancellationToken)
     {
@@ -106,7 +106,7 @@ public sealed class OutlineProviderPollingAppService(
                 if (!status.IsProcessed)
                 {
                     request.OutlinePollingCount++;
-                    request.NextOutlinePollAtUtc = DateTime.UtcNow.AddSeconds(_pollingOptions.OutlinePollingIntervalSeconds);
+                    request.NextOutlinePollAtUtc = DateTime.UtcNow.AddSeconds(_pollingSettings.IntervalSeconds);
                     request.UpdatedAtUtc = DateTime.UtcNow;
 
                     await ReplaceCustomerAsync(request, cancellationToken);
@@ -164,7 +164,7 @@ public sealed class OutlineProviderPollingAppService(
                     request.Status = "OUTLINE_PROVIDER_POLLING";
                     request.OutlineStatus = "POLLING";
                     request.CurrentStep = EventNames.OutlineProviderPollingStarted;
-                    request.NextOutlinePollAtUtc = DateTime.UtcNow.AddSeconds(5);
+                    request.NextOutlinePollAtUtc = DateTime.UtcNow.AddSeconds(_pollingSettings.BackoffIntervalSeconds);
 
                     await ReplaceCustomerAsync(request, cancellationToken);
                 }
@@ -208,7 +208,7 @@ public sealed class OutlineProviderPollingAppService(
                 try
                 {
                     var claimUpdate = Builders<AnalysisContentNormalizedRequest>.Update
-                        .Set("Items.$.NextOutlinePollAtUtc", DateTime.UtcNow.AddSeconds(5))
+                        .Set("Items.$.NextOutlinePollAtUtc", DateTime.UtcNow.AddSeconds(_pollingSettings.IntervalSeconds))
                         .Set("Items.$.UpdatedAtUtc", DateTime.UtcNow)
                         .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);
 
