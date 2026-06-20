@@ -46,6 +46,30 @@ var storageProviderSettings = builder.Configuration.GetSection(StorageProviderSe
     .Get<StorageProviderSettings>() ?? new StorageProviderSettings();
 builder.Services.AddSingleton(storageProviderSettings);
 
+// CDN Provider Resolver
+builder.Services.AddSingleton<ICdnProviderResolver>(sp =>
+{
+    var cdnProviders = new Dictionary<string, CdnProviderSettingsBase>(StringComparer.OrdinalIgnoreCase);
+    var cdnSection = builder.Configuration.GetSection("Provider:Cdn");
+
+    if (cdnSection.Exists())
+    {
+        foreach (var child in cdnSection.GetChildren())
+        {
+            var settings = child.Get<CdnProviderSettingsBase>();
+            if (settings != null)
+            {
+                cdnProviders[child.Key] = settings;
+            }
+        }
+    }
+
+    return new CdnProviderResolver(cdnProviders);
+});
+
+// CDN Storage Provider Factory
+builder.Services.AddSingleton<CdnStorageProviderFactory>();
+
 var audioPollingSettings = builder.Configuration.GetSection(AudioPollingSettings.SectionName)
     .Get<AudioPollingSettings>() ?? new AudioPollingSettings();
 builder.Services.AddSingleton(audioPollingSettings);
@@ -64,6 +88,9 @@ builder.Services.AddSingleton<VideoMongoContext>();
 
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<IEventBus, RabbitMqEventBus>();
+
+// Storage Service (CDN + Storage integration)
+builder.Services.AddScoped<IStorageService, DummyStorageService>();
 
 builder.Services.AddScoped<VideoGeneratorInboxStore>();
 builder.Services.AddScoped<VideoOperationAppService>();

@@ -406,9 +406,21 @@ public async Task CreateVideoRequestAsync(
 
             await ReplaceAudioAsync(audioRequest, cancellationToken);
 
-            var storageUrl = await storageService.UploadAsync(@event.LocalFilePath, cancellationToken);
+            // Upload file to CDN using selected provider
+            var cdnProviderKey = audioRequest.AudioCdnProviderKey ?? "CdnAbc";
+
+            await using var fileStream = File.OpenRead(@event.LocalFilePath);
+            var fileName = Path.GetFileName(@event.LocalFilePath);
+
+            var (storageUrl, cdnUrl) = await storageService.UploadAsync(
+                cdnProviderKey,
+                fileStream,
+                fileName,
+                cancellationToken);
 
             audioRequest.AudioStorageUrl = storageUrl;
+            audioRequest.AudioCdnUrl = cdnUrl;
+            audioRequest.AudioCdnProviderKey = cdnProviderKey;
             audioRequest.Status = "UPLOADED";
             audioRequest.CurrentStep = EventNames.AudioFileUploadCompleted;
             audioRequest.UpdatedAtUtc = DateTime.UtcNow;
@@ -678,9 +690,21 @@ public async Task HandleAudioUploadCompletedAsync(
 
             await ReplaceVideoAsync(videoRequest, cancellationToken);
 
-            var storageUrl = await storageService.UploadAsync(@event.LocalFilePath, cancellationToken);
+            // Upload file to CDN using selected provider
+            var cdnProviderKey = videoRequest.VideoCdnProviderKey ?? "CdnAbc";
+
+            await using var fileStream = File.OpenRead(@event.LocalFilePath);
+            var fileName = Path.GetFileName(@event.LocalFilePath);
+
+            var (storageUrl, cdnUrl) = await storageService.UploadAsync(
+                cdnProviderKey,
+                fileStream,
+                fileName,
+                cancellationToken);
 
             videoRequest.FinalVideoStorageUrl = storageUrl;
+            videoRequest.VideoCdnUrl = cdnUrl;
+            videoRequest.VideoCdnProviderKey = cdnProviderKey;
             videoRequest.Status = "COMPLETED";
             videoRequest.CurrentStep = EventNames.VideoGenerationResultPublished;
             videoRequest.UpdatedAtUtc = DateTime.UtcNow;

@@ -25,6 +25,9 @@ public sealed class VideoRequest
     public string? ProviderFileName { get; set; }
     public string? LocalVideoFilePath { get; set; }
     public string? FinalVideoStorageUrl { get; set; }
+    public string? VideoStorageUrl { get; set; }
+    public string? VideoCdnUrl { get; set; }
+    public string? VideoCdnProviderKey { get; set; }
 
     public int RetryCount { get; set; }
     public int MaxRetryCount { get; set; } = 30;
@@ -68,6 +71,8 @@ public sealed class AudioRequest
     public string? ProviderFileName { get; set; }
     public string? LocalAudioFilePath { get; set; }
     public string? AudioStorageUrl { get; set; }
+    public string? AudioCdnUrl { get; set; }
+    public string? AudioCdnProviderKey { get; set; }
 
     public int RetryCount { get; set; }
     public int MaxRetryCount { get; set; } = 30;

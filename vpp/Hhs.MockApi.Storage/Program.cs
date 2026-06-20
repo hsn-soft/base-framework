@@ -1,122 +1,128 @@
+using System.Collections.Concurrent;
+
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddSingleton<StorageService>();
+builder.Services.AddHttpClient();
 
 var app = builder.Build();
 
-// Storage directory for uploaded files
-var storageDir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "media");
-Directory.CreateDirectory(storageDir);
+var mediaDir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "media", "storage");
+Directory.CreateDirectory(mediaDir);
 
-// Upload endpoint - accept multipart form data with file
-app.MapPost("/storage/upload", async (HttpRequest request) =>
+// Upload file to central storage
+app.MapPost("/upload", async (IFormFile file, StorageService service, CancellationToken ct) =>
 {
-    try
-    {
-        if (!request.HasFormContentType)
-            return Results.BadRequest(new { error = "Content-Type must be multipart/form-data" });
+    if (file == null || file.Length == 0)
+        return Results.BadRequest("File is required");
 
-        var form = await request.ReadFormAsync();
-        var file = form.Files["file"];
-
-        if (file == null || file.Length == 0)
-            return Results.BadRequest(new { error = "No file provided" });
-
-        // Generate unique filename
-        var fileName = $"{Guid.NewGuid():N}-{file.FileName}";
-        var filePath = Path.Combine(storageDir, fileName);
-
-        using (var stream = System.IO.File.Create(filePath))
-        {
-            await file.CopyToAsync(stream);
-        }
-
-        var fakeRemoteUrl = $"https://fake-storage.internal/files/{fileName}";
-        return Results.Ok(new
-        {
-            fileName,
-            url = fakeRemoteUrl,
-            size = file.Length,
-            contentType = file.ContentType
-        });
-    }
-    catch (Exception ex)
-    {
-        return Results.BadRequest(new { error = ex.Message });
-    }
-});
-
-// Alternative upload endpoint - accept raw binary data with optional local filename
-app.MapPost("/storage/upload-binary", async (HttpRequest request) =>
-{
-    try
-    {
-        var localFileName = request.Query["fileName"].ToString();
-
-        // Generate storage filename by prefixing local filename with 'storage_'
-        var storageFileName = $"storage_{localFileName}";
-        var filePath = Path.Combine(storageDir, storageFileName);
-
-        using (var stream = System.IO.File.Create(filePath))
-        {
-            await request.Body.CopyToAsync(stream);
-        }
-
-        var fakeRemoteUrl = $"https://fake-storage.internal/files/{storageFileName}";
-        return Results.Ok(new
-        {
-            localFileName,
-            fileName = storageFileName,
-            url = fakeRemoteUrl,
-            storagePath = filePath
-        });
-    }
-    catch (Exception ex)
-    {
-        return Results.BadRequest(new { error = ex.Message });
-    }
-});
-
-// Download endpoint
-app.MapGet("/storage/files/{fileName}", async (string fileName) =>
-{
-    var filePath = Path.Combine(storageDir, fileName);
-    if (!System.IO.File.Exists(filePath))
-        return Results.NotFound(new { error = $"File not found: {fileName}" });
-
-    var fileContent = await System.IO.File.ReadAllBytesAsync(filePath);
-    var contentType = GetContentType(fileName);
-    return Results.File(fileContent, contentType, fileName);
-});
-
-// List all uploaded files
-app.MapGet("/storage/list", () =>
-{
-    var files = Directory.GetFiles(storageDir)
-        .Select(filePath => new
-        {
-            fileName = Path.GetFileName(filePath),
-            size = new FileInfo(filePath).Length,
-            url = $"https://fake-storage.internal/files/{Path.GetFileName(filePath)}"
-        })
-        .ToList();
+    var fileId = await service.UploadAsync(file, mediaDir, ct);
 
     return Results.Ok(new
     {
-        storagePath = storageDir,
-        fileCount = files.Count,
+        success = true,
+        fileId,
+        fileName = file.FileName,
+        fileSize = file.Length,
+        provider = "storage"
+    });
+});
+
+// Download file from central storage
+app.MapGet("/download/{fileId}", async (string fileId, StorageService service, CancellationToken ct) =>
+{
+    var filePath = service.GetFilePath(fileId, mediaDir);
+    if (!File.Exists(filePath))
+        return Results.NotFound();
+
+    var fileContent = await File.ReadAllBytesAsync(filePath, ct);
+    return Results.File(fileContent, "application/octet-stream", Path.GetFileName(filePath));
+});
+
+// List all stored files
+app.MapGet("/list", (StorageService service) =>
+{
+    var files = service.GetAllFiles(mediaDir);
+    return Results.Ok(new
+    {
+        total = files.Count,
         files
     });
 });
 
 // Health check
-app.MapGet("/health", () => Results.Ok(new { status = "healthy", storageDir }));
+app.MapGet("/health", () => Results.Ok(new { status = "healthy", provider = "storage" }));
 
 app.Run();
 
-static string GetContentType(string fileName) => Path.GetExtension(fileName).ToLower() switch
+public sealed class StorageService
 {
-    ".mp3" => "audio/mpeg",
-    ".mp4" => "video/mp4",
-    ".txt" => "text/plain",
-    ".pdf" => "application/pdf",
-    _ => "application/octet-stream"
-};
+    private static readonly ConcurrentDictionary<string, StorageFileEntry> FileStore = new();
+    private readonly ILogger<StorageService> _logger;
+
+    public StorageService(ILogger<StorageService> logger)
+    {
+        _logger = logger;
+    }
+
+    public async Task<string> UploadAsync(IFormFile file, string storageDir, CancellationToken ct)
+    {
+        var fileId = Guid.NewGuid().ToString("N");
+        var dateFolder = DateTime.UtcNow.ToString("yyyy/MM/dd");
+        var uploadDir = Path.Combine(storageDir, dateFolder);
+        Directory.CreateDirectory(uploadDir);
+
+        var filePath = Path.Combine(uploadDir, $"{fileId}_{file.FileName}");
+
+        await using (var stream = file.OpenReadStream())
+        {
+            await using var fileStream = File.Create(filePath);
+            await stream.CopyToAsync(fileStream, ct);
+        }
+
+        FileStore[fileId] = new StorageFileEntry
+        {
+            OriginalFileName = file.FileName,
+            FilePath = filePath,
+            FileSize = file.Length,
+            UploadedAtUtc = DateTime.UtcNow
+        };
+
+        _logger.LogInformation("File stored: {FileId}, OriginalName: {FileName}, Size: {Size}",
+            fileId, file.FileName, file.Length);
+
+        return fileId;
+    }
+
+    public string GetFilePath(string fileId, string storageDir)
+    {
+        if (FileStore.TryGetValue(fileId, out var entry))
+            return entry.FilePath;
+
+        // Fallback: try to find in directory
+        var files = Directory.GetFiles(storageDir, $"{fileId}_*", SearchOption.AllDirectories);
+        if (files.Length > 0)
+            return files[0];
+
+        return Path.Combine(storageDir, fileId);
+    }
+
+    public List<object> GetAllFiles(string storageDir)
+    {
+        return FileStore.Select(kvp => new
+        {
+            fileId = kvp.Key,
+            fileName = kvp.Value.OriginalFileName,
+            size = kvp.Value.FileSize,
+            uploadedAt = kvp.Value.UploadedAtUtc
+        }).Cast<object>().ToList();
+    }
+}
+
+public sealed class StorageFileEntry
+{
+    public string OriginalFileName { get; set; } = string.Empty;
+    public string FilePath { get; set; } = string.Empty;
+    public long FileSize { get; set; }
+    public DateTime UploadedAtUtc { get; set; }
+}

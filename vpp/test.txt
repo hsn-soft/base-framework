@@ -1,0 +1,18 @@
+Bu bir test dosyasıdır.
+Mock CDN API'leri bu dosyayı upload ve download yapacaklar.
+
+Test Metni:
+- İçerik 1
+- İçerik 2
+- İçerik 3
+
+Timestamp: 2026-06-20T18:30:00Z
+
+Bu dosya 4 farklı CDN provider'a yüklenecek:
+1. CdnLocalMinio (5070) - MinIO backend
+2. CdnBunnySelf (5071) - Self-hosted disk
+3. CdnBunnyS3 (5072) - S3 mock backend
+4. CdnAbc (5073) - Storage backend (5074)
+
+Her upload sonrasında dosya nerede saklanıyor göreceğiz.
+Her download sonrasında aynı içeriğin döndüğünü doğrulayacağız.
