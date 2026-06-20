@@ -4,8 +4,6 @@ namespace Hhs.VideoGeneratorService.Configuration.Providers.Storage;
 
 public sealed class LocalStorageSettings : StorageProviderSettingsBase
 {
-    public const string SectionName = "Provider:Storage:Local";
-
     public LocalStorageSettings()
     {
         Type = "Local";
