@@ -658,13 +658,13 @@ public sealed class NormalizerOperationAppService(
             return StatusNames.OutlineProviderRequestStarted;
 
         if (analysis.Items.All(x => x.OutlineStatus == StatusNames.Completed))
-            return "OUTLINE_COMPLETED";
+            return StatusNames.OutlineCompleted;
 
         if (analysis.Items.Any(x => x.OutlineStatus == StatusNames.Completed))
-            return "OUTLINE_PARTIALLY_COMPLETED";
+            return StatusNames.OutlinePartiallyCompleted;
 
         if (analysis.Items.Any(x => x.ScrapingStatus == StatusNames.Completed))
-            return "SCRAPING_PARTIALLY_COMPLETED";
+            return StatusNames.ScrapingPartiallyCompleted;
 
         return analysis.Status;
     }
@@ -981,7 +981,7 @@ public sealed class NormalizerOperationAppService(
                 Builders<AnalysisContentNormalizedRequest>.Filter.Eq(x => x.Id, analysisRequestId),
                 Builders<AnalysisContentNormalizedRequest>.Filter.Nin(
                     x => x.Status,
-                    new[] { StatusNames.Completed, "OUTLINE_COMPLETED" }));
+                    new[] { StatusNames.Completed, StatusNames.OutlineCompleted }));
 
         var update = Builders<AnalysisContentNormalizedRequest>.Update
             .Set(x => x.Status, status)

@@ -1,3 +1,5 @@
+using Hhs.Shared.Events;
+
 namespace Hhs.TextNormalizerService.Entities;
 
 public sealed class AnalysisNormalizedItem
@@ -11,11 +13,11 @@ public sealed class AnalysisNormalizedItem
     public string? Path { get; set; }
 
     // Scraping State
-    public string ScrapingStatus { get; set; } = "CREATED";
+    public string ScrapingStatus { get; set; } = StatusNames.Created;
     public ScrapingResult? ScrapingResult { get; set; }
 
     // Outline Generation State
-    public string OutlineStatus { get; set; } = "CREATED";
+    public string OutlineStatus { get; set; } = StatusNames.Created;
     public OutlineResult? OutlineResult { get; set; }
 
     // Outline Polling & Tracking
@@ -25,8 +27,8 @@ public sealed class AnalysisNormalizedItem
     public int MaxOutlinePollingCount { get; set; } = 60;
 
     // Status & Progress
-    public string Status { get; set; } = "CREATED";
-    public string CurrentStep { get; set; } = "CREATED";
+    public string Status { get; set; } = StatusNames.Created;
+    public string CurrentStep { get; set; } = StatusNames.Created;
 
     // Retry Configuration
     public int RetryCount { get; set; }
