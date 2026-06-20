@@ -6,6 +6,7 @@ public static class StatusNames
     public const string Created = "CREATED";
     public const string Started = "STARTED";
     public const string Completed = "COMPLETED";
+    public const string Processing = "PROCESSING";
     public const string Failed = "FAILED";
     public const string WaitingRetry = "WAITING_RETRY";
 

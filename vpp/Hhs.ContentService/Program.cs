@@ -48,7 +48,7 @@ app.MapGet("/customer-contents/{id}", async (
     return Results.Ok(new
     {
         id = content.Id,
-        status = content.NormalizeStatus == "COMPLETED" && content.VideoStatus == "COMPLETED" ? "COMPLETED" : "PROCESSING",
+        status = content.NormalizeStatus == StatusNames.Completed && content.VideoStatus == StatusNames.Completed ? StatusNames.Completed : StatusNames.Processing,
         normalizeStatus = content.NormalizeStatus,
         videoStatus = content.VideoStatus,
         url = content.Url,
@@ -82,7 +82,7 @@ app.MapGet("/analysis-contents/{id}", async (
     return Results.Ok(new
     {
         id = content.Id,
-        status = content.NormalizeStatus == "COMPLETED" && content.VideoStatus == "COMPLETED" ? "COMPLETED" : "PROCESSING",
+        status = content.NormalizeStatus == StatusNames.Completed && content.VideoStatus == StatusNames.Completed ? StatusNames.Completed : StatusNames.Processing,
         normalizeStatus = content.NormalizeStatus,
         videoStatus = content.VideoStatus,
         title = content.Title,
