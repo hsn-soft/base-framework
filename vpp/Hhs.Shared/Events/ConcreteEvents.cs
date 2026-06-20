@@ -199,6 +199,7 @@ public sealed record NormalizerResultPublishedEto : IntegrationEvent
     {
         EventName = EventNames.NormalizerResultPublished;
         Facility = EventNames.NormalizerResultPublished;
+        ContentProcessType = ContentProcessTypes.CustomerContent;
     }
 }
 
