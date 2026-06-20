@@ -22,11 +22,9 @@ public sealed class VideoOperationAppService(
     HttpClient httpClient,
     ILogger<VideoOperationAppService> logger,
     RetryDelayCalculator retryDelayCalculator,
-    IOptions<ProviderEndpointsOptions> options,
-    VideoEntityDefaults entityDefaults)
+    IOptions<ProviderEndpointsOptions> options)
 {
     private readonly RetryDelayCalculator _retryDelayCalculator = retryDelayCalculator;
-    private readonly VideoEntityDefaults _entityDefaults = entityDefaults;
 public async Task CreateVideoRequestAsync(
     VideoGenerationApprovedEto @event,
     CancellationToken cancellationToken)
