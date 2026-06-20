@@ -28,10 +28,6 @@ var normalizerRetrySettings = builder.Configuration.GetSection(nameof(Normalizer
 builder.Services.AddSingleton(normalizerRetrySettings);
 builder.Services.AddSingleton(_ => new RetryDelayCalculator(normalizerRetrySettings.DelaySeconds));
 
-var normalizerEntityDefaults = builder.Configuration.GetSection(NormalizerEntityDefaults.SectionName)
-    .Get<NormalizerEntityDefaults>() ?? new NormalizerEntityDefaults();
-builder.Services.AddSingleton(normalizerEntityDefaults);
-
 BsonRegisterTools.MongoConfigure();
 builder.Services.AddSingleton<NormalizerMongoContext>();
 
