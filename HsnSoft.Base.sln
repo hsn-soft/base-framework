@@ -139,13 +139,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hhs.MockApi.OutlineFast", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hhs.MockApi.Storage", "vpp\Hhs.MockApi.Storage\Hhs.MockApi.Storage.csproj", "{DA6710C3-E1A0-4A34-ABB9-90778F5A63FE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hhs.MockApi.VideoCloud", "vpp\Hhs.MockApi.VideoCloud\Hhs.MockApi.VideoCloud.csproj", "{5744F4FE-1332-4A00-93AB-617EE3E5C185}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hhs.MockApi.VideoQueueExternal", "vpp\Hhs.MockApi.VideoQueueExternal\Hhs.MockApi.VideoCloud.csproj", "{5744F4FE-1332-4A00-93AB-617EE3E5C185}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hhs.MockApi.VideoFast", "vpp\Hhs.MockApi.VideoFast\Hhs.MockApi.VideoFast.csproj", "{DC65DDB5-821E-42DB-B135-833A10EB6218}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hhs.MockApi.VideoFastExternal", "vpp\Hhs.MockApi.VideoFastExternal\Hhs.MockApi.VideoFast.csproj", "{DC65DDB5-821E-42DB-B135-833A10EB6218}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hhs.MockApi.VideoPro", "vpp\Hhs.MockApi.VideoPro\Hhs.MockApi.VideoPro.csproj", "{2CFC0854-CF29-45E1-BDB7-FB56D6543208}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hhs.MockApi.VideoQueueInternal", "vpp\Hhs.MockApi.VideoQueueInternal\Hhs.MockApi.VideoPro.csproj", "{2CFC0854-CF29-45E1-BDB7-FB56D6543208}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hhs.MockApi.VideoSync", "vpp\Hhs.MockApi.VideoSync\Hhs.MockApi.VideoSync.csproj", "{684F8B86-E0E7-4B4B-AF11-0F9912640D69}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hhs.MockApi.VideoFastInternal", "vpp\Hhs.MockApi.VideoFastInternal\Hhs.MockApi.VideoSync.csproj", "{684F8B86-E0E7-4B4B-AF11-0F9912640D69}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hhs.MockApi.OutlineQueue", "vpp\Hhs.MockApi.OutlineQueue\Hhs.MockApi.OutlineQueue.csproj", "{0E2A2794-AB42-4485-AC7D-312C24C09C8D}"
 EndProject

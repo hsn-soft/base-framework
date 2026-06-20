@@ -22,7 +22,7 @@ public sealed class VideoFastInternalProvider : IVideoProvider
     {
         ProviderKey = ProviderKey,
         ExecutionMode = ProviderExecutionMode.ImmediateResult,
-        AudioInputMode = VideoAudioInputMode.NoAudioRequired
+        AudioInputMode = VideoAudioInputMode.ProviderCreatesAudio
     };
 
     public async Task<VideoCreateResponse> CreateAsync(
