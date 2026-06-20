@@ -5,32 +5,32 @@ using System.Text.Json;
 
 namespace Hhs.VideoGeneratorService.Providers;
 
-public sealed class VideoProProvider : IVideoProvider
+public sealed class VideoQueueExternalProvider : IVideoProvider
 {
     private readonly HttpClient _httpClient;
     private readonly string _baseUrl;
 
-    public VideoProProvider(HttpClient httpClient, IOptions<ProviderEndpointsOptions> options)
+    public VideoQueueExternalProvider(HttpClient httpClient, IOptions<ProviderEndpointsOptions> options)
     {
         _httpClient = httpClient;
-        _baseUrl = options.Value.VideoProviders.ProBaseUrl;
+        _baseUrl = options.Value.VideoProviders.QueueExternalBaseUrl;
     }
 
-    public string ProviderKey => ProviderKeys.VideoPro;
+    public string ProviderKey => ProviderKeys.VideoQueueExternal;
 
     public VideoProviderCapabilities Capabilities => new()
     {
         ProviderKey = ProviderKey,
         ExecutionMode = ProviderExecutionMode.AsyncPolling,
-        AudioInputMode = VideoAudioInputMode.AudioFileRequired
+        AudioInputMode = VideoAudioInputMode.AudioUrlListRequired
     };
 
     public async Task<VideoCreateResponse> CreateAsync(
         VideoCreateRequest request,
         CancellationToken cancellationToken)
     {
-        if (request.AudioFilePaths.Count == 0)
-            throw new InvalidOperationException("VideoProviderC requires audio file paths.");
+        if (request.AudioUrls.Count == 0)
+            throw new InvalidOperationException("VideoProviderB requires audio urls.");
 
         var response = await _httpClient.PostAsJsonAsync(
             $"{_baseUrl}/video/generate",
@@ -47,7 +47,9 @@ public sealed class VideoProProvider : IVideoProvider
         };
     }
 
-    public async Task<VideoStatusResponse> GetStatusAsync(string providerTrackId, CancellationToken cancellationToken)
+    public async Task<VideoStatusResponse> GetStatusAsync(
+        string providerTrackId,
+        CancellationToken cancellationToken)
     {
         var response = await _httpClient.GetAsync(
             $"{_baseUrl}/video/status/{providerTrackId}",

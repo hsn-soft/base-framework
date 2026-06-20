@@ -1,34 +1,34 @@
 using System.Collections.Concurrent;
-using Hhs.MockApi.VideoCloud;
+using Hhs.MockApi.VideoQueueInternal;
 using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.Configure<MockApiOptions>(builder.Configuration.GetSection("MockApi"));
-builder.Services.AddSingleton<VideoCloudService>();
+builder.Services.AddSingleton<VideoQueueInternalService>();
 
 var app = builder.Build();
 
 var mockFilesDir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "media");
 Directory.CreateDirectory(mockFilesDir);
 
-app.MapPost("/video/generate", (VideoRequest request, VideoCloudService service) =>
+app.MapPost("/video/generate", (VideoRequest request, VideoQueueInternalService service) =>
 {
-    var trackingId = service.CreateRequest(request.AudioUrls);
-    return Results.Ok(new { provider = "video-cloud", trackingId, pollingWindowSec = 150 });
+    var trackingId = service.CreateRequest();
+    return Results.Ok(new { provider = "video-queue-internal", trackingId, pollingWindowSec = 150 });
 });
 
-app.MapGet("/video/status/{trackingId}", async (string trackingId, VideoCloudService service, CancellationToken ct) =>
+app.MapGet("/video/status/{trackingId}", async (string trackingId, VideoQueueInternalService service, CancellationToken ct) =>
 {
     var (isReady, fileUrl, error, fileName) = await service.GetStatusAsync(trackingId, mockFilesDir, ct);
     if (!isReady)
-        return Results.Ok(new { provider = "video-cloud", trackingId, status = "processing", error });
-    return Results.Ok(new { provider = "video-cloud", trackingId, status = "completed", remoteFileUrl = fileUrl, fileName });
+        return Results.Ok(new { provider = "video-queue-internal", trackingId, status = "processing", error });
+    return Results.Ok(new { provider = "video-queue-internal", trackingId, status = "completed", remoteFileUrl = fileUrl, fileName });
 });
 
 app.MapGet("/video/download/{trackingId}", async (string trackingId) =>
 {
-    var filePath = VideoCloudService.GetFilePath(trackingId, mockFilesDir);
+    var filePath = VideoQueueInternalService.GetFilePath(trackingId, mockFilesDir);
     if (!System.IO.File.Exists(filePath))
         return Results.NotFound();
 
@@ -38,28 +38,27 @@ app.MapGet("/video/download/{trackingId}", async (string trackingId) =>
 
 app.Run();
 
-namespace Hhs.MockApi.VideoCloud
+namespace Hhs.MockApi.VideoQueueInternal
 {
     public sealed class MockApiOptions
     {
         public string SelfBaseUrl { get; set; } = string.Empty;
     }
 
-    public sealed class VideoCloudService
+    public sealed class VideoQueueInternalService
     {
-        private static readonly ConcurrentDictionary<string, VideoCloudEntry> Store = new();
+        private static readonly ConcurrentDictionary<string, VideoQueueInternalEntry> Store = new();
         private readonly IOptions<MockApiOptions> _options;
 
-        public VideoCloudService(IOptions<MockApiOptions> options)
+        public VideoQueueInternalService(IOptions<MockApiOptions> options)
         {
             _options = options;
         }
 
-        public string CreateRequest(List<string> audioUrls)
+        public string CreateRequest()
         {
             var trackingId = Guid.NewGuid().ToString("N");
-            var createdAt = DateTime.UtcNow;
-            Store[trackingId] = new VideoCloudEntry { AudioUrls = audioUrls, CreatedAt = createdAt };
+            Store[trackingId] = new VideoQueueInternalEntry { CreatedAt = DateTime.UtcNow };
             return trackingId;
         }
 
@@ -77,8 +76,7 @@ namespace Hhs.MockApi.VideoCloud
 
             if (!System.IO.File.Exists(filePath))
             {
-                var audioInfo = entry.AudioUrls?.Count > 0 ? $"Audio URLs: {string.Join(", ", entry.AudioUrls)}" : "No audio";
-                await System.IO.File.WriteAllTextAsync(filePath, $"Mock Video File\nTracking ID: {trackingId}\n{audioInfo}\nCreated: {DateTime.UtcNow:O}", cancellationToken);
+                await System.IO.File.WriteAllTextAsync(filePath, $"Mock Video File (Internal Audio)\nTracking ID: {trackingId}\nCreated: {DateTime.UtcNow:O}", cancellationToken);
             }
 
             var downloadUrl = $"{_options.Value.SelfBaseUrl}/video/download/{trackingId}";
@@ -87,13 +85,12 @@ namespace Hhs.MockApi.VideoCloud
 
         public static string GetFilePath(string trackingId, string mockFilesDir)
         {
-            return Path.Combine(mockFilesDir, $"mock_video_cloud_{trackingId}.mp4.txt");
+            return Path.Combine(mockFilesDir, $"mock_video_queue_internal_{trackingId}.mp4.txt");
         }
     }
 
-    public sealed class VideoCloudEntry
+    public sealed class VideoQueueInternalEntry
     {
-        public List<string> AudioUrls { get; set; } = new();
         public DateTime CreatedAt { get; set; }
     }
 

@@ -18,7 +18,7 @@ Content-Type: application/json
   "url": "https://example.com/s1-all-immediate",
   "outlineProviderKey": "outline-fast",
   "audioProviderKey": "audio-quick",
-  "videoProviderKey": "video-fast"
+  "videoProviderKey": "video-fast-external"
 }
 
 ### ============================================
@@ -33,7 +33,7 @@ Content-Type: application/json
   "url": "https://example.com/s2-immediate-sync",
   "outlineProviderKey": "outline-fast",
   "audioProviderKey": "audio-quick",
-  "videoProviderKey": "video-sync"
+  "videoProviderKey": "video-fast-internal"
 }
 
 ### ============================================
@@ -48,7 +48,7 @@ Content-Type: application/json
   "url": "https://example.com/s3-fast-cloud",
   "outlineProviderKey": "outline-fast",
   "audioProviderKey": "audio-quick",
-  "videoProviderKey": "video-cloud"
+  "videoProviderKey": "video-queue-external"
 }
 
 ### ============================================
@@ -63,7 +63,7 @@ Content-Type: application/json
   "url": "https://example.com/s4-fast-pro",
   "outlineProviderKey": "outline-fast",
   "audioProviderKey": "audio-quick",
-  "videoProviderKey": "video-pro"
+  "videoProviderKey": "video-queue-internal"
 }
 
 ### ============================================
@@ -78,7 +78,7 @@ Content-Type: application/json
   "url": "https://example.com/s5-fast-hq-cloud",
   "outlineProviderKey": "outline-fast",
   "audioProviderKey": "audio-hq",
-  "videoProviderKey": "video-cloud"
+  "videoProviderKey": "video-queue-external"
 }
 
 ### ============================================
@@ -93,7 +93,7 @@ Content-Type: application/json
   "url": "https://example.com/s6-fast-hq-pro",
   "outlineProviderKey": "outline-fast",
   "audioProviderKey": "audio-hq",
-  "videoProviderKey": "video-pro"
+  "videoProviderKey": "video-queue-internal"
 }
 
 ### ============================================
@@ -108,7 +108,7 @@ Content-Type: application/json
   "url": "https://example.com/s7-queue-hq-cloud",
   "outlineProviderKey": "outline-queue",
   "audioProviderKey": "audio-hq",
-  "videoProviderKey": "video-cloud"
+  "videoProviderKey": "video-queue-external"
 }
 
 ### ============================================
@@ -123,7 +123,7 @@ Content-Type: application/json
   "url": "https://example.com/s8-queue-hq-pro",
   "outlineProviderKey": "outline-queue",
   "audioProviderKey": "audio-hq",
-  "videoProviderKey": "video-pro"
+  "videoProviderKey": "video-queue-internal"
 }
 
 ###

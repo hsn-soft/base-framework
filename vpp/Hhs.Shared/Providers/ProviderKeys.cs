@@ -11,8 +11,8 @@ public static class ProviderKeys
     public const string AudioHQ = "audio-hq";
 
     // Video Providers
-    public const string VideoFast = "video-fast";
-    public const string VideoSync = "video-sync";
-    public const string VideoCloud = "video-cloud";
-    public const string VideoPro = "video-pro";
+    public const string VideoFastExternal = "video-fast-external";
+    public const string VideoFastInternal = "video-fast-internal";
+    public const string VideoQueueExternal = "video-queue-external";
+    public const string VideoQueueInternal = "video-queue-internal";
 }

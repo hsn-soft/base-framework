@@ -16,8 +16,8 @@ public sealed class AudioProviderEndpoints
 
 public sealed class VideoProviderEndpoints
 {
-    public string FastBaseUrl { get; set; } = string.Empty;
-    public string SyncBaseUrl { get; set; } = string.Empty;
-    public string ProBaseUrl { get; set; } = string.Empty;
-    public string CloudBaseUrl { get; set; } = string.Empty;
+    public string FastExternalBaseUrl { get; set; } = string.Empty;
+    public string FastInternalBaseUrl { get; set; } = string.Empty;
+    public string QueueExternalBaseUrl { get; set; } = string.Empty;
+    public string QueueInternalBaseUrl { get; set; } = string.Empty;
 }

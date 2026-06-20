@@ -34,10 +34,10 @@ builder.Services.AddScoped<IAudioProvider, AudioQuickProvider>();
 builder.Services.AddScoped<IAudioProvider, AudioHQProvider>();
 builder.Services.AddScoped<IAudioProviderResolver, AudioProviderResolver>();
 
-builder.Services.AddScoped<IVideoProvider, VideoFastProvider>();
-builder.Services.AddScoped<IVideoProvider, VideoSyncProvider>();
-builder.Services.AddScoped<IVideoProvider, VideoCloudProvider>();
-builder.Services.AddScoped<IVideoProvider, VideoProProvider>();
+builder.Services.AddScoped<IVideoProvider, VideoFastExternalProvider>();
+builder.Services.AddScoped<IVideoProvider, VideoFastInternalProvider>();
+builder.Services.AddScoped<IVideoProvider, VideoQueueExternalProvider>();
+builder.Services.AddScoped<IVideoProvider, VideoQueueInternalProvider>();
 builder.Services.AddScoped<IVideoProviderResolver, VideoProviderResolver>();
 builder.Services.AddScoped<IFileDownloader, DummyFileDownloader>();
 builder.Services.AddScoped<IStorageService, DummyStorageService>();

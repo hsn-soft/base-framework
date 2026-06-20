@@ -1,25 +1,25 @@
-using Hhs.MockApi.VideoSync;
+using Hhs.MockApi.VideoFastExternal;
 using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.Configure<MockApiOptions>(builder.Configuration.GetSection("MockApi"));
-builder.Services.AddSingleton<VideoSyncService>();
+builder.Services.AddSingleton<VideoFastExternalService>();
 
 var app = builder.Build();
 
 var mockFilesDir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "media");
 Directory.CreateDirectory(mockFilesDir);
 
-app.MapPost("/video/generate", async (VideoRequest request, VideoSyncService service, CancellationToken ct) =>
+app.MapPost("/video/generate", async (VideoRequest request, VideoFastExternalService service, CancellationToken ct) =>
 {
     var (trackingId, fileUrl, fileName) = await service.GenerateVideoAsync(request.AudioUrls, mockFilesDir, ct);
-    return Results.Ok(new { provider = "video-sync", remoteFileUrl = fileUrl, fileName, processingMs = 5000, trackingId });
+    return Results.Ok(new { provider = "video-fast-external", remoteFileUrl = fileUrl, fileName, processingMs = 5000, trackingId });
 });
 
 app.MapGet("/video/download/{trackingId}", async (string trackingId) =>
 {
-    var filePath = VideoSyncService.GetFilePath(trackingId, mockFilesDir);
+    var filePath = VideoFastExternalService.GetFilePath(trackingId, mockFilesDir);
     if (!System.IO.File.Exists(filePath))
         return Results.NotFound();
 
@@ -27,9 +27,9 @@ app.MapGet("/video/download/{trackingId}", async (string trackingId) =>
     return Results.File(fileContent, "application/octet-stream", Path.GetFileName(filePath));
 });
 
-app.MapGet("/video/status/{trackingId}", async (string trackingId, VideoSyncService service) =>
+app.MapGet("/video/status/{trackingId}", async (string trackingId, VideoFastExternalService service) =>
 {
-    var filePath = VideoSyncService.GetFilePath(trackingId, mockFilesDir);
+    var filePath = VideoFastExternalService.GetFilePath(trackingId, mockFilesDir);
     if (!System.IO.File.Exists(filePath))
         return Results.NotFound();
 
@@ -45,18 +45,18 @@ app.MapGet("/video/status/{trackingId}", async (string trackingId, VideoSyncServ
 
 app.Run();
 
-namespace Hhs.MockApi.VideoSync
+namespace Hhs.MockApi.VideoFastExternal
 {
     public sealed class MockApiOptions
     {
         public string SelfBaseUrl { get; set; } = string.Empty;
     }
 
-    public sealed class VideoSyncService
+    public sealed class VideoFastExternalService
     {
         private readonly IOptions<MockApiOptions> _options;
 
-        public VideoSyncService(IOptions<MockApiOptions> options)
+        public VideoFastExternalService(IOptions<MockApiOptions> options)
         {
             _options = options;
         }
@@ -79,7 +79,7 @@ namespace Hhs.MockApi.VideoSync
 
         public static string GetFilePath(string trackingId, string mockFilesDir)
         {
-            return Path.Combine(mockFilesDir, $"mock_video_sync_{trackingId}.mp4.txt");
+            return Path.Combine(mockFilesDir, $"mock_video_fast_external_{trackingId}.mp4.txt");
         }
     }
 

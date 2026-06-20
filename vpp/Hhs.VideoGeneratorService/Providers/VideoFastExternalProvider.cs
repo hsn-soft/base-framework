@@ -5,18 +5,18 @@ using System.Text.Json;
 
 namespace Hhs.VideoGeneratorService.Providers;
 
-public sealed class VideoFastProvider : IVideoProvider
+public sealed class VideoFastExternalProvider : IVideoProvider
 {
     private readonly HttpClient _httpClient;
     private readonly string _baseUrl;
 
-    public VideoFastProvider(HttpClient httpClient, IOptions<ProviderEndpointsOptions> options)
+    public VideoFastExternalProvider(HttpClient httpClient, IOptions<ProviderEndpointsOptions> options)
     {
         _httpClient = httpClient;
-        _baseUrl = options.Value.VideoProviders.FastBaseUrl;
+        _baseUrl = options.Value.VideoProviders.FastExternalBaseUrl;
     }
 
-    public string ProviderKey => ProviderKeys.VideoFast;
+    public string ProviderKey => ProviderKeys.VideoFastExternal;
 
     public VideoProviderCapabilities Capabilities => new()
     {

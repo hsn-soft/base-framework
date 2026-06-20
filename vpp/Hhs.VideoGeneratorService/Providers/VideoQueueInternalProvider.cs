@@ -5,47 +5,42 @@ using System.Text.Json;
 
 namespace Hhs.VideoGeneratorService.Providers;
 
-public sealed class VideoSyncProvider : IVideoProvider
+public sealed class VideoQueueInternalProvider : IVideoProvider
 {
     private readonly HttpClient _httpClient;
     private readonly string _baseUrl;
 
-    public VideoSyncProvider(HttpClient httpClient, IOptions<ProviderEndpointsOptions> options)
+    public VideoQueueInternalProvider(HttpClient httpClient, IOptions<ProviderEndpointsOptions> options)
     {
         _httpClient = httpClient;
-        _baseUrl = options.Value.VideoProviders.SyncBaseUrl;
+        _baseUrl = options.Value.VideoProviders.QueueInternalBaseUrl;
     }
 
-    public string ProviderKey => ProviderKeys.VideoSync;
+    public string ProviderKey => ProviderKeys.VideoQueueInternal;
 
     public VideoProviderCapabilities Capabilities => new()
     {
         ProviderKey = ProviderKey,
-        ExecutionMode = ProviderExecutionMode.ImmediateResult,
-        AudioInputMode = VideoAudioInputMode.AudioFileRequired
+        ExecutionMode = ProviderExecutionMode.AsyncPolling,
+        AudioInputMode = VideoAudioInputMode.NoAudioRequired
     };
 
     public async Task<VideoCreateResponse> CreateAsync(
         VideoCreateRequest request,
         CancellationToken cancellationToken)
     {
-        if (request.AudioFilePaths.Count == 0)
-            throw new InvalidOperationException("VideoSyncProvider requires audio file paths.");
-
         var response = await _httpClient.PostAsJsonAsync(
             $"{_baseUrl}/video/generate",
             request,
             cancellationToken);
 
         var json = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken);
-        var fileUrl = json.GetProperty("remoteFileUrl").GetString();
-        var fileName = json.TryGetProperty("fileName", out var fnProp) ? fnProp.GetString() : null;
+        var trackingId = json.GetProperty("trackingId").GetString();
 
         return new VideoCreateResponse
         {
-            IsCompleted = true,
-            ProviderFileUrl = fileUrl,
-            FileName = fileName
+            IsCompleted = false,
+            ProviderTrackId = trackingId
         };
     }
 
@@ -56,12 +51,15 @@ public sealed class VideoSyncProvider : IVideoProvider
             cancellationToken);
 
         var json = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken);
+        var status = json.GetProperty("status").GetString();
+        var fileUrl = status == "completed" ? json.GetProperty("remoteFileUrl").GetString() : null;
+        var fileName = status == "completed" && json.TryGetProperty("fileName", out var fnProp) ? fnProp.GetString() : null;
 
         return new VideoStatusResponse
         {
-            IsCompleted = true,
-            ProviderFileUrl = json.GetProperty("remoteFileUrl").GetString(),
-            FileName = json.TryGetProperty("fileName", out var fnProp) ? fnProp.GetString() : null
+            IsCompleted = status == "completed",
+            ProviderFileUrl = fileUrl,
+            FileName = fileName
         };
     }
 }

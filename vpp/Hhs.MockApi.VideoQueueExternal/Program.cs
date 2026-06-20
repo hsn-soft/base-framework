@@ -1,34 +1,34 @@
 using System.Collections.Concurrent;
-using Hhs.MockApi.VideoPro;
+using Hhs.MockApi.VideoQueueExternal;
 using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.Configure<MockApiOptions>(builder.Configuration.GetSection("MockApi"));
-builder.Services.AddSingleton<VideoProService>();
+builder.Services.AddSingleton<VideoQueueExternalService>();
 
 var app = builder.Build();
 
 var mockFilesDir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "media");
 Directory.CreateDirectory(mockFilesDir);
 
-app.MapPost("/video/generate", (VideoRequest request, VideoProService service) =>
+app.MapPost("/video/generate", (VideoRequest request, VideoQueueExternalService service) =>
 {
     var trackingId = service.CreateRequest(request.AudioUrls);
-    return Results.Ok(new { provider = "video-pro", trackingId, pollingWindowSec = 150 });
+    return Results.Ok(new { provider = "video-queue-external", trackingId, pollingWindowSec = 150 });
 });
 
-app.MapGet("/video/status/{trackingId}", async (string trackingId, VideoProService service, CancellationToken ct) =>
+app.MapGet("/video/status/{trackingId}", async (string trackingId, VideoQueueExternalService service, CancellationToken ct) =>
 {
     var (isReady, fileUrl, error, fileName) = await service.GetStatusAsync(trackingId, mockFilesDir, ct);
     if (!isReady)
-        return Results.Ok(new { provider = "video-pro", trackingId, status = "processing", error });
-    return Results.Ok(new { provider = "video-pro", trackingId, status = "completed", remoteFileUrl = fileUrl, fileName });
+        return Results.Ok(new { provider = "video-queue-external", trackingId, status = "processing", error });
+    return Results.Ok(new { provider = "video-queue-external", trackingId, status = "completed", remoteFileUrl = fileUrl, fileName });
 });
 
 app.MapGet("/video/download/{trackingId}", async (string trackingId) =>
 {
-    var filePath = VideoProService.GetFilePath(trackingId, mockFilesDir);
+    var filePath = VideoQueueExternalService.GetFilePath(trackingId, mockFilesDir);
     if (!System.IO.File.Exists(filePath))
         return Results.NotFound();
 
@@ -38,19 +38,19 @@ app.MapGet("/video/download/{trackingId}", async (string trackingId) =>
 
 app.Run();
 
-namespace Hhs.MockApi.VideoPro
+namespace Hhs.MockApi.VideoQueueExternal
 {
     public sealed class MockApiOptions
     {
         public string SelfBaseUrl { get; set; } = string.Empty;
     }
 
-    public sealed class VideoProService
+    public sealed class VideoQueueExternalService
     {
-        private static readonly ConcurrentDictionary<string, VideoProEntry> Store = new();
+        private static readonly ConcurrentDictionary<string, VideoQueueExternalEntry> Store = new();
         private readonly IOptions<MockApiOptions> _options;
 
-        public VideoProService(IOptions<MockApiOptions> options)
+        public VideoQueueExternalService(IOptions<MockApiOptions> options)
         {
             _options = options;
         }
@@ -58,7 +58,8 @@ namespace Hhs.MockApi.VideoPro
         public string CreateRequest(List<string> audioUrls)
         {
             var trackingId = Guid.NewGuid().ToString("N");
-            Store[trackingId] = new VideoProEntry { AudioUrls = audioUrls, CreatedAt = DateTime.UtcNow };
+            var createdAt = DateTime.UtcNow;
+            Store[trackingId] = new VideoQueueExternalEntry { AudioUrls = audioUrls, CreatedAt = createdAt };
             return trackingId;
         }
 
@@ -86,11 +87,11 @@ namespace Hhs.MockApi.VideoPro
 
         public static string GetFilePath(string trackingId, string mockFilesDir)
         {
-            return Path.Combine(mockFilesDir, $"mock_video_pro_{trackingId}.mp4.txt");
+            return Path.Combine(mockFilesDir, $"mock_video_queue_external_{trackingId}.mp4.txt");
         }
     }
 
-    public sealed class VideoProEntry
+    public sealed class VideoQueueExternalEntry
     {
         public List<string> AudioUrls { get; set; } = new();
         public DateTime CreatedAt { get; set; }
