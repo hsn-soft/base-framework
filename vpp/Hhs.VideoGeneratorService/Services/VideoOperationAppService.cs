@@ -119,6 +119,18 @@ public async Task CreateVideoRequestAsync(
         if (videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.ProviderCreatesAudio ||
             videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.NoAudio)
         {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(
+                    "Skipping audio operations for video request {VideoRequestId}. " +
+                    "Video provider '{VideoProviderKey}' has AudioInputMode={AudioInputMode}. " +
+                    "Selected AudioProviderKey was: {AudioProviderKey}",
+                    videoRequest.Id,
+                    videoRequest.VideoProviderKey,
+                    videoProvider.Capabilities.AudioInputMode,
+                    videoRequest.AudioProviderKey ?? "null");
+            }
+
             await eventBus.PublishAsync(new VideoProviderRequestStartedEto
             {
                 CustomerContentId = videoRequest.CustomerContentId,
