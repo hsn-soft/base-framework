@@ -1,4 +1,7 @@
 using System.Collections.Concurrent;
+using Amazon.S3;
+using Amazon;
+using Amazon.S3.Model;
 using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,7 +20,7 @@ app.MapPost("/upload", async (IFormFile file, MinioService service, Cancellation
 
     var result = await service.UploadAsync(file, ct);
     return Results.Ok(result);
-});
+}).DisableAntiforgery();
 
 // Download file from MinIO via CDN API
 app.MapGet("/download/{fileId}", async (string fileId, MinioService service, CancellationToken ct) =>
@@ -56,14 +59,31 @@ public sealed class MinioService
 {
     private static readonly ConcurrentDictionary<string, MinioFileEntry> FileStore = new();
     private readonly IOptions<MockApiOptions> _options;
-    private readonly HttpClient _httpClient;
     private readonly ILogger<MinioService> _logger;
+    private IAmazonS3? _s3Client;
 
-    public MinioService(IOptions<MockApiOptions> options, HttpClient httpClient, ILogger<MinioService> logger)
+    public MinioService(IOptions<MockApiOptions> options, ILogger<MinioService> logger)
     {
         _options = options;
-        _httpClient = httpClient;
         _logger = logger;
+    }
+
+    private IAmazonS3 GetS3Client()
+    {
+        if (_s3Client != null) return _s3Client;
+
+        var config = new AmazonS3Config
+        {
+            ServiceURL = _options.Value.MinioEndpoint,
+            ForcePathStyle = true,
+        };
+
+        _s3Client = new AmazonS3Client(
+            _options.Value.MinioAccessKey,
+            _options.Value.MinioSecretKey,
+            config);
+
+        return _s3Client;
     }
 
     public async Task<object> UploadAsync(IFormFile file, CancellationToken ct)
@@ -76,28 +96,34 @@ public sealed class MinioService
             var s3Key = $"{dateFolder}/{storedFileName}";
 
             // Read file bytes
-            await using var memStream = new MemoryStream();
-            await file.CopyToAsync(memStream, ct);
-            var fileBytes = memStream.ToArray();
-
-            // Upload to MinIO
-            var minioUrl = $"{_options.Value.MinioEndpoint}/{_options.Value.MinioBucket}/{s3Key}";
-
-            _logger.LogInformation(
-                "Uploading to MinIO: {MinioUrl}, FileId: {FileId}, StoredName: {StoredFileName}, Size: {Size}",
-                minioUrl, fileId, storedFileName, fileBytes.Length);
-
-            using var content = new ByteArrayContent(fileBytes);
-            var response = await _httpClient.PutAsync(minioUrl, content, ct);
-
-            if (!response.IsSuccessStatusCode)
+            byte[] fileBytes;
+            await using (var memStream = new MemoryStream())
             {
-                _logger.LogError("MinIO upload failed: {StatusCode}", response.StatusCode);
-                throw new InvalidOperationException($"MinIO upload failed: {response.StatusCode}");
+                await file.CopyToAsync(memStream, ct);
+                fileBytes = memStream.ToArray();
             }
 
+            _logger.LogInformation(
+                "Uploading to MinIO: FileId={FileId}, StoredName={StoredFileName}, Bucket={Bucket}, S3Key={S3Key}, Size={Size}",
+                fileId, storedFileName, _options.Value.MinioBucket, s3Key, fileBytes.Length);
+
+            var client = GetS3Client();
+
+            // Upload file
+            var uploadStream = new MemoryStream(fileBytes);
+            var putRequest = new PutObjectRequest
+            {
+                BucketName = _options.Value.MinioBucket,
+                Key = s3Key,
+                InputStream = uploadStream,
+                ContentType = "application/octet-stream"
+            };
+
+            await client.PutObjectAsync(putRequest, ct);
+            uploadStream.Dispose();
+
             // Build URLs
-            var storageUrl = minioUrl; // Internal: direct MinIO URL
+            var storageUrl = $"{_options.Value.MinioEndpoint}/{_options.Value.MinioBucket}/{s3Key}";
             var cdnUrl = $"{_options.Value.SelfBaseUrl}/{_options.Value.CdnZonePath}/{_options.Value.CdnPathPrefix}/{s3Key}";
 
             // Store metadata
@@ -160,27 +186,31 @@ public sealed class MinioService
                 return null;
             }
 
-            var minioUrl = entry.StorageUrl;
-
             _logger.LogInformation(
-                "Downloading from MinIO: {FileId}, StoredName: {StoredFileName}, MinioUrl: {MinioUrl}",
-                fileId, entry.StoredFileName, minioUrl);
+                "Downloading from MinIO: FileId={FileId}, StoredName={StoredFileName}, S3Key={S3Key}",
+                fileId, entry.StoredFileName, entry.S3Key);
 
-            var response = await _httpClient.GetAsync(minioUrl, ct);
+            var client = GetS3Client();
 
-            if (!response.IsSuccessStatusCode)
+            var getRequest = new GetObjectRequest
             {
-                _logger.LogError("MinIO download failed: {StatusCode}", response.StatusCode);
-                return null;
+                BucketName = _options.Value.MinioBucket,
+                Key = entry.S3Key
+            };
+
+            var response = await client.GetObjectAsync(getRequest, ct);
+            var memStream = response.ResponseStream as MemoryStream ?? new MemoryStream();
+            if (response.ResponseStream is not MemoryStream)
+            {
+                await response.ResponseStream.CopyToAsync(memStream, ct);
+                memStream.Position = 0;
             }
 
-            var fileStream = await response.Content.ReadAsStreamAsync(ct);
-
             _logger.LogInformation(
-                "Download successful: {FileId}, Size: {Size}",
-                fileId, fileStream.Length);
+                "Download successful: FileId={FileId}, Size={Size}",
+                fileId, memStream.Length);
 
-            return fileStream;
+            return memStream;
         }
         catch (Exception ex)
         {

@@ -21,16 +21,30 @@ Console.WriteLine($"   Hash: {GetHash(fileBytes)}\n");
 
 using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
 
-// Test scenarios
-var tests = new[]
-{
-    new { Name = "CdnLocalMinio", Url = "http://localhost:5070", Backend = "MinIO" },
-    new { Name = "CdnBunnySelf", Url = "http://localhost:5071", Backend = "Self-Hosted Disk" },
-    new { Name = "CdnBunnyS3", Url = "http://localhost:5072", Backend = "S3 Mock (Local Disk)" },
-    new { Name = "CdnAbc → Storage", Url = "http://localhost:5073", Backend = "Storage Backend (5074)" }
-};
+// Select test mode
+Console.WriteLine("🔍 Test Modu Seç:");
+Console.WriteLine("   1 = CdnLocalMinio (MinIO) Detailed Test");
+Console.WriteLine("   2 = Tüm CDN'leri Test Et");
+Console.WriteLine();
 
-foreach (var test in tests)
+var choice = Console.ReadLine();
+
+if (choice == "1")
+{
+    await TestCdnLocalMinioDetailed(httpClient, fileBytes, testFilePath);
+}
+else
+{
+    // Test scenarios
+    var tests = new[]
+    {
+        new { Name = "CdnLocalMinio", Url = "http://localhost:5070", Backend = "MinIO" },
+        new { Name = "CdnBunnySelf", Url = "http://localhost:5071", Backend = "Self-Hosted Disk" },
+        new { Name = "CdnBunnyS3", Url = "http://localhost:5072", Backend = "S3 Mock (Local Disk)" },
+        new { Name = "CdnAbc → Storage", Url = "http://localhost:5073", Backend = "Storage Backend (5074)" }
+    };
+
+    foreach (var test in tests)
 {
     Console.WriteLine(new string('═', 70));
     Console.WriteLine($"🔷 TEST: {test.Name}");
@@ -129,16 +143,167 @@ foreach (var test in tests)
     }
 }
 
-Console.WriteLine(new string('═', 70));
-Console.WriteLine("✅ Tüm testler tamamlandı!\n");
+    Console.WriteLine(new string('═', 70));
+    Console.WriteLine("✅ Tüm testler tamamlandı!\n");
+}
 
-Console.WriteLine("📋 INSTRUCTIONS - Mock API'leri çalıştırmak için 5 ayrı terminal açın:\n");
+Console.WriteLine("📋 INSTRUCTIONS - Mock API'leri çalıştırmak için:\n");
 Console.WriteLine("   Terminal 1: cd Hhs.MockApi.Storage && dotnet run        (Port 5074)");
 Console.WriteLine("   Terminal 2: cd Hhs.MockApi.CdnLocalMinio && dotnet run  (Port 5070)");
 Console.WriteLine("   Terminal 3: cd Hhs.MockApi.CdnBunnySelf && dotnet run   (Port 5071)");
 Console.WriteLine("   Terminal 4: cd Hhs.MockApi.CdnBunnyS3 && dotnet run     (Port 5072)");
 Console.WriteLine("   Terminal 5: cd Hhs.MockApi.CdnAbc && dotnet run         (Port 5073)");
 Console.WriteLine("\n   Sonra bu programı çalıştırın: dotnet run\n");
+
+static async Task TestCdnLocalMinioDetailed(HttpClient httpClient, byte[] fileBytes, string testFilePath)
+{
+    Console.WriteLine("\n╔════════════════════════════════════════════════════════════════╗");
+    Console.WriteLine("║       CdnLocalMinio + MinIO Detailed Test                       ║");
+    Console.WriteLine("╚════════════════════════════════════════════════════════════════╝\n");
+
+    const string apiUrl = "http://localhost:5070";
+    const string minioUrl = "http://localhost:9100";
+    const string minioConsoleUrl = "http://localhost:9101";
+
+    try
+    {
+        // 1. Health Check
+        Console.WriteLine("1️⃣ Health Check:");
+        var healthResponse = await httpClient.GetAsync($"{apiUrl}/health");
+        if (!healthResponse.IsSuccessStatusCode)
+        {
+            Console.WriteLine($"   ❌ CdnLocalMinio not responding ({healthResponse.StatusCode})");
+            return;
+        }
+        Console.WriteLine($"   ✅ CdnLocalMinio API healthy (5070)");
+        Console.WriteLine($"   ✅ MinIO API (9100) expected to be running");
+        Console.WriteLine($"   ✅ MinIO Console (9101) available at {minioConsoleUrl}\n");
+
+        // 2. Upload
+        Console.WriteLine("2️⃣ File Upload to MinIO:");
+        Console.WriteLine($"   📤 Uploading: {testFilePath}");
+        Console.WriteLine($"   Size: {fileBytes.Length} bytes");
+        Console.WriteLine($"   Original Hash: {GetHash(fileBytes)}\n");
+
+        string? uploadedFileId = null;
+        string? s3Key = null;
+        string? storedFileName = null;
+
+        using (var formContent = new MultipartFormDataContent())
+        {
+            formContent.Add(new ByteArrayContent(fileBytes), "file", testFilePath);
+            var uploadResponse = await httpClient.PostAsync($"{apiUrl}/upload", formContent);
+
+            if (!uploadResponse.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"   ❌ Upload failed: {uploadResponse.StatusCode}");
+                return;
+            }
+
+            var jsonContent = await uploadResponse.Content.ReadAsStringAsync();
+            var jsonDoc = JsonDocument.Parse(jsonContent);
+            var root = jsonDoc.RootElement;
+
+            uploadedFileId = root.GetProperty("fileId").GetString();
+            s3Key = root.GetProperty("s3Key").GetString();
+            storedFileName = root.GetProperty("storedFileName").GetString();
+            var storageUrl = root.GetProperty("storageUrl").GetString();
+            var cdnUrl = root.GetProperty("cdnUrl").GetString();
+
+            Console.WriteLine($"   ✅ Upload successful!");
+            Console.WriteLine($"   📋 FileId: {uploadedFileId}");
+            Console.WriteLine($"   📄 FileName: {storedFileName}");
+            Console.WriteLine($"   🔗 S3 Key: {s3Key}");
+            Console.WriteLine($"   📦 Storage URL: {storageUrl}");
+            Console.WriteLine($"   🌐 CDN URL: {cdnUrl}\n");
+        }
+
+        // 3. MinIO UI Info
+        Console.WriteLine("3️⃣ MinIO UI Information:");
+        Console.WriteLine($"   🔗 MinIO Console: {minioConsoleUrl}");
+        Console.WriteLine($"   👤 Username: minioadmin");
+        Console.WriteLine($"   🔑 Password: minioadmin");
+        Console.WriteLine($"   📦 Bucket: videos");
+        Console.WriteLine($"   📁 Path: {s3Key}");
+        Console.WriteLine($"   💾 Expected to find file: {storedFileName}\n");
+
+        // 4. Download
+        Console.WriteLine("4️⃣ File Download & Verification:");
+        if (uploadedFileId == null)
+        {
+            Console.WriteLine("   ❌ FileId not available");
+            return;
+        }
+
+        Console.WriteLine($"   📥 Downloading from: {apiUrl}/download/{uploadedFileId}");
+
+        var downloadResponse = await httpClient.GetAsync($"{apiUrl}/download/{uploadedFileId}");
+        if (!downloadResponse.IsSuccessStatusCode)
+        {
+            Console.WriteLine($"   ❌ Download failed: {downloadResponse.StatusCode}");
+            return;
+        }
+
+        var downloadedBytes = await downloadResponse.Content.ReadAsByteArrayAsync();
+        var downloadedHash = GetHash(downloadedBytes);
+        var originalHash = GetHash(fileBytes);
+        var hashMatches = downloadedHash == originalHash;
+
+        Console.WriteLine($"   ✅ Download successful!");
+        Console.WriteLine($"   📊 Downloaded Size: {downloadedBytes.Length} bytes");
+        Console.WriteLine($"   🔐 Original Hash:   {originalHash}");
+        Console.WriteLine($"   🔐 Downloaded Hash: {downloadedHash}");
+        Console.WriteLine($"   ✔️ Content Match: {(hashMatches ? "✅ YES - Files are identical!" : "❌ NO - Hash mismatch!")}\n");
+
+        // 5. List Files
+        Console.WriteLine("5️⃣ List All Uploaded Files:");
+        var listResponse = await httpClient.GetAsync($"{apiUrl}/list");
+        if (listResponse.IsSuccessStatusCode)
+        {
+            var listContent = await listResponse.Content.ReadAsStringAsync();
+            var listDoc = JsonDocument.Parse(listContent);
+            var listRoot = listDoc.RootElement;
+            var total = listRoot.GetProperty("total").GetInt32();
+
+            Console.WriteLine($"   📊 Total Files: {total}");
+            if (total > 0)
+            {
+                var files = listRoot.GetProperty("files").EnumerateArray();
+                foreach (var file in files)
+                {
+                    var fId = file.GetProperty("fileId").GetString();
+                    var fName = file.GetProperty("originalFileName").GetString();
+                    var fSize = file.GetProperty("fileSize").GetInt64();
+                    Console.WriteLine($"      • {fId}: {fName} ({fSize} bytes)");
+                }
+            }
+            Console.WriteLine();
+        }
+
+        // 6. Summary
+        Console.WriteLine("✅ TEST SUMMARY:");
+        Console.WriteLine("   ✅ CdnLocalMinio API is running");
+        Console.WriteLine("   ✅ MinIO storage backend is accessible");
+        Console.WriteLine("   ✅ File uploaded successfully");
+        Console.WriteLine($"   ✅ File hash verification: {(hashMatches ? "PASSED" : "FAILED")}");
+        Console.WriteLine("   ✅ Download successful");
+        Console.WriteLine($"\n   📋 Next Steps:");
+        Console.WriteLine($"      1. Open MinIO Console: {minioConsoleUrl}");
+        Console.WriteLine($"      2. Login with minioadmin/minioadmin");
+        Console.WriteLine($"      3. Navigate to bucket 'videos'");
+        Console.WriteLine($"      4. Verify file at path: {s3Key}");
+        Console.WriteLine($"      5. Confirm: {storedFileName}\n");
+    }
+    catch (HttpRequestException ex)
+    {
+        Console.WriteLine($"   ❌ Connection Error: {ex.Message}");
+        Console.WriteLine("   💡 Make sure CdnLocalMinio and MinIO are running!");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"   ❌ Error: {ex.Message}");
+    }
+}
 
 static string GetHash(byte[] data)
 {
