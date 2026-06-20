@@ -51,7 +51,9 @@ app.MapGet("/customer-contents/{id}", async (
         status = content.NormalizeStatus == StatusNames.Completed && content.VideoStatus == StatusNames.Completed ? StatusNames.Completed : StatusNames.Processing,
         normalizeStatus = content.NormalizeStatus,
         videoStatus = content.VideoStatus,
-        url = content.Url,
+        scopeKey = content.ScopeKey,
+        domainName = content.DomainName,
+        contentKey = content.ContentKey,
         finalVideoUrl = content.FinalVideoUrl,
         createdAt = content.CreatedAtUtc,
         updatedAt = content.UpdatedAtUtc
@@ -139,12 +141,16 @@ app.Run();
 namespace Hhs.ContentService
 {
     public sealed record CreateCustomerContentRequest(
-        string Url,
+        string ScopeKey,
+        string DomainName,
+        string ContentKey,
         string? OutlineProviderKey = "openai",
         string? VideoProviderKey = "video-external",
         string? AudioProviderKey = "audio-def");
 
     public sealed record CreateAnalysisContentRequest(
+        string ScopeKey,
+        string DomainName,
         string Title,
         List<Guid> CustomerContentIds,
         string OutlineProviderKey = "openai",

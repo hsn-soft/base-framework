@@ -1,6 +1,8 @@
 using Hhs.ContentService.Data;
 using Hhs.ContentService.Entities;
+using Hhs.Shared.Configuration;
 using Hhs.Shared.Events;
+using Hhs.Shared.Helpers;
 using Hhs.Shared.RabbitMQ;
 using Microsoft.EntityFrameworkCore;
 
@@ -31,7 +33,10 @@ public sealed class ContentOperationAppService
         var entity = new CustomerContent
         {
             Id = id,
-            Url = request.Url,
+            ScopeKey = request.ScopeKey,
+            DomainName = request.DomainName,
+            ContentKey = request.ContentKey,
+            SlugKey = StringHelper.ToSlug(request.ContentKey),
             NormalizeStatus = StatusNames.Created,
             VideoStatus = StatusNames.NotStarted,
             LastFacility = EventNames.CustomerContentCreated,
@@ -39,7 +44,8 @@ public sealed class ContentOperationAppService
             VideoProviderKey = NormalizeProviderKey(request.VideoProviderKey),
             AudioProviderKey = request.AudioProviderKey != null ? NormalizeProviderKey(request.AudioProviderKey) : null,
             CreatedAtUtc = DateTime.UtcNow,
-            UpdatedAtUtc = DateTime.UtcNow
+            UpdatedAtUtc = DateTime.UtcNow,
+            CorrelationId = Guid.NewGuid()
         };
 
         _db.CustomerContents.Add(entity);
@@ -48,11 +54,10 @@ public sealed class ContentOperationAppService
         await _eventBus.PublishAsync(new CustomerContentCreatedEto
         {
             RefContentId = id,
-            Url = entity.Url,
-            CorrelationId = Guid.NewGuid(),
-            OutlineProviderKey = entity.OutlineProviderKey,
-            VideoProviderKey = entity.VideoProviderKey,
-            AudioProviderKey = entity.AudioProviderKey
+            CorrelationId = entity.CorrelationId,
+            ScopeKey = entity.ScopeKey,
+            DomainName = entity.DomainName,
+            ContentKey = entity.ContentKey
         }, cancellationToken);
 
         return id;
@@ -73,6 +78,8 @@ public sealed class ContentOperationAppService
         var analysis = new AnalysisContent
         {
             Id = analysisId,
+            ScopeKey = request.ScopeKey,
+            DomainName = request.DomainName,
             Title = request.Title,
             NormalizeStatus = StatusNames.Created,
             VideoStatus = StatusNames.NotStarted,
@@ -81,7 +88,8 @@ public sealed class ContentOperationAppService
             VideoProviderKey = NormalizeProviderKey(request.VideoProviderKey),
             AudioProviderKey = request.AudioProviderKey != null ? NormalizeProviderKey(request.AudioProviderKey) : null,
             CreatedAtUtc = DateTime.UtcNow,
-            UpdatedAtUtc = DateTime.UtcNow
+            UpdatedAtUtc = DateTime.UtcNow,
+            CorrelationId = Guid.NewGuid()
         };
 
         var sort = 1;
@@ -102,18 +110,17 @@ public sealed class ContentOperationAppService
             {
                 var content = contentMap[id];
 
-                return new AnalysisNormalizeItem { CustomerContentId = content.Id, Url = content.Url, Path = content.Path, SortOrder = index + 1 };
+                return new AnalysisNormalizeItem { CustomerContentId = content.Id, ContentKey = content.ContentKey, SortOrder = index + 1 };
             })
             .ToList();
 
         await _eventBus.PublishAsync(new AnalysisContentCreatedEto
         {
             RefContentId = analysisId,
-            Items = items,
-            OutlineProviderKey = analysis.OutlineProviderKey,
-            VideoProviderKey = analysis.VideoProviderKey,
-            AudioProviderKey = analysis.AudioProviderKey,
-            CorrelationId = Guid.NewGuid()
+            CorrelationId = analysis.CorrelationId,
+            ScopeKey = analysis.ScopeKey,
+            DomainName = analysis.DomainName,
+            Items = items
         }, cancellationToken);
 
         return analysisId;

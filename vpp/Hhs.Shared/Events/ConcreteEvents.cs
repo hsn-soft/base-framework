@@ -2,7 +2,9 @@ namespace Hhs.Shared.Events;
 
 public sealed record CustomerContentCreatedEto : IntegrationEvent
 {
-    public string Url { get; init; } = default!;
+    public string ScopeKey { get; init; } = default!;
+    public string DomainName { get; init; } = default!;
+    public string ContentKey { get; init; } = default!;
 
     public CustomerContentCreatedEto()
     {
@@ -10,14 +12,12 @@ public sealed record CustomerContentCreatedEto : IntegrationEvent
         Facility = EventNames.CustomerContentCreated;
         RefContentType = ContentType.CustomerContent;
     }
-
-    public string OutlineProviderKey { get; init; } = default!;
-    public string VideoProviderKey { get; init; } = default!;
-    public string? AudioProviderKey { get; init; }
 }
 
 public sealed record AnalysisContentCreatedEto : IntegrationEvent
 {
+    public string ScopeKey { get; init; } = default!;
+    public string DomainName { get; init; } = default!;
     public List<AnalysisNormalizeItem> Items { get; init; } = [];
 
     public AnalysisContentCreatedEto()
@@ -26,18 +26,13 @@ public sealed record AnalysisContentCreatedEto : IntegrationEvent
         Facility = EventNames.AnalysisContentCreated;
         RefContentType = ContentType.AnalysisContent;
     }
-
-    public string OutlineProviderKey { get; init; } = default!;
-    public string VideoProviderKey { get; init; } = default!;
-    public string? AudioProviderKey { get; init; }
 }
 
 public sealed record AnalysisNormalizeItem
 {
     public Guid CustomerContentId { get; init; }
     public int SortOrder { get; init; }
-    public string Url { get; init; } = default!;
-    public string? Path { get; init; }
+    public string ContentKey { get; init; } = default!;
 }
 
 public sealed record CustomerContentNormalizeRequestCreatedEto : IntegrationEvent
