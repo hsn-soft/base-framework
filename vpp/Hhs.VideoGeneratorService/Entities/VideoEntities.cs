@@ -22,24 +22,24 @@ public sealed class VideoRequest
     public string ContentProcessType { get; set; } = default!;
     public string Status { get; set; } = default!;
     public string CurrentStep { get; set; } = default!;
-    public bool ExternalAudioRequired { get; set; }
-    public string AudioInputMode { get; set; } = default!;
 
     // Input Data
-    public string VideoInputJson { get; set; } = default!;
+    public string MediaInputJson { get; set; } = default!;
 
     // Provider Configuration
-    public string VideoProviderKey { get; set; } = default!;
     public string? AudioProviderKey { get; set; }
+    public string VideoProviderKey { get; set; } = default!;
 
     // Video Generation (external provider)
-    public string? VideoTrackingId { get; set; }
+    public string? VideoProviderTrackingId { get; set; }
     public string? VideoProviderUrl { get; set; }
-    public string? VideoFileName { get; set; }
     public string? VideoLocalPath { get; set; }
+
+    // Storage & CDN
+    public string? VideoCdnProviderKey { get; set; }
     public string? VideoStorageUrl { get; set; }
     public string? VideoCdnUrl { get; set; }
-    public string? VideoCdnProviderKey { get; set; }
+
 
     // Polling & Retry
     public DateTime? NextProviderPollAtUtc { get; set; }
@@ -77,9 +77,8 @@ public sealed class AudioRequest
     public string AudioProviderKey { get; set; } = default!;
 
     // Audio Generation (external provider)
-    public string? AudioTrackingId { get; set; }
+    public string? AudioProviderTrackingId { get; set; }
     public string? AudioProviderUrl { get; set; }
-    public string? AudioFileName { get; set; }
     public string? AudioLocalPath { get; set; }
     public string? AudioStorageUrl { get; set; }
     public string? AudioCdnUrl { get; set; }

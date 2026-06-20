@@ -31,7 +31,7 @@ public sealed class AudioProviderPollingAppService(
                 x.Status == "AUDIO_PROVIDER_POLLING" &&
                 x.NextProviderPollAtUtc != null &&
                 x.NextProviderPollAtUtc <= now &&
-                x.AudioTrackingId != null)
+                x.AudioProviderTrackingId != null)
             .Limit(50)
             .ToListAsync(cancellationToken);
 
@@ -73,7 +73,7 @@ public sealed class AudioProviderPollingAppService(
                 var provider = audioProviderResolver.Resolve(request.AudioProviderKey);
 
                 var status = await provider.GetStatusAsync(
-                    request.AudioTrackingId!,
+                    request.AudioProviderTrackingId!,
                     cancellationToken);
 
                 if (status.IsFailed)
@@ -111,12 +111,8 @@ public sealed class AudioProviderPollingAppService(
                 if (string.IsNullOrWhiteSpace(status.ProviderFileUrl))
                     throw new InvalidOperationException("Audio provider completed but file url is empty.");
 
-                request.AudioFileName = status.FileName;
-
                 // Download file from provider and upload to mock storage
-                var localFileName = !string.IsNullOrWhiteSpace(status.FileName)
-                    ? $"local_{status.FileName}"
-                    : $"local_audio_{request.Id:N}.mp3";
+                var localFileName = $"local_audio_{request.Id:N}.mp3";
                 var mockStorageUrl = await DownloadAndUploadToStorageAsync(
                     status.ProviderFileUrl,
                     localFileName,
@@ -193,7 +189,7 @@ public sealed class AudioProviderPollingAppService(
                 x.Status == "AUDIO_PROVIDER_POLLING" &&
                 x.NextProviderPollAtUtc != null &&
                 x.NextProviderPollAtUtc <= now &&
-                x.AudioTrackingId != null,
+                x.AudioProviderTrackingId != null,
             Builders<AudioRequest>.Update
                 .Set(x => x.NextProviderPollAtUtc, DateTime.UtcNow.AddSeconds(5))
                 .Set(x => x.UpdatedAtUtc, DateTime.UtcNow),
