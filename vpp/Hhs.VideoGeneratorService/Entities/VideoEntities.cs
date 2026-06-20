@@ -32,13 +32,6 @@ public sealed class VideoRequest
     public string VideoProviderKey { get; set; } = default!;
     public string? AudioProviderKey { get; set; }
 
-    // Audio Generation (external provider)
-    public string? AudioTrackingId { get; set; }
-    public string? AudioProviderUrl { get; set; }
-    public string? AudioLocalPath { get; set; }
-    public string? AudioStorageUrl { get; set; }
-    public string? AudioCdnUrl { get; set; }
-
     // Video Generation (external provider)
     public string? VideoTrackingId { get; set; }
     public string? VideoProviderUrl { get; set; }
