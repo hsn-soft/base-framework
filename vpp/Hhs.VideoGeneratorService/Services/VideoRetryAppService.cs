@@ -48,9 +48,8 @@ public sealed class VideoRetryAppService(
 
                     await eventBus.PublishAsync(new AudioProviderRequestStartedEto
                     {
-                        CustomerContentId = request.CustomerContentId,
-                        AnalysisContentId = request.AnalysisContentId,
-                        ContentProcessType = request.ContentProcessType,
+                        RefContentId = request.RefContentId,
+                RefContentType = request.RefContentType,
                         CorrelationId = request.CorrelationId,
                         VideoRequestId = request.VideoRequestId,
                         AudioRequestId = request.Id,
@@ -62,9 +61,8 @@ public sealed class VideoRetryAppService(
                 {
                     await eventBus.PublishAsync(new AudioFileDownloadStartedEto
                     {
-                        CustomerContentId = request.CustomerContentId,
-                        AnalysisContentId = request.AnalysisContentId,
-                        ContentProcessType = request.ContentProcessType,
+                        RefContentId = request.RefContentId,
+                RefContentType = request.RefContentType,
                         CorrelationId = request.CorrelationId,
                         VideoRequestId = request.VideoRequestId,
                         AudioRequestId = request.Id,
@@ -76,9 +74,8 @@ public sealed class VideoRetryAppService(
                 {
                     await eventBus.PublishAsync(new AudioFileUploadStartedEto
                     {
-                        CustomerContentId = request.CustomerContentId,
-                        AnalysisContentId = request.AnalysisContentId,
-                        ContentProcessType = request.ContentProcessType,
+                        RefContentId = request.RefContentId,
+                RefContentType = request.RefContentType,
                         CorrelationId = request.CorrelationId,
                         VideoRequestId = request.VideoRequestId,
                         AudioRequestId = request.Id,
@@ -106,9 +103,8 @@ public sealed class VideoRetryAppService(
 
                     await eventBus.PublishAsync(new StepFailedEto
                     {
-                        CustomerContentId = request.CustomerContentId,
-                        AnalysisContentId = request.AnalysisContentId,
-                        ContentProcessType = request.ContentProcessType,
+                        RefContentId = request.RefContentId,
+                RefContentType = request.RefContentType,
                         CorrelationId = request.CorrelationId,
                         Step = request.CurrentStep,
                         ErrorMessage = request.LastError,
@@ -177,9 +173,8 @@ public sealed class VideoRetryAppService(
 
                     await eventBus.PublishAsync(new VideoProviderRequestStartedEto
                     {
-                        CustomerContentId = request.CustomerContentId,
-                        AnalysisContentId = request.AnalysisContentId,
-                        ContentProcessType = request.ContentProcessType,
+                        RefContentId = request.RefContentId,
+                RefContentType = request.RefContentType,
                         CorrelationId = request.CorrelationId,
                         VideoRequestId = request.Id,
                         AudioUrls = videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioUrlListRequired
@@ -194,9 +189,8 @@ public sealed class VideoRetryAppService(
                 {
                     await eventBus.PublishAsync(new VideoFileDownloadStartedEto
                     {
-                        CustomerContentId = request.CustomerContentId,
-                        AnalysisContentId = request.AnalysisContentId,
-                        ContentProcessType = request.ContentProcessType,
+                        RefContentId = request.RefContentId,
+                RefContentType = request.RefContentType,
                         CorrelationId = request.CorrelationId,
                         VideoRequestId = request.Id,
                         ProviderFileUrl = request.VideoProviderUrl
@@ -207,9 +201,8 @@ public sealed class VideoRetryAppService(
                 {
                     await eventBus.PublishAsync(new VideoFileUploadStartedEto
                     {
-                        CustomerContentId = request.CustomerContentId,
-                        AnalysisContentId = request.AnalysisContentId,
-                        ContentProcessType = request.ContentProcessType,
+                        RefContentId = request.RefContentId,
+                RefContentType = request.RefContentType,
                         CorrelationId = request.CorrelationId,
                         VideoRequestId = request.Id,
                         LocalFilePath = request.VideoLocalPath
@@ -236,9 +229,8 @@ public sealed class VideoRetryAppService(
 
                     await eventBus.PublishAsync(new StepFailedEto
                     {
-                        CustomerContentId = request.CustomerContentId,
-                        AnalysisContentId = request.AnalysisContentId,
-                        ContentProcessType = request.ContentProcessType,
+                        RefContentId = request.RefContentId,
+                RefContentType = request.RefContentType,
                         CorrelationId = request.CorrelationId,
                         Step = request.CurrentStep,
                         ErrorMessage = request.LastError,

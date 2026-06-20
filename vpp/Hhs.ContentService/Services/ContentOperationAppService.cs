@@ -47,7 +47,7 @@ public sealed class ContentOperationAppService
 
         await _eventBus.PublishAsync(new CustomerContentCreatedEto
         {
-            CustomerContentId = id,
+            RefContentId = id,
             Url = entity.Url,
             CorrelationId = Guid.NewGuid(),
             OutlineProviderKey = entity.OutlineProviderKey,
@@ -108,7 +108,7 @@ public sealed class ContentOperationAppService
 
         await _eventBus.PublishAsync(new AnalysisContentCreatedEto
         {
-            AnalysisContentId = analysisId,
+            RefContentId = analysisId,
             Items = items,
             OutlineProviderKey = analysis.OutlineProviderKey,
             VideoProviderKey = analysis.VideoProviderKey,
@@ -125,10 +125,10 @@ public sealed class ContentOperationAppService
     {
         var shouldPublishEvent = false;
 
-        if (@event.CustomerContentId.HasValue)
+        if (@event.RefContentType == ContentProcessTypes.CustomerContent)
         {
             var entity = await _db.CustomerContents
-                .FirstOrDefaultAsync(x => x.Id == @event.CustomerContentId.Value, cancellationToken);
+                .FirstOrDefaultAsync(x => x.Id == @event.RefContentId, cancellationToken);
 
             if (entity != null && entity.NormalizeRequestId == null)
             {
@@ -142,10 +142,10 @@ public sealed class ContentOperationAppService
             }
         }
 
-        if (@event.AnalysisContentId.HasValue)
+        if (@event.RefContentType == ContentProcessTypes.AnalysisContent)
         {
             var entity = await _db.AnalysisContents
-                .FirstOrDefaultAsync(x => x.Id == @event.AnalysisContentId.Value, cancellationToken);
+                .FirstOrDefaultAsync(x => x.Id == @event.RefContentId, cancellationToken);
 
             if (entity != null && entity.NormalizeRequestId == null)
             {
@@ -165,9 +165,8 @@ public sealed class ContentOperationAppService
 
             await _eventBus.PublishAsync(new VideoGenerationApprovedEto
             {
-                CustomerContentId = @event.CustomerContentId,
-                AnalysisContentId = @event.AnalysisContentId,
-                ContentProcessType = @event.ContentProcessType,
+                RefContentId = @event.RefContentId,
+                RefContentType = @event.RefContentType,
                 VideoInputJson = @event.VideoInputJson,
                 CorrelationId = @event.CorrelationId,
                 VideoProviderKey = @event.VideoProviderKey,
@@ -178,9 +177,9 @@ public sealed class ContentOperationAppService
 
     public async Task HandleVideoResultAsync(VideoGenerationResultPublishedEto @event, CancellationToken cancellationToken)
     {
-        if (@event.CustomerContentId.HasValue)
+        if (@event.RefContentType == ContentProcessTypes.CustomerContent)
         {
-            var entity = await _db.CustomerContents.FirstOrDefaultAsync(x => x.Id == @event.CustomerContentId, cancellationToken);
+            var entity = await _db.CustomerContents.FirstOrDefaultAsync(x => x.Id == @event.RefContentId, cancellationToken);
             if (entity != null)
             {
                 entity.VideoStatus = "COMPLETED";
@@ -191,9 +190,9 @@ public sealed class ContentOperationAppService
             }
         }
 
-        if (@event.AnalysisContentId.HasValue)
+        if (@event.RefContentType == ContentProcessTypes.AnalysisContent)
         {
-            var entity = await _db.AnalysisContents.FirstOrDefaultAsync(x => x.Id == @event.AnalysisContentId, cancellationToken);
+            var entity = await _db.AnalysisContents.FirstOrDefaultAsync(x => x.Id == @event.RefContentId, cancellationToken);
             if (entity != null)
             {
                 entity.VideoStatus = "COMPLETED";
@@ -211,10 +210,10 @@ public sealed class ContentOperationAppService
         StepFailedEto @event,
         CancellationToken cancellationToken)
     {
-        if (@event.CustomerContentId.HasValue)
+        if (@event.RefContentType == ContentProcessTypes.CustomerContent)
         {
             var entity = await _db.CustomerContents
-                .FirstAsync(x => x.Id == @event.CustomerContentId.Value, cancellationToken);
+                .FirstAsync(x => x.Id == @event.RefContentId, cancellationToken);
 
             entity.LastFacility = @event.Facility;
             entity.LastError = @event.ErrorMessage;
@@ -230,10 +229,10 @@ public sealed class ContentOperationAppService
             }
         }
 
-        if (@event.AnalysisContentId.HasValue)
+        if (@event.RefContentType == ContentProcessTypes.AnalysisContent)
         {
             var entity = await _db.AnalysisContents
-                .FirstAsync(x => x.Id == @event.AnalysisContentId.Value, cancellationToken);
+                .FirstAsync(x => x.Id == @event.RefContentId, cancellationToken);
 
             entity.LastFacility = @event.Facility;
             entity.LastError = @event.ErrorMessage;

@@ -54,12 +54,11 @@ public async Task CreateVideoRequestAsync(
 
             await eventBus.PublishAsync(new VideoRequestCreatedEto
             {
-                CustomerContentId = existing.CustomerContentId,
-                AnalysisContentId = existing.AnalysisContentId,
-                ContentProcessType = existing.ContentProcessType,
+                RefContentId = existing.RefContentId,
+                RefContentType = existing.RefContentType,
                 CorrelationId = existing.CorrelationId,
                 VideoRequestId = existing.Id,
-                IsAnalysis = existing.AnalysisContentId.HasValue,
+                IsAnalysis = existing.RefContentType == ContentProcessTypes.AnalysisContent,
                 ExternalAudioRequired = existingExternalAudioRequired
             }, cancellationToken);
 
@@ -75,9 +74,8 @@ public async Task CreateVideoRequestAsync(
             Id = videoRequestId,
             SourceEventId = @event.EventId,
             CorrelationId = @event.CorrelationId,
-            CustomerContentId = @event.CustomerContentId,
-            AnalysisContentId = @event.AnalysisContentId,
-            ContentProcessType = @event.ContentProcessType,
+            RefContentId = @event.RefContentId,
+            RefContentType = @event.RefContentType,
             Status = "CREATED",
             CurrentStep = EventNames.VideoRequestCreated,
             MediaInputJson = @event.VideoInputJson,
@@ -95,12 +93,11 @@ public async Task CreateVideoRequestAsync(
 
         await eventBus.PublishAsync(new VideoRequestCreatedEto
         {
-            CustomerContentId = @event.CustomerContentId,
-            AnalysisContentId = @event.AnalysisContentId,
-            ContentProcessType = @event.ContentProcessType,
+            RefContentId = @event.RefContentId,
+            RefContentType = @event.RefContentType,
             CorrelationId = @event.CorrelationId,
             VideoRequestId = videoRequestId,
-            IsAnalysis = @event.AnalysisContentId.HasValue,
+            IsAnalysis = @event.RefContentType == ContentProcessTypes.AnalysisContent,
             ExternalAudioRequired = externalAudioRequired
         }, cancellationToken);
     }
@@ -109,11 +106,11 @@ public async Task CreateVideoRequestAsync(
         if (logger.IsEnabled(LogLevel.Error))
         {
             logger.LogError(ex,
-                "CreateVideoRequestAsync failed for event {EventId}. VideoProviderKey={VideoProviderKey}, CustomerContentId={CustomerContentId}, AnalysisContentId={AnalysisContentId}",
+                "CreateVideoRequestAsync failed for event {EventId}. VideoProviderKey={VideoProviderKey}, RefContentId={RefContentId}, RefContentType={RefContentType}",
                 @event.EventId,
                 @event.VideoProviderKey,
-                @event.CustomerContentId,
-                @event.AnalysisContentId);
+                @event.RefContentId,
+                @event.RefContentType);
         }
         throw;
     }
@@ -135,9 +132,8 @@ public async Task CreateVideoRequestAsync(
 
         await eventBus.PublishAsync(new VideoOperationStartedEto
         {
-            CustomerContentId = videoRequest.CustomerContentId,
-            AnalysisContentId = videoRequest.AnalysisContentId,
-            ContentProcessType = videoRequest.ContentProcessType,
+            RefContentId = videoRequest.RefContentId,
+            RefContentType = videoRequest.RefContentType,
             CorrelationId = @event.CorrelationId,
             VideoRequestId = videoRequest.Id,
             ExternalAudioRequired = externalAudioRequired
@@ -168,9 +164,8 @@ public async Task CreateVideoRequestAsync(
 
             await eventBus.PublishAsync(new VideoProviderRequestStartedEto
             {
-                CustomerContentId = videoRequest.CustomerContentId,
-                AnalysisContentId = videoRequest.AnalysisContentId,
-                ContentProcessType = videoRequest.ContentProcessType,
+                RefContentId = videoRequest.RefContentId,
+                RefContentType = videoRequest.RefContentType,
                 CorrelationId = @event.CorrelationId,
                 VideoRequestId = videoRequest.Id,
                 AudioUrls = []
@@ -191,9 +186,8 @@ public async Task CreateVideoRequestAsync(
             {
                 await eventBus.PublishAsync(new AudioProviderRequestStartedEto
                 {
-                    CustomerContentId = existingAudio.CustomerContentId,
-                    AnalysisContentId = existingAudio.AnalysisContentId,
-                    ContentProcessType = existingAudio.ContentProcessType,
+                    RefContentId = existingAudio.RefContentId,
+                RefContentType = existingAudio.RefContentType,
                     CorrelationId = existingAudio.CorrelationId,
                     VideoRequestId = existingAudio.VideoRequestId,
                     AudioRequestId = existingAudio.Id,
@@ -213,9 +207,8 @@ public async Task CreateVideoRequestAsync(
                 Id = audioRequestId,
                 CorrelationId = @event.CorrelationId,
                 VideoRequestId = videoRequest.Id,
-                CustomerContentId = item.CustomerContentId ?? videoRequest.CustomerContentId,
-                AnalysisContentId = videoRequest.AnalysisContentId,
-                ContentProcessType = videoRequest.ContentProcessType,
+                RefContentId = item.CustomerContentId ?? videoRequest.CustomerContentId,
+                RefContentType = videoRequest.RefContentType,
                 SortOrder = item.SortOrder,
                 InputText = item.Text,
                 AudioProviderKey = videoRequest.AudioProviderKey
@@ -230,9 +223,8 @@ public async Task CreateVideoRequestAsync(
 
             await eventBus.PublishAsync(new AudioProviderRequestStartedEto
             {
-                CustomerContentId = audioRequest.CustomerContentId,
-                AnalysisContentId = audioRequest.AnalysisContentId,
-                ContentProcessType = videoRequest.ContentProcessType,
+                RefContentId = audioRequest.RefContentId,
+                RefContentType = videoRequest.RefContentType,
                 CorrelationId = @event.CorrelationId,
                 VideoRequestId = videoRequest.Id,
                 AudioRequestId = audioRequest.Id,
@@ -280,9 +272,8 @@ public async Task CreateVideoRequestAsync(
 
                 await eventBus.PublishAsync(new AudioProviderCompletedEto
                 {
-                    CustomerContentId = audioRequest.CustomerContentId,
-                    AnalysisContentId = audioRequest.AnalysisContentId,
-                    ContentProcessType = @event.ContentProcessType,
+                    RefContentId = audioRequest.RefContentId,
+                RefContentType = @event.RefContentType,
                     CorrelationId = @event.CorrelationId,
                     VideoRequestId = audioRequest.VideoRequestId,
                     AudioRequestId = audioRequest.Id,
@@ -306,9 +297,8 @@ public async Task CreateVideoRequestAsync(
 
             await eventBus.PublishAsync(new AudioProviderPollingStartedEto
             {
-                CustomerContentId = audioRequest.CustomerContentId,
-                AnalysisContentId = audioRequest.AnalysisContentId,
-                ContentProcessType = @event.ContentProcessType,
+                RefContentId = audioRequest.RefContentId,
+                RefContentType = @event.RefContentType,
                 CorrelationId = @event.CorrelationId,
                 VideoRequestId = audioRequest.VideoRequestId,
                 AudioRequestId = audioRequest.Id,
@@ -335,9 +325,8 @@ public async Task CreateVideoRequestAsync(
     {
         await eventBus.PublishAsync(new AudioFileDownloadStartedEto
         {
-            CustomerContentId = @event.CustomerContentId,
-            AnalysisContentId = @event.AnalysisContentId,
-            ContentProcessType = @event.ContentProcessType,
+            RefContentId = @event.RefContentId,
+                RefContentType = @event.RefContentType,
             CorrelationId = @event.CorrelationId,
             VideoRequestId = @event.VideoRequestId,
             AudioRequestId = @event.AudioRequestId,
@@ -370,9 +359,8 @@ public async Task CreateVideoRequestAsync(
 
             await eventBus.PublishAsync(new AudioFileDownloadCompletedEto
             {
-                CustomerContentId = audioRequest.CustomerContentId,
-                AnalysisContentId = audioRequest.AnalysisContentId,
-                ContentProcessType = @event.ContentProcessType,
+                RefContentId = audioRequest.RefContentId,
+                RefContentType = @event.RefContentType,
                 CorrelationId = @event.CorrelationId,
                 VideoRequestId = audioRequest.VideoRequestId,
                 AudioRequestId = audioRequest.Id,
@@ -381,9 +369,8 @@ public async Task CreateVideoRequestAsync(
 
             await eventBus.PublishAsync(new AudioFileUploadStartedEto
             {
-                CustomerContentId = audioRequest.CustomerContentId,
-                AnalysisContentId = audioRequest.AnalysisContentId,
-                ContentProcessType = @event.ContentProcessType,
+                RefContentId = audioRequest.RefContentId,
+                RefContentType = @event.RefContentType,
                 CorrelationId = @event.CorrelationId,
                 VideoRequestId = audioRequest.VideoRequestId,
                 AudioRequestId = audioRequest.Id,
@@ -439,9 +426,8 @@ public async Task CreateVideoRequestAsync(
 
             await eventBus.PublishAsync(new AudioFileUploadCompletedEto
             {
-                CustomerContentId = audioRequest.CustomerContentId,
-                AnalysisContentId = audioRequest.AnalysisContentId,
-                ContentProcessType = @event.ContentProcessType,
+                RefContentId = audioRequest.RefContentId,
+                RefContentType = @event.RefContentType,
                 CorrelationId = @event.CorrelationId,
                 VideoRequestId = audioRequest.VideoRequestId,
                 AudioRequestId = audioRequest.Id,
@@ -515,9 +501,8 @@ public async Task HandleAudioUploadCompletedAsync(
 
         await eventBus.PublishAsync(new VideoProviderRequestStartedEto
         {
-            CustomerContentId = videoRequest.CustomerContentId,
-            AnalysisContentId = videoRequest.AnalysisContentId,
-            ContentProcessType = videoRequest.ContentProcessType,
+            RefContentId = videoRequest.RefContentId,
+                RefContentType = videoRequest.RefContentType,
             CorrelationId = @event.CorrelationId,
             VideoRequestId = videoRequest.Id,
             AudioUrls = videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioUrlListRequired
@@ -575,9 +560,8 @@ public async Task HandleAudioUploadCompletedAsync(
 
                 await eventBus.PublishAsync(new VideoProviderCompletedEto
                 {
-                    CustomerContentId = videoRequest.CustomerContentId,
-                    AnalysisContentId = videoRequest.AnalysisContentId,
-                    ContentProcessType = videoRequest.ContentProcessType,
+                    RefContentId = videoRequest.RefContentId,
+                RefContentType = videoRequest.RefContentType,
                     CorrelationId = @event.CorrelationId,
                     VideoRequestId = videoRequest.Id,
                     ProviderFileUrl = mockStorageUrl
@@ -600,9 +584,8 @@ public async Task HandleAudioUploadCompletedAsync(
 
             await eventBus.PublishAsync(new VideoProviderPollingStartedEto
             {
-                CustomerContentId = videoRequest.CustomerContentId,
-                AnalysisContentId = videoRequest.AnalysisContentId,
-                ContentProcessType = videoRequest.ContentProcessType,
+                RefContentId = videoRequest.RefContentId,
+                RefContentType = videoRequest.RefContentType,
                 CorrelationId = @event.CorrelationId,
                 VideoRequestId = videoRequest.Id,
                 ProviderKey = videoRequest.VideoProviderKey,
@@ -628,9 +611,8 @@ public async Task HandleAudioUploadCompletedAsync(
     {
         await eventBus.PublishAsync(new VideoFileDownloadStartedEto
         {
-            CustomerContentId = @event.CustomerContentId,
-            AnalysisContentId = @event.AnalysisContentId,
-            ContentProcessType = @event.ContentProcessType,
+            RefContentId = @event.RefContentId,
+                RefContentType = @event.RefContentType,
             CorrelationId = @event.CorrelationId,
             VideoRequestId = @event.VideoRequestId,
             ProviderFileUrl = @event.ProviderFileUrl
@@ -662,9 +644,8 @@ public async Task HandleAudioUploadCompletedAsync(
 
             await eventBus.PublishAsync(new VideoFileUploadStartedEto
             {
-                CustomerContentId = videoRequest.CustomerContentId,
-                AnalysisContentId = videoRequest.AnalysisContentId,
-                ContentProcessType = videoRequest.ContentProcessType,
+                RefContentId = videoRequest.RefContentId,
+                RefContentType = videoRequest.RefContentType,
                 CorrelationId = @event.CorrelationId,
                 VideoRequestId = videoRequest.Id,
                 LocalFilePath = localPath
@@ -719,9 +700,8 @@ public async Task HandleAudioUploadCompletedAsync(
 
             await eventBus.PublishAsync(new VideoGenerationResultPublishedEto
             {
-                CustomerContentId = videoRequest.CustomerContentId,
-                AnalysisContentId = videoRequest.AnalysisContentId,
-                ContentProcessType = videoRequest.ContentProcessType,
+                RefContentId = videoRequest.RefContentId,
+                RefContentType = videoRequest.RefContentType,
                 CorrelationId = @event.CorrelationId,
                 VideoRequestId = videoRequest.Id,
                 FinalVideoUrl = storageUrl
@@ -756,9 +736,8 @@ public async Task HandleAudioUploadCompletedAsync(
 
         await eventBus.PublishAsync(new AudioFileUploadCompletedEto
         {
-            CustomerContentId = audio.CustomerContentId,
-            AnalysisContentId = audio.AnalysisContentId,
-            ContentProcessType = audio.ContentProcessType,
+            RefContentId = audio.RefContentId,
+                RefContentType = audio.RefContentType,
             CorrelationId = input.CorrelationId,
             VideoRequestId = audio.VideoRequestId,
             AudioRequestId = audio.Id,
@@ -826,7 +805,7 @@ public async Task HandleAudioUploadCompletedAsync(
             .EnumerateArray()
             .Select(x => new VideoInputAudioItem
             {
-                CustomerContentId = x.TryGetProperty("customerContentId", out var customerIdEl)
+                RefContentId = x.TryGetProperty("customerContentId", out var customerIdEl)
                     ? customerIdEl.GetGuid()
                     : null,
                 SortOrder = x.GetProperty("sortOrder").GetInt32(),
@@ -902,9 +881,8 @@ public async Task HandleAudioUploadCompletedAsync(
 
         await eventBus.PublishAsync(new StepFailedEto
         {
-            CustomerContentId = request.CustomerContentId,
-            AnalysisContentId = request.AnalysisContentId,
-            ContentProcessType = request.ContentProcessType,
+            RefContentId = request.RefContentId,
+                RefContentType = request.RefContentType,
             CorrelationId = request.CorrelationId,
             Step = step,
             ErrorMessage = ex.Message,
@@ -929,9 +907,8 @@ public async Task HandleAudioUploadCompletedAsync(
 
         await eventBus.PublishAsync(new StepFailedEto
         {
-            CustomerContentId = request.CustomerContentId,
-            AnalysisContentId = request.AnalysisContentId,
-            ContentProcessType = request.ContentProcessType,
+            RefContentId = request.RefContentId,
+                RefContentType = request.RefContentType,
             CorrelationId = request.CorrelationId,
             Step = step,
             ErrorMessage = ex.Message,
@@ -980,9 +957,8 @@ public async Task HandleAudioUploadCompletedAsync(
 
         await eventBus.PublishAsync(new StepFailedEto
         {
-            CustomerContentId = request.CustomerContentId,
-            AnalysisContentId = request.AnalysisContentId,
-            ContentProcessType = request.ContentProcessType,
+            RefContentId = request.RefContentId,
+                RefContentType = request.RefContentType,
             CorrelationId = request.CorrelationId,
             Step = step,
             ErrorMessage = ex.Message,
@@ -1007,9 +983,8 @@ public async Task HandleAudioUploadCompletedAsync(
 
         await eventBus.PublishAsync(new StepFailedEto
         {
-            CustomerContentId = request.CustomerContentId,
-            AnalysisContentId = request.AnalysisContentId,
-            ContentProcessType = request.ContentProcessType,
+            RefContentId = request.RefContentId,
+                RefContentType = request.RefContentType,
             CorrelationId = request.CorrelationId,
             Step = step,
             ErrorMessage = ex.Message,

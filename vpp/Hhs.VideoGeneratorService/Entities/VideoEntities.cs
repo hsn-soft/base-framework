@@ -15,11 +15,10 @@ public sealed class VideoRequest
     // Correlation & Context
     public Guid CorrelationId { get; set; }
     public Guid SourceEventId { get; set; }
-    public Guid? CustomerContentId { get; set; }
-    public Guid? AnalysisContentId { get; set; }
+    public Guid RefContentId { get; set; }
+    public string RefContentType { get; set; } = default!;
 
     // Status & Configuration
-    public string ContentProcessType { get; set; } = default!;
     public string Status { get; set; } = default!;
     public string CurrentStep { get; set; } = default!;
 
@@ -61,11 +60,10 @@ public sealed class AudioRequest
     // Correlation & Context
     public Guid CorrelationId { get; set; }
     public Guid VideoRequestId { get; set; }
-    public Guid? CustomerContentId { get; set; }
-    public Guid? AnalysisContentId { get; set; }
+    public Guid RefContentId { get; set; }
+    public string RefContentType { get; set; } = default!;
 
     // Status & Configuration
-    public string ContentProcessType { get; set; } = default!;
     public string Status { get; set; } = default!;
     public string CurrentStep { get; set; } = default!;
     public int SortOrder { get; set; }
