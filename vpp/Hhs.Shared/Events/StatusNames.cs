@@ -34,6 +34,22 @@ public static class StatusNames
     public const string AudioProviderRequestStarted = "AUDIO_PROVIDER_REQUEST_STARTED";
     public const string Downloading = "DOWNLOADING";
 
+    // Audio/Video request statuses
+    public const string AudioRequestCreated = "AUDIO_REQUEST_CREATED";
+    public const string AudioProviderRequestRetrying = "AUDIO_PROVIDER_REQUEST_RETRYING";
+    public const string Downloaded = "DOWNLOADED";
+    public const string Uploading = "UPLOADING";
+    public const string Uploaded = "UPLOADED";
+
+    // Video provider statuses
+    public const string VideoProviderRequestStarting = "VIDEO_PROVIDER_REQUEST_STARTING";
+    public const string VideoProviderRequestStarted = "VIDEO_PROVIDER_REQUEST_STARTED";
+    public const string VideoProviderPolling = "VIDEO_PROVIDER_POLLING";
+    public const string VideoProviderCompleted = "VIDEO_PROVIDER_COMPLETED";
+    public const string VideoDownloading = "VIDEO_DOWNLOADING";
+    public const string VideoDownloaded = "VIDEO_DOWNLOADED";
+    public const string VideoUploading = "VIDEO_UPLOADING";
+
     // Polling statuses
     public const string Polling = "POLLING";
 }

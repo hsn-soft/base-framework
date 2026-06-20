@@ -34,7 +34,7 @@ public sealed class ContentOperationAppService
             Url = request.Url,
             NormalizeStatus = StatusNames.Created,
             VideoStatus = StatusNames.NotStarted,
-            LastFacility = "CUSTOMER_CONTENT_CREATED",
+            LastFacility = EventNames.CustomerContentCreated,
             OutlineProviderKey = NormalizeProviderKey(request.OutlineProviderKey),
             VideoProviderKey = NormalizeProviderKey(request.VideoProviderKey),
             AudioProviderKey = request.AudioProviderKey != null ? NormalizeProviderKey(request.AudioProviderKey) : null,
@@ -76,7 +76,7 @@ public sealed class ContentOperationAppService
             Title = request.Title,
             NormalizeStatus = StatusNames.Created,
             VideoStatus = StatusNames.NotStarted,
-            LastFacility = "ANALYSIS_CONTENT_CREATED",
+            LastFacility = EventNames.AnalysisContentCreated,
             OutlineProviderKey = NormalizeProviderKey(request.OutlineProviderKey),
             VideoProviderKey = NormalizeProviderKey(request.VideoProviderKey),
             AudioProviderKey = request.AudioProviderKey != null ? NormalizeProviderKey(request.AudioProviderKey) : null,
@@ -253,15 +253,15 @@ public sealed class ContentOperationAppService
 
     private static bool IsNormalizeStep(string step)
     {
-        return step.Contains("SCRAPING", StringComparison.OrdinalIgnoreCase)
-               || step.Contains("OUTLINE", StringComparison.OrdinalIgnoreCase)
-               || step.Contains("NORMALIZE", StringComparison.OrdinalIgnoreCase);
+        return step.Contains(StepKeywords.Scraping, StringComparison.OrdinalIgnoreCase)
+               || step.Contains(StepKeywords.Outline, StringComparison.OrdinalIgnoreCase)
+               || step.Contains(StepKeywords.Normalize, StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool IsVideoStep(string step)
     {
-        return step.Contains("AUDIO", StringComparison.OrdinalIgnoreCase)
-               || step.Contains("VIDEO", StringComparison.OrdinalIgnoreCase);
+        return step.Contains(StepKeywords.Audio, StringComparison.OrdinalIgnoreCase)
+               || step.Contains(StepKeywords.Video, StringComparison.OrdinalIgnoreCase);
     }
 
     private static string NormalizeProviderKey(string key)

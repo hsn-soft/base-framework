@@ -51,8 +51,8 @@ public sealed class VideoProviderPollingAppService(
 
                 if (request.ProviderPollingCount >= 60)
                 {
-                    request.Status = "FAILED";
-                    request.LastError = "Video provider polling timeout.";
+                    request.Status = StatusNames.Failed;
+                    request.LastError = ErrorMessages.VideoProviderPollingTimeout;
                     request.UpdatedAtUtc = DateTime.UtcNow;
 
                     await ReplaceVideoAsync(request, cancellationToken);

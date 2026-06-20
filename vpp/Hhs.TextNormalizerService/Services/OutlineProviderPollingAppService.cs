@@ -54,7 +54,7 @@ public sealed class OutlineProviderPollingAppService(
                 if (request.OutlinePollingCount >= request.MaxOutlinePollingCount)
                 {
                     request.Status = StatusNames.Failed;
-                    request.LastError = "Outline provider polling timeout.";
+                    request.LastError = ErrorMessages.OutlineProviderPollingTimeout;
                     request.UpdatedAtUtc = DateTime.UtcNow;
 
                     await ReplaceCustomerAsync(request, cancellationToken);
@@ -86,7 +86,7 @@ public sealed class OutlineProviderPollingAppService(
                 if (status.IsProcessFailed)
                 {
                     request.Status = StatusNames.Failed;
-                    request.LastError = status.ErrorMessage ?? "Outline provider failed.";
+                    request.LastError = status.ErrorMessage ?? ErrorMessages.OutlineProviderFailed;
                     request.UpdatedAtUtc = DateTime.UtcNow;
 
                     await ReplaceCustomerAsync(request, cancellationToken);
@@ -209,8 +209,8 @@ public sealed class OutlineProviderPollingAppService(
                 try
                 {
                     var claimUpdate = Builders<AnalysisContentNormalizedRequest>.Update
-                        .Set("Items.$.NextOutlinePollAtUtc", DateTime.UtcNow.AddSeconds(_pollingSettings.IntervalSeconds))
-                        .Set("Items.$.UpdatedAtUtc", DateTime.UtcNow)
+                        .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextOutlinePollAtUtc)}", DateTime.UtcNow.AddSeconds(_pollingSettings.IntervalSeconds))
+                        .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.UpdatedAtUtc)}", DateTime.UtcNow)
                         .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);
 
                     var claimResult = await UpdateDuePollingAnalysisItemAsync(
@@ -228,7 +228,7 @@ public sealed class OutlineProviderPollingAppService(
                         await FailAnalysisPollingItemAsync(
                             request,
                             item,
-                            "Outline provider polling timeout.",
+                            ErrorMessages.OutlineProviderPollingTimeout,
                             false,
                             cancellationToken);
 
@@ -261,9 +261,9 @@ public sealed class OutlineProviderPollingAppService(
                     if (!status.IsProcessed)
                     {
                         var update = Builders<AnalysisContentNormalizedRequest>.Update
-                            .Inc("Items.$.OutlinePollingCount", 1)
-                            .Set("Items.$.NextOutlinePollAtUtc", DateTime.UtcNow.AddSeconds(_pollingSettings.ErrorRescheduleDelaySeconds))
-                            .Set("Items.$.UpdatedAtUtc", DateTime.UtcNow)
+                            .Inc($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlinePollingCount)}", 1)
+                            .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextOutlinePollAtUtc)}", DateTime.UtcNow.AddSeconds(_pollingSettings.ErrorRescheduleDelaySeconds))
+                            .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.UpdatedAtUtc)}", DateTime.UtcNow)
                             .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);
 
                         await UpdateAnalysisItemAsync(
@@ -279,12 +279,12 @@ public sealed class OutlineProviderPollingAppService(
                         throw new InvalidOperationException("Outline provider completed but script is empty.");
 
                     var completedUpdate = Builders<AnalysisContentNormalizedRequest>.Update
-                        .Inc("Items.$.OutlinePollingCount", 1)
-                        .Set("Items.$.Status", StatusNames.OutlineProviderCompleted)
-                        .Set("Items.$.CurrentStep", EventNames.OutlineProviderCompleted)
-                        .Set("Items.$.NextOutlinePollAtUtc", (DateTime?)null)
-                        .Set("Items.$.OutlineStatus", StatusNames.ProviderCompleted)
-                        .Set("Items.$.UpdatedAtUtc", DateTime.UtcNow)
+                        .Inc($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlinePollingCount)}", 1)
+                        .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", StatusNames.OutlineProviderCompleted)
+                        .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentStep)}", EventNames.OutlineProviderCompleted)
+                        .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextOutlinePollAtUtc)}", (DateTime?)null)
+                        .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineStatus)}", StatusNames.ProviderCompleted)
+                        .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.UpdatedAtUtc)}", DateTime.UtcNow)
                         .Set(x => x.CurrentStep, EventNames.OutlineProviderCompleted)
                         .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);
 
@@ -328,13 +328,13 @@ public sealed class OutlineProviderPollingAppService(
                     }
 
                     var update = Builders<AnalysisContentNormalizedRequest>.Update
-                        .Set("Items.$.OutlinePollingCount", nextCount)
-                        .Set("Items.$.Status", StatusNames.OutlineProviderPolling)
-                        .Set("Items.$.CurrentStep", EventNames.OutlineProviderPollingStarted)
-                        .Set("Items.$.OutlineStatus", StatusNames.Polling)
-                        .Set("Items.$.LastError", ex.Message)
-                        .Set("Items.$.NextOutlinePollAtUtc", DateTime.UtcNow.AddSeconds(_pollingSettings.ErrorRescheduleDelaySeconds))
-                        .Set("Items.$.UpdatedAtUtc", DateTime.UtcNow)
+                        .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlinePollingCount)}", nextCount)
+                        .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", StatusNames.OutlineProviderPolling)
+                        .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentStep)}", EventNames.OutlineProviderPollingStarted)
+                        .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineStatus)}", StatusNames.Polling)
+                        .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.LastError)}", ex.Message)
+                        .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextOutlinePollAtUtc)}", DateTime.UtcNow.AddSeconds(_pollingSettings.ErrorRescheduleDelaySeconds))
+                        .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.UpdatedAtUtc)}", DateTime.UtcNow)
                         .Set(x => x.Status, StatusNames.OutlineProviderPolling)
                         .Set(x => x.CurrentStep, EventNames.OutlineProviderPollingStarted)
                         .Set(x => x.LastError, ex.Message)
@@ -388,12 +388,12 @@ public sealed class OutlineProviderPollingAppService(
         CancellationToken cancellationToken)
     {
         var update = Builders<AnalysisContentNormalizedRequest>.Update
-            .Set("Items.$.Status", StatusNames.Failed)
-            .Set("Items.$.CurrentStep", EventNames.OutlineProviderPollingStarted)
-            .Set("Items.$.OutlineStatus", StatusNames.Failed)
-            .Set("Items.$.LastError", errorMessage)
-            .Set("Items.$.NextOutlinePollAtUtc", (DateTime?)null)
-            .Set("Items.$.UpdatedAtUtc", DateTime.UtcNow)
+            .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", StatusNames.Failed)
+            .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentStep)}", EventNames.OutlineProviderPollingStarted)
+            .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineStatus)}", StatusNames.Failed)
+            .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.LastError)}", errorMessage)
+            .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextOutlinePollAtUtc)}", (DateTime?)null)
+            .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.UpdatedAtUtc)}", DateTime.UtcNow)
             .Set(x => x.Status, StatusNames.Failed)
             .Set(x => x.CurrentStep, EventNames.OutlineProviderPollingStarted)
             .Set(x => x.LastError, errorMessage)

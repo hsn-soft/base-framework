@@ -50,7 +50,7 @@ public sealed class AudioProviderPollingAppService(
                 if (request.ProviderPollingCount >= 60)
                 {
                     request.Status = StatusNames.Failed;
-                    request.LastError = "Audio provider polling timeout.";
+                    request.LastError = ErrorMessages.AudioProviderPollingTimeout;
                     request.UpdatedAtUtc = DateTime.UtcNow;
 
                     await ReplaceAudioAsync(request, cancellationToken);
