@@ -1043,7 +1043,7 @@ public sealed class VideoInputAudioItem
 
 public sealed class ManualAudioUploadInput
 {
-    public Guid CorrelationId { get; set; } = Guid.NewGuid();
+    public string? CorrelationId { get; set; }
     public string ContentProcessType { get; set; } = ContentProcessTypes.CustomerContent;
     public string StorageUrl { get; set; } = default!;
 }
