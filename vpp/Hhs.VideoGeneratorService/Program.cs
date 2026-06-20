@@ -17,7 +17,34 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.Configure<MongoOptions>(builder.Configuration.GetSection("MongoDb"));
 builder.Services.Configure<RabbitMqOptions>(builder.Configuration.GetSection("RabbitMq"));
-builder.Services.Configure<ProviderEndpointsOptions>(builder.Configuration.GetSection("ProviderEndpoints"));
+
+var audioFastProviderSettings = builder.Configuration.GetSection(AudioFastProviderSettings.SectionName)
+    .Get<AudioFastProviderSettings>() ?? new AudioFastProviderSettings();
+builder.Services.AddSingleton(audioFastProviderSettings);
+
+var audioQueueProviderSettings = builder.Configuration.GetSection(AudioQueueProviderSettings.SectionName)
+    .Get<AudioQueueProviderSettings>() ?? new AudioQueueProviderSettings();
+builder.Services.AddSingleton(audioQueueProviderSettings);
+
+var videoFastExternalProviderSettings = builder.Configuration.GetSection(VideoFastExternalProviderSettings.SectionName)
+    .Get<VideoFastExternalProviderSettings>() ?? new VideoFastExternalProviderSettings();
+builder.Services.AddSingleton(videoFastExternalProviderSettings);
+
+var videoFastInternalProviderSettings = builder.Configuration.GetSection(VideoFastInternalProviderSettings.SectionName)
+    .Get<VideoFastInternalProviderSettings>() ?? new VideoFastInternalProviderSettings();
+builder.Services.AddSingleton(videoFastInternalProviderSettings);
+
+var videoQueueExternalProviderSettings = builder.Configuration.GetSection(VideoQueueExternalProviderSettings.SectionName)
+    .Get<VideoQueueExternalProviderSettings>() ?? new VideoQueueExternalProviderSettings();
+builder.Services.AddSingleton(videoQueueExternalProviderSettings);
+
+var videoQueueInternalProviderSettings = builder.Configuration.GetSection(VideoQueueInternalProviderSettings.SectionName)
+    .Get<VideoQueueInternalProviderSettings>() ?? new VideoQueueInternalProviderSettings();
+builder.Services.AddSingleton(videoQueueInternalProviderSettings);
+
+var storageProviderSettings = builder.Configuration.GetSection(StorageProviderSettings.SectionName)
+    .Get<StorageProviderSettings>() ?? new StorageProviderSettings();
+builder.Services.AddSingleton(storageProviderSettings);
 
 var audioPollingSettings = builder.Configuration.GetSection(AudioPollingSettings.SectionName)
     .Get<AudioPollingSettings>() ?? new AudioPollingSettings();

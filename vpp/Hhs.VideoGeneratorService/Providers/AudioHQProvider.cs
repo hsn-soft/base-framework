@@ -1,6 +1,5 @@
 using Hhs.Shared.Providers;
 using Hhs.VideoGeneratorService.Configuration;
-using Microsoft.Extensions.Options;
 using System.Text.Json;
 
 namespace Hhs.VideoGeneratorService.Providers;
@@ -10,10 +9,10 @@ public sealed class AudioHQProvider : IAudioProvider
     private readonly HttpClient _httpClient;
     private readonly string _baseUrl;
 
-    public AudioHQProvider(HttpClient httpClient, IOptions<ProviderEndpointsOptions> options)
+    public AudioHQProvider(HttpClient httpClient, AudioQueueProviderSettings audioSettings)
     {
         _httpClient = httpClient;
-        _baseUrl = options.Value.AudioProviders.HQBaseUrl;
+        _baseUrl = audioSettings.BaseUrl;
     }
 
     public string ProviderKey => ProviderKeys.AudioHQ;

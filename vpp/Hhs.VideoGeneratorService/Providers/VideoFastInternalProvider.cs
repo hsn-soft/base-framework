@@ -1,6 +1,5 @@
 using Hhs.Shared.Providers;
 using Hhs.VideoGeneratorService.Configuration;
-using Microsoft.Extensions.Options;
 using System.Text.Json;
 
 namespace Hhs.VideoGeneratorService.Providers;
@@ -10,10 +9,10 @@ public sealed class VideoFastInternalProvider : IVideoProvider
     private readonly HttpClient _httpClient;
     private readonly string _baseUrl;
 
-    public VideoFastInternalProvider(HttpClient httpClient, IOptions<ProviderEndpointsOptions> options)
+    public VideoFastInternalProvider(HttpClient httpClient, VideoFastInternalProviderSettings videoSettings)
     {
         _httpClient = httpClient;
-        _baseUrl = options.Value.VideoProviders.FastInternalBaseUrl;
+        _baseUrl = videoSettings.BaseUrl;
     }
 
     public string ProviderKey => ProviderKeys.VideoFastInternal;
@@ -22,7 +21,7 @@ public sealed class VideoFastInternalProvider : IVideoProvider
     {
         ProviderKey = ProviderKey,
         ExecutionMode = ProviderExecutionMode.ImmediateResult,
-        AudioInputMode = VideoAudioInputMode.ProviderCreatesAudio
+        AudioInputMode = VideoAudioInputMode.AudioUrlListRequired
     };
 
     public async Task<VideoCreateResponse> CreateAsync(

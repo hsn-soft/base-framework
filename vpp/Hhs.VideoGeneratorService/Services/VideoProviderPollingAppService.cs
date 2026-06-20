@@ -4,7 +4,6 @@ using Hhs.VideoGeneratorService.Configuration;
 using Hhs.VideoGeneratorService.Entities;
 using Hhs.VideoGeneratorService.Mongo;
 using Hhs.VideoGeneratorService.Providers;
-using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 
 namespace Hhs.VideoGeneratorService.Services;
@@ -15,7 +14,11 @@ public sealed class VideoProviderPollingAppService(
     IEventBus eventBus,
     ILogger<VideoProviderPollingAppService> logger,
     HttpClient httpClient,
-    IOptions<ProviderEndpointsOptions> options,
+    VideoFastExternalProviderSettings videoFastExternalSettings,
+    VideoFastInternalProviderSettings videoFastInternalSettings,
+    VideoQueueExternalProviderSettings videoQueueExternalSettings,
+    VideoQueueInternalProviderSettings videoQueueInternalSettings,
+    StorageProviderSettings storageSettings,
     VideoPollingSettings pollingSettings)
 {
     private readonly VideoPollingSettings _pollingSettings = pollingSettings;
@@ -214,7 +217,7 @@ public sealed class VideoProviderPollingAppService(
             var fileContent = await httpClient.GetByteArrayAsync(downloadUrl, cancellationToken);
 
             // Upload to mock storage
-            var storageUrl = $"{options.Value.StorageBaseUrl}/storage/upload-binary";
+            var storageUrl = $"{storageSettings.BaseUrl}/storage/upload-binary";
             using (var content = new ByteArrayContent(fileContent))
             {
                 var response = await httpClient.PostAsync(

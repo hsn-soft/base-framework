@@ -1,6 +1,5 @@
 using Hhs.Shared.Providers;
 using Hhs.VideoGeneratorService.Configuration;
-using Microsoft.Extensions.Options;
 using System.Text.Json;
 
 namespace Hhs.VideoGeneratorService.Providers;
@@ -10,10 +9,10 @@ public sealed class VideoFastExternalProvider : IVideoProvider
     private readonly HttpClient _httpClient;
     private readonly string _baseUrl;
 
-    public VideoFastExternalProvider(HttpClient httpClient, IOptions<ProviderEndpointsOptions> options)
+    public VideoFastExternalProvider(HttpClient httpClient, VideoFastExternalProviderSettings videoSettings)
     {
         _httpClient = httpClient;
-        _baseUrl = options.Value.VideoProviders.FastExternalBaseUrl;
+        _baseUrl = videoSettings.BaseUrl;
     }
 
     public string ProviderKey => ProviderKeys.VideoFastExternal;

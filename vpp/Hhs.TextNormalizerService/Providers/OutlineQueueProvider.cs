@@ -1,13 +1,12 @@
 using Hhs.Shared.Providers;
 using Hhs.TextNormalizerService.Configuration;
-using Microsoft.Extensions.Options;
 using System.Text.Json;
 
 namespace Hhs.TextNormalizerService.Providers;
 
-public sealed class OutlineQueueProvider(HttpClient httpClient, IOptions<OutlineProviderEndpointsOptions> options) : IOutlineProvider
+public sealed class OutlineQueueProvider(HttpClient httpClient, OutlineQueueProviderSettings outlineSettings) : IOutlineProvider
 {
-    private readonly string _baseUrl = options == null ? throw new ArgumentNullException(nameof(options)) : options.Value.QueueBaseUrl;
+    private readonly string _baseUrl = outlineSettings == null ? throw new ArgumentNullException(nameof(outlineSettings)) : outlineSettings.BaseUrl;
 
     public string ProviderKey => ProviderKeys.OutlineQueue;
 

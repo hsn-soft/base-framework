@@ -1,6 +1,5 @@
 using Hhs.Shared.Providers;
 using Hhs.VideoGeneratorService.Configuration;
-using Microsoft.Extensions.Options;
 using System.Text.Json;
 
 namespace Hhs.VideoGeneratorService.Providers;
@@ -10,10 +9,10 @@ public sealed class VideoQueueExternalProvider : IVideoProvider
     private readonly HttpClient _httpClient;
     private readonly string _baseUrl;
 
-    public VideoQueueExternalProvider(HttpClient httpClient, IOptions<ProviderEndpointsOptions> options)
+    public VideoQueueExternalProvider(HttpClient httpClient, VideoQueueExternalProviderSettings videoSettings)
     {
         _httpClient = httpClient;
-        _baseUrl = options.Value.VideoProviders.QueueExternalBaseUrl;
+        _baseUrl = videoSettings.BaseUrl;
     }
 
     public string ProviderKey => ProviderKeys.VideoQueueExternal;
@@ -29,9 +28,6 @@ public sealed class VideoQueueExternalProvider : IVideoProvider
         VideoCreateRequest request,
         CancellationToken cancellationToken)
     {
-        if (request.AudioUrls.Count == 0)
-            throw new InvalidOperationException("VideoProviderB requires audio urls.");
-
         var response = await _httpClient.PostAsJsonAsync(
             $"{_baseUrl}/video/generate",
             request,
@@ -47,9 +43,7 @@ public sealed class VideoQueueExternalProvider : IVideoProvider
         };
     }
 
-    public async Task<VideoStatusResponse> GetStatusAsync(
-        string providerTrackId,
-        CancellationToken cancellationToken)
+    public async Task<VideoStatusResponse> GetStatusAsync(string providerTrackId, CancellationToken cancellationToken)
     {
         var response = await _httpClient.GetAsync(
             $"{_baseUrl}/video/status/{providerTrackId}",

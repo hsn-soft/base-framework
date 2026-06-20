@@ -17,7 +17,14 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.Configure<MongoOptions>(builder.Configuration.GetSection("MongoDb"));
 builder.Services.Configure<RabbitMqOptions>(builder.Configuration.GetSection("RabbitMq"));
-builder.Services.Configure<OutlineProviderEndpointsOptions>(builder.Configuration.GetSection("OutlineProviders"));
+
+var outlineFastProviderSettings = builder.Configuration.GetSection(OutlineFastProviderSettings.SectionName)
+    .Get<OutlineFastProviderSettings>() ?? new OutlineFastProviderSettings();
+builder.Services.AddSingleton(outlineFastProviderSettings);
+
+var outlineQueueProviderSettings = builder.Configuration.GetSection(OutlineQueueProviderSettings.SectionName)
+    .Get<OutlineQueueProviderSettings>() ?? new OutlineQueueProviderSettings();
+builder.Services.AddSingleton(outlineQueueProviderSettings);
 
 var outlinePollingSettings = builder.Configuration.GetSection(OutlinePollingSettings.SectionName)
     .Get<OutlinePollingSettings>() ?? new OutlinePollingSettings();

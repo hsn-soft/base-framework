@@ -1,5 +1,4 @@
 using Hhs.VideoGeneratorService.Configuration;
-using Microsoft.Extensions.Options;
 
 namespace Hhs.VideoGeneratorService.Providers;
 
@@ -13,10 +12,10 @@ public sealed class DummyStorageService : IStorageService
     private readonly HttpClient _httpClient;
     private readonly string _storageBaseUrl;
 
-    public DummyStorageService(HttpClient httpClient, IOptions<ProviderEndpointsOptions> options)
+    public DummyStorageService(HttpClient httpClient, StorageProviderSettings storageSettings)
     {
         _httpClient = httpClient;
-        _storageBaseUrl = options.Value.StorageBaseUrl;
+        _storageBaseUrl = storageSettings.BaseUrl;
     }
 
     public async Task<string> UploadAsync(string localFilePath, CancellationToken cancellationToken)
