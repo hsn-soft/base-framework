@@ -162,7 +162,6 @@ static async Task TestCdnLocalMinioDetailed(HttpClient httpClient, byte[] fileBy
     Console.WriteLine("╚════════════════════════════════════════════════════════════════╝\n");
 
     const string apiUrl = "http://localhost:5070";
-    const string minioUrl = "http://localhost:9100";
     const string minioConsoleUrl = "http://localhost:9101";
 
     try
@@ -290,7 +289,7 @@ static async Task TestCdnLocalMinioDetailed(HttpClient httpClient, byte[] fileBy
         Console.WriteLine($"\n   📋 Next Steps:");
         Console.WriteLine($"      1. Open MinIO Console: {minioConsoleUrl}");
         Console.WriteLine($"      2. Login with minioadmin/minioadmin");
-        Console.WriteLine($"      3. Navigate to bucket 'videos'");
+        Console.WriteLine($"      3. Navigate to bucket 'cdn-local-minio-bucket'");
         Console.WriteLine($"      4. Verify file at path: {s3Key}");
         Console.WriteLine($"      5. Confirm: {storedFileName}\n");
     }

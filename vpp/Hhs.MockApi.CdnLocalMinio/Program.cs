@@ -93,7 +93,8 @@ public sealed class MinioService
             var fileId = Guid.NewGuid().ToString("N")[..8];
             var dateFolder = DateTime.UtcNow.ToString("yyyy/MM/dd");
             var storedFileName = $"{fileId}_{file.FileName}";
-            var s3Key = $"{dateFolder}/{storedFileName}";
+            var providerKey = "cdn-local-minio"; // CDN provider identifier
+            var s3Key = $"{providerKey}/{dateFolder}/{storedFileName}";
 
             // Read file bytes
             byte[] fileBytes;
