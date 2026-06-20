@@ -39,8 +39,6 @@ public sealed class ContentDbContext : DbContext
             b.HasKey(x => x.Id);
             b.Property(x => x.ScopeKey).IsRequired().HasMaxLength(100);
             b.Property(x => x.DomainName).IsRequired().HasMaxLength(500);
-            b.Property(x => x.ContentKey).IsRequired().HasMaxLength(500);
-            b.Property(x => x.SlugKey).IsRequired().HasMaxLength(500);
             b.Property(x => x.Title).HasMaxLength(500);
             b.Property(x => x.NormalizeStatus).HasMaxLength(80);
             b.Property(x => x.VideoStatus).HasMaxLength(80);

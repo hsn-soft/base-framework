@@ -15,8 +15,6 @@ public sealed class AnalysisContent
 
     // Content Metadata
     public string DomainName { get; set; } = default!;
-    public string ContentKey { get; set; } = default!;
-    public string SlugKey { get; set; } = default!;
     public string? Title { get; set; }
 
     // Normalization Status

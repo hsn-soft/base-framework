@@ -16,7 +16,6 @@ public sealed class AnalysisContentNormalizedRequest
     // Content Reference
     public Guid AnalysisContentId { get; set; }
     public string DomainName { get; set; } = default!;
-    public string ContentKey { get; set; } = default!;
 
     // Status & Progress
     public string Status { get; set; } = default!;
