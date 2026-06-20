@@ -4,6 +4,7 @@ using Hhs.Shared.Configuration;
 using Hhs.Shared.Providers;
 using Hhs.Shared.Retry;
 using Hhs.TextNormalizerService.Configuration;
+using Hhs.TextNormalizerService.Configuration.Providers.Outline;
 using Hhs.TextNormalizerService.Entities;
 using Hhs.TextNormalizerService.Handlers;
 using Hhs.TextNormalizerService.Infrastructure;

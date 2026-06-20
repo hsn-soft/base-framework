@@ -1,6 +1,7 @@
 using Hhs.Shared.Events;
 using Hhs.Shared.RabbitMQ;
 using Hhs.TextNormalizerService.Configuration;
+using Hhs.TextNormalizerService.Configuration.Providers.Outline;
 using Hhs.TextNormalizerService.Entities;
 using Hhs.TextNormalizerService.Mongo;
 using Hhs.TextNormalizerService.Providers;

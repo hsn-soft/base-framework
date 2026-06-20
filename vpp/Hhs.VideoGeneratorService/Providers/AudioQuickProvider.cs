@@ -1,5 +1,6 @@
 using Hhs.Shared.Providers;
 using Hhs.VideoGeneratorService.Configuration;
+using Hhs.VideoGeneratorService.Configuration.Providers.Audio;
 using System.Text.Json;
 
 namespace Hhs.VideoGeneratorService.Providers;

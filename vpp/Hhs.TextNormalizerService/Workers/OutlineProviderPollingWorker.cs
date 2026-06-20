@@ -1,4 +1,5 @@
 using Hhs.TextNormalizerService.Configuration;
+using Hhs.TextNormalizerService.Configuration.Providers.Outline;
 using Hhs.TextNormalizerService.Services;
 
 namespace Hhs.TextNormalizerService.Workers;

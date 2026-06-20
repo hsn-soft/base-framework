@@ -4,6 +4,7 @@ using Hhs.Shared.Configuration;
 using Hhs.Shared.Configuration.Providers;
 using Hhs.Shared.Providers;
 using Hhs.VideoGeneratorService.Configuration;
+using Hhs.VideoGeneratorService.Configuration.Providers.Storage;
 
 namespace Hhs.VideoGeneratorService.Providers.Storage;
 

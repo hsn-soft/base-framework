@@ -1,7 +1,7 @@
 using Hhs.Shared.Configuration;
 using Hhs.Shared.Configuration.Providers;
 
-namespace Hhs.TextNormalizerService.Configuration;
+namespace Hhs.TextNormalizerService.Configuration.Providers.Outline;
 
 public sealed class OutlineFastProviderSettings : OutlineProviderSettingsBase
 {

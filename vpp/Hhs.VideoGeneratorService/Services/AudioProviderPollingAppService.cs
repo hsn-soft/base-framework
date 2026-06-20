@@ -1,6 +1,8 @@
 using Hhs.Shared.Events;
 using Hhs.Shared.RabbitMQ;
 using Hhs.VideoGeneratorService.Configuration;
+using Hhs.VideoGeneratorService.Configuration.Providers.Audio;
+using Hhs.VideoGeneratorService.Configuration.Providers.Video;
 using Hhs.VideoGeneratorService.Entities;
 using Hhs.VideoGeneratorService.Mongo;
 using Hhs.VideoGeneratorService.Providers;

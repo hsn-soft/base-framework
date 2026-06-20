@@ -1,5 +1,6 @@
 using Hhs.Shared.Providers;
 using Hhs.TextNormalizerService.Configuration;
+using Hhs.TextNormalizerService.Configuration.Providers.Outline;
 using System.Text.Json;
 
 namespace Hhs.TextNormalizerService.Providers;
