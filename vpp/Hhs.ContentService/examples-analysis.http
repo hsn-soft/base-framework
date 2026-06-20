@@ -1,4 +1,4 @@
-@ContentService_HostAddress = http://localhost:5000
+@ContentService_HostAddress = http://localhost:7461
 
 ### ============================================
 ### ANALYSIS CONTENT TEST SCENARIOS - Collage Video Creation

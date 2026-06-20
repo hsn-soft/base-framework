@@ -1,4 +1,4 @@
-@ContentService_HostAddress = http://localhost:5000
+@ContentService_HostAddress = http://localhost:7461
 
 ### ============================================
 ### CUSTOMER CONTENT TEST SCENARIOS - All 8 Provider Combinations
