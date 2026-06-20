@@ -1,4 +1,5 @@
 using Hhs.Shared.Configuration;
+using Hhs.Shared.Configuration.Providers.Video;
 
 namespace Hhs.VideoGeneratorService.Configuration;
 
