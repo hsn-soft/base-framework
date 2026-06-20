@@ -1,5 +1,7 @@
+using Hhs.Shared.Configuration;
 using Hhs.Shared.Events;
 using Hhs.Shared.RabbitMQ;
+using Hhs.TextNormalizerService.Configuration;
 using Hhs.TextNormalizerService.Entities;
 using Hhs.TextNormalizerService.Mongo;
 using MongoDB.Driver;
@@ -8,8 +10,11 @@ namespace Hhs.TextNormalizerService.Services;
 
 public sealed class NormalizerRetryAppService(
     NormalizerMongoContext context,
-    IEventBus eventBus)
+    IEventBus eventBus,
+    NormalizerRetrySettings retrySettings)
 {
+    private readonly NormalizerRetrySettings _retrySettings = retrySettings;
+
     public async Task RetryDueRequestsAsync(CancellationToken cancellationToken)
     {
         var now = DateTime.UtcNow;
@@ -27,7 +32,7 @@ public sealed class NormalizerRetryAppService(
                 x.Status == "WAITING_RETRY" &&
                 x.NextRetryAtUtc != null &&
                 x.NextRetryAtUtc <= now)
-            .Limit(50)
+            .Limit(_retrySettings.BatchSize)
             .ToListAsync(cancellationToken);
 
         foreach (var request in requests)
@@ -57,7 +62,7 @@ public sealed class NormalizerRetryAppService(
                         x.NextRetryAtUtc != null &&
                         x.NextRetryAtUtc <= now,
                     Builders<CustomerContentNormalizedRequest>.Update
-                        .Set(x => x.NextRetryAtUtc, DateTime.UtcNow.AddSeconds(10))
+                        .Set(x => x.NextRetryAtUtc, DateTime.UtcNow.AddSeconds(_retrySettings.ClaimFailRescheduleDelaySeconds))
                         .Set(x => x.LastError, null)
                         .Set(x => x.UpdatedAtUtc, DateTime.UtcNow),
                     cancellationToken: cancellationToken);
@@ -114,7 +119,7 @@ public sealed class NormalizerRetryAppService(
                     x => x.Id == request.Id,
                     Builders<CustomerContentNormalizedRequest>.Update
                         .Set(x => x.Status, "WAITING_RETRY")
-                        .Set(x => x.NextRetryAtUtc, DateTime.UtcNow.AddSeconds(10))
+                        .Set(x => x.NextRetryAtUtc, DateTime.UtcNow.AddSeconds(_retrySettings.ClaimFailRescheduleDelaySeconds))
                         .Set(x => x.UpdatedAtUtc, DateTime.UtcNow),
                     cancellationToken: cancellationToken);
 
@@ -136,7 +141,7 @@ public sealed class NormalizerRetryAppService(
 
         var requests = await context.AnalysisRequests
             .Find(filter)
-            .Limit(50)
+            .Limit(_retrySettings.BatchSize)
             .ToListAsync(cancellationToken);
 
         foreach (var request in requests)
@@ -181,7 +186,7 @@ public sealed class NormalizerRetryAppService(
                     }
 
                     var claimUpdate = Builders<AnalysisContentNormalizedRequest>.Update
-                        .Set("Items.$.NextRetryAtUtc", DateTime.UtcNow.AddSeconds(10))
+                        .Set("Items.$.NextRetryAtUtc", DateTime.UtcNow.AddSeconds(_retrySettings.ClaimFailRescheduleDelaySeconds))
                         .Set("Items.$.UpdatedAtUtc", DateTime.UtcNow)
                         .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);
 
@@ -255,7 +260,7 @@ public sealed class NormalizerRetryAppService(
                 {
                     var retryAgainUpdate = Builders<AnalysisContentNormalizedRequest>.Update
                         .Set("Items.$.Status", "WAITING_RETRY")
-                        .Set("Items.$.NextRetryAtUtc", DateTime.UtcNow.AddSeconds(10))
+                        .Set("Items.$.NextRetryAtUtc", DateTime.UtcNow.AddSeconds(_retrySettings.ClaimFailRescheduleDelaySeconds))
                         .Set("Items.$.UpdatedAtUtc", DateTime.UtcNow)
                         .Set(x => x.Status, "WAITING_RETRY")
                         .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);

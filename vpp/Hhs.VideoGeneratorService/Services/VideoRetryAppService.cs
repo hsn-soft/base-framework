@@ -1,6 +1,8 @@
+using Hhs.Shared.Configuration;
 using Hhs.Shared.Events;
 using Hhs.Shared.Providers;
 using Hhs.Shared.RabbitMQ;
+using Hhs.VideoGeneratorService.Configuration;
 using Hhs.VideoGeneratorService.Mongo;
 using Hhs.VideoGeneratorService.Providers;
 using MongoDB.Driver;
@@ -10,8 +12,11 @@ namespace Hhs.VideoGeneratorService.Services;
 public sealed class VideoRetryAppService(
     VideoMongoContext context,
     IEventBus eventBus,
-    IVideoProviderResolver videoProviderResolver)
+    IVideoProviderResolver videoProviderResolver,
+    VideoRetrySettings retrySettings)
 {
+    private readonly VideoRetrySettings _retrySettings = retrySettings;
+
     public async Task RetryDueRequestsAsync(CancellationToken cancellationToken)
     {
         var now = DateTime.UtcNow;
@@ -29,7 +34,7 @@ public sealed class VideoRetryAppService(
                 x.Status == "WAITING_RETRY" &&
                 x.NextRetryAtUtc != null &&
                 x.NextRetryAtUtc <= now)
-            .Limit(50)
+            .Limit(_retrySettings.BatchSize)
             .ToListAsync(cancellationToken);
 
         foreach (var request in requests)
@@ -128,7 +133,7 @@ public sealed class VideoRetryAppService(
             }
             catch
             {
-                request.NextRetryAtUtc = DateTime.UtcNow.AddSeconds(10);
+                request.NextRetryAtUtc = DateTime.UtcNow.AddSeconds(_retrySettings.ClaimFailRescheduleDelaySeconds);
                 request.UpdatedAtUtc = DateTime.UtcNow;
 
                 await context.AudioRequests.ReplaceOneAsync(
@@ -150,7 +155,7 @@ public sealed class VideoRetryAppService(
                 x.Status == "WAITING_RETRY" &&
                 x.NextRetryAtUtc != null &&
                 x.NextRetryAtUtc <= now)
-            .Limit(50)
+            .Limit(_retrySettings.BatchSize)
             .ToListAsync(cancellationToken);
 
         foreach (var request in requests)
@@ -258,7 +263,7 @@ public sealed class VideoRetryAppService(
             }
             catch
             {
-                request.NextRetryAtUtc = DateTime.UtcNow.AddSeconds(10);
+                request.NextRetryAtUtc = DateTime.UtcNow.AddSeconds(_retrySettings.ClaimFailRescheduleDelaySeconds);
                 request.UpdatedAtUtc = DateTime.UtcNow;
 
                 await context.VideoRequests.ReplaceOneAsync(

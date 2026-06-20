@@ -27,10 +27,14 @@ var videoPollingSettings = builder.Configuration.GetSection(VideoPollingSettings
     .Get<VideoPollingSettings>() ?? new VideoPollingSettings();
 builder.Services.AddSingleton(videoPollingSettings);
 
-var videoRetrySettings = builder.Configuration.GetSection(VideoRetrySettings.SectionName)
+var videoRetrySettings = builder.Configuration.GetSection(nameof(VideoRetrySettings))
     .Get<VideoRetrySettings>() ?? new VideoRetrySettings();
 builder.Services.AddSingleton(videoRetrySettings);
 builder.Services.AddSingleton(_ => new RetryDelayCalculator(videoRetrySettings.DelaySeconds));
+
+var videoEntityDefaults = builder.Configuration.GetSection(VideoEntityDefaults.SectionName)
+    .Get<VideoEntityDefaults>() ?? new VideoEntityDefaults();
+builder.Services.AddSingleton(videoEntityDefaults);
 
 BsonRegisterTools.MongoConfigure();
 builder.Services.AddSingleton<VideoMongoContext>();

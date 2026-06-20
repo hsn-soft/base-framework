@@ -18,11 +18,13 @@ public sealed class NormalizerOperationAppService(
     ILogger<NormalizerOperationAppService> logger,
     IOutlineProviderResolver outlineProviderResolver,
     OutlinePollingSettings outlinePollingSettings,
-    RetryDelayCalculator retryDelayCalculator)
+    RetryDelayCalculator retryDelayCalculator,
+    NormalizerEntityDefaults entityDefaults)
 {
     private readonly ILogger<NormalizerOperationAppService> _logger = logger;
     private readonly OutlinePollingSettings _outlinePollingSettings = outlinePollingSettings;
     private readonly RetryDelayCalculator _retryDelayCalculator = retryDelayCalculator;
+    private readonly NormalizerEntityDefaults _entityDefaults = entityDefaults;
 
     public async Task CreateCustomerContentNormalizeRequestAsync(CustomerContentCreatedEto @event, CancellationToken cancellationToken)
     {
@@ -66,7 +68,7 @@ public sealed class NormalizerOperationAppService(
             MaxOutlinePollingCount = _outlinePollingSettings.MaxAttempts,
             // event retry mechanism
             RetryCount = 0,
-            MaxRetryCount = 0,
+            MaxRetryCount = _entityDefaults.MaxRetryCount,
             NextRetryAtUtc = null,
             // audit
             CreatedAtUtc = DateTime.UtcNow,

@@ -23,10 +23,14 @@ var outlinePollingSettings = builder.Configuration.GetSection(OutlinePollingSett
     .Get<OutlinePollingSettings>() ?? new OutlinePollingSettings();
 builder.Services.AddSingleton(outlinePollingSettings);
 
-var normalizerRetrySettings = builder.Configuration.GetSection(NormalizerRetrySettings.SectionName)
+var normalizerRetrySettings = builder.Configuration.GetSection(nameof(NormalizerRetrySettings))
     .Get<NormalizerRetrySettings>() ?? new NormalizerRetrySettings();
 builder.Services.AddSingleton(normalizerRetrySettings);
 builder.Services.AddSingleton(_ => new RetryDelayCalculator(normalizerRetrySettings.DelaySeconds));
+
+var normalizerEntityDefaults = builder.Configuration.GetSection(NormalizerEntityDefaults.SectionName)
+    .Get<NormalizerEntityDefaults>() ?? new NormalizerEntityDefaults();
+builder.Services.AddSingleton(normalizerEntityDefaults);
 
 BsonRegisterTools.MongoConfigure();
 builder.Services.AddSingleton<NormalizerMongoContext>();
