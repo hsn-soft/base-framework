@@ -1,7 +1,8 @@
 using Microsoft.Extensions.Logging;
 using Hhs.Shared.Configuration;
-using Hhs.Shared.Configuration.Providers.Storage;
+using Hhs.Shared.Configuration.Providers;
 using Hhs.Shared.Providers;
+using Hhs.VideoGeneratorService.Configuration;
 
 namespace Hhs.VideoGeneratorService.Providers.Storage;
 

@@ -1,9 +1,10 @@
 using Hhs.Shared.Events;
 using Hhs.Shared.RabbitMQ;
 using Hhs.Shared.Configuration;
-using Hhs.Shared.Configuration.Providers.Storage;
+using Hhs.Shared.Configuration.Providers;
 using Hhs.Shared.Providers;
 using Hhs.Shared.Retry;
+using Hhs.VideoGeneratorService.Configuration;
 using Hhs.VideoGeneratorService.Providers.Storage;
 using Hhs.VideoGeneratorService.Configuration;
 using Hhs.VideoGeneratorService.Entities;

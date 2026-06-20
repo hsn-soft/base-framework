@@ -1,4 +1,4 @@
-namespace Hhs.Shared.Configuration.Providers.Storage;
+namespace Hhs.Shared.Configuration.Providers;
 
 public abstract class CdnProviderSettingsBase : IHasCdnBaseUrl
 {
