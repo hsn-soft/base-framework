@@ -255,7 +255,7 @@ public async Task CreateVideoRequestAsync(
                 if (string.IsNullOrWhiteSpace(response.ProviderFileUrl))
                     throw new InvalidOperationException("Audio provider completed but file url is empty.");
 
-                audioRequest.ProviderFileName = response.FileName;
+                audioRequest.AudioFileName = response.FileName;
 
                 // Download file from provider and upload to mock storage
                 var localFileName = !string.IsNullOrWhiteSpace(response.FileName)
@@ -266,7 +266,7 @@ public async Task CreateVideoRequestAsync(
                     localFileName,
                     cancellationToken);
 
-                audioRequest.ProviderAudioFileUrl = mockStorageUrl;
+                audioRequest.AudioProviderUrl = mockStorageUrl;
                 audioRequest.Status = "AUDIO_PROVIDER_COMPLETED";
                 audioRequest.CurrentStep = EventNames.AudioProviderCompleted;
                 audioRequest.UpdatedAtUtc = DateTime.UtcNow;
@@ -290,7 +290,7 @@ public async Task CreateVideoRequestAsync(
             if (string.IsNullOrWhiteSpace(response.ProviderTrackId))
                 throw new InvalidOperationException("Audio provider track id is required.");
 
-            audioRequest.AudioProviderTrackId = response.ProviderTrackId;
+            audioRequest.AudioTrackingId = response.ProviderTrackId;
             audioRequest.Status = "AUDIO_PROVIDER_POLLING";
             audioRequest.CurrentStep = EventNames.AudioProviderPollingStarted;
             audioRequest.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(5);
@@ -354,9 +354,9 @@ public async Task CreateVideoRequestAsync(
 
             await ReplaceAudioAsync(audioRequest, cancellationToken);
 
-            var localPath = await fileDownloader.DownloadAsync(@event.ProviderFileUrl, "mp3", audioRequest.ProviderFileName, cancellationToken);
+            var localPath = await fileDownloader.DownloadAsync(@event.ProviderFileUrl, "mp3", audioRequest.AudioFileName, cancellationToken);
 
-            audioRequest.LocalAudioFilePath = localPath;
+            audioRequest.AudioLocalPath = localPath;
             audioRequest.Status = "DOWNLOADED";
             audioRequest.CurrentStep = EventNames.AudioFileDownloadCompleted;
             audioRequest.UpdatedAtUtc = DateTime.UtcNow;
@@ -481,7 +481,7 @@ public async Task HandleAudioUploadCompletedAsync(
         }
 
         if (videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioFileRequired &&
-            orderedAudios.Any(x => string.IsNullOrWhiteSpace(x.LocalAudioFilePath)))
+            orderedAudios.Any(x => string.IsNullOrWhiteSpace(x.AudioLocalPath)))
         {
             throw new InvalidOperationException("LocalAudioFilePath is required for video provider.");
         }
@@ -519,7 +519,7 @@ public async Task HandleAudioUploadCompletedAsync(
                 ? orderedAudios.Select(x => x.AudioStorageUrl!).ToList()
                 : [],
             AudioFilePaths = videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioFileRequired
-                ? orderedAudios.Select(x => x.LocalAudioFilePath!).ToList()
+                ? orderedAudios.Select(x => x.AudioLocalPath!).ToList()
                 : []
         }, cancellationToken);
     }
@@ -554,7 +554,7 @@ public async Task HandleAudioUploadCompletedAsync(
                 if (string.IsNullOrWhiteSpace(response.ProviderFileUrl))
                     throw new InvalidOperationException("Video provider completed but file url is empty.");
 
-                videoRequest.ProviderFileName = response.FileName;
+                videoRequest.VideoFileName = response.FileName;
 
                 // Download file from provider and upload to mock storage
                 var localFileName = !string.IsNullOrWhiteSpace(response.FileName)
@@ -565,7 +565,7 @@ public async Task HandleAudioUploadCompletedAsync(
                     localFileName,
                     cancellationToken);
 
-                videoRequest.ProviderVideoFileUrl = mockStorageUrl;
+                videoRequest.VideoProviderUrl = mockStorageUrl;
                 videoRequest.Status = "VIDEO_PROVIDER_COMPLETED";
                 videoRequest.CurrentStep = EventNames.VideoProviderCompleted;
                 videoRequest.UpdatedAtUtc = DateTime.UtcNow;
@@ -588,7 +588,7 @@ public async Task HandleAudioUploadCompletedAsync(
             if (string.IsNullOrWhiteSpace(response.ProviderTrackId))
                 throw new InvalidOperationException("Video provider track id is required.");
 
-            videoRequest.VideoProviderTrackId = response.ProviderTrackId;
+            videoRequest.VideoTrackingId = response.ProviderTrackId;
             videoRequest.Status = "VIDEO_PROVIDER_POLLING";
             videoRequest.CurrentStep = EventNames.VideoProviderPollingStarted;
             videoRequest.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(5);
@@ -650,9 +650,9 @@ public async Task HandleAudioUploadCompletedAsync(
 
             await ReplaceVideoAsync(videoRequest, cancellationToken);
 
-            var localPath = await fileDownloader.DownloadAsync(@event.ProviderFileUrl, "mp4", videoRequest.ProviderFileName, cancellationToken);
+            var localPath = await fileDownloader.DownloadAsync(@event.ProviderFileUrl, "mp4", videoRequest.VideoFileName, cancellationToken);
 
-            videoRequest.LocalVideoFilePath = localPath;
+            videoRequest.VideoLocalPath = localPath;
             videoRequest.Status = "VIDEO_DOWNLOADED";
             videoRequest.CurrentStep = EventNames.VideoFileDownloadCompleted;
             videoRequest.UpdatedAtUtc = DateTime.UtcNow;
@@ -707,7 +707,7 @@ public async Task HandleAudioUploadCompletedAsync(
                 fileName,
                 cancellationToken);
 
-            videoRequest.FinalVideoStorageUrl = storageUrl;
+            videoRequest.VideoStorageUrl = storageUrl;
             videoRequest.VideoCdnUrl = cdnUrl;
             videoRequest.VideoCdnProviderKey = cdnProviderKey;
             videoRequest.Status = "COMPLETED";
@@ -778,7 +778,7 @@ public async Task HandleAudioUploadCompletedAsync(
         if (audioRequest.Status is "AUDIO_PROVIDER_COMPLETED" or "UPLOADED" or "FAILED")
             return;
 
-        audioRequest.AudioProviderTrackId = @event.ProviderTrackId;
+        audioRequest.AudioTrackingId = @event.ProviderTrackId;
         audioRequest.Status = "AUDIO_PROVIDER_POLLING";
         audioRequest.CurrentStep = EventNames.AudioProviderPollingStarted;
 
@@ -803,7 +803,7 @@ public async Task HandleAudioUploadCompletedAsync(
         if (videoRequest.Status is "VIDEO_PROVIDER_COMPLETED" or "COMPLETED" or "FAILED")
             return;
 
-        videoRequest.VideoProviderTrackId = @event.ProviderTrackId;
+        videoRequest.VideoTrackingId = @event.ProviderTrackId;
         videoRequest.Status = "VIDEO_PROVIDER_POLLING";
         videoRequest.CurrentStep = EventNames.VideoProviderPollingStarted;
 
@@ -883,7 +883,7 @@ public async Task HandleAudioUploadCompletedAsync(
     {
         request.RetryCount++;
 
-        if (request.RetryCount >= request.MaxRetryCount)
+        if (request.RetryCount >= 30)
         {
             await FailAudioAsync(request, step, ex, false, cancellationToken);
             return;
@@ -961,7 +961,7 @@ public async Task HandleAudioUploadCompletedAsync(
     {
         request.RetryCount++;
 
-        if (request.RetryCount >= request.MaxRetryCount)
+        if (request.RetryCount >= 30)
         {
             await FailVideoAsync(request, step, ex, false, cancellationToken);
             return;

@@ -7,86 +7,97 @@ public sealed class VideoRequest
 {
     [BsonId]
     public Guid Id { get; set; }
+
+    // Audit Fields
+    public DateTime CreatedAtUtc { get; set; }
+    public DateTime UpdatedAtUtc { get; set; }
+
+    // Correlation & Context
     public Guid CorrelationId { get; set; }
     public Guid SourceEventId { get; set; }
-
     public Guid? CustomerContentId { get; set; }
     public Guid? AnalysisContentId { get; set; }
 
+    // Status & Configuration
     public string ContentProcessType { get; set; } = default!;
     public string Status { get; set; } = default!;
     public string CurrentStep { get; set; } = default!;
-
     public bool ExternalAudioRequired { get; set; }
+    public string AudioInputMode { get; set; } = default!;
+
+    // Input Data
     public string VideoInputJson { get; set; } = default!;
 
-    public string? VideoProviderRequestId { get; set; }
-    public string? ProviderVideoFileUrl { get; set; }
-    public string? ProviderFileName { get; set; }
-    public string? LocalVideoFilePath { get; set; }
-    public string? FinalVideoStorageUrl { get; set; }
+    // Provider Configuration
+    public string VideoProviderKey { get; set; } = default!;
+    public string? AudioProviderKey { get; set; }
+
+    // Audio Generation (external provider)
+    public string? AudioTrackingId { get; set; }
+    public string? AudioProviderUrl { get; set; }
+    public string? AudioLocalPath { get; set; }
+    public string? AudioStorageUrl { get; set; }
+    public string? AudioCdnUrl { get; set; }
+
+    // Video Generation (external provider)
+    public string? VideoTrackingId { get; set; }
+    public string? VideoProviderUrl { get; set; }
+    public string? VideoFileName { get; set; }
+    public string? VideoLocalPath { get; set; }
     public string? VideoStorageUrl { get; set; }
     public string? VideoCdnUrl { get; set; }
     public string? VideoCdnProviderKey { get; set; }
 
-    public int RetryCount { get; set; }
-    public int MaxRetryCount { get; set; } = 30;
-    public DateTime? NextRetryAtUtc { get; set; }
-    public string? LastError { get; set; }
-
-    public DateTime CreatedAtUtc { get; set; }
-    public DateTime UpdatedAtUtc { get; set; }
-    public string AudioInputMode { get; set; } = default!;
-    public string VideoProviderKey { get; set; } = default!;
-    public string? AudioProviderKey { get; set; }
-    public string? VideoProviderTrackId { get; set; }
+    // Polling & Retry
     public DateTime? NextProviderPollAtUtc { get; set; }
     public int ProviderPollingCount { get; set; }
-    public int MaxProviderPollingCount { get; set; } = 60;
-
+    public int RetryCount { get; set; }
+    public DateTime? NextRetryAtUtc { get; set; }
+    public string? LastError { get; set; }
 }
 
 public sealed class AudioRequest
 {
     [BsonId]
     public Guid Id { get; set; }
+
+    // Audit Fields
+    public DateTime CreatedAtUtc { get; set; }
+    public DateTime UpdatedAtUtc { get; set; }
+
+    // Correlation & Context
     public Guid CorrelationId { get; set; }
-
     public Guid VideoRequestId { get; set; }
-
     public Guid? CustomerContentId { get; set; }
     public Guid? AnalysisContentId { get; set; }
 
+    // Status & Configuration
     public string ContentProcessType { get; set; } = default!;
-
-    public int SortOrder { get; set; }
-
     public string Status { get; set; } = default!;
     public string CurrentStep { get; set; } = default!;
+    public int SortOrder { get; set; }
 
+    // Input Data
     public string InputText { get; set; } = default!;
 
-    public string? AudioProviderRequestId { get; set; }
-    public string? ProviderAudioFileUrl { get; set; }
-    public string? ProviderFileName { get; set; }
-    public string? LocalAudioFilePath { get; set; }
+    // Provider Configuration
+    public string AudioProviderKey { get; set; } = default!;
+
+    // Audio Generation (external provider)
+    public string? AudioTrackingId { get; set; }
+    public string? AudioProviderUrl { get; set; }
+    public string? AudioFileName { get; set; }
+    public string? AudioLocalPath { get; set; }
     public string? AudioStorageUrl { get; set; }
     public string? AudioCdnUrl { get; set; }
     public string? AudioCdnProviderKey { get; set; }
 
-    public int RetryCount { get; set; }
-    public int MaxRetryCount { get; set; } = 30;
-    public DateTime? NextRetryAtUtc { get; set; }
-    public string? LastError { get; set; }
-
-    public DateTime CreatedAtUtc { get; set; }
-    public DateTime UpdatedAtUtc { get; set; }
-
-    public string AudioProviderKey { get; set; } = default!;
-    public string? AudioProviderTrackId { get; set; }
+    // Polling & Retry
     public DateTime? NextProviderPollAtUtc { get; set; }
     public int ProviderPollingCount { get; set; }
-    public int MaxProviderPollingCount { get; set; } = 60;
+    public int RetryCount { get; set; }
+    public DateTime? NextRetryAtUtc { get; set; }
+    public string? LastError { get; set; }
 }
 
 public sealed class VideoGeneratorInboxMessage

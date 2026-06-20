@@ -205,7 +205,7 @@ app.MapPost("/scheduler/audio-polling",
                 x.Status == "AUDIO_PROVIDER_POLLING" &&
                 x.NextProviderPollAtUtc != null &&
                 x.NextProviderPollAtUtc <= now &&
-                x.AudioProviderTrackId != null)
+                x.AudioTrackingId != null)
             .Limit(10)
             .ToListAsync(cancellationToken);
 
@@ -217,7 +217,7 @@ app.MapPost("/scheduler/audio-polling",
                     x.Status == "AUDIO_PROVIDER_POLLING" &&
                     x.NextProviderPollAtUtc != null &&
                     x.NextProviderPollAtUtc <= now &&
-                    x.AudioProviderTrackId != null,
+                    x.AudioTrackingId != null,
                 Builders<AudioRequest>.Update
                     .Set(x => x.NextProviderPollAtUtc, DateTime.UtcNow.AddSeconds(5))
                     .Set(x => x.UpdatedAtUtc, DateTime.UtcNow),
@@ -231,7 +231,7 @@ app.MapPost("/scheduler/audio-polling",
                 VideoRequestId = request.VideoRequestId,
                 AudioRequestId = request.Id,
                 ProviderKey = request.AudioProviderKey,
-                ProviderTrackId = request.AudioProviderTrackId
+                ProviderTrackId = request.AudioTrackingId
             }, cancellationToken);
         }
 
@@ -250,7 +250,7 @@ app.MapPost("/scheduler/video-polling",
                 x.Status == "VIDEO_PROVIDER_POLLING" &&
                 x.NextProviderPollAtUtc != null &&
                 x.NextProviderPollAtUtc <= now &&
-                x.VideoProviderTrackId != null)
+                x.VideoTrackingId != null)
             .Limit(10)
             .ToListAsync(cancellationToken);
 
@@ -262,7 +262,7 @@ app.MapPost("/scheduler/video-polling",
                     x.Status == "VIDEO_PROVIDER_POLLING" &&
                     x.NextProviderPollAtUtc != null &&
                     x.NextProviderPollAtUtc <= now &&
-                    x.VideoProviderTrackId != null,
+                    x.VideoTrackingId != null,
                 Builders<VideoRequest>.Update
                     .Set(x => x.NextProviderPollAtUtc, DateTime.UtcNow.AddSeconds(5))
                     .Set(x => x.UpdatedAtUtc, DateTime.UtcNow),
@@ -275,7 +275,7 @@ app.MapPost("/scheduler/video-polling",
             {
                 VideoRequestId = request.Id,
                 ProviderKey = request.VideoProviderKey,
-                ProviderTrackId = request.VideoProviderTrackId
+                ProviderTrackId = request.VideoTrackingId
             }, cancellationToken);
         }
 

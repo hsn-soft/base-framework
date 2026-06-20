@@ -68,7 +68,7 @@ public sealed class VideoRetryAppService(
                         CorrelationId = request.CorrelationId,
                         VideoRequestId = request.VideoRequestId,
                         AudioRequestId = request.Id,
-                        ProviderFileUrl = request.ProviderAudioFileUrl
+                        ProviderFileUrl = request.AudioProviderUrl
                                           ?? throw new InvalidOperationException("ProviderAudioFileUrl is required.")
                     }, cancellationToken);
                 }
@@ -82,7 +82,7 @@ public sealed class VideoRetryAppService(
                         CorrelationId = request.CorrelationId,
                         VideoRequestId = request.VideoRequestId,
                         AudioRequestId = request.Id,
-                        LocalFilePath = request.LocalAudioFilePath
+                        LocalFilePath = request.AudioLocalPath
                                         ?? throw new InvalidOperationException("LocalAudioFilePath is required.")
                     }, cancellationToken);
                 }
@@ -186,7 +186,7 @@ public sealed class VideoRetryAppService(
                             ? orderedAudios.Select(x => x.AudioStorageUrl!).ToList()
                             : [],
                         AudioFilePaths = videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioFileRequired
-                            ? orderedAudios.Select(x => x.LocalAudioFilePath!).ToList()
+                            ? orderedAudios.Select(x => x.AudioLocalPath!).ToList()
                             : []
                     }, cancellationToken);
                 }
@@ -199,8 +199,8 @@ public sealed class VideoRetryAppService(
                         ContentProcessType = request.ContentProcessType,
                         CorrelationId = request.CorrelationId,
                         VideoRequestId = request.Id,
-                        ProviderFileUrl = request.ProviderVideoFileUrl
-                                          ?? throw new InvalidOperationException("ProviderVideoFileUrl is required.")
+                        ProviderFileUrl = request.VideoProviderUrl
+                                          ?? throw new InvalidOperationException("VideoProviderUrl is required.")
                     }, cancellationToken);
                 }
                 else if (request.CurrentStep == EventNames.VideoFileUploadStarted)
@@ -212,8 +212,8 @@ public sealed class VideoRetryAppService(
                         ContentProcessType = request.ContentProcessType,
                         CorrelationId = request.CorrelationId,
                         VideoRequestId = request.Id,
-                        LocalFilePath = request.LocalVideoFilePath
-                                        ?? throw new InvalidOperationException("LocalVideoFilePath is required.")
+                        LocalFilePath = request.VideoLocalPath
+                                        ?? throw new InvalidOperationException("VideoLocalPath is required.")
                     }, cancellationToken);
                 }
                 else if (request.CurrentStep == EventNames.VideoProviderPollingStarted)

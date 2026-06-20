@@ -31,7 +31,7 @@ public sealed class AudioProviderPollingAppService(
                 x.Status == "AUDIO_PROVIDER_POLLING" &&
                 x.NextProviderPollAtUtc != null &&
                 x.NextProviderPollAtUtc <= now &&
-                x.AudioProviderTrackId != null)
+                x.AudioTrackingId != null)
             .Limit(50)
             .ToListAsync(cancellationToken);
 
@@ -47,7 +47,7 @@ public sealed class AudioProviderPollingAppService(
                 if (claimResult.ModifiedCount == 0)
                     continue;
 
-                if (request.ProviderPollingCount >= request.MaxProviderPollingCount)
+                if (request.ProviderPollingCount >= 60)
                 {
                     request.Status = "FAILED";
                     request.LastError = "Audio provider polling timeout.";
@@ -73,7 +73,7 @@ public sealed class AudioProviderPollingAppService(
                 var provider = audioProviderResolver.Resolve(request.AudioProviderKey);
 
                 var status = await provider.GetStatusAsync(
-                    request.AudioProviderTrackId!,
+                    request.AudioTrackingId!,
                     cancellationToken);
 
                 if (status.IsFailed)
@@ -111,7 +111,7 @@ public sealed class AudioProviderPollingAppService(
                 if (string.IsNullOrWhiteSpace(status.ProviderFileUrl))
                     throw new InvalidOperationException("Audio provider completed but file url is empty.");
 
-                request.ProviderFileName = status.FileName;
+                request.AudioFileName = status.FileName;
 
                 // Download file from provider and upload to mock storage
                 var localFileName = !string.IsNullOrWhiteSpace(status.FileName)
@@ -124,7 +124,7 @@ public sealed class AudioProviderPollingAppService(
 
                 request.ProviderPollingCount++;
                 request.NextProviderPollAtUtc = null;
-                request.ProviderAudioFileUrl = mockStorageUrl;
+                request.AudioProviderUrl = mockStorageUrl;
                 request.Status = "AUDIO_PROVIDER_COMPLETED";
                 request.CurrentStep = EventNames.AudioProviderCompleted;
                 request.LastError = null;
@@ -149,7 +149,7 @@ public sealed class AudioProviderPollingAppService(
                 request.LastError = ex.Message;
                 request.UpdatedAtUtc = DateTime.UtcNow;
 
-                if (request.ProviderPollingCount >= request.MaxProviderPollingCount)
+                if (request.ProviderPollingCount >= 60)
                 {
                     request.Status = "FAILED";
                     request.NextProviderPollAtUtc = null;
@@ -193,7 +193,7 @@ public sealed class AudioProviderPollingAppService(
                 x.Status == "AUDIO_PROVIDER_POLLING" &&
                 x.NextProviderPollAtUtc != null &&
                 x.NextProviderPollAtUtc <= now &&
-                x.AudioProviderTrackId != null,
+                x.AudioTrackingId != null,
             Builders<AudioRequest>.Update
                 .Set(x => x.NextProviderPollAtUtc, DateTime.UtcNow.AddSeconds(5))
                 .Set(x => x.UpdatedAtUtc, DateTime.UtcNow),

@@ -33,7 +33,7 @@ public sealed class VideoProviderPollingAppService(
                 x.Status == "VIDEO_PROVIDER_POLLING" &&
                 x.NextProviderPollAtUtc != null &&
                 x.NextProviderPollAtUtc <= now &&
-                x.VideoProviderTrackId != null)
+                x.VideoTrackingId != null)
             .Limit(50)
             .ToListAsync(cancellationToken);
 
@@ -49,7 +49,7 @@ public sealed class VideoProviderPollingAppService(
                 if (claimResult.ModifiedCount == 0)
                     continue;
 
-                if (request.ProviderPollingCount >= request.MaxProviderPollingCount)
+                if (request.ProviderPollingCount >= 60)
                 {
                     request.Status = "FAILED";
                     request.LastError = "Video provider polling timeout.";
@@ -74,7 +74,7 @@ public sealed class VideoProviderPollingAppService(
                 var provider = videoProviderResolver.Resolve(request.VideoProviderKey);
 
                 var status = await provider.GetStatusAsync(
-                    request.VideoProviderTrackId!,
+                    request.VideoTrackingId!,
                     cancellationToken);
 
                 if (status.IsFailed)
@@ -112,7 +112,7 @@ public sealed class VideoProviderPollingAppService(
                 if (string.IsNullOrWhiteSpace(status.ProviderFileUrl))
                     throw new InvalidOperationException("Video provider completed but file url is empty.");
 
-                request.ProviderFileName = status.FileName;
+                request.VideoFileName = status.FileName;
 
                 // Download file from provider and upload to mock storage
                 var localFileName = !string.IsNullOrWhiteSpace(status.FileName)
@@ -125,7 +125,7 @@ public sealed class VideoProviderPollingAppService(
 
                 request.ProviderPollingCount++;
                 request.NextProviderPollAtUtc = null;
-                request.ProviderVideoFileUrl = mockStorageUrl;
+                request.VideoProviderUrl = mockStorageUrl;
                 request.Status = "VIDEO_PROVIDER_COMPLETED";
                 request.CurrentStep = EventNames.VideoProviderCompleted;
                 request.LastError = null;
@@ -149,7 +149,7 @@ public sealed class VideoProviderPollingAppService(
                 request.LastError = ex.Message;
                 request.UpdatedAtUtc = DateTime.UtcNow;
 
-                if (request.ProviderPollingCount >= request.MaxProviderPollingCount)
+                if (request.ProviderPollingCount >= 60)
                 {
                     request.Status = "FAILED";
                     request.NextProviderPollAtUtc = null;
@@ -192,7 +192,7 @@ public sealed class VideoProviderPollingAppService(
                 x.Status == "VIDEO_PROVIDER_POLLING" &&
                 x.NextProviderPollAtUtc != null &&
                 x.NextProviderPollAtUtc <= now &&
-                x.VideoProviderTrackId != null,
+                x.VideoTrackingId != null,
             Builders<VideoRequest>.Update
                 .Set(x => x.NextProviderPollAtUtc, DateTime.UtcNow.AddSeconds(5))
                 .Set(x => x.UpdatedAtUtc, DateTime.UtcNow),
