@@ -19,12 +19,12 @@
 ### ============================================
 POST {{ContentService_HostAddress}}/customer-contents
 Content-Type: application/json
+X-Correlation-Id: cid-001-{{$timestamp}}
 
 {
-  "url": "https://scenario.com/test01-{{$timestamp}}",
-  "outlineProviderKey": "outline-fast",
-  "audioProviderKey": "audio-quick",
-  "videoProviderKey": "video-fast-external"
+  "ScopeKey": "scenario-001",
+  "DomainName": "https://scenario.com",
+  "ContentKey": "/customer/test01-{{$timestamp}}"
 }
 
 ### ============================================
@@ -34,12 +34,12 @@ Content-Type: application/json
 ### ============================================
 POST {{ContentService_HostAddress}}/customer-contents
 Content-Type: application/json
+X-Correlation-Id: cid-002-{{$timestamp}}
 
 {
-  "url": "https://scenario.com/test02-{{$timestamp}}",
-  "outlineProviderKey": "outline-fast",
-  "audioProviderKey": "audio-hq",
-  "videoProviderKey": "video-fast-external"
+  "ScopeKey": "scenario-002",
+  "DomainName": "https://scenario.com",
+  "ContentKey": "/customer/test02-{{$timestamp}}"
 }
 
 ### ============================================
@@ -49,12 +49,12 @@ Content-Type: application/json
 ### ============================================
 POST {{ContentService_HostAddress}}/customer-contents
 Content-Type: application/json
+X-Correlation-Id: cid-003-{{$timestamp}}
 
 {
-  "url": "https://scenario.com/test03-{{$timestamp}}",
-  "outlineProviderKey": "outline-fast",
-  "audioProviderKey": "audio-quick",
-  "videoProviderKey": "video-queue-external"
+  "ScopeKey": "scenario-003",
+  "DomainName": "https://scenario.com",
+  "ContentKey": "/customer/test03-{{$timestamp}}"
 }
 
 ### ============================================
@@ -64,12 +64,12 @@ Content-Type: application/json
 ### ============================================
 POST {{ContentService_HostAddress}}/customer-contents
 Content-Type: application/json
+X-Correlation-Id: cid-004-{{$timestamp}}
 
 {
-  "url": "https://scenario.com/test04-{{$timestamp}}",
-  "outlineProviderKey": "outline-fast",
-  "audioProviderKey": "audio-hq",
-  "videoProviderKey": "video-queue-external"
+  "ScopeKey": "scenario-004",
+  "DomainName": "https://scenario.com",
+  "ContentKey": "/customer/test04-{{$timestamp}}"
 }
 
 ### ============================================
@@ -79,12 +79,12 @@ Content-Type: application/json
 ### ============================================
 POST {{ContentService_HostAddress}}/customer-contents
 Content-Type: application/json
+X-Correlation-Id: cid-005-{{$timestamp}}
 
 {
-  "url": "https://scenario.com/test05-{{$timestamp}}",
-  "outlineProviderKey": "outline-queue",
-  "audioProviderKey": "audio-quick",
-  "videoProviderKey": "video-fast-external"
+  "ScopeKey": "scenario-005",
+  "DomainName": "https://scenario.com",
+  "ContentKey": "/customer/test05-{{$timestamp}}"
 }
 
 ### ============================================
@@ -94,12 +94,12 @@ Content-Type: application/json
 ### ============================================
 POST {{ContentService_HostAddress}}/customer-contents
 Content-Type: application/json
+X-Correlation-Id: cid-006-{{$timestamp}}
 
 {
-  "url": "https://scenario.com/test06-{{$timestamp}}",
-  "outlineProviderKey": "outline-queue",
-  "audioProviderKey": "audio-hq",
-  "videoProviderKey": "video-fast-external"
+  "ScopeKey": "scenario-006",
+  "DomainName": "https://scenario.com",
+  "ContentKey": "/customer/test06-{{$timestamp}}"
 }
 
 ### ============================================
@@ -109,12 +109,12 @@ Content-Type: application/json
 ### ============================================
 POST {{ContentService_HostAddress}}/customer-contents
 Content-Type: application/json
+X-Correlation-Id: cid-007-{{$timestamp}}
 
 {
-  "url": "https://scenario.com/test07-{{$timestamp}}",
-  "outlineProviderKey": "outline-queue",
-  "audioProviderKey": "audio-quick",
-  "videoProviderKey": "video-queue-external"
+  "ScopeKey": "scenario-007",
+  "DomainName": "https://scenario.com",
+  "ContentKey": "/customer/test07-{{$timestamp}}"
 }
 
 ### ============================================
@@ -124,12 +124,12 @@ Content-Type: application/json
 ### ============================================
 POST {{ContentService_HostAddress}}/customer-contents
 Content-Type: application/json
+X-Correlation-Id: cid-008-{{$timestamp}}
 
 {
-  "url": "https://scenario.com/test08-{{$timestamp}}",
-  "outlineProviderKey": "outline-queue",
-  "audioProviderKey": "audio-hq",
-  "videoProviderKey": "video-queue-external"
+  "ScopeKey": "scenario-008",
+  "DomainName": "https://scenario.com",
+  "ContentKey": "/customer/test08-{{$timestamp}}"
 }
 
 ### ============================================
@@ -144,12 +144,12 @@ Content-Type: application/json
 ### ============================================
 POST {{ContentService_HostAddress}}/customer-contents
 Content-Type: application/json
+X-Correlation-Id: cid-009-{{$timestamp}}
 
 {
-  "url": "https://scenario.com/test09-{{$timestamp}}",
-  "outlineProviderKey": "outline-fast",
-  "audioProviderKey": "audio-quick",
-  "videoProviderKey": "video-fast-internal"
+  "ScopeKey": "scenario-009",
+  "DomainName": "https://scenario.com",
+  "ContentKey": "/customer/test09-{{$timestamp}}"
 }
 
 ### ============================================
@@ -159,12 +159,12 @@ Content-Type: application/json
 ### ============================================
 POST {{ContentService_HostAddress}}/customer-contents
 Content-Type: application/json
+X-Correlation-Id: cid-010-{{$timestamp}}
 
 {
-  "url": "https://scenario.com/test10-{{$timestamp}}",
-  "outlineProviderKey": "outline-queue",
-  "audioProviderKey": "audio-hq",
-  "videoProviderKey": "video-fast-internal"
+  "ScopeKey": "scenario-010",
+  "DomainName": "https://scenario.com",
+  "ContentKey": "/customer/test10-{{$timestamp}}"
 }
 
 ### ============================================
@@ -174,12 +174,12 @@ Content-Type: application/json
 ### ============================================
 POST {{ContentService_HostAddress}}/customer-contents
 Content-Type: application/json
+X-Correlation-Id: cid-011-{{$timestamp}}
 
 {
-  "url": "https://scenario.com/test11-{{$timestamp}}",
-  "outlineProviderKey": "outline-fast",
-  "audioProviderKey": "audio-quick",
-  "videoProviderKey": "video-queue-internal"
+  "ScopeKey": "scenario-011",
+  "DomainName": "https://scenario.com",
+  "ContentKey": "/customer/test11-{{$timestamp}}"
 }
 
 ### ============================================
@@ -189,12 +189,12 @@ Content-Type: application/json
 ### ============================================
 POST {{ContentService_HostAddress}}/customer-contents
 Content-Type: application/json
+X-Correlation-Id: cid-012-{{$timestamp}}
 
 {
-  "url": "https://scenario.com/test12-{{$timestamp}}",
-  "outlineProviderKey": "outline-queue",
-  "audioProviderKey": "audio-hq",
-  "videoProviderKey": "video-queue-internal"
+  "ScopeKey": "scenario-012",
+  "DomainName": "https://scenario.com",
+  "ContentKey": "/customer/test12-{{$timestamp}}"
 }
 
 ###
