@@ -44,7 +44,7 @@ public sealed class VideoRetryAppService(
 
                 if (request.CurrentStep == EventNames.AudioProviderRequestStarted)
                 {
-                    request.Status = "AUDIO_PROVIDER_REQUEST_RETRYING";
+                    request.Status = StatusNames.AudioProviderRequestRetrying;
 
                     await eventBus.PublishAsync(new AudioProviderRequestStartedEto
                     {
@@ -85,13 +85,13 @@ public sealed class VideoRetryAppService(
                 }
                 else if (request.CurrentStep == EventNames.AudioProviderPollingStarted)
                 {
-                    request.Status = "AUDIO_PROVIDER_POLLING";
+                    request.Status = StatusNames.AudioProviderPolling;
                     request.NextProviderPollAtUtc = DateTime.UtcNow;
                     pollingRetry = true;
                 }
                 else
                 {
-                    request.Status = "FAILED";
+                    request.Status = StatusNames.Failed;
                     request.LastError = $"Unsupported audio retry step: {request.CurrentStep}";
                     request.NextRetryAtUtc = null;
                     request.UpdatedAtUtc = DateTime.UtcNow;
@@ -116,7 +116,7 @@ public sealed class VideoRetryAppService(
 
                 if (!pollingRetry)
                 {
-                    request.Status = "RETRY_EVENT_PUBLISHED";
+                    request.Status = StatusNames.RetryEventPublished;
                 }
                 request.NextRetryAtUtc = null;
                 request.UpdatedAtUtc = DateTime.UtcNow;
@@ -211,13 +211,13 @@ public sealed class VideoRetryAppService(
                 }
                 else if (request.CurrentStep == EventNames.VideoProviderPollingStarted)
                 {
-                    request.Status = "VIDEO_PROVIDER_POLLING";
+                    request.Status = StatusNames.VideoProviderPolling;
                     request.NextProviderPollAtUtc = DateTime.UtcNow;
                     pollingRetry = true;
                 }
                 else
                 {
-                    request.Status = "FAILED";
+                    request.Status = StatusNames.Failed;
                     request.LastError = $"Unsupported video retry step: {request.CurrentStep}";
                     request.NextRetryAtUtc = null;
                     request.UpdatedAtUtc = DateTime.UtcNow;
@@ -242,7 +242,7 @@ public sealed class VideoRetryAppService(
 
                 if (!pollingRetry)
                 {
-                    request.Status = "RETRY_EVENT_PUBLISHED";
+                    request.Status = StatusNames.RetryEventPublished;
                 }
                 request.NextRetryAtUtc = null;
                 request.UpdatedAtUtc = DateTime.UtcNow;

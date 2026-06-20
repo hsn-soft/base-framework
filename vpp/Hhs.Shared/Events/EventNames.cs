@@ -35,6 +35,8 @@ public static class EventNames
 
     public const string VideoGenerationApproved = "VIDEO_GENERATION_APPROVED";
 
+    public const string AudioRequestCreated = "AUDIO_REQUEST_CREATED";
+
     public const string VideoRequestCreated = "VIDEO_REQUEST_CREATED";
     public const string VideoOperationStarted = "VIDEO_OPERATION_STARTED";
 

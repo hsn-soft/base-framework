@@ -30,7 +30,7 @@ public sealed class VideoProviderPollingAppService(
 
         var requests = await context.VideoRequests
             .Find(x =>
-                x.Status == "VIDEO_PROVIDER_POLLING" &&
+                x.Status == StatusNames.VideoProviderPolling &&
                 x.NextProviderPollAtUtc != null &&
                 x.NextProviderPollAtUtc <= now &&
                 x.VideoProviderTrackingId != null)
@@ -78,7 +78,7 @@ public sealed class VideoProviderPollingAppService(
 
                 if (status.IsFailed)
                 {
-                    request.Status = "FAILED";
+                    request.Status = StatusNames.Failed;
                     request.LastError = status.ErrorMessage ?? "Video provider failed.";
                     request.UpdatedAtUtc = DateTime.UtcNow;
 
@@ -120,7 +120,7 @@ public sealed class VideoProviderPollingAppService(
                 request.ProviderPollingCount++;
                 request.NextProviderPollAtUtc = null;
                 request.VideoProviderUrl = mockStorageUrl;
-                request.Status = "VIDEO_PROVIDER_COMPLETED";
+                request.Status = StatusNames.VideoProviderCompleted;
                 request.CurrentStep = EventNames.VideoProviderCompleted;
                 request.LastError = null;
                 request.UpdatedAtUtc = DateTime.UtcNow;
@@ -144,7 +144,7 @@ public sealed class VideoProviderPollingAppService(
 
                 if (request.ProviderPollingCount >= 60)
                 {
-                    request.Status = "FAILED";
+                    request.Status = StatusNames.Failed;
                     request.NextProviderPollAtUtc = null;
 
                     await ReplaceVideoAsync(request, cancellationToken);
@@ -181,7 +181,7 @@ public sealed class VideoProviderPollingAppService(
         return context.VideoRequests.UpdateOneAsync(
             x =>
                 x.Id == videoRequestId &&
-                x.Status == "VIDEO_PROVIDER_POLLING" &&
+                x.Status == StatusNames.VideoProviderPolling &&
                 x.NextProviderPollAtUtc != null &&
                 x.NextProviderPollAtUtc <= now &&
                 x.VideoProviderTrackingId != null,

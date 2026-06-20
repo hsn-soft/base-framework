@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Hhs.Shared.Configuration;
 using Hhs.Shared.Events;
 using Hhs.Shared.Providers;
 using Hhs.Shared.RabbitMQ;
@@ -78,7 +79,7 @@ public async Task CreateVideoRequestAsync(
             CorrelationId = @event.CorrelationId,
             RefContentId = @event.RefContentId,
             RefContentType = @event.RefContentType,
-            Status = "CREATED",
+            Status = StatusNames.Created,
             CurrentStep = EventNames.VideoRequestCreated,
             MediaInputJson = @event.VideoInputJson,
             VideoProviderKey = @event.VideoProviderKey,
@@ -126,7 +127,7 @@ public async Task CreateVideoRequestAsync(
             videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioUrlListRequired ||
             videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioFileRequired;
 
-        videoRequest.Status = "STARTED";
+        videoRequest.Status = StatusNames.Started;
         videoRequest.CurrentStep = EventNames.VideoOperationStarted;
         videoRequest.UpdatedAtUtc = DateTime.UtcNow;
 
@@ -215,8 +216,8 @@ public async Task CreateVideoRequestAsync(
                 InputText = item.Text,
                 AudioProviderKey = videoRequest.AudioProviderKey
                                    ?? throw new InvalidOperationException("AudioProviderKey is required."),
-                Status = "CREATED",
-                CurrentStep = "AUDIO_REQUEST_CREATED",
+                Status = StatusNames.AudioRequestCreated,
+                CurrentStep = EventNames.AudioRequestCreated,
                 CreatedAtUtc = DateTime.UtcNow,
                 UpdatedAtUtc = DateTime.UtcNow
             };
@@ -266,7 +267,7 @@ public async Task CreateVideoRequestAsync(
                     cancellationToken);
 
                 audioRequest.AudioProviderUrl = mockStorageUrl;
-                audioRequest.Status = "AUDIO_PROVIDER_COMPLETED";
+                audioRequest.Status = StatusNames.AudioProviderCompleted;
                 audioRequest.CurrentStep = EventNames.AudioProviderCompleted;
                 audioRequest.UpdatedAtUtc = DateTime.UtcNow;
 
@@ -289,7 +290,7 @@ public async Task CreateVideoRequestAsync(
                 throw new InvalidOperationException("Audio provider track id is required.");
 
             audioRequest.AudioProviderTrackingId = response.ProviderTrackId;
-            audioRequest.Status = "AUDIO_PROVIDER_POLLING";
+            audioRequest.Status = StatusNames.AudioProviderPolling;
             audioRequest.CurrentStep = EventNames.AudioProviderPollingStarted;
             audioRequest.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(_videoPollingSettings.ErrorRescheduleDelaySeconds);
             audioRequest.ProviderPollingCount = 0;
@@ -353,7 +354,7 @@ public async Task CreateVideoRequestAsync(
             var localPath = await fileDownloader.DownloadAsync(@event.ProviderFileUrl, "mp3", $"audio_{audioRequest.Id:N}", cancellationToken);
 
             audioRequest.AudioLocalPath = localPath;
-            audioRequest.Status = "DOWNLOADED";
+            audioRequest.Status = StatusNames.Downloaded;
             audioRequest.CurrentStep = EventNames.AudioFileDownloadCompleted;
             audioRequest.UpdatedAtUtc = DateTime.UtcNow;
 
@@ -399,14 +400,14 @@ public async Task CreateVideoRequestAsync(
 
         try
         {
-            audioRequest.Status = "UPLOADING";
+            audioRequest.Status = StatusNames.Uploading;
             audioRequest.CurrentStep = EventNames.AudioFileUploadStarted;
             audioRequest.UpdatedAtUtc = DateTime.UtcNow;
 
             await ReplaceAudioAsync(audioRequest, cancellationToken);
 
             // Upload file to CDN using selected provider
-            var cdnProviderKey = audioRequest.AudioCdnProviderKey ?? "CdnAbc";
+            var cdnProviderKey = audioRequest.AudioCdnProviderKey ?? ProviderDefaults.DefaultCdnProvider;
 
             await using var fileStream = File.OpenRead(@event.LocalFilePath);
             var fileName = Path.GetFileName(@event.LocalFilePath);
@@ -420,7 +421,7 @@ public async Task CreateVideoRequestAsync(
             audioRequest.AudioStorageUrl = storageUrl;
             audioRequest.AudioCdnUrl = cdnUrl;
             audioRequest.AudioCdnProviderKey = cdnProviderKey;
-            audioRequest.Status = "UPLOADED";
+            audioRequest.Status = StatusNames.Uploaded;
             audioRequest.CurrentStep = EventNames.AudioFileUploadCompleted;
             audioRequest.UpdatedAtUtc = DateTime.UtcNow;
 
@@ -462,7 +463,7 @@ public async Task HandleAudioUploadCompletedAsync(
             .Find(x => x.VideoRequestId == @event.VideoRequestId)
             .ToListAsync(cancellationToken);
 
-        if (allAudios.Any(x => x.Status != "UPLOADED"))
+        if (allAudios.Any(x => x.Status != StatusNames.Uploaded))
             return;
 
         var orderedAudios = allAudios.OrderBy(x => x.SortOrder).ToList();
@@ -481,16 +482,16 @@ public async Task HandleAudioUploadCompletedAsync(
 
         var lockResult = await context.VideoRequests.UpdateOneAsync(
             x => x.Id == @event.VideoRequestId &&
-                 x.Status != "VIDEO_PROVIDER_REQUEST_STARTING" &&
-                 x.Status != "VIDEO_PROVIDER_REQUEST_STARTED" &&
-                 x.Status != "VIDEO_PROVIDER_POLLING" &&
-                 x.Status != "VIDEO_PROVIDER_COMPLETED" &&
-                 x.Status != "VIDEO_DOWNLOADING" &&
-                 x.Status != "VIDEO_UPLOADING" &&
+                 x.Status != StatusNames.VideoProviderRequestStarting &&
+                 x.Status != StatusNames.VideoProviderRequestStarted &&
+                 x.Status != StatusNames.VideoProviderPolling &&
+                 x.Status != StatusNames.VideoProviderCompleted &&
+                 x.Status != StatusNames.VideoDownloading &&
+                 x.Status != StatusNames.VideoUploading &&
                  x.Status != StatusNames.Completed &&
                  x.Status != StatusNames.Failed,
             Builders<VideoRequest>.Update
-                .Set(x => x.Status, "VIDEO_PROVIDER_REQUEST_STARTING")
+                .Set(x => x.Status, StatusNames.VideoProviderRequestStarting)
                 .Set(x => x.CurrentStep, EventNames.VideoProviderRequestStarted)
                 .Set(x => x.LastError, null)
                 .Set(x => x.UpdatedAtUtc, DateTime.UtcNow),
@@ -499,7 +500,7 @@ public async Task HandleAudioUploadCompletedAsync(
         if (lockResult.ModifiedCount == 0)
             return;
 
-        videoRequest.Status = "VIDEO_PROVIDER_REQUEST_STARTING";
+        videoRequest.Status = StatusNames.VideoProviderRequestStarting;
 
         await eventBus.PublishAsync(new VideoProviderRequestStartedEto
         {
@@ -533,7 +534,7 @@ public async Task HandleAudioUploadCompletedAsync(
 
         try
         {
-            videoRequest.Status = "VIDEO_PROVIDER_REQUEST_STARTED";
+            videoRequest.Status = StatusNames.VideoProviderRequestStarted;
             videoRequest.CurrentStep = EventNames.VideoProviderRequestStarted;
             videoRequest.UpdatedAtUtc = DateTime.UtcNow;
 
@@ -554,7 +555,7 @@ public async Task HandleAudioUploadCompletedAsync(
                     cancellationToken);
 
                 videoRequest.VideoProviderUrl = mockStorageUrl;
-                videoRequest.Status = "VIDEO_PROVIDER_COMPLETED";
+                videoRequest.Status = StatusNames.VideoProviderCompleted;
                 videoRequest.CurrentStep = EventNames.VideoProviderCompleted;
                 videoRequest.UpdatedAtUtc = DateTime.UtcNow;
 
@@ -576,7 +577,7 @@ public async Task HandleAudioUploadCompletedAsync(
                 throw new InvalidOperationException("Video provider track id is required.");
 
             videoRequest.VideoProviderTrackingId = response.ProviderTrackId;
-            videoRequest.Status = "VIDEO_PROVIDER_POLLING";
+            videoRequest.Status = StatusNames.VideoProviderPolling;
             videoRequest.CurrentStep = EventNames.VideoProviderPollingStarted;
             videoRequest.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(_videoPollingSettings.ErrorRescheduleDelaySeconds);
             videoRequest.ProviderPollingCount = 0;
@@ -629,7 +630,7 @@ public async Task HandleAudioUploadCompletedAsync(
 
         try
         {
-            videoRequest.Status = "VIDEO_DOWNLOADING";
+            videoRequest.Status = StatusNames.VideoDownloading;
             videoRequest.CurrentStep = EventNames.VideoFileDownloadStarted;
             videoRequest.UpdatedAtUtc = DateTime.UtcNow;
 
@@ -638,7 +639,7 @@ public async Task HandleAudioUploadCompletedAsync(
             var localPath = await fileDownloader.DownloadAsync(@event.ProviderFileUrl, "mp4", $"video_{videoRequest.Id:N}", cancellationToken);
 
             videoRequest.VideoLocalPath = localPath;
-            videoRequest.Status = "VIDEO_DOWNLOADED";
+            videoRequest.Status = StatusNames.VideoDownloaded;
             videoRequest.CurrentStep = EventNames.VideoFileDownloadCompleted;
             videoRequest.UpdatedAtUtc = DateTime.UtcNow;
 
@@ -673,14 +674,14 @@ public async Task HandleAudioUploadCompletedAsync(
 
         try
         {
-            videoRequest.Status = "VIDEO_UPLOADING";
+            videoRequest.Status = StatusNames.VideoUploading;
             videoRequest.CurrentStep = EventNames.VideoFileUploadStarted;
             videoRequest.UpdatedAtUtc = DateTime.UtcNow;
 
             await ReplaceVideoAsync(videoRequest, cancellationToken);
 
             // Upload file to CDN using selected provider
-            var cdnProviderKey = videoRequest.VideoCdnProviderKey ?? "CdnAbc";
+            var cdnProviderKey = videoRequest.VideoCdnProviderKey ?? ProviderDefaults.DefaultCdnProvider;
 
             await using var fileStream = File.OpenRead(@event.LocalFilePath);
             var fileName = Path.GetFileName(@event.LocalFilePath);
@@ -694,7 +695,7 @@ public async Task HandleAudioUploadCompletedAsync(
             videoRequest.VideoStorageUrl = storageUrl;
             videoRequest.VideoCdnUrl = cdnUrl;
             videoRequest.VideoCdnProviderKey = cdnProviderKey;
-            videoRequest.Status = "COMPLETED";
+            videoRequest.Status = StatusNames.Completed;
             videoRequest.CurrentStep = EventNames.VideoGenerationResultPublished;
             videoRequest.UpdatedAtUtc = DateTime.UtcNow;
 
@@ -729,7 +730,7 @@ public async Task HandleAudioUploadCompletedAsync(
         var audio = await GetAudioAsync(audioRequestId, cancellationToken);
 
         audio.AudioStorageUrl = input.StorageUrl;
-        audio.Status = "UPLOADED";
+        audio.Status = StatusNames.Uploaded;
         audio.CurrentStep = EventNames.AudioFileUploadCompleted;
         audio.LastError = null;
         audio.UpdatedAtUtc = DateTime.UtcNow;
@@ -757,11 +758,11 @@ public async Task HandleAudioUploadCompletedAsync(
 
         var audioRequest = await GetAudioAsync(@event.AudioRequestId, cancellationToken);
 
-        if (audioRequest.Status is "AUDIO_PROVIDER_COMPLETED" or "UPLOADED" or "FAILED")
+        if (audioRequest.Status is StatusNames.AudioProviderCompleted or StatusNames.Uploaded or StatusNames.Failed)
             return;
 
         audioRequest.AudioProviderTrackingId = @event.ProviderTrackId;
-        audioRequest.Status = "AUDIO_PROVIDER_POLLING";
+        audioRequest.Status = StatusNames.AudioProviderPolling;
         audioRequest.CurrentStep = EventNames.AudioProviderPollingStarted;
 
         if (audioRequest.NextProviderPollAtUtc is null)
@@ -782,11 +783,11 @@ public async Task HandleAudioUploadCompletedAsync(
 
         var videoRequest = await GetVideoAsync(@event.VideoRequestId, cancellationToken);
 
-        if (videoRequest.Status is "VIDEO_PROVIDER_COMPLETED" or "COMPLETED" or "FAILED")
+        if (videoRequest.Status is StatusNames.VideoProviderCompleted or StatusNames.Completed or StatusNames.Failed)
             return;
 
         videoRequest.VideoProviderTrackingId = @event.ProviderTrackId;
-        videoRequest.Status = "VIDEO_PROVIDER_POLLING";
+        videoRequest.Status = StatusNames.VideoProviderPolling;
         videoRequest.CurrentStep = EventNames.VideoProviderPollingStarted;
 
         if (videoRequest.NextProviderPollAtUtc is null)
@@ -871,7 +872,7 @@ public async Task HandleAudioUploadCompletedAsync(
             return;
         }
 
-        request.Status = "WAITING_RETRY";
+        request.Status = StatusNames.WaitingRetry;
         request.CurrentStep = step;
         request.LastError = ex.Message;
         request.NextRetryAtUtc = DateTime.UtcNow.Add(
@@ -899,7 +900,7 @@ public async Task HandleAudioUploadCompletedAsync(
         bool retryable,
         CancellationToken cancellationToken)
     {
-        request.Status = "FAILED";
+        request.Status = StatusNames.Failed;
         request.CurrentStep = step;
         request.LastError = ex.Message;
         request.NextRetryAtUtc = null;
@@ -947,7 +948,7 @@ public async Task HandleAudioUploadCompletedAsync(
             return;
         }
 
-        request.Status = "WAITING_RETRY";
+        request.Status = StatusNames.WaitingRetry;
         request.CurrentStep = step;
         request.LastError = ex.Message;
         request.NextRetryAtUtc = DateTime.UtcNow.Add(
@@ -975,7 +976,7 @@ public async Task HandleAudioUploadCompletedAsync(
         bool retryable,
         CancellationToken cancellationToken)
     {
-        request.Status = "FAILED";
+        request.Status = StatusNames.Failed;
         request.CurrentStep = step;
         request.LastError = ex.Message;
         request.NextRetryAtUtc = null;

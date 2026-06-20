@@ -50,6 +50,9 @@ public static class StatusNames
     public const string VideoDownloaded = "VIDEO_DOWNLOADED";
     public const string VideoUploading = "VIDEO_UPLOADING";
 
+    // Retry statuses
+    public const string RetryEventPublished = "RETRY_EVENT_PUBLISHED";
+
     // Polling statuses
     public const string Polling = "POLLING";
 }
