@@ -18,6 +18,9 @@ public sealed class VideoRequest
     public Guid RefContentId { get; set; }
     public ContentType RefContentType { get; set; }
 
+    // Subscription & Scope
+    public string ScopeKey { get; set; } = default!;
+
     // Status & Configuration
     public string Status { get; set; } = default!;
     public string CurrentStep { get; set; } = default!;

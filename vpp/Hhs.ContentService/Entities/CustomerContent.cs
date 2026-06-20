@@ -10,10 +10,13 @@ public sealed class CustomerContent
     // Correlation & Tracing
     public Guid? CorrelationId { get; set; }
 
+    // Subscription & Scope
+    public string ScopeKey { get; set; } = default!;
+
     // Content Metadata
-    public string Url { get; set; } = default!;
-    public string? Title { get; set; }
-    public string? Path { get; set; }
+    public string DomainName { get; set; } = default!;
+    public string ContentKey { get; set; } = default!;
+    public string SlugKey { get; set; } = default!;
 
     // Normalization Status
     public string? NormalizeStatus { get; set; }

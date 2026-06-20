@@ -10,9 +10,14 @@ public sealed class CustomerContentNormalizedRequest
     public Guid? CorrelationId { get; set; }
     public Guid SourceEventId { get; set; }
 
+    // Subscription & Scope
+    public string ScopeKey { get; set; } = default!;
+
     // Content Reference
     public Guid CustomerContentId { get; set; }
-    public string Url { get; set; } = default!;
+    public string DomainName { get; set; } = default!;
+    public string ContentKey { get; set; } = default!;
+    public string SlugKey { get; set; } = default!;
 
     // Status & Progress
     public string Status { get; set; } = default!;

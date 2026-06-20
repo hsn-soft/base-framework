@@ -10,7 +10,13 @@ public sealed class AnalysisContent
     // Correlation & Tracing
     public Guid? CorrelationId { get; set; }
 
+    // Subscription & Scope
+    public string ScopeKey { get; set; } = default!;
+
     // Content Metadata
+    public string DomainName { get; set; } = default!;
+    public string ContentKey { get; set; } = default!;
+    public string SlugKey { get; set; } = default!;
     public string? Title { get; set; }
 
     // Normalization Status
