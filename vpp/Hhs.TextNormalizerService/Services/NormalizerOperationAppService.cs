@@ -465,7 +465,6 @@ public sealed class NormalizerOperationAppService(
             { 
                 CustomerContentId = x.CustomerContentId, 
                 SortOrder = x.SortOrder, 
-                DomainName = @event.DomainName,
                 ContentKey = x.ContentKey 
             }).ToList(),
             CreatedAtUtc = DateTime.UtcNow,
@@ -524,7 +523,7 @@ public sealed class NormalizerOperationAppService(
                 startUpdate,
                 cancellationToken);
 
-            var result = await scraper.ScrapeAsync((item.DomainName + item.ContentKey), cancellationToken);
+            var result = await scraper.ScrapeAsync((request.DomainName + item.ContentKey), cancellationToken);
 
             var completeUpdate = Builders<AnalysisContentNormalizedRequest>.Update
                 .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", StatusNames.ScrapingCompleted)

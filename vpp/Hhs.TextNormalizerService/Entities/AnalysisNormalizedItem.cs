@@ -9,7 +9,6 @@ public sealed class AnalysisNormalizedItem
     public int SortOrder { get; set; }
 
     // Content Reference
-    public string DomainName { get; set; } = default!;
     public string ContentKey { get; set; } = default!;
 
     // Scraping State

@@ -4,9 +4,15 @@ namespace Hhs.TextNormalizerService.Entities;
 
 public sealed class AnalysisContentNormalizedRequest
 {
-    // Identity & Correlation
+    // Identity 
     [BsonId]
     public Guid Id { get; set; }
+
+    // Audit Fields
+    public DateTime CreatedAtUtc { get; set; }
+    public DateTime UpdatedAtUtc { get; set; }
+
+    // Correlation
     public string? CorrelationId { get; set; }
     public Guid SourceEventId { get; set; }
 
@@ -26,10 +32,4 @@ public sealed class AnalysisContentNormalizedRequest
 
     // Error Handling
     public string? LastError { get; set; }
-
-    // Audit Fields
-    public DateTime CreatedAtUtc { get; set; }
-    public DateTime UpdatedAtUtc { get; set; }
-
-    // Provider Configuration
 }

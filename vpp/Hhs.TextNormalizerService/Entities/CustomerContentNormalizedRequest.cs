@@ -4,9 +4,15 @@ namespace Hhs.TextNormalizerService.Entities;
 
 public sealed class CustomerContentNormalizedRequest
 {
-    // Identity & Correlation
+    // Identity 
     [BsonId]
     public Guid Id { get; set; }
+
+    // Audit Fields
+    public DateTime CreatedAtUtc { get; set; }
+    public DateTime UpdatedAtUtc { get; set; }
+
+    // Correlation
     public string? CorrelationId { get; set; }
     public Guid SourceEventId { get; set; }
 
@@ -41,10 +47,4 @@ public sealed class CustomerContentNormalizedRequest
     public int MaxRetryCount { get; set; } = 5;
     public DateTime? NextRetryAtUtc { get; set; }
     public string? LastError { get; set; }
-
-    // Audit Fields
-    public DateTime CreatedAtUtc { get; set; }
-    public DateTime UpdatedAtUtc { get; set; }
-
-    // Provider Configuration
 }
