@@ -1,6 +1,6 @@
 namespace Hhs.Shared.Configuration;
 
-public abstract class PollingSettingsBase
+public abstract class PollingSettings
 {
     public int IntervalSeconds { get; set; } = 5;
     public int MaxAttempts { get; set; } = 10;
