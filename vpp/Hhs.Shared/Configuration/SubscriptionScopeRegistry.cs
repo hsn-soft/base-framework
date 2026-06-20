@@ -11,36 +11,95 @@ namespace Hhs.Shared.Configuration;
 /// </summary>
 public static class SubscriptionScopeRegistry
 {
-    private static readonly Dictionary<Guid, SubscriptionScope> _scopes = [];
+    private static readonly Dictionary<string, SubscriptionScope> _scopes = [];
 
     /// <summary>
-    /// Initialize with test/default scopes. Replace with database initialization.
+    /// Initialize with 12 test scenarios matching HTTP test files.
     /// </summary>
     public static void Initialize()
     {
-        // TODO: Load from database instead of hardcoding
         _scopes.Clear();
 
-        // Example scopes - replace with actual database data
-        Add(new SubscriptionScope(
-            scopeKey: Guid.Parse("4fe789ab-0652-4e7b-bd35-07019058081d"),
+        // Scenarios 1-4: outline-fast combinations
+        Add("scenario-001", new SubscriptionScope(
             outlineProviderKey: "outline-fast",
             audioProviderKey: "audio-quick",
             videoProviderKey: "video-fast-external"
         ));
 
-        Add(new SubscriptionScope(
-            scopeKey: Guid.Parse("550e8400-e29b-41d4-a716-446655440000"),
-            outlineProviderKey: "openai",
+        Add("scenario-002", new SubscriptionScope(
+            outlineProviderKey: "outline-fast",
+            audioProviderKey: "audio-hq",
+            videoProviderKey: "video-fast-external"
+        ));
+
+        Add("scenario-003", new SubscriptionScope(
+            outlineProviderKey: "outline-fast",
+            audioProviderKey: "audio-quick",
+            videoProviderKey: "video-queue-external"
+        ));
+
+        Add("scenario-004", new SubscriptionScope(
+            outlineProviderKey: "outline-fast",
             audioProviderKey: "audio-hq",
             videoProviderKey: "video-queue-external"
+        ));
+
+        // Scenarios 5-8: outline-queue combinations
+        Add("scenario-005", new SubscriptionScope(
+            outlineProviderKey: "outline-queue",
+            audioProviderKey: "audio-quick",
+            videoProviderKey: "video-fast-external"
+        ));
+
+        Add("scenario-006", new SubscriptionScope(
+            outlineProviderKey: "outline-queue",
+            audioProviderKey: "audio-hq",
+            videoProviderKey: "video-fast-external"
+        ));
+
+        Add("scenario-007", new SubscriptionScope(
+            outlineProviderKey: "outline-queue",
+            audioProviderKey: "audio-quick",
+            videoProviderKey: "video-queue-external"
+        ));
+
+        Add("scenario-008", new SubscriptionScope(
+            outlineProviderKey: "outline-queue",
+            audioProviderKey: "audio-hq",
+            videoProviderKey: "video-queue-external"
+        ));
+
+        // Scenarios 9-12: internal video combinations
+        Add("scenario-009", new SubscriptionScope(
+            outlineProviderKey: "outline-fast",
+            audioProviderKey: null,
+            videoProviderKey: "video-fast-internal"
+        ));
+
+        Add("scenario-010", new SubscriptionScope(
+            outlineProviderKey: "outline-queue",
+            audioProviderKey: null,
+            videoProviderKey: "video-fast-internal"
+        ));
+
+        Add("scenario-011", new SubscriptionScope(
+            outlineProviderKey: "outline-fast",
+            audioProviderKey: null,
+            videoProviderKey: "video-queue-internal"
+        ));
+
+        Add("scenario-012", new SubscriptionScope(
+            outlineProviderKey: "outline-queue",
+            audioProviderKey: null,
+            videoProviderKey: "video-queue-internal"
         ));
     }
 
     /// <summary>
     /// Get provider configuration for a specific scope.
     /// </summary>
-    public static SubscriptionScope? GetScope(Guid scopeKey)
+    public static SubscriptionScope? GetScope(string scopeKey)
     {
         return _scopes.TryGetValue(scopeKey, out var scope) ? scope : null;
     }
@@ -48,7 +107,7 @@ public static class SubscriptionScopeRegistry
     /// <summary>
     /// Get outline provider key for a scope.
     /// </summary>
-    public static string? GetOutlineProviderKey(Guid scopeKey)
+    public static string? GetOutlineProviderKey(string scopeKey)
     {
         return GetScope(scopeKey)?.OutlineProviderKey;
     }
@@ -56,7 +115,7 @@ public static class SubscriptionScopeRegistry
     /// <summary>
     /// Get audio provider key for a scope.
     /// </summary>
-    public static string? GetAudioProviderKey(Guid scopeKey)
+    public static string? GetAudioProviderKey(string scopeKey)
     {
         return GetScope(scopeKey)?.AudioProviderKey;
     }
@@ -64,7 +123,7 @@ public static class SubscriptionScopeRegistry
     /// <summary>
     /// Get video provider key for a scope.
     /// </summary>
-    public static string? GetVideoProviderKey(Guid scopeKey)
+    public static string? GetVideoProviderKey(string scopeKey)
     {
         return GetScope(scopeKey)?.VideoProviderKey;
     }
@@ -72,15 +131,15 @@ public static class SubscriptionScopeRegistry
     /// <summary>
     /// Add or update a subscription scope.
     /// </summary>
-    public static void Add(SubscriptionScope scope)
+    private static void Add(string scopeKey, SubscriptionScope scope)
     {
-        _scopes[scope.ScopeKey] = scope;
+        _scopes[scopeKey] = scope;
     }
 
     /// <summary>
     /// Remove a subscription scope.
     /// </summary>
-    public static bool Remove(Guid scopeKey)
+    public static bool Remove(string scopeKey)
     {
         return _scopes.Remove(scopeKey);
     }
@@ -88,7 +147,7 @@ public static class SubscriptionScopeRegistry
     /// <summary>
     /// Get all registered scopes.
     /// </summary>
-    public static IReadOnlyDictionary<Guid, SubscriptionScope> GetAllScopes()
+    public static IReadOnlyDictionary<string, SubscriptionScope> GetAllScopes()
     {
         return _scopes.AsReadOnly();
     }

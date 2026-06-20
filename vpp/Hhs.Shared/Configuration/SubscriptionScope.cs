@@ -6,19 +6,12 @@ namespace Hhs.Shared.Configuration;
 /// </summary>
 public sealed class SubscriptionScope
 {
-    public Guid ScopeKey { get; set; }
+    public string OutlineProviderKey { get; }
+    public string? AudioProviderKey { get; }
+    public string VideoProviderKey { get; }
 
-    public string OutlineProviderKey { get; set; } = default!;
-    public string AudioProviderKey { get; set; } = default!;
-    public string VideoProviderKey { get; set; } = default!;
-
-    public SubscriptionScope()
+    public SubscriptionScope(string outlineProviderKey, string? audioProviderKey, string videoProviderKey)
     {
-    }
-
-    public SubscriptionScope(Guid scopeKey, string outlineProviderKey, string audioProviderKey, string videoProviderKey)
-    {
-        ScopeKey = scopeKey;
         OutlineProviderKey = outlineProviderKey;
         AudioProviderKey = audioProviderKey;
         VideoProviderKey = videoProviderKey;
