@@ -1,10 +1,10 @@
-namespace Hhs.VideoGeneratorService.Providers.Storage;
+namespace Hhs.VideoGeneratorService.Providers.Cdn;
 
 /// <summary>
-/// Provider abstraction for CDN storage operations.
+/// Provider abstraction for CDN operations.
 /// Each CDN provider (Local, S3, Azure, Cloudflare, etc.) implements this interface.
 /// </summary>
-public interface ICdnStorageProvider
+public interface ICdnProvider
 {
     /// <summary>
     /// Uploads a file to CDN storage.

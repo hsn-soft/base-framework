@@ -8,8 +8,7 @@ using Hhs.VideoGeneratorService.Configuration;
 using Hhs.VideoGeneratorService.Configuration.Providers.Audio;
 using Hhs.VideoGeneratorService.Configuration.Providers.Video;
 using Hhs.VideoGeneratorService.Configuration.Providers.Cdn;
-using Hhs.VideoGeneratorService.Configuration.Providers.Storage;
-using Hhs.VideoGeneratorService.Providers.Storage;
+using Hhs.VideoGeneratorService.Providers.Cdn;
 using Hhs.VideoGeneratorService.Entities;
 using Hhs.VideoGeneratorService.Handlers;
 using Hhs.VideoGeneratorService.Infrastructure;
@@ -79,7 +78,7 @@ builder.Services.AddSingleton<ICdnProviderResolver>(sp =>
 });
 
 // CDN Storage Provider Factory
-builder.Services.AddSingleton<CdnStorageProviderFactory>();
+builder.Services.AddSingleton<CdnProviderFactory>();
 
 var audioPollingSettings = builder.Configuration.GetSection(AudioPollingSettings.SectionName)
     .Get<AudioPollingSettings>() ?? new AudioPollingSettings();

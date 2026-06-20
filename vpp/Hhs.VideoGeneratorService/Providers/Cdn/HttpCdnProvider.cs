@@ -3,22 +3,22 @@ using Hhs.Shared.Configuration;
 using Hhs.Shared.Configuration.Providers;
 using Hhs.Shared.Providers;
 
-namespace Hhs.VideoGeneratorService.Providers.Storage;
+namespace Hhs.VideoGeneratorService.Providers.Cdn;
 
 /// <summary>
 /// Generic HTTP-based CDN storage provider.
 /// Can work with any HTTP endpoint that supports /upload and /download operations.
 /// </summary>
-public sealed class HttpCdnStorageProvider : ICdnStorageProvider
+public sealed class HttpCdnProvider : ICdnProvider
 {
     private readonly IHasCdnBaseUrl _cdnSettings;
     private readonly HttpClient _httpClient;
-    private readonly ILogger<HttpCdnStorageProvider> _logger;
+    private readonly ILogger<HttpCdnProvider> _logger;
 
-    public HttpCdnStorageProvider(
+    public HttpCdnProvider(
         IHasCdnBaseUrl cdnSettings,
         HttpClient httpClient,
-        ILogger<HttpCdnStorageProvider> logger)
+        ILogger<HttpCdnProvider> logger)
     {
         _cdnSettings = cdnSettings;
         _httpClient = httpClient;

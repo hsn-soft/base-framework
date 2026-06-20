@@ -1,29 +1,28 @@
 using Microsoft.Extensions.Logging;
-using System.Text.Json;
 using Hhs.Shared.Configuration;
 using Hhs.Shared.Configuration.Providers;
 using Hhs.Shared.Providers;
 using Hhs.VideoGeneratorService.Configuration;
 using Hhs.VideoGeneratorService.Configuration.Providers.Storage;
 
-namespace Hhs.VideoGeneratorService.Providers.Storage;
+namespace Hhs.VideoGeneratorService.Providers.Cdn;
 
 /// <summary>
-/// S3-compatible CDN storage provider implementation.
-/// Supports AWS S3, MinIO, and other S3-compatible services.
+/// Cloudflare R2 CDN storage provider implementation.
+/// Stores files in Cloudflare R2 object storage and constructs CDN URLs.
 /// </summary>
-public sealed class S3StorageProvider : ICdnStorageProvider
+public sealed class CloudflareR2CdnProvider : ICdnProvider
 {
     private readonly IHasCdnBaseUrl _cdnSettings;
-    private readonly S3StorageSettings _storageSettings;
+    private readonly CloudflareR2StorageSettings _storageSettings;
     private readonly HttpClient _httpClient;
-    private readonly ILogger<S3StorageProvider> _logger;
+    private readonly ILogger<CloudflareR2CdnProvider> _logger;
 
-    public S3StorageProvider(
+    public CloudflareR2CdnProvider(
         IHasCdnBaseUrl cdnSettings,
-        S3StorageSettings storageSettings,
+        CloudflareR2StorageSettings storageSettings,
         HttpClient httpClient,
-        ILogger<S3StorageProvider> logger)
+        ILogger<CloudflareR2CdnProvider> logger)
     {
         _cdnSettings = cdnSettings;
         _storageSettings = storageSettings;
@@ -38,13 +37,13 @@ public sealed class S3StorageProvider : ICdnStorageProvider
     {
         try
         {
-            var bucketName = _storageSettings.BucketOrContainer ?? "default-bucket";
-            var endpoint = _storageSettings.Url ?? "http://localhost:9000";
+            var bucketName = _storageSettings.BucketName ?? "default-bucket";
+            var endpoint = _storageSettings.Endpoint ?? $"https://{_storageSettings.AccountId}.r2.cloudflarestorage.com";
 
             if (_logger.IsEnabled(LogLevel.Information))
             {
                 _logger.LogInformation(
-                    "Uploading file to S3 storage. Filename: {Filename}, Bucket: {Bucket}, Endpoint: {Endpoint}",
+                    "Uploading file to Cloudflare R2. Filename: {Filename}, Bucket: {Bucket}, Endpoint: {Endpoint}",
                     filename,
                     bucketName,
                     endpoint);
@@ -62,7 +61,7 @@ public sealed class S3StorageProvider : ICdnStorageProvider
             await fileStream.CopyToAsync(memoryStream, cancellationToken);
             var fileBytes = memoryStream.ToArray();
 
-            // Upload to S3-compatible endpoint
+            // Upload to Cloudflare R2
             var uploadUrl = $"{endpoint.TrimEnd('/')}/{bucketName}/{objectKey}";
             using (var content = new ByteArrayContent(fileBytes))
             {
@@ -71,7 +70,7 @@ public sealed class S3StorageProvider : ICdnStorageProvider
                 if (!response.IsSuccessStatusCode)
                 {
                     throw new InvalidOperationException(
-                        $"S3 upload failed with status {response.StatusCode}: {await response.Content.ReadAsStringAsync(cancellationToken)}");
+                        $"Cloudflare R2 upload failed with status {response.StatusCode}: {await response.Content.ReadAsStringAsync(cancellationToken)}");
                 }
             }
 
@@ -86,7 +85,7 @@ public sealed class S3StorageProvider : ICdnStorageProvider
             if (_logger.IsEnabled(LogLevel.Information))
             {
                 _logger.LogInformation(
-                    "File uploaded to S3 successfully. StorageUrl: {StorageUrl}, CdnUrl: {CdnUrl}",
+                    "File uploaded to Cloudflare R2 successfully. StorageUrl: {StorageUrl}, CdnUrl: {CdnUrl}",
                     storageUrl,
                     cdnUrl);
             }
@@ -95,7 +94,7 @@ public sealed class S3StorageProvider : ICdnStorageProvider
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to upload file '{Filename}' to S3 storage", filename);
+            _logger.LogError(ex, "Failed to upload file '{Filename}' to Cloudflare R2", filename);
             throw;
         }
     }
@@ -109,7 +108,7 @@ public sealed class S3StorageProvider : ICdnStorageProvider
             if (_logger.IsEnabled(LogLevel.Information))
             {
                 _logger.LogInformation(
-                    "Downloading file from S3 storage. StorageUrl: {StorageUrl}",
+                    "Downloading file from Cloudflare R2. StorageUrl: {StorageUrl}",
                     storageUrl);
             }
 
@@ -118,14 +117,14 @@ public sealed class S3StorageProvider : ICdnStorageProvider
             if (!response.IsSuccessStatusCode)
             {
                 throw new InvalidOperationException(
-                    $"S3 download failed with status {response.StatusCode}");
+                    $"Cloudflare R2 download failed with status {response.StatusCode}");
             }
 
             return await response.Content.ReadAsStreamAsync(cancellationToken);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to download file from S3 storage URL '{StorageUrl}'", storageUrl);
+            _logger.LogError(ex, "Failed to download file from Cloudflare R2 storage URL '{StorageUrl}'", storageUrl);
             throw;
         }
     }

@@ -1,6 +1,6 @@
 using Hhs.Shared.Configuration;
 using Hhs.Shared.Providers;
-using Hhs.VideoGeneratorService.Providers.Storage;
+using Hhs.VideoGeneratorService.Providers.Cdn;
 
 namespace Hhs.VideoGeneratorService.Providers;
 
@@ -35,11 +35,11 @@ public interface IStorageService
 
 public sealed class DummyStorageService : IStorageService
 {
-    private readonly CdnStorageProviderFactory _providerFactory;
+    private readonly CdnProviderFactory _providerFactory;
     private readonly ILogger<DummyStorageService> _logger;
 
     public DummyStorageService(
-        CdnStorageProviderFactory providerFactory,
+        CdnProviderFactory providerFactory,
         ILogger<DummyStorageService> logger)
     {
         _providerFactory = providerFactory;

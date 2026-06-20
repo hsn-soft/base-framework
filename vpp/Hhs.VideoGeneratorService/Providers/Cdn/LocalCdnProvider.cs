@@ -5,22 +5,22 @@ using Hhs.Shared.Providers;
 using Hhs.VideoGeneratorService.Configuration;
 using Hhs.VideoGeneratorService.Configuration.Providers.Storage;
 
-namespace Hhs.VideoGeneratorService.Providers.Storage;
+namespace Hhs.VideoGeneratorService.Providers.Cdn;
 
 /// <summary>
 /// Local file system CDN storage provider implementation.
 /// Stores files on the local disk and constructs CDN URLs for public access.
 /// </summary>
-public sealed class LocalStorageProvider : ICdnStorageProvider
+public sealed class LocalCdnProvider : ICdnProvider
 {
     private readonly IHasCdnBaseUrl _cdnSettings;
     private readonly LocalStorageSettings _storageSettings;
-    private readonly ILogger<LocalStorageProvider> _logger;
+    private readonly ILogger<LocalCdnProvider> _logger;
 
-    public LocalStorageProvider(
+    public LocalCdnProvider(
         IHasCdnBaseUrl cdnSettings,
         LocalStorageSettings storageSettings,
-        ILogger<LocalStorageProvider> logger)
+        ILogger<LocalCdnProvider> logger)
     {
         _cdnSettings = cdnSettings;
         _storageSettings = storageSettings;
