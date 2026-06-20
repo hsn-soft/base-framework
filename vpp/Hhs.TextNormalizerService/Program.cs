@@ -118,7 +118,7 @@ app.MapPost("/scheduler/outline-polling",
 
         var customerRequests = await mongoContext.CustomerRequests
             .Find(x =>
-                x.Status == "OUTLINE_PROVIDER_POLLING" &&
+                x.Status == StatusNames.OutlineProviderPolling &&
                 x.NextOutlinePollAtUtc != null &&
                 x.NextOutlinePollAtUtc <= now &&
                 x.OutlineProviderTrackId != null)
@@ -132,7 +132,7 @@ app.MapPost("/scheduler/outline-polling",
             var claimResult = await mongoContext.CustomerRequests.UpdateOneAsync(
                 x =>
                     x.Id == request.Id &&
-                    x.Status == "OUTLINE_PROVIDER_POLLING" &&
+                    x.Status == StatusNames.OutlineProviderPolling &&
                     x.NextOutlinePollAtUtc != null &&
                     x.NextOutlinePollAtUtc <= now &&
                     x.OutlineProviderTrackId != null,
@@ -150,7 +150,7 @@ app.MapPost("/scheduler/outline-polling",
         var analysisRequests = await mongoContext.AnalysisRequests
             .Find(x =>
                 x.Items.Any(i =>
-                    i.OutlineStatus == "POLLING" &&
+                    i.OutlineStatus == StatusNames.Polling &&
                     i.NextOutlinePollAtUtc != null &&
                     i.NextOutlinePollAtUtc <= now &&
                     i.OutlineProviderTrackId != null))
@@ -161,7 +161,7 @@ app.MapPost("/scheduler/outline-polling",
         {
             var pollingItems = request.Items
                 .Where(i =>
-                    i.OutlineStatus == "POLLING" &&
+                    i.OutlineStatus == StatusNames.Polling &&
                     i.NextOutlinePollAtUtc != null &&
                     i.NextOutlinePollAtUtc <= now &&
                     i.OutlineProviderTrackId != null)
@@ -172,8 +172,8 @@ app.MapPost("/scheduler/outline-polling",
             foreach (var item in pollingItems)
             {
                 var claimUpdate = Builders<AnalysisContentNormalizedRequest>.Update
-                    .Set("Items.$.NextOutlinePollAtUtc", DateTime.UtcNow.AddSeconds(outlinePollingSettings.ErrorRescheduleDelaySeconds))
-                    .Set("Items.$.UpdatedAtUtc", DateTime.UtcNow)
+                    .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextOutlinePollAtUtc)}", DateTime.UtcNow.AddSeconds(outlinePollingSettings.ErrorRescheduleDelaySeconds))
+                    .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.UpdatedAtUtc)}", DateTime.UtcNow)
                     .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);
 
                 var claimResult = await mongoContext.AnalysisRequests.UpdateOneAsync(
@@ -183,7 +183,7 @@ app.MapPost("/scheduler/outline-polling",
                             x => x.Items,
                             i =>
                                 i.CustomerContentId == item.CustomerContentId &&
-                                i.OutlineStatus == "POLLING" &&
+                                i.OutlineStatus == StatusNames.Polling &&
                                 i.NextOutlinePollAtUtc != null &&
                                 i.NextOutlinePollAtUtc <= now &&
                                 i.OutlineProviderTrackId != null)),

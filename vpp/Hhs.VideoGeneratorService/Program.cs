@@ -202,7 +202,7 @@ app.MapPost("/scheduler/audio-polling",
         var now = DateTime.UtcNow;
         var requests = await mongoContext.AudioRequests
             .Find(x =>
-                x.Status == "AUDIO_PROVIDER_POLLING" &&
+                x.Status == StatusNames.AudioProviderPolling &&
                 x.NextProviderPollAtUtc != null &&
                 x.NextProviderPollAtUtc <= now &&
                 x.AudioProviderTrackingId != null)
@@ -214,7 +214,7 @@ app.MapPost("/scheduler/audio-polling",
             var claimResult = await mongoContext.AudioRequests.UpdateOneAsync(
                 x =>
                     x.Id == request.Id &&
-                    x.Status == "AUDIO_PROVIDER_POLLING" &&
+                    x.Status == StatusNames.AudioProviderPolling &&
                     x.NextProviderPollAtUtc != null &&
                     x.NextProviderPollAtUtc <= now &&
                     x.AudioProviderTrackingId != null,
@@ -247,7 +247,7 @@ app.MapPost("/scheduler/video-polling",
         var now = DateTime.UtcNow;
         var requests = await mongoContext.VideoRequests
             .Find(x =>
-                x.Status == "VIDEO_PROVIDER_POLLING" &&
+                x.Status == StatusNames.VideoProviderPolling &&
                 x.NextProviderPollAtUtc != null &&
                 x.NextProviderPollAtUtc <= now &&
                 x.VideoProviderTrackingId != null)
@@ -259,7 +259,7 @@ app.MapPost("/scheduler/video-polling",
             var claimResult = await mongoContext.VideoRequests.UpdateOneAsync(
                 x =>
                     x.Id == request.Id &&
-                    x.Status == "VIDEO_PROVIDER_POLLING" &&
+                    x.Status == StatusNames.VideoProviderPolling &&
                     x.NextProviderPollAtUtc != null &&
                     x.NextProviderPollAtUtc <= now &&
                     x.VideoProviderTrackingId != null,
