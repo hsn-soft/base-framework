@@ -108,6 +108,7 @@ public sealed record CustomerContentOutlineCompletedEto : IntegrationEvent
 
 public sealed record AnalysisItemScrapingStartedEto : IntegrationEvent
 {
+    public Guid? RefContentIdForItem { get; init; }
     public int SortOrder { get; init; }
 
     public AnalysisItemScrapingStartedEto()
@@ -120,6 +121,7 @@ public sealed record AnalysisItemScrapingStartedEto : IntegrationEvent
 
 public sealed record AnalysisItemScrapingCompletedEto : IntegrationEvent
 {
+    public Guid? RefContentIdForItem { get; init; }
     public int SortOrder { get; init; }
     public string Title { get; init; } = default!;
     public string Text { get; init; } = default!;
@@ -135,6 +137,7 @@ public sealed record AnalysisItemScrapingCompletedEto : IntegrationEvent
 
 public sealed record AnalysisItemOutlineStartedEto : IntegrationEvent
 {
+    public Guid? RefContentIdForItem { get; init; }
     public int SortOrder { get; init; }
 
     public AnalysisItemOutlineStartedEto()
@@ -150,6 +153,7 @@ public sealed record OutlineProviderRequestStartedEto : IntegrationEvent
     public string ProviderKey { get; init; } = default!;
     public Guid NormalizedRequestId { get; init; }
     public Guid? CustomerContentIdForItem { get; init; }
+    public Guid? RefContentIdForItem { get; init; }
     public int? SortOrder { get; init; }
     public string InputText { get; init; } = default!;
 
@@ -164,6 +168,7 @@ public sealed record OutlineProviderCompletedEto : IntegrationEvent
 {
     public Guid NormalizedRequestId { get; init; }
     public Guid? CustomerContentIdForItem { get; init; }
+    public Guid? RefContentIdForItem { get; init; }
     public int? SortOrder { get; init; }
     public string Script { get; init; } = default!;
 
@@ -176,6 +181,7 @@ public sealed record OutlineProviderCompletedEto : IntegrationEvent
 
 public sealed record AnalysisItemOutlineCompletedEto : IntegrationEvent
 {
+    public Guid? RefContentIdForItem { get; init; }
     public int SortOrder { get; init; }
     public string Script { get; init; } = default!;
 

@@ -30,7 +30,7 @@ public sealed class VideoRetryAppService(
     {
         var requests = await context.AudioRequests
             .Find(x =>
-                x.Status == "WAITING_RETRY" &&
+                x.Status == StatusNames.WaitingRetry &&
                 x.NextRetryAtUtc != null &&
                 x.NextRetryAtUtc <= now)
             .Limit(_retrySettings.BatchSize)
@@ -147,7 +147,7 @@ public sealed class VideoRetryAppService(
     {
         var requests = await context.VideoRequests
             .Find(x =>
-                x.Status == "WAITING_RETRY" &&
+                x.Status == StatusNames.WaitingRetry &&
                 x.NextRetryAtUtc != null &&
                 x.NextRetryAtUtc <= now)
             .Limit(_retrySettings.BatchSize)

@@ -32,7 +32,7 @@ public sealed class OutlineProviderPollingAppService(
     {
         var requests = await context.CustomerRequests
             .Find(x =>
-                x.Status == "OUTLINE_PROVIDER_POLLING" &&
+                x.Status == StatusNames.OutlineProviderPolling &&
                 x.NextOutlinePollAtUtc != null &&
                 x.NextOutlinePollAtUtc <= now &&
                 x.OutlineProviderTrackId != null)
@@ -53,7 +53,7 @@ public sealed class OutlineProviderPollingAppService(
 
                 if (request.OutlinePollingCount >= request.MaxOutlinePollingCount)
                 {
-                    request.Status = "FAILED";
+                    request.Status = StatusNames.Failed;
                     request.LastError = "Outline provider polling timeout.";
                     request.UpdatedAtUtc = DateTime.UtcNow;
 
@@ -85,7 +85,7 @@ public sealed class OutlineProviderPollingAppService(
 
                 if (status.IsProcessFailed)
                 {
-                    request.Status = "FAILED";
+                    request.Status = StatusNames.Failed;
                     request.LastError = status.ErrorMessage ?? "Outline provider failed.";
                     request.UpdatedAtUtc = DateTime.UtcNow;
 
@@ -116,7 +116,7 @@ public sealed class OutlineProviderPollingAppService(
 
                 request.OutlinePollingCount++;
                 request.NextOutlinePollAtUtc = null;
-                request.Status = "OUTLINE_PROVIDER_COMPLETED";
+                request.Status = StatusNames.OutlineProviderCompleted;
                 request.OutlineStatus = "PROVIDER_COMPLETED";
                 request.CurrentStep = EventNames.OutlineProviderCompleted;
                 request.UpdatedAtUtc = DateTime.UtcNow;
@@ -143,8 +143,8 @@ public sealed class OutlineProviderPollingAppService(
 
                 if (request.OutlinePollingCount >= request.MaxOutlinePollingCount)
                 {
-                    request.Status = "FAILED";
-                    request.OutlineStatus = "FAILED";
+                    request.Status = StatusNames.Failed;
+                    request.OutlineStatus = StatusNames.Failed;
                     request.CurrentStep = EventNames.OutlineProviderPollingStarted;
                     request.NextOutlinePollAtUtc = null;
 
@@ -162,8 +162,8 @@ public sealed class OutlineProviderPollingAppService(
                 }
                 else
                 {
-                    request.Status = "OUTLINE_PROVIDER_POLLING";
-                    request.OutlineStatus = "POLLING";
+                    request.Status = StatusNames.OutlineProviderPolling;
+                    request.OutlineStatus = StatusNames.Polling;
                     request.CurrentStep = EventNames.OutlineProviderPollingStarted;
                     request.NextOutlinePollAtUtc = DateTime.UtcNow.AddSeconds(_pollingSettings.BackoffIntervalSeconds);
 
@@ -185,7 +185,7 @@ public sealed class OutlineProviderPollingAppService(
         var filter = Builders<AnalysisContentNormalizedRequest>.Filter.ElemMatch(
             x => x.Items,
             i =>
-                i.OutlineStatus == "POLLING" &&
+                i.OutlineStatus == StatusNames.Polling &&
                 i.NextOutlinePollAtUtc <= now &&
                 i.OutlineProviderTrackId != null);
 
@@ -198,7 +198,7 @@ public sealed class OutlineProviderPollingAppService(
         {
             var pollingItems = request.Items
                 .Where(i =>
-                    i.OutlineStatus == "POLLING" &&
+                    i.OutlineStatus == StatusNames.Polling &&
                     i.NextOutlinePollAtUtc <= now &&
                     i.OutlineProviderTrackId != null)
                 .OrderBy(i => i.SortOrder)
@@ -280,7 +280,7 @@ public sealed class OutlineProviderPollingAppService(
 
                     var completedUpdate = Builders<AnalysisContentNormalizedRequest>.Update
                         .Inc("Items.$.OutlinePollingCount", 1)
-                        .Set("Items.$.Status", "OUTLINE_PROVIDER_COMPLETED")
+                        .Set("Items.$.Status", StatusNames.OutlineProviderCompleted)
                         .Set("Items.$.CurrentStep", EventNames.OutlineProviderCompleted)
                         .Set("Items.$.NextOutlinePollAtUtc", (DateTime?)null)
                         .Set("Items.$.OutlineStatus", "PROVIDER_COMPLETED")
@@ -297,8 +297,7 @@ public sealed class OutlineProviderPollingAppService(
                     await eventBus.PublishAsync(new OutlineProviderCompletedEto
                     {
                         RefContentId = request.AnalysisContentId,
-                        RefContentId = item.CustomerContentId,
-                        CustomerContentIdForItem = item.CustomerContentId,
+                        RefContentIdForItem = item.CustomerContentId,
                         RefContentType = ContentType.AnalysisContent,
                         CorrelationId = request.CorrelationId,
                         NormalizedRequestId = request.Id,
@@ -330,13 +329,13 @@ public sealed class OutlineProviderPollingAppService(
 
                     var update = Builders<AnalysisContentNormalizedRequest>.Update
                         .Set("Items.$.OutlinePollingCount", nextCount)
-                        .Set("Items.$.Status", "OUTLINE_PROVIDER_POLLING")
+                        .Set("Items.$.Status", StatusNames.OutlineProviderPolling)
                         .Set("Items.$.CurrentStep", EventNames.OutlineProviderPollingStarted)
-                        .Set("Items.$.OutlineStatus", "POLLING")
+                        .Set("Items.$.OutlineStatus", StatusNames.Polling)
                         .Set("Items.$.LastError", ex.Message)
                         .Set("Items.$.NextOutlinePollAtUtc", DateTime.UtcNow.AddSeconds(5))
                         .Set("Items.$.UpdatedAtUtc", DateTime.UtcNow)
-                        .Set(x => x.Status, "OUTLINE_PROVIDER_POLLING")
+                        .Set(x => x.Status, StatusNames.OutlineProviderPolling)
                         .Set(x => x.CurrentStep, EventNames.OutlineProviderPollingStarted)
                         .Set(x => x.LastError, ex.Message)
                         .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);
@@ -370,7 +369,7 @@ public sealed class OutlineProviderPollingAppService(
                 x => x.Items,
                 i =>
                     i.CustomerContentId == customerContentId &&
-                    i.OutlineStatus == "POLLING" &&
+                    i.OutlineStatus == StatusNames.Polling &&
                     i.NextOutlinePollAtUtc != null &&
                     i.NextOutlinePollAtUtc <= now &&
                     i.OutlineProviderTrackId != null));
@@ -389,13 +388,13 @@ public sealed class OutlineProviderPollingAppService(
         CancellationToken cancellationToken)
     {
         var update = Builders<AnalysisContentNormalizedRequest>.Update
-            .Set("Items.$.Status", "FAILED")
+            .Set("Items.$.Status", StatusNames.Failed)
             .Set("Items.$.CurrentStep", EventNames.OutlineProviderPollingStarted)
-            .Set("Items.$.OutlineStatus", "FAILED")
+            .Set("Items.$.OutlineStatus", StatusNames.Failed)
             .Set("Items.$.LastError", errorMessage)
             .Set("Items.$.NextOutlinePollAtUtc", (DateTime?)null)
             .Set("Items.$.UpdatedAtUtc", DateTime.UtcNow)
-            .Set(x => x.Status, "FAILED")
+            .Set(x => x.Status, StatusNames.Failed)
             .Set(x => x.CurrentStep, EventNames.OutlineProviderPollingStarted)
             .Set(x => x.LastError, errorMessage)
             .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);
@@ -410,7 +409,6 @@ public sealed class OutlineProviderPollingAppService(
         {
             CorrelationId = request.CorrelationId,
             RefContentId = request.AnalysisContentId,
-            RefContentId = item.CustomerContentId,
             RefContentType = ContentType.AnalysisContent,
             Step = EventNames.OutlineProviderPollingStarted,
             ErrorMessage = errorMessage,
@@ -454,7 +452,7 @@ public sealed class OutlineProviderPollingAppService(
         return context.CustomerRequests.UpdateOneAsync(
             x =>
                 x.Id == customerRequestId &&
-                x.Status == "OUTLINE_PROVIDER_POLLING" &&
+                x.Status == StatusNames.OutlineProviderPolling &&
                 x.NextOutlinePollAtUtc != null &&
                 x.NextOutlinePollAtUtc <= now &&
                 x.OutlineProviderTrackId != null,

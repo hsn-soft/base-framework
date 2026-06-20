@@ -485,8 +485,8 @@ public async Task HandleAudioUploadCompletedAsync(
                  x.Status != "VIDEO_PROVIDER_COMPLETED" &&
                  x.Status != "VIDEO_DOWNLOADING" &&
                  x.Status != "VIDEO_UPLOADING" &&
-                 x.Status != "COMPLETED" &&
-                 x.Status != "FAILED",
+                 x.Status != StatusNames.Completed &&
+                 x.Status != StatusNames.Failed,
             Builders<VideoRequest>.Update
                 .Set(x => x.Status, "VIDEO_PROVIDER_REQUEST_STARTING")
                 .Set(x => x.CurrentStep, EventNames.VideoProviderRequestStarted)
