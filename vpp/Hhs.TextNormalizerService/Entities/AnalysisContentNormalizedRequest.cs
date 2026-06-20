@@ -7,7 +7,7 @@ public sealed class AnalysisContentNormalizedRequest
     // Identity & Correlation
     [BsonId]
     public Guid Id { get; set; }
-    public Guid CorrelationId { get; set; }
+    public Guid? CorrelationId { get; set; }
     public Guid SourceEventId { get; set; }
 
     // Content Reference

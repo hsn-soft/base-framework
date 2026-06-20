@@ -7,6 +7,9 @@ public sealed class CustomerContent
     public DateTime CreatedAtUtc { get; set; }
     public DateTime UpdatedAtUtc { get; set; }
 
+    // Correlation & Tracing
+    public Guid? CorrelationId { get; set; }
+
     // Content Metadata
     public string Url { get; set; } = default!;
     public string? Title { get; set; }

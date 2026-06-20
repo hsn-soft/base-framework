@@ -7,6 +7,9 @@ public sealed class AnalysisContent
     public DateTime CreatedAtUtc { get; set; }
     public DateTime UpdatedAtUtc { get; set; }
 
+    // Correlation & Tracing
+    public Guid? CorrelationId { get; set; }
+
     // Content Metadata
     public string? Title { get; set; }
 

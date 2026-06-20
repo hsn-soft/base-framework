@@ -8,6 +8,8 @@ public sealed class VideoGeneratorInboxMessage
     [BsonId]
     public Guid EventId { get; set; }
 
+    public Guid? CorrelationId { get; set; }
+
     public string EventName { get; set; } = default!;
     public string Payload { get; set; } = default!;
     public string Status { get; set; } = InboxStatuses.Started;

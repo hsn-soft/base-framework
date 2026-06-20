@@ -7,6 +7,9 @@ public sealed class ContentInboxMessage
     // Identity
     public Guid EventId { get; set; }
 
+    // Correlation & Tracing
+    public Guid? CorrelationId { get; set; }
+
     // Event Data
     public string EventName { get; set; } = default!;
     public string Payload { get; set; } = default!;

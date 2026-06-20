@@ -8,6 +8,9 @@ public sealed class AnalysisNormalizedItem
     public Guid CustomerContentId { get; set; }
     public int SortOrder { get; set; }
 
+    // Correlation & Tracing
+    public Guid? CorrelationId { get; set; }
+
     // Content Reference
     public string Url { get; set; } = default!;
     public string? Path { get; set; }
