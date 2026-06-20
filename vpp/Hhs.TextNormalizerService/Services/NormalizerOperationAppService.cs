@@ -232,7 +232,6 @@ public sealed class NormalizerOperationAppService(
                 await eventBus.PublishAsync(new OutlineProviderCompletedEto
                 {
                     RefContentId = @event.RefContentId,
-                    ContentProcessType = @event.ContentProcessType,
                     CorrelationId = @event.CorrelationId,
                     NormalizedRequestId = @event.NormalizedRequestId,
                     CustomerContentIdForItem = @event.RefContentIdForItem,
@@ -390,7 +389,7 @@ public sealed class NormalizerOperationAppService(
 
         await eventBus.PublishAsync(new AnalysisItemOutlineCompletedEto
         {
-            AnalysisContentId = analysis.AnalysisContentId,
+            RefContentId = analysis.AnalysisContentId,
             RefContentId = item.CustomerContentId,
             RefContentType = ContentType.AnalysisContent,
             CorrelationId = @event.CorrelationId,

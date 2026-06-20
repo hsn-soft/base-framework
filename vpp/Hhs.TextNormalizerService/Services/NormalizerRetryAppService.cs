@@ -71,18 +71,18 @@ public sealed class NormalizerRetryAppService(
 
                 if (request.CurrentStep == EventNames.CustomerContentScrapingStarted)
                 {
-                    await eventBus.PublishAsync(new CustomerContentScrapingStartedEto { CustomerContentId = request.CustomerContentId, ContentProcessType = ContentProcessTypes.CustomerContent, CorrelationId = request.CorrelationId }, cancellationToken);
+                    await eventBus.PublishAsync(new CustomerContentScrapingStartedEto { RefContentId = request.CustomerContentId, RefContentType = ContentType.CustomerContent, CorrelationId = request.CorrelationId }, cancellationToken);
                 }
                 else if (request.CurrentStep == EventNames.CustomerContentOutlineStarted)
                 {
-                    await eventBus.PublishAsync(new CustomerContentOutlineStartedEto { CustomerContentId = request.CustomerContentId, ContentProcessType = ContentProcessTypes.CustomerContent, CorrelationId = request.CorrelationId }, cancellationToken);
+                    await eventBus.PublishAsync(new CustomerContentOutlineStartedEto { RefContentId = request.CustomerContentId, RefContentType = ContentType.CustomerContent, CorrelationId = request.CorrelationId }, cancellationToken);
                 }
                 else if (request.CurrentStep == EventNames.OutlineProviderRequestStarted)
                 {
                     await eventBus.PublishAsync(new OutlineProviderRequestStartedEto
                     {
-                        CustomerContentId = request.CustomerContentId,
-                        ContentProcessType = ContentProcessTypes.CustomerContent,
+                        RefContentId = request.CustomerContentId,
+                        RefContentType = ContentType.CustomerContent,
                         CorrelationId = request.CorrelationId,
                         NormalizedRequestId = request.Id,
                         ProviderKey = request.OutlineProviderKey,
@@ -104,8 +104,8 @@ public sealed class NormalizerRetryAppService(
                     await eventBus.PublishAsync(new StepFailedEto
                     {
                         CorrelationId = request.CorrelationId,
-                        CustomerContentId = request.CustomerContentId,
-                        ContentProcessType = ContentProcessTypes.CustomerContent,
+                        RefContentId = request.CustomerContentId,
+                        RefContentType = ContentType.CustomerContent,
                         Step = request.CurrentStep,
                         ErrorMessage = $"Unsupported customer retry step: {request.CurrentStep}",
                         Retryable = false
@@ -203,9 +203,9 @@ public sealed class NormalizerRetryAppService(
                     {
                         await eventBus.PublishAsync(new AnalysisItemScrapingStartedEto
                         {
-                            AnalysisContentId = request.AnalysisContentId,
-                            CustomerContentId = item.CustomerContentId,
-                            ContentProcessType = ContentProcessTypes.AnalysisContent,
+                            RefContentId = request.AnalysisContentId,
+                            RefContentId = item.CustomerContentId,
+                            RefContentType = ContentType.AnalysisContent,
                             CorrelationId = request.CorrelationId,
                             SortOrder = item.SortOrder
                         }, cancellationToken);
@@ -214,9 +214,9 @@ public sealed class NormalizerRetryAppService(
                     {
                         await eventBus.PublishAsync(new AnalysisItemOutlineStartedEto
                         {
-                            AnalysisContentId = request.AnalysisContentId,
-                            CustomerContentId = item.CustomerContentId,
-                            ContentProcessType = ContentProcessTypes.AnalysisContent,
+                            RefContentId = request.AnalysisContentId,
+                            RefContentId = item.CustomerContentId,
+                            RefContentType = ContentType.AnalysisContent,
                             CorrelationId = request.CorrelationId,
                             SortOrder = item.SortOrder
                         }, cancellationToken);
@@ -225,10 +225,10 @@ public sealed class NormalizerRetryAppService(
                     {
                         await eventBus.PublishAsync(new OutlineProviderRequestStartedEto
                         {
-                            AnalysisContentId = request.AnalysisContentId,
-                            CustomerContentId = item.CustomerContentId,
+                            RefContentId = request.AnalysisContentId,
+                            RefContentId = item.CustomerContentId,
                             CustomerContentIdForItem = item.CustomerContentId,
-                            ContentProcessType = ContentProcessTypes.AnalysisContent,
+                            RefContentType = ContentType.AnalysisContent,
                             CorrelationId = request.CorrelationId,
                             NormalizedRequestId = request.Id,
                             ProviderKey = request.OutlineProviderKey,

@@ -62,8 +62,8 @@ public sealed class OutlineProviderPollingAppService(
                     await eventBus.PublishAsync(new StepFailedEto
                     {
                         CorrelationId = request.CorrelationId,
-                        CustomerContentId = request.CustomerContentId,
-                        ContentProcessType = ContentProcessTypes.CustomerContent,
+                        RefContentId = request.CustomerContentId,
+                        RefContentType = ContentType.CustomerContent,
                         Step = EventNames.OutlineProviderPollingStarted,
                         ErrorMessage = request.LastError,
                         Retryable = false
@@ -94,8 +94,8 @@ public sealed class OutlineProviderPollingAppService(
                     await eventBus.PublishAsync(new StepFailedEto
                     {
                         CorrelationId = request.CorrelationId,
-                        CustomerContentId = request.CustomerContentId,
-                        ContentProcessType = ContentProcessTypes.CustomerContent,
+                        RefContentId = request.CustomerContentId,
+                        RefContentType = ContentType.CustomerContent,
                         Step = EventNames.OutlineProviderPollingStarted,
                         ErrorMessage = request.LastError,
                         Retryable = false
@@ -128,8 +128,8 @@ public sealed class OutlineProviderPollingAppService(
 
                 await eventBus.PublishAsync(new OutlineProviderCompletedEto
                 {
-                    CustomerContentId = request.CustomerContentId,
-                    ContentProcessType = ContentProcessTypes.CustomerContent,
+                    RefContentId = request.CustomerContentId,
+                    RefContentType = ContentType.CustomerContent,
                     CorrelationId = request.CorrelationId,
                     NormalizedRequestId = request.Id,
                     Script = status.OutlinedData!
@@ -153,8 +153,8 @@ public sealed class OutlineProviderPollingAppService(
                     await eventBus.PublishAsync(new StepFailedEto
                     {
                         CorrelationId = request.CorrelationId,
-                        CustomerContentId = request.CustomerContentId,
-                        ContentProcessType = ContentProcessTypes.CustomerContent,
+                        RefContentId = request.CustomerContentId,
+                        RefContentType = ContentType.CustomerContent,
                         Step = EventNames.OutlineProviderPollingStarted,
                         ErrorMessage = ex.Message,
                         Retryable = false
@@ -296,10 +296,10 @@ public sealed class OutlineProviderPollingAppService(
 
                     await eventBus.PublishAsync(new OutlineProviderCompletedEto
                     {
-                        AnalysisContentId = request.AnalysisContentId,
-                        CustomerContentId = item.CustomerContentId,
+                        RefContentId = request.AnalysisContentId,
+                        RefContentId = item.CustomerContentId,
                         CustomerContentIdForItem = item.CustomerContentId,
-                        ContentProcessType = ContentProcessTypes.AnalysisContent,
+                        RefContentType = ContentType.AnalysisContent,
                         CorrelationId = request.CorrelationId,
                         NormalizedRequestId = request.Id,
                         SortOrder = item.SortOrder,
@@ -409,9 +409,9 @@ public sealed class OutlineProviderPollingAppService(
         await eventBus.PublishAsync(new StepFailedEto
         {
             CorrelationId = request.CorrelationId,
-            AnalysisContentId = request.AnalysisContentId,
-            CustomerContentId = item.CustomerContentId,
-            ContentProcessType = ContentProcessTypes.AnalysisContent,
+            RefContentId = request.AnalysisContentId,
+            RefContentId = item.CustomerContentId,
+            RefContentType = ContentType.AnalysisContent,
             Step = EventNames.OutlineProviderPollingStarted,
             ErrorMessage = errorMessage,
             Retryable = retryable
