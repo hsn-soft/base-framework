@@ -15,7 +15,7 @@ Directory.CreateDirectory(mockFilesDir);
 app.MapPost("/video/generate", (VideoRequest request, VideoCloudService service) =>
 {
     var trackingId = service.CreateRequest(request.AudioUrls);
-    return Results.Ok(new { provider = "video-cloud", trackingId, pollingWindowSec = 120 });
+    return Results.Ok(new { provider = "video-cloud", trackingId, pollingWindowSec = 150 });
 });
 
 app.MapGet("/video/status/{trackingId}", async (string trackingId, VideoCloudService service, CancellationToken ct) =>
@@ -69,7 +69,7 @@ namespace Hhs.MockApi.VideoCloud
                 return (false, null, "Not found", null);
 
             var elapsed = DateTime.UtcNow - entry.CreatedAt;
-            if (elapsed.TotalSeconds < 20)
+            if (elapsed.TotalSeconds < 30)
                 return (false, null, null, null);
 
             var filePath = GetFilePath(trackingId, mockFilesDir);

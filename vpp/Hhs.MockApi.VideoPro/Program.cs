@@ -15,7 +15,7 @@ Directory.CreateDirectory(mockFilesDir);
 app.MapPost("/video/generate", (VideoRequest request, VideoProService service) =>
 {
     var trackingId = service.CreateRequest(request.AudioUrls);
-    return Results.Ok(new { provider = "video-pro", trackingId, pollingWindowSec = 120 });
+    return Results.Ok(new { provider = "video-pro", trackingId, pollingWindowSec = 150 });
 });
 
 app.MapGet("/video/status/{trackingId}", async (string trackingId, VideoProService service, CancellationToken ct) =>
@@ -68,7 +68,7 @@ namespace Hhs.MockApi.VideoPro
                 return (false, null, "Not found", null);
 
             var elapsed = DateTime.UtcNow - entry.CreatedAt;
-            if (elapsed.TotalSeconds < 20)
+            if (elapsed.TotalSeconds < 30)
                 return (false, null, null, null);
 
             var filePath = GetFilePath(trackingId, mockFilesDir);

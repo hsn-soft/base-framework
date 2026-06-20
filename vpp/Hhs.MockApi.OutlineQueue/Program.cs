@@ -8,7 +8,7 @@ var app = builder.Build();
 app.MapPost("/outline/generate", (OutlineRequest request) =>
 {
     var trackingId = OutlineQueueService.CreateRequest(request.InputText);
-    return Results.Ok(new { provider = "outline-queue", trackingId, pollingWindowSec = 30 });
+    return Results.Ok(new { provider = "outline-queue", trackingId, pollingWindowSec = 150 });
 });
 
 app.MapGet("/outline/status/{trackingId}", async (string trackingId, CancellationToken ct) =>
@@ -40,7 +40,7 @@ namespace Hhs.MockApi.OutlineQueue
                 return (false, null, "Not found");
 
             var elapsed = DateTime.UtcNow - entry.CreatedAt;
-            if (elapsed.TotalSeconds < 20)
+            if (elapsed.TotalSeconds < 10)
                 return (false, null, null);
 
             var lines = entry.InputText.Split(new[] { '.', '!', '?' }, StringSplitOptions.RemoveEmptyEntries);

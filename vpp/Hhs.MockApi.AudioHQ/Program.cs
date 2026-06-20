@@ -16,7 +16,7 @@ Directory.CreateDirectory(mockFilesDir);
 app.MapPost("/audio/generate", (AudioRequest request, AudioHQService service) =>
 {
     var trackingId = service.CreateRequest(request.InputText);
-    return Results.Ok(new { provider = "audio-hq", trackingId, pollingWindowSec = 60 });
+    return Results.Ok(new { provider = "audio-hq", trackingId, pollingWindowSec = 150 });
 });
 
 app.MapGet("/audio/status/{trackingId}", async (string trackingId, AudioHQService service, CancellationToken ct) =>
