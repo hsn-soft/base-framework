@@ -1,9 +1,7 @@
 using Hhs.Shared.Events;
 using Hhs.Shared.RabbitMQ;
 using Hhs.Shared.Configuration;
-using Hhs.Shared.Configuration.Providers.Storage;
 using Hhs.Shared.Providers;
-using Hhs.Shared.Providers.Storage;
 using Hhs.Shared.Retry;
 using Hhs.TextNormalizerService.Configuration;
 using Hhs.TextNormalizerService.Entities;
@@ -37,30 +35,6 @@ var normalizerRetrySettings = builder.Configuration.GetSection(nameof(Normalizer
     .Get<NormalizerRetrySettings>() ?? new NormalizerRetrySettings();
 builder.Services.AddSingleton(normalizerRetrySettings);
 builder.Services.AddSingleton(_ => new RetryDelayCalculator(normalizerRetrySettings.DelaySeconds));
-
-// CDN Provider Resolver
-builder.Services.AddSingleton<ICdnProviderResolver>(sp =>
-{
-    var cdnProviders = new Dictionary<string, CdnProviderSettingsBase>(StringComparer.OrdinalIgnoreCase);
-    var cdnSection = builder.Configuration.GetSection("Provider:Cdn");
-
-    if (cdnSection.Exists())
-    {
-        foreach (var child in cdnSection.GetChildren())
-        {
-            var settings = child.Get<CdnProviderSettingsBase>();
-            if (settings != null)
-            {
-                cdnProviders[child.Key] = settings;
-            }
-        }
-    }
-
-    return new CdnProviderResolver(cdnProviders);
-});
-
-// CDN Storage Provider Factory
-builder.Services.AddSingleton<CdnStorageProviderFactory>();
 
 BsonRegisterTools.MongoConfigure();
 builder.Services.AddSingleton<NormalizerMongoContext>();

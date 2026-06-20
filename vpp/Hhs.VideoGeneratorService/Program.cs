@@ -3,10 +3,9 @@ using Hhs.Shared.RabbitMQ;
 using Hhs.Shared.Configuration;
 using Hhs.Shared.Configuration.Providers.Storage;
 using Hhs.Shared.Providers;
-using Hhs.Shared.Providers.Storage;
 using Hhs.Shared.Retry;
+using Hhs.VideoGeneratorService.Providers.Storage;
 using Hhs.VideoGeneratorService.Configuration;
-using Hhs.VideoGeneratorService.Workers;
 using Hhs.VideoGeneratorService.Entities;
 using Hhs.VideoGeneratorService.Handlers;
 using Hhs.VideoGeneratorService.Infrastructure;
@@ -48,6 +47,11 @@ builder.Services.AddSingleton(videoQueueInternalProviderSettings);
 var storageProviderSettings = builder.Configuration.GetSection(StorageProviderSettings.SectionName)
     .Get<StorageProviderSettings>() ?? new StorageProviderSettings();
 builder.Services.AddSingleton(storageProviderSettings);
+
+// CDN Provider Configuration (environment-based)
+var cdnProviderConfig = builder.Configuration.GetSection(CdnProviderConfiguration.SectionName)
+    .Get<CdnProviderConfiguration>() ?? new CdnProviderConfiguration();
+builder.Services.AddSingleton(cdnProviderConfig);
 
 // CDN Provider Resolver
 builder.Services.AddSingleton<ICdnProviderResolver>(sp =>

@@ -1,4 +1,4 @@
-namespace Hhs.Shared.Providers.Storage;
+namespace Hhs.VideoGeneratorService.Providers.Storage;
 
 /// <summary>
 /// Provider abstraction for CDN storage operations.
