@@ -117,7 +117,7 @@ public sealed class OutlineProviderPollingAppService(
                 request.OutlinePollingCount++;
                 request.NextOutlinePollAtUtc = null;
                 request.Status = StatusNames.OutlineProviderCompleted;
-                request.OutlineStatus = "PROVIDER_COMPLETED";
+                request.OutlineStatus = StatusNames.ProviderCompleted;
                 request.CurrentStep = EventNames.OutlineProviderCompleted;
                 request.UpdatedAtUtc = DateTime.UtcNow;
 
@@ -283,7 +283,7 @@ public sealed class OutlineProviderPollingAppService(
                         .Set("Items.$.Status", StatusNames.OutlineProviderCompleted)
                         .Set("Items.$.CurrentStep", EventNames.OutlineProviderCompleted)
                         .Set("Items.$.NextOutlinePollAtUtc", (DateTime?)null)
-                        .Set("Items.$.OutlineStatus", "PROVIDER_COMPLETED")
+                        .Set("Items.$.OutlineStatus", StatusNames.ProviderCompleted)
                         .Set("Items.$.UpdatedAtUtc", DateTime.UtcNow)
                         .Set(x => x.CurrentStep, EventNames.OutlineProviderCompleted)
                         .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);
