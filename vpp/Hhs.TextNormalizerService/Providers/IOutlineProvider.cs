@@ -27,7 +27,7 @@ public sealed class OutlineStatusRequest
 public class OutlineStatusResponse
 {
     public bool IsProcessed { get; set; }
-    public bool IsProcessFailed => !string.IsNullOrWhiteSpace(OutlinedData);
+    public bool IsProcessFailed  { get; set; }
     public string? ErrorMessage { get; set; }
 
     public string? OutlinedData { get; set; }
