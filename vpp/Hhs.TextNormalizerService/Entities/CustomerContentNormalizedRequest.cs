@@ -17,7 +17,6 @@ public sealed class CustomerContentNormalizedRequest
     public Guid CustomerContentId { get; set; }
     public string DomainName { get; set; } = default!;
     public string ContentKey { get; set; } = default!;
-    public string SlugKey { get; set; } = default!;
 
     // Status & Progress
     public string Status { get; set; } = default!;
