@@ -4,6 +4,8 @@ namespace Hhs.VideoGeneratorService.Configuration.Providers.Storage;
 
 public sealed class CloudflareR2StorageSettings : StorageProviderSettingsBase
 {
+    public const string SectionName = "Provider:Storage:CloudflareR2";
+
     public CloudflareR2StorageSettings()
     {
         Type = "CloudflareR2";
