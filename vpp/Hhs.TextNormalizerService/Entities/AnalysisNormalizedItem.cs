@@ -9,6 +9,7 @@ public sealed class AnalysisNormalizedItem
     public int SortOrder { get; set; }
 
     // Content Reference
+    public string ContentKey { get; set; } = default!;
     public string Url { get; set; } = default!;
     public string? Path { get; set; }
 

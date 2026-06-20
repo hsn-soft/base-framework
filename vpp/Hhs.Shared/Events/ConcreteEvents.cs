@@ -32,6 +32,7 @@ public sealed record AnalysisNormalizeItem
 {
     public Guid CustomerContentId { get; init; }
     public int SortOrder { get; init; }
+    public string ContentKey { get; init; } = default!;
 }
 
 public sealed record CustomerContentNormalizeRequestCreatedEto : IntegrationEvent
