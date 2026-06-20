@@ -2,7 +2,7 @@ using Hhs.Shared.Configuration;
 
 namespace Hhs.VideoGeneratorService.Configuration;
 
-public sealed class AudioFastProviderSettings : AudioProviderSettings
+public sealed class AudioFastProviderSettings : AudioProviderSettingsBase
 {
     public const string SectionName = "Provider:Audio:AudioFast";
 

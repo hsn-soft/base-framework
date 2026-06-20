@@ -1,6 +1,6 @@
 namespace Hhs.Shared.Configuration.Providers.Video;
 
-public abstract class VideoProviderSettings : ProviderSettingsBase
+public abstract class VideoProviderSettingsBase : ProviderSettingsBase
 {
     public bool AllowHorizontal { get; set; } = true;
     public bool AllowVertical { get; set; } = true;

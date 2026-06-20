@@ -2,7 +2,7 @@ using Hhs.Shared.Configuration;
 
 namespace Hhs.VideoGeneratorService.Configuration;
 
-public sealed class AudioQueueProviderSettings : AudioProviderSettings
+public sealed class AudioQueueProviderSettings : AudioProviderSettingsBase
 {
     public const string SectionName = "Provider:Audio:AudioQueue";
 

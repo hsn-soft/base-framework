@@ -1,6 +1,6 @@
 namespace Hhs.Shared.Configuration.Providers.Audio;
 
-public abstract class AudioProviderSettings : ProviderSettingsBase
+public abstract class AudioProviderSettingsBase : ProviderSettingsBase
 {
     public string AudioQuality { get; set; } = "high";
     public int MaxDurationSeconds { get; set; } = 3600;
