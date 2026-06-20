@@ -58,9 +58,8 @@ public sealed class AudioProviderPollingAppService(
                     await eventBus.PublishAsync(new StepFailedEto
                     {
 
-                        CustomerContentId = request.CustomerContentId,
-                        AnalysisContentId = request.AnalysisContentId,
-                        ContentProcessType = request.ContentProcessType,
+                        RefContentId = request.RefContentId,
+                RefContentType = request.RefContentType,
                         CorrelationId = request.CorrelationId,
                         Step = EventNames.AudioProviderPollingStarted,
                         ErrorMessage = request.LastError,
@@ -86,9 +85,8 @@ public sealed class AudioProviderPollingAppService(
 
                     await eventBus.PublishAsync(new StepFailedEto
                     {
-                        CustomerContentId = request.CustomerContentId,
-                        AnalysisContentId = request.AnalysisContentId,
-                        ContentProcessType = request.ContentProcessType,
+                        RefContentId = request.RefContentId,
+                RefContentType = request.RefContentType,
                         CorrelationId = request.CorrelationId,
                         Step = EventNames.AudioProviderPollingStarted,
                         ErrorMessage = request.LastError,
@@ -130,9 +128,8 @@ public sealed class AudioProviderPollingAppService(
 
                 await eventBus.PublishAsync(new AudioProviderCompletedEto
                 {
-                    CustomerContentId = request.CustomerContentId,
-                    AnalysisContentId = request.AnalysisContentId,
-                    ContentProcessType = request.ContentProcessType,
+                    RefContentId = request.RefContentId,
+                RefContentType = request.RefContentType,
                     CorrelationId = request.CorrelationId,
                     VideoRequestId = request.VideoRequestId,
                     AudioRequestId = request.Id,
@@ -154,9 +151,8 @@ public sealed class AudioProviderPollingAppService(
 
                     await eventBus.PublishAsync(new StepFailedEto
                     {
-                        CustomerContentId = request.CustomerContentId,
-                        AnalysisContentId = request.AnalysisContentId,
-                        ContentProcessType = request.ContentProcessType,
+                        RefContentId = request.RefContentId,
+                RefContentType = request.RefContentType,
                         CorrelationId = request.CorrelationId,
                         Step = EventNames.AudioProviderPollingStarted,
                         ErrorMessage = ex.Message,

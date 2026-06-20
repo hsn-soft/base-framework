@@ -6,7 +6,7 @@ public abstract record IntegrationEvent
     public Guid CorrelationId { get; init; } = Guid.NewGuid();
 
     public Guid RefContentId { get; init; }
-    public string RefContentType { get; init; } = default!;
+    public ContentType RefContentType { get; init; }
 
     public string EventName { get; init; } = default!;
     public string Facility { get; init; } = default!;

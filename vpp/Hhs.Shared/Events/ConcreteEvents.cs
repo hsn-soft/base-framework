@@ -8,7 +8,7 @@ public sealed record CustomerContentCreatedEto : IntegrationEvent
     {
         EventName = EventNames.CustomerContentCreated;
         Facility = EventNames.CustomerContentCreated;
-        RefContentType = ContentProcessTypes.CustomerContent;
+        RefContentType = ContentType.CustomerContent;
     }
 
     public string OutlineProviderKey { get; init; } = default!;
@@ -24,7 +24,7 @@ public sealed record AnalysisContentCreatedEto : IntegrationEvent
     {
         EventName = EventNames.AnalysisContentCreated;
         Facility = EventNames.AnalysisContentCreated;
-        RefContentType = ContentProcessTypes.AnalysisContent;
+        RefContentType = ContentType.AnalysisContent;
     }
 
     public string OutlineProviderKey { get; init; } = default!;
@@ -46,7 +46,7 @@ public sealed record CustomerContentNormalizeRequestCreatedEto : IntegrationEven
     {
         EventName = EventNames.CustomerContentNormalizeRequestCreated;
         Facility = EventNames.CustomerContentNormalizeRequestCreated;
-        RefContentType = ContentProcessTypes.CustomerContent;
+        RefContentType = ContentType.CustomerContent;
     }
 }
 
@@ -56,7 +56,7 @@ public sealed record AnalysisContentNormalizeRequestCreatedEto : IntegrationEven
     {
         EventName = EventNames.AnalysisContentNormalizeRequestCreated;
         Facility = EventNames.AnalysisContentNormalizeRequestCreated;
-        RefContentType = ContentProcessTypes.AnalysisContent;
+        RefContentType = ContentType.AnalysisContent;
     }
 }
 
@@ -66,7 +66,7 @@ public sealed record CustomerContentScrapingStartedEto : IntegrationEvent
     {
         EventName = EventNames.CustomerContentScrapingStarted;
         Facility = EventNames.CustomerContentScrapingStarted;
-        RefContentType = ContentProcessTypes.CustomerContent;
+        RefContentType = ContentType.CustomerContent;
     }
 }
 
@@ -80,7 +80,7 @@ public sealed record CustomerContentScrapingCompletedEto : IntegrationEvent
     {
         EventName = EventNames.CustomerContentScrapingCompleted;
         Facility = EventNames.CustomerContentScrapingCompleted;
-        RefContentType = ContentProcessTypes.CustomerContent;
+        RefContentType = ContentType.CustomerContent;
     }
 }
 
@@ -90,7 +90,7 @@ public sealed record CustomerContentOutlineStartedEto : IntegrationEvent
     {
         EventName = EventNames.CustomerContentOutlineStarted;
         Facility = EventNames.CustomerContentOutlineStarted;
-        RefContentType = ContentProcessTypes.CustomerContent;
+        RefContentType = ContentType.CustomerContent;
     }
 }
 
@@ -102,7 +102,7 @@ public sealed record CustomerContentOutlineCompletedEto : IntegrationEvent
     {
         EventName = EventNames.CustomerContentOutlineCompleted;
         Facility = EventNames.CustomerContentOutlineCompleted;
-        RefContentType = ContentProcessTypes.CustomerContent;
+        RefContentType = ContentType.CustomerContent;
     }
 }
 
@@ -114,7 +114,7 @@ public sealed record AnalysisItemScrapingStartedEto : IntegrationEvent
     {
         EventName = EventNames.AnalysisItemScrapingStarted;
         Facility = EventNames.AnalysisItemScrapingStarted;
-        RefContentType = ContentProcessTypes.AnalysisContent;
+        RefContentType = ContentType.AnalysisContent;
     }
 }
 
@@ -129,7 +129,7 @@ public sealed record AnalysisItemScrapingCompletedEto : IntegrationEvent
     {
         EventName = EventNames.AnalysisItemScrapingCompleted;
         Facility = EventNames.AnalysisItemScrapingCompleted;
-        RefContentType = ContentProcessTypes.AnalysisContent;
+        RefContentType = ContentType.AnalysisContent;
     }
 }
 
@@ -141,7 +141,7 @@ public sealed record AnalysisItemOutlineStartedEto : IntegrationEvent
     {
         EventName = EventNames.AnalysisItemOutlineStarted;
         Facility = EventNames.AnalysisItemOutlineStarted;
-        RefContentType = ContentProcessTypes.AnalysisContent;
+        RefContentType = ContentType.AnalysisContent;
     }
 }
 
@@ -183,7 +183,7 @@ public sealed record AnalysisItemOutlineCompletedEto : IntegrationEvent
     {
         EventName = EventNames.AnalysisItemOutlineCompleted;
         Facility = EventNames.AnalysisItemOutlineCompleted;
-        RefContentType = ContentProcessTypes.AnalysisContent;
+        RefContentType = ContentType.AnalysisContent;
     }
 }
 
@@ -199,7 +199,7 @@ public sealed record NormalizerResultPublishedEto : IntegrationEvent
     {
         EventName = EventNames.NormalizerResultPublished;
         Facility = EventNames.NormalizerResultPublished;
-        RefContentType = ContentProcessTypes.CustomerContent;
+        RefContentType = ContentType.CustomerContent;
     }
 }
 

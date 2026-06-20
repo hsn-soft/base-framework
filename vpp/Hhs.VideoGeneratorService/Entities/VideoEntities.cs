@@ -1,3 +1,4 @@
+using Hhs.Shared.Events;
 using Hhs.Shared.Inbox;
 using MongoDB.Bson.Serialization.Attributes;
 
@@ -16,7 +17,7 @@ public sealed class VideoRequest
     public Guid CorrelationId { get; set; }
     public Guid SourceEventId { get; set; }
     public Guid RefContentId { get; set; }
-    public string RefContentType { get; set; } = default!;
+    public ContentType RefContentType { get; set; }
 
     // Status & Configuration
     public string Status { get; set; } = default!;
@@ -61,7 +62,7 @@ public sealed class AudioRequest
     public Guid CorrelationId { get; set; }
     public Guid VideoRequestId { get; set; }
     public Guid RefContentId { get; set; }
-    public string RefContentType { get; set; } = default!;
+    public ContentType RefContentType { get; set; }
 
     // Status & Configuration
     public string Status { get; set; } = default!;

@@ -125,7 +125,7 @@ public sealed class ContentOperationAppService
     {
         var shouldPublishEvent = false;
 
-        if (@event.RefContentType == ContentProcessTypes.CustomerContent)
+        if (@event.RefContentType == ContentType.CustomerContent)
         {
             var entity = await _db.CustomerContents
                 .FirstOrDefaultAsync(x => x.Id == @event.RefContentId, cancellationToken);
@@ -142,7 +142,7 @@ public sealed class ContentOperationAppService
             }
         }
 
-        if (@event.RefContentType == ContentProcessTypes.AnalysisContent)
+        if (@event.RefContentType == ContentType.AnalysisContent)
         {
             var entity = await _db.AnalysisContents
                 .FirstOrDefaultAsync(x => x.Id == @event.RefContentId, cancellationToken);
@@ -177,7 +177,7 @@ public sealed class ContentOperationAppService
 
     public async Task HandleVideoResultAsync(VideoGenerationResultPublishedEto @event, CancellationToken cancellationToken)
     {
-        if (@event.RefContentType == ContentProcessTypes.CustomerContent)
+        if (@event.RefContentType == ContentType.CustomerContent)
         {
             var entity = await _db.CustomerContents.FirstOrDefaultAsync(x => x.Id == @event.RefContentId, cancellationToken);
             if (entity != null)
@@ -190,7 +190,7 @@ public sealed class ContentOperationAppService
             }
         }
 
-        if (@event.RefContentType == ContentProcessTypes.AnalysisContent)
+        if (@event.RefContentType == ContentType.AnalysisContent)
         {
             var entity = await _db.AnalysisContents.FirstOrDefaultAsync(x => x.Id == @event.RefContentId, cancellationToken);
             if (entity != null)
@@ -210,7 +210,7 @@ public sealed class ContentOperationAppService
         StepFailedEto @event,
         CancellationToken cancellationToken)
     {
-        if (@event.RefContentType == ContentProcessTypes.CustomerContent)
+        if (@event.RefContentType == ContentType.CustomerContent)
         {
             var entity = await _db.CustomerContents
                 .FirstAsync(x => x.Id == @event.RefContentId, cancellationToken);
@@ -229,7 +229,7 @@ public sealed class ContentOperationAppService
             }
         }
 
-        if (@event.RefContentType == ContentProcessTypes.AnalysisContent)
+        if (@event.RefContentType == ContentType.AnalysisContent)
         {
             var entity = await _db.AnalysisContents
                 .FirstAsync(x => x.Id == @event.RefContentId, cancellationToken);

@@ -58,7 +58,7 @@ public async Task CreateVideoRequestAsync(
                 RefContentType = existing.RefContentType,
                 CorrelationId = existing.CorrelationId,
                 VideoRequestId = existing.Id,
-                IsAnalysis = existing.RefContentType == ContentProcessTypes.AnalysisContent,
+                IsAnalysis = existing.RefContentType == ContentType.AnalysisContent,
                 ExternalAudioRequired = existingExternalAudioRequired
             }, cancellationToken);
 
@@ -97,7 +97,7 @@ public async Task CreateVideoRequestAsync(
             RefContentType = @event.RefContentType,
             CorrelationId = @event.CorrelationId,
             VideoRequestId = videoRequestId,
-            IsAnalysis = @event.RefContentType == ContentProcessTypes.AnalysisContent,
+            IsAnalysis = @event.RefContentType == ContentType.AnalysisContent,
             ExternalAudioRequired = externalAudioRequired
         }, cancellationToken);
     }
@@ -207,7 +207,7 @@ public async Task CreateVideoRequestAsync(
                 Id = audioRequestId,
                 CorrelationId = @event.CorrelationId,
                 VideoRequestId = videoRequest.Id,
-                RefContentId = item.CustomerContentId ?? videoRequest.CustomerContentId,
+                RefContentId = videoRequest.RefContentId,
                 RefContentType = videoRequest.RefContentType,
                 SortOrder = item.SortOrder,
                 InputText = item.Text,
@@ -805,7 +805,7 @@ public async Task HandleAudioUploadCompletedAsync(
             .EnumerateArray()
             .Select(x => new VideoInputAudioItem
             {
-                RefContentId = x.TryGetProperty("customerContentId", out var customerIdEl)
+                CustomerContentId = x.TryGetProperty("customerContentId", out var customerIdEl)
                     ? customerIdEl.GetGuid()
                     : null,
                 SortOrder = x.GetProperty("sortOrder").GetInt32(),

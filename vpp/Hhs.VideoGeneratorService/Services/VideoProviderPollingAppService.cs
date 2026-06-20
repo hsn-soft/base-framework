@@ -59,9 +59,8 @@ public sealed class VideoProviderPollingAppService(
 
                     await eventBus.PublishAsync(new StepFailedEto
                     {
-                        CustomerContentId = request.CustomerContentId,
-                        AnalysisContentId = request.AnalysisContentId,
-                        ContentProcessType = request.ContentProcessType,
+                        RefContentId = request.RefContentId,
+                RefContentType = request.RefContentType,
                         CorrelationId = request.CorrelationId,
                         Step = EventNames.VideoProviderPollingStarted,
                         ErrorMessage = request.LastError,
@@ -87,9 +86,8 @@ public sealed class VideoProviderPollingAppService(
 
                     await eventBus.PublishAsync(new StepFailedEto
                     {
-                        CustomerContentId = request.CustomerContentId,
-                        AnalysisContentId = request.AnalysisContentId,
-                        ContentProcessType = request.ContentProcessType,
+                        RefContentId = request.RefContentId,
+                RefContentType = request.RefContentType,
                         CorrelationId = request.CorrelationId,
                         Step = EventNames.VideoProviderPollingStarted,
                         ErrorMessage = request.LastError,
@@ -131,9 +129,8 @@ public sealed class VideoProviderPollingAppService(
 
                 await eventBus.PublishAsync(new VideoProviderCompletedEto
                 {
-                    CustomerContentId = request.CustomerContentId,
-                    AnalysisContentId = request.AnalysisContentId,
-                    ContentProcessType = request.ContentProcessType,
+                    RefContentId = request.RefContentId,
+                RefContentType = request.RefContentType,
                     CorrelationId = request.CorrelationId,
                     VideoRequestId = request.Id,
                     ProviderFileUrl = mockStorageUrl
@@ -154,9 +151,8 @@ public sealed class VideoProviderPollingAppService(
 
                     await eventBus.PublishAsync(new StepFailedEto
                     {
-                        CustomerContentId = request.CustomerContentId,
-                        AnalysisContentId = request.AnalysisContentId,
-                        ContentProcessType = request.ContentProcessType,
+                        RefContentId = request.RefContentId,
+                RefContentType = request.RefContentType,
                         CorrelationId = request.CorrelationId,
                         Step = EventNames.VideoProviderPollingStarted,
                         ErrorMessage = ex.Message,
