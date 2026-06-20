@@ -3,7 +3,7 @@ namespace Hhs.Shared.Events;
 public abstract record IntegrationEvent
 {
     public Guid EventId { get; init; } = Guid.NewGuid();
-    public Guid? CorrelationId { get; init; }
+    public string? CorrelationId { get; init; }
 
     public Guid RefContentId { get; init; }
     public ContentType RefContentType { get; init; }

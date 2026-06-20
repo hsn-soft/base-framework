@@ -7,7 +7,7 @@ public sealed class CustomerContentNormalizedRequest
     // Identity & Correlation
     [BsonId]
     public Guid Id { get; set; }
-    public Guid? CorrelationId { get; set; }
+    public string? CorrelationId { get; set; }
     public Guid SourceEventId { get; set; }
 
     // Subscription & Scope

@@ -8,7 +8,7 @@ public sealed class CustomerContent
     public DateTime UpdatedAtUtc { get; set; }
 
     // Correlation & Tracing
-    public Guid? CorrelationId { get; set; }
+    public string? CorrelationId { get; set; }
 
     // Subscription & Scope
     public string ScopeKey { get; set; } = default!;

@@ -26,6 +26,7 @@ public sealed class ContentOperationAppService
 
     public async Task<Guid> CreateCustomerContentAsync(
         CreateCustomerContentRequest request,
+        string? correlationId,
         CancellationToken cancellationToken)
     {
         var id = Guid.NewGuid();
@@ -45,7 +46,7 @@ public sealed class ContentOperationAppService
             AudioProviderKey = request.AudioProviderKey != null ? NormalizeProviderKey(request.AudioProviderKey) : null,
             CreatedAtUtc = DateTime.UtcNow,
             UpdatedAtUtc = DateTime.UtcNow,
-            CorrelationId = Guid.NewGuid()
+            CorrelationId = correlationId
         };
 
         _db.CustomerContents.Add(entity);
@@ -65,6 +66,7 @@ public sealed class ContentOperationAppService
 
     public async Task<Guid> CreateAnalysisContentAsync(
         CreateAnalysisContentRequest request,
+        string? correlationId,
         CancellationToken cancellationToken)
     {
         var analysisId = Guid.NewGuid();
@@ -89,7 +91,7 @@ public sealed class ContentOperationAppService
             AudioProviderKey = request.AudioProviderKey != null ? NormalizeProviderKey(request.AudioProviderKey) : null,
             CreatedAtUtc = DateTime.UtcNow,
             UpdatedAtUtc = DateTime.UtcNow,
-            CorrelationId = Guid.NewGuid()
+            CorrelationId = correlationId
         };
 
         var sort = 1;

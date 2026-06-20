@@ -31,9 +31,11 @@ var app = builder.Build();
 app.MapPost("/customer-contents", async (
     CreateCustomerContentRequest request,
     ContentOperationAppService appService,
+    HttpContext httpContext,
     CancellationToken cancellationToken) =>
 {
-    var id = await appService.CreateCustomerContentAsync(request, cancellationToken);
+    var correlationId = httpContext.Request.Headers["X-Correlation-Id"].ToString();
+    var id = await appService.CreateCustomerContentAsync(request, correlationId, cancellationToken);
     return Results.Ok(new { id });
 });
 
@@ -63,9 +65,11 @@ app.MapGet("/customer-contents/{id}", async (
 app.MapPost("/analysis-contents", async (
     CreateAnalysisContentRequest request,
     ContentOperationAppService appService,
+    HttpContext httpContext,
     CancellationToken cancellationToken) =>
 {
-    var id = await appService.CreateAnalysisContentAsync(request, cancellationToken);
+    var correlationId = httpContext.Request.Headers["X-Correlation-Id"].ToString();
+    var id = await appService.CreateAnalysisContentAsync(request, correlationId, cancellationToken);
     return Results.Ok(new { id });
 });
 
@@ -97,10 +101,13 @@ app.MapGet("/analysis-contents/{id}", async (
 app.MapPost("/demo/customer1/openai", async (
     CreateCustomerContentRequest request,
     ContentOperationAppService appService,
+    HttpContext httpContext,
     CancellationToken cancellationToken) =>
 {
+    var correlationId = httpContext.Request.Headers["X-Correlation-Id"].ToString();
     var id = await appService.CreateCustomerContentAsync(
         request with { OutlineProviderKey = "openai" },
+        correlationId,
         cancellationToken);
 
     return Results.Ok(new
@@ -115,10 +122,13 @@ app.MapPost("/demo/customer1/openai", async (
 app.MapPost("/demo/customer2/custom-xyz", async (
     CreateCustomerContentRequest request,
     ContentOperationAppService appService,
+    HttpContext httpContext,
     CancellationToken cancellationToken) =>
 {
+    var correlationId = httpContext.Request.Headers["X-Correlation-Id"].ToString();
     var id = await appService.CreateCustomerContentAsync(
         request with { OutlineProviderKey = "custom-xyz" },
+        correlationId,
         cancellationToken);
 
     return Results.Ok(new
