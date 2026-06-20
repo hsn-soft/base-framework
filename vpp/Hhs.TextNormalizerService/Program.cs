@@ -18,7 +18,7 @@ using MongoDB.Driver;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.Configure<MongoOptions>(builder.Configuration.GetSection("MongoDb"));
-builder.Services.Configure<RabbitMqOptions>(builder.Configuration.GetSection("RabbitMq"));
+builder.Services.Configure<RabbitMqOptions>(builder.Configuration.GetSection(RabbitMqOptions.SectionName));
 
 var outlineFastProviderSettings = builder.Configuration.GetSection(OutlineFastProviderSettings.SectionName)
     .Get<OutlineFastProviderSettings>() ?? new OutlineFastProviderSettings();

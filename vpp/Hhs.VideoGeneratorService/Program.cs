@@ -22,7 +22,7 @@ using MongoDB.Driver;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.Configure<MongoOptions>(builder.Configuration.GetSection("MongoDb"));
-builder.Services.Configure<RabbitMqOptions>(builder.Configuration.GetSection("RabbitMq"));
+builder.Services.Configure<RabbitMqOptions>(builder.Configuration.GetSection(RabbitMqOptions.SectionName));
 
 var audioFastProviderSettings = builder.Configuration.GetSection(AudioFastProviderSettings.SectionName)
     .Get<AudioFastProviderSettings>() ?? new AudioFastProviderSettings();
