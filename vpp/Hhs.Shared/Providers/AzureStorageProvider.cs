@@ -1,6 +1,8 @@
 using Microsoft.Extensions.Logging;
+using Hhs.Shared.Configuration;
+using Hhs.Shared.Providers;
 
-namespace Hhs.Shared.Configuration;
+namespace Hhs.Shared.Providers;
 
 /// <summary>
 /// Azure Blob Storage CDN provider implementation.

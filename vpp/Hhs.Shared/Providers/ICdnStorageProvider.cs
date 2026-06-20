@@ -1,4 +1,4 @@
-namespace Hhs.Shared.Configuration;
+namespace Hhs.Shared.Providers;
 
 /// <summary>
 /// Provider abstraction for CDN storage operations.

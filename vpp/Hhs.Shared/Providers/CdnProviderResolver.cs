@@ -1,4 +1,7 @@
-namespace Hhs.Shared.Configuration;
+using Hhs.Shared.Configuration;
+using Hhs.Shared.Providers;
+
+namespace Hhs.Shared.Providers;
 
 public interface ICdnProviderResolver
 {
