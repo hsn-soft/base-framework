@@ -32,6 +32,4 @@ public sealed class AnalysisContent
 
     // Analysis Items
     public List<AnalysisContentItem> Items { get; set; } = [];
-
-    // Provider Configuration
 }

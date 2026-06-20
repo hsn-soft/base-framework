@@ -47,7 +47,4 @@ public sealed class CustomerContentNormalizedRequest
     public DateTime UpdatedAtUtc { get; set; }
 
     // Provider Configuration
-    public string OutlineProviderKey { get; set; } = default!;
-    public string VideoProviderKey { get; set; } = default!;
-    public string? AudioProviderKey { get; set; }
 }

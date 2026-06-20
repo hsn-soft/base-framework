@@ -53,9 +53,6 @@ public sealed class NormalizerOperationAppService(
             CurrentStep = EventNames.CustomerContentCreated,
             LastError = null,
             // provider keys
-            OutlineProviderKey = @event.OutlineProviderKey,
-            VideoProviderKey = @event.VideoProviderKey,
-            AudioProviderKey = @event.AudioProviderKey,
             // scraping states
             ScrapingStatus = null,
             ScrapingResult = null,
@@ -434,8 +431,6 @@ public sealed class NormalizerOperationAppService(
                 CorrelationId = @event.CorrelationId,
                 RefContentType = ContentType.CustomerContent,
                 VideoInputJson = System.Text.Json.JsonSerializer.Serialize(videoInput),
-                VideoProviderKey = request.VideoProviderKey,
-                AudioProviderKey = request.AudioProviderKey
             },
             cancellationToken);
     }
@@ -461,9 +456,6 @@ public sealed class NormalizerOperationAppService(
             SourceEventId = @event.EventId,
             CorrelationId = @event.CorrelationId,
             AnalysisContentId = @event.RefContentId,
-            OutlineProviderKey = @event.OutlineProviderKey,
-            VideoProviderKey = @event.VideoProviderKey,
-            AudioProviderKey = @event.AudioProviderKey,
             Status = StatusNames.Created,
             CurrentStep = EventNames.AnalysisContentCreated,
             Items = @event.Items.Select(x => new AnalysisNormalizedItem { CustomerContentId = x.CustomerContentId, SortOrder = x.SortOrder, Url = x.Url, Path = x.Path }).ToList(),
@@ -724,8 +716,6 @@ public sealed class NormalizerOperationAppService(
             CorrelationId = @event.CorrelationId,
             RefContentType = ContentType.AnalysisContent,
             VideoInputJson = System.Text.Json.JsonSerializer.Serialize(videoInput),
-            VideoProviderKey = request.VideoProviderKey,
-            AudioProviderKey = request.AudioProviderKey
         }, cancellationToken);
     }
 

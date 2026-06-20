@@ -31,6 +31,4 @@ public sealed class CustomerContent
     public string? FinalVideoUrl { get; set; }
     public string? LastFacility { get; set; }
     public string? LastError { get; set; }
-
-    // Provider Configuration
 }
