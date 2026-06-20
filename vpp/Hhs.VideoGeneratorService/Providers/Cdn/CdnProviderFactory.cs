@@ -61,9 +61,14 @@ public sealed class CdnProviderFactory
                 _httpClient,
                 _loggerFactory.CreateLogger<CdnCloudflareR2Provider>()),
 
+            "httpcnd" => new CdnHttpProvider(
+                cdnSettings,
+                _httpClient,
+                _loggerFactory.CreateLogger<CdnHttpProvider>()),
+
             _ => throw new InvalidOperationException(
                 $"Unsupported storage type '{storageSettings.Type}' for CDN provider '{cdnProviderKey}'. " +
-                $"Supported types: local, s3, azure, cloudflarer2")
+                $"Supported types: local, s3, azure, cloudflarer2, httpcnd")
         };
     }
 }
