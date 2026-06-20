@@ -1,124 +1,246 @@
 @ContentService_HostAddress = http://localhost:7461
+@timestamp = {{$timestamp}}
 
 ### ============================================
-### ANALYSIS CONTENT TEST SCENARIOS - Collage Video Creation
+### ANALYSIS CONTENT TEST SCENARIOS - 12 Combinations
 ### ============================================
-### Combining first 5 customer-contents into collage videos
+### Analysis workflow: Multiple customer contents + Provider combinations
+### Same 12 combinations as customer content (external audio + internal audio)
+### ============================================
+### Note: Replace {customerContentId} with actual IDs from customer-content tests
 ### ============================================
 
 ### ============================================
-### ANALYSIS SCENARIO 1: Fast Pipeline Collage
-### Combines customer-contents with all immediate providers
-### outline-fast + audio-quick + video-fast
-### Expected: Fast collage creation
+### SCENARIO 1: Analysis with External Audio Path (Fast + Quick + FastExternal)
+### outline-fast + audio-quick + video-fast-external
 ### ============================================
 POST {{ContentService_HostAddress}}/analysis-contents
 Content-Type: application/json
 
 {
-  "title": "Fast Pipeline Collage - Immediate Providers",
+  "title": "Analysis Test 1 - Fast Outline + Quick Audio + Fast External Video",
   "customerContentIds": [
-    "34a1c457-c049-4a39-a98e-c4e415c25fbe",
-    "a4c51e12-d787-436b-bdb1-8fbeec737bb6",
-    "1b00b3bd-fcad-464c-8c5d-5ab2fdb46477",
-    "43ae351a-9602-424f-a9d4-9830ab67d158",
-    "2e29fa83-9599-40ea-84f5-404077f021d6"
+    "00000000-0000-0000-0000-000000000001",
+    "00000000-0000-0000-0000-000000000002",
+    "00000000-0000-0000-0000-000000000003"
   ],
   "outlineProviderKey": "outline-fast",
   "audioProviderKey": "audio-quick",
-  "videoProviderKey": "video-fast"
+  "videoProviderKey": "video-fast-external"
 }
 
 ### ============================================
-### ANALYSIS SCENARIO 2: Mixed Fast + Cloud Collage
-### Combines with cloud video polling
-### outline-fast + audio-quick + video-cloud
-### Expected: ~128s + collage overhead
+### SCENARIO 2: Analysis with External Audio Path (Fast + HQ + FastExternal)
+### outline-fast + audio-hq + video-fast-external
 ### ============================================
 POST {{ContentService_HostAddress}}/analysis-contents
 Content-Type: application/json
 
 {
-  "title": "Fast + Cloud Collage - With Video Polling",
+  "title": "Analysis Test 2 - Fast Outline + HQ Audio + Fast External Video",
   "customerContentIds": [
-    "34a1c457-c049-4a39-a98e-c4e415c25fbe",
-    "a4c51e12-d787-436b-bdb1-8fbeec737bb6",
-    "1b00b3bd-fcad-464c-8c5d-5ab2fdb46477",
-    "43ae351a-9602-424f-a9d4-9830ab67d158",
-    "2e29fa83-9599-40ea-84f5-404077f021d6"
+    "00000000-0000-0000-0000-000000000004",
+    "00000000-0000-0000-0000-000000000005",
+    "00000000-0000-0000-0000-000000000006"
+  ],
+  "outlineProviderKey": "outline-fast",
+  "audioProviderKey": "audio-hq",
+  "videoProviderKey": "video-fast-external"
+}
+
+### ============================================
+### SCENARIO 3: Analysis with External Audio Path (Fast + Quick + QueueExternal)
+### outline-fast + audio-quick + video-queue-external
+### ============================================
+POST {{ContentService_HostAddress}}/analysis-contents
+Content-Type: application/json
+
+{
+  "title": "Analysis Test 3 - Fast Outline + Quick Audio + Queue External Video",
+  "customerContentIds": [
+    "00000000-0000-0000-0000-000000000007",
+    "00000000-0000-0000-0000-000000000008",
+    "00000000-0000-0000-0000-000000000009"
   ],
   "outlineProviderKey": "outline-fast",
   "audioProviderKey": "audio-quick",
-  "videoProviderKey": "video-cloud"
+  "videoProviderKey": "video-queue-external"
 }
 
 ### ============================================
-### ANALYSIS SCENARIO 3: Professional Async Collage
-### Combines with HQ audio + professional video
-### outline-fast + audio-hq + video-pro
-### Expected: ~188s + collage overhead
+### SCENARIO 4: Analysis with External Audio Path (Fast + HQ + QueueExternal)
+### outline-fast + audio-hq + video-queue-external
 ### ============================================
 POST {{ContentService_HostAddress}}/analysis-contents
 Content-Type: application/json
 
 {
-  "title": "Professional Async Collage - HQ Audio + Pro Video",
+  "title": "Analysis Test 4 - Fast Outline + HQ Audio + Queue External Video",
   "customerContentIds": [
-    "34a1c457-c049-4a39-a98e-c4e415c25fbe",
-    "a4c51e12-d787-436b-bdb1-8fbeec737bb6",
-    "1b00b3bd-fcad-464c-8c5d-5ab2fdb46477",
-    "43ae351a-9602-424f-a9d4-9830ab67d158",
-    "2e29fa83-9599-40ea-84f5-404077f021d6"
+    "00000000-0000-0000-0000-00000000000a",
+    "00000000-0000-0000-0000-00000000000b",
+    "00000000-0000-0000-0000-00000000000c"
   ],
   "outlineProviderKey": "outline-fast",
   "audioProviderKey": "audio-hq",
-  "videoProviderKey": "video-pro"
+  "videoProviderKey": "video-queue-external"
 }
 
 ### ============================================
-### ANALYSIS SCENARIO 4: Full Async Collage
-### All polling providers
-### outline-queue + audio-hq + video-cloud
-### Expected: ~210s + collage overhead
+### SCENARIO 5: Analysis with External Audio Path (Queue + Quick + FastExternal)
+### outline-queue + audio-quick + video-fast-external
 ### ============================================
 POST {{ContentService_HostAddress}}/analysis-contents
 Content-Type: application/json
 
 {
-  "title": "Full Async Collage - All Polling Providers",
+  "title": "Analysis Test 5 - Queue Outline + Quick Audio + Fast External Video",
   "customerContentIds": [
-    "34a1c457-c049-4a39-a98e-c4e415c25fbe",
-    "a4c51e12-d787-436b-bdb1-8fbeec737bb6",
-    "1b00b3bd-fcad-464c-8c5d-5ab2fdb46477",
-    "43ae351a-9602-424f-a9d4-9830ab67d158",
-    "2e29fa83-9599-40ea-84f5-404077f021d6"
+    "00000000-0000-0000-0000-00000000000d",
+    "00000000-0000-0000-0000-00000000000e",
+    "00000000-0000-0000-0000-00000000000f"
   ],
   "outlineProviderKey": "outline-queue",
-  "audioProviderKey": "audio-hq",
-  "videoProviderKey": "video-cloud"
+  "audioProviderKey": "audio-quick",
+  "videoProviderKey": "video-fast-external"
 }
 
 ### ============================================
-### ANALYSIS SCENARIO 5: Maximum Quality Collage
-### All async with file-based processing
-### outline-queue + audio-hq + video-pro
-### Expected: ~210s + collage overhead
+### SCENARIO 6: Analysis with External Audio Path (Queue + HQ + FastExternal)
+### outline-queue + audio-hq + video-fast-external
 ### ============================================
 POST {{ContentService_HostAddress}}/analysis-contents
 Content-Type: application/json
 
 {
-  "title": "Maximum Quality Collage - All Async Files",
+  "title": "Analysis Test 6 - Queue Outline + HQ Audio + Fast External Video",
   "customerContentIds": [
-    "34a1c457-c049-4a39-a98e-c4e415c25fbe",
-    "a4c51e12-d787-436b-bdb1-8fbeec737bb6",
-    "1b00b3bd-fcad-464c-8c5d-5ab2fdb46477",
-    "43ae351a-9602-424f-a9d4-9830ab67d158",
-    "2e29fa83-9599-40ea-84f5-404077f021d6"
+    "00000000-0000-0000-0000-000000000010",
+    "00000000-0000-0000-0000-000000000011",
+    "00000000-0000-0000-0000-000000000012"
   ],
   "outlineProviderKey": "outline-queue",
   "audioProviderKey": "audio-hq",
-  "videoProviderKey": "video-pro"
+  "videoProviderKey": "video-fast-external"
+}
+
+### ============================================
+### SCENARIO 7: Analysis with External Audio Path (Queue + Quick + QueueExternal)
+### outline-queue + audio-quick + video-queue-external
+### ============================================
+POST {{ContentService_HostAddress}}/analysis-contents
+Content-Type: application/json
+
+{
+  "title": "Analysis Test 7 - Queue Outline + Quick Audio + Queue External Video",
+  "customerContentIds": [
+    "00000000-0000-0000-0000-000000000013",
+    "00000000-0000-0000-0000-000000000014",
+    "00000000-0000-0000-0000-000000000015"
+  ],
+  "outlineProviderKey": "outline-queue",
+  "audioProviderKey": "audio-quick",
+  "videoProviderKey": "video-queue-external"
+}
+
+### ============================================
+### SCENARIO 8: Analysis with External Audio Path (Queue + HQ + QueueExternal)
+### outline-queue + audio-hq + video-queue-external
+### ============================================
+POST {{ContentService_HostAddress}}/analysis-contents
+Content-Type: application/json
+
+{
+  "title": "Analysis Test 8 - Queue Outline + HQ Audio + Queue External Video",
+  "customerContentIds": [
+    "00000000-0000-0000-0000-000000000016",
+    "00000000-0000-0000-0000-000000000017",
+    "00000000-0000-0000-0000-000000000018"
+  ],
+  "outlineProviderKey": "outline-queue",
+  "audioProviderKey": "audio-hq",
+  "videoProviderKey": "video-queue-external"
+}
+
+### ============================================
+### SCENARIO 9: Analysis with Internal Audio Path (Fast + ignored + FastInternal)
+### outline-fast + [audio-quick ignored] + video-fast-internal
+### ============================================
+POST {{ContentService_HostAddress}}/analysis-contents
+Content-Type: application/json
+
+{
+  "title": "Analysis Test 9 - Fast Outline + (ignored) + Fast Internal Video",
+  "customerContentIds": [
+    "00000000-0000-0000-0000-000000000019",
+    "00000000-0000-0000-0000-00000000001a",
+    "00000000-0000-0000-0000-00000000001b"
+  ],
+  "outlineProviderKey": "outline-fast",
+  "audioProviderKey": "audio-quick",
+  "videoProviderKey": "video-fast-internal"
+}
+
+### ============================================
+### SCENARIO 10: Analysis with Internal Audio Path (Queue + ignored + FastInternal)
+### outline-queue + [audio-hq ignored] + video-fast-internal
+### ============================================
+POST {{ContentService_HostAddress}}/analysis-contents
+Content-Type: application/json
+
+{
+  "title": "Analysis Test 10 - Queue Outline + (ignored) + Fast Internal Video",
+  "customerContentIds": [
+    "00000000-0000-0000-0000-00000000001c",
+    "00000000-0000-0000-0000-00000000001d",
+    "00000000-0000-0000-0000-00000000001e"
+  ],
+  "outlineProviderKey": "outline-queue",
+  "audioProviderKey": "audio-hq",
+  "videoProviderKey": "video-fast-internal"
+}
+
+### ============================================
+### SCENARIO 11: Analysis with Internal Audio Path (Fast + ignored + QueueInternal)
+### outline-fast + [audio-quick ignored] + video-queue-internal
+### ============================================
+POST {{ContentService_HostAddress}}/analysis-contents
+Content-Type: application/json
+
+{
+  "title": "Analysis Test 11 - Fast Outline + (ignored) + Queue Internal Video",
+  "customerContentIds": [
+    "00000000-0000-0000-0000-00000000001f",
+    "00000000-0000-0000-0000-000000000020",
+    "00000000-0000-0000-0000-000000000021"
+  ],
+  "outlineProviderKey": "outline-fast",
+  "audioProviderKey": "audio-quick",
+  "videoProviderKey": "video-queue-internal"
+}
+
+### ============================================
+### SCENARIO 12: Analysis with Internal Audio Path (Queue + ignored + QueueInternal)
+### outline-queue + [audio-hq ignored] + video-queue-internal
+### ============================================
+POST {{ContentService_HostAddress}}/analysis-contents
+Content-Type: application/json
+
+{
+  "title": "Analysis Test 12 - Queue Outline + (ignored) + Queue Internal Video",
+  "customerContentIds": [
+    "00000000-0000-0000-0000-000000000022",
+    "00000000-0000-0000-0000-000000000023",
+    "00000000-0000-0000-0000-000000000024"
+  ],
+  "outlineProviderKey": "outline-queue",
+  "audioProviderKey": "audio-hq",
+  "videoProviderKey": "video-queue-internal"
 }
 
 ###
+### ============================================
+### HELPER: Get all analysis contents
+### ============================================
+### GET {{ContentService_HostAddress}}/analysis-contents
+### ============================================

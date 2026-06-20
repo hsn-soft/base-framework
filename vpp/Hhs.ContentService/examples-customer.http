@@ -1,126 +1,197 @@
 @ContentService_HostAddress = http://localhost:7461
+@timestamp = {{$timestamp}}
 
 ### ============================================
-### CUSTOMER CONTENT TEST SCENARIOS - All 8 Provider Combinations
+### CUSTOMER CONTENT TEST SCENARIOS - 12 Combinations
 ### ============================================
-### Testing all outline (2) × audio (2) × video (4) combinations
+### 2 Outline × 2 Audio × 4 Video = 8 External Audio + 4 Internal Audio
 ### ============================================
 
 ### ============================================
-### SCENARIO 1: All Immediate (Fast Path)
-### outline-fast (5s) + audio-quick (3s) + video-fast (5s)
+### GROUP 1: EXTERNAL AUDIO SCENARIOS (8)
+### Audio operations required → Full orchestration
+### ============================================
+
+### ============================================
+### SCENARIO 1: Fast Outline + Quick Audio + Fast External Video
+### outline-fast (5s) + audio-quick (3s) + video-fast-external (5s)
 ### Expected: ~13s | Flow: All synchronous
 ### ============================================
 POST {{ContentService_HostAddress}}/customer-contents
 Content-Type: application/json
 
 {
-  "url": "https://example.com/s1-all-immediate",
+  "url": "https://scenario.com/test1-{{$timestamp}}",
   "outlineProviderKey": "outline-fast",
   "audioProviderKey": "audio-quick",
   "videoProviderKey": "video-fast-external"
 }
 
 ### ============================================
-### SCENARIO 2: Immediate (Fast) + Immediate + Sync Files
-### outline-fast (5s) + audio-quick (3s) + video-sync (5s)
-### Expected: ~13s | Flow: All synchronous with file passing
+### SCENARIO 2: Fast Outline + HQ Audio + Fast External Video
+### outline-fast (5s) + audio-hq (20s ready, 60s window) + video-fast-external (5s)
+### Expected: ~28s | Flow: Outline → Audio (polling) → Video (parallel)
 ### ============================================
 POST {{ContentService_HostAddress}}/customer-contents
 Content-Type: application/json
 
 {
-  "url": "https://example.com/s2-immediate-sync",
+  "url": "https://scenario.com/test2-{{$timestamp}}",
   "outlineProviderKey": "outline-fast",
-  "audioProviderKey": "audio-quick",
-  "videoProviderKey": "video-fast-internal"
+  "audioProviderKey": "audio-hq",
+  "videoProviderKey": "video-fast-external"
 }
 
 ### ============================================
-### SCENARIO 3: Immediate + Immediate + Cloud Polling
-### outline-fast (5s) + audio-quick (3s) + video-cloud (120s polling)
-### Expected: ~128s | Flow: Immediate→Immediate→Polling
+### SCENARIO 3: Fast Outline + Quick Audio + Queue External Video
+### outline-fast (5s) + audio-quick (3s) + video-queue-external (30s ready, 150s window)
+### Expected: ~38s | Flow: Outline → Audio → Video (polling)
 ### ============================================
 POST {{ContentService_HostAddress}}/customer-contents
 Content-Type: application/json
 
 {
-  "url": "https://example.com/s3-fast-cloud",
+  "url": "https://scenario.com/test3-{{$timestamp}}",
   "outlineProviderKey": "outline-fast",
   "audioProviderKey": "audio-quick",
   "videoProviderKey": "video-queue-external"
 }
 
 ### ============================================
-### SCENARIO 4: Immediate + Immediate + Pro Polling (Files)
-### outline-fast (5s) + audio-quick (3s) + video-pro (120s polling)
-### Expected: ~128s | Flow: Immediate→Immediate→Polling with file passing
+### SCENARIO 4: Fast Outline + HQ Audio + Queue External Video
+### outline-fast (5s) + audio-hq (20s) + video-queue-external (30s)
+### Expected: ~53s | Flow: Full orchestration with polling
 ### ============================================
 POST {{ContentService_HostAddress}}/customer-contents
 Content-Type: application/json
 
 {
-  "url": "https://example.com/s4-fast-pro",
-  "outlineProviderKey": "outline-fast",
-  "audioProviderKey": "audio-quick",
-  "videoProviderKey": "video-queue-internal"
-}
-
-### ============================================
-### SCENARIO 5: Immediate + HQ Polling + Cloud Polling
-### outline-fast (5s) + audio-hq (60s polling) + video-cloud (120s polling)
-### Expected: ~188s | Flow: Immediate→Polling→Polling (parallel audio+video)
-### ============================================
-POST {{ContentService_HostAddress}}/customer-contents
-Content-Type: application/json
-
-{
-  "url": "https://example.com/s5-fast-hq-cloud",
+  "url": "https://scenario.com/test4-{{$timestamp}}",
   "outlineProviderKey": "outline-fast",
   "audioProviderKey": "audio-hq",
   "videoProviderKey": "video-queue-external"
 }
 
 ### ============================================
-### SCENARIO 6: Immediate + HQ Polling + Pro Polling (Files)
-### outline-fast (5s) + audio-hq (60s polling) + video-pro (120s polling)
-### Expected: ~188s | Flow: Immediate→Polling→Polling with file dependent flow
+### SCENARIO 5: Queue Outline + Quick Audio + Fast External Video
+### outline-queue (10s) + audio-quick (3s) + video-fast-external (5s)
+### Expected: ~18s | Flow: Outline (polling) → Audio → Video
 ### ============================================
 POST {{ContentService_HostAddress}}/customer-contents
 Content-Type: application/json
 
 {
-  "url": "https://example.com/s6-fast-hq-pro",
-  "outlineProviderKey": "outline-fast",
-  "audioProviderKey": "audio-hq",
-  "videoProviderKey": "video-queue-internal"
+  "url": "https://scenario.com/test5-{{$timestamp}}",
+  "outlineProviderKey": "outline-queue",
+  "audioProviderKey": "audio-quick",
+  "videoProviderKey": "video-fast-external"
 }
 
 ### ============================================
-### SCENARIO 7: queue Polling + HQ Polling + Cloud Polling
-### outline-queue (30s polling) + audio-hq (60s polling) + video-cloud (120s polling)
-### Expected: ~210s | Flow: All AsyncPolling with proper sequencing
+### SCENARIO 6: Queue Outline + HQ Audio + Fast External Video
+### outline-queue (10s) + audio-hq (20s) + video-fast-external (5s)
+### Expected: ~33s | Flow: Outline (polling) → Audio (polling) → Video (parallel)
 ### ============================================
 POST {{ContentService_HostAddress}}/customer-contents
 Content-Type: application/json
 
 {
-  "url": "https://example.com/s7-queue-hq-cloud",
+  "url": "https://scenario.com/test6-{{$timestamp}}",
+  "outlineProviderKey": "outline-queue",
+  "audioProviderKey": "audio-hq",
+  "videoProviderKey": "video-fast-external"
+}
+
+### ============================================
+### SCENARIO 7: Queue Outline + Quick Audio + Queue External Video
+### outline-queue (10s) + audio-quick (3s) + video-queue-external (30s)
+### Expected: ~43s | Flow: Outline & Audio → Video (polling)
+### ============================================
+POST {{ContentService_HostAddress}}/customer-contents
+Content-Type: application/json
+
+{
+  "url": "https://scenario.com/test7-{{$timestamp}}",
+  "outlineProviderKey": "outline-queue",
+  "audioProviderKey": "audio-quick",
+  "videoProviderKey": "video-queue-external"
+}
+
+### ============================================
+### SCENARIO 8: Queue Outline + HQ Audio + Queue External Video
+### outline-queue (10s) + audio-hq (20s) + video-queue-external (30s)
+### Expected: ~58s | Flow: Full orchestration with multiple polling cycles
+### ============================================
+POST {{ContentService_HostAddress}}/customer-contents
+Content-Type: application/json
+
+{
+  "url": "https://scenario.com/test8-{{$timestamp}}",
   "outlineProviderKey": "outline-queue",
   "audioProviderKey": "audio-hq",
   "videoProviderKey": "video-queue-external"
 }
 
 ### ============================================
-### SCENARIO 8: Full Async Pipeline (All Polling)
-### outline-queue (30s polling) + audio-hq (60s polling) + video-pro (120s polling)
-### Expected: ~210s | Flow: Complete async with file dependency management
+### GROUP 2: INTERNAL AUDIO SCENARIOS (4)
+### Audio operations SKIPPED → Video provider creates audio internally
+### ============================================
+
+### ============================================
+### SCENARIO 9: Fast Outline + (audio ignored) + Fast Internal Video
+### outline-fast (5s) + [audio-quick selected but SKIPPED] + video-fast-internal (5s)
+### Expected: ~10s | Flow: Outline → Video Direct (no audio)
 ### ============================================
 POST {{ContentService_HostAddress}}/customer-contents
 Content-Type: application/json
 
 {
-  "url": "https://example.com/s8-queue-hq-pro",
+  "url": "https://scenario.com/test9-{{$timestamp}}",
+  "outlineProviderKey": "outline-fast",
+  "audioProviderKey": "audio-quick",
+  "videoProviderKey": "video-fast-internal"
+}
+
+### ============================================
+### SCENARIO 10: Queue Outline + (audio ignored) + Fast Internal Video
+### outline-queue (10s) + [audio-hq selected but SKIPPED] + video-fast-internal (5s)
+### Expected: ~15s | Flow: Outline (polling) → Video Direct (no audio)
+### ============================================
+POST {{ContentService_HostAddress}}/customer-contents
+Content-Type: application/json
+
+{
+  "url": "https://scenario.com/test10-{{$timestamp}}",
+  "outlineProviderKey": "outline-queue",
+  "audioProviderKey": "audio-hq",
+  "videoProviderKey": "video-fast-internal"
+}
+
+### ============================================
+### SCENARIO 11: Fast Outline + (audio ignored) + Queue Internal Video
+### outline-fast (5s) + [audio-quick selected but SKIPPED] + video-queue-internal (30s polling)
+### Expected: ~35s | Flow: Outline → Video Polling (no audio)
+### ============================================
+POST {{ContentService_HostAddress}}/customer-contents
+Content-Type: application/json
+
+{
+  "url": "https://scenario.com/test11-{{$timestamp}}",
+  "outlineProviderKey": "outline-fast",
+  "audioProviderKey": "audio-quick",
+  "videoProviderKey": "video-queue-internal"
+}
+
+### ============================================
+### SCENARIO 12: Queue Outline + (audio ignored) + Queue Internal Video
+### outline-queue (10s) + [audio-hq selected but SKIPPED] + video-queue-internal (30s)
+### Expected: ~40s | Flow: Outline & Video both polling (no audio)
+### ============================================
+POST {{ContentService_HostAddress}}/customer-contents
+Content-Type: application/json
+
+{
+  "url": "https://scenario.com/test12-{{$timestamp}}",
   "outlineProviderKey": "outline-queue",
   "audioProviderKey": "audio-hq",
   "videoProviderKey": "video-queue-internal"
