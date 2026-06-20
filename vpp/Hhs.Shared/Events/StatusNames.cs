@@ -31,6 +31,8 @@ public static class StatusNames
     public const string Approved = "APPROVED";
     public const string AudioProviderPolling = "AUDIO_PROVIDER_POLLING";
     public const string AudioProviderCompleted = "AUDIO_PROVIDER_COMPLETED";
+    public const string AudioProviderRequestStarted = "AUDIO_PROVIDER_REQUEST_STARTED";
+    public const string Downloading = "DOWNLOADING";
 
     // Polling statuses
     public const string Polling = "POLLING";

@@ -32,7 +32,7 @@ public sealed class ContentOperationAppService
         {
             Id = id,
             Url = request.Url,
-            NormalizeStatus = "CREATED",
+            NormalizeStatus = StatusNames.Created,
             VideoStatus = StatusNames.NotStarted,
             LastFacility = "CUSTOMER_CONTENT_CREATED",
             OutlineProviderKey = NormalizeProviderKey(request.OutlineProviderKey),
@@ -74,7 +74,7 @@ public sealed class ContentOperationAppService
         {
             Id = analysisId,
             Title = request.Title,
-            NormalizeStatus = "CREATED",
+            NormalizeStatus = StatusNames.Created,
             VideoStatus = StatusNames.NotStarted,
             LastFacility = "ANALYSIS_CONTENT_CREATED",
             OutlineProviderKey = NormalizeProviderKey(request.OutlineProviderKey),
@@ -133,7 +133,7 @@ public sealed class ContentOperationAppService
             if (entity != null && entity.NormalizeRequestId == null)
             {
                 entity.NormalizeRequestId = @event.NormalizeRequestId;
-                entity.NormalizeStatus = "COMPLETED";
+                entity.NormalizeStatus = StatusNames.Completed;
                 entity.VideoStatus = StatusNames.Approved;
                 entity.LastFacility = @event.Facility;
                 entity.LastError = null;
@@ -150,7 +150,7 @@ public sealed class ContentOperationAppService
             if (entity != null && entity.NormalizeRequestId == null)
             {
                 entity.NormalizeRequestId = @event.NormalizeRequestId;
-                entity.NormalizeStatus = "COMPLETED";
+                entity.NormalizeStatus = StatusNames.Completed;
                 entity.VideoStatus = StatusNames.Approved;
                 entity.LastFacility = @event.Facility;
                 entity.LastError = null;
@@ -182,7 +182,7 @@ public sealed class ContentOperationAppService
             var entity = await _db.CustomerContents.FirstOrDefaultAsync(x => x.Id == @event.RefContentId, cancellationToken);
             if (entity != null)
             {
-                entity.VideoStatus = "COMPLETED";
+                entity.VideoStatus = StatusNames.Completed;
                 entity.VideoRequestId = @event.VideoRequestId;
                 entity.FinalVideoUrl = @event.FinalVideoUrl;
                 entity.LastFacility = @event.Facility;
@@ -195,7 +195,7 @@ public sealed class ContentOperationAppService
             var entity = await _db.AnalysisContents.FirstOrDefaultAsync(x => x.Id == @event.RefContentId, cancellationToken);
             if (entity != null)
             {
-                entity.VideoStatus = "COMPLETED";
+                entity.VideoStatus = StatusNames.Completed;
                 entity.VideoRequestId = @event.VideoRequestId;
                 entity.FinalVideoUrl = @event.FinalVideoUrl;
                 entity.LastFacility = @event.Facility;
@@ -222,10 +222,10 @@ public sealed class ContentOperationAppService
             if (!@event.Retryable)
             {
                 if (IsNormalizeStep(@event.Step))
-                    entity.NormalizeStatus = "FAILED";
+                    entity.NormalizeStatus = StatusNames.Failed;
 
                 if (IsVideoStep(@event.Step))
-                    entity.VideoStatus = "FAILED";
+                    entity.VideoStatus = StatusNames.Failed;
             }
         }
 
@@ -241,10 +241,10 @@ public sealed class ContentOperationAppService
             if (!@event.Retryable)
             {
                 if (IsNormalizeStep(@event.Step))
-                    entity.NormalizeStatus = "FAILED";
+                    entity.NormalizeStatus = StatusNames.Failed;
 
                 if (IsVideoStep(@event.Step))
-                    entity.VideoStatus = "FAILED";
+                    entity.VideoStatus = StatusNames.Failed;
             }
         }
 

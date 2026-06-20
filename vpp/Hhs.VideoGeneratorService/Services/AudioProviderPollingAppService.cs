@@ -49,7 +49,7 @@ public sealed class AudioProviderPollingAppService(
 
                 if (request.ProviderPollingCount >= 60)
                 {
-                    request.Status = "FAILED";
+                    request.Status = StatusNames.Failed;
                     request.LastError = "Audio provider polling timeout.";
                     request.UpdatedAtUtc = DateTime.UtcNow;
 
@@ -77,7 +77,7 @@ public sealed class AudioProviderPollingAppService(
 
                 if (status.IsFailed)
                 {
-                    request.Status = "FAILED";
+                    request.Status = StatusNames.Failed;
                     request.LastError = status.ErrorMessage ?? "Audio provider failed.";
                     request.UpdatedAtUtc = DateTime.UtcNow;
 
@@ -144,7 +144,7 @@ public sealed class AudioProviderPollingAppService(
 
                 if (request.ProviderPollingCount >= 60)
                 {
-                    request.Status = "FAILED";
+                    request.Status = StatusNames.Failed;
                     request.NextProviderPollAtUtc = null;
 
                     await ReplaceAudioAsync(request, cancellationToken);

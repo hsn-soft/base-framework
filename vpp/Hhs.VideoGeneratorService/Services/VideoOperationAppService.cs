@@ -245,7 +245,7 @@ public async Task CreateVideoRequestAsync(
 
         try
         {
-            audioRequest.Status = "AUDIO_PROVIDER_REQUEST_STARTED";
+            audioRequest.Status = StatusNames.AudioProviderRequestStarted;
             audioRequest.CurrentStep = EventNames.AudioProviderRequestStarted;
             audioRequest.UpdatedAtUtc = DateTime.UtcNow;
 
@@ -344,7 +344,7 @@ public async Task CreateVideoRequestAsync(
 
         try
         {
-            audioRequest.Status = "DOWNLOADING";
+            audioRequest.Status = StatusNames.Downloading;
             audioRequest.CurrentStep = EventNames.AudioFileDownloadStarted;
             audioRequest.UpdatedAtUtc = DateTime.UtcNow;
 
