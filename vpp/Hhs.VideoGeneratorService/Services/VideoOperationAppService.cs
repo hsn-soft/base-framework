@@ -784,14 +784,20 @@ public async Task HandleAudioUploadCompletedAsync(
             .ToList();
     }
 
-    private Task<VideoRequest> GetVideoAsync(Guid id, CancellationToken cancellationToken)
+    private async Task<VideoRequest> GetVideoAsync(Guid id, CancellationToken cancellationToken)
     {
-        return context.VideoRequests.Find(x => x.Id == id).FirstAsync(cancellationToken);
+        var video = await context.VideoRequests.Find(x => x.Id == id).FirstOrDefaultAsync(cancellationToken);
+        if (video == null)
+            throw new InvalidOperationException($"VideoRequest not found: {id}");
+        return video;
     }
 
-    private Task<AudioRequest> GetAudioAsync(Guid id, CancellationToken cancellationToken)
+    private async Task<AudioRequest> GetAudioAsync(Guid id, CancellationToken cancellationToken)
     {
-        return context.AudioRequests.Find(x => x.Id == id).FirstAsync(cancellationToken);
+        var audio = await context.AudioRequests.Find(x => x.Id == id).FirstOrDefaultAsync(cancellationToken);
+        if (audio == null)
+            throw new InvalidOperationException($"AudioRequest not found: {id}");
+        return audio;
     }
 
     private Task ReplaceVideoAsync(VideoRequest request, CancellationToken cancellationToken)

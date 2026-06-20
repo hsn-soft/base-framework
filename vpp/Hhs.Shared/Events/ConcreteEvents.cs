@@ -206,6 +206,8 @@ public sealed record NormalizerResultPublishedEto : IntegrationEvent
 public sealed record VideoGenerationApprovedEto : IntegrationEvent
 {
     public string VideoInputJson { get; init; } = default!;
+    public Guid? CustomerContentId { get; init; }
+    public Guid? AnalysisContentId { get; init; }
 
     public VideoGenerationApprovedEto()
     {
