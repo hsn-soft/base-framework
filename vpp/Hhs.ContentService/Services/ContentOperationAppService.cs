@@ -33,7 +33,7 @@ public sealed class ContentOperationAppService
             Id = id,
             Url = request.Url,
             NormalizeStatus = "CREATED",
-            VideoStatus = "NOT_STARTED",
+            VideoStatus = StatusNames.NotStarted,
             LastFacility = "CUSTOMER_CONTENT_CREATED",
             OutlineProviderKey = NormalizeProviderKey(request.OutlineProviderKey),
             VideoProviderKey = NormalizeProviderKey(request.VideoProviderKey),
@@ -75,7 +75,7 @@ public sealed class ContentOperationAppService
             Id = analysisId,
             Title = request.Title,
             NormalizeStatus = "CREATED",
-            VideoStatus = "NOT_STARTED",
+            VideoStatus = StatusNames.NotStarted,
             LastFacility = "ANALYSIS_CONTENT_CREATED",
             OutlineProviderKey = NormalizeProviderKey(request.OutlineProviderKey),
             VideoProviderKey = NormalizeProviderKey(request.VideoProviderKey),
@@ -134,7 +134,7 @@ public sealed class ContentOperationAppService
             {
                 entity.NormalizeRequestId = @event.NormalizeRequestId;
                 entity.NormalizeStatus = "COMPLETED";
-                entity.VideoStatus = "APPROVED";
+                entity.VideoStatus = StatusNames.Approved;
                 entity.LastFacility = @event.Facility;
                 entity.LastError = null;
                 entity.UpdatedAtUtc = DateTime.UtcNow;
@@ -151,7 +151,7 @@ public sealed class ContentOperationAppService
             {
                 entity.NormalizeRequestId = @event.NormalizeRequestId;
                 entity.NormalizeStatus = "COMPLETED";
-                entity.VideoStatus = "APPROVED";
+                entity.VideoStatus = StatusNames.Approved;
                 entity.LastFacility = @event.Facility;
                 entity.LastError = null;
                 entity.UpdatedAtUtc = DateTime.UtcNow;

@@ -27,6 +27,11 @@ public static class StatusNames
     public const string OutlineCompleted = "OUTLINE_COMPLETED";
     public const string OutlinePartiallyCompleted = "OUTLINE_PARTIALLY_COMPLETED";
 
+    public const string NotStarted = "NOT_STARTED";
+    public const string Approved = "APPROVED";
+    public const string AudioProviderPolling = "AUDIO_PROVIDER_POLLING";
+    public const string AudioProviderCompleted = "AUDIO_PROVIDER_COMPLETED";
+
     // Polling statuses
     public const string Polling = "POLLING";
 }

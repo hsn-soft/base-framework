@@ -28,7 +28,7 @@ public sealed class AudioProviderPollingAppService(
 
         var requests = await context.AudioRequests
             .Find(x =>
-                x.Status == "AUDIO_PROVIDER_POLLING" &&
+                x.Status == StatusNames.AudioProviderPolling &&
                 x.NextProviderPollAtUtc != null &&
                 x.NextProviderPollAtUtc <= now &&
                 x.AudioProviderTrackingId != null)
@@ -119,7 +119,7 @@ public sealed class AudioProviderPollingAppService(
                 request.ProviderPollingCount++;
                 request.NextProviderPollAtUtc = null;
                 request.AudioProviderUrl = mockStorageUrl;
-                request.Status = "AUDIO_PROVIDER_COMPLETED";
+                request.Status = StatusNames.AudioProviderCompleted;
                 request.CurrentStep = EventNames.AudioProviderCompleted;
                 request.LastError = null;
                 request.UpdatedAtUtc = DateTime.UtcNow;
@@ -182,7 +182,7 @@ public sealed class AudioProviderPollingAppService(
         return context.AudioRequests.UpdateOneAsync(
             x =>
                 x.Id == audioRequestId &&
-                x.Status == "AUDIO_PROVIDER_POLLING" &&
+                x.Status == StatusNames.AudioProviderPolling &&
                 x.NextProviderPollAtUtc != null &&
                 x.NextProviderPollAtUtc <= now &&
                 x.AudioProviderTrackingId != null,
