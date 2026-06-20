@@ -1,4 +1,4 @@
-namespace Hhs.Shared.Configuration.Providers.Outline;
+namespace Hhs.Shared.Configuration.Providers;
 
 public abstract class OutlineProviderSettingsBase : ProviderSettingsBase
 {

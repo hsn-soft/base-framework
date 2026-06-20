@@ -1,4 +1,4 @@
-namespace Hhs.Shared.Configuration.Providers.Video;
+namespace Hhs.Shared.Configuration.Providers;
 
 public abstract class VideoProviderSettingsBase : ProviderSettingsBase
 {
