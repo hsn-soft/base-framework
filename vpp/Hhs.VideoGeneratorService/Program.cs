@@ -77,13 +77,8 @@ builder.Services.AddSingleton<ICdnProviderResolver>(sp =>
                 settings = child.Get<BunnyCdnSettings>();
             else if (key.Equals("CdnBunnyS3", StringComparison.OrdinalIgnoreCase))
                 settings = child.Get<CdnBunnyS3Settings>();
-            else if (key.StartsWith("CdnAbc", StringComparison.OrdinalIgnoreCase) ||
-                     key.StartsWith("CdnCloudflare", StringComparison.OrdinalIgnoreCase))
+            else if (key.StartsWith("CdnAbc", StringComparison.OrdinalIgnoreCase))
                 settings = child.Get<CloudflareCdnSettings>();
-            else if (key.StartsWith("CdnAzure", StringComparison.OrdinalIgnoreCase))
-                settings = child.Get<AzureCdnSettings>();
-            else if (key.StartsWith("CdnAws", StringComparison.OrdinalIgnoreCase))
-                settings = child.Get<AwsCloudFrontCdnSettings>();
 
             if (settings != null)
             {
