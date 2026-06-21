@@ -702,6 +702,7 @@ public async Task HandleAudioUploadCompletedAsync(
 
             videoRequest.VideoStorageUrl = storageUrl;
             videoRequest.VideoCdnUrl = cdnUrl;
+            videoRequest.VideoCdnProviderKey = cdnProviderKey;
             videoRequest.Status = StatusNames.Completed;
             videoRequest.CurrentStep = EventNames.VideoGenerationResultPublished;
             videoRequest.UpdatedAtUtc = DateTime.UtcNow;

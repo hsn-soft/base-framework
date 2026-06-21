@@ -1,3 +1,4 @@
+using Hhs.Shared.Configuration;
 using Hhs.Shared.Events;
 using Hhs.Shared.RabbitMQ;
 using Hhs.VideoGeneratorService.Configuration;
@@ -70,7 +71,8 @@ public sealed class VideoProviderPollingAppService(
                     continue;
                 }
 
-                var provider = videoProviderResolver.Resolve(request.VideoProviderKey);
+                var videoProviderKey = SubscriptionScopeRegistry.GetVideoProviderKey(request.ScopeKey);
+                var provider = videoProviderResolver.Resolve(videoProviderKey);
 
                 var status = await provider.GetStatusAsync(
                     request.VideoProviderTrackingId!,

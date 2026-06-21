@@ -1,3 +1,4 @@
+using Hhs.Shared.Configuration;
 using Hhs.Shared.Events;
 using Hhs.Shared.Providers;
 using Hhs.Shared.RabbitMQ;
@@ -161,7 +162,8 @@ public sealed class VideoRetryAppService(
 
                 if (request.CurrentStep == EventNames.VideoProviderRequestStarted)
                 {
-                    var videoProvider = videoProviderResolver.Resolve(request.VideoProviderKey);
+                    var videoProviderKey = SubscriptionScopeRegistry.GetVideoProviderKey(request.ScopeKey);
+                    var videoProvider = videoProviderResolver.Resolve(videoProviderKey);
 
                     var audioRequests = await context.AudioRequests
                         .Find(x => x.VideoRequestId == request.Id)
