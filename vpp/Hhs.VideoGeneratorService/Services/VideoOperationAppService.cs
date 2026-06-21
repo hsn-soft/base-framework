@@ -23,7 +23,7 @@ public sealed class VideoOperationAppService(
     IEventBus eventBus,
     IVideoProviderResolver videoProviderResolver,
     IAudioProviderResolver audioProviderResolver,
-    IConfiguration configuration,
+    CdnProviderConfiguration cdnProviderConfig,
     ILogger<VideoOperationAppService> logger,
     RetryDelayCalculator retryDelayCalculator,
     VideoPollingSettings videoPollingSettings)
@@ -372,8 +372,7 @@ public sealed class VideoOperationAppService(
 
         try
         {
-            // CDN provider key from appsettings (environment-based)
-            var cdnProviderKey = configuration["CdnProvider:Default"] ?? "CdnLocalMinio";
+            var cdnProviderKey = cdnProviderConfig.Default;
 
             audioRequest.Status = StatusNames.AudioFileUploading;
             audioRequest.CurrentStep = EventNames.AudioFileUploadStarted;
@@ -654,8 +653,7 @@ public sealed class VideoOperationAppService(
 
         try
         {
-            // CDN provider key from appsettings (environment-based)
-            var cdnProviderKey = configuration["CdnProvider:Default"] ?? "CdnLocalMinio";
+            var cdnProviderKey = cdnProviderConfig.Default;
 
             videoRequest.Status = StatusNames.VideoFileUploading;
             videoRequest.CurrentStep = EventNames.VideoFileUploadStarted;
