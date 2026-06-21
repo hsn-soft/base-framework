@@ -219,38 +219,44 @@ public sealed class ContentOperationAppService
         if (@event.RefContentType == ContentType.CustomerContent)
         {
             var entity = await _db.CustomerContents
-                .FirstAsync(x => x.Id == @event.RefContentId, cancellationToken);
+                .FirstOrDefaultAsync(x => x.Id == @event.RefContentId, cancellationToken);
 
-            entity.LastFacility = @event.Facility;
-            entity.LastError = @event.ErrorMessage;
-            entity.UpdatedAtUtc = DateTime.UtcNow;
-
-            if (!@event.Retryable)
+            if (entity is not null)
             {
-                if (IsNormalizeStep(@event.Step))
-                    entity.NormalizeStatus = StatusNames.Failed;
+                entity.LastFacility = @event.Facility;
+                entity.LastError = @event.ErrorMessage;
+                entity.UpdatedAtUtc = DateTime.UtcNow;
 
-                if (IsVideoStep(@event.Step))
-                    entity.VideoStatus = StatusNames.Failed;
+                if (!@event.Retryable)
+                {
+                    if (IsNormalizeStep(@event.Step))
+                        entity.NormalizeStatus = StatusNames.Failed;
+
+                    if (IsVideoStep(@event.Step))
+                        entity.VideoStatus = StatusNames.Failed;
+                }
             }
         }
 
         if (@event.RefContentType == ContentType.AnalysisContent)
         {
             var entity = await _db.AnalysisContents
-                .FirstAsync(x => x.Id == @event.RefContentId, cancellationToken);
+                .FirstOrDefaultAsync(x => x.Id == @event.RefContentId, cancellationToken);
 
-            entity.LastFacility = @event.Facility;
-            entity.LastError = @event.ErrorMessage;
-            entity.UpdatedAtUtc = DateTime.UtcNow;
-
-            if (!@event.Retryable)
+            if (entity is not null)
             {
-                if (IsNormalizeStep(@event.Step))
-                    entity.NormalizeStatus = StatusNames.Failed;
+                entity.LastFacility = @event.Facility;
+                entity.LastError = @event.ErrorMessage;
+                entity.UpdatedAtUtc = DateTime.UtcNow;
 
-                if (IsVideoStep(@event.Step))
-                    entity.VideoStatus = StatusNames.Failed;
+                if (!@event.Retryable)
+                {
+                    if (IsNormalizeStep(@event.Step))
+                        entity.NormalizeStatus = StatusNames.Failed;
+
+                    if (IsVideoStep(@event.Step))
+                        entity.VideoStatus = StatusNames.Failed;
+                }
             }
         }
 
