@@ -47,9 +47,12 @@ public sealed class NormalizerOperationAppService(
         await context.CustomerRequests.InsertOneAsync(new CustomerContentNormalizedRequest
         {
             Id = requestId,
-            CorrelationId = @event.CorrelationId,
             SourceEventId = @event.EventId,
+            CorrelationId = @event.CorrelationId,
+            ScopeKey = @event.ScopeKey,
             CustomerContentId = @event.RefContentId,
+            DomainName = @event.DomainName,
+            ContentKey = @event.ContentKey,
             Status = StatusNames.Created,
             CurrentStep = EventNames.CustomerContentCreated,
             LastError = null,
