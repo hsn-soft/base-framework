@@ -12,5 +12,5 @@ public sealed class BunnyCdnSettings : CdnProviderSettingsBase
     public string? StorageRegion { get; set; }
 
     // Override with concrete type for JSON deserialization
-    public new StorageSettings Storage { get; set; } = default!;
+    public new DefaultStorageSettings Storage { get; set; } = default!;
 }
