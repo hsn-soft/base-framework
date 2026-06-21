@@ -9,13 +9,11 @@ public sealed class SubscriptionScope
     public string OutlineProviderKey { get; }
     public string? AudioProviderKey { get; }
     public string VideoProviderKey { get; }
-    public string CdnProviderKey { get; }
 
-    public SubscriptionScope(string outlineProviderKey, string? audioProviderKey, string videoProviderKey, string cdnProviderKey = "CdnAbc")
+    public SubscriptionScope(string outlineProviderKey, string? audioProviderKey, string videoProviderKey)
     {
         OutlineProviderKey = outlineProviderKey;
         AudioProviderKey = audioProviderKey;
         VideoProviderKey = videoProviderKey;
-        CdnProviderKey = cdnProviderKey;
     }
 }

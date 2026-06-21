@@ -129,14 +129,6 @@ public static class SubscriptionScopeRegistry
     }
 
     /// <summary>
-    /// Get CDN provider key for a scope.
-    /// </summary>
-    public static string? GetCdnProviderKey(string scopeKey)
-    {
-        return GetScope(scopeKey)?.CdnProviderKey;
-    }
-
-    /// <summary>
     /// Add or update a subscription scope.
     /// </summary>
     private static void Add(string scopeKey, SubscriptionScope scope)
