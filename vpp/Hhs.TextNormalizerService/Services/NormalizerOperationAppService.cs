@@ -30,17 +30,22 @@ public sealed class NormalizerOperationAppService(
 
     public async Task CreateCustomerContentNormalizeRequestAsync(CustomerContentCreatedEto @event, CancellationToken cancellationToken)
     {
+        _logger.LogInformation($"CreateCustomerContentNormalizeRequestAsync started for RefContentId: {@event.RefContentId}, EventId: {@event.EventId}");
+
         var existing = await context.CustomerRequests
             .Find(x => x.SourceEventId == @event.EventId || x.CustomerContentId == @event.RefContentId)
             .FirstOrDefaultAsync(cancellationToken);
 
         if (existing is not null)
         {
+            _logger.LogInformation($"Existing request found, publishing event");
             await eventBus.PublishAsync(new CustomerContentNormalizeRequestCreatedEto { RefContentType = ContentType.CustomerContent,
             RefContentId = existing.CustomerContentId, CorrelationId = existing.CorrelationId }, cancellationToken);
 
             return;
         }
+
+        _logger.LogInformation($"Creating new request...");
 
         var requestId = Guid.NewGuid();
 

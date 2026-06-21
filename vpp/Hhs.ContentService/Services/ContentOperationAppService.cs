@@ -49,14 +49,26 @@ public sealed class ContentOperationAppService
         _db.CustomerContents.Add(entity);
         await _db.SaveChangesAsync(cancellationToken);
 
-        await _eventBus.PublishAsync(new CustomerContentCreatedEto
+        _logger.LogInformation($"About to publish CustomerContentCreatedEto for RefContentId: {id}, ScopeKey: {entity.ScopeKey}");
+
+        try
         {
-            RefContentId = id,
-            CorrelationId = entity.CorrelationId,
-            ScopeKey = entity.ScopeKey,
-            DomainName = entity.DomainName,
-            ContentKey = entity.ContentKey
-        }, cancellationToken);
+            await _eventBus.PublishAsync(new CustomerContentCreatedEto
+            {
+                RefContentId = id,
+                CorrelationId = entity.CorrelationId,
+                ScopeKey = entity.ScopeKey,
+                DomainName = entity.DomainName,
+                ContentKey = entity.ContentKey
+            }, cancellationToken);
+
+            _logger.LogInformation($"Successfully published CustomerContentCreatedEto");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Failed to publish CustomerContentCreatedEto: {ex.Message}");
+            throw;
+        }
 
         return id;
     }
