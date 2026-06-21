@@ -52,10 +52,6 @@ var videoQueueInternalProviderSettings = builder.Configuration.GetSection(VideoQ
     .Get<VideoQueueInternalProviderSettings>() ?? new VideoQueueInternalProviderSettings();
 builder.Services.AddSingleton(videoQueueInternalProviderSettings);
 
-var storageProviderSettings = builder.Configuration.GetSection(StorageProviderSettings.SectionName)
-    .Get<StorageProviderSettings>() ?? new StorageProviderSettings();
-builder.Services.AddSingleton(storageProviderSettings);
-
 // CDN Provider Configuration (environment-based)
 var cdnProviderConfig = builder.Configuration.GetSection(CdnProviderConfiguration.SectionName)
     .Get<CdnProviderConfiguration>() ?? new CdnProviderConfiguration();
@@ -120,9 +116,6 @@ builder.Services.AddSingleton<VideoMongoContext>();
 
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<IEventBus, RabbitMqEventBus>();
-
-// Storage Service (CDN + Storage integration)
-builder.Services.AddScoped<IStorageService, DummyStorageService>();
 
 builder.Services.AddScoped<VideoGeneratorInboxStore>();
 builder.Services.AddScoped<VideoOperationAppService>();
