@@ -42,31 +42,29 @@ public async Task CreateVideoRequestAsync(
     VideoGenerationApprovedEto @event,
     CancellationToken cancellationToken)
 {
-    try
+    var existing = await context.VideoRequests
+        .Find(x => x.SourceEventId == @event.EventId)
+        .FirstOrDefaultAsync(cancellationToken);
+
+    if (existing is not null)
     {
-        var existing = await context.VideoRequests
-            .Find(x => x.SourceEventId == @event.EventId)
-            .FirstOrDefaultAsync(cancellationToken);
+        var providerForExisting = videoProviderResolver.Resolve(SubscriptionScopeRegistry.GetVideoProviderKey(existing.ScopeKey));
+        var existingExternalAudioRequired =
+            providerForExisting.Capabilities.AudioInputMode == VideoAudioInputMode.AudioUrlListRequired ||
+            providerForExisting.Capabilities.AudioInputMode == VideoAudioInputMode.AudioFileRequired;
 
-        if (existing is not null)
+        await eventBus.PublishAsync(new VideoRequestCreatedEto
         {
-            var providerForExisting = videoProviderResolver.Resolve(SubscriptionScopeRegistry.GetVideoProviderKey(existing.ScopeKey));
-            var existingExternalAudioRequired =
-                providerForExisting.Capabilities.AudioInputMode == VideoAudioInputMode.AudioUrlListRequired ||
-                providerForExisting.Capabilities.AudioInputMode == VideoAudioInputMode.AudioFileRequired;
+            RefContentId = existing.RefContentId,
+            RefContentType = existing.RefContentType,
+            CorrelationId = existing.CorrelationId,
+            VideoRequestId = existing.Id,
+            IsAnalysis = existing.RefContentType == ContentType.AnalysisContent,
+            ExternalAudioRequired = existingExternalAudioRequired
+        }, cancellationToken);
 
-            await eventBus.PublishAsync(new VideoRequestCreatedEto
-            {
-                RefContentId = existing.RefContentId,
-                RefContentType = existing.RefContentType,
-                CorrelationId = existing.CorrelationId,
-                VideoRequestId = existing.Id,
-                IsAnalysis = existing.RefContentType == ContentType.AnalysisContent,
-                ExternalAudioRequired = existingExternalAudioRequired
-            }, cancellationToken);
-
-            return;
-        }
+        return;
+    }
 
         var scopeKey = @event.ScopeKey ?? "unknown";
         var videoProviderKey = SubscriptionScopeRegistry.GetVideoProviderKey(scopeKey);
@@ -107,20 +105,6 @@ public async Task CreateVideoRequestAsync(
             IsAnalysis = @event.RefContentType == ContentType.AnalysisContent,
             ExternalAudioRequired = externalAudioRequired
         }, cancellationToken);
-    }
-    catch (Exception ex)
-    {
-        if (logger.IsEnabled(LogLevel.Error))
-        {
-            logger.LogError(ex,
-                "CreateVideoRequestAsync failed for event {EventId}. ScopeKey={ScopeKey}, RefContentId={RefContentId}, RefContentType={RefContentType}",
-                @event.EventId,
-                @event.ScopeKey,
-                @event.RefContentId,
-                @event.RefContentType);
-        }
-        throw;
-    }
 }
 
     public async Task StartVideoOperationAsync(VideoRequestCreatedEto @event, CancellationToken cancellationToken)
