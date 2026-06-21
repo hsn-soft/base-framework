@@ -230,7 +230,6 @@ app.MapPost("/scheduler/audio-polling",
             {
                 VideoRequestId = request.VideoRequestId,
                 AudioRequestId = request.Id,
-                ProviderKey = request.AudioProviderKey,
                 ProviderTrackId = request.AudioProviderTrackingId
             }, cancellationToken);
         }
@@ -274,7 +273,6 @@ app.MapPost("/scheduler/video-polling",
             await eventBus.PublishAsync(new VideoProviderPollingStartedEto
             {
                 VideoRequestId = request.Id,
-                ProviderKey = request.VideoProviderKey,
                 ProviderTrackId = request.VideoProviderTrackingId
             }, cancellationToken);
         }

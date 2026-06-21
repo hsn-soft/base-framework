@@ -256,7 +256,6 @@ public sealed record AudioProviderPollingStartedEto : IntegrationEvent
 {
     public Guid VideoRequestId { get; init; }
     public Guid AudioRequestId { get; init; }
-    public string ProviderKey { get; init; } = default!;
     public string ProviderTrackId { get; init; } = default!;
 
     public AudioProviderPollingStartedEto()
@@ -349,7 +348,6 @@ public sealed record VideoProviderRequestStartedEto : IntegrationEvent
 public sealed record VideoProviderPollingStartedEto : IntegrationEvent
 {
     public Guid VideoRequestId { get; init; }
-    public string ProviderKey { get; init; } = default!;
     public string ProviderTrackId { get; init; } = default!;
 
     public VideoProviderPollingStartedEto()

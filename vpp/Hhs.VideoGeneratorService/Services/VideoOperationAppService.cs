@@ -312,7 +312,6 @@ public async Task CreateVideoRequestAsync(
                 CorrelationId = @event.CorrelationId,
                 VideoRequestId = audioRequest.VideoRequestId,
                 AudioRequestId = audioRequest.Id,
-                ProviderKey = audioRequest.AudioProviderKey,
                 ProviderTrackId = response.ProviderTrackId!
             }, cancellationToken);
         }
@@ -599,7 +598,6 @@ public async Task HandleAudioUploadCompletedAsync(
                 RefContentType = videoRequest.RefContentType,
                 CorrelationId = @event.CorrelationId,
                 VideoRequestId = videoRequest.Id,
-                ProviderKey = videoRequest.VideoProviderKey,
                 ProviderTrackId = response.ProviderTrackId!
             }, cancellationToken);
         }
@@ -760,9 +758,6 @@ public async Task HandleAudioUploadCompletedAsync(
         AudioProviderPollingStartedEto @event,
         CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(@event.ProviderKey))
-            throw new InvalidOperationException("ProviderKey is required for polling.");
-
         var audioRequest = await GetAudioAsync(@event.AudioRequestId, cancellationToken);
 
         if (audioRequest.Status is StatusNames.AudioProviderCompleted or StatusNames.Uploaded or StatusNames.Failed)
@@ -785,9 +780,6 @@ public async Task HandleAudioUploadCompletedAsync(
         VideoProviderPollingStartedEto @event,
         CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(@event.ProviderKey))
-            throw new InvalidOperationException("ProviderKey is required for polling.");
-
         var videoRequest = await GetVideoAsync(@event.VideoRequestId, cancellationToken);
 
         if (videoRequest.Status is StatusNames.VideoProviderCompleted or StatusNames.Completed or StatusNames.Failed)
