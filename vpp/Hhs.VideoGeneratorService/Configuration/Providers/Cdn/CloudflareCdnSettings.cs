@@ -12,5 +12,5 @@ public sealed class CloudflareCdnSettings : CdnProviderSettingsBase
     public string? AccountId { get; set; }
     public string? NamespaceId { get; set; }
 
-    public new DefaultStorageSettings Storage { get; set; } = default!;
+    public new CloudflareStorageSettings Storage { get; set; } = default!;
 }
