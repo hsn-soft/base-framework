@@ -1,16 +1,12 @@
 using Hhs.Shared.Events;
 using Hhs.Shared.RabbitMQ;
 using Hhs.Shared.Configuration;
-using Hhs.Shared.Configuration.Providers;
 using Hhs.Shared.Retry;
 using Hhs.VideoGeneratorService.Configuration;
 using Hhs.VideoGeneratorService.Configuration.Providers.Audio;
 using Hhs.VideoGeneratorService.Configuration.Providers.Video;
 using Hhs.VideoGeneratorService.Configuration.Providers.Cdn;
-using Hhs.VideoGeneratorService.Configuration.Providers.Storage;
-using Hhs.Shared.Providers;
 using Hhs.VideoGeneratorService.Providers.Cdn;
-using Hhs.VideoGeneratorService.Entities;
 using Hhs.VideoGeneratorService.Handlers;
 using Hhs.VideoGeneratorService.Infrastructure;
 using Hhs.VideoGeneratorService.Mongo;
@@ -19,16 +15,24 @@ using Hhs.VideoGeneratorService.Providers.Audio;
 using Hhs.VideoGeneratorService.Providers.FileDownloader;
 using Hhs.VideoGeneratorService.Providers.Video;
 using Hhs.VideoGeneratorService.Services;
-using Hhs.VideoGeneratorService.Workers;
-using MongoDB.Driver;
 
-// Initialize subscription scope registry
 SubscriptionScopeRegistry.Initialize();
 
 var builder = WebApplication.CreateBuilder(args);
 
+// ============================================================================
+// 1. INFRASTRUCTURE & MESSAGING CONFIGURATION
+// ============================================================================
+
 builder.Services.Configure<MongoOptions>(builder.Configuration.GetSection("MongoDb"));
 builder.Services.Configure<RabbitMqOptions>(builder.Configuration.GetSection(RabbitMqOptions.SectionName));
+
+builder.Services.AddHttpClient();
+builder.Services.AddSingleton<IEventBus, RabbitMqEventBus>();
+
+// ============================================================================
+// 2. AUDIO PROVIDER CONFIGURATION
+// ============================================================================
 
 var audioFastProviderSettings = builder.Configuration.GetSection(AudioFastProviderSettings.SectionName)
     .Get<AudioFastProviderSettings>() ?? new AudioFastProviderSettings();
@@ -37,6 +41,15 @@ builder.Services.AddSingleton(audioFastProviderSettings);
 var audioQueueProviderSettings = builder.Configuration.GetSection(AudioQueueProviderSettings.SectionName)
     .Get<AudioQueueProviderSettings>() ?? new AudioQueueProviderSettings();
 builder.Services.AddSingleton(audioQueueProviderSettings);
+
+// Register Audio Provider implementations
+builder.Services.AddScoped<IAudioProvider, AudioQuickProvider>();
+builder.Services.AddScoped<IAudioProvider, AudioHQProvider>();
+builder.Services.AddScoped<IAudioProviderResolver, AudioProviderResolver>();
+
+// ============================================================================
+// 3. VIDEO PROVIDER CONFIGURATION
+// ============================================================================
 
 var videoFastExternalProviderSettings = builder.Configuration.GetSection(VideoFastExternalProviderSettings.SectionName)
     .Get<VideoFastExternalProviderSettings>() ?? new VideoFastExternalProviderSettings();
@@ -54,50 +67,49 @@ var videoQueueInternalProviderSettings = builder.Configuration.GetSection(VideoQ
     .Get<VideoQueueInternalProviderSettings>() ?? new VideoQueueInternalProviderSettings();
 builder.Services.AddSingleton(videoQueueInternalProviderSettings);
 
-// CDN Provider Configuration (environment-based)
+// Register Video Provider implementations
+builder.Services.AddScoped<IVideoProvider, VideoFastExternalProvider>();
+builder.Services.AddScoped<IVideoProvider, VideoFastInternalProvider>();
+builder.Services.AddScoped<IVideoProvider, VideoQueueExternalProvider>();
+builder.Services.AddScoped<IVideoProvider, VideoQueueInternalProvider>();
+builder.Services.AddScoped<IVideoProviderResolver, VideoProviderResolver>();
+
+// ============================================================================
+// 4. CDN PROVIDER CONFIGURATION
+// ============================================================================
+
+// System CDN selection (which CDN to use based on environment)
 var systemCdnSettings = builder.Configuration.GetSection("SystemCdn")
     .Get<SystemCdnSettings>() ?? new SystemCdnSettings();
 builder.Services.AddSingleton(systemCdnSettings);
 
-// Build CDN settings from configuration
-var cdnLocalMinioSettings = builder.Configuration.GetSection("Provider:Cdn:CdnLocalMinio").Get<CdnLocalMinioSettings>() ?? new CdnLocalMinioSettings();
-var cdnBunnySelfSettings = builder.Configuration.GetSection("Provider:Cdn:CdnBunnySelf").Get<CdnBunnySelfSettings>() ?? new CdnBunnySelfSettings();
-var cdnBunnyS3Settings = builder.Configuration.GetSection("Provider:Cdn:CdnBunnyS3").Get<CdnBunnyS3Settings>() ?? new CdnBunnyS3Settings();
-var cdnAbcSettings = builder.Configuration.GetSection("Provider:Cdn:CdnAbc").Get<CdnAbcCloudFrontSettings>() ?? new CdnAbcCloudFrontSettings();
+// Load CDN provider settings from configuration
+var cdnLocalMinioSettings = builder.Configuration.GetSection("Provider:Cdn:CdnLocalMinio")
+    .Get<CdnLocalMinioSettings>() ?? new CdnLocalMinioSettings();
+builder.Services.AddSingleton(cdnLocalMinioSettings);
 
-// Register CDN providers as factory lambdas
-builder.Services.AddScoped<ICdnProvider>(sp =>
-{
-    var httpClient = sp.GetRequiredService<HttpClient>();
-    var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
-    var storageSettings = cdnLocalMinioSettings.Storage as StorageProviderSettingsBase;
-    return new CdnHttpProvider(ProviderKeys.CdnLocalMinio, cdnLocalMinioSettings, httpClient, loggerFactory.CreateLogger<CdnHttpProvider>());
-});
+var cdnBunnySelfSettings = builder.Configuration.GetSection("Provider:Cdn:CdnBunnySelf")
+    .Get<CdnBunnySelfSettings>() ?? new CdnBunnySelfSettings();
+builder.Services.AddSingleton(cdnBunnySelfSettings);
 
-builder.Services.AddScoped<ICdnProvider>(sp =>
-{
-    var httpClient = sp.GetRequiredService<HttpClient>();
-    var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
-    return new CdnHttpProvider(ProviderKeys.CdnBunnySelf, cdnBunnySelfSettings, httpClient, loggerFactory.CreateLogger<CdnHttpProvider>());
-});
+var cdnBunnyS3Settings = builder.Configuration.GetSection("Provider:Cdn:CdnBunnyS3")
+    .Get<CdnBunnyS3Settings>() ?? new CdnBunnyS3Settings();
+builder.Services.AddSingleton(cdnBunnyS3Settings);
 
-builder.Services.AddScoped<ICdnProvider>(sp =>
-{
-    var httpClient = sp.GetRequiredService<HttpClient>();
-    var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
-    var storageSettings = cdnBunnyS3Settings.Storage as S3StorageSettings ?? throw new InvalidOperationException("Expected S3StorageSettings");
-    return new CdnS3Provider(cdnBunnyS3Settings, storageSettings, httpClient, loggerFactory.CreateLogger<CdnS3Provider>());
-});
+var cdnAbcSettings = builder.Configuration.GetSection("Provider:Cdn:CdnAbcCloudFront")
+    .Get<CdnAbcCloudFrontSettings>() ?? new CdnAbcCloudFrontSettings();
+builder.Services.AddSingleton(cdnAbcSettings);
 
-builder.Services.AddScoped<ICdnProvider>(sp =>
-{
-    var httpClient = sp.GetRequiredService<HttpClient>();
-    var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
-    return new CdnHttpProvider(ProviderKeys.CdnAbc, cdnAbcSettings, httpClient, loggerFactory.CreateLogger<CdnHttpProvider>());
-});
-
-// Register resolver (uses IEnumerable<ICdnProvider> from DI)
+// Register CDN Provider implementations
+builder.Services.AddScoped<ICdnProvider, CdnLocalMinioProvider>();
+builder.Services.AddScoped<ICdnProvider, CdnBunnySelfProvider>();
+builder.Services.AddScoped<ICdnProvider, CdnBunnyS3Provider>();
+builder.Services.AddScoped<ICdnProvider, CdnAbcCloudFrontProvider>();
 builder.Services.AddScoped<ICdnProviderResolver, CdnProviderResolver>();
+
+// ============================================================================
+// 5. POLLING & RETRY CONFIGURATION
+// ============================================================================
 
 var audioPollingSettings = builder.Configuration.GetSection(AudioPollingSettings.SectionName)
     .Get<AudioPollingSettings>() ?? new AudioPollingSettings();
@@ -112,149 +124,89 @@ var videoRetrySettings = builder.Configuration.GetSection(nameof(VideoRetrySetti
 builder.Services.AddSingleton(videoRetrySettings);
 builder.Services.AddSingleton(_ => new RetryDelayCalculator(videoRetrySettings.DelaySeconds));
 
+// ============================================================================
+// 6. DATABASE CONFIGURATION
+// ============================================================================
+
 BsonRegisterTools.MongoConfigure();
 builder.Services.AddSingleton<VideoMongoContext>();
 
-builder.Services.AddHttpClient();
-builder.Services.AddSingleton<IEventBus, RabbitMqEventBus>();
+// ============================================================================
+// 7. APPLICATION SERVICES
+// ============================================================================
 
 builder.Services.AddScoped<VideoGeneratorInboxStore>();
 builder.Services.AddScoped<VideoOperationAppService>();
-
-builder.Services.AddScoped<IAudioProvider, AudioQuickProvider>();
-builder.Services.AddScoped<IAudioProvider, AudioHQProvider>();
-builder.Services.AddScoped<IAudioProviderResolver, AudioProviderResolver>();
-
-builder.Services.AddScoped<IVideoProvider, VideoFastExternalProvider>();
-builder.Services.AddScoped<IVideoProvider, VideoFastInternalProvider>();
-builder.Services.AddScoped<IVideoProvider, VideoQueueExternalProvider>();
-builder.Services.AddScoped<IVideoProvider, VideoQueueInternalProvider>();
-builder.Services.AddScoped<IVideoProviderResolver, VideoProviderResolver>();
 builder.Services.AddScoped<IFileDownloader, DummyFileDownloader>();
 builder.Services.AddScoped<IStorageService, DummyStorageService>();
 
+// ============================================================================
+// 8. EVENT HANDLERS
+// ============================================================================
+// Order matters: handlers are triggered by events from event bus
+
+// Video Generation Handlers
 builder.Services.AddScoped<VideoGenerationApprovedEtoHandler>();
 builder.Services.AddScoped<VideoRequestCreatedEtoHandler>();
 builder.Services.AddScoped<VideoOperationStartedEtoHandler>();
+
+// Audio Processing Handlers
 builder.Services.AddScoped<AudioProviderRequestStartedEtoHandler>();
 builder.Services.AddScoped<AudioProviderCompletedEtoHandler>();
 builder.Services.AddScoped<AudioFileDownloadStartedEtoHandler>();
 builder.Services.AddScoped<AudioFileDownloadCompletedEtoHandler>();
 builder.Services.AddScoped<AudioFileUploadCompletedEtoHandler>();
+
+// Video Processing Handlers
 builder.Services.AddScoped<VideoProviderRequestStartedEtoHandler>();
 builder.Services.AddScoped<VideoProviderCompletedEtoHandler>();
 builder.Services.AddScoped<VideoFileDownloadStartedEtoHandler>();
 builder.Services.AddScoped<VideoFileDownloadCompletedEtoHandler>();
 builder.Services.AddScoped<VideoFileUploadCompletedEtoHandler>();
 
+// Polling Handlers (periodically check status)
 builder.Services.AddScoped<AudioProviderPollingStartedEtoHandler>();
 builder.Services.AddScoped<VideoProviderPollingStartedEtoHandler>();
 
+// ============================================================================
+// 9. BACKGROUND WORKERS / HOSTED SERVICES
+// ============================================================================
+// These are long-running services that listen to RabbitMQ queues
+
+// Audio Processing Workers
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<AudioProviderPollingStartedEto, AudioProviderPollingStartedEtoHandler>>();
+
+// Video Processing Workers
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<VideoProviderPollingStartedEto, VideoProviderPollingStartedEtoHandler>>();
 
+// Video Generation Event Handlers
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<VideoGenerationApprovedEto, VideoGenerationApprovedEtoHandler>>();
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<VideoRequestCreatedEto, VideoRequestCreatedEtoHandler>>();
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<VideoOperationStartedEto, VideoOperationStartedEtoHandler>>();
+
+// Audio Event Handlers
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<AudioProviderRequestStartedEto, AudioProviderRequestStartedEtoHandler>>();
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<AudioProviderCompletedEto, AudioProviderCompletedEtoHandler>>();
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<AudioFileDownloadStartedEto, AudioFileDownloadStartedEtoHandler>>();
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<AudioFileDownloadCompletedEto, AudioFileDownloadCompletedEtoHandler>>();
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<AudioFileUploadCompletedEto, AudioFileUploadCompletedEtoHandler>>();
+
+// Video Event Handlers
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<VideoProviderRequestStartedEto, VideoProviderRequestStartedEtoHandler>>();
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<VideoProviderCompletedEto, VideoProviderCompletedEtoHandler>>();
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<VideoFileDownloadStartedEto, VideoFileDownloadStartedEtoHandler>>();
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<VideoFileDownloadCompletedEto, VideoFileDownloadCompletedEtoHandler>>();
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<VideoFileUploadCompletedEto, VideoFileUploadCompletedEtoHandler>>();
 
-builder.Services.AddScoped<AudioProviderPollingAppService>();
-builder.Services.AddHostedService<AudioProviderPollingWorker>();
-
-builder.Services.AddScoped<VideoProviderPollingAppService>();
-builder.Services.AddHostedService<VideoProviderPollingWorker>();
-
-builder.Services.AddScoped<VideoRetryAppService>();
-builder.Services.AddHostedService<VideoRetryWorker>();
+// ============================================================================
+// 10. BUILD & RUN APPLICATION
+// ============================================================================
 
 var app = builder.Build();
 
-app.MapPost("/scheduler/audio-polling",
-    async (
-        VideoMongoContext mongoContext,
-        IEventBus eventBus,
-        IAudioProviderResolver audioProviderResolver,
-        CancellationToken cancellationToken) =>
-    {
-        var now = DateTime.UtcNow;
-        var requests = await mongoContext.AudioRequests
-            .Find(x =>
-                x.Status == StatusNames.AudioProviderPolling &&
-                x.NextProviderPollAtUtc != null &&
-                x.NextProviderPollAtUtc <= now &&
-                x.AudioProviderTrackingId != null)
-            .Limit(10)
-            .ToListAsync(cancellationToken);
+app.UseHttpsRedirection();
+app.UseAuthorization();
 
-        foreach (var request in requests)
-        {
-            var claimResult = await mongoContext.AudioRequests.UpdateOneAsync(
-                x =>
-                    x.Id == request.Id &&
-                    x.Status == StatusNames.AudioProviderPolling &&
-                    x.NextProviderPollAtUtc != null &&
-                    x.NextProviderPollAtUtc <= now &&
-                    x.AudioProviderTrackingId != null,
-                Builders<AudioRequest>.Update
-                    .Set(x => x.NextProviderPollAtUtc, DateTime.UtcNow.AddSeconds(audioPollingSettings.ErrorRescheduleDelaySeconds))
-                    .Set(x => x.UpdatedAtUtc, DateTime.UtcNow),
-                cancellationToken: cancellationToken);
-
-            if (claimResult.ModifiedCount == 0)
-                continue;
-
-            await eventBus.PublishAsync(new AudioProviderPollingStartedEto { VideoRequestId = request.VideoRequestId, AudioRequestId = request.Id, ProviderTrackId = request.AudioProviderTrackingId }, cancellationToken);
-        }
-
-        return Results.Ok(new { processed = requests.Count });
-    });
-
-app.MapPost("/scheduler/video-polling",
-    async (
-        VideoMongoContext mongoContext,
-        IEventBus eventBus,
-        CancellationToken cancellationToken) =>
-    {
-        var now = DateTime.UtcNow;
-        var requests = await mongoContext.VideoRequests
-            .Find(x =>
-                x.Status == StatusNames.VideoProviderPolling &&
-                x.NextProviderPollAtUtc != null &&
-                x.NextProviderPollAtUtc <= now &&
-                x.VideoProviderTrackingId != null)
-            .Limit(10)
-            .ToListAsync(cancellationToken);
-
-        foreach (var request in requests)
-        {
-            var claimResult = await mongoContext.VideoRequests.UpdateOneAsync(
-                x =>
-                    x.Id == request.Id &&
-                    x.Status == StatusNames.VideoProviderPolling &&
-                    x.NextProviderPollAtUtc != null &&
-                    x.NextProviderPollAtUtc <= now &&
-                    x.VideoProviderTrackingId != null,
-                Builders<VideoRequest>.Update
-                    .Set(x => x.NextProviderPollAtUtc, DateTime.UtcNow.AddSeconds(videoPollingSettings.ErrorRescheduleDelaySeconds))
-                    .Set(x => x.UpdatedAtUtc, DateTime.UtcNow),
-                cancellationToken: cancellationToken);
-
-            if (claimResult.ModifiedCount == 0)
-                continue;
-
-            await eventBus.PublishAsync(new VideoProviderPollingStartedEto { VideoRequestId = request.Id, ProviderTrackId = request.VideoProviderTrackingId }, cancellationToken);
-        }
-
-        return Results.Ok(new { processed = requests.Count });
-    });
+app.MapControllers();
 
 app.Run();

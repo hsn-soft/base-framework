@@ -9,7 +9,6 @@ using Hhs.VideoGeneratorService.Entities;
 using Hhs.VideoGeneratorService.Mongo;
 using Hhs.VideoGeneratorService.Providers;
 using Hhs.VideoGeneratorService.Providers.Audio;
-using Hhs.VideoGeneratorService.Providers.Cdn;
 using Hhs.VideoGeneratorService.Providers.FileDownloader;
 using Hhs.VideoGeneratorService.Providers.Video;
 using MongoDB.Driver;
@@ -24,7 +23,6 @@ public sealed class VideoOperationAppService(
     IVideoProviderResolver videoProviderResolver,
     IAudioProviderResolver audioProviderResolver,
     SystemCdnSettings systemCdnSettings,
-    ILogger<VideoOperationAppService> logger,
     RetryDelayCalculator retryDelayCalculator,
     VideoPollingSettings videoPollingSettings)
 {
@@ -129,18 +127,6 @@ public sealed class VideoOperationAppService(
         if (videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.ProviderCreatesAudio ||
             videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.NoAudio)
         {
-            if (logger.IsEnabled(LogLevel.Information))
-            {
-                logger.LogInformation(
-                    "Skipping audio operations for video request {VideoRequestId}. " +
-                    "Video provider '{VideoProviderKey}' has AudioInputMode={AudioInputMode}. " +
-                    "Selected AudioProviderKey was: {AudioProviderKey} (informational only)",
-                    videoRequest.Id,
-                    videoRequest.VideoProviderKey,
-                    videoProvider.Capabilities.AudioInputMode,
-                    videoRequest.AudioProviderKey ?? "null");
-            }
-
             await eventBus.PublishAsync(new VideoProviderRequestStartedEto
             {
                 RefContentId = videoRequest.RefContentId,
@@ -915,11 +901,4 @@ public sealed class VideoInputAudioItem
     public Guid? CustomerContentId { get; set; }
     public int SortOrder { get; set; }
     public string Text { get; set; } = default!;
-}
-
-public sealed class ManualAudioUploadInput
-{
-    public string? CorrelationId { get; set; }
-    public string ContentProcessType { get; set; } = ContentProcessTypes.CustomerContent;
-    public string StorageUrl { get; set; } = default!;
 }

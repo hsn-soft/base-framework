@@ -1,5 +1,4 @@
 using Hhs.VideoGeneratorService.Providers;
-using Hhs.VideoGeneratorService.Providers.Cdn;
 
 namespace Hhs.VideoGeneratorService.Services;
 

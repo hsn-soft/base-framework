@@ -8,37 +8,72 @@ using Hhs.Shared.RabbitMQ;
 using Hhs.Shared.Configuration;
 using Microsoft.EntityFrameworkCore;
 
-// Initialize subscription scope registry
 SubscriptionScopeRegistry.Initialize();
 
 var builder = WebApplication.CreateBuilder(args);
+
+// ============================================================================
+// 1. INFRASTRUCTURE & MESSAGING CONFIGURATION
+// ============================================================================
 
 builder.Services.AddDbContext<ContentDbContext>(opt =>
     opt.UseNpgsql(builder.Configuration.GetConnectionString("Postgres")));
 
 builder.Services.Configure<RabbitMqOptions>(builder.Configuration.GetSection(RabbitMqOptions.SectionName));
 builder.Services.AddSingleton<IEventBus, RabbitMqEventBus>();
+builder.Services.AddHttpClient();
+
+// ============================================================================
+// 2. APPLICATION SERVICES
+// ============================================================================
 
 builder.Services.AddScoped<ContentInboxStore>();
 builder.Services.AddScoped<ContentOperationAppService>();
+
+// ============================================================================
+// 3. EVENT HANDLERS
+// ============================================================================
 
 builder.Services.AddScoped<NormalizerResultPublishedEtoHandler>();
 builder.Services.AddScoped<VideoGenerationResultPublishedEtoHandler>();
 builder.Services.AddScoped<StepFailedEtoHandler>();
 
+// ============================================================================
+// 4. BACKGROUND WORKERS / HOSTED SERVICES
+// ============================================================================
+
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<StepFailedEto, StepFailedEtoHandler>>();
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<NormalizerResultPublishedEto, NormalizerResultPublishedEtoHandler>>();
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<VideoGenerationResultPublishedEto, VideoGenerationResultPublishedEtoHandler>>();
 
+// ============================================================================
+// 5. DATABASE INITIALIZATION
+// ============================================================================
+
+using (var scope = builder.Services.BuildServiceProvider().CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ContentDbContext>();
+    await db.Database.EnsureCreatedAsync();
+}
+
+// ============================================================================
+// 6. BUILD APPLICATION
+// ============================================================================
+
 var app = builder.Build();
 
+// ============================================================================
+// 7. API ENDPOINTS
+// ============================================================================
+
+// Customer Content Endpoints
 app.MapPost("/customer-contents", async (
     CreateCustomerContentRequest request,
     ContentOperationAppService appService,
     HttpContext httpContext,
     CancellationToken cancellationToken) =>
 {
-    var correlationId = httpContext.Request.Headers["X-Correlation-Id"].ToString();
+    string correlationId = httpContext.Request.Headers["X-Correlation-Id"].ToString();
     var id = await appService.CreateCustomerContentAsync(request, correlationId, cancellationToken);
     return Results.Ok(new { id });
 });
@@ -54,7 +89,7 @@ app.MapGet("/customer-contents/{id}", async (
     return Results.Ok(new
     {
         id = content.Id,
-        status = content.NormalizeStatus == StatusNames.Completed && content.VideoStatus == StatusNames.Completed ? StatusNames.Completed : StatusNames.Processing,
+        status = content is { NormalizeStatus: StatusNames.Completed, VideoStatus: StatusNames.Completed } ? StatusNames.Completed : StatusNames.Processing,
         normalizeStatus = content.NormalizeStatus,
         videoStatus = content.VideoStatus,
         scopeKey = content.ScopeKey,
@@ -66,13 +101,14 @@ app.MapGet("/customer-contents/{id}", async (
     });
 });
 
+// Analysis Content Endpoints
 app.MapPost("/analysis-contents", async (
     CreateAnalysisContentRequest request,
     ContentOperationAppService appService,
     HttpContext httpContext,
     CancellationToken cancellationToken) =>
 {
-    var correlationId = httpContext.Request.Headers["X-Correlation-Id"].ToString();
+    string correlationId = httpContext.Request.Headers["X-Correlation-Id"].ToString();
     var id = await appService.CreateAnalysisContentAsync(request, correlationId, cancellationToken);
     return Results.Ok(new { id });
 });
@@ -92,7 +128,7 @@ app.MapGet("/analysis-contents/{id}", async (
     return Results.Ok(new
     {
         id = content.Id,
-        status = content.NormalizeStatus == StatusNames.Completed && content.VideoStatus == StatusNames.Completed ? StatusNames.Completed : StatusNames.Processing,
+        status = content is { NormalizeStatus: StatusNames.Completed, VideoStatus: StatusNames.Completed } ? StatusNames.Completed : StatusNames.Processing,
         normalizeStatus = content.NormalizeStatus,
         videoStatus = content.VideoStatus,
         title = content.Title,
@@ -102,72 +138,8 @@ app.MapGet("/analysis-contents/{id}", async (
     });
 });
 
-app.MapPost("/demo/customer1/openai", async (
-    CreateCustomerContentRequest request,
-    ContentOperationAppService appService,
-    HttpContext httpContext,
-    CancellationToken cancellationToken) =>
-{
-    var correlationId = httpContext.Request.Headers["X-Correlation-Id"].ToString();
-    var id = await appService.CreateCustomerContentAsync(
-        request with { OutlineProviderKey = "openai" },
-        correlationId,
-        cancellationToken);
-
-    return Results.Ok(new
-    {
-        message = "Customer1 created with OpenAI (immediate result - 5sec processing)",
-        contentId = id,
-        providerKey = "openai",
-        processingMs = 5000
-    });
-});
-
-app.MapPost("/demo/customer2/custom-xyz", async (
-    CreateCustomerContentRequest request,
-    ContentOperationAppService appService,
-    HttpContext httpContext,
-    CancellationToken cancellationToken) =>
-{
-    var correlationId = httpContext.Request.Headers["X-Correlation-Id"].ToString();
-    var id = await appService.CreateCustomerContentAsync(
-        request with { OutlineProviderKey = "custom-xyz" },
-        correlationId,
-        cancellationToken);
-
-    return Results.Ok(new
-    {
-        message = "Customer2 created with CustomXyz (polling - 30sec wait)",
-        contentId = id,
-        providerKey = "custom-xyz",
-        pollingWindowSec = 30
-    });
-});
-
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<ContentDbContext>();
-    await db.Database.EnsureCreatedAsync();
-}
+// ============================================================================
+// 8. RUN APPLICATION
+// ============================================================================
 
 app.Run();
-
-namespace Hhs.ContentService
-{
-    public sealed record CreateCustomerContentRequest(
-        string ScopeKey,
-        string DomainName,
-        string ContentKey,
-        string? OutlineProviderKey = "openai",
-        string? VideoProviderKey = "video-external",
-        string? AudioProviderKey = "audio-def");
-
-    public sealed record CreateAnalysisContentRequest(
-        string ScopeKey,
-        string DomainName,
-        string Title,
-        List<Guid> CustomerContentIds,
-        string OutlineProviderKey = "openai",
-        string VideoProviderKey = "video-a",
-        string? AudioProviderKey = "audio-a");
-}

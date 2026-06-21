@@ -5,8 +5,6 @@ using Hhs.TextNormalizerService.Entities;
 using Hhs.TextNormalizerService.Mongo;
 using MongoDB.Driver;
 
-using Hhs.Shared.Configuration;
-
 namespace Hhs.TextNormalizerService.Services;
 
 public sealed class NormalizerRetryAppService(

@@ -7,7 +7,6 @@ using Hhs.TextNormalizerService.Mongo;
 using Hhs.TextNormalizerService.Providers;
 using MongoDB.Driver;
 using Hhs.Shared.Retry;
-using Hhs.TextNormalizerService.Models;
 using Hhs.TextNormalizerService.Providers.Outline;
 using Hhs.TextNormalizerService.Providers.Scraping;
 
@@ -352,7 +351,7 @@ public sealed class NormalizerOperationAppService(
             ex,
             cancellationToken);
     }
- 
+
     public async Task CompleteOutlineProviderAsync(OutlineProviderCompletedEto @event, CancellationToken cancellationToken)
     {
         if (@event.RefContentType == ContentType.CustomerContent)
@@ -490,11 +489,11 @@ public sealed class NormalizerOperationAppService(
             AnalysisContentId = @event.RefContentId,
             Status = StatusNames.Created,
             CurrentStep = EventNames.AnalysisContentCreated,
-            Items = @event.Items.Select(x => new AnalysisNormalizedItem 
-            { 
-                CustomerContentId = x.CustomerContentId, 
-                SortOrder = x.SortOrder, 
-                ContentKey = x.ContentKey 
+            Items = @event.Items.Select(x => new AnalysisNormalizedItem
+            {
+                CustomerContentId = x.CustomerContentId,
+                SortOrder = x.SortOrder,
+                ContentKey = x.ContentKey
             }).ToList(),
             CreatedAtUtc = DateTime.UtcNow,
             UpdatedAtUtc = DateTime.UtcNow
@@ -754,33 +753,6 @@ public sealed class NormalizerOperationAppService(
             CorrelationId = @event.CorrelationId,
             RefContentType = ContentType.AnalysisContent,
             VideoInputJson = System.Text.Json.JsonSerializer.Serialize(videoInput),
-        }, cancellationToken);
-    }
-
-    public async Task CompleteCustomerScrapingManuallyAsync(Guid customerContentId, ManualScrapingInput input, CancellationToken cancellationToken)
-    {
-        var request = await context.CustomerRequests
-            .Find(x => x.CustomerContentId == customerContentId)
-            .FirstAsync(cancellationToken);
-
-        request.ScrapingStatus = StatusNames.Completed;
-        request.Status = StatusNames.ScrapingCompleted;
-        request.CurrentStep = EventNames.CustomerContentScrapingCompleted;
-        request.ScrapingResult = new ScrapingResult { Title = input.Title, Text = input.Text, ReleaseTimeUtc = input.ReleaseTimeUtc, Source = "MANUAL" };
-        request.LastError = null;
-        request.UpdatedAtUtc = DateTime.UtcNow;
-
-        await ReplaceCustomerAsync(request, cancellationToken);
-
-        await eventBus.PublishAsync(new CustomerContentScrapingCompletedEto
-        {
-            RefContentType = ContentType.CustomerContent,
-            RefContentId = customerContentId,
-            CorrelationId = input.CorrelationId,
-            Title = input.Title,
-            Text = input.Text,
-            ReleaseTimeUtc = input.ReleaseTimeUtc,
-            IsManual = true
         }, cancellationToken);
     }
 

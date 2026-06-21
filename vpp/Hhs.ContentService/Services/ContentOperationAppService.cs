@@ -1,6 +1,5 @@
 using Hhs.ContentService.Data;
 using Hhs.ContentService.Entities;
-using Hhs.Shared.Configuration;
 using Hhs.Shared.Events;
 using Hhs.Shared.Helpers;
 using Hhs.Shared.RabbitMQ;
@@ -100,7 +99,7 @@ public sealed class ContentOperationAppService
             CorrelationId = correlationId
         };
 
-        var sort = 1;
+        int sort = 1;
 
         foreach (var customerContentId in request.CustomerContentIds)
         {
@@ -138,7 +137,7 @@ public sealed class ContentOperationAppService
         NormalizerResultPublishedEto @event,
         CancellationToken cancellationToken)
     {
-        var shouldPublishEvent = false;
+        bool shouldPublishEvent = false;
 
         if (@event.RefContentType == ContentType.CustomerContent)
         {
@@ -178,7 +177,7 @@ public sealed class ContentOperationAppService
         {
             await _db.SaveChangesAsync(cancellationToken);
 
-            var scopeKey = @event.RefContentType == ContentType.CustomerContent
+            string? scopeKey = @event.RefContentType == ContentType.CustomerContent
                 ? (await _db.CustomerContents.FirstOrDefaultAsync(x => x.Id == @event.RefContentId, cancellationToken))?.ScopeKey
                 : (await _db.AnalysisContents.FirstOrDefaultAsync(x => x.Id == @event.RefContentId, cancellationToken))?.ScopeKey;
 

@@ -1,29 +1,21 @@
-using Hhs.Shared.Configuration.Providers;
 using Hhs.Shared.Providers;
-using Hhs.VideoGeneratorService.Configuration.Providers.Storage;
+using Hhs.VideoGeneratorService.Configuration.Providers.Cdn;
 
 namespace Hhs.VideoGeneratorService.Providers.Cdn;
 
-/// <summary>
-/// S3-compatible CDN storage provider implementation.
-/// Supports AWS S3, MinIO, and other S3-compatible services.
-/// </summary>
-public sealed class CdnS3Provider : ICdnProvider
+public sealed class CdnBunnyS3Provider : ICdnProvider
 {
     public string ProviderKey => ProviderKeys.CdnBunnyS3;
-    private readonly IHasCdnBaseUrl _cdnSettings;
-    private readonly S3StorageSettings _storageSettings;
+    private readonly CdnBunnyS3Settings _settings;
     private readonly HttpClient _httpClient;
-    private readonly ILogger<CdnS3Provider> _logger;
+    private readonly ILogger<CdnBunnyS3Provider> _logger;
 
-    public CdnS3Provider(
-        IHasCdnBaseUrl cdnSettings,
-        S3StorageSettings storageSettings,
+    public CdnBunnyS3Provider(
+        CdnBunnyS3Settings settings,
         HttpClient httpClient,
-        ILogger<CdnS3Provider> logger)
+        ILogger<CdnBunnyS3Provider> logger)
     {
-        _cdnSettings = cdnSettings;
-        _storageSettings = storageSettings;
+        _settings = settings;
         _httpClient = httpClient;
         _logger = logger;
     }
@@ -35,8 +27,8 @@ public sealed class CdnS3Provider : ICdnProvider
     {
         try
         {
-            string bucketName = _storageSettings.BucketOrContainer ?? "default-bucket";
-            string endpoint = _storageSettings.Url ?? "http://localhost:9000";
+            string bucketName = _settings.StorageType ?? "default-bucket";
+            string endpoint = _settings.StorageEndpointUrl ?? "http://localhost:9000";
 
             if (_logger.IsEnabled(LogLevel.Information))
             {
@@ -47,19 +39,16 @@ public sealed class CdnS3Provider : ICdnProvider
                     endpoint);
             }
 
-            // Generate unique filename
             string dateFolder = DateTime.UtcNow.ToString("yyyy/MM/dd");
             string fileExtension = Path.GetExtension(filename);
             string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(filename);
             string uniqueFilename = $"{fileNameWithoutExtension}_{Guid.NewGuid():N}{fileExtension}";
             string objectKey = $"{dateFolder}/{uniqueFilename}";
 
-            // Read stream into bytes
             var memoryStream = new MemoryStream();
             await fileStream.CopyToAsync(memoryStream, cancellationToken);
             byte[] fileBytes = memoryStream.ToArray();
 
-            // Upload to S3-compatible endpoint
             string uploadUrl = $"{endpoint.TrimEnd('/')}/{bucketName}/{objectKey}";
             using (var content = new ByteArrayContent(fileBytes))
             {
@@ -72,11 +61,8 @@ public sealed class CdnS3Provider : ICdnProvider
                 }
             }
 
-            // Create storage URL
             string storageUrl = uploadUrl;
-
-            // Create CDN URL
-            string cdnUrl = $"{_cdnSettings.BaseUrl.TrimEnd('/')}/{_cdnSettings.ZonePath.Trim('/')}/{_cdnSettings.PathPrefix.Trim('/')}/{objectKey}"
+            string cdnUrl = $"{_settings.BaseUrl.TrimEnd('/')}/{_settings.ZonePath.Trim('/')}/{_settings.PathPrefix.Trim('/')}/{objectKey}"
                 .Replace("//", "/")
                 .Replace(":///", "://");
 
