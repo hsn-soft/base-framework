@@ -213,6 +213,8 @@ public sealed class NormalizerOperationAppService(
             if (request.ScrapingResult is null)
                 throw new InvalidOperationException("ScrapingResult is required before outline.");
 
+            _logger.LogInformation($"Publishing OutlineProviderRequestStartedEto with ScopeKey='{request.ScopeKey}' (null={request.ScopeKey == null})");
+
             await eventBus.PublishAsync(new OutlineProviderRequestStartedEto
             {
                 RefContentId = request.CustomerContentId,
@@ -237,10 +239,15 @@ public sealed class NormalizerOperationAppService(
 
     public async Task StartOutlineProviderRequestAsync(OutlineProviderRequestStartedEto @event, CancellationToken cancellationToken)
     {
+        _logger.LogInformation($"StartOutlineProviderRequestAsync - Event ScopeKey: '{@event.ScopeKey}' (null={@event.ScopeKey == null}, empty={string.IsNullOrWhiteSpace(@event.ScopeKey)})");
+
         try
         {
             var providerKey = SubscriptionScopeRegistry.GetOutlineProviderKey(@event.ScopeKey);
+            _logger.LogInformation($"Got providerKey from registry: '{providerKey}' (null={providerKey == null})");
+
             var provider = outlineProviderResolver.Resolve(providerKey);
+            _logger.LogInformation($"✓ Resolved provider successfully");
 
             var response = await provider.CreateAsync(new OutlineCreateRequest { OutlineInput = @event.InputText }, cancellationToken);
 
