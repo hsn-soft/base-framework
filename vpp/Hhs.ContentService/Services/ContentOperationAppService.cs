@@ -166,10 +166,15 @@ public sealed class ContentOperationAppService
         {
             await _db.SaveChangesAsync(cancellationToken);
 
+            var scopeKey = @event.RefContentType == ContentType.CustomerContent
+                ? (await _db.CustomerContents.FirstOrDefaultAsync(x => x.Id == @event.RefContentId, cancellationToken))?.ScopeKey
+                : (await _db.AnalysisContents.FirstOrDefaultAsync(x => x.Id == @event.RefContentId, cancellationToken))?.ScopeKey;
+
             await _eventBus.PublishAsync(new VideoGenerationApprovedEto
             {
                 RefContentId = @event.RefContentId,
                 RefContentType = @event.RefContentType,
+                ScopeKey = scopeKey ?? string.Empty,
                 VideoInputJson = @event.VideoInputJson,
                 CorrelationId = @event.CorrelationId,
             }, cancellationToken);

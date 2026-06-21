@@ -206,6 +206,7 @@ public sealed record NormalizerResultPublishedEto : IntegrationEvent
 
 public sealed record VideoGenerationApprovedEto : IntegrationEvent
 {
+    public string ScopeKey { get; init; } = default!;
     public string VideoInputJson { get; init; } = default!;
 
     public VideoGenerationApprovedEto()

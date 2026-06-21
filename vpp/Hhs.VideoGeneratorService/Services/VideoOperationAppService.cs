@@ -50,10 +50,10 @@ public async Task CreateVideoRequestAsync(
 
         if (existing is not null)
         {
-            var provider = videoProviderResolver.Resolve(existing.VideoProviderKey);
+            var providerForExisting = videoProviderResolver.Resolve(SubscriptionScopeRegistry.GetVideoProviderKey(existing.ScopeKey));
             var existingExternalAudioRequired =
-                provider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioUrlListRequired ||
-                provider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioFileRequired;
+                providerForExisting.Capabilities.AudioInputMode == VideoAudioInputMode.AudioUrlListRequired ||
+                providerForExisting.Capabilities.AudioInputMode == VideoAudioInputMode.AudioFileRequired;
 
             await eventBus.PublishAsync(new VideoRequestCreatedEto
             {
@@ -68,7 +68,8 @@ public async Task CreateVideoRequestAsync(
             return;
         }
 
-        var videoProvider = videoProviderResolver.Resolve(@event.VideoProviderKey);
+        var videoProviderKey = SubscriptionScopeRegistry.GetVideoProviderKey(@event.ScopeKey ?? "unknown");
+        var videoProvider = videoProviderResolver.Resolve(videoProviderKey);
 
         var videoRequestId = Guid.NewGuid();
 
@@ -122,7 +123,8 @@ public async Task CreateVideoRequestAsync(
     public async Task StartVideoOperationAsync(VideoRequestCreatedEto @event, CancellationToken cancellationToken)
     {
         var videoRequest = await GetVideoAsync(@event.VideoRequestId, cancellationToken);
-        var videoProvider = videoProviderResolver.Resolve(videoRequest.VideoProviderKey);
+        var videoProviderKey = SubscriptionScopeRegistry.GetVideoProviderKey(videoRequest.ScopeKey);
+        var videoProvider = videoProviderResolver.Resolve(videoProviderKey);
         var externalAudioRequired =
             videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioUrlListRequired ||
             videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioFileRequired;
@@ -148,7 +150,8 @@ public async Task CreateVideoRequestAsync(
         CancellationToken cancellationToken)
     {
         var videoRequest = await GetVideoAsync(@event.VideoRequestId, cancellationToken);
-        var videoProvider = videoProviderResolver.Resolve(videoRequest.VideoProviderKey);
+        var videoProviderKey = SubscriptionScopeRegistry.GetVideoProviderKey(videoRequest.ScopeKey);
+        var videoProvider = videoProviderResolver.Resolve(videoProviderKey);
 
         if (videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.ProviderCreatesAudio ||
             videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.NoAudio)
@@ -158,7 +161,7 @@ public async Task CreateVideoRequestAsync(
                 logger.LogInformation(
                     "Skipping audio operations for video request {VideoRequestId}. " +
                     "Video provider '{VideoProviderKey}' has AudioInputMode={AudioInputMode}. " +
-                    "Selected AudioProviderKey was: {AudioProviderKey}",
+                    "Selected AudioProviderKey was: {AudioProviderKey} (informational only)",
                     videoRequest.Id,
                     videoRequest.VideoProviderKey,
                     videoProvider.Capabilities.AudioInputMode,
@@ -421,7 +424,6 @@ public async Task CreateVideoRequestAsync(
 
             audioRequest.AudioStorageUrl = storageUrl;
             audioRequest.AudioCdnUrl = cdnUrl;
-            audioRequest.AudioCdnProviderKey = cdnProviderKey;
             audioRequest.Status = StatusNames.Uploaded;
             audioRequest.CurrentStep = EventNames.AudioFileUploadCompleted;
             audioRequest.UpdatedAtUtc = DateTime.UtcNow;
@@ -458,7 +460,8 @@ public async Task HandleAudioUploadCompletedAsync(
 
     try
     {
-        var videoProvider = videoProviderResolver.Resolve(videoRequest.VideoProviderKey);
+        var videoProviderKey = SubscriptionScopeRegistry.GetVideoProviderKey(videoRequest.ScopeKey);
+        var videoProvider = videoProviderResolver.Resolve(videoProviderKey);
 
         var allAudios = await context.AudioRequests
             .Find(x => x.VideoRequestId == @event.VideoRequestId)
@@ -531,7 +534,8 @@ public async Task HandleAudioUploadCompletedAsync(
         CancellationToken cancellationToken)
     {
         var videoRequest = await GetVideoAsync(@event.VideoRequestId, cancellationToken);
-        var provider = videoProviderResolver.Resolve(videoRequest.VideoProviderKey);
+        var videoProviderKey = SubscriptionScopeRegistry.GetVideoProviderKey(videoRequest.ScopeKey);
+        var provider = videoProviderResolver.Resolve(videoProviderKey);
 
         try
         {
@@ -681,8 +685,8 @@ public async Task HandleAudioUploadCompletedAsync(
 
             await ReplaceVideoAsync(videoRequest, cancellationToken);
 
-            // Upload file to CDN using selected provider
-            var cdnProviderKey = videoRequest.VideoCdnProviderKey ?? ProviderDefaults.DefaultCdnProvider;
+            // Upload file to CDN using default provider from settings
+            var cdnProviderKey = ProviderDefaults.DefaultCdnProvider;
 
             await using var fileStream = File.OpenRead(@event.LocalFilePath);
             var fileName = Path.GetFileName(@event.LocalFilePath);
@@ -695,7 +699,6 @@ public async Task HandleAudioUploadCompletedAsync(
 
             videoRequest.VideoStorageUrl = storageUrl;
             videoRequest.VideoCdnUrl = cdnUrl;
-            videoRequest.VideoCdnProviderKey = cdnProviderKey;
             videoRequest.Status = StatusNames.Completed;
             videoRequest.CurrentStep = EventNames.VideoGenerationResultPublished;
             videoRequest.UpdatedAtUtc = DateTime.UtcNow;
