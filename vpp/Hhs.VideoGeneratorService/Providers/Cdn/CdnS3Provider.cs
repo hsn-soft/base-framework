@@ -33,8 +33,8 @@ public sealed class CdnS3Provider : ICdnProvider
     {
         try
         {
-            var bucketName = _storageSettings.BucketOrContainer ?? "default-bucket";
-            var endpoint = _storageSettings.Url ?? "http://localhost:9000";
+            string bucketName = _storageSettings.BucketOrContainer ?? "default-bucket";
+            string endpoint = _storageSettings.Url ?? "http://localhost:9000";
 
             if (_logger.IsEnabled(LogLevel.Information))
             {
@@ -46,19 +46,19 @@ public sealed class CdnS3Provider : ICdnProvider
             }
 
             // Generate unique filename
-            var dateFolder = DateTime.UtcNow.ToString("yyyy/MM/dd");
-            var fileExtension = Path.GetExtension(filename);
-            var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(filename);
-            var uniqueFilename = $"{fileNameWithoutExtension}_{Guid.NewGuid():N}{fileExtension}";
-            var objectKey = $"{dateFolder}/{uniqueFilename}";
+            string dateFolder = DateTime.UtcNow.ToString("yyyy/MM/dd");
+            string fileExtension = Path.GetExtension(filename);
+            string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(filename);
+            string uniqueFilename = $"{fileNameWithoutExtension}_{Guid.NewGuid():N}{fileExtension}";
+            string objectKey = $"{dateFolder}/{uniqueFilename}";
 
             // Read stream into bytes
             var memoryStream = new MemoryStream();
             await fileStream.CopyToAsync(memoryStream, cancellationToken);
-            var fileBytes = memoryStream.ToArray();
+            byte[] fileBytes = memoryStream.ToArray();
 
             // Upload to S3-compatible endpoint
-            var uploadUrl = $"{endpoint.TrimEnd('/')}/{bucketName}/{objectKey}";
+            string uploadUrl = $"{endpoint.TrimEnd('/')}/{bucketName}/{objectKey}";
             using (var content = new ByteArrayContent(fileBytes))
             {
                 var response = await _httpClient.PutAsync(uploadUrl, content, cancellationToken);
@@ -71,10 +71,10 @@ public sealed class CdnS3Provider : ICdnProvider
             }
 
             // Create storage URL
-            var storageUrl = uploadUrl;
+            string storageUrl = uploadUrl;
 
             // Create CDN URL
-            var cdnUrl = $"{_cdnSettings.BaseUrl.TrimEnd('/')}/{_cdnSettings.ZonePath.Trim('/')}/{_cdnSettings.PathPrefix.Trim('/')}/{objectKey}"
+            string cdnUrl = $"{_cdnSettings.BaseUrl.TrimEnd('/')}/{_cdnSettings.ZonePath.Trim('/')}/{_cdnSettings.PathPrefix.Trim('/')}/{objectKey}"
                 .Replace("//", "/")
                 .Replace(":///", "://");
 

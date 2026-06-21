@@ -64,7 +64,7 @@ public sealed class DummyStorageService : IStorageService
             var provider = _providerFactory.CreateProvider(cdnProviderKey);
 
             // Upload using the provider
-            var (storageUrl, cdnUrl) = await provider.UploadAsync(fileStream, filename, cancellationToken);
+            (string storageUrl, string cdnUrl) = await provider.UploadAsync(fileStream, filename, cancellationToken);
 
             if (_logger.IsEnabled(LogLevel.Information))
             {

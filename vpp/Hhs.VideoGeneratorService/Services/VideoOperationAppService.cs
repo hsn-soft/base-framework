@@ -37,7 +37,7 @@ public sealed class VideoOperationAppService(
         if (existing is not null)
         {
             var providerForExisting = videoProviderResolver.Resolve(SubscriptionScopeRegistry.GetVideoProviderKey(existing.ScopeKey));
-            var existingExternalAudioRequired =
+            bool existingExternalAudioRequired =
                 providerForExisting.Capabilities.AudioInputMode == VideoAudioInputMode.AudioUrlListRequired ||
                 providerForExisting.Capabilities.AudioInputMode == VideoAudioInputMode.AudioFileRequired;
 
@@ -54,9 +54,9 @@ public sealed class VideoOperationAppService(
             return;
         }
 
-        var scopeKey = @event.ScopeKey ?? "unknown";
-        var videoProviderKey = SubscriptionScopeRegistry.GetVideoProviderKey(scopeKey);
-        var audioProviderKey = SubscriptionScopeRegistry.GetAudioProviderKey(scopeKey);
+        string scopeKey = @event.ScopeKey ?? "unknown";
+        string? videoProviderKey = SubscriptionScopeRegistry.GetVideoProviderKey(scopeKey);
+        string? audioProviderKey = SubscriptionScopeRegistry.GetAudioProviderKey(scopeKey);
         var videoProvider = videoProviderResolver.Resolve(videoProviderKey);
 
         var videoRequestId = Guid.NewGuid();
@@ -80,7 +80,7 @@ public sealed class VideoOperationAppService(
 
         await context.VideoRequests.InsertOneAsync(videoRequest, cancellationToken: cancellationToken);
 
-        var externalAudioRequired =
+        bool externalAudioRequired =
             videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioUrlListRequired ||
             videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioFileRequired;
 
@@ -98,9 +98,9 @@ public sealed class VideoOperationAppService(
     public async Task StartVideoOperationAsync(VideoRequestCreatedEto @event, CancellationToken cancellationToken)
     {
         var videoRequest = await GetVideoAsync(@event.VideoRequestId, cancellationToken);
-        var videoProviderKey = SubscriptionScopeRegistry.GetVideoProviderKey(videoRequest.ScopeKey);
+        string? videoProviderKey = SubscriptionScopeRegistry.GetVideoProviderKey(videoRequest.ScopeKey);
         var videoProvider = videoProviderResolver.Resolve(videoProviderKey);
-        var externalAudioRequired =
+        bool externalAudioRequired =
             videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioUrlListRequired ||
             videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioFileRequired;
 
@@ -123,7 +123,7 @@ public sealed class VideoOperationAppService(
     public async Task HandleVideoOperationStartedAsync(VideoOperationStartedEto @event, CancellationToken cancellationToken)
     {
         var videoRequest = await GetVideoAsync(@event.VideoRequestId, cancellationToken);
-        var videoProviderKey = SubscriptionScopeRegistry.GetVideoProviderKey(videoRequest.ScopeKey);
+        string? videoProviderKey = SubscriptionScopeRegistry.GetVideoProviderKey(videoRequest.ScopeKey);
         var videoProvider = videoProviderResolver.Resolve(videoProviderKey);
 
         if (videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.ProviderCreatesAudio ||
@@ -217,7 +217,7 @@ public sealed class VideoOperationAppService(
     public async Task StartAudioProviderRequestAsync(AudioProviderRequestStartedEto @event, CancellationToken cancellationToken)
     {
         var audioRequest = await GetAudioAsync(@event.AudioRequestId, cancellationToken);
-        var audioProviderKey = SubscriptionScopeRegistry.GetAudioProviderKey(audioRequest.ScopeKey);
+        string? audioProviderKey = SubscriptionScopeRegistry.GetAudioProviderKey(audioRequest.ScopeKey);
         var provider = audioProviderResolver.Resolve(audioProviderKey);
 
         try
@@ -309,7 +309,6 @@ public sealed class VideoOperationAppService(
         await ReplaceAudioAsync(audioRequest, cancellationToken);
     }
 
-
     public async Task HandleAudioProviderCompletedAsync(AudioProviderCompletedEto @event, CancellationToken cancellationToken)
     {
         await eventBus.PublishAsync(new AudioFileDownloadStartedEto
@@ -335,7 +334,7 @@ public sealed class VideoOperationAppService(
 
             await ReplaceAudioAsync(audioRequest, cancellationToken);
 
-            var localPath = await fileDownloader.DownloadAsync(@event.ProviderFileUrl, "mp3", $"audio_{audioRequest.Id:N}", cancellationToken);
+            string localPath = await fileDownloader.DownloadAsync(@event.ProviderFileUrl, "mp3", $"audio_{audioRequest.Id:N}", cancellationToken);
 
             audioRequest.AudioLocalPath = localPath;
             audioRequest.Status = StatusNames.Downloaded;
@@ -372,7 +371,7 @@ public sealed class VideoOperationAppService(
 
         try
         {
-            var cdnProviderKey = systemCdnSettings.Selected;
+            string cdnProviderKey = systemCdnSettings.Selected;
 
             audioRequest.Status = StatusNames.AudioFileUploading;
             audioRequest.CurrentStep = EventNames.AudioFileUploadStarted;
@@ -382,10 +381,10 @@ public sealed class VideoOperationAppService(
 
             // Upload file to CDN using resolved CDN provider
             await using var fileStream = File.OpenRead(@event.LocalFilePath);
-            var fileName = Path.GetFileName(@event.LocalFilePath);
+            string fileName = Path.GetFileName(@event.LocalFilePath);
 
             var cdnProvider = cdnProviderFactory.CreateProvider(cdnProviderKey);
-            var (storageUrl, cdnUrl) = await cdnProvider.UploadAsync(
+            (string storageUrl, string cdnUrl) = await cdnProvider.UploadAsync(
                 fileStream,
                 fileName,
                 cancellationToken);
@@ -429,7 +428,7 @@ public sealed class VideoOperationAppService(
 
         try
         {
-            var videoProviderKey = SubscriptionScopeRegistry.GetVideoProviderKey(videoRequest.ScopeKey);
+            string? videoProviderKey = SubscriptionScopeRegistry.GetVideoProviderKey(videoRequest.ScopeKey);
             var videoProvider = videoProviderResolver.Resolve(videoProviderKey);
 
             var allAudios = await context.AudioRequests
@@ -502,7 +501,7 @@ public sealed class VideoOperationAppService(
     public async Task StartVideoProviderRequestAsync(VideoProviderRequestStartedEto @event, CancellationToken cancellationToken)
     {
         var videoRequest = await GetVideoAsync(@event.VideoRequestId, cancellationToken);
-        var videoProviderKey = SubscriptionScopeRegistry.GetVideoProviderKey(videoRequest.ScopeKey);
+        string? videoProviderKey = SubscriptionScopeRegistry.GetVideoProviderKey(videoRequest.ScopeKey);
         var provider = videoProviderResolver.Resolve(videoProviderKey);
 
         try
@@ -616,7 +615,7 @@ public sealed class VideoOperationAppService(
 
             await ReplaceVideoAsync(videoRequest, cancellationToken);
 
-            var localPath = await fileDownloader.DownloadAsync(@event.ProviderFileUrl, "mp4", $"video_{videoRequest.Id:N}", cancellationToken);
+            string localPath = await fileDownloader.DownloadAsync(@event.ProviderFileUrl, "mp4", $"video_{videoRequest.Id:N}", cancellationToken);
 
             videoRequest.VideoLocalPath = localPath;
             videoRequest.Status = StatusNames.VideoDownloaded;
@@ -653,7 +652,7 @@ public sealed class VideoOperationAppService(
 
         try
         {
-            var cdnProviderKey = systemCdnSettings.Selected;
+            string cdnProviderKey = systemCdnSettings.Selected;
 
             videoRequest.Status = StatusNames.VideoFileUploading;
             videoRequest.CurrentStep = EventNames.VideoFileUploadStarted;
@@ -663,10 +662,10 @@ public sealed class VideoOperationAppService(
 
             // Upload file to CDN using resolved CDN provider
             await using var fileStream = File.OpenRead(@event.LocalFilePath);
-            var fileName = Path.GetFileName(@event.LocalFilePath);
+            string fileName = Path.GetFileName(@event.LocalFilePath);
 
             var cdnProvider = cdnProviderFactory.CreateProvider(cdnProviderKey);
-            var (storageUrl, cdnUrl) = await cdnProvider.UploadAsync(
+            (string storageUrl, string cdnUrl) = await cdnProvider.UploadAsync(
                 fileStream,
                 fileName,
                 cancellationToken);
@@ -735,6 +734,8 @@ public sealed class VideoOperationAppService(
             return;
         }
     }
+
+    #region Private methods
 
     private static List<VideoInputAudioItem> ExtractAudioItems(string videoInputJson)
     {
@@ -905,6 +906,8 @@ public sealed class VideoOperationAppService(
             Retryable = retryable
         }, cancellationToken);
     }
+
+    #endregion
 }
 
 public sealed class VideoInputAudioItem

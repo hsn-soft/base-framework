@@ -71,7 +71,7 @@ public sealed class VideoProviderPollingAppService(
                     continue;
                 }
 
-                var videoProviderKey = SubscriptionScopeRegistry.GetVideoProviderKey(request.ScopeKey);
+                string? videoProviderKey = SubscriptionScopeRegistry.GetVideoProviderKey(request.ScopeKey);
                 var provider = videoProviderResolver.Resolve(videoProviderKey);
 
                 var status = await provider.GetStatusAsync(

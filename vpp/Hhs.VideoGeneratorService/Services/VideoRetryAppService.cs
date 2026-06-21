@@ -41,7 +41,7 @@ public sealed class VideoRetryAppService(
         {
             try
             {
-                var pollingRetry = false;
+                bool pollingRetry = false;
 
                 if (request.CurrentStep == EventNames.AudioProviderRequestStarted)
                 {
@@ -158,11 +158,11 @@ public sealed class VideoRetryAppService(
         {
             try
             {
-                var pollingRetry = false;
+                bool pollingRetry = false;
 
                 if (request.CurrentStep == EventNames.VideoProviderRequestStarted)
                 {
-                    var videoProviderKey = SubscriptionScopeRegistry.GetVideoProviderKey(request.ScopeKey);
+                    string? videoProviderKey = SubscriptionScopeRegistry.GetVideoProviderKey(request.ScopeKey);
                     var videoProvider = videoProviderResolver.Resolve(videoProviderKey);
 
                     var audioRequests = await context.AudioRequests

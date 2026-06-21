@@ -67,7 +67,7 @@ builder.Services.AddSingleton<ICdnProviderResolver>(sp =>
     {
         foreach (var child in cdnSection.GetChildren())
         {
-            var key = child.Key;
+            string key = child.Key;
             CdnProviderSettingsBase? settings = null;
 
             // Try concrete implementations in order

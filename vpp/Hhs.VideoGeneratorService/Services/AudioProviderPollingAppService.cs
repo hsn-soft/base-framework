@@ -69,7 +69,7 @@ public sealed class AudioProviderPollingAppService(
                     continue;
                 }
 
-                var audioProviderKey = SubscriptionScopeRegistry.GetAudioProviderKey(request.ScopeKey);
+                string? audioProviderKey = SubscriptionScopeRegistry.GetAudioProviderKey(request.ScopeKey);
                 var provider = audioProviderResolver.Resolve(audioProviderKey);
 
                 var status = await provider.GetStatusAsync(

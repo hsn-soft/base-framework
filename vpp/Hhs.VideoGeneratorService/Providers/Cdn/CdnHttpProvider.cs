@@ -41,7 +41,7 @@ public sealed class CdnHttpProvider : ICdnProvider
             content.Add(new StreamContent(fileStream), "file", filename);
 
             // Upload to HTTP endpoint
-            var uploadUrl = $"{_cdnSettings.BaseUrl.TrimEnd('/')}/upload";
+            string uploadUrl = $"{_cdnSettings.BaseUrl.TrimEnd('/')}/upload";
             var response = await _httpClient.PostAsync(uploadUrl, content, cancellationToken);
 
             if (!response.IsSuccessStatusCode)
@@ -52,20 +52,20 @@ public sealed class CdnHttpProvider : ICdnProvider
             }
 
             // Parse response
-            var responseJson = await response.Content.ReadAsStringAsync(cancellationToken);
+            string responseJson = await response.Content.ReadAsStringAsync(cancellationToken);
             using var jsonDoc = System.Text.Json.JsonDocument.Parse(responseJson);
             var root = jsonDoc.RootElement;
 
             // Extract fileId from response
-            var fileId = root.TryGetProperty("fileId", out var fileIdElement)
+            string? fileId = root.TryGetProperty("fileId", out var fileIdElement)
                 ? fileIdElement.GetString()
                 : root.TryGetProperty("fileName", out var fileNameElement)
                     ? fileNameElement.GetString()
                     : throw new InvalidOperationException("No fileId in upload response");
 
             // Construct storage and CDN URLs
-            var storageUrl = $"{_cdnSettings.BaseUrl.TrimEnd('/')}/download/{fileId}";
-            var cdnUrl = $"{_cdnSettings.BaseUrl.TrimEnd('/')}/{_cdnSettings.ZonePath.Trim('/')}/{_cdnSettings.PathPrefix.Trim('/')}/{fileId}"
+            string storageUrl = $"{_cdnSettings.BaseUrl.TrimEnd('/')}/download/{fileId}";
+            string cdnUrl = $"{_cdnSettings.BaseUrl.TrimEnd('/')}/{_cdnSettings.ZonePath.Trim('/')}/{_cdnSettings.PathPrefix.Trim('/')}/{fileId}"
                 .Replace("//", "/")
                 .Replace(":///", "://");
 

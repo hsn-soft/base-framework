@@ -34,7 +34,7 @@ public sealed class VideoQueueExternalProvider : IVideoProvider
             cancellationToken);
 
         var json = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken);
-        var trackingId = json.GetProperty("trackingId").GetString();
+        string? trackingId = json.GetProperty("trackingId").GetString();
 
         return new VideoCreateResponse
         {
@@ -50,9 +50,9 @@ public sealed class VideoQueueExternalProvider : IVideoProvider
             cancellationToken);
 
         var json = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken);
-        var status = json.GetProperty("status").GetString();
-        var fileUrl = status == "completed" ? json.GetProperty("remoteFileUrl").GetString() : null;
-        var fileName = status == "completed" && json.TryGetProperty("fileName", out var fnProp) ? fnProp.GetString() : null;
+        string? status = json.GetProperty("status").GetString();
+        string? fileUrl = status == "completed" ? json.GetProperty("remoteFileUrl").GetString() : null;
+        string? fileName = status == "completed" && json.TryGetProperty("fileName", out var fnProp) ? fnProp.GetString() : null;
 
         return new VideoStatusResponse
         {

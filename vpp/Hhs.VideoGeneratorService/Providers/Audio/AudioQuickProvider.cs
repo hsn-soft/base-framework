@@ -33,8 +33,8 @@ public sealed class AudioQuickProvider : IAudioProvider
             cancellationToken);
 
         var json = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken);
-        var fileUrl = json.GetProperty("remoteFileUrl").GetString();
-        var fileName = json.TryGetProperty("fileName", out var fnProp) ? fnProp.GetString() : null;
+        string? fileUrl = json.GetProperty("remoteFileUrl").GetString();
+        string? fileName = json.TryGetProperty("fileName", out var fnProp) ? fnProp.GetString() : null;
 
         return new AudioCreateResponse
         {
