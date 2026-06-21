@@ -145,7 +145,7 @@ public sealed record AnalysisItemOutlineStartedEto : IntegrationEvent
 
 public sealed record OutlineProviderRequestStartedEto : IntegrationEvent
 {
-    public string ProviderKey { get; init; } = default!;
+    public string ScopeKey { get; init; } = default!;
     public Guid NormalizedRequestId { get; init; }
     public Guid? CustomerContentIdForItem { get; init; }
     public Guid? RefContentIdForItem { get; init; }

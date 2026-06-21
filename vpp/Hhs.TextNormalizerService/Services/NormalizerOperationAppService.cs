@@ -198,7 +198,7 @@ public sealed class NormalizerOperationAppService(
                 RefContentType = ContentType.CustomerContent,
                 CorrelationId = @event.CorrelationId,
                 NormalizedRequestId = request.Id,
-                ProviderKey = SubscriptionScopeRegistry.GetOutlineProviderKey(request.ScopeKey),
+                ScopeKey = request.ScopeKey,
                 InputText = request.ScrapingResult.Text
             }, cancellationToken);
         }
@@ -218,7 +218,8 @@ public sealed class NormalizerOperationAppService(
     {
         try
         {
-            var provider = outlineProviderResolver.Resolve(@event.ProviderKey);
+            var providerKey = SubscriptionScopeRegistry.GetOutlineProviderKey(@event.ScopeKey);
+            var provider = outlineProviderResolver.Resolve(providerKey);
 
             var response = await provider.CreateAsync(new OutlineCreateRequest { OutlineInput = @event.InputText }, cancellationToken);
 
@@ -617,13 +618,13 @@ public sealed class NormalizerOperationAppService(
 
             await eventBus.PublishAsync(new OutlineProviderRequestStartedEto
             {
-                
+
                 RefContentId = item.CustomerContentId,
                 CustomerContentIdForItem = item.CustomerContentId,
                 RefContentType = ContentType.AnalysisContent,
                 CorrelationId = @event.CorrelationId,
                 NormalizedRequestId = request.Id,
-                ProviderKey = SubscriptionScopeRegistry.GetOutlineProviderKey(request.ScopeKey),
+                ScopeKey = request.ScopeKey,
                 SortOrder = item.SortOrder,
                 InputText = item.ScrapingResult.Text
             }, cancellationToken);

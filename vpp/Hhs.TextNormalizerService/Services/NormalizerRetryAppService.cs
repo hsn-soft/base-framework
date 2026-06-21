@@ -87,7 +87,7 @@ public sealed class NormalizerRetryAppService(
                         RefContentType = ContentType.CustomerContent,
                         CorrelationId = request.CorrelationId,
                         NormalizedRequestId = request.Id,
-                        ProviderKey = SubscriptionScopeRegistry.GetOutlineProviderKey(request.ScopeKey),
+                        ScopeKey = request.ScopeKey,
                         InputText = request.ScrapingResult?.Text
                                     ?? throw new InvalidOperationException("ScrapingResult.Text is required.")
                     }, cancellationToken);
@@ -232,7 +232,7 @@ public sealed class NormalizerRetryAppService(
                             RefContentType = ContentType.AnalysisContent,
                             CorrelationId = request.CorrelationId,
                             NormalizedRequestId = request.Id,
-                            ProviderKey = SubscriptionScopeRegistry.GetOutlineProviderKey(request.ScopeKey),
+                            ScopeKey = request.ScopeKey,
                             SortOrder = item.SortOrder,
                             InputText = item.ScrapingResult?.Text
                                         ?? throw new InvalidOperationException("ScrapingResult.Text is required.")
