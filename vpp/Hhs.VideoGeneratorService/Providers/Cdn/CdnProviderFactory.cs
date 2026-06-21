@@ -35,32 +35,15 @@ public sealed class CdnProviderFactory
 
         var cdnSettings = _cdnProviderResolver.Resolve(cdnProviderKey);
         var storageSettings = cdnSettings.Storage as StorageProviderSettingsBase ?? throw new InvalidOperationException($"Storage settings not found for CDN provider '{cdnProviderKey}'");
-        var logger = _loggerFactory.CreateLogger(typeof(CdnLocalProvider));
+        var logger = _loggerFactory.CreateLogger(typeof(CdnS3Provider));
 
         return storageSettings.Type?.ToLowerInvariant() switch
         {
-            "local" => new CdnLocalProvider(
-                cdnSettings,
-                storageSettings as LocalStorageSettings ?? throw new InvalidOperationException("Expected LocalStorageSettings"),
-                logger as dynamic ?? _loggerFactory.CreateLogger<CdnLocalProvider>()),
-
             "s3" => new CdnS3Provider(
                 cdnSettings,
                 storageSettings as S3StorageSettings ?? throw new InvalidOperationException("Expected S3StorageSettings"),
                 _httpClient,
                 _loggerFactory.CreateLogger<CdnS3Provider>()),
-
-            "azure" => new CdnAzureProvider(
-                cdnSettings,
-                storageSettings as AzureBlobStorageSettings ?? throw new InvalidOperationException("Expected AzureBlobStorageSettings"),
-                _httpClient,
-                _loggerFactory.CreateLogger<CdnAzureProvider>()),
-
-            "cloudflarer2" => new CdnCloudflareR2Provider(
-                cdnSettings,
-                storageSettings as CloudflareR2StorageSettings ?? throw new InvalidOperationException("Expected CloudflareR2StorageSettings"),
-                _httpClient,
-                _loggerFactory.CreateLogger<CdnCloudflareR2Provider>()),
 
             "httpcnd" => new CdnHttpProvider(
                 cdnSettings,
@@ -69,7 +52,7 @@ public sealed class CdnProviderFactory
 
             _ => throw new InvalidOperationException(
                 $"Unsupported storage type '{storageSettings.Type}' for CDN provider '{cdnProviderKey}'. " +
-                $"Supported types: local, s3, azure, cloudflarer2, httpcnd")
+                $"Supported types: s3, httpcnd")
         };
     }
 }
