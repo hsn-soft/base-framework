@@ -68,7 +68,9 @@ public async Task CreateVideoRequestAsync(
             return;
         }
 
-        var videoProviderKey = SubscriptionScopeRegistry.GetVideoProviderKey(@event.ScopeKey ?? "unknown");
+        var scopeKey = @event.ScopeKey ?? "unknown";
+        var videoProviderKey = SubscriptionScopeRegistry.GetVideoProviderKey(scopeKey);
+        var audioProviderKey = SubscriptionScopeRegistry.GetAudioProviderKey(scopeKey);
         var videoProvider = videoProviderResolver.Resolve(videoProviderKey);
 
         var videoRequestId = Guid.NewGuid();
@@ -78,13 +80,14 @@ public async Task CreateVideoRequestAsync(
             Id = videoRequestId,
             SourceEventId = @event.EventId,
             CorrelationId = @event.CorrelationId,
+            ScopeKey = scopeKey,
             RefContentId = @event.RefContentId,
             RefContentType = @event.RefContentType,
             Status = StatusNames.Created,
             CurrentStep = EventNames.VideoRequestCreated,
             MediaInputJson = @event.VideoInputJson,
-            VideoProviderKey = @event.VideoProviderKey,
-            AudioProviderKey = @event.AudioProviderKey,
+            VideoProviderKey = videoProviderKey,
+            AudioProviderKey = audioProviderKey,
             CreatedAtUtc = DateTime.UtcNow,
             UpdatedAtUtc = DateTime.UtcNow
         };
@@ -110,9 +113,9 @@ public async Task CreateVideoRequestAsync(
         if (logger.IsEnabled(LogLevel.Error))
         {
             logger.LogError(ex,
-                "CreateVideoRequestAsync failed for event {EventId}. VideoProviderKey={VideoProviderKey}, RefContentId={RefContentId}, RefContentType={RefContentType}",
+                "CreateVideoRequestAsync failed for event {EventId}. ScopeKey={ScopeKey}, RefContentId={RefContentId}, RefContentType={RefContentType}",
                 @event.EventId,
-                @event.VideoProviderKey,
+                @event.ScopeKey,
                 @event.RefContentId,
                 @event.RefContentType);
         }

@@ -211,9 +211,6 @@ public sealed record VideoGenerationApprovedEto : IntegrationEvent
         EventName = EventNames.VideoGenerationApproved;
         Facility = EventNames.VideoGenerationApproved;
     }
-
-    public string VideoProviderKey { get; init; } = default!;
-    public string? AudioProviderKey { get; init; }
 }
 
 public sealed record VideoRequestCreatedEto : IntegrationEvent
