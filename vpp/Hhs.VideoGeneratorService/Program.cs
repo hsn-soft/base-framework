@@ -7,6 +7,8 @@ using Hhs.VideoGeneratorService.Configuration;
 using Hhs.VideoGeneratorService.Configuration.Providers.Audio;
 using Hhs.VideoGeneratorService.Configuration.Providers.Video;
 using Hhs.VideoGeneratorService.Configuration.Providers.Cdn;
+using Hhs.VideoGeneratorService.Configuration.Providers.Storage;
+using Hhs.Shared.Providers;
 using Hhs.VideoGeneratorService.Providers.Cdn;
 using Hhs.VideoGeneratorService.Entities;
 using Hhs.VideoGeneratorService.Handlers;
@@ -57,41 +59,45 @@ var systemCdnSettings = builder.Configuration.GetSection("SystemCdn")
     .Get<SystemCdnSettings>() ?? new SystemCdnSettings();
 builder.Services.AddSingleton(systemCdnSettings);
 
-// CDN Provider Resolver (resolves settings and creates providers)
-builder.Services.AddSingleton<ICdnProviderResolver>(sp =>
+// Build CDN settings from configuration
+var cdnLocalMinioSettings = builder.Configuration.GetSection("Provider:Cdn:CdnLocalMinio").Get<CdnLocalMinioSettings>() ?? new CdnLocalMinioSettings();
+var cdnBunnySelfSettings = builder.Configuration.GetSection("Provider:Cdn:CdnBunnySelf").Get<CdnBunnySelfSettings>() ?? new CdnBunnySelfSettings();
+var cdnBunnyS3Settings = builder.Configuration.GetSection("Provider:Cdn:CdnBunnyS3").Get<CdnBunnyS3Settings>() ?? new CdnBunnyS3Settings();
+var cdnAbcSettings = builder.Configuration.GetSection("Provider:Cdn:CdnAbc").Get<CdnAbcCloudFrontSettings>() ?? new CdnAbcCloudFrontSettings();
+
+// Register CDN providers as factory lambdas
+builder.Services.AddScoped<ICdnProvider>(sp =>
 {
-    var cdnProviders = new Dictionary<string, CdnProviderSettingsBase>(StringComparer.OrdinalIgnoreCase);
-    var cdnSection = builder.Configuration.GetSection("Provider:Cdn");
-
-    if (cdnSection.Exists())
-    {
-        foreach (var child in cdnSection.GetChildren())
-        {
-            string key = child.Key;
-            CdnProviderSettingsBase? settings = null;
-
-            // Try concrete implementations in order
-            if (key.Equals("CdnLocalMinio", StringComparison.OrdinalIgnoreCase))
-                settings = child.Get<LocalMinioCdnSettings>();
-            else if (key.Equals("CdnBunnySelf", StringComparison.OrdinalIgnoreCase))
-                settings = child.Get<BunnyCdnSettings>();
-            else if (key.Equals("CdnBunnyS3", StringComparison.OrdinalIgnoreCase))
-                settings = child.Get<CdnBunnyS3Settings>();
-            else if (key.StartsWith("CdnAbc", StringComparison.OrdinalIgnoreCase))
-                settings = child.Get<CloudflareCdnSettings>();
-
-            if (settings != null)
-            {
-                cdnProviders[key] = settings;
-            }
-        }
-    }
-
     var httpClient = sp.GetRequiredService<HttpClient>();
     var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
-    
-    return new CdnProviderResolver(cdnProviders, httpClient, loggerFactory);
+    var storageSettings = cdnLocalMinioSettings.Storage as StorageProviderSettingsBase;
+    return new CdnHttpProvider(ProviderKeys.CdnLocalMinio, cdnLocalMinioSettings, httpClient, loggerFactory.CreateLogger<CdnHttpProvider>());
 });
+
+builder.Services.AddScoped<ICdnProvider>(sp =>
+{
+    var httpClient = sp.GetRequiredService<HttpClient>();
+    var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
+    return new CdnHttpProvider(ProviderKeys.CdnBunnySelf, cdnBunnySelfSettings, httpClient, loggerFactory.CreateLogger<CdnHttpProvider>());
+});
+
+builder.Services.AddScoped<ICdnProvider>(sp =>
+{
+    var httpClient = sp.GetRequiredService<HttpClient>();
+    var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
+    var storageSettings = cdnBunnyS3Settings.Storage as S3StorageSettings ?? throw new InvalidOperationException("Expected S3StorageSettings");
+    return new CdnS3Provider(cdnBunnyS3Settings, storageSettings, httpClient, loggerFactory.CreateLogger<CdnS3Provider>());
+});
+
+builder.Services.AddScoped<ICdnProvider>(sp =>
+{
+    var httpClient = sp.GetRequiredService<HttpClient>();
+    var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
+    return new CdnHttpProvider(ProviderKeys.CdnAbc, cdnAbcSettings, httpClient, loggerFactory.CreateLogger<CdnHttpProvider>());
+});
+
+// Register resolver (uses IEnumerable<ICdnProvider> from DI)
+builder.Services.AddScoped<ICdnProviderResolver, CdnProviderResolver>();
 
 var audioPollingSettings = builder.Configuration.GetSection(AudioPollingSettings.SectionName)
     .Get<AudioPollingSettings>() ?? new AudioPollingSettings();

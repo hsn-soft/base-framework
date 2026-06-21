@@ -20,7 +20,5 @@ public static class ProviderKeys
     public const string CdnLocalMinio = "cdn-local-minio";
     public const string CdnBunnySelf = "cdn-bunny-self";
     public const string CdnBunnyS3 = "cdn-bunny-s3";
-    public const string CdnCloudflare = "cdn-cloudflare";
-    public const string CdnAzure = "cdn-azure";
-    public const string CdnAwsCloudFront = "cdn-aws-cloudfront";
+    public const string CdnAbcCloudFront = "cdn-abc-cloudfront";
 }

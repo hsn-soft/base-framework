@@ -8,15 +8,19 @@ namespace Hhs.VideoGeneratorService.Providers.Cdn;
 /// </summary>
 public sealed class CdnHttpProvider : ICdnProvider
 {
+    public string ProviderKey => _providerKey;
+    private readonly string _providerKey;
     private readonly IHasCdnBaseUrl _cdnSettings;
     private readonly HttpClient _httpClient;
     private readonly ILogger<CdnHttpProvider> _logger;
 
     public CdnHttpProvider(
+        string providerKey,
         IHasCdnBaseUrl cdnSettings,
         HttpClient httpClient,
         ILogger<CdnHttpProvider> logger)
     {
+        _providerKey = providerKey;
         _cdnSettings = cdnSettings;
         _httpClient = httpClient;
         _logger = logger;

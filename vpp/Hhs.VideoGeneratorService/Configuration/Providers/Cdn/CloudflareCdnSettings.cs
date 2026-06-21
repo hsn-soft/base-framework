@@ -1,16 +1,17 @@
 using Hhs.Shared.Configuration.Providers;
-using Hhs.VideoGeneratorService.Configuration.Providers.Storage;
 
 namespace Hhs.VideoGeneratorService.Configuration.Providers.Cdn;
 
-public sealed class CloudflareCdnSettings : CdnProviderSettingsBase
+public sealed class CdnAbcCloudFrontSettings : CdnProviderSettingsBase
 {
-    public const string SectionName = "Provider:Cdn:CdnCloudflare";
+    public const string SectionName = "Provider:Cdn:CdnAbcCloudFront";
 
-    // Cloudflare-specific settings
     public string? ZoneId { get; set; }
     public string? AccountId { get; set; }
     public string? NamespaceId { get; set; }
 
-    public new CloudflareStorageSettings Storage { get; set; } = default!;
+    public string? StorageType { get; set; }
+    public string? StorageEndpointUrl { get; set; }
+    public string? StorageApiKey { get; set; }
+    public string? StorageSecretKey { get; set; }
 }

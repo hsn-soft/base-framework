@@ -1,4 +1,5 @@
 using Hhs.Shared.Configuration.Providers;
+using Hhs.Shared.Providers;
 using Hhs.VideoGeneratorService.Configuration.Providers.Storage;
 
 namespace Hhs.VideoGeneratorService.Providers.Cdn;
@@ -9,6 +10,7 @@ namespace Hhs.VideoGeneratorService.Providers.Cdn;
 /// </summary>
 public sealed class CdnS3Provider : ICdnProvider
 {
+    public string ProviderKey => ProviderKeys.CdnBunnyS3;
     private readonly IHasCdnBaseUrl _cdnSettings;
     private readonly S3StorageSettings _storageSettings;
     private readonly HttpClient _httpClient;
