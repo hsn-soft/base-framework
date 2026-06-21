@@ -242,7 +242,8 @@ public async Task CreateVideoRequestAsync(
         CancellationToken cancellationToken)
     {
         var audioRequest = await GetAudioAsync(@event.AudioRequestId, cancellationToken);
-        var provider = audioProviderResolver.Resolve(audioRequest.AudioProviderKey);
+        var audioProviderKey = SubscriptionScopeRegistry.GetAudioProviderKey(audioRequest.ScopeKey);
+        var provider = audioProviderResolver.Resolve(audioProviderKey);
 
         try
         {
@@ -407,7 +408,7 @@ public async Task CreateVideoRequestAsync(
             await ReplaceAudioAsync(audioRequest, cancellationToken);
 
             // Upload file to CDN using selected provider
-            var cdnProviderKey = audioRequest.AudioCdnProviderKey ?? ProviderDefaults.DefaultCdnProvider;
+            var cdnProviderKey = ProviderDefaults.DefaultCdnProvider; // Decision from settings, not entity
 
             await using var fileStream = File.OpenRead(@event.LocalFilePath);
             var fileName = Path.GetFileName(@event.LocalFilePath);

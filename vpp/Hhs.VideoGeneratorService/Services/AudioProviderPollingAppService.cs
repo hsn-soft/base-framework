@@ -7,6 +7,8 @@ using Hhs.VideoGeneratorService.Mongo;
 using Hhs.VideoGeneratorService.Providers;
 using MongoDB.Driver;
 
+using Hhs.Shared.Configuration;
+
 namespace Hhs.VideoGeneratorService.Services;
 
 public sealed class AudioProviderPollingAppService(
@@ -69,7 +71,8 @@ public sealed class AudioProviderPollingAppService(
                     continue;
                 }
 
-                var provider = audioProviderResolver.Resolve(request.AudioProviderKey);
+                var audioProviderKey = SubscriptionScopeRegistry.GetAudioProviderKey(request.ScopeKey);
+                var provider = audioProviderResolver.Resolve(audioProviderKey);
 
                 var status = await provider.GetStatusAsync(
                     request.AudioProviderTrackingId!,
