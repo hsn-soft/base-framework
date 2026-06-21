@@ -193,9 +193,6 @@ public sealed record NormalizerResultPublishedEto : IntegrationEvent
     public Guid NormalizeRequestId { get; init; }
     public string VideoInputJson { get; init; } = default!;
 
-    public string VideoProviderKey { get; init; } = default!;
-    public string? AudioProviderKey { get; init; }
-
     public NormalizerResultPublishedEto()
     {
         EventName = EventNames.NormalizerResultPublished;

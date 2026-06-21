@@ -721,6 +721,7 @@ public sealed class NormalizerOperationAppService(
         await eventBus.PublishAsync(new NormalizerResultPublishedEto
         {
             NormalizeRequestId = request.Id,
+            RefContentId = request.AnalysisContentId,
             CorrelationId = @event.CorrelationId,
             RefContentType = ContentType.AnalysisContent,
             VideoInputJson = System.Text.Json.JsonSerializer.Serialize(videoInput),
