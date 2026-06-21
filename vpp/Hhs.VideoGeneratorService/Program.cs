@@ -57,7 +57,7 @@ var systemCdnSettings = builder.Configuration.GetSection("SystemCdn")
     .Get<SystemCdnSettings>() ?? new SystemCdnSettings();
 builder.Services.AddSingleton(systemCdnSettings);
 
-// CDN Provider Resolver
+// CDN Provider Resolver (resolves settings and creates providers)
 builder.Services.AddSingleton<ICdnProviderResolver>(sp =>
 {
     var cdnProviders = new Dictionary<string, CdnProviderSettingsBase>(StringComparer.OrdinalIgnoreCase);
@@ -87,11 +87,11 @@ builder.Services.AddSingleton<ICdnProviderResolver>(sp =>
         }
     }
 
-    return new CdnProviderResolver(cdnProviders);
+    var httpClient = sp.GetRequiredService<HttpClient>();
+    var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
+    
+    return new CdnProviderResolver(cdnProviders, httpClient, loggerFactory);
 });
-
-// CDN Storage Provider Factory
-builder.Services.AddSingleton<CdnProviderFactory>();
 
 var audioPollingSettings = builder.Configuration.GetSection(AudioPollingSettings.SectionName)
     .Get<AudioPollingSettings>() ?? new AudioPollingSettings();

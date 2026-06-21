@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using Hhs.MockApi.CdnBunnySelf;
 using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -47,79 +48,82 @@ app.MapGet("/health", () => Results.Ok(new { status = "healthy", provider = "bun
 
 app.Run();
 
-public sealed class MockApiOptions
+namespace Hhs.MockApi.CdnBunnySelf
 {
-    public string SelfBaseUrl { get; set; } = "http://localhost:5071";
-}
-
-public sealed class CdnBunnySelfService
-{
-    private static readonly ConcurrentDictionary<string, CdnFileEntry> Store = new();
-    private readonly IOptions<MockApiOptions> _options;
-    private readonly ILogger<CdnBunnySelfService> _logger;
-    private const string ZonePath = "media";
-    private const string PathPrefix = "bunny";
-
-    public CdnBunnySelfService(IOptions<MockApiOptions> options, ILogger<CdnBunnySelfService> logger)
+    public sealed class MockApiOptions
     {
-        _options = options;
-        _logger = logger;
+        public string SelfBaseUrl { get; set; } = "http://localhost:5071";
     }
 
-    public async Task<string> UploadAsync(IFormFile file, string mediaDir, CancellationToken ct)
+    public sealed class CdnBunnySelfService
     {
-        var fileId = Guid.NewGuid().ToString("N");
-        var dateFolder = DateTime.UtcNow.ToString("yyyy/MM/dd");
-        var uploadDir = Path.Combine(mediaDir, PathPrefix, dateFolder);
-        Directory.CreateDirectory(uploadDir);
+        private static readonly ConcurrentDictionary<string, CdnFileEntry> Store = new();
+        private readonly IOptions<MockApiOptions> _options;
+        private readonly ILogger<CdnBunnySelfService> _logger;
+        private const string ZonePath = "media";
+        private const string PathPrefix = "bunny";
 
-        var filePath = Path.Combine(uploadDir, $"{fileId}_{file.FileName}");
-
-        await using (var stream = file.OpenReadStream())
+        public CdnBunnySelfService(IOptions<MockApiOptions> options, ILogger<CdnBunnySelfService> logger)
         {
-            await using var fileStream = File.Create(filePath);
-            await stream.CopyToAsync(fileStream, ct);
+            _options = options;
+            _logger = logger;
         }
 
-        Store[fileId] = new CdnFileEntry
+        public async Task<string> UploadAsync(IFormFile file, string mediaDir, CancellationToken ct)
         {
-            OriginalFileName = file.FileName,
-            FilePath = filePath,
-            RelativePath = $"{ZonePath}/{PathPrefix}/{dateFolder}/{Path.GetFileName(filePath)}",
-            UploadedAtUtc = DateTime.UtcNow
-        };
+            var fileId = Guid.NewGuid().ToString("N");
+            var dateFolder = DateTime.UtcNow.ToString("yyyy/MM/dd");
+            var uploadDir = Path.Combine(mediaDir, PathPrefix, dateFolder);
+            Directory.CreateDirectory(uploadDir);
 
-        _logger.LogInformation("File uploaded to BunnySelf: {FileId}, OriginalName: {FileName}", fileId, file.FileName);
-        return fileId;
-    }
+            var filePath = Path.Combine(uploadDir, $"{fileId}_{file.FileName}");
 
-    public string GetRelativeUrl(string fileId)
-    {
-        if (Store.TryGetValue(fileId, out var entry))
-            return entry.RelativePath;
-        return fileId;
-    }
+            await using (var stream = file.OpenReadStream())
+            {
+                await using var fileStream = File.Create(filePath);
+                await stream.CopyToAsync(fileStream, ct);
+            }
 
-    public string GetFilePathFromRelativePath(string relativePath, string mediaDir)
-    {
-        // Remove zone path from relative path
-        var pathParts = relativePath.Split('/', StringSplitOptions.RemoveEmptyEntries);
-        if (pathParts.Length > 0 && pathParts[0] == ZonePath)
-        {
-            // Remove ZonePath from the beginning
-            var remainingPath = string.Join(Path.DirectorySeparatorChar, pathParts.Skip(1));
-            return Path.Combine(mediaDir, remainingPath);
+            Store[fileId] = new CdnFileEntry
+            {
+                OriginalFileName = file.FileName,
+                FilePath = filePath,
+                RelativePath = $"{ZonePath}/{PathPrefix}/{dateFolder}/{Path.GetFileName(filePath)}",
+                UploadedAtUtc = DateTime.UtcNow
+            };
+
+            _logger.LogInformation("File uploaded to BunnySelf: {FileId}, OriginalName: {FileName}", fileId, file.FileName);
+            return fileId;
         }
-        return Path.Combine(mediaDir, relativePath);
+
+        public string GetRelativeUrl(string fileId)
+        {
+            if (Store.TryGetValue(fileId, out var entry))
+                return entry.RelativePath;
+            return fileId;
+        }
+
+        public string GetFilePathFromRelativePath(string relativePath, string mediaDir)
+        {
+            // Remove zone path from relative path
+            var pathParts = relativePath.Split('/', StringSplitOptions.RemoveEmptyEntries);
+            if (pathParts.Length > 0 && pathParts[0] == ZonePath)
+            {
+                // Remove ZonePath from the beginning
+                var remainingPath = string.Join(Path.DirectorySeparatorChar, pathParts.Skip(1));
+                return Path.Combine(mediaDir, remainingPath);
+            }
+            return Path.Combine(mediaDir, relativePath);
+        }
+
+        public string GetSelfBaseUrl() => _options.Value.SelfBaseUrl;
     }
 
-    public string GetSelfBaseUrl() => _options.Value.SelfBaseUrl;
-}
-
-public sealed class CdnFileEntry
-{
-    public string OriginalFileName { get; set; } = string.Empty;
-    public string FilePath { get; set; } = string.Empty;
-    public string RelativePath { get; set; } = string.Empty;
-    public DateTime UploadedAtUtc { get; set; }
+    public sealed class CdnFileEntry
+    {
+        public string OriginalFileName { get; set; } = string.Empty;
+        public string FilePath { get; set; } = string.Empty;
+        public string RelativePath { get; set; } = string.Empty;
+        public DateTime UploadedAtUtc { get; set; }
+    }
 }

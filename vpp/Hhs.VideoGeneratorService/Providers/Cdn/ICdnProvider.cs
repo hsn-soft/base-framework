@@ -2,7 +2,7 @@ namespace Hhs.VideoGeneratorService.Providers.Cdn;
 
 /// <summary>
 /// Provider abstraction for CDN operations.
-/// Each CDN provider (Local, S3, Azure, Cloudflare, etc.) implements this interface.
+/// Each CDN provider (Local, S3, Cloudflare, etc.) implements this interface.
 /// </summary>
 public interface ICdnProvider
 {

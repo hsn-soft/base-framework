@@ -19,7 +19,7 @@ namespace Hhs.VideoGeneratorService.Services;
 public sealed class VideoOperationAppService(
     VideoMongoContext context,
     IFileDownloader fileDownloader,
-    CdnProviderFactory cdnProviderFactory,
+    ICdnProviderResolver cdnProviderResolver,
     IEventBus eventBus,
     IVideoProviderResolver videoProviderResolver,
     IAudioProviderResolver audioProviderResolver,
@@ -383,7 +383,7 @@ public sealed class VideoOperationAppService(
             await using var fileStream = File.OpenRead(@event.LocalFilePath);
             string fileName = Path.GetFileName(@event.LocalFilePath);
 
-            var cdnProvider = cdnProviderFactory.CreateProvider(cdnProviderKey);
+            var cdnProvider = cdnProviderResolver.Resolve(cdnProviderKey);
             (string storageUrl, string cdnUrl) = await cdnProvider.UploadAsync(
                 fileStream,
                 fileName,
@@ -664,7 +664,7 @@ public sealed class VideoOperationAppService(
             await using var fileStream = File.OpenRead(@event.LocalFilePath);
             string fileName = Path.GetFileName(@event.LocalFilePath);
 
-            var cdnProvider = cdnProviderFactory.CreateProvider(cdnProviderKey);
+            var cdnProvider = cdnProviderResolver.Resolve(cdnProviderKey);
             (string storageUrl, string cdnUrl) = await cdnProvider.UploadAsync(
                 fileStream,
                 fileName,

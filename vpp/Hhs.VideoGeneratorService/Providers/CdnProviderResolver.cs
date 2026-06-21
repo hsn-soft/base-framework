@@ -2,7 +2,7 @@ using Hhs.Shared.Configuration.Providers;
 using Hhs.VideoGeneratorService.Configuration.Providers.Storage;
 using Hhs.VideoGeneratorService.Providers.Cdn;
 
-namespace Hhs.VideoGeneratorService.Providers.Cdn;
+namespace Hhs.VideoGeneratorService.Providers;
 
 public interface ICdnProviderResolver
 {
@@ -33,7 +33,7 @@ public sealed class CdnProviderResolver : ICdnProviderResolver
         if (!_providers.TryGetValue(cdnProviderKey, out var cdnSettings))
             throw new InvalidOperationException($"CDN provider '{cdnProviderKey}' not found in configuration. Available providers: {string.Join(", ", _providers.Keys)}");
 
-        var storageSettings = cdnSettings.Storage as StorageProviderSettingsBase 
+        var storageSettings = cdnSettings.Storage as StorageProviderSettingsBase
             ?? throw new InvalidOperationException($"Storage settings not found for CDN provider '{cdnProviderKey}'");
 
         return storageSettings.Type?.ToLowerInvariant() switch

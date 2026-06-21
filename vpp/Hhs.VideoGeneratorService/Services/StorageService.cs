@@ -1,3 +1,4 @@
+using Hhs.VideoGeneratorService.Providers;
 using Hhs.VideoGeneratorService.Providers.Cdn;
 
 namespace Hhs.VideoGeneratorService.Services;
@@ -33,14 +34,14 @@ public interface IStorageService
 
 public sealed class DummyStorageService : IStorageService
 {
-    private readonly CdnProviderFactory _providerFactory;
+    private readonly ICdnProviderResolver _providerResolver;
     private readonly ILogger<DummyStorageService> _logger;
 
     public DummyStorageService(
-        CdnProviderFactory providerFactory,
+        ICdnProviderResolver providerResolver,
         ILogger<DummyStorageService> logger)
     {
-        _providerFactory = providerFactory;
+        _providerResolver = providerResolver;
         _logger = logger;
     }
 
@@ -61,7 +62,7 @@ public sealed class DummyStorageService : IStorageService
             }
 
             // Create provider instance for the given CDN key
-            var provider = _providerFactory.CreateProvider(cdnProviderKey);
+            var provider = _providerResolver.Resolve(cdnProviderKey);
 
             // Upload using the provider
             (string storageUrl, string cdnUrl) = await provider.UploadAsync(fileStream, filename, cancellationToken);
@@ -100,7 +101,7 @@ public sealed class DummyStorageService : IStorageService
             }
 
             // Create provider instance for the given CDN key
-            var provider = _providerFactory.CreateProvider(cdnProviderKey);
+            var provider = _providerResolver.Resolve(cdnProviderKey);
 
             // Download using the provider
             var stream = await provider.DownloadAsync(storageUrl, cancellationToken);
