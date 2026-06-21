@@ -218,6 +218,7 @@ public async Task CreateVideoRequestAsync(
                 VideoRequestId = videoRequest.Id,
                 RefContentId = videoRequest.RefContentId,
                 RefContentType = videoRequest.RefContentType,
+                ScopeKey = videoRequest.ScopeKey,
                 SortOrder = item.SortOrder,
                 InputText = item.Text,
                 AudioProviderKey = videoRequest.AudioProviderKey
@@ -426,6 +427,7 @@ public async Task CreateVideoRequestAsync(
 
             audioRequest.AudioStorageUrl = storageUrl;
             audioRequest.AudioCdnUrl = cdnUrl;
+            audioRequest.AudioCdnProviderKey = cdnProviderKey;
             audioRequest.Status = StatusNames.Uploaded;
             audioRequest.CurrentStep = EventNames.AudioFileUploadCompleted;
             audioRequest.UpdatedAtUtc = DateTime.UtcNow;
