@@ -53,9 +53,9 @@ var videoQueueInternalProviderSettings = builder.Configuration.GetSection(VideoQ
 builder.Services.AddSingleton(videoQueueInternalProviderSettings);
 
 // CDN Provider Configuration (environment-based)
-var cdnProviderConfig = builder.Configuration.GetSection(CdnProviderConfiguration.SectionName)
-    .Get<CdnProviderConfiguration>() ?? new CdnProviderConfiguration();
-builder.Services.AddSingleton(cdnProviderConfig);
+var systemCdnSettings = builder.Configuration.GetSection("SystemCdn")
+    .Get<SystemCdnSettings>() ?? new SystemCdnSettings();
+builder.Services.AddSingleton(systemCdnSettings);
 
 // CDN Provider Resolver
 builder.Services.AddSingleton<ICdnProviderResolver>(sp =>
