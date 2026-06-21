@@ -24,9 +24,10 @@ public sealed class CdnProviderFactory
 
     /// <summary>
     /// Creates an ICdnProvider instance for the given CDN provider key.
+    /// Supports S3 (CdnBunnyS3) and HttpCdn (CdnLocalMinio, CdnBunnySelf, CdnAbc).
     /// </summary>
-    /// <param name="cdnProviderKey">CDN provider key (e.g., "LocalStorageCdn", "S3Cdn", "AzureCdn")</param>
-    /// <returns>ICdnProvider instance</returns>
+    /// <param name="cdnProviderKey">CDN provider key (e.g., "CdnLocalMinio", "CdnBunnyS3", "CdnAbc")</param>
+    /// <returns>ICdnProvider instance based on storage Type (s3 → CdnS3Provider, httpcnd → CdnHttpProvider)</returns>
     /// <exception cref="InvalidOperationException">If provider type is not supported</exception>
     public ICdnProvider CreateProvider(string cdnProviderKey)
     {
