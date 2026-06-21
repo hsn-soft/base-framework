@@ -14,6 +14,7 @@ public sealed class AudioRequest
 
     // Correlation & Context
     public string? CorrelationId { get; set; }
+    public Guid SourceEventId { get; set; }
     public Guid VideoRequestId { get; set; }
     public Guid RefContentId { get; set; }
     public ContentType RefContentType { get; set; }

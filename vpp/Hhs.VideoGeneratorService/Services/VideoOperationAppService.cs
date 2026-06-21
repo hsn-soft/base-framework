@@ -215,6 +215,7 @@ public async Task CreateVideoRequestAsync(
             {
                 Id = audioRequestId,
                 CorrelationId = @event.CorrelationId,
+                SourceEventId = @event.EventId,
                 VideoRequestId = videoRequest.Id,
                 RefContentId = videoRequest.RefContentId,
                 RefContentType = videoRequest.RefContentType,
