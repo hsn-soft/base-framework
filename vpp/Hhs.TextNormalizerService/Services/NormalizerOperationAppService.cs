@@ -49,7 +49,10 @@ public sealed class NormalizerOperationAppService(
 
         var requestId = Guid.NewGuid();
 
-        await context.CustomerRequests.InsertOneAsync(new CustomerContentNormalizedRequest
+        try
+        {
+            _logger.LogInformation($"Inserting record into MongoDB...");
+            await context.CustomerRequests.InsertOneAsync(new CustomerContentNormalizedRequest
         {
             Id = requestId,
             SourceEventId = @event.EventId,
@@ -81,8 +84,18 @@ public sealed class NormalizerOperationAppService(
             UpdatedAtUtc = DateTime.UtcNow,
         }, cancellationToken: cancellationToken);
 
-        await eventBus.PublishAsync(new CustomerContentNormalizeRequestCreatedEto { RefContentType = ContentType.CustomerContent,
-            RefContentId = @event.RefContentId, CorrelationId = @event.CorrelationId }, cancellationToken);
+            _logger.LogInformation($"MongoDB insert successful, publishing event...");
+
+            await eventBus.PublishAsync(new CustomerContentNormalizeRequestCreatedEto { RefContentType = ContentType.CustomerContent,
+                RefContentId = @event.RefContentId, CorrelationId = @event.CorrelationId }, cancellationToken);
+
+            _logger.LogInformation($"Event published successfully");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error in CreateCustomerContentNormalizeRequestAsync: {ex.Message}");
+            throw;
+        }
     }
 
     public async Task StartCustomerContentNormalizeAsync(CustomerContentNormalizeRequestCreatedEto @event, CancellationToken cancellationToken)

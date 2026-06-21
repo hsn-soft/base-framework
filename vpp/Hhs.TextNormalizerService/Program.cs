@@ -1,6 +1,7 @@
 using Hhs.Shared.Events;
 using Hhs.Shared.RabbitMQ;
 using Hhs.Shared.Retry;
+using Hhs.Shared.Configuration;
 using Hhs.TextNormalizerService.Configuration;
 using Hhs.TextNormalizerService.Configuration.Providers.Outline;
 using Hhs.TextNormalizerService.Entities;
@@ -14,6 +15,9 @@ using Hhs.TextNormalizerService.Providers.Scraping;
 using Hhs.TextNormalizerService.Services;
 using Hhs.TextNormalizerService.Workers;
 using MongoDB.Driver;
+
+// Initialize subscription scope registry
+SubscriptionScopeRegistry.Initialize();
 
 var builder = WebApplication.CreateBuilder(args);
 

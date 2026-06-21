@@ -1,5 +1,6 @@
 using Hhs.Shared.Events;
 using Hhs.Shared.RabbitMQ;
+using Hhs.Shared.Configuration;
 using Hhs.Shared.Configuration.Providers;
 using Hhs.Shared.Retry;
 using Hhs.VideoGeneratorService.Configuration;
@@ -18,6 +19,9 @@ using Hhs.VideoGeneratorService.Providers.Video;
 using Hhs.VideoGeneratorService.Services;
 using Hhs.VideoGeneratorService.Workers;
 using MongoDB.Driver;
+
+// Initialize subscription scope registry
+SubscriptionScopeRegistry.Initialize();
 
 var builder = WebApplication.CreateBuilder(args);
 

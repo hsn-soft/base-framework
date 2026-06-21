@@ -5,7 +5,11 @@ using Hhs.ContentService.Infrastructure;
 using Hhs.ContentService.Services;
 using Hhs.Shared.Events;
 using Hhs.Shared.RabbitMQ;
+using Hhs.Shared.Configuration;
 using Microsoft.EntityFrameworkCore;
+
+// Initialize subscription scope registry
+SubscriptionScopeRegistry.Initialize();
 
 var builder = WebApplication.CreateBuilder(args);
 
