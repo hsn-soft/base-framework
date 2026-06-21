@@ -146,12 +146,12 @@ builder.Services.AddScoped<AudioProviderRequestStartedEtoHandler>();
 builder.Services.AddScoped<AudioProviderCompletedEtoHandler>();
 builder.Services.AddScoped<AudioFileDownloadStartedEtoHandler>();
 builder.Services.AddScoped<AudioFileDownloadCompletedEtoHandler>();
-builder.Services.AddScoped<AudioFileUploadStartedEtoHandler>();
 builder.Services.AddScoped<AudioFileUploadCompletedEtoHandler>();
 builder.Services.AddScoped<VideoProviderRequestStartedEtoHandler>();
 builder.Services.AddScoped<VideoProviderCompletedEtoHandler>();
 builder.Services.AddScoped<VideoFileDownloadStartedEtoHandler>();
-builder.Services.AddScoped<VideoFileUploadStartedEtoHandler>();
+builder.Services.AddScoped<VideoFileDownloadCompletedEtoHandler>();
+builder.Services.AddScoped<VideoFileUploadCompletedEtoHandler>();
 
 builder.Services.AddScoped<AudioProviderPollingStartedEtoHandler>();
 builder.Services.AddScoped<VideoProviderPollingStartedEtoHandler>();
@@ -166,12 +166,12 @@ builder.Services.AddHostedService<RabbitMqConsumerHostedService<AudioProviderReq
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<AudioProviderCompletedEto, AudioProviderCompletedEtoHandler>>();
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<AudioFileDownloadStartedEto, AudioFileDownloadStartedEtoHandler>>();
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<AudioFileDownloadCompletedEto, AudioFileDownloadCompletedEtoHandler>>();
-builder.Services.AddHostedService<RabbitMqConsumerHostedService<AudioFileUploadStartedEto, AudioFileUploadStartedEtoHandler>>();
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<AudioFileUploadCompletedEto, AudioFileUploadCompletedEtoHandler>>();
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<VideoProviderRequestStartedEto, VideoProviderRequestStartedEtoHandler>>();
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<VideoProviderCompletedEto, VideoProviderCompletedEtoHandler>>();
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<VideoFileDownloadStartedEto, VideoFileDownloadStartedEtoHandler>>();
-builder.Services.AddHostedService<RabbitMqConsumerHostedService<VideoFileUploadStartedEto, VideoFileUploadStartedEtoHandler>>();
+builder.Services.AddHostedService<RabbitMqConsumerHostedService<VideoFileDownloadCompletedEto, VideoFileDownloadCompletedEtoHandler>>();
+builder.Services.AddHostedService<RabbitMqConsumerHostedService<VideoFileUploadCompletedEto, VideoFileUploadCompletedEtoHandler>>();
 
 builder.Services.AddScoped<AudioProviderPollingAppService>();
 builder.Services.AddHostedService<AudioProviderPollingWorker>();
@@ -183,18 +183,6 @@ builder.Services.AddScoped<VideoRetryAppService>();
 builder.Services.AddHostedService<VideoRetryWorker>();
 
 var app = builder.Build();
-
-app.MapPost("/admin/audio-requests/{audioRequestId:guid}/upload/complete-manual",
-    async (
-        Guid audioRequestId,
-        ManualAudioUploadInput input,
-        VideoOperationAppService appService,
-        CancellationToken cancellationToken) =>
-    {
-        await appService.CompleteAudioUploadManuallyAsync(audioRequestId, input, cancellationToken);
-        return Results.Ok();
-    });
-
 
 app.MapPost("/scheduler/audio-polling",
     async (
@@ -230,12 +218,7 @@ app.MapPost("/scheduler/audio-polling",
             if (claimResult.ModifiedCount == 0)
                 continue;
 
-            await eventBus.PublishAsync(new AudioProviderPollingStartedEto
-            {
-                VideoRequestId = request.VideoRequestId,
-                AudioRequestId = request.Id,
-                ProviderTrackId = request.AudioProviderTrackingId
-            }, cancellationToken);
+            await eventBus.PublishAsync(new AudioProviderPollingStartedEto { VideoRequestId = request.VideoRequestId, AudioRequestId = request.Id, ProviderTrackId = request.AudioProviderTrackingId }, cancellationToken);
         }
 
         return Results.Ok(new { processed = requests.Count });
@@ -274,11 +257,7 @@ app.MapPost("/scheduler/video-polling",
             if (claimResult.ModifiedCount == 0)
                 continue;
 
-            await eventBus.PublishAsync(new VideoProviderPollingStartedEto
-            {
-                VideoRequestId = request.Id,
-                ProviderTrackId = request.VideoProviderTrackingId
-            }, cancellationToken);
+            await eventBus.PublishAsync(new VideoProviderPollingStartedEto { VideoRequestId = request.Id, ProviderTrackId = request.VideoProviderTrackingId }, cancellationToken);
         }
 
         return Results.Ok(new { processed = requests.Count });

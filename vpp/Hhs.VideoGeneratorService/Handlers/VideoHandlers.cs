@@ -54,6 +54,12 @@ public sealed class AudioProviderRequestStartedEtoHandler(VideoGeneratorInboxSto
         => appService.StartAudioProviderRequestAsync(@event, cancellationToken);
 }
 
+public sealed class AudioProviderPollingStartedEtoHandler(VideoGeneratorInboxStore inboxStore, VideoOperationAppService appService) : VideoEventHandlerBase<AudioProviderPollingStartedEto>(inboxStore)
+{
+    protected override Task ExecuteAsync(AudioProviderPollingStartedEto @event, CancellationToken cancellationToken)
+        => appService.ScheduleAudioProviderPollingAsync(@event, cancellationToken);
+}
+
 public sealed class AudioProviderCompletedEtoHandler(VideoGeneratorInboxStore inboxStore, VideoOperationAppService appService) : VideoEventHandlerBase<AudioProviderCompletedEto>(inboxStore)
 {
     protected override Task ExecuteAsync(AudioProviderCompletedEto @event, CancellationToken cancellationToken)
@@ -66,16 +72,10 @@ public sealed class AudioFileDownloadStartedEtoHandler(VideoGeneratorInboxStore 
         => appService.DownloadAudioFileAsync(@event, cancellationToken);
 }
 
-public sealed class AudioFileDownloadCompletedEtoHandler(VideoGeneratorInboxStore inboxStore) : VideoEventHandlerBase<AudioFileDownloadCompletedEto>(inboxStore)
+public sealed class AudioFileDownloadCompletedEtoHandler(VideoGeneratorInboxStore inboxStore, VideoOperationAppService appService) : VideoEventHandlerBase<AudioFileDownloadCompletedEto>(inboxStore)
 {
     protected override Task ExecuteAsync(AudioFileDownloadCompletedEto @event, CancellationToken cancellationToken)
-        => Task.CompletedTask;
-}
-
-public sealed class AudioFileUploadStartedEtoHandler(VideoGeneratorInboxStore inboxStore, VideoOperationAppService appService) : VideoEventHandlerBase<AudioFileUploadStartedEto>(inboxStore)
-{
-    protected override Task ExecuteAsync(AudioFileUploadStartedEto @event, CancellationToken cancellationToken)
-        => appService.UploadAudioFileAsync(@event, cancellationToken);
+        => appService.HandleAudioDownloadCompletedAsync(@event, cancellationToken);
 }
 
 public sealed class AudioFileUploadCompletedEtoHandler(VideoGeneratorInboxStore inboxStore, VideoOperationAppService appService) : VideoEventHandlerBase<AudioFileUploadCompletedEto>(inboxStore)
@@ -90,6 +90,12 @@ public sealed class VideoProviderRequestStartedEtoHandler(VideoGeneratorInboxSto
         => appService.StartVideoProviderRequestAsync(@event, cancellationToken);
 }
 
+public sealed class VideoProviderPollingStartedEtoHandler(VideoGeneratorInboxStore inboxStore, VideoOperationAppService appService) : VideoEventHandlerBase<VideoProviderPollingStartedEto>(inboxStore)
+{
+    protected override Task ExecuteAsync(VideoProviderPollingStartedEto @event, CancellationToken cancellationToken)
+        => appService.ScheduleVideoProviderPollingAsync(@event, cancellationToken);
+}
+
 public sealed class VideoProviderCompletedEtoHandler(VideoGeneratorInboxStore inboxStore, VideoOperationAppService appService) : VideoEventHandlerBase<VideoProviderCompletedEto>(inboxStore)
 {
     protected override Task ExecuteAsync(VideoProviderCompletedEto @event, CancellationToken cancellationToken)
@@ -102,20 +108,14 @@ public sealed class VideoFileDownloadStartedEtoHandler(VideoGeneratorInboxStore 
         => appService.DownloadVideoFileAsync(@event, cancellationToken);
 }
 
-public sealed class VideoFileUploadStartedEtoHandler(VideoGeneratorInboxStore inboxStore, VideoOperationAppService appService) : VideoEventHandlerBase<VideoFileUploadStartedEto>(inboxStore)
+public sealed class VideoFileDownloadCompletedEtoHandler(VideoGeneratorInboxStore inboxStore, VideoOperationAppService appService) : VideoEventHandlerBase<VideoFileDownloadCompletedEto>(inboxStore)
 {
-    protected override Task ExecuteAsync(VideoFileUploadStartedEto @event, CancellationToken cancellationToken)
-        => appService.UploadVideoFileAsync(@event, cancellationToken);
+    protected override Task ExecuteAsync(VideoFileDownloadCompletedEto @event, CancellationToken cancellationToken)
+        => appService.HandleVideoDownloadCompletedAsync(@event, cancellationToken);
 }
 
-public sealed class AudioProviderPollingStartedEtoHandler(VideoGeneratorInboxStore inboxStore, VideoOperationAppService appService) : VideoEventHandlerBase<AudioProviderPollingStartedEto>(inboxStore)
+public sealed class VideoFileUploadCompletedEtoHandler(VideoGeneratorInboxStore inboxStore, VideoOperationAppService appService) : VideoEventHandlerBase<VideoFileUploadCompletedEto>(inboxStore)
 {
-    protected override Task ExecuteAsync(AudioProviderPollingStartedEto @event, CancellationToken cancellationToken)
-        => appService.ScheduleAudioProviderPollingAsync(@event, cancellationToken);
-}
-
-public sealed class VideoProviderPollingStartedEtoHandler(VideoGeneratorInboxStore inboxStore, VideoOperationAppService appService) : VideoEventHandlerBase<VideoProviderPollingStartedEto>(inboxStore)
-{
-    protected override Task ExecuteAsync(VideoProviderPollingStartedEto @event, CancellationToken cancellationToken)
-        => appService.ScheduleVideoProviderPollingAsync(@event, cancellationToken);
+    protected override Task ExecuteAsync(VideoFileUploadCompletedEto @event, CancellationToken cancellationToken)
+        => appService.HandleVideoUploadCompletedAsync(@event, cancellationToken);
 }

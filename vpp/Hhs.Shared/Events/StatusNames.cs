@@ -37,6 +37,10 @@ public static class StatusNames
     // Audio/Video request statuses
     public const string AudioRequestCreated = "AUDIO_REQUEST_CREATED";
     public const string AudioProviderRequestRetrying = "AUDIO_PROVIDER_REQUEST_RETRYING";
+    public const string AudioFileDownloading = "AUDIO_FILE_DOWNLOADING";
+    public const string AudioFileDownloadCompleted = "AUDIO_FILE_DOWNLOAD_COMPLETED";
+    public const string AudioFileUploading = "AUDIO_FILE_UPLOADING";
+    public const string AudioFileUploadCompleted = "AUDIO_FILE_UPLOAD_COMPLETED";
     public const string Downloaded = "DOWNLOADED";
     public const string Uploading = "UPLOADING";
     public const string Uploaded = "UPLOADED";
@@ -46,8 +50,12 @@ public static class StatusNames
     public const string VideoProviderRequestStarted = "VIDEO_PROVIDER_REQUEST_STARTED";
     public const string VideoProviderPolling = "VIDEO_PROVIDER_POLLING";
     public const string VideoProviderCompleted = "VIDEO_PROVIDER_COMPLETED";
+    public const string VideoFileDownloading = "VIDEO_FILE_DOWNLOADING";
+    public const string VideoFileDownloaded = "VIDEO_FILE_DOWNLOADED";
     public const string VideoDownloading = "VIDEO_DOWNLOADING";
     public const string VideoDownloaded = "VIDEO_DOWNLOADED";
+    public const string VideoFileUploading = "VIDEO_FILE_UPLOADING";
+    public const string VideoFileUploadCompleted = "VIDEO_FILE_UPLOAD_COMPLETED";
     public const string VideoUploading = "VIDEO_UPLOADING";
 
     // Retry statuses

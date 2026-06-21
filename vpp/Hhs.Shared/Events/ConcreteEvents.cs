@@ -324,6 +324,8 @@ public sealed record AudioFileUploadCompletedEto : IntegrationEvent
     public Guid VideoRequestId { get; init; }
     public Guid AudioRequestId { get; init; }
     public string StorageUrl { get; init; } = default!;
+    public string CdnFileUrl { get; init; } = default!;
+    public string CdnProviderKey { get; init; } = default!;
 
     public AudioFileUploadCompletedEto()
     {
@@ -383,6 +385,19 @@ public sealed record VideoFileDownloadStartedEto : IntegrationEvent
     }
 }
 
+public sealed record VideoFileDownloadCompletedEto : IntegrationEvent
+{
+    public Guid VideoRequestId { get; init; }
+    public string LocalFilePath { get; init; } = default!;
+    public string ProviderFileUrl { get; init; } = default!;
+
+    public VideoFileDownloadCompletedEto()
+    {
+        EventName = EventNames.VideoFileDownloadCompleted;
+        Facility = EventNames.VideoFileDownloadCompleted;
+    }
+}
+
 public sealed record VideoFileUploadStartedEto : IntegrationEvent
 {
     public Guid VideoRequestId { get; init; }
@@ -392,6 +407,20 @@ public sealed record VideoFileUploadStartedEto : IntegrationEvent
     {
         EventName = EventNames.VideoFileUploadStarted;
         Facility = EventNames.VideoFileUploadStarted;
+    }
+}
+
+public sealed record VideoFileUploadCompletedEto : IntegrationEvent
+{
+    public Guid VideoRequestId { get; init; }
+    public string StorageUrl { get; init; } = default!;
+    public string CdnFileUrl { get; init; } = default!;
+    public string CdnProviderKey { get; init; } = default!;
+
+    public VideoFileUploadCompletedEto()
+    {
+        EventName = EventNames.VideoFileUploadCompleted;
+        Facility = EventNames.VideoFileUploadCompleted;
     }
 }
 

@@ -54,6 +54,7 @@ public static class EventNames
     public const string VideoFileDownloadStarted = "VIDEO_FILE_DOWNLOAD_STARTED";
     public const string VideoFileDownloadCompleted = "VIDEO_FILE_DOWNLOAD_COMPLETED";
     public const string VideoFileUploadStarted = "VIDEO_FILE_UPLOAD_STARTED";
+    public const string VideoFileUploadCompleted = "VIDEO_FILE_UPLOAD_COMPLETED";
     public const string VideoGenerationResultPublished = "VIDEO_GENERATION_RESULT_PUBLISHED";
 
     public const string StepFailed = "STEP_FAILED";

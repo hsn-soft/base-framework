@@ -6,6 +6,7 @@ using Hhs.VideoGeneratorService.Configuration.Providers.Video;
 using Hhs.VideoGeneratorService.Entities;
 using Hhs.VideoGeneratorService.Mongo;
 using Hhs.VideoGeneratorService.Providers;
+using Hhs.VideoGeneratorService.Providers.FileDownloader;
 using MongoDB.Driver;
 
 namespace Hhs.VideoGeneratorService.Services;
@@ -15,12 +16,11 @@ public sealed class VideoProviderPollingAppService(
     IVideoProviderResolver videoProviderResolver,
     IEventBus eventBus,
     ILogger<VideoProviderPollingAppService> logger,
-    HttpClient httpClient,
+    IFileDownloader fileDownloader,
     VideoFastExternalProviderSettings videoFastExternalSettings,
     VideoFastInternalProviderSettings videoFastInternalSettings,
     VideoQueueExternalProviderSettings videoQueueExternalSettings,
     VideoQueueInternalProviderSettings videoQueueInternalSettings,
-    StorageProviderSettings storageSettings,
     VideoPollingSettings pollingSettings)
 {
     private readonly VideoPollingSettings _pollingSettings = pollingSettings;
@@ -61,7 +61,7 @@ public sealed class VideoProviderPollingAppService(
                     await eventBus.PublishAsync(new StepFailedEto
                     {
                         RefContentId = request.RefContentId,
-                RefContentType = request.RefContentType,
+                        RefContentType = request.RefContentType,
                         CorrelationId = request.CorrelationId,
                         Step = EventNames.VideoProviderPollingStarted,
                         ErrorMessage = request.LastError,
@@ -89,7 +89,7 @@ public sealed class VideoProviderPollingAppService(
                     await eventBus.PublishAsync(new StepFailedEto
                     {
                         RefContentId = request.RefContentId,
-                RefContentType = request.RefContentType,
+                        RefContentType = request.RefContentType,
                         CorrelationId = request.CorrelationId,
                         Step = EventNames.VideoProviderPollingStarted,
                         ErrorMessage = request.LastError,
@@ -112,16 +112,8 @@ public sealed class VideoProviderPollingAppService(
                 if (string.IsNullOrWhiteSpace(status.ProviderFileUrl))
                     throw new InvalidOperationException("Video provider completed but file url is empty.");
 
-                // Download file from provider and upload to mock storage
-                var localFileName = $"local_video_{request.Id:N}.mp4";
-                var mockStorageUrl = await DownloadAndUploadToStorageAsync(
-                    status.ProviderFileUrl,
-                    localFileName,
-                    cancellationToken);
-
                 request.ProviderPollingCount++;
                 request.NextProviderPollAtUtc = null;
-                request.VideoProviderUrl = mockStorageUrl;
                 request.Status = StatusNames.VideoProviderCompleted;
                 request.CurrentStep = EventNames.VideoProviderCompleted;
                 request.LastError = null;
@@ -129,13 +121,14 @@ public sealed class VideoProviderPollingAppService(
 
                 await ReplaceVideoAsync(request, cancellationToken);
 
+                // Publish provider completed event - handler will trigger download cascade
                 await eventBus.PublishAsync(new VideoProviderCompletedEto
                 {
                     RefContentId = request.RefContentId,
-                RefContentType = request.RefContentType,
+                    RefContentType = request.RefContentType,
                     CorrelationId = request.CorrelationId,
                     VideoRequestId = request.Id,
-                    ProviderFileUrl = mockStorageUrl
+                    ProviderFileUrl = status.ProviderFileUrl
                 }, cancellationToken);
             }
             catch (Exception ex)
@@ -154,7 +147,7 @@ public sealed class VideoProviderPollingAppService(
                     await eventBus.PublishAsync(new StepFailedEto
                     {
                         RefContentId = request.RefContentId,
-                RefContentType = request.RefContentType,
+                        RefContentType = request.RefContentType,
                         CorrelationId = request.CorrelationId,
                         Step = EventNames.VideoProviderPollingStarted,
                         ErrorMessage = ex.Message,
@@ -199,40 +192,5 @@ public sealed class VideoProviderPollingAppService(
             x => x.Id == request.Id,
             request,
             cancellationToken: cancellationToken);
-    }
-
-    private async Task<string> DownloadAndUploadToStorageAsync(
-        string downloadUrl,
-        string fileName,
-        CancellationToken cancellationToken)
-    {
-        try
-        {
-            // Download file from provider
-            var fileContent = await httpClient.GetByteArrayAsync(downloadUrl, cancellationToken);
-
-            // Upload to mock storage
-            var storageUrl = $"{storageSettings.BaseUrl}/storage/upload-binary";
-            using (var content = new ByteArrayContent(fileContent))
-            {
-                var response = await httpClient.PostAsync(
-                    $"{storageUrl}?fileName={fileName}",
-                    content,
-                    cancellationToken);
-
-                response.EnsureSuccessStatusCode();
-
-                var responseJson = await response.Content.ReadAsStringAsync(cancellationToken);
-                var jsonDoc = System.Text.Json.JsonDocument.Parse(responseJson);
-                var remoteUrl = jsonDoc.RootElement.GetProperty("url").GetString();
-
-                return remoteUrl ?? throw new InvalidOperationException("No URL in storage response");
-            }
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Failed to download and upload video file from {DownloadUrl}", downloadUrl);
-            throw;
-        }
     }
 }
