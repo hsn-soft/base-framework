@@ -3,33 +3,20 @@ using Hhs.VideoGeneratorService.Configuration.Providers.Cdn;
 
 namespace Hhs.VideoGeneratorService.Providers.Cdn;
 
-public sealed class CdnLocalMinioProvider : ICdnProvider
+public sealed class CdnLocalMinioProvider(
+    CdnLocalMinioSettings settings,
+    HttpClient httpClient,
+    ILogger<CdnLocalMinioProvider> logger) : ICdnProvider
 {
     public string ProviderKey => ProviderKeys.CdnLocalMinio;
-    private readonly CdnLocalMinioSettings _settings;
-    private readonly HttpClient _httpClient;
-    private readonly ILogger<CdnLocalMinioProvider> _logger;
 
-    public CdnLocalMinioProvider(
-        CdnLocalMinioSettings settings,
-        HttpClient httpClient,
-        ILogger<CdnLocalMinioProvider> logger)
-    {
-        _settings = settings;
-        _httpClient = httpClient;
-        _logger = logger;
-    }
-
-    public async Task<(string StorageUrl, string CdnUrl)> UploadAsync(
-        Stream fileStream,
-        string filename,
-        CancellationToken cancellationToken)
+    public async Task<CdnUploadResult> UploadAsync(Stream fileStream, string filename, CancellationToken cancellationToken)
     {
         try
         {
-            if (_logger.IsEnabled(LogLevel.Information))
+            if (logger.IsEnabled(LogLevel.Information))
             {
-                _logger.LogInformation(
+                logger.LogInformation(
                     "Uploading file '{Filename}' to LocalMinio CDN endpoint",
                     filename);
             }
@@ -37,8 +24,17 @@ public sealed class CdnLocalMinioProvider : ICdnProvider
             var content = new MultipartFormDataContent();
             content.Add(new StreamContent(fileStream), "file", filename);
 
-            string uploadUrl = $"{_settings.BaseUrl.TrimEnd('/')}/upload";
-            var response = await _httpClient.PostAsync(uploadUrl, content, cancellationToken);
+            var request = new HttpRequestMessage(HttpMethod.Post, $"{settings.BaseUrl.TrimEnd('/')}/api/cdn/assets/upload")
+            {
+                Content = content
+            };
+
+            if (!string.IsNullOrEmpty(settings.APIKey))
+            {
+                request.Headers.Add("X-Api-Key", settings.APIKey);
+            }
+
+            var response = await httpClient.SendAsync(request, cancellationToken);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -51,31 +47,39 @@ public sealed class CdnLocalMinioProvider : ICdnProvider
             using var jsonDoc = System.Text.Json.JsonDocument.Parse(responseJson);
             var root = jsonDoc.RootElement;
 
-            string? fileId = root.TryGetProperty("fileId", out var fileIdElement)
-                ? fileIdElement.GetString()
-                : root.TryGetProperty("fileName", out var fileNameElement)
-                    ? fileNameElement.GetString()
-                    : throw new InvalidOperationException("No fileId in upload response");
+            // Parse CDN's response format
+            string? objectKey = root.TryGetProperty("objectKey", out var objectKeyElement)
+                ? objectKeyElement.GetString()
+                : null;
 
-            string storageUrl = $"{_settings.BaseUrl.TrimEnd('/')}/download/{fileId}";
-            string cdnUrl = $"{_settings.BaseUrl.TrimEnd('/')}/{_settings.ZonePath.Trim('/')}/{_settings.PathPrefix.Trim('/')}/{fileId}"
-                .Replace("//", "/")
-                .Replace(":///", "://");
+            if (objectKey is null)
+                throw new InvalidOperationException("No objectKey in upload response");
 
-            if (_logger.IsEnabled(LogLevel.Information))
+            string? cdnUrl = root.TryGetProperty("cdnUrl", out var cdnUrlElement)
+                ? cdnUrlElement.GetString()
+                : null;
+
+            if (cdnUrl is null)
+                throw new InvalidOperationException("No cdnUrl in upload response");
+
+            // Convert CDN response to standardized CdnUploadResult
+            // Storage URL: Private access with API key (ApplicationLayer responsibility)
+            var storageUrl = $"{settings.BaseUrl.TrimEnd('/')}/api/cdn/assets/download?key={Uri.EscapeDataString(objectKey)}";
+
+            if (logger.IsEnabled(LogLevel.Information))
             {
-                _logger.LogInformation(
-                    "File uploaded to LocalMinio CDN. FileId: {FileId}, StorageUrl: {StorageUrl}, CdnUrl: {CdnUrl}",
-                    fileId,
+                logger.LogInformation(
+                    "File uploaded to LocalMinio CDN. ObjectKey: {ObjectKey}, StorageUrl: {StorageUrl}, CdnUrl: {CdnUrl}",
+                    objectKey,
                     storageUrl,
                     cdnUrl);
             }
 
-            return (storageUrl, cdnUrl);
+            return new CdnUploadResult(storageUrl, cdnUrl);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to upload file '{Filename}' to LocalMinio CDN", filename);
+            logger.LogError(ex, "Failed to upload file '{Filename}' to LocalMinio CDN", filename);
             throw;
         }
     }
@@ -86,14 +90,21 @@ public sealed class CdnLocalMinioProvider : ICdnProvider
     {
         try
         {
-            if (_logger.IsEnabled(LogLevel.Information))
+            if (logger.IsEnabled(LogLevel.Information))
             {
-                _logger.LogInformation(
+                logger.LogInformation(
                     "Downloading file from LocalMinio CDN. Url: {StorageUrl}",
                     storageUrl);
             }
 
-            var response = await _httpClient.GetAsync(storageUrl, cancellationToken);
+            var request = new HttpRequestMessage(HttpMethod.Get, storageUrl);
+
+            if (!string.IsNullOrEmpty(settings.APIKey))
+            {
+                request.Headers.Add("X-Api-Key", settings.APIKey);
+            }
+
+            var response = await httpClient.SendAsync(request, cancellationToken);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -105,7 +116,7 @@ public sealed class CdnLocalMinioProvider : ICdnProvider
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to download file from LocalMinio CDN URL '{StorageUrl}'", storageUrl);
+            logger.LogError(ex, "Failed to download file from LocalMinio CDN URL '{StorageUrl}'", storageUrl);
             throw;
         }
     }

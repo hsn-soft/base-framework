@@ -18,6 +18,7 @@ public static class ProviderKeys
 
     // CDN Providers (Storage)
     public const string CdnLocalMinio = "cdn-local-minio";
+    public const string CdnAbc = "cdn-abc";
     public const string CdnBunnySelf = "cdn-bunny-self";
     public const string CdnBunnyS3 = "cdn-bunny-s3";
     public const string CdnAbcCloudFront = "cdn-abc-cloudfront";
