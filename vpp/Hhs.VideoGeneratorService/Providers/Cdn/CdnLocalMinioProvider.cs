@@ -37,8 +37,18 @@ public sealed class CdnLocalMinioProvider : ICdnProvider
             var content = new MultipartFormDataContent();
             content.Add(new StreamContent(fileStream), "file", filename);
 
-            string uploadUrl = $"{_settings.BaseUrl.TrimEnd('/')}/upload";
-            var response = await _httpClient.PostAsync(uploadUrl, content, cancellationToken);
+            var request = new HttpRequestMessage(HttpMethod.Post,
+                $"{_settings.BaseUrl.TrimEnd('/')}/api/cdn/assets/upload")
+            {
+                Content = content
+            };
+
+            if (!string.IsNullOrEmpty(_settings.APIKey))
+            {
+                request.Headers.Add("X-Api-Key", _settings.APIKey);
+            }
+
+            var response = await _httpClient.SendAsync(request, cancellationToken);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -51,23 +61,27 @@ public sealed class CdnLocalMinioProvider : ICdnProvider
             using var jsonDoc = System.Text.Json.JsonDocument.Parse(responseJson);
             var root = jsonDoc.RootElement;
 
-            string? fileId = root.TryGetProperty("fileId", out var fileIdElement)
-                ? fileIdElement.GetString()
-                : root.TryGetProperty("fileName", out var fileNameElement)
-                    ? fileNameElement.GetString()
-                    : throw new InvalidOperationException("No fileId in upload response");
+            string? cdnUrl = root.TryGetProperty("cdnUrl", out var cdnUrlElement)
+                ? cdnUrlElement.GetString()
+                : null;
 
-            string storageUrl = $"{_settings.BaseUrl.TrimEnd('/')}/download/{fileId}";
-            string cdnUrl = $"{_settings.BaseUrl.TrimEnd('/')}/{_settings.ZonePath.Trim('/')}/{_settings.PathPrefix.Trim('/')}/{fileId}"
-                .Replace("//", "/")
-                .Replace(":///", "://");
+            if (cdnUrl is null)
+                throw new InvalidOperationException("No cdnUrl in upload response");
+
+            string? objectKey = root.TryGetProperty("objectKey", out var objectKeyElement)
+                ? objectKeyElement.GetString()
+                : null;
+
+            if (objectKey is null)
+                throw new InvalidOperationException("No objectKey in upload response");
+
+            string storageUrl = objectKey;
 
             if (_logger.IsEnabled(LogLevel.Information))
             {
                 _logger.LogInformation(
-                    "File uploaded to LocalMinio CDN. FileId: {FileId}, StorageUrl: {StorageUrl}, CdnUrl: {CdnUrl}",
-                    fileId,
-                    storageUrl,
+                    "File uploaded to LocalMinio CDN. ObjectKey: {ObjectKey}, CdnUrl: {CdnUrl}",
+                    objectKey,
                     cdnUrl);
             }
 

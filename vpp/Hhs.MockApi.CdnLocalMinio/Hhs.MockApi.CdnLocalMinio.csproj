@@ -9,6 +9,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.5" />
     <PackageReference Include="AWSSDK.S3" Version="3.7.400" />
+    <PackageReference Include="Minio" Version="7.0.0" />
   </ItemGroup>
 
 </Project>
