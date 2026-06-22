@@ -56,7 +56,7 @@ public sealed class PublicCdnController(
         if (!contentTypeProvider.TryGetContentType(path, out var contentType))
             contentType = "application/octet-stream";
 
-        Response.Headers.CacheControl = "public, max-age=31536000, immutable";
+        Response.Headers.CacheControl = _minioOptions.CacheControl;
 
         return File(memoryStream, contentType);
     }

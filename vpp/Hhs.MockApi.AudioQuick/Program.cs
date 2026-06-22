@@ -8,18 +8,19 @@ builder.Services.AddSingleton<AudioQuickService>();
 
 var app = builder.Build();
 
-var mockFilesDir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "media");
+var options = app.Services.GetRequiredService<IOptions<MockApiOptions>>().Value;
+var mockFilesDir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", options.MediaDirectory);
 Directory.CreateDirectory(mockFilesDir);
 
 app.MapPost("/audio/generate", async (AudioRequest request, AudioQuickService service, CancellationToken ct) =>
 {
-    var (trackingId, fileUrl, fileName) = await service.GenerateAudioAsync(request.InputText, mockFilesDir, ct);
-    return Results.Ok(new { provider = "audio-quick", remoteFileUrl = fileUrl, fileName, processingMs = 3000, trackingId });
+    var (trackingId, fileUrl, fileName) = await service.GenerateAudioAsync(request.InputText, mockFilesDir, options, ct);
+    return Results.Ok(new { provider = "audio-quick", remoteFileUrl = fileUrl, fileName, processingMs = options.ProcessingDelaySeconds * 1000, trackingId });
 });
 
 app.MapGet("/audio/download/{trackingId}", async (string trackingId) =>
 {
-    var filePath = AudioQuickService.GetFilePath(trackingId, mockFilesDir);
+    var filePath = AudioQuickService.GetFilePath(trackingId, mockFilesDir, options);
     if (!System.IO.File.Exists(filePath))
         return Results.NotFound();
 
@@ -29,7 +30,7 @@ app.MapGet("/audio/download/{trackingId}", async (string trackingId) =>
 
 app.MapGet("/audio/status/{trackingId}", async (string trackingId, AudioQuickService service) =>
 {
-    var filePath = AudioQuickService.GetFilePath(trackingId, mockFilesDir);
+    var filePath = AudioQuickService.GetFilePath(trackingId, mockFilesDir, options);
     if (!System.IO.File.Exists(filePath))
         return Results.NotFound();
 
@@ -50,6 +51,9 @@ namespace Hhs.MockApi.AudioQuick
     public sealed class MockApiOptions
     {
         public string SelfBaseUrl { get; set; } = string.Empty;
+        public int ProcessingDelaySeconds { get; set; } = 3;
+        public string FileNamePrefix { get; set; } = "mock_audio_quick_";
+        public string MediaDirectory { get; set; } = "media";
     }
 
     public sealed class AudioQuickService
@@ -63,12 +67,12 @@ namespace Hhs.MockApi.AudioQuick
 
         public string GetBaseUrl() => _options.Value.SelfBaseUrl;
 
-        public async Task<(string TrackingId, string FileUrl, string FileName)> GenerateAudioAsync(string inputText, string mockFilesDir, CancellationToken cancellationToken)
+        public async Task<(string TrackingId, string FileUrl, string FileName)> GenerateAudioAsync(string inputText, string mockFilesDir, MockApiOptions options, CancellationToken cancellationToken)
         {
-            await Task.Delay(3000, cancellationToken);
+            await Task.Delay(options.ProcessingDelaySeconds * 1000, cancellationToken);
             var trackingId = Guid.NewGuid().ToString("N");
 
-            var filePath = GetFilePath(trackingId, mockFilesDir);
+            var filePath = GetFilePath(trackingId, mockFilesDir, options);
             var fileName = Path.GetFileName(filePath);
 
             await System.IO.File.WriteAllTextAsync(filePath, $"Mock Audio File\nTracking ID: {trackingId}\nCreated: {DateTime.UtcNow:O}", cancellationToken);
@@ -77,9 +81,9 @@ namespace Hhs.MockApi.AudioQuick
             return (trackingId, downloadUrl, fileName);
         }
 
-        public static string GetFilePath(string trackingId, string mockFilesDir)
+        public static string GetFilePath(string trackingId, string mockFilesDir, MockApiOptions options)
         {
-            return Path.Combine(mockFilesDir, $"mock_audio_quick_{trackingId}.mp3.txt");
+            return Path.Combine(mockFilesDir, $"{options.FileNamePrefix}{trackingId}.mp3.txt");
         }
     }
 

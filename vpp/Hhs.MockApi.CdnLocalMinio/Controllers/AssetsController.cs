@@ -29,7 +29,7 @@ public sealed class AssetsController(
 
         var safeFileName = Path.GetFileName(request.File.FileName);
 
-        string objectKey = $"{customer.TenantKey}/{customer.RootPath}/{DateTime.UtcNow:yyyy-MM-dd}-{Guid.NewGuid():N}-{safeFileName}";
+        string objectKey = $"{customer.TenantKey}/{customer.RootPath}/{DateTime.UtcNow.ToString(_minioOptions.ObjectKeyDateFormat)}-{Guid.NewGuid():N}-{safeFileName}";
 
         await using var stream = request.File.OpenReadStream();
 

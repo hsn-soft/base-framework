@@ -9,18 +9,19 @@ builder.Services.AddSingleton<VideoQueueExternalService>();
 
 var app = builder.Build();
 
-var mockFilesDir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "media");
+var options = app.Services.GetRequiredService<IOptions<MockApiOptions>>().Value;
+var mockFilesDir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", options.MediaDirectory);
 Directory.CreateDirectory(mockFilesDir);
 
 app.MapPost("/video/generate", (VideoRequest request, VideoQueueExternalService service) =>
 {
     var trackingId = service.CreateRequest(request.AudioUrls);
-    return Results.Ok(new { provider = "video-queue-external", trackingId, pollingWindowSec = 150 });
+    return Results.Ok(new { provider = "video-queue-external", trackingId, pollingWindowSec = options.PollingWindowSeconds });
 });
 
 app.MapGet("/video/status/{trackingId}", async (string trackingId, VideoQueueExternalService service, CancellationToken ct) =>
 {
-    var (isReady, fileUrl, error, fileName) = await service.GetStatusAsync(trackingId, mockFilesDir, ct);
+    var (isReady, fileUrl, error, fileName) = await service.GetStatusAsync(trackingId, mockFilesDir, options, ct);
     if (!isReady)
         return Results.Ok(new { provider = "video-queue-external", trackingId, status = "processing", error });
     return Results.Ok(new { provider = "video-queue-external", trackingId, status = "completed", remoteFileUrl = fileUrl, fileName });
@@ -28,7 +29,7 @@ app.MapGet("/video/status/{trackingId}", async (string trackingId, VideoQueueExt
 
 app.MapGet("/video/download/{trackingId}", async (string trackingId) =>
 {
-    var filePath = VideoQueueExternalService.GetFilePath(trackingId, mockFilesDir);
+    var filePath = VideoQueueExternalService.GetFilePath(trackingId, mockFilesDir, options);
     if (!System.IO.File.Exists(filePath))
         return Results.NotFound();
 
@@ -43,6 +44,10 @@ namespace Hhs.MockApi.VideoQueueExternal
     public sealed class MockApiOptions
     {
         public string SelfBaseUrl { get; set; } = string.Empty;
+        public int ProcessingDelaySeconds { get; set; } = 30;
+        public int PollingWindowSeconds { get; set; } = 150;
+        public string FileNamePrefix { get; set; } = "mock_video_queue_external_";
+        public string MediaDirectory { get; set; } = "media";
     }
 
     public sealed class VideoQueueExternalService
@@ -63,37 +68,37 @@ namespace Hhs.MockApi.VideoQueueExternal
             return trackingId;
         }
 
-        public async Task<(bool IsReady, string? FileUrl, string? Error, string? FileName)> GetStatusAsync(string trackingId, string mockFilesDir, CancellationToken cancellationToken)
+        public async Task<(bool IsReady, string? FileUrl, string? Error, string? FileName)> GetStatusAsync(string trackingId, string mockFilesDir, MockApiOptions options, CancellationToken cancellationToken)
         {
             if (!Store.TryGetValue(trackingId, out var entry))
                 return (false, null, "Not found", null);
 
             var elapsed = DateTime.UtcNow - entry.CreatedAt;
-            if (elapsed.TotalSeconds < 30)
+            if (elapsed.TotalSeconds < options.ProcessingDelaySeconds)
                 return (false, null, null, null);
 
-            var filePath = GetFilePath(trackingId, mockFilesDir);
+            var filePath = GetFilePath(trackingId, mockFilesDir, options);
             var fileName = Path.GetFileName(filePath);
 
             if (!System.IO.File.Exists(filePath))
             {
                 var audioInfo = entry.AudioUrls?.Count > 0 ? $"Audio URLs: {string.Join(", ", entry.AudioUrls)}" : "No audio";
-                await System.IO.File.WriteAllTextAsync(filePath, $"Mock Video File\nTracking ID: {trackingId}\n{audioInfo}\nCreated: {DateTime.UtcNow:O}", cancellationToken);
+                await System.IO.File.WriteAllTextAsync(filePath, $"Mock Video File (External Audio)\nTracking ID: {trackingId}\n{audioInfo}\nCreated: {DateTime.UtcNow:O}", cancellationToken);
             }
 
             var downloadUrl = $"{_options.Value.SelfBaseUrl}/video/download/{trackingId}";
             return (true, downloadUrl, null, fileName);
         }
 
-        public static string GetFilePath(string trackingId, string mockFilesDir)
+        public static string GetFilePath(string trackingId, string mockFilesDir, MockApiOptions options)
         {
-            return Path.Combine(mockFilesDir, $"mock_video_queue_external_{trackingId}.mp4.txt");
+            return Path.Combine(mockFilesDir, $"{options.FileNamePrefix}{trackingId}.mp4.txt");
         }
     }
 
     public sealed class VideoQueueExternalEntry
     {
-        public List<string> AudioUrls { get; set; } = new();
+        public List<string> AudioUrls { get; set; } = [];
         public DateTime CreatedAt { get; set; }
     }
 

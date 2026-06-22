@@ -91,6 +91,9 @@ builder.Services.AddSingleton(cdnBunnyS3Settings);
 builder.Services.AddScoped<ICdnProvider, CdnLocalMinioProvider>();
 builder.Services.AddScoped<ICdnProvider, CdnBunnySelfProvider>();
 builder.Services.AddScoped<ICdnProvider, CdnBunnyS3Provider>();
+builder.Services.AddScoped<ICdnProviderResolver, CdnProviderResolver>();
+
+// ============================================================================
 // 5. POLLING & RETRY CONFIGURATION
 // ============================================================================
 
