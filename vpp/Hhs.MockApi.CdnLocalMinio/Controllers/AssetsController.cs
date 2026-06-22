@@ -29,8 +29,7 @@ public sealed class AssetsController(
 
         var safeFileName = Path.GetFileName(request.File.FileName);
 
-        var objectKey =
-            $"{customer.TenantKey}/{customer.RootPath}/{DateTime.UtcNow:yyyy/MM/dd}/{Guid.NewGuid():N}-{safeFileName}";
+        var objectKey = $"{customer.TenantKey}/{customer.RootPath}/{DateTime.UtcNow:yyyy/MM/dd}/{Guid.NewGuid():N}-{safeFileName}";
 
         await using var stream = request.File.OpenReadStream();
 
@@ -45,7 +44,6 @@ public sealed class AssetsController(
 
         var relativePath = objectKey.Substring(objectKey.IndexOf(customer.RootPath));
         var cdnUrl = $"{customer.BaseUrl}/{relativePath}";
-        var storageUrl = $"{Request.Scheme}://{Request.Host}/api/cdn/assets/download?key={Uri.EscapeDataString(objectKey)}";
 
         return Ok(new UploadCdnFileResponse
         {

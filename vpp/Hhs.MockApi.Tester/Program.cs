@@ -4,8 +4,8 @@ using System.Text.Json;
 const string testFilePath = "test.txt";
 const string cdnApiUrl = "http://localhost:5070";
 const string storageApiUrl = "http://localhost:5074";
-const string apiKey = "ciner-secret-api-key";
-const string storageApiKey = "storage-secret-api-key";
+const string apiKey = "techsummus-cdn-secret-api-key";
+const string storageApiKey = "techsummus-storage-secret-api-key";
 
 Console.WriteLine("╔════════════════════════════════════════════════════════════════╗");
 Console.WriteLine("║         Mock API Test Suite - Choose Your Test                 ║");
@@ -19,8 +19,8 @@ if (!File.Exists(testFilePath))
     return;
 }
 
-var fileBytes = await File.ReadAllBytesAsync(testFilePath);
-var originalHash = GetHash(fileBytes);
+byte[] fileBytes = await File.ReadAllBytesAsync(testFilePath);
+string originalHash = GetHash(fileBytes);
 Console.WriteLine($"✅ Dosya hazır: {testFilePath}");
 Console.WriteLine($"   Boyut: {fileBytes.Length} bytes");
 Console.WriteLine($"   Hash: {originalHash}\n");
@@ -32,7 +32,7 @@ Console.WriteLine("1 = CDN API (Hhs.MockApi.CdnLocalMinio)");
 Console.WriteLine("2 = Storage API (Hhs.MockApi.StorageXyz)");
 Console.WriteLine();
 
-var choice = Console.ReadLine();
+string? choice = Console.ReadLine();
 
 switch (choice)
 {
@@ -86,11 +86,11 @@ async Task TestCdnApi(HttpClient client, byte[] fileBytes, string originalHash)
                 return;
             }
 
-            var jsonContent = await uploadResponse.Content.ReadAsStringAsync();
+            string jsonContent = await uploadResponse.Content.ReadAsStringAsync();
             var jsonDoc = JsonDocument.Parse(jsonContent);
             var root = jsonDoc.RootElement;
 
-            var objectKey = root.GetProperty("objectKey").GetString();
+            string? objectKey = root.GetProperty("objectKey").GetString();
             cdnUrl = root.GetProperty("cdnUrl").GetString();
             storageUrl = $"{cdnApiUrl}/api/cdn/assets/download?key={Uri.EscapeDataString(objectKey)}";
 
@@ -112,8 +112,8 @@ async Task TestCdnApi(HttpClient client, byte[] fileBytes, string originalHash)
             return;
         }
 
-        var storageBytes = await storageResponse.Content.ReadAsByteArrayAsync();
-        var storageHash = GetHash(storageBytes);
+        byte[] storageBytes = await storageResponse.Content.ReadAsByteArrayAsync();
+        string storageHash = GetHash(storageBytes);
 
         Console.WriteLine($"✅ Download successful (200 OK)");
         Console.WriteLine($"  Hash match: {(storageHash == originalHash ? "✅ YES" : "❌ NO")}\n");
@@ -127,8 +127,8 @@ async Task TestCdnApi(HttpClient client, byte[] fileBytes, string originalHash)
             return;
         }
 
-        var cdnBytes = await cdnResponse.Content.ReadAsByteArrayAsync();
-        var cdnHash = GetHash(cdnBytes);
+        byte[] cdnBytes = await cdnResponse.Content.ReadAsByteArrayAsync();
+        string cdnHash = GetHash(cdnBytes);
 
         Console.WriteLine($"✅ Download successful (200 OK)");
         Console.WriteLine($"  Hash match: {(cdnHash == originalHash ? "✅ YES" : "❌ NO")}\n");
@@ -136,7 +136,7 @@ async Task TestCdnApi(HttpClient client, byte[] fileBytes, string originalHash)
         // 4️⃣ SECURITY TEST
         Console.WriteLine("4️⃣ SECURITY TEST");
         var unauthorizedResponse = await client.GetAsync(storageUrl);
-        var isSecure = unauthorizedResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized;
+        bool isSecure = unauthorizedResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized;
 
         Console.WriteLine($"StorageUrl without API Key: {(isSecure ? "✅ 401 Unauthorized" : "❌ EXPOSED")}\n");
 
@@ -189,7 +189,7 @@ async Task TestStorageApi(HttpClient client, byte[] fileBytes, string originalHa
                 return;
             }
 
-            var jsonContent = await uploadResponse.Content.ReadAsStringAsync();
+            string jsonContent = await uploadResponse.Content.ReadAsStringAsync();
             var jsonDoc = JsonDocument.Parse(jsonContent);
             var root = jsonDoc.RootElement;
 
@@ -201,7 +201,7 @@ async Task TestStorageApi(HttpClient client, byte[] fileBytes, string originalHa
 
         // 2️⃣ AUTHENTICATED DOWNLOAD
         Console.WriteLine("2️⃣ AUTHENTICATED DOWNLOAD");
-        var downloadUrl = $"{storageApiUrl}/api/storage/download?key={Uri.EscapeDataString(objectKey)}";
+        string downloadUrl = $"{storageApiUrl}/api/storage/download?key={Uri.EscapeDataString(objectKey)}";
         var downloadRequest = new HttpRequestMessage(HttpMethod.Get, downloadUrl);
         downloadRequest.Headers.Add("X-Api-Key", storageApiKey);
 
@@ -212,8 +212,8 @@ async Task TestStorageApi(HttpClient client, byte[] fileBytes, string originalHa
             return;
         }
 
-        var downloadedBytes = await downloadResponse.Content.ReadAsByteArrayAsync();
-        var downloadedHash = GetHash(downloadedBytes);
+        byte[] downloadedBytes = await downloadResponse.Content.ReadAsByteArrayAsync();
+        string downloadedHash = GetHash(downloadedBytes);
 
         Console.WriteLine($"✅ Download successful (200 OK)");
         Console.WriteLine($"  Hash match: {(downloadedHash == originalHash ? "✅ YES" : "❌ NO")}\n");
@@ -221,7 +221,7 @@ async Task TestStorageApi(HttpClient client, byte[] fileBytes, string originalHa
         // 3️⃣ SECURITY TEST - Download without API Key
         Console.WriteLine("3️⃣ SECURITY TEST - Download Protection");
         var unauthorizedResponse = await client.GetAsync(downloadUrl);
-        var isSecure = unauthorizedResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized;
+        bool isSecure = unauthorizedResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized;
 
         Console.WriteLine($"Download without API Key: {(isSecure ? "✅ 401 Unauthorized" : "❌ EXPOSED")}\n");
 
@@ -231,7 +231,7 @@ async Task TestStorageApi(HttpClient client, byte[] fileBytes, string originalHa
         {
             formContent.Add(new ByteArrayContent(fileBytes), "file", testFilePath);
             var uploadResponse = await client.PostAsync($"{storageApiUrl}/api/storage/upload", formContent);
-            var uploadSecure = uploadResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized;
+            bool uploadSecure = uploadResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized;
 
             Console.WriteLine($"Upload without API Key: {(uploadSecure ? "✅ 401 Unauthorized" : "❌ EXPOSED")}\n");
         }
@@ -251,6 +251,6 @@ async Task TestStorageApi(HttpClient client, byte[] fileBytes, string originalHa
 
 static string GetHash(byte[] data)
 {
-    var hash = SHA256.HashData(data);
+    byte[] hash = SHA256.HashData(data);
     return Convert.ToHexString(hash)[..16];
 }
