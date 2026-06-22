@@ -21,6 +21,8 @@ public sealed class AssetsController(
     public async Task<IActionResult> Upload([FromForm] UploadCdnFileRequest request, CancellationToken cancellationToken)
     {
         var customer = ResolveCustomer();
+        if (customer is null)
+            return Unauthorized(new { error = "Invalid API key." });
 
         if (request.File.Length == 0)
             return BadRequest(new { error = "File is empty." });
@@ -44,24 +46,55 @@ public sealed class AssetsController(
 
         var relativePath = objectKey.Replace(customer.RootPath + "/", "");
         var cdnUrl = $"{customer.BaseUrl}/{relativePath}";
+        var storageUrl = $"{Request.Scheme}://{Request.Host}/api/cdn/assets/storage/download?key={Uri.EscapeDataString(objectKey)}";
 
         return Ok(new UploadCdnFileResponse
         {
-            CdnUrl = cdnUrl,
-            ObjectKey = objectKey
+            StorageUrl = storageUrl,
+            CdnUrl = cdnUrl
         });
     }
 
-    private CdnCustomerOptions ResolveCustomer()
+    [HttpGet("storage/download")]
+    public async Task<IActionResult> DownloadFromStorage([FromQuery] string key, CancellationToken cancellationToken)
+    {
+        var customer = ResolveCustomer();
+        if (customer is null)
+            return Unauthorized(new { error = "API key is required." });
+
+        if (string.IsNullOrEmpty(key))
+            return BadRequest(new { error = "Object key is required." });
+
+        var memoryStream = new MemoryStream();
+
+        try
+        {
+            var getArgs = new GetObjectArgs()
+                .WithBucket(_minioOptions.BucketName)
+                .WithObject(key)
+                .WithCallbackStream(stream =>
+                {
+                    stream.CopyTo(memoryStream);
+                });
+
+            await minioClient.GetObjectAsync(getArgs, cancellationToken);
+        }
+        catch
+        {
+            return NotFound(new { error = "File not found in storage." });
+        }
+
+        memoryStream.Position = 0;
+
+        var fileName = Path.GetFileName(key);
+        return File(memoryStream, "application/octet-stream", fileName);
+    }
+
+    private CdnCustomerOptions? ResolveCustomer()
     {
         if (!Request.Headers.TryGetValue("X-Api-Key", out var apiKey))
-            throw new UnauthorizedAccessException("API key is required.");
+            return null;
 
-        var customer = _customers.FirstOrDefault(x => x.ApiKey == apiKey.ToString());
-
-        if (customer is null)
-            throw new UnauthorizedAccessException("Invalid API key.");
-
-        return customer;
+        return _customers.FirstOrDefault(x => x.ApiKey == apiKey.ToString());
     }
 }

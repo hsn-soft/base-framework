@@ -61,6 +61,13 @@ public sealed class CdnLocalMinioProvider : ICdnProvider
             using var jsonDoc = System.Text.Json.JsonDocument.Parse(responseJson);
             var root = jsonDoc.RootElement;
 
+            string? storageUrl = root.TryGetProperty("storageUrl", out var storageUrlElement)
+                ? storageUrlElement.GetString()
+                : null;
+
+            if (storageUrl is null)
+                throw new InvalidOperationException("No storageUrl in upload response");
+
             string? cdnUrl = root.TryGetProperty("cdnUrl", out var cdnUrlElement)
                 ? cdnUrlElement.GetString()
                 : null;
@@ -68,20 +75,11 @@ public sealed class CdnLocalMinioProvider : ICdnProvider
             if (cdnUrl is null)
                 throw new InvalidOperationException("No cdnUrl in upload response");
 
-            string? objectKey = root.TryGetProperty("objectKey", out var objectKeyElement)
-                ? objectKeyElement.GetString()
-                : null;
-
-            if (objectKey is null)
-                throw new InvalidOperationException("No objectKey in upload response");
-
-            string storageUrl = objectKey;
-
             if (_logger.IsEnabled(LogLevel.Information))
             {
                 _logger.LogInformation(
-                    "File uploaded to LocalMinio CDN. ObjectKey: {ObjectKey}, CdnUrl: {CdnUrl}",
-                    objectKey,
+                    "File uploaded to LocalMinio CDN. StorageUrl: {StorageUrl}, CdnUrl: {CdnUrl}",
+                    storageUrl,
                     cdnUrl);
             }
 
