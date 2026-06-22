@@ -17,7 +17,7 @@ namespace Hhs.VideoGeneratorService.Services;
 
 public sealed class VideoOperationAppService(
     VideoMongoContext context,
-    IRemoteFileDownloader fileDownloader,
+    IRemoteFileDownloader remoteFileDownloader,
     ICdnProviderResolver cdnProviderResolver,
     IEventBus eventBus,
     IVideoProviderResolver videoProviderResolver,
@@ -320,10 +320,8 @@ public sealed class VideoOperationAppService(
 
             await ReplaceAudioAsync(audioRequest, cancellationToken);
 
-            var (success, filename) = await fileDownloader.DownloadAsync(@event.ProviderFileUrl, "mp3", cancellationToken);
-            if (!success) throw new InvalidOperationException($"Failed to download audio file: {filename}");
-            string downloadDir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", systemCdnSettings.LocalDownloadPath);
-            string audioLocalPath = Path.Combine(downloadDir, filename);
+            var (success, audioLocalPath) = await remoteFileDownloader.DownloadAsync(@event.ProviderFileUrl, cancellationToken);
+            if (!success) throw new InvalidOperationException($"Failed to download audio file: {audioLocalPath}");
 
             audioRequest.AudioLocalPath = audioLocalPath;
             audioRequest.Status = StatusNames.Downloaded;
@@ -604,10 +602,8 @@ public sealed class VideoOperationAppService(
 
             await ReplaceVideoAsync(videoRequest, cancellationToken);
 
-            var (success, filename) = await fileDownloader.DownloadAsync(@event.ProviderFileUrl, "mp4", cancellationToken);
-            if (!success) throw new InvalidOperationException($"Failed to download video file: {filename}");
-            string downloadDir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", systemCdnSettings.LocalDownloadPath);
-            string videoLocalPath = Path.Combine(downloadDir, filename);
+            var (success, videoLocalPath) = await remoteFileDownloader.DownloadAsync(@event.ProviderFileUrl, cancellationToken);
+            if (!success) throw new InvalidOperationException($"Failed to download video file: {videoLocalPath}");
 
             videoRequest.VideoLocalPath = videoLocalPath;
             videoRequest.Status = StatusNames.VideoDownloaded;

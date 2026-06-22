@@ -2,11 +2,9 @@ using Hhs.Shared.Events;
 using Hhs.Shared.RabbitMQ;
 using Hhs.Shared.Configuration;
 using Hhs.VideoGeneratorService.Configuration;
-using Hhs.VideoGeneratorService.Configuration.Providers.Audio;
 using Hhs.VideoGeneratorService.Entities;
 using Hhs.VideoGeneratorService.Mongo;
 using Hhs.VideoGeneratorService.Providers;
-using Hhs.VideoGeneratorService.Providers.FileDownloader;
 using MongoDB.Driver;
 
 namespace Hhs.VideoGeneratorService.Services;
@@ -16,13 +14,8 @@ public sealed class AudioProviderPollingAppService(
     IAudioProviderResolver audioProviderResolver,
     IEventBus eventBus,
     ILogger<AudioProviderPollingAppService> logger,
-    IRemoteFileDownloader fileDownloader,
-    AudioFastProviderSettings audioFastSettings,
-    AudioQueueProviderSettings audioQueueSettings,
     AudioPollingSettings pollingSettings)
 {
-    private readonly AudioPollingSettings _pollingSettings = pollingSettings;
-
     public async Task PollDueAudioRequestsAsync(CancellationToken cancellationToken)
     {
         var now = DateTime.UtcNow;
@@ -100,7 +93,7 @@ public sealed class AudioProviderPollingAppService(
                 if (!status.IsCompleted)
                 {
                     request.ProviderPollingCount++;
-                    request.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(_pollingSettings.IntervalSeconds);
+                    request.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(pollingSettings.IntervalSeconds);
                     request.UpdatedAtUtc = DateTime.UtcNow;
 
                     await ReplaceAudioAsync(request, cancellationToken);
@@ -155,7 +148,7 @@ public sealed class AudioProviderPollingAppService(
                 }
                 else
                 {
-                    request.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(_pollingSettings.BackoffIntervalSeconds);
+                    request.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(pollingSettings.BackoffIntervalSeconds);
                     await ReplaceAudioAsync(request, cancellationToken);
                 }
 
@@ -180,7 +173,7 @@ public sealed class AudioProviderPollingAppService(
                 x.NextProviderPollAtUtc <= now &&
                 x.AudioProviderTrackingId != null,
             Builders<AudioRequest>.Update
-                .Set(x => x.NextProviderPollAtUtc, DateTime.UtcNow.AddSeconds(_pollingSettings.ErrorRescheduleDelaySeconds))
+                .Set(x => x.NextProviderPollAtUtc, DateTime.UtcNow.AddSeconds(pollingSettings.ErrorRescheduleDelaySeconds))
                 .Set(x => x.UpdatedAtUtc, DateTime.UtcNow),
             cancellationToken: cancellationToken);
     }

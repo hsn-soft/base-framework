@@ -6,14 +6,13 @@ namespace Hhs.VideoGeneratorService.Providers.FileDownloader;
 public sealed class RemoteFileDownloader(
     IOptions<SystemCdnSettings> cdnSettings,
     ILogger<RemoteFileDownloader> logger,
-    HttpClient httpClient) : IRemoteFileDownloader
+    HttpClient httpClient,
+    IHostEnvironment environment)
+    : IRemoteFileDownloader
 {
-    private readonly SystemCdnSettings _cdnSettings = cdnSettings.Value;
+    private readonly SystemCdnSettings _cdnSettings = cdnSettings.Value ?? throw new ArgumentNullException(nameof(cdnSettings));
 
-    public async Task<(bool Success, string Result)> DownloadAsync(
-        string remoteUrl,
-        string extension,
-        CancellationToken cancellationToken)
+    public async Task<(bool Success, string Result)> DownloadAsync(string remoteUrl, CancellationToken cancellationToken)
     {
         try
         {
@@ -22,17 +21,25 @@ public sealed class RemoteFileDownloader(
                 return (false, "Remote URL is required");
             }
 
-            if (string.IsNullOrWhiteSpace(extension))
+            // Extract filename and extension from URL
+            var uri = new Uri(remoteUrl);
+            string filename = Path.GetFileName(uri.LocalPath);
+
+            if (string.IsNullOrWhiteSpace(filename))
             {
-                return (false, "File extension is required");
+                filename = $"{Guid.CreateVersion7().ToString("N").ToLower()}";
             }
 
-            // Ensure download directory exists
-            string downloadDir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", _cdnSettings.LocalDownloadPath);
-            var dirInfo = Directory.CreateDirectory(downloadDir);
+            // Build download directory path
+            string downloadDir = _cdnSettings.LocalDownloadPath;
 
-            // Generate filename
-            string filename = $"{Guid.CreateVersion7().ToString("N").ToLower()}.{extension}";
+            // If development environment, prepend relative path components
+            if (environment.IsDevelopment())
+            {
+                downloadDir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", downloadDir);
+            }
+
+            var dirInfo = Directory.CreateDirectory(downloadDir);
             string filePath = Path.Combine(dirInfo.FullName, filename);
 
             try
@@ -54,8 +61,8 @@ public sealed class RemoteFileDownloader(
                     }
                 }
 
-                logger.LogInformation("File downloaded successfully: {Filename} from {RemoteUrl}", filename, remoteUrl);
-                return (true, filename);
+                logger.LogInformation("File downloaded successfully: {FilePath} from {RemoteUrl}", filePath, remoteUrl);
+                return (true, filePath);
             }
             catch (Exception ex) when (!(ex is OperationCanceledException))
             {
