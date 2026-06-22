@@ -15,6 +15,7 @@ using Hhs.VideoGeneratorService.Providers.Audio;
 using Hhs.VideoGeneratorService.Providers.FileDownloader;
 using Hhs.VideoGeneratorService.Providers.Video;
 using Hhs.VideoGeneratorService.Services;
+using Hhs.VideoGeneratorService.Workers;
 
 SubscriptionScopeRegistry.Initialize();
 
@@ -158,10 +159,10 @@ builder.Services.AddScoped<VideoProviderPollingStartedEtoHandler>();
 // ============================================================================
 // These are long-running services that listen to RabbitMQ queues
 
-// Audio Processing Workers
+// Audio Polling Start Event Handlers
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<AudioProviderPollingStartedEto, AudioProviderPollingStartedEtoHandler>>();
 
-// Video Processing Workers
+// Video Polling Start Event Handlers
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<VideoProviderPollingStartedEto, VideoProviderPollingStartedEtoHandler>>();
 
 // Video Generation Event Handlers
@@ -182,6 +183,17 @@ builder.Services.AddHostedService<RabbitMqConsumerHostedService<VideoProviderCom
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<VideoFileDownloadStartedEto, VideoFileDownloadStartedEtoHandler>>();
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<VideoFileDownloadCompletedEto, VideoFileDownloadCompletedEtoHandler>>();
 builder.Services.AddHostedService<RabbitMqConsumerHostedService<VideoFileUploadCompletedEto, VideoFileUploadCompletedEtoHandler>>();
+
+// Polling Workers (continuously poll for due requests)
+builder.Services.AddScoped<AudioProviderPollingAppService>();
+builder.Services.AddHostedService<AudioProviderPollingWorker>();
+
+builder.Services.AddScoped<VideoProviderPollingAppService>();
+builder.Services.AddHostedService<VideoProviderPollingWorker>();
+
+// Retry Worker (handles failed video requests with exponential backoff)
+builder.Services.AddScoped<VideoRetryAppService>();
+builder.Services.AddHostedService<VideoRetryWorker>();
 
 // ============================================================================
 // 10. BUILD & RUN APPLICATION
