@@ -87,6 +87,9 @@ builder.Services.AddSingleton(systemCdnSettings);
 var cdnLocalMinioSettings = builder.Configuration.GetSection("Provider:Cdn:CdnLocalMinio")
     .Get<CdnLocalMinioSettings>() ?? new CdnLocalMinioSettings();
 builder.Services.AddSingleton(cdnLocalMinioSettings);
+var cdnAbcSettings = builder.Configuration.GetSection("Provider:Cdn:CdnAbc")
+    .Get<CdnAbcSettings>() ?? new CdnAbcSettings();
+builder.Services.AddSingleton(cdnAbcSettings);
 
 var cdnBunnySelfSettings = builder.Configuration.GetSection("Provider:Cdn:CdnBunnySelf")
     .Get<CdnBunnySelfSettings>() ?? new CdnBunnySelfSettings();
@@ -102,6 +105,7 @@ builder.Services.AddSingleton(cdnAbcSettings);
 
 // Register CDN Provider implementations
 builder.Services.AddScoped<ICdnProvider, CdnLocalMinioProvider>();
+builder.Services.AddScoped<ICdnProvider, CdnAbcProvider>();
 builder.Services.AddScoped<ICdnProvider, CdnBunnySelfProvider>();
 builder.Services.AddScoped<ICdnProvider, CdnBunnyS3Provider>();
 builder.Services.AddScoped<ICdnProvider, CdnAbcCloudFrontProvider>();
