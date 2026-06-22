@@ -1,132 +1,172 @@
-using System.Collections.Concurrent;
-using Hhs.MockApi.Storage;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.Extensions.Options;
+using Minio;
+using Minio.DataModel.Args;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddSingleton<StorageService>();
-builder.Services.AddHttpClient();
+// Configure Options
+builder.Services.Configure<MinioOptions>(
+    builder.Configuration.GetSection("Minio"));
+
+builder.Services.Configure<List<StorageCustomerOptions>>(
+    builder.Configuration.GetSection("StorageCustomers"));
+
+// Register Minio Client
+builder.Services.AddSingleton<IMinioClient>(sp =>
+{
+    var opt = builder.Configuration.GetSection("Minio").Get<MinioOptions>()!;
+
+    return new MinioClient()
+        .WithEndpoint(opt.Endpoint)
+        .WithCredentials(opt.AccessKey, opt.SecretKey)
+        .WithSSL(opt.UseSsl)
+        .Build();
+});
+
+// Register Services
+builder.Services.AddSingleton<FileExtensionContentTypeProvider>();
+builder.Services.AddControllers();
 
 var app = builder.Build();
 
-var mediaDir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "media", "storage");
-Directory.CreateDirectory(mediaDir);
-
-// Upload file to central storage
-app.MapPost("/upload", async (IFormFile file, StorageService service, CancellationToken ct) =>
-{
-    if (file == null || file.Length == 0)
-        return Results.BadRequest("File is required");
-
-    var fileId = await service.UploadAsync(file, mediaDir, ct);
-
-    return Results.Ok(new
-    {
-        success = true,
-        fileId,
-        fileName = file.FileName,
-        fileSize = file.Length,
-        provider = "storage"
-    });
-});
-
-// Download file from central storage
-app.MapGet("/download/{fileId}", async (string fileId, StorageService service, CancellationToken ct) =>
-{
-    var filePath = service.GetFilePath(fileId, mediaDir);
-    if (!File.Exists(filePath))
-        return Results.NotFound();
-
-    var fileContent = await File.ReadAllBytesAsync(filePath, ct);
-    return Results.File(fileContent, "application/octet-stream", Path.GetFileName(filePath));
-});
-
-// List all stored files
-app.MapGet("/list", (StorageService service) =>
-{
-    var files = service.GetAllFiles(mediaDir);
-    return Results.Ok(new
-    {
-        total = files.Count,
-        files
-    });
-});
-
-// Health check
-app.MapGet("/health", () => Results.Ok(new { status = "healthy", provider = "storage" }));
-
+app.MapControllers();
 app.Run();
 
-namespace Hhs.MockApi.Storage
+// ============================================================================
+// OPTIONS CLASSES
+// ============================================================================
+
+public sealed class MinioOptions
 {
-    public sealed class StorageService
+    public string Endpoint { get; set; } = default!;
+    public string AccessKey { get; set; } = default!;
+    public string SecretKey { get; set; } = default!;
+    public string BucketName { get; set; } = default!;
+    public bool UseSsl { get; set; }
+}
+
+public sealed class StorageCustomerOptions
+{
+    public string CustomerKey { get; set; } = default!;
+    public string ApiKey { get; set; } = default!;
+    public string RootPath { get; set; } = default!;
+    public bool IsPublic { get; set; }
+}
+
+// ============================================================================
+// REQUEST/RESPONSE DTOs
+// ============================================================================
+
+public sealed class UploadStorageFileRequest
+{
+    public string FileType { get; set; } = "files";
+    public IFormFile File { get; set; } = default!;
+}
+
+public sealed class UploadStorageFileResponse
+{
+    public string ObjectKey { get; set; } = default!;
+}
+
+// ============================================================================
+// CONTROLLERS
+// ============================================================================
+
+[ApiController]
+[Route("api/storage")]
+public sealed class StorageController : ControllerBase
+{
+    private readonly IMinioClient _minioClient;
+    private readonly MinioOptions _minioOptions;
+    private readonly List<StorageCustomerOptions> _customers;
+
+    public StorageController(
+        IMinioClient minioClient,
+        IOptions<MinioOptions> minioOptions,
+        IOptions<List<StorageCustomerOptions>> customers)
     {
-        private static readonly ConcurrentDictionary<string, StorageFileEntry> FileStore = new();
-        private readonly ILogger<StorageService> _logger;
-
-        public StorageService(ILogger<StorageService> logger)
-        {
-            _logger = logger;
-        }
-
-        public async Task<string> UploadAsync(IFormFile file, string storageDir, CancellationToken ct)
-        {
-            var fileId = Guid.NewGuid().ToString("N");
-            var dateFolder = DateTime.UtcNow.ToString("yyyy/MM/dd");
-            var uploadDir = Path.Combine(storageDir, dateFolder);
-            Directory.CreateDirectory(uploadDir);
-
-            var filePath = Path.Combine(uploadDir, $"{fileId}_{file.FileName}");
-
-            await using (var stream = file.OpenReadStream())
-            {
-                await using var fileStream = File.Create(filePath);
-                await stream.CopyToAsync(fileStream, ct);
-            }
-
-            FileStore[fileId] = new StorageFileEntry
-            {
-                OriginalFileName = file.FileName,
-                FilePath = filePath,
-                FileSize = file.Length,
-                UploadedAtUtc = DateTime.UtcNow
-            };
-
-            _logger.LogInformation("File stored: {FileId}, OriginalName: {FileName}, Size: {Size}",
-                fileId, file.FileName, file.Length);
-
-            return fileId;
-        }
-
-        public string GetFilePath(string fileId, string storageDir)
-        {
-            if (FileStore.TryGetValue(fileId, out var entry))
-                return entry.FilePath;
-
-            // Fallback: try to find in directory
-            var files = Directory.GetFiles(storageDir, $"{fileId}_*", SearchOption.AllDirectories);
-            if (files.Length > 0)
-                return files[0];
-
-            return Path.Combine(storageDir, fileId);
-        }
-
-        public List<object> GetAllFiles(string storageDir)
-        {
-            return FileStore.Select(kvp => new
-            {
-                fileId = kvp.Key,
-                fileName = kvp.Value.OriginalFileName,
-                size = kvp.Value.FileSize,
-                uploadedAt = kvp.Value.UploadedAtUtc
-            }).Cast<object>().ToList();
-        }
+        _minioClient = minioClient;
+        _minioOptions = minioOptions.Value;
+        _customers = customers.Value;
     }
 
-    public sealed class StorageFileEntry
+    [HttpPost("upload")]
+    public async Task<IActionResult> Upload(
+        [FromForm] UploadStorageFileRequest request,
+        CancellationToken cancellationToken)
     {
-        public string OriginalFileName { get; set; } = string.Empty;
-        public string FilePath { get; set; } = string.Empty;
-        public long FileSize { get; set; }
-        public DateTime UploadedAtUtc { get; set; }
+        var customer = ResolveCustomer();
+        if (customer is null)
+            return Unauthorized(new { error = "API key is required." });
+
+        if (request.File.Length == 0)
+            return BadRequest(new { error = "File is empty." });
+
+        var safeFileName = Path.GetFileName(request.File.FileName);
+        var fileType = string.IsNullOrWhiteSpace(request.FileType) ? "files" : request.FileType;
+
+        var objectKey =
+            $"{customer.RootPath}/{fileType}/{DateTime.UtcNow:yyyy/MM/dd}/{Guid.NewGuid():N}-{safeFileName}";
+
+        await using var stream = request.File.OpenReadStream();
+
+        var putArgs = new PutObjectArgs()
+            .WithBucket(_minioOptions.BucketName)
+            .WithObject(objectKey)
+            .WithStreamData(stream)
+            .WithObjectSize(request.File.Length)
+            .WithContentType(request.File.ContentType ?? "application/octet-stream");
+
+        await _minioClient.PutObjectAsync(putArgs, cancellationToken);
+
+        return Ok(new UploadStorageFileResponse
+        {
+            ObjectKey = objectKey
+        });
+    }
+
+    [HttpGet("download")]
+    public async Task<IActionResult> Download([FromQuery] string key, CancellationToken cancellationToken)
+    {
+        var customer = ResolveCustomer();
+        if (customer is null)
+            return Unauthorized(new { error = "API key is required." });
+
+        if (string.IsNullOrEmpty(key))
+            return BadRequest(new { error = "Object key is required." });
+
+        var memoryStream = new MemoryStream();
+
+        try
+        {
+            var getArgs = new GetObjectArgs()
+                .WithBucket(_minioOptions.BucketName)
+                .WithObject(key)
+                .WithCallbackStream(stream =>
+                {
+                    stream.CopyTo(memoryStream);
+                });
+
+            await _minioClient.GetObjectAsync(getArgs, cancellationToken);
+        }
+        catch
+        {
+            return NotFound(new { error = "File not found in storage." });
+        }
+
+        memoryStream.Position = 0;
+
+        var fileName = Path.GetFileName(key);
+        return File(memoryStream, "application/octet-stream", fileName);
+    }
+
+    private StorageCustomerOptions? ResolveCustomer()
+    {
+        if (!Request.Headers.TryGetValue("X-Api-Key", out var apiKey))
+            return null;
+
+        return _customers.FirstOrDefault(x => x.ApiKey == apiKey.ToString());
     }
 }
