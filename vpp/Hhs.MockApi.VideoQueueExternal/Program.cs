@@ -46,7 +46,6 @@ namespace Hhs.MockApi.VideoQueueExternal
         public string SelfBaseUrl { get; set; } = string.Empty;
         public int ProcessingDelaySeconds { get; set; } = 30;
         public int PollingWindowSeconds { get; set; } = 150;
-        public string FileNamePrefix { get; set; } = "mock_video_queue_external_";
         public string MediaDirectory { get; set; } = "media";
     }
 
@@ -54,6 +53,7 @@ namespace Hhs.MockApi.VideoQueueExternal
     {
         private static readonly ConcurrentDictionary<string, VideoQueueExternalEntry> Store = new();
         private readonly IOptions<MockApiOptions> _options;
+        private const string ProviderName = "video-queue-external";
 
         public VideoQueueExternalService(IOptions<MockApiOptions> options)
         {
@@ -62,7 +62,7 @@ namespace Hhs.MockApi.VideoQueueExternal
 
         public string CreateRequest(List<string> audioUrls)
         {
-            var trackingId = Guid.NewGuid().ToString("N");
+            var trackingId = Guid.CreateVersion7().ToString("N").ToLower();
             var createdAt = DateTime.UtcNow;
             Store[trackingId] = new VideoQueueExternalEntry { AudioUrls = audioUrls, CreatedAt = createdAt };
             return trackingId;
@@ -92,7 +92,7 @@ namespace Hhs.MockApi.VideoQueueExternal
 
         public static string GetFilePath(string trackingId, string mockFilesDir, MockApiOptions options)
         {
-            return Path.Combine(mockFilesDir, $"{options.FileNamePrefix}{trackingId}.mp4.txt");
+            return Path.Combine(mockFilesDir, $"{ProviderName}-{trackingId}.avi");
         }
     }
 

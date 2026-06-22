@@ -46,7 +46,6 @@ namespace Hhs.MockApi.VideoQueueInternal
         public string SelfBaseUrl { get; set; } = string.Empty;
         public int ProcessingDelaySeconds { get; set; } = 30;
         public int PollingWindowSeconds { get; set; } = 150;
-        public string FileNamePrefix { get; set; } = "mock_video_queue_internal_";
         public string MediaDirectory { get; set; } = "media";
     }
 
@@ -54,6 +53,7 @@ namespace Hhs.MockApi.VideoQueueInternal
     {
         private static readonly ConcurrentDictionary<string, VideoQueueInternalEntry> Store = new();
         private readonly IOptions<MockApiOptions> _options;
+        private const string ProviderName = "video-queue-internal";
 
         public VideoQueueInternalService(IOptions<MockApiOptions> options)
         {
@@ -62,7 +62,7 @@ namespace Hhs.MockApi.VideoQueueInternal
 
         public string CreateRequest()
         {
-            var trackingId = Guid.NewGuid().ToString("N");
+            var trackingId = Guid.CreateVersion7().ToString("N").ToLower();
             Store[trackingId] = new VideoQueueInternalEntry { CreatedAt = DateTime.UtcNow };
             return trackingId;
         }
@@ -90,7 +90,7 @@ namespace Hhs.MockApi.VideoQueueInternal
 
         public static string GetFilePath(string trackingId, string mockFilesDir, MockApiOptions options)
         {
-            return Path.Combine(mockFilesDir, $"{options.FileNamePrefix}{trackingId}.mp4.txt");
+            return Path.Combine(mockFilesDir, $"{ProviderName}-{trackingId}.avi");
         }
     }
 

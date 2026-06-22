@@ -46,7 +46,6 @@ namespace Hhs.MockApi.AudioHQ
         public string SelfBaseUrl { get; set; } = string.Empty;
         public int ProcessingDelaySeconds { get; set; } = 20;
         public int PollingWindowSeconds { get; set; } = 150;
-        public string FileNamePrefix { get; set; } = "mock_audio_hq_";
         public string MediaDirectory { get; set; } = "media";
     }
 
@@ -54,6 +53,7 @@ namespace Hhs.MockApi.AudioHQ
     {
         private static readonly ConcurrentDictionary<string, AudioHQEntry> Store = new();
         private readonly IOptions<MockApiOptions> _options;
+        private const string ProviderName = "audio-hq";
 
         public AudioHQService(IOptions<MockApiOptions> options)
         {
@@ -62,7 +62,7 @@ namespace Hhs.MockApi.AudioHQ
 
         public string CreateRequest(string inputText)
         {
-            var trackingId = Guid.NewGuid().ToString("N");
+            var trackingId = Guid.CreateVersion7().ToString("N").ToLower();
             var createdAt = DateTime.UtcNow;
             Store[trackingId] = new AudioHQEntry { InputText = inputText, CreatedAt = createdAt };
             return trackingId;
@@ -91,7 +91,7 @@ namespace Hhs.MockApi.AudioHQ
 
         public static string GetFilePath(string trackingId, string mockFilesDir, MockApiOptions options)
         {
-            return Path.Combine(mockFilesDir, $"{options.FileNamePrefix}{trackingId}.mp3.txt");
+            return Path.Combine(mockFilesDir, $"{ProviderName}-{trackingId}.mp3");
         }
     }
 
