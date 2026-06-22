@@ -2,204 +2,160 @@
 @timestamp = {{$timestamp}}
 
 ### ============================================
-### CUSTOMER CONTENT TEST SCENARIOS - 12 Combinations
+### CUSTOMER CONTENT TEST SCENARIOS
 ### ============================================
-### 2 Outline × 2 Audio × 4 Video = 8 External Audio + 4 Internal Audio
+### Complete test coverage of all meaningful provider combinations
+###
+### Provider Topology:
+### - Outline: outline-fast (5s) | outline-queue (10s polling)
+### - Audio:   audio-quick (3s) | audio-hq (20s polling)
+### - Video:   video-queue-external (30s polling, requires audio)
+###            video-queue-internal (30s polling, creates own audio)
+###
+### Total Combinations: 6 scenarios covering all outline×audio×video paths
 ### ============================================
 
 ### ============================================
-### GROUP 1: EXTERNAL AUDIO SCENARIOS (8)
-### Audio operations required → Full orchestration
+### GROUP 1: EXTERNAL VIDEO SCENARIOS (1-4)
+### External video requires external audio input
+### All combinations of outline providers × audio providers
 ### ============================================
 
 ### ============================================
-### SCENARIO 1: Fast Outline + Quick Audio + Fast External Video
-### outline-fast (5s) + audio-quick (3s) + video-fast-external (5s)
-### Expected: ~13s | Flow: All synchronous
+### SCENARIO 001
+### Fast Outline + Quick Audio + Queue External Video
+###
+### Provider Chain: outline-fast (5s) → audio-quick (3s) → video-queue-external (30s)
+### Flow: All providers operate in sequence with polling for video
+### Expected Duration: ~38 seconds
+###
+### Test Purpose: Baseline scenario - fastest outline + audio with queue video
 ### ============================================
 POST {{ContentService_HostAddress}}/customer-contents
 Content-Type: application/json
-X-Correlation-Id: cid-001-{{$timestamp}}
+X-Correlation-Id: scenario-001-{{$timestamp}}
 
 {
   "ScopeKey": "scenario-001",
   "DomainName": "https://scenario.com",
-  "ContentKey": "/customer/test01-{{$timestamp}}"
+  "ContentKey": "/customer/scenario-001-{{$timestamp}}"
 }
 
 ### ============================================
-### SCENARIO 2: Fast Outline + HQ Audio + Fast External Video
-### outline-fast (5s) + audio-hq (20s ready, 60s window) + video-fast-external (5s)
-### Expected: ~28s | Flow: Outline → Audio (polling) → Video (parallel)
+### SCENARIO 002
+### Fast Outline + HQ Audio (Polling) + Queue External Video
+###
+### Provider Chain: outline-fast (5s) → audio-hq (20s polling) → video-queue-external (30s polling)
+### Flow: Outline fast → Audio polling → Video polling (parallel capable)
+### Expected Duration: ~53 seconds
+###
+### Test Purpose: HQ audio with polling challenges video start timing
 ### ============================================
 POST {{ContentService_HostAddress}}/customer-contents
 Content-Type: application/json
-X-Correlation-Id: cid-002-{{$timestamp}}
+X-Correlation-Id: scenario-002-{{$timestamp}}
 
 {
   "ScopeKey": "scenario-002",
   "DomainName": "https://scenario.com",
-  "ContentKey": "/customer/test02-{{$timestamp}}"
+  "ContentKey": "/customer/scenario-002-{{$timestamp}}"
 }
 
 ### ============================================
-### SCENARIO 3: Fast Outline + Quick Audio + Queue External Video
-### outline-fast (5s) + audio-quick (3s) + video-queue-external (30s ready, 150s window)
-### Expected: ~38s | Flow: Outline → Audio → Video (polling)
+### SCENARIO 003
+### Queue Outline (Polling) + Quick Audio + Queue External Video
+###
+### Provider Chain: outline-queue (10s polling) → audio-quick (3s) → video-queue-external (30s polling)
+### Flow: Outline polling → Audio quick → Video polling
+### Expected Duration: ~43 seconds
+###
+### Test Purpose: Outline polling delays audio/video start
 ### ============================================
 POST {{ContentService_HostAddress}}/customer-contents
 Content-Type: application/json
-X-Correlation-Id: cid-003-{{$timestamp}}
+X-Correlation-Id: scenario-003-{{$timestamp}}
 
 {
   "ScopeKey": "scenario-003",
   "DomainName": "https://scenario.com",
-  "ContentKey": "/customer/test03-{{$timestamp}}"
+  "ContentKey": "/customer/scenario-003-{{$timestamp}}"
 }
 
 ### ============================================
-### SCENARIO 4: Fast Outline + HQ Audio + Queue External Video
-### outline-fast (5s) + audio-hq (20s) + video-queue-external (30s)
-### Expected: ~53s | Flow: Full orchestration with polling
+### SCENARIO 004
+### Queue Outline (Polling) + HQ Audio (Polling) + Queue External Video
+###
+### Provider Chain: outline-queue (10s polling) → audio-hq (20s polling) → video-queue-external (30s polling)
+### Flow: All providers involve polling - maximum complexity scenario
+### Expected Duration: ~58 seconds
+###
+### Test Purpose: Full orchestration with multiple polling cycles and dependencies
 ### ============================================
 POST {{ContentService_HostAddress}}/customer-contents
 Content-Type: application/json
-X-Correlation-Id: cid-004-{{$timestamp}}
+X-Correlation-Id: scenario-004-{{$timestamp}}
 
 {
   "ScopeKey": "scenario-004",
   "DomainName": "https://scenario.com",
-  "ContentKey": "/customer/test04-{{$timestamp}}"
+  "ContentKey": "/customer/scenario-004-{{$timestamp}}"
 }
 
 ### ============================================
-### SCENARIO 5: Queue Outline + Quick Audio + Fast External Video
-### outline-queue (10s) + audio-quick (3s) + video-fast-external (5s)
-### Expected: ~18s | Flow: Outline (polling) → Audio → Video
+### GROUP 2: INTERNAL VIDEO SCENARIOS (5-6)
+### Internal video creates audio internally - no external audio needed
+### Audio provider is NOT used (set to null in scope registry)
+### ============================================
+
+### ============================================
+### SCENARIO 005
+### Fast Outline + Queue Internal Video (Generates Audio Internally)
+###
+### Provider Chain: outline-fast (5s) → video-queue-internal (30s polling, creates own audio)
+### Flow: Outline fast → Video polling (audio generation happens inside video provider)
+### Expected Duration: ~35 seconds
+###
+### Test Purpose: Verify internal video provider can successfully generate audio without external provider
 ### ============================================
 POST {{ContentService_HostAddress}}/customer-contents
 Content-Type: application/json
-X-Correlation-Id: cid-005-{{$timestamp}}
+X-Correlation-Id: scenario-005-{{$timestamp}}
 
 {
   "ScopeKey": "scenario-005",
   "DomainName": "https://scenario.com",
-  "ContentKey": "/customer/test05-{{$timestamp}}"
+  "ContentKey": "/customer/scenario-005-{{$timestamp}}"
 }
 
 ### ============================================
-### SCENARIO 6: Queue Outline + HQ Audio + Fast External Video
-### outline-queue (10s) + audio-hq (20s) + video-fast-external (5s)
-### Expected: ~33s | Flow: Outline (polling) → Audio (polling) → Video (parallel)
+### SCENARIO 006
+### Queue Outline (Polling) + Queue Internal Video (Generates Audio Internally)
+###
+### Provider Chain: outline-queue (10s polling) → video-queue-internal (30s polling, creates own audio)
+### Flow: Outline polling → Video polling with internal audio generation
+### Expected Duration: ~40 seconds
+###
+### Test Purpose: Verify internal video with delayed outline start still completes successfully
 ### ============================================
 POST {{ContentService_HostAddress}}/customer-contents
 Content-Type: application/json
-X-Correlation-Id: cid-006-{{$timestamp}}
+X-Correlation-Id: scenario-006-{{$timestamp}}
 
 {
   "ScopeKey": "scenario-006",
   "DomainName": "https://scenario.com",
-  "ContentKey": "/customer/test06-{{$timestamp}}"
-}
-
-### ============================================
-### SCENARIO 7: Queue Outline + Quick Audio + Queue External Video
-### outline-queue (10s) + audio-quick (3s) + video-queue-external (30s)
-### Expected: ~43s | Flow: Outline & Audio → Video (polling)
-### ============================================
-POST {{ContentService_HostAddress}}/customer-contents
-Content-Type: application/json
-X-Correlation-Id: cid-007-{{$timestamp}}
-
-{
-  "ScopeKey": "scenario-007",
-  "DomainName": "https://scenario.com",
-  "ContentKey": "/customer/test07-{{$timestamp}}"
-}
-
-### ============================================
-### SCENARIO 8: Queue Outline + HQ Audio + Queue External Video
-### outline-queue (10s) + audio-hq (20s) + video-queue-external (30s)
-### Expected: ~58s | Flow: Full orchestration with multiple polling cycles
-### ============================================
-POST {{ContentService_HostAddress}}/customer-contents
-Content-Type: application/json
-X-Correlation-Id: cid-008-{{$timestamp}}
-
-{
-  "ScopeKey": "scenario-008",
-  "DomainName": "https://scenario.com",
-  "ContentKey": "/customer/test08-{{$timestamp}}"
-}
-
-### ============================================
-### GROUP 2: INTERNAL AUDIO SCENARIOS (4)
-### Audio operations SKIPPED → Video provider creates audio internally
-### ============================================
-
-### ============================================
-### SCENARIO 9: Fast Outline + (audio ignored) + Fast Internal Video
-### outline-fast (5s) + [audio-quick selected but SKIPPED] + video-fast-internal (5s)
-### Expected: ~10s | Flow: Outline → Video Direct (no audio)
-### ============================================
-POST {{ContentService_HostAddress}}/customer-contents
-Content-Type: application/json
-X-Correlation-Id: cid-009-{{$timestamp}}
-
-{
-  "ScopeKey": "scenario-009",
-  "DomainName": "https://scenario.com",
-  "ContentKey": "/customer/test09-{{$timestamp}}"
-}
-
-### ============================================
-### SCENARIO 10: Queue Outline + (audio ignored) + Fast Internal Video
-### outline-queue (10s) + [audio-hq selected but SKIPPED] + video-fast-internal (5s)
-### Expected: ~15s | Flow: Outline (polling) → Video Direct (no audio)
-### ============================================
-POST {{ContentService_HostAddress}}/customer-contents
-Content-Type: application/json
-X-Correlation-Id: cid-010-{{$timestamp}}
-
-{
-  "ScopeKey": "scenario-010",
-  "DomainName": "https://scenario.com",
-  "ContentKey": "/customer/test10-{{$timestamp}}"
-}
-
-### ============================================
-### SCENARIO 11: Fast Outline + (audio ignored) + Queue Internal Video
-### outline-fast (5s) + [audio-quick selected but SKIPPED] + video-queue-internal (30s polling)
-### Expected: ~35s | Flow: Outline → Video Polling (no audio)
-### ============================================
-POST {{ContentService_HostAddress}}/customer-contents
-Content-Type: application/json
-X-Correlation-Id: cid-011-{{$timestamp}}
-
-{
-  "ScopeKey": "scenario-011",
-  "DomainName": "https://scenario.com",
-  "ContentKey": "/customer/test11-{{$timestamp}}"
-}
-
-### ============================================
-### SCENARIO 12: Queue Outline + (audio ignored) + Queue Internal Video
-### outline-queue (10s) + [audio-hq selected but SKIPPED] + video-queue-internal (30s)
-### Expected: ~40s | Flow: Outline & Video both polling (no audio)
-### ============================================
-POST {{ContentService_HostAddress}}/customer-contents
-Content-Type: application/json
-X-Correlation-Id: cid-012-{{$timestamp}}
-
-{
-  "ScopeKey": "scenario-012",
-  "DomainName": "https://scenario.com",
-  "ContentKey": "/customer/test12-{{$timestamp}}"
+  "ContentKey": "/customer/scenario-006-{{$timestamp}}"
 }
 
 ###
 ### ============================================
-### HELPER: Get all customer contents
+### HELPER ENDPOINTS
 ### ============================================
+
+### GET all customer contents
 ### GET {{ContentService_HostAddress}}/customer-contents
+
+### GET specific customer content by ID
+### GET {{ContentService_HostAddress}}/customer-contents/{id}
+
 ### ============================================

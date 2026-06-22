@@ -2,27 +2,42 @@
 @timestamp = {{$timestamp}}
 
 ### ============================================
-### ANALYSIS CONTENT TEST SCENARIOS - 12 Combinations
+### ANALYSIS CONTENT TEST SCENARIOS
 ### ============================================
-### Analysis workflow: Multiple customer contents + Provider combinations
-### Same 12 combinations as customer content (external audio + internal audio)
-### ============================================
-### Note: Replace {customerContentId} with actual IDs from customer-content tests
+### Analysis workflow with multiple customer content items
+### Same provider combinations as customer-content scenarios
+###
+### Analysis Structure:
+### - Processes multiple customer content IDs together
+### - Each item goes through outline → audio/video pipeline
+### - Final video is composite/merged from all items
+###
+### Note: Use actual customerContentIds from successful customer-content tests
 ### ============================================
 
 ### ============================================
-### SCENARIO 1: Analysis with External Audio Path (Fast + Quick + FastExternal)
-### outline-fast + audio-quick + video-fast-external
+### GROUP 1: EXTERNAL VIDEO SCENARIOS (1-4)
+### External video requires external audio input
+### ============================================
+
+### ============================================
+### SCENARIO 001
+### Analysis with Fast Outline + Quick Audio + Queue External Video
+###
+### Provider Chain: outline-fast → audio-quick → video-queue-external
+### Expected Duration: ~38 seconds (per item)
+###
+### Test Purpose: Baseline analysis - verify multi-item outline/audio/video pipeline
 ### ============================================
 POST {{ContentService_HostAddress}}/analysis-contents
 Content-Type: application/json
-X-Correlation-Id: cid-001-{{$timestamp}}
+X-Correlation-Id: scenario-001-{{$timestamp}}
 
 {
   "ScopeKey": "scenario-001",
   "DomainName": "https://scenario.com",
-  "title": "Analysis Test 1 - Fast Outline + Quick Audio + Fast External Video",
-  "customerContentIds": [
+  "Title": "Analysis Scenario 001 - Fast Outline + Quick Audio + Queue External Video",
+  "CustomerContentIds": [
     "00000000-0000-0000-0000-000000000001",
     "00000000-0000-0000-0000-000000000002",
     "00000000-0000-0000-0000-000000000003"
@@ -30,18 +45,23 @@ X-Correlation-Id: cid-001-{{$timestamp}}
 }
 
 ### ============================================
-### SCENARIO 2: Analysis with External Audio Path (Fast + HQ + FastExternal)
-### outline-fast + audio-hq + video-fast-external
+### SCENARIO 002
+### Analysis with Fast Outline + HQ Audio (Polling) + Queue External Video
+###
+### Provider Chain: outline-fast → audio-hq (polling) → video-queue-external (polling)
+### Expected Duration: ~53 seconds (per item)
+###
+### Test Purpose: Verify HQ audio polling doesn't block video processing
 ### ============================================
 POST {{ContentService_HostAddress}}/analysis-contents
 Content-Type: application/json
-X-Correlation-Id: cid-002-{{$timestamp}}
+X-Correlation-Id: scenario-002-{{$timestamp}}
 
 {
   "ScopeKey": "scenario-002",
   "DomainName": "https://scenario.com",
-  "title": "Analysis Test 2 - Fast Outline + HQ Audio + Fast External Video",
-  "customerContentIds": [
+  "Title": "Analysis Scenario 002 - Fast Outline + HQ Audio + Queue External Video",
+  "CustomerContentIds": [
     "00000000-0000-0000-0000-000000000004",
     "00000000-0000-0000-0000-000000000005",
     "00000000-0000-0000-0000-000000000006"
@@ -49,18 +69,23 @@ X-Correlation-Id: cid-002-{{$timestamp}}
 }
 
 ### ============================================
-### SCENARIO 3: Analysis with External Audio Path (Fast + Quick + QueueExternal)
-### outline-fast + audio-quick + video-queue-external
+### SCENARIO 003
+### Analysis with Queue Outline (Polling) + Quick Audio + Queue External Video
+###
+### Provider Chain: outline-queue (polling) → audio-quick → video-queue-external (polling)
+### Expected Duration: ~43 seconds (per item)
+###
+### Test Purpose: Verify delayed outline start doesn't cascade delays
 ### ============================================
 POST {{ContentService_HostAddress}}/analysis-contents
 Content-Type: application/json
-X-Correlation-Id: cid-003-{{$timestamp}}
+X-Correlation-Id: scenario-003-{{$timestamp}}
 
 {
   "ScopeKey": "scenario-003",
   "DomainName": "https://scenario.com",
-  "title": "Analysis Test 3 - Fast Outline + Quick Audio + Queue External Video",
-  "customerContentIds": [
+  "Title": "Analysis Scenario 003 - Queue Outline + Quick Audio + Queue External Video",
+  "CustomerContentIds": [
     "00000000-0000-0000-0000-000000000007",
     "00000000-0000-0000-0000-000000000008",
     "00000000-0000-0000-0000-000000000009"
@@ -68,18 +93,23 @@ X-Correlation-Id: cid-003-{{$timestamp}}
 }
 
 ### ============================================
-### SCENARIO 4: Analysis with External Audio Path (Fast + HQ + QueueExternal)
-### outline-fast + audio-hq + video-queue-external
+### SCENARIO 004
+### Analysis with Queue Outline (Polling) + HQ Audio (Polling) + Queue External Video
+###
+### Provider Chain: outline-queue (polling) → audio-hq (polling) → video-queue-external (polling)
+### Expected Duration: ~58 seconds (per item)
+###
+### Test Purpose: Maximum complexity - verify full orchestration with multiple polling cycles
 ### ============================================
 POST {{ContentService_HostAddress}}/analysis-contents
 Content-Type: application/json
-X-Correlation-Id: cid-004-{{$timestamp}}
+X-Correlation-Id: scenario-004-{{$timestamp}}
 
 {
   "ScopeKey": "scenario-004",
   "DomainName": "https://scenario.com",
-  "title": "Analysis Test 4 - Fast Outline + HQ Audio + Queue External Video",
-  "customerContentIds": [
+  "Title": "Analysis Scenario 004 - Queue Outline + HQ Audio + Queue External Video",
+  "CustomerContentIds": [
     "00000000-0000-0000-0000-00000000000a",
     "00000000-0000-0000-0000-00000000000b",
     "00000000-0000-0000-0000-00000000000c"
@@ -87,18 +117,28 @@ X-Correlation-Id: cid-004-{{$timestamp}}
 }
 
 ### ============================================
-### SCENARIO 5: Analysis with External Audio Path (Queue + Quick + FastExternal)
-### outline-queue + audio-quick + video-fast-external
+### GROUP 2: INTERNAL VIDEO SCENARIOS (5-6)
+### Internal video creates audio internally
+### ============================================
+
+### ============================================
+### SCENARIO 005
+### Analysis with Fast Outline + Queue Internal Video (Generates Audio Internally)
+###
+### Provider Chain: outline-fast → video-queue-internal (creates own audio)
+### Expected Duration: ~35 seconds (per item)
+###
+### Test Purpose: Verify internal video successfully handles multi-item analysis
 ### ============================================
 POST {{ContentService_HostAddress}}/analysis-contents
 Content-Type: application/json
-X-Correlation-Id: cid-005-{{$timestamp}}
+X-Correlation-Id: scenario-005-{{$timestamp}}
 
 {
   "ScopeKey": "scenario-005",
   "DomainName": "https://scenario.com",
-  "title": "Analysis Test 5 - Queue Outline + Quick Audio + Fast External Video",
-  "customerContentIds": [
+  "Title": "Analysis Scenario 005 - Fast Outline + Queue Internal Video",
+  "CustomerContentIds": [
     "00000000-0000-0000-0000-00000000000d",
     "00000000-0000-0000-0000-00000000000e",
     "00000000-0000-0000-0000-00000000000f"
@@ -106,141 +146,38 @@ X-Correlation-Id: cid-005-{{$timestamp}}
 }
 
 ### ============================================
-### SCENARIO 6: Analysis with External Audio Path (Queue + HQ + FastExternal)
-### outline-queue + audio-hq + video-fast-external
+### SCENARIO 006
+### Analysis with Queue Outline (Polling) + Queue Internal Video (Generates Audio Internally)
+###
+### Provider Chain: outline-queue (polling) → video-queue-internal (creates own audio, polling)
+### Expected Duration: ~40 seconds (per item)
+###
+### Test Purpose: Verify internal video with outline polling delays still completes
 ### ============================================
 POST {{ContentService_HostAddress}}/analysis-contents
 Content-Type: application/json
-X-Correlation-Id: cid-006-{{$timestamp}}
+X-Correlation-Id: scenario-006-{{$timestamp}}
 
 {
   "ScopeKey": "scenario-006",
   "DomainName": "https://scenario.com",
-  "title": "Analysis Test 6 - Queue Outline + HQ Audio + Fast External Video",
-  "customerContentIds": [
+  "Title": "Analysis Scenario 006 - Queue Outline + Queue Internal Video",
+  "CustomerContentIds": [
     "00000000-0000-0000-0000-000000000010",
     "00000000-0000-0000-0000-000000000011",
     "00000000-0000-0000-0000-000000000012"
   ]
 }
 
-### ============================================
-### SCENARIO 7: Analysis with External Audio Path (Queue + Quick + QueueExternal)
-### outline-queue + audio-quick + video-queue-external
-### ============================================
-POST {{ContentService_HostAddress}}/analysis-contents
-Content-Type: application/json
-X-Correlation-Id: cid-007-{{$timestamp}}
-
-{
-  "ScopeKey": "scenario-007",
-  "DomainName": "https://scenario.com",
-  "title": "Analysis Test 7 - Queue Outline + Quick Audio + Queue External Video",
-  "customerContentIds": [
-    "00000000-0000-0000-0000-000000000013",
-    "00000000-0000-0000-0000-000000000014",
-    "00000000-0000-0000-0000-000000000015"
-  ]
-}
-
-### ============================================
-### SCENARIO 8: Analysis with External Audio Path (Queue + HQ + QueueExternal)
-### outline-queue + audio-hq + video-queue-external
-### ============================================
-POST {{ContentService_HostAddress}}/analysis-contents
-Content-Type: application/json
-X-Correlation-Id: cid-008-{{$timestamp}}
-
-{
-  "ScopeKey": "scenario-008",
-  "DomainName": "https://scenario.com",
-  "title": "Analysis Test 8 - Queue Outline + HQ Audio + Queue External Video",
-  "customerContentIds": [
-    "00000000-0000-0000-0000-000000000016",
-    "00000000-0000-0000-0000-000000000017",
-    "00000000-0000-0000-0000-000000000018"
-  ]
-}
-
-### ============================================
-### SCENARIO 9: Analysis with Internal Audio Path (Fast + ignored + FastInternal)
-### outline-fast + [audio-quick ignored] + video-fast-internal
-### ============================================
-POST {{ContentService_HostAddress}}/analysis-contents
-Content-Type: application/json
-X-Correlation-Id: cid-009-{{$timestamp}}
-
-{
-  "ScopeKey": "scenario-009",
-  "DomainName": "https://scenario.com",
-  "title": "Analysis Test 9 - Fast Outline + (ignored) + Fast Internal Video",
-  "customerContentIds": [
-    "00000000-0000-0000-0000-000000000019",
-    "00000000-0000-0000-0000-00000000001a",
-    "00000000-0000-0000-0000-00000000001b"
-  ]
-}
-
-### ============================================
-### SCENARIO 10: Analysis with Internal Audio Path (Queue + ignored + FastInternal)
-### outline-queue + [audio-hq ignored] + video-fast-internal
-### ============================================
-POST {{ContentService_HostAddress}}/analysis-contents
-Content-Type: application/json
-X-Correlation-Id: cid-010-{{$timestamp}}
-
-{
-  "ScopeKey": "scenario-010",
-  "DomainName": "https://scenario.com",
-  "title": "Analysis Test 10 - Queue Outline + (ignored) + Fast Internal Video",
-  "customerContentIds": [
-    "00000000-0000-0000-0000-00000000001c",
-    "00000000-0000-0000-0000-00000000001d",
-    "00000000-0000-0000-0000-00000000001e"
-  ]
-}
-
-### ============================================
-### SCENARIO 11: Analysis with Internal Audio Path (Fast + ignored + QueueInternal)
-### outline-fast + [audio-quick ignored] + video-queue-internal
-### ============================================
-POST {{ContentService_HostAddress}}/analysis-contents
-Content-Type: application/json
-X-Correlation-Id: cid-011-{{$timestamp}}
-
-{
-  "ScopeKey": "scenario-011",
-  "DomainName": "https://scenario.com",
-  "title": "Analysis Test 11 - Fast Outline + (ignored) + Queue Internal Video",
-  "customerContentIds": [
-    "00000000-0000-0000-0000-00000000001f",
-    "00000000-0000-0000-0000-000000000020",
-    "00000000-0000-0000-0000-000000000021"
-  ]
-}
-
-### ============================================
-### SCENARIO 12: Analysis with Internal Audio Path (Queue + ignored + QueueInternal)
-### outline-queue + [audio-hq ignored] + video-queue-internal
-### ============================================
-POST {{ContentService_HostAddress}}/analysis-contents
-Content-Type: application/json
-X-Correlation-Id: cid-012-{{$timestamp}}
-
-{
-  "ScopeKey": "scenario-012",
-  "DomainName": "https://scenario.com",
-  "title": "Analysis Test 12 - Queue Outline + (ignored) + Queue Internal Video",
-  "customerContentIds": [
-    "00000000-0000-0000-0000-000000000022",
-    "00000000-0000-0000-0000-000000000023",
-    "00000000-0000-0000-0000-000000000024"
-  ]
-}
-
 ###
 ### ============================================
-### HELPER: Get all analysis contents
+### HELPER ENDPOINTS
 ### ============================================
+
+### GET all analysis contents
 ### GET {{ContentService_HostAddress}}/analysis-contents
+
+### GET specific analysis content by ID
+### GET {{ContentService_HostAddress}}/analysis-contents/{id}
+
 ### ============================================

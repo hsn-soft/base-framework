@@ -14,82 +14,74 @@ public static class SubscriptionScopeRegistry
     private static readonly Dictionary<string, SubscriptionScope> _scopes = [];
 
     /// <summary>
-    /// Initialize with 12 test scenarios matching HTTP test files.
+    /// Initialize with 6 test scenarios covering all meaningful combinations of providers.
+    ///
+    /// Provider Topology:
+    /// - Outline: 2 variants (fast: 5s, queue: 10s)
+    /// - Audio: 2 variants (quick: 3s, hq: 20s)
+    /// - Video: 2 variants (queue-external: requires audio, queue-internal: creates own audio)
+    ///
+    /// Total Combinations: 2 outline × 2 audio × 1 video-external + 2 outline × 0 audio × 1 video-internal = 6
     /// </summary>
     public static void Initialize()
     {
         _scopes.Clear();
 
-        // Scenarios 1-4: outline-fast combinations
+        // ========================================================================
+        // GROUP 1: EXTERNAL VIDEO (requires external audio input)
+        // Scenarios 001-004: All combinations of outline × audio providers
+        // ========================================================================
+        // Timing expectations: outline + audio + video polling cycles
+
+        // Scenario 001: Fast outline + Quick audio + External video (polling)
+        // Expected time: ~38s (5s outline + 3s audio + 30s video)
         Add("scenario-001", new SubscriptionScope(
             outlineProviderKey: "outline-fast",
             audioProviderKey: "audio-quick",
-            videoProviderKey: "video-fast-external"
+            videoProviderKey: "video-queue-external"
         ));
 
+        // Scenario 002: Fast outline + HQ audio (polling) + External video (polling)
+        // Expected time: ~53s (5s outline + 20s audio + 30s video)
         Add("scenario-002", new SubscriptionScope(
             outlineProviderKey: "outline-fast",
             audioProviderKey: "audio-hq",
-            videoProviderKey: "video-fast-external"
+            videoProviderKey: "video-queue-external"
         ));
 
+        // Scenario 003: Queue outline (polling) + Quick audio + External video (polling)
+        // Expected time: ~43s (10s outline + 3s audio + 30s video)
         Add("scenario-003", new SubscriptionScope(
-            outlineProviderKey: "outline-fast",
+            outlineProviderKey: "outline-queue",
             audioProviderKey: "audio-quick",
             videoProviderKey: "video-queue-external"
         ));
 
+        // Scenario 004: Queue outline (polling) + HQ audio (polling) + External video (polling)
+        // Expected time: ~58s (10s outline + 20s audio + 30s video)
         Add("scenario-004", new SubscriptionScope(
-            outlineProviderKey: "outline-fast",
+            outlineProviderKey: "outline-queue",
             audioProviderKey: "audio-hq",
             videoProviderKey: "video-queue-external"
         ));
 
-        // Scenarios 5-8: outline-queue combinations
+        // ========================================================================
+        // GROUP 2: INTERNAL VIDEO (creates audio internally, no external audio needed)
+        // Scenarios 005-006: Outline provider combinations with internal video
+        // Note: audioProviderKey is null because internal video generates audio
+        // ========================================================================
+
+        // Scenario 005: Fast outline + Internal video (creates own audio via polling)
+        // Expected time: ~35s (5s outline + 30s video with internal audio)
         Add("scenario-005", new SubscriptionScope(
-            outlineProviderKey: "outline-queue",
-            audioProviderKey: "audio-quick",
-            videoProviderKey: "video-fast-external"
-        ));
-
-        Add("scenario-006", new SubscriptionScope(
-            outlineProviderKey: "outline-queue",
-            audioProviderKey: "audio-hq",
-            videoProviderKey: "video-fast-external"
-        ));
-
-        Add("scenario-007", new SubscriptionScope(
-            outlineProviderKey: "outline-queue",
-            audioProviderKey: "audio-quick",
-            videoProviderKey: "video-queue-external"
-        ));
-
-        Add("scenario-008", new SubscriptionScope(
-            outlineProviderKey: "outline-queue",
-            audioProviderKey: "audio-hq",
-            videoProviderKey: "video-queue-external"
-        ));
-
-        // Scenarios 9-12: internal video combinations
-        Add("scenario-009", new SubscriptionScope(
-            outlineProviderKey: "outline-fast",
-            audioProviderKey: null,
-            videoProviderKey: "video-fast-internal"
-        ));
-
-        Add("scenario-010", new SubscriptionScope(
-            outlineProviderKey: "outline-queue",
-            audioProviderKey: null,
-            videoProviderKey: "video-fast-internal"
-        ));
-
-        Add("scenario-011", new SubscriptionScope(
             outlineProviderKey: "outline-fast",
             audioProviderKey: null,
             videoProviderKey: "video-queue-internal"
         ));
 
-        Add("scenario-012", new SubscriptionScope(
+        // Scenario 006: Queue outline (polling) + Internal video (creates own audio via polling)
+        // Expected time: ~40s (10s outline + 30s video with internal audio)
+        Add("scenario-006", new SubscriptionScope(
             outlineProviderKey: "outline-queue",
             audioProviderKey: null,
             videoProviderKey: "video-queue-internal"
