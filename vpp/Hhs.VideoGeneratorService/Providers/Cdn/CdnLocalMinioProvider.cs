@@ -111,7 +111,14 @@ public sealed class CdnLocalMinioProvider : ICdnProvider
                     storageUrl);
             }
 
-            var response = await _httpClient.GetAsync(storageUrl, cancellationToken);
+            var request = new HttpRequestMessage(HttpMethod.Get, storageUrl);
+            
+            if (!string.IsNullOrEmpty(_settings.APIKey))
+            {
+                request.Headers.Add("X-Api-Key", _settings.APIKey);
+            }
+
+            var response = await _httpClient.SendAsync(request, cancellationToken);
 
             if (!response.IsSuccessStatusCode)
             {
