@@ -105,7 +105,6 @@ builder.Services.AddScoped<ICdnProvider, CdnLocalMinioProvider>();
 builder.Services.AddScoped<ICdnProvider, CdnAbcProvider>();
 builder.Services.AddScoped<ICdnProvider, CdnBunnySelfProvider>();
 builder.Services.AddScoped<ICdnProvider, CdnBunnyS3Provider>();
-builder.Services.AddScoped<ICdnProvider, CdnAbcCloudFrontProvider>();
 // 5. POLLING & RETRY CONFIGURATION
 // ============================================================================
 
