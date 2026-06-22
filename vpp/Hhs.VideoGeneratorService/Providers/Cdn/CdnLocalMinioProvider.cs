@@ -20,7 +20,7 @@ public sealed class CdnLocalMinioProvider : ICdnProvider
         _logger = logger;
     }
 
-    public async Task<(string StorageUrl, string CdnUrl)> UploadAsync(
+    public async Task<CdnUploadResult> UploadAsync(
         Stream fileStream,
         string filename,
         CancellationToken cancellationToken)
@@ -83,7 +83,7 @@ public sealed class CdnLocalMinioProvider : ICdnProvider
                     cdnUrl);
             }
 
-            return (storageUrl, cdnUrl);
+            return new CdnUploadResult(storageUrl, cdnUrl);
         }
         catch (Exception ex)
         {

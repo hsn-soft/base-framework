@@ -4,7 +4,7 @@ public interface ICdnProvider
 {
     string ProviderKey { get; }
 
-    Task<(string StorageUrl, string CdnUrl)> UploadAsync(
+    Task<CdnUploadResult> UploadAsync(
         Stream fileStream,
         string filename,
         CancellationToken cancellationToken);
