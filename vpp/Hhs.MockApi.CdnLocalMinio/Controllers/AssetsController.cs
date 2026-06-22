@@ -55,8 +55,8 @@ public sealed class AssetsController(
         });
     }
 
-    [HttpGet("storage/download")]
-    public async Task<IActionResult> DownloadFromStorage([FromQuery] string key, CancellationToken cancellationToken)
+    [HttpGet("download")]
+    public async Task<IActionResult> Download([FromQuery] string key, CancellationToken cancellationToken)
     {
         var customer = ResolveCustomer();
         if (customer is null)
