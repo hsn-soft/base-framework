@@ -99,9 +99,6 @@ var cdnBunnyS3Settings = builder.Configuration.GetSection("Provider:Cdn:CdnBunny
     .Get<CdnBunnyS3Settings>() ?? new CdnBunnyS3Settings();
 builder.Services.AddSingleton(cdnBunnyS3Settings);
 
-var cdnAbcSettings = builder.Configuration.GetSection("Provider:Cdn:CdnAbcCloudFront")
-    .Get<CdnAbcCloudFrontSettings>() ?? new CdnAbcCloudFrontSettings();
-builder.Services.AddSingleton(cdnAbcSettings);
 
 // Register CDN Provider implementations
 builder.Services.AddScoped<ICdnProvider, CdnLocalMinioProvider>();
@@ -109,9 +106,6 @@ builder.Services.AddScoped<ICdnProvider, CdnAbcProvider>();
 builder.Services.AddScoped<ICdnProvider, CdnBunnySelfProvider>();
 builder.Services.AddScoped<ICdnProvider, CdnBunnyS3Provider>();
 builder.Services.AddScoped<ICdnProvider, CdnAbcCloudFrontProvider>();
-builder.Services.AddScoped<ICdnProviderResolver, CdnProviderResolver>();
-
-// ============================================================================
 // 5. POLLING & RETRY CONFIGURATION
 // ============================================================================
 
