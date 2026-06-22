@@ -3,9 +3,7 @@ using System.Text.Json;
 
 const string testFilePath = "test.txt";
 const string cdnApiUrl = "http://localhost:5070";
-const string storageApiUrl = "http://localhost:5074";
 const string apiKey = "techsummus-cdn-secret-api-key";
-const string storageApiKey = "techsummus-storage-secret-api-key";
 
 Console.WriteLine("╔════════════════════════════════════════════════════════════════╗");
 Console.WriteLine("║         Mock API Test Suite - Choose Your Test                 ║");
@@ -27,25 +25,8 @@ Console.WriteLine($"   Hash: {originalHash}\n");
 
 using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
 
-Console.WriteLine("Hangi testi çalıştırmak istiyorsunuz?");
-Console.WriteLine("1 = CDN API (Hhs.MockApi.CdnLocalMinio)");
-Console.WriteLine("2 = Storage API (Hhs.MockApi.StorageXyz)");
-Console.WriteLine();
-
-string? choice = Console.ReadLine();
-
-switch (choice)
-{
-    case "1":
-        await TestCdnApi(httpClient, fileBytes, originalHash);
-        break;
-    case "2":
-        await TestStorageApi(httpClient, fileBytes, originalHash);
-        break;
-    default:
-        Console.WriteLine("❌ Geçersiz seçim");
-        return;
-}
+Console.WriteLine("CDN API Test çalıştırılıyor...\n");
+await TestCdnApi(httpClient, fileBytes, originalHash);
 
 Console.WriteLine("\n✅ Test tamamlandı!\n");
 
@@ -153,101 +134,6 @@ async Task TestCdnApi(HttpClient client, byte[] fileBytes, string originalHash)
     }
 }
 
-// ============================================================================
-// STORAGE API TEST
-// ============================================================================
-
-async Task TestStorageApi(HttpClient client, byte[] fileBytes, string originalHash)
-{
-    Console.WriteLine("═".PadRight(70, '═'));
-    Console.WriteLine("🔷 STORAGE API TEST (Hhs.MockApi.StorageXyz)");
-    Console.WriteLine("═".PadRight(70, '═') + "\n");
-
-    try
-    {
-        // 1️⃣ UPLOAD
-        Console.WriteLine("1️⃣ FILE UPLOAD");
-        Console.WriteLine($"📤 Endpoint: POST {storageApiUrl}/api/storage/upload\n");
-
-        string? objectKey = null;
-
-        using (var formContent = new MultipartFormDataContent())
-        {
-            formContent.Add(new ByteArrayContent(fileBytes), "file", testFilePath);
-
-            var request = new HttpRequestMessage(HttpMethod.Post, $"{storageApiUrl}/api/storage/upload")
-            {
-                Content = formContent
-            };
-            request.Headers.Add("X-Api-Key", storageApiKey);
-
-            var uploadResponse = await client.SendAsync(request);
-
-            if (!uploadResponse.IsSuccessStatusCode)
-            {
-                Console.WriteLine($"❌ Upload failed: {uploadResponse.StatusCode}");
-                return;
-            }
-
-            string jsonContent = await uploadResponse.Content.ReadAsStringAsync();
-            var jsonDoc = JsonDocument.Parse(jsonContent);
-            var root = jsonDoc.RootElement;
-
-            objectKey = root.GetProperty("objectKey").GetString();
-
-            Console.WriteLine($"✅ Upload successful (200 OK)");
-            Console.WriteLine($"  ObjectKey: {objectKey}\n");
-        }
-
-        // 2️⃣ AUTHENTICATED DOWNLOAD
-        Console.WriteLine("2️⃣ AUTHENTICATED DOWNLOAD");
-        string downloadUrl = $"{storageApiUrl}/api/storage/download?key={Uri.EscapeDataString(objectKey)}";
-        var downloadRequest = new HttpRequestMessage(HttpMethod.Get, downloadUrl);
-        downloadRequest.Headers.Add("X-Api-Key", storageApiKey);
-
-        var downloadResponse = await client.SendAsync(downloadRequest);
-        if (!downloadResponse.IsSuccessStatusCode)
-        {
-            Console.WriteLine($"❌ Download failed: {downloadResponse.StatusCode}");
-            return;
-        }
-
-        byte[] downloadedBytes = await downloadResponse.Content.ReadAsByteArrayAsync();
-        string downloadedHash = GetHash(downloadedBytes);
-
-        Console.WriteLine($"✅ Download successful (200 OK)");
-        Console.WriteLine($"  Hash match: {(downloadedHash == originalHash ? "✅ YES" : "❌ NO")}\n");
-
-        // 3️⃣ SECURITY TEST - Download without API Key
-        Console.WriteLine("3️⃣ SECURITY TEST - Download Protection");
-        var unauthorizedResponse = await client.GetAsync(downloadUrl);
-        bool isSecure = unauthorizedResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized;
-
-        Console.WriteLine($"Download without API Key: {(isSecure ? "✅ 401 Unauthorized" : "❌ EXPOSED")}\n");
-
-        // 4️⃣ SECURITY TEST - Upload without API Key
-        Console.WriteLine("4️⃣ SECURITY TEST - Upload Protection");
-        using (var formContent = new MultipartFormDataContent())
-        {
-            formContent.Add(new ByteArrayContent(fileBytes), "file", testFilePath);
-            var uploadResponse = await client.PostAsync($"{storageApiUrl}/api/storage/upload", formContent);
-            bool uploadSecure = uploadResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized;
-
-            Console.WriteLine($"Upload without API Key: {(uploadSecure ? "✅ 401 Unauthorized" : "❌ EXPOSED")}\n");
-        }
-
-        Console.WriteLine("✅ STORAGE API TEST PASSED!");
-    }
-    catch (HttpRequestException ex)
-    {
-        Console.WriteLine($"❌ Connection Error: {ex.Message}");
-        Console.WriteLine("💡 Make sure StorageXyz API is running on http://localhost:5074\n");
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"❌ Error: {ex.Message}\n");
-    }
-}
 
 static string GetHash(byte[] data)
 {

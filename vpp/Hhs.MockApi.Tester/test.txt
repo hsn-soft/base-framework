@@ -1,1 +1,1 @@
-This is a test file for CDN Local Minio upload test at Sat Jun 20 22:15:38 +03 2026
+This is a test file for CDN upload/download verification
