@@ -8,7 +8,7 @@ const string apiKey = "ciner-secret-api-key";
 const string storageApiKey = "storage-secret-api-key";
 
 Console.WriteLine("╔════════════════════════════════════════════════════════════════╗");
-Console.WriteLine("║         Mock API Test Suite - CDN & Storage                    ║");
+Console.WriteLine("║         Mock API Test Suite - Choose Your Test                 ║");
 Console.WriteLine("╚════════════════════════════════════════════════════════════════╝\n");
 
 // Prepare test file
@@ -27,10 +27,10 @@ Console.WriteLine($"   Hash: {originalHash}\n");
 
 using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
 
-Console.WriteLine("Hangi API'yi test etmek istiyorsunuz?");
-Console.WriteLine("1 = CDN (Hhs.MockApi.CdnLocalMinio)");
-Console.WriteLine("2 = Storage (Hhs.MockApi.StorageXyz)");
-Console.WriteLine("3 = Her ikisini test et\n");
+Console.WriteLine("Hangi testi çalıştırmak istiyorsunuz?");
+Console.WriteLine("1 = CDN API (Hhs.MockApi.CdnLocalMinio)");
+Console.WriteLine("2 = Storage API (Hhs.MockApi.StorageXyz)");
+Console.WriteLine();
 
 var choice = Console.ReadLine();
 
@@ -42,17 +42,12 @@ switch (choice)
     case "2":
         await TestStorageApi(httpClient, fileBytes, originalHash);
         break;
-    case "3":
-        await TestCdnApi(httpClient, fileBytes, originalHash);
-        Console.WriteLine("\n" + "═".PadRight(70, '═') + "\n");
-        await TestStorageApi(httpClient, fileBytes, originalHash);
-        break;
     default:
         Console.WriteLine("❌ Geçersiz seçim");
         return;
 }
 
-Console.WriteLine("\n✅ Tüm testler tamamlandı!\n");
+Console.WriteLine("\n✅ Test tamamlandı!\n");
 
 // ============================================================================
 // CDN API TEST
@@ -76,7 +71,6 @@ async Task TestCdnApi(HttpClient client, byte[] fileBytes, string originalHash)
         using (var formContent = new MultipartFormDataContent())
         {
             formContent.Add(new ByteArrayContent(fileBytes), "file", testFilePath);
-            formContent.Add(new StringContent("documents"), "assetType");
 
             var request = new HttpRequestMessage(HttpMethod.Post, $"{cdnApiUrl}/api/cdn/assets/upload")
             {
@@ -101,8 +95,9 @@ async Task TestCdnApi(HttpClient client, byte[] fileBytes, string originalHash)
             storageUrl = $"{cdnApiUrl}/api/cdn/assets/download?key={Uri.EscapeDataString(objectKey)}";
 
             Console.WriteLine($"✅ Upload successful (200 OK)");
-            Console.WriteLine($"  StorageUrl (Private): {storageUrl}");
-            Console.WriteLine($"  CdnUrl (Public):     {cdnUrl}\n");
+            Console.WriteLine($"  ObjectKey: {objectKey}");
+            Console.WriteLine($"  CdnUrl:    {cdnUrl}");
+            Console.WriteLine($"  StorageUrl (for download): {storageUrl}\n");
         }
 
         // 2️⃣ STORAGE DOWNLOAD (WITH API KEY)
@@ -179,7 +174,6 @@ async Task TestStorageApi(HttpClient client, byte[] fileBytes, string originalHa
         using (var formContent = new MultipartFormDataContent())
         {
             formContent.Add(new ByteArrayContent(fileBytes), "file", testFilePath);
-            formContent.Add(new StringContent("documents"), "fileType");
 
             var request = new HttpRequestMessage(HttpMethod.Post, $"{storageApiUrl}/api/storage/upload")
             {
@@ -225,14 +219,14 @@ async Task TestStorageApi(HttpClient client, byte[] fileBytes, string originalHa
         Console.WriteLine($"  Hash match: {(downloadedHash == originalHash ? "✅ YES" : "❌ NO")}\n");
 
         // 3️⃣ SECURITY TEST - Download without API Key
-        Console.WriteLine("3️⃣ SECURITY TEST");
+        Console.WriteLine("3️⃣ SECURITY TEST - Download Protection");
         var unauthorizedResponse = await client.GetAsync(downloadUrl);
         var isSecure = unauthorizedResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized;
 
         Console.WriteLine($"Download without API Key: {(isSecure ? "✅ 401 Unauthorized" : "❌ EXPOSED")}\n");
 
         // 4️⃣ SECURITY TEST - Upload without API Key
-        Console.WriteLine("4️⃣ UPLOAD SECURITY TEST");
+        Console.WriteLine("4️⃣ SECURITY TEST - Upload Protection");
         using (var formContent = new MultipartFormDataContent())
         {
             formContent.Add(new ByteArrayContent(fileBytes), "file", testFilePath);

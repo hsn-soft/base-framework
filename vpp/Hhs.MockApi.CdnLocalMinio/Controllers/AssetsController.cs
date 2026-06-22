@@ -28,10 +28,9 @@ public sealed class AssetsController(
             return BadRequest(new { error = "File is empty." });
 
         var safeFileName = Path.GetFileName(request.File.FileName);
-        var assetType = string.IsNullOrWhiteSpace(request.AssetType) ? "files" : request.AssetType;
 
         var objectKey =
-            $"{customer.RootPath}/{assetType}/{DateTime.UtcNow:yyyy/MM/dd}/{Guid.NewGuid():N}-{safeFileName}";
+            $"{customer.TenantKey}/{customer.RootPath}/{DateTime.UtcNow:yyyy/MM/dd}/{Guid.NewGuid():N}-{safeFileName}";
 
         await using var stream = request.File.OpenReadStream();
 
@@ -44,7 +43,7 @@ public sealed class AssetsController(
 
         await minioClient.PutObjectAsync(putArgs, cancellationToken);
 
-        var relativePath = objectKey.Replace(customer.RootPath + "/", "");
+        var relativePath = objectKey.Substring(objectKey.IndexOf(customer.RootPath));
         var cdnUrl = $"{customer.BaseUrl}/{relativePath}";
         var storageUrl = $"{Request.Scheme}://{Request.Host}/api/cdn/assets/download?key={Uri.EscapeDataString(objectKey)}";
 

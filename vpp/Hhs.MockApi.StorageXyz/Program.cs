@@ -31,8 +31,30 @@ builder.Services.AddControllers();
 
 var app = builder.Build();
 
+// Ensure bucket exists
+EnsureBucketExists(app.Services).Wait();
+
 app.MapControllers();
 app.Run();
+
+async Task EnsureBucketExists(IServiceProvider services)
+{
+    var minioClient = services.GetRequiredService<IMinioClient>();
+    var minioOptions = services.GetRequiredService<IOptions<MinioOptions>>().Value;
+
+    var bucketExistsArgs = new BucketExistsArgs().WithBucket(minioOptions.BucketName);
+    bool isBucketExist = await minioClient.BucketExistsAsync(bucketExistsArgs);
+    if (!isBucketExist)
+    {
+        var makeBucketArgs = new MakeBucketArgs().WithBucket(minioOptions.BucketName);
+        await minioClient.MakeBucketAsync(makeBucketArgs);
+        Console.WriteLine($"✅ Bucket '{minioOptions.BucketName}' created");
+    }
+    else
+    {
+        Console.WriteLine($"✅ Bucket '{minioOptions.BucketName}' exists");
+    }
+}
 
 // ============================================================================
 // OPTIONS CLASSES
@@ -49,7 +71,7 @@ public sealed class MinioOptions
 
 public sealed class StorageCustomerOptions
 {
-    public string CustomerKey { get; set; } = default!;
+    public string TenantKey { get; set; } = default!;
     public string ApiKey { get; set; } = default!;
     public string RootPath { get; set; } = default!;
     public bool IsPublic { get; set; }
@@ -76,26 +98,16 @@ public sealed class UploadStorageFileResponse
 
 [ApiController]
 [Route("api/storage")]
-public sealed class StorageController : ControllerBase
+public sealed class StorageController(
+    IMinioClient minioClient,
+    IOptions<MinioOptions> minioOptions,
+    IOptions<List<StorageCustomerOptions>> customers) : ControllerBase
 {
-    private readonly IMinioClient _minioClient;
-    private readonly MinioOptions _minioOptions;
-    private readonly List<StorageCustomerOptions> _customers;
-
-    public StorageController(
-        IMinioClient minioClient,
-        IOptions<MinioOptions> minioOptions,
-        IOptions<List<StorageCustomerOptions>> customers)
-    {
-        _minioClient = minioClient;
-        _minioOptions = minioOptions.Value;
-        _customers = customers.Value;
-    }
+    private readonly MinioOptions _minioOptions = minioOptions.Value;
+    private readonly List<StorageCustomerOptions> _customers = customers.Value;
 
     [HttpPost("upload")]
-    public async Task<IActionResult> Upload(
-        [FromForm] UploadStorageFileRequest request,
-        CancellationToken cancellationToken)
+    public async Task<IActionResult> Upload([FromForm] UploadStorageFileRequest request, CancellationToken cancellationToken)
     {
         var customer = ResolveCustomer();
         if (customer is null)
@@ -104,11 +116,9 @@ public sealed class StorageController : ControllerBase
         if (request.File.Length == 0)
             return BadRequest(new { error = "File is empty." });
 
-        var safeFileName = Path.GetFileName(request.File.FileName);
-        var fileType = string.IsNullOrWhiteSpace(request.FileType) ? "files" : request.FileType;
+        string safeFileName = Path.GetFileName(request.File.FileName);
 
-        var objectKey =
-            $"{customer.RootPath}/{fileType}/{DateTime.UtcNow:yyyy/MM/dd}/{Guid.NewGuid():N}-{safeFileName}";
+        string objectKey = $"{customer.TenantKey}/{customer.RootPath}/{DateTime.UtcNow:yyyy-MM-dd}-{Guid.NewGuid():N}-{safeFileName}";
 
         await using var stream = request.File.OpenReadStream();
 
@@ -119,12 +129,9 @@ public sealed class StorageController : ControllerBase
             .WithObjectSize(request.File.Length)
             .WithContentType(request.File.ContentType ?? "application/octet-stream");
 
-        await _minioClient.PutObjectAsync(putArgs, cancellationToken);
+        await minioClient.PutObjectAsync(putArgs, cancellationToken);
 
-        return Ok(new UploadStorageFileResponse
-        {
-            ObjectKey = objectKey
-        });
+        return Ok(new UploadStorageFileResponse { ObjectKey = objectKey });
     }
 
     [HttpGet("download")]
@@ -144,12 +151,9 @@ public sealed class StorageController : ControllerBase
             var getArgs = new GetObjectArgs()
                 .WithBucket(_minioOptions.BucketName)
                 .WithObject(key)
-                .WithCallbackStream(stream =>
-                {
-                    stream.CopyTo(memoryStream);
-                });
+                .WithCallbackStream(stream => { stream.CopyTo(memoryStream); });
 
-            await _minioClient.GetObjectAsync(getArgs, cancellationToken);
+            await minioClient.GetObjectAsync(getArgs, cancellationToken);
         }
         catch
         {
@@ -158,15 +162,11 @@ public sealed class StorageController : ControllerBase
 
         memoryStream.Position = 0;
 
-        var fileName = Path.GetFileName(key);
+        string fileName = Path.GetFileName(key);
         return File(memoryStream, "application/octet-stream", fileName);
     }
 
-    private StorageCustomerOptions? ResolveCustomer()
-    {
-        if (!Request.Headers.TryGetValue("X-Api-Key", out var apiKey))
-            return null;
-
-        return _customers.FirstOrDefault(x => x.ApiKey == apiKey.ToString());
-    }
+    private StorageCustomerOptions? ResolveCustomer() => !Request.Headers.TryGetValue("X-Api-Key", out var apiKey)
+        ? null
+        : _customers.FirstOrDefault(x => x.ApiKey == apiKey.ToString());
 }
