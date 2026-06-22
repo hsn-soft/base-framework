@@ -320,7 +320,7 @@ public sealed class VideoOperationAppService(
 
             await ReplaceAudioAsync(audioRequest, cancellationToken);
 
-            var (success, audioLocalPath) = await remoteFileDownloader.DownloadAsync(@event.ProviderFileUrl, cancellationToken);
+            var (success, audioLocalPath) = await remoteFileDownloader.DownloadAsync(audioRequest.AudioProviderKey, @event.ProviderFileUrl, cancellationToken);
             if (!success) throw new InvalidOperationException($"Failed to download audio file: {audioLocalPath}");
 
             audioRequest.AudioLocalPath = audioLocalPath;
@@ -602,7 +602,7 @@ public sealed class VideoOperationAppService(
 
             await ReplaceVideoAsync(videoRequest, cancellationToken);
 
-            var (success, videoLocalPath) = await remoteFileDownloader.DownloadAsync(@event.ProviderFileUrl, cancellationToken);
+            var (success, videoLocalPath) = await remoteFileDownloader.DownloadAsync(videoRequest.VideoProviderKey, @event.ProviderFileUrl, cancellationToken);
             if (!success) throw new InvalidOperationException($"Failed to download video file: {videoLocalPath}");
 
             videoRequest.VideoLocalPath = videoLocalPath;

@@ -12,14 +12,20 @@ public sealed class RemoteFileDownloader(
 {
     private readonly SystemCdnSettings _cdnSettings = cdnSettings.Value ?? throw new ArgumentNullException(nameof(cdnSettings));
 
-    public async Task<(bool Success, string Result)> DownloadAsync(string remoteUrl, CancellationToken cancellationToken)
+    public async Task<(bool Success, string Result)> DownloadAsync(string providerKey, string remoteUrl, CancellationToken cancellationToken)
     {
         try
         {
+            if (string.IsNullOrWhiteSpace(providerKey))
+            {
+                return (false, "Provider key is required");
+            }
+
             if (string.IsNullOrWhiteSpace(remoteUrl))
             {
                 return (false, "Remote URL is required");
             }
+
 
             // Extract filename and extension from URL
             var uri = new Uri(remoteUrl);
@@ -29,6 +35,8 @@ public sealed class RemoteFileDownloader(
             {
                 filename = $"{Guid.CreateVersion7().ToString("N").ToLower()}";
             }
+
+            filename = $"{providerKey}-{filename}";
 
             // Build download directory path
             string downloadDir = _cdnSettings.LocalDownloadPath;

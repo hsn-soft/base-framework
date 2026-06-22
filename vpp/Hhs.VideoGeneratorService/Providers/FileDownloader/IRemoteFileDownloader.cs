@@ -12,5 +12,5 @@ public interface IRemoteFileDownloader
     /// - Success=true: Result contains full file path (e.g., "/path/to/downloads/audio-quick-xxx.mp3")
     /// - Success=false: Result contains error message
     /// </returns>
-    Task<(bool Success, string Result)> DownloadAsync(string remoteUrl, CancellationToken cancellationToken);
+    Task<(bool Success, string Result)> DownloadAsync(string providerKey,string remoteUrl, CancellationToken cancellationToken);
 }
