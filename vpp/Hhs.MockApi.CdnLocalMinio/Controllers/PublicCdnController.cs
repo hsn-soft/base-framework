@@ -9,30 +9,18 @@ namespace Hhs.MockApi.CdnLocalMinio.Controllers;
 
 [ApiController]
 [Route("{customerKey}/{**path}")]
-public sealed class PublicCdnController : ControllerBase
+public sealed class PublicCdnController(
+    IMinioClient minioClient,
+    IOptions<MinioOptions> minioOptions,
+    IOptions<List<CdnCustomerOptions>> customers,
+    FileExtensionContentTypeProvider contentTypeProvider)
+    : ControllerBase
 {
-    private readonly IMinioClient _minioClient;
-    private readonly MinioOptions _minioOptions;
-    private readonly List<CdnCustomerOptions> _customers;
-    private readonly FileExtensionContentTypeProvider _contentTypeProvider;
-
-    public PublicCdnController(
-        IMinioClient minioClient,
-        IOptions<MinioOptions> minioOptions,
-        IOptions<List<CdnCustomerOptions>> customers,
-        FileExtensionContentTypeProvider contentTypeProvider)
-    {
-        _minioClient = minioClient;
-        _minioOptions = minioOptions.Value;
-        _customers = customers.Value;
-        _contentTypeProvider = contentTypeProvider;
-    }
+    private readonly MinioOptions _minioOptions = minioOptions.Value;
+    private readonly List<CdnCustomerOptions> _customers = customers.Value;
 
     [HttpGet]
-    public async Task<IActionResult> GetPublicFile(
-        string customerKey,
-        string path,
-        CancellationToken cancellationToken)
+    public async Task<IActionResult> GetPublicFile(string customerKey, string path, CancellationToken cancellationToken)
     {
         var customer = _customers.FirstOrDefault(x =>
             x.CustomerKey.Equals(customerKey, StringComparison.OrdinalIgnoreCase));
@@ -57,7 +45,7 @@ public sealed class PublicCdnController : ControllerBase
                     stream.CopyTo(memoryStream);
                 });
 
-            await _minioClient.GetObjectAsync(getArgs, cancellationToken);
+            await minioClient.GetObjectAsync(getArgs, cancellationToken);
         }
         catch
         {
@@ -66,7 +54,7 @@ public sealed class PublicCdnController : ControllerBase
 
         memoryStream.Position = 0;
 
-        if (!_contentTypeProvider.TryGetContentType(path, out var contentType))
+        if (!contentTypeProvider.TryGetContentType(path, out var contentType))
             contentType = "application/octet-stream";
 
         Response.Headers.CacheControl = "public, max-age=31536000, immutable";

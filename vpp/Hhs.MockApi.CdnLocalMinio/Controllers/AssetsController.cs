@@ -9,26 +9,16 @@ namespace Hhs.MockApi.CdnLocalMinio.Controllers;
 
 [ApiController]
 [Route("api/cdn/assets")]
-public sealed class AssetsController : ControllerBase
+public sealed class AssetsController(
+    IMinioClient minioClient,
+    IOptions<MinioOptions> minioOptions,
+    IOptions<List<CdnCustomerOptions>> customers) : ControllerBase
 {
-    private readonly IMinioClient _minioClient;
-    private readonly MinioOptions _minioOptions;
-    private readonly List<CdnCustomerOptions> _customers;
-
-    public AssetsController(
-        IMinioClient minioClient,
-        IOptions<MinioOptions> minioOptions,
-        IOptions<List<CdnCustomerOptions>> customers)
-    {
-        _minioClient = minioClient;
-        _minioOptions = minioOptions.Value;
-        _customers = customers.Value;
-    }
+    private readonly MinioOptions _minioOptions = minioOptions.Value;
+    private readonly List<CdnCustomerOptions> _customers = customers.Value;
 
     [HttpPost("upload")]
-    public async Task<IActionResult> Upload(
-        [FromForm] UploadCdnFileRequest request,
-        CancellationToken cancellationToken)
+    public async Task<IActionResult> Upload([FromForm] UploadCdnFileRequest request, CancellationToken cancellationToken)
     {
         var customer = ResolveCustomer();
 
@@ -50,7 +40,7 @@ public sealed class AssetsController : ControllerBase
             .WithObjectSize(request.File.Length)
             .WithContentType(request.File.ContentType ?? "application/octet-stream");
 
-        await _minioClient.PutObjectAsync(putArgs, cancellationToken);
+        await minioClient.PutObjectAsync(putArgs, cancellationToken);
 
         var relativePath = objectKey.Replace(customer.RootPath + "/", "");
         var cdnUrl = $"{customer.BaseUrl}/{relativePath}";
