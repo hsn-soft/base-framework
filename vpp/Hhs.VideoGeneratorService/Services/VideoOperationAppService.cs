@@ -421,15 +421,15 @@ public sealed class VideoOperationAppService(
                 .Find(x => x.VideoRequestId == @event.VideoRequestId)
                 .ToListAsync(cancellationToken);
 
-            if (allAudios.Any(x => x.Status != StatusNames.Uploaded))
+            if (allAudios.Any(x => x.Status != StatusNames.AudioFileUploadCompleted))
                 return;
 
             var orderedAudios = allAudios.OrderBy(x => x.SortOrder).ToList();
 
             if (videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioUrlListRequired &&
-                orderedAudios.Any(x => string.IsNullOrWhiteSpace(x.AudioStorageUrl)))
+                orderedAudios.Any(x => string.IsNullOrWhiteSpace(x.AudioCdnUrl)))
             {
-                throw new InvalidOperationException("AudioStorageUrl is required for video provider.");
+                throw new InvalidOperationException("AudioCdnUrl is required for video provider.");
             }
 
             if (videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioFileRequired &&
