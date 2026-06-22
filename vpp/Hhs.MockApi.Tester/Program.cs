@@ -7,7 +7,7 @@ const string apiKey = "ciner-secret-api-key";
 const string customerKey = "ciner";
 
 Console.WriteLine("╔════════════════════════════════════════════════════════════════╗");
-Console.WriteLine("║      Multi-Tenant CDN API (MinIO Backend) Test                 ║");
+Console.WriteLine("║      CDN API - Authenticated vs Public Download Test           ║");
 Console.WriteLine("╚════════════════════════════════════════════════════════════════╝\n");
 
 // Prepare test file
@@ -26,18 +26,14 @@ Console.WriteLine($"   Hash: {originalHash}\n");
 
 using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
 
-Console.WriteLine("═".PadRight(70, '═'));
-Console.WriteLine("🔷 TEST: CdnLocalMinio + MinIO Multi-Tenant API");
-Console.WriteLine("═".PadRight(70, '═') + "\n");
-
 try
 {
-    // 1. Upload Test
-    Console.WriteLine("1️⃣ File Upload (Multi-Tenant):");
-    Console.WriteLine($"   📤 Uploading to: {apiUrl}/api/cdn/assets/upload");
-    Console.WriteLine($"   👤 Customer: {customerKey}");
-    Console.WriteLine($"   📋 API Key: {apiKey}");
-    Console.WriteLine($"   Asset Type: documents\n");
+    // 1️⃣ UPLOAD
+    Console.WriteLine("═".PadRight(70, '═'));
+    Console.WriteLine("1️⃣ FILE UPLOAD");
+    Console.WriteLine("═".PadRight(70, '═'));
+    Console.WriteLine($"📤 Endpoint: POST {apiUrl}/api/cdn/assets/upload");
+    Console.WriteLine($"🔐 Auth: X-Api-Key: {apiKey}\n");
 
     string? storageUrl = null;
     string? cdnUrl = null;
@@ -57,9 +53,7 @@ try
 
         if (!uploadResponse.IsSuccessStatusCode)
         {
-            Console.WriteLine($"   ❌ Upload failed: {uploadResponse.StatusCode}");
-            var errorContent = await uploadResponse.Content.ReadAsStringAsync();
-            Console.WriteLine($"   Error: {errorContent}");
+            Console.WriteLine($"❌ Upload failed: {uploadResponse.StatusCode}");
             return;
         }
 
@@ -70,20 +64,18 @@ try
         storageUrl = root.GetProperty("storageUrl").GetString();
         cdnUrl = root.GetProperty("cdnUrl").GetString();
 
-        Console.WriteLine($"   ✅ Upload successful (200 OK)");
-        Console.WriteLine($"   🔐 Storage URL (Private): {storageUrl}");
-        Console.WriteLine($"   🌐 CDN URL (Public):     {cdnUrl}\n");
+        Console.WriteLine($"✅ Upload successful (200 OK)\n");
+        Console.WriteLine($"Response URLs:");
+        Console.WriteLine($"  StorageUrl: {storageUrl}");
+        Console.WriteLine($"  CdnUrl:     {cdnUrl}\n");
     }
 
-    // 2. Storage Download Test (Authenticated)
-    Console.WriteLine("2️⃣ Storage Download (API Key Required):");
-    if (string.IsNullOrEmpty(storageUrl))
-    {
-        Console.WriteLine("   ❌ Storage URL not available");
-        return;
-    }
-
-    Console.WriteLine($"   📥 Downloading from: {storageUrl}");
+    // 2️⃣ STORAGE DOWNLOAD (WITH API KEY)
+    Console.WriteLine("═".PadRight(70, '═'));
+    Console.WriteLine("2️⃣ STORAGE DOWNLOAD (With API Key)");
+    Console.WriteLine("═".PadRight(70, '═'));
+    Console.WriteLine($"📥 Endpoint: GET /api/cdn/assets/download?key=...");
+    Console.WriteLine($"🔐 Auth: X-Api-Key: {apiKey}\n");
 
     var storageRequest = new HttpRequestMessage(HttpMethod.Get, storageUrl);
     storageRequest.Headers.Add("X-Api-Key", apiKey);
@@ -91,92 +83,95 @@ try
     var storageResponse = await httpClient.SendAsync(storageRequest);
     if (!storageResponse.IsSuccessStatusCode)
     {
-        Console.WriteLine($"   ❌ Storage download failed: {storageResponse.StatusCode}");
+        Console.WriteLine($"❌ Storage download failed: {storageResponse.StatusCode}");
         return;
     }
 
     var storageBytes = await storageResponse.Content.ReadAsByteArrayAsync();
     var storageHash = GetHash(storageBytes);
-    var storageMatches = storageHash == originalHash;
+    var storageMatch = storageHash == originalHash;
 
-    Console.WriteLine($"   ✅ Download successful (200 OK)");
-    Console.WriteLine($"   📊 Downloaded Size: {storageBytes.Length} bytes");
-    Console.WriteLine($"   🔐 Original Hash:   {originalHash}");
-    Console.WriteLine($"   🔐 Storage Hash:    {storageHash}");
-    Console.WriteLine($"   ✔️ Content Match: {(storageMatches ? "✅ YES" : "❌ NO")}\n");
+    Console.WriteLine($"✅ Download successful (200 OK)");
+    Console.WriteLine($"  Size: {storageBytes.Length} bytes");
+    Console.WriteLine($"  Original Hash:   {originalHash}");
+    Console.WriteLine($"  Downloaded Hash: {storageHash}");
+    Console.WriteLine($"  Match: {(storageMatch ? "✅ YES" : "❌ NO")}\n");
 
-    // 3. Public CDN Download Test (No Auth)
-    Console.WriteLine("3️⃣ Public CDN Download (No Auth Required):");
-    if (string.IsNullOrEmpty(cdnUrl))
-    {
-        Console.WriteLine("   ❌ CDN URL not available");
-        return;
-    }
-
-    Console.WriteLine($"   📥 Downloading from: {cdnUrl}");
+    // 3️⃣ CDN PUBLIC DOWNLOAD (NO API KEY)
+    Console.WriteLine("═".PadRight(70, '═'));
+    Console.WriteLine("3️⃣ CDN PUBLIC DOWNLOAD (No API Key)");
+    Console.WriteLine("═".PadRight(70, '═'));
+    Console.WriteLine($"📥 Endpoint: GET {cdnUrl}");
+    Console.WriteLine($"🔓 Auth: None\n");
 
     var cdnResponse = await httpClient.GetAsync(cdnUrl);
     if (!cdnResponse.IsSuccessStatusCode)
     {
-        Console.WriteLine($"   ❌ CDN download failed: {cdnResponse.StatusCode}");
+        Console.WriteLine($"❌ CDN download failed: {cdnResponse.StatusCode}");
         return;
     }
 
     var cdnBytes = await cdnResponse.Content.ReadAsByteArrayAsync();
     var cdnHash = GetHash(cdnBytes);
-    var cdnMatches = cdnHash == originalHash;
+    var cdnMatch = cdnHash == originalHash;
 
-    Console.WriteLine($"   ✅ Download successful (200 OK)");
-    Console.WriteLine($"   📊 Downloaded Size: {cdnBytes.Length} bytes");
-    Console.WriteLine($"   🔐 Original Hash:   {originalHash}");
-    Console.WriteLine($"   🔐 CDN Hash:        {cdnHash}");
-    Console.WriteLine($"   ✔️ Content Match: {(cdnMatches ? "✅ YES" : "❌ NO")}\n");
+    Console.WriteLine($"✅ Download successful (200 OK)");
+    Console.WriteLine($"  Size: {cdnBytes.Length} bytes");
+    Console.WriteLine($"  Original Hash: {originalHash}");
+    Console.WriteLine($"  Downloaded Hash: {cdnHash}");
+    Console.WriteLine($"  Match: {(cdnMatch ? "✅ YES" : "❌ NO")}\n");
 
-    // 4. Cache Headers Test
-    Console.WriteLine("4️⃣ Cache Headers Verification:");
-    if (cdnResponse.Headers.TryGetValues("Cache-Control", out var cacheHeaders))
+    // 4️⃣ COMPARISON
+    Console.WriteLine("═".PadRight(70, '═'));
+    Console.WriteLine("4️⃣ DOWNLOAD METHOD COMPARISON");
+    Console.WriteLine("═".PadRight(70, '═'));
+
+    var storageVsCdn = storageHash == cdnHash;
+    Console.WriteLine($"Storage URL vs CDN URL files identical: {(storageVsCdn ? "✅ YES" : "❌ NO")}\n");
+
+    // 5️⃣ SECURITY TEST
+    Console.WriteLine("═".PadRight(70, '═'));
+    Console.WriteLine("5️⃣ SECURITY TEST - Storage URL without API Key");
+    Console.WriteLine("═".PadRight(70, '═'));
+
+    var unauthorizedResponse = await httpClient.GetAsync(storageUrl);
+    var isUnauthorized = unauthorizedResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized;
+
+    Console.WriteLine($"GET {storageUrl}");
+    Console.WriteLine($"Response Status: {unauthorizedResponse.StatusCode}");
+    Console.WriteLine($"✅ Access Denied (401): {(isUnauthorized ? "YES ✅" : "NO ❌")}\n");
+
+    // 6️⃣ SUMMARY
+    Console.WriteLine("═".PadRight(70, '═'));
+    Console.WriteLine("✅ TEST SUMMARY");
+    Console.WriteLine("═".PadRight(70, '═'));
+    Console.WriteLine($"✅ Upload:                    SUCCESS");
+    Console.WriteLine($"✅ Storage Download (Auth):   {(storageMatch ? "PASS ✅" : "FAIL ❌")}");
+    Console.WriteLine($"✅ CDN Download (Public):     {(cdnMatch ? "PASS ✅" : "FAIL ❌")}");
+    Console.WriteLine($"✅ File Integrity:            {(storageVsCdn ? "MATCH ✅" : "MISMATCH ❌")}");
+    Console.WriteLine($"✅ Security (401 check):      {(isUnauthorized ? "PROTECTED ✅" : "EXPOSED ❌")}\n");
+
+    if (storageMatch && cdnMatch && storageVsCdn && isUnauthorized)
     {
-        var cacheHeader = cacheHeaders.FirstOrDefault();
-        Console.WriteLine($"   Cache-Control: {cacheHeader}");
-        Console.WriteLine($"   ✅ Immutable cache headers configured\n");
+        Console.WriteLine("🎉 ALL TESTS PASSED!\n");
+    }
+    else
+    {
+        Console.WriteLine("⚠️ SOME TESTS FAILED\n");
     }
 
-    // 5. Security Test - Storage URL without auth
-    Console.WriteLine("5️⃣ Security Test (Storage URL without API Key):");
-    var unauthorizedResponse = await httpClient.GetAsync(storageUrl);
-    Console.WriteLine($"   Status: {unauthorizedResponse.StatusCode}");
-    Console.WriteLine($"   ✔️ Access Denied: {(unauthorizedResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized ? "✅ YES (401)" : "❌ NO")}\n");
-
-    // 6. Summary
-    Console.WriteLine("═".PadRight(70, '═'));
-    Console.WriteLine("✅ TEST SUMMARY:");
-    Console.WriteLine($"   ✅ Upload successful");
-    Console.WriteLine($"   ✅ Storage download (authenticated): {(storageMatches ? "PASSED" : "FAILED")}");
-    Console.WriteLine($"   ✅ CDN download (public): {(cdnMatches ? "PASSED" : "FAILED")}");
-    Console.WriteLine($"   ✅ Cache headers configured");
-    Console.WriteLine($"   ✅ Security verified (401 Unauthorized)\n");
-
-    Console.WriteLine("📋 Configuration:");
-    Console.WriteLine($"   API Endpoint: {apiUrl}");
-    Console.WriteLine($"   MinIO Bucket: cdn-assets");
-    Console.WriteLine($"   MinIO Console: http://localhost:9101");
-    Console.WriteLine($"   Credentials: minioadmin/minioadmin\n");
-
-    Console.WriteLine("═".PadRight(70, '═'));
-    Console.WriteLine("✅ All tests passed!\n");
+    Console.WriteLine("📋 Endpoints:");
+    Console.WriteLine($"  Public CDN:  GET  /{customerKey}/documents/...");
+    Console.WriteLine($"  Authenticated: GET  /api/cdn/assets/download?key=...  + X-Api-Key header");
 }
 catch (HttpRequestException ex)
 {
     Console.WriteLine($"❌ Connection Error: {ex.Message}");
-    Console.WriteLine("💡 Make sure:");
-    Console.WriteLine("   1. MinIO is running on localhost:9100");
-    Console.WriteLine($"   2. CdnLocalMinio API is running on {apiUrl}");
-    Console.WriteLine("   3. Bucket 'cdn-assets' exists in MinIO\n");
+    Console.WriteLine("💡 Make sure CdnLocalMinio API is running on http://localhost:5070\n");
 }
 catch (Exception ex)
 {
     Console.WriteLine($"❌ Error: {ex.Message}");
-    Console.WriteLine($"   {ex.StackTrace}");
 }
 
 static string GetHash(byte[] data)

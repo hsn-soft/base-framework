@@ -46,7 +46,7 @@ public sealed class AssetsController(
 
         var relativePath = objectKey.Replace(customer.RootPath + "/", "");
         var cdnUrl = $"{customer.BaseUrl}/{relativePath}";
-        var storageUrl = $"{Request.Scheme}://{Request.Host}/api/cdn/assets/storage/download?key={Uri.EscapeDataString(objectKey)}";
+        var storageUrl = $"{Request.Scheme}://{Request.Host}/api/cdn/assets/download?key={Uri.EscapeDataString(objectKey)}";
 
         return Ok(new UploadCdnFileResponse
         {
