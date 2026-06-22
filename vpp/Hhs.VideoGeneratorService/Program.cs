@@ -51,14 +51,6 @@ builder.Services.AddScoped<IAudioProviderResolver, AudioProviderResolver>();
 // 3. VIDEO PROVIDER CONFIGURATION
 // ============================================================================
 
-var videoFastExternalProviderSettings = builder.Configuration.GetSection(VideoFastExternalProviderSettings.SectionName)
-    .Get<VideoFastExternalProviderSettings>() ?? new VideoFastExternalProviderSettings();
-builder.Services.AddSingleton(videoFastExternalProviderSettings);
-
-var videoFastInternalProviderSettings = builder.Configuration.GetSection(VideoFastInternalProviderSettings.SectionName)
-    .Get<VideoFastInternalProviderSettings>() ?? new VideoFastInternalProviderSettings();
-builder.Services.AddSingleton(videoFastInternalProviderSettings);
-
 var videoQueueExternalProviderSettings = builder.Configuration.GetSection(VideoQueueExternalProviderSettings.SectionName)
     .Get<VideoQueueExternalProviderSettings>() ?? new VideoQueueExternalProviderSettings();
 builder.Services.AddSingleton(videoQueueExternalProviderSettings);
@@ -68,8 +60,6 @@ var videoQueueInternalProviderSettings = builder.Configuration.GetSection(VideoQ
 builder.Services.AddSingleton(videoQueueInternalProviderSettings);
 
 // Register Video Provider implementations
-builder.Services.AddScoped<IVideoProvider, VideoFastExternalProvider>();
-builder.Services.AddScoped<IVideoProvider, VideoFastInternalProvider>();
 builder.Services.AddScoped<IVideoProvider, VideoQueueExternalProvider>();
 builder.Services.AddScoped<IVideoProvider, VideoQueueInternalProvider>();
 builder.Services.AddScoped<IVideoProviderResolver, VideoProviderResolver>();
@@ -87,9 +77,6 @@ builder.Services.AddSingleton(systemCdnSettings);
 var cdnLocalMinioSettings = builder.Configuration.GetSection("Provider:Cdn:CdnLocalMinio")
     .Get<CdnLocalMinioSettings>() ?? new CdnLocalMinioSettings();
 builder.Services.AddSingleton(cdnLocalMinioSettings);
-var cdnAbcSettings = builder.Configuration.GetSection("Provider:Cdn:CdnAbc")
-    .Get<CdnAbcSettings>() ?? new CdnAbcSettings();
-builder.Services.AddSingleton(cdnAbcSettings);
 
 var cdnBunnySelfSettings = builder.Configuration.GetSection("Provider:Cdn:CdnBunnySelf")
     .Get<CdnBunnySelfSettings>() ?? new CdnBunnySelfSettings();
@@ -102,7 +89,6 @@ builder.Services.AddSingleton(cdnBunnyS3Settings);
 
 // Register CDN Provider implementations
 builder.Services.AddScoped<ICdnProvider, CdnLocalMinioProvider>();
-builder.Services.AddScoped<ICdnProvider, CdnAbcProvider>();
 builder.Services.AddScoped<ICdnProvider, CdnBunnySelfProvider>();
 builder.Services.AddScoped<ICdnProvider, CdnBunnyS3Provider>();
 // 5. POLLING & RETRY CONFIGURATION

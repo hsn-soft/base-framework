@@ -2,11 +2,9 @@ using Hhs.Shared.Configuration;
 using Hhs.Shared.Events;
 using Hhs.Shared.RabbitMQ;
 using Hhs.VideoGeneratorService.Configuration;
-using Hhs.VideoGeneratorService.Configuration.Providers.Video;
 using Hhs.VideoGeneratorService.Entities;
 using Hhs.VideoGeneratorService.Mongo;
 using Hhs.VideoGeneratorService.Providers;
-using Hhs.VideoGeneratorService.Providers.FileDownloader;
 using MongoDB.Driver;
 
 namespace Hhs.VideoGeneratorService.Services;
@@ -16,15 +14,8 @@ public sealed class VideoProviderPollingAppService(
     IVideoProviderResolver videoProviderResolver,
     IEventBus eventBus,
     ILogger<VideoProviderPollingAppService> logger,
-    IFileDownloader fileDownloader,
-    VideoFastExternalProviderSettings videoFastExternalSettings,
-    VideoFastInternalProviderSettings videoFastInternalSettings,
-    VideoQueueExternalProviderSettings videoQueueExternalSettings,
-    VideoQueueInternalProviderSettings videoQueueInternalSettings,
     VideoPollingSettings pollingSettings)
 {
-    private readonly VideoPollingSettings _pollingSettings = pollingSettings;
-
     public async Task PollDueVideoRequestsAsync(CancellationToken cancellationToken)
     {
         var now = DateTime.UtcNow;
@@ -102,7 +93,7 @@ public sealed class VideoProviderPollingAppService(
                 if (!status.IsCompleted)
                 {
                     request.ProviderPollingCount++;
-                    request.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(_pollingSettings.IntervalSeconds);
+                    request.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(pollingSettings.IntervalSeconds);
                     request.UpdatedAtUtc = DateTime.UtcNow;
 
                     await ReplaceVideoAsync(request, cancellationToken);
@@ -156,7 +147,7 @@ public sealed class VideoProviderPollingAppService(
                 }
                 else
                 {
-                    request.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(_pollingSettings.BackoffIntervalSeconds);
+                    request.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(pollingSettings.BackoffIntervalSeconds);
                     await ReplaceVideoAsync(request, cancellationToken);
                 }
 
@@ -181,7 +172,7 @@ public sealed class VideoProviderPollingAppService(
                 x.NextProviderPollAtUtc <= now &&
                 x.VideoProviderTrackingId != null,
             Builders<VideoRequest>.Update
-                .Set(x => x.NextProviderPollAtUtc, DateTime.UtcNow.AddSeconds(_pollingSettings.ErrorRescheduleDelaySeconds))
+                .Set(x => x.NextProviderPollAtUtc, DateTime.UtcNow.AddSeconds(pollingSettings.ErrorRescheduleDelaySeconds))
                 .Set(x => x.UpdatedAtUtc, DateTime.UtcNow),
             cancellationToken: cancellationToken);
     }
