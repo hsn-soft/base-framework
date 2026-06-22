@@ -123,8 +123,7 @@ builder.Services.AddSingleton<VideoMongoContext>();
 
 builder.Services.AddScoped<VideoGeneratorInboxStore>();
 builder.Services.AddScoped<VideoOperationAppService>();
-builder.Services.AddScoped<IFileDownloader, DummyFileDownloader>();
-builder.Services.AddScoped<IStorageService, DummyStorageService>();
+builder.Services.AddScoped<IRemoteFileDownloader, RemoteFileDownloader>();
 
 // ============================================================================
 // 8. EVENT HANDLERS

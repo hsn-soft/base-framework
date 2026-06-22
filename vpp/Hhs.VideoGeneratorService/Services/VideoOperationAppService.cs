@@ -17,7 +17,7 @@ namespace Hhs.VideoGeneratorService.Services;
 
 public sealed class VideoOperationAppService(
     VideoMongoContext context,
-    IFileDownloader fileDownloader,
+    IRemoteFileDownloader fileDownloader,
     ICdnProviderResolver cdnProviderResolver,
     IEventBus eventBus,
     IVideoProviderResolver videoProviderResolver,
@@ -320,9 +320,12 @@ public sealed class VideoOperationAppService(
 
             await ReplaceAudioAsync(audioRequest, cancellationToken);
 
-            string localPath = await fileDownloader.DownloadAsync(@event.ProviderFileUrl, "mp3", $"audio_{audioRequest.Id:N}", cancellationToken);
+            var (success, filename) = await fileDownloader.DownloadAsync(@event.ProviderFileUrl, "mp3", cancellationToken);
+            if (!success) throw new InvalidOperationException($"Failed to download audio file: {filename}");
+            string downloadDir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", systemCdnSettings.LocalDownloadPath);
+            string audioLocalPath = Path.Combine(downloadDir, filename);
 
-            audioRequest.AudioLocalPath = localPath;
+            audioRequest.AudioLocalPath = audioLocalPath;
             audioRequest.Status = StatusNames.Downloaded;
             audioRequest.CurrentStep = EventNames.AudioFileDownloadCompleted;
             audioRequest.UpdatedAtUtc = DateTime.UtcNow;
@@ -336,7 +339,7 @@ public sealed class VideoOperationAppService(
                 CorrelationId = @event.CorrelationId,
                 VideoRequestId = audioRequest.VideoRequestId,
                 AudioRequestId = audioRequest.Id,
-                LocalFilePath = localPath
+                LocalFilePath = audioLocalPath
             }, cancellationToken);
         }
         catch (Exception ex)
@@ -601,9 +604,12 @@ public sealed class VideoOperationAppService(
 
             await ReplaceVideoAsync(videoRequest, cancellationToken);
 
-            string localPath = await fileDownloader.DownloadAsync(@event.ProviderFileUrl, "mp4", $"video_{videoRequest.Id:N}", cancellationToken);
+            var (success, filename) = await fileDownloader.DownloadAsync(@event.ProviderFileUrl, "mp4", cancellationToken);
+            if (!success) throw new InvalidOperationException($"Failed to download video file: {filename}");
+            string downloadDir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", systemCdnSettings.LocalDownloadPath);
+            string videoLocalPath = Path.Combine(downloadDir, filename);
 
-            videoRequest.VideoLocalPath = localPath;
+            videoRequest.VideoLocalPath = videoLocalPath;
             videoRequest.Status = StatusNames.VideoDownloaded;
             videoRequest.CurrentStep = EventNames.VideoFileDownloadCompleted;
             videoRequest.UpdatedAtUtc = DateTime.UtcNow;
@@ -616,7 +622,7 @@ public sealed class VideoOperationAppService(
                 RefContentType = videoRequest.RefContentType,
                 CorrelationId = @event.CorrelationId,
                 VideoRequestId = videoRequest.Id,
-                LocalFilePath = localPath,
+                LocalFilePath = videoLocalPath,
                 ProviderFileUrl = @event.ProviderFileUrl
             }, cancellationToken);
         }

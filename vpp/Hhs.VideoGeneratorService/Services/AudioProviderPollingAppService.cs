@@ -16,7 +16,7 @@ public sealed class AudioProviderPollingAppService(
     IAudioProviderResolver audioProviderResolver,
     IEventBus eventBus,
     ILogger<AudioProviderPollingAppService> logger,
-    IFileDownloader fileDownloader,
+    IRemoteFileDownloader fileDownloader,
     AudioFastProviderSettings audioFastSettings,
     AudioQueueProviderSettings audioQueueSettings,
     AudioPollingSettings pollingSettings)
