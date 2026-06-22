@@ -50,7 +50,7 @@ public sealed class AssetsController(
 
         return Ok(new UploadCdnFileResponse
         {
-            StorageUrl = storageUrl,
+            ObjectKey = objectKey,
             CdnUrl = cdnUrl
         });
     }

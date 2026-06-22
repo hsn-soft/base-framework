@@ -61,11 +61,17 @@ try
         var jsonDoc = JsonDocument.Parse(jsonContent);
         var root = jsonDoc.RootElement;
 
-        storageUrl = root.GetProperty("storageUrl").GetString();
+        var objectKey = root.GetProperty("objectKey").GetString();
         cdnUrl = root.GetProperty("cdnUrl").GetString();
 
+        // Provider converts CDN response to standardized format
+        storageUrl = $"{apiUrl}/api/cdn/assets/download?key={Uri.EscapeDataString(objectKey)}";
+
         Console.WriteLine($"✅ Upload successful (200 OK)\n");
-        Console.WriteLine($"Response URLs:");
+        Console.WriteLine($"CDN Response:");
+        Console.WriteLine($"  ObjectKey: {objectKey}");
+        Console.WriteLine($"  CdnUrl:    {cdnUrl}");
+        Console.WriteLine($"\nProvider converts to:");
         Console.WriteLine($"  StorageUrl: {storageUrl}");
         Console.WriteLine($"  CdnUrl:     {cdnUrl}\n");
     }
