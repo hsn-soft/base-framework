@@ -103,6 +103,9 @@ public sealed class AudioProviderPollingAppService(
                 if (string.IsNullOrWhiteSpace(status.ProviderFileUrl))
                     throw new InvalidOperationException("Audio provider completed but file url is empty.");
 
+                // set provider file url
+                request.AudioProviderUrl = status.ProviderFileUrl;
+
                 request.ProviderPollingCount++;
                 request.NextProviderPollAtUtc = null;
                 request.Status = StatusNames.AudioProviderCompleted;
@@ -113,15 +116,7 @@ public sealed class AudioProviderPollingAppService(
                 await ReplaceAudioAsync(request, cancellationToken);
 
                 // Publish provider completed event - handler will trigger download cascade
-                await eventBus.PublishAsync(new AudioProviderCompletedEto
-                {
-                    RefContentId = request.RefContentId,
-                    RefContentType = request.RefContentType,
-                    CorrelationId = request.CorrelationId,
-                    VideoRequestId = request.VideoRequestId,
-                    AudioRequestId = request.Id,
-                    ProviderFileUrl = status.ProviderFileUrl
-                }, cancellationToken);
+                await eventBus.PublishAsync(new AudioProviderCompletedEto { CorrelationId = request.CorrelationId, AudioRequestId = request.Id, }, cancellationToken);
             }
             catch (Exception ex)
             {

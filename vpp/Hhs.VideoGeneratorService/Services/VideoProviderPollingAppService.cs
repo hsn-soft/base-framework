@@ -103,6 +103,9 @@ public sealed class VideoProviderPollingAppService(
                 if (string.IsNullOrWhiteSpace(status.ProviderFileUrl))
                     throw new InvalidOperationException("Video provider completed but file url is empty.");
 
+                // set provider file url
+                request.VideoProviderUrl = status.ProviderFileUrl;
+
                 request.ProviderPollingCount++;
                 request.NextProviderPollAtUtc = null;
                 request.Status = StatusNames.VideoProviderCompleted;
@@ -113,14 +116,7 @@ public sealed class VideoProviderPollingAppService(
                 await ReplaceVideoAsync(request, cancellationToken);
 
                 // Publish provider completed event - handler will trigger download cascade
-                await eventBus.PublishAsync(new VideoProviderCompletedEto
-                {
-                    RefContentId = request.RefContentId,
-                    RefContentType = request.RefContentType,
-                    CorrelationId = request.CorrelationId,
-                    VideoRequestId = request.Id,
-                    ProviderFileUrl = status.ProviderFileUrl
-                }, cancellationToken);
+                await eventBus.PublishAsync(new VideoProviderCompletedEto { CorrelationId = request.CorrelationId, VideoRequestId = request.Id }, cancellationToken);
             }
             catch (Exception ex)
             {

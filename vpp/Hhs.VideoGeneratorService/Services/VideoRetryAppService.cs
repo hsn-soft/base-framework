@@ -47,42 +47,11 @@ public sealed class VideoRetryAppService(
                 {
                     request.Status = StatusNames.AudioProviderRequestRetrying;
 
-                    await eventBus.PublishAsync(new AudioProviderRequestStartedEto
-                    {
-                        RefContentId = request.RefContentId,
-                RefContentType = request.RefContentType,
-                        CorrelationId = request.CorrelationId,
-                        VideoRequestId = request.VideoRequestId,
-                        AudioRequestId = request.Id,
-                        SortOrder = request.SortOrder,
-                        InputText = request.InputText
-                    }, cancellationToken);
+                    await eventBus.PublishAsync(new AudioProviderRequestStartedEto { CorrelationId = request.CorrelationId, AudioRequestId = request.Id, }, cancellationToken);
                 }
                 else if (request.CurrentStep == EventNames.AudioFileDownloadStarted)
                 {
-                    await eventBus.PublishAsync(new AudioFileDownloadStartedEto
-                    {
-                        RefContentId = request.RefContentId,
-                RefContentType = request.RefContentType,
-                        CorrelationId = request.CorrelationId,
-                        VideoRequestId = request.VideoRequestId,
-                        AudioRequestId = request.Id,
-                        ProviderFileUrl = request.AudioProviderUrl
-                                          ?? throw new InvalidOperationException("ProviderAudioFileUrl is required.")
-                    }, cancellationToken);
-                }
-                else if (request.CurrentStep == EventNames.AudioFileUploadStarted)
-                {
-                    await eventBus.PublishAsync(new AudioFileUploadStartedEto
-                    {
-                        RefContentId = request.RefContentId,
-                RefContentType = request.RefContentType,
-                        CorrelationId = request.CorrelationId,
-                        VideoRequestId = request.VideoRequestId,
-                        AudioRequestId = request.Id,
-                        LocalFilePath = request.AudioLocalPath
-                                        ?? throw new InvalidOperationException("LocalAudioFilePath is required.")
-                    }, cancellationToken);
+                    await eventBus.PublishAsync(new AudioFileDownloadStartedEto { CorrelationId = request.CorrelationId, AudioRequestId = request.Id, }, cancellationToken);
                 }
                 else if (request.CurrentStep == EventNames.AudioProviderPollingStarted)
                 {
@@ -105,7 +74,7 @@ public sealed class VideoRetryAppService(
                     await eventBus.PublishAsync(new StepFailedEto
                     {
                         RefContentId = request.RefContentId,
-                RefContentType = request.RefContentType,
+                        RefContentType = request.RefContentType,
                         CorrelationId = request.CorrelationId,
                         Step = request.CurrentStep,
                         ErrorMessage = request.LastError,
@@ -119,6 +88,7 @@ public sealed class VideoRetryAppService(
                 {
                     request.Status = StatusNames.RetryEventPublished;
                 }
+
                 request.NextRetryAtUtc = null;
                 request.UpdatedAtUtc = DateTime.UtcNow;
 
@@ -175,8 +145,6 @@ public sealed class VideoRetryAppService(
 
                     await eventBus.PublishAsync(new VideoProviderRequestStartedEto
                     {
-                        RefContentId = request.RefContentId,
-                RefContentType = request.RefContentType,
                         CorrelationId = request.CorrelationId,
                         VideoRequestId = request.Id,
                         AudioUrls = videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioUrlListRequired
@@ -186,27 +154,7 @@ public sealed class VideoRetryAppService(
                 }
                 else if (request.CurrentStep == EventNames.VideoFileDownloadStarted)
                 {
-                    await eventBus.PublishAsync(new VideoFileDownloadStartedEto
-                    {
-                        RefContentId = request.RefContentId,
-                RefContentType = request.RefContentType,
-                        CorrelationId = request.CorrelationId,
-                        VideoRequestId = request.Id,
-                        ProviderFileUrl = request.VideoProviderUrl
-                                          ?? throw new InvalidOperationException("VideoProviderUrl is required.")
-                    }, cancellationToken);
-                }
-                else if (request.CurrentStep == EventNames.VideoFileUploadStarted)
-                {
-                    await eventBus.PublishAsync(new VideoFileUploadStartedEto
-                    {
-                        RefContentId = request.RefContentId,
-                RefContentType = request.RefContentType,
-                        CorrelationId = request.CorrelationId,
-                        VideoRequestId = request.Id,
-                        LocalFilePath = request.VideoLocalPath
-                                        ?? throw new InvalidOperationException("VideoLocalPath is required.")
-                    }, cancellationToken);
+                    await eventBus.PublishAsync(new VideoFileDownloadStartedEto { CorrelationId = request.CorrelationId, VideoRequestId = request.Id, }, cancellationToken);
                 }
                 else if (request.CurrentStep == EventNames.VideoProviderPollingStarted)
                 {
@@ -229,7 +177,7 @@ public sealed class VideoRetryAppService(
                     await eventBus.PublishAsync(new StepFailedEto
                     {
                         RefContentId = request.RefContentId,
-                RefContentType = request.RefContentType,
+                        RefContentType = request.RefContentType,
                         CorrelationId = request.CorrelationId,
                         Step = request.CurrentStep,
                         ErrorMessage = request.LastError,
@@ -243,6 +191,7 @@ public sealed class VideoRetryAppService(
                 {
                     request.Status = StatusNames.RetryEventPublished;
                 }
+
                 request.NextRetryAtUtc = null;
                 request.UpdatedAtUtc = DateTime.UtcNow;
 

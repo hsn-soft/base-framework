@@ -20,6 +20,6 @@ public sealed class VideoMongoContext
     public IMongoCollection<AudioRequest> AudioRequests =>
         _database.GetCollection<AudioRequest>("audio_requests");
 
-    public IMongoCollection<VideoGeneratorInboxMessage> InboxMessages =>
+    public IMongoCollection<VideoGeneratorInboxMessage> VideoGeneratorInboxMessages =>
         _database.GetCollection<VideoGeneratorInboxMessage>("inbox_messages");
 }

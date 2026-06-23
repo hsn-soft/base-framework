@@ -18,8 +18,6 @@ public sealed class OutlineProviderPollingAppService(
     ILogger<OutlineProviderPollingAppService> logger,
     OutlinePollingSettings pollingSettings)
 {
-    private readonly OutlinePollingSettings _pollingSettings = pollingSettings;
-
     public async Task PollDueOutlineRequestsAsync(CancellationToken cancellationToken)
     {
         var now = DateTime.UtcNow;
@@ -32,7 +30,7 @@ public sealed class OutlineProviderPollingAppService(
         DateTime now,
         CancellationToken cancellationToken)
     {
-        var requests = await context.CustomerRequests
+        var requests = await context.CustomerContentNormalizedRequests
             .Find(x =>
                 x.Status == StatusNames.OutlineProviderPolling &&
                 x.NextOutlinePollAtUtc != null &&
@@ -109,7 +107,7 @@ public sealed class OutlineProviderPollingAppService(
                 if (!status.IsProcessed)
                 {
                     request.OutlinePollingCount++;
-                    request.NextOutlinePollAtUtc = DateTime.UtcNow.AddSeconds(_pollingSettings.IntervalSeconds);
+                    request.NextOutlinePollAtUtc = DateTime.UtcNow.AddSeconds(pollingSettings.IntervalSeconds);
                     request.UpdatedAtUtc = DateTime.UtcNow;
 
                     await ReplaceCustomerAsync(request, cancellationToken);
@@ -130,7 +128,6 @@ public sealed class OutlineProviderPollingAppService(
 
                 await eventBus.PublishAsync(new OutlineProviderCompletedEto
                 {
-                    RefContentId = request.CustomerContentId,
                     RefContentType = ContentType.CustomerContent,
                     CorrelationId = request.CorrelationId,
                     NormalizedRequestId = request.Id,
@@ -167,7 +164,7 @@ public sealed class OutlineProviderPollingAppService(
                     request.Status = StatusNames.OutlineProviderPolling;
                     request.OutlineStatus = StatusNames.Polling;
                     request.CurrentStep = EventNames.OutlineProviderPollingStarted;
-                    request.NextOutlinePollAtUtc = DateTime.UtcNow.AddSeconds(_pollingSettings.BackoffIntervalSeconds);
+                    request.NextOutlinePollAtUtc = DateTime.UtcNow.AddSeconds(pollingSettings.BackoffIntervalSeconds);
 
                     await ReplaceCustomerAsync(request, cancellationToken);
                 }
@@ -191,7 +188,7 @@ public sealed class OutlineProviderPollingAppService(
                 i.NextOutlinePollAtUtc <= now &&
                 i.OutlineProviderTrackId != null);
 
-        var requests = await context.AnalysisRequests
+        var requests = await context.AnalysisContentNormalizedRequests
             .Find(filter)
             .Limit(50)
             .ToListAsync(cancellationToken);
@@ -211,7 +208,7 @@ public sealed class OutlineProviderPollingAppService(
                 try
                 {
                     var claimUpdate = Builders<AnalysisContentNormalizedRequest>.Update
-                        .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextOutlinePollAtUtc)}", DateTime.UtcNow.AddSeconds(_pollingSettings.IntervalSeconds))
+                        .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextOutlinePollAtUtc)}", DateTime.UtcNow.AddSeconds(pollingSettings.IntervalSeconds))
                         .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.UpdatedAtUtc)}", DateTime.UtcNow)
                         .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);
 
@@ -264,7 +261,7 @@ public sealed class OutlineProviderPollingAppService(
                     {
                         var update = Builders<AnalysisContentNormalizedRequest>.Update
                             .Inc($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlinePollingCount)}", 1)
-                            .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextOutlinePollAtUtc)}", DateTime.UtcNow.AddSeconds(_pollingSettings.ErrorRescheduleDelaySeconds))
+                            .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextOutlinePollAtUtc)}", DateTime.UtcNow.AddSeconds(pollingSettings.ErrorRescheduleDelaySeconds))
                             .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.UpdatedAtUtc)}", DateTime.UtcNow)
                             .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);
 
@@ -298,12 +295,10 @@ public sealed class OutlineProviderPollingAppService(
 
                     await eventBus.PublishAsync(new OutlineProviderCompletedEto
                     {
-                        RefContentId = request.AnalysisContentId,
                         RefContentIdForItem = item.CustomerContentId,
                         RefContentType = ContentType.AnalysisContent,
                         CorrelationId = request.CorrelationId,
                         NormalizedRequestId = request.Id,
-                        SortOrder = item.SortOrder,
                         Script = status.OutlinedData!
                     }, cancellationToken);
                 }
@@ -335,7 +330,7 @@ public sealed class OutlineProviderPollingAppService(
                         .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentStep)}", EventNames.OutlineProviderPollingStarted)
                         .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineStatus)}", StatusNames.Polling)
                         .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.LastError)}", ex.Message)
-                        .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextOutlinePollAtUtc)}", DateTime.UtcNow.AddSeconds(_pollingSettings.ErrorRescheduleDelaySeconds))
+                        .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextOutlinePollAtUtc)}", DateTime.UtcNow.AddSeconds(pollingSettings.ErrorRescheduleDelaySeconds))
                         .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.UpdatedAtUtc)}", DateTime.UtcNow)
                         .Set(x => x.Status, StatusNames.OutlineProviderPolling)
                         .Set(x => x.CurrentStep, EventNames.OutlineProviderPollingStarted)
@@ -376,7 +371,7 @@ public sealed class OutlineProviderPollingAppService(
                     i.NextOutlinePollAtUtc <= now &&
                     i.OutlineProviderTrackId != null));
 
-        return context.AnalysisRequests.UpdateOneAsync(
+        return context.AnalysisContentNormalizedRequests.UpdateOneAsync(
             filter,
             update,
             cancellationToken: cancellationToken);
@@ -430,7 +425,7 @@ public sealed class OutlineProviderPollingAppService(
                 x => x.Items,
                 i => i.CustomerContentId == customerContentId));
 
-        return context.AnalysisRequests.UpdateOneAsync(
+        return context.AnalysisContentNormalizedRequests.UpdateOneAsync(
             filter,
             update,
             cancellationToken: cancellationToken);
@@ -440,7 +435,7 @@ public sealed class OutlineProviderPollingAppService(
         CustomerContentNormalizedRequest request,
         CancellationToken cancellationToken)
     {
-        return context.CustomerRequests.ReplaceOneAsync(
+        return context.CustomerContentNormalizedRequests.ReplaceOneAsync(
             x => x.Id == request.Id,
             request,
             cancellationToken: cancellationToken);
@@ -451,7 +446,7 @@ public sealed class OutlineProviderPollingAppService(
         DateTime now,
         CancellationToken cancellationToken)
     {
-        return context.CustomerRequests.UpdateOneAsync(
+        return context.CustomerContentNormalizedRequests.UpdateOneAsync(
             x =>
                 x.Id == customerRequestId &&
                 x.Status == StatusNames.OutlineProviderPolling &&
@@ -459,7 +454,7 @@ public sealed class OutlineProviderPollingAppService(
                 x.NextOutlinePollAtUtc <= now &&
                 x.OutlineProviderTrackId != null,
             Builders<CustomerContentNormalizedRequest>.Update
-                .Set(x => x.NextOutlinePollAtUtc, DateTime.UtcNow.AddSeconds(_pollingSettings.ErrorRescheduleDelaySeconds))
+                .Set(x => x.NextOutlinePollAtUtc, DateTime.UtcNow.AddSeconds(pollingSettings.ErrorRescheduleDelaySeconds))
                 .Set(x => x.UpdatedAtUtc, DateTime.UtcNow),
             cancellationToken: cancellationToken);
     }

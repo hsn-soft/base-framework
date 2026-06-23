@@ -14,7 +14,7 @@ public sealed class NormalizerInboxStore(
         Guid eventId,
         CancellationToken cancellationToken)
     {
-        return await context.InboxMessages
+        return await context.NormalizerInboxMessages
             .Find(x =>
                 x.EventId == eventId &&
                 x.Status == InboxStatuses.Completed)
@@ -29,7 +29,7 @@ public sealed class NormalizerInboxStore(
         if (await IsProcessedAsync(@event.EventId, cancellationToken))
             return false;
 
-        var existing = await context.InboxMessages
+        var existing = await context.NormalizerInboxMessages
             .Find(x => x.EventId == @event.EventId)
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -38,7 +38,7 @@ public sealed class NormalizerInboxStore(
             if (existing.Status != InboxStatuses.Failed)
                 return false;
 
-            await context.InboxMessages.UpdateOneAsync(
+            await context.NormalizerInboxMessages.UpdateOneAsync(
                 x => x.EventId == @event.EventId && x.Status == InboxStatuses.Failed,
                 Builders<NormalizerInboxMessage>.Update
                     .Set(x => x.Status, InboxStatuses.Started)
@@ -51,7 +51,7 @@ public sealed class NormalizerInboxStore(
 
         try
         {
-            await context.InboxMessages.InsertOneAsync(
+            await context.NormalizerInboxMessages.InsertOneAsync(
                 new NormalizerInboxMessage
                 {
                     EventId = @event.EventId,
@@ -77,7 +77,7 @@ public sealed class NormalizerInboxStore(
         Guid eventId,
         CancellationToken cancellationToken)
     {
-        await context.InboxMessages.UpdateOneAsync(
+        await context.NormalizerInboxMessages.UpdateOneAsync(
             x => x.EventId == eventId,
             Builders<NormalizerInboxMessage>.Update
                 .Set(x => x.Status, InboxStatuses.Completed)
@@ -91,7 +91,7 @@ public sealed class NormalizerInboxStore(
         Exception ex,
         CancellationToken cancellationToken)
     {
-        await context.InboxMessages.UpdateOneAsync(
+        await context.NormalizerInboxMessages.UpdateOneAsync(
             x => x.EventId == eventId,
             Builders<NormalizerInboxMessage>.Update
                 .Set(x => x.Status, InboxStatuses.Failed)

@@ -11,7 +11,7 @@ public sealed class VideoGeneratorInboxStore(VideoMongoContext context)
 {
     public async Task<bool> IsProcessedAsync(Guid eventId, CancellationToken cancellationToken)
     {
-        return await context.InboxMessages
+        return await context.VideoGeneratorInboxMessages
             .Find(x => x.EventId == eventId && x.Status == InboxStatuses.Completed)
             .AnyAsync(cancellationToken);
     }
@@ -22,7 +22,7 @@ public sealed class VideoGeneratorInboxStore(VideoMongoContext context)
         if (await IsProcessedAsync(@event.EventId, cancellationToken))
             return false;
 
-        var existing = await context.InboxMessages
+        var existing = await context.VideoGeneratorInboxMessages
             .Find(x => x.EventId == @event.EventId)
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -31,7 +31,7 @@ public sealed class VideoGeneratorInboxStore(VideoMongoContext context)
             if (existing.Status != InboxStatuses.Failed)
                 return false;
 
-            await context.InboxMessages.UpdateOneAsync(
+            await context.VideoGeneratorInboxMessages.UpdateOneAsync(
                 x => x.EventId == @event.EventId && x.Status == InboxStatuses.Failed,
                 Builders<VideoGeneratorInboxMessage>.Update
                     .Set(x => x.Status, InboxStatuses.Started)
@@ -44,7 +44,7 @@ public sealed class VideoGeneratorInboxStore(VideoMongoContext context)
 
         try
         {
-            await context.InboxMessages.InsertOneAsync(new VideoGeneratorInboxMessage
+            await context.VideoGeneratorInboxMessages.InsertOneAsync(new VideoGeneratorInboxMessage
             {
                 EventId = @event.EventId,
                 EventName = @event.EventName,
@@ -64,7 +64,7 @@ public sealed class VideoGeneratorInboxStore(VideoMongoContext context)
 
     public async Task CompleteAsync(Guid eventId, CancellationToken cancellationToken)
     {
-        await context.InboxMessages.UpdateOneAsync(
+        await context.VideoGeneratorInboxMessages.UpdateOneAsync(
             x => x.EventId == eventId,
             Builders<VideoGeneratorInboxMessage>.Update
                 .Set(x => x.Status, InboxStatuses.Completed)
@@ -75,7 +75,7 @@ public sealed class VideoGeneratorInboxStore(VideoMongoContext context)
 
     public async Task FailAsync(Guid eventId, Exception ex, CancellationToken cancellationToken)
     {
-        await context.InboxMessages.UpdateOneAsync(
+        await context.VideoGeneratorInboxMessages.UpdateOneAsync(
             x => x.EventId == eventId,
             Builders<VideoGeneratorInboxMessage>.Update
                 .Set(x => x.Status, InboxStatuses.Failed)

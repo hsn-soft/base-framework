@@ -54,7 +54,7 @@ public sealed class ContentOperationAppService
         {
             await _eventBus.PublishAsync(new CustomerContentCreatedEto
             {
-                RefContentId = id,
+                CustomerContentId = id,
                 CorrelationId = entity.CorrelationId,
                 ScopeKey = entity.ScopeKey,
                 DomainName = entity.DomainName,
@@ -123,7 +123,7 @@ public sealed class ContentOperationAppService
 
         await _eventBus.PublishAsync(new AnalysisContentCreatedEto
         {
-            RefContentId = analysisId,
+            AnalysisContentId = analysisId,
             CorrelationId = analysis.CorrelationId,
             ScopeKey = analysis.ScopeKey,
             DomainName = analysis.DomainName,

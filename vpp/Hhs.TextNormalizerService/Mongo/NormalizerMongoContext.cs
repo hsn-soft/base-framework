@@ -14,12 +14,12 @@ public sealed class NormalizerMongoContext
         _database = client.GetDatabase(options.Value.DatabaseName);
     }
 
-    public IMongoCollection<CustomerContentNormalizedRequest> CustomerRequests =>
+    public IMongoCollection<CustomerContentNormalizedRequest> CustomerContentNormalizedRequests =>
         _database.GetCollection<CustomerContentNormalizedRequest>("customer_content_normalized_requests");
 
-    public IMongoCollection<AnalysisContentNormalizedRequest> AnalysisRequests =>
+    public IMongoCollection<AnalysisContentNormalizedRequest> AnalysisContentNormalizedRequests =>
         _database.GetCollection<AnalysisContentNormalizedRequest>("analysis_content_normalized_requests");
 
-    public IMongoCollection<NormalizerInboxMessage> InboxMessages =>
+    public IMongoCollection<NormalizerInboxMessage> NormalizerInboxMessages =>
         _database.GetCollection<NormalizerInboxMessage>("inbox_messages");
 }

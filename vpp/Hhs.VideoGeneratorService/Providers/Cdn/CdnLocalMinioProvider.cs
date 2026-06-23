@@ -64,7 +64,7 @@ public sealed class CdnLocalMinioProvider(
 
             // Convert CDN response to standardized CdnUploadResult
             // Storage URL: Private access with API key (ApplicationLayer responsibility)
-            var storageUrl = $"{settings.BaseUrl.TrimEnd('/')}/api/cdn/assets/download?key={Uri.EscapeDataString(objectKey)}";
+            string storageUrl = $"{settings.BaseUrl.TrimEnd('/')}/api/cdn/assets/download?key={Uri.EscapeDataString(objectKey)}";
 
             if (logger.IsEnabled(LogLevel.Information))
             {
