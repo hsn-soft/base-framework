@@ -16,7 +16,8 @@ Directory.CreateDirectory(mockFilesDir);
 app.MapPost("/video/generate", (VideoRequest request, VideoQueueExternalService service) =>
 {
     var trackingId = service.CreateRequest(request.AudioUrls);
-    return Results.Ok(new { provider = "video-queue-external", trackingId, pollingWindowSec = options.PollingWindowSeconds });
+    var downloadUrl = $"{service.GetBaseUrl()}/video/download/{trackingId}";
+    return Results.Ok(new { provider = "video-queue-external", trackingId, remoteFileUrl = downloadUrl, pollingWindowSec = options.PollingWindowSeconds });
 });
 
 app.MapGet("/video/status/{trackingId}", async (string trackingId, VideoQueueExternalService service, CancellationToken ct) =>
@@ -59,6 +60,8 @@ namespace Hhs.MockApi.VideoQueueExternal
         {
             _options = options;
         }
+
+        public string GetBaseUrl() => _options.Value.SelfBaseUrl;
 
         public string CreateRequest(List<string> audioUrls)
         {

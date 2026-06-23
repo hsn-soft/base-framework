@@ -15,7 +15,7 @@ Directory.CreateDirectory(mockFilesDir);
 app.MapPost("/audio/generate", async (AudioRequest request, AudioQuickService service, CancellationToken ct) =>
 {
     var (trackingId, fileUrl, fileName) = await service.GenerateAudioAsync(request.InputText, mockFilesDir, options, ct);
-    return Results.Ok(new { provider = "audio-quick", remoteFileUrl = fileUrl, fileName, processingMs = options.ProcessingDelaySeconds * 1000, trackingId });
+    return Results.Ok(new { provider = "audio-quick", trackingId, remoteFileUrl = fileUrl, fileName, processingMs = options.ProcessingDelaySeconds * 1000 });
 });
 
 app.MapGet("/audio/download/{trackingId}", async (string trackingId) =>

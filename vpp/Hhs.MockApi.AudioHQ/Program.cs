@@ -16,7 +16,8 @@ Directory.CreateDirectory(mockFilesDir);
 app.MapPost("/audio/generate", (AudioRequest request, AudioHQService service) =>
 {
     var trackingId = service.CreateRequest(request.InputText);
-    return Results.Ok(new { provider = "audio-hq", trackingId, pollingWindowSec = options.PollingWindowSeconds });
+    var downloadUrl = $"{service.GetBaseUrl()}/audio/download/{trackingId}";
+    return Results.Ok(new { provider = "audio-hq", trackingId, remoteFileUrl = downloadUrl, pollingWindowSec = options.PollingWindowSeconds });
 });
 
 app.MapGet("/audio/status/{trackingId}", async (string trackingId, AudioHQService service, CancellationToken ct) =>
@@ -59,6 +60,8 @@ namespace Hhs.MockApi.AudioHQ
         {
             _options = options;
         }
+
+        public string GetBaseUrl() => _options.Value.SelfBaseUrl;
 
         public string CreateRequest(string inputText)
         {
