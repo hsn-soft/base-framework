@@ -1,0 +1,161 @@
+@ContentService_HostAddress = http://localhost:7461
+@timestamp = {{$timestamp}}
+
+### ============================================
+### CUSTOMER CONTENT TEST SCENARIOS
+### ============================================
+### Complete test coverage of all meaningful provider combinations
+###
+### Provider Topology:
+### - Outline: outline-fast (5s) | outline-queue (10s polling)
+### - Audio:   audio-quick (3s) | audio-hq (20s polling)
+### - Video:   video-queue-external (30s polling, requires audio)
+###            video-queue-internal (30s polling, creates own audio)
+###
+### Total Combinations: 6 scenarios covering all outline×audio×video paths
+### ============================================
+
+### ============================================
+### GROUP 1: EXTERNAL VIDEO SCENARIOS (1-4)
+### External video requires external audio input
+### All combinations of outline providers × audio providers
+### ============================================
+
+### ============================================
+### SCENARIO 001
+### Fast Outline + Quick Audio + Queue External Video
+###
+### Provider Chain: outline-fast (5s) → audio-quick (3s) → video-queue-external (30s)
+### Flow: All providers operate in sequence with polling for video
+### Expected Duration: ~38 seconds
+###
+### Test Purpose: Baseline scenario - fastest outline + audio with queue video
+### ============================================
+POST {{ContentService_HostAddress}}/customer-contents
+Content-Type: application/json
+X-Correlation-Id: scenario-001-{{$timestamp}}
+
+{
+  "ScopeKey": "scenario-001",
+  "DomainName": "https://scenario.com",
+  "ContentKey": "/customer/scenario-001-{{$timestamp}}"
+}
+
+### ============================================
+### SCENARIO 002
+### Fast Outline + HQ Audio (Polling) + Queue External Video
+###
+### Provider Chain: outline-fast (5s) → audio-hq (20s polling) → video-queue-external (30s polling)
+### Flow: Outline fast → Audio polling → Video polling (parallel capable)
+### Expected Duration: ~53 seconds
+###
+### Test Purpose: HQ audio with polling challenges video start timing
+### ============================================
+POST {{ContentService_HostAddress}}/customer-contents
+Content-Type: application/json
+X-Correlation-Id: scenario-002-{{$timestamp}}
+
+{
+  "ScopeKey": "scenario-002",
+  "DomainName": "https://scenario.com",
+  "ContentKey": "/customer/scenario-002-{{$timestamp}}"
+}
+
+### ============================================
+### SCENARIO 003
+### Queue Outline (Polling) + Quick Audio + Queue External Video
+###
+### Provider Chain: outline-queue (10s polling) → audio-quick (3s) → video-queue-external (30s polling)
+### Flow: Outline polling → Audio quick → Video polling
+### Expected Duration: ~43 seconds
+###
+### Test Purpose: Outline polling delays audio/video start
+### ============================================
+POST {{ContentService_HostAddress}}/customer-contents
+Content-Type: application/json
+X-Correlation-Id: scenario-003-{{$timestamp}}
+
+{
+  "ScopeKey": "scenario-003",
+  "DomainName": "https://scenario.com",
+  "ContentKey": "/customer/scenario-003-{{$timestamp}}"
+}
+
+### ============================================
+### SCENARIO 004
+### Queue Outline (Polling) + HQ Audio (Polling) + Queue External Video
+###
+### Provider Chain: outline-queue (10s polling) → audio-hq (20s polling) → video-queue-external (30s polling)
+### Flow: All providers involve polling - maximum complexity scenario
+### Expected Duration: ~58 seconds
+###
+### Test Purpose: Full orchestration with multiple polling cycles and dependencies
+### ============================================
+POST {{ContentService_HostAddress}}/customer-contents
+Content-Type: application/json
+X-Correlation-Id: scenario-004-{{$timestamp}}
+
+{
+  "ScopeKey": "scenario-004",
+  "DomainName": "https://scenario.com",
+  "ContentKey": "/customer/scenario-004-{{$timestamp}}"
+}
+
+### ============================================
+### GROUP 2: INTERNAL VIDEO SCENARIOS (5-6)
+### Internal video creates audio internally - no external audio needed
+### Audio provider is NOT used (set to null in scope registry)
+### ============================================
+
+### ============================================
+### SCENARIO 005
+### Fast Outline + Queue Internal Video (Generates Audio Internally)
+###
+### Provider Chain: outline-fast (5s) → video-queue-internal (30s polling, creates own audio)
+### Flow: Outline fast → Video polling (audio generation happens inside video provider)
+### Expected Duration: ~35 seconds
+###
+### Test Purpose: Verify internal video provider can successfully generate audio without external provider
+### ============================================
+POST {{ContentService_HostAddress}}/customer-contents
+Content-Type: application/json
+X-Correlation-Id: scenario-005-{{$timestamp}}
+
+{
+  "ScopeKey": "scenario-005",
+  "DomainName": "https://scenario.com",
+  "ContentKey": "/customer/scenario-005-{{$timestamp}}"
+}
+
+### ============================================
+### SCENARIO 006
+### Queue Outline (Polling) + Queue Internal Video (Generates Audio Internally)
+###
+### Provider Chain: outline-queue (10s polling) → video-queue-internal (30s polling, creates own audio)
+### Flow: Outline polling → Video polling with internal audio generation
+### Expected Duration: ~40 seconds
+###
+### Test Purpose: Verify internal video with delayed outline start still completes successfully
+### ============================================
+POST {{ContentService_HostAddress}}/customer-contents
+Content-Type: application/json
+X-Correlation-Id: scenario-006-{{$timestamp}}
+
+{
+  "ScopeKey": "scenario-006",
+  "DomainName": "https://scenario.com",
+  "ContentKey": "/customer/scenario-006-{{$timestamp}}"
+}
+
+###
+### ============================================
+### HELPER ENDPOINTS
+### ============================================
+
+### GET all customer contents
+### GET {{ContentService_HostAddress}}/customer-contents
+
+### GET specific customer content by ID
+### GET {{ContentService_HostAddress}}/customer-contents/{id}
+
+### ============================================

@@ -1,0 +1,183 @@
+@ContentService_HostAddress = http://localhost:7461
+@timestamp = {{$timestamp}}
+
+### ============================================
+### ANALYSIS CONTENT TEST SCENARIOS
+### ============================================
+### Analysis workflow with multiple customer content items
+### Same provider combinations as customer-content scenarios
+###
+### Analysis Structure:
+### - Processes multiple customer content IDs together
+### - Each item goes through outline → audio/video pipeline
+### - Final video is composite/merged from all items
+###
+### Note: Use actual customerContentIds from successful customer-content tests
+### ============================================
+
+### ============================================
+### GROUP 1: EXTERNAL VIDEO SCENARIOS (1-4)
+### External video requires external audio input
+### ============================================
+
+### ============================================
+### SCENARIO 001
+### Analysis with Fast Outline + Quick Audio + Queue External Video
+###
+### Provider Chain: outline-fast → audio-quick → video-queue-external
+### Expected Duration: ~38 seconds (per item)
+###
+### Test Purpose: Baseline analysis - verify multi-item outline/audio/video pipeline
+### ============================================
+POST {{ContentService_HostAddress}}/analysis-contents
+Content-Type: application/json
+X-Correlation-Id: scenario-001-{{$timestamp}}
+
+{
+  "ScopeKey": "scenario-001",
+  "DomainName": "https://scenario.com",
+  "Title": "Analysis Scenario 001 - Fast Outline + Quick Audio + Queue External Video",
+  "CustomerContentIds": [
+    "00000000-0000-0000-0000-000000000001",
+    "00000000-0000-0000-0000-000000000002",
+    "00000000-0000-0000-0000-000000000003"
+  ]
+}
+
+### ============================================
+### SCENARIO 002
+### Analysis with Fast Outline + HQ Audio (Polling) + Queue External Video
+###
+### Provider Chain: outline-fast → audio-hq (polling) → video-queue-external (polling)
+### Expected Duration: ~53 seconds (per item)
+###
+### Test Purpose: Verify HQ audio polling doesn't block video processing
+### ============================================
+POST {{ContentService_HostAddress}}/analysis-contents
+Content-Type: application/json
+X-Correlation-Id: scenario-002-{{$timestamp}}
+
+{
+  "ScopeKey": "scenario-002",
+  "DomainName": "https://scenario.com",
+  "Title": "Analysis Scenario 002 - Fast Outline + HQ Audio + Queue External Video",
+  "CustomerContentIds": [
+    "00000000-0000-0000-0000-000000000004",
+    "00000000-0000-0000-0000-000000000005",
+    "00000000-0000-0000-0000-000000000006"
+  ]
+}
+
+### ============================================
+### SCENARIO 003
+### Analysis with Queue Outline (Polling) + Quick Audio + Queue External Video
+###
+### Provider Chain: outline-queue (polling) → audio-quick → video-queue-external (polling)
+### Expected Duration: ~43 seconds (per item)
+###
+### Test Purpose: Verify delayed outline start doesn't cascade delays
+### ============================================
+POST {{ContentService_HostAddress}}/analysis-contents
+Content-Type: application/json
+X-Correlation-Id: scenario-003-{{$timestamp}}
+
+{
+  "ScopeKey": "scenario-003",
+  "DomainName": "https://scenario.com",
+  "Title": "Analysis Scenario 003 - Queue Outline + Quick Audio + Queue External Video",
+  "CustomerContentIds": [
+    "00000000-0000-0000-0000-000000000007",
+    "00000000-0000-0000-0000-000000000008",
+    "00000000-0000-0000-0000-000000000009"
+  ]
+}
+
+### ============================================
+### SCENARIO 004
+### Analysis with Queue Outline (Polling) + HQ Audio (Polling) + Queue External Video
+###
+### Provider Chain: outline-queue (polling) → audio-hq (polling) → video-queue-external (polling)
+### Expected Duration: ~58 seconds (per item)
+###
+### Test Purpose: Maximum complexity - verify full orchestration with multiple polling cycles
+### ============================================
+POST {{ContentService_HostAddress}}/analysis-contents
+Content-Type: application/json
+X-Correlation-Id: scenario-004-{{$timestamp}}
+
+{
+  "ScopeKey": "scenario-004",
+  "DomainName": "https://scenario.com",
+  "Title": "Analysis Scenario 004 - Queue Outline + HQ Audio + Queue External Video",
+  "CustomerContentIds": [
+    "00000000-0000-0000-0000-00000000000a",
+    "00000000-0000-0000-0000-00000000000b",
+    "00000000-0000-0000-0000-00000000000c"
+  ]
+}
+
+### ============================================
+### GROUP 2: INTERNAL VIDEO SCENARIOS (5-6)
+### Internal video creates audio internally
+### ============================================
+
+### ============================================
+### SCENARIO 005
+### Analysis with Fast Outline + Queue Internal Video (Generates Audio Internally)
+###
+### Provider Chain: outline-fast → video-queue-internal (creates own audio)
+### Expected Duration: ~35 seconds (per item)
+###
+### Test Purpose: Verify internal video successfully handles multi-item analysis
+### ============================================
+POST {{ContentService_HostAddress}}/analysis-contents
+Content-Type: application/json
+X-Correlation-Id: scenario-005-{{$timestamp}}
+
+{
+  "ScopeKey": "scenario-005",
+  "DomainName": "https://scenario.com",
+  "Title": "Analysis Scenario 005 - Fast Outline + Queue Internal Video",
+  "CustomerContentIds": [
+    "00000000-0000-0000-0000-00000000000d",
+    "00000000-0000-0000-0000-00000000000e",
+    "00000000-0000-0000-0000-00000000000f"
+  ]
+}
+
+### ============================================
+### SCENARIO 006
+### Analysis with Queue Outline (Polling) + Queue Internal Video (Generates Audio Internally)
+###
+### Provider Chain: outline-queue (polling) → video-queue-internal (creates own audio, polling)
+### Expected Duration: ~40 seconds (per item)
+###
+### Test Purpose: Verify internal video with outline polling delays still completes
+### ============================================
+POST {{ContentService_HostAddress}}/analysis-contents
+Content-Type: application/json
+X-Correlation-Id: scenario-006-{{$timestamp}}
+
+{
+  "ScopeKey": "scenario-006",
+  "DomainName": "https://scenario.com",
+  "Title": "Analysis Scenario 006 - Queue Outline + Queue Internal Video",
+  "CustomerContentIds": [
+    "00000000-0000-0000-0000-000000000010",
+    "00000000-0000-0000-0000-000000000011",
+    "00000000-0000-0000-0000-000000000012"
+  ]
+}
+
+###
+### ============================================
+### HELPER ENDPOINTS
+### ============================================
+
+### GET all analysis contents
+### GET {{ContentService_HostAddress}}/analysis-contents
+
+### GET specific analysis content by ID
+### GET {{ContentService_HostAddress}}/analysis-contents/{id}
+
+### ============================================

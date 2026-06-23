@@ -31,7 +31,7 @@ public sealed class ContentServiceDbContext(
         builder.ConfigureContentVideoGenerationLimitEntity();
 
 
-                builder.Entity<CustomerContent>(b =>
+        builder.Entity<CustomerContent>(b =>
         {
             b.ToTable("customer_contents");
             b.HasKey(x => x.Id);
@@ -42,7 +42,6 @@ public sealed class ContentServiceDbContext(
             b.Property(x => x.NormalizeStatus).HasMaxLength(80);
             b.Property(x => x.VideoStatus).HasMaxLength(80);
             b.Property(x => x.LastFacility).HasMaxLength(120);
-
         });
 
         builder.Entity<AnalysisContent>(b =>
@@ -55,7 +54,6 @@ public sealed class ContentServiceDbContext(
             b.Property(x => x.NormalizeStatus).HasMaxLength(80);
             b.Property(x => x.VideoStatus).HasMaxLength(80);
             b.Property(x => x.LastFacility).HasMaxLength(120);
-
         });
 
         builder.Entity<AnalysisContentItem>(b =>
