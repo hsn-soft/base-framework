@@ -14,6 +14,7 @@ using HsnSoft.Base.Serilog;
 using HsnSoft.Base.Swashbuckle;
 using HsnSoft.Base.Tracing;
 using Serilog;
+using Hhs.Shared.Contracts.Events;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -129,7 +130,9 @@ try
     // EventBus
     app.UseEventBus(typeof(EventHandlersAssemblyMarker).Assembly, new Dictionary<string, ushort>
     {
-
+        { nameof(NormalizerResultPublishedEto), 5 }, // This event fetch count more than one
+        { nameof(VideoGenerationResultPublishedEto), 5 }, // This event fetch count more than one
+        { nameof(StepFailedEto), 1 } // This event fetch count more than one
     });
 
     // Shutdown hook

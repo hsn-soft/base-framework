@@ -1,9 +1,9 @@
-using Hhs.ContentService.Domain.ContentDomain.Entities;
 using Hhs.ContentService.Domain.Enums;
+using Hhs.ContentService.Domain.SettingDomain.Entities;
 using HsnSoft.Base.Domain.Repositories;
 using JetBrains.Annotations;
 
-namespace Hhs.ContentService.Domain.ContentDomain.Repositories;
+namespace Hhs.ContentService.Domain.SettingDomain.Repositories;
 
 public interface IContentVideoGenerationLimitRepository : IReadOnlyGenericRepository<ContentVideoGenerationLimit, Guid>
 {

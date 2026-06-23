@@ -22,7 +22,6 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Hhs.ContentService.Application\Hhs.ContentService.Application.csproj"/>
-        <ProjectReference Include="..\Hhs.ContentService.EntityFrameworkCore\Hhs.ContentService.EntityFrameworkCore.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

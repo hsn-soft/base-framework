@@ -1,7 +1,7 @@
 using HsnSoft.Base.Application.Dtos;
 using JetBrains.Annotations;
 
-namespace Hhs.ContentService.Application.Contracts.CustomerDomain.Dtos;
+namespace Hhs.ContentService.Application.Contracts.SettingDomain.Dtos;
 
 public sealed class CustomerVpSettingCheckDto : EntityDto<Guid>
 {

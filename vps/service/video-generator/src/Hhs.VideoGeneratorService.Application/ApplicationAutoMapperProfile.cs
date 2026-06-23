@@ -1,5 +1,4 @@
 using AutoMapper;
-using HsnSoft.Base.Text;
 
 namespace Hhs.VideoGeneratorService.Application;
 

@@ -1,6 +1,6 @@
-using Hhs.ContentService.Domain.ContentDomain.Entities;
-using Hhs.ContentService.Domain.ContentDomain.Repositories;
 using Hhs.ContentService.Domain.Enums;
+using Hhs.ContentService.Domain.SettingDomain.Entities;
+using Hhs.ContentService.Domain.SettingDomain.Repositories;
 using Hhs.ContentService.EntityFrameworkCore.Context;
 using HsnSoft.Base.Domain.Repositories;
 

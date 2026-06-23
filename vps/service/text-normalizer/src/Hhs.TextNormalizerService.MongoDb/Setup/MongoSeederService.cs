@@ -1,4 +1,3 @@
-using Hhs.TextNormalizerService.Domain.Enums;
 using Hhs.TextNormalizerService.Domain.SettingDomain.Entities;
 using Hhs.TextNormalizerService.MongoDb.Context;
 using HsnSoft.Base.Data;

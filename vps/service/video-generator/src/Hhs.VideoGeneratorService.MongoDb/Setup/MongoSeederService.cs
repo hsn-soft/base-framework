@@ -1,5 +1,3 @@
-using Hhs.Shared.Helper.Enums;
-using Hhs.VideoGeneratorService.Domain.Enums;
 using Hhs.VideoGeneratorService.Domain.SettingDomain.Entities;
 using Hhs.VideoGeneratorService.MongoDb.Context;
 using HsnSoft.Base.Data;

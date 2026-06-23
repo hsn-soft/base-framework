@@ -1,4 +1,3 @@
-using Hhs.ContentService.Domain.ContentDomain.Repositories;
 using Hhs.ContentService.Domain.SettingDomain.Repositories;
 using Hhs.ContentService.EntityFrameworkCore.Context;
 using Hhs.ContentService.EntityFrameworkCore.Repositories;

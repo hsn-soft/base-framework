@@ -1,12 +1,12 @@
-using Hhs.ContentService.Domain.ContentDomain.Consts;
 using Hhs.ContentService.Domain.Enums;
+using Hhs.ContentService.Domain.SettingDomain.Consts;
 using Hhs.Shared.Localization;
 using HsnSoft.Base.Domain.Entities;
 using HsnSoft.Base.Subscribe;
 using HsnSoft.Base.Text;
 using JetBrains.Annotations;
 
-namespace Hhs.ContentService.Domain.ContentDomain.Entities;
+namespace Hhs.ContentService.Domain.SettingDomain.Entities;
 
 public sealed class ContentVideoGenerationLimit : Entity<Guid>, IScopeSubscription
 {

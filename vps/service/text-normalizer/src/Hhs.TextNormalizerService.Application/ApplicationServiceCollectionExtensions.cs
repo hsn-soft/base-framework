@@ -1,5 +1,4 @@
 using Hhs.Shared.Contracts.Cache;
-using Hhs.TextNormalizerService.Application.Contracts;
 using Hhs.TextNormalizerService.Domain.Settings;
 using HsnSoft.Base.PuppeTeer;
 using Microsoft.Extensions.Configuration;

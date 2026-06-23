@@ -1,4 +1,4 @@
-using Hhs.ContentService.Application.Contracts;
+using Hhs.ContentService.Application.Services;
 using Hhs.ContentService.Domain.Settings;
 using Hhs.Shared.Contracts.Cache;
 using Microsoft.Extensions.Configuration;
@@ -17,6 +17,8 @@ public static class ApplicationServiceCollectionExtensions
         services.AddSingleton<IServicePermissionProvider, ApplicationPermissionProvider>();
 
         // Must be Scoped or Transient => Cannot consume any scoped service
+        // services.AddScoped<ContentInboxStore>();
+        services.AddScoped<ContentOperationAppService>();
 
         return services;
     }

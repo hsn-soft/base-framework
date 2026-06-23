@@ -1,7 +1,4 @@
 using AutoMapper;
-using Hhs.ContentService.Application.Contracts.CustomerDomain.Dtos;
-using Hhs.ContentService.Domain.ContentDomain.Entities;
-using Hhs.ContentService.Domain.SettingDomain.Entities;
 
 namespace Hhs.ContentService.Application;
 

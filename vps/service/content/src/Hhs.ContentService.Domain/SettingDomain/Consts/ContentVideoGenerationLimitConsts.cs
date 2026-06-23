@@ -1,6 +1,6 @@
-using Hhs.ContentService.Domain.ContentDomain.Entities;
+using Hhs.ContentService.Domain.SettingDomain.Entities;
 
-namespace Hhs.ContentService.Domain.ContentDomain.Consts;
+namespace Hhs.ContentService.Domain.SettingDomain.Consts;
 
 public static class ContentVideoGenerationLimitConsts
 {

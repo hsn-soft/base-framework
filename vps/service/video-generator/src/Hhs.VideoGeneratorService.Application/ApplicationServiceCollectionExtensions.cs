@@ -1,5 +1,4 @@
 using Hhs.Shared.Contracts.Cache;
-using Hhs.VideoGeneratorService.Application.Contracts;
 using Hhs.VideoGeneratorService.Domain.Settings;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

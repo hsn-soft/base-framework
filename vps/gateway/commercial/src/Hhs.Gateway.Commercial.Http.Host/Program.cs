@@ -11,7 +11,6 @@ using Hhs.Shared.Hosting.Extensions;
 using Hhs.Shared.Hosting.Gateways.Extensions;
 using Hhs.Shared.Hosting.Helpers;
 using Hhs.Shared.Hosting.Middlewares;
-using HsnSoft.Base.AspNetCore.Responses;
 using HsnSoft.Base.AspNetCore.Tracing;
 using HsnSoft.Base.Serilog;
 using HsnSoft.Base.Swashbuckle;

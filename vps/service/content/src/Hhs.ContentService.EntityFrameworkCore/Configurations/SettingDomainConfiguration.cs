@@ -1,6 +1,4 @@
 using System.Text.Json;
-using Hhs.ContentService.Domain.ContentDomain.Consts;
-using Hhs.ContentService.Domain.ContentDomain.Entities;
 using Hhs.ContentService.Domain.SettingDomain.Consts;
 using Hhs.ContentService.Domain.SettingDomain.Entities;
 using Microsoft.EntityFrameworkCore;
