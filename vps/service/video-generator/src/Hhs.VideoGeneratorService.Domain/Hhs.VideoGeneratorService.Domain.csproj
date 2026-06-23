@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <Import Project="..\..\common.version.props"/>
+    <Import Project="..\..\common.test.props"/>
+    <Import Project="..\..\common.props"/>
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <PackageId>Hhs.VideoGeneratorService.Domain</PackageId>
+        <RootNamespace>Hhs.VideoGeneratorService.Domain</RootNamespace>
+        <Title>TechSummus Hhs VideoGenerator Service Domain</Title>
+        <Description>TechSummus Hhs VideoGenerator Service Domain</Description>
+        <PackageTags>TechSummus Hhs VideoGenerator Service Domain</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.Ddd.Domain\HsnSoft.Base.Ddd.Domain.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\..\shared\src\Hhs.Shared.Helper\Hhs.Shared.Helper.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <EmbeddedResource Include="Localization\VideoGeneratorService\*.json"/>
+        <Content Remove="Localization\VideoGeneratorService\*.json"/>
+    </ItemGroup>
+
+</Project>

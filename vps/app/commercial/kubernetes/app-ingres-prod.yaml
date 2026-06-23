@@ -1,0 +1,30 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: hhs-app-commercial-ingress
+  namespace: ns-hhs-prod-apps
+  labels:
+    app.kubernetes.io/name: hhs-app-commercial #DEPLOYMENT_APP_LABEL
+    app.kubernetes.io/instance: hhs-app-commercial
+    app.kubernetes.io/component: "server"
+    app.kubernetes.io/version: "latest"
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - hhs-app-commercial.techsummus.com
+      secretName: hhs-app-commercial.techsummus.com-tls # will be generated
+  rules:
+    - host: hhs-app-commercial.techsummus.com
+      http:
+        paths:
+          - pathType: Prefix
+            path: "/"
+            backend:
+              service:
+                name: hhs-app-commercial-svc
+                port:
+                  number: 80

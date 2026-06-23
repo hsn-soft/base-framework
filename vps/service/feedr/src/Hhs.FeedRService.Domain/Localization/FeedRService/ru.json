@@ -1,0 +1,11 @@
+{
+  "culture": "ru",
+  "texts": {
+    "CREATED": "СОЗДАН",
+    "SKIPPED_PATH": "ПРОПУЩЕН",
+    "PROCESSING": "ОБРАБОТКА",
+    "READY": "ГОТОВО",
+    "NO_ANALYSIS_VIDEO": "НЕТ ВИДЕО",
+    "FAILED": "СБОЙ"
+  }
+}

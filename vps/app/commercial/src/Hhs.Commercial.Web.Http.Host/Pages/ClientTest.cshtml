@@ -1,0 +1,97 @@
+﻿@page
+@model Hhs.Commercial.Web.Pages.ClientTestModel
+@{
+    ViewData["Title"] = "Client Test";
+}
+
+<h3>Client Id</h3>
+<input id="inTargetClientId" type="text" class="in-class" style="width: 400px" autofocus="autofocus" value="@Model.TargetClientId"/>
+<p>DemoTechSummus: <b>4fe789ab-0652-4e7b-bd35-07019058081d</b></p>
+<p>KisaDalga: <b>e8265c9c-e52c-4daa-8dbe-30874e5fc02c</b></p>
+<p>Dunya: <b>07ca0b44-c052-4970-b128-b7b5feb1a03b</b></p>
+<p>Tamindir: <b>18bf822c-175c-4e2d-b9e0-1c3f0b2fe013</b></p>
+<p>TechnoToDay: <b>37fbec7b-9db2-4b68-a108-56cbfd6aa9ca</b></p>
+<p>SonDakika: <b>f6b8b776-9f17-4f73-ac2b-17d7a153e4fb</b></p>
+<p>T24: <b>46f859a8-0737-452a-8fd6-258156fdf901</b></p>
+<p>Cnbce: <b>2901aeaf-b3cc-41c9-936e-897a5502879e</b></p>
+<p>BoxOfficeTurkiye: <b>d09e458b-9b42-4894-9bc2-349ad54cbf2a</b></p>
+
+<input id="inTargetClientUrl" type="text" class="in-class" style="width: 800px" autofocus="autofocus" value="@Model.TargetClientUrl"/>
+<button id="btnClient" type="button" class="btn-danger" onclick="goToClientUrl();">Go to Client Url</button>
+
+<!--HHS ADS Place Area-->
+<div id="div-hhs-ad-place"></div>
+<script src="~/js/public/client/test-player.js?v=12345686"></script>
+<!--HHS ADS Place Area-->
+
+<p>DemoTechSummus: <b>97422b81-74da-4532-a230-9e4fb0c0dede</b></p>
+<p>KisaDalga: <b>54a50c2d-3ad0-41f2-99a2-3df95f508395</b></p>
+<p>Dunya: <b>8c2420c0-3cef-43fc-a8bf-71e22afee1f5</b></p>
+<p>Tamindir: <b>23389012-8c70-4d64-9d7f-7a0420b00c17</b></p>
+<p>TechnoToDay: <b>f25a1a33-8fd9-4652-98e1-c354a4201717</b></p>
+<p>DemoTechSummus: <b>97422b81-74da-4532-a230-9e4fb0c0dede</b></p>
+<p>KisaDalga: <b>54a50c2d-3ad0-41f2-99a2-3df95f508395</b></p>
+<p>Dunya: <b>8c2420c0-3cef-43fc-a8bf-71e22afee1f5</b></p>
+<p>Tamindir: <b>23389012-8c70-4d64-9d7f-7a0420b00c17</b></p>
+<p>TechnoToDay: <b>f25a1a33-8fd9-4652-98e1-c354a4201717</b></p>
+<p>DemoTechSummus: <b>97422b81-74da-4532-a230-9e4fb0c0dede</b></p>
+<p>KisaDalga: <b>54a50c2d-3ad0-41f2-99a2-3df95f508395</b></p>
+<p>Dunya: <b>8c2420c0-3cef-43fc-a8bf-71e22afee1f5</b></p>
+<p>Tamindir: <b>23389012-8c70-4d64-9d7f-7a0420b00c17</b></p>
+<p>TechnoToDay: <b>f25a1a33-8fd9-4652-98e1-c354a4201717</b></p>
+<p>DemoTechSummus: <b>97422b81-74da-4532-a230-9e4fb0c0dede</b></p>
+<p>KisaDalga: <b>54a50c2d-3ad0-41f2-99a2-3df95f508395</b></p>
+<p>Dunya: <b>8c2420c0-3cef-43fc-a8bf-71e22afee1f5</b></p>
+<p>Tamindir: <b>23389012-8c70-4d64-9d7f-7a0420b00c17</b></p>
+<p>TechnoToDay: <b>f25a1a33-8fd9-4652-98e1-c354a4201717</b></p>
+<p>DemoTechSummus: <b>97422b81-74da-4532-a230-9e4fb0c0dede</b></p>
+<p>KisaDalga: <b>54a50c2d-3ad0-41f2-99a2-3df95f508395</b></p>
+<p>Dunya: <b>8c2420c0-3cef-43fc-a8bf-71e22afee1f5</b></p>
+<p>Tamindir: <b>23389012-8c70-4d64-9d7f-7a0420b00c17</b></p>
+<p>TechnoToDay: <b>f25a1a33-8fd9-4652-98e1-c354a4201717</b></p>
+<p>DemoTechSummus: <b>97422b81-74da-4532-a230-9e4fb0c0dede</b></p>
+<p>KisaDalga: <b>54a50c2d-3ad0-41f2-99a2-3df95f508395</b></p>
+<p>Dunya: <b>8c2420c0-3cef-43fc-a8bf-71e22afee1f5</b></p>
+<p>Tamindir: <b>23389012-8c70-4d64-9d7f-7a0420b00c17</b></p>
+<p>TechnoToDay: <b>f25a1a33-8fd9-4652-98e1-c354a4201717</b></p>
+<p>DemoTechSummus: <b>97422b81-74da-4532-a230-9e4fb0c0dede</b></p>
+<p>KisaDalga: <b>54a50c2d-3ad0-41f2-99a2-3df95f508395</b></p>
+<p>Dunya: <b>8c2420c0-3cef-43fc-a8bf-71e22afee1f5</b></p>
+<p>Tamindir: <b>23389012-8c70-4d64-9d7f-7a0420b00c17</b></p>
+<p>TechnoToDay: <b>f25a1a33-8fd9-4652-98e1-c354a4201717</b></p>
+<p>DemoTechSummus: <b>97422b81-74da-4532-a230-9e4fb0c0dede</b></p>
+<p>KisaDalga: <b>54a50c2d-3ad0-41f2-99a2-3df95f508395</b></p>
+<p>Dunya: <b>8c2420c0-3cef-43fc-a8bf-71e22afee1f5</b></p>
+<p>Tamindir: <b>23389012-8c70-4d64-9d7f-7a0420b00c17</b></p>
+<p>TechnoToDay: <b>f25a1a33-8fd9-4652-98e1-c354a4201717</b></p>
+<p>DemoTechSummus: <b>97422b81-74da-4532-a230-9e4fb0c0dede</b></p>
+<p>KisaDalga: <b>54a50c2d-3ad0-41f2-99a2-3df95f508395</b></p>
+<p>Dunya: <b>8c2420c0-3cef-43fc-a8bf-71e22afee1f5</b></p>
+<p>Tamindir: <b>23389012-8c70-4d64-9d7f-7a0420b00c17</b></p>
+<p>TechnoToDay: <b>f25a1a33-8fd9-4652-98e1-c354a4201717</b></p>
+<p>DemoTechSummus: <b>97422b81-74da-4532-a230-9e4fb0c0dede</b></p>
+<p>KisaDalga: <b>54a50c2d-3ad0-41f2-99a2-3df95f508395</b></p>
+<p>Dunya: <b>8c2420c0-3cef-43fc-a8bf-71e22afee1f5</b></p>
+<p>Tamindir: <b>23389012-8c70-4d64-9d7f-7a0420b00c17</b></p>
+<p>TechnoToDay: <b>f25a1a33-8fd9-4652-98e1-c354a4201717</b></p>
+<p>DemoTechSummus: <b>97422b81-74da-4532-a230-9e4fb0c0dede</b></p>
+<p>KisaDalga: <b>54a50c2d-3ad0-41f2-99a2-3df95f508395</b></p>
+<p>Dunya: <b>8c2420c0-3cef-43fc-a8bf-71e22afee1f5</b></p>
+<p>Tamindir: <b>23389012-8c70-4d64-9d7f-7a0420b00c17</b></p>
+<p>TechnoToDay: <b>f25a1a33-8fd9-4652-98e1-c354a4201717</b></p>
+<p>DemoTechSummus: <b>97422b81-74da-4532-a230-9e4fb0c0dede</b></p>
+<p>KisaDalga: <b>54a50c2d-3ad0-41f2-99a2-3df95f508395</b></p>
+<p>Dunya: <b>8c2420c0-3cef-43fc-a8bf-71e22afee1f5</b></p>
+<p>Tamindir: <b>23389012-8c70-4d64-9d7f-7a0420b00c17</b></p>
+<p>TechnoToDay: <b>f25a1a33-8fd9-4652-98e1-c354a4201717</b></p>
+
+@section PageScriptSection {
+    <script type="text/javascript">
+        function goToClientUrl() {
+            const txtValUrl = document.getElementById("inTargetClientUrl").value;
+            const txtValId = document.getElementById("inTargetClientId").value;
+            const url = '@Url.Page("ClientTest")';
+            window.location.href = url + '/?clientUrl=' + txtValUrl + '&clientId=' + txtValId;
+        }
+    </script>
+}

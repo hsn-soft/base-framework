@@ -1,0 +1,15 @@
+--PODS
+kubectl get pods -n ns-hhs-prod-apps -owide --watch
+kubectl logs -n ns-hhs-prod-apps -f hhs-service-event-manager-deployment-b4c755f7d-7tt4x
+kubectl logs -n ns-hhs-prod-apps -f hhs-service-event-manager-deployment-b4c755f7d-pbp79
+
+-- KUBERNETES EVENT LOGS
+kubectl get events -n ns-hhs-prod-apps --sort-by='.metadata.creationTimestamp'
+
+-- DEPLOYMENT DESCRIBE
+kubectl get deployments -n ns-hhs-prod-apps
+kubectl describe deployments -n ns-hhs-prod-apps hhs-service-event-manager-deployment
+
+-- SERVICE DESCRIBE
+kubectl get svc -n ns-hhs-prod-apps -owide
+kubectl describe service -n ns-hhs-prod-apps hhs-service-event-manager-service

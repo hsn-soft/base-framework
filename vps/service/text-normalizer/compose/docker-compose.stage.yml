@@ -1,0 +1,64 @@
+services:
+  
+  hhs-service-text-normalizer-stage:
+    container_name: hhs-service-text-normalizer-stage-container
+    image: ${IMAGE_NAME}
+    restart: always
+    stop_signal: SIGTERM
+    stop_grace_period: 70s # wait graceful termination, host time out 60, app drain time 30
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
+      memlock:
+        soft: -1
+        hard: -1
+    shm_size: "1gb" # /dev/shm size
+    mem_limit: 2g
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      # tmpfs-folder
+      - /tmp
+      # dev-shm
+      - /dev/shm # for Chromium
+      # puppeteer-config
+      - /home/serviceuser/.config # "1001 serviceuser"
+    labels:
+      - "autoheal=true"
+    healthcheck:
+      #test: ["CMD", "curl", "--silent", "-f", "http://127.0.0.1:9000/api"]
+      test: curl --fail http://localhost:8080/ReadinessCheck || exit 1
+      start_period: 20s
+      interval: 30s # application healthcheck period with "curl --fail"
+      timeout: 5s # application healthcheck response timeout.
+      retries: 3 # If the application does not respond after 3 attempts, it will be marked as "unhealthy".
+    ports:
+      - "7460:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=stage
+      - BUILD_NUMBER=${BUILD_ID}
+      - PUPPETEER_PROXY_HOST=
+      - PUPPETEER_PROXY_PORT=
+      - PUPPETEER_PROXY_USERNAME=
+      - PUPPETEER_PROXY_PASSWORD=
+    networks:
+      - infra-network
+
+  # check healthy status and restart
+  autoheal:
+    image: willfarrell/autoheal:latest
+    tty: true
+    restart: always
+    environment:
+      - AUTOHEAL_START_PERIOD=120 # wait 120 seconds for the initialization of all applications.
+      - AUTOHEAL_INTERVAL=20 # auto-heal check period - check the health status of all applications.
+      - AUTOHEAL_DEFAULT_STOP_TIMEOUT=10 # wait 10 seconds for the application to graceful shutdown.
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+networks:
+  infra-network:
+    name: local.infrastructure-network
+    external: true

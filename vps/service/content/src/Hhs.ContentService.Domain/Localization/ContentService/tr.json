@@ -1,0 +1,25 @@
+{
+  "culture": "tr",
+  "texts": {
+    "Error:ContentService:100001": "Origin Adres Bilinmiyor",
+    "Error:ContentService:100002": "Geçersiz Origin Adres",
+    "Error:ContentService:100003": "Geçersiz Domain Adres",
+    "Error:ContentService:100004": "Uyumsuz Domain Address",
+    "Error:ContentService:000021": "İçerik Bulunamadı",
+    "Error:ContentService:000022": "İçerik Mükerrer",
+    "Error:ContentService:000023": "İçerik Durum Hatası",
+    "Error:ContentService:000051": "Analiz Bulunamadı",
+    "Error:ContentService:000052": "Analiz Durum Hatası",
+    "Error:ContentService:000031": "İstemci Bulunamadı",
+    "Error:ContentService:000032": "İstemci Mükerrer",
+    "Error:ContentService:000033": "İstemci Domain Adresi Geçersiz",
+    "Error:ContentService:000034": "İstemci Domain Bloklu",
+    "Error:ContentService:000041": "İstemci Filtresi Bulunamadı",
+    "CREATED": "YENI",
+    "SKIPPED_PATH": "ISLEM DISI",
+    "PROCESSING": "ISLENIYOR",
+    "READY": "HAZIR",
+    "NO_ANALYSIS_VIDEO": "VIDEO YOK",
+    "FAILED": "HATALI"
+  }
+}

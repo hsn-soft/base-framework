@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <Import Project="..\..\common.version.props"/>
+    <Import Project="..\..\common.test.props"/>
+    <Import Project="..\..\common.props"/>
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <PackageId>Hhs.ContentService.Application</PackageId>
+        <RootNamespace>Hhs.ContentService.Application</RootNamespace>
+        <Title>TechSummus Hhs Content Service Application</Title>
+        <Description>TechSummus Hhs Content Service Application</Description>
+        <PackageTags>TechSummus Hhs Content Service Application</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\..\shared\src\Hhs.Shared.Contracts\Hhs.Shared.Contracts.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Hhs.ContentService.Domain\Hhs.ContentService.Domain.csproj"/>
+    </ItemGroup>
+
+</Project>

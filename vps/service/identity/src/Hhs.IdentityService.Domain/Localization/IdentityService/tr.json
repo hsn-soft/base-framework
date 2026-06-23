@@ -1,0 +1,32 @@
+{
+  "culture": "tr",
+  "texts": {
+    "Error:IdentityService:000010": "Firma Erişim Yetkisi Hatası",
+    "Error:IdentityService:000011": "Firma bulunamadı",
+    "Error:IdentityService:000100": "Kullanıcı Kimlik Hatası",
+    "Error:IdentityService:000101": "Kullanıcı Bulunamadı",
+    "Error:IdentityService:000102": "Kullanıcı daha önceden oluşturulmuş",
+    "Error:IdentityService:000103": "Kullanıcı eposta daha önceden oluşturulmuş",
+    "Error:IdentityService:000200": "Rol kimlik hatası",
+    "Error:IdentityService:000201": "Rol bulunamadı",
+    "Error:IdentityService:000202": "Rol daha önceden oluşturulmuş",
+    "TenantId": "Firma Id",
+    "TenantDomain": "Firma Profili",
+    "AppRole:Name": "Rol Adı",
+    "AppRole:IsDefault": "Varsayılan",
+    "AppRole:IsStatic": "Statik",
+    "AppRole:IsPublic": "Yerel",
+    "AppUser:UserName": "Kullanıcı Adı",
+    "AppUser:Email": "Eposta",
+    "AppUser:Name": "Adı",
+    "AppUser:Surname": "Soyadı",
+    "AppUser:PhoneNumber": "Telefon",
+    "AppUser:DefaultLanguage": "Varsayılan Dil",
+    "Role": "Rol",
+    "Roles": "Roller",
+    "NewRole": "Yeni Rol",
+    "NewUser": "Yeni Kullanıcı",
+    "User": "Kullanıcı",
+    "Users": "Kullanıcılar"
+  }
+}

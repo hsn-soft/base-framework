@@ -1,0 +1,30 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{712A7BE8-F612-4DAE-8831-550B386C55C1}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{6544FBCA-140F-494C-A44E-1A5555017E30}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hhs.AuthServer.Http.Host", "src\Hhs.AuthServer.Http.Host\Hhs.AuthServer.Http.Host.csproj", "{1967825D-1014-40DD-997C-D46EDFD71204}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hhs.AuthServer.ConsoleApp", "test\Hhs.AuthServer.ConsoleApp\Hhs.AuthServer.ConsoleApp.csproj", "{C0193B55-7B23-4D93-9F45-811459E4D797}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{1967825D-1014-40DD-997C-D46EDFD71204} = {712A7BE8-F612-4DAE-8831-550B386C55C1}
+		{C0193B55-7B23-4D93-9F45-811459E4D797} = {6544FBCA-140F-494C-A44E-1A5555017E30}
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1967825D-1014-40DD-997C-D46EDFD71204}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1967825D-1014-40DD-997C-D46EDFD71204}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1967825D-1014-40DD-997C-D46EDFD71204}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1967825D-1014-40DD-997C-D46EDFD71204}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C0193B55-7B23-4D93-9F45-811459E4D797}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C0193B55-7B23-4D93-9F45-811459E4D797}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C0193B55-7B23-4D93-9F45-811459E4D797}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C0193B55-7B23-4D93-9F45-811459E4D797}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

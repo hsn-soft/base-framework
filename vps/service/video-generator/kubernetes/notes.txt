@@ -1,0 +1,15 @@
+--PODS
+kubectl get pods -n ns-hhs-prod-apps -owide --watch
+kubectl logs -n ns-hhs-prod-apps -f hhs-service-video-generator-deployment-75564df867-m4ncw
+kubectl logs -n ns-hhs-prod-apps -f hhs-service-video-generator-deployment-75564df867-srh4c
+kubectl logs -n mongo -f mongo-server-mongodb-0
+-- KUBERNETES EVENT LOGS
+kubectl get events -n ns-hhs-prod-apps --sort-by='.metadata.creationTimestamp'
+
+-- DEPLOYMENT DESCRIBE
+kubectl get deployments -n ns-hhs-prod-apps
+kubectl describe deployments -n ns-hhs-prod-apps hhs-service-video-generator-deployment
+
+-- SERVICE DESCRIBE
+kubectl get svc -n ns-hhs-prod-apps -owide
+kubectl describe service -n ns-hhs-prod-apps hhs-service-video-generator-service

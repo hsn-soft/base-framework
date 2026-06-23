@@ -1,0 +1,15 @@
+{
+  "culture": "en",
+  "texts": {
+    "Message:ViewSuccessResult": "{0} records found",
+    "InvalidModelStateErrorMessage": "Invalid request parameters. Check parameter formats and required fields.",
+    "UnauthorizedRequest": "Unauthorized request, check your credentials",
+    "ForbiddenRequest": "Unauthorized access this area",
+    "NotFoundRequest": "No records matching the criteria were found",
+    "MethodNotAllowed": "Method not allowed",
+    "RequestTimeout": "Error loading data, please try again",
+    "UnsupportedRequestContentType": "Check your request content type",
+    "SuccessRequest": "Request completed successfully",
+    "Error:UnknownField":"{0} is unknown"
+  }
+}

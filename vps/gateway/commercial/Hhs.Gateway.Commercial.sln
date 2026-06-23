@@ -1,0 +1,23 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{16879DFE-E63C-48DA-ABA2-99A328E4524A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{FF0E30C5-8A33-44D7-BB1F-B919484702BA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hhs.Gateway.Commercial.Http.Host", "src\Hhs.Gateway.Commercial.Http.Host\Hhs.Gateway.Commercial.Http.Host.csproj", "{B8B29034-FDA4-4221-A6B7-D62AF9515237}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{B8B29034-FDA4-4221-A6B7-D62AF9515237} = {16879DFE-E63C-48DA-ABA2-99A328E4524A}
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B8B29034-FDA4-4221-A6B7-D62AF9515237}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B8B29034-FDA4-4221-A6B7-D62AF9515237}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B8B29034-FDA4-4221-A6B7-D62AF9515237}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B8B29034-FDA4-4221-A6B7-D62AF9515237}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

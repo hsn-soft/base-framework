@@ -1,0 +1,39 @@
+name: '.NETCore Build & Test'
+
+on:
+  pull_request:
+    branches: [ "dev" ]
+    types: [ opened, synchronize, reopened ]
+
+jobs:
+  build:
+    name: 'Build And Test JOB'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget
+
+      - name: Restore Dependencies
+        run: dotnet restore --force --verbosity minimal --configfile nuget.config
+
+      - name: Build Solution
+        run: dotnet build --no-restore --no-incremental --verbosity minimal --configuration Release
+
+      - name: Test Solution
+        run: dotnet test --no-restore --no-build --verbosity minimal --configuration Release --filter "category!=integration"

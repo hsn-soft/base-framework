@@ -1,0 +1,25 @@
+﻿@page
+@model Hhs.Commercial.Web.Pages.IndexModel
+@inject IConfiguration conf
+@inject IHostEnvironment env
+@{
+    ViewData["Title"] = "Home page";
+    var gatewayUrl = conf.GetValue<string>("RemoteServices:Default:BaseUrl");
+    var title = $"HHS Commercial Web UI - Mvc ( Razor Page ) | Environment[{env.EnvironmentName}] | Gateway[{gatewayUrl}] | Version[v1.0.0]";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <p>@title</p>
+    <p>
+        Content Fake List
+    </p>
+    <ul>
+        @foreach (var fake in ((List<string>)ViewData["ContentFakes"])!)
+        {
+            <li>
+                @fake
+            </li>
+        }
+    </ul>
+</div>

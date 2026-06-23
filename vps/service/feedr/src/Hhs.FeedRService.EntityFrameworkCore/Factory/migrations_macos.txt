@@ -1,0 +1,12 @@
+dotnet tool update --global dotnet-ef
+
+cd src/Hhs.FeedRService.EntityFrameworkCore/
+
+dotnet ef migrations add InitialCreate --context Hhs.FeedRService.EntityFrameworkCore.Context.FeedRServiceDbContext -o Migrations
+dotnet ef database update --context Hhs.FeedRService.EntityFrameworkCore.Context.FeedRServiceDbContext
+
+
+dotnet ef database remove --context Hhs.FeedRService.EntityFrameworkCore.Context.FeedRServiceDbContext
+
+
+dotnet ef migrations add IndexChange --context Hhs.FeedRService.EntityFrameworkCore.Context.FeedRServiceDbContext -o Migrations

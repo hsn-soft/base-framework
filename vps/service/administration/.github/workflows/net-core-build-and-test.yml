@@ -1,0 +1,71 @@
+name: '.NETCore Build & Test'
+
+on:
+  pull_request:
+    branches:
+      - dev
+      - rel/stage
+      - rel/uat
+      - rel/prod
+    types: [ opened, synchronize, reopened ]
+
+jobs:
+  build:
+    name: 'Build And Test JOB'
+    runs-on: ubuntu-latest
+    permissions:
+      packages: read
+      contents: read
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget
+
+      - name: Check Package User & Secret
+        run: |
+          if [ -z "${{ secrets.REPO_NUGET_USER_NAME }}" ]; then
+            echo "❌ Package User Unknown"
+            exit 1
+          else
+            echo "✅ Package User Found"
+          fi
+          if [ -z "${{ secrets.REPO_NUGET_USER_SECRET }}" ]; then
+            echo "❌ Package Token Unknown"
+            exit 1
+          else
+            echo "✅ Package Token Found"
+          fi
+
+      - name: Authenticate NuGet
+        run: |
+          dotnet nuget update source github \
+            --username "REPO_PACKAGE_USER" \
+            --password "$REPO_PACKAGE_TOKEN" \
+            --store-password-in-clear-text
+        env:
+          REPO_PACKAGE_TOKEN: ${{ secrets.REPO_NUGET_USER_SECRET }}
+          REPO_PACKAGE_USER: ${{ secrets.REPO_NUGET_USER_NAME }}
+
+      - name: Restore Dependencies
+        run: dotnet restore --force --verbosity minimal
+
+      - name: Build Solution
+        run: dotnet build --no-restore --no-incremental --verbosity minimal --configuration Release
+
+      - name: Test Solution
+        run: dotnet test --no-restore --no-build --verbosity minimal --configuration Release --filter "category!=integration"

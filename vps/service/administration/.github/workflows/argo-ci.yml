@@ -1,0 +1,164 @@
+name: CI Build & Push & GitOps Update
+
+on:
+  push:
+    branches:
+      - rel/uat
+      - rel/prod
+
+env:
+  ACR_NAME: techsummus.azurecr.io
+  SOLUTION: hhs
+  SERVICE_BASE_NAME: service-administration
+  GITOPS_REPO: tech-summus/hhs-gitops
+  SERVICE_PROJECT_NAME: Hhs.AdministrationService.Http.Host
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Detect Environment (uat | prod)
+        id: envselect
+        run: |
+          set -e
+          BRANCH_NAME="${GITHUB_REF_NAME}"
+          echo "🔹 Current branch: $BRANCH_NAME"
+
+          if [ "$BRANCH_NAME" = "rel/prod" ]; then
+            echo "ENV_SUFFIX=prod" >> $GITHUB_OUTPUT
+            echo "KUSTOMIZE_PATH=${SERVICE_BASE_NAME}/overlays/prod" >> $GITHUB_OUTPUT
+            echo "ENV_ARGOCD_HOST=https://argocd.techsummus.com" >> $GITHUB_OUTPUT
+          elif [ "$BRANCH_NAME" = "rel/uat" ]; then
+            echo "ENV_SUFFIX=uat" >> $GITHUB_OUTPUT
+            echo "KUSTOMIZE_PATH=${SERVICE_BASE_NAME}/overlays/uat" >> $GITHUB_OUTPUT
+            echo "ENV_ARGOCD_HOST=https://argocd-uat.techsummus.com" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Unsupported branch: $BRANCH_NAME"
+            exit 1
+          fi
+      - name: Notify CI Start
+        run: |
+          START_TIME=$(date +"%Y-%m-%d %H:%M:%S")
+          APP_NAME="${SOLUTION}-${SERVICE_BASE_NAME}-${{ steps.envselect.outputs.ENV_SUFFIX }}"
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -d "{\"text\":\"🚀 *CI Started*\n*App:* ${APP_NAME}\n\n*Started:* ${START_TIME}\"}" \
+            "${{ secrets.GCHAT_WEBHOOK_URL }}"
+      - name: Install yq
+        run: |
+          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+      - name: Login to Azure Container Registry
+        run: |
+          set -e
+          echo "${{ secrets.ACR_TOKEN }}" | docker login $ACR_NAME -u "techsummus" --password-stdin
+      - name: Extract Git Short SHA
+        id: vars
+        run: echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+      - name: Generate Timestamp (yyMMddHHmm)
+        id: timestamp
+        run: echo "stamp=$(date +'%y%m%d%H%M')" >> $GITHUB_OUTPUT
+      - name: Create Image Tag
+        id: imagetag
+        run: echo "tag=${{ steps.timestamp.outputs.stamp }}-sha-${{ steps.vars.outputs.sha }}" >> $GITHUB_OUTPUT
+      - name: Define Image Repo for Environment
+        id: imagerepo
+        run: echo "repo=${ACR_NAME}/${SOLUTION}-${SERVICE_BASE_NAME}-${{ steps.envselect.outputs.ENV_SUFFIX }}" >> $GITHUB_OUTPUT
+      - name: Check Package User & Secret
+        run: |
+          if [ -z "${{ secrets.REPO_NUGET_USER_NAME }}" ]; then
+            echo "❌ Package User Unknown"
+            exit 1
+          else
+            echo "✅ Package User Found"
+          fi
+          if [ -z "${{ secrets.REPO_NUGET_USER_SECRET }}" ]; then
+            echo "❌ Package Token Unknown"
+            exit 1
+          else
+            echo "✅ Package Token Found"
+          fi
+      - name: Build Docker Image (ARG based)
+        run: |
+          DOCKER_BUILDKIT=1 docker build \
+            --build-arg NUGET_USER=${{ secrets.REPO_NUGET_USER_NAME }} \
+            --build-arg NUGET_TOKEN=${{ secrets.REPO_NUGET_USER_SECRET }} \
+            -t ${{ steps.imagerepo.outputs.repo }}:${{ steps.imagetag.outputs.tag }} \
+            -f src/${{ env.SERVICE_PROJECT_NAME }}/Dockerfile \
+            .
+      - name: Push Docker Image
+        run: |
+          set -e
+          docker push ${{ steps.imagerepo.outputs.repo }}:${{ steps.imagetag.outputs.tag }}
+      - name: Checkout GitOps Repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.GITOPS_REPO }}
+          token: ${{ secrets.GITOPS_PAT }}
+          path: gitops
+      - name: Update Image Tag in GitOps (overlay for this env)
+        run: |
+          set -e
+          cd gitops/${{ steps.envselect.outputs.KUSTOMIZE_PATH }}
+          yq eval -i '.images[0].newTag = "${{ steps.imagetag.outputs.tag }}"' kustomization.yaml
+      - name: Update BUILD_NUMBER env in env-patch
+        run: |
+          set -e
+          cd gitops/${{ steps.envselect.outputs.KUSTOMIZE_PATH }}
+
+          CONTAINER_NAME="${SOLUTION}-${SERVICE_BASE_NAME}-container"
+          BUILD="${{ steps.imagetag.outputs.tag }}"
+
+          yq eval -i "
+            (.spec.template.spec.containers[]
+              | select(.name == \"$CONTAINER_NAME\")
+              | .env[]
+              | select(.name == \"BUILD_NUMBER\")
+              | .value) = \"$BUILD\"
+              " env-patch.yaml
+      - name: Commit & Push GitOps Update
+        run: |
+          set -e
+          cd gitops
+          git config user.email "ci@techsummus.com"
+          git config user.name "TechSummus CI Bot"
+          git add .
+          git commit -m "Update ${SOLUTION}-${SERVICE_BASE_NAME}-${{ steps.envselect.outputs.ENV_SUFFIX }} to ${{ steps.imagetag.outputs.tag }}" || echo "No changes to commit"
+          git push || echo "Nothing to push"
+      - name: Trigger ArgoCD Sync
+        run: |
+          curl -X POST "${{ steps.envselect.outputs.ENV_ARGOCD_HOST }}/api/v1/applications/${SOLUTION}-${SERVICE_BASE_NAME}-${{ steps.envselect.outputs.ENV_SUFFIX }}/sync" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${{ secrets.ARGOCD_CI_TOKEN }}" \
+            -d "{\"revision\":\"master\"}"
+      - name: Notify CI Success
+        if: success()
+        run: |
+          COMPLETED_TIME=$(date +"%Y-%m-%d %H:%M:%S")
+          APP_NAME="${SOLUTION}-${SERVICE_BASE_NAME}-${{ steps.envselect.outputs.ENV_SUFFIX }}"
+          NEW_TAG="${{ steps.imagetag.outputs.tag }}"
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -d "{\"text\":\"🎉 *CI Completed*\n*App:* ${APP_NAME}\n\n*Completed:* ${COMPLETED_TIME}\n*Version:* ${NEW_TAG}\"}" \
+            "${{ secrets.GCHAT_WEBHOOK_URL }}"
+      - name: Build Summary
+        run: |
+          echo "✅ Image built and pushed successfully:" >> $GITHUB_STEP_SUMMARY
+          echo "- Repository: ${{ steps.imagerepo.outputs.repo }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Tag: ${{ steps.imagetag.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Environment: ${{ steps.envselect.outputs.ENV_SUFFIX }}" >> $GITHUB_STEP_SUMMARY
+          echo "- GitOps Path: ${{ steps.envselect.outputs.KUSTOMIZE_PATH }}" >> $GITHUB_STEP_SUMMARY
+      - name: Notify CI Failed
+        if: failure()
+        run: |
+          FINISH_TIME=$(date +"%Y-%m-%d %H:%M:%S")
+          APP_NAME="${SOLUTION}-${SERVICE_BASE_NAME}-${{ steps.envselect.outputs.ENV_SUFFIX }}"
+          REASON="${{ steps.imagetag.outcome || 'Unknown error' }}"
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -d "{\"text\":\"❌ *CI Failed*\n*App:* ${APP_NAME}\n\n*Failed:* ${FINISH_TIME}\n*Reason:* ${REASON}\"}" \
+            "${{ secrets.GCHAT_WEBHOOK_URL }}"

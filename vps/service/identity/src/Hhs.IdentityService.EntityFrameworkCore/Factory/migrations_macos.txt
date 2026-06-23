@@ -1,0 +1,12 @@
+dotnet tool update --global dotnet-ef
+dotnet tool update --global dotnet-ef --version 10.0.5
+
+cd src/Hhs.IdentityService.EntityFrameworkCore/
+dotnet ef migrations add InitialCreate --context Hhs.IdentityService.EntityFrameworkCore.Context.IdentityServiceDbContext -o Migrations/Service
+
+
+dotnet ef database update --context Hhs.IdentityService.EntityFrameworkCore.Context.IdentityServiceDbContext
+
+dotnet ef database remove --context Hhs.IdentityService.EntityFrameworkCore.Context.IdentityServiceDbContext
+
+
