@@ -15,9 +15,11 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.MongoDB\HsnSoft.Base.MongoDB.csproj" />
         <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.Ddd.Domain\HsnSoft.Base.Ddd.Domain.csproj" />
     </ItemGroup>
 
+    
     <ItemGroup>
         <ProjectReference Include="..\..\..\..\shared\src\Hhs.Shared.Helper\Hhs.Shared.Helper.csproj" />
     </ItemGroup>

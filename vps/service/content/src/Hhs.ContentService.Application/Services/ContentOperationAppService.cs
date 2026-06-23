@@ -2,7 +2,6 @@ using Hhs.ContentService.Domain.ContentDomain.Entities;
 using Hhs.ContentService.EntityFrameworkCore.Context;
 using Hhs.Shared.Contracts.Events;
 using Hhs.Shared.Helper;
-using HsnSoft.Base.EventBus;
 using HsnSoft.Base.Text;
 using HsnSoft.Base.Tracing;
 using Microsoft.EntityFrameworkCore;
@@ -24,7 +23,6 @@ public sealed class ContentOperationAppService(
     IServiceProvider provider,
     ITraceAccesor traceAccessor,
     ContentServiceDbContext db,
-    IEventBus eventBus,
     ILogger<ContentOperationAppService> logger) : ApplicationServiceBase(provider)
 {
     public async Task<CreateContentResponse> CreateCustomerContentAsync(CreateCustomerContentRequest request, CancellationToken cancellationToken)

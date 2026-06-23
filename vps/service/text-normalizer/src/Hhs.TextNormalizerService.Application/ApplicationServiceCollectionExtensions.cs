@@ -1,4 +1,5 @@
 using Hhs.Shared.Contracts.Cache;
+using Hhs.TextNormalizerService.Application.Services;
 using Hhs.TextNormalizerService.Domain.Settings;
 using HsnSoft.Base.PuppeTeer;
 using Microsoft.Extensions.Configuration;
@@ -19,6 +20,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddSingleton<IPuppeteerBrowser, PuppeteerBrowser>();
 
         // Must be Scoped or Transient => Cannot consume any scoped service
+        services.AddScoped<NormalizerOperationAppService>();
 
         return services;
     }

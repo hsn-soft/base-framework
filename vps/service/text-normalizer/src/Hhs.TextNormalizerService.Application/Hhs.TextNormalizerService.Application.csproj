@@ -27,7 +27,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Hhs.TextNormalizerService.Domain\Hhs.TextNormalizerService.Domain.csproj"/>
+        <ProjectReference Include="..\Hhs.TextNormalizerService.MongoDb\Hhs.TextNormalizerService.MongoDb.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
