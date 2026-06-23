@@ -295,7 +295,7 @@ public sealed class OutlineProviderPollingAppService(
 
                     await eventBus.PublishAsync(new OutlineProviderCompletedEto
                     {
-                        RefContentIdForItem = item.CustomerContentId,
+                        CustomerContentIdForItem = item.CustomerContentId,
                         RefContentType = ContentType.AnalysisContent,
                         CorrelationId = request.CorrelationId,
                         NormalizedRequestId = request.Id,

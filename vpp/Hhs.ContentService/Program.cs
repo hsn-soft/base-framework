@@ -2,6 +2,7 @@ using Hhs.ContentService;
 using Hhs.ContentService.Data;
 using Hhs.ContentService.Handlers;
 using Hhs.ContentService.Infrastructure;
+using Hhs.ContentService.Models;
 using Hhs.ContentService.Services;
 using Hhs.Shared.Events;
 using Hhs.Shared.RabbitMQ;

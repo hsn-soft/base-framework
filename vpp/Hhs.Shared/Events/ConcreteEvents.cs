@@ -107,6 +107,7 @@ public sealed record CustomerContentOutlineCompletedEto : IntegrationEvent
 public sealed record AnalysisItemScrapingStartedEto : IntegrationEvent
 {
     public Guid AnalysisContentId { get; init; }
+    public Guid? CustomerContentIdForItem { get; init; }
 
     public AnalysisItemScrapingStartedEto()
     {
@@ -118,6 +119,7 @@ public sealed record AnalysisItemScrapingStartedEto : IntegrationEvent
 public sealed record AnalysisItemScrapingCompletedEto : IntegrationEvent
 {
     public Guid AnalysisContentId { get; init; }
+    public Guid? CustomerContentIdForItem { get; init; }
 
     public AnalysisItemScrapingCompletedEto()
     {
@@ -129,6 +131,7 @@ public sealed record AnalysisItemScrapingCompletedEto : IntegrationEvent
 public sealed record AnalysisItemOutlineStartedEto : IntegrationEvent
 {
     public Guid AnalysisContentId { get; init; }
+    public Guid? CustomerContentIdForItem { get; init; }
 
     public AnalysisItemOutlineStartedEto()
     {
@@ -140,12 +143,12 @@ public sealed record AnalysisItemOutlineStartedEto : IntegrationEvent
 public sealed record OutlineProviderRequestStartedEto : IntegrationEvent
 {
     public ContentType RefContentType { get; init; }
+    public Guid? CustomerContentIdForItem { get; init; }
     public Guid NormalizedRequestId { get; init; }
 
     public string ScopeKey { get; init; } = default!;
 
-    public Guid? CustomerContentIdForItem { get; init; }
-    public Guid? RefContentIdForItem { get; init; }
+
     public string InputText { get; init; } = default!;
 
     public OutlineProviderRequestStartedEto()
@@ -161,7 +164,7 @@ public sealed record OutlineProviderCompletedEto : IntegrationEvent
 
     public Guid NormalizedRequestId { get; init; }
     public Guid? CustomerContentIdForItem { get; init; }
-    public Guid? RefContentIdForItem { get; init; }
+
     public string Script { get; init; } = default!;
 
     public OutlineProviderCompletedEto()
@@ -173,7 +176,7 @@ public sealed record OutlineProviderCompletedEto : IntegrationEvent
 
 public sealed record AnalysisItemOutlineCompletedEto : IntegrationEvent
 {
-    public Guid AnalysisContentNormalizedRequestId { get; init; }
+    public Guid AnalysisContentId { get; init; }
 
     public AnalysisItemOutlineCompletedEto()
     {

@@ -226,7 +226,7 @@ public sealed class NormalizerRetryAppService(
                     {
                         await eventBus.PublishAsync(new OutlineProviderRequestStartedEto
                         {
-                            RefContentIdForItem = item.CustomerContentId,
+                            CustomerContentIdForItem = item.CustomerContentId,
                             RefContentType = ContentType.AnalysisContent,
                             CorrelationId = request.CorrelationId,
                             NormalizedRequestId = request.Id,
