@@ -9,9 +9,7 @@ public enum ProviderExecutionMode
 public enum VideoAudioInputMode
 {
     ProviderCreatesAudio,
-    AudioUrlListRequired,
-    AudioFileRequired,
-    NoAudio
+    AudioUrlListRequired
 }
 
 public sealed class OutlineProviderCapabilities

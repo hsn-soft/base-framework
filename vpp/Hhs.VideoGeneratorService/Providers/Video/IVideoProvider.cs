@@ -20,7 +20,6 @@ public sealed class VideoCreateRequest
 {
     public string VideoInputJson { get; set; } = default!;
     public List<string> AudioUrls { get; set; } = [];
-    public List<string> AudioFilePaths { get; set; } = [];
 }
 
 public sealed class VideoCreateResponse

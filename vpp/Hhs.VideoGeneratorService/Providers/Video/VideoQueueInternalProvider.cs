@@ -21,7 +21,7 @@ public sealed class VideoQueueInternalProvider : IVideoProvider
     {
         ProviderKey = ProviderKey,
         ExecutionMode = ProviderExecutionMode.AsyncPolling,
-        AudioInputMode = VideoAudioInputMode.AudioUrlListRequired
+        AudioInputMode = VideoAudioInputMode.ProviderCreatesAudio
     };
 
     public async Task<VideoCreateResponse> CreateAsync(

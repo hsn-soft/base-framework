@@ -181,9 +181,6 @@ public sealed class VideoRetryAppService(
                         VideoRequestId = request.Id,
                         AudioUrls = videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioUrlListRequired
                             ? orderedAudios.Select(x => x.AudioStorageUrl!).ToList()
-                            : [],
-                        AudioFilePaths = videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioFileRequired
-                            ? orderedAudios.Select(x => x.AudioLocalPath!).ToList()
                             : []
                     }, cancellationToken);
                 }

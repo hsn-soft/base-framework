@@ -217,7 +217,6 @@ public sealed record VideoRequestCreatedEto : IntegrationEvent
 {
     public Guid VideoRequestId { get; init; }
     public bool IsAnalysis { get; init; }
-    public bool ExternalAudioRequired { get; init; }
 
     public VideoRequestCreatedEto()
     {
@@ -229,7 +228,6 @@ public sealed record VideoRequestCreatedEto : IntegrationEvent
 public sealed record VideoOperationStartedEto : IntegrationEvent
 {
     public Guid VideoRequestId { get; init; }
-    public bool ExternalAudioRequired { get; init; }
 
     public VideoOperationStartedEto()
     {
@@ -338,7 +336,6 @@ public sealed record VideoProviderRequestStartedEto : IntegrationEvent
 {
     public Guid VideoRequestId { get; init; }
     public List<string> AudioUrls { get; init; } = [];
-    public List<string> AudioFilePaths { get; init; } = [];
 
     public VideoProviderRequestStartedEto()
     {

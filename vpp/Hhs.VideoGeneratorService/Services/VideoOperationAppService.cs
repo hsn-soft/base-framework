@@ -34,19 +34,13 @@ public sealed class VideoOperationAppService(
 
         if (existing is not null)
         {
-            var providerForExisting = videoProviderResolver.Resolve(SubscriptionScopeRegistry.GetVideoProviderKey(existing.ScopeKey));
-            bool existingExternalAudioRequired =
-                providerForExisting.Capabilities.AudioInputMode == VideoAudioInputMode.AudioUrlListRequired ||
-                providerForExisting.Capabilities.AudioInputMode == VideoAudioInputMode.AudioFileRequired;
-
             await eventBus.PublishAsync(new VideoRequestCreatedEto
             {
                 RefContentId = existing.RefContentId,
                 RefContentType = existing.RefContentType,
                 CorrelationId = existing.CorrelationId,
                 VideoRequestId = existing.Id,
-                IsAnalysis = existing.RefContentType == ContentType.AnalysisContent,
-                ExternalAudioRequired = existingExternalAudioRequired
+                IsAnalysis = existing.RefContentType == ContentType.AnalysisContent
             }, cancellationToken);
 
             return;
@@ -78,29 +72,19 @@ public sealed class VideoOperationAppService(
 
         await context.VideoRequests.InsertOneAsync(videoRequest, cancellationToken: cancellationToken);
 
-        bool externalAudioRequired =
-            videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioUrlListRequired ||
-            videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioFileRequired;
-
         await eventBus.PublishAsync(new VideoRequestCreatedEto
         {
             RefContentId = @event.RefContentId,
             RefContentType = @event.RefContentType,
             CorrelationId = @event.CorrelationId,
             VideoRequestId = videoRequestId,
-            IsAnalysis = @event.RefContentType == ContentType.AnalysisContent,
-            ExternalAudioRequired = externalAudioRequired
+            IsAnalysis = @event.RefContentType == ContentType.AnalysisContent
         }, cancellationToken);
     }
 
     public async Task StartVideoOperationAsync(VideoRequestCreatedEto @event, CancellationToken cancellationToken)
     {
         var videoRequest = await GetVideoAsync(@event.VideoRequestId, cancellationToken);
-        string? videoProviderKey = SubscriptionScopeRegistry.GetVideoProviderKey(videoRequest.ScopeKey);
-        var videoProvider = videoProviderResolver.Resolve(videoProviderKey);
-        bool externalAudioRequired =
-            videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioUrlListRequired ||
-            videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioFileRequired;
 
         videoRequest.Status = StatusNames.Started;
         videoRequest.CurrentStep = EventNames.VideoOperationStarted;
@@ -108,14 +92,7 @@ public sealed class VideoOperationAppService(
 
         await ReplaceVideoAsync(videoRequest, cancellationToken);
 
-        await eventBus.PublishAsync(new VideoOperationStartedEto
-        {
-            RefContentId = videoRequest.RefContentId,
-            RefContentType = videoRequest.RefContentType,
-            CorrelationId = @event.CorrelationId,
-            VideoRequestId = videoRequest.Id,
-            ExternalAudioRequired = externalAudioRequired
-        }, cancellationToken);
+        await eventBus.PublishAsync(new VideoOperationStartedEto { RefContentId = videoRequest.RefContentId, RefContentType = videoRequest.RefContentType, CorrelationId = @event.CorrelationId, VideoRequestId = videoRequest.Id }, cancellationToken);
     }
 
     public async Task HandleVideoOperationStartedAsync(VideoOperationStartedEto @event, CancellationToken cancellationToken)
@@ -124,8 +101,7 @@ public sealed class VideoOperationAppService(
         string? videoProviderKey = SubscriptionScopeRegistry.GetVideoProviderKey(videoRequest.ScopeKey);
         var videoProvider = videoProviderResolver.Resolve(videoProviderKey);
 
-        if (videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.ProviderCreatesAudio ||
-            videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.NoAudio)
+        if (videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.ProviderCreatesAudio)
         {
             await eventBus.PublishAsync(new VideoProviderRequestStartedEto
             {
@@ -433,12 +409,6 @@ public sealed class VideoOperationAppService(
                 throw new InvalidOperationException("AudioCdnUrl is required for video provider.");
             }
 
-            if (videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioFileRequired &&
-                orderedAudios.Any(x => string.IsNullOrWhiteSpace(x.AudioLocalPath)))
-            {
-                throw new InvalidOperationException("LocalAudioFilePath is required for video provider.");
-            }
-
             var lockResult = await context.VideoRequests.UpdateOneAsync(
                 x => x.Id == @event.VideoRequestId &&
                      x.Status != StatusNames.VideoProviderRequestStarting &&
@@ -469,9 +439,6 @@ public sealed class VideoOperationAppService(
                 VideoRequestId = videoRequest.Id,
                 AudioUrls = videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioUrlListRequired
                     ? orderedAudios.Select(x => x.AudioStorageUrl!).ToList()
-                    : [],
-                AudioFilePaths = videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioFileRequired
-                    ? orderedAudios.Select(x => x.AudioLocalPath!).ToList()
                     : []
             }, cancellationToken);
         }
@@ -499,7 +466,7 @@ public sealed class VideoOperationAppService(
 
             await ReplaceVideoAsync(videoRequest, cancellationToken);
 
-            var response = await provider.CreateAsync(new VideoCreateRequest { VideoInputJson = videoRequest.MediaInputJson, AudioUrls = @event.AudioUrls, AudioFilePaths = @event.AudioFilePaths }, cancellationToken);
+            var response = await provider.CreateAsync(new VideoCreateRequest { VideoInputJson = videoRequest.MediaInputJson, AudioUrls = @event.AudioUrls }, cancellationToken);
 
             if (provider.Capabilities.ExecutionMode == ProviderExecutionMode.ImmediateResult)
             {
