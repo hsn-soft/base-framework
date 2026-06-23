@@ -1,3 +1,5 @@
+using Hhs.Shared.Contracts.Events;
+using Hhs.Shared.Helper.Configuration;
 using Hhs.Shared.Helper.Consts;
 using Hhs.Shared.Hosting.Extensions;
 using Hhs.Shared.Hosting.Helpers;
@@ -6,9 +8,11 @@ using Hhs.Shared.Hosting.Microservices.Middlewares;
 using Hhs.TextNormalizerService;
 using Hhs.TextNormalizerService.Application;
 using Hhs.TextNormalizerService.Application.Contracts.Events;
+using Hhs.TextNormalizerService.Application.Services;
 using Hhs.TextNormalizerService.Domain.Localization;
 using Hhs.TextNormalizerService.MongoDb;
 using Hhs.TextNormalizerService.MongoDb.Setup;
+using Hhs.TextNormalizerService.Workers;
 using HsnSoft.Base.AspNetCore.Localization;
 using HsnSoft.Base.Data;
 using HsnSoft.Base.PuppeTeer;
@@ -17,6 +21,8 @@ using HsnSoft.Base.Swashbuckle;
 using HsnSoft.Base.Tracing;
 using Microsoft.Extensions.Options;
 using Serilog;
+
+SubscriptionScopeRegistry.Initialize();
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -69,6 +75,17 @@ builder.Services.AddTransient<IBasicDataSeeder, MongoSeederService>();
 builder.Services.AddHostedService<PuppeteerShutdownHostedService>();
 builder.Services.AddOptions<HostOptions>()
     .Configure<IOptions<PuppeteerBrowserSettings>>((hostOptions, browserSettings) => { hostOptions.ShutdownTimeout = TimeSpan.FromSeconds(browserSettings.Value.ShutdownDrainTimeoutSeconds + 30); });
+
+builder.Services.AddHttpClient();
+
+// ============================================================================
+// CUSTOM WORKERS (Polling & Retry Logic)
+// ============================================================================
+builder.Services.AddScoped<OutlineProviderPollingAppService>();
+builder.Services.AddHostedService<OutlineProviderPollingWorker>();
+
+builder.Services.AddScoped<NormalizerRetryAppService>();
+builder.Services.AddHostedService<NormalizerRetryWorker>();
 
 // Swagger
 if (!builder.Environment.IsHostProduction())
@@ -145,7 +162,7 @@ try
     // EventBus
     app.UseEventBus(typeof(EventHandlersAssemblyMarker).Assembly, new Dictionary<string, ushort>
     {
-        { nameof(ContentNormalizedRequestScrapingStartedEto), 5 }, // This event fetch count more than one
+        { nameof(CustomerContentCreatedEto), 1 }, // This event fetch count more than one
     });
 
     // Shutdown hook

@@ -6,23 +6,23 @@ using HsnSoft.Base.Logging.Abstracts;
 
 namespace Hhs.TextNormalizerService.EventHandlers.Content;
 
-public class CustomerContentCreatedEtoHandler(
+public class AnalysisContentCreatedEtoHandler(
     IAppConsoleLogger logger,
     NormalizerOperationAppService normalizerOperationAppService
-) : IIntegrationEventHandler<CustomerContentCreatedEto>
+) : IIntegrationEventHandler<AnalysisContentCreatedEto>
 {
     private readonly IAppConsoleLogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     private readonly NormalizerOperationAppService _normalizerOperationAppService = normalizerOperationAppService ?? throw new ArgumentNullException(nameof(normalizerOperationAppService));
 
-    public async Task HandleAsync(MessageEnvelope<CustomerContentCreatedEto> @event)
+    public async Task HandleAsync(MessageEnvelope<AnalysisContentCreatedEto> @event)
     {
         _logger.LogDebug("EVENT HANDLING | [ {EventName} ] => CorrelationId[{CorrelationId}], MessageId[{MessageId}], RelatedMessageId[{RelatedMessageId}]",
-            nameof(CustomerContentCreatedEto)[..^"Eto".Length],
+            nameof(AnalysisContentCreatedEto)[..^"Eto".Length],
             @event.CorrelationId ?? string.Empty,
             @event.MessageId.ToString(),
             @event.ParentMessageId != null ? @event.ParentMessageId.Value.ToString() : string.Empty);
 
         _normalizerOperationAppService.SetParentIntegrationEvent(@event);
-        await _normalizerOperationAppService.CreateCustomerContentNormalizeRequestAsync(@event.Message, @event.MessageId, @event.CorrelationId);
+        await _normalizerOperationAppService.CreateAnalysisContentNormalizeRequestAsync(@event.Message, @event.MessageId, @event.CorrelationId);
     }
 }
