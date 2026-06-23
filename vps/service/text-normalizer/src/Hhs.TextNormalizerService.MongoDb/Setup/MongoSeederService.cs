@@ -1,4 +1,3 @@
-using Hhs.TextNormalizerService.Domain.ContentDomain.Entities;
 using Hhs.TextNormalizerService.Domain.Enums;
 using Hhs.TextNormalizerService.Domain.SettingDomain.Entities;
 using Hhs.TextNormalizerService.MongoDb.Context;
@@ -25,41 +24,41 @@ public sealed class MongoSeederService(IServiceScopeFactory serviceScopeFactory)
         var dataFilter = scope.ServiceProvider.GetRequiredService<IDataFilter>();
         try
         {
-            #region Check - Is ContentNormalizedRequest Collection Initialized
-
-            long estimatedContentNormalizedRequestDocCount = await dbContext.ContentNormalizedRequests.EstimatedDocumentCountAsync(cancellationToken: cancellationToken);
-            if (estimatedContentNormalizedRequestDocCount < 1)
-            {
-                var tempId = Guid.CreateVersion7();
-                await dbContext.ContentNormalizedRequests.InsertOneAsync(new ContentNormalizedRequest(tempId, "test_scope",
-                    "test", Guid.CreateVersion7(), "test", ContentNormalizedRequestStates.CreatedWaitForScraping, "test"), cancellationToken: cancellationToken);
-
-                var filter = Builders<ContentNormalizedRequest>.Filter.Eq(doc => doc.Id, tempId);
-                var delResult = await dbContext.ContentNormalizedRequests.DeleteOneAsync(filter, cancellationToken);
-                if (delResult.DeletedCount < 1) throw new Exception($"{nameof(ContentNormalizedRequest)} First initialize error");
-
-                logger.LogDebug("{WorkerName} | MONGO DATABASE IS READY FOR {CollectionName}", nameof(MongoSeederService), nameof(ContentNormalizedRequest));
-            }
-
-            #endregion
-
-            #region Check - Is AnalysisNormalizedRequest Collection Initialized
-
-            long estimatedAnalysisNormalizedRequestDocCount = await dbContext.AnalysisNormalizedRequests.EstimatedDocumentCountAsync(cancellationToken: cancellationToken);
-            if (estimatedAnalysisNormalizedRequestDocCount < 1)
-            {
-                var tempId = Guid.CreateVersion7();
-                await dbContext.AnalysisNormalizedRequests.InsertOneAsync(new AnalysisNormalizedRequest(tempId, "test_scope", "test", Guid.CreateVersion7(),
-                    DateTime.UtcNow.Date, [new AnalysisReferenceModel { AnalysisDataModel = new AnalysisDataModel { Title = "test", ImageUrl = "image", Spot = "spot" }, CustomerContentId = Guid.CreateVersion7(), ContentNormalizedRequestId = Guid.CreateVersion7() }], AnalysisNormalizedRequestStates.CreatedWaitForOutline, "test"), cancellationToken: cancellationToken);
-
-                var filter = Builders<AnalysisNormalizedRequest>.Filter.Eq(doc => doc.Id, tempId);
-                var delResult = await dbContext.AnalysisNormalizedRequests.DeleteOneAsync(filter, cancellationToken);
-                if (delResult.DeletedCount < 1) throw new Exception($"{nameof(AnalysisNormalizedRequest)} First initialize error");
-
-                logger.LogDebug("{WorkerName} | MONGO DATABASE IS READY FOR {CollectionName}", nameof(MongoSeederService), nameof(AnalysisNormalizedRequest));
-            }
-
-            #endregion
+            // #region Check - Is ContentNormalizedRequest Collection Initialized
+            //
+            // long estimatedContentNormalizedRequestDocCount = await dbContext.ContentNormalizedRequests.EstimatedDocumentCountAsync(cancellationToken: cancellationToken);
+            // if (estimatedContentNormalizedRequestDocCount < 1)
+            // {
+            //     var tempId = Guid.CreateVersion7();
+            //     await dbContext.ContentNormalizedRequests.InsertOneAsync(new ContentNormalizedRequest(tempId, "test_scope",
+            //         "test", Guid.CreateVersion7(), "test", ContentNormalizedRequestStates.CreatedWaitForScraping, "test"), cancellationToken: cancellationToken);
+            //
+            //     var filter = Builders<ContentNormalizedRequest>.Filter.Eq(doc => doc.Id, tempId);
+            //     var delResult = await dbContext.ContentNormalizedRequests.DeleteOneAsync(filter, cancellationToken);
+            //     if (delResult.DeletedCount < 1) throw new Exception($"{nameof(ContentNormalizedRequest)} First initialize error");
+            //
+            //     logger.LogDebug("{WorkerName} | MONGO DATABASE IS READY FOR {CollectionName}", nameof(MongoSeederService), nameof(ContentNormalizedRequest));
+            // }
+            //
+            // #endregion
+            //
+            // #region Check - Is AnalysisNormalizedRequest Collection Initialized
+            //
+            // long estimatedAnalysisNormalizedRequestDocCount = await dbContext.AnalysisNormalizedRequests.EstimatedDocumentCountAsync(cancellationToken: cancellationToken);
+            // if (estimatedAnalysisNormalizedRequestDocCount < 1)
+            // {
+            //     var tempId = Guid.CreateVersion7();
+            //     await dbContext.AnalysisNormalizedRequests.InsertOneAsync(new AnalysisNormalizedRequest(tempId, "test_scope", "test", Guid.CreateVersion7(),
+            //         DateTime.UtcNow.Date, [new AnalysisReferenceModel { AnalysisDataModel = new AnalysisDataModel { Title = "test", ImageUrl = "image", Spot = "spot" }, CustomerContentId = Guid.CreateVersion7(), ContentNormalizedRequestId = Guid.CreateVersion7() }], AnalysisNormalizedRequestStates.CreatedWaitForOutline, "test"), cancellationToken: cancellationToken);
+            //
+            //     var filter = Builders<AnalysisNormalizedRequest>.Filter.Eq(doc => doc.Id, tempId);
+            //     var delResult = await dbContext.AnalysisNormalizedRequests.DeleteOneAsync(filter, cancellationToken);
+            //     if (delResult.DeletedCount < 1) throw new Exception($"{nameof(AnalysisNormalizedRequest)} First initialize error");
+            //
+            //     logger.LogDebug("{WorkerName} | MONGO DATABASE IS READY FOR {CollectionName}", nameof(MongoSeederService), nameof(AnalysisNormalizedRequest));
+            // }
+            //
+            // #endregion
 
             #region Check - Is CustomerVpSetting Collection Initialized
 

@@ -50,12 +50,7 @@ public static class EfCoreServiceCollectionExtensions
 
         services.AddScoped<ICustomerVpSettingRepository, EfCoreCustomerVpSettingRepository>();
 
-        services.AddScoped<ICustomerContentRepository, EfCoreCustomerContentRepository>();
-        services.AddScoped<ICustomerContentVisitRepository, EfCoreCustomerContentVisitRepository>();
-        services.AddScoped<IAnalysisContentRepository, EfCoreAnalysisContentRepository>();
-
         services.AddScoped<IContentVideoGenerationLimitRepository, EfCoreContentVideoGenerationLimitRepository>();
-        // services.AddScoped<IResponseStatisticRepository, EfCoreResponseStatisticRepository>();
 
         return services;
     }

@@ -1,4 +1,4 @@
-namespace Hhs.FeedRService.Application.Contracts.ReportingDomain.Dtos;
+namespace Hhs.FeedRService.Application.Contracts.DashboardDomain.Dtos;
 
 public sealed class GroupedByOrderItemDto
 {

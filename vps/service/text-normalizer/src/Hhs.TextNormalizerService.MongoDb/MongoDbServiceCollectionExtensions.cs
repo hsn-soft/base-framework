@@ -1,5 +1,4 @@
 using Hhs.TextNormalizerService.Domain;
-using Hhs.TextNormalizerService.Domain.ContentDomain.Repositories;
 using Hhs.TextNormalizerService.Domain.SettingDomain.Repositories;
 using Hhs.TextNormalizerService.MongoDb.Configurations;
 using Hhs.TextNormalizerService.MongoDb.Context;
@@ -43,8 +42,6 @@ public static class MongoDbServiceCollectionExtensions
 
         services.AddScoped<ICustomerVpSettingRepository, MongoCustomerVpSettingRepository>();
 
-        services.AddScoped<IContentNormalizedRequestRepository, MongoContentNormalizedRequestRepository>();
-        services.AddScoped<IAnalysisNormalizedRequestRepository, MongoAnalysisNormalizedRequestRepository>();
 
         return services;
     }
@@ -90,8 +87,6 @@ public static class MongoDbServiceCollectionExtensions
     private static void RegisterClassMaps()
     {
         EntityClassMap.Register();
-        ContentNormalizedRequestClassMap.Register();
-        AnalysisNormalizedRequestClassMap.Register();
         CustomerVpSettingClassMap.Register();
     }
 }

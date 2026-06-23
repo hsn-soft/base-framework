@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Hhs.ContentService.EntityFrameworkCore.Configurations;
 
-public static class CustomerDomainConfiguration
+public static class SettingDomainConfiguration
 {
     public static void ConfigureCustomerVpSettingEntity(this ModelBuilder builder)
     {

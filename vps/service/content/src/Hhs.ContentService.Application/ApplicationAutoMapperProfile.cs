@@ -1,5 +1,4 @@
 using AutoMapper;
-using Hhs.ContentService.Application.Contracts.ContentDomain.Dtos;
 using Hhs.ContentService.Application.Contracts.CustomerDomain.Dtos;
 using Hhs.ContentService.Domain.ContentDomain.Entities;
 using Hhs.ContentService.Domain.SettingDomain.Entities;
@@ -10,12 +9,12 @@ public class ApplicationAutoMapperProfile : Profile
 {
     public ApplicationAutoMapperProfile()
     {
-        CreateMap<CustomerVpSetting, CustomerVpSettingCheckDto>();
-
-        CreateMap<CustomerContent, CustomerContentDto>();
-        CreateMap<CustomerContent, CustomerContentStatusDto>()
-            .ForMember(dest => dest.CustomerContentId, opt =>
-                opt.MapFrom(source => source.Id));
-        CreateMap<CustomerContent, CustomerContentSearchDto>();
+        // CreateMap<CustomerVpSetting, CustomerVpSettingCheckDto>();
+        //
+        // CreateMap<CustomerContent, CustomerContentDto>();
+        // CreateMap<CustomerContent, CustomerContentStatusDto>()
+        //     .ForMember(dest => dest.CustomerContentId, opt =>
+        //         opt.MapFrom(source => source.Id));
+        // CreateMap<CustomerContent, CustomerContentSearchDto>();
     }
 }

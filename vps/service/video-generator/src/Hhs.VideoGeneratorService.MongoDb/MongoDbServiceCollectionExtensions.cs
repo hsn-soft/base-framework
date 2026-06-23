@@ -1,6 +1,5 @@
 using Hhs.VideoGeneratorService.Domain;
 using Hhs.VideoGeneratorService.Domain.SettingDomain.Repositories;
-using Hhs.VideoGeneratorService.Domain.VideoDomain.Repositories;
 using Hhs.VideoGeneratorService.MongoDb.Configurations;
 using Hhs.VideoGeneratorService.MongoDb.Context;
 using Hhs.VideoGeneratorService.MongoDb.Repositories;
@@ -41,7 +40,6 @@ public static class MongoDbServiceCollectionExtensions
         // Must be Scoped => Cannot consume any scoped service and CurrentUser object creation on constructor
         services.AddScoped(typeof(IMongoGenericRepository<,>), typeof(MongoGenericRepository<,>));
         services.AddScoped<ICustomerVpSettingRepository, MongoCustomerVpSettingRepository>();
-        services.AddScoped<IVideoRequestRepository, MongoVideoRequestRepository>();
 
         return services;
     }
@@ -87,7 +85,6 @@ public static class MongoDbServiceCollectionExtensions
     private static void RegisterClassMaps()
     {
         EntityClassMap.Register();
-        VideoRequestClassMap.Register();
         CustomerVpSettingClassMap.Register();
     }
 }

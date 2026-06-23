@@ -1,6 +1,5 @@
 using Hhs.FeedRService.Application.Contracts.DashboardDomain;
 using Hhs.FeedRService.Application.Contracts.DashboardDomain.Dtos;
-using Hhs.FeedRService.Application.Contracts.ReportingDomain.Dtos;
 using Hhs.FeedRService.Domain.ReportingDomain.Entities;
 using Hhs.FeedRService.Domain.ReportingDomain.Repositories;
 

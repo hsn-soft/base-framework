@@ -30,4 +30,8 @@
         <ProjectReference Include="..\Hhs.TextNormalizerService.Domain\Hhs.TextNormalizerService.Domain.csproj"/>
     </ItemGroup>
 
+    <ItemGroup>
+      <Compile Remove="Contracts\Events\SetNormalizedStatusToFailedEto.cs" />
+    </ItemGroup>
+
 </Project>

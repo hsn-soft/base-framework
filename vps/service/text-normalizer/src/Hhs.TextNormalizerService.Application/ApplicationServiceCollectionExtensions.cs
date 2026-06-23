@@ -1,11 +1,5 @@
 using Hhs.Shared.Contracts.Cache;
 using Hhs.TextNormalizerService.Application.Contracts;
-using Hhs.TextNormalizerService.Application.Contracts.ContentDomain.Interfaces;
-using Hhs.TextNormalizerService.Application.Contracts.DasbhoardDomain;
-using Hhs.TextNormalizerService.Application.Contracts.Providers;
-using Hhs.TextNormalizerService.Application.Contracts.Providers.Dtos.Outline.OpenAI;
-using Hhs.TextNormalizerService.Application.Providers;
-using Hhs.TextNormalizerService.Application.Services;
 using Hhs.TextNormalizerService.Domain.Settings;
 using HsnSoft.Base.PuppeTeer;
 using Microsoft.Extensions.Configuration;
@@ -21,20 +15,11 @@ public static class ApplicationServiceCollectionExtensions
 
         services.Configure<TextNormalizerSettings>(configuration.GetSection(nameof(TextNormalizerSettings)));
         services.Configure<PuppeteerBrowserSettings>(configuration.GetSection(nameof(PuppeteerBrowserSettings)));
-        services.Configure<OpenAiSettings>(configuration.GetSection(nameof(OpenAiSettings)));
 
         services.AddSingleton<IServicePermissionProvider, ApplicationPermissionProvider>();
         services.AddSingleton<IPuppeteerBrowser, PuppeteerBrowser>();
 
         // Must be Scoped or Transient => Cannot consume any scoped service
-        services.AddScoped<IEventManagerAppService, EventManagerAppService>();
-
-        services.AddScoped<IScrapingProvider, PuppeTeerScrapingProvider>();
-        services.AddScoped<IOutlineProvider, OpenAiOutlineProvider>();
-
-        services.AddScoped<IContentNormalizedRequestAppService, ContentNormalizedRequestAppService>();
-        services.AddScoped<IAnalysisNormalizedRequestAppService, AnalysisNormalizedRequestAppService>();
-        services.AddScoped<IDashboardAppService, DashboardAppService>();
 
         return services;
     }

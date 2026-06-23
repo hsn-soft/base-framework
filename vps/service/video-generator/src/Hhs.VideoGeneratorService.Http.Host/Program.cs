@@ -1,4 +1,3 @@
-using Hhs.Shared.Contracts.Events.VideoGenerator;
 using Hhs.Shared.Helper.Consts;
 using Hhs.Shared.Hosting.Extensions;
 using Hhs.Shared.Hosting.Helpers;
@@ -129,7 +128,6 @@ try
     // EventBus
     app.UseEventBus(typeof(EventHandlersAssemblyMarker).Assembly, new Dictionary<string, ushort>
     {
-        { nameof(VideoGenerationStartedEto), 5 } // This event fetch count more than one
     });
 
     // Shutdown hook

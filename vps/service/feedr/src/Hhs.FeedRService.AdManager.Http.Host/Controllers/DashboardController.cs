@@ -1,7 +1,6 @@
 using Hhs.FeedRService.AdManager.Controllers.Base;
 using Hhs.FeedRService.Application.Contracts.DashboardDomain;
 using Hhs.FeedRService.Application.Contracts.DashboardDomain.Dtos;
-using Hhs.FeedRService.Application.Contracts.ReportingDomain.Dtos;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Hhs.FeedRService.AdManager.Controllers;

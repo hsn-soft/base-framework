@@ -1,4 +1,3 @@
-using Hhs.Shared.Contracts.Events.TextNormalizer;
 using Hhs.Shared.Helper.Consts;
 using Hhs.Shared.Hosting.Extensions;
 using Hhs.Shared.Hosting.Helpers;
@@ -147,8 +146,6 @@ try
     app.UseEventBus(typeof(EventHandlersAssemblyMarker).Assembly, new Dictionary<string, ushort>
     {
         { nameof(ContentNormalizedRequestScrapingStartedEto), 5 }, // This event fetch count more than one
-        { nameof(CustomerContentNormalizedStartedEto), 5 }, // This event fetch count more than one
-        { nameof(AnalysisContentNormalizedStartedEto), 5 } // This event fetch count more than one
     });
 
     // Shutdown hook

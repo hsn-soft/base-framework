@@ -1,7 +1,4 @@
 using Hhs.ContentService.Application.Contracts;
-using Hhs.ContentService.Application.Contracts.ContentDomain.Interfaces;
-using Hhs.ContentService.Application.Contracts.JobDomain;
-using Hhs.ContentService.Application.Services;
 using Hhs.ContentService.Domain.Settings;
 using Hhs.Shared.Contracts.Cache;
 using Microsoft.Extensions.Configuration;
@@ -20,13 +17,6 @@ public static class ApplicationServiceCollectionExtensions
         services.AddSingleton<IServicePermissionProvider, ApplicationPermissionProvider>();
 
         // Must be Scoped or Transient => Cannot consume any scoped service
-        services.AddScoped<IJobAppService, JobAppService>();
-        services.AddScoped<IEventManagerAppService, EventManagerAppService>();
-        // services.AddScoped<IDashboardAppService, DashboardAppService>();
-        // services.AddScoped<ICustomerContentSettingAppService, CustomerContentSettingAppService>();
-        services.AddScoped<ICustomerContentPublicAppService, CustomerContentPublicAppService>();
-        services.AddScoped<ICustomerContentAppService, CustomerContentAppService>();
-        services.AddScoped<IAnalysisContentAppService, AnalysisContentAppService>();
 
         return services;
     }

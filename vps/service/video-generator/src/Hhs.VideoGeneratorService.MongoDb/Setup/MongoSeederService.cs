@@ -1,7 +1,6 @@
 using Hhs.Shared.Helper.Enums;
 using Hhs.VideoGeneratorService.Domain.Enums;
 using Hhs.VideoGeneratorService.Domain.SettingDomain.Entities;
-using Hhs.VideoGeneratorService.Domain.VideoDomain.Entities;
 using Hhs.VideoGeneratorService.MongoDb.Context;
 using HsnSoft.Base.Data;
 using HsnSoft.Base.Logging.Abstracts;
@@ -26,23 +25,23 @@ public sealed class MongoSeederService(IServiceScopeFactory serviceScopeFactory)
         var dataFilter = scope.ServiceProvider.GetRequiredService<IDataFilter>();
         try
         {
-            #region Check - Is VideoRequest Collection Initialized
-
-            long estimatedVideoRequestDocCount = await dbContext.VideoRequests.EstimatedDocumentCountAsync(cancellationToken: cancellationToken);
-            if (estimatedVideoRequestDocCount < 1)
-            {
-                var tempId = Guid.NewGuid();
-                await dbContext.VideoRequests.InsertOneAsync(new VideoRequest(tempId, "test_cope", "test", ReferenceContentTypes.CUSTOMER_CONTENT, Guid.NewGuid(),
-                    VideoRequestStates.CreatedWaitForVideoSent, [new NormalizedContentData { NormalizedContent = "test" }]), cancellationToken: cancellationToken);
-
-                var filter = Builders<VideoRequest>.Filter.Eq(doc => doc.Id, tempId);
-                var delResult = await dbContext.VideoRequests.DeleteOneAsync(filter, cancellationToken);
-                if (delResult.DeletedCount < 1) throw new Exception($"{nameof(VideoRequest)} First initialize error");
-
-                logger.LogDebug("{WorkerName} | MONGO DATABASE IS READY FOR {CollectionName}", nameof(MongoSeederService), nameof(VideoRequest));
-            }
-
-            #endregion
+            // #region Check - Is VideoRequest Collection Initialized
+            //
+            // long estimatedVideoRequestDocCount = await dbContext.VideoRequests.EstimatedDocumentCountAsync(cancellationToken: cancellationToken);
+            // if (estimatedVideoRequestDocCount < 1)
+            // {
+            //     var tempId = Guid.NewGuid();
+            //     await dbContext.VideoRequests.InsertOneAsync(new VideoRequest(tempId, "test_cope", "test", ReferenceContentTypes.CUSTOMER_CONTENT, Guid.NewGuid(),
+            //         VideoRequestStates.CreatedWaitForVideoSent, [new NormalizedContentData { NormalizedContent = "test" }]), cancellationToken: cancellationToken);
+            //
+            //     var filter = Builders<VideoRequest>.Filter.Eq(doc => doc.Id, tempId);
+            //     var delResult = await dbContext.VideoRequests.DeleteOneAsync(filter, cancellationToken);
+            //     if (delResult.DeletedCount < 1) throw new Exception($"{nameof(VideoRequest)} First initialize error");
+            //
+            //     logger.LogDebug("{WorkerName} | MONGO DATABASE IS READY FOR {CollectionName}", nameof(MongoSeederService), nameof(VideoRequest));
+            // }
+            //
+            // #endregion
 
             #region Check - Is CustomerVpSetting Collection Initialized
 

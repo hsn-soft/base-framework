@@ -48,7 +48,7 @@ public sealed class ContentVideoGenerationLimit : Entity<Guid>, IScopeSubscripti
     private void SetScopeKey(string scopeKey)
         => ScopeKey = LocalizedModelValidator.NotNullOrWhiteSpace(
             scopeKey,
-            $"{nameof(CustomerContent)}:{nameof(ScopeKey)}",
+            $"{nameof(ContentVideoGenerationLimit)}:{nameof(ScopeKey)}",
             ContentVideoGenerationLimitConsts.ScopeKeyMaxLength
         );
 
