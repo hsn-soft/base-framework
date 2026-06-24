@@ -81,19 +81,7 @@ builder.Services.AddTransient<IBasicDataSeeder, MongoSeederService>();
 // Configures background service for retrying failed events with exponential backoff
 // Monitors EventInboxMessage collection for Failed status and re-processes eligible events
 // Max 30 retries per event; runs every 10 seconds (configurable via RetryPolicy)
-builder.Services
-    .AddSingleton<Hhs.EventManagerService.Domain.Configuration.EventManagerRetrySettings>(sp =>
-    {
-        var config = sp.GetRequiredService<IConfiguration>();
-        var settings = new Hhs.EventManagerService.Domain.Configuration.EventManagerRetrySettings();
-        var section = config.GetSection("RetryPolicy");
-        if (section.Exists())
-        {
-            section.Bind(settings);
-        }
-        return settings;
-    })
-    .AddHostedService<EventManagerRetryWorker>();
+builder.Services.AddHostedService<EventManagerRetryWorker>();
 
 // Swagger
 if (!builder.Environment.IsHostProduction())

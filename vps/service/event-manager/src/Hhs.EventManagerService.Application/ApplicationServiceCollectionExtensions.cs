@@ -1,6 +1,7 @@
 using Hhs.EventManagerService.Application.Contracts.EventDomain.Interfaces;
 using Hhs.EventManagerService.Application.Infrastructure;
 using Hhs.EventManagerService.Application.Services;
+using Hhs.EventManagerService.Domain.Configuration;
 using Hhs.Shared.Contracts.Cache;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,6 +21,14 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<EventOperationRetryWorkerService>();
 
         services.AddScoped<IFailedIntegrationEventAppService, FailedIntegrationEventAppService>();
+
+        // ============================================================================
+        // RETRY CONFIGURATION
+        // ============================================================================
+
+        var eventManagerRetrySettings = configuration.GetSection("RetryPolicy")
+            .Get<EventManagerRetrySettings>() ?? new EventManagerRetrySettings();
+        services.AddSingleton(eventManagerRetrySettings);
 
         return services;
     }
