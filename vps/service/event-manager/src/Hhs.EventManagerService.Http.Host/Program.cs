@@ -82,11 +82,6 @@ builder.Services.AddTransient<IBasicDataSeeder, MongoSeederService>();
 // Monitors EventInboxMessage collection for Failed status and re-processes eligible events
 // Max 30 retries per event; runs every 10 seconds (configurable via RetryPolicy)
 builder.Services
-    .AddScoped<Hhs.EventManagerService.Domain.InfraDomain.Repositories.IEventInboxMessageRepository>(sp =>
-        sp.GetRequiredService<Hhs.EventManagerService.MongoDb.Repositories.MongoEventInboxMessageRepository>())
-    .AddScoped<Hhs.EventManagerService.MongoDb.Repositories.MongoEventInboxMessageRepository>()
-    .AddScoped<Hhs.EventManagerService.Application.Infrastructure.ApplicationEventInboxMessageManager>()
-    .AddScoped<Hhs.EventManagerService.Application.Services.EventOperationRetryWorkerService>()
     .AddSingleton<Hhs.EventManagerService.Domain.Configuration.EventManagerRetrySettings>(sp =>
     {
         var config = sp.GetRequiredService<IConfiguration>();
