@@ -1,10 +1,10 @@
 using Hhs.FeedRService.Domain.InfraDomain.Entities.PostgreSQL;
-using Hhs.FeedRService.Domain.InfraDomain.Repositories;
+using Hhs.FeedRService.Domain.InfraDomain.Repositories.PostgreSQL;
 using Hhs.FeedRService.EntityFrameworkCore.Context;
 using HsnSoft.Base.Domain.Models;
 using HsnSoft.Base.Domain.Repositories;
 
-namespace Hhs.FeedRService.EntityFrameworkCore.Repositories;
+namespace Hhs.FeedRService.EntityFrameworkCore.Repositories.PostgreSQL;
 
 public sealed class EfCoreEventInboxMessageRepository(
     IServiceProvider provider,

@@ -1,11 +1,12 @@
 using Hhs.FeedRService.Application.Contracts.DashboardDomain;
 using Hhs.FeedRService.Application.ReportingDomain;
-using Hhs.FeedRService.Domain.ConfigurationDomain.Repositories;
+using Hhs.FeedRService.Domain.ConfigurationDomain.Repositories.MongoDB;
 using Hhs.FeedRService.Domain.ReportingDomain.Entities.MongoDB;
 using Hhs.FeedRService.Domain.ReportingDomain.Entities.PostgreSQL;
 using Hhs.FeedRService.Domain.ReportingDomain.Enums;
 using Hhs.FeedRService.Domain.ReportingDomain.Models;
-using Hhs.FeedRService.Domain.ReportingDomain.Repositories;
+using Hhs.FeedRService.Domain.ReportingDomain.Repositories.MongoDB;
+using Hhs.FeedRService.Domain.ReportingDomain.Repositories.PostgreSQL;
 using HsnSoft.Base.Logging;
 using HsnSoft.Base.Logging.Abstracts;
 using Microsoft.Extensions.DependencyInjection;

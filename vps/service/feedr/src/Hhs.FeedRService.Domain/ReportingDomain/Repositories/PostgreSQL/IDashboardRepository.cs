@@ -2,7 +2,7 @@ using Hhs.FeedRService.Domain.ReportingDomain.Entities.PostgreSQL;
 using HsnSoft.Base.Domain.Repositories;
 using JetBrains.Annotations;
 
-namespace Hhs.FeedRService.Domain.ReportingDomain.Repositories;
+namespace Hhs.FeedRService.Domain.ReportingDomain.Repositories.PostgreSQL;
 
 public interface IDashboardRepository : IReadOnlyGenericRepository<DashboardResponse, Guid>
 {

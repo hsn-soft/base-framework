@@ -1,11 +1,11 @@
 using Hhs.FeedRService.Domain.ReportingDomain.Entities.PostgreSQL;
-using Hhs.FeedRService.Domain.ReportingDomain.Repositories;
+using Hhs.FeedRService.Domain.ReportingDomain.Repositories.PostgreSQL;
 using Hhs.FeedRService.EntityFrameworkCore.Context;
 using HsnSoft.Base.Domain.Repositories;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 
-namespace Hhs.FeedRService.EntityFrameworkCore.Repositories;
+namespace Hhs.FeedRService.EntityFrameworkCore.Repositories.PostgreSQL;
 
 public sealed class EfCoreDashboardRepository(
     IServiceProvider provider,

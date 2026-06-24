@@ -2,7 +2,7 @@ using Hhs.FeedRService.Domain.ReportingDomain.Entities.MongoDB;
 using Hhs.FeedRService.Domain.ReportingDomain.Enums;
 using HsnSoft.Base.Domain.Repositories;
 
-namespace Hhs.FeedRService.Domain.ReportingDomain.Repositories;
+namespace Hhs.FeedRService.Domain.ReportingDomain.Repositories.MongoDB;
 
 public interface IRawGoogleAdManagerResponseRepository : IReadOnlyGenericRepository<RawGoogleAdManagerResponse, Guid>
 {

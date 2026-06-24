@@ -1,7 +1,7 @@
 using Hhs.FeedRService.Domain.ConfigurationDomain.Entities.MongoDB;
 using HsnSoft.Base.Domain.Repositories;
 
-namespace Hhs.FeedRService.Domain.ConfigurationDomain.Repositories;
+namespace Hhs.FeedRService.Domain.ConfigurationDomain.Repositories.MongoDB;
 
 public interface INetworkConfigurationRepository : IReadOnlyGenericRepository<NetworkConfiguration, Guid>
 {

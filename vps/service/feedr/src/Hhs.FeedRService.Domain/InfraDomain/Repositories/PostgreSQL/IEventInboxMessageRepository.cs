@@ -3,7 +3,7 @@ using Hhs.FeedRService.Domain.InfraDomain.Entities.PostgreSQL;
 using HsnSoft.Base.Domain.Repositories;
 using Microsoft.EntityFrameworkCore.Query;
 
-namespace Hhs.FeedRService.Domain.InfraDomain.Repositories;
+namespace Hhs.FeedRService.Domain.InfraDomain.Repositories.PostgreSQL;
 
 public interface IEventInboxMessageRepository : IGenericRepository<EventInboxMessage, Guid>
 {

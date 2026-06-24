@@ -1,7 +1,7 @@
 using Hhs.FeedRService.Application.Contracts.DashboardDomain;
 using Hhs.FeedRService.Application.Contracts.DashboardDomain.Dtos;
 using Hhs.FeedRService.Domain.ReportingDomain.Entities.PostgreSQL;
-using Hhs.FeedRService.Domain.ReportingDomain.Repositories;
+using Hhs.FeedRService.Domain.ReportingDomain.Repositories.PostgreSQL;
 
 namespace Hhs.FeedRService.Application.Services;
 

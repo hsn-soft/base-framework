@@ -2,7 +2,7 @@ using System.Text;
 using Google.Ads.AdManager.V1;
 using Hhs.FeedRService.Application.Contracts.DashboardDomain;
 using Hhs.FeedRService.Application.Contracts.JobDomain.Dtos.Reporting;
-using Hhs.FeedRService.Domain.ConfigurationDomain.Repositories;
+using Hhs.FeedRService.Domain.ConfigurationDomain.Repositories.MongoDB;
 using HsnSoft.Base.Logging.Abstracts;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

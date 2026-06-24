@@ -1,7 +1,7 @@
 using Hhs.FeedRService.Application.Contracts.CustomerDomain;
 using Hhs.FeedRService.Application.Contracts.CustomerDomain.Dtos;
 using Hhs.FeedRService.Domain.ConfigurationDomain.Entities.MongoDB;
-using Hhs.FeedRService.Domain.ConfigurationDomain.Repositories;
+using Hhs.FeedRService.Domain.ConfigurationDomain.Repositories.MongoDB;
 using HsnSoft.Base;
 
 namespace Hhs.FeedRService.Application.Services;

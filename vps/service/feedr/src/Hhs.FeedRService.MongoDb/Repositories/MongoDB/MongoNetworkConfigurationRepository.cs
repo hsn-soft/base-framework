@@ -3,9 +3,9 @@ using HsnSoft.Base.Domain.Repositories;
 using MongoDB.Driver;
 using System.Reflection;
 using Hhs.FeedRService.Domain.ConfigurationDomain.Entities.MongoDB;
-using Hhs.FeedRService.Domain.ConfigurationDomain.Repositories;
+using Hhs.FeedRService.Domain.ConfigurationDomain.Repositories.MongoDB;
 
-namespace Hhs.FeedRService.MongoDb.Repositories;
+namespace Hhs.FeedRService.MongoDb.Repositories.MongoDB;
 
 public sealed class MongoNetworkConfigurationRepository
     : MongoGenericRepository<NetworkConfiguration, Guid>, INetworkConfigurationRepository

@@ -1,7 +1,7 @@
 using FluentAssertions;
 using Hhs.FeedRService.Application.Services;
 using Hhs.FeedRService.Domain.ReportingDomain.Entities.PostgreSQL;
-using Hhs.FeedRService.Domain.ReportingDomain.Repositories;
+using Hhs.FeedRService.Domain.ReportingDomain.Repositories.PostgreSQL;
 using AutoMapper;
 using Hhs.FeedRService.Application.Contracts.DashboardDomain.Dtos;
 using HsnSoft.Base.EventBus;
