@@ -1,11 +1,13 @@
 using Hhs.IdentityService;
 using Hhs.IdentityService.Application;
+using Hhs.IdentityService.Domain.Configuration;
 using Hhs.IdentityService.Domain.Localization;
 using Hhs.IdentityService.EntityFrameworkCore;
 using Hhs.IdentityService.EntityFrameworkCore.Setup;
 using Hhs.IdentityService.Workers;
 using Hhs.Shared.Contracts.Events;
 using Hhs.Shared.Helper.Consts;
+using Hhs.Shared.Helper.Retry;
 using Hhs.Shared.Hosting.Extensions;
 using Hhs.Shared.Hosting.Helpers;
 using Hhs.Shared.Hosting.Microservices.Extensions;
@@ -80,26 +82,13 @@ builder.Services.AddTransient<IBasicDataSeeder, EfCoreSeederService>();
 // ============================================================================
 // BACKGROUND WORKERS (Retry Logic & Event Recovery)
 // ============================================================================
-// Configures background service for retrying failed events with exponential backoff
-// Monitors EventInboxMessage table for Failed status and re-processes eligible events
-// Max 30 retries per event; runs every 10 seconds (configurable via RetryPolicy)
+// Retry Worker: Configures background service for retrying failed events
+var identityRetrySettings = builder.Configuration.GetSection(nameof(IdentityRetrySettings))
+    .Get<IdentityRetrySettings>() ?? new IdentityRetrySettings();
 builder.Services
-    .AddScoped<Hhs.IdentityService.Domain.InfraDomain.Repositories.IEventInboxMessageRepository>(sp =>
-        sp.GetRequiredService<Hhs.IdentityService.EntityFrameworkCore.Repositories.EfCoreEventInboxMessageRepository>())
-    .AddScoped<Hhs.IdentityService.EntityFrameworkCore.Repositories.EfCoreEventInboxMessageRepository>()
-    .AddScoped<Hhs.IdentityService.Application.Infrastructure.ApplicationEventInboxMessageManager>()
-    .AddScoped<Hhs.IdentityService.Application.Services.IdentityOperationRetryWorkerService>()
-    .AddSingleton<Hhs.IdentityService.Domain.Configuration.IdentityRetrySettings>(sp =>
-    {
-        var config = sp.GetRequiredService<IConfiguration>();
-        var settings = new Hhs.IdentityService.Domain.Configuration.IdentityRetrySettings();
-        var section = config.GetSection("RetryPolicy");
-        if (section.Exists())
-        {
-            section.Bind(settings);
-        }
-        return settings;
-    })
+    .AddSingleton(identityRetrySettings)
+    .AddSingleton(_ => new RetryDelayCalculator(identityRetrySettings.DelaySeconds))
+    .AddScoped<IdentityOperationRetryWorkerService>()
     .AddHostedService<IdentityRetryWorker>();
 
 // Swagger

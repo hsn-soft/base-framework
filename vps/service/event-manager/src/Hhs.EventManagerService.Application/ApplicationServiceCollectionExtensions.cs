@@ -22,14 +22,6 @@ public static class ApplicationServiceCollectionExtensions
 
         services.AddScoped<IFailedIntegrationEventAppService, FailedIntegrationEventAppService>();
 
-        // ============================================================================
-        // RETRY CONFIGURATION
-        // ============================================================================
-
-        var eventManagerRetrySettings = configuration.GetSection("RetryPolicy")
-            .Get<EventManagerRetrySettings>() ?? new EventManagerRetrySettings();
-        services.AddSingleton(eventManagerRetrySettings);
-
         return services;
     }
 }

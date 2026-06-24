@@ -16,10 +16,6 @@ public static class ApplicationServiceCollectionExtensions
 
         services.AddSingleton<IServicePermissionProvider, ApplicationPermissionProvider>();
 
-        // Must be Scoped or Transient => Cannot consume any scoped service
-        services.AddScoped<ApplicationEventInboxMessageManager>();
-        services.AddScoped<AdministrationOperationRetryWorkerService>();
-
         services.AddScoped<IJobAppService, JobAppService>();
         services.AddScoped<IPermissionStoreOperationAppService, PermissionStoreOperationAppService>();
         services.AddScoped<ISessionPermissionAppService, SessionPermissionAppService>();

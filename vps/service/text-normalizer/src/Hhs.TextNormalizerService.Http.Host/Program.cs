@@ -1,6 +1,7 @@
 using Hhs.Shared.Contracts.Events;
 using Hhs.Shared.Helper.Configuration;
 using Hhs.Shared.Helper.Consts;
+using Hhs.Shared.Helper.Retry;
 using Hhs.Shared.Hosting.Extensions;
 using Hhs.Shared.Hosting.Helpers;
 using Hhs.Shared.Hosting.Microservices.Extensions;
@@ -8,6 +9,7 @@ using Hhs.Shared.Hosting.Microservices.Middlewares;
 using Hhs.TextNormalizerService;
 using Hhs.TextNormalizerService.Application;
 using Hhs.TextNormalizerService.Application.Services;
+using Hhs.TextNormalizerService.Domain.Configuration;
 using Hhs.TextNormalizerService.Domain.Localization;
 using Hhs.TextNormalizerService.MongoDb;
 using Hhs.TextNormalizerService.MongoDb.Setup;
@@ -107,10 +109,13 @@ builder.Services.AddScoped<OutlineProviderPollingWorkerService>();
 builder.Services.AddHostedService<OutlineProviderPollingWorker>();
 
 // Retry Worker: Handles failed normalization operations with exponential backoff
-// Monitors event inbox for Failed status and retries up to max configured attempts
-// Runs every 10 seconds to check for eligible retry candidates
-builder.Services.AddScoped<NormalizerOperationRetryWorkerService>();
-builder.Services.AddHostedService<NormalizerRetryWorker>();
+var normalizerRetrySettings = builder.Configuration.GetSection(nameof(NormalizerRetrySettings))
+    .Get<NormalizerRetrySettings>() ?? new NormalizerRetrySettings();
+builder.Services
+    .AddSingleton(normalizerRetrySettings)
+    .AddSingleton(_ => new RetryDelayCalculator(normalizerRetrySettings.DelaySeconds))
+    .AddScoped<NormalizerOperationRetryWorkerService>()
+    .AddHostedService<NormalizerRetryWorker>();
 
 // Swagger
 if (!builder.Environment.IsHostProduction())

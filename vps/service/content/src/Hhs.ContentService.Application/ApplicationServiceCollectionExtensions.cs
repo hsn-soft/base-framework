@@ -22,15 +22,6 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<ApplicationEventInboxMessageManager>();
         services.AddScoped<ContentOperationAppService>();
 
-        // ============================================================================
-        // RETRY CONFIGURATION
-        // ============================================================================
-
-        var contentRetrySettings = configuration.GetSection(nameof(ContentRetrySettings))
-            .Get<ContentRetrySettings>() ?? new ContentRetrySettings();
-        services.AddSingleton(contentRetrySettings);
-        services.AddSingleton(_ => new RetryDelayCalculator(contentRetrySettings.DelaySeconds));
-
         return services;
     }
 }

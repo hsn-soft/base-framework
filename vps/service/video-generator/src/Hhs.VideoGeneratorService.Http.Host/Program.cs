@@ -8,10 +8,12 @@ using Hhs.VideoGeneratorService;
 using Hhs.VideoGeneratorService.Application;
 using Hhs.VideoGeneratorService.Application.Infrastructure;
 using Hhs.VideoGeneratorService.Application.Services;
+using Hhs.VideoGeneratorService.Domain.Configuration;
 using Hhs.VideoGeneratorService.Domain.Localization;
 using Hhs.VideoGeneratorService.MongoDb;
 using Hhs.VideoGeneratorService.MongoDb.Setup;
 using Hhs.VideoGeneratorService.Workers;
+using Hhs.Shared.Helper.Retry;
 using HsnSoft.Base.AspNetCore.Localization;
 using HsnSoft.Base.Data;
 using HsnSoft.Base.Serilog;
@@ -102,10 +104,13 @@ builder.Services.AddScoped<VideoProviderPollingWorkerService>();
 builder.Services.AddHostedService<VideoProviderPollingWorker>();
 
 // Retry Worker: Handles failed video generation operations with exponential backoff
-// Monitors event inbox for Failed status and retries up to max configured attempts
-// Runs every 10 seconds to check for eligible retry candidates
-builder.Services.AddScoped<VideoOperationRetryWorkerService>();
-builder.Services.AddHostedService<VideoRetryWorker>();
+var videoRetrySettings = builder.Configuration.GetSection(nameof(VideoRetrySettings))
+    .Get<VideoRetrySettings>() ?? new VideoRetrySettings();
+builder.Services
+    .AddSingleton(videoRetrySettings)
+    .AddSingleton(_ => new RetryDelayCalculator(videoRetrySettings.DelaySeconds))
+    .AddScoped<VideoOperationRetryWorkerService>()
+    .AddHostedService<VideoRetryWorker>();
 
 // Swagger
 if (!builder.Environment.IsHostProduction())

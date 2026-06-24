@@ -1,11 +1,13 @@
 using Hhs.ContentService;
 using Hhs.ContentService.Application;
 using Hhs.ContentService.Application.Services;
+using Hhs.ContentService.Domain.Configuration;
 using Hhs.ContentService.Domain.Localization;
 using Hhs.ContentService.EntityFrameworkCore;
 using Hhs.ContentService.EntityFrameworkCore.Setup;
 using Hhs.ContentService.Workers;
 using Hhs.Shared.Helper.Consts;
+using Hhs.Shared.Helper.Retry;
 using Hhs.Shared.Hosting.Extensions;
 using Hhs.Shared.Hosting.Helpers;
 using Hhs.Shared.Hosting.Microservices.Extensions;
@@ -81,11 +83,14 @@ builder.Services.AddTransient<IBasicDataSeeder, EfCoreSeederService>();
 // ============================================================================
 // BACKGROUND WORKERS (Retry Logic & Event Recovery)
 // ============================================================================
-// Configures background service for retrying failed events with exponential backoff
-// Monitors EventInboxMessage table for Failed status and re-processes eligible events
-// Max 30 retries per event; runs every 10 seconds (configurable via RetryPolicy)
-builder.Services.AddScoped<ContentOperationRetryWorkerService>();
-builder.Services.AddHostedService<ContentRetryWorker>();
+// Retry Worker: Configures background service for retrying failed events
+var contentRetrySettings = builder.Configuration.GetSection(nameof(ContentRetrySettings))
+    .Get<ContentRetrySettings>() ?? new ContentRetrySettings();
+builder.Services
+    .AddSingleton(contentRetrySettings)
+    .AddSingleton(_ => new RetryDelayCalculator(contentRetrySettings.DelaySeconds))
+    .AddScoped<ContentOperationRetryWorkerService>()
+    .AddHostedService<ContentRetryWorker>();
 
 // Swagger
 if (!builder.Environment.IsHostProduction())

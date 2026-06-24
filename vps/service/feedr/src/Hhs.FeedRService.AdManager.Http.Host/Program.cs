@@ -2,10 +2,12 @@ using Hhs.FeedRService.AdManager;
 using Hhs.FeedRService.AdManager.Workers;
 using Hhs.FeedRService.Application;
 using Hhs.FeedRService.Application.Contracts.Events;
+using Hhs.FeedRService.Domain.Configuration;
 using Hhs.FeedRService.Domain.Localization;
 using Hhs.FeedRService.EntityFrameworkCore;
 using Hhs.FeedRService.MongoDb;
 using Hhs.Shared.Helper.Consts;
+using Hhs.Shared.Helper.Retry;
 using Hhs.Shared.Hosting.Extensions;
 using Hhs.Shared.Hosting.Helpers;
 using Hhs.Shared.Hosting.Microservices.Extensions;
@@ -85,26 +87,13 @@ builder.Services.AddTransient<IBasicDataSeeder, CompositeSeederService>();
 // ============================================================================
 // BACKGROUND WORKERS (Retry Logic & Event Recovery)
 // ============================================================================
-// Configures background service for retrying failed events with exponential backoff
-// Monitors EventInboxMessage table (PostgreSQL) for Failed status and re-processes eligible events
-// Max 30 retries per event; runs every 10 seconds (configurable via RetryPolicy)
+// Retry Worker: Configures background service for retrying failed events
+var feedRRetrySettings = builder.Configuration.GetSection(nameof(FeedRRetrySettings))
+    .Get<FeedRRetrySettings>() ?? new FeedRRetrySettings();
 builder.Services
-    .AddScoped<Hhs.FeedRService.Domain.InfraDomain.Repositories.IEventInboxMessageRepository>(sp =>
-        sp.GetRequiredService<Hhs.FeedRService.EntityFrameworkCore.Repositories.EfCoreEventInboxMessageRepository>())
-    .AddScoped<Hhs.FeedRService.EntityFrameworkCore.Repositories.EfCoreEventInboxMessageRepository>()
-    .AddScoped<Hhs.FeedRService.Application.Infrastructure.ApplicationEventInboxMessageManager>()
-    .AddScoped<Hhs.FeedRService.Application.Services.FeedROperationRetryWorkerService>()
-    .AddSingleton<Hhs.FeedRService.Domain.Configuration.FeedRRetrySettings>(sp =>
-    {
-        var config = sp.GetRequiredService<IConfiguration>();
-        var settings = new Hhs.FeedRService.Domain.Configuration.FeedRRetrySettings();
-        var section = config.GetSection("RetryPolicy");
-        if (section.Exists())
-        {
-            section.Bind(settings);
-        }
-        return settings;
-    })
+    .AddSingleton(feedRRetrySettings)
+    .AddSingleton(_ => new RetryDelayCalculator(feedRRetrySettings.DelaySeconds))
+    .AddScoped<FeedROperationRetryWorkerService>()
     .AddHostedService<FeedRRetryWorker>();
 
 // Swagger
