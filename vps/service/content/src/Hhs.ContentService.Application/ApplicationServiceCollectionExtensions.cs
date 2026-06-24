@@ -14,10 +14,10 @@ public static class ApplicationServiceCollectionExtensions
         services.AddAutoMapper(typeof(ApplicationAutoMapperProfile));
 
         services.Configure<ContentOperationSettings>(configuration.GetSection(nameof(ContentOperationSettings)));
-
         services.AddSingleton<IServicePermissionProvider, ApplicationPermissionProvider>();
 
-        services.AddScoped<ContentInboxStoreService>();
+        // Must be Scoped or Transient => Cannot consume any scoped service
+        services.AddScoped<ApplicationEventInboxMessageManager>();
         services.AddScoped<ContentOperationAppService>();
 
         return services;

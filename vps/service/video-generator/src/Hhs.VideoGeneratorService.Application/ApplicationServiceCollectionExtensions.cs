@@ -1,5 +1,6 @@
 using Hhs.Shared.Contracts.Cache;
 using Hhs.Shared.Helper.Retry;
+using Hhs.VideoGeneratorService.Application.Infrastructure;
 using Hhs.VideoGeneratorService.Application.Providers;
 using Hhs.VideoGeneratorService.Application.Providers.Audio;
 using Hhs.VideoGeneratorService.Application.Providers.Cdn;
@@ -24,10 +25,10 @@ public static class ApplicationServiceCollectionExtensions
 
         services.Configure<VideoRequestQuerySettings>(configuration.GetSection(nameof(VideoRequestQuerySettings)));
         services.Configure<VideoGenerationSettings>(configuration.GetSection(nameof(VideoGenerationSettings)));
-
         services.AddSingleton<IServicePermissionProvider, ApplicationPermissionProvider>();
 
         // Must be Scoped or Transient => Cannot consume any scoped service
+        services.AddScoped<ApplicationEventInboxMessageManager>();
         services.AddScoped<VideoOperationAppService>();
         services.AddScoped<IRemoteFileDownloader, RemoteFileDownloader>();
 

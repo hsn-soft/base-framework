@@ -3,6 +3,6 @@ using HsnSoft.Base.Domain.Repositories;
 
 namespace Hhs.ContentService.Domain.SettingDomain.Repositories;
 
-public interface ICustomerVpSettingRepository : IReadOnlyGenericRepository<CustomerVpSetting, Guid>
+public interface ICustomerVpSettingRepository : IGenericRepository<CustomerVpSetting, Guid>
 {
 }

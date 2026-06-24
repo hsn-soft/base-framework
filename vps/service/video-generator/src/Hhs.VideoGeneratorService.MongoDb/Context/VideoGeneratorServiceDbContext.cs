@@ -1,3 +1,4 @@
+using Hhs.VideoGeneratorService.Domain.InfraDomain.Entities;
 using Hhs.VideoGeneratorService.Domain.MediaDomain.Entities;
 using Hhs.VideoGeneratorService.Domain.SettingDomain.Entities;
 using HsnSoft.Base.MongoDB;
@@ -12,5 +13,5 @@ public sealed class VideoGeneratorServiceDbContext(IServiceProvider provider, IC
 
     public ITrackingMongoCollection<VideoRequest> VideoRequests => GetCollection<VideoRequest>();
     public ITrackingMongoCollection<AudioRequest> AudioRequests => GetCollection<AudioRequest>();
-    public ITrackingMongoCollection<EventInboxMessage> VideoGeneratorInboxMessages => GetCollection<EventInboxMessage>();
+    public ITrackingMongoCollection<EventInboxMessage> EventInboxMessages => GetCollection<EventInboxMessage>();
 }

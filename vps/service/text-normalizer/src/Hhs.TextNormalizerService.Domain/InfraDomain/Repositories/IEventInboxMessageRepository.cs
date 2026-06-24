@@ -1,9 +1,9 @@
-using Hhs.TextNormalizerService.Domain.NormalizeDomain.Entities;
+using Hhs.TextNormalizerService.Domain.InfraDomain.Entities;
 using HsnSoft.Base.Domain.Repositories;
 
-namespace Hhs.TextNormalizerService.Domain.NormalizeDomain.Repositories;
+namespace Hhs.TextNormalizerService.Domain.InfraDomain.Repositories;
 
-public interface INormalizerInboxMessageRepository : IGenericRepository<EventInboxMessage, Guid>
+public interface IEventInboxMessageRepository : IMongoGenericRepository<EventInboxMessage, Guid>
 {
     Task<List<EventInboxMessage>> GetUnprocessedAsync(CancellationToken cancellationToken = default);
     Task<List<EventInboxMessage>> GetByStatusAsync(string status, CancellationToken cancellationToken = default);

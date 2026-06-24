@@ -1,4 +1,4 @@
-namespace Hhs.ContentService.Domain.ContentDomain.Consts;
+namespace Hhs.ContentService.Domain.InfraDomain.Consts;
 
 public static class EventInboxMessageConsts
 {

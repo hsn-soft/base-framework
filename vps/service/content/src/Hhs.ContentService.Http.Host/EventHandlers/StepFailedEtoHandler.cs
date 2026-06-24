@@ -7,7 +7,7 @@ using HsnSoft.Base.Logging.Abstracts;
 namespace Hhs.ContentService.EventHandlers;
 
 public class StepFailedEtoHandler(
-    ContentInboxStoreService inboxStore,
+    ApplicationEventInboxMessageManager inboxStore,
     IAppConsoleLogger logger,
     ContentOperationAppService contentOperationAppService
 ) : ContentEventHandlerBase<StepFailedEto>(inboxStore)

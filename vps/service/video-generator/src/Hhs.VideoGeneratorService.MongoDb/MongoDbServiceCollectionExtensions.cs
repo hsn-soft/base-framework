@@ -1,4 +1,5 @@
 using Hhs.VideoGeneratorService.Domain;
+using Hhs.VideoGeneratorService.Domain.InfraDomain.Repositories;
 using Hhs.VideoGeneratorService.Domain.MediaDomain.Repositories;
 using Hhs.VideoGeneratorService.Domain.SettingDomain.Repositories;
 using Hhs.VideoGeneratorService.MongoDb.Configurations;
@@ -45,7 +46,9 @@ public static class MongoDbServiceCollectionExtensions
         // MediaDomain Repositories
         services.AddScoped<IVideoRequestRepository, MongoVideoRequestRepository>();
         services.AddScoped<IAudioRequestRepository, MongoAudioRequestRepository>();
-        services.AddScoped<IVideoGeneratorInboxMessageRepository, MongoVideoGeneratorInboxMessageRepository>();
+
+        // Infra Domain Repositories
+        services.AddScoped<IEventInboxMessageRepository, MongoEventInboxMessageRepository>();
 
         return services;
     }
@@ -91,9 +94,15 @@ public static class MongoDbServiceCollectionExtensions
     private static void RegisterClassMaps()
     {
         EntityClassMap.Register();
+
+        // SettingDomain configuration
         CustomerVpSettingClassMap.Register();
+
+        // MediaDomain configuration
         VideoRequestClassMap.Register();
         AudioRequestClassMap.Register();
-        VideoGeneratorInboxMessageClassMap.Register();
+
+        // InfraDomain configuration
+        EventInboxMessageClassMap.Register();
     }
 }

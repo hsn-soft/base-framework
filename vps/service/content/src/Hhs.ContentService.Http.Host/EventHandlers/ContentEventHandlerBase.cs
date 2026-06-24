@@ -4,11 +4,11 @@ using HsnSoft.Base.EventBus;
 
 namespace Hhs.ContentService.EventHandlers;
 
-public abstract class ContentEventHandlerBase<TEvent>(ContentInboxStoreService inboxStore)
+public abstract class ContentEventHandlerBase<TEvent>(ApplicationEventInboxMessageManager inboxStore)
     : IIntegrationEventHandler<TEvent>
     where TEvent : IIntegrationEventMessage
 {
-    protected readonly ContentInboxStoreService InboxStore = inboxStore;
+    protected readonly ApplicationEventInboxMessageManager InboxStore = inboxStore;
 
     public async Task HandleAsync(MessageEnvelope<TEvent> @event)
     {

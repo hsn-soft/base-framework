@@ -1,12 +1,12 @@
 using System.Text.Json;
 using Hhs.Shared.Helper;
-using Hhs.VideoGeneratorService.Domain.MediaDomain.Entities;
-using Hhs.VideoGeneratorService.Domain.MediaDomain.Repositories;
+using Hhs.ContentService.Domain.InfraDomain.Entities;
+using Hhs.ContentService.Domain.InfraDomain.Repositories;
 using HsnSoft.Base.Domain.Entities.Events;
 
-namespace Hhs.VideoGeneratorService.Application.Infrastructure;
+namespace Hhs.ContentService.Application.Infrastructure;
 
-public sealed class VideoGeneratorInboxStoreService(IVideoGeneratorInboxMessageRepository repository)
+public sealed class ApplicationEventInboxMessageManager(IEventInboxMessageRepository repository)
 {
     public async Task<bool> IsProcessedAsync(Guid eventId, CancellationToken cancellationToken)
     {
@@ -33,11 +33,13 @@ public sealed class VideoGeneratorInboxStoreService(IVideoGeneratorInboxMessageR
                 if (existing.RetryCount >= 30)
                     return false;
 
-                existing.Status = InboxStatuses.Started;
-                existing.RetryCount = existing.RetryCount + 1;
-                existing.ErrorMessage = null;
-
-                await repository.UpdateAsync(existing, cancellationToken);
+                await repository.UpdateByExpressionAsync(
+                    x => x.Id == @event.MessageId && x.Status == InboxStatuses.Failed,
+                    s => s
+                        .SetProperty(a => a.Status, InboxStatuses.Started)
+                        .SetProperty(a => a.RetryCount, existing.RetryCount + 1)
+                        .SetProperty(a => a.ErrorMessage, (string?)null),
+                    cancellationToken: cancellationToken);
 
                 return true;
             }
@@ -66,16 +68,13 @@ public sealed class VideoGeneratorInboxStoreService(IVideoGeneratorInboxMessageR
 
     public async Task CompleteAsync(Guid eventId, CancellationToken cancellationToken)
     {
-        var inbox = await repository.GetByIdAsync(eventId, cancellationToken: cancellationToken);
-
-        if (inbox != null)
-        {
-            inbox.Status = InboxStatuses.Completed;
-            inbox.ProcessedAtUtc = DateTime.UtcNow;
-            inbox.ErrorMessage = null;
-
-            await repository.UpdateAsync(inbox, cancellationToken);
-        }
+        await repository.UpdateByExpressionAsync(
+            x => x.Id == eventId,
+            s => s
+                .SetProperty(a => a.Status, InboxStatuses.Completed)
+                .SetProperty(a => a.ProcessedAtUtc, DateTime.UtcNow)
+                .SetProperty(a => a.ErrorMessage, (string?)null),
+            cancellationToken: cancellationToken);
     }
 
     public async Task FailAsync(Guid eventId, Exception ex, CancellationToken cancellationToken)

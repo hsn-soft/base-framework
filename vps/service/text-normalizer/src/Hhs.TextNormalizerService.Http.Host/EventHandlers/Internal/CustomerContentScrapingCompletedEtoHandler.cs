@@ -8,7 +8,7 @@ namespace Hhs.TextNormalizerService.EventHandlers.Internal;
 
 public class CustomerContentScrapingCompletedEtoHandler(
     IAppConsoleLogger logger,
-    NormalizerInboxStoreService inboxStore,
+    ApplicationEventInboxMessageManager inboxStore,
     NormalizerOperationAppService normalizerOperationAppService
 ) : NormalizerEventHandlerBase<CustomerContentScrapingCompletedEto>(inboxStore)
 {

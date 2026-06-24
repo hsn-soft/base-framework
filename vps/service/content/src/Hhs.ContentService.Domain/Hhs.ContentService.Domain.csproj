@@ -30,7 +30,6 @@
 
     <ItemGroup>
       <Folder Include="ContentDomain\Consts\" />
-      <Folder Include="InfraDomain\" />
     </ItemGroup>
 
 </Project>

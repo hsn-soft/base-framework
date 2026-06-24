@@ -1,7 +1,7 @@
 using Hhs.Shared.Helper;
 using HsnSoft.Base.Domain.Entities.Auditing;
 
-namespace Hhs.VideoGeneratorService.Domain.MediaDomain.Entities;
+namespace Hhs.ContentService.Domain.InfraDomain.Entities;
 
 public sealed class EventInboxMessage : AuditedEntity<Guid>
 {

@@ -7,7 +7,7 @@ using HsnSoft.Base.Logging.Abstracts;
 namespace Hhs.ContentService.EventHandlers.TextNormalizer;
 
 public class NormalizerResultPublishedEtoHandler(
-    ContentInboxStoreService inboxStore,
+    ApplicationEventInboxMessageManager inboxStore,
     IAppConsoleLogger logger,
     ContentOperationAppService contentOperationAppService
 ) : ContentEventHandlerBase<NormalizerResultPublishedEto>(inboxStore)

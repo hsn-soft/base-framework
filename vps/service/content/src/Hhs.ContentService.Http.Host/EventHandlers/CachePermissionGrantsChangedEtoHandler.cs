@@ -7,7 +7,7 @@ using HsnSoft.Base.Logging.Abstracts;
 namespace Hhs.ContentService.EventHandlers;
 
 public sealed class CachePermissionGrantsChangedEtoHandler(
-    ContentInboxStoreService inboxStore,
+    ApplicationEventInboxMessageManager inboxStore,
     IAppConsoleLogger logger
 ) : ContentEventHandlerBase<CachePermissionGrantsChangedEto>(inboxStore)
 {

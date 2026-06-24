@@ -26,9 +26,6 @@ public sealed class ContentOperationAppService(
     IAnalysisContentRepository analysisContentRepository,
     ILogger<ContentOperationAppService> logger) : ApplicationServiceBase(provider)
 {
-    private readonly ICustomerContentRepository _customerContentRepository = customerContentRepository;
-    private readonly IAnalysisContentRepository _analysisContentRepository = analysisContentRepository;
-
     public async Task<CreateContentResponse> CreateCustomerContentAsync(CreateCustomerContentRequest request, CancellationToken cancellationToken)
     {
         var id = Guid.NewGuid();
@@ -42,7 +39,7 @@ public sealed class ContentOperationAppService(
             slugKey,
             traceAccessor?.GetCorrelationId());
 
-        await _customerContentRepository.InsertAsync(entity, cancellationToken);
+        await customerContentRepository.InsertAsync(entity, cancellationToken);
 
         logger.LogInformation($"About to publish CustomerContentCreatedEto for RefContentId: {id}, ScopeKey: {entity.ScopeKey}");
 
@@ -73,7 +70,7 @@ public sealed class ContentOperationAppService(
         var contentsForAnalysis = new List<CustomerContent>();
         foreach (var id in request.CustomerContentIds)
         {
-            var content = await _customerContentRepository.GetByIdWithTrackingAsync(id, cancellationToken);
+            var content = await customerContentRepository.GetByIdWithTrackingAsync(id, cancellationToken);
             if (content == null)
                 throw new InvalidOperationException($"CustomerContent not found: {id}");
             contentsForAnalysis.Add(content);
@@ -98,7 +95,7 @@ public sealed class ContentOperationAppService(
                 , analysisContentId: analysisId, customerContentId: customerContentId, sortOrder: sort++));
         }
 
-        await _analysisContentRepository.InsertAsync(analysis, cancellationToken);
+        await analysisContentRepository.InsertAsync(analysis, cancellationToken);
 
         var items = request.CustomerContentIds
             .Select((id, index) =>
@@ -125,7 +122,7 @@ public sealed class ContentOperationAppService(
 
         if (@event.RefContentType == ContentType.CustomerContent)
         {
-            var entity = await _customerContentRepository.GetByIdWithTrackingAsync(@event.RefContentId, cancellationToken);
+            var entity = await customerContentRepository.GetByIdWithTrackingAsync(@event.RefContentId, cancellationToken);
 
             if (entity != null && entity.NormalizeRequestId == null)
             {
@@ -137,13 +134,13 @@ public sealed class ContentOperationAppService(
                 shouldPublishEvent = true;
                 scopeKey = entity.ScopeKey;
 
-                await _customerContentRepository.UpdateAsync(entity, cancellationToken);
+                await customerContentRepository.UpdateAsync(entity, cancellationToken);
             }
         }
 
         if (@event.RefContentType == ContentType.AnalysisContent)
         {
-            var entity = await _analysisContentRepository.GetByIdWithItemsAsync(@event.RefContentId, cancellationToken);
+            var entity = await analysisContentRepository.GetByIdWithItemsAsync(@event.RefContentId, cancellationToken);
 
             if (entity != null && entity.NormalizeRequestId == null)
             {
@@ -155,7 +152,7 @@ public sealed class ContentOperationAppService(
                 shouldPublishEvent = true;
                 scopeKey = entity.ScopeKey;
 
-                await _analysisContentRepository.UpdateAsync(entity, cancellationToken);
+                await analysisContentRepository.UpdateAsync(entity, cancellationToken);
             }
         }
 
@@ -172,7 +169,7 @@ public sealed class ContentOperationAppService(
     {
         if (@event.RefContentType == ContentType.CustomerContent)
         {
-            var entity = await _customerContentRepository.GetByIdWithTrackingAsync(@event.RefContentId, cancellationToken);
+            var entity = await customerContentRepository.GetByIdWithTrackingAsync(@event.RefContentId, cancellationToken);
             if (entity != null)
             {
                 entity.VideoStatus = StatusNames.Completed;
@@ -180,13 +177,13 @@ public sealed class ContentOperationAppService(
                 entity.FinalVideoUrl = @event.FinalVideoUrl;
                 entity.LastFacility = EventNames.VideoGenerationResultPublished;
 
-                await _customerContentRepository.UpdateAsync(entity, cancellationToken);
+                await customerContentRepository.UpdateAsync(entity, cancellationToken);
             }
         }
 
         if (@event.RefContentType == ContentType.AnalysisContent)
         {
-            var entity = await _analysisContentRepository.GetByIdWithItemsAsync(@event.RefContentId, cancellationToken);
+            var entity = await analysisContentRepository.GetByIdWithItemsAsync(@event.RefContentId, cancellationToken);
             if (entity != null)
             {
                 entity.VideoStatus = StatusNames.Completed;
@@ -194,7 +191,7 @@ public sealed class ContentOperationAppService(
                 entity.FinalVideoUrl = @event.FinalVideoUrl;
                 entity.LastFacility = EventNames.VideoGenerationResultPublished;
 
-                await _analysisContentRepository.UpdateAsync(entity, cancellationToken);
+                await analysisContentRepository.UpdateAsync(entity, cancellationToken);
             }
         }
     }
@@ -203,7 +200,7 @@ public sealed class ContentOperationAppService(
     {
         if (@event.RefContentType == ContentType.CustomerContent)
         {
-            var entity = await _customerContentRepository.GetByIdWithTrackingAsync(@event.RefContentId, cancellationToken);
+            var entity = await customerContentRepository.GetByIdWithTrackingAsync(@event.RefContentId, cancellationToken);
 
             if (entity is not null)
             {
@@ -219,13 +216,13 @@ public sealed class ContentOperationAppService(
                         entity.VideoStatus = StatusNames.Failed;
                 }
 
-                await _customerContentRepository.UpdateAsync(entity, cancellationToken);
+                await customerContentRepository.UpdateAsync(entity, cancellationToken);
             }
         }
 
         if (@event.RefContentType == ContentType.AnalysisContent)
         {
-            var entity = await _analysisContentRepository.GetByIdWithItemsAsync(@event.RefContentId, cancellationToken);
+            var entity = await analysisContentRepository.GetByIdWithItemsAsync(@event.RefContentId, cancellationToken);
 
             if (entity is not null)
             {
@@ -241,7 +238,7 @@ public sealed class ContentOperationAppService(
                         entity.VideoStatus = StatusNames.Failed;
                 }
 
-                await _analysisContentRepository.UpdateAsync(entity, cancellationToken);
+                await analysisContentRepository.UpdateAsync(entity, cancellationToken);
             }
         }
     }

@@ -3,6 +3,6 @@ using HsnSoft.Base.Domain.Repositories;
 
 namespace Hhs.VideoGeneratorService.Domain.SettingDomain.Repositories;
 
-public interface ICustomerVpSettingRepository : IReadOnlyGenericRepository<CustomerVpSetting, Guid>
+public interface ICustomerVpSettingRepository : IMongoGenericRepository<CustomerVpSetting, Guid>
 {
 }

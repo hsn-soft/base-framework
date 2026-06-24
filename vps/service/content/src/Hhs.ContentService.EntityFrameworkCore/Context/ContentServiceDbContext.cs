@@ -1,4 +1,5 @@
 using Hhs.ContentService.Domain.ContentDomain.Entities;
+using Hhs.ContentService.Domain.InfraDomain.Entities;
 using Hhs.ContentService.Domain.SettingDomain.Entities;
 using Hhs.ContentService.EntityFrameworkCore.Configurations;
 using HsnSoft.Base;
@@ -35,6 +36,8 @@ public sealed class ContentServiceDbContext(
         builder.ConfigureCustomerContentEntity();
         builder.ConfigureAnalysisContentEntity();
         builder.ConfigureAnalysisContentItemEntity();
-        builder.ConfigureContentInboxMessageEntity();
+
+        // InfraDomain configuration
+        builder.ConfigureEventInboxMessageEntity();
     }
 }

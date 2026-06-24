@@ -5,7 +5,7 @@ using JetBrains.Annotations;
 
 namespace Hhs.ContentService.Domain.SettingDomain.Repositories;
 
-public interface IContentVideoGenerationLimitRepository : IReadOnlyGenericRepository<ContentVideoGenerationLimit, Guid>
+public interface IContentVideoGenerationLimitRepository : IGenericRepository<ContentVideoGenerationLimit, Guid>
 {
     Task<long> GetCustomerVideoHistoryCountAsync([NotNull] string scopeKey,
         DateTime videoGenerationDate, VideoGenerationTypes? videoGenerationType = null);

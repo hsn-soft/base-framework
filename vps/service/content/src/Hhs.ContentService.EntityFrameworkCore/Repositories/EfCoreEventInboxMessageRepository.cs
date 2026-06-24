@@ -1,5 +1,5 @@
-using Hhs.ContentService.Domain.ContentDomain.Entities;
-using Hhs.ContentService.Domain.ContentDomain.Repositories;
+using Hhs.ContentService.Domain.InfraDomain.Entities;
+using Hhs.ContentService.Domain.InfraDomain.Repositories;
 using Hhs.ContentService.EntityFrameworkCore.Context;
 using Hhs.Shared.Helper;
 using HsnSoft.Base.Domain.Models;
@@ -7,10 +7,10 @@ using HsnSoft.Base.Domain.Repositories;
 
 namespace Hhs.ContentService.EntityFrameworkCore.Repositories;
 
-public sealed class EfCoreContentInboxMessageRepository(
+public sealed class EfCoreEventInboxMessageRepository(
     IServiceProvider provider,
     ContentServiceDbContext dbContext
-) : EfCoreGenericRepository<EventInboxMessage, Guid>(provider, dbContext), IContentInboxMessageRepository
+) : EfCoreGenericRepository<EventInboxMessage, Guid>(provider, dbContext), IEventInboxMessageRepository
 {
     public async Task<List<EventInboxMessage>> GetUnprocessedAsync(CancellationToken cancellationToken = default)
     {

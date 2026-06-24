@@ -1,4 +1,4 @@
-namespace Hhs.VideoGeneratorService.Domain.MediaDomain.Consts;
+namespace Hhs.TextNormalizerService.Domain.InfraDomain.Consts;
 
 public static class EventInboxMessageConsts
 {

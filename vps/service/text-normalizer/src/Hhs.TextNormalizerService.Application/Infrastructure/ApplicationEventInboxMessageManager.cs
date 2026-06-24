@@ -1,12 +1,12 @@
 using System.Text.Json;
 using Hhs.Shared.Helper;
-using Hhs.ContentService.Domain.ContentDomain.Entities;
-using Hhs.ContentService.Domain.ContentDomain.Repositories;
+using Hhs.TextNormalizerService.Domain.InfraDomain.Entities;
+using Hhs.TextNormalizerService.Domain.InfraDomain.Repositories;
 using HsnSoft.Base.Domain.Entities.Events;
 
-namespace Hhs.ContentService.Application.Infrastructure;
+namespace Hhs.TextNormalizerService.Application.Infrastructure;
 
-public sealed class ContentInboxStoreService(IContentInboxMessageRepository repository)
+public sealed class ApplicationEventInboxMessageManager(IEventInboxMessageRepository repository)
 {
     public async Task<bool> IsProcessedAsync(Guid eventId, CancellationToken cancellationToken)
     {
@@ -33,13 +33,10 @@ public sealed class ContentInboxStoreService(IContentInboxMessageRepository repo
                 if (existing.RetryCount >= 30)
                     return false;
 
-                await repository.UpdateByExpressionAsync(
-                    x => x.Id == @event.MessageId && x.Status == InboxStatuses.Failed,
-                    s => s
-                        .SetProperty(a => a.Status, InboxStatuses.Started)
-                        .SetProperty(a => a.RetryCount, existing.RetryCount + 1)
-                        .SetProperty(a => a.ErrorMessage, (string?)null),
-                    cancellationToken: cancellationToken);
+                existing.Status = InboxStatuses.Started;
+                existing.RetryCount += 1;
+                existing.ErrorMessage = null;
+                await repository.UpdateAsync(existing, cancellationToken);
 
                 return true;
             }
@@ -68,13 +65,14 @@ public sealed class ContentInboxStoreService(IContentInboxMessageRepository repo
 
     public async Task CompleteAsync(Guid eventId, CancellationToken cancellationToken)
     {
-        await repository.UpdateByExpressionAsync(
-            x => x.Id == eventId,
-            s => s
-                .SetProperty(a => a.Status, InboxStatuses.Completed)
-                .SetProperty(a => a.ProcessedAtUtc, DateTime.UtcNow)
-                .SetProperty(a => a.ErrorMessage, (string?)null),
-            cancellationToken: cancellationToken);
+        var inbox = await repository.GetByIdAsync(eventId, cancellationToken: cancellationToken);
+        if (inbox != null)
+        {
+            inbox.Status = InboxStatuses.Completed;
+            inbox.ProcessedAtUtc = DateTime.UtcNow;
+            inbox.ErrorMessage = null;
+            await repository.UpdateAsync(inbox, cancellationToken);
+        }
     }
 
     public async Task FailAsync(Guid eventId, Exception ex, CancellationToken cancellationToken)

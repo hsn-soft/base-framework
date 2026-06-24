@@ -1,16 +1,16 @@
 using Hhs.Shared.Helper;
-using Hhs.VideoGeneratorService.Domain.MediaDomain.Entities;
-using Hhs.VideoGeneratorService.Domain.MediaDomain.Repositories;
+using Hhs.VideoGeneratorService.Domain.InfraDomain.Entities;
+using Hhs.VideoGeneratorService.Domain.InfraDomain.Repositories;
 using Hhs.VideoGeneratorService.MongoDb.Context;
 using HsnSoft.Base.Domain.Models;
 using HsnSoft.Base.Domain.Repositories;
 
 namespace Hhs.VideoGeneratorService.MongoDb.Repositories;
 
-public sealed class MongoVideoGeneratorInboxMessageRepository(
+public sealed class MongoEventInboxMessageRepository(
     IServiceProvider provider,
     VideoGeneratorServiceDbContext dbContext
-) : MongoGenericRepository<EventInboxMessage, Guid>(provider, dbContext), IVideoGeneratorInboxMessageRepository
+) : MongoGenericRepository<EventInboxMessage, Guid>(provider, dbContext), IEventInboxMessageRepository
 {
     public async Task<List<EventInboxMessage>> GetUnprocessedAsync(CancellationToken cancellationToken = default)
     {

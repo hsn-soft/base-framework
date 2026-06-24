@@ -71,11 +71,6 @@ builder.Services.AddTransient<IBasicDataSeeder, MongoSeederService>();
 builder.Services.AddHttpClient();
 
 // ============================================================================
-// INBOX & EVENT IDEMPOTENCY
-// ============================================================================
-builder.Services.AddScoped<VideoGeneratorInboxStoreService>();
-
-// ============================================================================
 // CUSTOM WORKERS (Polling & Retry Logic)
 // ============================================================================
 // Polling Workers (continuously poll for due requests)

@@ -4,11 +4,11 @@ using HsnSoft.Base.EventBus;
 
 namespace Hhs.VideoGeneratorService.EventHandlers;
 
-public abstract class VideoEventHandlerBase<TEvent>(VideoGeneratorInboxStoreService inboxStore)
+public abstract class VideoEventHandlerBase<TEvent>(ApplicationEventInboxMessageManager inboxStore)
     : IIntegrationEventHandler<TEvent>
     where TEvent : IIntegrationEventMessage
 {
-    protected readonly VideoGeneratorInboxStoreService InboxStore = inboxStore;
+    protected readonly ApplicationEventInboxMessageManager InboxStore = inboxStore;
 
     public async Task HandleAsync(MessageEnvelope<TEvent> @event)
     {

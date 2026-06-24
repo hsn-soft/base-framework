@@ -21,13 +21,13 @@ public static class ApplicationServiceCollectionExtensions
         services.AddAutoMapper(typeof(ApplicationAutoMapperProfile));
 
         services.Configure<TextNormalizerSettings>(configuration.GetSection(nameof(TextNormalizerSettings)));
-        services.Configure<PuppeteerBrowserSettings>(configuration.GetSection(nameof(PuppeteerBrowserSettings)));
-
         services.AddSingleton<IServicePermissionProvider, ApplicationPermissionProvider>();
+
+        services.Configure<PuppeteerBrowserSettings>(configuration.GetSection(nameof(PuppeteerBrowserSettings)));
         services.AddSingleton<IPuppeteerBrowser, PuppeteerBrowser>();
 
         // Must be Scoped or Transient => Cannot consume any scoped service
-        services.AddScoped<NormalizerInboxStoreService>();
+        services.AddScoped<ApplicationEventInboxMessageManager>();
         services.AddScoped<NormalizerOperationAppService>();
         services.AddScoped<IContentScraper, DummyContentScraper>();
 

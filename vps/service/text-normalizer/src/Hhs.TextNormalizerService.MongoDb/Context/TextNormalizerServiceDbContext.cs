@@ -1,3 +1,4 @@
+using Hhs.TextNormalizerService.Domain.InfraDomain.Entities;
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Entities;
 using Hhs.TextNormalizerService.Domain.SettingDomain.Entities;
 using HsnSoft.Base.MongoDB;
@@ -12,5 +13,5 @@ public sealed class TextNormalizerServiceDbContext(IServiceProvider provider, IC
 
     public ITrackingMongoCollection<CustomerContentNormalizedRequest> CustomerContentNormalizedRequests => GetCollection<CustomerContentNormalizedRequest>();
     public ITrackingMongoCollection<AnalysisContentNormalizedRequest> AnalysisContentNormalizedRequests => GetCollection<AnalysisContentNormalizedRequest>();
-    public ITrackingMongoCollection<EventInboxMessage> NormalizerInboxMessages => GetCollection<EventInboxMessage>();
+    public ITrackingMongoCollection<EventInboxMessage> EventInboxMessages => GetCollection<EventInboxMessage>();
 }

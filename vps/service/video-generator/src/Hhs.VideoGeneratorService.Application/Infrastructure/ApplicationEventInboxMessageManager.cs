@@ -1,12 +1,12 @@
 using System.Text.Json;
 using Hhs.Shared.Helper;
-using Hhs.TextNormalizerService.Domain.NormalizeDomain.Entities;
-using Hhs.TextNormalizerService.Domain.NormalizeDomain.Repositories;
+using Hhs.VideoGeneratorService.Domain.InfraDomain.Entities;
+using Hhs.VideoGeneratorService.Domain.InfraDomain.Repositories;
 using HsnSoft.Base.Domain.Entities.Events;
 
-namespace Hhs.TextNormalizerService.Application.Infrastructure;
+namespace Hhs.VideoGeneratorService.Application.Infrastructure;
 
-public sealed class NormalizerInboxStoreService(INormalizerInboxMessageRepository repository)
+public sealed class ApplicationEventInboxMessageManager(IEventInboxMessageRepository repository)
 {
     public async Task<bool> IsProcessedAsync(Guid eventId, CancellationToken cancellationToken)
     {
@@ -34,8 +34,9 @@ public sealed class NormalizerInboxStoreService(INormalizerInboxMessageRepositor
                     return false;
 
                 existing.Status = InboxStatuses.Started;
-                existing.RetryCount += 1;
+                existing.RetryCount = existing.RetryCount + 1;
                 existing.ErrorMessage = null;
+
                 await repository.UpdateAsync(existing, cancellationToken);
 
                 return true;
@@ -66,11 +67,13 @@ public sealed class NormalizerInboxStoreService(INormalizerInboxMessageRepositor
     public async Task CompleteAsync(Guid eventId, CancellationToken cancellationToken)
     {
         var inbox = await repository.GetByIdAsync(eventId, cancellationToken: cancellationToken);
+
         if (inbox != null)
         {
             inbox.Status = InboxStatuses.Completed;
             inbox.ProcessedAtUtc = DateTime.UtcNow;
             inbox.ErrorMessage = null;
+
             await repository.UpdateAsync(inbox, cancellationToken);
         }
     }

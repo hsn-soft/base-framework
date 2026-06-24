@@ -1,16 +1,16 @@
 using Hhs.Shared.Helper;
-using Hhs.TextNormalizerService.Domain.NormalizeDomain.Entities;
-using Hhs.TextNormalizerService.Domain.NormalizeDomain.Repositories;
+using Hhs.TextNormalizerService.Domain.InfraDomain.Entities;
+using Hhs.TextNormalizerService.Domain.InfraDomain.Repositories;
 using Hhs.TextNormalizerService.MongoDb.Context;
 using HsnSoft.Base.Domain.Models;
 using HsnSoft.Base.Domain.Repositories;
 
 namespace Hhs.TextNormalizerService.MongoDb.Repositories;
 
-public sealed class MongoNormalizerInboxMessageRepository(
+public sealed class MongoEventInboxMessageRepository(
     IServiceProvider provider,
     TextNormalizerServiceDbContext dbContext
-) : MongoGenericRepository<EventInboxMessage, Guid>(provider, dbContext), INormalizerInboxMessageRepository
+) : MongoGenericRepository<EventInboxMessage, Guid>(provider, dbContext), IEventInboxMessageRepository
 {
     public async Task<List<EventInboxMessage>> GetUnprocessedAsync(CancellationToken cancellationToken = default)
     {

@@ -7,7 +7,6 @@ using Hhs.TextNormalizerService.Domain.NormalizeDomain.Entities;
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Models;
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Repositories;
 using HsnSoft.Base.Domain.Models;
-using HsnSoft.Base.EventBus;
 using MongoDB.Driver;
 
 namespace Hhs.TextNormalizerService.Application.Services;
@@ -16,11 +15,8 @@ public sealed class NormalizerRetryAppService(
     IServiceProvider provider,
     IAnalysisContentNormalizedRequestRepository analysisRepository,
     ICustomerContentNormalizedRequestRepository customerRepository,
-    IEventBus eventBus,
     NormalizerRetrySettings retrySettings) : ApplicationServiceBase(provider)
 {
-    private readonly NormalizerRetrySettings _retrySettings = retrySettings;
-
     public async Task RetryDueRequestsAsync(CancellationToken cancellationToken)
     {
         var now = DateTime.UtcNow;
@@ -38,7 +34,7 @@ public sealed class NormalizerRetryAppService(
             Filter = x => x.Status == StatusNames.WaitingRetry &&
                          x.NextRetryAtUtc != null &&
                          x.NextRetryAtUtc <= now,
-            MaxResultCount = _retrySettings.BatchSize
+            MaxResultCount = retrySettings.BatchSize
         };
 
         var requests = await customerRepository
@@ -78,7 +74,7 @@ public sealed class NormalizerRetryAppService(
                     x.NextRetryAtUtc <= now);
 
                 var claimUpdate = Builders<CustomerContentNormalizedRequest>.Update
-                    .Set(x => x.NextRetryAtUtc, DateTime.UtcNow.AddSeconds(_retrySettings.ClaimFailRescheduleDelaySeconds))
+                    .Set(x => x.NextRetryAtUtc, DateTime.UtcNow.AddSeconds(retrySettings.ClaimFailRescheduleDelaySeconds))
                     .Set(x => x.LastError, null);
 
                 var claimResult = await customerRepository.UpdateByExpressionAsync(
@@ -148,7 +144,7 @@ public sealed class NormalizerRetryAppService(
                 var exceptionPredicate = (Expression<Func<CustomerContentNormalizedRequest, bool>>)(x => x.Id == request.Id);
                 var exceptionUpdate = Builders<CustomerContentNormalizedRequest>.Update
                     .Set(x => x.Status, StatusNames.WaitingRetry)
-                    .Set(x => x.NextRetryAtUtc, DateTime.UtcNow.AddSeconds(_retrySettings.ClaimFailRescheduleDelaySeconds));
+                    .Set(x => x.NextRetryAtUtc, DateTime.UtcNow.AddSeconds(retrySettings.ClaimFailRescheduleDelaySeconds));
 
                 await customerRepository.UpdateByExpressionAsync(
                     exceptionPredicate,
@@ -171,7 +167,7 @@ public sealed class NormalizerRetryAppService(
                 i.Status == StatusNames.WaitingRetry &&
                 i.NextRetryAtUtc != null &&
                 i.NextRetryAtUtc <= now),
-            MaxResultCount = _retrySettings.BatchSize
+            MaxResultCount = retrySettings.BatchSize
         };
 
         var requests = await analysisRepository
@@ -218,7 +214,7 @@ public sealed class NormalizerRetryAppService(
                     }
 
                     var claimUpdate = Builders<AnalysisContentNormalizedRequest>.Update
-                        .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextRetryAtUtc)}", DateTime.UtcNow.AddSeconds(_retrySettings.ClaimFailRescheduleDelaySeconds));
+                        .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextRetryAtUtc)}", DateTime.UtcNow.AddSeconds(retrySettings.ClaimFailRescheduleDelaySeconds));
 
                     var claimResult = await UpdateDueRetryAnalysisItemAsync(
                         request.Id,
@@ -276,7 +272,7 @@ public sealed class NormalizerRetryAppService(
                 {
                     var retryAgainUpdate = Builders<AnalysisContentNormalizedRequest>.Update
                         .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", StatusNames.WaitingRetry)
-                        .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextRetryAtUtc)}", DateTime.UtcNow.AddSeconds(_retrySettings.ClaimFailRescheduleDelaySeconds))
+                        .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextRetryAtUtc)}", DateTime.UtcNow.AddSeconds(retrySettings.ClaimFailRescheduleDelaySeconds))
                         .Set(x => x.Status, StatusNames.WaitingRetry);
 
                     await UpdateAnalysisItemAsync(

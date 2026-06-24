@@ -10,7 +10,6 @@ using Hhs.TextNormalizerService.Domain.NormalizeDomain.Entities;
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Models;
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Repositories;
 using HsnSoft.Base.Domain.Models;
-using HsnSoft.Base.EventBus;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 
@@ -21,7 +20,6 @@ public sealed class OutlineProviderPollingAppService(
     IAnalysisContentNormalizedRequestRepository analysisRepository,
     ICustomerContentNormalizedRequestRepository customerRepository,
     IOutlineProviderResolver outlineProviderResolver,
-    IEventBus eventBus,
     ILogger<OutlineProviderPollingAppService> logger,
     OutlinePollingSettings pollingSettings) : ApplicationServiceBase(provider)
 {

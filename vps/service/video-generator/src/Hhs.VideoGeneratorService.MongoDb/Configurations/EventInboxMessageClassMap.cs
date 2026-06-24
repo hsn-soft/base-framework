@@ -1,9 +1,9 @@
-using Hhs.VideoGeneratorService.Domain.MediaDomain.Entities;
+using Hhs.VideoGeneratorService.Domain.InfraDomain.Entities;
 using MongoDB.Bson.Serialization;
 
 namespace Hhs.VideoGeneratorService.MongoDb.Configurations;
 
-public static class VideoGeneratorInboxMessageClassMap
+public static class EventInboxMessageClassMap
 {
     public static void Register()
     {

@@ -1,9 +1,9 @@
-using Hhs.TextNormalizerService.Domain.NormalizeDomain.Entities;
+using Hhs.TextNormalizerService.Domain.InfraDomain.Entities;
 using MongoDB.Bson.Serialization;
 
 namespace Hhs.TextNormalizerService.MongoDb.Configurations;
 
-public static class NormalizerInboxMessageClassMap
+public static class EventInboxMessageClassMap
 {
     public static void Register()
     {

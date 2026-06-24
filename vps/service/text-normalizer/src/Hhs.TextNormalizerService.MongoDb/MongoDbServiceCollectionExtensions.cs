@@ -1,4 +1,5 @@
 using Hhs.TextNormalizerService.Domain;
+using Hhs.TextNormalizerService.Domain.InfraDomain.Repositories;
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Repositories;
 using Hhs.TextNormalizerService.Domain.SettingDomain.Repositories;
 using Hhs.TextNormalizerService.MongoDb.Configurations;
@@ -47,7 +48,9 @@ public static class MongoDbServiceCollectionExtensions
         // Normalize Domain Repositories
         services.AddScoped<ICustomerContentNormalizedRequestRepository, MongoCustomerContentNormalizedRequestRepository>();
         services.AddScoped<IAnalysisContentNormalizedRequestRepository, MongoAnalysisContentNormalizedRequestRepository>();
-        services.AddScoped<INormalizerInboxMessageRepository, MongoNormalizerInboxMessageRepository>();
+
+        // Infra Domain Repositories
+        services.AddScoped<IEventInboxMessageRepository, MongoEventInboxMessageRepository>();
 
         return services;
     }
@@ -93,9 +96,15 @@ public static class MongoDbServiceCollectionExtensions
     private static void RegisterClassMaps()
     {
         EntityClassMap.Register();
+
+        // SettingDomain configuration
         CustomerVpSettingClassMap.Register();
+
+        // NormalizeDomain configuration
         CustomerContentNormalizedRequestClassMap.Register();
         AnalysisContentNormalizedRequestClassMap.Register();
-        NormalizerInboxMessageClassMap.Register();
+
+        // InfraDomain configuration
+        EventInboxMessageClassMap.Register();
     }
 }

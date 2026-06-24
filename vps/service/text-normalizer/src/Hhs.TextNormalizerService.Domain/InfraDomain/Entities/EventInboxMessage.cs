@@ -1,7 +1,7 @@
 using Hhs.Shared.Helper;
 using HsnSoft.Base.Domain.Entities.Auditing;
 
-namespace Hhs.ContentService.Domain.ContentDomain.Entities;
+namespace Hhs.TextNormalizerService.Domain.InfraDomain.Entities;
 
 public sealed class EventInboxMessage : AuditedEntity<Guid>
 {
