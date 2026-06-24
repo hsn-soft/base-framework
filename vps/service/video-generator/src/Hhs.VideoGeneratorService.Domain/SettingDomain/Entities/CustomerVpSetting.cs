@@ -30,9 +30,9 @@ public class CustomerVpSetting : AuditedEntity<Guid>, ISoftDelete, IScopeSubscri
     public AudioProviderTypes AudioProviderType { get; set; }
     public object AudioProviderSettings { get; set; }
     public bool IsCustomerZoneActive { get; set; }
-    public string CustomerZoneName { get; set; }
-    public string CustomerBucketKey { get; set; }
-    public string CustomerBucketSecret { get; set; }
+    [CanBeNull] public string CustomerZoneName { get; set; }
+    [CanBeNull] public string CustomerBucketKey { get; set; }
+    [CanBeNull] public string CustomerBucketSecret { get; set; }
 
     private CustomerVpSetting()
     {

@@ -15,4 +15,8 @@ public static class CustomerVpSettingConsts
     public const string TableName = "CustomerVpSettings";
     public const int ScopeKeyMaxLength = 128;
     public const int DomainNameMaxLength = 100;
+    public const int ContentOutlinePromptMaxLength = 5000;
+    public const int AnalysisOutlineContentPromptMaxLength = 5000;
+    public const int AnalysisOutlineIntroPromptMaxLength = 5000;
+    public const int AnalysisOutlineOutroPromptMaxLength = 5000;
 }

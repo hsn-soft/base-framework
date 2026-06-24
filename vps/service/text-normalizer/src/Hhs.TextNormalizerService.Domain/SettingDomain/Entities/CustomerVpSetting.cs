@@ -22,11 +22,11 @@ public class CustomerVpSetting : AuditedEntity<Guid>, ISoftDelete, IScopeSubscri
     public bool IsScrapingOperationActive { get; set; }
     public bool IsOutlineOperationActive { get; set; }
     public TextNormalizeProviderTypes ContentOutlineProvider { get; set; }
-    public string ContentOutlinePrompt { get; set; }
+    [CanBeNull] public string ContentOutlinePrompt { get; set; }
     public TextNormalizeProviderTypes AnalysisOutlineProvider { get; set; }
-    public string AnalysisOutlineContentPrompt { get; set; }
-    public string AnalysisOutlineIntroPrompt { get; set; }
-    public string AnalysisOutlineOutroPrompt { get; set; }
+    [CanBeNull] public string AnalysisOutlineContentPrompt { get; set; }
+    [CanBeNull] public string AnalysisOutlineIntroPrompt { get; set; }
+    [CanBeNull] public string AnalysisOutlineOutroPrompt { get; set; }
     public bool IsForceContentDetailInAnalyseActive { get; set; }
 
     private CustomerVpSetting()

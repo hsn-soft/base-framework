@@ -15,4 +15,7 @@ public static class CustomerVpSettingConsts
     public const string TableName = "CustomerVpSettings";
     public const int ScopeKeyMaxLength = 128;
     public const int DomainNameMaxLength = 100;
+    public const int CustomerZoneNameMaxLength = 256;
+    public const int CustomerBucketKeyMaxLength = 256;
+    public const int CustomerBucketSecretMaxLength = 512;
 }

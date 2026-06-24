@@ -16,19 +16,17 @@ public static class CustomerContentNormalizedRequestClassMap
             // Subscription & Scope - MaxLength: CustomerContentNormalizedRequestConsts.ScopeKeyMaxLength
             map.MapMember(x => x.ScopeKey).SetIsRequired(true);
 
-            // Content Reference
-            // MaxLength: CustomerContentNormalizedRequestConsts.DomainNameMaxLength
-            // MaxLength: CustomerContentNormalizedRequestConsts.ContentKeyMaxLength
+            // Content Reference - MaxLength: CustomerContentNormalizedRequestConsts.DomainNameMaxLength, ContentKeyMaxLength
+            map.MapMember(x => x.DomainName).SetIsRequired(true);
+            map.MapMember(x => x.ContentKey).SetIsRequired(true);
 
-            // Status & Progress - MaxLength: CustomerContentNormalizedRequestConsts.StatusMaxLength, CustomerContentNormalizedRequestConsts.CurrentStepMaxLength
+            // Status & Progress - MaxLength: CustomerContentNormalizedRequestConsts.StatusMaxLength, CurrentStepMaxLength
             map.MapMember(x => x.Status).SetIsRequired(true);
             map.MapMember(x => x.CurrentStep).SetIsRequired(true);
 
             // Scraping State - MaxLength: CustomerContentNormalizedRequestConsts.ScrapingStatusMaxLength
 
-            // Outline Generation State
-            // MaxLength: CustomerContentNormalizedRequestConsts.OutlineStatusMaxLength
-            // MaxLength: CustomerContentNormalizedRequestConsts.OutlineProviderTrackIdMaxLength
+            // Outline Generation State - MaxLength: CustomerContentNormalizedRequestConsts.OutlineStatusMaxLength, OutlineProviderTrackIdMaxLength
 
             // Error Handling - MaxLength: CustomerContentNormalizedRequestConsts.LastErrorMaxLength
         });
