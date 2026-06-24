@@ -42,4 +42,16 @@ public sealed class CustomerContentNormalizedRequest : AuditedEntity<Guid>
     public int MaxRetryCount { get; set; } = 5;
     public DateTime? NextRetryAtUtc { get; set; }
     public string? LastError { get; set; }
+
+    private CustomerContentNormalizedRequest() { }
+
+    public CustomerContentNormalizedRequest(Guid id, string scopeKey, Guid customerContentId, string domainName, string contentKey, Guid? correlationId = null)
+    {
+        Id = id;
+        ScopeKey = scopeKey;
+        CustomerContentId = customerContentId;
+        DomainName = domainName;
+        ContentKey = contentKey;
+        CorrelationId = correlationId?.ToString();
+    }
 }

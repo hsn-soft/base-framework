@@ -27,4 +27,15 @@ public sealed class AnalysisContentNormalizedRequest : AuditedEntity<Guid>
 
     // Error Handling
     public string? LastError { get; set; }
+
+    private AnalysisContentNormalizedRequest() { }
+
+    public AnalysisContentNormalizedRequest(Guid id, string scopeKey, Guid analysisContentId, string domainName, Guid? correlationId = null)
+    {
+        Id = id;
+        ScopeKey = scopeKey;
+        AnalysisContentId = analysisContentId;
+        DomainName = domainName;
+        CorrelationId = correlationId?.ToString();
+    }
 }

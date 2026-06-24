@@ -10,7 +10,7 @@ using Hhs.TextNormalizerService.Application.Providers.Scraping;
 using Hhs.TextNormalizerService.Domain.Configuration.Providers.Outline;
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Entities;
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Models;
-using Hhs.TextNormalizerService.MongoDb.Context;
+using Hhs.TextNormalizerService.Domain.NormalizeDomain.Repositories;
 using HsnSoft.Base.EventBus;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Logging;
@@ -20,7 +20,8 @@ namespace Hhs.TextNormalizerService.Application.Services;
 
 public sealed class NormalizerOperationAppService(
     IServiceProvider provider,
-    TextNormalizerServiceDbContext context,
+    ICustomerContentNormalizedRequestRepository customerContentRepository,
+    IAnalysisContentNormalizedRequestRepository analysisContentRepository,
     IContentScraper scraper,
     ILogger<NormalizerOperationAppService> logger,
     IOutlineProviderResolver outlineProviderResolver,
@@ -31,9 +32,7 @@ public sealed class NormalizerOperationAppService(
     {
         logger.LogInformation($"CreateCustomerContentNormalizeRequestAsync started for RefContentId: {@event.CustomerContentId}, EventId: {eventId}");
 
-        var existing = await context.CustomerContentNormalizedRequests
-            .Find(x => x.SourceEventId == eventId || x.CustomerContentId == @event.CustomerContentId)
-            .FirstOrDefaultAsync();
+        var existing = await customerContentRepository.GetByScopeKeyAndContentIdAsync(@event.ScopeKey, @event.CustomerContentId, cancellationToken);
 
         if (existing is not null)
         {
@@ -53,37 +52,18 @@ public sealed class NormalizerOperationAppService(
         try
         {
             logger.LogInformation($"Inserting record into MongoDB...");
-            await context.CustomerContentNormalizedRequests.InsertOneAsync(new CustomerContentNormalizedRequest
-            {
-                Id = requestId,
-                SourceEventId = eventId,
-                CorrelationId = correlationId,
-                ScopeKey = @event.ScopeKey,
-                CustomerContentId = @event.CustomerContentId,
-                DomainName = @event.DomainName,
-                ContentKey = @event.ContentKey,
-                Status = StatusNames.Created,
-                CurrentStep = EventNames.CustomerContentCreated,
-                LastError = null,
-                // provider keys
-                // scraping states
-                ScrapingStatus = null,
-                ScrapingResult = null,
-                // outline states
-                OutlineStatus = null,
-                OutlineResult = null,
-                // outline polling
-                OutlineProviderTrackId = null,
-                NextOutlinePollAtUtc = null,
-                OutlinePollingCount = 0,
-                MaxOutlinePollingCount = outlinePollingSettings.MaxAttempts,
-                // event retry mechanism
-                RetryCount = 0,
-                NextRetryAtUtc = null,
-                // audit
-                CreatedAtUtc = DateTime.UtcNow,
-                UpdatedAtUtc = DateTime.UtcNow,
-            });
+            var entity = new CustomerContentNormalizedRequest(
+                requestId,
+                @event.ScopeKey,
+                @event.CustomerContentId,
+                @event.DomainName,
+                @event.ContentKey,
+                correlationId != null ? (Guid?)Guid.Parse(correlationId) : null);
+            entity.Status = StatusNames.Created;
+            entity.CurrentStep = EventNames.CustomerContentCreated;
+            entity.MaxOutlinePollingCount = outlinePollingSettings.MaxAttempts;
+
+            await customerContentRepository.InsertAsync(entity, cancellationToken);
 
             logger.LogInformation($"MongoDB insert successful, publishing event...");
 
