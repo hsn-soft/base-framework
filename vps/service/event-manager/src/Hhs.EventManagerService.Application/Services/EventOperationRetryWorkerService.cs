@@ -1,8 +1,6 @@
 using Hhs.Shared.Helper;
 using Hhs.EventManagerService.Domain.Configuration;
-using Hhs.EventManagerService.Domain.InfraDomain.Entities;
 using Hhs.EventManagerService.Domain.InfraDomain.Repositories;
-using HsnSoft.Base.Domain.Models;
 using Microsoft.Extensions.Logging;
 
 namespace Hhs.EventManagerService.Application.Services;

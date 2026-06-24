@@ -1,5 +1,4 @@
 using Hhs.EventManagerService.Domain.InfraDomain.Entities;
-using HsnSoft.Base.Domain.Models;
 using HsnSoft.Base.Domain.Repositories;
 
 namespace Hhs.EventManagerService.Domain.InfraDomain.Repositories;

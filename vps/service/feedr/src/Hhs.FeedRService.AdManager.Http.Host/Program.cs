@@ -2,6 +2,7 @@ using Hhs.FeedRService.AdManager;
 using Hhs.FeedRService.AdManager.Workers;
 using Hhs.FeedRService.Application;
 using Hhs.FeedRService.Application.Contracts.Events;
+using Hhs.FeedRService.Application.Services;
 using Hhs.FeedRService.Domain.Configuration;
 using Hhs.FeedRService.Domain.Localization;
 using Hhs.FeedRService.EntityFrameworkCore;
@@ -90,6 +91,7 @@ builder.Services.AddTransient<IBasicDataSeeder, CompositeSeederService>();
 // Retry Worker: Configures background service for retrying failed events
 var feedRRetrySettings = builder.Configuration.GetSection(nameof(FeedRRetrySettings))
     .Get<FeedRRetrySettings>() ?? new FeedRRetrySettings();
+
 builder.Services
     .AddSingleton(feedRRetrySettings)
     .AddSingleton(_ => new RetryDelayCalculator(feedRRetrySettings.DelaySeconds))

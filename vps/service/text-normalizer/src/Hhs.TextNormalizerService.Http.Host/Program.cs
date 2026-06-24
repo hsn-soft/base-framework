@@ -10,6 +10,7 @@ using Hhs.TextNormalizerService;
 using Hhs.TextNormalizerService.Application;
 using Hhs.TextNormalizerService.Application.Services;
 using Hhs.TextNormalizerService.Domain.Configuration;
+using Hhs.TextNormalizerService.Domain.Configuration.Providers.Outline;
 using Hhs.TextNormalizerService.Domain.Localization;
 using Hhs.TextNormalizerService.MongoDb;
 using Hhs.TextNormalizerService.MongoDb.Setup;
@@ -85,7 +86,6 @@ builder.Services.AddMicroserviceHosting(builder.Configuration, typeof(Program))
 // ============================================================================
 // DATA SEEDING
 // ============================================================================
-// Configures default data seeder for MongoDB initialization
 builder.Services.AddTransient<IBasicDataSeeder, MongoSeederService>();
 
 // ============================================================================
@@ -98,19 +98,24 @@ builder.Services.AddHostedService<PuppeteerShutdownHostedService>();
 builder.Services.AddOptions<HostOptions>()
     .Configure<IOptions<PuppeteerBrowserSettings>>((hostOptions, browserSettings) => { hostOptions.ShutdownTimeout = TimeSpan.FromSeconds(browserSettings.Value.ShutdownDrainTimeoutSeconds + 30); });
 
+// For Provider Clients
 builder.Services.AddHttpClient();
 
 // ============================================================================
-// BACKGROUND WORKERS (Polling & Retry Logic)
+// 3. POLLING & RETRY CONFIGURATION
 // ============================================================================
-// Polling Worker: Continuously polls for outline provider requests and processes them
-// Runs on configurable interval (default: every 30 seconds) until completion
-builder.Services.AddScoped<OutlineProviderPollingWorkerService>();
-builder.Services.AddHostedService<OutlineProviderPollingWorker>();
 
-// Retry Worker: Handles failed normalization operations with exponential backoff
+var outlinePollingSettings = builder.Configuration.GetSection(OutlinePollingSettings.SectionName)
+    .Get<OutlinePollingSettings>() ?? new OutlinePollingSettings();
+
+builder.Services
+    .AddSingleton(outlinePollingSettings)
+    .AddScoped<OutlineProviderPollingWorkerService>()
+    .AddHostedService<OutlineProviderPollingWorker>();
+
 var normalizerRetrySettings = builder.Configuration.GetSection(nameof(NormalizerRetrySettings))
     .Get<NormalizerRetrySettings>() ?? new NormalizerRetrySettings();
+
 builder.Services
     .AddSingleton(normalizerRetrySettings)
     .AddSingleton(_ => new RetryDelayCalculator(normalizerRetrySettings.DelaySeconds))

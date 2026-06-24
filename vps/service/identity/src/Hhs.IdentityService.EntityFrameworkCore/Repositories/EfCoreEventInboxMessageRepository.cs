@@ -1,7 +1,6 @@
 using Hhs.IdentityService.Domain.InfraDomain.Entities;
 using Hhs.IdentityService.Domain.InfraDomain.Repositories;
 using Hhs.IdentityService.EntityFrameworkCore.Context;
-using Hhs.Shared.Helper;
 using HsnSoft.Base.Domain.Models;
 using HsnSoft.Base.Domain.Repositories;
 

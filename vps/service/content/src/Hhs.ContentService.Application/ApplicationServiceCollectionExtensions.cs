@@ -1,9 +1,7 @@
 using Hhs.ContentService.Application.Infrastructure;
 using Hhs.ContentService.Application.Services;
-using Hhs.ContentService.Domain.Configuration;
 using Hhs.ContentService.Domain.Settings;
 using Hhs.Shared.Contracts.Cache;
-using Hhs.Shared.Helper.Retry;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 

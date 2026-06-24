@@ -1,5 +1,6 @@
 using Hhs.IdentityService;
 using Hhs.IdentityService.Application;
+using Hhs.IdentityService.Application.Services;
 using Hhs.IdentityService.Domain.Configuration;
 using Hhs.IdentityService.Domain.Localization;
 using Hhs.IdentityService.EntityFrameworkCore;

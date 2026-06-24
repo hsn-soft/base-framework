@@ -1,5 +1,4 @@
 using Hhs.Shared.Contracts.Cache;
-using Hhs.Shared.Helper.Retry;
 using Hhs.VideoGeneratorService.Application.Infrastructure;
 using Hhs.VideoGeneratorService.Application.Providers;
 using Hhs.VideoGeneratorService.Application.Providers.Audio;
@@ -88,29 +87,11 @@ public static class ApplicationServiceCollectionExtensions
             .Get<CdnBunnyS3Settings>() ?? new CdnBunnyS3Settings();
         services.AddSingleton(cdnBunnyS3Settings);
 
-
         // Register CDN Provider implementations
         services.AddScoped<ICdnProvider, CdnLocalMinioProvider>();
         services.AddScoped<ICdnProvider, CdnBunnySelfProvider>();
         services.AddScoped<ICdnProvider, CdnBunnyS3Provider>();
         services.AddScoped<ICdnProviderResolver, CdnProviderResolver>();
-
-        // ============================================================================
-        // 5. POLLING & RETRY CONFIGURATION
-        // ============================================================================
-
-        var audioPollingSettings = configuration.GetSection(AudioPollingSettings.SectionName)
-            .Get<AudioPollingSettings>() ?? new AudioPollingSettings();
-        services.AddSingleton(audioPollingSettings);
-
-        var videoPollingSettings = configuration.GetSection(VideoPollingSettings.SectionName)
-            .Get<VideoPollingSettings>() ?? new VideoPollingSettings();
-        services.AddSingleton(videoPollingSettings);
-
-        var videoRetrySettings = configuration.GetSection(nameof(VideoRetrySettings))
-            .Get<VideoRetrySettings>() ?? new VideoRetrySettings();
-        services.AddSingleton(videoRetrySettings);
-        services.AddSingleton(_ => new RetryDelayCalculator(videoRetrySettings.DelaySeconds));
 
         return services;
     }

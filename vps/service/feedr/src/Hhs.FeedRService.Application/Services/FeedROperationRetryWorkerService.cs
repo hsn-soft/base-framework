@@ -1,8 +1,6 @@
 using Hhs.Shared.Helper;
 using Hhs.FeedRService.Domain.Configuration;
-using Hhs.FeedRService.Domain.InfraDomain.Entities;
 using Hhs.FeedRService.Domain.InfraDomain.Repositories;
-using HsnSoft.Base.Domain.Models;
 using Microsoft.Extensions.Logging;
 
 namespace Hhs.FeedRService.Application.Services;

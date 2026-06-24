@@ -1,7 +1,6 @@
 using Hhs.FeedRService.Domain.InfraDomain.Entities;
 using Hhs.FeedRService.Domain.InfraDomain.Repositories;
 using Hhs.FeedRService.EntityFrameworkCore.Context;
-using Hhs.Shared.Helper;
 using HsnSoft.Base.Domain.Models;
 using HsnSoft.Base.Domain.Repositories;
 

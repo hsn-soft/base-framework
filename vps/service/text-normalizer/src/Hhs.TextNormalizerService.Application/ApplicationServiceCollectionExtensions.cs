@@ -48,19 +48,6 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<IOutlineProvider, OutlineQueueProvider>();
         services.AddScoped<IOutlineProviderResolver, OutlineProviderResolver>();
 
-        // ============================================================================
-        // 3. POLLING & RETRY CONFIGURATION
-        // ============================================================================
-
-        var outlinePollingSettings = configuration.GetSection(OutlinePollingSettings.SectionName)
-            .Get<OutlinePollingSettings>() ?? new OutlinePollingSettings();
-        services.AddSingleton(outlinePollingSettings);
-
-        var normalizerRetrySettings = configuration.GetSection(nameof(NormalizerRetrySettings))
-            .Get<NormalizerRetrySettings>() ?? new NormalizerRetrySettings();
-        services.AddSingleton(normalizerRetrySettings);
-        services.AddSingleton(_ => new RetryDelayCalculator(normalizerRetrySettings.DelaySeconds));
-
         return services;
     }
 }

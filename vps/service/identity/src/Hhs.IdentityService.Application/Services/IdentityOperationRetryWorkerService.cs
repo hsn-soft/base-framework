@@ -1,8 +1,6 @@
 using Hhs.Shared.Helper;
 using Hhs.IdentityService.Domain.Configuration;
-using Hhs.IdentityService.Domain.InfraDomain.Entities;
 using Hhs.IdentityService.Domain.InfraDomain.Repositories;
-using HsnSoft.Base.Domain.Models;
 using Microsoft.Extensions.Logging;
 
 namespace Hhs.IdentityService.Application.Services;

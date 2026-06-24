@@ -1,5 +1,6 @@
 using Hhs.EventManagerService;
 using Hhs.EventManagerService.Application;
+using Hhs.EventManagerService.Application.Services;
 using Hhs.EventManagerService.Domain.Configuration;
 using Hhs.EventManagerService.Domain.Localization;
 using Hhs.EventManagerService.MongoDb;
@@ -82,6 +83,7 @@ builder.Services.AddTransient<IBasicDataSeeder, MongoSeederService>();
 // Retry Worker: Configures background service for retrying failed events
 var eventManagerRetrySettings = builder.Configuration.GetSection("RetryPolicy")
     .Get<EventManagerRetrySettings>() ?? new EventManagerRetrySettings();
+
 builder.Services
     .AddSingleton(eventManagerRetrySettings)
     .AddScoped<EventOperationRetryWorkerService>()

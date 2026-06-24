@@ -86,6 +86,7 @@ builder.Services.AddTransient<IBasicDataSeeder, EfCoreSeederService>();
 // Retry Worker: Configures background service for retrying failed events
 var administrationRetrySettings = builder.Configuration.GetSection(nameof(AdministrationRetrySettings))
     .Get<AdministrationRetrySettings>() ?? new AdministrationRetrySettings();
+
 builder.Services
     .AddSingleton(administrationRetrySettings)
     .AddSingleton(_ => new RetryDelayCalculator(administrationRetrySettings.DelaySeconds))

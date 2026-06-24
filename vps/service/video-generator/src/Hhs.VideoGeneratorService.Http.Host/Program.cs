@@ -6,7 +6,6 @@ using Hhs.Shared.Hosting.Microservices.Extensions;
 using Hhs.Shared.Hosting.Microservices.Middlewares;
 using Hhs.VideoGeneratorService;
 using Hhs.VideoGeneratorService.Application;
-using Hhs.VideoGeneratorService.Application.Infrastructure;
 using Hhs.VideoGeneratorService.Application.Services;
 using Hhs.VideoGeneratorService.Domain.Configuration;
 using Hhs.VideoGeneratorService.Domain.Localization;
@@ -86,26 +85,30 @@ builder.Services.AddMicroserviceHosting(builder.Configuration, typeof(Program))
 // Configures default data seeder for MongoDB initialization
 builder.Services.AddTransient<IBasicDataSeeder, MongoSeederService>();
 
+// For Provider Clients
 builder.Services.AddHttpClient();
 
 // ============================================================================
-// BACKGROUND WORKERS (Polling & Retry Logic)
+// 5. POLLING & RETRY WORKERS
 // ============================================================================
-// Audio Polling Worker: Continuously polls for audio generation requests
-// Processes due requests on configurable interval (default: every 30 seconds)
-// Maintains order and prevents duplicate processing via request status tracking
-builder.Services.AddScoped<AudioProviderPollingWorkerService>();
-builder.Services.AddHostedService<AudioProviderPollingWorker>();
 
-// Video Polling Worker: Continuously polls for video generation requests
-// Processes due requests on configurable interval (default: every 30 seconds)
-// Coordinates with audio generation and applies layout/styling to final output
-builder.Services.AddScoped<VideoProviderPollingWorkerService>();
-builder.Services.AddHostedService<VideoProviderPollingWorker>();
+var audioPollingSettings = builder.Configuration.GetSection(AudioPollingSettings.SectionName)
+    .Get<AudioPollingSettings>() ?? new AudioPollingSettings();
+builder.Services
+    .AddSingleton(audioPollingSettings)
+    .AddScoped<AudioProviderPollingWorkerService>()
+    .AddHostedService<AudioProviderPollingWorker>();
 
-// Retry Worker: Handles failed video generation operations with exponential backoff
+var videoPollingSettings = builder.Configuration.GetSection(VideoPollingSettings.SectionName)
+    .Get<VideoPollingSettings>() ?? new VideoPollingSettings();
+builder.Services
+    .AddSingleton(videoPollingSettings)
+    .AddScoped<VideoProviderPollingWorkerService>()
+    .AddHostedService<VideoProviderPollingWorker>();
+
 var videoRetrySettings = builder.Configuration.GetSection(nameof(VideoRetrySettings))
     .Get<VideoRetrySettings>() ?? new VideoRetrySettings();
+
 builder.Services
     .AddSingleton(videoRetrySettings)
     .AddSingleton(_ => new RetryDelayCalculator(videoRetrySettings.DelaySeconds))
