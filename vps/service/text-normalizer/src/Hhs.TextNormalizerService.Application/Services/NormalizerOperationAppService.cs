@@ -82,18 +82,15 @@ public sealed class NormalizerOperationAppService(
 
     public async Task StartCustomerContentNormalizeAsync(CustomerContentNormalizeRequestCreatedEto @event, CancellationToken cancellationToken = default)
     {
-        var request = await context.CustomerContentNormalizedRequests
-            .Find(x => x.CustomerContentId == @event.CustomerContentId)
-            .FirstAsync();
+        var request = await customerContentRepository.GetFirstOrDefaultAsync(x => x.CustomerContentId == @event.CustomerContentId, cancellationToken: cancellationToken);
 
         try
         {
             request.Status = StatusNames.Scraping;
             request.ScrapingStatus = StatusNames.Started;
             request.CurrentStep = EventNames.CustomerContentScrapingStarted;
-            request.UpdatedAtUtc = DateTime.UtcNow;
 
-            await ReplaceCustomerAsync(request);
+            await customerContentRepository.UpdateAsync(request, cancellationToken);
 
             await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
                 eventMessage: new CustomerContentScrapingStartedEto { CustomerContentId = @event.CustomerContentId }
@@ -111,9 +108,7 @@ public sealed class NormalizerOperationAppService(
 
     public async Task StartCustomerContentScrapingAsync(CustomerContentScrapingStartedEto @event, CancellationToken cancellationToken = default)
     {
-        var request = await context.CustomerContentNormalizedRequests
-            .Find(x => x.CustomerContentId == @event.CustomerContentId)
-            .FirstAsync();
+        var request = await customerContentRepository.GetFirstOrDefaultAsync(x => x.CustomerContentId == @event.CustomerContentId, cancellationToken: cancellationToken);
 
         try
         {
@@ -124,9 +119,8 @@ public sealed class NormalizerOperationAppService(
             request.CurrentStep = EventNames.CustomerContentScrapingCompleted;
             request.ScrapingResult = new ScrapingResult { Title = result.Title, Text = result.Text, ReleaseTimeUtc = result.ReleaseTimeUtc };
             request.LastError = null;
-            request.UpdatedAtUtc = DateTime.UtcNow;
 
-            await ReplaceCustomerAsync(request);
+            await customerContentRepository.UpdateAsync(request, cancellationToken);
 
             await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
                 eventMessage: new CustomerContentScrapingCompletedEto { CustomerContentId = request.CustomerContentId }
@@ -144,17 +138,14 @@ public sealed class NormalizerOperationAppService(
 
     public async Task CompleteCustomerContentScrapingAsync(CustomerContentScrapingCompletedEto @event, CancellationToken cancellationToken = default)
     {
-        var request = await context.CustomerContentNormalizedRequests
-            .Find(x => x.CustomerContentId == @event.CustomerContentId)
-            .FirstAsync();
+        var request = await customerContentRepository.GetFirstOrDefaultAsync(x => x.CustomerContentId == @event.CustomerContentId, cancellationToken: cancellationToken);
 
         try
         {
             request.OutlineStatus = StatusNames.Started;
             request.CurrentStep = EventNames.CustomerContentOutlineStarted;
-            request.UpdatedAtUtc = DateTime.UtcNow;
 
-            await ReplaceCustomerAsync(request);
+            await customerContentRepository.UpdateAsync(request, cancellationToken);
 
             await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
                 eventMessage: new CustomerContentOutlineStartedEto { CustomerContentId = @event.CustomerContentId }
@@ -172,15 +163,12 @@ public sealed class NormalizerOperationAppService(
 
     public async Task StartCustomerContentOutlineAsync(CustomerContentOutlineStartedEto @event, CancellationToken cancellationToken = default)
     {
-        var request = await context.CustomerContentNormalizedRequests
-            .Find(x => x.CustomerContentId == @event.CustomerContentId)
-            .FirstAsync();
+        var request = await customerContentRepository.GetFirstOrDefaultAsync(x => x.CustomerContentId == @event.CustomerContentId, cancellationToken: cancellationToken);
 
         try
         {
             request.Status = StatusNames.OutlineProviderRequestStarted;
             request.CurrentStep = EventNames.OutlineProviderRequestStarted;
-            request.UpdatedAtUtc = DateTime.UtcNow;
 
             if (request.ScrapingResult is null)
                 throw new InvalidOperationException("ScrapingResult is required before outline.");
@@ -211,9 +199,9 @@ public sealed class NormalizerOperationAppService(
 
     public async Task CreateAnalysisContentNormalizeRequestAsync(AnalysisContentCreatedEto @event, Guid eventId, [CanBeNull] string correlationId, CancellationToken cancellationToken = default)
     {
-        var existing = await context.AnalysisContentNormalizedRequests
-            .Find(x => x.SourceEventId == eventId || x.AnalysisContentId == @event.AnalysisContentId)
-            .FirstOrDefaultAsync();
+        var existing = await analysisContentRepository.GetFirstOrDefaultAsync(
+            x => x.SourceEventId == eventId || x.AnalysisContentId == @event.AnalysisContentId,
+            cancellationToken: cancellationToken);
 
         if (existing is not null)
         {
@@ -224,22 +212,20 @@ public sealed class NormalizerOperationAppService(
             return;
         }
 
-        var request = new AnalysisContentNormalizedRequest
-        {
-            Id = Guid.NewGuid(),
-            SourceEventId = eventId,
-            CorrelationId = correlationId,
-            ScopeKey = @event.ScopeKey,
-            DomainName = @event.DomainName,
-            AnalysisContentId = @event.AnalysisContentId,
-            Status = StatusNames.Created,
-            CurrentStep = EventNames.AnalysisContentCreated,
-            Items = @event.Items.Select(x => new AnalysisNormalizedItem { CustomerContentId = x.CustomerContentId, SortOrder = x.SortOrder, ContentKey = x.ContentKey }).ToList(),
-            CreatedAtUtc = DateTime.UtcNow,
-            UpdatedAtUtc = DateTime.UtcNow
-        };
+        var requestId = Guid.NewGuid();
+        var request = new AnalysisContentNormalizedRequest(
+            requestId,
+            @event.ScopeKey,
+            @event.AnalysisContentId,
+            @event.DomainName,
+            correlationId != null ? (Guid?)Guid.Parse(correlationId) : null);
 
-        await context.AnalysisContentNormalizedRequests.InsertOneAsync(request);
+        request.SourceEventId = eventId;
+        request.Status = StatusNames.Created;
+        request.CurrentStep = EventNames.AnalysisContentCreated;
+        request.Items = @event.Items.Select(x => new AnalysisNormalizedItem { CustomerContentId = x.CustomerContentId, SortOrder = x.SortOrder, ContentKey = x.ContentKey }).ToList();
+
+        await analysisContentRepository.InsertAsync(request, cancellationToken);
 
         await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
             eventMessage: new AnalysisContentNormalizeRequestCreatedEto { AnalysisContentId = @event.AnalysisContentId }
@@ -248,9 +234,7 @@ public sealed class NormalizerOperationAppService(
 
     public async Task StartAnalysisContentNormalizeAsync(AnalysisContentNormalizeRequestCreatedEto @event, CancellationToken cancellationToken = default)
     {
-        var request = await context.AnalysisContentNormalizedRequests
-            .Find(x => x.AnalysisContentId == @event.AnalysisContentId)
-            .FirstAsync();
+        var request = await analysisContentRepository.GetFirstOrDefaultAsync(x => x.AnalysisContentId == @event.AnalysisContentId, cancellationToken: cancellationToken);
 
         foreach (var item in request.Items.OrderBy(x => x.SortOrder))
         {
@@ -274,10 +258,8 @@ public sealed class NormalizerOperationAppService(
                 .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", StatusNames.Scraping)
                 .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentStep)}", EventNames.AnalysisItemScrapingStarted)
                 .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.ScrapingStatus)}", StatusNames.Started)
-                .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.UpdatedAtUtc)}", DateTime.UtcNow)
                 .Set(x => x.Status, StatusNames.Scraping)
-                .Set(x => x.CurrentStep, EventNames.AnalysisItemScrapingStarted)
-                .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);
+                .Set(x => x.CurrentStep, EventNames.AnalysisItemScrapingStarted);
 
             await UpdateAnalysisItemAsync(
                 request.Id,
@@ -293,9 +275,7 @@ public sealed class NormalizerOperationAppService(
                 .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.ScrapingStatus)}", StatusNames.Completed)
                 .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.ScrapingResult)}", new ScrapingResult { Title = result.Title, Text = result.Text, ReleaseTimeUtc = result.ReleaseTimeUtc })
                 .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.LastError)}", (string?)null)
-                .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.UpdatedAtUtc)}", DateTime.UtcNow)
-                .Set(x => x.CurrentStep, EventNames.AnalysisItemScrapingCompleted)
-                .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);
+                .Set(x => x.CurrentStep, EventNames.AnalysisItemScrapingCompleted);
 
             await UpdateAnalysisItemAsync(
                 request.Id,
@@ -340,11 +320,9 @@ public sealed class NormalizerOperationAppService(
                     .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineStatus)}", StatusNames.WaitingScraping)
                     .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.LastError)}", "ScrapingResult is required before outline.")
                     .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextRetryAtUtc)}", DateTime.UtcNow.AddSeconds(outlinePollingSettings.ErrorRescheduleDelaySeconds))
-                    .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.UpdatedAtUtc)}", DateTime.UtcNow)
                     .Set(x => x.Status, StatusNames.WaitingRetry)
                     .Set(x => x.CurrentStep, EventNames.AnalysisItemOutlineStarted)
-                    .Set(x => x.LastError, "ScrapingResult is required before outline.")
-                    .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);
+                    .Set(x => x.LastError, "ScrapingResult is required before outline.");
 
                 await UpdateAnalysisItemAsync(analysisContentNormalizedRequest.Id, item.CustomerContentId, update);
                 return;
@@ -357,10 +335,8 @@ public sealed class NormalizerOperationAppService(
                 .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", StatusNames.OutlineProviderRequestStarted)
                 .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineStatus)}", StatusNames.Started)
                 .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentStep)}", EventNames.AnalysisItemOutlineStarted)
-                .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.UpdatedAtUtc)}", DateTime.UtcNow)
                 .Set(x => x.Status, StatusNames.OutlineProviderRequestStarted)
-                .Set(x => x.CurrentStep, EventNames.OutlineProviderRequestStarted)
-                .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);
+                .Set(x => x.CurrentStep, EventNames.OutlineProviderRequestStarted);
 
             await UpdateAnalysisItemAsync(analysisContentNormalizedRequest.Id, item.CustomerContentId, startUpdate);
 
@@ -429,18 +405,15 @@ public sealed class NormalizerOperationAppService(
 
         if (@event.RefContentType == ContentType.CustomerContent)
         {
-            var request = await context.CustomerContentNormalizedRequests
-                .Find(x => x.Id == @event.NormalizedRequestId)
-                .FirstAsync();
+            var request = await customerContentRepository.GetByIdAsync(@event.NormalizedRequestId);
 
             request.OutlineProviderTrackId = providerTrackId;
             request.Status = StatusNames.OutlineProviderPolling;
             request.OutlineStatus = StatusNames.Polling;
             request.CurrentStep = EventNames.OutlineProviderPollingStarted;
             request.NextOutlinePollAtUtc = DateTime.UtcNow.AddSeconds(outlinePollingSettings.IntervalSeconds);
-            request.UpdatedAtUtc = DateTime.UtcNow;
 
-            await ReplaceCustomerAsync(request);
+            await customerContentRepository.UpdateAsync(request);
             return;
         }
 
@@ -453,10 +426,8 @@ public sealed class NormalizerOperationAppService(
             .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineProviderTrackId)}", providerTrackId)
             .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineStatus)}", StatusNames.Polling)
             .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextOutlinePollAtUtc)}", DateTime.UtcNow.AddSeconds(outlinePollingSettings.IntervalSeconds))
-            .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.UpdatedAtUtc)}", DateTime.UtcNow)
             .Set(x => x.Status, StatusNames.OutlineProviderPolling)
-            .Set(x => x.CurrentStep, EventNames.OutlineProviderPollingStarted)
-            .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);
+            .Set(x => x.CurrentStep, EventNames.OutlineProviderPollingStarted);
 
         await UpdateAnalysisItemAsync(
             @event.NormalizedRequestId,
@@ -471,9 +442,7 @@ public sealed class NormalizerOperationAppService(
 
         if (@event.RefContentType == ContentType.CustomerContent)
         {
-            var customerContentNormalizedRequest = await context.CustomerContentNormalizedRequests
-                .Find(x => x.Id == @event.NormalizedRequestId)
-                .FirstAsync();
+            var customerContentNormalizedRequest = await customerContentRepository.GetByIdAsync(@event.NormalizedRequestId);
 
             await HandleCustomerExceptionAsync(
                 customerContentNormalizedRequest,
@@ -484,9 +453,7 @@ public sealed class NormalizerOperationAppService(
             return;
         }
 
-        var analysis = await context.AnalysisContentNormalizedRequests
-            .Find(x => x.Id == @event.NormalizedRequestId)
-            .FirstAsync();
+        var analysis = await analysisContentRepository.GetByIdAsync(@event.NormalizedRequestId);
 
         if (@event.CustomerContentIdForItem is null)
             throw new InvalidOperationException("CustomerContentIdForItem is required.");
@@ -507,9 +474,7 @@ public sealed class NormalizerOperationAppService(
 
         if (@event.RefContentType == ContentType.CustomerContent)
         {
-            var customerContentNormalizedRequest = await context.CustomerContentNormalizedRequests
-                .Find(x => x.Id == @event.NormalizedRequestId)
-                .FirstAsync();
+            var customerContentNormalizedRequest = await customerContentRepository.GetByIdAsync(@event.NormalizedRequestId);
 
             if (customerContentNormalizedRequest.Status == StatusNames.Completed ||
                 customerContentNormalizedRequest.CurrentStep == EventNames.NormalizerResultPublished ||
@@ -520,9 +485,8 @@ public sealed class NormalizerOperationAppService(
             customerContentNormalizedRequest.OutlineStatus = StatusNames.Completed;
             customerContentNormalizedRequest.CurrentStep = EventNames.CustomerContentOutlineCompleted;
             customerContentNormalizedRequest.OutlineResult = new OutlineResult { Script = @event.Script };
-            customerContentNormalizedRequest.UpdatedAtUtc = DateTime.UtcNow;
 
-            await ReplaceCustomerAsync(customerContentNormalizedRequest);
+            await customerContentRepository.UpdateAsync(customerContentNormalizedRequest);
 
             await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
                 eventMessage: new CustomerContentOutlineCompletedEto { RefContentId = customerContentNormalizedRequest.CustomerContentId, RefContentType = ContentType.CustomerContent, Script = @event.Script }
@@ -530,9 +494,7 @@ public sealed class NormalizerOperationAppService(
             return;
         }
 
-        var analysisContentNormalizedRequest = await context.AnalysisContentNormalizedRequests
-            .Find(x => x.Id == @event.NormalizedRequestId)
-            .FirstAsync();
+        var analysisContentNormalizedRequest = await analysisContentRepository.GetByIdAsync(@event.NormalizedRequestId);
 
         if (@event.CustomerContentIdForItem is null)
             throw new InvalidOperationException("CustomerContentIdForItem is required for analysis outline completion.");
@@ -549,9 +511,7 @@ public sealed class NormalizerOperationAppService(
             .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineResult)}", new OutlineResult { Script = @event.Script })
             .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.LastError)}", (string?)null)
             .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextRetryAtUtc)}", (DateTime?)null)
-            .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.UpdatedAtUtc)}", DateTime.UtcNow)
-            .Set(x => x.CurrentStep, EventNames.AnalysisItemOutlineCompleted)
-            .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);
+            .Set(x => x.CurrentStep, EventNames.AnalysisItemOutlineCompleted);
 
         await UpdateAnalysisItemAsync(
             analysisContentNormalizedRequest.Id,
@@ -573,9 +533,9 @@ public sealed class NormalizerOperationAppService(
 
     public async Task CompleteCustomerContentOutlineAsync(CustomerContentOutlineCompletedEto @event, CancellationToken cancellationToken = default)
     {
-        var customerContentNormalizedRequest = await context.CustomerContentNormalizedRequests
-            .Find(x => x.CustomerContentId == @event.RefContentId)
-            .FirstAsync();
+        var customerContentNormalizedRequest = await customerContentRepository.GetFirstOrDefaultAsync(
+            x => x.CustomerContentId == @event.RefContentId,
+            cancellationToken: cancellationToken);
 
         var videoInput = new
         {
@@ -586,19 +546,14 @@ public sealed class NormalizerOperationAppService(
             audioItems = new[] { new { customerContentId = customerContentNormalizedRequest.CustomerContentId, sortOrder = 1, text = customerContentNormalizedRequest.OutlineResult?.Script } }
         };
 
-        var completeResult = await context.CustomerContentNormalizedRequests.UpdateOneAsync(
-            x =>
-                x.Id == customerContentNormalizedRequest.Id &&
-                x.Status != StatusNames.Completed &&
-                x.CurrentStep != EventNames.NormalizerResultPublished,
-            Builders<CustomerContentNormalizedRequest>.Update
-                .Set(x => x.Status, StatusNames.Completed)
-                .Set(x => x.CurrentStep, EventNames.NormalizerResultPublished)
-                .Set(x => x.UpdatedAtUtc, DateTime.UtcNow)
-        );
-
-        if (completeResult.ModifiedCount == 0)
+        if (customerContentNormalizedRequest.Status == StatusNames.Completed ||
+            customerContentNormalizedRequest.CurrentStep == EventNames.NormalizerResultPublished)
             return;
+
+        customerContentNormalizedRequest.Status = StatusNames.Completed;
+        customerContentNormalizedRequest.CurrentStep = EventNames.NormalizerResultPublished;
+
+        await customerContentRepository.UpdateAsync(customerContentNormalizedRequest, cancellationToken);
 
         await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
             eventMessage: new NormalizerResultPublishedEto
@@ -641,21 +596,14 @@ public sealed class NormalizerOperationAppService(
                 .ToList()
         };
 
-        var completeUpdate = Builders<AnalysisContentNormalizedRequest>.Update
-            .Set(x => x.Status, StatusNames.Completed)
-            .Set(x => x.CurrentStep, EventNames.NormalizerResultPublished)
-            .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);
-
-        var completeResult = await context.AnalysisContentNormalizedRequests.UpdateOneAsync(
-            x =>
-                x.Id == analysisContentNormalizedRequest.Id &&
-                x.Status != StatusNames.Completed &&
-                x.CurrentStep != EventNames.NormalizerResultPublished,
-            completeUpdate
-        );
-
-        if (completeResult.ModifiedCount == 0)
+        if (analysisContentNormalizedRequest.Status == StatusNames.Completed ||
+            analysisContentNormalizedRequest.CurrentStep == EventNames.NormalizerResultPublished)
             return;
+
+        analysisContentNormalizedRequest.Status = StatusNames.Completed;
+        analysisContentNormalizedRequest.CurrentStep = EventNames.NormalizerResultPublished;
+
+        await analysisContentRepository.UpdateAsync(analysisContentNormalizedRequest, cancellationToken);
 
         await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
             eventMessage: new NormalizerResultPublishedEto
@@ -696,19 +644,10 @@ public sealed class NormalizerOperationAppService(
         return analysis.Status;
     }
 
-    private Task ReplaceCustomerAsync(CustomerContentNormalizedRequest request)
-    {
-        return context.CustomerContentNormalizedRequests.ReplaceOneAsync(
-            x => x.Id == request.Id,
-            request
-        );
-    }
 
     private Task<AnalysisContentNormalizedRequest> GetAnalysisContentNormalizedRequestAsync(Guid analysisContentId)
     {
-        return context.AnalysisContentNormalizedRequests
-            .Find(x => x.AnalysisContentId == analysisContentId)
-            .FirstAsync();
+        return analysisContentRepository.GetFirstOrDefaultAsync(x => x.AnalysisContentId == analysisContentId);
     }
 
     private async Task FailCustomerAsync(CustomerContentNormalizedRequest request, string step, Exception ex, bool retryable)
@@ -717,9 +656,8 @@ public sealed class NormalizerOperationAppService(
         request.CurrentStep = step;
         request.LastError = ex.Message;
         request.NextRetryAtUtc = null;
-        request.UpdatedAtUtc = DateTime.UtcNow;
 
-        await ReplaceCustomerAsync(request);
+        await customerContentRepository.UpdateAsync(request);
 
         await EventBus.PublishAsync(
             parentMessage: ParentIntegrationEvent,
@@ -762,9 +700,7 @@ public sealed class NormalizerOperationAppService(
         request.NextRetryAtUtc = DateTime.UtcNow.Add(
             retryDelayCalculator.Calculate(request.RetryCount));
 
-        request.UpdatedAtUtc = DateTime.UtcNow;
-
-        await ReplaceCustomerAsync(request);
+        await customerContentRepository.UpdateAsync(request);
 
         await EventBus.PublishAsync(
             parentMessage: ParentIntegrationEvent,
@@ -810,11 +746,9 @@ public sealed class NormalizerOperationAppService(
             .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.LastError)}", ex.Message)
             .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.RetryCount)}", retryCount)
             .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextRetryAtUtc)}", nextRetryAtUtc)
-            .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.UpdatedAtUtc)}", DateTime.UtcNow)
             .Set(x => x.Status, StatusNames.WaitingRetry)
             .Set(x => x.CurrentStep, step)
-            .Set(x => x.LastError, ex.Message)
-            .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);
+            .Set(x => x.LastError, ex.Message);
 
         if (step == EventNames.AnalysisItemScrapingStarted)
         {
@@ -855,11 +789,9 @@ public sealed class NormalizerOperationAppService(
             .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentStep)}", step)
             .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.LastError)}", ex.Message)
             .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextRetryAtUtc)}", (DateTime?)null)
-            .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.UpdatedAtUtc)}", DateTime.UtcNow)
             .Set(x => x.Status, StatusNames.Failed)
             .Set(x => x.CurrentStep, step)
-            .Set(x => x.LastError, ex.Message)
-            .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);
+            .Set(x => x.LastError, ex.Message);
 
         if (step == EventNames.AnalysisItemScrapingStarted)
             update = update.Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.ScrapingStatus)}", StatusNames.Failed);
@@ -889,61 +821,37 @@ public sealed class NormalizerOperationAppService(
         );
     }
 
-    private Task UpdateAnalysisParentAsync(Guid id, string status, string currentStep, string? lastError)
+    private async Task UpdateAnalysisParentAsync(Guid id, string status, string currentStep, string? lastError)
     {
-        var update = Builders<AnalysisContentNormalizedRequest>.Update
-            .Set(x => x.Status, status)
-            .Set(x => x.CurrentStep, currentStep)
-            .Set(x => x.LastError, lastError)
-            .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);
+        var request = await analysisContentRepository.GetByIdAsync(id);
+        request.Status = status;
+        request.CurrentStep = currentStep;
+        request.LastError = lastError;
 
-        return context.AnalysisContentNormalizedRequests.UpdateOneAsync(
-            x => x.Id == id,
-            update
-        );
+        await analysisContentRepository.UpdateAsync(request);
     }
 
     private Task UpdateAnalysisItemAsync(Guid analysisRequestId, Guid customerContentId, UpdateDefinition<AnalysisContentNormalizedRequest> update)
-    {
-        var filter = Builders<AnalysisContentNormalizedRequest>.Filter.And(
-            Builders<AnalysisContentNormalizedRequest>.Filter.Eq(x => x.Id, analysisRequestId),
-            Builders<AnalysisContentNormalizedRequest>.Filter.ElemMatch(
-                x => x.Items,
-                i => i.CustomerContentId == customerContentId));
-
-        return context.AnalysisContentNormalizedRequests.UpdateOneAsync(
-            filter,
-            update
-        );
-    }
+        => analysisContentRepository.UpdateItemWithFilterAsync(analysisRequestId, customerContentId, update);
 
     private async Task RecalculateAndUpdateAnalysisParentAsync(Guid analysisRequestId, string currentStep, string? lastError)
     {
-        var analysis = await context.AnalysisContentNormalizedRequests
-            .Find(x => x.Id == analysisRequestId)
-            .FirstAsync();
+        var analysis = await analysisContentRepository.GetByIdAsync(analysisRequestId);
 
         string status = CalculateAnalysisParentStatus(analysis);
 
-        var filter = status == StatusNames.OutlineCompleted
-            ? Builders<AnalysisContentNormalizedRequest>.Filter.And(
-                Builders<AnalysisContentNormalizedRequest>.Filter.Eq(x => x.Id, analysisRequestId),
-                Builders<AnalysisContentNormalizedRequest>.Filter.Ne(x => x.Status, StatusNames.Completed))
-            : Builders<AnalysisContentNormalizedRequest>.Filter.And(
-                Builders<AnalysisContentNormalizedRequest>.Filter.Eq(x => x.Id, analysisRequestId),
-                Builders<AnalysisContentNormalizedRequest>.Filter.Nin(
-                    x => x.Status,
-                    new[] { StatusNames.Completed, StatusNames.OutlineCompleted }));
+        // Only update if status is not already completed
+        if (status == StatusNames.OutlineCompleted && analysis.Status == StatusNames.Completed)
+            return;
 
-        var update = Builders<AnalysisContentNormalizedRequest>.Update
-            .Set(x => x.Status, status)
-            .Set(x => x.CurrentStep, currentStep)
-            .Set(x => x.LastError, lastError)
-            .Set(x => x.UpdatedAtUtc, DateTime.UtcNow);
+        if (status != StatusNames.OutlineCompleted &&
+            (analysis.Status == StatusNames.Completed || analysis.Status == StatusNames.OutlineCompleted))
+            return;
 
-        await context.AnalysisContentNormalizedRequests.UpdateOneAsync(
-            filter,
-            update
-        );
+        analysis.Status = status;
+        analysis.CurrentStep = currentStep;
+        analysis.LastError = lastError;
+
+        await analysisContentRepository.UpdateAsync(analysis);
     }
 }
