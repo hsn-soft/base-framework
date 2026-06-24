@@ -1,24 +1,16 @@
+using System.Reflection;
 using Hhs.FeedRService.Domain.ReportingDomain.Entities.MongoDB;
 using Hhs.FeedRService.Domain.ReportingDomain.Enums;
 using Hhs.FeedRService.Domain.ReportingDomain.Repositories.MongoDB;
 using Hhs.FeedRService.MongoDb.Context;
 using HsnSoft.Base.Domain.Repositories;
 using MongoDB.Driver;
-using System.Reflection;
 
-namespace Hhs.FeedRService.MongoDb.Repositories.MongoDB;
+namespace Hhs.FeedRService.MongoDb.Repositories;
 
-public sealed class MongoRawGoogleAdManagerResponseRepository
-    : MongoGenericRepository<RawGoogleAdManagerResponse, Guid>, IRawGoogleAdManagerResponseRepository
+public sealed class MongoRawGoogleAdManagerResponseRepository(IServiceProvider provider, FeedRServiceDbContext dbContext) : MongoGenericRepository<RawGoogleAdManagerResponse, Guid>(provider, dbContext), IRawGoogleAdManagerResponseRepository
 {
-    private readonly FeedRServiceDbContext _dbContext;
     private IMongoCollection<RawGoogleAdManagerResponse> _mongoCollection;
-
-    public MongoRawGoogleAdManagerResponseRepository(IServiceProvider provider, FeedRServiceDbContext dbContext)
-        : base(provider, dbContext)
-    {
-        _dbContext = dbContext;
-    }
 
     private IMongoCollection<RawGoogleAdManagerResponse> GetRawCollection()
     {
@@ -27,8 +19,8 @@ public sealed class MongoRawGoogleAdManagerResponseRepository
         try
         {
             // Try to extract underlying MongoDB collection from the ITrackingMongoCollection
-            var trackingCollection = _dbContext.RawGoogleAdManagerResponses;
-            
+            var trackingCollection = dbContext.RawGoogleAdManagerResponses;
+
             // Get the underlying IMongoCollection via reflection or direct cast
             var property = trackingCollection.GetType().GetProperty("InnerCollection", BindingFlags.NonPublic | BindingFlags.Instance);
             if (property?.GetValue(trackingCollection) is IMongoCollection<RawGoogleAdManagerResponse> innerCollection)
@@ -36,7 +28,7 @@ public sealed class MongoRawGoogleAdManagerResponseRepository
                 _mongoCollection = innerCollection;
                 return _mongoCollection;
             }
-            
+
             // Fallback: create a new collection reference directly
             // Extract database name from the tracking collection
             var field = trackingCollection.GetType().GetField("_collection", BindingFlags.NonPublic | BindingFlags.Instance);
@@ -52,7 +44,7 @@ public sealed class MongoRawGoogleAdManagerResponseRepository
         }
 
         // Fallback: use the DbContext collection
-        _mongoCollection = _dbContext.RawGoogleAdManagerResponses;
+        _mongoCollection = dbContext.RawGoogleAdManagerResponses;
         return _mongoCollection;
     }
 
@@ -68,12 +60,12 @@ public sealed class MongoRawGoogleAdManagerResponseRepository
         var filter = Builders<RawGoogleAdManagerResponse>.Filter.In(
             x => x.ProcessedStatus,
             new[] { DerivationStatus.Pending, DerivationStatus.Failed });
-        
+
         var list = await collection
             .Find(filter)
             .Limit(maxCount)
             .ToListAsync(cancellationToken);
-        
+
         return list;
     }
 
@@ -88,26 +80,26 @@ public sealed class MongoRawGoogleAdManagerResponseRepository
     {
         var collection = GetRawCollection();
         var filter = Builders<RawGoogleAdManagerResponse>.Filter.Eq(x => x.Id, id);
-        
+
         var update = status switch
         {
             DerivationStatus.Processing => Builders<RawGoogleAdManagerResponse>.Update
                 .Set(x => x.ProcessedStatus, status)
                 .Set(x => x.ProcessedAt, DateTime.UtcNow),
-            
+
             DerivationStatus.Completed => Builders<RawGoogleAdManagerResponse>.Update
                 .Set(x => x.ProcessedStatus, status)
                 .Set(x => x.ProcessedAt, DateTime.UtcNow),
-            
+
             DerivationStatus.Failed => Builders<RawGoogleAdManagerResponse>.Update
                 .Set(x => x.ProcessedStatus, status)
                 .Set(x => x.ProcessedAt, DateTime.UtcNow)
                 .Set(x => x.ProcessingError, error),
-            
+
             _ => Builders<RawGoogleAdManagerResponse>.Update
                 .Set(x => x.ProcessedStatus, status)
         };
-        
+
         await collection.UpdateOneAsync(filter, update, cancellationToken: cancellationToken);
     }
 }

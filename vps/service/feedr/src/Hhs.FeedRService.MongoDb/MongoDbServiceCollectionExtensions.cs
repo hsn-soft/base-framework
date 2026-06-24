@@ -3,7 +3,7 @@ using Hhs.FeedRService.Domain.ConfigurationDomain.Repositories.MongoDB;
 using Hhs.FeedRService.Domain.ReportingDomain.Repositories.MongoDB;
 using Hhs.FeedRService.MongoDb.Configurations;
 using Hhs.FeedRService.MongoDb.Context;
-using Hhs.FeedRService.MongoDb.Repositories.MongoDB;
+using Hhs.FeedRService.MongoDb.Repositories;
 using HsnSoft.Base.Auditing;
 using HsnSoft.Base.Data;
 using HsnSoft.Base.Domain.Repositories;

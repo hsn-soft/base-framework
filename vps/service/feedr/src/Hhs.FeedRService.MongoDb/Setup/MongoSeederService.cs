@@ -5,7 +5,7 @@ using HsnSoft.Base.Data;
 using HsnSoft.Base.Logging.Abstracts;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Hhs.FeedRService.MongoDb;
+namespace Hhs.FeedRService.MongoDb.Setup;
 
 public sealed class MongoSeederService(IServiceScopeFactory serviceScopeFactory) : IBasicDataSeeder
 {

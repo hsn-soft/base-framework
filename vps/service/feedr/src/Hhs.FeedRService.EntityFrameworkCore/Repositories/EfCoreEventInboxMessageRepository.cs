@@ -4,7 +4,7 @@ using Hhs.FeedRService.EntityFrameworkCore.Context;
 using HsnSoft.Base.Domain.Models;
 using HsnSoft.Base.Domain.Repositories;
 
-namespace Hhs.FeedRService.EntityFrameworkCore.Repositories.PostgreSQL;
+namespace Hhs.FeedRService.EntityFrameworkCore.Repositories;
 
 public sealed class EfCoreEventInboxMessageRepository(
     IServiceProvider provider,

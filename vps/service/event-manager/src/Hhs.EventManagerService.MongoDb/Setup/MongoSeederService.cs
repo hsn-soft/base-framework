@@ -7,7 +7,7 @@ using HsnSoft.Base.Users;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
 
-namespace Hhs.EventManagerService.MongoDb;
+namespace Hhs.EventManagerService.MongoDb.Setup;
 
 public sealed class MongoSeederService : IBasicDataSeeder
 {

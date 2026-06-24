@@ -4,6 +4,7 @@ using Hhs.EventManagerService.Application.Services;
 using Hhs.EventManagerService.Domain.Configuration;
 using Hhs.EventManagerService.Domain.Localization;
 using Hhs.EventManagerService.MongoDb;
+using Hhs.EventManagerService.MongoDb.Setup;
 using Hhs.EventManagerService.Workers;
 using Hhs.Shared.Helper.Consts;
 using Hhs.Shared.Hosting.Extensions;

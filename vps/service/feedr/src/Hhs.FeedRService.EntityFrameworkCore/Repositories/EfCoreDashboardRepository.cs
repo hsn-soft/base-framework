@@ -5,7 +5,7 @@ using HsnSoft.Base.Domain.Repositories;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 
-namespace Hhs.FeedRService.EntityFrameworkCore.Repositories.PostgreSQL;
+namespace Hhs.FeedRService.EntityFrameworkCore.Repositories;
 
 public sealed class EfCoreDashboardRepository(
     IServiceProvider provider,
@@ -80,11 +80,11 @@ public sealed class EfCoreDashboardRepository(
     public async Task<DashboardResponse> UpsertDailyReportAsync(DashboardResponse draft, CancellationToken cancellationToken = default)
     {
         var existing = await _dbContext.DashboardResponses.FirstOrDefaultAsync(
-            x => x.AdUnitClientId == draft.AdUnitClientId && 
+            x => x.AdUnitClientId == draft.AdUnitClientId &&
                  x.ReportDate == draft.ReportDate &&
                  x.DemandChannel == draft.DemandChannel &&
                  x.DemandSubchannelName == draft.DemandSubchannelName &&
-                 x.OrderId == draft.OrderId, 
+                 x.OrderId == draft.OrderId,
             cancellationToken);
 
         if (existing == null)
@@ -193,14 +193,14 @@ public sealed class EfCoreDashboardRepository(
 
         if (!string.IsNullOrEmpty(demandChannel))
             query = query.Where(x => x.dr.DemandChannel == demandChannel);
-        
+
         if (!string.IsNullOrEmpty(demandSubchannelName))
             query = query.Where(x => x.dr.DemandSubchannelName == demandSubchannelName);
 
         if (!string.IsNullOrEmpty(orderId))
             query = query.Where(x => x.dr.OrderId == orderId);
 
-        if (!string.IsNullOrEmpty(orderName))   
+        if (!string.IsNullOrEmpty(orderName))
             query = query.Where(x => x.dr.OrderName == orderName);
 
         return await query.OrderBy(x => x.dr.ReportDate).Select(x => x.dr).ToListAsync(cancellationToken);
@@ -225,7 +225,7 @@ public sealed class EfCoreDashboardRepository(
             join topLevel in _dbContext.AdUnitTopLevels on client.AdUnitTopLevelId equals topLevel.Id
             join network in _dbContext.AdNetworks on topLevel.AdNetworkId equals network.Id
             where dr.ReportDate >= fromDate && dr.ReportDate <= toDate &&
-                  dr.DemandChannel == demandChannel && 
+                  dr.DemandChannel == demandChannel &&
                   dr.DemandSubchannelName == demandSubchannelName
             select new { dr, client, topLevel, network };
 

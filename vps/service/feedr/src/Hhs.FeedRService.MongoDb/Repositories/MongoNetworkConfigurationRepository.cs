@@ -1,23 +1,15 @@
-using Hhs.FeedRService.MongoDb.Context;
-using HsnSoft.Base.Domain.Repositories;
-using MongoDB.Driver;
 using System.Reflection;
 using Hhs.FeedRService.Domain.ConfigurationDomain.Entities.MongoDB;
 using Hhs.FeedRService.Domain.ConfigurationDomain.Repositories.MongoDB;
+using Hhs.FeedRService.MongoDb.Context;
+using HsnSoft.Base.Domain.Repositories;
+using MongoDB.Driver;
 
-namespace Hhs.FeedRService.MongoDb.Repositories.MongoDB;
+namespace Hhs.FeedRService.MongoDb.Repositories;
 
-public sealed class MongoNetworkConfigurationRepository
-    : MongoGenericRepository<NetworkConfiguration, Guid>, INetworkConfigurationRepository
+public sealed class MongoNetworkConfigurationRepository(IServiceProvider provider, FeedRServiceDbContext dbContext) : MongoGenericRepository<NetworkConfiguration, Guid>(provider, dbContext), INetworkConfigurationRepository
 {
-    private readonly FeedRServiceDbContext _dbContext;
     private IMongoCollection<NetworkConfiguration> _mongoCollection;
-
-    public MongoNetworkConfigurationRepository(IServiceProvider provider, FeedRServiceDbContext dbContext)
-        : base(provider, dbContext)
-    {
-        _dbContext = dbContext;
-    }
 
     private IMongoCollection<NetworkConfiguration> GetRawCollection()
     {
@@ -25,7 +17,7 @@ public sealed class MongoNetworkConfigurationRepository
 
         try
         {
-            var trackingCollection = _dbContext.NetworkConfigurations;
+            var trackingCollection = dbContext.NetworkConfigurations;
             var property = trackingCollection.GetType().GetProperty("InnerCollection", BindingFlags.NonPublic | BindingFlags.Instance);
             if (property?.GetValue(trackingCollection) is IMongoCollection<NetworkConfiguration> innerCollection)
             {
@@ -44,7 +36,7 @@ public sealed class MongoNetworkConfigurationRepository
         {
         }
 
-        _mongoCollection = _dbContext.NetworkConfigurations;
+        _mongoCollection = dbContext.NetworkConfigurations;
         return _mongoCollection;
     }
 

@@ -1,7 +1,7 @@
 using Hhs.FeedRService.Domain.InfraDomain.Repositories.PostgreSQL;
 using Hhs.FeedRService.Domain.ReportingDomain.Repositories.PostgreSQL;
 using Hhs.FeedRService.EntityFrameworkCore.Context;
-using Hhs.FeedRService.EntityFrameworkCore.Repositories.PostgreSQL;
+using Hhs.FeedRService.EntityFrameworkCore.Repositories;
 using HsnSoft.Base.Auditing;
 using HsnSoft.Base.Data;
 using HsnSoft.Base.Domain.Repositories;
