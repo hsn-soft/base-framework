@@ -1,23 +1,34 @@
 using Hhs.Shared.Helper;
-using MongoDB.Bson.Serialization.Attributes;
+using HsnSoft.Base.Domain.Entities.Auditing;
 
 namespace Hhs.VideoGeneratorService.Domain.MediaDomain.Entities;
 
-public sealed class VideoGeneratorInboxMessage
+public sealed class VideoGeneratorInboxMessage : AuditedEntity<Guid>
 {
-    [BsonId]
-    public Guid EventId { get; set; }
+    // Correlation & Tracing
+    public Guid? CorrelationId { get; private set; }
 
-    public Guid? CorrelationId { get; set; }
+    // Event Data
+    public string EventName { get; private set; } = default!;
+    public string Payload { get; private set; } = default!;
 
-    public string EventName { get; set; } = default!;
-    public string Payload { get; set; } = default!;
+    // Status & Tracking
     public string Status { get; set; } = InboxStatuses.Started;
-
-    public DateTime CreatedAtUtc { get; set; }
     public DateTime? ProcessedAtUtc { get; set; }
 
+    // Error Handling
     public string? ErrorMessage { get; set; }
 
+    // Retry Management
     public int RetryCount { get; set; } = 0;
+
+    private VideoGeneratorInboxMessage() { }
+
+    public VideoGeneratorInboxMessage(Guid id, string eventName, string payload, Guid? correlationId = null)
+    {
+        Id = id;
+        EventName = eventName;
+        Payload = payload;
+        CorrelationId = correlationId;
+    }
 }

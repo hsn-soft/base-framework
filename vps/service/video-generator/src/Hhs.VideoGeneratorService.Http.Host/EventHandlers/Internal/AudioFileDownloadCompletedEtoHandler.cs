@@ -7,7 +7,7 @@ using HsnSoft.Base.Logging.Abstracts;
 namespace Hhs.VideoGeneratorService.EventHandlers.Internal;
 
 public class AudioFileDownloadCompletedEtoHandler(
-    VideoGeneratorInboxStore inboxStore,
+    VideoGeneratorInboxStoreService inboxStore,
     IAppConsoleLogger logger,
     VideoOperationAppService videoOperationAppService
 ) : VideoEventHandlerBase<AudioFileDownloadCompletedEto>(inboxStore)

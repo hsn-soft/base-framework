@@ -1,17 +1,10 @@
 using Hhs.Shared.Helper.Enums;
-using MongoDB.Bson.Serialization.Attributes;
+using HsnSoft.Base.Domain.Entities.Auditing;
 
 namespace Hhs.VideoGeneratorService.Domain.MediaDomain.Entities;
 
-public sealed class VideoRequest
+public sealed class VideoRequest : AuditedEntity<Guid>
 {
-    [BsonId]
-    public Guid Id { get; set; }
-
-    // Audit Fields
-    public DateTime CreatedAtUtc { get; set; }
-    public DateTime UpdatedAtUtc { get; set; }
-
     // Correlation & Context
     public string? CorrelationId { get; set; }
     public Guid SourceEventId { get; set; }
@@ -42,11 +35,21 @@ public sealed class VideoRequest
     public string? VideoStorageUrl { get; set; }
     public string? VideoCdnUrl { get; set; }
 
-
     // Polling & Retry
     public DateTime? NextProviderPollAtUtc { get; set; }
     public int ProviderPollingCount { get; set; }
     public int RetryCount { get; set; }
     public DateTime? NextRetryAtUtc { get; set; }
     public string? LastError { get; set; }
+
+    private VideoRequest() { }
+
+    public VideoRequest(Guid id, string scopeKey, Guid refContentId, ContentType refContentType, Guid sourceEventId)
+    {
+        Id = id;
+        ScopeKey = scopeKey;
+        RefContentId = refContentId;
+        RefContentType = refContentType;
+        SourceEventId = sourceEventId;
+    }
 }

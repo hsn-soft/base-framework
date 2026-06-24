@@ -56,32 +56,19 @@ public sealed class VideoOperationAppService(
 
         var videoRequestId = Guid.NewGuid();
 
-        var videoRequest = new VideoRequest
+        var videoRequest = new VideoRequest(
+            videoRequestId,
+            @event.ScopeKey,
+            @event.RefContentId,
+            @event.RefContentType,
+            eventId)
         {
-            Id = videoRequestId,
-            CreatedAtUtc = DateTime.UtcNow,
-            UpdatedAtUtc = DateTime.UtcNow,
             CorrelationId = correlationId,
-            SourceEventId = eventId,
-            RefContentId = @event.RefContentId,
-            RefContentType = @event.RefContentType,
-            ScopeKey = @event.ScopeKey,
             Status = StatusNames.Created,
             CurrentStep = EventNames.VideoRequestCreated,
             MediaInputJson = @event.VideoInputJson,
             AudioProviderKey = audioProviderKey,
-            VideoProviderKey = videoProviderKey,
-            VideoProviderTrackingId = null,
-            VideoProviderUrl = null,
-            VideoLocalPath = null,
-            VideoCdnProviderKey = null,
-            VideoStorageUrl = null,
-            VideoCdnUrl = null,
-            NextProviderPollAtUtc = null,
-            ProviderPollingCount = 0,
-            RetryCount = 0,
-            NextRetryAtUtc = null,
-            LastError = null
+            VideoProviderKey = videoProviderKey
         };
 
         await context.VideoRequests.InsertOneAsync(videoRequest);
@@ -97,7 +84,6 @@ public sealed class VideoOperationAppService(
 
         videoRequest.Status = StatusNames.Started;
         videoRequest.CurrentStep = EventNames.VideoOperationStarted;
-        videoRequest.UpdatedAtUtc = DateTime.UtcNow;
 
         await ReplaceVideoAsync(videoRequest);
 
@@ -144,33 +130,20 @@ public sealed class VideoOperationAppService(
 
             var audioRequestId = Guid.NewGuid();
 
-            var audioRequest = new AudioRequest
+            var audioRequest = new AudioRequest(
+                audioRequestId,
+                videoRequest.Id,
+                videoRequest.RefContentId,
+                videoRequest.RefContentType,
+                videoRequest.ScopeKey,
+                eventId,
+                item.Text,
+                videoRequest.AudioProviderKey,
+                item.SortOrder)
             {
-                Id = audioRequestId,
-                CreatedAtUtc = DateTime.UtcNow,
-                UpdatedAtUtc = DateTime.UtcNow,
                 CorrelationId = videoRequest.CorrelationId,
-                SourceEventId = eventId,
-                VideoRequestId = videoRequest.Id,
-                RefContentId = videoRequest.RefContentId,
-                RefContentType = videoRequest.RefContentType,
-                ScopeKey = videoRequest.ScopeKey,
                 Status = StatusNames.AudioRequestCreated,
-                CurrentStep = EventNames.AudioRequestCreated,
-                SortOrder = item.SortOrder,
-                InputText = item.Text,
-                AudioProviderKey = videoRequest.AudioProviderKey,
-                AudioProviderTrackingId = null,
-                AudioProviderUrl = null,
-                AudioLocalPath = null,
-                AudioStorageUrl = null,
-                AudioCdnUrl = null,
-                AudioCdnProviderKey = null,
-                NextProviderPollAtUtc = null,
-                ProviderPollingCount = 0,
-                RetryCount = 0,
-                NextRetryAtUtc = null,
-                LastError = null
+                CurrentStep = EventNames.AudioRequestCreated
             };
 
             await context.AudioRequests.InsertOneAsync(audioRequest);
@@ -190,7 +163,6 @@ public sealed class VideoOperationAppService(
         {
             audioRequest.Status = StatusNames.AudioProviderRequestStarted;
             audioRequest.CurrentStep = EventNames.AudioProviderRequestStarted;
-            audioRequest.UpdatedAtUtc = DateTime.UtcNow;
 
             await ReplaceAudioAsync(audioRequest);
 
@@ -206,7 +178,6 @@ public sealed class VideoOperationAppService(
 
                 audioRequest.Status = StatusNames.AudioProviderCompleted;
                 audioRequest.CurrentStep = EventNames.AudioProviderCompleted;
-                audioRequest.UpdatedAtUtc = DateTime.UtcNow;
 
                 await ReplaceAudioAsync(audioRequest);
 
@@ -225,7 +196,6 @@ public sealed class VideoOperationAppService(
             audioRequest.CurrentStep = EventNames.AudioProviderPollingStarted;
             audioRequest.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(videoPollingSettings.ErrorRescheduleDelaySeconds);
             audioRequest.ProviderPollingCount = 0;
-            audioRequest.UpdatedAtUtc = DateTime.UtcNow;
 
             await ReplaceAudioAsync(audioRequest);
 
@@ -259,7 +229,6 @@ public sealed class VideoOperationAppService(
             audioRequest.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(videoPollingSettings.ErrorRescheduleDelaySeconds);
 
         audioRequest.LastError = null;
-        audioRequest.UpdatedAtUtc = DateTime.UtcNow;
 
         await ReplaceAudioAsync(audioRequest);
     }
@@ -279,7 +248,6 @@ public sealed class VideoOperationAppService(
         {
             audioRequest.Status = StatusNames.Downloading;
             audioRequest.CurrentStep = EventNames.AudioFileDownloadStarted;
-            audioRequest.UpdatedAtUtc = DateTime.UtcNow;
 
             await ReplaceAudioAsync(audioRequest);
 
@@ -293,7 +261,6 @@ public sealed class VideoOperationAppService(
 
             audioRequest.Status = StatusNames.Downloaded;
             audioRequest.CurrentStep = EventNames.AudioFileDownloadCompleted;
-            audioRequest.UpdatedAtUtc = DateTime.UtcNow;
 
             await ReplaceAudioAsync(audioRequest);
 
@@ -321,7 +288,6 @@ public sealed class VideoOperationAppService(
         {
             audioRequest.Status = StatusNames.AudioFileUploading;
             audioRequest.CurrentStep = EventNames.AudioFileUploadStarted;
-            audioRequest.UpdatedAtUtc = DateTime.UtcNow;
 
             await ReplaceAudioAsync(audioRequest);
 
@@ -352,7 +318,6 @@ public sealed class VideoOperationAppService(
 
             audioRequest.Status = StatusNames.AudioFileUploadCompleted;
             audioRequest.CurrentStep = EventNames.AudioFileUploadCompleted;
-            audioRequest.UpdatedAtUtc = DateTime.UtcNow;
 
             await ReplaceAudioAsync(audioRequest);
 
@@ -410,7 +375,6 @@ public sealed class VideoOperationAppService(
                     .Set(x => x.Status, StatusNames.VideoProviderRequestStarting)
                     .Set(x => x.CurrentStep, EventNames.VideoProviderRequestStarted)
                     .Set(x => x.LastError, null)
-                    .Set(x => x.UpdatedAtUtc, DateTime.UtcNow)
             );
 
             if (lockResult.ModifiedCount == 0)
@@ -448,7 +412,6 @@ public sealed class VideoOperationAppService(
         {
             videoRequest.Status = StatusNames.VideoProviderRequestStarted;
             videoRequest.CurrentStep = EventNames.VideoProviderRequestStarted;
-            videoRequest.UpdatedAtUtc = DateTime.UtcNow;
 
             await ReplaceVideoAsync(videoRequest);
 
@@ -464,7 +427,6 @@ public sealed class VideoOperationAppService(
 
                 videoRequest.Status = StatusNames.VideoProviderCompleted;
                 videoRequest.CurrentStep = EventNames.VideoProviderCompleted;
-                videoRequest.UpdatedAtUtc = DateTime.UtcNow;
 
                 await ReplaceVideoAsync(videoRequest);
 
@@ -483,7 +445,6 @@ public sealed class VideoOperationAppService(
             videoRequest.CurrentStep = EventNames.VideoProviderPollingStarted;
             videoRequest.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(videoPollingSettings.ErrorRescheduleDelaySeconds);
             videoRequest.ProviderPollingCount = 0;
-            videoRequest.UpdatedAtUtc = DateTime.UtcNow;
 
             await ReplaceVideoAsync(videoRequest);
 
@@ -517,7 +478,6 @@ public sealed class VideoOperationAppService(
             videoRequest.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(videoPollingSettings.ErrorRescheduleDelaySeconds);
 
         videoRequest.LastError = null;
-        videoRequest.UpdatedAtUtc = DateTime.UtcNow;
 
         await ReplaceVideoAsync(videoRequest);
     }
@@ -537,7 +497,6 @@ public sealed class VideoOperationAppService(
         {
             videoRequest.Status = StatusNames.VideoDownloading;
             videoRequest.CurrentStep = EventNames.VideoFileDownloadStarted;
-            videoRequest.UpdatedAtUtc = DateTime.UtcNow;
 
             await ReplaceVideoAsync(videoRequest);
 
@@ -548,7 +507,6 @@ public sealed class VideoOperationAppService(
 
             videoRequest.Status = StatusNames.VideoDownloaded;
             videoRequest.CurrentStep = EventNames.VideoFileDownloadCompleted;
-            videoRequest.UpdatedAtUtc = DateTime.UtcNow;
 
             await ReplaceVideoAsync(videoRequest);
 
@@ -578,7 +536,6 @@ public sealed class VideoOperationAppService(
 
             videoRequest.Status = StatusNames.VideoFileUploading;
             videoRequest.CurrentStep = EventNames.VideoFileUploadStarted;
-            videoRequest.UpdatedAtUtc = DateTime.UtcNow;
 
             await ReplaceVideoAsync(videoRequest);
 
@@ -598,7 +555,6 @@ public sealed class VideoOperationAppService(
 
             videoRequest.Status = StatusNames.VideoFileUploadCompleted;
             videoRequest.CurrentStep = EventNames.VideoFileUploadCompleted;
-            videoRequest.UpdatedAtUtc = DateTime.UtcNow;
 
             await ReplaceVideoAsync(videoRequest);
 
@@ -626,7 +582,6 @@ public sealed class VideoOperationAppService(
         {
             videoRequest.Status = StatusNames.Completed;
             videoRequest.CurrentStep = EventNames.VideoGenerationResultPublished;
-            videoRequest.UpdatedAtUtc = DateTime.UtcNow;
 
             await ReplaceVideoAsync(videoRequest);
 
@@ -719,8 +674,6 @@ public sealed class VideoOperationAppService(
         request.NextRetryAtUtc = DateTime.UtcNow.Add(
             retryDelayCalculator.Calculate(request.RetryCount));
 
-        request.UpdatedAtUtc = DateTime.UtcNow;
-
         await ReplaceAudioAsync(request);
 
         await EventBus.PublishAsync(
@@ -743,7 +696,6 @@ public sealed class VideoOperationAppService(
         request.CurrentStep = step;
         request.LastError = ex.Message;
         request.NextRetryAtUtc = null;
-        request.UpdatedAtUtc = DateTime.UtcNow;
 
         await ReplaceAudioAsync(request);
 
@@ -788,8 +740,6 @@ public sealed class VideoOperationAppService(
         request.NextRetryAtUtc = DateTime.UtcNow.Add(
             retryDelayCalculator.Calculate(request.RetryCount));
 
-        request.UpdatedAtUtc = DateTime.UtcNow;
-
         await ReplaceVideoAsync(request);
 
         await EventBus.PublishAsync(
@@ -812,7 +762,6 @@ public sealed class VideoOperationAppService(
         request.CurrentStep = step;
         request.LastError = ex.Message;
         request.NextRetryAtUtc = null;
-        request.UpdatedAtUtc = DateTime.UtcNow;
 
         await ReplaceVideoAsync(request);
 

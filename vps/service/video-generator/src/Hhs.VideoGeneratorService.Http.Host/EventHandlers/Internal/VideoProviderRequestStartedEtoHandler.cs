@@ -7,7 +7,7 @@ using HsnSoft.Base.Logging.Abstracts;
 namespace Hhs.VideoGeneratorService.EventHandlers.Internal;
 
 public class VideoProviderRequestStartedEtoHandler(
-    VideoGeneratorInboxStore inboxStore,
+    VideoGeneratorInboxStoreService inboxStore,
     IAppConsoleLogger logger,
     VideoOperationAppService videoOperationAppService
 ) : VideoEventHandlerBase<VideoProviderRequestStartedEto>(inboxStore)

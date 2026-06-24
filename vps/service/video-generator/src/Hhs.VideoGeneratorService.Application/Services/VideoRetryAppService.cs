@@ -67,7 +67,6 @@ public sealed class VideoRetryAppService(
                     request.Status = StatusNames.Failed;
                     request.LastError = $"Unsupported audio retry step: {request.CurrentStep}";
                     request.NextRetryAtUtc = null;
-                    request.UpdatedAtUtc = DateTime.UtcNow;
 
                     await context.AudioRequests.ReplaceOneAsync(
                         x => x.Id == request.Id,
@@ -96,7 +95,6 @@ public sealed class VideoRetryAppService(
                 }
 
                 request.NextRetryAtUtc = null;
-                request.UpdatedAtUtc = DateTime.UtcNow;
 
                 await context.AudioRequests.ReplaceOneAsync(
                     x => x.Id == request.Id,
@@ -106,7 +104,6 @@ public sealed class VideoRetryAppService(
             catch
             {
                 request.NextRetryAtUtc = DateTime.UtcNow.AddSeconds(retrySettings.ClaimFailRescheduleDelaySeconds);
-                request.UpdatedAtUtc = DateTime.UtcNow;
 
                 await context.AudioRequests.ReplaceOneAsync(
                     x => x.Id == request.Id,
@@ -176,7 +173,6 @@ public sealed class VideoRetryAppService(
                     request.Status = StatusNames.Failed;
                     request.LastError = $"Unsupported video retry step: {request.CurrentStep}";
                     request.NextRetryAtUtc = null;
-                    request.UpdatedAtUtc = DateTime.UtcNow;
 
                     await context.VideoRequests.ReplaceOneAsync(
                         x => x.Id == request.Id,
@@ -204,7 +200,6 @@ public sealed class VideoRetryAppService(
                 }
 
                 request.NextRetryAtUtc = null;
-                request.UpdatedAtUtc = DateTime.UtcNow;
 
                 await context.VideoRequests.ReplaceOneAsync(
                     x => x.Id == request.Id,
@@ -214,7 +209,6 @@ public sealed class VideoRetryAppService(
             catch
             {
                 request.NextRetryAtUtc = DateTime.UtcNow.AddSeconds(retrySettings.ClaimFailRescheduleDelaySeconds);
-                request.UpdatedAtUtc = DateTime.UtcNow;
 
                 await context.VideoRequests.ReplaceOneAsync(
                     x => x.Id == request.Id,

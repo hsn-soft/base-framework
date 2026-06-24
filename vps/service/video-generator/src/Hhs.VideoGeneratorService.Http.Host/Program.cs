@@ -73,7 +73,7 @@ builder.Services.AddHttpClient();
 // ============================================================================
 // INBOX & EVENT IDEMPOTENCY
 // ============================================================================
-builder.Services.AddScoped<VideoGeneratorInboxStore>();
+builder.Services.AddScoped<VideoGeneratorInboxStoreService>();
 
 // ============================================================================
 // CUSTOM WORKERS (Polling & Retry Logic)

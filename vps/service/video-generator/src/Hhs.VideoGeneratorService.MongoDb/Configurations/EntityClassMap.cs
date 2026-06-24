@@ -13,5 +13,9 @@ public static class EntityClassMap
             map.SetIgnoreExtraElements(true);
             map.MapIdMember(x => x.Id);
         });
+
+        VideoRequestClassMap.Register();
+        AudioRequestClassMap.Register();
+        VideoGeneratorInboxMessageClassMap.Register();
     }
 }

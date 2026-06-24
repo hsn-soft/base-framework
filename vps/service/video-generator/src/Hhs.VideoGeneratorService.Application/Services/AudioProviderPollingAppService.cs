@@ -47,7 +47,6 @@ public sealed class AudioProviderPollingAppService(
                 {
                     request.Status = StatusNames.Failed;
                     request.LastError = ErrorMessages.AudioProviderPollingTimeout;
-                    request.UpdatedAtUtc = DateTime.UtcNow;
 
                     await ReplaceAudioAsync(request, cancellationToken);
 
@@ -76,7 +75,6 @@ public sealed class AudioProviderPollingAppService(
                 {
                     request.Status = StatusNames.Failed;
                     request.LastError = status.ErrorMessage ?? "Audio provider failed.";
-                    request.UpdatedAtUtc = DateTime.UtcNow;
 
                     await ReplaceAudioAsync(request, cancellationToken);
 
@@ -100,7 +98,6 @@ public sealed class AudioProviderPollingAppService(
                 {
                     request.ProviderPollingCount++;
                     request.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(pollingSettings.IntervalSeconds);
-                    request.UpdatedAtUtc = DateTime.UtcNow;
 
                     await ReplaceAudioAsync(request, cancellationToken);
                     continue;
@@ -117,7 +114,6 @@ public sealed class AudioProviderPollingAppService(
                 request.Status = StatusNames.AudioProviderCompleted;
                 request.CurrentStep = EventNames.AudioProviderCompleted;
                 request.LastError = null;
-                request.UpdatedAtUtc = DateTime.UtcNow;
 
                 await ReplaceAudioAsync(request, cancellationToken);
 
@@ -130,7 +126,6 @@ public sealed class AudioProviderPollingAppService(
             {
                 request.ProviderPollingCount++;
                 request.LastError = ex.Message;
-                request.UpdatedAtUtc = DateTime.UtcNow;
 
                 if (request.ProviderPollingCount >= 60)
                 {
@@ -179,8 +174,7 @@ public sealed class AudioProviderPollingAppService(
                 x.NextProviderPollAtUtc <= now &&
                 x.AudioProviderTrackingId != null,
             Builders<AudioRequest>.Update
-                .Set(x => x.NextProviderPollAtUtc, DateTime.UtcNow.AddSeconds(pollingSettings.ErrorRescheduleDelaySeconds))
-                .Set(x => x.UpdatedAtUtc, DateTime.UtcNow),
+                .Set(x => x.NextProviderPollAtUtc, DateTime.UtcNow.AddSeconds(pollingSettings.ErrorRescheduleDelaySeconds)),
             cancellationToken: cancellationToken);
     }
 

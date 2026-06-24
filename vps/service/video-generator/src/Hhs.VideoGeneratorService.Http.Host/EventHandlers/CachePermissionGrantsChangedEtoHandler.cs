@@ -7,7 +7,7 @@ using HsnSoft.Base.Logging.Abstracts;
 namespace Hhs.VideoGeneratorService.EventHandlers;
 
 public sealed class CachePermissionGrantsChangedEtoHandler(
-    VideoGeneratorInboxStore inboxStore,
+    VideoGeneratorInboxStoreService inboxStore,
     IAppConsoleLogger logger
 ) : VideoEventHandlerBase<CachePermissionGrantsChangedEto>(inboxStore)
 {
