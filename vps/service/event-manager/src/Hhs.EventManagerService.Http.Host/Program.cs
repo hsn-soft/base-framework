@@ -47,6 +47,25 @@ builder.WebHost.ConfigureKestrel((_, options) =>
 // ConfigureServices
 // =======================
 
+builder.Services
+    .AddScoped<Hhs.EventManagerService.Domain.InfraDomain.Repositories.IEventInboxMessageRepository>(sp =>
+        sp.GetRequiredService<Hhs.EventManagerService.MongoDb.Repositories.MongoEventInboxMessageRepository>())
+    .AddScoped<Hhs.EventManagerService.MongoDb.Repositories.MongoEventInboxMessageRepository>()
+    .AddScoped<Hhs.EventManagerService.Application.Infrastructure.ApplicationEventInboxMessageManager>()
+    .AddScoped<Hhs.EventManagerService.Application.Services.EventOperationRetryWorkerService>()
+    .AddSingleton<Hhs.EventManagerService.Domain.Configuration.EventManagerRetrySettings>(sp =>
+    {
+        var config = sp.GetRequiredService<IConfiguration>();
+        var settings = new Hhs.EventManagerService.Domain.Configuration.EventManagerRetrySettings();
+        var section = config.GetSection("RetryPolicy");
+        if (section.Exists())
+        {
+            section.Bind(settings);
+        }
+        return settings;
+    })
+    .AddHostedService<Hhs.EventManagerService.Http.Host.Workers.EventManagerRetryWorker>();
+
 builder.Services.AddMicroserviceHosting(builder.Configuration, typeof(Program))
     .AddJwtServerAuthentication(builder.Configuration, builder.Environment, "audience-service-event-manager")
     .AddPermissionAuthorization()
