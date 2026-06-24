@@ -3,7 +3,9 @@
     "allow": [
       "Bash(tee /tmp/build-output.log)",
       "Bash(git commit -m ' *)",
-      "Bash(chmod +x /private/tmp/claude-501/-Users-hasansahin-ws-tst-base-framework/86cfbd8a-b4e7-4c14-a87f-9e4c67fe701d/scratchpad/scan_entities.sh)"
+      "Bash(chmod +x /private/tmp/claude-501/-Users-hasansahin-ws-tst-base-framework/86cfbd8a-b4e7-4c14-a87f-9e4c67fe701d/scratchpad/scan_entities.sh)",
+      "Bash(chmod +x /tmp/find_domains.sh)",
+      "Bash(/tmp/find_domains.sh)"
     ]
   }
 }
