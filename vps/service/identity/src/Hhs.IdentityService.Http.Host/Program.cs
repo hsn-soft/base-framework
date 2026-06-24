@@ -48,6 +48,40 @@ builder.WebHost.ConfigureKestrel((_, options) =>
 // ConfigureServices
 // =======================
 
+// ============================================================================
+// DATABASE CONFIGURATION (PostgreSQL + EF Core)
+// ============================================================================
+// Configures PostgreSQL connection, Entity Framework Core repositories, and audit tracking
+builder.Services.AddServiceEfCoreDatabaseConfiguration(builder.Configuration, !builder.Environment.IsHostProduction());
+
+// ============================================================================
+// CORE SERVICE REGISTRATION
+// ============================================================================
+// Registers microservice hosting, authentication, authorization, health checks, and event bus
+builder.Services.AddMicroserviceHosting(builder.Configuration, typeof(Program))
+    .AddJwtServerAuthentication(builder.Configuration, builder.Environment, "audience-service-identity")
+    .AddPermissionAuthorization()
+    .AddMicroserviceUserTenantChecker()
+    .AddEventBus(builder.Configuration, typeof(EventHandlersAssemblyMarker).Assembly)
+    .AddHostingHealthChecks(builder.Configuration, "identity",
+        checkRedis: true,
+        checkBroker: true,
+        checkPostgresql: true,
+        postgresqlConnectionName: EfCoreDbProperties.ConnectionStringName)
+    .AddServiceApplicationConfiguration(builder.Configuration);
+
+// ============================================================================
+// DATA SEEDING
+// ============================================================================
+// Configures default data seeder for database initialization
+builder.Services.AddTransient<IBasicDataSeeder, EfCoreSeederService>();
+
+// ============================================================================
+// BACKGROUND WORKERS (Retry Logic & Event Recovery)
+// ============================================================================
+// Configures background service for retrying failed events with exponential backoff
+// Monitors EventInboxMessage table for Failed status and re-processes eligible events
+// Max 30 retries per event; runs every 10 seconds (configurable via RetryPolicy)
 builder.Services
     .AddScoped<Hhs.IdentityService.Domain.InfraDomain.Repositories.IEventInboxMessageRepository>(sp =>
         sp.GetRequiredService<Hhs.IdentityService.EntityFrameworkCore.Repositories.EfCoreEventInboxMessageRepository>())
@@ -66,22 +100,6 @@ builder.Services
         return settings;
     })
     .AddHostedService<Hhs.IdentityService.Http.Host.Workers.IdentityRetryWorker>();
-
-builder.Services.AddMicroserviceHosting(builder.Configuration, typeof(Program))
-    .AddJwtServerAuthentication(builder.Configuration, builder.Environment, "audience-service-identity")
-    .AddPermissionAuthorization()
-    .AddMicroserviceUserTenantChecker()
-    .AddEventBus(builder.Configuration, typeof(EventHandlersAssemblyMarker).Assembly)
-    .AddHostingHealthChecks(builder.Configuration, "identity",
-        checkRedis: true,
-        checkBroker: true,
-        checkPostgresql: true,
-        postgresqlConnectionName: EfCoreDbProperties.ConnectionStringName)
-    .AddServiceApplicationConfiguration(builder.Configuration)
-    .AddServiceEfCoreDatabaseConfiguration(builder.Configuration, !builder.Environment.IsHostProduction());
-
-// override DefaultBasicDataSeeder
-builder.Services.AddTransient<IBasicDataSeeder, EfCoreSeederService>();
 
 // Swagger
 if (!builder.Environment.IsHostProduction())

@@ -21,6 +21,10 @@ using HsnSoft.Base.Tracing;
 using Microsoft.Extensions.Options;
 using Serilog;
 
+// ============================================================================
+// SUBSCRIPTION SCOPE REGISTRY
+// ============================================================================
+// Initializes the subscription scope registry before builder creation for proper dependency tracking
 SubscriptionScopeRegistry.Initialize();
 
 var builder = WebApplication.CreateBuilder(args);
@@ -55,6 +59,16 @@ builder.WebHost.ConfigureKestrel((_, options) =>
 // ConfigureServices
 // =======================
 
+// ============================================================================
+// DATABASE CONFIGURATION (MongoDB)
+// ============================================================================
+// Configures MongoDB connection and repositories for text normalization data storage
+builder.Services.AddServiceMongoDatabaseConfiguration(builder.Configuration);
+
+// ============================================================================
+// CORE SERVICE REGISTRATION
+// ============================================================================
+// Registers microservice hosting, authentication, authorization, health checks, and event bus
 builder.Services.AddMicroserviceHosting(builder.Configuration, typeof(Program))
     .AddJwtServerAuthentication(builder.Configuration, builder.Environment, "audience-service-text-normalizer")
     .AddPermissionAuthorization()
@@ -64,13 +78,20 @@ builder.Services.AddMicroserviceHosting(builder.Configuration, typeof(Program))
         checkRedis: true,
         checkBroker: true,
         checkMongo: true, mongoConnectionName: MongoDbProperties.ConnectionStringName)
-    .AddServiceApplicationConfiguration(builder.Configuration)
-    .AddServiceMongoDatabaseConfiguration(builder.Configuration);
+    .AddServiceApplicationConfiguration(builder.Configuration);
 
-// override DefaultBasicDataSeeder
+// ============================================================================
+// DATA SEEDING
+// ============================================================================
+// Configures default data seeder for MongoDB initialization
 builder.Services.AddTransient<IBasicDataSeeder, MongoSeederService>();
 
-// PuppeTeer Graceful Shutdown
+// ============================================================================
+// SPECIAL INTEGRATIONS (Puppeteer Browser Management)
+// ============================================================================
+// Initializes Puppeteer browser for web scraping and rendering; configures graceful shutdown
+// Puppeteer browser instance is cached and reused across requests for performance
+// Shutdown timeout extended by 30 seconds to allow pending operations to complete safely
 builder.Services.AddHostedService<PuppeteerShutdownHostedService>();
 builder.Services.AddOptions<HostOptions>()
     .Configure<IOptions<PuppeteerBrowserSettings>>((hostOptions, browserSettings) => { hostOptions.ShutdownTimeout = TimeSpan.FromSeconds(browserSettings.Value.ShutdownDrainTimeoutSeconds + 30); });
@@ -78,11 +99,16 @@ builder.Services.AddOptions<HostOptions>()
 builder.Services.AddHttpClient();
 
 // ============================================================================
-// CUSTOM WORKERS (Polling & Retry Logic)
+// BACKGROUND WORKERS (Polling & Retry Logic)
 // ============================================================================
+// Polling Worker: Continuously polls for outline provider requests and processes them
+// Runs on configurable interval (default: every 30 seconds) until completion
 builder.Services.AddScoped<OutlineProviderPollingWorkerService>();
 builder.Services.AddHostedService<OutlineProviderPollingWorker>();
 
+// Retry Worker: Handles failed normalization operations with exponential backoff
+// Monitors event inbox for Failed status and retries up to max configured attempts
+// Runs every 10 seconds to check for eligible retry candidates
 builder.Services.AddScoped<NormalizerOperationRetryWorkerService>();
 builder.Services.AddHostedService<NormalizerRetryWorker>();
 
@@ -107,6 +133,8 @@ try
 
     using (var scope = app.Services.CreateScope())
     {
+        // Initialize Puppeteer browser on startup to detect availability early
+        // If unavailable, service runs in degraded mode without scraping/rendering capabilities
         try
         {
             var puppeTeer = scope.ServiceProvider.GetRequiredService<IPuppeteerBrowser>();

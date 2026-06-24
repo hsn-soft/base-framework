@@ -48,6 +48,45 @@ builder.WebHost.ConfigureKestrel((_, options) =>
 // ConfigureServices
 // =======================
 
+// ============================================================================
+// DATABASE CONFIGURATION (Hybrid: PostgreSQL + MongoDB)
+// ============================================================================
+// Configures dual database setup: PostgreSQL via EF Core for event inbox/persistence logic,
+// MongoDB for business data storage. PostgreSQL ensures reliable event tracking and recovery.
+builder.Services.AddServiceEfCoreDatabaseConfiguration(builder.Configuration, !builder.Environment.IsHostProduction())
+    .AddServiceMongoDatabaseConfiguration(builder.Configuration);
+
+// ============================================================================
+// CORE SERVICE REGISTRATION
+// ============================================================================
+// Registers microservice hosting, authentication, authorization, health checks, and event bus
+builder.Services.AddMicroserviceHosting(builder.Configuration, typeof(Program))
+    .AddJwtServerAuthentication(builder.Configuration, builder.Environment, "audience-service-feedr-admanager")
+    .AddPermissionAuthorization()
+    .AddMicroserviceUserTenantChecker()
+    .AddEventBus(builder.Configuration, typeof(EventHandlersAssemblyMarker).Assembly)
+    .AddHostingHealthChecks(builder.Configuration, "feedr-admanager",
+        checkRedis: true,
+        checkBroker: true,
+        checkPostgresql: true,
+        postgresqlConnectionName: EfCoreDbProperties.ConnectionStringName,
+        checkMongo: true, mongoConnectionName: MongoDbProperties.ConnectionStringName)
+    .AddServiceApplicationConfiguration(builder.Configuration);
+
+// ============================================================================
+// DATA SEEDING
+// ============================================================================
+// Configures composite seeders for both PostgreSQL and MongoDB initialization
+builder.Services.AddTransient<EfCoreSeederService>();
+builder.Services.AddTransient<MongoSeederService>();
+builder.Services.AddTransient<IBasicDataSeeder, CompositeSeederService>();
+
+// ============================================================================
+// BACKGROUND WORKERS (Retry Logic & Event Recovery)
+// ============================================================================
+// Configures background service for retrying failed events with exponential backoff
+// Monitors EventInboxMessage table (PostgreSQL) for Failed status and re-processes eligible events
+// Max 30 retries per event; runs every 10 seconds (configurable via RetryPolicy)
 builder.Services
     .AddScoped<Hhs.FeedRService.Domain.InfraDomain.Repositories.IEventInboxMessageRepository>(sp =>
         sp.GetRequiredService<Hhs.FeedRService.EntityFrameworkCore.Repositories.EfCoreEventInboxMessageRepository>())
@@ -66,26 +105,6 @@ builder.Services
         return settings;
     })
     .AddHostedService<Hhs.FeedRService.AdManager.Http.Host.Workers.FeedRRetryWorker>();
-
-builder.Services.AddMicroserviceHosting(builder.Configuration, typeof(Program))
-    .AddJwtServerAuthentication(builder.Configuration, builder.Environment, "audience-service-feedr-admanager")
-    .AddPermissionAuthorization()
-    .AddMicroserviceUserTenantChecker()
-    .AddEventBus(builder.Configuration, typeof(EventHandlersAssemblyMarker).Assembly)
-    .AddHostingHealthChecks(builder.Configuration, "feedr-admanager",
-        checkRedis: true,
-        checkBroker: true,
-        checkPostgresql: true,
-        postgresqlConnectionName: EfCoreDbProperties.ConnectionStringName,
-        checkMongo: true, mongoConnectionName: MongoDbProperties.ConnectionStringName)
-    .AddServiceApplicationConfiguration(builder.Configuration)
-    .AddServiceEfCoreDatabaseConfiguration(builder.Configuration, !builder.Environment.IsHostProduction())
-    .AddServiceMongoDatabaseConfiguration(builder.Configuration);
-
-// override DefaultBasicDataSeeder
-builder.Services.AddTransient<EfCoreSeederService>();
-builder.Services.AddTransient<MongoSeederService>();
-builder.Services.AddTransient<IBasicDataSeeder, CompositeSeederService>();
 
 // Swagger
 if (!builder.Environment.IsHostProduction())

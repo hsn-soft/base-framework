@@ -47,6 +47,39 @@ builder.WebHost.ConfigureKestrel((_, options) =>
 // ConfigureServices
 // =======================
 
+// ============================================================================
+// DATABASE CONFIGURATION (MongoDB)
+// ============================================================================
+// Configures MongoDB connection and repositories for event and business data storage
+builder.Services.AddServiceMongoDatabaseConfiguration(builder.Configuration);
+
+// ============================================================================
+// CORE SERVICE REGISTRATION
+// ============================================================================
+// Registers microservice hosting, authentication, authorization, health checks, and event bus
+builder.Services.AddMicroserviceHosting(builder.Configuration, typeof(Program))
+    .AddJwtServerAuthentication(builder.Configuration, builder.Environment, "audience-service-event-manager")
+    .AddPermissionAuthorization()
+    .AddMicroserviceUserTenantChecker()
+    .AddEventBus(builder.Configuration, typeof(EventHandlersAssemblyMarker).Assembly)
+    .AddHostingHealthChecks(builder.Configuration, "event-manager",
+        checkRedis: true,
+        checkBroker: true,
+        checkMongo: true, mongoConnectionName: MongoDbProperties.ConnectionStringName)
+    .AddServiceApplicationConfiguration(builder.Configuration);
+
+// ============================================================================
+// DATA SEEDING
+// ============================================================================
+// Configures default data seeder for MongoDB initialization
+builder.Services.AddTransient<IBasicDataSeeder, MongoSeederService>();
+
+// ============================================================================
+// BACKGROUND WORKERS (Retry Logic & Event Recovery)
+// ============================================================================
+// Configures background service for retrying failed events with exponential backoff
+// Monitors EventInboxMessage collection for Failed status and re-processes eligible events
+// Max 30 retries per event; runs every 10 seconds (configurable via RetryPolicy)
 builder.Services
     .AddScoped<Hhs.EventManagerService.Domain.InfraDomain.Repositories.IEventInboxMessageRepository>(sp =>
         sp.GetRequiredService<Hhs.EventManagerService.MongoDb.Repositories.MongoEventInboxMessageRepository>())
@@ -65,21 +98,6 @@ builder.Services
         return settings;
     })
     .AddHostedService<Hhs.EventManagerService.Http.Host.Workers.EventManagerRetryWorker>();
-
-builder.Services.AddMicroserviceHosting(builder.Configuration, typeof(Program))
-    .AddJwtServerAuthentication(builder.Configuration, builder.Environment, "audience-service-event-manager")
-    .AddPermissionAuthorization()
-    .AddMicroserviceUserTenantChecker()
-    .AddEventBus(builder.Configuration, typeof(EventHandlersAssemblyMarker).Assembly)
-    .AddHostingHealthChecks(builder.Configuration, "event-manager",
-        checkRedis: true,
-        checkBroker: true,
-        checkMongo: true, mongoConnectionName: MongoDbProperties.ConnectionStringName)
-    .AddServiceApplicationConfiguration(builder.Configuration)
-    .AddServiceMongoDatabaseConfiguration(builder.Configuration);
-
-// override DefaultBasicDataSeeder
-builder.Services.AddTransient<IBasicDataSeeder, MongoSeederService>();
 
 // Swagger
 if (!builder.Environment.IsHostProduction())

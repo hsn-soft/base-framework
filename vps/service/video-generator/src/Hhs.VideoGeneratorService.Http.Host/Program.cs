@@ -19,6 +19,10 @@ using HsnSoft.Base.Swashbuckle;
 using HsnSoft.Base.Tracing;
 using Serilog;
 
+// ============================================================================
+// SUBSCRIPTION SCOPE REGISTRY
+// ============================================================================
+// Initializes the subscription scope registry before builder creation for proper dependency tracking
 SubscriptionScopeRegistry.Initialize();
 
 var builder = WebApplication.CreateBuilder(args);
@@ -53,6 +57,16 @@ builder.WebHost.ConfigureKestrel((_, options) =>
 // ConfigureServices
 // =======================
 
+// ============================================================================
+// DATABASE CONFIGURATION (MongoDB)
+// ============================================================================
+// Configures MongoDB connection and repositories for video generation data storage
+builder.Services.AddServiceMongoDatabaseConfiguration(builder.Configuration);
+
+// ============================================================================
+// CORE SERVICE REGISTRATION
+// ============================================================================
+// Registers microservice hosting, authentication, authorization, health checks, and event bus
 builder.Services.AddMicroserviceHosting(builder.Configuration, typeof(Program))
     .AddJwtServerAuthentication(builder.Configuration, builder.Environment, "audience-service-video-generator")
     .AddPermissionAuthorization()
@@ -62,25 +76,34 @@ builder.Services.AddMicroserviceHosting(builder.Configuration, typeof(Program))
         checkRedis: true,
         checkBroker: true,
         checkMongo: true, mongoConnectionName: MongoDbProperties.ConnectionStringName)
-    .AddServiceApplicationConfiguration(builder.Configuration)
-    .AddServiceMongoDatabaseConfiguration(builder.Configuration);
+    .AddServiceApplicationConfiguration(builder.Configuration);
 
-// override DefaultBasicDataSeeder
+// ============================================================================
+// DATA SEEDING
+// ============================================================================
+// Configures default data seeder for MongoDB initialization
 builder.Services.AddTransient<IBasicDataSeeder, MongoSeederService>();
 
 builder.Services.AddHttpClient();
 
 // ============================================================================
-// CUSTOM WORKERS (Polling & Retry Logic)
+// BACKGROUND WORKERS (Polling & Retry Logic)
 // ============================================================================
-// Polling Workers (continuously poll for due requests)
+// Audio Polling Worker: Continuously polls for audio generation requests
+// Processes due requests on configurable interval (default: every 30 seconds)
+// Maintains order and prevents duplicate processing via request status tracking
 builder.Services.AddScoped<AudioProviderPollingWorkerService>();
 builder.Services.AddHostedService<AudioProviderPollingWorker>();
 
+// Video Polling Worker: Continuously polls for video generation requests
+// Processes due requests on configurable interval (default: every 30 seconds)
+// Coordinates with audio generation and applies layout/styling to final output
 builder.Services.AddScoped<VideoProviderPollingWorkerService>();
 builder.Services.AddHostedService<VideoProviderPollingWorker>();
 
-// Retry Worker (handles failed video requests with exponential backoff)
+// Retry Worker: Handles failed video generation operations with exponential backoff
+// Monitors event inbox for Failed status and retries up to max configured attempts
+// Runs every 10 seconds to check for eligible retry candidates
 builder.Services.AddScoped<VideoOperationRetryWorkerService>();
 builder.Services.AddHostedService<VideoRetryWorker>();
 
