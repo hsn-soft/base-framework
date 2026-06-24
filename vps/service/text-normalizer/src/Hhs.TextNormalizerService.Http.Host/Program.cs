@@ -96,7 +96,10 @@ builder.Services.AddTransient<IBasicDataSeeder, MongoSeederService>();
 // Shutdown timeout extended by 30 seconds to allow pending operations to complete safely
 builder.Services.AddHostedService<PuppeteerShutdownHostedService>();
 builder.Services.AddOptions<HostOptions>()
-    .Configure<IOptions<PuppeteerBrowserSettings>>((hostOptions, browserSettings) => { hostOptions.ShutdownTimeout = TimeSpan.FromSeconds(browserSettings.Value.ShutdownDrainTimeoutSeconds + 30); });
+    .Configure<IOptions<PuppeteerBrowserSettings>>((hostOptions, browserSettings) =>
+    {
+        hostOptions.ShutdownTimeout = TimeSpan.FromSeconds(browserSettings.Value.ShutdownDrainTimeoutSeconds);
+    });
 
 // For Provider Clients
 builder.Services.AddHttpClient();

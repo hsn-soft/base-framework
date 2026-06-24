@@ -2,11 +2,12 @@ using System.Text.Json;
 using Hhs.Shared.Helper;
 using Hhs.ContentService.Domain.InfraDomain.Entities;
 using Hhs.ContentService.Domain.InfraDomain.Repositories;
+using Hhs.ContentService.Domain.Configuration;
 using HsnSoft.Base.Domain.Entities.Events;
 
 namespace Hhs.ContentService.Application.Infrastructure;
 
-public sealed class ApplicationEventInboxMessageManager(IEventInboxMessageRepository repository)
+public sealed class ApplicationEventInboxMessageManager(IEventInboxMessageRepository repository, ContentRetrySettings settings)
 {
     public async Task<bool> IsProcessedAsync(Guid eventId, CancellationToken cancellationToken)
     {
@@ -30,7 +31,7 @@ public sealed class ApplicationEventInboxMessageManager(IEventInboxMessageReposi
 
             if (existing.Status == InboxStatuses.Failed)
             {
-                if (existing.RetryCount >= 30)
+                if (existing.RetryCount >= settings.MaxRetryCount)
                     return false;
 
                 await repository.UpdateByExpressionAsync(

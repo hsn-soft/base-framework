@@ -2,11 +2,12 @@ using System.Text.Json;
 using Hhs.Shared.Helper;
 using Hhs.TextNormalizerService.Domain.InfraDomain.Entities;
 using Hhs.TextNormalizerService.Domain.InfraDomain.Repositories;
+using Hhs.TextNormalizerService.Domain.Configuration;
 using HsnSoft.Base.Domain.Entities.Events;
 
 namespace Hhs.TextNormalizerService.Application.Infrastructure;
 
-public sealed class ApplicationEventInboxMessageManager(IEventInboxMessageRepository repository)
+public sealed class ApplicationEventInboxMessageManager(IEventInboxMessageRepository repository, NormalizerRetrySettings settings)
 {
     public async Task<bool> IsProcessedAsync(Guid eventId, CancellationToken cancellationToken)
     {
@@ -30,7 +31,7 @@ public sealed class ApplicationEventInboxMessageManager(IEventInboxMessageReposi
 
             if (existing.Status == InboxStatuses.Failed)
             {
-                if (existing.RetryCount >= 30)
+                if (existing.RetryCount >= settings.MaxRetryCount)
                     return false;
 
                 existing.Status = InboxStatuses.Started;

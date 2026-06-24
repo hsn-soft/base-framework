@@ -2,6 +2,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Hhs.Shared.Helper.Providers;
 using Hhs.VideoGeneratorService.Domain.Configuration.Providers.Video;
+using Hhs.VideoGeneratorService.Domain.Constants;
 
 namespace Hhs.VideoGeneratorService.Application.Providers.Video;
 
@@ -45,12 +46,12 @@ public sealed class VideoQueueInternalProvider : IVideoProvider
 
         var json = await response.Content.ReadFromJsonAsync<JsonElement>();
         string? status = json.GetProperty("status").GetString();
-        string? fileUrl = status == "completed" ? json.GetProperty("remoteFileUrl").GetString() : null;
-        string? fileName = status == "completed" && json.TryGetProperty("fileName", out var fnProp) ? fnProp.GetString() : null;
+        string? fileUrl = status == ProviderStatusConstants.Completed ? json.GetProperty("remoteFileUrl").GetString() : null;
+        string? fileName = status == ProviderStatusConstants.Completed && json.TryGetProperty("fileName", out var fnProp) ? fnProp.GetString() : null;
 
         return new VideoStatusResponse
         {
-            IsCompleted = status == "completed",
+            IsCompleted = status == ProviderStatusConstants.Completed,
             ProviderFileUrl = fileUrl,
             FileName = fileName
         };

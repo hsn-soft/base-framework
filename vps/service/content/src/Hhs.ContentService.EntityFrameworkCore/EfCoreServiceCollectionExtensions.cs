@@ -19,6 +19,11 @@ namespace Hhs.ContentService.EntityFrameworkCore;
 
 public static class EfCoreServiceCollectionExtensions
 {
+    private const int DbRetryCount = 10;
+    private const int DbRetryDelaySeconds = 6;
+    private const int DbCommandTimeoutMs = 30000;
+    private const int DbMaxBatchSize = 100;
+
     public static IServiceCollection AddServiceEfCoreDatabaseConfiguration(this IServiceCollection services, IConfiguration configuration, bool enabledSensitiveData = false)
     {
         services.AddBaseTimingServiceCollection();
@@ -32,9 +37,9 @@ public static class EfCoreServiceCollectionExtensions
                 {
                     sqlOptions.MigrationsHistoryTable("__EFMigrationsHistory");
                     sqlOptions.MigrationsAssembly(typeof(ContentServiceDbContext).Assembly.GetName().Name);
-                    sqlOptions.EnableRetryOnFailure(10, TimeSpan.FromSeconds(6), null);
-                    sqlOptions.CommandTimeout(30000);
-                    sqlOptions.MaxBatchSize(100);
+                    sqlOptions.EnableRetryOnFailure(DbRetryCount, TimeSpan.FromSeconds(DbRetryDelaySeconds), null);
+                    sqlOptions.CommandTimeout(DbCommandTimeoutMs);
+                    sqlOptions.MaxBatchSize(DbMaxBatchSize);
                 });
                 options.EnableSensitiveDataLogging(enabledSensitiveData);
                 options.UseLoggerFactory(LoggerFactory.Create(builder => { builder.AddSerilog(Log.Logger); }));
