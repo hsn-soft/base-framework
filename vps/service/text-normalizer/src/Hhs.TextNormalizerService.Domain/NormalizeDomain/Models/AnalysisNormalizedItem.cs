@@ -1,4 +1,5 @@
 using Hhs.Shared.Helper;
+using Hhs.TextNormalizerService.Domain.NormalizeDomain.Consts;
 
 namespace Hhs.TextNormalizerService.Domain.NormalizeDomain.Models;
 
@@ -23,7 +24,7 @@ public sealed class AnalysisNormalizedItem
     public string? OutlineProviderTrackId { get; set; }
     public DateTime? NextOutlinePollAtUtc { get; set; }
     public int OutlinePollingCount { get; set; }
-    public int MaxOutlinePollingCount { get; set; } = 60;
+    public int MaxOutlinePollingCount { get; set; } = AnalysisNormalizedItemConsts.MaxOutlinePollingCountDefault;
 
     // Status & Progress
     public string Status { get; set; } = StatusNames.Created;
@@ -31,7 +32,7 @@ public sealed class AnalysisNormalizedItem
 
     // Retry Configuration
     public int RetryCount { get; set; }
-    public int MaxRetryCount { get; set; } = 5;
+    public int MaxRetryCount { get; set; } = AnalysisNormalizedItemConsts.MaxRetryCountDefault;
     public DateTime? NextRetryAtUtc { get; set; }
 
     // Error Handling & Tracking

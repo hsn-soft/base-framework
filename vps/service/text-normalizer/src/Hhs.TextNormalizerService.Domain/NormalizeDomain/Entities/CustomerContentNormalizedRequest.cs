@@ -1,6 +1,7 @@
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Models;
 using HsnSoft.Base.Domain.Entities.Auditing;
 using System.Diagnostics.CodeAnalysis;
+using Hhs.TextNormalizerService.Domain.NormalizeDomain.Consts;
 using HsnSoft.Base;
 using HsnSoft.Base.Subscribe;
 
