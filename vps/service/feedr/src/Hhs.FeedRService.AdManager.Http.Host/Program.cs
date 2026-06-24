@@ -48,6 +48,25 @@ builder.WebHost.ConfigureKestrel((_, options) =>
 // ConfigureServices
 // =======================
 
+builder.Services
+    .AddScoped<Hhs.FeedRService.Domain.InfraDomain.Repositories.IEventInboxMessageRepository>(sp =>
+        sp.GetRequiredService<Hhs.FeedRService.EntityFrameworkCore.Repositories.EfCoreEventInboxMessageRepository>())
+    .AddScoped<Hhs.FeedRService.EntityFrameworkCore.Repositories.EfCoreEventInboxMessageRepository>()
+    .AddScoped<Hhs.FeedRService.Application.Infrastructure.ApplicationEventInboxMessageManager>()
+    .AddScoped<Hhs.FeedRService.Application.Services.FeedROperationRetryWorkerService>()
+    .AddSingleton<Hhs.FeedRService.Domain.Configuration.FeedRRetrySettings>(sp =>
+    {
+        var config = sp.GetRequiredService<IConfiguration>();
+        var settings = new Hhs.FeedRService.Domain.Configuration.FeedRRetrySettings();
+        var section = config.GetSection("RetryPolicy");
+        if (section.Exists())
+        {
+            section.Bind(settings);
+        }
+        return settings;
+    })
+    .AddHostedService<Hhs.FeedRService.AdManager.Http.Host.Workers.FeedRRetryWorker>();
+
 builder.Services.AddMicroserviceHosting(builder.Configuration, typeof(Program))
     .AddJwtServerAuthentication(builder.Configuration, builder.Environment, "audience-service-feedr-admanager")
     .AddPermissionAuthorization()

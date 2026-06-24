@@ -1,16 +1,19 @@
 using Hhs.Shared.Contracts;
 using Hhs.Shared.Contracts.Events;
+using Hhs.IdentityService.Application.Infrastructure;
 using HsnSoft.Base.Domain.Entities.Events;
-using HsnSoft.Base.EventBus;
 using HsnSoft.Base.Logging.Abstracts;
 
 namespace Hhs.IdentityService.EventHandlers;
 
-public sealed class CachePermissionGrantsChangedEtoHandler(IAppConsoleLogger logger) : IIntegrationEventHandler<CachePermissionGrantsChangedEto>
+public sealed class CachePermissionGrantsChangedEtoHandler(
+    ApplicationEventInboxMessageManager inboxStore,
+    IAppConsoleLogger logger
+) : ApplicationEventHandlerBase<CachePermissionGrantsChangedEto>(inboxStore)
 {
     private readonly IAppConsoleLogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-    public async Task HandleAsync(MessageEnvelope<CachePermissionGrantsChangedEto> @event)
+    protected override async Task ExecuteAsync(MessageEnvelope<CachePermissionGrantsChangedEto> @event, CancellationToken cancellationToken)
     {
         _logger.LogDebug("{Producer} Event[ {EventName} ] => CorrelationId[{CorrelationId}], MessageId[{MessageId}], RelatedMessageId[{RelatedMessageId}]",
             @event.Producer,

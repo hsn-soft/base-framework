@@ -48,6 +48,25 @@ builder.WebHost.ConfigureKestrel((_, options) =>
 // ConfigureServices
 // =======================
 
+builder.Services
+    .AddScoped<Hhs.IdentityService.Domain.InfraDomain.Repositories.IEventInboxMessageRepository>(sp =>
+        sp.GetRequiredService<Hhs.IdentityService.EntityFrameworkCore.Repositories.EfCoreEventInboxMessageRepository>())
+    .AddScoped<Hhs.IdentityService.EntityFrameworkCore.Repositories.EfCoreEventInboxMessageRepository>()
+    .AddScoped<Hhs.IdentityService.Application.Infrastructure.ApplicationEventInboxMessageManager>()
+    .AddScoped<Hhs.IdentityService.Application.Services.IdentityOperationRetryWorkerService>()
+    .AddSingleton<Hhs.IdentityService.Domain.Configuration.IdentityRetrySettings>(sp =>
+    {
+        var config = sp.GetRequiredService<IConfiguration>();
+        var settings = new Hhs.IdentityService.Domain.Configuration.IdentityRetrySettings();
+        var section = config.GetSection("RetryPolicy");
+        if (section.Exists())
+        {
+            section.Bind(settings);
+        }
+        return settings;
+    })
+    .AddHostedService<Hhs.IdentityService.Http.Host.Workers.IdentityRetryWorker>();
+
 builder.Services.AddMicroserviceHosting(builder.Configuration, typeof(Program))
     .AddJwtServerAuthentication(builder.Configuration, builder.Environment, "audience-service-identity")
     .AddPermissionAuthorization()

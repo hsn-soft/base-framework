@@ -1,18 +1,20 @@
 using Hhs.FeedRService.Application.Contracts;
+using Hhs.FeedRService.Application.Infrastructure;
 using HsnSoft.Base.Domain.Entities.Events;
-using HsnSoft.Base.EventBus;
 using HsnSoft.Base.Logging.Abstracts;
 
 namespace Hhs.FeedRService.AdManager.EventHandlers;
 
 public class ReQueuedEtoHandler(
+    ApplicationEventInboxMessageManager inboxStore,
     IAppConsoleLogger logger,
-    IEventManagerAppService eventManagerAppService) : IIntegrationEventHandler<ReQueuedEto>
+    IEventManagerAppService eventManagerAppService
+) : ApplicationEventHandlerBase<ReQueuedEto>(inboxStore)
 {
     private readonly IAppConsoleLogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     private readonly IEventManagerAppService _eventManagerAppService = eventManagerAppService ?? throw new ArgumentNullException(nameof(eventManagerAppService));
 
-    public async Task HandleAsync(MessageEnvelope<ReQueuedEto> @event)
+    protected override async Task ExecuteAsync(MessageEnvelope<ReQueuedEto> @event, CancellationToken cancellationToken)
     {
         _logger.LogDebug("EVENT HANDLING | [ {EventName} ] => CorrelationId[{CorrelationId}], MessageId[{MessageId}], RelatedMessageId[{RelatedMessageId}]",
             nameof(ReQueuedEto)[..^"Eto".Length],

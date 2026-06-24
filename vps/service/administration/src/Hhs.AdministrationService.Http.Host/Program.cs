@@ -48,6 +48,25 @@ builder.WebHost.ConfigureKestrel((_, options) =>
 // ConfigureServices
 // =======================
 
+builder.Services
+    .AddScoped<Hhs.AdministrationService.Domain.InfraDomain.Repositories.IEventInboxMessageRepository>(sp =>
+        sp.GetRequiredService<Hhs.AdministrationService.EntityFrameworkCore.Repositories.EfCoreEventInboxMessageRepository>())
+    .AddScoped<Hhs.AdministrationService.EntityFrameworkCore.Repositories.EfCoreEventInboxMessageRepository>()
+    .AddScoped<Hhs.AdministrationService.Application.Infrastructure.ApplicationEventInboxMessageManager>()
+    .AddScoped<Hhs.AdministrationService.Application.Services.AdministrationOperationRetryWorkerService>()
+    .AddSingleton<Hhs.AdministrationService.Domain.Configuration.AdministrationRetrySettings>(sp =>
+    {
+        var config = sp.GetRequiredService<IConfiguration>();
+        var settings = new Hhs.AdministrationService.Domain.Configuration.AdministrationRetrySettings();
+        var section = config.GetSection("RetryPolicy");
+        if (section.Exists())
+        {
+            section.Bind(settings);
+        }
+        return settings;
+    })
+    .AddHostedService<Hhs.AdministrationService.Http.Host.Workers.AdministrationRetryWorker>();
+
 builder.Services.AddMicroserviceHosting(builder.Configuration, typeof(Program))
     .AddJwtServerAuthentication(builder.Configuration, builder.Environment, "audience-service-administration")
     .AddPermissionAuthorization()
