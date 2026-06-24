@@ -62,16 +62,6 @@ builder.WebHost.ConfigureKestrel((_, options) =>
 // ConfigureServices
 // =======================
 
-// ============================================================================
-// DATABASE CONFIGURATION (MongoDB)
-// ============================================================================
-// Configures MongoDB connection and repositories for text normalization data storage
-builder.Services.AddServiceMongoDatabaseConfiguration(builder.Configuration);
-
-// ============================================================================
-// CORE SERVICE REGISTRATION
-// ============================================================================
-// Registers microservice hosting, authentication, authorization, health checks, and event bus
 builder.Services.AddMicroserviceHosting(builder.Configuration, typeof(Program))
     .AddJwtServerAuthentication(builder.Configuration, builder.Environment, "audience-service-text-normalizer")
     .AddPermissionAuthorization()
@@ -81,7 +71,8 @@ builder.Services.AddMicroserviceHosting(builder.Configuration, typeof(Program))
         checkRedis: true,
         checkBroker: true,
         checkMongo: true, mongoConnectionName: MongoDbProperties.ConnectionStringName)
-    .AddServiceApplicationConfiguration(builder.Configuration);
+    .AddServiceApplicationConfiguration(builder.Configuration)
+    .AddServiceMongoDatabaseConfiguration(builder.Configuration);
 
 // ============================================================================
 // DATA SEEDING

@@ -53,14 +53,6 @@ builder.WebHost.ConfigureKestrel((_, options) =>
 // =======================
 
 // ============================================================================
-// DATABASE CONFIGURATION (Hybrid: PostgreSQL + MongoDB)
-// ============================================================================
-// Configures dual database setup: PostgreSQL via EF Core for event inbox/persistence logic,
-// MongoDB for business data storage. PostgreSQL ensures reliable event tracking and recovery.
-builder.Services.AddServiceEfCoreDatabaseConfiguration(builder.Configuration, !builder.Environment.IsHostProduction())
-    .AddServiceMongoDatabaseConfiguration(builder.Configuration);
-
-// ============================================================================
 // CORE SERVICE REGISTRATION
 // ============================================================================
 // Registers microservice hosting, authentication, authorization, health checks, and event bus
@@ -75,7 +67,9 @@ builder.Services.AddMicroserviceHosting(builder.Configuration, typeof(Program))
         checkPostgresql: true,
         postgresqlConnectionName: EfCoreDbProperties.ConnectionStringName,
         checkMongo: true, mongoConnectionName: MongoDbProperties.ConnectionStringName)
-    .AddServiceApplicationConfiguration(builder.Configuration);
+    .AddServiceApplicationConfiguration(builder.Configuration)
+    .AddServiceEfCoreDatabaseConfiguration(builder.Configuration, !builder.Environment.IsHostProduction())
+    .AddServiceMongoDatabaseConfiguration(builder.Configuration);
 
 // ============================================================================
 // DATA SEEDING

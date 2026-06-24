@@ -52,16 +52,6 @@ builder.WebHost.ConfigureKestrel((_, options) =>
 // ConfigureServices
 // =======================
 
-// ============================================================================
-// DATABASE CONFIGURATION (PostgreSQL + EF Core)
-// ============================================================================
-// Configures PostgreSQL connection, Entity Framework Core repositories, and audit tracking
-builder.Services.AddServiceEfCoreDatabaseConfiguration(builder.Configuration, !builder.Environment.IsHostProduction());
-
-// ============================================================================
-// CORE SERVICE REGISTRATION
-// ============================================================================
-// Registers microservice hosting, authentication, authorization, health checks, and event bus
 builder.Services.AddMicroserviceHosting(builder.Configuration, typeof(Program))
     .AddJwtServerAuthentication(builder.Configuration, builder.Environment, "audience-service-content")
     .AddPermissionAuthorization()
@@ -72,7 +62,8 @@ builder.Services.AddMicroserviceHosting(builder.Configuration, typeof(Program))
         checkBroker: true,
         checkPostgresql: true,
         postgresqlConnectionName: EfCoreDbProperties.ConnectionStringName)
-    .AddServiceApplicationConfiguration(builder.Configuration);
+    .AddServiceApplicationConfiguration(builder.Configuration)
+    .AddServiceEfCoreDatabaseConfiguration(builder.Configuration, !builder.Environment.IsHostProduction());
 
 // ============================================================================
 // DATA SEEDING
