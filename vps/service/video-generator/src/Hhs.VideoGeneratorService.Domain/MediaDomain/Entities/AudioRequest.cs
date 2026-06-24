@@ -10,7 +10,7 @@ public sealed class AudioRequest : AuditedEntity<Guid>, ISoftDelete, IScopeSubsc
 {
     // Correlation & Context
     [CanBeNull]
-    public string? CorrelationId { get; set; }
+    public string CorrelationId { get; set; }
     public Guid SourceEventId { get; set; }
     public Guid VideoRequestId { get; set; }
     public Guid RefContentId { get; set; }
@@ -34,19 +34,19 @@ public sealed class AudioRequest : AuditedEntity<Guid>, ISoftDelete, IScopeSubsc
     [NotNull] public string AudioProviderKey { get; set; } = default!;
 
     // Audio Generation (external provider)
-    [CanBeNull] public string? AudioProviderTrackingId { get; set; }
-    [CanBeNull] public string? AudioProviderUrl { get; set; }
-    [CanBeNull] public string? AudioLocalPath { get; set; }
-    [CanBeNull] public string? AudioStorageUrl { get; set; }
-    [CanBeNull] public string? AudioCdnUrl { get; set; }
-    [CanBeNull] public string? AudioCdnProviderKey { get; set; }
+    [CanBeNull]  public string AudioProviderTrackingId { get; set; }
+    [CanBeNull]  public string AudioProviderUrl { get; set; }
+    [CanBeNull]  public string AudioLocalPath { get; set; }
+    [CanBeNull]  public string AudioStorageUrl { get; set; }
+    [CanBeNull]  public string AudioCdnUrl { get; set; }
+    [CanBeNull]  public string AudioCdnProviderKey { get; set; }
 
     // Polling & Retry
     [CanBeNull] public DateTime? NextProviderPollAtUtc { get; set; }
     public int ProviderPollingCount { get; set; }
     public int RetryCount { get; set; }
     [CanBeNull] public DateTime? NextRetryAtUtc { get; set; }
-    [CanBeNull] public string? LastError { get; set; }
+    [CanBeNull]  public string LastError { get; set; }
 
     private AudioRequest() { }
 

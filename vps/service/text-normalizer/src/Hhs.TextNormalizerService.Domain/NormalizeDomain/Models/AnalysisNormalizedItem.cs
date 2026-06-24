@@ -15,14 +15,14 @@ public sealed class AnalysisNormalizedItem
 
     // Scraping State
     [NotNull] public string ScrapingStatus { get; set; } = StatusNames.Created;
-    [CanBeNull] public ScrapingResult? ScrapingResult { get; set; }
+    [CanBeNull]  public ScrapingResult ScrapingResult { get; set; }
 
     // Outline Generation State
     [NotNull] public string OutlineStatus { get; set; } = StatusNames.Created;
-    [CanBeNull] public OutlineResult? OutlineResult { get; set; }
+    [CanBeNull]  public OutlineResult OutlineResult { get; set; }
 
     // Outline Polling & Tracking
-    [CanBeNull] public string? OutlineProviderTrackId { get; set; }
+    [CanBeNull]  public string OutlineProviderTrackId { get; set; }
     [CanBeNull] public DateTime? NextOutlinePollAtUtc { get; set; }
     public int OutlinePollingCount { get; set; }
     public int MaxOutlinePollingCount { get; set; } = AnalysisNormalizedItemConsts.MaxOutlinePollingCountDefault;
@@ -37,6 +37,6 @@ public sealed class AnalysisNormalizedItem
     [CanBeNull] public DateTime? NextRetryAtUtc { get; set; }
 
     // Error Handling & Tracking
-    [CanBeNull] public string? LastError { get; set; }
+    [CanBeNull]  public string LastError { get; set; }
     [CanBeNull] public DateTime? UpdatedAtUtc { get; set; }
 }

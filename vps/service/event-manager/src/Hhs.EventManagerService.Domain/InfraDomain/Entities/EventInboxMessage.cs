@@ -6,12 +6,12 @@ namespace Hhs.EventManagerService.Domain.InfraDomain.Entities;
 
 public sealed class EventInboxMessage : AuditedEntity<Guid>
 {
-    [CanBeNull] public string? CorrelationId { get; private set; }
+    [CanBeNull]  public string CorrelationId { get; private set; }
     [NotNull] public string EventName { get; private set; } = default!;
     [NotNull] public string Payload { get; private set; } = default!;
     [NotNull] public string Status { get; set; } = InboxStatuses.Started;
     public DateTime? ProcessedAtUtc { get; set; }
-    [CanBeNull] public string? ErrorMessage { get; set; }
+    [CanBeNull]  public string ErrorMessage { get; set; }
     public int RetryCount { get; set; } = 0;
 
     private EventInboxMessage() { }

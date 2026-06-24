@@ -58,7 +58,7 @@ public sealed class NormalizerOperationAppService(
                 @event.CustomerContentId,
                 @event.DomainName,
                 @event.ContentKey,
-                correlationId != null ? (Guid?)Guid.Parse(correlationId) : null);
+                correlationId);
             entity.Status = StatusNames.Created;
             entity.CurrentStep = EventNames.CustomerContentCreated;
             entity.MaxOutlinePollingCount = outlinePollingSettings.MaxAttempts;
@@ -218,7 +218,7 @@ public sealed class NormalizerOperationAppService(
             @event.ScopeKey,
             @event.AnalysisContentId,
             @event.DomainName,
-            correlationId != null ? (Guid?)Guid.Parse(correlationId) : null);
+            correlationId);
 
         request.SourceEventId = eventId;
         request.Status = StatusNames.Created;
@@ -827,7 +827,7 @@ public sealed class NormalizerOperationAppService(
         );
     }
 
-    private async Task UpdateAnalysisParentAsync(Guid id, string status, string currentStep, string? lastError)
+    private async Task UpdateAnalysisParentAsync(Guid id, string status, string currentStep, [CanBeNull] string lastError)
     {
         var request = await analysisContentRepository.GetByIdAsync(id);
         request.Status = status;
@@ -850,7 +850,7 @@ public sealed class NormalizerOperationAppService(
         return analysisContentRepository.UpdateByExpressionAsync(predicate, updateFunc, cancellationToken);
     }
 
-    private async Task RecalculateAndUpdateAnalysisParentAsync(Guid analysisRequestId, string currentStep, string? lastError)
+    private async Task RecalculateAndUpdateAnalysisParentAsync(Guid analysisRequestId, string currentStep, [CanBeNull] string lastError)
     {
         var analysis = await analysisContentRepository.GetByIdAsync(analysisRequestId);
 

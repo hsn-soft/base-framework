@@ -1,5 +1,6 @@
 using Hhs.Shared.Helper.Enums;
 using HsnSoft.Base.Domain.Entities.Events;
+using JetBrains.Annotations;
 
 namespace Hhs.Shared.Contracts.Events;
 
@@ -381,7 +382,7 @@ public sealed record VideoGenerationResultPublishedEto : IIntegrationEventMessag
     public Guid RefContentId { get; init; }
     public ContentType RefContentType { get; init; }
     public Guid VideoRequestId { get; init; }
-    public string? FinalVideoUrl { get; init; } = default!;
+    [CanBeNull] public string FinalVideoUrl { get; init; } = default!;
 
     public VideoGenerationResultPublishedEto()
     {

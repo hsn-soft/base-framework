@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using HsnSoft.Base;
 using HsnSoft.Base.Domain.Entities.Auditing;
 using HsnSoft.Base.Subscribe;
@@ -16,31 +15,31 @@ public sealed class AnalysisContent : AuditedEntity<Guid>, ISoftDelete, IScopeSu
 
     // Content Metadata
     [NotNull] public string DomainName { get; private set; } = default!;
-    [CanBeNull] public string? Title { get; private set; }
+    [CanBeNull]  public string Title { get; private set; }
 
     // Correlation & Tracing
     [CanBeNull]
-    public string? CorrelationId { get; private set; }
+    public string CorrelationId { get; private set; }
 
     // Normalization Status
-    [CanBeNull] public string? NormalizeStatus { get; set; }
+    [CanBeNull]  public string NormalizeStatus { get; set; }
     [CanBeNull] public Guid? NormalizeRequestId { get; set; }
 
     // Video Generation Status
-    [CanBeNull] public string? VideoStatus { get; set; }
+    [CanBeNull]  public string VideoStatus { get; set; }
     [CanBeNull] public Guid? VideoRequestId { get; set; }
 
     // Result & Errors
-    [CanBeNull] public string? FinalVideoUrl { get; set; }
-    [CanBeNull] public string? LastFacility { get; set; }
-    [CanBeNull] public string? LastError { get; set; }
+    [CanBeNull]  public string FinalVideoUrl { get; set; }
+    [CanBeNull]  public string LastFacility { get; set; }
+    [CanBeNull]  public string LastError { get; set; }
 
     // Analysis Items
     public List<AnalysisContentItem> Items { get; private set; } = [];
 
     private AnalysisContent() { }
 
-    public AnalysisContent(Guid id, string scopeKey, string domainName, string? title = null, string? correlationId = null)
+    public AnalysisContent(Guid id, string scopeKey, string domainName, [CanBeNull] string title = null, [CanBeNull] string correlationId = null)
     {
         Id = id;
         ScopeKey = scopeKey;

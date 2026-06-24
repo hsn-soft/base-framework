@@ -1,3 +1,5 @@
+using JetBrains.Annotations;
+
 namespace Hhs.Shared.Helper.Retry;
 
 public enum ProcessErrorType
@@ -13,7 +15,7 @@ public sealed class ProcessException : Exception
     public ProcessException(
         string message,
         ProcessErrorType errorType,
-        Exception? innerException = null)
+        [CanBeNull] Exception innerException = null)
         : base(message, innerException)
     {
         ErrorType = errorType;

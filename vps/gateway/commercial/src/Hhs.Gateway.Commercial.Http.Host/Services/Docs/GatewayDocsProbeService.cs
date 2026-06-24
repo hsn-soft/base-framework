@@ -1,13 +1,15 @@
 using System.Diagnostics;
 using Hhs.Gateway.Commercial.Options.Docs;
 using Hhs.Gateway.Commercial.Services.Swagger;
+using JetBrains.Annotations;
 
 namespace Hhs.Gateway.Commercial.Services.Docs;
 
 public interface IGatewayDocsProbeService
 {
-    Task<EndpointProbeResult?> ProbeEndpointAsync(
-        string? url,
+    [ItemCanBeNull]
+    Task<EndpointProbeResult> ProbeEndpointAsync(
+        [CanBeNull] string url,
         CancellationToken cancellationToken = default);
 
     Task<IReadOnlyCollection<GatewayServiceLiveInfo>> ProbeAsync(
@@ -57,8 +59,9 @@ public sealed class GatewayDocsProbeService(
         return await Task.WhenAll(tasks);
     }
 
-    public async Task<EndpointProbeResult?> ProbeEndpointAsync(
-        string? url,
+    [ItemCanBeNull]
+    public async Task<EndpointProbeResult> ProbeEndpointAsync(
+        [CanBeNull] string url,
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(url))

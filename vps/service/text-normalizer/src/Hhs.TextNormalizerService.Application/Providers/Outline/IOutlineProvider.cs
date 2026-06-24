@@ -1,4 +1,5 @@
 using Hhs.Shared.Helper.Providers;
+using JetBrains.Annotations;
 
 namespace Hhs.TextNormalizerService.Application.Providers.Outline;
 
@@ -15,7 +16,7 @@ public sealed class OutlineCreateRequest
 public sealed class OutlineCreateResponse : OutlineStatusResponse
 {
     // Pooling Track Id
-    public string? ProviderTrackId { get; set; }
+    [CanBeNull] public string ProviderTrackId { get; set; }
 }
 
 public sealed class OutlineStatusRequest
@@ -27,11 +28,11 @@ public class OutlineStatusResponse
 {
     public bool IsProcessed { get; set; }
     public bool IsProcessFailed  { get; set; }
-    public string? ErrorMessage { get; set; }
+    [CanBeNull] public string ErrorMessage { get; set; }
 
-    public string? OutlinedData { get; set; }
-    public List<string>? Categories { get; set; }
-    public List<string>? Tags { get; set; }
+    [CanBeNull] public string OutlinedData { get; set; }
+    [CanBeNull] public List<string> Categories { get; set; }
+    [CanBeNull] public List<string> Tags { get; set; }
 }
 
 public interface IOutlineProvider

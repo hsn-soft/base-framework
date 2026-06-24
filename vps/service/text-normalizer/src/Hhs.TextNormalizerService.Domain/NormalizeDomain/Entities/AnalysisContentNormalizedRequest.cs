@@ -11,7 +11,7 @@ public sealed class AnalysisContentNormalizedRequest : AuditedEntity<Guid>, ISof
 
     // Correlation
     [CanBeNull]
-    public string? CorrelationId { get; set; }
+    public string CorrelationId { get; set; }
     public Guid SourceEventId { get; set; }
 
     // Subscription & Scope
@@ -32,11 +32,11 @@ public sealed class AnalysisContentNormalizedRequest : AuditedEntity<Guid>, ISof
     public List<AnalysisNormalizedItem> Items { get; set; } = [];
 
     // Error Handling
-    [CanBeNull] public string? LastError { get; set; }
+    [CanBeNull]  public string LastError { get; set; }
 
     private AnalysisContentNormalizedRequest() { }
 
-    public AnalysisContentNormalizedRequest(Guid id, string scopeKey, Guid analysisContentId, string domainName, string? correlationId = null)
+    public AnalysisContentNormalizedRequest(Guid id, string scopeKey, Guid analysisContentId, string domainName, [CanBeNull] string correlationId = null)
     {
         Id = id;
         ScopeKey = scopeKey;

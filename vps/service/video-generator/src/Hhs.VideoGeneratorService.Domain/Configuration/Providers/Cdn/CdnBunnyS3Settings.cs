@@ -1,4 +1,5 @@
 using Hhs.Shared.Helper.Configuration.Providers;
+using JetBrains.Annotations;
 
 namespace Hhs.VideoGeneratorService.Domain.Configuration.Providers.Cdn;
 
@@ -10,12 +11,12 @@ public sealed class CdnBunnyS3Settings : CdnProviderSettingsBase
 
     public string PathPrefix { get; set; } = "prod";
 
-    public string? AccountId { get; set; }
-    public string? Region { get; set; }
+    [CanBeNull] public string AccountId { get; set; }
+    [CanBeNull] public string Region { get; set; }
 
     // S3 Storage configuration
-    public string? StorageType { get; set; }
-    public string? StorageEndpointUrl { get; set; }
-    public string? StorageApiKey { get; set; }
-    public string? StorageSecretKey { get; set; }
+    [CanBeNull] public string StorageType { get; set; }
+    [CanBeNull] public string StorageEndpointUrl { get; set; }
+    [CanBeNull] public string StorageApiKey { get; set; }
+    [CanBeNull] public string StorageSecretKey { get; set; }
 }

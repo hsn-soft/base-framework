@@ -1,10 +1,11 @@
+using JetBrains.Annotations;
 using Microsoft.Extensions.Options;
 
 namespace Hhs.Gateway.Commercial.Options.Docs;
 
 public sealed class SwaggerAggregationOptionsValidator : IValidateOptions<SwaggerAggregationOptions>
 {
-    public ValidateOptionsResult Validate(string? name, SwaggerAggregationOptions options)
+    public ValidateOptionsResult Validate([CanBeNull] string name, SwaggerAggregationOptions options)
     {
         var errors = new List<string>();
 

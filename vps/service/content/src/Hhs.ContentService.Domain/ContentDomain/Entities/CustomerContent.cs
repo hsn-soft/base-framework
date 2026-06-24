@@ -19,25 +19,25 @@ public sealed class CustomerContent : AuditedEntity<Guid>, ISoftDelete, IScopeSu
 
     // Correlation & Tracing
     [CanBeNull]
-    public string? CorrelationId { get; private set; }
+    public string CorrelationId { get; private set; }
 
     // Normalization Status
-    [CanBeNull] public string? NormalizeStatus { get; set; }
+    [CanBeNull]  public string NormalizeStatus { get; set; }
     [CanBeNull] public Guid? NormalizeRequestId { get; set; }
 
     // Video Generation Status
-    [CanBeNull] public string? VideoStatus { get; set; }
+    [CanBeNull]  public string VideoStatus { get; set; }
     [CanBeNull] public Guid? VideoRequestId { get; set; }
     [CanBeNull] public Guid? AudioRequestId { get; set; }
 
     // Result & Errors
-    [CanBeNull] public string? FinalVideoUrl { get; set; }
-    [CanBeNull] public string? LastFacility { get; set; }
-    [CanBeNull] public string? LastError { get; set; }
+    [CanBeNull]  public string FinalVideoUrl { get; set; }
+    [CanBeNull]  public string LastFacility { get; set; }
+    [CanBeNull]  public string LastError { get; set; }
 
     private CustomerContent() { }
 
-    public CustomerContent(Guid id, string scopeKey, string domainName, string contentKey, string slugKey, string? correlationId = null)
+    public CustomerContent(Guid id, string scopeKey, string domainName, string contentKey, string slugKey, [CanBeNull] string correlationId = null)
     {
         Id = id;
         ScopeKey = scopeKey;

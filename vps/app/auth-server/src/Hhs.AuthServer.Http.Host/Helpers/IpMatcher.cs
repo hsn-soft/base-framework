@@ -1,11 +1,12 @@
 using System.Net;
 using System.Net.Sockets;
+using JetBrains.Annotations;
 
 namespace Hhs.AuthServer.Helpers;
 
 public static class IpMatcher
 {
-    public static bool IsMatch(IPAddress? address, IEnumerable<string> cidrsOrIps)
+    public static bool IsMatch([CanBeNull] IPAddress address, IEnumerable<string> cidrsOrIps)
     {
         if (address is null)
             return false;

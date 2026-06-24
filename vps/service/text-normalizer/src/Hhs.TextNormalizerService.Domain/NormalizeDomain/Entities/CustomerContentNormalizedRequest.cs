@@ -14,7 +14,7 @@ public sealed class CustomerContentNormalizedRequest : AuditedEntity<Guid>, ISof
 
     // Correlation
     [CanBeNull]
-    public string? CorrelationId { get; set; }
+    public string CorrelationId { get; set; }
     public Guid SourceEventId { get; set; }
 
     // Subscription & Scope
@@ -30,15 +30,15 @@ public sealed class CustomerContentNormalizedRequest : AuditedEntity<Guid>, ISof
     [NotNull] public string CurrentStep { get; set; } = default!;
 
     // Scraping State
-    [CanBeNull] public string? ScrapingStatus { get; set; }
-    [CanBeNull] public ScrapingResult? ScrapingResult { get; set; }
+    [CanBeNull]  public string ScrapingStatus { get; set; }
+    [CanBeNull]  public ScrapingResult ScrapingResult { get; set; }
 
     // Outline Generation State
-    [CanBeNull] public string? OutlineStatus { get; set; }
-    [CanBeNull] public OutlineResult? OutlineResult { get; set; }
+    [CanBeNull]  public string OutlineStatus { get; set; }
+    [CanBeNull]  public OutlineResult OutlineResult { get; set; }
 
     // Outline Polling & Tracking
-    [CanBeNull] public string? OutlineProviderTrackId { get; set; }
+    [CanBeNull]  public string OutlineProviderTrackId { get; set; }
     [CanBeNull] public DateTime? NextOutlinePollAtUtc { get; set; }
     public int OutlinePollingCount { get; set; }
     public int MaxOutlinePollingCount { get; set; } = CustomerContentNormalizedRequestConsts.MaxOutlinePollingCountDefault;
@@ -47,11 +47,11 @@ public sealed class CustomerContentNormalizedRequest : AuditedEntity<Guid>, ISof
     public int RetryCount { get; set; }
     public int MaxRetryCount { get; set; } = CustomerContentNormalizedRequestConsts.MaxRetryCountDefault;
     [CanBeNull] public DateTime? NextRetryAtUtc { get; set; }
-    [CanBeNull] public string? LastError { get; set; }
+    [CanBeNull]  public string LastError { get; set; }
 
     private CustomerContentNormalizedRequest() { }
 
-    public CustomerContentNormalizedRequest(Guid id, string scopeKey, Guid customerContentId, string domainName, string contentKey, string? correlationId = null)
+    public CustomerContentNormalizedRequest(Guid id, string scopeKey, Guid customerContentId, string domainName, string contentKey, [CanBeNull] string correlationId = null)
     {
         Id = id;
         ScopeKey = scopeKey;

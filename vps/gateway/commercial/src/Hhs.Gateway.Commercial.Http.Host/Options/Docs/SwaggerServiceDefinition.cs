@@ -1,3 +1,5 @@
+using JetBrains.Annotations;
+
 namespace Hhs.Gateway.Commercial.Options.Docs;
 
 public sealed class SwaggerServiceDefinition
@@ -10,6 +12,6 @@ public sealed class SwaggerServiceDefinition
     public string GatewayPathPrefix { get; set; } = string.Empty;
 
     // Swagger Doc details
-    public string? ServiceHealthPath { get; set; }
-    public string? GatewayHealthPath { get; set; }
+    [CanBeNull] public string ServiceHealthPath { get; set; }
+    [CanBeNull] public string GatewayHealthPath { get; set; }
 }

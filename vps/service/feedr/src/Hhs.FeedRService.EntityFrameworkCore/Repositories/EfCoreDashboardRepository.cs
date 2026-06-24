@@ -2,6 +2,7 @@ using Hhs.FeedRService.Domain.ReportingDomain.Entities;
 using Hhs.FeedRService.Domain.ReportingDomain.Repositories;
 using Hhs.FeedRService.EntityFrameworkCore.Context;
 using HsnSoft.Base.Domain.Repositories;
+using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 
 namespace Hhs.FeedRService.EntityFrameworkCore.Repositories;
@@ -274,9 +275,9 @@ public sealed class EfCoreDashboardRepository(
     }
 
     public async Task<List<(string OrderId, string OrderName)>> GetDistinctOrdersAsync(
-        string? networkCode,
-        string? adUnitTopLevelCode,
-        string? adUnitCode,
+        [CanBeNull] string networkCode,
+        [CanBeNull] string adUnitTopLevelCode,
+        [CanBeNull] string adUnitCode,
         Guid? clientId,
         CancellationToken cancellationToken = default)
     {

@@ -1,5 +1,6 @@
 using Hhs.FeedRService.Domain.ReportingDomain.Entities;
 using HsnSoft.Base.Domain.Repositories;
+using JetBrains.Annotations;
 
 namespace Hhs.FeedRService.Domain.ReportingDomain.Repositories;
 
@@ -56,9 +57,9 @@ public interface IDashboardRepository : IReadOnlyGenericRepository<DashboardResp
     /// At least one of networkCode, adUnitTopLevelCode, adUnitCode, or clientId should be non-null.
     /// </summary>
     Task<List<(string OrderId, string OrderName)>> GetDistinctOrdersAsync(
-        string? networkCode,
-        string? adUnitTopLevelCode,
-        string? adUnitCode,
+        [CanBeNull] string networkCode,
+        [CanBeNull] string adUnitTopLevelCode,
+        [CanBeNull] string adUnitCode,
         Guid? clientId,
         CancellationToken cancellationToken = default);
 }

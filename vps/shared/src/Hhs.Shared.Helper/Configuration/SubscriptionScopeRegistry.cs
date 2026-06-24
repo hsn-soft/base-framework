@@ -1,3 +1,5 @@
+using JetBrains.Annotations;
+
 namespace Hhs.Shared.Helper.Configuration;
 
 /// <summary>
@@ -91,7 +93,8 @@ public static class SubscriptionScopeRegistry
     /// <summary>
     /// Get provider configuration for a specific scope.
     /// </summary>
-    public static SubscriptionScope? GetScope(string scopeKey)
+    [CanBeNull]
+    public static SubscriptionScope GetScope(string scopeKey)
     {
         return _scopes.TryGetValue(scopeKey, out var scope) ? scope : null;
     }
@@ -99,7 +102,8 @@ public static class SubscriptionScopeRegistry
     /// <summary>
     /// Get outline provider key for a scope.
     /// </summary>
-    public static string? GetOutlineProviderKey(string scopeKey)
+    [CanBeNull]
+    public static string GetOutlineProviderKey(string scopeKey)
     {
         return GetScope(scopeKey)?.OutlineProviderKey;
     }
@@ -107,7 +111,8 @@ public static class SubscriptionScopeRegistry
     /// <summary>
     /// Get audio provider key for a scope.
     /// </summary>
-    public static string? GetAudioProviderKey(string scopeKey)
+    [CanBeNull]
+    public static string GetAudioProviderKey(string scopeKey)
     {
         return GetScope(scopeKey)?.AudioProviderKey;
     }
@@ -115,7 +120,8 @@ public static class SubscriptionScopeRegistry
     /// <summary>
     /// Get video provider key for a scope.
     /// </summary>
-    public static string? GetVideoProviderKey(string scopeKey)
+    [CanBeNull]
+    public static string GetVideoProviderKey(string scopeKey)
     {
         return GetScope(scopeKey)?.VideoProviderKey;
     }

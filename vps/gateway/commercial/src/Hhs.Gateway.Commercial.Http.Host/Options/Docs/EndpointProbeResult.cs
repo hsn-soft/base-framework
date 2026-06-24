@@ -1,4 +1,5 @@
 using System.Net;
+using JetBrains.Annotations;
 
 namespace Hhs.Gateway.Commercial.Options.Docs;
 
@@ -12,7 +13,7 @@ public sealed class EndpointProbeResult
 
     public long ResponseTimeMs { get; set; }
 
-    public string? ResponseSnippet { get; set; }
+    [CanBeNull] public string ResponseSnippet { get; set; }
 
-    public string? ErrorMessage { get; set; }
+    [CanBeNull] public string ErrorMessage { get; set; }
 }

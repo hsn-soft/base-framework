@@ -1,3 +1,5 @@
+using JetBrains.Annotations;
+
 namespace Hhs.Shared.Helper.Configuration;
 
 /// <summary>
@@ -7,10 +9,10 @@ namespace Hhs.Shared.Helper.Configuration;
 public sealed class SubscriptionScope
 {
     public string OutlineProviderKey { get; }
-    public string? AudioProviderKey { get; }
+    [CanBeNull] public string AudioProviderKey { get; }
     public string VideoProviderKey { get; }
 
-    public SubscriptionScope(string outlineProviderKey, string? audioProviderKey, string videoProviderKey)
+    public SubscriptionScope(string outlineProviderKey, [CanBeNull] string audioProviderKey, string videoProviderKey)
     {
         OutlineProviderKey = outlineProviderKey;
         AudioProviderKey = audioProviderKey;

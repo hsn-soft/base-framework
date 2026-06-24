@@ -1,4 +1,5 @@
 using Hhs.Shared.Helper.Providers;
+using JetBrains.Annotations;
 
 namespace Hhs.VideoGeneratorService.Application.Providers.Audio;
 
@@ -22,16 +23,16 @@ public sealed class AudioCreateRequest
 public sealed class AudioCreateResponse
 {
     public bool IsCompleted { get; set; }
-    public string? ProviderTrackId { get; set; }
-    public string? ProviderFileUrl { get; set; }
-    public string? FileName { get; set; }
+    [CanBeNull] public string ProviderTrackId { get; set; }
+    [CanBeNull] public string ProviderFileUrl { get; set; }
+    [CanBeNull] public string FileName { get; set; }
 }
 
 public sealed class AudioStatusResponse
 {
     public bool IsCompleted { get; set; }
     public bool IsFailed { get; set; }
-    public string? ProviderFileUrl { get; set; }
-    public string? ErrorMessage { get; set; }
-    public string? FileName { get; set; }
+    [CanBeNull] public string ProviderFileUrl { get; set; }
+    [CanBeNull] public string ErrorMessage { get; set; }
+    [CanBeNull] public string FileName { get; set; }
 }

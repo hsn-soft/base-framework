@@ -145,7 +145,7 @@ public sealed class ApiRequestResponseLoggingMiddleware
         }
     }
 
-    private RequestResponseLogModel BuildLogModel(HttpContext context, string? requestBody, string? responseBody, long elapsedMs)
+    private RequestResponseLogModel BuildLogModel(HttpContext context, [CanBeNull] string requestBody, [CanBeNull] string responseBody, long elapsedMs)
     {
         var request = context.Request;
         var response = context.Response;
@@ -286,7 +286,7 @@ public sealed class ApiRequestResponseLoggingMiddleware
         return !path.StartsWith("/swagger") && !path.StartsWith("/health");
     }
 
-    private static bool IsJsonContentType(string? contentType)
+    private static bool IsJsonContentType([CanBeNull] string contentType)
     {
         if (string.IsNullOrWhiteSpace(contentType))
             return false;
@@ -295,7 +295,8 @@ public sealed class ApiRequestResponseLoggingMiddleware
                || contentType.Contains("+json", StringComparison.OrdinalIgnoreCase);
     }
 
-    private static async Task<string?> ReadRequestBodyAsync(HttpRequest request, int maxBytes)
+    [ItemCanBeNull]
+    private static async Task<string> ReadRequestBodyAsync(HttpRequest request, int maxBytes)
     {
         request.EnableBuffering(bufferThreshold: 1024 * 30, bufferLimit: maxBytes);
         request.Body.Position = 0;
@@ -400,7 +401,7 @@ public sealed class ApiRequestResponseLoggingMiddleware
         return string.IsNullOrWhiteSpace(name) ? "Set-Cookie: <unknown>" : $"Set-Cookie: {(name.Length > 30 ? name[..30] + "..." : name)}";
     }
 
-    private static string TruncateText(string? value, int maxLength)
+    private static string TruncateText([CanBeNull] string value, int maxLength)
     {
         if (string.IsNullOrEmpty(value) || maxLength <= 0)
             return string.Empty;

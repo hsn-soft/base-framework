@@ -1,5 +1,6 @@
 using Hhs.Gateway.Commercial.Options.Docs;
 using Hhs.Gateway.Commercial.Services.Swagger;
+using JetBrains.Annotations;
 
 namespace Hhs.Gateway.Commercial.Services.Docs;
 
@@ -84,9 +85,9 @@ public static class GatewayDocsBuilder
                  """;
     }
 
-    private static string Html(string? value) => System.Net.WebUtility.HtmlEncode(value ?? string.Empty);
+    private static string Html([CanBeNull] string value) => System.Net.WebUtility.HtmlEncode(value ?? string.Empty);
 
-    private static string StatusBadge(EndpointProbeResult? probe)
+    private static string StatusBadge([CanBeNull] EndpointProbeResult probe)
     {
         if (probe is null) return """<span class="badge gray">N/A</span>""";
 
@@ -95,7 +96,7 @@ public static class GatewayDocsBuilder
             : $"""<span class="badge red">DOWN · {probe.ResponseTimeMs} ms</span>""";
     }
 
-    private static string ProbeBlock(string title, EndpointProbeResult? probe)
+    private static string ProbeBlock(string title, [CanBeNull] EndpointProbeResult probe)
     {
         if (probe is null)
         {

@@ -1,5 +1,6 @@
 using Hhs.Gateway.Commercial.Options;
 using Hhs.Gateway.Commercial.Options.Docs;
+using JetBrains.Annotations;
 using Microsoft.Extensions.Options;
 
 namespace Hhs.Gateway.Commercial.Services.Swagger;
@@ -9,8 +10,8 @@ public interface IServiceUrlResolver
     string GetGatewayPublicOrigin();
     string GetServiceOrigin(string serviceKey);
 
-    string BuildServiceUrl(string serviceKey, string? relativePath);
-    string BuildGatewayUrl(string? relativePath);
+    string BuildServiceUrl(string serviceKey, [CanBeNull] string relativePath);
+    string BuildGatewayUrl([CanBeNull] string relativePath);
 }
 
 public sealed class ServiceUrlResolver(
@@ -35,12 +36,12 @@ public sealed class ServiceUrlResolver(
         return NormalizeOrigin(item.Origin);
     }
 
-    public string BuildServiceUrl(string serviceKey, string? relativePath)
+    public string BuildServiceUrl(string serviceKey, [CanBeNull] string relativePath)
     {
         return Combine(GetServiceOrigin(serviceKey), relativePath);
     }
 
-    public string BuildGatewayUrl(string? relativePath)
+    public string BuildGatewayUrl([CanBeNull] string relativePath)
     {
         return Combine(GetGatewayPublicOrigin(), relativePath);
     }
@@ -53,7 +54,7 @@ public sealed class ServiceUrlResolver(
         return origin.TrimEnd('/');
     }
 
-    private static string Combine(string origin, string? relativePath)
+    private static string Combine(string origin, [CanBeNull] string relativePath)
     {
         if (string.IsNullOrWhiteSpace(relativePath) || relativePath == "/")
             return origin + "/";

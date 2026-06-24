@@ -1,3 +1,5 @@
+using JetBrains.Annotations;
+
 namespace Hhs.FeedRService.Application.Contracts.DashboardDomain.Dtos;
 
 /// <summary>
@@ -7,13 +9,16 @@ namespace Hhs.FeedRService.Application.Contracts.DashboardDomain.Dtos;
 public sealed class GetOrdersQueryDto
 {
     /// <summary>Google Ad Manager network code (optional).</summary>
-    public string? NetworkCode { get; set; }
+    [CanBeNull]
+    public string NetworkCode { get; set; }
 
     /// <summary>Top-level AdUnit code (optional).</summary>
-    public string? AdUnitTopLevelCode { get; set; }
+    [CanBeNull]
+    public string AdUnitTopLevelCode { get; set; }
 
     /// <summary>Client-specific AdUnit code (optional).</summary>
-    public string? AdUnitCode { get; set; }
+    [CanBeNull]
+    public string AdUnitCode { get; set; }
 
     /// <summary>Client identifier (optional).</summary>
     public Guid? ClientId { get; set; }

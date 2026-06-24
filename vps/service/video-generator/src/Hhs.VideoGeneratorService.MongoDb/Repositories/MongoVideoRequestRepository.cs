@@ -3,6 +3,7 @@ using Hhs.VideoGeneratorService.Domain.MediaDomain.Repositories;
 using Hhs.VideoGeneratorService.MongoDb.Context;
 using HsnSoft.Base.Domain.Models;
 using HsnSoft.Base.Domain.Repositories;
+using JetBrains.Annotations;
 
 namespace Hhs.VideoGeneratorService.MongoDb.Repositories;
 
@@ -11,7 +12,8 @@ public sealed class MongoVideoRequestRepository(
     VideoGeneratorServiceDbContext dbContext
 ) : MongoGenericRepository<VideoRequest, Guid>(provider, dbContext), IVideoRequestRepository
 {
-    public async Task<VideoRequest?> GetByScopeKeyAndRefContentAsync(string scopeKey, Guid refContentId, CancellationToken cancellationToken = default)
+    [ItemCanBeNull]
+    public async Task<VideoRequest> GetByScopeKeyAndRefContentAsync(string scopeKey, Guid refContentId, CancellationToken cancellationToken = default)
         => await GetFirstOrDefaultAsync(
             x => x.ScopeKey == scopeKey && x.RefContentId == refContentId,
             cancellationToken: cancellationToken
