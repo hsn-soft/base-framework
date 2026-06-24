@@ -1,3 +1,5 @@
+using JetBrains.Annotations;
+
 namespace Hhs.FeedRService.Domain.ConfigurationDomain.Entities;
 
 /// <summary>
@@ -6,7 +8,9 @@ namespace Hhs.FeedRService.Domain.ConfigurationDomain.Entities;
 /// </summary>
 public sealed class TopLevelGroupConfig
 {
+    [NotNull]
     public string AdUnitTopLevelCode { get; set; } = string.Empty;
+    [NotNull]
     public string DisplayName { get; set; } = string.Empty;
     public bool IsActive { get; set; } = true;
 

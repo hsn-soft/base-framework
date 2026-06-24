@@ -1,5 +1,6 @@
 using HsnSoft.Base.Domain.Entities.Auditing;
 using HsnSoft.Base.MultiTenancy;
+using JetBrains.Annotations;
 
 namespace Hhs.FeedRService.Domain.ConfigurationDomain.Entities;
 
@@ -12,7 +13,9 @@ public sealed class NetworkConfiguration : CreationAuditedEntity<Guid>, IMultiTe
 {   
     public Guid NetworkId { get; private set; }
     public Guid TenantId { get; private set; }
+    [NotNull]
     public string NetworkCode { get; private set; } = string.Empty;
+    [NotNull]
     public string DisplayName { get; private set; } = string.Empty;
     public bool IsActive { get; private set; } = true;
 

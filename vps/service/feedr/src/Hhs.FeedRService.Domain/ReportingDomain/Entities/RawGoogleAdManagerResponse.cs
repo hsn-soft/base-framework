@@ -1,6 +1,7 @@
 using Hhs.FeedRService.Domain.ReportingDomain.Enums;
 using HsnSoft.Base.Domain.Entities.Auditing;
 using HsnSoft.Base.MultiTenancy;
+using JetBrains.Annotations;
 
 namespace Hhs.FeedRService.Domain.ReportingDomain.Entities;
 
@@ -13,21 +14,27 @@ public sealed class RawGoogleAdManagerResponse : CreationAuditedEntity<Guid>, IM
 {
     public Guid TenantId { get; private set; }
     public Guid ClientId { get; private set; }
+    [NotNull]
     public string ClientName { get; private set; } = string.Empty;
 
     /// <summary>Unique correlation identifier linking this response to a CreateReportRequest / job run.</summary>
+    [NotNull]
     public string RequestId { get; private set; } = string.Empty;
 
     /// <summary>Job name (e.g. GenerateSummaryReport) that triggered this response.</summary>
+    [NotNull]
     public string JobName { get; private set; } = string.Empty;
 
     /// <summary>Google Ad Manager network the report was executed against.</summary>
+    [NotNull]
     public string Network { get; private set; } = string.Empty;
 
     /// <summary>The AdUnitIdTopLevel used as the report filter.</summary>
+    [NotNull]
     public string AdUnitIdTopLevel { get; private set; } = string.Empty;
 
     /// <summary>The AdUnitId used as the report filter (the client-specific ad unit).</summary>
+    [NotNull]
     public string AdUnitId { get; private set; } = string.Empty;
 
     /// <summary>The date the report data is representing (Google Ad Manager Yesterday relative range).</summary>
@@ -37,6 +44,7 @@ public sealed class RawGoogleAdManagerResponse : CreationAuditedEntity<Guid>, IM
     public DateTime Timestamp { get; private set; }
 
     /// <summary>The raw (verbatim) NDJSON response body returned by Google Ad Manager.</summary>
+    [NotNull]
     public string RawResponse { get; private set; } = string.Empty;
 
     /// <summary>The response parsed into structured rows - stored as a list within the single document.</summary>
@@ -46,6 +54,7 @@ public sealed class RawGoogleAdManagerResponse : CreationAuditedEntity<Guid>, IM
     public DerivationStatus ProcessedStatus { get; private set; } = DerivationStatus.Pending;
 
     public DateTime? ProcessedAt { get; private set; }
+    [CanBeNull]
     public string ProcessingError { get; private set; }
 
     private RawGoogleAdManagerResponse() { }

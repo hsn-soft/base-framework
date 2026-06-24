@@ -1,5 +1,6 @@
 using HsnSoft.Base.Domain.Entities.Auditing;
 using HsnSoft.Base.MultiTenancy;
+using JetBrains.Annotations;
 
 namespace Hhs.FeedRService.Domain.ReportingDomain.Entities;
 
@@ -15,10 +16,12 @@ public sealed class AdUnitClient : AuditedEntity<Guid>, IMultiTenant
     public AdUnitTopLevel AdUnitTopLevel { get; private set; }
 
     /// <summary>The Google Ad Manager AdUnitId (client-specific).</summary>
+    [NotNull]
     public string AdUnitCode { get; private set; } = string.Empty;
 
     /// <summary>Client identifier that owns this ad unit.</summary>
     public Guid ClientId { get; private set; }
+    [NotNull]
     public string ClientName { get; private set; } = string.Empty;
 
     public ICollection<DashboardResponse> DailyReports { get; private set; } = new List<DashboardResponse>();

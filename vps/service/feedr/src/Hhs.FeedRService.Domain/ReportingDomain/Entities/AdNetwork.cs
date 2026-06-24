@@ -1,4 +1,5 @@
 using HsnSoft.Base.Domain.Entities.Auditing;
+using JetBrains.Annotations;
 
 namespace Hhs.FeedRService.Domain.ReportingDomain.Entities;
 
@@ -10,7 +11,9 @@ namespace Hhs.FeedRService.Domain.ReportingDomain.Entities;
 /// </summary>
 public sealed class AdNetwork : AuditedEntity<Guid>
 {
+    [NotNull]
     public string NetworkCode { get; private set; } = string.Empty;
+    [NotNull]
     public string DisplayName { get; private set; } = string.Empty;
 
     public ICollection<AdUnitTopLevel> TopLevelAdUnits { get; private set; } = new List<AdUnitTopLevel>();

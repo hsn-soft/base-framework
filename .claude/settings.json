@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(tee /tmp/build-output.log)",
+      "Bash(git commit -m ' *)"
+    ]
+  }
+}

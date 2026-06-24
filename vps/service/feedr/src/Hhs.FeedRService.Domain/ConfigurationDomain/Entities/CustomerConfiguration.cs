@@ -1,6 +1,7 @@
 using HsnSoft.Base;
 using HsnSoft.Base.Domain.Entities.Auditing;
 using HsnSoft.Base.MultiTenancy;
+using JetBrains.Annotations;
 
 namespace Hhs.FeedRService.Domain.ConfigurationDomain.Entities;
 
@@ -9,14 +10,19 @@ public class CustomerConfiguration : CreationAuditedEntity<Guid>, ISoftDelete, I
     public bool IsDeleted { get; set; }
     public Guid TenantId { get; private set; }
     public Guid ClientId { get; private set; }
+    [NotNull]
     public string ClientName { get; private set; }
 
+    [CanBeNull]
     public string Network { get; private set; }
 
+    [CanBeNull]
     public string AdUnitName { get; private set; }
 
+    [NotNull]
     public string AdUnitIdTopLevel { get; private set; }
 
+    [CanBeNull]
     public List<string> AdUnitId { get; private set; }
 
     private CustomerConfiguration()
