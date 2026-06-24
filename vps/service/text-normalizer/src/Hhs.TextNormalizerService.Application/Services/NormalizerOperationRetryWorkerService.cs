@@ -11,7 +11,7 @@ using MongoDB.Driver;
 
 namespace Hhs.TextNormalizerService.Application.Services;
 
-public sealed class NormalizerRetryAppService(
+public sealed class NormalizerOperationRetryWorkerService(
     IServiceProvider provider,
     IAnalysisContentNormalizedRequestRepository analysisRepository,
     ICustomerContentNormalizedRequestRepository customerRepository,

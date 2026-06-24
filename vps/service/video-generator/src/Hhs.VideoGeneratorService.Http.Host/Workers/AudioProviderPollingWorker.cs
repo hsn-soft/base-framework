@@ -20,7 +20,7 @@ public sealed class AudioProviderPollingWorker(
                 using var scope = serviceProvider.CreateScope();
 
                 var appService = scope.ServiceProvider
-                    .GetRequiredService<AudioProviderPollingAppService>();
+                    .GetRequiredService<AudioProviderPollingWorkerService>();
 
                 await appService.PollDueAudioRequestsAsync(stoppingToken);
             }

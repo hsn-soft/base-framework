@@ -12,7 +12,7 @@ using MongoDB.Driver;
 
 namespace Hhs.VideoGeneratorService.Application.Services;
 
-public sealed class VideoRetryAppService(
+public sealed class VideoOperationRetryWorkerService(
     IServiceProvider provider,
     IVideoRequestRepository videoRequestRepository,
     IAudioRequestRepository audioRequestRepository,

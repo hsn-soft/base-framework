@@ -20,7 +20,7 @@ public sealed class VideoRetryWorker(
                 using var scope = serviceProvider.CreateScope();
 
                 var appService = scope.ServiceProvider
-                    .GetRequiredService<VideoRetryAppService>();
+                    .GetRequiredService<VideoOperationRetryWorkerService>();
 
                 await appService.RetryDueRequestsAsync(stoppingToken);
             }

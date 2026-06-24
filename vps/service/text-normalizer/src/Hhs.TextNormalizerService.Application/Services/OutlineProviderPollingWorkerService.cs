@@ -15,12 +15,12 @@ using MongoDB.Driver;
 
 namespace Hhs.TextNormalizerService.Application.Services;
 
-public sealed class OutlineProviderPollingAppService(
+public sealed class OutlineProviderPollingWorkerService(
     IServiceProvider provider,
     IAnalysisContentNormalizedRequestRepository analysisRepository,
     ICustomerContentNormalizedRequestRepository customerRepository,
     IOutlineProviderResolver outlineProviderResolver,
-    ILogger<OutlineProviderPollingAppService> logger,
+    ILogger<OutlineProviderPollingWorkerService> logger,
     OutlinePollingSettings pollingSettings) : ApplicationServiceBase(provider)
 {
     public async Task PollDueOutlineRequestsAsync(CancellationToken cancellationToken)

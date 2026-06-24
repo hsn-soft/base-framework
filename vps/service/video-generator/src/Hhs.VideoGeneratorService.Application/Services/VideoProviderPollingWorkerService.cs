@@ -12,34 +12,34 @@ using MongoDB.Driver;
 
 namespace Hhs.VideoGeneratorService.Application.Services;
 
-public sealed class AudioProviderPollingAppService(
+public sealed class VideoProviderPollingWorkerService(
     IServiceProvider provider,
-    IAudioRequestRepository audioRequestRepository,
-    IAudioProviderResolver audioProviderResolver,
-    ILogger<AudioProviderPollingAppService> logger,
-    AudioPollingSettings pollingSettings) : ApplicationServiceBase(provider)
+    IVideoRequestRepository videoRequestRepository,
+    IVideoProviderResolver videoProviderResolver,
+    ILogger<VideoProviderPollingWorkerService> logger,
+    VideoPollingSettings pollingSettings) : ApplicationServiceBase(provider)
 {
-    public async Task PollDueAudioRequestsAsync(CancellationToken cancellationToken)
+    public async Task PollDueVideoRequestsAsync(CancellationToken cancellationToken)
     {
         var now = DateTime.UtcNow;
 
-        var options = new ListQueryOptions<AudioRequest>
+        var options = new ListQueryOptions<VideoRequest>
         {
             Filter = x =>
-                x.Status == StatusNames.AudioProviderPolling &&
+                x.Status == StatusNames.VideoProviderPolling &&
                 x.NextProviderPollAtUtc != null &&
                 x.NextProviderPollAtUtc <= now &&
-                x.AudioProviderTrackingId != null,
+                x.VideoProviderTrackingId != null,
             MaxResultCount = 50
         };
 
-        var requests = await audioRequestRepository.GetListAsync(options, cancellationToken);
+        var requests = await videoRequestRepository.GetListAsync(options, cancellationToken);
 
         foreach (var request in requests)
         {
             try
             {
-                var claimResult = await ClaimDueAudioPollingAsync(
+                var claimResult = await ClaimDueVideoPollingAsync(
                     request.Id,
                     now,
                     cancellationToken);
@@ -50,9 +50,9 @@ public sealed class AudioProviderPollingAppService(
                 if (request.ProviderPollingCount >= 60)
                 {
                     request.Status = StatusNames.Failed;
-                    request.LastError = ErrorMessages.AudioProviderPollingTimeout;
+                    request.LastError = ErrorMessages.VideoProviderPollingTimeout;
 
-                    await ReplaceAudioAsync(request, cancellationToken);
+                    await ReplaceVideoAsync(request, cancellationToken);
 
                     await EventBus.PublishAsync(
                         parentMessage: ParentIntegrationEvent,
@@ -61,7 +61,7 @@ public sealed class AudioProviderPollingAppService(
                         {
                             RefContentId = request.RefContentId,
                             RefContentType = request.RefContentType,
-                            Step = EventNames.AudioProviderPollingStarted,
+                            Step = EventNames.VideoProviderPollingStarted,
                             ErrorMessage = request.LastError,
                             Retryable = false
                         }
@@ -70,17 +70,17 @@ public sealed class AudioProviderPollingAppService(
                     continue;
                 }
 
-                string? audioProviderKey = SubscriptionScopeRegistry.GetAudioProviderKey(request.ScopeKey);
-                var provider = audioProviderResolver.Resolve(audioProviderKey);
+                string? videoProviderKey = SubscriptionScopeRegistry.GetVideoProviderKey(request.ScopeKey);
+                var provider = videoProviderResolver.Resolve(videoProviderKey);
 
-                var status = await provider.GetStatusAsync(request.AudioProviderTrackingId!);
+                var status = await provider.GetStatusAsync(request.VideoProviderTrackingId!);
 
                 if (status.IsFailed)
                 {
                     request.Status = StatusNames.Failed;
-                    request.LastError = status.ErrorMessage ?? "Audio provider failed.";
+                    request.LastError = status.ErrorMessage ?? "Video provider failed.";
 
-                    await ReplaceAudioAsync(request, cancellationToken);
+                    await ReplaceVideoAsync(request, cancellationToken);
 
                     await EventBus.PublishAsync(
                         parentMessage: ParentIntegrationEvent,
@@ -89,7 +89,7 @@ public sealed class AudioProviderPollingAppService(
                         {
                             RefContentId = request.RefContentId,
                             RefContentType = request.RefContentType,
-                            Step = EventNames.AudioProviderPollingStarted,
+                            Step = EventNames.VideoProviderPollingStarted,
                             ErrorMessage = request.LastError,
                             Retryable = false
                         }
@@ -103,27 +103,27 @@ public sealed class AudioProviderPollingAppService(
                     request.ProviderPollingCount++;
                     request.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(pollingSettings.IntervalSeconds);
 
-                    await ReplaceAudioAsync(request, cancellationToken);
+                    await ReplaceVideoAsync(request, cancellationToken);
                     continue;
                 }
 
                 if (string.IsNullOrWhiteSpace(status.ProviderFileUrl))
-                    throw new InvalidOperationException("Audio provider completed but file url is empty.");
+                    throw new InvalidOperationException("Video provider completed but file url is empty.");
 
                 // set provider file url
-                request.AudioProviderUrl = status.ProviderFileUrl;
+                request.VideoProviderUrl = status.ProviderFileUrl;
 
                 request.ProviderPollingCount++;
                 request.NextProviderPollAtUtc = null;
-                request.Status = StatusNames.AudioProviderCompleted;
-                request.CurrentStep = EventNames.AudioProviderCompleted;
+                request.Status = StatusNames.VideoProviderCompleted;
+                request.CurrentStep = EventNames.VideoProviderCompleted;
                 request.LastError = null;
 
-                await ReplaceAudioAsync(request, cancellationToken);
+                await ReplaceVideoAsync(request, cancellationToken);
 
                 // Publish provider completed event - handler will trigger download cascade
                 await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
-                    eventMessage: new AudioProviderCompletedEto { AudioRequestId = request.Id, }
+                    eventMessage: new VideoProviderCompletedEto { VideoRequestId = request.Id }
                 );
             }
             catch (Exception ex)
@@ -136,7 +136,7 @@ public sealed class AudioProviderPollingAppService(
                     request.Status = StatusNames.Failed;
                     request.NextProviderPollAtUtc = null;
 
-                    await ReplaceAudioAsync(request, cancellationToken);
+                    await ReplaceVideoAsync(request, cancellationToken);
 
                     await EventBus.PublishAsync(
                         parentMessage: ParentIntegrationEvent,
@@ -145,7 +145,7 @@ public sealed class AudioProviderPollingAppService(
                         {
                             RefContentId = request.RefContentId,
                             RefContentType = request.RefContentType,
-                            Step = EventNames.AudioProviderPollingStarted,
+                            Step = EventNames.VideoProviderPollingStarted,
                             ErrorMessage = ex.Message,
                             Retryable = false
                         }
@@ -154,58 +154,58 @@ public sealed class AudioProviderPollingAppService(
                 else
                 {
                     request.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(pollingSettings.BackoffIntervalSeconds);
-                    await ReplaceAudioAsync(request, cancellationToken);
+                    await ReplaceVideoAsync(request, cancellationToken);
                 }
 
                 logger.LogError(
                     ex,
-                    "Audio provider polling failed. AudioRequestId: {AudioRequestId}",
+                    "Video provider polling failed. VideoRequestId: {VideoRequestId}",
                     request.Id);
             }
         }
     }
 
-    private Task<long> ClaimDueAudioPollingAsync(
-        Guid audioRequestId,
+    private Task<long> ClaimDueVideoPollingAsync(
+        Guid videoRequestId,
         DateTime now,
         CancellationToken cancellationToken)
     {
-        var predicate = (Expression<Func<AudioRequest, bool>>)(x =>
-            x.Id == audioRequestId &&
-            x.Status == StatusNames.AudioProviderPolling &&
+        var predicate = (Expression<Func<VideoRequest, bool>>)(x =>
+            x.Id == videoRequestId &&
+            x.Status == StatusNames.VideoProviderPolling &&
             x.NextProviderPollAtUtc != null &&
             x.NextProviderPollAtUtc <= now &&
-            x.AudioProviderTrackingId != null);
+            x.VideoProviderTrackingId != null);
 
-        var update = Builders<AudioRequest>.Update
+        var update = Builders<VideoRequest>.Update
             .Set(x => x.NextProviderPollAtUtc, DateTime.UtcNow.AddSeconds(pollingSettings.ErrorRescheduleDelaySeconds));
 
-        return audioRequestRepository.UpdateByExpressionAsync(
+        return videoRequestRepository.UpdateByExpressionAsync(
             predicate,
             u => update,
             cancellationToken: cancellationToken);
     }
 
-    private Task ReplaceAudioAsync(AudioRequest request, CancellationToken cancellationToken)
+    private Task ReplaceVideoAsync(VideoRequest request, CancellationToken cancellationToken)
     {
-        var predicate = (Expression<Func<AudioRequest, bool>>)(x => x.Id == request.Id);
-        var update = Builders<AudioRequest>.Update
+        var predicate = (Expression<Func<VideoRequest, bool>>)(x => x.Id == request.Id);
+        var update = Builders<VideoRequest>.Update
             .Set(x => x.Status, request.Status)
             .Set(x => x.CurrentStep, request.CurrentStep)
-            .Set(x => x.InputText, request.InputText)
+            .Set(x => x.MediaInputJson, request.MediaInputJson)
             .Set(x => x.AudioProviderKey, request.AudioProviderKey)
-            .Set(x => x.SortOrder, request.SortOrder)
-            .Set(x => x.AudioProviderTrackingId, request.AudioProviderTrackingId)
-            .Set(x => x.AudioProviderUrl, request.AudioProviderUrl)
+            .Set(x => x.VideoProviderKey, request.VideoProviderKey)
+            .Set(x => x.VideoProviderTrackingId, request.VideoProviderTrackingId)
+            .Set(x => x.VideoProviderUrl, request.VideoProviderUrl)
             .Set(x => x.NextProviderPollAtUtc, request.NextProviderPollAtUtc)
             .Set(x => x.ProviderPollingCount, request.ProviderPollingCount)
-            .Set(x => x.AudioLocalPath, request.AudioLocalPath)
-            .Set(x => x.AudioCdnProviderKey, request.AudioCdnProviderKey)
-            .Set(x => x.AudioCdnUrl, request.AudioCdnUrl)
-            .Set(x => x.AudioStorageUrl, request.AudioStorageUrl)
+            .Set(x => x.VideoLocalPath, request.VideoLocalPath)
+            .Set(x => x.VideoCdnProviderKey, request.VideoCdnProviderKey)
+            .Set(x => x.VideoCdnUrl, request.VideoCdnUrl)
+            .Set(x => x.VideoStorageUrl, request.VideoStorageUrl)
             .Set(x => x.LastError, request.LastError);
 
-        return audioRequestRepository.UpdateByExpressionAsync(
+        return videoRequestRepository.UpdateByExpressionAsync(
             predicate,
             u => update,
             cancellationToken: cancellationToken);

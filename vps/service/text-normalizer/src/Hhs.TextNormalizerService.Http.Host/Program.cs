@@ -80,10 +80,10 @@ builder.Services.AddHttpClient();
 // ============================================================================
 // CUSTOM WORKERS (Polling & Retry Logic)
 // ============================================================================
-builder.Services.AddScoped<OutlineProviderPollingAppService>();
+builder.Services.AddScoped<OutlineProviderPollingWorkerService>();
 builder.Services.AddHostedService<OutlineProviderPollingWorker>();
 
-builder.Services.AddScoped<NormalizerRetryAppService>();
+builder.Services.AddScoped<NormalizerOperationRetryWorkerService>();
 builder.Services.AddHostedService<NormalizerRetryWorker>();
 
 // Swagger

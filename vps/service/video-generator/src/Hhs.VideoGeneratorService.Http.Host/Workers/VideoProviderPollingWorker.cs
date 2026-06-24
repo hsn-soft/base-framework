@@ -20,7 +20,7 @@ public sealed class VideoProviderPollingWorker(
                 using var scope = serviceProvider.CreateScope();
 
                 var appService = scope.ServiceProvider
-                    .GetRequiredService<VideoProviderPollingAppService>();
+                    .GetRequiredService<VideoProviderPollingWorkerService>();
 
                 await appService.PollDueVideoRequestsAsync(stoppingToken);
             }

@@ -74,14 +74,14 @@ builder.Services.AddHttpClient();
 // CUSTOM WORKERS (Polling & Retry Logic)
 // ============================================================================
 // Polling Workers (continuously poll for due requests)
-builder.Services.AddScoped<AudioProviderPollingAppService>();
+builder.Services.AddScoped<AudioProviderPollingWorkerService>();
 builder.Services.AddHostedService<AudioProviderPollingWorker>();
 
-builder.Services.AddScoped<VideoProviderPollingAppService>();
+builder.Services.AddScoped<VideoProviderPollingWorkerService>();
 builder.Services.AddHostedService<VideoProviderPollingWorker>();
 
 // Retry Worker (handles failed video requests with exponential backoff)
-builder.Services.AddScoped<VideoRetryAppService>();
+builder.Services.AddScoped<VideoOperationRetryWorkerService>();
 builder.Services.AddHostedService<VideoRetryWorker>();
 
 // Swagger

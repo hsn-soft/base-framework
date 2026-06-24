@@ -20,7 +20,7 @@ public sealed class NormalizerRetryWorker(
                 using var scope = serviceProvider.CreateScope();
 
                 var appService = scope.ServiceProvider
-                    .GetRequiredService<NormalizerRetryAppService>();
+                    .GetRequiredService<NormalizerOperationRetryWorkerService>();
 
                 await appService.RetryDueRequestsAsync(stoppingToken);
             }
