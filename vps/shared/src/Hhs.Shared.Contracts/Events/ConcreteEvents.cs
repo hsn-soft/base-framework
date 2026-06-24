@@ -1,13 +1,7 @@
+using Hhs.Shared.Helper.Enums;
 using HsnSoft.Base.Domain.Entities.Events;
 
 namespace Hhs.Shared.Contracts.Events;
-
-public enum ContentType
-{
-    None,
-    CustomerContent,
-    AnalysisContent
-}
 
 public sealed record CustomerContentCreatedEto : IIntegrationEventMessage
 {

@@ -6,9 +6,11 @@ using Hhs.Shared.Hosting.Microservices.Extensions;
 using Hhs.Shared.Hosting.Microservices.Middlewares;
 using Hhs.VideoGeneratorService;
 using Hhs.VideoGeneratorService.Application;
+using Hhs.VideoGeneratorService.Application.Services;
 using Hhs.VideoGeneratorService.Domain.Localization;
 using Hhs.VideoGeneratorService.MongoDb;
 using Hhs.VideoGeneratorService.MongoDb.Setup;
+using Hhs.VideoGeneratorService.Workers;
 using HsnSoft.Base.AspNetCore.Localization;
 using HsnSoft.Base.Data;
 using HsnSoft.Base.Serilog;
@@ -64,6 +66,22 @@ builder.Services.AddMicroserviceHosting(builder.Configuration, typeof(Program))
 
 // override DefaultBasicDataSeeder
 builder.Services.AddTransient<IBasicDataSeeder, MongoSeederService>();
+
+builder.Services.AddHttpClient();
+
+// ============================================================================
+// CUSTOM WORKERS (Polling & Retry Logic)
+// ============================================================================
+// Polling Workers (continuously poll for due requests)
+builder.Services.AddScoped<AudioProviderPollingAppService>();
+builder.Services.AddHostedService<AudioProviderPollingWorker>();
+
+builder.Services.AddScoped<VideoProviderPollingAppService>();
+builder.Services.AddHostedService<VideoProviderPollingWorker>();
+
+// Retry Worker (handles failed video requests with exponential backoff)
+builder.Services.AddScoped<VideoRetryAppService>();
+builder.Services.AddHostedService<VideoRetryWorker>();
 
 // Swagger
 if (!builder.Environment.IsHostProduction())

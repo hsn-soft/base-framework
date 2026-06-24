@@ -1,5 +1,6 @@
 using Hhs.Shared.Contracts.Events;
 using Hhs.Shared.Helper;
+using Hhs.Shared.Helper.Enums;
 using Hhs.TextNormalizerService.Domain.Configuration;
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Entities;
 using Hhs.TextNormalizerService.MongoDb.Context;

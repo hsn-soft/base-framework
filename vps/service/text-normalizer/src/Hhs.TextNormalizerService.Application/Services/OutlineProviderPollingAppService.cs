@@ -1,6 +1,7 @@
 using Hhs.Shared.Contracts.Events;
 using Hhs.Shared.Helper;
 using Hhs.Shared.Helper.Configuration;
+using Hhs.Shared.Helper.Enums;
 using Hhs.TextNormalizerService.Application.Providers;
 using Hhs.TextNormalizerService.Application.Providers.Outline;
 using Hhs.TextNormalizerService.Domain.Configuration.Providers.Outline;

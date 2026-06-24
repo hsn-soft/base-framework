@@ -15,10 +15,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.MongoDB\HsnSoft.Base.MongoDB.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
         <ProjectReference Include="..\Hhs.VideoGeneratorService.Domain\Hhs.VideoGeneratorService.Domain.csproj"/>
     </ItemGroup>
 </Project>
