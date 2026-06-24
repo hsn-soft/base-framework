@@ -27,9 +27,7 @@ public sealed class NormalizerRetryWorker(
                 {
                     using (dataFilter.Disable<IScopeSubscription>())
                     {
-                        var appService = scope.ServiceProvider
-                            .GetRequiredService<NormalizerOperationRetryWorkerService>();
-
+                        var appService = scope.ServiceProvider.GetRequiredService<NormalizerOperationRetryWorkerService>();
                         await appService.RetryDueRequestsAsync(stoppingToken);
                     }
                 }

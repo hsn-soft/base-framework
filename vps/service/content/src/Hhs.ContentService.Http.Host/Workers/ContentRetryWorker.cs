@@ -30,9 +30,7 @@ public sealed class ContentRetryWorker(
                 {
                     using (dataFilter.Disable<IScopeSubscription>())
                     {
-                        var appService = scope.ServiceProvider
-                            .GetRequiredService<ContentOperationRetryWorkerService>();
-
+                        var appService = scope.ServiceProvider.GetRequiredService<ContentOperationRetryWorkerService>();
                         await appService.RetryDueRequestsAsync(stoppingToken);
                     }
                 }

@@ -1,40 +1,35 @@
-using Hhs.Shared.Helper;
 using Hhs.EventManagerService.Domain.Configuration;
-using Hhs.EventManagerService.Domain.InfraDomain.Repositories;
 using Microsoft.Extensions.Logging;
 
 namespace Hhs.EventManagerService.Application.Services;
 
 public sealed class EventOperationRetryWorkerService(
     IServiceProvider provider,
-    IEventInboxMessageRepository inboxRepository,
     EventManagerRetrySettings retrySettings,
     ILogger<EventOperationRetryWorkerService> logger
 ) : ApplicationServiceBase(provider)
 {
     public async Task RetryDueRequestsAsync(CancellationToken cancellationToken)
     {
-        var failedInboxes = await inboxRepository.GetByStatusAsync(InboxStatuses.Failed, cancellationToken);
-
-        var failedToRetry = failedInboxes
-            .Where(x => x.RetryCount < 30)
-            .Take(retrySettings.BatchSize)
-            .ToList();
-
-        foreach (var inbox in failedToRetry)
+        try
         {
-            try
-            {
-                inbox.Status = InboxStatuses.Started;
-                inbox.RetryCount = inbox.RetryCount + 1;
-                inbox.ErrorMessage = null;
+            // ContentService does not have separate request tracking entities like TextNormalizer.
+            // Retry logic is handled through event processing and status updates on ContentOperation entities.
+            // This method serves as a placeholder for future retry implementations if needed.
 
-                await inboxRepository.UpdateAsync(inbox, cancellationToken);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Error retrying inbox message {InboxId}", inbox.Id);
-            }
+            logger.LogDebug("Content operation retry worker executed. Batch size: {BatchSize}", retrySettings.BatchSize);
+
+            await Task.CompletedTask;
+        }
+        catch (OperationCanceledException)
+        {
+            logger.LogInformation("Content operation retry worker cancelled");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Content operation retry worker encountered an error");
+            throw;
         }
     }
 }

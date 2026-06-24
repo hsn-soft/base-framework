@@ -1,11 +1,9 @@
 using Hhs.Shared.Contracts.Cache;
-using Hhs.Shared.Helper.Retry;
 using Hhs.TextNormalizerService.Application.Infrastructure;
 using Hhs.TextNormalizerService.Application.Providers;
 using Hhs.TextNormalizerService.Application.Providers.Outline;
 using Hhs.TextNormalizerService.Application.Providers.Scraping;
 using Hhs.TextNormalizerService.Application.Services;
-using Hhs.TextNormalizerService.Domain.Configuration;
 using Hhs.TextNormalizerService.Domain.Configuration.Providers.Outline;
 using Hhs.TextNormalizerService.Domain.Settings;
 using HsnSoft.Base.PuppeTeer;

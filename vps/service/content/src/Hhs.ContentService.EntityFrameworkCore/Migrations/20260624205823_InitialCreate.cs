@@ -16,6 +16,7 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
                     ScopeKey = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     DomainName = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
                     Title = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
@@ -38,32 +39,11 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "content_inbox_messages",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    CorrelationId = table.Column<Guid>(type: "uuid", nullable: true),
-                    EventName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
-                    Payload = table.Column<string>(type: "jsonb", nullable: true),
-                    Status = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    ProcessedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    ErrorMessage = table.Column<string>(type: "text", nullable: true),
-                    RetryCount = table.Column<int>(type: "integer", nullable: false),
-                    CreationTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    CreatorId = table.Column<Guid>(type: "uuid", nullable: true),
-                    LastModificationTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    LastModifierId = table.Column<Guid>(type: "uuid", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_content_inbox_messages", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "customer_contents",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
                     ScopeKey = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     DomainName = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
                     ContentKey = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
@@ -114,6 +94,28 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_CustomerVpSettings", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "EventInboxMessages",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    CorrelationId = table.Column<Guid>(type: "uuid", nullable: true),
+                    EventName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
+                    Payload = table.Column<string>(type: "jsonb", nullable: true),
+                    Status = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    ProcessedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    ErrorMessage = table.Column<string>(type: "text", nullable: true),
+                    RetryCount = table.Column<int>(type: "integer", nullable: false),
+                    CreationTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CreatorId = table.Column<Guid>(type: "uuid", nullable: true),
+                    LastModificationTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    LastModifierId = table.Column<Guid>(type: "uuid", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_EventInboxMessages", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -186,11 +188,6 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                 column: "ScopeKey");
 
             migrationBuilder.CreateIndex(
-                name: "IX_content_inbox_messages_Status",
-                table: "content_inbox_messages",
-                column: "Status");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_ContentVideoGenerationLimits_CustomerVpSettingId",
                 table: "ContentVideoGenerationLimits",
                 column: "CustomerVpSettingId");
@@ -222,6 +219,11 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                 table: "CustomerVpSettings",
                 column: "ScopeKey",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EventInboxMessages_Status",
+                table: "EventInboxMessages",
+                column: "Status");
         }
 
         /// <inheritdoc />
@@ -231,10 +233,10 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                 name: "analysis_content_items");
 
             migrationBuilder.DropTable(
-                name: "content_inbox_messages");
+                name: "ContentVideoGenerationLimits");
 
             migrationBuilder.DropTable(
-                name: "ContentVideoGenerationLimits");
+                name: "EventInboxMessages");
 
             migrationBuilder.DropTable(
                 name: "analysis_contents");

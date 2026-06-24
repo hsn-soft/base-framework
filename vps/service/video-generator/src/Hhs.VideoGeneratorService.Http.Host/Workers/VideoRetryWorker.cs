@@ -27,9 +27,7 @@ public sealed class VideoRetryWorker(
                 {
                     using (dataFilter.Disable<IScopeSubscription>())
                     {
-                        var appService = scope.ServiceProvider
-                            .GetRequiredService<VideoOperationRetryWorkerService>();
-
+                        var appService = scope.ServiceProvider.GetRequiredService<VideoOperationRetryWorkerService>();
                         await appService.RetryDueRequestsAsync(stoppingToken);
                     }
                 }

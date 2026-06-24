@@ -1,6 +1,5 @@
 using Hhs.Shared.Helper.Enums;
 using HsnSoft.Base.Domain.Entities.Auditing;
-using HsnSoft.Base.Domain.Entities;
 using System.Diagnostics.CodeAnalysis;
 using HsnSoft.Base;
 using HsnSoft.Base.Subscribe;

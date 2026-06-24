@@ -38,6 +38,28 @@ namespace Hhs.AdministrationService.EntityFrameworkCore.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "EventInboxMessages",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    CorrelationId = table.Column<Guid>(type: "uuid", nullable: true),
+                    EventName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
+                    Payload = table.Column<string>(type: "jsonb", nullable: true),
+                    Status = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    ProcessedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    ErrorMessage = table.Column<string>(type: "text", nullable: true),
+                    RetryCount = table.Column<int>(type: "integer", nullable: false),
+                    CreationTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CreatorId = table.Column<Guid>(type: "uuid", nullable: true),
+                    LastModificationTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    LastModifierId = table.Column<Guid>(type: "uuid", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_EventInboxMessages", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "PermissionGrants",
                 columns: table => new
                 {
@@ -202,6 +224,11 @@ namespace Hhs.AdministrationService.EntityFrameworkCore.Migrations
                 column: "PermissionId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_EventInboxMessages_Status",
+                table: "EventInboxMessages",
+                column: "Status");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_PermissionDependencies_DependsOnPermissionId",
                 table: "PermissionDependencies",
                 column: "DependsOnPermissionId");
@@ -236,6 +263,9 @@ namespace Hhs.AdministrationService.EntityFrameworkCore.Migrations
 
             migrationBuilder.DropTable(
                 name: "AppRolePermissions");
+
+            migrationBuilder.DropTable(
+                name: "EventInboxMessages");
 
             migrationBuilder.DropTable(
                 name: "PermissionDependencies");

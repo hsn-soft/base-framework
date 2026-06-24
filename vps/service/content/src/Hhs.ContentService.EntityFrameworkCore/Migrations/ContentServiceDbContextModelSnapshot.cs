@@ -46,6 +46,12 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                     b.Property<string>("FinalVideoUrl")
                         .HasColumnType("text");
 
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("IsDeleted");
+
                     b.Property<string>("LastError")
                         .HasColumnType("text");
 
@@ -94,7 +100,6 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
             modelBuilder.Entity("Hhs.ContentService.Domain.ContentDomain.Entities.AnalysisContentItem", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("AnalysisContentId")
@@ -119,7 +124,94 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                     b.ToTable("analysis_content_items", (string)null);
                 });
 
-            modelBuilder.Entity("Hhs.ContentService.Domain.ContentDomain.Entities.ContentInboxMessage", b =>
+            modelBuilder.Entity("Hhs.ContentService.Domain.ContentDomain.Entities.CustomerContent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("AudioRequestId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ContentKey")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("CorrelationId")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreationTime");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("CreatorId");
+
+                    b.Property<string>("DomainName")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("FinalVideoUrl")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("IsDeleted");
+
+                    b.Property<string>("LastError")
+                        .HasColumnType("text");
+
+                    b.Property<string>("LastFacility")
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<DateTime>("LastModificationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("LastModificationTime");
+
+                    b.Property<Guid?>("LastModifierId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("LastModifierId");
+
+                    b.Property<Guid?>("NormalizeRequestId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("NormalizeStatus")
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<string>("ScopeKey")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("SlugKey")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<Guid?>("VideoRequestId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("VideoStatus")
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ScopeKey");
+
+                    b.HasIndex("ScopeKey", "DomainName")
+                        .IsUnique();
+
+                    b.ToTable("customer_contents", (string)null);
+                });
+
+            modelBuilder.Entity("Hhs.ContentService.Domain.InfraDomain.Entities.EventInboxMessage", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
@@ -169,88 +261,7 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
 
                     b.HasIndex("Status");
 
-                    b.ToTable("content_inbox_messages", (string)null);
-                });
-
-            modelBuilder.Entity("Hhs.ContentService.Domain.ContentDomain.Entities.CustomerContent", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("AudioRequestId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("ContentKey")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<string>("CorrelationId")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreationTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("CreationTime");
-
-                    b.Property<Guid?>("CreatorId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("CreatorId");
-
-                    b.Property<string>("DomainName")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<string>("FinalVideoUrl")
-                        .HasColumnType("text");
-
-                    b.Property<string>("LastError")
-                        .HasColumnType("text");
-
-                    b.Property<string>("LastFacility")
-                        .HasMaxLength(120)
-                        .HasColumnType("character varying(120)");
-
-                    b.Property<DateTime>("LastModificationTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("LastModificationTime");
-
-                    b.Property<Guid?>("LastModifierId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("LastModifierId");
-
-                    b.Property<Guid?>("NormalizeRequestId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("NormalizeStatus")
-                        .HasMaxLength(80)
-                        .HasColumnType("character varying(80)");
-
-                    b.Property<string>("ScopeKey")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("SlugKey")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<Guid?>("VideoRequestId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("VideoStatus")
-                        .HasMaxLength(80)
-                        .HasColumnType("character varying(80)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ScopeKey");
-
-                    b.HasIndex("ScopeKey", "DomainName")
-                        .IsUnique();
-
-                    b.ToTable("customer_contents", (string)null);
+                    b.ToTable("EventInboxMessages", (string)null);
                 });
 
             modelBuilder.Entity("Hhs.ContentService.Domain.SettingDomain.Entities.ContentVideoGenerationLimit", b =>
