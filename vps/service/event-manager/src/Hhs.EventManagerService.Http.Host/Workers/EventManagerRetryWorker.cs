@@ -1,9 +1,7 @@
 using Hhs.EventManagerService.Application.Services;
 using Hhs.EventManagerService.Domain.Configuration;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 
-namespace Hhs.EventManagerService.Http.Host.Workers;
+namespace Hhs.EventManagerService.Workers;
 
 public class EventManagerRetryWorker(
     IServiceProvider serviceProvider,

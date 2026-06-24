@@ -1,9 +1,7 @@
 using Hhs.FeedRService.Application.Services;
 using Hhs.FeedRService.Domain.Configuration;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 
-namespace Hhs.FeedRService.AdManager.Http.Host.Workers;
+namespace Hhs.FeedRService.AdManager.Workers;
 
 public class FeedRRetryWorker(
     IServiceProvider serviceProvider,

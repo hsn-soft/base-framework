@@ -1,4 +1,5 @@
 using Hhs.FeedRService.AdManager;
+using Hhs.FeedRService.AdManager.Workers;
 using Hhs.FeedRService.Application;
 using Hhs.FeedRService.Application.Contracts.Events;
 using Hhs.FeedRService.Domain.Localization;
@@ -104,7 +105,7 @@ builder.Services
         }
         return settings;
     })
-    .AddHostedService<Hhs.FeedRService.AdManager.Http.Host.Workers.FeedRRetryWorker>();
+    .AddHostedService<FeedRRetryWorker>();
 
 // Swagger
 if (!builder.Environment.IsHostProduction())

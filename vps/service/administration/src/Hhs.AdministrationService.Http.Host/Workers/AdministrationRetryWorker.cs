@@ -1,9 +1,7 @@
 using Hhs.AdministrationService.Application.Services;
 using Hhs.AdministrationService.Domain.Configuration;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 
-namespace Hhs.AdministrationService.Http.Host.Workers;
+namespace Hhs.AdministrationService.Workers;
 
 public class AdministrationRetryWorker(
     IServiceProvider serviceProvider,

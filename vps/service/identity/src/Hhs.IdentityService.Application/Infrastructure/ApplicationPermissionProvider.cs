@@ -1,7 +1,7 @@
 using Hhs.Shared.Contracts.Cache;
 using Hhs.Shared.Helper.Consts.Permissions;
 
-namespace Hhs.IdentityService.Application;
+namespace Hhs.IdentityService.Application.Infrastructure;
 
 public sealed class ApplicationPermissionProvider : IServicePermissionProvider
 {

@@ -3,6 +3,7 @@ using Hhs.IdentityService.Application;
 using Hhs.IdentityService.Domain.Localization;
 using Hhs.IdentityService.EntityFrameworkCore;
 using Hhs.IdentityService.EntityFrameworkCore.Setup;
+using Hhs.IdentityService.Workers;
 using Hhs.Shared.Contracts.Events;
 using Hhs.Shared.Helper.Consts;
 using Hhs.Shared.Hosting.Extensions;
@@ -99,7 +100,7 @@ builder.Services
         }
         return settings;
     })
-    .AddHostedService<Hhs.IdentityService.Http.Host.Workers.IdentityRetryWorker>();
+    .AddHostedService<IdentityRetryWorker>();
 
 // Swagger
 if (!builder.Environment.IsHostProduction())

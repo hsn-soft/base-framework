@@ -2,6 +2,7 @@ using Hhs.EventManagerService;
 using Hhs.EventManagerService.Application;
 using Hhs.EventManagerService.Domain.Localization;
 using Hhs.EventManagerService.MongoDb;
+using Hhs.EventManagerService.Workers;
 using Hhs.Shared.Helper.Consts;
 using Hhs.Shared.Hosting.Extensions;
 using Hhs.Shared.Hosting.Helpers;
@@ -97,7 +98,7 @@ builder.Services
         }
         return settings;
     })
-    .AddHostedService<Hhs.EventManagerService.Http.Host.Workers.EventManagerRetryWorker>();
+    .AddHostedService<EventManagerRetryWorker>();
 
 // Swagger
 if (!builder.Environment.IsHostProduction())

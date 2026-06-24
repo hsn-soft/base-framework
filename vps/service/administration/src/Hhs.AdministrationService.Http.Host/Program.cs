@@ -4,6 +4,7 @@ using Hhs.AdministrationService.Application.Contracts.Events;
 using Hhs.AdministrationService.Domain.Localization;
 using Hhs.AdministrationService.EntityFrameworkCore;
 using Hhs.AdministrationService.EntityFrameworkCore.Setup;
+using Hhs.AdministrationService.Workers;
 using Hhs.Shared.Helper.Consts;
 using Hhs.Shared.Hosting.Extensions;
 using Hhs.Shared.Hosting.Helpers;
@@ -94,7 +95,7 @@ builder.Services
         }
         return settings;
     })
-    .AddHostedService<Hhs.AdministrationService.Http.Host.Workers.AdministrationRetryWorker>();
+    .AddHostedService<AdministrationRetryWorker>();
 
 // Swagger
 if (!builder.Environment.IsHostProduction())

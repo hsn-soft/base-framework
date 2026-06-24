@@ -1,7 +1,7 @@
 using Hhs.Shared.Contracts.Cache;
 using Hhs.Shared.Helper.Consts.Permissions;
 
-namespace Hhs.TextNormalizerService.Application;
+namespace Hhs.TextNormalizerService.Application.Infrastructure;
 
 public sealed class ApplicationPermissionProvider : IServicePermissionProvider
 {

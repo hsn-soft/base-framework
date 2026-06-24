@@ -1,7 +1,7 @@
 using Hhs.Shared.Contracts.Cache;
 using Hhs.Shared.Helper.Consts.Permissions;
 
-namespace Hhs.FeedRService.Application;
+namespace Hhs.FeedRService.Application.Infrastructure;
 
 public sealed class ApplicationPermissionProvider : IServicePermissionProvider
 {

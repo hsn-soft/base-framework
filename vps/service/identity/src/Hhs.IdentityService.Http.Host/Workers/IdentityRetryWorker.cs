@@ -1,9 +1,7 @@
 using Hhs.IdentityService.Application.Services;
 using Hhs.IdentityService.Domain.Configuration;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 
-namespace Hhs.IdentityService.Http.Host.Workers;
+namespace Hhs.IdentityService.Workers;
 
 public class IdentityRetryWorker(
     IServiceProvider serviceProvider,
