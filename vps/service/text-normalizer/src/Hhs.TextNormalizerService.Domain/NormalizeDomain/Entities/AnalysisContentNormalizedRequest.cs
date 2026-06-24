@@ -1,3 +1,4 @@
+using Hhs.TextNormalizerService.Domain.NormalizeDomain.Models;
 using MongoDB.Bson.Serialization.Attributes;
 
 namespace Hhs.TextNormalizerService.Domain.NormalizeDomain.Entities;

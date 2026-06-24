@@ -1,4 +1,4 @@
-namespace Hhs.TextNormalizerService.Domain.NormalizeDomain.Entities;
+namespace Hhs.TextNormalizerService.Domain.NormalizeDomain.Models;
 
 public sealed class OutlineResult
 {
