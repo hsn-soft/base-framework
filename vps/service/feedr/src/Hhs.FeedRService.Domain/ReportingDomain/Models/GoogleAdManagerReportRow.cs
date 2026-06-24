@@ -1,6 +1,6 @@
 using JetBrains.Annotations;
 
-namespace Hhs.FeedRService.Domain.ReportingDomain.Entities;
+namespace Hhs.FeedRService.Domain.ReportingDomain.Models;
 
 /// <summary>
 /// Structured representation of a single Google Ad Manager report row

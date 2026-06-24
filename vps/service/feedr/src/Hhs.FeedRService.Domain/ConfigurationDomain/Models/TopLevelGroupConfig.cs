@@ -1,6 +1,6 @@
 using JetBrains.Annotations;
 
-namespace Hhs.FeedRService.Domain.ConfigurationDomain.Entities;
+namespace Hhs.FeedRService.Domain.ConfigurationDomain.Models;
 
 /// <summary>
 /// Value object representing a top-level ad unit group within a <see cref="NetworkConfiguration"/>.

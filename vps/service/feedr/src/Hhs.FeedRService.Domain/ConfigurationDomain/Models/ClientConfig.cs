@@ -1,4 +1,4 @@
-namespace Hhs.FeedRService.Domain.ConfigurationDomain.Entities;
+namespace Hhs.FeedRService.Domain.ConfigurationDomain.Models;
 
 /// <summary>
 /// Value object representing a single client (AdUnit) within a <see cref="TopLevelGroupConfig"/>.

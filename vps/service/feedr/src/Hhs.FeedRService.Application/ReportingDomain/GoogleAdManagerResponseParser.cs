@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Hhs.FeedRService.Domain.ReportingDomain.Entities;
+using Hhs.FeedRService.Domain.ReportingDomain.Models;
 
 namespace Hhs.FeedRService.Application.ReportingDomain;
 

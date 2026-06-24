@@ -1,4 +1,5 @@
 using Hhs.FeedRService.Domain.ConfigurationDomain.Entities;
+using Hhs.FeedRService.Domain.ConfigurationDomain.Models;
 using MongoDB.Bson.Serialization;
 
 namespace Hhs.FeedRService.MongoDb.Configurations;

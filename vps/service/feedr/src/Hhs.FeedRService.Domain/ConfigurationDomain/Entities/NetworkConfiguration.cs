@@ -1,3 +1,4 @@
+using Hhs.FeedRService.Domain.ConfigurationDomain.Models;
 using HsnSoft.Base.Domain.Entities.Auditing;
 using HsnSoft.Base.MultiTenancy;
 using JetBrains.Annotations;

@@ -3,6 +3,7 @@ using Hhs.FeedRService.Application.ReportingDomain;
 using Hhs.FeedRService.Domain.ConfigurationDomain.Repositories;
 using Hhs.FeedRService.Domain.ReportingDomain.Entities;
 using Hhs.FeedRService.Domain.ReportingDomain.Enums;
+using Hhs.FeedRService.Domain.ReportingDomain.Models;
 using Hhs.FeedRService.Domain.ReportingDomain.Repositories;
 using HsnSoft.Base.Logging;
 using HsnSoft.Base.Logging.Abstracts;

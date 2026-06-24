@@ -1,4 +1,5 @@
 using Hhs.FeedRService.Domain.ReportingDomain.Enums;
+using Hhs.FeedRService.Domain.ReportingDomain.Models;
 using HsnSoft.Base.Domain.Entities.Auditing;
 using HsnSoft.Base.MultiTenancy;
 using JetBrains.Annotations;

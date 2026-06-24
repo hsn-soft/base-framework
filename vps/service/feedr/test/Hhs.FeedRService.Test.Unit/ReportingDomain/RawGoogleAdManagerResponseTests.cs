@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Hhs.FeedRService.Domain.ReportingDomain.Entities;
 using Hhs.FeedRService.Domain.ReportingDomain.Enums;
+using Hhs.FeedRService.Domain.ReportingDomain.Models;
 
 namespace Hhs.FeedRService.Test.Unit.ReportingDomain;
 
