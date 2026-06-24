@@ -13,12 +13,6 @@ public sealed class EfCoreContentInboxMessageRepository(
     ContentServiceDbContext dbContext
 ) : EfCoreGenericRepository<ContentInboxMessage, Guid>(provider, dbContext), IContentInboxMessageRepository
 {
-    public async Task<ContentInboxMessage?> GetByEventIdAsync(Guid eventId, CancellationToken cancellationToken = default)
-        => await GetFirstOrDefaultAsync(
-            x => x.Id == eventId,
-            cancellationToken: cancellationToken
-        );
-
     public async Task<List<ContentInboxMessage>> GetUnprocessedAsync(CancellationToken cancellationToken = default)
     {
         var options = new ListQueryOptions<ContentInboxMessage>

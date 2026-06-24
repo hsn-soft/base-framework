@@ -1,17 +1,11 @@
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Models;
+using HsnSoft.Base.Domain.Entities.Auditing;
 using MongoDB.Bson.Serialization.Attributes;
 
 namespace Hhs.TextNormalizerService.Domain.NormalizeDomain.Entities;
 
-public sealed class AnalysisContentNormalizedRequest
+public sealed class AnalysisContentNormalizedRequest : AuditedEntity<Guid>
 {
-    // Identity
-    [BsonId]
-    public Guid Id { get; set; }
-
-    // Audit Fields
-    public DateTime CreatedAtUtc { get; set; }
-    public DateTime UpdatedAtUtc { get; set; }
 
     // Correlation
     public string? CorrelationId { get; set; }

@@ -1,19 +1,18 @@
 using System.Text.Json;
 using Hhs.Shared.Helper;
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Entities;
-using Hhs.TextNormalizerService.MongoDb.Context;
+using Hhs.TextNormalizerService.Domain.NormalizeDomain.Repositories;
 using HsnSoft.Base.Domain.Entities.Events;
-using MongoDB.Driver;
 
 namespace Hhs.TextNormalizerService.Application.Infrastructure;
 
-public sealed class NormalizerInboxStore(TextNormalizerServiceDbContext context)
+public sealed class NormalizerInboxStoreService(INormalizerInboxMessageRepository repository)
 {
     public async Task<bool> IsProcessedAsync(Guid eventId, CancellationToken cancellationToken)
     {
-        return await context.NormalizerInboxMessages
-            .Find(x => x.EventId == eventId && x.Status == InboxStatuses.Completed)
-            .AnyAsync(cancellationToken);
+        return await repository.ExistsAsync(
+            x => x.Id == eventId && x.Status == InboxStatuses.Completed,
+            cancellationToken: cancellationToken);
     }
 
     public async Task<bool> StartAsync<TEvent>(MessageEnvelope<TEvent> @event, CancellationToken cancellationToken)
@@ -22,9 +21,7 @@ public sealed class NormalizerInboxStore(TextNormalizerServiceDbContext context)
         if (await IsProcessedAsync(@event.MessageId, cancellationToken))
             return false;
 
-        var existing = await context.NormalizerInboxMessages
-            .Find(x => x.EventId == @event.MessageId)
-            .FirstOrDefaultAsync(cancellationToken);
+        var existing = await repository.GetByIdAsync(@event.MessageId, cancellationToken: cancellationToken);
 
         if (existing is not null)
         {
@@ -36,13 +33,10 @@ public sealed class NormalizerInboxStore(TextNormalizerServiceDbContext context)
                 if (existing.RetryCount >= 30)
                     return false;
 
-                await context.NormalizerInboxMessages.UpdateOneAsync(
-                    x => x.EventId == @event.MessageId && x.Status == InboxStatuses.Failed,
-                    Builders<NormalizerInboxMessage>.Update
-                        .Set(x => x.Status, InboxStatuses.Started)
-                        .Set(x => x.RetryCount, existing.RetryCount + 1)
-                        .Set(x => x.ErrorMessage, null),
-                    cancellationToken: cancellationToken);
+                existing.Status = InboxStatuses.Started;
+                existing.RetryCount += 1;
+                existing.ErrorMessage = null;
+                await repository.UpdateAsync(existing, cancellationToken);
 
                 return true;
             }
@@ -55,20 +49,15 @@ public sealed class NormalizerInboxStore(TextNormalizerServiceDbContext context)
 
         try
         {
-            await context.NormalizerInboxMessages.InsertOneAsync(new NormalizerInboxMessage
-            {
-                EventId = @event.MessageId,
-                EventName = typeof(TEvent).Name,
-                Payload = JsonSerializer.Serialize(@event.Message, @event.Message.GetType()),
-                Status = InboxStatuses.Started,
-                CreatedAtUtc = DateTime.UtcNow,
-                RetryCount = 0
-            }, cancellationToken: cancellationToken);
+            var newMessage = new NormalizerInboxMessage(
+                @event.MessageId,
+                typeof(TEvent).Name,
+                JsonSerializer.Serialize(@event.Message, @event.Message.GetType()));
 
+            await repository.InsertAsync(newMessage, cancellationToken);
             return true;
         }
-        catch (MongoWriteException ex)
-            when (ex.WriteError.Category == ServerErrorCategory.DuplicateKey)
+        catch
         {
             return false;
         }
@@ -76,20 +65,19 @@ public sealed class NormalizerInboxStore(TextNormalizerServiceDbContext context)
 
     public async Task CompleteAsync(Guid eventId, CancellationToken cancellationToken)
     {
-        await context.NormalizerInboxMessages.UpdateOneAsync(
-            x => x.EventId == eventId,
-            Builders<NormalizerInboxMessage>.Update
-                .Set(x => x.Status, InboxStatuses.Completed)
-                .Set(x => x.ProcessedAtUtc, DateTime.UtcNow)
-                .Set(x => x.ErrorMessage, null),
-            cancellationToken: cancellationToken);
+        var inbox = await repository.GetByIdAsync(eventId, cancellationToken: cancellationToken);
+        if (inbox != null)
+        {
+            inbox.Status = InboxStatuses.Completed;
+            inbox.ProcessedAtUtc = DateTime.UtcNow;
+            inbox.ErrorMessage = null;
+            await repository.UpdateAsync(inbox, cancellationToken);
+        }
     }
 
     public async Task FailAsync(Guid eventId, Exception ex, CancellationToken cancellationToken)
     {
-        var inbox = await context.NormalizerInboxMessages
-            .Find(x => x.EventId == eventId)
-            .FirstOrDefaultAsync(cancellationToken);
+        var inbox = await repository.GetByIdAsync(eventId, cancellationToken: cancellationToken);
 
         if (inbox != null)
         {
@@ -97,10 +85,7 @@ public sealed class NormalizerInboxStore(TextNormalizerServiceDbContext context)
             inbox.ErrorMessage = ex.Message;
             inbox.RetryCount = Math.Max(inbox.RetryCount, 0);
 
-            await context.NormalizerInboxMessages.ReplaceOneAsync(
-                x => x.EventId == eventId,
-                inbox,
-                cancellationToken: cancellationToken);
+            await repository.UpdateAsync(inbox, cancellationToken);
         }
     }
 }

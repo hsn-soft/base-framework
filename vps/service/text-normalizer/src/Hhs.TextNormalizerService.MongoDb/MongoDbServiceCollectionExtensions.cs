@@ -1,4 +1,5 @@
 using Hhs.TextNormalizerService.Domain;
+using Hhs.TextNormalizerService.Domain.NormalizeDomain.Repositories;
 using Hhs.TextNormalizerService.Domain.SettingDomain.Repositories;
 using Hhs.TextNormalizerService.MongoDb.Configurations;
 using Hhs.TextNormalizerService.MongoDb.Context;
@@ -40,8 +41,13 @@ public static class MongoDbServiceCollectionExtensions
         // Must be Scoped => Cannot consume any scoped service and CurrentUser object creation on constructor
         services.AddScoped(typeof(IMongoGenericRepository<,>), typeof(MongoGenericRepository<,>));
 
+        // Setting Domain Repositories
         services.AddScoped<ICustomerVpSettingRepository, MongoCustomerVpSettingRepository>();
 
+        // Normalize Domain Repositories
+        services.AddScoped<ICustomerContentNormalizedRequestRepository, MongoCustomerContentNormalizedRequestRepository>();
+        services.AddScoped<IAnalysisContentNormalizedRequestRepository, MongoAnalysisContentNormalizedRequestRepository>();
+        services.AddScoped<INormalizerInboxMessageRepository, MongoNormalizerInboxMessageRepository>();
 
         return services;
     }
@@ -88,5 +94,8 @@ public static class MongoDbServiceCollectionExtensions
     {
         EntityClassMap.Register();
         CustomerVpSettingClassMap.Register();
+        CustomerContentNormalizedRequestClassMap.Register();
+        AnalysisContentNormalizedRequestClassMap.Register();
+        NormalizerInboxMessageClassMap.Register();
     }
 }
