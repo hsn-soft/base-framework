@@ -48,10 +48,10 @@ public static class ReportingConfiguration
             b.ToTable(EfCoreDbProperties.DbTablePrefix + ReportingConsts.DailyReportResponseTableName, EfCoreDbProperties.DbSchema);
             b.HasKey(x => x.Id);
             b.Property(x => x.ReportDate).HasColumnType("date");
-            b.Property(x => x.DemandChannel).IsRequired().HasMaxLength(256);
-            b.Property(x => x.DemandSubchannelName).IsRequired().HasMaxLength(256);
-            b.Property(x => x.OrderId).IsRequired().HasMaxLength(256);
-            b.Property(x => x.OrderName).IsRequired().HasMaxLength(512);
+            b.Property(x => x.DemandChannel).IsRequired().HasMaxLength(ReportingConsts.DemandChannelMaxLength);
+            b.Property(x => x.DemandSubchannelName).IsRequired().HasMaxLength(ReportingConsts.DemandSubchannelNameMaxLength);
+            b.Property(x => x.OrderId).IsRequired().HasMaxLength(ReportingConsts.OrderIdMaxLength);
+            b.Property(x => x.OrderName).IsRequired().HasMaxLength(ReportingConsts.OrderNameMaxLength);
             b.HasIndex(x => x.TenantId);
             b.HasIndex(x => x.ClientId);
             b.HasIndex(x => x.ReportDate);
