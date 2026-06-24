@@ -1,5 +1,5 @@
 using FluentAssertions;
-using Hhs.FeedRService.Domain.ReportingDomain.Entities;
+using Hhs.FeedRService.Domain.ReportingDomain.Entities.PostgreSQL;
 using Hhs.FeedRService.Domain.ReportingDomain.Enums;
 
 namespace Hhs.FeedRService.Test.Unit.ReportingDomain;

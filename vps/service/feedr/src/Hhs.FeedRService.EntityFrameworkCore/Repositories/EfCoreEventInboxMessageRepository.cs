@@ -1,4 +1,4 @@
-using Hhs.FeedRService.Domain.InfraDomain.Entities;
+using Hhs.FeedRService.Domain.InfraDomain.Entities.PostgreSQL;
 using Hhs.FeedRService.Domain.InfraDomain.Repositories;
 using Hhs.FeedRService.EntityFrameworkCore.Context;
 using HsnSoft.Base.Domain.Models;

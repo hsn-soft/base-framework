@@ -1,5 +1,5 @@
 using Hhs.FeedRService.Domain.InfraDomain.Consts;
-using Hhs.FeedRService.Domain.InfraDomain.Entities;
+using Hhs.FeedRService.Domain.InfraDomain.Entities.PostgreSQL;
 using Microsoft.EntityFrameworkCore;
 
 namespace Hhs.FeedRService.EntityFrameworkCore.Configurations;

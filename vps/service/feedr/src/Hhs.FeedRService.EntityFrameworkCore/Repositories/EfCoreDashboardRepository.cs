@@ -1,4 +1,4 @@
-using Hhs.FeedRService.Domain.ReportingDomain.Entities;
+using Hhs.FeedRService.Domain.ReportingDomain.Entities.PostgreSQL;
 using Hhs.FeedRService.Domain.ReportingDomain.Repositories;
 using Hhs.FeedRService.EntityFrameworkCore.Context;
 using HsnSoft.Base.Domain.Repositories;
@@ -79,7 +79,7 @@ public sealed class EfCoreDashboardRepository(
 
     public async Task<DashboardResponse> UpsertDailyReportAsync(DashboardResponse draft, CancellationToken cancellationToken = default)
     {
-        var existing = await _dbContext.DailyReportResponses.FirstOrDefaultAsync(
+        var existing = await _dbContext.DashboardResponses.FirstOrDefaultAsync(
             x => x.AdUnitClientId == draft.AdUnitClientId && 
                  x.ReportDate == draft.ReportDate &&
                  x.DemandChannel == draft.DemandChannel &&
@@ -89,7 +89,7 @@ public sealed class EfCoreDashboardRepository(
 
         if (existing == null)
         {
-            await _dbContext.DailyReportResponses.AddAsync(draft, cancellationToken);
+            await _dbContext.DashboardResponses.AddAsync(draft, cancellationToken);
             await _dbContext.SaveChangesAsync(cancellationToken);
             return draft;
         }
@@ -103,7 +103,7 @@ public sealed class EfCoreDashboardRepository(
             draft.SourceRowCount,
             draft.SourceMongoDbId);
 
-        _dbContext.DailyReportResponses.Update(existing);
+        _dbContext.DashboardResponses.Update(existing);
         await _dbContext.SaveChangesAsync(cancellationToken);
         return existing;
     }
@@ -119,7 +119,7 @@ public sealed class EfCoreDashboardRepository(
         var from = startDate.Date;
         var to = endDate.Date;
 
-        return await _dbContext.DailyReportResponses
+        return await _dbContext.DashboardResponses
             .Include(x => x.AdUnitClient)
             .Where(x => x.AdUnitClient.AdUnitCode == adUnitCode && x.ReportDate >= from && x.ReportDate <= to)
             .OrderBy(x => x.ReportDate)
@@ -131,7 +131,7 @@ public sealed class EfCoreDashboardRepository(
         var from = startDate.Date;
         var to = endDate.Date;
 
-        return await _dbContext.DailyReportResponses
+        return await _dbContext.DashboardResponses
             .Include(x => x.AdUnitClient)
             .Where(x => x.ClientId == clientId && x.ReportDate >= from && x.ReportDate <= to)
             .OrderBy(x => x.ReportDate)
@@ -144,7 +144,7 @@ public sealed class EfCoreDashboardRepository(
         var toDate = endDate.Date;
 
         return await (
-            from dr in _dbContext.DailyReportResponses.Include(x => x.AdUnitClient)
+            from dr in _dbContext.DashboardResponses.Include(x => x.AdUnitClient)
             join client in _dbContext.AdUnitClients on dr.AdUnitClientId equals client.Id
             join topLevel in _dbContext.AdUnitTopLevels on client.AdUnitTopLevelId equals topLevel.Id
             join network in _dbContext.AdNetworks on topLevel.AdNetworkId equals network.Id
@@ -160,7 +160,7 @@ public sealed class EfCoreDashboardRepository(
         var toDate = endDate.Date;
 
         return await (
-            from dr in _dbContext.DailyReportResponses.Include(x => x.AdUnitClient)
+            from dr in _dbContext.DashboardResponses.Include(x => x.AdUnitClient)
             join client in _dbContext.AdUnitClients on dr.AdUnitClientId equals client.Id
             join topLevel in _dbContext.AdUnitTopLevels on client.AdUnitTopLevelId equals topLevel.Id
             where topLevel.AdUnitTopLevelCode == adUnitTopLevelCode && dr.ReportDate >= fromDate && dr.ReportDate <= toDate
@@ -175,7 +175,7 @@ public sealed class EfCoreDashboardRepository(
         var toDate = endDate.Date;
 
         var query =
-            from dr in _dbContext.DailyReportResponses.Include(x => x.AdUnitClient)
+            from dr in _dbContext.DashboardResponses.Include(x => x.AdUnitClient)
             join client in _dbContext.AdUnitClients on dr.AdUnitClientId equals client.Id
             join topLevel in _dbContext.AdUnitTopLevels on client.AdUnitTopLevelId equals topLevel.Id
             join network in _dbContext.AdNetworks on topLevel.AdNetworkId equals network.Id
@@ -220,7 +220,7 @@ public sealed class EfCoreDashboardRepository(
         var toDate = endDate.Date;
 
         var query =
-            from dr in _dbContext.DailyReportResponses.Include(x => x.AdUnitClient)
+            from dr in _dbContext.DashboardResponses.Include(x => x.AdUnitClient)
             join client in _dbContext.AdUnitClients on dr.AdUnitClientId equals client.Id
             join topLevel in _dbContext.AdUnitTopLevels on client.AdUnitTopLevelId equals topLevel.Id
             join network in _dbContext.AdNetworks on topLevel.AdNetworkId equals network.Id
@@ -254,7 +254,7 @@ public sealed class EfCoreDashboardRepository(
         var toDate = endDate.Date;
 
         var query =
-            from dr in _dbContext.DailyReportResponses.Include(x => x.AdUnitClient)
+            from dr in _dbContext.DashboardResponses.Include(x => x.AdUnitClient)
             join client in _dbContext.AdUnitClients on dr.AdUnitClientId equals client.Id
             join topLevel in _dbContext.AdUnitTopLevels on client.AdUnitTopLevelId equals topLevel.Id
             join network in _dbContext.AdNetworks on topLevel.AdNetworkId equals network.Id
@@ -282,7 +282,7 @@ public sealed class EfCoreDashboardRepository(
         CancellationToken cancellationToken = default)
     {
         var query =
-            from dr in _dbContext.DailyReportResponses
+            from dr in _dbContext.DashboardResponses
             join client in _dbContext.AdUnitClients on dr.AdUnitClientId equals client.Id
             join topLevel in _dbContext.AdUnitTopLevels on client.AdUnitTopLevelId equals topLevel.Id
             join network in _dbContext.AdNetworks on topLevel.AdNetworkId equals network.Id

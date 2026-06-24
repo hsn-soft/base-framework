@@ -22,7 +22,7 @@ namespace Hhs.FeedRService.EntityFrameworkCore.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("Hhs.FeedRService.Domain.InfraDomain.Entities.EventInboxMessage", b =>
+            modelBuilder.Entity("Hhs.FeedRService.Domain.InfraDomain.Entities.PostgreSQL.EventInboxMessage", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
@@ -75,7 +75,7 @@ namespace Hhs.FeedRService.EntityFrameworkCore.Migrations
                     b.ToTable("EventInboxMessages", "public");
                 });
 
-            modelBuilder.Entity("Hhs.FeedRService.Domain.ReportingDomain.Entities.AdNetwork", b =>
+            modelBuilder.Entity("Hhs.FeedRService.Domain.ReportingDomain.Entities.PostgreSQL.AdNetwork", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
@@ -113,7 +113,7 @@ namespace Hhs.FeedRService.EntityFrameworkCore.Migrations
                     b.ToTable("AdNetworks", "public");
                 });
 
-            modelBuilder.Entity("Hhs.FeedRService.Domain.ReportingDomain.Entities.AdUnitClient", b =>
+            modelBuilder.Entity("Hhs.FeedRService.Domain.ReportingDomain.Entities.PostgreSQL.AdUnitClient", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
@@ -165,7 +165,7 @@ namespace Hhs.FeedRService.EntityFrameworkCore.Migrations
                     b.ToTable("AdUnitClients", "public");
                 });
 
-            modelBuilder.Entity("Hhs.FeedRService.Domain.ReportingDomain.Entities.AdUnitTopLevel", b =>
+            modelBuilder.Entity("Hhs.FeedRService.Domain.ReportingDomain.Entities.PostgreSQL.AdUnitTopLevel", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
@@ -204,7 +204,7 @@ namespace Hhs.FeedRService.EntityFrameworkCore.Migrations
                     b.ToTable("AdUnitTopLevels", "public");
                 });
 
-            modelBuilder.Entity("Hhs.FeedRService.Domain.ReportingDomain.Entities.DashboardResponse", b =>
+            modelBuilder.Entity("Hhs.FeedRService.Domain.ReportingDomain.Entities.PostgreSQL.DashboardResponse", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
@@ -295,7 +295,7 @@ namespace Hhs.FeedRService.EntityFrameworkCore.Migrations
                     b.ToTable("DailyReportResponses", "public");
                 });
 
-            modelBuilder.Entity("Hhs.FeedRService.Domain.ReportingDomain.Entities.MongoToPostgresMapping", b =>
+            modelBuilder.Entity("Hhs.FeedRService.Domain.ReportingDomain.Entities.PostgreSQL.MongoToPostgresMapping", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
@@ -346,7 +346,7 @@ namespace Hhs.FeedRService.EntityFrameworkCore.Migrations
                     b.ToTable("MongoToPostgresMappings", "public");
                 });
 
-            modelBuilder.Entity("Hhs.FeedRService.Domain.ReportingDomain.Entities.AdUnitClient", b =>
+            modelBuilder.Entity("Hhs.FeedRService.Domain.ReportingDomain.Entities.PostgreSQL.AdUnitClient", b =>
                 {
                     b.HasOne("Hhs.FeedRService.Domain.ReportingDomain.Entities.AdUnitTopLevel", "AdUnitTopLevel")
                         .WithMany("Clients")
@@ -357,7 +357,7 @@ namespace Hhs.FeedRService.EntityFrameworkCore.Migrations
                     b.Navigation("AdUnitTopLevel");
                 });
 
-            modelBuilder.Entity("Hhs.FeedRService.Domain.ReportingDomain.Entities.AdUnitTopLevel", b =>
+            modelBuilder.Entity("Hhs.FeedRService.Domain.ReportingDomain.Entities.PostgreSQL.AdUnitTopLevel", b =>
                 {
                     b.HasOne("Hhs.FeedRService.Domain.ReportingDomain.Entities.AdNetwork", "AdNetwork")
                         .WithMany("TopLevelAdUnits")
@@ -368,7 +368,7 @@ namespace Hhs.FeedRService.EntityFrameworkCore.Migrations
                     b.Navigation("AdNetwork");
                 });
 
-            modelBuilder.Entity("Hhs.FeedRService.Domain.ReportingDomain.Entities.DashboardResponse", b =>
+            modelBuilder.Entity("Hhs.FeedRService.Domain.ReportingDomain.Entities.PostgreSQL.DashboardResponse", b =>
                 {
                     b.HasOne("Hhs.FeedRService.Domain.ReportingDomain.Entities.AdUnitClient", "AdUnitClient")
                         .WithMany("DailyReports")
@@ -379,17 +379,17 @@ namespace Hhs.FeedRService.EntityFrameworkCore.Migrations
                     b.Navigation("AdUnitClient");
                 });
 
-            modelBuilder.Entity("Hhs.FeedRService.Domain.ReportingDomain.Entities.AdNetwork", b =>
+            modelBuilder.Entity("Hhs.FeedRService.Domain.ReportingDomain.Entities.PostgreSQL.AdNetwork", b =>
                 {
                     b.Navigation("TopLevelAdUnits");
                 });
 
-            modelBuilder.Entity("Hhs.FeedRService.Domain.ReportingDomain.Entities.AdUnitClient", b =>
+            modelBuilder.Entity("Hhs.FeedRService.Domain.ReportingDomain.Entities.PostgreSQL.AdUnitClient", b =>
                 {
                     b.Navigation("DailyReports");
                 });
 
-            modelBuilder.Entity("Hhs.FeedRService.Domain.ReportingDomain.Entities.AdUnitTopLevel", b =>
+            modelBuilder.Entity("Hhs.FeedRService.Domain.ReportingDomain.Entities.PostgreSQL.AdUnitTopLevel", b =>
                 {
                     b.Navigation("Clients");
                 });

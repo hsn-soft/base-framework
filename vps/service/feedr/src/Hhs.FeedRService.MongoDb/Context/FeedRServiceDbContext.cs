@@ -1,5 +1,5 @@
-using Hhs.FeedRService.Domain.ConfigurationDomain.Entities;
-using Hhs.FeedRService.Domain.ReportingDomain.Entities;
+using Hhs.FeedRService.Domain.ConfigurationDomain.Entities.MongoDB;
+using Hhs.FeedRService.Domain.ReportingDomain.Entities.MongoDB;
 using HsnSoft.Base.MongoDB;
 using HsnSoft.Base.MongoDB.Context;
 using Microsoft.Extensions.Configuration;

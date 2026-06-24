@@ -1,7 +1,7 @@
 using HsnSoft.Base.Domain.Entities.Auditing;
 using JetBrains.Annotations;
 
-namespace Hhs.FeedRService.Domain.ReportingDomain.Entities;
+namespace Hhs.FeedRService.Domain.ReportingDomain.Entities.PostgreSQL;
 
 /// <summary>
 /// Top-level ad unit grouping under a Network. Multiple <see cref="AdUnitClient"/> records

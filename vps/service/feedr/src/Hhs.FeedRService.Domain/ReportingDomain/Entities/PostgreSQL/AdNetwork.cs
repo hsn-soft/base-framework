@@ -1,7 +1,7 @@
 using HsnSoft.Base.Domain.Entities.Auditing;
 using JetBrains.Annotations;
 
-namespace Hhs.FeedRService.Domain.ReportingDomain.Entities;
+namespace Hhs.FeedRService.Domain.ReportingDomain.Entities.PostgreSQL;
 
 /// <summary>
 /// Google Ad Manager Network reference. A customer configuration may reference up to 10 of these.

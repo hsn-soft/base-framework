@@ -1,4 +1,4 @@
-using Hhs.FeedRService.Domain.ConfigurationDomain.Entities;
+using Hhs.FeedRService.Domain.ConfigurationDomain.Entities.MongoDB;
 using HsnSoft.Base.Domain.Repositories;
 
 namespace Hhs.FeedRService.Domain.ConfigurationDomain.Repositories;

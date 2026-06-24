@@ -3,7 +3,7 @@ using HsnSoft.Base.Domain.Entities.Auditing;
 using HsnSoft.Base.MultiTenancy;
 using JetBrains.Annotations;
 
-namespace Hhs.FeedRService.Domain.ConfigurationDomain.Entities;
+namespace Hhs.FeedRService.Domain.ConfigurationDomain.Entities.MongoDB;
 
 public class CustomerConfiguration : CreationAuditedEntity<Guid>, ISoftDelete, IMultiTenant
 {
@@ -81,4 +81,3 @@ public class CustomerConfiguration : CreationAuditedEntity<Guid>, ISoftDelete, I
         AdUnitId = adUnitId;
     }
 }
-

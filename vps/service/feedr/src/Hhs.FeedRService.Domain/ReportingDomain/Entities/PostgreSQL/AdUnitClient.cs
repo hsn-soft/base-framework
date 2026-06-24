@@ -2,7 +2,7 @@ using HsnSoft.Base.Domain.Entities.Auditing;
 using HsnSoft.Base.MultiTenancy;
 using JetBrains.Annotations;
 
-namespace Hhs.FeedRService.Domain.ReportingDomain.Entities;
+namespace Hhs.FeedRService.Domain.ReportingDomain.Entities.PostgreSQL;
 
 /// <summary>
 /// Per-client ad unit under an AdUnitTopLevel. This is the lowest level of the hierarchy

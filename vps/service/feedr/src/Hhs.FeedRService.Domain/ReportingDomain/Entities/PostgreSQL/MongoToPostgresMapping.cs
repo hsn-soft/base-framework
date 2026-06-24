@@ -1,7 +1,7 @@
 using Hhs.FeedRService.Domain.ReportingDomain.Enums;
 using HsnSoft.Base.Domain.Entities.Auditing;
 
-namespace Hhs.FeedRService.Domain.ReportingDomain.Entities;
+namespace Hhs.FeedRService.Domain.ReportingDomain.Entities.PostgreSQL;
 
 /// <summary>
 /// Tracks the derivation from a single MongoDB <c>RawGoogleAdManagerResponse</c> document

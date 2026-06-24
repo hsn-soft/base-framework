@@ -2,7 +2,7 @@ using Hhs.Shared.Helper;
 using HsnSoft.Base.Domain.Entities.Auditing;
 using JetBrains.Annotations;
 
-namespace Hhs.FeedRService.Domain.InfraDomain.Entities;
+namespace Hhs.FeedRService.Domain.InfraDomain.Entities.PostgreSQL;
 
 public sealed class EventInboxMessage : AuditedEntity<Guid>
 {

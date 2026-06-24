@@ -3,7 +3,7 @@ using HsnSoft.Base.Domain.Entities.Auditing;
 using HsnSoft.Base.MultiTenancy;
 using JetBrains.Annotations;
 
-namespace Hhs.FeedRService.Domain.ConfigurationDomain.Entities;
+namespace Hhs.FeedRService.Domain.ConfigurationDomain.Entities.MongoDB;
 
 /// <summary>
 /// MongoDB document representing a Google Ad Manager network and its full hierarchy:
@@ -11,7 +11,7 @@ namespace Hhs.FeedRService.Domain.ConfigurationDomain.Entities;
 /// One document per (TenantId, NetworkCode) pair.
 /// </summary>
 public sealed class NetworkConfiguration : CreationAuditedEntity<Guid>, IMultiTenant
-{   
+{
     public Guid NetworkId { get; private set; }
     public Guid TenantId { get; private set; }
     [NotNull]

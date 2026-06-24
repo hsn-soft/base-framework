@@ -2,7 +2,7 @@ using Hhs.FeedRService.MongoDb.Context;
 using HsnSoft.Base.Domain.Repositories;
 using MongoDB.Driver;
 using System.Reflection;
-using Hhs.FeedRService.Domain.ConfigurationDomain.Entities;
+using Hhs.FeedRService.Domain.ConfigurationDomain.Entities.MongoDB;
 using Hhs.FeedRService.Domain.ConfigurationDomain.Repositories;
 
 namespace Hhs.FeedRService.MongoDb.Repositories;

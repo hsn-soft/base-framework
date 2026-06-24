@@ -1,5 +1,5 @@
 using System.Linq.Expressions;
-using Hhs.FeedRService.Domain.InfraDomain.Entities;
+using Hhs.FeedRService.Domain.InfraDomain.Entities.PostgreSQL;
 using HsnSoft.Base.Domain.Repositories;
 using Microsoft.EntityFrameworkCore.Query;
 

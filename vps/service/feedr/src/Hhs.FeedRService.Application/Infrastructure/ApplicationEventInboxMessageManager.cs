@@ -1,6 +1,6 @@
 using System.Text.Json;
 using Hhs.Shared.Helper;
-using Hhs.FeedRService.Domain.InfraDomain.Entities;
+using Hhs.FeedRService.Domain.InfraDomain.Entities.PostgreSQL;
 using Hhs.FeedRService.Domain.InfraDomain.Repositories;
 using HsnSoft.Base.Domain.Entities.Events;
 

@@ -1,11 +1,11 @@
 using HsnSoft.Base.Domain.Entities.Auditing;
 using HsnSoft.Base.MultiTenancy;
 
-namespace Hhs.FeedRService.Domain.ReportingDomain.Entities;
+namespace Hhs.FeedRService.Domain.ReportingDomain.Entities.PostgreSQL;
 
 /// <summary>
 /// Derived per-client, per-day aggregation of Google Ad Manager report data.
-/// One record exists per (<see cref="AdUnitClientId"/>, <see cref="ReportDate"/>, <see cref="DemandChannel"/>, 
+/// One record exists per (<see cref="AdUnitClientId"/>, <see cref="ReportDate"/>, <see cref="DemandChannel"/>,
 /// <see cref="DemandSubchannelName"/>, <see cref="OrderId"/>) tuple.
 /// Aggregatable metrics (impressions, revenue, etc.) are summed; <see cref="AverageEcpm"/>
 /// is an impressions-weighted average of the source rows.

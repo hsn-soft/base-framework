@@ -4,7 +4,7 @@ using HsnSoft.Base.Domain.Entities.Auditing;
 using HsnSoft.Base.MultiTenancy;
 using JetBrains.Annotations;
 
-namespace Hhs.FeedRService.Domain.ReportingDomain.Entities;
+namespace Hhs.FeedRService.Domain.ReportingDomain.Entities.MongoDB;
 
 /// <summary>
 /// MongoDB bulk storage of raw Google Ad Manager report responses.

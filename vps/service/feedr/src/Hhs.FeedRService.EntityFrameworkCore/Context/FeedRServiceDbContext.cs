@@ -1,5 +1,5 @@
-using Hhs.FeedRService.Domain.InfraDomain.Entities;
-using Hhs.FeedRService.Domain.ReportingDomain.Entities;
+using Hhs.FeedRService.Domain.InfraDomain.Entities.PostgreSQL;
+using Hhs.FeedRService.Domain.ReportingDomain.Entities.PostgreSQL;
 using Hhs.FeedRService.EntityFrameworkCore.Configurations;
 using HsnSoft.Base.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -13,7 +13,7 @@ public sealed class FeedRServiceDbContext(IServiceProvider provider, DbContextOp
     public DbSet<AdNetwork> AdNetworks { get; set; }
     public DbSet<AdUnitTopLevel> AdUnitTopLevels { get; set; }
     public DbSet<AdUnitClient> AdUnitClients { get; set; }
-    public DbSet<DashboardResponse> DailyReportResponses { get; set; }
+    public DbSet<DashboardResponse> DashboardResponses { get; set; }
     public DbSet<MongoToPostgresMapping> MongoToPostgresMappings { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
