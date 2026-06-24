@@ -39,11 +39,11 @@ public sealed class CustomerContentNormalizedRequest : AuditedEntity<Guid>, ISof
     public string? OutlineProviderTrackId { get; set; }
     public DateTime? NextOutlinePollAtUtc { get; set; }
     public int OutlinePollingCount { get; set; }
-    public int MaxOutlinePollingCount { get; set; } = 60;
+    public int MaxOutlinePollingCount { get; set; } = CustomerContentNormalizedRequestConsts.MaxOutlinePollingCountDefault;
 
     // Retry Configuration
     public int RetryCount { get; set; }
-    public int MaxRetryCount { get; set; } = 5;
+    public int MaxRetryCount { get; set; } = CustomerContentNormalizedRequestConsts.MaxRetryCountDefault;
     public DateTime? NextRetryAtUtc { get; set; }
     public string? LastError { get; set; }
 

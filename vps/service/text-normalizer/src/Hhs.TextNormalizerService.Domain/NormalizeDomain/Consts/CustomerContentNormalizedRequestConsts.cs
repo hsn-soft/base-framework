@@ -10,4 +10,8 @@ public static class CustomerContentNormalizedRequestConsts
     public const int ScrapingStatusMaxLength = 50;
     public const int OutlineStatusMaxLength = 50;
     public const int OutlineProviderTrackIdMaxLength = 256;
+
+    // Polling & Retry Configuration
+    public const int MaxOutlinePollingCountDefault = 60;
+    public const int MaxRetryCountDefault = 5;
 }
