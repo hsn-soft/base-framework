@@ -10,7 +10,7 @@ public class AnalysisContentCreatedEtoHandler(
     IAppConsoleLogger logger,
     ApplicationEventInboxMessageManager inboxStore,
     NormalizerOperationAppService normalizerOperationAppService
-) : NormalizerEventHandlerBase<AnalysisContentCreatedEto>(inboxStore)
+) : ApplicationEventHandlerBase<AnalysisContentCreatedEto>(inboxStore)
 {
     private readonly IAppConsoleLogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     private readonly NormalizerOperationAppService _normalizerOperationAppService = normalizerOperationAppService ?? throw new ArgumentNullException(nameof(normalizerOperationAppService));

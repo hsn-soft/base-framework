@@ -10,7 +10,7 @@ public class CustomerContentScrapingCompletedEtoHandler(
     IAppConsoleLogger logger,
     ApplicationEventInboxMessageManager inboxStore,
     NormalizerOperationAppService normalizerOperationAppService
-) : NormalizerEventHandlerBase<CustomerContentScrapingCompletedEto>(inboxStore)
+) : ApplicationEventHandlerBase<CustomerContentScrapingCompletedEto>(inboxStore)
 {
     private readonly IAppConsoleLogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     private readonly NormalizerOperationAppService _normalizerOperationAppService = normalizerOperationAppService ?? throw new ArgumentNullException(nameof(normalizerOperationAppService));

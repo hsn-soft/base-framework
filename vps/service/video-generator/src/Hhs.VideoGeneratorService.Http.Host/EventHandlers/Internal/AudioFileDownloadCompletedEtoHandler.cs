@@ -10,7 +10,7 @@ public class AudioFileDownloadCompletedEtoHandler(
     ApplicationEventInboxMessageManager inboxStore,
     IAppConsoleLogger logger,
     VideoOperationAppService videoOperationAppService
-) : VideoEventHandlerBase<AudioFileDownloadCompletedEto>(inboxStore)
+) : ApplicationEventHandlerBase<AudioFileDownloadCompletedEto>(inboxStore)
 {
     private readonly IAppConsoleLogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     private readonly VideoOperationAppService _videoOperationAppService = videoOperationAppService ?? throw new ArgumentNullException(nameof(videoOperationAppService));

@@ -9,7 +9,7 @@ namespace Hhs.ContentService.EventHandlers;
 public sealed class CachePermissionGrantsChangedEtoHandler(
     ApplicationEventInboxMessageManager inboxStore,
     IAppConsoleLogger logger
-) : ContentEventHandlerBase<CachePermissionGrantsChangedEto>(inboxStore)
+) : ApplicationEventHandlerBase<CachePermissionGrantsChangedEto>(inboxStore)
 {
     private readonly IAppConsoleLogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 

@@ -1,10 +1,10 @@
-using Hhs.VideoGeneratorService.Application.Infrastructure;
+using Hhs.ContentService.Application.Infrastructure;
 using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.EventBus;
 
-namespace Hhs.VideoGeneratorService.EventHandlers;
+namespace Hhs.ContentService.EventHandlers;
 
-public abstract class VideoEventHandlerBase<TEvent>(ApplicationEventInboxMessageManager inboxStore)
+public abstract class ApplicationEventHandlerBase<TEvent>(ApplicationEventInboxMessageManager inboxStore)
     : IIntegrationEventHandler<TEvent>
     where TEvent : IIntegrationEventMessage
 {

@@ -9,7 +9,7 @@ namespace Hhs.VideoGeneratorService.EventHandlers;
 public sealed class CachePermissionGrantsChangedEtoHandler(
     ApplicationEventInboxMessageManager inboxStore,
     IAppConsoleLogger logger
-) : VideoEventHandlerBase<CachePermissionGrantsChangedEto>(inboxStore)
+) : ApplicationEventHandlerBase<CachePermissionGrantsChangedEto>(inboxStore)
 {
     private readonly IAppConsoleLogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 

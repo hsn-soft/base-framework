@@ -10,7 +10,7 @@ public class VideoFileDownloadStartedEtoHandler(
     ApplicationEventInboxMessageManager inboxStore,
     IAppConsoleLogger logger,
     VideoOperationAppService videoOperationAppService
-) : VideoEventHandlerBase<VideoFileDownloadStartedEto>(inboxStore)
+) : ApplicationEventHandlerBase<VideoFileDownloadStartedEto>(inboxStore)
 {
     private readonly IAppConsoleLogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     private readonly VideoOperationAppService _videoOperationAppService = videoOperationAppService ?? throw new ArgumentNullException(nameof(videoOperationAppService));

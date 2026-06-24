@@ -10,7 +10,7 @@ public class StepFailedEtoHandler(
     ApplicationEventInboxMessageManager inboxStore,
     IAppConsoleLogger logger,
     ContentOperationAppService contentOperationAppService
-) : ContentEventHandlerBase<StepFailedEto>(inboxStore)
+) : ApplicationEventHandlerBase<StepFailedEto>(inboxStore)
 {
     private readonly IAppConsoleLogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     private readonly ContentOperationAppService _contentOperationAppService = contentOperationAppService ?? throw new ArgumentNullException(nameof(contentOperationAppService));

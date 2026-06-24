@@ -10,7 +10,7 @@ public class VideoGenerationResultPublishedEtoHandler(
     ApplicationEventInboxMessageManager inboxStore,
     IAppConsoleLogger logger,
     ContentOperationAppService contentOperationAppService
-) : ContentEventHandlerBase<VideoGenerationResultPublishedEto>(inboxStore)
+) : ApplicationEventHandlerBase<VideoGenerationResultPublishedEto>(inboxStore)
 {
     private readonly IAppConsoleLogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     private readonly ContentOperationAppService _contentOperationAppService = contentOperationAppService ?? throw new ArgumentNullException(nameof(contentOperationAppService));

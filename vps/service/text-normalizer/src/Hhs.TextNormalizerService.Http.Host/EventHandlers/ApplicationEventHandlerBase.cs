@@ -1,10 +1,10 @@
-using Hhs.ContentService.Application.Infrastructure;
+using Hhs.TextNormalizerService.Application.Infrastructure;
 using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.EventBus;
 
-namespace Hhs.ContentService.EventHandlers;
+namespace Hhs.TextNormalizerService.EventHandlers;
 
-public abstract class ContentEventHandlerBase<TEvent>(ApplicationEventInboxMessageManager inboxStore)
+public abstract class ApplicationEventHandlerBase<TEvent>(ApplicationEventInboxMessageManager inboxStore)
     : IIntegrationEventHandler<TEvent>
     where TEvent : IIntegrationEventMessage
 {

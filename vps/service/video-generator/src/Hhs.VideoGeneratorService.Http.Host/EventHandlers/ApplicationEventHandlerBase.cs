@@ -1,10 +1,10 @@
-using Hhs.TextNormalizerService.Application.Infrastructure;
+using Hhs.VideoGeneratorService.Application.Infrastructure;
 using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.EventBus;
 
-namespace Hhs.TextNormalizerService.EventHandlers;
+namespace Hhs.VideoGeneratorService.EventHandlers;
 
-public abstract class NormalizerEventHandlerBase<TEvent>(ApplicationEventInboxMessageManager inboxStore)
+public abstract class ApplicationEventHandlerBase<TEvent>(ApplicationEventInboxMessageManager inboxStore)
     : IIntegrationEventHandler<TEvent>
     where TEvent : IIntegrationEventMessage
 {
