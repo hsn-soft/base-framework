@@ -7,7 +7,7 @@ using HsnSoft.Base.Logging.Abstracts;
 namespace Hhs.ContentService.EventHandlers.VideoGenerator;
 
 public class VideoGenerationResultPublishedEtoHandler(
-    ContentInboxStore inboxStore,
+    ContentInboxStoreService inboxStore,
     IAppConsoleLogger logger,
     ContentOperationAppService contentOperationAppService
 ) : ContentEventHandlerBase<VideoGenerationResultPublishedEto>(inboxStore)

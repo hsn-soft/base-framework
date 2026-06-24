@@ -5,11 +5,11 @@ using HsnSoft.Base.EventBus;
 
 namespace Hhs.ContentService.EventHandlers;
 
-public abstract class ContentEventHandlerBase<TEvent>(ContentInboxStore inboxStore)
+public abstract class ContentEventHandlerBase<TEvent>(ContentInboxStoreService inboxStore)
     : IIntegrationEventHandler<TEvent>
     where TEvent : IIntegrationEventMessage
 {
-    protected readonly ContentInboxStore InboxStore = inboxStore;
+    protected readonly ContentInboxStoreService InboxStore = inboxStore;
 
     public async Task HandleAsync(MessageEnvelope<TEvent> @event)
     {

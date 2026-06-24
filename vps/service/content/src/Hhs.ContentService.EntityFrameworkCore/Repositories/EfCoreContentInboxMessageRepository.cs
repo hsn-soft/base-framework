@@ -33,4 +33,10 @@ public sealed class EfCoreContentInboxMessageRepository(
         var options = new ListQueryOptions<ContentInboxMessage> { Filter = x => x.Status == status };
         return await GetListAsync(options, cancellationToken);
     }
+
+    public async Task<int> UpdateByExpressionAsync(
+        System.Linq.Expressions.Expression<Func<ContentInboxMessage, bool>> predicate,
+        Action<Microsoft.EntityFrameworkCore.Query.UpdateSettersBuilder<ContentInboxMessage>> setPropertyCalls,
+        CancellationToken cancellationToken = default)
+        => await base.UpdateByExpressionAsync(predicate, setPropertyCalls, cancellationToken);
 }

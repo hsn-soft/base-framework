@@ -65,11 +65,6 @@ builder.Services.AddMicroserviceHosting(builder.Configuration, typeof(Program))
 // override DefaultBasicDataSeeder
 builder.Services.AddTransient<IBasicDataSeeder, EfCoreSeederService>();
 
-// ============================================================================
-// INBOX & EVENT IDEMPOTENCY
-// ============================================================================
-builder.Services.AddScoped<ContentInboxStore>();
-
 // Swagger
 if (!builder.Environment.IsHostProduction())
 {
