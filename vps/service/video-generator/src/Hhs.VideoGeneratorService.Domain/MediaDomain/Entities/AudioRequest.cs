@@ -1,9 +1,11 @@
 using Hhs.Shared.Helper.Enums;
+using HsnSoft.Base;
 using HsnSoft.Base.Domain.Entities.Auditing;
+using HsnSoft.Base.Subscribe;
 
 namespace Hhs.VideoGeneratorService.Domain.MediaDomain.Entities;
 
-public sealed class AudioRequest : AuditedEntity<Guid>
+public sealed class AudioRequest : AuditedEntity<Guid>, ISoftDelete, IScopeSubscription
 {
     // Correlation & Context
     public string? CorrelationId { get; set; }
@@ -13,7 +15,10 @@ public sealed class AudioRequest : AuditedEntity<Guid>
     public ContentType RefContentType { get; set; }
 
     // Subscription & Scope
-    public string ScopeKey { get; set; } = default!;
+    [NotNull] public string ScopeKey { get; private set; } = default!;
+
+    // Soft Delete
+    public bool IsDeleted { get; internal set; }
 
     // Status & Configuration
     public string Status { get; set; } = default!;

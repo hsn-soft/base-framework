@@ -1,11 +1,13 @@
 using Hhs.TextNormalizerService.Application.Services;
 using Hhs.TextNormalizerService.Domain.Configuration;
+using HsnSoft.Base.Data;
 
 namespace Hhs.TextNormalizerService.Workers;
 
 public sealed class NormalizerRetryWorker(
     IServiceProvider serviceProvider,
     NormalizerRetrySettings retrySettings,
+    IDataFilter dataFilter,
     ILogger<NormalizerRetryWorker> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -19,10 +21,16 @@ public sealed class NormalizerRetryWorker(
             {
                 using var scope = serviceProvider.CreateScope();
 
-                var appService = scope.ServiceProvider
-                    .GetRequiredService<NormalizerOperationRetryWorkerService>();
+                using (dataFilter.Disable<IMultiTenant>())
+                {
+                    using (dataFilter.Disable<IScopeSubscription>())
+                    {
+                        var appService = scope.ServiceProvider
+                            .GetRequiredService<NormalizerOperationRetryWorkerService>();
 
-                await appService.RetryDueRequestsAsync(stoppingToken);
+                        await appService.RetryDueRequestsAsync(stoppingToken);
+                    }
+                }
             }
             catch (OperationCanceledException)
             {

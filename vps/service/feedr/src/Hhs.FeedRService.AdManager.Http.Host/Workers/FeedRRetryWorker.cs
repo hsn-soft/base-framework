@@ -1,11 +1,13 @@
 using Hhs.FeedRService.Application.Services;
 using Hhs.FeedRService.Domain.Configuration;
+using HsnSoft.Base.Data;
 
 namespace Hhs.FeedRService.AdManager.Workers;
 
 public class FeedRRetryWorker(
     IServiceProvider serviceProvider,
     FeedRRetrySettings settings,
+    IDataFilter dataFilter,
     ILogger<FeedRRetryWorker> logger
 ) : BackgroundService
 {
@@ -19,8 +21,14 @@ public class FeedRRetryWorker(
             {
                 using (var scope = serviceProvider.CreateScope())
                 {
-                    var retryService = scope.ServiceProvider.GetRequiredService<FeedROperationRetryWorkerService>();
-                    await retryService.RetryDueRequestsAsync(stoppingToken);
+                    using (dataFilter.Disable<IMultiTenant>())
+                    {
+                        using (dataFilter.Disable<IScopeSubscription>())
+                        {
+                            var retryService = scope.ServiceProvider.GetRequiredService<FeedROperationRetryWorkerService>();
+                            await retryService.RetryDueRequestsAsync(stoppingToken);
+                        }
+                    }
                 }
             }
             catch (OperationCanceledException)

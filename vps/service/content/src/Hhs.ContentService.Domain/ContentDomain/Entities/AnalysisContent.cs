@@ -1,11 +1,17 @@
+using System.Diagnostics.CodeAnalysis;
 using HsnSoft.Base.Domain.Entities.Auditing;
+using HsnSoft.Base.Domain.Entities.SoftDeleting;
+using HsnSoft.Base.Domain.Entities.Subscriptions;
 
 namespace Hhs.ContentService.Domain.ContentDomain.Entities;
 
-public sealed class AnalysisContent : AuditedEntity<Guid>
+public sealed class AnalysisContent : AuditedEntity<Guid>, ISoftDelete, IScopeSubscription
 {
+    // Soft Delete
+    public bool IsDeleted { get; internal set; }
+
     // Subscription & Scope
-    public string ScopeKey { get; private set; } = default!;
+    [NotNull] public string ScopeKey { get; private set; } = default!;
 
     // Content Metadata
     public string DomainName { get; private set; } = default!;

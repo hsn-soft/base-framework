@@ -1,11 +1,13 @@
 using Hhs.VideoGeneratorService.Application.Services;
 using Hhs.VideoGeneratorService.Domain.Configuration;
+using HsnSoft.Base.Data;
 
 namespace Hhs.VideoGeneratorService.Workers;
 
 public sealed class AudioProviderPollingWorker(
     IServiceProvider serviceProvider,
     AudioPollingSettings pollingSettings,
+    IDataFilter dataFilter,
     ILogger<AudioProviderPollingWorker> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -19,10 +21,16 @@ public sealed class AudioProviderPollingWorker(
             {
                 using var scope = serviceProvider.CreateScope();
 
-                var appService = scope.ServiceProvider
-                    .GetRequiredService<AudioProviderPollingWorkerService>();
+                using (dataFilter.Disable<IMultiTenant>())
+                {
+                    using (dataFilter.Disable<IScopeSubscription>())
+                    {
+                        var appService = scope.ServiceProvider
+                            .GetRequiredService<AudioProviderPollingWorkerService>();
 
-                await appService.PollDueAudioRequestsAsync(stoppingToken);
+                        await appService.PollDueAudioRequestsAsync(stoppingToken);
+                    }
+                }
             }
             catch (OperationCanceledException)
             {

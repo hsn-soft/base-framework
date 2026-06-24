@@ -1,11 +1,13 @@
 using Hhs.EventManagerService.Application.Services;
 using Hhs.EventManagerService.Domain.Configuration;
+using HsnSoft.Base.Data;
 
 namespace Hhs.EventManagerService.Workers;
 
 public class EventManagerRetryWorker(
     IServiceProvider serviceProvider,
     EventManagerRetrySettings settings,
+    IDataFilter dataFilter,
     ILogger<EventManagerRetryWorker> logger
 ) : BackgroundService
 {
@@ -19,8 +21,14 @@ public class EventManagerRetryWorker(
             {
                 using (var scope = serviceProvider.CreateScope())
                 {
-                    var retryService = scope.ServiceProvider.GetRequiredService<EventOperationRetryWorkerService>();
-                    await retryService.RetryDueRequestsAsync(stoppingToken);
+                    using (dataFilter.Disable<IMultiTenant>())
+                    {
+                        using (dataFilter.Disable<IScopeSubscription>())
+                        {
+                            var retryService = scope.ServiceProvider.GetRequiredService<EventOperationRetryWorkerService>();
+                            await retryService.RetryDueRequestsAsync(stoppingToken);
+                        }
+                    }
                 }
             }
             catch (OperationCanceledException)

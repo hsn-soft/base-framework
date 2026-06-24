@@ -1,11 +1,13 @@
 using Hhs.TextNormalizerService.Application.Services;
 using Hhs.TextNormalizerService.Domain.Configuration.Providers.Outline;
+using HsnSoft.Base.Data;
 
 namespace Hhs.TextNormalizerService.Workers;
 
 public sealed class OutlineProviderPollingWorker(
     IServiceProvider serviceProvider,
     OutlinePollingSettings pollingSettings,
+    IDataFilter dataFilter,
     ILogger<OutlineProviderPollingWorker> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -19,9 +21,15 @@ public sealed class OutlineProviderPollingWorker(
             {
                 using var scope = serviceProvider.CreateScope();
 
-                var appService = scope.ServiceProvider.GetRequiredService<OutlineProviderPollingWorkerService>();
+                using (dataFilter.Disable<IMultiTenant>())
+                {
+                    using (dataFilter.Disable<IScopeSubscription>())
+                    {
+                        var appService = scope.ServiceProvider.GetRequiredService<OutlineProviderPollingWorkerService>();
 
-                await appService.PollDueOutlineRequestsAsync(stoppingToken);
+                        await appService.PollDueOutlineRequestsAsync(stoppingToken);
+                    }
+                }
             }
             catch (OperationCanceledException)
             {

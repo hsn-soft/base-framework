@@ -1,9 +1,12 @@
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Models;
+using HsnSoft.Base;
 using HsnSoft.Base.Domain.Entities.Auditing;
+using HsnSoft.Base.Subscribe;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Hhs.TextNormalizerService.Domain.NormalizeDomain.Entities;
 
-public sealed class AnalysisContentNormalizedRequest : AuditedEntity<Guid>
+public sealed class AnalysisContentNormalizedRequest : AuditedEntity<Guid>, ISoftDelete, IScopeSubscription
 {
 
     // Correlation
@@ -11,7 +14,10 @@ public sealed class AnalysisContentNormalizedRequest : AuditedEntity<Guid>
     public Guid SourceEventId { get; set; }
 
     // Subscription & Scope
-    public string ScopeKey { get; set; } = default!;
+    [NotNull] public string ScopeKey { get; private set; }
+
+    // Soft Delete
+    public bool IsDeleted { get; internal set; }
 
     // Content Reference
     public Guid AnalysisContentId { get; set; }

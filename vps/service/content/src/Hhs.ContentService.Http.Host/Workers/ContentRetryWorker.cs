@@ -1,5 +1,6 @@
 using Hhs.ContentService.Application.Services;
 using Hhs.ContentService.Domain.Configuration;
+using HsnSoft.Base.Data;
 using Microsoft.Extensions.Options;
 
 namespace Hhs.ContentService.Workers;
@@ -7,6 +8,7 @@ namespace Hhs.ContentService.Workers;
 public sealed class ContentRetryWorker(
     IServiceProvider serviceProvider,
     IOptions<ContentRetrySettings> retrySettingsOptions,
+    IDataFilter dataFilter,
     ILogger<ContentRetryWorker> logger) : BackgroundService
 {
     private readonly ContentRetrySettings _retrySettings = retrySettingsOptions.Value;
@@ -22,10 +24,16 @@ public sealed class ContentRetryWorker(
             {
                 using var scope = serviceProvider.CreateScope();
 
-                var appService = scope.ServiceProvider
-                    .GetRequiredService<ContentOperationRetryWorkerService>();
+                using (dataFilter.Disable<IMultiTenant>())
+                {
+                    using (dataFilter.Disable<IScopeSubscription>())
+                    {
+                        var appService = scope.ServiceProvider
+                            .GetRequiredService<ContentOperationRetryWorkerService>();
 
-                await appService.RetryDueRequestsAsync(stoppingToken);
+                        await appService.RetryDueRequestsAsync(stoppingToken);
+                    }
+                }
             }
             catch (OperationCanceledException)
             {

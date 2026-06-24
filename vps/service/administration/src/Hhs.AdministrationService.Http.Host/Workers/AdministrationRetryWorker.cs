@@ -1,11 +1,13 @@
 using Hhs.AdministrationService.Application.Services;
 using Hhs.AdministrationService.Domain.Configuration;
+using HsnSoft.Base.Data;
 
 namespace Hhs.AdministrationService.Workers;
 
 public class AdministrationRetryWorker(
     IServiceProvider serviceProvider,
     AdministrationRetrySettings settings,
+    IDataFilter dataFilter,
     ILogger<AdministrationRetryWorker> logger
 ) : BackgroundService
 {
@@ -19,8 +21,14 @@ public class AdministrationRetryWorker(
             {
                 using (var scope = serviceProvider.CreateScope())
                 {
-                    var retryService = scope.ServiceProvider.GetRequiredService<AdministrationOperationRetryWorkerService>();
-                    await retryService.RetryDueRequestsAsync(stoppingToken);
+                    using (dataFilter.Disable<IMultiTenant>())
+                    {
+                        using (dataFilter.Disable<IScopeSubscription>())
+                        {
+                            var retryService = scope.ServiceProvider.GetRequiredService<AdministrationOperationRetryWorkerService>();
+                            await retryService.RetryDueRequestsAsync(stoppingToken);
+                        }
+                    }
                 }
             }
             catch (OperationCanceledException)

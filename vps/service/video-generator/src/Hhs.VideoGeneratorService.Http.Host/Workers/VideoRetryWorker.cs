@@ -1,11 +1,13 @@
 using Hhs.VideoGeneratorService.Application.Services;
 using Hhs.VideoGeneratorService.Domain.Configuration;
+using HsnSoft.Base.Data;
 
 namespace Hhs.VideoGeneratorService.Workers;
 
 public sealed class VideoRetryWorker(
     IServiceProvider serviceProvider,
     VideoRetrySettings retrySettings,
+    IDataFilter dataFilter,
     ILogger<VideoRetryWorker> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -19,10 +21,16 @@ public sealed class VideoRetryWorker(
             {
                 using var scope = serviceProvider.CreateScope();
 
-                var appService = scope.ServiceProvider
-                    .GetRequiredService<VideoOperationRetryWorkerService>();
+                using (dataFilter.Disable<IMultiTenant>())
+                {
+                    using (dataFilter.Disable<IScopeSubscription>())
+                    {
+                        var appService = scope.ServiceProvider
+                            .GetRequiredService<VideoOperationRetryWorkerService>();
 
-                await appService.RetryDueRequestsAsync(stoppingToken);
+                        await appService.RetryDueRequestsAsync(stoppingToken);
+                    }
+                }
             }
             catch (OperationCanceledException)
             {

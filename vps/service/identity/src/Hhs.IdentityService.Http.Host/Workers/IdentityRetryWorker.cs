@@ -1,11 +1,13 @@
 using Hhs.IdentityService.Application.Services;
 using Hhs.IdentityService.Domain.Configuration;
+using HsnSoft.Base.Data;
 
 namespace Hhs.IdentityService.Workers;
 
 public class IdentityRetryWorker(
     IServiceProvider serviceProvider,
     IdentityRetrySettings settings,
+    IDataFilter dataFilter,
     ILogger<IdentityRetryWorker> logger
 ) : BackgroundService
 {
@@ -19,8 +21,14 @@ public class IdentityRetryWorker(
             {
                 using (var scope = serviceProvider.CreateScope())
                 {
-                    var retryService = scope.ServiceProvider.GetRequiredService<IdentityOperationRetryWorkerService>();
-                    await retryService.RetryDueRequestsAsync(stoppingToken);
+                    using (dataFilter.Disable<IMultiTenant>())
+                    {
+                        using (dataFilter.Disable<IScopeSubscription>())
+                        {
+                            var retryService = scope.ServiceProvider.GetRequiredService<IdentityOperationRetryWorkerService>();
+                            await retryService.RetryDueRequestsAsync(stoppingToken);
+                        }
+                    }
                 }
             }
             catch (OperationCanceledException)
