@@ -1,6 +1,5 @@
 using Hhs.ContentService.Domain.ContentDomain.Consts;
 using Hhs.ContentService.Domain.ContentDomain.Entities;
-using HsnSoft.Base;
 using Microsoft.EntityFrameworkCore;
 
 namespace Hhs.ContentService.EntityFrameworkCore.Configurations;
@@ -67,13 +66,13 @@ public static class ContentDomainConfiguration
 
     public static void ConfigureContentInboxMessageEntity(this ModelBuilder builder)
     {
-        builder.Entity<ContentInboxMessage>(b =>
+        builder.Entity<EventInboxMessage>(b =>
         {
-            b.ToTable(EfCoreDbProperties.DbTablePrefix + ContentInboxMessageConsts.TableName, EfCoreDbProperties.DbSchema);
+            b.ToTable(EfCoreDbProperties.DbTablePrefix + EventInboxMessageConsts.TableName, EfCoreDbProperties.DbSchema);
             b.HasKey(x => x.Id);
 
-            b.Property(x => x.EventName).HasMaxLength(ContentInboxMessageConsts.EventNameMaxLength).IsRequired();
-            b.Property(x => x.Status).HasMaxLength(ContentInboxMessageConsts.StatusMaxLength).IsRequired();
+            b.Property(x => x.EventName).HasMaxLength(EventInboxMessageConsts.EventNameMaxLength).IsRequired();
+            b.Property(x => x.Status).HasMaxLength(EventInboxMessageConsts.StatusMaxLength).IsRequired();
             b.Property(x => x.Payload).HasColumnType("jsonb");
 
             b.HasIndex(x => x.Status);

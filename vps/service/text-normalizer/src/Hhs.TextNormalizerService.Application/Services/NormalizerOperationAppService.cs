@@ -12,7 +12,6 @@ using Hhs.TextNormalizerService.Domain.Configuration.Providers.Outline;
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Entities;
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Models;
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Repositories;
-using HsnSoft.Base.EventBus;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;

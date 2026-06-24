@@ -1,8 +1,8 @@
 namespace Hhs.VideoGeneratorService.Domain.MediaDomain.Consts;
 
-public static class VideoGeneratorInboxMessageConsts
+public static class EventInboxMessageConsts
 {
-    public const string TableName = "video_generator_inbox_messages";
+    public const string TableName = "EventInboxMessages";
     public const int EventNameMaxLength = 256;
     public const int StatusMaxLength = 50;
     public const int ErrorMessageMaxLength = 1000;

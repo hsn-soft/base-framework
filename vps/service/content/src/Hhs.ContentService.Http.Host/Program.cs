@@ -1,6 +1,5 @@
 using Hhs.ContentService;
 using Hhs.ContentService.Application;
-using Hhs.ContentService.Application.Infrastructure;
 using Hhs.ContentService.Domain.Localization;
 using Hhs.ContentService.EntityFrameworkCore;
 using Hhs.ContentService.EntityFrameworkCore.Setup;

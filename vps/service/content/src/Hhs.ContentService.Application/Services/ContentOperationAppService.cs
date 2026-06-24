@@ -94,7 +94,8 @@ public sealed class ContentOperationAppService(
             if (content == null)
                 throw new InvalidOperationException($"CustomerContent not found: {customerContentId}");
 
-            analysis.Items.Add(new AnalysisContentItem { Id = Guid.NewGuid(), AnalysisContentId = analysisId, CustomerContentId = customerContentId, SortOrder = sort++ });
+            analysis.Items.Add(new AnalysisContentItem(id: Guid.NewGuid()
+                , analysisContentId: analysisId, customerContentId: customerContentId, sortOrder: sort++));
         }
 
         await _analysisContentRepository.InsertAsync(analysis, cancellationToken);

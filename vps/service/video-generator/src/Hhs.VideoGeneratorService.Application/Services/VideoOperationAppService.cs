@@ -11,7 +11,6 @@ using Hhs.VideoGeneratorService.Application.Providers.Video;
 using Hhs.VideoGeneratorService.Domain.Configuration;
 using Hhs.VideoGeneratorService.Domain.MediaDomain.Entities;
 using Hhs.VideoGeneratorService.MongoDb.Context;
-using HsnSoft.Base.EventBus;
 using MongoDB.Driver;
 
 namespace Hhs.VideoGeneratorService.Application.Services;

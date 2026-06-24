@@ -1,6 +1,5 @@
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Models;
 using HsnSoft.Base.Domain.Entities.Auditing;
-using MongoDB.Bson.Serialization.Attributes;
 
 namespace Hhs.TextNormalizerService.Domain.NormalizeDomain.Entities;
 

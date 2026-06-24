@@ -12,5 +12,5 @@ public sealed class TextNormalizerServiceDbContext(IServiceProvider provider, IC
 
     public ITrackingMongoCollection<CustomerContentNormalizedRequest> CustomerContentNormalizedRequests => GetCollection<CustomerContentNormalizedRequest>();
     public ITrackingMongoCollection<AnalysisContentNormalizedRequest> AnalysisContentNormalizedRequests => GetCollection<AnalysisContentNormalizedRequest>();
-    public ITrackingMongoCollection<NormalizerInboxMessage> NormalizerInboxMessages => GetCollection<NormalizerInboxMessage>();
+    public ITrackingMongoCollection<EventInboxMessage> NormalizerInboxMessages => GetCollection<EventInboxMessage>();
 }

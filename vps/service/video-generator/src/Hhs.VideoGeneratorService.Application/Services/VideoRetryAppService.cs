@@ -5,7 +5,6 @@ using Hhs.Shared.Helper.Providers;
 using Hhs.VideoGeneratorService.Application.Providers;
 using Hhs.VideoGeneratorService.Domain.Configuration;
 using Hhs.VideoGeneratorService.MongoDb.Context;
-using HsnSoft.Base.EventBus;
 using MongoDB.Driver;
 
 namespace Hhs.VideoGeneratorService.Application.Services;

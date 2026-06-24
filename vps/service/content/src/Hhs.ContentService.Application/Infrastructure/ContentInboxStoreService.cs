@@ -1,5 +1,4 @@
 using System.Text.Json;
-using Hhs.Shared.Contracts.Events;
 using Hhs.Shared.Helper;
 using Hhs.ContentService.Domain.ContentDomain.Entities;
 using Hhs.ContentService.Domain.ContentDomain.Repositories;
@@ -53,7 +52,7 @@ public sealed class ContentInboxStoreService(IContentInboxMessageRepository repo
 
         try
         {
-            var newMessage = new ContentInboxMessage(
+            var newMessage = new EventInboxMessage(
                 @event.MessageId,
                 typeof(TEvent).Name,
                 JsonSerializer.Serialize(@event.Message, @event.Message.GetType()));

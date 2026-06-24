@@ -3,7 +3,7 @@ using HsnSoft.Base.Domain.Entities.Auditing;
 
 namespace Hhs.ContentService.Domain.ContentDomain.Entities;
 
-public sealed class ContentInboxMessage : AuditedEntity<Guid>
+public sealed class EventInboxMessage : AuditedEntity<Guid>
 {
     // Correlation & Tracing
     public Guid? CorrelationId { get; private set; }
@@ -22,9 +22,9 @@ public sealed class ContentInboxMessage : AuditedEntity<Guid>
     // Retry Management
     public int RetryCount { get; set; } = 0;
 
-    private ContentInboxMessage() { }
+    private EventInboxMessage() { }
 
-    public ContentInboxMessage(Guid id, string eventName, string payload, Guid? correlationId = null)
+    public EventInboxMessage(Guid id, string eventName, string payload, Guid? correlationId = null)
     {
         Id = id;
         EventName = eventName;

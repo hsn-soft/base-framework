@@ -49,7 +49,7 @@ public sealed class NormalizerInboxStoreService(INormalizerInboxMessageRepositor
 
         try
         {
-            var newMessage = new NormalizerInboxMessage(
+            var newMessage = new EventInboxMessage(
                 @event.MessageId,
                 typeof(TEvent).Name,
                 JsonSerializer.Serialize(@event.Message, @event.Message.GetType()));

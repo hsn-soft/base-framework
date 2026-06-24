@@ -1,4 +1,3 @@
-using Hhs.TextNormalizerService.Domain.NormalizeDomain.Consts;
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Entities;
 using MongoDB.Bson.Serialization;
 
@@ -8,9 +7,9 @@ public static class NormalizerInboxMessageClassMap
 {
     public static void Register()
     {
-        if (!BsonClassMap.IsClassMapRegistered(typeof(NormalizerInboxMessage)))
+        if (!BsonClassMap.IsClassMapRegistered(typeof(EventInboxMessage)))
         {
-            BsonClassMap.RegisterClassMap<NormalizerInboxMessage>(map =>
+            BsonClassMap.RegisterClassMap<EventInboxMessage>(map =>
             {
                 map.AutoMap();
                 map.SetIgnoreExtraElements(true);

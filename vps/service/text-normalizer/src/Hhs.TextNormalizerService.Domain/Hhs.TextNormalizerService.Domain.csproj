@@ -29,4 +29,8 @@
         <Content Remove="Localization\TextNormalizerService\*.json"/>
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="InfraDomain\" />
+    </ItemGroup>
+
 </Project>

@@ -1,4 +1,3 @@
-using Hhs.Shared.Contracts.Events;
 using Hhs.ContentService.Application.Infrastructure;
 using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.EventBus;

@@ -1,8 +1,9 @@
 namespace Hhs.ContentService.Domain.ContentDomain.Consts;
 
-public static class ContentInboxMessageConsts
+public static class EventInboxMessageConsts
 {
-    public const string TableName = "content_inbox_messages";
+    public const string TableName = "EventInboxMessages";
     public const int EventNameMaxLength = 256;
     public const int StatusMaxLength = 50;
+    public const int ErrorMessageMaxLength = 1000;
 }

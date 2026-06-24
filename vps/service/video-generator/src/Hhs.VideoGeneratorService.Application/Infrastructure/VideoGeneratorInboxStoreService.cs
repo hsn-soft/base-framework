@@ -50,7 +50,7 @@ public sealed class VideoGeneratorInboxStoreService(IVideoGeneratorInboxMessageR
 
         try
         {
-            var newMessage = new VideoGeneratorInboxMessage(
+            var newMessage = new EventInboxMessage(
                 @event.MessageId,
                 typeof(TEvent).Name,
                 JsonSerializer.Serialize(@event.Message, @event.Message.GetType()));

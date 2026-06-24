@@ -1,4 +1,3 @@
-using Hhs.Shared.Contracts.Events;
 using Hhs.TextNormalizerService.Application.Infrastructure;
 using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.EventBus;

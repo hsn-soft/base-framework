@@ -5,13 +5,13 @@ using Microsoft.EntityFrameworkCore.Query;
 
 namespace Hhs.ContentService.Domain.ContentDomain.Repositories;
 
-public interface IContentInboxMessageRepository : IGenericRepository<ContentInboxMessage, Guid>
+public interface IContentInboxMessageRepository : IGenericRepository<EventInboxMessage, Guid>
 {
-    Task<List<ContentInboxMessage>> GetUnprocessedAsync(CancellationToken cancellationToken = default);
-    Task<List<ContentInboxMessage>> GetByStatusAsync(string status, CancellationToken cancellationToken = default);
+    Task<List<EventInboxMessage>> GetUnprocessedAsync(CancellationToken cancellationToken = default);
+    Task<List<EventInboxMessage>> GetByStatusAsync(string status, CancellationToken cancellationToken = default);
 
     Task<int> UpdateByExpressionAsync(
-        Expression<Func<ContentInboxMessage, bool>> predicate,
-        Action<UpdateSettersBuilder<ContentInboxMessage>> setPropertyCalls,
+        Expression<Func<EventInboxMessage, bool>> predicate,
+        Action<UpdateSettersBuilder<EventInboxMessage>> setPropertyCalls,
         CancellationToken cancellationToken = default);
 }

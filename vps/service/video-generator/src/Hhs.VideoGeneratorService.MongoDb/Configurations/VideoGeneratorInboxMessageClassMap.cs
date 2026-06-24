@@ -7,7 +7,7 @@ public static class VideoGeneratorInboxMessageClassMap
 {
     public static void Register()
     {
-        BsonClassMap.RegisterClassMap<VideoGeneratorInboxMessage>(map =>
+        BsonClassMap.RegisterClassMap<EventInboxMessage>(map =>
         {
             map.AutoMap();
             map.SetIgnoreExtraElements(true);

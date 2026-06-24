@@ -12,5 +12,5 @@ public sealed class VideoGeneratorServiceDbContext(IServiceProvider provider, IC
 
     public ITrackingMongoCollection<VideoRequest> VideoRequests => GetCollection<VideoRequest>();
     public ITrackingMongoCollection<AudioRequest> AudioRequests => GetCollection<AudioRequest>();
-    public ITrackingMongoCollection<VideoGeneratorInboxMessage> VideoGeneratorInboxMessages => GetCollection<VideoGeneratorInboxMessage>();
+    public ITrackingMongoCollection<EventInboxMessage> VideoGeneratorInboxMessages => GetCollection<EventInboxMessage>();
 }

@@ -10,20 +10,20 @@ namespace Hhs.TextNormalizerService.MongoDb.Repositories;
 public sealed class MongoNormalizerInboxMessageRepository(
     IServiceProvider provider,
     TextNormalizerServiceDbContext dbContext
-) : MongoGenericRepository<NormalizerInboxMessage, Guid>(provider, dbContext), INormalizerInboxMessageRepository
+) : MongoGenericRepository<EventInboxMessage, Guid>(provider, dbContext), INormalizerInboxMessageRepository
 {
-    public async Task<List<NormalizerInboxMessage>> GetUnprocessedAsync(CancellationToken cancellationToken = default)
+    public async Task<List<EventInboxMessage>> GetUnprocessedAsync(CancellationToken cancellationToken = default)
     {
-        var options = new ListQueryOptions<NormalizerInboxMessage>
+        var options = new ListQueryOptions<EventInboxMessage>
         {
             Filter = x => x.Status != InboxStatuses.Completed && x.Status != InboxStatuses.Failed
         };
         return await GetListAsync(options, cancellationToken);
     }
 
-    public async Task<List<NormalizerInboxMessage>> GetByStatusAsync(string status, CancellationToken cancellationToken = default)
+    public async Task<List<EventInboxMessage>> GetByStatusAsync(string status, CancellationToken cancellationToken = default)
     {
-        var options = new ListQueryOptions<NormalizerInboxMessage> { Filter = x => x.Status == status };
+        var options = new ListQueryOptions<EventInboxMessage> { Filter = x => x.Status == status };
         return await GetListAsync(options, cancellationToken);
     }
 }

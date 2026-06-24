@@ -1,10 +1,9 @@
 using Hhs.Shared.Helper;
 using HsnSoft.Base.Domain.Entities.Auditing;
-using MongoDB.Bson.Serialization.Attributes;
 
 namespace Hhs.TextNormalizerService.Domain.NormalizeDomain.Entities;
 
-public sealed class NormalizerInboxMessage : AuditedEntity<Guid>
+public sealed class EventInboxMessage : AuditedEntity<Guid>
 {
     // Correlation & Tracing
     public Guid? CorrelationId { get; private set; }
@@ -23,9 +22,9 @@ public sealed class NormalizerInboxMessage : AuditedEntity<Guid>
     // Retry Management
     public int RetryCount { get; set; } = 0;
 
-    private NormalizerInboxMessage() { }
+    private EventInboxMessage() { }
 
-    public NormalizerInboxMessage(Guid id, string eventName, string payload, Guid? correlationId = null)
+    public EventInboxMessage(Guid id, string eventName, string payload, Guid? correlationId = null)
     {
         Id = id;
         EventName = eventName;
