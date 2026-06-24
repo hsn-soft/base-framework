@@ -2,6 +2,7 @@ using Hhs.FeedRService.Application.Contracts;
 using Hhs.FeedRService.Application.Contracts.CustomerDomain;
 using Hhs.FeedRService.Application.Contracts.DashboardDomain;
 using Hhs.FeedRService.Application.Contracts.JobDomain;
+using Hhs.FeedRService.Application.Infrastructure;
 using Hhs.FeedRService.Application.Services;
 using Hhs.Shared.Contracts.Cache;
 using Microsoft.Extensions.Configuration;
@@ -17,6 +18,9 @@ public static class ApplicationServiceCollectionExtensions
         services.AddSingleton<IServicePermissionProvider, ApplicationPermissionProvider>();
 
         // Must be Scoped or Transient => Cannot consume any scoped service
+        services.AddScoped<ApplicationEventInboxMessageManager>();
+        services.AddScoped<FeedROperationRetryWorkerService>();
+
         services.AddScoped<IJobAppService, JobAppService>();
         services.AddScoped<IEventManagerAppService, EventManagerAppService>();
         services.AddScoped<IGoogleReportService, ReportService>();

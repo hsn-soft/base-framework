@@ -1,6 +1,7 @@
 using Hhs.IdentityService.Domain.AppRoleDomain.Entities;
 using Hhs.IdentityService.Domain.AppUserDomain.Entities;
 using Hhs.IdentityService.Domain.AuthDomain.Entities;
+using Hhs.IdentityService.Domain.InfraDomain.Entities;
 using Hhs.IdentityService.Domain.TenantDomain.Entities;
 using Hhs.IdentityService.EntityFrameworkCore.Configurations;
 using HsnSoft.Base;
@@ -14,6 +15,7 @@ public sealed class IdentityServiceDbContext(
     DbContextOptions<IdentityServiceDbContext> options
 ) : BaseEfCoreDbContext<IdentityServiceDbContext>(options, provider)
 {
+    public DbSet<EventInboxMessage> EventInboxMessages => Set<EventInboxMessage>();
     public DbSet<Tenant> Tenants => Set<Tenant>();
     public DbSet<Company> Companies => Set<Company>();
     public DbSet<Customer> Customers => Set<Customer>();
@@ -36,6 +38,8 @@ public sealed class IdentityServiceDbContext(
         Check.NotNull(builder, nameof(builder));
 
         base.OnModelCreating(builder);
+
+        builder.ConfigureEventInboxMessageEntity();
 
         builder.ConfigureTenantEntity();
         builder.ConfigureCompanyEntity();

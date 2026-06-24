@@ -1,3 +1,4 @@
+using Hhs.AdministrationService.Domain.InfraDomain.Repositories;
 using Hhs.AdministrationService.Domain.MenuDomain.Repositories;
 using Hhs.AdministrationService.Domain.PermissionDomain.Repositories;
 using Hhs.AdministrationService.EntityFrameworkCore.Context;
@@ -42,6 +43,9 @@ public static class EfCoreServiceCollectionExtensions
 
         // Must be Scoped => Cannot consume any scoped service and CurrentUser object creation on constructor
         services.AddScoped(typeof(IEfCoreGenericRepository<,>), typeof(EfCoreGenericRepository<,>));
+
+        // Infra Domain Repositories
+        services.AddScoped<IEventInboxMessageRepository, EfCoreEventInboxMessageRepository>();
 
         services.AddScoped<IAppMenuRepository, EfCoreAppMenuRepository>();
         services.AddScoped<IAppMenuPermissionRepository, EfCoreAppMenuPermissionRepository>();

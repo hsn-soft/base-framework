@@ -1,5 +1,6 @@
 using Hhs.EventManagerService.Domain;
 using Hhs.EventManagerService.Domain.EventDomain.Repositories;
+using Hhs.EventManagerService.Domain.InfraDomain.Repositories;
 using Hhs.EventManagerService.MongoDb.Configurations;
 using Hhs.EventManagerService.MongoDb.Context;
 using Hhs.EventManagerService.MongoDb.Repositories;
@@ -39,6 +40,10 @@ public static class MongoDbServiceCollectionExtensions
 
         // Must be Scoped => Cannot consume any scoped service and CurrentUser object creation on constructor
         services.AddScoped(typeof(IMongoGenericRepository<,>), typeof(MongoGenericRepository<,>));
+
+        // Infra Domain Repositories
+        services.AddScoped<IEventInboxMessageRepository, MongoEventInboxMessageRepository>();
+
         services.AddScoped<IFailedIntegrationEventRepository, MongoFailedIntegrationEventRepository>();
 
         return services;
@@ -85,6 +90,7 @@ public static class MongoDbServiceCollectionExtensions
     private static void RegisterClassMaps()
     {
         EntityClassMap.Register();
+        EventInboxMessageClassMap.Register();
         FailedIntegrationEventClassMap.Register();
     }
 }

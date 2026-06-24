@@ -1,5 +1,6 @@
 using Hhs.AdministrationService.Application.Contracts.JobDomain;
 using Hhs.AdministrationService.Application.Contracts.PermissionDomain.Services;
+using Hhs.AdministrationService.Application.Infrastructure;
 using Hhs.AdministrationService.Application.Services;
 using Hhs.Shared.Contracts.Cache;
 using Microsoft.Extensions.Configuration;
@@ -16,6 +17,9 @@ public static class ApplicationServiceCollectionExtensions
         services.AddSingleton<IServicePermissionProvider, ApplicationPermissionProvider>();
 
         // Must be Scoped or Transient => Cannot consume any scoped service
+        services.AddScoped<ApplicationEventInboxMessageManager>();
+        services.AddScoped<AdministrationOperationRetryWorkerService>();
+
         services.AddScoped<IJobAppService, JobAppService>();
         services.AddScoped<IPermissionStoreOperationAppService, PermissionStoreOperationAppService>();
         services.AddScoped<ISessionPermissionAppService, SessionPermissionAppService>();

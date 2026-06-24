@@ -1,4 +1,5 @@
 using Hhs.EventManagerService.Application.Contracts.EventDomain.Interfaces;
+using Hhs.EventManagerService.Application.Infrastructure;
 using Hhs.EventManagerService.Application.Services;
 using Hhs.Shared.Contracts.Cache;
 using Microsoft.Extensions.Configuration;
@@ -15,6 +16,9 @@ public static class ApplicationServiceCollectionExtensions
         services.AddSingleton<IServicePermissionProvider, ApplicationPermissionProvider>();
 
         // Must be Scoped or Transient => Cannot consume any scoped service
+        services.AddScoped<ApplicationEventInboxMessageManager>();
+        services.AddScoped<EventOperationRetryWorkerService>();
+
         services.AddScoped<IFailedIntegrationEventAppService, FailedIntegrationEventAppService>();
 
         return services;

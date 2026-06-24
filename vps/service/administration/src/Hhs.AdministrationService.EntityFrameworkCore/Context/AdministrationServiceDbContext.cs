@@ -1,3 +1,4 @@
+using Hhs.AdministrationService.Domain.InfraDomain.Entities;
 using Hhs.AdministrationService.Domain.MenuDomain.Entities;
 using Hhs.AdministrationService.Domain.PermissionDomain.Entities;
 using Hhs.AdministrationService.EntityFrameworkCore.Configurations;
@@ -12,6 +13,7 @@ public sealed class AdministrationServiceDbContext(
     DbContextOptions<AdministrationServiceDbContext> options
 ) : BaseEfCoreDbContext<AdministrationServiceDbContext>(options, provider)
 {
+    public DbSet<EventInboxMessage> EventInboxMessages => Set<EventInboxMessage>();
     public DbSet<AppMenu> AppMenus => Set<AppMenu>();
     public DbSet<AppMenuPermission> AppMenuPermissions => Set<AppMenuPermission>();
     public DbSet<PermissionGrant> PermissionGrants => Set<PermissionGrant>();
@@ -25,6 +27,8 @@ public sealed class AdministrationServiceDbContext(
         Check.NotNull(modelBuilder, nameof(modelBuilder));
 
         base.OnModelCreating(modelBuilder);
+
+        modelBuilder.ConfigureEventInboxMessageEntity();
 
         modelBuilder.ConfigureAppMenuEntity();
         modelBuilder.ConfigureAppMenuPermissionEntity();

@@ -1,3 +1,4 @@
+using Hhs.FeedRService.Domain.InfraDomain.Repositories;
 using Hhs.FeedRService.Domain.ReportingDomain.Repositories;
 using Hhs.FeedRService.EntityFrameworkCore.Context;
 using Hhs.FeedRService.EntityFrameworkCore.Repositories;
@@ -46,6 +47,10 @@ public static class EfCoreServiceCollectionExtensions
 
         // Must be Scoped => Cannot consume any scoped service and CurrentUser object creation on constructor
         services.AddScoped(typeof(IEfCoreGenericRepository<,>), typeof(EfCoreGenericRepository<,>));
+
+        // Infra Domain Repositories
+        services.AddScoped<IEventInboxMessageRepository, EfCoreEventInboxMessageRepository>();
+
         services.AddScoped<IDashboardRepository, EfCoreDashboardRepository>();
 
         return services;
