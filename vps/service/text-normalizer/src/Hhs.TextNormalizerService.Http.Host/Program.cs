@@ -80,11 +80,6 @@ builder.Services.AddOptions<HostOptions>()
 builder.Services.AddHttpClient();
 
 // ============================================================================
-// INBOX & EVENT IDEMPOTENCY
-// ============================================================================
-builder.Services.AddScoped<NormalizerInboxStore>();
-
-// ============================================================================
 // CUSTOM WORKERS (Polling & Retry Logic)
 // ============================================================================
 builder.Services.AddScoped<OutlineProviderPollingAppService>();

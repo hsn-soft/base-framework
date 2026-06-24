@@ -8,7 +8,7 @@ namespace Hhs.TextNormalizerService.EventHandlers;
 
 public sealed class CachePermissionGrantsChangedEtoHandler(
     IAppConsoleLogger logger,
-    NormalizerInboxStore inboxStore
+    NormalizerInboxStoreService inboxStore
 ) : NormalizerEventHandlerBase<CachePermissionGrantsChangedEto>(inboxStore)
 {
     private readonly IAppConsoleLogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));

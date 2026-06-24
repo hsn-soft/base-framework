@@ -1,10 +1,12 @@
+using System.Linq.Expressions;
 using Hhs.Shared.Contracts.Events;
 using Hhs.Shared.Helper;
 using Hhs.Shared.Helper.Enums;
 using Hhs.TextNormalizerService.Domain.Configuration;
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Entities;
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Models;
-using Hhs.TextNormalizerService.MongoDb.Context;
+using Hhs.TextNormalizerService.Domain.NormalizeDomain.Repositories;
+using HsnSoft.Base.Domain.Models;
 using HsnSoft.Base.EventBus;
 using MongoDB.Driver;
 
@@ -12,7 +14,8 @@ namespace Hhs.TextNormalizerService.Application.Services;
 
 public sealed class NormalizerRetryAppService(
     IServiceProvider provider,
-    TextNormalizerServiceDbContext context,
+    IAnalysisContentNormalizedRequestRepository analysisRepository,
+    ICustomerContentNormalizedRequestRepository customerRepository,
     IEventBus eventBus,
     NormalizerRetrySettings retrySettings) : ApplicationServiceBase(provider)
 {
@@ -30,13 +33,17 @@ public sealed class NormalizerRetryAppService(
         DateTime now,
         CancellationToken cancellationToken)
     {
-        var requests = await context.CustomerContentNormalizedRequests
-            .Find(x =>
-                x.Status == StatusNames.WaitingRetry &&
-                x.NextRetryAtUtc != null &&
-                x.NextRetryAtUtc <= now)
-            .Limit(_retrySettings.BatchSize)
-            .ToListAsync(cancellationToken);
+        var options = new ListQueryOptions<CustomerContentNormalizedRequest>
+        {
+            Filter = x => x.Status == StatusNames.WaitingRetry &&
+                         x.NextRetryAtUtc != null &&
+                         x.NextRetryAtUtc <= now,
+            MaxResultCount = _retrySettings.BatchSize
+        };
+
+        var requests = await customerRepository
+            .GetListAsync(options, cancellationToken)
+            .ConfigureAwait(false);
 
         foreach (var request in requests)
         {
@@ -44,31 +51,43 @@ public sealed class NormalizerRetryAppService(
             {
                 if (request.CurrentStep == EventNames.OutlineProviderPollingStarted)
                 {
-                    await context.CustomerContentNormalizedRequests.UpdateOneAsync(
-                        x => x.Id == request.Id && x.Status == StatusNames.WaitingRetry,
-                        Builders<CustomerContentNormalizedRequest>.Update
-                            .Set(x => x.Status, StatusNames.OutlineProviderPolling)
-                            .Set(x => x.OutlineStatus, StatusNames.Polling)
-                            .Set(x => x.NextOutlinePollAtUtc, DateTime.UtcNow)
-                            .Set(x => x.NextRetryAtUtc, (DateTime?)null)
-                            .Set(x => x.LastError, null),
-                        cancellationToken: cancellationToken);
+                    var outlinePollingPredicate = (Expression<Func<CustomerContentNormalizedRequest, bool>>)(x =>
+                        x.Id == request.Id &&
+                        x.Status == StatusNames.WaitingRetry);
+
+                    var outlinePollingUpdate = Builders<CustomerContentNormalizedRequest>.Update
+                        .Set(x => x.Status, StatusNames.OutlineProviderPolling)
+                        .Set(x => x.OutlineStatus, StatusNames.Polling)
+                        .Set(x => x.NextOutlinePollAtUtc, DateTime.UtcNow)
+                        .Set(x => x.NextRetryAtUtc, (DateTime?)null)
+                        .Set(x => x.LastError, null);
+
+                    await customerRepository.UpdateByExpressionAsync(
+                        outlinePollingPredicate,
+                        u => outlinePollingUpdate,
+                        cancellationToken: cancellationToken)
+                        .ConfigureAwait(false);
 
                     continue;
                 }
 
-                var claimResult = await context.CustomerContentNormalizedRequests.UpdateOneAsync(
-                    x =>
-                        x.Id == request.Id &&
-                        x.Status == StatusNames.WaitingRetry &&
-                        x.NextRetryAtUtc != null &&
-                        x.NextRetryAtUtc <= now,
-                    Builders<CustomerContentNormalizedRequest>.Update
-                        .Set(x => x.NextRetryAtUtc, DateTime.UtcNow.AddSeconds(_retrySettings.ClaimFailRescheduleDelaySeconds))
-                        .Set(x => x.LastError, null),
-                    cancellationToken: cancellationToken);
+                var claimPredicate = (Expression<Func<CustomerContentNormalizedRequest, bool>>)(x =>
+                    x.Id == request.Id &&
+                    x.Status == StatusNames.WaitingRetry &&
+                    x.NextRetryAtUtc != null &&
+                    x.NextRetryAtUtc <= now);
 
-                if (claimResult.ModifiedCount == 0)
+                var claimUpdate = Builders<CustomerContentNormalizedRequest>.Update
+                    .Set(x => x.NextRetryAtUtc, DateTime.UtcNow.AddSeconds(_retrySettings.ClaimFailRescheduleDelaySeconds))
+                    .Set(x => x.LastError, null);
+
+                var claimResult = await customerRepository.UpdateByExpressionAsync(
+                    claimPredicate,
+                    u => claimUpdate,
+                    cancellationToken: cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (claimResult == 0)
                     continue;
 
                 if (request.CurrentStep == EventNames.CustomerContentScrapingStarted)
@@ -98,13 +117,17 @@ public sealed class NormalizerRetryAppService(
                 }
                 else
                 {
-                    await context.CustomerContentNormalizedRequests.UpdateOneAsync(
-                        x => x.Id == request.Id,
-                        Builders<CustomerContentNormalizedRequest>.Update
-                            .Set(x => x.Status, StatusNames.Failed)
-                            .Set(x => x.LastError, $"Unsupported customer retry step: {request.CurrentStep}")
-                            .Set(x => x.NextRetryAtUtc, (DateTime?)null),
-                        cancellationToken: cancellationToken);
+                    var failPredicate = (Expression<Func<CustomerContentNormalizedRequest, bool>>)(x => x.Id == request.Id);
+                    var failUpdate = Builders<CustomerContentNormalizedRequest>.Update
+                        .Set(x => x.Status, StatusNames.Failed)
+                        .Set(x => x.LastError, $"Unsupported customer retry step: {request.CurrentStep}")
+                        .Set(x => x.NextRetryAtUtc, (DateTime?)null);
+
+                    await customerRepository.UpdateByExpressionAsync(
+                        failPredicate,
+                        u => failUpdate,
+                        cancellationToken: cancellationToken)
+                        .ConfigureAwait(false);
 
                     await EventBus.PublishAsync(
                         parentMessage: ParentIntegrationEvent,
@@ -122,12 +145,16 @@ public sealed class NormalizerRetryAppService(
             }
             catch
             {
-                await context.CustomerContentNormalizedRequests.UpdateOneAsync(
-                    x => x.Id == request.Id,
-                    Builders<CustomerContentNormalizedRequest>.Update
-                        .Set(x => x.Status, StatusNames.WaitingRetry)
-                        .Set(x => x.NextRetryAtUtc, DateTime.UtcNow.AddSeconds(_retrySettings.ClaimFailRescheduleDelaySeconds)),
-                    cancellationToken: cancellationToken);
+                var exceptionPredicate = (Expression<Func<CustomerContentNormalizedRequest, bool>>)(x => x.Id == request.Id);
+                var exceptionUpdate = Builders<CustomerContentNormalizedRequest>.Update
+                    .Set(x => x.Status, StatusNames.WaitingRetry)
+                    .Set(x => x.NextRetryAtUtc, DateTime.UtcNow.AddSeconds(_retrySettings.ClaimFailRescheduleDelaySeconds));
+
+                await customerRepository.UpdateByExpressionAsync(
+                    exceptionPredicate,
+                    u => exceptionUpdate,
+                    cancellationToken: cancellationToken)
+                    .ConfigureAwait(false);
 
                 throw;
             }
@@ -138,17 +165,18 @@ public sealed class NormalizerRetryAppService(
         DateTime now,
         CancellationToken cancellationToken)
     {
-        var filter = Builders<AnalysisContentNormalizedRequest>.Filter.ElemMatch(
-            x => x.Items,
-            i =>
+        var options = new ListQueryOptions<AnalysisContentNormalizedRequest>
+        {
+            Filter = x => x.Items.Any(i =>
                 i.Status == StatusNames.WaitingRetry &&
                 i.NextRetryAtUtc != null &&
-                i.NextRetryAtUtc <= now);
+                i.NextRetryAtUtc <= now),
+            MaxResultCount = _retrySettings.BatchSize
+        };
 
-        var requests = await context.AnalysisContentNormalizedRequests
-            .Find(filter)
-            .Limit(_retrySettings.BatchSize)
-            .ToListAsync(cancellationToken);
+        var requests = await analysisRepository
+            .GetListAsync(options, cancellationToken)
+            .ConfigureAwait(false);
 
         foreach (var request in requests)
         {
@@ -183,7 +211,7 @@ public sealed class NormalizerRetryAppService(
                             pollingClaim,
                             cancellationToken);
 
-                        if (result.ModifiedCount == 0)
+                        if (result == 0)
                             continue;
 
                         continue;
@@ -199,7 +227,7 @@ public sealed class NormalizerRetryAppService(
                         claimUpdate,
                         cancellationToken);
 
-                    if (claimResult.ModifiedCount == 0)
+                    if (claimResult == 0)
                         continue;
 
                     if (item.CurrentStep == EventNames.AnalysisItemScrapingStarted)
@@ -263,44 +291,40 @@ public sealed class NormalizerRetryAppService(
         }
     }
 
-    private Task<UpdateResult> UpdateDueRetryAnalysisItemAsync(
+    private Task<long> UpdateDueRetryAnalysisItemAsync(
         Guid analysisRequestId,
         Guid customerContentId,
         DateTime now,
         UpdateDefinition<AnalysisContentNormalizedRequest> update,
         CancellationToken cancellationToken)
     {
-        var filter = Builders<AnalysisContentNormalizedRequest>.Filter.And(
-            Builders<AnalysisContentNormalizedRequest>.Filter.Eq(x => x.Id, analysisRequestId),
-            Builders<AnalysisContentNormalizedRequest>.Filter.ElemMatch(
-                x => x.Items,
-                i =>
-                    i.CustomerContentId == customerContentId &&
-                    i.Status == StatusNames.WaitingRetry &&
-                    i.NextRetryAtUtc != null &&
-                    i.NextRetryAtUtc <= now));
+        var predicate = (Expression<Func<AnalysisContentNormalizedRequest, bool>>)(x =>
+            x.Id == analysisRequestId &&
+            x.Items.Any(i =>
+                i.CustomerContentId == customerContentId &&
+                i.Status == StatusNames.WaitingRetry &&
+                i.NextRetryAtUtc != null &&
+                i.NextRetryAtUtc <= now));
 
-        return context.AnalysisContentNormalizedRequests.UpdateOneAsync(
-            filter,
-            update,
+        return analysisRepository.UpdateByExpressionAsync(
+            predicate,
+            u => update,
             cancellationToken: cancellationToken);
     }
 
-    private Task<UpdateResult> UpdateAnalysisItemAsync(
+    private Task<long> UpdateAnalysisItemAsync(
         Guid analysisRequestId,
         Guid customerContentId,
         UpdateDefinition<AnalysisContentNormalizedRequest> update,
         CancellationToken cancellationToken)
     {
-        var filter = Builders<AnalysisContentNormalizedRequest>.Filter.And(
-            Builders<AnalysisContentNormalizedRequest>.Filter.Eq(x => x.Id, analysisRequestId),
-            Builders<AnalysisContentNormalizedRequest>.Filter.ElemMatch(
-                x => x.Items,
-                i => i.CustomerContentId == customerContentId));
+        var predicate = (Expression<Func<AnalysisContentNormalizedRequest, bool>>)(x =>
+            x.Id == analysisRequestId &&
+            x.Items.Any(i => i.CustomerContentId == customerContentId));
 
-        return context.AnalysisContentNormalizedRequests.UpdateOneAsync(
-            filter,
-            update,
+        return analysisRepository.UpdateByExpressionAsync(
+            predicate,
+            u => update,
             cancellationToken: cancellationToken);
     }
 }

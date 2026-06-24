@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using Hhs.Shared.Contracts.Events;
 using Hhs.Shared.Helper;
 using Hhs.Shared.Helper.Configuration;
@@ -7,7 +8,8 @@ using Hhs.TextNormalizerService.Application.Providers.Outline;
 using Hhs.TextNormalizerService.Domain.Configuration.Providers.Outline;
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Entities;
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Models;
-using Hhs.TextNormalizerService.MongoDb.Context;
+using Hhs.TextNormalizerService.Domain.NormalizeDomain.Repositories;
+using HsnSoft.Base.Domain.Models;
 using HsnSoft.Base.EventBus;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
@@ -16,7 +18,8 @@ namespace Hhs.TextNormalizerService.Application.Services;
 
 public sealed class OutlineProviderPollingAppService(
     IServiceProvider provider,
-    TextNormalizerServiceDbContext context,
+    IAnalysisContentNormalizedRequestRepository analysisRepository,
+    ICustomerContentNormalizedRequestRepository customerRepository,
     IOutlineProviderResolver outlineProviderResolver,
     IEventBus eventBus,
     ILogger<OutlineProviderPollingAppService> logger,
@@ -34,14 +37,18 @@ public sealed class OutlineProviderPollingAppService(
         DateTime now,
         CancellationToken cancellationToken)
     {
-        var requests = await context.CustomerContentNormalizedRequests
-            .Find(x =>
-                x.Status == StatusNames.OutlineProviderPolling &&
-                x.NextOutlinePollAtUtc != null &&
-                x.NextOutlinePollAtUtc <= now &&
-                x.OutlineProviderTrackId != null)
-            .Limit(50)
-            .ToListAsync(cancellationToken);
+        var options = new ListQueryOptions<CustomerContentNormalizedRequest>
+        {
+            Filter = x => x.Status == StatusNames.OutlineProviderPolling &&
+                         x.NextOutlinePollAtUtc != null &&
+                         x.NextOutlinePollAtUtc <= now &&
+                         x.OutlineProviderTrackId != null,
+            MaxResultCount = 50
+        };
+
+        var requests = await customerRepository
+            .GetListAsync(options, cancellationToken)
+            .ConfigureAwait(false);
 
         foreach (var request in requests)
         {
@@ -52,7 +59,7 @@ public sealed class OutlineProviderPollingAppService(
                     now,
                     cancellationToken);
 
-                if (claimResult.ModifiedCount == 0)
+                if (claimResult == 0)
                     continue;
 
                 if (request.OutlinePollingCount >= request.MaxOutlinePollingCount)
@@ -185,17 +192,18 @@ public sealed class OutlineProviderPollingAppService(
         DateTime now,
         CancellationToken cancellationToken)
     {
-        var filter = Builders<AnalysisContentNormalizedRequest>.Filter.ElemMatch(
-            x => x.Items,
-            i =>
+        var options = new ListQueryOptions<AnalysisContentNormalizedRequest>
+        {
+            Filter = x => x.Items.Any(i =>
                 i.OutlineStatus == StatusNames.Polling &&
                 i.NextOutlinePollAtUtc <= now &&
-                i.OutlineProviderTrackId != null);
+                i.OutlineProviderTrackId != null),
+            MaxResultCount = 50
+        };
 
-        var requests = await context.AnalysisContentNormalizedRequests
-            .Find(filter)
-            .Limit(50)
-            .ToListAsync(cancellationToken);
+        var requests = await analysisRepository
+            .GetListAsync(options, cancellationToken)
+            .ConfigureAwait(false);
 
         foreach (var request in requests)
         {
@@ -221,7 +229,7 @@ public sealed class OutlineProviderPollingAppService(
                         claimUpdate,
                         cancellationToken);
 
-                    if (claimResult.ModifiedCount == 0)
+                    if (claimResult == 0)
                         continue;
 
                     if (item.OutlinePollingCount >= item.MaxOutlinePollingCount)
@@ -344,27 +352,25 @@ public sealed class OutlineProviderPollingAppService(
         }
     }
 
-    private Task<UpdateResult> UpdateDuePollingAnalysisItemAsync(
+    private Task<long> UpdateDuePollingAnalysisItemAsync(
         Guid analysisRequestId,
         Guid customerContentId,
         DateTime now,
         UpdateDefinition<AnalysisContentNormalizedRequest> update,
         CancellationToken cancellationToken)
     {
-        var filter = Builders<AnalysisContentNormalizedRequest>.Filter.And(
-            Builders<AnalysisContentNormalizedRequest>.Filter.Eq(x => x.Id, analysisRequestId),
-            Builders<AnalysisContentNormalizedRequest>.Filter.ElemMatch(
-                x => x.Items,
-                i =>
-                    i.CustomerContentId == customerContentId &&
-                    i.OutlineStatus == StatusNames.Polling &&
-                    i.NextOutlinePollAtUtc != null &&
-                    i.NextOutlinePollAtUtc <= now &&
-                    i.OutlineProviderTrackId != null));
+        var predicate = (Expression<Func<AnalysisContentNormalizedRequest, bool>>)(x =>
+            x.Id == analysisRequestId &&
+            x.Items.Any(i =>
+                i.CustomerContentId == customerContentId &&
+                i.OutlineStatus == StatusNames.Polling &&
+                i.NextOutlinePollAtUtc != null &&
+                i.NextOutlinePollAtUtc <= now &&
+                i.OutlineProviderTrackId != null));
 
-        return context.AnalysisContentNormalizedRequests.UpdateOneAsync(
-            filter,
-            update,
+        return analysisRepository.UpdateByExpressionAsync(
+            predicate,
+            u => update,
             cancellationToken: cancellationToken);
     }
 
@@ -411,42 +417,55 @@ public sealed class OutlineProviderPollingAppService(
         UpdateDefinition<AnalysisContentNormalizedRequest> update,
         CancellationToken cancellationToken)
     {
-        var filter = Builders<AnalysisContentNormalizedRequest>.Filter.And(
-            Builders<AnalysisContentNormalizedRequest>.Filter.Eq(x => x.Id, analysisRequestId),
-            Builders<AnalysisContentNormalizedRequest>.Filter.ElemMatch(
-                x => x.Items,
-                i => i.CustomerContentId == customerContentId));
+        var predicate = (Expression<Func<AnalysisContentNormalizedRequest, bool>>)(x =>
+            x.Id == analysisRequestId &&
+            x.Items.Any(i => i.CustomerContentId == customerContentId));
 
-        return context.AnalysisContentNormalizedRequests.UpdateOneAsync(
-            filter,
-            update,
+        return analysisRepository.UpdateByExpressionAsync(
+            predicate,
+            u => update,
             cancellationToken: cancellationToken);
     }
 
-    private Task ReplaceCustomerAsync(
+    private async Task ReplaceCustomerAsync(
         CustomerContentNormalizedRequest request,
         CancellationToken cancellationToken)
     {
-        return context.CustomerContentNormalizedRequests.ReplaceOneAsync(
-            x => x.Id == request.Id,
-            request,
-            cancellationToken: cancellationToken);
+        var predicate = (Expression<Func<CustomerContentNormalizedRequest, bool>>)(x => x.Id == request.Id);
+        var update = Builders<CustomerContentNormalizedRequest>.Update
+            .Set(x => x.Status, request.Status)
+            .Set(x => x.OutlineStatus, request.OutlineStatus)
+            .Set(x => x.OutlinePollingCount, request.OutlinePollingCount)
+            .Set(x => x.NextOutlinePollAtUtc, request.NextOutlinePollAtUtc)
+            .Set(x => x.OutlineProviderTrackId, request.OutlineProviderTrackId)
+            .Set(x => x.LastError, request.LastError)
+            .Set(x => x.CurrentStep, request.CurrentStep);
+
+        await customerRepository.UpdateByExpressionAsync(
+            predicate,
+            u => update,
+            cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
     }
 
-    private Task<UpdateResult> ClaimDueCustomerPollingAsync(
+    private Task<long> ClaimDueCustomerPollingAsync(
         Guid customerRequestId,
         DateTime now,
         CancellationToken cancellationToken)
     {
-        return context.CustomerContentNormalizedRequests.UpdateOneAsync(
-            x =>
-                x.Id == customerRequestId &&
-                x.Status == StatusNames.OutlineProviderPolling &&
-                x.NextOutlinePollAtUtc != null &&
-                x.NextOutlinePollAtUtc <= now &&
-                x.OutlineProviderTrackId != null,
-            Builders<CustomerContentNormalizedRequest>.Update
-                .Set(x => x.NextOutlinePollAtUtc, DateTime.UtcNow.AddSeconds(pollingSettings.ErrorRescheduleDelaySeconds)),
+        var predicate = (Expression<Func<CustomerContentNormalizedRequest, bool>>)(x =>
+            x.Id == customerRequestId &&
+            x.Status == StatusNames.OutlineProviderPolling &&
+            x.NextOutlinePollAtUtc != null &&
+            x.NextOutlinePollAtUtc <= now &&
+            x.OutlineProviderTrackId != null);
+
+        var update = Builders<CustomerContentNormalizedRequest>.Update
+            .Set(x => x.NextOutlinePollAtUtc, DateTime.UtcNow.AddSeconds(pollingSettings.ErrorRescheduleDelaySeconds));
+
+        return customerRepository.UpdateByExpressionAsync(
+            predicate,
+            u => update,
             cancellationToken: cancellationToken);
     }
 }

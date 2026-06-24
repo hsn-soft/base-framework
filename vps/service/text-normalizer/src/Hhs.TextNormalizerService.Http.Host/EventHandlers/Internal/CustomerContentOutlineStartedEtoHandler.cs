@@ -8,7 +8,7 @@ namespace Hhs.TextNormalizerService.EventHandlers.Internal;
 
 public class CustomerContentOutlineStartedEtoHandler(
     IAppConsoleLogger logger,
-    NormalizerInboxStore inboxStore,
+    NormalizerInboxStoreService inboxStore,
     NormalizerOperationAppService normalizerOperationAppService
 ) : NormalizerEventHandlerBase<CustomerContentOutlineStartedEto>(inboxStore)
 {

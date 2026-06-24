@@ -3,7 +3,7 @@ using HsnSoft.Base.Domain.Repositories;
 
 namespace Hhs.TextNormalizerService.Domain.NormalizeDomain.Repositories;
 
-public interface ICustomerContentNormalizedRequestRepository : IGenericRepository<CustomerContentNormalizedRequest, Guid>
+public interface ICustomerContentNormalizedRequestRepository : IMongoGenericRepository<CustomerContentNormalizedRequest, Guid>
 {
     Task<CustomerContentNormalizedRequest?> GetByScopeKeyAndContentIdAsync(string scopeKey, Guid customerContentId, CancellationToken cancellationToken = default);
     Task<List<CustomerContentNormalizedRequest>> GetByScopeKeyAsync(string scopeKey, CancellationToken cancellationToken = default);

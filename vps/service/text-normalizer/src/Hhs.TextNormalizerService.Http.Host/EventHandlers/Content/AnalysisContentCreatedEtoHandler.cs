@@ -8,7 +8,7 @@ namespace Hhs.TextNormalizerService.EventHandlers.Content;
 
 public class AnalysisContentCreatedEtoHandler(
     IAppConsoleLogger logger,
-    NormalizerInboxStore inboxStore,
+    NormalizerInboxStoreService inboxStore,
     NormalizerOperationAppService normalizerOperationAppService
 ) : NormalizerEventHandlerBase<AnalysisContentCreatedEto>(inboxStore)
 {

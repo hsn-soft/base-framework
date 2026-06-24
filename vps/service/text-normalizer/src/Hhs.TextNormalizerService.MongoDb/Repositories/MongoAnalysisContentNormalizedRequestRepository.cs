@@ -3,7 +3,6 @@ using Hhs.TextNormalizerService.Domain.NormalizeDomain.Repositories;
 using Hhs.TextNormalizerService.MongoDb.Context;
 using HsnSoft.Base.Domain.Models;
 using HsnSoft.Base.Domain.Repositories;
-using MongoDB.Driver;
 
 namespace Hhs.TextNormalizerService.MongoDb.Repositories;
 
@@ -28,19 +27,5 @@ public sealed class MongoAnalysisContentNormalizedRequestRepository(
     {
         var options = new ListQueryOptions<AnalysisContentNormalizedRequest> { Filter = x => x.Status == status };
         return await GetListAsync(options, cancellationToken);
-    }
-
-    public async Task UpdateItemWithFilterAsync(Guid analysisRequestId, Guid customerContentId, object updateDefinition, CancellationToken cancellationToken = default)
-    {
-        var filter = Builders<AnalysisContentNormalizedRequest>.Filter.And(
-            Builders<AnalysisContentNormalizedRequest>.Filter.Eq(x => x.Id, analysisRequestId),
-            Builders<AnalysisContentNormalizedRequest>.Filter.ElemMatch(
-                x => x.Items,
-                i => i.CustomerContentId == customerContentId));
-
-        await GetCollection().UpdateOneAsync(
-            filter,
-            (UpdateDefinition<AnalysisContentNormalizedRequest>)updateDefinition,
-            cancellationToken: cancellationToken);
     }
 }

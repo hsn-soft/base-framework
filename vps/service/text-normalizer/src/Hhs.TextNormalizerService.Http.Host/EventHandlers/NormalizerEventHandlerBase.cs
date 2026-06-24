@@ -5,11 +5,11 @@ using HsnSoft.Base.EventBus;
 
 namespace Hhs.TextNormalizerService.EventHandlers;
 
-public abstract class NormalizerEventHandlerBase<TEvent>(NormalizerInboxStore inboxStore)
+public abstract class NormalizerEventHandlerBase<TEvent>(NormalizerInboxStoreService inboxStore)
     : IIntegrationEventHandler<TEvent>
     where TEvent : IIntegrationEventMessage
 {
-    protected readonly NormalizerInboxStore InboxStore = inboxStore;
+    protected readonly NormalizerInboxStoreService InboxStore = inboxStore;
 
     public async Task HandleAsync(MessageEnvelope<TEvent> @event)
     {
