@@ -1,8 +1,10 @@
 using Hhs.ContentService;
 using Hhs.ContentService.Application;
+using Hhs.ContentService.Application.Services;
 using Hhs.ContentService.Domain.Localization;
 using Hhs.ContentService.EntityFrameworkCore;
 using Hhs.ContentService.EntityFrameworkCore.Setup;
+using Hhs.ContentService.Workers;
 using Hhs.Shared.Helper.Consts;
 using Hhs.Shared.Hosting.Extensions;
 using Hhs.Shared.Hosting.Helpers;
@@ -63,6 +65,12 @@ builder.Services.AddMicroserviceHosting(builder.Configuration, typeof(Program))
 
 // override DefaultBasicDataSeeder
 builder.Services.AddTransient<IBasicDataSeeder, EfCoreSeederService>();
+
+// ============================================================================
+// CUSTOM WORKERS (Retry Logic)
+// ============================================================================
+builder.Services.AddScoped<ContentOperationRetryWorkerService>();
+builder.Services.AddHostedService<ContentRetryWorker>();
 
 // Swagger
 if (!builder.Environment.IsHostProduction())

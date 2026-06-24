@@ -1,20 +1,21 @@
 using Hhs.Shared.Contracts.Events;
+using Hhs.TextNormalizerService.Application.Infrastructure;
 using Hhs.TextNormalizerService.Application.Services;
 using HsnSoft.Base.Domain.Entities.Events;
-using HsnSoft.Base.EventBus;
 using HsnSoft.Base.Logging.Abstracts;
 
 namespace Hhs.TextNormalizerService.EventHandlers.Internal;
 
 public class CustomerContentNormalizeRequestCreatedEtoHandler(
     IAppConsoleLogger logger,
+    ApplicationEventInboxMessageManager inboxStore,
     NormalizerOperationAppService normalizerOperationAppService
-) : IIntegrationEventHandler<CustomerContentNormalizeRequestCreatedEto>
+) : ApplicationEventHandlerBase<CustomerContentNormalizeRequestCreatedEto>(inboxStore)
 {
     private readonly IAppConsoleLogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     private readonly NormalizerOperationAppService _normalizerOperationAppService = normalizerOperationAppService ?? throw new ArgumentNullException(nameof(normalizerOperationAppService));
 
-    public async Task HandleAsync(MessageEnvelope<CustomerContentNormalizeRequestCreatedEto> @event)
+    protected override async Task ExecuteAsync(MessageEnvelope<CustomerContentNormalizeRequestCreatedEto> @event, CancellationToken cancellationToken)
     {
         _logger.LogDebug("EVENT HANDLING | [ {EventName} ] => CorrelationId[{CorrelationId}], MessageId[{MessageId}], RelatedMessageId[{RelatedMessageId}]",
             nameof(CustomerContentNormalizeRequestCreatedEto)[..^"Eto".Length],

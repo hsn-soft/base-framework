@@ -1,7 +1,9 @@
 using Hhs.ContentService.Application.Infrastructure;
 using Hhs.ContentService.Application.Services;
+using Hhs.ContentService.Domain.Configuration;
 using Hhs.ContentService.Domain.Settings;
 using Hhs.Shared.Contracts.Cache;
+using Hhs.Shared.Helper.Retry;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -19,6 +21,15 @@ public static class ApplicationServiceCollectionExtensions
         // Must be Scoped or Transient => Cannot consume any scoped service
         services.AddScoped<ApplicationEventInboxMessageManager>();
         services.AddScoped<ContentOperationAppService>();
+
+        // ============================================================================
+        // RETRY CONFIGURATION
+        // ============================================================================
+
+        var contentRetrySettings = configuration.GetSection(nameof(ContentRetrySettings))
+            .Get<ContentRetrySettings>() ?? new ContentRetrySettings();
+        services.AddSingleton(contentRetrySettings);
+        services.AddSingleton(_ => new RetryDelayCalculator(contentRetrySettings.DelaySeconds));
 
         return services;
     }
