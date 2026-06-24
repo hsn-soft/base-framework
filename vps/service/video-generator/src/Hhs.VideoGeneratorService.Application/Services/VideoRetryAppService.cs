@@ -1,17 +1,21 @@
+using System.Linq.Expressions;
 using Hhs.Shared.Contracts.Events;
 using Hhs.Shared.Helper;
 using Hhs.Shared.Helper.Configuration;
 using Hhs.Shared.Helper.Providers;
 using Hhs.VideoGeneratorService.Application.Providers;
 using Hhs.VideoGeneratorService.Domain.Configuration;
-using Hhs.VideoGeneratorService.MongoDb.Context;
+using Hhs.VideoGeneratorService.Domain.MediaDomain.Entities;
+using Hhs.VideoGeneratorService.Domain.MediaDomain.Repositories;
+using HsnSoft.Base.Domain.Models;
 using MongoDB.Driver;
 
 namespace Hhs.VideoGeneratorService.Application.Services;
 
 public sealed class VideoRetryAppService(
     IServiceProvider provider,
-    VideoGeneratorServiceDbContext context,
+    IVideoRequestRepository videoRequestRepository,
+    IAudioRequestRepository audioRequestRepository,
     IVideoProviderResolver videoProviderResolver,
     VideoRetrySettings retrySettings) : ApplicationServiceBase(provider)
 {
@@ -27,13 +31,16 @@ public sealed class VideoRetryAppService(
         DateTime now,
         CancellationToken cancellationToken)
     {
-        var requests = await context.AudioRequests
-            .Find(x =>
+        var options = new ListQueryOptions<AudioRequest>
+        {
+            Filter = x =>
                 x.Status == StatusNames.WaitingRetry &&
                 x.NextRetryAtUtc != null &&
-                x.NextRetryAtUtc <= now)
-            .Limit(retrySettings.BatchSize)
-            .ToListAsync(cancellationToken);
+                x.NextRetryAtUtc <= now,
+            MaxResultCount = retrySettings.BatchSize
+        };
+
+        var requests = await audioRequestRepository.GetListAsync(options, cancellationToken);
 
         foreach (var request in requests)
         {
@@ -67,9 +74,15 @@ public sealed class VideoRetryAppService(
                     request.LastError = $"Unsupported audio retry step: {request.CurrentStep}";
                     request.NextRetryAtUtc = null;
 
-                    await context.AudioRequests.ReplaceOneAsync(
-                        x => x.Id == request.Id,
-                        request,
+                    var failPredicate = (Expression<Func<AudioRequest, bool>>)(x => x.Id == request.Id);
+                    var failUpdate = Builders<AudioRequest>.Update
+                        .Set(x => x.Status, request.Status)
+                        .Set(x => x.LastError, request.LastError)
+                        .Set(x => x.NextRetryAtUtc, request.NextRetryAtUtc);
+
+                    await audioRequestRepository.UpdateByExpressionAsync(
+                        failPredicate,
+                        u => failUpdate,
                         cancellationToken: cancellationToken);
 
                     await EventBus.PublishAsync(
@@ -95,18 +108,28 @@ public sealed class VideoRetryAppService(
 
                 request.NextRetryAtUtc = null;
 
-                await context.AudioRequests.ReplaceOneAsync(
-                    x => x.Id == request.Id,
-                    request,
+                var updatePredicate = (Expression<Func<AudioRequest, bool>>)(x => x.Id == request.Id);
+                var updateUpdate = Builders<AudioRequest>.Update
+                    .Set(x => x.Status, request.Status)
+                    .Set(x => x.NextRetryAtUtc, request.NextRetryAtUtc)
+                    .Set(x => x.NextProviderPollAtUtc, request.NextProviderPollAtUtc);
+
+                await audioRequestRepository.UpdateByExpressionAsync(
+                    updatePredicate,
+                    u => updateUpdate,
                     cancellationToken: cancellationToken);
             }
             catch
             {
                 request.NextRetryAtUtc = DateTime.UtcNow.AddSeconds(retrySettings.ClaimFailRescheduleDelaySeconds);
 
-                await context.AudioRequests.ReplaceOneAsync(
-                    x => x.Id == request.Id,
-                    request,
+                var exceptionPredicate = (Expression<Func<AudioRequest, bool>>)(x => x.Id == request.Id);
+                var exceptionUpdate = Builders<AudioRequest>.Update
+                    .Set(x => x.NextRetryAtUtc, request.NextRetryAtUtc);
+
+                await audioRequestRepository.UpdateByExpressionAsync(
+                    exceptionPredicate,
+                    u => exceptionUpdate,
                     cancellationToken: cancellationToken);
 
                 throw;
@@ -118,13 +141,16 @@ public sealed class VideoRetryAppService(
         DateTime now,
         CancellationToken cancellationToken)
     {
-        var requests = await context.VideoRequests
-            .Find(x =>
+        var options = new ListQueryOptions<VideoRequest>
+        {
+            Filter = x =>
                 x.Status == StatusNames.WaitingRetry &&
                 x.NextRetryAtUtc != null &&
-                x.NextRetryAtUtc <= now)
-            .Limit(retrySettings.BatchSize)
-            .ToListAsync(cancellationToken);
+                x.NextRetryAtUtc <= now,
+            MaxResultCount = retrySettings.BatchSize
+        };
+
+        var requests = await videoRequestRepository.GetListAsync(options, cancellationToken);
 
         foreach (var request in requests)
         {
@@ -137,9 +163,11 @@ public sealed class VideoRetryAppService(
                     string? videoProviderKey = SubscriptionScopeRegistry.GetVideoProviderKey(request.ScopeKey);
                     var videoProvider = videoProviderResolver.Resolve(videoProviderKey);
 
-                    var audioRequests = await context.AudioRequests
-                        .Find(x => x.VideoRequestId == request.Id)
-                        .ToListAsync(cancellationToken);
+                    var audioOptions = new ListQueryOptions<AudioRequest>
+                    {
+                        Filter = x => x.VideoRequestId == request.Id
+                    };
+                    var audioRequests = await audioRequestRepository.GetListAsync(audioOptions, cancellationToken);
 
                     var orderedAudios = audioRequests
                         .OrderBy(x => x.SortOrder)
@@ -173,9 +201,15 @@ public sealed class VideoRetryAppService(
                     request.LastError = $"Unsupported video retry step: {request.CurrentStep}";
                     request.NextRetryAtUtc = null;
 
-                    await context.VideoRequests.ReplaceOneAsync(
-                        x => x.Id == request.Id,
-                        request,
+                    var failPredicate = (Expression<Func<VideoRequest, bool>>)(x => x.Id == request.Id);
+                    var failUpdate = Builders<VideoRequest>.Update
+                        .Set(x => x.Status, request.Status)
+                        .Set(x => x.LastError, request.LastError)
+                        .Set(x => x.NextRetryAtUtc, request.NextRetryAtUtc);
+
+                    await videoRequestRepository.UpdateByExpressionAsync(
+                        failPredicate,
+                        u => failUpdate,
                         cancellationToken: cancellationToken);
 
                     await EventBus.PublishAsync(
@@ -200,18 +234,28 @@ public sealed class VideoRetryAppService(
 
                 request.NextRetryAtUtc = null;
 
-                await context.VideoRequests.ReplaceOneAsync(
-                    x => x.Id == request.Id,
-                    request,
+                var updatePredicate = (Expression<Func<VideoRequest, bool>>)(x => x.Id == request.Id);
+                var updateUpdate = Builders<VideoRequest>.Update
+                    .Set(x => x.Status, request.Status)
+                    .Set(x => x.NextRetryAtUtc, request.NextRetryAtUtc)
+                    .Set(x => x.NextProviderPollAtUtc, request.NextProviderPollAtUtc);
+
+                await videoRequestRepository.UpdateByExpressionAsync(
+                    updatePredicate,
+                    u => updateUpdate,
                     cancellationToken: cancellationToken);
             }
             catch
             {
                 request.NextRetryAtUtc = DateTime.UtcNow.AddSeconds(retrySettings.ClaimFailRescheduleDelaySeconds);
 
-                await context.VideoRequests.ReplaceOneAsync(
-                    x => x.Id == request.Id,
-                    request,
+                var exceptionPredicate = (Expression<Func<VideoRequest, bool>>)(x => x.Id == request.Id);
+                var exceptionUpdate = Builders<VideoRequest>.Update
+                    .Set(x => x.NextRetryAtUtc, request.NextRetryAtUtc);
+
+                await videoRequestRepository.UpdateByExpressionAsync(
+                    exceptionPredicate,
+                    u => exceptionUpdate,
                     cancellationToken: cancellationToken);
 
                 throw;

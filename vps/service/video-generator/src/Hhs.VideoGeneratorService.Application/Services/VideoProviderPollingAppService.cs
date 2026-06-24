@@ -1,10 +1,12 @@
+using System.Linq.Expressions;
 using Hhs.Shared.Contracts.Events;
 using Hhs.Shared.Helper;
 using Hhs.Shared.Helper.Configuration;
 using Hhs.VideoGeneratorService.Application.Providers;
 using Hhs.VideoGeneratorService.Domain.Configuration;
 using Hhs.VideoGeneratorService.Domain.MediaDomain.Entities;
-using Hhs.VideoGeneratorService.MongoDb.Context;
+using Hhs.VideoGeneratorService.Domain.MediaDomain.Repositories;
+using HsnSoft.Base.Domain.Models;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 
@@ -12,7 +14,7 @@ namespace Hhs.VideoGeneratorService.Application.Services;
 
 public sealed class VideoProviderPollingAppService(
     IServiceProvider provider,
-    VideoGeneratorServiceDbContext context,
+    IVideoRequestRepository videoRequestRepository,
     IVideoProviderResolver videoProviderResolver,
     ILogger<VideoProviderPollingAppService> logger,
     VideoPollingSettings pollingSettings) : ApplicationServiceBase(provider)
@@ -21,14 +23,17 @@ public sealed class VideoProviderPollingAppService(
     {
         var now = DateTime.UtcNow;
 
-        var requests = await context.VideoRequests
-            .Find(x =>
+        var options = new ListQueryOptions<VideoRequest>
+        {
+            Filter = x =>
                 x.Status == StatusNames.VideoProviderPolling &&
                 x.NextProviderPollAtUtc != null &&
                 x.NextProviderPollAtUtc <= now &&
-                x.VideoProviderTrackingId != null)
-            .Limit(50)
-            .ToListAsync(cancellationToken);
+                x.VideoProviderTrackingId != null,
+            MaxResultCount = 50
+        };
+
+        var requests = await videoRequestRepository.GetListAsync(options, cancellationToken);
 
         foreach (var request in requests)
         {
@@ -39,7 +44,7 @@ public sealed class VideoProviderPollingAppService(
                     now,
                     cancellationToken);
 
-                if (claimResult.ModifiedCount == 0)
+                if (claimResult == 0)
                     continue;
 
                 if (request.ProviderPollingCount >= 60)
@@ -160,28 +165,49 @@ public sealed class VideoProviderPollingAppService(
         }
     }
 
-    private Task<UpdateResult> ClaimDueVideoPollingAsync(
+    private Task<long> ClaimDueVideoPollingAsync(
         Guid videoRequestId,
         DateTime now,
         CancellationToken cancellationToken)
     {
-        return context.VideoRequests.UpdateOneAsync(
-            x =>
-                x.Id == videoRequestId &&
-                x.Status == StatusNames.VideoProviderPolling &&
-                x.NextProviderPollAtUtc != null &&
-                x.NextProviderPollAtUtc <= now &&
-                x.VideoProviderTrackingId != null,
-            Builders<VideoRequest>.Update
-                .Set(x => x.NextProviderPollAtUtc, DateTime.UtcNow.AddSeconds(pollingSettings.ErrorRescheduleDelaySeconds)),
+        var predicate = (Expression<Func<VideoRequest, bool>>)(x =>
+            x.Id == videoRequestId &&
+            x.Status == StatusNames.VideoProviderPolling &&
+            x.NextProviderPollAtUtc != null &&
+            x.NextProviderPollAtUtc <= now &&
+            x.VideoProviderTrackingId != null);
+
+        var update = Builders<VideoRequest>.Update
+            .Set(x => x.NextProviderPollAtUtc, DateTime.UtcNow.AddSeconds(pollingSettings.ErrorRescheduleDelaySeconds));
+
+        return videoRequestRepository.UpdateByExpressionAsync(
+            predicate,
+            u => update,
             cancellationToken: cancellationToken);
     }
 
     private Task ReplaceVideoAsync(VideoRequest request, CancellationToken cancellationToken)
     {
-        return context.VideoRequests.ReplaceOneAsync(
-            x => x.Id == request.Id,
-            request,
+        var predicate = (Expression<Func<VideoRequest, bool>>)(x => x.Id == request.Id);
+        var update = Builders<VideoRequest>.Update
+            .Set(x => x.Status, request.Status)
+            .Set(x => x.CurrentStep, request.CurrentStep)
+            .Set(x => x.MediaInputJson, request.MediaInputJson)
+            .Set(x => x.AudioProviderKey, request.AudioProviderKey)
+            .Set(x => x.VideoProviderKey, request.VideoProviderKey)
+            .Set(x => x.VideoProviderTrackingId, request.VideoProviderTrackingId)
+            .Set(x => x.VideoProviderUrl, request.VideoProviderUrl)
+            .Set(x => x.NextProviderPollAtUtc, request.NextProviderPollAtUtc)
+            .Set(x => x.ProviderPollingCount, request.ProviderPollingCount)
+            .Set(x => x.VideoLocalPath, request.VideoLocalPath)
+            .Set(x => x.VideoCdnProviderKey, request.VideoCdnProviderKey)
+            .Set(x => x.VideoCdnUrl, request.VideoCdnUrl)
+            .Set(x => x.VideoStorageUrl, request.VideoStorageUrl)
+            .Set(x => x.LastError, request.LastError);
+
+        return videoRequestRepository.UpdateByExpressionAsync(
+            predicate,
+            u => update,
             cancellationToken: cancellationToken);
     }
 }

@@ -1,10 +1,12 @@
+using System.Linq.Expressions;
 using Hhs.Shared.Contracts.Events;
 using Hhs.Shared.Helper;
 using Hhs.Shared.Helper.Configuration;
 using Hhs.VideoGeneratorService.Application.Providers;
 using Hhs.VideoGeneratorService.Domain.Configuration;
 using Hhs.VideoGeneratorService.Domain.MediaDomain.Entities;
-using Hhs.VideoGeneratorService.MongoDb.Context;
+using Hhs.VideoGeneratorService.Domain.MediaDomain.Repositories;
+using HsnSoft.Base.Domain.Models;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 
@@ -12,7 +14,7 @@ namespace Hhs.VideoGeneratorService.Application.Services;
 
 public sealed class AudioProviderPollingAppService(
     IServiceProvider provider,
-    VideoGeneratorServiceDbContext context,
+    IAudioRequestRepository audioRequestRepository,
     IAudioProviderResolver audioProviderResolver,
     ILogger<AudioProviderPollingAppService> logger,
     AudioPollingSettings pollingSettings) : ApplicationServiceBase(provider)
@@ -21,14 +23,17 @@ public sealed class AudioProviderPollingAppService(
     {
         var now = DateTime.UtcNow;
 
-        var requests = await context.AudioRequests
-            .Find(x =>
+        var options = new ListQueryOptions<AudioRequest>
+        {
+            Filter = x =>
                 x.Status == StatusNames.AudioProviderPolling &&
                 x.NextProviderPollAtUtc != null &&
                 x.NextProviderPollAtUtc <= now &&
-                x.AudioProviderTrackingId != null)
-            .Limit(50)
-            .ToListAsync(cancellationToken);
+                x.AudioProviderTrackingId != null,
+            MaxResultCount = 50
+        };
+
+        var requests = await audioRequestRepository.GetListAsync(options, cancellationToken);
 
         foreach (var request in requests)
         {
@@ -39,7 +44,7 @@ public sealed class AudioProviderPollingAppService(
                     now,
                     cancellationToken);
 
-                if (claimResult.ModifiedCount == 0)
+                if (claimResult == 0)
                     continue;
 
                 if (request.ProviderPollingCount >= 60)
@@ -160,28 +165,49 @@ public sealed class AudioProviderPollingAppService(
         }
     }
 
-    private Task<UpdateResult> ClaimDueAudioPollingAsync(
+    private Task<long> ClaimDueAudioPollingAsync(
         Guid audioRequestId,
         DateTime now,
         CancellationToken cancellationToken)
     {
-        return context.AudioRequests.UpdateOneAsync(
-            x =>
-                x.Id == audioRequestId &&
-                x.Status == StatusNames.AudioProviderPolling &&
-                x.NextProviderPollAtUtc != null &&
-                x.NextProviderPollAtUtc <= now &&
-                x.AudioProviderTrackingId != null,
-            Builders<AudioRequest>.Update
-                .Set(x => x.NextProviderPollAtUtc, DateTime.UtcNow.AddSeconds(pollingSettings.ErrorRescheduleDelaySeconds)),
+        var predicate = (Expression<Func<AudioRequest, bool>>)(x =>
+            x.Id == audioRequestId &&
+            x.Status == StatusNames.AudioProviderPolling &&
+            x.NextProviderPollAtUtc != null &&
+            x.NextProviderPollAtUtc <= now &&
+            x.AudioProviderTrackingId != null);
+
+        var update = Builders<AudioRequest>.Update
+            .Set(x => x.NextProviderPollAtUtc, DateTime.UtcNow.AddSeconds(pollingSettings.ErrorRescheduleDelaySeconds));
+
+        return audioRequestRepository.UpdateByExpressionAsync(
+            predicate,
+            u => update,
             cancellationToken: cancellationToken);
     }
 
     private Task ReplaceAudioAsync(AudioRequest request, CancellationToken cancellationToken)
     {
-        return context.AudioRequests.ReplaceOneAsync(
-            x => x.Id == request.Id,
-            request,
+        var predicate = (Expression<Func<AudioRequest, bool>>)(x => x.Id == request.Id);
+        var update = Builders<AudioRequest>.Update
+            .Set(x => x.Status, request.Status)
+            .Set(x => x.CurrentStep, request.CurrentStep)
+            .Set(x => x.InputText, request.InputText)
+            .Set(x => x.AudioProviderKey, request.AudioProviderKey)
+            .Set(x => x.SortOrder, request.SortOrder)
+            .Set(x => x.AudioProviderTrackingId, request.AudioProviderTrackingId)
+            .Set(x => x.AudioProviderUrl, request.AudioProviderUrl)
+            .Set(x => x.NextProviderPollAtUtc, request.NextProviderPollAtUtc)
+            .Set(x => x.ProviderPollingCount, request.ProviderPollingCount)
+            .Set(x => x.AudioLocalPath, request.AudioLocalPath)
+            .Set(x => x.AudioCdnProviderKey, request.AudioCdnProviderKey)
+            .Set(x => x.AudioCdnUrl, request.AudioCdnUrl)
+            .Set(x => x.AudioStorageUrl, request.AudioStorageUrl)
+            .Set(x => x.LastError, request.LastError);
+
+        return audioRequestRepository.UpdateByExpressionAsync(
+            predicate,
+            u => update,
             cancellationToken: cancellationToken);
     }
 }
