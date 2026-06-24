@@ -1,6 +1,8 @@
 using Hhs.IdentityService.Application.Services;
 using Hhs.IdentityService.Domain.Configuration;
 using HsnSoft.Base.Data;
+using HsnSoft.Base.MultiTenancy;
+using HsnSoft.Base.Subscribe;
 
 namespace Hhs.IdentityService.Workers;
 

@@ -1,6 +1,8 @@
 using Hhs.FeedRService.Application.Services;
 using Hhs.FeedRService.Domain.Configuration;
 using HsnSoft.Base.Data;
+using HsnSoft.Base.MultiTenancy;
+using HsnSoft.Base.Subscribe;
 
 namespace Hhs.FeedRService.AdManager.Workers;
 

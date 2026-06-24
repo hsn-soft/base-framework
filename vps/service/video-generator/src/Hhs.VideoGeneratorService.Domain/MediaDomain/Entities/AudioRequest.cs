@@ -2,6 +2,7 @@ using Hhs.Shared.Helper.Enums;
 using HsnSoft.Base;
 using HsnSoft.Base.Domain.Entities.Auditing;
 using HsnSoft.Base.Subscribe;
+using JetBrains.Annotations;
 
 namespace Hhs.VideoGeneratorService.Domain.MediaDomain.Entities;
 

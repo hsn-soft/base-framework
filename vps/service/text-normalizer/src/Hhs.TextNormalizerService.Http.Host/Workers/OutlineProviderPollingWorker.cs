@@ -1,6 +1,8 @@
 using Hhs.TextNormalizerService.Application.Services;
 using Hhs.TextNormalizerService.Domain.Configuration.Providers.Outline;
 using HsnSoft.Base.Data;
+using HsnSoft.Base.MultiTenancy;
+using HsnSoft.Base.Subscribe;
 
 namespace Hhs.TextNormalizerService.Workers;
 

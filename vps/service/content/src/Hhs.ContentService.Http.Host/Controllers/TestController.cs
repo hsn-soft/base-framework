@@ -1,6 +1,8 @@
 using Hhs.ContentService.Application.Services;
 using Hhs.ContentService.Controllers.Base;
 using HsnSoft.Base.Data;
+using HsnSoft.Base.MultiTenancy;
+using HsnSoft.Base.Subscribe;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

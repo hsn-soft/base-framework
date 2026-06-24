@@ -1,7 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
+using HsnSoft.Base;
 using HsnSoft.Base.Domain.Entities.Auditing;
-using HsnSoft.Base.Domain.Entities.SoftDeleting;
-using HsnSoft.Base.Domain.Entities.Subscriptions;
+using HsnSoft.Base.Subscribe;
 
 namespace Hhs.ContentService.Domain.ContentDomain.Entities;
 

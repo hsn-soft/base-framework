@@ -1,6 +1,7 @@
 using HsnSoft.Base.Domain.Entities.Auditing;
 using HsnSoft.Base;
 using HsnSoft.Base.Subscribe;
+using JetBrains.Annotations;
 
 namespace Hhs.ContentService.Domain.ContentDomain.Entities;
 

@@ -1,6 +1,8 @@
 using Hhs.EventManagerService.Application.Services;
 using Hhs.EventManagerService.Domain.Configuration;
 using HsnSoft.Base.Data;
+using HsnSoft.Base.MultiTenancy;
+using HsnSoft.Base.Subscribe;
 
 namespace Hhs.EventManagerService.Workers;
 

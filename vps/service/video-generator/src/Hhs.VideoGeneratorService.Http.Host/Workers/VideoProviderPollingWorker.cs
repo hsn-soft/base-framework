@@ -1,6 +1,8 @@
 using Hhs.VideoGeneratorService.Application.Services;
 using Hhs.VideoGeneratorService.Domain.Configuration;
 using HsnSoft.Base.Data;
+using HsnSoft.Base.MultiTenancy;
+using HsnSoft.Base.Subscribe;
 
 namespace Hhs.VideoGeneratorService.Workers;
 

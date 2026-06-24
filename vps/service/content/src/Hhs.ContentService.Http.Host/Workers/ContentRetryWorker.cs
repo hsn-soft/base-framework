@@ -1,6 +1,8 @@
 using Hhs.ContentService.Application.Services;
 using Hhs.ContentService.Domain.Configuration;
 using HsnSoft.Base.Data;
+using HsnSoft.Base.MultiTenancy;
+using HsnSoft.Base.Subscribe;
 using Microsoft.Extensions.Options;
 
 namespace Hhs.ContentService.Workers;

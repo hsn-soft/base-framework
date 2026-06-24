@@ -1,6 +1,8 @@
 using Hhs.AdministrationService.Application.Services;
 using Hhs.AdministrationService.Domain.Configuration;
 using HsnSoft.Base.Data;
+using HsnSoft.Base.MultiTenancy;
+using HsnSoft.Base.Subscribe;
 
 namespace Hhs.AdministrationService.Workers;
 
