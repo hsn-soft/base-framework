@@ -13,4 +13,5 @@ public static class SubscriptionConsts
     }
 
     public const string TableName = "Subscriptions";
+    public const int SettingsJsonMaxLength = 5000;
 }

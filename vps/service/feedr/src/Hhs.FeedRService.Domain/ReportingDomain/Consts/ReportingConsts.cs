@@ -22,6 +22,8 @@ public static class ReportingConsts
     public const int DemandSubchannelNameMaxLength = 256;
     public const int OrderIdMaxLength = 256;
     public const int OrderNameMaxLength = 512;
+    public const int DisplayNameMaxLength = 256;
+    public const int AdUnitTopLevelCodeMaxLength = 256;
 
     public const string DefaultDailyReportSorting = "ReportDate desc";
 }
