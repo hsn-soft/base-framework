@@ -11,7 +11,7 @@ public static class CustomerContentNormalizedRequestClassMap
         {
             map.AutoMap();
             map.SetIgnoreExtraElements(true);
-            map.MapIdMember(x => x.Id);
+            map.MapMember(x => x.ScopeKey).SetIsRequired(true);
         });
     }
 }

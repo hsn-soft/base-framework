@@ -12,7 +12,7 @@ public static class AnalysisContentNormalizedRequestClassMap
         {
             map.AutoMap();
             map.SetIgnoreExtraElements(true);
-            map.MapIdMember(x => x.Id);
+            map.MapMember(x => x.ScopeKey).SetIsRequired(true);
         });
 
         if (!BsonClassMap.IsClassMapRegistered(typeof(AnalysisNormalizedItem)))
