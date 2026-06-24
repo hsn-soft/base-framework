@@ -2,7 +2,7 @@ using Hhs.TextNormalizerService.Domain.NormalizeDomain.Models;
 using HsnSoft.Base;
 using HsnSoft.Base.Domain.Entities.Auditing;
 using HsnSoft.Base.Subscribe;
-using System.Diagnostics.CodeAnalysis;
+using JetBrains.Annotations;
 
 namespace Hhs.TextNormalizerService.Domain.NormalizeDomain.Entities;
 
@@ -10,6 +10,7 @@ public sealed class AnalysisContentNormalizedRequest : AuditedEntity<Guid>, ISof
 {
 
     // Correlation
+    [CanBeNull]
     public string? CorrelationId { get; set; }
     public Guid SourceEventId { get; set; }
 
@@ -21,26 +22,26 @@ public sealed class AnalysisContentNormalizedRequest : AuditedEntity<Guid>, ISof
 
     // Content Reference
     public Guid AnalysisContentId { get; set; }
-    public string DomainName { get; set; } = default!;
+    [NotNull] public string DomainName { get; set; } = default!;
 
     // Status & Progress
-    public string Status { get; set; } = default!;
-    public string CurrentStep { get; set; } = default!;
+    [NotNull] public string Status { get; set; } = default!;
+    [NotNull] public string CurrentStep { get; set; } = default!;
 
     // Analysis Items
     public List<AnalysisNormalizedItem> Items { get; set; } = [];
 
     // Error Handling
-    public string? LastError { get; set; }
+    [CanBeNull] public string? LastError { get; set; }
 
     private AnalysisContentNormalizedRequest() { }
 
-    public AnalysisContentNormalizedRequest(Guid id, string scopeKey, Guid analysisContentId, string domainName, Guid? correlationId = null)
+    public AnalysisContentNormalizedRequest(Guid id, string scopeKey, Guid analysisContentId, string domainName, string? correlationId = null)
     {
         Id = id;
         ScopeKey = scopeKey;
         AnalysisContentId = analysisContentId;
         DomainName = domainName;
-        CorrelationId = correlationId?.ToString();
+        CorrelationId = correlationId;
     }
 }

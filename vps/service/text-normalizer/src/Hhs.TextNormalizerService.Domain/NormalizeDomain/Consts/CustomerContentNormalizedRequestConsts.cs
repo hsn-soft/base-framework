@@ -4,12 +4,15 @@ public static class CustomerContentNormalizedRequestConsts
 {
     public const string CollectionName = "customer_content_normalized_requests";
     public const int ScopeKeyMaxLength = 100;
+    public const int CorrelationIdMaxLength = 50;
     public const int DomainNameMaxLength = 500;
     public const int ContentKeyMaxLength = 500;
+    public const int StatusMaxLength = 80;
     public const int CurrentStepMaxLength = 100;
     public const int ScrapingStatusMaxLength = 50;
     public const int OutlineStatusMaxLength = 50;
     public const int OutlineProviderTrackIdMaxLength = 256;
+    public const int LastErrorMaxLength = 1000;
 
     // Polling & Retry Configuration
     public const int MaxOutlinePollingCountDefault = 60;

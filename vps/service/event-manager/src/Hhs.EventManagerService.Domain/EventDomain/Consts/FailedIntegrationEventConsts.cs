@@ -10,7 +10,7 @@ public static class FailedIntegrationEventConsts
     }
 
     public const string TableName = "FailedIntegrationEvents";
-    public const int CorrelationIdMaxLength = 100;
+    public const int CorrelationIdMaxLength = 50;
     public const int ProducerMaxLength = 100;
     public const int ChannelMaxLength = 100;
     public const int UserIdMaxLength = 100;

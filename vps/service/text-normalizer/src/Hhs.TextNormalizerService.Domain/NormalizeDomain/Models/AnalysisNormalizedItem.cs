@@ -1,5 +1,6 @@
 using Hhs.Shared.Helper;
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Consts;
+using JetBrains.Annotations;
 
 namespace Hhs.TextNormalizerService.Domain.NormalizeDomain.Models;
 
@@ -10,32 +11,32 @@ public sealed class AnalysisNormalizedItem
     public int SortOrder { get; set; }
 
     // Content Reference
-    public string ContentKey { get; set; } = default!;
+    [NotNull] public string ContentKey { get; set; } = default!;
 
     // Scraping State
-    public string ScrapingStatus { get; set; } = StatusNames.Created;
-    public ScrapingResult? ScrapingResult { get; set; }
+    [NotNull] public string ScrapingStatus { get; set; } = StatusNames.Created;
+    [CanBeNull] public ScrapingResult? ScrapingResult { get; set; }
 
     // Outline Generation State
-    public string OutlineStatus { get; set; } = StatusNames.Created;
-    public OutlineResult? OutlineResult { get; set; }
+    [NotNull] public string OutlineStatus { get; set; } = StatusNames.Created;
+    [CanBeNull] public OutlineResult? OutlineResult { get; set; }
 
     // Outline Polling & Tracking
-    public string? OutlineProviderTrackId { get; set; }
-    public DateTime? NextOutlinePollAtUtc { get; set; }
+    [CanBeNull] public string? OutlineProviderTrackId { get; set; }
+    [CanBeNull] public DateTime? NextOutlinePollAtUtc { get; set; }
     public int OutlinePollingCount { get; set; }
     public int MaxOutlinePollingCount { get; set; } = AnalysisNormalizedItemConsts.MaxOutlinePollingCountDefault;
 
     // Status & Progress
-    public string Status { get; set; } = StatusNames.Created;
-    public string CurrentStep { get; set; } = StatusNames.Created;
+    [NotNull] public string Status { get; set; } = StatusNames.Created;
+    [NotNull] public string CurrentStep { get; set; } = StatusNames.Created;
 
     // Retry Configuration
     public int RetryCount { get; set; }
     public int MaxRetryCount { get; set; } = AnalysisNormalizedItemConsts.MaxRetryCountDefault;
-    public DateTime? NextRetryAtUtc { get; set; }
+    [CanBeNull] public DateTime? NextRetryAtUtc { get; set; }
 
     // Error Handling & Tracking
-    public string? LastError { get; set; }
-    public DateTime? UpdatedAtUtc { get; set; }
+    [CanBeNull] public string? LastError { get; set; }
+    [CanBeNull] public DateTime? UpdatedAtUtc { get; set; }
 }

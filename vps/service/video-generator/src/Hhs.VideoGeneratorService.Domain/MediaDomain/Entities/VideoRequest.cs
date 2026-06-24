@@ -3,12 +3,14 @@ using HsnSoft.Base.Domain.Entities.Auditing;
 using System.Diagnostics.CodeAnalysis;
 using HsnSoft.Base;
 using HsnSoft.Base.Subscribe;
+using JetBrains.Annotations;
 
 namespace Hhs.VideoGeneratorService.Domain.MediaDomain.Entities;
 
 public sealed class VideoRequest : AuditedEntity<Guid>, ISoftDelete, IScopeSubscription
 {
     // Correlation & Context
+    [CanBeNull]
     public string? CorrelationId { get; set; }
     public Guid SourceEventId { get; set; }
     public Guid RefContentId { get; set; }
@@ -18,35 +20,35 @@ public sealed class VideoRequest : AuditedEntity<Guid>, ISoftDelete, IScopeSubsc
     [NotNull] public string ScopeKey { get; private set; } = default!;
 
     // Status & Configuration
-    public string Status { get; set; } = default!;
-    public string CurrentStep { get; set; } = default!;
+    [NotNull] public string Status { get; set; } = default!;
+    [NotNull] public string CurrentStep { get; set; } = default!;
 
     // Soft Delete
     public bool IsDeleted { get; internal set; }
 
     // Input Data
-    public string MediaInputJson { get; set; } = default!;
+    [NotNull] public string MediaInputJson { get; set; } = default!;
 
     // Provider Configuration
-    public string? AudioProviderKey { get; set; }
-    public string VideoProviderKey { get; set; } = default!;
+    [CanBeNull] public string? AudioProviderKey { get; set; }
+    [NotNull] public string VideoProviderKey { get; set; } = default!;
 
     // Video Generation (external provider)
-    public string? VideoProviderTrackingId { get; set; }
-    public string? VideoProviderUrl { get; set; }
-    public string? VideoLocalPath { get; set; }
+    [CanBeNull] public string? VideoProviderTrackingId { get; set; }
+    [CanBeNull] public string? VideoProviderUrl { get; set; }
+    [CanBeNull] public string? VideoLocalPath { get; set; }
 
     // Storage & CDN
-    public string? VideoCdnProviderKey { get; set; }
-    public string? VideoStorageUrl { get; set; }
-    public string? VideoCdnUrl { get; set; }
+    [CanBeNull] public string? VideoCdnProviderKey { get; set; }
+    [CanBeNull] public string? VideoStorageUrl { get; set; }
+    [CanBeNull] public string? VideoCdnUrl { get; set; }
 
     // Polling & Retry
-    public DateTime? NextProviderPollAtUtc { get; set; }
+    [CanBeNull] public DateTime? NextProviderPollAtUtc { get; set; }
     public int ProviderPollingCount { get; set; }
     public int RetryCount { get; set; }
-    public DateTime? NextRetryAtUtc { get; set; }
-    public string? LastError { get; set; }
+    [CanBeNull] public DateTime? NextRetryAtUtc { get; set; }
+    [CanBeNull] public string? LastError { get; set; }
 
     private VideoRequest() { }
 

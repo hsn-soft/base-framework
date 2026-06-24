@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using HsnSoft.Base;
 using HsnSoft.Base.Domain.Entities.Auditing;
 using HsnSoft.Base.Subscribe;
+using JetBrains.Annotations;
 
 namespace Hhs.ContentService.Domain.ContentDomain.Entities;
 
@@ -14,24 +15,25 @@ public sealed class AnalysisContent : AuditedEntity<Guid>, ISoftDelete, IScopeSu
     [NotNull] public string ScopeKey { get; private set; } = default!;
 
     // Content Metadata
-    public string DomainName { get; private set; } = default!;
-    public string? Title { get; private set; }
+    [NotNull] public string DomainName { get; private set; } = default!;
+    [CanBeNull] public string? Title { get; private set; }
 
     // Correlation & Tracing
+    [CanBeNull]
     public string? CorrelationId { get; private set; }
 
     // Normalization Status
-    public string? NormalizeStatus { get; set; }
-    public Guid? NormalizeRequestId { get; set; }
+    [CanBeNull] public string? NormalizeStatus { get; set; }
+    [CanBeNull] public Guid? NormalizeRequestId { get; set; }
 
     // Video Generation Status
-    public string? VideoStatus { get; set; }
-    public Guid? VideoRequestId { get; set; }
+    [CanBeNull] public string? VideoStatus { get; set; }
+    [CanBeNull] public Guid? VideoRequestId { get; set; }
 
     // Result & Errors
-    public string? FinalVideoUrl { get; set; }
-    public string? LastFacility { get; set; }
-    public string? LastError { get; set; }
+    [CanBeNull] public string? FinalVideoUrl { get; set; }
+    [CanBeNull] public string? LastFacility { get; set; }
+    [CanBeNull] public string? LastError { get; set; }
 
     // Analysis Items
     public List<AnalysisContentItem> Items { get; private set; } = [];

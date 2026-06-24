@@ -9,6 +9,7 @@ namespace Hhs.VideoGeneratorService.Domain.MediaDomain.Entities;
 public sealed class AudioRequest : AuditedEntity<Guid>, ISoftDelete, IScopeSubscription
 {
     // Correlation & Context
+    [CanBeNull]
     public string? CorrelationId { get; set; }
     public Guid SourceEventId { get; set; }
     public Guid VideoRequestId { get; set; }
@@ -22,30 +23,30 @@ public sealed class AudioRequest : AuditedEntity<Guid>, ISoftDelete, IScopeSubsc
     public bool IsDeleted { get; internal set; }
 
     // Status & Configuration
-    public string Status { get; set; } = default!;
-    public string CurrentStep { get; set; } = default!;
+    [NotNull] public string Status { get; set; } = default!;
+    [NotNull] public string CurrentStep { get; set; } = default!;
     public int SortOrder { get; set; }
 
     // Input Data
-    public string InputText { get; set; } = default!;
+    [NotNull] public string InputText { get; set; } = default!;
 
     // Provider Configuration
-    public string AudioProviderKey { get; set; } = default!;
+    [NotNull] public string AudioProviderKey { get; set; } = default!;
 
     // Audio Generation (external provider)
-    public string? AudioProviderTrackingId { get; set; }
-    public string? AudioProviderUrl { get; set; }
-    public string? AudioLocalPath { get; set; }
-    public string? AudioStorageUrl { get; set; }
-    public string? AudioCdnUrl { get; set; }
-    public string? AudioCdnProviderKey { get; set; }
+    [CanBeNull] public string? AudioProviderTrackingId { get; set; }
+    [CanBeNull] public string? AudioProviderUrl { get; set; }
+    [CanBeNull] public string? AudioLocalPath { get; set; }
+    [CanBeNull] public string? AudioStorageUrl { get; set; }
+    [CanBeNull] public string? AudioCdnUrl { get; set; }
+    [CanBeNull] public string? AudioCdnProviderKey { get; set; }
 
     // Polling & Retry
-    public DateTime? NextProviderPollAtUtc { get; set; }
+    [CanBeNull] public DateTime? NextProviderPollAtUtc { get; set; }
     public int ProviderPollingCount { get; set; }
     public int RetryCount { get; set; }
-    public DateTime? NextRetryAtUtc { get; set; }
-    public string? LastError { get; set; }
+    [CanBeNull] public DateTime? NextRetryAtUtc { get; set; }
+    [CanBeNull] public string? LastError { get; set; }
 
     private AudioRequest() { }
 
