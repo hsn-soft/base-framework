@@ -18,4 +18,6 @@ public sealed class VideoGeneratorInboxMessage
     public DateTime? ProcessedAtUtc { get; set; }
 
     public string? ErrorMessage { get; set; }
+
+    public int RetryCount { get; set; } = 0;
 }

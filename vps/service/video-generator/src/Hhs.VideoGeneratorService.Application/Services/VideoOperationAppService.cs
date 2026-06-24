@@ -27,7 +27,7 @@ public sealed class VideoOperationAppService(
     RetryDelayCalculator retryDelayCalculator,
     VideoPollingSettings videoPollingSettings) : ApplicationServiceBase(provider)
 {
-    public async Task CreateVideoRequestAsync(VideoGenerationApprovedEto @event, Guid eventId, string correlationId)
+    public async Task CreateVideoRequestAsync(VideoGenerationApprovedEto @event, Guid eventId, string correlationId, CancellationToken cancellationToken = default)
     {
         var existing = await context.VideoRequests
             .Find(x => x.SourceEventId == eventId)
@@ -91,7 +91,7 @@ public sealed class VideoOperationAppService(
         );
     }
 
-    public async Task StartVideoOperationAsync(VideoRequestCreatedEto @event)
+    public async Task StartVideoOperationAsync(VideoRequestCreatedEto @event, CancellationToken cancellationToken = default)
     {
         var videoRequest = await GetVideoAsync(@event.VideoRequestId);
 
@@ -106,7 +106,7 @@ public sealed class VideoOperationAppService(
         );
     }
 
-    public async Task HandleVideoOperationStartedAsync(VideoOperationStartedEto @event, Guid eventId)
+    public async Task HandleVideoOperationStartedAsync(VideoOperationStartedEto @event, Guid eventId, CancellationToken cancellationToken = default)
     {
         var videoRequest = await GetVideoAsync(@event.VideoRequestId);
         var videoProvider = videoProviderResolver.Resolve(videoRequest.VideoProviderKey);
@@ -181,7 +181,7 @@ public sealed class VideoOperationAppService(
         }
     }
 
-    public async Task StartAudioProviderRequestAsync(AudioProviderRequestStartedEto @event)
+    public async Task StartAudioProviderRequestAsync(AudioProviderRequestStartedEto @event, CancellationToken cancellationToken = default)
     {
         var audioRequest = await GetAudioAsync(@event.AudioRequestId);
         var audioProvider = audioProviderResolver.Resolve(audioRequest.AudioProviderKey);
@@ -245,7 +245,7 @@ public sealed class VideoOperationAppService(
         }
     }
 
-    public async Task ScheduleAudioProviderPollingAsync(AudioProviderPollingStartedEto @event)
+    public async Task ScheduleAudioProviderPollingAsync(AudioProviderPollingStartedEto @event, CancellationToken cancellationToken = default)
     {
         var audioRequest = await GetAudioAsync(@event.AudioRequestId);
 
@@ -264,14 +264,14 @@ public sealed class VideoOperationAppService(
         await ReplaceAudioAsync(audioRequest);
     }
 
-    public async Task HandleAudioProviderCompletedAsync(AudioProviderCompletedEto @event)
+    public async Task HandleAudioProviderCompletedAsync(AudioProviderCompletedEto @event, CancellationToken cancellationToken = default)
     {
         await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
             eventMessage: new AudioFileDownloadStartedEto { AudioRequestId = @event.AudioRequestId }
         );
     }
 
-    public async Task DownloadAudioFileAsync(AudioFileDownloadStartedEto @event)
+    public async Task DownloadAudioFileAsync(AudioFileDownloadStartedEto @event, CancellationToken cancellationToken = default)
     {
         var audioRequest = await GetAudioAsync(@event.AudioRequestId);
 
@@ -313,7 +313,7 @@ public sealed class VideoOperationAppService(
         }
     }
 
-    public async Task HandleAudioDownloadCompletedAsync(AudioFileDownloadCompletedEto @event)
+    public async Task HandleAudioDownloadCompletedAsync(AudioFileDownloadCompletedEto @event, CancellationToken cancellationToken = default)
     {
         var audioRequest = await GetAudioAsync(@event.AudioRequestId);
 
@@ -372,7 +372,7 @@ public sealed class VideoOperationAppService(
         }
     }
 
-    public async Task HandleAudioUploadCompletedAsync(AudioFileUploadCompletedEto @event)
+    public async Task HandleAudioUploadCompletedAsync(AudioFileUploadCompletedEto @event, CancellationToken cancellationToken = default)
     {
         var videoRequest = await GetVideoAsync(@event.VideoRequestId);
 
@@ -438,7 +438,7 @@ public sealed class VideoOperationAppService(
         }
     }
 
-    public async Task StartVideoProviderRequestAsync(VideoProviderRequestStartedEto @event)
+    public async Task StartVideoProviderRequestAsync(VideoProviderRequestStartedEto @event, CancellationToken cancellationToken = default)
     {
         var videoRequest = await GetVideoAsync(@event.VideoRequestId);
         string? videoProviderKey = SubscriptionScopeRegistry.GetVideoProviderKey(videoRequest.ScopeKey);
@@ -503,7 +503,7 @@ public sealed class VideoOperationAppService(
         }
     }
 
-    public async Task ScheduleVideoProviderPollingAsync(VideoProviderPollingStartedEto @event)
+    public async Task ScheduleVideoProviderPollingAsync(VideoProviderPollingStartedEto @event, CancellationToken cancellationToken = default)
     {
         var videoRequest = await GetVideoAsync(@event.VideoRequestId);
 
@@ -522,14 +522,14 @@ public sealed class VideoOperationAppService(
         await ReplaceVideoAsync(videoRequest);
     }
 
-    public async Task HandleVideoProviderCompletedAsync(VideoProviderCompletedEto @event)
+    public async Task HandleVideoProviderCompletedAsync(VideoProviderCompletedEto @event, CancellationToken cancellationToken = default)
     {
         await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
             eventMessage: new VideoFileDownloadStartedEto { VideoRequestId = @event.VideoRequestId }
         );
     }
 
-    public async Task DownloadVideoFileAsync(VideoFileDownloadStartedEto @event)
+    public async Task DownloadVideoFileAsync(VideoFileDownloadStartedEto @event, CancellationToken cancellationToken = default)
     {
         var videoRequest = await GetVideoAsync(@event.VideoRequestId);
 
@@ -568,7 +568,7 @@ public sealed class VideoOperationAppService(
         }
     }
 
-    public async Task HandleVideoDownloadCompletedAsync(VideoFileDownloadCompletedEto @event)
+    public async Task HandleVideoDownloadCompletedAsync(VideoFileDownloadCompletedEto @event, CancellationToken cancellationToken = default)
     {
         var videoRequest = await GetVideoAsync(@event.VideoRequestId);
 
@@ -618,7 +618,7 @@ public sealed class VideoOperationAppService(
         }
     }
 
-    public async Task HandleVideoUploadCompletedAsync(VideoFileUploadCompletedEto @event)
+    public async Task HandleVideoUploadCompletedAsync(VideoFileUploadCompletedEto @event, CancellationToken cancellationToken = default)
     {
         var videoRequest = await GetVideoAsync(@event.VideoRequestId);
 

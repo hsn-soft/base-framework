@@ -124,14 +124,14 @@ public sealed class ContentOperationAppService(
         return new CreateContentResponse(Id: analysisId.ToString());
     }
 
-    public async Task HandleNormalizerResultAsync(NormalizerResultPublishedEto @event)
+    public async Task HandleNormalizerResultAsync(NormalizerResultPublishedEto @event, CancellationToken cancellationToken = default)
     {
         bool shouldPublishEvent = false;
 
         if (@event.RefContentType == ContentType.CustomerContent)
         {
             var entity = await db.CustomerContents
-                .FirstOrDefaultAsync(x => x.Id == @event.RefContentId);
+                .FirstOrDefaultAsync(x => x.Id == @event.RefContentId, cancellationToken);
 
             if (entity != null && entity.NormalizeRequestId == null)
             {
@@ -148,7 +148,7 @@ public sealed class ContentOperationAppService(
         if (@event.RefContentType == ContentType.AnalysisContent)
         {
             var entity = await db.AnalysisContents
-                .FirstOrDefaultAsync(x => x.Id == @event.RefContentId);
+                .FirstOrDefaultAsync(x => x.Id == @event.RefContentId, cancellationToken);
 
             if (entity != null && entity.NormalizeRequestId == null)
             {
@@ -164,11 +164,11 @@ public sealed class ContentOperationAppService(
 
         if (shouldPublishEvent)
         {
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(cancellationToken);
 
             string? scopeKey = @event.RefContentType == ContentType.CustomerContent
-                ? (await db.CustomerContents.FirstOrDefaultAsync(x => x.Id == @event.RefContentId))?.ScopeKey
-                : (await db.AnalysisContents.FirstOrDefaultAsync(x => x.Id == @event.RefContentId))?.ScopeKey;
+                ? (await db.CustomerContents.FirstOrDefaultAsync(x => x.Id == @event.RefContentId, cancellationToken))?.ScopeKey
+                : (await db.AnalysisContents.FirstOrDefaultAsync(x => x.Id == @event.RefContentId, cancellationToken))?.ScopeKey;
 
             await EventBus.PublishAsync(
                 parentMessage: ParentIntegrationEvent,
@@ -177,11 +177,11 @@ public sealed class ContentOperationAppService(
         }
     }
 
-    public async Task HandleVideoResultAsync(VideoGenerationResultPublishedEto @event)
+    public async Task HandleVideoResultAsync(VideoGenerationResultPublishedEto @event, CancellationToken cancellationToken = default)
     {
         if (@event.RefContentType == ContentType.CustomerContent)
         {
-            var entity = await db.CustomerContents.FirstOrDefaultAsync(x => x.Id == @event.RefContentId);
+            var entity = await db.CustomerContents.FirstOrDefaultAsync(x => x.Id == @event.RefContentId, cancellationToken);
             if (entity != null)
             {
                 entity.VideoStatus = StatusNames.Completed;
@@ -194,7 +194,7 @@ public sealed class ContentOperationAppService(
 
         if (@event.RefContentType == ContentType.AnalysisContent)
         {
-            var entity = await db.AnalysisContents.FirstOrDefaultAsync(x => x.Id == @event.RefContentId);
+            var entity = await db.AnalysisContents.FirstOrDefaultAsync(x => x.Id == @event.RefContentId, cancellationToken);
             if (entity != null)
             {
                 entity.VideoStatus = StatusNames.Completed;
@@ -205,15 +205,15 @@ public sealed class ContentOperationAppService(
             }
         }
 
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task HandleStepFailedAsync(StepFailedEto @event)
+    public async Task HandleStepFailedAsync(StepFailedEto @event, CancellationToken cancellationToken = default)
     {
         if (@event.RefContentType == ContentType.CustomerContent)
         {
             var entity = await db.CustomerContents
-                .FirstOrDefaultAsync(x => x.Id == @event.RefContentId);
+                .FirstOrDefaultAsync(x => x.Id == @event.RefContentId, cancellationToken);
 
             if (entity is not null)
             {
@@ -235,7 +235,7 @@ public sealed class ContentOperationAppService(
         if (@event.RefContentType == ContentType.AnalysisContent)
         {
             var entity = await db.AnalysisContents
-                .FirstOrDefaultAsync(x => x.Id == @event.RefContentId);
+                .FirstOrDefaultAsync(x => x.Id == @event.RefContentId, cancellationToken);
 
             if (entity is not null)
             {
@@ -254,7 +254,7 @@ public sealed class ContentOperationAppService(
             }
         }
 
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(cancellationToken);
     }
 
     private static bool IsNormalizeStep(string step)

@@ -46,7 +46,8 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                     Status = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     ProcessedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    ErrorMessage = table.Column<string>(type: "text", nullable: true)
+                    ErrorMessage = table.Column<string>(type: "text", nullable: true),
+                    RetryCount = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {

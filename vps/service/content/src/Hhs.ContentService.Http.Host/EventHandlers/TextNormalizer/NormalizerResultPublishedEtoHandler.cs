@@ -1,28 +1,26 @@
+using Hhs.ContentService.Application.Infrastructure;
 using Hhs.ContentService.Application.Services;
 using Hhs.Shared.Contracts.Events;
 using HsnSoft.Base.Domain.Entities.Events;
-using HsnSoft.Base.EventBus;
 using HsnSoft.Base.Logging.Abstracts;
 
 namespace Hhs.ContentService.EventHandlers.TextNormalizer;
 
 public class NormalizerResultPublishedEtoHandler(
+    ContentInboxStore inboxStore,
     IAppConsoleLogger logger,
     ContentOperationAppService contentOperationAppService
-) : IIntegrationEventHandler<NormalizerResultPublishedEto>
+) : ContentEventHandlerBase<NormalizerResultPublishedEto>(inboxStore)
 {
     private readonly IAppConsoleLogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     private readonly ContentOperationAppService _contentOperationAppService = contentOperationAppService ?? throw new ArgumentNullException(nameof(contentOperationAppService));
 
-    public async Task HandleAsync(MessageEnvelope<NormalizerResultPublishedEto> @event)
+    protected override async Task ExecuteAsync(MessageEnvelope<NormalizerResultPublishedEto> @event, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("EVENT HANDLING | [ {EventName} ] => CorrelationId[{CorrelationId}], MessageId[{MessageId}], RelatedMessageId[{RelatedMessageId}]",
+        _logger.LogDebug("EVENT HANDLING | [ {EventName} ] => CorrelationId[{CorrelationId}]",
             nameof(NormalizerResultPublishedEto)[..^"Eto".Length],
-            @event.CorrelationId ?? string.Empty,
-            @event.MessageId.ToString(),
-            @event.ParentMessageId != null ? @event.ParentMessageId.Value.ToString() : string.Empty);
+            @event.MessageId);
 
-        _contentOperationAppService.SetParentIntegrationEvent(@event);
-        await _contentOperationAppService.HandleNormalizerResultAsync(@event.Message);
+        await _contentOperationAppService.HandleNormalizerResultAsync(@event.Message, cancellationToken);
     }
 }

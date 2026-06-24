@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Hhs.ContentService.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(ContentServiceDbContext))]
-    [Migration("20260623215324_InitialCreate")]
+    [Migration("20260624134240_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -136,6 +136,9 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
 
                     b.Property<DateTime?>("ProcessedAtUtc")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("RetryCount")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Status")
                         .IsRequired()

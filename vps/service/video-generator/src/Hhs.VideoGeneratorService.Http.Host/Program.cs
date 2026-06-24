@@ -6,6 +6,7 @@ using Hhs.Shared.Hosting.Microservices.Extensions;
 using Hhs.Shared.Hosting.Microservices.Middlewares;
 using Hhs.VideoGeneratorService;
 using Hhs.VideoGeneratorService.Application;
+using Hhs.VideoGeneratorService.Application.Infrastructure;
 using Hhs.VideoGeneratorService.Application.Services;
 using Hhs.VideoGeneratorService.Domain.Localization;
 using Hhs.VideoGeneratorService.MongoDb;
@@ -68,6 +69,11 @@ builder.Services.AddMicroserviceHosting(builder.Configuration, typeof(Program))
 builder.Services.AddTransient<IBasicDataSeeder, MongoSeederService>();
 
 builder.Services.AddHttpClient();
+
+// ============================================================================
+// INBOX & EVENT IDEMPOTENCY
+// ============================================================================
+builder.Services.AddScoped<VideoGeneratorInboxStore>();
 
 // ============================================================================
 // CUSTOM WORKERS (Polling & Retry Logic)

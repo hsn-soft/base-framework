@@ -1,28 +1,26 @@
+using Hhs.ContentService.Application.Infrastructure;
 using Hhs.ContentService.Application.Services;
 using Hhs.Shared.Contracts.Events;
 using HsnSoft.Base.Domain.Entities.Events;
-using HsnSoft.Base.EventBus;
 using HsnSoft.Base.Logging.Abstracts;
 
 namespace Hhs.ContentService.EventHandlers.VideoGenerator;
 
 public class VideoGenerationResultPublishedEtoHandler(
+    ContentInboxStore inboxStore,
     IAppConsoleLogger logger,
     ContentOperationAppService contentOperationAppService
-) : IIntegrationEventHandler<VideoGenerationResultPublishedEto>
+) : ContentEventHandlerBase<VideoGenerationResultPublishedEto>(inboxStore)
 {
     private readonly IAppConsoleLogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     private readonly ContentOperationAppService _contentOperationAppService = contentOperationAppService ?? throw new ArgumentNullException(nameof(contentOperationAppService));
 
-    public async Task HandleAsync(MessageEnvelope<VideoGenerationResultPublishedEto> @event)
+    protected override async Task ExecuteAsync(MessageEnvelope<VideoGenerationResultPublishedEto> @event, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("EVENT HANDLING | [ {EventName} ] => CorrelationId[{CorrelationId}], MessageId[{MessageId}], RelatedMessageId[{RelatedMessageId}]",
+        _logger.LogDebug("EVENT HANDLING | [ {EventName} ] => CorrelationId[{CorrelationId}]",
             nameof(VideoGenerationResultPublishedEto)[..^"Eto".Length],
-            @event.CorrelationId ?? string.Empty,
-            @event.MessageId.ToString(),
-            @event.ParentMessageId != null ? @event.ParentMessageId.Value.ToString() : string.Empty);
+            @event.MessageId);
 
-        _contentOperationAppService.SetParentIntegrationEvent(@event);
-        await _contentOperationAppService.HandleVideoResultAsync(@event.Message);
+        await _contentOperationAppService.HandleVideoResultAsync(@event.Message, cancellationToken);
     }
 }

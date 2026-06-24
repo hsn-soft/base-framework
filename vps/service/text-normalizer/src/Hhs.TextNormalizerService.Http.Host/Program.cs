@@ -8,6 +8,7 @@ using Hhs.Shared.Hosting.Microservices.Middlewares;
 using Hhs.TextNormalizerService;
 using Hhs.TextNormalizerService.Application;
 using Hhs.TextNormalizerService.Application.Contracts.Events;
+using Hhs.TextNormalizerService.Application.Infrastructure;
 using Hhs.TextNormalizerService.Application.Services;
 using Hhs.TextNormalizerService.Domain.Localization;
 using Hhs.TextNormalizerService.MongoDb;
@@ -77,6 +78,11 @@ builder.Services.AddOptions<HostOptions>()
     .Configure<IOptions<PuppeteerBrowserSettings>>((hostOptions, browserSettings) => { hostOptions.ShutdownTimeout = TimeSpan.FromSeconds(browserSettings.Value.ShutdownDrainTimeoutSeconds + 30); });
 
 builder.Services.AddHttpClient();
+
+// ============================================================================
+// INBOX & EVENT IDEMPOTENCY
+// ============================================================================
+builder.Services.AddScoped<NormalizerInboxStore>();
 
 // ============================================================================
 // CUSTOM WORKERS (Polling & Retry Logic)

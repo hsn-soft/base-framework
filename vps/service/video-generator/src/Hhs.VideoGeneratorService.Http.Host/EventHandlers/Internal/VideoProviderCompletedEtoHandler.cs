@@ -1,28 +1,26 @@
 using Hhs.Shared.Contracts.Events;
+using Hhs.VideoGeneratorService.Application.Infrastructure;
 using Hhs.VideoGeneratorService.Application.Services;
 using HsnSoft.Base.Domain.Entities.Events;
-using HsnSoft.Base.EventBus;
 using HsnSoft.Base.Logging.Abstracts;
 
 namespace Hhs.VideoGeneratorService.EventHandlers.Internal;
 
 public class VideoProviderCompletedEtoHandler(
+    VideoGeneratorInboxStore inboxStore,
     IAppConsoleLogger logger,
     VideoOperationAppService videoOperationAppService
-) : IIntegrationEventHandler<VideoProviderCompletedEto>
+) : VideoEventHandlerBase<VideoProviderCompletedEto>(inboxStore)
 {
     private readonly IAppConsoleLogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     private readonly VideoOperationAppService _videoOperationAppService = videoOperationAppService ?? throw new ArgumentNullException(nameof(videoOperationAppService));
 
-    public async Task HandleAsync(MessageEnvelope<VideoProviderCompletedEto> @event)
+    protected override async Task ExecuteAsync(MessageEnvelope<VideoProviderCompletedEto> @event, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("EVENT HANDLING | [ {EventName} ] => CorrelationId[{CorrelationId}], MessageId[{MessageId}], RelatedMessageId[{RelatedMessageId}]",
+        _logger.LogDebug("EVENT HANDLING | [ {EventName} ] => EventId[{EventId}]",
             nameof(VideoProviderCompletedEto)[..^"Eto".Length],
-            @event.CorrelationId ?? string.Empty,
-            @event.MessageId.ToString(),
-            @event.ParentMessageId != null ? @event.ParentMessageId.Value.ToString() : string.Empty);
+            @event.MessageId);
 
-        _videoOperationAppService.SetParentIntegrationEvent(@event);
-        await _videoOperationAppService.HandleVideoProviderCompletedAsync(@event.Message);
+        await _videoOperationAppService.HandleVideoProviderCompletedAsync(@event.Message, cancellationToken);
     }
 }

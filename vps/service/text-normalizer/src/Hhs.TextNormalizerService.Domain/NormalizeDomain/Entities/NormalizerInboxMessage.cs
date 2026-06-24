@@ -23,4 +23,7 @@ public sealed class NormalizerInboxMessage
 
     // Error Handling
     public string? ErrorMessage { get; set; }
+
+    // Retry Management
+    public int RetryCount { get; set; } = 0;
 }
