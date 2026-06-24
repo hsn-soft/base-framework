@@ -16,19 +16,21 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    UpdatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    CorrelationId = table.Column<string>(type: "text", nullable: true),
                     ScopeKey = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     DomainName = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
                     Title = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    CorrelationId = table.Column<string>(type: "text", nullable: true),
                     NormalizeStatus = table.Column<string>(type: "character varying(80)", maxLength: 80, nullable: true),
                     NormalizeRequestId = table.Column<Guid>(type: "uuid", nullable: true),
                     VideoStatus = table.Column<string>(type: "character varying(80)", maxLength: 80, nullable: true),
                     VideoRequestId = table.Column<Guid>(type: "uuid", nullable: true),
                     FinalVideoUrl = table.Column<string>(type: "text", nullable: true),
                     LastFacility = table.Column<string>(type: "character varying(120)", maxLength: 120, nullable: true),
-                    LastError = table.Column<string>(type: "text", nullable: true)
+                    LastError = table.Column<string>(type: "text", nullable: true),
+                    CreationTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CreatorId = table.Column<Guid>(type: "uuid", nullable: true),
+                    LastModificationTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    LastModifierId = table.Column<Guid>(type: "uuid", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -39,19 +41,22 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                 name: "content_inbox_messages",
                 columns: table => new
                 {
-                    EventId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
                     CorrelationId = table.Column<Guid>(type: "uuid", nullable: true),
-                    EventName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    EventName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
                     Payload = table.Column<string>(type: "jsonb", nullable: true),
                     Status = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     ProcessedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     ErrorMessage = table.Column<string>(type: "text", nullable: true),
-                    RetryCount = table.Column<int>(type: "integer", nullable: false)
+                    RetryCount = table.Column<int>(type: "integer", nullable: false),
+                    CreationTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CreatorId = table.Column<Guid>(type: "uuid", nullable: true),
+                    LastModificationTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    LastModifierId = table.Column<Guid>(type: "uuid", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_content_inbox_messages", x => x.EventId);
+                    table.PrimaryKey("PK_content_inbox_messages", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -59,13 +64,11 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    UpdatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    CorrelationId = table.Column<string>(type: "text", nullable: true),
                     ScopeKey = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     DomainName = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
                     ContentKey = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
                     SlugKey = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    CorrelationId = table.Column<string>(type: "text", nullable: true),
                     NormalizeStatus = table.Column<string>(type: "character varying(80)", maxLength: 80, nullable: true),
                     NormalizeRequestId = table.Column<Guid>(type: "uuid", nullable: true),
                     VideoStatus = table.Column<string>(type: "character varying(80)", maxLength: 80, nullable: true),
@@ -73,7 +76,11 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                     AudioRequestId = table.Column<Guid>(type: "uuid", nullable: true),
                     FinalVideoUrl = table.Column<string>(type: "text", nullable: true),
                     LastFacility = table.Column<string>(type: "character varying(120)", maxLength: 120, nullable: true),
-                    LastError = table.Column<string>(type: "text", nullable: true)
+                    LastError = table.Column<string>(type: "text", nullable: true),
+                    CreationTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CreatorId = table.Column<Guid>(type: "uuid", nullable: true),
+                    LastModificationTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    LastModifierId = table.Column<Guid>(type: "uuid", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -174,6 +181,16 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                 column: "CustomerContentId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_analysis_contents_ScopeKey",
+                table: "analysis_contents",
+                column: "ScopeKey");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_content_inbox_messages_Status",
+                table: "content_inbox_messages",
+                column: "Status");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ContentVideoGenerationLimits_CustomerVpSettingId",
                 table: "ContentVideoGenerationLimits",
                 column: "CustomerVpSettingId");
@@ -182,6 +199,17 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                 name: "IX_ContentVideoGenerationLimits_ScopeKey_VideoGenerationType",
                 table: "ContentVideoGenerationLimits",
                 columns: new[] { "ScopeKey", "VideoGenerationType" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_customer_contents_ScopeKey",
+                table: "customer_contents",
+                column: "ScopeKey");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_customer_contents_ScopeKey_DomainName",
+                table: "customer_contents",
+                columns: new[] { "ScopeKey", "DomainName" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_CustomerVpSettings_DomainName",

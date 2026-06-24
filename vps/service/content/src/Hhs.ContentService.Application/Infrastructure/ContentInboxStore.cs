@@ -13,7 +13,7 @@ public sealed class ContentInboxStore(ContentServiceDbContext context)
     public async Task<bool> IsProcessedAsync(Guid eventId, CancellationToken cancellationToken)
     {
         return await context.InboxMessages
-            .AnyAsync(x => x.EventId == eventId && x.Status == InboxStatuses.Completed,
+            .AnyAsync(x => x.Id == eventId && x.Status == InboxStatuses.Completed,
                 cancellationToken: cancellationToken);
     }
 
@@ -24,7 +24,7 @@ public sealed class ContentInboxStore(ContentServiceDbContext context)
             return false;
 
         var existing = await context.InboxMessages
-            .FirstOrDefaultAsync(x => x.EventId == @event.MessageId, cancellationToken);
+            .FirstOrDefaultAsync(x => x.Id == @event.MessageId, cancellationToken);
 
         if (existing is not null)
         {
@@ -37,7 +37,7 @@ public sealed class ContentInboxStore(ContentServiceDbContext context)
                     return false;
 
                 await context.InboxMessages
-                    .Where(x => x.EventId == @event.MessageId && x.Status == InboxStatuses.Failed)
+                    .Where(x => x.Id == @event.MessageId && x.Status == InboxStatuses.Failed)
                     .ExecuteUpdateAsync(
                         s => s
                             .SetProperty(a => a.Status, InboxStatuses.Started)
@@ -54,15 +54,10 @@ public sealed class ContentInboxStore(ContentServiceDbContext context)
             return false;
         }
 
-        context.InboxMessages.Add(new ContentInboxMessage
-        {
-            EventId = @event.MessageId,
-            EventName = typeof(TEvent).Name,
-            Payload = JsonSerializer.Serialize(@event.Message, @event.Message.GetType()),
-            Status = InboxStatuses.Started,
-            CreatedAtUtc = DateTime.UtcNow,
-            RetryCount = 0
-        });
+        context.InboxMessages.Add(new ContentInboxMessage(
+            @event.MessageId,
+            typeof(TEvent).Name,
+            JsonSerializer.Serialize(@event.Message, @event.Message.GetType())));
 
         try
         {
@@ -78,7 +73,7 @@ public sealed class ContentInboxStore(ContentServiceDbContext context)
     public async Task CompleteAsync(Guid eventId, CancellationToken cancellationToken)
     {
         await context.InboxMessages
-            .Where(x => x.EventId == eventId)
+            .Where(x => x.Id == eventId)
             .ExecuteUpdateAsync(
                 s => s
                     .SetProperty(a => a.Status, InboxStatuses.Completed)
@@ -90,7 +85,7 @@ public sealed class ContentInboxStore(ContentServiceDbContext context)
     public async Task FailAsync(Guid eventId, Exception ex, CancellationToken cancellationToken)
     {
         var inbox = await context.InboxMessages
-            .FirstOrDefaultAsync(x => x.EventId == eventId, cancellationToken);
+            .FirstOrDefaultAsync(x => x.Id == eventId, cancellationToken);
 
         if (inbox != null)
         {

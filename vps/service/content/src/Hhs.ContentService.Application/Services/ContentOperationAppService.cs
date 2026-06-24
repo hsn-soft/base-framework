@@ -1,11 +1,10 @@
 using Hhs.ContentService.Domain.ContentDomain.Entities;
-using Hhs.ContentService.EntityFrameworkCore.Context;
+using Hhs.ContentService.Domain.ContentDomain.Repositories;
 using Hhs.Shared.Contracts.Events;
 using Hhs.Shared.Helper;
 using Hhs.Shared.Helper.Enums;
 using HsnSoft.Base.Text;
 using HsnSoft.Base.Tracing;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace Hhs.ContentService.Application.Services;
@@ -23,30 +22,27 @@ public sealed record CreateAnalysisContentRequest(
 public sealed class ContentOperationAppService(
     IServiceProvider provider,
     ITraceAccesor traceAccessor,
-    ContentServiceDbContext db,
+    ICustomerContentRepository customerContentRepository,
+    IAnalysisContentRepository analysisContentRepository,
     ILogger<ContentOperationAppService> logger) : ApplicationServiceBase(provider)
 {
+    private readonly ICustomerContentRepository _customerContentRepository = customerContentRepository;
+    private readonly IAnalysisContentRepository _analysisContentRepository = analysisContentRepository;
+
     public async Task<CreateContentResponse> CreateCustomerContentAsync(CreateCustomerContentRequest request, CancellationToken cancellationToken)
     {
         var id = Guid.NewGuid();
+        var slugKey = StringHelper.SlugKeyNormalize(request.ContentKey);
 
-        var entity = new CustomerContent
-        {
-            Id = id,
-            ScopeKey = request.ScopeKey,
-            DomainName = request.DomainName,
-            ContentKey = request.ContentKey,
-            SlugKey = StringHelper.SlugKeyNormalize(request.ContentKey),
-            NormalizeStatus = StatusNames.Created,
-            VideoStatus = StatusNames.NotStarted,
-            LastFacility = EventNames.CustomerContentCreated,
-            CreatedAtUtc = DateTime.UtcNow,
-            UpdatedAtUtc = DateTime.UtcNow,
-            CorrelationId = traceAccessor?.GetCorrelationId()
-        };
+        var entity = new CustomerContent(
+            id,
+            request.ScopeKey,
+            request.DomainName,
+            request.ContentKey,
+            slugKey,
+            traceAccessor?.GetCorrelationId());
 
-        db.CustomerContents.Add(entity);
-        await db.SaveChangesAsync(cancellationToken);
+        await _customerContentRepository.InsertAsync(entity, cancellationToken);
 
         logger.LogInformation($"About to publish CustomerContentCreatedEto for RefContentId: {id}, ScopeKey: {entity.ScopeKey}");
 
@@ -73,43 +69,40 @@ public sealed class ContentOperationAppService(
     {
         var analysisId = Guid.NewGuid();
 
-        var contents = await db.CustomerContents
-            .Where(x => request.CustomerContentIds.Contains(x.Id))
-            .ToListAsync(cancellationToken);
-
-        var contentMap = contents.ToDictionary(x => x.Id);
-
-        var analysis = new AnalysisContent
+        // Fetch all customer contents by IDs
+        var contentsForAnalysis = new List<CustomerContent>();
+        foreach (var id in request.CustomerContentIds)
         {
-            Id = analysisId,
-            ScopeKey = request.ScopeKey,
-            DomainName = request.DomainName,
-            Title = request.Title,
-            NormalizeStatus = StatusNames.Created,
-            VideoStatus = StatusNames.NotStarted,
-            LastFacility = EventNames.AnalysisContentCreated,
-            CreatedAtUtc = DateTime.UtcNow,
-            UpdatedAtUtc = DateTime.UtcNow,
-            CorrelationId = traceAccessor?.GetCorrelationId()
-        };
+            var content = await _customerContentRepository.GetByIdWithTrackingAsync(id, cancellationToken);
+            if (content == null)
+                throw new InvalidOperationException($"CustomerContent not found: {id}");
+            contentsForAnalysis.Add(content);
+        }
+
+        var analysis = new AnalysisContent(
+            analysisId,
+            request.ScopeKey,
+            request.DomainName,
+            request.Title,
+            traceAccessor?.GetCorrelationId());
 
         int sort = 1;
 
         foreach (var customerContentId in request.CustomerContentIds)
         {
-            if (!contentMap.ContainsKey(customerContentId))
+            var content = contentsForAnalysis.FirstOrDefault(x => x.Id == customerContentId);
+            if (content == null)
                 throw new InvalidOperationException($"CustomerContent not found: {customerContentId}");
 
             analysis.Items.Add(new AnalysisContentItem { Id = Guid.NewGuid(), AnalysisContentId = analysisId, CustomerContentId = customerContentId, SortOrder = sort++ });
         }
 
-        db.AnalysisContents.Add(analysis);
-        await db.SaveChangesAsync(cancellationToken);
+        await _analysisContentRepository.InsertAsync(analysis, cancellationToken);
 
         var items = request.CustomerContentIds
             .Select((id, index) =>
             {
-                var content = contentMap[id];
+                var content = contentsForAnalysis.First(x => x.Id == id);
 
                 return new AnalysisNormalizeItem { CustomerContentId = content.Id, ContentKey = content.ContentKey, SortOrder = index + 1 };
             })
@@ -127,11 +120,11 @@ public sealed class ContentOperationAppService(
     public async Task HandleNormalizerResultAsync(NormalizerResultPublishedEto @event, CancellationToken cancellationToken = default)
     {
         bool shouldPublishEvent = false;
+        string? scopeKey = null;
 
         if (@event.RefContentType == ContentType.CustomerContent)
         {
-            var entity = await db.CustomerContents
-                .FirstOrDefaultAsync(x => x.Id == @event.RefContentId, cancellationToken);
+            var entity = await _customerContentRepository.GetByIdWithTrackingAsync(@event.RefContentId, cancellationToken);
 
             if (entity != null && entity.NormalizeRequestId == null)
             {
@@ -140,15 +133,16 @@ public sealed class ContentOperationAppService(
                 entity.VideoStatus = StatusNames.Approved;
                 entity.LastFacility = EventNames.NormalizerResultPublished;
                 entity.LastError = null;
-                entity.UpdatedAtUtc = DateTime.UtcNow;
                 shouldPublishEvent = true;
+                scopeKey = entity.ScopeKey;
+
+                await _customerContentRepository.UpdateAsync(entity, cancellationToken);
             }
         }
 
         if (@event.RefContentType == ContentType.AnalysisContent)
         {
-            var entity = await db.AnalysisContents
-                .FirstOrDefaultAsync(x => x.Id == @event.RefContentId, cancellationToken);
+            var entity = await _analysisContentRepository.GetByIdWithItemsAsync(@event.RefContentId, cancellationToken);
 
             if (entity != null && entity.NormalizeRequestId == null)
             {
@@ -157,19 +151,15 @@ public sealed class ContentOperationAppService(
                 entity.VideoStatus = StatusNames.Approved;
                 entity.LastFacility = EventNames.NormalizerResultPublished;
                 entity.LastError = null;
-                entity.UpdatedAtUtc = DateTime.UtcNow;
                 shouldPublishEvent = true;
+                scopeKey = entity.ScopeKey;
+
+                await _analysisContentRepository.UpdateAsync(entity, cancellationToken);
             }
         }
 
         if (shouldPublishEvent)
         {
-            await db.SaveChangesAsync(cancellationToken);
-
-            string? scopeKey = @event.RefContentType == ContentType.CustomerContent
-                ? (await db.CustomerContents.FirstOrDefaultAsync(x => x.Id == @event.RefContentId, cancellationToken))?.ScopeKey
-                : (await db.AnalysisContents.FirstOrDefaultAsync(x => x.Id == @event.RefContentId, cancellationToken))?.ScopeKey;
-
             await EventBus.PublishAsync(
                 parentMessage: ParentIntegrationEvent,
                 eventMessage: new VideoGenerationApprovedEto { RefContentId = @event.RefContentId, RefContentType = @event.RefContentType, ScopeKey = scopeKey ?? string.Empty, VideoInputJson = @event.VideoInputJson }
@@ -181,45 +171,43 @@ public sealed class ContentOperationAppService(
     {
         if (@event.RefContentType == ContentType.CustomerContent)
         {
-            var entity = await db.CustomerContents.FirstOrDefaultAsync(x => x.Id == @event.RefContentId, cancellationToken);
+            var entity = await _customerContentRepository.GetByIdWithTrackingAsync(@event.RefContentId, cancellationToken);
             if (entity != null)
             {
                 entity.VideoStatus = StatusNames.Completed;
                 entity.VideoRequestId = @event.VideoRequestId;
                 entity.FinalVideoUrl = @event.FinalVideoUrl;
                 entity.LastFacility = EventNames.VideoGenerationResultPublished;
-                entity.UpdatedAtUtc = DateTime.UtcNow;
+
+                await _customerContentRepository.UpdateAsync(entity, cancellationToken);
             }
         }
 
         if (@event.RefContentType == ContentType.AnalysisContent)
         {
-            var entity = await db.AnalysisContents.FirstOrDefaultAsync(x => x.Id == @event.RefContentId, cancellationToken);
+            var entity = await _analysisContentRepository.GetByIdWithItemsAsync(@event.RefContentId, cancellationToken);
             if (entity != null)
             {
                 entity.VideoStatus = StatusNames.Completed;
                 entity.VideoRequestId = @event.VideoRequestId;
                 entity.FinalVideoUrl = @event.FinalVideoUrl;
                 entity.LastFacility = EventNames.VideoGenerationResultPublished;
-                entity.UpdatedAtUtc = DateTime.UtcNow;
+
+                await _analysisContentRepository.UpdateAsync(entity, cancellationToken);
             }
         }
-
-        await db.SaveChangesAsync(cancellationToken);
     }
 
     public async Task HandleStepFailedAsync(StepFailedEto @event, CancellationToken cancellationToken = default)
     {
         if (@event.RefContentType == ContentType.CustomerContent)
         {
-            var entity = await db.CustomerContents
-                .FirstOrDefaultAsync(x => x.Id == @event.RefContentId, cancellationToken);
+            var entity = await _customerContentRepository.GetByIdWithTrackingAsync(@event.RefContentId, cancellationToken);
 
             if (entity is not null)
             {
                 entity.LastFacility = EventNames.StepFailed;
                 entity.LastError = @event.ErrorMessage;
-                entity.UpdatedAtUtc = DateTime.UtcNow;
 
                 if (!@event.Retryable)
                 {
@@ -229,19 +217,19 @@ public sealed class ContentOperationAppService(
                     if (IsVideoStep(@event.Step))
                         entity.VideoStatus = StatusNames.Failed;
                 }
+
+                await _customerContentRepository.UpdateAsync(entity, cancellationToken);
             }
         }
 
         if (@event.RefContentType == ContentType.AnalysisContent)
         {
-            var entity = await db.AnalysisContents
-                .FirstOrDefaultAsync(x => x.Id == @event.RefContentId, cancellationToken);
+            var entity = await _analysisContentRepository.GetByIdWithItemsAsync(@event.RefContentId, cancellationToken);
 
             if (entity is not null)
             {
                 entity.LastFacility = EventNames.StepFailed;
                 entity.LastError = @event.ErrorMessage;
-                entity.UpdatedAtUtc = DateTime.UtcNow;
 
                 if (!@event.Retryable)
                 {
@@ -251,10 +239,10 @@ public sealed class ContentOperationAppService(
                     if (IsVideoStep(@event.Step))
                         entity.VideoStatus = StatusNames.Failed;
                 }
+
+                await _analysisContentRepository.UpdateAsync(entity, cancellationToken);
             }
         }
-
-        await db.SaveChangesAsync(cancellationToken);
     }
 
     private static bool IsNormalizeStep(string step)

@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Hhs.ContentService.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(ContentServiceDbContext))]
-    [Migration("20260624134240_InitialCreate")]
+    [Migration("20260624145859_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -28,14 +28,18 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
             modelBuilder.Entity("Hhs.ContentService.Domain.ContentDomain.Entities.AnalysisContent", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<string>("CorrelationId")
                         .HasColumnType("text");
 
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreationTime");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("CreatorId");
 
                     b.Property<string>("DomainName")
                         .IsRequired()
@@ -51,6 +55,14 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                     b.Property<string>("LastFacility")
                         .HasMaxLength(120)
                         .HasColumnType("character varying(120)");
+
+                    b.Property<DateTime>("LastModificationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("LastModificationTime");
+
+                    b.Property<Guid?>("LastModifierId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("LastModifierId");
 
                     b.Property<Guid?>("NormalizeRequestId")
                         .HasColumnType("uuid");
@@ -68,9 +80,6 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
-                    b.Property<DateTime>("UpdatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<Guid?>("VideoRequestId")
                         .HasColumnType("uuid");
 
@@ -79,6 +88,8 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                         .HasColumnType("character varying(80)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ScopeKey");
 
                     b.ToTable("analysis_contents", (string)null);
                 });
@@ -113,23 +124,35 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
 
             modelBuilder.Entity("Hhs.ContentService.Domain.ContentDomain.Entities.ContentInboxMessage", b =>
                 {
-                    b.Property<Guid>("EventId")
-                        .ValueGeneratedOnAdd()
+                    b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
                     b.Property<Guid?>("CorrelationId")
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreationTime");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("CreatorId");
 
                     b.Property<string>("ErrorMessage")
                         .HasColumnType("text");
 
                     b.Property<string>("EventName")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTime>("LastModificationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("LastModificationTime");
+
+                    b.Property<Guid?>("LastModifierId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("LastModifierId");
 
                     b.Property<string>("Payload")
                         .HasColumnType("jsonb");
@@ -145,7 +168,9 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
-                    b.HasKey("EventId");
+                    b.HasKey("Id");
+
+                    b.HasIndex("Status");
 
                     b.ToTable("content_inbox_messages", (string)null);
                 });
@@ -153,7 +178,6 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
             modelBuilder.Entity("Hhs.ContentService.Domain.ContentDomain.Entities.CustomerContent", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<Guid?>("AudioRequestId")
@@ -167,8 +191,13 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                     b.Property<string>("CorrelationId")
                         .HasColumnType("text");
 
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreationTime");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("CreatorId");
 
                     b.Property<string>("DomainName")
                         .IsRequired()
@@ -184,6 +213,14 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                     b.Property<string>("LastFacility")
                         .HasMaxLength(120)
                         .HasColumnType("character varying(120)");
+
+                    b.Property<DateTime>("LastModificationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("LastModificationTime");
+
+                    b.Property<Guid?>("LastModifierId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("LastModifierId");
 
                     b.Property<Guid?>("NormalizeRequestId")
                         .HasColumnType("uuid");
@@ -202,9 +239,6 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
-                    b.Property<DateTime>("UpdatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<Guid?>("VideoRequestId")
                         .HasColumnType("uuid");
 
@@ -213,6 +247,11 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                         .HasColumnType("character varying(80)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ScopeKey");
+
+                    b.HasIndex("ScopeKey", "DomainName")
+                        .IsUnique();
 
                     b.ToTable("customer_contents", (string)null);
                 });

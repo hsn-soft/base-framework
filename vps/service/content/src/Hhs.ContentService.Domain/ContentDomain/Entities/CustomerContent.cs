@@ -1,22 +1,20 @@
+using Hhs.ContentService.Domain.ContentDomain.Consts;
+using HsnSoft.Base.Domain.Entities.Auditing;
+
 namespace Hhs.ContentService.Domain.ContentDomain.Entities;
 
-public sealed class CustomerContent
+public sealed class CustomerContent : AuditedEntity<Guid>
 {
-    // Audit Fields
-    public Guid Id { get; set; }
-    public DateTime CreatedAtUtc { get; set; }
-    public DateTime UpdatedAtUtc { get; set; }
-
-    // Correlation & Tracing
-    public string? CorrelationId { get; set; }
-
     // Subscription & Scope
-    public string ScopeKey { get; set; } = default!;
+    public string ScopeKey { get; private set; } = default!;
 
     // Content Metadata
-    public string DomainName { get; set; } = default!;
-    public string ContentKey { get; set; } = default!;
-    public string SlugKey { get; set; } = default!;
+    public string DomainName { get; private set; } = default!;
+    public string ContentKey { get; private set; } = default!;
+    public string SlugKey { get; private set; } = default!;
+
+    // Correlation & Tracing
+    public string? CorrelationId { get; private set; }
 
     // Normalization Status
     public string? NormalizeStatus { get; set; }
@@ -31,4 +29,16 @@ public sealed class CustomerContent
     public string? FinalVideoUrl { get; set; }
     public string? LastFacility { get; set; }
     public string? LastError { get; set; }
+
+    private CustomerContent() { }
+
+    public CustomerContent(Guid id, string scopeKey, string domainName, string contentKey, string slugKey, string? correlationId = null)
+    {
+        Id = id;
+        ScopeKey = scopeKey;
+        DomainName = domainName;
+        ContentKey = contentKey;
+        SlugKey = slugKey;
+        CorrelationId = correlationId;
+    }
 }
