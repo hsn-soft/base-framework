@@ -7,14 +7,11 @@ public static class CustomerContentNormalizedRequestClassMap
 {
     public static void Register()
     {
-        if (!BsonClassMap.IsClassMapRegistered(typeof(CustomerContentNormalizedRequest)))
+        BsonClassMap.RegisterClassMap<CustomerContentNormalizedRequest>(map =>
         {
-            BsonClassMap.RegisterClassMap<CustomerContentNormalizedRequest>(map =>
-            {
-                map.AutoMap();
-                map.SetIgnoreExtraElements(true);
-                map.MapIdMember(x => x.Id);
-            });
-        }
+            map.AutoMap();
+            map.SetIgnoreExtraElements(true);
+            map.MapIdMember(x => x.Id);
+        });
     }
 }
