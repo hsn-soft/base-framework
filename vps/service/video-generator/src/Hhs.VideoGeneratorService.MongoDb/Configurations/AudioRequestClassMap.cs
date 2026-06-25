@@ -1,3 +1,5 @@
+using HsnSoft.Base.MongoDB.Helpers;
+using Hhs.VideoGeneratorService.Domain.MediaDomain.Consts;
 using Hhs.VideoGeneratorService.Domain.MediaDomain.Entities;
 using MongoDB.Bson.Serialization;
 
@@ -12,13 +14,22 @@ public static class AudioRequestClassMap
             map.AutoMap();
             map.SetIgnoreExtraElements(true);
 
-            // Correlation & Context - MaxLength: AudioRequestConsts.CorrelationIdMaxLength
-            // Subscription & Scope - MaxLength: AudioRequestConsts.ScopeKeyMaxLength
-            map.MapMember(x => x.ScopeKey).SetIsRequired(true);
+            // Correlation & Context
+            map.MapMember(x => x.CorrelationId)
+                .SetMaxLength(AudioRequestConsts.CorrelationIdMaxLength);
 
-            // Status & Configuration - MaxLength: AudioRequestConsts.StatusMaxLength, AudioRequestConsts.CurrentStepMaxLength
-            map.MapMember(x => x.Status).SetIsRequired(true);
-            map.MapMember(x => x.CurrentStep).SetIsRequired(true);
+            // Subscription & Scope
+            map.MapMember(x => x.ScopeKey)
+                .SetIsRequired(true)
+                .SetMaxLength(AudioRequestConsts.ScopeKeyMaxLength);
+
+            // Status & Configuration
+            map.MapMember(x => x.Status)
+                .SetIsRequired(true)
+                .SetMaxLength(AudioRequestConsts.StatusMaxLength);
+            map.MapMember(x => x.CurrentStep)
+                .SetIsRequired(true)
+                .SetMaxLength(AudioRequestConsts.CurrentStepMaxLength);
 
             // Reference Fields
             map.MapMember(x => x.RefContentId).SetIsRequired(true);
@@ -26,23 +37,35 @@ public static class AudioRequestClassMap
             map.MapMember(x => x.SourceEventId).SetIsRequired(true);
             map.MapMember(x => x.VideoRequestId).SetIsRequired(true);
 
-            // Input Data - MaxLength: AudioRequestConsts.InputTextMaxLength
-            map.MapMember(x => x.InputText).SetIsRequired(true);
+            // Input Data
+            map.MapMember(x => x.InputText)
+                .SetIsRequired(true)
+                .SetMaxLength(AudioRequestConsts.InputTextMaxLength);
 
-            // Provider Configuration - MaxLength: AudioRequestConsts.AudioProviderKeyMaxLength
-            map.MapMember(x => x.AudioProviderKey).SetIsRequired(true);
+            // Provider Configuration
+            map.MapMember(x => x.AudioProviderKey)
+                .SetIsRequired(true)
+                .SetMaxLength(AudioRequestConsts.AudioProviderKeyMaxLength);
 
             // Audio Generation (external provider)
-            // MaxLength: AudioRequestConsts.AudioProviderTrackingIdMaxLength
-            // MaxLength: AudioRequestConsts.AudioProviderUrlMaxLength
-            // MaxLength: AudioRequestConsts.AudioLocalPathMaxLength
+            map.MapMember(x => x.AudioProviderTrackingId)
+                .SetMaxLength(AudioRequestConsts.AudioProviderTrackingIdMaxLength);
+            map.MapMember(x => x.AudioProviderUrl)
+                .SetMaxLength(AudioRequestConsts.AudioProviderUrlMaxLength);
+            map.MapMember(x => x.AudioLocalPath)
+                .SetMaxLength(AudioRequestConsts.AudioLocalPathMaxLength);
 
             // Storage & CDN
-            // MaxLength: AudioRequestConsts.AudioStorageUrlMaxLength
-            // MaxLength: AudioRequestConsts.AudioCdnUrlMaxLength
-            // MaxLength: AudioRequestConsts.AudioCdnProviderKeyMaxLength
+            map.MapMember(x => x.AudioStorageUrl)
+                .SetMaxLength(AudioRequestConsts.AudioStorageUrlMaxLength);
+            map.MapMember(x => x.AudioCdnUrl)
+                .SetMaxLength(AudioRequestConsts.AudioCdnUrlMaxLength);
+            map.MapMember(x => x.AudioCdnProviderKey)
+                .SetMaxLength(AudioRequestConsts.AudioCdnProviderKeyMaxLength);
 
-            // Error Handling - MaxLength: AudioRequestConsts.LastErrorMaxLength
+            // Error Handling
+            map.MapMember(x => x.LastError)
+                .SetMaxLength(AudioRequestConsts.LastErrorMaxLength);
         });
     }
 }

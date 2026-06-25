@@ -1,3 +1,5 @@
+using HsnSoft.Base.MongoDB.Helpers;
+using Hhs.TextNormalizerService.Domain.NormalizeDomain.Consts;
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Entities;
 using MongoDB.Bson.Serialization;
 
@@ -12,23 +14,44 @@ public static class CustomerContentNormalizedRequestClassMap
             map.AutoMap();
             map.SetIgnoreExtraElements(true);
 
-            // Correlation & Tracing - MaxLength: CustomerContentNormalizedRequestConsts.CorrelationIdMaxLength
-            // Subscription & Scope - MaxLength: CustomerContentNormalizedRequestConsts.ScopeKeyMaxLength
-            map.MapMember(x => x.ScopeKey).SetIsRequired(true);
+            // Correlation & Tracing
+            map.MapMember(x => x.CorrelationId)
+                .SetMaxLength(CustomerContentNormalizedRequestConsts.CorrelationIdMaxLength);
 
-            // Content Reference - MaxLength: CustomerContentNormalizedRequestConsts.DomainNameMaxLength, ContentKeyMaxLength
-            map.MapMember(x => x.DomainName).SetIsRequired(true);
-            map.MapMember(x => x.ContentKey).SetIsRequired(true);
+            // Subscription & Scope
+            map.MapMember(x => x.ScopeKey)
+                .SetIsRequired(true)
+                .SetMaxLength(CustomerContentNormalizedRequestConsts.ScopeKeyMaxLength);
 
-            // Status & Progress - MaxLength: CustomerContentNormalizedRequestConsts.StatusMaxLength, CurrentStepMaxLength
-            map.MapMember(x => x.Status).SetIsRequired(true);
-            map.MapMember(x => x.CurrentStep).SetIsRequired(true);
+            // Content Reference
+            map.MapMember(x => x.DomainName)
+                .SetIsRequired(true)
+                .SetMaxLength(CustomerContentNormalizedRequestConsts.DomainNameMaxLength);
+            map.MapMember(x => x.ContentKey)
+                .SetIsRequired(true)
+                .SetMaxLength(CustomerContentNormalizedRequestConsts.ContentKeyMaxLength);
 
-            // Scraping State - MaxLength: CustomerContentNormalizedRequestConsts.ScrapingStatusMaxLength
+            // Status & Progress
+            map.MapMember(x => x.Status)
+                .SetIsRequired(true)
+                .SetMaxLength(CustomerContentNormalizedRequestConsts.StatusMaxLength);
+            map.MapMember(x => x.CurrentStep)
+                .SetIsRequired(true)
+                .SetMaxLength(CustomerContentNormalizedRequestConsts.CurrentStepMaxLength);
 
-            // Outline Generation State - MaxLength: CustomerContentNormalizedRequestConsts.OutlineStatusMaxLength, OutlineProviderTrackIdMaxLength
+            // Scraping State
+            map.MapMember(x => x.ScrapingStatus)
+                .SetMaxLength(CustomerContentNormalizedRequestConsts.ScrapingStatusMaxLength);
 
-            // Error Handling - MaxLength: CustomerContentNormalizedRequestConsts.LastErrorMaxLength
+            // Outline Generation State
+            map.MapMember(x => x.OutlineStatus)
+                .SetMaxLength(CustomerContentNormalizedRequestConsts.OutlineStatusMaxLength);
+            map.MapMember(x => x.OutlineProviderTrackId)
+                .SetMaxLength(CustomerContentNormalizedRequestConsts.OutlineProviderTrackIdMaxLength);
+
+            // Error Handling
+            map.MapMember(x => x.LastError)
+                .SetMaxLength(CustomerContentNormalizedRequestConsts.LastErrorMaxLength);
         });
     }
 }

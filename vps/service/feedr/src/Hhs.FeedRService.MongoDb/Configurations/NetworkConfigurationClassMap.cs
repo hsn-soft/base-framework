@@ -1,3 +1,5 @@
+using HsnSoft.Base.MongoDB.Helpers;
+using Hhs.FeedRService.Domain.ConfigurationDomain.Consts;
 using Hhs.FeedRService.Domain.ConfigurationDomain.Entities.MongoDB;
 using Hhs.FeedRService.Domain.ConfigurationDomain.Models;
 using MongoDB.Bson.Serialization;
@@ -18,7 +20,11 @@ public static class NetworkConfigurationClassMap
         {
             map.AutoMap();
             map.SetIgnoreExtraElements(true);
+
             map.MapMember(x => x.NetworkCode).SetIsRequired(true);
+
+            map.MapMember(x => x.DisplayName)
+                .SetMaxLength(NetworkConfigurationConsts.DisplayNameMaxLength);
         });
     }
 }

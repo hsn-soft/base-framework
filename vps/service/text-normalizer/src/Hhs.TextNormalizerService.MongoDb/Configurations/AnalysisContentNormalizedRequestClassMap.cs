@@ -1,3 +1,5 @@
+using HsnSoft.Base.MongoDB.Helpers;
+using Hhs.TextNormalizerService.Domain.NormalizeDomain.Consts;
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Entities;
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Models;
 using MongoDB.Bson.Serialization;
@@ -13,17 +15,30 @@ public static class AnalysisContentNormalizedRequestClassMap
             map.AutoMap();
             map.SetIgnoreExtraElements(true);
 
-            // Correlation & Tracing - MaxLength: AnalysisContentNormalizedRequestConsts.CorrelationIdMaxLength
-            // Subscription & Scope - MaxLength: AnalysisContentNormalizedRequestConsts.ScopeKeyMaxLength
-            map.MapMember(x => x.ScopeKey).SetIsRequired(true);
+            // Correlation & Tracing
+            map.MapMember(x => x.CorrelationId)
+                .SetMaxLength(AnalysisContentNormalizedRequestConsts.CorrelationIdMaxLength);
 
-            // Content Reference - MaxLength: AnalysisContentNormalizedRequestConsts.DomainNameMaxLength
+            // Subscription & Scope
+            map.MapMember(x => x.ScopeKey)
+                .SetIsRequired(true)
+                .SetMaxLength(AnalysisContentNormalizedRequestConsts.ScopeKeyMaxLength);
 
-            // Status & Progress - MaxLength: AnalysisContentNormalizedRequestConsts.StatusMaxLength, AnalysisContentNormalizedRequestConsts.CurrentStepMaxLength
-            map.MapMember(x => x.Status).SetIsRequired(true);
-            map.MapMember(x => x.CurrentStep).SetIsRequired(true);
+            // Content Reference
+            map.MapMember(x => x.DomainName)
+                .SetMaxLength(AnalysisContentNormalizedRequestConsts.DomainNameMaxLength);
 
-            // Error Handling - MaxLength: AnalysisContentNormalizedRequestConsts.LastErrorMaxLength
+            // Status & Progress
+            map.MapMember(x => x.Status)
+                .SetIsRequired(true)
+                .SetMaxLength(AnalysisContentNormalizedRequestConsts.StatusMaxLength);
+            map.MapMember(x => x.CurrentStep)
+                .SetIsRequired(true)
+                .SetMaxLength(AnalysisContentNormalizedRequestConsts.CurrentStepMaxLength);
+
+            // Error Handling
+            map.MapMember(x => x.LastError)
+                .SetMaxLength(AnalysisContentNormalizedRequestConsts.LastErrorMaxLength);
         });
 
         if (!BsonClassMap.IsClassMapRegistered(typeof(AnalysisNormalizedItem)))
@@ -33,22 +48,29 @@ public static class AnalysisContentNormalizedRequestClassMap
                 map.AutoMap();
                 map.SetIgnoreExtraElements(true);
 
-                // Content Reference - MaxLength: AnalysisNormalizedItemConsts.ContentKeyMaxLength
-                map.MapMember(x => x.ContentKey).SetIsRequired(true);
+                // Content Reference
+                map.MapMember(x => x.ContentKey)
+                    .SetIsRequired(true);
 
-                // Scraping State - MaxLength: AnalysisNormalizedItemConsts.ScrapingStatusMaxLength
-                map.MapMember(x => x.ScrapingStatus).SetIsRequired(true);
+                // Scraping State
+                map.MapMember(x => x.ScrapingStatus)
+                    .SetIsRequired(true);
 
-                // Outline Generation State - MaxLength: AnalysisNormalizedItemConsts.OutlineStatusMaxLength
-                map.MapMember(x => x.OutlineStatus).SetIsRequired(true);
+                // Outline Generation State
+                map.MapMember(x => x.OutlineStatus)
+                    .SetIsRequired(true);
 
-                // Outline Polling & Tracking - MaxLength: AnalysisNormalizedItemConsts.OutlineProviderTrackIdMaxLength
+                // Outline Polling & Tracking
+                map.MapMember(x => x.OutlineProviderTrackId);
 
-                // Status & Progress - MaxLength: AnalysisNormalizedItemConsts.StatusMaxLength, AnalysisNormalizedItemConsts.CurrentStepMaxLength
-                map.MapMember(x => x.Status).SetIsRequired(true);
-                map.MapMember(x => x.CurrentStep).SetIsRequired(true);
+                // Status & Progress
+                map.MapMember(x => x.Status)
+                    .SetIsRequired(true);
+                map.MapMember(x => x.CurrentStep)
+                    .SetIsRequired(true);
 
-                // Error Handling & Tracking - MaxLength: AnalysisNormalizedItemConsts.LastErrorMaxLength
+                // Error Handling & Tracking
+                map.MapMember(x => x.LastError);
             });
         }
     }

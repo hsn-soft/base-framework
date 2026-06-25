@@ -1,3 +1,5 @@
+using HsnSoft.Base.MongoDB.Helpers;
+using Hhs.EventManagerService.Domain.EventDomain.Consts;
 using Hhs.EventManagerService.Domain.EventDomain.Entities;
 using MongoDB.Bson.Serialization;
 
@@ -12,23 +14,34 @@ public static class FailedIntegrationEventClassMap
             map.AutoMap();
             map.SetIgnoreExtraElements(true);
 
-            // Correlation & Tracing - MaxLength: FailedIntegrationEventConsts.CorrelationIdMaxLength
+            // Correlation & Tracing
+            map.MapMember(x => x.CorrelationId)
+                .SetMaxLength(FailedIntegrationEventConsts.CorrelationIdMaxLength);
 
             // Error Handling
-            // MaxLength: FailedIntegrationEventConsts.FailedReasonMaxLength
-            map.MapMember(x => x.FailedReason).SetIsRequired(true);
+            map.MapMember(x => x.FailedReason)
+                .SetIsRequired(true)
+                .SetMaxLength(FailedIntegrationEventConsts.FailedReasonMaxLength);
 
-            // OperationStatusDescription - MaxLength: FailedIntegrationEventConsts.OperationStatusDescriptionMaxLength
+            // OperationStatusDescription
+            map.MapMember(x => x.OperationStatusDescription)
+                .SetMaxLength(FailedIntegrationEventConsts.OperationStatusDescriptionMaxLength);
 
             // Provider Information
-            // MaxLength: FailedIntegrationEventConsts.ProducerMaxLength
-            // MaxLength: FailedIntegrationEventConsts.ChannelMaxLength
+            map.MapMember(x => x.Producer)
+                .SetMaxLength(FailedIntegrationEventConsts.ProducerMaxLength);
+            map.MapMember(x => x.Channel)
+                .SetMaxLength(FailedIntegrationEventConsts.ChannelMaxLength);
 
             // User Information
-            // MaxLength: FailedIntegrationEventConsts.UserIdMaxLength
-            // MaxLength: FailedIntegrationEventConsts.UserRoleUniqueNameMaxLength
+            map.MapMember(x => x.UserId)
+                .SetMaxLength(FailedIntegrationEventConsts.UserIdMaxLength);
+            map.MapMember(x => x.UserRoleUniqueName)
+                .SetMaxLength(FailedIntegrationEventConsts.UserRoleUniqueNameMaxLength);
 
-            // Message Information - MaxLength: FailedIntegrationEventConsts.FailedMessageTypeNameMaxLength
+            // Message Information
+            map.MapMember(x => x.FailedMessageTypeName)
+                .SetMaxLength(FailedIntegrationEventConsts.FailedMessageTypeNameMaxLength);
         });
     }
 }
