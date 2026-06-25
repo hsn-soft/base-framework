@@ -251,6 +251,8 @@ public sealed class NormalizerOperationAppService(
     public async Task StartAnalysisItemScrapingAsync(AnalysisItemScrapingStartedEto @event, CancellationToken cancellationToken = default)
     {
         var request = await GetAnalysisContentNormalizedRequestAsync(@event.AnalysisContentId);
+        if (request.Status == StatusNames.Failed) return;
+
         var item = request.Items.First(x => x.CustomerContentId == @event.CustomerContentIdForItem);
 
         try
@@ -305,6 +307,8 @@ public sealed class NormalizerOperationAppService(
     public async Task StartAnalysisItemOutlineAsync(AnalysisItemOutlineStartedEto @event, CancellationToken cancellationToken = default)
     {
         var analysisContentNormalizedRequest = await GetAnalysisContentNormalizedRequestAsync(@event.AnalysisContentId);
+        if (analysisContentNormalizedRequest.Status == StatusNames.Failed) return;
+
         var item = analysisContentNormalizedRequest.Items.First(x => x.CustomerContentId == @event.CustomerContentIdForItem);
 
         try
@@ -775,7 +779,7 @@ public sealed class NormalizerOperationAppService(
             correlationId: request.CorrelationId,
             eventMessage: new StepFailedEto
             {
-                RefContentId = item.CustomerContentId,
+                RefContentId = request.AnalysisContentId,
                 RefContentType = ContentType.AnalysisContent,
                 Step = step,
                 ErrorMessage = ex.Message,
@@ -819,7 +823,7 @@ public sealed class NormalizerOperationAppService(
             correlationId: request.CorrelationId,
             eventMessage: new StepFailedEto
             {
-                RefContentId = item.CustomerContentId,
+                RefContentId = request.AnalysisContentId,
                 RefContentType = ContentType.AnalysisContent,
                 Step = step,
                 ErrorMessage = ex.Message,
