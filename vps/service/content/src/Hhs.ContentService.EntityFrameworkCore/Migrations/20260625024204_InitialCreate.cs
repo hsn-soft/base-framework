@@ -203,9 +203,9 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                 column: "ScopeKey");
 
             migrationBuilder.CreateIndex(
-                name: "IX_CustomerContents_ScopeKey_DomainName",
+                name: "IX_CustomerContents_ScopeKey_ContentKey",
                 table: "CustomerContents",
-                columns: new[] { "ScopeKey", "DomainName" },
+                columns: new[] { "ScopeKey", "ContentKey" },
                 unique: true);
 
             migrationBuilder.CreateIndex(

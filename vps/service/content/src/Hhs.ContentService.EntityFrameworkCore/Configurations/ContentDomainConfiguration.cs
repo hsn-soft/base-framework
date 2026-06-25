@@ -25,7 +25,7 @@ public static class ContentDomainConfiguration
             b.Property(x => x.LastError).HasMaxLength(CustomerContentConsts.LastErrorMaxLength);
 
             b.HasIndex(x => x.ScopeKey);
-            b.HasIndex(x => new { x.ScopeKey, x.DomainName }).IsUnique();
+            b.HasIndex(x => new { x.ScopeKey, x.ContentKey }).IsUnique();
         });
     }
 

@@ -211,7 +211,7 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
 
                     b.HasIndex("ScopeKey");
 
-                    b.HasIndex("ScopeKey", "DomainName")
+                    b.HasIndex("ScopeKey", "ContentKey")
                         .IsUnique();
 
                     b.ToTable("CustomerContents", (string)null);
