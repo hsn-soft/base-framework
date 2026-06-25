@@ -9,40 +9,43 @@ public static class FailedIntegrationEventClassMap
 {
     public static void Register()
     {
-        BsonClassMap.RegisterClassMap<FailedIntegrationEvent>(map =>
+        if (!BsonClassMap.IsClassMapRegistered(typeof(FailedIntegrationEvent)))
         {
-            map.AutoMap();
-            // map.MapIdMember(x => x.Id);
-            map.SetIgnoreExtraElements(true);
+            BsonClassMap.RegisterClassMap<FailedIntegrationEvent>(map =>
+            {
+                map.AutoMap();
+                // map.MapIdMember(x => x.Id);
+                map.SetIgnoreExtraElements(true);
 
-            // Correlation & Tracing
-            map.MapMember(x => x.CorrelationId)
-                .SetMaxLength(FailedIntegrationEventConsts.CorrelationIdMaxLength);
+                // Correlation & Tracing
+                map.MapMember(x => x.CorrelationId)
+                    .SetMaxLength(FailedIntegrationEventConsts.CorrelationIdMaxLength);
 
-            // Error Handling
-            map.MapMember(x => x.FailedReason)
-                .SetIsRequired(true)
-                .SetMaxLength(FailedIntegrationEventConsts.FailedReasonMaxLength);
+                // Error Handling
+                map.MapMember(x => x.FailedReason)
+                    .SetIsRequired(true)
+                    .SetMaxLength(FailedIntegrationEventConsts.FailedReasonMaxLength);
 
-            // OperationStatusDescription
-            map.MapMember(x => x.OperationStatusDescription)
-                .SetMaxLength(FailedIntegrationEventConsts.OperationStatusDescriptionMaxLength);
+                // OperationStatusDescription
+                map.MapMember(x => x.OperationStatusDescription)
+                    .SetMaxLength(FailedIntegrationEventConsts.OperationStatusDescriptionMaxLength);
 
-            // Provider Information
-            map.MapMember(x => x.Producer)
-                .SetMaxLength(FailedIntegrationEventConsts.ProducerMaxLength);
-            map.MapMember(x => x.Channel)
-                .SetMaxLength(FailedIntegrationEventConsts.ChannelMaxLength);
+                // Provider Information
+                map.MapMember(x => x.Producer)
+                    .SetMaxLength(FailedIntegrationEventConsts.ProducerMaxLength);
+                map.MapMember(x => x.Channel)
+                    .SetMaxLength(FailedIntegrationEventConsts.ChannelMaxLength);
 
-            // User Information
-            map.MapMember(x => x.UserId)
-                .SetMaxLength(FailedIntegrationEventConsts.UserIdMaxLength);
-            map.MapMember(x => x.UserRoleUniqueName)
-                .SetMaxLength(FailedIntegrationEventConsts.UserRoleUniqueNameMaxLength);
+                // User Information
+                map.MapMember(x => x.UserId)
+                    .SetMaxLength(FailedIntegrationEventConsts.UserIdMaxLength);
+                map.MapMember(x => x.UserRoleUniqueName)
+                    .SetMaxLength(FailedIntegrationEventConsts.UserRoleUniqueNameMaxLength);
 
-            // Message Information
-            map.MapMember(x => x.FailedMessageTypeName)
-                .SetMaxLength(FailedIntegrationEventConsts.FailedMessageTypeNameMaxLength);
-        });
+                // Message Information
+                map.MapMember(x => x.FailedMessageTypeName)
+                    .SetMaxLength(FailedIntegrationEventConsts.FailedMessageTypeNameMaxLength);
+            });
+        }
     }
 }

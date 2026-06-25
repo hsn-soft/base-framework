@@ -9,49 +9,52 @@ public static class CustomerContentNormalizedRequestClassMap
 {
     public static void Register()
     {
-        BsonClassMap.RegisterClassMap<CustomerContentNormalizedRequest>(map =>
+        if (!BsonClassMap.IsClassMapRegistered(typeof(CustomerContentNormalizedRequest)))
         {
-            map.AutoMap();
-            map.SetIgnoreExtraElements(true);
+            BsonClassMap.RegisterClassMap<CustomerContentNormalizedRequest>(map =>
+            {
+                map.AutoMap();
+                map.SetIgnoreExtraElements(true);
 
-            // Correlation & Tracing
-            map.MapMember(x => x.CorrelationId)
-                .SetMaxLength(CustomerContentNormalizedRequestConsts.CorrelationIdMaxLength);
+                // Correlation & Tracing
+                map.MapMember(x => x.CorrelationId)
+                    .SetMaxLength(CustomerContentNormalizedRequestConsts.CorrelationIdMaxLength);
 
-            // Subscription & Scope
-            map.MapMember(x => x.ScopeKey)
-                .SetIsRequired(true)
-                .SetMaxLength(CustomerContentNormalizedRequestConsts.ScopeKeyMaxLength);
+                // Subscription & Scope
+                map.MapMember(x => x.ScopeKey)
+                    .SetIsRequired(true)
+                    .SetMaxLength(CustomerContentNormalizedRequestConsts.ScopeKeyMaxLength);
 
-            // Content Reference
-            map.MapMember(x => x.DomainName)
-                .SetIsRequired(true)
-                .SetMaxLength(CustomerContentNormalizedRequestConsts.DomainNameMaxLength);
-            map.MapMember(x => x.ContentKey)
-                .SetIsRequired(true)
-                .SetMaxLength(CustomerContentNormalizedRequestConsts.ContentKeyMaxLength);
+                // Content Reference
+                map.MapMember(x => x.DomainName)
+                    .SetIsRequired(true)
+                    .SetMaxLength(CustomerContentNormalizedRequestConsts.DomainNameMaxLength);
+                map.MapMember(x => x.ContentKey)
+                    .SetIsRequired(true)
+                    .SetMaxLength(CustomerContentNormalizedRequestConsts.ContentKeyMaxLength);
 
-            // Status & Progress
-            map.MapMember(x => x.Status)
-                .SetIsRequired(true)
-                .SetMaxLength(CustomerContentNormalizedRequestConsts.StatusMaxLength);
-            map.MapMember(x => x.CurrentStep)
-                .SetIsRequired(true)
-                .SetMaxLength(CustomerContentNormalizedRequestConsts.CurrentStepMaxLength);
+                // Status & Progress
+                map.MapMember(x => x.Status)
+                    .SetIsRequired(true)
+                    .SetMaxLength(CustomerContentNormalizedRequestConsts.StatusMaxLength);
+                map.MapMember(x => x.CurrentStep)
+                    .SetIsRequired(true)
+                    .SetMaxLength(CustomerContentNormalizedRequestConsts.CurrentStepMaxLength);
 
-            // Scraping State
-            map.MapMember(x => x.ScrapingStatus)
-                .SetMaxLength(CustomerContentNormalizedRequestConsts.ScrapingStatusMaxLength);
+                // Scraping State
+                map.MapMember(x => x.ScrapingStatus)
+                    .SetMaxLength(CustomerContentNormalizedRequestConsts.ScrapingStatusMaxLength);
 
-            // Outline Generation State
-            map.MapMember(x => x.OutlineStatus)
-                .SetMaxLength(CustomerContentNormalizedRequestConsts.OutlineStatusMaxLength);
-            map.MapMember(x => x.OutlineProviderTrackId)
-                .SetMaxLength(CustomerContentNormalizedRequestConsts.OutlineProviderTrackIdMaxLength);
+                // Outline Generation State
+                map.MapMember(x => x.OutlineStatus)
+                    .SetMaxLength(CustomerContentNormalizedRequestConsts.OutlineStatusMaxLength);
+                map.MapMember(x => x.OutlineProviderTrackId)
+                    .SetMaxLength(CustomerContentNormalizedRequestConsts.OutlineProviderTrackIdMaxLength);
 
-            // Error Handling
-            map.MapMember(x => x.LastError)
-                .SetMaxLength(CustomerContentNormalizedRequestConsts.LastErrorMaxLength);
-        });
+                // Error Handling
+                map.MapMember(x => x.LastError)
+                    .SetMaxLength(CustomerContentNormalizedRequestConsts.LastErrorMaxLength);
+            });
+        }
     }
 }

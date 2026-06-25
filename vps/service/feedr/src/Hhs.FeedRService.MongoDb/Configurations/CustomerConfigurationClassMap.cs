@@ -9,24 +9,27 @@ public static class CustomerConfigurationClassMap
 {
     public static void Register()
     {
-        BsonClassMap.RegisterClassMap<CustomerConfiguration>(map =>
+        if (!BsonClassMap.IsClassMapRegistered(typeof(CustomerConfiguration)))
         {
-            map.AutoMap();
-            map.SetIgnoreExtraElements(true);
+            BsonClassMap.RegisterClassMap<CustomerConfiguration>(map =>
+            {
+                map.AutoMap();
+                map.SetIgnoreExtraElements(true);
 
-            map.MapMember(x => x.ClientName)
-                .SetIsRequired(true)
-                .SetMaxLength(CustomerConfigurationConsts.ClientNameMaxLength);
+                map.MapMember(x => x.ClientName)
+                    .SetIsRequired(true)
+                    .SetMaxLength(CustomerConfigurationConsts.ClientNameMaxLength);
 
-            map.MapMember(x => x.AdUnitIdTopLevel)
-                .SetIsRequired(true)
-                .SetMaxLength(CustomerConfigurationConsts.AdUnitIdTopLevelMaxLength);
+                map.MapMember(x => x.AdUnitIdTopLevel)
+                    .SetIsRequired(true)
+                    .SetMaxLength(CustomerConfigurationConsts.AdUnitIdTopLevelMaxLength);
 
-            map.MapMember(x => x.Network)
-                .SetMaxLength(CustomerConfigurationConsts.NetworkMaxLength);
+                map.MapMember(x => x.Network)
+                    .SetMaxLength(CustomerConfigurationConsts.NetworkMaxLength);
 
-            map.MapMember(x => x.AdUnitName)
-                .SetMaxLength(CustomerConfigurationConsts.AdUnitNameMaxLength);
-        });
+                map.MapMember(x => x.AdUnitName)
+                    .SetMaxLength(CustomerConfigurationConsts.AdUnitNameMaxLength);
+            });
+        }
     }
 }

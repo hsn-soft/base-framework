@@ -7,15 +7,18 @@ public static class EventInboxMessageClassMap
 {
     public static void Register()
     {
-        BsonClassMap.RegisterClassMap<EventInboxMessage>(map =>
+        if (!BsonClassMap.IsClassMapRegistered(typeof(EventInboxMessage)))
         {
-            map.AutoMap();
-            // map.MapIdMember(x => x.Id);
-            map.SetIgnoreExtraElements(true);
+            BsonClassMap.RegisterClassMap<EventInboxMessage>(map =>
+            {
+                map.AutoMap();
+                // map.MapIdMember(x => x.Id);
+                map.SetIgnoreExtraElements(true);
 
-            map.MapMember(x => x.EventName).SetIsRequired(true);
-            map.MapMember(x => x.Payload).SetIsRequired(true);
-            map.MapMember(x => x.Status).SetIsRequired(true);
-        });
+                map.MapMember(x => x.EventName).SetIsRequired(true);
+                map.MapMember(x => x.Payload).SetIsRequired(true);
+                map.MapMember(x => x.Status).SetIsRequired(true);
+            });
+        }
     }
 }

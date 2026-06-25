@@ -10,36 +10,39 @@ public static class AnalysisContentNormalizedRequestClassMap
 {
     public static void Register()
     {
-        BsonClassMap.RegisterClassMap<AnalysisContentNormalizedRequest>(map =>
+        if (!BsonClassMap.IsClassMapRegistered(typeof(AnalysisContentNormalizedRequest)))
         {
-            map.AutoMap();
-            map.SetIgnoreExtraElements(true);
+            BsonClassMap.RegisterClassMap<AnalysisContentNormalizedRequest>(map =>
+            {
+                map.AutoMap();
+                map.SetIgnoreExtraElements(true);
 
-            // Correlation & Tracing
-            map.MapMember(x => x.CorrelationId)
-                .SetMaxLength(AnalysisContentNormalizedRequestConsts.CorrelationIdMaxLength);
+                // Correlation & Tracing
+                map.MapMember(x => x.CorrelationId)
+                    .SetMaxLength(AnalysisContentNormalizedRequestConsts.CorrelationIdMaxLength);
 
-            // Subscription & Scope
-            map.MapMember(x => x.ScopeKey)
-                .SetIsRequired(true)
-                .SetMaxLength(AnalysisContentNormalizedRequestConsts.ScopeKeyMaxLength);
+                // Subscription & Scope
+                map.MapMember(x => x.ScopeKey)
+                    .SetIsRequired(true)
+                    .SetMaxLength(AnalysisContentNormalizedRequestConsts.ScopeKeyMaxLength);
 
-            // Content Reference
-            map.MapMember(x => x.DomainName)
-                .SetMaxLength(AnalysisContentNormalizedRequestConsts.DomainNameMaxLength);
+                // Content Reference
+                map.MapMember(x => x.DomainName)
+                    .SetMaxLength(AnalysisContentNormalizedRequestConsts.DomainNameMaxLength);
 
-            // Status & Progress
-            map.MapMember(x => x.Status)
-                .SetIsRequired(true)
-                .SetMaxLength(AnalysisContentNormalizedRequestConsts.StatusMaxLength);
-            map.MapMember(x => x.CurrentStep)
-                .SetIsRequired(true)
-                .SetMaxLength(AnalysisContentNormalizedRequestConsts.CurrentStepMaxLength);
+                // Status & Progress
+                map.MapMember(x => x.Status)
+                    .SetIsRequired(true)
+                    .SetMaxLength(AnalysisContentNormalizedRequestConsts.StatusMaxLength);
+                map.MapMember(x => x.CurrentStep)
+                    .SetIsRequired(true)
+                    .SetMaxLength(AnalysisContentNormalizedRequestConsts.CurrentStepMaxLength);
 
-            // Error Handling
-            map.MapMember(x => x.LastError)
-                .SetMaxLength(AnalysisContentNormalizedRequestConsts.LastErrorMaxLength);
-        });
+                // Error Handling
+                map.MapMember(x => x.LastError)
+                    .SetMaxLength(AnalysisContentNormalizedRequestConsts.LastErrorMaxLength);
+            });
+        }
 
         if (!BsonClassMap.IsClassMapRegistered(typeof(AnalysisNormalizedItem)))
         {

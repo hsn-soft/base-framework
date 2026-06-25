@@ -10,56 +10,62 @@ public static class RawGoogleAdManagerResponseClassMap
 {
     public static void Register()
     {
-        BsonClassMap.RegisterClassMap<GoogleAdManagerReportRow>(map =>
+        if (!BsonClassMap.IsClassMapRegistered(typeof(GoogleAdManagerReportRow)))
         {
-            map.AutoMap();
-            map.SetIgnoreExtraElements(true);
+            BsonClassMap.RegisterClassMap<GoogleAdManagerReportRow>(map =>
+            {
+                map.AutoMap();
+                map.SetIgnoreExtraElements(true);
 
-            map.MapMember(x => x.AdUnitIdTopLevel);
+                map.MapMember(x => x.AdUnitIdTopLevel);
 
-            map.MapMember(x => x.AdUnitId);
+                map.MapMember(x => x.AdUnitId);
 
-            map.MapMember(x => x.DemandChannel);
+                map.MapMember(x => x.DemandChannel);
 
-            map.MapMember(x => x.DemandSubchannelName);
+                map.MapMember(x => x.DemandSubchannelName);
 
-            map.MapMember(x => x.OrderId);
+                map.MapMember(x => x.OrderId);
 
-            map.MapMember(x => x.OrderName);
+                map.MapMember(x => x.OrderName);
 
-            map.MapMember(x => x.Date);
-        });
+                map.MapMember(x => x.Date);
+            });
+        }
 
-        BsonClassMap.RegisterClassMap<RawGoogleAdManagerResponse>(map =>
+        if (!BsonClassMap.IsClassMapRegistered(typeof(RawGoogleAdManagerResponse)))
         {
-            map.AutoMap();
-            map.SetIgnoreExtraElements(true);
+            BsonClassMap.RegisterClassMap<RawGoogleAdManagerResponse>(map =>
+            {
+                map.AutoMap();
+                map.SetIgnoreExtraElements(true);
 
-            map.MapMember(x => x.RequestId)
-                .SetIsRequired(true)
-                .SetMaxLength(RawGoogleAdManagerResponseConsts.RequestIdMaxLength);
+                map.MapMember(x => x.RequestId)
+                    .SetIsRequired(true)
+                    .SetMaxLength(RawGoogleAdManagerResponseConsts.RequestIdMaxLength);
 
-            map.MapMember(x => x.JobName)
-                .SetIsRequired(true)
-                .SetMaxLength(RawGoogleAdManagerResponseConsts.JobNameMaxLength);
+                map.MapMember(x => x.JobName)
+                    .SetIsRequired(true)
+                    .SetMaxLength(RawGoogleAdManagerResponseConsts.JobNameMaxLength);
 
-            map.MapMember(x => x.ClientName)
-                .SetMaxLength(RawGoogleAdManagerResponseConsts.ClientNameMaxLength);
+                map.MapMember(x => x.ClientName)
+                    .SetMaxLength(RawGoogleAdManagerResponseConsts.ClientNameMaxLength);
 
-            map.MapMember(x => x.Network)
-                .SetMaxLength(RawGoogleAdManagerResponseConsts.NetworkMaxLength);
+                map.MapMember(x => x.Network)
+                    .SetMaxLength(RawGoogleAdManagerResponseConsts.NetworkMaxLength);
 
-            map.MapMember(x => x.AdUnitIdTopLevel)
-                .SetMaxLength(RawGoogleAdManagerResponseConsts.AdUnitIdTopLevelMaxLength);
+                map.MapMember(x => x.AdUnitIdTopLevel)
+                    .SetMaxLength(RawGoogleAdManagerResponseConsts.AdUnitIdTopLevelMaxLength);
 
-            map.MapMember(x => x.AdUnitId)
-                .SetMaxLength(RawGoogleAdManagerResponseConsts.AdUnitIdMaxLength);
+                map.MapMember(x => x.AdUnitId)
+                    .SetMaxLength(RawGoogleAdManagerResponseConsts.AdUnitIdMaxLength);
 
-            map.MapMember(x => x.RawResponse)
-                .SetMaxLength(RawGoogleAdManagerResponseConsts.RawResponseMaxLength);
+                map.MapMember(x => x.RawResponse)
+                    .SetMaxLength(RawGoogleAdManagerResponseConsts.RawResponseMaxLength);
 
-            map.MapMember(x => x.ProcessingError)
-                .SetMaxLength(RawGoogleAdManagerResponseConsts.ProcessingErrorMaxLength);
-        });
+                map.MapMember(x => x.ProcessingError)
+                    .SetMaxLength(RawGoogleAdManagerResponseConsts.ProcessingErrorMaxLength);
+            });
+        }
     }
 }

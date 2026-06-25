@@ -10,21 +10,27 @@ public static class NetworkConfigurationClassMap
 {
     public static void Register()
     {
-        BsonClassMap.RegisterClassMap<TopLevelGroupConfig>(map =>
+        if (!BsonClassMap.IsClassMapRegistered(typeof(TopLevelGroupConfig)))
         {
-            map.AutoMap();
-            map.SetIgnoreExtraElements(true);
-        });
+            BsonClassMap.RegisterClassMap<TopLevelGroupConfig>(map =>
+            {
+                map.AutoMap();
+                map.SetIgnoreExtraElements(true);
+            });
+        }
 
-        BsonClassMap.RegisterClassMap<NetworkConfiguration>(map =>
+        if (!BsonClassMap.IsClassMapRegistered(typeof(NetworkConfiguration)))
         {
-            map.AutoMap();
-            map.SetIgnoreExtraElements(true);
+            BsonClassMap.RegisterClassMap<NetworkConfiguration>(map =>
+            {
+                map.AutoMap();
+                map.SetIgnoreExtraElements(true);
 
-            map.MapMember(x => x.NetworkCode).SetIsRequired(true);
+                map.MapMember(x => x.NetworkCode).SetIsRequired(true);
 
-            map.MapMember(x => x.DisplayName)
-                .SetMaxLength(NetworkConfigurationConsts.DisplayNameMaxLength);
-        });
+                map.MapMember(x => x.DisplayName)
+                    .SetMaxLength(NetworkConfigurationConsts.DisplayNameMaxLength);
+            });
+        }
     }
 }
