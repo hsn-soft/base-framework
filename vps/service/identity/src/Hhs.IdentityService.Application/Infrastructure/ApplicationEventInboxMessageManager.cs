@@ -22,7 +22,7 @@ public sealed class ApplicationEventInboxMessageManager(IEventInboxMessageReposi
         if (await IsProcessedAsync(@event.MessageId, cancellationToken))
             return false;
 
-        var existing = await repository.GetByIdAsync(@event.MessageId, cancellationToken: cancellationToken);
+        var existing = await repository.GetByIdOrDefaultAsync(@event.MessageId, cancellationToken: cancellationToken);
 
         if (existing is not null)
         {
@@ -80,7 +80,7 @@ public sealed class ApplicationEventInboxMessageManager(IEventInboxMessageReposi
 
     public async Task FailAsync(Guid eventId, Exception ex, CancellationToken cancellationToken)
     {
-        var inbox = await repository.GetByIdAsync(eventId, cancellationToken: cancellationToken);
+        var inbox = await repository.GetByIdOrDefaultAsync(eventId, cancellationToken: cancellationToken);
 
         if (inbox != null)
         {
