@@ -53,7 +53,7 @@ public static class StaticData
         return allServicePermissions;
     }
 
-    public static IEnumerable<MenuMap> MenuMapDatas => new MenuMap[]
+    public static IEnumerable<OldMenuMap> MenuMapDatas => new OldMenuMap[]
     {
         new(AppUiNames.BackOfficeClientId, "dashboard", null, WebChannelMenu.Dashboards.NodeName, MenuMapType.Node, null, "ti ti-brand-google-home", 1, ""),
         new(AppUiNames.BackOfficeClientId, "dashboard", WebChannelMenu.Dashboards.NodeName, WebChannelMenu.Dashboards.Summary, MenuMapType.Leaf, "/dashboards/summary", "", 1, ""),
@@ -105,7 +105,7 @@ public static class StaticData
         new(AppUiNames.BackOfficeClientId, "dashboard", null, WebChannelMenu.Account.Settings, MenuMapType.Leaf, "/account/settings", "ti ti-atom", orderNo: 15, ""),
     };
 
-    public static IEnumerable<LeafMenuPermissionMap> MenuPermissionMapDatas => new LeafMenuPermissionMap[]
+    public static IEnumerable<OldMenuPermissionMap> MenuPermissionMapDatas => new OldMenuPermissionMap[]
     {
         new(AppUiNames.BackOfficeClientId, WebChannelMenu.Dashboards.Summary, PermissionTypesold.LeafMenuPermission, $"{WebChannelMenu.Dashboards.Summary}{WebChannelMenu.LeafPermissionName}", 10),
         // new(AppUiNames.BackOfficeClientId, WebChannelMenu.Dashboards.Summary, PermissionTypes.ActionPermission, ContentServicePermissions.Dashboards.ResponseStatisticView, 11),

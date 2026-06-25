@@ -22,4 +22,15 @@ public static class AnalysisNormalizedItemConsts
     // Polling & Retry Configuration
     public const int MaxOutlinePollingCountDefault = 60;
     public const int MaxRetryCountDefault = 5;
+
+    // Helper methods for accessing constraint values
+    public static int GetContentKeyMaxLength() => ContentKeyMaxLength;
+    public static int GetScrapingStatusMaxLength() => ScrapingStatusMaxLength;
+    public static int GetOutlineStatusMaxLength() => OutlineStatusMaxLength;
+    public static int GetOutlineProviderTrackIdMaxLength() => OutlineProviderTrackIdMaxLength;
+    public static int GetStatusMaxLength() => StatusMaxLength;
+    public static int GetCurrentStepMaxLength() => CurrentStepMaxLength;
+    public static int GetLastErrorMaxLength() => LastErrorMaxLength;
+    public static int GetMaxOutlinePollingCountDefault() => MaxOutlinePollingCountDefault;
+    public static int GetMaxRetryCountDefault() => MaxRetryCountDefault;
 }

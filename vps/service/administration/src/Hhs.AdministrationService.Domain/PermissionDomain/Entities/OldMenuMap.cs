@@ -4,7 +4,7 @@ using JetBrains.Annotations;
 
 namespace Hhs.AdministrationService.Domain.PermissionDomain.Entities;
 
-public sealed class MenuMap : Entity<Guid>
+public sealed class OldMenuMap : Entity<Guid>
 {
     public string ClientId { get; set; }
     public string ClientMenuType { get; set; }
@@ -25,7 +25,7 @@ public sealed class MenuMap : Entity<Guid>
 
     public bool OnlyAccessSystemUsers { get; set; }
 
-    public MenuMap(string clientId, string clientMenuType, string parentUniqueName, string uniqueName, MenuMapType mapType, string url, string icon,
+    public OldMenuMap(string clientId, string clientMenuType, string parentUniqueName, string uniqueName, MenuMapType mapType, string url, string icon,
         byte orderNo, string hierarchy, bool onlyAccessSystemUsers = false)
     {
         Id = Guid.CreateVersion7();

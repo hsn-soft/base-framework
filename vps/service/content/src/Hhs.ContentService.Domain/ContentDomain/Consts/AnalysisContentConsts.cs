@@ -13,8 +13,3 @@ public static class AnalysisContentConsts
     public const int LastFacilityMaxLength = 120;
     public const int LastErrorMaxLength = 1000;
 }
-
-public static class AnalysisContentItemConsts
-{
-    public const string TableName = "analysis_content_items";
-}

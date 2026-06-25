@@ -49,6 +49,6 @@ public sealed class MenuPermissionAppService : ApplicationServiceBase, IMenuPerm
             items = items.Where(x => x.OnlyAccessSystemUsers == false).ToList();
         }
 
-        return Mapper.Map<List<MenuMap>, List<MenuMapDto>>(items);
+        return Mapper.Map<List<OldMenuMap>, List<MenuMapDto>>(items);
     }
 }

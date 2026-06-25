@@ -3,7 +3,7 @@ using HsnSoft.Base.Domain.Entities;
 
 namespace Hhs.AdministrationService.Domain.PermissionDomain.Entities;
 
-public sealed class LeafMenuPermissionMap : Entity<Guid>
+public sealed class OldMenuPermissionMap : Entity<Guid>
 {
     public string ClientId { get; set; }
 
@@ -15,7 +15,7 @@ public sealed class LeafMenuPermissionMap : Entity<Guid>
 
     public byte OrderNo { get; set; }
 
-    public LeafMenuPermissionMap(string clientId, string leafMenuUniqueName, PermissionTypesold permissionType, string permissionUniqueName, byte orderNo)
+    public OldMenuPermissionMap(string clientId, string leafMenuUniqueName, PermissionTypesold permissionType, string permissionUniqueName, byte orderNo)
     {
         Id = Guid.CreateVersion7();
         ClientId = clientId;

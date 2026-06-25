@@ -15,6 +15,6 @@ public class ApplicationAutoMapperProfile : Profile
 
         CreateMap<PermissionGrantDto, PermissionGrant>();
 
-        CreateMap<MenuMap, MenuMapDto>();
+        CreateMap<OldMenuMap, MenuMapDto>();
     }
 }
