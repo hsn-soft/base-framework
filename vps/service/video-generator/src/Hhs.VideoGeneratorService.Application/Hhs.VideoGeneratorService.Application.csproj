@@ -23,10 +23,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Hhs.VideoGeneratorService.MongoDb\Hhs.VideoGeneratorService.MongoDb.csproj"/>
-    </ItemGroup>
-
-    <ItemGroup>
         <ProjectReference Include="..\Hhs.VideoGeneratorService.Domain\Hhs.VideoGeneratorService.Domain.csproj"/>
     </ItemGroup>
 

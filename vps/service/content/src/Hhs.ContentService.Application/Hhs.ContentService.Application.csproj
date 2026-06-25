@@ -16,7 +16,6 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\..\..\shared\src\Hhs.Shared.Contracts\Hhs.Shared.Contracts.csproj" />
-        <ProjectReference Include="..\Hhs.ContentService.EntityFrameworkCore\Hhs.ContentService.EntityFrameworkCore.csproj" />
     </ItemGroup>
 
     <ItemGroup>

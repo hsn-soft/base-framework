@@ -27,11 +27,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Hhs.TextNormalizerService.MongoDb\Hhs.TextNormalizerService.MongoDb.csproj"/>
-    </ItemGroup>
-
-    <ItemGroup>
-      <Compile Remove="Contracts\Events\SetNormalizedStatusToFailedEto.cs" />
+        <ProjectReference Include="..\Hhs.TextNormalizerService.Domain\Hhs.TextNormalizerService.Domain.csproj"/>
     </ItemGroup>
 
 </Project>
