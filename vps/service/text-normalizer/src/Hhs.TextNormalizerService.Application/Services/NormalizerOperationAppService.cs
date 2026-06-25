@@ -16,6 +16,7 @@ using Hhs.TextNormalizerService.Domain.NormalizeDomain.Repositories;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
+using Newtonsoft.Json;
 
 namespace Hhs.TextNormalizerService.Application.Services;
 
@@ -874,5 +875,79 @@ public sealed class NormalizerOperationAppService(
         analysis.LastError = lastError;
 
         await analysisContentRepository.UpdateAsync(analysis);
+    }
+
+    public async Task ForwardVideoGenerationDataAsync(VideoGenerationApprovedEto @event, CancellationToken cancellationToken = default)
+    {
+        string? videoInputJson = null;
+        string? correlationId = null;
+
+        if (@event.RefContentType == ContentType.CustomerContent)
+        {
+            var request = await customerContentRepository.GetFirstOrDefaultAsync(x => x.Id == @event.NormalizeRequestId, cancellationToken: cancellationToken);
+            if (request == null) return;
+
+            correlationId = request.CorrelationId;
+            videoInputJson = BuildVideoInputJson(
+                scrapeTitle: request.ScrapingResult?.Title,
+                scrapeText: request.ScrapingResult?.Text,
+                outlineScript: request.OutlineResult?.Script
+            );
+        }
+        else if (@event.RefContentType == ContentType.AnalysisContent)
+        {
+            var request = await analysisContentRepository.GetFirstOrDefaultAsync(x => x.Id == @event.NormalizeRequestId, cancellationToken: cancellationToken);
+            if (request == null) return;
+
+            correlationId = request.CorrelationId;
+            var items = request.Items
+                .Where(x => x.ScrapingStatus == StatusNames.Completed && x.OutlineStatus == StatusNames.Completed)
+                .OrderBy(x => x.SortOrder)
+                .ToList();
+
+            videoInputJson = BuildAnalysisVideoInputJson(items);
+        }
+
+        if (string.IsNullOrWhiteSpace(videoInputJson)) return;
+
+        await EventBus.PublishAsync(
+            parentMessage: ParentIntegrationEvent,
+            correlationId: correlationId,
+            eventMessage: new VideoGenerationDataForwardedEto
+            {
+                RefContentId = @event.RefContentId,
+                RefContentType = @event.RefContentType,
+                ScopeKey = @event.ScopeKey,
+                NormalizeRequestId = @event.NormalizeRequestId,
+                VideoInputJson = videoInputJson
+            }
+        );
+    }
+
+    private string BuildVideoInputJson(string? scrapeTitle, string? scrapeText, string? outlineScript)
+    {
+        return JsonConvert.SerializeObject(new
+        {
+            title = scrapeTitle,
+            text = scrapeText,
+            outline = outlineScript
+        });
+    }
+
+    private string BuildAnalysisVideoInputJson(List<AnalysisNormalizedItem> items)
+    {
+        var audioItems = items
+            .Select((item, index) => new
+            {
+                sortOrder = index + 1,
+                customerContentId = item.CustomerContentId,
+                contentKey = item.ContentKey,
+                title = item.ScrapingResult?.Title,
+                text = item.ScrapingResult?.Text,
+                outline = item.OutlineResult?.Script
+            })
+            .ToList();
+
+        return JsonConvert.SerializeObject(new { audioItems });
     }
 }
