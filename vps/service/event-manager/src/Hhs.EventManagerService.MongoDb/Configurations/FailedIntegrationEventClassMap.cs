@@ -12,6 +12,7 @@ public static class FailedIntegrationEventClassMap
         BsonClassMap.RegisterClassMap<FailedIntegrationEvent>(map =>
         {
             map.AutoMap();
+            map.MapIdMember(x => x.Id);
             map.SetIgnoreExtraElements(true);
 
             // Correlation & Tracing

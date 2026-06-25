@@ -13,6 +13,7 @@ public static class AnalysisContentNormalizedRequestClassMap
         BsonClassMap.RegisterClassMap<AnalysisContentNormalizedRequest>(map =>
         {
             map.AutoMap();
+            map.MapIdMember(x => x.Id);
             map.SetIgnoreExtraElements(true);
 
             // Correlation & Tracing

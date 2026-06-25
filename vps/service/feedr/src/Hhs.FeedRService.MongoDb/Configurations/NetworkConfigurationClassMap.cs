@@ -19,6 +19,7 @@ public static class NetworkConfigurationClassMap
         BsonClassMap.RegisterClassMap<NetworkConfiguration>(map =>
         {
             map.AutoMap();
+            map.MapIdMember(x => x.Id);
             map.SetIgnoreExtraElements(true);
 
             map.MapMember(x => x.NetworkCode).SetIsRequired(true);

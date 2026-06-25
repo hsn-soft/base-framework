@@ -12,6 +12,7 @@ public static class CustomerConfigurationClassMap
         BsonClassMap.RegisterClassMap<CustomerConfiguration>(map =>
         {
             map.AutoMap();
+            map.MapIdMember(x => x.Id);
             map.SetIgnoreExtraElements(true);
 
             map.MapMember(x => x.ClientName)

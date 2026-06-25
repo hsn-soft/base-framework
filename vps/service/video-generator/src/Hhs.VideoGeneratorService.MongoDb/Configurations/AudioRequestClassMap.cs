@@ -12,6 +12,7 @@ public static class AudioRequestClassMap
         BsonClassMap.RegisterClassMap<AudioRequest>(map =>
         {
             map.AutoMap();
+            map.MapIdMember(x => x.Id);
             map.SetIgnoreExtraElements(true);
 
             // Correlation & Context

@@ -12,6 +12,7 @@ public static class EventInboxMessageClassMap
             BsonClassMap.RegisterClassMap<EventInboxMessage>(map =>
             {
                 map.AutoMap();
+                map.MapIdMember(x => x.Id);
                 map.SetIgnoreExtraElements(true);
                 map.MapMember(x => x.EventName).SetIsRequired(true);
                 map.MapMember(x => x.Payload).SetIsRequired(true);
