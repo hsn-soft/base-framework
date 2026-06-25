@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Hhs.FeedRService.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(FeedRServiceDbContext))]
-    [Migration("20260624205627_InitialCreate")]
+    [Migration("20260625003522_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -30,8 +30,8 @@ namespace Hhs.FeedRService.EntityFrameworkCore.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid?>("CorrelationId")
-                        .HasColumnType("uuid");
+                    b.Property<string>("CorrelationId")
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("CreationTime")
                         .HasColumnType("timestamp with time zone")
@@ -295,7 +295,7 @@ namespace Hhs.FeedRService.EntityFrameworkCore.Migrations
                     b.HasIndex("AdUnitClientId", "ReportDate", "DemandChannel", "DemandSubchannelName", "OrderId")
                         .IsUnique();
 
-                    b.ToTable("DailyReportResponses", "public");
+                    b.ToTable("DashboardResponses", "public");
                 });
 
             modelBuilder.Entity("Hhs.FeedRService.Domain.ReportingDomain.Entities.PostgreSQL.MongoToPostgresMapping", b =>
@@ -351,7 +351,7 @@ namespace Hhs.FeedRService.EntityFrameworkCore.Migrations
 
             modelBuilder.Entity("Hhs.FeedRService.Domain.ReportingDomain.Entities.PostgreSQL.AdUnitClient", b =>
                 {
-                    b.HasOne("Hhs.FeedRService.Domain.ReportingDomain.Entities.AdUnitTopLevel", "AdUnitTopLevel")
+                    b.HasOne("Hhs.FeedRService.Domain.ReportingDomain.Entities.PostgreSQL.AdUnitTopLevel", "AdUnitTopLevel")
                         .WithMany("Clients")
                         .HasForeignKey("AdUnitTopLevelId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -362,7 +362,7 @@ namespace Hhs.FeedRService.EntityFrameworkCore.Migrations
 
             modelBuilder.Entity("Hhs.FeedRService.Domain.ReportingDomain.Entities.PostgreSQL.AdUnitTopLevel", b =>
                 {
-                    b.HasOne("Hhs.FeedRService.Domain.ReportingDomain.Entities.AdNetwork", "AdNetwork")
+                    b.HasOne("Hhs.FeedRService.Domain.ReportingDomain.Entities.PostgreSQL.AdNetwork", "AdNetwork")
                         .WithMany("TopLevelAdUnits")
                         .HasForeignKey("AdNetworkId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -373,7 +373,7 @@ namespace Hhs.FeedRService.EntityFrameworkCore.Migrations
 
             modelBuilder.Entity("Hhs.FeedRService.Domain.ReportingDomain.Entities.PostgreSQL.DashboardResponse", b =>
                 {
-                    b.HasOne("Hhs.FeedRService.Domain.ReportingDomain.Entities.AdUnitClient", "AdUnitClient")
+                    b.HasOne("Hhs.FeedRService.Domain.ReportingDomain.Entities.PostgreSQL.AdUnitClient", "AdUnitClient")
                         .WithMany("DailyReports")
                         .HasForeignKey("AdUnitClientId")
                         .OnDelete(DeleteBehavior.Cascade)

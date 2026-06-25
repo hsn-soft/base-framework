@@ -27,8 +27,8 @@ namespace Hhs.AdministrationService.EntityFrameworkCore.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid?>("CorrelationId")
-                        .HasColumnType("uuid");
+                    b.Property<string>("CorrelationId")
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("CreationTime")
                         .HasColumnType("timestamp with time zone")
@@ -194,6 +194,71 @@ namespace Hhs.AdministrationService.EntityFrameworkCore.Migrations
                         .IsUnique();
 
                     b.ToTable("AppRolePermissionConstraints", (string)null);
+                });
+
+            modelBuilder.Entity("Hhs.AdministrationService.Domain.PermissionDomain.Entities.OldMenuMap", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ClientId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ClientMenuType")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Hierarchy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Icon")
+                        .HasColumnType("text");
+
+                    b.Property<int>("MapType")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("OnlyAccessSystemUsers")
+                        .HasColumnType("boolean");
+
+                    b.Property<byte>("OrderNo")
+                        .HasColumnType("smallint");
+
+                    b.Property<string>("ParentUniqueName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("UniqueName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Url")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("OldMenuMaps");
+                });
+
+            modelBuilder.Entity("Hhs.AdministrationService.Domain.PermissionDomain.Entities.OldMenuPermissionMap", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ClientId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("LeafMenuUniqueName")
+                        .HasColumnType("text");
+
+                    b.Property<byte>("OrderNo")
+                        .HasColumnType("smallint");
+
+                    b.Property<int>("PermissionType")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("PermissionUniqueName")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("OldMenuPermissionMaps");
                 });
 
             modelBuilder.Entity("Hhs.AdministrationService.Domain.PermissionDomain.Entities.Permission", b =>

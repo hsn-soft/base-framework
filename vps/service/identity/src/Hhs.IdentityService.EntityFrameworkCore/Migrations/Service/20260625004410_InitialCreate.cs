@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -86,7 +87,7 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    CorrelationId = table.Column<Guid>(type: "uuid", nullable: true),
+                    CorrelationId = table.Column<string>(type: "text", nullable: true),
                     EventName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
                     Payload = table.Column<string>(type: "jsonb", nullable: true),
                     Status = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),

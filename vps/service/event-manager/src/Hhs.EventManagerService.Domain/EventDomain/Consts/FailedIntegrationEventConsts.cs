@@ -1,12 +1,15 @@
+using Hhs.EventManagerService.Domain.EventDomain.Entities;
+
 namespace Hhs.EventManagerService.Domain.EventDomain.Consts;
 
 public static class FailedIntegrationEventConsts
 {
-    private const string DefaultSorting = "{0}CreationTime desc";
+    private const string DefaultSorting = "{0}{1} desc";
+    private const string DefaultSortingField = nameof(FailedIntegrationEvent.CreationTime);
 
     public static string GetDefaultSorting(bool withEntityName = false)
     {
-        return string.Format(DefaultSorting, withEntityName ? $"{TableName}." : string.Empty);
+        return string.Format(DefaultSorting, withEntityName ? $"{TableName}." : string.Empty, DefaultSortingField);
     }
 
     public const string TableName = "FailedIntegrationEvents";

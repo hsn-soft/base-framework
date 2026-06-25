@@ -1,4 +1,4 @@
-namespace Hhs.IdentityService.Domain.AuthDomain.Consts;
+namespace Hhs.IdentityService.Domain.AppRoleDomain.Consts;
 
 public static class AppRoleClaimConsts
 {

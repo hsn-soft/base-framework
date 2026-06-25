@@ -74,7 +74,7 @@ public static class AuthDomainConfiguration
     public static void ConfigureAppUserRoleEntity(this ModelBuilder builder) =>
         builder.Entity<AppUserRole>(b =>
         {
-            b.ToTable("AppUserRoles");
+            b.ToTable(EfCoreDbProperties.DbTablePrefix + AppUserRoleConsts.TableName, EfCoreDbProperties.DbSchema);
             b.HasKey(x => x.Id);
 
             b.HasOne(x => x.User)
@@ -92,7 +92,7 @@ public static class AuthDomainConfiguration
     public static void ConfigureAppUserClaimEntity(this ModelBuilder builder) =>
         builder.Entity<AppUserClaim>(b =>
         {
-            b.ToTable("AppUserClaims");
+            b.ToTable(EfCoreDbProperties.DbTablePrefix + AppUserClaimConsts.TableName, EfCoreDbProperties.DbSchema);
             b.HasKey(x => x.Id);
 
             b.Property(x => x.UserId).IsRequired();
@@ -109,7 +109,7 @@ public static class AuthDomainConfiguration
     public static void ConfigureAppRoleClaimEntity(this ModelBuilder builder) =>
         builder.Entity<AppRoleClaim>(b =>
         {
-            b.ToTable("AppRoleClaims");
+            b.ToTable(EfCoreDbProperties.DbTablePrefix + AppRoleClaimConsts.TableName, EfCoreDbProperties.DbSchema);
             b.HasKey(x => x.Id);
 
             b.Property(x => x.RoleId).IsRequired();
@@ -126,7 +126,7 @@ public static class AuthDomainConfiguration
     public static void ConfigureAppRoleSubscriptionEntity(this ModelBuilder builder) =>
         builder.Entity<AppRoleSubscription>(b =>
         {
-            b.ToTable("AppRoleSubscriptions");
+            b.ToTable(EfCoreDbProperties.DbTablePrefix + AppRoleSubscriptionConsts.TableName, EfCoreDbProperties.DbSchema);
             b.HasKey(x => x.Id);
 
             b.Property(x => x.TenantId).IsRequired();
@@ -152,7 +152,7 @@ public static class AuthDomainConfiguration
     public static void ConfigureAuthRefreshTokenEntity(this ModelBuilder builder) =>
         builder.Entity<AuthRefreshToken>(b =>
         {
-            b.ToTable("AuthRefreshTokens");
+            b.ToTable(EfCoreDbProperties.DbTablePrefix + AuthRefreshTokenConsts.TableName, EfCoreDbProperties.DbSchema);
             b.HasKey(x => x.Id);
 
             b.Property(x => x.TokenHash).HasMaxLength(AuthRefreshTokenConsts.TokenHashMaxLength).IsRequired();
@@ -168,7 +168,7 @@ public static class AuthDomainConfiguration
     public static void ConfigureAuthLoginAuditEntity(this ModelBuilder builder) =>
         builder.Entity<AuthLoginAudit>(b =>
         {
-            b.ToTable("AuthLoginAudits");
+            b.ToTable(EfCoreDbProperties.DbTablePrefix + AuthLoginAuditConsts.TableName, EfCoreDbProperties.DbSchema);
             b.HasKey(x => x.Id);
 
             b.Property(x => x.TenantId);
@@ -186,7 +186,7 @@ public static class AuthDomainConfiguration
     public static void ConfigureAuthPasswordPolicyEntity(this ModelBuilder builder) =>
         builder.Entity<AuthPasswordPolicy>(b =>
         {
-            b.ToTable("AuthPasswordPolicies");
+            b.ToTable(EfCoreDbProperties.DbTablePrefix + AuthPasswordPolicyConsts.TableName, EfCoreDbProperties.DbSchema);
             b.HasKey(x => x.Id);
 
             b.HasOne(x => x.Tenant)
@@ -200,7 +200,7 @@ public static class AuthDomainConfiguration
     public static void ConfigureAuthEmailConfirmationTokenEntity(this ModelBuilder builder) =>
         builder.Entity<AuthEmailConfirmationToken>(b =>
         {
-            b.ToTable("AuthEmailConfirmationTokens");
+            b.ToTable(EfCoreDbProperties.DbTablePrefix + AuthEmailConfirmationTokenConsts.TableName, EfCoreDbProperties.DbSchema);
             b.HasKey(x => x.Id);
 
             b.Property(x => x.UserId).IsRequired();
@@ -215,7 +215,7 @@ public static class AuthDomainConfiguration
     public static void ConfigureAuthTokenRevocationEntity(this ModelBuilder builder) =>
         builder.Entity<AuthTokenRevocation>(b =>
         {
-            b.ToTable("AuthTokenRevocations");
+            b.ToTable(EfCoreDbProperties.DbTablePrefix + AuthTokenRevocationConsts.TableName, EfCoreDbProperties.DbSchema);
             b.HasKey(x => x.Id);
 
             b.Property(x => x.Jti).HasMaxLength(AuthTokenRevocationConsts.JtiMaxLength).IsRequired();

@@ -2,7 +2,7 @@ namespace Hhs.FeedRService.Domain.ReportingDomain.Consts;
 
 public static class DashboardResponseConsts
 {
-    public const string TableName = "DailyReportResponses";
+    public const string TableName = "DashboardResponses";
     public const int NetworkMaxLength = 256;
     public const int AdUnitNameMaxLength = 256;
     public const int DemandChannelMaxLength = 256;

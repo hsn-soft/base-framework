@@ -12,7 +12,7 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "analysis_contents",
+                name: "AnalysisContents",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
@@ -20,14 +20,14 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                     ScopeKey = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     DomainName = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
                     Title = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
-                    CorrelationId = table.Column<string>(type: "text", nullable: true),
+                    CorrelationId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
                     NormalizeStatus = table.Column<string>(type: "character varying(80)", maxLength: 80, nullable: true),
                     NormalizeRequestId = table.Column<Guid>(type: "uuid", nullable: true),
                     VideoStatus = table.Column<string>(type: "character varying(80)", maxLength: 80, nullable: true),
                     VideoRequestId = table.Column<Guid>(type: "uuid", nullable: true),
-                    FinalVideoUrl = table.Column<string>(type: "text", nullable: true),
+                    FinalVideoUrl = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
                     LastFacility = table.Column<string>(type: "character varying(120)", maxLength: 120, nullable: true),
-                    LastError = table.Column<string>(type: "text", nullable: true),
+                    LastError = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
                     CreationTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     CreatorId = table.Column<Guid>(type: "uuid", nullable: true),
                     LastModificationTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -35,11 +35,11 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_analysis_contents", x => x.Id);
+                    table.PrimaryKey("PK_AnalysisContents", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
-                name: "customer_contents",
+                name: "CustomerContents",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
@@ -48,15 +48,15 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                     DomainName = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
                     ContentKey = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
                     SlugKey = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
-                    CorrelationId = table.Column<string>(type: "text", nullable: true),
+                    CorrelationId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
                     NormalizeStatus = table.Column<string>(type: "character varying(80)", maxLength: 80, nullable: true),
                     NormalizeRequestId = table.Column<Guid>(type: "uuid", nullable: true),
                     VideoStatus = table.Column<string>(type: "character varying(80)", maxLength: 80, nullable: true),
                     VideoRequestId = table.Column<Guid>(type: "uuid", nullable: true),
                     AudioRequestId = table.Column<Guid>(type: "uuid", nullable: true),
-                    FinalVideoUrl = table.Column<string>(type: "text", nullable: true),
+                    FinalVideoUrl = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
                     LastFacility = table.Column<string>(type: "character varying(120)", maxLength: 120, nullable: true),
-                    LastError = table.Column<string>(type: "text", nullable: true),
+                    LastError = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
                     CreationTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     CreatorId = table.Column<Guid>(type: "uuid", nullable: true),
                     LastModificationTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -64,7 +64,7 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_customer_contents", x => x.Id);
+                    table.PrimaryKey("PK_CustomerContents", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -101,7 +101,7 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    CorrelationId = table.Column<Guid>(type: "uuid", nullable: true),
+                    CorrelationId = table.Column<string>(type: "text", nullable: true),
                     EventName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
                     Payload = table.Column<string>(type: "jsonb", nullable: true),
                     Status = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
@@ -119,7 +119,7 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "analysis_content_items",
+                name: "AnalysisContentItems",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
@@ -129,17 +129,17 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_analysis_content_items", x => x.Id);
+                    table.PrimaryKey("PK_AnalysisContentItems", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_analysis_content_items_analysis_contents_AnalysisContentId",
+                        name: "FK_AnalysisContentItems_AnalysisContents_AnalysisContentId",
                         column: x => x.AnalysisContentId,
-                        principalTable: "analysis_contents",
+                        principalTable: "AnalysisContents",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_analysis_content_items_customer_contents_CustomerContentId",
+                        name: "FK_AnalysisContentItems_CustomerContents_CustomerContentId",
                         column: x => x.CustomerContentId,
-                        principalTable: "customer_contents",
+                        principalTable: "CustomerContents",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -166,25 +166,25 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_analysis_content_items_AnalysisContentId_CustomerContentId",
-                table: "analysis_content_items",
+                name: "IX_AnalysisContentItems_AnalysisContentId_CustomerContentId",
+                table: "AnalysisContentItems",
                 columns: new[] { "AnalysisContentId", "CustomerContentId" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_analysis_content_items_AnalysisContentId_SortOrder",
-                table: "analysis_content_items",
+                name: "IX_AnalysisContentItems_AnalysisContentId_SortOrder",
+                table: "AnalysisContentItems",
                 columns: new[] { "AnalysisContentId", "SortOrder" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_analysis_content_items_CustomerContentId",
-                table: "analysis_content_items",
+                name: "IX_AnalysisContentItems_CustomerContentId",
+                table: "AnalysisContentItems",
                 column: "CustomerContentId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_analysis_contents_ScopeKey",
-                table: "analysis_contents",
+                name: "IX_AnalysisContents_ScopeKey",
+                table: "AnalysisContents",
                 column: "ScopeKey");
 
             migrationBuilder.CreateIndex(
@@ -198,13 +198,13 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                 columns: new[] { "ScopeKey", "VideoGenerationType" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_customer_contents_ScopeKey",
-                table: "customer_contents",
+                name: "IX_CustomerContents_ScopeKey",
+                table: "CustomerContents",
                 column: "ScopeKey");
 
             migrationBuilder.CreateIndex(
-                name: "IX_customer_contents_ScopeKey_DomainName",
-                table: "customer_contents",
+                name: "IX_CustomerContents_ScopeKey_DomainName",
+                table: "CustomerContents",
                 columns: new[] { "ScopeKey", "DomainName" },
                 unique: true);
 
@@ -230,7 +230,7 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "analysis_content_items");
+                name: "AnalysisContentItems");
 
             migrationBuilder.DropTable(
                 name: "ContentVideoGenerationLimits");
@@ -239,10 +239,10 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                 name: "EventInboxMessages");
 
             migrationBuilder.DropTable(
-                name: "analysis_contents");
+                name: "AnalysisContents");
 
             migrationBuilder.DropTable(
-                name: "customer_contents");
+                name: "CustomerContents");
 
             migrationBuilder.DropTable(
                 name: "CustomerVpSettings");

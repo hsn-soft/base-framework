@@ -1,8 +1,18 @@
+using Hhs.VideoGeneratorService.Domain.MediaDomain.Entities;
+
 namespace Hhs.VideoGeneratorService.Domain.MediaDomain.Consts;
 
 public static class VideoRequestConsts
 {
-    public const string TableName = "video_requests";
+    private const string DefaultSorting = "{0}{1} desc";
+    private const string DefaultSortingField = nameof(VideoRequest.CreationTime);
+
+    public static string GetDefaultSorting(bool withEntityName = false)
+    {
+        return string.Format(DefaultSorting, withEntityName ? $"{TableName}." : string.Empty, DefaultSortingField);
+    }
+
+    public const string TableName = "VideoRequests";
     public const int ScopeKeyMaxLength = 100;
     public const int CorrelationIdMaxLength = 50;
     public const int StatusMaxLength = 80;

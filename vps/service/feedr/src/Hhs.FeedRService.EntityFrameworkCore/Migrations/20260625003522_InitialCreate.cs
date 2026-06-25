@@ -38,7 +38,7 @@ namespace Hhs.FeedRService.EntityFrameworkCore.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    CorrelationId = table.Column<Guid>(type: "uuid", nullable: true),
+                    CorrelationId = table.Column<string>(type: "text", nullable: true),
                     EventName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
                     Payload = table.Column<string>(type: "jsonb", nullable: true),
                     Status = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
@@ -131,7 +131,7 @@ namespace Hhs.FeedRService.EntityFrameworkCore.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "DailyReportResponses",
+                name: "DashboardResponses",
                 schema: "public",
                 columns: table => new
                 {
@@ -158,9 +158,9 @@ namespace Hhs.FeedRService.EntityFrameworkCore.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_DailyReportResponses", x => x.Id);
+                    table.PrimaryKey("PK_DashboardResponses", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_DailyReportResponses_AdUnitClients_AdUnitClientId",
+                        name: "FK_DashboardResponses_AdUnitClients_AdUnitClientId",
                         column: x => x.AdUnitClientId,
                         principalSchema: "public",
                         principalTable: "AdUnitClients",
@@ -208,34 +208,34 @@ namespace Hhs.FeedRService.EntityFrameworkCore.Migrations
                 column: "AdUnitTopLevelCode");
 
             migrationBuilder.CreateIndex(
-                name: "IX_DailyReportResponses_AdUnitClientId_ReportDate_DemandChanne~",
+                name: "IX_DashboardResponses_AdUnitClientId_ReportDate_DemandChannel_~",
                 schema: "public",
-                table: "DailyReportResponses",
+                table: "DashboardResponses",
                 columns: new[] { "AdUnitClientId", "ReportDate", "DemandChannel", "DemandSubchannelName", "OrderId" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_DailyReportResponses_ClientId",
+                name: "IX_DashboardResponses_ClientId",
                 schema: "public",
-                table: "DailyReportResponses",
+                table: "DashboardResponses",
                 column: "ClientId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_DailyReportResponses_ClientId_ReportDate",
+                name: "IX_DashboardResponses_ClientId_ReportDate",
                 schema: "public",
-                table: "DailyReportResponses",
+                table: "DashboardResponses",
                 columns: new[] { "ClientId", "ReportDate" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_DailyReportResponses_ReportDate",
+                name: "IX_DashboardResponses_ReportDate",
                 schema: "public",
-                table: "DailyReportResponses",
+                table: "DashboardResponses",
                 column: "ReportDate");
 
             migrationBuilder.CreateIndex(
-                name: "IX_DailyReportResponses_TenantId",
+                name: "IX_DashboardResponses_TenantId",
                 schema: "public",
-                table: "DailyReportResponses",
+                table: "DashboardResponses",
                 column: "TenantId");
 
             migrationBuilder.CreateIndex(
@@ -262,7 +262,7 @@ namespace Hhs.FeedRService.EntityFrameworkCore.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "DailyReportResponses",
+                name: "DashboardResponses",
                 schema: "public");
 
             migrationBuilder.DropTable(

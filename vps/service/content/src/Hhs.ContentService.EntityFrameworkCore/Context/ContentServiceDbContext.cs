@@ -20,7 +20,7 @@ public sealed class ContentServiceDbContext(
     public DbSet<CustomerContent> CustomerContents => Set<CustomerContent>();
     public DbSet<AnalysisContent> AnalysisContents => Set<AnalysisContent>();
     public DbSet<AnalysisContentItem> AnalysisContentItems => Set<AnalysisContentItem>();
-    public DbSet<EventInboxMessage> InboxMessages => Set<EventInboxMessage>();
+    public DbSet<EventInboxMessage> EventInboxMessages => Set<EventInboxMessage>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

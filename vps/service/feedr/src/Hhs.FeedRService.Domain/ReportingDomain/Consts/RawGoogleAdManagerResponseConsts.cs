@@ -2,7 +2,6 @@ namespace Hhs.FeedRService.Domain.ReportingDomain.Consts;
 
 public static class RawGoogleAdManagerResponseConsts
 {
-    public const string CollectionName = "RawGoogleAdManagerResponses";
     public const string TableName = "RawGoogleAdManagerResponses";
 
     public const int ClientNameMaxLength = 256;

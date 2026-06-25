@@ -506,8 +506,8 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid?>("CorrelationId")
-                        .HasColumnType("uuid");
+                    b.Property<string>("CorrelationId")
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("CreationTime")
                         .HasColumnType("timestamp with time zone")

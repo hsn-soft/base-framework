@@ -42,7 +42,7 @@ namespace Hhs.AdministrationService.EntityFrameworkCore.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    CorrelationId = table.Column<Guid>(type: "uuid", nullable: true),
+                    CorrelationId = table.Column<string>(type: "text", nullable: true),
                     EventName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
                     Payload = table.Column<string>(type: "jsonb", nullable: true),
                     Status = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
@@ -57,6 +57,43 @@ namespace Hhs.AdministrationService.EntityFrameworkCore.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_EventInboxMessages", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "OldMenuMaps",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ClientId = table.Column<string>(type: "text", nullable: true),
+                    ClientMenuType = table.Column<string>(type: "text", nullable: true),
+                    ParentUniqueName = table.Column<string>(type: "text", nullable: true),
+                    UniqueName = table.Column<string>(type: "text", nullable: true),
+                    MapType = table.Column<int>(type: "integer", nullable: false),
+                    Url = table.Column<string>(type: "text", nullable: true),
+                    Icon = table.Column<string>(type: "text", nullable: true),
+                    OrderNo = table.Column<byte>(type: "smallint", nullable: false),
+                    Hierarchy = table.Column<string>(type: "text", nullable: true),
+                    OnlyAccessSystemUsers = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_OldMenuMaps", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "OldMenuPermissionMaps",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ClientId = table.Column<string>(type: "text", nullable: true),
+                    LeafMenuUniqueName = table.Column<string>(type: "text", nullable: true),
+                    PermissionType = table.Column<int>(type: "integer", nullable: false),
+                    PermissionUniqueName = table.Column<string>(type: "text", nullable: true),
+                    OrderNo = table.Column<byte>(type: "smallint", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_OldMenuPermissionMaps", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -266,6 +303,12 @@ namespace Hhs.AdministrationService.EntityFrameworkCore.Migrations
 
             migrationBuilder.DropTable(
                 name: "EventInboxMessages");
+
+            migrationBuilder.DropTable(
+                name: "OldMenuMaps");
+
+            migrationBuilder.DropTable(
+                name: "OldMenuPermissionMaps");
 
             migrationBuilder.DropTable(
                 name: "PermissionDependencies");

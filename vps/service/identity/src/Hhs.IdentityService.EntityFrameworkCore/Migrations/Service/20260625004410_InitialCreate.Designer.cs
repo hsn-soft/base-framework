@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
 {
     [DbContext(typeof(IdentityServiceDbContext))]
-    [Migration("20260624205339_InitialCreate")]
+    [Migration("20260625004410_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -509,8 +509,8 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid?>("CorrelationId")
-                        .HasColumnType("uuid");
+                    b.Property<string>("CorrelationId")
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("CreationTime")
                         .HasColumnType("timestamp with time zone")

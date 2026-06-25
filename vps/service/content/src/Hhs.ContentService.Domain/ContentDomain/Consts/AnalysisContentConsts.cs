@@ -1,8 +1,18 @@
+using Hhs.ContentService.Domain.ContentDomain.Entities;
+
 namespace Hhs.ContentService.Domain.ContentDomain.Consts;
 
 public static class AnalysisContentConsts
 {
-    public const string TableName = "analysis_contents";
+    private const string DefaultSorting = "{0}{1} desc";
+    private const string DefaultSortingField = nameof(AnalysisContent.CreationTime);
+
+    public static string GetDefaultSorting(bool withEntityName = false)
+    {
+        return string.Format(DefaultSorting, withEntityName ? $"{TableName}." : string.Empty, DefaultSortingField);
+    }
+
+    public const string TableName = "AnalysisContents";
     public const int ScopeKeyMaxLength = 100;
     public const int DomainNameMaxLength = 500;
     public const int TitleMaxLength = 500;

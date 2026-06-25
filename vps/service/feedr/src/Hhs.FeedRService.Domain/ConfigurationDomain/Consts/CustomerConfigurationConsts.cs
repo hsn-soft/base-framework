@@ -1,8 +1,8 @@
-namespace Hhs.FeedRService.Domain.ReportingDomain.Consts;
+namespace Hhs.FeedRService.Domain.ConfigurationDomain.Consts;
 
 public static class CustomerConfigurationConsts
 {
-    public const string CollectionName = "CustomerConfigurations";
+    public const string TableName = "CustomerConfigurations";
     public const int ClientNameMaxLength = 256;
     public const int NetworkMaxLength = 256;
     public const int AdUnitNameMaxLength = 256;

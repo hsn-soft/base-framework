@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Hhs.ContentService.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(ContentServiceDbContext))]
-    [Migration("20260624205823_InitialCreate")]
+    [Migration("20260625005746_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -31,7 +31,8 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<string>("CorrelationId")
-                        .HasColumnType("text");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<DateTime>("CreationTime")
                         .HasColumnType("timestamp with time zone")
@@ -47,7 +48,8 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                         .HasColumnType("character varying(500)");
 
                     b.Property<string>("FinalVideoUrl")
-                        .HasColumnType("text");
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
 
                     b.Property<bool>("IsDeleted")
                         .ValueGeneratedOnAdd()
@@ -56,7 +58,8 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                         .HasColumnName("IsDeleted");
 
                     b.Property<string>("LastError")
-                        .HasColumnType("text");
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
 
                     b.Property<string>("LastFacility")
                         .HasMaxLength(120)
@@ -97,7 +100,7 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
 
                     b.HasIndex("ScopeKey");
 
-                    b.ToTable("analysis_contents", (string)null);
+                    b.ToTable("AnalysisContents", (string)null);
                 });
 
             modelBuilder.Entity("Hhs.ContentService.Domain.ContentDomain.Entities.AnalysisContentItem", b =>
@@ -124,7 +127,7 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                     b.HasIndex("AnalysisContentId", "SortOrder")
                         .IsUnique();
 
-                    b.ToTable("analysis_content_items", (string)null);
+                    b.ToTable("AnalysisContentItems", (string)null);
                 });
 
             modelBuilder.Entity("Hhs.ContentService.Domain.ContentDomain.Entities.CustomerContent", b =>
@@ -141,7 +144,8 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                         .HasColumnType("character varying(500)");
 
                     b.Property<string>("CorrelationId")
-                        .HasColumnType("text");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<DateTime>("CreationTime")
                         .HasColumnType("timestamp with time zone")
@@ -157,7 +161,8 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                         .HasColumnType("character varying(500)");
 
                     b.Property<string>("FinalVideoUrl")
-                        .HasColumnType("text");
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
 
                     b.Property<bool>("IsDeleted")
                         .ValueGeneratedOnAdd()
@@ -166,7 +171,8 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                         .HasColumnName("IsDeleted");
 
                     b.Property<string>("LastError")
-                        .HasColumnType("text");
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
 
                     b.Property<string>("LastFacility")
                         .HasMaxLength(120)
@@ -211,7 +217,7 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                     b.HasIndex("ScopeKey", "DomainName")
                         .IsUnique();
 
-                    b.ToTable("customer_contents", (string)null);
+                    b.ToTable("CustomerContents", (string)null);
                 });
 
             modelBuilder.Entity("Hhs.ContentService.Domain.InfraDomain.Entities.EventInboxMessage", b =>
@@ -219,8 +225,8 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid?>("CorrelationId")
-                        .HasColumnType("uuid");
+                    b.Property<string>("CorrelationId")
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("CreationTime")
                         .HasColumnType("timestamp with time zone")
