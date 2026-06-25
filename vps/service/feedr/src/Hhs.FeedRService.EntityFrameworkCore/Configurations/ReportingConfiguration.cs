@@ -13,19 +13,19 @@ public static class ReportingConfiguration
 
         builder.Entity<AdNetwork>(b =>
         {
-            b.ToTable(EfCoreDbProperties.DbTablePrefix + ReportingConsts.AdNetworkTableName, EfCoreDbProperties.DbSchema);
+            b.ToTable(EfCoreDbProperties.DbTablePrefix + AdNetworkConsts.TableName, EfCoreDbProperties.DbSchema);
             b.HasKey(x => x.Id);
-            b.Property(x => x.NetworkCode).IsRequired().HasMaxLength(ReportingConsts.NetworkCodeMaxLength);
-            b.Property(x => x.DisplayName).HasMaxLength(ReportingConsts.ClientNameMaxLength);
+            b.Property(x => x.NetworkCode).IsRequired().HasMaxLength(AdNetworkConsts.NetworkCodeMaxLength);
+            b.Property(x => x.DisplayName).HasMaxLength(AdNetworkConsts.DisplayNameMaxLength);
             b.HasIndex(x => x.NetworkCode).IsUnique();
             b.HasMany(x => x.TopLevelAdUnits).WithOne(x => x.AdNetwork).HasForeignKey(x => x.AdNetworkId).OnDelete(DeleteBehavior.Cascade);
         });
 
         builder.Entity<AdUnitTopLevel>(b =>
         {
-            b.ToTable(EfCoreDbProperties.DbTablePrefix + ReportingConsts.AdUnitTopLevelTableName, EfCoreDbProperties.DbSchema);
+            b.ToTable(EfCoreDbProperties.DbTablePrefix + AdUnitTopLevelConsts.TableName, EfCoreDbProperties.DbSchema);
             b.HasKey(x => x.Id);
-            b.Property(x => x.AdUnitTopLevelCode).IsRequired().HasMaxLength(ReportingConsts.AdUnitCodeMaxLength);
+            b.Property(x => x.AdUnitTopLevelCode).IsRequired().HasMaxLength(AdUnitTopLevelConsts.AdUnitCodeMaxLength);
             b.HasIndex(x => new { x.AdNetworkId, x.AdUnitTopLevelCode }).IsUnique();
             b.HasIndex(x => x.AdUnitTopLevelCode);
             b.HasMany(x => x.Clients).WithOne(x => x.AdUnitTopLevel).HasForeignKey(x => x.AdUnitTopLevelId).OnDelete(DeleteBehavior.Cascade);
@@ -33,10 +33,10 @@ public static class ReportingConfiguration
 
         builder.Entity<AdUnitClient>(b =>
         {
-            b.ToTable(EfCoreDbProperties.DbTablePrefix + ReportingConsts.AdUnitClientTableName, EfCoreDbProperties.DbSchema);
+            b.ToTable(EfCoreDbProperties.DbTablePrefix + AdUnitClientConsts.TableName, EfCoreDbProperties.DbSchema);
             b.HasKey(x => x.Id);
-            b.Property(x => x.AdUnitCode).IsRequired().HasMaxLength(ReportingConsts.AdUnitCodeMaxLength);
-            b.Property(x => x.ClientName).HasMaxLength(ReportingConsts.ClientNameMaxLength);
+            b.Property(x => x.AdUnitCode).IsRequired().HasMaxLength(AdUnitClientConsts.AdUnitCodeMaxLength);
+            b.Property(x => x.ClientName).HasMaxLength(AdUnitClientConsts.ClientNameMaxLength);
             b.HasIndex(x => x.TenantId);
             b.HasIndex(x => x.ClientId);
             b.HasIndex(x => new { x.AdUnitTopLevelId, x.AdUnitCode }).IsUnique();
@@ -45,13 +45,13 @@ public static class ReportingConfiguration
 
         builder.Entity<DashboardResponse>(b =>
         {
-            b.ToTable(EfCoreDbProperties.DbTablePrefix + ReportingConsts.DailyReportResponseTableName, EfCoreDbProperties.DbSchema);
+            b.ToTable(EfCoreDbProperties.DbTablePrefix + DashboardResponseConsts.TableName, EfCoreDbProperties.DbSchema);
             b.HasKey(x => x.Id);
             b.Property(x => x.ReportDate).HasColumnType("date");
-            b.Property(x => x.DemandChannel).IsRequired().HasMaxLength(ReportingConsts.DemandChannelMaxLength);
-            b.Property(x => x.DemandSubchannelName).IsRequired().HasMaxLength(ReportingConsts.DemandSubchannelNameMaxLength);
-            b.Property(x => x.OrderId).IsRequired().HasMaxLength(ReportingConsts.OrderIdMaxLength);
-            b.Property(x => x.OrderName).IsRequired().HasMaxLength(ReportingConsts.OrderNameMaxLength);
+            b.Property(x => x.DemandChannel).IsRequired().HasMaxLength(DashboardResponseConsts.DemandChannelMaxLength);
+            b.Property(x => x.DemandSubchannelName).IsRequired().HasMaxLength(DashboardResponseConsts.DemandSubchannelNameMaxLength);
+            b.Property(x => x.OrderId).IsRequired().HasMaxLength(DashboardResponseConsts.OrderIdMaxLength);
+            b.Property(x => x.OrderName).IsRequired().HasMaxLength(DashboardResponseConsts.OrderNameMaxLength);
             b.HasIndex(x => x.TenantId);
             b.HasIndex(x => x.ClientId);
             b.HasIndex(x => x.ReportDate);
@@ -62,9 +62,9 @@ public static class ReportingConfiguration
 
         builder.Entity<MongoToPostgresMapping>(b =>
         {
-            b.ToTable(EfCoreDbProperties.DbTablePrefix + ReportingConsts.MongoToPostgresMappingTableName, EfCoreDbProperties.DbSchema);
+            b.ToTable(EfCoreDbProperties.DbTablePrefix + MongoToPostgresMappingConsts.TableName, EfCoreDbProperties.DbSchema);
             b.HasKey(x => x.Id);
-            b.Property(x => x.DerivationStatus).HasConversion<string>().HasMaxLength(ReportingConsts.StatusMaxLength);
+            b.Property(x => x.DerivationStatus).HasConversion<string>().HasMaxLength(MongoToPostgresMappingConsts.StatusMaxLength);
             b.HasIndex(x => x.MongoDbDocumentId).IsUnique();
             b.HasIndex(x => x.DerivationStatus);
         });
