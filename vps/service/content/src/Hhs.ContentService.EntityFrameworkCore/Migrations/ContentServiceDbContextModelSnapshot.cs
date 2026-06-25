@@ -223,7 +223,8 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<string>("CorrelationId")
-                        .HasColumnType("text");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<DateTime>("CreationTime")
                         .HasColumnType("timestamp with time zone")
@@ -234,7 +235,8 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                         .HasColumnName("CreatorId");
 
                     b.Property<string>("ErrorMessage")
-                        .HasColumnType("text");
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
 
                     b.Property<string>("EventName")
                         .IsRequired()

@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Hhs.ContentService.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(ContentServiceDbContext))]
-    [Migration("20260625005746_InitialCreate")]
+    [Migration("20260625015954_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -226,7 +226,8 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<string>("CorrelationId")
-                        .HasColumnType("text");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<DateTime>("CreationTime")
                         .HasColumnType("timestamp with time zone")
@@ -237,7 +238,8 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                         .HasColumnName("CreatorId");
 
                     b.Property<string>("ErrorMessage")
-                        .HasColumnType("text");
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
 
                     b.Property<string>("EventName")
                         .IsRequired()

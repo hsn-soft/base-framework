@@ -443,7 +443,8 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("ReplacedByTokenHash")
-                        .HasColumnType("text");
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<DateTime?>("RevokedAt")
                         .HasColumnType("timestamp with time zone");
@@ -698,6 +699,7 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
 
                     b.Property<string>("SettingsJson")
                         .IsRequired()
+                        .HasMaxLength(5000)
                         .HasColumnType("jsonb");
 
                     b.Property<DateTime>("ValidFrom")

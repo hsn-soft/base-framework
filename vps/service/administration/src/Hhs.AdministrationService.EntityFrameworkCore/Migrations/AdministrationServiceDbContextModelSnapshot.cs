@@ -28,7 +28,8 @@ namespace Hhs.AdministrationService.EntityFrameworkCore.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<string>("CorrelationId")
-                        .HasColumnType("text");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<DateTime>("CreationTime")
                         .HasColumnType("timestamp with time zone")
@@ -39,7 +40,8 @@ namespace Hhs.AdministrationService.EntityFrameworkCore.Migrations
                         .HasColumnName("CreatorId");
 
                     b.Property<string>("ErrorMessage")
-                        .HasColumnType("text");
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
 
                     b.Property<string>("EventName")
                         .IsRequired()
@@ -202,15 +204,19 @@ namespace Hhs.AdministrationService.EntityFrameworkCore.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<string>("ClientId")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("ClientMenuType")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Hierarchy")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Icon")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<int>("MapType")
@@ -226,14 +232,16 @@ namespace Hhs.AdministrationService.EntityFrameworkCore.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("UniqueName")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Url")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");
 
-                    b.ToTable("OldMenuMaps");
+                    b.ToTable("OldMenuMaps", (string)null);
                 });
 
             modelBuilder.Entity("Hhs.AdministrationService.Domain.PermissionDomain.Entities.OldMenuPermissionMap", b =>
@@ -242,9 +250,11 @@ namespace Hhs.AdministrationService.EntityFrameworkCore.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<string>("ClientId")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("LeafMenuUniqueName")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<byte>("OrderNo")
@@ -254,11 +264,12 @@ namespace Hhs.AdministrationService.EntityFrameworkCore.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("PermissionUniqueName")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");
 
-                    b.ToTable("OldMenuPermissionMaps");
+                    b.ToTable("OldMenuPermissionMaps", (string)null);
                 });
 
             modelBuilder.Entity("Hhs.AdministrationService.Domain.PermissionDomain.Entities.Permission", b =>

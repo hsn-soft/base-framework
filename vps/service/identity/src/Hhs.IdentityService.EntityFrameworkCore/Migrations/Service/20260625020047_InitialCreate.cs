@@ -261,7 +261,7 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                     ValidFrom = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     IsBlocked = table.Column<bool>(type: "boolean", nullable: false),
                     ValidTo = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    SettingsJson = table.Column<string>(type: "jsonb", nullable: false),
+                    SettingsJson = table.Column<string>(type: "jsonb", maxLength: 5000, nullable: false),
                     CreationTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     CreatorId = table.Column<Guid>(type: "uuid", nullable: true),
                     LastModificationTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -362,7 +362,7 @@ namespace Hhs.IdentityService.EntityFrameworkCore.Migrations.Service
                     TokenHash = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
                     ExpiresAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     RevokedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    ReplacedByTokenHash = table.Column<string>(type: "text", nullable: true),
+                    ReplacedByTokenHash = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     AppUserId = table.Column<Guid>(type: "uuid", nullable: true),
                     CreationTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     CreatorId = table.Column<Guid>(type: "uuid", nullable: true)

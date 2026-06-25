@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Hhs.FeedRService.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(FeedRServiceDbContext))]
-    [Migration("20260625003522_InitialCreate")]
+    [Migration("20260625020020_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -31,7 +31,8 @@ namespace Hhs.FeedRService.EntityFrameworkCore.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<string>("CorrelationId")
-                        .HasColumnType("text");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<DateTime>("CreationTime")
                         .HasColumnType("timestamp with time zone")
@@ -42,7 +43,8 @@ namespace Hhs.FeedRService.EntityFrameworkCore.Migrations
                         .HasColumnName("CreatorId");
 
                     b.Property<string>("ErrorMessage")
-                        .HasColumnType("text");
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
 
                     b.Property<string>("EventName")
                         .IsRequired()
@@ -323,10 +325,12 @@ namespace Hhs.FeedRService.EntityFrameworkCore.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("DerivedRecordIds")
-                        .HasColumnType("text");
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
 
                     b.Property<string>("ErrorMessage")
-                        .HasColumnType("text");
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
 
                     b.Property<DateTime>("LastModificationTime")
                         .HasColumnType("timestamp with time zone")

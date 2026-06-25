@@ -42,12 +42,12 @@ namespace Hhs.AdministrationService.EntityFrameworkCore.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    CorrelationId = table.Column<string>(type: "text", nullable: true),
+                    CorrelationId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
                     EventName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
                     Payload = table.Column<string>(type: "jsonb", nullable: true),
                     Status = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     ProcessedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    ErrorMessage = table.Column<string>(type: "text", nullable: true),
+                    ErrorMessage = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
                     RetryCount = table.Column<int>(type: "integer", nullable: false),
                     CreationTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     CreatorId = table.Column<Guid>(type: "uuid", nullable: true),
@@ -64,15 +64,15 @@ namespace Hhs.AdministrationService.EntityFrameworkCore.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    ClientId = table.Column<string>(type: "text", nullable: true),
-                    ClientMenuType = table.Column<string>(type: "text", nullable: true),
+                    ClientId = table.Column<string>(type: "text", nullable: false),
+                    ClientMenuType = table.Column<string>(type: "text", nullable: false),
                     ParentUniqueName = table.Column<string>(type: "text", nullable: true),
-                    UniqueName = table.Column<string>(type: "text", nullable: true),
+                    UniqueName = table.Column<string>(type: "text", nullable: false),
                     MapType = table.Column<int>(type: "integer", nullable: false),
-                    Url = table.Column<string>(type: "text", nullable: true),
-                    Icon = table.Column<string>(type: "text", nullable: true),
+                    Url = table.Column<string>(type: "text", nullable: false),
+                    Icon = table.Column<string>(type: "text", nullable: false),
                     OrderNo = table.Column<byte>(type: "smallint", nullable: false),
-                    Hierarchy = table.Column<string>(type: "text", nullable: true),
+                    Hierarchy = table.Column<string>(type: "text", nullable: false),
                     OnlyAccessSystemUsers = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
@@ -85,10 +85,10 @@ namespace Hhs.AdministrationService.EntityFrameworkCore.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    ClientId = table.Column<string>(type: "text", nullable: true),
-                    LeafMenuUniqueName = table.Column<string>(type: "text", nullable: true),
+                    ClientId = table.Column<string>(type: "text", nullable: false),
+                    LeafMenuUniqueName = table.Column<string>(type: "text", nullable: false),
                     PermissionType = table.Column<int>(type: "integer", nullable: false),
-                    PermissionUniqueName = table.Column<string>(type: "text", nullable: true),
+                    PermissionUniqueName = table.Column<string>(type: "text", nullable: false),
                     OrderNo = table.Column<byte>(type: "smallint", nullable: false)
                 },
                 constraints: table =>
