@@ -40,5 +40,8 @@ public sealed class AdministrationServiceDbContext(
         modelBuilder.ConfigurePermissionDependencyEntity();
         modelBuilder.ConfigureAppRolePermissionEntity();
         modelBuilder.ConfigureAppRolePermissionConstraintEntity();
+
+        modelBuilder.ConfigureOldMenuMapEntity();
+        modelBuilder.ConfigureOldMenuPermissionMapEntity();
     }
 }
