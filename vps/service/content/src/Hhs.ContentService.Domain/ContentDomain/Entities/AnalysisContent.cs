@@ -2,6 +2,7 @@ using HsnSoft.Base;
 using HsnSoft.Base.Domain.Entities.Auditing;
 using HsnSoft.Base.Subscribe;
 using JetBrains.Annotations;
+using Hhs.Shared.Helper;
 
 namespace Hhs.ContentService.Domain.ContentDomain.Entities;
 
@@ -46,5 +47,7 @@ public sealed class AnalysisContent : AuditedEntity<Guid>, ISoftDelete, IScopeSu
         DomainName = domainName;
         Title = title;
         CorrelationId = correlationId;
+        NormalizeStatus = StatusNames.NotStarted;
+        VideoStatus = StatusNames.NotStarted;
     }
 }

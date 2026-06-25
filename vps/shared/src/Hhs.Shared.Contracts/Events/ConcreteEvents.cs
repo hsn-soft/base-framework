@@ -42,6 +42,7 @@ public sealed record AnalysisNormalizeItem
 public sealed record CustomerContentNormalizeRequestCreatedEto : IIntegrationEventMessage
 {
     public Guid CustomerContentId { get; init; }
+    public Guid NormalizeRequestId { get; init; }
 
     public CustomerContentNormalizeRequestCreatedEto()
     {
@@ -53,6 +54,7 @@ public sealed record CustomerContentNormalizeRequestCreatedEto : IIntegrationEve
 public sealed record AnalysisContentNormalizeRequestCreatedEto : IIntegrationEventMessage
 {
     public Guid AnalysisContentId { get; init; }
+    public Guid NormalizeRequestId { get; init; }
 
     public AnalysisContentNormalizeRequestCreatedEto()
     {
@@ -209,14 +211,28 @@ public sealed record VideoGenerationApprovedEto : IIntegrationEventMessage
 {
     public Guid RefContentId { get; init; }
     public ContentType RefContentType { get; init; }
-
     public string ScopeKey { get; init; } = default!;
-    public string VideoInputJson { get; init; } = default!;
+    public Guid NormalizeRequestId { get; init; }
 
     public VideoGenerationApprovedEto()
     {
         // EventName = EventNames.VideoGenerationApproved;
         // Facility = EventNames.VideoGenerationApproved;
+    }
+}
+
+public sealed record VideoGenerationDataForwardedEto : IIntegrationEventMessage
+{
+    public Guid RefContentId { get; init; }
+    public ContentType RefContentType { get; init; }
+    public string ScopeKey { get; init; } = default!;
+    public Guid NormalizeRequestId { get; init; }
+    public string VideoInputJson { get; init; } = default!;
+
+    public VideoGenerationDataForwardedEto()
+    {
+        // EventName = EventNames.VideoGenerationDataForwarded;
+        // Facility = EventNames.VideoGenerationDataForwarded;
     }
 }
 

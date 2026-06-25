@@ -41,7 +41,7 @@ public sealed class NormalizerOperationAppService(
             logger.LogInformation($"Existing request found, publishing event");
 
             await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
-                eventMessage: new CustomerContentNormalizeRequestCreatedEto { CustomerContentId = existing.CustomerContentId }
+                eventMessage: new CustomerContentNormalizeRequestCreatedEto { CustomerContentId = existing.CustomerContentId, NormalizeRequestId = existing.Id }
             );
 
             return;
@@ -69,7 +69,7 @@ public sealed class NormalizerOperationAppService(
             logger.LogInformation($"MongoDB insert successful, publishing event...");
 
             await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
-                eventMessage: new CustomerContentNormalizeRequestCreatedEto { CustomerContentId = @event.CustomerContentId, }
+                eventMessage: new CustomerContentNormalizeRequestCreatedEto { CustomerContentId = @event.CustomerContentId, NormalizeRequestId = requestId }
             );
 
             logger.LogInformation($"Event published successfully");
@@ -207,7 +207,7 @@ public sealed class NormalizerOperationAppService(
         if (existing is not null)
         {
             await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
-                eventMessage: new AnalysisContentNormalizeRequestCreatedEto { AnalysisContentId = existing.AnalysisContentId }
+                eventMessage: new AnalysisContentNormalizeRequestCreatedEto { AnalysisContentId = existing.AnalysisContentId, NormalizeRequestId = existing.Id }
             );
 
             return;
@@ -229,7 +229,7 @@ public sealed class NormalizerOperationAppService(
         await analysisContentRepository.InsertAsync(request, cancellationToken);
 
         await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
-            eventMessage: new AnalysisContentNormalizeRequestCreatedEto { AnalysisContentId = @event.AnalysisContentId }
+            eventMessage: new AnalysisContentNormalizeRequestCreatedEto { AnalysisContentId = @event.AnalysisContentId, NormalizeRequestId = requestId }
         );
     }
 

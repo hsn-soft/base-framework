@@ -34,6 +34,7 @@ public static class EventNames
     public const string NormalizerResultPublished = "NORMALIZER_RESULT_PUBLISHED";
 
     public const string VideoGenerationApproved = "VIDEO_GENERATION_APPROVED";
+    public const string VideoGenerationDataForwarded = "VIDEO_GENERATION_DATA_FORWARDED";
 
     public const string AudioRequestCreated = "AUDIO_REQUEST_CREATED";
 
