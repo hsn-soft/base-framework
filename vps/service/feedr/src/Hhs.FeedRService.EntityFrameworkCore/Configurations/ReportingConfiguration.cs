@@ -65,6 +65,8 @@ public static class ReportingConfiguration
             b.ToTable(EfCoreDbProperties.DbTablePrefix + MongoToPostgresMappingConsts.TableName, EfCoreDbProperties.DbSchema);
             b.HasKey(x => x.Id);
             b.Property(x => x.DerivationStatus).HasConversion<string>().HasMaxLength(MongoToPostgresMappingConsts.StatusMaxLength);
+            b.Property(x => x.DerivedRecordIds).HasMaxLength(MongoToPostgresMappingConsts.DerivedRecordIdsMaxLength);
+            b.Property(x => x.ErrorMessage).HasMaxLength(MongoToPostgresMappingConsts.ErrorMessageMaxLength);
             b.HasIndex(x => x.MongoDbDocumentId).IsUnique();
             b.HasIndex(x => x.DerivationStatus);
         });

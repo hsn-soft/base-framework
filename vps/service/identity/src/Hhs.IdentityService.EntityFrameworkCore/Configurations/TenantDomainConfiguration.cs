@@ -80,7 +80,7 @@ public static class TenantDomainConfiguration
             b.Property(x => x.IsBlocked).IsRequired();
             b.Property(x => x.ValidTo);
 
-            b.Property(x => x.SettingsJson).IsRequired().HasColumnType("jsonb");
+            b.Property(x => x.SettingsJson).IsRequired().HasColumnType("jsonb").HasMaxLength(SubscriptionConsts.SettingsJsonMaxLength);
 
             b.HasOne(x => x.Company)
                 .WithMany()

@@ -156,6 +156,7 @@ public static class AuthDomainConfiguration
             b.HasKey(x => x.Id);
 
             b.Property(x => x.TokenHash).HasMaxLength(AuthRefreshTokenConsts.TokenHashMaxLength).IsRequired();
+            b.Property(x => x.ReplacedByTokenHash).HasMaxLength(AuthRefreshTokenConsts.ReplacedByTokenHashMaxLength);
 
             b.HasOne(x => x.User)
                 .WithMany()

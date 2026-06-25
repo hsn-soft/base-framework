@@ -16,6 +16,8 @@ public static class InfraDomainConfiguration
             b.Property(x => x.EventName).HasMaxLength(EventInboxMessageConsts.EventNameMaxLength).IsRequired();
             b.Property(x => x.Status).HasMaxLength(EventInboxMessageConsts.StatusMaxLength).IsRequired();
             b.Property(x => x.Payload).HasColumnType("jsonb");
+            b.Property(x => x.CorrelationId).HasMaxLength(EventInboxMessageConsts.CorrelationIdMaxLength);
+            b.Property(x => x.ErrorMessage).HasMaxLength(EventInboxMessageConsts.ErrorMessageMaxLength);
 
             b.HasIndex(x => x.Status);
         });
