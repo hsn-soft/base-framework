@@ -30,7 +30,7 @@ public sealed class VideoOperationAppService(
     VideoPollingSettings videoPollingSettings,
     VideoRetrySettings serviceRetrySettings) : ApplicationServiceBase(provider)
 {
-    public async Task CreateVideoRequestAsync(VideoGenerationApprovedEto @event, Guid eventId, string correlationId, CancellationToken cancellationToken = default)
+    public async Task CreateVideoRequestAsync(VideoGenerationDataForwardedEto @event, Guid eventId, string correlationId, CancellationToken cancellationToken = default)
     {
         var options = new ListQueryOptions<VideoRequest>
         {
@@ -359,6 +359,12 @@ public sealed class VideoOperationAppService(
                 Filter = x => x.VideoRequestId == @event.VideoRequestId
             };
             var allAudios = await audioRequestRepository.GetListAsync(audioOptions, cancellationToken);
+
+            if (allAudios.Any(x => x.Status == StatusNames.Failed))
+            {
+                await FailVideoRequestDueToAudioFailureAsync(videoRequest, cancellationToken);
+                return;
+            }
 
             if (allAudios.Any(x => x.Status != StatusNames.AudioFileUploadCompleted))
                 return;
@@ -766,6 +772,12 @@ public sealed class VideoOperationAppService(
                 Retryable = retryable
             }
         );
+
+        var parentVideoRequest = await GetVideoAsync(request.VideoRequestId, cancellationToken);
+        if (parentVideoRequest != null && parentVideoRequest.Status != StatusNames.Failed && parentVideoRequest.Status != StatusNames.Completed)
+        {
+            await FailVideoRequestDueToAudioFailureAsync(parentVideoRequest, cancellationToken);
+        }
     }
 
     private async Task HandleVideoExceptionAsync(VideoRequest request, string step, Exception ex, CancellationToken cancellationToken = default)
@@ -830,6 +842,29 @@ public sealed class VideoOperationAppService(
                 Step = step,
                 ErrorMessage = ex.Message,
                 Retryable = retryable
+            }
+        );
+    }
+
+    private async Task FailVideoRequestDueToAudioFailureAsync(VideoRequest videoRequest, CancellationToken cancellationToken = default)
+    {
+        videoRequest.Status = StatusNames.Failed;
+        videoRequest.CurrentStep = EventNames.AudioFileUploadCompleted;
+        videoRequest.LastError = "One or more audio requests failed.";
+        videoRequest.NextRetryAtUtc = null;
+
+        await ReplaceVideoAsync(videoRequest, cancellationToken);
+
+        await EventBus.PublishAsync(
+            parentMessage: ParentIntegrationEvent,
+            correlationId: videoRequest.CorrelationId,
+            eventMessage: new StepFailedEto
+            {
+                RefContentId = videoRequest.RefContentId,
+                RefContentType = videoRequest.RefContentType,
+                Step = EventNames.AudioFileUploadCompleted,
+                ErrorMessage = "One or more audio requests failed.",
+                Retryable = false
             }
         );
     }

@@ -2,6 +2,7 @@ using Hhs.ContentService.Domain.ContentDomain.Entities;
 using Hhs.ContentService.Domain.ContentDomain.Repositories;
 using Hhs.Shared.Contracts.Events;
 using Hhs.Shared.Helper;
+using Hhs.Shared.Helper.Configuration;
 using Hhs.Shared.Helper.Enums;
 using HsnSoft.Base.Text;
 using HsnSoft.Base.Tracing;

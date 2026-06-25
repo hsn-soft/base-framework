@@ -6,19 +6,19 @@ using HsnSoft.Base.Logging.Abstracts;
 
 namespace Hhs.VideoGeneratorService.EventHandlers.Content;
 
-public class VideoGenerationApprovedEtoHandler(
+public class VideoGenerationDataForwardedEtoHandler(
     ApplicationEventInboxMessageManager inboxStore,
     IAppConsoleLogger logger,
     VideoOperationAppService videoOperationAppService
-) : ApplicationEventHandlerBase<VideoGenerationApprovedEto>(inboxStore)
+) : ApplicationEventHandlerBase<VideoGenerationDataForwardedEto>(inboxStore)
 {
     private readonly IAppConsoleLogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     private readonly VideoOperationAppService _videoOperationAppService = videoOperationAppService ?? throw new ArgumentNullException(nameof(videoOperationAppService));
 
-    protected override async Task ExecuteAsync(MessageEnvelope<VideoGenerationApprovedEto> @event, CancellationToken cancellationToken)
+    protected override async Task ExecuteAsync(MessageEnvelope<VideoGenerationDataForwardedEto> @event, CancellationToken cancellationToken)
     {
         _logger.LogDebug("EVENT HANDLING | [ {EventName} ] => EventId[{EventId}]",
-            nameof(VideoGenerationApprovedEto)[..^"Eto".Length],
+            nameof(VideoGenerationDataForwardedEto)[..^"Eto".Length],
             @event.MessageId);
 
         await _videoOperationAppService.CreateVideoRequestAsync(@event.Message, @event.MessageId, @event.CorrelationId ?? "", cancellationToken);
