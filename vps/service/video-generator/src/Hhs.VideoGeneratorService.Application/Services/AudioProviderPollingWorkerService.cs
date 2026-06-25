@@ -47,7 +47,7 @@ public sealed class AudioProviderPollingWorkerService(
                 if (claimResult == 0)
                     continue;
 
-                if (request.ProviderPollingCount >= 60)
+                if (request.ProviderPollingCount >= pollingSettings.MaxAttempts)
                 {
                     request.Status = StatusNames.Failed;
                     request.LastError = ErrorMessages.AudioProviderPollingTimeout;
@@ -131,7 +131,7 @@ public sealed class AudioProviderPollingWorkerService(
                 request.ProviderPollingCount++;
                 request.LastError = ex.Message;
 
-                if (request.ProviderPollingCount >= 60)
+                if (request.ProviderPollingCount >= pollingSettings.MaxAttempts)
                 {
                     request.Status = StatusNames.Failed;
                     request.NextProviderPollAtUtc = null;

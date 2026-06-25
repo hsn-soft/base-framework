@@ -60,7 +60,7 @@ public sealed class OutlineProviderPollingWorkerService(
                 if (claimResult == 0)
                     continue;
 
-                if (request.OutlinePollingCount >= request.MaxOutlinePollingCount)
+                if (request.OutlinePollingCount >= pollingSettings.MaxAttempts)
                 {
                     request.Status = StatusNames.Failed;
                     request.LastError = ErrorMessages.OutlineProviderPollingTimeout;
@@ -146,7 +146,7 @@ public sealed class OutlineProviderPollingWorkerService(
                 request.OutlinePollingCount++;
                 request.LastError = ex.Message;
 
-                if (request.OutlinePollingCount >= request.MaxOutlinePollingCount)
+                if (request.OutlinePollingCount >= pollingSettings.MaxAttempts)
                 {
                     request.Status = StatusNames.Failed;
                     request.OutlineStatus = StatusNames.Failed;
@@ -230,7 +230,7 @@ public sealed class OutlineProviderPollingWorkerService(
                     if (claimResult == 0)
                         continue;
 
-                    if (item.OutlinePollingCount >= item.MaxOutlinePollingCount)
+                    if (item.OutlinePollingCount >= pollingSettings.MaxAttempts)
                     {
                         await FailAnalysisPollingItemAsync(
                             request,
@@ -305,7 +305,7 @@ public sealed class OutlineProviderPollingWorkerService(
                 {
                     int nextCount = item.OutlinePollingCount + 1;
 
-                    if (nextCount >= item.MaxOutlinePollingCount)
+                    if (nextCount >= pollingSettings.MaxAttempts)
                     {
                         await FailAnalysisPollingItemAsync(
                             request,

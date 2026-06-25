@@ -27,7 +27,8 @@ public sealed class VideoOperationAppService(
     IAudioProviderResolver audioProviderResolver,
     SystemCdnSettings systemCdnSettings,
     RetryDelayCalculator retryDelayCalculator,
-    VideoPollingSettings videoPollingSettings) : ApplicationServiceBase(provider)
+    VideoPollingSettings videoPollingSettings,
+    VideoRetrySettings serviceRetrySettings) : ApplicationServiceBase(provider)
 {
     public async Task CreateVideoRequestAsync(VideoGenerationApprovedEto @event, Guid eventId, string correlationId, CancellationToken cancellationToken = default)
     {
@@ -716,7 +717,7 @@ public sealed class VideoOperationAppService(
     {
         request.RetryCount++;
 
-        if (request.RetryCount >= 30)
+        if (request.RetryCount >= serviceRetrySettings.MaxRetryCount)
         {
             await FailAudioAsync(request, step, ex, false, cancellationToken);
             return;
@@ -782,7 +783,7 @@ public sealed class VideoOperationAppService(
     {
         request.RetryCount++;
 
-        if (request.RetryCount >= 30)
+        if (request.RetryCount >= serviceRetrySettings.MaxRetryCount)
         {
             await FailVideoAsync(request, step, ex, false, cancellationToken);
             return;

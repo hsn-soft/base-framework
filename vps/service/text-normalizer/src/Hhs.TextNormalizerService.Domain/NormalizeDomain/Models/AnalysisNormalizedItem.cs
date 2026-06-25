@@ -25,7 +25,6 @@ public sealed class AnalysisNormalizedItem
     [CanBeNull]  public string OutlineProviderTrackId { get; set; }
     [CanBeNull] public DateTime? NextOutlinePollAtUtc { get; set; }
     public int OutlinePollingCount { get; set; }
-    public int MaxOutlinePollingCount { get; set; }
 
     // Status & Progress
     [NotNull] public string Status { get; set; } = StatusNames.Created;
@@ -33,7 +32,7 @@ public sealed class AnalysisNormalizedItem
 
     // Retry Configuration
     public int RetryCount { get; set; }
-    public int MaxRetryCount { get; set; }
+
     [CanBeNull] public DateTime? NextRetryAtUtc { get; set; }
 
     // Error Handling & Tracking

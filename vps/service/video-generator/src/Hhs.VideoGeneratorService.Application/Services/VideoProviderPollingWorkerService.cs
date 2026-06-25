@@ -47,7 +47,7 @@ public sealed class VideoProviderPollingWorkerService(
                 if (claimResult == 0)
                     continue;
 
-                if (request.ProviderPollingCount >= 60)
+                if (request.ProviderPollingCount >= pollingSettings.MaxAttempts)
                 {
                     request.Status = StatusNames.Failed;
                     request.LastError = ErrorMessages.VideoProviderPollingTimeout;
@@ -131,7 +131,7 @@ public sealed class VideoProviderPollingWorkerService(
                 request.ProviderPollingCount++;
                 request.LastError = ex.Message;
 
-                if (request.ProviderPollingCount >= 60)
+                if (request.ProviderPollingCount >= pollingSettings.MaxAttempts)
                 {
                     request.Status = StatusNames.Failed;
                     request.NextProviderPollAtUtc = null;

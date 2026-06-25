@@ -23,8 +23,4 @@ public static class CustomerContentNormalizedRequestConsts
     public const int OutlineStatusMaxLength = 50;
     public const int OutlineProviderTrackIdMaxLength = 256;
     public const int LastErrorMaxLength = 1000;
-
-    // Polling & Retry Configuration
-    public const int MaxOutlinePollingCountDefault = 60;
-    public const int MaxRetryCountDefault = 5;
 }

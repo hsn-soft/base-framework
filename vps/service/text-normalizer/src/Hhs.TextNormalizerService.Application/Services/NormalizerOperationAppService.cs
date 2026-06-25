@@ -8,6 +8,7 @@ using Hhs.Shared.Helper.Retry;
 using Hhs.TextNormalizerService.Application.Providers;
 using Hhs.TextNormalizerService.Application.Providers.Outline;
 using Hhs.TextNormalizerService.Application.Providers.Scraping;
+using Hhs.TextNormalizerService.Domain.Configuration;
 using Hhs.TextNormalizerService.Domain.Configuration.Providers.Outline;
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Entities;
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Models;
@@ -26,7 +27,8 @@ public sealed class NormalizerOperationAppService(
     ILogger<NormalizerOperationAppService> logger,
     IOutlineProviderResolver outlineProviderResolver,
     OutlinePollingSettings outlinePollingSettings,
-    RetryDelayCalculator retryDelayCalculator) : ApplicationServiceBase(provider)
+    RetryDelayCalculator retryDelayCalculator,
+    NormalizerRetrySettings serviceRetrySettings) : ApplicationServiceBase(provider)
 {
     public async Task CreateCustomerContentNormalizeRequestAsync(CustomerContentCreatedEto @event, Guid eventId, [CanBeNull] string correlationId, CancellationToken cancellationToken = default)
     {
@@ -61,7 +63,6 @@ public sealed class NormalizerOperationAppService(
                 correlationId);
             entity.Status = StatusNames.Created;
             entity.CurrentStep = EventNames.CustomerContentCreated;
-            entity.MaxOutlinePollingCount = outlinePollingSettings.MaxAttempts;
 
             await customerContentRepository.InsertAsync(entity, cancellationToken);
 
@@ -684,7 +685,7 @@ public sealed class NormalizerOperationAppService(
     {
         request.RetryCount++;
 
-        if (request.RetryCount >= request.MaxRetryCount)
+        if (request.RetryCount >= serviceRetrySettings.MaxRetryCount)
         {
             await FailCustomerAsync(request, step, ex, false);
             return;
@@ -727,7 +728,7 @@ public sealed class NormalizerOperationAppService(
     {
         int retryCount = item.RetryCount + 1;
 
-        if (retryCount >= item.MaxRetryCount)
+        if (retryCount >= serviceRetrySettings.MaxRetryCount)
         {
             await FailAnalysisItemAsync(request, item, step, ex, false);
             return;
