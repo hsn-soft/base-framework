@@ -7,11 +7,14 @@ public static class EntityClassMap
 {
     public static void Register()
     {
-        BsonClassMap.RegisterClassMap<Entity<Guid>>(map =>
+        if (!BsonClassMap.IsClassMapRegistered(typeof(Entity<Guid>)))
         {
-            map.AutoMap();
-            map.SetIgnoreExtraElements(true);
-            map.MapIdMember(x => x.Id);
-        });
+            BsonClassMap.RegisterClassMap<Entity<Guid>>(map =>
+            {
+                map.AutoMap();
+                map.SetIgnoreExtraElements(true);
+                map.MapIdMember(x => x.Id);
+            });
+        }
     }
 }
