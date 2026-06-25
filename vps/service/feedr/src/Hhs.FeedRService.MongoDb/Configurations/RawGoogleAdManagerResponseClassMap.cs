@@ -33,7 +33,6 @@ public static class RawGoogleAdManagerResponseClassMap
         BsonClassMap.RegisterClassMap<RawGoogleAdManagerResponse>(map =>
         {
             map.AutoMap();
-            map.MapIdMember(x => x.Id);
             map.SetIgnoreExtraElements(true);
 
             map.MapMember(x => x.RequestId)

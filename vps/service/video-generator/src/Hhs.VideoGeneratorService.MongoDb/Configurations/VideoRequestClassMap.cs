@@ -12,7 +12,6 @@ public static class VideoRequestClassMap
         BsonClassMap.RegisterClassMap<VideoRequest>(map =>
         {
             map.AutoMap();
-            map.MapIdMember(x => x.Id);
             map.SetIgnoreExtraElements(true);
 
             // Correlation & Context

@@ -12,7 +12,6 @@ public static class CustomerContentNormalizedRequestClassMap
         BsonClassMap.RegisterClassMap<CustomerContentNormalizedRequest>(map =>
         {
             map.AutoMap();
-            map.MapIdMember(x => x.Id);
             map.SetIgnoreExtraElements(true);
 
             // Correlation & Tracing
