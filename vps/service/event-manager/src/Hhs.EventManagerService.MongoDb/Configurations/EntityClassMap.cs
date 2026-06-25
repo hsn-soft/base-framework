@@ -10,8 +10,8 @@ public static class EntityClassMap
         BsonClassMap.RegisterClassMap<Entity<Guid>>(map =>
         {
             map.AutoMap();
-            map.SetIgnoreExtraElements(true);
             map.MapIdMember(x => x.Id);
+            map.SetIgnoreExtraElements(true);
         });
     }
 }
