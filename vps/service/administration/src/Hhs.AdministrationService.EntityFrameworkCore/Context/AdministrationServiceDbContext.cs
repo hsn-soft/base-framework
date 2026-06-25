@@ -21,6 +21,8 @@ public sealed class AdministrationServiceDbContext(
     public DbSet<PermissionDependency> PermissionDependencies => Set<PermissionDependency>();
     public DbSet<AppRolePermission> AppRolePermissions => Set<AppRolePermission>();
     public DbSet<AppRolePermissionConstraint> AppRolePermissionConstraints => Set<AppRolePermissionConstraint>();
+    public DbSet<OldMenuMap> OldMenuMaps => Set<OldMenuMap>();
+    public DbSet<OldMenuPermissionMap> OldMenuPermissionMaps => Set<OldMenuPermissionMap>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
