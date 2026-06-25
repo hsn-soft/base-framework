@@ -1,6 +1,7 @@
 using HsnSoft.Base.MongoDB.Helpers;
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Consts;
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Entities;
+using Hhs.TextNormalizerService.Domain.NormalizeDomain.Models;
 using MongoDB.Bson.Serialization;
 
 namespace Hhs.TextNormalizerService.MongoDb.Configurations;
@@ -9,6 +10,24 @@ public static class CustomerContentNormalizedRequestClassMap
 {
     public static void Register()
     {
+        if (!BsonClassMap.IsClassMapRegistered(typeof(ScrapingResult)))
+        {
+            BsonClassMap.RegisterClassMap<ScrapingResult>(map =>
+            {
+                map.AutoMap();
+                map.SetIgnoreExtraElements(true);
+            });
+        }
+
+        if (!BsonClassMap.IsClassMapRegistered(typeof(OutlineResult)))
+        {
+            BsonClassMap.RegisterClassMap<OutlineResult>(map =>
+            {
+                map.AutoMap();
+                map.SetIgnoreExtraElements(true);
+            });
+        }
+
         if (!BsonClassMap.IsClassMapRegistered(typeof(CustomerContentNormalizedRequest)))
         {
             BsonClassMap.RegisterClassMap<CustomerContentNormalizedRequest>(map =>
