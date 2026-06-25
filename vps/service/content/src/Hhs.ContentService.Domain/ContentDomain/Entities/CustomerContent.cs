@@ -46,7 +46,6 @@ public sealed class CustomerContent : AuditedEntity<Guid>, ISoftDelete, IScopeSu
         ContentKey = contentKey;
         SlugKey = slugKey;
         CorrelationId = correlationId;
-        NormalizeStatus = StatusNames.NotStarted;
-        VideoStatus = StatusNames.NotStarted;
+        // NormalizeStatus and VideoStatus start as null, handlers will set them
     }
 }

@@ -47,7 +47,6 @@ public sealed class AnalysisContent : AuditedEntity<Guid>, ISoftDelete, IScopeSu
         DomainName = domainName;
         Title = title;
         CorrelationId = correlationId;
-        NormalizeStatus = StatusNames.NotStarted;
-        VideoStatus = StatusNames.NotStarted;
+        // NormalizeStatus and VideoStatus start as null, handlers will set them
     }
 }
