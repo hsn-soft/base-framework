@@ -210,7 +210,7 @@ public sealed class NormalizerOperationAppService(
                 {
                     // Update reference for Content Service
                     CustomerContentId = request.CustomerContentId,
-                    ScrapeReleaseTimeUtc = result.ReleaseTimeUtc,
+                    ScrapedReleaseTimeUtc = result.ReleaseTimeUtc,
 
                     CustomerContentNormalizeRequestId = @event.CustomerContentNormalizeRequestId
                 }
@@ -343,7 +343,7 @@ public sealed class NormalizerOperationAppService(
         if (existing is not null)
         {
             await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
-                eventMessage: new AnalysisContentNormalizeRequestCreatedEto { AnalysisContentId = existing.AnalysisContentId, NormalizeRequestId = existing.Id }
+                eventMessage: new AnalysisContentNormalizeRequestCreatedEto { AnalysisContentId = existing.AnalysisContentId, AnalysisContentNormalizeRequestId = existing.Id }
             );
 
             return;
@@ -365,7 +365,7 @@ public sealed class NormalizerOperationAppService(
         await analysisContentRepository.InsertAsync(request, cancellationToken);
 
         await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
-            eventMessage: new AnalysisContentNormalizeRequestCreatedEto { AnalysisContentId = @event.AnalysisContentId, NormalizeRequestId = requestId }
+            eventMessage: new AnalysisContentNormalizeRequestCreatedEto { AnalysisContentId = @event.AnalysisContentId, AnalysisContentNormalizeRequestId = requestId }
         );
     }
 

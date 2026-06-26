@@ -9,11 +9,11 @@ namespace Hhs.ContentService.EventHandlers;
 public class StepFailedEtoHandler(
     ApplicationEventInboxMessageManager inboxStore,
     IAppConsoleLogger logger,
-    ContentOperationAppService contentOperationAppService
+    ContentOperationService contentOperationService
 ) : ApplicationEventHandlerBase<StepFailedEto>(inboxStore)
 {
     private readonly IAppConsoleLogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    private readonly ContentOperationAppService _contentOperationAppService = contentOperationAppService ?? throw new ArgumentNullException(nameof(contentOperationAppService));
+    private readonly ContentOperationService _contentOperationService = contentOperationService ?? throw new ArgumentNullException(nameof(contentOperationService));
 
     protected override async Task ExecuteAsync(MessageEnvelope<StepFailedEto> @event, CancellationToken cancellationToken)
     {
@@ -21,6 +21,6 @@ public class StepFailedEtoHandler(
             nameof(StepFailedEto)[..^"Eto".Length],
             @event.MessageId);
 
-        await _contentOperationAppService.HandleStepFailedAsync(@event.Message, cancellationToken);
+        await _contentOperationService.HandleStepFailedAsync(@event.Message, cancellationToken);
     }
 }

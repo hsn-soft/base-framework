@@ -10,11 +10,11 @@ namespace Hhs.ContentService.EventHandlers.TextNormalizer;
 public class CustomerContentScrapingCompletedEtoHandler(
     ApplicationEventInboxMessageManager inboxStore,
     IAppConsoleLogger logger,
-    ContentOperationAppService contentOperationAppService
+    ContentOperationService contentOperationService
 ) : ApplicationEventHandlerBase<CustomerContentScrapingCompletedEto>(inboxStore)
 {
     private readonly IAppConsoleLogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    private readonly ContentOperationAppService _contentOperationAppService = contentOperationAppService ?? throw new ArgumentNullException(nameof(contentOperationAppService));
+    private readonly ContentOperationService _contentOperationService = contentOperationService ?? throw new ArgumentNullException(nameof(contentOperationService));
 
     protected override async Task ExecuteAsync(MessageEnvelope<CustomerContentScrapingCompletedEto> @event, CancellationToken cancellationToken)
     {
@@ -22,9 +22,9 @@ public class CustomerContentScrapingCompletedEtoHandler(
             nameof(CustomerContentScrapingCompletedEto)[..^"Eto".Length],
             @event.MessageId);
 
-        await _contentOperationAppService.HandleScrapingCompletedAsync(
-            @event.Message.CustomerContentId,
-            @event.Message.ScrapeReleaseTimeUtc,
-            cancellationToken);
+        await _contentOperationService.HandleCustomerContentScrapeTimeAsync(
+            customerContentId: @event.Message.CustomerContentId,
+            scrapedReleaseTimeUtc: @event.Message.ScrapedReleaseTimeUtc
+        );
     }
 }

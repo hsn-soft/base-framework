@@ -6,7 +6,18 @@ namespace Hhs.ContentService.Domain.ContentDomain.Repositories;
 
 public interface ICustomerContentRepository : IGenericRepository<CustomerContent, Guid>
 {
+    Task SetNormalizedReferenceAsync(Guid id, Guid normalizedRequestId);
+    Task SetScrapeTimeAsync(Guid id, DateTime? scrapeTime);
+
+
+
+
+
   Task<CustomerContent> CreateAsync([NotNull] string scopeKey, [NotNull] string contentKey, [CanBeNull] string correlationId = null);
+
+
+
+
 
 
     [ItemCanBeNull]

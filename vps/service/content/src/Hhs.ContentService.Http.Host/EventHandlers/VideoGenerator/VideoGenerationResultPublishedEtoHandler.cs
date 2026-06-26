@@ -9,11 +9,11 @@ namespace Hhs.ContentService.EventHandlers.VideoGenerator;
 public class VideoGenerationResultPublishedEtoHandler(
     ApplicationEventInboxMessageManager inboxStore,
     IAppConsoleLogger logger,
-    ContentOperationAppService contentOperationAppService
+    ContentOperationService contentOperationService
 ) : ApplicationEventHandlerBase<VideoGenerationResultPublishedEto>(inboxStore)
 {
     private readonly IAppConsoleLogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    private readonly ContentOperationAppService _contentOperationAppService = contentOperationAppService ?? throw new ArgumentNullException(nameof(contentOperationAppService));
+    private readonly ContentOperationService _contentOperationService = contentOperationService ?? throw new ArgumentNullException(nameof(contentOperationService));
 
     protected override async Task ExecuteAsync(MessageEnvelope<VideoGenerationResultPublishedEto> @event, CancellationToken cancellationToken)
     {
@@ -21,6 +21,6 @@ public class VideoGenerationResultPublishedEtoHandler(
             nameof(VideoGenerationResultPublishedEto)[..^"Eto".Length],
             @event.MessageId);
 
-        await _contentOperationAppService.HandleVideoResultAsync(@event.Message, cancellationToken);
+        await _contentOperationService.HandleVideoResultAsync(@event.Message, cancellationToken);
     }
 }

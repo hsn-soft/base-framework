@@ -1,210 +1,38 @@
 using Hhs.ContentService.Domain.ContentDomain.Entities;
+using Hhs.ContentService.Domain.ContentDomain.Exceptions;
 using Hhs.ContentService.Domain.ContentDomain.Repositories;
 using Hhs.Shared.Contracts.Events;
 using Hhs.Shared.Helper;
 using Hhs.Shared.Helper.Enums;
 using HsnSoft.Base.Domain.Models;
 using HsnSoft.Base.Tracing;
-using Microsoft.Extensions.Logging;
 
 namespace Hhs.ContentService.Application.Services;
 
-public sealed record CreateCustomerContentRequest(string ScopeKey, string DomainName, string ContentKey);
-
-public sealed record CreateContentResponse(string Id);
-
-public sealed record CreateAnalysisContentRequest(
-    string ScopeKey,
-    string DomainName,
-    string Title,
-    List<Guid> CustomerContentIds);
-
-public sealed record CreateAnalysisContentFromScopeRequest(
-    string ScopeKey,
-    string DomainName,
-    string Title,
-    int MaxCustomerContents = 5);
-
-public sealed class ContentOperationAppService(
+public sealed class ContentOperationService(
     IServiceProvider provider,
     ITraceAccesor traceAccessor,
     ICustomerContentRepository customerContentRepository,
-    IAnalysisContentRepository analysisContentRepository,
-    ILogger<ContentOperationAppService> logger) : ApplicationServiceBase(provider)
+    IAnalysisContentRepository analysisContentRepository) : ApplicationServiceBase(provider)
 {
-    public async Task<CreateContentResponse> CreateCustomerContentAsync(CreateCustomerContentRequest request, CancellationToken cancellationToken)
+    public async Task HandleNormalizedRequestReferenceAsync(ContentType refContentType, Guid refContentId, Guid refNormalizeRequestId)
     {
-        // Add appContent record
-        var placedCustomerContent = await customerContentRepository.CreateAsync(
-            scopeKey: request.ScopeKey,
-            contentKey: request.ContentKey,
-            correlationId: traceAccessor?.GetCorrelationId());
-
-        logger.LogInformation($"About to publish CustomerContentCreatedEto for RefContentId: {placedCustomerContent.Id}, ScopeKey: {placedCustomerContent.ScopeKey}");
-
-        try
+        switch (refContentType)
         {
-            // Integration Event for TextNormalizerService
-            await EventBus.PublishAsync(
-                correlationId: placedCustomerContent.CorrelationId,
-                eventMessage: new CustomerContentCreatedEto { CustomerContentId = placedCustomerContent.Id, ScopeKey = placedCustomerContent.ScopeKey, DomainName = request.DomainName, DomainPath = request.ContentKey }
-            );
-
-            logger.LogInformation($"Successfully published CustomerContentCreatedEto");
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, $"Failed to publish CustomerContentCreatedEto: {ex.Message}");
-            throw;
-        }
-
-        return new CreateContentResponse(Id: placedCustomerContent.Id.ToString());
-    }
-
-    public async Task<CreateContentResponse> CreateAnalysisContentAsync(CreateAnalysisContentRequest request, CancellationToken cancellationToken)
-    {
-        var analysisId = Guid.NewGuid();
-
-        // Fetch all customer contents by IDs
-        var contentsForAnalysis = new List<CustomerContent>();
-        foreach (var id in request.CustomerContentIds)
-        {
-            var content = await customerContentRepository.GetByIdWithTrackingAsync(id, cancellationToken);
-            if (content == null)
-                throw new InvalidOperationException($"CustomerContent not found: {id}");
-            contentsForAnalysis.Add(content);
-        }
-
-        var analysis = new AnalysisContent(
-            analysisId,
-            request.ScopeKey,
-            request.DomainName,
-            request.Title,
-            traceAccessor?.GetCorrelationId());
-
-        int sort = 1;
-
-        foreach (var customerContentId in request.CustomerContentIds)
-        {
-            var content = contentsForAnalysis.FirstOrDefault(x => x.Id == customerContentId);
-            if (content == null)
-                throw new InvalidOperationException($"CustomerContent not found: {customerContentId}");
-
-            analysis.Items.Add(new AnalysisContentItem(id: Guid.NewGuid()
-                , analysisContentId: analysisId, customerContentId: customerContentId, sortOrder: sort++));
-        }
-
-        await analysisContentRepository.InsertAsync(analysis, cancellationToken);
-
-        var items = request.CustomerContentIds
-            .Select((id, index) =>
-            {
-                var content = contentsForAnalysis.First(x => x.Id == id);
-
-                return new AnalysisNormalizeItem { CustomerContentId = content.Id, ContentKey = content.ContentKey, SortOrder = index + 1 };
-            })
-            .ToList();
-
-        await EventBus.PublishAsync(
-            parentMessage: ParentIntegrationEvent,
-            correlationId: analysis.CorrelationId,
-            eventMessage: new AnalysisContentCreatedEto { AnalysisContentId = analysisId, ScopeKey = analysis.ScopeKey, DomainName = analysis.DomainName, Items = items }
-        );
-
-        return new CreateContentResponse(Id: analysisId.ToString());
-    }
-
-    public async Task<CreateContentResponse> CreateAnalysisContentFromScopeAsync(CreateAnalysisContentFromScopeRequest request, CancellationToken cancellationToken)
-    {
-        // Fetch latest N successful CustomerContents with this ScopeKey and COMPLETED NormalizeStatus
-        var options = new ListQueryOptions<CustomerContent> { Filter = x => x.ScopeKey == request.ScopeKey && x.NormalizeStatus == StatusNames.Completed, OrderByEntity = o => o.OrderByDescending(s => s.CreationTime), MaxResultCount = request.MaxCustomerContents };
-
-        var successfulContents = await customerContentRepository.GetListAsync(options, cancellationToken);
-
-        if (successfulContents.Count == 0)
-            throw new InvalidOperationException($"No successful CustomerContent found for ScopeKey: {request.ScopeKey}");
-
-        // Extract IDs for analysis
-        var customerContentIds = successfulContents.Select(x => x.Id).ToList();
-
-        // Create analysis using extracted IDs
-        var analysisId = Guid.NewGuid();
-
-        var analysis = new AnalysisContent(
-            analysisId,
-            request.ScopeKey,
-            request.DomainName,
-            request.Title,
-            traceAccessor?.GetCorrelationId());
-
-        int sort = 1;
-
-        foreach (var customerContentId in customerContentIds)
-        {
-            var content = successfulContents.FirstOrDefault(x => x.Id == customerContentId);
-            if (content == null)
-                throw new InvalidOperationException($"CustomerContent not found: {customerContentId}");
-
-            analysis.Items.Add(new AnalysisContentItem(id: Guid.NewGuid()
-                , analysisContentId: analysisId, customerContentId: customerContentId, sortOrder: sort++));
-        }
-
-        await analysisContentRepository.InsertAsync(analysis, cancellationToken);
-
-        var items = customerContentIds
-            .Select((id, index) =>
-            {
-                var content = successfulContents.First(x => x.Id == id);
-
-                return new AnalysisNormalizeItem { CustomerContentId = content.Id, ContentKey = content.ContentKey, SortOrder = index + 1 };
-            })
-            .ToList();
-
-        await EventBus.PublishAsync(
-            parentMessage: ParentIntegrationEvent,
-            correlationId: analysis.CorrelationId,
-            eventMessage: new AnalysisContentCreatedEto { AnalysisContentId = analysisId, ScopeKey = analysis.ScopeKey, DomainName = analysis.DomainName, Items = items }
-        );
-
-        return new CreateContentResponse(Id: analysisId.ToString());
-    }
-
-    public async Task HandleNormalizeStartedAsync(Guid contentId, Guid normalizeRequestId, ContentType contentType, CancellationToken cancellationToken = default)
-    {
-        if (contentType == ContentType.CustomerContent)
-        {
-            var entity = await customerContentRepository.GetByIdWithTrackingAsync(contentId, cancellationToken);
-            if (entity != null && entity.NormalizeRequestId == null)
-            {
-                entity.NormalizeRequestId = normalizeRequestId;
-                entity.NormalizeStatus = StatusNames.Created;
-                entity.LastFacility = EventNames.CustomerContentNormalizeRequestCreated;
-                await customerContentRepository.UpdateAsync(entity, cancellationToken);
-            }
-        }
-        else if (contentType == ContentType.AnalysisContent)
-        {
-            var entity = await analysisContentRepository.GetByIdWithItemsAsync(contentId, cancellationToken);
-            if (entity != null && entity.NormalizeRequestId == null)
-            {
-                entity.NormalizeRequestId = normalizeRequestId;
-                entity.NormalizeStatus = StatusNames.Created;
-                entity.LastFacility = EventNames.AnalysisContentNormalizeRequestCreated;
-                await analysisContentRepository.UpdateAsync(entity, cancellationToken);
-            }
+            case ContentType.CustomerContent:
+                await customerContentRepository.SetNormalizedReferenceAsync(refContentId, refNormalizeRequestId);
+                break;
+            case ContentType.AnalysisContent:
+                await analysisContentRepository.SetNormalizedReferenceAsync(refContentId, refNormalizeRequestId);
+                break;
+            case ContentType.None:
+            default:
+                throw new ArgumentOutOfRangeException(nameof(refContentType), refContentType, null);
         }
     }
 
-    public async Task HandleScrapingCompletedAsync(Guid customerContentId, DateTime? scrapReleaseTimeUtc, CancellationToken cancellationToken = default)
-    {
-        var entity = await customerContentRepository.GetByIdWithTrackingAsync(customerContentId, cancellationToken);
-        if (entity != null && entity.ScrapReleaseTimeUtc == null)
-        {
-            entity.SetScrapReleaseTimeUtc(scrapReleaseTimeUtc);
-
-            await customerContentRepository.UpdateAsync(entity, cancellationToken);
-        }
-    }
+    public async Task HandleCustomerContentScrapeTimeAsync(Guid customerContentId, DateTime? scrapedReleaseTimeUtc)
+        => await customerContentRepository.SetScrapeTimeAsync(customerContentId, scrapedReleaseTimeUtc);
 
     public async Task HandleNormalizerResultAsync(NormalizerResultPublishedEto @event, CancellationToken cancellationToken = default)
     {
@@ -270,6 +98,33 @@ public sealed class ContentOperationAppService(
         }
     }
 
+
+    public async Task HandleVideoRequestCreatedAsync(Guid contentId, Guid videoRequestId, ContentType contentType, CancellationToken cancellationToken = default)
+    {
+        if (contentType == ContentType.CustomerContent)
+        {
+            var entity = await customerContentRepository.GetByIdWithTrackingAsync(contentId, cancellationToken);
+            if (entity != null && entity.VideoRequestId == null)
+            {
+                entity.VideoRequestId = videoRequestId;
+                entity.VideoStatus = StatusNames.Created;
+                entity.LastFacility = EventNames.VideoRequestCreated;
+                await customerContentRepository.UpdateAsync(entity, cancellationToken);
+            }
+        }
+        else if (contentType == ContentType.AnalysisContent)
+        {
+            var entity = await analysisContentRepository.GetByIdWithItemsAsync(contentId, cancellationToken);
+            if (entity != null && entity.VideoRequestId == null)
+            {
+                entity.VideoRequestId = videoRequestId;
+                entity.VideoStatus = StatusNames.Created;
+                entity.LastFacility = EventNames.VideoRequestCreated;
+                await analysisContentRepository.UpdateAsync(entity, cancellationToken);
+            }
+        }
+    }
+
     public async Task HandleVideoResultAsync(VideoGenerationResultPublishedEto @event, CancellationToken cancellationToken = default)
     {
         if (@event.RefContentType == ContentType.CustomerContent)
@@ -301,31 +156,6 @@ public sealed class ContentOperationAppService(
         }
     }
 
-    public async Task HandleVideoRequestCreatedAsync(Guid contentId, Guid videoRequestId, ContentType contentType, CancellationToken cancellationToken = default)
-    {
-        if (contentType == ContentType.CustomerContent)
-        {
-            var entity = await customerContentRepository.GetByIdWithTrackingAsync(contentId, cancellationToken);
-            if (entity != null && entity.VideoRequestId == null)
-            {
-                entity.VideoRequestId = videoRequestId;
-                entity.VideoStatus = StatusNames.Created;
-                entity.LastFacility = EventNames.VideoRequestCreated;
-                await customerContentRepository.UpdateAsync(entity, cancellationToken);
-            }
-        }
-        else if (contentType == ContentType.AnalysisContent)
-        {
-            var entity = await analysisContentRepository.GetByIdWithItemsAsync(contentId, cancellationToken);
-            if (entity != null && entity.VideoRequestId == null)
-            {
-                entity.VideoRequestId = videoRequestId;
-                entity.VideoStatus = StatusNames.Created;
-                entity.LastFacility = EventNames.VideoRequestCreated;
-                await analysisContentRepository.UpdateAsync(entity, cancellationToken);
-            }
-        }
-    }
 
     public async Task HandleStepFailedAsync(StepFailedEto @event, CancellationToken cancellationToken = default)
     {

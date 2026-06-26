@@ -10,11 +10,11 @@ namespace Hhs.ContentService.EventHandlers.TextNormalizer;
 public class CustomerContentNormalizeRequestCreatedEtoHandler(
     ApplicationEventInboxMessageManager inboxStore,
     IAppConsoleLogger logger,
-    ContentOperationAppService contentOperationAppService
+    ContentOperationService contentOperationService
 ) : ApplicationEventHandlerBase<CustomerContentNormalizeRequestCreatedEto>(inboxStore)
 {
     private readonly IAppConsoleLogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    private readonly ContentOperationAppService _contentOperationAppService = contentOperationAppService ?? throw new ArgumentNullException(nameof(contentOperationAppService));
+    private readonly ContentOperationService _contentOperationService = contentOperationService ?? throw new ArgumentNullException(nameof(contentOperationService));
 
     protected override async Task ExecuteAsync(MessageEnvelope<CustomerContentNormalizeRequestCreatedEto> @event, CancellationToken cancellationToken)
     {
@@ -22,6 +22,10 @@ public class CustomerContentNormalizeRequestCreatedEtoHandler(
             nameof(CustomerContentNormalizeRequestCreatedEto)[..^"Eto".Length],
             @event.MessageId);
 
-        await _contentOperationAppService.HandleNormalizeStartedAsync(@event.Message.CustomerContentId, @event.Message.CustomerContentNormalizeRequestId, ContentType.CustomerContent, cancellationToken);
+        await _contentOperationService.HandleNormalizedRequestReferenceAsync(
+            refContentType: ContentType.CustomerContent,
+            refContentId: @event.Message.CustomerContentId,
+            refNormalizeRequestId: @event.Message.CustomerContentNormalizeRequestId
+        );
     }
 }

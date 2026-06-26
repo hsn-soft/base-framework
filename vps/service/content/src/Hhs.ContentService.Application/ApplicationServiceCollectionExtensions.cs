@@ -21,9 +21,11 @@ public static class ApplicationServiceCollectionExtensions
         // Must be Scoped or Transient => Cannot consume any scoped service
         services.AddScoped<IJobAppService, JobAppService>();
         services.AddScoped<ApplicationEventInboxMessageManager>();
-        services.AddScoped<ContentOperationAppService>();
+
+        services.AddScoped<ContentOperationService>();
 
         services.AddScoped<ICustomerContentPublicAppService, CustomerContentPublicAppService>();
+        services.AddScoped<IAnalysisContentAppService, AnalysisContentAppService>();
 
         return services;
     }

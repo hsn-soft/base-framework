@@ -3,6 +3,7 @@ using Hhs.ContentService.Domain.ContentDomain.Exceptions;
 using Hhs.ContentService.Domain.ContentDomain.Repositories;
 using Hhs.ContentService.Domain.Localization;
 using Hhs.ContentService.EntityFrameworkCore.Context;
+using Hhs.Shared.Helper;
 using Hhs.Shared.Localization;
 using HsnSoft.Base.Domain.Models;
 using HsnSoft.Base.Domain.Repositories;
@@ -29,6 +30,32 @@ public sealed class EfCoreCustomerContentRepository(
         ]
     );
 
+    public async Task SetNormalizedReferenceAsync(Guid id, Guid normalizedRequestId)
+        => await UpdateByExpressionAsync(x => x.Id == id && x.NormalizeRequestId == null,
+            s => s
+                .SetProperty(a => a.NormalizeRequestId, normalizedRequestId)
+                .SetProperty(a => a.NormalizeStatus, StatusNames.Created)
+                .SetProperty(a => a.LastFacility, EventNames.AnalysisContentNormalizeRequestCreated)
+        );
+
+    public async Task SetScrapeTimeAsync(Guid id, DateTime? scrapeTime)
+    {
+        if (scrapeTime.HasValue && scrapeTime.Value == default)
+        {
+            scrapeTime = null;
+        }
+
+        if (scrapeTime.HasValue && scrapeTime.Value.Kind != DateTimeKind.Utc)
+        {
+            scrapeTime = scrapeTime.Value.ToUniversalTime();
+        }
+
+        await UpdateByExpressionAsync(x => x.Id == id && x.ScrapReleaseTimeUtc == null,
+            s => s
+                .SetProperty(a => a.ScrapReleaseTimeUtc, scrapeTime)
+        );
+    }
+
     public async Task<CustomerContent> CreateAsync(string scopeKey, string contentKey, string correlationId = null)
     {
         // Create draft
@@ -44,6 +71,7 @@ public sealed class EfCoreCustomerContentRepository(
         _ = await InsertAsync(draft);
         return draft;
     }
+
 
     public async Task<CustomerContent> GetByScopeKeyAndSlugKeyAsync(string scopeKey, string slugKey, CancellationToken cancellationToken = default)
         => await GetFirstOrDefaultAsync(

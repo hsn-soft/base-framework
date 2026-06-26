@@ -27,7 +27,7 @@ public sealed record CustomerContentScrapingStartedEto : IIntegrationEventMessag
 public sealed record CustomerContentScrapingCompletedEto : IIntegrationEventMessage
 {
     public Guid CustomerContentId { get; init; }
-    public DateTime? ScrapeReleaseTimeUtc { get; init; }
+    public DateTime? ScrapedReleaseTimeUtc { get; init; }
 
     public Guid CustomerContentNormalizeRequestId { get; init; }
 }
@@ -63,7 +63,7 @@ public sealed record AnalysisNormalizeItem
 public sealed record AnalysisContentNormalizeRequestCreatedEto : IIntegrationEventMessage
 {
     public Guid AnalysisContentId { get; init; }
-    public Guid NormalizeRequestId { get; init; }
+    public Guid AnalysisContentNormalizeRequestId { get; init; }
 }
 
 public sealed record AnalysisItemScrapingStartedEto : IIntegrationEventMessage

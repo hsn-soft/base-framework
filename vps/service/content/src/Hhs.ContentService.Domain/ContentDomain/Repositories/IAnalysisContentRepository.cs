@@ -6,6 +6,8 @@ namespace Hhs.ContentService.Domain.ContentDomain.Repositories;
 
 public interface IAnalysisContentRepository : IGenericRepository<AnalysisContent, Guid>
 {
+    Task SetNormalizedReferenceAsync(Guid id, Guid normalizedRequestId);
+
     [ItemCanBeNull]
     Task<AnalysisContent> GetByIdWithItemsAsync(Guid id, CancellationToken cancellationToken = default);
     [ItemCanBeNull]
