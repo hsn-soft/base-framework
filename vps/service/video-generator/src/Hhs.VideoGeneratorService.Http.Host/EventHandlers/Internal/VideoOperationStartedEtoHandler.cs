@@ -21,6 +21,14 @@ public class VideoOperationStartedEtoHandler(
             nameof(VideoOperationStartedEto)[..^"Eto".Length],
             @event.MessageId);
 
-        await _videoOperationAppService.HandleVideoOperationStartedAsync(@event.Message, @event.MessageId, cancellationToken);
+        try
+        {
+            await _videoOperationAppService.HandleVideoOperationStartedAsync(@event.Message, @event.MessageId, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "ERROR in HandleVideoOperationStartedAsync: {Message}\n{StackTrace}", ex.Message, ex.StackTrace);
+            throw;
+        }
     }
 }

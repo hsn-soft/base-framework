@@ -100,6 +100,8 @@ public sealed class VideoOperationAppService(
     public async Task HandleVideoOperationStartedAsync(VideoOperationStartedEto @event, Guid eventId, CancellationToken cancellationToken = default)
     {
         var videoRequest = await GetVideoAsync(@event.VideoRequestId, cancellationToken);
+        System.Diagnostics.Debug.WriteLine($"DEBUG: VideoProviderKey={videoRequest.VideoProviderKey}");
+        System.Diagnostics.Debug.WriteLine($"DEBUG: MediaInputJson={videoRequest.MediaInputJson}");
         var videoProvider = videoProviderResolver.Resolve(videoRequest.VideoProviderKey);
 
         if (videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.ProviderCreatesAudio)

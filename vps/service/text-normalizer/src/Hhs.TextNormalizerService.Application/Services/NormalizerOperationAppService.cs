@@ -889,6 +889,7 @@ public sealed class NormalizerOperationAppService(
 
             correlationId = request.CorrelationId;
             videoInputJson = BuildVideoInputJson(
+                customerContentId: request.CustomerContentId,
                 scrapeTitle: request.ScrapingResult?.Title,
                 scrapeText: request.ScrapingResult?.Text,
                 outlineScript: request.OutlineResult?.Script
@@ -924,14 +925,21 @@ public sealed class NormalizerOperationAppService(
         );
     }
 
-    private string BuildVideoInputJson(string? scrapeTitle, string? scrapeText, string? outlineScript)
+    private string BuildVideoInputJson(Guid customerContentId, string? scrapeTitle, string? scrapeText, string? outlineScript)
     {
-        return JsonConvert.SerializeObject(new
+        var audioItems = new[]
         {
-            title = scrapeTitle,
-            text = scrapeText,
-            outline = outlineScript
-        });
+            new
+            {
+                sortOrder = 1,
+                customerContentId,
+                text = scrapeText,
+                title = scrapeTitle,
+                outline = outlineScript
+            }
+        };
+
+        return JsonConvert.SerializeObject(new { audioItems });
     }
 
     private string BuildAnalysisVideoInputJson(List<AnalysisNormalizedItem> items)
