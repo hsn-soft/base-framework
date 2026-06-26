@@ -243,7 +243,13 @@ public sealed class ContentOperationAppService(
         {
             await EventBus.PublishAsync(
                 parentMessage: ParentIntegrationEvent,
-                eventMessage: new VideoGenerationApprovedEto { RefContentId = @event.RefContentId, RefContentType = @event.RefContentType, ScopeKey = scopeKey ?? string.Empty, NormalizeRequestId = @event.NormalizeRequestId }
+                eventMessage: new VideoGenerationApprovedEto
+                {
+                    RefContentId = @event.RefContentId,
+                    RefContentType = @event.RefContentType,
+                    ScopeKey = scopeKey ?? string.Empty,
+                    RefNormalizeRequestId = @event.NormalizeRequestId
+                }
             );
         }
     }

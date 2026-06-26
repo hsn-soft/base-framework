@@ -31,7 +31,7 @@ public sealed class CustomerContentNormalizedRequest : AuditedEntity<Guid>, ISof
 
     // Scraping State
     [CanBeNull]  public string ScrapingStatus { get; set; }
-    [CanBeNull]  public ScrapingResult ScrapingResult { get; set; }
+    [CanBeNull]  public ScrapingContentDataModel ScrapingResult { get; set; }
 
     // Outline Generation State
     [CanBeNull]  public string OutlineStatus { get; set; }

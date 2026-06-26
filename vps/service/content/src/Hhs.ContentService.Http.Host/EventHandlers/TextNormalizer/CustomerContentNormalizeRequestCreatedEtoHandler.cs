@@ -22,6 +22,6 @@ public class CustomerContentNormalizeRequestCreatedEtoHandler(
             nameof(CustomerContentNormalizeRequestCreatedEto)[..^"Eto".Length],
             @event.MessageId);
 
-        await _contentOperationAppService.HandleNormalizeStartedAsync(@event.Message.CustomerContentId, @event.Message.NormalizeRequestId, ContentType.CustomerContent, cancellationToken);
+        await _contentOperationAppService.HandleNormalizeStartedAsync(@event.Message.CustomerContentId, @event.Message.CustomerContentNormalizeRequestId, ContentType.CustomerContent, cancellationToken);
     }
 }

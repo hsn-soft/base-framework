@@ -15,7 +15,7 @@ public sealed class AnalysisNormalizedItem
 
     // Scraping State
     [NotNull] public string ScrapingStatus { get; set; } = StatusNames.Created;
-    [CanBeNull]  public ScrapingResult ScrapingResult { get; set; }
+    [CanBeNull]  public ScrapingContentDataModel ScrapingResult { get; set; }
 
     // Outline Generation State
     [NotNull] public string OutlineStatus { get; set; } = StatusNames.Created;

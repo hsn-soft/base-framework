@@ -14,7 +14,7 @@ public sealed class MongoCustomerContentNormalizedRequestRepository(
 {
     [ItemCanBeNull]
     public async Task<CustomerContentNormalizedRequest> GetByScopeKeyAndContentIdAsync(string scopeKey, Guid customerContentId, CancellationToken cancellationToken = default)
-        => await GetFirstOrDefaultAsync(
+        => await GetSingleOrDefaultAsync(
             x => x.ScopeKey == scopeKey && x.CustomerContentId == customerContentId,
             cancellationToken: cancellationToken
         );

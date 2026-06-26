@@ -13,7 +13,7 @@ public sealed class OutlineFastProvider(HttpClient httpClient, OutlineFastProvid
 
     public OutlineProviderCapabilities Capabilities => new() { ProviderKey = ProviderKey, ExecutionMode = ProviderExecutionMode.ImmediateResult };
 
-    public async Task<OutlineCreateResponse> CreateAsync(OutlineCreateRequest request)
+    public async Task<OutlineCreateResponse> OutlineOperationAsync(OutlineCreateRequest request)
     {
         var inputText = string.IsNullOrWhiteSpace(request.OutlineInput) ? request.OutlinePrompt : request.OutlineInput;
         if (string.IsNullOrWhiteSpace(inputText))

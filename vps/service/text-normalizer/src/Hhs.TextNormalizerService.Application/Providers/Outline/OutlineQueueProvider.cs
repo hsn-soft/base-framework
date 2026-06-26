@@ -13,7 +13,7 @@ public sealed class OutlineQueueProvider(HttpClient httpClient, OutlineQueueProv
 
     public OutlineProviderCapabilities Capabilities => new() { ProviderKey = ProviderKey, ExecutionMode = ProviderExecutionMode.AsyncPolling };
 
-    public async Task<OutlineCreateResponse> CreateAsync(OutlineCreateRequest request)
+    public async Task<OutlineCreateResponse> OutlineOperationAsync(OutlineCreateRequest request)
     {
         var inputText = string.IsNullOrWhiteSpace(request.OutlineInput) ? request.OutlinePrompt : request.OutlineInput;
         if (string.IsNullOrWhiteSpace(inputText))

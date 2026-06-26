@@ -10,9 +10,9 @@ public static class CustomerContentNormalizedRequestClassMap
 {
     public static void Register()
     {
-        if (!BsonClassMap.IsClassMapRegistered(typeof(ScrapingResult)))
+        if (!BsonClassMap.IsClassMapRegistered(typeof(ScrapingContentDataModel)))
         {
-            BsonClassMap.RegisterClassMap<ScrapingResult>(map =>
+            BsonClassMap.RegisterClassMap<ScrapingContentDataModel>(map =>
             {
                 map.AutoMap();
                 map.SetIgnoreExtraElements(true);

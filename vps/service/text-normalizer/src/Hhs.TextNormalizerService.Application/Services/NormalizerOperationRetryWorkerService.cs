@@ -89,13 +89,13 @@ public sealed class NormalizerOperationRetryWorkerService(
                 if (request.CurrentStep == EventNames.CustomerContentScrapingStarted)
                 {
                     await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
-                        eventMessage: new CustomerContentScrapingStartedEto { CustomerContentId = request.CustomerContentId, }
+                        eventMessage: new CustomerContentScrapingStartedEto { CustomerContentNormalizeRequestId = request.Id, }
                     );
                 }
                 else if (request.CurrentStep == EventNames.CustomerContentOutlineStarted)
                 {
                     await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
-                        eventMessage: new CustomerContentOutlineStartedEto { CustomerContentId = request.CustomerContentId }
+                        eventMessage: new CustomerContentOutlineStartedEto { CustomerContentNormalizeRequestId = request.Id }
                     );
                 }
                 else if (request.CurrentStep == EventNames.OutlineProviderRequestStarted)
@@ -104,9 +104,9 @@ public sealed class NormalizerOperationRetryWorkerService(
                         eventMessage: new OutlineProviderRequestStartedEto
                         {
                             RefContentType = ContentType.CustomerContent,
-                            NormalizedRequestId = request.Id,
+                            RefNormalizedRequestId = request.Id,
                             ScopeKey = request.ScopeKey,
-                            InputText = request.ScrapingResult?.Text
+                            InputText = request.ScrapingResult?.Details
                                         ?? throw new InvalidOperationException("ScrapingResult.Text is required.")
                         }
                     );
@@ -245,9 +245,9 @@ public sealed class NormalizerOperationRetryWorkerService(
                             {
                                 CustomerContentIdForItem = item.CustomerContentId,
                                 RefContentType = ContentType.AnalysisContent,
-                                NormalizedRequestId = request.Id,
+                                RefNormalizedRequestId = request.Id,
                                 ScopeKey = request.ScopeKey,
-                                InputText = item.ScrapingResult?.Text
+                                InputText = item.ScrapingResult?.Details
                                             ?? throw new InvalidOperationException("ScrapingResult.Text is required.")
                             }
                         );

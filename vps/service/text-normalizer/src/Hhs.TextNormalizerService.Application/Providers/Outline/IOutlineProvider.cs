@@ -40,7 +40,7 @@ public interface IOutlineProvider
     string ProviderKey { get; }
     OutlineProviderCapabilities Capabilities { get; }
 
-    Task<OutlineCreateResponse> CreateAsync(OutlineCreateRequest request);
+    Task<OutlineCreateResponse> OutlineOperationAsync(OutlineCreateRequest request);
 
     Task<OutlineStatusResponse> GetStatusAsync(OutlineStatusRequest request);
 }

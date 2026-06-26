@@ -138,7 +138,7 @@ public sealed class OutlineProviderPollingWorkerService(
                     throw new InvalidOperationException("Outline provider completed but script is empty.");
 
                 await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
-                    eventMessage: new OutlineProviderCompletedEto { RefContentType = ContentType.CustomerContent, NormalizedRequestId = request.Id, Script = status.OutlinedData! }
+                    eventMessage: new OutlineProviderCompletedEto { RefContentType = ContentType.CustomerContent, RefNormalizedRequestId = request.Id, OutlinedData = status.OutlinedData! }
                 );
             }
             catch (Exception ex)
@@ -298,7 +298,7 @@ public sealed class OutlineProviderPollingWorkerService(
                         cancellationToken);
 
                     await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
-                        eventMessage: new OutlineProviderCompletedEto { CustomerContentIdForItem = item.CustomerContentId, RefContentType = ContentType.AnalysisContent, NormalizedRequestId = request.Id, Script = status.OutlinedData! }
+                        eventMessage: new OutlineProviderCompletedEto { CustomerContentIdForItem = item.CustomerContentId, RefContentType = ContentType.AnalysisContent, RefNormalizedRequestId = request.Id, OutlinedData = status.OutlinedData! }
                     );
                 }
                 catch (Exception ex)
