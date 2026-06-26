@@ -1,5 +1,5 @@
 using Hhs.ContentService.Application.Contracts.ContentDomain.Dtos;
-using Hhs.ContentService.Application.Contracts.ContentDomain.Submits;
+using Hhs.ContentService.Application.Contracts.ContentDomain.Dtos.Submits;
 using HsnSoft.Base.EventBus;
 
 namespace Hhs.ContentService.Application.Contracts.ContentDomain.Interfaces;

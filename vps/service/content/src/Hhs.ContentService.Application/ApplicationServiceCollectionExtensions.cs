@@ -16,6 +16,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddAutoMapper(typeof(ApplicationAutoMapperProfile));
 
         services.Configure<ContentOperationSettings>(configuration.GetSection(nameof(ContentOperationSettings)));
+
         services.AddSingleton<IServicePermissionProvider, ApplicationPermissionProvider>();
 
         // Must be Scoped or Transient => Cannot consume any scoped service
@@ -25,7 +26,9 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<ContentOperationService>();
 
         services.AddScoped<ICustomerContentPublicAppService, CustomerContentPublicAppService>();
+        services.AddScoped<ICustomerContentAppService, CustomerContentAppService>();
         services.AddScoped<IAnalysisContentAppService, AnalysisContentAppService>();
+        // services.AddScoped<IDashboardAppService, DashboardAppService>();
 
         return services;
     }

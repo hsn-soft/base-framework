@@ -24,21 +24,7 @@ public sealed class TestController(
         {
             using (dataFilter.Disable<IScopeSubscription>())
             {
-                return await analysisContentAppService.CreateAnalysisContentAsync(request, cancellationToken);
-            }
-        }
-    }
-
-    [AllowAnonymous]
-    [HttpPost("analysis-contents-from-scope")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<CreateContentResponse> CreateAnalysisContentFromScopeAsync([FromBody] CreateAnalysisContentFromScopeRequest request, CancellationToken cancellationToken = default)
-    {
-        using (dataFilter.Disable<IMultiTenant>())
-        {
-            using (dataFilter.Disable<IScopeSubscription>())
-            {
-                return await analysisContentAppService.CreateAnalysisContentFromScopeAsync(request, cancellationToken);
+                return await analysisContentAppService.CreateTestAnalysisContentAsync(request, cancellationToken);
             }
         }
     }

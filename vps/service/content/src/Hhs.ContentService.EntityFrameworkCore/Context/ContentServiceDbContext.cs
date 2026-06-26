@@ -22,6 +22,7 @@ public sealed class ContentServiceDbContext(
     public DbSet<AnalysisContentItem> AnalysisContentItems => Set<AnalysisContentItem>();
 
     public DbSet<EventInboxMessage> EventInboxMessages => Set<EventInboxMessage>();
+    // public DbSet<ResponseStatistic> ResponseStatistics => Set<ResponseStatistic>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -32,6 +33,7 @@ public sealed class ContentServiceDbContext(
         // SettingDomain configuration
         builder.ConfigureCustomerVpSettingEntity();
         builder.ConfigureContentVideoGenerationLimitEntity();
+        // builder.ConfigureResponseStatisticEntity();
 
         // ContentDomain configuration
         builder.ConfigureCustomerContentEntity();

@@ -10,6 +10,8 @@ public interface IAnalysisContentRepository : IGenericRepository<AnalysisContent
 
     Task SetVideoReferenceAsync(Guid id, Guid videoRequestId);
 
+    Task SetVideoGenerationApprovedAsync(Guid id);
+
     [ItemCanBeNull]
     Task<AnalysisContent> GetByIdWithItemsAsync(Guid id, CancellationToken cancellationToken = default);
 

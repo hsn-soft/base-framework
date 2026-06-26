@@ -21,6 +21,23 @@ public sealed class JobsController(
     public async Task AnalysisVideoGenerationQueryAsync([FromBody] AnalysisVideoGenerationQueryTriggerDto input)
         => await jobAppService.AnalysisVideoGenerationQueryTriggerAsync(input, GetJobCorrelationId());
 
+    [HttpPost("dashboard-response-statistic-query")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task DashboardResponseStatisticQueryAsync([FromBody] DashboardResponseStatisticQueryTriggerDto input)
+        => await jobAppService.DashboardResponseStatisticQueryTriggerAsync(input, GetJobCorrelationId());
+
+    [HttpPost("trend-video-generation-query")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task TrendVideoGenerationQueryAsync([FromBody] TrendVideoGenerationQueryTriggerDto input)
+        => await jobAppService.TrendVideoGenerationQueryTriggerAsync(input, GetJobCorrelationId());
+
+    [HttpPost("test-query")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    // [EndpointConcurrencyLimit("content:jobs:test-query", defaultLimit: 3, ttlSeconds: 60)]
+    [EventConcurrencyLimit("content:jobs:test-query", defaultLimit: 3, ttlSeconds: 60)]
+    public async Task TestAsync([FromBody] TestQueryTriggerDto input)
+        => await jobAppService.TestQueryTriggerAsync(input, GetJobCorrelationId());
+
     #region Private Functions
 
     [NonAction]

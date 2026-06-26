@@ -1,4 +1,7 @@
+using Hhs.ContentService.Application.Contracts.DashboardDomain.Dtos;
+using Hhs.ContentService.Application.Contracts.Events;
 using HsnSoft.Base.EventBus;
+using JetBrains.Annotations;
 
 namespace Hhs.ContentService.Application.Contracts.ContentDomain.Interfaces;
 
@@ -18,6 +21,8 @@ public sealed record CreateAnalysisContentFromScopeRequest(
 
 public interface IAnalysisContentAppService : IEventApplicationService
 {
-    Task<CreateContentResponse> CreateAnalysisContentAsync(CreateAnalysisContentRequest request, CancellationToken cancellationToken);
-    Task<CreateContentResponse> CreateAnalysisContentFromScopeAsync(CreateAnalysisContentFromScopeRequest request, CancellationToken cancellationToken);
+    Task<CreateContentResponse> CreateTestAnalysisContentAsync(CreateAnalysisContentRequest request, CancellationToken cancellationToken);
+
+    Task AnalysisVideoGenerationQueryAsync(AnalysisVideoGenerationQueryEto input, [CanBeNull] string correlationId = null);
+    Task<ForceAnalysisVideoGenerationResultDto> ForceAnalysisVideoGenerationQueryAsync(ForceAnalysisVideoGenerationRequestDto input, string correlationId = null);
 }

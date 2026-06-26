@@ -29,6 +29,7 @@ public static class StatusNames
 
     public const string NotStarted = "NOT_STARTED";
     public const string Approved = "APPROVED";
+    public const string Rejected = "REJECTED";
     public const string Skipped = "SKIPPED";
     public const string AudioProviderPolling = "AUDIO_PROVIDER_POLLING";
     public const string AudioProviderCompleted = "AUDIO_PROVIDER_COMPLETED";

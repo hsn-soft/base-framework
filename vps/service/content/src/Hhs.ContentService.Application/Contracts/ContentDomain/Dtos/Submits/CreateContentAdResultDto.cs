@@ -1,6 +1,6 @@
 using JetBrains.Annotations;
 
-namespace Hhs.ContentService.Application.Contracts.ContentDomain.Submits;
+namespace Hhs.ContentService.Application.Contracts.ContentDomain.Dtos.Submits;
 
 public sealed class CreateContentAdResultDto
 {

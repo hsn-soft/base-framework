@@ -1,6 +1,5 @@
 using System.Linq.Expressions;
 using Hhs.ContentService.Domain.ContentDomain.Entities;
-using Hhs.ContentService.Domain.ContentDomain.Models;
 using Hhs.ContentService.Domain.SettingDomain.Models;
 using HsnSoft.Base.Domain.Repositories;
 using JetBrains.Annotations;

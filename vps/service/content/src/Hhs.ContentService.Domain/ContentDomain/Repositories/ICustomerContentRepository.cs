@@ -10,14 +10,12 @@ public interface ICustomerContentRepository : IGenericRepository<CustomerContent
     Task SetScrapeTimeAsync(Guid id, DateTime? scrapeTime);
 
     Task SetVideoReferenceAsync(Guid id, Guid videoRequestId);
+    Task SetVideoGenerationApprovedAsync(Guid id);
+    Task SetVideoGenerationRejectedAsync(Guid id, [CanBeNull] string rejectReason);
 
 
 
-  Task<CustomerContent> CreateAsync([NotNull] string scopeKey, [NotNull] string contentKey, [CanBeNull] string correlationId = null);
-
-
-
-
+    Task<CustomerContent> CreateAsync([NotNull] string scopeKey, [NotNull] string contentKey, [CanBeNull] string correlationId = null);
 
 
     [ItemCanBeNull]
@@ -25,4 +23,8 @@ public interface ICustomerContentRepository : IGenericRepository<CustomerContent
     [ItemCanBeNull]
     Task<CustomerContent> GetByIdWithTrackingAsync(Guid id, CancellationToken cancellationToken = default);
     Task<List<CustomerContent>> GetByScopeKeyAsync(string scopeKey, CancellationToken cancellationToken = default);
+
+
+    Task<List<Guid>> GetCustomerDailyTrendContentIdsAsync( [NotNull] string scopeKey, ushort dailyTrendVideoWaitStatisticHour, CancellationToken cancellationToken = default);
+    Task<List<Guid>> GetCustomerDailyAnalysisContentIdsAsync([NotNull] string scopeKey, CancellationToken cancellationToken = default);
 }

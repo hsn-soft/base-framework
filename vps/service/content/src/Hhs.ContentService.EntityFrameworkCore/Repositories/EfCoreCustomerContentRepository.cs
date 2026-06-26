@@ -64,6 +64,24 @@ public sealed class EfCoreCustomerContentRepository(
                 .SetProperty(a => a.LastFacility, EventNames.VideoRequestCreated)
         );
 
+    public async Task SetVideoGenerationApprovedAsync(Guid id) =>
+        await UpdateByExpressionAsync(x => x.Id == id && x.VideoRequestId == null,
+            s => s
+                .SetProperty(a => a.NormalizeStatus, StatusNames.Completed)
+                .SetProperty(a => a.LastFacility, EventNames.NormalizerResultPublished)
+                .SetProperty(a => a.LastError, (string)null)
+                .SetProperty(a => a.VideoStatus, StatusNames.Approved)
+        );
+
+    public async Task SetVideoGenerationRejectedAsync(Guid id, [CanBeNull] string rejectReason) =>
+        await UpdateByExpressionAsync(x => x.Id == id && x.VideoRequestId == null,
+            s => s
+                .SetProperty(a => a.NormalizeStatus, StatusNames.Completed)
+                .SetProperty(a => a.LastFacility, EventNames.NormalizerResultPublished)
+                .SetProperty(a => a.LastError, rejectReason)
+                .SetProperty(a => a.VideoStatus, StatusNames.Rejected)
+        );
+
     public async Task<CustomerContent> CreateAsync(string scopeKey, string contentKey, string correlationId = null)
     {
         // Create draft
@@ -99,6 +117,41 @@ public sealed class EfCoreCustomerContentRepository(
         var options = new ListQueryOptions<CustomerContent> { Filter = x => x.ScopeKey == scopeKey };
         return await GetListAsync(options, cancellationToken);
     }
+
+
+
+
+
+    public async Task<List<Guid>> GetCustomerDailyTrendContentIdsAsync(string scopeKey, ushort dailyTrendVideoWaitStatisticHour, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+
+        // var statisticMinTime = DateTime.UtcNow.AddHours(-1 * dailyTrendVideoWaitStatisticHour);
+        // var releaseMinDate = DateTime.UtcNow.Date;
+        // var releaseMaxDate = DateTime.UtcNow.Date.AddDays(1);
+        // return await GetDbSet().Where(x =>
+        //     x.ScopeKey == scopeKey
+        //     && x.OperationStatus == CustomerContentOperationStates.VideoGenerationRejectedReturnAnalysisVideo
+        //     && x.CreationTime < statisticMinTime // min one day waited on system
+        //     && x.ReleaseTime != null && x.ReleaseTime < releaseMaxDate && x.ReleaseTime >= releaseMinDate).Select(x => x.Id).ToListAsync(cancellationToken);
+    }
+
+    public async Task<List<Guid>> GetCustomerDailyAnalysisContentIdsAsync(string scopeKey, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+
+        // var releaseMinDate = DateTime.UtcNow.Date;
+        // var releaseMaxDate = DateTime.UtcNow.Date.AddDays(1);
+        // return await GetDbSet().Where(x =>
+        //     x.ScopeKey == scopeKey
+        //     && x.OperationStatus != CustomerContentOperationStates.CreatedWaitForNormalize
+        //     && x.OperationStatus != CustomerContentOperationStates.OperationFail
+        //     && x.ReleaseTime != null && x.ReleaseTime < releaseMaxDate && x.ReleaseTime >= releaseMinDate).Select(x => x.Id).ToListAsync(cancellationToken);
+    }
+
+
+
+
 
     private async Task ContentDuplicateControlAsync([NotNull] string scopeKey, [NotNull] string slugKey)
     {

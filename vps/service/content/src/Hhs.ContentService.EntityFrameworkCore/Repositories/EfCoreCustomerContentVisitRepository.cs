@@ -1,6 +1,5 @@
 using System.Linq.Expressions;
 using Hhs.ContentService.Domain.ContentDomain.Entities;
-using Hhs.ContentService.Domain.ContentDomain.Models;
 using Hhs.ContentService.Domain.ContentDomain.Repositories;
 using Hhs.ContentService.Domain.SettingDomain.Models;
 using Hhs.ContentService.EntityFrameworkCore.Context;

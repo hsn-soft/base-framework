@@ -57,6 +57,7 @@ public static class EfCoreServiceCollectionExtensions
         // Setting Domain Repositories
         services.AddScoped<ICustomerVpSettingRepository, EfCoreCustomerVpSettingRepository>();
         services.AddScoped<IContentVideoGenerationLimitRepository, EfCoreContentVideoGenerationLimitRepository>();
+        // services.AddScoped<IResponseStatisticRepository, EfCoreResponseStatisticRepository>();
 
         // Content Domain Repositories
         services.AddScoped<ICustomerContentRepository, EfCoreCustomerContentRepository>();

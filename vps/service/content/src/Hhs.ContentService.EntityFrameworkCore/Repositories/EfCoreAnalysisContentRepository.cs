@@ -30,6 +30,15 @@ public sealed class EfCoreAnalysisContentRepository(
                 .SetProperty(a => a.LastFacility, EventNames.VideoRequestCreated)
         );
 
+    public async Task SetVideoGenerationApprovedAsync(Guid id) =>
+        await UpdateByExpressionAsync(x => x.Id == id && x.VideoRequestId == null,
+            s => s
+                .SetProperty(a => a.NormalizeStatus, StatusNames.Completed)
+                .SetProperty(a => a.LastFacility, EventNames.NormalizerResultPublished)
+                .SetProperty(a => a.LastError, (string)null)
+                .SetProperty(a => a.VideoStatus, StatusNames.Approved)
+        );
+
     [ItemCanBeNull]
     public async Task<AnalysisContent> GetByIdWithItemsAsync(Guid id, CancellationToken cancellationToken = default)
         => await GetFirstOrDefaultAsync(

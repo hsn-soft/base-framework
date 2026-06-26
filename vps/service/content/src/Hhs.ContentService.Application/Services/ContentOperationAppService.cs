@@ -1,15 +1,30 @@
 using Hhs.ContentService.Domain.ContentDomain.Repositories;
+using Hhs.ContentService.Domain.Enums;
+using Hhs.ContentService.Domain.SettingDomain.Exceptions;
+using Hhs.ContentService.Domain.SettingDomain.Repositories;
+using Hhs.ContentService.Domain.Settings;
 using Hhs.Shared.Contracts.Events;
 using Hhs.Shared.Helper;
 using Hhs.Shared.Helper.Enums;
+using HsnSoft.Base.Logging;
+using HsnSoft.Base.Logging.Abstracts;
+using JetBrains.Annotations;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace Hhs.ContentService.Application.Services;
 
 public sealed class ContentOperationService(
     IServiceProvider provider,
+    IOptions<ContentOperationSettings> serviceSettings,
     ICustomerContentRepository customerContentRepository,
-    IAnalysisContentRepository analysisContentRepository) : ApplicationServiceBase(provider)
+    IAnalysisContentRepository analysisContentRepository,
+    ICustomerVpSettingRepository customerVpSettingRepository,
+    IContentVideoGenerationLimitRepository contentVideoGenerationLimitRepository) : ApplicationServiceBase(provider)
 {
+    private readonly IFrameworkLogger _logger = provider.GetRequiredService<IFrameworkLogger>();
+    private readonly ContentOperationSettings _serviceSettings = serviceSettings?.Value ?? throw new ArgumentNullException(nameof(serviceSettings));
+
     public async Task HandleNormalizedRequestReferenceAsync(ContentType refContentType, Guid refContentId, Guid refNormalizeRequestId)
     {
         switch (refContentType)
@@ -34,54 +49,97 @@ public sealed class ContentOperationService(
         bool shouldPublishEvent = false;
         string? scopeKey = null;
 
-        if (@event.RefContentType is not (ContentType.CustomerContent or ContentType.AnalysisContent))
+        switch (@event.RefContentType)
         {
-            var entity = await customerContentRepository.GetByIdWithTrackingAsync(@event.RefContentId, cancellationToken);
+            case ContentType.CustomerContent:
+                {
+                    var entity = await customerContentRepository.GetByIdWithTrackingAsync(@event.RefContentId, cancellationToken);
 
-            if (entity != null && entity.NormalizeStatus != StatusNames.Completed)
-            {
-                entity.NormalizeStatus = StatusNames.Completed;
-                entity.LastFacility = EventNames.NormalizerResultPublished;
-                entity.LastError = "Unknown content reference type for approve operation";
+                    if (entity != null && entity.NormalizeStatus != StatusNames.Completed)
+                    {
+                        _logger.FrameworkInfoLog(LogHelper.Generate(
+                            message: "CustomerContent normalized success",
+                            reference: new { entity.ScopeKey, RefContentId = entity.Id, RefNormalizedRequestId = entity.NormalizeRequestId },
+                            facility: "CUSTOMER_CONTENT_NORMALIZED_SUCCESS",
+                            correlationId: entity.CorrelationId,
+                            exception: null
+                        ));
 
-                await customerContentRepository.UpdateAsync(entity, cancellationToken);
-            }
-        }
+                        var checkResult = await CheckVideoGenerationApproveRules(entity.ScopeKey, entity.ScrapReleaseTimeUtc);
+                        if (checkResult.Key)
+                        {
+                            await customerContentRepository.SetVideoGenerationApprovedAsync(id: entity.Id);
 
-        if (@event.RefContentType == ContentType.CustomerContent)
-        {
-            var entity = await customerContentRepository.GetByIdWithTrackingAsync(@event.RefContentId, cancellationToken);
+                            _logger.FrameworkInfoLog(LogHelper.Generate(
+                                message: "CustomerContent video generation approved",
+                                reference: new { entity.ScopeKey, RefContentId = entity.Id, RefNormalizedRequestId = entity.NormalizeRequestId },
+                                facility: "CUSTOMER_CONTENT_VIDEO_GENERATION_APPROVED",
+                                correlationId: entity.CorrelationId,
+                                exception: null
+                            ));
 
-            if (entity != null && entity.NormalizeStatus != StatusNames.Completed)
-            {
-                entity.NormalizeStatus = StatusNames.Completed;
-                entity.LastFacility = EventNames.NormalizerResultPublished;
-                entity.LastError = null;
-                scopeKey = entity.ScopeKey;
+                            // Add video generation history for client quote control
+                            await contentVideoGenerationLimitRepository.CreateAsync(scopeKey: entity.ScopeKey,
+                                videoGenerationDate: entity.ScrapReleaseTimeUtc?.Date ?? DateTime.UtcNow.Date,
+                                videoGenerationType: VideoGenerationTypes.DirectVideoGeneration,
+                                contentReferenceIds: entity.Id.ToString());
 
-                entity.VideoStatus = StatusNames.Approved;
-                shouldPublishEvent = true;
+                            shouldPublishEvent = true;
+                        }
+                        else
+                        {
+                            await customerContentRepository.SetVideoGenerationRejectedAsync(entity.Id, checkResult.Value);
 
-                await customerContentRepository.UpdateAsync(entity, cancellationToken);
-            }
-        }
+                            _logger.FrameworkInfoLog(LogHelper.Generate(
+                                message: "CustomerContent video generation rejected",
+                                reference: new { entity.ScopeKey, RefContentId = entity.Id, RefNormalizedRequestId = entity.NormalizeRequestId },
+                                facility: checkResult.Value,
+                                correlationId: entity.CorrelationId,
+                                exception: null
+                            ));
+                        }
+                    }
 
-        if (@event.RefContentType == ContentType.AnalysisContent)
-        {
-            var entity = await analysisContentRepository.GetByIdWithItemsAsync(@event.RefContentId, cancellationToken);
+                    break;
+                }
+            case ContentType.AnalysisContent:
+                {
+                    var entity = await analysisContentRepository.GetByIdWithItemsAsync(@event.RefContentId, cancellationToken);
 
-            if (entity != null && entity.NormalizeStatus != StatusNames.Completed)
-            {
-                entity.NormalizeStatus = StatusNames.Completed;
-                entity.LastFacility = EventNames.NormalizerResultPublished;
-                entity.LastError = null;
-                scopeKey = entity.ScopeKey;
+                    if (entity != null && entity.NormalizeStatus != StatusNames.Completed)
+                    {
+                        _logger.FrameworkInfoLog(LogHelper.Generate(
+                            message: "Analysis Content normalized success",
+                            reference: new { entity.ScopeKey, RefContentId = entity.Id, RefNormalizedRequestId = entity.NormalizeRequestId },
+                            facility: "ANALYSIS_CONTENT_NORMALIZED_SUCCESS",
+                            correlationId: entity.CorrelationId,
+                            exception: null
+                        ));
 
-                entity.VideoStatus = StatusNames.Approved;
-                shouldPublishEvent = true;
+                        await analysisContentRepository.SetVideoGenerationApprovedAsync(id: entity.Id);
 
-                await analysisContentRepository.UpdateAsync(entity, cancellationToken);
-            }
+                        _logger.FrameworkInfoLog(LogHelper.Generate(
+                            message: "Analysis Content video generation approved",
+                            reference: new { entity.ScopeKey, RefContentId = entity.Id, RefNormalizedRequestId = entity.NormalizeRequestId },
+                            facility: "ANALYSIS_CONTENT_VIDEO_GENERATION_APPROVED",
+                            correlationId: entity.CorrelationId,
+                            exception: null
+                        ));
+
+                        // Add video generation history for client quote control
+                        await contentVideoGenerationLimitRepository.CreateAsync(scopeKey: entity.ScopeKey,
+                            videoGenerationDate: entity.AnalysisDate.Date,
+                            videoGenerationType: VideoGenerationTypes.AnalysisVideoGeneration,
+                            contentReferenceIds: entity.Id.ToString());
+
+                        shouldPublishEvent = true;
+                    }
+
+                    break;
+                }
+            case ContentType.None:
+            default:
+                throw new InvalidOperationException("Unknown content reference type for approve operation");
         }
 
         if (shouldPublishEvent)
@@ -111,32 +169,42 @@ public sealed class ContentOperationService(
 
     public async Task HandleVideoResultAsync(VideoGenerationResultPublishedEto @event, CancellationToken cancellationToken = default)
     {
-        if (@event.RefContentType == ContentType.CustomerContent)
+        switch (@event.RefContentType)
         {
-            var entity = await customerContentRepository.GetByIdWithTrackingAsync(@event.RefContentId, cancellationToken);
-            if (entity != null)
-            {
-                entity.VideoStatus = StatusNames.Completed;
-                entity.VideoRequestId = @event.VideoRequestId;
-                entity.VideoCdnUrl = @event.FinalVideoUrl;
-                entity.LastFacility = EventNames.VideoGenerationResultPublished;
+            case ContentType.CustomerContent:
+                {
+                    var entity = await customerContentRepository.GetByIdWithTrackingAsync(@event.RefContentId, cancellationToken);
+                    if (entity != null)
+                    {
+                        entity.VideoStatus = StatusNames.Completed;
+                        entity.VideoRequestId = @event.VideoRequestId;
+                        entity.VideoCdnUrl = @event.FinalVideoUrl;
+                        entity.LastFacility = EventNames.VideoGenerationResultPublished;
 
-                await customerContentRepository.UpdateAsync(entity, cancellationToken);
-            }
-        }
+                        await customerContentRepository.UpdateAsync(entity, cancellationToken);
+                    }
 
-        if (@event.RefContentType == ContentType.AnalysisContent)
-        {
-            var entity = await analysisContentRepository.GetByIdWithItemsAsync(@event.RefContentId, cancellationToken);
-            if (entity != null)
-            {
-                entity.VideoStatus = StatusNames.Completed;
-                entity.VideoRequestId = @event.VideoRequestId;
-                entity.VideoCdnUrl = @event.FinalVideoUrl;
-                entity.LastFacility = EventNames.VideoGenerationResultPublished;
+                    break;
+                }
+            case ContentType.AnalysisContent:
+                {
+                    var entity = await analysisContentRepository.GetByIdWithItemsAsync(@event.RefContentId, cancellationToken);
+                    if (entity != null)
+                    {
+                        entity.VideoStatus = StatusNames.Completed;
+                        entity.VideoRequestId = @event.VideoRequestId;
+                        entity.VideoCdnUrl = @event.FinalVideoUrl;
+                        entity.LastFacility = EventNames.VideoGenerationResultPublished;
 
-                await analysisContentRepository.UpdateAsync(entity, cancellationToken);
-            }
+                        await analysisContentRepository.UpdateAsync(entity, cancellationToken);
+                    }
+
+                    break;
+                }
+            case ContentType.None:
+                break;
+            default:
+                throw new InvalidOperationException("Unknown content reference type for result update operation");
         }
     }
 
@@ -198,5 +266,49 @@ public sealed class ContentOperationService(
     {
         return step.Contains(StepKeywords.Audio, StringComparison.OrdinalIgnoreCase)
                || step.Contains(StepKeywords.Video, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private async Task<KeyValuePair<bool, string>> CheckVideoGenerationApproveRules([NotNull] string scopeKey, DateTime? releaseTime)
+    {
+        if (_serviceSettings.SkipContentCheckOperation)
+        {
+            return new KeyValuePair<bool, string>(true, "CUSTOMER_CONTENT_VIDEO_GENERATION_APPROVED");
+        }
+
+        // Check content release time
+        if (!releaseTime.HasValue || releaseTime.Value.ToUniversalTime().Date != DateTime.UtcNow.Date)
+        {
+            return new KeyValuePair<bool, string>(false, "CUSTOMER_CONTENT_VIDEO_GENERATION_SKIPPED_OLD_CONTENT");
+        }
+
+        // Get Client Details
+        var customerVpSetting = await customerVpSettingRepository.GetSingleOrDefaultAsync(x => x.ScopeKey == scopeKey);
+        if (customerVpSetting == null)
+        {
+            throw new CustomerVpSettingNotFoundException(L, scopeKey);
+        }
+
+        // Check client video generation started settings
+        if (DateTime.UtcNow.Hour < customerVpSetting.DailyDirectVideoGenerationStartedUtcHour)
+        {
+            if (DateTime.UtcNow.Hour < releaseTime.Value.ToUniversalTime().Hour)
+            {
+                return new KeyValuePair<bool, string>(false, "CUSTOMER_CONTENT_VIDEO_GENERATION_SKIPPED_EARLY_TIME");
+            }
+        }
+
+        // Check client direct video generation limit
+        if (customerVpSetting.DailyDirectVideoGenerationLimit <= 0)
+        {
+            return new KeyValuePair<bool, string>(false, "CUSTOMER_CONTENT_VIDEO_GENERATION_SKIPPED_DAILY_LIMIT");
+        }
+
+        // Check client direct video generation available
+        long clientDailyDirectVideoHistoryCount = await contentVideoGenerationLimitRepository.GetCustomerVideoHistoryCountAsync(scopeKey,
+            releaseTime.Value.ToUniversalTime().Date, VideoGenerationTypes.DirectVideoGeneration);
+
+        return customerVpSetting.DailyDirectVideoGenerationLimit - clientDailyDirectVideoHistoryCount <= 0
+            ? new KeyValuePair<bool, string>(false, "CUSTOMER_CONTENT_VIDEO_GENERATION_SKIPPED_DAILY_LIMIT")
+            : new KeyValuePair<bool, string>(true, "CUSTOMER_CONTENT_VIDEO_GENERATION_APPROVED");
     }
 }
