@@ -28,8 +28,4 @@
         <Content Remove="Localization\ContentService\*.json"/>
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="ContentDomain\Consts\" />
-    </ItemGroup>
-
 </Project>

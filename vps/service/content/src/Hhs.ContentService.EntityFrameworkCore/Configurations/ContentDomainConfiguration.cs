@@ -36,6 +36,25 @@ public static class ContentDomainConfiguration
         });
     }
 
+    public static void ConfigureCustomerContentVisitEntity(this ModelBuilder builder)
+    {
+        builder.Entity<CustomerContentVisit>(b =>
+        {
+            b.ToTable(EfCoreDbProperties.DbTablePrefix + CustomerContentVisitConsts.TableName, EfCoreDbProperties.DbSchema);
+            b.HasKey(ci => ci.Id);
+
+            b.Property(x => x.ScopeKey).HasMaxLength(CustomerContentVisitConsts.ScopeKeyMaxLength).IsRequired();
+            b.Property(x => x.CustomerContentId).IsRequired();
+            b.Property(x => x.VisitTime).IsRequired();
+            b.Property(x => x.VisitResponse).IsRequired().HasMaxLength(CustomerContentVisitConsts.VisitResponseMaxLength);
+
+            b.HasIndex(x => x.ScopeKey);
+            b.HasIndex(x => x.CustomerContentId);
+            b.HasIndex(x => x.VisitTime);
+            b.HasIndex(x => x.VisitResponse);
+        });
+    }
+
     public static void ConfigureAnalysisContentEntity(this ModelBuilder builder)
     {
         builder.Entity<AnalysisContent>(b =>

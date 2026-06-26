@@ -16,10 +16,11 @@ public sealed class ContentServiceDbContext(
     public DbSet<CustomerVpSetting> CustomerVpSettings => Set<CustomerVpSetting>();
     public DbSet<ContentVideoGenerationLimit> ContentVideoGenerationLimits => Set<ContentVideoGenerationLimit>();
 
-
     public DbSet<CustomerContent> CustomerContents => Set<CustomerContent>();
+    public DbSet<CustomerContentVisit> CustomerContentVisits => Set<CustomerContentVisit>();
     public DbSet<AnalysisContent> AnalysisContents => Set<AnalysisContent>();
     public DbSet<AnalysisContentItem> AnalysisContentItems => Set<AnalysisContentItem>();
+
     public DbSet<EventInboxMessage> EventInboxMessages => Set<EventInboxMessage>();
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -34,6 +35,7 @@ public sealed class ContentServiceDbContext(
 
         // ContentDomain configuration
         builder.ConfigureCustomerContentEntity();
+        builder.ConfigureCustomerContentVisitEntity();
         builder.ConfigureAnalysisContentEntity();
         builder.ConfigureAnalysisContentItemEntity();
 

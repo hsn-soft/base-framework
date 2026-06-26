@@ -68,6 +68,21 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "CustomerContentVisits",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ScopeKey = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
+                    CustomerContentId = table.Column<Guid>(type: "uuid", nullable: false),
+                    VisitTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    VisitResponse = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CustomerContentVisits", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "CustomerVpSettings",
                 columns: table => new
                 {
@@ -209,6 +224,26 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_CustomerContentVisits_CustomerContentId",
+                table: "CustomerContentVisits",
+                column: "CustomerContentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CustomerContentVisits_ScopeKey",
+                table: "CustomerContentVisits",
+                column: "ScopeKey");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CustomerContentVisits_VisitResponse",
+                table: "CustomerContentVisits",
+                column: "VisitResponse");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CustomerContentVisits_VisitTime",
+                table: "CustomerContentVisits",
+                column: "VisitTime");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_CustomerVpSettings_DomainName",
                 table: "CustomerVpSettings",
                 column: "DomainName",
@@ -234,6 +269,9 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
 
             migrationBuilder.DropTable(
                 name: "ContentVideoGenerationLimits");
+
+            migrationBuilder.DropTable(
+                name: "CustomerContentVisits");
 
             migrationBuilder.DropTable(
                 name: "EventInboxMessages");

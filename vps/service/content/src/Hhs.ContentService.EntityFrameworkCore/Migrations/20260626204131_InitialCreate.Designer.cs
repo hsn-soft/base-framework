@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Hhs.ContentService.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(ContentServiceDbContext))]
-    [Migration("20260626165425_InitialCreate")]
+    [Migration("20260626204131_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -216,6 +216,40 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                         .IsUnique();
 
                     b.ToTable("CustomerContents", (string)null);
+                });
+
+            modelBuilder.Entity("Hhs.ContentService.Domain.ContentDomain.Entities.CustomerContentVisit", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerContentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ScopeKey")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("VisitResponse")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<DateTime>("VisitTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerContentId");
+
+                    b.HasIndex("ScopeKey");
+
+                    b.HasIndex("VisitResponse");
+
+                    b.HasIndex("VisitTime");
+
+                    b.ToTable("CustomerContentVisits", (string)null);
                 });
 
             modelBuilder.Entity("Hhs.ContentService.Domain.InfraDomain.Entities.EventInboxMessage", b =>

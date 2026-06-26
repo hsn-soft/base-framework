@@ -60,6 +60,7 @@ public static class EfCoreServiceCollectionExtensions
 
         // Content Domain Repositories
         services.AddScoped<ICustomerContentRepository, EfCoreCustomerContentRepository>();
+        services.AddScoped<ICustomerContentVisitRepository, EfCoreCustomerContentVisitRepository>();
         services.AddScoped<IAnalysisContentRepository, EfCoreAnalysisContentRepository>();
 
         // Infra Domain Repositories
