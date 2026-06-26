@@ -4,6 +4,7 @@ using Hhs.Shared.Contracts.Events;
 using Hhs.Shared.Helper;
 using Hhs.Shared.Helper.Configuration;
 using Hhs.Shared.Helper.Enums;
+using HsnSoft.Base.Domain.Models;
 using HsnSoft.Base.Text;
 using HsnSoft.Base.Tracing;
 using Microsoft.Extensions.Logging;
@@ -19,6 +20,12 @@ public sealed record CreateAnalysisContentRequest(
     string DomainName,
     string Title,
     List<Guid> CustomerContentIds);
+
+public sealed record CreateAnalysisContentFromScopeRequest(
+    string ScopeKey,
+    string DomainName,
+    string Title,
+    int MaxCustomerContents = 5);
 
 public sealed class ContentOperationAppService(
     IServiceProvider provider,
@@ -102,6 +109,61 @@ public sealed class ContentOperationAppService(
             .Select((id, index) =>
             {
                 var content = contentsForAnalysis.First(x => x.Id == id);
+
+                return new AnalysisNormalizeItem { CustomerContentId = content.Id, ContentKey = content.ContentKey, SortOrder = index + 1 };
+            })
+            .ToList();
+
+        await EventBus.PublishAsync(
+            parentMessage: ParentIntegrationEvent,
+            correlationId: analysis.CorrelationId,
+            eventMessage: new AnalysisContentCreatedEto { AnalysisContentId = analysisId, ScopeKey = analysis.ScopeKey, DomainName = analysis.DomainName, Items = items }
+        );
+
+        return new CreateContentResponse(Id: analysisId.ToString());
+    }
+
+    public async Task<CreateContentResponse> CreateAnalysisContentFromScopeAsync(CreateAnalysisContentFromScopeRequest request, CancellationToken cancellationToken)
+    {
+        // Fetch latest N successful CustomerContents with this ScopeKey and COMPLETED NormalizeStatus
+        var options = new ListQueryOptions<CustomerContent> { Filter = x => x.ScopeKey == request.ScopeKey && x.NormalizeStatus == StatusNames.Completed, OrderByEntity = o => o.OrderByDescending(s => s.CreationTime), MaxResultCount = request.MaxCustomerContents };
+
+        var successfulContents = await customerContentRepository.GetListAsync(options, cancellationToken);
+
+        if (successfulContents.Count == 0)
+            throw new InvalidOperationException($"No successful CustomerContent found for ScopeKey: {request.ScopeKey}");
+
+        // Extract IDs for analysis
+        var customerContentIds = successfulContents.Select(x => x.Id).ToList();
+
+        // Create analysis using extracted IDs
+        var analysisId = Guid.NewGuid();
+
+        var analysis = new AnalysisContent(
+            analysisId,
+            request.ScopeKey,
+            request.DomainName,
+            request.Title,
+            traceAccessor?.GetCorrelationId());
+
+        int sort = 1;
+
+        foreach (var customerContentId in customerContentIds)
+        {
+            var content = successfulContents.FirstOrDefault(x => x.Id == customerContentId);
+            if (content == null)
+                throw new InvalidOperationException($"CustomerContent not found: {customerContentId}");
+
+            analysis.Items.Add(new AnalysisContentItem(id: Guid.NewGuid()
+                , analysisContentId: analysisId, customerContentId: customerContentId, sortOrder: sort++));
+        }
+
+        await analysisContentRepository.InsertAsync(analysis, cancellationToken);
+
+        var items = customerContentIds
+            .Select((id, index) =>
+            {
+                var content = successfulContents.First(x => x.Id == id);
 
                 return new AnalysisNormalizeItem { CustomerContentId = content.Id, ContentKey = content.ContentKey, SortOrder = index + 1 };
             })
