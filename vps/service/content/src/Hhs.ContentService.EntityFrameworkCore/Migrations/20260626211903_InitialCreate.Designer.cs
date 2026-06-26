@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Hhs.ContentService.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(ContentServiceDbContext))]
-    [Migration("20260626204131_InitialCreate")]
+    [Migration("20260626211903_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -30,6 +30,9 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
+                    b.Property<DateTime>("AnalysisDate")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("CorrelationId")
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
@@ -41,15 +44,6 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                     b.Property<Guid?>("CreatorId")
                         .HasColumnType("uuid")
                         .HasColumnName("CreatorId");
-
-                    b.Property<string>("DomainName")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<string>("FinalVideoUrl")
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
 
                     b.Property<bool>("IsDeleted")
                         .ValueGeneratedOnAdd()
@@ -85,9 +79,9 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<string>("Title")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
+                    b.Property<string>("VideoCdnUrl")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
 
                     b.Property<Guid?>("VideoRequestId")
                         .HasColumnType("uuid");
@@ -98,7 +92,11 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("AnalysisDate");
+
                     b.HasIndex("ScopeKey");
+
+                    b.HasIndex("VideoStatus");
 
                     b.ToTable("AnalysisContents", (string)null);
                 });

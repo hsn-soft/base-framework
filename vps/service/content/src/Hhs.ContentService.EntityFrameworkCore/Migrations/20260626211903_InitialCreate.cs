@@ -18,16 +18,15 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     IsDeleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
                     ScopeKey = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    DomainName = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
-                    Title = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    AnalysisDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     CorrelationId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    LastFacility = table.Column<string>(type: "character varying(120)", maxLength: 120, nullable: true),
+                    LastError = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
                     NormalizeStatus = table.Column<string>(type: "character varying(80)", maxLength: 80, nullable: true),
                     NormalizeRequestId = table.Column<Guid>(type: "uuid", nullable: true),
                     VideoStatus = table.Column<string>(type: "character varying(80)", maxLength: 80, nullable: true),
                     VideoRequestId = table.Column<Guid>(type: "uuid", nullable: true),
-                    FinalVideoUrl = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
-                    LastFacility = table.Column<string>(type: "character varying(120)", maxLength: 120, nullable: true),
-                    LastError = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
+                    VideoCdnUrl = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
                     CreationTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     CreatorId = table.Column<Guid>(type: "uuid", nullable: true),
                     LastModificationTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -198,9 +197,19 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                 column: "CustomerContentId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_AnalysisContents_AnalysisDate",
+                table: "AnalysisContents",
+                column: "AnalysisDate");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_AnalysisContents_ScopeKey",
                 table: "AnalysisContents",
                 column: "ScopeKey");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AnalysisContents_VideoStatus",
+                table: "AnalysisContents",
+                column: "VideoStatus");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ContentVideoGenerationLimits_CustomerVpSettingId",
