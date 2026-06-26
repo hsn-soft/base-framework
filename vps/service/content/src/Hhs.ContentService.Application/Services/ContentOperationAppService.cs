@@ -125,9 +125,8 @@ public sealed class ContentOperationAppService(
         {
             var entity = await customerContentRepository.GetByIdWithTrackingAsync(@event.RefContentId, cancellationToken);
 
-            if (entity != null && entity.NormalizeRequestId == null)
+            if (entity != null && entity.NormalizeStatus != StatusNames.Completed)
             {
-                entity.NormalizeRequestId = @event.NormalizeRequestId;
                 entity.NormalizeStatus = StatusNames.Completed;
                 entity.LastFacility = EventNames.NormalizerResultPublished;
                 entity.LastError = null;
@@ -154,9 +153,8 @@ public sealed class ContentOperationAppService(
         {
             var entity = await analysisContentRepository.GetByIdWithItemsAsync(@event.RefContentId, cancellationToken);
 
-            if (entity != null && entity.NormalizeRequestId == null)
+            if (entity != null && entity.NormalizeStatus != StatusNames.Completed)
             {
-                entity.NormalizeRequestId = @event.NormalizeRequestId;
                 entity.NormalizeStatus = StatusNames.Completed;
                 entity.LastFacility = EventNames.NormalizerResultPublished;
                 entity.LastError = null;
