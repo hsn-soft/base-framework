@@ -24,14 +24,16 @@
 ### Providers: outline-fast (5s) → audio-quick (3s) → video-queue-external (30s polling)
 ### Expected: ~38 seconds
 ###
-POST {{ContentService_HostAddress}}/api/content-service/v1/commercial/tests/customer-contents
+POST {{ContentService_HostAddress}}/api/content-service/v1/commercial/contents/get-or-create
 Content-Type: application/json
+Origin: https://tst01.scenario.com
+Referer: https://tst01.scenario.com
 X-Correlation-Id: scenario-001-{{$timestamp}}
 
 {
-  "ScopeKey": "scenario-001",
-  "DomainName": "https://scenario.com",
-  "ContentKey": "/customer/scenario-001-{{$timestamp}}"
+    "CustomerId": "00000001-6307-494B-8905-467DA196F0CB",
+    "DomainName": "https://tst01.scenario.com",
+    "ContentKey": "/haber/{{$timestamp}}"
 }
 
 ###
@@ -39,14 +41,16 @@ X-Correlation-Id: scenario-001-{{$timestamp}}
 ### Providers: outline-fast (5s) → audio-hq (20s polling) → video-queue-external (30s polling)
 ### Expected: ~53 seconds
 ###
-POST {{ContentService_HostAddress}}/api/content-service/v1/commercial/tests/customer-contents
+POST {{ContentService_HostAddress}}/api/content-service/v1/commercial/contents/get-or-create
 Content-Type: application/json
+Origin: https://tst02.scenario.com
+Referer: https://tst02.scenario.com
 X-Correlation-Id: scenario-002-{{$timestamp}}
 
 {
-  "ScopeKey": "scenario-002",
-  "DomainName": "https://scenario.com",
-  "ContentKey": "/customer/scenario-002-{{$timestamp}}"
+    "CustomerId": "00000002-6307-494B-8905-467DA196F0CB",
+    "DomainName": "https://tst02.scenario.com",
+    "ContentKey": "/haber/{{$timestamp}}"
 }
 
 ###
@@ -54,14 +58,16 @@ X-Correlation-Id: scenario-002-{{$timestamp}}
 ### Providers: outline-queue (10s polling) → audio-quick (3s) → video-queue-external (30s polling)
 ### Expected: ~43 seconds
 ###
-POST {{ContentService_HostAddress}}/api/content-service/v1/commercial/tests/customer-contents
+POST {{ContentService_HostAddress}}/api/content-service/v1/commercial/contents/get-or-create
 Content-Type: application/json
+Origin: https://tst03.scenario.com
+Referer: https://tst03.scenario.com
 X-Correlation-Id: scenario-003-{{$timestamp}}
 
 {
-  "ScopeKey": "scenario-003",
-  "DomainName": "https://scenario.com",
-  "ContentKey": "/customer/scenario-003-{{$timestamp}}"
+    "CustomerId": "00000003-6307-494B-8905-467DA196F0CB",
+    "DomainName": "https://tst03.scenario.com",
+    "ContentKey": "/haber/{{$timestamp}}"
 }
 
 ###
@@ -69,14 +75,16 @@ X-Correlation-Id: scenario-003-{{$timestamp}}
 ### Providers: outline-queue (10s polling) → audio-hq (20s polling) → video-queue-external (30s polling)
 ### Expected: ~58 seconds (maximum complexity - all providers involve polling)
 ###
-POST {{ContentService_HostAddress}}/api/content-service/v1/commercial/tests/customer-contents
+POST {{ContentService_HostAddress}}/api/content-service/v1/commercial/contents/get-or-create
 Content-Type: application/json
+Origin: https://tst04.scenario.com
+Referer: https://tst04.scenario.com
 X-Correlation-Id: scenario-004-{{$timestamp}}
 
 {
-  "ScopeKey": "scenario-004",
-  "DomainName": "https://scenario.com",
-  "ContentKey": "/customer/scenario-004-{{$timestamp}}"
+    "CustomerId": "00000004-6307-494B-8905-467DA196F0CB",
+    "DomainName": "https://tst04.scenario.com",
+    "ContentKey": "/haber/{{$timestamp}}"
 }
 
 ###
@@ -84,14 +92,16 @@ X-Correlation-Id: scenario-004-{{$timestamp}}
 ### Providers: outline-fast (5s) → video-queue-internal (30s polling, creates own audio)
 ### Expected: ~35 seconds
 ###
-POST {{ContentService_HostAddress}}/api/content-service/v1/commercial/tests/customer-contents
+POST {{ContentService_HostAddress}}/api/content-service/v1/commercial/contents/get-or-create
 Content-Type: application/json
+Origin: https://tst05.scenario.com
+Referer: https://tst05.scenario.com
 X-Correlation-Id: scenario-005-{{$timestamp}}
 
 {
-  "ScopeKey": "scenario-005",
-  "DomainName": "https://scenario.com",
-  "ContentKey": "/customer/scenario-005-{{$timestamp}}"
+    "CustomerId": "00000005-6307-494B-8905-467DA196F0CB",
+    "DomainName": "https://tst05.scenario.com",
+    "ContentKey": "/haber/{{$timestamp}}"
 }
 
 ###
@@ -99,12 +109,14 @@ X-Correlation-Id: scenario-005-{{$timestamp}}
 ### Providers: outline-queue (10s polling) → video-queue-internal (30s polling, creates own audio)
 ### Expected: ~40 seconds
 ###
-POST {{ContentService_HostAddress}}/api/content-service/v1/commercial/tests/customer-contents
+POST {{ContentService_HostAddress}}/api/content-service/v1/commercial/contents/get-or-create
 Content-Type: application/json
+Origin: https://tst06.scenario.com
+Referer: https://tst06.scenario.com
 X-Correlation-Id: scenario-006-{{$timestamp}}
 
 {
-  "ScopeKey": "scenario-006",
-  "DomainName": "https://scenario.com",
-  "ContentKey": "/customer/scenario-006-{{$timestamp}}"
+    "CustomerId": "00000006-6307-494B-8905-467DA196F0CB",
+    "DomainName": "https://tst06.scenario.com",
+    "ContentKey": "/haber/{{$timestamp}}"
 }

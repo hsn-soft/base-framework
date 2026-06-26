@@ -301,7 +301,6 @@ public sealed class ContentOperationAppService(
         }
     }
 
-
     public async Task HandleVideoRequestCreatedAsync(Guid contentId, Guid videoRequestId, ContentType contentType, CancellationToken cancellationToken = default)
     {
         if (contentType == ContentType.CustomerContent)

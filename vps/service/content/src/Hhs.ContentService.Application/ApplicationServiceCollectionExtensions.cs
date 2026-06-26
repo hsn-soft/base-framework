@@ -1,4 +1,5 @@
 using Hhs.ContentService.Application.Contracts.ContentDomain.Interfaces;
+using Hhs.ContentService.Application.Contracts.JobDomain;
 using Hhs.ContentService.Application.Infrastructure;
 using Hhs.ContentService.Application.Services;
 using Hhs.ContentService.Domain.Settings;
@@ -18,6 +19,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddSingleton<IServicePermissionProvider, ApplicationPermissionProvider>();
 
         // Must be Scoped or Transient => Cannot consume any scoped service
+        services.AddScoped<IJobAppService, JobAppService>();
         services.AddScoped<ApplicationEventInboxMessageManager>();
         services.AddScoped<ContentOperationAppService>();
 
