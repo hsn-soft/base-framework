@@ -1,12 +1,9 @@
-using System.Drawing;
 using Hhs.Shared.Helper.Consts;
 using Hhs.Shared.Helper.Enums;
 using Hhs.Shared.Helper.Utils;
-using Hhs.VideoGeneratorService.Domain.Enums;
 using Hhs.VideoGeneratorService.Domain.SettingDomain.Entities;
 using Hhs.VideoGeneratorService.MongoDb.Context;
 using HsnSoft.Base.Logging.Abstracts;
-using HsnSoft.Base.Text;
 using MongoDB.Driver;
 
 namespace Hhs.VideoGeneratorService.MongoDb.Setup;

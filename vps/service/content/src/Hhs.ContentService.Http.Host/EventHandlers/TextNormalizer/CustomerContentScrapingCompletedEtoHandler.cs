@@ -1,7 +1,6 @@
 using Hhs.ContentService.Application.Infrastructure;
 using Hhs.ContentService.Application.Services;
 using Hhs.Shared.Contracts.Events;
-using Hhs.Shared.Helper.Enums;
 using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.Logging.Abstracts;
 

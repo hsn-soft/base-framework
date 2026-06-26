@@ -1,17 +1,12 @@
-using Hhs.ContentService.Domain.ContentDomain.Entities;
-using Hhs.ContentService.Domain.ContentDomain.Exceptions;
 using Hhs.ContentService.Domain.ContentDomain.Repositories;
 using Hhs.Shared.Contracts.Events;
 using Hhs.Shared.Helper;
 using Hhs.Shared.Helper.Enums;
-using HsnSoft.Base.Domain.Models;
-using HsnSoft.Base.Tracing;
 
 namespace Hhs.ContentService.Application.Services;
 
 public sealed class ContentOperationService(
     IServiceProvider provider,
-    ITraceAccesor traceAccessor,
     ICustomerContentRepository customerContentRepository,
     IAnalysisContentRepository analysisContentRepository) : ApplicationServiceBase(provider)
 {
@@ -98,30 +93,19 @@ public sealed class ContentOperationService(
         }
     }
 
-
-    public async Task HandleVideoRequestCreatedAsync(Guid contentId, Guid videoRequestId, ContentType contentType, CancellationToken cancellationToken = default)
+    public async Task HandleVideoRequestCreatedAsync(Guid refContentId, Guid refVideoRequestId, ContentType refContentType, CancellationToken cancellationToken = default)
     {
-        if (contentType == ContentType.CustomerContent)
+        switch (refContentType)
         {
-            var entity = await customerContentRepository.GetByIdWithTrackingAsync(contentId, cancellationToken);
-            if (entity != null && entity.VideoRequestId == null)
-            {
-                entity.VideoRequestId = videoRequestId;
-                entity.VideoStatus = StatusNames.Created;
-                entity.LastFacility = EventNames.VideoRequestCreated;
-                await customerContentRepository.UpdateAsync(entity, cancellationToken);
-            }
-        }
-        else if (contentType == ContentType.AnalysisContent)
-        {
-            var entity = await analysisContentRepository.GetByIdWithItemsAsync(contentId, cancellationToken);
-            if (entity != null && entity.VideoRequestId == null)
-            {
-                entity.VideoRequestId = videoRequestId;
-                entity.VideoStatus = StatusNames.Created;
-                entity.LastFacility = EventNames.VideoRequestCreated;
-                await analysisContentRepository.UpdateAsync(entity, cancellationToken);
-            }
+            case ContentType.CustomerContent:
+                await customerContentRepository.SetVideoReferenceAsync(refContentId, refVideoRequestId);
+                break;
+            case ContentType.AnalysisContent:
+                await analysisContentRepository.SetVideoReferenceAsync(refContentId, refVideoRequestId);
+                break;
+            case ContentType.None:
+            default:
+                throw new ArgumentOutOfRangeException(nameof(refContentType), refContentType, null);
         }
     }
 
@@ -155,7 +139,6 @@ public sealed class ContentOperationService(
             }
         }
     }
-
 
     public async Task HandleStepFailedAsync(StepFailedEto @event, CancellationToken cancellationToken = default)
     {

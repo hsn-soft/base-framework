@@ -56,6 +56,14 @@ public sealed class EfCoreCustomerContentRepository(
         );
     }
 
+    public async Task SetVideoReferenceAsync(Guid id, Guid videoRequestId)
+        => await UpdateByExpressionAsync(x => x.Id == id && x.VideoRequestId == null,
+            s => s
+                .SetProperty(a => a.VideoRequestId, videoRequestId)
+                .SetProperty(a => a.NormalizeStatus, StatusNames.Created)
+                .SetProperty(a => a.LastFacility, EventNames.VideoRequestCreated)
+        );
+
     public async Task<CustomerContent> CreateAsync(string scopeKey, string contentKey, string correlationId = null)
     {
         // Create draft

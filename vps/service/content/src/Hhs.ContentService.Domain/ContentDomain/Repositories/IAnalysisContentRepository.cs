@@ -8,6 +8,8 @@ public interface IAnalysisContentRepository : IGenericRepository<AnalysisContent
 {
     Task SetNormalizedReferenceAsync(Guid id, Guid normalizedRequestId);
 
+       Task SetVideoReferenceAsync(Guid id, Guid videoRequestId);
+
     [ItemCanBeNull]
     Task<AnalysisContent> GetByIdWithItemsAsync(Guid id, CancellationToken cancellationToken = default);
     [ItemCanBeNull]

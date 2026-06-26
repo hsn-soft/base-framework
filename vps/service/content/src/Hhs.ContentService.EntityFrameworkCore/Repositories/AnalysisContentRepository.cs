@@ -22,6 +22,14 @@ public sealed class EfCoreAnalysisContentRepository(
                 .SetProperty(a => a.LastFacility, EventNames.CustomerContentNormalizeRequestCreated)
         );
 
+    public async Task SetVideoReferenceAsync(Guid id, Guid videoRequestId)
+        => await UpdateByExpressionAsync(x => x.Id == id && x.VideoRequestId == null,
+            s => s
+                .SetProperty(a => a.VideoRequestId, videoRequestId)
+                .SetProperty(a => a.NormalizeStatus, StatusNames.Created)
+                .SetProperty(a => a.LastFacility, EventNames.VideoRequestCreated)
+        );
+
     [ItemCanBeNull]
     public async Task<AnalysisContent> GetByIdWithItemsAsync(Guid id, CancellationToken cancellationToken = default)
         => await GetFirstOrDefaultAsync(

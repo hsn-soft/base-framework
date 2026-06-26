@@ -9,7 +9,7 @@ public interface ICustomerContentRepository : IGenericRepository<CustomerContent
     Task SetNormalizedReferenceAsync(Guid id, Guid normalizedRequestId);
     Task SetScrapeTimeAsync(Guid id, DateTime? scrapeTime);
 
-
+    Task SetVideoReferenceAsync(Guid id, Guid videoRequestId);
 
 
 
