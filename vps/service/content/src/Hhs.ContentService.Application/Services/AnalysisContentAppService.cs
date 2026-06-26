@@ -16,8 +16,6 @@ public sealed class AnalysisContentAppService(
 {
     public async Task<CreateContentResponse> CreateAnalysisContentAsync(CreateAnalysisContentRequest request, CancellationToken cancellationToken)
     {
-        var analysisId = Guid.NewGuid();
-
         // Fetch all customer contents by IDs
         var contentsForAnalysis = new List<CustomerContent>();
         foreach (var id in request.CustomerContentIds)
@@ -28,13 +26,13 @@ public sealed class AnalysisContentAppService(
             contentsForAnalysis.Add(content);
         }
 
-        var analysis = new AnalysisContent(
-            analysisId,
-            request.ScopeKey,
-            request.DomainName,
-            request.Title,
-            traceAccessor?.GetCorrelationId());
+        var analysisId = Guid.CreateVersion7();
+        var analysisDate = DateTime.UtcNow.Date;
 
+        var analysis = new AnalysisContent(id: analysisId,
+            scopeKey: request.ScopeKey,
+            analysisDate: analysisDate,
+            traceAccessor?.GetCorrelationId());
         int sort = 1;
 
         foreach (var customerContentId in request.CustomerContentIds)
@@ -61,7 +59,7 @@ public sealed class AnalysisContentAppService(
         await EventBus.PublishAsync(
             parentMessage: ParentIntegrationEvent,
             correlationId: analysis.CorrelationId,
-            eventMessage: new AnalysisContentCreatedEto { AnalysisContentId = analysisId, ScopeKey = analysis.ScopeKey, DomainName = analysis.DomainName, Items = items }
+            eventMessage: new AnalysisContentCreatedEto { AnalysisContentId = analysisId, ScopeKey = analysis.ScopeKey, DomainName = request.DomainName, Items = items }
         );
 
         return new CreateContentResponse(Id: analysisId.ToString());
@@ -81,15 +79,13 @@ public sealed class AnalysisContentAppService(
         var customerContentIds = successfulContents.Select(x => x.Id).ToList();
 
         // Create analysis using extracted IDs
-        var analysisId = Guid.NewGuid();
+        var analysisId = Guid.CreateVersion7();
+        var analysisDate = DateTime.UtcNow.Date;
 
-        var analysis = new AnalysisContent(
-            analysisId,
-            request.ScopeKey,
-            request.DomainName,
-            request.Title,
+        var analysis = new AnalysisContent(id: analysisId,
+            scopeKey: request.ScopeKey,
+            analysisDate: analysisDate,
             traceAccessor?.GetCorrelationId());
-
         int sort = 1;
 
         foreach (var customerContentId in customerContentIds)
@@ -116,7 +112,7 @@ public sealed class AnalysisContentAppService(
         await EventBus.PublishAsync(
             parentMessage: ParentIntegrationEvent,
             correlationId: analysis.CorrelationId,
-            eventMessage: new AnalysisContentCreatedEto { AnalysisContentId = analysisId, ScopeKey = analysis.ScopeKey, DomainName = analysis.DomainName, Items = items }
+            eventMessage: new AnalysisContentCreatedEto { AnalysisContentId = analysisId, ScopeKey = analysis.ScopeKey, DomainName = request.DomainName, Items = items }
         );
 
         return new CreateContentResponse(Id: analysisId.ToString());

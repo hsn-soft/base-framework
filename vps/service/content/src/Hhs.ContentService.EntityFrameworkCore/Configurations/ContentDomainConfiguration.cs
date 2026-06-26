@@ -63,16 +63,23 @@ public static class ContentDomainConfiguration
             b.HasKey(x => x.Id);
 
             b.Property(x => x.ScopeKey).HasMaxLength(AnalysisContentConsts.ScopeKeyMaxLength).IsRequired();
-            b.Property(x => x.DomainName).HasMaxLength(AnalysisContentConsts.DomainNameMaxLength).IsRequired();
-            b.Property(x => x.Title).HasMaxLength(AnalysisContentConsts.TitleMaxLength);
+
+            b.Property(x => x.AnalysisDate).IsRequired();
+
             b.Property(x => x.CorrelationId).HasMaxLength(AnalysisContentConsts.CorrelationIdMaxLength);
-            b.Property(x => x.NormalizeStatus).HasMaxLength(AnalysisContentConsts.NormalizeStatusMaxLength);
-            b.Property(x => x.VideoStatus).HasMaxLength(AnalysisContentConsts.VideoStatusMaxLength);
-            b.Property(x => x.FinalVideoUrl).HasMaxLength(AnalysisContentConsts.FinalVideoUrlMaxLength);
             b.Property(x => x.LastFacility).HasMaxLength(AnalysisContentConsts.LastFacilityMaxLength);
             b.Property(x => x.LastError).HasMaxLength(AnalysisContentConsts.LastErrorMaxLength);
 
+            b.Property(x => x.NormalizeStatus).HasMaxLength(AnalysisContentConsts.NormalizeStatusMaxLength);
+            b.Property(x => x.NormalizeRequestId);
+
+            b.Property(x => x.VideoStatus).HasMaxLength(AnalysisContentConsts.VideoStatusMaxLength);
+            b.Property(x => x.VideoRequestId);
+            b.Property(x => x.VideoCdnUrl).HasMaxLength(AnalysisContentConsts.FinalVideoUrlMaxLength);
+
             b.HasIndex(x => x.ScopeKey);
+            b.HasIndex(x => x.AnalysisDate);
+            b.HasIndex(x => x.VideoStatus);
         });
     }
 

@@ -8,11 +8,13 @@ public interface IAnalysisContentRepository : IGenericRepository<AnalysisContent
 {
     Task SetNormalizedReferenceAsync(Guid id, Guid normalizedRequestId);
 
-       Task SetVideoReferenceAsync(Guid id, Guid videoRequestId);
+    Task SetVideoReferenceAsync(Guid id, Guid videoRequestId);
 
     [ItemCanBeNull]
     Task<AnalysisContent> GetByIdWithItemsAsync(Guid id, CancellationToken cancellationToken = default);
+
     [ItemCanBeNull]
     Task<AnalysisContent> GetByScopeKeyAsync(string scopeKey, CancellationToken cancellationToken = default);
+
     Task<List<AnalysisContent>> GetAllByScopeKeyAsync(string scopeKey, CancellationToken cancellationToken = default);
 }

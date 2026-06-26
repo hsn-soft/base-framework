@@ -12,10 +12,12 @@ using Hhs.ContentService.Domain.Enums;
 using Hhs.ContentService.Domain.SettingDomain.Exceptions;
 using Hhs.ContentService.Domain.SettingDomain.Repositories;
 using Hhs.Shared.Contracts.Events;
+using Hhs.Shared.Helper;
 using Hhs.Shared.Helper.Enums;
 using Hhs.Shared.Helper.Utils;
 using HsnSoft.Base;
 using HsnSoft.Base.Data;
+using HsnSoft.Base.Logging;
 using HsnSoft.Base.Logging.Abstracts;
 using HsnSoft.Base.Subscribe;
 using HsnSoft.Base.Text;
@@ -27,6 +29,7 @@ namespace Hhs.ContentService.Application.Services;
 public sealed class CustomerContentPublicAppService(
     IServiceProvider provider,
     ICustomerContentRepository customerContentRepository,
+    ICustomerContentVisitRepository customerContentVisitRepository,
     IAnalysisContentRepository analysisContentRepository,
     ICustomerVpSettingRepository customerVpSettingRepository,
     ITraceAccesor traceAccessor,
@@ -56,6 +59,13 @@ public sealed class CustomerContentPublicAppService(
                 input.DomainName,
                 input.ContentKey,
                 PublicContentStatus.SKIPPED_PATH);
+
+            // Add statistic record
+            await customerContentVisitRepository.CreateAsync(
+                scopeKey: scopeKey,
+                customerContentId: Guid.Empty,
+                visitResponse: PublicContentStatus.SKIPPED_PATH
+            );
 
             return new GetOrCreateCustomerContentResponseDto { ContentType = PublicContentType.SKIPPED_CONTENT, ContentStatus = PublicContentStatus.SKIPPED_PATH };
         }
@@ -102,7 +112,49 @@ public sealed class CustomerContentPublicAppService(
             if (customerContentStatusModel.OperationStatus != CustomerContentOperationStates.OperationSuccess)
             {
                 result = new GetOrCreateCustomerContentResponseDto { ContentType = PublicContentType.ANALYSIS_CONTENT, ContentStatus = PublicContentStatus.NO_ANALYSIS_VIDEO };
+
+                using (dataFilter.Disable<IScopeSubscription>()) // anonymous user , unknown tenant
+                {
+                    var analysisEndDate = DateTime.UtcNow.Date.AddDays(1);
+                    // TODO: analysisVideoUrl = RANDOM(1)
+                    var analysisContent = await analysisContentRepository.GetFirstOrDefaultAsync(
+                        x => x.ScopeKey == scopeKey
+                             && x.VideoStatus == StatusNames.Completed
+                             && x.AnalysisDate < analysisEndDate,
+                        selector: s => new { s.Id, s.VideoCdnUrl },
+                        orderByEntity: o => o.OrderByDescending(x => x.CreationTime),
+                        cancellationToken: cancellationToken);
+
+                    if (analysisContent != null)
+                    {
+                        result = new GetOrCreateCustomerContentResponseDto { ContentType = PublicContentType.ANALYSIS_CONTENT, ContentId = analysisContent.Id, ContentStatus = PublicContentStatus.READY, ContentVideoUrl = analysisContent.VideoCdnUrl };
+                    }
+                    else
+                    {
+                        analysisEndDate = DateTime.UtcNow.Date;
+                        // TODO: analysisVideoUrl = RANDOM(1)
+                        analysisContent = await analysisContentRepository.GetFirstOrDefaultAsync(
+                            x => x.ScopeKey == scopeKey
+                                 && x.VideoStatus == StatusNames.Completed
+                                 && x.AnalysisDate < analysisEndDate,
+                            selector: s => new { s.Id, s.VideoCdnUrl },
+                            orderByEntity: o => o.OrderByDescending(x => x.AnalysisDate),
+                            cancellationToken: cancellationToken);
+
+                        if (analysisContent != null)
+                        {
+                            result = new GetOrCreateCustomerContentResponseDto { ContentType = PublicContentType.ANALYSIS_CONTENT, ContentId = analysisContent.Id, ContentStatus = PublicContentStatus.READY, ContentVideoUrl = analysisContent.VideoCdnUrl };
+                        }
+                    }
+                }
             }
+
+            // Add statistic record
+            await customerContentVisitRepository.CreateAsync(
+                scopeKey: scopeKey,
+                customerContentId: customerContentStatusModel.CustomerContentId,
+                visitResponse: result.ContentStatus
+            );
         }
         else
         {
@@ -145,6 +197,13 @@ public sealed class CustomerContentPublicAppService(
                         input.ContentKey,
                         PublicContentStatus.SKIPPED_PATH);
 
+                    // Add statistic record
+                    await customerContentVisitRepository.CreateAsync(
+                        scopeKey: scopeKey,
+                        customerContentId: Guid.Empty,
+                        visitResponse: PublicContentStatus.SKIPPED_PATH
+                    );
+
                     return new GetOrCreateCustomerContentResponseDto { ContentType = PublicContentType.SKIPPED_CONTENT, ContentStatus = PublicContentStatus.SKIPPED_PATH };
                 }
             }
@@ -163,6 +222,13 @@ public sealed class CustomerContentPublicAppService(
                     {
                         _logger.LogDebug("DomainName: {DomainName}, ContentKey: {ContentKey} GET OR CREATE FINISHED ContentStatus {ContentStatus}", input.DomainName, input.ContentKey, PublicContentStatus.SKIPPED_PATH);
 
+                        // Add statistic record
+                        await customerContentVisitRepository.CreateAsync(
+                            scopeKey: scopeKey,
+                            customerContentId: Guid.Empty,
+                            visitResponse: PublicContentStatus.SKIPPED_PATH
+                        );
+
                         return new GetOrCreateCustomerContentResponseDto { ContentType = PublicContentType.SKIPPED_CONTENT, ContentStatus = PublicContentStatus.SKIPPED_PATH };
                     }
                 }
@@ -174,7 +240,21 @@ public sealed class CustomerContentPublicAppService(
                 contentKey: input.ContentKey,
                 correlationId: traceAccessor?.GetCorrelationId());
 
+            _logger.FrameworkInfoLog(LogHelper.Generate(
+                message: $"CustomerContent created {input.ContentKey}",
+                reference: new { placedCustomerContent.ScopeKey, ClientDomain = customerVpSettingCheck.DomainName, input.ContentKey, RefContentId = placedCustomerContent.Id },
+                facility: EventNames.CustomerContentCreated,
+                correlationId: placedCustomerContent.CorrelationId,
+                exception: null
+            ));
+
             result = new GetOrCreateCustomerContentResponseDto { ContentType = PublicContentType.CUSTOMER_CONTENT, ContentId = placedCustomerContent.Id, ContentStatus = PublicContentStatus.CREATED };
+
+            // Add statistic record
+            await customerContentVisitRepository.CreateAsync(
+                scopeKey: placedCustomerContent.ScopeKey,
+                customerContentId: placedCustomerContent.Id,
+                visitResponse: result.ContentStatus);
 
             // Integration Event for TextNormalizerService
             await EventBus.PublishAsync(

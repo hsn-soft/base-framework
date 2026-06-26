@@ -132,7 +132,7 @@ public sealed class ContentOperationService(
             {
                 entity.VideoStatus = StatusNames.Completed;
                 entity.VideoRequestId = @event.VideoRequestId;
-                entity.FinalVideoUrl = @event.FinalVideoUrl;
+                entity.VideoCdnUrl = @event.FinalVideoUrl;
                 entity.LastFacility = EventNames.VideoGenerationResultPublished;
 
                 await analysisContentRepository.UpdateAsync(entity, cancellationToken);

@@ -1,3 +1,5 @@
+using Hhs.ContentService.Domain.ContentDomain.Consts;
+using Hhs.Shared.Localization;
 using HsnSoft.Base;
 using HsnSoft.Base.Domain.Entities.Auditing;
 using HsnSoft.Base.Subscribe;
@@ -11,41 +13,60 @@ public sealed class AnalysisContent : AuditedEntity<Guid>, ISoftDelete, IScopeSu
     public bool IsDeleted { get; internal set; }
 
     // Subscription & Scope
-    [NotNull] public string ScopeKey { get; private set; } = default!;
+    [NotNull] public string ScopeKey { get; private set; }
 
-    // Content Metadata
-    [NotNull] public string DomainName { get; private set; } = default!;
-    [CanBeNull]  public string Title { get; private set; }
+    public DateTime AnalysisDate { get; private set; }
 
     // Correlation & Tracing
-    [CanBeNull]
-    public string CorrelationId { get; private set; }
+    [CanBeNull] public string CorrelationId { get; private set; }
+    [CanBeNull] public string LastFacility { get; set; }
+    [CanBeNull] public string LastError { get; set; }
 
     // Normalization Status
-    [CanBeNull]  public string NormalizeStatus { get; set; }
+    [CanBeNull] public string NormalizeStatus { get; set; }
     [CanBeNull] public Guid? NormalizeRequestId { get; set; }
 
     // Video Generation Status
-    [CanBeNull]  public string VideoStatus { get; set; }
+    [CanBeNull] public string VideoStatus { get; set; }
     [CanBeNull] public Guid? VideoRequestId { get; set; }
-
-    // Result & Errors
-    [CanBeNull]  public string FinalVideoUrl { get; set; }
-    [CanBeNull]  public string LastFacility { get; set; }
-    [CanBeNull]  public string LastError { get; set; }
+    [CanBeNull] public string VideoCdnUrl { get; set; }
 
     // Analysis Items
     public List<AnalysisContentItem> Items { get; private set; } = [];
 
-    private AnalysisContent() { }
+    private AnalysisContent()
+    {
+        // Not-Null string fields
+        ScopeKey = string.Empty;
+    }
 
-    public AnalysisContent(Guid id, string scopeKey, string domainName, [CanBeNull] string title = null, [CanBeNull] string correlationId = null)
+    public AnalysisContent([NotNull] string scopeKey, DateTime analysisDate, [CanBeNull] string correlationId = null)
+        : this(id: Guid.CreateVersion7(), scopeKey: scopeKey, analysisDate: analysisDate, correlationId: correlationId)
+    {
+    }
+
+    public AnalysisContent(Guid id, [NotNull] string scopeKey, DateTime analysisDate, [CanBeNull] string correlationId = null) : this()
     {
         Id = id;
-        ScopeKey = scopeKey;
-        DomainName = domainName;
-        Title = title;
+        SetScopeKey(scopeKey);
+        SetAnalysisDate(analysisDate);
         CorrelationId = correlationId;
-        // NormalizeStatus and VideoStatus start as null, handlers will set them
+    }
+
+    private void SetScopeKey(string scopeKey)
+        => ScopeKey = LocalizedModelValidator.NotNullOrWhiteSpace(
+            scopeKey,
+            $"{nameof(CustomerContent)}:{nameof(ScopeKey)}",
+            AnalysisContentConsts.ScopeKeyMaxLength
+        );
+
+    private void SetAnalysisDate(DateTime analysisDate)
+    {
+        if (analysisDate == default || analysisDate.ToUniversalTime().Date > DateTime.UtcNow.Date)
+        {
+            throw new ArgumentException($"{nameof(AnalysisDate)} is invalid", nameof(analysisDate));
+        }
+
+        AnalysisDate = analysisDate.ToUniversalTime().Date;
     }
 }
