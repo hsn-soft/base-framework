@@ -2,10 +2,8 @@ using Hhs.ContentService.Domain.ContentDomain.Entities;
 using Hhs.ContentService.Domain.ContentDomain.Repositories;
 using Hhs.Shared.Contracts.Events;
 using Hhs.Shared.Helper;
-using Hhs.Shared.Helper.Configuration;
 using Hhs.Shared.Helper.Enums;
 using HsnSoft.Base.Domain.Models;
-using HsnSoft.Base.Text;
 using HsnSoft.Base.Tracing;
 using Microsoft.Extensions.Logging;
 
@@ -36,27 +34,20 @@ public sealed class ContentOperationAppService(
 {
     public async Task<CreateContentResponse> CreateCustomerContentAsync(CreateCustomerContentRequest request, CancellationToken cancellationToken)
     {
-        var id = Guid.NewGuid();
-        var slugKey = StringHelper.SlugKeyNormalize(request.ContentKey);
+        // Add appContent record
+        var placedCustomerContent = await customerContentRepository.CreateAsync(
+            scopeKey: request.ScopeKey,
+            contentKey: request.ContentKey,
+            correlationId: traceAccessor?.GetCorrelationId());
 
-        var entity = new CustomerContent(
-            id,
-            request.ScopeKey,
-            request.DomainName,
-            request.ContentKey,
-            slugKey,
-            traceAccessor?.GetCorrelationId());
-
-        await customerContentRepository.InsertAsync(entity, cancellationToken);
-
-        logger.LogInformation($"About to publish CustomerContentCreatedEto for RefContentId: {id}, ScopeKey: {entity.ScopeKey}");
+        logger.LogInformation($"About to publish CustomerContentCreatedEto for RefContentId: {placedCustomerContent.Id}, ScopeKey: {placedCustomerContent.ScopeKey}");
 
         try
         {
+            // Integration Event for TextNormalizerService
             await EventBus.PublishAsync(
-                parentMessage: ParentIntegrationEvent,
-                correlationId: entity.CorrelationId,
-                eventMessage: new CustomerContentCreatedEto { CustomerContentId = id, ScopeKey = entity.ScopeKey, DomainName = entity.DomainName, ContentKey = entity.ContentKey }
+                correlationId: placedCustomerContent.CorrelationId,
+                eventMessage: new CustomerContentCreatedEto { CustomerContentId = placedCustomerContent.Id, ScopeKey = placedCustomerContent.ScopeKey, DomainName = request.DomainName, DomainPath = request.ContentKey }
             );
 
             logger.LogInformation($"Successfully published CustomerContentCreatedEto");
@@ -67,7 +58,7 @@ public sealed class ContentOperationAppService(
             throw;
         }
 
-        return new CreateContentResponse(Id: id.ToString());
+        return new CreateContentResponse(Id: placedCustomerContent.Id.ToString());
     }
 
     public async Task<CreateContentResponse> CreateAnalysisContentAsync(CreateAnalysisContentRequest request, CancellationToken cancellationToken)
@@ -178,113 +169,6 @@ public sealed class ContentOperationAppService(
         return new CreateContentResponse(Id: analysisId.ToString());
     }
 
-    public async Task HandleNormalizerResultAsync(NormalizerResultPublishedEto @event, CancellationToken cancellationToken = default)
-    {
-        bool shouldPublishEvent = false;
-        string? scopeKey = null;
-
-        if (@event.RefContentType == ContentType.CustomerContent)
-        {
-            var entity = await customerContentRepository.GetByIdWithTrackingAsync(@event.RefContentId, cancellationToken);
-
-            if (entity != null && entity.NormalizeStatus != StatusNames.Completed)
-            {
-                entity.NormalizeStatus = StatusNames.Completed;
-                entity.LastFacility = EventNames.NormalizerResultPublished;
-                entity.LastError = null;
-                scopeKey = entity.ScopeKey;
-
-                // Check if video generation is supported for this scope
-                var videoProviderKey = SubscriptionScopeRegistry.GetVideoProviderKey(entity.ScopeKey);
-                if (videoProviderKey == null)
-                {
-                    entity.VideoStatus = StatusNames.Skipped;
-                    shouldPublishEvent = false;
-                }
-                else
-                {
-                    entity.VideoStatus = StatusNames.Approved;
-                    shouldPublishEvent = true;
-                }
-
-                await customerContentRepository.UpdateAsync(entity, cancellationToken);
-            }
-        }
-
-        if (@event.RefContentType == ContentType.AnalysisContent)
-        {
-            var entity = await analysisContentRepository.GetByIdWithItemsAsync(@event.RefContentId, cancellationToken);
-
-            if (entity != null && entity.NormalizeStatus != StatusNames.Completed)
-            {
-                entity.NormalizeStatus = StatusNames.Completed;
-                entity.LastFacility = EventNames.NormalizerResultPublished;
-                entity.LastError = null;
-                scopeKey = entity.ScopeKey;
-
-                // Check if video generation is supported for this scope
-                var videoProviderKey = SubscriptionScopeRegistry.GetVideoProviderKey(entity.ScopeKey);
-                if (videoProviderKey == null)
-                {
-                    entity.VideoStatus = StatusNames.Skipped;
-                    shouldPublishEvent = false;
-                }
-                else
-                {
-                    entity.VideoStatus = StatusNames.Approved;
-                    shouldPublishEvent = true;
-                }
-
-                await analysisContentRepository.UpdateAsync(entity, cancellationToken);
-            }
-        }
-
-        if (shouldPublishEvent)
-        {
-            await EventBus.PublishAsync(
-                parentMessage: ParentIntegrationEvent,
-                eventMessage: new VideoGenerationApprovedEto
-                {
-                    RefContentId = @event.RefContentId,
-                    RefContentType = @event.RefContentType,
-                    ScopeKey = scopeKey ?? string.Empty,
-                    RefNormalizeRequestId = @event.NormalizeRequestId
-                }
-            );
-        }
-    }
-
-    public async Task HandleVideoResultAsync(VideoGenerationResultPublishedEto @event, CancellationToken cancellationToken = default)
-    {
-        if (@event.RefContentType == ContentType.CustomerContent)
-        {
-            var entity = await customerContentRepository.GetByIdWithTrackingAsync(@event.RefContentId, cancellationToken);
-            if (entity != null)
-            {
-                entity.VideoStatus = StatusNames.Completed;
-                entity.VideoRequestId = @event.VideoRequestId;
-                entity.FinalVideoUrl = @event.FinalVideoUrl;
-                entity.LastFacility = EventNames.VideoGenerationResultPublished;
-
-                await customerContentRepository.UpdateAsync(entity, cancellationToken);
-            }
-        }
-
-        if (@event.RefContentType == ContentType.AnalysisContent)
-        {
-            var entity = await analysisContentRepository.GetByIdWithItemsAsync(@event.RefContentId, cancellationToken);
-            if (entity != null)
-            {
-                entity.VideoStatus = StatusNames.Completed;
-                entity.VideoRequestId = @event.VideoRequestId;
-                entity.FinalVideoUrl = @event.FinalVideoUrl;
-                entity.LastFacility = EventNames.VideoGenerationResultPublished;
-
-                await analysisContentRepository.UpdateAsync(entity, cancellationToken);
-            }
-        }
-    }
-
     public async Task HandleNormalizeStartedAsync(Guid contentId, Guid normalizeRequestId, ContentType contentType, CancellationToken cancellationToken = default)
     {
         if (contentType == ContentType.CustomerContent)
@@ -310,6 +194,113 @@ public sealed class ContentOperationAppService(
             }
         }
     }
+
+    public async Task HandleScrapingCompletedAsync(Guid customerContentId, DateTime? scrapReleaseTimeUtc, CancellationToken cancellationToken = default)
+    {
+        var entity = await customerContentRepository.GetByIdWithTrackingAsync(customerContentId, cancellationToken);
+        if (entity != null && entity.ScrapReleaseTimeUtc == null)
+        {
+            entity.SetScrapReleaseTimeUtc(scrapReleaseTimeUtc);
+
+            await customerContentRepository.UpdateAsync(entity, cancellationToken);
+        }
+    }
+
+    public async Task HandleNormalizerResultAsync(NormalizerResultPublishedEto @event, CancellationToken cancellationToken = default)
+    {
+        bool shouldPublishEvent = false;
+        string? scopeKey = null;
+
+        if (@event.RefContentType is not (ContentType.CustomerContent or ContentType.AnalysisContent))
+        {
+            var entity = await customerContentRepository.GetByIdWithTrackingAsync(@event.RefContentId, cancellationToken);
+
+            if (entity != null && entity.NormalizeStatus != StatusNames.Completed)
+            {
+                entity.NormalizeStatus = StatusNames.Completed;
+                entity.LastFacility = EventNames.NormalizerResultPublished;
+                entity.LastError = "Unknown content reference type for approve operation";
+
+                await customerContentRepository.UpdateAsync(entity, cancellationToken);
+            }
+        }
+
+        if (@event.RefContentType == ContentType.CustomerContent)
+        {
+            var entity = await customerContentRepository.GetByIdWithTrackingAsync(@event.RefContentId, cancellationToken);
+
+            if (entity != null && entity.NormalizeStatus != StatusNames.Completed)
+            {
+                entity.NormalizeStatus = StatusNames.Completed;
+                entity.LastFacility = EventNames.NormalizerResultPublished;
+                entity.LastError = null;
+                scopeKey = entity.ScopeKey;
+
+                entity.VideoStatus = StatusNames.Approved;
+                shouldPublishEvent = true;
+
+                await customerContentRepository.UpdateAsync(entity, cancellationToken);
+            }
+        }
+
+        if (@event.RefContentType == ContentType.AnalysisContent)
+        {
+            var entity = await analysisContentRepository.GetByIdWithItemsAsync(@event.RefContentId, cancellationToken);
+
+            if (entity != null && entity.NormalizeStatus != StatusNames.Completed)
+            {
+                entity.NormalizeStatus = StatusNames.Completed;
+                entity.LastFacility = EventNames.NormalizerResultPublished;
+                entity.LastError = null;
+                scopeKey = entity.ScopeKey;
+
+                entity.VideoStatus = StatusNames.Approved;
+                shouldPublishEvent = true;
+
+                await analysisContentRepository.UpdateAsync(entity, cancellationToken);
+            }
+        }
+
+        if (shouldPublishEvent)
+        {
+            await EventBus.PublishAsync(
+                parentMessage: ParentIntegrationEvent,
+                eventMessage: new VideoGenerationApprovedEto { RefContentId = @event.RefContentId, RefContentType = @event.RefContentType, ScopeKey = scopeKey ?? string.Empty, RefNormalizeRequestId = @event.NormalizeRequestId }
+            );
+        }
+    }
+
+    public async Task HandleVideoResultAsync(VideoGenerationResultPublishedEto @event, CancellationToken cancellationToken = default)
+    {
+        if (@event.RefContentType == ContentType.CustomerContent)
+        {
+            var entity = await customerContentRepository.GetByIdWithTrackingAsync(@event.RefContentId, cancellationToken);
+            if (entity != null)
+            {
+                entity.VideoStatus = StatusNames.Completed;
+                entity.VideoRequestId = @event.VideoRequestId;
+                entity.VideoCdnUrl = @event.FinalVideoUrl;
+                entity.LastFacility = EventNames.VideoGenerationResultPublished;
+
+                await customerContentRepository.UpdateAsync(entity, cancellationToken);
+            }
+        }
+
+        if (@event.RefContentType == ContentType.AnalysisContent)
+        {
+            var entity = await analysisContentRepository.GetByIdWithItemsAsync(@event.RefContentId, cancellationToken);
+            if (entity != null)
+            {
+                entity.VideoStatus = StatusNames.Completed;
+                entity.VideoRequestId = @event.VideoRequestId;
+                entity.FinalVideoUrl = @event.FinalVideoUrl;
+                entity.LastFacility = EventNames.VideoGenerationResultPublished;
+
+                await analysisContentRepository.UpdateAsync(entity, cancellationToken);
+            }
+        }
+    }
+
 
     public async Task HandleVideoRequestCreatedAsync(Guid contentId, Guid videoRequestId, ContentType contentType, CancellationToken cancellationToken = default)
     {

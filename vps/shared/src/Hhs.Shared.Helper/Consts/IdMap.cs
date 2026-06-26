@@ -18,6 +18,13 @@ public static class TenantRoleSeedIds
 
 public static class CustomerSeedIds
 {
+    public const string Scenario01CustomerId = "00000001-6307-494B-8905-467DA196F0CB";
+    public const string Scenario02CustomerId = "00000002-6307-494B-8905-467DA196F0CB";
+    public const string Scenario03CustomerId = "00000003-6307-494B-8905-467DA196F0CB";
+    public const string Scenario04CustomerId = "00000004-6307-494B-8905-467DA196F0CB";
+    public const string Scenario05CustomerId = "00000005-6307-494B-8905-467DA196F0CB";
+    public const string Scenario06CustomerId = "00000006-6307-494B-8905-467DA196F0CB";
+
     public const string TechSummusCustomerId = "4fe789ab-0652-4e7b-bd35-07019058081d";
     public const string HaberturkCustomerId = "59e368a4-7d4a-419b-9e74-2f517ed65af7";
     public const string BloomberghtCustomerId = "f05ad9c0-52c7-4ad8-8349-1f4bcc1b9bf9";

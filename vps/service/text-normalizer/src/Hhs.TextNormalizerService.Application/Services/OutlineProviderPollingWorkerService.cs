@@ -1,7 +1,6 @@
 using System.Linq.Expressions;
 using Hhs.Shared.Contracts.Events;
 using Hhs.Shared.Helper;
-using Hhs.Shared.Helper.Configuration;
 using Hhs.Shared.Helper.Enums;
 using Hhs.TextNormalizerService.Application.Providers;
 using Hhs.TextNormalizerService.Application.Providers.Outline;
@@ -9,6 +8,7 @@ using Hhs.TextNormalizerService.Domain.Configuration.Providers.Outline;
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Entities;
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Models;
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Repositories;
+using Hhs.TextNormalizerService.Domain.SettingDomain.Repositories;
 using HsnSoft.Base.Domain.Models;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
@@ -19,6 +19,7 @@ public sealed class OutlineProviderPollingWorkerService(
     IServiceProvider provider,
     IAnalysisContentNormalizedRequestRepository analysisRepository,
     ICustomerContentNormalizedRequestRepository customerRepository,
+    ICustomerVpSettingRepository customerVpSettingRepository,
     IOutlineProviderResolver outlineProviderResolver,
     ILogger<OutlineProviderPollingWorkerService> logger,
     OutlinePollingSettings pollingSettings) : ApplicationServiceBase(provider)
@@ -38,9 +39,9 @@ public sealed class OutlineProviderPollingWorkerService(
         var options = new ListQueryOptions<CustomerContentNormalizedRequest>
         {
             Filter = x => x.Status == StatusNames.OutlineProviderPolling &&
-                         x.NextOutlinePollAtUtc != null &&
-                         x.NextOutlinePollAtUtc <= now &&
-                         x.OutlineProviderTrackId != null,
+                          x.NextOutlinePollAtUtc != null &&
+                          x.NextOutlinePollAtUtc <= now &&
+                          x.OutlineProviderTrackId != null,
             MaxResultCount = 50
         };
 
@@ -83,9 +84,15 @@ public sealed class OutlineProviderPollingWorkerService(
                     continue;
                 }
 
-                var provider = outlineProviderResolver.Resolve(SubscriptionScopeRegistry.GetOutlineProviderKey(request.ScopeKey));
+                var providerKeyResult = await customerVpSettingRepository.GetOutlineProviderKeyByScopeKeyAsync(request.ScopeKey, cancellationToken);
+                if (!providerKeyResult.Key)
+                {
+                    throw new InvalidOperationException($"Provider key value is unknown. Scope key: {request.ScopeKey}");
+                }
 
-                var status = await provider.GetStatusAsync
+                var outlineProvider = outlineProviderResolver.Resolve(providerKeyResult.Value);
+
+                var status = await outlineProvider.GetStatusAsync
                 (
                     new OutlineStatusRequest
                     {
@@ -242,9 +249,14 @@ public sealed class OutlineProviderPollingWorkerService(
                         continue;
                     }
 
-                    var provider = outlineProviderResolver.Resolve(SubscriptionScopeRegistry.GetOutlineProviderKey(request.ScopeKey));
+                    var providerKeyResult = await customerVpSettingRepository.GetOutlineProviderKeyByScopeKeyAsync(request.ScopeKey, cancellationToken);
+                    if (!providerKeyResult.Key)
+                    {
+                        throw new InvalidOperationException($"Provider key value is unknown. Scope key: {request.ScopeKey}");
+                    }
+                    var outlineProvider = outlineProviderResolver.Resolve(providerKeyResult.Value);
 
-                    var status = await provider.GetStatusAsync
+                    var status = await outlineProvider.GetStatusAsync
                     (
                         new OutlineStatusRequest
                         {
@@ -440,9 +452,9 @@ public sealed class OutlineProviderPollingWorkerService(
             .Set(x => x.CurrentStep, request.CurrentStep);
 
         await customerRepository.UpdateByExpressionAsync(
-            predicate,
-            u => update,
-            cancellationToken: cancellationToken)
+                predicate,
+                u => update,
+                cancellationToken: cancellationToken)
             .ConfigureAwait(false);
     }
 

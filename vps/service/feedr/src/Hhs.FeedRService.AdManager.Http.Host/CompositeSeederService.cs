@@ -1,5 +1,4 @@
 using Hhs.FeedRService.EntityFrameworkCore;
-using Hhs.FeedRService.MongoDb;
 using Hhs.FeedRService.MongoDb.Setup;
 using HsnSoft.Base.Data;
 

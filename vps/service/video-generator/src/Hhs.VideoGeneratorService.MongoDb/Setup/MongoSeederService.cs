@@ -47,7 +47,7 @@ public sealed class MongoSeederService(IServiceScopeFactory serviceScopeFactory)
             if (estimatedCustomerVpSettingDocCount < 1)
             {
                 var tempId = Guid.CreateVersion7();
-                await dbContext.CustomerVpSettings.InsertOneAsync(new CustomerVpSetting(tempId, Guid.CreateVersion7(), "test_domain"), cancellationToken: cancellationToken);
+                await dbContext.CustomerVpSettings.InsertOneAsync(new CustomerVpSetting(tempId, Guid.CreateVersion7(), "test","test"), cancellationToken: cancellationToken);
 
                 var filter = Builders<CustomerVpSetting>.Filter.Eq(doc => doc.Id, tempId);
                 var delResult = await dbContext.CustomerVpSettings.DeleteOneAsync(filter, cancellationToken);

@@ -14,15 +14,22 @@ public static class ContentDomainConfiguration
             b.HasKey(x => x.Id);
 
             b.Property(x => x.ScopeKey).HasMaxLength(CustomerContentConsts.ScopeKeyMaxLength).IsRequired();
-            b.Property(x => x.DomainName).HasMaxLength(CustomerContentConsts.DomainNameMaxLength).IsRequired();
             b.Property(x => x.ContentKey).HasMaxLength(CustomerContentConsts.ContentKeyMaxLength).IsRequired();
-            b.Property(x => x.SlugKey).HasMaxLength(CustomerContentConsts.SlugKeyMaxLength).IsRequired();
+            b.Property(x => x.SlugKey).HasMaxLength(CustomerContentConsts.ContentKeyMaxLength).IsRequired();
+
             b.Property(x => x.CorrelationId).HasMaxLength(CustomerContentConsts.CorrelationIdMaxLength);
-            b.Property(x => x.NormalizeStatus).HasMaxLength(CustomerContentConsts.NormalizeStatusMaxLength);
-            b.Property(x => x.VideoStatus).HasMaxLength(CustomerContentConsts.VideoStatusMaxLength);
-            b.Property(x => x.FinalVideoUrl).HasMaxLength(CustomerContentConsts.FinalVideoUrlMaxLength);
             b.Property(x => x.LastFacility).HasMaxLength(CustomerContentConsts.LastFacilityMaxLength);
             b.Property(x => x.LastError).HasMaxLength(CustomerContentConsts.LastErrorMaxLength);
+
+            b.Property(x => x.NormalizeStatus).HasMaxLength(CustomerContentConsts.NormalizeStatusMaxLength);
+            b.Property(x => x.NormalizeRequestId);
+            b.Property(x => x.ScrapReleaseTimeUtc);
+
+            b.Property(x => x.VideoStatus).HasMaxLength(CustomerContentConsts.VideoStatusMaxLength);
+            b.Property(x => x.AudioRequestId);
+            b.Property(x => x.VideoRequestId);
+            b.Property(x => x.VideoCdnUrl).HasMaxLength(CustomerContentConsts.VideoCdnUrlMaxLength);
+
 
             b.HasIndex(x => x.ScopeKey);
             b.HasIndex(x => new { x.ScopeKey, x.ContentKey }).IsUnique();

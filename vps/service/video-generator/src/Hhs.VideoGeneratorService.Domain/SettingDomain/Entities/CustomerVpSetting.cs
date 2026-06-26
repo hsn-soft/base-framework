@@ -18,16 +18,14 @@ public class CustomerVpSetting : AuditedEntity<Guid>, ISoftDelete, IScopeSubscri
 
     [NotNull] public string ScopeKey { get; private set; }
 
-    [NotNull] public string DomainName { get; private set; }
+    [CanBeNull] public string AudioProviderKey { get; private set; }
+
+    [NotNull] public string VideoProviderKey { get; private set; }
 
     public bool IsEnabledVideoGeneration { get; set; }
 
-    public bool IsEnabledExternalAudioGeneration { get; set; }
-
-    public VideoGenerationProviderTypes VideoGenerationProviderType { get; set; }
     public object VideoGenerationProviderSettings { get; set; }
 
-    public AudioProviderTypes AudioProviderType { get; set; }
     public object AudioProviderSettings { get; set; }
     public bool IsCustomerZoneActive { get; set; }
     [CanBeNull] public string CustomerZoneName { get; set; }
@@ -38,19 +36,27 @@ public class CustomerVpSetting : AuditedEntity<Guid>, ISoftDelete, IScopeSubscri
     {
         // Not-Null string fields
         ScopeKey = string.Empty;
-        DomainName = string.Empty;
+        VideoProviderKey = string.Empty;
     }
 
-    internal CustomerVpSetting(Guid customerId, [NotNull] string domainName) : this(Guid.CreateVersion7(), customerId, domainName)
+    internal CustomerVpSetting(
+        Guid customerId,
+        [NotNull] string videoProviderKey,
+        [CanBeNull] string audioProviderKey = null)
+        : this(id: Guid.CreateVersion7(), customerId: customerId, audioProviderKey: audioProviderKey, videoProviderKey: videoProviderKey)
     {
     }
 
-    internal CustomerVpSetting(Guid id, Guid customerId, [NotNull] string domainName) : this()
+    internal CustomerVpSetting(Guid id,
+        Guid customerId,
+        [NotNull] string videoProviderKey,
+        [CanBeNull] string audioProviderKey = null) : this()
     {
         Id = id;
 
         SetScopeKey(customerId);
-        SetDomainName(domainName);
+        SetAudioProviderKey(audioProviderKey);
+        SetVideoProviderKey(videoProviderKey);
     }
 
     private void SetScopeKey(Guid customerId)
@@ -60,10 +66,23 @@ public class CustomerVpSetting : AuditedEntity<Guid>, ISoftDelete, IScopeSubscri
             CustomerVpSettingConsts.ScopeKeyMaxLength
         );
 
-    internal void SetDomainName(string domainName)
+    internal void SetAudioProviderKey(string audioProviderKey)
     {
-        string checkDomainName = LocalizedModelValidator.NotNullOrWhiteSpace(domainName, $"{nameof(CustomerVpSetting)}:{nameof(DomainName)}", CustomerVpSettingConsts.DomainNameMaxLength);
-        DomainName = StringHelper.Minimize(StringHelper.ReplaceInvalidChars(checkDomainName));
+        if (!string.IsNullOrWhiteSpace(audioProviderKey))
+        {
+            string checkAudioProviderKey = LocalizedModelValidator.NotNullOrWhiteSpace(audioProviderKey, $"{nameof(CustomerVpSetting)}:{nameof(AudioProviderKey)}", CustomerVpSettingConsts.AudioProviderKeyMaxLength);
+            AudioProviderKey = StringHelper.Minimize(StringHelper.ReplaceInvalidChars(checkAudioProviderKey));
+        }
+        else
+        {
+            AudioProviderKey = null;
+        }
+    }
+
+    internal void SetVideoProviderKey(string videoProviderKey)
+    {
+        string checkVideoProviderKey = LocalizedModelValidator.NotNullOrWhiteSpace(videoProviderKey, $"{nameof(CustomerVpSetting)}:{nameof(VideoProviderKey)}", CustomerVpSettingConsts.VideoProviderKeyMaxLength);
+        VideoProviderKey = StringHelper.Minimize(StringHelper.ReplaceInvalidChars(checkVideoProviderKey));
     }
 }
 

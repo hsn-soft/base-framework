@@ -353,6 +353,112 @@ public static class CustomerVpSettingSeeder
         );
 
         #endregion
+
+        #region scenarious
+
+        await GetOrCreateCustomerVpSettingAsync(db, logger,
+            customerId: Guid.Parse(CustomerSeedIds.Scenario01CustomerId),
+            domainName: "tst01.scenario.com",
+            dailyDirectVideoGenerationLimit: 0,
+            dailyDirectVideoGenerationStartedUtcHour: 0,
+            dailyTrendVideoGenerationLimit: 0,
+            dailyTrendVideoGenerationStartedUtcHour: 8,
+            dailyTrendVideoWaitStatisticHour: 2,
+            dailyTrendVideoMinVisitCount: 100,
+            dailyAnalysisVideoGenerationLimit: 0,
+            dailyAnalysisVideoGenerationStartedUtcHour: 6,
+            includePathFilters:
+            [
+                "haber"
+            ]
+        );
+
+        await GetOrCreateCustomerVpSettingAsync(db, logger,
+            customerId: Guid.Parse(CustomerSeedIds.Scenario02CustomerId),
+            domainName: "tst02.scenario.com",
+            dailyDirectVideoGenerationLimit: 0,
+            dailyDirectVideoGenerationStartedUtcHour: 0,
+            dailyTrendVideoGenerationLimit: 0,
+            dailyTrendVideoGenerationStartedUtcHour: 8,
+            dailyTrendVideoWaitStatisticHour: 2,
+            dailyTrendVideoMinVisitCount: 100,
+            dailyAnalysisVideoGenerationLimit: 0,
+            dailyAnalysisVideoGenerationStartedUtcHour: 6,
+            includePathFilters:
+            [
+                "haber"
+            ]
+        );
+
+        await GetOrCreateCustomerVpSettingAsync(db, logger,
+            customerId: Guid.Parse(CustomerSeedIds.Scenario03CustomerId),
+            domainName: "tst03.scenario.com",
+            dailyDirectVideoGenerationLimit: 0,
+            dailyDirectVideoGenerationStartedUtcHour: 0,
+            dailyTrendVideoGenerationLimit: 0,
+            dailyTrendVideoGenerationStartedUtcHour: 8,
+            dailyTrendVideoWaitStatisticHour: 2,
+            dailyTrendVideoMinVisitCount: 100,
+            dailyAnalysisVideoGenerationLimit: 0,
+            dailyAnalysisVideoGenerationStartedUtcHour: 6,
+            includePathFilters:
+            [
+                "haber"
+            ]
+        );
+
+        await GetOrCreateCustomerVpSettingAsync(db, logger,
+            customerId: Guid.Parse(CustomerSeedIds.Scenario04CustomerId),
+            domainName: "tst04.scenario.com",
+            dailyDirectVideoGenerationLimit: 0,
+            dailyDirectVideoGenerationStartedUtcHour: 0,
+            dailyTrendVideoGenerationLimit: 0,
+            dailyTrendVideoGenerationStartedUtcHour: 8,
+            dailyTrendVideoWaitStatisticHour: 2,
+            dailyTrendVideoMinVisitCount: 100,
+            dailyAnalysisVideoGenerationLimit: 0,
+            dailyAnalysisVideoGenerationStartedUtcHour: 6,
+            includePathFilters:
+            [
+                "haber"
+            ]
+        );
+
+        await GetOrCreateCustomerVpSettingAsync(db, logger,
+            customerId: Guid.Parse(CustomerSeedIds.Scenario05CustomerId),
+            domainName: "tst05.scenario.com",
+            dailyDirectVideoGenerationLimit: 0,
+            dailyDirectVideoGenerationStartedUtcHour: 0,
+            dailyTrendVideoGenerationLimit: 0,
+            dailyTrendVideoGenerationStartedUtcHour: 8,
+            dailyTrendVideoWaitStatisticHour: 2,
+            dailyTrendVideoMinVisitCount: 100,
+            dailyAnalysisVideoGenerationLimit: 0,
+            dailyAnalysisVideoGenerationStartedUtcHour: 6,
+            includePathFilters:
+            [
+                "haber"
+            ]
+        );
+
+        await GetOrCreateCustomerVpSettingAsync(db, logger,
+            customerId: Guid.Parse(CustomerSeedIds.Scenario06CustomerId),
+            domainName: "tst06.scenario.com",
+            dailyDirectVideoGenerationLimit: 0,
+            dailyDirectVideoGenerationStartedUtcHour: 0,
+            dailyTrendVideoGenerationLimit: 0,
+            dailyTrendVideoGenerationStartedUtcHour: 8,
+            dailyTrendVideoWaitStatisticHour: 2,
+            dailyTrendVideoMinVisitCount: 100,
+            dailyAnalysisVideoGenerationLimit: 0,
+            dailyAnalysisVideoGenerationStartedUtcHour: 6,
+            includePathFilters:
+            [
+                "haber"
+            ]
+        );
+
+        #endregion
     }
 
     private static async Task GetOrCreateCustomerVpSettingAsync(ContentServiceDbContext db, IAppConsoleLogger logger,

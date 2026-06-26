@@ -5,4 +5,5 @@ namespace Hhs.TextNormalizerService.Domain.SettingDomain.Repositories;
 
 public interface ICustomerVpSettingRepository : IMongoGenericRepository<CustomerVpSetting, Guid>
 {
+    Task<KeyValuePair<bool,string>> GetOutlineProviderKeyByScopeKeyAsync(string scopeKey, CancellationToken cancellationToken = default);
 }

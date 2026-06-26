@@ -1,4 +1,3 @@
-using Hhs.Shared.Helper.Configuration;
 using Hhs.Shared.Helper.Consts;
 using Hhs.Shared.Hosting.Extensions;
 using Hhs.Shared.Hosting.Helpers;
@@ -19,12 +18,6 @@ using HsnSoft.Base.Serilog;
 using HsnSoft.Base.Swashbuckle;
 using HsnSoft.Base.Tracing;
 using Serilog;
-
-// ============================================================================
-// SUBSCRIPTION SCOPE REGISTRY
-// ============================================================================
-// Initializes the subscription scope registry before builder creation for proper dependency tracking
-SubscriptionScopeRegistry.Initialize();
 
 var builder = WebApplication.CreateBuilder(args);
 

@@ -1,3 +1,4 @@
+using Hhs.ContentService.Application.Contracts.ContentDomain.Interfaces;
 using Hhs.ContentService.Application.Infrastructure;
 using Hhs.ContentService.Application.Services;
 using Hhs.ContentService.Domain.Settings;
@@ -19,6 +20,8 @@ public static class ApplicationServiceCollectionExtensions
         // Must be Scoped or Transient => Cannot consume any scoped service
         services.AddScoped<ApplicationEventInboxMessageManager>();
         services.AddScoped<ContentOperationAppService>();
+
+        services.AddScoped<ICustomerContentPublicAppService, CustomerContentPublicAppService>();
 
         return services;
     }

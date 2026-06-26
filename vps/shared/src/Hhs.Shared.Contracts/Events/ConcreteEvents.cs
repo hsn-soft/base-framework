@@ -7,9 +7,42 @@ namespace Hhs.Shared.Contracts.Events;
 public sealed record CustomerContentCreatedEto : IIntegrationEventMessage
 {
     public string ScopeKey { get; init; } = default!;
-    public string DomainName { get; init; } = default!;
-    public string ContentKey { get; init; } = default!;
+
     public Guid CustomerContentId { get; init; }
+
+    public string DomainName { get; init; } = default!;
+    public string DomainPath { get; init; } = default!;
+}
+
+public sealed record CustomerContentNormalizeRequestCreatedEto : IIntegrationEventMessage
+{
+    public Guid CustomerContentId { get; init; }
+    public Guid CustomerContentNormalizeRequestId { get; init; }
+}
+public sealed record CustomerContentScrapingStartedEto : IIntegrationEventMessage
+{
+    public Guid CustomerContentNormalizeRequestId { get; init; }
+}
+
+public sealed record CustomerContentScrapingCompletedEto : IIntegrationEventMessage
+{
+    public Guid CustomerContentId { get; init; }
+    public DateTime? ScrapeReleaseTimeUtc { get; init; }
+
+    public Guid CustomerContentNormalizeRequestId { get; init; }
+}
+
+public sealed record CustomerContentOutlineStartedEto : IIntegrationEventMessage
+{
+    public Guid CustomerContentNormalizeRequestId { get; init; }
+}
+
+public sealed record CustomerContentOutlineCompletedEto : IIntegrationEventMessage
+{
+    public Guid RefContentId { get; init; }
+    public ContentType RefContentType { get; init; }
+
+    public string Script { get; init; } = default!;
 }
 
 public sealed record AnalysisContentCreatedEto : IIntegrationEventMessage
@@ -27,39 +60,10 @@ public sealed record AnalysisNormalizeItem
     public string ContentKey { get; init; } = default!;
 }
 
-public sealed record CustomerContentNormalizeRequestCreatedEto : IIntegrationEventMessage
-{
-    public Guid CustomerContentId { get; init; }
-    public Guid CustomerContentNormalizeRequestId { get; init; }
-}
-
 public sealed record AnalysisContentNormalizeRequestCreatedEto : IIntegrationEventMessage
 {
     public Guid AnalysisContentId { get; init; }
     public Guid NormalizeRequestId { get; init; }
-}
-
-public sealed record CustomerContentScrapingStartedEto : IIntegrationEventMessage
-{
-    public Guid CustomerContentNormalizeRequestId { get; init; }
-}
-
-public sealed record CustomerContentScrapingCompletedEto : IIntegrationEventMessage
-{
-    public Guid CustomerContentNormalizeRequestId { get; init; }
-}
-
-public sealed record CustomerContentOutlineStartedEto : IIntegrationEventMessage
-{
-    public Guid CustomerContentNormalizeRequestId { get; init; }
-}
-
-public sealed record CustomerContentOutlineCompletedEto : IIntegrationEventMessage
-{
-    public Guid RefContentId { get; init; }
-    public ContentType RefContentType { get; init; }
-
-    public string Script { get; init; } = default!;
 }
 
 public sealed record AnalysisItemScrapingStartedEto : IIntegrationEventMessage

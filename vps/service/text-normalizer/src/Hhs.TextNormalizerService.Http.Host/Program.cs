@@ -1,5 +1,4 @@
 using Hhs.Shared.Contracts.Events;
-using Hhs.Shared.Helper.Configuration;
 using Hhs.Shared.Helper.Consts;
 using Hhs.Shared.Helper.Retry;
 using Hhs.Shared.Hosting.Extensions;
@@ -23,12 +22,6 @@ using HsnSoft.Base.Swashbuckle;
 using HsnSoft.Base.Tracing;
 using Microsoft.Extensions.Options;
 using Serilog;
-
-// ============================================================================
-// SUBSCRIPTION SCOPE REGISTRY
-// ============================================================================
-// Initializes the subscription scope registry before builder creation for proper dependency tracking
-SubscriptionScopeRegistry.Initialize();
 
 var builder = WebApplication.CreateBuilder(args);
 

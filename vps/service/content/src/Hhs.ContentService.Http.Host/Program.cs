@@ -7,7 +7,6 @@ using Hhs.ContentService.EntityFrameworkCore;
 using Hhs.ContentService.EntityFrameworkCore.Setup;
 using Hhs.ContentService.Workers;
 using Hhs.Shared.Helper.Consts;
-using Hhs.Shared.Helper.Configuration;
 using Hhs.Shared.Helper.Retry;
 using Hhs.Shared.Hosting.Extensions;
 using Hhs.Shared.Hosting.Helpers;
@@ -20,12 +19,6 @@ using HsnSoft.Base.Swashbuckle;
 using HsnSoft.Base.Tracing;
 using Serilog;
 using Hhs.Shared.Contracts.Events;
-
-// ============================================================================
-// SUBSCRIPTION SCOPE REGISTRY
-// ============================================================================
-// Initializes the subscription scope registry before builder creation for provider configuration lookup
-SubscriptionScopeRegistry.Initialize();
 
 var builder = WebApplication.CreateBuilder(args);
 

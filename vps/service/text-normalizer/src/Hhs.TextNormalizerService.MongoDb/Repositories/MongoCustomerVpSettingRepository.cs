@@ -10,4 +10,14 @@ public sealed class MongoCustomerVpSettingRepository(
     TextNormalizerServiceDbContext dbContext
 ) : MongoGenericRepository<CustomerVpSetting, Guid>(provider, dbContext), ICustomerVpSettingRepository
 {
+    public async Task<KeyValuePair<bool, string>> GetOutlineProviderKeyByScopeKeyAsync(string scopeKey, CancellationToken cancellationToken = default)
+    {
+        string result = await GetSingleOrDefaultAsync(
+            predicate: x => x.ScopeKey == scopeKey,
+            selector: x => x.OutlineProviderKey, cancellationToken: cancellationToken);
+
+        return string.IsNullOrWhiteSpace(result)
+            ? new KeyValuePair<bool, string>(false, null)
+            : new KeyValuePair<bool, string>(true, result);
+    }
 }

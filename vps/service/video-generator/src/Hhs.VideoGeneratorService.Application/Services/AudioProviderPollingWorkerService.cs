@@ -1,11 +1,11 @@
 using System.Linq.Expressions;
 using Hhs.Shared.Contracts.Events;
 using Hhs.Shared.Helper;
-using Hhs.Shared.Helper.Configuration;
 using Hhs.VideoGeneratorService.Application.Providers;
 using Hhs.VideoGeneratorService.Domain.Configuration;
 using Hhs.VideoGeneratorService.Domain.MediaDomain.Entities;
 using Hhs.VideoGeneratorService.Domain.MediaDomain.Repositories;
+using Hhs.VideoGeneratorService.Domain.SettingDomain.Repositories;
 using HsnSoft.Base.Domain.Models;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
@@ -15,6 +15,7 @@ namespace Hhs.VideoGeneratorService.Application.Services;
 public sealed class AudioProviderPollingWorkerService(
     IServiceProvider provider,
     IAudioRequestRepository audioRequestRepository,
+    ICustomerVpSettingRepository customerVpSettingRepository,
     IAudioProviderResolver audioProviderResolver,
     ILogger<AudioProviderPollingWorkerService> logger,
     AudioPollingSettings pollingSettings) : ApplicationServiceBase(provider)
@@ -70,8 +71,13 @@ public sealed class AudioProviderPollingWorkerService(
                     continue;
                 }
 
-                string? audioProviderKey = SubscriptionScopeRegistry.GetAudioProviderKey(request.ScopeKey);
-                var provider = audioProviderResolver.Resolve(audioProviderKey);
+                var providerKeyResult = await customerVpSettingRepository.GetAudioProviderKeyByScopeKeyAsync(request.ScopeKey, cancellationToken);
+                if (!providerKeyResult.Key)
+                {
+                    throw new InvalidOperationException($"Provider key value is unknown. Scope key: {request.ScopeKey}");
+                }
+
+                var provider = audioProviderResolver.Resolve(providerKeyResult.Value);
 
                 var status = await provider.GetStatusAsync(request.AudioProviderTrackingId!);
 

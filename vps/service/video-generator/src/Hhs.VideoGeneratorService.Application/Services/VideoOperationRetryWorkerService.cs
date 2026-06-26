@@ -1,12 +1,12 @@
 using System.Linq.Expressions;
 using Hhs.Shared.Contracts.Events;
 using Hhs.Shared.Helper;
-using Hhs.Shared.Helper.Configuration;
 using Hhs.Shared.Helper.Providers;
 using Hhs.VideoGeneratorService.Application.Providers;
 using Hhs.VideoGeneratorService.Domain.Configuration;
 using Hhs.VideoGeneratorService.Domain.MediaDomain.Entities;
 using Hhs.VideoGeneratorService.Domain.MediaDomain.Repositories;
+using Hhs.VideoGeneratorService.Domain.SettingDomain.Repositories;
 using HsnSoft.Base.Domain.Models;
 using MongoDB.Driver;
 
@@ -16,6 +16,7 @@ public sealed class VideoOperationRetryWorkerService(
     IServiceProvider provider,
     IVideoRequestRepository videoRequestRepository,
     IAudioRequestRepository audioRequestRepository,
+    ICustomerVpSettingRepository customerVpSettingRepository,
     IVideoProviderResolver videoProviderResolver,
     VideoRetrySettings retrySettings) : ApplicationServiceBase(provider)
 {
@@ -160,8 +161,13 @@ public sealed class VideoOperationRetryWorkerService(
 
                 if (request.CurrentStep == EventNames.VideoProviderRequestStarted)
                 {
-                    string? videoProviderKey = SubscriptionScopeRegistry.GetVideoProviderKey(request.ScopeKey);
-                    var videoProvider = videoProviderResolver.Resolve(videoProviderKey);
+                    var providerKeyResult = await customerVpSettingRepository.GetVideoProviderKeyByScopeKeyAsync(request.ScopeKey, cancellationToken);
+                    if (!providerKeyResult.Key)
+                    {
+                        throw new InvalidOperationException($"Provider key value is unknown. Scope key: {request.ScopeKey}");
+                    }
+
+                    var videoProvider = videoProviderResolver.Resolve(providerKeyResult.Value);
 
                     var audioOptions = new ListQueryOptions<AudioRequest>
                     {

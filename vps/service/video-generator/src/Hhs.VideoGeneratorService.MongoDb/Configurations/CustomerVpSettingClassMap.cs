@@ -1,4 +1,6 @@
+using Hhs.VideoGeneratorService.Domain.SettingDomain.Consts;
 using Hhs.VideoGeneratorService.Domain.SettingDomain.Entities;
+using HsnSoft.Base.MongoDB.Helpers;
 using MongoDB.Bson.Serialization;
 
 namespace Hhs.VideoGeneratorService.MongoDb.Configurations;
@@ -12,11 +14,17 @@ public static class CustomerVpSettingClassMap
             map.AutoMap();
             map.SetIgnoreExtraElements(true);
 
-            // Subscription & Scope - MaxLength: CustomerVpSettingConsts.ScopeKeyMaxLength, CustomerVpSettingConsts.DomainNameMaxLength
-            map.MapMember(x => x.ScopeKey).SetIsRequired(true);
-            map.MapMember(x => x.DomainName).SetIsRequired(true);
+            map.MapMember(x => x.ScopeKey)
+                .SetIsRequired(true)
+                .SetMaxLength(CustomerVpSettingConsts.ScopeKeyMaxLength);
 
-            // Optional Customer Zone Settings - MaxLength: CustomerVpSettingConsts.CustomerZoneNameMaxLength, CustomerBucketKeyMaxLength, CustomerBucketSecretMaxLength
+            map.MapMember(x => x.AudioProviderKey)
+                .SetIsRequired(false)
+                .SetMaxLength(CustomerVpSettingConsts.AudioProviderKeyMaxLength);
+
+            map.MapMember(x => x.VideoProviderKey)
+                .SetIsRequired(true)
+                .SetMaxLength(CustomerVpSettingConsts.VideoProviderKeyMaxLength);
         });
 
         if (!BsonClassMap.IsClassMapRegistered(typeof(ClientDidAiSettings)))

@@ -19,6 +19,8 @@ public class CustomerVpSetting : AuditedEntity<Guid>, ISoftDelete, IScopeSubscri
 
     [NotNull] public string DomainName { get; private set; }
 
+    [NotNull] public string OutlineProviderKey { get; private set; }
+
     public bool IsScrapingOperationActive { get; set; }
     public bool IsOutlineOperationActive { get; set; }
     public TextNormalizeProviderTypes ContentOutlineProvider { get; set; }
@@ -36,16 +38,18 @@ public class CustomerVpSetting : AuditedEntity<Guid>, ISoftDelete, IScopeSubscri
         DomainName = string.Empty;
     }
 
-    internal CustomerVpSetting(Guid customerId, [NotNull] string domainName) : this(Guid.CreateVersion7(), customerId, domainName)
+    internal CustomerVpSetting(Guid customerId, [NotNull] string domainName, [NotNull] string outlineProviderKey)
+        : this(Guid.CreateVersion7(), customerId, domainName, outlineProviderKey)
     {
     }
 
-    internal CustomerVpSetting(Guid id, Guid customerId, [NotNull] string domainName) : this()
+    internal CustomerVpSetting(Guid id, Guid customerId, [NotNull] string domainName, [NotNull] string outlineProviderKey) : this()
     {
         Id = id;
 
         SetScopeKey(customerId);
         SetDomainName(domainName);
+        SetOutlineProviderKey(outlineProviderKey);
     }
 
     private void SetScopeKey(Guid customerId)
@@ -59,5 +63,11 @@ public class CustomerVpSetting : AuditedEntity<Guid>, ISoftDelete, IScopeSubscri
     {
         string checkDomainName = LocalizedModelValidator.NotNullOrWhiteSpace(domainName, $"{nameof(CustomerVpSetting)}:{nameof(DomainName)}", CustomerVpSettingConsts.DomainNameMaxLength);
         DomainName = StringHelper.Minimize(StringHelper.ReplaceInvalidChars(checkDomainName));
+    }
+
+    internal void SetOutlineProviderKey(string outlineProviderKey)
+    {
+        string checkOutlineProviderKey = LocalizedModelValidator.NotNullOrWhiteSpace(outlineProviderKey, $"{nameof(CustomerVpSetting)}:{nameof(OutlineProviderKey)}", CustomerVpSettingConsts.OutlineProviderKeyMaxLength);
+        OutlineProviderKey = StringHelper.Minimize(StringHelper.ReplaceInvalidChars(checkOutlineProviderKey));
     }
 }

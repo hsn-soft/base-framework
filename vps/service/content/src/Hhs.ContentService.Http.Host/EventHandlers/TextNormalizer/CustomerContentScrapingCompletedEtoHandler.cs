@@ -7,21 +7,24 @@ using HsnSoft.Base.Logging.Abstracts;
 
 namespace Hhs.ContentService.EventHandlers.TextNormalizer;
 
-public class CustomerContentNormalizeRequestCreatedEtoHandler(
+public class CustomerContentScrapingCompletedEtoHandler(
     ApplicationEventInboxMessageManager inboxStore,
     IAppConsoleLogger logger,
     ContentOperationAppService contentOperationAppService
-) : ApplicationEventHandlerBase<CustomerContentNormalizeRequestCreatedEto>(inboxStore)
+) : ApplicationEventHandlerBase<CustomerContentScrapingCompletedEto>(inboxStore)
 {
     private readonly IAppConsoleLogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     private readonly ContentOperationAppService _contentOperationAppService = contentOperationAppService ?? throw new ArgumentNullException(nameof(contentOperationAppService));
 
-    protected override async Task ExecuteAsync(MessageEnvelope<CustomerContentNormalizeRequestCreatedEto> @event, CancellationToken cancellationToken)
+    protected override async Task ExecuteAsync(MessageEnvelope<CustomerContentScrapingCompletedEto> @event, CancellationToken cancellationToken)
     {
         _logger.LogDebug("EVENT HANDLING | [ {EventName} ] => CorrelationId[{CorrelationId}]",
-            nameof(CustomerContentNormalizeRequestCreatedEto)[..^"Eto".Length],
+            nameof(CustomerContentScrapingCompletedEto)[..^"Eto".Length],
             @event.MessageId);
 
-        await _contentOperationAppService.HandleNormalizeStartedAsync(@event.Message.CustomerContentId, @event.Message.CustomerContentNormalizeRequestId, ContentType.CustomerContent, cancellationToken);
+        await _contentOperationAppService.HandleScrapingCompletedAsync(
+            @event.Message.CustomerContentId,
+            @event.Message.ScrapeReleaseTimeUtc,
+            cancellationToken);
     }
 }

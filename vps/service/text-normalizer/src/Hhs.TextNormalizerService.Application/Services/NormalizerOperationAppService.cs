@@ -2,7 +2,6 @@ using System.Linq.Expressions;
 using System.Net;
 using Hhs.Shared.Contracts.Events;
 using Hhs.Shared.Helper;
-using Hhs.Shared.Helper.Configuration;
 using Hhs.Shared.Helper.Enums;
 using Hhs.Shared.Helper.Providers;
 using Hhs.Shared.Helper.Retry;
@@ -14,13 +13,13 @@ using Hhs.TextNormalizerService.Domain.Configuration.Providers.Outline;
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Entities;
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Models;
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Repositories;
+using Hhs.TextNormalizerService.Domain.SettingDomain.Repositories;
 using HsnSoft.Base;
 using HsnSoft.Base.Logging;
 using HsnSoft.Base.Logging.Abstracts;
 using HsnSoft.Base.Text;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 using Newtonsoft.Json;
 
@@ -30,6 +29,7 @@ public sealed class NormalizerOperationAppService(
     IServiceProvider provider,
     ICustomerContentNormalizedRequestRepository customerContentRepository,
     IAnalysisContentNormalizedRequestRepository analysisContentRepository,
+    ICustomerVpSettingRepository customerVpSettingRepository,
     IContentScraper scraper,
     IOutlineProviderResolver outlineProviderResolver,
     OutlinePollingSettings outlinePollingSettings,
@@ -69,9 +69,10 @@ public sealed class NormalizerOperationAppService(
                 @event.ScopeKey,
                 @event.CustomerContentId,
                 StringHelper.Minimize(@event.DomainName),
-                StringHelper.Minimize(@event.ContentKey),
+                StringHelper.Minimize(@event.DomainPath),
                 correlationId);
 
+            entity.SourceEventId = eventId;
             entity.Status = StatusNames.Created;
             entity.CurrentStep = EventNames.CustomerContentCreated;
 
@@ -95,7 +96,7 @@ public sealed class NormalizerOperationAppService(
             await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
                 eventMessage: new CustomerContentNormalizeRequestCreatedEto
                 {
-                    CustomerContentId = existing.CustomerContentId, // for content service update
+                    CustomerContentId = @event.CustomerContentId, // for content service update
                     CustomerContentNormalizeRequestId = requestId
                 }
             );
@@ -205,7 +206,14 @@ public sealed class NormalizerOperationAppService(
             ));
 
             await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
-                eventMessage: new CustomerContentScrapingCompletedEto { CustomerContentNormalizeRequestId = @event.CustomerContentNormalizeRequestId }
+                eventMessage: new CustomerContentScrapingCompletedEto
+                {
+                    // Update reference for Content Service
+                    CustomerContentId = request.CustomerContentId,
+                    ScrapeReleaseTimeUtc = result.ReleaseTimeUtc,
+
+                    CustomerContentNormalizeRequestId = @event.CustomerContentNormalizeRequestId
+                }
             );
         }
         catch (Exception ex)
@@ -325,7 +333,6 @@ public sealed class NormalizerOperationAppService(
             );
         }
     }
-
 
     public async Task CreateAnalysisContentNormalizeRequestAsync(AnalysisContentCreatedEto @event, Guid eventId, [CanBeNull] string correlationId, CancellationToken cancellationToken = default)
     {
@@ -469,9 +476,6 @@ public sealed class NormalizerOperationAppService(
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(SubscriptionScopeRegistry.GetOutlineProviderKey(analysisContentNormalizedRequest.ScopeKey)))
-                throw new InvalidOperationException("OutlineProviderKey is required.");
-
             await UpdateAnalysisItemAsync(
                 analysisContentNormalizedRequest.Id,
                 item.CustomerContentId,
@@ -505,17 +509,19 @@ public sealed class NormalizerOperationAppService(
         }
     }
 
-
     public async Task StartOutlineProviderRequestAsync(OutlineProviderRequestStartedEto @event, CancellationToken cancellationToken = default)
     {
         _logger.LogInformation($"StartOutlineProviderRequestAsync - Event ScopeKey: '{@event.ScopeKey}' (null={@event.ScopeKey == null}, empty={string.IsNullOrWhiteSpace(@event.ScopeKey)})");
 
         try
         {
-            var providerKey = SubscriptionScopeRegistry.GetOutlineProviderKey(@event.ScopeKey);
-            _logger.LogInformation($"Got providerKey from registry: '{providerKey}' (null={providerKey == null})");
+            var providerKeyResult = await customerVpSettingRepository.GetOutlineProviderKeyByScopeKeyAsync(@event.ScopeKey, cancellationToken);
+            if (!providerKeyResult.Key)
+            {
+                throw new InvalidOperationException($"Provider key value is unknown. Scope key: {@event.ScopeKey}");
+            }
 
-            var outlineProvider = outlineProviderResolver.Resolve(providerKey);
+            var outlineProvider = outlineProviderResolver.Resolve(providerKeyResult.Value);
             _logger.LogInformation($"✓ Resolved provider successfully");
 
             var response = await outlineProvider.OutlineOperationAsync(new OutlineCreateRequest { OutlineInput = @event.InputText, OutlinePrompt = @event.InputPrompt ?? string.Empty, EngineModel = "model-1", UseStructuredOutput = false });
@@ -669,7 +675,6 @@ public sealed class NormalizerOperationAppService(
         );
     }
 
-
     public async Task CompleteCustomerContentOutlineAsync(CustomerContentOutlineCompletedEto @event, CancellationToken cancellationToken = default)
     {
         var customerContentNormalizedRequest = await customerContentRepository.GetFirstOrDefaultAsync(
@@ -727,6 +732,54 @@ public sealed class NormalizerOperationAppService(
         );
     }
 
+    public async Task ForwardVideoGenerationDataAsync(VideoGenerationApprovedEto @event, CancellationToken cancellationToken = default)
+    {
+        string? videoInputJson = null;
+        string? correlationId = null;
+
+        if (@event.RefContentType == ContentType.CustomerContent)
+        {
+            var request = await customerContentRepository.GetFirstOrDefaultAsync(x => x.Id == @event.RefNormalizeRequestId, cancellationToken: cancellationToken);
+            if (request == null) return;
+
+            correlationId = request.CorrelationId;
+            videoInputJson = BuildVideoInputJson(
+                customerContentId: request.CustomerContentId,
+                scrapeTitle: request.ScrapingResult?.Title,
+                scrapeText: request.ScrapingResult?.Details,
+                outlineScript: request.OutlineResult?.OutlinedData
+            );
+        }
+        else if (@event.RefContentType == ContentType.AnalysisContent)
+        {
+            var request = await analysisContentRepository.GetFirstOrDefaultAsync(x => x.Id == @event.RefNormalizeRequestId, cancellationToken: cancellationToken);
+            if (request == null) return;
+
+            correlationId = request.CorrelationId;
+            var items = request.Items
+                .Where(x => x.ScrapingStatus == StatusNames.Completed && x.OutlineStatus == StatusNames.Completed)
+                .OrderBy(x => x.SortOrder)
+                .ToList();
+
+            videoInputJson = BuildAnalysisVideoInputJson(items);
+        }
+
+        if (string.IsNullOrWhiteSpace(videoInputJson)) return;
+
+        await EventBus.PublishAsync(
+            parentMessage: ParentIntegrationEvent,
+            correlationId: correlationId,
+            eventMessage: new VideoGenerationDataForwardedEto
+            {
+                RefContentId = @event.RefContentId,
+                RefContentType = @event.RefContentType,
+                ScopeKey = @event.ScopeKey,
+                NormalizeRequestId = @event.RefNormalizeRequestId,
+                VideoInputJson = videoInputJson
+            }
+        );
+    }
+
 
     private static string CalculateAnalysisParentStatus(AnalysisContentNormalizedRequest analysis)
     {
@@ -757,7 +810,6 @@ public sealed class NormalizerOperationAppService(
 
         return analysis.Status;
     }
-
 
     private Task<AnalysisContentNormalizedRequest> GetAnalysisContentNormalizedRequestAsync(Guid analysisContentId)
     {
@@ -1002,54 +1054,6 @@ public sealed class NormalizerOperationAppService(
         analysis.LastError = lastError;
 
         await analysisContentRepository.UpdateAsync(analysis);
-    }
-
-    public async Task ForwardVideoGenerationDataAsync(VideoGenerationApprovedEto @event, CancellationToken cancellationToken = default)
-    {
-        string? videoInputJson = null;
-        string? correlationId = null;
-
-        if (@event.RefContentType == ContentType.CustomerContent)
-        {
-            var request = await customerContentRepository.GetFirstOrDefaultAsync(x => x.Id == @event.RefNormalizeRequestId, cancellationToken: cancellationToken);
-            if (request == null) return;
-
-            correlationId = request.CorrelationId;
-            videoInputJson = BuildVideoInputJson(
-                customerContentId: request.CustomerContentId,
-                scrapeTitle: request.ScrapingResult?.Title,
-                scrapeText: request.ScrapingResult?.Details,
-                outlineScript: request.OutlineResult?.OutlinedData
-            );
-        }
-        else if (@event.RefContentType == ContentType.AnalysisContent)
-        {
-            var request = await analysisContentRepository.GetFirstOrDefaultAsync(x => x.Id == @event.RefNormalizeRequestId, cancellationToken: cancellationToken);
-            if (request == null) return;
-
-            correlationId = request.CorrelationId;
-            var items = request.Items
-                .Where(x => x.ScrapingStatus == StatusNames.Completed && x.OutlineStatus == StatusNames.Completed)
-                .OrderBy(x => x.SortOrder)
-                .ToList();
-
-            videoInputJson = BuildAnalysisVideoInputJson(items);
-        }
-
-        if (string.IsNullOrWhiteSpace(videoInputJson)) return;
-
-        await EventBus.PublishAsync(
-            parentMessage: ParentIntegrationEvent,
-            correlationId: correlationId,
-            eventMessage: new VideoGenerationDataForwardedEto
-            {
-                RefContentId = @event.RefContentId,
-                RefContentType = @event.RefContentType,
-                ScopeKey = @event.ScopeKey,
-                NormalizeRequestId = @event.RefNormalizeRequestId,
-                VideoInputJson = videoInputJson
-            }
-        );
     }
 
     private string BuildVideoInputJson(Guid customerContentId, string? scrapeTitle, string? scrapeText, string? outlineScript)

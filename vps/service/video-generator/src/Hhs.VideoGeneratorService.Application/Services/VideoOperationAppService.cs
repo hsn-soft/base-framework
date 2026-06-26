@@ -2,7 +2,6 @@ using System.Linq.Expressions;
 using System.Text.Json;
 using Hhs.Shared.Contracts.Events;
 using Hhs.Shared.Helper;
-using Hhs.Shared.Helper.Configuration;
 using Hhs.Shared.Helper.Providers;
 using Hhs.Shared.Helper.Retry;
 using Hhs.VideoGeneratorService.Application.Providers;
@@ -12,6 +11,7 @@ using Hhs.VideoGeneratorService.Application.Providers.Video;
 using Hhs.VideoGeneratorService.Domain.Configuration;
 using Hhs.VideoGeneratorService.Domain.MediaDomain.Entities;
 using Hhs.VideoGeneratorService.Domain.MediaDomain.Repositories;
+using Hhs.VideoGeneratorService.Domain.SettingDomain.Repositories;
 using HsnSoft.Base.Domain.Models;
 using MongoDB.Driver;
 
@@ -21,6 +21,7 @@ public sealed class VideoOperationAppService(
     IServiceProvider provider,
     IVideoRequestRepository videoRequestRepository,
     IAudioRequestRepository audioRequestRepository,
+    ICustomerVpSettingRepository customerVpSettingRepository,
     IRemoteFileDownloader remoteFileDownloader,
     ICdnProviderResolver cdnProviderResolver,
     IVideoProviderResolver videoProviderResolver,
@@ -32,10 +33,7 @@ public sealed class VideoOperationAppService(
 {
     public async Task CreateVideoRequestAsync(VideoGenerationDataForwardedEto @event, Guid eventId, string correlationId, CancellationToken cancellationToken = default)
     {
-        var options = new ListQueryOptions<VideoRequest>
-        {
-            Filter = x => x.SourceEventId == eventId
-        };
+        var options = new ListQueryOptions<VideoRequest> { Filter = x => x.SourceEventId == eventId };
         var existing = (await videoRequestRepository.GetListAsync(options, cancellationToken)).FirstOrDefault();
 
         if (existing is not null)
@@ -46,17 +44,25 @@ public sealed class VideoOperationAppService(
             return;
         }
 
-        string? videoProviderKey = SubscriptionScopeRegistry.GetVideoProviderKey(@event.ScopeKey);
-        if (videoProviderKey is null) throw new InvalidOperationException("VideoProviderKey is required.");
+        var videoProviderKeyResult = await customerVpSettingRepository.GetVideoProviderKeyByScopeKeyAsync(@event.ScopeKey, cancellationToken);
+        if (!videoProviderKeyResult.Key)
+        {
+            throw new InvalidOperationException($"Provider key value is unknown. Scope key: {@event.ScopeKey}");
+        }
 
-        var videoProvider = videoProviderResolver.Resolve(videoProviderKey);
+        var videoProvider = videoProviderResolver.Resolve(videoProviderKeyResult.Value);
         if (videoProvider is null) throw new InvalidOperationException("Video Provider not found.");
 
         string? audioProviderKey = null;
         if (videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioUrlListRequired)
         {
-            audioProviderKey = SubscriptionScopeRegistry.GetAudioProviderKey(@event.ScopeKey);
-            if (audioProviderKey is null) throw new InvalidOperationException("AudioProviderKey is required.");
+            var audioProviderKeyResult = await customerVpSettingRepository.GetAudioProviderKeyByScopeKeyAsync(@event.ScopeKey, cancellationToken);
+            if (!audioProviderKeyResult.Key)
+            {
+                throw new InvalidOperationException($"Provider key value is unknown. Scope key: {@event.ScopeKey}");
+            }
+
+            audioProviderKey = audioProviderKeyResult.Value;
         }
 
         var videoRequestId = Guid.NewGuid();
@@ -73,7 +79,7 @@ public sealed class VideoOperationAppService(
             CurrentStep = EventNames.VideoRequestCreated,
             MediaInputJson = @event.VideoInputJson,
             AudioProviderKey = audioProviderKey,
-            VideoProviderKey = videoProviderKey
+            VideoProviderKey = videoProviderKeyResult.Value
         };
 
         await videoRequestRepository.InsertAsync(videoRequest, cancellationToken);
@@ -122,10 +128,7 @@ public sealed class VideoOperationAppService(
 
         foreach (var item in audioItems)
         {
-            var audioOptions = new ListQueryOptions<AudioRequest>
-            {
-                Filter = x => x.VideoRequestId == videoRequest.Id && x.SortOrder == item.SortOrder
-            };
+            var audioOptions = new ListQueryOptions<AudioRequest> { Filter = x => x.VideoRequestId == videoRequest.Id && x.SortOrder == item.SortOrder };
             var existingAudio = (await audioRequestRepository.GetListAsync(audioOptions, cancellationToken)).FirstOrDefault();
 
             if (existingAudio is not null)
@@ -148,12 +151,7 @@ public sealed class VideoOperationAppService(
                 eventId,
                 item.Text,
                 videoRequest.AudioProviderKey,
-                item.SortOrder)
-            {
-                CorrelationId = videoRequest.CorrelationId,
-                Status = StatusNames.AudioRequestCreated,
-                CurrentStep = EventNames.AudioRequestCreated
-            };
+                item.SortOrder) { CorrelationId = videoRequest.CorrelationId, Status = StatusNames.AudioRequestCreated, CurrentStep = EventNames.AudioRequestCreated };
 
             await audioRequestRepository.InsertAsync(audioRequest, cancellationToken);
 
@@ -353,13 +351,15 @@ public sealed class VideoOperationAppService(
 
         try
         {
-            string? videoProviderKey = SubscriptionScopeRegistry.GetVideoProviderKey(videoRequest.ScopeKey);
-            var videoProvider = videoProviderResolver.Resolve(videoProviderKey);
-
-            var audioOptions = new ListQueryOptions<AudioRequest>
+            var providerKeyResult = await customerVpSettingRepository.GetVideoProviderKeyByScopeKeyAsync(videoRequest.ScopeKey, cancellationToken);
+            if (!providerKeyResult.Key)
             {
-                Filter = x => x.VideoRequestId == @event.VideoRequestId
-            };
+                throw new InvalidOperationException($"Provider key value is unknown. Scope key: {videoRequest.ScopeKey}");
+            }
+
+            var videoProvider = videoProviderResolver.Resolve(providerKeyResult.Value);
+
+            var audioOptions = new ListQueryOptions<AudioRequest> { Filter = x => x.VideoRequestId == @event.VideoRequestId };
             var allAudios = await audioRequestRepository.GetListAsync(audioOptions, cancellationToken);
 
             if (allAudios.Any(x => x.Status == StatusNames.Failed))
@@ -429,8 +429,15 @@ public sealed class VideoOperationAppService(
     public async Task StartVideoProviderRequestAsync(VideoProviderRequestStartedEto @event, CancellationToken cancellationToken = default)
     {
         var videoRequest = await GetVideoAsync(@event.VideoRequestId, cancellationToken);
-        string? videoProviderKey = SubscriptionScopeRegistry.GetVideoProviderKey(videoRequest.ScopeKey);
-        var provider = videoProviderResolver.Resolve(videoProviderKey);
+
+
+        var providerKeyResult = await customerVpSettingRepository.GetVideoProviderKeyByScopeKeyAsync(videoRequest.ScopeKey, cancellationToken);
+        if (!providerKeyResult.Key)
+        {
+            throw new InvalidOperationException($"Provider key value is unknown. Scope key: {videoRequest.ScopeKey}");
+        }
+
+        var provider = videoProviderResolver.Resolve(providerKeyResult.Value);
 
         try
         {

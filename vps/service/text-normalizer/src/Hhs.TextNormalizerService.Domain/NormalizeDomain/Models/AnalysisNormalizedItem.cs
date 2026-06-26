@@ -1,5 +1,4 @@
 using Hhs.Shared.Helper;
-using Hhs.TextNormalizerService.Domain.NormalizeDomain.Consts;
 using JetBrains.Annotations;
 
 namespace Hhs.TextNormalizerService.Domain.NormalizeDomain.Models;

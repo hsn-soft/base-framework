@@ -1,5 +1,4 @@
 using System.Text.Json;
-using Hhs.FeedRService.Domain.ReportingDomain.Entities.MongoDB;
 using Hhs.FeedRService.Domain.ReportingDomain.Models;
 
 namespace Hhs.FeedRService.Application.ReportingDomain;
