@@ -316,7 +316,7 @@ public sealed class CustomerContentPublicAppService(
                         throw new CustomerContentNotFoundException(L, input.ContentId);
                     }
 
-                    // TODO: Save statistics to event manager
+                    _logger.LogWarning("AD_RESULT_STATISTICS_NOT_IMPLEMENTED: ContentId={ContentId} FeedKey={FeedKey}", input.ContentId, input.FeedKey);
                     break;
                 }
             case PublicContentType.ANALYSIS_CONTENT:
@@ -333,7 +333,7 @@ public sealed class CustomerContentPublicAppService(
                         throw new AnalysisContentNotFoundException(L, input.ContentId.ToString());
                     }
 
-                    // TODO: Save statistics to event manager
+                    _logger.LogWarning("AD_RESULT_STATISTICS_NOT_IMPLEMENTED: ContentId={ContentId} FeedKey={FeedKey}", input.ContentId, input.FeedKey);
                     break;
                 }
         }

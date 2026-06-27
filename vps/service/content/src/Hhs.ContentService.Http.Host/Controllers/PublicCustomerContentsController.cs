@@ -39,7 +39,7 @@ public sealed class PublicCustomerContentsController(
     {
         // CheckUserAgent();
 
-        // await _appContentPublicAppService.CreateAdResultAsync(input, cancellationToken);
+        await customerContentPublicAppService.CreateAdResultAsync(input, cancellationToken);
     }
 
     #region Private methods
