@@ -128,7 +128,12 @@ public sealed class AnalysisContentAppService(
             var successfulContents = await customerContentRepository.GetListAsync(options);
 
             if (successfulContents.Count == 0)
-                throw new InvalidOperationException($"No successful CustomerContent found for ScopeKey: {customerVpSetting.ScopeKey}");
+            {
+                _logger.LogWarning("Client[{ClientDomain}] | {OperationStatus} => {QueryResult}",
+                    customerVpSetting.DomainName, "SKIPPED", "CUSTOMER_CONTENT_VIDEO_GENERATION_SKIPPED_NO_COMPLETED_CONTENT");
+                _logger.LogInformation("Client[{ClientDomain}] | {OperationStatus}", customerVpSetting.DomainName, "END");
+                return;
+            }
 
             // Extract IDs for analysis
             var customerContentIds = successfulContents.Select(x => x.Id).ToList();
