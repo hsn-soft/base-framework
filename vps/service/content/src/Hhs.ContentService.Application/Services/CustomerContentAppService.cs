@@ -218,82 +218,9 @@ public sealed class CustomerContentAppService(
 
                 if (contentVisitList is { Count: > 0 })
                 {
-                    foreach (var contentVisit in contentVisitList)
-                    {
-                        // var placedCustomerContent = await customerContentRepository.GetSingleOrDefaultAsync(x => x.Id == contentVisit.CustomerContentId);
-                        // if (placedCustomerContent is { OperationStatus: CustomerContentOperationStates.VideoGenerationRejectedReturnAnalysisVideo })
-                        // {
-                        //     bool operationSuccess;
-                        //     string errorMessage = string.Empty;
-                        //     try
-                        //     {
-                        //         await customerContentRepository.SetVideoGenerationApprovedAsync(id: contentVisit.CustomerContentId);
-                        //
-                        //         _logger.FrameworkInfoLog(LogHelper.Generate(
-                        //             message: "Trend content video generation approved",
-                        //             reference: new { placedCustomerContent.ScopeKey, CustomerContentId = placedCustomerContent.Id, placedCustomerContent.NormalizedRequestId },
-                        //             facility: "CUSTOMER_CONTENT_VIDEO_GENERATION_APPROVED",
-                        //             correlationId: placedCustomerContent.CorrelationId,
-                        //             exception: null
-                        //         ));
-                        //
-                        //         // Add video generation history for client quote control
-                        //         await contentVideoGenerationLimitRepository.CreateAsync(scopeKey: placedCustomerContent.ScopeKey,
-                        //             videoGenerationDate: placedCustomerContent.ScrapReleaseTimeUtc?.Date ?? DateTime.UtcNow.Date,
-                        //             videoGenerationType: VideoGenerationTypes.TrendVideoGeneration,
-                        //             contentReferenceIds: placedCustomerContent.Id.ToString());
-                        //
-                        //         // Integration Event for TextNormalizerGeneratorService
-                        //         await EventBus.PublishAsync(correlationId: placedCustomerContent.CorrelationId,
-                        //             eventMessage: new VideoGenerationApprovedEto(
-                        //                 ScopeKey: placedCustomerContent.ScopeKey,
-                        //                 ReferenceContentType: ReferenceContentTypes.CUSTOMER_CONTENT,
-                        //                 ReferenceContentId: placedCustomerContent.Id
-                        //             ));
-                        //
-                        //         operationSuccess = true;
-                        //     }
-                        //     catch (Exception e)
-                        //     {
-                        //         operationSuccess = false;
-                        //         errorMessage = e.Message;
-                        //     }
-                        //
-                        //     if (operationSuccess)
-                        //     {
-                        //         _logger.LogInformation("Client[{ClientDomain}] | CONTENT: {CustomerContentId}, VISIT: {VisitCount}",
-                        //             customerVpSetting.DomainName,
-                        //             contentVisit.CustomerContentId.ToString(),
-                        //             contentVisit.VisitCount.ToString());
-                        //     }
-                        //     else
-                        //     {
-                        //         _logger.LogError("Client[{ClientDomain}] | CONTENT: {CustomerContentId}, {OperationStatus} | {FailReason}", customerVpSetting.DomainName,
-                        //             contentVisit.CustomerContentId.ToString(), "FAIL", errorMessage);
-                        //
-                        //         _logger.FrameworkErrorLog(LogHelper.Generate(
-                        //             message: $"Trend content video generation rejected: {errorMessage}",
-                        //             reference: new { placedCustomerContent.ScopeKey, CustomerContentId = placedCustomerContent.Id, placedCustomerContent.refNormalizedRequestId },
-                        //             facility: "CUSTOMER_CONTENT_VIDEO_GENERATION_SKIPPED_REGENERATION_FAILED",
-                        //             correlationId: placedCustomerContent.CorrelationId,
-                        //             exception: null
-                        //         ));
-                        //
-                        //         await customerContentRepository.SetVideoGenerationRejectedAsync(id: contentVisit.CustomerContentId, "CUSTOMER_CONTENT_VIDEO_GENERATION_SKIPPED_REGENERATION_FAILED");
-                        //     }
-                        // }
-                        // else
-                        // {
-                        //     _logger.LogError("Client[{ClientDomain}] | CONTENT: {CustomerContentId}, {OperationStatus} | {FailReason}",
-                        //         customerVpSetting.DomainName,
-                        //         contentVisit.CustomerContentId.ToString(),
-                        //         "FAIL",
-                        //         "CONTENT_INFO_NOT_FOUND");
-                        // }
-
-                        // Loop period
-                        Thread.Sleep(50);
-                    }
+                    _logger.LogWarning(
+                        "Client[{ClientDomain}] | {OperationStatus} => {QueryResult} | Pending items: {Count}",
+                        customerVpSetting.DomainName, "SKIPPED", "TREND_VIDEO_GENERATION_NOT_IMPLEMENTED", contentVisitList.Count);
                 }
                 else
                 {
