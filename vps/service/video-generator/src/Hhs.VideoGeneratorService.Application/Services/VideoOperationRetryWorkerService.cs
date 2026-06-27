@@ -63,6 +63,13 @@ public sealed class VideoOperationRetryWorkerService(
                         eventMessage: new AudioFileDownloadStartedEto { AudioRequestId = request.Id, }
                     );
                 }
+                else if (request.CurrentStep == EventNames.AudioFileUploadStarted)
+                {
+                    // Re-trigger from download so the local file is refreshed before re-uploading.
+                    await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+                        eventMessage: new AudioFileDownloadStartedEto { AudioRequestId = request.Id, }
+                    );
+                }
                 else if (request.CurrentStep == EventNames.AudioProviderPollingStarted)
                 {
                     request.Status = StatusNames.AudioProviderPolling;
@@ -191,6 +198,13 @@ public sealed class VideoOperationRetryWorkerService(
                 }
                 else if (request.CurrentStep == EventNames.VideoFileDownloadStarted)
                 {
+                    await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+                        eventMessage: new VideoFileDownloadStartedEto { VideoRequestId = request.Id, }
+                    );
+                }
+                else if (request.CurrentStep == EventNames.VideoFileUploadStarted)
+                {
+                    // Re-trigger from download so the local file is refreshed before re-uploading.
                     await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
                         eventMessage: new VideoFileDownloadStartedEto { VideoRequestId = request.Id, }
                     );
