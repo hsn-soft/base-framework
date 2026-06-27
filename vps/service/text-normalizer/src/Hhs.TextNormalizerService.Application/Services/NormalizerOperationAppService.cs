@@ -303,8 +303,7 @@ public sealed class NormalizerOperationAppService(
                 exception: null
             ));
 
-            // TODO: Get prompt from customer settings
-            string outlineInputPrompt = "Test prompt";
+            string outlineInputPrompt = await customerVpSettingRepository.GetContentOutlinePromptByScopeKeyAsync(request.ScopeKey, cancellationToken);
 
             string outlineInputText = string.Format("{0} {1} {2}",
                 request.ScrapingResult.Title,

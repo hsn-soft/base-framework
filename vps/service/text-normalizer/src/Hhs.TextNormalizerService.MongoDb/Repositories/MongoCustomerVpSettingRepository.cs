@@ -20,4 +20,12 @@ public sealed class MongoCustomerVpSettingRepository(
             ? new KeyValuePair<bool, string>(false, null)
             : new KeyValuePair<bool, string>(true, result);
     }
+
+    public async Task<string> GetContentOutlinePromptByScopeKeyAsync(string scopeKey, CancellationToken cancellationToken = default)
+    {
+        return await GetSingleOrDefaultAsync(
+            predicate: x => x.ScopeKey == scopeKey,
+            selector: x => x.ContentOutlinePrompt,
+            cancellationToken: cancellationToken) ?? string.Empty;
+    }
 }
