@@ -9,12 +9,13 @@ using Hhs.TextNormalizerService.Domain.Settings;
 using HsnSoft.Base.PuppeTeer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace Hhs.TextNormalizerService.Application;
 
 public static class ApplicationServiceCollectionExtensions
 {
-    public static IServiceCollection AddServiceApplicationConfiguration(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddServiceApplicationConfiguration(this IServiceCollection services, IConfiguration configuration, IHostEnvironment environment)
     {
         services.AddAutoMapper(typeof(ApplicationAutoMapperProfile));
 
@@ -27,7 +28,11 @@ public static class ApplicationServiceCollectionExtensions
         // Must be Scoped or Transient => Cannot consume any scoped service
         services.AddScoped<ApplicationEventInboxMessageManager>();
         services.AddScoped<NormalizerOperationAppService>();
-        services.AddScoped<IContentScraper, DummyContentScraper>();
+
+        if (environment.IsProduction())
+            services.AddScoped<IContentScraper, PuppeteerContentScraper>();
+        else
+            services.AddScoped<IContentScraper, DummyContentScraper>();
 
         // ============================================================================
         // 2. OUTLINE PROVIDER CONFIGURATION

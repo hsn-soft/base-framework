@@ -64,7 +64,7 @@ builder.Services.AddMicroserviceHosting(builder.Configuration, typeof(Program))
         checkRedis: true,
         checkBroker: true,
         checkMongo: true, mongoConnectionName: MongoDbProperties.ConnectionStringName)
-    .AddServiceApplicationConfiguration(builder.Configuration)
+    .AddServiceApplicationConfiguration(builder.Configuration, builder.Environment)
     .AddServiceMongoDatabaseConfiguration(builder.Configuration);
 
 // ============================================================================
