@@ -10,7 +10,7 @@ public class EventNameConversionTests
     [Fact]
     public void EventMessage_Name_ShouldEndEto()
     {
-        var refAssembly = typeof(SetNormalizedStatusToFailedEto).Assembly;
+        var refAssembly = typeof(ContentNormalizedRequestScrapingStartedEto).Assembly;
         var eventMessages = ReflectionUtils.GetInternalEventMessages(refAssembly);
 
         foreach (var eventMessage in eventMessages)

@@ -247,13 +247,21 @@ public sealed class NormalizerOperationRetryWorkerService(
                     if (item.CurrentStep == EventNames.AnalysisItemScrapingStarted)
                     {
                         await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
-                            eventMessage: new AnalysisItemScrapingStartedEto { AnalysisContentId = request.AnalysisContentId }
+                            eventMessage: new AnalysisItemScrapingStartedEto
+                            {
+                                AnalysisContentId = request.AnalysisContentId,
+                                CustomerContentIdForItem = item.CustomerContentId
+                            }
                         );
                     }
                     else if (item.CurrentStep == EventNames.AnalysisItemOutlineStarted)
                     {
                         await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
-                            eventMessage: new AnalysisItemOutlineStartedEto { AnalysisContentId = request.AnalysisContentId }
+                            eventMessage: new AnalysisItemOutlineStartedEto
+                            {
+                                AnalysisContentId = request.AnalysisContentId,
+                                CustomerContentIdForItem = item.CustomerContentId
+                            }
                         );
                     }
                     else if (item.CurrentStep == EventNames.OutlineProviderRequestStarted)
