@@ -38,6 +38,7 @@ public sealed class OutlineQueueProvider(HttpClient httpClient, OutlineQueueProv
             $"{_baseUrl}/outline/status/{request.ProviderTrackId}"
             );
 
+        response.EnsureSuccessStatusCode();
         var json = await response.Content.ReadFromJsonAsync<JsonElement>();
         string? status = json.GetProperty("status").GetString();
 
