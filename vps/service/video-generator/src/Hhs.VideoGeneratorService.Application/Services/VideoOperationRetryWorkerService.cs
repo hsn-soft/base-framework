@@ -8,12 +8,14 @@ using Hhs.VideoGeneratorService.Domain.MediaDomain.Entities;
 using Hhs.VideoGeneratorService.Domain.MediaDomain.Repositories;
 using Hhs.VideoGeneratorService.Domain.SettingDomain.Repositories;
 using HsnSoft.Base.Domain.Models;
+using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 
 namespace Hhs.VideoGeneratorService.Application.Services;
 
 public sealed class VideoOperationRetryWorkerService(
     IServiceProvider provider,
+    ILogger<VideoOperationRetryWorkerService> logger,
     IVideoRequestRepository videoRequestRepository,
     IAudioRequestRepository audioRequestRepository,
     ICustomerVpSettingRepository customerVpSettingRepository,
@@ -127,8 +129,10 @@ public sealed class VideoOperationRetryWorkerService(
                     u => updateUpdate,
                     cancellationToken: cancellationToken);
             }
-            catch
+            catch (Exception ex)
             {
+                logger.LogError(ex, "RETRY_AUDIO_REQUEST_FAILED: RequestId={RequestId}", request.Id);
+
                 request.NextRetryAtUtc = DateTime.UtcNow.AddSeconds(retrySettings.ClaimFailRescheduleDelaySeconds);
 
                 var exceptionPredicate = (Expression<Func<AudioRequest, bool>>)(x => x.Id == request.Id);
@@ -139,8 +143,6 @@ public sealed class VideoOperationRetryWorkerService(
                     exceptionPredicate,
                     u => exceptionUpdate,
                     cancellationToken: cancellationToken);
-
-                throw;
             }
         }
     }
@@ -265,8 +267,10 @@ public sealed class VideoOperationRetryWorkerService(
                     u => updateUpdate,
                     cancellationToken: cancellationToken);
             }
-            catch
+            catch (Exception ex)
             {
+                logger.LogError(ex, "RETRY_VIDEO_REQUEST_FAILED: RequestId={RequestId}", request.Id);
+
                 request.NextRetryAtUtc = DateTime.UtcNow.AddSeconds(retrySettings.ClaimFailRescheduleDelaySeconds);
 
                 var exceptionPredicate = (Expression<Func<VideoRequest, bool>>)(x => x.Id == request.Id);
@@ -277,8 +281,6 @@ public sealed class VideoOperationRetryWorkerService(
                     exceptionPredicate,
                     u => exceptionUpdate,
                     cancellationToken: cancellationToken);
-
-                throw;
             }
         }
     }

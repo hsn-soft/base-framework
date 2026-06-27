@@ -157,8 +157,10 @@ public sealed class NormalizerOperationRetryWorkerService(
                     );
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                logger.LogError(ex, "RETRY_CUSTOMER_REQUEST_FAILED: RequestId={RequestId}", request.Id);
+
                 var exceptionPredicate = (Expression<Func<CustomerContentNormalizedRequest, bool>>)(x => x.Id == request.Id);
                 var exceptionUpdate = Builders<CustomerContentNormalizedRequest>.Update
                     .Set(x => x.Status, StatusNames.WaitingRetry)
@@ -169,8 +171,6 @@ public sealed class NormalizerOperationRetryWorkerService(
                     u => exceptionUpdate,
                     cancellationToken: cancellationToken)
                     .ConfigureAwait(false);
-
-                throw;
             }
         }
     }
@@ -294,8 +294,10 @@ public sealed class NormalizerOperationRetryWorkerService(
                             cancellationToken);
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
+                    logger.LogError(ex, "RETRY_ANALYSIS_REQUEST_FAILED: RequestId={RequestId} CustomerContentId={CustomerContentId}", request.Id, item.CustomerContentId);
+
                     var retryAgainUpdate = Builders<AnalysisContentNormalizedRequest>.Update
                         .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", StatusNames.WaitingRetry)
                         .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextRetryAtUtc)}", DateTime.UtcNow.AddSeconds(retrySettings.ClaimFailRescheduleDelaySeconds))
@@ -306,8 +308,6 @@ public sealed class NormalizerOperationRetryWorkerService(
                         item.CustomerContentId,
                         retryAgainUpdate,
                         cancellationToken);
-
-                    throw;
                 }
             }
         }
