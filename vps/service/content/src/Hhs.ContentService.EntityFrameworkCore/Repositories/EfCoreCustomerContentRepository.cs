@@ -124,35 +124,31 @@ public sealed class EfCoreCustomerContentRepository(
 
     public Task<List<Guid>> GetCustomerDailyTrendContentIdsAsync(string scopeKey, ushort dailyTrendVideoWaitStatisticHour, CancellationToken cancellationToken = default)
     {
-    //   var statisticMinTime = DateTime.UtcNow.AddHours(-1 * dailyTrendVideoWaitStatisticHour);
-    //     var releaseMinDate = DateTime.UtcNow.Date;
-    //     var releaseMaxDate = DateTime.UtcNow.Date.AddDays(1);
-    //     return await GetDbSet().Where(x =>
-    //         x.ScopeKey == scopeKey
-    //         && x.OperationStatus == CustomerContentOperationStates.VideoGenerationRejectedReturnAnalysisVideo
-    //         && x.CreationTime < statisticMinTime // min one day waited on system
-    //         && x.ReleaseTime != null && x.ReleaseTime < releaseMaxDate && x.ReleaseTime >= releaseMinDate).Select(x => x.Id).ToListAsync(cancellationToken);
-  
-
-        // TODO: query uses OperationStatus (enum) which was replaced with string-based VideoStatus.
-        // Re-implement once the video status transition model is finalised.
-        return Task.FromResult(new List<Guid>());
+        var statisticMinTime = DateTime.UtcNow.AddHours(-1 * dailyTrendVideoWaitStatisticHour);
+        var releaseMinDate = DateTime.UtcNow.Date;
+        var releaseMaxDate = DateTime.UtcNow.Date.AddDays(1);
+        return GetDbSet().Where(x =>
+            x.ScopeKey == scopeKey
+            && x.NormalizeStatus == StatusNames.Completed
+            && x.VideoStatus == StatusNames.Rejected
+            && x.CreationTime < statisticMinTime
+            && x.ScrapReleaseTimeUtc != null
+            && x.ScrapReleaseTimeUtc >= releaseMinDate
+            && x.ScrapReleaseTimeUtc < releaseMaxDate
+        ).Select(x => x.Id).ToListAsync(cancellationToken);
     }
 
     public Task<List<Guid>> GetCustomerDailyAnalysisContentIdsAsync(string scopeKey, CancellationToken cancellationToken = default)
     {
-        //     var releaseMinDate = DateTime.UtcNow.Date;
-        // var releaseMaxDate = DateTime.UtcNow.Date.AddDays(1);
-        // return await GetDbSet().Where(x =>
-        //     x.ScopeKey == scopeKey
-        //     && x.OperationStatus != CustomerContentOperationStates.CreatedWaitForNormalize
-        //     && x.OperationStatus != CustomerContentOperationStates.OperationFail
-        //     && x.ReleaseTime != null && x.ReleaseTime < releaseMaxDate && x.ReleaseTime >= releaseMinDate).Select(x => x.Id).ToListAsync(cancellationToken);
-  
-
-        // TODO: query uses OperationStatus (enum) which was replaced with string-based NormalizeStatus.
-        // Re-implement once the content status query requirements are finalised.
-        return Task.FromResult(new List<Guid>());
+        var releaseMinDate = DateTime.UtcNow.Date;
+        var releaseMaxDate = DateTime.UtcNow.Date.AddDays(1);
+        return GetDbSet().Where(x =>
+            x.ScopeKey == scopeKey
+            && x.NormalizeStatus == StatusNames.Completed
+            && x.ScrapReleaseTimeUtc != null
+            && x.ScrapReleaseTimeUtc >= releaseMinDate
+            && x.ScrapReleaseTimeUtc < releaseMaxDate
+        ).Select(x => x.Id).ToListAsync(cancellationToken);
     }
 
 

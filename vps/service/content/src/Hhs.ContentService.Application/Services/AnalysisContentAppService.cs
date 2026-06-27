@@ -113,21 +113,64 @@ public sealed class AnalysisContentAppService(
             : new KeyValuePair<bool, string>(true, "CUSTOMER_CONTENT_VIDEO_GENERATION_APPROVED");
         if (clientQuoteResult.Key)
         {
-            #region Approve Logic 1
+            const int analysisItemLimit = 5; // TODO: move to CustomerVpSetting.DailyAnalysisVideoItemLimit
 
-            // Fetch latest N successful CustomerContents with this ScopeKey and COMPLETED NormalizeStatus
-            var options = new ListQueryOptions<CustomerContent>
+            List<CustomerContent> selectedContents;
+
+            // Primary: today's published & normalized content ordered by visit count
+            var dailyContentIds = await customerContentRepository.GetCustomerDailyAnalysisContentIdsAsync(customerVpSetting.ScopeKey);
+            if (dailyContentIds is { Count: > 0 })
             {
-                // completed contents
-                Filter = x => x.ScopeKey == customerVpSetting.ScopeKey
-                              && x.NormalizeStatus == StatusNames.Completed,
-                OrderByEntity = o => o.OrderByDescending(s => s.CreationTime),
-                MaxResultCount = 5 // TODO: Get value from settings -> max 5 take
-            };
+                long? minVisit = customerVpSetting.DailyTrendVideoMinVisitCount > 0
+                    ? (long?)customerVpSetting.DailyTrendVideoMinVisitCount
+                    : null;
 
-            var successfulContents = await customerContentRepository.GetListAsync(options);
+                var visitList = await customerContentVisitRepository.GetContentIdsVisitCountsAsync(
+                    customerContentIds: dailyContentIds,
+                    isMaxCountOrdered: true,
+                    customerContentOrderedLimit: analysisItemLimit,
+                    customerContentVisitedCountLimit: minVisit);
 
-            if (successfulContents.Count == 0)
+                if (visitList is { Count: > 0 })
+                {
+                    var visitedIds = visitList.Select(x => x.CustomerContentId).ToList();
+                    var fetchOptions = new ListQueryOptions<CustomerContent>
+                    {
+                        Filter = x => visitedIds.Contains(x.Id)
+                    };
+                    var fetched = await customerContentRepository.GetListAsync(fetchOptions);
+                    selectedContents = visitedIds
+                        .Select(id => fetched.FirstOrDefault(c => c.Id == id))
+                        .Where(c => c != null)
+                        .ToList();
+                }
+                else
+                {
+                    selectedContents = [];
+                }
+            }
+            else
+            {
+                selectedContents = [];
+            }
+
+            // Fallback: most recently completed content regardless of release date
+            if (selectedContents.Count == 0)
+            {
+                _logger.LogWarning("Client[{ClientDomain}] | {OperationStatus} => {QueryResult}",
+                    customerVpSetting.DomainName, "FALLBACK", "ANALYSIS_USING_RECENT_COMPLETED_CONTENT");
+
+                var fallbackOptions = new ListQueryOptions<CustomerContent>
+                {
+                    Filter = x => x.ScopeKey == customerVpSetting.ScopeKey
+                                  && x.NormalizeStatus == StatusNames.Completed,
+                    OrderByEntity = o => o.OrderByDescending(s => s.CreationTime),
+                    MaxResultCount = analysisItemLimit
+                };
+                selectedContents = await customerContentRepository.GetListAsync(fallbackOptions);
+            }
+
+            if (selectedContents.Count == 0)
             {
                 _logger.LogWarning("Client[{ClientDomain}] | {OperationStatus} => {QueryResult}",
                     customerVpSetting.DomainName, "SKIPPED", "CUSTOMER_CONTENT_VIDEO_GENERATION_SKIPPED_NO_COMPLETED_CONTENT");
@@ -135,25 +178,20 @@ public sealed class AnalysisContentAppService(
                 return;
             }
 
-            // Extract IDs for analysis
-            var customerContentIds = successfulContents.Select(x => x.Id).ToList();
-
-            // Create analysis using extracted IDs
             var analysisContentId = Guid.CreateVersion7();
-            var analysis = new AnalysisContent(id: analysisContentId,
+            var analysis = new AnalysisContent(
+                id: analysisContentId,
                 scopeKey: customerVpSetting.ScopeKey,
                 analysisDate: analysisDate,
                 traceAccessor?.GetCorrelationId());
             int sort = 1;
-
-            foreach (var customerContentId in customerContentIds)
+            foreach (var content in selectedContents)
             {
-                var content = successfulContents.FirstOrDefault(x => x.Id == customerContentId);
-                if (content == null)
-                    throw new InvalidOperationException($"CustomerContent not found: {customerContentId}");
-
-                analysis.Items.Add(new AnalysisContentItem(id: Guid.NewGuid()
-                    , analysisContentId: analysisContentId, customerContentId: customerContentId, sortOrder: sort++));
+                analysis.Items.Add(new AnalysisContentItem(
+                    id: Guid.NewGuid(),
+                    analysisContentId: analysisContentId,
+                    customerContentId: content.Id,
+                    sortOrder: sort++));
             }
 
             await analysisContentRepository.InsertAsync(analysis);
@@ -166,109 +204,26 @@ public sealed class AnalysisContentAppService(
                 exception: null
             ));
 
-            var items = customerContentIds
-                .Select((id, index) =>
+            var items = selectedContents
+                .Select((content, index) => new AnalysisNormalizeItem
                 {
-                    var content = successfulContents.First(x => x.Id == id);
-
-                    return new AnalysisNormalizeItem { CustomerContentId = content.Id, ContentKey = content.ContentKey, SortOrder = index + 1 };
+                    CustomerContentId = content.Id,
+                    ContentKey = content.ContentKey,
+                    SortOrder = index + 1
                 })
                 .ToList();
 
             await EventBus.PublishAsync(
                 parentMessage: ParentIntegrationEvent,
                 correlationId: analysis.CorrelationId,
-                eventMessage: new AnalysisContentCreatedEto { ScopeKey = analysis.ScopeKey, DomainName = customerVpSetting.DomainName, AnalysisContentId = analysisContentId, Items = items }
+                eventMessage: new AnalysisContentCreatedEto
+                {
+                    ScopeKey = analysis.ScopeKey,
+                    DomainName = customerVpSetting.DomainName,
+                    AnalysisContentId = analysisContentId,
+                    Items = items
+                }
             );
-
-            #endregion
-
-            #region Approve Logic 2
-
-            // var customerContentIds = await customerContentRepository.GetCustomerDailyAnalysisContentIdsAsync(customerVpSetting.ScopeKey);
-            // if (customerContentIds is { Count: > 0 })
-            // {
-            //     var contentVisitList = await customerContentVisitRepository.GetContentIdsVisitCountsAsync(customerContentIds: customerContentIds,
-            //         isMaxCountOrdered: true,
-            //         customerContentOrderedLimit: 5, // TODO: Get value from settings -> max 5 take
-            //         customerContentVisitedCountLimit: 3); // TODO: Get value from settings
-            //
-            //     if (contentVisitList is { Count: >= 5 }) // TODO: Get value from settings
-            //     {
-            //         bool operationSuccess;
-            //         string errorMessage = string.Empty;
-            //         var analysisContentId = Guid.CreateVersion7();
-            //         if (string.IsNullOrWhiteSpace(correlationId))
-            //         {
-            //             correlationId = Guid.CreateVersion7().ToString("N");
-            //         }
-            //
-            //         try
-            //         {
-            //             // Add analysis content record
-            //             var placed = await analysisContentRepository.CreateAsync(
-            //                 id: analysisContentId,
-            //                 customerId: Guid.Parse(input.ScopeKey.Split(":")[0]),
-            //                 productType: ProductTypes.VideoPlatform,
-            //                 analysisDate: analysisDate,
-            //                 operationStatus: AnalysisContentOperationStates.CreatedWaitForNormalize,
-            //                 correlationId: correlationId);
-            //
-            //             _logger.FrameworkInfoLog(LogHelper.Generate(
-            //                 message: $"Analysis Content created",
-            //                 reference: new { placed.ScopeKey, AnalysisContentId = analysisContentId },
-            //                 facility: AnalysisContentOperationFacilities.ANALYSIS_CONTENT_CREATED,
-            //                 correlationId: correlationId,
-            //                 exception: null
-            //             ));
-            //
-            //             // Integration Event for TextNormalizerService
-            //             await EventBus.PublishAsync(correlationId: correlationId,
-            //                 eventMessage: new AnalysisContentNormalizedStartedEto(
-            //                     ScopeKey: customerVpSetting.ScopeKey,
-            //                     DomainName: customerVpSetting.DomainName,
-            //                     AnalysisContentId: analysisContentId,
-            //                     CustomerContentIdList: contentVisitList.Select(x => x.CustomerContentId).ToList(),
-            //                     AnalysisDate: placed.AnalysisDate
-            //                 ));
-            //
-            //             operationSuccess = true;
-            //         }
-            //         catch (Exception e)
-            //         {
-            //             operationSuccess = false;
-            //             errorMessage = e.Message;
-            //         }
-            //
-            //         if (operationSuccess)
-            //         {
-            //             _logger.LogInformation("Client[{ClientDomain}] | ANALYSIS CONTENT CREATED", customerVpSetting.DomainName);
-            //         }
-            //         else
-            //         {
-            //             _logger.LogError("Client[{ClientDomain}] | ANALYSIS CONTENT CREATION FAIL: {FailReason}", customerVpSetting.DomainName, errorMessage);
-            //
-            //             _logger.FrameworkErrorLog(LogHelper.Generate(
-            //                 message: $"Analysis content video generation rejected: {errorMessage}",
-            //                 reference: new { customerVpSetting.ScopeKey, AnalysisContentId = analysisContentId },
-            //                 facility: "CUSTOMER_CONTENT_VIDEO_GENERATION_SKIPPED_REGENERATION_FAILED",
-            //                 correlationId: correlationId,
-            //                 exception: null
-            //             ));
-            //         }
-            //     }
-            //     else
-            //     {
-            //         _logger.LogWarning("Client[{ClientDomain}] | {OperationStatus} => {QueryResult}", customerVpSetting.DomainName, "SKIPPED",
-            //             "NOT_ENOUGH_VISIT_FOR_DAILY_ANALYSIS");
-            //     }
-            // }
-            // else
-            // {
-            //     _logger.LogWarning("Client[{ClientDomain}] | {OperationStatus} => {QueryResult}", customerVpSetting.DomainName, "SKIPPED", "NO_DAILY_ANALYSIS_CONTENT");
-            // }
-
-            #endregion
         }
         else
         {
