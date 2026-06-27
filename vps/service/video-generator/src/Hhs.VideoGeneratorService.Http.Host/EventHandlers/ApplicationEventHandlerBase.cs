@@ -10,6 +10,8 @@ public abstract class ApplicationEventHandlerBase<TEvent>(ApplicationEventInboxM
 {
     protected readonly ApplicationEventInboxMessageManager InboxStore = inboxStore;
 
+    protected virtual IEventApplicationService? AppService => null;
+
     public async Task HandleAsync(MessageEnvelope<TEvent> @event)
     {
         bool started = await InboxStore.StartAsync(@event, CancellationToken.None);
@@ -19,6 +21,7 @@ public abstract class ApplicationEventHandlerBase<TEvent>(ApplicationEventInboxM
 
         try
         {
+            AppService?.SetParentIntegrationEvent(@event);
             await ExecuteAsync(@event, CancellationToken.None);
             await InboxStore.CompleteAsync(@event.MessageId, CancellationToken.None);
         }
