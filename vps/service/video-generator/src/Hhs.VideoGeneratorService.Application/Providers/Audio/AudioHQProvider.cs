@@ -51,6 +51,7 @@ public sealed class AudioHQProvider : IAudioProvider
         return new AudioStatusResponse
         {
             IsCompleted = status == ProviderStatusConstants.Completed,
+            IsFailed = status == ProviderStatusConstants.Failed,
             ProviderFileUrl = fileUrl,
             FileName = fileName
         };

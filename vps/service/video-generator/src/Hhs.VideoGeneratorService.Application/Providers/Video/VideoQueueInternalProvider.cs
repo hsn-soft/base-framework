@@ -52,6 +52,7 @@ public sealed class VideoQueueInternalProvider : IVideoProvider
         return new VideoStatusResponse
         {
             IsCompleted = status == ProviderStatusConstants.Completed,
+            IsFailed = status == ProviderStatusConstants.Failed,
             ProviderFileUrl = fileUrl,
             FileName = fileName
         };
