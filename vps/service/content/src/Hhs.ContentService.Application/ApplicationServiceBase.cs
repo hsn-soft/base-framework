@@ -20,6 +20,9 @@ public abstract class ApplicationServiceBase : ApplicationService, IEventApplica
     [NotNull]
     protected IMapper Mapper { get; }
 
+    // KNOWN GAP: EventBus.PublishAsync is called after DB writes with no transactional guarantee.
+    // If a publish fails after a successful DB commit the event is permanently lost.
+    // Mitigation: implement an Outbox table + relay worker in each service.
     [NotNull]
     protected IEventBus EventBus { get; }
 

@@ -21,11 +21,6 @@ public sealed class JobsController(
     public async Task AnalysisVideoGenerationQueryAsync([FromBody] AnalysisVideoGenerationQueryTriggerDto input)
         => await jobAppService.AnalysisVideoGenerationQueryTriggerAsync(input, GetJobCorrelationId());
 
-    [HttpPost("dashboard-response-statistic-query")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task DashboardResponseStatisticQueryAsync([FromBody] DashboardResponseStatisticQueryTriggerDto input)
-        => await jobAppService.DashboardResponseStatisticQueryTriggerAsync(input, GetJobCorrelationId());
-
     [HttpPost("trend-video-generation-query")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task TrendVideoGenerationQueryAsync([FromBody] TrendVideoGenerationQueryTriggerDto input)
