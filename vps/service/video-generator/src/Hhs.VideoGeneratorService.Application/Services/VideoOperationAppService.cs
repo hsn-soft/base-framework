@@ -292,6 +292,13 @@ public sealed class VideoOperationAppService(
     {
         var audioRequest = await GetAudioAsync(@event.AudioRequestId, cancellationToken);
 
+        if (audioRequest.Status == StatusNames.AudioFileUploadCompleted)
+        {
+            await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+                eventMessage: new AudioFileUploadCompletedEto { VideoRequestId = audioRequest.VideoRequestId });
+            return;
+        }
+
         try
         {
             audioRequest.Status = StatusNames.AudioFileUploading;
@@ -563,6 +570,13 @@ public sealed class VideoOperationAppService(
     public async Task HandleVideoDownloadCompletedAsync(VideoFileDownloadCompletedEto @event, CancellationToken cancellationToken = default)
     {
         var videoRequest = await GetVideoAsync(@event.VideoRequestId, cancellationToken);
+
+        if (videoRequest.Status == StatusNames.VideoFileUploadCompleted || videoRequest.Status == StatusNames.Completed)
+        {
+            await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+                eventMessage: new VideoFileUploadCompletedEto { VideoRequestId = videoRequest.Id });
+            return;
+        }
 
         try
         {
