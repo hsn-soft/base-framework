@@ -386,7 +386,7 @@ public sealed class VideoOperationAppService(
                 x.Status != StatusNames.VideoProviderPolling &&
                 x.Status != StatusNames.VideoProviderCompleted &&
                 x.Status != StatusNames.VideoDownloading &&
-                x.Status != StatusNames.VideoUploading &&
+                x.Status != StatusNames.VideoFileUploading &&
                 x.Status != StatusNames.Completed &&
                 x.Status != StatusNames.Failed);
 
