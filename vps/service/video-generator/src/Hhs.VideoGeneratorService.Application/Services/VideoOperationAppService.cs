@@ -329,6 +329,8 @@ public sealed class VideoOperationAppService(
 
             await ReplaceAudioAsync(audioRequest, cancellationToken);
 
+            TryDeleteLocalFile(audioRequest.AudioLocalPath);
+
             await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
                 eventMessage: new AudioFileUploadCompletedEto { VideoRequestId = audioRequest.VideoRequestId }
             );
@@ -590,6 +592,8 @@ public sealed class VideoOperationAppService(
 
             await ReplaceVideoAsync(videoRequest, cancellationToken);
 
+            TryDeleteLocalFile(videoRequest.VideoLocalPath);
+
             await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
                 eventMessage: new VideoFileUploadCompletedEto { VideoRequestId = videoRequest.Id }
             );
@@ -767,6 +771,8 @@ public sealed class VideoOperationAppService(
         request.LastError = ex.Message;
         request.NextRetryAtUtc = null;
 
+        TryDeleteLocalFile(request.AudioLocalPath);
+
         await ReplaceAudioAsync(request, cancellationToken);
 
         await EventBus.PublishAsync(
@@ -839,6 +845,8 @@ public sealed class VideoOperationAppService(
         request.LastError = ex.Message;
         request.NextRetryAtUtc = null;
 
+        TryDeleteLocalFile(request.VideoLocalPath);
+
         await ReplaceVideoAsync(request, cancellationToken);
 
         await EventBus.PublishAsync(
@@ -876,6 +884,13 @@ public sealed class VideoOperationAppService(
                 Retryable = false
             }
         );
+    }
+
+    private static void TryDeleteLocalFile(string localPath)
+    {
+        if (string.IsNullOrWhiteSpace(localPath)) return;
+        try { File.Delete(localPath); }
+        catch { /* best-effort: log or ignore */ }
     }
 
     #endregion
