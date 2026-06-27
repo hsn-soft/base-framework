@@ -3,10 +3,12 @@ using Hhs.Shared.Contracts.Events;
 using Hhs.Shared.Helper;
 using Hhs.Shared.Helper.Enums;
 using Hhs.TextNormalizerService.Domain.Configuration;
+using Hhs.TextNormalizerService.Domain.InfraDomain.Repositories;
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Entities;
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Models;
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Repositories;
 using HsnSoft.Base.Domain.Models;
+using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 
 namespace Hhs.TextNormalizerService.Application.Services;
@@ -15,14 +17,30 @@ public sealed class NormalizerOperationRetryWorkerService(
     IServiceProvider provider,
     IAnalysisContentNormalizedRequestRepository analysisRepository,
     ICustomerContentNormalizedRequestRepository customerRepository,
+    IEventInboxMessageRepository inboxRepository,
+    ILogger<NormalizerOperationRetryWorkerService> logger,
     NormalizerRetrySettings retrySettings) : ApplicationServiceBase(provider)
 {
     public async Task RetryDueRequestsAsync(CancellationToken cancellationToken)
     {
         var now = DateTime.UtcNow;
 
+        await ResetStaleStartedInboxMessagesAsync(now, cancellationToken);
         await RetryCustomerRequestsAsync(now, cancellationToken);
         await RetryAnalysisRequestsAsync(now, cancellationToken);
+    }
+
+    private async Task ResetStaleStartedInboxMessagesAsync(DateTime now, CancellationToken cancellationToken)
+    {
+        var staleThreshold = now.AddMinutes(-retrySettings.StaleInboxMessageThresholdMinutes);
+        var updated = await inboxRepository.ResetStaleStartedMessagesAsync(staleThreshold, cancellationToken);
+        if (updated > 0)
+        {
+            logger.LogWarning(
+                "Normalizer retry worker reset {Count} stale inbox message(s) from 'Started' to 'Failed'. " +
+                "These will be re-processed on next broker re-delivery.",
+                updated);
+        }
     }
 
     private async Task RetryCustomerRequestsAsync(

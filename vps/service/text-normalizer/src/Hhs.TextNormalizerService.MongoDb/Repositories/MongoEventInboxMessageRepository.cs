@@ -4,6 +4,7 @@ using Hhs.TextNormalizerService.Domain.InfraDomain.Repositories;
 using Hhs.TextNormalizerService.MongoDb.Context;
 using HsnSoft.Base.Domain.Models;
 using HsnSoft.Base.Domain.Repositories;
+using MongoDB.Driver;
 
 namespace Hhs.TextNormalizerService.MongoDb.Repositories;
 
@@ -25,5 +26,15 @@ public sealed class MongoEventInboxMessageRepository(
     {
         var options = new ListQueryOptions<EventInboxMessage> { Filter = x => x.Status == status };
         return await GetListAsync(options, cancellationToken);
+    }
+
+    public async Task<long> ResetStaleStartedMessagesAsync(DateTime staleThreshold, CancellationToken cancellationToken = default)
+    {
+        return await UpdateByExpressionAsync(
+            x => x.Status == InboxStatuses.Started && x.CreationTime < staleThreshold,
+            u => u
+                .Set(x => x.Status, InboxStatuses.Failed)
+                .Set(x => x.ErrorMessage, "Reset by retry worker: handler did not complete within the stale threshold."),
+            cancellationToken);
     }
 }
