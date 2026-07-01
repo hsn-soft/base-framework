@@ -5,6 +5,7 @@ public static class ProviderKeys
     // Outline Providers
     public const string OutlineFast = "outline-fast";
     public const string OutlineQueue = "outline-queue";
+    public const string OutlineOpenAi = "outline-open-ai";
 
     // Audio Providers
     public const string AudioQuick = "audio-quick";

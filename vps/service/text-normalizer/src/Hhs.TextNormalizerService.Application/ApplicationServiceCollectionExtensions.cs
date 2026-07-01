@@ -46,9 +46,14 @@ public static class ApplicationServiceCollectionExtensions
             .Get<OutlineQueueProviderSettings>() ?? new OutlineQueueProviderSettings();
         services.AddSingleton(outlineQueueProviderSettings);
 
+        var outlineOpenAiProviderSettings = configuration.GetSection(OutlineOpenAiProviderSettings.SectionName)
+            .Get<OutlineOpenAiProviderSettings>() ?? new OutlineOpenAiProviderSettings();
+        services.AddSingleton(outlineOpenAiProviderSettings);
+
         // Register Outline Provider implementations
         services.AddScoped<IOutlineProvider, OutlineFastProvider>();
         services.AddScoped<IOutlineProvider, OutlineQueueProvider>();
+        services.AddScoped<IOutlineProvider, OutlineOpenAiProvider>();
         services.AddScoped<IOutlineProviderResolver, OutlineProviderResolver>();
 
         return services;
