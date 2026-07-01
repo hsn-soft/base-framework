@@ -8,9 +8,7 @@ public class TextNormalizerSettings
 
     public bool UseStructuredOutput { get; set; }
 
-    // When true: analysis-content items are always re-scraped and re-outlined independently,
-    // ignoring any previously completed customer-content scraping/outline results.
-    // When false (default): reuses existing scraping/outline data from the matched
-    // customer-content normalized request if already completed.
-    public bool ForceReScrapeAndReOutlineForAnalysis { get; set; }
+    // When true: analysis-content items are always re-scraped, ignoring any previously
+    // completed customer-content scraping results. Outline is always re-done regardless.
+    public bool ForceReScrapeForAnalysis { get; set; }
 }

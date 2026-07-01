@@ -14,6 +14,7 @@ using Hhs.TextNormalizerService.Domain.Settings;
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Entities;
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Models;
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Repositories;
+using Hhs.TextNormalizerService.Domain.SettingDomain.Entities;
 using Hhs.TextNormalizerService.Domain.SettingDomain.Repositories;
 using HsnSoft.Base;
 using HsnSoft.Base.Logging;
@@ -394,7 +395,7 @@ public sealed class NormalizerOperationAppService(
 
         var item = request.Items.First(x => x.CustomerContentId == @event.CustomerContentIdForItem);
 
-        if (!_normalizerSettings.ForceReScrapeAndReOutlineForAnalysis)
+        if (!_normalizerSettings.ForceReScrapeForAnalysis)
         {
             var existingRequest = await customerContentRepository.GetByScopeKeyAndContentIdAsync(request.ScopeKey, item.CustomerContentId, cancellationToken);
             if (existingRequest?.ScrapingStatus == StatusNames.Completed && existingRequest.ScrapingResult is not null)
@@ -502,35 +503,6 @@ public sealed class NormalizerOperationAppService(
                 return;
             }
 
-            if (!_normalizerSettings.ForceReScrapeAndReOutlineForAnalysis)
-            {
-                CustomerContentNormalizedRequest existingRequest = await customerContentRepository.GetByScopeKeyAndContentIdAsync(analysisContentNormalizedRequest.ScopeKey, item.CustomerContentId, cancellationToken);
-                if (existingRequest?.OutlineStatus == StatusNames.Completed && existingRequest.OutlineResult is not null)
-                {
-                    await UpdateAnalysisItemAsync(
-                        analysisContentNormalizedRequest.Id,
-                        item.CustomerContentId,
-                        u => u.Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", StatusNames.OutlineCompleted)
-                            .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentStep)}", EventNames.AnalysisItemOutlineCompleted)
-                            .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineStatus)}", StatusNames.Completed)
-                            .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineResult)}", existingRequest.OutlineResult)
-                            .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.LastError)}", default(string))
-                            .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextRetryAtUtc)}", default(DateTime?))
-                            .Set(x => x.CurrentStep, EventNames.AnalysisItemOutlineCompleted),
-                        cancellationToken
-                    );
-                    await RecalculateAndUpdateAnalysisParentAsync(
-                        analysisContentNormalizedRequest.Id,
-                        EventNames.AnalysisItemOutlineCompleted,
-                        null
-                    );
-                    await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
-                        eventMessage: new AnalysisItemOutlineCompletedEto { AnalysisContentId = analysisContentNormalizedRequest.AnalysisContentId }
-                    );
-                    return;
-                }
-            }
-
             await UpdateAnalysisItemAsync(
                 analysisContentNormalizedRequest.Id,
                 item.CustomerContentId,
@@ -542,6 +514,14 @@ public sealed class NormalizerOperationAppService(
                 cancellationToken
             );
 
+            CustomerVpSetting analysisVpSetting = await customerVpSettingRepository.GetFirstOrDefaultAsync(
+                x => x.ScopeKey == analysisContentNormalizedRequest.ScopeKey,
+                cancellationToken: cancellationToken);
+
+            string outlineInputText = analysisVpSetting?.IsForceContentDetailInAnalyseActive == true
+                ? item.ScrapingResult.Details
+                : item.ScrapingResult.Title.Replace(":", "") + " : " + (item.ScrapingResult.Spot ?? item.ScrapingResult.Details);
+
             await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
                 eventMessage: new OutlineProviderRequestStartedEto
                 {
@@ -549,7 +529,8 @@ public sealed class NormalizerOperationAppService(
                     RefContentType = ContentType.AnalysisContent,
                     RefNormalizedRequestId = analysisContentNormalizedRequest.Id,
                     ScopeKey = analysisContentNormalizedRequest.ScopeKey,
-                    InputText = item.ScrapingResult.Details
+                    InputText = outlineInputText,
+                    InputPrompt = analysisVpSetting?.AnalysisOutlineContentPrompt ?? string.Empty
                 }
             );
         }
@@ -776,6 +757,8 @@ public sealed class NormalizerOperationAppService(
         if (analysisContentNormalizedRequest.Status == StatusNames.Completed ||
             analysisContentNormalizedRequest.CurrentStep == EventNames.NormalizerResultPublished)
             return;
+
+        await AppendIntroOutroToAnalysisItemsAsync(analysisContentNormalizedRequest, cancellationToken);
 
         analysisContentNormalizedRequest.Status = StatusNames.Completed;
         analysisContentNormalizedRequest.CurrentStep = EventNames.NormalizerResultPublished;
@@ -1143,5 +1126,93 @@ public sealed class NormalizerOperationAppService(
             .ToList();
 
         return JsonConvert.SerializeObject(new { audioItems });
+    }
+
+    private async Task AppendIntroOutroToAnalysisItemsAsync(AnalysisContentNormalizedRequest request, CancellationToken cancellationToken)
+    {
+        List<AnalysisNormalizedItem> orderedItems = [.. request.Items.OrderBy(x => x.SortOrder)];
+
+        if (orderedItems.Count == 0) return;
+
+        string introText;
+        string outroText;
+
+        CustomerVpSetting vpSetting = await customerVpSettingRepository.GetFirstOrDefaultAsync(
+            x => x.ScopeKey == request.ScopeKey,
+            cancellationToken: cancellationToken);
+
+        bool canGenerateViaProvider = vpSetting is not null
+            && !_normalizerSettings.SkipOutlineOperation
+            && vpSetting.IsOutlineOperationActive
+            && !string.IsNullOrWhiteSpace(vpSetting.AnalysisOutlineIntroPrompt)
+            && !string.IsNullOrWhiteSpace(vpSetting.AnalysisOutlineOutroPrompt);
+
+        if (canGenerateViaProvider)
+        {
+            KeyValuePair<bool, string> providerKeyResult = await customerVpSettingRepository
+                .GetOutlineProviderKeyByScopeKeyAsync(request.ScopeKey, cancellationToken);
+
+            if (providerKeyResult.Key)
+            {
+                IOutlineProvider outlineProvider = outlineProviderResolver.Resolve(providerKeyResult.Value);
+
+                OutlineCreateResponse introResponse = await outlineProvider.OutlineOperationAsync(new OutlineCreateRequest
+                {
+                    OutlinePrompt = vpSetting.AnalysisOutlineIntroPrompt,
+                    OutlineInput = vpSetting.AnalysisOutlineIntroPrompt,
+                    EngineModel = "gpt-4.1-mini",
+                    UseStructuredOutput = false
+                });
+
+                introText = !string.IsNullOrWhiteSpace(introResponse?.OutlinedData)
+                    ? introResponse.OutlinedData
+                    : "İyi günler, günün öne çıkan haberleriyle karşınızdayız.";
+
+                OutlineCreateResponse outroResponse = await outlineProvider.OutlineOperationAsync(new OutlineCreateRequest
+                {
+                    OutlinePrompt = vpSetting.AnalysisOutlineOutroPrompt,
+                    OutlineInput = vpSetting.AnalysisOutlineOutroPrompt,
+                    EngineModel = "gpt-4.1-mini",
+                    UseStructuredOutput = false
+                });
+
+                outroText = !string.IsNullOrWhiteSpace(outroResponse?.OutlinedData)
+                    ? outroResponse.OutlinedData
+                    : "Günün öne çıkan gelişmelerini aktardık. Tekrar görüşmek üzere";
+            }
+            else
+            {
+                introText = "İyi günler, günün öne çıkan haberleriyle karşınızdayız.";
+                outroText = "Günün öne çıkan gelişmelerini aktardık. Tekrar görüşmek üzere";
+            }
+        }
+        else
+        {
+            introText = "İyi günler, günün öne çıkan haberleriyle karşınızdayız.";
+            outroText = "Günün öne çıkan gelişmelerini aktardık. Tekrar görüşmek üzere";
+        }
+
+        AnalysisNormalizedItem firstItem = orderedItems[0];
+        AnalysisNormalizedItem lastItem = orderedItems[^1];
+
+        if (orderedItems.Count == 1)
+        {
+            firstItem.OutlineResult = new OutlineResult
+            {
+                OutlinedData = $"{introText} {firstItem.OutlineResult?.OutlinedData} {outroText}"
+            };
+        }
+        else
+        {
+            firstItem.OutlineResult = new OutlineResult
+            {
+                OutlinedData = $"{introText} {firstItem.OutlineResult?.OutlinedData}"
+            };
+
+            lastItem.OutlineResult = new OutlineResult
+            {
+                OutlinedData = $"{lastItem.OutlineResult?.OutlinedData} {outroText}"
+            };
+        }
     }
 }
