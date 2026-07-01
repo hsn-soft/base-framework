@@ -84,6 +84,7 @@ public sealed class ContentOperationService(
                                 videoGenerationType: VideoGenerationTypes.DirectVideoGeneration,
                                 contentReferenceIds: entity.Id.ToString());
 
+                            scopeKey = entity.ScopeKey;
                             shouldPublishEvent = true;
                         }
                         else
@@ -132,6 +133,7 @@ public sealed class ContentOperationService(
                             videoGenerationType: VideoGenerationTypes.AnalysisVideoGeneration,
                             contentReferenceIds: entity.Id.ToString());
 
+                        scopeKey = entity.ScopeKey;
                         shouldPublishEvent = true;
                     }
 
@@ -146,7 +148,15 @@ public sealed class ContentOperationService(
         {
             await EventBus.PublishAsync(
                 parentMessage: ParentIntegrationEvent,
-                eventMessage: new VideoGenerationApprovedEto { RefContentId = @event.RefContentId, RefContentType = @event.RefContentType, ScopeKey = scopeKey ?? string.Empty, RefNormalizeRequestId = @event.NormalizeRequestId }
+                eventMessage: new VideoGenerationApprovedEto
+                {
+                    RefContentId = @event.RefContentId,
+                    RefContentType = @event.RefContentType,
+                    ScopeKey = string.IsNullOrWhiteSpace(scopeKey)
+                        ? throw new ArgumentNullException(scopeKey)
+                        : scopeKey,
+                    RefNormalizeRequestId = @event.NormalizeRequestId
+                }
             );
         }
     }
