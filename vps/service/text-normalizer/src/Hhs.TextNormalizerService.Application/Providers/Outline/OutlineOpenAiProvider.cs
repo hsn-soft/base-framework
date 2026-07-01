@@ -57,18 +57,26 @@ public sealed class OutlineOpenAiProvider(OutlineOpenAiProviderSettings settings
         if (string.IsNullOrWhiteSpace(settings.APIKey))
             return new OutlineCreateResponse { IsProcessed = false, IsProcessFailed = true, ErrorMessage = "OUTLINE_OPENAI_API_KEY_MISSING" };
 
-        string model = string.IsNullOrWhiteSpace(request.EngineModel) ? settings.Engine : request.EngineModel;
+        // Explicit EngineModel on the request overrides both defaults.
+        // Simple mode defaults to settings.Engine (e.g. gpt-3.5-turbo).
+        // Structured mode defaults to settings.StructuredEngine (e.g. gpt-4o-mini).
+        string model = !string.IsNullOrWhiteSpace(request.EngineModel)
+            ? request.EngineModel
+            : request.UseStructuredOutput
+                ? (settings.StructuredEngine ?? "gpt-4o-mini")
+                : (settings.Engine ?? "gpt-3.5-turbo");
+
         ApiKeyCredential credential = new(settings.APIKey);
 
         ChatClient client;
         if (!string.IsNullOrWhiteSpace(settings.BaseUrl))
         {
             OpenAIClient openAiClient = new(credential, new OpenAIClientOptions { Endpoint = new Uri(settings.BaseUrl) });
-            client = openAiClient.GetChatClient(model ?? "gpt-4o-mini");
+            client = openAiClient.GetChatClient(model);
         }
         else
         {
-            client = new ChatClient(model ?? "gpt-4o-mini", credential);
+            client = new ChatClient(model, credential);
         }
 
         ChatMessage[] messages =
