@@ -10,6 +10,7 @@ using Hhs.TextNormalizerService.Application.Providers.Outline;
 using Hhs.TextNormalizerService.Application.Providers.Scraping;
 using Hhs.TextNormalizerService.Domain.Configuration;
 using Hhs.TextNormalizerService.Domain.Configuration.Providers.Outline;
+using Hhs.TextNormalizerService.Domain.Settings;
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Entities;
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Models;
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Repositories;
@@ -20,6 +21,7 @@ using HsnSoft.Base.Logging.Abstracts;
 using HsnSoft.Base.Text;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using Newtonsoft.Json;
 
@@ -34,9 +36,11 @@ public sealed class NormalizerOperationAppService(
     IOutlineProviderResolver outlineProviderResolver,
     OutlinePollingSettings outlinePollingSettings,
     RetryDelayCalculator retryDelayCalculator,
-    NormalizerRetrySettings serviceRetrySettings) : ApplicationServiceBase(provider)
+    NormalizerRetrySettings serviceRetrySettings,
+    IOptions<TextNormalizerSettings> normalizerSettings) : ApplicationServiceBase(provider)
 {
     private readonly IFrameworkLogger _logger = provider.GetRequiredService<IFrameworkLogger>();
+    private readonly TextNormalizerSettings _normalizerSettings = normalizerSettings.Value;
 
     public async Task CreateCustomerContentNormalizeRequestAsync(CustomerContentCreatedEto @event, Guid eventId, [CanBeNull] string correlationId, CancellationToken cancellationToken = default)
     {
@@ -390,6 +394,29 @@ public sealed class NormalizerOperationAppService(
 
         var item = request.Items.First(x => x.CustomerContentId == @event.CustomerContentIdForItem);
 
+        if (!_normalizerSettings.ForceReScrapeAndReOutlineForAnalysis)
+        {
+            var existingRequest = await customerContentRepository.GetByScopeKeyAndContentIdAsync(request.ScopeKey, item.CustomerContentId, cancellationToken);
+            if (existingRequest?.ScrapingStatus == StatusNames.Completed && existingRequest.ScrapingResult is not null)
+            {
+                await UpdateAnalysisItemAsync(
+                    request.Id,
+                    item.CustomerContentId,
+                    u => u.Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", StatusNames.ScrapingCompleted)
+                        .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentStep)}", EventNames.AnalysisItemScrapingCompleted)
+                        .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.ScrapingStatus)}", StatusNames.Completed)
+                        .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.ScrapingResult)}", existingRequest.ScrapingResult)
+                        .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.LastError)}", default(string))
+                        .Set(x => x.CurrentStep, EventNames.AnalysisItemScrapingCompleted),
+                    cancellationToken
+                );
+                await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+                    eventMessage: new AnalysisItemScrapingCompletedEto { AnalysisContentId = request.AnalysisContentId, CustomerContentIdForItem = @event.CustomerContentIdForItem }
+                );
+                return;
+            }
+        }
+
         try
         {
             await UpdateAnalysisItemAsync(
@@ -473,6 +500,35 @@ public sealed class NormalizerOperationAppService(
                     cancellationToken
                 );
                 return;
+            }
+
+            if (!_normalizerSettings.ForceReScrapeAndReOutlineForAnalysis)
+            {
+                CustomerContentNormalizedRequest existingRequest = await customerContentRepository.GetByScopeKeyAndContentIdAsync(analysisContentNormalizedRequest.ScopeKey, item.CustomerContentId, cancellationToken);
+                if (existingRequest?.OutlineStatus == StatusNames.Completed && existingRequest.OutlineResult is not null)
+                {
+                    await UpdateAnalysisItemAsync(
+                        analysisContentNormalizedRequest.Id,
+                        item.CustomerContentId,
+                        u => u.Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", StatusNames.OutlineCompleted)
+                            .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentStep)}", EventNames.AnalysisItemOutlineCompleted)
+                            .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineStatus)}", StatusNames.Completed)
+                            .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineResult)}", existingRequest.OutlineResult)
+                            .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.LastError)}", default(string))
+                            .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextRetryAtUtc)}", default(DateTime?))
+                            .Set(x => x.CurrentStep, EventNames.AnalysisItemOutlineCompleted),
+                        cancellationToken
+                    );
+                    await RecalculateAndUpdateAnalysisParentAsync(
+                        analysisContentNormalizedRequest.Id,
+                        EventNames.AnalysisItemOutlineCompleted,
+                        null
+                    );
+                    await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+                        eventMessage: new AnalysisItemOutlineCompletedEto { AnalysisContentId = analysisContentNormalizedRequest.AnalysisContentId }
+                    );
+                    return;
+                }
             }
 
             await UpdateAnalysisItemAsync(
