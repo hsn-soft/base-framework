@@ -26,13 +26,14 @@ public sealed class PuppeteerContentScraper(IAppConsoleLogger logger, IPuppeteer
 
         BaseScrapingService service = input.DomainKey switch
         {
-            "demo.techsummus.com" => throw new NotSupportedException("DOMAIN_SCRAPER_NOT_CONFIGURED: demo.techsummus.com"),
-            "www.tamindir.com"    => throw new NotSupportedException("DOMAIN_SCRAPER_NOT_CONFIGURED: www.tamindir.com"),
-            "www.t24.com.tr"      => throw new NotSupportedException("DOMAIN_SCRAPER_NOT_CONFIGURED: www.t24.com.tr"),
-            "www.cnbce.com"       => new CnbceScrapingService(targetUri, logger, puppeteerBrowser),
-            "www.diyetkolik.com"  => throw new NotSupportedException("DOMAIN_SCRAPER_NOT_CONFIGURED: www.diyetkolik.com"),
-            "www.instyle.com.tr"  => throw new NotSupportedException("DOMAIN_SCRAPER_NOT_CONFIGURED: www.instyle.com.tr"),
-            _                     => throw new NotSupportedException($"INVALID_SCRAPING_DOMAIN: {input.DomainKey}")
+            "demo.techsummus.com"    => new TechSummusDemoScrapingService(targetUri, logger, puppeteerBrowser),
+            "www.tamindir.com"       => new TamindirScrapingService(targetUri, logger, puppeteerBrowser),
+            "www.t24.com.tr"         => new T24ScrapingService(targetUri, logger, puppeteerBrowser),
+            "www.cnbce.com"          => new CnbceScrapingService(targetUri, logger, puppeteerBrowser),
+            "www.diyetkolik.com"     => new DiyetkolikScrapingService(targetUri, logger, puppeteerBrowser),
+            "www.instyle.com.tr"     => new InStyleScrapingService(targetUri, logger, puppeteerBrowser),
+            "www.boxofficeturkiye.com" => throw new NotSupportedException("DOMAIN_SCRAPER_NOT_CONFIGURED: www.boxofficeturkiye.com"),
+            _                        => throw new NotSupportedException($"INVALID_SCRAPING_DOMAIN: {input.DomainKey}")
         };
 
         return await service.RunAsync();
