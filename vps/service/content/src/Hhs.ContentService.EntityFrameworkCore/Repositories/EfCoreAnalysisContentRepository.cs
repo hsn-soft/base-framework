@@ -14,12 +14,21 @@ public sealed class EfCoreAnalysisContentRepository(
     ContentServiceDbContext dbContext
 ) : EfCoreGenericRepository<AnalysisContent, Guid>(provider, dbContext), IAnalysisContentRepository
 {
-    public async Task SetNormalizedReferenceAsync(Guid id, Guid normalizedRequestId)
+    public async Task SetNormalizedReferenceAsync(Guid id, Guid normalizedRequestId,string normalizeStatus, string normalizeCurrentStep)
         => await UpdateByExpressionAsync(x => x.Id == id && x.NormalizeRequestId == null,
             s => s
                 .SetProperty(a => a.NormalizeRequestId, normalizedRequestId)
-                .SetProperty(a => a.NormalizeStatus, StatusNames.Created)
-                .SetProperty(a => a.LastFacility, EventNames.CustomerContentNormalizeRequestCreated)
+                .SetProperty(a => a.NormalizeStatus, normalizeStatus)
+                .SetProperty(a => a.LastFacility, normalizeCurrentStep)
+        );
+
+    public async Task SetVideoGenerationApprovedAsync(Guid id) =>
+        await UpdateByExpressionAsync(x => x.Id == id && x.VideoRequestId == null,
+            s => s
+                .SetProperty(a => a.NormalizeStatus, NormalizeStatusNames.Completed)
+                .SetProperty(a => a.LastFacility, EventNames.NormalizerResultPublished)
+                .SetProperty(a => a.LastError, (string)null)
+                .SetProperty(a => a.VideoStatus, MediaStatusNames.Approved)
         );
 
     public async Task SetVideoReferenceAsync(Guid id, Guid videoRequestId)
@@ -28,15 +37,6 @@ public sealed class EfCoreAnalysisContentRepository(
                 .SetProperty(a => a.VideoRequestId, videoRequestId)
                 .SetProperty(a => a.VideoStatus, StatusNames.Created)
                 .SetProperty(a => a.LastFacility, EventNames.VideoRequestCreated)
-        );
-
-    public async Task SetVideoGenerationApprovedAsync(Guid id) =>
-        await UpdateByExpressionAsync(x => x.Id == id && x.VideoRequestId == null,
-            s => s
-                .SetProperty(a => a.NormalizeStatus, StatusNames.Completed)
-                .SetProperty(a => a.LastFacility, EventNames.NormalizerResultPublished)
-                .SetProperty(a => a.LastError, (string)null)
-                .SetProperty(a => a.VideoStatus, ContentStatusNames.Approved)
         );
 
     [ItemCanBeNull]

@@ -70,8 +70,8 @@ public sealed class NormalizerOperationRetryWorkerService(
                         x.Status == StatusNames.WaitingRetry);
 
                     var outlinePollingUpdate = Builders<CustomerContentNormalizedRequest>.Update
-                        .Set(x => x.Status, StatusNames.OutlineProviderPolling)
-                        .Set(x => x.OutlineStatus, StatusNames.Polling)
+                        .Set(x => x.Status, NormalizeStatusNames.OutlineProviderRequestPolling)
+                        .Set(x => x.OutlineStatus, OutlineStatusNames.Polling)
                         .Set(x => x.NextOutlinePollAtUtc, DateTime.UtcNow)
                         .Set(x => x.NextRetryAtUtc, (DateTime?)null)
                         .Set(x => x.LastError, null);
@@ -209,12 +209,12 @@ public sealed class NormalizerOperationRetryWorkerService(
                     if (item.CurrentStep == EventNames.OutlineProviderPollingStarted)
                     {
                         var pollingClaim = Builders<AnalysisContentNormalizedRequest>.Update
-                            .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", StatusNames.OutlineProviderPolling)
-                            .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineStatus)}", StatusNames.Polling)
+                            .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", NormalizeStatusNames.OutlineProviderRequestPolling)
+                            .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineStatus)}", OutlineStatusNames.Polling)
                             .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextOutlinePollAtUtc)}", DateTime.UtcNow)
                             .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextRetryAtUtc)}", (DateTime?)null)
                             .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.LastError)}", (string?)null)
-                            .Set(x => x.Status, StatusNames.OutlineProviderPolling)
+                            .Set(x => x.Status, NormalizeStatusNames.OutlineProviderRequestPolling)
                             .Set(x => x.CurrentStep, EventNames.OutlineProviderPollingStarted)
                             .Set(x => x.LastError, null);
 

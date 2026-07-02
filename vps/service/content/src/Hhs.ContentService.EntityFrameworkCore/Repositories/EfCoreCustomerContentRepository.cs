@@ -30,15 +30,36 @@ public sealed class EfCoreCustomerContentRepository(
         ]
     );
 
-    public async Task SetNormalizedReferenceAsync(Guid id, Guid normalizedRequestId)
+    public async Task<CustomerContent> CreateAsync(string scopeKey, string contentKey, string correlationId = null)
+    {
+        // Create draft
+        var draft = new CustomerContent(
+            id: Guid.CreateVersion7(),
+            scopeKey: scopeKey,
+            contentKey: contentKey,
+            correlationId: correlationId
+        );
+        draft.NormalizeStatus = NormalizeStatusNames.NotStarted;
+        draft.VideoStatus = MediaStatusNames.NotStarted;
+        draft.LastFacility = EventNames.CustomerContentCreated;
+
+        //Domain Rules
+        await ContentDuplicateControlAsync(scopeKey: draft.ScopeKey, draft.SlugKey);
+        _ = await InsertAsync(draft);
+        return draft;
+    }
+
+
+
+    public async Task SetNormalizedReferenceAsync(Guid id, Guid normalizedRequestId,string normalizeStatus, string normalizeCurrentStep)
         => await UpdateByExpressionAsync(x => x.Id == id && x.NormalizeRequestId == null,
             s => s
                 .SetProperty(a => a.NormalizeRequestId, normalizedRequestId)
-                .SetProperty(a => a.NormalizeStatus, StatusNames.Created)
-                .SetProperty(a => a.LastFacility, EventNames.CustomerContentNormalizeRequestCreated)
+                .SetProperty(a => a.NormalizeStatus, normalizeStatus)
+                .SetProperty(a => a.LastFacility, normalizeCurrentStep)
         );
 
-    public async Task SetScrapeTimeAsync(Guid id, DateTime? scrapeTime)
+    public async Task SetScrapeResultsAsync(Guid id, Guid normalizedRequestId,string normalizeStatus, string normalizeCurrentStep, DateTime? scrapeTime)
     {
         if (scrapeTime.HasValue && scrapeTime.Value == default)
         {
@@ -52,9 +73,19 @@ public sealed class EfCoreCustomerContentRepository(
 
         await UpdateByExpressionAsync(x => x.Id == id && x.ScrapReleaseTimeUtc == null,
             s => s
+                .SetProperty(a => a.NormalizeRequestId, normalizedRequestId)
+                .SetProperty(a => a.NormalizeStatus, normalizeStatus)
+                .SetProperty(a => a.LastFacility, normalizeCurrentStep)
                 .SetProperty(a => a.ScrapReleaseTimeUtc, scrapeTime)
         );
     }
+
+    public async Task SetNormalizedResultsAsync(Guid id, string normalizeStatus, string normalizeCurrentStep)
+        => await UpdateByExpressionAsync(x => x.Id == id && x.ScrapReleaseTimeUtc == null,
+            s => s
+                .SetProperty(a => a.NormalizeStatus, normalizeStatus)
+                .SetProperty(a => a.LastFacility, normalizeCurrentStep)
+        );
 
     public async Task SetVideoReferenceAsync(Guid id, Guid videoRequestId)
         => await UpdateByExpressionAsync(x => x.Id == id && x.VideoRequestId == null,
@@ -67,45 +98,24 @@ public sealed class EfCoreCustomerContentRepository(
     public async Task SetVideoGenerationApprovedAsync(Guid id) =>
         await UpdateByExpressionAsync(x => x.Id == id && x.VideoRequestId == null,
             s => s
-                .SetProperty(a => a.NormalizeStatus, StatusNames.Completed)
+                .SetProperty(a => a.NormalizeStatus, NormalizeStatusNames.Completed)
                 .SetProperty(a => a.LastFacility, EventNames.NormalizerResultPublished)
                 .SetProperty(a => a.LastError, (string)null)
-                .SetProperty(a => a.VideoStatus, ContentStatusNames.Approved)
+                .SetProperty(a => a.VideoStatus, MediaStatusNames.Approved)
         );
 
     public async Task SetVideoGenerationRejectedAsync(Guid id, [CanBeNull] string rejectReason) =>
         await UpdateByExpressionAsync(x => x.Id == id && x.VideoRequestId == null,
             s => s
-                .SetProperty(a => a.NormalizeStatus, StatusNames.Completed)
+                .SetProperty(a => a.NormalizeStatus, NormalizeStatusNames.Completed)
                 .SetProperty(a => a.LastFacility, EventNames.NormalizerResultPublished)
                 .SetProperty(a => a.LastError, rejectReason)
-                .SetProperty(a => a.VideoStatus, ContentStatusNames.Rejected)
+                .SetProperty(a => a.VideoStatus, MediaStatusNames.Rejected)
         );
 
-    public async Task SetVideoGenerationSkippedAsync(Guid id, string skipReason) =>
-        await UpdateByExpressionAsync(x => x.Id == id && x.VideoRequestId == null,
-            s => s
-                .SetProperty(a => a.NormalizeStatus, StatusNames.Completed)
-                .SetProperty(a => a.LastFacility, EventNames.NormalizerResultPublished)
-                .SetProperty(a => a.LastError, skipReason)
-                .SetProperty(a => a.VideoStatus, ContentStatusNames.Skipped)
-        );
 
-    public async Task<CustomerContent> CreateAsync(string scopeKey, string contentKey, string correlationId = null)
-    {
-        // Create draft
-        var draft = new CustomerContent(
-            id: Guid.CreateVersion7(),
-            scopeKey: scopeKey,
-            contentKey: contentKey,
-            correlationId: correlationId
-        );
 
-        //Domain Rules
-        await ContentDuplicateControlAsync(scopeKey: draft.ScopeKey, draft.SlugKey);
-        _ = await InsertAsync(draft);
-        return draft;
-    }
+
 
 
     public async Task<CustomerContent> GetByScopeKeyAndSlugKeyAsync(string scopeKey, string slugKey, CancellationToken cancellationToken = default)
@@ -136,7 +146,7 @@ public sealed class EfCoreCustomerContentRepository(
         return GetDbSet().Where(x =>
             x.ScopeKey == scopeKey
             && x.NormalizeStatus == StatusNames.Completed
-            && x.VideoStatus == ContentStatusNames.Rejected
+            && x.VideoStatus == MediaStatusNames.Rejected
             && x.CreationTime < statisticMinTime
             && x.ScrapReleaseTimeUtc != null
             && x.ScrapReleaseTimeUtc >= releaseMinDate

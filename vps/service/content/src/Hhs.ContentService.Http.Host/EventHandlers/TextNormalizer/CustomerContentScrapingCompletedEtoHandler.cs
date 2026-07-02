@@ -21,9 +21,6 @@ public class CustomerContentScrapingCompletedEtoHandler(
             nameof(CustomerContentScrapingCompletedEto)[..^"Eto".Length],
             @event.MessageId);
 
-        await _contentOperationService.HandleCustomerContentScrapeTimeAsync(
-            customerContentId: @event.Message.CustomerContentId,
-            scrapedReleaseTimeUtc: @event.Message.ScrapedReleaseTimeUtc
-        );
+        await _contentOperationService.HandleCustomerContentScrapeResultsAsync(@event.Message, cancellationToken);
     }
 }

@@ -1,6 +1,7 @@
 using Hhs.ContentService.Application.Infrastructure;
 using Hhs.ContentService.Application.Services;
 using Hhs.Shared.Contracts.Events;
+using Hhs.Shared.Helper;
 using Hhs.Shared.Helper.Enums;
 using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.Logging.Abstracts;
@@ -25,7 +26,9 @@ public class CustomerContentNormalizeRequestCreatedEtoHandler(
         await _contentOperationService.HandleNormalizedRequestReferenceAsync(
             refContentType: ContentType.CustomerContent,
             refContentId: @event.Message.CustomerContentId,
-            refNormalizeRequestId: @event.Message.CustomerContentNormalizeRequestId
+            refNormalizeRequestId: @event.Message.CustomerContentNormalizeRequestId,
+            normalizeStatus:@event.Message.NormalizeStatus,
+            normalizeCurrentStep:@event.Message.NormalizeCurrentStep
         );
     }
 }

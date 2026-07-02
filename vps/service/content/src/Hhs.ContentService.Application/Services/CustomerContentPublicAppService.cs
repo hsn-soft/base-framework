@@ -242,13 +242,24 @@ public sealed class CustomerContentPublicAppService(
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
                 message: $"CustomerContent created {input.ContentKey}",
-                reference: new { placedCustomerContent.ScopeKey, ClientDomain = customerVpSettingCheck.DomainName, input.ContentKey, RefContentId = placedCustomerContent.Id },
+                reference: new
+                {
+                    placedCustomerContent.ScopeKey,
+                    ClientDomain = customerVpSettingCheck.DomainName,
+                    input.ContentKey,
+                    RefContentId = placedCustomerContent.Id
+                },
                 facility: EventNames.CustomerContentCreated,
                 correlationId: placedCustomerContent.CorrelationId,
                 exception: null
             ));
 
-            result = new GetOrCreateCustomerContentResponseDto { ContentType = PublicContentType.CUSTOMER_CONTENT, ContentId = placedCustomerContent.Id, ContentStatus = PublicContentStatus.CREATED };
+            result = new GetOrCreateCustomerContentResponseDto
+            {
+                ContentType = PublicContentType.CUSTOMER_CONTENT,
+                ContentId = placedCustomerContent.Id,
+                ContentStatus = PublicContentStatus.CREATED
+            };
 
             // Add statistic record
             await customerContentVisitRepository.CreateAsync(
@@ -259,7 +270,13 @@ public sealed class CustomerContentPublicAppService(
             // Integration Event for TextNormalizerService
             await EventBus.PublishAsync(
                 correlationId: placedCustomerContent.CorrelationId,
-                eventMessage: new CustomerContentCreatedEto { ScopeKey = placedCustomerContent.ScopeKey, CustomerContentId = placedCustomerContent.Id, DomainName = customerVpSettingCheck.DomainName, DomainPath = input.ContentKey }
+                eventMessage: new CustomerContentCreatedEto
+                {
+                    ScopeKey = placedCustomerContent.ScopeKey,
+                    CustomerContentId = placedCustomerContent.Id,
+                    DomainName = customerVpSettingCheck.DomainName,
+                    DomainPath = input.ContentKey
+                }
             );
         }
 

@@ -25,7 +25,9 @@ public class AnalysisContentNormalizeRequestCreatedEtoHandler(
         await _contentOperationService.HandleNormalizedRequestReferenceAsync(
             refContentType: ContentType.AnalysisContent,
             refContentId: @event.Message.AnalysisContentId,
-            refNormalizeRequestId: @event.Message.AnalysisContentNormalizeRequestId
+            refNormalizeRequestId: @event.Message.AnalysisContentNormalizeRequestId,
+            normalizeStatus:@event.Message.NormalizeStatus,
+            normalizeCurrentStep:@event.Message.NormalizeCurrentStep
         );
     }
 }

@@ -21,6 +21,6 @@ public class NormalizerResultPublishedEtoHandler(
             nameof(NormalizerResultPublishedEto)[..^"Eto".Length],
             @event.MessageId);
 
-        await _contentOperationService.HandleNormalizerResultAsync(@event.Message, cancellationToken);
+        await _contentOperationService.HandleOutlineResultAsync(@event.Message, cancellationToken);
     }
 }

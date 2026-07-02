@@ -25,15 +25,15 @@ public sealed class ContentOperationService(
     private readonly IFrameworkLogger _logger = provider.GetRequiredService<IFrameworkLogger>();
     private readonly ContentOperationSettings _serviceSettings = serviceSettings?.Value ?? throw new ArgumentNullException(nameof(serviceSettings));
 
-    public async Task HandleNormalizedRequestReferenceAsync(ContentType refContentType, Guid refContentId, Guid refNormalizeRequestId)
+    public async Task HandleNormalizedRequestReferenceAsync(ContentType refContentType, Guid refContentId, Guid refNormalizeRequestId, string normalizeStatus, string normalizeCurrentStep)
     {
         switch (refContentType)
         {
             case ContentType.CustomerContent:
-                await customerContentRepository.SetNormalizedReferenceAsync(refContentId, refNormalizeRequestId);
+                await customerContentRepository.SetNormalizedReferenceAsync(refContentId, refNormalizeRequestId, normalizeStatus, normalizeCurrentStep);
                 break;
             case ContentType.AnalysisContent:
-                await analysisContentRepository.SetNormalizedReferenceAsync(refContentId, refNormalizeRequestId);
+                await analysisContentRepository.SetNormalizedReferenceAsync(refContentId, refNormalizeRequestId, normalizeStatus, normalizeCurrentStep);
                 break;
             case ContentType.None:
             default:
@@ -41,10 +41,15 @@ public sealed class ContentOperationService(
         }
     }
 
-    public async Task HandleCustomerContentScrapeTimeAsync(Guid customerContentId, DateTime? scrapedReleaseTimeUtc)
-        => await customerContentRepository.SetScrapeTimeAsync(customerContentId, scrapedReleaseTimeUtc);
+    public async Task HandleCustomerContentScrapeResultsAsync(CustomerContentScrapingCompletedEto @event, CancellationToken cancellationToken = default) =>
+        await customerContentRepository.SetScrapeResultsAsync(
+            @event.CustomerContentId,
+            @event.CustomerContentNormalizeRequestId,
+            @event.NormalizeStatus,
+            @event.NormalizeCurrentStep,
+            @event.ScrapedReleaseTimeUtc);
 
-    public async Task HandleNormalizerResultAsync(NormalizerResultPublishedEto @event, CancellationToken cancellationToken = default)
+    public async Task HandleOutlineResultAsync(NormalizerResultPublishedEto @event, CancellationToken cancellationToken = default)
     {
         bool shouldPublishEvent = false;
         string? scopeKey = null;
@@ -57,22 +62,17 @@ public sealed class ContentOperationService(
 
                     if (entity != null && entity.NormalizeStatus != StatusNames.Completed)
                     {
-                        if (@event.NormalizeStatus == StatusNames.OutlineSkipped)
+                        if (@event.NormalizeStatus == NormalizeStatusNames.OutlineSkipped)
                         {
-                            _logger.FrameworkInfoLog(LogHelper.Generate(
-                                message: "CustomerContent normalized skipped",
-                                reference: new { entity.ScopeKey, RefContentId = entity.Id, RefNormalizedRequestId = entity.NormalizeRequestId },
-                                facility: "CUSTOMER_CONTENT_NORMALIZED_SKIPPED",
-                                correlationId: entity.CorrelationId,
-                                exception: null
-                            ));
-
-                            await customerContentRepository.SetVideoGenerationSkippedAsync(entity.Id, "CUSTOMER_CONTENT_OUTLINE_SKIPPED");
+                            await customerContentRepository.SetNormalizedResultsAsync(
+                                entity.Id,
+                                @event.NormalizeStatus,
+                                @event.NormalizeCurrentStep);
 
                             _logger.FrameworkInfoLog(LogHelper.Generate(
                                 message: "CustomerContent video generation rejected",
                                 reference: new { entity.ScopeKey, RefContentId = entity.Id, RefNormalizedRequestId = entity.NormalizeRequestId },
-                                facility: "CUSTOMER_CONTENT_OUTLINE_SKIPPED",
+                                facility: EventNames.CustomerContentOutlineSkipped,
                                 correlationId: entity.CorrelationId,
                                 exception: null
                             ));
@@ -83,7 +83,7 @@ public sealed class ContentOperationService(
                         _logger.FrameworkInfoLog(LogHelper.Generate(
                             message: "CustomerContent normalized success",
                             reference: new { entity.ScopeKey, RefContentId = entity.Id, RefNormalizedRequestId = entity.NormalizeRequestId },
-                            facility: "CUSTOMER_CONTENT_NORMALIZED_SUCCESS",
+                            facility: EventNames.NormalizerResultPublished,
                             correlationId: entity.CorrelationId,
                             exception: null
                         ));
@@ -96,7 +96,7 @@ public sealed class ContentOperationService(
                             _logger.FrameworkInfoLog(LogHelper.Generate(
                                 message: "CustomerContent video generation approved",
                                 reference: new { entity.ScopeKey, RefContentId = entity.Id, RefNormalizedRequestId = entity.NormalizeRequestId },
-                                facility: "CUSTOMER_CONTENT_VIDEO_GENERATION_APPROVED",
+                                facility: EventNames.VideoGenerationApproved,
                                 correlationId: entity.CorrelationId,
                                 exception: null
                             ));
@@ -135,7 +135,7 @@ public sealed class ContentOperationService(
                         _logger.FrameworkInfoLog(LogHelper.Generate(
                             message: "Analysis Content normalized success",
                             reference: new { entity.ScopeKey, RefContentId = entity.Id, RefNormalizedRequestId = entity.NormalizeRequestId },
-                            facility: "ANALYSIS_CONTENT_NORMALIZED_SUCCESS",
+                            facility: EventNames.NormalizerResultPublished,
                             correlationId: entity.CorrelationId,
                             exception: null
                         ));
@@ -145,7 +145,7 @@ public sealed class ContentOperationService(
                         _logger.FrameworkInfoLog(LogHelper.Generate(
                             message: "Analysis Content video generation approved",
                             reference: new { entity.ScopeKey, RefContentId = entity.Id, RefNormalizedRequestId = entity.NormalizeRequestId },
-                            facility: "ANALYSIS_CONTENT_VIDEO_GENERATION_APPROVED",
+                            facility: EventNames.VideoGenerationApproved,
                             correlationId: entity.CorrelationId,
                             exception: null
                         ));

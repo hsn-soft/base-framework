@@ -18,6 +18,9 @@ public sealed record CustomerContentNormalizeRequestCreatedEto : IIntegrationEve
 {
     public Guid CustomerContentId { get; init; }
     public Guid CustomerContentNormalizeRequestId { get; init; }
+
+    public string NormalizeStatus { get; init; } = default!;
+    public string NormalizeCurrentStep { get; init; } = default!;
 }
 public sealed record CustomerContentScrapingStartedEto : IIntegrationEventMessage
 {
@@ -27,9 +30,12 @@ public sealed record CustomerContentScrapingStartedEto : IIntegrationEventMessag
 public sealed record CustomerContentScrapingCompletedEto : IIntegrationEventMessage
 {
     public Guid CustomerContentId { get; init; }
-    public DateTime? ScrapedReleaseTimeUtc { get; init; }
 
     public Guid CustomerContentNormalizeRequestId { get; init; }
+    public DateTime? ScrapedReleaseTimeUtc { get; init; }
+
+    public string NormalizeStatus { get; init; } = default!;
+    public string NormalizeCurrentStep { get; init; } = default!;
 }
 
 public sealed record CustomerContentOutlineStartedEto : IIntegrationEventMessage
@@ -64,6 +70,9 @@ public sealed record AnalysisContentNormalizeRequestCreatedEto : IIntegrationEve
 {
     public Guid AnalysisContentId { get; init; }
     public Guid AnalysisContentNormalizeRequestId { get; init; }
+
+    public string NormalizeStatus { get; init; } = default!;
+    public string NormalizeCurrentStep { get; init; } = default!;
 }
 
 public sealed record AnalysisItemScrapingStartedEto : IIntegrationEventMessage
@@ -119,6 +128,7 @@ public sealed record NormalizerResultPublishedEto : IIntegrationEventMessage
 
     public Guid NormalizeRequestId { get; init; }
     public string NormalizeStatus { get; init; } = default!;
+    public string NormalizeCurrentStep { get; init; } = default!;
 }
 
 public sealed record VideoGenerationApprovedEto : IIntegrationEventMessage

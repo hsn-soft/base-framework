@@ -6,11 +6,12 @@ namespace Hhs.ContentService.Domain.ContentDomain.Repositories;
 
 public interface IAnalysisContentRepository : IGenericRepository<AnalysisContent, Guid>
 {
-    Task SetNormalizedReferenceAsync(Guid id, Guid normalizedRequestId);
+    Task SetNormalizedReferenceAsync(Guid id, Guid normalizedRequestId,string normalizeStatus, string normalizeCurrentStep);
+
+    Task SetVideoGenerationApprovedAsync(Guid id);
 
     Task SetVideoReferenceAsync(Guid id, Guid videoRequestId);
 
-    Task SetVideoGenerationApprovedAsync(Guid id);
 
     [ItemCanBeNull]
     Task<AnalysisContent> GetByIdWithItemsAsync(Guid id, CancellationToken cancellationToken = default);

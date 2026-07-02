@@ -6,17 +6,20 @@ namespace Hhs.ContentService.Domain.ContentDomain.Repositories;
 
 public interface ICustomerContentRepository : IGenericRepository<CustomerContent, Guid>
 {
-    Task SetNormalizedReferenceAsync(Guid id, Guid normalizedRequestId);
-    Task SetScrapeTimeAsync(Guid id, DateTime? scrapeTime);
+    Task<CustomerContent> CreateAsync([NotNull] string scopeKey, [NotNull] string contentKey, [CanBeNull] string correlationId = null);
 
-    Task SetVideoReferenceAsync(Guid id, Guid videoRequestId);
+
+
+
+    Task SetNormalizedReferenceAsync(Guid id, Guid normalizedRequestId,string normalizeStatus, string normalizeCurrentStep);
+    Task SetScrapeResultsAsync(Guid id, Guid normalizedRequestId,string normalizeStatus, string normalizeCurrentStep, DateTime? scrapeTime);
+    Task SetNormalizedResultsAsync(Guid id, string normalizeStatus, string normalizeCurrentStep);
+
     Task SetVideoGenerationApprovedAsync(Guid id);
     Task SetVideoGenerationRejectedAsync(Guid id, [CanBeNull] string rejectReason);
-    Task SetVideoGenerationSkippedAsync(Guid id, [CanBeNull] string skipReason);
 
+    Task SetVideoReferenceAsync(Guid id, Guid videoRequestId);
 
-
-    Task<CustomerContent> CreateAsync([NotNull] string scopeKey, [NotNull] string contentKey, [CanBeNull] string correlationId = null);
 
 
     [ItemCanBeNull]
