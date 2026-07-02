@@ -1,7 +1,6 @@
 using Hhs.Shared.Helper.Enums;
 using Hhs.Shared.Helper.Utils;
 using Hhs.Shared.Localization;
-using Hhs.TextNormalizerService.Domain.Enums;
 using Hhs.TextNormalizerService.Domain.SettingDomain.Consts;
 using HsnSoft.Base;
 using HsnSoft.Base.Domain.Entities.Auditing;
@@ -23,9 +22,7 @@ public class CustomerVpSetting : AuditedEntity<Guid>, ISoftDelete, IScopeSubscri
 
     public bool IsScrapingOperationActive { get; set; }
     public bool IsOutlineOperationActive { get; set; }
-    public TextNormalizeProviderTypes ContentOutlineProvider { get; set; }
     [CanBeNull] public string ContentOutlinePrompt { get; set; }
-    public TextNormalizeProviderTypes AnalysisOutlineProvider { get; set; }
     [CanBeNull] public string AnalysisOutlineContentPrompt { get; set; }
     [CanBeNull] public string AnalysisOutlineIntroPrompt { get; set; }
     [CanBeNull] public string AnalysisOutlineOutroPrompt { get; set; }

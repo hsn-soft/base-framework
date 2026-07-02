@@ -1,7 +1,7 @@
 using Hhs.Shared.Helper.Consts;
 using Hhs.Shared.Helper.Enums;
+using Hhs.Shared.Helper.Providers;
 using Hhs.Shared.Helper.Utils;
-using Hhs.TextNormalizerService.Domain.Enums;
 using Hhs.TextNormalizerService.Domain.SettingDomain.Entities;
 using Hhs.TextNormalizerService.MongoDb.Context;
 using HsnSoft.Base.Logging.Abstracts;
@@ -19,7 +19,7 @@ public static class CustomerVpSettingSeeder
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.Scenario01CustomerId),
             domainName: "tst01.scenario.com",
-            outlineProviderKey: "outline-fast",
+            outlineProviderKey: ProviderKeys.OutlineFast,
             analysisOutlineContentPrompt: "test outline content prompt",
             analysisOutlineIntroPrompt: "test outline intro prompt",
             analysisOutlineOutroPrompt: "test outro prompt"
@@ -28,7 +28,7 @@ public static class CustomerVpSettingSeeder
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.Scenario02CustomerId),
             domainName: "tst02.scenario.com",
-            outlineProviderKey: "outline-fast",
+            outlineProviderKey: ProviderKeys.OutlineFast,
             analysisOutlineContentPrompt: "test outline content prompt",
             analysisOutlineIntroPrompt: "test outline intro prompt",
             analysisOutlineOutroPrompt: "test outro prompt"
@@ -37,7 +37,7 @@ public static class CustomerVpSettingSeeder
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.Scenario03CustomerId),
             domainName: "tst03.scenario.com",
-            outlineProviderKey: "outline-queue",
+            outlineProviderKey: ProviderKeys.OutlineQueue,
             analysisOutlineContentPrompt: "test outline content prompt",
             analysisOutlineIntroPrompt: "test outline intro prompt",
             analysisOutlineOutroPrompt: "test outro prompt"
@@ -46,7 +46,7 @@ public static class CustomerVpSettingSeeder
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.Scenario04CustomerId),
             domainName: "tst04.scenario.com",
-            outlineProviderKey: "outline-queue",
+            outlineProviderKey: ProviderKeys.OutlineQueue,
             analysisOutlineContentPrompt: "test outline content prompt",
             analysisOutlineIntroPrompt: "test outline intro prompt",
             analysisOutlineOutroPrompt: "test outro prompt"
@@ -55,7 +55,7 @@ public static class CustomerVpSettingSeeder
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.Scenario05CustomerId),
             domainName: "tst05.scenario.com",
-            outlineProviderKey: "outline-fast",
+            outlineProviderKey: ProviderKeys.OutlineFast,
             analysisOutlineContentPrompt: "test outline content prompt",
             analysisOutlineIntroPrompt: "test outline intro prompt",
             analysisOutlineOutroPrompt: "test outro prompt"
@@ -64,7 +64,7 @@ public static class CustomerVpSettingSeeder
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.Scenario06CustomerId),
             domainName: "tst06.scenario.com",
-            outlineProviderKey: "outline-queue",
+            outlineProviderKey: ProviderKeys.OutlineQueue,
             analysisOutlineContentPrompt: "test outline content prompt",
             analysisOutlineIntroPrompt: "test outline intro prompt",
             analysisOutlineOutroPrompt: "test outro prompt"
@@ -77,7 +77,7 @@ public static class CustomerVpSettingSeeder
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.TechSummusCustomerId),
             domainName: "demo.techsummus.com",
-            outlineProviderKey: "outline-fast",
+            outlineProviderKey: ProviderKeys.OutlineOpenAi,
             analysisOutlineContentPrompt: "Sen bir haber sitesinin anchorman'i olarak çalışıyorsun. " +
                                           "Sana teknoloji ile alakalı haber başlığı ve kısa bir içerik veriyorum ve " +
                                           "sen Bu içeriği haber sitesinde sunulmak üzere 3 cümle ile yeniden yorumluyorsun. Haber şu şekilde. ",
@@ -100,7 +100,7 @@ public static class CustomerVpSettingSeeder
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.T24CustomerId),
             domainName: "t24.com.tr",
-            outlineProviderKey: "outline-fast",
+            outlineProviderKey: ProviderKeys.OutlineOpenAi,
             analysisOutlineContentPrompt: "Sen bir haber sitesinin anchorman'i olarak çalışıyorsun. " +
                                           "Sana ilgili haberin başlığını ve içeriğini sağlıyorum. " +
                                           "sen Bu içeriği haber sitesinde sunulmak üzere 3 cümle ile yeniden yorumluyorsun. " +
@@ -121,7 +121,7 @@ public static class CustomerVpSettingSeeder
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.TamIndirCustomerId),
             domainName: "tamindir.com",
-            outlineProviderKey: "outline-fast",
+            outlineProviderKey: ProviderKeys.OutlineOpenAi,
             analysisOutlineContentPrompt: "Sen bir teknoloji sitesinin anchorman'i olarak çalışıyorsun. " +
                                           "Sana ilgili teknoloji haberinin başlığını ve içeriğini sağlıyorum. " +
                                           "sen Bu içeriği bu sitede sunulmak üzere 3 cümle ile yeniden yorumluyorsun. " +
@@ -142,7 +142,7 @@ public static class CustomerVpSettingSeeder
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.SonDakikaCustomerId),
             domainName: "sondakika.com",
-            outlineProviderKey: "outline-fast",
+            outlineProviderKey: ProviderKeys.OutlineOpenAi,
             analysisOutlineContentPrompt: "Merhaba, sırasıyla sana haber başlıkları vereceğim. Haberlerin sunulduğu sitenin adı SONDAKIKA.com. " +
                                           "Bu haber sitesinde, başlık içeriklerini değiştirmeden, günün öne çıkan bilgilerinin SONDAKIKA.com'de paylaşılacağına dair bir giriş cümlesi eklemeni, " +
                                           "başlıklar arası geçişleri bir haber spikeri gibi sunup, sonunda gündemi takip etmek için SONDAKIKA.com'un takip edilmesi gerektiğine dair bir cümle eklemeni istiyorum.",
@@ -157,7 +157,7 @@ public static class CustomerVpSettingSeeder
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.TechnoTodayCustomerId),
             domainName: "technotoday.com.tr",
-            outlineProviderKey: "outline-fast",
+            outlineProviderKey: ProviderKeys.OutlineOpenAi,
             analysisOutlineContentPrompt: "Sen bir haber sitesinin anchorman'i olarak çalışıyorsun. " +
                                           "Sana teknoloji ile alakalı haber başlığı ve kısa bir içerik veriyorum ve " +
                                           "sen Bu içeriği haber sitesinde sunulmak üzere 3 cümle ile yeniden yorumluyorsun. " +
@@ -181,7 +181,7 @@ public static class CustomerVpSettingSeeder
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.KisaDalgaCustomerId),
             domainName: "kisadalga.net",
-            outlineProviderKey: "outline-fast",
+            outlineProviderKey: ProviderKeys.OutlineOpenAi,
             analysisOutlineContentPrompt: "Merhaba, sırasıyla sana haber başlıkları vereceğim. Haberlerin sunulduğu sitenin adı KISADALGA.net. " +
                                           "Bu haber sitesinde, başlık içeriklerini değiştirmeden, günün öne çıkan bilgilerinin KISADALGA.net'de paylaşılacağına dair bir giriş cümlesi eklemeni, " +
                                           "başlıklar arası geçişleri bir haber spikeri gibi sunup, sonunda gündemi takip etmek için KISADALGA.net'in takip edilmesi gerektiğine dair bir cümle eklemeni istiyorum.",
@@ -196,7 +196,7 @@ public static class CustomerVpSettingSeeder
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.DunyaCustomerId),
             domainName: "dunya.com",
-            outlineProviderKey: "outline-fast",
+            outlineProviderKey: ProviderKeys.OutlineOpenAi,
             analysisOutlineContentPrompt: "Merhaba, sırasıyla sana haber başlıkları vereceğim. Haberlerin sunulduğu sitenin adı DÜNYA.com. " +
                                           "Ekonomi haberleri içeren bu haber sitesinde, başlık içeriklerini değiştirmeden, günün öne çıkan bilgilerinin DÜNYA.com'da paylaşılacağına dair bir giriş cümlesi eklemeni, " +
                                           "başlıklar arası geçişleri bir haber spikeri gibi sunup, sonunda gündemi takip etmek için DÜNYA.com'un takip edilmesi gerektiğine dair bir cümle eklemeni istiyorum.",
@@ -211,7 +211,7 @@ public static class CustomerVpSettingSeeder
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.BoxofficeCustomerId),
             domainName: "boxofficeturkiye.com",
-            outlineProviderKey: "outline-fast",
+            outlineProviderKey: ProviderKeys.OutlineOpenAi,
             analysisOutlineContentPrompt: "Merhaba, sırasıyla sana haber başlıkları vereceğim. Haberlerin sunulduğu sitenin adı boxofficeturkiye.com. " +
                                           "Bu haber sitesinde, başlık içeriklerini değiştirmeden, günün öne çıkan bilgilerinin boxofficeturkiye.com'da paylaşılacağına dair bir giriş cümlesi eklemeni, " +
                                           "başlıklar arası geçişleri bir haber spikeri gibi sunup, sonunda gündemi takip etmek için boxofficeturkiye.com'un takip edilmesi gerektiğine dair bir cümle eklemeni istiyorum.",
@@ -226,7 +226,7 @@ public static class CustomerVpSettingSeeder
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.DiyetKolikCustomerId),
             domainName: "diyetkolik.com",
-            outlineProviderKey: "outline-fast",
+            outlineProviderKey: ProviderKeys.OutlineOpenAi,
             analysisOutlineContentPrompt: "Merhaba, sırasıyla sana içerikler sağlayacağım. Bu içeriklerin yer aldığı websitenin adı diyetkolik.com. " +
                                           "İçerik başlıklarını değiştirmeden, günün öne çıkan içeriklerin diyetkolik.com'da paylaşılacağına dair bir giriş cümlesi eklemeni, " +
                                           "başlıklar arası geçişleri yaptıktan sonra, en sonunda diyet ve sağlık içerikleri için diyetkolik.com'un takip edilmesi gerektiğine dair bir cümle eklemeni istiyorum.",
@@ -245,7 +245,7 @@ public static class CustomerVpSettingSeeder
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.InStyleCustomerId),
             domainName: "instyle.com.tr",
-            outlineProviderKey: "outline-fast",
+            outlineProviderKey: ProviderKeys.OutlineOpenAi,
             analysisOutlineContentPrompt: "Merhaba, sırasıyla sana içerikler sağlayacağım. Bu içeriklerin yer aldığı websitenin adı instyle.com.tr " +
                                           "İçerik başlıklarını değiştirmeden, günün öne çıkan içeriklerinin instyle.com.tr'de paylaşılacağına dair bir giriş cümlesi eklemeni, " +
                                           "başlıklar arası geçişleri yaptıktan sonra, en sonunda moda ve lifestyle içerikleri için instyle.com.tr'nin takip edilmesi gerektiğine dair bir cümle eklemeni istiyorum.",
@@ -264,7 +264,7 @@ public static class CustomerVpSettingSeeder
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.HaberturkCustomerId),
             domainName: "haberturk.com",
-            outlineProviderKey: "outline-fast",
+            outlineProviderKey: ProviderKeys.OutlineOpenAi,
             analysisOutlineContentPrompt: "Merhaba, sırasıyla sana haber başlıkları vereceğim. Haberlerin sunulduğu sitenin adı HABERTURK.com. " +
                                           "Bu haber sitesinde, başlık içeriklerini değiştirmeden, günün öne çıkan bilgilerinin HABERTURK.com'de paylaşılacağına dair bir giriş cümlesi eklemeni, " +
                                           "başlıklar arası geçişleri bir haber spikeri gibi sunup, sonunda gündemi takip etmek için HABERTURK.com'un takip edilmesi gerektiğine dair bir cümle eklemeni istiyorum.",
@@ -279,7 +279,7 @@ public static class CustomerVpSettingSeeder
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.BloomberghtCustomerId),
             domainName: "bloomberght.com",
-            outlineProviderKey: "outline-fast",
+            outlineProviderKey: ProviderKeys.OutlineOpenAi,
             analysisOutlineContentPrompt: "Merhaba, sırasıyla sana haber başlıkları vereceğim. Haberlerin sunulduğu sitenin adı BLOOMBERGHT.com. " +
                                           "Bu haber sitesinde, başlık içeriklerini değiştirmeden, günün öne çıkan bilgilerinin BLOOMBERGHT.com'de paylaşılacağına dair bir giriş cümlesi eklemeni, " +
                                           "başlıklar arası geçişleri bir haber spikeri gibi sunup, sonunda gündemi takip etmek için BLOOMBERGHT.com'un takip edilmesi gerektiğine dair bir cümle eklemeni istiyorum.",
@@ -294,7 +294,7 @@ public static class CustomerVpSettingSeeder
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.CnbceCustomerId),
             domainName: "cnbce.com",
-            outlineProviderKey: "outline-fast",
+            outlineProviderKey: ProviderKeys.OutlineOpenAi,
             analysisOutlineContentPrompt: "Sen bir haber sitesinin anchorman'i olarak çalışıyorsun. " +
                                           "Sana ilgili haberin başlığını ve içeriğini sağlıyorum. " +
                                           "sen Bu içeriği haber sitesinde sunulmak üzere 3 cümle ile yeniden yorumluyorsun. " +
@@ -340,7 +340,6 @@ public static class CustomerVpSettingSeeder
         {
             IsScrapingOperationActive = true,
             IsOutlineOperationActive = true,
-            ContentOutlineProvider = TextNormalizeProviderTypes.OPEN_AI,
             ContentOutlinePrompt = string.IsNullOrWhiteSpace(contentOutlinePrompt)
                 ? """
                   Sen deneyimli bir haber editörüsün. Sana bir haber metni verilecek.
@@ -352,7 +351,6 @@ public static class CustomerVpSettingSeeder
                   - Summary: Yaklaşık 50 kelimeden oluşan Haber Özeti
                   """
                 : contentOutlinePrompt,
-            AnalysisOutlineProvider = TextNormalizeProviderTypes.OPEN_AI,
             AnalysisOutlineContentPrompt = analysisOutlineContentPrompt,
             AnalysisOutlineIntroPrompt = analysisOutlineIntroPrompt,
             AnalysisOutlineOutroPrompt = analysisOutlineOutroPrompt,
