@@ -582,7 +582,7 @@ public sealed class NormalizerOperationAppService(
                     RefNormalizedRequestId = analysisContentNormalizedRequest.Id,
                     ScopeKey = analysisContentNormalizedRequest.ScopeKey,
                     InputText = outlineInputText,
-                    InputPrompt = analysisVpSetting?.AnalysisOutlineContentPrompt ?? string.Empty
+                    InputPrompt = analysisVpSetting?.AnalysisOutlineContentPrompt
                 }
             );
         }
@@ -624,6 +624,11 @@ public sealed class NormalizerOperationAppService(
             {
                 // dummy response
                 response = new OutlineCreateResponse { IsProcessed = true, OutlinedData = @event.InputText };
+            }
+
+            if (response.IsProcessFailed)
+            {
+                throw new InvalidOperationException("OUTLINE_PROVIDER_PROCESS_FAILED: " + response.ErrorMessage);
             }
 
             if (outlineProvider.Capabilities.ExecutionMode == ProviderExecutionMode.ImmediateResult
