@@ -36,7 +36,7 @@ public sealed class EfCoreAnalysisContentRepository(
                 .SetProperty(a => a.NormalizeStatus, StatusNames.Completed)
                 .SetProperty(a => a.LastFacility, EventNames.NormalizerResultPublished)
                 .SetProperty(a => a.LastError, (string)null)
-                .SetProperty(a => a.VideoStatus, StatusNames.Approved)
+                .SetProperty(a => a.VideoStatus, ContentStatusNames.Approved)
         );
 
     [ItemCanBeNull]

@@ -53,7 +53,7 @@ public sealed class VideoOperationRetryWorkerService(
 
                 if (request.CurrentStep == EventNames.AudioProviderRequestStarted)
                 {
-                    request.Status = StatusNames.AudioProviderRequestRetrying;
+                    request.Status = AudioStatusNames.AudioProviderRequestRetrying;
 
                     await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
                         eventMessage: new AudioProviderRequestStartedEto { AudioRequestId = request.Id, }
@@ -74,7 +74,7 @@ public sealed class VideoOperationRetryWorkerService(
                 }
                 else if (request.CurrentStep == EventNames.AudioProviderPollingStarted)
                 {
-                    request.Status = StatusNames.AudioProviderPolling;
+                    request.Status = AudioStatusNames.AudioProviderPolling;
                     request.NextProviderPollAtUtc = DateTime.UtcNow;
                     pollingRetry = true;
                 }
@@ -213,7 +213,7 @@ public sealed class VideoOperationRetryWorkerService(
                 }
                 else if (request.CurrentStep == EventNames.VideoProviderPollingStarted)
                 {
-                    request.Status = StatusNames.VideoProviderPolling;
+                    request.Status = VideoStatusNames.VideoProviderPolling;
                     request.NextProviderPollAtUtc = DateTime.UtcNow;
                     pollingRetry = true;
                 }

@@ -79,12 +79,14 @@ public sealed class NormalizerOperationAppService(
 
             entity.SourceEventId = eventId;
             entity.Status = StatusNames.Created;
-            entity.CurrentStep = EventNames.CustomerContentCreated;
+            entity.CurrentStep = EventNames.CustomerContentNormalizeRequestCreated;
+            entity.ScrapingStatus = StatusNames.NotStarted;
+            entity.OutlineStatus = StatusNames.NotStarted;
 
             await customerContentRepository.InsertAsync(entity, cancellationToken);
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
-                message: EventNames.CustomerContentCreated,
+                message: EventNames.CustomerContentNormalizeRequestCreated,
                 reference: new
                 {
                     ScopeKey = entity.ScopeKey,
@@ -93,7 +95,7 @@ public sealed class NormalizerOperationAppService(
                     RefContentId = entity.CustomerContentId,
                     RefNormalizedRequestId = entity.Id
                 },
-                facility: EventNames.CustomerContentCreated,
+                facility: EventNames.CustomerContentNormalizeRequestCreated,
                 correlationId: correlationId,
                 exception: null
             ));

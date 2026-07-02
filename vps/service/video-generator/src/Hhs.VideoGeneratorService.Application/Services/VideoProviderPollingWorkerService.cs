@@ -27,7 +27,7 @@ public sealed class VideoProviderPollingWorkerService(
         var options = new ListQueryOptions<VideoRequest>
         {
             Filter = x =>
-                x.Status == StatusNames.VideoProviderPolling &&
+                x.Status == VideoStatusNames.VideoProviderPolling &&
                 x.NextProviderPollAtUtc != null &&
                 x.NextProviderPollAtUtc <= now &&
                 x.VideoProviderTrackingId != null,
@@ -121,7 +121,7 @@ public sealed class VideoProviderPollingWorkerService(
 
                 request.ProviderPollingCount++;
                 request.NextProviderPollAtUtc = null;
-                request.Status = StatusNames.VideoProviderCompleted;
+                request.Status = VideoStatusNames.VideoProviderCompleted;
                 request.CurrentStep = EventNames.VideoProviderCompleted;
                 request.LastError = null;
 
@@ -178,7 +178,7 @@ public sealed class VideoProviderPollingWorkerService(
     {
         var predicate = (Expression<Func<VideoRequest, bool>>)(x =>
             x.Id == videoRequestId &&
-            x.Status == StatusNames.VideoProviderPolling &&
+            x.Status == VideoStatusNames.VideoProviderPolling &&
             x.NextProviderPollAtUtc != null &&
             x.NextProviderPollAtUtc <= now &&
             x.VideoProviderTrackingId != null);

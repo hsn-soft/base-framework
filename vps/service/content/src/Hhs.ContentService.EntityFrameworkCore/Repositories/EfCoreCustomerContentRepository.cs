@@ -35,7 +35,7 @@ public sealed class EfCoreCustomerContentRepository(
             s => s
                 .SetProperty(a => a.NormalizeRequestId, normalizedRequestId)
                 .SetProperty(a => a.NormalizeStatus, StatusNames.Created)
-                .SetProperty(a => a.LastFacility, EventNames.AnalysisContentNormalizeRequestCreated)
+                .SetProperty(a => a.LastFacility, EventNames.CustomerContentNormalizeRequestCreated)
         );
 
     public async Task SetScrapeTimeAsync(Guid id, DateTime? scrapeTime)
@@ -70,7 +70,7 @@ public sealed class EfCoreCustomerContentRepository(
                 .SetProperty(a => a.NormalizeStatus, StatusNames.Completed)
                 .SetProperty(a => a.LastFacility, EventNames.NormalizerResultPublished)
                 .SetProperty(a => a.LastError, (string)null)
-                .SetProperty(a => a.VideoStatus, StatusNames.Approved)
+                .SetProperty(a => a.VideoStatus, ContentStatusNames.Approved)
         );
 
     public async Task SetVideoGenerationRejectedAsync(Guid id, [CanBeNull] string rejectReason) =>
@@ -79,7 +79,7 @@ public sealed class EfCoreCustomerContentRepository(
                 .SetProperty(a => a.NormalizeStatus, StatusNames.Completed)
                 .SetProperty(a => a.LastFacility, EventNames.NormalizerResultPublished)
                 .SetProperty(a => a.LastError, rejectReason)
-                .SetProperty(a => a.VideoStatus, StatusNames.Rejected)
+                .SetProperty(a => a.VideoStatus, ContentStatusNames.Rejected)
         );
 
     public async Task SetVideoGenerationSkippedAsync(Guid id, string skipReason) =>
@@ -88,7 +88,7 @@ public sealed class EfCoreCustomerContentRepository(
                 .SetProperty(a => a.NormalizeStatus, StatusNames.Completed)
                 .SetProperty(a => a.LastFacility, EventNames.NormalizerResultPublished)
                 .SetProperty(a => a.LastError, skipReason)
-                .SetProperty(a => a.VideoStatus, StatusNames.Skipped)
+                .SetProperty(a => a.VideoStatus, ContentStatusNames.Skipped)
         );
 
     public async Task<CustomerContent> CreateAsync(string scopeKey, string contentKey, string correlationId = null)
@@ -136,7 +136,7 @@ public sealed class EfCoreCustomerContentRepository(
         return GetDbSet().Where(x =>
             x.ScopeKey == scopeKey
             && x.NormalizeStatus == StatusNames.Completed
-            && x.VideoStatus == StatusNames.Rejected
+            && x.VideoStatus == ContentStatusNames.Rejected
             && x.CreationTime < statisticMinTime
             && x.ScrapReleaseTimeUtc != null
             && x.ScrapReleaseTimeUtc >= releaseMinDate

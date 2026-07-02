@@ -27,7 +27,7 @@ public sealed class AudioProviderPollingWorkerService(
         var options = new ListQueryOptions<AudioRequest>
         {
             Filter = x =>
-                x.Status == StatusNames.AudioProviderPolling &&
+                x.Status == AudioStatusNames.AudioProviderPolling &&
                 x.NextProviderPollAtUtc != null &&
                 x.NextProviderPollAtUtc <= now &&
                 x.AudioProviderTrackingId != null,
@@ -121,7 +121,7 @@ public sealed class AudioProviderPollingWorkerService(
 
                 request.ProviderPollingCount++;
                 request.NextProviderPollAtUtc = null;
-                request.Status = StatusNames.AudioProviderCompleted;
+                request.Status = AudioStatusNames.AudioProviderCompleted;
                 request.CurrentStep = EventNames.AudioProviderCompleted;
                 request.LastError = null;
 
@@ -178,7 +178,7 @@ public sealed class AudioProviderPollingWorkerService(
     {
         var predicate = (Expression<Func<AudioRequest, bool>>)(x =>
             x.Id == audioRequestId &&
-            x.Status == StatusNames.AudioProviderPolling &&
+            x.Status == AudioStatusNames.AudioProviderPolling &&
             x.NextProviderPollAtUtc != null &&
             x.NextProviderPollAtUtc <= now &&
             x.AudioProviderTrackingId != null);

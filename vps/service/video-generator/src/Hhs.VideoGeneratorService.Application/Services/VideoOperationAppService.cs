@@ -151,7 +151,7 @@ public sealed class VideoOperationAppService(
                 eventId,
                 item.Text,
                 videoRequest.AudioProviderKey,
-                item.SortOrder) { CorrelationId = videoRequest.CorrelationId, Status = StatusNames.AudioRequestCreated, CurrentStep = EventNames.AudioRequestCreated };
+                item.SortOrder) { CorrelationId = videoRequest.CorrelationId, Status = AudioStatusNames.AudioRequestCreated, CurrentStep = EventNames.AudioRequestCreated };
 
             await audioRequestRepository.InsertAsync(audioRequest, cancellationToken);
 
@@ -168,7 +168,7 @@ public sealed class VideoOperationAppService(
 
         try
         {
-            audioRequest.Status = StatusNames.AudioProviderRequestStarted;
+            audioRequest.Status = AudioStatusNames.AudioProviderRequestStarted;
             audioRequest.CurrentStep = EventNames.AudioProviderRequestStarted;
 
             await ReplaceAudioAsync(audioRequest, cancellationToken);
@@ -183,7 +183,7 @@ public sealed class VideoOperationAppService(
                 if (string.IsNullOrWhiteSpace(response.ProviderFileUrl))
                     throw new InvalidOperationException("Audio provider completed but file url is empty.");
 
-                audioRequest.Status = StatusNames.AudioProviderCompleted;
+                audioRequest.Status = AudioStatusNames.AudioProviderCompleted;
                 audioRequest.CurrentStep = EventNames.AudioProviderCompleted;
 
                 await ReplaceAudioAsync(audioRequest, cancellationToken);
@@ -199,7 +199,7 @@ public sealed class VideoOperationAppService(
             if (string.IsNullOrWhiteSpace(response.ProviderTrackId))
                 throw new InvalidOperationException("Audio provider track id is required.");
 
-            audioRequest.Status = StatusNames.AudioProviderPolling;
+            audioRequest.Status = AudioStatusNames.AudioProviderPolling;
             audioRequest.CurrentStep = EventNames.AudioProviderPollingStarted;
             audioRequest.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(videoPollingSettings.ErrorRescheduleDelaySeconds);
             audioRequest.ProviderPollingCount = 0;
@@ -227,10 +227,10 @@ public sealed class VideoOperationAppService(
     {
         var audioRequest = await GetAudioAsync(@event.AudioRequestId, cancellationToken);
 
-        if (audioRequest.Status is StatusNames.AudioProviderCompleted or StatusNames.Uploaded or StatusNames.Failed)
+        if (audioRequest.Status is AudioStatusNames.AudioProviderCompleted or StatusNames.Failed)
             return;
 
-        audioRequest.Status = StatusNames.AudioProviderPolling;
+        audioRequest.Status = AudioStatusNames.AudioProviderPolling;
         audioRequest.CurrentStep = EventNames.AudioProviderPollingStarted;
 
         if (audioRequest.NextProviderPollAtUtc is null)
@@ -254,7 +254,7 @@ public sealed class VideoOperationAppService(
 
         try
         {
-            audioRequest.Status = StatusNames.Downloading;
+            audioRequest.Status = AudioStatusNames.AudioFileDownloading;
             audioRequest.CurrentStep = EventNames.AudioFileDownloadStarted;
 
             await ReplaceAudioAsync(audioRequest, cancellationToken);
@@ -267,7 +267,7 @@ public sealed class VideoOperationAppService(
 
             audioRequest.AudioLocalPath = audioLocalPath;
 
-            audioRequest.Status = StatusNames.Downloaded;
+            audioRequest.Status = AudioStatusNames.AudioFileDownloadCompleted;
             audioRequest.CurrentStep = EventNames.AudioFileDownloadCompleted;
 
             await ReplaceAudioAsync(audioRequest, cancellationToken);
@@ -292,7 +292,7 @@ public sealed class VideoOperationAppService(
     {
         var audioRequest = await GetAudioAsync(@event.AudioRequestId, cancellationToken);
 
-        if (audioRequest.Status == StatusNames.AudioFileUploadCompleted)
+        if (audioRequest.Status == AudioStatusNames.AudioFileUploadCompleted)
         {
             await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
                 eventMessage: new AudioFileUploadCompletedEto { VideoRequestId = audioRequest.VideoRequestId });
@@ -301,7 +301,7 @@ public sealed class VideoOperationAppService(
 
         try
         {
-            audioRequest.Status = StatusNames.AudioFileUploading;
+            audioRequest.Status = AudioStatusNames.AudioFileUploading;
             audioRequest.CurrentStep = EventNames.AudioFileUploadStarted;
 
             await ReplaceAudioAsync(audioRequest, cancellationToken);
@@ -331,7 +331,7 @@ public sealed class VideoOperationAppService(
             audioRequest.AudioCdnUrl = cdnUrl;
             audioRequest.AudioStorageUrl = storageUrl;
 
-            audioRequest.Status = StatusNames.AudioFileUploadCompleted;
+            audioRequest.Status = AudioStatusNames.AudioFileUploadCompleted;
             audioRequest.CurrentStep = EventNames.AudioFileUploadCompleted;
 
             await ReplaceAudioAsync(audioRequest, cancellationToken);
@@ -377,7 +377,7 @@ public sealed class VideoOperationAppService(
                 return;
             }
 
-            if (allAudios.Any(x => x.Status != StatusNames.AudioFileUploadCompleted))
+            if (allAudios.Any(x => x.Status != AudioStatusNames.AudioFileUploadCompleted))
                 return;
 
             var orderedAudios = allAudios.OrderBy(x => x.SortOrder).ToList();
@@ -390,17 +390,17 @@ public sealed class VideoOperationAppService(
 
             var lockPredicate = (Expression<Func<VideoRequest, bool>>)(x =>
                 x.Id == @event.VideoRequestId &&
-                x.Status != StatusNames.VideoProviderRequestStarting &&
-                x.Status != StatusNames.VideoProviderRequestStarted &&
-                x.Status != StatusNames.VideoProviderPolling &&
-                x.Status != StatusNames.VideoProviderCompleted &&
-                x.Status != StatusNames.VideoDownloading &&
-                x.Status != StatusNames.VideoFileUploading &&
+                x.Status != VideoStatusNames.VideoProviderRequestStarting &&
+                x.Status != VideoStatusNames.VideoProviderRequestStarted &&
+                x.Status != VideoStatusNames.VideoProviderPolling &&
+                x.Status != VideoStatusNames.VideoProviderCompleted &&
+                x.Status != VideoStatusNames.VideoFileDownloading &&
+                x.Status != VideoStatusNames.VideoFileUploading &&
                 x.Status != StatusNames.Completed &&
                 x.Status != StatusNames.Failed);
 
             var lockUpdate = Builders<VideoRequest>.Update
-                .Set(x => x.Status, StatusNames.VideoProviderRequestStarting)
+                .Set(x => x.Status, VideoStatusNames.VideoProviderRequestStarting)
                 .Set(x => x.CurrentStep, EventNames.VideoProviderRequestStarted)
                 .Set(x => x.LastError, null);
 
@@ -412,7 +412,7 @@ public sealed class VideoOperationAppService(
             if (lockResult == 0)
                 return;
 
-            videoRequest.Status = StatusNames.VideoProviderRequestStarting;
+            videoRequest.Status = VideoStatusNames.VideoProviderRequestStarting;
 
             await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
                 eventMessage: new VideoProviderRequestStartedEto
@@ -450,7 +450,7 @@ public sealed class VideoOperationAppService(
 
         try
         {
-            videoRequest.Status = StatusNames.VideoProviderRequestStarted;
+            videoRequest.Status = VideoStatusNames.VideoProviderRequestStarted;
             videoRequest.CurrentStep = EventNames.VideoProviderRequestStarted;
 
             await ReplaceVideoAsync(videoRequest, cancellationToken);
@@ -465,7 +465,7 @@ public sealed class VideoOperationAppService(
                 if (string.IsNullOrWhiteSpace(response.ProviderFileUrl))
                     throw new InvalidOperationException("Video provider completed but file url is empty.");
 
-                videoRequest.Status = StatusNames.VideoProviderCompleted;
+                videoRequest.Status = VideoStatusNames.VideoProviderCompleted;
                 videoRequest.CurrentStep = EventNames.VideoProviderCompleted;
 
                 await ReplaceVideoAsync(videoRequest, cancellationToken);
@@ -481,7 +481,7 @@ public sealed class VideoOperationAppService(
             if (string.IsNullOrWhiteSpace(response.ProviderTrackId))
                 throw new InvalidOperationException("Video provider track id is required.");
 
-            videoRequest.Status = StatusNames.VideoProviderPolling;
+            videoRequest.Status = VideoStatusNames.VideoProviderPolling;
             videoRequest.CurrentStep = EventNames.VideoProviderPollingStarted;
             videoRequest.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(videoPollingSettings.ErrorRescheduleDelaySeconds);
             videoRequest.ProviderPollingCount = 0;
@@ -509,10 +509,10 @@ public sealed class VideoOperationAppService(
     {
         var videoRequest = await GetVideoAsync(@event.VideoRequestId, cancellationToken);
 
-        if (videoRequest.Status is StatusNames.VideoProviderCompleted or StatusNames.Completed or StatusNames.Failed)
+        if (videoRequest.Status is VideoStatusNames.VideoProviderCompleted or StatusNames.Completed or StatusNames.Failed)
             return;
 
-        videoRequest.Status = StatusNames.VideoProviderPolling;
+        videoRequest.Status = VideoStatusNames.VideoProviderPolling;
         videoRequest.CurrentStep = EventNames.VideoProviderPollingStarted;
 
         if (videoRequest.NextProviderPollAtUtc is null)
@@ -536,7 +536,7 @@ public sealed class VideoOperationAppService(
 
         try
         {
-            videoRequest.Status = StatusNames.VideoDownloading;
+            videoRequest.Status = VideoStatusNames.VideoFileDownloading;
             videoRequest.CurrentStep = EventNames.VideoFileDownloadStarted;
 
             await ReplaceVideoAsync(videoRequest, cancellationToken);
@@ -546,7 +546,7 @@ public sealed class VideoOperationAppService(
 
             videoRequest.VideoLocalPath = videoLocalPath;
 
-            videoRequest.Status = StatusNames.VideoDownloaded;
+            videoRequest.Status = VideoStatusNames.VideoFileDownloaded;
             videoRequest.CurrentStep = EventNames.VideoFileDownloadCompleted;
 
             await ReplaceVideoAsync(videoRequest, cancellationToken);
@@ -571,7 +571,7 @@ public sealed class VideoOperationAppService(
     {
         var videoRequest = await GetVideoAsync(@event.VideoRequestId, cancellationToken);
 
-        if (videoRequest.Status == StatusNames.VideoFileUploadCompleted || videoRequest.Status == StatusNames.Completed)
+        if (videoRequest.Status == VideoStatusNames.VideoFileUploadCompleted || videoRequest.Status == StatusNames.Completed)
         {
             await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
                 eventMessage: new VideoFileUploadCompletedEto { VideoRequestId = videoRequest.Id });
@@ -582,7 +582,7 @@ public sealed class VideoOperationAppService(
         {
             string cdnProviderKey = systemCdnSettings.Selected;
 
-            videoRequest.Status = StatusNames.VideoFileUploading;
+            videoRequest.Status = VideoStatusNames.VideoFileUploading;
             videoRequest.CurrentStep = EventNames.VideoFileUploadStarted;
 
             await ReplaceVideoAsync(videoRequest, cancellationToken);
@@ -601,7 +601,7 @@ public sealed class VideoOperationAppService(
             videoRequest.VideoCdnUrl = cdnUrl;
             videoRequest.VideoStorageUrl = storageUrl;
 
-            videoRequest.Status = StatusNames.VideoFileUploadCompleted;
+            videoRequest.Status = VideoStatusNames.VideoFileUploadCompleted;
             videoRequest.CurrentStep = EventNames.VideoFileUploadCompleted;
 
             await ReplaceVideoAsync(videoRequest, cancellationToken);

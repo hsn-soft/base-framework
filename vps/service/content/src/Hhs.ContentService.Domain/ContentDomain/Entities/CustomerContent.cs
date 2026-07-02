@@ -3,6 +3,7 @@ using HsnSoft.Base.Domain.Entities.Auditing;
 using HsnSoft.Base;
 using HsnSoft.Base.Subscribe;
 using JetBrains.Annotations;
+using Hhs.Shared.Helper;
 using Hhs.Shared.Localization;
 using HsnSoft.Base.Text;
 
@@ -56,6 +57,10 @@ public sealed class CustomerContent : AuditedEntity<Guid>, ISoftDelete, IScopeSu
         SetContentKey(contentKey);
 
         CorrelationId = correlationId;
+
+        NormalizeStatus = StatusNames.NotStarted;
+        VideoStatus = StatusNames.NotStarted;
+        LastFacility = EventNames.CustomerContentCreated;
     }
 
     private void SetScopeKey(string scopeKey)
