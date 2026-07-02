@@ -50,8 +50,7 @@ public sealed class EfCoreCustomerContentRepository(
     }
 
 
-
-    public async Task SetNormalizedReferenceAsync(Guid id, Guid normalizedRequestId,string normalizeStatus, string normalizeCurrentStep)
+    public async Task SetNormalizedReferenceAsync(Guid id, Guid normalizedRequestId, string normalizeStatus, string normalizeCurrentStep)
         => await UpdateByExpressionAsync(x => x.Id == id && x.NormalizeRequestId == null,
             s => s
                 .SetProperty(a => a.NormalizeRequestId, normalizedRequestId)
@@ -59,7 +58,7 @@ public sealed class EfCoreCustomerContentRepository(
                 .SetProperty(a => a.LastFacility, normalizeCurrentStep)
         );
 
-    public async Task SetScrapeResultsAsync(Guid id, Guid normalizedRequestId,string normalizeStatus, string normalizeCurrentStep, DateTime? scrapeTime)
+    public async Task SetScrapeResultsAsync(Guid id, Guid normalizedRequestId, string normalizeStatus, string normalizeCurrentStep, DateTime? scrapeTime)
     {
         if (scrapeTime.HasValue && scrapeTime.Value == default)
         {
@@ -71,7 +70,7 @@ public sealed class EfCoreCustomerContentRepository(
             scrapeTime = scrapeTime.Value.ToUniversalTime();
         }
 
-        await UpdateByExpressionAsync(x => x.Id == id && x.ScrapReleaseTimeUtc == null,
+        await UpdateByExpressionAsync(x => x.Id == id,
             s => s
                 .SetProperty(a => a.NormalizeRequestId, normalizedRequestId)
                 .SetProperty(a => a.NormalizeStatus, normalizeStatus)
@@ -81,7 +80,7 @@ public sealed class EfCoreCustomerContentRepository(
     }
 
     public async Task SetNormalizedResultsAsync(Guid id, string normalizeStatus, string normalizeCurrentStep)
-        => await UpdateByExpressionAsync(x => x.Id == id && x.ScrapReleaseTimeUtc == null,
+        => await UpdateByExpressionAsync(x => x.Id == id,
             s => s
                 .SetProperty(a => a.NormalizeStatus, normalizeStatus)
                 .SetProperty(a => a.LastFacility, normalizeCurrentStep)
@@ -112,10 +111,6 @@ public sealed class EfCoreCustomerContentRepository(
                 .SetProperty(a => a.LastError, rejectReason)
                 .SetProperty(a => a.VideoStatus, MediaStatusNames.Rejected)
         );
-
-
-
-
 
 
     public async Task<CustomerContent> GetByScopeKeyAndSlugKeyAsync(string scopeKey, string slugKey, CancellationToken cancellationToken = default)
