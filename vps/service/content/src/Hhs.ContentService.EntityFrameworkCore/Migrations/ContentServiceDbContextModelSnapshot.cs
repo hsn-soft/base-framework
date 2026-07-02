@@ -348,10 +348,19 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("CreatorId");
 
+                    b.Property<int>("DailyAnalysisContentMinVisitCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("DailyAnalysisContentWaitStatisticHour")
+                        .HasColumnType("integer");
+
                     b.Property<int>("DailyAnalysisVideoGenerationLimit")
                         .HasColumnType("integer");
 
                     b.Property<int>("DailyAnalysisVideoGenerationStartedUtcHour")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("DailyAnalysisVideoItemLimit")
                         .HasColumnType("integer");
 
                     b.Property<int>("DailyDirectVideoGenerationLimit")
@@ -360,16 +369,16 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                     b.Property<int>("DailyDirectVideoGenerationStartedUtcHour")
                         .HasColumnType("integer");
 
+                    b.Property<int>("DailyTrendContentMinVisitCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("DailyTrendContentWaitStatisticHour")
+                        .HasColumnType("integer");
+
                     b.Property<int>("DailyTrendVideoGenerationLimit")
                         .HasColumnType("integer");
 
                     b.Property<int>("DailyTrendVideoGenerationStartedUtcHour")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("DailyTrendVideoMinVisitCount")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("DailyTrendVideoWaitStatisticHour")
                         .HasColumnType("integer");
 
                     b.Property<string>("DomainName")

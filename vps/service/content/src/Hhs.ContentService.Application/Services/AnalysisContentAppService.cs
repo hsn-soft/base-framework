@@ -113,22 +113,24 @@ public sealed class AnalysisContentAppService(
             : new KeyValuePair<bool, string>(true, "CUSTOMER_CONTENT_VIDEO_GENERATION_APPROVED");
         if (clientQuoteResult.Key)
         {
-            const int analysisItemLimit = 5; // TODO: move to CustomerVpSetting.DailyAnalysisVideoItemLimit
-
             List<CustomerContent> selectedContents;
 
             // Primary: today's published & normalized content ordered by visit count
             var dailyContentIds = await customerContentRepository.GetCustomerDailyAnalysisContentIdsAsync(customerVpSetting.ScopeKey);
             if (dailyContentIds is { Count: > 0 })
             {
-                long? minVisit = customerVpSetting.DailyTrendVideoMinVisitCount > 0
-                    ? (long?)customerVpSetting.DailyTrendVideoMinVisitCount
+                long? minVisit = customerVpSetting.DailyAnalysisContentMinVisitCount > 0
+                    ? (long?)customerVpSetting.DailyAnalysisContentMinVisitCount
+                    : null;
+
+                long? maxItem = customerVpSetting.DailyAnalysisVideoItemLimit > 0
+                    ? (long?)customerVpSetting.DailyAnalysisVideoItemLimit
                     : null;
 
                 var visitList = await customerContentVisitRepository.GetContentIdsVisitCountsAsync(
                     customerContentIds: dailyContentIds,
                     isMaxCountOrdered: true,
-                    customerContentOrderedLimit: analysisItemLimit,
+                    customerContentOrderedLimit: maxItem,
                     customerContentVisitedCountLimit: minVisit);
 
                 if (visitList is { Count: > 0 })
@@ -155,22 +157,22 @@ public sealed class AnalysisContentAppService(
             }
 
             // Fallback: most recently completed content regardless of release date
-            if (selectedContents.Count == 0)
-            {
-                _logger.LogWarning("Client[{ClientDomain}] | {OperationStatus} => {QueryResult}",
-                    customerVpSetting.DomainName, "FALLBACK", "ANALYSIS_USING_RECENT_COMPLETED_CONTENT");
+            // if (selectedContents.Count == 0)
+            // {
+            //     _logger.LogWarning("Client[{ClientDomain}] | {OperationStatus} => {QueryResult}",
+            //         customerVpSetting.DomainName, "FALLBACK", "ANALYSIS_USING_RECENT_COMPLETED_CONTENT");
+            //
+            //     var fallbackOptions = new ListQueryOptions<CustomerContent>
+            //     {
+            //         Filter = x => x.ScopeKey == customerVpSetting.ScopeKey
+            //                       && x.NormalizeStatus == StatusNames.Completed,
+            //         OrderByEntity = o => o.OrderByDescending(s => s.CreationTime),
+            //         MaxResultCount = analysisItemLimit
+            //     };
+            //     selectedContents = await customerContentRepository.GetListAsync(fallbackOptions);
+            // }
 
-                var fallbackOptions = new ListQueryOptions<CustomerContent>
-                {
-                    Filter = x => x.ScopeKey == customerVpSetting.ScopeKey
-                                  && x.NormalizeStatus == StatusNames.Completed,
-                    OrderByEntity = o => o.OrderByDescending(s => s.CreationTime),
-                    MaxResultCount = analysisItemLimit
-                };
-                selectedContents = await customerContentRepository.GetListAsync(fallbackOptions);
-            }
-
-            if (selectedContents.Count == 0)
+            if (selectedContents.Count < customerVpSetting.DailyAnalysisVideoItemLimit)
             {
                 _logger.LogWarning("Client[{ClientDomain}] | {OperationStatus} => {QueryResult}",
                     customerVpSetting.DomainName, "SKIPPED", "CUSTOMER_CONTENT_VIDEO_GENERATION_SKIPPED_NO_COMPLETED_CONTENT");

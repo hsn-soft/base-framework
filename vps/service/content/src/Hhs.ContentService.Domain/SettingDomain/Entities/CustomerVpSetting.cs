@@ -25,11 +25,14 @@ public sealed class CustomerVpSetting : AuditedEntity<Guid>, ISoftDelete, IScope
 
     public ushort DailyTrendVideoGenerationStartedUtcHour { get; set; }
     public ushort DailyTrendVideoGenerationLimit { get; set; }
-    public ushort DailyTrendVideoWaitStatisticHour { get; set; }
-    public ushort DailyTrendVideoMinVisitCount { get; set; }
+    public ushort DailyTrendContentWaitStatisticHour { get; set; }
+    public ushort DailyTrendContentMinVisitCount { get; set; }
 
     public ushort DailyAnalysisVideoGenerationStartedUtcHour { get; set; }
     public ushort DailyAnalysisVideoGenerationLimit { get; set; }
+    public ushort DailyAnalysisContentWaitStatisticHour { get; set; }
+    public ushort DailyAnalysisContentMinVisitCount { get; set; }
+    public ushort DailyAnalysisVideoItemLimit { get; set; }
 
     public List<string> IncludePathFilters { get; set; }
     public List<string> ExcludePathFilters { get; set; }

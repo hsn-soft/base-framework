@@ -23,11 +23,14 @@ public static class SettingDomainConfiguration
 
             b.Property(x => x.DailyTrendVideoGenerationStartedUtcHour).IsRequired();
             b.Property(x => x.DailyTrendVideoGenerationLimit).IsRequired();
-            b.Property(x => x.DailyTrendVideoWaitStatisticHour).IsRequired();
-            b.Property(x => x.DailyTrendVideoMinVisitCount).IsRequired();
+            b.Property(x => x.DailyTrendContentWaitStatisticHour).IsRequired();
+            b.Property(x => x.DailyTrendContentMinVisitCount).IsRequired();
 
             b.Property(x => x.DailyAnalysisVideoGenerationStartedUtcHour).IsRequired();
             b.Property(x => x.DailyAnalysisVideoGenerationLimit).IsRequired();
+            b.Property(x => x.DailyAnalysisContentWaitStatisticHour).IsRequired();
+            b.Property(x => x.DailyAnalysisContentMinVisitCount).IsRequired();
+            b.Property(x => x.DailyAnalysisVideoItemLimit).IsRequired();
 
             b.Property(x => x.IncludePathFilters)
                 .HasColumnType("jsonb")

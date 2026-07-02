@@ -207,14 +207,14 @@ public sealed class CustomerContentAppService(
             var contentIds = await customerContentRepository.GetCustomerDailyTrendContentIdsAsync
             (
                 scopeKey: customerVpSetting.ScopeKey,
-                dailyTrendVideoWaitStatisticHour: customerVpSetting.DailyTrendVideoWaitStatisticHour
+                dailyTrendVideoWaitStatisticHour: customerVpSetting.DailyTrendContentWaitStatisticHour
             );
             if (contentIds is { Count: > 0 })
             {
                 var contentVisitList = await customerContentVisitRepository.GetContentIdsVisitCountsAsync(customerContentIds: contentIds,
                     isMaxCountOrdered: true,
                     customerContentOrderedLimit: clientDailyTrendVideoGenerationLimit,
-                    customerContentVisitedCountLimit: customerVpSetting.DailyTrendVideoMinVisitCount);
+                    customerContentVisitedCountLimit: customerVpSetting.DailyTrendContentMinVisitCount);
 
                 if (contentVisitList is { Count: > 0 })
                 {

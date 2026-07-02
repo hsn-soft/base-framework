@@ -18,14 +18,6 @@ public static class CustomerVpSettingSeeder
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.TechSummusCustomerId),
             domainName: "demo.techsummus.com",
-            dailyDirectVideoGenerationLimit: 100,
-            dailyDirectVideoGenerationStartedUtcHour: 0,
-            dailyTrendVideoGenerationLimit: 0,
-            dailyTrendVideoGenerationStartedUtcHour: 8,
-            dailyTrendVideoWaitStatisticHour: 2,
-            dailyTrendVideoMinVisitCount: 100,
-            dailyAnalysisVideoGenerationLimit: 1,
-            dailyAnalysisVideoGenerationStartedUtcHour: 0,
             includePathFilters:
             [
                 "son-dakika",
@@ -44,18 +36,7 @@ public static class CustomerVpSettingSeeder
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.T24CustomerId),
             domainName: "t24.com.tr",
-            dailyDirectVideoGenerationLimit: 0,
-            dailyDirectVideoGenerationStartedUtcHour: 0,
-            dailyTrendVideoGenerationLimit: 0,
-            dailyTrendVideoGenerationStartedUtcHour: 8,
-            dailyTrendVideoWaitStatisticHour: 2,
-            dailyTrendVideoMinVisitCount: 100,
-            dailyAnalysisVideoGenerationLimit: 0,
-            dailyAnalysisVideoGenerationStartedUtcHour: 6,
-            includePathFilters:
-            [
-                "haber"
-            ],
+            includePathFilters: ["haber"],
             excludePathFilters: []
         );
 
@@ -66,14 +47,6 @@ public static class CustomerVpSettingSeeder
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.TamIndirCustomerId),
             domainName: "tamindir.com",
-            dailyDirectVideoGenerationLimit: 0,
-            dailyDirectVideoGenerationStartedUtcHour: 0,
-            dailyTrendVideoGenerationLimit: 0,
-            dailyTrendVideoGenerationStartedUtcHour: 8,
-            dailyTrendVideoWaitStatisticHour: 2,
-            dailyTrendVideoMinVisitCount: 100,
-            dailyAnalysisVideoGenerationLimit: 0,
-            dailyAnalysisVideoGenerationStartedUtcHour: 6,
             includePathFilters: ["haber"],
             excludePathFilters: []
         );
@@ -85,14 +58,6 @@ public static class CustomerVpSettingSeeder
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.SonDakikaCustomerId),
             domainName: "sondakika.com",
-            dailyDirectVideoGenerationLimit: 0,
-            dailyDirectVideoGenerationStartedUtcHour: 0,
-            dailyTrendVideoGenerationLimit: 0,
-            dailyTrendVideoGenerationStartedUtcHour: 8,
-            dailyTrendVideoWaitStatisticHour: 2,
-            dailyTrendVideoMinVisitCount: 100,
-            dailyAnalysisVideoGenerationLimit: 0,
-            dailyAnalysisVideoGenerationStartedUtcHour: 6,
             includePathFilters:
             [
                 "guncel",
@@ -123,19 +88,8 @@ public static class CustomerVpSettingSeeder
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.TechnoTodayCustomerId),
             domainName: "technotoday.com.tr",
-            dailyDirectVideoGenerationLimit: 0,
-            dailyDirectVideoGenerationStartedUtcHour: 0,
-            dailyTrendVideoGenerationLimit: 0,
-            dailyTrendVideoGenerationStartedUtcHour: 8,
-            dailyTrendVideoWaitStatisticHour: 2,
-            dailyTrendVideoMinVisitCount: 100,
-            dailyAnalysisVideoGenerationLimit: 0,
-            dailyAnalysisVideoGenerationStartedUtcHour: 6,
             includePathFilters: [],
-            excludePathFilters:
-            [
-                "kategori"
-            ]
+            excludePathFilters: ["kategori"]
         );
 
         #endregion
@@ -145,14 +99,6 @@ public static class CustomerVpSettingSeeder
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.KisaDalgaCustomerId),
             domainName: "kisadalga.net",
-            dailyDirectVideoGenerationLimit: 0,
-            dailyDirectVideoGenerationStartedUtcHour: 0,
-            dailyTrendVideoGenerationLimit: 0,
-            dailyTrendVideoGenerationStartedUtcHour: 8,
-            dailyTrendVideoWaitStatisticHour: 2,
-            dailyTrendVideoMinVisitCount: 100,
-            dailyAnalysisVideoGenerationLimit: 0,
-            dailyAnalysisVideoGenerationStartedUtcHour: 6,
             includePathFilters:
             [
                 "haber/gundem",
@@ -179,14 +125,6 @@ public static class CustomerVpSettingSeeder
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.DunyaCustomerId),
             domainName: "dunya.com",
-            dailyDirectVideoGenerationLimit: 0,
-            dailyDirectVideoGenerationStartedUtcHour: 0,
-            dailyTrendVideoGenerationLimit: 0,
-            dailyTrendVideoGenerationStartedUtcHour: 8,
-            dailyTrendVideoWaitStatisticHour: 2,
-            dailyTrendVideoMinVisitCount: 100,
-            dailyAnalysisVideoGenerationLimit: 0,
-            dailyAnalysisVideoGenerationStartedUtcHour: 6,
             includePathFilters:
             [
                 "dunya",
@@ -207,18 +145,7 @@ public static class CustomerVpSettingSeeder
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.BoxofficeCustomerId),
             domainName: "boxofficeturkiye.com",
-            dailyDirectVideoGenerationLimit: 0,
-            dailyDirectVideoGenerationStartedUtcHour: 0,
-            dailyTrendVideoGenerationLimit: 0,
-            dailyTrendVideoGenerationStartedUtcHour: 8,
-            dailyTrendVideoWaitStatisticHour: 2,
-            dailyTrendVideoMinVisitCount: 100,
-            dailyAnalysisVideoGenerationLimit: 0,
-            dailyAnalysisVideoGenerationStartedUtcHour: 6,
-            includePathFilters:
-            [
-                "haber"
-            ],
+            includePathFilters: ["haber"],
             excludePathFilters: []
         );
 
@@ -229,22 +156,8 @@ public static class CustomerVpSettingSeeder
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.DiyetKolikCustomerId),
             domainName: "diyetkolik.com",
-            dailyDirectVideoGenerationLimit: 0,
-            dailyDirectVideoGenerationStartedUtcHour: 0,
-            dailyTrendVideoGenerationLimit: 0,
-            dailyTrendVideoGenerationStartedUtcHour: 8,
-            dailyTrendVideoWaitStatisticHour: 2,
-            dailyTrendVideoMinVisitCount: 100,
-            dailyAnalysisVideoGenerationLimit: 0,
-            dailyAnalysisVideoGenerationStartedUtcHour: 6,
-            includePathFilters:
-            [
-                "icerik"
-            ],
-            excludePathFilters:
-            [
-                "icerik/kategori"
-            ]
+            includePathFilters: ["icerik"],
+            excludePathFilters: ["icerik/kategori"]
         );
 
         #endregion
@@ -254,14 +167,6 @@ public static class CustomerVpSettingSeeder
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.InStyleCustomerId),
             domainName: "instyle.com.tr",
-            dailyDirectVideoGenerationLimit: 0,
-            dailyDirectVideoGenerationStartedUtcHour: 0,
-            dailyTrendVideoGenerationLimit: 0,
-            dailyTrendVideoGenerationStartedUtcHour: 8,
-            dailyTrendVideoWaitStatisticHour: 2,
-            dailyTrendVideoMinVisitCount: 100,
-            dailyAnalysisVideoGenerationLimit: 0,
-            dailyAnalysisVideoGenerationStartedUtcHour: 6,
             includePathFilters:
             [
                 "pop-kultur",
@@ -280,14 +185,6 @@ public static class CustomerVpSettingSeeder
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.HaberturkCustomerId),
             domainName: "haberturk.com",
-            dailyDirectVideoGenerationLimit: 0,
-            dailyDirectVideoGenerationStartedUtcHour: 0,
-            dailyTrendVideoGenerationLimit: 0,
-            dailyTrendVideoGenerationStartedUtcHour: 8,
-            dailyTrendVideoWaitStatisticHour: 2,
-            dailyTrendVideoMinVisitCount: 100,
-            dailyAnalysisVideoGenerationLimit: 0,
-            dailyAnalysisVideoGenerationStartedUtcHour: 6,
             includePathFilters: [],
             excludePathFilters: []
         );
@@ -299,14 +196,6 @@ public static class CustomerVpSettingSeeder
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.BloomberghtCustomerId),
             domainName: "bloomberght.com",
-            dailyDirectVideoGenerationLimit: 0,
-            dailyDirectVideoGenerationStartedUtcHour: 0,
-            dailyTrendVideoGenerationLimit: 0,
-            dailyTrendVideoGenerationStartedUtcHour: 8,
-            dailyTrendVideoWaitStatisticHour: 2,
-            dailyTrendVideoMinVisitCount: 100,
-            dailyAnalysisVideoGenerationLimit: 0,
-            dailyAnalysisVideoGenerationStartedUtcHour: 6,
             includePathFilters: [],
             excludePathFilters: []
         );
@@ -318,14 +207,6 @@ public static class CustomerVpSettingSeeder
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.CnbceCustomerId),
             domainName: "www.cnbce.com",
-            dailyDirectVideoGenerationLimit: 0,
-            dailyDirectVideoGenerationStartedUtcHour: 0,
-            dailyTrendVideoGenerationLimit: 0,
-            dailyTrendVideoGenerationStartedUtcHour: 8,
-            dailyTrendVideoWaitStatisticHour: 2,
-            dailyTrendVideoMinVisitCount: 100,
-            dailyAnalysisVideoGenerationLimit: 0,
-            dailyAnalysisVideoGenerationStartedUtcHour: 6,
             includePathFilters:
             [
                 "piyasalar",
@@ -359,103 +240,37 @@ public static class CustomerVpSettingSeeder
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.Scenario01CustomerId),
             domainName: "tst01.scenario.com",
-            dailyDirectVideoGenerationLimit: 0,
-            dailyDirectVideoGenerationStartedUtcHour: 0,
-            dailyTrendVideoGenerationLimit: 0,
-            dailyTrendVideoGenerationStartedUtcHour: 8,
-            dailyTrendVideoWaitStatisticHour: 2,
-            dailyTrendVideoMinVisitCount: 100,
-            dailyAnalysisVideoGenerationLimit: 0,
-            dailyAnalysisVideoGenerationStartedUtcHour: 6,
-            includePathFilters:
-            [
-                "haber"
-            ]
+            includePathFilters: ["haber"]
         );
 
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.Scenario02CustomerId),
             domainName: "tst02.scenario.com",
-            dailyDirectVideoGenerationLimit: 0,
-            dailyDirectVideoGenerationStartedUtcHour: 0,
-            dailyTrendVideoGenerationLimit: 0,
-            dailyTrendVideoGenerationStartedUtcHour: 8,
-            dailyTrendVideoWaitStatisticHour: 2,
-            dailyTrendVideoMinVisitCount: 100,
-            dailyAnalysisVideoGenerationLimit: 0,
-            dailyAnalysisVideoGenerationStartedUtcHour: 6,
-            includePathFilters:
-            [
-                "haber"
-            ]
+            includePathFilters: ["haber"]
         );
 
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.Scenario03CustomerId),
             domainName: "tst03.scenario.com",
-            dailyDirectVideoGenerationLimit: 0,
-            dailyDirectVideoGenerationStartedUtcHour: 0,
-            dailyTrendVideoGenerationLimit: 0,
-            dailyTrendVideoGenerationStartedUtcHour: 8,
-            dailyTrendVideoWaitStatisticHour: 2,
-            dailyTrendVideoMinVisitCount: 100,
-            dailyAnalysisVideoGenerationLimit: 0,
-            dailyAnalysisVideoGenerationStartedUtcHour: 6,
-            includePathFilters:
-            [
-                "haber"
-            ]
+            includePathFilters: ["haber"]
         );
 
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.Scenario04CustomerId),
             domainName: "tst04.scenario.com",
-            dailyDirectVideoGenerationLimit: 0,
-            dailyDirectVideoGenerationStartedUtcHour: 0,
-            dailyTrendVideoGenerationLimit: 0,
-            dailyTrendVideoGenerationStartedUtcHour: 8,
-            dailyTrendVideoWaitStatisticHour: 2,
-            dailyTrendVideoMinVisitCount: 100,
-            dailyAnalysisVideoGenerationLimit: 0,
-            dailyAnalysisVideoGenerationStartedUtcHour: 6,
-            includePathFilters:
-            [
-                "haber"
-            ]
+            includePathFilters: ["haber"]
         );
 
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.Scenario05CustomerId),
             domainName: "tst05.scenario.com",
-            dailyDirectVideoGenerationLimit: 0,
-            dailyDirectVideoGenerationStartedUtcHour: 0,
-            dailyTrendVideoGenerationLimit: 0,
-            dailyTrendVideoGenerationStartedUtcHour: 8,
-            dailyTrendVideoWaitStatisticHour: 2,
-            dailyTrendVideoMinVisitCount: 100,
-            dailyAnalysisVideoGenerationLimit: 0,
-            dailyAnalysisVideoGenerationStartedUtcHour: 6,
-            includePathFilters:
-            [
-                "haber"
-            ]
+            includePathFilters: ["haber"]
         );
 
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.Scenario06CustomerId),
             domainName: "tst06.scenario.com",
-            dailyDirectVideoGenerationLimit: 0,
-            dailyDirectVideoGenerationStartedUtcHour: 0,
-            dailyTrendVideoGenerationLimit: 0,
-            dailyTrendVideoGenerationStartedUtcHour: 8,
-            dailyTrendVideoWaitStatisticHour: 2,
-            dailyTrendVideoMinVisitCount: 100,
-            dailyAnalysisVideoGenerationLimit: 0,
-            dailyAnalysisVideoGenerationStartedUtcHour: 6,
-            includePathFilters:
-            [
-                "haber"
-            ]
+            includePathFilters: ["haber"]
         );
 
         #endregion
@@ -465,14 +280,20 @@ public static class CustomerVpSettingSeeder
         Guid customerId, string domainName,
         List<string> includePathFilters = null,
         List<string> excludePathFilters = null,
+        // direct-video
         ushort dailyDirectVideoGenerationLimit = 0,
         ushort dailyDirectVideoGenerationStartedUtcHour = 0,
+        // trend-video
         ushort dailyTrendVideoGenerationLimit = 0,
-        ushort dailyTrendVideoGenerationStartedUtcHour = 0,
-        ushort dailyTrendVideoWaitStatisticHour = 0,
-        ushort dailyTrendVideoMinVisitCount = 0,
-        ushort dailyAnalysisVideoGenerationLimit = 0,
-        ushort dailyAnalysisVideoGenerationStartedUtcHour = 0
+        ushort dailyTrendVideoGenerationStartedUtcHour = 8,
+        ushort dailyTrendContentWaitStatisticHour = 2,
+        ushort dailyTrendContentMinVisitCount = 100,
+        // analysis-video
+        ushort dailyAnalysisVideoGenerationLimit = 1,
+        ushort dailyAnalysisVideoGenerationStartedUtcHour = 6,
+        ushort dailyAnalysisContentWaitStatisticHour = 2,
+        ushort dailyAnalysisContentMinVisitCount = 100,
+        ushort dailyAnalysisVideoItemLimit = 5
     )
     {
         string scopeKey = ScopeKeyHelper.Generate(customerId, ProductTypes.VideoPlatform);
@@ -494,14 +315,20 @@ public static class CustomerVpSettingSeeder
         )
         {
             IsBlocked = false,
+            // Direct Video
             DailyDirectVideoGenerationLimit = dailyDirectVideoGenerationLimit,
             DailyDirectVideoGenerationStartedUtcHour = dailyDirectVideoGenerationStartedUtcHour,
+            // Trend Video
             DailyTrendVideoGenerationLimit = dailyTrendVideoGenerationLimit,
             DailyTrendVideoGenerationStartedUtcHour = dailyTrendVideoGenerationStartedUtcHour,
-            DailyTrendVideoWaitStatisticHour = dailyTrendVideoWaitStatisticHour,
-            DailyTrendVideoMinVisitCount = dailyTrendVideoMinVisitCount,
+            DailyTrendContentWaitStatisticHour = dailyTrendContentWaitStatisticHour,
+            DailyTrendContentMinVisitCount = dailyTrendContentMinVisitCount,
+            // Analysis Video
             DailyAnalysisVideoGenerationLimit = dailyAnalysisVideoGenerationLimit,
-            DailyAnalysisVideoGenerationStartedUtcHour = dailyAnalysisVideoGenerationStartedUtcHour
+            DailyAnalysisVideoGenerationStartedUtcHour = dailyAnalysisVideoGenerationStartedUtcHour,
+            DailyAnalysisContentWaitStatisticHour = dailyAnalysisContentWaitStatisticHour,
+            DailyAnalysisContentMinVisitCount = dailyAnalysisContentMinVisitCount,
+            DailyAnalysisVideoItemLimit = dailyAnalysisVideoItemLimit
         };
 
         db.CustomerVpSettings.Add(customerVpSetting);
