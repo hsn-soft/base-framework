@@ -18,8 +18,6 @@ public static class ContentDomainConfiguration
             b.Property(x => x.SlugKey).HasMaxLength(CustomerContentConsts.ContentKeyMaxLength).IsRequired();
 
             b.Property(x => x.CorrelationId).HasMaxLength(CustomerContentConsts.CorrelationIdMaxLength);
-            b.Property(x => x.LastFacility).HasMaxLength(CustomerContentConsts.LastFacilityMaxLength);
-            b.Property(x => x.LastError).HasMaxLength(CustomerContentConsts.LastErrorMaxLength);
 
             b.Property(x => x.NormalizeStatus).HasMaxLength(CustomerContentConsts.NormalizeStatusMaxLength);
             b.Property(x => x.NormalizeRequestId);
@@ -30,6 +28,8 @@ public static class ContentDomainConfiguration
             b.Property(x => x.VideoRequestId);
             b.Property(x => x.VideoCdnUrl).HasMaxLength(CustomerContentConsts.VideoCdnUrlMaxLength);
 
+            b.Property(x => x.LastFacility).HasMaxLength(CustomerContentConsts.LastFacilityMaxLength);
+            b.Property(x => x.LastError).HasMaxLength(CustomerContentConsts.LastErrorMaxLength);
 
             b.HasIndex(x => x.ScopeKey);
             b.HasIndex(x => new { x.ScopeKey, x.ContentKey }).IsUnique();
@@ -67,8 +67,6 @@ public static class ContentDomainConfiguration
             b.Property(x => x.AnalysisDate).IsRequired();
 
             b.Property(x => x.CorrelationId).HasMaxLength(AnalysisContentConsts.CorrelationIdMaxLength);
-            b.Property(x => x.LastFacility).HasMaxLength(AnalysisContentConsts.LastFacilityMaxLength);
-            b.Property(x => x.LastError).HasMaxLength(AnalysisContentConsts.LastErrorMaxLength);
 
             b.Property(x => x.NormalizeStatus).HasMaxLength(AnalysisContentConsts.NormalizeStatusMaxLength);
             b.Property(x => x.NormalizeRequestId);
@@ -76,6 +74,9 @@ public static class ContentDomainConfiguration
             b.Property(x => x.VideoStatus).HasMaxLength(AnalysisContentConsts.VideoStatusMaxLength);
             b.Property(x => x.VideoRequestId);
             b.Property(x => x.VideoCdnUrl).HasMaxLength(AnalysisContentConsts.FinalVideoUrlMaxLength);
+
+            b.Property(x => x.LastFacility).HasMaxLength(AnalysisContentConsts.LastFacilityMaxLength);
+            b.Property(x => x.LastError).HasMaxLength(AnalysisContentConsts.LastErrorMaxLength);
 
             b.HasIndex(x => x.ScopeKey);
             b.HasIndex(x => x.AnalysisDate);

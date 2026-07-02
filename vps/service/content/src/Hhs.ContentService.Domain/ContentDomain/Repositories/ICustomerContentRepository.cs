@@ -12,6 +12,7 @@ public interface ICustomerContentRepository : IGenericRepository<CustomerContent
     Task SetVideoReferenceAsync(Guid id, Guid videoRequestId);
     Task SetVideoGenerationApprovedAsync(Guid id);
     Task SetVideoGenerationRejectedAsync(Guid id, [CanBeNull] string rejectReason);
+    Task SetVideoGenerationSkippedAsync(Guid id, [CanBeNull] string skipReason);
 
 
 

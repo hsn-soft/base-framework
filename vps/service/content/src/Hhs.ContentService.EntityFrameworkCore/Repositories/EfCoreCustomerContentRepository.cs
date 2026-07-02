@@ -82,6 +82,15 @@ public sealed class EfCoreCustomerContentRepository(
                 .SetProperty(a => a.VideoStatus, StatusNames.Rejected)
         );
 
+    public async Task SetVideoGenerationSkippedAsync(Guid id, string skipReason) =>
+        await UpdateByExpressionAsync(x => x.Id == id && x.VideoRequestId == null,
+            s => s
+                .SetProperty(a => a.NormalizeStatus, StatusNames.Completed)
+                .SetProperty(a => a.LastFacility, EventNames.NormalizerResultPublished)
+                .SetProperty(a => a.LastError, skipReason)
+                .SetProperty(a => a.VideoStatus, StatusNames.Skipped)
+        );
+
     public async Task<CustomerContent> CreateAsync(string scopeKey, string contentKey, string correlationId = null)
     {
         // Create draft
@@ -119,9 +128,6 @@ public sealed class EfCoreCustomerContentRepository(
     }
 
 
-
-
-
     public Task<List<Guid>> GetCustomerDailyTrendContentIdsAsync(string scopeKey, ushort dailyTrendVideoWaitStatisticHour, CancellationToken cancellationToken = default)
     {
         var statisticMinTime = DateTime.UtcNow.AddHours(-1 * dailyTrendVideoWaitStatisticHour);
@@ -150,9 +156,6 @@ public sealed class EfCoreCustomerContentRepository(
             && x.ScrapReleaseTimeUtc < releaseMaxDate
         ).Select(x => x.Id).ToListAsync(cancellationToken);
     }
-
-
-
 
 
     private async Task ContentDuplicateControlAsync([NotNull] string scopeKey, [NotNull] string slugKey)

@@ -19,10 +19,8 @@ public sealed class CustomerContent : AuditedEntity<Guid>, ISoftDelete, IScopeSu
     [NotNull] public string ContentKey { get; private set; }
     [NotNull] public string SlugKey { get; private set; }
 
-    // Correlation & Tracing
+    // Correlation
     [CanBeNull] public string CorrelationId { get; private set; }
-    [CanBeNull] public string LastFacility { get; set; }
-    [CanBeNull] public string LastError { get; set; }
 
     // Normalization Status
     [CanBeNull] public string NormalizeStatus { get; set; }
@@ -35,6 +33,8 @@ public sealed class CustomerContent : AuditedEntity<Guid>, ISoftDelete, IScopeSu
     [CanBeNull] public Guid? VideoRequestId { get; set; }
     [CanBeNull] public string VideoCdnUrl { get; set; }
 
+    [CanBeNull] public string LastFacility { get; set; }
+    [CanBeNull] public string LastError { get; set; }
 
     private CustomerContent()
     {

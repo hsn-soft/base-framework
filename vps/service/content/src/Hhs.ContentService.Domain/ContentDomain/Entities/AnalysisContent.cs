@@ -17,10 +17,9 @@ public sealed class AnalysisContent : AuditedEntity<Guid>, ISoftDelete, IScopeSu
 
     public DateTime AnalysisDate { get; private set; }
 
-    // Correlation & Tracing
+    // Correlation
     [CanBeNull] public string CorrelationId { get; private set; }
-    [CanBeNull] public string LastFacility { get; set; }
-    [CanBeNull] public string LastError { get; set; }
+
 
     // Normalization Status
     [CanBeNull] public string NormalizeStatus { get; set; }
@@ -30,6 +29,9 @@ public sealed class AnalysisContent : AuditedEntity<Guid>, ISoftDelete, IScopeSu
     [CanBeNull] public string VideoStatus { get; set; }
     [CanBeNull] public Guid? VideoRequestId { get; set; }
     [CanBeNull] public string VideoCdnUrl { get; set; }
+
+    [CanBeNull] public string LastFacility { get; set; }
+    [CanBeNull] public string LastError { get; set; }
 
     // Analysis Items
     public List<AnalysisContentItem> Items { get; private set; } = [];

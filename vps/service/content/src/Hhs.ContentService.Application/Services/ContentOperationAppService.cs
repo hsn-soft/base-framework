@@ -67,7 +67,7 @@ public sealed class ContentOperationService(
                                 exception: null
                             ));
 
-                            await customerContentRepository.SetVideoGenerationRejectedAsync(entity.Id, "CUSTOMER_CONTENT_OUTLINE_SKIPPED");
+                            await customerContentRepository.SetVideoGenerationSkippedAsync(entity.Id, "CUSTOMER_CONTENT_OUTLINE_SKIPPED");
 
                             _logger.FrameworkInfoLog(LogHelper.Generate(
                                 message: "CustomerContent video generation rejected",
