@@ -17,7 +17,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\..\..\shared\src\Hhs.Shared.Hosting.Microservices\Hhs.Shared.Hosting.Microservices.csproj" />
+        <PackageReference Include="DotNetEnv" Version="3.2.0"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\..\shared\src\Hhs.Shared.Hosting.Microservices\Hhs.Shared.Hosting.Microservices.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

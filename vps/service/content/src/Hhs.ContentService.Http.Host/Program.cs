@@ -20,6 +20,16 @@ using HsnSoft.Base.Tracing;
 using Serilog;
 using Hhs.Shared.Contracts.Events;
 
+// Load .env from current dir, project root, or bin output path — whichever exists first (file is gitignored)
+string[] envCandidates =
+[
+    Path.Combine(Directory.GetCurrentDirectory(), ".env"),
+    Path.Combine(AppContext.BaseDirectory, ".env"),
+    Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".env"),
+];
+string? envFile = Array.Find(envCandidates, File.Exists);
+if (envFile != null) DotNetEnv.Env.Load(envFile);
+
 var builder = WebApplication.CreateBuilder(args);
 
 // App info

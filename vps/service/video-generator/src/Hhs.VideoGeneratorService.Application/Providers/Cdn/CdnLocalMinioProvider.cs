@@ -30,9 +30,9 @@ public sealed class CdnLocalMinioProvider(
                 Content = content
             };
 
-            if (!string.IsNullOrEmpty(settings.APIKey))
+            if (!string.IsNullOrEmpty(settings.ApiKey))
             {
-                request.Headers.Add("X-Api-Key", settings.APIKey);
+                request.Headers.Add("X-Api-Key", settings.ApiKey);
             }
 
             var response = await httpClient.SendAsync(request);
@@ -98,9 +98,9 @@ public sealed class CdnLocalMinioProvider(
 
             var request = new HttpRequestMessage(HttpMethod.Get, storageUrl);
 
-            if (!string.IsNullOrEmpty(settings.APIKey))
+            if (!string.IsNullOrEmpty(settings.ApiKey))
             {
-                request.Headers.Add("X-Api-Key", settings.APIKey);
+                request.Headers.Add("X-Api-Key", settings.ApiKey);
             }
 
             var response = await httpClient.SendAsync(request);

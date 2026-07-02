@@ -54,7 +54,7 @@ public sealed class OutlineOpenAiProvider(OutlineOpenAiProviderSettings settings
         if (string.IsNullOrWhiteSpace(request.OutlinePrompt) || string.IsNullOrWhiteSpace(inputText))
             return new OutlineCreateResponse { IsProcessed = false, IsProcessFailed = true, ErrorMessage = "INVALID_OUTLINE_REQUEST" };
 
-        if (string.IsNullOrWhiteSpace(settings.APIKey))
+        if (string.IsNullOrWhiteSpace(settings.ApiKey))
             return new OutlineCreateResponse { IsProcessed = false, IsProcessFailed = true, ErrorMessage = "OUTLINE_OPENAI_API_KEY_MISSING" };
 
         // Explicit EngineModel on the request overrides both defaults.
@@ -66,7 +66,7 @@ public sealed class OutlineOpenAiProvider(OutlineOpenAiProviderSettings settings
                 ? (settings.StructuredEngine ?? "gpt-4o-mini")
                 : (settings.Engine ?? "gpt-3.5-turbo");
 
-        ApiKeyCredential credential = new(settings.APIKey);
+        ApiKeyCredential credential = new(settings.ApiKey);
 
         ChatClient client;
         if (!string.IsNullOrWhiteSpace(settings.BaseUrl))

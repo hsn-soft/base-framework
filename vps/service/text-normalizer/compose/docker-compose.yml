@@ -52,6 +52,8 @@ services:
       - PUPPETEER_PROXY_PORT=
       - PUPPETEER_PROXY_USERNAME=
       - PUPPETEER_PROXY_PASSWORD=
+      - Provider__Outline__OutlineOpenAi__ApiKey
+      - SchedulerApiKey
     networks:
       - infra-network
 

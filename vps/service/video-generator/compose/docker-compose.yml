@@ -36,6 +36,12 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=docker
       - BUILD_NUMBER=1
+      - SchedulerApiKey
+      - Provider__Cdn__CdnLocalMinio__ApiKey
+      - Provider__Cdn__CdnBunnySelf__ApiKey
+      - Provider__Cdn__CdnBunnyS3__ApiKey
+      - Provider__Cdn__CdnBunnyS3__StorageApiKey
+      - Provider__Cdn__CdnBunnyS3__StorageSecretKey
     networks:
       - infra-network
 

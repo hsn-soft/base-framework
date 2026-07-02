@@ -36,6 +36,7 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=docker
       - BUILD_NUMBER=1
+      - SchedulerApiKey
     networks:
       - infra-network
 
