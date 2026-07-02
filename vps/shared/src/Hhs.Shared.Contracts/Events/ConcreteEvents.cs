@@ -118,6 +118,7 @@ public sealed record NormalizerResultPublishedEto : IIntegrationEventMessage
     public ContentType RefContentType { get; init; }
 
     public Guid NormalizeRequestId { get; init; }
+    public string NormalizeStatus { get; init; } = default!;
 }
 
 public sealed record VideoGenerationApprovedEto : IIntegrationEventMessage

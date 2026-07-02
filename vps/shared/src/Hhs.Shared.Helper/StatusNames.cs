@@ -25,6 +25,7 @@ public static class StatusNames
     // Outline statuses
     public const string Outline = "OUTLINE";
     public const string OutlineCompleted = "OUTLINE_COMPLETED";
+    public const string OutlineSkipped = "OUTLINE_SKIPPED";
     public const string OutlinePartiallyCompleted = "OUTLINE_PARTIALLY_COMPLETED";
 
     public const string NotStarted = "NOT_STARTED";

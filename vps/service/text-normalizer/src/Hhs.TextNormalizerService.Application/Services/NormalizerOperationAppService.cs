@@ -174,11 +174,35 @@ public sealed class NormalizerOperationAppService(
                 throw new BaseHttpException((int)HttpStatusCode.BadRequest);
             }
 
-            var result = await scraper.ScrapeAsync(new ScraperRequestDto { DomainKey = request.DomainName, Path = request.ContentKey });
+            ScraperResultDto result;
+            var customerVpSetting = await customerVpSettingRepository.GetSingleOrDefaultAsync(x => x.ScopeKey == request.ScopeKey, cancellationToken: cancellationToken);
+            if (customerVpSetting is null) throw new ArgumentNullException(nameof(request.ScopeKey));
+
+            if (!_normalizerSettings.SkipScrapingOperation && customerVpSetting.IsScrapingOperationActive)
+            {
+                result = await scraper.ScrapeAsync(new ScraperRequestDto { DomainKey = request.DomainName, Path = request.ContentKey });
+            }
+            else
+            {
+                result = await new DummyContentScraper().ScrapeAsync(new ScraperRequestDto { DomainKey = request.DomainName, Path = request.ContentKey });
+            }
+
+            if (result == null)
+            {
+                throw new Exception("SCRAPING DATA NOT FOUND");
+            }
+
+            if (result.HasError)
+            {
+                throw new Exception(string.Join(" ", result.Errors));
+            }
 
             if (!(!string.IsNullOrWhiteSpace(result.Title)
                   || !string.IsNullOrWhiteSpace(result.Spot)
-                  || !string.IsNullOrWhiteSpace(result.Details))) throw new Exception("SCRAPING DATA IS EMPTY");
+                  || !string.IsNullOrWhiteSpace(result.Details)))
+            {
+                throw new Exception("SCRAPING DATA IS EMPTY");
+            }
 
             request.Status = StatusNames.ScrapingCompleted;
             request.ScrapingStatus = StatusNames.Completed;
@@ -214,10 +238,7 @@ public sealed class NormalizerOperationAppService(
                 eventMessage: new CustomerContentScrapingCompletedEto
                 {
                     // Update reference for Content Service
-                    CustomerContentId = request.CustomerContentId,
-                    ScrapedReleaseTimeUtc = result.ReleaseTimeUtc,
-
-                    CustomerContentNormalizeRequestId = @event.CustomerContentNormalizeRequestId
+                    CustomerContentId = request.CustomerContentId, ScrapedReleaseTimeUtc = result.ReleaseTimeUtc, CustomerContentNormalizeRequestId = @event.CustomerContentNormalizeRequestId
                 }
             );
         }
@@ -286,7 +307,38 @@ public sealed class NormalizerOperationAppService(
         try
         {
             if (request.ScrapingResult is null)
-                throw new InvalidOperationException("ScrapingResult is required before outline.");
+                throw new InvalidOperationException("OUTLINE SCRAPING DATA UNKNOWN");
+
+            if (request.ScrapingResult.ReleaseTimeUtc != null
+                && request.ScrapingResult.ReleaseTimeUtc < DateTime.UtcNow.AddDays(-3)
+                && !_normalizerSettings.UseReleaseTimeOldContentOutlineOperation)
+            {
+                request.Status = StatusNames.OutlineSkipped;
+                request.CurrentStep = EventNames.NormalizerResultPublished;
+
+                await customerContentRepository.UpdateAsync(request, cancellationToken);
+
+                _logger.FrameworkInfoLog(LogHelper.Generate(
+                    message: "Content Normalized request outline skipped",
+                    reference: new
+                    {
+                        request.ScopeKey,
+                        ClientDomain = request.DomainName,
+                        ContentKey = request.ContentKey,
+                        RefContentId = request.CustomerContentId,
+                        RefNormalizedRequestId = request.Id
+                    },
+                    facility: "CONTENT_NORMALIZED_REQUEST_OUTLINE_SKIPPED",
+                    correlationId: request.CorrelationId,
+                    exception: null
+                ));
+
+                await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+                    eventMessage: new NormalizerResultPublishedEto { RefContentId = request.CustomerContentId, RefContentType = ContentType.CustomerContent, NormalizeRequestId = request.Id, NormalizeStatus = request.Status }
+                );
+
+                return;
+            }
 
             request.Status = StatusNames.OutlineProviderRequestStarted;
             request.CurrentStep = EventNames.OutlineProviderRequestStarted;
@@ -560,9 +612,23 @@ public sealed class NormalizerOperationAppService(
             var outlineProvider = outlineProviderResolver.Resolve(providerKeyResult.Value);
             _logger.LogInformation($"✓ Resolved provider successfully");
 
-            var response = await outlineProvider.OutlineOperationAsync(new OutlineCreateRequest { OutlineInput = @event.InputText, OutlinePrompt = @event.InputPrompt ?? string.Empty, EngineModel = "model-1", UseStructuredOutput = false });
+            var customerVpSetting = await customerVpSettingRepository.GetSingleOrDefaultAsync(x => x.ScopeKey == @event.ScopeKey, cancellationToken: cancellationToken);
+            if (customerVpSetting is null) throw new ArgumentNullException(nameof(@event.ScopeKey));
 
-            if (outlineProvider.Capabilities.ExecutionMode == ProviderExecutionMode.ImmediateResult)
+            OutlineCreateResponse response;
+            if (!_normalizerSettings.SkipOutlineOperation && customerVpSetting.IsOutlineOperationActive)
+            {
+                response = await outlineProvider.OutlineOperationAsync(new OutlineCreateRequest { OutlineInput = @event.InputText, OutlinePrompt = @event.InputPrompt, UseStructuredOutput = _normalizerSettings.UseStructuredOutput, });
+            }
+            else
+            {
+                // dummy response
+                response = new OutlineCreateResponse { IsProcessed = true, OutlinedData = @event.InputText };
+            }
+
+            if (outlineProvider.Capabilities.ExecutionMode == ProviderExecutionMode.ImmediateResult
+                || _normalizerSettings.SkipOutlineOperation
+                || !customerVpSetting.IsOutlineOperationActive)
             {
                 if (string.IsNullOrWhiteSpace(response.OutlinedData))
                     throw new InvalidOperationException("OUTLINE RESPONSE CONTENT DATA UNKNOWN");
@@ -657,7 +723,7 @@ public sealed class NormalizerOperationAppService(
 
         if (@event.RefContentType == ContentType.CustomerContent)
         {
-            var customerContentNormalizedRequest = await customerContentRepository.GetByIdAsync(@event.RefNormalizedRequestId);
+            var customerContentNormalizedRequest = await customerContentRepository.GetByIdAsync(@event.RefNormalizedRequestId, cancellationToken: cancellationToken);
 
             if (customerContentNormalizedRequest.Status == StatusNames.Completed ||
                 customerContentNormalizedRequest.CurrentStep == EventNames.NormalizerResultPublished ||
@@ -669,7 +735,7 @@ public sealed class NormalizerOperationAppService(
             customerContentNormalizedRequest.CurrentStep = EventNames.CustomerContentOutlineCompleted;
             customerContentNormalizedRequest.OutlineResult = new OutlineResult { OutlinedData = @event.OutlinedData };
 
-            await customerContentRepository.UpdateAsync(customerContentNormalizedRequest);
+            await customerContentRepository.UpdateAsync(customerContentNormalizedRequest, cancellationToken);
 
             await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
                 eventMessage: new CustomerContentOutlineCompletedEto { RefContentId = customerContentNormalizedRequest.CustomerContentId, RefContentType = ContentType.CustomerContent, Script = @event.OutlinedData }
@@ -677,7 +743,7 @@ public sealed class NormalizerOperationAppService(
             return;
         }
 
-        var analysisContentNormalizedRequest = await analysisContentRepository.GetByIdAsync(@event.RefNormalizedRequestId);
+        var analysisContentNormalizedRequest = await analysisContentRepository.GetByIdAsync(@event.RefNormalizedRequestId, cancellationToken: cancellationToken);
 
         if (@event.CustomerContentIdForItem is null)
             throw new InvalidOperationException("CustomerContentIdForItem is required for analysis outline completion.");
@@ -727,7 +793,7 @@ public sealed class NormalizerOperationAppService(
         await customerContentRepository.UpdateAsync(customerContentNormalizedRequest, cancellationToken);
 
         await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
-            eventMessage: new NormalizerResultPublishedEto { NormalizeRequestId = customerContentNormalizedRequest.Id, RefContentId = customerContentNormalizedRequest.CustomerContentId, RefContentType = ContentType.CustomerContent }
+            eventMessage: new NormalizerResultPublishedEto { RefContentId = customerContentNormalizedRequest.CustomerContentId, RefContentType = ContentType.CustomerContent, NormalizeRequestId = customerContentNormalizedRequest.Id, NormalizeStatus = customerContentNormalizedRequest.Status }
         );
     }
 
@@ -766,7 +832,7 @@ public sealed class NormalizerOperationAppService(
         await analysisContentRepository.UpdateAsync(analysisContentNormalizedRequest, cancellationToken);
 
         await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
-            eventMessage: new NormalizerResultPublishedEto { RefContentType = ContentType.AnalysisContent, RefContentId = analysisContentNormalizedRequest.AnalysisContentId, NormalizeRequestId = analysisContentNormalizedRequest.Id }
+            eventMessage: new NormalizerResultPublishedEto { RefContentType = ContentType.AnalysisContent, RefContentId = analysisContentNormalizedRequest.AnalysisContentId, NormalizeRequestId = analysisContentNormalizedRequest.Id, NormalizeStatus = analysisContentNormalizedRequest.Status }
         );
     }
 
@@ -1134,62 +1200,36 @@ public sealed class NormalizerOperationAppService(
 
         if (orderedItems.Count == 0) return;
 
-        string introText;
-        string outroText;
+        string introText = "İyi günler, günün öne çıkan haberleriyle karşınızdayız.";
+        string outroText = "Günün öne çıkan gelişmelerini aktardık. Tekrar görüşmek üzere";
 
         CustomerVpSetting vpSetting = await customerVpSettingRepository.GetFirstOrDefaultAsync(
             x => x.ScopeKey == request.ScopeKey,
             cancellationToken: cancellationToken);
 
         bool canGenerateViaProvider = vpSetting is not null
-            && !_normalizerSettings.SkipOutlineOperation
-            && vpSetting.IsOutlineOperationActive
-            && !string.IsNullOrWhiteSpace(vpSetting.AnalysisOutlineIntroPrompt)
-            && !string.IsNullOrWhiteSpace(vpSetting.AnalysisOutlineOutroPrompt);
+                                      && !_normalizerSettings.SkipOutlineOperation
+                                      && vpSetting.IsOutlineOperationActive
+                                      && !string.IsNullOrWhiteSpace(vpSetting.AnalysisOutlineIntroPrompt)
+                                      && !string.IsNullOrWhiteSpace(vpSetting.AnalysisOutlineOutroPrompt);
 
         if (canGenerateViaProvider)
         {
-            KeyValuePair<bool, string> providerKeyResult = await customerVpSettingRepository
-                .GetOutlineProviderKeyByScopeKeyAsync(request.ScopeKey, cancellationToken);
-
+            KeyValuePair<bool, string> providerKeyResult = await customerVpSettingRepository.GetOutlineProviderKeyByScopeKeyAsync(request.ScopeKey, cancellationToken);
             if (providerKeyResult.Key)
             {
                 IOutlineProvider outlineProvider = outlineProviderResolver.Resolve(providerKeyResult.Value);
 
-                OutlineCreateResponse introResponse = await outlineProvider.OutlineOperationAsync(new OutlineCreateRequest
-                {
-                    OutlinePrompt = vpSetting.AnalysisOutlineIntroPrompt,
-                    OutlineInput = vpSetting.AnalysisOutlineIntroPrompt,
-                    EngineModel = "gpt-4.1-mini",
-                    UseStructuredOutput = false
-                });
+                OutlineCreateResponse introResponse = await outlineProvider.OutlineOperationAsync(new OutlineCreateRequest { OutlinePrompt = vpSetting.AnalysisOutlineIntroPrompt, OutlineInput = ".", EngineModel = "gpt-4.1-mini" });
 
-                introText = !string.IsNullOrWhiteSpace(introResponse?.OutlinedData)
-                    ? introResponse.OutlinedData
-                    : "İyi günler, günün öne çıkan haberleriyle karşınızdayız.";
+                if (!string.IsNullOrWhiteSpace(introResponse?.OutlinedData))
+                    introText = introResponse.OutlinedData;
 
-                OutlineCreateResponse outroResponse = await outlineProvider.OutlineOperationAsync(new OutlineCreateRequest
-                {
-                    OutlinePrompt = vpSetting.AnalysisOutlineOutroPrompt,
-                    OutlineInput = vpSetting.AnalysisOutlineOutroPrompt,
-                    EngineModel = "gpt-4.1-mini",
-                    UseStructuredOutput = false
-                });
+                OutlineCreateResponse outroResponse = await outlineProvider.OutlineOperationAsync(new OutlineCreateRequest { OutlinePrompt = vpSetting.AnalysisOutlineOutroPrompt, OutlineInput = ".", EngineModel = "gpt-4.1-mini" });
 
-                outroText = !string.IsNullOrWhiteSpace(outroResponse?.OutlinedData)
-                    ? outroResponse.OutlinedData
-                    : "Günün öne çıkan gelişmelerini aktardık. Tekrar görüşmek üzere";
+                if (!string.IsNullOrWhiteSpace(outroResponse?.OutlinedData))
+                    outroText = outroResponse.OutlinedData;
             }
-            else
-            {
-                introText = "İyi günler, günün öne çıkan haberleriyle karşınızdayız.";
-                outroText = "Günün öne çıkan gelişmelerini aktardık. Tekrar görüşmek üzere";
-            }
-        }
-        else
-        {
-            introText = "İyi günler, günün öne çıkan haberleriyle karşınızdayız.";
-            outroText = "Günün öne çıkan gelişmelerini aktardık. Tekrar görüşmek üzere";
         }
 
         AnalysisNormalizedItem firstItem = orderedItems[0];
@@ -1197,22 +1237,13 @@ public sealed class NormalizerOperationAppService(
 
         if (orderedItems.Count == 1)
         {
-            firstItem.OutlineResult = new OutlineResult
-            {
-                OutlinedData = $"{introText} {firstItem.OutlineResult?.OutlinedData} {outroText}"
-            };
+            firstItem.OutlineResult = new OutlineResult { OutlinedData = $"{introText} {firstItem.OutlineResult?.OutlinedData} {outroText}" };
         }
         else
         {
-            firstItem.OutlineResult = new OutlineResult
-            {
-                OutlinedData = $"{introText} {firstItem.OutlineResult?.OutlinedData}"
-            };
+            firstItem.OutlineResult = new OutlineResult { OutlinedData = $"{introText} {firstItem.OutlineResult?.OutlinedData}" };
 
-            lastItem.OutlineResult = new OutlineResult
-            {
-                OutlinedData = $"{lastItem.OutlineResult?.OutlinedData} {outroText}"
-            };
+            lastItem.OutlineResult = new OutlineResult { OutlinedData = $"{lastItem.OutlineResult?.OutlinedData} {outroText}" };
         }
     }
 }

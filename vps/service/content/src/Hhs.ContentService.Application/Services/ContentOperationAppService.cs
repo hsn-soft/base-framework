@@ -57,6 +57,29 @@ public sealed class ContentOperationService(
 
                     if (entity != null && entity.NormalizeStatus != StatusNames.Completed)
                     {
+                        if (@event.NormalizeStatus == StatusNames.OutlineSkipped)
+                        {
+                            _logger.FrameworkInfoLog(LogHelper.Generate(
+                                message: "CustomerContent normalized skipped",
+                                reference: new { entity.ScopeKey, RefContentId = entity.Id, RefNormalizedRequestId = entity.NormalizeRequestId },
+                                facility: "CUSTOMER_CONTENT_NORMALIZED_SKIPPED",
+                                correlationId: entity.CorrelationId,
+                                exception: null
+                            ));
+
+                            await customerContentRepository.SetVideoGenerationRejectedAsync(entity.Id, "CUSTOMER_CONTENT_OUTLINE_SKIPPED");
+
+                            _logger.FrameworkInfoLog(LogHelper.Generate(
+                                message: "CustomerContent video generation rejected",
+                                reference: new { entity.ScopeKey, RefContentId = entity.Id, RefNormalizedRequestId = entity.NormalizeRequestId },
+                                facility: "CUSTOMER_CONTENT_OUTLINE_SKIPPED",
+                                correlationId: entity.CorrelationId,
+                                exception: null
+                            ));
+
+                            return;
+                        }
+
                         _logger.FrameworkInfoLog(LogHelper.Generate(
                             message: "CustomerContent normalized success",
                             reference: new { entity.ScopeKey, RefContentId = entity.Id, RefNormalizedRequestId = entity.NormalizeRequestId },

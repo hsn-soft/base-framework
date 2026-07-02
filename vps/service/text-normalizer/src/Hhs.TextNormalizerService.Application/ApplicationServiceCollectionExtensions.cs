@@ -29,10 +29,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<ApplicationEventInboxMessageManager>();
         services.AddScoped<NormalizerOperationAppService>();
 
-        if (environment.IsProduction())
-            services.AddScoped<IContentScraper, PuppeteerContentScraper>();
-        else
-            services.AddScoped<IContentScraper, DummyContentScraper>();
+        services.AddScoped<IContentScraper, PuppeteerContentScraper>();
 
         // ============================================================================
         // 2. OUTLINE PROVIDER CONFIGURATION
