@@ -191,6 +191,8 @@ public sealed class VideoOperationRetryWorkerService(
                     await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
                         eventMessage: new VideoProviderRequestStartedEto
                         {
+                            RefContentId = request.RefContentId,
+                            RefContentType = request.RefContentType,
                             VideoRequestId = request.Id,
                             AudioUrls = videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioUrlListRequired
                                 ? orderedAudios.Select(x => x.AudioStorageUrl!).ToList()

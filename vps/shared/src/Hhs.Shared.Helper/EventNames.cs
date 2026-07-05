@@ -40,6 +40,7 @@ public static class EventNames
 
     public const string VideoRequestCreated = "VIDEO_REQUEST_CREATED";
     public const string VideoOperationStarted = "VIDEO_OPERATION_STARTED";
+    public const string VideoAudioStarted = "VIDEO_AUDIO_STARTED";
 
     public const string AudioProviderRequestStarted = "AUDIO_PROVIDER_REQUEST_STARTED";
     public const string AudioProviderPollingStarted = "AUDIO_PROVIDER_POLLING_STARTED";

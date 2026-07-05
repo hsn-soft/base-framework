@@ -24,6 +24,6 @@ public class VideoRequestCreatedEtoHandler(
             nameof(VideoRequestCreatedEto)[..^"Eto".Length],
             @event.MessageId);
 
-        await _videoOperationAppService.StartVideoOperationAsync(@event.Message, cancellationToken);
+        await _videoOperationAppService.StartVideoOperationAsync(@event.Message, @event.MessageId, cancellationToken);
     }
 }

@@ -200,6 +200,38 @@ public sealed class ContentOperationService(
         }
     }
 
+    public async Task HandleVideoAudioStartedAsync(VideoAudioStartedEto @event, CancellationToken cancellationToken = default)
+    {
+        switch (@event.RefContentType)
+        {
+            case ContentType.CustomerContent:
+                await customerContentRepository.SetVideoAudioStartedAsync(@event.RefContentId, @event.AudioCount);
+                break;
+            case ContentType.AnalysisContent:
+                await analysisContentRepository.SetVideoAudioStartedAsync(@event.RefContentId, @event.AudioCount);
+                break;
+            case ContentType.None:
+            default:
+                throw new ArgumentOutOfRangeException(nameof(@event.RefContentType), @event.RefContentType, null);
+        }
+    }
+
+    public async Task HandleVideoProviderStartedAsync(VideoProviderRequestStartedEto @event, CancellationToken cancellationToken = default)
+    {
+        switch (@event.RefContentType)
+        {
+            case ContentType.CustomerContent:
+                await customerContentRepository.SetVideoProviderStartedAsync(@event.RefContentId);
+                break;
+            case ContentType.AnalysisContent:
+                await analysisContentRepository.SetVideoProviderStartedAsync(@event.RefContentId);
+                break;
+            case ContentType.None:
+            default:
+                throw new ArgumentOutOfRangeException(nameof(@event.RefContentType), @event.RefContentType, null);
+        }
+    }
+
     public async Task HandleVideoResultAsync(VideoGenerationResultPublishedEto @event, CancellationToken cancellationToken = default)
     {
         switch (@event.RefContentType)

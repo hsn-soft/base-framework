@@ -39,6 +39,20 @@ public sealed class EfCoreAnalysisContentRepository(
                 .SetProperty(a => a.LastFacility, EventNames.VideoRequestCreated)
         );
 
+    public async Task SetVideoAudioStartedAsync(Guid id, int audioCount)
+        => await UpdateByExpressionAsync(x => x.Id == id && x.VideoStatus == MediaStatusNames.Created,
+            s => s
+                .SetProperty(a => a.VideoStatus, MediaStatusNames.AudioStarted)
+                .SetProperty(a => a.LastFacility, EventNames.VideoAudioStarted)
+        );
+
+    public async Task SetVideoProviderStartedAsync(Guid id)
+        => await UpdateByExpressionAsync(x => x.Id == id,
+            s => s
+                .SetProperty(a => a.VideoStatus, MediaStatusNames.VideoProviderStarted)
+                .SetProperty(a => a.LastFacility, EventNames.VideoProviderRequestStarted)
+        );
+
     [ItemCanBeNull]
     public async Task<AnalysisContent> GetByIdWithItemsAsync(Guid id, CancellationToken cancellationToken = default)
         => await GetFirstOrDefaultAsync(

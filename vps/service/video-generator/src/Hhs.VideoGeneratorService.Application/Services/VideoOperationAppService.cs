@@ -89,7 +89,7 @@ public sealed class VideoOperationAppService(
         );
     }
 
-    public async Task StartVideoOperationAsync(VideoRequestCreatedEto @event, CancellationToken cancellationToken = default)
+    public async Task StartVideoOperationAsync(VideoRequestCreatedEto @event, Guid eventId, CancellationToken cancellationToken = default)
     {
         var videoRequest = await GetVideoAsync(@event.VideoRequestId, cancellationToken);
 
@@ -98,22 +98,18 @@ public sealed class VideoOperationAppService(
 
         await ReplaceVideoAsync(videoRequest, cancellationToken);
 
-        await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
-            eventMessage: new VideoOperationStartedEto { VideoRequestId = videoRequest.Id }
-        );
-    }
-
-    public async Task HandleVideoOperationStartedAsync(VideoOperationStartedEto @event, Guid eventId, CancellationToken cancellationToken = default)
-    {
-        var videoRequest = await GetVideoAsync(@event.VideoRequestId, cancellationToken);
-        System.Diagnostics.Debug.WriteLine($"DEBUG: VideoProviderKey={videoRequest.VideoProviderKey}");
-        System.Diagnostics.Debug.WriteLine($"DEBUG: MediaInputJson={videoRequest.MediaInputJson}");
         var videoProvider = videoProviderResolver.Resolve(videoRequest.VideoProviderKey);
 
         if (videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.ProviderCreatesAudio)
         {
             await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
-                eventMessage: new VideoProviderRequestStartedEto { VideoRequestId = videoRequest.Id, AudioUrls = [] }
+                eventMessage: new VideoProviderRequestStartedEto
+                {
+                    RefContentId = videoRequest.RefContentId,
+                    RefContentType = videoRequest.RefContentType,
+                    VideoRequestId = videoRequest.Id,
+                    AudioUrls = []
+                }
             );
 
             return;
@@ -125,6 +121,16 @@ public sealed class VideoOperationAppService(
         if (audioProvider is null) throw new InvalidOperationException("Audio Provider not found.");
 
         var audioItems = ExtractAudioItems(videoRequest.MediaInputJson);
+
+        await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+            eventMessage: new VideoAudioStartedEto
+            {
+                RefContentId = videoRequest.RefContentId,
+                RefContentType = videoRequest.RefContentType,
+                VideoRequestId = videoRequest.Id,
+                AudioCount = audioItems.Count
+            }
+        );
 
         foreach (var item in audioItems)
         {
@@ -151,7 +157,12 @@ public sealed class VideoOperationAppService(
                 eventId,
                 item.Text,
                 videoRequest.AudioProviderKey,
-                item.SortOrder) { CorrelationId = videoRequest.CorrelationId, Status = AudioStatusNames.AudioRequestCreated, CurrentStep = EventNames.AudioRequestCreated };
+                item.SortOrder)
+            {
+                CorrelationId = videoRequest.CorrelationId,
+                Status = AudioStatusNames.AudioRequestCreated,
+                CurrentStep = EventNames.AudioRequestCreated
+            };
 
             await audioRequestRepository.InsertAsync(audioRequest, cancellationToken);
 
@@ -417,6 +428,8 @@ public sealed class VideoOperationAppService(
             await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
                 eventMessage: new VideoProviderRequestStartedEto
                 {
+                    RefContentId = videoRequest.RefContentId,
+                    RefContentType = videoRequest.RefContentType,
                     VideoRequestId = videoRequest.Id,
                     AudioUrls = videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioUrlListRequired
                         ? orderedAudios.Select(x => x.AudioStorageUrl!).ToList()

@@ -160,6 +160,14 @@ public sealed record VideoOperationStartedEto : IIntegrationEventMessage
     public Guid VideoRequestId { get; init; }
 }
 
+public sealed record VideoAudioStartedEto : IIntegrationEventMessage
+{
+    public Guid RefContentId { get; init; }
+    public ContentType RefContentType { get; init; }
+    public Guid VideoRequestId { get; init; }
+    public int AudioCount { get; init; }
+}
+
 public sealed record AudioProviderRequestStartedEto : IIntegrationEventMessage
 {
     public Guid AudioRequestId { get; init; }
@@ -192,6 +200,8 @@ public sealed record AudioFileUploadCompletedEto : IIntegrationEventMessage
 
 public sealed record VideoProviderRequestStartedEto : IIntegrationEventMessage
 {
+    public Guid RefContentId { get; init; }
+    public ContentType RefContentType { get; init; }
     public Guid VideoRequestId { get; init; }
     public List<string> AudioUrls { get; init; } = [];
 }

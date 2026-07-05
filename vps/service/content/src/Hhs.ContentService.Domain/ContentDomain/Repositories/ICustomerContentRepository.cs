@@ -19,6 +19,8 @@ public interface ICustomerContentRepository : IGenericRepository<CustomerContent
     Task SetVideoGenerationRejectedAsync(Guid id, [CanBeNull] string rejectReason);
 
     Task SetVideoReferenceAsync(Guid id, Guid videoRequestId);
+    Task SetVideoAudioStartedAsync(Guid id, int audioCount);
+    Task SetVideoProviderStartedAsync(Guid id);
 
 
 
