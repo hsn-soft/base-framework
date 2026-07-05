@@ -21,6 +21,6 @@ public class CustomerContentScrapingCompletedEtoHandler(
             nameof(CustomerContentScrapingCompletedEto)[..^"Eto".Length],
             @event.MessageId);
 
-        await _contentOperationService.HandleCustomerContentScrapeResultsAsync(@event.Message, cancellationToken);
+        await _contentOperationService.HandleCustomerContentScrapeResultsAsync(@event.Message, @event.CorrelationId, cancellationToken);
     }
 }

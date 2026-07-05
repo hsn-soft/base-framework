@@ -24,6 +24,6 @@ public class AudioProviderCompletedEtoHandler(
             nameof(AudioProviderCompletedEto)[..^"Eto".Length],
             @event.MessageId);
 
-        await _videoOperationAppService.HandleAudioProviderCompletedAsync(@event.Message, cancellationToken);
+        await _videoOperationAppService.HandleAudioProviderCompletedAsync(@event.Message, @event.CorrelationId, cancellationToken);
     }
 }

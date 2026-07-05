@@ -28,7 +28,8 @@ public class CustomerContentNormalizeRequestCreatedEtoHandler(
             refContentId: @event.Message.CustomerContentId,
             refNormalizeRequestId: @event.Message.CustomerContentNormalizeRequestId,
             normalizeStatus:@event.Message.NormalizeStatus,
-            normalizeCurrentStep:@event.Message.NormalizeCurrentStep
+            normalizeCurrentStep:@event.Message.NormalizeCurrentStep,
+            correlationId: @event.CorrelationId
         );
     }
 }

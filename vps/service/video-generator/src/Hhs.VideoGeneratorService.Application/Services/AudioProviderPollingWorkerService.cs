@@ -7,6 +7,9 @@ using Hhs.VideoGeneratorService.Domain.MediaDomain.Entities;
 using Hhs.VideoGeneratorService.Domain.MediaDomain.Repositories;
 using Hhs.VideoGeneratorService.Domain.SettingDomain.Repositories;
 using HsnSoft.Base.Domain.Models;
+using HsnSoft.Base.Logging;
+using HsnSoft.Base.Logging.Abstracts;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 
@@ -20,6 +23,8 @@ public sealed class AudioProviderPollingWorkerService(
     ILogger<AudioProviderPollingWorkerService> logger,
     AudioPollingSettings pollingSettings) : ApplicationServiceBase(provider)
 {
+    private readonly IFrameworkLogger _logger = provider.GetRequiredService<IFrameworkLogger>();
+
     public async Task PollDueAudioRequestsAsync(CancellationToken cancellationToken)
     {
         var now = DateTime.UtcNow;
@@ -55,6 +60,14 @@ public sealed class AudioProviderPollingWorkerService(
 
                     await ReplaceAudioAsync(request, cancellationToken);
 
+                    _logger.FrameworkErrorLog(LogHelper.Generate(
+                        message: EventNames.AudioProviderPollingStarted,
+                        reference: new { AudioRequestId = request.Id, VideoRequestId = request.VideoRequestId, request.ProviderPollingCount },
+                        facility: EventNames.AudioProviderPollingStarted,
+                        correlationId: request.CorrelationId,
+                        exception: null
+                    ));
+
                     await EventBus.PublishAsync(
                         parentMessage: ParentIntegrationEvent,
                         correlationId: request.CorrelationId,
@@ -88,6 +101,14 @@ public sealed class AudioProviderPollingWorkerService(
 
                     await ReplaceAudioAsync(request, cancellationToken);
 
+                    _logger.FrameworkErrorLog(LogHelper.Generate(
+                        message: EventNames.AudioProviderPollingStarted,
+                        reference: new { AudioRequestId = request.Id, VideoRequestId = request.VideoRequestId, request.ProviderPollingCount, request.LastError },
+                        facility: EventNames.AudioProviderPollingStarted,
+                        correlationId: request.CorrelationId,
+                        exception: null
+                    ));
+
                     await EventBus.PublishAsync(
                         parentMessage: ParentIntegrationEvent,
                         correlationId: request.CorrelationId,
@@ -110,6 +131,15 @@ public sealed class AudioProviderPollingWorkerService(
                     request.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(pollingSettings.IntervalSeconds);
 
                     await ReplaceAudioAsync(request, cancellationToken);
+
+                    _logger.FrameworkInfoLog(LogHelper.Generate(
+                        message: EventNames.AudioProviderPollingStarted,
+                        reference: new { AudioRequestId = request.Id, VideoRequestId = request.VideoRequestId, Attempt = request.ProviderPollingCount, MaxAttempts = pollingSettings.MaxAttempts, request.NextProviderPollAtUtc },
+                        facility: EventNames.AudioProviderPollingStarted,
+                        correlationId: request.CorrelationId,
+                        exception: null
+                    ));
+
                     continue;
                 }
 
@@ -127,8 +157,17 @@ public sealed class AudioProviderPollingWorkerService(
 
                 await ReplaceAudioAsync(request, cancellationToken);
 
+                _logger.FrameworkInfoLog(LogHelper.Generate(
+                    message: EventNames.AudioProviderCompleted,
+                    reference: new { AudioRequestId = request.Id, VideoRequestId = request.VideoRequestId, TotalPolls = request.ProviderPollingCount },
+                    facility: EventNames.AudioProviderCompleted,
+                    correlationId: request.CorrelationId,
+                    exception: null
+                ));
+
                 // Publish provider completed event - handler will trigger download cascade
                 await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+                    correlationId: request.CorrelationId,
                     eventMessage: new AudioProviderCompletedEto { AudioRequestId = request.Id, }
                 );
             }
@@ -143,6 +182,14 @@ public sealed class AudioProviderPollingWorkerService(
                     request.NextProviderPollAtUtc = null;
 
                     await ReplaceAudioAsync(request, cancellationToken);
+
+                    _logger.FrameworkErrorLog(LogHelper.Generate(
+                        message: EventNames.AudioProviderPollingStarted,
+                        reference: new { AudioRequestId = request.Id, VideoRequestId = request.VideoRequestId, request.ProviderPollingCount },
+                        facility: EventNames.AudioProviderPollingStarted,
+                        correlationId: request.CorrelationId,
+                        exception: ex
+                    ));
 
                     await EventBus.PublishAsync(
                         parentMessage: ParentIntegrationEvent,
@@ -161,6 +208,14 @@ public sealed class AudioProviderPollingWorkerService(
                 {
                     request.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(pollingSettings.BackoffIntervalSeconds);
                     await ReplaceAudioAsync(request, cancellationToken);
+
+                    _logger.FrameworkErrorLog(LogHelper.Generate(
+                        message: EventNames.RetryScheduled,
+                        reference: new { AudioRequestId = request.Id, VideoRequestId = request.VideoRequestId, FailedStep = EventNames.AudioProviderPollingStarted, request.ProviderPollingCount, request.NextProviderPollAtUtc },
+                        facility: EventNames.RetryScheduled,
+                        correlationId: request.CorrelationId,
+                        exception: ex
+                    ));
                 }
 
                 logger.LogError(

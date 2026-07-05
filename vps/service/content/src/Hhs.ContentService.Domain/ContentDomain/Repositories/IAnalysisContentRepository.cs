@@ -11,7 +11,7 @@ public interface IAnalysisContentRepository : IGenericRepository<AnalysisContent
     Task SetVideoGenerationApprovedAsync(Guid id);
 
     Task SetVideoReferenceAsync(Guid id, Guid videoRequestId);
-    Task SetVideoAudioStartedAsync(Guid id, int audioCount);
+    Task SetAudioOperationStartedAsync(Guid id, string audioMode);
     Task SetVideoProviderStartedAsync(Guid id);
 
 

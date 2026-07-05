@@ -8,6 +8,9 @@ using Hhs.VideoGeneratorService.Domain.MediaDomain.Entities;
 using Hhs.VideoGeneratorService.Domain.MediaDomain.Repositories;
 using Hhs.VideoGeneratorService.Domain.SettingDomain.Repositories;
 using HsnSoft.Base.Domain.Models;
+using HsnSoft.Base.Logging;
+using HsnSoft.Base.Logging.Abstracts;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 
@@ -22,6 +25,8 @@ public sealed class VideoOperationRetryWorkerService(
     IVideoProviderResolver videoProviderResolver,
     VideoRetrySettings retrySettings) : ApplicationServiceBase(provider)
 {
+    private readonly IFrameworkLogger _logger = provider.GetRequiredService<IFrameworkLogger>();
+
     public async Task RetryDueRequestsAsync(CancellationToken cancellationToken)
     {
         var now = DateTime.UtcNow;
@@ -56,12 +61,14 @@ public sealed class VideoOperationRetryWorkerService(
                     request.Status = AudioStatusNames.AudioProviderRequestRetrying;
 
                     await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+                        correlationId: request.CorrelationId,
                         eventMessage: new AudioProviderRequestStartedEto { AudioRequestId = request.Id, }
                     );
                 }
                 else if (request.CurrentStep == EventNames.AudioFileDownloadStarted)
                 {
                     await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+                        correlationId: request.CorrelationId,
                         eventMessage: new AudioFileDownloadStartedEto { AudioRequestId = request.Id, }
                     );
                 }
@@ -69,6 +76,7 @@ public sealed class VideoOperationRetryWorkerService(
                 {
                     // Re-trigger from download so the local file is refreshed before re-uploading.
                     await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+                        correlationId: request.CorrelationId,
                         eventMessage: new AudioFileDownloadStartedEto { AudioRequestId = request.Id, }
                     );
                 }
@@ -95,6 +103,14 @@ public sealed class VideoOperationRetryWorkerService(
                         u => failUpdate,
                         cancellationToken: cancellationToken);
 
+                    _logger.FrameworkErrorLog(LogHelper.Generate(
+                        message: request.CurrentStep,
+                        reference: new { AudioRequestId = request.Id, VideoRequestId = request.VideoRequestId, request.LastError },
+                        facility: request.CurrentStep,
+                        correlationId: request.CorrelationId,
+                        exception: null
+                    ));
+
                     await EventBus.PublishAsync(
                         parentMessage: ParentIntegrationEvent,
                         correlationId: request.CorrelationId,
@@ -110,6 +126,14 @@ public sealed class VideoOperationRetryWorkerService(
 
                     continue;
                 }
+
+                _logger.FrameworkErrorLog(LogHelper.Generate(
+                    message: EventNames.RetryScheduled,
+                    reference: new { AudioRequestId = request.Id, VideoRequestId = request.VideoRequestId, FailedStep = request.CurrentStep },
+                    facility: EventNames.RetryScheduled,
+                    correlationId: request.CorrelationId,
+                    exception: null
+                ));
 
                 if (!pollingRetry)
                 {
@@ -143,6 +167,14 @@ public sealed class VideoOperationRetryWorkerService(
                     exceptionPredicate,
                     u => exceptionUpdate,
                     cancellationToken: cancellationToken);
+
+                _logger.FrameworkErrorLog(LogHelper.Generate(
+                    message: EventNames.RetryScheduled,
+                    reference: new { AudioRequestId = request.Id, VideoRequestId = request.VideoRequestId, FailedStep = request.CurrentStep, request.NextRetryAtUtc },
+                    facility: EventNames.RetryScheduled,
+                    correlationId: request.CorrelationId,
+                    exception: ex
+                ));
             }
         }
     }
@@ -189,6 +221,7 @@ public sealed class VideoOperationRetryWorkerService(
                         .ToList();
 
                     await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+                        correlationId: request.CorrelationId,
                         eventMessage: new VideoProviderRequestStartedEto
                         {
                             RefContentId = request.RefContentId,
@@ -203,6 +236,7 @@ public sealed class VideoOperationRetryWorkerService(
                 else if (request.CurrentStep == EventNames.VideoFileDownloadStarted)
                 {
                     await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+                        correlationId: request.CorrelationId,
                         eventMessage: new VideoFileDownloadStartedEto { VideoRequestId = request.Id, }
                     );
                 }
@@ -210,6 +244,7 @@ public sealed class VideoOperationRetryWorkerService(
                 {
                     // Re-trigger from download so the local file is refreshed before re-uploading.
                     await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+                        correlationId: request.CorrelationId,
                         eventMessage: new VideoFileDownloadStartedEto { VideoRequestId = request.Id, }
                     );
                 }
@@ -236,6 +271,14 @@ public sealed class VideoOperationRetryWorkerService(
                         u => failUpdate,
                         cancellationToken: cancellationToken);
 
+                    _logger.FrameworkErrorLog(LogHelper.Generate(
+                        message: request.CurrentStep,
+                        reference: new { VideoRequestId = request.Id, request.RefContentId, request.LastError },
+                        facility: request.CurrentStep,
+                        correlationId: request.CorrelationId,
+                        exception: null
+                    ));
+
                     await EventBus.PublishAsync(
                         parentMessage: ParentIntegrationEvent,
                         correlationId: request.CorrelationId,
@@ -250,6 +293,14 @@ public sealed class VideoOperationRetryWorkerService(
                     );
                     continue;
                 }
+
+                _logger.FrameworkErrorLog(LogHelper.Generate(
+                    message: EventNames.RetryScheduled,
+                    reference: new { VideoRequestId = request.Id, request.RefContentId, FailedStep = request.CurrentStep },
+                    facility: EventNames.RetryScheduled,
+                    correlationId: request.CorrelationId,
+                    exception: null
+                ));
 
                 if (!pollingRetry)
                 {
@@ -283,6 +334,14 @@ public sealed class VideoOperationRetryWorkerService(
                     exceptionPredicate,
                     u => exceptionUpdate,
                     cancellationToken: cancellationToken);
+
+                _logger.FrameworkErrorLog(LogHelper.Generate(
+                    message: EventNames.RetryScheduled,
+                    reference: new { VideoRequestId = request.Id, request.RefContentId, FailedStep = request.CurrentStep, request.NextRetryAtUtc },
+                    facility: EventNames.RetryScheduled,
+                    correlationId: request.CorrelationId,
+                    exception: ex
+                ));
             }
         }
     }

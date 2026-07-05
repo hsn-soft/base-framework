@@ -94,11 +94,11 @@ public sealed class EfCoreCustomerContentRepository(
                 .SetProperty(a => a.LastFacility, EventNames.VideoRequestCreated)
         );
 
-    public async Task SetVideoAudioStartedAsync(Guid id, int audioCount)
+    public async Task SetAudioOperationStartedAsync(Guid id, string audioMode)
         => await UpdateByExpressionAsync(x => x.Id == id && x.VideoStatus == MediaStatusNames.Created,
             s => s
                 .SetProperty(a => a.VideoStatus, MediaStatusNames.AudioStarted)
-                .SetProperty(a => a.LastFacility, EventNames.VideoAudioStarted)
+                .SetProperty(a => a.LastFacility, audioMode)
         );
 
     public async Task SetVideoProviderStartedAsync(Guid id)

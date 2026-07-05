@@ -24,7 +24,6 @@ public static class ContentDomainConfiguration
             b.Property(x => x.ScrapReleaseTimeUtc);
 
             b.Property(x => x.VideoStatus).HasMaxLength(CustomerContentConsts.VideoStatusMaxLength);
-            b.Property(x => x.AudioRequestId);
             b.Property(x => x.VideoRequestId);
             b.Property(x => x.VideoCdnUrl).HasMaxLength(CustomerContentConsts.VideoCdnUrlMaxLength);
 

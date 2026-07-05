@@ -10,6 +10,9 @@ using Hhs.TextNormalizerService.Domain.NormalizeDomain.Models;
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Repositories;
 using Hhs.TextNormalizerService.Domain.SettingDomain.Repositories;
 using HsnSoft.Base.Domain.Models;
+using HsnSoft.Base.Logging;
+using HsnSoft.Base.Logging.Abstracts;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 
@@ -24,6 +27,8 @@ public sealed class OutlineProviderPollingWorkerService(
     ILogger<OutlineProviderPollingWorkerService> logger,
     OutlinePollingSettings pollingSettings) : ApplicationServiceBase(provider)
 {
+    private readonly IFrameworkLogger _logger = provider.GetRequiredService<IFrameworkLogger>();
+
     public async Task PollDueOutlineRequestsAsync(CancellationToken cancellationToken)
     {
         var now = DateTime.UtcNow;
@@ -68,6 +73,14 @@ public sealed class OutlineProviderPollingWorkerService(
 
                     await ReplaceCustomerAsync(request, cancellationToken);
 
+                    _logger.FrameworkErrorLog(LogHelper.Generate(
+                        message: EventNames.OutlineProviderPollingStarted,
+                        reference: new { request.ScopeKey, RefContentId = request.CustomerContentId, RefNormalizedRequestId = request.Id, request.OutlinePollingCount },
+                        facility: EventNames.OutlineProviderPollingStarted,
+                        correlationId: request.CorrelationId,
+                        exception: null
+                    ));
+
                     await EventBus.PublishAsync(
                         parentMessage: ParentIntegrationEvent,
                         correlationId: request.CorrelationId,
@@ -108,6 +121,14 @@ public sealed class OutlineProviderPollingWorkerService(
 
                     await ReplaceCustomerAsync(request, cancellationToken);
 
+                    _logger.FrameworkErrorLog(LogHelper.Generate(
+                        message: EventNames.OutlineProviderPollingStarted,
+                        reference: new { request.ScopeKey, RefContentId = request.CustomerContentId, RefNormalizedRequestId = request.Id, request.LastError },
+                        facility: EventNames.OutlineProviderPollingStarted,
+                        correlationId: request.CorrelationId,
+                        exception: null
+                    ));
+
                     await EventBus.PublishAsync(
                         parentMessage: ParentIntegrationEvent,
                         correlationId: request.CorrelationId,
@@ -130,6 +151,15 @@ public sealed class OutlineProviderPollingWorkerService(
                     request.NextOutlinePollAtUtc = DateTime.UtcNow.AddSeconds(pollingSettings.IntervalSeconds);
 
                     await ReplaceCustomerAsync(request, cancellationToken);
+
+                    _logger.FrameworkInfoLog(LogHelper.Generate(
+                        message: EventNames.OutlineProviderPollingStarted,
+                        reference: new { request.ScopeKey, RefContentId = request.CustomerContentId, RefNormalizedRequestId = request.Id, Attempt = request.OutlinePollingCount, MaxAttempts = pollingSettings.MaxAttempts, request.NextOutlinePollAtUtc },
+                        facility: EventNames.OutlineProviderPollingStarted,
+                        correlationId: request.CorrelationId,
+                        exception: null
+                    ));
+
                     continue;
                 }
 
@@ -146,7 +176,16 @@ public sealed class OutlineProviderPollingWorkerService(
                 if (string.IsNullOrWhiteSpace(status.OutlinedData))
                     throw new InvalidOperationException("Outline provider completed but script is empty.");
 
+                _logger.FrameworkInfoLog(LogHelper.Generate(
+                    message: EventNames.OutlineProviderRequestCompleted,
+                    reference: new { request.ScopeKey, RefContentId = request.CustomerContentId, RefNormalizedRequestId = request.Id, TotalPolls = request.OutlinePollingCount },
+                    facility: EventNames.OutlineProviderRequestCompleted,
+                    correlationId: request.CorrelationId,
+                    exception: null
+                ));
+
                 await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+                    correlationId: request.CorrelationId,
                     eventMessage: new OutlineProviderCompletedEto { RefContentType = ContentType.CustomerContent, RefNormalizedRequestId = request.Id, OutlinedData = status.OutlinedData! }
                 );
             }
@@ -163,6 +202,14 @@ public sealed class OutlineProviderPollingWorkerService(
                     request.NextOutlinePollAtUtc = null;
 
                     await ReplaceCustomerAsync(request, cancellationToken);
+
+                    _logger.FrameworkErrorLog(LogHelper.Generate(
+                        message: EventNames.OutlineProviderPollingStarted,
+                        reference: new { request.ScopeKey, RefContentId = request.CustomerContentId, RefNormalizedRequestId = request.Id, request.OutlinePollingCount },
+                        facility: EventNames.OutlineProviderPollingStarted,
+                        correlationId: request.CorrelationId,
+                        exception: ex
+                    ));
 
                     await EventBus.PublishAsync(
                         parentMessage: ParentIntegrationEvent,
@@ -185,6 +232,14 @@ public sealed class OutlineProviderPollingWorkerService(
                     request.NextOutlinePollAtUtc = DateTime.UtcNow.AddSeconds(pollingSettings.BackoffIntervalSeconds);
 
                     await ReplaceCustomerAsync(request, cancellationToken);
+
+                    _logger.FrameworkErrorLog(LogHelper.Generate(
+                        message: EventNames.RetryScheduled,
+                        reference: new { request.ScopeKey, RefContentId = request.CustomerContentId, RefNormalizedRequestId = request.Id, FailedStep = EventNames.OutlineProviderPollingStarted, request.OutlinePollingCount, request.NextOutlinePollAtUtc },
+                        facility: EventNames.RetryScheduled,
+                        correlationId: request.CorrelationId,
+                        exception: ex
+                    ));
                 }
 
                 logger.LogError(
@@ -291,6 +346,14 @@ public sealed class OutlineProviderPollingWorkerService(
                             update,
                             cancellationToken);
 
+                        _logger.FrameworkInfoLog(LogHelper.Generate(
+                            message: EventNames.OutlineProviderPollingStarted,
+                            reference: new { request.ScopeKey, RefContentId = request.AnalysisContentId, RefNormalizedRequestId = request.Id, item.CustomerContentId, Attempt = item.OutlinePollingCount + 1, MaxAttempts = pollingSettings.MaxAttempts },
+                            facility: EventNames.OutlineProviderPollingStarted,
+                            correlationId: request.CorrelationId,
+                            exception: null
+                        ));
+
                         continue;
                     }
 
@@ -311,7 +374,16 @@ public sealed class OutlineProviderPollingWorkerService(
                         completedUpdate,
                         cancellationToken);
 
+                    _logger.FrameworkInfoLog(LogHelper.Generate(
+                        message: EventNames.OutlineProviderRequestCompleted,
+                        reference: new { request.ScopeKey, RefContentId = request.AnalysisContentId, RefNormalizedRequestId = request.Id, item.CustomerContentId },
+                        facility: EventNames.OutlineProviderRequestCompleted,
+                        correlationId: request.CorrelationId,
+                        exception: null
+                    ));
+
                     await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+                        correlationId: request.CorrelationId,
                         eventMessage: new OutlineProviderCompletedEto { CustomerContentIdForItem = item.CustomerContentId, RefContentType = ContentType.AnalysisContent, RefNormalizedRequestId = request.Id, OutlinedData = status.OutlinedData! }
                     );
                 }
@@ -353,6 +425,14 @@ public sealed class OutlineProviderPollingWorkerService(
                         item.CustomerContentId,
                         update,
                         cancellationToken);
+
+                    _logger.FrameworkErrorLog(LogHelper.Generate(
+                        message: EventNames.RetryScheduled,
+                        reference: new { request.ScopeKey, RefContentId = request.AnalysisContentId, RefNormalizedRequestId = request.Id, item.CustomerContentId, FailedStep = EventNames.OutlineProviderPollingStarted, OutlinePollingCount = nextCount },
+                        facility: EventNames.RetryScheduled,
+                        correlationId: request.CorrelationId,
+                        exception: ex
+                    ));
 
                     logger.LogError(
                         ex,
@@ -408,6 +488,14 @@ public sealed class OutlineProviderPollingWorkerService(
             item.CustomerContentId,
             update,
             cancellationToken);
+
+        _logger.FrameworkErrorLog(LogHelper.Generate(
+            message: EventNames.OutlineProviderPollingStarted,
+            reference: new { request.ScopeKey, RefContentId = request.AnalysisContentId, RefNormalizedRequestId = request.Id, item.CustomerContentId, errorMessage },
+            facility: EventNames.OutlineProviderPollingStarted,
+            correlationId: request.CorrelationId,
+            exception: null
+        ));
 
         await EventBus.PublishAsync(
             parentMessage: ParentIntegrationEvent,

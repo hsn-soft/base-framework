@@ -130,9 +130,6 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid?>("AudioRequestId")
-                        .HasColumnType("uuid");
-
                     b.Property<string>("ContentKey")
                         .IsRequired()
                         .HasMaxLength(500)

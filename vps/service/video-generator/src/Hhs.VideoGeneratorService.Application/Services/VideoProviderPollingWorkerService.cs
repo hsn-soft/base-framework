@@ -7,6 +7,9 @@ using Hhs.VideoGeneratorService.Domain.MediaDomain.Entities;
 using Hhs.VideoGeneratorService.Domain.MediaDomain.Repositories;
 using Hhs.VideoGeneratorService.Domain.SettingDomain.Repositories;
 using HsnSoft.Base.Domain.Models;
+using HsnSoft.Base.Logging;
+using HsnSoft.Base.Logging.Abstracts;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 
@@ -20,6 +23,8 @@ public sealed class VideoProviderPollingWorkerService(
     ILogger<VideoProviderPollingWorkerService> logger,
     VideoPollingSettings pollingSettings) : ApplicationServiceBase(provider)
 {
+    private readonly IFrameworkLogger _logger = provider.GetRequiredService<IFrameworkLogger>();
+
     public async Task PollDueVideoRequestsAsync(CancellationToken cancellationToken)
     {
         var now = DateTime.UtcNow;
@@ -55,6 +60,14 @@ public sealed class VideoProviderPollingWorkerService(
 
                     await ReplaceVideoAsync(request, cancellationToken);
 
+                    _logger.FrameworkErrorLog(LogHelper.Generate(
+                        message: EventNames.VideoProviderPollingStarted,
+                        reference: new { VideoRequestId = request.Id, request.RefContentId, request.ProviderPollingCount },
+                        facility: EventNames.VideoProviderPollingStarted,
+                        correlationId: request.CorrelationId,
+                        exception: null
+                    ));
+
                     await EventBus.PublishAsync(
                         parentMessage: ParentIntegrationEvent,
                         correlationId: request.CorrelationId,
@@ -88,6 +101,14 @@ public sealed class VideoProviderPollingWorkerService(
 
                     await ReplaceVideoAsync(request, cancellationToken);
 
+                    _logger.FrameworkErrorLog(LogHelper.Generate(
+                        message: EventNames.VideoProviderPollingStarted,
+                        reference: new { VideoRequestId = request.Id, request.RefContentId, request.ProviderPollingCount, request.LastError },
+                        facility: EventNames.VideoProviderPollingStarted,
+                        correlationId: request.CorrelationId,
+                        exception: null
+                    ));
+
                     await EventBus.PublishAsync(
                         parentMessage: ParentIntegrationEvent,
                         correlationId: request.CorrelationId,
@@ -110,6 +131,15 @@ public sealed class VideoProviderPollingWorkerService(
                     request.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(pollingSettings.IntervalSeconds);
 
                     await ReplaceVideoAsync(request, cancellationToken);
+
+                    _logger.FrameworkInfoLog(LogHelper.Generate(
+                        message: EventNames.VideoProviderPollingStarted,
+                        reference: new { VideoRequestId = request.Id, request.RefContentId, Attempt = request.ProviderPollingCount, MaxAttempts = pollingSettings.MaxAttempts, request.NextProviderPollAtUtc },
+                        facility: EventNames.VideoProviderPollingStarted,
+                        correlationId: request.CorrelationId,
+                        exception: null
+                    ));
+
                     continue;
                 }
 
@@ -127,8 +157,17 @@ public sealed class VideoProviderPollingWorkerService(
 
                 await ReplaceVideoAsync(request, cancellationToken);
 
+                _logger.FrameworkInfoLog(LogHelper.Generate(
+                    message: EventNames.VideoProviderCompleted,
+                    reference: new { VideoRequestId = request.Id, request.RefContentId, TotalPolls = request.ProviderPollingCount },
+                    facility: EventNames.VideoProviderCompleted,
+                    correlationId: request.CorrelationId,
+                    exception: null
+                ));
+
                 // Publish provider completed event - handler will trigger download cascade
                 await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+                    correlationId: request.CorrelationId,
                     eventMessage: new VideoProviderCompletedEto { VideoRequestId = request.Id }
                 );
             }
@@ -143,6 +182,14 @@ public sealed class VideoProviderPollingWorkerService(
                     request.NextProviderPollAtUtc = null;
 
                     await ReplaceVideoAsync(request, cancellationToken);
+
+                    _logger.FrameworkErrorLog(LogHelper.Generate(
+                        message: EventNames.VideoProviderPollingStarted,
+                        reference: new { VideoRequestId = request.Id, request.RefContentId, request.ProviderPollingCount },
+                        facility: EventNames.VideoProviderPollingStarted,
+                        correlationId: request.CorrelationId,
+                        exception: ex
+                    ));
 
                     await EventBus.PublishAsync(
                         parentMessage: ParentIntegrationEvent,
@@ -161,6 +208,14 @@ public sealed class VideoProviderPollingWorkerService(
                 {
                     request.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(pollingSettings.BackoffIntervalSeconds);
                     await ReplaceVideoAsync(request, cancellationToken);
+
+                    _logger.FrameworkErrorLog(LogHelper.Generate(
+                        message: EventNames.RetryScheduled,
+                        reference: new { VideoRequestId = request.Id, request.RefContentId, FailedStep = EventNames.VideoProviderPollingStarted, request.ProviderPollingCount, request.NextProviderPollAtUtc },
+                        facility: EventNames.RetryScheduled,
+                        correlationId: request.CorrelationId,
+                        exception: ex
+                    ));
                 }
 
                 logger.LogError(

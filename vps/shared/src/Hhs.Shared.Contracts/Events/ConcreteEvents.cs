@@ -160,12 +160,12 @@ public sealed record VideoOperationStartedEto : IIntegrationEventMessage
     public Guid VideoRequestId { get; init; }
 }
 
-public sealed record VideoAudioStartedEto : IIntegrationEventMessage
+public sealed record AudioOperationStartedEto : IIntegrationEventMessage
 {
     public Guid RefContentId { get; init; }
     public ContentType RefContentType { get; init; }
     public Guid VideoRequestId { get; init; }
-    public int AudioCount { get; init; }
+    public string AudioMode { get; init; }
 }
 
 public sealed record AudioProviderRequestStartedEto : IIntegrationEventMessage

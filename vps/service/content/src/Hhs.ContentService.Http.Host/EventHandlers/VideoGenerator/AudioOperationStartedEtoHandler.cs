@@ -6,21 +6,21 @@ using HsnSoft.Base.Logging.Abstracts;
 
 namespace Hhs.ContentService.EventHandlers.VideoGenerator;
 
-public class VideoAudioStartedEtoHandler(
+public class AudioOperationStartedEtoHandler(
     ApplicationEventInboxMessageManager inboxStore,
     IAppConsoleLogger logger,
     ContentOperationService contentOperationService
-) : ApplicationEventHandlerBase<VideoAudioStartedEto>(inboxStore)
+) : ApplicationEventHandlerBase<AudioOperationStartedEto>(inboxStore)
 {
     private readonly IAppConsoleLogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     private readonly ContentOperationService _contentOperationService = contentOperationService ?? throw new ArgumentNullException(nameof(contentOperationService));
 
-    protected override async Task ExecuteAsync(MessageEnvelope<VideoAudioStartedEto> @event, CancellationToken cancellationToken)
+    protected override async Task ExecuteAsync(MessageEnvelope<AudioOperationStartedEto> @event, CancellationToken cancellationToken)
     {
         _logger.LogDebug("EVENT HANDLING | [ {EventName} ] => CorrelationId[{CorrelationId}]",
-            nameof(VideoAudioStartedEto)[..^"Eto".Length],
+            nameof(AudioOperationStartedEto)[..^"Eto".Length],
             @event.MessageId);
 
-        await _contentOperationService.HandleVideoAudioStartedAsync(@event.Message, cancellationToken);
+        await _contentOperationService.HandleAudioOperationStartedAsync(@event.Message, @event.CorrelationId, cancellationToken);
     }
 }

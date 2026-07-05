@@ -21,6 +21,6 @@ public class OutlineProviderRequestStartedEtoHandler(
             nameof(OutlineProviderRequestStartedEto)[..^"Eto".Length],
             @event.CorrelationId ?? string.Empty);
 
-        await _normalizerOperationAppService.StartOutlineProviderRequestAsync(@event.Message);
+        await _normalizerOperationAppService.StartOutlineProviderRequestAsync(@event.Message, @event.CorrelationId, cancellationToken);
     }
 }

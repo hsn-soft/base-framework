@@ -30,7 +30,6 @@ public sealed class CustomerContent : AuditedEntity<Guid>, ISoftDelete, IScopeSu
 
     // Video Generation Status
     [CanBeNull] public string VideoStatus { get; set; }
-    [CanBeNull] public Guid? AudioRequestId { get; set; }
     [CanBeNull] public Guid? VideoRequestId { get; set; }
     [CanBeNull] public string VideoCdnUrl { get; set; }
 

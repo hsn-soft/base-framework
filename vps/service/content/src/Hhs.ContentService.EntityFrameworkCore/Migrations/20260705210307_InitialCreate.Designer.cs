@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Hhs.ContentService.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(ContentServiceDbContext))]
-    [Migration("20260702152758_InitialCreate")]
+    [Migration("20260705210307_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -131,9 +131,6 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
             modelBuilder.Entity("Hhs.ContentService.Domain.ContentDomain.Entities.CustomerContent", b =>
                 {
                     b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("AudioRequestId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("ContentKey")

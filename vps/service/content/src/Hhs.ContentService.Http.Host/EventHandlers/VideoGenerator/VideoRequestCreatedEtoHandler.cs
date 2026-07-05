@@ -21,6 +21,6 @@ public class VideoRequestCreatedEtoHandler(
             nameof(VideoRequestCreatedEto)[..^"Eto".Length],
             @event.MessageId);
 
-        await _contentOperationService.HandleVideoRequestCreatedAsync(@event.Message.RefContentId, @event.Message.VideoRequestId, @event.Message.RefContentType, cancellationToken);
+        await _contentOperationService.HandleVideoRequestCreatedAsync(@event.Message.RefContentId, @event.Message.VideoRequestId, @event.Message.RefContentType, @event.CorrelationId, cancellationToken);
     }
 }

@@ -25,7 +25,7 @@ public sealed class ContentOperationService(
     private readonly IFrameworkLogger _logger = provider.GetRequiredService<IFrameworkLogger>();
     private readonly ContentOperationSettings _serviceSettings = serviceSettings?.Value ?? throw new ArgumentNullException(nameof(serviceSettings));
 
-    public async Task HandleNormalizedRequestReferenceAsync(ContentType refContentType, Guid refContentId, Guid refNormalizeRequestId, string normalizeStatus, string normalizeCurrentStep)
+    public async Task HandleNormalizedRequestReferenceAsync(ContentType refContentType, Guid refContentId, Guid refNormalizeRequestId, string normalizeStatus, string normalizeCurrentStep, [CanBeNull] string correlationId = null)
     {
         switch (refContentType)
         {
@@ -39,9 +39,18 @@ public sealed class ContentOperationService(
             default:
                 throw new ArgumentOutOfRangeException(nameof(refContentType), refContentType, null);
         }
+
+        _logger.FrameworkInfoLog(LogHelper.Generate(
+            message: EventNames.CustomerContentNormalizeRequestCreated,
+            reference: new { RefContentType = refContentType, RefContentId = refContentId, RefNormalizeRequestId = refNormalizeRequestId },
+            facility: EventNames.CustomerContentNormalizeRequestCreated,
+            correlationId: correlationId,
+            exception: null
+        ));
     }
 
-    public async Task HandleCustomerContentScrapeResultsAsync(CustomerContentScrapingCompletedEto @event, CancellationToken cancellationToken = default) =>
+    public async Task HandleCustomerContentScrapeResultsAsync(CustomerContentScrapingCompletedEto @event, [CanBeNull] string correlationId = null, CancellationToken cancellationToken = default)
+    {
         await customerContentRepository.SetScrapeResultsAsync(
             @event.CustomerContentId,
             @event.CustomerContentNormalizeRequestId,
@@ -49,10 +58,20 @@ public sealed class ContentOperationService(
             @event.NormalizeCurrentStep,
             @event.ScrapedReleaseTimeUtc);
 
+        _logger.FrameworkInfoLog(LogHelper.Generate(
+            message: EventNames.CustomerContentScrapingCompleted,
+            reference: new { RefContentId = @event.CustomerContentId, RefNormalizeRequestId = @event.CustomerContentNormalizeRequestId },
+            facility: EventNames.CustomerContentScrapingCompleted,
+            correlationId: correlationId,
+            exception: null
+        ));
+    }
+
     public async Task HandleOutlineResultAsync(NormalizerResultPublishedEto @event, CancellationToken cancellationToken = default)
     {
         bool shouldPublishEvent = false;
         string? scopeKey = null;
+        string? correlationId = null;
 
         switch (@event.RefContentType)
         {
@@ -108,6 +127,7 @@ public sealed class ContentOperationService(
                                 contentReferenceIds: entity.Id.ToString());
 
                             scopeKey = entity.ScopeKey;
+                            correlationId = entity.CorrelationId;
                             shouldPublishEvent = true;
                         }
                         else
@@ -157,6 +177,7 @@ public sealed class ContentOperationService(
                             contentReferenceIds: entity.Id.ToString());
 
                         scopeKey = entity.ScopeKey;
+                        correlationId = entity.CorrelationId;
                         shouldPublishEvent = true;
                     }
 
@@ -171,6 +192,7 @@ public sealed class ContentOperationService(
         {
             await EventBus.PublishAsync(
                 parentMessage: ParentIntegrationEvent,
+                correlationId: correlationId,
                 eventMessage: new VideoGenerationApprovedEto
                 {
                     RefContentId = @event.RefContentId,
@@ -184,7 +206,7 @@ public sealed class ContentOperationService(
         }
     }
 
-    public async Task HandleVideoRequestCreatedAsync(Guid refContentId, Guid refVideoRequestId, ContentType refContentType, CancellationToken cancellationToken = default)
+    public async Task HandleVideoRequestCreatedAsync(Guid refContentId, Guid refVideoRequestId, ContentType refContentType, [CanBeNull] string correlationId = null, CancellationToken cancellationToken = default)
     {
         switch (refContentType)
         {
@@ -198,25 +220,41 @@ public sealed class ContentOperationService(
             default:
                 throw new ArgumentOutOfRangeException(nameof(refContentType), refContentType, null);
         }
+
+        _logger.FrameworkInfoLog(LogHelper.Generate(
+            message: EventNames.VideoRequestCreated,
+            reference: new { RefContentType = refContentType, RefContentId = refContentId, VideoRequestId = refVideoRequestId },
+            facility: EventNames.VideoRequestCreated,
+            correlationId: correlationId,
+            exception: null
+        ));
     }
 
-    public async Task HandleVideoAudioStartedAsync(VideoAudioStartedEto @event, CancellationToken cancellationToken = default)
+    public async Task HandleAudioOperationStartedAsync(AudioOperationStartedEto @event, [CanBeNull] string correlationId = null, CancellationToken cancellationToken = default)
     {
         switch (@event.RefContentType)
         {
             case ContentType.CustomerContent:
-                await customerContentRepository.SetVideoAudioStartedAsync(@event.RefContentId, @event.AudioCount);
+                await customerContentRepository.SetAudioOperationStartedAsync(@event.RefContentId, @event.AudioMode);
                 break;
             case ContentType.AnalysisContent:
-                await analysisContentRepository.SetVideoAudioStartedAsync(@event.RefContentId, @event.AudioCount);
+                await analysisContentRepository.SetAudioOperationStartedAsync(@event.RefContentId, @event.AudioMode);
                 break;
             case ContentType.None:
             default:
                 throw new ArgumentOutOfRangeException(nameof(@event.RefContentType), @event.RefContentType, null);
         }
+
+        _logger.FrameworkInfoLog(LogHelper.Generate(
+            message: @event.AudioMode,
+            reference: new { RefContentType = @event.RefContentType, RefContentId = @event.RefContentId, VideoRequestId = @event.VideoRequestId },
+            facility: @event.AudioMode,
+            correlationId: correlationId,
+            exception: null
+        ));
     }
 
-    public async Task HandleVideoProviderStartedAsync(VideoProviderRequestStartedEto @event, CancellationToken cancellationToken = default)
+    public async Task HandleVideoProviderStartedAsync(VideoProviderRequestStartedEto @event, [CanBeNull] string correlationId = null, CancellationToken cancellationToken = default)
     {
         switch (@event.RefContentType)
         {
@@ -230,6 +268,14 @@ public sealed class ContentOperationService(
             default:
                 throw new ArgumentOutOfRangeException(nameof(@event.RefContentType), @event.RefContentType, null);
         }
+
+        _logger.FrameworkInfoLog(LogHelper.Generate(
+            message: EventNames.VideoProviderRequestStarted,
+            reference: new { RefContentType = @event.RefContentType, RefContentId = @event.RefContentId, VideoRequestId = @event.VideoRequestId },
+            facility: EventNames.VideoProviderRequestStarted,
+            correlationId: correlationId,
+            exception: null
+        ));
     }
 
     public async Task HandleVideoResultAsync(VideoGenerationResultPublishedEto @event, CancellationToken cancellationToken = default)
@@ -247,6 +293,14 @@ public sealed class ContentOperationService(
                         entity.LastFacility = EventNames.VideoGenerationResultPublished;
 
                         await customerContentRepository.UpdateAsync(entity, cancellationToken);
+
+                        _logger.FrameworkInfoLog(LogHelper.Generate(
+                            message: EventNames.VideoGenerationResultPublished,
+                            reference: new { entity.ScopeKey, RefContentId = entity.Id, VideoRequestId = @event.VideoRequestId, entity.VideoCdnUrl },
+                            facility: EventNames.VideoGenerationResultPublished,
+                            correlationId: entity.CorrelationId,
+                            exception: null
+                        ));
                     }
 
                     break;
@@ -262,6 +316,14 @@ public sealed class ContentOperationService(
                         entity.LastFacility = EventNames.VideoGenerationResultPublished;
 
                         await analysisContentRepository.UpdateAsync(entity, cancellationToken);
+
+                        _logger.FrameworkInfoLog(LogHelper.Generate(
+                            message: EventNames.VideoGenerationResultPublished,
+                            reference: new { entity.ScopeKey, RefContentId = entity.Id, VideoRequestId = @event.VideoRequestId, entity.VideoCdnUrl },
+                            facility: EventNames.VideoGenerationResultPublished,
+                            correlationId: entity.CorrelationId,
+                            exception: null
+                        ));
                     }
 
                     break;
@@ -294,6 +356,14 @@ public sealed class ContentOperationService(
                 }
 
                 await customerContentRepository.UpdateAsync(entity, cancellationToken);
+
+                _logger.FrameworkErrorLog(LogHelper.Generate(
+                    message: EventNames.StepFailed,
+                    reference: new { entity.ScopeKey, RefContentId = entity.Id, @event.Step, @event.Retryable, @event.ErrorMessage },
+                    facility: EventNames.StepFailed,
+                    correlationId: entity.CorrelationId,
+                    exception: null
+                ));
             }
         }
 
@@ -316,6 +386,14 @@ public sealed class ContentOperationService(
                 }
 
                 await analysisContentRepository.UpdateAsync(entity, cancellationToken);
+
+                _logger.FrameworkErrorLog(LogHelper.Generate(
+                    message: EventNames.StepFailed,
+                    reference: new { entity.ScopeKey, RefContentId = entity.Id, @event.Step, @event.Retryable, @event.ErrorMessage },
+                    facility: EventNames.StepFailed,
+                    correlationId: entity.CorrelationId,
+                    exception: null
+                ));
             }
         }
     }
@@ -337,13 +415,13 @@ public sealed class ContentOperationService(
     {
         if (_serviceSettings.SkipContentCheckOperation)
         {
-            return new KeyValuePair<bool, string>(true, "CUSTOMER_CONTENT_VIDEO_GENERATION_APPROVED");
+            return new KeyValuePair<bool, string>(true, EventNames.CustomerContentVideoGenerationApproved);
         }
 
         // Check content release time
         if (!releaseTime.HasValue || releaseTime.Value.ToUniversalTime().Date != DateTime.UtcNow.Date)
         {
-            return new KeyValuePair<bool, string>(false, "CUSTOMER_CONTENT_VIDEO_GENERATION_SKIPPED_OLD_CONTENT");
+            return new KeyValuePair<bool, string>(false, EventNames.CustomerContentVideoGenerationSkippedOldContent);
         }
 
         // Get Client Details
@@ -358,14 +436,14 @@ public sealed class ContentOperationService(
         {
             if (DateTime.UtcNow.Hour < releaseTime.Value.ToUniversalTime().Hour)
             {
-                return new KeyValuePair<bool, string>(false, "CUSTOMER_CONTENT_VIDEO_GENERATION_SKIPPED_EARLY_TIME");
+                return new KeyValuePair<bool, string>(false, EventNames.CustomerContentVideoGenerationSkippedEarlyTime);
             }
         }
 
         // Check client direct video generation limit
         if (customerVpSetting.DailyDirectVideoGenerationLimit <= 0)
         {
-            return new KeyValuePair<bool, string>(false, "CUSTOMER_CONTENT_VIDEO_GENERATION_SKIPPED_DAILY_LIMIT");
+            return new KeyValuePair<bool, string>(false, EventNames.CustomerContentVideoGenerationSkippedDailyLimit);
         }
 
         // Check client direct video generation available
@@ -373,7 +451,7 @@ public sealed class ContentOperationService(
             releaseTime.Value.ToUniversalTime().Date, VideoGenerationTypes.DirectVideoGeneration);
 
         return customerVpSetting.DailyDirectVideoGenerationLimit - clientDailyDirectVideoHistoryCount <= 0
-            ? new KeyValuePair<bool, string>(false, "CUSTOMER_CONTENT_VIDEO_GENERATION_SKIPPED_DAILY_LIMIT")
-            : new KeyValuePair<bool, string>(true, "CUSTOMER_CONTENT_VIDEO_GENERATION_APPROVED");
+            ? new KeyValuePair<bool, string>(false, EventNames.CustomerContentVideoGenerationSkippedDailyLimit)
+            : new KeyValuePair<bool, string>(true, EventNames.CustomerContentVideoGenerationApproved);
     }
 }

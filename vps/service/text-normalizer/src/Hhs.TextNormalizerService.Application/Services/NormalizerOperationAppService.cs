@@ -52,7 +52,16 @@ public sealed class NormalizerOperationAppService(
         {
             _logger.LogDebug($"Existing request found, publishing event");
 
+            _logger.FrameworkInfoLog(LogHelper.Generate(
+                message: EventNames.CustomerContentNormalizeRequestCreated,
+                reference: new { existing.ScopeKey, RefContentId = existing.CustomerContentId, RefNormalizedRequestId = existing.Id },
+                facility: EventNames.CustomerContentNormalizeRequestCreated,
+                correlationId: existing.CorrelationId,
+                exception: null
+            ));
+
             await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+                correlationId: existing.CorrelationId,
                 eventMessage: new CustomerContentNormalizeRequestCreatedEto
                 {
                     CustomerContentId = existing.CustomerContentId, // for content service update
@@ -105,6 +114,7 @@ public sealed class NormalizerOperationAppService(
             ));
 
             await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+                correlationId: correlationId,
                 eventMessage: new CustomerContentNormalizeRequestCreatedEto
                 {
                     CustomerContentId = @event.CustomerContentId, // for content service update
@@ -155,6 +165,7 @@ public sealed class NormalizerOperationAppService(
             ));
 
             await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+                correlationId: request.CorrelationId,
                 eventMessage: new CustomerContentScrapingStartedEto { CustomerContentNormalizeRequestId = @event.CustomerContentNormalizeRequestId }
             );
         }
@@ -246,6 +257,7 @@ public sealed class NormalizerOperationAppService(
             ));
 
             await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+                correlationId: request.CorrelationId,
                 eventMessage: new CustomerContentScrapingCompletedEto
                 {
                     // Update reference for Content Service
@@ -300,6 +312,7 @@ public sealed class NormalizerOperationAppService(
             ));
 
             await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+                correlationId: request.CorrelationId,
                 eventMessage: new CustomerContentOutlineStartedEto { CustomerContentNormalizeRequestId = @event.CustomerContentNormalizeRequestId }
             );
         }
@@ -353,6 +366,7 @@ public sealed class NormalizerOperationAppService(
                 ));
 
                 await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+                    correlationId: request.CorrelationId,
                     eventMessage: new NormalizerResultPublishedEto
                     {
                         RefContentId = request.CustomerContentId,
@@ -395,6 +409,7 @@ public sealed class NormalizerOperationAppService(
             );
 
             await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+                correlationId: request.CorrelationId,
                 eventMessage: new OutlineProviderRequestStartedEto
                 {
                     RefNormalizedRequestId = request.Id,
@@ -427,6 +442,7 @@ public sealed class NormalizerOperationAppService(
         if (existing is not null)
         {
             await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+                correlationId: existing.CorrelationId,
                 eventMessage: new AnalysisContentNormalizeRequestCreatedEto
                 {
                     AnalysisContentId = existing.AnalysisContentId,
@@ -455,6 +471,7 @@ public sealed class NormalizerOperationAppService(
         await analysisContentRepository.InsertAsync(request, cancellationToken);
 
         await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+            correlationId: correlationId,
             eventMessage: new AnalysisContentNormalizeRequestCreatedEto
             {
                 AnalysisContentId = @event.AnalysisContentId,
@@ -475,6 +492,7 @@ public sealed class NormalizerOperationAppService(
                 continue;
 
             await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+                correlationId: request.CorrelationId,
                 eventMessage: new AnalysisItemScrapingStartedEto { AnalysisContentId = request.AnalysisContentId, CustomerContentIdForItem = item.CustomerContentId }
             );
         }
@@ -504,6 +522,7 @@ public sealed class NormalizerOperationAppService(
                     cancellationToken
                 );
                 await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+                    correlationId: request.CorrelationId,
                     eventMessage: new AnalysisItemScrapingCompletedEto { AnalysisContentId = request.AnalysisContentId, CustomerContentIdForItem = @event.CustomerContentIdForItem }
                 );
                 return;
@@ -547,6 +566,7 @@ public sealed class NormalizerOperationAppService(
             );
 
             await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+                correlationId: request.CorrelationId,
                 eventMessage: new AnalysisItemScrapingCompletedEto { AnalysisContentId = request.AnalysisContentId, CustomerContentIdForItem = @event.CustomerContentIdForItem, }
             );
         }
@@ -563,7 +583,10 @@ public sealed class NormalizerOperationAppService(
 
     public async Task CompleteAnalysisItemScrapingAsync(AnalysisItemScrapingCompletedEto @event, CancellationToken cancellationToken = default)
     {
+        var request = await GetAnalysisContentNormalizedRequestAsync(@event.AnalysisContentId);
+
         await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+            correlationId: request?.CorrelationId,
             eventMessage: new AnalysisItemOutlineStartedEto { AnalysisContentId = @event.AnalysisContentId, CustomerContentIdForItem = @event.CustomerContentIdForItem }
         );
     }
@@ -615,6 +638,7 @@ public sealed class NormalizerOperationAppService(
                 : item.ScrapingResult.Title.Replace(":", "") + " : " + (item.ScrapingResult.Spot ?? item.ScrapingResult.Details);
 
             await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+                correlationId: analysisContentNormalizedRequest.CorrelationId,
                 eventMessage: new OutlineProviderRequestStartedEto
                 {
                     CustomerContentIdForItem = item.CustomerContentId,
@@ -640,7 +664,7 @@ public sealed class NormalizerOperationAppService(
 
 
 
-    public async Task StartOutlineProviderRequestAsync(OutlineProviderRequestStartedEto @event, CancellationToken cancellationToken = default)
+    public async Task StartOutlineProviderRequestAsync(OutlineProviderRequestStartedEto @event, [CanBeNull] string correlationId = null, CancellationToken cancellationToken = default)
     {
         _logger.LogInformation($"StartOutlineProviderRequestAsync - Event ScopeKey: '{@event.ScopeKey}' (null={@event.ScopeKey == null}, empty={string.IsNullOrWhiteSpace(@event.ScopeKey)})");
 
@@ -681,7 +705,16 @@ public sealed class NormalizerOperationAppService(
                 if (string.IsNullOrWhiteSpace(response.OutlinedData))
                     throw new InvalidOperationException("OUTLINE RESPONSE CONTENT DATA UNKNOWN");
 
+                _logger.FrameworkInfoLog(LogHelper.Generate(
+                    message: EventNames.OutlineProviderRequestCompleted,
+                    reference: new { @event.ScopeKey, @event.RefContentType, RefNormalizedRequestId = @event.RefNormalizedRequestId, @event.CustomerContentIdForItem },
+                    facility: EventNames.OutlineProviderRequestCompleted,
+                    correlationId: correlationId,
+                    exception: null
+                ));
+
                 await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+                    correlationId: correlationId,
                     eventMessage: new OutlineProviderCompletedEto { RefContentType = @event.RefContentType, RefNormalizedRequestId = @event.RefNormalizedRequestId, CustomerContentIdForItem = @event.CustomerContentIdForItem, OutlinedData = response.OutlinedData }
                 );
                 return;
@@ -690,7 +723,7 @@ public sealed class NormalizerOperationAppService(
             if (string.IsNullOrWhiteSpace(response.ProviderTrackId))
                 throw new InvalidOperationException("ProviderTrackId is required for async outline provider.");
 
-            await SaveOutlinePollingStateAsync(@event, response.ProviderTrackId);
+            await SaveOutlinePollingStateAsync(@event, response.ProviderTrackId, correlationId);
         }
         catch (Exception ex)
         {
@@ -698,7 +731,7 @@ public sealed class NormalizerOperationAppService(
         }
     }
 
-    private async Task SaveOutlinePollingStateAsync(OutlineProviderRequestStartedEto @event, string providerTrackId)
+    private async Task SaveOutlinePollingStateAsync(OutlineProviderRequestStartedEto @event, string providerTrackId, [CanBeNull] string correlationId = null)
     {
         if (@event.RefContentType == ContentType.None) throw new InvalidOperationException("RefContentType is required.");
 
@@ -716,6 +749,14 @@ public sealed class NormalizerOperationAppService(
             request.NextOutlinePollAtUtc = DateTime.UtcNow.AddSeconds(outlinePollingSettings.IntervalSeconds);
 
             await customerContentRepository.UpdateAsync(request);
+
+            _logger.FrameworkInfoLog(LogHelper.Generate(
+                message: EventNames.OutlineProviderPollingStarted,
+                reference: new { request.ScopeKey, RefContentId = request.CustomerContentId, RefNormalizedRequestId = request.Id, request.NextOutlinePollAtUtc },
+                facility: EventNames.OutlineProviderPollingStarted,
+                correlationId: request.CorrelationId,
+                exception: null
+            ));
             return;
         }
 
@@ -735,6 +776,14 @@ public sealed class NormalizerOperationAppService(
                 .Set(x => x.CurrentStep, EventNames.OutlineProviderPollingStarted),
             CancellationToken.None
         );
+
+        _logger.FrameworkInfoLog(LogHelper.Generate(
+            message: EventNames.OutlineProviderPollingStarted,
+            reference: new { RefNormalizedRequestId = @event.RefNormalizedRequestId, @event.CustomerContentIdForItem },
+            facility: EventNames.OutlineProviderPollingStarted,
+            correlationId: correlationId,
+            exception: null
+        ));
     }
 
     private async Task HandleOutlineProviderRequestExceptionAsync(OutlineProviderRequestStartedEto @event, Exception ex)
@@ -791,7 +840,16 @@ public sealed class NormalizerOperationAppService(
 
             await customerContentRepository.UpdateAsync(customerContentNormalizedRequest, cancellationToken);
 
+            _logger.FrameworkInfoLog(LogHelper.Generate(
+                message: EventNames.CustomerContentOutlineCompleted,
+                reference: new { customerContentNormalizedRequest.ScopeKey, RefContentId = customerContentNormalizedRequest.CustomerContentId, RefNormalizedRequestId = customerContentNormalizedRequest.Id },
+                facility: EventNames.CustomerContentOutlineCompleted,
+                correlationId: customerContentNormalizedRequest.CorrelationId,
+                exception: null
+            ));
+
             await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+                correlationId: customerContentNormalizedRequest.CorrelationId,
                 eventMessage: new CustomerContentOutlineCompletedEto { RefContentId = customerContentNormalizedRequest.CustomerContentId, RefContentType = ContentType.CustomerContent, Script = @event.OutlinedData }
             );
             return;
@@ -826,7 +884,16 @@ public sealed class NormalizerOperationAppService(
             null
         );
 
+        _logger.FrameworkInfoLog(LogHelper.Generate(
+            message: EventNames.AnalysisItemOutlineCompleted,
+            reference: new { analysisContentNormalizedRequest.ScopeKey, RefContentId = analysisContentNormalizedRequest.AnalysisContentId, RefNormalizedRequestId = analysisContentNormalizedRequest.Id, item.CustomerContentId },
+            facility: EventNames.AnalysisItemOutlineCompleted,
+            correlationId: analysisContentNormalizedRequest.CorrelationId,
+            exception: null
+        ));
+
         await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+            correlationId: analysisContentNormalizedRequest.CorrelationId,
             eventMessage: new AnalysisItemOutlineCompletedEto { AnalysisContentId = analysisContentNormalizedRequest.AnalysisContentId }
         );
     }
@@ -846,7 +913,16 @@ public sealed class NormalizerOperationAppService(
 
         await customerContentRepository.UpdateAsync(customerContentNormalizedRequest, cancellationToken);
 
+        _logger.FrameworkInfoLog(LogHelper.Generate(
+            message: EventNames.NormalizerResultPublished,
+            reference: new { customerContentNormalizedRequest.ScopeKey, RefContentId = customerContentNormalizedRequest.CustomerContentId, RefNormalizedRequestId = customerContentNormalizedRequest.Id },
+            facility: EventNames.NormalizerResultPublished,
+            correlationId: customerContentNormalizedRequest.CorrelationId,
+            exception: null
+        ));
+
         await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+            correlationId: customerContentNormalizedRequest.CorrelationId,
             eventMessage: new NormalizerResultPublishedEto
             {
                 RefContentId = customerContentNormalizedRequest.CustomerContentId,
@@ -892,7 +968,16 @@ public sealed class NormalizerOperationAppService(
 
         await analysisContentRepository.UpdateAsync(analysisContentNormalizedRequest, cancellationToken);
 
+        _logger.FrameworkInfoLog(LogHelper.Generate(
+            message: EventNames.NormalizerResultPublished,
+            reference: new { analysisContentNormalizedRequest.ScopeKey, RefContentId = analysisContentNormalizedRequest.AnalysisContentId, RefNormalizedRequestId = analysisContentNormalizedRequest.Id },
+            facility: EventNames.NormalizerResultPublished,
+            correlationId: analysisContentNormalizedRequest.CorrelationId,
+            exception: null
+        ));
+
         await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+            correlationId: analysisContentNormalizedRequest.CorrelationId,
             eventMessage: new NormalizerResultPublishedEto
             {
                 RefContentType = ContentType.AnalysisContent,
@@ -1063,6 +1148,14 @@ public sealed class NormalizerOperationAppService(
 
         await customerContentRepository.UpdateAsync(request);
 
+        _logger.FrameworkErrorLog(LogHelper.Generate(
+            message: EventNames.RetryScheduled,
+            reference: new { request.ScopeKey, RefContentId = request.CustomerContentId, RefNormalizedRequestId = request.Id, FailedStep = step, request.RetryCount, request.NextRetryAtUtc },
+            facility: EventNames.RetryScheduled,
+            correlationId: request.CorrelationId,
+            exception: ex
+        ));
+
         await EventBus.PublishAsync(
             parentMessage: ParentIntegrationEvent,
             correlationId: request.CorrelationId,
@@ -1134,6 +1227,14 @@ public sealed class NormalizerOperationAppService(
             CancellationToken.None
         );
 
+        _logger.FrameworkErrorLog(LogHelper.Generate(
+            message: EventNames.RetryScheduled,
+            reference: new { request.ScopeKey, RefContentId = request.AnalysisContentId, RefNormalizedRequestId = request.Id, item.CustomerContentId, FailedStep = step, retryCount, nextRetryAtUtc },
+            facility: EventNames.RetryScheduled,
+            correlationId: request.CorrelationId,
+            exception: ex
+        ));
+
         await EventBus.PublishAsync(
             parentMessage: ParentIntegrationEvent,
             correlationId: request.CorrelationId,
@@ -1177,6 +1278,14 @@ public sealed class NormalizerOperationAppService(
             updateFunc,
             CancellationToken.None
         );
+
+        _logger.FrameworkErrorLog(LogHelper.Generate(
+            message: step,
+            reference: new { request.ScopeKey, RefContentId = request.AnalysisContentId, RefNormalizedRequestId = request.Id, item.CustomerContentId, retryable },
+            facility: step,
+            correlationId: request.CorrelationId,
+            exception: ex
+        ));
 
         await EventBus.PublishAsync(
             parentMessage: ParentIntegrationEvent,

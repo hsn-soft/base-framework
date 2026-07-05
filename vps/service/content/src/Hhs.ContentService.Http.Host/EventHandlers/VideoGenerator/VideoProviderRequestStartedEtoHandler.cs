@@ -21,6 +21,6 @@ public class VideoProviderRequestStartedEtoHandler(
             nameof(VideoProviderRequestStartedEto)[..^"Eto".Length],
             @event.MessageId);
 
-        await _contentOperationService.HandleVideoProviderStartedAsync(@event.Message, cancellationToken);
+        await _contentOperationService.HandleVideoProviderStartedAsync(@event.Message, @event.CorrelationId, cancellationToken);
     }
 }

@@ -20,6 +20,11 @@ public static class EventNames
 
     public const string NormalizerResultPublished = "NORMALIZER_RESULT_PUBLISHED";
 
+    public const string CustomerContentVideoGenerationApproved = "CUSTOMER_CONTENT_VIDEO_GENERATION_APPROVED";
+    public const string CustomerContentVideoGenerationSkippedOldContent = "CUSTOMER_CONTENT_VIDEO_GENERATION_SKIPPED_OLD_CONTENT";
+    public const string CustomerContentVideoGenerationSkippedEarlyTime = "CUSTOMER_CONTENT_VIDEO_GENERATION_SKIPPED_EARLY_TIME";
+    public const string CustomerContentVideoGenerationSkippedDailyLimit = "CUSTOMER_CONTENT_VIDEO_GENERATION_SKIPPED_DAILY_LIMIT";
+
 
     public const string AnalysisContentCreated = "ANALYSIS_CONTENT_CREATED";
 
@@ -40,7 +45,8 @@ public static class EventNames
 
     public const string VideoRequestCreated = "VIDEO_REQUEST_CREATED";
     public const string VideoOperationStarted = "VIDEO_OPERATION_STARTED";
-    public const string VideoAudioStarted = "VIDEO_AUDIO_STARTED";
+    public const string VideoAudioInternal = "VIDEO_AUDIO_INTERNAL";
+    public const string VideoAudioExternal = "VIDEO_AUDIO_EXTERNAL";
 
     public const string AudioProviderRequestStarted = "AUDIO_PROVIDER_REQUEST_STARTED";
     public const string AudioProviderPollingStarted = "AUDIO_PROVIDER_POLLING_STARTED";

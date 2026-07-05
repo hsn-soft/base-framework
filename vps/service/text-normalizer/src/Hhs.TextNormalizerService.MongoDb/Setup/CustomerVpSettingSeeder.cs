@@ -22,7 +22,8 @@ public static class CustomerVpSettingSeeder
             outlineProviderKey: ProviderKeys.OutlineFast,
             analysisOutlineContentPrompt: "test outline content prompt",
             analysisOutlineIntroPrompt: "test outline intro prompt",
-            analysisOutlineOutroPrompt: "test outro prompt"
+            analysisOutlineOutroPrompt: "test outro prompt",
+            isScrapingOperationActive: false
         );
 
         await GetOrCreateCustomerVpSettingAsync(db, logger,
@@ -31,7 +32,8 @@ public static class CustomerVpSettingSeeder
             outlineProviderKey: ProviderKeys.OutlineFast,
             analysisOutlineContentPrompt: "test outline content prompt",
             analysisOutlineIntroPrompt: "test outline intro prompt",
-            analysisOutlineOutroPrompt: "test outro prompt"
+            analysisOutlineOutroPrompt: "test outro prompt",
+            isScrapingOperationActive: false
         );
 
         await GetOrCreateCustomerVpSettingAsync(db, logger,
@@ -40,7 +42,8 @@ public static class CustomerVpSettingSeeder
             outlineProviderKey: ProviderKeys.OutlineQueue,
             analysisOutlineContentPrompt: "test outline content prompt",
             analysisOutlineIntroPrompt: "test outline intro prompt",
-            analysisOutlineOutroPrompt: "test outro prompt"
+            analysisOutlineOutroPrompt: "test outro prompt",
+            isScrapingOperationActive: false
         );
 
         await GetOrCreateCustomerVpSettingAsync(db, logger,
@@ -49,7 +52,8 @@ public static class CustomerVpSettingSeeder
             outlineProviderKey: ProviderKeys.OutlineQueue,
             analysisOutlineContentPrompt: "test outline content prompt",
             analysisOutlineIntroPrompt: "test outline intro prompt",
-            analysisOutlineOutroPrompt: "test outro prompt"
+            analysisOutlineOutroPrompt: "test outro prompt",
+            isScrapingOperationActive: false
         );
 
         await GetOrCreateCustomerVpSettingAsync(db, logger,
@@ -58,7 +62,8 @@ public static class CustomerVpSettingSeeder
             outlineProviderKey: ProviderKeys.OutlineFast,
             analysisOutlineContentPrompt: "test outline content prompt",
             analysisOutlineIntroPrompt: "test outline intro prompt",
-            analysisOutlineOutroPrompt: "test outro prompt"
+            analysisOutlineOutroPrompt: "test outro prompt",
+            isScrapingOperationActive: false
         );
 
         await GetOrCreateCustomerVpSettingAsync(db, logger,
@@ -67,7 +72,8 @@ public static class CustomerVpSettingSeeder
             outlineProviderKey: ProviderKeys.OutlineQueue,
             analysisOutlineContentPrompt: "test outline content prompt",
             analysisOutlineIntroPrompt: "test outline intro prompt",
-            analysisOutlineOutroPrompt: "test outro prompt"
+            analysisOutlineOutroPrompt: "test outro prompt",
+            isScrapingOperationActive: false
         );
 
         #endregion
@@ -315,7 +321,8 @@ public static class CustomerVpSettingSeeder
 
     private static async Task GetOrCreateCustomerVpSettingAsync(TextNormalizerServiceDbContext db, IAppConsoleLogger logger,
         Guid customerId, string domainName, string outlineProviderKey,
-        string analysisOutlineContentPrompt, string analysisOutlineIntroPrompt, string analysisOutlineOutroPrompt, string contentOutlinePrompt = null)
+        string analysisOutlineContentPrompt, string analysisOutlineIntroPrompt, string analysisOutlineOutroPrompt,
+        string contentOutlinePrompt = null, bool isScrapingOperationActive = true)
     {
         string scopeKey = ScopeKeyHelper.Generate(customerId, ProductTypes.VideoPlatform);
         string normaizedDomainName = StringHelper.Minimize(StringHelper.ReplaceInvalidChars(domainName));
@@ -338,7 +345,7 @@ public static class CustomerVpSettingSeeder
             outlineProviderKey: outlineProviderKey
         )
         {
-            IsScrapingOperationActive = true,
+            IsScrapingOperationActive = isScrapingOperationActive,
             IsOutlineOperationActive = true,
             ContentOutlinePrompt = string.IsNullOrWhiteSpace(contentOutlinePrompt)
                 ? """

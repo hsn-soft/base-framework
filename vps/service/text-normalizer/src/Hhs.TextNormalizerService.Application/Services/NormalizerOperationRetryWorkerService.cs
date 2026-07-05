@@ -8,6 +8,9 @@ using Hhs.TextNormalizerService.Domain.NormalizeDomain.Entities;
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Models;
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Repositories;
 using HsnSoft.Base.Domain.Models;
+using HsnSoft.Base.Logging;
+using HsnSoft.Base.Logging.Abstracts;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 
@@ -21,6 +24,8 @@ public sealed class NormalizerOperationRetryWorkerService(
     ILogger<NormalizerOperationRetryWorkerService> logger,
     NormalizerRetrySettings retrySettings) : ApplicationServiceBase(provider)
 {
+    private readonly IFrameworkLogger _logger = provider.GetRequiredService<IFrameworkLogger>();
+
     public async Task RetryDueRequestsAsync(CancellationToken cancellationToken)
     {
         var now = DateTime.UtcNow;
@@ -82,6 +87,14 @@ public sealed class NormalizerOperationRetryWorkerService(
                         cancellationToken: cancellationToken)
                         .ConfigureAwait(false);
 
+                    _logger.FrameworkErrorLog(LogHelper.Generate(
+                        message: EventNames.RetryScheduled,
+                        reference: new { request.ScopeKey, RefContentId = request.CustomerContentId, RefNormalizedRequestId = request.Id, FailedStep = EventNames.OutlineProviderPollingStarted },
+                        facility: EventNames.RetryScheduled,
+                        correlationId: request.CorrelationId,
+                        exception: null
+                    ));
+
                     continue;
                 }
 
@@ -107,18 +120,21 @@ public sealed class NormalizerOperationRetryWorkerService(
                 if (request.CurrentStep == EventNames.CustomerContentScrapingStarted)
                 {
                     await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+                        correlationId: request.CorrelationId,
                         eventMessage: new CustomerContentScrapingStartedEto { CustomerContentNormalizeRequestId = request.Id, }
                     );
                 }
                 else if (request.CurrentStep == EventNames.CustomerContentOutlineStarted)
                 {
                     await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+                        correlationId: request.CorrelationId,
                         eventMessage: new CustomerContentOutlineStartedEto { CustomerContentNormalizeRequestId = request.Id }
                     );
                 }
                 else if (request.CurrentStep == EventNames.OutlineProviderRequestStarted)
                 {
                     await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+                        correlationId: request.CorrelationId,
                         eventMessage: new OutlineProviderRequestStartedEto
                         {
                             RefContentType = ContentType.CustomerContent,
@@ -143,6 +159,14 @@ public sealed class NormalizerOperationRetryWorkerService(
                         cancellationToken: cancellationToken)
                         .ConfigureAwait(false);
 
+                    _logger.FrameworkErrorLog(LogHelper.Generate(
+                        message: request.CurrentStep,
+                        reference: new { request.ScopeKey, RefContentId = request.CustomerContentId, RefNormalizedRequestId = request.Id },
+                        facility: request.CurrentStep,
+                        correlationId: request.CorrelationId,
+                        exception: null
+                    ));
+
                     await EventBus.PublishAsync(
                         parentMessage: ParentIntegrationEvent,
                         correlationId: request.CorrelationId,
@@ -155,7 +179,17 @@ public sealed class NormalizerOperationRetryWorkerService(
                             Retryable = false
                         }
                     );
+
+                    continue;
                 }
+
+                _logger.FrameworkErrorLog(LogHelper.Generate(
+                    message: EventNames.RetryScheduled,
+                    reference: new { request.ScopeKey, RefContentId = request.CustomerContentId, RefNormalizedRequestId = request.Id, FailedStep = request.CurrentStep },
+                    facility: EventNames.RetryScheduled,
+                    correlationId: request.CorrelationId,
+                    exception: null
+                ));
             }
             catch (Exception ex)
             {
@@ -171,6 +205,14 @@ public sealed class NormalizerOperationRetryWorkerService(
                     u => exceptionUpdate,
                     cancellationToken: cancellationToken)
                     .ConfigureAwait(false);
+
+                _logger.FrameworkErrorLog(LogHelper.Generate(
+                    message: EventNames.RetryScheduled,
+                    reference: new { request.ScopeKey, RefContentId = request.CustomerContentId, RefNormalizedRequestId = request.Id, FailedStep = request.CurrentStep },
+                    facility: EventNames.RetryScheduled,
+                    correlationId: request.CorrelationId,
+                    exception: ex
+                ));
             }
         }
     }
@@ -228,6 +270,14 @@ public sealed class NormalizerOperationRetryWorkerService(
                         if (result == 0)
                             continue;
 
+                        _logger.FrameworkErrorLog(LogHelper.Generate(
+                            message: EventNames.RetryScheduled,
+                            reference: new { request.ScopeKey, RefContentId = request.AnalysisContentId, RefNormalizedRequestId = request.Id, item.CustomerContentId, FailedStep = EventNames.OutlineProviderPollingStarted },
+                            facility: EventNames.RetryScheduled,
+                            correlationId: request.CorrelationId,
+                            exception: null
+                        ));
+
                         continue;
                     }
 
@@ -247,6 +297,7 @@ public sealed class NormalizerOperationRetryWorkerService(
                     if (item.CurrentStep == EventNames.AnalysisItemScrapingStarted)
                     {
                         await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+                            correlationId: request.CorrelationId,
                             eventMessage: new AnalysisItemScrapingStartedEto
                             {
                                 AnalysisContentId = request.AnalysisContentId,
@@ -257,6 +308,7 @@ public sealed class NormalizerOperationRetryWorkerService(
                     else if (item.CurrentStep == EventNames.AnalysisItemOutlineStarted)
                     {
                         await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+                            correlationId: request.CorrelationId,
                             eventMessage: new AnalysisItemOutlineStartedEto
                             {
                                 AnalysisContentId = request.AnalysisContentId,
@@ -267,6 +319,7 @@ public sealed class NormalizerOperationRetryWorkerService(
                     else if (item.CurrentStep == EventNames.OutlineProviderRequestStarted)
                     {
                         await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+                            correlationId: request.CorrelationId,
                             eventMessage: new OutlineProviderRequestStartedEto
                             {
                                 CustomerContentIdForItem = item.CustomerContentId,
@@ -292,7 +345,25 @@ public sealed class NormalizerOperationRetryWorkerService(
                             item.CustomerContentId,
                             failUpdate,
                             cancellationToken);
+
+                        _logger.FrameworkErrorLog(LogHelper.Generate(
+                            message: item.CurrentStep,
+                            reference: new { request.ScopeKey, RefContentId = request.AnalysisContentId, RefNormalizedRequestId = request.Id, item.CustomerContentId },
+                            facility: item.CurrentStep,
+                            correlationId: request.CorrelationId,
+                            exception: null
+                        ));
+
+                        continue;
                     }
+
+                    _logger.FrameworkErrorLog(LogHelper.Generate(
+                        message: EventNames.RetryScheduled,
+                        reference: new { request.ScopeKey, RefContentId = request.AnalysisContentId, RefNormalizedRequestId = request.Id, item.CustomerContentId, FailedStep = item.CurrentStep },
+                        facility: EventNames.RetryScheduled,
+                        correlationId: request.CorrelationId,
+                        exception: null
+                    ));
                 }
                 catch (Exception ex)
                 {
@@ -308,6 +379,14 @@ public sealed class NormalizerOperationRetryWorkerService(
                         item.CustomerContentId,
                         retryAgainUpdate,
                         cancellationToken);
+
+                    _logger.FrameworkErrorLog(LogHelper.Generate(
+                        message: EventNames.RetryScheduled,
+                        reference: new { request.ScopeKey, RefContentId = request.AnalysisContentId, RefNormalizedRequestId = request.Id, item.CustomerContentId, FailedStep = item.CurrentStep },
+                        facility: EventNames.RetryScheduled,
+                        correlationId: request.CorrelationId,
+                        exception: ex
+                    ));
                 }
             }
         }

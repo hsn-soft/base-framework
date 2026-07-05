@@ -24,6 +24,6 @@ public class VideoProviderCompletedEtoHandler(
             nameof(VideoProviderCompletedEto)[..^"Eto".Length],
             @event.MessageId);
 
-        await _videoOperationAppService.HandleVideoProviderCompletedAsync(@event.Message, cancellationToken);
+        await _videoOperationAppService.HandleVideoProviderCompletedAsync(@event.Message, @event.CorrelationId, cancellationToken);
     }
 }

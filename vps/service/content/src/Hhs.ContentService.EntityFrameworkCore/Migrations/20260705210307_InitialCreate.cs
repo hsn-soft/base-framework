@@ -51,7 +51,6 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                     NormalizeRequestId = table.Column<Guid>(type: "uuid", nullable: true),
                     ScrapReleaseTimeUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     VideoStatus = table.Column<string>(type: "character varying(80)", maxLength: 80, nullable: true),
-                    AudioRequestId = table.Column<Guid>(type: "uuid", nullable: true),
                     VideoRequestId = table.Column<Guid>(type: "uuid", nullable: true),
                     VideoCdnUrl = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
                     LastFacility = table.Column<string>(type: "character varying(120)", maxLength: 120, nullable: true),
