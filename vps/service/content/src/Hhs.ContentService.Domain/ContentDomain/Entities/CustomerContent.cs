@@ -57,6 +57,10 @@ public sealed class CustomerContent : AuditedEntity<Guid>, ISoftDelete, IScopeSu
         SetContentKey(contentKey);
 
         CorrelationId = correlationId;
+
+        NormalizeStatus = NormalizeStatusNames.NotStarted;
+        VideoStatus = MediaStatusNames.NotStarted;
+        LastFacility = EventNames.CustomerContentCreated;
     }
 
     private void SetScopeKey(string scopeKey)

@@ -37,7 +37,7 @@ public sealed class VideoOperationRetryWorkerService(
         var options = new ListQueryOptions<AudioRequest>
         {
             Filter = x =>
-                x.Status == StatusNames.WaitingRetry &&
+                x.Status == AudioStatusNames.WaitingRetry &&
                 x.NextRetryAtUtc != null &&
                 x.NextRetryAtUtc <= now,
             MaxResultCount = retrySettings.BatchSize
@@ -80,7 +80,7 @@ public sealed class VideoOperationRetryWorkerService(
                 }
                 else
                 {
-                    request.Status = StatusNames.Failed;
+                    request.Status = AudioStatusNames.Failed;
                     request.LastError = $"Unsupported audio retry step: {request.CurrentStep}";
                     request.NextRetryAtUtc = null;
 
@@ -113,7 +113,7 @@ public sealed class VideoOperationRetryWorkerService(
 
                 if (!pollingRetry)
                 {
-                    request.Status = StatusNames.RetryEventPublished;
+                    request.Status = AudioStatusNames.RetryEventPublished;
                 }
 
                 request.NextRetryAtUtc = null;
@@ -154,7 +154,7 @@ public sealed class VideoOperationRetryWorkerService(
         var options = new ListQueryOptions<VideoRequest>
         {
             Filter = x =>
-                x.Status == StatusNames.WaitingRetry &&
+                x.Status == VideoStatusNames.WaitingRetry &&
                 x.NextRetryAtUtc != null &&
                 x.NextRetryAtUtc <= now,
             MaxResultCount = retrySettings.BatchSize
@@ -219,7 +219,7 @@ public sealed class VideoOperationRetryWorkerService(
                 }
                 else
                 {
-                    request.Status = StatusNames.Failed;
+                    request.Status = VideoStatusNames.Failed;
                     request.LastError = $"Unsupported video retry step: {request.CurrentStep}";
                     request.NextRetryAtUtc = null;
 
@@ -251,7 +251,7 @@ public sealed class VideoOperationRetryWorkerService(
 
                 if (!pollingRetry)
                 {
-                    request.Status = StatusNames.RetryEventPublished;
+                    request.Status = VideoStatusNames.RetryEventPublished;
                 }
 
                 request.NextRetryAtUtc = null;

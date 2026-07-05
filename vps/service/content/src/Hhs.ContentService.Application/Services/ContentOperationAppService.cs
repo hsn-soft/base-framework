@@ -60,7 +60,7 @@ public sealed class ContentOperationService(
                 {
                     var entity = await customerContentRepository.GetByIdWithTrackingAsync(@event.RefContentId, cancellationToken);
 
-                    if (entity != null && entity.NormalizeStatus != StatusNames.Completed)
+                    if (entity != null && entity.NormalizeStatus != NormalizeStatusNames.Completed)
                     {
                         if (@event.NormalizeStatus == NormalizeStatusNames.OutlineSkipped)
                         {
@@ -130,7 +130,7 @@ public sealed class ContentOperationService(
                 {
                     var entity = await analysisContentRepository.GetByIdWithItemsAsync(@event.RefContentId, cancellationToken);
 
-                    if (entity != null && entity.NormalizeStatus != StatusNames.Completed)
+                    if (entity != null && entity.NormalizeStatus != NormalizeStatusNames.Completed)
                     {
                         _logger.FrameworkInfoLog(LogHelper.Generate(
                             message: "Analysis Content normalized success",
@@ -209,7 +209,7 @@ public sealed class ContentOperationService(
                     var entity = await customerContentRepository.GetByIdWithTrackingAsync(@event.RefContentId, cancellationToken);
                     if (entity != null)
                     {
-                        entity.VideoStatus = StatusNames.Completed;
+                        entity.VideoStatus = MediaStatusNames.Completed;
                         entity.VideoRequestId = @event.VideoRequestId;
                         entity.VideoCdnUrl = @event.FinalVideoUrl;
                         entity.LastFacility = EventNames.VideoGenerationResultPublished;
@@ -224,7 +224,7 @@ public sealed class ContentOperationService(
                     var entity = await analysisContentRepository.GetByIdWithItemsAsync(@event.RefContentId, cancellationToken);
                     if (entity != null)
                     {
-                        entity.VideoStatus = StatusNames.Completed;
+                        entity.VideoStatus = MediaStatusNames.Completed;
                         entity.VideoRequestId = @event.VideoRequestId;
                         entity.VideoCdnUrl = @event.FinalVideoUrl;
                         entity.LastFacility = EventNames.VideoGenerationResultPublished;
@@ -255,10 +255,10 @@ public sealed class ContentOperationService(
                 if (!@event.Retryable)
                 {
                     if (IsNormalizeStep(@event.Step))
-                        entity.NormalizeStatus = StatusNames.Failed;
+                        entity.NormalizeStatus = NormalizeStatusNames.Failed;
 
                     if (IsVideoStep(@event.Step))
-                        entity.VideoStatus = StatusNames.Failed;
+                        entity.VideoStatus = MediaStatusNames.Failed;
                 }
 
                 await customerContentRepository.UpdateAsync(entity, cancellationToken);
@@ -277,10 +277,10 @@ public sealed class ContentOperationService(
                 if (!@event.Retryable)
                 {
                     if (IsNormalizeStep(@event.Step))
-                        entity.NormalizeStatus = StatusNames.Failed;
+                        entity.NormalizeStatus = NormalizeStatusNames.Failed;
 
                     if (IsVideoStep(@event.Step))
-                        entity.VideoStatus = StatusNames.Failed;
+                        entity.VideoStatus = MediaStatusNames.Failed;
                 }
 
                 await analysisContentRepository.UpdateAsync(entity, cancellationToken);

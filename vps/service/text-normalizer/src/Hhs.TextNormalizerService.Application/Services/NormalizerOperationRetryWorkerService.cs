@@ -49,7 +49,7 @@ public sealed class NormalizerOperationRetryWorkerService(
     {
         var options = new ListQueryOptions<CustomerContentNormalizedRequest>
         {
-            Filter = x => x.Status == StatusNames.WaitingRetry &&
+            Filter = x => x.Status == NormalizeStatusNames.WaitingRetry &&
                          x.NextRetryAtUtc != null &&
                          x.NextRetryAtUtc <= now,
             MaxResultCount = retrySettings.BatchSize
@@ -67,7 +67,7 @@ public sealed class NormalizerOperationRetryWorkerService(
                 {
                     var outlinePollingPredicate = (Expression<Func<CustomerContentNormalizedRequest, bool>>)(x =>
                         x.Id == request.Id &&
-                        x.Status == StatusNames.WaitingRetry);
+                        x.Status == NormalizeStatusNames.WaitingRetry);
 
                     var outlinePollingUpdate = Builders<CustomerContentNormalizedRequest>.Update
                         .Set(x => x.Status, NormalizeStatusNames.OutlineProviderRequestPolling)
@@ -87,7 +87,7 @@ public sealed class NormalizerOperationRetryWorkerService(
 
                 var claimPredicate = (Expression<Func<CustomerContentNormalizedRequest, bool>>)(x =>
                     x.Id == request.Id &&
-                    x.Status == StatusNames.WaitingRetry &&
+                    x.Status == NormalizeStatusNames.WaitingRetry &&
                     x.NextRetryAtUtc != null &&
                     x.NextRetryAtUtc <= now);
 
@@ -133,7 +133,7 @@ public sealed class NormalizerOperationRetryWorkerService(
                 {
                     var failPredicate = (Expression<Func<CustomerContentNormalizedRequest, bool>>)(x => x.Id == request.Id);
                     var failUpdate = Builders<CustomerContentNormalizedRequest>.Update
-                        .Set(x => x.Status, StatusNames.Failed)
+                        .Set(x => x.Status, NormalizeStatusNames.Failed)
                         .Set(x => x.LastError, $"Unsupported customer retry step: {request.CurrentStep}")
                         .Set(x => x.NextRetryAtUtc, (DateTime?)null);
 
@@ -163,7 +163,7 @@ public sealed class NormalizerOperationRetryWorkerService(
 
                 var exceptionPredicate = (Expression<Func<CustomerContentNormalizedRequest, bool>>)(x => x.Id == request.Id);
                 var exceptionUpdate = Builders<CustomerContentNormalizedRequest>.Update
-                    .Set(x => x.Status, StatusNames.WaitingRetry)
+                    .Set(x => x.Status, NormalizeStatusNames.WaitingRetry)
                     .Set(x => x.NextRetryAtUtc, DateTime.UtcNow.AddSeconds(retrySettings.ClaimFailRescheduleDelaySeconds));
 
                 await customerRepository.UpdateByExpressionAsync(
@@ -182,7 +182,7 @@ public sealed class NormalizerOperationRetryWorkerService(
         var options = new ListQueryOptions<AnalysisContentNormalizedRequest>
         {
             Filter = x => x.Items.Any(i =>
-                i.Status == StatusNames.WaitingRetry &&
+                i.Status == NormalizeStatusNames.WaitingRetry &&
                 i.NextRetryAtUtc != null &&
                 i.NextRetryAtUtc <= now),
             MaxResultCount = retrySettings.BatchSize
@@ -196,7 +196,7 @@ public sealed class NormalizerOperationRetryWorkerService(
         {
             var items = request.Items
                 .Where(x =>
-                    x.Status == StatusNames.WaitingRetry &&
+                    x.Status == NormalizeStatusNames.WaitingRetry &&
                     x.NextRetryAtUtc != null &&
                     x.NextRetryAtUtc <= now)
                 .OrderBy(x => x.SortOrder)
@@ -281,10 +281,10 @@ public sealed class NormalizerOperationRetryWorkerService(
                     else
                     {
                         var failUpdate = Builders<AnalysisContentNormalizedRequest>.Update
-                            .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", StatusNames.Failed)
+                            .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", NormalizeStatusNames.Failed)
                             .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.LastError)}", $"Unsupported analysis retry step: {item.CurrentStep}")
                             .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextRetryAtUtc)}", (DateTime?)null)
-                            .Set(x => x.Status, StatusNames.Failed)
+                            .Set(x => x.Status, NormalizeStatusNames.Failed)
                             .Set(x => x.LastError, $"Unsupported analysis retry step: {item.CurrentStep}");
 
                         await UpdateAnalysisItemAsync(
@@ -299,9 +299,9 @@ public sealed class NormalizerOperationRetryWorkerService(
                     logger.LogError(ex, "RETRY_ANALYSIS_REQUEST_FAILED: RequestId={RequestId} CustomerContentId={CustomerContentId}", request.Id, item.CustomerContentId);
 
                     var retryAgainUpdate = Builders<AnalysisContentNormalizedRequest>.Update
-                        .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", StatusNames.WaitingRetry)
+                        .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", NormalizeStatusNames.WaitingRetry)
                         .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextRetryAtUtc)}", DateTime.UtcNow.AddSeconds(retrySettings.ClaimFailRescheduleDelaySeconds))
-                        .Set(x => x.Status, StatusNames.WaitingRetry);
+                        .Set(x => x.Status, NormalizeStatusNames.WaitingRetry);
 
                     await UpdateAnalysisItemAsync(
                         request.Id,
@@ -324,7 +324,7 @@ public sealed class NormalizerOperationRetryWorkerService(
             x.Id == analysisRequestId &&
             x.Items.Any(i =>
                 i.CustomerContentId == customerContentId &&
-                i.Status == StatusNames.WaitingRetry &&
+                i.Status == NormalizeStatusNames.WaitingRetry &&
                 i.NextRetryAtUtc != null &&
                 i.NextRetryAtUtc <= now));
 

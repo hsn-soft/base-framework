@@ -448,7 +448,7 @@ public sealed class NormalizerOperationAppService(
             correlationId);
 
         request.SourceEventId = eventId;
-        request.Status = StatusNames.Created;
+        request.Status = NormalizeStatusNames.Created;
         request.CurrentStep = EventNames.AnalysisContentCreated;
         request.Items = @event.Items.Select(x => new AnalysisNormalizedItem { CustomerContentId = x.CustomerContentId, SortOrder = x.SortOrder, ContentKey = x.ContentKey }).ToList();
 
@@ -471,7 +471,7 @@ public sealed class NormalizerOperationAppService(
 
         foreach (var item in request.Items.OrderBy(x => x.SortOrder))
         {
-            if (item.ScrapingStatus == StatusNames.Completed)
+            if (item.ScrapingStatus == ScrapingStatusNames.Completed)
                 continue;
 
             await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
@@ -483,21 +483,21 @@ public sealed class NormalizerOperationAppService(
     public async Task StartAnalysisItemScrapingAsync(AnalysisItemScrapingStartedEto @event, CancellationToken cancellationToken = default)
     {
         var request = await GetAnalysisContentNormalizedRequestAsync(@event.AnalysisContentId);
-        if (request.Status == StatusNames.Failed) return;
+        if (request.Status == NormalizeStatusNames.Failed) return;
 
         var item = request.Items.First(x => x.CustomerContentId == @event.CustomerContentIdForItem);
 
         if (!_normalizerSettings.ForceReScrapeForAnalysis)
         {
             var existingRequest = await customerContentRepository.GetByScopeKeyAndContentIdAsync(request.ScopeKey, item.CustomerContentId, cancellationToken);
-            if (existingRequest?.ScrapingStatus == StatusNames.Completed && existingRequest.ScrapingResult is not null)
+            if (existingRequest?.ScrapingStatus == ScrapingStatusNames.Completed && existingRequest.ScrapingResult is not null)
             {
                 await UpdateAnalysisItemAsync(
                     request.Id,
                     item.CustomerContentId,
-                    u => u.Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", StatusNames.ScrapingCompleted)
+                    u => u.Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", NormalizeStatusNames.ScrapingCompleted)
                         .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentStep)}", EventNames.AnalysisItemScrapingCompleted)
-                        .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.ScrapingStatus)}", StatusNames.Completed)
+                        .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.ScrapingStatus)}", ScrapingStatusNames.Completed)
                         .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.ScrapingResult)}", existingRequest.ScrapingResult)
                         .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.LastError)}", default(string))
                         .Set(x => x.CurrentStep, EventNames.AnalysisItemScrapingCompleted),
@@ -515,10 +515,10 @@ public sealed class NormalizerOperationAppService(
             await UpdateAnalysisItemAsync(
                 request.Id,
                 item.CustomerContentId,
-                u => u.Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", StatusNames.Scraping)
+                u => u.Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", NormalizeStatusNames.ScrapingStarted)
                     .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentStep)}", EventNames.AnalysisItemScrapingStarted)
-                    .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.ScrapingStatus)}", StatusNames.Started)
-                    .Set(x => x.Status, StatusNames.Scraping)
+                    .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.ScrapingStatus)}", ScrapingStatusNames.Started)
+                    .Set(x => x.Status, NormalizeStatusNames.ScrapingStarted)
                     .Set(x => x.CurrentStep, EventNames.AnalysisItemScrapingStarted),
                 cancellationToken
             );
@@ -528,9 +528,9 @@ public sealed class NormalizerOperationAppService(
             await UpdateAnalysisItemAsync(
                 request.Id,
                 item.CustomerContentId,
-                u => u.Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", StatusNames.ScrapingCompleted)
+                u => u.Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", NormalizeStatusNames.ScrapingCompleted)
                     .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentStep)}", EventNames.AnalysisItemScrapingCompleted)
-                    .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.ScrapingStatus)}", StatusNames.Completed)
+                    .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.ScrapingStatus)}", ScrapingStatusNames.Completed)
                     .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.ScrapingResult)}",
                         new ScrapingContentDataModel
                         {
@@ -571,23 +571,23 @@ public sealed class NormalizerOperationAppService(
     public async Task StartAnalysisItemOutlineAsync(AnalysisItemOutlineStartedEto @event, CancellationToken cancellationToken = default)
     {
         var analysisContentNormalizedRequest = await GetAnalysisContentNormalizedRequestAsync(@event.AnalysisContentId);
-        if (analysisContentNormalizedRequest.Status == StatusNames.Failed) return;
+        if (analysisContentNormalizedRequest.Status == NormalizeStatusNames.Failed) return;
 
         var item = analysisContentNormalizedRequest.Items.First(x => x.CustomerContentId == @event.CustomerContentIdForItem);
 
         try
         {
-            if (item.ScrapingStatus != StatusNames.Completed || item.ScrapingResult is null)
+            if (item.ScrapingStatus != ScrapingStatusNames.Completed || item.ScrapingResult is null)
             {
                 await UpdateAnalysisItemAsync(
                     analysisContentNormalizedRequest.Id,
                     item.CustomerContentId,
-                    u => u.Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", StatusNames.WaitingRetry)
+                    u => u.Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", NormalizeStatusNames.WaitingRetry)
                         .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentStep)}", EventNames.AnalysisItemOutlineStarted)
-                        .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineStatus)}", StatusNames.WaitingScraping)
+                        .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineStatus)}", OutlineStatusNames.WaitingScraping)
                         .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.LastError)}", "ScrapingResult is required before outline.")
                         .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextRetryAtUtc)}", DateTime.UtcNow.AddSeconds(outlinePollingSettings.ErrorRescheduleDelaySeconds))
-                        .Set(x => x.Status, StatusNames.WaitingRetry)
+                        .Set(x => x.Status, NormalizeStatusNames.WaitingRetry)
                         .Set(x => x.CurrentStep, EventNames.AnalysisItemOutlineStarted)
                         .Set(x => x.LastError, "ScrapingResult is required before outline."),
                     cancellationToken
@@ -599,7 +599,7 @@ public sealed class NormalizerOperationAppService(
                 analysisContentNormalizedRequest.Id,
                 item.CustomerContentId,
                 u => u.Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", NormalizeStatusNames.OutlineProviderRequestStarted)
-                    .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineStatus)}", StatusNames.Started)
+                    .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineStatus)}", OutlineStatusNames.Started)
                     .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentStep)}", EventNames.AnalysisItemOutlineStarted)
                     .Set(x => x.Status, NormalizeStatusNames.OutlineProviderRequestStarted)
                     .Set(x => x.CurrentStep, EventNames.OutlineProviderRequestStarted),
@@ -777,7 +777,7 @@ public sealed class NormalizerOperationAppService(
         {
             var customerContentNormalizedRequest = await customerContentRepository.GetByIdAsync(@event.RefNormalizedRequestId, cancellationToken: cancellationToken);
 
-            if (customerContentNormalizedRequest.Status == StatusNames.Completed ||
+            if (customerContentNormalizedRequest.Status == NormalizeStatusNames.Completed ||
                 customerContentNormalizedRequest.CurrentStep == EventNames.NormalizerResultPublished ||
                 customerContentNormalizedRequest.OutlineStatus == OutlineStatusNames.Completed)
                 return;
@@ -812,7 +812,7 @@ public sealed class NormalizerOperationAppService(
             item.CustomerContentId,
             u => u.Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", NormalizeStatusNames.OutlineCompleted)
                 .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentStep)}", EventNames.AnalysisItemOutlineCompleted)
-                .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineStatus)}", StatusNames.Completed)
+                .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineStatus)}", OutlineStatusNames.Completed)
                 .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineResult)}", new OutlineResult { OutlinedData = @event.OutlinedData })
                 .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.LastError)}", (string?)null)
                 .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextRetryAtUtc)}", (DateTime?)null)
@@ -837,7 +837,7 @@ public sealed class NormalizerOperationAppService(
             x => x.CustomerContentId == @event.RefContentId,
             cancellationToken: cancellationToken);
 
-        if (customerContentNormalizedRequest.Status == StatusNames.Completed ||
+        if (customerContentNormalizedRequest.Status == NormalizeStatusNames.Completed ||
             customerContentNormalizedRequest.CurrentStep == EventNames.NormalizerResultPublished)
             return;
 
@@ -862,32 +862,32 @@ public sealed class NormalizerOperationAppService(
     {
         var analysisContentNormalizedRequest = await GetAnalysisContentNormalizedRequestAsync(@event.AnalysisContentId);
 
-        if (analysisContentNormalizedRequest is { Status: StatusNames.Completed, CurrentStep: EventNames.NormalizerResultPublished })
+        if (analysisContentNormalizedRequest is { Status: NormalizeStatusNames.Completed, CurrentStep: EventNames.NormalizerResultPublished })
         {
             return;
         }
 
-        if (analysisContentNormalizedRequest.Items.Any(x => x.Status == StatusNames.Failed))
+        if (analysisContentNormalizedRequest.Items.Any(x => x.Status == NormalizeStatusNames.Failed))
         {
             await UpdateAnalysisParentAsync(
                 analysisContentNormalizedRequest.Id,
-                StatusNames.Failed,
+                NormalizeStatusNames.Failed,
                 EventNames.AnalysisItemOutlineCompleted,
                 "One or more items failed during processing."
             );
             return;
         }
 
-        if (analysisContentNormalizedRequest.Items.Any(x => x.OutlineStatus != StatusNames.Completed))
+        if (analysisContentNormalizedRequest.Items.Any(x => x.OutlineStatus != OutlineStatusNames.Completed))
             return;
 
-        if (analysisContentNormalizedRequest.Status == StatusNames.Completed ||
+        if (analysisContentNormalizedRequest.Status == NormalizeStatusNames.Completed ||
             analysisContentNormalizedRequest.CurrentStep == EventNames.NormalizerResultPublished)
             return;
 
         await AppendIntroOutroToAnalysisItemsAsync(analysisContentNormalizedRequest, cancellationToken);
 
-        analysisContentNormalizedRequest.Status = StatusNames.Completed;
+        analysisContentNormalizedRequest.Status = NormalizeStatusNames.Completed;
         analysisContentNormalizedRequest.CurrentStep = EventNames.NormalizerResultPublished;
 
         await analysisContentRepository.UpdateAsync(analysisContentNormalizedRequest, cancellationToken);
@@ -929,7 +929,7 @@ public sealed class NormalizerOperationAppService(
 
             correlationId = request.CorrelationId;
             var items = request.Items
-                .Where(x => x.ScrapingStatus == StatusNames.Completed && x.OutlineStatus == StatusNames.Completed)
+                .Where(x => x.ScrapingStatus == ScrapingStatusNames.Completed && x.OutlineStatus == OutlineStatusNames.Completed)
                 .OrderBy(x => x.SortOrder)
                 .ToList();
 
@@ -963,10 +963,10 @@ public sealed class NormalizerOperationAppService(
 
     private static string CalculateAnalysisParentStatus(AnalysisContentNormalizedRequest analysis)
     {
-        if (analysis.Items.Any(x => x.Status == StatusNames.Failed))
+        if (analysis.Items.Any(x => x.Status == NormalizeStatusNames.Failed))
             return NormalizeStatusNames.Failed;
 
-        if (analysis.Items.Any(x => x.Status == StatusNames.WaitingRetry))
+        if (analysis.Items.Any(x => x.Status == NormalizeStatusNames.WaitingRetry))
             return NormalizeStatusNames.WaitingRetry;
 
         if (analysis.Items.Any(x =>
@@ -998,7 +998,7 @@ public sealed class NormalizerOperationAppService(
 
     private async Task FailCustomerAsync(CustomerContentNormalizedRequest request, string step, Exception ex, bool retryable)
     {
-        request.Status = StatusNames.Failed;
+        request.Status = NormalizeStatusNames.Failed;
         request.CurrentStep = step;
         request.LastError = ex.Message;
         request.NextRetryAtUtc = null;
@@ -1055,7 +1055,7 @@ public sealed class NormalizerOperationAppService(
             return;
         }
 
-        request.Status = StatusNames.WaitingRetry;
+        request.Status = NormalizeStatusNames.WaitingRetry;
         request.CurrentStep = step;
         request.LastError = ex.Message;
         request.NextRetryAtUtc = DateTime.UtcNow.Add(
@@ -1103,25 +1103,25 @@ public sealed class NormalizerOperationAppService(
 
         var updateFunc = new Func<UpdateDefinitionBuilder<AnalysisContentNormalizedRequest>, UpdateDefinition<AnalysisContentNormalizedRequest>>(u =>
         {
-            var baseUpdate = u.Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", StatusNames.WaitingRetry)
+            var baseUpdate = u.Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", NormalizeStatusNames.WaitingRetry)
                 .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentStep)}", step)
                 .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.LastError)}", ex.Message)
                 .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.RetryCount)}", retryCount)
                 .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextRetryAtUtc)}", nextRetryAtUtc)
-                .Set(x => x.Status, StatusNames.WaitingRetry)
+                .Set(x => x.Status, NormalizeStatusNames.WaitingRetry)
                 .Set(x => x.CurrentStep, step)
                 .Set(x => x.LastError, ex.Message);
 
             if (step == EventNames.AnalysisItemScrapingStarted)
             {
-                baseUpdate = baseUpdate.Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.ScrapingStatus)}", StatusNames.WaitingRetry);
+                baseUpdate = baseUpdate.Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.ScrapingStatus)}", ScrapingStatusNames.WaitingRetry);
             }
 
             if (step is EventNames.AnalysisItemOutlineStarted
                 or EventNames.OutlineProviderRequestStarted
                 or EventNames.OutlineProviderPollingStarted)
             {
-                baseUpdate = baseUpdate.Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineStatus)}", StatusNames.WaitingRetry);
+                baseUpdate = baseUpdate.Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineStatus)}", OutlineStatusNames.WaitingRetry);
             }
 
             return baseUpdate;
@@ -1152,21 +1152,21 @@ public sealed class NormalizerOperationAppService(
     {
         var updateFunc = new Func<UpdateDefinitionBuilder<AnalysisContentNormalizedRequest>, UpdateDefinition<AnalysisContentNormalizedRequest>>(u =>
         {
-            var baseUpdate = u.Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", StatusNames.Failed)
+            var baseUpdate = u.Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", NormalizeStatusNames.Failed)
                 .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentStep)}", step)
                 .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.LastError)}", ex.Message)
                 .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextRetryAtUtc)}", (DateTime?)null)
-                .Set(x => x.Status, StatusNames.Failed)
+                .Set(x => x.Status, NormalizeStatusNames.Failed)
                 .Set(x => x.CurrentStep, step)
                 .Set(x => x.LastError, ex.Message);
 
             if (step == EventNames.AnalysisItemScrapingStarted)
-                baseUpdate = baseUpdate.Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.ScrapingStatus)}", StatusNames.Failed);
+                baseUpdate = baseUpdate.Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.ScrapingStatus)}", ScrapingStatusNames.Failed);
 
             if (step is EventNames.AnalysisItemOutlineStarted
                 or EventNames.OutlineProviderRequestStarted
                 or EventNames.OutlineProviderPollingStarted)
-                baseUpdate = baseUpdate.Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineStatus)}", StatusNames.Failed);
+                baseUpdate = baseUpdate.Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineStatus)}", OutlineStatusNames.Failed);
 
             return baseUpdate;
         });
@@ -1222,11 +1222,11 @@ public sealed class NormalizerOperationAppService(
         string status = CalculateAnalysisParentStatus(analysis);
 
         // Only update if status is not already completed
-        if (status == NormalizeStatusNames.OutlineCompleted && analysis.Status == StatusNames.Completed)
+        if (status == NormalizeStatusNames.OutlineCompleted && analysis.Status == NormalizeStatusNames.Completed)
             return;
 
         if (status != NormalizeStatusNames.OutlineCompleted &&
-            (analysis.Status == StatusNames.Completed || analysis.Status == NormalizeStatusNames.OutlineCompleted))
+            (analysis.Status == NormalizeStatusNames.Completed || analysis.Status == NormalizeStatusNames.OutlineCompleted))
             return;
 
         analysis.Status = status;

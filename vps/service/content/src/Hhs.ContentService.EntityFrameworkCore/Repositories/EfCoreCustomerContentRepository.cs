@@ -90,7 +90,7 @@ public sealed class EfCoreCustomerContentRepository(
         => await UpdateByExpressionAsync(x => x.Id == id && x.VideoRequestId == null,
             s => s
                 .SetProperty(a => a.VideoRequestId, videoRequestId)
-                .SetProperty(a => a.VideoStatus, StatusNames.Created)
+                .SetProperty(a => a.VideoStatus, MediaStatusNames.Created)
                 .SetProperty(a => a.LastFacility, EventNames.VideoRequestCreated)
         );
 
@@ -140,7 +140,7 @@ public sealed class EfCoreCustomerContentRepository(
         var releaseMaxDate = DateTime.UtcNow.Date.AddDays(1);
         return GetDbSet().Where(x =>
             x.ScopeKey == scopeKey
-            && x.NormalizeStatus == StatusNames.Completed
+            && x.NormalizeStatus == NormalizeStatusNames.Completed
             && x.VideoStatus == MediaStatusNames.Rejected
             && x.CreationTime < statisticMinTime
             && x.ScrapReleaseTimeUtc != null
@@ -155,7 +155,7 @@ public sealed class EfCoreCustomerContentRepository(
         var releaseMaxDate = DateTime.UtcNow.Date.AddDays(1);
         return GetDbSet().Where(x =>
             x.ScopeKey == scopeKey
-            && x.NormalizeStatus == StatusNames.Completed
+            && x.NormalizeStatus == NormalizeStatusNames.Completed
             && x.ScrapReleaseTimeUtc != null
             && x.ScrapReleaseTimeUtc >= releaseMinDate
             && x.ScrapReleaseTimeUtc < releaseMaxDate

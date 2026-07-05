@@ -50,7 +50,7 @@ public sealed class AudioProviderPollingWorkerService(
 
                 if (request.ProviderPollingCount >= pollingSettings.MaxAttempts)
                 {
-                    request.Status = StatusNames.Failed;
+                    request.Status = AudioStatusNames.Failed;
                     request.LastError = ErrorMessages.AudioProviderPollingTimeout;
 
                     await ReplaceAudioAsync(request, cancellationToken);
@@ -83,7 +83,7 @@ public sealed class AudioProviderPollingWorkerService(
 
                 if (status.IsFailed)
                 {
-                    request.Status = StatusNames.Failed;
+                    request.Status = AudioStatusNames.Failed;
                     request.LastError = status.ErrorMessage ?? "Audio provider failed.";
 
                     await ReplaceAudioAsync(request, cancellationToken);
@@ -139,7 +139,7 @@ public sealed class AudioProviderPollingWorkerService(
 
                 if (request.ProviderPollingCount >= pollingSettings.MaxAttempts)
                 {
-                    request.Status = StatusNames.Failed;
+                    request.Status = AudioStatusNames.Failed;
                     request.NextProviderPollAtUtc = null;
 
                     await ReplaceAudioAsync(request, cancellationToken);

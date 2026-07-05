@@ -35,7 +35,7 @@ public sealed class EfCoreAnalysisContentRepository(
         => await UpdateByExpressionAsync(x => x.Id == id && x.VideoRequestId == null,
             s => s
                 .SetProperty(a => a.VideoRequestId, videoRequestId)
-                .SetProperty(a => a.VideoStatus, StatusNames.Created)
+                .SetProperty(a => a.VideoStatus, MediaStatusNames.Created)
                 .SetProperty(a => a.LastFacility, EventNames.VideoRequestCreated)
         );
 

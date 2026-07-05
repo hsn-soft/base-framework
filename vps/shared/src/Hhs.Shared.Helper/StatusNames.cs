@@ -32,6 +32,7 @@ public static class ScrapingStatusNames
     public const string Started = "STARTED";
     public const string Completed = "COMPLETED";
     public const string Failed = "FAILED";
+    public const string WaitingRetry = "WAITING_RETRY";
 }
 
 public static class OutlineStatusNames
@@ -43,6 +44,8 @@ public static class OutlineStatusNames
     public const string ProviderCompleted = "PROVIDER_COMPLETED";
     public const string Completed = "COMPLETED";
     public const string Failed = "FAILED";
+    public const string WaitingScraping = "WAITING_SCRAPING";
+    public const string WaitingRetry = "WAITING_RETRY";
 }
 
 public static class MediaStatusNames
@@ -52,45 +55,11 @@ public static class MediaStatusNames
     public const string Approved = "APPROVED";
     public const string Rejected = "REJECTED";
 
-
     public const string Created = "CREATED";
-
-    public const string StepFailed = "STEP_FAILED";
-}
-
-
-
-
-// ── Generic ──────────────────────────────────────────────────────────────────
-// Shared across all three microservices as top-level Status values
-public static class StatusNames
-{
-    public const string NotStarted = "NOT_STARTED";
-    public const string Created = "CREATED";
-    public const string Started = "STARTED";
     public const string Completed = "COMPLETED";
+
     public const string Failed = "FAILED";
-    public const string WaitingRetry = "WAITING_RETRY";
-
-    // ── text-normalizer: NormalizedRequest.Status ─────────────────────────
-    public const string Scraping = "SCRAPING";
-    public const string ScrapingCompleted = "SCRAPING_COMPLETED";
-
-    public const string WaitingScraping = "WAITING_SCRAPING";
-
-
-
-
-
-
-
-
-    // ── text-normalizer: sub-field (ScrapingStatus / OutlineStatus) ───────
-
-
-
-    // ── video-generator: shared ───────────────────────────────────────────
-    public const string RetryEventPublished = "RETRY_EVENT_PUBLISHED";
+    public const string StepFailed = "STEP_FAILED";
 }
 
 // ── video-generator: AudioRequest.Status ─────────────────────────────────────
@@ -105,6 +74,9 @@ public static class AudioStatusNames
     public const string AudioFileDownloadCompleted = "AUDIO_FILE_DOWNLOAD_COMPLETED";
     public const string AudioFileUploading = "AUDIO_FILE_UPLOADING";
     public const string AudioFileUploadCompleted = "AUDIO_FILE_UPLOAD_COMPLETED";
+    public const string Failed = "FAILED";
+    public const string WaitingRetry = "WAITING_RETRY";
+    public const string RetryEventPublished = "RETRY_EVENT_PUBLISHED";
 }
 
 // ── video-generator: VideoRequest.Status ─────────────────────────────────────
@@ -118,4 +90,10 @@ public static class VideoStatusNames
     public const string VideoFileDownloaded = "VIDEO_FILE_DOWNLOADED";
     public const string VideoFileUploading = "VIDEO_FILE_UPLOADING";
     public const string VideoFileUploadCompleted = "VIDEO_FILE_UPLOAD_COMPLETED";
+    public const string Created = "CREATED";
+    public const string Started = "STARTED";
+    public const string Completed = "COMPLETED";
+    public const string Failed = "FAILED";
+    public const string WaitingRetry = "WAITING_RETRY";
+    public const string RetryEventPublished = "RETRY_EVENT_PUBLISHED";
 }

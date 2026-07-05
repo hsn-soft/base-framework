@@ -165,7 +165,7 @@ public sealed class AnalysisContentAppService(
             //     var fallbackOptions = new ListQueryOptions<CustomerContent>
             //     {
             //         Filter = x => x.ScopeKey == customerVpSetting.ScopeKey
-            //                       && x.NormalizeStatus == StatusNames.Completed,
+            //                       && x.NormalizeStatus == NormalizeStatusNames.Completed,
             //         OrderByEntity = o => o.OrderByDescending(s => s.CreationTime),
             //         MaxResultCount = analysisItemLimit
             //     };
@@ -254,7 +254,7 @@ public sealed class AnalysisContentAppService(
             var options = new ListQueryOptions<CustomerContent>
             {
                 Filter = x => x.ScopeKey == input.ScopeKey
-                              && x.NormalizeStatus == StatusNames.Completed
+                              && x.NormalizeStatus == NormalizeStatusNames.Completed
                               && input.CustomerContentIds.Contains(x.Id),
                 OrderByEntity = o => o.OrderByDescending(s => s.CreationTime)
             };

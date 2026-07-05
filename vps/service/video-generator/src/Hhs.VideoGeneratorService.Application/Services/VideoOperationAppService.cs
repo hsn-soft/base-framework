@@ -75,7 +75,7 @@ public sealed class VideoOperationAppService(
             eventId)
         {
             CorrelationId = correlationId,
-            Status = StatusNames.Created,
+            Status = VideoStatusNames.Created,
             CurrentStep = EventNames.VideoRequestCreated,
             MediaInputJson = @event.VideoInputJson,
             AudioProviderKey = audioProviderKey,
@@ -93,7 +93,7 @@ public sealed class VideoOperationAppService(
     {
         var videoRequest = await GetVideoAsync(@event.VideoRequestId, cancellationToken);
 
-        videoRequest.Status = StatusNames.Started;
+        videoRequest.Status = VideoStatusNames.Started;
         videoRequest.CurrentStep = EventNames.VideoOperationStarted;
 
         await ReplaceVideoAsync(videoRequest, cancellationToken);
@@ -227,7 +227,7 @@ public sealed class VideoOperationAppService(
     {
         var audioRequest = await GetAudioAsync(@event.AudioRequestId, cancellationToken);
 
-        if (audioRequest.Status is AudioStatusNames.AudioProviderCompleted or StatusNames.Failed)
+        if (audioRequest.Status is AudioStatusNames.AudioProviderCompleted or AudioStatusNames.Failed)
             return;
 
         audioRequest.Status = AudioStatusNames.AudioProviderPolling;
@@ -371,7 +371,7 @@ public sealed class VideoOperationAppService(
             var audioOptions = new ListQueryOptions<AudioRequest> { Filter = x => x.VideoRequestId == @event.VideoRequestId };
             var allAudios = await audioRequestRepository.GetListAsync(audioOptions, cancellationToken);
 
-            if (allAudios.Any(x => x.Status == StatusNames.Failed))
+            if (allAudios.Any(x => x.Status == AudioStatusNames.Failed))
             {
                 await FailVideoRequestDueToAudioFailureAsync(videoRequest, cancellationToken);
                 return;
@@ -396,8 +396,8 @@ public sealed class VideoOperationAppService(
                 x.Status != VideoStatusNames.VideoProviderCompleted &&
                 x.Status != VideoStatusNames.VideoFileDownloading &&
                 x.Status != VideoStatusNames.VideoFileUploading &&
-                x.Status != StatusNames.Completed &&
-                x.Status != StatusNames.Failed);
+                x.Status != VideoStatusNames.Completed &&
+                x.Status != VideoStatusNames.Failed);
 
             var lockUpdate = Builders<VideoRequest>.Update
                 .Set(x => x.Status, VideoStatusNames.VideoProviderRequestStarting)
@@ -509,7 +509,7 @@ public sealed class VideoOperationAppService(
     {
         var videoRequest = await GetVideoAsync(@event.VideoRequestId, cancellationToken);
 
-        if (videoRequest.Status is VideoStatusNames.VideoProviderCompleted or StatusNames.Completed or StatusNames.Failed)
+        if (videoRequest.Status is VideoStatusNames.VideoProviderCompleted or VideoStatusNames.Completed or VideoStatusNames.Failed)
             return;
 
         videoRequest.Status = VideoStatusNames.VideoProviderPolling;
@@ -571,7 +571,7 @@ public sealed class VideoOperationAppService(
     {
         var videoRequest = await GetVideoAsync(@event.VideoRequestId, cancellationToken);
 
-        if (videoRequest.Status == VideoStatusNames.VideoFileUploadCompleted || videoRequest.Status == StatusNames.Completed)
+        if (videoRequest.Status == VideoStatusNames.VideoFileUploadCompleted || videoRequest.Status == VideoStatusNames.Completed)
         {
             await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
                 eventMessage: new VideoFileUploadCompletedEto { VideoRequestId = videoRequest.Id });
@@ -630,7 +630,7 @@ public sealed class VideoOperationAppService(
 
         try
         {
-            videoRequest.Status = StatusNames.Completed;
+            videoRequest.Status = VideoStatusNames.Completed;
             videoRequest.CurrentStep = EventNames.VideoGenerationResultPublished;
 
             await ReplaceVideoAsync(videoRequest, cancellationToken);
@@ -756,7 +756,7 @@ public sealed class VideoOperationAppService(
             return;
         }
 
-        request.Status = StatusNames.WaitingRetry;
+        request.Status = AudioStatusNames.WaitingRetry;
         request.CurrentStep = step;
         request.LastError = ex.Message;
         request.NextRetryAtUtc = DateTime.UtcNow.Add(
@@ -780,7 +780,7 @@ public sealed class VideoOperationAppService(
 
     private async Task FailAudioAsync(AudioRequest request, string step, Exception ex, bool retryable, CancellationToken cancellationToken = default)
     {
-        request.Status = StatusNames.Failed;
+        request.Status = AudioStatusNames.Failed;
         request.CurrentStep = step;
         request.LastError = ex.Message;
         request.NextRetryAtUtc = null;
@@ -803,7 +803,7 @@ public sealed class VideoOperationAppService(
         );
 
         var parentVideoRequest = await GetVideoAsync(request.VideoRequestId, cancellationToken);
-        if (parentVideoRequest != null && parentVideoRequest.Status != StatusNames.Failed && parentVideoRequest.Status != StatusNames.Completed)
+        if (parentVideoRequest != null && parentVideoRequest.Status != VideoStatusNames.Failed && parentVideoRequest.Status != VideoStatusNames.Completed)
         {
             await FailVideoRequestDueToAudioFailureAsync(parentVideoRequest, cancellationToken);
         }
@@ -830,7 +830,7 @@ public sealed class VideoOperationAppService(
             return;
         }
 
-        request.Status = StatusNames.WaitingRetry;
+        request.Status = VideoStatusNames.WaitingRetry;
         request.CurrentStep = step;
         request.LastError = ex.Message;
         request.NextRetryAtUtc = DateTime.UtcNow.Add(
@@ -854,7 +854,7 @@ public sealed class VideoOperationAppService(
 
     private async Task FailVideoAsync(VideoRequest request, string step, Exception ex, bool retryable, CancellationToken cancellationToken = default)
     {
-        request.Status = StatusNames.Failed;
+        request.Status = VideoStatusNames.Failed;
         request.CurrentStep = step;
         request.LastError = ex.Message;
         request.NextRetryAtUtc = null;
@@ -879,7 +879,7 @@ public sealed class VideoOperationAppService(
 
     private async Task FailVideoRequestDueToAudioFailureAsync(VideoRequest videoRequest, CancellationToken cancellationToken = default)
     {
-        videoRequest.Status = StatusNames.Failed;
+        videoRequest.Status = VideoStatusNames.Failed;
         videoRequest.CurrentStep = EventNames.AudioFileUploadCompleted;
         videoRequest.LastError = "One or more audio requests failed.";
         videoRequest.NextRetryAtUtc = null;

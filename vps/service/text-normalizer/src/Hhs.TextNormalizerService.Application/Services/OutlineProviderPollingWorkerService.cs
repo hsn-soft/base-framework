@@ -63,7 +63,7 @@ public sealed class OutlineProviderPollingWorkerService(
 
                 if (request.OutlinePollingCount >= pollingSettings.MaxAttempts)
                 {
-                    request.Status = StatusNames.Failed;
+                    request.Status = NormalizeStatusNames.Failed;
                     request.LastError = ErrorMessages.OutlineProviderPollingTimeout;
 
                     await ReplaceCustomerAsync(request, cancellationToken);
@@ -103,7 +103,7 @@ public sealed class OutlineProviderPollingWorkerService(
 
                 if (status.IsProcessFailed)
                 {
-                    request.Status = StatusNames.Failed;
+                    request.Status = NormalizeStatusNames.Failed;
                     request.LastError = status.ErrorMessage ?? ErrorMessages.OutlineProviderFailed;
 
                     await ReplaceCustomerAsync(request, cancellationToken);
@@ -157,8 +157,8 @@ public sealed class OutlineProviderPollingWorkerService(
 
                 if (request.OutlinePollingCount >= pollingSettings.MaxAttempts)
                 {
-                    request.Status = StatusNames.Failed;
-                    request.OutlineStatus = StatusNames.Failed;
+                    request.Status = NormalizeStatusNames.Failed;
+                    request.OutlineStatus = OutlineStatusNames.Failed;
                     request.CurrentStep = EventNames.OutlineProviderPollingStarted;
                     request.NextOutlinePollAtUtc = null;
 
@@ -394,12 +394,12 @@ public sealed class OutlineProviderPollingWorkerService(
         CancellationToken cancellationToken)
     {
         var update = Builders<AnalysisContentNormalizedRequest>.Update
-            .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", StatusNames.Failed)
+            .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", NormalizeStatusNames.Failed)
             .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentStep)}", EventNames.OutlineProviderPollingStarted)
-            .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineStatus)}", StatusNames.Failed)
+            .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineStatus)}", OutlineStatusNames.Failed)
             .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.LastError)}", errorMessage)
             .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextOutlinePollAtUtc)}", (DateTime?)null)
-            .Set(x => x.Status, StatusNames.Failed)
+            .Set(x => x.Status, NormalizeStatusNames.Failed)
             .Set(x => x.CurrentStep, EventNames.OutlineProviderPollingStarted)
             .Set(x => x.LastError, errorMessage);
 

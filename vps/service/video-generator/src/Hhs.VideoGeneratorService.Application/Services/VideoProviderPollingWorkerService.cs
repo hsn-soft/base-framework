@@ -50,7 +50,7 @@ public sealed class VideoProviderPollingWorkerService(
 
                 if (request.ProviderPollingCount >= pollingSettings.MaxAttempts)
                 {
-                    request.Status = StatusNames.Failed;
+                    request.Status = VideoStatusNames.Failed;
                     request.LastError = ErrorMessages.VideoProviderPollingTimeout;
 
                     await ReplaceVideoAsync(request, cancellationToken);
@@ -83,7 +83,7 @@ public sealed class VideoProviderPollingWorkerService(
 
                 if (status.IsFailed)
                 {
-                    request.Status = StatusNames.Failed;
+                    request.Status = VideoStatusNames.Failed;
                     request.LastError = status.ErrorMessage ?? "Video provider failed.";
 
                     await ReplaceVideoAsync(request, cancellationToken);
@@ -139,7 +139,7 @@ public sealed class VideoProviderPollingWorkerService(
 
                 if (request.ProviderPollingCount >= pollingSettings.MaxAttempts)
                 {
-                    request.Status = StatusNames.Failed;
+                    request.Status = VideoStatusNames.Failed;
                     request.NextProviderPollAtUtc = null;
 
                     await ReplaceVideoAsync(request, cancellationToken);

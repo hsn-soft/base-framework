@@ -119,7 +119,7 @@ public sealed class CustomerContentPublicAppService(
                     // TODO: analysisVideoUrl = RANDOM(1)
                     var analysisContent = await analysisContentRepository.GetFirstOrDefaultAsync(
                         x => x.ScopeKey == scopeKey
-                             && x.VideoStatus == StatusNames.Completed
+                             && x.VideoStatus == MediaStatusNames.Completed
                              && x.AnalysisDate < analysisEndDate,
                         selector: s => new { s.Id, s.VideoCdnUrl },
                         orderByEntity: o => o.OrderByDescending(x => x.CreationTime),
@@ -135,7 +135,7 @@ public sealed class CustomerContentPublicAppService(
                         // TODO: analysisVideoUrl = RANDOM(1)
                         analysisContent = await analysisContentRepository.GetFirstOrDefaultAsync(
                             x => x.ScopeKey == scopeKey
-                                 && x.VideoStatus == StatusNames.Completed
+                                 && x.VideoStatus == MediaStatusNames.Completed
                                  && x.AnalysisDate < analysisEndDate,
                             selector: s => new { s.Id, s.VideoCdnUrl },
                             orderByEntity: o => o.OrderByDescending(x => x.AnalysisDate),
