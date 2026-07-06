@@ -15,6 +15,7 @@ public static class ProviderKeys
     // Video Providers
     public const string VideoQueueExternal = "video-queue-external";
     public const string VideoQueueInternal = "video-queue-internal";
+    public const string VideoCreatomate = "video-creatomate";
 
     // CDN Providers (Storage)
     public const string CdnLocalMinio = "cdn-local-minio";

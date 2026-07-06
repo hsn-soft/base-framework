@@ -66,9 +66,14 @@ public static class ApplicationServiceCollectionExtensions
             .Get<VideoQueueInternalProviderSettings>() ?? new VideoQueueInternalProviderSettings();
         services.AddSingleton(videoQueueInternalProviderSettings);
 
+        var videoCreatomateProviderSettings = configuration.GetSection(VideoCreatomateProviderSettings.SectionName)
+            .Get<VideoCreatomateProviderSettings>() ?? new VideoCreatomateProviderSettings();
+        services.AddSingleton(videoCreatomateProviderSettings);
+
         // Register Video Provider implementations
         services.AddScoped<IVideoProvider, VideoQueueExternalProvider>();
         services.AddScoped<IVideoProvider, VideoQueueInternalProvider>();
+        services.AddScoped<IVideoProvider, VideoCreatomateProvider>();
         services.AddScoped<IVideoProviderResolver, VideoProviderResolver>();
 
         // ============================================================================

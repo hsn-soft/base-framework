@@ -528,14 +528,13 @@ public sealed class VideoOperationAppService(
     {
         var videoRequest = await GetVideoAsync(@event.VideoRequestId, cancellationToken);
 
-
-        var providerKeyResult = await customerVpSettingRepository.GetVideoProviderKeyByScopeKeyAsync(videoRequest.ScopeKey, cancellationToken);
-        if (!providerKeyResult.Key)
+        var customerVpSetting = await customerVpSettingRepository.GetFirstOrDefaultAsync(x => x.ScopeKey == videoRequest.ScopeKey, cancellationToken: cancellationToken);
+        if (customerVpSetting is null || string.IsNullOrWhiteSpace(customerVpSetting.VideoProviderKey))
         {
             throw new InvalidOperationException($"Provider key value is unknown. Scope key: {videoRequest.ScopeKey}");
         }
 
-        var provider = videoProviderResolver.Resolve(providerKeyResult.Value);
+        var provider = videoProviderResolver.Resolve(customerVpSetting.VideoProviderKey);
 
         try
         {
@@ -546,7 +545,13 @@ public sealed class VideoOperationAppService(
                 validPriorStatuses: [VideoStatusNames.VideoProviderRequestStarting, VideoStatusNames.WaitingRetry]);
             if (claimed == 0) return;
 
-            var response = await provider.CreateAsync(new VideoCreateRequest { VideoInputJson = videoRequest.MediaInputJson, AudioUrls = @event.AudioUrls });
+            var response = await provider.CreateAsync(new VideoCreateRequest
+            {
+                VideoInputJson = videoRequest.MediaInputJson,
+                AudioUrls = @event.AudioUrls,
+                RefContentType = videoRequest.RefContentType,
+                CustomerProviderSettings = customerVpSetting.VideoGenerationProviderSettings
+            });
 
             videoRequest.VideoProviderTrackingId = response.ProviderTrackId;
             videoRequest.VideoProviderUrl = response.ProviderFileUrl;

@@ -964,6 +964,7 @@ public sealed class NormalizerOperationAppService(
                 customerContentId: request.CustomerContentId,
                 scrapeTitle: request.ScrapingResult?.Title,
                 scrapeText: request.ScrapingResult?.Details,
+                scrapeImageUrl: request.ScrapingResult?.ImageUrl,
                 outlineScript: request.OutlineResult?.OutlinedData
             );
         }
@@ -1298,7 +1299,7 @@ public sealed class NormalizerOperationAppService(
         return analysisContentRepository.UpdateByExpressionAsync(predicate, updateFunc, cancellationToken);
     }
 
-    private string BuildVideoInputJson(Guid customerContentId, string? scrapeTitle, string? scrapeText, string? outlineScript)
+    private string BuildVideoInputJson(Guid customerContentId, string? scrapeTitle, string? scrapeText, string? scrapeImageUrl, string? outlineScript)
     {
         var audioItems = new[]
         {
@@ -1308,6 +1309,7 @@ public sealed class NormalizerOperationAppService(
                 customerContentId,
                 text = scrapeText,
                 title = scrapeTitle,
+                imageUrl = scrapeImageUrl,
                 outline = outlineScript
             }
         };
@@ -1325,6 +1327,7 @@ public sealed class NormalizerOperationAppService(
                 contentKey = item.ContentKey,
                 title = item.ScrapingResult?.Title,
                 text = item.ScrapingResult?.Details,
+                imageUrl = item.ScrapingResult?.ImageUrl,
                 outline = item.OutlineResult?.OutlinedData
             })
             .ToList();

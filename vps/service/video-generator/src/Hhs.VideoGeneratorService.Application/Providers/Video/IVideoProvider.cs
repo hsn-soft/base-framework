@@ -1,3 +1,4 @@
+using Hhs.Shared.Helper.Enums;
 using Hhs.Shared.Helper.Providers;
 using JetBrains.Annotations;
 
@@ -19,6 +20,15 @@ public sealed class VideoCreateRequest
 {
     public string VideoInputJson { get; set; } = default!;
     public List<string> AudioUrls { get; set; } = [];
+    public ContentType RefContentType { get; set; }
+
+    /// <summary>
+    /// Opaque per-customer provider configuration (CustomerVpSetting.VideoGenerationProviderSettings),
+    /// e.g. ClientCreatomateSettings — template ids, branding, and video dimensions genuinely vary
+    /// per customer, unlike a provider's own API key/base settings which come from appsettings.
+    /// Providers that don't need per-customer configuration (VideoQueueExternal/Internal) ignore it.
+    /// </summary>
+    [CanBeNull] public object CustomerProviderSettings { get; set; }
 }
 
 public sealed class VideoCreateResponse
