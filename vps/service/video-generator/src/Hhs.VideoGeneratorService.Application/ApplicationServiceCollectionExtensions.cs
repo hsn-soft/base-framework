@@ -44,9 +44,14 @@ public static class ApplicationServiceCollectionExtensions
             .Get<AudioQueueProviderSettings>() ?? new AudioQueueProviderSettings();
         services.AddSingleton(audioQueueProviderSettings);
 
+        var audioElevenLabsProviderSettings = configuration.GetSection(AudioElevenLabsProviderSettings.SectionName)
+            .Get<AudioElevenLabsProviderSettings>() ?? new AudioElevenLabsProviderSettings();
+        services.AddSingleton(audioElevenLabsProviderSettings);
+
         // Register Audio Provider implementations
         services.AddScoped<IAudioProvider, AudioQuickProvider>();
         services.AddScoped<IAudioProvider, AudioHQProvider>();
+        services.AddScoped<IAudioProvider, AudioElevenLabsProvider>();
         services.AddScoped<IAudioProviderResolver, AudioProviderResolver>();
 
         // ============================================================================

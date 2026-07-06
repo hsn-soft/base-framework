@@ -10,6 +10,7 @@ public static class ProviderKeys
     // Audio Providers
     public const string AudioQuick = "audio-quick";
     public const string AudioHQ = "audio-hq";
+    public const string AudioElevenLabs = "audio-eleven-labs";
 
     // Video Providers
     public const string VideoQueueExternal = "video-queue-external";

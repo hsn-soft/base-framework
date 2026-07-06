@@ -28,6 +28,23 @@ public sealed class RemoteFileDownloader(
                 return (false, "Remote URL is required");
             }
 
+            // Some providers (e.g. ElevenLabs, which returns audio bytes synchronously with no
+            // separately-hosted URL) already persist the generated file to local disk themselves
+            // during CreateAsync and hand back that local path as ProviderFileUrl. Detect that case
+            // and short-circuit instead of attempting an HTTP GET against a filesystem path.
+            bool isHttpUrl = Uri.TryCreate(remoteUrl, UriKind.Absolute, out var parsedUrl) &&
+                              (parsedUrl.Scheme == Uri.UriSchemeHttp || parsedUrl.Scheme == Uri.UriSchemeHttps);
+
+            if (!isHttpUrl)
+            {
+                if (System.IO.File.Exists(remoteUrl))
+                {
+                    logger.LogInformation("File is already local, skipping download: {FilePath}", remoteUrl);
+                    return (true, remoteUrl);
+                }
+
+                return (false, $"Remote URL is not a valid http(s) URL and no local file exists at: {remoteUrl}");
+            }
 
             // Extract filename and extension from URL
             var uri = new Uri(remoteUrl);
