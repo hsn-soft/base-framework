@@ -72,7 +72,7 @@ public sealed class VideoOperationAppService(
             audioProviderKey = audioProviderKeyResult.Value;
         }
 
-        var videoRequestId = Guid.NewGuid();
+        var videoRequestId = Guid.CreateVersion7();
 
         var videoRequest = new VideoRequest(
             videoRequestId,
@@ -208,7 +208,7 @@ public sealed class VideoOperationAppService(
                 continue;
             }
 
-            var audioRequestId = Guid.NewGuid();
+            var audioRequestId = Guid.CreateVersion7();
 
             var audioRequest = new AudioRequest(
                 audioRequestId,

@@ -75,7 +75,7 @@ namespace Hhs.MockApi.CdnBunnyS3
 
         public async Task<string> UploadAsync(IFormFile file, CancellationToken ct)
         {
-            var fileId = Guid.NewGuid().ToString("N");
+            var fileId = Guid.CreateVersion7().ToString("N");
             var dateFolder = DateTime.UtcNow.ToString("yyyy/MM/dd");
             var s3Key = $"{dateFolder}/{fileId}_{file.FileName}";
 

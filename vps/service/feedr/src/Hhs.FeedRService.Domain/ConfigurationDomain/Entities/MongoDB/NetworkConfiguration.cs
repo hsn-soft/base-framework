@@ -32,7 +32,7 @@ public sealed class NetworkConfiguration : CreationAuditedEntity<Guid>, IMultiTe
         bool isActive,
         List<TopLevelGroupConfig> topLevelGroups)
     {
-        Id = Guid.NewGuid();
+        Id = Guid.CreateVersion7();
         NetworkId = networkId;
         TenantId = tenantId;
         NetworkCode = networkCode ?? string.Empty;

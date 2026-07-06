@@ -55,7 +55,7 @@ public sealed class AnalysisContentAppService(
             if (content == null)
                 throw new InvalidOperationException($"CustomerContent not found: {customerContentId}");
 
-            analysis.Items.Add(new AnalysisContentItem(id: Guid.NewGuid()
+            analysis.Items.Add(new AnalysisContentItem(id: Guid.CreateVersion7()
                 , analysisContentId: analysisId, customerContentId: customerContentId, sortOrder: sort++));
         }
 
@@ -190,7 +190,7 @@ public sealed class AnalysisContentAppService(
             foreach (var content in selectedContents)
             {
                 analysis.Items.Add(new AnalysisContentItem(
-                    id: Guid.NewGuid(),
+                    id: Guid.CreateVersion7(),
                     analysisContentId: analysisContentId,
                     customerContentId: content.Id,
                     sortOrder: sort++));
@@ -283,7 +283,7 @@ public sealed class AnalysisContentAppService(
                 if (content == null)
                     throw new InvalidOperationException($"CustomerContent not found: {customerContentId}");
 
-                analysis.Items.Add(new AnalysisContentItem(id: Guid.NewGuid()
+                analysis.Items.Add(new AnalysisContentItem(id: Guid.CreateVersion7()
                     , analysisContentId: analysisId, customerContentId: customerContentId, sortOrder: sort++));
             }
 

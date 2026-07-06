@@ -35,7 +35,7 @@ public sealed class MongoSeederService : IBasicDataSeeder
                 return;
             }
 
-            var tempId = Guid.NewGuid();
+            var tempId = Guid.CreateVersion7();
             await dbContext.FailedIntegrationEvents.InsertOneAsync(new FailedIntegrationEvent(tempId, DateTime.UtcNow, "test",
                 FailedIntegrationEventStates.CreatedWaitForHandling), cancellationToken: cancellationToken);
 

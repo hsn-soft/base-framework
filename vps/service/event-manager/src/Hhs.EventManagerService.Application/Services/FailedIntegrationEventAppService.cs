@@ -99,7 +99,7 @@ public sealed class FailedIntegrationEventAppService : ApplicationServiceBase, I
         try
         {
             await _failedIntegrationEventRepository.CreateAsync(
-                id: ParentIntegrationEvent?.MessageId ?? Guid.NewGuid(),
+                id: ParentIntegrationEvent?.MessageId ?? Guid.CreateVersion7(),
                 envelopeTime: ParentIntegrationEvent?.MessageTime.ToUniversalTime() ?? DateTime.UtcNow,
                 failedReason: input?.FailedReason ?? string.Empty,
                 operationStatus: FailedIntegrationEventStates.CreatedWaitForHandling,
@@ -164,7 +164,7 @@ public sealed class FailedIntegrationEventAppService : ApplicationServiceBase, I
             {
                 HopLevel = failedIntegrationEventItem.HopLevel,
                 ReQueuedCount = failedIntegrationEventItem.ReQueuedCount,
-                MessageId = failedIntegrationEventItem.FailedMessageEnvelopeId ?? Guid.NewGuid(),
+                MessageId = failedIntegrationEventItem.FailedMessageEnvelopeId ?? Guid.CreateVersion7(),
                 MessageTime = failedIntegrationEventItem.FailedMessageEnvelopeTime ?? DateTime.UtcNow,
                 CorrelationId = failedIntegrationEventItem.CorrelationId,
                 UserId = failedIntegrationEventItem.UserId,

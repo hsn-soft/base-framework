@@ -40,7 +40,7 @@ public sealed class CustomerConfigurationAppService : ApplicationServiceBase, IC
     public async Task<CustomerConfigurationDto> CreateAsync(CreateCustomerConfigurationDto input, CancellationToken cancellationToken = default)
     {
         var entity = new CustomerConfiguration(
-            id: Guid.NewGuid(),
+            id: Guid.CreateVersion7(),
             tenantId: input.TenantId,
             clientId: input.ClientId,
             clientName: input.ClientName,

@@ -49,8 +49,8 @@ public sealed class ReportPersistenceService : ApplicationServiceBase, IReportPe
         var rows = GoogleAdManagerResponseParser.Parse(rawResponseBody);
 
         var entity = new RawGoogleAdManagerResponse(
-            id: Guid.NewGuid(),
-            tenantId: tenantId == Guid.Empty ? Guid.NewGuid() : tenantId,
+            id: Guid.CreateVersion7(),
+            tenantId: tenantId == Guid.Empty ? Guid.CreateVersion7() : tenantId,
             requestId: requestId,
             jobName: jobName,
             network: network,
@@ -63,7 +63,7 @@ public sealed class ReportPersistenceService : ApplicationServiceBase, IReportPe
         try
         {
             await _rawRepository.InsertAsync(entity, cancellationToken);
-            
+
             _logger.FrameworkInfoLog(LogHelper.Generate(
                 message: $"Raw Google Ad Manager response persisted to MongoDB. Id={entity.Id}, Rows={rows.Count}",
                 reference: new { RawResponseId = entity.Id, RowCount = rows.Count, AdUnitId = adUnitId },
@@ -128,7 +128,7 @@ public sealed class ReportPersistenceService : ApplicationServiceBase, IReportPe
             var network = await _dailyRepository.EnsureNetworkAsync(raw.Network, networkDisplayName, cancellationToken);
             var topLevel = await _dailyRepository.EnsureTopLevelAsync(network.Id, raw.AdUnitIdTopLevel, cancellationToken);
 
-            // Group rows by (AdUnitId, Date, DemandChannel, DemandSubchannelName, OrderId) — 
+            // Group rows by (AdUnitId, Date, DemandChannel, DemandSubchannelName, OrderId) —
             // one DailyReportResponse per client-specific AdUnit per day per dimension combination.
             var groups = raw.Rows
                 .Where(r => !string.IsNullOrEmpty(r.AdUnitId))
@@ -162,7 +162,7 @@ public sealed class ReportPersistenceService : ApplicationServiceBase, IReportPe
                 var aggregate = AggregateRows(group.ToList());
 
                 var draft = new DashboardResponse(
-                    id: Guid.NewGuid(),
+                    id: Guid.CreateVersion7(),
                     tenantId: tenantId,
                     adUnitClientId: clientUnit.Id,
                     clientId: clientId,
@@ -185,7 +185,7 @@ public sealed class ReportPersistenceService : ApplicationServiceBase, IReportPe
 
             // Audit trail.
             await _dailyRepository.InsertMappingAsync(
-                new MongoToPostgresMapping(Guid.NewGuid(), raw.Id, derivedIds, DerivationStatus.Completed),
+                new MongoToPostgresMapping(Guid.CreateVersion7(), raw.Id, derivedIds, DerivationStatus.Completed),
                 cancellationToken);
 
             await _rawRepository.UpdateProcessedStatusAsync(raw.Id, DerivationStatus.Completed, cancellationToken: cancellationToken);
@@ -201,7 +201,7 @@ public sealed class ReportPersistenceService : ApplicationServiceBase, IReportPe
         {
             await _rawRepository.UpdateProcessedStatusAsync(raw.Id, DerivationStatus.Failed, ex.Message, cancellationToken);
             await _dailyRepository.InsertMappingAsync(
-                new MongoToPostgresMapping(Guid.NewGuid(), raw.Id, derivedIds, DerivationStatus.Failed, ex.Message),
+                new MongoToPostgresMapping(Guid.CreateVersion7(), raw.Id, derivedIds, DerivationStatus.Failed, ex.Message),
                 cancellationToken);
             throw;
         }

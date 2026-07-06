@@ -40,7 +40,7 @@ public sealed class CdnBunnyS3Provider : ICdnProvider
             string dateFolder = DateTime.UtcNow.ToString("yyyy/MM/dd");
             string fileExtension = Path.GetExtension(filename);
             string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(filename);
-            string uniqueFilename = $"{fileNameWithoutExtension}_{Guid.NewGuid():N}{fileExtension}";
+            string uniqueFilename = $"{fileNameWithoutExtension}_{Guid.CreateVersion7():N}{fileExtension}";
             string objectKey = $"{dateFolder}/{uniqueFilename}";
 
             var memoryStream = new MemoryStream();

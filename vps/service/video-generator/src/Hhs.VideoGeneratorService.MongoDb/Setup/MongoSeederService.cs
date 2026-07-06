@@ -28,8 +28,8 @@ public sealed class MongoSeederService(IServiceScopeFactory serviceScopeFactory)
             // long estimatedVideoRequestDocCount = await dbContext.VideoRequests.EstimatedDocumentCountAsync(cancellationToken: cancellationToken);
             // if (estimatedVideoRequestDocCount < 1)
             // {
-            //     var tempId = Guid.NewGuid();
-            //     await dbContext.VideoRequests.InsertOneAsync(new VideoRequest(tempId, "test_cope", "test", ReferenceContentTypes.CUSTOMER_CONTENT, Guid.NewGuid(),
+            //     var tempId = Guid.CreateVersion7();
+            //     await dbContext.VideoRequests.InsertOneAsync(new VideoRequest(tempId, "test_cope", "test", ReferenceContentTypes.CUSTOMER_CONTENT, Guid.CreateVersion7(),
             //         VideoRequestStates.CreatedWaitForVideoSent, [new NormalizedContentData { NormalizedContent = "test" }]), cancellationToken: cancellationToken);
             //
             //     var filter = Builders<VideoRequest>.Filter.Eq(doc => doc.Id, tempId);

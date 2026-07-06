@@ -30,7 +30,7 @@ public sealed class MongoFailedIntegrationEventRepository : MongoGenericReposito
         string failedMessageTypeName = null,
         ushort hopLevel = 1,
         ushort reQueuedCount = 0)
-        => await CreateAsync(id: Guid.NewGuid(),
+        => await CreateAsync(id: Guid.CreateVersion7(),
             envelopeTime: envelopeTime,
             failedReason: failedReason,
             operationStatus: operationStatus,
@@ -66,7 +66,7 @@ public sealed class MongoFailedIntegrationEventRepository : MongoGenericReposito
         ushort hopLevel = 1,
         ushort reQueuedCount = 0)
     {
-        if (id == Guid.Empty) id = Guid.NewGuid();
+        if (id == Guid.Empty) id = Guid.CreateVersion7();
 
         var draft = new FailedIntegrationEvent(
             id: id,

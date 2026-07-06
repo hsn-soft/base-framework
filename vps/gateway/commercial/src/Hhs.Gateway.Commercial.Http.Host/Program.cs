@@ -437,7 +437,7 @@ finally
 //     public static async Task<int> Main(string[] args)
 //     {
 //         string workspace = typeof(Startup).Namespace;
-//         ApplicationIdentifier.AppId = Guid.NewGuid().ToString("N");
+//         ApplicationIdentifier.AppId = Guid.CreateVersion7().ToString("N");
 //         ApplicationIdentifier.AppName = workspace?[(workspace.IndexOf('.') + 1)..];
 //
 //         Log.Logger = SerilogConfigurationHelper.ConfigureConsoleLogger(GetConfiguration());

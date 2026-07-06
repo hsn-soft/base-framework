@@ -24,7 +24,7 @@ public sealed class MongoSeederService(IServiceScopeFactory serviceScopeFactory)
             long customerConfigurationsDocCount = await dbContext.CustomerConfigurations.EstimatedDocumentCountAsync(cancellationToken: cancellationToken);
             if (customerConfigurationsDocCount < 1)
             {
-            
+
                 var t24ClientId = Guid.Parse("46f859a8-0737-452a-8fd6-258156fdf901");
                 var t24TenantId = Guid.Parse("f05ad9c0-52c7-4ad8-8349-1f4bcc1b9bf9");
                 string t24DomainName = "www.t24.com.tr";
@@ -65,7 +65,7 @@ public sealed class MongoSeederService(IServiceScopeFactory serviceScopeFactory)
                 var bondNetworkId = Guid.Parse("67f812b7-0737-452a-8fd6-258156abc123");
                 var bondTenantId = Guid.Parse("b15ad9c0-52c7-4ad8-8349-1f4bcc1b9bb1");
                 await dbContext.NetworkConfigurations.InsertOneAsync(new NetworkConfiguration(
-                    networkId: Guid.NewGuid(),
+                    networkId: Guid.CreateVersion7(),
                     tenantId: bondTenantId,
                     networkCode: "21852615636",
                     displayName: "Bond Network",
@@ -88,7 +88,7 @@ public sealed class MongoSeederService(IServiceScopeFactory serviceScopeFactory)
 
     private CustomerConfiguration InitCustomerConfiguration(Guid tenantId, Guid clientId, string domainName, string network, string adUnitName, string adUnitIdTopLevel, List<string> adUnitId)
     {
-        var conf = new CustomerConfiguration(id: Guid.NewGuid(), tenantId: tenantId, clientId: clientId, clientName: domainName, network: network, adUnitName: adUnitName, adUnitIdTopLevel: adUnitIdTopLevel, adUnitId: adUnitId);
+        var conf = new CustomerConfiguration(id: Guid.CreateVersion7(), tenantId: tenantId, clientId: clientId, clientName: domainName, network: network, adUnitName: adUnitName, adUnitIdTopLevel: adUnitIdTopLevel, adUnitId: adUnitId);
         return conf;
     }
 }

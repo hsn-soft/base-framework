@@ -455,7 +455,7 @@ public sealed class NormalizerOperationAppService(
             return;
         }
 
-        var requestId = Guid.NewGuid();
+        var requestId = Guid.CreateVersion7();
         var request = new AnalysisContentNormalizedRequest(
             requestId,
             @event.ScopeKey,

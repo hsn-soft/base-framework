@@ -40,7 +40,7 @@ namespace Hhs.MockApi.OutlineQueue
 
         public static string CreateRequest(string inputText)
         {
-            var trackingId = Guid.NewGuid().ToString("N");
+            var trackingId = Guid.CreateVersion7().ToString("N");
             Store[trackingId] = new QueueOutlineEntry { InputText = inputText, CreatedAt = DateTime.UtcNow };
             return trackingId;
         }

@@ -45,7 +45,7 @@ public sealed class NetworkConfigurationAppService : ApplicationServiceBase, INe
         )).ToList() ?? new List<TopLevelGroupConfig>();
 
         var entity = new NetworkConfiguration(
-            networkId: Guid.NewGuid(),
+            networkId: Guid.CreateVersion7(),
             tenantId: input.TenantId,
             networkCode: input.NetworkCode,
             displayName: input.DisplayName,

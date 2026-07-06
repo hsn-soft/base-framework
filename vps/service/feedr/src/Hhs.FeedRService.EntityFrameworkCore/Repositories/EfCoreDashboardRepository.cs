@@ -31,7 +31,7 @@ public sealed class EfCoreDashboardRepository(
             return existing;
         }
 
-        var draft = new AdNetwork(Guid.NewGuid(), networkCode, displayName);
+        var draft = new AdNetwork(Guid.CreateVersion7(), networkCode, displayName);
         await _dbContext.AdNetworks.AddAsync(draft, cancellationToken);
         await _dbContext.SaveChangesAsync(cancellationToken);
         return draft;
@@ -44,7 +44,7 @@ public sealed class EfCoreDashboardRepository(
 
         if (existing != null) return existing;
 
-        var draft = new AdUnitTopLevel(Guid.NewGuid(), adNetworkId, adUnitTopLevelCode);
+        var draft = new AdUnitTopLevel(Guid.CreateVersion7(), adNetworkId, adUnitTopLevelCode);
         await _dbContext.AdUnitTopLevels.AddAsync(draft, cancellationToken);
         await _dbContext.SaveChangesAsync(cancellationToken);
         return draft;
@@ -71,7 +71,7 @@ public sealed class EfCoreDashboardRepository(
             return existing;
         }
 
-        var draft = new AdUnitClient(Guid.NewGuid(), tenantId, adUnitTopLevelId, adUnitCode, clientId, clientName);
+        var draft = new AdUnitClient(Guid.CreateVersion7(), tenantId, adUnitTopLevelId, adUnitCode, clientId, clientName);
         await _dbContext.AdUnitClients.AddAsync(draft, cancellationToken);
         await _dbContext.SaveChangesAsync(cancellationToken);
         return draft;

@@ -71,7 +71,7 @@ namespace Hhs.MockApi.CdnBunnySelf
 
         public async Task<string> UploadAsync(IFormFile file, string mediaDir, CancellationToken ct)
         {
-            var fileId = Guid.NewGuid().ToString("N");
+            var fileId = Guid.CreateVersion7().ToString("N");
             var dateFolder = DateTime.UtcNow.ToString("yyyy/MM/dd");
             var uploadDir = Path.Combine(mediaDir, PathPrefix, dateFolder);
             Directory.CreateDirectory(uploadDir);
