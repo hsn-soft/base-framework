@@ -7,20 +7,11 @@ using HsnSoft.Base.Logging.Abstracts;
 namespace Hhs.TextNormalizerService.EventHandlers.Internal;
 
 public class AnalysisItemScrapingCompletedEtoHandler(
-    IAppConsoleLogger logger,
     IEventInboxMessageManager inboxStore,
+    IAppConsoleLogger logger,
     NormalizerOperationAppService normalizerOperationAppService
-) : ApplicationEventHandlerBase<AnalysisItemScrapingCompletedEto>(inboxStore)
+) : ApplicationEventHandlerBase<AnalysisItemScrapingCompletedEto>(inboxStore, logger, normalizerOperationAppService)
 {
-    private readonly IAppConsoleLogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    private readonly NormalizerOperationAppService _normalizerOperationAppService = normalizerOperationAppService ?? throw new ArgumentNullException(nameof(normalizerOperationAppService));
-
     protected override async Task ExecuteAsync(MessageEnvelope<AnalysisItemScrapingCompletedEto> @event, CancellationToken cancellationToken)
-    {
-        _logger.LogDebug("EVENT HANDLING | [ {EventName} ] => CorrelationId[{CorrelationId}]",
-            nameof(AnalysisItemScrapingCompletedEto)[..^"Eto".Length],
-            @event.CorrelationId ?? string.Empty);
-
-        await _normalizerOperationAppService.CompleteAnalysisItemScrapingAsync(@event.Message);
-    }
+        => await normalizerOperationAppService.CompleteAnalysisItemScrapingAsync(@event.Message, cancellationToken);
 }

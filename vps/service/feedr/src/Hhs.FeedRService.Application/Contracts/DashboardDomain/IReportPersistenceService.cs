@@ -1,8 +1,9 @@
 using Hhs.FeedRService.Application.Contracts.DashboardDomain.Dtos;
+using HsnSoft.Base.EventBus;
 
 namespace Hhs.FeedRService.Application.Contracts.DashboardDomain;
 
-public interface IReportPersistenceService
+public interface IReportPersistenceService : IEventApplicationService
 {
     /// <summary>
     /// Stage 1: Persist the raw Google Ad Manager NDJSON response into MongoDB

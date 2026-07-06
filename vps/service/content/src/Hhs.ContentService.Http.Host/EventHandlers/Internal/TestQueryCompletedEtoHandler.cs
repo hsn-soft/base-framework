@@ -10,15 +10,15 @@ public class TestQueryCompletedEtoHandler(
     IEventInboxMessageManager inboxStore,
     IAppConsoleLogger logger,
     IRequestLimitStore limitStore
-) : ApplicationEventHandlerBase<TestQueryCompletedEto>(inboxStore)
+) : ApplicationEventHandlerBase<TestQueryCompletedEto>(inboxStore, null)
 {
-    private readonly IAppConsoleLogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+
     private readonly IRequestLimitStore _limitStore = limitStore ?? throw new ArgumentNullException(nameof(limitStore));
     private const string EndpointKey = "content:jobs:test-query";
 
     protected override async Task ExecuteAsync(MessageEnvelope<TestQueryCompletedEto> @event, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("EVENT HANDLING | [ {EventName} ] => CorrelationId[{CorrelationId}], MessageId[{MessageId}], RelatedMessageId[{RelatedMessageId}]",
+        Logger.LogDebug("EVENT HANDLING | [ {EventName} ] => CorrelationId[{CorrelationId}], MessageId[{MessageId}], RelatedMessageId[{RelatedMessageId}]",
             nameof(TestQueryCompletedEto)[..^"Eto".Length],
             @event.CorrelationId ?? string.Empty,
             @event.MessageId.ToString(),

@@ -10,17 +10,8 @@ public class VideoGenerationDataForwardedEtoHandler(
     IEventInboxMessageManager inboxStore,
     IAppConsoleLogger logger,
     VideoOperationAppService videoOperationAppService
-) : ApplicationEventHandlerBase<VideoGenerationDataForwardedEto>(inboxStore)
+) : ApplicationEventHandlerBase<VideoGenerationDataForwardedEto>(inboxStore, logger, videoOperationAppService)
 {
-    private readonly IAppConsoleLogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    private readonly VideoOperationAppService _videoOperationAppService = videoOperationAppService ?? throw new ArgumentNullException(nameof(videoOperationAppService));
-
     protected override async Task ExecuteAsync(MessageEnvelope<VideoGenerationDataForwardedEto> @event, CancellationToken cancellationToken)
-    {
-        _logger.LogDebug("EVENT HANDLING | [ {EventName} ] => EventId[{EventId}]",
-            nameof(VideoGenerationDataForwardedEto)[..^"Eto".Length],
-            @event.MessageId);
-
-        await _videoOperationAppService.CreateVideoRequestAsync(@event.Message, @event.MessageId, @event.CorrelationId ?? "", cancellationToken);
-    }
+        => await videoOperationAppService.CreateVideoRequestAsync(@event.Message, @event.MessageId, @event.CorrelationId ?? "", cancellationToken);
 }

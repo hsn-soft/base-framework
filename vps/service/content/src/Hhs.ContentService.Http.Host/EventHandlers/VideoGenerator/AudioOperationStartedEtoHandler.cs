@@ -10,17 +10,8 @@ public class AudioOperationStartedEtoHandler(
     IEventInboxMessageManager inboxStore,
     IAppConsoleLogger logger,
     ContentOperationService contentOperationService
-) : ApplicationEventHandlerBase<AudioOperationStartedEto>(inboxStore)
+) : ApplicationEventHandlerBase<AudioOperationStartedEto>(inboxStore, logger, contentOperationService)
 {
-    private readonly IAppConsoleLogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    private readonly ContentOperationService _contentOperationService = contentOperationService ?? throw new ArgumentNullException(nameof(contentOperationService));
-
     protected override async Task ExecuteAsync(MessageEnvelope<AudioOperationStartedEto> @event, CancellationToken cancellationToken)
-    {
-        _logger.LogDebug("EVENT HANDLING | [ {EventName} ] => CorrelationId[{CorrelationId}]",
-            nameof(AudioOperationStartedEto)[..^"Eto".Length],
-            @event.MessageId);
-
-        await _contentOperationService.HandleAudioOperationStartedAsync(@event.Message, @event.CorrelationId, cancellationToken);
-    }
+        => await contentOperationService.HandleAudioOperationStartedAsync(@event.Message, @event.CorrelationId, cancellationToken);
 }

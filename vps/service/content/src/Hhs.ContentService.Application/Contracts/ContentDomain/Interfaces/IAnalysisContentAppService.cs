@@ -21,8 +21,9 @@ public sealed record CreateAnalysisContentFromScopeRequest(
 
 public interface IAnalysisContentAppService : IEventApplicationService
 {
+    Task AnalysisVideoGenerationQueryAsync(AnalysisVideoGenerationQueryEto input, [CanBeNull] string correlationId = null);
+
     Task<CreateContentResponse> CreateTestAnalysisContentAsync(CreateAnalysisContentRequest request, CancellationToken cancellationToken);
 
-    Task AnalysisVideoGenerationQueryAsync(AnalysisVideoGenerationQueryEto input, [CanBeNull] string correlationId = null);
     Task<ForceAnalysisVideoGenerationResultDto> ForceAnalysisVideoGenerationQueryAsync(ForceAnalysisVideoGenerationRequestDto input, string correlationId = null);
 }

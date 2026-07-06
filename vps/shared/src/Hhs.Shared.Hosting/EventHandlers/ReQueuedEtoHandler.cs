@@ -4,6 +4,7 @@ using Hhs.Shared.Contracts.EventInbox;
 using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.EventBus;
 using HsnSoft.Base.EventBus.RabbitMQ;
+using HsnSoft.Base.Logging.Abstracts;
 
 namespace Hhs.Shared.Hosting.EventHandlers;
 
@@ -22,10 +23,11 @@ namespace Hhs.Shared.Hosting.EventHandlers;
 /// </summary>
 public sealed class ReQueuedEtoHandler(
     IEventInboxMessageManager inboxStore,
+    IAppConsoleLogger logger,
     IEventBusSubscriptionManager subscriptionsManager,
     IEventDispatcher dispatcher,
     IFailedEventNotifier failedEventNotifier
-) : ApplicationEventHandlerBase<ReQueuedEto>(inboxStore)
+) : ApplicationEventHandlerBase<ReQueuedEto>(inboxStore, logger)
 {
     protected override async Task ExecuteAsync(MessageEnvelope<ReQueuedEto> @event, CancellationToken cancellationToken)
     {

@@ -7,20 +7,11 @@ using HsnSoft.Base.Logging.Abstracts;
 namespace Hhs.TextNormalizerService.EventHandlers.Internal;
 
 public class AnalysisContentNormalizeRequestCreatedEtoHandler(
-    IAppConsoleLogger logger,
     IEventInboxMessageManager inboxStore,
+    IAppConsoleLogger logger,
     NormalizerOperationAppService normalizerOperationAppService
-) : ApplicationEventHandlerBase<AnalysisContentNormalizeRequestCreatedEto>(inboxStore)
+) : ApplicationEventHandlerBase<AnalysisContentNormalizeRequestCreatedEto>(inboxStore, logger, normalizerOperationAppService)
 {
-    private readonly IAppConsoleLogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    private readonly NormalizerOperationAppService _normalizerOperationAppService = normalizerOperationAppService ?? throw new ArgumentNullException(nameof(normalizerOperationAppService));
-
     protected override async Task ExecuteAsync(MessageEnvelope<AnalysisContentNormalizeRequestCreatedEto> @event, CancellationToken cancellationToken)
-    {
-        _logger.LogDebug("EVENT HANDLING | [ {EventName} ] => CorrelationId[{CorrelationId}]",
-            nameof(AnalysisContentNormalizeRequestCreatedEto)[..^"Eto".Length],
-            @event.CorrelationId ?? string.Empty);
-
-        await _normalizerOperationAppService.StartAnalysisContentNormalizeAsync(@event.Message);
-    }
+        => await normalizerOperationAppService.StartAnalysisContentNormalizeAsync(@event.Message, cancellationToken);
 }

@@ -10,17 +10,8 @@ public class StepFailedEtoHandler(
     IEventInboxMessageManager inboxStore,
     IAppConsoleLogger logger,
     ContentOperationService contentOperationService
-) : ApplicationEventHandlerBase<StepFailedEto>(inboxStore)
+) : ApplicationEventHandlerBase<StepFailedEto>(inboxStore, logger, contentOperationService)
 {
-    private readonly IAppConsoleLogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    private readonly ContentOperationService _contentOperationService = contentOperationService ?? throw new ArgumentNullException(nameof(contentOperationService));
-
     protected override async Task ExecuteAsync(MessageEnvelope<StepFailedEto> @event, CancellationToken cancellationToken)
-    {
-        _logger.LogDebug("EVENT HANDLING | [ {EventName} ] => CorrelationId[{CorrelationId}]",
-            nameof(StepFailedEto)[..^"Eto".Length],
-            @event.MessageId);
-
-        await _contentOperationService.HandleStepFailedAsync(@event.Message, cancellationToken);
-    }
+        => await contentOperationService.HandleStepFailedAsync(@event.Message, cancellationToken);
 }

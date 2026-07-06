@@ -14,17 +14,10 @@ namespace Hhs.Shared.Hosting.EventHandlers;
 public sealed class CachePermissionGrantsChangedEtoHandler(
     IEventInboxMessageManager inboxStore,
     IAppConsoleLogger logger
-) : ApplicationEventHandlerBase<CachePermissionGrantsChangedEto>(inboxStore)
+) : ApplicationEventHandlerBase<CachePermissionGrantsChangedEto>(inboxStore, logger)
 {
     protected override async Task ExecuteAsync(MessageEnvelope<CachePermissionGrantsChangedEto> @event, CancellationToken cancellationToken)
     {
-        logger.LogDebug("{Producer} Event[ {EventName} ] => CorrelationId[{CorrelationId}], MessageId[{MessageId}], RelatedMessageId[{RelatedMessageId}]",
-            @event.Producer,
-            nameof(CachePermissionGrantsChangedEto)[..^"Eto".Length],
-            @event.CorrelationId ?? string.Empty,
-            @event.MessageId.ToString(),
-            @event.ParentMessageId != null ? @event.ParentMessageId.Value.ToString() : string.Empty);
-
         // Simulate a work time
         await Task.Delay(1000, cancellationToken);
 
