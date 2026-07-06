@@ -34,8 +34,134 @@ public sealed class VideoOperationRetryWorkerService(
         var now = DateTime.UtcNow;
 
         await ResetStaleStartedInboxMessagesAsync(now, cancellationToken);
+        await AdvanceReadyVideoRequestsToProviderStartAsync(cancellationToken);
         await RetryAudioRequestsAsync(now, cancellationToken);
         await RetryVideoRequestsAsync(now, cancellationToken);
+    }
+
+    /// <summary>
+    /// Fan-in gate: a VideoRequest can only start its video-provider request once every sibling
+    /// AudioRequest has reached a terminal state (AudioFileUploadCompleted or Failed). Instead of
+    /// reacting to a single audio's completion event (which can be lost to a redelivery race —
+    /// see the framework-level inbox reclaim fix), this re-derives readiness directly from the
+    /// audios' current DB state on every tick, so it can never get permanently stuck waiting for
+    /// an event that never arrives. The final claim (Started -&gt; VideoProviderRequestStarting) is
+    /// atomic, so a duplicate tick (or a second worker instance) racing the same VideoRequest is
+    /// always a safe no-op.
+    /// </summary>
+    private async Task AdvanceReadyVideoRequestsToProviderStartAsync(CancellationToken cancellationToken)
+    {
+        var options = new ListQueryOptions<VideoRequest>
+        {
+            Filter = x => x.Status == VideoStatusNames.Started,
+            MaxResultCount = retrySettings.BatchSize
+        };
+        var candidates = await videoRequestRepository.GetListAsync(options, cancellationToken);
+
+        foreach (var videoRequest in candidates)
+        {
+            try
+            {
+                var audioOptions = new ListQueryOptions<AudioRequest> { Filter = x => x.VideoRequestId == videoRequest.Id };
+                var allAudios = await audioRequestRepository.GetListAsync(audioOptions, cancellationToken);
+
+                if (allAudios.Count == 0)
+                    continue; // audios not created yet — still inside StartVideoOperationAsync
+
+                if (allAudios.Any(x => x.Status == AudioStatusNames.Failed))
+                {
+                    var failPredicate = (Expression<Func<VideoRequest, bool>>)(x =>
+                        x.Id == videoRequest.Id && x.Status == VideoStatusNames.Started);
+                    var failUpdate = Builders<VideoRequest>.Update
+                        .Set(x => x.Status, VideoStatusNames.Failed)
+                        .Set(x => x.CurrentStep, EventNames.AudioFileUploadCompleted)
+                        .Set(x => x.LastError, "One or more audio requests failed.")
+                        .Set(x => x.NextRetryAtUtc, (DateTime?)null);
+
+                    var failClaimed = await videoRequestRepository.UpdateByExpressionAsync(failPredicate, u => failUpdate, cancellationToken: cancellationToken);
+                    if (failClaimed == 0) continue;
+
+                    _logger.FrameworkErrorLog(LogHelper.Generate(
+                        message: EventNames.AudioFileUploadCompleted,
+                        reference: new { VideoRequestId = videoRequest.Id, videoRequest.RefContentId },
+                        facility: EventNames.AudioFileUploadCompleted,
+                        correlationId: videoRequest.CorrelationId,
+                        exception: null
+                    ));
+
+                    await EventBus.PublishAsync(
+                        parentMessage: ParentIntegrationEvent,
+                        correlationId: videoRequest.CorrelationId,
+                        eventMessage: new StepFailedEto
+                        {
+                            RefContentId = videoRequest.RefContentId,
+                            RefContentType = videoRequest.RefContentType,
+                            Step = EventNames.AudioFileUploadCompleted,
+                            ErrorMessage = "One or more audio requests failed.",
+                            Retryable = false
+                        }
+                    );
+
+                    continue;
+                }
+
+                if (allAudios.Any(x => x.Status != AudioStatusNames.AudioFileUploadCompleted))
+                    continue; // still waiting on at least one sibling
+
+                var providerKeyResult = await customerVpSettingRepository.GetVideoProviderKeyByScopeKeyAsync(videoRequest.ScopeKey, cancellationToken);
+                if (!providerKeyResult.Key)
+                {
+                    logger.LogError("ADVANCE_VIDEO_PROVIDER_START_FAILED: unknown provider key. ScopeKey={ScopeKey}, VideoRequestId={VideoRequestId}", videoRequest.ScopeKey, videoRequest.Id);
+                    continue;
+                }
+
+                var videoProvider = videoProviderResolver.Resolve(providerKeyResult.Value);
+                var orderedAudios = allAudios.OrderBy(x => x.SortOrder).ToList();
+
+                if (videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioUrlListRequired &&
+                    orderedAudios.Any(x => string.IsNullOrWhiteSpace(x.AudioCdnUrl)))
+                {
+                    logger.LogError("ADVANCE_VIDEO_PROVIDER_START_FAILED: AudioCdnUrl missing. VideoRequestId={VideoRequestId}", videoRequest.Id);
+                    continue;
+                }
+
+                var lockPredicate = (Expression<Func<VideoRequest, bool>>)(x =>
+                    x.Id == videoRequest.Id && x.Status == VideoStatusNames.Started);
+
+                var lockUpdate = Builders<VideoRequest>.Update
+                    .Set(x => x.Status, VideoStatusNames.VideoProviderRequestStarting)
+                    .Set(x => x.CurrentStep, EventNames.VideoProviderRequestStarted)
+                    .Set(x => x.LastError, null);
+
+                var lockResult = await videoRequestRepository.UpdateByExpressionAsync(lockPredicate, u => lockUpdate, cancellationToken: cancellationToken);
+                if (lockResult == 0) continue; // another tick/instance already claimed this VideoRequest
+
+                _logger.FrameworkInfoLog(LogHelper.Generate(
+                    message: EventNames.VideoProviderRequestStarted,
+                    reference: new { videoRequest.ScopeKey, videoRequest.RefContentId, VideoRequestId = videoRequest.Id, AudioCount = orderedAudios.Count },
+                    facility: EventNames.VideoProviderRequestStarted,
+                    correlationId: videoRequest.CorrelationId,
+                    exception: null
+                ));
+
+                await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+                    correlationId: videoRequest.CorrelationId,
+                    eventMessage: new VideoProviderRequestStartedEto
+                    {
+                        RefContentId = videoRequest.RefContentId,
+                        RefContentType = videoRequest.RefContentType,
+                        VideoRequestId = videoRequest.Id,
+                        AudioUrls = videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioUrlListRequired
+                            ? orderedAudios.Select(x => x.AudioStorageUrl!).ToList()
+                            : []
+                    }
+                );
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "ADVANCE_VIDEO_PROVIDER_START_FAILED: VideoRequestId={VideoRequestId}", videoRequest.Id);
+            }
+        }
     }
 
     /// <summary>
@@ -76,6 +202,11 @@ public sealed class VideoOperationRetryWorkerService(
 
         foreach (var request in requests)
         {
+            var claimPredicate = (Expression<Func<AudioRequest, bool>>)(x => x.Id == request.Id && x.Status == AudioStatusNames.WaitingRetry);
+            var claimUpdate = Builders<AudioRequest>.Update.Set(x => x.Status, AudioStatusNames.RetryEventPublished);
+            var claimed = await audioRequestRepository.UpdateByExpressionAsync(claimPredicate, u => claimUpdate, cancellationToken: cancellationToken);
+            if (claimed == 0) continue; // another tick/instance already claimed this AudioRequest
+
             try
             {
                 bool pollingRetry = false;
@@ -220,6 +351,11 @@ public sealed class VideoOperationRetryWorkerService(
 
         foreach (var request in requests)
         {
+            var claimPredicate = (Expression<Func<VideoRequest, bool>>)(x => x.Id == request.Id && x.Status == VideoStatusNames.WaitingRetry);
+            var claimUpdate = Builders<VideoRequest>.Update.Set(x => x.Status, VideoStatusNames.RetryEventPublished);
+            var claimed = await videoRequestRepository.UpdateByExpressionAsync(claimPredicate, u => claimUpdate, cancellationToken: cancellationToken);
+            if (claimed == 0) continue; // another tick/instance already claimed this VideoRequest
+
             try
             {
                 bool pollingRetry = false;

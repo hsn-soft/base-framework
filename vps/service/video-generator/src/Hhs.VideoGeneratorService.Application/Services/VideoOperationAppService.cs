@@ -112,7 +112,8 @@ public sealed class VideoOperationAppService(
         videoRequest.Status = VideoStatusNames.Started;
         videoRequest.CurrentStep = EventNames.VideoOperationStarted;
 
-        await ReplaceVideoAsync(videoRequest, cancellationToken);
+        var claimed = await ReplaceVideoAsync(videoRequest, cancellationToken, validPriorStatuses: [VideoStatusNames.Created]);
+        if (claimed == 0) return;
 
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: EventNames.VideoOperationStarted,
@@ -253,7 +254,9 @@ public sealed class VideoOperationAppService(
             audioRequest.Status = AudioStatusNames.AudioProviderRequestStarted;
             audioRequest.CurrentStep = EventNames.AudioProviderRequestStarted;
 
-            await ReplaceAudioAsync(audioRequest, cancellationToken);
+            var claimed = await ReplaceAudioAsync(audioRequest, cancellationToken,
+                validPriorStatuses: [AudioStatusNames.AudioRequestCreated, AudioStatusNames.WaitingRetry]);
+            if (claimed == 0) return;
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
                 message: EventNames.AudioProviderRequestStarted,
@@ -382,7 +385,9 @@ public sealed class VideoOperationAppService(
             audioRequest.Status = AudioStatusNames.AudioFileDownloading;
             audioRequest.CurrentStep = EventNames.AudioFileDownloadStarted;
 
-            await ReplaceAudioAsync(audioRequest, cancellationToken);
+            var claimed = await ReplaceAudioAsync(audioRequest, cancellationToken,
+                validPriorStatuses: [AudioStatusNames.AudioProviderCompleted, AudioStatusNames.WaitingRetry]);
+            if (claimed == 0) return;
 
             if (string.IsNullOrWhiteSpace(audioRequest.AudioProviderUrl))
                 throw new InvalidOperationException("Audio provider url is required.");
@@ -439,7 +444,9 @@ public sealed class VideoOperationAppService(
             audioRequest.Status = AudioStatusNames.AudioFileUploading;
             audioRequest.CurrentStep = EventNames.AudioFileUploadStarted;
 
-            await ReplaceAudioAsync(audioRequest, cancellationToken);
+            var claimed = await ReplaceAudioAsync(audioRequest, cancellationToken,
+                validPriorStatuses: [AudioStatusNames.AudioFileDownloadCompleted, AudioStatusNames.WaitingRetry]);
+            if (claimed == 0) return;
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
                 message: EventNames.AudioFileUploadStarted,
@@ -506,96 +513,15 @@ public sealed class VideoOperationAppService(
         }
     }
 
-    public async Task HandleAudioUploadCompletedAsync(AudioFileUploadCompletedEto @event, CancellationToken cancellationToken = default)
+    public Task HandleAudioUploadCompletedAsync(AudioFileUploadCompletedEto @event, CancellationToken cancellationToken = default)
     {
-        var videoRequest = await GetVideoAsync(@event.VideoRequestId, cancellationToken);
-
-        try
-        {
-            var providerKeyResult = await customerVpSettingRepository.GetVideoProviderKeyByScopeKeyAsync(videoRequest.ScopeKey, cancellationToken);
-            if (!providerKeyResult.Key)
-            {
-                throw new InvalidOperationException($"Provider key value is unknown. Scope key: {videoRequest.ScopeKey}");
-            }
-
-            var videoProvider = videoProviderResolver.Resolve(providerKeyResult.Value);
-
-            var audioOptions = new ListQueryOptions<AudioRequest> { Filter = x => x.VideoRequestId == @event.VideoRequestId };
-            var allAudios = await audioRequestRepository.GetListAsync(audioOptions, cancellationToken);
-
-            if (allAudios.Any(x => x.Status == AudioStatusNames.Failed))
-            {
-                await FailVideoRequestDueToAudioFailureAsync(videoRequest, cancellationToken);
-                return;
-            }
-
-            if (allAudios.Any(x => x.Status != AudioStatusNames.AudioFileUploadCompleted))
-                return;
-
-            var orderedAudios = allAudios.OrderBy(x => x.SortOrder).ToList();
-
-            if (videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioUrlListRequired &&
-                orderedAudios.Any(x => string.IsNullOrWhiteSpace(x.AudioCdnUrl)))
-            {
-                throw new InvalidOperationException("AudioCdnUrl is required for video provider.");
-            }
-
-            var lockPredicate = (Expression<Func<VideoRequest, bool>>)(x =>
-                x.Id == @event.VideoRequestId &&
-                x.Status != VideoStatusNames.VideoProviderRequestStarting &&
-                x.Status != VideoStatusNames.VideoProviderRequestStarted &&
-                x.Status != VideoStatusNames.VideoProviderPolling &&
-                x.Status != VideoStatusNames.VideoProviderCompleted &&
-                x.Status != VideoStatusNames.VideoFileDownloading &&
-                x.Status != VideoStatusNames.VideoFileUploading &&
-                x.Status != VideoStatusNames.Completed &&
-                x.Status != VideoStatusNames.Failed);
-
-            var lockUpdate = Builders<VideoRequest>.Update
-                .Set(x => x.Status, VideoStatusNames.VideoProviderRequestStarting)
-                .Set(x => x.CurrentStep, EventNames.VideoProviderRequestStarted)
-                .Set(x => x.LastError, null);
-
-            var lockResult = await videoRequestRepository.UpdateByExpressionAsync(
-                lockPredicate,
-                u => lockUpdate,
-                cancellationToken: cancellationToken);
-
-            if (lockResult == 0)
-                return;
-
-            videoRequest.Status = VideoStatusNames.VideoProviderRequestStarting;
-
-            _logger.FrameworkInfoLog(LogHelper.Generate(
-                message: EventNames.VideoProviderRequestStarted,
-                reference: new { videoRequest.ScopeKey, videoRequest.RefContentId, VideoRequestId = videoRequest.Id, AudioCount = orderedAudios.Count },
-                facility: EventNames.VideoProviderRequestStarted,
-                correlationId: videoRequest.CorrelationId,
-                exception: null
-            ));
-
-            await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
-                correlationId: videoRequest.CorrelationId,
-                eventMessage: new VideoProviderRequestStartedEto
-                {
-                    RefContentId = videoRequest.RefContentId,
-                    RefContentType = videoRequest.RefContentType,
-                    VideoRequestId = videoRequest.Id,
-                    AudioUrls = videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioUrlListRequired
-                        ? orderedAudios.Select(x => x.AudioStorageUrl!).ToList()
-                        : []
-                }
-            );
-        }
-        catch (Exception ex)
-        {
-            await HandleVideoExceptionAsync(
-                videoRequest,
-                EventNames.VideoProviderRequestStarted,
-                ex,
-                cancellationToken
-            );
-        }
+        // Fan-in advancement (checking whether every sibling AudioRequest has reached a terminal
+        // state, and if so atomically claiming and advancing the parent VideoRequest to
+        // VideoProviderRequestStarting) is now owned exclusively by
+        // VideoOperationRetryWorkerService.AdvanceReadyVideoRequestsToProviderStartAsync, which
+        // re-derives readiness directly from current DB state every tick instead of reacting to
+        // this single event — immune to this exact event being lost to a redelivery race.
+        return Task.CompletedTask;
     }
 
     public async Task StartVideoProviderRequestAsync(VideoProviderRequestStartedEto @event, CancellationToken cancellationToken = default)
@@ -616,7 +542,9 @@ public sealed class VideoOperationAppService(
             videoRequest.Status = VideoStatusNames.VideoProviderRequestStarted;
             videoRequest.CurrentStep = EventNames.VideoProviderRequestStarted;
 
-            await ReplaceVideoAsync(videoRequest, cancellationToken);
+            var claimed = await ReplaceVideoAsync(videoRequest, cancellationToken,
+                validPriorStatuses: [VideoStatusNames.VideoProviderRequestStarting, VideoStatusNames.WaitingRetry]);
+            if (claimed == 0) return;
 
             var response = await provider.CreateAsync(new VideoCreateRequest { VideoInputJson = videoRequest.MediaInputJson, AudioUrls = @event.AudioUrls });
 
@@ -737,7 +665,9 @@ public sealed class VideoOperationAppService(
             videoRequest.Status = VideoStatusNames.VideoFileDownloading;
             videoRequest.CurrentStep = EventNames.VideoFileDownloadStarted;
 
-            await ReplaceVideoAsync(videoRequest, cancellationToken);
+            var claimed = await ReplaceVideoAsync(videoRequest, cancellationToken,
+                validPriorStatuses: [VideoStatusNames.VideoProviderCompleted, VideoStatusNames.WaitingRetry]);
+            if (claimed == 0) return;
 
             (bool success, string videoLocalPath) = await remoteFileDownloader.DownloadAsync(videoRequest.VideoProviderKey, videoRequest.VideoProviderUrl);
             if (!success) throw new InvalidOperationException($"Failed to download video file: {videoLocalPath}");
@@ -793,7 +723,9 @@ public sealed class VideoOperationAppService(
             videoRequest.Status = VideoStatusNames.VideoFileUploading;
             videoRequest.CurrentStep = EventNames.VideoFileUploadStarted;
 
-            await ReplaceVideoAsync(videoRequest, cancellationToken);
+            var claimed = await ReplaceVideoAsync(videoRequest, cancellationToken,
+                validPriorStatuses: [VideoStatusNames.VideoFileDownloaded, VideoStatusNames.WaitingRetry]);
+            if (claimed == 0) return;
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
                 message: EventNames.VideoFileUploadStarted,
@@ -858,7 +790,9 @@ public sealed class VideoOperationAppService(
             videoRequest.Status = VideoStatusNames.Completed;
             videoRequest.CurrentStep = EventNames.VideoGenerationResultPublished;
 
-            await ReplaceVideoAsync(videoRequest, cancellationToken);
+            var claimed = await ReplaceVideoAsync(videoRequest, cancellationToken,
+                validPriorStatuses: [VideoStatusNames.VideoFileUploadCompleted, VideoStatusNames.WaitingRetry]);
+            if (claimed == 0) return;
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
                 message: EventNames.VideoGenerationResultPublished,
@@ -921,9 +855,11 @@ public sealed class VideoOperationAppService(
         return audio;
     }
 
-    private Task ReplaceVideoAsync(VideoRequest request, CancellationToken cancellationToken = default)
+    private Task<long> ReplaceVideoAsync(VideoRequest request, CancellationToken cancellationToken = default, IReadOnlyCollection<string> validPriorStatuses = null)
     {
-        var predicate = (Expression<Func<VideoRequest, bool>>)(x => x.Id == request.Id);
+        Expression<Func<VideoRequest, bool>> predicate = validPriorStatuses is null
+            ? x => x.Id == request.Id
+            : x => x.Id == request.Id && validPriorStatuses.Contains(x.Status);
         var update = Builders<VideoRequest>.Update
             .Set(x => x.Status, request.Status)
             .Set(x => x.CurrentStep, request.CurrentStep)
@@ -945,9 +881,11 @@ public sealed class VideoOperationAppService(
         return videoRequestRepository.UpdateByExpressionAsync(predicate, u => update, cancellationToken: cancellationToken);
     }
 
-    private Task ReplaceAudioAsync(AudioRequest request, CancellationToken cancellationToken = default)
+    private Task<long> ReplaceAudioAsync(AudioRequest request, CancellationToken cancellationToken = default, IReadOnlyCollection<string> validPriorStatuses = null)
     {
-        var predicate = (Expression<Func<AudioRequest, bool>>)(x => x.Id == request.Id);
+        Expression<Func<AudioRequest, bool>> predicate = validPriorStatuses is null
+            ? x => x.Id == request.Id
+            : x => x.Id == request.Id && validPriorStatuses.Contains(x.Status);
         var update = Builders<AudioRequest>.Update
             .Set(x => x.Status, request.Status)
             .Set(x => x.CurrentStep, request.CurrentStep)

@@ -28,23 +28,14 @@ public sealed class ApplicationEventInboxMessageManager(IEventInboxMessageReposi
             if (existing.Status == InboxStatuses.Completed)
                 return false;
 
-            if (existing.Status == InboxStatuses.Failed)
-            {
-                if (existing.RetryCount >= settings.MaxRetryCount)
-                    return false;
-
-                existing.Status = InboxStatuses.Started;
-                existing.RetryCount += 1;
-                existing.ErrorMessage = null;
-                await repository.UpdateAsync(existing, cancellationToken);
-
-                return true;
-            }
-
-            if (existing.Status == InboxStatuses.Started)
-                return false;
-
-            return false;
+            // Existing row is 'Failed' (eligible for business retry) or 'Started' (this call is
+            // happening because the broker redelivered an unacked message — the original attempt
+            // is presumed abandoned once its processing lease has expired). Atomic single round
+            // trip: at most one concurrent caller can ever win this claim, so it's safe even if the
+            // original handler's Task is still alive (channel drop ≠ guaranteed process death).
+            var staleStartedBeforeUtc = DateTime.UtcNow.AddSeconds(-settings.InboxProcessingLeaseSeconds);
+            var reclaimed = await repository.TryReclaimAsync(existing.Id, staleStartedBeforeUtc, settings.MaxRetryCount, cancellationToken);
+            return reclaimed > 0;
         }
 
         try
