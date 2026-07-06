@@ -1,6 +1,6 @@
-using Hhs.FeedRService.Domain.InfraDomain.Consts;
-using Hhs.FeedRService.Domain.InfraDomain.Entities.PostgreSQL;
+using Hhs.Shared.Helper.EventInbox;
 using Microsoft.EntityFrameworkCore;
+using EventInboxMessageConsts = Hhs.FeedRService.Domain.InfraDomain.Consts.EventInboxMessageConsts;
 
 namespace Hhs.FeedRService.EntityFrameworkCore.Configurations;
 

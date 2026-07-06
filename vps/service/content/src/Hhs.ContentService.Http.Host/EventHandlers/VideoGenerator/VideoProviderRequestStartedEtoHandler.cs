@@ -1,5 +1,5 @@
-using Hhs.ContentService.Application.Infrastructure;
 using Hhs.ContentService.Application.Services;
+using Hhs.Shared.Contracts.EventInbox;
 using Hhs.Shared.Contracts.Events;
 using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.Logging.Abstracts;
@@ -7,7 +7,7 @@ using HsnSoft.Base.Logging.Abstracts;
 namespace Hhs.ContentService.EventHandlers.VideoGenerator;
 
 public class VideoProviderRequestStartedEtoHandler(
-    ApplicationEventInboxMessageManager inboxStore,
+    IEventInboxMessageManager inboxStore,
     IAppConsoleLogger logger,
     ContentOperationService contentOperationService
 ) : ApplicationEventHandlerBase<VideoProviderRequestStartedEto>(inboxStore)

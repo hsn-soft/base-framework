@@ -1,6 +1,6 @@
-using Hhs.IdentityService.Domain.InfraDomain.Consts;
-using Hhs.IdentityService.Domain.InfraDomain.Entities;
+using Hhs.Shared.Helper.EventInbox;
 using Microsoft.EntityFrameworkCore;
+using EventInboxMessageConsts = Hhs.IdentityService.Domain.InfraDomain.Consts.EventInboxMessageConsts;
 
 namespace Hhs.IdentityService.EntityFrameworkCore.Configurations;
 

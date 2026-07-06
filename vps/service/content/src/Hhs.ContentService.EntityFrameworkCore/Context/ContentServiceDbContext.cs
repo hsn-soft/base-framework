@@ -1,7 +1,7 @@
 using Hhs.ContentService.Domain.ContentDomain.Entities;
-using Hhs.ContentService.Domain.InfraDomain.Entities;
 using Hhs.ContentService.Domain.SettingDomain.Entities;
 using Hhs.ContentService.EntityFrameworkCore.Configurations;
+using Hhs.Shared.Helper.EventInbox;
 using HsnSoft.Base;
 using HsnSoft.Base.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;

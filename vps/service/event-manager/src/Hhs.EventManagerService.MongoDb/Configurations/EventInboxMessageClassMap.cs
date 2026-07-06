@@ -1,4 +1,4 @@
-using Hhs.EventManagerService.Domain.InfraDomain.Entities;
+using Hhs.Shared.Helper.EventInbox;
 using MongoDB.Bson.Serialization;
 
 namespace Hhs.EventManagerService.MongoDb.Configurations;

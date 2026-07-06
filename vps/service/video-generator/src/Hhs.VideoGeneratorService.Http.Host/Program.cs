@@ -1,3 +1,4 @@
+using Hhs.Shared.Helper.Configuration;
 using Hhs.Shared.Helper.Consts;
 using Hhs.Shared.Hosting.Extensions;
 using Hhs.Shared.Hosting.Helpers;
@@ -105,6 +106,7 @@ var videoRetrySettings = builder.Configuration.GetSection(nameof(VideoRetrySetti
 
 builder.Services
     .AddSingleton(videoRetrySettings)
+    .AddSingleton<RetrySettingsBase>(videoRetrySettings)
     .AddSingleton(_ => new RetryDelayCalculator(videoRetrySettings.DelaySeconds))
     .AddScoped<VideoOperationRetryWorkerService>()
     .AddHostedService<VideoRetryWorker>();

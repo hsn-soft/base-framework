@@ -1,4 +1,4 @@
-using Hhs.TextNormalizerService.Domain.InfraDomain.Entities;
+using Hhs.Shared.Helper.EventInbox;
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Entities;
 using Hhs.TextNormalizerService.Domain.SettingDomain.Entities;
 using HsnSoft.Base.MongoDB;

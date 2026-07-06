@@ -7,6 +7,7 @@ using Hhs.AdministrationService.Domain.Configuration;
 using Hhs.AdministrationService.EntityFrameworkCore;
 using Hhs.AdministrationService.EntityFrameworkCore.Setup;
 using Hhs.AdministrationService.Workers;
+using Hhs.Shared.Helper.Configuration;
 using Hhs.Shared.Helper.Consts;
 using Hhs.Shared.Helper.Retry;
 using Hhs.Shared.Hosting.Extensions;
@@ -90,6 +91,7 @@ var administrationRetrySettings = builder.Configuration.GetSection(nameof(Admini
 
 builder.Services
     .AddSingleton(administrationRetrySettings)
+    .AddSingleton<RetrySettingsBase>(administrationRetrySettings)
     .AddSingleton(_ => new RetryDelayCalculator(administrationRetrySettings.DelaySeconds))
     .AddScoped<AdministrationOperationRetryWorkerService>()
     .AddHostedService<AdministrationRetryWorker>();

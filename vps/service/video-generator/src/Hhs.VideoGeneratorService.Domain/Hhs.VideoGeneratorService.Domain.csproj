@@ -29,8 +29,4 @@
         <Content Remove="Localization\VideoGeneratorService\*.json"/>
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="MediaDomain\" />
-    </ItemGroup>
-
 </Project>

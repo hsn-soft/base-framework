@@ -1,21 +1,22 @@
 using Hhs.ContentService.Application.Contracts.Events;
+using Hhs.Shared.Contracts.EventInbox;
 using HsnSoft.Base.Caching.StackExchangeRedis;
 using HsnSoft.Base.Domain.Entities.Events;
-using HsnSoft.Base.EventBus;
 using HsnSoft.Base.Logging.Abstracts;
 
 namespace Hhs.ContentService.EventHandlers.Internal;
 
 public class TestQueryCompletedEtoHandler(
+    IEventInboxMessageManager inboxStore,
     IAppConsoleLogger logger,
     IRequestLimitStore limitStore
-) : IIntegrationEventHandler<TestQueryCompletedEto>
+) : ApplicationEventHandlerBase<TestQueryCompletedEto>(inboxStore)
 {
     private readonly IAppConsoleLogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     private readonly IRequestLimitStore _limitStore = limitStore ?? throw new ArgumentNullException(nameof(limitStore));
     private const string EndpointKey = "content:jobs:test-query";
 
-    public async Task HandleAsync(MessageEnvelope<TestQueryCompletedEto> @event)
+    protected override async Task ExecuteAsync(MessageEnvelope<TestQueryCompletedEto> @event, CancellationToken cancellationToken)
     {
         _logger.LogDebug("EVENT HANDLING | [ {EventName} ] => CorrelationId[{CorrelationId}], MessageId[{MessageId}], RelatedMessageId[{RelatedMessageId}]",
             nameof(TestQueryCompletedEto)[..^"Eto".Length],

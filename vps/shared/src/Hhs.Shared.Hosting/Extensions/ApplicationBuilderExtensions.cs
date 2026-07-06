@@ -1,6 +1,9 @@
 using System.Reflection;
+using Hhs.Shared.Contracts.Events;
+using Hhs.Shared.Hosting.EventHandlers;
 using Hhs.Shared.Localization;
 using HsnSoft.Base.AspNetCore.Responses;
+using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.EventBus;
 using HsnSoft.Base.Reflection;
 using HsnSoft.Base.Validation.Localization;
@@ -74,13 +77,11 @@ public static class ApplicationBuilderExtensions
 
         public void UseEventBus(Assembly assembly, Dictionary<string, ushort> eventFetchCounts = null)
         {
+            var eventBus = app.Services.GetRequiredService<IEventBus>();
+
             var refType = typeof(IIntegrationEventHandler);
             var eventHandlerTypes = assembly.GetTypes()
                 .Where(p => refType.IsAssignableFrom(p) && p is { IsInterface: false, IsAbstract: false }).ToList();
-
-            if (eventHandlerTypes is not { Count: > 0 }) return;
-
-            var eventBus = app.Services.GetRequiredService<IEventBus>();
 
             foreach (var eventHandlerType in eventHandlerTypes)
             {
@@ -97,6 +98,14 @@ public static class ApplicationBuilderExtensions
 
                 eventBus.Subscribe(eventType, eventHandlerType, fetchCount < 1 ? (ushort)1 : fetchCount);
             }
+
+            // Every microservice automatically gets generic ReQueuedEto handling and cache-permission-grants
+            // sync handling — no bespoke per-service code needed. Relies on EventBusRabbitMq.Subscribe's
+            // per-event-name idempotency guard: if the assembly scan above already registered a custom
+            // handler for this service, this call becomes a harmless no-op — that's why it must run AFTER
+            // the scan loop.
+            eventBus.Subscribe(typeof(ReQueuedEto), typeof(ReQueuedEtoHandler), fetchCount: 1);
+            eventBus.Subscribe(typeof(CachePermissionGrantsChangedEto), typeof(CachePermissionGrantsChangedEtoHandler), fetchCount: 1);
         }
 
         public void UseHostingHealthChecks()

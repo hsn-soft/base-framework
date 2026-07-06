@@ -19,6 +19,10 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.Ddd.Domain\HsnSoft.Base.Ddd.Domain.csproj" />
+    </ItemGroup>
+    
+    <ItemGroup>
         <ProjectReference Include="..\Hhs.Shared.Localization\Hhs.Shared.Localization.csproj"/>
     </ItemGroup>
 

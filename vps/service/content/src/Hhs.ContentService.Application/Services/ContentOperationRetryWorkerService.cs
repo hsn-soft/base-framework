@@ -1,13 +1,12 @@
 using Hhs.ContentService.Domain.Configuration;
-using Hhs.ContentService.Domain.InfraDomain.Repositories;
-using Hhs.Shared.Helper;
+using Hhs.Shared.Contracts.EventInbox;
 using Microsoft.Extensions.Logging;
 
 namespace Hhs.ContentService.Application.Services;
 
 public sealed class ContentOperationRetryWorkerService(
     IServiceProvider provider,
-    IEventInboxMessageRepository inboxRepository,
+    IEventInboxMessageManager inboxManager,
     ILogger<ContentOperationRetryWorkerService> logger,
     ContentRetrySettings retrySettings) : ApplicationServiceBase(provider)
 {
@@ -39,12 +38,7 @@ public sealed class ContentOperationRetryWorkerService(
     {
         var staleThreshold = DateTime.UtcNow.AddMinutes(-retrySettings.StaleInboxMessageThresholdMinutes);
 
-        var updated = await inboxRepository.UpdateByExpressionAsync(
-            x => x.Status == InboxStatuses.Started && x.CreationTime < staleThreshold,
-            s => s
-                .SetProperty(a => a.Status, InboxStatuses.Failed)
-                .SetProperty(a => a.ErrorMessage, "Reset by retry worker: handler did not complete within the stale threshold."),
-            cancellationToken);
+        var updated = await inboxManager.ResetStaleStartedMessagesAsync(staleThreshold, cancellationToken);
 
         if (updated > 0)
         {

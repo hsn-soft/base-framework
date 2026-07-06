@@ -1,9 +1,9 @@
 using System.Linq.Expressions;
+using Hhs.Shared.Contracts.EventInbox;
 using Hhs.Shared.Contracts.Events;
 using Hhs.Shared.Helper;
 using Hhs.Shared.Helper.Enums;
 using Hhs.TextNormalizerService.Domain.Configuration;
-using Hhs.TextNormalizerService.Domain.InfraDomain.Repositories;
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Entities;
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Models;
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Repositories;
@@ -20,7 +20,7 @@ public sealed class NormalizerOperationRetryWorkerService(
     IServiceProvider provider,
     IAnalysisContentNormalizedRequestRepository analysisRepository,
     ICustomerContentNormalizedRequestRepository customerRepository,
-    IEventInboxMessageRepository inboxRepository,
+    IEventInboxMessageManager inboxManager,
     ILogger<NormalizerOperationRetryWorkerService> logger,
     NormalizerRetrySettings retrySettings) : ApplicationServiceBase(provider)
 {
@@ -38,7 +38,7 @@ public sealed class NormalizerOperationRetryWorkerService(
     private async Task ResetStaleStartedInboxMessagesAsync(DateTime now, CancellationToken cancellationToken)
     {
         var staleThreshold = now.AddMinutes(-retrySettings.StaleInboxMessageThresholdMinutes);
-        var updated = await inboxRepository.ResetStaleStartedMessagesAsync(staleThreshold, cancellationToken);
+        var updated = await inboxManager.ResetStaleStartedMessagesAsync(staleThreshold, cancellationToken);
         if (updated > 0)
         {
             logger.LogWarning(

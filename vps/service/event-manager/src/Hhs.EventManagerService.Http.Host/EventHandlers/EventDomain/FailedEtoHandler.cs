@@ -1,12 +1,12 @@
 using Hhs.EventManagerService.Application.Contracts.EventDomain.Interfaces;
-using Hhs.EventManagerService.Application.Infrastructure;
+using Hhs.Shared.Contracts.EventInbox;
 using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.Logging.Abstracts;
 
 namespace Hhs.EventManagerService.EventHandlers.EventDomain;
 
 public class FailedEtoHandler(
-    ApplicationEventInboxMessageManager inboxStore,
+    IEventInboxMessageManager inboxStore,
     IAppConsoleLogger logger,
     IFailedIntegrationEventAppService failedIntegrationEventAppService
 ) : ApplicationEventHandlerBase<FailedEto>(inboxStore)

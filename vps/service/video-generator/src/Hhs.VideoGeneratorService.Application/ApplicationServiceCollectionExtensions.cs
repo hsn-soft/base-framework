@@ -1,4 +1,5 @@
 using Hhs.Shared.Contracts.Cache;
+using Hhs.Shared.Contracts.EventInbox;
 using Hhs.VideoGeneratorService.Application.Infrastructure;
 using Hhs.VideoGeneratorService.Application.Providers;
 using Hhs.VideoGeneratorService.Application.Providers.Audio;
@@ -27,7 +28,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddSingleton<IServicePermissionProvider, ApplicationPermissionProvider>();
 
         // Must be Scoped or Transient => Cannot consume any scoped service
-        services.AddScoped<ApplicationEventInboxMessageManager>();
+        services.AddScoped<IEventInboxMessageManager, ApplicationEventInboxMessageManager>();
         services.AddScoped<VideoOperationAppService>();
         services.AddScoped<IRemoteFileDownloader, RemoteFileDownloader>();
 

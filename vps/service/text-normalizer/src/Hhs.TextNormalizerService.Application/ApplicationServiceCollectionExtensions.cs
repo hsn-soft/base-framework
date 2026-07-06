@@ -1,4 +1,5 @@
 using Hhs.Shared.Contracts.Cache;
+using Hhs.Shared.Contracts.EventInbox;
 using Hhs.TextNormalizerService.Application.Infrastructure;
 using Hhs.TextNormalizerService.Application.Providers;
 using Hhs.TextNormalizerService.Application.Providers.Outline;
@@ -26,7 +27,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddSingleton<IPuppeteerBrowser, PuppeteerBrowser>();
 
         // Must be Scoped or Transient => Cannot consume any scoped service
-        services.AddScoped<ApplicationEventInboxMessageManager>();
+        services.AddScoped<IEventInboxMessageManager, ApplicationEventInboxMessageManager>();
         services.AddScoped<NormalizerOperationAppService>();
 
         services.AddScoped<IContentScraper, PuppeteerContentScraper>();

@@ -1,4 +1,4 @@
-using Hhs.VideoGeneratorService.Domain.InfraDomain.Entities;
+using Hhs.Shared.Helper.EventInbox;
 using Hhs.VideoGeneratorService.Domain.MediaDomain.Entities;
 using Hhs.VideoGeneratorService.Domain.SettingDomain.Entities;
 using HsnSoft.Base.MongoDB;

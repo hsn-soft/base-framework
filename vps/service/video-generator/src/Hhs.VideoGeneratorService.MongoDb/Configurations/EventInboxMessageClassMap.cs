@@ -1,4 +1,4 @@
-using Hhs.VideoGeneratorService.Domain.InfraDomain.Entities;
+using Hhs.Shared.Helper.EventInbox;
 using MongoDB.Bson.Serialization;
 
 namespace Hhs.VideoGeneratorService.MongoDb.Configurations;

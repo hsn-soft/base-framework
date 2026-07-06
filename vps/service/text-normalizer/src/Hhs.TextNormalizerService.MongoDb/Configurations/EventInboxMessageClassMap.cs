@@ -1,4 +1,4 @@
-using Hhs.TextNormalizerService.Domain.InfraDomain.Entities;
+using Hhs.Shared.Helper.EventInbox;
 using MongoDB.Bson.Serialization;
 
 namespace Hhs.TextNormalizerService.MongoDb.Configurations;

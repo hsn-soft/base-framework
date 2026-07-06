@@ -6,6 +6,7 @@ using Hhs.ContentService.Domain.Localization;
 using Hhs.ContentService.EntityFrameworkCore;
 using Hhs.ContentService.EntityFrameworkCore.Setup;
 using Hhs.ContentService.Workers;
+using Hhs.Shared.Helper.Configuration;
 using Hhs.Shared.Helper.Consts;
 using Hhs.Shared.Helper.Retry;
 using Hhs.Shared.Hosting.Extensions;
@@ -90,6 +91,7 @@ var contentRetrySettings = builder.Configuration.GetSection(nameof(ContentRetryS
 
 builder.Services
     .AddSingleton(contentRetrySettings)
+    .AddSingleton<RetrySettingsBase>(contentRetrySettings)
     .AddSingleton(_ => new RetryDelayCalculator(contentRetrySettings.DelaySeconds))
     .AddScoped<ContentOperationRetryWorkerService>()
     .AddHostedService<ContentRetryWorker>();

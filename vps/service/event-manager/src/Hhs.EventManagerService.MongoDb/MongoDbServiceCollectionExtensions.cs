@@ -1,9 +1,9 @@
 using Hhs.EventManagerService.Domain;
 using Hhs.EventManagerService.Domain.EventDomain.Repositories;
-using Hhs.EventManagerService.Domain.InfraDomain.Repositories;
 using Hhs.EventManagerService.MongoDb.Configurations;
 using Hhs.EventManagerService.MongoDb.Context;
 using Hhs.EventManagerService.MongoDb.Repositories;
+using Hhs.Shared.Helper.EventInbox;
 using HsnSoft.Base.Auditing;
 using HsnSoft.Base.Data;
 using HsnSoft.Base.Domain.Repositories;

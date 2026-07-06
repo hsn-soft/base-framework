@@ -14,7 +14,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Hhs.Shared.Contracts\Hhs.Shared.Contracts.csproj"/>
         <ProjectReference Include="..\Hhs.Shared.Hosting\Hhs.Shared.Hosting.csproj"/>
     </ItemGroup>
 </Project>

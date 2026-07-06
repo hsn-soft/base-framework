@@ -1,8 +1,8 @@
-using Hhs.AdministrationService.Domain.InfraDomain.Repositories;
 using Hhs.AdministrationService.Domain.MenuDomain.Repositories;
 using Hhs.AdministrationService.Domain.PermissionDomain.Repositories;
 using Hhs.AdministrationService.EntityFrameworkCore.Context;
 using Hhs.AdministrationService.EntityFrameworkCore.Repositories;
+using Hhs.Shared.Helper.EventInbox;
 using HsnSoft.Base.Auditing;
 using HsnSoft.Base.Data;
 using HsnSoft.Base.Domain.Repositories;

@@ -8,6 +8,7 @@ using Hhs.FeedRService.Domain.Localization;
 using Hhs.FeedRService.EntityFrameworkCore;
 using Hhs.FeedRService.MongoDb;
 using Hhs.FeedRService.MongoDb.Setup;
+using Hhs.Shared.Helper.Configuration;
 using Hhs.Shared.Helper.Consts;
 using Hhs.Shared.Helper.Retry;
 using Hhs.Shared.Hosting.Extensions;
@@ -99,6 +100,7 @@ var feedRRetrySettings = builder.Configuration.GetSection(nameof(FeedRRetrySetti
 
 builder.Services
     .AddSingleton(feedRRetrySettings)
+    .AddSingleton<RetrySettingsBase>(feedRRetrySettings)
     .AddSingleton(_ => new RetryDelayCalculator(feedRRetrySettings.DelaySeconds))
     .AddScoped<FeedROperationRetryWorkerService>()
     .AddHostedService<FeedRRetryWorker>();

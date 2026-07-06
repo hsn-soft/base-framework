@@ -1,6 +1,6 @@
 using Hhs.FeedRService.Application.Contracts.Events;
 using Hhs.FeedRService.Application.Contracts.JobDomain;
-using Hhs.FeedRService.Application.Infrastructure;
+using Hhs.Shared.Contracts.EventInbox;
 using HsnSoft.Base.Caching.StackExchangeRedis;
 using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.Logging.Abstracts;
@@ -8,7 +8,7 @@ using HsnSoft.Base.Logging.Abstracts;
 namespace Hhs.FeedRService.AdManager.EventHandlers.Internal;
 
 public class TestQueryCompletedEtoHandler(
-    ApplicationEventInboxMessageManager inboxStore,
+    IEventInboxMessageManager inboxStore,
     IAppConsoleLogger logger,
     IRequestLimitStore limitStore,
     IGoogleReportService reportService

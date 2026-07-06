@@ -1,6 +1,6 @@
-using Hhs.FeedRService.Domain.InfraDomain.Entities.PostgreSQL;
 using Hhs.FeedRService.Domain.ReportingDomain.Entities.PostgreSQL;
 using Hhs.FeedRService.EntityFrameworkCore.Configurations;
+using Hhs.Shared.Helper.EventInbox;
 using HsnSoft.Base.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 

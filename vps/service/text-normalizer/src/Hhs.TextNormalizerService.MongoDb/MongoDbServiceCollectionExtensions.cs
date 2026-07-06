@@ -1,10 +1,10 @@
 using Hhs.TextNormalizerService.Domain;
-using Hhs.TextNormalizerService.Domain.InfraDomain.Repositories;
 using Hhs.TextNormalizerService.Domain.NormalizeDomain.Repositories;
 using Hhs.TextNormalizerService.Domain.SettingDomain.Repositories;
 using Hhs.TextNormalizerService.MongoDb.Configurations;
 using Hhs.TextNormalizerService.MongoDb.Context;
 using Hhs.TextNormalizerService.MongoDb.Repositories;
+using Hhs.Shared.Helper.EventInbox;
 using HsnSoft.Base.Auditing;
 using HsnSoft.Base.Data;
 using HsnSoft.Base.Domain.Repositories;

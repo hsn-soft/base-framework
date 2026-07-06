@@ -1,5 +1,5 @@
-using Hhs.AdministrationService.Domain.InfraDomain.Consts;
-using Hhs.AdministrationService.Domain.InfraDomain.Entities;
+using Hhs.Shared.Helper.Consts;
+using Hhs.Shared.Helper.EventInbox;
 using Microsoft.EntityFrameworkCore;
 
 namespace Hhs.AdministrationService.EntityFrameworkCore.Configurations;

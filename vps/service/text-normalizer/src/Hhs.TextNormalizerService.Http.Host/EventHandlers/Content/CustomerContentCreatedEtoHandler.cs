@@ -1,5 +1,5 @@
+using Hhs.Shared.Contracts.EventInbox;
 using Hhs.Shared.Contracts.Events;
-using Hhs.TextNormalizerService.Application.Infrastructure;
 using Hhs.TextNormalizerService.Application.Services;
 using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.Logging.Abstracts;
@@ -8,7 +8,7 @@ namespace Hhs.TextNormalizerService.EventHandlers.Content;
 
 public class CustomerContentCreatedEtoHandler(
     IAppConsoleLogger logger,
-    ApplicationEventInboxMessageManager inboxStore,
+    IEventInboxMessageManager inboxStore,
     NormalizerOperationAppService normalizerOperationAppService
 ) : ApplicationEventHandlerBase<CustomerContentCreatedEto>(inboxStore)
 {

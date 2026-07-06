@@ -6,6 +6,7 @@ using Hhs.EventManagerService.Domain.Localization;
 using Hhs.EventManagerService.MongoDb;
 using Hhs.EventManagerService.MongoDb.Setup;
 using Hhs.EventManagerService.Workers;
+using Hhs.Shared.Helper.Configuration;
 using Hhs.Shared.Helper.Consts;
 using Hhs.Shared.Hosting.Extensions;
 using Hhs.Shared.Hosting.Helpers;
@@ -88,6 +89,7 @@ var eventManagerRetrySettings = builder.Configuration.GetSection("RetryPolicy")
 
 builder.Services
     .AddSingleton(eventManagerRetrySettings)
+    .AddSingleton<RetrySettingsBase>(eventManagerRetrySettings)
     .AddScoped<EventOperationRetryWorkerService>()
     .AddHostedService<EventManagerRetryWorker>();
 

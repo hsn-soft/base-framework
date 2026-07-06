@@ -1,5 +1,4 @@
-using Hhs.ContentService.Domain.InfraDomain.Consts;
-using Hhs.ContentService.Domain.InfraDomain.Entities;
+using Hhs.Shared.Helper.EventInbox;
 using Microsoft.EntityFrameworkCore;
 
 namespace Hhs.ContentService.EntityFrameworkCore.Configurations;

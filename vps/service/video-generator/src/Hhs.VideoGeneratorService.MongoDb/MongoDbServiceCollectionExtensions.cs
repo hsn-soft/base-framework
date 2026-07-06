@@ -1,10 +1,10 @@
 using Hhs.VideoGeneratorService.Domain;
-using Hhs.VideoGeneratorService.Domain.InfraDomain.Repositories;
 using Hhs.VideoGeneratorService.Domain.MediaDomain.Repositories;
 using Hhs.VideoGeneratorService.Domain.SettingDomain.Repositories;
 using Hhs.VideoGeneratorService.MongoDb.Configurations;
 using Hhs.VideoGeneratorService.MongoDb.Context;
 using Hhs.VideoGeneratorService.MongoDb.Repositories;
+using Hhs.Shared.Helper.EventInbox;
 using HsnSoft.Base.Auditing;
 using HsnSoft.Base.Data;
 using HsnSoft.Base.Domain.Repositories;

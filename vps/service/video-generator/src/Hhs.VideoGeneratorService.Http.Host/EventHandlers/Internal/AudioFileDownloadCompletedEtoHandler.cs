@@ -1,5 +1,5 @@
+using Hhs.Shared.Contracts.EventInbox;
 using Hhs.Shared.Contracts.Events;
-using Hhs.VideoGeneratorService.Application.Infrastructure;
 using Hhs.VideoGeneratorService.Application.Services;
 using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.EventBus;
@@ -8,7 +8,7 @@ using HsnSoft.Base.Logging.Abstracts;
 namespace Hhs.VideoGeneratorService.EventHandlers.Internal;
 
 public class AudioFileDownloadCompletedEtoHandler(
-    ApplicationEventInboxMessageManager inboxStore,
+    IEventInboxMessageManager inboxStore,
     IAppConsoleLogger logger,
     VideoOperationAppService videoOperationAppService
 ) : ApplicationEventHandlerBase<AudioFileDownloadCompletedEto>(inboxStore)

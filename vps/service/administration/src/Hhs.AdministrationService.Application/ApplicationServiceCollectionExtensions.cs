@@ -3,6 +3,7 @@ using Hhs.AdministrationService.Application.Contracts.PermissionDomain.Services;
 using Hhs.AdministrationService.Application.Infrastructure;
 using Hhs.AdministrationService.Application.Services;
 using Hhs.Shared.Contracts.Cache;
+using Hhs.Shared.Contracts.EventInbox;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -17,7 +18,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddSingleton<IServicePermissionProvider, ApplicationPermissionProvider>();
 
         // Must be Scoped or Transient => Cannot consume any scoped service
-        services.AddScoped<ApplicationEventInboxMessageManager>();
+        services.AddScoped<IEventInboxMessageManager, ApplicationEventInboxMessageManager>();
         services.AddScoped<IJobAppService, JobAppService>();
         services.AddScoped<IPermissionStoreOperationAppService, PermissionStoreOperationAppService>();
         services.AddScoped<ISessionPermissionAppService, SessionPermissionAppService>();

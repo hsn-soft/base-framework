@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 using System.Security.Cryptography;
+using Hhs.Shared.Hosting.EventHandlers;
 using Hhs.Shared.Hosting.Exceptions;
 using HsnSoft.Base;
 using HsnSoft.Base.AspNetCore;
@@ -288,6 +289,14 @@ public static class ServiceCollectionExtensions
 
             services.AddSingleton<IRabbitMqPersistentConnection, RabbitMqPersistentConnection>();
             services.AddSingleton<IEventBusSubscriptionManager, InMemoryEventBusSubscriptionManager>();
+
+            // Shared dispatch/failure-notification services used by RabbitMqConsumer and the generic
+            // ReQueuedEtoHandler alike — registered explicitly here (not via assembly scan) since they
+            // live in the framework package, not in any individual microservice's own assembly.
+            services.AddSingleton<IEventDispatcher, EventDispatcher>();
+            services.AddSingleton<IFailedEventNotifier, FailedEventNotifier>();
+            services.AddTransient<ReQueuedEtoHandler>();
+            services.AddTransient<CachePermissionGrantsChangedEtoHandler>();
 
             // Singleton EventBusRabbitMq (uses scopes internally for scoped services)
             services.AddSingleton<IEventBus, EventBusRabbitMq>(sp => new EventBusRabbitMq(sp));

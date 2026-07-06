@@ -194,6 +194,8 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
             _subsManager,
             _rabbitMqEventBusConfig,
             _logger,
+            _serviceProvider.GetRequiredService<IEventDispatcher>(),
+            _serviceProvider.GetRequiredService<IFailedEventNotifier>(),
             eventName);
 
         consumer.StartBasicConsume().GetAwaiter().GetResult();

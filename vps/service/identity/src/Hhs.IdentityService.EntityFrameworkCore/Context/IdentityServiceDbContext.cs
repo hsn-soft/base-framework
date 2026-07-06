@@ -1,9 +1,9 @@
 using Hhs.IdentityService.Domain.AppRoleDomain.Entities;
 using Hhs.IdentityService.Domain.AppUserDomain.Entities;
 using Hhs.IdentityService.Domain.AuthDomain.Entities;
-using Hhs.IdentityService.Domain.InfraDomain.Entities;
 using Hhs.IdentityService.Domain.TenantDomain.Entities;
 using Hhs.IdentityService.EntityFrameworkCore.Configurations;
+using Hhs.Shared.Helper.EventInbox;
 using HsnSoft.Base;
 using HsnSoft.Base.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;

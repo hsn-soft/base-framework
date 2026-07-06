@@ -1,5 +1,5 @@
+using Hhs.Shared.Contracts.EventInbox;
 using Hhs.Shared.Contracts.Events;
-using Hhs.TextNormalizerService.Application.Infrastructure;
 using Hhs.TextNormalizerService.Application.Services;
 using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.Logging.Abstracts;
@@ -7,7 +7,7 @@ using HsnSoft.Base.Logging.Abstracts;
 namespace Hhs.TextNormalizerService.EventHandlers.Content;
 
 public class VideoGenerationApprovedEtoHandler(
-    ApplicationEventInboxMessageManager inboxStore,
+    IEventInboxMessageManager inboxStore,
     IAppConsoleLogger logger,
     NormalizerOperationAppService normalizerOperationAppService
 ) : ApplicationEventHandlerBase<VideoGenerationApprovedEto>(inboxStore)

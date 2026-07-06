@@ -148,7 +148,7 @@ public sealed class FailedIntegrationEventAppService : ApplicationServiceBase, I
 
         var failedIntegrationEventItem = await _failedIntegrationEventRepository.GetSingleOrDefaultAsync(x =>
             x.Id == failedIntegrationEventId
-            && x.OperationStatus == FailedIntegrationEventStates.CreatedWaitForHandling
+            && (x.OperationStatus == FailedIntegrationEventStates.CreatedWaitForHandling || x.OperationStatus == FailedIntegrationEventStates.OperationFail)
         );
 
         if (failedIntegrationEventItem == null)
