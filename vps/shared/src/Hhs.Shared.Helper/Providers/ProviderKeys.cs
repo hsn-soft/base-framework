@@ -12,15 +12,11 @@ public static class ProviderKeys
     public const string AudioHQ = "audio-hq";
 
     // Video Providers
-    public const string VideoFastExternal = "video-fast-external";
-    public const string VideoFastInternal = "video-fast-internal";
     public const string VideoQueueExternal = "video-queue-external";
     public const string VideoQueueInternal = "video-queue-internal";
 
     // CDN Providers (Storage)
     public const string CdnLocalMinio = "cdn-local-minio";
-    public const string CdnAbc = "cdn-abc";
     public const string CdnBunnySelf = "cdn-bunny-self";
     public const string CdnBunnyS3 = "cdn-bunny-s3";
-    public const string CdnAbcCloudFront = "cdn-abc-cloudfront";
 }
