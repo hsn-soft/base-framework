@@ -52,7 +52,8 @@ public sealed class ApplicationEventInboxMessageManager(IEventInboxMessageReposi
             var newMessage = new EventInboxMessage(
                 @event.MessageId,
                 typeof(TEvent).Name,
-                JsonSerializer.Serialize(@event.Message, @event.Message.GetType()));
+                JsonSerializer.Serialize(@event.Message, @event.Message.GetType()),
+                @event.CorrelationId);
 
             await repository.InsertAsync(newMessage, cancellationToken);
             return true;

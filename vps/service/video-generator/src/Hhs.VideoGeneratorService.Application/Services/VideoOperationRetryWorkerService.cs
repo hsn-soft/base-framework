@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using Hhs.Shared.Contracts.EventInbox;
 using Hhs.Shared.Contracts.Events;
 using Hhs.Shared.Helper;
 using Hhs.Shared.Helper.Providers;
@@ -19,6 +20,7 @@ namespace Hhs.VideoGeneratorService.Application.Services;
 public sealed class VideoOperationRetryWorkerService(
     IServiceProvider provider,
     ILogger<VideoOperationRetryWorkerService> logger,
+    IEventInboxMessageManager inboxManager,
     IVideoRequestRepository videoRequestRepository,
     IAudioRequestRepository audioRequestRepository,
     ICustomerVpSettingRepository customerVpSettingRepository,
@@ -31,8 +33,30 @@ public sealed class VideoOperationRetryWorkerService(
     {
         var now = DateTime.UtcNow;
 
+        await ResetStaleStartedInboxMessagesAsync(now, cancellationToken);
         await RetryAudioRequestsAsync(now, cancellationToken);
         await RetryVideoRequestsAsync(now, cancellationToken);
+    }
+
+    /// <summary>
+    /// Resets EventInboxMessage records that are stuck in 'Started' status beyond the stale
+    /// threshold back to 'Failed', so the next broker re-delivery can attempt processing.
+    /// This handles the case where a handler crashed after inserting the inbox record but
+    /// before calling CompleteAsync. Independent of the business-level (StepFailedEto) retry
+    /// mechanism below, which only covers domain entities already past the inbox stage.
+    /// </summary>
+    private async Task ResetStaleStartedInboxMessagesAsync(DateTime now, CancellationToken cancellationToken)
+    {
+        var staleThreshold = now.AddMinutes(-retrySettings.StaleInboxMessageThresholdMinutes);
+        var updated = await inboxManager.ResetStaleStartedMessagesAsync(staleThreshold, cancellationToken);
+
+        if (updated > 0)
+        {
+            logger.LogWarning(
+                "Video-generator retry worker reset {Count} stale inbox message(s) from 'Started' to 'Failed'. " +
+                "These will be re-processed on next broker re-delivery.",
+                updated);
+        }
     }
 
     private async Task RetryAudioRequestsAsync(
