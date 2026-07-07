@@ -153,7 +153,7 @@ public sealed class VideoOperationAppService(
                     RefContentId = videoRequest.RefContentId,
                     RefContentType = videoRequest.RefContentType,
                     VideoRequestId = videoRequest.Id,
-                    AudioUrls = []
+                    AudioCdnUrls = []
                 }
             );
 
@@ -548,7 +548,7 @@ public sealed class VideoOperationAppService(
             var response = await provider.CreateAsync(new VideoCreateRequest
             {
                 VideoInputJson = videoRequest.MediaInputJson,
-                AudioUrls = @event.AudioUrls,
+                AudioCdnUrls = @event.AudioCdnUrls,
                 RefContentType = videoRequest.RefContentType,
                 CustomerProviderSettings = customerVpSetting.VideoGenerationProviderSettings
             });

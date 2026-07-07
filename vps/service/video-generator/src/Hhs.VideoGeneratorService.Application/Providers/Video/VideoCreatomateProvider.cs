@@ -49,7 +49,7 @@ public sealed class VideoCreatomateProvider : IVideoProvider
             throw new InvalidOperationException($"Creatomate template id is not configured for RefContentType={request.RefContentType}.");
 
         var items = ParseVideoInputItems(request.VideoInputJson);
-        var audioUrls = request.AudioUrls ?? [];
+        var audioCdnUrls = request.AudioCdnUrls ?? [];
 
         var modifications = new CreatomateModifications
         {
@@ -63,8 +63,8 @@ public sealed class VideoCreatomateProvider : IVideoProvider
         int slotCount = Math.Min(items.Count, MaxSlotCount);
         for (int i = 0; i < slotCount; i++)
         {
-            string? audioUrl = i < audioUrls.Count ? audioUrls[i] : null;
-            ApplySlot(modifications, i, audioUrl, items[i].ImageUrl, items[i].Title, clientSettings.BackgroundColor);
+            string? audioCdnUrl = i < audioCdnUrls.Count ? audioCdnUrls[i] : null;
+            ApplySlot(modifications, i, audioCdnUrl, items[i].ImageUrl, items[i].Title, clientSettings.BackgroundColor);
         }
 
         var payload = new CreatomateVideoRequest { TemplateId = templateId, Modifications = modifications };
@@ -108,40 +108,40 @@ public sealed class VideoCreatomateProvider : IVideoProvider
         return new VideoStatusResponse { IsCompleted = false, IsFailed = false };
     }
 
-    private static void ApplySlot(CreatomateModifications m, int index, string? audioUrl, string? imageUrl, string? text, string? backgroundColor)
+    private static void ApplySlot(CreatomateModifications m, int index, string? audioCdnUrl, string? imageUrl, string? text, string? backgroundColor)
     {
         switch (index)
         {
             case 0:
-                m.Audio1Source = audioUrl;
+                m.Audio1Source = audioCdnUrl;
                 m.Image1Source = imageUrl;
                 m.Text1Text = text;
                 m.Shape1FillColor = backgroundColor;
                 m.Number1BackgroundColor = backgroundColor;
                 break;
             case 1:
-                m.Audio2Source = audioUrl;
+                m.Audio2Source = audioCdnUrl;
                 m.Image2Source = imageUrl;
                 m.Text2Text = text;
                 m.Shape2FillColor = backgroundColor;
                 m.Number2BackgroundColor = backgroundColor;
                 break;
             case 2:
-                m.Audio3Source = audioUrl;
+                m.Audio3Source = audioCdnUrl;
                 m.Image3Source = imageUrl;
                 m.Text3Text = text;
                 m.Shape3FillColor = backgroundColor;
                 m.Number3BackgroundColor = backgroundColor;
                 break;
             case 3:
-                m.Audio4Source = audioUrl;
+                m.Audio4Source = audioCdnUrl;
                 m.Image4Source = imageUrl;
                 m.Text4Text = text;
                 m.Shape4FillColor = backgroundColor;
                 m.Number4BackgroundColor = backgroundColor;
                 break;
             case 4:
-                m.Audio5Source = audioUrl;
+                m.Audio5Source = audioCdnUrl;
                 m.Image5Source = imageUrl;
                 m.Text5Text = text;
                 m.Shape5FillColor = backgroundColor;

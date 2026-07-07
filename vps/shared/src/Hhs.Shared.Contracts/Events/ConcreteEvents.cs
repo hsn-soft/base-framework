@@ -203,7 +203,7 @@ public sealed record VideoProviderRequestStartedEto : IIntegrationEventMessage
     public Guid RefContentId { get; init; }
     public ContentType RefContentType { get; init; }
     public Guid VideoRequestId { get; init; }
-    public List<string> AudioUrls { get; init; } = [];
+    public List<string> AudioCdnUrls { get; init; } = [];
 }
 
 public sealed record VideoProviderPollingStartedEto : IIntegrationEventMessage

@@ -151,8 +151,8 @@ public sealed class VideoOperationRetryWorkerService(
                         RefContentId = videoRequest.RefContentId,
                         RefContentType = videoRequest.RefContentType,
                         VideoRequestId = videoRequest.Id,
-                        AudioUrls = videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioUrlListRequired
-                            ? orderedAudios.Select(x => x.AudioStorageUrl!).ToList()
+                        AudioCdnUrls = videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioUrlListRequired
+                            ? orderedAudios.Select(x => x.AudioCdnUrl!).ToList()
                             : []
                     }
                 );
@@ -387,8 +387,8 @@ public sealed class VideoOperationRetryWorkerService(
                             RefContentId = request.RefContentId,
                             RefContentType = request.RefContentType,
                             VideoRequestId = request.Id,
-                            AudioUrls = videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioUrlListRequired
-                                ? orderedAudios.Select(x => x.AudioStorageUrl!).ToList()
+                            AudioCdnUrls = videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioUrlListRequired
+                                ? orderedAudios.Select(x => x.AudioCdnUrl!).ToList()
                                 : []
                         }
                     );
