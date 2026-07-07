@@ -239,6 +239,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hhs.MockApi.VideoQueueInter
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hhs.RabbitMqReset", "vps\mock\Hhs.RabbitMqReset\Hhs.RabbitMqReset.csproj", "{5C7CDC26-EB1C-497A-96EF-BA3A19CB63B7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hhs.Scheduler.ApiTrigger.Host", "vps\app\scheduler\src\Hhs.Scheduler.ApiTrigger.Host\Hhs.Scheduler.ApiTrigger.Host.csproj", "{2C4C9E1E-5619-47F3-973D-F7DB129E146C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -649,6 +651,10 @@ Global
 		{5C7CDC26-EB1C-497A-96EF-BA3A19CB63B7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5C7CDC26-EB1C-497A-96EF-BA3A19CB63B7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5C7CDC26-EB1C-497A-96EF-BA3A19CB63B7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2C4C9E1E-5619-47F3-973D-F7DB129E146C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2C4C9E1E-5619-47F3-973D-F7DB129E146C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2C4C9E1E-5619-47F3-973D-F7DB129E146C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2C4C9E1E-5619-47F3-973D-F7DB129E146C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -769,6 +775,7 @@ Global
 		{899FEFB7-37AA-48D1-8DDD-A1ABE437DC19} = {27FD547A-4B4B-4C7B-A3E6-BDE0220F5318}
 		{FACB6536-D4C7-48A6-B046-8715F4FA99CA} = {27FD547A-4B4B-4C7B-A3E6-BDE0220F5318}
 		{5C7CDC26-EB1C-497A-96EF-BA3A19CB63B7} = {27FD547A-4B4B-4C7B-A3E6-BDE0220F5318}
+		{2C4C9E1E-5619-47F3-973D-F7DB129E146C} = {F37AB0D0-A8E8-45B8-B699-E417282F1680}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {BB97ECF4-9A84-433F-A80B-2A3285BDD1D5}

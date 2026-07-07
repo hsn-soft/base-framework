@@ -27,7 +27,7 @@ public sealed class JobAppService : ApplicationServiceBase, IJobAppService
     public async Task GenerateSummaryReportTriggerAsync(GenerateSummaryReportTriggerDto input,
         string correlationId = null)
     {
-        string str = input.ClientId==Guid.Empty?"All":input.ClientId.ToString();
+        string str = input.ClientId == Guid.Empty ? "All" : input.ClientId.ToString();
 
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: $"{input.JobName} successfully triggered for ClientId:{str}",
@@ -56,7 +56,6 @@ public sealed class JobAppService : ApplicationServiceBase, IJobAppService
     public async Task DerivePendingReportsAsync(DerivePendingReportsTriggerDto input,
         string correlationId = null)
     {
-
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: $"{input.JobName} successfully triggered with MaxCount:{input.MaxCount}",
             reference: new { RefContentId = input.JobName },
@@ -67,5 +66,4 @@ public sealed class JobAppService : ApplicationServiceBase, IJobAppService
 
         await EventBus.PublishAsync(eventMessage: new DerivePendingReportsRequestedEto(input.MaxCount));
     }
-
 }
