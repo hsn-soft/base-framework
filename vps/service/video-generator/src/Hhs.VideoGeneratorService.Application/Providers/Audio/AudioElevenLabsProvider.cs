@@ -11,10 +11,7 @@ namespace Hhs.VideoGeneratorService.Application.Providers.Audio;
 
 public sealed class AudioElevenLabsProvider : IAudioProvider
 {
-    private static readonly JsonSerializerOptions RequestJsonOptions = new()
-    {
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-    };
+    private static readonly JsonSerializerOptions RequestJsonOptions = new() { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull };
 
     private readonly HttpClient _httpClient;
     private readonly AudioElevenLabsProviderSettings _settings;
@@ -57,10 +54,7 @@ public sealed class AudioElevenLabsProvider : IAudioProvider
             apply_text_normalization = "on"
         };
 
-        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, $"{_settings.BaseUrl}{_settings.VoiceId}")
-        {
-            Content = JsonContent.Create(payload, options: RequestJsonOptions)
-        };
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, $"{_settings.BaseUrl}{_settings.VoiceId}") { Content = JsonContent.Create(payload, options: RequestJsonOptions) };
         httpRequest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("audio/mpeg"));
         httpRequest.Headers.Add("xi-api-key", _settings.ApiKey);
 
@@ -85,7 +79,11 @@ public sealed class AudioElevenLabsProvider : IAudioProvider
 
         Directory.CreateDirectory(downloadDir);
 
-        string fileName = $"{ProviderKey}-{Guid.CreateVersion7():N}.mp3";
+        string fileKey = string.IsNullOrWhiteSpace(request.AudioReferenceKey)
+            ? Guid.CreateVersion7().ToString("N").ToLower()
+            : request.AudioReferenceKey;
+
+        string fileName = $"{ProviderKey}-{fileKey}.mp3";
         string filePath = Path.Combine(downloadDir, fileName);
 
         await using (var contentStream = await response.Content.ReadAsStreamAsync())

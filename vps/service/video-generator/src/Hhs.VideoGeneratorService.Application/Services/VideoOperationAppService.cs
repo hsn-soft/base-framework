@@ -255,7 +255,7 @@ public sealed class VideoOperationAppService(
             audioRequest.CurrentStep = EventNames.AudioProviderRequestStarted;
 
             var claimed = await ReplaceAudioAsync(audioRequest, cancellationToken,
-                validPriorStatuses: [AudioStatusNames.AudioRequestCreated, AudioStatusNames.WaitingRetry]);
+                validPriorStatuses: [AudioStatusNames.AudioRequestCreated, AudioStatusNames.WaitingRetry, AudioStatusNames.RetryEventPublished]);
             if (claimed == 0) return;
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
@@ -266,7 +266,7 @@ public sealed class VideoOperationAppService(
                 exception: null
             ));
 
-            var response = await audioProvider.CreateAsync(new AudioCreateRequest { InputText = audioRequest.InputText });
+            var response = await audioProvider.CreateAsync(new AudioCreateRequest {AudioReferenceKey = audioRequest.Id.ToString("N").ToLower(), InputText = audioRequest.InputText });
 
             audioRequest.AudioProviderTrackingId = response.ProviderTrackId;
             audioRequest.AudioProviderUrl = response.ProviderFileUrl;
@@ -386,7 +386,7 @@ public sealed class VideoOperationAppService(
             audioRequest.CurrentStep = EventNames.AudioFileDownloadStarted;
 
             var claimed = await ReplaceAudioAsync(audioRequest, cancellationToken,
-                validPriorStatuses: [AudioStatusNames.AudioProviderCompleted, AudioStatusNames.WaitingRetry]);
+                validPriorStatuses: [AudioStatusNames.AudioProviderCompleted, AudioStatusNames.WaitingRetry, AudioStatusNames.RetryEventPublished]);
             if (claimed == 0) return;
 
             if (string.IsNullOrWhiteSpace(audioRequest.AudioProviderUrl))
@@ -445,7 +445,7 @@ public sealed class VideoOperationAppService(
             audioRequest.CurrentStep = EventNames.AudioFileUploadStarted;
 
             var claimed = await ReplaceAudioAsync(audioRequest, cancellationToken,
-                validPriorStatuses: [AudioStatusNames.AudioFileDownloadCompleted, AudioStatusNames.WaitingRetry]);
+                validPriorStatuses: [AudioStatusNames.AudioFileDownloadCompleted, AudioStatusNames.WaitingRetry, AudioStatusNames.RetryEventPublished]);
             if (claimed == 0) return;
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
@@ -542,7 +542,7 @@ public sealed class VideoOperationAppService(
             videoRequest.CurrentStep = EventNames.VideoProviderRequestStarted;
 
             var claimed = await ReplaceVideoAsync(videoRequest, cancellationToken,
-                validPriorStatuses: [VideoStatusNames.VideoProviderRequestStarting, VideoStatusNames.WaitingRetry]);
+                validPriorStatuses: [VideoStatusNames.VideoProviderRequestStarting, VideoStatusNames.WaitingRetry, VideoStatusNames.RetryEventPublished]);
             if (claimed == 0) return;
 
             var response = await provider.CreateAsync(new VideoCreateRequest
@@ -671,7 +671,7 @@ public sealed class VideoOperationAppService(
             videoRequest.CurrentStep = EventNames.VideoFileDownloadStarted;
 
             var claimed = await ReplaceVideoAsync(videoRequest, cancellationToken,
-                validPriorStatuses: [VideoStatusNames.VideoProviderCompleted, VideoStatusNames.WaitingRetry]);
+                validPriorStatuses: [VideoStatusNames.VideoProviderCompleted, VideoStatusNames.WaitingRetry, VideoStatusNames.RetryEventPublished]);
             if (claimed == 0) return;
 
             (bool success, string videoLocalPath) = await remoteFileDownloader.DownloadAsync(videoRequest.VideoProviderKey, videoRequest.VideoProviderUrl);
@@ -729,7 +729,7 @@ public sealed class VideoOperationAppService(
             videoRequest.CurrentStep = EventNames.VideoFileUploadStarted;
 
             var claimed = await ReplaceVideoAsync(videoRequest, cancellationToken,
-                validPriorStatuses: [VideoStatusNames.VideoFileDownloaded, VideoStatusNames.WaitingRetry]);
+                validPriorStatuses: [VideoStatusNames.VideoFileDownloaded, VideoStatusNames.WaitingRetry, VideoStatusNames.RetryEventPublished]);
             if (claimed == 0) return;
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
@@ -796,7 +796,7 @@ public sealed class VideoOperationAppService(
             videoRequest.CurrentStep = EventNames.VideoGenerationResultPublished;
 
             var claimed = await ReplaceVideoAsync(videoRequest, cancellationToken,
-                validPriorStatuses: [VideoStatusNames.VideoFileUploadCompleted, VideoStatusNames.WaitingRetry]);
+                validPriorStatuses: [VideoStatusNames.VideoFileUploadCompleted, VideoStatusNames.WaitingRetry, VideoStatusNames.RetryEventPublished]);
             if (claimed == 0) return;
 
             _logger.FrameworkInfoLog(LogHelper.Generate(

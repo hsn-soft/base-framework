@@ -844,7 +844,7 @@ public sealed class NormalizerOperationAppService(
             customerContentNormalizedRequest.OutlineResult = new OutlineResult { OutlinedData = @event.OutlinedData };
 
             var customerClaimed = await ReplaceCustomerContentAsync(customerContentNormalizedRequest, cancellationToken,
-                validPriorStatuses: [NormalizeStatusNames.OutlineProviderRequestStarted, NormalizeStatusNames.OutlineProviderRequestPolling, NormalizeStatusNames.WaitingRetry]);
+                validPriorStatuses: [NormalizeStatusNames.OutlineProviderRequestStarted, NormalizeStatusNames.OutlineProviderRequestPolling, NormalizeStatusNames.OutlineProviderRequestCompleted, NormalizeStatusNames.WaitingRetry]);
             if (customerClaimed == 0) return;
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
@@ -882,7 +882,7 @@ public sealed class NormalizerOperationAppService(
                 .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.LastError)}", (string?)null)
                 .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextRetryAtUtc)}", (DateTime?)null),
             CancellationToken.None,
-            validPriorOutlineStatuses: [OutlineStatusNames.Started, OutlineStatusNames.Polling, OutlineStatusNames.WaitingRetry]
+            validPriorOutlineStatuses: [OutlineStatusNames.Started, OutlineStatusNames.Polling, OutlineStatusNames.ProviderCompleted, OutlineStatusNames.WaitingRetry]
         );
         if (claimed == 0) return;
 

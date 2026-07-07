@@ -17,7 +17,8 @@ public interface IAudioProvider
 
 public sealed class AudioCreateRequest
 {
-    public string InputText { get; set; } = default!;
+    [NotNull] public string InputText { get; set; } = default!;
+    [CanBeNull] public string AudioReferenceKey { get; set; }
 }
 
 public sealed class AudioCreateResponse
