@@ -1,0 +1,7 @@
+<Project>
+    <PropertyGroup>
+        <LangVersion>latest</LangVersion>
+        <Version>2026.10</Version>
+        <HsnSoftFrameworkVersion>2026.10.37</HsnSoftFrameworkVersion>
+    </PropertyGroup>
+</Project>
