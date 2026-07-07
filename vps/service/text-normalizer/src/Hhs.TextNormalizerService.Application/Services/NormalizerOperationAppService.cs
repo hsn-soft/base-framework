@@ -351,7 +351,7 @@ public sealed class NormalizerOperationAppService(
                 request.Status = NormalizeStatusNames.OutlineSkipped;
                 request.CurrentStep = EventNames.CustomerContentOutlineSkipped;
 
-                request.OutlineStatus= OutlineStatusNames.Skipped;
+                request.OutlineStatus = OutlineStatusNames.Skipped;
 
                 var skipClaimed = await ReplaceCustomerContentAsync(request, cancellationToken,
                     validPriorStatuses: [NormalizeStatusNames.OutlineStarted, NormalizeStatusNames.WaitingRetry]);
@@ -380,7 +380,7 @@ public sealed class NormalizerOperationAppService(
                         RefContentType = ContentType.CustomerContent,
                         NormalizeRequestId = request.Id,
                         NormalizeStatus = request.Status,
-                        NormalizeCurrentStep =  request.CurrentStep
+                        NormalizeCurrentStep = request.CurrentStep
                     }
                 );
 
@@ -435,7 +435,6 @@ public sealed class NormalizerOperationAppService(
     }
 
 
-
     public async Task CreateAnalysisContentNormalizeRequestAsync(AnalysisContentCreatedEto @event, Guid eventId, [CanBeNull] string correlationId, CancellationToken cancellationToken = default)
     {
         var existing = await analysisContentRepository.GetFirstOrDefaultAsync(
@@ -448,10 +447,7 @@ public sealed class NormalizerOperationAppService(
                 correlationId: existing.CorrelationId,
                 eventMessage: new AnalysisContentNormalizeRequestCreatedEto
                 {
-                    AnalysisContentId = existing.AnalysisContentId,
-                    AnalysisContentNormalizeRequestId = existing.Id,
-                    NormalizeStatus = existing.Status,
-                    NormalizeCurrentStep = existing.CurrentStep,
+                    AnalysisContentId = existing.AnalysisContentId, AnalysisContentNormalizeRequestId = existing.Id, NormalizeStatus = existing.Status, NormalizeCurrentStep = existing.CurrentStep,
                 }
             );
 
@@ -477,10 +473,7 @@ public sealed class NormalizerOperationAppService(
             correlationId: correlationId,
             eventMessage: new AnalysisContentNormalizeRequestCreatedEto
             {
-                AnalysisContentId = @event.AnalysisContentId,
-                AnalysisContentNormalizeRequestId = requestId,
-                NormalizeStatus = request.Status,
-                NormalizeCurrentStep = request.CurrentStep,
+                AnalysisContentId = @event.AnalysisContentId, AnalysisContentNormalizeRequestId = requestId, NormalizeStatus = request.Status, NormalizeCurrentStep = request.CurrentStep,
             }
         );
     }
@@ -651,8 +644,6 @@ public sealed class NormalizerOperationAppService(
             );
         }
     }
-
-
 
 
     public async Task StartOutlineProviderRequestAsync(OutlineProviderRequestStartedEto @event, [CanBeNull] string correlationId = null, CancellationToken cancellationToken = default)
@@ -930,9 +921,8 @@ public sealed class NormalizerOperationAppService(
             correlationId = request.CorrelationId;
             videoInputJson = BuildVideoInputJson(
                 customerContentId: request.CustomerContentId,
-                scrapeTitle: request.ScrapingResult?.Title,
-                scrapeText: request.ScrapingResult?.Details,
                 scrapeImageUrl: request.ScrapingResult?.ImageUrl,
+                scrapeTitle: request.ScrapingResult?.Title,
                 outlineScript: request.OutlineResult?.OutlinedData
             );
         }
@@ -1118,7 +1108,15 @@ public sealed class NormalizerOperationAppService(
 
         _logger.FrameworkErrorLog(LogHelper.Generate(
             message: EventNames.RetryScheduled,
-            reference: new { request.ScopeKey, RefContentId = request.CustomerContentId, RefNormalizedRequestId = request.Id, FailedStep = step, request.RetryCount, request.NextRetryAtUtc },
+            reference: new
+            {
+                request.ScopeKey,
+                RefContentId = request.CustomerContentId,
+                RefNormalizedRequestId = request.Id,
+                FailedStep = step,
+                request.RetryCount,
+                request.NextRetryAtUtc
+            },
             facility: EventNames.RetryScheduled,
             correlationId: request.CorrelationId,
             exception: ex
@@ -1194,7 +1192,16 @@ public sealed class NormalizerOperationAppService(
 
         _logger.FrameworkErrorLog(LogHelper.Generate(
             message: EventNames.RetryScheduled,
-            reference: new { request.ScopeKey, RefContentId = request.AnalysisContentId, RefNormalizedRequestId = request.Id, item.CustomerContentId, FailedStep = step, retryCount, nextRetryAtUtc },
+            reference: new
+            {
+                request.ScopeKey,
+                RefContentId = request.AnalysisContentId,
+                RefNormalizedRequestId = request.Id,
+                item.CustomerContentId,
+                FailedStep = step,
+                retryCount,
+                nextRetryAtUtc
+            },
             facility: EventNames.RetryScheduled,
             correlationId: request.CorrelationId,
             exception: ex
@@ -1247,7 +1254,14 @@ public sealed class NormalizerOperationAppService(
 
         _logger.FrameworkErrorLog(LogHelper.Generate(
             message: step,
-            reference: new { request.ScopeKey, RefContentId = request.AnalysisContentId, RefNormalizedRequestId = request.Id, item.CustomerContentId, retryable },
+            reference: new
+            {
+                request.ScopeKey,
+                RefContentId = request.AnalysisContentId,
+                RefNormalizedRequestId = request.Id,
+                item.CustomerContentId,
+                retryable
+            },
             facility: step,
             correlationId: request.CorrelationId,
             exception: ex
@@ -1290,12 +1304,12 @@ public sealed class NormalizerOperationAppService(
         if (validPriorScrapingStatuses is not null)
         {
             predicate = x => x.Id == analysisRequestId &&
-                              x.Items.Any(i => i.CustomerContentId == customerContentId && validPriorScrapingStatuses.Contains(i.ScrapingStatus));
+                             x.Items.Any(i => i.CustomerContentId == customerContentId && validPriorScrapingStatuses.Contains(i.ScrapingStatus));
         }
         else if (validPriorOutlineStatuses is not null)
         {
             predicate = x => x.Id == analysisRequestId &&
-                              x.Items.Any(i => i.CustomerContentId == customerContentId && validPriorOutlineStatuses.Contains(i.OutlineStatus));
+                             x.Items.Any(i => i.CustomerContentId == customerContentId && validPriorOutlineStatuses.Contains(i.OutlineStatus));
         }
         else
         {
@@ -1305,7 +1319,7 @@ public sealed class NormalizerOperationAppService(
         return analysisContentRepository.UpdateByExpressionAsync(predicate, updateFunc, cancellationToken);
     }
 
-    private string BuildVideoInputJson(Guid customerContentId, string? scrapeTitle, string? scrapeText, string? scrapeImageUrl, string? outlineScript)
+    private string BuildVideoInputJson(Guid customerContentId, string? scrapeImageUrl, string? scrapeTitle, string? outlineScript)
     {
         var audioItems = new[]
         {
@@ -1313,10 +1327,9 @@ public sealed class NormalizerOperationAppService(
             {
                 sortOrder = 1,
                 customerContentId,
-                encodedText = EncodeOrNull(scrapeText),
-                encodedTitle = EncodeOrNull(scrapeTitle),
                 encodedImageUrl = EncodeOrNull(scrapeImageUrl),
-                outline = outlineScript
+                encodedTitle = EncodeOrNull(scrapeTitle),
+                encodedOutlineData = EncodeOrNull(outlineScript)
             }
         };
 
@@ -1330,11 +1343,9 @@ public sealed class NormalizerOperationAppService(
             {
                 sortOrder = index + 1,
                 customerContentId = item.CustomerContentId,
-                contentKey = item.ContentKey,
-                encodedTitle = EncodeOrNull(item.ScrapingResult?.Title),
-                encodedText = EncodeOrNull(item.ScrapingResult?.Details),
                 encodedImageUrl = EncodeOrNull(item.ScrapingResult?.ImageUrl),
-                outline = item.OutlineResult?.OutlinedData
+                encodedTitle = EncodeOrNull(item.ScrapingResult?.Title),
+                encodedOutlineData = EncodeOrNull(item.OutlineResult?.OutlinedData)
             })
             .ToList();
 

@@ -772,7 +772,7 @@ public sealed class VideoOperationAppService(
                     ? customerIdEl.GetGuid()
                     : null,
                 SortOrder = x.GetProperty("sortOrder").GetInt32(),
-                Text = StringHelper.Base64Decode(x.GetProperty("encodedText").GetString() ?? string.Empty)
+                Text = StringHelper.Base64Decode(x.GetProperty("encodedOutlineData").GetString() ?? string.Empty)
             })
             .ToList();
     }
