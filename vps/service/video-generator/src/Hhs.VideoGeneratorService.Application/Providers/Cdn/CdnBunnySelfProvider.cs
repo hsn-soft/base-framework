@@ -1,108 +1,56 @@
+using System.Net.Http.Headers;
 using Hhs.Shared.Helper.Providers;
 using Hhs.VideoGeneratorService.Domain.Configuration.Providers.Cdn;
-using Microsoft.Extensions.Logging;
 
 namespace Hhs.VideoGeneratorService.Application.Providers.Cdn;
 
-public sealed class CdnBunnySelfProvider : ICdnProvider
+/// <summary>
+/// Real Bunny.net Edge Storage API (PUT/GET https://storage.bunnycdn.com/{StorageZoneName}/{path}
+/// with an "AccessKey" header) — not a mock. The Pull Zone in front of the storage zone is what
+/// makes the uploaded file publicly reachable (needed by external services like Creatomate that
+/// can't reach a local dev machine).
+/// </summary>
+public sealed class CdnBunnySelfProvider(CdnBunnySelfSettings settings, HttpClient httpClient) : ICdnProvider
 {
     public string ProviderKey => ProviderKeys.CdnBunnySelf;
-    private readonly CdnBunnySelfSettings _settings;
-    private readonly HttpClient _httpClient;
-    private readonly ILogger<CdnBunnySelfProvider> _logger;
-
-    public CdnBunnySelfProvider(
-        CdnBunnySelfSettings settings,
-        HttpClient httpClient,
-        ILogger<CdnBunnySelfProvider> logger)
-    {
-        _settings = settings;
-        _httpClient = httpClient;
-        _logger = logger;
-    }
 
     public async Task<CdnUploadResult> UploadAsync(Stream fileStream, string filename)
     {
-        try
+        string objectKey = BuildObjectKey(settings.Path, filename);
+
+        using var request = new HttpRequestMessage(HttpMethod.Put, $"{settings.BaseUrl.TrimEnd('/')}/{settings.StorageZoneName.Trim('/')}/{objectKey}")
         {
-            if (_logger.IsEnabled(LogLevel.Information))
-            {
-                _logger.LogInformation(
-                    "Uploading file '{Filename}' to Bunny Self CDN endpoint",
-                    filename);
-            }
+            Content = new StreamContent(fileStream)
+        };
+        request.Headers.Add("AccessKey", settings.ApiKey);
+        request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
 
-            var content = new MultipartFormDataContent();
-            content.Add(new StreamContent(fileStream), "file", filename);
+        using var response = await httpClient.SendAsync(request);
+        if (!response.IsSuccessStatusCode)
+            throw new InvalidOperationException($"Bunny storage upload failed: HTTP {(int)response.StatusCode} {await response.Content.ReadAsStringAsync()}");
 
-            string uploadUrl = $"{_settings.BaseUrl.TrimEnd('/')}/upload";
-            var response = await _httpClient.PostAsync(uploadUrl, content);
+        string storageUrl = $"{settings.BaseUrl.TrimEnd('/')}/{settings.StorageZoneName.Trim('/')}/{objectKey}";
+        string cdnHost = $"{settings.StorageZoneName.Trim('/')}{settings.PullZoneUrl}".TrimEnd('/');
+        string cdnUrl = $"https://{cdnHost}/{objectKey}";
 
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new InvalidOperationException(
-                    $"Bunny Self CDN upload failed with status {response.StatusCode}: " +
-                    $"{await response.Content.ReadAsStringAsync()}");
-            }
-
-            string responseJson = await response.Content.ReadAsStringAsync();
-            using var jsonDoc = System.Text.Json.JsonDocument.Parse(responseJson);
-            var root = jsonDoc.RootElement;
-
-            string? fileId = root.TryGetProperty("fileId", out var fileIdElement)
-                ? fileIdElement.GetString()
-                : root.TryGetProperty("fileName", out var fileNameElement)
-                    ? fileNameElement.GetString()
-                    : throw new InvalidOperationException("No fileId in upload response");
-
-            string storageUrl = $"{_settings.BaseUrl.TrimEnd('/')}/download/{fileId}";
-            string cdnUrl = $"{_settings.BaseUrl.TrimEnd('/')}/{_settings.ZonePath.Trim('/')}/{_settings.PathPrefix.Trim('/')}/{fileId}"
-                .Replace("//", "/")
-                .Replace(":///", "://");
-
-            if (_logger.IsEnabled(LogLevel.Information))
-            {
-                _logger.LogInformation(
-                    "File uploaded to Bunny Self CDN. FileId: {FileId}, StorageUrl: {StorageUrl}, CdnUrl: {CdnUrl}",
-                    fileId,
-                    storageUrl,
-                    cdnUrl);
-            }
-
-            return new CdnUploadResult(storageUrl, cdnUrl);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to upload file '{Filename}' to Bunny Self CDN", filename);
-            throw;
-        }
+        return new CdnUploadResult(storageUrl, cdnUrl);
     }
 
     public async Task<Stream> DownloadAsync(string storageUrl)
     {
-        try
-        {
-            if (_logger.IsEnabled(LogLevel.Information))
-            {
-                _logger.LogInformation(
-                    "Downloading file from Bunny Self CDN. Url: {StorageUrl}",
-                    storageUrl);
-            }
+        using var request = new HttpRequestMessage(HttpMethod.Get, storageUrl);
+        request.Headers.Add("AccessKey", settings.ApiKey);
 
-            var response = await _httpClient.GetAsync(storageUrl);
+        var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+        if (!response.IsSuccessStatusCode)
+            throw new InvalidOperationException($"Bunny storage download failed: HTTP {(int)response.StatusCode}");
 
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new InvalidOperationException(
-                    $"Bunny Self CDN download failed with status {response.StatusCode}");
-            }
+        return await response.Content.ReadAsStreamAsync();
+    }
 
-            return await response.Content.ReadAsStreamAsync();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to download file from Bunny Self CDN URL '{StorageUrl}'", storageUrl);
-            throw;
-        }
+    private static string BuildObjectKey(string pathPrefix, string filename)
+    {
+        string trimmedPrefix = pathPrefix?.Trim('/') ?? "";
+        return trimmedPrefix.Length > 0 ? $"{trimmedPrefix}/{filename}" : filename;
     }
 }

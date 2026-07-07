@@ -1,111 +1,80 @@
+using Amazon.Runtime;
+using Amazon.S3;
+using Amazon.S3.Model;
 using Hhs.Shared.Helper.Providers;
 using Hhs.VideoGeneratorService.Domain.Configuration.Providers.Cdn;
-using Microsoft.Extensions.Logging;
 
 namespace Hhs.VideoGeneratorService.Application.Providers.Cdn;
 
+/// <summary>
+/// Bunny.net's S3-compatible storage backing (e.g. BackBlaze B2), uploaded to via the real AWS S3
+/// SDK (proper SigV4 signing) rather than a raw unsigned PUT. A Bunny Pull Zone in front of the
+/// bucket makes the uploaded file publicly reachable.
+/// </summary>
 public sealed class CdnBunnyS3Provider : ICdnProvider
 {
-    public string ProviderKey => ProviderKeys.CdnBunnyS3;
     private readonly CdnBunnyS3Settings _settings;
-    private readonly HttpClient _httpClient;
-    private readonly ILogger<CdnBunnyS3Provider> _logger;
+    private readonly IAmazonS3 _s3Client;
 
-    public CdnBunnyS3Provider(
-        CdnBunnyS3Settings settings,
-        HttpClient httpClient,
-        ILogger<CdnBunnyS3Provider> logger)
+    public CdnBunnyS3Provider(CdnBunnyS3Settings settings)
     {
         _settings = settings;
-        _httpClient = httpClient;
-        _logger = logger;
+        _s3Client = new AmazonS3Client(
+            new BasicAWSCredentials(settings.ApiKey, settings.ApiSecret),
+            new AmazonS3Config
+            {
+                ServiceURL = settings.BaseUrl,
+                // Most non-AWS S3-compatible providers (BackBlaze B2 included) need path-style
+                // requests (https://endpoint/bucket/key) rather than AWS's default virtual-hosted
+                // style (https://bucket.endpoint/key).
+                ForcePathStyle = true
+            });
     }
+
+    public string ProviderKey => ProviderKeys.CdnBunnyS3;
 
     public async Task<CdnUploadResult> UploadAsync(Stream fileStream, string filename)
     {
-        try
+        string objectKey = BuildObjectKey(_settings.Path, filename);
+
+        var request = new PutObjectRequest
         {
-            string bucketName = _settings.StorageType ?? "default-bucket";
-            string endpoint = _settings.StorageEndpointUrl ?? "http://localhost:9000";
+            BucketName = _settings.BucketName,
+            Key = objectKey,
+            InputStream = fileStream,
+            AutoCloseStream = false,
+            ContentType = "application/octet-stream"
+        };
 
-            if (_logger.IsEnabled(LogLevel.Information))
-            {
-                _logger.LogInformation(
-                    "Uploading file to S3 storage. Filename: {Filename}, Bucket: {Bucket}, Endpoint: {Endpoint}",
-                    filename,
-                    bucketName,
-                    endpoint);
-            }
+        var response = await _s3Client.PutObjectAsync(request);
+        if (response.HttpStatusCode != System.Net.HttpStatusCode.OK)
+            throw new InvalidOperationException($"BackBlaze S3 upload failed: HTTP {(int)response.HttpStatusCode}");
 
-            string dateFolder = DateTime.UtcNow.ToString("yyyy/MM/dd");
-            string fileExtension = Path.GetExtension(filename);
-            string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(filename);
-            string uniqueFilename = $"{fileNameWithoutExtension}_{Guid.CreateVersion7():N}{fileExtension}";
-            string objectKey = $"{dateFolder}/{uniqueFilename}";
+        string storageUrl = $"{_settings.BaseUrl.TrimEnd('/')}/{_settings.BucketName}/{objectKey}";
+        string cdnHost = $"{_settings.BucketName}{_settings.PullZoneUrl}".TrimEnd('/');
+        string cdnUrl = $"https://{cdnHost}/{objectKey}";
 
-            var memoryStream = new MemoryStream();
-            await fileStream.CopyToAsync(memoryStream);
-            byte[] fileBytes = memoryStream.ToArray();
-
-            string uploadUrl = $"{endpoint.TrimEnd('/')}/{bucketName}/{objectKey}";
-            using (var content = new ByteArrayContent(fileBytes))
-            {
-                var response = await _httpClient.PutAsync(uploadUrl, content);
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    throw new InvalidOperationException(
-                        $"S3 upload failed with status {response.StatusCode}: {await response.Content.ReadAsStringAsync()}");
-                }
-            }
-
-            string storageUrl = uploadUrl;
-            string cdnUrl = $"{_settings.BaseUrl.TrimEnd('/')}/{_settings.ZonePath.Trim('/')}/{_settings.PathPrefix.Trim('/')}/{objectKey}"
-                .Replace("//", "/")
-                .Replace(":///", "://");
-
-            if (_logger.IsEnabled(LogLevel.Information))
-            {
-                _logger.LogInformation(
-                    "File uploaded to S3 successfully. StorageUrl: {StorageUrl}, CdnUrl: {CdnUrl}",
-                    storageUrl,
-                    cdnUrl);
-            }
-
-            return new CdnUploadResult(storageUrl, cdnUrl);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to upload file '{Filename}' to S3 storage", filename);
-            throw;
-        }
+        return new CdnUploadResult(storageUrl, cdnUrl);
     }
 
     public async Task<Stream> DownloadAsync(string storageUrl)
     {
-        try
-        {
-            if (_logger.IsEnabled(LogLevel.Information))
-            {
-                _logger.LogInformation(
-                    "Downloading file from S3 storage. StorageUrl: {StorageUrl}",
-                    storageUrl);
-            }
+        string key = ExtractObjectKey(storageUrl);
 
-            var response = await _httpClient.GetAsync(storageUrl);
+        var response = await _s3Client.GetObjectAsync(_settings.BucketName, key);
+        return response.ResponseStream;
+    }
 
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new InvalidOperationException(
-                    $"S3 download failed with status {response.StatusCode}");
-            }
+    private string ExtractObjectKey(string storageUrl)
+    {
+        string path = new Uri(storageUrl).AbsolutePath.TrimStart('/');
+        string bucketPrefix = $"{_settings.BucketName}/";
+        return path.StartsWith(bucketPrefix, StringComparison.OrdinalIgnoreCase) ? path[bucketPrefix.Length..] : path;
+    }
 
-            return await response.Content.ReadAsStreamAsync();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to download file from S3 storage URL '{StorageUrl}'", storageUrl);
-            throw;
-        }
+    private static string BuildObjectKey(string pathPrefix, string filename)
+    {
+        string trimmedPrefix = pathPrefix?.Trim('/') ?? "";
+        return trimmedPrefix.Length > 0 ? $"{trimmedPrefix}/{filename}" : filename;
     }
 }
