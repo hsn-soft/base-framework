@@ -81,9 +81,9 @@ public sealed class VideoCreatomateProvider : IVideoProvider
         if (!response.IsSuccessStatusCode)
             throw new InvalidOperationException($"Creatomate video generation failed: HTTP {(int)response.StatusCode} {resJson}");
 
-        var result = JsonSerializer.Deserialize<CreatomateVideoResponse>(resJson);
+        var result = JsonSerializer.Deserialize<CreatomateRenderResponse>(resJson);
 
-        return new VideoCreateResponse { IsCompleted = false, ProviderTrackId = result?.VideoId };
+        return new VideoCreateResponse { IsCompleted = false, ProviderTrackId = result?.Id };
     }
 
     public async Task<VideoStatusResponse> GetStatusAsync(string providerTrackId)
@@ -97,13 +97,13 @@ public sealed class VideoCreatomateProvider : IVideoProvider
         if (!response.IsSuccessStatusCode)
             throw new InvalidOperationException($"Creatomate status query failed: HTTP {(int)response.StatusCode} {resJson}");
 
-        var result = JsonSerializer.Deserialize<CreatomateVideoQueryResponse>(resJson);
+        var result = JsonSerializer.Deserialize<CreatomateRenderResponse>(resJson);
 
         if (result?.Status == "succeeded")
-            return new VideoStatusResponse { IsCompleted = true, ProviderFileUrl = result.VideoUrl };
+            return new VideoStatusResponse { IsCompleted = true, ProviderFileUrl = result.Url };
 
         if (result?.Status == "failed")
-            return new VideoStatusResponse { IsFailed = true, ErrorMessage = "Creatomate render failed." };
+            return new VideoStatusResponse { IsFailed = true, ErrorMessage = result?.ErrorMessage ?? "Creatomate render failed." };
 
         return new VideoStatusResponse { IsCompleted = false, IsFailed = false };
     }
@@ -274,17 +274,34 @@ internal sealed class CreatomateModifications
     public string? Number5BackgroundColor { get; set; }
 }
 
-internal sealed class CreatomateVideoResponse
+/// <summary>
+/// Creatomate's render-create (POST /v2/renders) and status-query (GET /v2/renders/{id}) responses
+/// share the exact same shape (the create call returns the render's initial state), so one DTO
+/// covers both — status is "planned"/"waiting"/"transcribing"/"rendering" while in progress,
+/// "succeeded" with a populated Url on completion, or "failed" with ErrorMessage populated
+/// (e.g. "A file could not be downloaded: &lt;url&gt; (element Audio1)" when a source asset,
+/// like a locally-hosted CDN url unreachable from Creatomate's cloud, can't be fetched).
+/// </summary>
+internal sealed class CreatomateRenderResponse
 {
     [JsonPropertyName("id")]
-    public string? VideoId { get; set; }
-}
+    public string? Id { get; set; }
 
-internal sealed class CreatomateVideoQueryResponse
-{
     [JsonPropertyName("status")]
     public string? Status { get; set; }
 
+    [JsonPropertyName("error_message")]
+    public string? ErrorMessage { get; set; }
+
     [JsonPropertyName("url")]
-    public string? VideoUrl { get; set; }
+    public string? Url { get; set; }
+
+    [JsonPropertyName("template_id")]
+    public string? TemplateId { get; set; }
+
+    [JsonPropertyName("template_name")]
+    public string? TemplateName { get; set; }
+
+    [JsonPropertyName("output_format")]
+    public string? OutputFormat { get; set; }
 }
