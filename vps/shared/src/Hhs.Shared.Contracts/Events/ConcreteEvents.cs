@@ -81,12 +81,6 @@ public sealed record AnalysisItemScrapingStartedEto : IIntegrationEventMessage
     public Guid? CustomerContentIdForItem { get; init; }
 }
 
-public sealed record AnalysisItemScrapingCompletedEto : IIntegrationEventMessage
-{
-    public Guid AnalysisContentId { get; init; }
-    public Guid? CustomerContentIdForItem { get; init; }
-}
-
 public sealed record AnalysisItemOutlineStartedEto : IIntegrationEventMessage
 {
     public Guid AnalysisContentId { get; init; }
@@ -114,11 +108,6 @@ public sealed record OutlineProviderCompletedEto : IIntegrationEventMessage
     public Guid? CustomerContentIdForItem { get; init; }
 
     public string OutlinedData { get; init; } = default!;
-}
-
-public sealed record AnalysisItemOutlineCompletedEto : IIntegrationEventMessage
-{
-    public Guid AnalysisContentId { get; init; }
 }
 
 public sealed record NormalizerResultPublishedEto : IIntegrationEventMessage

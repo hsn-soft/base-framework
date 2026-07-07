@@ -273,6 +273,11 @@ public sealed class NormalizerOperationRetryWorkerService(
                 }
                 else if (request.CurrentStep == EventNames.OutlineProviderRequestStarted)
                 {
+                    if (request.ScrapingResult is null)
+                        throw new InvalidOperationException("ScrapingResult is required.");
+
+                    var (outlineInputText, outlineInputPrompt) = await normalizerOperationAppService.BuildCustomerOutlineInputAsync(request, cancellationToken);
+
                     await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
                         correlationId: request.CorrelationId,
                         eventMessage: new OutlineProviderRequestStartedEto
@@ -280,8 +285,8 @@ public sealed class NormalizerOperationRetryWorkerService(
                             RefContentType = ContentType.CustomerContent,
                             RefNormalizedRequestId = request.Id,
                             ScopeKey = request.ScopeKey,
-                            InputText = request.ScrapingResult?.Details
-                                        ?? throw new InvalidOperationException("ScrapingResult.Text is required.")
+                            InputText = outlineInputText,
+                            InputPrompt = outlineInputPrompt
                         }
                     );
                 }
@@ -455,6 +460,11 @@ public sealed class NormalizerOperationRetryWorkerService(
                     }
                     else if (item.CurrentStep == EventNames.OutlineProviderRequestStarted)
                     {
+                        if (item.ScrapingResult is null)
+                            throw new InvalidOperationException("ScrapingResult is required.");
+
+                        var (outlineInputText, outlineInputPrompt) = await normalizerOperationAppService.BuildAnalysisItemOutlineInputAsync(request, item, cancellationToken);
+
                         await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
                             correlationId: request.CorrelationId,
                             eventMessage: new OutlineProviderRequestStartedEto
@@ -463,8 +473,8 @@ public sealed class NormalizerOperationRetryWorkerService(
                                 RefContentType = ContentType.AnalysisContent,
                                 RefNormalizedRequestId = request.Id,
                                 ScopeKey = request.ScopeKey,
-                                InputText = item.ScrapingResult?.Details
-                                            ?? throw new InvalidOperationException("ScrapingResult.Text is required.")
+                                InputText = outlineInputText,
+                                InputPrompt = outlineInputPrompt
                             }
                         );
                     }

@@ -276,7 +276,7 @@ public sealed class NormalizerOperationAppService(
         {
             await HandleCustomerExceptionAsync(
                 request,
-                EventNames.CustomerContentScrapingCompleted,
+                EventNames.CustomerContentScrapingStarted,
                 ex
             );
         }
@@ -409,13 +409,7 @@ public sealed class NormalizerOperationAppService(
                 exception: null
             ));
 
-            string outlineInputPrompt = await customerVpSettingRepository.GetContentOutlinePromptByScopeKeyAsync(request.ScopeKey, cancellationToken);
-
-            string outlineInputText = string.Format("{0} {1} {2}",
-                request.ScrapingResult.Title,
-                request.ScrapingResult.Spot ?? string.Empty,
-                request.ScrapingResult.Details ?? string.Empty
-            );
+            var (outlineInputText, outlineInputPrompt) = await BuildCustomerOutlineInputAsync(request, cancellationToken);
 
             await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
                 correlationId: request.CorrelationId,
@@ -532,10 +526,13 @@ public sealed class NormalizerOperationAppService(
                 );
                 if (reuseClaimed == 0) return;
 
-                await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+                _logger.FrameworkInfoLog(LogHelper.Generate(
+                    message: EventNames.AnalysisItemScrapingCompleted,
+                    reference: new { request.ScopeKey, RefContentId = request.AnalysisContentId, RefNormalizedRequestId = request.Id, item.CustomerContentId },
+                    facility: EventNames.AnalysisItemScrapingCompleted,
                     correlationId: request.CorrelationId,
-                    eventMessage: new AnalysisItemScrapingCompletedEto { AnalysisContentId = request.AnalysisContentId, CustomerContentIdForItem = @event.CustomerContentIdForItem }
-                );
+                    exception: null
+                ));
                 return;
             }
         }
@@ -575,10 +572,13 @@ public sealed class NormalizerOperationAppService(
                 cancellationToken
             );
 
-            await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+            _logger.FrameworkInfoLog(LogHelper.Generate(
+                message: EventNames.AnalysisItemScrapingCompleted,
+                reference: new { request.ScopeKey, RefContentId = request.AnalysisContentId, RefNormalizedRequestId = request.Id, item.CustomerContentId },
+                facility: EventNames.AnalysisItemScrapingCompleted,
                 correlationId: request.CorrelationId,
-                eventMessage: new AnalysisItemScrapingCompletedEto { AnalysisContentId = request.AnalysisContentId, CustomerContentIdForItem = @event.CustomerContentIdForItem, }
-            );
+                exception: null
+            ));
         }
         catch (Exception ex)
         {
@@ -589,16 +589,6 @@ public sealed class NormalizerOperationAppService(
                 ex
             );
         }
-    }
-
-    public Task CompleteAnalysisItemScrapingAsync(AnalysisItemScrapingCompletedEto @event, CancellationToken cancellationToken = default)
-    {
-        // Fan-in gate: outline must not start for ANY item until ALL sibling items have reached a
-        // terminal scraping state (Completed or Failed). Instead of immediately fanning this one
-        // item into outline (the old, incorrect behavior), that decision is now owned exclusively by
-        // NormalizerOperationRetryWorkerService.AdvanceReadyAnalysisItemsToOutlineAsync, which
-        // re-derives readiness directly from all siblings' current DB state every tick.
-        return Task.CompletedTask;
     }
 
     public async Task StartAnalysisItemOutlineAsync(AnalysisItemOutlineStartedEto @event, CancellationToken cancellationToken = default)
@@ -636,13 +626,7 @@ public sealed class NormalizerOperationAppService(
             );
             if (claimed == 0) return;
 
-            CustomerVpSetting analysisVpSetting = await customerVpSettingRepository.GetFirstOrDefaultAsync(
-                x => x.ScopeKey == analysisContentNormalizedRequest.ScopeKey,
-                cancellationToken: cancellationToken);
-
-            string outlineInputText = analysisVpSetting?.IsForceContentDetailInAnalyseActive == true
-                ? item.ScrapingResult.Details
-                : item.ScrapingResult.Title.Replace(":", "") + " : " + (item.ScrapingResult.Spot ?? item.ScrapingResult.Details);
+            var (outlineInputText, outlineInputPrompt) = await BuildAnalysisItemOutlineInputAsync(analysisContentNormalizedRequest, item, cancellationToken);
 
             await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
                 correlationId: analysisContentNormalizedRequest.CorrelationId,
@@ -653,7 +637,7 @@ public sealed class NormalizerOperationAppService(
                     RefNormalizedRequestId = analysisContentNormalizedRequest.Id,
                     ScopeKey = analysisContentNormalizedRequest.ScopeKey,
                     InputText = outlineInputText,
-                    InputPrompt = analysisVpSetting?.AnalysisOutlineContentPrompt
+                    InputPrompt = outlineInputPrompt
                 }
             );
         }
@@ -893,11 +877,6 @@ public sealed class NormalizerOperationAppService(
             correlationId: analysisContentNormalizedRequest.CorrelationId,
             exception: null
         ));
-
-        await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
-            correlationId: analysisContentNormalizedRequest.CorrelationId,
-            eventMessage: new AnalysisItemOutlineCompletedEto { AnalysisContentId = analysisContentNormalizedRequest.AnalysisContentId }
-        );
     }
 
     public async Task CompleteCustomerContentOutlineAsync(CustomerContentOutlineCompletedEto @event, CancellationToken cancellationToken = default)
@@ -936,17 +915,6 @@ public sealed class NormalizerOperationAppService(
                 NormalizeCurrentStep = customerContentNormalizedRequest.CurrentStep
             }
         );
-    }
-
-    public Task CompleteAnalysisItemOutlineAsync(AnalysisItemOutlineCompletedEto @event, CancellationToken cancellationToken = default)
-    {
-        // Fan-in gate: the result must not be published until ALL sibling items have reached a
-        // terminal outline state (Completed or Failed). Instead of re-checking siblings from this
-        // one item's completion (non-atomic — a lost-update race against concurrent per-item writes
-        // was found here during investigation), that decision is now owned exclusively by
-        // NormalizerOperationRetryWorkerService.AdvanceReadyAnalysisContentsToResultAsync, which
-        // atomically claims the parent and re-derives readiness directly from current DB state.
-        return Task.CompletedTask;
     }
 
     public async Task ForwardVideoGenerationDataAsync(VideoGenerationApprovedEto @event, CancellationToken cancellationToken = default)
@@ -1010,6 +978,44 @@ public sealed class NormalizerOperationAppService(
     private Task<AnalysisContentNormalizedRequest> GetAnalysisContentNormalizedRequestAsync(Guid analysisContentId)
     {
         return analysisContentRepository.GetFirstOrDefaultAsync(x => x.AnalysisContentId == analysisContentId);
+    }
+
+    /// <summary>
+    /// Single source of truth for the outline provider's input (customer path) — used both by the
+    /// original call site and by NormalizerOperationRetryWorkerService.RetryCustomerRequestsAsync
+    /// when re-publishing OutlineProviderRequestStartedEto on retry, so a retried outline call never
+    /// silently loses the customer's outline prompt or falls back to incomplete input text.
+    /// </summary>
+    internal async Task<(string InputText, string InputPrompt)> BuildCustomerOutlineInputAsync(CustomerContentNormalizedRequest request, CancellationToken cancellationToken)
+    {
+        string outlineInputPrompt = await customerVpSettingRepository.GetContentOutlinePromptByScopeKeyAsync(request.ScopeKey, cancellationToken);
+
+        string outlineInputText = string.Format("{0} {1} {2}",
+            request.ScrapingResult.Title,
+            request.ScrapingResult.Spot ?? string.Empty,
+            request.ScrapingResult.Details ?? string.Empty
+        );
+
+        return (outlineInputText, outlineInputPrompt);
+    }
+
+    /// <summary>
+    /// Single source of truth for the outline provider's input (analysis-item path) — used both by
+    /// the original call site and by NormalizerOperationRetryWorkerService.RetryAnalysisRequestsAsync
+    /// when re-publishing OutlineProviderRequestStartedEto on retry, so a retried outline call never
+    /// silently loses the customer's outline prompt or falls back to incomplete input text.
+    /// </summary>
+    internal async Task<(string InputText, string InputPrompt)> BuildAnalysisItemOutlineInputAsync(AnalysisContentNormalizedRequest request, AnalysisNormalizedItem item, CancellationToken cancellationToken)
+    {
+        CustomerVpSetting analysisVpSetting = await customerVpSettingRepository.GetFirstOrDefaultAsync(
+            x => x.ScopeKey == request.ScopeKey,
+            cancellationToken: cancellationToken);
+
+        string outlineInputText = analysisVpSetting?.IsForceContentDetailInAnalyseActive == true
+            ? item.ScrapingResult.Details
+            : item.ScrapingResult.Title.Replace(":", "") + " : " + (item.ScrapingResult.Spot ?? item.ScrapingResult.Details);
+
+        return (outlineInputText, analysisVpSetting?.AnalysisOutlineContentPrompt);
     }
 
     /// <summary>
