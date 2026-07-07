@@ -1,5 +1,6 @@
 using Hhs.Shared.Helper.Consts;
 using Hhs.Shared.Helper.Enums;
+using Hhs.Shared.Helper.Providers;
 using Hhs.Shared.Helper.Utils;
 using Hhs.VideoGeneratorService.Domain.SettingDomain.Entities;
 using Hhs.VideoGeneratorService.MongoDb.Context;
@@ -16,8 +17,8 @@ public static class CustomerVpSettingSeeder
 
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.Scenario01CustomerId),
-            audioProviderKey: "audio-quick",
-            videoProviderKey: "video-queue-external",
+            audioProviderKey: ProviderKeys.AudioQuick,
+            videoProviderKey: ProviderKeys.VideoQueueExternal,
             logoUrl: "https://tst01.scenario.com/demo-techsummus-48x48.png",
             directVideoTemplateId: "xxxxxx",
             analysisVideoTemplateId: "xxxxxxx",
@@ -27,8 +28,8 @@ public static class CustomerVpSettingSeeder
 
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.Scenario02CustomerId),
-            audioProviderKey: "audio-hq",
-            videoProviderKey: "video-queue-external",
+            audioProviderKey: ProviderKeys.AudioHQ,
+            videoProviderKey: ProviderKeys.VideoQueueExternal,
             logoUrl: "https://tst01.scenario.com/demo-techsummus-48x48.png",
             directVideoTemplateId: "xxxxxx",
             analysisVideoTemplateId: "xxxxxxx",
@@ -38,8 +39,8 @@ public static class CustomerVpSettingSeeder
 
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.Scenario03CustomerId),
-            audioProviderKey: "audio-quick",
-            videoProviderKey: "video-queue-external",
+            audioProviderKey: ProviderKeys.AudioQuick,
+            videoProviderKey: ProviderKeys.VideoQueueExternal,
             logoUrl: "https://tst01.scenario.com/demo-techsummus-48x48.png",
             directVideoTemplateId: "xxxxxx",
             analysisVideoTemplateId: "xxxxxxx",
@@ -49,8 +50,8 @@ public static class CustomerVpSettingSeeder
 
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.Scenario04CustomerId),
-            audioProviderKey: "audio-hq",
-            videoProviderKey: "video-queue-external",
+            audioProviderKey: ProviderKeys.AudioHQ,
+            videoProviderKey: ProviderKeys.VideoQueueExternal,
             logoUrl: "https://tst01.scenario.com/demo-techsummus-48x48.png",
             directVideoTemplateId: "xxxxxx",
             analysisVideoTemplateId: "xxxxxxx",
@@ -61,7 +62,7 @@ public static class CustomerVpSettingSeeder
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.Scenario05CustomerId),
             audioProviderKey: null,
-            videoProviderKey: "video-queue-internal",
+            videoProviderKey: ProviderKeys.VideoQueueInternal,
             logoUrl: "https://tst01.scenario.com/demo-techsummus-48x48.png",
             directVideoTemplateId: "xxxxxx",
             analysisVideoTemplateId: "xxxxxxx",
@@ -72,7 +73,7 @@ public static class CustomerVpSettingSeeder
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.Scenario06CustomerId),
             audioProviderKey: null,
-            videoProviderKey: "video-queue-internal",
+            videoProviderKey: ProviderKeys.VideoQueueInternal,
             logoUrl: "https://tst01.scenario.com/demo-techsummus-48x48.png",
             directVideoTemplateId: "xxxxxx",
             analysisVideoTemplateId: "xxxxxxx",
@@ -86,8 +87,8 @@ public static class CustomerVpSettingSeeder
 
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.TechSummusCustomerId),
-            audioProviderKey: "audio-quick",
-            videoProviderKey: "video-queue-external",
+            audioProviderKey: ProviderKeys.AudioQuick,
+            videoProviderKey: ProviderKeys.VideoQueueExternal,
             logoUrl: "https://assets-techsummus.b-cdn.net/demo-techsummus-48x48.png",
             directVideoTemplateId: "51009d1aea634ac7b1115a5d62a306b9",
             analysisVideoTemplateId: "71de19fbe60e4c7ca643045ffe83bb0a",
@@ -101,8 +102,8 @@ public static class CustomerVpSettingSeeder
 
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.T24CustomerId),
-            audioProviderKey: "audio-quick",
-            videoProviderKey: "video-queue-external",
+            audioProviderKey: ProviderKeys.AudioElevenLabs,
+            videoProviderKey: ProviderKeys.VideoQueueExternal,
             logoUrl: "https://assets-techsummus.b-cdn.net/t24-video-logo-48x48.png",
             directVideoTemplateId: "51009d1aea634ac7b1115a5d62a306b9",
             analysisVideoTemplateId: "350c0486-accb-4583-abaa-b0d70fcdea1d", //creatomate Audio Template
@@ -119,8 +120,8 @@ public static class CustomerVpSettingSeeder
 
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.TamIndirCustomerId),
-            audioProviderKey: "audio-quick",
-            videoProviderKey: "video-queue-external",
+            audioProviderKey: ProviderKeys.AudioElevenLabs,
+            videoProviderKey: ProviderKeys.VideoQueueExternal,
             logoUrl: "https://assets-techsummus.b-cdn.net/tamindir-video-logo-48x48.png",
             directVideoTemplateId: "51009d1aea634ac7b1115a5d62a306b9",
             analysisVideoTemplateId: "350c0486-accb-4583-abaa-b0d70fcdea1d", //"2c88c05dc5f6487e9d566fee4083fd8e",
@@ -134,8 +135,8 @@ public static class CustomerVpSettingSeeder
 
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.SonDakikaCustomerId),
-            audioProviderKey: "audio-quick",
-            videoProviderKey: "video-queue-external",
+            audioProviderKey: ProviderKeys.AudioElevenLabs,
+            videoProviderKey: ProviderKeys.VideoQueueExternal,
             logoUrl: "https://assets-techsummus.b-cdn.net/sondakika-video-logo-48x48.png",
             directVideoTemplateId: "51009d1aea634ac7b1115a5d62a306b9",
             analysisVideoTemplateId: "15c206d38b0f441aa9fdfddd4303eb5d",
@@ -149,8 +150,8 @@ public static class CustomerVpSettingSeeder
 
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.TechnoTodayCustomerId),
-            audioProviderKey: "audio-quick",
-            videoProviderKey: "video-queue-external",
+            audioProviderKey: ProviderKeys.AudioElevenLabs,
+            videoProviderKey: ProviderKeys.VideoQueueExternal,
             logoUrl: "https://assets-techsummus.b-cdn.net/technotoday-footer-logo-48x48.png",
             directVideoTemplateId: "51009d1aea634ac7b1115a5d62a306b9",
             analysisVideoTemplateId: "a2a2ca3a1d474fbc9489251f0aeb2e7a",
@@ -164,8 +165,8 @@ public static class CustomerVpSettingSeeder
 
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.KisaDalgaCustomerId),
-            audioProviderKey: "audio-quick",
-            videoProviderKey: "video-queue-external",
+            audioProviderKey: ProviderKeys.AudioElevenLabs,
+            videoProviderKey: ProviderKeys.VideoQueueExternal,
             logoUrl: "https://assets-techsummus.b-cdn.net/KisaDalgaLogoDark.png",
             directVideoTemplateId: "51009d1aea634ac7b1115a5d62a306b9",
             analysisVideoTemplateId: "71de19fbe60e4c7ca643045ffe83bb0a",
@@ -179,8 +180,8 @@ public static class CustomerVpSettingSeeder
 
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.DunyaCustomerId),
-            audioProviderKey: "audio-quick",
-            videoProviderKey: "video-queue-external",
+            audioProviderKey: ProviderKeys.AudioElevenLabs,
+            videoProviderKey: ProviderKeys.VideoQueueExternal,
             logoUrl: "https://assets-techsummus.b-cdn.net/dunya-video-logo-48x48.png",
             directVideoTemplateId: "51009d1aea634ac7b1115a5d62a306b9",
             analysisVideoTemplateId: "b5e26cfe3d6948388fa63276f566eac1",
@@ -194,8 +195,8 @@ public static class CustomerVpSettingSeeder
 
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.BoxofficeCustomerId),
-            audioProviderKey: "audio-quick",
-            videoProviderKey: "video-queue-external",
+            audioProviderKey: ProviderKeys.AudioElevenLabs,
+            videoProviderKey: ProviderKeys.VideoQueueExternal,
             logoUrl: "https://assets-techsummus.b-cdn.net/boxofficeturkiye-video-logo-48x48.png",
             directVideoTemplateId: "51009d1aea634ac7b1115a5d62a306b9",
             analysisVideoTemplateId: "xxxxxxxxxxx", // TODO: Set real template id
@@ -209,8 +210,8 @@ public static class CustomerVpSettingSeeder
 
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.DiyetKolikCustomerId),
-            audioProviderKey: "audio-quick",
-            videoProviderKey: "video-queue-external",
+            audioProviderKey: ProviderKeys.AudioElevenLabs,
+            videoProviderKey: ProviderKeys.VideoQueueExternal,
             logoUrl: "https://assets-techsummus.b-cdn.net/diyetkolik-video-logo-48x48.png",
             directVideoTemplateId: "51009d1aea634ac7b1115a5d62a306b9",
             analysisVideoTemplateId: "3c0e045ec26c43b186c9bc6054d3f2f3",
@@ -224,8 +225,8 @@ public static class CustomerVpSettingSeeder
 
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.InStyleCustomerId),
-            audioProviderKey: "audio-quick",
-            videoProviderKey: "video-queue-external",
+            audioProviderKey: ProviderKeys.AudioElevenLabs,
+            videoProviderKey: ProviderKeys.VideoQueueExternal,
             logoUrl: "https://assets-techsummus.b-cdn.net/instyle-video-logo-48x48.png",
             directVideoTemplateId: "51009d1aea634ac7b1115a5d62a306b9",
             analysisVideoTemplateId: "3c0e045ec26c43b186c9bc6054d3f2f3",
@@ -239,8 +240,8 @@ public static class CustomerVpSettingSeeder
 
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.HaberturkCustomerId),
-            audioProviderKey: "audio-quick",
-            videoProviderKey: "video-queue-external",
+            audioProviderKey: ProviderKeys.AudioElevenLabs,
+            videoProviderKey: ProviderKeys.VideoQueueExternal,
             logoUrl: "https://assets-techsummus.b-cdn.net/instyle-video-logo-48x48.png",
             directVideoTemplateId: "51009d1aea634ac7b1115a5d62a306b9",
             analysisVideoTemplateId: "3c0e045ec26c43b186c9bc6054d3f2f3",
@@ -254,8 +255,8 @@ public static class CustomerVpSettingSeeder
 
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.BloomberghtCustomerId),
-            audioProviderKey: "audio-quick",
-            videoProviderKey: "video-queue-external",
+            audioProviderKey: ProviderKeys.AudioElevenLabs,
+            videoProviderKey: ProviderKeys.VideoQueueExternal,
             logoUrl: "https://assets-techsummus.b-cdn.net/instyle-video-logo-48x48.png",
             directVideoTemplateId: "51009d1aea634ac7b1115a5d62a306b9",
             analysisVideoTemplateId: "3c0e045ec26c43b186c9bc6054d3f2f3",
@@ -269,8 +270,8 @@ public static class CustomerVpSettingSeeder
 
         await GetOrCreateCustomerVpSettingAsync(db, logger,
             customerId: Guid.Parse(CustomerSeedIds.CnbceCustomerId),
-            audioProviderKey: "audio-quick",
-            videoProviderKey: "video-queue-external",
+            audioProviderKey: ProviderKeys.AudioElevenLabs,
+            videoProviderKey: ProviderKeys.VideoQueueExternal,
             logoUrl: "https://assets-techsummus.b-cdn.net/cnbce-video-logo-48x48.png",
             directVideoTemplateId: "51009d1aea634ac7b1115a5d62a306b9",
             analysisVideoTemplateId: "350c0486-accb-4583-abaa-b0d70fcdea1d", //creatomate Audio Template
