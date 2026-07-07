@@ -239,7 +239,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hhs.MockApi.VideoQueueInter
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hhs.RabbitMqReset", "vps\mock\Hhs.RabbitMqReset\Hhs.RabbitMqReset.csproj", "{5C7CDC26-EB1C-497A-96EF-BA3A19CB63B7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hhs.Scheduler.ApiTrigger.Host", "vps\app\trigger\src\Hhs.Scheduler.ApiTrigger.Host\Hhs.Scheduler.ApiTrigger.Host.csproj", "{FE06C0FB-42FF-4666-850B-D76F4475DC1F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hhs.Scheduler.ApiTrigger.Host", "vps\app\scheduler\src\Hhs.Scheduler.ApiTrigger.Host\Hhs.Scheduler.ApiTrigger.Host.csproj", "{FE06C0FB-42FF-4666-850B-D76F4475DC1F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
