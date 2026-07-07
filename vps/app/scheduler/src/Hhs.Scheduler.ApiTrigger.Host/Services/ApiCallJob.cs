@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json;
 using Hhs.Scheduler.ApiTrigger.Host.Models;
 using HsnSoft.Base.Logging;
 using HsnSoft.Base.Logging.Abstracts;
@@ -20,7 +21,7 @@ public class ApiCallJob(IHttpClientFactory httpClientFactory, IFrameworkLogger l
             JobName = jobData.GetString("JobName"),
             Url = jobData.GetString("Url"),
             Method = jobData.GetString("Method"),
-            Body = jobData.GetString("Body"),
+            Payload = new PayloadModel { PeriodSeconds = jobData.GetInt("PeriodSeconds") },
             Key = jobData.GetString("Key")
         };
 
@@ -35,13 +36,20 @@ public class ApiCallJob(IHttpClientFactory httpClientFactory, IFrameworkLogger l
         client.DefaultRequestHeaders.Add(SchedulerJobIdLabel, jobCorrelationId);
         client.DefaultRequestHeaders.Add(SchedulerJobNameLabel, endpoint.JobName);
 
+        string payloadJson = JsonSerializer.Serialize(new
+        {
+            JobName = endpoint.JobName,
+            JobPeriodDesc = DescribePeriod(endpoint.Payload?.PeriodSeconds ?? 0),
+            NextTriggerTimeUtc = context.NextFireTimeUtc?.UtcDateTime
+        });
+
         try
         {
             var response = endpoint.Method?.ToUpperInvariant() switch
             {
-                "POST" => await client.PostAsync(endpoint.Url, new StringContent(endpoint.Body ?? "", Encoding.UTF8, "application/json")),
+                "POST" => await client.PostAsync(endpoint.Url, new StringContent(payloadJson, Encoding.UTF8, "application/json")),
                 "GET" => await client.GetAsync(endpoint.Url),
-                "PUT" => await client.PutAsync(endpoint.Url, new StringContent(endpoint.Body ?? "", Encoding.UTF8, "application/json")),
+                "PUT" => await client.PutAsync(endpoint.Url, new StringContent(payloadJson, Encoding.UTF8, "application/json")),
                 "DELETE" => await client.DeleteAsync(endpoint.Url),
                 _ => throw new Exception($"Method {endpoint.Method} not supported")
             };
@@ -89,5 +97,23 @@ public class ApiCallJob(IHttpClientFactory httpClientFactory, IFrameworkLogger l
         {
             client.Dispose();
         }
+    }
+
+    private static string DescribePeriod(int periodSeconds)
+    {
+        if (periodSeconds <= 0) return "unknown";
+        if (periodSeconds % 3600 == 0)
+        {
+            int hours = periodSeconds / 3600;
+            return hours == 1 ? "1 hour" : $"{hours} hours";
+        }
+
+        if (periodSeconds % 60 == 0)
+        {
+            int minutes = periodSeconds / 60;
+            return minutes == 1 ? "1 min" : $"{minutes} min";
+        }
+
+        return periodSeconds == 1 ? "1 sec" : $"{periodSeconds} sec";
     }
 }

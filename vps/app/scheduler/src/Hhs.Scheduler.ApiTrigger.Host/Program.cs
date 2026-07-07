@@ -235,8 +235,9 @@ public static class Program
                     Url = s.Url,
                     Method = s.Method,
                     Pattern = s.Pattern,
-                    Body = s.Body,
-                    Key = s.Key ?? defaultEndPointKey
+                    Payload = s.Payload,
+                    Key = s.Key ?? defaultEndPointKey,
+                    TriggerOnStartup = s.TriggerOnStartup
                 })
                 .ToList();
         }
@@ -260,7 +261,7 @@ public static class Program
                         .UsingJobData("JobName", endpoint.JobName)
                         .UsingJobData("Url", new Uri($"{serviceEndpointConfiguration.ServiceUrl}{endpoint.Url}").AbsoluteUri)
                         .UsingJobData("Method", endpoint.Method)
-                        .UsingJobData("Body", endpoint.Body ?? "")
+                        .UsingJobData("PeriodSeconds", endpoint.Payload?.PeriodSeconds ?? 0)
                         .UsingJobData("Key", endpoint.Key ?? "")
                         .Build();
 
@@ -271,8 +272,11 @@ public static class Program
 
                     await scheduler.ScheduleJob(job, trigger);
 
-                    // first run manually
-                    await scheduler.TriggerJob(job.Key);
+                    if (endpoint.TriggerOnStartup)
+                    {
+                        // first run manually
+                        await scheduler.TriggerJob(job.Key);
+                    }
                 }
             }
         }

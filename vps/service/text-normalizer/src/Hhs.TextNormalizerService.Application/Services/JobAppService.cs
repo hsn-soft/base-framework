@@ -18,7 +18,7 @@ public sealed class JobAppService(
     {
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: $"{input.JobName} successfully triggered",
-            reference: new { RefContentId = input.JobName },
+            reference: new { RefContentId = input.JobName, input.JobPeriodDesc, input.NextTriggerTimeUtc },
             facility: "RETRY_DUE_REQUESTS",
             correlationId: correlationId,
             exception: null
@@ -31,7 +31,7 @@ public sealed class JobAppService(
     {
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: $"{input.JobName} successfully triggered",
-            reference: new { RefContentId = input.JobName },
+            reference: new { RefContentId = input.JobName, input.JobPeriodDesc, input.NextTriggerTimeUtc },
             facility: "POLL_DUE_OUTLINE_REQUESTS",
             correlationId: correlationId,
             exception: null

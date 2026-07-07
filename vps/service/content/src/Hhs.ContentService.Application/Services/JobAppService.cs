@@ -22,7 +22,7 @@ public sealed class JobAppService(
     {
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: $"{input.JobName} successfully triggered",
-            reference: new { RefContentId = input.JobName },
+            reference: new { RefContentId = input.JobName, input.JobPeriodDesc, input.NextTriggerTimeUtc },
             facility: "ANALYSIS_VIDEO_GENERATION_QUERY",
             correlationId: correlationId,
             exception: null
@@ -54,7 +54,7 @@ public sealed class JobAppService(
     {
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: $"{input.JobName} successfully triggered",
-            reference: new { RefContentId = input.JobName },
+            reference: new { RefContentId = input.JobName, input.JobPeriodDesc, input.NextTriggerTimeUtc },
             facility: "TREND_VIDEO_GENERATION_QUERY",
             correlationId: correlationId,
             exception: null
@@ -85,7 +85,7 @@ public sealed class JobAppService(
     {
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: $"{input.JobName} successfully triggered",
-            reference: new { RefContentId = input.JobName },
+            reference: new { RefContentId = input.JobName, input.JobPeriodDesc, input.NextTriggerTimeUtc },
             facility: "TEST_QUERY",
             correlationId: correlationId,
             exception: null
@@ -98,7 +98,7 @@ public sealed class JobAppService(
     {
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: $"{input.JobName} successfully triggered",
-            reference: new { RefContentId = input.JobName },
+            reference: new { RefContentId = input.JobName, input.JobPeriodDesc, input.NextTriggerTimeUtc },
             facility: "RETRY_DUE_REQUESTS",
             correlationId: correlationId,
             exception: null

@@ -367,7 +367,7 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                     b.ToTable("CustomerVpSettings", (string)null);
                 });
 
-            modelBuilder.Entity("Hhs.Shared.EventInbox.Entities.EventInboxMessage", b =>
+            modelBuilder.Entity("Hhs.Shared.Helper.EventInbox.EventInboxMessage", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");

@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Hhs.ContentService.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(ContentServiceDbContext))]
-    [Migration("20260706153918_InitialCreate")]
+    [Migration("20260707205029_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -370,7 +370,7 @@ namespace Hhs.ContentService.EntityFrameworkCore.Migrations
                     b.ToTable("CustomerVpSettings", (string)null);
                 });
 
-            modelBuilder.Entity("Hhs.Shared.EventInbox.Entities.EventInboxMessage", b =>
+            modelBuilder.Entity("Hhs.Shared.Helper.EventInbox.EventInboxMessage", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");

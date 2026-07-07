@@ -5,7 +5,10 @@
     "Url": "/api/administration-service/v1/commercial/jobs/synch-all-permission-to-cache-db",
     "Method": "POST",
     "Pattern": "0 0/5 * * * ?",
-    "Body": "{\"JobName\":\"SynchAllPermissionToCacheDb\"}"
+    "Payload": {
+      "PeriodSeconds": 300
+    },
+    "TriggerOnStartup": false
   },
   {
     "ServiceName": "content-service",
@@ -13,7 +16,9 @@
     "Url": "/api/content-service/v1/commercial/jobs/analysis-video-generation-query",
     "Method": "POST",
     "Pattern": "0 0 0/3 * * ?",
-    "Body": "{\"JobName\":\"AnalysisVideoGenerationQuery\"}"
+    "Payload": {
+      "PeriodSeconds": 10800
+    }
   },
   {
     "ServiceName": "content-service",
@@ -21,7 +26,10 @@
     "Url": "/api/content-service/v1/commercial/jobs/dashboard-response-statistic-query",
     "Method": "POST",
     "Pattern": "0 0/1 * * * ?",
-    "Body": "{\"JobName\":\"DashboardResponseStatisticQuery\"}"
+    "Payload": {
+      "PeriodSeconds": 60
+    },
+    "TriggerOnStartup": false
   },
   {
     "ServiceName": "content-service",
@@ -29,7 +37,9 @@
     "Url": "/api/content-service/v1/commercial/jobs/trend-video-generation-query",
     "Method": "POST",
     "Pattern": "0 0 0/1 * * ?",
-    "Body": "{\"JobName\":\"TrendVideoGenerationQuery\"}"
+    "Payload": {
+      "PeriodSeconds": 3600
+    }
   },
   {
     "ServiceName": "content-service",
@@ -37,7 +47,10 @@
     "Url": "/api/content-service/v1/commercial/jobs/retry-due-requests",
     "Method": "POST",
     "Pattern": "0/5 * * * * ?",
-    "Body": "{\"JobName\":\"ContentRetryDueRequests\"}"
+    "Payload": {
+      "PeriodSeconds": 5
+    },
+    "TriggerOnStartup": false
   },
   {
     "ServiceName": "feedr-admanager-service",
@@ -45,7 +58,10 @@
     "Url": "/api/feedr-admanager-service/v1/commercial/jobs/generate-summary-report",
     "Method": "POST",
     "Pattern": "0 0/1 * * * ?",
-    "Body": "{\"JobName\":\"generate-summary-report\"}"
+    "Payload": {
+      "PeriodSeconds": 60
+    },
+    "TriggerOnStartup": false
   },
   {
     "ServiceName": "text-normalizer-service",
@@ -53,7 +69,10 @@
     "Url": "/api/text-normalizer-service/v1/commercial/jobs/retry-due-requests",
     "Method": "POST",
     "Pattern": "0/5 * * * * ?",
-    "Body": "{\"JobName\":\"TextNormalizerRetryDueRequests\"}"
+    "Payload": {
+      "PeriodSeconds": 5
+    },
+    "TriggerOnStartup": false
   },
   {
     "ServiceName": "text-normalizer-service",
@@ -61,7 +80,10 @@
     "Url": "/api/text-normalizer-service/v1/commercial/jobs/poll-due-outline-requests",
     "Method": "POST",
     "Pattern": "0/10 * * * * ?",
-    "Body": "{\"JobName\":\"TextNormalizerPollDueOutlineRequests\"}"
+    "Payload": {
+      "PeriodSeconds": 10
+    },
+    "TriggerOnStartup": false
   },
   {
     "ServiceName": "video-generator-service",
@@ -69,7 +91,10 @@
     "Url": "/api/video-generator-service/v1/commercial/jobs/retry-due-requests",
     "Method": "POST",
     "Pattern": "0/5 * * * * ?",
-    "Body": "{\"JobName\":\"VideoGeneratorRetryDueRequests\"}"
+    "Payload": {
+      "PeriodSeconds": 5
+    },
+    "TriggerOnStartup": false
   },
   {
     "ServiceName": "video-generator-service",
@@ -77,7 +102,10 @@
     "Url": "/api/video-generator-service/v1/commercial/jobs/poll-due-video-requests",
     "Method": "POST",
     "Pattern": "0/10 * * * * ?",
-    "Body": "{\"JobName\":\"VideoGeneratorPollDueVideoRequests\"}"
+    "Payload": {
+      "PeriodSeconds": 10
+    },
+    "TriggerOnStartup": false
   },
   {
     "ServiceName": "video-generator-service",
@@ -85,6 +113,9 @@
     "Url": "/api/video-generator-service/v1/commercial/jobs/poll-due-audio-requests",
     "Method": "POST",
     "Pattern": "0/10 * * * * ?",
-    "Body": "{\"JobName\":\"VideoGeneratorPollDueAudioRequests\"}"
+    "Payload": {
+      "PeriodSeconds": 10
+    },
+    "TriggerOnStartup": false
   }
 ]
