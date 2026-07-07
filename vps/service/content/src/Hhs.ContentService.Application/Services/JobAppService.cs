@@ -12,7 +12,8 @@ namespace Hhs.ContentService.Application.Services;
 
 public sealed class JobAppService(
     IServiceProvider provider,
-    ICustomerVpSettingRepository customerVpSettingRepository
+    ICustomerVpSettingRepository customerVpSettingRepository,
+    ContentOperationRetryWorkerService contentOperationRetryWorkerService
 ) : ApplicationServiceBase(provider), IJobAppService
 {
     private readonly IFrameworkLogger _logger = provider.GetRequiredService<IFrameworkLogger>();
@@ -91,5 +92,18 @@ public sealed class JobAppService(
         ));
 
         await EventBus.PublishAsync(eventMessage: new TestQueryRequestedEto(CustomerId: Guid.CreateVersion7()), correlationId: correlationId);
+    }
+
+    public async Task RetryDueRequestsTriggerAsync(RetryDueRequestsTriggerDto input, string correlationId = null, CancellationToken cancellationToken = default)
+    {
+        _logger.FrameworkInfoLog(LogHelper.Generate(
+            message: $"{input.JobName} successfully triggered",
+            reference: new { RefContentId = input.JobName },
+            facility: "RETRY_DUE_REQUESTS",
+            correlationId: correlationId,
+            exception: null
+        ));
+
+        await contentOperationRetryWorkerService.RetryDueRequestsAsync(cancellationToken);
     }
 }

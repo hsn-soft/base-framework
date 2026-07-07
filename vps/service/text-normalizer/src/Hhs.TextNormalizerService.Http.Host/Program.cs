@@ -14,7 +14,6 @@ using Hhs.TextNormalizerService.Domain.Configuration.Providers.Outline;
 using Hhs.TextNormalizerService.Domain.Localization;
 using Hhs.TextNormalizerService.MongoDb;
 using Hhs.TextNormalizerService.MongoDb.Setup;
-using Hhs.TextNormalizerService.Workers;
 using HsnSoft.Base.AspNetCore.Localization;
 using HsnSoft.Base.Data;
 using HsnSoft.Base.PuppeTeer;
@@ -108,8 +107,7 @@ var outlinePollingSettings = builder.Configuration.GetSection(OutlinePollingSett
 
 builder.Services
     .AddSingleton(outlinePollingSettings)
-    .AddScoped<OutlineProviderPollingWorkerService>()
-    .AddHostedService<OutlineProviderPollingWorker>();
+    .AddScoped<OutlineProviderPollingWorkerService>();
 
 var normalizerRetrySettings = builder.Configuration.GetSection(nameof(NormalizerRetrySettings))
     .Get<NormalizerRetrySettings>() ?? new NormalizerRetrySettings();
@@ -118,8 +116,7 @@ builder.Services
     .AddSingleton(normalizerRetrySettings)
     .AddSingleton<RetrySettingsBase>(normalizerRetrySettings)
     .AddSingleton(_ => new RetryDelayCalculator(normalizerRetrySettings.DelaySeconds))
-    .AddScoped<NormalizerOperationRetryWorkerService>()
-    .AddHostedService<NormalizerRetryWorker>();
+    .AddScoped<NormalizerOperationRetryWorkerService>();
 
 // Swagger
 if (!builder.Environment.IsHostProduction())

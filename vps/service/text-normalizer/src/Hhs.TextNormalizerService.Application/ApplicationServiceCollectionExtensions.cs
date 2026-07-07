@@ -1,5 +1,6 @@
 using Hhs.Shared.Contracts.Cache;
 using Hhs.Shared.Contracts.EventInbox;
+using Hhs.TextNormalizerService.Application.Contracts.JobDomain;
 using Hhs.TextNormalizerService.Application.Infrastructure;
 using Hhs.TextNormalizerService.Application.Providers;
 using Hhs.TextNormalizerService.Application.Providers.Outline;
@@ -29,6 +30,7 @@ public static class ApplicationServiceCollectionExtensions
         // Must be Scoped or Transient => Cannot consume any scoped service
         services.AddScoped<IEventInboxMessageManager, ApplicationEventInboxMessageManager>();
         services.AddScoped<NormalizerOperationAppService>();
+        services.AddScoped<IJobAppService, JobAppService>();
 
         services.AddScoped<IContentScraper, PuppeteerContentScraper>();
 

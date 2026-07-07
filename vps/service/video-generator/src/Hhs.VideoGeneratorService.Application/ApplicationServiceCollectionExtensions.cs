@@ -1,5 +1,6 @@
 using Hhs.Shared.Contracts.Cache;
 using Hhs.Shared.Contracts.EventInbox;
+using Hhs.VideoGeneratorService.Application.Contracts.JobDomain;
 using Hhs.VideoGeneratorService.Application.Infrastructure;
 using Hhs.VideoGeneratorService.Application.Providers;
 using Hhs.VideoGeneratorService.Application.Providers.Audio;
@@ -23,13 +24,13 @@ public static class ApplicationServiceCollectionExtensions
     {
         services.AddAutoMapper(typeof(ApplicationAutoMapperProfile));
 
-        services.Configure<VideoRequestQuerySettings>(configuration.GetSection(nameof(VideoRequestQuerySettings)));
         services.Configure<VideoGenerationSettings>(configuration.GetSection(nameof(VideoGenerationSettings)));
         services.AddSingleton<IServicePermissionProvider, ApplicationPermissionProvider>();
 
         // Must be Scoped or Transient => Cannot consume any scoped service
         services.AddScoped<IEventInboxMessageManager, ApplicationEventInboxMessageManager>();
         services.AddScoped<VideoOperationAppService>();
+        services.AddScoped<IJobAppService, JobAppService>();
         services.AddScoped<IRemoteFileDownloader, RemoteFileDownloader>();
 
         // ============================================================================

@@ -11,7 +11,6 @@ using Hhs.VideoGeneratorService.Domain.Configuration;
 using Hhs.VideoGeneratorService.Domain.Localization;
 using Hhs.VideoGeneratorService.MongoDb;
 using Hhs.VideoGeneratorService.MongoDb.Setup;
-using Hhs.VideoGeneratorService.Workers;
 using Hhs.Shared.Helper.Retry;
 using HsnSoft.Base.AspNetCore.Localization;
 using HsnSoft.Base.Data;
@@ -91,15 +90,13 @@ var audioPollingSettings = builder.Configuration.GetSection(AudioPollingSettings
     .Get<AudioPollingSettings>() ?? new AudioPollingSettings();
 builder.Services
     .AddSingleton(audioPollingSettings)
-    .AddScoped<AudioProviderPollingWorkerService>()
-    .AddHostedService<AudioProviderPollingWorker>();
+    .AddScoped<AudioProviderPollingWorkerService>();
 
 var videoPollingSettings = builder.Configuration.GetSection(VideoPollingSettings.SectionName)
     .Get<VideoPollingSettings>() ?? new VideoPollingSettings();
 builder.Services
     .AddSingleton(videoPollingSettings)
-    .AddScoped<VideoProviderPollingWorkerService>()
-    .AddHostedService<VideoProviderPollingWorker>();
+    .AddScoped<VideoProviderPollingWorkerService>();
 
 var videoRetrySettings = builder.Configuration.GetSection(nameof(VideoRetrySettings))
     .Get<VideoRetrySettings>() ?? new VideoRetrySettings();
@@ -108,8 +105,7 @@ builder.Services
     .AddSingleton(videoRetrySettings)
     .AddSingleton<RetrySettingsBase>(videoRetrySettings)
     .AddSingleton(_ => new RetryDelayCalculator(videoRetrySettings.DelaySeconds))
-    .AddScoped<VideoOperationRetryWorkerService>()
-    .AddHostedService<VideoRetryWorker>();
+    .AddScoped<VideoOperationRetryWorkerService>();
 
 // Swagger
 if (!builder.Environment.IsHostProduction())

@@ -9,4 +9,6 @@ public interface IJobAppService
     Task TrendVideoGenerationQueryTriggerAsync(TrendVideoGenerationQueryTriggerDto input, [CanBeNull] string correlationId = null);
 
     Task TestQueryTriggerAsync(TestQueryTriggerDto input, [CanBeNull] string correlationId = null);
+
+    Task RetryDueRequestsTriggerAsync(RetryDueRequestsTriggerDto input, [CanBeNull] string correlationId = null, CancellationToken cancellationToken = default);
 }

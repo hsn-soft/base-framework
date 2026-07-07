@@ -33,6 +33,12 @@ public sealed class JobsController(
     public async Task TestAsync([FromBody] TestQueryTriggerDto input)
         => await jobAppService.TestQueryTriggerAsync(input, GetJobCorrelationId());
 
+    [HttpPost("retry-due-requests")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [EndpointConcurrencyLimit("content:jobs:retry-due-requests", defaultLimit: 1, ttlSeconds: 120)]
+    public async Task RetryDueRequestsAsync([FromBody] RetryDueRequestsTriggerDto input, CancellationToken cancellationToken)
+        => await jobAppService.RetryDueRequestsTriggerAsync(input, GetJobCorrelationId(), cancellationToken);
+
     #region Private Functions
 
     [NonAction]
