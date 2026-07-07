@@ -112,7 +112,8 @@ public sealed class VideoOperationAppService(
         videoRequest.Status = VideoStatusNames.Started;
         videoRequest.CurrentStep = EventNames.VideoOperationStarted;
 
-        var claimed = await ReplaceVideoAsync(videoRequest, cancellationToken, validPriorStatuses: [VideoStatusNames.Created]);
+        var claimed = await ReplaceVideoAsync(videoRequest, cancellationToken,
+            validPriorStatuses: [VideoStatusNames.Created, VideoStatusNames.WaitingRetry, VideoStatusNames.RetryEventPublished]);
         if (claimed == 0) return;
 
         _logger.FrameworkInfoLog(LogHelper.Generate(
@@ -123,14 +124,56 @@ public sealed class VideoOperationAppService(
             exception: null
         ));
 
-        var videoProvider = videoProviderResolver.Resolve(videoRequest.VideoProviderKey);
-
-        if (videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.ProviderCreatesAudio)
+        try
         {
+            var videoProvider = videoProviderResolver.Resolve(videoRequest.VideoProviderKey);
+
+            if (videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.ProviderCreatesAudio)
+            {
+                _logger.FrameworkInfoLog(LogHelper.Generate(
+                    message: EventNames.VideoAudioInternal,
+                    reference: new { videoRequest.ScopeKey, videoRequest.RefContentId, VideoRequestId = videoRequest.Id },
+                    facility: EventNames.VideoAudioInternal,
+                    correlationId: videoRequest.CorrelationId,
+                    exception: null
+                ));
+
+                await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+                    correlationId: videoRequest.CorrelationId,
+                    eventMessage: new AudioOperationStartedEto
+                    {
+                        RefContentId = videoRequest.RefContentId,
+                        RefContentType = videoRequest.RefContentType,
+                        VideoRequestId = videoRequest.Id,
+                        AudioMode = EventNames.VideoAudioInternal
+                    }
+                );
+
+                await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+                    correlationId: videoRequest.CorrelationId,
+                    eventMessage: new VideoProviderRequestStartedEto
+                    {
+                        RefContentId = videoRequest.RefContentId,
+                        RefContentType = videoRequest.RefContentType,
+                        VideoRequestId = videoRequest.Id,
+                        AudioCdnUrls = []
+                    }
+                );
+
+                return;
+            }
+
+            if (videoRequest.AudioProviderKey is null) throw new InvalidOperationException("AudioProviderKey is required.");
+
+            var audioProvider = audioProviderResolver.Resolve(videoRequest.AudioProviderKey);
+            if (audioProvider is null) throw new InvalidOperationException("Audio Provider not found.");
+
+            var audioItems = ExtractAudioItems(videoRequest.MediaInputJson);
+
             _logger.FrameworkInfoLog(LogHelper.Generate(
-                message: EventNames.VideoAudioInternal,
-                reference: new { videoRequest.ScopeKey, videoRequest.RefContentId, VideoRequestId = videoRequest.Id },
-                facility: EventNames.VideoAudioInternal,
+                message: EventNames.VideoAudioExternal,
+                reference: new { videoRequest.ScopeKey, videoRequest.RefContentId, VideoRequestId = videoRequest.Id, AudioCount = audioItems.Count },
+                facility: EventNames.VideoAudioExternal,
                 correlationId: videoRequest.CorrelationId,
                 exception: null
             ));
@@ -142,105 +185,77 @@ public sealed class VideoOperationAppService(
                     RefContentId = videoRequest.RefContentId,
                     RefContentType = videoRequest.RefContentType,
                     VideoRequestId = videoRequest.Id,
-                    AudioMode = EventNames.VideoAudioInternal
+                    AudioMode = EventNames.VideoAudioExternal
                 }
             );
 
-            await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
-                correlationId: videoRequest.CorrelationId,
-                eventMessage: new VideoProviderRequestStartedEto
+            foreach (var item in audioItems)
+            {
+                var audioOptions = new ListQueryOptions<AudioRequest> { Filter = x => x.VideoRequestId == videoRequest.Id && x.SortOrder == item.SortOrder };
+                var existingAudio = (await audioRequestRepository.GetListAsync(audioOptions, cancellationToken)).FirstOrDefault();
+
+                if (existingAudio is not null)
                 {
-                    RefContentId = videoRequest.RefContentId,
-                    RefContentType = videoRequest.RefContentType,
-                    VideoRequestId = videoRequest.Id,
-                    AudioCdnUrls = []
+                    _logger.FrameworkInfoLog(LogHelper.Generate(
+                        message: EventNames.AudioProviderRequestStarted,
+                        reference: new { videoRequest.ScopeKey, videoRequest.RefContentId, VideoRequestId = videoRequest.Id, AudioRequestId = existingAudio.Id, item.SortOrder },
+                        facility: EventNames.AudioProviderRequestStarted,
+                        correlationId: videoRequest.CorrelationId,
+                        exception: null
+                    ));
+
+                    await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+                        correlationId: videoRequest.CorrelationId,
+                        eventMessage: new AudioProviderRequestStartedEto { AudioRequestId = existingAudio.Id }
+                    );
+
+                    continue;
                 }
-            );
 
-            return;
-        }
+                var audioRequestId = Guid.CreateVersion7();
 
-        if (videoRequest.AudioProviderKey is null) throw new InvalidOperationException("AudioProviderKey is required.");
+                var audioRequest = new AudioRequest(
+                    audioRequestId,
+                    videoRequest.Id,
+                    videoRequest.RefContentId,
+                    videoRequest.RefContentType,
+                    videoRequest.ScopeKey,
+                    eventId,
+                    item.Text,
+                    videoRequest.AudioProviderKey,
+                    item.SortOrder)
+                {
+                    CorrelationId = videoRequest.CorrelationId,
+                    Status = AudioStatusNames.AudioRequestCreated,
+                    CurrentStep = EventNames.AudioRequestCreated
+                };
 
-        var audioProvider = audioProviderResolver.Resolve(videoRequest.AudioProviderKey);
-        if (audioProvider is null) throw new InvalidOperationException("Audio Provider not found.");
+                await audioRequestRepository.InsertAsync(audioRequest, cancellationToken);
 
-        var audioItems = ExtractAudioItems(videoRequest.MediaInputJson);
-
-        _logger.FrameworkInfoLog(LogHelper.Generate(
-            message: EventNames.VideoAudioExternal,
-            reference: new { videoRequest.ScopeKey, videoRequest.RefContentId, VideoRequestId = videoRequest.Id, AudioCount = audioItems.Count },
-            facility: EventNames.VideoAudioExternal,
-            correlationId: videoRequest.CorrelationId,
-            exception: null
-        ));
-
-        await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
-            correlationId: videoRequest.CorrelationId,
-            eventMessage: new AudioOperationStartedEto
-            {
-                RefContentId = videoRequest.RefContentId,
-                RefContentType = videoRequest.RefContentType,
-                VideoRequestId = videoRequest.Id,
-                AudioMode = EventNames.VideoAudioExternal
-            }
-        );
-
-        foreach (var item in audioItems)
-        {
-            var audioOptions = new ListQueryOptions<AudioRequest> { Filter = x => x.VideoRequestId == videoRequest.Id && x.SortOrder == item.SortOrder };
-            var existingAudio = (await audioRequestRepository.GetListAsync(audioOptions, cancellationToken)).FirstOrDefault();
-
-            if (existingAudio is not null)
-            {
                 _logger.FrameworkInfoLog(LogHelper.Generate(
-                    message: EventNames.AudioProviderRequestStarted,
-                    reference: new { videoRequest.ScopeKey, videoRequest.RefContentId, VideoRequestId = videoRequest.Id, AudioRequestId = existingAudio.Id, item.SortOrder },
-                    facility: EventNames.AudioProviderRequestStarted,
+                    message: EventNames.AudioRequestCreated,
+                    reference: new { videoRequest.ScopeKey, videoRequest.RefContentId, VideoRequestId = videoRequest.Id, AudioRequestId = audioRequestId, item.SortOrder },
+                    facility: EventNames.AudioRequestCreated,
                     correlationId: videoRequest.CorrelationId,
                     exception: null
                 ));
 
                 await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
                     correlationId: videoRequest.CorrelationId,
-                    eventMessage: new AudioProviderRequestStartedEto { AudioRequestId = existingAudio.Id }
+                    eventMessage: new AudioProviderRequestStartedEto { AudioRequestId = audioRequest.Id }
                 );
-
-                continue;
             }
-
-            var audioRequestId = Guid.CreateVersion7();
-
-            var audioRequest = new AudioRequest(
-                audioRequestId,
-                videoRequest.Id,
-                videoRequest.RefContentId,
-                videoRequest.RefContentType,
-                videoRequest.ScopeKey,
-                eventId,
-                item.Text,
-                videoRequest.AudioProviderKey,
-                item.SortOrder)
-            {
-                CorrelationId = videoRequest.CorrelationId,
-                Status = AudioStatusNames.AudioRequestCreated,
-                CurrentStep = EventNames.AudioRequestCreated
-            };
-
-            await audioRequestRepository.InsertAsync(audioRequest, cancellationToken);
-
-            _logger.FrameworkInfoLog(LogHelper.Generate(
-                message: EventNames.AudioRequestCreated,
-                reference: new { videoRequest.ScopeKey, videoRequest.RefContentId, VideoRequestId = videoRequest.Id, AudioRequestId = audioRequestId, item.SortOrder },
-                facility: EventNames.AudioRequestCreated,
-                correlationId: videoRequest.CorrelationId,
-                exception: null
-            ));
-
-            await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
-                correlationId: videoRequest.CorrelationId,
-                eventMessage: new AudioProviderRequestStartedEto { AudioRequestId = audioRequest.Id }
+        }
+        catch (Exception ex)
+        {
+            await HandleVideoExceptionAsync(
+                videoRequest,
+                EventNames.VideoOperationStarted,
+                ex,
+                cancellationToken
             );
+
+            return;
         }
     }
 
@@ -315,11 +330,6 @@ public sealed class VideoOperationAppService(
                 correlationId: audioRequest.CorrelationId,
                 exception: null
             ));
-
-            await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
-                correlationId: audioRequest.CorrelationId,
-                eventMessage: new AudioProviderPollingStartedEto { AudioRequestId = audioRequest.Id }
-            );
         }
         catch (Exception ex)
         {
@@ -332,32 +342,6 @@ public sealed class VideoOperationAppService(
 
             return;
         }
-    }
-
-    public async Task ScheduleAudioProviderPollingAsync(AudioProviderPollingStartedEto @event, CancellationToken cancellationToken = default)
-    {
-        var audioRequest = await GetAudioAsync(@event.AudioRequestId, cancellationToken);
-
-        if (audioRequest.Status is AudioStatusNames.AudioProviderCompleted or AudioStatusNames.Failed)
-            return;
-
-        audioRequest.Status = AudioStatusNames.AudioProviderPolling;
-        audioRequest.CurrentStep = EventNames.AudioProviderPollingStarted;
-
-        if (audioRequest.NextProviderPollAtUtc is null)
-            audioRequest.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(videoPollingSettings.ErrorRescheduleDelaySeconds);
-
-        audioRequest.LastError = null;
-
-        await ReplaceAudioAsync(audioRequest, cancellationToken);
-
-        _logger.FrameworkInfoLog(LogHelper.Generate(
-            message: EventNames.AudioProviderPollingStarted,
-            reference: new { AudioRequestId = audioRequest.Id, VideoRequestId = audioRequest.VideoRequestId, audioRequest.NextProviderPollAtUtc },
-            facility: EventNames.AudioProviderPollingStarted,
-            correlationId: audioRequest.CorrelationId,
-            exception: null
-        ));
     }
 
     public async Task HandleAudioProviderCompletedAsync(AudioProviderCompletedEto @event, [CanBeNull] string correlationId = null, CancellationToken cancellationToken = default)
@@ -432,12 +416,7 @@ public sealed class VideoOperationAppService(
         var audioRequest = await GetAudioAsync(@event.AudioRequestId, cancellationToken);
 
         if (audioRequest.Status == AudioStatusNames.AudioFileUploadCompleted)
-        {
-            await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
-                correlationId: audioRequest.CorrelationId,
-                eventMessage: new AudioFileUploadCompletedEto { VideoRequestId = audioRequest.VideoRequestId });
             return;
-        }
 
         try
         {
@@ -495,11 +474,6 @@ public sealed class VideoOperationAppService(
                 correlationId: audioRequest.CorrelationId,
                 exception: null
             ));
-
-            await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
-                correlationId: audioRequest.CorrelationId,
-                eventMessage: new AudioFileUploadCompletedEto { VideoRequestId = audioRequest.VideoRequestId }
-            );
         }
         catch (Exception ex)
         {
@@ -511,17 +485,6 @@ public sealed class VideoOperationAppService(
 
             return;
         }
-    }
-
-    public Task HandleAudioUploadCompletedAsync(AudioFileUploadCompletedEto @event, CancellationToken cancellationToken = default)
-    {
-        // Fan-in advancement (checking whether every sibling AudioRequest has reached a terminal
-        // state, and if so atomically claiming and advancing the parent VideoRequest to
-        // VideoProviderRequestStarting) is now owned exclusively by
-        // VideoOperationRetryWorkerService.AdvanceReadyVideoRequestsToProviderStartAsync, which
-        // re-derives readiness directly from current DB state every tick instead of reacting to
-        // this single event — immune to this exact event being lost to a redelivery race.
-        return Task.CompletedTask;
     }
 
     public async Task StartVideoProviderRequestAsync(VideoProviderRequestStartedEto @event, CancellationToken cancellationToken = default)
@@ -600,11 +563,6 @@ public sealed class VideoOperationAppService(
                 correlationId: videoRequest.CorrelationId,
                 exception: null
             ));
-
-            await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
-                correlationId: videoRequest.CorrelationId,
-                eventMessage: new VideoProviderPollingStartedEto { VideoRequestId = videoRequest.Id }
-            );
         }
         catch (Exception ex)
         {
@@ -617,32 +575,6 @@ public sealed class VideoOperationAppService(
 
             return;
         }
-    }
-
-    public async Task ScheduleVideoProviderPollingAsync(VideoProviderPollingStartedEto @event, CancellationToken cancellationToken = default)
-    {
-        var videoRequest = await GetVideoAsync(@event.VideoRequestId, cancellationToken);
-
-        if (videoRequest.Status is VideoStatusNames.VideoProviderCompleted or VideoStatusNames.Completed or VideoStatusNames.Failed)
-            return;
-
-        videoRequest.Status = VideoStatusNames.VideoProviderPolling;
-        videoRequest.CurrentStep = EventNames.VideoProviderPollingStarted;
-
-        if (videoRequest.NextProviderPollAtUtc is null)
-            videoRequest.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(videoPollingSettings.ErrorRescheduleDelaySeconds);
-
-        videoRequest.LastError = null;
-
-        await ReplaceVideoAsync(videoRequest, cancellationToken);
-
-        _logger.FrameworkInfoLog(LogHelper.Generate(
-            message: EventNames.VideoProviderPollingStarted,
-            reference: new { videoRequest.ScopeKey, videoRequest.RefContentId, VideoRequestId = videoRequest.Id, videoRequest.NextProviderPollAtUtc },
-            facility: EventNames.VideoProviderPollingStarted,
-            correlationId: videoRequest.CorrelationId,
-            exception: null
-        ));
     }
 
     public async Task HandleVideoProviderCompletedAsync(VideoProviderCompletedEto @event, [CanBeNull] string correlationId = null, CancellationToken cancellationToken = default)

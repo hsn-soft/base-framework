@@ -173,11 +173,6 @@ public sealed record AudioProviderRequestStartedEto : IIntegrationEventMessage
     public Guid AudioRequestId { get; init; }
 }
 
-public sealed record AudioProviderPollingStartedEto : IIntegrationEventMessage
-{
-    public Guid AudioRequestId { get; init; }
-}
-
 public sealed record AudioProviderCompletedEto : IIntegrationEventMessage
 {
     public Guid AudioRequestId { get; init; }
@@ -193,22 +188,12 @@ public sealed record AudioFileDownloadCompletedEto : IIntegrationEventMessage
     public Guid AudioRequestId { get; init; }
 }
 
-public sealed record AudioFileUploadCompletedEto : IIntegrationEventMessage
-{
-    public Guid VideoRequestId { get; init; }
-}
-
 public sealed record VideoProviderRequestStartedEto : IIntegrationEventMessage
 {
     public Guid RefContentId { get; init; }
     public ContentType RefContentType { get; init; }
     public Guid VideoRequestId { get; init; }
     public List<string> AudioCdnUrls { get; init; } = [];
-}
-
-public sealed record VideoProviderPollingStartedEto : IIntegrationEventMessage
-{
-    public Guid VideoRequestId { get; init; }
 }
 
 public sealed record VideoProviderCompletedEto : IIntegrationEventMessage

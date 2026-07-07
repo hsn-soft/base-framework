@@ -360,7 +360,14 @@ public sealed class VideoOperationRetryWorkerService(
             {
                 bool pollingRetry = false;
 
-                if (request.CurrentStep == EventNames.VideoProviderRequestStarted)
+                if (request.CurrentStep == EventNames.VideoOperationStarted)
+                {
+                    await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+                        correlationId: request.CorrelationId,
+                        eventMessage: new VideoRequestCreatedEto { RefContentId = request.RefContentId, RefContentType = request.RefContentType, VideoRequestId = request.Id }
+                    );
+                }
+                else if (request.CurrentStep == EventNames.VideoProviderRequestStarted)
                 {
                     var providerKeyResult = await customerVpSettingRepository.GetVideoProviderKeyByScopeKeyAsync(request.ScopeKey, cancellationToken);
                     if (!providerKeyResult.Key)
@@ -406,6 +413,14 @@ public sealed class VideoOperationRetryWorkerService(
                     await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
                         correlationId: request.CorrelationId,
                         eventMessage: new VideoFileDownloadStartedEto { VideoRequestId = request.Id, }
+                    );
+                }
+                else if (request.CurrentStep == EventNames.VideoFileUploadCompleted)
+                {
+                    // The file is already uploaded — just re-attempt publishing the final result.
+                    await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+                        correlationId: request.CorrelationId,
+                        eventMessage: new VideoFileUploadCompletedEto { VideoRequestId = request.Id, }
                     );
                 }
                 else if (request.CurrentStep == EventNames.VideoProviderPollingStarted)
