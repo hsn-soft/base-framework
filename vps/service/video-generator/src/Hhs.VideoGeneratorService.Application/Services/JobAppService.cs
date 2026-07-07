@@ -19,7 +19,7 @@ public sealed class JobAppService(
     {
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: $"{input.JobName} successfully triggered",
-            reference: new { RefContentId = input.JobName, input.JobPeriodDesc, input.NextTriggerTimeUtc },
+            reference: new { Type = "Job", Key = input.JobName, input.JobPeriodDesc, input.NextTriggerTimeUtc },
             facility: "RETRY_DUE_REQUESTS",
             correlationId: correlationId,
             exception: null
@@ -32,7 +32,7 @@ public sealed class JobAppService(
     {
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: $"{input.JobName} successfully triggered",
-            reference: new { RefContentId = input.JobName, input.JobPeriodDesc, input.NextTriggerTimeUtc },
+            reference: new { Type = "Job", Key = input.JobName, input.JobPeriodDesc, input.NextTriggerTimeUtc },
             facility: "POLL_DUE_VIDEO_REQUESTS",
             correlationId: correlationId,
             exception: null
@@ -45,7 +45,7 @@ public sealed class JobAppService(
     {
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: $"{input.JobName} successfully triggered",
-            reference: new { RefContentId = input.JobName, input.JobPeriodDesc, input.NextTriggerTimeUtc },
+            reference: new { Type = "Job", Key = input.JobName, input.JobPeriodDesc, input.NextTriggerTimeUtc },
             facility: "POLL_DUE_AUDIO_REQUESTS",
             correlationId: correlationId,
             exception: null

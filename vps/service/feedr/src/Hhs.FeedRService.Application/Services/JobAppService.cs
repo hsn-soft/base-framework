@@ -31,7 +31,7 @@ public sealed class JobAppService : ApplicationServiceBase, IJobAppService
 
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: $"{input.JobName} successfully triggered for ClientId:{str}",
-            reference: new { RefContentId = input.JobName, input.JobPeriodDesc, input.NextTriggerTimeUtc },
+            reference: new { Type = "Job", Key = input.JobName, input.JobPeriodDesc, input.NextTriggerTimeUtc },
             facility: "GENERATE_SUMMARY_REPORT",
             correlationId: correlationId,
             exception: null
@@ -44,7 +44,7 @@ public sealed class JobAppService : ApplicationServiceBase, IJobAppService
     {
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: $"{input.JobName} successfully triggered",
-            reference: new { RefContentId = input.JobName, input.JobPeriodDesc, input.NextTriggerTimeUtc },
+            reference: new { Type = "Job", Key = input.JobName, input.JobPeriodDesc, input.NextTriggerTimeUtc },
             facility: "TEST_QUERY",
             correlationId: correlationId,
             exception: null
@@ -58,7 +58,7 @@ public sealed class JobAppService : ApplicationServiceBase, IJobAppService
     {
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: $"{input.JobName} successfully triggered with MaxCount:{input.MaxCount}",
-            reference: new { RefContentId = input.JobName, input.JobPeriodDesc, input.NextTriggerTimeUtc },
+            reference: new { Type = "Job", Key = input.JobName, input.JobPeriodDesc, input.NextTriggerTimeUtc },
             facility: "DERIVE_PENDING_REPORTS",
             correlationId: correlationId,
             exception: null

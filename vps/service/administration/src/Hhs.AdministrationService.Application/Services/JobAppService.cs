@@ -20,7 +20,7 @@ public sealed class JobAppService : ApplicationServiceBase, IJobAppService
     {
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: $"{input.JobName} successfully triggered",
-            reference: new { RefContentId = input.JobName, input.JobPeriodDesc, input.NextTriggerTimeUtc },
+            reference: new { Type = "Job", Key = input.JobName, input.JobPeriodDesc, input.NextTriggerTimeUtc },
             facility: "JOB_TRIGGERED_SUCCESS",
             correlationId: correlationId,
             exception: null
