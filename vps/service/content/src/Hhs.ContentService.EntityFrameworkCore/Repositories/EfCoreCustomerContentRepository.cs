@@ -56,6 +56,7 @@ public sealed class EfCoreCustomerContentRepository(
                 .SetProperty(a => a.NormalizeRequestId, normalizedRequestId)
                 .SetProperty(a => a.NormalizeStatus, normalizeStatus)
                 .SetProperty(a => a.LastFacility, normalizeCurrentStep)
+                .SetProperty(a => a.LastError, (string?)null)
         );
 
     public async Task SetScrapeResultsAsync(Guid id, Guid normalizedRequestId, string normalizeStatus, string normalizeCurrentStep, DateTime? scrapeTime)
@@ -75,6 +76,7 @@ public sealed class EfCoreCustomerContentRepository(
                 .SetProperty(a => a.NormalizeRequestId, normalizedRequestId)
                 .SetProperty(a => a.NormalizeStatus, normalizeStatus)
                 .SetProperty(a => a.LastFacility, normalizeCurrentStep)
+                .SetProperty(a => a.LastError, (string)null)
                 .SetProperty(a => a.ScrapReleaseTimeUtc, scrapeTime)
         );
     }
@@ -84,6 +86,7 @@ public sealed class EfCoreCustomerContentRepository(
             s => s
                 .SetProperty(a => a.NormalizeStatus, normalizeStatus)
                 .SetProperty(a => a.LastFacility, normalizeCurrentStep)
+                .SetProperty(a => a.LastError, (string)null)
         );
 
     public async Task SetVideoReferenceAsync(Guid id, Guid videoRequestId)
@@ -92,6 +95,7 @@ public sealed class EfCoreCustomerContentRepository(
                 .SetProperty(a => a.VideoRequestId, videoRequestId)
                 .SetProperty(a => a.VideoStatus, MediaStatusNames.Created)
                 .SetProperty(a => a.LastFacility, EventNames.VideoRequestCreated)
+                .SetProperty(a => a.LastError, (string)null)
         );
 
     public async Task SetAudioOperationStartedAsync(Guid id, string audioMode)
@@ -99,6 +103,7 @@ public sealed class EfCoreCustomerContentRepository(
             s => s
                 .SetProperty(a => a.VideoStatus, MediaStatusNames.AudioStarted)
                 .SetProperty(a => a.LastFacility, audioMode)
+                .SetProperty(a => a.LastError, (string)null)
         );
 
     public async Task SetVideoProviderStartedAsync(Guid id)
@@ -106,6 +111,7 @@ public sealed class EfCoreCustomerContentRepository(
             s => s
                 .SetProperty(a => a.VideoStatus, MediaStatusNames.VideoProviderStarted)
                 .SetProperty(a => a.LastFacility, EventNames.VideoProviderRequestStarted)
+                .SetProperty(a => a.LastError, (string)null)
         );
 
     public async Task SetVideoGenerationApprovedAsync(Guid id) =>

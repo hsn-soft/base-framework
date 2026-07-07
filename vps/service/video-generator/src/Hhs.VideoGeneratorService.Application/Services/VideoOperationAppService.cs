@@ -15,6 +15,7 @@ using Hhs.VideoGeneratorService.Domain.SettingDomain.Repositories;
 using HsnSoft.Base.Domain.Models;
 using HsnSoft.Base.Logging;
 using HsnSoft.Base.Logging.Abstracts;
+using HsnSoft.Base.Text;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
@@ -771,7 +772,7 @@ public sealed class VideoOperationAppService(
                     ? customerIdEl.GetGuid()
                     : null,
                 SortOrder = x.GetProperty("sortOrder").GetInt32(),
-                Text = x.GetProperty("text").GetString() ?? string.Empty
+                Text = StringHelper.Base64Decode(x.GetProperty("encodedText").GetString() ?? string.Empty)
             })
             .ToList();
     }

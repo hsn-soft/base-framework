@@ -1313,9 +1313,9 @@ public sealed class NormalizerOperationAppService(
             {
                 sortOrder = 1,
                 customerContentId,
-                text = scrapeText,
-                title = scrapeTitle,
-                imageUrl = scrapeImageUrl,
+                encodedText = EncodeOrNull(scrapeText),
+                encodedTitle = EncodeOrNull(scrapeTitle),
+                encodedImageUrl = EncodeOrNull(scrapeImageUrl),
                 outline = outlineScript
             }
         };
@@ -1331,15 +1331,17 @@ public sealed class NormalizerOperationAppService(
                 sortOrder = index + 1,
                 customerContentId = item.CustomerContentId,
                 contentKey = item.ContentKey,
-                title = item.ScrapingResult?.Title,
-                text = item.ScrapingResult?.Details,
-                imageUrl = item.ScrapingResult?.ImageUrl,
+                encodedTitle = EncodeOrNull(item.ScrapingResult?.Title),
+                encodedText = EncodeOrNull(item.ScrapingResult?.Details),
+                encodedImageUrl = EncodeOrNull(item.ScrapingResult?.ImageUrl),
                 outline = item.OutlineResult?.OutlinedData
             })
             .ToList();
 
         return JsonConvert.SerializeObject(new { audioItems });
     }
+
+    private static string? EncodeOrNull(string? value) => value is null ? null : StringHelper.Base64Encode(value);
 
     /// <summary>
     /// Called by NormalizerOperationRetryWorkerService.AdvanceReadyAnalysisContentsToResultAsync

@@ -6,6 +6,7 @@ using Hhs.Shared.Helper.Enums;
 using Hhs.Shared.Helper.Providers;
 using Hhs.VideoGeneratorService.Domain.Configuration.Providers.Video;
 using Hhs.VideoGeneratorService.Domain.SettingDomain.Entities;
+using HsnSoft.Base.Text;
 
 namespace Hhs.VideoGeneratorService.Application.Providers.Video;
 
@@ -159,8 +160,12 @@ public sealed class VideoCreatomateProvider : IVideoProvider
             .EnumerateArray()
             .Select(x => new CreatomateInputItem
             {
-                Title = x.TryGetProperty("title", out var titleEl) ? titleEl.GetString() : null,
-                ImageUrl = x.TryGetProperty("imageUrl", out var imageEl) ? imageEl.GetString() : null
+                Title = x.TryGetProperty("encodedTitle", out var titleEl) && titleEl.GetString() is { } encodedTitle
+                    ? StringHelper.Base64Decode(encodedTitle)
+                    : null,
+                ImageUrl = x.TryGetProperty("encodedImageUrl", out var imageEl) && imageEl.GetString() is { } encodedImageUrl
+                    ? StringHelper.Base64Decode(encodedImageUrl)
+                    : null
             })
             .ToList();
     }
