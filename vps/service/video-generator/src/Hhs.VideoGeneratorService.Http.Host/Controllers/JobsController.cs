@@ -34,11 +34,11 @@ public sealed class JobsController(
     public async Task PollDueAudioRequestsAsync([FromBody] PollDueAudioRequestsTriggerDto input, CancellationToken cancellationToken)
         => await jobAppService.PollDueAudioRequestsTriggerAsync(input, GetJobCorrelationId(), cancellationToken);
 
-    [HttpPost("advance-ready-video-requests")]
+    [HttpPost("check-ready-audio-requests-to-video")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    [EndpointConcurrencyLimit("video-generator:jobs:advance-ready-video-requests", defaultLimit: 1, ttlSeconds: 120)]
-    public async Task AdvanceReadyVideoRequestsAsync([FromBody] AdvanceReadyVideoRequestsTriggerDto input, CancellationToken cancellationToken)
-        => await jobAppService.AdvanceReadyVideoRequestsTriggerAsync(input, GetJobCorrelationId(), cancellationToken);
+    [EndpointConcurrencyLimit("video-generator:jobs:check-ready-audio-requests-to-video", defaultLimit: 1, ttlSeconds: 120)]
+    public async Task CheckReadyAudioRequestsToVideoAsync([FromBody] CheckReadyAudioRequestsToVideoTriggerDto input, CancellationToken cancellationToken)
+        => await jobAppService.CheckReadyAudioRequestsToVideoTriggerAsync(input, GetJobCorrelationId(), cancellationToken);
 
     #region Private Functions
 

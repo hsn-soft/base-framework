@@ -86,6 +86,28 @@
     "TriggerOnStartup": false
   },
   {
+    "ServiceName": "text-normalizer-service",
+    "JobName": "TextNormalizerCheckReadyAnalysisContentsToOutline",
+    "Url": "/api/text-normalizer-service/v1/commercial/jobs/check-ready-analysis-contents-to-outline",
+    "Method": "POST",
+    "Pattern": "0/5 * * * * ?",
+    "Payload": {
+      "PeriodSeconds": 5
+    },
+    "TriggerOnStartup": false
+  },
+  {
+    "ServiceName": "text-normalizer-service",
+    "JobName": "TextNormalizerCheckReadyAnalysisContentsToResult",
+    "Url": "/api/text-normalizer-service/v1/commercial/jobs/check-ready-analysis-contents-to-result",
+    "Method": "POST",
+    "Pattern": "0/5 * * * * ?",
+    "Payload": {
+      "PeriodSeconds": 5
+    },
+    "TriggerOnStartup": false
+  },
+  {
     "ServiceName": "video-generator-service",
     "JobName": "VideoGeneratorRetryDueRequests",
     "Url": "/api/video-generator-service/v1/commercial/jobs/retry-due-requests",
@@ -120,8 +142,8 @@
   },
   {
     "ServiceName": "video-generator-service",
-    "JobName": "VideoGeneratorAdvanceReadyVideoRequests",
-    "Url": "/api/video-generator-service/v1/commercial/jobs/advance-ready-video-requests",
+    "JobName": "VideoGeneratorCheckReadyAudioRequestsToVideo",
+    "Url": "/api/video-generator-service/v1/commercial/jobs/check-ready-audio-requests-to-video",
     "Method": "POST",
     "Pattern": "0/5 * * * * ?",
     "Payload": {

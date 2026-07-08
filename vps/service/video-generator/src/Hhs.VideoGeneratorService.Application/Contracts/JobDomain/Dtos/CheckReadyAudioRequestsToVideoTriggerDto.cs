@@ -1,6 +1,6 @@
 namespace Hhs.VideoGeneratorService.Application.Contracts.JobDomain.Dtos;
 
-public sealed record AdvanceReadyVideoRequestsTriggerDto(string JobName, string JobPeriodDesc = null, DateTime? NextTriggerTimeUtc = null)
+public sealed record CheckReadyAudioRequestsToVideoTriggerDto(string JobName, string JobPeriodDesc = null, DateTime? NextTriggerTimeUtc = null)
 {
     public string JobName { get; } = JobName;
     public string JobPeriodDesc { get; } = JobPeriodDesc;

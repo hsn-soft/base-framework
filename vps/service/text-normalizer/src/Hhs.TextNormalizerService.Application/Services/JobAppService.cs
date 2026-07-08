@@ -40,4 +40,30 @@ public sealed class JobAppService(
 
         await outlineProviderPollingWorkerService.PollDueOutlineRequestsAsync(cancellationToken);
     }
+
+    public async Task CheckReadyAnalysisContentsToOutlineTriggerAsync(CheckReadyAnalysisContentsToOutlineTriggerDto input, string correlationId = null, CancellationToken cancellationToken = default)
+    {
+        _logger.FrameworkInfoLog(LogHelper.Generate(
+            message: $"{input.JobName} successfully triggered",
+            reference: new { Type = "Job", Key = input.JobName, input.JobPeriodDesc, input.NextTriggerTimeUtc },
+            facility: Facilities.CheckReadyAnalysisContentsToOutlineTriggered,
+            correlationId: correlationId,
+            exception: null
+        ));
+
+        await normalizerOperationRetryWorkerService.CheckReadyAnalysisContentsToOutlineAsync(cancellationToken);
+    }
+
+    public async Task CheckReadyAnalysisContentsToResultTriggerAsync(CheckReadyAnalysisContentsToResultTriggerDto input, string correlationId = null, CancellationToken cancellationToken = default)
+    {
+        _logger.FrameworkInfoLog(LogHelper.Generate(
+            message: $"{input.JobName} successfully triggered",
+            reference: new { Type = "Job", Key = input.JobName, input.JobPeriodDesc, input.NextTriggerTimeUtc },
+            facility: Facilities.CheckReadyAnalysisContentsToResultTriggered,
+            correlationId: correlationId,
+            exception: null
+        ));
+
+        await normalizerOperationRetryWorkerService.CheckReadyAnalysisContentsToResultAsync(cancellationToken);
+    }
 }

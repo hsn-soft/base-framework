@@ -28,6 +28,18 @@ public sealed class JobsController(
     public async Task PollDueOutlineRequestsAsync([FromBody] PollDueOutlineRequestsTriggerDto input, CancellationToken cancellationToken)
         => await jobAppService.PollDueOutlineRequestsTriggerAsync(input, GetJobCorrelationId(), cancellationToken);
 
+    [HttpPost("check-ready-analysis-contents-to-outline")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [EndpointConcurrencyLimit("text-normalizer:jobs:check-ready-analysis-contents-to-outline", defaultLimit: 1, ttlSeconds: 120)]
+    public async Task CheckReadyAnalysisContentsToOutlineAsync([FromBody] CheckReadyAnalysisContentsToOutlineTriggerDto input, CancellationToken cancellationToken)
+        => await jobAppService.CheckReadyAnalysisContentsToOutlineTriggerAsync(input, GetJobCorrelationId(), cancellationToken);
+
+    [HttpPost("check-ready-analysis-contents-to-result")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [EndpointConcurrencyLimit("text-normalizer:jobs:check-ready-analysis-contents-to-result", defaultLimit: 1, ttlSeconds: 120)]
+    public async Task CheckReadyAnalysisContentsToResultAsync([FromBody] CheckReadyAnalysisContentsToResultTriggerDto input, CancellationToken cancellationToken)
+        => await jobAppService.CheckReadyAnalysisContentsToResultTriggerAsync(input, GetJobCorrelationId(), cancellationToken);
+
     #region Private Functions
 
     [NonAction]

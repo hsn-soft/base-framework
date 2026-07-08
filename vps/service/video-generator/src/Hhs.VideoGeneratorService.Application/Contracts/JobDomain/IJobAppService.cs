@@ -8,5 +8,5 @@ public interface IJobAppService
     Task RetryDueRequestsTriggerAsync(RetryDueRequestsTriggerDto input, [CanBeNull] string correlationId = null, CancellationToken cancellationToken = default);
     Task PollDueVideoRequestsTriggerAsync(PollDueVideoRequestsTriggerDto input, [CanBeNull] string correlationId = null, CancellationToken cancellationToken = default);
     Task PollDueAudioRequestsTriggerAsync(PollDueAudioRequestsTriggerDto input, [CanBeNull] string correlationId = null, CancellationToken cancellationToken = default);
-    Task AdvanceReadyVideoRequestsTriggerAsync(AdvanceReadyVideoRequestsTriggerDto input, [CanBeNull] string correlationId = null, CancellationToken cancellationToken = default);
+    Task CheckReadyAudioRequestsToVideoTriggerAsync(CheckReadyAudioRequestsToVideoTriggerDto input, [CanBeNull] string correlationId = null, CancellationToken cancellationToken = default);
 }

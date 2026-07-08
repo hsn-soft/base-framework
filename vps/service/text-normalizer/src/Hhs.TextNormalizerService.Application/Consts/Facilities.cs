@@ -24,4 +24,6 @@ public static class Facilities
 
     public const string RetryDueRequestsTriggered = "RETRY_DUE_REQUESTS";
     public const string PollDueOutlineRequestsTriggered = "POLL_DUE_OUTLINE_REQUESTS";
+    public const string CheckReadyAnalysisContentsToOutlineTriggered = "CHECK_READY_ANALYSIS_CONTENTS_TO_OUTLINE";
+    public const string CheckReadyAnalysisContentsToResultTriggered = "CHECK_READY_ANALYSIS_CONTENTS_TO_RESULT";
 }

@@ -50,12 +50,13 @@ public sealed class VideoOperationRetryWorkerService(
     /// always a safe no-op. Triggered on its own schedule (not part of RetryDueRequestsAsync) since
     /// this is a happy-path fan-in gate, not error recovery.
     /// </summary>
-    public async Task AdvanceReadyVideoRequestsToProviderStartAsync(CancellationToken cancellationToken)
+    public async Task CheckReadyAudioRequestsToVideoAsync(CancellationToken cancellationToken)
     {
         var options = new ListQueryOptions<VideoRequest>
         {
             Filter = x => x.Status == VideoStatusNames.Started,
-            MaxResultCount = retrySettings.BatchSize
+            MaxResultCount = retrySettings.BatchSize,
+            OrderByEntity = o=>o.OrderBy(x => x.CreationTime)
         };
         var candidates = await videoRequestRepository.GetListAsync(options, cancellationToken);
 

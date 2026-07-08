@@ -33,8 +33,6 @@ public sealed class NormalizerOperationRetryWorkerService(
         var now = DateTime.UtcNow;
 
         await ResetStaleStartedInboxMessagesAsync(now, cancellationToken);
-        await AdvanceReadyAnalysisItemsToOutlineAsync(cancellationToken);
-        await AdvanceReadyAnalysisContentsToResultAsync(cancellationToken);
         await RetryCustomerRequestsAsync(now, cancellationToken);
         await RetryAnalysisRequestsAsync(now, cancellationToken);
     }
@@ -47,14 +45,17 @@ public sealed class NormalizerOperationRetryWorkerService(
     /// needed here: this only fans an item out to AnalysisItemOutlineStartedEto while its own
     /// OutlineStatus is still NotStarted, and StartAnalysisItemOutlineAsync's own per-item CAS
     /// (NotStarted/WaitingRetry -&gt; Started) makes a duplicate fan-out across ticks a safe no-op.
+    /// Triggered on its own schedule (not part of RetryDueRequestsAsync) since this is a
+    /// happy-path fan-in gate, not error recovery.
     /// </summary>
-    private async Task AdvanceReadyAnalysisItemsToOutlineAsync(CancellationToken cancellationToken)
+    public async Task CheckReadyAnalysisContentsToOutlineAsync(CancellationToken cancellationToken)
     {
         var options = new ListQueryOptions<AnalysisContentNormalizedRequest>
         {
             Filter = x => x.Status != NormalizeStatusNames.Completed && x.Status != NormalizeStatusNames.Failed &&
                           x.Items.Any(i => i.ScrapingStatus == ScrapingStatusNames.Completed && i.OutlineStatus == OutlineStatusNames.NotStarted),
-            MaxResultCount = retrySettings.BatchSize
+            MaxResultCount = retrySettings.BatchSize,
+            OrderByEntity = o=>o.OrderBy(x => x.CreationTime)
         };
 
         var candidates = await analysisRepository.GetListAsync(options, cancellationToken).ConfigureAwait(false);
@@ -93,14 +94,18 @@ public sealed class NormalizerOperationRetryWorkerService(
     /// CreateAnalysisContentNormalizeRequestAsync, Completed/Failed only here) — every per-item
     /// operation elsewhere only ever touches Items.$.* fields, never the parent's own Status,
     /// so this Status!=Completed/Failed filter can never be short-circuited by an unrelated
-    /// sibling's retry/poll/fail write.
+    /// sibling's retry/poll/fail write. Triggered on its own schedule (not part of
+    /// RetryDueRequestsAsync) since this is a happy-path fan-in gate, not error recovery.
     /// </summary>
-    private async Task AdvanceReadyAnalysisContentsToResultAsync(CancellationToken cancellationToken)
+    public async Task CheckReadyAnalysisContentsToResultAsync(CancellationToken cancellationToken)
     {
         var options = new ListQueryOptions<AnalysisContentNormalizedRequest>
         {
-            Filter = x => x.Status != NormalizeStatusNames.Completed && x.Status != NormalizeStatusNames.Failed,
-            MaxResultCount = retrySettings.BatchSize
+            Filter = x => x.Status != NormalizeStatusNames.Completed && x.Status != NormalizeStatusNames.Failed &&
+                          x.Items.Count > 0 &&
+                          x.Items.All(i => i.OutlineStatus == OutlineStatusNames.Completed || i.OutlineStatus == OutlineStatusNames.Failed),
+            MaxResultCount = retrySettings.BatchSize,
+            OrderByEntity = o=>o.OrderBy(x => x.CreationTime)
         };
 
         var candidates = await analysisRepository.GetListAsync(options, cancellationToken).ConfigureAwait(false);

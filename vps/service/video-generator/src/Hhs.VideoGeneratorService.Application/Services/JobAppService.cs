@@ -55,16 +55,16 @@ public sealed class JobAppService(
         await audioProviderPollingWorkerService.PollDueAudioRequestsAsync(cancellationToken);
     }
 
-    public async Task AdvanceReadyVideoRequestsTriggerAsync(AdvanceReadyVideoRequestsTriggerDto input, string correlationId = null, CancellationToken cancellationToken = default)
+    public async Task CheckReadyAudioRequestsToVideoTriggerAsync(CheckReadyAudioRequestsToVideoTriggerDto input, string correlationId = null, CancellationToken cancellationToken = default)
     {
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: $"{input.JobName} successfully triggered",
             reference: new { Type = "Job", Key = input.JobName, input.JobPeriodDesc, input.NextTriggerTimeUtc },
-            facility: Facilities.AdvanceReadyVideoRequestsTriggered,
+            facility: Facilities.CheckReadyAudioRequestsToVideoTriggered,
             correlationId: correlationId,
             exception: null
         ));
 
-        await videoOperationRetryWorkerService.AdvanceReadyVideoRequestsToProviderStartAsync(cancellationToken);
+        await videoOperationRetryWorkerService.CheckReadyAudioRequestsToVideoAsync(cancellationToken);
     }
 }

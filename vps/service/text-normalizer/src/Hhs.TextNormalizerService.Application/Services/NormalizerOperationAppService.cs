@@ -1379,7 +1379,7 @@ public sealed class NormalizerOperationAppService(
     private static string? EncodeOrNull(string? value) => value is null ? null : StringHelper.Base64Encode(value);
 
     /// <summary>
-    /// Called by NormalizerOperationRetryWorkerService.AdvanceReadyAnalysisContentsToResultAsync
+    /// Called by NormalizerOperationRetryWorkerService.CheckReadyAnalysisContentsToResultAsync
     /// after it has atomically claimed the parent, immediately before publishing the result — so
     /// this persists its own per-item writes (there's no longer a caller-side whole-document
     /// replace to piggy-back on).
