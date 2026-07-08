@@ -1,3 +1,4 @@
+using Hhs.FeedRService.Application.Consts;
 using Hhs.FeedRService.Application.Contracts.DashboardDomain;
 using Hhs.FeedRService.Application.ReportingDomain;
 using Hhs.FeedRService.Domain.ConfigurationDomain.Repositories.MongoDB;
@@ -66,8 +67,8 @@ public sealed class ReportPersistenceService : ApplicationServiceBase, IReportPe
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
                 message: $"Raw Google Ad Manager response persisted to MongoDB. Id={entity.Id}, Rows={rows.Count}",
-                reference: new { RawResponseId = entity.Id, RowCount = rows.Count, AdUnitId = adUnitId },
-                facility: "REPORT_PERSISTENCE",
+                reference: new { Type = nameof(RawGoogleAdManagerResponse), Key = entity.Id, RefType = "AdUnit", RefKey = adUnitId, RowCount = rows.Count },
+                facility: Facilities.ReportPersisted,
                 correlationId: requestId,
                 exception: null));
         }
@@ -192,8 +193,8 @@ public sealed class ReportPersistenceService : ApplicationServiceBase, IReportPe
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
                 message: $"Derived raw response {raw.Id} into {derivedIds.Count} DailyReportResponse record(s).",
-                reference: new { RawResponseId = raw.Id, DerivedCount = derivedIds.Count },
-                facility: "REPORT_DERIVATION",
+                reference: new { Type = nameof(RawGoogleAdManagerResponse), Key = raw.Id, DerivedCount = derivedIds.Count },
+                facility: Facilities.ReportDerived,
                 correlationId: raw.RequestId,
                 exception: null));
         }
@@ -250,7 +251,7 @@ public sealed class ReportPersistenceService : ApplicationServiceBase, IReportPe
             {
                 _logger.FrameworkInfoLog(LogHelper.Generate(
                     message: $"[CLIENT_LOOKUP] CustomerConfiguration loaded {lookup.Count} AdUnitId mapping(s) for network={networkCode}. adUnitCodes=[{string.Join(", ", lookup.Keys)}]",
-                    reference: null, facility: "REPORT_DERIVATION", correlationId: null, exception: null));
+                    reference: null, facility: Facilities.ReportDerived, correlationId: null, exception: null));
             }
             else
             {

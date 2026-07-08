@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using Hhs.Shared.Contracts.Events;
 using Hhs.Shared.Helper;
+using Hhs.VideoGeneratorService.Application.Consts;
 using Hhs.VideoGeneratorService.Application.Providers;
 using Hhs.VideoGeneratorService.Domain.Configuration;
 using Hhs.VideoGeneratorService.Domain.MediaDomain.Entities;
@@ -62,8 +63,8 @@ public sealed class AudioProviderPollingWorkerService(
 
                     _logger.FrameworkErrorLog(LogHelper.Generate(
                         message: EventNames.AudioProviderPollingStarted,
-                        reference: new { AudioRequestId = request.Id, VideoRequestId = request.VideoRequestId, request.ProviderPollingCount },
-                        facility: EventNames.AudioProviderPollingStarted,
+                        reference: new { request.ScopeKey, Type = nameof(AudioRequest), Key = request.Id, RefType = request.RefContentType.ToString(), RefKey = request.RefContentId, VideoRequestId = request.VideoRequestId, request.ProviderPollingCount },
+                        facility: Facilities.StepFailed,
                         correlationId: request.CorrelationId,
                         exception: null
                     ));
@@ -103,8 +104,8 @@ public sealed class AudioProviderPollingWorkerService(
 
                     _logger.FrameworkErrorLog(LogHelper.Generate(
                         message: EventNames.AudioProviderPollingStarted,
-                        reference: new { AudioRequestId = request.Id, VideoRequestId = request.VideoRequestId, request.ProviderPollingCount, request.LastError },
-                        facility: EventNames.AudioProviderPollingStarted,
+                        reference: new { request.ScopeKey, Type = nameof(AudioRequest), Key = request.Id, RefType = request.RefContentType.ToString(), RefKey = request.RefContentId, VideoRequestId = request.VideoRequestId, request.ProviderPollingCount, request.LastError },
+                        facility: Facilities.StepFailed,
                         correlationId: request.CorrelationId,
                         exception: null
                     ));
@@ -134,8 +135,8 @@ public sealed class AudioProviderPollingWorkerService(
 
                     _logger.FrameworkInfoLog(LogHelper.Generate(
                         message: EventNames.AudioProviderPollingStarted,
-                        reference: new { AudioRequestId = request.Id, VideoRequestId = request.VideoRequestId, Attempt = request.ProviderPollingCount, MaxAttempts = pollingSettings.MaxAttempts, request.NextProviderPollAtUtc },
-                        facility: EventNames.AudioProviderPollingStarted,
+                        reference: new { request.ScopeKey, Type = nameof(AudioRequest), Key = request.Id, RefType = request.RefContentType.ToString(), RefKey = request.RefContentId, VideoRequestId = request.VideoRequestId, Attempt = request.ProviderPollingCount, MaxAttempts = pollingSettings.MaxAttempts, request.NextProviderPollAtUtc },
+                        facility: Facilities.AudioProviderPollingStarted,
                         correlationId: request.CorrelationId,
                         exception: null
                     ));
@@ -159,8 +160,8 @@ public sealed class AudioProviderPollingWorkerService(
 
                 _logger.FrameworkInfoLog(LogHelper.Generate(
                     message: EventNames.AudioProviderCompleted,
-                    reference: new { AudioRequestId = request.Id, VideoRequestId = request.VideoRequestId, TotalPolls = request.ProviderPollingCount },
-                    facility: EventNames.AudioProviderCompleted,
+                    reference: new { request.ScopeKey, Type = nameof(AudioRequest), Key = request.Id, RefType = request.RefContentType.ToString(), RefKey = request.RefContentId, VideoRequestId = request.VideoRequestId, TotalPolls = request.ProviderPollingCount },
+                    facility: Facilities.AudioProviderCompleted,
                     correlationId: request.CorrelationId,
                     exception: null
                 ));
@@ -185,8 +186,8 @@ public sealed class AudioProviderPollingWorkerService(
 
                     _logger.FrameworkErrorLog(LogHelper.Generate(
                         message: EventNames.AudioProviderPollingStarted,
-                        reference: new { AudioRequestId = request.Id, VideoRequestId = request.VideoRequestId, request.ProviderPollingCount },
-                        facility: EventNames.AudioProviderPollingStarted,
+                        reference: new { request.ScopeKey, Type = nameof(AudioRequest), Key = request.Id, RefType = request.RefContentType.ToString(), RefKey = request.RefContentId, VideoRequestId = request.VideoRequestId, request.ProviderPollingCount },
+                        facility: Facilities.StepFailed,
                         correlationId: request.CorrelationId,
                         exception: ex
                     ));
@@ -211,8 +212,8 @@ public sealed class AudioProviderPollingWorkerService(
 
                     _logger.FrameworkErrorLog(LogHelper.Generate(
                         message: EventNames.RetryScheduled,
-                        reference: new { AudioRequestId = request.Id, VideoRequestId = request.VideoRequestId, FailedStep = EventNames.AudioProviderPollingStarted, request.ProviderPollingCount, request.NextProviderPollAtUtc },
-                        facility: EventNames.RetryScheduled,
+                        reference: new { request.ScopeKey, Type = nameof(AudioRequest), Key = request.Id, RefType = request.RefContentType.ToString(), RefKey = request.RefContentId, VideoRequestId = request.VideoRequestId, FailedStep = EventNames.AudioProviderPollingStarted, request.ProviderPollingCount, request.NextProviderPollAtUtc },
+                        facility: Facilities.RetryScheduled,
                         correlationId: request.CorrelationId,
                         exception: ex
                     ));

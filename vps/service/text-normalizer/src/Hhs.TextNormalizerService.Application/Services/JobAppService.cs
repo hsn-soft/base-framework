@@ -1,3 +1,4 @@
+using Hhs.TextNormalizerService.Application.Consts;
 using Hhs.TextNormalizerService.Application.Contracts.JobDomain;
 using Hhs.TextNormalizerService.Application.Contracts.JobDomain.Dtos;
 using HsnSoft.Base.Logging;
@@ -19,7 +20,7 @@ public sealed class JobAppService(
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: $"{input.JobName} successfully triggered",
             reference: new { Type = "Job", Key = input.JobName, input.JobPeriodDesc, input.NextTriggerTimeUtc },
-            facility: "RETRY_DUE_REQUESTS",
+            facility: Facilities.RetryDueRequestsTriggered,
             correlationId: correlationId,
             exception: null
         ));
@@ -32,7 +33,7 @@ public sealed class JobAppService(
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: $"{input.JobName} successfully triggered",
             reference: new { Type = "Job", Key = input.JobName, input.JobPeriodDesc, input.NextTriggerTimeUtc },
-            facility: "POLL_DUE_OUTLINE_REQUESTS",
+            facility: Facilities.PollDueOutlineRequestsTriggered,
             correlationId: correlationId,
             exception: null
         ));

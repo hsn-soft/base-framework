@@ -1,5 +1,6 @@
 using System.Linq.Expressions;
 using Hhs.Shared.Contracts.EventInbox;
+using Hhs.TextNormalizerService.Application.Consts;
 using Hhs.Shared.Contracts.Events;
 using Hhs.Shared.Helper;
 using Hhs.Shared.Helper.Enums;
@@ -124,8 +125,8 @@ public sealed class NormalizerOperationRetryWorkerService(
 
                     _logger.FrameworkErrorLog(LogHelper.Generate(
                         message: EventNames.AnalysisItemOutlineCompleted,
-                        reference: new { request.ScopeKey, RefContentId = request.AnalysisContentId, RefNormalizedRequestId = request.Id },
-                        facility: EventNames.AnalysisItemOutlineCompleted,
+                        reference: new { request.ScopeKey, Type = nameof(AnalysisContentNormalizedRequest), Key = request.Id, RefType = "AnalysisContent", RefKey = request.AnalysisContentId },
+                        facility: Facilities.StepFailed,
                         correlationId: request.CorrelationId,
                         exception: null
                     ));
@@ -150,8 +151,8 @@ public sealed class NormalizerOperationRetryWorkerService(
 
                 _logger.FrameworkInfoLog(LogHelper.Generate(
                     message: EventNames.NormalizerResultPublished,
-                    reference: new { request.ScopeKey, RefContentId = request.AnalysisContentId, RefNormalizedRequestId = request.Id },
-                    facility: EventNames.NormalizerResultPublished,
+                    reference: new { request.ScopeKey, Type = nameof(AnalysisContentNormalizedRequest), Key = request.Id, RefType = "AnalysisContent", RefKey = request.AnalysisContentId },
+                    facility: Facilities.NormalizerResultPublished,
                     correlationId: request.CorrelationId,
                     exception: null
                 ));
@@ -229,8 +230,8 @@ public sealed class NormalizerOperationRetryWorkerService(
 
                     _logger.FrameworkErrorLog(LogHelper.Generate(
                         message: EventNames.RetryScheduled,
-                        reference: new { request.ScopeKey, RefContentId = request.CustomerContentId, RefNormalizedRequestId = request.Id, FailedStep = EventNames.OutlineProviderPollingStarted },
-                        facility: EventNames.RetryScheduled,
+                        reference: new { request.ScopeKey, Type = nameof(CustomerContentNormalizedRequest), Key = request.Id, RefType = "CustomerContent", RefKey = request.CustomerContentId, FailedStep = EventNames.OutlineProviderPollingStarted },
+                        facility: Facilities.RetryScheduled,
                         correlationId: request.CorrelationId,
                         exception: null
                     ));
@@ -306,8 +307,8 @@ public sealed class NormalizerOperationRetryWorkerService(
 
                     _logger.FrameworkErrorLog(LogHelper.Generate(
                         message: request.CurrentStep,
-                        reference: new { request.ScopeKey, RefContentId = request.CustomerContentId, RefNormalizedRequestId = request.Id },
-                        facility: request.CurrentStep,
+                        reference: new { request.ScopeKey, Type = nameof(CustomerContentNormalizedRequest), Key = request.Id, RefType = "CustomerContent", RefKey = request.CustomerContentId, FailedStep = request.CurrentStep },
+                        facility: Facilities.StepFailed,
                         correlationId: request.CorrelationId,
                         exception: null
                     ));
@@ -330,8 +331,8 @@ public sealed class NormalizerOperationRetryWorkerService(
 
                 _logger.FrameworkErrorLog(LogHelper.Generate(
                     message: EventNames.RetryScheduled,
-                    reference: new { request.ScopeKey, RefContentId = request.CustomerContentId, RefNormalizedRequestId = request.Id, FailedStep = request.CurrentStep },
-                    facility: EventNames.RetryScheduled,
+                    reference: new { request.ScopeKey, Type = nameof(CustomerContentNormalizedRequest), Key = request.Id, RefType = "CustomerContent", RefKey = request.CustomerContentId, FailedStep = request.CurrentStep },
+                    facility: Facilities.RetryScheduled,
                     correlationId: request.CorrelationId,
                     exception: null
                 ));
@@ -353,8 +354,8 @@ public sealed class NormalizerOperationRetryWorkerService(
 
                 _logger.FrameworkErrorLog(LogHelper.Generate(
                     message: EventNames.RetryScheduled,
-                    reference: new { request.ScopeKey, RefContentId = request.CustomerContentId, RefNormalizedRequestId = request.Id, FailedStep = request.CurrentStep },
-                    facility: EventNames.RetryScheduled,
+                    reference: new { request.ScopeKey, Type = nameof(CustomerContentNormalizedRequest), Key = request.Id, RefType = "CustomerContent", RefKey = request.CustomerContentId, FailedStep = request.CurrentStep },
+                    facility: Facilities.RetryScheduled,
                     correlationId: request.CorrelationId,
                     exception: ex
                 ));
@@ -414,8 +415,8 @@ public sealed class NormalizerOperationRetryWorkerService(
 
                         _logger.FrameworkErrorLog(LogHelper.Generate(
                             message: EventNames.RetryScheduled,
-                            reference: new { request.ScopeKey, RefContentId = request.AnalysisContentId, RefNormalizedRequestId = request.Id, item.CustomerContentId, FailedStep = EventNames.OutlineProviderPollingStarted },
-                            facility: EventNames.RetryScheduled,
+                            reference: new { request.ScopeKey, Type = nameof(AnalysisNormalizedItem), Key = item.CustomerContentId, RefType = "AnalysisContent", RefKey = request.AnalysisContentId, AnalysisContentNormalizeRequestId = request.Id, FailedStep = EventNames.OutlineProviderPollingStarted },
+                            facility: Facilities.RetryScheduled,
                             correlationId: request.CorrelationId,
                             exception: null
                         ));
@@ -493,8 +494,8 @@ public sealed class NormalizerOperationRetryWorkerService(
 
                         _logger.FrameworkErrorLog(LogHelper.Generate(
                             message: item.CurrentStep,
-                            reference: new { request.ScopeKey, RefContentId = request.AnalysisContentId, RefNormalizedRequestId = request.Id, item.CustomerContentId },
-                            facility: item.CurrentStep,
+                            reference: new { request.ScopeKey, Type = nameof(AnalysisNormalizedItem), Key = item.CustomerContentId, RefType = "AnalysisContent", RefKey = request.AnalysisContentId, AnalysisContentNormalizeRequestId = request.Id, FailedStep = item.CurrentStep },
+                            facility: Facilities.StepFailed,
                             correlationId: request.CorrelationId,
                             exception: null
                         ));
@@ -504,8 +505,8 @@ public sealed class NormalizerOperationRetryWorkerService(
 
                     _logger.FrameworkErrorLog(LogHelper.Generate(
                         message: EventNames.RetryScheduled,
-                        reference: new { request.ScopeKey, RefContentId = request.AnalysisContentId, RefNormalizedRequestId = request.Id, item.CustomerContentId, FailedStep = item.CurrentStep },
-                        facility: EventNames.RetryScheduled,
+                        reference: new { request.ScopeKey, Type = nameof(AnalysisNormalizedItem), Key = item.CustomerContentId, RefType = "AnalysisContent", RefKey = request.AnalysisContentId, AnalysisContentNormalizeRequestId = request.Id, FailedStep = item.CurrentStep },
+                        facility: Facilities.RetryScheduled,
                         correlationId: request.CorrelationId,
                         exception: null
                     ));
@@ -526,8 +527,8 @@ public sealed class NormalizerOperationRetryWorkerService(
 
                     _logger.FrameworkErrorLog(LogHelper.Generate(
                         message: EventNames.RetryScheduled,
-                        reference: new { request.ScopeKey, RefContentId = request.AnalysisContentId, RefNormalizedRequestId = request.Id, item.CustomerContentId, FailedStep = item.CurrentStep },
-                        facility: EventNames.RetryScheduled,
+                        reference: new { request.ScopeKey, Type = nameof(AnalysisNormalizedItem), Key = item.CustomerContentId, RefType = "AnalysisContent", RefKey = request.AnalysisContentId, AnalysisContentNormalizeRequestId = request.Id, FailedStep = item.CurrentStep },
+                        facility: Facilities.RetryScheduled,
                         correlationId: request.CorrelationId,
                         exception: ex
                     ));

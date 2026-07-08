@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Net;
+using Hhs.ContentService.Application.Consts;
 using Hhs.ContentService.Application.Contracts.ContentDomain.Dtos;
 using Hhs.ContentService.Application.Contracts.ContentDomain.Dtos.Submits;
 using Hhs.ContentService.Application.Contracts.ContentDomain.Interfaces;
@@ -245,11 +246,12 @@ public sealed class CustomerContentPublicAppService(
                 reference: new
                 {
                     placedCustomerContent.ScopeKey,
+                    Type = nameof(CustomerContent),
+                    Key = placedCustomerContent.Id,
                     ClientDomain = customerVpSettingCheck.DomainName,
-                    input.ContentKey,
-                    RefContentId = placedCustomerContent.Id
+                    input.ContentKey
                 },
-                facility: EventNames.CustomerContentCreated,
+                facility: Facilities.CustomerContentCreated,
                 correlationId: placedCustomerContent.CorrelationId,
                 exception: null
             ));

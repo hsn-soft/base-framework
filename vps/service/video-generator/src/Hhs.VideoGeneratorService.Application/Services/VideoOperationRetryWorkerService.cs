@@ -3,6 +3,7 @@ using Hhs.Shared.Contracts.EventInbox;
 using Hhs.Shared.Contracts.Events;
 using Hhs.Shared.Helper;
 using Hhs.Shared.Helper.Providers;
+using Hhs.VideoGeneratorService.Application.Consts;
 using Hhs.VideoGeneratorService.Application.Providers;
 using Hhs.VideoGeneratorService.Domain.Configuration;
 using Hhs.VideoGeneratorService.Domain.MediaDomain.Entities;
@@ -83,8 +84,8 @@ public sealed class VideoOperationRetryWorkerService(
 
                     _logger.FrameworkErrorLog(LogHelper.Generate(
                         message: EventNames.AudioFileUploadCompleted,
-                        reference: new { VideoRequestId = videoRequest.Id, videoRequest.RefContentId },
-                        facility: EventNames.AudioFileUploadCompleted,
+                        reference: new { videoRequest.ScopeKey, Type = nameof(VideoRequest), Key = videoRequest.Id, RefType = videoRequest.RefContentType.ToString(), RefKey = videoRequest.RefContentId },
+                        facility: Facilities.StepFailed,
                         correlationId: videoRequest.CorrelationId,
                         exception: null
                     ));
@@ -138,8 +139,8 @@ public sealed class VideoOperationRetryWorkerService(
 
                 _logger.FrameworkInfoLog(LogHelper.Generate(
                     message: EventNames.VideoProviderRequestStarted,
-                    reference: new { videoRequest.ScopeKey, videoRequest.RefContentId, VideoRequestId = videoRequest.Id, AudioCount = orderedAudios.Count },
-                    facility: EventNames.VideoProviderRequestStarted,
+                    reference: new { videoRequest.ScopeKey, Type = nameof(VideoRequest), Key = videoRequest.Id, RefType = videoRequest.RefContentType.ToString(), RefKey = videoRequest.RefContentId, AudioCount = orderedAudios.Count },
+                    facility: Facilities.VideoProviderRequestStarted,
                     correlationId: videoRequest.CorrelationId,
                     exception: null
                 ));
@@ -260,8 +261,8 @@ public sealed class VideoOperationRetryWorkerService(
 
                     _logger.FrameworkErrorLog(LogHelper.Generate(
                         message: request.CurrentStep,
-                        reference: new { AudioRequestId = request.Id, VideoRequestId = request.VideoRequestId, request.LastError },
-                        facility: request.CurrentStep,
+                        reference: new { request.ScopeKey, Type = nameof(AudioRequest), Key = request.Id, RefType = request.RefContentType.ToString(), RefKey = request.RefContentId, VideoRequestId = request.VideoRequestId, FailedStep = request.CurrentStep, request.LastError },
+                        facility: Facilities.StepFailed,
                         correlationId: request.CorrelationId,
                         exception: null
                     ));
@@ -284,8 +285,8 @@ public sealed class VideoOperationRetryWorkerService(
 
                 _logger.FrameworkErrorLog(LogHelper.Generate(
                     message: EventNames.RetryScheduled,
-                    reference: new { AudioRequestId = request.Id, VideoRequestId = request.VideoRequestId, FailedStep = request.CurrentStep },
-                    facility: EventNames.RetryScheduled,
+                    reference: new { request.ScopeKey, Type = nameof(AudioRequest), Key = request.Id, RefType = request.RefContentType.ToString(), RefKey = request.RefContentId, VideoRequestId = request.VideoRequestId, FailedStep = request.CurrentStep },
+                    facility: Facilities.RetryScheduled,
                     correlationId: request.CorrelationId,
                     exception: null
                 ));
@@ -325,8 +326,8 @@ public sealed class VideoOperationRetryWorkerService(
 
                 _logger.FrameworkErrorLog(LogHelper.Generate(
                     message: EventNames.RetryScheduled,
-                    reference: new { AudioRequestId = request.Id, VideoRequestId = request.VideoRequestId, FailedStep = request.CurrentStep, request.NextRetryAtUtc },
-                    facility: EventNames.RetryScheduled,
+                    reference: new { request.ScopeKey, Type = nameof(AudioRequest), Key = request.Id, RefType = request.RefContentType.ToString(), RefKey = request.RefContentId, VideoRequestId = request.VideoRequestId, FailedStep = request.CurrentStep, request.NextRetryAtUtc },
+                    facility: Facilities.RetryScheduled,
                     correlationId: request.CorrelationId,
                     exception: ex
                 ));
@@ -448,8 +449,8 @@ public sealed class VideoOperationRetryWorkerService(
 
                     _logger.FrameworkErrorLog(LogHelper.Generate(
                         message: request.CurrentStep,
-                        reference: new { VideoRequestId = request.Id, request.RefContentId, request.LastError },
-                        facility: request.CurrentStep,
+                        reference: new { request.ScopeKey, Type = nameof(VideoRequest), Key = request.Id, RefType = request.RefContentType.ToString(), RefKey = request.RefContentId, FailedStep = request.CurrentStep, request.LastError },
+                        facility: Facilities.StepFailed,
                         correlationId: request.CorrelationId,
                         exception: null
                     ));
@@ -471,8 +472,8 @@ public sealed class VideoOperationRetryWorkerService(
 
                 _logger.FrameworkErrorLog(LogHelper.Generate(
                     message: EventNames.RetryScheduled,
-                    reference: new { VideoRequestId = request.Id, request.RefContentId, FailedStep = request.CurrentStep },
-                    facility: EventNames.RetryScheduled,
+                    reference: new { request.ScopeKey, Type = nameof(VideoRequest), Key = request.Id, RefType = request.RefContentType.ToString(), RefKey = request.RefContentId, FailedStep = request.CurrentStep },
+                    facility: Facilities.RetryScheduled,
                     correlationId: request.CorrelationId,
                     exception: null
                 ));
@@ -512,8 +513,8 @@ public sealed class VideoOperationRetryWorkerService(
 
                 _logger.FrameworkErrorLog(LogHelper.Generate(
                     message: EventNames.RetryScheduled,
-                    reference: new { VideoRequestId = request.Id, request.RefContentId, FailedStep = request.CurrentStep, request.NextRetryAtUtc },
-                    facility: EventNames.RetryScheduled,
+                    reference: new { request.ScopeKey, Type = nameof(VideoRequest), Key = request.Id, RefType = request.RefContentType.ToString(), RefKey = request.RefContentId, FailedStep = request.CurrentStep, request.NextRetryAtUtc },
+                    facility: Facilities.RetryScheduled,
                     correlationId: request.CorrelationId,
                     exception: ex
                 ));

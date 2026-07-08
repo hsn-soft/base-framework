@@ -1,3 +1,4 @@
+using Hhs.FeedRService.Application.Consts;
 using Hhs.FeedRService.Application.Contracts.Events;
 using Hhs.FeedRService.Application.Contracts.Events.Reporting;
 using Hhs.FeedRService.Application.Contracts.JobDomain;
@@ -32,7 +33,7 @@ public sealed class JobAppService : ApplicationServiceBase, IJobAppService
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: $"{input.JobName} successfully triggered for ClientId:{str}",
             reference: new { Type = "Job", Key = input.JobName, input.JobPeriodDesc, input.NextTriggerTimeUtc },
-            facility: "GENERATE_SUMMARY_REPORT",
+            facility: Facilities.GenerateSummaryReportTriggered,
             correlationId: correlationId,
             exception: null
         ));
@@ -45,7 +46,7 @@ public sealed class JobAppService : ApplicationServiceBase, IJobAppService
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: $"{input.JobName} successfully triggered",
             reference: new { Type = "Job", Key = input.JobName, input.JobPeriodDesc, input.NextTriggerTimeUtc },
-            facility: "TEST_QUERY",
+            facility: Facilities.TestQueryTriggered,
             correlationId: correlationId,
             exception: null
         ));
@@ -59,7 +60,7 @@ public sealed class JobAppService : ApplicationServiceBase, IJobAppService
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: $"{input.JobName} successfully triggered with MaxCount:{input.MaxCount}",
             reference: new { Type = "Job", Key = input.JobName, input.JobPeriodDesc, input.NextTriggerTimeUtc },
-            facility: "DERIVE_PENDING_REPORTS",
+            facility: Facilities.DerivePendingReportsTriggered,
             correlationId: correlationId,
             exception: null
         ));

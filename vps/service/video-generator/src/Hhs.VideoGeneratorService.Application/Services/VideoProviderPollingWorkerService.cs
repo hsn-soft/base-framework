@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using Hhs.Shared.Contracts.Events;
 using Hhs.Shared.Helper;
+using Hhs.VideoGeneratorService.Application.Consts;
 using Hhs.VideoGeneratorService.Application.Providers;
 using Hhs.VideoGeneratorService.Domain.Configuration;
 using Hhs.VideoGeneratorService.Domain.MediaDomain.Entities;
@@ -62,8 +63,8 @@ public sealed class VideoProviderPollingWorkerService(
 
                     _logger.FrameworkErrorLog(LogHelper.Generate(
                         message: EventNames.VideoProviderPollingStarted,
-                        reference: new { VideoRequestId = request.Id, request.RefContentId, request.ProviderPollingCount },
-                        facility: EventNames.VideoProviderPollingStarted,
+                        reference: new { request.ScopeKey, Type = nameof(VideoRequest), Key = request.Id, RefType = request.RefContentType.ToString(), RefKey = request.RefContentId, request.ProviderPollingCount },
+                        facility: Facilities.StepFailed,
                         correlationId: request.CorrelationId,
                         exception: null
                     ));
@@ -103,8 +104,8 @@ public sealed class VideoProviderPollingWorkerService(
 
                     _logger.FrameworkErrorLog(LogHelper.Generate(
                         message: EventNames.VideoProviderPollingStarted,
-                        reference: new { VideoRequestId = request.Id, request.RefContentId, request.ProviderPollingCount, request.LastError },
-                        facility: EventNames.VideoProviderPollingStarted,
+                        reference: new { request.ScopeKey, Type = nameof(VideoRequest), Key = request.Id, RefType = request.RefContentType.ToString(), RefKey = request.RefContentId, request.ProviderPollingCount, request.LastError },
+                        facility: Facilities.StepFailed,
                         correlationId: request.CorrelationId,
                         exception: null
                     ));
@@ -134,8 +135,8 @@ public sealed class VideoProviderPollingWorkerService(
 
                     _logger.FrameworkInfoLog(LogHelper.Generate(
                         message: EventNames.VideoProviderPollingStarted,
-                        reference: new { VideoRequestId = request.Id, request.RefContentId, Attempt = request.ProviderPollingCount, MaxAttempts = pollingSettings.MaxAttempts, request.NextProviderPollAtUtc },
-                        facility: EventNames.VideoProviderPollingStarted,
+                        reference: new { request.ScopeKey, Type = nameof(VideoRequest), Key = request.Id, RefType = request.RefContentType.ToString(), RefKey = request.RefContentId, Attempt = request.ProviderPollingCount, MaxAttempts = pollingSettings.MaxAttempts, request.NextProviderPollAtUtc },
+                        facility: Facilities.VideoProviderPollingStarted,
                         correlationId: request.CorrelationId,
                         exception: null
                     ));
@@ -159,8 +160,8 @@ public sealed class VideoProviderPollingWorkerService(
 
                 _logger.FrameworkInfoLog(LogHelper.Generate(
                     message: EventNames.VideoProviderCompleted,
-                    reference: new { VideoRequestId = request.Id, request.RefContentId, TotalPolls = request.ProviderPollingCount },
-                    facility: EventNames.VideoProviderCompleted,
+                    reference: new { request.ScopeKey, Type = nameof(VideoRequest), Key = request.Id, RefType = request.RefContentType.ToString(), RefKey = request.RefContentId, TotalPolls = request.ProviderPollingCount },
+                    facility: Facilities.VideoProviderCompleted,
                     correlationId: request.CorrelationId,
                     exception: null
                 ));
@@ -185,8 +186,8 @@ public sealed class VideoProviderPollingWorkerService(
 
                     _logger.FrameworkErrorLog(LogHelper.Generate(
                         message: EventNames.VideoProviderPollingStarted,
-                        reference: new { VideoRequestId = request.Id, request.RefContentId, request.ProviderPollingCount },
-                        facility: EventNames.VideoProviderPollingStarted,
+                        reference: new { request.ScopeKey, Type = nameof(VideoRequest), Key = request.Id, RefType = request.RefContentType.ToString(), RefKey = request.RefContentId, request.ProviderPollingCount },
+                        facility: Facilities.StepFailed,
                         correlationId: request.CorrelationId,
                         exception: ex
                     ));
@@ -211,8 +212,8 @@ public sealed class VideoProviderPollingWorkerService(
 
                     _logger.FrameworkErrorLog(LogHelper.Generate(
                         message: EventNames.RetryScheduled,
-                        reference: new { VideoRequestId = request.Id, request.RefContentId, FailedStep = EventNames.VideoProviderPollingStarted, request.ProviderPollingCount, request.NextProviderPollAtUtc },
-                        facility: EventNames.RetryScheduled,
+                        reference: new { request.ScopeKey, Type = nameof(VideoRequest), Key = request.Id, RefType = request.RefContentType.ToString(), RefKey = request.RefContentId, FailedStep = EventNames.VideoProviderPollingStarted, request.ProviderPollingCount, request.NextProviderPollAtUtc },
+                        facility: Facilities.RetryScheduled,
                         correlationId: request.CorrelationId,
                         exception: ex
                     ));

@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using System.Net;
 using Hhs.Shared.Contracts.Events;
+using Hhs.TextNormalizerService.Application.Consts;
 using Hhs.Shared.Helper;
 using Hhs.Shared.Helper.Enums;
 using Hhs.Shared.Helper.Providers;
@@ -54,8 +55,8 @@ public sealed class NormalizerOperationAppService(
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
                 message: EventNames.CustomerContentNormalizeRequestCreated,
-                reference: new { existing.ScopeKey, RefContentId = existing.CustomerContentId, RefNormalizedRequestId = existing.Id },
-                facility: EventNames.CustomerContentNormalizeRequestCreated,
+                reference: new { existing.ScopeKey, Type = nameof(CustomerContentNormalizedRequest), Key = existing.Id, RefType = "CustomerContent", RefKey = existing.CustomerContentId },
+                facility: Facilities.NormalizeRequestCreated,
                 correlationId: existing.CorrelationId,
                 exception: null
             ));
@@ -103,12 +104,14 @@ public sealed class NormalizerOperationAppService(
                 reference: new
                 {
                     ScopeKey = entity.ScopeKey,
+                    Type = nameof(CustomerContentNormalizedRequest),
+                    Key = entity.Id,
+                    RefType = "CustomerContent",
+                    RefKey = entity.CustomerContentId,
                     ClientDomain = entity.DomainName,
-                    ContentKey = entity.ContentKey,
-                    RefContentId = entity.CustomerContentId,
-                    RefNormalizedRequestId = entity.Id
+                    ContentKey = entity.ContentKey
                 },
-                facility: EventNames.CustomerContentNormalizeRequestCreated,
+                facility: Facilities.NormalizeRequestCreated,
                 correlationId: correlationId,
                 exception: null
             ));
@@ -155,12 +158,14 @@ public sealed class NormalizerOperationAppService(
                 reference: new
                 {
                     request.ScopeKey,
+                    Type = nameof(CustomerContentNormalizedRequest),
+                    Key = request.Id,
+                    RefType = "CustomerContent",
+                    RefKey = request.CustomerContentId,
                     ClientDomain = request.DomainName,
-                    ContentKey = request.ContentKey,
-                    RefContentId = request.CustomerContentId,
-                    RefNormalizedRequestId = request.Id
+                    ContentKey = request.ContentKey
                 },
-                facility: EventNames.CustomerContentScrapingStarted,
+                facility: Facilities.ScrapingStarted,
                 correlationId: request.CorrelationId,
                 exception: null
             ));
@@ -249,12 +254,14 @@ public sealed class NormalizerOperationAppService(
                 reference: new
                 {
                     request.ScopeKey,
+                    Type = nameof(CustomerContentNormalizedRequest),
+                    Key = request.Id,
+                    RefType = "CustomerContent",
+                    RefKey = request.CustomerContentId,
                     ClientDomain = request.DomainName,
-                    ContentKey = request.ContentKey,
-                    RefContentId = request.CustomerContentId,
-                    RefNormalizedRequestId = request.Id
+                    ContentKey = request.ContentKey
                 },
-                facility: EventNames.CustomerContentScrapingCompleted,
+                facility: Facilities.ScrapingCompleted,
                 correlationId: request.CorrelationId,
                 exception: null
             ));
@@ -306,12 +313,14 @@ public sealed class NormalizerOperationAppService(
                 reference: new
                 {
                     request.ScopeKey,
+                    Type = nameof(CustomerContentNormalizedRequest),
+                    Key = request.Id,
+                    RefType = "CustomerContent",
+                    RefKey = request.CustomerContentId,
                     ClientDomain = request.DomainName,
-                    ContentKey = request.ContentKey,
-                    RefContentId = request.CustomerContentId,
-                    RefNormalizedRequestId = request.Id
+                    ContentKey = request.ContentKey
                 },
-                facility: EventNames.CustomerContentOutlineStarted,
+                facility: Facilities.OutlineStarted,
                 correlationId: request.CorrelationId,
                 exception: null
             ));
@@ -362,12 +371,14 @@ public sealed class NormalizerOperationAppService(
                     reference: new
                     {
                         request.ScopeKey,
+                        Type = nameof(CustomerContentNormalizedRequest),
+                        Key = request.Id,
+                        RefType = "CustomerContent",
+                        RefKey = request.CustomerContentId,
                         ClientDomain = request.DomainName,
-                        ContentKey = request.ContentKey,
-                        RefContentId = request.CustomerContentId,
-                        RefNormalizedRequestId = request.Id
+                        ContentKey = request.ContentKey
                     },
-                    facility: EventNames.CustomerContentOutlineSkipped,
+                    facility: Facilities.OutlineSkipped,
                     correlationId: request.CorrelationId,
                     exception: null
                 ));
@@ -399,12 +410,14 @@ public sealed class NormalizerOperationAppService(
                 reference: new
                 {
                     request.ScopeKey,
+                    Type = nameof(CustomerContentNormalizedRequest),
+                    Key = request.Id,
+                    RefType = "CustomerContent",
+                    RefKey = request.CustomerContentId,
                     ClientDomain = request.DomainName,
-                    ContentKey = request.ContentKey,
-                    RefContentId = request.CustomerContentId,
-                    RefNormalizedRequestId = request.Id
+                    ContentKey = request.ContentKey
                 },
-                facility: EventNames.OutlineProviderRequestStarted,
+                facility: Facilities.OutlineProviderRequestStarted,
                 correlationId: request.CorrelationId,
                 exception: null
             ));
@@ -521,8 +534,8 @@ public sealed class NormalizerOperationAppService(
 
                 _logger.FrameworkInfoLog(LogHelper.Generate(
                     message: EventNames.AnalysisItemScrapingCompleted,
-                    reference: new { request.ScopeKey, RefContentId = request.AnalysisContentId, RefNormalizedRequestId = request.Id, item.CustomerContentId },
-                    facility: EventNames.AnalysisItemScrapingCompleted,
+                    reference: new { request.ScopeKey, Type = nameof(AnalysisNormalizedItem), Key = item.CustomerContentId, RefType = "AnalysisContent", RefKey = request.AnalysisContentId, AnalysisContentNormalizeRequestId = request.Id },
+                    facility: Facilities.ScrapingCompleted,
                     correlationId: request.CorrelationId,
                     exception: null
                 ));
@@ -567,8 +580,8 @@ public sealed class NormalizerOperationAppService(
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
                 message: EventNames.AnalysisItemScrapingCompleted,
-                reference: new { request.ScopeKey, RefContentId = request.AnalysisContentId, RefNormalizedRequestId = request.Id, item.CustomerContentId },
-                facility: EventNames.AnalysisItemScrapingCompleted,
+                reference: new { request.ScopeKey, Type = nameof(AnalysisNormalizedItem), Key = item.CustomerContentId, RefType = "AnalysisContent", RefKey = request.AnalysisContentId, AnalysisContentNormalizeRequestId = request.Id },
+                facility: Facilities.ScrapingCompleted,
                 correlationId: request.CorrelationId,
                 exception: null
             ));
@@ -689,8 +702,8 @@ public sealed class NormalizerOperationAppService(
 
                 _logger.FrameworkInfoLog(LogHelper.Generate(
                     message: EventNames.OutlineProviderRequestCompleted,
-                    reference: new { @event.ScopeKey, @event.RefContentType, RefNormalizedRequestId = @event.RefNormalizedRequestId, @event.CustomerContentIdForItem },
-                    facility: EventNames.OutlineProviderRequestCompleted,
+                    reference: new { @event.ScopeKey, Type = @event.RefContentType.ToString(), Key = @event.RefNormalizedRequestId, @event.CustomerContentIdForItem },
+                    facility: Facilities.OutlineProviderRequestCompleted,
                     correlationId: correlationId,
                     exception: null
                 ));
@@ -734,8 +747,8 @@ public sealed class NormalizerOperationAppService(
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
                 message: EventNames.OutlineProviderPollingStarted,
-                reference: new { request.ScopeKey, RefContentId = request.CustomerContentId, RefNormalizedRequestId = request.Id, request.NextOutlinePollAtUtc },
-                facility: EventNames.OutlineProviderPollingStarted,
+                reference: new { request.ScopeKey, Type = nameof(CustomerContentNormalizedRequest), Key = request.Id, RefType = "CustomerContent", RefKey = request.CustomerContentId, request.NextOutlinePollAtUtc },
+                facility: Facilities.OutlineProviderPollingStarted,
                 correlationId: request.CorrelationId,
                 exception: null
             ));
@@ -759,8 +772,8 @@ public sealed class NormalizerOperationAppService(
 
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: EventNames.OutlineProviderPollingStarted,
-            reference: new { RefNormalizedRequestId = @event.RefNormalizedRequestId, @event.CustomerContentIdForItem },
-            facility: EventNames.OutlineProviderPollingStarted,
+            reference: new { Type = nameof(AnalysisNormalizedItem), Key = @event.CustomerContentIdForItem, RefType = nameof(AnalysisContentNormalizedRequest), RefKey = @event.RefNormalizedRequestId },
+            facility: Facilities.OutlineProviderPollingStarted,
             correlationId: correlationId,
             exception: null
         ));
@@ -824,8 +837,8 @@ public sealed class NormalizerOperationAppService(
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
                 message: EventNames.CustomerContentOutlineCompleted,
-                reference: new { customerContentNormalizedRequest.ScopeKey, RefContentId = customerContentNormalizedRequest.CustomerContentId, RefNormalizedRequestId = customerContentNormalizedRequest.Id },
-                facility: EventNames.CustomerContentOutlineCompleted,
+                reference: new { customerContentNormalizedRequest.ScopeKey, Type = nameof(CustomerContentNormalizedRequest), Key = customerContentNormalizedRequest.Id, RefType = "CustomerContent", RefKey = customerContentNormalizedRequest.CustomerContentId },
+                facility: Facilities.OutlineCompleted,
                 correlationId: customerContentNormalizedRequest.CorrelationId,
                 exception: null
             ));
@@ -863,8 +876,8 @@ public sealed class NormalizerOperationAppService(
 
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: EventNames.AnalysisItemOutlineCompleted,
-            reference: new { analysisContentNormalizedRequest.ScopeKey, RefContentId = analysisContentNormalizedRequest.AnalysisContentId, RefNormalizedRequestId = analysisContentNormalizedRequest.Id, item.CustomerContentId },
-            facility: EventNames.AnalysisItemOutlineCompleted,
+            reference: new { analysisContentNormalizedRequest.ScopeKey, Type = nameof(AnalysisNormalizedItem), Key = item.CustomerContentId, RefType = "AnalysisContent", RefKey = analysisContentNormalizedRequest.AnalysisContentId, AnalysisContentNormalizeRequestId = analysisContentNormalizedRequest.Id },
+            facility: Facilities.OutlineCompleted,
             correlationId: analysisContentNormalizedRequest.CorrelationId,
             exception: null
         ));
@@ -889,8 +902,8 @@ public sealed class NormalizerOperationAppService(
 
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: EventNames.NormalizerResultPublished,
-            reference: new { customerContentNormalizedRequest.ScopeKey, RefContentId = customerContentNormalizedRequest.CustomerContentId, RefNormalizedRequestId = customerContentNormalizedRequest.Id },
-            facility: EventNames.NormalizerResultPublished,
+            reference: new { customerContentNormalizedRequest.ScopeKey, Type = nameof(CustomerContentNormalizedRequest), Key = customerContentNormalizedRequest.Id, RefType = "CustomerContent", RefKey = customerContentNormalizedRequest.CustomerContentId },
+            facility: Facilities.NormalizerResultPublished,
             correlationId: customerContentNormalizedRequest.CorrelationId,
             exception: null
         ));
@@ -944,8 +957,8 @@ public sealed class NormalizerOperationAppService(
 
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: EventNames.VideoGenerationDataForwarded,
-            reference: new { @event.ScopeKey, RefContentId = @event.RefContentId, RefNormalizedRequestId = @event.RefNormalizeRequestId },
-            facility: EventNames.VideoGenerationDataForwarded,
+            reference: new { @event.ScopeKey, Type = @event.RefContentType.ToString(), Key = @event.RefContentId, RefType = "NormalizeRequest", RefKey = @event.RefNormalizeRequestId },
+            facility: Facilities.VideoGenerationDataForwarded,
             correlationId: correlationId,
             exception: null
         ));
@@ -1053,12 +1066,16 @@ public sealed class NormalizerOperationAppService(
             reference: new
             {
                 request.ScopeKey,
+                Type = nameof(CustomerContentNormalizedRequest),
+                Key = request.Id,
+                RefType = "CustomerContent",
+                RefKey = request.CustomerContentId,
                 ClientDomain = request.DomainName,
                 ContentKey = request.ContentKey,
-                RefContentId = request.CustomerContentId,
-                RefNormalizedRequestId = request.Id
+                FailedStep = step,
+                Retryable = retryable
             },
-            facility: step,
+            facility: Facilities.StepFailed,
             correlationId: request.CorrelationId,
             exception: ex
         ));
@@ -1111,13 +1128,15 @@ public sealed class NormalizerOperationAppService(
             reference: new
             {
                 request.ScopeKey,
-                RefContentId = request.CustomerContentId,
-                RefNormalizedRequestId = request.Id,
+                Type = nameof(CustomerContentNormalizedRequest),
+                Key = request.Id,
+                RefType = "CustomerContent",
+                RefKey = request.CustomerContentId,
                 FailedStep = step,
                 request.RetryCount,
                 request.NextRetryAtUtc
             },
-            facility: EventNames.RetryScheduled,
+            facility: Facilities.RetryScheduled,
             correlationId: request.CorrelationId,
             exception: ex
         ));
@@ -1195,14 +1214,16 @@ public sealed class NormalizerOperationAppService(
             reference: new
             {
                 request.ScopeKey,
-                RefContentId = request.AnalysisContentId,
-                RefNormalizedRequestId = request.Id,
-                item.CustomerContentId,
+                Type = nameof(AnalysisNormalizedItem),
+                Key = item.CustomerContentId,
+                RefType = "AnalysisContent",
+                RefKey = request.AnalysisContentId,
+                AnalysisContentNormalizeRequestId = request.Id,
                 FailedStep = step,
                 retryCount,
                 nextRetryAtUtc
             },
-            facility: EventNames.RetryScheduled,
+            facility: Facilities.RetryScheduled,
             correlationId: request.CorrelationId,
             exception: ex
         ));
@@ -1257,12 +1278,15 @@ public sealed class NormalizerOperationAppService(
             reference: new
             {
                 request.ScopeKey,
-                RefContentId = request.AnalysisContentId,
-                RefNormalizedRequestId = request.Id,
-                item.CustomerContentId,
-                retryable
+                Type = nameof(AnalysisNormalizedItem),
+                Key = item.CustomerContentId,
+                RefType = "AnalysisContent",
+                RefKey = request.AnalysisContentId,
+                AnalysisContentNormalizeRequestId = request.Id,
+                FailedStep = step,
+                Retryable = retryable
             },
-            facility: step,
+            facility: Facilities.StepFailed,
             correlationId: request.CorrelationId,
             exception: ex
         ));

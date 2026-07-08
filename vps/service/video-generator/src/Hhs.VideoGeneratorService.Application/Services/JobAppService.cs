@@ -1,3 +1,4 @@
+using Hhs.VideoGeneratorService.Application.Consts;
 using Hhs.VideoGeneratorService.Application.Contracts.JobDomain;
 using Hhs.VideoGeneratorService.Application.Contracts.JobDomain.Dtos;
 using HsnSoft.Base.Logging;
@@ -20,7 +21,7 @@ public sealed class JobAppService(
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: $"{input.JobName} successfully triggered",
             reference: new { Type = "Job", Key = input.JobName, input.JobPeriodDesc, input.NextTriggerTimeUtc },
-            facility: "RETRY_DUE_REQUESTS",
+            facility: Facilities.RetryDueRequestsTriggered,
             correlationId: correlationId,
             exception: null
         ));
@@ -33,7 +34,7 @@ public sealed class JobAppService(
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: $"{input.JobName} successfully triggered",
             reference: new { Type = "Job", Key = input.JobName, input.JobPeriodDesc, input.NextTriggerTimeUtc },
-            facility: "POLL_DUE_VIDEO_REQUESTS",
+            facility: Facilities.PollDueVideoRequestsTriggered,
             correlationId: correlationId,
             exception: null
         ));
@@ -46,7 +47,7 @@ public sealed class JobAppService(
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: $"{input.JobName} successfully triggered",
             reference: new { Type = "Job", Key = input.JobName, input.JobPeriodDesc, input.NextTriggerTimeUtc },
-            facility: "POLL_DUE_AUDIO_REQUESTS",
+            facility: Facilities.PollDueAudioRequestsTriggered,
             correlationId: correlationId,
             exception: null
         ));

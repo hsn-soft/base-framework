@@ -1,3 +1,5 @@
+using Hhs.ContentService.Application.Consts;
+using Hhs.ContentService.Domain.ContentDomain.Entities;
 using Hhs.ContentService.Domain.ContentDomain.Repositories;
 using Hhs.ContentService.Domain.Enums;
 using Hhs.ContentService.Domain.SettingDomain.Exceptions;
@@ -42,8 +44,8 @@ public sealed class ContentOperationService(
 
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: EventNames.CustomerContentNormalizeRequestCreated,
-            reference: new { RefContentType = refContentType, RefContentId = refContentId, RefNormalizeRequestId = refNormalizeRequestId },
-            facility: EventNames.CustomerContentNormalizeRequestCreated,
+            reference: new { Type = refContentType.ToString(), Key = refContentId, RefType = "NormalizeRequest", RefKey = refNormalizeRequestId },
+            facility: Facilities.NormalizeRequestReferenceSet,
             correlationId: correlationId,
             exception: null
         ));
@@ -60,8 +62,8 @@ public sealed class ContentOperationService(
 
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: EventNames.CustomerContentScrapingCompleted,
-            reference: new { RefContentId = @event.CustomerContentId, RefNormalizeRequestId = @event.CustomerContentNormalizeRequestId },
-            facility: EventNames.CustomerContentScrapingCompleted,
+            reference: new { Type = nameof(CustomerContent), Key = @event.CustomerContentId, RefType = "CustomerContentNormalizeRequest", RefKey = @event.CustomerContentNormalizeRequestId },
+            facility: Facilities.CustomerContentScrapingCompleted,
             correlationId: correlationId,
             exception: null
         ));
@@ -90,8 +92,8 @@ public sealed class ContentOperationService(
 
                             _logger.FrameworkInfoLog(LogHelper.Generate(
                                 message: "CustomerContent video generation rejected",
-                                reference: new { entity.ScopeKey, RefContentId = entity.Id, RefNormalizedRequestId = entity.NormalizeRequestId },
-                                facility: EventNames.CustomerContentOutlineSkipped,
+                                reference: new { entity.ScopeKey, Type = nameof(CustomerContent), Key = entity.Id, RefType = "CustomerContentNormalizeRequest", RefKey = entity.NormalizeRequestId },
+                                facility: Facilities.ContentOutlineRejected,
                                 correlationId: entity.CorrelationId,
                                 exception: null
                             ));
@@ -101,8 +103,8 @@ public sealed class ContentOperationService(
 
                         _logger.FrameworkInfoLog(LogHelper.Generate(
                             message: "CustomerContent normalized success",
-                            reference: new { entity.ScopeKey, RefContentId = entity.Id, RefNormalizedRequestId = entity.NormalizeRequestId },
-                            facility: EventNames.NormalizerResultPublished,
+                            reference: new { entity.ScopeKey, Type = nameof(CustomerContent), Key = entity.Id, RefType = "CustomerContentNormalizeRequest", RefKey = entity.NormalizeRequestId },
+                            facility: Facilities.ContentNormalizedSuccess,
                             correlationId: entity.CorrelationId,
                             exception: null
                         ));
@@ -114,8 +116,8 @@ public sealed class ContentOperationService(
 
                             _logger.FrameworkInfoLog(LogHelper.Generate(
                                 message: "CustomerContent video generation approved",
-                                reference: new { entity.ScopeKey, RefContentId = entity.Id, RefNormalizedRequestId = entity.NormalizeRequestId },
-                                facility: EventNames.VideoGenerationApproved,
+                                reference: new { entity.ScopeKey, Type = nameof(CustomerContent), Key = entity.Id, RefType = "CustomerContentNormalizeRequest", RefKey = entity.NormalizeRequestId },
+                                facility: Facilities.VideoGenerationApproved,
                                 correlationId: entity.CorrelationId,
                                 exception: null
                             ));
@@ -136,8 +138,8 @@ public sealed class ContentOperationService(
 
                             _logger.FrameworkInfoLog(LogHelper.Generate(
                                 message: "CustomerContent video generation rejected",
-                                reference: new { entity.ScopeKey, RefContentId = entity.Id, RefNormalizedRequestId = entity.NormalizeRequestId },
-                                facility: checkResult.Value,
+                                reference: new { entity.ScopeKey, Type = nameof(CustomerContent), Key = entity.Id, RefType = "CustomerContentNormalizeRequest", RefKey = entity.NormalizeRequestId, RejectReason = checkResult.Value },
+                                facility: Facilities.VideoGenerationRejected,
                                 correlationId: entity.CorrelationId,
                                 exception: null
                             ));
@@ -154,8 +156,8 @@ public sealed class ContentOperationService(
                     {
                         _logger.FrameworkInfoLog(LogHelper.Generate(
                             message: "Analysis Content normalized success",
-                            reference: new { entity.ScopeKey, RefContentId = entity.Id, RefNormalizedRequestId = entity.NormalizeRequestId },
-                            facility: EventNames.NormalizerResultPublished,
+                            reference: new { entity.ScopeKey, Type = nameof(AnalysisContent), Key = entity.Id, RefType = "AnalysisContentNormalizeRequest", RefKey = entity.NormalizeRequestId },
+                            facility: Facilities.ContentNormalizedSuccess,
                             correlationId: entity.CorrelationId,
                             exception: null
                         ));
@@ -164,8 +166,8 @@ public sealed class ContentOperationService(
 
                         _logger.FrameworkInfoLog(LogHelper.Generate(
                             message: "Analysis Content video generation approved",
-                            reference: new { entity.ScopeKey, RefContentId = entity.Id, RefNormalizedRequestId = entity.NormalizeRequestId },
-                            facility: EventNames.VideoGenerationApproved,
+                            reference: new { entity.ScopeKey, Type = nameof(AnalysisContent), Key = entity.Id, RefType = "AnalysisContentNormalizeRequest", RefKey = entity.NormalizeRequestId },
+                            facility: Facilities.VideoGenerationApproved,
                             correlationId: entity.CorrelationId,
                             exception: null
                         ));
@@ -223,8 +225,8 @@ public sealed class ContentOperationService(
 
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: EventNames.VideoRequestCreated,
-            reference: new { RefContentType = refContentType, RefContentId = refContentId, VideoRequestId = refVideoRequestId },
-            facility: EventNames.VideoRequestCreated,
+            reference: new { Type = refContentType.ToString(), Key = refContentId, RefType = "VideoRequest", RefKey = refVideoRequestId },
+            facility: Facilities.VideoRequestCreated,
             correlationId: correlationId,
             exception: null
         ));
@@ -247,8 +249,8 @@ public sealed class ContentOperationService(
 
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: @event.AudioMode,
-            reference: new { RefContentType = @event.RefContentType, RefContentId = @event.RefContentId, VideoRequestId = @event.VideoRequestId },
-            facility: @event.AudioMode,
+            reference: new { Type = @event.RefContentType.ToString(), Key = @event.RefContentId, RefType = "VideoRequest", RefKey = @event.VideoRequestId, AudioMode = @event.AudioMode },
+            facility: Facilities.AudioOperationStarted,
             correlationId: correlationId,
             exception: null
         ));
@@ -271,8 +273,8 @@ public sealed class ContentOperationService(
 
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: EventNames.VideoProviderRequestStarted,
-            reference: new { RefContentType = @event.RefContentType, RefContentId = @event.RefContentId, VideoRequestId = @event.VideoRequestId },
-            facility: EventNames.VideoProviderRequestStarted,
+            reference: new { Type = @event.RefContentType.ToString(), Key = @event.RefContentId, RefType = "VideoRequest", RefKey = @event.VideoRequestId },
+            facility: Facilities.VideoProviderRequestStarted,
             correlationId: correlationId,
             exception: null
         ));
@@ -296,8 +298,8 @@ public sealed class ContentOperationService(
 
                         _logger.FrameworkInfoLog(LogHelper.Generate(
                             message: EventNames.VideoGenerationResultPublished,
-                            reference: new { entity.ScopeKey, RefContentId = entity.Id, VideoRequestId = @event.VideoRequestId, entity.VideoCdnUrl },
-                            facility: EventNames.VideoGenerationResultPublished,
+                            reference: new { entity.ScopeKey, Type = nameof(CustomerContent), Key = entity.Id, RefType = "VideoRequest", RefKey = @event.VideoRequestId, entity.VideoCdnUrl },
+                            facility: Facilities.VideoGenerationResultPublished,
                             correlationId: entity.CorrelationId,
                             exception: null
                         ));
@@ -319,8 +321,8 @@ public sealed class ContentOperationService(
 
                         _logger.FrameworkInfoLog(LogHelper.Generate(
                             message: EventNames.VideoGenerationResultPublished,
-                            reference: new { entity.ScopeKey, RefContentId = entity.Id, VideoRequestId = @event.VideoRequestId, entity.VideoCdnUrl },
-                            facility: EventNames.VideoGenerationResultPublished,
+                            reference: new { entity.ScopeKey, Type = nameof(AnalysisContent), Key = entity.Id, RefType = "VideoRequest", RefKey = @event.VideoRequestId, entity.VideoCdnUrl },
+                            facility: Facilities.VideoGenerationResultPublished,
                             correlationId: entity.CorrelationId,
                             exception: null
                         ));
@@ -359,8 +361,8 @@ public sealed class ContentOperationService(
 
                 _logger.FrameworkErrorLog(LogHelper.Generate(
                     message: EventNames.StepFailed,
-                    reference: new { entity.ScopeKey, RefContentId = entity.Id, @event.Step, @event.Retryable, @event.ErrorMessage },
-                    facility: EventNames.StepFailed,
+                    reference: new { entity.ScopeKey, Type = nameof(CustomerContent), Key = entity.Id, FailedStep = @event.Step, @event.Retryable, @event.ErrorMessage },
+                    facility: Facilities.StepFailed,
                     correlationId: entity.CorrelationId,
                     exception: null
                 ));
@@ -389,8 +391,8 @@ public sealed class ContentOperationService(
 
                 _logger.FrameworkErrorLog(LogHelper.Generate(
                     message: EventNames.StepFailed,
-                    reference: new { entity.ScopeKey, RefContentId = entity.Id, @event.Step, @event.Retryable, @event.ErrorMessage },
-                    facility: EventNames.StepFailed,
+                    reference: new { entity.ScopeKey, Type = nameof(AnalysisContent), Key = entity.Id, FailedStep = @event.Step, @event.Retryable, @event.ErrorMessage },
+                    facility: Facilities.StepFailed,
                     correlationId: entity.CorrelationId,
                     exception: null
                 ));

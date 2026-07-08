@@ -1,4 +1,5 @@
 using System.Net;
+using Hhs.ContentService.Application.Consts;
 using Hhs.ContentService.Application.Contracts.ContentDomain.Interfaces;
 using Hhs.ContentService.Application.Contracts.DashboardDomain.Dtos;
 using Hhs.ContentService.Application.Contracts.Events;
@@ -200,8 +201,8 @@ public sealed class AnalysisContentAppService(
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
                 message: $"Analysis Content created",
-                reference: new { customerVpSetting.ScopeKey, AnalysisContentId = analysisContentId },
-                facility: EventNames.AnalysisContentCreated,
+                reference: new { customerVpSetting.ScopeKey, Type = nameof(AnalysisContent), Key = analysisContentId },
+                facility: Facilities.AnalysisContentCreated,
                 correlationId: correlationId,
                 exception: null
             ));

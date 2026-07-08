@@ -1,3 +1,4 @@
+using Hhs.AdministrationService.Application.Consts;
 using Hhs.AdministrationService.Application.Contracts.Events;
 using Hhs.AdministrationService.Application.Contracts.JobDomain;
 using Hhs.AdministrationService.Application.Contracts.JobDomain.Dtos;
@@ -21,7 +22,7 @@ public sealed class JobAppService : ApplicationServiceBase, IJobAppService
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: $"{input.JobName} successfully triggered",
             reference: new { Type = "Job", Key = input.JobName, input.JobPeriodDesc, input.NextTriggerTimeUtc },
-            facility: "JOB_TRIGGERED_SUCCESS",
+            facility: Facilities.JobTriggered,
             correlationId: correlationId,
             exception: null
         ));

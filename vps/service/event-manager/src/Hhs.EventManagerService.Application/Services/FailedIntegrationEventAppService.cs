@@ -96,10 +96,12 @@ public sealed class FailedIntegrationEventAppService : ApplicationServiceBase, I
             // test = JsonConvert.DeserializeObject<Tester2>(doc.Response.ToString()) as Tester2;
         }
 
+        var failedIntegrationEventId = ParentIntegrationEvent?.MessageId ?? Guid.CreateVersion7();
+
         try
         {
             await _failedIntegrationEventRepository.CreateAsync(
-                id: ParentIntegrationEvent?.MessageId ?? Guid.CreateVersion7(),
+                id: failedIntegrationEventId,
                 envelopeTime: ParentIntegrationEvent?.MessageTime.ToUniversalTime() ?? DateTime.UtcNow,
                 failedReason: input?.FailedReason ?? string.Empty,
                 operationStatus: FailedIntegrationEventStates.CreatedWaitForHandling,
@@ -119,7 +121,7 @@ public sealed class FailedIntegrationEventAppService : ApplicationServiceBase, I
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
                 message: $"Failed integration event created",
-                reference: new { Consumer = ParentIntegrationEvent.Producer, ConsumerMessageType = input.FailedMessageTypeName, input.FailedReason },
+                reference: new { Type = nameof(FailedIntegrationEvent), Key = failedIntegrationEventId, Consumer = ParentIntegrationEvent.Producer, ConsumerMessageType = input.FailedMessageTypeName, input.FailedReason },
                 facility: FailedIntegrationEventOperationFacilities.ERROR_HANDLING_CREATED,
                 correlationId: ParentIntegrationEvent?.CorrelationId,
                 exception: null
@@ -129,7 +131,7 @@ public sealed class FailedIntegrationEventAppService : ApplicationServiceBase, I
         {
             _logger.FrameworkErrorLog(LogHelper.Generate(
                 message: $"Failed integration event error: {e.Message}",
-                reference: new { Consumer = ParentIntegrationEvent.Producer, ConsumerMessageType = input.FailedMessageTypeName, input.FailedReason },
+                reference: new { Type = nameof(FailedIntegrationEvent), Key = failedIntegrationEventId, Consumer = ParentIntegrationEvent.Producer, ConsumerMessageType = input.FailedMessageTypeName, input.FailedReason },
                 facility: FailedIntegrationEventOperationFacilities.ERROR_HANDLING_FAILED,
                 correlationId: ParentIntegrationEvent?.CorrelationId,
                 exception: null
@@ -186,7 +188,7 @@ public sealed class FailedIntegrationEventAppService : ApplicationServiceBase, I
         {
             _logger.FrameworkErrorLog(LogHelper.Generate(
                 message: $"Failed integration event re-queued error: {ex.Message}",
-                reference: new { Consumer = failedIntegrationEventItem.Producer, ConsumerMessageType = failedIntegrationEventItem.FailedMessageTypeName, failedIntegrationEventItem.FailedReason },
+                reference: new { Type = nameof(FailedIntegrationEvent), Key = failedIntegrationEventItem.Id, Consumer = failedIntegrationEventItem.Producer, ConsumerMessageType = failedIntegrationEventItem.FailedMessageTypeName, failedIntegrationEventItem.FailedReason },
                 facility: FailedIntegrationEventOperationFacilities.ERROR_HANDLING_FAILED,
                 correlationId: failedIntegrationEventItem?.CorrelationId,
                 exception: null
@@ -205,7 +207,7 @@ public sealed class FailedIntegrationEventAppService : ApplicationServiceBase, I
         {
             _logger.FrameworkInfoLog(LogHelper.Generate(
                 message: $"Failed integration event successfully re-queued",
-                reference: new { Consumer = failedIntegrationEventItem.Producer, ConsumerMessageType = failedIntegrationEventItem.FailedMessageTypeName, failedIntegrationEventItem.FailedReason },
+                reference: new { Type = nameof(FailedIntegrationEvent), Key = failedIntegrationEventItem.Id, Consumer = failedIntegrationEventItem.Producer, ConsumerMessageType = failedIntegrationEventItem.FailedMessageTypeName, failedIntegrationEventItem.FailedReason },
                 facility: FailedIntegrationEventOperationFacilities.ERROR_HANDLING_SUCCESS,
                 correlationId: failedIntegrationEventItem?.CorrelationId,
                 exception: null

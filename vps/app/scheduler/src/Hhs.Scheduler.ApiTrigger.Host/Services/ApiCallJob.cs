@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using Hhs.Scheduler.ApiTrigger.Host.Consts;
 using Hhs.Scheduler.ApiTrigger.Host.Models;
 using HsnSoft.Base.Logging;
 using HsnSoft.Base.Logging.Abstracts;
@@ -36,11 +37,14 @@ public class ApiCallJob(IHttpClientFactory httpClientFactory, IFrameworkLogger l
         client.DefaultRequestHeaders.Add(SchedulerJobIdLabel, jobCorrelationId);
         client.DefaultRequestHeaders.Add(SchedulerJobNameLabel, endpoint.JobName);
 
+        string jobPeriodDesc = DescribePeriod(endpoint.Payload?.PeriodSeconds ?? 0);
+        DateTime? nextTriggerTimeUtc = context.NextFireTimeUtc?.UtcDateTime;
+
         string payloadJson = JsonSerializer.Serialize(new
         {
             JobName = endpoint.JobName,
-            JobPeriodDesc = DescribePeriod(endpoint.Payload?.PeriodSeconds ?? 0),
-            NextTriggerTimeUtc = context.NextFireTimeUtc?.UtcDateTime
+            JobPeriodDesc = jobPeriodDesc,
+            NextTriggerTimeUtc = nextTriggerTimeUtc
         });
 
         try
@@ -61,8 +65,8 @@ public class ApiCallJob(IHttpClientFactory httpClientFactory, IFrameworkLogger l
                 logger.LogInformation("{WorkerName} | {JobName} | SUCCESSFULLY TRIGGERED", nameof(ApiCallJob), endpoint.JobName);
                 logger.FrameworkInfoLog(LogHelper.Generate(
                     message: $"{endpoint.JobName} successfully triggered",
-                    reference: new { RefContentId = endpoint.JobName },
-                    facility: "JOB_TRIGGERED_SUCCESS",
+                    reference: new { Type = "Job", Key = endpoint.JobName, JobPeriodDesc = jobPeriodDesc, NextTriggerTimeUtc = nextTriggerTimeUtc },
+                    facility: Facilities.JobTriggeredSuccess,
                     correlationId: jobCorrelationId,
                     exception: null
                 ));
@@ -72,8 +76,8 @@ public class ApiCallJob(IHttpClientFactory httpClientFactory, IFrameworkLogger l
                 logger.LogWarning("{WorkerName} | {JobName} | TRIGGER FAILED | {ResponseBody}", nameof(ApiCallJob), endpoint.JobName, responseBody);
                 logger.FrameworkErrorLog(LogHelper.Generate(
                     message: $"{endpoint.JobName} trigger failed. Response status: {((int)response.StatusCode)} - {responseBody}",
-                    reference: new { RefContentId = endpoint.JobName },
-                    facility: "JOB_TRIGGERED_FAILED",
+                    reference: new { Type = "Job", Key = endpoint.JobName, JobPeriodDesc = jobPeriodDesc, NextTriggerTimeUtc = nextTriggerTimeUtc, ResponseStatusCode = (int)response.StatusCode },
+                    facility: Facilities.JobTriggeredFailed,
                     correlationId: jobCorrelationId,
                     exception: new Exception(response.ReasonPhrase)
                 ));
@@ -87,8 +91,8 @@ public class ApiCallJob(IHttpClientFactory httpClientFactory, IFrameworkLogger l
             logger.LogError("{WorkerName} | {JobName} | {OperationStatus} | {Error}", nameof(ApiCallJob), endpoint.JobName, "FAIL", e.Message);
             logger.FrameworkErrorLog(LogHelper.Generate(
                 message: $"{endpoint.JobName} trigger failed",
-                reference: new { RefContentId = endpoint.JobName },
-                facility: "JOB_TRIGGERED_FAILED",
+                reference: new { Type = "Job", Key = endpoint.JobName, JobPeriodDesc = jobPeriodDesc, NextTriggerTimeUtc = nextTriggerTimeUtc },
+                facility: Facilities.JobTriggeredFailed,
                 correlationId: jobCorrelationId,
                 exception: e
             ));

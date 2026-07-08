@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using System.Text.Json;
 using Hhs.Shared.Contracts.Events;
+using Hhs.VideoGeneratorService.Application.Consts;
 using Hhs.Shared.Helper;
 using Hhs.Shared.Helper.Providers;
 using Hhs.Shared.Helper.Retry;
@@ -94,8 +95,8 @@ public sealed class VideoOperationAppService(
 
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: EventNames.VideoRequestCreated,
-            reference: new { @event.ScopeKey, RefContentId = @event.RefContentId, VideoRequestId = videoRequestId },
-            facility: EventNames.VideoRequestCreated,
+            reference: new { @event.ScopeKey, Type = nameof(VideoRequest), Key = videoRequestId, RefType = @event.RefContentType.ToString(), RefKey = @event.RefContentId },
+            facility: Facilities.VideoRequestCreated,
             correlationId: correlationId,
             exception: null
         ));
@@ -119,8 +120,8 @@ public sealed class VideoOperationAppService(
 
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: EventNames.VideoOperationStarted,
-            reference: new { videoRequest.ScopeKey, videoRequest.RefContentId, VideoRequestId = videoRequest.Id },
-            facility: EventNames.VideoOperationStarted,
+            reference: new { videoRequest.ScopeKey, Type = nameof(VideoRequest), Key = videoRequest.Id, RefType = videoRequest.RefContentType.ToString(), RefKey = videoRequest.RefContentId },
+            facility: Facilities.VideoOperationStarted,
             correlationId: videoRequest.CorrelationId,
             exception: null
         ));
@@ -133,8 +134,8 @@ public sealed class VideoOperationAppService(
             {
                 _logger.FrameworkInfoLog(LogHelper.Generate(
                     message: EventNames.VideoAudioInternal,
-                    reference: new { videoRequest.ScopeKey, videoRequest.RefContentId, VideoRequestId = videoRequest.Id },
-                    facility: EventNames.VideoAudioInternal,
+                    reference: new { videoRequest.ScopeKey, Type = nameof(VideoRequest), Key = videoRequest.Id, RefType = videoRequest.RefContentType.ToString(), RefKey = videoRequest.RefContentId },
+                    facility: Facilities.VideoAudioInternal,
                     correlationId: videoRequest.CorrelationId,
                     exception: null
                 ));
@@ -173,8 +174,8 @@ public sealed class VideoOperationAppService(
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
                 message: EventNames.VideoAudioExternal,
-                reference: new { videoRequest.ScopeKey, videoRequest.RefContentId, VideoRequestId = videoRequest.Id, AudioCount = audioItems.Count },
-                facility: EventNames.VideoAudioExternal,
+                reference: new { videoRequest.ScopeKey, Type = nameof(VideoRequest), Key = videoRequest.Id, RefType = videoRequest.RefContentType.ToString(), RefKey = videoRequest.RefContentId, AudioCount = audioItems.Count },
+                facility: Facilities.VideoAudioExternal,
                 correlationId: videoRequest.CorrelationId,
                 exception: null
             ));
@@ -199,8 +200,8 @@ public sealed class VideoOperationAppService(
                 {
                     _logger.FrameworkInfoLog(LogHelper.Generate(
                         message: EventNames.AudioProviderRequestStarted,
-                        reference: new { videoRequest.ScopeKey, videoRequest.RefContentId, VideoRequestId = videoRequest.Id, AudioRequestId = existingAudio.Id, item.SortOrder },
-                        facility: EventNames.AudioProviderRequestStarted,
+                        reference: new { videoRequest.ScopeKey, Type = nameof(AudioRequest), Key = existingAudio.Id, RefType = videoRequest.RefContentType.ToString(), RefKey = videoRequest.RefContentId, VideoRequestId = videoRequest.Id, item.SortOrder },
+                        facility: Facilities.AudioProviderRequestStarted,
                         correlationId: videoRequest.CorrelationId,
                         exception: null
                     ));
@@ -235,8 +236,8 @@ public sealed class VideoOperationAppService(
 
                 _logger.FrameworkInfoLog(LogHelper.Generate(
                     message: EventNames.AudioRequestCreated,
-                    reference: new { videoRequest.ScopeKey, videoRequest.RefContentId, VideoRequestId = videoRequest.Id, AudioRequestId = audioRequestId, item.SortOrder },
-                    facility: EventNames.AudioRequestCreated,
+                    reference: new { videoRequest.ScopeKey, Type = nameof(AudioRequest), Key = audioRequestId, RefType = videoRequest.RefContentType.ToString(), RefKey = videoRequest.RefContentId, VideoRequestId = videoRequest.Id, item.SortOrder },
+                    facility: Facilities.AudioRequestCreated,
                     correlationId: videoRequest.CorrelationId,
                     exception: null
                 ));
@@ -276,8 +277,8 @@ public sealed class VideoOperationAppService(
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
                 message: EventNames.AudioProviderRequestStarted,
-                reference: new { AudioRequestId = audioRequest.Id, VideoRequestId = audioRequest.VideoRequestId, audioRequest.SortOrder },
-                facility: EventNames.AudioProviderRequestStarted,
+                reference: new { audioRequest.ScopeKey, Type = nameof(AudioRequest), Key = audioRequest.Id, RefType = audioRequest.RefContentType.ToString(), RefKey = audioRequest.RefContentId, VideoRequestId = audioRequest.VideoRequestId, audioRequest.SortOrder },
+                facility: Facilities.AudioProviderRequestStarted,
                 correlationId: audioRequest.CorrelationId,
                 exception: null
             ));
@@ -299,8 +300,8 @@ public sealed class VideoOperationAppService(
 
                 _logger.FrameworkInfoLog(LogHelper.Generate(
                     message: EventNames.AudioProviderCompleted,
-                    reference: new { AudioRequestId = audioRequest.Id, VideoRequestId = audioRequest.VideoRequestId },
-                    facility: EventNames.AudioProviderCompleted,
+                    reference: new { audioRequest.ScopeKey, Type = nameof(AudioRequest), Key = audioRequest.Id, RefType = audioRequest.RefContentType.ToString(), RefKey = audioRequest.RefContentId, VideoRequestId = audioRequest.VideoRequestId },
+                    facility: Facilities.AudioProviderCompleted,
                     correlationId: audioRequest.CorrelationId,
                     exception: null
                 ));
@@ -326,8 +327,8 @@ public sealed class VideoOperationAppService(
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
                 message: EventNames.AudioProviderPollingStarted,
-                reference: new { AudioRequestId = audioRequest.Id, VideoRequestId = audioRequest.VideoRequestId, audioRequest.NextProviderPollAtUtc },
-                facility: EventNames.AudioProviderPollingStarted,
+                reference: new { audioRequest.ScopeKey, Type = nameof(AudioRequest), Key = audioRequest.Id, RefType = audioRequest.RefContentType.ToString(), RefKey = audioRequest.RefContentId, VideoRequestId = audioRequest.VideoRequestId, audioRequest.NextProviderPollAtUtc },
+                facility: Facilities.AudioProviderPollingStarted,
                 correlationId: audioRequest.CorrelationId,
                 exception: null
             ));
@@ -349,8 +350,8 @@ public sealed class VideoOperationAppService(
     {
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: EventNames.AudioFileDownloadStarted,
-            reference: new { AudioRequestId = @event.AudioRequestId },
-            facility: EventNames.AudioFileDownloadStarted,
+            reference: new { Type = nameof(AudioRequest), Key = @event.AudioRequestId },
+            facility: Facilities.AudioFileDownloadStarted,
             correlationId: correlationId,
             exception: null
         ));
@@ -389,8 +390,8 @@ public sealed class VideoOperationAppService(
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
                 message: EventNames.AudioFileDownloadCompleted,
-                reference: new { AudioRequestId = audioRequest.Id, VideoRequestId = audioRequest.VideoRequestId },
-                facility: EventNames.AudioFileDownloadCompleted,
+                reference: new { audioRequest.ScopeKey, Type = nameof(AudioRequest), Key = audioRequest.Id, RefType = audioRequest.RefContentType.ToString(), RefKey = audioRequest.RefContentId, VideoRequestId = audioRequest.VideoRequestId },
+                facility: Facilities.AudioFileDownloadCompleted,
                 correlationId: audioRequest.CorrelationId,
                 exception: null
             ));
@@ -430,8 +431,8 @@ public sealed class VideoOperationAppService(
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
                 message: EventNames.AudioFileUploadStarted,
-                reference: new { AudioRequestId = audioRequest.Id, VideoRequestId = audioRequest.VideoRequestId },
-                facility: EventNames.AudioFileUploadStarted,
+                reference: new { audioRequest.ScopeKey, Type = nameof(AudioRequest), Key = audioRequest.Id, RefType = audioRequest.RefContentType.ToString(), RefKey = audioRequest.RefContentId, VideoRequestId = audioRequest.VideoRequestId },
+                facility: Facilities.AudioFileUploadStarted,
                 correlationId: audioRequest.CorrelationId,
                 exception: null
             ));
@@ -470,8 +471,8 @@ public sealed class VideoOperationAppService(
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
                 message: EventNames.AudioFileUploadCompleted,
-                reference: new { AudioRequestId = audioRequest.Id, VideoRequestId = audioRequest.VideoRequestId, audioRequest.AudioCdnUrl },
-                facility: EventNames.AudioFileUploadCompleted,
+                reference: new { audioRequest.ScopeKey, Type = nameof(AudioRequest), Key = audioRequest.Id, RefType = audioRequest.RefContentType.ToString(), RefKey = audioRequest.RefContentId, VideoRequestId = audioRequest.VideoRequestId, audioRequest.AudioCdnUrl },
+                facility: Facilities.AudioFileUploadCompleted,
                 correlationId: audioRequest.CorrelationId,
                 exception: null
             ));
@@ -532,8 +533,8 @@ public sealed class VideoOperationAppService(
 
                 _logger.FrameworkInfoLog(LogHelper.Generate(
                     message: EventNames.VideoProviderCompleted,
-                    reference: new { videoRequest.ScopeKey, videoRequest.RefContentId, VideoRequestId = videoRequest.Id },
-                    facility: EventNames.VideoProviderCompleted,
+                    reference: new { videoRequest.ScopeKey, Type = nameof(VideoRequest), Key = videoRequest.Id, RefType = videoRequest.RefContentType.ToString(), RefKey = videoRequest.RefContentId },
+                    facility: Facilities.VideoProviderCompleted,
                     correlationId: videoRequest.CorrelationId,
                     exception: null
                 ));
@@ -559,8 +560,8 @@ public sealed class VideoOperationAppService(
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
                 message: EventNames.VideoProviderPollingStarted,
-                reference: new { videoRequest.ScopeKey, videoRequest.RefContentId, VideoRequestId = videoRequest.Id, videoRequest.NextProviderPollAtUtc },
-                facility: EventNames.VideoProviderPollingStarted,
+                reference: new { videoRequest.ScopeKey, Type = nameof(VideoRequest), Key = videoRequest.Id, RefType = videoRequest.RefContentType.ToString(), RefKey = videoRequest.RefContentId, videoRequest.NextProviderPollAtUtc },
+                facility: Facilities.VideoProviderPollingStarted,
                 correlationId: videoRequest.CorrelationId,
                 exception: null
             ));
@@ -582,8 +583,8 @@ public sealed class VideoOperationAppService(
     {
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: EventNames.VideoFileDownloadStarted,
-            reference: new { VideoRequestId = @event.VideoRequestId },
-            facility: EventNames.VideoFileDownloadStarted,
+            reference: new { Type = nameof(VideoRequest), Key = @event.VideoRequestId },
+            facility: Facilities.VideoFileDownloadStarted,
             correlationId: correlationId,
             exception: null
         ));
@@ -619,8 +620,8 @@ public sealed class VideoOperationAppService(
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
                 message: EventNames.VideoFileDownloadCompleted,
-                reference: new { videoRequest.ScopeKey, videoRequest.RefContentId, VideoRequestId = videoRequest.Id },
-                facility: EventNames.VideoFileDownloadCompleted,
+                reference: new { videoRequest.ScopeKey, Type = nameof(VideoRequest), Key = videoRequest.Id, RefType = videoRequest.RefContentType.ToString(), RefKey = videoRequest.RefContentId },
+                facility: Facilities.VideoFileDownloadCompleted,
                 correlationId: videoRequest.CorrelationId,
                 exception: null
             ));
@@ -667,8 +668,8 @@ public sealed class VideoOperationAppService(
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
                 message: EventNames.VideoFileUploadStarted,
-                reference: new { videoRequest.ScopeKey, videoRequest.RefContentId, VideoRequestId = videoRequest.Id },
-                facility: EventNames.VideoFileUploadStarted,
+                reference: new { videoRequest.ScopeKey, Type = nameof(VideoRequest), Key = videoRequest.Id, RefType = videoRequest.RefContentType.ToString(), RefKey = videoRequest.RefContentId },
+                facility: Facilities.VideoFileUploadStarted,
                 correlationId: videoRequest.CorrelationId,
                 exception: null
             ));
@@ -696,8 +697,8 @@ public sealed class VideoOperationAppService(
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
                 message: EventNames.VideoFileUploadCompleted,
-                reference: new { videoRequest.ScopeKey, videoRequest.RefContentId, VideoRequestId = videoRequest.Id, videoRequest.VideoCdnUrl },
-                facility: EventNames.VideoFileUploadCompleted,
+                reference: new { videoRequest.ScopeKey, Type = nameof(VideoRequest), Key = videoRequest.Id, RefType = videoRequest.RefContentType.ToString(), RefKey = videoRequest.RefContentId, videoRequest.VideoCdnUrl },
+                facility: Facilities.VideoFileUploadCompleted,
                 correlationId: videoRequest.CorrelationId,
                 exception: null
             ));
@@ -734,8 +735,8 @@ public sealed class VideoOperationAppService(
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
                 message: EventNames.VideoGenerationResultPublished,
-                reference: new { videoRequest.ScopeKey, videoRequest.RefContentId, VideoRequestId = videoRequest.Id, videoRequest.VideoCdnUrl },
-                facility: EventNames.VideoGenerationResultPublished,
+                reference: new { videoRequest.ScopeKey, Type = nameof(VideoRequest), Key = videoRequest.Id, RefType = videoRequest.RefContentType.ToString(), RefKey = videoRequest.RefContentId, videoRequest.VideoCdnUrl },
+                facility: Facilities.VideoGenerationResultPublished,
                 correlationId: videoRequest.CorrelationId,
                 exception: null
             ));
@@ -876,8 +877,8 @@ public sealed class VideoOperationAppService(
 
         _logger.FrameworkErrorLog(LogHelper.Generate(
             message: EventNames.RetryScheduled,
-            reference: new { AudioRequestId = request.Id, VideoRequestId = request.VideoRequestId, FailedStep = step, request.RetryCount, request.NextRetryAtUtc },
-            facility: EventNames.RetryScheduled,
+            reference: new { request.ScopeKey, Type = nameof(AudioRequest), Key = request.Id, RefType = request.RefContentType.ToString(), RefKey = request.RefContentId, VideoRequestId = request.VideoRequestId, FailedStep = step, request.RetryCount, request.NextRetryAtUtc },
+            facility: Facilities.RetryScheduled,
             correlationId: request.CorrelationId,
             exception: ex
         ));
@@ -909,8 +910,8 @@ public sealed class VideoOperationAppService(
 
         _logger.FrameworkErrorLog(LogHelper.Generate(
             message: step,
-            reference: new { AudioRequestId = request.Id, VideoRequestId = request.VideoRequestId, FailedStep = step, retryable },
-            facility: step,
+            reference: new { request.ScopeKey, Type = nameof(AudioRequest), Key = request.Id, RefType = request.RefContentType.ToString(), RefKey = request.RefContentId, VideoRequestId = request.VideoRequestId, FailedStep = step, retryable },
+            facility: Facilities.StepFailed,
             correlationId: request.CorrelationId,
             exception: ex
         ));
@@ -966,8 +967,8 @@ public sealed class VideoOperationAppService(
 
         _logger.FrameworkErrorLog(LogHelper.Generate(
             message: EventNames.RetryScheduled,
-            reference: new { VideoRequestId = request.Id, FailedStep = step, request.RetryCount, request.NextRetryAtUtc },
-            facility: EventNames.RetryScheduled,
+            reference: new { request.ScopeKey, Type = nameof(VideoRequest), Key = request.Id, RefType = request.RefContentType.ToString(), RefKey = request.RefContentId, FailedStep = step, request.RetryCount, request.NextRetryAtUtc },
+            facility: Facilities.RetryScheduled,
             correlationId: request.CorrelationId,
             exception: ex
         ));
@@ -999,8 +1000,8 @@ public sealed class VideoOperationAppService(
 
         _logger.FrameworkErrorLog(LogHelper.Generate(
             message: step,
-            reference: new { VideoRequestId = request.Id, FailedStep = step, retryable },
-            facility: step,
+            reference: new { request.ScopeKey, Type = nameof(VideoRequest), Key = request.Id, RefType = request.RefContentType.ToString(), RefKey = request.RefContentId, FailedStep = step, retryable },
+            facility: Facilities.StepFailed,
             correlationId: request.CorrelationId,
             exception: ex
         ));
@@ -1030,8 +1031,8 @@ public sealed class VideoOperationAppService(
 
         _logger.FrameworkErrorLog(LogHelper.Generate(
             message: EventNames.AudioFileUploadCompleted,
-            reference: new { VideoRequestId = videoRequest.Id, videoRequest.RefContentId },
-            facility: EventNames.AudioFileUploadCompleted,
+            reference: new { videoRequest.ScopeKey, Type = nameof(VideoRequest), Key = videoRequest.Id, RefType = videoRequest.RefContentType.ToString(), RefKey = videoRequest.RefContentId },
+            facility: Facilities.StepFailed,
             correlationId: videoRequest.CorrelationId,
             exception: null
         ));
