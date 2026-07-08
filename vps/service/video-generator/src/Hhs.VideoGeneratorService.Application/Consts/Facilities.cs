@@ -34,4 +34,5 @@ public static class Facilities
     public const string RetryDueRequestsTriggered = "RETRY_DUE_REQUESTS";
     public const string PollDueVideoRequestsTriggered = "POLL_DUE_VIDEO_REQUESTS";
     public const string PollDueAudioRequestsTriggered = "POLL_DUE_AUDIO_REQUESTS";
+    public const string AdvanceReadyVideoRequestsTriggered = "ADVANCE_READY_VIDEO_REQUESTS";
 }

@@ -35,7 +35,6 @@ public sealed class VideoOperationRetryWorkerService(
         var now = DateTime.UtcNow;
 
         await ResetStaleStartedInboxMessagesAsync(now, cancellationToken);
-        await AdvanceReadyVideoRequestsToProviderStartAsync(cancellationToken);
         await RetryAudioRequestsAsync(now, cancellationToken);
         await RetryVideoRequestsAsync(now, cancellationToken);
     }
@@ -48,9 +47,10 @@ public sealed class VideoOperationRetryWorkerService(
     /// audios' current DB state on every tick, so it can never get permanently stuck waiting for
     /// an event that never arrives. The final claim (Started -&gt; VideoProviderRequestStarting) is
     /// atomic, so a duplicate tick (or a second worker instance) racing the same VideoRequest is
-    /// always a safe no-op.
+    /// always a safe no-op. Triggered on its own schedule (not part of RetryDueRequestsAsync) since
+    /// this is a happy-path fan-in gate, not error recovery.
     /// </summary>
-    private async Task AdvanceReadyVideoRequestsToProviderStartAsync(CancellationToken cancellationToken)
+    public async Task AdvanceReadyVideoRequestsToProviderStartAsync(CancellationToken cancellationToken)
     {
         var options = new ListQueryOptions<VideoRequest>
         {

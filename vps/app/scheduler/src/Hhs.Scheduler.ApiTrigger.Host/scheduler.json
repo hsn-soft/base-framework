@@ -117,5 +117,16 @@
       "PeriodSeconds": 10
     },
     "TriggerOnStartup": false
+  },
+  {
+    "ServiceName": "video-generator-service",
+    "JobName": "VideoGeneratorAdvanceReadyVideoRequests",
+    "Url": "/api/video-generator-service/v1/commercial/jobs/advance-ready-video-requests",
+    "Method": "POST",
+    "Pattern": "0/5 * * * * ?",
+    "Payload": {
+      "PeriodSeconds": 5
+    },
+    "TriggerOnStartup": false
   }
 ]
