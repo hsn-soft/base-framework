@@ -156,7 +156,7 @@ public sealed class AudioProviderPollingWorkerService(
                     await ReplaceAudioAsync(request, cancellationToken);
 
                     _logger.FrameworkErrorLog(LogHelper.Generate(
-                        message: $"{Facilities.RetryScheduled}: {request.LastError}",
+                        message: $"{Facilities.RetryAttemptFailed}: {request.LastError}",
                         reference: new
                         {
                             request.ScopeKey,
@@ -170,7 +170,7 @@ public sealed class AudioProviderPollingWorkerService(
                             request.ProviderPollingCount,
                             request.NextProviderPollAtUtc
                         },
-                        facility: Facilities.RetryScheduled,
+                        facility: Facilities.RetryAttemptFailed,
                         correlationId: request.CorrelationId,
                         exception: null
                     ));
@@ -292,7 +292,7 @@ public sealed class AudioProviderPollingWorkerService(
                     await ReplaceAudioAsync(request, cancellationToken);
 
                     _logger.FrameworkErrorLog(LogHelper.Generate(
-                        message: $"{Facilities.RetryScheduled}: {request.LastError}",
+                        message: $"{Facilities.RetryAttemptFailed}: {request.LastError}",
                         reference: new
                         {
                             request.ScopeKey,
@@ -306,7 +306,7 @@ public sealed class AudioProviderPollingWorkerService(
                             request.ProviderPollingCount,
                             request.NextProviderPollAtUtc
                         },
-                        facility: Facilities.RetryScheduled,
+                        facility: Facilities.RetryAttemptFailed,
                         correlationId: request.CorrelationId,
                         exception: ex
                     ));

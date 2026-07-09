@@ -27,6 +27,7 @@ public static class Facilities
     public const string NormalizerResultPublished = "NORMALIZER_RESULT_PUBLISHED";
     public const string VideoGenerationDataForwarded = "VIDEO_GENERATION_DATA_FORWARDED";
     public const string RetryScheduled = "RETRY_SCHEDULED";
+    public const string RetryAttemptFailed = "RETRY_ATTEMPT_FAILED";
     public const string StepFailed = "STEP_FAILED";
 
     public const string RetryDueRequestsTriggered = "RETRY_DUE_REQUESTS";

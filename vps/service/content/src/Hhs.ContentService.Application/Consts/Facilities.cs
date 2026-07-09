@@ -20,6 +20,7 @@ public static class Facilities
     public const string StepFailed = "STEP_FAILED";
     public const string AnalysisContentCreated = "ANALYSIS_CONTENT_CREATED";
     public const string CustomerContentCreated = "CUSTOMER_CONTENT_CREATED";
+    public const string RetryScheduled = "RETRY_SCHEDULED";
 
     public const string AnalysisVideoGenerationQueryTriggered = "ANALYSIS_VIDEO_GENERATION_QUERY";
     public const string TrendVideoGenerationQueryTriggered = "TREND_VIDEO_GENERATION_QUERY";

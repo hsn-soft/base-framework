@@ -92,7 +92,14 @@ public sealed class ContentOperationService(
 
                             _logger.FrameworkInfoLog(LogHelper.Generate(
                                 message: "CustomerContent video generation rejected",
-                                reference: new { entity.ScopeKey, Type = nameof(CustomerContent), Key = entity.Id, RefType = "CustomerContentNormalizeRequest", RefKey = entity.NormalizeRequestId },
+                                reference: new
+                                {
+                                    entity.ScopeKey,
+                                    Type = nameof(CustomerContent),
+                                    Key = entity.Id,
+                                    RefType = "CustomerContentNormalizeRequest",
+                                    RefKey = entity.NormalizeRequestId
+                                },
                                 facility: Facilities.ContentOutlineRejected,
                                 correlationId: entity.CorrelationId,
                                 exception: null
@@ -103,7 +110,14 @@ public sealed class ContentOperationService(
 
                         _logger.FrameworkInfoLog(LogHelper.Generate(
                             message: "CustomerContent normalized success",
-                            reference: new { entity.ScopeKey, Type = nameof(CustomerContent), Key = entity.Id, RefType = "CustomerContentNormalizeRequest", RefKey = entity.NormalizeRequestId },
+                            reference: new
+                            {
+                                entity.ScopeKey,
+                                Type = nameof(CustomerContent),
+                                Key = entity.Id,
+                                RefType = "CustomerContentNormalizeRequest",
+                                RefKey = entity.NormalizeRequestId
+                            },
                             facility: Facilities.ContentNormalizedSuccess,
                             correlationId: entity.CorrelationId,
                             exception: null
@@ -116,7 +130,14 @@ public sealed class ContentOperationService(
 
                             _logger.FrameworkInfoLog(LogHelper.Generate(
                                 message: "CustomerContent video generation approved",
-                                reference: new { entity.ScopeKey, Type = nameof(CustomerContent), Key = entity.Id, RefType = "CustomerContentNormalizeRequest", RefKey = entity.NormalizeRequestId },
+                                reference: new
+                                {
+                                    entity.ScopeKey,
+                                    Type = nameof(CustomerContent),
+                                    Key = entity.Id,
+                                    RefType = "CustomerContentNormalizeRequest",
+                                    RefKey = entity.NormalizeRequestId
+                                },
                                 facility: Facilities.VideoGenerationApproved,
                                 correlationId: entity.CorrelationId,
                                 exception: null
@@ -138,7 +159,15 @@ public sealed class ContentOperationService(
 
                             _logger.FrameworkInfoLog(LogHelper.Generate(
                                 message: "CustomerContent video generation rejected",
-                                reference: new { entity.ScopeKey, Type = nameof(CustomerContent), Key = entity.Id, RefType = "CustomerContentNormalizeRequest", RefKey = entity.NormalizeRequestId, RejectReason = checkResult.Value },
+                                reference: new
+                                {
+                                    entity.ScopeKey,
+                                    Type = nameof(CustomerContent),
+                                    Key = entity.Id,
+                                    RefType = "CustomerContentNormalizeRequest",
+                                    RefKey = entity.NormalizeRequestId,
+                                    RejectReason = checkResult.Value
+                                },
                                 facility: Facilities.VideoGenerationRejected,
                                 correlationId: entity.CorrelationId,
                                 exception: null
@@ -156,7 +185,14 @@ public sealed class ContentOperationService(
                     {
                         _logger.FrameworkInfoLog(LogHelper.Generate(
                             message: "Analysis Content normalized success",
-                            reference: new { entity.ScopeKey, Type = nameof(AnalysisContent), Key = entity.Id, RefType = "AnalysisContentNormalizeRequest", RefKey = entity.NormalizeRequestId },
+                            reference: new
+                            {
+                                entity.ScopeKey,
+                                Type = nameof(AnalysisContent),
+                                Key = entity.Id,
+                                RefType = "AnalysisContentNormalizeRequest",
+                                RefKey = entity.NormalizeRequestId
+                            },
                             facility: Facilities.ContentNormalizedSuccess,
                             correlationId: entity.CorrelationId,
                             exception: null
@@ -166,7 +202,14 @@ public sealed class ContentOperationService(
 
                         _logger.FrameworkInfoLog(LogHelper.Generate(
                             message: "Analysis Content video generation approved",
-                            reference: new { entity.ScopeKey, Type = nameof(AnalysisContent), Key = entity.Id, RefType = "AnalysisContentNormalizeRequest", RefKey = entity.NormalizeRequestId },
+                            reference: new
+                            {
+                                entity.ScopeKey,
+                                Type = nameof(AnalysisContent),
+                                Key = entity.Id,
+                                RefType = "AnalysisContentNormalizeRequest",
+                                RefKey = entity.NormalizeRequestId
+                            },
                             facility: Facilities.VideoGenerationApproved,
                             correlationId: entity.CorrelationId,
                             exception: null
@@ -249,7 +292,14 @@ public sealed class ContentOperationService(
 
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: @event.AudioMode,
-            reference: new { Type = @event.RefContentType.ToString(), Key = @event.RefContentId, RefType = "VideoRequest", RefKey = @event.VideoRequestId, AudioMode = @event.AudioMode },
+            reference: new
+            {
+                Type = @event.RefContentType.ToString(),
+                Key = @event.RefContentId,
+                RefType = "VideoRequest",
+                RefKey = @event.VideoRequestId,
+                AudioMode = @event.AudioMode
+            },
             facility: Facilities.AudioOperationStarted,
             correlationId: correlationId,
             exception: null
@@ -298,7 +348,15 @@ public sealed class ContentOperationService(
 
                         _logger.FrameworkInfoLog(LogHelper.Generate(
                             message: EventNames.VideoGenerationResultPublished,
-                            reference: new { entity.ScopeKey, Type = nameof(CustomerContent), Key = entity.Id, RefType = "VideoRequest", RefKey = @event.VideoRequestId, entity.VideoCdnUrl },
+                            reference: new
+                            {
+                                entity.ScopeKey,
+                                Type = nameof(CustomerContent),
+                                Key = entity.Id,
+                                RefType = "VideoRequest",
+                                RefKey = @event.VideoRequestId,
+                                entity.VideoCdnUrl
+                            },
                             facility: Facilities.VideoGenerationResultPublished,
                             correlationId: entity.CorrelationId,
                             exception: null
@@ -321,7 +379,15 @@ public sealed class ContentOperationService(
 
                         _logger.FrameworkInfoLog(LogHelper.Generate(
                             message: EventNames.VideoGenerationResultPublished,
-                            reference: new { entity.ScopeKey, Type = nameof(AnalysisContent), Key = entity.Id, RefType = "VideoRequest", RefKey = @event.VideoRequestId, entity.VideoCdnUrl },
+                            reference: new
+                            {
+                                entity.ScopeKey,
+                                Type = nameof(AnalysisContent),
+                                Key = entity.Id,
+                                RefType = "VideoRequest",
+                                RefKey = @event.VideoRequestId,
+                                entity.VideoCdnUrl
+                            },
                             facility: Facilities.VideoGenerationResultPublished,
                             correlationId: entity.CorrelationId,
                             exception: null
@@ -345,8 +411,11 @@ public sealed class ContentOperationService(
 
             if (entity is not null)
             {
-                entity.LastFacility = EventNames.StepFailed;
-                entity.LastError = @event.ErrorMessage;
+                string facility = @event.Retryable ? Facilities.RetryScheduled : Facilities.StepFailed;
+                string failedDesc = $"{@event.Step}: {@event.ErrorMessage}";
+
+                entity.LastFacility = facility;
+                entity.LastError = failedDesc;
 
                 if (!@event.Retryable)
                 {
@@ -359,10 +428,8 @@ public sealed class ContentOperationService(
 
                 await customerContentRepository.UpdateAsync(entity, cancellationToken);
 
-                string failedDesc = $"{@event.Step}: {@event.ErrorMessage}";
-
                 _logger.FrameworkErrorLog(LogHelper.Generate(
-                    message: $"{EventNames.StepFailed} | {failedDesc}",
+                    message: $"{facility} | {failedDesc}",
                     reference: new
                     {
                         entity.ScopeKey,
@@ -373,11 +440,10 @@ public sealed class ContentOperationService(
                         @event.Retryable,
                         @event.ErrorMessage
                     },
-                    facility: Facilities.StepFailed,
+                    facility: facility,
                     correlationId: entity.CorrelationId,
                     exception: new Exception(failedDesc)
                 ));
-
             }
         }
 
@@ -387,8 +453,11 @@ public sealed class ContentOperationService(
 
             if (entity is not null)
             {
-                entity.LastFacility = EventNames.StepFailed;
-                entity.LastError = @event.ErrorMessage;
+                string facility = @event.Retryable ? Facilities.RetryScheduled : Facilities.StepFailed;
+                string failedDesc = $"{@event.Step}: {@event.ErrorMessage}";
+
+                entity.LastFacility = facility;
+                entity.LastError = failedDesc;
 
                 if (!@event.Retryable)
                 {
@@ -400,8 +469,6 @@ public sealed class ContentOperationService(
                 }
 
                 await analysisContentRepository.UpdateAsync(entity, cancellationToken);
-
-                string failedDesc = $"{@event.Step}: {@event.ErrorMessage}";
 
                 _logger.FrameworkErrorLog(LogHelper.Generate(
                     message: $"{EventNames.StepFailed} | {failedDesc}",
@@ -415,7 +482,7 @@ public sealed class ContentOperationService(
                         @event.Retryable,
                         @event.ErrorMessage
                     },
-                    facility: Facilities.StepFailed,
+                    facility: facility,
                     correlationId: entity.CorrelationId,
                     exception: new Exception(failedDesc)
                 ));

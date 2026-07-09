@@ -258,7 +258,7 @@ public sealed class NormalizerOperationRetryWorkerService(
                             RefKey = request.CustomerContentId,
                             FailedStep = EventNames.OutlineProviderPollingStarted
                         },
-                        facility: Facilities.RetryScheduled,
+                        facility: Facilities.RetryAttemptFailed,
                         correlationId: request.CorrelationId,
                         exception: null
                     ));
@@ -375,7 +375,7 @@ public sealed class NormalizerOperationRetryWorkerService(
                         RefKey = request.CustomerContentId,
                         FailedStep = request.CurrentStep
                     },
-                    facility: Facilities.RetryScheduled,
+                    facility: Facilities.RetryAttemptFailed,
                     correlationId: request.CorrelationId,
                     exception: null
                 ));
@@ -406,7 +406,7 @@ public sealed class NormalizerOperationRetryWorkerService(
                         RefKey = request.CustomerContentId,
                         FailedStep = request.CurrentStep
                     },
-                    facility: Facilities.RetryScheduled,
+                    facility: Facilities.RetryAttemptFailed,
                     correlationId: request.CorrelationId,
                     exception: ex
                 ));
@@ -476,7 +476,7 @@ public sealed class NormalizerOperationRetryWorkerService(
                                 AnalysisContentNormalizeRequestId = request.Id,
                                 FailedStep = EventNames.OutlineProviderPollingStarted
                             },
-                            facility: Facilities.RetryScheduled,
+                            facility: Facilities.RetryAttemptFailed,
                             correlationId: request.CorrelationId,
                             exception: null
                         ));
@@ -576,7 +576,7 @@ public sealed class NormalizerOperationRetryWorkerService(
                             AnalysisContentNormalizeRequestId = request.Id,
                             FailedStep = item.CurrentStep
                         },
-                        facility: Facilities.RetryScheduled,
+                        facility: Facilities.RetryAttemptFailed,
                         correlationId: request.CorrelationId,
                         exception: null
                     ));
@@ -607,7 +607,7 @@ public sealed class NormalizerOperationRetryWorkerService(
                             AnalysisContentNormalizeRequestId = request.Id,
                             FailedStep = item.CurrentStep
                         },
-                        facility: Facilities.RetryScheduled,
+                        facility: Facilities.RetryAttemptFailed,
                         correlationId: request.CorrelationId,
                         exception: ex
                     ));

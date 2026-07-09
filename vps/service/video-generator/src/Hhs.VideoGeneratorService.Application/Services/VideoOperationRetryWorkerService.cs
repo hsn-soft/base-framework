@@ -343,7 +343,7 @@ public sealed class VideoOperationRetryWorkerService(
                         request.VideoRequestId,
                         FailedStep = request.CurrentStep
                     },
-                    facility: Facilities.RetryScheduled,
+                    facility: Facilities.RetryAttemptFailed,
                     correlationId: request.CorrelationId,
                     exception: null
                 ));
@@ -394,7 +394,7 @@ public sealed class VideoOperationRetryWorkerService(
                         FailedStep = request.CurrentStep,
                         request.NextRetryAtUtc
                     },
-                    facility: Facilities.RetryScheduled,
+                    facility: Facilities.RetryAttemptFailed,
                     correlationId: request.CorrelationId,
                     exception: ex
                 ));
@@ -554,7 +554,7 @@ public sealed class VideoOperationRetryWorkerService(
                         RefKey = request.RefContentId,
                         FailedStep = request.CurrentStep
                     },
-                    facility: Facilities.RetryScheduled,
+                    facility: Facilities.RetryAttemptFailed,
                     correlationId: request.CorrelationId,
                     exception: null
                 ));
@@ -604,7 +604,7 @@ public sealed class VideoOperationRetryWorkerService(
                         FailedStep = request.CurrentStep,
                         request.NextRetryAtUtc
                     },
-                    facility: Facilities.RetryScheduled,
+                    facility: Facilities.RetryAttemptFailed,
                     correlationId: request.CorrelationId,
                     exception: ex
                 ));

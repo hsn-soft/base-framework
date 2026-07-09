@@ -175,7 +175,7 @@ public sealed class OutlineProviderPollingWorkerService(
                     await ReplaceCustomerAsync(request, cancellationToken);
 
                     _logger.FrameworkErrorLog(LogHelper.Generate(
-                        message: $"{Facilities.RetryScheduled}: {request.LastError}",
+                        message: $"{Facilities.RetryAttemptFailed}: {request.LastError}",
                         reference: new
                         {
                             request.ScopeKey,
@@ -188,7 +188,7 @@ public sealed class OutlineProviderPollingWorkerService(
                             request.OutlinePollingCount,
                             request.NextOutlinePollAtUtc
                         },
-                        facility: Facilities.RetryScheduled,
+                        facility: Facilities.RetryAttemptFailed,
                         correlationId: request.CorrelationId,
                         exception: null
                     ));
@@ -311,7 +311,7 @@ public sealed class OutlineProviderPollingWorkerService(
                     await ReplaceCustomerAsync(request, cancellationToken);
 
                     _logger.FrameworkErrorLog(LogHelper.Generate(
-                        message: $"{Facilities.RetryScheduled}: {request.LastError}",
+                        message: $"{Facilities.RetryAttemptFailed}: {request.LastError}",
                         reference: new
                         {
                             request.ScopeKey,
@@ -324,7 +324,7 @@ public sealed class OutlineProviderPollingWorkerService(
                             request.OutlinePollingCount,
                             request.NextOutlinePollAtUtc
                         },
-                        facility: Facilities.RetryScheduled,
+                        facility: Facilities.RetryAttemptFailed,
                         correlationId: request.CorrelationId,
                         exception: ex
                     ));
@@ -442,7 +442,7 @@ public sealed class OutlineProviderPollingWorkerService(
                             cancellationToken);
 
                         _logger.FrameworkErrorLog(LogHelper.Generate(
-                            message: $"{Facilities.RetryScheduled}: {failMessage}",
+                            message: $"{Facilities.RetryAttemptFailed}: {failMessage}",
                             reference: new
                             {
                                 request.ScopeKey,
@@ -455,7 +455,7 @@ public sealed class OutlineProviderPollingWorkerService(
                                 FailedStep = EventNames.OutlineProviderPollingStarted,
                                 OutlinePollingCount = nextPollingCount
                             },
-                            facility: Facilities.RetryScheduled,
+                            facility: Facilities.RetryAttemptFailed,
                             correlationId: request.CorrelationId,
                             exception: null
                         ));
@@ -571,7 +571,7 @@ public sealed class OutlineProviderPollingWorkerService(
                         cancellationToken);
 
                     _logger.FrameworkErrorLog(LogHelper.Generate(
-                        message: $"{Facilities.RetryScheduled}: {ex.Message}",
+                        message: $"{Facilities.RetryAttemptFailed}: {ex.Message}",
                         reference: new
                         {
                             request.ScopeKey,
@@ -584,7 +584,7 @@ public sealed class OutlineProviderPollingWorkerService(
                             FailedStep = EventNames.OutlineProviderPollingStarted,
                             OutlinePollingCount = nextCount
                         },
-                        facility: Facilities.RetryScheduled,
+                        facility: Facilities.RetryAttemptFailed,
                         correlationId: request.CorrelationId,
                         exception: ex
                     ));
