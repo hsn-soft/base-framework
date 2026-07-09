@@ -6,6 +6,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.Configure<MockApiOptions>(builder.Configuration.GetSection("MockApi"));
 builder.Services.AddSingleton<VideoQueueInternalService>();
+builder.Services.AddHostedService<StaleMockFileCleanupWorker>();
 
 var app = builder.Build();
 
@@ -115,4 +116,63 @@ namespace Hhs.MockApi.VideoQueueInternal
     }
 
     public sealed record VideoRequest(string InputText);
+
+    /// <summary>
+    /// Deletes generated mock media files older than 1 hour (by creation time) so the mock's
+    /// media directory doesn't grow unbounded across repeated local/CI runs. MinIO/CDN storage
+    /// is a separate mock (Hhs.MockApi.CdnLocalMinio) and is intentionally untouched here.
+    /// </summary>
+    public sealed class StaleMockFileCleanupWorker(IOptions<MockApiOptions> options, ILogger<StaleMockFileCleanupWorker> logger) : BackgroundService
+    {
+        private static readonly TimeSpan MaxFileAge = TimeSpan.FromHours(1);
+        private static readonly TimeSpan ScanInterval = TimeSpan.FromMinutes(10);
+
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        {
+            string mockFilesDir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", options.Value.MediaDirectory);
+
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                try
+                {
+                    CleanupStaleFiles(mockFilesDir);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Stale mock file cleanup failed for directory {MockFilesDir}", mockFilesDir);
+                }
+
+                try
+                {
+                    await Task.Delay(ScanInterval, stoppingToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
+            }
+        }
+
+        private void CleanupStaleFiles(string mockFilesDir)
+        {
+            if (!Directory.Exists(mockFilesDir)) return;
+
+            var cutoffUtc = DateTime.UtcNow - MaxFileAge;
+
+            foreach (string filePath in Directory.EnumerateFiles(mockFilesDir))
+            {
+                try
+                {
+                    if (File.GetCreationTimeUtc(filePath) >= cutoffUtc) continue;
+
+                    File.Delete(filePath);
+                    logger.LogInformation("Deleted stale mock file: {FilePath}", filePath);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Failed to delete stale mock file: {FilePath}", filePath);
+                }
+            }
+        }
+    }
 }
