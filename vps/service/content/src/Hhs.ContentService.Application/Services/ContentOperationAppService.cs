@@ -359,13 +359,25 @@ public sealed class ContentOperationService(
 
                 await customerContentRepository.UpdateAsync(entity, cancellationToken);
 
+                string failedDesc = $"{@event.Step}: {@event.ErrorMessage}";
+
                 _logger.FrameworkErrorLog(LogHelper.Generate(
-                    message: EventNames.StepFailed,
-                    reference: new { entity.ScopeKey, Type = nameof(CustomerContent), Key = entity.Id, FailedStep = @event.Step, @event.Retryable, @event.ErrorMessage },
+                    message: $"{EventNames.StepFailed} | {failedDesc}",
+                    reference: new
+                    {
+                        entity.ScopeKey,
+                        // references
+                        Type = nameof(CustomerContent),
+                        Key = entity.Id,
+                        FailedStep = @event.Step,
+                        @event.Retryable,
+                        @event.ErrorMessage
+                    },
                     facility: Facilities.StepFailed,
                     correlationId: entity.CorrelationId,
-                    exception: null
+                    exception: new Exception(failedDesc)
                 ));
+
             }
         }
 
@@ -389,12 +401,23 @@ public sealed class ContentOperationService(
 
                 await analysisContentRepository.UpdateAsync(entity, cancellationToken);
 
+                string failedDesc = $"{@event.Step}: {@event.ErrorMessage}";
+
                 _logger.FrameworkErrorLog(LogHelper.Generate(
-                    message: EventNames.StepFailed,
-                    reference: new { entity.ScopeKey, Type = nameof(AnalysisContent), Key = entity.Id, FailedStep = @event.Step, @event.Retryable, @event.ErrorMessage },
+                    message: $"{EventNames.StepFailed} | {failedDesc}",
+                    reference: new
+                    {
+                        entity.ScopeKey,
+                        // references
+                        Type = nameof(AnalysisContent),
+                        Key = entity.Id,
+                        FailedStep = @event.Step,
+                        @event.Retryable,
+                        @event.ErrorMessage
+                    },
                     facility: Facilities.StepFailed,
                     correlationId: entity.CorrelationId,
-                    exception: null
+                    exception: new Exception(failedDesc)
                 ));
             }
         }

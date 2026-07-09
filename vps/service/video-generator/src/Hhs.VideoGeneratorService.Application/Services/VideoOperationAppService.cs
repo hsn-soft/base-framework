@@ -35,7 +35,8 @@ public sealed class VideoOperationAppService(
     SystemCdnSettings systemCdnSettings,
     RetryDelayCalculator retryDelayCalculator,
     VideoPollingSettings videoPollingSettings,
-    VideoRetrySettings serviceRetrySettings) : ApplicationServiceBase(provider)
+    VideoRetrySettings serviceRetrySettings,
+    VideoOperationRetryWorkerService videoOperationRetryWorkerService) : ApplicationServiceBase(provider)
 {
     private readonly IFrameworkLogger _logger = provider.GetRequiredService<IFrameworkLogger>();
 
@@ -564,6 +565,10 @@ public sealed class VideoOperationAppService(
                 correlationId: audioRequest.CorrelationId,
                 exception: null
             ));
+
+            // Fast path: don't wait for the next CheckReadyAudioRequestsToVideoAsync tick if this
+            // was the last sibling audio to finish — the periodic tick remains the safety net.
+            await videoOperationRetryWorkerService.CheckReadyAudioRequestsToVideoAsync(audioRequest.VideoRequestId, cancellationToken);
         }
         catch (Exception ex)
         {

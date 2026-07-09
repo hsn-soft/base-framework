@@ -64,106 +64,133 @@ public sealed class VideoOperationRetryWorkerService(
         {
             try
             {
-                var audioOptions = new ListQueryOptions<AudioRequest> { Filter = x => x.VideoRequestId == videoRequest.Id };
-                var allAudios = await audioRequestRepository.GetListAsync(audioOptions, cancellationToken);
-
-                if (allAudios.Count == 0)
-                    continue; // audios not created yet — still inside StartVideoOperationAsync
-
-                if (allAudios.Any(x => x.Status == AudioStatusNames.Failed))
-                {
-                    var failPredicate = (Expression<Func<VideoRequest, bool>>)(x =>
-                        x.Id == videoRequest.Id && x.Status == VideoStatusNames.Started);
-                    var failUpdate = Builders<VideoRequest>.Update
-                        .Set(x => x.Status, VideoStatusNames.Failed)
-                        .Set(x => x.CurrentStep, EventNames.AudioFileUploadCompleted)
-                        .Set(x => x.LastError, "One or more audio requests failed.")
-                        .Set(x => x.NextRetryAtUtc, (DateTime?)null);
-
-                    var failClaimed = await videoRequestRepository.UpdateByExpressionAsync(failPredicate, u => failUpdate, cancellationToken: cancellationToken);
-                    if (failClaimed == 0) continue;
-
-                    _logger.FrameworkErrorLog(LogHelper.Generate(
-                        message: EventNames.AudioFileUploadCompleted,
-                        reference: new { videoRequest.ScopeKey, Type = nameof(VideoRequest), Key = videoRequest.Id, RefType = videoRequest.RefContentType.ToString(), RefKey = videoRequest.RefContentId },
-                        facility: Facilities.StepFailed,
-                        correlationId: videoRequest.CorrelationId,
-                        exception: null
-                    ));
-
-                    await EventBus.PublishAsync(
-                        parentMessage: ParentIntegrationEvent,
-                        correlationId: videoRequest.CorrelationId,
-                        eventMessage: new StepFailedEto
-                        {
-                            RefContentId = videoRequest.RefContentId,
-                            RefContentType = videoRequest.RefContentType,
-                            Step = EventNames.AudioFileUploadCompleted,
-                            ErrorMessage = "One or more audio requests failed.",
-                            Retryable = false
-                        }
-                    );
-
-                    continue;
-                }
-
-                if (allAudios.Any(x => x.Status != AudioStatusNames.AudioFileUploadCompleted))
-                    continue; // still waiting on at least one sibling
-
-                var providerKeyResult = await customerVpSettingRepository.GetVideoProviderKeyByScopeKeyAsync(videoRequest.ScopeKey, cancellationToken);
-                if (!providerKeyResult.Key)
-                {
-                    logger.LogError("ADVANCE_VIDEO_PROVIDER_START_FAILED: unknown provider key. ScopeKey={ScopeKey}, VideoRequestId={VideoRequestId}", videoRequest.ScopeKey, videoRequest.Id);
-                    continue;
-                }
-
-                var videoProvider = videoProviderResolver.Resolve(providerKeyResult.Value);
-                var orderedAudios = allAudios.OrderBy(x => x.SortOrder).ToList();
-
-                if (videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioUrlListRequired &&
-                    orderedAudios.Any(x => string.IsNullOrWhiteSpace(x.AudioCdnUrl)))
-                {
-                    logger.LogError("ADVANCE_VIDEO_PROVIDER_START_FAILED: AudioCdnUrl missing. VideoRequestId={VideoRequestId}", videoRequest.Id);
-                    continue;
-                }
-
-                var lockPredicate = (Expression<Func<VideoRequest, bool>>)(x =>
-                    x.Id == videoRequest.Id && x.Status == VideoStatusNames.Started);
-
-                var lockUpdate = Builders<VideoRequest>.Update
-                    .Set(x => x.Status, VideoStatusNames.VideoProviderRequestStarting)
-                    .Set(x => x.CurrentStep, EventNames.VideoProviderRequestStarted)
-                    .Set(x => x.LastError, null);
-
-                var lockResult = await videoRequestRepository.UpdateByExpressionAsync(lockPredicate, u => lockUpdate, cancellationToken: cancellationToken);
-                if (lockResult == 0) continue; // another tick/instance already claimed this VideoRequest
-
-                _logger.FrameworkInfoLog(LogHelper.Generate(
-                    message: EventNames.VideoProviderRequestStarted,
-                    reference: new { videoRequest.ScopeKey, Type = nameof(VideoRequest), Key = videoRequest.Id, RefType = videoRequest.RefContentType.ToString(), RefKey = videoRequest.RefContentId, AudioCount = orderedAudios.Count },
-                    facility: Facilities.VideoProviderRequestStarted,
-                    correlationId: videoRequest.CorrelationId,
-                    exception: null
-                ));
-
-                await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
-                    correlationId: videoRequest.CorrelationId,
-                    eventMessage: new VideoProviderRequestStartedEto
-                    {
-                        RefContentId = videoRequest.RefContentId,
-                        RefContentType = videoRequest.RefContentType,
-                        VideoRequestId = videoRequest.Id,
-                        AudioCdnUrls = videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioUrlListRequired
-                            ? orderedAudios.Select(x => x.AudioCdnUrl!).ToList()
-                            : []
-                    }
-                );
+                await TryAdvanceVideoRequestToProviderStartAsync(videoRequest, cancellationToken);
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "ADVANCE_VIDEO_PROVIDER_START_FAILED: VideoRequestId={VideoRequestId}", videoRequest.Id);
             }
         }
+    }
+
+    /// <summary>
+    /// Opportunistic single-request fast path: called right after an AudioRequest's own upload
+    /// completes so the common case (all siblings already done) doesn't have to wait for the next
+    /// CheckReadyAudioRequestsToVideoAsync tick. Purely a latency optimization — the periodic batch
+    /// tick remains the correctness safety net, and the atomic claim inside
+    /// TryAdvanceVideoRequestToProviderStartAsync makes a redundant/racing call here a safe no-op.
+    /// </summary>
+    public async Task CheckReadyAudioRequestsToVideoAsync(Guid videoRequestId, CancellationToken cancellationToken)
+    {
+        var videoRequest = await videoRequestRepository.GetByIdOrDefaultAsync(videoRequestId, cancellationToken: cancellationToken);
+        if (videoRequest is null || videoRequest.Status != VideoStatusNames.Started) return;
+
+        try
+        {
+            await TryAdvanceVideoRequestToProviderStartAsync(videoRequest, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "ADVANCE_VIDEO_PROVIDER_START_FAILED: VideoRequestId={VideoRequestId}", videoRequest.Id);
+        }
+    }
+
+    private async Task TryAdvanceVideoRequestToProviderStartAsync(VideoRequest videoRequest, CancellationToken cancellationToken)
+    {
+        var audioOptions = new ListQueryOptions<AudioRequest> { Filter = x => x.VideoRequestId == videoRequest.Id };
+        var allAudios = await audioRequestRepository.GetListAsync(audioOptions, cancellationToken);
+
+        if (allAudios.Count == 0)
+            return; // audios not created yet — still inside StartVideoOperationAsync
+
+        if (allAudios.Any(x => x.Status == AudioStatusNames.Failed))
+        {
+            var failPredicate = (Expression<Func<VideoRequest, bool>>)(x =>
+                x.Id == videoRequest.Id && x.Status == VideoStatusNames.Started);
+            var failUpdate = Builders<VideoRequest>.Update
+                .Set(x => x.Status, VideoStatusNames.Failed)
+                .Set(x => x.CurrentStep, EventNames.AudioFileUploadCompleted)
+                .Set(x => x.LastError, "One or more audio requests failed.")
+                .Set(x => x.NextRetryAtUtc, (DateTime?)null);
+
+            var failClaimed = await videoRequestRepository.UpdateByExpressionAsync(failPredicate, u => failUpdate, cancellationToken: cancellationToken);
+            if (failClaimed == 0) return;
+
+            _logger.FrameworkErrorLog(LogHelper.Generate(
+                message: EventNames.AudioFileUploadCompleted,
+                reference: new { videoRequest.ScopeKey, Type = nameof(VideoRequest), Key = videoRequest.Id, RefType = videoRequest.RefContentType.ToString(), RefKey = videoRequest.RefContentId },
+                facility: Facilities.StepFailed,
+                correlationId: videoRequest.CorrelationId,
+                exception: null
+            ));
+
+            await EventBus.PublishAsync(
+                parentMessage: ParentIntegrationEvent,
+                correlationId: videoRequest.CorrelationId,
+                eventMessage: new StepFailedEto
+                {
+                    RefContentId = videoRequest.RefContentId,
+                    RefContentType = videoRequest.RefContentType,
+                    Step = EventNames.AudioFileUploadCompleted,
+                    ErrorMessage = "One or more audio requests failed.",
+                    Retryable = false
+                }
+            );
+
+            return;
+        }
+
+        if (allAudios.Any(x => x.Status != AudioStatusNames.AudioFileUploadCompleted))
+            return; // still waiting on at least one sibling
+
+        var providerKeyResult = await customerVpSettingRepository.GetVideoProviderKeyByScopeKeyAsync(videoRequest.ScopeKey, cancellationToken);
+        if (!providerKeyResult.Key)
+        {
+            logger.LogError("ADVANCE_VIDEO_PROVIDER_START_FAILED: unknown provider key. ScopeKey={ScopeKey}, VideoRequestId={VideoRequestId}", videoRequest.ScopeKey, videoRequest.Id);
+            return;
+        }
+
+        var videoProvider = videoProviderResolver.Resolve(providerKeyResult.Value);
+        var orderedAudios = allAudios.OrderBy(x => x.SortOrder).ToList();
+
+        if (videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioUrlListRequired &&
+            orderedAudios.Any(x => string.IsNullOrWhiteSpace(x.AudioCdnUrl)))
+        {
+            logger.LogError("ADVANCE_VIDEO_PROVIDER_START_FAILED: AudioCdnUrl missing. VideoRequestId={VideoRequestId}", videoRequest.Id);
+            return;
+        }
+
+        var lockPredicate = (Expression<Func<VideoRequest, bool>>)(x =>
+            x.Id == videoRequest.Id && x.Status == VideoStatusNames.Started);
+
+        var lockUpdate = Builders<VideoRequest>.Update
+            .Set(x => x.Status, VideoStatusNames.VideoProviderRequestStarting)
+            .Set(x => x.CurrentStep, EventNames.VideoProviderRequestStarted)
+            .Set(x => x.LastError, null);
+
+        var lockResult = await videoRequestRepository.UpdateByExpressionAsync(lockPredicate, u => lockUpdate, cancellationToken: cancellationToken);
+        if (lockResult == 0) return; // another tick/instance already claimed this VideoRequest
+
+        _logger.FrameworkInfoLog(LogHelper.Generate(
+            message: EventNames.VideoProviderRequestStarted,
+            reference: new { videoRequest.ScopeKey, Type = nameof(VideoRequest), Key = videoRequest.Id, RefType = videoRequest.RefContentType.ToString(), RefKey = videoRequest.RefContentId, AudioCount = orderedAudios.Count },
+            facility: Facilities.VideoProviderRequestStarted,
+            correlationId: videoRequest.CorrelationId,
+            exception: null
+        ));
+
+        await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
+            correlationId: videoRequest.CorrelationId,
+            eventMessage: new VideoProviderRequestStartedEto
+            {
+                RefContentId = videoRequest.RefContentId,
+                RefContentType = videoRequest.RefContentType,
+                VideoRequestId = videoRequest.Id,
+                AudioCdnUrls = videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioUrlListRequired
+                    ? orderedAudios.Select(x => x.AudioCdnUrl!).ToList()
+                    : []
+            }
+        );
     }
 
     /// <summary>
