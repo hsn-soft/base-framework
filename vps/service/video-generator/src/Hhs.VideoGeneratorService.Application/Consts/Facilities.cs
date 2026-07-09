@@ -41,6 +41,7 @@ public static class Facilities
     public const string VideoOperationFailed = "VIDEO_OPERATION_FAILED";
 
     public const string RetryScheduled = "RETRY_SCHEDULED";
+    public const string RetryAttempted = "RETRY_ATTEMPTED";
     public const string RetryAttemptFailed = "RETRY_ATTEMPT_FAILED";
     public const string StepFailed = "STEP_FAILED";
 

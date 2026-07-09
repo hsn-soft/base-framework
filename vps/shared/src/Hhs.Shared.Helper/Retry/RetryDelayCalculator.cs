@@ -1,13 +1,10 @@
+using JetBrains.Annotations;
+
 namespace Hhs.Shared.Helper.Retry;
 
-public sealed class RetryDelayCalculator
+public sealed class RetryDelayCalculator([CanBeNull] int[] delaySeconds)
 {
-    private readonly int[] _delaySeconds;
-
-    public RetryDelayCalculator(int[] delaySeconds)
-    {
-        _delaySeconds = delaySeconds ?? [60, 120, 300, 900];
-    }
+    private readonly int[] _delaySeconds = delaySeconds ?? [60, 120, 300, 900];
 
     public TimeSpan Calculate(int retryCount)
     {

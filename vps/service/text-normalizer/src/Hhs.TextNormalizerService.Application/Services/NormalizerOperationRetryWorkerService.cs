@@ -247,7 +247,7 @@ public sealed class NormalizerOperationRetryWorkerService(
                             cancellationToken: cancellationToken)
                         .ConfigureAwait(false);
 
-                    _logger.FrameworkErrorLog(LogHelper.Generate(
+                    _logger.FrameworkInfoLog(LogHelper.Generate(
                         message: EventNames.RetryScheduled,
                         reference: new
                         {
@@ -258,7 +258,7 @@ public sealed class NormalizerOperationRetryWorkerService(
                             RefKey = request.CustomerContentId,
                             FailedStep = EventNames.OutlineProviderPollingStarted
                         },
-                        facility: Facilities.RetryAttemptFailed,
+                        facility: Facilities.RetryAttempted,
                         correlationId: request.CorrelationId,
                         exception: null
                     ));
@@ -364,7 +364,7 @@ public sealed class NormalizerOperationRetryWorkerService(
                     continue;
                 }
 
-                _logger.FrameworkErrorLog(LogHelper.Generate(
+                _logger.FrameworkInfoLog(LogHelper.Generate(
                     message: EventNames.RetryScheduled,
                     reference: new
                     {
@@ -375,7 +375,7 @@ public sealed class NormalizerOperationRetryWorkerService(
                         RefKey = request.CustomerContentId,
                         FailedStep = request.CurrentStep
                     },
-                    facility: Facilities.RetryAttemptFailed,
+                    facility: Facilities.RetryAttempted,
                     correlationId: request.CorrelationId,
                     exception: null
                 ));
@@ -464,7 +464,7 @@ public sealed class NormalizerOperationRetryWorkerService(
                         if (result == 0)
                             continue;
 
-                        _logger.FrameworkErrorLog(LogHelper.Generate(
+                        _logger.FrameworkInfoLog(LogHelper.Generate(
                             message: EventNames.RetryScheduled,
                             reference: new
                             {
@@ -476,7 +476,7 @@ public sealed class NormalizerOperationRetryWorkerService(
                                 AnalysisContentNormalizeRequestId = request.Id,
                                 FailedStep = EventNames.OutlineProviderPollingStarted
                             },
-                            facility: Facilities.RetryAttemptFailed,
+                            facility: Facilities.RetryAttempted,
                             correlationId: request.CorrelationId,
                             exception: null
                         ));
@@ -564,7 +564,7 @@ public sealed class NormalizerOperationRetryWorkerService(
                         continue;
                     }
 
-                    _logger.FrameworkErrorLog(LogHelper.Generate(
+                    _logger.FrameworkInfoLog(LogHelper.Generate(
                         message: EventNames.RetryScheduled,
                         reference: new
                         {
@@ -576,7 +576,7 @@ public sealed class NormalizerOperationRetryWorkerService(
                             AnalysisContentNormalizeRequestId = request.Id,
                             FailedStep = item.CurrentStep
                         },
-                        facility: Facilities.RetryAttemptFailed,
+                        facility: Facilities.RetryAttempted,
                         correlationId: request.CorrelationId,
                         exception: null
                     ));

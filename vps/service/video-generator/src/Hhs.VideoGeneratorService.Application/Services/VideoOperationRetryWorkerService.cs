@@ -331,7 +331,7 @@ public sealed class VideoOperationRetryWorkerService(
                     continue;
                 }
 
-                _logger.FrameworkErrorLog(LogHelper.Generate(
+                _logger.FrameworkInfoLog(LogHelper.Generate(
                     message: EventNames.RetryScheduled,
                     reference: new
                     {
@@ -343,7 +343,7 @@ public sealed class VideoOperationRetryWorkerService(
                         request.VideoRequestId,
                         FailedStep = request.CurrentStep
                     },
-                    facility: Facilities.RetryAttemptFailed,
+                    facility: Facilities.RetryAttempted,
                     correlationId: request.CorrelationId,
                     exception: null
                 ));
@@ -543,7 +543,7 @@ public sealed class VideoOperationRetryWorkerService(
                     continue;
                 }
 
-                _logger.FrameworkErrorLog(LogHelper.Generate(
+                _logger.FrameworkInfoLog(LogHelper.Generate(
                     message: EventNames.RetryScheduled,
                     reference: new
                     {
@@ -554,7 +554,7 @@ public sealed class VideoOperationRetryWorkerService(
                         RefKey = request.RefContentId,
                         FailedStep = request.CurrentStep
                     },
-                    facility: Facilities.RetryAttemptFailed,
+                    facility: Facilities.RetryAttempted,
                     correlationId: request.CorrelationId,
                     exception: null
                 ));
