@@ -545,7 +545,11 @@ public sealed class VideoOperationAppService(
 
             await ReplaceAudioAsync(audioRequest, cancellationToken);
 
+            // Only delete the local file once the CDN url is durably persisted — and clear the
+            // now-dangling local path in the DB too, so the record never points at a deleted file.
             TryDeleteLocalFile(audioRequest.AudioLocalPath);
+            audioRequest.AudioLocalPath = null;
+            await ReplaceAudioAsync(audioRequest, cancellationToken);
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
                 message: EventNames.AudioFileUploadCompleted,
@@ -820,7 +824,11 @@ public sealed class VideoOperationAppService(
 
             await ReplaceVideoAsync(videoRequest, cancellationToken);
 
+            // Only delete the local file once the CDN url is durably persisted — and clear the
+            // now-dangling local path in the DB too, so the record never points at a deleted file.
             TryDeleteLocalFile(videoRequest.VideoLocalPath);
+            videoRequest.VideoLocalPath = null;
+            await ReplaceVideoAsync(videoRequest, cancellationToken);
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
                 message: EventNames.VideoFileUploadCompleted,
@@ -1047,7 +1055,10 @@ public sealed class VideoOperationAppService(
         request.LastError = ex.Message;
         request.NextRetryAtUtc = null;
 
+        // Terminal failure — this request will never be retried, so the local file is dead
+        // weight; delete it and clear the path so the DB record doesn't reference a missing file.
         TryDeleteLocalFile(request.AudioLocalPath);
+        request.AudioLocalPath = null;
 
         await ReplaceAudioAsync(request, cancellationToken);
 
@@ -1195,7 +1206,10 @@ public sealed class VideoOperationAppService(
         request.LastError = ex.Message;
         request.NextRetryAtUtc = null;
 
+        // Terminal failure — this request will never be retried, so the local file is dead
+        // weight; delete it and clear the path so the DB record doesn't reference a missing file.
         TryDeleteLocalFile(request.VideoLocalPath);
+        request.VideoLocalPath = null;
 
         await ReplaceVideoAsync(request, cancellationToken);
 
