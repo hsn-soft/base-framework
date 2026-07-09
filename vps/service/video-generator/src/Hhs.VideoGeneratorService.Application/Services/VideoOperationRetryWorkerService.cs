@@ -264,7 +264,7 @@ public sealed class VideoOperationRetryWorkerService(
                         eventMessage: new AudioFileDownloadStartedEto { AudioRequestId = request.Id, }
                     );
                 }
-                else if (request.CurrentStep == EventNames.AudioProviderPolling)
+                else if (request.CurrentStep == EventNames.AudioProviderPollingStarted)
                 {
                     request.Status = AudioStatusNames.AudioProviderPolling;
                     request.NextProviderPollAtUtc = DateTime.UtcNow;
@@ -452,7 +452,7 @@ public sealed class VideoOperationRetryWorkerService(
                         eventMessage: new VideoFileUploadCompletedEto { VideoRequestId = request.Id, }
                     );
                 }
-                else if (request.CurrentStep == EventNames.VideoProviderPolling)
+                else if (request.CurrentStep == EventNames.VideoProviderPollingStarted)
                 {
                     request.Status = VideoStatusNames.VideoProviderPolling;
                     request.NextProviderPollAtUtc = DateTime.UtcNow;

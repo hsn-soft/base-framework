@@ -766,7 +766,7 @@ public sealed class NormalizerOperationAppService(
             request.OutlineProviderTrackId = providerTrackId;
 
             request.Status = NormalizeStatusNames.OutlineProviderRequestPolling;
-            request.CurrentStep = EventNames.OutlineProviderPolling;
+            request.CurrentStep = EventNames.OutlineProviderPollingStarted;
 
             request.OutlineStatus = OutlineStatusNames.Polling;
 
@@ -775,7 +775,7 @@ public sealed class NormalizerOperationAppService(
             await ReplaceCustomerContentAsync(request);
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
-                message: EventNames.OutlineProviderPolling,
+                message: EventNames.OutlineProviderPollingStarted,
                 reference: new
                 {
                     request.ScopeKey,
@@ -785,7 +785,7 @@ public sealed class NormalizerOperationAppService(
                     RefKey = request.CustomerContentId,
                     request.NextOutlinePollAtUtc
                 },
-                facility: Facilities.OutlineProviderPolling,
+                facility: EventNames.OutlineProviderPollingStarted,
                 correlationId: request.CorrelationId,
                 exception: null
             ));
@@ -800,7 +800,7 @@ public sealed class NormalizerOperationAppService(
             @event.CustomerContentIdForItem.Value,
             u => u
                 .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", NormalizeStatusNames.OutlineProviderRequestPolling)
-                .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentStep)}", EventNames.OutlineProviderPolling)
+                .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentStep)}", EventNames.OutlineProviderPollingStarted)
                 .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineProviderTrackId)}", providerTrackId)
                 .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineStatus)}", OutlineStatusNames.Polling)
                 .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextOutlinePollAtUtc)}", DateTime.UtcNow.AddSeconds(outlinePollingSettings.IntervalSeconds)),
@@ -808,9 +808,9 @@ public sealed class NormalizerOperationAppService(
         );
 
         _logger.FrameworkInfoLog(LogHelper.Generate(
-            message: EventNames.OutlineProviderPolling,
+            message: EventNames.OutlineProviderPollingStarted,
             reference: new { Type = nameof(AnalysisNormalizedItem), Key = @event.CustomerContentIdForItem, RefType = nameof(AnalysisContentNormalizedRequest), RefKey = @event.RefNormalizedRequestId },
-            facility: Facilities.OutlineProviderPolling,
+            facility: EventNames.OutlineProviderPollingStarted,
             correlationId: correlationId,
             exception: null
         ));
@@ -1264,7 +1264,7 @@ public sealed class NormalizerOperationAppService(
 
             if (step is EventNames.AnalysisItemOutlineStarted
                 or EventNames.OutlineProviderRequestStarted
-                or EventNames.OutlineProviderPolling)
+                or EventNames.OutlineProviderPollingStarted)
             {
                 baseUpdate = baseUpdate.Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineStatus)}", OutlineStatusNames.WaitingRetry);
             }
@@ -1330,7 +1330,7 @@ public sealed class NormalizerOperationAppService(
 
             if (step is EventNames.AnalysisItemOutlineStarted
                 or EventNames.OutlineProviderRequestStarted
-                or EventNames.OutlineProviderPolling)
+                or EventNames.OutlineProviderPollingStarted)
                 baseUpdate = baseUpdate.Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineStatus)}", OutlineStatusNames.Failed);
 
             return baseUpdate;

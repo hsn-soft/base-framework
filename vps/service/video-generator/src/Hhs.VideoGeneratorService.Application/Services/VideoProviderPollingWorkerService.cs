@@ -84,7 +84,7 @@ public sealed class VideoProviderPollingWorkerService(
                         {
                             RefContentId = request.RefContentId,
                             RefContentType = request.RefContentType,
-                            Step = EventNames.VideoProviderPolling, // error step
+                            Step = EventNames.VideoProviderPollingStarted, // error step
                             ErrorMessage = request.LastError,
                             Retryable = false
                         }
@@ -133,7 +133,7 @@ public sealed class VideoProviderPollingWorkerService(
                         {
                             RefContentId = request.RefContentId,
                             RefContentType = request.RefContentType,
-                            Step = EventNames.VideoProviderPolling,// error step
+                            Step = EventNames.VideoProviderPollingStarted,// error step
                             ErrorMessage = request.LastError,
                             Retryable = false
                         }
@@ -241,7 +241,7 @@ public sealed class VideoProviderPollingWorkerService(
                         {
                             RefContentId = request.RefContentId,
                             RefContentType = request.RefContentType,
-                            Step = EventNames.VideoProviderPolling,// error step
+                            Step = EventNames.VideoProviderPollingStarted,// error step
                             ErrorMessage = ex.Message,
                             Retryable = false
                         }
@@ -262,7 +262,7 @@ public sealed class VideoProviderPollingWorkerService(
                             Key = request.Id,
                             RefType = request.RefContentType.ToString(),
                             RefKey = request.RefContentId,
-                            FailedStep = EventNames.VideoProviderPolling,
+                            FailedStep = EventNames.VideoProviderPollingStarted,
                             request.ProviderPollingCount,
                             request.NextProviderPollAtUtc
                         },

@@ -85,7 +85,7 @@ public sealed class AudioProviderPollingWorkerService(
                         {
                             RefContentId = request.RefContentId,
                             RefContentType = request.RefContentType,
-                            Step = EventNames.AudioProviderPolling, // error step
+                            Step = EventNames.AudioProviderPollingStarted, // error step
                             ErrorMessage = request.LastError,
                             Retryable = false
                         }
@@ -135,7 +135,7 @@ public sealed class AudioProviderPollingWorkerService(
                         {
                             RefContentId = request.RefContentId,
                             RefContentType = request.RefContentType,
-                            Step = EventNames.AudioProviderPolling, // error step
+                            Step = EventNames.AudioProviderPollingStarted, // error step
                             ErrorMessage = request.LastError,
                             Retryable = false
                         }
@@ -246,7 +246,7 @@ public sealed class AudioProviderPollingWorkerService(
                         {
                             RefContentId = request.RefContentId,
                             RefContentType = request.RefContentType,
-                            Step = EventNames.AudioProviderPolling, // error step
+                            Step = EventNames.AudioProviderPollingStarted, // error step
                             ErrorMessage = ex.Message,
                             Retryable = false
                         }
@@ -268,7 +268,7 @@ public sealed class AudioProviderPollingWorkerService(
                             RefType = request.RefContentType.ToString(),
                             RefKey = request.RefContentId,
                             VideoRequestId = request.VideoRequestId,
-                            FailedStep = EventNames.AudioProviderPolling,
+                            FailedStep = EventNames.AudioProviderPollingStarted,
                             request.ProviderPollingCount,
                             request.NextProviderPollAtUtc
                         },

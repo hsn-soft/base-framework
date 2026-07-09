@@ -362,14 +362,14 @@ public sealed class VideoOperationAppService(
                 throw new InvalidOperationException("Audio provider track id is required.");
 
             audioRequest.Status = AudioStatusNames.AudioProviderPolling;
-            audioRequest.CurrentStep = EventNames.AudioProviderPolling;
+            audioRequest.CurrentStep = EventNames.AudioProviderPollingStarted;
             audioRequest.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(videoPollingSettings.ErrorRescheduleDelaySeconds);
             audioRequest.ProviderPollingCount = 0;
 
             await ReplaceAudioAsync(audioRequest, cancellationToken);
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
-                message: EventNames.AudioProviderPolling,
+                message: EventNames.AudioProviderPollingStarted,
                 reference: new
                 {
                     audioRequest.ScopeKey,
@@ -380,7 +380,7 @@ public sealed class VideoOperationAppService(
                     VideoRequestId = audioRequest.VideoRequestId,
                     audioRequest.NextProviderPollAtUtc
                 },
-                facility: Facilities.AudioProviderPolling,
+                facility: EventNames.AudioProviderPollingStarted,
                 correlationId: audioRequest.CorrelationId,
                 exception: null
             ));
@@ -647,14 +647,14 @@ public sealed class VideoOperationAppService(
                 throw new InvalidOperationException("Video provider track id is required.");
 
             videoRequest.Status = VideoStatusNames.VideoProviderPolling;
-            videoRequest.CurrentStep = EventNames.VideoProviderPolling;
+            videoRequest.CurrentStep = EventNames.VideoProviderPollingStarted;
             videoRequest.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(videoPollingSettings.ErrorRescheduleDelaySeconds);
             videoRequest.ProviderPollingCount = 0;
 
             await ReplaceVideoAsync(videoRequest, cancellationToken);
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
-                message: EventNames.VideoProviderPolling,
+                message: EventNames.VideoProviderPollingStarted,
                 reference: new
                 {
                     videoRequest.ScopeKey,
@@ -664,7 +664,7 @@ public sealed class VideoOperationAppService(
                     RefKey = videoRequest.RefContentId,
                     videoRequest.NextProviderPollAtUtc
                 },
-                facility: Facilities.VideoProviderPolling,
+                facility: EventNames.VideoProviderPollingStarted,
                 correlationId: videoRequest.CorrelationId,
                 exception: null
             ));

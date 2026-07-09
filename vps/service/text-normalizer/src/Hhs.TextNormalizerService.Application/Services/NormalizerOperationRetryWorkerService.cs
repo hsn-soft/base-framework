@@ -214,7 +214,7 @@ public sealed class NormalizerOperationRetryWorkerService(
         {
             try
             {
-                if (request.CurrentStep == EventNames.OutlineProviderPolling)
+                if (request.CurrentStep == EventNames.OutlineProviderPollingStarted)
                 {
                     var outlinePollingPredicate = (Expression<Func<CustomerContentNormalizedRequest, bool>>)(x =>
                         x.Id == request.Id &&
@@ -235,7 +235,7 @@ public sealed class NormalizerOperationRetryWorkerService(
 
                     _logger.FrameworkErrorLog(LogHelper.Generate(
                         message: EventNames.RetryScheduled,
-                        reference: new { request.ScopeKey, Type = nameof(CustomerContentNormalizedRequest), Key = request.Id, RefType = "CustomerContent", RefKey = request.CustomerContentId, FailedStep = EventNames.OutlineProviderPolling },
+                        reference: new { request.ScopeKey, Type = nameof(CustomerContentNormalizedRequest), Key = request.Id, RefType = "CustomerContent", RefKey = request.CustomerContentId, FailedStep = EventNames.OutlineProviderPollingStarted },
                         facility: Facilities.RetryScheduled,
                         correlationId: request.CorrelationId,
                         exception: null
@@ -399,7 +399,7 @@ public sealed class NormalizerOperationRetryWorkerService(
             {
                 try
                 {
-                    if (item.CurrentStep == EventNames.OutlineProviderPolling)
+                    if (item.CurrentStep == EventNames.OutlineProviderPollingStarted)
                     {
                         var pollingClaim = Builders<AnalysisContentNormalizedRequest>.Update
                             .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", NormalizeStatusNames.OutlineProviderRequestPolling)
@@ -420,7 +420,7 @@ public sealed class NormalizerOperationRetryWorkerService(
 
                         _logger.FrameworkErrorLog(LogHelper.Generate(
                             message: EventNames.RetryScheduled,
-                            reference: new { request.ScopeKey, Type = nameof(AnalysisNormalizedItem), Key = item.CustomerContentId, RefType = "AnalysisContent", RefKey = request.AnalysisContentId, AnalysisContentNormalizeRequestId = request.Id, FailedStep = EventNames.OutlineProviderPolling },
+                            reference: new { request.ScopeKey, Type = nameof(AnalysisNormalizedItem), Key = item.CustomerContentId, RefType = "AnalysisContent", RefKey = request.AnalysisContentId, AnalysisContentNormalizeRequestId = request.Id, FailedStep = EventNames.OutlineProviderPollingStarted },
                             facility: Facilities.RetryScheduled,
                             correlationId: request.CorrelationId,
                             exception: null
