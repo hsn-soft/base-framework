@@ -2,7 +2,13 @@ namespace Hhs.Shared.Helper.Configuration;
 
 public abstract class RetrySettingsBase
 {
-    public int[] DelaySeconds { get; set; } = [60, 120, 300, 900];
+    /// <summary>
+    /// Left null by default (rather than a literal array) because IConfiguration's array binding
+    /// appends config values onto any pre-existing array instead of replacing it — a non-null
+    /// default here would silently double up with whatever a service's appsettings.json configures.
+    /// Null falls through to <see cref="Hhs.Shared.Helper.Retry.RetryDelayCalculator"/>'s own [60, 120, 300, 900] default.
+    /// </summary>
+    public int[] DelaySeconds { get; set; }
     public int MaxRetryCount { get; set; } = 4;
     public int RetryWorkerIntervalSeconds { get; set; } = 10;
     public int ClaimFailRescheduleDelaySeconds { get; set; } = 10;
