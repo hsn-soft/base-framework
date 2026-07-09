@@ -125,7 +125,7 @@ public sealed class NormalizerOperationRetryWorkerService(
                         .Set(x => x.CurrentStep, EventNames.AnalysisItemOutlineCompleted)
                         .Set(x => x.LastError, "One or more items failed during processing.");
 
-                    var failClaimed = await analysisRepository.UpdateByExpressionAsync(failPredicate, u => failUpdate, cancellationToken: cancellationToken).ConfigureAwait(false);
+                    long failClaimed = await analysisRepository.UpdateByExpressionAsync(failPredicate, u => failUpdate, cancellationToken: cancellationToken).ConfigureAwait(false);
                     if (failClaimed == 0) continue;
 
                     _logger.FrameworkErrorLog(LogHelper.Generate(
@@ -149,7 +149,7 @@ public sealed class NormalizerOperationRetryWorkerService(
                     .Set(x => x.CurrentStep, EventNames.NormalizerResultPublished)
                     .Set(x => x.LastError, (string)null);
 
-                var claimed = await analysisRepository.UpdateByExpressionAsync(claimPredicate, u => claimUpdate, cancellationToken: cancellationToken).ConfigureAwait(false);
+                long claimed = await analysisRepository.UpdateByExpressionAsync(claimPredicate, u => claimUpdate, cancellationToken: cancellationToken).ConfigureAwait(false);
                 if (claimed == 0) continue; // already claimed by another tick/instance
 
                 await normalizerOperationAppService.AppendIntroOutroToAnalysisItemsAsync(request, cancellationToken);
@@ -184,7 +184,7 @@ public sealed class NormalizerOperationRetryWorkerService(
     private async Task ResetStaleStartedInboxMessagesAsync(DateTime now, CancellationToken cancellationToken)
     {
         var staleThreshold = now.AddMinutes(-retrySettings.StaleInboxMessageThresholdMinutes);
-        var updated = await inboxManager.ResetStaleStartedMessagesAsync(staleThreshold, cancellationToken);
+        int updated = await inboxManager.ResetStaleStartedMessagesAsync(staleThreshold, cancellationToken);
         if (updated > 0)
         {
             logger.LogWarning(
@@ -214,7 +214,7 @@ public sealed class NormalizerOperationRetryWorkerService(
         {
             try
             {
-                if (request.CurrentStep == EventNames.OutlineProviderPollingStarted)
+                if (request.CurrentStep == EventNames.OutlineProviderPolling)
                 {
                     var outlinePollingPredicate = (Expression<Func<CustomerContentNormalizedRequest, bool>>)(x =>
                         x.Id == request.Id &&
@@ -235,7 +235,7 @@ public sealed class NormalizerOperationRetryWorkerService(
 
                     _logger.FrameworkErrorLog(LogHelper.Generate(
                         message: EventNames.RetryScheduled,
-                        reference: new { request.ScopeKey, Type = nameof(CustomerContentNormalizedRequest), Key = request.Id, RefType = "CustomerContent", RefKey = request.CustomerContentId, FailedStep = EventNames.OutlineProviderPollingStarted },
+                        reference: new { request.ScopeKey, Type = nameof(CustomerContentNormalizedRequest), Key = request.Id, RefType = "CustomerContent", RefKey = request.CustomerContentId, FailedStep = EventNames.OutlineProviderPolling },
                         facility: Facilities.RetryScheduled,
                         correlationId: request.CorrelationId,
                         exception: null
@@ -254,7 +254,7 @@ public sealed class NormalizerOperationRetryWorkerService(
                     .Set(x => x.NextRetryAtUtc, DateTime.UtcNow.AddSeconds(retrySettings.ClaimFailRescheduleDelaySeconds))
                     .Set(x => x.LastError, null);
 
-                var claimResult = await customerRepository.UpdateByExpressionAsync(
+                long claimResult = await customerRepository.UpdateByExpressionAsync(
                     claimPredicate,
                     u => claimUpdate,
                     cancellationToken: cancellationToken)
@@ -282,7 +282,7 @@ public sealed class NormalizerOperationRetryWorkerService(
                     if (request.ScrapingResult is null)
                         throw new InvalidOperationException("ScrapingResult is required.");
 
-                    var (outlineInputText, outlineInputPrompt) = await normalizerOperationAppService.BuildCustomerOutlineInputAsync(request, cancellationToken);
+                    (string outlineInputText, string outlineInputPrompt) = await normalizerOperationAppService.BuildCustomerOutlineInputAsync(request, cancellationToken);
 
                     await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
                         correlationId: request.CorrelationId,
@@ -399,7 +399,7 @@ public sealed class NormalizerOperationRetryWorkerService(
             {
                 try
                 {
-                    if (item.CurrentStep == EventNames.OutlineProviderPollingStarted)
+                    if (item.CurrentStep == EventNames.OutlineProviderPolling)
                     {
                         var pollingClaim = Builders<AnalysisContentNormalizedRequest>.Update
                             .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", NormalizeStatusNames.OutlineProviderRequestPolling)
@@ -408,7 +408,7 @@ public sealed class NormalizerOperationRetryWorkerService(
                             .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextRetryAtUtc)}", (DateTime?)null)
                             .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.LastError)}", (string?)null);
 
-                        var result = await UpdateDueRetryAnalysisItemAsync(
+                        long result = await UpdateDueRetryAnalysisItemAsync(
                             request.Id,
                             item.CustomerContentId,
                             now,
@@ -420,7 +420,7 @@ public sealed class NormalizerOperationRetryWorkerService(
 
                         _logger.FrameworkErrorLog(LogHelper.Generate(
                             message: EventNames.RetryScheduled,
-                            reference: new { request.ScopeKey, Type = nameof(AnalysisNormalizedItem), Key = item.CustomerContentId, RefType = "AnalysisContent", RefKey = request.AnalysisContentId, AnalysisContentNormalizeRequestId = request.Id, FailedStep = EventNames.OutlineProviderPollingStarted },
+                            reference: new { request.ScopeKey, Type = nameof(AnalysisNormalizedItem), Key = item.CustomerContentId, RefType = "AnalysisContent", RefKey = request.AnalysisContentId, AnalysisContentNormalizeRequestId = request.Id, FailedStep = EventNames.OutlineProviderPolling },
                             facility: Facilities.RetryScheduled,
                             correlationId: request.CorrelationId,
                             exception: null
@@ -432,7 +432,7 @@ public sealed class NormalizerOperationRetryWorkerService(
                     var claimUpdate = Builders<AnalysisContentNormalizedRequest>.Update
                         .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextRetryAtUtc)}", DateTime.UtcNow.AddSeconds(retrySettings.ClaimFailRescheduleDelaySeconds));
 
-                    var claimResult = await UpdateDueRetryAnalysisItemAsync(
+                    long claimResult = await UpdateDueRetryAnalysisItemAsync(
                         request.Id,
                         item.CustomerContentId,
                         now,
@@ -469,7 +469,7 @@ public sealed class NormalizerOperationRetryWorkerService(
                         if (item.ScrapingResult is null)
                             throw new InvalidOperationException("ScrapingResult is required.");
 
-                        var (outlineInputText, outlineInputPrompt) = await normalizerOperationAppService.BuildAnalysisItemOutlineInputAsync(request, item, cancellationToken);
+                        (string outlineInputText, string outlineInputPrompt) = await normalizerOperationAppService.BuildAnalysisItemOutlineInputAsync(request, item, cancellationToken);
 
                         await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
                             correlationId: request.CorrelationId,

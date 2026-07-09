@@ -12,15 +12,20 @@ var options = app.Services.GetRequiredService<IOptions<MockApiOptions>>().Value;
 
 app.MapPost("/outline/generate", (OutlineRequest request) =>
 {
-    var trackingId = OutlineQueueService.CreateRequest(request.InputText);
+    string trackingId = OutlineQueueService.CreateRequest(request.InputText);
     return Results.Ok(new { provider = "outline-queue", trackingId, pollingWindowSec = options.PollingWindowSeconds });
 });
 
 app.MapGet("/outline/status/{trackingId}", async (string trackingId, CancellationToken ct) =>
 {
-    var (isReady, script, error) = await OutlineQueueService.GetStatusAsync(trackingId, options, ct);
+    (bool isReady, string? script, string? error) = await OutlineQueueService.GetStatusAsync(trackingId, options, ct);
     if (!isReady)
-        return Results.Ok(new { provider = "outline-queue", trackingId, status = "processing", error });
+    {
+        return Results.Ok(error != null
+            ? new { provider = "outline-queue", trackingId, status = "failed", error }
+            : new { provider = "outline-queue", trackingId, status = "processing", error = string.Empty });
+    }
+
     return Results.Ok(new { provider = "outline-queue", trackingId, status = "completed", script });
 });
 

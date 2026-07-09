@@ -13,7 +13,7 @@ public static class EventNames
     public const string CustomerContentOutlineSkipped = "CUSTOMER_CONTENT_OUTLINE_SKIPPED";
 
     public const string OutlineProviderRequestStarted = "OUTLINE_PROVIDER_REQUEST_STARTED";
-    public const string OutlineProviderPollingStarted = "OUTLINE_PROVIDER_POLLING_STARTED";
+    public const string OutlineProviderPolling = "OUTLINE_PROVIDER_POLLING";
     public const string OutlineProviderRequestCompleted = "OUTLINE_PROVIDER_REQUEST_COMPLETED";
 
     public const string CustomerContentOutlineCompleted = "CUSTOMER_CONTENT_OUTLINE_COMPLETED";
@@ -49,7 +49,7 @@ public static class EventNames
     public const string VideoAudioExternal = "VIDEO_AUDIO_EXTERNAL";
 
     public const string AudioProviderRequestStarted = "AUDIO_PROVIDER_REQUEST_STARTED";
-    public const string AudioProviderPollingStarted = "AUDIO_PROVIDER_POLLING_STARTED";
+    public const string AudioProviderPolling = "AUDIO_PROVIDER_POLLING";
     public const string AudioProviderCompleted = "AUDIO_PROVIDER_COMPLETED";
     public const string AudioFileDownloadStarted = "AUDIO_FILE_DOWNLOAD_STARTED";
     public const string AudioFileDownloadCompleted = "AUDIO_FILE_DOWNLOAD_COMPLETED";
@@ -57,7 +57,7 @@ public static class EventNames
     public const string AudioFileUploadCompleted = "AUDIO_FILE_UPLOAD_COMPLETED";
 
     public const string VideoProviderRequestStarted = "VIDEO_PROVIDER_REQUEST_STARTED";
-    public const string VideoProviderPollingStarted = "VIDEO_PROVIDER_POLLING_STARTED";
+    public const string VideoProviderPolling = "VIDEO_PROVIDER_POLLING";
     public const string VideoProviderCompleted = "VIDEO_PROVIDER_COMPLETED";
     public const string VideoFileDownloadStarted = "VIDEO_FILE_DOWNLOAD_STARTED";
     public const string VideoFileDownloadCompleted = "VIDEO_FILE_DOWNLOAD_COMPLETED";

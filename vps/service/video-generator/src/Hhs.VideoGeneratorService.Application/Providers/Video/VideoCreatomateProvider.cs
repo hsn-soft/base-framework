@@ -14,10 +14,7 @@ public sealed class VideoCreatomateProvider : IVideoProvider
 {
     private const int MaxSlotCount = 5;
 
-    private static readonly JsonSerializerOptions RequestJsonOptions = new()
-    {
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-    };
+    private static readonly JsonSerializerOptions RequestJsonOptions = new() { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull };
 
     private readonly HttpClient _httpClient;
     private readonly VideoCreatomateProviderSettings _settings;
@@ -30,12 +27,7 @@ public sealed class VideoCreatomateProvider : IVideoProvider
 
     public string ProviderKey => ProviderKeys.VideoCreatomate;
 
-    public VideoProviderCapabilities Capabilities => new()
-    {
-        ProviderKey = ProviderKey,
-        ExecutionMode = ProviderExecutionMode.AsyncPolling,
-        AudioInputMode = VideoAudioInputMode.AudioUrlListRequired
-    };
+    public VideoProviderCapabilities Capabilities => new() { ProviderKey = ProviderKey, ExecutionMode = ProviderExecutionMode.AsyncPolling, AudioInputMode = VideoAudioInputMode.AudioUrlListRequired };
 
     public async Task<VideoCreateResponse> CreateAsync(VideoCreateRequest request)
     {
@@ -70,10 +62,7 @@ public sealed class VideoCreatomateProvider : IVideoProvider
 
         var payload = new CreatomateVideoRequest { TemplateId = templateId, Modifications = modifications };
 
-        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, $"{_settings.BaseUrl}/v2/renders")
-        {
-            Content = JsonContent.Create(payload, options: RequestJsonOptions)
-        };
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, $"{_settings.BaseUrl}/v2/renders") { Content = JsonContent.Create(payload, options: RequestJsonOptions) };
         httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _settings.ApiKey);
 
         using var response = await _httpClient.SendAsync(httpRequest);
@@ -101,12 +90,12 @@ public sealed class VideoCreatomateProvider : IVideoProvider
         var result = JsonSerializer.Deserialize<CreatomateRenderResponse>(resJson);
 
         if (result?.Status == "succeeded")
-            return new VideoStatusResponse { IsCompleted = true, ProviderFileUrl = result.Url };
+            return new VideoStatusResponse { IsProcessed = true, ProviderFileUrl = result.Url };
 
         if (result?.Status == "failed")
             return new VideoStatusResponse { IsFailed = true, ErrorMessage = result?.ErrorMessage ?? "Creatomate render failed." };
 
-        return new VideoStatusResponse { IsCompleted = false, IsFailed = false };
+        return new VideoStatusResponse { IsProcessed = false, IsFailed = false };
     }
 
     private static void ApplySlot(CreatomateModifications m, int index, string? audioCdnUrl, string? imageUrl, string? text, string? backgroundColor)
@@ -179,20 +168,16 @@ public sealed class VideoCreatomateProvider : IVideoProvider
 
 internal sealed class CreatomateVideoRequest
 {
-    [JsonPropertyName("template_id")]
-    public string TemplateId { get; set; } = default!;
+    [JsonPropertyName("template_id")] public string TemplateId { get; set; } = default!;
 
-    [JsonPropertyName("modifications")]
-    public CreatomateModifications Modifications { get; set; } = default!;
+    [JsonPropertyName("modifications")] public CreatomateModifications Modifications { get; set; } = default!;
 }
 
 internal sealed class CreatomateModifications
 {
-    [JsonPropertyName("width")]
-    public short VideoWidth { get; set; }
+    [JsonPropertyName("width")] public short VideoWidth { get; set; }
 
-    [JsonPropertyName("height")]
-    public short VideoHeight { get; set; }
+    [JsonPropertyName("height")] public short VideoHeight { get; set; }
 
     [JsonPropertyName("Jenerik-Start.source")]
     public string? JenerikStartSource { get; set; }
@@ -200,17 +185,13 @@ internal sealed class CreatomateModifications
     [JsonPropertyName("Jenerik-End.source")]
     public string? JenerikEndSource { get; set; }
 
-    [JsonPropertyName("Logo.source")]
-    public string? LogoSource { get; set; }
+    [JsonPropertyName("Logo.source")] public string? LogoSource { get; set; }
 
-    [JsonPropertyName("Audio1.source")]
-    public string? Audio1Source { get; set; }
+    [JsonPropertyName("Audio1.source")] public string? Audio1Source { get; set; }
 
-    [JsonPropertyName("Image1.source")]
-    public string? Image1Source { get; set; }
+    [JsonPropertyName("Image1.source")] public string? Image1Source { get; set; }
 
-    [JsonPropertyName("Text1.text")]
-    public string? Text1Text { get; set; }
+    [JsonPropertyName("Text1.text")] public string? Text1Text { get; set; }
 
     [JsonPropertyName("Shape1.fill_color")]
     public string? Shape1FillColor { get; set; }
@@ -218,14 +199,11 @@ internal sealed class CreatomateModifications
     [JsonPropertyName("Number1.background_color")]
     public string? Number1BackgroundColor { get; set; }
 
-    [JsonPropertyName("Audio2.source")]
-    public string? Audio2Source { get; set; }
+    [JsonPropertyName("Audio2.source")] public string? Audio2Source { get; set; }
 
-    [JsonPropertyName("Image2.source")]
-    public string? Image2Source { get; set; }
+    [JsonPropertyName("Image2.source")] public string? Image2Source { get; set; }
 
-    [JsonPropertyName("Text2.text")]
-    public string? Text2Text { get; set; }
+    [JsonPropertyName("Text2.text")] public string? Text2Text { get; set; }
 
     [JsonPropertyName("Shape2.fill_color")]
     public string? Shape2FillColor { get; set; }
@@ -233,14 +211,11 @@ internal sealed class CreatomateModifications
     [JsonPropertyName("Number2.background_color")]
     public string? Number2BackgroundColor { get; set; }
 
-    [JsonPropertyName("Audio3.source")]
-    public string? Audio3Source { get; set; }
+    [JsonPropertyName("Audio3.source")] public string? Audio3Source { get; set; }
 
-    [JsonPropertyName("Image3.source")]
-    public string? Image3Source { get; set; }
+    [JsonPropertyName("Image3.source")] public string? Image3Source { get; set; }
 
-    [JsonPropertyName("Text3.text")]
-    public string? Text3Text { get; set; }
+    [JsonPropertyName("Text3.text")] public string? Text3Text { get; set; }
 
     [JsonPropertyName("Shape3.fill_color")]
     public string? Shape3FillColor { get; set; }
@@ -248,14 +223,11 @@ internal sealed class CreatomateModifications
     [JsonPropertyName("Number3.background_color")]
     public string? Number3BackgroundColor { get; set; }
 
-    [JsonPropertyName("Audio4.source")]
-    public string? Audio4Source { get; set; }
+    [JsonPropertyName("Audio4.source")] public string? Audio4Source { get; set; }
 
-    [JsonPropertyName("Image4.source")]
-    public string? Image4Source { get; set; }
+    [JsonPropertyName("Image4.source")] public string? Image4Source { get; set; }
 
-    [JsonPropertyName("Text4.text")]
-    public string? Text4Text { get; set; }
+    [JsonPropertyName("Text4.text")] public string? Text4Text { get; set; }
 
     [JsonPropertyName("Shape4.fill_color")]
     public string? Shape4FillColor { get; set; }
@@ -263,14 +235,11 @@ internal sealed class CreatomateModifications
     [JsonPropertyName("Number4.background_color")]
     public string? Number4BackgroundColor { get; set; }
 
-    [JsonPropertyName("Audio5.source")]
-    public string? Audio5Source { get; set; }
+    [JsonPropertyName("Audio5.source")] public string? Audio5Source { get; set; }
 
-    [JsonPropertyName("Image5.source")]
-    public string? Image5Source { get; set; }
+    [JsonPropertyName("Image5.source")] public string? Image5Source { get; set; }
 
-    [JsonPropertyName("Text5.text")]
-    public string? Text5Text { get; set; }
+    [JsonPropertyName("Text5.text")] public string? Text5Text { get; set; }
 
     [JsonPropertyName("Shape5.fill_color")]
     public string? Shape5FillColor { get; set; }
@@ -289,24 +258,17 @@ internal sealed class CreatomateModifications
 /// </summary>
 internal sealed class CreatomateRenderResponse
 {
-    [JsonPropertyName("id")]
-    public string? Id { get; set; }
+    [JsonPropertyName("id")] public string? Id { get; set; }
 
-    [JsonPropertyName("status")]
-    public string? Status { get; set; }
+    [JsonPropertyName("status")] public string? Status { get; set; }
 
-    [JsonPropertyName("error_message")]
-    public string? ErrorMessage { get; set; }
+    [JsonPropertyName("error_message")] public string? ErrorMessage { get; set; }
 
-    [JsonPropertyName("url")]
-    public string? Url { get; set; }
+    [JsonPropertyName("url")] public string? Url { get; set; }
 
-    [JsonPropertyName("template_id")]
-    public string? TemplateId { get; set; }
+    [JsonPropertyName("template_id")] public string? TemplateId { get; set; }
 
-    [JsonPropertyName("template_name")]
-    public string? TemplateName { get; set; }
+    [JsonPropertyName("template_name")] public string? TemplateName { get; set; }
 
-    [JsonPropertyName("output_format")]
-    public string? OutputFormat { get; set; }
+    [JsonPropertyName("output_format")] public string? OutputFormat { get; set; }
 }

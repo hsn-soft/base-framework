@@ -95,7 +95,14 @@ public sealed class VideoOperationAppService(
 
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: EventNames.VideoRequestCreated,
-            reference: new { @event.ScopeKey, Type = nameof(VideoRequest), Key = videoRequestId, RefType = @event.RefContentType.ToString(), RefKey = @event.RefContentId },
+            reference: new
+            {
+                @event.ScopeKey,
+                Type = nameof(VideoRequest),
+                Key = videoRequestId,
+                RefType = @event.RefContentType.ToString(),
+                RefKey = @event.RefContentId
+            },
             facility: Facilities.VideoRequestCreated,
             correlationId: correlationId,
             exception: null
@@ -120,7 +127,14 @@ public sealed class VideoOperationAppService(
 
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: EventNames.VideoOperationStarted,
-            reference: new { videoRequest.ScopeKey, Type = nameof(VideoRequest), Key = videoRequest.Id, RefType = videoRequest.RefContentType.ToString(), RefKey = videoRequest.RefContentId },
+            reference: new
+            {
+                videoRequest.ScopeKey,
+                Type = nameof(VideoRequest),
+                Key = videoRequest.Id,
+                RefType = videoRequest.RefContentType.ToString(),
+                RefKey = videoRequest.RefContentId
+            },
             facility: Facilities.VideoOperationStarted,
             correlationId: videoRequest.CorrelationId,
             exception: null
@@ -134,7 +148,14 @@ public sealed class VideoOperationAppService(
             {
                 _logger.FrameworkInfoLog(LogHelper.Generate(
                     message: EventNames.VideoAudioInternal,
-                    reference: new { videoRequest.ScopeKey, Type = nameof(VideoRequest), Key = videoRequest.Id, RefType = videoRequest.RefContentType.ToString(), RefKey = videoRequest.RefContentId },
+                    reference: new
+                    {
+                        videoRequest.ScopeKey,
+                        Type = nameof(VideoRequest),
+                        Key = videoRequest.Id,
+                        RefType = videoRequest.RefContentType.ToString(),
+                        RefKey = videoRequest.RefContentId
+                    },
                     facility: Facilities.VideoAudioInternal,
                     correlationId: videoRequest.CorrelationId,
                     exception: null
@@ -142,24 +163,12 @@ public sealed class VideoOperationAppService(
 
                 await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
                     correlationId: videoRequest.CorrelationId,
-                    eventMessage: new AudioOperationStartedEto
-                    {
-                        RefContentId = videoRequest.RefContentId,
-                        RefContentType = videoRequest.RefContentType,
-                        VideoRequestId = videoRequest.Id,
-                        AudioMode = EventNames.VideoAudioInternal
-                    }
+                    eventMessage: new AudioOperationStartedEto { RefContentId = videoRequest.RefContentId, RefContentType = videoRequest.RefContentType, VideoRequestId = videoRequest.Id, AudioMode = EventNames.VideoAudioInternal }
                 );
 
                 await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
                     correlationId: videoRequest.CorrelationId,
-                    eventMessage: new VideoProviderRequestStartedEto
-                    {
-                        RefContentId = videoRequest.RefContentId,
-                        RefContentType = videoRequest.RefContentType,
-                        VideoRequestId = videoRequest.Id,
-                        AudioCdnUrls = []
-                    }
+                    eventMessage: new VideoProviderRequestStartedEto { RefContentId = videoRequest.RefContentId, RefContentType = videoRequest.RefContentType, VideoRequestId = videoRequest.Id, AudioCdnUrls = [] }
                 );
 
                 return;
@@ -174,7 +183,15 @@ public sealed class VideoOperationAppService(
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
                 message: EventNames.VideoAudioExternal,
-                reference: new { videoRequest.ScopeKey, Type = nameof(VideoRequest), Key = videoRequest.Id, RefType = videoRequest.RefContentType.ToString(), RefKey = videoRequest.RefContentId, AudioCount = audioItems.Count },
+                reference: new
+                {
+                    videoRequest.ScopeKey,
+                    Type = nameof(VideoRequest),
+                    Key = videoRequest.Id,
+                    RefType = videoRequest.RefContentType.ToString(),
+                    RefKey = videoRequest.RefContentId,
+                    AudioCount = audioItems.Count
+                },
                 facility: Facilities.VideoAudioExternal,
                 correlationId: videoRequest.CorrelationId,
                 exception: null
@@ -182,13 +199,7 @@ public sealed class VideoOperationAppService(
 
             await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
                 correlationId: videoRequest.CorrelationId,
-                eventMessage: new AudioOperationStartedEto
-                {
-                    RefContentId = videoRequest.RefContentId,
-                    RefContentType = videoRequest.RefContentType,
-                    VideoRequestId = videoRequest.Id,
-                    AudioMode = EventNames.VideoAudioExternal
-                }
+                eventMessage: new AudioOperationStartedEto { RefContentId = videoRequest.RefContentId, RefContentType = videoRequest.RefContentType, VideoRequestId = videoRequest.Id, AudioMode = EventNames.VideoAudioExternal }
             );
 
             foreach (var item in audioItems)
@@ -200,7 +211,16 @@ public sealed class VideoOperationAppService(
                 {
                     _logger.FrameworkInfoLog(LogHelper.Generate(
                         message: EventNames.AudioProviderRequestStarted,
-                        reference: new { videoRequest.ScopeKey, Type = nameof(AudioRequest), Key = existingAudio.Id, RefType = videoRequest.RefContentType.ToString(), RefKey = videoRequest.RefContentId, VideoRequestId = videoRequest.Id, item.SortOrder },
+                        reference: new
+                        {
+                            videoRequest.ScopeKey,
+                            Type = nameof(AudioRequest),
+                            Key = existingAudio.Id,
+                            RefType = videoRequest.RefContentType.ToString(),
+                            RefKey = videoRequest.RefContentId,
+                            VideoRequestId = videoRequest.Id,
+                            item.SortOrder
+                        },
                         facility: Facilities.AudioProviderRequestStarted,
                         correlationId: videoRequest.CorrelationId,
                         exception: null
@@ -225,18 +245,22 @@ public sealed class VideoOperationAppService(
                     eventId,
                     item.Text,
                     videoRequest.AudioProviderKey,
-                    item.SortOrder)
-                {
-                    CorrelationId = videoRequest.CorrelationId,
-                    Status = AudioStatusNames.AudioRequestCreated,
-                    CurrentStep = EventNames.AudioRequestCreated
-                };
+                    item.SortOrder) { CorrelationId = videoRequest.CorrelationId, Status = AudioStatusNames.AudioRequestCreated, CurrentStep = EventNames.AudioRequestCreated };
 
                 await audioRequestRepository.InsertAsync(audioRequest, cancellationToken);
 
                 _logger.FrameworkInfoLog(LogHelper.Generate(
                     message: EventNames.AudioRequestCreated,
-                    reference: new { videoRequest.ScopeKey, Type = nameof(AudioRequest), Key = audioRequestId, RefType = videoRequest.RefContentType.ToString(), RefKey = videoRequest.RefContentId, VideoRequestId = videoRequest.Id, item.SortOrder },
+                    reference: new
+                    {
+                        videoRequest.ScopeKey,
+                        Type = nameof(AudioRequest),
+                        Key = audioRequestId,
+                        RefType = videoRequest.RefContentType.ToString(),
+                        RefKey = videoRequest.RefContentId,
+                        VideoRequestId = videoRequest.Id,
+                        item.SortOrder
+                    },
                     facility: Facilities.AudioRequestCreated,
                     correlationId: videoRequest.CorrelationId,
                     exception: null
@@ -253,6 +277,7 @@ public sealed class VideoOperationAppService(
             await HandleVideoExceptionAsync(
                 videoRequest,
                 EventNames.VideoOperationStarted,
+                Facilities.VideoOperationFailed,
                 ex,
                 cancellationToken
             );
@@ -277,13 +302,22 @@ public sealed class VideoOperationAppService(
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
                 message: EventNames.AudioProviderRequestStarted,
-                reference: new { audioRequest.ScopeKey, Type = nameof(AudioRequest), Key = audioRequest.Id, RefType = audioRequest.RefContentType.ToString(), RefKey = audioRequest.RefContentId, VideoRequestId = audioRequest.VideoRequestId, audioRequest.SortOrder },
+                reference: new
+                {
+                    audioRequest.ScopeKey,
+                    Type = nameof(AudioRequest),
+                    Key = audioRequest.Id,
+                    RefType = audioRequest.RefContentType.ToString(),
+                    RefKey = audioRequest.RefContentId,
+                    VideoRequestId = audioRequest.VideoRequestId,
+                    audioRequest.SortOrder
+                },
                 facility: Facilities.AudioProviderRequestStarted,
                 correlationId: audioRequest.CorrelationId,
                 exception: null
             ));
 
-            var response = await audioProvider.CreateAsync(new AudioCreateRequest {AudioReferenceKey = audioRequest.Id.ToString("N").ToLower(), InputText = audioRequest.InputText });
+            var response = await audioProvider.CreateAsync(new AudioCreateRequest { AudioReferenceKey = audioRequest.Id.ToString("N").ToLower(), InputText = audioRequest.InputText });
 
             audioRequest.AudioProviderTrackingId = response.ProviderTrackId;
             audioRequest.AudioProviderUrl = response.ProviderFileUrl;
@@ -300,8 +334,16 @@ public sealed class VideoOperationAppService(
 
                 _logger.FrameworkInfoLog(LogHelper.Generate(
                     message: EventNames.AudioProviderCompleted,
-                    reference: new { audioRequest.ScopeKey, Type = nameof(AudioRequest), Key = audioRequest.Id, RefType = audioRequest.RefContentType.ToString(), RefKey = audioRequest.RefContentId, VideoRequestId = audioRequest.VideoRequestId },
-                    facility: Facilities.AudioProviderCompleted,
+                    reference: new
+                    {
+                        audioRequest.ScopeKey,
+                        Type = nameof(AudioRequest),
+                        Key = audioRequest.Id,
+                        RefType = audioRequest.RefContentType.ToString(),
+                        RefKey = audioRequest.RefContentId,
+                        VideoRequestId = audioRequest.VideoRequestId
+                    },
+                    facility: Facilities.AudioProviderRequestCompleted,
                     correlationId: audioRequest.CorrelationId,
                     exception: null
                 ));
@@ -319,16 +361,25 @@ public sealed class VideoOperationAppService(
                 throw new InvalidOperationException("Audio provider track id is required.");
 
             audioRequest.Status = AudioStatusNames.AudioProviderPolling;
-            audioRequest.CurrentStep = EventNames.AudioProviderPollingStarted;
+            audioRequest.CurrentStep = EventNames.AudioProviderPolling;
             audioRequest.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(videoPollingSettings.ErrorRescheduleDelaySeconds);
             audioRequest.ProviderPollingCount = 0;
 
             await ReplaceAudioAsync(audioRequest, cancellationToken);
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
-                message: EventNames.AudioProviderPollingStarted,
-                reference: new { audioRequest.ScopeKey, Type = nameof(AudioRequest), Key = audioRequest.Id, RefType = audioRequest.RefContentType.ToString(), RefKey = audioRequest.RefContentId, VideoRequestId = audioRequest.VideoRequestId, audioRequest.NextProviderPollAtUtc },
-                facility: Facilities.AudioProviderPollingStarted,
+                message: EventNames.AudioProviderPolling,
+                reference: new
+                {
+                    audioRequest.ScopeKey,
+                    Type = nameof(AudioRequest),
+                    Key = audioRequest.Id,
+                    RefType = audioRequest.RefContentType.ToString(),
+                    RefKey = audioRequest.RefContentId,
+                    VideoRequestId = audioRequest.VideoRequestId,
+                    audioRequest.NextProviderPollAtUtc
+                },
+                facility: Facilities.AudioProviderPolling,
                 correlationId: audioRequest.CorrelationId,
                 exception: null
             ));
@@ -338,6 +389,7 @@ public sealed class VideoOperationAppService(
             await HandleAudioExceptionAsync(
                 audioRequest,
                 EventNames.AudioProviderRequestStarted,
+                Facilities.AudioOperationFailed,
                 ex,
                 cancellationToken
             );
@@ -346,19 +398,29 @@ public sealed class VideoOperationAppService(
         }
     }
 
-    public async Task HandleAudioProviderCompletedAsync(AudioProviderCompletedEto @event, [CanBeNull] string correlationId = null, CancellationToken cancellationToken = default)
+    public async Task HandleAudioProviderCompletedAsync(AudioProviderCompletedEto @event, CancellationToken cancellationToken = default)
     {
+        var audioRequest = await GetAudioAsync(@event.AudioRequestId, cancellationToken);
+
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: EventNames.AudioFileDownloadStarted,
-            reference: new { Type = nameof(AudioRequest), Key = @event.AudioRequestId },
+            reference: new
+            {
+                audioRequest.ScopeKey,
+                Type = nameof(AudioRequest),
+                Key = audioRequest.Id,
+                RefType = audioRequest.RefContentType.ToString(),
+                RefKey = audioRequest.RefContentId,
+                VideoRequestId = audioRequest.VideoRequestId
+            },
             facility: Facilities.AudioFileDownloadStarted,
-            correlationId: correlationId,
+            correlationId: audioRequest.CorrelationId,
             exception: null
         ));
 
         await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
-            correlationId: correlationId,
-            eventMessage: new AudioFileDownloadStartedEto { AudioRequestId = @event.AudioRequestId }
+            correlationId: audioRequest.CorrelationId,
+            eventMessage: new AudioFileDownloadStartedEto { AudioRequestId = audioRequest.Id }
         );
     }
 
@@ -390,7 +452,15 @@ public sealed class VideoOperationAppService(
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
                 message: EventNames.AudioFileDownloadCompleted,
-                reference: new { audioRequest.ScopeKey, Type = nameof(AudioRequest), Key = audioRequest.Id, RefType = audioRequest.RefContentType.ToString(), RefKey = audioRequest.RefContentId, VideoRequestId = audioRequest.VideoRequestId },
+                reference: new
+                {
+                    audioRequest.ScopeKey,
+                    Type = nameof(AudioRequest),
+                    Key = audioRequest.Id,
+                    RefType = audioRequest.RefContentType.ToString(),
+                    RefKey = audioRequest.RefContentId,
+                    VideoRequestId = audioRequest.VideoRequestId
+                },
                 facility: Facilities.AudioFileDownloadCompleted,
                 correlationId: audioRequest.CorrelationId,
                 exception: null
@@ -406,6 +476,7 @@ public sealed class VideoOperationAppService(
             await HandleAudioExceptionAsync(
                 audioRequest,
                 EventNames.AudioFileDownloadStarted,
+                Facilities.AudioOperationFailed,
                 ex
             );
 
@@ -431,7 +502,15 @@ public sealed class VideoOperationAppService(
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
                 message: EventNames.AudioFileUploadStarted,
-                reference: new { audioRequest.ScopeKey, Type = nameof(AudioRequest), Key = audioRequest.Id, RefType = audioRequest.RefContentType.ToString(), RefKey = audioRequest.RefContentId, VideoRequestId = audioRequest.VideoRequestId },
+                reference: new
+                {
+                    audioRequest.ScopeKey,
+                    Type = nameof(AudioRequest),
+                    Key = audioRequest.Id,
+                    RefType = audioRequest.RefContentType.ToString(),
+                    RefKey = audioRequest.RefContentId,
+                    VideoRequestId = audioRequest.VideoRequestId
+                },
                 facility: Facilities.AudioFileUploadStarted,
                 correlationId: audioRequest.CorrelationId,
                 exception: null
@@ -471,7 +550,16 @@ public sealed class VideoOperationAppService(
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
                 message: EventNames.AudioFileUploadCompleted,
-                reference: new { audioRequest.ScopeKey, Type = nameof(AudioRequest), Key = audioRequest.Id, RefType = audioRequest.RefContentType.ToString(), RefKey = audioRequest.RefContentId, VideoRequestId = audioRequest.VideoRequestId, audioRequest.AudioCdnUrl },
+                reference: new
+                {
+                    audioRequest.ScopeKey,
+                    Type = nameof(AudioRequest),
+                    Key = audioRequest.Id,
+                    RefType = audioRequest.RefContentType.ToString(),
+                    RefKey = audioRequest.RefContentId,
+                    VideoRequestId = audioRequest.VideoRequestId,
+                    audioRequest.AudioCdnUrl
+                },
                 facility: Facilities.AudioFileUploadCompleted,
                 correlationId: audioRequest.CorrelationId,
                 exception: null
@@ -482,6 +570,7 @@ public sealed class VideoOperationAppService(
             await HandleAudioExceptionAsync(
                 audioRequest,
                 EventNames.AudioFileUploadStarted,
+                Facilities.AudioOperationFailed,
                 ex
             );
 
@@ -510,13 +599,7 @@ public sealed class VideoOperationAppService(
                 validPriorStatuses: [VideoStatusNames.VideoProviderRequestStarting, VideoStatusNames.WaitingRetry, VideoStatusNames.RetryEventPublished]);
             if (claimed == 0) return;
 
-            var response = await provider.CreateAsync(new VideoCreateRequest
-            {
-                VideoInputJson = videoRequest.MediaInputJson,
-                AudioCdnUrls = @event.AudioCdnUrls,
-                RefContentType = videoRequest.RefContentType,
-                CustomerProviderSettings = customerVpSetting.VideoGenerationProviderSettings
-            });
+            var response = await provider.CreateAsync(new VideoCreateRequest { VideoInputJson = videoRequest.MediaInputJson, AudioCdnUrls = @event.AudioCdnUrls, RefContentType = videoRequest.RefContentType, CustomerProviderSettings = customerVpSetting.VideoGenerationProviderSettings });
 
             videoRequest.VideoProviderTrackingId = response.ProviderTrackId;
             videoRequest.VideoProviderUrl = response.ProviderFileUrl;
@@ -533,8 +616,15 @@ public sealed class VideoOperationAppService(
 
                 _logger.FrameworkInfoLog(LogHelper.Generate(
                     message: EventNames.VideoProviderCompleted,
-                    reference: new { videoRequest.ScopeKey, Type = nameof(VideoRequest), Key = videoRequest.Id, RefType = videoRequest.RefContentType.ToString(), RefKey = videoRequest.RefContentId },
-                    facility: Facilities.VideoProviderCompleted,
+                    reference: new
+                    {
+                        videoRequest.ScopeKey,
+                        Type = nameof(VideoRequest),
+                        Key = videoRequest.Id,
+                        RefType = videoRequest.RefContentType.ToString(),
+                        RefKey = videoRequest.RefContentId
+                    },
+                    facility: Facilities.VideoProviderRequestCompleted,
                     correlationId: videoRequest.CorrelationId,
                     exception: null
                 ));
@@ -552,16 +642,24 @@ public sealed class VideoOperationAppService(
                 throw new InvalidOperationException("Video provider track id is required.");
 
             videoRequest.Status = VideoStatusNames.VideoProviderPolling;
-            videoRequest.CurrentStep = EventNames.VideoProviderPollingStarted;
+            videoRequest.CurrentStep = EventNames.VideoProviderPolling;
             videoRequest.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(videoPollingSettings.ErrorRescheduleDelaySeconds);
             videoRequest.ProviderPollingCount = 0;
 
             await ReplaceVideoAsync(videoRequest, cancellationToken);
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
-                message: EventNames.VideoProviderPollingStarted,
-                reference: new { videoRequest.ScopeKey, Type = nameof(VideoRequest), Key = videoRequest.Id, RefType = videoRequest.RefContentType.ToString(), RefKey = videoRequest.RefContentId, videoRequest.NextProviderPollAtUtc },
-                facility: Facilities.VideoProviderPollingStarted,
+                message: EventNames.VideoProviderPolling,
+                reference: new
+                {
+                    videoRequest.ScopeKey,
+                    Type = nameof(VideoRequest),
+                    Key = videoRequest.Id,
+                    RefType = videoRequest.RefContentType.ToString(),
+                    RefKey = videoRequest.RefContentId,
+                    videoRequest.NextProviderPollAtUtc
+                },
+                facility: Facilities.VideoProviderPolling,
                 correlationId: videoRequest.CorrelationId,
                 exception: null
             ));
@@ -571,6 +669,7 @@ public sealed class VideoOperationAppService(
             await HandleVideoExceptionAsync(
                 videoRequest,
                 EventNames.VideoProviderRequestStarted,
+                Facilities.VideoOperationFailed,
                 ex,
                 cancellationToken
             );
@@ -579,19 +678,28 @@ public sealed class VideoOperationAppService(
         }
     }
 
-    public async Task HandleVideoProviderCompletedAsync(VideoProviderCompletedEto @event, [CanBeNull] string correlationId = null, CancellationToken cancellationToken = default)
+    public async Task HandleVideoProviderCompletedAsync(VideoProviderCompletedEto @event, CancellationToken cancellationToken = default)
     {
+        var videoRequest = await GetVideoAsync(@event.VideoRequestId, cancellationToken);
+
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: EventNames.VideoFileDownloadStarted,
-            reference: new { Type = nameof(VideoRequest), Key = @event.VideoRequestId },
+            reference: new
+            {
+                videoRequest.ScopeKey,
+                Type = nameof(VideoRequest),
+                Key = videoRequest.Id,
+                RefType = videoRequest.RefContentType.ToString(),
+                RefKey = videoRequest.RefContentId
+            },
             facility: Facilities.VideoFileDownloadStarted,
-            correlationId: correlationId,
+            correlationId: videoRequest.CorrelationId,
             exception: null
         ));
 
         await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
-            correlationId: correlationId,
-            eventMessage: new VideoFileDownloadStartedEto { VideoRequestId = @event.VideoRequestId }
+            correlationId: videoRequest.CorrelationId,
+            eventMessage: new VideoFileDownloadStartedEto { VideoRequestId = videoRequest.Id }
         );
     }
 
@@ -620,7 +728,14 @@ public sealed class VideoOperationAppService(
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
                 message: EventNames.VideoFileDownloadCompleted,
-                reference: new { videoRequest.ScopeKey, Type = nameof(VideoRequest), Key = videoRequest.Id, RefType = videoRequest.RefContentType.ToString(), RefKey = videoRequest.RefContentId },
+                reference: new
+                {
+                    videoRequest.ScopeKey,
+                    Type = nameof(VideoRequest),
+                    Key = videoRequest.Id,
+                    RefType = videoRequest.RefContentType.ToString(),
+                    RefKey = videoRequest.RefContentId
+                },
                 facility: Facilities.VideoFileDownloadCompleted,
                 correlationId: videoRequest.CorrelationId,
                 exception: null
@@ -636,6 +751,7 @@ public sealed class VideoOperationAppService(
             await HandleVideoExceptionAsync(
                 videoRequest,
                 EventNames.VideoFileDownloadStarted,
+                Facilities.VideoOperationFailed,
                 ex
             );
 
@@ -668,7 +784,14 @@ public sealed class VideoOperationAppService(
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
                 message: EventNames.VideoFileUploadStarted,
-                reference: new { videoRequest.ScopeKey, Type = nameof(VideoRequest), Key = videoRequest.Id, RefType = videoRequest.RefContentType.ToString(), RefKey = videoRequest.RefContentId },
+                reference: new
+                {
+                    videoRequest.ScopeKey,
+                    Type = nameof(VideoRequest),
+                    Key = videoRequest.Id,
+                    RefType = videoRequest.RefContentType.ToString(),
+                    RefKey = videoRequest.RefContentId
+                },
                 facility: Facilities.VideoFileUploadStarted,
                 correlationId: videoRequest.CorrelationId,
                 exception: null
@@ -697,7 +820,15 @@ public sealed class VideoOperationAppService(
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
                 message: EventNames.VideoFileUploadCompleted,
-                reference: new { videoRequest.ScopeKey, Type = nameof(VideoRequest), Key = videoRequest.Id, RefType = videoRequest.RefContentType.ToString(), RefKey = videoRequest.RefContentId, videoRequest.VideoCdnUrl },
+                reference: new
+                {
+                    videoRequest.ScopeKey,
+                    Type = nameof(VideoRequest),
+                    Key = videoRequest.Id,
+                    RefType = videoRequest.RefContentType.ToString(),
+                    RefKey = videoRequest.RefContentId,
+                    videoRequest.VideoCdnUrl
+                },
                 facility: Facilities.VideoFileUploadCompleted,
                 correlationId: videoRequest.CorrelationId,
                 exception: null
@@ -713,6 +844,7 @@ public sealed class VideoOperationAppService(
             await HandleVideoExceptionAsync(
                 videoRequest,
                 EventNames.VideoFileUploadStarted,
+                Facilities.VideoOperationFailed,
                 ex
             );
 
@@ -735,7 +867,15 @@ public sealed class VideoOperationAppService(
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
                 message: EventNames.VideoGenerationResultPublished,
-                reference: new { videoRequest.ScopeKey, Type = nameof(VideoRequest), Key = videoRequest.Id, RefType = videoRequest.RefContentType.ToString(), RefKey = videoRequest.RefContentId, videoRequest.VideoCdnUrl },
+                reference: new
+                {
+                    videoRequest.ScopeKey,
+                    Type = nameof(VideoRequest),
+                    Key = videoRequest.Id,
+                    RefType = videoRequest.RefContentType.ToString(),
+                    RefKey = videoRequest.RefContentId,
+                    videoRequest.VideoCdnUrl
+                },
                 facility: Facilities.VideoGenerationResultPublished,
                 correlationId: videoRequest.CorrelationId,
                 exception: null
@@ -751,6 +891,7 @@ public sealed class VideoOperationAppService(
             await HandleVideoExceptionAsync(
                 videoRequest,
                 EventNames.VideoFileUploadCompleted,
+                Facilities.VideoOperationFailed,
                 ex
             );
 
@@ -846,24 +987,24 @@ public sealed class VideoOperationAppService(
         return audioRequestRepository.UpdateByExpressionAsync(predicate, u => update, cancellationToken: cancellationToken);
     }
 
-    private async Task HandleAudioExceptionAsync(AudioRequest request, string step, Exception ex, CancellationToken cancellationToken = default)
+    private async Task HandleAudioExceptionAsync(AudioRequest request, string step, string facility, Exception ex, CancellationToken cancellationToken = default)
     {
         if (ExceptionClassifier.IsRetryable(ex))
         {
-            await ScheduleAudioRetryAsync(request, step, ex, cancellationToken);
+            await ScheduleAudioRetryAsync(request, step, facility, ex, cancellationToken);
             return;
         }
 
-        await FailAudioAsync(request, step, ex, false, cancellationToken);
+        await FailAudioAsync(request, step, facility, ex, false, cancellationToken);
     }
 
-    private async Task ScheduleAudioRetryAsync(AudioRequest request, string step, Exception ex, CancellationToken cancellationToken = default)
+    private async Task ScheduleAudioRetryAsync(AudioRequest request, string step, string facility, Exception ex, CancellationToken cancellationToken = default)
     {
         request.RetryCount++;
 
         if (request.RetryCount >= serviceRetrySettings.MaxRetryCount)
         {
-            await FailAudioAsync(request, step, ex, false, cancellationToken);
+            await FailAudioAsync(request, step, facility, ex, false, cancellationToken);
             return;
         }
 
@@ -877,7 +1018,18 @@ public sealed class VideoOperationAppService(
 
         _logger.FrameworkErrorLog(LogHelper.Generate(
             message: EventNames.RetryScheduled,
-            reference: new { request.ScopeKey, Type = nameof(AudioRequest), Key = request.Id, RefType = request.RefContentType.ToString(), RefKey = request.RefContentId, VideoRequestId = request.VideoRequestId, FailedStep = step, request.RetryCount, request.NextRetryAtUtc },
+            reference: new
+            {
+                request.ScopeKey,
+                Type = nameof(AudioRequest),
+                Key = request.Id,
+                RefType = request.RefContentType.ToString(),
+                RefKey = request.RefContentId,
+                VideoRequestId = request.VideoRequestId,
+                FailedStep = step,
+                request.RetryCount,
+                request.NextRetryAtUtc
+            },
             facility: Facilities.RetryScheduled,
             correlationId: request.CorrelationId,
             exception: ex
@@ -897,7 +1049,7 @@ public sealed class VideoOperationAppService(
         );
     }
 
-    private async Task FailAudioAsync(AudioRequest request, string step, Exception ex, bool retryable, CancellationToken cancellationToken = default)
+    private async Task FailAudioAsync(AudioRequest request, string step, string facility, Exception ex, bool retryable, CancellationToken cancellationToken = default)
     {
         request.Status = AudioStatusNames.Failed;
         request.CurrentStep = step;
@@ -910,8 +1062,18 @@ public sealed class VideoOperationAppService(
 
         _logger.FrameworkErrorLog(LogHelper.Generate(
             message: step,
-            reference: new { request.ScopeKey, Type = nameof(AudioRequest), Key = request.Id, RefType = request.RefContentType.ToString(), RefKey = request.RefContentId, VideoRequestId = request.VideoRequestId, FailedStep = step, retryable },
-            facility: Facilities.StepFailed,
+            reference: new
+            {
+                request.ScopeKey,
+                Type = nameof(AudioRequest),
+                Key = request.Id,
+                RefType = request.RefContentType.ToString(),
+                RefKey = request.RefContentId,
+                VideoRequestId = request.VideoRequestId,
+                FailedStep = step,
+                retryable
+            },
+            facility: facility,
             correlationId: request.CorrelationId,
             exception: ex
         ));
@@ -932,28 +1094,66 @@ public sealed class VideoOperationAppService(
         var parentVideoRequest = await GetVideoAsync(request.VideoRequestId, cancellationToken);
         if (parentVideoRequest != null && parentVideoRequest.Status != VideoStatusNames.Failed && parentVideoRequest.Status != VideoStatusNames.Completed)
         {
-            await FailVideoRequestDueToAudioFailureAsync(parentVideoRequest, cancellationToken);
+            await FailVideoRequestDueToAudioFailureAsync(parentVideoRequest, facility, cancellationToken);
         }
     }
 
-    private async Task HandleVideoExceptionAsync(VideoRequest request, string step, Exception ex, CancellationToken cancellationToken = default)
+    private async Task FailVideoRequestDueToAudioFailureAsync(VideoRequest videoRequest, string facility, CancellationToken cancellationToken = default)
+    {
+        videoRequest.Status = VideoStatusNames.Failed;
+        videoRequest.CurrentStep = EventNames.AudioFileUploadCompleted;
+        videoRequest.LastError = "One or more audio requests failed.";
+        videoRequest.NextRetryAtUtc = null;
+
+        await ReplaceVideoAsync(videoRequest, cancellationToken);
+
+        _logger.FrameworkErrorLog(LogHelper.Generate(
+            message: EventNames.AudioFileUploadCompleted,
+            reference: new
+            {
+                videoRequest.ScopeKey,
+                Type = nameof(VideoRequest),
+                Key = videoRequest.Id,
+                RefType = videoRequest.RefContentType.ToString(),
+                RefKey = videoRequest.RefContentId
+            },
+            facility: facility,
+            correlationId: videoRequest.CorrelationId,
+            exception: null
+        ));
+
+        await EventBus.PublishAsync(
+            parentMessage: ParentIntegrationEvent,
+            correlationId: videoRequest.CorrelationId,
+            eventMessage: new StepFailedEto
+            {
+                RefContentId = videoRequest.RefContentId,
+                RefContentType = videoRequest.RefContentType,
+                Step = EventNames.AudioFileUploadCompleted,
+                ErrorMessage = "One or more audio requests failed.",
+                Retryable = false
+            }
+        );
+    }
+
+    private async Task HandleVideoExceptionAsync(VideoRequest request, string step, string facility, Exception ex, CancellationToken cancellationToken = default)
     {
         if (ExceptionClassifier.IsRetryable(ex))
         {
-            await ScheduleVideoRetryAsync(request, step, ex, cancellationToken);
+            await ScheduleVideoRetryAsync(request, step, facility, ex, cancellationToken);
             return;
         }
 
-        await FailVideoAsync(request, step, ex, false, cancellationToken);
+        await FailVideoAsync(request, step, facility, ex, false, cancellationToken);
     }
 
-    private async Task ScheduleVideoRetryAsync(VideoRequest request, string step, Exception ex, CancellationToken cancellationToken = default)
+    private async Task ScheduleVideoRetryAsync(VideoRequest request, string step, string facility, Exception ex, CancellationToken cancellationToken = default)
     {
         request.RetryCount++;
 
         if (request.RetryCount >= serviceRetrySettings.MaxRetryCount)
         {
-            await FailVideoAsync(request, step, ex, false, cancellationToken);
+            await FailVideoAsync(request, step, facility, ex, false, cancellationToken);
             return;
         }
 
@@ -967,7 +1167,17 @@ public sealed class VideoOperationAppService(
 
         _logger.FrameworkErrorLog(LogHelper.Generate(
             message: EventNames.RetryScheduled,
-            reference: new { request.ScopeKey, Type = nameof(VideoRequest), Key = request.Id, RefType = request.RefContentType.ToString(), RefKey = request.RefContentId, FailedStep = step, request.RetryCount, request.NextRetryAtUtc },
+            reference: new
+            {
+                request.ScopeKey,
+                Type = nameof(VideoRequest),
+                Key = request.Id,
+                RefType = request.RefContentType.ToString(),
+                RefKey = request.RefContentId,
+                FailedStep = step,
+                request.RetryCount,
+                request.NextRetryAtUtc
+            },
             facility: Facilities.RetryScheduled,
             correlationId: request.CorrelationId,
             exception: ex
@@ -987,7 +1197,7 @@ public sealed class VideoOperationAppService(
         );
     }
 
-    private async Task FailVideoAsync(VideoRequest request, string step, Exception ex, bool retryable, CancellationToken cancellationToken = default)
+    private async Task FailVideoAsync(VideoRequest request, string step, string facility, Exception ex, bool retryable, CancellationToken cancellationToken = default)
     {
         request.Status = VideoStatusNames.Failed;
         request.CurrentStep = step;
@@ -1000,8 +1210,17 @@ public sealed class VideoOperationAppService(
 
         _logger.FrameworkErrorLog(LogHelper.Generate(
             message: step,
-            reference: new { request.ScopeKey, Type = nameof(VideoRequest), Key = request.Id, RefType = request.RefContentType.ToString(), RefKey = request.RefContentId, FailedStep = step, retryable },
-            facility: Facilities.StepFailed,
+            reference: new
+            {
+                request.ScopeKey,
+                Type = nameof(VideoRequest),
+                Key = request.Id,
+                RefType = request.RefContentType.ToString(),
+                RefKey = request.RefContentId,
+                FailedStep = step,
+                retryable
+            },
+            facility: facility,
             correlationId: request.CorrelationId,
             exception: ex
         ));
@@ -1020,42 +1239,17 @@ public sealed class VideoOperationAppService(
         );
     }
 
-    private async Task FailVideoRequestDueToAudioFailureAsync(VideoRequest videoRequest, CancellationToken cancellationToken = default)
-    {
-        videoRequest.Status = VideoStatusNames.Failed;
-        videoRequest.CurrentStep = EventNames.AudioFileUploadCompleted;
-        videoRequest.LastError = "One or more audio requests failed.";
-        videoRequest.NextRetryAtUtc = null;
-
-        await ReplaceVideoAsync(videoRequest, cancellationToken);
-
-        _logger.FrameworkErrorLog(LogHelper.Generate(
-            message: EventNames.AudioFileUploadCompleted,
-            reference: new { videoRequest.ScopeKey, Type = nameof(VideoRequest), Key = videoRequest.Id, RefType = videoRequest.RefContentType.ToString(), RefKey = videoRequest.RefContentId },
-            facility: Facilities.StepFailed,
-            correlationId: videoRequest.CorrelationId,
-            exception: null
-        ));
-
-        await EventBus.PublishAsync(
-            parentMessage: ParentIntegrationEvent,
-            correlationId: videoRequest.CorrelationId,
-            eventMessage: new StepFailedEto
-            {
-                RefContentId = videoRequest.RefContentId,
-                RefContentType = videoRequest.RefContentType,
-                Step = EventNames.AudioFileUploadCompleted,
-                ErrorMessage = "One or more audio requests failed.",
-                Retryable = false
-            }
-        );
-    }
-
     private static void TryDeleteLocalFile(string localPath)
     {
         if (string.IsNullOrWhiteSpace(localPath)) return;
-        try { File.Delete(localPath); }
-        catch { /* best-effort: log or ignore */ }
+        try
+        {
+            File.Delete(localPath);
+        }
+        catch
+        {
+            /* best-effort: log or ignore */
+        }
     }
 
     #endregion

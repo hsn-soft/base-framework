@@ -15,7 +15,7 @@ public sealed class OutlineQueueProvider(HttpClient httpClient, OutlineQueueProv
 
     public async Task<OutlineCreateResponse> OutlineOperationAsync(OutlineCreateRequest request)
     {
-        var inputText = string.IsNullOrWhiteSpace(request.OutlineInput) ? request.OutlinePrompt : request.OutlineInput;
+        string inputText = string.IsNullOrWhiteSpace(request.OutlineInput) ? request.OutlinePrompt : request.OutlineInput;
         if (string.IsNullOrWhiteSpace(inputText))
             inputText = "Default outline content";
 
@@ -44,7 +44,13 @@ public sealed class OutlineQueueProvider(HttpClient httpClient, OutlineQueueProv
 
         if (status != "completed")
         {
-            return new OutlineStatusResponse { IsProcessed = false };
+            if (status != "failed")
+            {
+                return new OutlineStatusResponse { IsProcessed = false };
+            }
+
+            string? error = json.GetProperty("error").GetString();
+            return new OutlineStatusResponse { IsProcessed = false, IsProcessFailed =  true , ErrorMessage = error};
         }
 
         string? script = json.GetProperty("script").GetString();

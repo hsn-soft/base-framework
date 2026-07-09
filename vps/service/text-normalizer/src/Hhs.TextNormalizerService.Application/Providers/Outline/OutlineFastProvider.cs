@@ -15,7 +15,7 @@ public sealed class OutlineFastProvider(HttpClient httpClient, OutlineFastProvid
 
     public async Task<OutlineCreateResponse> OutlineOperationAsync(OutlineCreateRequest request)
     {
-        var inputText = string.IsNullOrWhiteSpace(request.OutlineInput) ? request.OutlinePrompt : request.OutlineInput;
+        string inputText = string.IsNullOrWhiteSpace(request.OutlineInput) ? request.OutlinePrompt : request.OutlineInput;
         if (string.IsNullOrWhiteSpace(inputText))
             inputText = "Default outline content";
 

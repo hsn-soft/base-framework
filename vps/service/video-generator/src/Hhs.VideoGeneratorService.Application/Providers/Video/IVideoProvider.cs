@@ -41,7 +41,7 @@ public sealed class VideoCreateResponse
 
 public sealed class VideoStatusResponse
 {
-    public bool IsCompleted { get; set; }
+    public bool IsProcessed { get; set; }
     public bool IsFailed { get; set; }
     [CanBeNull] public string ProviderFileUrl { get; set; }
     [CanBeNull] public string ErrorMessage { get; set; }

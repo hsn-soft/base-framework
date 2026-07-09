@@ -10,31 +10,43 @@ builder.Services.AddSingleton<VideoQueueInternalService>();
 var app = builder.Build();
 
 var options = app.Services.GetRequiredService<IOptions<MockApiOptions>>().Value;
-var mockFilesDir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", options.MediaDirectory);
+string mockFilesDir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", options.MediaDirectory);
 Directory.CreateDirectory(mockFilesDir);
 
 app.MapPost("/video/generate", (VideoRequest request, VideoQueueInternalService service) =>
 {
-    var trackingId = service.CreateRequest();
-    var downloadUrl = $"{service.GetBaseUrl()}/video/download/{trackingId}";
+    string trackingId = service.CreateRequest();
+    string downloadUrl = $"{service.GetBaseUrl()}/video/download/{trackingId}";
     return Results.Ok(new { provider = "video-queue-internal", trackingId, remoteFileUrl = downloadUrl, pollingWindowSec = options.PollingWindowSeconds });
 });
 
 app.MapGet("/video/status/{trackingId}", async (string trackingId, VideoQueueInternalService service, CancellationToken ct) =>
 {
-    var (isReady, fileUrl, error, fileName) = await service.GetStatusAsync(trackingId, mockFilesDir, options, ct);
+    (bool isReady, string? fileUrl, string? error, string? fileName) = await service.GetStatusAsync(trackingId, mockFilesDir, options, ct);
     if (!isReady)
-        return Results.Ok(new { provider = "video-queue-internal", trackingId, status = "processing", error });
-    return Results.Ok(new { provider = "video-queue-internal", trackingId, status = "completed", remoteFileUrl = fileUrl, fileName });
+    {
+        return Results.Ok(error != null
+            ? new { provider = "video-queue-internal", trackingId, status = "failed", error }
+            : new { provider = "video-queue-internal", trackingId, status = "processing", error = string.Empty });
+    }
+
+    return Results.Ok(new
+    {
+        provider = "video-queue-internal",
+        trackingId,
+        status = "completed",
+        remoteFileUrl = fileUrl,
+        fileName
+    });
 });
 
 app.MapGet("/video/download/{trackingId}", async (string trackingId) =>
 {
-    var filePath = VideoQueueInternalService.GetFilePath(trackingId, mockFilesDir, options);
+    string filePath = VideoQueueInternalService.GetFilePath(trackingId, mockFilesDir, options);
     if (!System.IO.File.Exists(filePath))
         return Results.NotFound();
 
-    var fileContent = await System.IO.File.ReadAllBytesAsync(filePath);
+    byte[] fileContent = await System.IO.File.ReadAllBytesAsync(filePath);
     return Results.File(fileContent, "application/octet-stream", Path.GetFileName(filePath));
 });
 
@@ -65,7 +77,7 @@ namespace Hhs.MockApi.VideoQueueInternal
 
         public string CreateRequest()
         {
-            var trackingId = Guid.CreateVersion7().ToString("N").ToLower();
+            string trackingId = Guid.CreateVersion7().ToString("N").ToLower();
             Store[trackingId] = new VideoQueueInternalEntry { CreatedAt = DateTime.UtcNow };
             return trackingId;
         }
@@ -79,15 +91,15 @@ namespace Hhs.MockApi.VideoQueueInternal
             if (elapsed.TotalSeconds < options.ProcessingDelaySeconds)
                 return (false, null, null, null);
 
-            var filePath = GetFilePath(trackingId, mockFilesDir, options);
-            var fileName = Path.GetFileName(filePath);
+            string filePath = GetFilePath(trackingId, mockFilesDir, options);
+            string fileName = Path.GetFileName(filePath);
 
             if (!System.IO.File.Exists(filePath))
             {
                 await System.IO.File.WriteAllTextAsync(filePath, $"Mock Video File (Internal Audio)\nTracking ID: {trackingId}\nCreated: {DateTime.UtcNow:O}", cancellationToken);
             }
 
-            var downloadUrl = $"{_options.Value.SelfBaseUrl}/video/download/{trackingId}";
+            string downloadUrl = $"{_options.Value.SelfBaseUrl}/video/download/{trackingId}";
             return (true, downloadUrl, null, fileName);
         }
 

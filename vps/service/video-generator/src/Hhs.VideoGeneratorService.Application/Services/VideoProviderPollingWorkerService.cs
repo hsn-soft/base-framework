@@ -57,16 +57,24 @@ public sealed class VideoProviderPollingWorkerService(
                 if (request.ProviderPollingCount >= pollingSettings.MaxAttempts)
                 {
                     request.Status = VideoStatusNames.Failed;
-                    request.LastError = ErrorMessages.VideoProviderPollingTimeout;
+                    request.LastError = $"{ErrorMessages.VideoProviderPollingTimeout} [{request.ProviderPollingCount}]";
 
                     await ReplaceVideoAsync(request, cancellationToken);
 
                     _logger.FrameworkErrorLog(LogHelper.Generate(
-                        message: EventNames.VideoProviderPollingStarted,
-                        reference: new { request.ScopeKey, Type = nameof(VideoRequest), Key = request.Id, RefType = request.RefContentType.ToString(), RefKey = request.RefContentId, request.ProviderPollingCount },
-                        facility: Facilities.StepFailed,
+                        message: $"{Facilities.VideoOperationFailed}: {request.LastError}",
+                        reference: new
+                        {
+                            request.ScopeKey,
+                            // references
+                            Type = nameof(VideoRequest),
+                            Key = request.Id,
+                            RefType = request.RefContentType.ToString(),
+                            RefKey = request.RefContentId
+                        },
+                        facility: Facilities.VideoOperationFailed,
                         correlationId: request.CorrelationId,
-                        exception: null
+                        exception: new Exception(request.LastError)
                     ));
 
                     await EventBus.PublishAsync(
@@ -76,7 +84,7 @@ public sealed class VideoProviderPollingWorkerService(
                         {
                             RefContentId = request.RefContentId,
                             RefContentType = request.RefContentType,
-                            Step = EventNames.VideoProviderPollingStarted,
+                            Step = EventNames.VideoProviderPolling, // error step
                             ErrorMessage = request.LastError,
                             Retryable = false
                         }
@@ -98,16 +106,24 @@ public sealed class VideoProviderPollingWorkerService(
                 if (status.IsFailed)
                 {
                     request.Status = VideoStatusNames.Failed;
-                    request.LastError = status.ErrorMessage ?? "Video provider failed.";
+                    request.LastError = ErrorMessages.VideoProviderFailed + " " + status.ErrorMessage;
 
                     await ReplaceVideoAsync(request, cancellationToken);
 
                     _logger.FrameworkErrorLog(LogHelper.Generate(
-                        message: EventNames.VideoProviderPollingStarted,
-                        reference: new { request.ScopeKey, Type = nameof(VideoRequest), Key = request.Id, RefType = request.RefContentType.ToString(), RefKey = request.RefContentId, request.ProviderPollingCount, request.LastError },
-                        facility: Facilities.StepFailed,
+                        message: $"{Facilities.VideoOperationFailed}: {request.LastError}",
+                        reference: new
+                        {
+                            request.ScopeKey,
+                            // references
+                            Type = nameof(VideoRequest),
+                            Key = request.Id,
+                            RefType = request.RefContentType.ToString(),
+                            RefKey = request.RefContentId
+                        },
+                        facility: Facilities.VideoOperationFailed,
                         correlationId: request.CorrelationId,
-                        exception: null
+                        exception: new Exception(request.LastError)
                     ));
 
                     await EventBus.PublishAsync(
@@ -117,7 +133,7 @@ public sealed class VideoProviderPollingWorkerService(
                         {
                             RefContentId = request.RefContentId,
                             RefContentType = request.RefContentType,
-                            Step = EventNames.VideoProviderPollingStarted,
+                            Step = EventNames.VideoProviderPolling,// error step
                             ErrorMessage = request.LastError,
                             Retryable = false
                         }
@@ -126,7 +142,7 @@ public sealed class VideoProviderPollingWorkerService(
                     continue;
                 }
 
-                if (!status.IsCompleted)
+                if (!status.IsProcessed)
                 {
                     request.ProviderPollingCount++;
                     request.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(pollingSettings.IntervalSeconds);
@@ -134,9 +150,18 @@ public sealed class VideoProviderPollingWorkerService(
                     await ReplaceVideoAsync(request, cancellationToken);
 
                     _logger.FrameworkInfoLog(LogHelper.Generate(
-                        message: EventNames.VideoProviderPollingStarted,
-                        reference: new { request.ScopeKey, Type = nameof(VideoRequest), Key = request.Id, RefType = request.RefContentType.ToString(), RefKey = request.RefContentId, Attempt = request.ProviderPollingCount, MaxAttempts = pollingSettings.MaxAttempts, request.NextProviderPollAtUtc },
-                        facility: Facilities.VideoProviderPollingStarted,
+                        message: $"{Facilities.VideoProviderPolling}: [{request.ProviderPollingCount}/{pollingSettings.MaxAttempts}]",
+                        reference: new
+                        {
+                            request.ScopeKey,
+                            // references
+                            Type = nameof(VideoRequest),
+                            Key = request.Id,
+                            RefType = request.RefContentType.ToString(),
+                            RefKey = request.RefContentId,
+                            request.NextProviderPollAtUtc
+                        },
+                        facility: Facilities.VideoProviderPolling,
                         correlationId: request.CorrelationId,
                         exception: null
                     ));
@@ -159,9 +184,17 @@ public sealed class VideoProviderPollingWorkerService(
                 await ReplaceVideoAsync(request, cancellationToken);
 
                 _logger.FrameworkInfoLog(LogHelper.Generate(
-                    message: EventNames.VideoProviderCompleted,
-                    reference: new { request.ScopeKey, Type = nameof(VideoRequest), Key = request.Id, RefType = request.RefContentType.ToString(), RefKey = request.RefContentId, TotalPolls = request.ProviderPollingCount },
-                    facility: Facilities.VideoProviderCompleted,
+                    message: $"{Facilities.VideoProviderRequestCompleted}: [{request.ProviderPollingCount}/{pollingSettings.MaxAttempts}]",
+                    reference: new
+                    {
+                        request.ScopeKey,
+                        // references
+                        Type = nameof(VideoRequest),
+                        Key = request.Id,
+                        RefType = request.RefContentType.ToString(),
+                        RefKey = request.RefContentId
+                    },
+                    facility: Facilities.VideoProviderRequestCompleted,
                     correlationId: request.CorrelationId,
                     exception: null
                 ));
@@ -185,9 +218,18 @@ public sealed class VideoProviderPollingWorkerService(
                     await ReplaceVideoAsync(request, cancellationToken);
 
                     _logger.FrameworkErrorLog(LogHelper.Generate(
-                        message: EventNames.VideoProviderPollingStarted,
-                        reference: new { request.ScopeKey, Type = nameof(VideoRequest), Key = request.Id, RefType = request.RefContentType.ToString(), RefKey = request.RefContentId, request.ProviderPollingCount },
-                        facility: Facilities.StepFailed,
+                        message: $"{Facilities.VideoOperationFailed}: {request.LastError}",
+                        reference: new
+                        {
+                            request.ScopeKey,
+                            // references
+                            Type = nameof(VideoRequest),
+                            Key = request.Id,
+                            RefType = request.RefContentType.ToString(),
+                            RefKey = request.RefContentId,
+                            request.ProviderPollingCount
+                        },
+                        facility: Facilities.VideoOperationFailed,
                         correlationId: request.CorrelationId,
                         exception: ex
                     ));
@@ -199,7 +241,7 @@ public sealed class VideoProviderPollingWorkerService(
                         {
                             RefContentId = request.RefContentId,
                             RefContentType = request.RefContentType,
-                            Step = EventNames.VideoProviderPollingStarted,
+                            Step = EventNames.VideoProviderPolling,// error step
                             ErrorMessage = ex.Message,
                             Retryable = false
                         }
@@ -211,8 +253,19 @@ public sealed class VideoProviderPollingWorkerService(
                     await ReplaceVideoAsync(request, cancellationToken);
 
                     _logger.FrameworkErrorLog(LogHelper.Generate(
-                        message: EventNames.RetryScheduled,
-                        reference: new { request.ScopeKey, Type = nameof(VideoRequest), Key = request.Id, RefType = request.RefContentType.ToString(), RefKey = request.RefContentId, FailedStep = EventNames.VideoProviderPollingStarted, request.ProviderPollingCount, request.NextProviderPollAtUtc },
+                        message: $"{Facilities.RetryScheduled}: {request.LastError}",
+                        reference: new
+                        {
+                            request.ScopeKey,
+                            // references
+                            Type = nameof(VideoRequest),
+                            Key = request.Id,
+                            RefType = request.RefContentType.ToString(),
+                            RefKey = request.RefContentId,
+                            FailedStep = EventNames.VideoProviderPolling,
+                            request.ProviderPollingCount,
+                            request.NextProviderPollAtUtc
+                        },
                         facility: Facilities.RetryScheduled,
                         correlationId: request.CorrelationId,
                         exception: ex

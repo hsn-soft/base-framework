@@ -13,5 +13,5 @@ public class VideoProviderCompletedEtoHandler(
 ) : ApplicationEventHandlerBase<VideoProviderCompletedEto>(inboxStore, logger, videoOperationAppService)
 {
     protected override async Task ExecuteAsync(MessageEnvelope<VideoProviderCompletedEto> @event, CancellationToken cancellationToken)
-        => await videoOperationAppService.HandleVideoProviderCompletedAsync(@event.Message, @event.CorrelationId, cancellationToken);
+        => await videoOperationAppService.HandleVideoProviderCompletedAsync(@event.Message, cancellationToken);
 }

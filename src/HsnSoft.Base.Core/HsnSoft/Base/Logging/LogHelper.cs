@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Linq;
 using HsnSoft.Base.Logging.Models;
 using JetBrains.Annotations;
 
@@ -20,9 +21,16 @@ public static class LogHelper
 
         if (exception == null) return result;
 
+        string exceptionDetail = exception.Message;
+        if (exception.InnerException != null)
+        {
+            var errors = exception.InnerException.GetMessages().ToList();
+            exceptionDetail += " " + string.Join(' ', errors);
+        }
         var stackFrame = new StackTrace(exception, true).GetFrame(0);
         result.StackTrace = new StackTraceLogDetail
         {
+            ErrorDetail = exceptionDetail,
             StackFileName = stackFrame?.GetFileName(),
             StackMethodName = stackFrame?.GetMethod()?.Name,
             StackLineNumber = stackFrame?.GetFileLineNumber() ?? 0

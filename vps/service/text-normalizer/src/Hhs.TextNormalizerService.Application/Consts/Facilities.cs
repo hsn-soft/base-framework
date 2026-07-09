@@ -9,14 +9,21 @@ namespace Hhs.TextNormalizerService.Application.Consts;
 public static class Facilities
 {
     public const string NormalizeRequestCreated = "NORMALIZE_REQUEST_CREATED";
+
     public const string ScrapingStarted = "SCRAPING_STARTED";
     public const string ScrapingCompleted = "SCRAPING_COMPLETED";
+    public const string ScrapingFailed = "SCRAPING_FAILED";
+
     public const string OutlineStarted = "OUTLINE_STARTED";
     public const string OutlineSkipped = "OUTLINE_SKIPPED";
     public const string OutlineProviderRequestStarted = "OUTLINE_PROVIDER_REQUEST_STARTED";
     public const string OutlineProviderRequestCompleted = "OUTLINE_PROVIDER_REQUEST_COMPLETED";
-    public const string OutlineProviderPollingStarted = "OUTLINE_PROVIDER_POLLING_STARTED";
+
+    public const string OutlineProviderPolling = "OUTLINE_PROVIDER_POLLING";
+
     public const string OutlineCompleted = "OUTLINE_COMPLETED";
+    public const string OutlineFailed = "OUTLINE_FAILED";
+
     public const string NormalizerResultPublished = "NORMALIZER_RESULT_PUBLISHED";
     public const string VideoGenerationDataForwarded = "VIDEO_GENERATION_DATA_FORWARDED";
     public const string RetryScheduled = "RETRY_SCHEDULED";

@@ -55,7 +55,14 @@ public sealed class NormalizerOperationAppService(
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
                 message: EventNames.CustomerContentNormalizeRequestCreated,
-                reference: new { existing.ScopeKey, Type = nameof(CustomerContentNormalizedRequest), Key = existing.Id, RefType = "CustomerContent", RefKey = existing.CustomerContentId },
+                reference: new
+                {
+                    existing.ScopeKey,
+                    Type = nameof(CustomerContentNormalizedRequest),
+                    Key = existing.Id,
+                    RefType = "CustomerContent",
+                    RefKey = existing.CustomerContentId
+                },
                 facility: Facilities.NormalizeRequestCreated,
                 correlationId: existing.CorrelationId,
                 exception: null
@@ -149,7 +156,7 @@ public sealed class NormalizerOperationAppService(
 
             request.ScrapingStatus = ScrapingStatusNames.Started;
 
-            var claimed = await ReplaceCustomerContentAsync(request, cancellationToken,
+            long claimed = await ReplaceCustomerContentAsync(request, cancellationToken,
                 validPriorStatuses: [NormalizeStatusNames.Created, NormalizeStatusNames.WaitingRetry]);
             if (claimed == 0) return;
 
@@ -180,6 +187,7 @@ public sealed class NormalizerOperationAppService(
             await HandleCustomerExceptionAsync(
                 request,
                 EventNames.CustomerContentScrapingStarted,
+                Facilities.ScrapingFailed,
                 ex
             );
         }
@@ -245,7 +253,7 @@ public sealed class NormalizerOperationAppService(
             };
             request.LastError = null;
 
-            var claimed = await ReplaceCustomerContentAsync(request, cancellationToken,
+            long claimed = await ReplaceCustomerContentAsync(request, cancellationToken,
                 validPriorStatuses: [NormalizeStatusNames.ScrapingStarted, NormalizeStatusNames.WaitingRetry]);
             if (claimed == 0) return;
 
@@ -284,6 +292,7 @@ public sealed class NormalizerOperationAppService(
             await HandleCustomerExceptionAsync(
                 request,
                 EventNames.CustomerContentScrapingStarted,
+                Facilities.ScrapingFailed,
                 ex
             );
         }
@@ -304,7 +313,7 @@ public sealed class NormalizerOperationAppService(
 
             request.OutlineStatus = OutlineStatusNames.Started;
 
-            var claimed = await ReplaceCustomerContentAsync(request, cancellationToken,
+            long claimed = await ReplaceCustomerContentAsync(request, cancellationToken,
                 validPriorStatuses: [NormalizeStatusNames.ScrapingCompleted, NormalizeStatusNames.WaitingRetry]);
             if (claimed == 0) return;
 
@@ -335,6 +344,7 @@ public sealed class NormalizerOperationAppService(
             await HandleCustomerExceptionAsync(
                 request,
                 EventNames.CustomerContentOutlineStarted,
+                Facilities.ScrapingFailed,
                 ex
             );
         }
@@ -362,7 +372,7 @@ public sealed class NormalizerOperationAppService(
 
                 request.OutlineStatus = OutlineStatusNames.Skipped;
 
-                var skipClaimed = await ReplaceCustomerContentAsync(request, cancellationToken,
+                long skipClaimed = await ReplaceCustomerContentAsync(request, cancellationToken,
                     validPriorStatuses: [NormalizeStatusNames.OutlineStarted, NormalizeStatusNames.WaitingRetry]);
                 if (skipClaimed == 0) return;
 
@@ -401,7 +411,7 @@ public sealed class NormalizerOperationAppService(
             request.Status = NormalizeStatusNames.OutlineProviderRequestStarted;
             request.CurrentStep = EventNames.OutlineProviderRequestStarted;
 
-            var claimed = await ReplaceCustomerContentAsync(request, cancellationToken,
+            long claimed = await ReplaceCustomerContentAsync(request, cancellationToken,
                 validPriorStatuses: [NormalizeStatusNames.OutlineStarted, NormalizeStatusNames.WaitingRetry]);
             if (claimed == 0) return;
 
@@ -422,7 +432,7 @@ public sealed class NormalizerOperationAppService(
                 exception: null
             ));
 
-            var (outlineInputText, outlineInputPrompt) = await BuildCustomerOutlineInputAsync(request, cancellationToken);
+            (string outlineInputText, string outlineInputPrompt) = await BuildCustomerOutlineInputAsync(request, cancellationToken);
 
             await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
                 correlationId: request.CorrelationId,
@@ -442,6 +452,7 @@ public sealed class NormalizerOperationAppService(
             await HandleCustomerExceptionAsync(
                 request,
                 EventNames.OutlineProviderRequestStarted,
+                Facilities.OutlineFailed,
                 ex
             );
         }
@@ -519,7 +530,7 @@ public sealed class NormalizerOperationAppService(
             var existingRequest = await customerContentRepository.GetByScopeKeyAndContentIdAsync(request.ScopeKey, item.CustomerContentId, cancellationToken);
             if (existingRequest?.ScrapingStatus == ScrapingStatusNames.Completed && existingRequest.ScrapingResult is not null)
             {
-                var reuseClaimed = await UpdateAnalysisItemAsync(
+                long reuseClaimed = await UpdateAnalysisItemAsync(
                     request.Id,
                     item.CustomerContentId,
                     u => u.Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", NormalizeStatusNames.ScrapingCompleted)
@@ -534,7 +545,15 @@ public sealed class NormalizerOperationAppService(
 
                 _logger.FrameworkInfoLog(LogHelper.Generate(
                     message: EventNames.AnalysisItemScrapingCompleted,
-                    reference: new { request.ScopeKey, Type = nameof(AnalysisNormalizedItem), Key = item.CustomerContentId, RefType = "AnalysisContent", RefKey = request.AnalysisContentId, AnalysisContentNormalizeRequestId = request.Id },
+                    reference: new
+                    {
+                        request.ScopeKey,
+                        Type = nameof(AnalysisNormalizedItem),
+                        Key = item.CustomerContentId,
+                        RefType = "AnalysisContent",
+                        RefKey = request.AnalysisContentId,
+                        AnalysisContentNormalizeRequestId = request.Id
+                    },
                     facility: Facilities.ScrapingCompleted,
                     correlationId: request.CorrelationId,
                     exception: null
@@ -545,7 +564,7 @@ public sealed class NormalizerOperationAppService(
 
         try
         {
-            var claimed = await UpdateAnalysisItemAsync(
+            long claimed = await UpdateAnalysisItemAsync(
                 request.Id,
                 item.CustomerContentId,
                 u => u.Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", NormalizeStatusNames.ScrapingStarted)
@@ -580,7 +599,15 @@ public sealed class NormalizerOperationAppService(
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
                 message: EventNames.AnalysisItemScrapingCompleted,
-                reference: new { request.ScopeKey, Type = nameof(AnalysisNormalizedItem), Key = item.CustomerContentId, RefType = "AnalysisContent", RefKey = request.AnalysisContentId, AnalysisContentNormalizeRequestId = request.Id },
+                reference: new
+                {
+                    request.ScopeKey,
+                    Type = nameof(AnalysisNormalizedItem),
+                    Key = item.CustomerContentId,
+                    RefType = "AnalysisContent",
+                    RefKey = request.AnalysisContentId,
+                    AnalysisContentNormalizeRequestId = request.Id
+                },
                 facility: Facilities.ScrapingCompleted,
                 correlationId: request.CorrelationId,
                 exception: null
@@ -592,6 +619,7 @@ public sealed class NormalizerOperationAppService(
                 request,
                 item,
                 EventNames.AnalysisItemScrapingStarted,
+                Facilities.ScrapingFailed,
                 ex
             );
         }
@@ -621,7 +649,7 @@ public sealed class NormalizerOperationAppService(
                 return;
             }
 
-            var claimed = await UpdateAnalysisItemAsync(
+            long claimed = await UpdateAnalysisItemAsync(
                 analysisContentNormalizedRequest.Id,
                 item.CustomerContentId,
                 u => u.Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", NormalizeStatusNames.OutlineProviderRequestStarted)
@@ -632,7 +660,7 @@ public sealed class NormalizerOperationAppService(
             );
             if (claimed == 0) return;
 
-            var (outlineInputText, outlineInputPrompt) = await BuildAnalysisItemOutlineInputAsync(analysisContentNormalizedRequest, item, cancellationToken);
+            (string outlineInputText, string outlineInputPrompt) = await BuildAnalysisItemOutlineInputAsync(analysisContentNormalizedRequest, item, cancellationToken);
 
             await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
                 correlationId: analysisContentNormalizedRequest.CorrelationId,
@@ -653,6 +681,7 @@ public sealed class NormalizerOperationAppService(
                 analysisContentNormalizedRequest,
                 item,
                 EventNames.AnalysisItemOutlineStarted,
+                Facilities.OutlineFailed,
                 ex
             );
         }
@@ -737,7 +766,7 @@ public sealed class NormalizerOperationAppService(
             request.OutlineProviderTrackId = providerTrackId;
 
             request.Status = NormalizeStatusNames.OutlineProviderRequestPolling;
-            request.CurrentStep = EventNames.OutlineProviderPollingStarted;
+            request.CurrentStep = EventNames.OutlineProviderPolling;
 
             request.OutlineStatus = OutlineStatusNames.Polling;
 
@@ -746,9 +775,17 @@ public sealed class NormalizerOperationAppService(
             await ReplaceCustomerContentAsync(request);
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
-                message: EventNames.OutlineProviderPollingStarted,
-                reference: new { request.ScopeKey, Type = nameof(CustomerContentNormalizedRequest), Key = request.Id, RefType = "CustomerContent", RefKey = request.CustomerContentId, request.NextOutlinePollAtUtc },
-                facility: Facilities.OutlineProviderPollingStarted,
+                message: EventNames.OutlineProviderPolling,
+                reference: new
+                {
+                    request.ScopeKey,
+                    Type = nameof(CustomerContentNormalizedRequest),
+                    Key = request.Id,
+                    RefType = "CustomerContent",
+                    RefKey = request.CustomerContentId,
+                    request.NextOutlinePollAtUtc
+                },
+                facility: Facilities.OutlineProviderPolling,
                 correlationId: request.CorrelationId,
                 exception: null
             ));
@@ -763,7 +800,7 @@ public sealed class NormalizerOperationAppService(
             @event.CustomerContentIdForItem.Value,
             u => u
                 .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", NormalizeStatusNames.OutlineProviderRequestPolling)
-                .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentStep)}", EventNames.OutlineProviderPollingStarted)
+                .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentStep)}", EventNames.OutlineProviderPolling)
                 .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineProviderTrackId)}", providerTrackId)
                 .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineStatus)}", OutlineStatusNames.Polling)
                 .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextOutlinePollAtUtc)}", DateTime.UtcNow.AddSeconds(outlinePollingSettings.IntervalSeconds)),
@@ -771,9 +808,9 @@ public sealed class NormalizerOperationAppService(
         );
 
         _logger.FrameworkInfoLog(LogHelper.Generate(
-            message: EventNames.OutlineProviderPollingStarted,
+            message: EventNames.OutlineProviderPolling,
             reference: new { Type = nameof(AnalysisNormalizedItem), Key = @event.CustomerContentIdForItem, RefType = nameof(AnalysisContentNormalizedRequest), RefKey = @event.RefNormalizedRequestId },
-            facility: Facilities.OutlineProviderPollingStarted,
+            facility: Facilities.OutlineProviderPolling,
             correlationId: correlationId,
             exception: null
         ));
@@ -790,6 +827,7 @@ public sealed class NormalizerOperationAppService(
             await HandleCustomerExceptionAsync(
                 customerContentNormalizedRequest,
                 EventNames.OutlineProviderRequestStarted,
+                Facilities.OutlineFailed,
                 ex
             );
 
@@ -807,6 +845,7 @@ public sealed class NormalizerOperationAppService(
             analysis,
             item,
             EventNames.OutlineProviderRequestStarted,
+            Facilities.OutlineFailed,
             ex
         );
     }
@@ -831,13 +870,20 @@ public sealed class NormalizerOperationAppService(
 
             customerContentNormalizedRequest.OutlineResult = new OutlineResult { OutlinedData = @event.OutlinedData };
 
-            var customerClaimed = await ReplaceCustomerContentAsync(customerContentNormalizedRequest, cancellationToken,
+            long customerClaimed = await ReplaceCustomerContentAsync(customerContentNormalizedRequest, cancellationToken,
                 validPriorStatuses: [NormalizeStatusNames.OutlineProviderRequestStarted, NormalizeStatusNames.OutlineProviderRequestPolling, NormalizeStatusNames.OutlineProviderRequestCompleted, NormalizeStatusNames.WaitingRetry]);
             if (customerClaimed == 0) return;
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
                 message: EventNames.CustomerContentOutlineCompleted,
-                reference: new { customerContentNormalizedRequest.ScopeKey, Type = nameof(CustomerContentNormalizedRequest), Key = customerContentNormalizedRequest.Id, RefType = "CustomerContent", RefKey = customerContentNormalizedRequest.CustomerContentId },
+                reference: new
+                {
+                    customerContentNormalizedRequest.ScopeKey,
+                    Type = nameof(CustomerContentNormalizedRequest),
+                    Key = customerContentNormalizedRequest.Id,
+                    RefType = "CustomerContent",
+                    RefKey = customerContentNormalizedRequest.CustomerContentId
+                },
                 facility: Facilities.OutlineCompleted,
                 correlationId: customerContentNormalizedRequest.CorrelationId,
                 exception: null
@@ -860,7 +906,7 @@ public sealed class NormalizerOperationAppService(
         if (item.Status == NormalizeStatusNames.OutlineCompleted || item.OutlineStatus == OutlineStatusNames.Completed)
             return;
 
-        var claimed = await UpdateAnalysisItemAsync(
+        long claimed = await UpdateAnalysisItemAsync(
             analysisContentNormalizedRequest.Id,
             item.CustomerContentId,
             u => u.Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", NormalizeStatusNames.OutlineCompleted)
@@ -876,7 +922,15 @@ public sealed class NormalizerOperationAppService(
 
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: EventNames.AnalysisItemOutlineCompleted,
-            reference: new { analysisContentNormalizedRequest.ScopeKey, Type = nameof(AnalysisNormalizedItem), Key = item.CustomerContentId, RefType = "AnalysisContent", RefKey = analysisContentNormalizedRequest.AnalysisContentId, AnalysisContentNormalizeRequestId = analysisContentNormalizedRequest.Id },
+            reference: new
+            {
+                analysisContentNormalizedRequest.ScopeKey,
+                Type = nameof(AnalysisNormalizedItem),
+                Key = item.CustomerContentId,
+                RefType = "AnalysisContent",
+                RefKey = analysisContentNormalizedRequest.AnalysisContentId,
+                AnalysisContentNormalizeRequestId = analysisContentNormalizedRequest.Id
+            },
             facility: Facilities.OutlineCompleted,
             correlationId: analysisContentNormalizedRequest.CorrelationId,
             exception: null
@@ -896,13 +950,20 @@ public sealed class NormalizerOperationAppService(
         customerContentNormalizedRequest.Status = NormalizeStatusNames.Completed;
         customerContentNormalizedRequest.CurrentStep = EventNames.NormalizerResultPublished;
 
-        var claimed = await ReplaceCustomerContentAsync(customerContentNormalizedRequest, cancellationToken,
+        long claimed = await ReplaceCustomerContentAsync(customerContentNormalizedRequest, cancellationToken,
             validPriorStatuses: [NormalizeStatusNames.OutlineCompleted, NormalizeStatusNames.WaitingRetry]);
         if (claimed == 0) return;
 
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: EventNames.NormalizerResultPublished,
-            reference: new { customerContentNormalizedRequest.ScopeKey, Type = nameof(CustomerContentNormalizedRequest), Key = customerContentNormalizedRequest.Id, RefType = "CustomerContent", RefKey = customerContentNormalizedRequest.CustomerContentId },
+            reference: new
+            {
+                customerContentNormalizedRequest.ScopeKey,
+                Type = nameof(CustomerContentNormalizedRequest),
+                Key = customerContentNormalizedRequest.Id,
+                RefType = "CustomerContent",
+                RefKey = customerContentNormalizedRequest.CustomerContentId
+            },
             facility: Facilities.NormalizerResultPublished,
             correlationId: customerContentNormalizedRequest.CorrelationId,
             exception: null
@@ -957,7 +1018,14 @@ public sealed class NormalizerOperationAppService(
 
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: EventNames.VideoGenerationDataForwarded,
-            reference: new { @event.ScopeKey, Type = @event.RefContentType.ToString(), Key = @event.RefContentId, RefType = "NormalizeRequest", RefKey = @event.RefNormalizeRequestId },
+            reference: new
+            {
+                @event.ScopeKey,
+                Type = @event.RefContentType.ToString(),
+                Key = @event.RefContentId,
+                RefType = "NormalizeRequest",
+                RefKey = @event.RefNormalizeRequestId
+            },
             facility: Facilities.VideoGenerationDataForwarded,
             correlationId: correlationId,
             exception: null
@@ -1052,66 +1120,25 @@ public sealed class NormalizerOperationAppService(
         return customerContentRepository.UpdateByExpressionAsync(predicate, u => update, cancellationToken: cancellationToken);
     }
 
-    private async Task FailCustomerAsync(CustomerContentNormalizedRequest request, string step, Exception ex, bool retryable)
-    {
-        request.Status = NormalizeStatusNames.Failed;
-        request.CurrentStep = step;
-        request.LastError = ex.Message;
-        request.NextRetryAtUtc = null;
 
-        await ReplaceCustomerContentAsync(request);
-
-        _logger.FrameworkErrorLog(LogHelper.Generate(
-            message: ex.Message,
-            reference: new
-            {
-                request.ScopeKey,
-                Type = nameof(CustomerContentNormalizedRequest),
-                Key = request.Id,
-                RefType = "CustomerContent",
-                RefKey = request.CustomerContentId,
-                ClientDomain = request.DomainName,
-                ContentKey = request.ContentKey,
-                FailedStep = step,
-                Retryable = retryable
-            },
-            facility: Facilities.StepFailed,
-            correlationId: request.CorrelationId,
-            exception: ex
-        ));
-
-        await EventBus.PublishAsync(
-            parentMessage: ParentIntegrationEvent,
-            correlationId: request.CorrelationId,
-            eventMessage: new StepFailedEto
-            {
-                RefContentId = request.CustomerContentId,
-                RefContentType = ContentType.CustomerContent,
-                Step = step,
-                ErrorMessage = ex.Message,
-                Retryable = retryable
-            }
-        );
-    }
-
-    private async Task HandleCustomerExceptionAsync(CustomerContentNormalizedRequest request, string step, Exception ex)
+    private async Task HandleCustomerExceptionAsync(CustomerContentNormalizedRequest request, string step, string facility, Exception ex)
     {
         if (ExceptionClassifier.IsRetryable(ex))
         {
-            await ScheduleCustomerRetryAsync(request, step, ex);
+            await ScheduleCustomerRetryAsync(request, step, facility, ex);
             return;
         }
 
-        await FailCustomerAsync(request, step, ex, false);
+        await FailCustomerAsync(request, step, facility, ex, false);
     }
 
-    private async Task ScheduleCustomerRetryAsync(CustomerContentNormalizedRequest request, string step, Exception ex)
+    private async Task ScheduleCustomerRetryAsync(CustomerContentNormalizedRequest request, string step, string facility, Exception ex)
     {
         request.RetryCount++;
 
         if (request.RetryCount >= serviceRetrySettings.MaxRetryCount)
         {
-            await FailCustomerAsync(request, step, ex, false);
+            await FailCustomerAsync(request, step, facility, ex, false);
             return;
         }
 
@@ -1155,24 +1182,67 @@ public sealed class NormalizerOperationAppService(
         );
     }
 
-    private async Task HandleAnalysisItemExceptionAsync(AnalysisContentNormalizedRequest request, AnalysisNormalizedItem item, string step, Exception ex)
+    private async Task FailCustomerAsync(CustomerContentNormalizedRequest request, string step, string facility, Exception ex, bool retryable)
+    {
+        request.Status = NormalizeStatusNames.Failed;
+        request.CurrentStep = step;
+        request.LastError = ex.Message;
+        request.NextRetryAtUtc = null;
+
+        await ReplaceCustomerContentAsync(request);
+
+        _logger.FrameworkErrorLog(LogHelper.Generate(
+            message: ex.Message,
+            reference: new
+            {
+                request.ScopeKey,
+                Type = nameof(CustomerContentNormalizedRequest),
+                Key = request.Id,
+                RefType = "CustomerContent",
+                RefKey = request.CustomerContentId,
+                ClientDomain = request.DomainName,
+                ContentKey = request.ContentKey,
+                FailedStep = step,
+                Retryable = retryable
+            },
+            facility: facility,
+            correlationId: request.CorrelationId,
+            exception: ex
+        ));
+
+        await EventBus.PublishAsync(
+            parentMessage: ParentIntegrationEvent,
+            correlationId: request.CorrelationId,
+            eventMessage: new StepFailedEto
+            {
+                RefContentId = request.CustomerContentId,
+                RefContentType = ContentType.CustomerContent,
+                Step = step,
+                ErrorMessage = ex.Message,
+                Retryable = retryable
+            }
+        );
+    }
+
+
+    private async Task HandleAnalysisItemExceptionAsync(AnalysisContentNormalizedRequest request, AnalysisNormalizedItem item, string step, string facility, Exception ex)
     {
         if (ExceptionClassifier.IsRetryable(ex))
         {
-            await ScheduleAnalysisItemRetryAsync(request, item, step, ex);
+            await ScheduleAnalysisItemRetryAsync(request, item, step, facility, ex);
             return;
         }
 
-        await FailAnalysisItemAsync(request, item, step, ex, false);
+        await FailAnalysisItemAsync(request, item, step, facility, ex, false);
     }
 
-    private async Task ScheduleAnalysisItemRetryAsync(AnalysisContentNormalizedRequest request, AnalysisNormalizedItem item, string step, Exception ex)
+    private async Task ScheduleAnalysisItemRetryAsync(AnalysisContentNormalizedRequest request, AnalysisNormalizedItem item, string step, string facility, Exception ex)
     {
         int retryCount = item.RetryCount + 1;
 
         if (retryCount >= serviceRetrySettings.MaxRetryCount)
         {
-            await FailAnalysisItemAsync(request, item, step, ex, false);
+            await FailAnalysisItemAsync(request, item, step, facility, ex, false);
             return;
         }
 
@@ -1194,7 +1264,7 @@ public sealed class NormalizerOperationAppService(
 
             if (step is EventNames.AnalysisItemOutlineStarted
                 or EventNames.OutlineProviderRequestStarted
-                or EventNames.OutlineProviderPollingStarted)
+                or EventNames.OutlineProviderPolling)
             {
                 baseUpdate = baseUpdate.Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineStatus)}", OutlineStatusNames.WaitingRetry);
             }
@@ -1242,7 +1312,7 @@ public sealed class NormalizerOperationAppService(
         );
     }
 
-    private async Task FailAnalysisItemAsync(AnalysisContentNormalizedRequest request, AnalysisNormalizedItem item, string step, Exception ex, bool retryable)
+    private async Task FailAnalysisItemAsync(AnalysisContentNormalizedRequest request, AnalysisNormalizedItem item, string step, string facility, Exception ex, bool retryable)
     {
         var updateFunc = new Func<UpdateDefinitionBuilder<AnalysisContentNormalizedRequest>, UpdateDefinition<AnalysisContentNormalizedRequest>>(u =>
         {
@@ -1260,7 +1330,7 @@ public sealed class NormalizerOperationAppService(
 
             if (step is EventNames.AnalysisItemOutlineStarted
                 or EventNames.OutlineProviderRequestStarted
-                or EventNames.OutlineProviderPollingStarted)
+                or EventNames.OutlineProviderPolling)
                 baseUpdate = baseUpdate.Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineStatus)}", OutlineStatusNames.Failed);
 
             return baseUpdate;
@@ -1286,7 +1356,7 @@ public sealed class NormalizerOperationAppService(
                 FailedStep = step,
                 Retryable = retryable
             },
-            facility: Facilities.StepFailed,
+            facility: facility,
             correlationId: request.CorrelationId,
             exception: ex
         ));

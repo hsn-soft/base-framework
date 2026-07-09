@@ -13,5 +13,5 @@ public class AudioProviderCompletedEtoHandler(
 ) : ApplicationEventHandlerBase<AudioProviderCompletedEto>(inboxStore, logger, videoOperationAppService)
 {
     protected override async Task ExecuteAsync(MessageEnvelope<AudioProviderCompletedEto> @event, CancellationToken cancellationToken)
-        => await videoOperationAppService.HandleAudioProviderCompletedAsync(@event.Message, @event.CorrelationId, cancellationToken);
+        => await videoOperationAppService.HandleAudioProviderCompletedAsync(@event.Message, cancellationToken);
 }

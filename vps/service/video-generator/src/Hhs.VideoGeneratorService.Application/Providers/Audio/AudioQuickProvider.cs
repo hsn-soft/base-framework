@@ -37,6 +37,6 @@ public sealed class AudioQuickProvider : IAudioProvider
 
         var json = await response.Content.ReadFromJsonAsync<JsonElement>();
 
-        return new AudioStatusResponse { IsCompleted = true, ProviderFileUrl = json.GetProperty("remoteFileUrl").GetString(), FileName = json.TryGetProperty("fileName", out var fnProp) ? fnProp.GetString() : null };
+        return new AudioStatusResponse { IsProcessed = true, ProviderFileUrl = json.GetProperty("remoteFileUrl").GetString(), FileName = json.TryGetProperty("fileName", out var fnProp) ? fnProp.GetString() : null };
     }
 }

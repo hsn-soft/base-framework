@@ -104,8 +104,8 @@ public abstract class BaseScrapingService(Uri targetUri, IAppConsoleLogger logge
 
             if (response is not { Ok: true })
             {
-                var statusCode = response?.Status.ToString() ?? "NO_RESPONSE";
-                var statusText = response?.StatusText ?? string.Empty;
+                string statusCode = response?.Status.ToString() ?? "NO_RESPONSE";
+                string statusText = response?.StatusText ?? string.Empty;
                 throw new InvalidOperationException($"{statusCode}:{statusText}");
             }
 
@@ -118,7 +118,7 @@ public abstract class BaseScrapingService(Uri targetUri, IAppConsoleLogger logge
             {
                 try
                 {
-                    var items = await page.EvaluateFunctionAsync<string[]>(titleScript).ConfigureAwait(false);
+                    string[] items = await page.EvaluateFunctionAsync<string[]>(titleScript).ConfigureAwait(false);
                     result.Title = items?.FirstOrDefault(s => !string.IsNullOrWhiteSpace(s))
                         ?.Replace("\"", "").Replace("\\", "");
                 }
@@ -130,11 +130,11 @@ public abstract class BaseScrapingService(Uri targetUri, IAppConsoleLogger logge
             {
                 try
                 {
-                    var items = await page.EvaluateFunctionAsync<string[]>(releaseTimeScript).ConfigureAwait(false);
+                    string[] items = await page.EvaluateFunctionAsync<string[]>(releaseTimeScript).ConfigureAwait(false);
                     if (items is { Length: > 0 })
                     {
-                        var host = _targetUri.Host.ToLower(new CultureInfo("en-US"));
-                        foreach (var rTimeStr in items.Where(s => !string.IsNullOrWhiteSpace(s)))
+                        string host = _targetUri.Host.ToLower(new CultureInfo("en-US"));
+                        foreach (string rTimeStr in items.Where(s => !string.IsNullOrWhiteSpace(s)))
                         {
                             if (host.Contains("techsummus.com") &&
                                 DateTime.TryParseExact(rTimeStr, "dd/MM/yyyy", new CultureInfo("tr-TR"), DateTimeStyles.None, out var techDate))
@@ -168,7 +168,7 @@ public abstract class BaseScrapingService(Uri targetUri, IAppConsoleLogger logge
             {
                 try
                 {
-                    var items = await page.EvaluateFunctionAsync<string[]>(spotScript).ConfigureAwait(false);
+                    string[] items = await page.EvaluateFunctionAsync<string[]>(spotScript).ConfigureAwait(false);
                     result.Spot = string.Join(" ", (items ?? []).Where(s => !string.IsNullOrWhiteSpace(s)))
                         .Replace("\"", "").Replace("\\", "");
                     if (string.IsNullOrWhiteSpace(result.Spot)) result.Spot = null;
@@ -196,7 +196,7 @@ public abstract class BaseScrapingService(Uri targetUri, IAppConsoleLogger logge
             {
                 try
                 {
-                    var items = await page.EvaluateFunctionAsync<string[]>(imageScript).ConfigureAwait(false);
+                    string[] items = await page.EvaluateFunctionAsync<string[]>(imageScript).ConfigureAwait(false);
                     result.ImageUrl = items?.FirstOrDefault(s => !string.IsNullOrWhiteSpace(s))
                         ?.Replace("\"", "").Replace("\\", "");
                 }
@@ -250,8 +250,8 @@ public abstract class BaseScrapingService(Uri targetUri, IAppConsoleLogger logge
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var proxyUser = Environment.GetEnvironmentVariable("PUPPETEER_PROXY_USERNAME");
-            var proxyPass = Environment.GetEnvironmentVariable("PUPPETEER_PROXY_PASSWORD");
+            string proxyUser = Environment.GetEnvironmentVariable("PUPPETEER_PROXY_USERNAME");
+            string proxyPass = Environment.GetEnvironmentVariable("PUPPETEER_PROXY_PASSWORD");
 
             if (!string.IsNullOrWhiteSpace(proxyUser) && !string.IsNullOrWhiteSpace(proxyPass))
             {

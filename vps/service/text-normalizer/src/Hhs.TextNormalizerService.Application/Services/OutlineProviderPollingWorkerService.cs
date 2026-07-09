@@ -59,7 +59,7 @@ public sealed class OutlineProviderPollingWorkerService(
         {
             try
             {
-                var claimResult = await ClaimDueCustomerPollingAsync(
+                long claimResult = await ClaimDueCustomerPollingAsync(
                     request.Id,
                     now,
                     cancellationToken);
@@ -70,16 +70,24 @@ public sealed class OutlineProviderPollingWorkerService(
                 if (request.OutlinePollingCount >= pollingSettings.MaxAttempts)
                 {
                     request.Status = NormalizeStatusNames.Failed;
-                    request.LastError = ErrorMessages.OutlineProviderPollingTimeout;
+                    request.LastError = $"{ErrorMessages.OutlineProviderPollingTimeout} [{request.OutlinePollingCount}]";
 
                     await ReplaceCustomerAsync(request, cancellationToken);
 
                     _logger.FrameworkErrorLog(LogHelper.Generate(
-                        message: EventNames.OutlineProviderPollingStarted,
-                        reference: new { request.ScopeKey, Type = nameof(CustomerContentNormalizedRequest), Key = request.Id, RefType = "CustomerContent", RefKey = request.CustomerContentId, request.OutlinePollingCount },
-                        facility: Facilities.StepFailed,
+                        message: $"{Facilities.OutlineFailed}: {request.LastError}",
+                        reference: new
+                        {
+                            request.ScopeKey,
+                            // references
+                            Type = nameof(CustomerContentNormalizedRequest),
+                            Key = request.Id,
+                            RefType = "CustomerContent",
+                            RefKey = request.CustomerContentId
+                        },
+                        facility: Facilities.OutlineFailed,
                         correlationId: request.CorrelationId,
-                        exception: null
+                        exception: new Exception(request.LastError)
                     ));
 
                     await EventBus.PublishAsync(
@@ -89,7 +97,7 @@ public sealed class OutlineProviderPollingWorkerService(
                         {
                             RefContentId = request.CustomerContentId,
                             RefContentType = ContentType.CustomerContent,
-                            Step = EventNames.OutlineProviderPollingStarted,
+                            Step = EventNames.OutlineProviderPolling, // error step
                             ErrorMessage = request.LastError,
                             Retryable = false
                         }
@@ -118,16 +126,24 @@ public sealed class OutlineProviderPollingWorkerService(
                 if (status.IsProcessFailed)
                 {
                     request.Status = NormalizeStatusNames.Failed;
-                    request.LastError = status.ErrorMessage ?? ErrorMessages.OutlineProviderFailed;
+                    request.LastError = ErrorMessages.OutlineProviderFailed + " " + status.ErrorMessage;
 
                     await ReplaceCustomerAsync(request, cancellationToken);
 
                     _logger.FrameworkErrorLog(LogHelper.Generate(
-                        message: EventNames.OutlineProviderPollingStarted,
-                        reference: new { request.ScopeKey, Type = nameof(CustomerContentNormalizedRequest), Key = request.Id, RefType = "CustomerContent", RefKey = request.CustomerContentId, request.LastError },
-                        facility: Facilities.StepFailed,
+                        message: $"{Facilities.OutlineFailed}: {request.LastError}",
+                        reference: new
+                        {
+                            request.ScopeKey,
+                            // references
+                            Type = nameof(CustomerContentNormalizedRequest),
+                            Key = request.Id,
+                            RefType = "CustomerContent",
+                            RefKey = request.CustomerContentId
+                        },
+                        facility: Facilities.OutlineFailed,
                         correlationId: request.CorrelationId,
-                        exception: null
+                        exception: new Exception(request.LastError)
                     ));
 
                     await EventBus.PublishAsync(
@@ -137,7 +153,7 @@ public sealed class OutlineProviderPollingWorkerService(
                         {
                             RefContentId = request.CustomerContentId,
                             RefContentType = ContentType.CustomerContent,
-                            Step = EventNames.OutlineProviderPollingStarted,
+                            Step = EventNames.OutlineProviderPolling, // error step
                             ErrorMessage = request.LastError,
                             Retryable = false
                         }
@@ -154,15 +170,27 @@ public sealed class OutlineProviderPollingWorkerService(
                     await ReplaceCustomerAsync(request, cancellationToken);
 
                     _logger.FrameworkInfoLog(LogHelper.Generate(
-                        message: EventNames.OutlineProviderPollingStarted,
-                        reference: new { request.ScopeKey, Type = nameof(CustomerContentNormalizedRequest), Key = request.Id, RefType = "CustomerContent", RefKey = request.CustomerContentId, Attempt = request.OutlinePollingCount, MaxAttempts = pollingSettings.MaxAttempts, request.NextOutlinePollAtUtc },
-                        facility: Facilities.OutlineProviderPollingStarted,
+                        message: $"{Facilities.OutlineProviderPolling}: [{request.OutlinePollingCount}/{pollingSettings.MaxAttempts}]",
+                        reference: new
+                        {
+                            request.ScopeKey,
+                            // references
+                            Type = nameof(CustomerContentNormalizedRequest),
+                            Key = request.Id,
+                            RefType = "CustomerContent",
+                            RefKey = request.CustomerContentId,
+                            request.NextOutlinePollAtUtc
+                        },
+                        facility: Facilities.OutlineProviderPolling,
                         correlationId: request.CorrelationId,
                         exception: null
                     ));
 
                     continue;
                 }
+
+                if (string.IsNullOrWhiteSpace(status.OutlinedData))
+                    throw new InvalidOperationException("Outline provider completed but script is empty.");
 
                 request.OutlinePollingCount++;
                 request.NextOutlinePollAtUtc = null;
@@ -174,12 +202,17 @@ public sealed class OutlineProviderPollingWorkerService(
 
                 await ReplaceCustomerAsync(request, cancellationToken);
 
-                if (string.IsNullOrWhiteSpace(status.OutlinedData))
-                    throw new InvalidOperationException("Outline provider completed but script is empty.");
-
                 _logger.FrameworkInfoLog(LogHelper.Generate(
-                    message: EventNames.OutlineProviderRequestCompleted,
-                    reference: new { request.ScopeKey, Type = nameof(CustomerContentNormalizedRequest), Key = request.Id, RefType = "CustomerContent", RefKey = request.CustomerContentId, TotalPolls = request.OutlinePollingCount },
+                    message: $"{Facilities.OutlineProviderRequestCompleted}: [{request.OutlinePollingCount}/{pollingSettings.MaxAttempts}]",
+                    reference: new
+                    {
+                        request.ScopeKey,
+                        // references
+                        Type = nameof(CustomerContentNormalizedRequest),
+                        Key = request.Id,
+                        RefType = "CustomerContent",
+                        RefKey = request.CustomerContentId
+                    },
                     facility: Facilities.OutlineProviderRequestCompleted,
                     correlationId: request.CorrelationId,
                     exception: null
@@ -199,15 +232,24 @@ public sealed class OutlineProviderPollingWorkerService(
                 {
                     request.Status = NormalizeStatusNames.Failed;
                     request.OutlineStatus = OutlineStatusNames.Failed;
-                    request.CurrentStep = EventNames.OutlineProviderPollingStarted;
+                    request.CurrentStep = EventNames.OutlineProviderPolling;
                     request.NextOutlinePollAtUtc = null;
 
                     await ReplaceCustomerAsync(request, cancellationToken);
 
                     _logger.FrameworkErrorLog(LogHelper.Generate(
-                        message: EventNames.OutlineProviderPollingStarted,
-                        reference: new { request.ScopeKey, Type = nameof(CustomerContentNormalizedRequest), Key = request.Id, RefType = "CustomerContent", RefKey = request.CustomerContentId, request.OutlinePollingCount },
-                        facility: Facilities.StepFailed,
+                        message: $"{Facilities.OutlineFailed}: {request.LastError}",
+                        reference: new
+                        {
+                            request.ScopeKey,
+                            // references
+                            Type = nameof(CustomerContentNormalizedRequest),
+                            Key = request.Id,
+                            RefType = "CustomerContent",
+                            RefKey = request.CustomerContentId,
+                            request.OutlinePollingCount
+                        },
+                        facility: Facilities.OutlineFailed,
                         correlationId: request.CorrelationId,
                         exception: ex
                     ));
@@ -219,7 +261,7 @@ public sealed class OutlineProviderPollingWorkerService(
                         {
                             RefContentId = request.CustomerContentId,
                             RefContentType = ContentType.CustomerContent,
-                            Step = EventNames.OutlineProviderPollingStarted,
+                            Step = EventNames.OutlineProviderPolling,  // error step
                             ErrorMessage = ex.Message,
                             Retryable = false
                         }
@@ -229,14 +271,25 @@ public sealed class OutlineProviderPollingWorkerService(
                 {
                     request.Status = NormalizeStatusNames.OutlineProviderRequestPolling;
                     request.OutlineStatus = OutlineStatusNames.Polling;
-                    request.CurrentStep = EventNames.OutlineProviderPollingStarted;
+                    request.CurrentStep = EventNames.OutlineProviderPolling;
                     request.NextOutlinePollAtUtc = DateTime.UtcNow.AddSeconds(pollingSettings.BackoffIntervalSeconds);
 
                     await ReplaceCustomerAsync(request, cancellationToken);
 
                     _logger.FrameworkErrorLog(LogHelper.Generate(
-                        message: EventNames.RetryScheduled,
-                        reference: new { request.ScopeKey, Type = nameof(CustomerContentNormalizedRequest), Key = request.Id, RefType = "CustomerContent", RefKey = request.CustomerContentId, FailedStep = EventNames.OutlineProviderPollingStarted, request.OutlinePollingCount, request.NextOutlinePollAtUtc },
+                        message: $"{Facilities.RetryScheduled}: {request.LastError}",
+                        reference: new
+                        {
+                            request.ScopeKey,
+                            // references
+                            Type = nameof(CustomerContentNormalizedRequest),
+                            Key = request.Id,
+                            RefType = "CustomerContent",
+                            RefKey = request.CustomerContentId,
+                            FailedStep = EventNames.OutlineProviderPolling,
+                            request.OutlinePollingCount,
+                            request.NextOutlinePollAtUtc
+                        },
                         facility: Facilities.RetryScheduled,
                         correlationId: request.CorrelationId,
                         exception: ex
@@ -285,7 +338,7 @@ public sealed class OutlineProviderPollingWorkerService(
                     var claimUpdate = Builders<AnalysisContentNormalizedRequest>.Update
                         .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextOutlinePollAtUtc)}", DateTime.UtcNow.AddSeconds(pollingSettings.IntervalSeconds));
 
-                    var claimResult = await UpdateDuePollingAnalysisItemAsync(
+                    long claimResult = await UpdateDuePollingAnalysisItemAsync(
                         request.Id,
                         item.CustomerContentId,
                         now,
@@ -300,7 +353,7 @@ public sealed class OutlineProviderPollingWorkerService(
                         await FailAnalysisPollingItemAsync(
                             request,
                             item,
-                            ErrorMessages.OutlineProviderPollingTimeout,
+                            $"{ErrorMessages.OutlineProviderPollingTimeout} [{item.OutlinePollingCount}]",
                             false,
                             cancellationToken);
 
@@ -312,6 +365,7 @@ public sealed class OutlineProviderPollingWorkerService(
                     {
                         throw new InvalidOperationException($"Provider key value is unknown. Scope key: {request.ScopeKey}");
                     }
+
                     var outlineProvider = outlineProviderResolver.Resolve(providerKeyResult.Value);
 
                     var status = await outlineProvider.GetStatusAsync
@@ -328,7 +382,7 @@ public sealed class OutlineProviderPollingWorkerService(
                         await FailAnalysisPollingItemAsync(
                             request,
                             item,
-                            status.ErrorMessage ?? "Outline provider failed.",
+                            ErrorMessages.OutlineProviderFailed + " " + status.ErrorMessage,
                             false,
                             cancellationToken);
 
@@ -348,9 +402,19 @@ public sealed class OutlineProviderPollingWorkerService(
                             cancellationToken);
 
                         _logger.FrameworkInfoLog(LogHelper.Generate(
-                            message: EventNames.OutlineProviderPollingStarted,
-                            reference: new { request.ScopeKey, Type = nameof(AnalysisNormalizedItem), Key = item.CustomerContentId, RefType = "AnalysisContent", RefKey = request.AnalysisContentId, AnalysisContentNormalizeRequestId = request.Id, Attempt = item.OutlinePollingCount + 1, MaxAttempts = pollingSettings.MaxAttempts },
-                            facility: Facilities.OutlineProviderPollingStarted,
+                            message: $"{Facilities.OutlineProviderPolling}: [{item.OutlinePollingCount}/{pollingSettings.MaxAttempts}]",
+                            reference: new
+                            {
+                                request.ScopeKey,
+                                // references
+                                Type = nameof(AnalysisNormalizedItem),
+                                Key = item.CustomerContentId,
+                                RefType = "AnalysisContent",
+                                RefKey = request.AnalysisContentId,
+                                AnalysisContentNormalizeRequestId = request.Id,
+                                item.NextOutlinePollAtUtc
+                            },
+                            facility: Facilities.OutlineProviderPolling,
                             correlationId: request.CorrelationId,
                             exception: null
                         ));
@@ -375,8 +439,17 @@ public sealed class OutlineProviderPollingWorkerService(
                         cancellationToken);
 
                     _logger.FrameworkInfoLog(LogHelper.Generate(
-                        message: EventNames.OutlineProviderRequestCompleted,
-                        reference: new { request.ScopeKey, Type = nameof(AnalysisNormalizedItem), Key = item.CustomerContentId, RefType = "AnalysisContent", RefKey = request.AnalysisContentId, AnalysisContentNormalizeRequestId = request.Id },
+                        message: $"{Facilities.OutlineProviderRequestCompleted}: [{item.OutlinePollingCount}/{pollingSettings.MaxAttempts}]",
+                        reference: new
+                        {
+                            request.ScopeKey,
+                            // references
+                            Type = nameof(AnalysisNormalizedItem),
+                            Key = item.CustomerContentId,
+                            RefType = "AnalysisContent",
+                            RefKey = request.AnalysisContentId,
+                            AnalysisContentNormalizeRequestId = request.Id
+                        },
                         facility: Facilities.OutlineProviderRequestCompleted,
                         correlationId: request.CorrelationId,
                         exception: null
@@ -412,7 +485,7 @@ public sealed class OutlineProviderPollingWorkerService(
                     var update = Builders<AnalysisContentNormalizedRequest>.Update
                         .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlinePollingCount)}", nextCount)
                         .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", NormalizeStatusNames.OutlineProviderRequestPolling)
-                        .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentStep)}", EventNames.OutlineProviderPollingStarted)
+                        .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentStep)}", EventNames.OutlineProviderPolling)
                         .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineStatus)}", OutlineStatusNames.Polling)
                         .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.LastError)}", ex.Message)
                         .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextOutlinePollAtUtc)}", DateTime.UtcNow.AddSeconds(pollingSettings.ErrorRescheduleDelaySeconds));
@@ -424,8 +497,19 @@ public sealed class OutlineProviderPollingWorkerService(
                         cancellationToken);
 
                     _logger.FrameworkErrorLog(LogHelper.Generate(
-                        message: EventNames.RetryScheduled,
-                        reference: new { request.ScopeKey, Type = nameof(AnalysisNormalizedItem), Key = item.CustomerContentId, RefType = "AnalysisContent", RefKey = request.AnalysisContentId, AnalysisContentNormalizeRequestId = request.Id, FailedStep = EventNames.OutlineProviderPollingStarted, OutlinePollingCount = nextCount },
+                        message: $"{Facilities.RetryScheduled}: {ex.Message}",
+                        reference: new
+                        {
+                            request.ScopeKey,
+                            // references
+                            Type = nameof(AnalysisNormalizedItem),
+                            Key = item.CustomerContentId,
+                            RefType = "AnalysisContent",
+                            RefKey = request.AnalysisContentId,
+                            AnalysisContentNormalizeRequestId = request.Id,
+                            FailedStep = EventNames.OutlineProviderPolling,
+                            OutlinePollingCount = nextCount
+                        },
                         facility: Facilities.RetryScheduled,
                         correlationId: request.CorrelationId,
                         exception: ex
@@ -472,7 +556,7 @@ public sealed class OutlineProviderPollingWorkerService(
     {
         var update = Builders<AnalysisContentNormalizedRequest>.Update
             .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", NormalizeStatusNames.Failed)
-            .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentStep)}", EventNames.OutlineProviderPollingStarted)
+            .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentStep)}", EventNames.OutlineProviderPolling)
             .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineStatus)}", OutlineStatusNames.Failed)
             .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.LastError)}", errorMessage)
             .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextOutlinePollAtUtc)}", (DateTime?)null);
@@ -484,11 +568,20 @@ public sealed class OutlineProviderPollingWorkerService(
             cancellationToken);
 
         _logger.FrameworkErrorLog(LogHelper.Generate(
-            message: EventNames.OutlineProviderPollingStarted,
-            reference: new { request.ScopeKey, Type = nameof(AnalysisNormalizedItem), Key = item.CustomerContentId, RefType = "AnalysisContent", RefKey = request.AnalysisContentId, AnalysisContentNormalizeRequestId = request.Id, errorMessage },
-            facility: Facilities.StepFailed,
+            message: $"{Facilities.OutlineFailed}: {errorMessage}",
+            reference: new
+            {
+                request.ScopeKey,
+                // references
+                Type = nameof(AnalysisNormalizedItem),
+                Key = item.CustomerContentId,
+                RefType = "AnalysisContent",
+                RefKey = request.AnalysisContentId,
+                AnalysisContentNormalizeRequestId = request.Id,
+            },
+            facility: Facilities.OutlineFailed,
             correlationId: request.CorrelationId,
-            exception: null
+            exception: new Exception(errorMessage)
         ));
 
         await EventBus.PublishAsync(
@@ -498,7 +591,7 @@ public sealed class OutlineProviderPollingWorkerService(
             {
                 RefContentId = request.AnalysisContentId,
                 RefContentType = ContentType.AnalysisContent,
-                Step = EventNames.OutlineProviderPollingStarted,
+                Step = EventNames.OutlineProviderPolling,  // error step
                 ErrorMessage = errorMessage,
                 Retryable = retryable
             }

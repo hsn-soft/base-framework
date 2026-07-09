@@ -10,22 +10,34 @@ builder.Services.AddSingleton<AudioHQService>();
 var app = builder.Build();
 
 var options = app.Services.GetRequiredService<IOptions<MockApiOptions>>().Value;
-var mockFilesDir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", options.MediaDirectory);
+string mockFilesDir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", options.MediaDirectory);
 Directory.CreateDirectory(mockFilesDir);
 
 app.MapPost("/audio/generate", (AudioRequest request, AudioHQService service) =>
 {
-    var trackingId = service.CreateRequest(request.InputText);
-    var downloadUrl = $"{service.GetBaseUrl()}/audio/download/{trackingId}";
+    string trackingId = service.CreateRequest(request.InputText);
+    string downloadUrl = $"{service.GetBaseUrl()}/audio/download/{trackingId}";
     return Results.Ok(new { provider = "audio-hq", trackingId, remoteFileUrl = downloadUrl, pollingWindowSec = options.PollingWindowSeconds });
 });
 
 app.MapGet("/audio/status/{trackingId}", async (string trackingId, AudioHQService service, CancellationToken ct) =>
 {
-    var (isReady, fileUrl, error, fileName) = await service.GetStatusAsync(trackingId, mockFilesDir, options, ct);
+    (bool isReady, string? fileUrl, string? error, string? fileName) = await service.GetStatusAsync(trackingId, mockFilesDir, options, ct);
     if (!isReady)
-        return Results.Ok(new { provider = "audio-hq", trackingId, status = "processing", error });
-    return Results.Ok(new { provider = "audio-hq", trackingId, status = "completed", remoteFileUrl = fileUrl, fileName });
+    {
+        return Results.Ok(error != null
+            ? new { provider = "audio-hq", trackingId, status = "failed", error }
+            : new { provider = "audio-hq", trackingId, status = "processing", error = string.Empty });
+    }
+
+    return Results.Ok(new
+    {
+        provider = "audio-hq",
+        trackingId,
+        status = "completed",
+        remoteFileUrl = fileUrl,
+        fileName
+    });
 });
 
 app.MapGet("/audio/download/{trackingId}", async (string trackingId) =>

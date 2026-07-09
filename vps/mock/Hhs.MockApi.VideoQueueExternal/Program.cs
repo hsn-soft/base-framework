@@ -10,31 +10,35 @@ builder.Services.AddSingleton<VideoQueueExternalService>();
 var app = builder.Build();
 
 var options = app.Services.GetRequiredService<IOptions<MockApiOptions>>().Value;
-var mockFilesDir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", options.MediaDirectory);
+string mockFilesDir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", options.MediaDirectory);
 Directory.CreateDirectory(mockFilesDir);
 
 app.MapPost("/video/generate", (VideoRequest request, VideoQueueExternalService service) =>
 {
-    var trackingId = service.CreateRequest(request.AudioUrls);
-    var downloadUrl = $"{service.GetBaseUrl()}/video/download/{trackingId}";
+    string trackingId = service.CreateRequest(request.AudioUrls);
+    string downloadUrl = $"{service.GetBaseUrl()}/video/download/{trackingId}";
     return Results.Ok(new { provider = "video-queue-external", trackingId, remoteFileUrl = downloadUrl, pollingWindowSec = options.PollingWindowSeconds });
 });
 
 app.MapGet("/video/status/{trackingId}", async (string trackingId, VideoQueueExternalService service, CancellationToken ct) =>
 {
-    var (isReady, fileUrl, error, fileName) = await service.GetStatusAsync(trackingId, mockFilesDir, options, ct);
+    (bool isReady, string? fileUrl, string? error, string? fileName) = await service.GetStatusAsync(trackingId, mockFilesDir, options, ct);
     if (!isReady)
-        return Results.Ok(new { provider = "video-queue-external", trackingId, status = "processing", error });
+    {
+        return Results.Ok(error != null
+            ? new { provider = "video-queue-external", trackingId, status = "failed", error }
+            : new { provider = "video-queue-external", trackingId, status = "processing", error = string.Empty });
+    }
     return Results.Ok(new { provider = "video-queue-external", trackingId, status = "completed", remoteFileUrl = fileUrl, fileName });
 });
 
 app.MapGet("/video/download/{trackingId}", async (string trackingId) =>
 {
-    var filePath = VideoQueueExternalService.GetFilePath(trackingId, mockFilesDir, options);
+    string filePath = VideoQueueExternalService.GetFilePath(trackingId, mockFilesDir, options);
     if (!System.IO.File.Exists(filePath))
         return Results.NotFound();
 
-    var fileContent = await System.IO.File.ReadAllBytesAsync(filePath);
+    byte[] fileContent = await System.IO.File.ReadAllBytesAsync(filePath);
     return Results.File(fileContent, "application/octet-stream", Path.GetFileName(filePath));
 });
 

@@ -57,16 +57,25 @@ public sealed class AudioProviderPollingWorkerService(
                 if (request.ProviderPollingCount >= pollingSettings.MaxAttempts)
                 {
                     request.Status = AudioStatusNames.Failed;
-                    request.LastError = ErrorMessages.AudioProviderPollingTimeout;
+                    request.LastError = $"{ErrorMessages.AudioProviderPollingTimeout} [{request.ProviderPollingCount}]";
 
                     await ReplaceAudioAsync(request, cancellationToken);
 
                     _logger.FrameworkErrorLog(LogHelper.Generate(
-                        message: EventNames.AudioProviderPollingStarted,
-                        reference: new { request.ScopeKey, Type = nameof(AudioRequest), Key = request.Id, RefType = request.RefContentType.ToString(), RefKey = request.RefContentId, VideoRequestId = request.VideoRequestId, request.ProviderPollingCount },
-                        facility: Facilities.StepFailed,
+                        message: $"{Facilities.AudioOperationFailed}: {request.LastError}",
+                        reference: new
+                        {
+                            request.ScopeKey,
+                            // references
+                            Type = nameof(AudioRequest),
+                            Key = request.Id,
+                            RefType = request.RefContentType.ToString(),
+                            RefKey = request.RefContentId,
+                            VideoRequestId = request.VideoRequestId
+                        },
+                        facility: Facilities.AudioOperationFailed,
                         correlationId: request.CorrelationId,
-                        exception: null
+                        exception: new Exception(request.LastError)
                     ));
 
                     await EventBus.PublishAsync(
@@ -76,7 +85,7 @@ public sealed class AudioProviderPollingWorkerService(
                         {
                             RefContentId = request.RefContentId,
                             RefContentType = request.RefContentType,
-                            Step = EventNames.AudioProviderPollingStarted,
+                            Step = EventNames.AudioProviderPolling, // error step
                             ErrorMessage = request.LastError,
                             Retryable = false
                         }
@@ -98,16 +107,25 @@ public sealed class AudioProviderPollingWorkerService(
                 if (status.IsFailed)
                 {
                     request.Status = AudioStatusNames.Failed;
-                    request.LastError = status.ErrorMessage ?? "Audio provider failed.";
+                    request.LastError = ErrorMessages.AudioProviderFailed + " " + status.ErrorMessage;
 
                     await ReplaceAudioAsync(request, cancellationToken);
 
                     _logger.FrameworkErrorLog(LogHelper.Generate(
-                        message: EventNames.AudioProviderPollingStarted,
-                        reference: new { request.ScopeKey, Type = nameof(AudioRequest), Key = request.Id, RefType = request.RefContentType.ToString(), RefKey = request.RefContentId, VideoRequestId = request.VideoRequestId, request.ProviderPollingCount, request.LastError },
-                        facility: Facilities.StepFailed,
+                        message: $"{Facilities.AudioOperationFailed}: {request.LastError}",
+                        reference: new
+                        {
+                            request.ScopeKey,
+                            // references
+                            Type = nameof(AudioRequest),
+                            Key = request.Id,
+                            RefType = request.RefContentType.ToString(),
+                            RefKey = request.RefContentId,
+                            VideoRequestId = request.VideoRequestId
+                        },
+                        facility: Facilities.AudioOperationFailed,
                         correlationId: request.CorrelationId,
-                        exception: null
+                        exception: new Exception(request.LastError)
                     ));
 
                     await EventBus.PublishAsync(
@@ -117,7 +135,7 @@ public sealed class AudioProviderPollingWorkerService(
                         {
                             RefContentId = request.RefContentId,
                             RefContentType = request.RefContentType,
-                            Step = EventNames.AudioProviderPollingStarted,
+                            Step = EventNames.AudioProviderPolling, // error step
                             ErrorMessage = request.LastError,
                             Retryable = false
                         }
@@ -126,7 +144,7 @@ public sealed class AudioProviderPollingWorkerService(
                     continue;
                 }
 
-                if (!status.IsCompleted)
+                if (!status.IsProcessed)
                 {
                     request.ProviderPollingCount++;
                     request.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(pollingSettings.IntervalSeconds);
@@ -134,9 +152,19 @@ public sealed class AudioProviderPollingWorkerService(
                     await ReplaceAudioAsync(request, cancellationToken);
 
                     _logger.FrameworkInfoLog(LogHelper.Generate(
-                        message: EventNames.AudioProviderPollingStarted,
-                        reference: new { request.ScopeKey, Type = nameof(AudioRequest), Key = request.Id, RefType = request.RefContentType.ToString(), RefKey = request.RefContentId, VideoRequestId = request.VideoRequestId, Attempt = request.ProviderPollingCount, MaxAttempts = pollingSettings.MaxAttempts, request.NextProviderPollAtUtc },
-                        facility: Facilities.AudioProviderPollingStarted,
+                        message: $"{Facilities.AudioProviderPolling}: [{request.ProviderPollingCount}/{pollingSettings.MaxAttempts}]",
+                        reference: new
+                        {
+                            request.ScopeKey,
+                            // references
+                            Type = nameof(AudioRequest),
+                            Key = request.Id,
+                            RefType = request.RefContentType.ToString(),
+                            RefKey = request.RefContentId,
+                            VideoRequestId = request.VideoRequestId,
+                            request.NextProviderPollAtUtc
+                        },
+                        facility: Facilities.AudioProviderPolling,
                         correlationId: request.CorrelationId,
                         exception: null
                     ));
@@ -159,9 +187,18 @@ public sealed class AudioProviderPollingWorkerService(
                 await ReplaceAudioAsync(request, cancellationToken);
 
                 _logger.FrameworkInfoLog(LogHelper.Generate(
-                    message: EventNames.AudioProviderCompleted,
-                    reference: new { request.ScopeKey, Type = nameof(AudioRequest), Key = request.Id, RefType = request.RefContentType.ToString(), RefKey = request.RefContentId, VideoRequestId = request.VideoRequestId, TotalPolls = request.ProviderPollingCount },
-                    facility: Facilities.AudioProviderCompleted,
+                    message: $"{Facilities.AudioProviderRequestCompleted}: [{request.ProviderPollingCount}/{pollingSettings.MaxAttempts}]",
+                    reference: new
+                    {
+                        request.ScopeKey,
+                        // references
+                        Type = nameof(AudioRequest),
+                        Key = request.Id,
+                        RefType = request.RefContentType.ToString(),
+                        RefKey = request.RefContentId,
+                        VideoRequestId = request.VideoRequestId
+                    },
+                    facility: Facilities.AudioProviderRequestCompleted,
                     correlationId: request.CorrelationId,
                     exception: null
                 ));
@@ -185,9 +222,19 @@ public sealed class AudioProviderPollingWorkerService(
                     await ReplaceAudioAsync(request, cancellationToken);
 
                     _logger.FrameworkErrorLog(LogHelper.Generate(
-                        message: EventNames.AudioProviderPollingStarted,
-                        reference: new { request.ScopeKey, Type = nameof(AudioRequest), Key = request.Id, RefType = request.RefContentType.ToString(), RefKey = request.RefContentId, VideoRequestId = request.VideoRequestId, request.ProviderPollingCount },
-                        facility: Facilities.StepFailed,
+                        message: $"{Facilities.AudioOperationFailed}: {request.LastError}",
+                        reference: new
+                        {
+                            request.ScopeKey,
+                            // references
+                            Type = nameof(AudioRequest),
+                            Key = request.Id,
+                            RefType = request.RefContentType.ToString(),
+                            RefKey = request.RefContentId,
+                            VideoRequestId = request.VideoRequestId,
+                            request.ProviderPollingCount
+                        },
+                        facility: Facilities.AudioOperationFailed,
                         correlationId: request.CorrelationId,
                         exception: ex
                     ));
@@ -199,7 +246,7 @@ public sealed class AudioProviderPollingWorkerService(
                         {
                             RefContentId = request.RefContentId,
                             RefContentType = request.RefContentType,
-                            Step = EventNames.AudioProviderPollingStarted,
+                            Step = EventNames.AudioProviderPolling, // error step
                             ErrorMessage = ex.Message,
                             Retryable = false
                         }
@@ -211,8 +258,20 @@ public sealed class AudioProviderPollingWorkerService(
                     await ReplaceAudioAsync(request, cancellationToken);
 
                     _logger.FrameworkErrorLog(LogHelper.Generate(
-                        message: EventNames.RetryScheduled,
-                        reference: new { request.ScopeKey, Type = nameof(AudioRequest), Key = request.Id, RefType = request.RefContentType.ToString(), RefKey = request.RefContentId, VideoRequestId = request.VideoRequestId, FailedStep = EventNames.AudioProviderPollingStarted, request.ProviderPollingCount, request.NextProviderPollAtUtc },
+                        message: $"{Facilities.RetryScheduled}: {request.LastError}",
+                        reference: new
+                        {
+                            request.ScopeKey,
+                            // references
+                            Type = nameof(AudioRequest),
+                            Key = request.Id,
+                            RefType = request.RefContentType.ToString(),
+                            RefKey = request.RefContentId,
+                            VideoRequestId = request.VideoRequestId,
+                            FailedStep = EventNames.AudioProviderPolling,
+                            request.ProviderPollingCount,
+                            request.NextProviderPollAtUtc
+                        },
                         facility: Facilities.RetryScheduled,
                         correlationId: request.CorrelationId,
                         exception: ex

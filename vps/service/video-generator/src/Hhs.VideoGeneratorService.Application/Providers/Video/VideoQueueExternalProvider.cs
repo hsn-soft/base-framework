@@ -19,12 +19,7 @@ public sealed class VideoQueueExternalProvider : IVideoProvider
 
     public string ProviderKey => ProviderKeys.VideoQueueExternal;
 
-    public VideoProviderCapabilities Capabilities => new()
-    {
-        ProviderKey = ProviderKey,
-        ExecutionMode = ProviderExecutionMode.AsyncPolling,
-        AudioInputMode = VideoAudioInputMode.AudioUrlListRequired
-    };
+    public VideoProviderCapabilities Capabilities => new() { ProviderKey = ProviderKey, ExecutionMode = ProviderExecutionMode.AsyncPolling, AudioInputMode = VideoAudioInputMode.AudioUrlListRequired };
 
     public async Task<VideoCreateResponse> CreateAsync(VideoCreateRequest request)
     {
@@ -33,11 +28,7 @@ public sealed class VideoQueueExternalProvider : IVideoProvider
         var json = await response.Content.ReadFromJsonAsync<JsonElement>();
         string? trackingId = json.GetProperty("trackingId").GetString();
 
-        return new VideoCreateResponse
-        {
-            IsCompleted = false,
-            ProviderTrackId = trackingId
-        };
+        return new VideoCreateResponse { IsCompleted = false, ProviderTrackId = trackingId };
     }
 
     public async Task<VideoStatusResponse> GetStatusAsync(string providerTrackId)
@@ -46,15 +37,21 @@ public sealed class VideoQueueExternalProvider : IVideoProvider
 
         var json = await response.Content.ReadFromJsonAsync<JsonElement>();
         string? status = json.GetProperty("status").GetString();
+
+        if (status != ProviderStatusConstants.Completed)
+        {
+            if (status != ProviderStatusConstants.Failed)
+            {
+                return new VideoStatusResponse { IsProcessed = false };
+            }
+
+            string? error = json.GetProperty("error").GetString();
+            return new VideoStatusResponse { IsProcessed = false, IsFailed = true, ErrorMessage = error };
+        }
+
         string? fileUrl = status == ProviderStatusConstants.Completed ? json.GetProperty("remoteFileUrl").GetString() : null;
         string? fileName = status == ProviderStatusConstants.Completed && json.TryGetProperty("fileName", out var fnProp) ? fnProp.GetString() : null;
 
-        return new VideoStatusResponse
-        {
-            IsCompleted = status == ProviderStatusConstants.Completed,
-            IsFailed = status == ProviderStatusConstants.Failed,
-            ProviderFileUrl = fileUrl,
-            FileName = fileName
-        };
+        return new VideoStatusResponse { IsProcessed = true, IsFailed = false, ProviderFileUrl = fileUrl, FileName = fileName };
     }
 }
