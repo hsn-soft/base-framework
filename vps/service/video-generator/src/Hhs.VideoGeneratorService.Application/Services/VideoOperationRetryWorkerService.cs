@@ -42,7 +42,7 @@ public sealed class VideoOperationRetryWorkerService(
     /// <summary>
     /// Fan-in gate: a VideoRequest can only start its video-provider request once every sibling
     /// AudioRequest has reached a terminal state (AudioFileUploadCompleted or Failed). Instead of
-    /// reacting to a single audio's completion event (which can be lost to a redelivery race —
+    /// reacting to a single audio' completion event (which can be lost to a redelivery race —
     /// see the framework-level inbox reclaim fix), this re-derives readiness directly from the
     /// audios' current DB state on every tick, so it can never get permanently stuck waiting for
     /// an event that never arrives. The final claim (Started -&gt; VideoProviderRequestStarting) is
@@ -52,12 +52,7 @@ public sealed class VideoOperationRetryWorkerService(
     /// </summary>
     public async Task CheckReadyAudioRequestsToVideoAsync(CancellationToken cancellationToken)
     {
-        var options = new ListQueryOptions<VideoRequest>
-        {
-            Filter = x => x.Status == VideoStatusNames.Started,
-            MaxResultCount = retrySettings.BatchSize,
-            OrderByEntity = o=>o.OrderBy(x => x.CreationTime)
-        };
+        var options = new ListQueryOptions<VideoRequest> { Filter = x => x.Status == VideoStatusNames.Started, MaxResultCount = retrySettings.BatchSize, OrderByEntity = o => o.OrderBy(x => x.CreationTime) };
         var candidates = await videoRequestRepository.GetListAsync(options, cancellationToken);
 
         foreach (var videoRequest in candidates)
@@ -111,14 +106,21 @@ public sealed class VideoOperationRetryWorkerService(
                 .Set(x => x.Status, VideoStatusNames.Failed)
                 .Set(x => x.CurrentStep, EventNames.AudioFileUploadCompleted)
                 .Set(x => x.LastError, "One or more audio requests failed.")
-                .Set(x => x.NextRetryAtUtc, (DateTime?)null);
+                .Set(x => x.NextRetryAtUtc, null);
 
-            var failClaimed = await videoRequestRepository.UpdateByExpressionAsync(failPredicate, u => failUpdate, cancellationToken: cancellationToken);
+            long failClaimed = await videoRequestRepository.UpdateByExpressionAsync(failPredicate, _ => failUpdate, cancellationToken: cancellationToken);
             if (failClaimed == 0) return;
 
             _logger.FrameworkErrorLog(LogHelper.Generate(
                 message: EventNames.AudioFileUploadCompleted,
-                reference: new { videoRequest.ScopeKey, Type = nameof(VideoRequest), Key = videoRequest.Id, RefType = videoRequest.RefContentType.ToString(), RefKey = videoRequest.RefContentId },
+                reference: new
+                {
+                    videoRequest.ScopeKey,
+                    Type = nameof(VideoRequest),
+                    Key = videoRequest.Id,
+                    RefType = videoRequest.RefContentType.ToString(),
+                    RefKey = videoRequest.RefContentId
+                },
                 facility: Facilities.StepFailed,
                 correlationId: videoRequest.CorrelationId,
                 exception: null
@@ -168,12 +170,20 @@ public sealed class VideoOperationRetryWorkerService(
             .Set(x => x.CurrentStep, EventNames.VideoProviderRequestStarted)
             .Set(x => x.LastError, null);
 
-        var lockResult = await videoRequestRepository.UpdateByExpressionAsync(lockPredicate, u => lockUpdate, cancellationToken: cancellationToken);
+        long lockResult = await videoRequestRepository.UpdateByExpressionAsync(lockPredicate, _ => lockUpdate, cancellationToken: cancellationToken);
         if (lockResult == 0) return; // another tick/instance already claimed this VideoRequest
 
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: EventNames.VideoProviderRequestStarted,
-            reference: new { videoRequest.ScopeKey, Type = nameof(VideoRequest), Key = videoRequest.Id, RefType = videoRequest.RefContentType.ToString(), RefKey = videoRequest.RefContentId, AudioCount = orderedAudios.Count },
+            reference: new
+            {
+                videoRequest.ScopeKey,
+                Type = nameof(VideoRequest),
+                Key = videoRequest.Id,
+                RefType = videoRequest.RefContentType.ToString(),
+                RefKey = videoRequest.RefContentId,
+                AudioCount = orderedAudios.Count
+            },
             facility: Facilities.VideoProviderRequestStarted,
             correlationId: videoRequest.CorrelationId,
             exception: null
@@ -203,7 +213,7 @@ public sealed class VideoOperationRetryWorkerService(
     private async Task ResetStaleStartedInboxMessagesAsync(DateTime now, CancellationToken cancellationToken)
     {
         var staleThreshold = now.AddMinutes(-retrySettings.StaleInboxMessageThresholdMinutes);
-        var updated = await inboxManager.ResetStaleStartedMessagesAsync(staleThreshold, cancellationToken);
+        int updated = await inboxManager.ResetStaleStartedMessagesAsync(staleThreshold, cancellationToken);
 
         if (updated > 0)
         {
@@ -233,7 +243,7 @@ public sealed class VideoOperationRetryWorkerService(
         {
             var claimPredicate = (Expression<Func<AudioRequest, bool>>)(x => x.Id == request.Id && x.Status == AudioStatusNames.WaitingRetry);
             var claimUpdate = Builders<AudioRequest>.Update.Set(x => x.Status, AudioStatusNames.RetryEventPublished);
-            var claimed = await audioRequestRepository.UpdateByExpressionAsync(claimPredicate, u => claimUpdate, cancellationToken: cancellationToken);
+            long claimed = await audioRequestRepository.UpdateByExpressionAsync(claimPredicate, _ => claimUpdate, cancellationToken: cancellationToken);
             if (claimed == 0) continue; // another tick/instance already claimed this AudioRequest
 
             try
@@ -284,12 +294,22 @@ public sealed class VideoOperationRetryWorkerService(
 
                     await audioRequestRepository.UpdateByExpressionAsync(
                         failPredicate,
-                        u => failUpdate,
+                        _ => failUpdate,
                         cancellationToken: cancellationToken);
 
                     _logger.FrameworkErrorLog(LogHelper.Generate(
                         message: request.CurrentStep,
-                        reference: new { request.ScopeKey, Type = nameof(AudioRequest), Key = request.Id, RefType = request.RefContentType.ToString(), RefKey = request.RefContentId, VideoRequestId = request.VideoRequestId, FailedStep = request.CurrentStep, request.LastError },
+                        reference: new
+                        {
+                            request.ScopeKey,
+                            Type = nameof(AudioRequest),
+                            Key = request.Id,
+                            RefType = request.RefContentType.ToString(),
+                            RefKey = request.RefContentId,
+                            request.VideoRequestId,
+                            FailedStep = request.CurrentStep,
+                            request.LastError
+                        },
                         facility: Facilities.StepFailed,
                         correlationId: request.CorrelationId,
                         exception: null
@@ -313,7 +333,16 @@ public sealed class VideoOperationRetryWorkerService(
 
                 _logger.FrameworkErrorLog(LogHelper.Generate(
                     message: EventNames.RetryScheduled,
-                    reference: new { request.ScopeKey, Type = nameof(AudioRequest), Key = request.Id, RefType = request.RefContentType.ToString(), RefKey = request.RefContentId, VideoRequestId = request.VideoRequestId, FailedStep = request.CurrentStep },
+                    reference: new
+                    {
+                        request.ScopeKey,
+                        Type = nameof(AudioRequest),
+                        Key = request.Id,
+                        RefType = request.RefContentType.ToString(),
+                        RefKey = request.RefContentId,
+                        request.VideoRequestId,
+                        FailedStep = request.CurrentStep
+                    },
                     facility: Facilities.RetryScheduled,
                     correlationId: request.CorrelationId,
                     exception: null
@@ -334,7 +363,7 @@ public sealed class VideoOperationRetryWorkerService(
 
                 await audioRequestRepository.UpdateByExpressionAsync(
                     updatePredicate,
-                    u => updateUpdate,
+                    _ => updateUpdate,
                     cancellationToken: cancellationToken);
             }
             catch (Exception ex)
@@ -349,12 +378,22 @@ public sealed class VideoOperationRetryWorkerService(
 
                 await audioRequestRepository.UpdateByExpressionAsync(
                     exceptionPredicate,
-                    u => exceptionUpdate,
+                    _ => exceptionUpdate,
                     cancellationToken: cancellationToken);
 
                 _logger.FrameworkErrorLog(LogHelper.Generate(
                     message: EventNames.RetryScheduled,
-                    reference: new { request.ScopeKey, Type = nameof(AudioRequest), Key = request.Id, RefType = request.RefContentType.ToString(), RefKey = request.RefContentId, VideoRequestId = request.VideoRequestId, FailedStep = request.CurrentStep, request.NextRetryAtUtc },
+                    reference: new
+                    {
+                        request.ScopeKey,
+                        Type = nameof(AudioRequest),
+                        Key = request.Id,
+                        RefType = request.RefContentType.ToString(),
+                        RefKey = request.RefContentId,
+                        request.VideoRequestId,
+                        FailedStep = request.CurrentStep,
+                        request.NextRetryAtUtc
+                    },
                     facility: Facilities.RetryScheduled,
                     correlationId: request.CorrelationId,
                     exception: ex
@@ -382,7 +421,7 @@ public sealed class VideoOperationRetryWorkerService(
         {
             var claimPredicate = (Expression<Func<VideoRequest, bool>>)(x => x.Id == request.Id && x.Status == VideoStatusNames.WaitingRetry);
             var claimUpdate = Builders<VideoRequest>.Update.Set(x => x.Status, VideoStatusNames.RetryEventPublished);
-            var claimed = await videoRequestRepository.UpdateByExpressionAsync(claimPredicate, u => claimUpdate, cancellationToken: cancellationToken);
+            long claimed = await videoRequestRepository.UpdateByExpressionAsync(claimPredicate, _ => claimUpdate, cancellationToken: cancellationToken);
             if (claimed == 0) continue; // another tick/instance already claimed this VideoRequest
 
             try
@@ -406,10 +445,7 @@ public sealed class VideoOperationRetryWorkerService(
 
                     var videoProvider = videoProviderResolver.Resolve(providerKeyResult.Value);
 
-                    var audioOptions = new ListQueryOptions<AudioRequest>
-                    {
-                        Filter = x => x.VideoRequestId == request.Id
-                    };
+                    var audioOptions = new ListQueryOptions<AudioRequest> { Filter = x => x.VideoRequestId == request.Id };
                     var audioRequests = await audioRequestRepository.GetListAsync(audioOptions, cancellationToken);
 
                     var orderedAudios = audioRequests
@@ -472,12 +508,21 @@ public sealed class VideoOperationRetryWorkerService(
 
                     await videoRequestRepository.UpdateByExpressionAsync(
                         failPredicate,
-                        u => failUpdate,
+                        _ => failUpdate,
                         cancellationToken: cancellationToken);
 
                     _logger.FrameworkErrorLog(LogHelper.Generate(
                         message: request.CurrentStep,
-                        reference: new { request.ScopeKey, Type = nameof(VideoRequest), Key = request.Id, RefType = request.RefContentType.ToString(), RefKey = request.RefContentId, FailedStep = request.CurrentStep, request.LastError },
+                        reference: new
+                        {
+                            request.ScopeKey,
+                            Type = nameof(VideoRequest),
+                            Key = request.Id,
+                            RefType = request.RefContentType.ToString(),
+                            RefKey = request.RefContentId,
+                            FailedStep = request.CurrentStep,
+                            request.LastError
+                        },
                         facility: Facilities.StepFailed,
                         correlationId: request.CorrelationId,
                         exception: null
@@ -500,7 +545,15 @@ public sealed class VideoOperationRetryWorkerService(
 
                 _logger.FrameworkErrorLog(LogHelper.Generate(
                     message: EventNames.RetryScheduled,
-                    reference: new { request.ScopeKey, Type = nameof(VideoRequest), Key = request.Id, RefType = request.RefContentType.ToString(), RefKey = request.RefContentId, FailedStep = request.CurrentStep },
+                    reference: new
+                    {
+                        request.ScopeKey,
+                        Type = nameof(VideoRequest),
+                        Key = request.Id,
+                        RefType = request.RefContentType.ToString(),
+                        RefKey = request.RefContentId,
+                        FailedStep = request.CurrentStep
+                    },
                     facility: Facilities.RetryScheduled,
                     correlationId: request.CorrelationId,
                     exception: null
@@ -521,7 +574,7 @@ public sealed class VideoOperationRetryWorkerService(
 
                 await videoRequestRepository.UpdateByExpressionAsync(
                     updatePredicate,
-                    u => updateUpdate,
+                    _ => updateUpdate,
                     cancellationToken: cancellationToken);
             }
             catch (Exception ex)
@@ -536,12 +589,21 @@ public sealed class VideoOperationRetryWorkerService(
 
                 await videoRequestRepository.UpdateByExpressionAsync(
                     exceptionPredicate,
-                    u => exceptionUpdate,
+                    _ => exceptionUpdate,
                     cancellationToken: cancellationToken);
 
                 _logger.FrameworkErrorLog(LogHelper.Generate(
                     message: EventNames.RetryScheduled,
-                    reference: new { request.ScopeKey, Type = nameof(VideoRequest), Key = request.Id, RefType = request.RefContentType.ToString(), RefKey = request.RefContentId, FailedStep = request.CurrentStep, request.NextRetryAtUtc },
+                    reference: new
+                    {
+                        request.ScopeKey,
+                        Type = nameof(VideoRequest),
+                        Key = request.Id,
+                        RefType = request.RefContentType.ToString(),
+                        RefKey = request.RefContentId,
+                        FailedStep = request.CurrentStep,
+                        request.NextRetryAtUtc
+                    },
                     facility: Facilities.RetryScheduled,
                     correlationId: request.CorrelationId,
                     exception: ex

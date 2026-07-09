@@ -1,11 +1,15 @@
 using System.Net.Http.Json;
 using System.Text.Json;
 using Hhs.Shared.Helper.Providers;
+using Hhs.Shared.Helper.Retry;
 using Hhs.TextNormalizerService.Domain.Configuration.Providers.Outline;
 
 namespace Hhs.TextNormalizerService.Application.Providers.Outline;
 
-public sealed class OutlineFastProvider(HttpClient httpClient, OutlineFastProviderSettings outlineSettings) : IOutlineProvider
+public sealed class OutlineFastProvider(
+    HttpClient httpClient,
+    OutlineFastProviderSettings outlineSettings
+) : IOutlineProvider
 {
     private readonly string _baseUrl = outlineSettings == null ? throw new ArgumentNullException(nameof(outlineSettings)) : outlineSettings.BaseUrl;
 
@@ -15,21 +19,37 @@ public sealed class OutlineFastProvider(HttpClient httpClient, OutlineFastProvid
 
     public async Task<OutlineCreateResponse> OutlineOperationAsync(OutlineCreateRequest request)
     {
-        string inputText = string.IsNullOrWhiteSpace(request.OutlineInput) ? request.OutlinePrompt : request.OutlineInput;
-        if (string.IsNullOrWhiteSpace(inputText))
-            inputText = "Default outline content";
+        try
+        {
+            string inputText = string.IsNullOrWhiteSpace(request.OutlineInput) ? request.OutlinePrompt : request.OutlineInput;
+            if (string.IsNullOrWhiteSpace(inputText))
+                inputText = "Default outline content";
 
-        var mockRequest = new { InputText = inputText };
-        var response = await httpClient.PostAsJsonAsync(
-            $"{_baseUrl}/outline/generate",
-            mockRequest
+            var mockRequest = new { InputText = inputText };
+            var response = await httpClient.PostAsJsonAsync(
+                $"{_baseUrl}/outline/generate",
+                mockRequest
             );
 
-        response.EnsureSuccessStatusCode();
-        var json = await response.Content.ReadFromJsonAsync<JsonElement>();
-        string? script = json.GetProperty("script").GetString();
+            if (!response.IsSuccessStatusCode)
+            {
+                string errorBody = await response.Content.ReadAsStringAsync();
+                return new OutlineCreateResponse { IsProcessFailed = true, IsRetryable = ExceptionClassifier.IsRetryable(response.StatusCode), ErrorMessage = $"OutlineFast generation failed: HTTP {(int)response.StatusCode} {errorBody}" };
+            }
 
-        return new OutlineCreateResponse { IsProcessed = true, OutlinedData = script };
+            var json = await response.Content.ReadFromJsonAsync<JsonElement>();
+            string script = json.GetProperty("script").GetString();
+
+            return new OutlineCreateResponse { IsProcessed = true, OutlinedData = script };
+        }
+        catch (Exception ex) when (ExceptionClassifier.IsRetryable(ex))
+        {
+            return new OutlineCreateResponse { IsProcessFailed = true, IsRetryable = true, ErrorMessage = ex.Message };
+        }
+        catch (Exception ex)
+        {
+            return new OutlineCreateResponse { IsProcessFailed = true, IsRetryable = false, ErrorMessage = ex.Message };
+        }
     }
 
     public Task<OutlineStatusResponse> GetStatusAsync(OutlineStatusRequest request)

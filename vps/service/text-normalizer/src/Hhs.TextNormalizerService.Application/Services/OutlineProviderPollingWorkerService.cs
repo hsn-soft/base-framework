@@ -125,13 +125,57 @@ public sealed class OutlineProviderPollingWorkerService(
 
                 if (status.IsProcessFailed)
                 {
-                    request.Status = NormalizeStatusNames.Failed;
+                    request.OutlinePollingCount++;
                     request.LastError = ErrorMessages.OutlineProviderFailed + " " + status.ErrorMessage;
 
+                    if (!status.IsRetryable || request.OutlinePollingCount >= pollingSettings.MaxAttempts)
+                    {
+                        request.Status = NormalizeStatusNames.Failed;
+                        request.OutlineStatus = OutlineStatusNames.Failed;
+                        request.NextOutlinePollAtUtc = null;
+
+                        await ReplaceCustomerAsync(request, cancellationToken);
+
+                        _logger.FrameworkErrorLog(LogHelper.Generate(
+                            message: $"{Facilities.OutlineFailed}: {request.LastError}",
+                            reference: new
+                            {
+                                request.ScopeKey,
+                                // references
+                                Type = nameof(CustomerContentNormalizedRequest),
+                                Key = request.Id,
+                                RefType = "CustomerContent",
+                                RefKey = request.CustomerContentId,
+                                request.OutlinePollingCount
+                            },
+                            facility: Facilities.OutlineFailed,
+                            correlationId: request.CorrelationId,
+                            exception: new Exception(request.LastError)
+                        ));
+
+                        await EventBus.PublishAsync(
+                            parentMessage: ParentIntegrationEvent,
+                            correlationId: request.CorrelationId,
+                            eventMessage: new StepFailedEto
+                            {
+                                RefContentId = request.CustomerContentId,
+                                RefContentType = ContentType.CustomerContent,
+                                Step = EventNames.OutlineProviderPollingStarted, // error step
+                                ErrorMessage = request.LastError,
+                                Retryable = false
+                            }
+                        );
+
+                        continue;
+                    }
+
+                    // Provider reported a transient failure — back off and let the next poll tick
+                    // try again instead of hard-failing.
+                    request.NextOutlinePollAtUtc = DateTime.UtcNow.AddSeconds(pollingSettings.BackoffIntervalSeconds);
                     await ReplaceCustomerAsync(request, cancellationToken);
 
                     _logger.FrameworkErrorLog(LogHelper.Generate(
-                        message: $"{Facilities.OutlineFailed}: {request.LastError}",
+                        message: $"{Facilities.RetryScheduled}: {request.LastError}",
                         reference: new
                         {
                             request.ScopeKey,
@@ -139,25 +183,15 @@ public sealed class OutlineProviderPollingWorkerService(
                             Type = nameof(CustomerContentNormalizedRequest),
                             Key = request.Id,
                             RefType = "CustomerContent",
-                            RefKey = request.CustomerContentId
+                            RefKey = request.CustomerContentId,
+                            FailedStep = EventNames.OutlineProviderPollingStarted,
+                            request.OutlinePollingCount,
+                            request.NextOutlinePollAtUtc
                         },
-                        facility: Facilities.OutlineFailed,
+                        facility: Facilities.RetryScheduled,
                         correlationId: request.CorrelationId,
-                        exception: new Exception(request.LastError)
+                        exception: null
                     ));
-
-                    await EventBus.PublishAsync(
-                        parentMessage: ParentIntegrationEvent,
-                        correlationId: request.CorrelationId,
-                        eventMessage: new StepFailedEto
-                        {
-                            RefContentId = request.CustomerContentId,
-                            RefContentType = ContentType.CustomerContent,
-                            Step = EventNames.OutlineProviderPollingStarted, // error step
-                            ErrorMessage = request.LastError,
-                            Retryable = false
-                        }
-                    );
 
                     continue;
                 }
@@ -261,7 +295,7 @@ public sealed class OutlineProviderPollingWorkerService(
                         {
                             RefContentId = request.CustomerContentId,
                             RefContentType = ContentType.CustomerContent,
-                            Step = EventNames.OutlineProviderPollingStarted,  // error step
+                            Step = EventNames.OutlineProviderPollingStarted, // error step
                             ErrorMessage = ex.Message,
                             Retryable = false
                         }
@@ -379,12 +413,52 @@ public sealed class OutlineProviderPollingWorkerService(
 
                     if (status.IsProcessFailed)
                     {
-                        await FailAnalysisPollingItemAsync(
-                            request,
-                            item,
-                            ErrorMessages.OutlineProviderFailed + " " + status.ErrorMessage,
-                            false,
+                        string failMessage = ErrorMessages.OutlineProviderFailed + " " + status.ErrorMessage;
+                        int nextPollingCount = item.OutlinePollingCount + 1;
+
+                        if (!status.IsRetryable || nextPollingCount >= pollingSettings.MaxAttempts)
+                        {
+                            await FailAnalysisPollingItemAsync(
+                                request,
+                                item,
+                                failMessage,
+                                false,
+                                cancellationToken);
+
+                            continue;
+                        }
+
+                        // Provider reported a transient failure — back off and let the next poll
+                        // tick try again instead of hard-failing.
+                        var retryUpdate = Builders<AnalysisContentNormalizedRequest>.Update
+                            .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlinePollingCount)}", nextPollingCount)
+                            .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.LastError)}", failMessage)
+                            .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextOutlinePollAtUtc)}", DateTime.UtcNow.AddSeconds(pollingSettings.BackoffIntervalSeconds));
+
+                        await UpdateAnalysisItemAsync(
+                            request.Id,
+                            item.CustomerContentId,
+                            retryUpdate,
                             cancellationToken);
+
+                        _logger.FrameworkErrorLog(LogHelper.Generate(
+                            message: $"{Facilities.RetryScheduled}: {failMessage}",
+                            reference: new
+                            {
+                                request.ScopeKey,
+                                // references
+                                Type = nameof(AnalysisNormalizedItem),
+                                Key = item.CustomerContentId,
+                                RefType = "AnalysisContent",
+                                RefKey = request.AnalysisContentId,
+                                AnalysisContentNormalizeRequestId = request.Id,
+                                FailedStep = EventNames.OutlineProviderPollingStarted,
+                                OutlinePollingCount = nextPollingCount
+                            },
+                            facility: Facilities.RetryScheduled,
+                            correlationId: request.CorrelationId,
+                            exception: null
+                        ));
 
                         continue;
                     }
@@ -543,7 +617,7 @@ public sealed class OutlineProviderPollingWorkerService(
 
         return analysisRepository.UpdateByExpressionAsync(
             predicate,
-            u => update,
+            _ => update,
             cancellationToken: cancellationToken);
     }
 
@@ -591,7 +665,7 @@ public sealed class OutlineProviderPollingWorkerService(
             {
                 RefContentId = request.AnalysisContentId,
                 RefContentType = ContentType.AnalysisContent,
-                Step = EventNames.OutlineProviderPollingStarted,  // error step
+                Step = EventNames.OutlineProviderPollingStarted, // error step
                 ErrorMessage = errorMessage,
                 Retryable = retryable
             }
@@ -610,7 +684,7 @@ public sealed class OutlineProviderPollingWorkerService(
 
         return analysisRepository.UpdateByExpressionAsync(
             predicate,
-            u => update,
+            _ => update,
             cancellationToken: cancellationToken);
     }
 
@@ -630,7 +704,7 @@ public sealed class OutlineProviderPollingWorkerService(
 
         await customerRepository.UpdateByExpressionAsync(
                 predicate,
-                u => update,
+                _ => update,
                 cancellationToken: cancellationToken)
             .ConfigureAwait(false);
     }
@@ -652,7 +726,7 @@ public sealed class OutlineProviderPollingWorkerService(
 
         return customerRepository.UpdateByExpressionAsync(
             predicate,
-            u => update,
+            _ => update,
             cancellationToken: cancellationToken);
     }
 }

@@ -46,7 +46,7 @@ public sealed class VideoProviderPollingWorkerService(
         {
             try
             {
-                var claimResult = await ClaimDueVideoPollingAsync(
+                long claimResult = await ClaimDueVideoPollingAsync(
                     request.Id,
                     now,
                     cancellationToken);
@@ -105,13 +105,56 @@ public sealed class VideoProviderPollingWorkerService(
 
                 if (status.IsFailed)
                 {
-                    request.Status = VideoStatusNames.Failed;
+                    request.ProviderPollingCount++;
                     request.LastError = ErrorMessages.VideoProviderFailed + " " + status.ErrorMessage;
 
+                    if (!status.IsRetryable || request.ProviderPollingCount >= pollingSettings.MaxAttempts)
+                    {
+                        request.Status = VideoStatusNames.Failed;
+                        request.NextProviderPollAtUtc = null;
+
+                        await ReplaceVideoAsync(request, cancellationToken);
+
+                        _logger.FrameworkErrorLog(LogHelper.Generate(
+                            message: $"{Facilities.VideoOperationFailed}: {request.LastError}",
+                            reference: new
+                            {
+                                request.ScopeKey,
+                                // references
+                                Type = nameof(VideoRequest),
+                                Key = request.Id,
+                                RefType = request.RefContentType.ToString(),
+                                RefKey = request.RefContentId,
+                                request.ProviderPollingCount
+                            },
+                            facility: Facilities.VideoOperationFailed,
+                            correlationId: request.CorrelationId,
+                            exception: new Exception(request.LastError)
+                        ));
+
+                        await EventBus.PublishAsync(
+                            parentMessage: ParentIntegrationEvent,
+                            correlationId: request.CorrelationId,
+                            eventMessage: new StepFailedEto
+                            {
+                                RefContentId = request.RefContentId,
+                                RefContentType = request.RefContentType,
+                                Step = EventNames.VideoProviderPollingStarted, // error step
+                                ErrorMessage = request.LastError,
+                                Retryable = false
+                            }
+                        );
+
+                        continue;
+                    }
+
+                    // Provider reported a transient failure (e.g. its own internal retry-worthy
+                    // error) — back off and let the next poll tick try again instead of hard-failing.
+                    request.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(pollingSettings.BackoffIntervalSeconds);
                     await ReplaceVideoAsync(request, cancellationToken);
 
                     _logger.FrameworkErrorLog(LogHelper.Generate(
-                        message: $"{Facilities.VideoOperationFailed}: {request.LastError}",
+                        message: $"{Facilities.RetryScheduled}: {request.LastError}",
                         reference: new
                         {
                             request.ScopeKey,
@@ -119,25 +162,15 @@ public sealed class VideoProviderPollingWorkerService(
                             Type = nameof(VideoRequest),
                             Key = request.Id,
                             RefType = request.RefContentType.ToString(),
-                            RefKey = request.RefContentId
+                            RefKey = request.RefContentId,
+                            FailedStep = EventNames.VideoProviderPollingStarted,
+                            request.ProviderPollingCount,
+                            request.NextProviderPollAtUtc
                         },
-                        facility: Facilities.VideoOperationFailed,
+                        facility: Facilities.RetryScheduled,
                         correlationId: request.CorrelationId,
-                        exception: new Exception(request.LastError)
+                        exception: null
                     ));
-
-                    await EventBus.PublishAsync(
-                        parentMessage: ParentIntegrationEvent,
-                        correlationId: request.CorrelationId,
-                        eventMessage: new StepFailedEto
-                        {
-                            RefContentId = request.RefContentId,
-                            RefContentType = request.RefContentType,
-                            Step = EventNames.VideoProviderPollingStarted,// error step
-                            ErrorMessage = request.LastError,
-                            Retryable = false
-                        }
-                    );
 
                     continue;
                 }
@@ -241,7 +274,7 @@ public sealed class VideoProviderPollingWorkerService(
                         {
                             RefContentId = request.RefContentId,
                             RefContentType = request.RefContentType,
-                            Step = EventNames.VideoProviderPollingStarted,// error step
+                            Step = EventNames.VideoProviderPollingStarted, // error step
                             ErrorMessage = ex.Message,
                             Retryable = false
                         }
@@ -297,7 +330,7 @@ public sealed class VideoProviderPollingWorkerService(
 
         return videoRequestRepository.UpdateByExpressionAsync(
             predicate,
-            u => update,
+            _ => update,
             cancellationToken: cancellationToken);
     }
 
@@ -322,7 +355,7 @@ public sealed class VideoProviderPollingWorkerService(
 
         return videoRequestRepository.UpdateByExpressionAsync(
             predicate,
-            u => update,
+            _ => update,
             cancellationToken: cancellationToken);
     }
 }

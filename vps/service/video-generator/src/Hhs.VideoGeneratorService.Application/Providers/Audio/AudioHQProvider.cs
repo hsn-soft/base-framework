@@ -1,21 +1,18 @@
 using System.Net.Http.Json;
 using System.Text.Json;
 using Hhs.Shared.Helper.Providers;
+using Hhs.Shared.Helper.Retry;
 using Hhs.VideoGeneratorService.Domain.Configuration.Providers.Audio;
 using Hhs.VideoGeneratorService.Domain.Constants;
 
 namespace Hhs.VideoGeneratorService.Application.Providers.Audio;
 
-public sealed class AudioHQProvider : IAudioProvider
+public sealed class AudioHqProvider(
+    HttpClient httpClient,
+    AudioQueueProviderSettings audioSettings
+) : IAudioProvider
 {
-    private readonly HttpClient _httpClient;
-    private readonly string _baseUrl;
-
-    public AudioHQProvider(HttpClient httpClient, AudioQueueProviderSettings audioSettings)
-    {
-        _httpClient = httpClient;
-        _baseUrl = audioSettings.BaseUrl;
-    }
+    private readonly string _baseUrl = audioSettings.BaseUrl;
 
     public string ProviderKey => ProviderKeys.AudioHQ;
 
@@ -23,35 +20,71 @@ public sealed class AudioHQProvider : IAudioProvider
 
     public async Task<AudioCreateResponse> CreateAsync(AudioCreateRequest request)
     {
-        var response = await _httpClient.PostAsJsonAsync($"{_baseUrl}/audio/generate", request);
+        try
+        {
+            var response = await httpClient.PostAsJsonAsync($"{_baseUrl}/audio/generate", request);
 
-        var json = await response.Content.ReadFromJsonAsync<JsonElement>();
-        string? trackingId = json.GetProperty("trackingId").GetString();
+            if (!response.IsSuccessStatusCode)
+            {
+                string errorBody = await response.Content.ReadAsStringAsync();
+                return new AudioCreateResponse { IsFailed = true, IsRetryable = ExceptionClassifier.IsRetryable(response.StatusCode), ErrorMessage = $"AudioHQ generation failed: HTTP {(int)response.StatusCode} {errorBody}" };
+            }
 
-        return new AudioCreateResponse { IsCompleted = false, ProviderTrackId = trackingId };
+            var json = await response.Content.ReadFromJsonAsync<JsonElement>();
+            string trackingId = json.GetProperty("trackingId").GetString();
+
+            return new AudioCreateResponse { IsCompleted = false, ProviderTrackId = trackingId };
+        }
+        catch (Exception ex) when (ExceptionClassifier.IsRetryable(ex))
+        {
+            return new AudioCreateResponse { IsFailed = true, IsRetryable = true, ErrorMessage = ex.Message };
+        }
+        catch (Exception ex)
+        {
+            return new AudioCreateResponse { IsFailed = true, IsRetryable = false, ErrorMessage = ex.Message };
+        }
     }
 
     public async Task<AudioStatusResponse> GetStatusAsync(string providerTrackId)
     {
-        var response = await _httpClient.GetAsync($"{_baseUrl}/audio/status/{providerTrackId}");
-
-        var json = await response.Content.ReadFromJsonAsync<JsonElement>();
-        string? status = json.GetProperty("status").GetString();
-
-        if (status != ProviderStatusConstants.Completed)
+        try
         {
-            if (status != ProviderStatusConstants.Failed)
+            var response = await httpClient.GetAsync($"{_baseUrl}/audio/status/{providerTrackId}");
+
+            if (!response.IsSuccessStatusCode)
             {
-                return new AudioStatusResponse { IsProcessed = false };
+                string errorBody = await response.Content.ReadAsStringAsync();
+                return new AudioStatusResponse { IsFailed = true, IsRetryable = ExceptionClassifier.IsRetryable(response.StatusCode), ErrorMessage = $"AudioHQ status query failed: HTTP {(int)response.StatusCode} {errorBody}" };
             }
 
-            string? error = json.GetProperty("error").GetString();
-            return new AudioStatusResponse { IsProcessed = false, IsFailed = true, ErrorMessage = error };
+            var json = await response.Content.ReadFromJsonAsync<JsonElement>();
+            string status = json.GetProperty("status").GetString();
+
+            if (status != ProviderStatusConstants.Completed)
+            {
+                if (status != ProviderStatusConstants.Failed)
+                {
+                    return new AudioStatusResponse { IsProcessed = false };
+                }
+
+                string error = json.GetProperty("error").GetString();
+                // The remote provider itself reported a terminal failure for this job — not a
+                // transport-level error we can classify by HTTP status, so treat as non-retryable.
+                return new AudioStatusResponse { IsProcessed = false, IsFailed = true, IsRetryable = false, ErrorMessage = error };
+            }
+
+            string fileUrl = status == ProviderStatusConstants.Completed ? json.GetProperty("remoteFileUrl").GetString() : null;
+            string fileName = status == ProviderStatusConstants.Completed && json.TryGetProperty("fileName", out var fnProp) ? fnProp.GetString() : null;
+
+            return new AudioStatusResponse { IsProcessed = true, IsFailed = false, ProviderFileUrl = fileUrl, FileName = fileName };
         }
-
-        string? fileUrl = status == ProviderStatusConstants.Completed ? json.GetProperty("remoteFileUrl").GetString() : null;
-        string? fileName = status == ProviderStatusConstants.Completed && json.TryGetProperty("fileName", out var fnProp) ? fnProp.GetString() : null;
-
-        return new AudioStatusResponse { IsProcessed = true, IsFailed = false, ProviderFileUrl = fileUrl, FileName = fileName };
+        catch (Exception ex) when (ExceptionClassifier.IsRetryable(ex))
+        {
+            return new AudioStatusResponse { IsFailed = true, IsRetryable = true, ErrorMessage = ex.Message };
+        }
+        catch (Exception ex)
+        {
+            return new AudioStatusResponse { IsFailed = true, IsRetryable = false, ErrorMessage = ex.Message };
+        }
     }
 }

@@ -1,20 +1,17 @@
 using System.Net.Http.Json;
 using System.Text.Json;
 using Hhs.Shared.Helper.Providers;
+using Hhs.Shared.Helper.Retry;
 using Hhs.VideoGeneratorService.Domain.Configuration.Providers.Audio;
 
 namespace Hhs.VideoGeneratorService.Application.Providers.Audio;
 
-public sealed class AudioQuickProvider : IAudioProvider
+public sealed class AudioQuickProvider(
+    HttpClient httpClient,
+    AudioFastProviderSettings audioSettings
+) : IAudioProvider
 {
-    private readonly HttpClient _httpClient;
-    private readonly string _baseUrl;
-
-    public AudioQuickProvider(HttpClient httpClient, AudioFastProviderSettings audioSettings)
-    {
-        _httpClient = httpClient;
-        _baseUrl = audioSettings.BaseUrl;
-    }
+    private readonly string _baseUrl = audioSettings.BaseUrl;
 
     public string ProviderKey => ProviderKeys.AudioQuick;
 
@@ -22,21 +19,55 @@ public sealed class AudioQuickProvider : IAudioProvider
 
     public async Task<AudioCreateResponse> CreateAsync(AudioCreateRequest request)
     {
-        var response = await _httpClient.PostAsJsonAsync($"{_baseUrl}/audio/generate", request);
+        try
+        {
+            var response = await httpClient.PostAsJsonAsync($"{_baseUrl}/audio/generate", request);
 
-        var json = await response.Content.ReadFromJsonAsync<JsonElement>();
-        string? fileUrl = json.GetProperty("remoteFileUrl").GetString();
-        string? fileName = json.TryGetProperty("fileName", out var fnProp) ? fnProp.GetString() : null;
+            if (!response.IsSuccessStatusCode)
+            {
+                string errorBody = await response.Content.ReadAsStringAsync();
+                return new AudioCreateResponse { IsFailed = true, IsRetryable = ExceptionClassifier.IsRetryable(response.StatusCode), ErrorMessage = $"AudioQuick generation failed: HTTP {(int)response.StatusCode} {errorBody}" };
+            }
 
-        return new AudioCreateResponse { IsCompleted = true, ProviderFileUrl = fileUrl, FileName = fileName };
+            var json = await response.Content.ReadFromJsonAsync<JsonElement>();
+            string fileUrl = json.GetProperty("remoteFileUrl").GetString();
+            string fileName = json.TryGetProperty("fileName", out var fnProp) ? fnProp.GetString() : null;
+
+            return new AudioCreateResponse { IsCompleted = true, ProviderFileUrl = fileUrl, FileName = fileName };
+        }
+        catch (Exception ex) when (ExceptionClassifier.IsRetryable(ex))
+        {
+            return new AudioCreateResponse { IsFailed = true, IsRetryable = true, ErrorMessage = ex.Message };
+        }
+        catch (Exception ex)
+        {
+            return new AudioCreateResponse { IsFailed = true, IsRetryable = false, ErrorMessage = ex.Message };
+        }
     }
 
     public async Task<AudioStatusResponse> GetStatusAsync(string providerTrackId)
     {
-        var response = await _httpClient.GetAsync($"{_baseUrl}/audio/status/{providerTrackId}");
+        try
+        {
+            var response = await httpClient.GetAsync($"{_baseUrl}/audio/status/{providerTrackId}");
 
-        var json = await response.Content.ReadFromJsonAsync<JsonElement>();
+            if (!response.IsSuccessStatusCode)
+            {
+                string errorBody = await response.Content.ReadAsStringAsync();
+                return new AudioStatusResponse { IsFailed = true, IsRetryable = ExceptionClassifier.IsRetryable(response.StatusCode), ErrorMessage = $"AudioQuick status query failed: HTTP {(int)response.StatusCode} {errorBody}" };
+            }
 
-        return new AudioStatusResponse { IsProcessed = true, ProviderFileUrl = json.GetProperty("remoteFileUrl").GetString(), FileName = json.TryGetProperty("fileName", out var fnProp) ? fnProp.GetString() : null };
+            var json = await response.Content.ReadFromJsonAsync<JsonElement>();
+
+            return new AudioStatusResponse { IsProcessed = true, ProviderFileUrl = json.GetProperty("remoteFileUrl").GetString(), FileName = json.TryGetProperty("fileName", out var fnProp) ? fnProp.GetString() : null };
+        }
+        catch (Exception ex) when (ExceptionClassifier.IsRetryable(ex))
+        {
+            return new AudioStatusResponse { IsFailed = true, IsRetryable = true, ErrorMessage = ex.Message };
+        }
+        catch (Exception ex)
+        {
+            return new AudioStatusResponse { IsFailed = true, IsRetryable = false, ErrorMessage = ex.Message };
+        }
     }
 }

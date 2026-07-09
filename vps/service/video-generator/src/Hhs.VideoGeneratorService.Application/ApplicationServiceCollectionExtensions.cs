@@ -51,7 +51,7 @@ public static class ApplicationServiceCollectionExtensions
 
         // Register Audio Provider implementations
         services.AddScoped<IAudioProvider, AudioQuickProvider>();
-        services.AddScoped<IAudioProvider, AudioHQProvider>();
+        services.AddScoped<IAudioProvider, AudioHqProvider>();
         services.AddScoped<IAudioProvider, AudioElevenLabsProvider>();
         services.AddScoped<IAudioProviderResolver, AudioProviderResolver>();
 

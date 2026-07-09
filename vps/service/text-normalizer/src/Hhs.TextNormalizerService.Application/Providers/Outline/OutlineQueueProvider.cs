@@ -1,6 +1,7 @@
 using System.Net.Http.Json;
 using System.Text.Json;
 using Hhs.Shared.Helper.Providers;
+using Hhs.Shared.Helper.Retry;
 using Hhs.TextNormalizerService.Domain.Configuration.Providers.Outline;
 
 namespace Hhs.TextNormalizerService.Application.Providers.Outline;
@@ -15,45 +16,77 @@ public sealed class OutlineQueueProvider(HttpClient httpClient, OutlineQueueProv
 
     public async Task<OutlineCreateResponse> OutlineOperationAsync(OutlineCreateRequest request)
     {
-        string inputText = string.IsNullOrWhiteSpace(request.OutlineInput) ? request.OutlinePrompt : request.OutlineInput;
-        if (string.IsNullOrWhiteSpace(inputText))
-            inputText = "Default outline content";
+        try
+        {
+            string inputText = string.IsNullOrWhiteSpace(request.OutlineInput) ? request.OutlinePrompt : request.OutlineInput;
+            if (string.IsNullOrWhiteSpace(inputText))
+                inputText = "Default outline content";
 
-        var mockRequest = new { InputText = inputText };
-        var response = await httpClient.PostAsJsonAsync(
-            $"{_baseUrl}/outline/generate",
-            mockRequest
+            var mockRequest = new { InputText = inputText };
+            var response = await httpClient.PostAsJsonAsync(
+                $"{_baseUrl}/outline/generate",
+                mockRequest
             );
 
-        response.EnsureSuccessStatusCode();
-        var json = await response.Content.ReadFromJsonAsync<JsonElement>();
-        string? trackingId = json.GetProperty("trackingId").GetString();
+            if (!response.IsSuccessStatusCode)
+            {
+                string errorBody = await response.Content.ReadAsStringAsync();
+                return new OutlineCreateResponse { IsProcessFailed = true, IsRetryable = ExceptionClassifier.IsRetryable(response.StatusCode), ErrorMessage = $"OutlineQueue generation failed: HTTP {(int)response.StatusCode} {errorBody}" };
+            }
 
-        return new OutlineCreateResponse { IsProcessed = false, ProviderTrackId = trackingId };
+            var json = await response.Content.ReadFromJsonAsync<JsonElement>();
+            string trackingId = json.GetProperty("trackingId").GetString();
+
+            return new OutlineCreateResponse { IsProcessed = false, ProviderTrackId = trackingId };
+        }
+        catch (Exception ex) when (ExceptionClassifier.IsRetryable(ex))
+        {
+            return new OutlineCreateResponse { IsProcessFailed = true, IsRetryable = true, ErrorMessage = ex.Message };
+        }
+        catch (Exception ex)
+        {
+            return new OutlineCreateResponse { IsProcessFailed = true, IsRetryable = false, ErrorMessage = ex.Message };
+        }
     }
 
     public async Task<OutlineStatusResponse> GetStatusAsync(OutlineStatusRequest request)
     {
-        var response = await httpClient.GetAsync(
-            $"{_baseUrl}/outline/status/{request.ProviderTrackId}"
+        try
+        {
+            var response = await httpClient.GetAsync(
+                $"{_baseUrl}/outline/status/{request.ProviderTrackId}"
             );
 
-        response.EnsureSuccessStatusCode();
-        var json = await response.Content.ReadFromJsonAsync<JsonElement>();
-        string? status = json.GetProperty("status").GetString();
-
-        if (status != "completed")
-        {
-            if (status != "failed")
+            if (!response.IsSuccessStatusCode)
             {
-                return new OutlineStatusResponse { IsProcessed = false };
+                string errorBody = await response.Content.ReadAsStringAsync();
+                return new OutlineStatusResponse { IsProcessFailed = true, IsRetryable = ExceptionClassifier.IsRetryable(response.StatusCode), ErrorMessage = $"OutlineQueue status query failed: HTTP {(int)response.StatusCode} {errorBody}" };
             }
 
-            string? error = json.GetProperty("error").GetString();
-            return new OutlineStatusResponse { IsProcessed = false, IsProcessFailed =  true , ErrorMessage = error};
-        }
+            var json = await response.Content.ReadFromJsonAsync<JsonElement>();
+            string status = json.GetProperty("status").GetString();
 
-        string? script = json.GetProperty("script").GetString();
-        return new OutlineStatusResponse { IsProcessed = true, OutlinedData = script };
+            if (status != "completed")
+            {
+                if (status != "failed")
+                {
+                    return new OutlineStatusResponse { IsProcessed = false };
+                }
+
+                string error = json.GetProperty("error").GetString();
+                return new OutlineStatusResponse { IsProcessed = false, IsProcessFailed = true, IsRetryable = false, ErrorMessage = error };
+            }
+
+            string script = json.GetProperty("script").GetString();
+            return new OutlineStatusResponse { IsProcessed = true, OutlinedData = script };
+        }
+        catch (Exception ex) when (ExceptionClassifier.IsRetryable(ex))
+        {
+            return new OutlineStatusResponse { IsProcessFailed = true, IsRetryable = true, ErrorMessage = ex.Message };
+        }
+        catch (Exception ex)
+        {
+            return new OutlineStatusResponse { IsProcessFailed = true, IsRetryable = false, ErrorMessage = ex.Message };
+        }
     }
 }

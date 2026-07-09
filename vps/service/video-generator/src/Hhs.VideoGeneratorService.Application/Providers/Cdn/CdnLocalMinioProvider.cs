@@ -1,4 +1,5 @@
 using Hhs.Shared.Helper.Providers;
+using Hhs.Shared.Helper.Retry;
 using Hhs.VideoGeneratorService.Domain.Configuration.Providers.Cdn;
 using Microsoft.Extensions.Logging;
 
@@ -25,10 +26,7 @@ public sealed class CdnLocalMinioProvider(
             var content = new MultipartFormDataContent();
             content.Add(new StreamContent(fileStream), "file", filename);
 
-            var request = new HttpRequestMessage(HttpMethod.Post, $"{settings.BaseUrl.TrimEnd('/')}/api/cdn/assets/upload")
-            {
-                Content = content
-            };
+            var request = new HttpRequestMessage(HttpMethod.Post, $"{settings.BaseUrl.TrimEnd('/')}/api/cdn/assets/upload") { Content = content };
 
             if (!string.IsNullOrEmpty(settings.ApiKey))
             {
@@ -39,9 +37,9 @@ public sealed class CdnLocalMinioProvider(
 
             if (!response.IsSuccessStatusCode)
             {
-                throw new InvalidOperationException(
-                    $"LocalMinio CDN upload failed with status {response.StatusCode}: " +
-                    $"{await response.Content.ReadAsStringAsync()}");
+                string errorBody = await response.Content.ReadAsStringAsync();
+                logger.LogError("LocalMinio CDN upload failed with status {StatusCode}: {ErrorBody}", response.StatusCode, errorBody);
+                return new CdnUploadResult { IsFailed = true, IsRetryable = ExceptionClassifier.IsRetryable(response.StatusCode), ErrorMessage = $"LocalMinio CDN upload failed with status {response.StatusCode}: {errorBody}" };
             }
 
             string responseJson = await response.Content.ReadAsStringAsync();
@@ -49,19 +47,19 @@ public sealed class CdnLocalMinioProvider(
             var root = jsonDoc.RootElement;
 
             // Parse CDN's response format
-            string? objectKey = root.TryGetProperty("objectKey", out var objectKeyElement)
+            string objectKey = root.TryGetProperty("objectKey", out var objectKeyElement)
                 ? objectKeyElement.GetString()
                 : null;
 
             if (objectKey is null)
-                throw new InvalidOperationException("No objectKey in upload response");
+                return new CdnUploadResult { IsFailed = true, IsRetryable = false, ErrorMessage = "No objectKey in upload response" };
 
-            string? cdnUrl = root.TryGetProperty("cdnUrl", out var cdnUrlElement)
+            string cdnUrl = root.TryGetProperty("cdnUrl", out var cdnUrlElement)
                 ? cdnUrlElement.GetString()
                 : null;
 
             if (cdnUrl is null)
-                throw new InvalidOperationException("No cdnUrl in upload response");
+                return new CdnUploadResult { IsFailed = true, IsRetryable = false, ErrorMessage = "No cdnUrl in upload response" };
 
             // Convert CDN response to standardized CdnUploadResult
             // Storage URL: Private access with API key (ApplicationLayer responsibility)
@@ -78,14 +76,19 @@ public sealed class CdnLocalMinioProvider(
 
             return new CdnUploadResult(storageUrl, cdnUrl);
         }
+        catch (Exception ex) when (ExceptionClassifier.IsRetryable(ex))
+        {
+            logger.LogError(ex, "Failed to upload file '{Filename}' to LocalMinio CDN", filename);
+            return new CdnUploadResult { IsFailed = true, IsRetryable = true, ErrorMessage = ex.Message };
+        }
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to upload file '{Filename}' to LocalMinio CDN", filename);
-            throw;
+            return new CdnUploadResult { IsFailed = true, IsRetryable = false, ErrorMessage = ex.Message };
         }
     }
 
-    public async Task<Stream> DownloadAsync(string storageUrl)
+    public async Task<CdnDownloadResult> DownloadAsync(string storageUrl)
     {
         try
         {
@@ -107,16 +110,21 @@ public sealed class CdnLocalMinioProvider(
 
             if (!response.IsSuccessStatusCode)
             {
-                throw new InvalidOperationException(
-                    $"LocalMinio CDN download failed with status {response.StatusCode}");
+                logger.LogError("LocalMinio CDN download failed with status {StatusCode}", response.StatusCode);
+                return new CdnDownloadResult { IsFailed = true, IsRetryable = ExceptionClassifier.IsRetryable(response.StatusCode), ErrorMessage = $"LocalMinio CDN download failed with status {response.StatusCode}" };
             }
 
-            return await response.Content.ReadAsStreamAsync();
+            return new CdnDownloadResult { Content = await response.Content.ReadAsStreamAsync() };
+        }
+        catch (Exception ex) when (ExceptionClassifier.IsRetryable(ex))
+        {
+            logger.LogError(ex, "Failed to download file from LocalMinio CDN URL '{StorageUrl}'", storageUrl);
+            return new CdnDownloadResult { IsFailed = true, IsRetryable = true, ErrorMessage = ex.Message };
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to download file from LocalMinio CDN URL '{StorageUrl}'", storageUrl);
-            throw;
+            return new CdnDownloadResult { IsFailed = true, IsRetryable = false, ErrorMessage = ex.Message };
         }
     }
 }

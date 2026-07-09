@@ -1,3 +1,4 @@
+using Hhs.Shared.Helper.Retry;
 using Hhs.VideoGeneratorService.Domain.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -9,23 +10,18 @@ public sealed class RemoteFileDownloader(
     IOptions<SystemCdnSettings> cdnSettings,
     ILogger<RemoteFileDownloader> logger,
     HttpClient httpClient,
-    IHostEnvironment environment)
-    : IRemoteFileDownloader
+    IHostEnvironment environment
+) : IRemoteFileDownloader
 {
-    private readonly SystemCdnSettings _cdnSettings = cdnSettings.Value ?? throw new ArgumentNullException(nameof(cdnSettings));
+    private readonly SystemCdnSettings _cdnSettings = cdnSettings.Value;
 
-    public async Task<(bool Success, string Result)> DownloadAsync(string providerKey, string remoteUrl)
+    public async Task<(bool Success, string Result, bool IsRetryable)> DownloadAsync(string remoteUrl)
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(providerKey))
-            {
-                return (false, "Provider key is required");
-            }
-
             if (string.IsNullOrWhiteSpace(remoteUrl))
             {
-                return (false, "Remote URL is required");
+                return (false, "Remote URL is required", false);
             }
 
             // Some providers (e.g. ElevenLabs, which returns audio bytes synchronously with no
@@ -33,17 +29,17 @@ public sealed class RemoteFileDownloader(
             // during CreateAsync and hand back that local path as ProviderFileUrl. Detect that case
             // and short-circuit instead of attempting an HTTP GET against a filesystem path.
             bool isHttpUrl = Uri.TryCreate(remoteUrl, UriKind.Absolute, out var parsedUrl) &&
-                              (parsedUrl.Scheme == Uri.UriSchemeHttp || parsedUrl.Scheme == Uri.UriSchemeHttps);
+                             (parsedUrl.Scheme == Uri.UriSchemeHttp || parsedUrl.Scheme == Uri.UriSchemeHttps);
 
             if (!isHttpUrl)
             {
-                if (System.IO.File.Exists(remoteUrl))
+                if (File.Exists(remoteUrl))
                 {
                     logger.LogInformation("File is already local, skipping download: {FilePath}", remoteUrl);
-                    return (true, remoteUrl);
+                    return (true, remoteUrl, false);
                 }
 
-                return (false, $"Remote URL is not a valid http(s) URL and no local file exists at: {remoteUrl}");
+                return (false, $"Remote URL is not a valid http(s) URL and no local file exists at: {remoteUrl}", false);
             }
 
             // Extract filename and extension from URL
@@ -55,7 +51,7 @@ public sealed class RemoteFileDownloader(
                 filename = $"{Guid.CreateVersion7().ToString("N").ToLower()}";
             }
 
-            filename = $"{providerKey}-{filename}";
+            filename = $"{filename}";
 
             // Build download directory path
             string downloadDir = _cdnSettings.LocalDownloadPath;
@@ -76,12 +72,12 @@ public sealed class RemoteFileDownloader(
                 {
                     if (!response.IsSuccessStatusCode)
                     {
-                        return (false, $"Failed to download file: HTTP {response.StatusCode}");
+                        return (false, $"Failed to download file: HTTP {response.StatusCode}", ExceptionClassifier.IsRetryable(response.StatusCode));
                     }
 
-                    using (var contentStream = await response.Content.ReadAsStreamAsync())
+                    await using (var contentStream = await response.Content.ReadAsStreamAsync())
                     {
-                        using (var fileStream = System.IO.File.Create(filePath))
+                        await using (var fileStream = File.Create(filePath))
                         {
                             await contentStream.CopyToAsync(fileStream);
                         }
@@ -89,16 +85,16 @@ public sealed class RemoteFileDownloader(
                 }
 
                 logger.LogInformation("File downloaded successfully: {FilePath} from {RemoteUrl}", filePath, remoteUrl);
-                return (true, filePath);
+                return (true, filePath, false);
             }
             catch (Exception ex) when (!(ex is OperationCanceledException))
             {
                 // Clean up partial file if exists
                 try
                 {
-                    if (System.IO.File.Exists(filePath))
+                    if (File.Exists(filePath))
                     {
-                        System.IO.File.Delete(filePath);
+                        File.Delete(filePath);
                     }
                 }
                 catch
@@ -108,18 +104,20 @@ public sealed class RemoteFileDownloader(
 
                 string errorMessage = $"Failed to save file to disk: {ex.Message}";
                 logger.LogError(ex, errorMessage);
-                return (false, errorMessage);
+                return (false, errorMessage, ExceptionClassifier.IsRetryable(ex));
             }
         }
         catch (OperationCanceledException)
         {
-            return (false, "Download was cancelled");
+            // Timeout/cancellation — the same class of transient failure ExceptionClassifier treats
+            // TaskCanceledException as, just caught here via its OperationCanceledException base.
+            return (false, "Download was cancelled", true);
         }
         catch (Exception ex)
         {
             string errorMessage = $"Unexpected error during download: {ex.Message}";
             logger.LogError(ex, errorMessage);
-            return (false, errorMessage);
+            return (false, errorMessage, ExceptionClassifier.IsRetryable(ex));
         }
     }
 }

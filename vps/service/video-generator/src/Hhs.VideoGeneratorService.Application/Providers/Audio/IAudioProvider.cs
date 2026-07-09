@@ -24,6 +24,12 @@ public sealed class AudioCreateRequest
 public sealed class AudioCreateResponse
 {
     public bool IsCompleted { get; set; }
+    public bool IsFailed { get; set; }
+
+    /// <summary>Only meaningful when IsFailed is true — set by the provider's own error classification.</summary>
+    public bool IsRetryable { get; set; }
+
+    [CanBeNull] public string ErrorMessage { get; set; }
     [CanBeNull] public string ProviderTrackId { get; set; }
     [CanBeNull] public string ProviderFileUrl { get; set; }
     [CanBeNull] public string FileName { get; set; }
@@ -33,6 +39,10 @@ public sealed class AudioStatusResponse
 {
     public bool IsProcessed { get; set; }
     public bool IsFailed { get; set; }
+
+    /// <summary>Only meaningful when IsFailed is true — set by the provider's own error classification.</summary>
+    public bool IsRetryable { get; set; }
+
     [CanBeNull] public string ProviderFileUrl { get; set; }
     [CanBeNull] public string ErrorMessage { get; set; }
     [CanBeNull] public string FileName { get; set; }

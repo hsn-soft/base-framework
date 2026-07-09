@@ -17,7 +17,6 @@ using HsnSoft.Base.Domain.Models;
 using HsnSoft.Base.Logging;
 using HsnSoft.Base.Logging.Abstracts;
 using HsnSoft.Base.Text;
-using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
 
@@ -63,7 +62,7 @@ public sealed class VideoOperationAppService(
         var videoProvider = videoProviderResolver.Resolve(videoProviderKeyResult.Value);
         if (videoProvider is null) throw new InvalidOperationException("Video Provider not found.");
 
-        string? audioProviderKey = null;
+        string audioProviderKey = null;
         if (videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioUrlListRequired)
         {
             var audioProviderKeyResult = await customerVpSettingRepository.GetAudioProviderKeyByScopeKeyAsync(@event.ScopeKey, cancellationToken);
@@ -122,7 +121,7 @@ public sealed class VideoOperationAppService(
         videoRequest.Status = VideoStatusNames.Started;
         videoRequest.CurrentStep = EventNames.VideoOperationStarted;
 
-        var claimed = await ReplaceVideoAsync(videoRequest, cancellationToken,
+        long claimed = await ReplaceVideoAsync(videoRequest, cancellationToken,
             validPriorStatuses: [VideoStatusNames.Created, VideoStatusNames.WaitingRetry, VideoStatusNames.RetryEventPublished]);
         if (claimed == 0) return;
 
@@ -282,8 +281,6 @@ public sealed class VideoOperationAppService(
                 ex,
                 cancellationToken
             );
-
-            return;
         }
     }
 
@@ -297,7 +294,7 @@ public sealed class VideoOperationAppService(
             audioRequest.Status = AudioStatusNames.AudioProviderRequestStarted;
             audioRequest.CurrentStep = EventNames.AudioProviderRequestStarted;
 
-            var claimed = await ReplaceAudioAsync(audioRequest, cancellationToken,
+            long claimed = await ReplaceAudioAsync(audioRequest, cancellationToken,
                 validPriorStatuses: [AudioStatusNames.AudioRequestCreated, AudioStatusNames.WaitingRetry, AudioStatusNames.RetryEventPublished]);
             if (claimed == 0) return;
 
@@ -310,7 +307,7 @@ public sealed class VideoOperationAppService(
                     Key = audioRequest.Id,
                     RefType = audioRequest.RefContentType.ToString(),
                     RefKey = audioRequest.RefContentId,
-                    VideoRequestId = audioRequest.VideoRequestId,
+                    audioRequest.VideoRequestId,
                     audioRequest.SortOrder
                 },
                 facility: Facilities.AudioProviderRequestStarted,
@@ -319,6 +316,9 @@ public sealed class VideoOperationAppService(
             ));
 
             var response = await audioProvider.CreateAsync(new AudioCreateRequest { AudioReferenceKey = audioRequest.Id.ToString("N").ToLower(), InputText = audioRequest.InputText });
+
+            if (response.IsFailed)
+                throw new ProcessException(response.ErrorMessage ?? "Audio provider create failed.", response.IsRetryable ? ProcessErrorType.Retryable : ProcessErrorType.NonRetryable);
 
             audioRequest.AudioProviderTrackingId = response.ProviderTrackId;
             audioRequest.AudioProviderUrl = response.ProviderFileUrl;
@@ -342,7 +342,7 @@ public sealed class VideoOperationAppService(
                         Key = audioRequest.Id,
                         RefType = audioRequest.RefContentType.ToString(),
                         RefKey = audioRequest.RefContentId,
-                        VideoRequestId = audioRequest.VideoRequestId
+                        audioRequest.VideoRequestId
                     },
                     facility: Facilities.AudioProviderRequestCompleted,
                     correlationId: audioRequest.CorrelationId,
@@ -377,7 +377,7 @@ public sealed class VideoOperationAppService(
                     Key = audioRequest.Id,
                     RefType = audioRequest.RefContentType.ToString(),
                     RefKey = audioRequest.RefContentId,
-                    VideoRequestId = audioRequest.VideoRequestId,
+                    audioRequest.VideoRequestId,
                     audioRequest.NextProviderPollAtUtc
                 },
                 facility: EventNames.AudioProviderPollingStarted,
@@ -394,8 +394,6 @@ public sealed class VideoOperationAppService(
                 ex,
                 cancellationToken
             );
-
-            return;
         }
     }
 
@@ -412,7 +410,7 @@ public sealed class VideoOperationAppService(
                 Key = audioRequest.Id,
                 RefType = audioRequest.RefContentType.ToString(),
                 RefKey = audioRequest.RefContentId,
-                VideoRequestId = audioRequest.VideoRequestId
+                audioRequest.VideoRequestId
             },
             facility: Facilities.AudioFileDownloadStarted,
             correlationId: audioRequest.CorrelationId,
@@ -434,15 +432,15 @@ public sealed class VideoOperationAppService(
             audioRequest.Status = AudioStatusNames.AudioFileDownloading;
             audioRequest.CurrentStep = EventNames.AudioFileDownloadStarted;
 
-            var claimed = await ReplaceAudioAsync(audioRequest, cancellationToken,
+            long claimed = await ReplaceAudioAsync(audioRequest, cancellationToken,
                 validPriorStatuses: [AudioStatusNames.AudioProviderCompleted, AudioStatusNames.WaitingRetry, AudioStatusNames.RetryEventPublished]);
             if (claimed == 0) return;
 
             if (string.IsNullOrWhiteSpace(audioRequest.AudioProviderUrl))
                 throw new InvalidOperationException("Audio provider url is required.");
 
-            (bool success, string audioLocalPath) = await remoteFileDownloader.DownloadAsync(audioRequest.AudioProviderKey, audioRequest.AudioProviderUrl);
-            if (!success) throw new InvalidOperationException($"Failed to download audio file: {audioLocalPath}");
+            (bool success, string audioLocalPath, bool isRetryable) = await remoteFileDownloader.DownloadAsync(audioRequest.AudioProviderUrl);
+            if (!success) throw new ProcessException($"Failed to download audio file: {audioLocalPath}", isRetryable ? ProcessErrorType.Retryable : ProcessErrorType.NonRetryable);
 
             audioRequest.AudioLocalPath = audioLocalPath;
 
@@ -460,7 +458,7 @@ public sealed class VideoOperationAppService(
                     Key = audioRequest.Id,
                     RefType = audioRequest.RefContentType.ToString(),
                     RefKey = audioRequest.RefContentId,
-                    VideoRequestId = audioRequest.VideoRequestId
+                    audioRequest.VideoRequestId
                 },
                 facility: Facilities.AudioFileDownloadCompleted,
                 correlationId: audioRequest.CorrelationId,
@@ -478,10 +476,7 @@ public sealed class VideoOperationAppService(
                 audioRequest,
                 EventNames.AudioFileDownloadStarted,
                 Facilities.AudioOperationFailed,
-                ex
-            );
-
-            return;
+                ex, cancellationToken);
         }
     }
 
@@ -497,7 +492,7 @@ public sealed class VideoOperationAppService(
             audioRequest.Status = AudioStatusNames.AudioFileUploading;
             audioRequest.CurrentStep = EventNames.AudioFileUploadStarted;
 
-            var claimed = await ReplaceAudioAsync(audioRequest, cancellationToken,
+            long claimed = await ReplaceAudioAsync(audioRequest, cancellationToken,
                 validPriorStatuses: [AudioStatusNames.AudioFileDownloadCompleted, AudioStatusNames.WaitingRetry, AudioStatusNames.RetryEventPublished]);
             if (claimed == 0) return;
 
@@ -510,7 +505,7 @@ public sealed class VideoOperationAppService(
                     Key = audioRequest.Id,
                     RefType = audioRequest.RefContentType.ToString(),
                     RefKey = audioRequest.RefContentId,
-                    VideoRequestId = audioRequest.VideoRequestId
+                    audioRequest.VideoRequestId
                 },
                 facility: Facilities.AudioFileUploadStarted,
                 correlationId: audioRequest.CorrelationId,
@@ -533,14 +528,17 @@ public sealed class VideoOperationAppService(
             var cdnProvider = cdnProviderResolver.Resolve(systemCdnSettings.Selected);
             if (cdnProvider is null) throw new InvalidOperationException("Cdn Provider not found.");
 
-            (string storageUrl, string cdnUrl) = await cdnProvider.UploadAsync(
+            var uploadResult = await cdnProvider.UploadAsync(
                 fileStream,
                 fileName
             );
 
+            if (uploadResult.IsFailed)
+                throw new ProcessException(uploadResult.ErrorMessage ?? "CDN upload failed.", uploadResult.IsRetryable ? ProcessErrorType.Retryable : ProcessErrorType.NonRetryable);
+
             audioRequest.AudioCdnProviderKey = systemCdnSettings.Selected;
-            audioRequest.AudioCdnUrl = cdnUrl;
-            audioRequest.AudioStorageUrl = storageUrl;
+            audioRequest.AudioCdnUrl = uploadResult.CdnUrl;
+            audioRequest.AudioStorageUrl = uploadResult.StorageUrl;
 
             audioRequest.Status = AudioStatusNames.AudioFileUploadCompleted;
             audioRequest.CurrentStep = EventNames.AudioFileUploadCompleted;
@@ -558,7 +556,7 @@ public sealed class VideoOperationAppService(
                     Key = audioRequest.Id,
                     RefType = audioRequest.RefContentType.ToString(),
                     RefKey = audioRequest.RefContentId,
-                    VideoRequestId = audioRequest.VideoRequestId,
+                    audioRequest.VideoRequestId,
                     audioRequest.AudioCdnUrl
                 },
                 facility: Facilities.AudioFileUploadCompleted,
@@ -576,10 +574,7 @@ public sealed class VideoOperationAppService(
                 audioRequest,
                 EventNames.AudioFileUploadStarted,
                 Facilities.AudioOperationFailed,
-                ex
-            );
-
-            return;
+                ex, cancellationToken);
         }
     }
 
@@ -600,11 +595,14 @@ public sealed class VideoOperationAppService(
             videoRequest.Status = VideoStatusNames.VideoProviderRequestStarted;
             videoRequest.CurrentStep = EventNames.VideoProviderRequestStarted;
 
-            var claimed = await ReplaceVideoAsync(videoRequest, cancellationToken,
+            long claimed = await ReplaceVideoAsync(videoRequest, cancellationToken,
                 validPriorStatuses: [VideoStatusNames.VideoProviderRequestStarting, VideoStatusNames.WaitingRetry, VideoStatusNames.RetryEventPublished]);
             if (claimed == 0) return;
 
             var response = await provider.CreateAsync(new VideoCreateRequest { VideoInputJson = videoRequest.MediaInputJson, AudioCdnUrls = @event.AudioCdnUrls, RefContentType = videoRequest.RefContentType, CustomerProviderSettings = customerVpSetting.VideoGenerationProviderSettings });
+
+            if (response.IsFailed)
+                throw new ProcessException(response.ErrorMessage ?? "Video provider create failed.", response.IsRetryable ? ProcessErrorType.Retryable : ProcessErrorType.NonRetryable);
 
             videoRequest.VideoProviderTrackingId = response.ProviderTrackId;
             videoRequest.VideoProviderUrl = response.ProviderFileUrl;
@@ -678,8 +676,6 @@ public sealed class VideoOperationAppService(
                 ex,
                 cancellationToken
             );
-
-            return;
         }
     }
 
@@ -717,12 +713,12 @@ public sealed class VideoOperationAppService(
             videoRequest.Status = VideoStatusNames.VideoFileDownloading;
             videoRequest.CurrentStep = EventNames.VideoFileDownloadStarted;
 
-            var claimed = await ReplaceVideoAsync(videoRequest, cancellationToken,
+            long claimed = await ReplaceVideoAsync(videoRequest, cancellationToken,
                 validPriorStatuses: [VideoStatusNames.VideoProviderCompleted, VideoStatusNames.WaitingRetry, VideoStatusNames.RetryEventPublished]);
             if (claimed == 0) return;
 
-            (bool success, string videoLocalPath) = await remoteFileDownloader.DownloadAsync(videoRequest.VideoProviderKey, videoRequest.VideoProviderUrl);
-            if (!success) throw new InvalidOperationException($"Failed to download video file: {videoLocalPath}");
+            (bool success, string videoLocalPath, bool isRetryable) = await remoteFileDownloader.DownloadAsync(videoRequest.VideoProviderUrl);
+            if (!success) throw new ProcessException($"Failed to download video file: {videoLocalPath}", isRetryable ? ProcessErrorType.Retryable : ProcessErrorType.NonRetryable);
 
             videoRequest.VideoLocalPath = videoLocalPath;
 
@@ -757,10 +753,7 @@ public sealed class VideoOperationAppService(
                 videoRequest,
                 EventNames.VideoFileDownloadStarted,
                 Facilities.VideoOperationFailed,
-                ex
-            );
-
-            return;
+                ex, cancellationToken);
         }
     }
 
@@ -783,7 +776,7 @@ public sealed class VideoOperationAppService(
             videoRequest.Status = VideoStatusNames.VideoFileUploading;
             videoRequest.CurrentStep = EventNames.VideoFileUploadStarted;
 
-            var claimed = await ReplaceVideoAsync(videoRequest, cancellationToken,
+            long claimed = await ReplaceVideoAsync(videoRequest, cancellationToken,
                 validPriorStatuses: [VideoStatusNames.VideoFileDownloaded, VideoStatusNames.WaitingRetry, VideoStatusNames.RetryEventPublished]);
             if (claimed == 0) return;
 
@@ -802,19 +795,25 @@ public sealed class VideoOperationAppService(
                 exception: null
             ));
 
+            if (string.IsNullOrWhiteSpace(videoRequest.VideoLocalPath) || !File.Exists(videoRequest.VideoLocalPath))
+                throw new InvalidOperationException("Video Local Path is required.");
+
             // Upload file to CDN using resolved CDN provider
             await using var fileStream = File.OpenRead(videoRequest.VideoLocalPath);
             string fileName = Path.GetFileName(videoRequest.VideoLocalPath);
 
             var cdnProvider = cdnProviderResolver.Resolve(cdnProviderKey);
-            (string storageUrl, string cdnUrl) = await cdnProvider.UploadAsync(
+            var uploadResult = await cdnProvider.UploadAsync(
                 fileStream,
                 fileName
             );
 
+            if (uploadResult.IsFailed)
+                throw new ProcessException(uploadResult.ErrorMessage ?? "CDN upload failed.", uploadResult.IsRetryable ? ProcessErrorType.Retryable : ProcessErrorType.NonRetryable);
+
             videoRequest.VideoCdnProviderKey = cdnProviderKey;
-            videoRequest.VideoCdnUrl = cdnUrl;
-            videoRequest.VideoStorageUrl = storageUrl;
+            videoRequest.VideoCdnUrl = uploadResult.CdnUrl;
+            videoRequest.VideoStorageUrl = uploadResult.StorageUrl;
 
             videoRequest.Status = VideoStatusNames.VideoFileUploadCompleted;
             videoRequest.CurrentStep = EventNames.VideoFileUploadCompleted;
@@ -850,10 +849,7 @@ public sealed class VideoOperationAppService(
                 videoRequest,
                 EventNames.VideoFileUploadStarted,
                 Facilities.VideoOperationFailed,
-                ex
-            );
-
-            return;
+                ex, cancellationToken);
         }
     }
 
@@ -866,7 +862,7 @@ public sealed class VideoOperationAppService(
             videoRequest.Status = VideoStatusNames.Completed;
             videoRequest.CurrentStep = EventNames.VideoGenerationResultPublished;
 
-            var claimed = await ReplaceVideoAsync(videoRequest, cancellationToken,
+            long claimed = await ReplaceVideoAsync(videoRequest, cancellationToken,
                 validPriorStatuses: [VideoStatusNames.VideoFileUploadCompleted, VideoStatusNames.WaitingRetry, VideoStatusNames.RetryEventPublished]);
             if (claimed == 0) return;
 
@@ -897,10 +893,7 @@ public sealed class VideoOperationAppService(
                 videoRequest,
                 EventNames.VideoFileUploadCompleted,
                 Facilities.VideoOperationFailed,
-                ex
-            );
-
-            return;
+                ex, cancellationToken);
         }
     }
 
@@ -913,14 +906,7 @@ public sealed class VideoOperationAppService(
         return doc.RootElement
             .GetProperty("audioItems")
             .EnumerateArray()
-            .Select(x => new VideoInputAudioItem
-            {
-                CustomerContentId = x.TryGetProperty("customerContentId", out var customerIdEl)
-                    ? customerIdEl.GetGuid()
-                    : null,
-                SortOrder = x.GetProperty("sortOrder").GetInt32(),
-                Text = StringHelper.Base64Decode(x.GetProperty("encodedOutlineData").GetString() ?? string.Empty)
-            })
+            .Select(x => new VideoInputAudioItem { SortOrder = x.GetProperty("sortOrder").GetInt32(), Text = StringHelper.Base64Decode(x.GetProperty("encodedOutlineData").GetString() ?? string.Empty) })
             .ToList();
     }
 
@@ -963,7 +949,7 @@ public sealed class VideoOperationAppService(
             .Set(x => x.LastError, request.LastError)
             .Set(x => x.NextRetryAtUtc, request.NextRetryAtUtc);
 
-        return videoRequestRepository.UpdateByExpressionAsync(predicate, u => update, cancellationToken: cancellationToken);
+        return videoRequestRepository.UpdateByExpressionAsync(predicate, _ => update, cancellationToken: cancellationToken);
     }
 
     private Task<long> ReplaceAudioAsync(AudioRequest request, CancellationToken cancellationToken = default, IReadOnlyCollection<string> validPriorStatuses = null)
@@ -989,7 +975,7 @@ public sealed class VideoOperationAppService(
             .Set(x => x.LastError, request.LastError)
             .Set(x => x.NextRetryAtUtc, request.NextRetryAtUtc);
 
-        return audioRequestRepository.UpdateByExpressionAsync(predicate, u => update, cancellationToken: cancellationToken);
+        return audioRequestRepository.UpdateByExpressionAsync(predicate, _ => update, cancellationToken: cancellationToken);
     }
 
     private async Task HandleAudioExceptionAsync(AudioRequest request, string step, string facility, Exception ex, CancellationToken cancellationToken = default)
@@ -1030,7 +1016,7 @@ public sealed class VideoOperationAppService(
                 Key = request.Id,
                 RefType = request.RefContentType.ToString(),
                 RefKey = request.RefContentId,
-                VideoRequestId = request.VideoRequestId,
+                request.VideoRequestId,
                 FailedStep = step,
                 request.RetryCount,
                 request.NextRetryAtUtc
@@ -1074,7 +1060,7 @@ public sealed class VideoOperationAppService(
                 Key = request.Id,
                 RefType = request.RefContentType.ToString(),
                 RefKey = request.RefContentId,
-                VideoRequestId = request.VideoRequestId,
+                request.VideoRequestId,
                 FailedStep = step,
                 retryable
             },
@@ -1262,7 +1248,6 @@ public sealed class VideoOperationAppService(
 
 public sealed class VideoInputAudioItem
 {
-    public Guid? CustomerContentId { get; set; }
-    public int SortOrder { get; set; }
-    public string Text { get; set; } = default!;
+    public int SortOrder { get; init; }
+    public string Text { get; init; } = string.Empty;
 }

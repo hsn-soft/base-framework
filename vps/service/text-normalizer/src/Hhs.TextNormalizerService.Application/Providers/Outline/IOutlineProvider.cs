@@ -28,6 +28,10 @@ public class OutlineStatusResponse
 {
     public bool IsProcessed { get; set; }
     public bool IsProcessFailed  { get; set; }
+
+    /// <summary>Only meaningful when IsProcessFailed is true — set by the provider's own error classification.</summary>
+    public bool IsRetryable { get; set; }
+
     [CanBeNull] public string ErrorMessage { get; set; }
 
     [CanBeNull] public string OutlinedData { get; set; }

@@ -1,29 +1,25 @@
+#nullable enable
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Hhs.Shared.Helper.Enums;
 using Hhs.Shared.Helper.Providers;
+using Hhs.Shared.Helper.Retry;
 using Hhs.VideoGeneratorService.Domain.Configuration.Providers.Video;
 using Hhs.VideoGeneratorService.Domain.SettingDomain.Entities;
 using HsnSoft.Base.Text;
 
 namespace Hhs.VideoGeneratorService.Application.Providers.Video;
 
-public sealed class VideoCreatomateProvider : IVideoProvider
+public sealed class VideoCreatomateProvider(
+    HttpClient httpClient,
+    VideoCreatomateProviderSettings videoSettings
+) : IVideoProvider
 {
     private const int MaxSlotCount = 5;
 
-    private static readonly JsonSerializerOptions RequestJsonOptions = new() { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull };
-
-    private readonly HttpClient _httpClient;
-    private readonly VideoCreatomateProviderSettings _settings;
-
-    public VideoCreatomateProvider(HttpClient httpClient, VideoCreatomateProviderSettings videoSettings)
-    {
-        _httpClient = httpClient;
-        _settings = videoSettings;
-    }
+    private static readonly JsonSerializerOptions s_requestJsonOptions = new() { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull };
 
     public string ProviderKey => ProviderKeys.VideoCreatomate;
 
@@ -32,70 +28,97 @@ public sealed class VideoCreatomateProvider : IVideoProvider
     public async Task<VideoCreateResponse> CreateAsync(VideoCreateRequest request)
     {
         if (request.CustomerProviderSettings is not ClientCreatomateSettings clientSettings)
-            throw new InvalidOperationException("Creatomate requires per-customer ClientCreatomateSettings (CustomerVpSetting.VideoGenerationProviderSettings).");
+            return new VideoCreateResponse { IsFailed = true, IsRetryable = false, ErrorMessage = "Creatomate requires per-customer ClientCreatomateSettings (CustomerVpSetting.VideoGenerationProviderSettings)." };
 
         string templateId = request.RefContentType == ContentType.AnalysisContent
             ? clientSettings.AnalysisVideoTemplateId
             : clientSettings.DirectVideoTemplateId;
 
         if (string.IsNullOrWhiteSpace(templateId))
-            throw new InvalidOperationException($"Creatomate template id is not configured for RefContentType={request.RefContentType}.");
+            return new VideoCreateResponse { IsFailed = true, IsRetryable = false, ErrorMessage = $"Creatomate template id is not configured for RefContentType={request.RefContentType}." };
 
-        var items = ParseVideoInputItems(request.VideoInputJson);
-        var audioCdnUrls = request.AudioCdnUrls ?? [];
-
-        var modifications = new CreatomateModifications
+        try
         {
-            VideoWidth = clientSettings.VideoWidth,
-            VideoHeight = clientSettings.VideoHeight,
-            JenerikStartSource = clientSettings.JenericUrl,
-            JenerikEndSource = clientSettings.JenericUrl,
-            LogoSource = clientSettings.LogoUrl
-        };
+            var items = ParseVideoInputItems(request.VideoInputJson);
+            var audioCdnUrls = request.AudioCdnUrls ?? [];
 
-        int slotCount = Math.Min(items.Count, MaxSlotCount);
-        for (int i = 0; i < slotCount; i++)
-        {
-            string? audioCdnUrl = i < audioCdnUrls.Count ? audioCdnUrls[i] : null;
-            ApplySlot(modifications, i, audioCdnUrl, items[i].ImageUrl, items[i].Title, clientSettings.BackgroundColor);
+            var modifications = new CreatomateModifications
+            {
+                VideoWidth = clientSettings.VideoWidth,
+                VideoHeight = clientSettings.VideoHeight,
+                JenerikStartSource = clientSettings.JenericUrl,
+                JenerikEndSource = clientSettings.JenericUrl,
+                LogoSource = clientSettings.LogoUrl
+            };
+
+            int slotCount = Math.Min(items.Count, MaxSlotCount);
+            for (int i = 0; i < slotCount; i++)
+            {
+                string? audioCdnUrl = i < audioCdnUrls.Count ? audioCdnUrls[i] : null;
+                ApplySlot(modifications, i, audioCdnUrl, items[i].ImageUrl, items[i].Title, clientSettings.BackgroundColor);
+            }
+
+            var payload = new CreatomateVideoRequest { TemplateId = templateId, Modifications = modifications };
+
+            using var httpRequest = new HttpRequestMessage(HttpMethod.Post, $"{videoSettings.BaseUrl}/v2/renders");
+            httpRequest.Content = JsonContent.Create(payload, options: s_requestJsonOptions);
+            httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", videoSettings.ApiKey);
+
+            using var response = await httpClient.SendAsync(httpRequest);
+            string resJson = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return new VideoCreateResponse { IsFailed = true, IsRetryable = ExceptionClassifier.IsRetryable(response.StatusCode), ErrorMessage = $"Creatomate video generation failed: HTTP {(int)response.StatusCode} {resJson}" };
+            }
+
+            var result = JsonSerializer.Deserialize<CreatomateRenderResponse>(resJson);
+
+            return new VideoCreateResponse { IsCompleted = false, ProviderTrackId = result?.Id };
         }
-
-        var payload = new CreatomateVideoRequest { TemplateId = templateId, Modifications = modifications };
-
-        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, $"{_settings.BaseUrl}/v2/renders") { Content = JsonContent.Create(payload, options: RequestJsonOptions) };
-        httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _settings.ApiKey);
-
-        using var response = await _httpClient.SendAsync(httpRequest);
-        string resJson = await response.Content.ReadAsStringAsync();
-
-        if (!response.IsSuccessStatusCode)
-            throw new InvalidOperationException($"Creatomate video generation failed: HTTP {(int)response.StatusCode} {resJson}");
-
-        var result = JsonSerializer.Deserialize<CreatomateRenderResponse>(resJson);
-
-        return new VideoCreateResponse { IsCompleted = false, ProviderTrackId = result?.Id };
+        catch (Exception ex) when (ExceptionClassifier.IsRetryable(ex))
+        {
+            return new VideoCreateResponse { IsFailed = true, IsRetryable = true, ErrorMessage = ex.Message };
+        }
+        catch (Exception ex)
+        {
+            return new VideoCreateResponse { IsFailed = true, IsRetryable = false, ErrorMessage = ex.Message };
+        }
     }
 
     public async Task<VideoStatusResponse> GetStatusAsync(string providerTrackId)
     {
-        using var httpRequest = new HttpRequestMessage(HttpMethod.Get, $"{_settings.BaseUrl}/v2/renders/{providerTrackId}");
-        httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _settings.ApiKey);
+        try
+        {
+            using var httpRequest = new HttpRequestMessage(HttpMethod.Get, $"{videoSettings.BaseUrl}/v2/renders/{providerTrackId}");
+            httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", videoSettings.ApiKey);
 
-        using var response = await _httpClient.SendAsync(httpRequest);
-        string resJson = await response.Content.ReadAsStringAsync();
+            using var response = await httpClient.SendAsync(httpRequest);
+            string resJson = await response.Content.ReadAsStringAsync();
 
-        if (!response.IsSuccessStatusCode)
-            throw new InvalidOperationException($"Creatomate status query failed: HTTP {(int)response.StatusCode} {resJson}");
+            if (!response.IsSuccessStatusCode)
+            {
+                return new VideoStatusResponse { IsFailed = true, IsRetryable = ExceptionClassifier.IsRetryable(response.StatusCode), ErrorMessage = $"Creatomate status query failed: HTTP {(int)response.StatusCode} {resJson}" };
+            }
 
-        var result = JsonSerializer.Deserialize<CreatomateRenderResponse>(resJson);
+            var result = JsonSerializer.Deserialize<CreatomateRenderResponse>(resJson);
 
-        if (result?.Status == "succeeded")
-            return new VideoStatusResponse { IsProcessed = true, ProviderFileUrl = result.Url };
+            if (result?.Status == "succeeded")
+                return new VideoStatusResponse { IsProcessed = true, ProviderFileUrl = result.Url };
 
-        if (result?.Status == "failed")
-            return new VideoStatusResponse { IsFailed = true, ErrorMessage = result?.ErrorMessage ?? "Creatomate render failed." };
+            if (result?.Status == "failed")
+                return new VideoStatusResponse { IsFailed = true, IsRetryable = false, ErrorMessage = result.ErrorMessage ?? "Creatomate render failed." };
 
-        return new VideoStatusResponse { IsProcessed = false, IsFailed = false };
+            return new VideoStatusResponse { IsProcessed = false, IsFailed = false };
+        }
+        catch (Exception ex) when (ExceptionClassifier.IsRetryable(ex))
+        {
+            return new VideoStatusResponse { IsFailed = true, IsRetryable = true, ErrorMessage = ex.Message };
+        }
+        catch (Exception ex)
+        {
+            return new VideoStatusResponse { IsFailed = true, IsRetryable = false, ErrorMessage = ex.Message };
+        }
     }
 
     private static void ApplySlot(CreatomateModifications m, int index, string? audioCdnUrl, string? imageUrl, string? text, string? backgroundColor)
@@ -168,9 +191,9 @@ public sealed class VideoCreatomateProvider : IVideoProvider
 
 internal sealed class CreatomateVideoRequest
 {
-    [JsonPropertyName("template_id")] public string TemplateId { get; set; } = default!;
+    [JsonPropertyName("template_id")] public string? TemplateId { get; set; }
 
-    [JsonPropertyName("modifications")] public CreatomateModifications Modifications { get; set; } = default!;
+    [JsonPropertyName("modifications")] public CreatomateModifications? Modifications { get; set; }
 }
 
 internal sealed class CreatomateModifications

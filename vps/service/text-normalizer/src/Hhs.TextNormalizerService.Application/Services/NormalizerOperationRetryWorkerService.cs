@@ -55,7 +55,7 @@ public sealed class NormalizerOperationRetryWorkerService(
             Filter = x => x.Status != NormalizeStatusNames.Completed && x.Status != NormalizeStatusNames.Failed &&
                           x.Items.Any(i => i.ScrapingStatus == ScrapingStatusNames.Completed && i.OutlineStatus == OutlineStatusNames.NotStarted),
             MaxResultCount = retrySettings.BatchSize,
-            OrderByEntity = o=>o.OrderBy(x => x.CreationTime)
+            OrderByEntity = o => o.OrderBy(x => x.CreationTime)
         };
 
         var candidates = await analysisRepository.GetListAsync(options, cancellationToken).ConfigureAwait(false);
@@ -105,7 +105,7 @@ public sealed class NormalizerOperationRetryWorkerService(
                           x.Items.Count > 0 &&
                           x.Items.All(i => i.OutlineStatus == OutlineStatusNames.Completed || i.OutlineStatus == OutlineStatusNames.Failed),
             MaxResultCount = retrySettings.BatchSize,
-            OrderByEntity = o=>o.OrderBy(x => x.CreationTime)
+            OrderByEntity = o => o.OrderBy(x => x.CreationTime)
         };
 
         var candidates = await analysisRepository.GetListAsync(options, cancellationToken).ConfigureAwait(false);
@@ -125,12 +125,19 @@ public sealed class NormalizerOperationRetryWorkerService(
                         .Set(x => x.CurrentStep, EventNames.AnalysisItemOutlineCompleted)
                         .Set(x => x.LastError, "One or more items failed during processing.");
 
-                    long failClaimed = await analysisRepository.UpdateByExpressionAsync(failPredicate, u => failUpdate, cancellationToken: cancellationToken).ConfigureAwait(false);
+                    long failClaimed = await analysisRepository.UpdateByExpressionAsync(failPredicate, _ => failUpdate, cancellationToken: cancellationToken).ConfigureAwait(false);
                     if (failClaimed == 0) continue;
 
                     _logger.FrameworkErrorLog(LogHelper.Generate(
                         message: EventNames.AnalysisItemOutlineCompleted,
-                        reference: new { request.ScopeKey, Type = nameof(AnalysisContentNormalizedRequest), Key = request.Id, RefType = "AnalysisContent", RefKey = request.AnalysisContentId },
+                        reference: new
+                        {
+                            request.ScopeKey,
+                            Type = nameof(AnalysisContentNormalizedRequest),
+                            Key = request.Id,
+                            RefType = "AnalysisContent",
+                            RefKey = request.AnalysisContentId
+                        },
                         facility: Facilities.StepFailed,
                         correlationId: request.CorrelationId,
                         exception: null
@@ -147,16 +154,23 @@ public sealed class NormalizerOperationRetryWorkerService(
                 var claimUpdate = Builders<AnalysisContentNormalizedRequest>.Update
                     .Set(x => x.Status, NormalizeStatusNames.Completed)
                     .Set(x => x.CurrentStep, EventNames.NormalizerResultPublished)
-                    .Set(x => x.LastError, (string)null);
+                    .Set(x => x.LastError, null);
 
-                long claimed = await analysisRepository.UpdateByExpressionAsync(claimPredicate, u => claimUpdate, cancellationToken: cancellationToken).ConfigureAwait(false);
+                long claimed = await analysisRepository.UpdateByExpressionAsync(claimPredicate, _ => claimUpdate, cancellationToken: cancellationToken).ConfigureAwait(false);
                 if (claimed == 0) continue; // already claimed by another tick/instance
 
                 await normalizerOperationAppService.AppendIntroOutroToAnalysisItemsAsync(request, cancellationToken);
 
                 _logger.FrameworkInfoLog(LogHelper.Generate(
                     message: EventNames.NormalizerResultPublished,
-                    reference: new { request.ScopeKey, Type = nameof(AnalysisContentNormalizedRequest), Key = request.Id, RefType = "AnalysisContent", RefKey = request.AnalysisContentId },
+                    reference: new
+                    {
+                        request.ScopeKey,
+                        Type = nameof(AnalysisContentNormalizedRequest),
+                        Key = request.Id,
+                        RefType = "AnalysisContent",
+                        RefKey = request.AnalysisContentId
+                    },
                     facility: Facilities.NormalizerResultPublished,
                     correlationId: request.CorrelationId,
                     exception: null
@@ -201,8 +215,8 @@ public sealed class NormalizerOperationRetryWorkerService(
         var options = new ListQueryOptions<CustomerContentNormalizedRequest>
         {
             Filter = x => x.Status == NormalizeStatusNames.WaitingRetry &&
-                         x.NextRetryAtUtc != null &&
-                         x.NextRetryAtUtc <= now,
+                          x.NextRetryAtUtc != null &&
+                          x.NextRetryAtUtc <= now,
             MaxResultCount = retrySettings.BatchSize
         };
 
@@ -224,18 +238,26 @@ public sealed class NormalizerOperationRetryWorkerService(
                         .Set(x => x.Status, NormalizeStatusNames.OutlineProviderRequestPolling)
                         .Set(x => x.OutlineStatus, OutlineStatusNames.Polling)
                         .Set(x => x.NextOutlinePollAtUtc, DateTime.UtcNow)
-                        .Set(x => x.NextRetryAtUtc, (DateTime?)null)
+                        .Set(x => x.NextRetryAtUtc, null)
                         .Set(x => x.LastError, null);
 
                     await customerRepository.UpdateByExpressionAsync(
-                        outlinePollingPredicate,
-                        u => outlinePollingUpdate,
-                        cancellationToken: cancellationToken)
+                            outlinePollingPredicate,
+                            _ => outlinePollingUpdate,
+                            cancellationToken: cancellationToken)
                         .ConfigureAwait(false);
 
                     _logger.FrameworkErrorLog(LogHelper.Generate(
                         message: EventNames.RetryScheduled,
-                        reference: new { request.ScopeKey, Type = nameof(CustomerContentNormalizedRequest), Key = request.Id, RefType = "CustomerContent", RefKey = request.CustomerContentId, FailedStep = EventNames.OutlineProviderPollingStarted },
+                        reference: new
+                        {
+                            request.ScopeKey,
+                            Type = nameof(CustomerContentNormalizedRequest),
+                            Key = request.Id,
+                            RefType = "CustomerContent",
+                            RefKey = request.CustomerContentId,
+                            FailedStep = EventNames.OutlineProviderPollingStarted
+                        },
                         facility: Facilities.RetryScheduled,
                         correlationId: request.CorrelationId,
                         exception: null
@@ -255,9 +277,9 @@ public sealed class NormalizerOperationRetryWorkerService(
                     .Set(x => x.LastError, null);
 
                 long claimResult = await customerRepository.UpdateByExpressionAsync(
-                    claimPredicate,
-                    u => claimUpdate,
-                    cancellationToken: cancellationToken)
+                        claimPredicate,
+                        _ => claimUpdate,
+                        cancellationToken: cancellationToken)
                     .ConfigureAwait(false);
 
                 if (claimResult == 0)
@@ -302,17 +324,25 @@ public sealed class NormalizerOperationRetryWorkerService(
                     var failUpdate = Builders<CustomerContentNormalizedRequest>.Update
                         .Set(x => x.Status, NormalizeStatusNames.Failed)
                         .Set(x => x.LastError, $"Unsupported customer retry step: {request.CurrentStep}")
-                        .Set(x => x.NextRetryAtUtc, (DateTime?)null);
+                        .Set(x => x.NextRetryAtUtc, null);
 
                     await customerRepository.UpdateByExpressionAsync(
-                        failPredicate,
-                        u => failUpdate,
-                        cancellationToken: cancellationToken)
+                            failPredicate,
+                            _ => failUpdate,
+                            cancellationToken: cancellationToken)
                         .ConfigureAwait(false);
 
                     _logger.FrameworkErrorLog(LogHelper.Generate(
                         message: request.CurrentStep,
-                        reference: new { request.ScopeKey, Type = nameof(CustomerContentNormalizedRequest), Key = request.Id, RefType = "CustomerContent", RefKey = request.CustomerContentId, FailedStep = request.CurrentStep },
+                        reference: new
+                        {
+                            request.ScopeKey,
+                            Type = nameof(CustomerContentNormalizedRequest),
+                            Key = request.Id,
+                            RefType = "CustomerContent",
+                            RefKey = request.CustomerContentId,
+                            FailedStep = request.CurrentStep
+                        },
                         facility: Facilities.StepFailed,
                         correlationId: request.CorrelationId,
                         exception: null
@@ -336,7 +366,15 @@ public sealed class NormalizerOperationRetryWorkerService(
 
                 _logger.FrameworkErrorLog(LogHelper.Generate(
                     message: EventNames.RetryScheduled,
-                    reference: new { request.ScopeKey, Type = nameof(CustomerContentNormalizedRequest), Key = request.Id, RefType = "CustomerContent", RefKey = request.CustomerContentId, FailedStep = request.CurrentStep },
+                    reference: new
+                    {
+                        request.ScopeKey,
+                        Type = nameof(CustomerContentNormalizedRequest),
+                        Key = request.Id,
+                        RefType = "CustomerContent",
+                        RefKey = request.CustomerContentId,
+                        FailedStep = request.CurrentStep
+                    },
                     facility: Facilities.RetryScheduled,
                     correlationId: request.CorrelationId,
                     exception: null
@@ -352,14 +390,22 @@ public sealed class NormalizerOperationRetryWorkerService(
                     .Set(x => x.NextRetryAtUtc, DateTime.UtcNow.AddSeconds(retrySettings.ClaimFailRescheduleDelaySeconds));
 
                 await customerRepository.UpdateByExpressionAsync(
-                    exceptionPredicate,
-                    u => exceptionUpdate,
-                    cancellationToken: cancellationToken)
+                        exceptionPredicate,
+                        _ => exceptionUpdate,
+                        cancellationToken: cancellationToken)
                     .ConfigureAwait(false);
 
                 _logger.FrameworkErrorLog(LogHelper.Generate(
                     message: EventNames.RetryScheduled,
-                    reference: new { request.ScopeKey, Type = nameof(CustomerContentNormalizedRequest), Key = request.Id, RefType = "CustomerContent", RefKey = request.CustomerContentId, FailedStep = request.CurrentStep },
+                    reference: new
+                    {
+                        request.ScopeKey,
+                        Type = nameof(CustomerContentNormalizedRequest),
+                        Key = request.Id,
+                        RefType = "CustomerContent",
+                        RefKey = request.CustomerContentId,
+                        FailedStep = request.CurrentStep
+                    },
                     facility: Facilities.RetryScheduled,
                     correlationId: request.CorrelationId,
                     exception: ex
@@ -406,7 +452,7 @@ public sealed class NormalizerOperationRetryWorkerService(
                             .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineStatus)}", OutlineStatusNames.Polling)
                             .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextOutlinePollAtUtc)}", DateTime.UtcNow)
                             .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextRetryAtUtc)}", (DateTime?)null)
-                            .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.LastError)}", (string?)null);
+                            .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.LastError)}", (string)null);
 
                         long result = await UpdateDueRetryAnalysisItemAsync(
                             request.Id,
@@ -420,7 +466,16 @@ public sealed class NormalizerOperationRetryWorkerService(
 
                         _logger.FrameworkErrorLog(LogHelper.Generate(
                             message: EventNames.RetryScheduled,
-                            reference: new { request.ScopeKey, Type = nameof(AnalysisNormalizedItem), Key = item.CustomerContentId, RefType = "AnalysisContent", RefKey = request.AnalysisContentId, AnalysisContentNormalizeRequestId = request.Id, FailedStep = EventNames.OutlineProviderPollingStarted },
+                            reference: new
+                            {
+                                request.ScopeKey,
+                                Type = nameof(AnalysisNormalizedItem),
+                                Key = item.CustomerContentId,
+                                RefType = "AnalysisContent",
+                                RefKey = request.AnalysisContentId,
+                                AnalysisContentNormalizeRequestId = request.Id,
+                                FailedStep = EventNames.OutlineProviderPollingStarted
+                            },
                             facility: Facilities.RetryScheduled,
                             correlationId: request.CorrelationId,
                             exception: null
@@ -446,22 +501,14 @@ public sealed class NormalizerOperationRetryWorkerService(
                     {
                         await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
                             correlationId: request.CorrelationId,
-                            eventMessage: new AnalysisItemScrapingStartedEto
-                            {
-                                AnalysisContentId = request.AnalysisContentId,
-                                CustomerContentIdForItem = item.CustomerContentId
-                            }
+                            eventMessage: new AnalysisItemScrapingStartedEto { AnalysisContentId = request.AnalysisContentId, CustomerContentIdForItem = item.CustomerContentId }
                         );
                     }
                     else if (item.CurrentStep == EventNames.AnalysisItemOutlineStarted)
                     {
                         await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
                             correlationId: request.CorrelationId,
-                            eventMessage: new AnalysisItemOutlineStartedEto
-                            {
-                                AnalysisContentId = request.AnalysisContentId,
-                                CustomerContentIdForItem = item.CustomerContentId
-                            }
+                            eventMessage: new AnalysisItemOutlineStartedEto { AnalysisContentId = request.AnalysisContentId, CustomerContentIdForItem = item.CustomerContentId }
                         );
                     }
                     else if (item.CurrentStep == EventNames.OutlineProviderRequestStarted)
@@ -499,7 +546,16 @@ public sealed class NormalizerOperationRetryWorkerService(
 
                         _logger.FrameworkErrorLog(LogHelper.Generate(
                             message: item.CurrentStep,
-                            reference: new { request.ScopeKey, Type = nameof(AnalysisNormalizedItem), Key = item.CustomerContentId, RefType = "AnalysisContent", RefKey = request.AnalysisContentId, AnalysisContentNormalizeRequestId = request.Id, FailedStep = item.CurrentStep },
+                            reference: new
+                            {
+                                request.ScopeKey,
+                                Type = nameof(AnalysisNormalizedItem),
+                                Key = item.CustomerContentId,
+                                RefType = "AnalysisContent",
+                                RefKey = request.AnalysisContentId,
+                                AnalysisContentNormalizeRequestId = request.Id,
+                                FailedStep = item.CurrentStep
+                            },
                             facility: Facilities.StepFailed,
                             correlationId: request.CorrelationId,
                             exception: null
@@ -510,7 +566,16 @@ public sealed class NormalizerOperationRetryWorkerService(
 
                     _logger.FrameworkErrorLog(LogHelper.Generate(
                         message: EventNames.RetryScheduled,
-                        reference: new { request.ScopeKey, Type = nameof(AnalysisNormalizedItem), Key = item.CustomerContentId, RefType = "AnalysisContent", RefKey = request.AnalysisContentId, AnalysisContentNormalizeRequestId = request.Id, FailedStep = item.CurrentStep },
+                        reference: new
+                        {
+                            request.ScopeKey,
+                            Type = nameof(AnalysisNormalizedItem),
+                            Key = item.CustomerContentId,
+                            RefType = "AnalysisContent",
+                            RefKey = request.AnalysisContentId,
+                            AnalysisContentNormalizeRequestId = request.Id,
+                            FailedStep = item.CurrentStep
+                        },
                         facility: Facilities.RetryScheduled,
                         correlationId: request.CorrelationId,
                         exception: null
@@ -532,7 +597,16 @@ public sealed class NormalizerOperationRetryWorkerService(
 
                     _logger.FrameworkErrorLog(LogHelper.Generate(
                         message: EventNames.RetryScheduled,
-                        reference: new { request.ScopeKey, Type = nameof(AnalysisNormalizedItem), Key = item.CustomerContentId, RefType = "AnalysisContent", RefKey = request.AnalysisContentId, AnalysisContentNormalizeRequestId = request.Id, FailedStep = item.CurrentStep },
+                        reference: new
+                        {
+                            request.ScopeKey,
+                            Type = nameof(AnalysisNormalizedItem),
+                            Key = item.CustomerContentId,
+                            RefType = "AnalysisContent",
+                            RefKey = request.AnalysisContentId,
+                            AnalysisContentNormalizeRequestId = request.Id,
+                            FailedStep = item.CurrentStep
+                        },
                         facility: Facilities.RetryScheduled,
                         correlationId: request.CorrelationId,
                         exception: ex
@@ -559,7 +633,7 @@ public sealed class NormalizerOperationRetryWorkerService(
 
         return analysisRepository.UpdateByExpressionAsync(
             predicate,
-            u => update,
+            _ => update,
             cancellationToken: cancellationToken);
     }
 
@@ -575,7 +649,7 @@ public sealed class NormalizerOperationRetryWorkerService(
 
         return analysisRepository.UpdateByExpressionAsync(
             predicate,
-            u => update,
+            _ => update,
             cancellationToken: cancellationToken);
     }
 }

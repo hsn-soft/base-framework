@@ -94,15 +94,14 @@ public sealed class NormalizerOperationAppService(
                 @event.CustomerContentId,
                 StringHelper.Minimize(@event.DomainName),
                 StringHelper.Minimize(@event.DomainPath),
-                correlationId);
-
-            entity.SourceEventId = eventId;
-
-            entity.Status = NormalizeStatusNames.Created;
-            entity.CurrentStep = EventNames.CustomerContentNormalizeRequestCreated;
-
-            entity.ScrapingStatus = ScrapingStatusNames.NotStarted;
-            entity.OutlineStatus = OutlineStatusNames.NotStarted;
+                correlationId)
+            {
+                SourceEventId = eventId,
+                Status = NormalizeStatusNames.Created,
+                CurrentStep = EventNames.CustomerContentNormalizeRequestCreated,
+                ScrapingStatus = ScrapingStatusNames.NotStarted,
+                OutlineStatus = OutlineStatusNames.NotStarted
+            };
 
             await customerContentRepository.InsertAsync(entity, cancellationToken);
 
@@ -110,13 +109,13 @@ public sealed class NormalizerOperationAppService(
                 message: EventNames.CustomerContentNormalizeRequestCreated,
                 reference: new
                 {
-                    ScopeKey = entity.ScopeKey,
+                    entity.ScopeKey,
                     Type = nameof(CustomerContentNormalizedRequest),
                     Key = entity.Id,
                     RefType = "CustomerContent",
                     RefKey = entity.CustomerContentId,
                     ClientDomain = entity.DomainName,
-                    ContentKey = entity.ContentKey
+                    entity.ContentKey
                 },
                 facility: Facilities.NormalizeRequestCreated,
                 correlationId: correlationId,
@@ -170,7 +169,7 @@ public sealed class NormalizerOperationAppService(
                     RefType = "CustomerContent",
                     RefKey = request.CustomerContentId,
                     ClientDomain = request.DomainName,
-                    ContentKey = request.ContentKey
+                    request.ContentKey
                 },
                 facility: Facilities.ScrapingStarted,
                 correlationId: request.CorrelationId,
@@ -203,7 +202,7 @@ public sealed class NormalizerOperationAppService(
 
         try
         {
-            if (string.IsNullOrEmpty(request?.DomainName) || string.IsNullOrEmpty(request?.ContentKey))
+            if (string.IsNullOrEmpty(request.DomainName) || string.IsNullOrEmpty(request.ContentKey))
             {
                 throw new BaseHttpException((int)HttpStatusCode.BadRequest);
             }
@@ -267,7 +266,7 @@ public sealed class NormalizerOperationAppService(
                     RefType = "CustomerContent",
                     RefKey = request.CustomerContentId,
                     ClientDomain = request.DomainName,
-                    ContentKey = request.ContentKey
+                    request.ContentKey
                 },
                 facility: Facilities.ScrapingCompleted,
                 correlationId: request.CorrelationId,
@@ -327,7 +326,7 @@ public sealed class NormalizerOperationAppService(
                     RefType = "CustomerContent",
                     RefKey = request.CustomerContentId,
                     ClientDomain = request.DomainName,
-                    ContentKey = request.ContentKey
+                    request.ContentKey
                 },
                 facility: Facilities.OutlineStarted,
                 correlationId: request.CorrelationId,
@@ -386,7 +385,7 @@ public sealed class NormalizerOperationAppService(
                         RefType = "CustomerContent",
                         RefKey = request.CustomerContentId,
                         ClientDomain = request.DomainName,
-                        ContentKey = request.ContentKey
+                        request.ContentKey
                     },
                     facility: Facilities.OutlineSkipped,
                     correlationId: request.CorrelationId,
@@ -425,7 +424,7 @@ public sealed class NormalizerOperationAppService(
                     RefType = "CustomerContent",
                     RefKey = request.CustomerContentId,
                     ClientDomain = request.DomainName,
-                    ContentKey = request.ContentKey
+                    request.ContentKey
                 },
                 facility: Facilities.OutlineProviderRequestStarted,
                 correlationId: request.CorrelationId,
@@ -484,12 +483,7 @@ public sealed class NormalizerOperationAppService(
             @event.ScopeKey,
             @event.AnalysisContentId,
             @event.DomainName,
-            correlationId);
-
-        request.SourceEventId = eventId;
-        request.Status = NormalizeStatusNames.Created;
-        request.CurrentStep = EventNames.AnalysisContentCreated;
-        request.Items = @event.Items.Select(x => new AnalysisNormalizedItem { CustomerContentId = x.CustomerContentId, SortOrder = x.SortOrder, ContentKey = x.ContentKey }).ToList();
+            correlationId) { SourceEventId = eventId, Status = NormalizeStatusNames.Created, CurrentStep = EventNames.AnalysisContentCreated, Items = @event.Items.Select(x => new AnalysisNormalizedItem { CustomerContentId = x.CustomerContentId, SortOrder = x.SortOrder, ContentKey = x.ContentKey }).ToList() };
 
         await analysisContentRepository.InsertAsync(request, cancellationToken);
 
@@ -506,7 +500,7 @@ public sealed class NormalizerOperationAppService(
     {
         var request = await analysisContentRepository.GetFirstOrDefaultAsync(x => x.AnalysisContentId == @event.AnalysisContentId, cancellationToken: cancellationToken);
 
-        foreach (var item in request.Items.OrderBy(x => x.SortOrder))
+        foreach (var item in request!.Items.OrderBy(x => x.SortOrder))
         {
             if (item.ScrapingStatus == ScrapingStatusNames.Completed)
                 continue;
@@ -528,7 +522,7 @@ public sealed class NormalizerOperationAppService(
         if (!_normalizerSettings.ForceReScrapeForAnalysis)
         {
             var existingRequest = await customerContentRepository.GetByScopeKeyAndContentIdAsync(request.ScopeKey, item.CustomerContentId, cancellationToken);
-            if (existingRequest?.ScrapingStatus == ScrapingStatusNames.Completed && existingRequest.ScrapingResult is not null)
+            if (existingRequest is { ScrapingStatus: ScrapingStatusNames.Completed, ScrapingResult: not null })
             {
                 long reuseClaimed = await UpdateAnalysisItemAsync(
                     request.Id,
@@ -593,7 +587,7 @@ public sealed class NormalizerOperationAppService(
                             ImageUrl = result.ImageUrl
                         }
                     )
-                    .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.LastError)}", (string?)null),
+                    .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.LastError)}", (string)null),
                 cancellationToken
             );
 
@@ -719,7 +713,9 @@ public sealed class NormalizerOperationAppService(
 
             if (response.IsProcessFailed)
             {
-                throw new InvalidOperationException("OUTLINE_PROVIDER_PROCESS_FAILED: " + response.ErrorMessage);
+                throw new ProcessException(
+                    "OUTLINE_PROVIDER_PROCESS_FAILED: " + response.ErrorMessage,
+                    response.IsRetryable ? ProcessErrorType.Retryable : ProcessErrorType.NonRetryable);
             }
 
             if (outlineProvider.Capabilities.ExecutionMode == ProviderExecutionMode.ImmediateResult
@@ -913,7 +909,7 @@ public sealed class NormalizerOperationAppService(
                 .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentStep)}", EventNames.AnalysisItemOutlineCompleted)
                 .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineStatus)}", OutlineStatusNames.Completed)
                 .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineResult)}", new OutlineResult { OutlinedData = @event.OutlinedData })
-                .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.LastError)}", (string?)null)
+                .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.LastError)}", (string)null)
                 .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextRetryAtUtc)}", (DateTime?)null),
             CancellationToken.None,
             validPriorOutlineStatuses: [OutlineStatusNames.Started, OutlineStatusNames.Polling, OutlineStatusNames.ProviderCompleted, OutlineStatusNames.WaitingRetry]
@@ -943,11 +939,11 @@ public sealed class NormalizerOperationAppService(
             x => x.CustomerContentId == @event.RefContentId,
             cancellationToken: cancellationToken);
 
-        if (customerContentNormalizedRequest.Status == NormalizeStatusNames.Completed ||
-            customerContentNormalizedRequest.CurrentStep == EventNames.NormalizerResultPublished)
+        if (customerContentNormalizedRequest?.Status == NormalizeStatusNames.Completed ||
+            customerContentNormalizedRequest?.CurrentStep == EventNames.NormalizerResultPublished)
             return;
 
-        customerContentNormalizedRequest.Status = NormalizeStatusNames.Completed;
+        customerContentNormalizedRequest!.Status = NormalizeStatusNames.Completed;
         customerContentNormalizedRequest.CurrentStep = EventNames.NormalizerResultPublished;
 
         long claimed = await ReplaceCustomerContentAsync(customerContentNormalizedRequest, cancellationToken,
@@ -984,8 +980,8 @@ public sealed class NormalizerOperationAppService(
 
     public async Task ForwardVideoGenerationDataAsync(VideoGenerationApprovedEto @event, CancellationToken cancellationToken = default)
     {
-        string? videoInputJson = null;
-        string? correlationId = null;
+        string videoInputJson = null;
+        string correlationId = null;
 
         if (@event.RefContentType == ContentType.CustomerContent)
         {
@@ -1062,9 +1058,9 @@ public sealed class NormalizerOperationAppService(
         string outlineInputPrompt = await customerVpSettingRepository.GetContentOutlinePromptByScopeKeyAsync(request.ScopeKey, cancellationToken);
 
         string outlineInputText = string.Format("{0} {1} {2}",
-            request.ScrapingResult.Title,
-            request.ScrapingResult.Spot ?? string.Empty,
-            request.ScrapingResult.Details ?? string.Empty
+            request.ScrapingResult?.Title,
+            request.ScrapingResult?.Spot ?? string.Empty,
+            request.ScrapingResult?.Details ?? string.Empty
         );
 
         return (outlineInputText, outlineInputPrompt);
@@ -1083,8 +1079,8 @@ public sealed class NormalizerOperationAppService(
             cancellationToken: cancellationToken);
 
         string outlineInputText = analysisVpSetting?.IsForceContentDetailInAnalyseActive == true
-            ? item.ScrapingResult.Details
-            : item.ScrapingResult.Title.Replace(":", "") + " : " + (item.ScrapingResult.Spot ?? item.ScrapingResult.Details);
+            ? item.ScrapingResult?.Details
+            : item.ScrapingResult?.Title.Replace(":", "") + " : " + (item.ScrapingResult?.Spot ?? item.ScrapingResult?.Details);
 
         return (outlineInputText, analysisVpSetting?.AnalysisOutlineContentPrompt);
     }
@@ -1117,7 +1113,7 @@ public sealed class NormalizerOperationAppService(
             .Set(x => x.NextRetryAtUtc, request.NextRetryAtUtc)
             .Set(x => x.LastError, request.LastError);
 
-        return customerContentRepository.UpdateByExpressionAsync(predicate, u => update, cancellationToken: cancellationToken);
+        return customerContentRepository.UpdateByExpressionAsync(predicate, _ => update, cancellationToken: cancellationToken);
     }
 
 
@@ -1201,7 +1197,7 @@ public sealed class NormalizerOperationAppService(
                 RefType = "CustomerContent",
                 RefKey = request.CustomerContentId,
                 ClientDomain = request.DomainName,
-                ContentKey = request.ContentKey,
+                request.ContentKey,
                 FailedStep = step,
                 Retryable = retryable
             },
@@ -1413,7 +1409,7 @@ public sealed class NormalizerOperationAppService(
         return analysisContentRepository.UpdateByExpressionAsync(predicate, updateFunc, cancellationToken);
     }
 
-    private string BuildVideoInputJson(Guid customerContentId, string? scrapeImageUrl, string? scrapeTitle, string? outlineScript)
+    private string BuildVideoInputJson(Guid customerContentId, [CanBeNull] string scrapeImageUrl, [CanBeNull] string scrapeTitle, [CanBeNull] string outlineScript)
     {
         var audioItems = new[]
         {
@@ -1446,13 +1442,14 @@ public sealed class NormalizerOperationAppService(
         return JsonConvert.SerializeObject(new { audioItems });
     }
 
-    private static string? EncodeOrNull(string? value) => value is null ? null : StringHelper.Base64Encode(value);
+    [CanBeNull]
+    private static string EncodeOrNull([CanBeNull] string value) => value is null ? null : StringHelper.Base64Encode(value);
 
     /// <summary>
     /// Called by NormalizerOperationRetryWorkerService.CheckReadyAnalysisContentsToResultAsync
     /// after it has atomically claimed the parent, immediately before publishing the result — so
     /// this persists its own per-item writes (there's no longer a caller-side whole-document
-    /// replace to piggy-back on).
+    /// replace to piggyback on).
     /// </summary>
     internal async Task AppendIntroOutroToAnalysisItemsAsync(AnalysisContentNormalizedRequest request, CancellationToken cancellationToken)
     {
@@ -1460,8 +1457,8 @@ public sealed class NormalizerOperationAppService(
 
         if (orderedItems.Count == 0) return;
 
-        string introText = "İyi günler, günün öne çıkan haberleriyle karşınızdayız.";
-        string outroText = "Günün öne çıkan gelişmelerini aktardık. Tekrar görüşmek üzere";
+        string introText = ".";
+        string outroText = ".";
 
         CustomerVpSetting vpSetting = await customerVpSettingRepository.GetFirstOrDefaultAsync(
             x => x.ScopeKey == request.ScopeKey,
