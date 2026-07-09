@@ -222,19 +222,21 @@ public sealed class NormalizerOperationAppService(
 
             if (result == null)
             {
-                throw new Exception("SCRAPING DATA NOT FOUND");
+                throw new ProcessException("SCRAPING DATA NOT FOUND", ProcessErrorType.NonRetryable);
             }
 
             if (result.HasError)
             {
-                throw new Exception(string.Join(" ", result.Errors));
+                throw new ProcessException(
+                    string.Join(" ", result.Errors),
+                    result.IsRetryable ? ProcessErrorType.Retryable : ProcessErrorType.NonRetryable);
             }
 
             if (!(!string.IsNullOrWhiteSpace(result.Title)
                   || !string.IsNullOrWhiteSpace(result.Spot)
                   || !string.IsNullOrWhiteSpace(result.Details)))
             {
-                throw new Exception("SCRAPING DATA IS EMPTY");
+                throw new ProcessException("SCRAPING DATA IS EMPTY", ProcessErrorType.NonRetryable);
             }
 
             request.Status = NormalizeStatusNames.ScrapingCompleted;
@@ -570,6 +572,25 @@ public sealed class NormalizerOperationAppService(
             if (claimed == 0) return;
 
             var result = await scraper.ScrapeAsync(new ScraperRequestDto { DomainKey = request.DomainName, Path = item.ContentKey });
+
+            if (result == null)
+            {
+                throw new ProcessException("SCRAPING DATA NOT FOUND", ProcessErrorType.NonRetryable);
+            }
+
+            if (result.HasError)
+            {
+                throw new ProcessException(
+                    string.Join(" ", result.Errors),
+                    result.IsRetryable ? ProcessErrorType.Retryable : ProcessErrorType.NonRetryable);
+            }
+
+            if (!(!string.IsNullOrWhiteSpace(result.Title)
+                  || !string.IsNullOrWhiteSpace(result.Spot)
+                  || !string.IsNullOrWhiteSpace(result.Details)))
+            {
+                throw new ProcessException("SCRAPING DATA IS EMPTY", ProcessErrorType.NonRetryable);
+            }
 
             await UpdateAnalysisItemAsync(
                 request.Id,

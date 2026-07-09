@@ -20,6 +20,9 @@ public sealed class ScraperResultDto
 
     public bool HasError { get; set; }
 
+    /// <summary>Only meaningful when HasError is true — set by the scraper's own error classification.</summary>
+    public bool IsRetryable { get; set; }
+
     public List<string> Errors { get; set; } = [];
 }
 

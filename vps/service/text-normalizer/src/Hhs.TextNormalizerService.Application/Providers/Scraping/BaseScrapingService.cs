@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.Json.Serialization;
+using Hhs.Shared.Helper.Retry;
 using HsnSoft.Base.Logging.Abstracts;
 using HsnSoft.Base.PuppeTeer;
 using PuppeteerSharp;
@@ -106,7 +107,16 @@ public abstract class BaseScrapingService(Uri targetUri, IAppConsoleLogger logge
             {
                 string statusCode = response?.Status.ToString() ?? "NO_RESPONSE";
                 string statusText = response?.StatusText ?? string.Empty;
-                throw new InvalidOperationException($"{statusCode}:{statusText}");
+                // No response at all (network/DNS-level failure) is treated as transient; a real
+                // non-OK HTTP status is classified by its code (5xx/429 transient, other 4xx permanent).
+                bool isRetryable = response is null || ExceptionClassifier.IsRetryable(response.Status);
+
+                return new ScraperResultDto
+                {
+                    HasError = true,
+                    IsRetryable = isRetryable,
+                    Errors = { $"{statusCode}:{statusText}" }
+                };
             }
 
             await page.WaitForFunctionAsync(
@@ -211,18 +221,34 @@ public abstract class BaseScrapingService(Uri targetUri, IAppConsoleLogger logge
             }
 
             result.HasError = true;
+            result.IsRetryable = false;
             result.Errors.Add("Scraping title, spot or details are empty");
             return result;
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException ex)
         {
             Logger.LogWarning("{Service} | Page {PageId} cancelled", nameof(BaseScrapingService), tracePageId);
-            throw;
+            return new ScraperResultDto { HasError = true, IsRetryable = true, Errors = { ex.Message } };
+        }
+        catch (Exception ex) when (ex is PuppeteerException or PuppeteerSharp.ProcessException)
+        {
+            // Puppeteer's own exception hierarchy (navigation failures, target closed/crashed,
+            // wait-task timeouts, browser process issues) is transient/infra-level by nature.
+            return new ScraperResultDto
+            {
+                HasError = true,
+                IsRetryable = true,
+                Errors = { $"PuppeteerBrowser Page {tracePageId} error: {ex.Message}" }
+            };
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException(
-                $"PuppeteerBrowser Page {tracePageId} navigation error: {ex.Message}", ex);
+            return new ScraperResultDto
+            {
+                HasError = true,
+                IsRetryable = ExceptionClassifier.IsRetryable(ex),
+                Errors = { $"PuppeteerBrowser Page {tracePageId} navigation error: {ex.Message}" }
+            };
         }
         finally
         {

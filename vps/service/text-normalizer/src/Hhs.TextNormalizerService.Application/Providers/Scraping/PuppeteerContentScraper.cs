@@ -8,7 +8,7 @@ public sealed class PuppeteerContentScraper(IAppConsoleLogger logger, IPuppeteer
     public async Task<ScraperResultDto> ScrapeAsync(ScraperRequestDto input)
     {
         if (input == null || string.IsNullOrWhiteSpace(input.DomainKey) || string.IsNullOrWhiteSpace(input.Path))
-            throw new InvalidOperationException("INVALID_SCRAPING_REQUEST");
+            return new ScraperResultDto { HasError = true, IsRetryable = false, Errors = { "INVALID_SCRAPING_REQUEST" } };
 
         if (input.DomainKey == "localhost")
         {
@@ -22,6 +22,9 @@ public sealed class PuppeteerContentScraper(IAppConsoleLogger logger, IPuppeteer
             };
         }
 
+        if (input.DomainKey == "www.boxofficeturkiye.com")
+            return new ScraperResultDto { HasError = true, IsRetryable = false, Errors = { "DOMAIN_SCRAPER_NOT_CONFIGURED: www.boxofficeturkiye.com" } };
+
         var targetUri = new Uri($"https://{input.DomainKey.TrimStart('/')}{input.Path}");
 
         BaseScrapingService service = input.DomainKey switch
@@ -32,9 +35,11 @@ public sealed class PuppeteerContentScraper(IAppConsoleLogger logger, IPuppeteer
             "www.cnbce.com"          => new CnbceScrapingService(targetUri, logger, puppeteerBrowser),
             "www.diyetkolik.com"     => new DiyetkolikScrapingService(targetUri, logger, puppeteerBrowser),
             "www.instyle.com.tr"     => new InStyleScrapingService(targetUri, logger, puppeteerBrowser),
-            "www.boxofficeturkiye.com" => throw new NotSupportedException("DOMAIN_SCRAPER_NOT_CONFIGURED: www.boxofficeturkiye.com"),
-            _                        => throw new NotSupportedException($"INVALID_SCRAPING_DOMAIN: {input.DomainKey}")
+            _                        => null
         };
+
+        if (service is null)
+            return new ScraperResultDto { HasError = true, IsRetryable = false, Errors = { $"INVALID_SCRAPING_DOMAIN: {input.DomainKey}" } };
 
         return await service.RunAsync();
     }

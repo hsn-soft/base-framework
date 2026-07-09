@@ -10,7 +10,7 @@ public static class ExceptionClassifier
             return processException.ErrorType == ProcessErrorType.Retryable;
 
         return ex is TimeoutException
-            or TaskCanceledException
+            or OperationCanceledException // covers TaskCanceledException too
             or HttpRequestException
             or IOException;
     }
