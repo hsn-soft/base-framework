@@ -228,44 +228,6 @@ public sealed class NormalizerOperationRetryWorkerService(
         {
             try
             {
-                if (request.CurrentStep == EventNames.OutlineProviderPollingStarted)
-                {
-                    var outlinePollingPredicate = (Expression<Func<CustomerContentNormalizedRequest, bool>>)(x =>
-                        x.Id == request.Id &&
-                        x.Status == NormalizeStatusNames.WaitingRetry);
-
-                    var outlinePollingUpdate = Builders<CustomerContentNormalizedRequest>.Update
-                        .Set(x => x.Status, NormalizeStatusNames.OutlineProviderRequestPolling)
-                        .Set(x => x.OutlineStatus, OutlineStatusNames.Polling)
-                        .Set(x => x.NextOutlinePollAtUtc, DateTime.UtcNow)
-                        .Set(x => x.NextRetryAtUtc, null)
-                        .Set(x => x.LastError, null);
-
-                    await customerRepository.UpdateByExpressionAsync(
-                            outlinePollingPredicate,
-                            _ => outlinePollingUpdate,
-                            cancellationToken: cancellationToken)
-                        .ConfigureAwait(false);
-
-                    _logger.FrameworkInfoLog(LogHelper.Generate(
-                        message: EventNames.RetryScheduled,
-                        reference: new
-                        {
-                            request.ScopeKey,
-                            Type = nameof(CustomerContentNormalizedRequest),
-                            Key = request.Id,
-                            RefType = "CustomerContent",
-                            RefKey = request.CustomerContentId,
-                            FailedStep = EventNames.OutlineProviderPollingStarted
-                        },
-                        facility: Facilities.RetryAttempted,
-                        correlationId: request.CorrelationId,
-                        exception: null
-                    ));
-
-                    continue;
-                }
-
                 var claimPredicate = (Expression<Func<CustomerContentNormalizedRequest, bool>>)(x =>
                     x.Id == request.Id &&
                     x.Status == NormalizeStatusNames.WaitingRetry &&
@@ -445,45 +407,6 @@ public sealed class NormalizerOperationRetryWorkerService(
             {
                 try
                 {
-                    if (item.CurrentStep == EventNames.OutlineProviderPollingStarted)
-                    {
-                        var pollingClaim = Builders<AnalysisContentNormalizedRequest>.Update
-                            .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", NormalizeStatusNames.OutlineProviderRequestPolling)
-                            .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineStatus)}", OutlineStatusNames.Polling)
-                            .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextOutlinePollAtUtc)}", DateTime.UtcNow)
-                            .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextRetryAtUtc)}", (DateTime?)null)
-                            .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.LastError)}", (string)null);
-
-                        long result = await UpdateDueRetryAnalysisItemAsync(
-                            request.Id,
-                            item.CustomerContentId,
-                            now,
-                            pollingClaim,
-                            cancellationToken);
-
-                        if (result == 0)
-                            continue;
-
-                        _logger.FrameworkInfoLog(LogHelper.Generate(
-                            message: EventNames.RetryScheduled,
-                            reference: new
-                            {
-                                request.ScopeKey,
-                                Type = nameof(AnalysisNormalizedItem),
-                                Key = item.CustomerContentId,
-                                RefType = "AnalysisContent",
-                                RefKey = request.AnalysisContentId,
-                                AnalysisContentNormalizeRequestId = request.Id,
-                                FailedStep = EventNames.OutlineProviderPollingStarted
-                            },
-                            facility: Facilities.RetryAttempted,
-                            correlationId: request.CorrelationId,
-                            exception: null
-                        ));
-
-                        continue;
-                    }
-
                     var claimUpdate = Builders<AnalysisContentNormalizedRequest>.Update
                         .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextRetryAtUtc)}", DateTime.UtcNow.AddSeconds(retrySettings.ClaimFailRescheduleDelaySeconds));
 

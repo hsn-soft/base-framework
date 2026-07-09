@@ -248,8 +248,6 @@ public sealed class VideoOperationRetryWorkerService(
 
             try
             {
-                bool pollingRetry = false;
-
                 if (request.CurrentStep == EventNames.AudioProviderRequestStarted)
                 {
                     request.Status = AudioStatusNames.AudioProviderRequestRetrying;
@@ -273,12 +271,6 @@ public sealed class VideoOperationRetryWorkerService(
                         correlationId: request.CorrelationId,
                         eventMessage: new AudioFileDownloadStartedEto { AudioRequestId = request.Id, }
                     );
-                }
-                else if (request.CurrentStep == EventNames.AudioProviderPollingStarted)
-                {
-                    request.Status = AudioStatusNames.AudioProviderPolling;
-                    request.NextProviderPollAtUtc = DateTime.UtcNow;
-                    pollingRetry = true;
                 }
                 else
                 {
@@ -348,11 +340,7 @@ public sealed class VideoOperationRetryWorkerService(
                     exception: null
                 ));
 
-                if (!pollingRetry)
-                {
-                    request.Status = AudioStatusNames.RetryEventPublished;
-                }
-
+                request.Status = AudioStatusNames.RetryEventPublished;
                 request.NextRetryAtUtc = null;
 
                 var updatePredicate = (Expression<Func<AudioRequest, bool>>)(x => x.Id == request.Id);
@@ -426,8 +414,6 @@ public sealed class VideoOperationRetryWorkerService(
 
             try
             {
-                bool pollingRetry = false;
-
                 if (request.CurrentStep == EventNames.VideoOperationStarted)
                 {
                     await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
@@ -487,12 +473,6 @@ public sealed class VideoOperationRetryWorkerService(
                         correlationId: request.CorrelationId,
                         eventMessage: new VideoFileUploadCompletedEto { VideoRequestId = request.Id, }
                     );
-                }
-                else if (request.CurrentStep == EventNames.VideoProviderPollingStarted)
-                {
-                    request.Status = VideoStatusNames.VideoProviderPolling;
-                    request.NextProviderPollAtUtc = DateTime.UtcNow;
-                    pollingRetry = true;
                 }
                 else
                 {
@@ -559,11 +539,7 @@ public sealed class VideoOperationRetryWorkerService(
                     exception: null
                 ));
 
-                if (!pollingRetry)
-                {
-                    request.Status = VideoStatusNames.RetryEventPublished;
-                }
-
+                request.Status = VideoStatusNames.RetryEventPublished;
                 request.NextRetryAtUtc = null;
 
                 var updatePredicate = (Expression<Func<VideoRequest, bool>>)(x => x.Id == request.Id);
