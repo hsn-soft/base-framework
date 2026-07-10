@@ -28,17 +28,12 @@ public static class EventNames
 
     public const string AnalysisContentCreated = "ANALYSIS_CONTENT_CREATED";
 
-    public const string AnalysisContentNormalizeRequestCreated = "ANALYSIS_CONTENT_NORMALIZE_REQUEST_CREATED";
-
     public const string AnalysisItemScrapingStarted = "ANALYSIS_ITEM_SCRAPING_STARTED";
     public const string AnalysisItemScrapingCompleted = "ANALYSIS_ITEM_SCRAPING_COMPLETED";
 
     public const string AnalysisItemOutlineStarted = "ANALYSIS_ITEM_OUTLINE_STARTED";
     public const string AnalysisItemOutlineCompleted = "ANALYSIS_ITEM_OUTLINE_COMPLETED";
 
-
-
-    public const string VideoGenerationApproved = "VIDEO_GENERATION_APPROVED";
     public const string VideoGenerationDataForwarded = "VIDEO_GENERATION_DATA_FORWARDED";
 
     public const string AudioRequestCreated = "AUDIO_REQUEST_CREATED";
