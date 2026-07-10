@@ -1,7 +1,7 @@
 using Hhs.AdministrationService.Domain.old;
 using Hhs.AdministrationService.Domain.PermissionDomain.Entities;
 using Hhs.Shared.Helper.Consts;
-using Hhs.Shared.Helper.Consts.Permissions;
+using Hhs.Shared.Helper.Permissions;
 
 namespace Hhs.AdministrationService.Application.Contracts.PermissionDomain.Data;
 

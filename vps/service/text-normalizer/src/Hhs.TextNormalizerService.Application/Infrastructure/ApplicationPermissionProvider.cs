@@ -1,5 +1,5 @@
 using Hhs.Shared.Contracts.Cache;
-using Hhs.Shared.Helper.Consts.Permissions;
+using Hhs.Shared.Helper.Permissions;
 
 namespace Hhs.TextNormalizerService.Application.Infrastructure;
 

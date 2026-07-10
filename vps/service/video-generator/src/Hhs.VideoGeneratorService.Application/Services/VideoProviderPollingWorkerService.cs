@@ -4,6 +4,7 @@ using Hhs.Shared.Helper;
 using Hhs.VideoGeneratorService.Application.Consts;
 using Hhs.VideoGeneratorService.Application.Providers;
 using Hhs.VideoGeneratorService.Domain.Configuration;
+using Hhs.VideoGeneratorService.Domain.Constants;
 using Hhs.VideoGeneratorService.Domain.MediaDomain.Entities;
 using Hhs.VideoGeneratorService.Domain.MediaDomain.Repositories;
 using Hhs.VideoGeneratorService.Domain.SettingDomain.Repositories;

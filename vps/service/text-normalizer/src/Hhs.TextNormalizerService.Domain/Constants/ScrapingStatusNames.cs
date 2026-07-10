@@ -1,4 +1,4 @@
-namespace Hhs.Shared.Helper;
+namespace Hhs.TextNormalizerService.Domain.Constants;
 
 public static class ScrapingStatusNames
 {

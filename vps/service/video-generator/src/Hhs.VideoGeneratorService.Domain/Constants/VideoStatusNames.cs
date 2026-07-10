@@ -1,4 +1,4 @@
-namespace Hhs.Shared.Helper;
+namespace Hhs.VideoGeneratorService.Domain.Constants;
 
 public static class VideoStatusNames
 {

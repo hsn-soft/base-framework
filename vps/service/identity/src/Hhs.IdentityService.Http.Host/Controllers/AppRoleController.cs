@@ -3,7 +3,7 @@ using Hhs.IdentityService.Application.Contracts.AppRoleDomain.Dtos.Filters;
 using Hhs.IdentityService.Application.Contracts.AppRoleDomain.Dtos.Submits;
 using Hhs.IdentityService.Application.Contracts.AppRoleDomain.Services;
 using Hhs.IdentityService.Controllers.Base;
-using Hhs.Shared.Helper.Consts.Permissions;
+using Hhs.Shared.Helper.Permissions;
 using HsnSoft.Base.Application.Dtos;
 using HsnSoft.Base.Authorization.Permissions;
 using Microsoft.AspNetCore.Mvc;

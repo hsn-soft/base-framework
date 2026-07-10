@@ -1,4 +1,4 @@
-namespace Hhs.Shared.Helper;
+namespace Hhs.ContentService.Domain.Constants;
 
 public static class MediaStatusNames
 {

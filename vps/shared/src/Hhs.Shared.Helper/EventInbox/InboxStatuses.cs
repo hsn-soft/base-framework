@@ -1,4 +1,4 @@
-namespace Hhs.Shared.Helper;
+namespace Hhs.Shared.Helper.EventInbox;
 
 public static class InboxStatuses
 {

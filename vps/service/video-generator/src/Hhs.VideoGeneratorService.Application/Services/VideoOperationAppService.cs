@@ -10,14 +10,17 @@ using Hhs.VideoGeneratorService.Application.Providers.Audio;
 using Hhs.VideoGeneratorService.Application.Providers.FileDownloader;
 using Hhs.VideoGeneratorService.Application.Providers.Video;
 using Hhs.VideoGeneratorService.Domain.Configuration;
+using Hhs.VideoGeneratorService.Domain.Constants;
 using Hhs.VideoGeneratorService.Domain.MediaDomain.Entities;
 using Hhs.VideoGeneratorService.Domain.MediaDomain.Repositories;
 using Hhs.VideoGeneratorService.Domain.SettingDomain.Repositories;
+using Hhs.VideoGeneratorService.Domain.Settings;
 using HsnSoft.Base.Domain.Models;
 using HsnSoft.Base.Logging;
 using HsnSoft.Base.Logging.Abstracts;
 using HsnSoft.Base.Text;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using MongoDB.Driver;
 
 namespace Hhs.VideoGeneratorService.Application.Services;
@@ -35,9 +38,31 @@ public sealed class VideoOperationAppService(
     RetryDelayCalculator retryDelayCalculator,
     VideoPollingSettings videoPollingSettings,
     VideoRetrySettings serviceRetrySettings,
+    VideoGenerationSettings videoGenerationSettings,
     VideoOperationRetryWorkerService videoOperationRetryWorkerService) : ApplicationServiceBase(provider)
 {
     private readonly IFrameworkLogger _logger = provider.GetRequiredService<IFrameworkLogger>();
+    private readonly IHostEnvironment _environment = provider.GetRequiredService<IHostEnvironment>();
+
+    // Development-only bypass (VideoGenerationSettings:Skip*GenerationOperation): writes a small
+    // placeholder file and hands its local path back as if a real provider had already produced
+    // and hosted the file — the rest of the pipeline (download short-circuits on a local path,
+    // then CDN upload, then completion) runs completely unchanged.
+    private async Task<string> CreateDummyProviderFileAsync(string fileName)
+    {
+        string downloadDir = systemCdnSettings.LocalDownloadPath;
+        if (_environment.IsDevelopment())
+        {
+            downloadDir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", downloadDir);
+        }
+
+        Directory.CreateDirectory(downloadDir);
+        string filePath = Path.Combine(downloadDir, fileName);
+
+        await File.WriteAllTextAsync(filePath, $"Dummy generated file (SkipGenerationOperation=true)\nCreated: {DateTime.UtcNow:O}");
+
+        return filePath;
+    }
 
     public async Task CreateVideoRequestAsync(VideoGenerationDataForwardedEto @event, Guid eventId, string correlationId, CancellationToken cancellationToken = default)
     {
@@ -315,15 +340,24 @@ public sealed class VideoOperationAppService(
                 exception: null
             ));
 
-            var response = await audioProvider.CreateAsync(new AudioCreateRequest { AudioReferenceKey = audioRequest.Id.ToString("N").ToLower(), InputText = audioRequest.InputText });
+            AudioCreateResponse response;
+            if (videoGenerationSettings.SkipAudioGenerationOperation)
+            {
+                string dummyFilePath = await CreateDummyProviderFileAsync($"{audioRequest.Id:N}.mp3");
+                response = new AudioCreateResponse { IsCompleted = true, ProviderFileUrl = dummyFilePath };
+            }
+            else
+            {
+                response = await audioProvider.CreateAsync(new AudioCreateRequest { AudioReferenceKey = audioRequest.Id.ToString("N").ToLower(), InputText = audioRequest.InputText });
 
-            if (response.IsFailed)
-                throw new ProcessException(response.ErrorMessage ?? "Audio provider create failed.", response.IsRetryable ? ProcessErrorType.Retryable : ProcessErrorType.NonRetryable);
+                if (response.IsFailed)
+                    throw new ProcessException(response.ErrorMessage ?? "Audio provider create failed.", response.IsRetryable ? ProcessErrorType.Retryable : ProcessErrorType.NonRetryable);
+            }
 
             audioRequest.AudioProviderTrackingId = response.ProviderTrackId;
             audioRequest.AudioProviderUrl = response.ProviderFileUrl;
 
-            if (audioProvider.Capabilities.ExecutionMode == ProviderExecutionMode.ImmediateResult)
+            if (videoGenerationSettings.SkipAudioGenerationOperation || audioProvider.Capabilities.ExecutionMode == ProviderExecutionMode.ImmediateResult)
             {
                 if (string.IsNullOrWhiteSpace(response.ProviderFileUrl))
                     throw new InvalidOperationException("Audio provider completed but file url is empty.");
@@ -603,15 +637,24 @@ public sealed class VideoOperationAppService(
                 validPriorStatuses: [VideoStatusNames.VideoProviderRequestStarting, VideoStatusNames.WaitingRetry, VideoStatusNames.RetryEventPublished]);
             if (claimed == 0) return;
 
-            var response = await provider.CreateAsync(new VideoCreateRequest { VideoInputJson = videoRequest.MediaInputJson, AudioCdnUrls = @event.AudioCdnUrls, RefContentType = videoRequest.RefContentType, CustomerProviderSettings = customerVpSetting.VideoGenerationProviderSettings });
+            VideoCreateResponse response;
+            if (videoGenerationSettings.SkipVideoGenerationOperation)
+            {
+                string dummyFilePath = await CreateDummyProviderFileAsync($"{videoRequest.Id:N}.mp4");
+                response = new VideoCreateResponse { IsCompleted = true, ProviderFileUrl = dummyFilePath };
+            }
+            else
+            {
+                response = await provider.CreateAsync(new VideoCreateRequest { VideoInputJson = videoRequest.MediaInputJson, AudioCdnUrls = @event.AudioCdnUrls, RefContentType = videoRequest.RefContentType, CustomerProviderSettings = customerVpSetting.VideoGenerationProviderSettings });
 
-            if (response.IsFailed)
-                throw new ProcessException(response.ErrorMessage ?? "Video provider create failed.", response.IsRetryable ? ProcessErrorType.Retryable : ProcessErrorType.NonRetryable);
+                if (response.IsFailed)
+                    throw new ProcessException(response.ErrorMessage ?? "Video provider create failed.", response.IsRetryable ? ProcessErrorType.Retryable : ProcessErrorType.NonRetryable);
+            }
 
             videoRequest.VideoProviderTrackingId = response.ProviderTrackId;
             videoRequest.VideoProviderUrl = response.ProviderFileUrl;
 
-            if (provider.Capabilities.ExecutionMode == ProviderExecutionMode.ImmediateResult)
+            if (videoGenerationSettings.SkipVideoGenerationOperation || provider.Capabilities.ExecutionMode == ProviderExecutionMode.ImmediateResult)
             {
                 if (string.IsNullOrWhiteSpace(response.ProviderFileUrl))
                     throw new InvalidOperationException("Video provider completed but file url is empty.");

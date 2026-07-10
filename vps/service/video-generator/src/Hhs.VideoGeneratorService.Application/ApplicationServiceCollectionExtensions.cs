@@ -24,7 +24,9 @@ public static class ApplicationServiceCollectionExtensions
     {
         services.AddAutoMapper(typeof(ApplicationAutoMapperProfile));
 
-        services.Configure<VideoGenerationSettings>(configuration.GetSection(nameof(VideoGenerationSettings)));
+        var videoGenerationSettings = configuration.GetSection(nameof(VideoGenerationSettings))
+            .Get<VideoGenerationSettings>() ?? new VideoGenerationSettings();
+        services.AddSingleton(videoGenerationSettings);
         services.AddSingleton<IServicePermissionProvider, ApplicationPermissionProvider>();
 
         // Must be Scoped or Transient => Cannot consume any scoped service

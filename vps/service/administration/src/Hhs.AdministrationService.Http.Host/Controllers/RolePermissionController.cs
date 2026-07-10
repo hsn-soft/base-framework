@@ -2,7 +2,7 @@ using Hhs.AdministrationService.Application.Contracts.PermissionDomain.Dtos;
 using Hhs.AdministrationService.Application.Contracts.PermissionDomain.Dtos.Filters;
 using Hhs.AdministrationService.Application.Contracts.PermissionDomain.Services;
 using Hhs.AdministrationService.Controllers.Base;
-using Hhs.Shared.Helper.Consts.Permissions;
+using Hhs.Shared.Helper.Permissions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

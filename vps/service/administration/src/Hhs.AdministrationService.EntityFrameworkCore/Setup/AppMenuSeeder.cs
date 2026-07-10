@@ -2,7 +2,7 @@ using Hhs.AdministrationService.Domain.Enums;
 using Hhs.AdministrationService.Domain.MenuDomain.Entities;
 using Hhs.AdministrationService.Domain.PermissionDomain.Entities;
 using Hhs.AdministrationService.EntityFrameworkCore.Context;
-using Hhs.Shared.Helper.Consts.Permissions;
+using Hhs.Shared.Helper.Permissions;
 using Hhs.Shared.Helper.Utils;
 using HsnSoft.Base.Logging.Abstracts;
 using HsnSoft.Base.Text;

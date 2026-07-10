@@ -1,6 +1,6 @@
 using HsnSoft.Base.Reflection;
 
-namespace Hhs.Shared.Helper.Consts.Permissions;
+namespace Hhs.Shared.Helper.Permissions;
 
 public static class FeedRAdManagerServicePermissions
 {
