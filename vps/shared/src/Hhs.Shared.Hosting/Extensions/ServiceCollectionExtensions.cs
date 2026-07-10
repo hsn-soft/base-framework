@@ -2,6 +2,7 @@
 using System.Security.Cryptography;
 using Hhs.Shared.Hosting.EventHandlers;
 using Hhs.Shared.Hosting.Exceptions;
+using Hhs.Shared.Hosting.Workers;
 using HsnSoft.Base;
 using HsnSoft.Base.AspNetCore;
 using HsnSoft.Base.AspNetCore.Logging;
@@ -64,6 +65,8 @@ public static class ServiceCollectionExtensions
 
             services.AddSingleton<IAppConsoleLogger, AppLogger>();
             services.AddSingleton<IFrameworkLogger, FrameworkLogger>();
+            services.AddSingleton<IRefreshableLogger>(sp => (IRefreshableLogger)sp.GetRequiredService<IFrameworkLogger>());
+            services.AddHostedService<PersistentLoggerSinkRefreshWorker>();
 
             services.AddBaseAspNetCoreJsonLocalization();
             services.AddSingleton<IApiExceptionMapper, ApiExceptionMapper>();
@@ -100,6 +103,7 @@ public static class ServiceCollectionExtensions
         {
             services.AddSingleton<ITraceAccesor, HttpContextTraceAccessor>();
             services.AddSingleton<IRequestResponseLogger, RequestResponseLogger>();
+            services.AddSingleton<IRefreshableLogger>(sp => (IRefreshableLogger)sp.GetRequiredService<IRequestResponseLogger>());
 
             return services;
         }
@@ -286,6 +290,7 @@ public static class ServiceCollectionExtensions
             services.AddSingleton<ICurrentPrincipalAccessor, HttpContextCurrentPrincipalAccessor>();
             services.AddSingleton<ITraceAccesor, HttpContextTraceAccessor>();
             services.AddSingleton<IEventBusLogger, EventBusLogger>();
+            services.AddSingleton<IRefreshableLogger>(sp => (IRefreshableLogger)sp.GetRequiredService<IEventBusLogger>());
 
             services.AddSingleton<IRabbitMqPersistentConnection, RabbitMqPersistentConnection>();
             services.AddSingleton<IEventBusSubscriptionManager, InMemoryEventBusSubscriptionManager>();

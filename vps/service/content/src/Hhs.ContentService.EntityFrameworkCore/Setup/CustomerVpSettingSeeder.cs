@@ -289,11 +289,11 @@ public static class CustomerVpSettingSeeder
         ushort dailyTrendContentWaitStatisticHour = 2,
         ushort dailyTrendContentMinVisitCount = 100,
         // analysis-video
-        ushort dailyAnalysisVideoGenerationLimit = 1,
+        ushort dailyAnalysisVideoGenerationLimit = 0,
         ushort dailyAnalysisVideoGenerationStartedUtcHour = 6,
         ushort dailyAnalysisContentWaitStatisticHour = 2,
         ushort dailyAnalysisContentMinVisitCount = 100,
-        ushort dailyAnalysisVideoItemLimit = 0
+        ushort dailyAnalysisVideoItemLimit = 5
     )
     {
         string scopeKey = ScopeKeyHelper.Generate(customerId, ProductTypes.VideoPlatform);

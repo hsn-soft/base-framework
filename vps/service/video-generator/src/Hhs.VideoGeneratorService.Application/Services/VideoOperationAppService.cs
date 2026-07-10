@@ -57,7 +57,7 @@ public sealed class VideoOperationAppService(
         }
 
         Directory.CreateDirectory(downloadDir);
-        string filePath = Path.Combine(downloadDir, fileName);
+        string filePath = Path.Combine(downloadDir, "dummy_media_"+fileName);
 
         await File.WriteAllTextAsync(filePath, $"Dummy generated file (SkipGenerationOperation=true)\nCreated: {DateTime.UtcNow:O}");
 
