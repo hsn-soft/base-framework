@@ -18,6 +18,7 @@ public static class Facilities
     public const string AudioProviderRequestStarted = "AUDIO_PROVIDER_REQUEST_STARTED";
     public const string AudioProviderRequestCompleted = "AUDIO_PROVIDER_REQUEST_COMPLETED";
 
+    public const string AudioProviderPollingStarted = "AUDIO_PROVIDER_POLLING_STARTED";
     public const string AudioProviderPolling = "AUDIO_PROVIDER_POLLING";
 
     public const string AudioFileDownloadStarted = "AUDIO_FILE_DOWNLOAD_STARTED";
@@ -30,6 +31,7 @@ public static class Facilities
     public const string VideoProviderRequestStarted = "VIDEO_PROVIDER_REQUEST_STARTED";
     public const string VideoProviderRequestCompleted = "VIDEO_PROVIDER_REQUEST_COMPLETED";
 
+    public const string VideoProviderPollingStarted = "VIDEO_PROVIDER_POLLING_STARTED";
     public const string VideoProviderPolling = "VIDEO_PROVIDER_POLLING";
 
     public const string VideoFileDownloadStarted = "VIDEO_FILE_DOWNLOAD_STARTED";

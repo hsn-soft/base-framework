@@ -19,6 +19,7 @@ public static class Facilities
     public const string OutlineProviderRequestStarted = "OUTLINE_PROVIDER_REQUEST_STARTED";
     public const string OutlineProviderRequestCompleted = "OUTLINE_PROVIDER_REQUEST_COMPLETED";
 
+    public const string OutlineProviderPollingStarted = "OUTLINE_PROVIDER_POLLING_STARTED";
     public const string OutlineProviderPolling = "OUTLINE_PROVIDER_POLLING";
 
     public const string OutlineCompleted = "OUTLINE_COMPLETED";

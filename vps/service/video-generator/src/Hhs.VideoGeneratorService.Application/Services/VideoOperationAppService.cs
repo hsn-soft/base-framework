@@ -412,7 +412,7 @@ public sealed class VideoOperationAppService(
                     audioRequest.VideoRequestId,
                     audioRequest.NextProviderPollAtUtc
                 },
-                facility: EventNames.AudioProviderPollingStarted,
+                facility: Facilities.AudioProviderPollingStarted,
                 correlationId: audioRequest.CorrelationId,
                 exception: null
             ));
@@ -706,7 +706,7 @@ public sealed class VideoOperationAppService(
                     RefKey = videoRequest.RefContentId,
                     videoRequest.NextProviderPollAtUtc
                 },
-                facility: EventNames.VideoProviderPollingStarted,
+                facility: Facilities.VideoProviderPollingStarted,
                 correlationId: videoRequest.CorrelationId,
                 exception: null
             ));

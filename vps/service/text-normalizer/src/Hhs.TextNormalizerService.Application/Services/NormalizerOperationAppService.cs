@@ -803,7 +803,7 @@ public sealed class NormalizerOperationAppService(
                     RefKey = request.CustomerContentId,
                     request.NextOutlinePollAtUtc
                 },
-                facility: EventNames.OutlineProviderPollingStarted,
+                facility: Facilities.OutlineProviderPollingStarted,
                 correlationId: request.CorrelationId,
                 exception: null
             ));
@@ -828,7 +828,7 @@ public sealed class NormalizerOperationAppService(
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: EventNames.OutlineProviderPollingStarted,
             reference: new { Type = nameof(AnalysisNormalizedItem), Key = @event.CustomerContentIdForItem, RefType = nameof(AnalysisContentNormalizedRequest), RefKey = @event.RefNormalizedRequestId },
-            facility: EventNames.OutlineProviderPollingStarted,
+            facility: Facilities.OutlineProviderPollingStarted,
             correlationId: correlationId,
             exception: null
         ));
