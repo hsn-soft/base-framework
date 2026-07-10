@@ -36,6 +36,13 @@ public static class Milestones
     public const string CustomerContentVideoGenerationSkippedEarlyTime = "CUSTOMER_CONTENT_VIDEO_GENERATION_SKIPPED_EARLY_TIME";
     public const string CustomerContentVideoGenerationSkippedDailyLimit = "CUSTOMER_CONTENT_VIDEO_GENERATION_SKIPPED_DAILY_LIMIT";
 
+    public const string AnalysisContentVideoGenerationSkippedEarlyTime = "ANALYSIS_CONTENT_VIDEO_GENERATION_SKIPPED_EARLY_TIME";
+    public const string AnalysisContentVideoGenerationSkippedDailyLimit = "ANALYSIS_CONTENT_VIDEO_GENERATION_SKIPPED_DAILY_LIMIT";
+    public const string AnalysisContentVideoGenerationApproved = "ANALYSIS_CONTENT_VIDEO_GENERATION_APPROVED";
+
+    public const string TrendVideoGenerationSkippedEarlyTime = "TREND_VIDEO_GENERATION_SKIPPED_EARLY_TIME";
+    public const string TrendVideoGenerationSkippedDailyLimit = "TREND_VIDEO_GENERATION_SKIPPED_DAILY_LIMIT";
+    public const string TrendVideoGenerationApproved = "TREND_VIDEO_GENERATION_APPROVED";
 
     public const string AnalysisContentCreated = "ANALYSIS_CONTENT_CREATED";
 

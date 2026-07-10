@@ -9,10 +9,12 @@ using Hhs.ContentService.Domain.ContentDomain.Repositories;
 using Hhs.ContentService.Domain.Enums;
 using Hhs.ContentService.Domain.SettingDomain.Repositories;
 using Hhs.ContentService.Domain.Settings;
+using Hhs.Shared.Helper;
 using Hhs.Shared.Helper.Utils;
 using HsnSoft.Base;
 using HsnSoft.Base.Application.Dtos;
 using HsnSoft.Base.Domain.Models;
+using HsnSoft.Base.Logging;
 using HsnSoft.Base.Logging.Abstracts;
 using HsnSoft.Base.Reflection;
 using HsnSoft.Base.Text;
@@ -188,8 +190,14 @@ public sealed class CustomerContentAppService(
         // Check client video generation started settings
         if (DateTime.UtcNow.Hour < customerVpSetting.DailyTrendVideoGenerationStartedUtcHour)
         {
-            _logger.LogWarning("Client[{ClientDomain}] | {OperationStatus} => {QueryResult}",
-                customerVpSetting.DomainName, "SKIPPED", "CUSTOMER_CONTENT_VIDEO_GENERATION_SKIPPED_EARLY_TIME");
+            _logger.FrameworkInfoLog(LogHelper.Generate(
+                message: Milestones.TrendVideoGenerationSkippedEarlyTime,
+                reference: new { customerVpSetting.ScopeKey, Type = "DomainName", Key = customerVpSetting.DomainName },
+                facility: Milestones.TrendVideoGenerationSkippedEarlyTime,
+                correlationId: correlationId,
+                exception: null
+            ));
+
             _logger.LogInformation("Client[{ClientDomain}] | {OperationStatus}", customerVpSetting.DomainName, "END");
             return;
         }
@@ -200,8 +208,8 @@ public sealed class CustomerContentAppService(
 
         long clientDailyTrendVideoGenerationLimit = customerVpSetting.DailyTrendVideoGenerationLimit - clientDailyTrendVideoHistoryCount;
         var clientQuoteResult = clientDailyTrendVideoGenerationLimit <= 0
-            ? new KeyValuePair<bool, string>(false, "CUSTOMER_CONTENT_VIDEO_GENERATION_SKIPPED_DAILY_LIMIT")
-            : new KeyValuePair<bool, string>(true, "CUSTOMER_CONTENT_VIDEO_GENERATION_APPROVED");
+            ? new KeyValuePair<bool, string>(false, Milestones.TrendVideoGenerationSkippedDailyLimit)
+            : new KeyValuePair<bool, string>(true, Milestones.TrendVideoGenerationApproved);
         if (clientQuoteResult.Key)
         {
             var contentIds = await customerContentRepository.GetCustomerDailyTrendContentIdsAsync

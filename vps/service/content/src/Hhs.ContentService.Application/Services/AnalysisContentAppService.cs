@@ -5,6 +5,7 @@ using Hhs.ContentService.Application.Contracts.DashboardDomain.Dtos;
 using Hhs.ContentService.Application.Contracts.Events;
 using Hhs.ContentService.Domain.ContentDomain.Entities;
 using Hhs.ContentService.Domain.ContentDomain.Repositories;
+using Hhs.ContentService.Domain.Enums;
 using Hhs.ContentService.Domain.SettingDomain.Repositories;
 using Hhs.Shared.Contracts.Events;
 using Hhs.Shared.Helper;
@@ -99,9 +100,9 @@ public sealed class AnalysisContentAppService(
         if (DateTime.UtcNow.Hour < customerVpSetting.DailyAnalysisVideoGenerationStartedUtcHour)
         {
             _logger.FrameworkInfoLog(LogHelper.Generate(
-                message: $"ANALYSIS_CONTENT_VIDEO_GENERATION_SKIPPED_EARLY_TIME",
+                message: Milestones.AnalysisContentVideoGenerationSkippedEarlyTime,
                 reference: new { customerVpSetting.ScopeKey, Type = "DomainName", Key = customerVpSetting.DomainName },
-                facility: "ANALYSIS_CONTENT_VIDEO_GENERATION_SKIPPED_EARLY_TIME",
+                facility: Milestones.AnalysisContentVideoGenerationSkippedEarlyTime,
                 correlationId: correlationId,
                 exception: null
             ));
@@ -113,11 +114,12 @@ public sealed class AnalysisContentAppService(
         var analysisDate = DateTime.UtcNow.Date;
 
         // check client Analysis video generation quote available
-        long clientDailyAnalysisContentCount = await analysisContentRepository.GetCountAsync(x => x.ScopeKey == customerVpSetting.ScopeKey && x.AnalysisDate == analysisDate);
-        long clientDailyAnalysisVideoGenerationLimit = customerVpSetting.DailyAnalysisVideoGenerationLimit - clientDailyAnalysisContentCount;
-        var clientQuoteResult = clientDailyAnalysisVideoGenerationLimit <= 0
-            ? new KeyValuePair<bool, string>(false, "ANALYSIS_CONTENT_VIDEO_GENERATION_SKIPPED_DAILY_LIMIT")
-            : new KeyValuePair<bool, string>(true, "ANALYSIS_CONTENT_VIDEO_GENERATION_APPROVED");
+        long clientDailyAnalysisVideoGenerationHistoryCount = await contentVideoGenerationLimitRepository.GetCustomerVideoHistoryCountAsync(customerVpSetting.ScopeKey,
+            analysisDate, VideoGenerationTypes.AnalysisVideoGeneration);
+
+        var clientQuoteResult = customerVpSetting.DailyAnalysisVideoGenerationLimit - clientDailyAnalysisVideoGenerationHistoryCount <= 0
+            ? new KeyValuePair<bool, string>(false, Milestones.AnalysisContentVideoGenerationSkippedDailyLimit)
+            : new KeyValuePair<bool, string>(true, Milestones.AnalysisContentVideoGenerationApproved);
         if (clientQuoteResult.Key)
         {
             List<CustomerContent> selectedContents;
