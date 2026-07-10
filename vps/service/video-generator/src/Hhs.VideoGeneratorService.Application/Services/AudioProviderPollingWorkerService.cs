@@ -98,7 +98,7 @@ public sealed class AudioProviderPollingWorkerService(
                 var providerKeyResult = await customerVpSettingRepository.GetAudioProviderKeyByScopeKeyAsync(request.ScopeKey, cancellationToken);
                 if (!providerKeyResult.Key)
                 {
-                    throw new InvalidOperationException($"Provider key value is unknown. Scope key: {request.ScopeKey}");
+                    throw new InvalidOperationException($"{ErrorMessages.ProviderKeyValueUnknown} {request.ScopeKey}");
                 }
 
                 var provider = audioProviderResolver.Resolve(providerKeyResult.Value);
@@ -208,7 +208,7 @@ public sealed class AudioProviderPollingWorkerService(
                 }
 
                 if (string.IsNullOrWhiteSpace(status.ProviderFileUrl))
-                    throw new InvalidOperationException("Audio provider completed but file url is empty.");
+                    throw new InvalidOperationException(ErrorMessages.AudioProviderFailedNoUrl);
 
                 // set provider file url
                 request.AudioProviderUrl = status.ProviderFileUrl;

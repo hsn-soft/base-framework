@@ -427,7 +427,7 @@ public sealed class VideoOperationRetryWorkerService(
                     var providerKeyResult = await customerVpSettingRepository.GetVideoProviderKeyByScopeKeyAsync(request.ScopeKey, cancellationToken);
                     if (!providerKeyResult.Key)
                     {
-                        throw new InvalidOperationException($"Provider key value is unknown. Scope key: {request.ScopeKey}");
+                        throw new InvalidOperationException($"{ErrorMessages.ProviderKeyValueUnknown} {request.ScopeKey}");
                     }
 
                     var videoProvider = videoProviderResolver.Resolve(providerKeyResult.Value);

@@ -265,7 +265,7 @@ public sealed class NormalizerOperationRetryWorkerService(
                 else if (request.CurrentStep == EventNames.OutlineProviderRequestStarted)
                 {
                     if (request.ScrapingResult is null)
-                        throw new InvalidOperationException("ScrapingResult is required.");
+                        throw new InvalidOperationException(ErrorMessages.ScrapingResultRequired);
 
                     (string outlineInputText, string outlineInputPrompt) = await normalizerOperationAppService.BuildCustomerOutlineInputAsync(request, cancellationToken);
 
@@ -438,7 +438,7 @@ public sealed class NormalizerOperationRetryWorkerService(
                     else if (item.CurrentStep == EventNames.OutlineProviderRequestStarted)
                     {
                         if (item.ScrapingResult is null)
-                            throw new InvalidOperationException("ScrapingResult is required.");
+                            throw new InvalidOperationException(ErrorMessages.ScrapingResultRequired);
 
                         (string outlineInputText, string outlineInputPrompt) = await normalizerOperationAppService.BuildAnalysisItemOutlineInputAsync(request, item, cancellationToken);
 

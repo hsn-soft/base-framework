@@ -14,19 +14,19 @@ public enum VideoAudioInputMode
 
 public sealed class OutlineProviderCapabilities
 {
-    public string ProviderKey { get; set; } = default!;
+    public string ProviderKey { get; set; } = string.Empty;
     public ProviderExecutionMode ExecutionMode { get; set; }
 }
 
 public sealed class AudioProviderCapabilities
 {
-    public string ProviderKey { get; set; } = default!;
+    public string ProviderKey { get; set; } = string.Empty;
     public ProviderExecutionMode ExecutionMode { get; set; }
 }
 
 public sealed class VideoProviderCapabilities
 {
-    public string ProviderKey { get; set; } = default!;
+    public string ProviderKey { get; set; } = string.Empty;
     public ProviderExecutionMode ExecutionMode { get; set; }
     public VideoAudioInputMode AudioInputMode { get; set; }
 }

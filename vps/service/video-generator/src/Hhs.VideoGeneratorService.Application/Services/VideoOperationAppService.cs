@@ -81,11 +81,10 @@ public sealed class VideoOperationAppService(
         var videoProviderKeyResult = await customerVpSettingRepository.GetVideoProviderKeyByScopeKeyAsync(@event.ScopeKey, cancellationToken);
         if (!videoProviderKeyResult.Key)
         {
-            throw new InvalidOperationException($"Provider key value is unknown. Scope key: {@event.ScopeKey}");
+            throw new InvalidOperationException($"{ErrorMessages.ProviderKeyValueUnknown} {@event.ScopeKey}");
         }
 
         var videoProvider = videoProviderResolver.Resolve(videoProviderKeyResult.Value);
-        if (videoProvider is null) throw new InvalidOperationException("Video Provider not found.");
 
         string audioProviderKey = null;
         if (videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.AudioUrlListRequired)
@@ -93,7 +92,7 @@ public sealed class VideoOperationAppService(
             var audioProviderKeyResult = await customerVpSettingRepository.GetAudioProviderKeyByScopeKeyAsync(@event.ScopeKey, cancellationToken);
             if (!audioProviderKeyResult.Key)
             {
-                throw new InvalidOperationException($"Provider key value is unknown. Scope key: {@event.ScopeKey}");
+                throw new InvalidOperationException($"{ErrorMessages.ProviderKeyValueUnknown} {@event.ScopeKey}");
             }
 
             audioProviderKey = audioProviderKeyResult.Value;
@@ -199,10 +198,9 @@ public sealed class VideoOperationAppService(
                 return;
             }
 
-            if (videoRequest.AudioProviderKey is null) throw new InvalidOperationException("AudioProviderKey is required.");
+            if (videoRequest.AudioProviderKey is null) throw new InvalidOperationException(ErrorMessages.AudioProviderKeyRequired);
 
             var audioProvider = audioProviderResolver.Resolve(videoRequest.AudioProviderKey);
-            if (audioProvider is null) throw new InvalidOperationException("Audio Provider not found.");
 
             var audioItems = ExtractAudioItems(videoRequest.MediaInputJson);
 
@@ -360,7 +358,7 @@ public sealed class VideoOperationAppService(
             if (videoGenerationSettings.SkipAudioGenerationOperation || audioProvider.Capabilities.ExecutionMode == ProviderExecutionMode.ImmediateResult)
             {
                 if (string.IsNullOrWhiteSpace(response.ProviderFileUrl))
-                    throw new InvalidOperationException("Audio provider completed but file url is empty.");
+                    throw new InvalidOperationException(ErrorMessages.AudioProviderFailedNoUrl);
 
                 audioRequest.Status = AudioStatusNames.AudioProviderCompleted;
                 audioRequest.CurrentStep = EventNames.AudioProviderCompleted;
@@ -393,7 +391,7 @@ public sealed class VideoOperationAppService(
             }
 
             if (string.IsNullOrWhiteSpace(response.ProviderTrackId))
-                throw new InvalidOperationException("Audio provider track id is required.");
+                throw new InvalidOperationException(ErrorMessages.AudioProviderTrackIdRequired);
 
             audioRequest.Status = AudioStatusNames.AudioProviderPolling;
             audioRequest.CurrentStep = EventNames.AudioProviderPollingStarted;
@@ -471,7 +469,7 @@ public sealed class VideoOperationAppService(
             if (claimed == 0) return;
 
             if (string.IsNullOrWhiteSpace(audioRequest.AudioProviderUrl))
-                throw new InvalidOperationException("Audio provider url is required.");
+                throw new InvalidOperationException(ErrorMessages.AudioProviderUrlRequired);
 
             (bool success, string audioLocalPath, bool isRetryable) = await remoteFileDownloader.DownloadAsync(audioRequest.AudioProviderUrl);
             if (!success) throw new ProcessException($"Failed to download audio file: {audioLocalPath}", isRetryable ? ProcessErrorType.Retryable : ProcessErrorType.NonRetryable);
@@ -547,20 +545,19 @@ public sealed class VideoOperationAppService(
             ));
 
             if (string.IsNullOrWhiteSpace(audioRequest.AudioLocalPath))
-                throw new InvalidOperationException("Audio local path is required.");
+                throw new InvalidOperationException(ErrorMessages.AudioLocalPathRequired);
 
             if (!File.Exists(audioRequest.AudioLocalPath))
-                throw new InvalidOperationException("Audio local file is not exist: " + audioRequest.AudioLocalPath);
+                throw new InvalidOperationException($"{ErrorMessages.AudioLocalFileNotExist} {audioRequest.AudioLocalPath}");
 
             // Upload file to CDN using resolved CDN provider
             await using var fileStream = File.OpenRead(audioRequest.AudioLocalPath);
             string fileName = Path.GetFileName(audioRequest.AudioLocalPath);
 
             if (string.IsNullOrWhiteSpace(systemCdnSettings.Selected))
-                throw new InvalidOperationException("Cdn Provider Key is required.");
+                throw new InvalidOperationException(ErrorMessages.CdnProviderKeyRequired);
 
             var cdnProvider = cdnProviderResolver.Resolve(systemCdnSettings.Selected);
-            if (cdnProvider is null) throw new InvalidOperationException("Cdn Provider not found.");
 
             var uploadResult = await cdnProvider.UploadAsync(
                 fileStream,
@@ -623,7 +620,7 @@ public sealed class VideoOperationAppService(
         var customerVpSetting = await customerVpSettingRepository.GetFirstOrDefaultAsync(x => x.ScopeKey == videoRequest.ScopeKey, cancellationToken: cancellationToken);
         if (customerVpSetting is null || string.IsNullOrWhiteSpace(customerVpSetting.VideoProviderKey))
         {
-            throw new InvalidOperationException($"Provider key value is unknown. Scope key: {videoRequest.ScopeKey}");
+            throw new InvalidOperationException($"{ErrorMessages.ProviderKeyValueUnknown} {videoRequest.ScopeKey}");
         }
 
         var provider = videoProviderResolver.Resolve(customerVpSetting.VideoProviderKey);
@@ -657,7 +654,7 @@ public sealed class VideoOperationAppService(
             if (videoGenerationSettings.SkipVideoGenerationOperation || provider.Capabilities.ExecutionMode == ProviderExecutionMode.ImmediateResult)
             {
                 if (string.IsNullOrWhiteSpace(response.ProviderFileUrl))
-                    throw new InvalidOperationException("Video provider completed but file url is empty.");
+                    throw new InvalidOperationException(ErrorMessages.VideoProviderFailedNoUrl);
 
                 videoRequest.Status = VideoStatusNames.VideoProviderCompleted;
                 videoRequest.CurrentStep = EventNames.VideoProviderCompleted;
@@ -689,7 +686,7 @@ public sealed class VideoOperationAppService(
             }
 
             if (string.IsNullOrWhiteSpace(response.ProviderTrackId))
-                throw new InvalidOperationException("Video provider track id is required.");
+                throw new InvalidOperationException(ErrorMessages.VideoProviderTrackIdRequired);
 
             videoRequest.Status = VideoStatusNames.VideoProviderPolling;
             videoRequest.CurrentStep = EventNames.VideoProviderPollingStarted;
@@ -843,7 +840,7 @@ public sealed class VideoOperationAppService(
             ));
 
             if (string.IsNullOrWhiteSpace(videoRequest.VideoLocalPath) || !File.Exists(videoRequest.VideoLocalPath))
-                throw new InvalidOperationException("Video Local Path is required.");
+                throw new InvalidOperationException(ErrorMessages.VideoLocalPathRequired);
 
             // Upload file to CDN using resolved CDN provider
             await using var fileStream = File.OpenRead(videoRequest.VideoLocalPath);

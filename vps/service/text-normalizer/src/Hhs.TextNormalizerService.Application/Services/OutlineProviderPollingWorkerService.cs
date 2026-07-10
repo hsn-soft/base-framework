@@ -110,7 +110,7 @@ public sealed class OutlineProviderPollingWorkerService(
                 var providerKeyResult = await customerVpSettingRepository.GetOutlineProviderKeyByScopeKeyAsync(request.ScopeKey, cancellationToken);
                 if (!providerKeyResult.Key)
                 {
-                    throw new InvalidOperationException($"Provider key value is unknown. Scope key: {request.ScopeKey}");
+                    throw new InvalidOperationException($"{ErrorMessages.ProviderKeyValueUnknown} {request.ScopeKey}");
                 }
 
                 var outlineProvider = outlineProviderResolver.Resolve(providerKeyResult.Value);
@@ -225,7 +225,7 @@ public sealed class OutlineProviderPollingWorkerService(
                 }
 
                 if (string.IsNullOrWhiteSpace(status.OutlinedData))
-                    throw new InvalidOperationException("Outline provider completed but script is empty.");
+                    throw new InvalidOperationException(ErrorMessages.OutlineProviderFailedEmptyScript);
 
                 request.OutlinePollingCount++;
                 request.NextOutlinePollAtUtc = null;
@@ -398,7 +398,7 @@ public sealed class OutlineProviderPollingWorkerService(
                     var providerKeyResult = await customerVpSettingRepository.GetOutlineProviderKeyByScopeKeyAsync(request.ScopeKey, cancellationToken);
                     if (!providerKeyResult.Key)
                     {
-                        throw new InvalidOperationException($"Provider key value is unknown. Scope key: {request.ScopeKey}");
+                        throw new InvalidOperationException($"{ErrorMessages.ProviderKeyValueUnknown} {request.ScopeKey}");
                     }
 
                     var outlineProvider = outlineProviderResolver.Resolve(providerKeyResult.Value);
@@ -498,7 +498,7 @@ public sealed class OutlineProviderPollingWorkerService(
                     }
 
                     if (string.IsNullOrWhiteSpace(status.OutlinedData))
-                        throw new InvalidOperationException("Outline provider completed but script is empty.");
+                        throw new InvalidOperationException(ErrorMessages.OutlineProviderFailedEmptyScript);
 
                     var completedUpdate = Builders<AnalysisContentNormalizedRequest>.Update
                         .Inc($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlinePollingCount)}", 1)

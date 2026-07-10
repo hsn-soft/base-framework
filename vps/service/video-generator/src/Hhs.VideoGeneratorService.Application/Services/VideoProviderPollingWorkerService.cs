@@ -97,7 +97,7 @@ public sealed class VideoProviderPollingWorkerService(
                 var providerKeyResult = await customerVpSettingRepository.GetVideoProviderKeyByScopeKeyAsync(request.ScopeKey, cancellationToken);
                 if (!providerKeyResult.Key)
                 {
-                    throw new InvalidOperationException($"Provider key value is unknown. Scope key: {request.ScopeKey}");
+                    throw new InvalidOperationException($"{ErrorMessages.ProviderKeyValueUnknown} {request.ScopeKey}");
                 }
 
                 var provider = videoProviderResolver.Resolve(providerKeyResult.Value);
@@ -204,7 +204,7 @@ public sealed class VideoProviderPollingWorkerService(
                 }
 
                 if (string.IsNullOrWhiteSpace(status.ProviderFileUrl))
-                    throw new InvalidOperationException("Video provider completed but file url is empty.");
+                    throw new InvalidOperationException(ErrorMessages.VideoProviderFailedNoUrl);
 
                 // set provider file url
                 request.VideoProviderUrl = status.ProviderFileUrl;

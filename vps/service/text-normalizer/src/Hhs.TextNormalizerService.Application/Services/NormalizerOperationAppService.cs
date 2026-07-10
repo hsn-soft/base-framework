@@ -223,7 +223,7 @@ public sealed class NormalizerOperationAppService(
 
             if (result == null)
             {
-                throw new ProcessException("SCRAPING DATA NOT FOUND", ProcessErrorType.NonRetryable);
+                throw new ProcessException(ErrorMessages.ScrapingDataNotFound, ProcessErrorType.NonRetryable);
             }
 
             if (result.HasError)
@@ -237,7 +237,7 @@ public sealed class NormalizerOperationAppService(
                   || !string.IsNullOrWhiteSpace(result.Spot)
                   || !string.IsNullOrWhiteSpace(result.Details)))
             {
-                throw new ProcessException("SCRAPING DATA IS EMPTY", ProcessErrorType.NonRetryable);
+                throw new ProcessException(ErrorMessages.ScrapingDataEmpty, ProcessErrorType.NonRetryable);
             }
 
             request.Status = NormalizeStatusNames.ScrapingCompleted;
@@ -363,7 +363,7 @@ public sealed class NormalizerOperationAppService(
         try
         {
             if (request.ScrapingResult is null)
-                throw new InvalidOperationException("OUTLINE SCRAPING DATA UNKNOWN");
+                throw new InvalidOperationException(ErrorMessages.OutlineScrapingDataUnknown);
 
             if (request.ScrapingResult.ReleaseTimeUtc != null
                 && request.ScrapingResult.ReleaseTimeUtc < DateTime.UtcNow.AddDays(-3)
@@ -576,7 +576,7 @@ public sealed class NormalizerOperationAppService(
 
             if (result == null)
             {
-                throw new ProcessException("SCRAPING DATA NOT FOUND", ProcessErrorType.NonRetryable);
+                throw new ProcessException(ErrorMessages.ScrapingDataNotFound, ProcessErrorType.NonRetryable);
             }
 
             if (result.HasError)
@@ -590,7 +590,7 @@ public sealed class NormalizerOperationAppService(
                   || !string.IsNullOrWhiteSpace(result.Spot)
                   || !string.IsNullOrWhiteSpace(result.Details)))
             {
-                throw new ProcessException("SCRAPING DATA IS EMPTY", ProcessErrorType.NonRetryable);
+                throw new ProcessException(ErrorMessages.ScrapingDataEmpty, ProcessErrorType.NonRetryable);
             }
 
             await UpdateAnalysisItemAsync(
@@ -713,7 +713,7 @@ public sealed class NormalizerOperationAppService(
             var providerKeyResult = await customerVpSettingRepository.GetOutlineProviderKeyByScopeKeyAsync(@event.ScopeKey, cancellationToken);
             if (!providerKeyResult.Key)
             {
-                throw new InvalidOperationException($"Provider key value is unknown. Scope key: {@event.ScopeKey}");
+                throw new InvalidOperationException($"{ErrorMessages.ProviderKeyValueUnknown} {@event.ScopeKey}");
             }
 
             var outlineProvider = outlineProviderResolver.Resolve(providerKeyResult.Value);
@@ -745,7 +745,7 @@ public sealed class NormalizerOperationAppService(
                 || !customerVpSetting.IsOutlineOperationActive)
             {
                 if (string.IsNullOrWhiteSpace(response.OutlinedData))
-                    throw new InvalidOperationException("OUTLINE RESPONSE CONTENT DATA UNKNOWN");
+                    throw new InvalidOperationException(ErrorMessages.OutlineResponseDataUnknown);
 
                 _logger.FrameworkInfoLog(LogHelper.Generate(
                     message: EventNames.OutlineProviderRequestCompleted,
@@ -763,7 +763,7 @@ public sealed class NormalizerOperationAppService(
             }
 
             if (string.IsNullOrWhiteSpace(response.ProviderTrackId))
-                throw new InvalidOperationException("ProviderTrackId is required for async outline provider.");
+                throw new InvalidOperationException(ErrorMessages.OutlineProviderTrackIdRequiredAsync);
 
             await SaveOutlinePollingStateAsync(@event, response.ProviderTrackId, correlationId);
         }
@@ -775,7 +775,7 @@ public sealed class NormalizerOperationAppService(
 
     private async Task SaveOutlinePollingStateAsync(OutlineProviderRequestStartedEto @event, string providerTrackId, [CanBeNull] string correlationId = null)
     {
-        if (@event.RefContentType == ContentType.None) throw new InvalidOperationException("RefContentType is required.");
+        if (@event.RefContentType == ContentType.None) throw new InvalidOperationException(ErrorMessages.RefContentTypeRequired);
 
         if (@event.RefContentType == ContentType.CustomerContent)
         {
@@ -811,7 +811,7 @@ public sealed class NormalizerOperationAppService(
         }
 
         if (@event.CustomerContentIdForItem is null)
-            throw new InvalidOperationException("CustomerContentIdForItem is required for analysis outline polling.");
+            throw new InvalidOperationException(ErrorMessages.CustomerContentIdForItemRequiredForOutlinePolling);
 
         await UpdateAnalysisItemAsync(
             @event.RefNormalizedRequestId,
@@ -836,7 +836,7 @@ public sealed class NormalizerOperationAppService(
 
     private async Task HandleOutlineProviderRequestExceptionAsync(OutlineProviderRequestStartedEto @event, Exception ex)
     {
-        if (@event.RefContentType == ContentType.None) throw new InvalidOperationException("RefContentType is required.");
+        if (@event.RefContentType == ContentType.None) throw new InvalidOperationException(ErrorMessages.RefContentTypeRequired);
 
         if (@event.RefContentType == ContentType.CustomerContent)
         {
@@ -855,7 +855,7 @@ public sealed class NormalizerOperationAppService(
         var analysis = await analysisContentRepository.GetByIdAsync(@event.RefNormalizedRequestId);
 
         if (@event.CustomerContentIdForItem is null)
-            throw new InvalidOperationException("CustomerContentIdForItem is required.");
+            throw new InvalidOperationException(ErrorMessages.CustomerContentIdForItemRequired);
 
         var item = analysis.Items.First(x => x.CustomerContentId == @event.CustomerContentIdForItem);
 
@@ -870,7 +870,7 @@ public sealed class NormalizerOperationAppService(
 
     public async Task CompleteOutlineProviderAsync(OutlineProviderCompletedEto @event, CancellationToken cancellationToken = default)
     {
-        if (@event.RefContentType == ContentType.None) throw new InvalidOperationException("RefContentType is required.");
+        if (@event.RefContentType == ContentType.None) throw new InvalidOperationException(ErrorMessages.RefContentTypeRequired);
 
         if (@event.RefContentType == ContentType.CustomerContent)
         {
@@ -917,7 +917,7 @@ public sealed class NormalizerOperationAppService(
         var analysisContentNormalizedRequest = await analysisContentRepository.GetByIdAsync(@event.RefNormalizedRequestId, cancellationToken: cancellationToken);
 
         if (@event.CustomerContentIdForItem is null)
-            throw new InvalidOperationException("CustomerContentIdForItem is required for analysis outline completion.");
+            throw new InvalidOperationException(ErrorMessages.CustomerContentIdForItemRequiredForOutlineCompletion);
 
         var item = analysisContentNormalizedRequest.Items.First(x => x.CustomerContentId == @event.CustomerContentIdForItem);
 
