@@ -299,6 +299,7 @@ public sealed class VideoOperationRetryWorkerService(
                             RefType = request.RefContentType.ToString(),
                             RefKey = request.RefContentId,
                             request.VideoRequestId,
+                            request.SortOrder,
                             FailedMilestone = request.CurrentMilestone,
                             request.LastError
                         },
@@ -333,6 +334,7 @@ public sealed class VideoOperationRetryWorkerService(
                         RefType = request.RefContentType.ToString(),
                         RefKey = request.RefContentId,
                         request.VideoRequestId,
+                        request.SortOrder,
                         FailedMilestone = request.CurrentMilestone
                     },
                     facility: Facilities.RetryAttempted,
@@ -379,6 +381,7 @@ public sealed class VideoOperationRetryWorkerService(
                         RefType = request.RefContentType.ToString(),
                         RefKey = request.RefContentId,
                         request.VideoRequestId,
+                        request.SortOrder,
                         FailedMilestone = request.CurrentMilestone,
                         request.NextRetryAtUtc
                     },

@@ -69,9 +69,10 @@ public sealed class AudioProviderPollingWorkerService(
                             // references
                             Type = nameof(AudioRequest),
                             Key = request.Id,
-                            RefType = request.RefContentType.ToString(),
-                            RefKey = request.RefContentId,
-                            request.VideoRequestId
+                            RefType = "CustomerContent",
+                            RefKey = request.CustomerContentIdForItem,
+                            request.VideoRequestId,
+                            request.SortOrder
                         },
                         facility: Facilities.AudioOperationFailed,
                         correlationId: request.CorrelationId,
@@ -124,9 +125,10 @@ public sealed class AudioProviderPollingWorkerService(
                                 // references
                                 Type = nameof(AudioRequest),
                                 Key = request.Id,
-                                RefType = request.RefContentType.ToString(),
-                                RefKey = request.RefContentId,
+                                RefType = "CustomerContent",
+                                RefKey = request.CustomerContentIdForItem,
                                 request.VideoRequestId,
+                                request.SortOrder,
                                 request.ProviderPollingCount
                             },
                             facility: Facilities.AudioOperationFailed,
@@ -163,9 +165,10 @@ public sealed class AudioProviderPollingWorkerService(
                             // references
                             Type = nameof(AudioRequest),
                             Key = request.Id,
-                            RefType = request.RefContentType.ToString(),
-                            RefKey = request.RefContentId,
+                            RefType = "CustomerContent",
+                            RefKey = request.CustomerContentIdForItem,
                             request.VideoRequestId,
+                            request.SortOrder,
                             FailedMilestone = Milestones.AudioProviderPollingStarted,
                             request.ProviderPollingCount,
                             request.NextProviderPollAtUtc
@@ -193,9 +196,10 @@ public sealed class AudioProviderPollingWorkerService(
                             // references
                             Type = nameof(AudioRequest),
                             Key = request.Id,
-                            RefType = request.RefContentType.ToString(),
-                            RefKey = request.RefContentId,
+                            RefType = "CustomerContent",
+                            RefKey = request.CustomerContentIdForItem,
                             request.VideoRequestId,
+                            request.SortOrder,
                             request.NextProviderPollAtUtc
                         },
                         facility: Facilities.AudioProviderPolling,
@@ -228,9 +232,10 @@ public sealed class AudioProviderPollingWorkerService(
                         // references
                         Type = nameof(AudioRequest),
                         Key = request.Id,
-                        RefType = request.RefContentType.ToString(),
-                        RefKey = request.RefContentId,
-                        request.VideoRequestId
+                        RefType = "CustomerContent",
+                        RefKey = request.CustomerContentIdForItem,
+                        request.VideoRequestId,
+                        request.SortOrder
                     },
                     facility: Facilities.AudioProviderRequestCompleted,
                     correlationId: request.CorrelationId,
@@ -263,9 +268,10 @@ public sealed class AudioProviderPollingWorkerService(
                             // references
                             Type = nameof(AudioRequest),
                             Key = request.Id,
-                            RefType = request.RefContentType.ToString(),
-                            RefKey = request.RefContentId,
+                            RefType = "CustomerContent",
+                            RefKey = request.CustomerContentIdForItem,
                             request.VideoRequestId,
+                            request.SortOrder,
                             request.ProviderPollingCount
                         },
                         facility: Facilities.AudioOperationFailed,
@@ -299,9 +305,10 @@ public sealed class AudioProviderPollingWorkerService(
                             // references
                             Type = nameof(AudioRequest),
                             Key = request.Id,
-                            RefType = request.RefContentType.ToString(),
-                            RefKey = request.RefContentId,
+                            RefType = "CustomerContent",
+                            RefKey = request.CustomerContentIdForItem,
                             request.VideoRequestId,
+                            request.SortOrder,
                             FailedMilestone = Milestones.AudioProviderPollingStarted,
                             request.ProviderPollingCount,
                             request.NextProviderPollAtUtc

@@ -36,6 +36,7 @@ public static class AudioRequestClassMap
                 // Reference Fields
                 map.MapMember(x => x.RefContentId).SetIsRequired(true);
                 map.MapMember(x => x.RefContentType).SetIsRequired(true);
+                map.MapMember(x => x.CustomerContentIdForItem).SetIsRequired(true);
                 map.MapMember(x => x.SourceEventId).SetIsRequired(true);
                 map.MapMember(x => x.VideoRequestId).SetIsRequired(true);
 

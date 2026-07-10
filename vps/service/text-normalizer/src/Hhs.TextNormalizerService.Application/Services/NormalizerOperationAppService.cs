@@ -545,7 +545,8 @@ public sealed class NormalizerOperationAppService(
                         Key = item.CustomerContentId,
                         RefType = "AnalysisContent",
                         RefKey = request.AnalysisContentId,
-                        AnalysisContentNormalizeRequestId = request.Id
+                        AnalysisContentNormalizeRequestId = request.Id,
+                        item.SortOrder
                     },
                     facility: Facilities.ScrapingCompleted,
                     correlationId: request.CorrelationId,
@@ -618,7 +619,8 @@ public sealed class NormalizerOperationAppService(
                     Key = request.AnalysisContentId,
                     RefType = "CustomerContent",
                     RefKey = item.CustomerContentId,
-                    AnalysisContentNormalizeRequestId = request.Id
+                    AnalysisContentNormalizeRequestId = request.Id,
+                    item.SortOrder
                 },
                 facility: Facilities.ScrapingCompleted,
                 correlationId: request.CorrelationId,
@@ -745,12 +747,14 @@ public sealed class NormalizerOperationAppService(
                 string type;
                 string typeKey;
                 string customerContentId;
+                int? sortOrder = null;
                 if (@event.RefContentType == ContentType.AnalysisContent)
                 {
                     var request = await analysisContentRepository.GetByIdAsync(@event.RefNormalizedRequestId, cancellationToken: cancellationToken);
                     type = "AnalysisContent";
                     typeKey = request.AnalysisContentId.ToString();
                     customerContentId = @event.CustomerContentIdForItem.ToString();
+                    sortOrder = request.Items.FirstOrDefault(x => x.CustomerContentId == @event.CustomerContentIdForItem)?.SortOrder;
                 }
                 else
                 {
@@ -768,7 +772,8 @@ public sealed class NormalizerOperationAppService(
                         Type = type,
                         Key = typeKey,
                         RefType = "CustomerContent",
-                        RefKey = customerContentId
+                        RefKey = customerContentId,
+                        SortOrder = sortOrder
                     },
                     facility: Facilities.OutlineProviderRequestCompleted,
                     correlationId: correlationId,
@@ -971,7 +976,8 @@ public sealed class NormalizerOperationAppService(
                 Key = analysisContentNormalizedRequest.AnalysisContentId,
                 RefType = "CustomerContent",
                 RefKey = item.CustomerContentId,
-                AnalysisContentNormalizeRequestId = analysisContentNormalizedRequest.Id
+                AnalysisContentNormalizeRequestId = analysisContentNormalizedRequest.Id,
+                item.SortOrder
             },
             facility: Facilities.OutlineCompleted,
             correlationId: analysisContentNormalizedRequest.CorrelationId,

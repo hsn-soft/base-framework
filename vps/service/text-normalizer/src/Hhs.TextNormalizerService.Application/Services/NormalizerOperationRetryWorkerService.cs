@@ -477,6 +477,7 @@ public sealed class NormalizerOperationRetryWorkerService(
                                 RefType = "AnalysisContent",
                                 RefKey = request.AnalysisContentId,
                                 AnalysisContentNormalizeRequestId = request.Id,
+                                item.SortOrder,
                                 FailedMilestone = item.CurrentMilestone
                             },
                             facility: Facilities.MilestoneFailed,
@@ -497,6 +498,7 @@ public sealed class NormalizerOperationRetryWorkerService(
                             RefType = "AnalysisContent",
                             RefKey = request.AnalysisContentId,
                             AnalysisContentNormalizeRequestId = request.Id,
+                            item.SortOrder,
                             FailedMilestone = item.CurrentMilestone
                         },
                         facility: Facilities.RetryAttempted,
@@ -528,6 +530,7 @@ public sealed class NormalizerOperationRetryWorkerService(
                             RefType = "AnalysisContent",
                             RefKey = request.AnalysisContentId,
                             AnalysisContentNormalizeRequestId = request.Id,
+                            item.SortOrder,
                             FailedMilestone = item.CurrentMilestone
                         },
                         facility: Facilities.RetryAttemptFailed,

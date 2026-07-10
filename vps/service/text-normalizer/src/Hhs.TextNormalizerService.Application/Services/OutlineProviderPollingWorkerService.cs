@@ -452,6 +452,7 @@ public sealed class OutlineProviderPollingWorkerService(
                                 RefType = "AnalysisContent",
                                 RefKey = request.AnalysisContentId,
                                 AnalysisContentNormalizeRequestId = request.Id,
+                                item.SortOrder,
                                 FailedMilestone = Milestones.OutlineProviderPollingStarted,
                                 OutlinePollingCount = nextPollingCount
                             },
@@ -486,6 +487,7 @@ public sealed class OutlineProviderPollingWorkerService(
                                 RefType = "AnalysisContent",
                                 RefKey = request.AnalysisContentId,
                                 AnalysisContentNormalizeRequestId = request.Id,
+                                item.SortOrder,
                                 item.NextOutlinePollAtUtc
                             },
                             facility: Facilities.OutlineProviderPolling,
@@ -522,7 +524,8 @@ public sealed class OutlineProviderPollingWorkerService(
                             Key = item.CustomerContentId,
                             RefType = "AnalysisContent",
                             RefKey = request.AnalysisContentId,
-                            AnalysisContentNormalizeRequestId = request.Id
+                            AnalysisContentNormalizeRequestId = request.Id,
+                            item.SortOrder
                         },
                         facility: Facilities.OutlineProviderRequestCompleted,
                         correlationId: request.CorrelationId,
@@ -581,6 +584,7 @@ public sealed class OutlineProviderPollingWorkerService(
                             RefType = "AnalysisContent",
                             RefKey = request.AnalysisContentId,
                             AnalysisContentNormalizeRequestId = request.Id,
+                            item.SortOrder,
                             FailedMilestone = Milestones.OutlineProviderPollingStarted,
                             OutlinePollingCount = nextCount
                         },
@@ -652,6 +656,7 @@ public sealed class OutlineProviderPollingWorkerService(
                 RefType = "AnalysisContent",
                 RefKey = request.AnalysisContentId,
                 AnalysisContentNormalizeRequestId = request.Id,
+                item.SortOrder,
             },
             facility: Facilities.OutlineFailed,
             correlationId: request.CorrelationId,

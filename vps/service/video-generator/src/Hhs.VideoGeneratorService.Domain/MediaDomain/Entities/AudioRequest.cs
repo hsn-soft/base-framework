@@ -16,6 +16,11 @@ public sealed class AudioRequest : AuditedEntity<Guid>, ISoftDelete, IScopeSubsc
     public Guid RefContentId { get; set; }
     public ContentType RefContentType { get; set; }
 
+    // CustomerContent this specific audio item is for — same as RefContentId when
+    // RefContentType is CustomerContent (single audio); the individual analysis item's own
+    // CustomerContentId when RefContentType is AnalysisContent (multiple audios per video).
+    public Guid CustomerContentIdForItem { get; set; }
+
     // Subscription & Scope
     [NotNull] public string ScopeKey { get; private set; } = default!;
 
@@ -50,12 +55,13 @@ public sealed class AudioRequest : AuditedEntity<Guid>, ISoftDelete, IScopeSubsc
 
     private AudioRequest() { }
 
-    public AudioRequest(Guid id, Guid videoRequestId, Guid refContentId, ContentType refContentType, string scopeKey, Guid sourceEventId, string inputText, string audioProviderKey, int sortOrder)
+    public AudioRequest(Guid id, Guid videoRequestId, Guid refContentId, ContentType refContentType, Guid customerContentIdForItem, string scopeKey, Guid sourceEventId, string inputText, string audioProviderKey, int sortOrder)
     {
         Id = id;
         VideoRequestId = videoRequestId;
         RefContentId = refContentId;
         RefContentType = refContentType;
+        CustomerContentIdForItem = customerContentIdForItem;
         ScopeKey = scopeKey;
         SourceEventId = sourceEventId;
         InputText = inputText;

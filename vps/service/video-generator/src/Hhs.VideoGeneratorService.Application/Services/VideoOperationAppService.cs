@@ -2,6 +2,7 @@ using System.Linq.Expressions;
 using System.Text.Json;
 using Hhs.Shared.Contracts.Events;
 using Hhs.Shared.Helper;
+using Hhs.Shared.Helper.Enums;
 using Hhs.Shared.Helper.Providers;
 using Hhs.Shared.Helper.Retry;
 using Hhs.VideoGeneratorService.Application.Providers;
@@ -121,10 +122,10 @@ public sealed class VideoOperationAppService(
             reference: new
             {
                 @event.ScopeKey,
-                Type = nameof(VideoRequest),
-                Key = videoRequestId,
-                RefType = @event.RefContentType.ToString(),
-                RefKey = @event.RefContentId
+                Type = @event.RefContentType.ToString(),
+                Key = @event.RefContentId,
+                RefType = nameof(VideoRequest),
+                RefKey = videoRequestId
             },
             facility: Facilities.VideoRequestCreated,
             correlationId: correlationId,
@@ -153,10 +154,10 @@ public sealed class VideoOperationAppService(
             reference: new
             {
                 videoRequest.ScopeKey,
-                Type = nameof(VideoRequest),
-                Key = videoRequest.Id,
-                RefType = videoRequest.RefContentType.ToString(),
-                RefKey = videoRequest.RefContentId
+                Type = videoRequest.RefContentType.ToString(),
+                Key = videoRequest.RefContentId,
+                RefType = nameof(VideoRequest),
+                RefKey = videoRequest.Id,
             },
             facility: Facilities.VideoOperationStarted,
             correlationId: videoRequest.CorrelationId,
@@ -174,10 +175,10 @@ public sealed class VideoOperationAppService(
                     reference: new
                     {
                         videoRequest.ScopeKey,
-                        Type = nameof(VideoRequest),
-                        Key = videoRequest.Id,
-                        RefType = videoRequest.RefContentType.ToString(),
-                        RefKey = videoRequest.RefContentId
+                        Type = videoRequest.RefContentType.ToString(),
+                        Key = videoRequest.RefContentId,
+                        RefType = nameof(VideoRequest),
+                        RefKey = videoRequest.Id,
                     },
                     facility: Facilities.VideoAudioInternal,
                     correlationId: videoRequest.CorrelationId,
@@ -208,10 +209,10 @@ public sealed class VideoOperationAppService(
                 reference: new
                 {
                     videoRequest.ScopeKey,
-                    Type = nameof(VideoRequest),
-                    Key = videoRequest.Id,
-                    RefType = videoRequest.RefContentType.ToString(),
-                    RefKey = videoRequest.RefContentId,
+                    Type = videoRequest.RefContentType.ToString(),
+                    Key = videoRequest.RefContentId,
+                    RefType = nameof(VideoRequest),
+                    RefKey = videoRequest.Id,
                     AudioCount = audioItems.Count
                 },
                 facility: Facilities.VideoAudioExternal,
@@ -238,8 +239,8 @@ public sealed class VideoOperationAppService(
                             videoRequest.ScopeKey,
                             Type = nameof(AudioRequest),
                             Key = existingAudio.Id,
-                            RefType = videoRequest.RefContentType.ToString(),
-                            RefKey = videoRequest.RefContentId,
+                            RefType = "CustomerContent",
+                            RefKey = existingAudio.CustomerContentIdForItem,
                             VideoRequestId = videoRequest.Id,
                             item.SortOrder
                         },
@@ -263,6 +264,7 @@ public sealed class VideoOperationAppService(
                     videoRequest.Id,
                     videoRequest.RefContentId,
                     videoRequest.RefContentType,
+                    item.CustomerContentId,
                     videoRequest.ScopeKey,
                     eventId,
                     item.Text,
@@ -278,8 +280,8 @@ public sealed class VideoOperationAppService(
                         videoRequest.ScopeKey,
                         Type = nameof(AudioRequest),
                         Key = audioRequestId,
-                        RefType = videoRequest.RefContentType.ToString(),
-                        RefKey = videoRequest.RefContentId,
+                        RefType = "CustomerContent",
+                        RefKey = audioRequest.CustomerContentIdForItem,
                         VideoRequestId = videoRequest.Id,
                         item.SortOrder
                     },
@@ -327,8 +329,8 @@ public sealed class VideoOperationAppService(
                     audioRequest.ScopeKey,
                     Type = nameof(AudioRequest),
                     Key = audioRequest.Id,
-                    RefType = audioRequest.RefContentType.ToString(),
-                    RefKey = audioRequest.RefContentId,
+                    RefType = "CustomerContent",
+                    RefKey = audioRequest.CustomerContentIdForItem,
                     audioRequest.VideoRequestId,
                     audioRequest.SortOrder
                 },
@@ -371,9 +373,10 @@ public sealed class VideoOperationAppService(
                         audioRequest.ScopeKey,
                         Type = nameof(AudioRequest),
                         Key = audioRequest.Id,
-                        RefType = audioRequest.RefContentType.ToString(),
-                        RefKey = audioRequest.RefContentId,
-                        audioRequest.VideoRequestId
+                        RefType = "CustomerContent",
+                        RefKey = audioRequest.CustomerContentIdForItem,
+                        audioRequest.VideoRequestId,
+                        audioRequest.SortOrder
                     },
                     facility: Facilities.AudioProviderRequestCompleted,
                     correlationId: audioRequest.CorrelationId,
@@ -406,10 +409,11 @@ public sealed class VideoOperationAppService(
                     audioRequest.ScopeKey,
                     Type = nameof(AudioRequest),
                     Key = audioRequest.Id,
-                    RefType = audioRequest.RefContentType.ToString(),
-                    RefKey = audioRequest.RefContentId,
+                    RefType = "CustomerContent",
+                    RefKey = audioRequest.CustomerContentIdForItem,
                     audioRequest.VideoRequestId,
-                    audioRequest.NextProviderPollAtUtc
+                    audioRequest.NextProviderPollAtUtc,
+                    audioRequest.SortOrder
                 },
                 facility: Facilities.AudioProviderPollingStarted,
                 correlationId: audioRequest.CorrelationId,
@@ -439,9 +443,10 @@ public sealed class VideoOperationAppService(
                 audioRequest.ScopeKey,
                 Type = nameof(AudioRequest),
                 Key = audioRequest.Id,
-                RefType = audioRequest.RefContentType.ToString(),
-                RefKey = audioRequest.RefContentId,
-                audioRequest.VideoRequestId
+                RefType = "CustomerContent",
+                RefKey = audioRequest.CustomerContentIdForItem,
+                audioRequest.VideoRequestId,
+                audioRequest.SortOrder
             },
             facility: Facilities.AudioFileDownloadStarted,
             correlationId: audioRequest.CorrelationId,
@@ -487,9 +492,10 @@ public sealed class VideoOperationAppService(
                     audioRequest.ScopeKey,
                     Type = nameof(AudioRequest),
                     Key = audioRequest.Id,
-                    RefType = audioRequest.RefContentType.ToString(),
-                    RefKey = audioRequest.RefContentId,
-                    audioRequest.VideoRequestId
+                    RefType = "CustomerContent",
+                    RefKey = audioRequest.CustomerContentIdForItem,
+                    audioRequest.VideoRequestId,
+                    audioRequest.SortOrder
                 },
                 facility: Facilities.AudioFileDownloadCompleted,
                 correlationId: audioRequest.CorrelationId,
@@ -534,9 +540,10 @@ public sealed class VideoOperationAppService(
                     audioRequest.ScopeKey,
                     Type = nameof(AudioRequest),
                     Key = audioRequest.Id,
-                    RefType = audioRequest.RefContentType.ToString(),
-                    RefKey = audioRequest.RefContentId,
-                    audioRequest.VideoRequestId
+                    RefType = "CustomerContent",
+                    RefKey = audioRequest.CustomerContentIdForItem,
+                    audioRequest.VideoRequestId,
+                    audioRequest.SortOrder
                 },
                 facility: Facilities.AudioFileUploadStarted,
                 correlationId: audioRequest.CorrelationId,
@@ -588,10 +595,11 @@ public sealed class VideoOperationAppService(
                     audioRequest.ScopeKey,
                     Type = nameof(AudioRequest),
                     Key = audioRequest.Id,
-                    RefType = audioRequest.RefContentType.ToString(),
-                    RefKey = audioRequest.RefContentId,
+                    RefType = "CustomerContent",
+                    RefKey = audioRequest.CustomerContentIdForItem,
                     audioRequest.VideoRequestId,
-                    audioRequest.AudioCdnUrl
+                    audioRequest.AudioCdnUrl,
+                    audioRequest.SortOrder
                 },
                 facility: Facilities.AudioFileUploadCompleted,
                 correlationId: audioRequest.CorrelationId,
@@ -953,7 +961,7 @@ public sealed class VideoOperationAppService(
         return doc.RootElement
             .GetProperty("audioItems")
             .EnumerateArray()
-            .Select(x => new VideoInputAudioItem { SortOrder = x.GetProperty("sortOrder").GetInt32(), Text = StringHelper.Base64Decode(x.GetProperty("encodedOutlineData").GetString() ?? string.Empty) })
+            .Select(x => new VideoInputAudioItem { SortOrder = x.GetProperty("sortOrder").GetInt32(), Text = StringHelper.Base64Decode(x.GetProperty("encodedOutlineData").GetString() ?? string.Empty), CustomerContentId = x.GetProperty("customerContentId").GetGuid() })
             .ToList();
     }
 
@@ -1061,9 +1069,10 @@ public sealed class VideoOperationAppService(
                 request.ScopeKey,
                 Type = nameof(AudioRequest),
                 Key = request.Id,
-                RefType = request.RefContentType.ToString(),
-                RefKey = request.RefContentId,
+                RefType = "CustomerContent",
+                RefKey = request.CustomerContentIdForItem,
                 request.VideoRequestId,
+                request.SortOrder,
                 FailedMilestone = milestone,
                 request.RetryCount,
                 request.NextRetryAtUtc
@@ -1108,9 +1117,10 @@ public sealed class VideoOperationAppService(
                 request.ScopeKey,
                 Type = nameof(AudioRequest),
                 Key = request.Id,
-                RefType = request.RefContentType.ToString(),
-                RefKey = request.RefContentId,
+                RefType = "CustomerContent",
+                RefKey = request.CustomerContentIdForItem,
                 request.VideoRequestId,
+                request.SortOrder,
                 FailedMilestone = milestone,
                 retryable
             },
@@ -1303,4 +1313,5 @@ public sealed class VideoInputAudioItem
 {
     public int SortOrder { get; init; }
     public string Text { get; init; } = string.Empty;
+    public Guid CustomerContentId { get; init; }
 }
