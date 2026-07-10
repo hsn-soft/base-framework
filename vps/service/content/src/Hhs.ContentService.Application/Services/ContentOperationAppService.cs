@@ -146,7 +146,7 @@ public sealed class ContentOperationService(
                                     RefType = "CustomerContentNormalizeRequest",
                                     RefKey = entity.NormalizeRequestId
                                 },
-                                facility: Facilities.VideoGenerationApproved,
+                                facility: Facilities.DirectVideoGenerationApproved,
                                 correlationId: entity.CorrelationId,
                                 exception: null
                             ));
@@ -176,7 +176,7 @@ public sealed class ContentOperationService(
                                     RefKey = entity.NormalizeRequestId,
                                     RejectReason = checkResult.Value
                                 },
-                                facility: Facilities.VideoGenerationRejected,
+                                facility: Facilities.DirectVideoGenerationRejected,
                                 correlationId: entity.CorrelationId,
                                 exception: null
                             ));
@@ -218,7 +218,7 @@ public sealed class ContentOperationService(
                                 RefType = "AnalysisContentNormalizeRequest",
                                 RefKey = entity.NormalizeRequestId
                             },
-                            facility: Facilities.VideoGenerationApproved,
+                            facility: Facilities.AnalysisVideoGenerationApproved,
                             correlationId: entity.CorrelationId,
                             exception: null
                         ));
@@ -277,7 +277,7 @@ public sealed class ContentOperationService(
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: Milestones.VideoRequestCreated,
             reference: new { Type = refContentType.ToString(), Key = refContentId, RefType = "VideoRequest", RefKey = refVideoRequestId },
-            facility: Facilities.VideoRequestCreated,
+            facility: Facilities.VideoRequestReferenceSet,
             correlationId: correlationId,
             exception: null
         ));

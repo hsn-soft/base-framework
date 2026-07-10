@@ -97,7 +97,7 @@ public sealed class EfCoreCustomerContentRepository(
             s => s
                 .SetProperty(a => a.VideoRequestId, videoRequestId)
                 .SetProperty(a => a.VideoStatus, MediaStatusNames.Created)
-                .SetProperty(a => a.LastFacility, Facilities.VideoRequestCreated)
+                .SetProperty(a => a.LastFacility, Facilities.VideoRequestReferenceSet)
                 .SetProperty(a => a.CurrentMilestone, Milestones.VideoRequestCreated)
                 .SetProperty(a => a.LastError, (string)null)
         );
@@ -123,7 +123,7 @@ public sealed class EfCoreCustomerContentRepository(
         await UpdateByExpressionAsync(x => x.Id == id && x.VideoRequestId == null,
             s => s
                 .SetProperty(a => a.NormalizeStatus, NormalizeStatusNames.Completed)
-                .SetProperty(a => a.LastFacility, Facilities.VideoGenerationApproved)
+                .SetProperty(a => a.LastFacility, Facilities.DirectVideoGenerationApproved)
                 .SetProperty(a => a.CurrentMilestone, Milestones.NormalizerResultPublished)
                 .SetProperty(a => a.LastError, (string)null)
                 .SetProperty(a => a.VideoStatus, MediaStatusNames.Approved)
@@ -133,7 +133,7 @@ public sealed class EfCoreCustomerContentRepository(
         await UpdateByExpressionAsync(x => x.Id == id && x.VideoRequestId == null,
             s => s
                 .SetProperty(a => a.NormalizeStatus, NormalizeStatusNames.Completed)
-                .SetProperty(a => a.LastFacility, Facilities.VideoGenerationRejected)
+                .SetProperty(a => a.LastFacility, Facilities.DirectVideoGenerationRejected)
                 .SetProperty(a => a.CurrentMilestone, Milestones.NormalizerResultPublished)
                 .SetProperty(a => a.LastError, rejectReason)
                 .SetProperty(a => a.VideoStatus, MediaStatusNames.Rejected)

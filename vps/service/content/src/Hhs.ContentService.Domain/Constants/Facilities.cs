@@ -8,21 +8,31 @@ namespace Hhs.ContentService.Domain.Constants;
 /// </summary>
 public static class Facilities
 {
+    public const string AnalysisContentCreated = "ANALYSIS_CONTENT_CREATED";
+    public const string CustomerContentCreated = "CUSTOMER_CONTENT_CREATED";
+
     public const string NormalizeRequestReferenceSet = "NORMALIZE_REQUEST_REFERENCE_SET";
+
     public const string CustomerContentScrapingCompleted = "CUSTOMER_CONTENT_SCRAPING_COMPLETED";
+
     public const string ContentOutlineRejected = "CONTENT_OUTLINE_REJECTED";
     public const string ContentNormalizedSuccess = "CONTENT_NORMALIZED_SUCCESS";
-    public const string VideoGenerationApproved = "VIDEO_GENERATION_APPROVED";
-    public const string VideoGenerationRejected = "VIDEO_GENERATION_REJECTED";
-    public const string VideoRequestCreated = "VIDEO_REQUEST_CREATED";
+
+    public const string AnalysisVideoGenerationApproved = "ANALYSIS_VIDEO_GENERATION_APPROVED";
+
+    public const string DirectVideoGenerationApproved = "DIRECT_VIDEO_GENERATION_APPROVED";
+    public const string DirectVideoGenerationRejected = "DIRECT_VIDEO_GENERATION_REJECTED";
+
+    public const string VideoRequestReferenceSet = "VIDEO_REQUEST_REFERENCE_SET";
+
     public const string AudioOperationStarted = "AUDIO_OPERATION_STARTED";
     public const string VideoProviderRequestStarted = "VIDEO_PROVIDER_REQUEST_STARTED";
     public const string VideoGenerationResultPublished = "VIDEO_GENERATION_RESULT_PUBLISHED";
+
     public const string MilestoneFailed = "MILESTONE_FAILED";
-    public const string AnalysisContentCreated = "ANALYSIS_CONTENT_CREATED";
-    public const string CustomerContentCreated = "CUSTOMER_CONTENT_CREATED";
     public const string RetryScheduled = "RETRY_SCHEDULED";
 
+    // query facilities
     public const string AnalysisVideoGenerationQueryTriggered = "ANALYSIS_VIDEO_GENERATION_QUERY";
     public const string TrendVideoGenerationQueryTriggered = "TREND_VIDEO_GENERATION_QUERY";
     public const string TestQueryTriggered = "TEST_QUERY";

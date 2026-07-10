@@ -742,20 +742,22 @@ public sealed class NormalizerOperationAppService(
                 if (string.IsNullOrWhiteSpace(response.OutlinedData))
                     throw new InvalidOperationException(ErrorMessages.OutlineResponseDataUnknown);
 
-                string refType;
-                string refKey;
-
+                string type;
+                string typeKey;
+                string customerContentId;
                 if (@event.RefContentType == ContentType.AnalysisContent)
                 {
                     var request = await analysisContentRepository.GetByIdAsync(@event.RefNormalizedRequestId, cancellationToken: cancellationToken);
-                    refType = "AnalysisContent";
-                    refKey = request.AnalysisContentId.ToString();
+                    type = "AnalysisContent";
+                    typeKey = request.AnalysisContentId.ToString();
+                    customerContentId = @event.CustomerContentIdForItem.ToString();
                 }
                 else
                 {
                     var request = await customerContentRepository.GetByIdAsync(@event.RefNormalizedRequestId, cancellationToken: cancellationToken);
-                    refType = "CustomerContent";
-                    refKey = request.CustomerContentId.ToString();
+                    type = nameof(CustomerContentNormalizedRequest);
+                    typeKey = @event.RefNormalizedRequestId.ToString();
+                    customerContentId = request.CustomerContentId.ToString();
                 }
 
                 _logger.FrameworkInfoLog(LogHelper.Generate(
@@ -763,12 +765,10 @@ public sealed class NormalizerOperationAppService(
                     reference: new
                     {
                         @event.ScopeKey,
-                        Type = @event.RefContentType == ContentType.AnalysisContent
-                            ? nameof(AnalysisContentNormalizedRequest)
-                            : nameof(CustomerContentNormalizedRequest),
-                        Key = @event.RefNormalizedRequestId,
-                        RefType = refType,
-                        RefKey = refKey
+                        Type = type,
+                        Key = typeKey,
+                        RefType = "CustomerContent",
+                        RefKey = customerContentId
                     },
                     facility: Facilities.OutlineProviderRequestCompleted,
                     correlationId: correlationId,
@@ -847,7 +847,11 @@ public sealed class NormalizerOperationAppService(
 
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: Milestones.OutlineProviderPollingStarted,
-            reference: new { Type = nameof(AnalysisNormalizedItem), Key = @event.CustomerContentIdForItem, RefType = nameof(AnalysisContentNormalizedRequest), RefKey = @event.RefNormalizedRequestId },
+            reference: new
+            {
+                // references
+                Type = nameof(AnalysisContentNormalizedRequest), Key = @event.RefNormalizedRequestId, RefType = "CustomerContent", RefKey = @event.CustomerContentIdForItem,
+            },
             facility: Facilities.OutlineProviderPollingStarted,
             correlationId: correlationId,
             exception: null
@@ -963,10 +967,10 @@ public sealed class NormalizerOperationAppService(
             reference: new
             {
                 analysisContentNormalizedRequest.ScopeKey,
-                Type = nameof(AnalysisNormalizedItem),
-                Key = item.CustomerContentId,
-                RefType = "AnalysisContent",
-                RefKey = analysisContentNormalizedRequest.AnalysisContentId,
+                Type = "AnalysisContent",
+                Key = analysisContentNormalizedRequest.AnalysisContentId,
+                RefType = "CustomerContent",
+                RefKey = item.CustomerContentId,
                 AnalysisContentNormalizeRequestId = analysisContentNormalizedRequest.Id
             },
             facility: Facilities.OutlineCompleted,
@@ -1061,7 +1065,9 @@ public sealed class NormalizerOperationAppService(
                 @event.ScopeKey,
                 Type = @event.RefContentType.ToString(),
                 Key = @event.RefContentId,
-                RefType = "NormalizeRequest",
+                RefType = @event.RefContentType == ContentType.AnalysisContent
+                    ? nameof(AnalysisContentNormalizedRequest)
+                    : nameof(CustomerContentNormalizedRequest),
                 RefKey = @event.RefNormalizeRequestId
             },
             facility: Facilities.VideoGenerationDataForwarded,

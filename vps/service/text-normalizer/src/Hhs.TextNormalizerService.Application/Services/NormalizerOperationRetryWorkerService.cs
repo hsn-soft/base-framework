@@ -166,10 +166,10 @@ public sealed class NormalizerOperationRetryWorkerService(
                     reference: new
                     {
                         request.ScopeKey,
-                        Type = nameof(AnalysisContentNormalizedRequest),
-                        Key = request.Id,
-                        RefType = "AnalysisContent",
-                        RefKey = request.AnalysisContentId
+                        Type = "AnalysisContent",
+                        Key = request.AnalysisContentId,
+                        RefType = nameof(AnalysisContentNormalizedRequest),
+                        RefKey = request.Id,
                     },
                     facility: Facilities.NormalizerResultPublished,
                     correlationId: request.CorrelationId,

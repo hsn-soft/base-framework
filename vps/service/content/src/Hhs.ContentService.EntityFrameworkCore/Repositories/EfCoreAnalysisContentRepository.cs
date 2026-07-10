@@ -29,7 +29,7 @@ public sealed class EfCoreAnalysisContentRepository(
         await UpdateByExpressionAsync(x => x.Id == id && x.VideoRequestId == null,
             s => s
                 .SetProperty(a => a.NormalizeStatus, NormalizeStatusNames.Completed)
-                .SetProperty(a => a.LastFacility, Facilities.VideoGenerationApproved)
+                .SetProperty(a => a.LastFacility, Facilities.AnalysisVideoGenerationApproved)
                 .SetProperty(a => a.CurrentMilestone, Milestones.NormalizerResultPublished)
                 .SetProperty(a => a.LastError, (string)null)
                 .SetProperty(a => a.VideoStatus, MediaStatusNames.Approved)
@@ -40,7 +40,7 @@ public sealed class EfCoreAnalysisContentRepository(
             s => s
                 .SetProperty(a => a.VideoRequestId, videoRequestId)
                 .SetProperty(a => a.VideoStatus, MediaStatusNames.Created)
-                .SetProperty(a => a.LastFacility, Facilities.VideoRequestCreated)
+                .SetProperty(a => a.LastFacility, Facilities.VideoRequestReferenceSet)
                 .SetProperty(a => a.CurrentMilestone, Milestones.VideoRequestCreated)
                 .SetProperty(a => a.LastError, (string)null)
         );
