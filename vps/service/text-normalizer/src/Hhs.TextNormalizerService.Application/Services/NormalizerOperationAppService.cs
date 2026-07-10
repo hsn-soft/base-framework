@@ -51,7 +51,7 @@ public sealed class NormalizerOperationAppService(
         var existing = await customerContentRepository.GetByScopeKeyAndContentIdAsync(@event.ScopeKey, @event.CustomerContentId, cancellationToken);
         if (existing is not null)
         {
-            _logger.LogDebug($"Existing request found, publishing event");
+            _logger.LogDebug("Existing request found, publishing event");
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
                 message: Milestones.CustomerContentNormalizeRequestCreated,
@@ -741,18 +741,18 @@ public sealed class NormalizerOperationAppService(
                 if (string.IsNullOrWhiteSpace(response.OutlinedData))
                     throw new InvalidOperationException(ErrorMessages.OutlineResponseDataUnknown);
 
-                string refType = string.Empty;
-                string refKey = string.Empty;
+                string refType;
+                string refKey;
 
                 if (@event.RefContentType == ContentType.AnalysisContent)
                 {
-                    var request = await analysisContentRepository.GetByIdAsync(@event.RefNormalizedRequestId);
+                    var request = await analysisContentRepository.GetByIdAsync(@event.RefNormalizedRequestId, cancellationToken: cancellationToken);
                     refType = "AnalysisContent";
                     refKey = request.AnalysisContentId.ToString();
                 }
                 else
                 {
-                    var request = await customerContentRepository.GetByIdAsync(@event.RefNormalizedRequestId);
+                    var request = await customerContentRepository.GetByIdAsync(@event.RefNormalizedRequestId, cancellationToken: cancellationToken);
                     refType = "CustomerContent";
                     refKey = request.CustomerContentId.ToString();
                 }
