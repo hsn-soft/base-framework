@@ -24,7 +24,7 @@ spec:
       labels:
         app: hhs-service-event-manager
     spec:
-      terminationGracePeriodSeconds: 10 # successfully wait termination
+      terminationGracePeriodSeconds: 90 # wait graceful termination — RabbitMQ consumer drain (up to ~30s, parallel) + publisher drain (up to ~30s) + host shutdown timeout (30s)
       securityContext:
         fsGroupChangePolicy: Always
         fsGroup: 1001
@@ -95,6 +95,16 @@ spec:
               drop: [ "ALL" ]
             seccompProfile:
               type: "RuntimeDefault"
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - /bin/sh
+                  - -c
+                  - |
+                    echo "preStop start";
+                    sleep 10;
+                    echo "preStop done";
           volumeMounts:
             - name: tmpfs-folder
               mountPath: /tmp

@@ -226,7 +226,11 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
         _logger.LogInformation("{BrokerName} | {OperationStatus}", "RabbitMQ", "TERMINATING");
 
         _logger.LogDebug("{BrokerName} | Consumers terminating...", "RabbitMQ");
-        foreach (var consumer in _consumers)
+        // Each consumer's Dispose() can block waiting for its own in-flight messages to drain (up to
+        // MaxWaitDisposeTimeMs). Disposing sequentially would sum that wait across every subscribed event
+        // type (11-16 per service) — minutes in the worst case. Disposing in parallel bounds the total
+        // wait to the single slowest consumer instead, regardless of how many event types are subscribed.
+        Parallel.ForEach(_consumers, consumer =>
         {
             try
             {
@@ -236,7 +240,7 @@ public sealed class EventBusRabbitMq : IEventBus, IDisposable
             {
                 _logger.LogError("{BrokerName} | Consumer dispose error: {Error}", "RabbitMQ", ex.Message);
             }
-        }
+        });
 
         _logger.LogDebug("{BrokerName} | Consumers terminated", "RabbitMQ");
 

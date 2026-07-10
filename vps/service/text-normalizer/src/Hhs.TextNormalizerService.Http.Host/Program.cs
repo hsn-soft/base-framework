@@ -18,6 +18,7 @@ using HsnSoft.Base.AspNetCore.Localization;
 using HsnSoft.Base.Data;
 using HsnSoft.Base.PuppeTeer;
 using HsnSoft.Base.Serilog;
+using HsnSoft.Base.Serilog.Loggers;
 using HsnSoft.Base.Swashbuckle;
 using HsnSoft.Base.Tracing;
 using Microsoft.Extensions.Options;
@@ -49,6 +50,9 @@ builder.Configuration
 Log.Logger = SerilogConfigurationHelper.ConfigureConsoleLogger(builder.Configuration, "Host");
 builder.Logging.ClearProviders();
 builder.Logging.AddSerilog(Log.Logger);
+
+// ThreadPool
+ThreadPoolConfigurationHelper.Configure(builder.Configuration, new AppLogger(builder.Configuration, "ThreadPool"));
 
 // Kestrel
 builder.WebHost.ConfigureKestrel((_, options) =>

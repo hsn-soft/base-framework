@@ -12,7 +12,6 @@ using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using RabbitMQ.Client.Exceptions;
 
 namespace HsnSoft.Base.EventBus.RabbitMQ;
 
@@ -35,6 +34,11 @@ public sealed class RabbitMqConsumer : IDisposable
     private readonly SemaphoreSlim _consumerPrefetchSemaphore;
     private IChannel _consumerChannel;
     private readonly Lock _channelLock = new();
+
+    // Single-flight guard for RecoveryWorkerAsync's detect->recreate->resubscribe sequence — without it,
+    // two racing passes of the 5s loop (or this loop racing RabbitMqPersistentConnection's own automatic
+    // recovery) could both decide the channel is dead and double-subscribe the same queue.
+    private readonly SemaphoreSlim _recoveryGate = new(1, 1);
 
     private bool _disposed;
     private string _currentConsumerTag = "no-active-consumer";
@@ -145,6 +149,7 @@ public sealed class RabbitMqConsumer : IDisposable
         }
 
         _consumerPrefetchSemaphore?.Dispose();
+        _recoveryGate?.Dispose();
 
         try
         {
@@ -299,7 +304,11 @@ public sealed class RabbitMqConsumer : IDisposable
     {
         if (!_persistentConnection.IsConnected) await _persistentConnection.TryConnectAsync();
 
-        var channel = await _persistentConnection.CreateModelAsync();
+        // ConsumerDispatchConcurrency mirrors FetchCount so RabbitMQ.Client actually dispatches up to
+        // FetchCount deliveries concurrently on this channel — without it, the client's own internal
+        // dispatcher (default concurrency=1) serializes every delivery regardless of prefetch/FetchCount,
+        // leaving _consumerPrefetchSemaphore below with nothing to throttle.
+        var channel = await _persistentConnection.CreateModelAsync(_consumerEventInfo.FetchCount);
         await channel.ExchangeDeclareAsync(exchange: _rabbitMqEventBusConfig.ExchangeName, type: "direct");
         return channel;
     }
@@ -330,23 +339,47 @@ public sealed class RabbitMqConsumer : IDisposable
         {
             try
             {
-                if (!_persistentConnection.IsConnected) await _persistentConnection.TryConnectAsync();
-                if (!_persistentConnection.IsConnected) throw new ConnectFailureException("", new Exception("Connection fail"));
-
-                var channel = _consumerChannel;
-                if (channel == null || channel.IsClosed)
+                // AutomaticRecoveryEnabled (RabbitMqPersistentConnection) owns reconnecting the connection
+                // itself, retrying forever on its own schedule — while disconnected there is nothing safe
+                // for this loop to do except wait, since touching the channel here would race the
+                // library's own in-flight recovery. We deliberately do NOT call TryConnectAsync() here.
+                if (_persistentConnection.IsConnected)
                 {
-                    _logger.LogWarning("{BrokerName} | Recovery: Channel is null/closed. Recreating...", "RabbitMQ");
-                    var newChannel = await CreateConsumerChannelAsync();
-                    if (newChannel != null)
+                    var channel = _consumerChannel;
+                    if (channel == null || channel.IsClosed)
                     {
-                        lock (_channelLock)
+                        // Connection is healthy but this specific channel died independently (e.g. a
+                        // broker-initiated basic.cancel from a deleted/moved queue, or a channel-level
+                        // protocol error) — the one gap RabbitMQ.Client's automatic recovery doesn't cover,
+                        // since it only recovers channels/consumers as a subroutine of *connection*
+                        // recovery. Rebuild immediately, single-flight guarded.
+                        if (await _recoveryGate.WaitAsync(0, ct))
                         {
-                            _consumerChannel?.Dispose();
-                            _consumerChannel = newChannel;
-                        }
+                            try
+                            {
+                                // Re-check under the gate: another pass may have already fixed it.
+                                channel = _consumerChannel;
+                                if (channel == null || channel.IsClosed)
+                                {
+                                    _logger.LogWarning("{BrokerName} | Recovery: Channel is null/closed while connection is healthy. Recreating...", "RabbitMQ");
+                                    var newChannel = await CreateConsumerChannelAsync();
+                                    if (newChannel != null)
+                                    {
+                                        lock (_channelLock)
+                                        {
+                                            _consumerChannel?.Dispose();
+                                            _consumerChannel = newChannel;
+                                        }
 
-                        await StartBasicConsume();
+                                        await StartBasicConsume();
+                                    }
+                                }
+                            }
+                            finally
+                            {
+                                _recoveryGate.Release();
+                            }
+                        }
                     }
                 }
             }

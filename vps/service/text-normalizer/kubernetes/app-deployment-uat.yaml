@@ -24,7 +24,7 @@ spec:
       labels:
         app: hhs-service-text-normalizer
     spec:
-      terminationGracePeriodSeconds: 75 # wait graceful termination, host time out 60, app drain time 30
+      terminationGracePeriodSeconds: 90 # wait graceful termination — RabbitMQ consumer drain (up to ~30s, parallel) + publisher drain (up to ~30s) + host shutdown timeout (30s)
       securityContext:
         fsGroupChangePolicy: Always
         fsGroup: 1001

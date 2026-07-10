@@ -14,7 +14,7 @@ services:
     image: hhs-service-text-normalizer-local:1.0.0
     restart: always
     stop_signal: SIGTERM
-    stop_grace_period: 70s # wait graceful termination, host time out 60, app drain time 30
+    stop_grace_period: 90s # wait graceful termination — RabbitMQ consumer/publisher drain + host shutdown timeout
     ulimits:
       nofile:
         soft: 65535

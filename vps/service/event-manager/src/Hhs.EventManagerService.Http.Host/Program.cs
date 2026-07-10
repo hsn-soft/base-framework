@@ -47,6 +47,12 @@ Log.Logger = SerilogConfigurationHelper.ConfigureConsoleLogger(builder.Configura
 builder.Logging.ClearProviders();
 builder.Logging.AddSerilog(Log.Logger);
 
+// Graceful shutdown — bounds how long IHostedService.StopAsync implementations (retry/polling workers,
+// sink refresh, etc.) get before their cancellation token fires. Must stay comfortably under the
+// container's terminationGracePeriodSeconds/stop_grace_period, which also has to cover the RabbitMQ
+// consumer/publisher drain that happens afterward during DI container disposal (EventBusRabbitMq.Dispose()).
+builder.Services.AddOptions<HostOptions>().Configure(hostOptions => hostOptions.ShutdownTimeout = TimeSpan.FromSeconds(30));
+
 // Kestrel
 builder.WebHost.ConfigureKestrel((_, options) =>
 {

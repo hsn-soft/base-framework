@@ -10,7 +10,7 @@ services:
     container_name: hhs-service-content-local-container
     image: hhs-service-content-local:1.0.0
     restart: always
-    stop_grace_period: 20s # wait graceful termination
+    stop_grace_period: 90s # wait graceful termination — RabbitMQ consumer/publisher drain + host shutdown timeout
     ulimits:
       memlock:
         soft: -1

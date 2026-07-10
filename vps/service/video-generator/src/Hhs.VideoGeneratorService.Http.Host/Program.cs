@@ -15,6 +15,7 @@ using Hhs.Shared.Helper.Retry;
 using HsnSoft.Base.AspNetCore.Localization;
 using HsnSoft.Base.Data;
 using HsnSoft.Base.Serilog;
+using HsnSoft.Base.Serilog.Loggers;
 using HsnSoft.Base.Swashbuckle;
 using HsnSoft.Base.Tracing;
 using Serilog;
@@ -45,6 +46,15 @@ builder.Configuration
 Log.Logger = SerilogConfigurationHelper.ConfigureConsoleLogger(builder.Configuration, "Host");
 builder.Logging.ClearProviders();
 builder.Logging.AddSerilog(Log.Logger);
+
+// ThreadPool
+ThreadPoolConfigurationHelper.Configure(builder.Configuration, new AppLogger(builder.Configuration, "ThreadPool"));
+
+// Graceful shutdown — bounds how long IHostedService.StopAsync implementations (retry/polling workers,
+// sink refresh, etc.) get before their cancellation token fires. Must stay comfortably under the
+// container's terminationGracePeriodSeconds/stop_grace_period, which also has to cover the RabbitMQ
+// consumer/publisher drain that happens afterward during DI container disposal (EventBusRabbitMq.Dispose()).
+builder.Services.AddOptions<HostOptions>().Configure(hostOptions => hostOptions.ShutdownTimeout = TimeSpan.FromSeconds(30));
 
 // Kestrel
 builder.WebHost.ConfigureKestrel((_, options) =>
