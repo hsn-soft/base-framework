@@ -11,9 +11,9 @@ public interface ICustomerContentRepository : IGenericRepository<CustomerContent
 
 
 
-    Task SetNormalizedReferenceAsync(Guid id, Guid normalizedRequestId,string normalizeStatus, string normalizeCurrentStep);
-    Task SetScrapeResultsAsync(Guid id, Guid normalizedRequestId,string normalizeStatus, string normalizeCurrentStep, DateTime? scrapeTime);
-    Task SetNormalizedResultsAsync(Guid id, string normalizeStatus, string normalizeCurrentStep);
+    Task SetNormalizedReferenceAsync(Guid id, Guid normalizedRequestId,string normalizeStatus, string normalizeCurrentMilestone);
+    Task SetScrapeResultsAsync(Guid id, Guid normalizedRequestId,string normalizeStatus, string normalizeCurrentMilestone, DateTime? scrapeTime);
+    Task SetNormalizedResultsAsync(Guid id, string normalizeStatus, string normalizeCurrentMilestone);
 
     Task SetVideoGenerationApprovedAsync(Guid id);
     Task SetVideoGenerationRejectedAsync(Guid id, [CanBeNull] string rejectReason);

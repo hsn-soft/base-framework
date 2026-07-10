@@ -1,6 +1,5 @@
 using System.Linq.Expressions;
 using Hhs.Shared.Contracts.Events;
-using Hhs.TextNormalizerService.Application.Consts;
 using Hhs.Shared.Helper;
 using Hhs.Shared.Helper.Enums;
 using Hhs.TextNormalizerService.Application.Providers;
@@ -94,11 +93,11 @@ public sealed class OutlineProviderPollingWorkerService(
                     await EventBus.PublishAsync(
                         parentMessage: ParentIntegrationEvent,
                         correlationId: request.CorrelationId,
-                        eventMessage: new StepFailedEto
+                        eventMessage: new MilestoneFailedEto
                         {
                             RefContentId = request.CustomerContentId,
                             RefContentType = ContentType.CustomerContent,
-                            Step = EventNames.OutlineProviderPollingStarted, // error step
+                            Milestone = Milestones.OutlineProviderPollingStarted, // error milestone
                             ErrorMessage = request.LastError,
                             Retryable = false
                         }
@@ -157,11 +156,11 @@ public sealed class OutlineProviderPollingWorkerService(
                         await EventBus.PublishAsync(
                             parentMessage: ParentIntegrationEvent,
                             correlationId: request.CorrelationId,
-                            eventMessage: new StepFailedEto
+                            eventMessage: new MilestoneFailedEto
                             {
                                 RefContentId = request.CustomerContentId,
                                 RefContentType = ContentType.CustomerContent,
-                                Step = EventNames.OutlineProviderPollingStarted, // error step
+                                Milestone = Milestones.OutlineProviderPollingStarted, // error milestone
                                 ErrorMessage = request.LastError,
                                 Retryable = false
                             }
@@ -185,7 +184,7 @@ public sealed class OutlineProviderPollingWorkerService(
                             Key = request.Id,
                             RefType = "CustomerContent",
                             RefKey = request.CustomerContentId,
-                            FailedStep = EventNames.OutlineProviderPollingStarted,
+                            FailedMilestone = Milestones.OutlineProviderPollingStarted,
                             request.OutlinePollingCount,
                             request.NextOutlinePollAtUtc
                         },
@@ -231,7 +230,7 @@ public sealed class OutlineProviderPollingWorkerService(
                 request.NextOutlinePollAtUtc = null;
 
                 request.Status = NormalizeStatusNames.OutlineProviderRequestCompleted;
-                request.CurrentStep = EventNames.OutlineProviderRequestCompleted;
+                request.CurrentMilestone = Milestones.OutlineProviderRequestCompleted;
 
                 request.OutlineStatus = OutlineStatusNames.ProviderCompleted;
 
@@ -267,7 +266,7 @@ public sealed class OutlineProviderPollingWorkerService(
                 {
                     request.Status = NormalizeStatusNames.Failed;
                     request.OutlineStatus = OutlineStatusNames.Failed;
-                    request.CurrentStep = EventNames.OutlineProviderPollingStarted;
+                    request.CurrentMilestone = Milestones.OutlineProviderPollingStarted;
                     request.NextOutlinePollAtUtc = null;
 
                     await ReplaceCustomerAsync(request, cancellationToken);
@@ -292,11 +291,11 @@ public sealed class OutlineProviderPollingWorkerService(
                     await EventBus.PublishAsync(
                         parentMessage: ParentIntegrationEvent,
                         correlationId: request.CorrelationId,
-                        eventMessage: new StepFailedEto
+                        eventMessage: new MilestoneFailedEto
                         {
                             RefContentId = request.CustomerContentId,
                             RefContentType = ContentType.CustomerContent,
-                            Step = EventNames.OutlineProviderPollingStarted, // error step
+                            Milestone = Milestones.OutlineProviderPollingStarted, // error milestone
                             ErrorMessage = ex.Message,
                             Retryable = false
                         }
@@ -306,7 +305,7 @@ public sealed class OutlineProviderPollingWorkerService(
                 {
                     request.Status = NormalizeStatusNames.OutlineProviderRequestPolling;
                     request.OutlineStatus = OutlineStatusNames.Polling;
-                    request.CurrentStep = EventNames.OutlineProviderPollingStarted;
+                    request.CurrentMilestone = Milestones.OutlineProviderPollingStarted;
                     request.NextOutlinePollAtUtc = DateTime.UtcNow.AddSeconds(pollingSettings.BackoffIntervalSeconds);
 
                     await ReplaceCustomerAsync(request, cancellationToken);
@@ -321,7 +320,7 @@ public sealed class OutlineProviderPollingWorkerService(
                             Key = request.Id,
                             RefType = "CustomerContent",
                             RefKey = request.CustomerContentId,
-                            FailedStep = EventNames.OutlineProviderPollingStarted,
+                            FailedMilestone = Milestones.OutlineProviderPollingStarted,
                             request.OutlinePollingCount,
                             request.NextOutlinePollAtUtc
                         },
@@ -453,7 +452,7 @@ public sealed class OutlineProviderPollingWorkerService(
                                 RefType = "AnalysisContent",
                                 RefKey = request.AnalysisContentId,
                                 AnalysisContentNormalizeRequestId = request.Id,
-                                FailedStep = EventNames.OutlineProviderPollingStarted,
+                                FailedMilestone = Milestones.OutlineProviderPollingStarted,
                                 OutlinePollingCount = nextPollingCount
                             },
                             facility: Facilities.RetryAttemptFailed,
@@ -503,7 +502,7 @@ public sealed class OutlineProviderPollingWorkerService(
                     var completedUpdate = Builders<AnalysisContentNormalizedRequest>.Update
                         .Inc($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlinePollingCount)}", 1)
                         .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", NormalizeStatusNames.OutlineProviderRequestCompleted)
-                        .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentStep)}", EventNames.OutlineProviderRequestCompleted)
+                        .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentMilestone)}", Milestones.OutlineProviderRequestCompleted)
                         .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextOutlinePollAtUtc)}", (DateTime?)null)
                         .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineStatus)}", OutlineStatusNames.ProviderCompleted);
 
@@ -560,7 +559,7 @@ public sealed class OutlineProviderPollingWorkerService(
                     var update = Builders<AnalysisContentNormalizedRequest>.Update
                         .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlinePollingCount)}", nextCount)
                         .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", NormalizeStatusNames.OutlineProviderRequestPolling)
-                        .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentStep)}", EventNames.OutlineProviderPollingStarted)
+                        .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentMilestone)}", Milestones.OutlineProviderPollingStarted)
                         .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineStatus)}", OutlineStatusNames.Polling)
                         .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.LastError)}", ex.Message)
                         .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextOutlinePollAtUtc)}", DateTime.UtcNow.AddSeconds(pollingSettings.ErrorRescheduleDelaySeconds));
@@ -582,7 +581,7 @@ public sealed class OutlineProviderPollingWorkerService(
                             RefType = "AnalysisContent",
                             RefKey = request.AnalysisContentId,
                             AnalysisContentNormalizeRequestId = request.Id,
-                            FailedStep = EventNames.OutlineProviderPollingStarted,
+                            FailedMilestone = Milestones.OutlineProviderPollingStarted,
                             OutlinePollingCount = nextCount
                         },
                         facility: Facilities.RetryAttemptFailed,
@@ -631,7 +630,7 @@ public sealed class OutlineProviderPollingWorkerService(
     {
         var update = Builders<AnalysisContentNormalizedRequest>.Update
             .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", NormalizeStatusNames.Failed)
-            .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentStep)}", EventNames.OutlineProviderPollingStarted)
+            .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentMilestone)}", Milestones.OutlineProviderPollingStarted)
             .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineStatus)}", OutlineStatusNames.Failed)
             .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.LastError)}", errorMessage)
             .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextOutlinePollAtUtc)}", (DateTime?)null);
@@ -662,11 +661,11 @@ public sealed class OutlineProviderPollingWorkerService(
         await EventBus.PublishAsync(
             parentMessage: ParentIntegrationEvent,
             correlationId: request.CorrelationId,
-            eventMessage: new StepFailedEto
+            eventMessage: new MilestoneFailedEto
             {
                 RefContentId = request.AnalysisContentId,
                 RefContentType = ContentType.AnalysisContent,
-                Step = EventNames.OutlineProviderPollingStarted, // error step
+                Milestone = Milestones.OutlineProviderPollingStarted, // error milestone
                 ErrorMessage = errorMessage,
                 Retryable = retryable
             }
@@ -701,7 +700,7 @@ public sealed class OutlineProviderPollingWorkerService(
             .Set(x => x.NextOutlinePollAtUtc, request.NextOutlinePollAtUtc)
             .Set(x => x.OutlineProviderTrackId, request.OutlineProviderTrackId)
             .Set(x => x.LastError, request.LastError)
-            .Set(x => x.CurrentStep, request.CurrentStep);
+            .Set(x => x.CurrentMilestone, request.CurrentMilestone);
 
         await customerRepository.UpdateByExpressionAsync(
                 predicate,

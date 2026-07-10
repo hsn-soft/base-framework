@@ -1,4 +1,4 @@
-using Hhs.Shared.Helper.Consts;
+using Hhs.Shared.Helper.Constants;
 using Hhs.Shared.Helper.Enums;
 using Hhs.Shared.Helper.Providers;
 using Hhs.Shared.Helper.Utils;

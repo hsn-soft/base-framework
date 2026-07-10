@@ -1,4 +1,3 @@
-using Hhs.ContentService.Application.Consts;
 using Hhs.ContentService.Domain.Constants;
 using Hhs.ContentService.Domain.ContentDomain.Entities;
 using Hhs.ContentService.Domain.ContentDomain.Repositories;
@@ -28,15 +27,15 @@ public sealed class ContentOperationService(
     private readonly IFrameworkLogger _logger = provider.GetRequiredService<IFrameworkLogger>();
     private readonly ContentOperationSettings _serviceSettings = serviceSettings?.Value ?? throw new ArgumentNullException(nameof(serviceSettings));
 
-    public async Task HandleNormalizedRequestReferenceAsync(ContentType refContentType, Guid refContentId, Guid refNormalizeRequestId, string normalizeStatus, string normalizeCurrentStep, [CanBeNull] string correlationId = null)
+    public async Task HandleNormalizedRequestReferenceAsync(ContentType refContentType, Guid refContentId, Guid refNormalizeRequestId, string normalizeStatus, string normalizeCurrentMilestone, [CanBeNull] string correlationId = null)
     {
         switch (refContentType)
         {
             case ContentType.CustomerContent:
-                await customerContentRepository.SetNormalizedReferenceAsync(refContentId, refNormalizeRequestId, normalizeStatus, normalizeCurrentStep);
+                await customerContentRepository.SetNormalizedReferenceAsync(refContentId, refNormalizeRequestId, normalizeStatus, normalizeCurrentMilestone);
                 break;
             case ContentType.AnalysisContent:
-                await analysisContentRepository.SetNormalizedReferenceAsync(refContentId, refNormalizeRequestId, normalizeStatus, normalizeCurrentStep);
+                await analysisContentRepository.SetNormalizedReferenceAsync(refContentId, refNormalizeRequestId, normalizeStatus, normalizeCurrentMilestone);
                 break;
             case ContentType.None:
             default:
@@ -44,7 +43,7 @@ public sealed class ContentOperationService(
         }
 
         _logger.FrameworkInfoLog(LogHelper.Generate(
-            message: EventNames.CustomerContentNormalizeRequestCreated,
+            message: Milestones.CustomerContentNormalizeRequestCreated,
             reference: new { Type = refContentType.ToString(), Key = refContentId, RefType = "CustomerContentNormalizeRequest", RefKey = refNormalizeRequestId },
             facility: Facilities.NormalizeRequestReferenceSet,
             correlationId: correlationId,
@@ -58,11 +57,11 @@ public sealed class ContentOperationService(
             @event.CustomerContentId,
             @event.CustomerContentNormalizeRequestId,
             @event.NormalizeStatus,
-            @event.NormalizeCurrentStep,
+            @event.NormalizeCurrentMilestone,
             @event.ScrapedReleaseTimeUtc);
 
         _logger.FrameworkInfoLog(LogHelper.Generate(
-            message: EventNames.CustomerContentScrapingCompleted,
+            message: Milestones.CustomerContentScrapingCompleted,
             reference: new { Type = nameof(CustomerContent), Key = @event.CustomerContentId, RefType = "CustomerContentNormalizeRequest", RefKey = @event.CustomerContentNormalizeRequestId },
             facility: Facilities.CustomerContentScrapingCompleted,
             correlationId: correlationId,
@@ -89,7 +88,7 @@ public sealed class ContentOperationService(
                             await customerContentRepository.SetNormalizedResultsAsync(
                                 entity.Id,
                                 @event.NormalizeStatus,
-                                @event.NormalizeCurrentStep);
+                                @event.NormalizeCurrentMilestone);
 
                             _logger.FrameworkInfoLog(LogHelper.Generate(
                                 message: "CustomerContent video generation rejected",
@@ -268,7 +267,7 @@ public sealed class ContentOperationService(
         }
 
         _logger.FrameworkInfoLog(LogHelper.Generate(
-            message: EventNames.VideoRequestCreated,
+            message: Milestones.VideoRequestCreated,
             reference: new { Type = refContentType.ToString(), Key = refContentId, RefType = "VideoRequest", RefKey = refVideoRequestId },
             facility: Facilities.VideoRequestCreated,
             correlationId: correlationId,
@@ -323,7 +322,7 @@ public sealed class ContentOperationService(
         }
 
         _logger.FrameworkInfoLog(LogHelper.Generate(
-            message: EventNames.VideoProviderRequestStarted,
+            message: Milestones.VideoProviderRequestStarted,
             reference: new { Type = @event.RefContentType.ToString(), Key = @event.RefContentId, RefType = "VideoRequest", RefKey = @event.VideoRequestId },
             facility: Facilities.VideoProviderRequestStarted,
             correlationId: correlationId,
@@ -343,12 +342,13 @@ public sealed class ContentOperationService(
                         entity.VideoStatus = MediaStatusNames.Completed;
                         entity.VideoRequestId = @event.VideoRequestId;
                         entity.VideoCdnUrl = @event.FinalVideoUrl;
-                        entity.LastFacility = EventNames.VideoGenerationResultPublished;
+                        entity.LastFacility = Facilities.VideoGenerationResultPublished;
+                        entity.CurrentMilestone = Milestones.VideoGenerationResultPublished;
 
                         await customerContentRepository.UpdateAsync(entity, cancellationToken);
 
                         _logger.FrameworkInfoLog(LogHelper.Generate(
-                            message: EventNames.VideoGenerationResultPublished,
+                            message: Milestones.VideoGenerationResultPublished,
                             reference: new
                             {
                                 entity.ScopeKey,
@@ -374,12 +374,13 @@ public sealed class ContentOperationService(
                         entity.VideoStatus = MediaStatusNames.Completed;
                         entity.VideoRequestId = @event.VideoRequestId;
                         entity.VideoCdnUrl = @event.FinalVideoUrl;
-                        entity.LastFacility = EventNames.VideoGenerationResultPublished;
+                        entity.LastFacility = Facilities.VideoGenerationResultPublished;
+                        entity.CurrentMilestone = Milestones.VideoGenerationResultPublished;
 
                         await analysisContentRepository.UpdateAsync(entity, cancellationToken);
 
                         _logger.FrameworkInfoLog(LogHelper.Generate(
-                            message: EventNames.VideoGenerationResultPublished,
+                            message: Milestones.VideoGenerationResultPublished,
                             reference: new
                             {
                                 entity.ScopeKey,
@@ -404,7 +405,7 @@ public sealed class ContentOperationService(
         }
     }
 
-    public async Task HandleStepFailedAsync(StepFailedEto @event, CancellationToken cancellationToken = default)
+    public async Task HandleMilestoneFailedAsync(MilestoneFailedEto @event, CancellationToken cancellationToken = default)
     {
         if (@event.RefContentType == ContentType.CustomerContent)
         {
@@ -412,18 +413,19 @@ public sealed class ContentOperationService(
 
             if (entity is not null)
             {
-                string facility = @event.Retryable ? Facilities.RetryScheduled : Facilities.StepFailed;
-                string failedDesc = $"{@event.Step}: {@event.ErrorMessage}";
+                string facility = @event.Retryable ? Facilities.RetryScheduled : Facilities.MilestoneFailed;
+                string failedDesc = $"{@event.Milestone}: {@event.ErrorMessage}";
 
                 entity.LastFacility = facility;
+                entity.CurrentMilestone = @event.Milestone;
                 entity.LastError = failedDesc;
 
                 if (!@event.Retryable)
                 {
-                    if (IsNormalizeStep(@event.Step))
+                    if (IsNormalizeMilestone(@event.Milestone))
                         entity.NormalizeStatus = NormalizeStatusNames.Failed;
 
-                    if (IsVideoStep(@event.Step))
+                    if (IsVideoMilestone(@event.Milestone))
                         entity.VideoStatus = MediaStatusNames.Failed;
                 }
 
@@ -437,7 +439,7 @@ public sealed class ContentOperationService(
                         // references
                         Type = nameof(CustomerContent),
                         Key = entity.Id,
-                        FailedStep = @event.Step,
+                        FailedMilestone = @event.Milestone,
                         @event.Retryable,
                         @event.ErrorMessage
                     },
@@ -454,32 +456,33 @@ public sealed class ContentOperationService(
 
             if (entity is not null)
             {
-                string facility = @event.Retryable ? Facilities.RetryScheduled : Facilities.StepFailed;
-                string failedDesc = $"{@event.Step}: {@event.ErrorMessage}";
+                string facility = @event.Retryable ? Facilities.RetryScheduled : Facilities.MilestoneFailed;
+                string failedDesc = $"{@event.Milestone}: {@event.ErrorMessage}";
 
                 entity.LastFacility = facility;
+                entity.CurrentMilestone = @event.Milestone;
                 entity.LastError = failedDesc;
 
                 if (!@event.Retryable)
                 {
-                    if (IsNormalizeStep(@event.Step))
+                    if (IsNormalizeMilestone(@event.Milestone))
                         entity.NormalizeStatus = NormalizeStatusNames.Failed;
 
-                    if (IsVideoStep(@event.Step))
+                    if (IsVideoMilestone(@event.Milestone))
                         entity.VideoStatus = MediaStatusNames.Failed;
                 }
 
                 await analysisContentRepository.UpdateAsync(entity, cancellationToken);
 
                 _logger.FrameworkErrorLog(LogHelper.Generate(
-                    message: $"{EventNames.StepFailed} | {failedDesc}",
+                    message: $"{Milestones.MilestoneFailed} | {failedDesc}",
                     reference: new
                     {
                         entity.ScopeKey,
                         // references
                         Type = nameof(AnalysisContent),
                         Key = entity.Id,
-                        FailedStep = @event.Step,
+                        FailedMilestone = @event.Milestone,
                         @event.Retryable,
                         @event.ErrorMessage
                     },
@@ -491,30 +494,30 @@ public sealed class ContentOperationService(
         }
     }
 
-    private static bool IsNormalizeStep(string step)
+    private static bool IsNormalizeMilestone(string milestone)
     {
-        return step.Contains(StepKeywords.Scraping, StringComparison.OrdinalIgnoreCase)
-               || step.Contains(StepKeywords.Outline, StringComparison.OrdinalIgnoreCase)
-               || step.Contains(StepKeywords.Normalize, StringComparison.OrdinalIgnoreCase);
+        return milestone.Contains(MilestoneKeywords.Scraping, StringComparison.OrdinalIgnoreCase)
+               || milestone.Contains(MilestoneKeywords.Outline, StringComparison.OrdinalIgnoreCase)
+               || milestone.Contains(MilestoneKeywords.Normalize, StringComparison.OrdinalIgnoreCase);
     }
 
-    private static bool IsVideoStep(string step)
+    private static bool IsVideoMilestone(string milestone)
     {
-        return step.Contains(StepKeywords.Audio, StringComparison.OrdinalIgnoreCase)
-               || step.Contains(StepKeywords.Video, StringComparison.OrdinalIgnoreCase);
+        return milestone.Contains(MilestoneKeywords.Audio, StringComparison.OrdinalIgnoreCase)
+               || milestone.Contains(MilestoneKeywords.Video, StringComparison.OrdinalIgnoreCase);
     }
 
     private async Task<KeyValuePair<bool, string>> CheckVideoGenerationApproveRules([NotNull] string scopeKey, DateTime? releaseTime)
     {
         if (_serviceSettings.SkipContentCheckOperation)
         {
-            return new KeyValuePair<bool, string>(true, EventNames.CustomerContentVideoGenerationApproved);
+            return new KeyValuePair<bool, string>(true, Milestones.CustomerContentVideoGenerationApproved);
         }
 
         // Check content release time
         if (!releaseTime.HasValue || releaseTime.Value.ToUniversalTime().Date != DateTime.UtcNow.Date)
         {
-            return new KeyValuePair<bool, string>(false, EventNames.CustomerContentVideoGenerationSkippedOldContent);
+            return new KeyValuePair<bool, string>(false, Milestones.CustomerContentVideoGenerationSkippedOldContent);
         }
 
         // Get Client Details
@@ -529,14 +532,14 @@ public sealed class ContentOperationService(
         {
             if (DateTime.UtcNow.Hour < releaseTime.Value.ToUniversalTime().Hour)
             {
-                return new KeyValuePair<bool, string>(false, EventNames.CustomerContentVideoGenerationSkippedEarlyTime);
+                return new KeyValuePair<bool, string>(false, Milestones.CustomerContentVideoGenerationSkippedEarlyTime);
             }
         }
 
         // Check client direct video generation limit
         if (customerVpSetting.DailyDirectVideoGenerationLimit <= 0)
         {
-            return new KeyValuePair<bool, string>(false, EventNames.CustomerContentVideoGenerationSkippedDailyLimit);
+            return new KeyValuePair<bool, string>(false, Milestones.CustomerContentVideoGenerationSkippedDailyLimit);
         }
 
         // Check client direct video generation available
@@ -544,7 +547,7 @@ public sealed class ContentOperationService(
             releaseTime.Value.ToUniversalTime().Date, VideoGenerationTypes.DirectVideoGeneration);
 
         return customerVpSetting.DailyDirectVideoGenerationLimit - clientDailyDirectVideoHistoryCount <= 0
-            ? new KeyValuePair<bool, string>(false, EventNames.CustomerContentVideoGenerationSkippedDailyLimit)
-            : new KeyValuePair<bool, string>(true, EventNames.CustomerContentVideoGenerationApproved);
+            ? new KeyValuePair<bool, string>(false, Milestones.CustomerContentVideoGenerationSkippedDailyLimit)
+            : new KeyValuePair<bool, string>(true, Milestones.CustomerContentVideoGenerationApproved);
     }
 }

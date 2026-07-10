@@ -1,7 +1,6 @@
 using System.Linq.Expressions;
 using System.Text.Json;
 using Hhs.Shared.Contracts.Events;
-using Hhs.VideoGeneratorService.Application.Consts;
 using Hhs.Shared.Helper;
 using Hhs.Shared.Helper.Providers;
 using Hhs.Shared.Helper.Retry;
@@ -109,7 +108,7 @@ public sealed class VideoOperationAppService(
         {
             CorrelationId = correlationId,
             Status = VideoStatusNames.Created,
-            CurrentStep = EventNames.VideoRequestCreated,
+            CurrentMilestone = Milestones.VideoRequestCreated,
             MediaInputJson = @event.VideoInputJson,
             AudioProviderKey = audioProviderKey,
             VideoProviderKey = videoProviderKeyResult.Value
@@ -118,7 +117,7 @@ public sealed class VideoOperationAppService(
         await videoRequestRepository.InsertAsync(videoRequest, cancellationToken);
 
         _logger.FrameworkInfoLog(LogHelper.Generate(
-            message: EventNames.VideoRequestCreated,
+            message: Milestones.VideoRequestCreated,
             reference: new
             {
                 @event.ScopeKey,
@@ -143,14 +142,14 @@ public sealed class VideoOperationAppService(
         var videoRequest = await GetVideoAsync(@event.VideoRequestId, cancellationToken);
 
         videoRequest.Status = VideoStatusNames.Started;
-        videoRequest.CurrentStep = EventNames.VideoOperationStarted;
+        videoRequest.CurrentMilestone = Milestones.VideoOperationStarted;
 
         long claimed = await ReplaceVideoAsync(videoRequest, cancellationToken,
             validPriorStatuses: [VideoStatusNames.Created, VideoStatusNames.WaitingRetry, VideoStatusNames.RetryEventPublished]);
         if (claimed == 0) return;
 
         _logger.FrameworkInfoLog(LogHelper.Generate(
-            message: EventNames.VideoOperationStarted,
+            message: Milestones.VideoOperationStarted,
             reference: new
             {
                 videoRequest.ScopeKey,
@@ -171,7 +170,7 @@ public sealed class VideoOperationAppService(
             if (videoProvider.Capabilities.AudioInputMode == VideoAudioInputMode.ProviderCreatesAudio)
             {
                 _logger.FrameworkInfoLog(LogHelper.Generate(
-                    message: EventNames.VideoAudioInternal,
+                    message: Milestones.VideoAudioInternal,
                     reference: new
                     {
                         videoRequest.ScopeKey,
@@ -187,7 +186,7 @@ public sealed class VideoOperationAppService(
 
                 await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
                     correlationId: videoRequest.CorrelationId,
-                    eventMessage: new AudioOperationStartedEto { RefContentId = videoRequest.RefContentId, RefContentType = videoRequest.RefContentType, VideoRequestId = videoRequest.Id, AudioMode = EventNames.VideoAudioInternal }
+                    eventMessage: new AudioOperationStartedEto { RefContentId = videoRequest.RefContentId, RefContentType = videoRequest.RefContentType, VideoRequestId = videoRequest.Id, AudioMode = Milestones.VideoAudioInternal }
                 );
 
                 await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
@@ -205,7 +204,7 @@ public sealed class VideoOperationAppService(
             var audioItems = ExtractAudioItems(videoRequest.MediaInputJson);
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
-                message: EventNames.VideoAudioExternal,
+                message: Milestones.VideoAudioExternal,
                 reference: new
                 {
                     videoRequest.ScopeKey,
@@ -222,7 +221,7 @@ public sealed class VideoOperationAppService(
 
             await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
                 correlationId: videoRequest.CorrelationId,
-                eventMessage: new AudioOperationStartedEto { RefContentId = videoRequest.RefContentId, RefContentType = videoRequest.RefContentType, VideoRequestId = videoRequest.Id, AudioMode = EventNames.VideoAudioExternal }
+                eventMessage: new AudioOperationStartedEto { RefContentId = videoRequest.RefContentId, RefContentType = videoRequest.RefContentType, VideoRequestId = videoRequest.Id, AudioMode = Milestones.VideoAudioExternal }
             );
 
             foreach (var item in audioItems)
@@ -233,7 +232,7 @@ public sealed class VideoOperationAppService(
                 if (existingAudio is not null)
                 {
                     _logger.FrameworkInfoLog(LogHelper.Generate(
-                        message: EventNames.AudioProviderRequestStarted,
+                        message: Milestones.AudioProviderRequestStarted,
                         reference: new
                         {
                             videoRequest.ScopeKey,
@@ -268,12 +267,12 @@ public sealed class VideoOperationAppService(
                     eventId,
                     item.Text,
                     videoRequest.AudioProviderKey,
-                    item.SortOrder) { CorrelationId = videoRequest.CorrelationId, Status = AudioStatusNames.AudioRequestCreated, CurrentStep = EventNames.AudioRequestCreated };
+                    item.SortOrder) { CorrelationId = videoRequest.CorrelationId, Status = AudioStatusNames.AudioRequestCreated, CurrentMilestone = Milestones.AudioRequestCreated };
 
                 await audioRequestRepository.InsertAsync(audioRequest, cancellationToken);
 
                 _logger.FrameworkInfoLog(LogHelper.Generate(
-                    message: EventNames.AudioRequestCreated,
+                    message: Milestones.AudioRequestCreated,
                     reference: new
                     {
                         videoRequest.ScopeKey,
@@ -299,7 +298,7 @@ public sealed class VideoOperationAppService(
         {
             await HandleVideoExceptionAsync(
                 videoRequest,
-                EventNames.VideoOperationStarted,
+                Milestones.VideoOperationStarted,
                 Facilities.VideoOperationFailed,
                 ex,
                 cancellationToken
@@ -315,14 +314,14 @@ public sealed class VideoOperationAppService(
         try
         {
             audioRequest.Status = AudioStatusNames.AudioProviderRequestStarted;
-            audioRequest.CurrentStep = EventNames.AudioProviderRequestStarted;
+            audioRequest.CurrentMilestone = Milestones.AudioProviderRequestStarted;
 
             long claimed = await ReplaceAudioAsync(audioRequest, cancellationToken,
                 validPriorStatuses: [AudioStatusNames.AudioRequestCreated, AudioStatusNames.WaitingRetry, AudioStatusNames.RetryEventPublished]);
             if (claimed == 0) return;
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
-                message: EventNames.AudioProviderRequestStarted,
+                message: Milestones.AudioProviderRequestStarted,
                 reference: new
                 {
                     audioRequest.ScopeKey,
@@ -361,12 +360,12 @@ public sealed class VideoOperationAppService(
                     throw new InvalidOperationException(ErrorMessages.AudioProviderFailedNoUrl);
 
                 audioRequest.Status = AudioStatusNames.AudioProviderCompleted;
-                audioRequest.CurrentStep = EventNames.AudioProviderCompleted;
+                audioRequest.CurrentMilestone = Milestones.AudioProviderCompleted;
 
                 await ReplaceAudioAsync(audioRequest, cancellationToken);
 
                 _logger.FrameworkInfoLog(LogHelper.Generate(
-                    message: EventNames.AudioProviderCompleted,
+                    message: Milestones.AudioProviderCompleted,
                     reference: new
                     {
                         audioRequest.ScopeKey,
@@ -394,14 +393,14 @@ public sealed class VideoOperationAppService(
                 throw new InvalidOperationException(ErrorMessages.AudioProviderTrackIdRequired);
 
             audioRequest.Status = AudioStatusNames.AudioProviderPolling;
-            audioRequest.CurrentStep = EventNames.AudioProviderPollingStarted;
+            audioRequest.CurrentMilestone = Milestones.AudioProviderPollingStarted;
             audioRequest.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(videoPollingSettings.ErrorRescheduleDelaySeconds);
             audioRequest.ProviderPollingCount = 0;
 
             await ReplaceAudioAsync(audioRequest, cancellationToken);
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
-                message: EventNames.AudioProviderPollingStarted,
+                message: Milestones.AudioProviderPollingStarted,
                 reference: new
                 {
                     audioRequest.ScopeKey,
@@ -421,7 +420,7 @@ public sealed class VideoOperationAppService(
         {
             await HandleAudioExceptionAsync(
                 audioRequest,
-                EventNames.AudioProviderRequestStarted,
+                Milestones.AudioProviderRequestStarted,
                 Facilities.AudioOperationFailed,
                 ex,
                 cancellationToken
@@ -434,7 +433,7 @@ public sealed class VideoOperationAppService(
         var audioRequest = await GetAudioAsync(@event.AudioRequestId, cancellationToken);
 
         _logger.FrameworkInfoLog(LogHelper.Generate(
-            message: EventNames.AudioFileDownloadStarted,
+            message: Milestones.AudioFileDownloadStarted,
             reference: new
             {
                 audioRequest.ScopeKey,
@@ -462,7 +461,7 @@ public sealed class VideoOperationAppService(
         try
         {
             audioRequest.Status = AudioStatusNames.AudioFileDownloading;
-            audioRequest.CurrentStep = EventNames.AudioFileDownloadStarted;
+            audioRequest.CurrentMilestone = Milestones.AudioFileDownloadStarted;
 
             long claimed = await ReplaceAudioAsync(audioRequest, cancellationToken,
                 validPriorStatuses: [AudioStatusNames.AudioProviderCompleted, AudioStatusNames.WaitingRetry, AudioStatusNames.RetryEventPublished]);
@@ -477,12 +476,12 @@ public sealed class VideoOperationAppService(
             audioRequest.AudioLocalPath = audioLocalPath;
 
             audioRequest.Status = AudioStatusNames.AudioFileDownloadCompleted;
-            audioRequest.CurrentStep = EventNames.AudioFileDownloadCompleted;
+            audioRequest.CurrentMilestone = Milestones.AudioFileDownloadCompleted;
 
             await ReplaceAudioAsync(audioRequest, cancellationToken);
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
-                message: EventNames.AudioFileDownloadCompleted,
+                message: Milestones.AudioFileDownloadCompleted,
                 reference: new
                 {
                     audioRequest.ScopeKey,
@@ -506,7 +505,7 @@ public sealed class VideoOperationAppService(
         {
             await HandleAudioExceptionAsync(
                 audioRequest,
-                EventNames.AudioFileDownloadStarted,
+                Milestones.AudioFileDownloadStarted,
                 Facilities.AudioOperationFailed,
                 ex, cancellationToken);
         }
@@ -522,14 +521,14 @@ public sealed class VideoOperationAppService(
         try
         {
             audioRequest.Status = AudioStatusNames.AudioFileUploading;
-            audioRequest.CurrentStep = EventNames.AudioFileUploadStarted;
+            audioRequest.CurrentMilestone = Milestones.AudioFileUploadStarted;
 
             long claimed = await ReplaceAudioAsync(audioRequest, cancellationToken,
                 validPriorStatuses: [AudioStatusNames.AudioFileDownloadCompleted, AudioStatusNames.WaitingRetry, AudioStatusNames.RetryEventPublished]);
             if (claimed == 0) return;
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
-                message: EventNames.AudioFileUploadStarted,
+                message: Milestones.AudioFileUploadStarted,
                 reference: new
                 {
                     audioRequest.ScopeKey,
@@ -572,7 +571,7 @@ public sealed class VideoOperationAppService(
             audioRequest.AudioStorageUrl = uploadResult.StorageUrl;
 
             audioRequest.Status = AudioStatusNames.AudioFileUploadCompleted;
-            audioRequest.CurrentStep = EventNames.AudioFileUploadCompleted;
+            audioRequest.CurrentMilestone = Milestones.AudioFileUploadCompleted;
 
             await ReplaceAudioAsync(audioRequest, cancellationToken);
 
@@ -583,7 +582,7 @@ public sealed class VideoOperationAppService(
             await ReplaceAudioAsync(audioRequest, cancellationToken);
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
-                message: EventNames.AudioFileUploadCompleted,
+                message: Milestones.AudioFileUploadCompleted,
                 reference: new
                 {
                     audioRequest.ScopeKey,
@@ -607,7 +606,7 @@ public sealed class VideoOperationAppService(
         {
             await HandleAudioExceptionAsync(
                 audioRequest,
-                EventNames.AudioFileUploadStarted,
+                Milestones.AudioFileUploadStarted,
                 Facilities.AudioOperationFailed,
                 ex, cancellationToken);
         }
@@ -628,7 +627,7 @@ public sealed class VideoOperationAppService(
         try
         {
             videoRequest.Status = VideoStatusNames.VideoProviderRequestStarted;
-            videoRequest.CurrentStep = EventNames.VideoProviderRequestStarted;
+            videoRequest.CurrentMilestone = Milestones.VideoProviderRequestStarted;
 
             long claimed = await ReplaceVideoAsync(videoRequest, cancellationToken,
                 validPriorStatuses: [VideoStatusNames.VideoProviderRequestStarting, VideoStatusNames.WaitingRetry, VideoStatusNames.RetryEventPublished]);
@@ -657,12 +656,12 @@ public sealed class VideoOperationAppService(
                     throw new InvalidOperationException(ErrorMessages.VideoProviderFailedNoUrl);
 
                 videoRequest.Status = VideoStatusNames.VideoProviderCompleted;
-                videoRequest.CurrentStep = EventNames.VideoProviderCompleted;
+                videoRequest.CurrentMilestone = Milestones.VideoProviderCompleted;
 
                 await ReplaceVideoAsync(videoRequest, cancellationToken);
 
                 _logger.FrameworkInfoLog(LogHelper.Generate(
-                    message: EventNames.VideoProviderCompleted,
+                    message: Milestones.VideoProviderCompleted,
                     reference: new
                     {
                         videoRequest.ScopeKey,
@@ -689,14 +688,14 @@ public sealed class VideoOperationAppService(
                 throw new InvalidOperationException(ErrorMessages.VideoProviderTrackIdRequired);
 
             videoRequest.Status = VideoStatusNames.VideoProviderPolling;
-            videoRequest.CurrentStep = EventNames.VideoProviderPollingStarted;
+            videoRequest.CurrentMilestone = Milestones.VideoProviderPollingStarted;
             videoRequest.NextProviderPollAtUtc = DateTime.UtcNow.AddSeconds(videoPollingSettings.ErrorRescheduleDelaySeconds);
             videoRequest.ProviderPollingCount = 0;
 
             await ReplaceVideoAsync(videoRequest, cancellationToken);
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
-                message: EventNames.VideoProviderPollingStarted,
+                message: Milestones.VideoProviderPollingStarted,
                 reference: new
                 {
                     videoRequest.ScopeKey,
@@ -715,7 +714,7 @@ public sealed class VideoOperationAppService(
         {
             await HandleVideoExceptionAsync(
                 videoRequest,
-                EventNames.VideoProviderRequestStarted,
+                Milestones.VideoProviderRequestStarted,
                 Facilities.VideoOperationFailed,
                 ex,
                 cancellationToken
@@ -728,7 +727,7 @@ public sealed class VideoOperationAppService(
         var videoRequest = await GetVideoAsync(@event.VideoRequestId, cancellationToken);
 
         _logger.FrameworkInfoLog(LogHelper.Generate(
-            message: EventNames.VideoFileDownloadStarted,
+            message: Milestones.VideoFileDownloadStarted,
             reference: new
             {
                 videoRequest.ScopeKey,
@@ -755,7 +754,7 @@ public sealed class VideoOperationAppService(
         try
         {
             videoRequest.Status = VideoStatusNames.VideoFileDownloading;
-            videoRequest.CurrentStep = EventNames.VideoFileDownloadStarted;
+            videoRequest.CurrentMilestone = Milestones.VideoFileDownloadStarted;
 
             long claimed = await ReplaceVideoAsync(videoRequest, cancellationToken,
                 validPriorStatuses: [VideoStatusNames.VideoProviderCompleted, VideoStatusNames.WaitingRetry, VideoStatusNames.RetryEventPublished]);
@@ -767,12 +766,12 @@ public sealed class VideoOperationAppService(
             videoRequest.VideoLocalPath = videoLocalPath;
 
             videoRequest.Status = VideoStatusNames.VideoFileDownloaded;
-            videoRequest.CurrentStep = EventNames.VideoFileDownloadCompleted;
+            videoRequest.CurrentMilestone = Milestones.VideoFileDownloadCompleted;
 
             await ReplaceVideoAsync(videoRequest, cancellationToken);
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
-                message: EventNames.VideoFileDownloadCompleted,
+                message: Milestones.VideoFileDownloadCompleted,
                 reference: new
                 {
                     videoRequest.ScopeKey,
@@ -795,7 +794,7 @@ public sealed class VideoOperationAppService(
         {
             await HandleVideoExceptionAsync(
                 videoRequest,
-                EventNames.VideoFileDownloadStarted,
+                Milestones.VideoFileDownloadStarted,
                 Facilities.VideoOperationFailed,
                 ex, cancellationToken);
         }
@@ -818,14 +817,14 @@ public sealed class VideoOperationAppService(
             string cdnProviderKey = systemCdnSettings.Selected;
 
             videoRequest.Status = VideoStatusNames.VideoFileUploading;
-            videoRequest.CurrentStep = EventNames.VideoFileUploadStarted;
+            videoRequest.CurrentMilestone = Milestones.VideoFileUploadStarted;
 
             long claimed = await ReplaceVideoAsync(videoRequest, cancellationToken,
                 validPriorStatuses: [VideoStatusNames.VideoFileDownloaded, VideoStatusNames.WaitingRetry, VideoStatusNames.RetryEventPublished]);
             if (claimed == 0) return;
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
-                message: EventNames.VideoFileUploadStarted,
+                message: Milestones.VideoFileUploadStarted,
                 reference: new
                 {
                     videoRequest.ScopeKey,
@@ -860,7 +859,7 @@ public sealed class VideoOperationAppService(
             videoRequest.VideoStorageUrl = uploadResult.StorageUrl;
 
             videoRequest.Status = VideoStatusNames.VideoFileUploadCompleted;
-            videoRequest.CurrentStep = EventNames.VideoFileUploadCompleted;
+            videoRequest.CurrentMilestone = Milestones.VideoFileUploadCompleted;
 
             await ReplaceVideoAsync(videoRequest, cancellationToken);
 
@@ -871,7 +870,7 @@ public sealed class VideoOperationAppService(
             await ReplaceVideoAsync(videoRequest, cancellationToken);
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
-                message: EventNames.VideoFileUploadCompleted,
+                message: Milestones.VideoFileUploadCompleted,
                 reference: new
                 {
                     videoRequest.ScopeKey,
@@ -895,7 +894,7 @@ public sealed class VideoOperationAppService(
         {
             await HandleVideoExceptionAsync(
                 videoRequest,
-                EventNames.VideoFileUploadStarted,
+                Milestones.VideoFileUploadStarted,
                 Facilities.VideoOperationFailed,
                 ex, cancellationToken);
         }
@@ -908,14 +907,14 @@ public sealed class VideoOperationAppService(
         try
         {
             videoRequest.Status = VideoStatusNames.Completed;
-            videoRequest.CurrentStep = EventNames.VideoGenerationResultPublished;
+            videoRequest.CurrentMilestone = Milestones.VideoGenerationResultPublished;
 
             long claimed = await ReplaceVideoAsync(videoRequest, cancellationToken,
                 validPriorStatuses: [VideoStatusNames.VideoFileUploadCompleted, VideoStatusNames.WaitingRetry, VideoStatusNames.RetryEventPublished]);
             if (claimed == 0) return;
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
-                message: EventNames.VideoGenerationResultPublished,
+                message: Milestones.VideoGenerationResultPublished,
                 reference: new
                 {
                     videoRequest.ScopeKey,
@@ -939,7 +938,7 @@ public sealed class VideoOperationAppService(
         {
             await HandleVideoExceptionAsync(
                 videoRequest,
-                EventNames.VideoFileUploadCompleted,
+                Milestones.VideoFileUploadCompleted,
                 Facilities.VideoOperationFailed,
                 ex, cancellationToken);
         }
@@ -981,7 +980,7 @@ public sealed class VideoOperationAppService(
             : x => x.Id == request.Id && validPriorStatuses.Contains(x.Status);
         var update = Builders<VideoRequest>.Update
             .Set(x => x.Status, request.Status)
-            .Set(x => x.CurrentStep, request.CurrentStep)
+            .Set(x => x.CurrentMilestone, request.CurrentMilestone)
             .Set(x => x.MediaInputJson, request.MediaInputJson)
             .Set(x => x.AudioProviderKey, request.AudioProviderKey)
             .Set(x => x.VideoProviderKey, request.VideoProviderKey)
@@ -1007,7 +1006,7 @@ public sealed class VideoOperationAppService(
             : x => x.Id == request.Id && validPriorStatuses.Contains(x.Status);
         var update = Builders<AudioRequest>.Update
             .Set(x => x.Status, request.Status)
-            .Set(x => x.CurrentStep, request.CurrentStep)
+            .Set(x => x.CurrentMilestone, request.CurrentMilestone)
             .Set(x => x.InputText, request.InputText)
             .Set(x => x.AudioProviderKey, request.AudioProviderKey)
             .Set(x => x.SortOrder, request.SortOrder)
@@ -1026,29 +1025,29 @@ public sealed class VideoOperationAppService(
         return audioRequestRepository.UpdateByExpressionAsync(predicate, _ => update, cancellationToken: cancellationToken);
     }
 
-    private async Task HandleAudioExceptionAsync(AudioRequest request, string step, string facility, Exception ex, CancellationToken cancellationToken = default)
+    private async Task HandleAudioExceptionAsync(AudioRequest request, string milestone, string facility, Exception ex, CancellationToken cancellationToken = default)
     {
         if (ExceptionClassifier.IsRetryable(ex))
         {
-            await ScheduleAudioRetryAsync(request, step, facility, ex, cancellationToken);
+            await ScheduleAudioRetryAsync(request, milestone, facility, ex, cancellationToken);
             return;
         }
 
-        await FailAudioAsync(request, step, facility, ex, false, cancellationToken);
+        await FailAudioAsync(request, milestone, facility, ex, false, cancellationToken);
     }
 
-    private async Task ScheduleAudioRetryAsync(AudioRequest request, string step, string facility, Exception ex, CancellationToken cancellationToken = default)
+    private async Task ScheduleAudioRetryAsync(AudioRequest request, string milestone, string facility, Exception ex, CancellationToken cancellationToken = default)
     {
         request.RetryCount++;
 
         if (request.RetryCount >= serviceRetrySettings.MaxRetryCount)
         {
-            await FailAudioAsync(request, step, facility, ex, false, cancellationToken);
+            await FailAudioAsync(request, milestone, facility, ex, false, cancellationToken);
             return;
         }
 
         request.Status = AudioStatusNames.WaitingRetry;
-        request.CurrentStep = step;
+        request.CurrentMilestone = milestone;
         request.LastError = ex.Message;
         request.NextRetryAtUtc = DateTime.UtcNow.Add(
             retryDelayCalculator.Calculate(request.RetryCount));
@@ -1056,7 +1055,7 @@ public sealed class VideoOperationAppService(
         await ReplaceAudioAsync(request, cancellationToken);
 
         _logger.FrameworkErrorLog(LogHelper.Generate(
-            message: EventNames.RetryScheduled,
+            message: Milestones.RetryScheduled,
             reference: new
             {
                 request.ScopeKey,
@@ -1065,7 +1064,7 @@ public sealed class VideoOperationAppService(
                 RefType = request.RefContentType.ToString(),
                 RefKey = request.RefContentId,
                 request.VideoRequestId,
-                FailedStep = step,
+                FailedMilestone = milestone,
                 request.RetryCount,
                 request.NextRetryAtUtc
             },
@@ -1077,21 +1076,21 @@ public sealed class VideoOperationAppService(
         await EventBus.PublishAsync(
             parentMessage: ParentIntegrationEvent,
             correlationId: request.CorrelationId,
-            eventMessage: new StepFailedEto
+            eventMessage: new MilestoneFailedEto
             {
                 RefContentId = request.RefContentId,
                 RefContentType = request.RefContentType,
-                Step = step,
+                Milestone = milestone,
                 ErrorMessage = ex.Message,
                 Retryable = true
             }
         );
     }
 
-    private async Task FailAudioAsync(AudioRequest request, string step, string facility, Exception ex, bool retryable, CancellationToken cancellationToken = default)
+    private async Task FailAudioAsync(AudioRequest request, string milestone, string facility, Exception ex, bool retryable, CancellationToken cancellationToken = default)
     {
         request.Status = AudioStatusNames.Failed;
-        request.CurrentStep = step;
+        request.CurrentMilestone = milestone;
         request.LastError = ex.Message;
         request.NextRetryAtUtc = null;
 
@@ -1103,7 +1102,7 @@ public sealed class VideoOperationAppService(
         await ReplaceAudioAsync(request, cancellationToken);
 
         _logger.FrameworkErrorLog(LogHelper.Generate(
-            message: step,
+            message: milestone,
             reference: new
             {
                 request.ScopeKey,
@@ -1112,7 +1111,7 @@ public sealed class VideoOperationAppService(
                 RefType = request.RefContentType.ToString(),
                 RefKey = request.RefContentId,
                 request.VideoRequestId,
-                FailedStep = step,
+                FailedMilestone = milestone,
                 retryable
             },
             facility: facility,
@@ -1123,11 +1122,11 @@ public sealed class VideoOperationAppService(
         await EventBus.PublishAsync(
             parentMessage: ParentIntegrationEvent,
             correlationId: request.CorrelationId,
-            eventMessage: new StepFailedEto
+            eventMessage: new MilestoneFailedEto
             {
                 RefContentId = request.RefContentId,
                 RefContentType = request.RefContentType,
-                Step = step,
+                Milestone = milestone,
                 ErrorMessage = ex.Message,
                 Retryable = retryable
             }
@@ -1143,14 +1142,14 @@ public sealed class VideoOperationAppService(
     private async Task FailVideoRequestDueToAudioFailureAsync(VideoRequest videoRequest, string facility, CancellationToken cancellationToken = default)
     {
         videoRequest.Status = VideoStatusNames.Failed;
-        videoRequest.CurrentStep = EventNames.AudioFileUploadCompleted;
+        videoRequest.CurrentMilestone = Milestones.AudioFileUploadCompleted;
         videoRequest.LastError = "One or more audio requests failed.";
         videoRequest.NextRetryAtUtc = null;
 
         await ReplaceVideoAsync(videoRequest, cancellationToken);
 
         _logger.FrameworkErrorLog(LogHelper.Generate(
-            message: EventNames.AudioFileUploadCompleted,
+            message: Milestones.AudioFileUploadCompleted,
             reference: new
             {
                 videoRequest.ScopeKey,
@@ -1167,40 +1166,40 @@ public sealed class VideoOperationAppService(
         await EventBus.PublishAsync(
             parentMessage: ParentIntegrationEvent,
             correlationId: videoRequest.CorrelationId,
-            eventMessage: new StepFailedEto
+            eventMessage: new MilestoneFailedEto
             {
                 RefContentId = videoRequest.RefContentId,
                 RefContentType = videoRequest.RefContentType,
-                Step = EventNames.AudioFileUploadCompleted,
+                Milestone = Milestones.AudioFileUploadCompleted,
                 ErrorMessage = "One or more audio requests failed.",
                 Retryable = false
             }
         );
     }
 
-    private async Task HandleVideoExceptionAsync(VideoRequest request, string step, string facility, Exception ex, CancellationToken cancellationToken = default)
+    private async Task HandleVideoExceptionAsync(VideoRequest request, string milestone, string facility, Exception ex, CancellationToken cancellationToken = default)
     {
         if (ExceptionClassifier.IsRetryable(ex))
         {
-            await ScheduleVideoRetryAsync(request, step, facility, ex, cancellationToken);
+            await ScheduleVideoRetryAsync(request, milestone, facility, ex, cancellationToken);
             return;
         }
 
-        await FailVideoAsync(request, step, facility, ex, false, cancellationToken);
+        await FailVideoAsync(request, milestone, facility, ex, false, cancellationToken);
     }
 
-    private async Task ScheduleVideoRetryAsync(VideoRequest request, string step, string facility, Exception ex, CancellationToken cancellationToken = default)
+    private async Task ScheduleVideoRetryAsync(VideoRequest request, string milestone, string facility, Exception ex, CancellationToken cancellationToken = default)
     {
         request.RetryCount++;
 
         if (request.RetryCount >= serviceRetrySettings.MaxRetryCount)
         {
-            await FailVideoAsync(request, step, facility, ex, false, cancellationToken);
+            await FailVideoAsync(request, milestone, facility, ex, false, cancellationToken);
             return;
         }
 
         request.Status = VideoStatusNames.WaitingRetry;
-        request.CurrentStep = step;
+        request.CurrentMilestone = milestone;
         request.LastError = ex.Message;
         request.NextRetryAtUtc = DateTime.UtcNow.Add(
             retryDelayCalculator.Calculate(request.RetryCount));
@@ -1208,7 +1207,7 @@ public sealed class VideoOperationAppService(
         await ReplaceVideoAsync(request, cancellationToken);
 
         _logger.FrameworkErrorLog(LogHelper.Generate(
-            message: EventNames.RetryScheduled,
+            message: Milestones.RetryScheduled,
             reference: new
             {
                 request.ScopeKey,
@@ -1216,7 +1215,7 @@ public sealed class VideoOperationAppService(
                 Key = request.Id,
                 RefType = request.RefContentType.ToString(),
                 RefKey = request.RefContentId,
-                FailedStep = step,
+                FailedMilestone = milestone,
                 request.RetryCount,
                 request.NextRetryAtUtc
             },
@@ -1228,21 +1227,21 @@ public sealed class VideoOperationAppService(
         await EventBus.PublishAsync(
             parentMessage: ParentIntegrationEvent,
             correlationId: request.CorrelationId,
-            eventMessage: new StepFailedEto
+            eventMessage: new MilestoneFailedEto
             {
                 RefContentId = request.RefContentId,
                 RefContentType = request.RefContentType,
-                Step = step,
+                Milestone = milestone,
                 ErrorMessage = ex.Message,
                 Retryable = true
             }
         );
     }
 
-    private async Task FailVideoAsync(VideoRequest request, string step, string facility, Exception ex, bool retryable, CancellationToken cancellationToken = default)
+    private async Task FailVideoAsync(VideoRequest request, string milestone, string facility, Exception ex, bool retryable, CancellationToken cancellationToken = default)
     {
         request.Status = VideoStatusNames.Failed;
-        request.CurrentStep = step;
+        request.CurrentMilestone = milestone;
         request.LastError = ex.Message;
         request.NextRetryAtUtc = null;
 
@@ -1254,7 +1253,7 @@ public sealed class VideoOperationAppService(
         await ReplaceVideoAsync(request, cancellationToken);
 
         _logger.FrameworkErrorLog(LogHelper.Generate(
-            message: step,
+            message: milestone,
             reference: new
             {
                 request.ScopeKey,
@@ -1262,7 +1261,7 @@ public sealed class VideoOperationAppService(
                 Key = request.Id,
                 RefType = request.RefContentType.ToString(),
                 RefKey = request.RefContentId,
-                FailedStep = step,
+                FailedMilestone = milestone,
                 retryable
             },
             facility: facility,
@@ -1273,11 +1272,11 @@ public sealed class VideoOperationAppService(
         await EventBus.PublishAsync(
             parentMessage: ParentIntegrationEvent,
             correlationId: request.CorrelationId,
-            eventMessage: new StepFailedEto
+            eventMessage: new MilestoneFailedEto
             {
                 RefContentId = request.RefContentId,
                 RefContentType = request.RefContentType,
-                Step = step,
+                Milestone = milestone,
                 ErrorMessage = ex.Message,
                 Retryable = retryable
             }

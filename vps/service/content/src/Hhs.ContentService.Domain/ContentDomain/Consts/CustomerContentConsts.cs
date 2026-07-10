@@ -17,6 +17,7 @@ public static class CustomerContentConsts
     public const int ContentKeyMaxLength = 500;
     public const int CorrelationIdMaxLength = 50;
     public const int LastFacilityMaxLength = 120;
+    public const int CurrentMilestoneMaxLength = 120;
     public const int LastErrorMaxLength = 1000;
     public const int NormalizeStatusMaxLength = 80;
     public const int VideoStatusMaxLength = 80;

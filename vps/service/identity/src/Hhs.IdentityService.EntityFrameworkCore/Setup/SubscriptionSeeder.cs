@@ -1,7 +1,7 @@
 using Hhs.IdentityService.Domain.AppRoleDomain.Entities;
 using Hhs.IdentityService.Domain.TenantDomain.Entities;
 using Hhs.IdentityService.EntityFrameworkCore.Context;
-using Hhs.Shared.Helper.Consts;
+using Hhs.Shared.Helper.Constants;
 using Hhs.Shared.Helper.Enums;
 using Hhs.Shared.Helper.Utils;
 using HsnSoft.Base.Logging.Abstracts;

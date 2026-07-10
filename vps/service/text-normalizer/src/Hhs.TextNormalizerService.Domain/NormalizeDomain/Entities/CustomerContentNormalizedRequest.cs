@@ -26,7 +26,7 @@ public sealed class CustomerContentNormalizedRequest : AuditedEntity<Guid>, ISof
 
     // Status & Progress
     [NotNull] public string Status { get; set; } = default!;
-    [NotNull] public string CurrentStep { get; set; } = default!;
+    [NotNull] public string CurrentMilestone { get; set; } = default!;
 
     // Scraping State
     [CanBeNull]  public string ScrapingStatus { get; set; }

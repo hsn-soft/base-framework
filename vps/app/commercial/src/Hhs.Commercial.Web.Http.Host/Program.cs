@@ -1,6 +1,6 @@
 using HealthChecks.UI.Client;
 using Hhs.Commercial.Web;
-using Hhs.Shared.Helper.Consts;
+using Hhs.Shared.Helper.Constants;
 using Hhs.Shared.Hosting.Extensions;
 using Hhs.Shared.Hosting.Helpers;
 using Hhs.Shared.Hosting.Middlewares;

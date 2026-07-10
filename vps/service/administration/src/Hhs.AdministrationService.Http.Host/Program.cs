@@ -8,7 +8,7 @@ using Hhs.AdministrationService.EntityFrameworkCore;
 using Hhs.AdministrationService.EntityFrameworkCore.Setup;
 using Hhs.AdministrationService.Workers;
 using Hhs.Shared.Helper.Configuration;
-using Hhs.Shared.Helper.Consts;
+using Hhs.Shared.Helper.Constants;
 using Hhs.Shared.Helper.Retry;
 using Hhs.Shared.Hosting.Extensions;
 using Hhs.Shared.Hosting.Helpers;

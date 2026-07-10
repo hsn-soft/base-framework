@@ -3,7 +3,7 @@ using Hhs.AuthServer.Localization;
 using Hhs.AuthServer.Options;
 using Hhs.AuthServer.Services;
 using Hhs.IdentityService.EntityFrameworkCore;
-using Hhs.Shared.Helper.Consts;
+using Hhs.Shared.Helper.Constants;
 using Hhs.Shared.Helper.Utils;
 using Hhs.Shared.Hosting.Extensions;
 using Hhs.Shared.Hosting.Helpers;

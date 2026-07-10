@@ -20,7 +20,7 @@ public sealed record CustomerContentNormalizeRequestCreatedEto : IIntegrationEve
     public Guid CustomerContentNormalizeRequestId { get; init; }
 
     public string NormalizeStatus { get; init; } = default!;
-    public string NormalizeCurrentStep { get; init; } = default!;
+    public string NormalizeCurrentMilestone { get; init; } = default!;
 }
 public sealed record CustomerContentScrapingStartedEto : IIntegrationEventMessage
 {
@@ -35,7 +35,7 @@ public sealed record CustomerContentScrapingCompletedEto : IIntegrationEventMess
     public DateTime? ScrapedReleaseTimeUtc { get; init; }
 
     public string NormalizeStatus { get; init; } = default!;
-    public string NormalizeCurrentStep { get; init; } = default!;
+    public string NormalizeCurrentMilestone { get; init; } = default!;
 }
 
 public sealed record CustomerContentOutlineStartedEto : IIntegrationEventMessage
@@ -72,7 +72,7 @@ public sealed record AnalysisContentNormalizeRequestCreatedEto : IIntegrationEve
     public Guid AnalysisContentNormalizeRequestId { get; init; }
 
     public string NormalizeStatus { get; init; } = default!;
-    public string NormalizeCurrentStep { get; init; } = default!;
+    public string NormalizeCurrentMilestone { get; init; } = default!;
 }
 
 public sealed record AnalysisItemScrapingStartedEto : IIntegrationEventMessage
@@ -117,7 +117,7 @@ public sealed record NormalizerResultPublishedEto : IIntegrationEventMessage
 
     public Guid NormalizeRequestId { get; init; }
     public string NormalizeStatus { get; init; } = default!;
-    public string NormalizeCurrentStep { get; init; } = default!;
+    public string NormalizeCurrentMilestone { get; init; } = default!;
 }
 
 public sealed record VideoGenerationApprovedEto : IIntegrationEventMessage
@@ -213,12 +213,12 @@ public sealed record VideoGenerationResultPublishedEto : IIntegrationEventMessag
     [CanBeNull] public string FinalVideoUrl { get; init; } = default!;
 }
 
-public sealed record StepFailedEto : IIntegrationEventMessage
+public sealed record MilestoneFailedEto : IIntegrationEventMessage
 {
     public Guid RefContentId { get; init; }
     public ContentType RefContentType { get; init; }
 
-    public string Step { get; init; } = default!;
+    public string Milestone { get; init; } = default!;
     public string ErrorMessage { get; init; } = default!;
     public bool Retryable { get; init; }
 }

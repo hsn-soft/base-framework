@@ -29,9 +29,9 @@ public static class AudioRequestClassMap
                 map.MapMember(x => x.Status)
                     .SetIsRequired(true)
                     .SetMaxLength(AudioRequestConsts.StatusMaxLength);
-                map.MapMember(x => x.CurrentStep)
+                map.MapMember(x => x.CurrentMilestone)
                     .SetIsRequired(true)
-                    .SetMaxLength(AudioRequestConsts.CurrentStepMaxLength);
+                    .SetMaxLength(AudioRequestConsts.CurrentMilestoneMaxLength);
 
                 // Reference Fields
                 map.MapMember(x => x.RefContentId).SetIsRequired(true);

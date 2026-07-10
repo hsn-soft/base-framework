@@ -29,9 +29,9 @@ public static class VideoRequestClassMap
                 map.MapMember(x => x.Status)
                     .SetIsRequired(true)
                     .SetMaxLength(VideoRequestConsts.StatusMaxLength);
-                map.MapMember(x => x.CurrentStep)
+                map.MapMember(x => x.CurrentMilestone)
                     .SetIsRequired(true)
-                    .SetMaxLength(VideoRequestConsts.CurrentStepMaxLength);
+                    .SetMaxLength(VideoRequestConsts.CurrentMilestoneMaxLength);
 
                 // Reference Fields
                 map.MapMember(x => x.RefContentId).SetIsRequired(true);

@@ -1,4 +1,4 @@
-namespace Hhs.Shared.Helper.Consts;
+namespace Hhs.Shared.Helper.Constants;
 
 public static class NameConsts
 {

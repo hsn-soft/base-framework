@@ -1,4 +1,4 @@
-using Hhs.ContentService.Application.Consts;
+using Hhs.ContentService.Domain.Constants;
 using Hhs.ContentService.Application.Contracts.Events;
 using Hhs.ContentService.Application.Contracts.JobDomain;
 using Hhs.ContentService.Application.Contracts.JobDomain.Dtos;

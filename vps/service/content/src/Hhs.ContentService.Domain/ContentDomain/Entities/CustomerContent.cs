@@ -35,6 +35,7 @@ public sealed class CustomerContent : AuditedEntity<Guid>, ISoftDelete, IScopeSu
     [CanBeNull] public string VideoCdnUrl { get; set; }
 
     [CanBeNull] public string LastFacility { get; set; }
+    [CanBeNull] public string CurrentMilestone { get; set; }
     [CanBeNull] public string LastError { get; set; }
 
     private CustomerContent()
@@ -60,7 +61,8 @@ public sealed class CustomerContent : AuditedEntity<Guid>, ISoftDelete, IScopeSu
 
         NormalizeStatus = NormalizeStatusNames.NotStarted;
         VideoStatus = MediaStatusNames.NotStarted;
-        LastFacility = EventNames.CustomerContentCreated;
+        LastFacility = Facilities.CustomerContentCreated;
+        CurrentMilestone = Milestones.CustomerContentCreated;
     }
 
     private void SetScopeKey(string scopeKey)

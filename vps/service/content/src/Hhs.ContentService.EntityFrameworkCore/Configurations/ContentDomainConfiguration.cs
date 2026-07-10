@@ -28,6 +28,7 @@ public static class ContentDomainConfiguration
             b.Property(x => x.VideoCdnUrl).HasMaxLength(CustomerContentConsts.VideoCdnUrlMaxLength);
 
             b.Property(x => x.LastFacility).HasMaxLength(CustomerContentConsts.LastFacilityMaxLength);
+            b.Property(x => x.CurrentMilestone).HasMaxLength(CustomerContentConsts.CurrentMilestoneMaxLength);
             b.Property(x => x.LastError).HasMaxLength(CustomerContentConsts.LastErrorMaxLength);
 
             b.HasIndex(x => x.ScopeKey);
@@ -75,6 +76,7 @@ public static class ContentDomainConfiguration
             b.Property(x => x.VideoCdnUrl).HasMaxLength(AnalysisContentConsts.FinalVideoUrlMaxLength);
 
             b.Property(x => x.LastFacility).HasMaxLength(AnalysisContentConsts.LastFacilityMaxLength);
+            b.Property(x => x.CurrentMilestone).HasMaxLength(AnalysisContentConsts.CurrentMilestoneMaxLength);
             b.Property(x => x.LastError).HasMaxLength(AnalysisContentConsts.LastErrorMaxLength);
 
             b.HasIndex(x => x.ScopeKey);

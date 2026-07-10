@@ -6,7 +6,7 @@ using Hhs.Gateway.Commercial.Options.Docs;
 using Hhs.Gateway.Commercial.Services;
 using Hhs.Gateway.Commercial.Services.Docs;
 using Hhs.Gateway.Commercial.Services.Swagger;
-using Hhs.Shared.Helper.Consts;
+using Hhs.Shared.Helper.Constants;
 using Hhs.Shared.Hosting.Extensions;
 using Hhs.Shared.Hosting.Gateways.Extensions;
 using Hhs.Shared.Hosting.Helpers;

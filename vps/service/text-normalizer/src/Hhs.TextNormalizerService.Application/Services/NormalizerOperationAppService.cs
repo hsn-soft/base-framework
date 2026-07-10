@@ -1,7 +1,6 @@
 using System.Linq.Expressions;
 using System.Net;
 using Hhs.Shared.Contracts.Events;
-using Hhs.TextNormalizerService.Application.Consts;
 using Hhs.Shared.Helper;
 using Hhs.Shared.Helper.Enums;
 using Hhs.Shared.Helper.Providers;
@@ -55,7 +54,7 @@ public sealed class NormalizerOperationAppService(
             _logger.LogDebug($"Existing request found, publishing event");
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
-                message: EventNames.CustomerContentNormalizeRequestCreated,
+                message: Milestones.CustomerContentNormalizeRequestCreated,
                 reference: new
                 {
                     existing.ScopeKey,
@@ -76,7 +75,7 @@ public sealed class NormalizerOperationAppService(
                     CustomerContentId = existing.CustomerContentId, // for content service update
                     CustomerContentNormalizeRequestId = existing.Id,
                     NormalizeStatus = existing.Status,
-                    NormalizeCurrentStep = existing.CurrentStep,
+                    NormalizeCurrentMilestone = existing.CurrentMilestone,
                 }
             );
 
@@ -99,7 +98,7 @@ public sealed class NormalizerOperationAppService(
             {
                 SourceEventId = eventId,
                 Status = NormalizeStatusNames.Created,
-                CurrentStep = EventNames.CustomerContentNormalizeRequestCreated,
+                CurrentMilestone = Milestones.CustomerContentNormalizeRequestCreated,
                 ScrapingStatus = ScrapingStatusNames.NotStarted,
                 OutlineStatus = OutlineStatusNames.NotStarted
             };
@@ -107,7 +106,7 @@ public sealed class NormalizerOperationAppService(
             await customerContentRepository.InsertAsync(entity, cancellationToken);
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
-                message: EventNames.CustomerContentNormalizeRequestCreated,
+                message: Milestones.CustomerContentNormalizeRequestCreated,
                 reference: new
                 {
                     entity.ScopeKey,
@@ -130,7 +129,7 @@ public sealed class NormalizerOperationAppService(
                     CustomerContentId = @event.CustomerContentId, // for content service update
                     CustomerContentNormalizeRequestId = requestId,
                     NormalizeStatus = entity.Status,
-                    NormalizeCurrentStep = entity.CurrentStep,
+                    NormalizeCurrentMilestone = entity.CurrentMilestone,
                 }
             );
         }
@@ -152,7 +151,7 @@ public sealed class NormalizerOperationAppService(
         try
         {
             request.Status = NormalizeStatusNames.ScrapingStarted;
-            request.CurrentStep = EventNames.CustomerContentScrapingStarted;
+            request.CurrentMilestone = Milestones.CustomerContentScrapingStarted;
 
             request.ScrapingStatus = ScrapingStatusNames.Started;
 
@@ -161,7 +160,7 @@ public sealed class NormalizerOperationAppService(
             if (claimed == 0) return;
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
-                message: EventNames.CustomerContentScrapingStarted,
+                message: Milestones.CustomerContentScrapingStarted,
                 reference: new
                 {
                     request.ScopeKey,
@@ -186,7 +185,7 @@ public sealed class NormalizerOperationAppService(
         {
             await HandleCustomerExceptionAsync(
                 request,
-                EventNames.CustomerContentScrapingStarted,
+                Milestones.CustomerContentScrapingStarted,
                 Facilities.ScrapingFailed,
                 ex
             );
@@ -241,7 +240,7 @@ public sealed class NormalizerOperationAppService(
             }
 
             request.Status = NormalizeStatusNames.ScrapingCompleted;
-            request.CurrentStep = EventNames.CustomerContentScrapingCompleted;
+            request.CurrentMilestone = Milestones.CustomerContentScrapingCompleted;
 
             request.ScrapingStatus = ScrapingStatusNames.Completed;
 
@@ -260,7 +259,7 @@ public sealed class NormalizerOperationAppService(
             if (claimed == 0) return;
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
-                message: EventNames.CustomerContentScrapingCompleted,
+                message: Milestones.CustomerContentScrapingCompleted,
                 reference: new
                 {
                     request.ScopeKey,
@@ -285,7 +284,7 @@ public sealed class NormalizerOperationAppService(
                     CustomerContentNormalizeRequestId = request.Id,
                     ScrapedReleaseTimeUtc = request.ScrapingResult.ReleaseTimeUtc,
                     NormalizeStatus = request.Status,
-                    NormalizeCurrentStep = request.CurrentStep
+                    NormalizeCurrentMilestone = request.CurrentMilestone
                 }
             );
         }
@@ -293,7 +292,7 @@ public sealed class NormalizerOperationAppService(
         {
             await HandleCustomerExceptionAsync(
                 request,
-                EventNames.CustomerContentScrapingStarted,
+                Milestones.CustomerContentScrapingStarted,
                 Facilities.ScrapingFailed,
                 ex
             );
@@ -311,7 +310,7 @@ public sealed class NormalizerOperationAppService(
         try
         {
             request.Status = NormalizeStatusNames.OutlineStarted;
-            request.CurrentStep = EventNames.CustomerContentOutlineStarted;
+            request.CurrentMilestone = Milestones.CustomerContentOutlineStarted;
 
             request.OutlineStatus = OutlineStatusNames.Started;
 
@@ -320,7 +319,7 @@ public sealed class NormalizerOperationAppService(
             if (claimed == 0) return;
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
-                message: EventNames.CustomerContentOutlineStarted,
+                message: Milestones.CustomerContentOutlineStarted,
                 reference: new
                 {
                     request.ScopeKey,
@@ -345,7 +344,7 @@ public sealed class NormalizerOperationAppService(
         {
             await HandleCustomerExceptionAsync(
                 request,
-                EventNames.CustomerContentOutlineStarted,
+                Milestones.CustomerContentOutlineStarted,
                 Facilities.ScrapingFailed,
                 ex
             );
@@ -370,7 +369,7 @@ public sealed class NormalizerOperationAppService(
                 && !_normalizerSettings.UseReleaseTimeOldContentOutlineOperation)
             {
                 request.Status = NormalizeStatusNames.OutlineSkipped;
-                request.CurrentStep = EventNames.CustomerContentOutlineSkipped;
+                request.CurrentMilestone = Milestones.CustomerContentOutlineSkipped;
 
                 request.OutlineStatus = OutlineStatusNames.Skipped;
 
@@ -403,7 +402,7 @@ public sealed class NormalizerOperationAppService(
                         RefContentType = ContentType.CustomerContent,
                         NormalizeRequestId = request.Id,
                         NormalizeStatus = request.Status,
-                        NormalizeCurrentStep = request.CurrentStep
+                        NormalizeCurrentMilestone = request.CurrentMilestone
                     }
                 );
 
@@ -411,14 +410,14 @@ public sealed class NormalizerOperationAppService(
             }
 
             request.Status = NormalizeStatusNames.OutlineProviderRequestStarted;
-            request.CurrentStep = EventNames.OutlineProviderRequestStarted;
+            request.CurrentMilestone = Milestones.OutlineProviderRequestStarted;
 
             long claimed = await ReplaceCustomerContentAsync(request, cancellationToken,
                 validPriorStatuses: [NormalizeStatusNames.OutlineStarted, NormalizeStatusNames.WaitingRetry]);
             if (claimed == 0) return;
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
-                message: EventNames.OutlineProviderRequestStarted,
+                message: Milestones.OutlineProviderRequestStarted,
                 reference: new
                 {
                     request.ScopeKey,
@@ -453,7 +452,7 @@ public sealed class NormalizerOperationAppService(
         {
             await HandleCustomerExceptionAsync(
                 request,
-                EventNames.OutlineProviderRequestStarted,
+                Milestones.OutlineProviderRequestStarted,
                 Facilities.OutlineFailed,
                 ex
             );
@@ -473,7 +472,7 @@ public sealed class NormalizerOperationAppService(
                 correlationId: existing.CorrelationId,
                 eventMessage: new AnalysisContentNormalizeRequestCreatedEto
                 {
-                    AnalysisContentId = existing.AnalysisContentId, AnalysisContentNormalizeRequestId = existing.Id, NormalizeStatus = existing.Status, NormalizeCurrentStep = existing.CurrentStep,
+                    AnalysisContentId = existing.AnalysisContentId, AnalysisContentNormalizeRequestId = existing.Id, NormalizeStatus = existing.Status, NormalizeCurrentMilestone = existing.CurrentMilestone,
                 }
             );
 
@@ -486,7 +485,7 @@ public sealed class NormalizerOperationAppService(
             @event.ScopeKey,
             @event.AnalysisContentId,
             @event.DomainName,
-            correlationId) { SourceEventId = eventId, Status = NormalizeStatusNames.Created, CurrentStep = EventNames.AnalysisContentCreated, Items = @event.Items.Select(x => new AnalysisNormalizedItem { CustomerContentId = x.CustomerContentId, SortOrder = x.SortOrder, ContentKey = x.ContentKey }).ToList() };
+            correlationId) { SourceEventId = eventId, Status = NormalizeStatusNames.Created, CurrentMilestone = Milestones.AnalysisContentCreated, Items = @event.Items.Select(x => new AnalysisNormalizedItem { CustomerContentId = x.CustomerContentId, SortOrder = x.SortOrder, ContentKey = x.ContentKey }).ToList() };
 
         await analysisContentRepository.InsertAsync(request, cancellationToken);
 
@@ -494,7 +493,7 @@ public sealed class NormalizerOperationAppService(
             correlationId: correlationId,
             eventMessage: new AnalysisContentNormalizeRequestCreatedEto
             {
-                AnalysisContentId = @event.AnalysisContentId, AnalysisContentNormalizeRequestId = requestId, NormalizeStatus = request.Status, NormalizeCurrentStep = request.CurrentStep,
+                AnalysisContentId = @event.AnalysisContentId, AnalysisContentNormalizeRequestId = requestId, NormalizeStatus = request.Status, NormalizeCurrentMilestone = request.CurrentMilestone,
             }
         );
     }
@@ -531,7 +530,7 @@ public sealed class NormalizerOperationAppService(
                     request.Id,
                     item.CustomerContentId,
                     u => u.Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", NormalizeStatusNames.ScrapingCompleted)
-                        .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentStep)}", EventNames.AnalysisItemScrapingCompleted)
+                        .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentMilestone)}", Milestones.AnalysisItemScrapingCompleted)
                         .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.ScrapingStatus)}", ScrapingStatusNames.Completed)
                         .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.ScrapingResult)}", existingRequest.ScrapingResult)
                         .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.LastError)}", default(string)),
@@ -541,7 +540,7 @@ public sealed class NormalizerOperationAppService(
                 if (reuseClaimed == 0) return;
 
                 _logger.FrameworkInfoLog(LogHelper.Generate(
-                    message: EventNames.AnalysisItemScrapingCompleted,
+                    message: Milestones.AnalysisItemScrapingCompleted,
                     reference: new
                     {
                         request.ScopeKey,
@@ -565,7 +564,7 @@ public sealed class NormalizerOperationAppService(
                 request.Id,
                 item.CustomerContentId,
                 u => u.Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", NormalizeStatusNames.ScrapingStarted)
-                    .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentStep)}", EventNames.AnalysisItemScrapingStarted)
+                    .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentMilestone)}", Milestones.AnalysisItemScrapingStarted)
                     .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.ScrapingStatus)}", ScrapingStatusNames.Started),
                 cancellationToken,
                 validPriorScrapingStatuses: [ScrapingStatusNames.NotStarted, ScrapingStatusNames.WaitingRetry]
@@ -597,7 +596,7 @@ public sealed class NormalizerOperationAppService(
                 request.Id,
                 item.CustomerContentId,
                 u => u.Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", NormalizeStatusNames.ScrapingCompleted)
-                    .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentStep)}", EventNames.AnalysisItemScrapingCompleted)
+                    .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentMilestone)}", Milestones.AnalysisItemScrapingCompleted)
                     .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.ScrapingStatus)}", ScrapingStatusNames.Completed)
                     .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.ScrapingResult)}",
                         new ScrapingContentDataModel
@@ -614,7 +613,7 @@ public sealed class NormalizerOperationAppService(
             );
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
-                message: EventNames.AnalysisItemScrapingCompleted,
+                message: Milestones.AnalysisItemScrapingCompleted,
                 reference: new
                 {
                     request.ScopeKey,
@@ -634,7 +633,7 @@ public sealed class NormalizerOperationAppService(
             await HandleAnalysisItemExceptionAsync(
                 request,
                 item,
-                EventNames.AnalysisItemScrapingStarted,
+                Milestones.AnalysisItemScrapingStarted,
                 Facilities.ScrapingFailed,
                 ex
             );
@@ -656,7 +655,7 @@ public sealed class NormalizerOperationAppService(
                     analysisContentNormalizedRequest.Id,
                     item.CustomerContentId,
                     u => u.Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", NormalizeStatusNames.WaitingRetry)
-                        .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentStep)}", EventNames.AnalysisItemOutlineStarted)
+                        .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentMilestone)}", Milestones.AnalysisItemOutlineStarted)
                         .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineStatus)}", OutlineStatusNames.WaitingScraping)
                         .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.LastError)}", "ScrapingResult is required before outline.")
                         .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextRetryAtUtc)}", DateTime.UtcNow.AddSeconds(outlinePollingSettings.ErrorRescheduleDelaySeconds)),
@@ -670,7 +669,7 @@ public sealed class NormalizerOperationAppService(
                 item.CustomerContentId,
                 u => u.Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", NormalizeStatusNames.OutlineProviderRequestStarted)
                     .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineStatus)}", OutlineStatusNames.Started)
-                    .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentStep)}", EventNames.AnalysisItemOutlineStarted),
+                    .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentMilestone)}", Milestones.AnalysisItemOutlineStarted),
                 cancellationToken,
                 validPriorOutlineStatuses: [OutlineStatusNames.NotStarted, OutlineStatusNames.WaitingRetry]
             );
@@ -696,7 +695,7 @@ public sealed class NormalizerOperationAppService(
             await HandleAnalysisItemExceptionAsync(
                 analysisContentNormalizedRequest,
                 item,
-                EventNames.AnalysisItemOutlineStarted,
+                Milestones.AnalysisItemOutlineStarted,
                 Facilities.OutlineFailed,
                 ex
             );
@@ -748,7 +747,7 @@ public sealed class NormalizerOperationAppService(
                     throw new InvalidOperationException(ErrorMessages.OutlineResponseDataUnknown);
 
                 _logger.FrameworkInfoLog(LogHelper.Generate(
-                    message: EventNames.OutlineProviderRequestCompleted,
+                    message: Milestones.OutlineProviderRequestCompleted,
                     reference: new { @event.ScopeKey, Type = @event.RefContentType.ToString(), Key = @event.RefNormalizedRequestId, @event.CustomerContentIdForItem },
                     facility: Facilities.OutlineProviderRequestCompleted,
                     correlationId: correlationId,
@@ -784,7 +783,7 @@ public sealed class NormalizerOperationAppService(
             request.OutlineProviderTrackId = providerTrackId;
 
             request.Status = NormalizeStatusNames.OutlineProviderRequestPolling;
-            request.CurrentStep = EventNames.OutlineProviderPollingStarted;
+            request.CurrentMilestone = Milestones.OutlineProviderPollingStarted;
 
             request.OutlineStatus = OutlineStatusNames.Polling;
 
@@ -793,7 +792,7 @@ public sealed class NormalizerOperationAppService(
             await ReplaceCustomerContentAsync(request);
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
-                message: EventNames.OutlineProviderPollingStarted,
+                message: Milestones.OutlineProviderPollingStarted,
                 reference: new
                 {
                     request.ScopeKey,
@@ -818,7 +817,7 @@ public sealed class NormalizerOperationAppService(
             @event.CustomerContentIdForItem.Value,
             u => u
                 .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", NormalizeStatusNames.OutlineProviderRequestPolling)
-                .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentStep)}", EventNames.OutlineProviderPollingStarted)
+                .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentMilestone)}", Milestones.OutlineProviderPollingStarted)
                 .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineProviderTrackId)}", providerTrackId)
                 .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineStatus)}", OutlineStatusNames.Polling)
                 .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextOutlinePollAtUtc)}", DateTime.UtcNow.AddSeconds(outlinePollingSettings.IntervalSeconds)),
@@ -826,7 +825,7 @@ public sealed class NormalizerOperationAppService(
         );
 
         _logger.FrameworkInfoLog(LogHelper.Generate(
-            message: EventNames.OutlineProviderPollingStarted,
+            message: Milestones.OutlineProviderPollingStarted,
             reference: new { Type = nameof(AnalysisNormalizedItem), Key = @event.CustomerContentIdForItem, RefType = nameof(AnalysisContentNormalizedRequest), RefKey = @event.RefNormalizedRequestId },
             facility: Facilities.OutlineProviderPollingStarted,
             correlationId: correlationId,
@@ -844,7 +843,7 @@ public sealed class NormalizerOperationAppService(
 
             await HandleCustomerExceptionAsync(
                 customerContentNormalizedRequest,
-                EventNames.OutlineProviderRequestStarted,
+                Milestones.OutlineProviderRequestStarted,
                 Facilities.OutlineFailed,
                 ex
             );
@@ -862,7 +861,7 @@ public sealed class NormalizerOperationAppService(
         await HandleAnalysisItemExceptionAsync(
             analysis,
             item,
-            EventNames.OutlineProviderRequestStarted,
+            Milestones.OutlineProviderRequestStarted,
             Facilities.OutlineFailed,
             ex
         );
@@ -877,12 +876,12 @@ public sealed class NormalizerOperationAppService(
             var customerContentNormalizedRequest = await customerContentRepository.GetByIdAsync(@event.RefNormalizedRequestId, cancellationToken: cancellationToken);
 
             if (customerContentNormalizedRequest.Status == NormalizeStatusNames.Completed ||
-                customerContentNormalizedRequest.CurrentStep == EventNames.NormalizerResultPublished ||
+                customerContentNormalizedRequest.CurrentMilestone == Milestones.NormalizerResultPublished ||
                 customerContentNormalizedRequest.OutlineStatus == OutlineStatusNames.Completed)
                 return;
 
             customerContentNormalizedRequest.Status = NormalizeStatusNames.OutlineCompleted;
-            customerContentNormalizedRequest.CurrentStep = EventNames.CustomerContentOutlineCompleted;
+            customerContentNormalizedRequest.CurrentMilestone = Milestones.CustomerContentOutlineCompleted;
 
             customerContentNormalizedRequest.OutlineStatus = OutlineStatusNames.Completed;
 
@@ -893,7 +892,7 @@ public sealed class NormalizerOperationAppService(
             if (customerClaimed == 0) return;
 
             _logger.FrameworkInfoLog(LogHelper.Generate(
-                message: EventNames.CustomerContentOutlineCompleted,
+                message: Milestones.CustomerContentOutlineCompleted,
                 reference: new
                 {
                     customerContentNormalizedRequest.ScopeKey,
@@ -928,7 +927,7 @@ public sealed class NormalizerOperationAppService(
             analysisContentNormalizedRequest.Id,
             item.CustomerContentId,
             u => u.Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", NormalizeStatusNames.OutlineCompleted)
-                .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentStep)}", EventNames.AnalysisItemOutlineCompleted)
+                .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentMilestone)}", Milestones.AnalysisItemOutlineCompleted)
                 .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineStatus)}", OutlineStatusNames.Completed)
                 .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineResult)}", new OutlineResult { OutlinedData = @event.OutlinedData })
                 .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.LastError)}", (string)null)
@@ -939,7 +938,7 @@ public sealed class NormalizerOperationAppService(
         if (claimed == 0) return;
 
         _logger.FrameworkInfoLog(LogHelper.Generate(
-            message: EventNames.AnalysisItemOutlineCompleted,
+            message: Milestones.AnalysisItemOutlineCompleted,
             reference: new
             {
                 analysisContentNormalizedRequest.ScopeKey,
@@ -962,18 +961,18 @@ public sealed class NormalizerOperationAppService(
             cancellationToken: cancellationToken);
 
         if (customerContentNormalizedRequest?.Status == NormalizeStatusNames.Completed ||
-            customerContentNormalizedRequest?.CurrentStep == EventNames.NormalizerResultPublished)
+            customerContentNormalizedRequest?.CurrentMilestone == Milestones.NormalizerResultPublished)
             return;
 
         customerContentNormalizedRequest!.Status = NormalizeStatusNames.Completed;
-        customerContentNormalizedRequest.CurrentStep = EventNames.NormalizerResultPublished;
+        customerContentNormalizedRequest.CurrentMilestone = Milestones.NormalizerResultPublished;
 
         long claimed = await ReplaceCustomerContentAsync(customerContentNormalizedRequest, cancellationToken,
             validPriorStatuses: [NormalizeStatusNames.OutlineCompleted, NormalizeStatusNames.WaitingRetry]);
         if (claimed == 0) return;
 
         _logger.FrameworkInfoLog(LogHelper.Generate(
-            message: EventNames.NormalizerResultPublished,
+            message: Milestones.NormalizerResultPublished,
             reference: new
             {
                 customerContentNormalizedRequest.ScopeKey,
@@ -995,7 +994,7 @@ public sealed class NormalizerOperationAppService(
                 RefContentType = ContentType.CustomerContent,
                 NormalizeRequestId = customerContentNormalizedRequest.Id,
                 NormalizeStatus = customerContentNormalizedRequest.Status,
-                NormalizeCurrentStep = customerContentNormalizedRequest.CurrentStep
+                NormalizeCurrentMilestone = customerContentNormalizedRequest.CurrentMilestone
             }
         );
     }
@@ -1035,7 +1034,7 @@ public sealed class NormalizerOperationAppService(
         if (string.IsNullOrWhiteSpace(videoInputJson)) return;
 
         _logger.FrameworkInfoLog(LogHelper.Generate(
-            message: EventNames.VideoGenerationDataForwarded,
+            message: Milestones.VideoGenerationDataForwarded,
             reference: new
             {
                 @event.ScopeKey,
@@ -1112,7 +1111,7 @@ public sealed class NormalizerOperationAppService(
     /// pattern used throughout video-generator: when <paramref name="validPriorStatuses"/> is
     /// supplied, the write only takes effect if the row's current Status is still one of the
     /// expected prior values — guarding against a concurrent duplicate delivery of the same event
-    /// re-applying the same transition and double-publishing the step's completion event. Returns
+    /// re-applying the same transition and double-publishing the milestone's completion event. Returns
     /// the affected row count (0 or 1); callers must check it and no-op on 0.
     /// </summary>
     private Task<long> ReplaceCustomerContentAsync(CustomerContentNormalizedRequest request, CancellationToken cancellationToken = default, IReadOnlyCollection<string> validPriorStatuses = null)
@@ -1123,7 +1122,7 @@ public sealed class NormalizerOperationAppService(
 
         var update = Builders<CustomerContentNormalizedRequest>.Update
             .Set(x => x.Status, request.Status)
-            .Set(x => x.CurrentStep, request.CurrentStep)
+            .Set(x => x.CurrentMilestone, request.CurrentMilestone)
             .Set(x => x.ScrapingStatus, request.ScrapingStatus)
             .Set(x => x.ScrapingResult, request.ScrapingResult)
             .Set(x => x.OutlineStatus, request.OutlineStatus)
@@ -1139,29 +1138,29 @@ public sealed class NormalizerOperationAppService(
     }
 
 
-    private async Task HandleCustomerExceptionAsync(CustomerContentNormalizedRequest request, string step, string facility, Exception ex)
+    private async Task HandleCustomerExceptionAsync(CustomerContentNormalizedRequest request, string milestone, string facility, Exception ex)
     {
         if (ExceptionClassifier.IsRetryable(ex))
         {
-            await ScheduleCustomerRetryAsync(request, step, facility, ex);
+            await ScheduleCustomerRetryAsync(request, milestone, facility, ex);
             return;
         }
 
-        await FailCustomerAsync(request, step, facility, ex, false);
+        await FailCustomerAsync(request, milestone, facility, ex, false);
     }
 
-    private async Task ScheduleCustomerRetryAsync(CustomerContentNormalizedRequest request, string step, string facility, Exception ex)
+    private async Task ScheduleCustomerRetryAsync(CustomerContentNormalizedRequest request, string milestone, string facility, Exception ex)
     {
         request.RetryCount++;
 
         if (request.RetryCount >= serviceRetrySettings.MaxRetryCount)
         {
-            await FailCustomerAsync(request, step, facility, ex, false);
+            await FailCustomerAsync(request, milestone, facility, ex, false);
             return;
         }
 
         request.Status = NormalizeStatusNames.WaitingRetry;
-        request.CurrentStep = step;
+        request.CurrentMilestone = milestone;
         request.LastError = ex.Message;
         request.NextRetryAtUtc = DateTime.UtcNow.Add(
             retryDelayCalculator.Calculate(request.RetryCount));
@@ -1169,7 +1168,7 @@ public sealed class NormalizerOperationAppService(
         await ReplaceCustomerContentAsync(request);
 
         _logger.FrameworkErrorLog(LogHelper.Generate(
-            message: EventNames.RetryScheduled,
+            message: Milestones.RetryScheduled,
             reference: new
             {
                 request.ScopeKey,
@@ -1177,7 +1176,7 @@ public sealed class NormalizerOperationAppService(
                 Key = request.Id,
                 RefType = "CustomerContent",
                 RefKey = request.CustomerContentId,
-                FailedStep = step,
+                FailedMilestone = milestone,
                 request.RetryCount,
                 request.NextRetryAtUtc
             },
@@ -1189,21 +1188,21 @@ public sealed class NormalizerOperationAppService(
         await EventBus.PublishAsync(
             parentMessage: ParentIntegrationEvent,
             correlationId: request.CorrelationId,
-            eventMessage: new StepFailedEto
+            eventMessage: new MilestoneFailedEto
             {
                 RefContentId = request.CustomerContentId,
                 RefContentType = ContentType.CustomerContent,
-                Step = step,
+                Milestone = milestone,
                 ErrorMessage = ex.Message,
                 Retryable = true
             }
         );
     }
 
-    private async Task FailCustomerAsync(CustomerContentNormalizedRequest request, string step, string facility, Exception ex, bool retryable)
+    private async Task FailCustomerAsync(CustomerContentNormalizedRequest request, string milestone, string facility, Exception ex, bool retryable)
     {
         request.Status = NormalizeStatusNames.Failed;
-        request.CurrentStep = step;
+        request.CurrentMilestone = milestone;
         request.LastError = ex.Message;
         request.NextRetryAtUtc = null;
 
@@ -1220,7 +1219,7 @@ public sealed class NormalizerOperationAppService(
                 RefKey = request.CustomerContentId,
                 ClientDomain = request.DomainName,
                 request.ContentKey,
-                FailedStep = step,
+                FailedMilestone = milestone,
                 Retryable = retryable
             },
             facility: facility,
@@ -1231,11 +1230,11 @@ public sealed class NormalizerOperationAppService(
         await EventBus.PublishAsync(
             parentMessage: ParentIntegrationEvent,
             correlationId: request.CorrelationId,
-            eventMessage: new StepFailedEto
+            eventMessage: new MilestoneFailedEto
             {
                 RefContentId = request.CustomerContentId,
                 RefContentType = ContentType.CustomerContent,
-                Step = step,
+                Milestone = milestone,
                 ErrorMessage = ex.Message,
                 Retryable = retryable
             }
@@ -1243,24 +1242,24 @@ public sealed class NormalizerOperationAppService(
     }
 
 
-    private async Task HandleAnalysisItemExceptionAsync(AnalysisContentNormalizedRequest request, AnalysisNormalizedItem item, string step, string facility, Exception ex)
+    private async Task HandleAnalysisItemExceptionAsync(AnalysisContentNormalizedRequest request, AnalysisNormalizedItem item, string milestone, string facility, Exception ex)
     {
         if (ExceptionClassifier.IsRetryable(ex))
         {
-            await ScheduleAnalysisItemRetryAsync(request, item, step, facility, ex);
+            await ScheduleAnalysisItemRetryAsync(request, item, milestone, facility, ex);
             return;
         }
 
-        await FailAnalysisItemAsync(request, item, step, facility, ex, false);
+        await FailAnalysisItemAsync(request, item, milestone, facility, ex, false);
     }
 
-    private async Task ScheduleAnalysisItemRetryAsync(AnalysisContentNormalizedRequest request, AnalysisNormalizedItem item, string step, string facility, Exception ex)
+    private async Task ScheduleAnalysisItemRetryAsync(AnalysisContentNormalizedRequest request, AnalysisNormalizedItem item, string milestone, string facility, Exception ex)
     {
         int retryCount = item.RetryCount + 1;
 
         if (retryCount >= serviceRetrySettings.MaxRetryCount)
         {
-            await FailAnalysisItemAsync(request, item, step, facility, ex, false);
+            await FailAnalysisItemAsync(request, item, milestone, facility, ex, false);
             return;
         }
 
@@ -1270,19 +1269,19 @@ public sealed class NormalizerOperationAppService(
         var updateFunc = new Func<UpdateDefinitionBuilder<AnalysisContentNormalizedRequest>, UpdateDefinition<AnalysisContentNormalizedRequest>>(u =>
         {
             var baseUpdate = u.Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", NormalizeStatusNames.WaitingRetry)
-                .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentStep)}", step)
+                .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentMilestone)}", milestone)
                 .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.LastError)}", ex.Message)
                 .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.RetryCount)}", retryCount)
                 .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextRetryAtUtc)}", nextRetryAtUtc);
 
-            if (step == EventNames.AnalysisItemScrapingStarted)
+            if (milestone == Milestones.AnalysisItemScrapingStarted)
             {
                 baseUpdate = baseUpdate.Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.ScrapingStatus)}", ScrapingStatusNames.WaitingRetry);
             }
 
-            if (step is EventNames.AnalysisItemOutlineStarted
-                or EventNames.OutlineProviderRequestStarted
-                or EventNames.OutlineProviderPollingStarted)
+            if (milestone is Milestones.AnalysisItemOutlineStarted
+                or Milestones.OutlineProviderRequestStarted
+                or Milestones.OutlineProviderPollingStarted)
             {
                 baseUpdate = baseUpdate.Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineStatus)}", OutlineStatusNames.WaitingRetry);
             }
@@ -1298,7 +1297,7 @@ public sealed class NormalizerOperationAppService(
         );
 
         _logger.FrameworkErrorLog(LogHelper.Generate(
-            message: EventNames.RetryScheduled,
+            message: Milestones.RetryScheduled,
             reference: new
             {
                 request.ScopeKey,
@@ -1307,7 +1306,7 @@ public sealed class NormalizerOperationAppService(
                 RefType = "AnalysisContent",
                 RefKey = request.AnalysisContentId,
                 AnalysisContentNormalizeRequestId = request.Id,
-                FailedStep = step,
+                FailedMilestone = milestone,
                 retryCount,
                 nextRetryAtUtc
             },
@@ -1319,36 +1318,36 @@ public sealed class NormalizerOperationAppService(
         await EventBus.PublishAsync(
             parentMessage: ParentIntegrationEvent,
             correlationId: request.CorrelationId,
-            eventMessage: new StepFailedEto
+            eventMessage: new MilestoneFailedEto
             {
                 RefContentId = request.AnalysisContentId,
                 RefContentType = ContentType.AnalysisContent,
-                Step = step,
+                Milestone = milestone,
                 ErrorMessage = ex.Message,
                 Retryable = true
             }
         );
     }
 
-    private async Task FailAnalysisItemAsync(AnalysisContentNormalizedRequest request, AnalysisNormalizedItem item, string step, string facility, Exception ex, bool retryable)
+    private async Task FailAnalysisItemAsync(AnalysisContentNormalizedRequest request, AnalysisNormalizedItem item, string milestone, string facility, Exception ex, bool retryable)
     {
         var updateFunc = new Func<UpdateDefinitionBuilder<AnalysisContentNormalizedRequest>, UpdateDefinition<AnalysisContentNormalizedRequest>>(u =>
         {
             var baseUpdate = u.Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.Status)}", NormalizeStatusNames.Failed)
-                .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentStep)}", step)
+                .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.CurrentMilestone)}", milestone)
                 .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.LastError)}", ex.Message)
                 .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.NextRetryAtUtc)}", (DateTime?)null);
 
-            if (step == EventNames.AnalysisItemScrapingStarted)
+            if (milestone == Milestones.AnalysisItemScrapingStarted)
                 // Scraping failed, so this item's outline will never be attempted either — mark it
                 // Failed too so the outline-completeness gate (worker) doesn't wait on it forever.
                 baseUpdate = baseUpdate
                     .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.ScrapingStatus)}", ScrapingStatusNames.Failed)
                     .Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineStatus)}", OutlineStatusNames.Failed);
 
-            if (step is EventNames.AnalysisItemOutlineStarted
-                or EventNames.OutlineProviderRequestStarted
-                or EventNames.OutlineProviderPollingStarted)
+            if (milestone is Milestones.AnalysisItemOutlineStarted
+                or Milestones.OutlineProviderRequestStarted
+                or Milestones.OutlineProviderPollingStarted)
                 baseUpdate = baseUpdate.Set($"{nameof(AnalysisContentNormalizedRequest.Items)}.$.{nameof(AnalysisNormalizedItem.OutlineStatus)}", OutlineStatusNames.Failed);
 
             return baseUpdate;
@@ -1362,7 +1361,7 @@ public sealed class NormalizerOperationAppService(
         );
 
         _logger.FrameworkErrorLog(LogHelper.Generate(
-            message: step,
+            message: milestone,
             reference: new
             {
                 request.ScopeKey,
@@ -1371,7 +1370,7 @@ public sealed class NormalizerOperationAppService(
                 RefType = "AnalysisContent",
                 RefKey = request.AnalysisContentId,
                 AnalysisContentNormalizeRequestId = request.Id,
-                FailedStep = step,
+                FailedMilestone = milestone,
                 Retryable = retryable
             },
             facility: facility,
@@ -1382,11 +1381,11 @@ public sealed class NormalizerOperationAppService(
         await EventBus.PublishAsync(
             parentMessage: ParentIntegrationEvent,
             correlationId: request.CorrelationId,
-            eventMessage: new StepFailedEto
+            eventMessage: new MilestoneFailedEto
             {
                 RefContentId = request.AnalysisContentId,
                 RefContentType = ContentType.AnalysisContent,
-                Step = step,
+                Milestone = milestone,
                 ErrorMessage = ex.Message,
                 Retryable = retryable
             }

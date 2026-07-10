@@ -34,9 +34,9 @@ public static class AnalysisContentNormalizedRequestClassMap
                 map.MapMember(x => x.Status)
                     .SetIsRequired(true)
                     .SetMaxLength(AnalysisContentNormalizedRequestConsts.StatusMaxLength);
-                map.MapMember(x => x.CurrentStep)
+                map.MapMember(x => x.CurrentMilestone)
                     .SetIsRequired(true)
-                    .SetMaxLength(AnalysisContentNormalizedRequestConsts.CurrentStepMaxLength);
+                    .SetMaxLength(AnalysisContentNormalizedRequestConsts.CurrentMilestoneMaxLength);
 
                 // Error Handling
                 map.MapMember(x => x.LastError)
@@ -69,7 +69,7 @@ public static class AnalysisContentNormalizedRequestClassMap
                 // Status & Progress
                 map.MapMember(x => x.Status)
                     .SetIsRequired(true);
-                map.MapMember(x => x.CurrentStep)
+                map.MapMember(x => x.CurrentMilestone)
                     .SetIsRequired(true);
 
                 // Error Handling & Tracking

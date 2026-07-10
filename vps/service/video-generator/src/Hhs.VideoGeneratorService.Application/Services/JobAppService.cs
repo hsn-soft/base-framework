@@ -1,6 +1,6 @@
-using Hhs.VideoGeneratorService.Application.Consts;
 using Hhs.VideoGeneratorService.Application.Contracts.JobDomain;
 using Hhs.VideoGeneratorService.Application.Contracts.JobDomain.Dtos;
+using Hhs.VideoGeneratorService.Domain.Constants;
 using HsnSoft.Base.Logging;
 using HsnSoft.Base.Logging.Abstracts;
 using Microsoft.Extensions.DependencyInjection;

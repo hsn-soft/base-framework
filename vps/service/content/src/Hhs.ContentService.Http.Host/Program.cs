@@ -6,7 +6,6 @@ using Hhs.ContentService.Domain.Localization;
 using Hhs.ContentService.EntityFrameworkCore;
 using Hhs.ContentService.EntityFrameworkCore.Setup;
 using Hhs.Shared.Helper.Configuration;
-using Hhs.Shared.Helper.Consts;
 using Hhs.Shared.Helper.Retry;
 using Hhs.Shared.Hosting.Extensions;
 using Hhs.Shared.Hosting.Helpers;
@@ -19,6 +18,7 @@ using HsnSoft.Base.Swashbuckle;
 using HsnSoft.Base.Tracing;
 using Serilog;
 using Hhs.Shared.Contracts.Events;
+using Hhs.Shared.Helper.Constants;
 
 // Load .env from current dir, project root, or bin output path — whichever exists first (file is gitignored)
 string[] envCandidates =
@@ -162,7 +162,7 @@ try
     {
         { nameof(NormalizerResultPublishedEto), 5 }, // This event fetch count more than one
         { nameof(VideoGenerationResultPublishedEto), 5 }, // This event fetch count more than one
-        { nameof(StepFailedEto), 1 } // This event fetch count more than one
+        { nameof(MilestoneFailedEto), 1 } // This event fetch count more than one
     });
 
     // Shutdown hook

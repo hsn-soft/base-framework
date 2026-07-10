@@ -1,5 +1,5 @@
 using Hhs.Shared.Contracts.Cache;
-using Hhs.Shared.Helper.Consts;
+using Hhs.Shared.Helper.Constants;
 using HsnSoft.Base.Authorization.Permissions.ValueProviders;
 using Newtonsoft.Json;
 using StackExchange.Redis;

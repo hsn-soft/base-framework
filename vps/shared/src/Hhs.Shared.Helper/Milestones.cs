@@ -1,6 +1,17 @@
 namespace Hhs.Shared.Helper;
 
-public static class EventNames
+/// <summary>
+/// Pipeline milestone names, shared across services, used as the value of an entity's
+/// CurrentMilestone field and of MilestoneFailedEto.Milestone. A milestone names the point a
+/// record most recently STARTED attempting to reach — not one it has completed. Combined with
+/// Status: Status in-progress (Started/Polling/...) → CurrentMilestone is in flight right now;
+/// Status Failed/WaitingRetry → CurrentMilestone is the one that failed (doubles as
+/// "FailedMilestone" — no separate field needed); Status Completed → CurrentMilestone is the
+/// last (terminal) one reached. Retry workers dispatch on CurrentMilestone to resume from the
+/// right handler. Deliberately separate from Facilities (which names a log-line category, not a
+/// pipeline position) — never use Milestones as a log `facility:` value.
+/// </summary>
+public static class Milestones
 {
     public const string CustomerContentCreated = "CUSTOMER_CONTENT_CREATED";
 
@@ -28,6 +39,7 @@ public static class EventNames
 
     public const string AnalysisContentCreated = "ANALYSIS_CONTENT_CREATED";
 
+    public const string AnalysisItemCreated = "ANALYSIS_ITEM_CREATED";
     public const string AnalysisItemScrapingStarted = "ANALYSIS_ITEM_SCRAPING_STARTED";
     public const string AnalysisItemScrapingCompleted = "ANALYSIS_ITEM_SCRAPING_COMPLETED";
 
@@ -60,6 +72,6 @@ public static class EventNames
     public const string VideoFileUploadCompleted = "VIDEO_FILE_UPLOAD_COMPLETED";
     public const string VideoGenerationResultPublished = "VIDEO_GENERATION_RESULT_PUBLISHED";
 
-    public const string StepFailed = "STEP_FAILED";
+    public const string MilestoneFailed = "MILESTONE_FAILED";
     public const string RetryScheduled = "RETRY_SCHEDULED";
 }

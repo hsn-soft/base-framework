@@ -1,6 +1,6 @@
-using Hhs.TextNormalizerService.Application.Consts;
 using Hhs.TextNormalizerService.Application.Contracts.JobDomain;
 using Hhs.TextNormalizerService.Application.Contracts.JobDomain.Dtos;
+using Hhs.TextNormalizerService.Domain.Constants;
 using HsnSoft.Base.Logging;
 using HsnSoft.Base.Logging.Abstracts;
 using Microsoft.Extensions.DependencyInjection;

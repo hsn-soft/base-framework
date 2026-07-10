@@ -3,7 +3,6 @@ using Hhs.Shared.Contracts.EventInbox;
 using Hhs.Shared.Contracts.Events;
 using Hhs.Shared.Helper;
 using Hhs.Shared.Helper.Providers;
-using Hhs.VideoGeneratorService.Application.Consts;
 using Hhs.VideoGeneratorService.Application.Providers;
 using Hhs.VideoGeneratorService.Domain.Configuration;
 using Hhs.VideoGeneratorService.Domain.Constants;
@@ -105,7 +104,7 @@ public sealed class VideoOperationRetryWorkerService(
                 x.Id == videoRequest.Id && x.Status == VideoStatusNames.Started);
             var failUpdate = Builders<VideoRequest>.Update
                 .Set(x => x.Status, VideoStatusNames.Failed)
-                .Set(x => x.CurrentStep, EventNames.AudioFileUploadCompleted)
+                .Set(x => x.CurrentMilestone, Milestones.AudioFileUploadCompleted)
                 .Set(x => x.LastError, "One or more audio requests failed.")
                 .Set(x => x.NextRetryAtUtc, null);
 
@@ -113,7 +112,7 @@ public sealed class VideoOperationRetryWorkerService(
             if (failClaimed == 0) return;
 
             _logger.FrameworkErrorLog(LogHelper.Generate(
-                message: EventNames.AudioFileUploadCompleted,
+                message: Milestones.AudioFileUploadCompleted,
                 reference: new
                 {
                     videoRequest.ScopeKey,
@@ -122,7 +121,7 @@ public sealed class VideoOperationRetryWorkerService(
                     RefType = videoRequest.RefContentType.ToString(),
                     RefKey = videoRequest.RefContentId
                 },
-                facility: Facilities.StepFailed,
+                facility: Facilities.MilestoneFailed,
                 correlationId: videoRequest.CorrelationId,
                 exception: null
             ));
@@ -130,11 +129,11 @@ public sealed class VideoOperationRetryWorkerService(
             await EventBus.PublishAsync(
                 parentMessage: ParentIntegrationEvent,
                 correlationId: videoRequest.CorrelationId,
-                eventMessage: new StepFailedEto
+                eventMessage: new MilestoneFailedEto
                 {
                     RefContentId = videoRequest.RefContentId,
                     RefContentType = videoRequest.RefContentType,
-                    Step = EventNames.AudioFileUploadCompleted,
+                    Milestone = Milestones.AudioFileUploadCompleted,
                     ErrorMessage = "One or more audio requests failed.",
                     Retryable = false
                 }
@@ -168,14 +167,14 @@ public sealed class VideoOperationRetryWorkerService(
 
         var lockUpdate = Builders<VideoRequest>.Update
             .Set(x => x.Status, VideoStatusNames.VideoProviderRequestStarting)
-            .Set(x => x.CurrentStep, EventNames.VideoProviderRequestStarted)
+            .Set(x => x.CurrentMilestone, Milestones.VideoProviderRequestStarted)
             .Set(x => x.LastError, null);
 
         long lockResult = await videoRequestRepository.UpdateByExpressionAsync(lockPredicate, _ => lockUpdate, cancellationToken: cancellationToken);
         if (lockResult == 0) return; // another tick/instance already claimed this VideoRequest
 
         _logger.FrameworkInfoLog(LogHelper.Generate(
-            message: EventNames.VideoProviderRequestStarted,
+            message: Milestones.VideoProviderRequestStarted,
             reference: new
             {
                 videoRequest.ScopeKey,
@@ -208,7 +207,7 @@ public sealed class VideoOperationRetryWorkerService(
     /// Resets EventInboxMessage records that are stuck in 'Started' status beyond the stale
     /// threshold back to 'Failed', so the next broker re-delivery can attempt processing.
     /// This handles the case where a handler crashed after inserting the inbox record but
-    /// before calling CompleteAsync. Independent of the business-level (StepFailedEto) retry
+    /// before calling CompleteAsync. Independent of the business-level (MilestoneFailedEto) retry
     /// mechanism below, which only covers domain entities already past the inbox stage.
     /// </summary>
     private async Task ResetStaleStartedInboxMessagesAsync(DateTime now, CancellationToken cancellationToken)
@@ -249,7 +248,7 @@ public sealed class VideoOperationRetryWorkerService(
 
             try
             {
-                if (request.CurrentStep == EventNames.AudioProviderRequestStarted)
+                if (request.CurrentMilestone == Milestones.AudioProviderRequestStarted)
                 {
                     request.Status = AudioStatusNames.AudioProviderRequestRetrying;
 
@@ -258,14 +257,14 @@ public sealed class VideoOperationRetryWorkerService(
                         eventMessage: new AudioProviderRequestStartedEto { AudioRequestId = request.Id, }
                     );
                 }
-                else if (request.CurrentStep == EventNames.AudioFileDownloadStarted)
+                else if (request.CurrentMilestone == Milestones.AudioFileDownloadStarted)
                 {
                     await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
                         correlationId: request.CorrelationId,
                         eventMessage: new AudioFileDownloadStartedEto { AudioRequestId = request.Id, }
                     );
                 }
-                else if (request.CurrentStep == EventNames.AudioFileUploadStarted)
+                else if (request.CurrentMilestone == Milestones.AudioFileUploadStarted)
                 {
                     // Re-trigger from download so the local file is refreshed before re-uploading.
                     await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
@@ -276,7 +275,7 @@ public sealed class VideoOperationRetryWorkerService(
                 else
                 {
                     request.Status = AudioStatusNames.Failed;
-                    request.LastError = $"Unsupported audio retry step: {request.CurrentStep}";
+                    request.LastError = $"Unsupported audio retry milestone: {request.CurrentMilestone}";
                     request.NextRetryAtUtc = null;
 
                     var failPredicate = (Expression<Func<AudioRequest, bool>>)(x => x.Id == request.Id);
@@ -291,7 +290,7 @@ public sealed class VideoOperationRetryWorkerService(
                         cancellationToken: cancellationToken);
 
                     _logger.FrameworkErrorLog(LogHelper.Generate(
-                        message: request.CurrentStep,
+                        message: request.CurrentMilestone,
                         reference: new
                         {
                             request.ScopeKey,
@@ -300,10 +299,10 @@ public sealed class VideoOperationRetryWorkerService(
                             RefType = request.RefContentType.ToString(),
                             RefKey = request.RefContentId,
                             request.VideoRequestId,
-                            FailedStep = request.CurrentStep,
+                            FailedMilestone = request.CurrentMilestone,
                             request.LastError
                         },
-                        facility: Facilities.StepFailed,
+                        facility: Facilities.MilestoneFailed,
                         correlationId: request.CorrelationId,
                         exception: null
                     ));
@@ -311,11 +310,11 @@ public sealed class VideoOperationRetryWorkerService(
                     await EventBus.PublishAsync(
                         parentMessage: ParentIntegrationEvent,
                         correlationId: request.CorrelationId,
-                        eventMessage: new StepFailedEto
+                        eventMessage: new MilestoneFailedEto
                         {
                             RefContentId = request.RefContentId,
                             RefContentType = request.RefContentType,
-                            Step = request.CurrentStep,
+                            Milestone = request.CurrentMilestone,
                             ErrorMessage = request.LastError,
                             Retryable = false
                         }
@@ -325,7 +324,7 @@ public sealed class VideoOperationRetryWorkerService(
                 }
 
                 _logger.FrameworkInfoLog(LogHelper.Generate(
-                    message: EventNames.RetryScheduled,
+                    message: Milestones.RetryScheduled,
                     reference: new
                     {
                         request.ScopeKey,
@@ -334,7 +333,7 @@ public sealed class VideoOperationRetryWorkerService(
                         RefType = request.RefContentType.ToString(),
                         RefKey = request.RefContentId,
                         request.VideoRequestId,
-                        FailedStep = request.CurrentStep
+                        FailedMilestone = request.CurrentMilestone
                     },
                     facility: Facilities.RetryAttempted,
                     correlationId: request.CorrelationId,
@@ -371,7 +370,7 @@ public sealed class VideoOperationRetryWorkerService(
                     cancellationToken: cancellationToken);
 
                 _logger.FrameworkErrorLog(LogHelper.Generate(
-                    message: EventNames.RetryScheduled,
+                    message: Milestones.RetryScheduled,
                     reference: new
                     {
                         request.ScopeKey,
@@ -380,7 +379,7 @@ public sealed class VideoOperationRetryWorkerService(
                         RefType = request.RefContentType.ToString(),
                         RefKey = request.RefContentId,
                         request.VideoRequestId,
-                        FailedStep = request.CurrentStep,
+                        FailedMilestone = request.CurrentMilestone,
                         request.NextRetryAtUtc
                     },
                     facility: Facilities.RetryAttemptFailed,
@@ -415,14 +414,14 @@ public sealed class VideoOperationRetryWorkerService(
 
             try
             {
-                if (request.CurrentStep == EventNames.VideoOperationStarted)
+                if (request.CurrentMilestone == Milestones.VideoOperationStarted)
                 {
                     await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
                         correlationId: request.CorrelationId,
                         eventMessage: new VideoRequestCreatedEto { RefContentId = request.RefContentId, RefContentType = request.RefContentType, VideoRequestId = request.Id }
                     );
                 }
-                else if (request.CurrentStep == EventNames.VideoProviderRequestStarted)
+                else if (request.CurrentMilestone == Milestones.VideoProviderRequestStarted)
                 {
                     var providerKeyResult = await customerVpSettingRepository.GetVideoProviderKeyByScopeKeyAsync(request.ScopeKey, cancellationToken);
                     if (!providerKeyResult.Key)
@@ -452,14 +451,14 @@ public sealed class VideoOperationRetryWorkerService(
                         }
                     );
                 }
-                else if (request.CurrentStep == EventNames.VideoFileDownloadStarted)
+                else if (request.CurrentMilestone == Milestones.VideoFileDownloadStarted)
                 {
                     await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
                         correlationId: request.CorrelationId,
                         eventMessage: new VideoFileDownloadStartedEto { VideoRequestId = request.Id, }
                     );
                 }
-                else if (request.CurrentStep == EventNames.VideoFileUploadStarted)
+                else if (request.CurrentMilestone == Milestones.VideoFileUploadStarted)
                 {
                     // Re-trigger from download so the local file is refreshed before re-uploading.
                     await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
@@ -467,7 +466,7 @@ public sealed class VideoOperationRetryWorkerService(
                         eventMessage: new VideoFileDownloadStartedEto { VideoRequestId = request.Id, }
                     );
                 }
-                else if (request.CurrentStep == EventNames.VideoFileUploadCompleted)
+                else if (request.CurrentMilestone == Milestones.VideoFileUploadCompleted)
                 {
                     // The file is already uploaded — just re-attempt publishing the final result.
                     await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
@@ -478,7 +477,7 @@ public sealed class VideoOperationRetryWorkerService(
                 else
                 {
                     request.Status = VideoStatusNames.Failed;
-                    request.LastError = $"Unsupported video retry step: {request.CurrentStep}";
+                    request.LastError = $"Unsupported video retry milestone: {request.CurrentMilestone}";
                     request.NextRetryAtUtc = null;
 
                     var failPredicate = (Expression<Func<VideoRequest, bool>>)(x => x.Id == request.Id);
@@ -493,7 +492,7 @@ public sealed class VideoOperationRetryWorkerService(
                         cancellationToken: cancellationToken);
 
                     _logger.FrameworkErrorLog(LogHelper.Generate(
-                        message: request.CurrentStep,
+                        message: request.CurrentMilestone,
                         reference: new
                         {
                             request.ScopeKey,
@@ -501,10 +500,10 @@ public sealed class VideoOperationRetryWorkerService(
                             Key = request.Id,
                             RefType = request.RefContentType.ToString(),
                             RefKey = request.RefContentId,
-                            FailedStep = request.CurrentStep,
+                            FailedMilestone = request.CurrentMilestone,
                             request.LastError
                         },
-                        facility: Facilities.StepFailed,
+                        facility: Facilities.MilestoneFailed,
                         correlationId: request.CorrelationId,
                         exception: null
                     ));
@@ -512,11 +511,11 @@ public sealed class VideoOperationRetryWorkerService(
                     await EventBus.PublishAsync(
                         parentMessage: ParentIntegrationEvent,
                         correlationId: request.CorrelationId,
-                        eventMessage: new StepFailedEto
+                        eventMessage: new MilestoneFailedEto
                         {
                             RefContentId = request.RefContentId,
                             RefContentType = request.RefContentType,
-                            Step = request.CurrentStep,
+                            Milestone = request.CurrentMilestone,
                             ErrorMessage = request.LastError,
                             Retryable = false
                         }
@@ -525,7 +524,7 @@ public sealed class VideoOperationRetryWorkerService(
                 }
 
                 _logger.FrameworkInfoLog(LogHelper.Generate(
-                    message: EventNames.RetryScheduled,
+                    message: Milestones.RetryScheduled,
                     reference: new
                     {
                         request.ScopeKey,
@@ -533,7 +532,7 @@ public sealed class VideoOperationRetryWorkerService(
                         Key = request.Id,
                         RefType = request.RefContentType.ToString(),
                         RefKey = request.RefContentId,
-                        FailedStep = request.CurrentStep
+                        FailedMilestone = request.CurrentMilestone
                     },
                     facility: Facilities.RetryAttempted,
                     correlationId: request.CorrelationId,
@@ -570,7 +569,7 @@ public sealed class VideoOperationRetryWorkerService(
                     cancellationToken: cancellationToken);
 
                 _logger.FrameworkErrorLog(LogHelper.Generate(
-                    message: EventNames.RetryScheduled,
+                    message: Milestones.RetryScheduled,
                     reference: new
                     {
                         request.ScopeKey,
@@ -578,7 +577,7 @@ public sealed class VideoOperationRetryWorkerService(
                         Key = request.Id,
                         RefType = request.RefContentType.ToString(),
                         RefKey = request.RefContentId,
-                        FailedStep = request.CurrentStep,
+                        FailedMilestone = request.CurrentMilestone,
                         request.NextRetryAtUtc
                     },
                     facility: Facilities.RetryAttemptFailed,

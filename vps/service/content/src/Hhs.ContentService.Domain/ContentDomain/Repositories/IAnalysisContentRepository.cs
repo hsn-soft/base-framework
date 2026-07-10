@@ -6,7 +6,7 @@ namespace Hhs.ContentService.Domain.ContentDomain.Repositories;
 
 public interface IAnalysisContentRepository : IGenericRepository<AnalysisContent, Guid>
 {
-    Task SetNormalizedReferenceAsync(Guid id, Guid normalizedRequestId,string normalizeStatus, string normalizeCurrentStep);
+    Task SetNormalizedReferenceAsync(Guid id, Guid normalizedRequestId,string normalizeStatus, string normalizeCurrentMilestone);
 
     Task SetVideoGenerationApprovedAsync(Guid id);
 

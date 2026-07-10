@@ -1,6 +1,6 @@
 using Hhs.ContentService.Domain.SettingDomain.Entities;
 using Hhs.ContentService.EntityFrameworkCore.Context;
-using Hhs.Shared.Helper.Consts;
+using Hhs.Shared.Helper.Constants;
 using Hhs.Shared.Helper.Enums;
 using Hhs.Shared.Helper.Utils;
 using HsnSoft.Base.Logging.Abstracts;

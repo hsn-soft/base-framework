@@ -1,10 +1,10 @@
-namespace Hhs.TextNormalizerService.Application.Consts;
+namespace Hhs.TextNormalizerService.Domain.Constants;
 
 /// <summary>
 /// Log "facility" values describing the operation a FrameworkInfoLog/FrameworkErrorLog call
-/// represents. Deliberately separate from EventNames (which names the actual integration events
+/// represents. Deliberately separate from Milestones (which names the actual integration events
 /// published on the bus) — a facility describes what's happening right now, not which event fired.
-/// EventNames stays in use for retry-mechanism bookkeeping (CurrentStep/FailedStep values).
+/// Milestones stays in use for retry-mechanism bookkeeping (CurrentMilestone/FailedMilestone values).
 /// </summary>
 public static class Facilities
 {
@@ -30,7 +30,7 @@ public static class Facilities
     public const string RetryScheduled = "RETRY_SCHEDULED";
     public const string RetryAttempted = "RETRY_ATTEMPTED";
     public const string RetryAttemptFailed = "RETRY_ATTEMPT_FAILED";
-    public const string StepFailed = "STEP_FAILED";
+    public const string MilestoneFailed = "MILESTONE_FAILED";
 
     public const string RetryDueRequestsTriggered = "RETRY_DUE_REQUESTS";
     public const string PollDueOutlineRequestsTriggered = "POLL_DUE_OUTLINE_REQUESTS";

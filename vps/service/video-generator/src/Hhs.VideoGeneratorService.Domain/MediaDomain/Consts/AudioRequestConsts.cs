@@ -16,7 +16,7 @@ public static class AudioRequestConsts
     public const int ScopeKeyMaxLength = 100;
     public const int CorrelationIdMaxLength = 50;
     public const int StatusMaxLength = 80;
-    public const int CurrentStepMaxLength = 100;
+    public const int CurrentMilestoneMaxLength = 100;
     public const int InputTextMaxLength = 5000;
     public const int AudioProviderKeyMaxLength = 100;
     public const int AudioProviderTrackingIdMaxLength = 500;

@@ -13,5 +13,5 @@ public static class MediaStatusNames
     public const string Completed = "COMPLETED";
 
     public const string Failed = "FAILED";
-    public const string StepFailed = "STEP_FAILED";
+    public const string MilestoneFailed = "MILESTONE_FAILED";
 }

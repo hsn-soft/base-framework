@@ -16,6 +16,7 @@ public static class AnalysisContentConsts
     public const int ScopeKeyMaxLength = 100;
     public const int CorrelationIdMaxLength = 50;
     public const int LastFacilityMaxLength = 120;
+    public const int CurrentMilestoneMaxLength = 120;
     public const int LastErrorMaxLength = 1000;
 
     public const int NormalizeStatusMaxLength = 80;

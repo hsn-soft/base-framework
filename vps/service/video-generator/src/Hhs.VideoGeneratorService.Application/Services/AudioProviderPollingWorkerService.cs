@@ -1,7 +1,6 @@
 using System.Linq.Expressions;
 using Hhs.Shared.Contracts.Events;
 using Hhs.Shared.Helper;
-using Hhs.VideoGeneratorService.Application.Consts;
 using Hhs.VideoGeneratorService.Application.Providers;
 using Hhs.VideoGeneratorService.Domain.Configuration;
 using Hhs.VideoGeneratorService.Domain.Constants;
@@ -82,11 +81,11 @@ public sealed class AudioProviderPollingWorkerService(
                     await EventBus.PublishAsync(
                         parentMessage: ParentIntegrationEvent,
                         correlationId: request.CorrelationId,
-                        eventMessage: new StepFailedEto
+                        eventMessage: new MilestoneFailedEto
                         {
                             RefContentId = request.RefContentId,
                             RefContentType = request.RefContentType,
-                            Step = EventNames.AudioProviderPollingStarted, // error step
+                            Milestone = Milestones.AudioProviderPollingStarted, // error milestone
                             ErrorMessage = request.LastError,
                             Retryable = false
                         }
@@ -138,11 +137,11 @@ public sealed class AudioProviderPollingWorkerService(
                         await EventBus.PublishAsync(
                             parentMessage: ParentIntegrationEvent,
                             correlationId: request.CorrelationId,
-                            eventMessage: new StepFailedEto
+                            eventMessage: new MilestoneFailedEto
                             {
                                 RefContentId = request.RefContentId,
                                 RefContentType = request.RefContentType,
-                                Step = EventNames.AudioProviderPollingStarted, // error step
+                                Milestone = Milestones.AudioProviderPollingStarted, // error milestone
                                 ErrorMessage = request.LastError,
                                 Retryable = false
                             }
@@ -167,7 +166,7 @@ public sealed class AudioProviderPollingWorkerService(
                             RefType = request.RefContentType.ToString(),
                             RefKey = request.RefContentId,
                             request.VideoRequestId,
-                            FailedStep = EventNames.AudioProviderPollingStarted,
+                            FailedMilestone = Milestones.AudioProviderPollingStarted,
                             request.ProviderPollingCount,
                             request.NextProviderPollAtUtc
                         },
@@ -216,7 +215,7 @@ public sealed class AudioProviderPollingWorkerService(
                 request.ProviderPollingCount++;
                 request.NextProviderPollAtUtc = null;
                 request.Status = AudioStatusNames.AudioProviderCompleted;
-                request.CurrentStep = EventNames.AudioProviderCompleted;
+                request.CurrentMilestone = Milestones.AudioProviderCompleted;
                 request.LastError = null;
 
                 await ReplaceAudioAsync(request, cancellationToken);
@@ -277,11 +276,11 @@ public sealed class AudioProviderPollingWorkerService(
                     await EventBus.PublishAsync(
                         parentMessage: ParentIntegrationEvent,
                         correlationId: request.CorrelationId,
-                        eventMessage: new StepFailedEto
+                        eventMessage: new MilestoneFailedEto
                         {
                             RefContentId = request.RefContentId,
                             RefContentType = request.RefContentType,
-                            Step = EventNames.AudioProviderPollingStarted, // error step
+                            Milestone = Milestones.AudioProviderPollingStarted, // error milestone
                             ErrorMessage = ex.Message,
                             Retryable = false
                         }
@@ -303,7 +302,7 @@ public sealed class AudioProviderPollingWorkerService(
                             RefType = request.RefContentType.ToString(),
                             RefKey = request.RefContentId,
                             request.VideoRequestId,
-                            FailedStep = EventNames.AudioProviderPollingStarted,
+                            FailedMilestone = Milestones.AudioProviderPollingStarted,
                             request.ProviderPollingCount,
                             request.NextProviderPollAtUtc
                         },
@@ -347,7 +346,7 @@ public sealed class AudioProviderPollingWorkerService(
         var predicate = (Expression<Func<AudioRequest, bool>>)(x => x.Id == request.Id);
         var update = Builders<AudioRequest>.Update
             .Set(x => x.Status, request.Status)
-            .Set(x => x.CurrentStep, request.CurrentStep)
+            .Set(x => x.CurrentMilestone, request.CurrentMilestone)
             .Set(x => x.InputText, request.InputText)
             .Set(x => x.AudioProviderKey, request.AudioProviderKey)
             .Set(x => x.SortOrder, request.SortOrder)

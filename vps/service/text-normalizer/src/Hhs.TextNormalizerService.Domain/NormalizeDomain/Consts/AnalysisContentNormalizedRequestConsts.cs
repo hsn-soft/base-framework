@@ -17,6 +17,6 @@ public static class AnalysisContentNormalizedRequestConsts
     public const int CorrelationIdMaxLength = 50;
     public const int DomainNameMaxLength = 500;
     public const int StatusMaxLength = 80;
-    public const int CurrentStepMaxLength = 100;
+    public const int CurrentMilestoneMaxLength = 100;
     public const int LastErrorMaxLength = 1000;
 }

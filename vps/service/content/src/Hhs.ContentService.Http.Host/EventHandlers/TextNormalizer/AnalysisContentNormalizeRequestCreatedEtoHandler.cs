@@ -19,6 +19,6 @@ public class AnalysisContentNormalizeRequestCreatedEtoHandler(
             refContentId: @event.Message.AnalysisContentId,
             refNormalizeRequestId: @event.Message.AnalysisContentNormalizeRequestId,
             normalizeStatus: @event.Message.NormalizeStatus,
-            normalizeCurrentStep: @event.Message.NormalizeCurrentStep
+            normalizeCurrentMilestone: @event.Message.NormalizeCurrentMilestone
         );
 }

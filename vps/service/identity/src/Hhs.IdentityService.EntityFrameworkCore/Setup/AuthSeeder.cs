@@ -4,7 +4,7 @@ using Hhs.IdentityService.Domain.AuthDomain.Entities;
 using Hhs.IdentityService.Domain.Enums;
 using Hhs.IdentityService.Domain.TenantDomain.Entities;
 using Hhs.IdentityService.EntityFrameworkCore.Context;
-using Hhs.Shared.Helper.Consts;
+using Hhs.Shared.Helper.Constants;
 using Hhs.Shared.Helper.Utils;
 using HsnSoft.Base.Logging.Abstracts;
 using HsnSoft.Base.Text;

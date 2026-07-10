@@ -20,7 +20,7 @@ public sealed class VideoRequest : AuditedEntity<Guid>, ISoftDelete, IScopeSubsc
 
     // Status & Configuration
     [NotNull] public string Status { get; set; } = default!;
-    [NotNull] public string CurrentStep { get; set; } = default!;
+    [NotNull] public string CurrentMilestone { get; set; } = default!;
 
     // Soft Delete
     public bool IsDeleted { get; internal set; }

@@ -1,5 +1,5 @@
 using System.Net;
-using Hhs.ContentService.Application.Consts;
+using Hhs.ContentService.Domain.Constants;
 using Hhs.ContentService.Application.Contracts.ContentDomain.Interfaces;
 using Hhs.ContentService.Application.Contracts.DashboardDomain.Dtos;
 using Hhs.ContentService.Application.Contracts.Events;

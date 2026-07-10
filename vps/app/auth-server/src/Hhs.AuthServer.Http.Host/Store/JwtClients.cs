@@ -1,4 +1,4 @@
-using Hhs.Shared.Helper.Consts;
+using Hhs.Shared.Helper.Constants;
 
 namespace Hhs.AuthServer.Store;
 

@@ -26,7 +26,7 @@ public sealed class AnalysisContentNormalizedRequest : AuditedEntity<Guid>, ISof
 
     // Status & Progress
     [NotNull] public string Status { get; set; } = default!;
-    [NotNull] public string CurrentStep { get; set; } = default!;
+    [NotNull] public string CurrentMilestone { get; set; } = default!;
 
     // Analysis Items
     public List<AnalysisNormalizedItem> Items { get; set; } = [];

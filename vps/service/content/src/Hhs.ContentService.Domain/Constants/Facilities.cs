@@ -1,9 +1,10 @@
-namespace Hhs.ContentService.Application.Consts;
+namespace Hhs.ContentService.Domain.Constants;
 
 /// <summary>
 /// Log "facility" values describing the operation a FrameworkInfoLog/FrameworkErrorLog call
-/// represents. Deliberately separate from EventNames (which names the actual integration events
+/// represents. Deliberately separate from Milestones (which names the actual integration events
 /// published on the bus) — a facility describes what's happening right now, not which event fired.
+/// Lives in Domain (not Application) so entity constructors and EF Core repositories can use it too.
 /// </summary>
 public static class Facilities
 {
@@ -17,7 +18,7 @@ public static class Facilities
     public const string AudioOperationStarted = "AUDIO_OPERATION_STARTED";
     public const string VideoProviderRequestStarted = "VIDEO_PROVIDER_REQUEST_STARTED";
     public const string VideoGenerationResultPublished = "VIDEO_GENERATION_RESULT_PUBLISHED";
-    public const string StepFailed = "STEP_FAILED";
+    public const string MilestoneFailed = "MILESTONE_FAILED";
     public const string AnalysisContentCreated = "ANALYSIS_CONTENT_CREATED";
     public const string CustomerContentCreated = "CUSTOMER_CONTENT_CREATED";
     public const string RetryScheduled = "RETRY_SCHEDULED";

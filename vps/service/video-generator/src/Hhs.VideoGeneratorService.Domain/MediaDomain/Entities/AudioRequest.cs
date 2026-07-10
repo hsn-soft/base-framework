@@ -24,7 +24,7 @@ public sealed class AudioRequest : AuditedEntity<Guid>, ISoftDelete, IScopeSubsc
 
     // Status & Configuration
     [NotNull] public string Status { get; set; } = default!;
-    [NotNull] public string CurrentStep { get; set; } = default!;
+    [NotNull] public string CurrentMilestone { get; set; } = default!;
     public int SortOrder { get; set; }
 
     // Input Data

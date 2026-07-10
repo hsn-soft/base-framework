@@ -1,4 +1,6 @@
 using Hhs.ContentService.Domain.ContentDomain.Consts;
+using Hhs.ContentService.Domain.Constants;
+using Hhs.Shared.Helper;
 using Hhs.Shared.Localization;
 using HsnSoft.Base;
 using HsnSoft.Base.Domain.Entities.Auditing;
@@ -31,6 +33,7 @@ public sealed class AnalysisContent : AuditedEntity<Guid>, ISoftDelete, IScopeSu
     [CanBeNull] public string VideoCdnUrl { get; set; }
 
     [CanBeNull] public string LastFacility { get; set; }
+    [CanBeNull] public string CurrentMilestone { get; set; }
     [CanBeNull] public string LastError { get; set; }
 
     // Analysis Items
@@ -53,6 +56,9 @@ public sealed class AnalysisContent : AuditedEntity<Guid>, ISoftDelete, IScopeSu
         SetScopeKey(scopeKey);
         SetAnalysisDate(analysisDate);
         CorrelationId = correlationId;
+
+        LastFacility = Facilities.AnalysisContentCreated;
+        CurrentMilestone = Milestones.AnalysisContentCreated;
     }
 
     private void SetScopeKey(string scopeKey)

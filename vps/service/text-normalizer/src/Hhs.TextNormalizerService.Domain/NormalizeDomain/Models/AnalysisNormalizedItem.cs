@@ -28,7 +28,7 @@ public sealed class AnalysisNormalizedItem
 
     // Status & Progress
     [NotNull] public string Status { get; set; } = NormalizeStatusNames.Created;
-    [NotNull] public string CurrentStep { get; set; } = NormalizeStatusNames.Created;
+    [NotNull] public string CurrentMilestone { get; set; } = Milestones.AnalysisItemCreated;
 
     // Retry Configuration
     public int RetryCount { get; set; }

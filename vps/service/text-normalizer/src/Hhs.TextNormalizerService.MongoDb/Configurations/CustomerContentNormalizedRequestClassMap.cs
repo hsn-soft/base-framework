@@ -56,9 +56,9 @@ public static class CustomerContentNormalizedRequestClassMap
                 map.MapMember(x => x.Status)
                     .SetIsRequired(true)
                     .SetMaxLength(CustomerContentNormalizedRequestConsts.StatusMaxLength);
-                map.MapMember(x => x.CurrentStep)
+                map.MapMember(x => x.CurrentMilestone)
                     .SetIsRequired(true)
-                    .SetMaxLength(CustomerContentNormalizedRequestConsts.CurrentStepMaxLength);
+                    .SetMaxLength(CustomerContentNormalizedRequestConsts.CurrentMilestoneMaxLength);
 
                 // Scraping State
                 map.MapMember(x => x.ScrapingStatus)

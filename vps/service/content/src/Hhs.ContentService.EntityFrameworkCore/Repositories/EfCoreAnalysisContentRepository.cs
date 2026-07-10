@@ -15,12 +15,13 @@ public sealed class EfCoreAnalysisContentRepository(
     ContentServiceDbContext dbContext
 ) : EfCoreGenericRepository<AnalysisContent, Guid>(provider, dbContext), IAnalysisContentRepository
 {
-    public async Task SetNormalizedReferenceAsync(Guid id, Guid normalizedRequestId,string normalizeStatus, string normalizeCurrentStep)
+    public async Task SetNormalizedReferenceAsync(Guid id, Guid normalizedRequestId,string normalizeStatus, string normalizeCurrentMilestone)
         => await UpdateByExpressionAsync(x => x.Id == id && x.NormalizeRequestId == null,
             s => s
                 .SetProperty(a => a.NormalizeRequestId, normalizedRequestId)
                 .SetProperty(a => a.NormalizeStatus, normalizeStatus)
-                .SetProperty(a => a.LastFacility, normalizeCurrentStep)
+                .SetProperty(a => a.LastFacility, Facilities.NormalizeRequestReferenceSet)
+                .SetProperty(a => a.CurrentMilestone, normalizeCurrentMilestone)
                 .SetProperty(a => a.LastError, (string?)null)
         );
 
@@ -28,7 +29,8 @@ public sealed class EfCoreAnalysisContentRepository(
         await UpdateByExpressionAsync(x => x.Id == id && x.VideoRequestId == null,
             s => s
                 .SetProperty(a => a.NormalizeStatus, NormalizeStatusNames.Completed)
-                .SetProperty(a => a.LastFacility, EventNames.NormalizerResultPublished)
+                .SetProperty(a => a.LastFacility, Facilities.VideoGenerationApproved)
+                .SetProperty(a => a.CurrentMilestone, Milestones.NormalizerResultPublished)
                 .SetProperty(a => a.LastError, (string)null)
                 .SetProperty(a => a.VideoStatus, MediaStatusNames.Approved)
         );
@@ -38,7 +40,8 @@ public sealed class EfCoreAnalysisContentRepository(
             s => s
                 .SetProperty(a => a.VideoRequestId, videoRequestId)
                 .SetProperty(a => a.VideoStatus, MediaStatusNames.Created)
-                .SetProperty(a => a.LastFacility, EventNames.VideoRequestCreated)
+                .SetProperty(a => a.LastFacility, Facilities.VideoRequestCreated)
+                .SetProperty(a => a.CurrentMilestone, Milestones.VideoRequestCreated)
                 .SetProperty(a => a.LastError, (string)null)
         );
 
@@ -46,7 +49,7 @@ public sealed class EfCoreAnalysisContentRepository(
         => await UpdateByExpressionAsync(x => x.Id == id && x.VideoStatus == MediaStatusNames.Created,
             s => s
                 .SetProperty(a => a.VideoStatus, MediaStatusNames.AudioStarted)
-                .SetProperty(a => a.LastFacility, audioMode)
+                .SetProperty(a => a.LastFacility, Facilities.AudioOperationStarted)
                 .SetProperty(a => a.LastError, (string)null)
         );
 
@@ -54,7 +57,8 @@ public sealed class EfCoreAnalysisContentRepository(
         => await UpdateByExpressionAsync(x => x.Id == id,
             s => s
                 .SetProperty(a => a.VideoStatus, MediaStatusNames.VideoProviderStarted)
-                .SetProperty(a => a.LastFacility, EventNames.VideoProviderRequestStarted)
+                .SetProperty(a => a.LastFacility, Facilities.VideoProviderRequestStarted)
+                .SetProperty(a => a.CurrentMilestone, Milestones.VideoProviderRequestStarted)
                 .SetProperty(a => a.LastError, (string)null)
         );
 

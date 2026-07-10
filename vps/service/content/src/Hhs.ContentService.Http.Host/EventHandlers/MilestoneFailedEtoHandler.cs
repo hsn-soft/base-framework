@@ -6,12 +6,12 @@ using HsnSoft.Base.Logging.Abstracts;
 
 namespace Hhs.ContentService.EventHandlers;
 
-public class StepFailedEtoHandler(
+public class MilestoneFailedEtoHandler(
     IEventInboxMessageManager inboxStore,
     IAppConsoleLogger logger,
     ContentOperationService contentOperationService
-) : ApplicationEventHandlerBase<StepFailedEto>(inboxStore, logger, contentOperationService)
+) : ApplicationEventHandlerBase<MilestoneFailedEto>(inboxStore, logger, contentOperationService)
 {
-    protected override async Task ExecuteAsync(MessageEnvelope<StepFailedEto> @event, CancellationToken cancellationToken)
-        => await contentOperationService.HandleStepFailedAsync(@event.Message, cancellationToken);
+    protected override async Task ExecuteAsync(MessageEnvelope<MilestoneFailedEto> @event, CancellationToken cancellationToken)
+        => await contentOperationService.HandleMilestoneFailedAsync(@event.Message, cancellationToken);
 }

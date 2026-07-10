@@ -1,6 +1,6 @@
 namespace Hhs.ContentService.Domain.Constants;
 
-public static class StepKeywords
+public static class MilestoneKeywords
 {
     public const string Scraping = "SCRAPING";
     public const string Outline = "OUTLINE";
