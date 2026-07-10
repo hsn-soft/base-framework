@@ -3,17 +3,23 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Hhs.Shared.Helper.Providers;
 using Hhs.Shared.Helper.Retry;
+using Hhs.VideoGeneratorService.Domain.Configuration;
 using Hhs.VideoGeneratorService.Domain.Configuration.Providers.Video;
 using Hhs.VideoGeneratorService.Domain.Constants;
 
 namespace Hhs.VideoGeneratorService.Application.Providers.Video;
 
-public sealed class VideoQueueInternalProvider(
-    HttpClient httpClient,
-    VideoQueueInternalProviderSettings videoSettings
-) : IVideoProvider
+public sealed class VideoQueueInternalProvider : IVideoProvider
 {
-    private readonly string _baseUrl = videoSettings.BaseUrl;
+    private readonly HttpClient httpClient;
+    private readonly string _baseUrl;
+
+    public VideoQueueInternalProvider(HttpClient httpClient, VideoQueueInternalProviderSettings videoSettings, VideoPollingSettings pollingSettings)
+    {
+        this.httpClient = httpClient;
+        this.httpClient.Timeout = TimeSpan.FromSeconds(pollingSettings.TimeoutSeconds);
+        _baseUrl = videoSettings.BaseUrl;
+    }
 
     public string ProviderKey => ProviderKeys.VideoQueueInternal;
 

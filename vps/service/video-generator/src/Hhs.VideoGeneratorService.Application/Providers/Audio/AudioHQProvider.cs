@@ -2,17 +2,23 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Hhs.Shared.Helper.Providers;
 using Hhs.Shared.Helper.Retry;
+using Hhs.VideoGeneratorService.Domain.Configuration;
 using Hhs.VideoGeneratorService.Domain.Configuration.Providers.Audio;
 using Hhs.VideoGeneratorService.Domain.Constants;
 
 namespace Hhs.VideoGeneratorService.Application.Providers.Audio;
 
-public sealed class AudioHqProvider(
-    HttpClient httpClient,
-    AudioQueueProviderSettings audioSettings
-) : IAudioProvider
+public sealed class AudioHqProvider : IAudioProvider
 {
-    private readonly string _baseUrl = audioSettings.BaseUrl;
+    private readonly HttpClient httpClient;
+    private readonly string _baseUrl;
+
+    public AudioHqProvider(HttpClient httpClient, AudioQueueProviderSettings audioSettings, AudioPollingSettings pollingSettings)
+    {
+        this.httpClient = httpClient;
+        this.httpClient.Timeout = TimeSpan.FromSeconds(pollingSettings.TimeoutSeconds);
+        _baseUrl = audioSettings.BaseUrl;
+    }
 
     public string ProviderKey => ProviderKeys.AudioHQ;
 

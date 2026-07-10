@@ -10,14 +10,28 @@ using Microsoft.Extensions.Hosting;
 
 namespace Hhs.VideoGeneratorService.Application.Providers.Audio;
 
-public sealed class AudioElevenLabsProvider(
-    HttpClient httpClient,
-    AudioElevenLabsProviderSettings audioSettings,
-    SystemCdnSettings cdnSettings,
-    IHostEnvironment environment
-) : IAudioProvider
+public sealed class AudioElevenLabsProvider : IAudioProvider
 {
+    // ElevenLabs returns the generated audio file as a synchronous response stream (no polling,
+    // see ExecutionMode below) — that response can take noticeably longer than a status-check
+    // call, so it gets its own fixed timeout instead of AudioPollingSettings.TimeoutSeconds.
+    private const int HttpTimeoutSeconds = 120;
+
     private static readonly JsonSerializerOptions s_requestJsonOptions = new() { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull };
+
+    private readonly HttpClient _httpClient;
+    private readonly AudioElevenLabsProviderSettings _audioSettings;
+    private readonly SystemCdnSettings _cdnSettings;
+    private readonly IHostEnvironment _environment;
+
+    public AudioElevenLabsProvider(HttpClient httpClient, AudioElevenLabsProviderSettings audioSettings, SystemCdnSettings cdnSettings, IHostEnvironment environment)
+    {
+        _httpClient = httpClient;
+        _httpClient.Timeout = TimeSpan.FromSeconds(HttpTimeoutSeconds);
+        _audioSettings = audioSettings;
+        _cdnSettings = cdnSettings;
+        _environment = environment;
+    }
 
     public string ProviderKey => ProviderKeys.AudioElevenLabs;
 
@@ -25,36 +39,36 @@ public sealed class AudioElevenLabsProvider(
 
     public async Task<AudioCreateResponse> CreateAsync(AudioCreateRequest request)
     {
-        if (string.IsNullOrWhiteSpace(audioSettings.ApiKey))
+        if (string.IsNullOrWhiteSpace(_audioSettings.ApiKey))
             return new AudioCreateResponse { IsFailed = true, IsRetryable = false, ErrorMessage = "ElevenLabs ApiKey is not configured." };
 
-        if (string.IsNullOrWhiteSpace(audioSettings.VoiceId))
+        if (string.IsNullOrWhiteSpace(_audioSettings.VoiceId))
             return new AudioCreateResponse { IsFailed = true, IsRetryable = false, ErrorMessage = "ElevenLabs VoiceId is not configured." };
 
         var payload = new
         {
             text = request.InputText,
-            model_id = audioSettings.Model,
-            language_code = audioSettings.LanguageCode,
+            model_id = _audioSettings.Model,
+            language_code = _audioSettings.LanguageCode,
             voice_settings = new
             {
-                stability = audioSettings.Stability,
-                similarity_boost = audioSettings.SimilarityBoost,
+                stability = _audioSettings.Stability,
+                similarity_boost = _audioSettings.SimilarityBoost,
                 style = 0.0,
                 use_speaker_boost = false,
-                speed = audioSettings.Speed
+                speed = _audioSettings.Speed
             },
             apply_text_normalization = "on"
         };
 
         try
         {
-            using var httpRequest = new HttpRequestMessage(HttpMethod.Post, $"{audioSettings.BaseUrl}{audioSettings.VoiceId}");
+            using var httpRequest = new HttpRequestMessage(HttpMethod.Post, $"{_audioSettings.BaseUrl}{_audioSettings.VoiceId}");
             httpRequest.Content = JsonContent.Create(payload, options: s_requestJsonOptions);
             httpRequest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("audio/mpeg"));
-            httpRequest.Headers.Add("xi-api-key", audioSettings.ApiKey);
+            httpRequest.Headers.Add("xi-api-key", _audioSettings.ApiKey);
 
-            using var response = await httpClient.SendAsync(httpRequest);
+            using var response = await _httpClient.SendAsync(httpRequest);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -67,8 +81,8 @@ public sealed class AudioElevenLabsProvider(
             // RemoteFileDownloader uses, and return that local path as ProviderFileUrl:
             // RemoteFileDownloader.DownloadAsync recognizes an already-local path and short-circuits
             // instead of attempting an HTTP GET against it.
-            string downloadDir = cdnSettings.LocalDownloadPath;
-            if (environment.IsDevelopment())
+            string downloadDir = _cdnSettings.LocalDownloadPath;
+            if (_environment.IsDevelopment())
             {
                 downloadDir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", downloadDir);
             }

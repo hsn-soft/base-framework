@@ -11,7 +11,7 @@ using System.Text.Json.Serialization;
 
 namespace Hhs.TextNormalizerService.Application.Providers.Outline;
 
-public sealed class OutlineOpenAiProvider(OutlineOpenAiProviderSettings settings) : IOutlineProvider
+public sealed class OutlineOpenAiProvider(OutlineOpenAiProviderSettings settings, OutlinePollingSettings pollingSettings) : IOutlineProvider
 {
     // Schema is equivalent to what JSchemaGenerator produces from StructuredOutput
     // with DefaultRequired = Required.Always and AllowAdditionalProperties = false
@@ -62,15 +62,18 @@ public sealed class OutlineOpenAiProvider(OutlineOpenAiProviderSettings settings
 
         ApiKeyCredential credential = new(settings.ApiKey);
 
+        var clientOptions = new OpenAIClientOptions { NetworkTimeout = TimeSpan.FromSeconds(pollingSettings.TimeoutSeconds) };
+
         ChatClient client;
         if (!string.IsNullOrWhiteSpace(settings.BaseUrl))
         {
-            OpenAIClient openAiClient = new(credential, new OpenAIClientOptions { Endpoint = new Uri(settings.BaseUrl) });
+            clientOptions.Endpoint = new Uri(settings.BaseUrl);
+            OpenAIClient openAiClient = new(credential, clientOptions);
             client = openAiClient.GetChatClient(model);
         }
         else
         {
-            client = new ChatClient(model, credential);
+            client = new ChatClient(model, credential, clientOptions);
         }
 
         ChatMessage[] messages =

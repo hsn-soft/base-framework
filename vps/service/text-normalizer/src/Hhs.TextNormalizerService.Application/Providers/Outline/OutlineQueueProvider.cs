@@ -6,9 +6,17 @@ using Hhs.TextNormalizerService.Domain.Configuration.Providers.Outline;
 
 namespace Hhs.TextNormalizerService.Application.Providers.Outline;
 
-public sealed class OutlineQueueProvider(HttpClient httpClient, OutlineQueueProviderSettings outlineSettings) : IOutlineProvider
+public sealed class OutlineQueueProvider : IOutlineProvider
 {
-    private readonly string _baseUrl = outlineSettings == null ? throw new ArgumentNullException(nameof(outlineSettings)) : outlineSettings.BaseUrl;
+    private readonly HttpClient httpClient;
+    private readonly string _baseUrl;
+
+    public OutlineQueueProvider(HttpClient httpClient, OutlineQueueProviderSettings outlineSettings, OutlinePollingSettings pollingSettings)
+    {
+        this.httpClient = httpClient;
+        this.httpClient.Timeout = TimeSpan.FromSeconds(pollingSettings.TimeoutSeconds);
+        _baseUrl = outlineSettings == null ? throw new ArgumentNullException(nameof(outlineSettings)) : outlineSettings.BaseUrl;
+    }
 
     public string ProviderKey => ProviderKeys.OutlineQueue;
 

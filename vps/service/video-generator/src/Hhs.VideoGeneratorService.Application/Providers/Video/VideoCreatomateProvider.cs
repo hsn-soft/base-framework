@@ -6,20 +6,28 @@ using System.Text.Json.Serialization;
 using Hhs.Shared.Helper.Enums;
 using Hhs.Shared.Helper.Providers;
 using Hhs.Shared.Helper.Retry;
+using Hhs.VideoGeneratorService.Domain.Configuration;
 using Hhs.VideoGeneratorService.Domain.Configuration.Providers.Video;
 using Hhs.VideoGeneratorService.Domain.SettingDomain.Entities;
 using HsnSoft.Base.Text;
 
 namespace Hhs.VideoGeneratorService.Application.Providers.Video;
 
-public sealed class VideoCreatomateProvider(
-    HttpClient httpClient,
-    VideoCreatomateProviderSettings videoSettings
-) : IVideoProvider
+public sealed class VideoCreatomateProvider : IVideoProvider
 {
     private const int MaxSlotCount = 5;
 
     private static readonly JsonSerializerOptions s_requestJsonOptions = new() { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull };
+
+    private readonly HttpClient httpClient;
+    private readonly VideoCreatomateProviderSettings videoSettings;
+
+    public VideoCreatomateProvider(HttpClient httpClient, VideoCreatomateProviderSettings videoSettings, VideoPollingSettings pollingSettings)
+    {
+        this.httpClient = httpClient;
+        this.httpClient.Timeout = TimeSpan.FromSeconds(pollingSettings.TimeoutSeconds);
+        this.videoSettings = videoSettings;
+    }
 
     public string ProviderKey => ProviderKeys.VideoCreatomate;
 
