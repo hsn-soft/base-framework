@@ -123,7 +123,7 @@ public sealed class ContentOperationService(
                             exception: null
                         ));
 
-                        var checkResult = await CheckVideoGenerationApproveRules(entity.ScopeKey, entity.ScrapReleaseTimeUtc);
+                        var checkResult = await CheckDirectVideoGenerationApproveRules(entity.ScopeKey, entity.ScrapReleaseTimeUtc);
                         if (checkResult.Key)
                         {
                             await customerContentRepository.SetVideoGenerationApprovedAsync(id: entity.Id);
@@ -507,9 +507,9 @@ public sealed class ContentOperationService(
                || milestone.Contains(MilestoneKeywords.Video, StringComparison.OrdinalIgnoreCase);
     }
 
-    private async Task<KeyValuePair<bool, string>> CheckVideoGenerationApproveRules([NotNull] string scopeKey, DateTime? releaseTime)
+    private async Task<KeyValuePair<bool, string>> CheckDirectVideoGenerationApproveRules([NotNull] string scopeKey, DateTime? releaseTime)
     {
-        if (_serviceSettings.SkipContentCheckOperation)
+        if (_serviceSettings.SkipDirectVideoGenerationApproveRules)
         {
             return new KeyValuePair<bool, string>(true, Milestones.CustomerContentVideoGenerationApproved);
         }
