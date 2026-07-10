@@ -19,6 +19,7 @@ public class AnalysisContentNormalizeRequestCreatedEtoHandler(
             refContentId: @event.Message.AnalysisContentId,
             refNormalizeRequestId: @event.Message.AnalysisContentNormalizeRequestId,
             normalizeStatus: @event.Message.NormalizeStatus,
-            normalizeCurrentMilestone: @event.Message.NormalizeCurrentMilestone
+            normalizeCurrentMilestone: @event.Message.NormalizeCurrentMilestone,
+            correlationId: @event.CorrelationId
         );
 }

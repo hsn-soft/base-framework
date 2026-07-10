@@ -13,5 +13,5 @@ public class AnalysisVideoGenerationQueryEtoHandler(
 ) : ApplicationEventHandlerBase<AnalysisVideoGenerationQueryEto>(inboxStore, logger, analysisContentAppService)
 {
     protected override async Task ExecuteAsync(MessageEnvelope<AnalysisVideoGenerationQueryEto> @event, CancellationToken cancellationToken)
-        => await analysisContentAppService.AnalysisVideoGenerationQueryAsync(@event.Message);
+        => await analysisContentAppService.AnalysisVideoGenerationQueryAsync(@event.Message, @event.CorrelationId);
 }

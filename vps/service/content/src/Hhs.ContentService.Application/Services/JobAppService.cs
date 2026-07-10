@@ -21,14 +21,6 @@ public sealed class JobAppService(
 
     public async Task AnalysisVideoGenerationQueryTriggerAsync(AnalysisVideoGenerationQueryTriggerDto input, string correlationId = null)
     {
-        _logger.FrameworkInfoLog(LogHelper.Generate(
-            message: $"{input.JobName} successfully triggered",
-            reference: new { Type = "Job", Key = input.JobName, input.JobPeriodDesc, input.NextTriggerTimeUtc },
-            facility: Facilities.AnalysisVideoGenerationQueryTriggered,
-            correlationId: correlationId,
-            exception: null
-        ));
-
         var scopeKeys = await customerVpSettingRepository.GetListAsync(new ListQueryOptions<CustomerVpSetting>
             {
                 Filter = x
@@ -37,6 +29,14 @@ public sealed class JobAppService(
             , selector: x => x.ScopeKey);
         if (scopeKeys is { Count: > 0 })
         {
+            _logger.FrameworkInfoLog(LogHelper.Generate(
+                message: $"{input.JobName} successfully triggered",
+                reference: new { Type = "Job", Key = input.JobName, input.JobPeriodDesc, input.NextTriggerTimeUtc },
+                facility: Facilities.AnalysisVideoGenerationQueryTriggered,
+                correlationId: correlationId,
+                exception: null
+            ));
+
             foreach (string scopeKey in scopeKeys)
             {
                 await EventBus.PublishAsync(
@@ -47,20 +47,18 @@ public sealed class JobAppService(
         }
         else
         {
-            _logger.LogWarning("There is no client which has ANALYSIS video generation limit");
+            _logger.FrameworkInfoLog(LogHelper.Generate(
+                message: "There is no client which has ANALYSIS video generation limit",
+                reference: new { Type = "Job", Key = input.JobName, input.JobPeriodDesc, input.NextTriggerTimeUtc },
+                facility: Facilities.AnalysisVideoGenerationQueryTriggered,
+                correlationId: correlationId,
+                exception: null
+            ));
         }
     }
 
     public async Task TrendVideoGenerationQueryTriggerAsync(TrendVideoGenerationQueryTriggerDto input, string correlationId = null)
     {
-        _logger.FrameworkInfoLog(LogHelper.Generate(
-            message: $"{input.JobName} successfully triggered",
-            reference: new { Type = "Job", Key = input.JobName, input.JobPeriodDesc, input.NextTriggerTimeUtc },
-            facility: Facilities.TrendVideoGenerationQueryTriggered,
-            correlationId: correlationId,
-            exception: null
-        ));
-
         var scopeKeys = await customerVpSettingRepository.GetListAsync(new ListQueryOptions<CustomerVpSetting>
             {
                 Filter = x
@@ -69,6 +67,14 @@ public sealed class JobAppService(
             , selector: x => x.ScopeKey);
         if (scopeKeys is { Count: > 0 })
         {
+            _logger.FrameworkInfoLog(LogHelper.Generate(
+                message: $"{input.JobName} successfully triggered",
+                reference: new { Type = "Job", Key = input.JobName, input.JobPeriodDesc, input.NextTriggerTimeUtc },
+                facility: Facilities.TrendVideoGenerationQueryTriggered,
+                correlationId: correlationId,
+                exception: null
+            ));
+
             foreach (string scopeKey in scopeKeys)
             {
                 await EventBus.PublishAsync(eventMessage: new TrendVideoGenerationQueryEto(ScopeKey: scopeKey),
@@ -78,7 +84,13 @@ public sealed class JobAppService(
         }
         else
         {
-            _logger.LogWarning("There is no client which has TREND video generation limit");
+            _logger.FrameworkInfoLog(LogHelper.Generate(
+                message: "There is no client which has TREND video generation limit",
+                reference: new { Type = "Job", Key = input.JobName, input.JobPeriodDesc, input.NextTriggerTimeUtc },
+                facility: Facilities.TrendVideoGenerationQueryTriggered,
+                correlationId: correlationId,
+                exception: null
+            ));
         }
     }
 

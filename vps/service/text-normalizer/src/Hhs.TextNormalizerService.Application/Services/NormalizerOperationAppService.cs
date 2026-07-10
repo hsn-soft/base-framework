@@ -459,7 +459,6 @@ public sealed class NormalizerOperationAppService(
         }
     }
 
-
     public async Task CreateAnalysisContentNormalizeRequestAsync(AnalysisContentCreatedEto @event, Guid eventId, [CanBeNull] string correlationId, CancellationToken cancellationToken = default)
     {
         var existing = await analysisContentRepository.GetFirstOrDefaultAsync(
@@ -470,10 +469,7 @@ public sealed class NormalizerOperationAppService(
         {
             await EventBus.PublishAsync(parentMessage: ParentIntegrationEvent,
                 correlationId: existing.CorrelationId,
-                eventMessage: new AnalysisContentNormalizeRequestCreatedEto
-                {
-                    AnalysisContentId = existing.AnalysisContentId, AnalysisContentNormalizeRequestId = existing.Id, NormalizeStatus = existing.Status, NormalizeCurrentMilestone = existing.CurrentMilestone,
-                }
+                eventMessage: new AnalysisContentNormalizeRequestCreatedEto { AnalysisContentId = existing.AnalysisContentId, AnalysisContentNormalizeRequestId = existing.Id, NormalizeStatus = existing.Status, NormalizeCurrentMilestone = existing.CurrentMilestone }
             );
 
             return;
@@ -516,7 +512,7 @@ public sealed class NormalizerOperationAppService(
 
     public async Task StartAnalysisItemScrapingAsync(AnalysisItemScrapingStartedEto @event, CancellationToken cancellationToken = default)
     {
-        var request = await GetAnalysisContentNormalizedRequestAsync(@event.AnalysisContentId);
+        var request = await analysisContentRepository.GetFirstOrDefaultAsync(x => x.AnalysisContentId == @event.AnalysisContentId, cancellationToken: cancellationToken);
         if (request.Status == NormalizeStatusNames.Failed) return;
 
         var item = request.Items.First(x => x.CustomerContentId == @event.CustomerContentIdForItem);
@@ -642,7 +638,7 @@ public sealed class NormalizerOperationAppService(
 
     public async Task StartAnalysisItemOutlineAsync(AnalysisItemOutlineStartedEto @event, CancellationToken cancellationToken = default)
     {
-        var analysisContentNormalizedRequest = await GetAnalysisContentNormalizedRequestAsync(@event.AnalysisContentId);
+        var analysisContentNormalizedRequest = await analysisContentRepository.GetFirstOrDefaultAsync(x => x.AnalysisContentId == @event.AnalysisContentId, cancellationToken: cancellationToken);
         if (analysisContentNormalizedRequest.Status == NormalizeStatusNames.Failed) return;
 
         var item = analysisContentNormalizedRequest.Items.First(x => x.CustomerContentId == @event.CustomerContentIdForItem);
@@ -702,7 +698,6 @@ public sealed class NormalizerOperationAppService(
         }
     }
 
-
     public async Task StartOutlineProviderRequestAsync(OutlineProviderRequestStartedEto @event, [CanBeNull] string correlationId = null, CancellationToken cancellationToken = default)
     {
         _logger.LogInformation($"StartOutlineProviderRequestAsync - Event ScopeKey: '{@event.ScopeKey}' (null={@event.ScopeKey == null}, empty={string.IsNullOrWhiteSpace(@event.ScopeKey)})");
@@ -746,9 +741,34 @@ public sealed class NormalizerOperationAppService(
                 if (string.IsNullOrWhiteSpace(response.OutlinedData))
                     throw new InvalidOperationException(ErrorMessages.OutlineResponseDataUnknown);
 
+                string refType = string.Empty;
+                string refKey = string.Empty;
+
+                if (@event.RefContentType == ContentType.AnalysisContent)
+                {
+                    var request = await analysisContentRepository.GetByIdAsync(@event.RefNormalizedRequestId);
+                    refType = "AnalysisContent";
+                    refKey = request.AnalysisContentId.ToString();
+                }
+                else
+                {
+                    var request = await customerContentRepository.GetByIdAsync(@event.RefNormalizedRequestId);
+                    refType = "CustomerContent";
+                    refKey = request.CustomerContentId.ToString();
+                }
+
                 _logger.FrameworkInfoLog(LogHelper.Generate(
                     message: Milestones.OutlineProviderRequestCompleted,
-                    reference: new { @event.ScopeKey, Type = @event.RefContentType.ToString(), Key = @event.RefNormalizedRequestId, @event.CustomerContentIdForItem },
+                    reference: new
+                    {
+                        @event.ScopeKey,
+                        Type = @event.RefContentType == ContentType.AnalysisContent
+                            ? nameof(AnalysisContentNormalizedRequest)
+                            : nameof(CustomerContentNormalizedRequest),
+                        Key = @event.RefNormalizedRequestId,
+                        RefType = refType,
+                        RefKey = refKey
+                    },
                     facility: Facilities.OutlineProviderRequestCompleted,
                     correlationId: correlationId,
                     exception: null
@@ -1062,12 +1082,6 @@ public sealed class NormalizerOperationAppService(
         );
     }
 
-
-    private Task<AnalysisContentNormalizedRequest> GetAnalysisContentNormalizedRequestAsync(Guid analysisContentId)
-    {
-        return analysisContentRepository.GetFirstOrDefaultAsync(x => x.AnalysisContentId == analysisContentId);
-    }
-
     /// <summary>
     /// Single source of truth for the outline provider's input (customer path) — used both by the
     /// original call site and by NormalizerOperationRetryWorkerService.RetryCustomerRequestsAsync
@@ -1136,7 +1150,6 @@ public sealed class NormalizerOperationAppService(
 
         return customerContentRepository.UpdateByExpressionAsync(predicate, _ => update, cancellationToken: cancellationToken);
     }
-
 
     private async Task HandleCustomerExceptionAsync(CustomerContentNormalizedRequest request, string milestone, string facility, Exception ex)
     {
@@ -1240,7 +1253,6 @@ public sealed class NormalizerOperationAppService(
             }
         );
     }
-
 
     private async Task HandleAnalysisItemExceptionAsync(AnalysisContentNormalizedRequest request, AnalysisNormalizedItem item, string milestone, string facility, Exception ex)
     {

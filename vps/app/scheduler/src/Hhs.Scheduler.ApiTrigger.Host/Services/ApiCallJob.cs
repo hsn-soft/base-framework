@@ -33,7 +33,7 @@ public class ApiCallJob(IHttpClientFactory httpClientFactory, IFrameworkLogger l
         // if (!string.IsNullOrEmpty(bearerToken)) { client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", bearerToken);}
         if (!string.IsNullOrEmpty(endpoint.Key)) { client.DefaultRequestHeaders.Add(SchedulerApiKeyLabel, endpoint.Key); }
 
-        string jobCorrelationId = Guid.NewGuid().ToString();
+        string jobCorrelationId = $"job-{Guid.CreateVersion7():N}";
         client.DefaultRequestHeaders.Add(SchedulerJobIdLabel, jobCorrelationId);
         client.DefaultRequestHeaders.Add(SchedulerJobNameLabel, endpoint.JobName);
 

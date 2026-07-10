@@ -44,7 +44,15 @@ public sealed class ContentOperationService(
 
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: Milestones.CustomerContentNormalizeRequestCreated,
-            reference: new { Type = refContentType.ToString(), Key = refContentId, RefType = "CustomerContentNormalizeRequest", RefKey = refNormalizeRequestId },
+            reference: new
+            {
+                Type = refContentType.ToString(),
+                Key = refContentId,
+                RefType = refContentType == ContentType.AnalysisContent
+                    ? "AnalysisContentNormalizedRequest"
+                    : "CustomerContentNormalizedRequest",
+                RefKey = refNormalizeRequestId
+            },
             facility: Facilities.NormalizeRequestReferenceSet,
             correlationId: correlationId,
             exception: null

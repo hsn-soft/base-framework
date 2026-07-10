@@ -98,8 +98,14 @@ public sealed class AnalysisContentAppService(
         // Check client video generation started settings
         if (DateTime.UtcNow.Hour < customerVpSetting.DailyAnalysisVideoGenerationStartedUtcHour)
         {
-            _logger.LogWarning("Client[{ClientDomain}] | {OperationStatus} => {QueryResult}",
-                customerVpSetting.DomainName, "SKIPPED", "CUSTOMER_CONTENT_VIDEO_GENERATION_SKIPPED_EARLY_TIME");
+            _logger.FrameworkInfoLog(LogHelper.Generate(
+                message: $"ANALYSIS_CONTENT_VIDEO_GENERATION_SKIPPED_EARLY_TIME",
+                reference: new { customerVpSetting.ScopeKey, Type = "DomainName", Key = customerVpSetting.DomainName },
+                facility: "ANALYSIS_CONTENT_VIDEO_GENERATION_SKIPPED_EARLY_TIME",
+                correlationId: correlationId,
+                exception: null
+            ));
+
             _logger.LogInformation("Client[{ClientDomain}] | {OperationStatus}", customerVpSetting.DomainName, "END");
             return;
         }
@@ -110,8 +116,8 @@ public sealed class AnalysisContentAppService(
         long clientDailyAnalysisContentCount = await analysisContentRepository.GetCountAsync(x => x.ScopeKey == customerVpSetting.ScopeKey && x.AnalysisDate == analysisDate);
         long clientDailyAnalysisVideoGenerationLimit = customerVpSetting.DailyAnalysisVideoGenerationLimit - clientDailyAnalysisContentCount;
         var clientQuoteResult = clientDailyAnalysisVideoGenerationLimit <= 0
-            ? new KeyValuePair<bool, string>(false, "CUSTOMER_CONTENT_VIDEO_GENERATION_SKIPPED_DAILY_LIMIT")
-            : new KeyValuePair<bool, string>(true, "CUSTOMER_CONTENT_VIDEO_GENERATION_APPROVED");
+            ? new KeyValuePair<bool, string>(false, "ANALYSIS_CONTENT_VIDEO_GENERATION_SKIPPED_DAILY_LIMIT")
+            : new KeyValuePair<bool, string>(true, "ANALYSIS_CONTENT_VIDEO_GENERATION_APPROVED");
         if (clientQuoteResult.Key)
         {
             List<CustomerContent> selectedContents;
@@ -137,10 +143,7 @@ public sealed class AnalysisContentAppService(
                 if (visitList is { Count: > 0 })
                 {
                     var visitedIds = visitList.Select(x => x.CustomerContentId).ToList();
-                    var fetchOptions = new ListQueryOptions<CustomerContent>
-                    {
-                        Filter = x => visitedIds.Contains(x.Id)
-                    };
+                    var fetchOptions = new ListQueryOptions<CustomerContent> { Filter = x => visitedIds.Contains(x.Id) };
                     var fetched = await customerContentRepository.GetListAsync(fetchOptions);
                     selectedContents = visitedIds
                         .Select(id => fetched.FirstOrDefault(c => c.Id == id))
@@ -150,11 +153,27 @@ public sealed class AnalysisContentAppService(
                 else
                 {
                     selectedContents = [];
+
+                    _logger.FrameworkInfoLog(LogHelper.Generate(
+                        message: "ANALYSIS_CONTENT_VIDEO_GENERATION_SKIPPED_NO_VISITED_CONTENT",
+                        reference: new { customerVpSetting.ScopeKey, Type = "DomainName", Key = customerVpSetting.DomainName },
+                        facility: "ANALYSIS_CONTENT_VIDEO_GENERATION_SKIPPED_NO_VISITED_CONTENT",
+                        correlationId: correlationId,
+                        exception: null
+                    ));
                 }
             }
             else
             {
                 selectedContents = [];
+
+                _logger.FrameworkInfoLog(LogHelper.Generate(
+                    message: "ANALYSIS_CONTENT_VIDEO_GENERATION_SKIPPED_NO_COMPLETED_CONTENT",
+                    reference: new { customerVpSetting.ScopeKey, Type = "DomainName", Key = customerVpSetting.DomainName },
+                    facility: "ANALYSIS_CONTENT_VIDEO_GENERATION_SKIPPED_NO_COMPLETED_CONTENT",
+                    correlationId: correlationId,
+                    exception: null
+                ));
             }
 
             // Fallback: most recently completed content regardless of release date
@@ -175,11 +194,17 @@ public sealed class AnalysisContentAppService(
 
             if (selectedContents.Count < customerVpSetting.DailyAnalysisVideoItemLimit)
             {
-                _logger.LogWarning("Client[{ClientDomain}] | {OperationStatus} => {QueryResult}",
-                    customerVpSetting.DomainName, "SKIPPED", "CUSTOMER_CONTENT_VIDEO_GENERATION_SKIPPED_NO_COMPLETED_CONTENT");
                 _logger.LogInformation("Client[{ClientDomain}] | {OperationStatus}", customerVpSetting.DomainName, "END");
                 return;
             }
+
+            _logger.FrameworkInfoLog(LogHelper.Generate(
+                message: clientQuoteResult.Value,
+                reference: new { customerVpSetting.ScopeKey, Type = "DomainName", Key = customerVpSetting.DomainName },
+                facility: clientQuoteResult.Value,
+                correlationId: correlationId,
+                exception: null
+            ));
 
             var analysisContentId = Guid.CreateVersion7();
             var analysis = new AnalysisContent(
@@ -208,29 +233,24 @@ public sealed class AnalysisContentAppService(
             ));
 
             var items = selectedContents
-                .Select((content, index) => new AnalysisNormalizeItem
-                {
-                    CustomerContentId = content.Id,
-                    ContentKey = content.ContentKey,
-                    SortOrder = index + 1
-                })
+                .Select((content, index) => new AnalysisNormalizeItem { CustomerContentId = content.Id, ContentKey = content.ContentKey, SortOrder = index + 1 })
                 .ToList();
 
             await EventBus.PublishAsync(
                 parentMessage: ParentIntegrationEvent,
                 correlationId: analysis.CorrelationId,
-                eventMessage: new AnalysisContentCreatedEto
-                {
-                    ScopeKey = analysis.ScopeKey,
-                    DomainName = customerVpSetting.DomainName,
-                    AnalysisContentId = analysisContentId,
-                    Items = items
-                }
+                eventMessage: new AnalysisContentCreatedEto { ScopeKey = analysis.ScopeKey, DomainName = customerVpSetting.DomainName, AnalysisContentId = analysisContentId, Items = items }
             );
         }
         else
         {
-            _logger.LogWarning("Client[{ClientDomain}] | {OperationStatus} => {QueryResult}", customerVpSetting.DomainName, "SKIPPED", clientQuoteResult.Value);
+            _logger.FrameworkInfoLog(LogHelper.Generate(
+                message: clientQuoteResult.Value,
+                reference: new { customerVpSetting.ScopeKey, Type = "DomainName", Key = customerVpSetting.DomainName },
+                facility: clientQuoteResult.Value,
+                correlationId: correlationId,
+                exception: null
+            ));
         }
 
         _logger.LogInformation("Client[{ClientDomain}] | {OperationStatus}", customerVpSetting.DomainName, "END");

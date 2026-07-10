@@ -50,7 +50,7 @@ public sealed class JobsController(
             correlationId = schedulerJobId.ToString();
         }
 
-        return string.IsNullOrWhiteSpace(correlationId) ? null : correlationId;
+        return string.IsNullOrWhiteSpace(correlationId) ? $"job-{Guid.CreateVersion7():N}" : correlationId;
     }
 
     # endregion
