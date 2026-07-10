@@ -46,9 +46,10 @@ public sealed class NormalizerOperationAppService(
 
     public async Task CreateCustomerContentNormalizeRequestAsync(CustomerContentCreatedEto @event, Guid eventId, [CanBeNull] string correlationId, CancellationToken cancellationToken = default)
     {
-        _logger.LogDebug($"CreateCustomerContentNormalizeRequestAsync started for RefContentId: {@event.CustomerContentId}, EventId: {eventId}");
+        var existing = await customerContentRepository.GetSingleOrDefaultAsync(
+            x => x.SourceEventId == eventId || x.CustomerContentId == @event.CustomerContentId,
+            cancellationToken: cancellationToken);
 
-        var existing = await customerContentRepository.GetByScopeKeyAndContentIdAsync(@event.ScopeKey, @event.CustomerContentId, cancellationToken);
         if (existing is not null)
         {
             _logger.LogDebug("Existing request found, publishing event");
@@ -613,10 +614,10 @@ public sealed class NormalizerOperationAppService(
                 reference: new
                 {
                     request.ScopeKey,
-                    Type = nameof(AnalysisNormalizedItem),
-                    Key = item.CustomerContentId,
-                    RefType = "AnalysisContent",
-                    RefKey = request.AnalysisContentId,
+                    Type = "AnalysisContent",
+                    Key = request.AnalysisContentId,
+                    RefType = "CustomerContent",
+                    RefKey = item.CustomerContentId,
                     AnalysisContentNormalizeRequestId = request.Id
                 },
                 facility: Facilities.ScrapingCompleted,

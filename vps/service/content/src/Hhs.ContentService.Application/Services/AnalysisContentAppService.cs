@@ -211,7 +211,7 @@ public sealed class AnalysisContentAppService(
                 id: analysisContentId,
                 scopeKey: customerVpSetting.ScopeKey,
                 analysisDate: analysisDate,
-                traceAccessor?.GetCorrelationId());
+                correlationId);
             int sort = 1;
             foreach (var content in selectedContents)
             {
@@ -256,7 +256,7 @@ public sealed class AnalysisContentAppService(
         _logger.LogInformation("Client[{ClientDomain}] | {OperationStatus}", customerVpSetting.DomainName, "END");
     }
 
-    public async Task<ForceAnalysisVideoGenerationResultDto> ForceAnalysisVideoGenerationQueryAsync(ForceAnalysisVideoGenerationRequestDto input, string correlationId = null)
+    public async Task<ForceAnalysisVideoGenerationResultDto> ForceAnalysisVideoGenerationQueryAsync(ForceAnalysisVideoGenerationRequestDto input)
     {
         try
         {

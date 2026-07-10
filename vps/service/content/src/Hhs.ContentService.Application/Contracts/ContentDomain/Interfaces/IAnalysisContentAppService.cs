@@ -25,5 +25,5 @@ public interface IAnalysisContentAppService : IEventApplicationService
 
     Task<CreateContentResponse> CreateTestAnalysisContentAsync(CreateAnalysisContentRequest request, CancellationToken cancellationToken);
 
-    Task<ForceAnalysisVideoGenerationResultDto> ForceAnalysisVideoGenerationQueryAsync(ForceAnalysisVideoGenerationRequestDto input, string correlationId = null);
+    Task<ForceAnalysisVideoGenerationResultDto> ForceAnalysisVideoGenerationQueryAsync(ForceAnalysisVideoGenerationRequestDto input);
 }
