@@ -59,6 +59,8 @@ public sealed class RabbitMqPersistentConnection(IOptions<RabbitMqConnectionSett
                     _connection!.CallbackExceptionAsync -= OnCallbackExceptionAsync;
                     _connection!.ConnectionBlockedAsync -= OnConnectionBlockedAsync;
                     _connection!.ConnectionUnblockedAsync -= OnConnectionUnblockedAsync;
+                    _connection!.RecoverySucceededAsync -= OnRecoverySucceededAsync;
+                    _connection!.ConnectionRecoveryErrorAsync -= OnConnectionRecoveryErrorAsync;
 
                     _connection.CloseAsync().GetAwaiter().GetResult();
                 }
@@ -82,10 +84,19 @@ public sealed class RabbitMqPersistentConnection(IOptions<RabbitMqConnectionSett
 
             if (IsConnected)
             {
+                // AutomaticRecoveryEnabled=true (set above) means RabbitMQ.Client's own AutorecoveringConnection
+                // retries forever (every NetworkRecoveryInterval) and transparently recovers connection,
+                // topology, channels, and consumers with zero app involvement. These 4 handlers are
+                // deliberately log-only — they must NOT trigger TryConnectAsync(), which would tear down and
+                // replace the whole connection object mid-recovery, orphaning channels/consumers that the
+                // library was already in the process of recovering. RecoverySucceededAsync/
+                // ConnectionRecoveryErrorAsync give visibility into that recovery without interfering with it.
                 _connection!.ConnectionShutdownAsync += OnConnectionShutdownAsync;
                 _connection!.CallbackExceptionAsync += OnCallbackExceptionAsync;
                 _connection!.ConnectionBlockedAsync += OnConnectionBlockedAsync;
                 _connection!.ConnectionUnblockedAsync += OnConnectionUnblockedAsync;
+                _connection!.RecoverySucceededAsync += OnRecoverySucceededAsync;
+                _connection!.ConnectionRecoveryErrorAsync += OnConnectionRecoveryErrorAsync;
 
                 logger.LogInformation("RabbitMQ Client acquired a persistent connection to '{HostName}'", _connection?.Endpoint.HostName);
 
@@ -99,9 +110,11 @@ public sealed class RabbitMqPersistentConnection(IOptions<RabbitMqConnectionSett
     }
 
 
-    public Task<IChannel> CreateModelAsync() => !IsConnected
+    public Task<IChannel> CreateModelAsync(ushort? consumerDispatchConcurrency = null) => !IsConnected
         ? throw new InvalidOperationException("No RabbitMQ connections are available to perform this action")
-        : _connection?.CreateChannelAsync();
+        : _connection?.CreateChannelAsync(consumerDispatchConcurrency.HasValue
+            ? new CreateChannelOptions(publisherConfirmationsEnabled: false, publisherConfirmationTrackingEnabled: false, consumerDispatchConcurrency: consumerDispatchConcurrency.Value)
+            : null);
 
     public void Dispose()
     {
@@ -116,6 +129,8 @@ public sealed class RabbitMqPersistentConnection(IOptions<RabbitMqConnectionSett
                 _connection!.CallbackExceptionAsync -= OnCallbackExceptionAsync;
                 _connection!.ConnectionBlockedAsync -= OnConnectionBlockedAsync;
                 _connection!.ConnectionUnblockedAsync -= OnConnectionUnblockedAsync;
+                _connection!.RecoverySucceededAsync -= OnRecoverySucceededAsync;
+                _connection!.ConnectionRecoveryErrorAsync -= OnConnectionRecoveryErrorAsync;
                 if (_connection.IsOpen)
                 {
                     _connection.CloseAsync().GetAwaiter().GetResult();
@@ -161,35 +176,43 @@ public sealed class RabbitMqPersistentConnection(IOptions<RabbitMqConnectionSett
         return connections.Count;
     }
 
+    // Log-only: AutomaticRecoveryEnabled's own infinite-retry loop (every NetworkRecoveryInterval) owns
+    // reconnection now — these handlers must not call TryConnectAsync(), which would tear down and
+    // replace the whole connection object mid-recovery. See the comment above where these are wired up.
     private Task OnCallbackExceptionAsync(object sender, CallbackExceptionEventArgs @event)
     {
-        logger.LogWarning("A RabbitMQ connection throw exception. Trying to re-connect...");
-        return TryConnectIfNotDisposed();
+        logger.LogWarning("A RabbitMQ connection callback threw an exception: {Error}", @event?.Exception.Message ?? "UNKNOWN");
+        return Task.CompletedTask;
     }
 
     private Task OnConnectionShutdownAsync(object sender, ShutdownEventArgs @event)
     {
-        logger.LogWarning("A RabbitMQ connection is on shutdown. Trying to re-connect...");
-        return TryConnectIfNotDisposed();
+        logger.LogWarning("A RabbitMQ connection is shutting down. Automatic recovery will handle reconnection.");
+        return Task.CompletedTask;
     }
 
     private Task OnConnectionBlockedAsync(object sender, ConnectionBlockedEventArgs @event)
     {
-        logger.LogWarning("A RabbitMQ connection is unblocked. Trying to re-connect...");
-        return TryConnectIfNotDisposed();
+        // Broker-side flow control (e.g. a resource alarm), not a connection failure — no reconnect needed.
+        logger.LogWarning("RabbitMQ connection blocked by broker: {Reason}", @event?.Reason ?? "UNKNOWN");
+        return Task.CompletedTask;
     }
 
     private Task OnConnectionUnblockedAsync(object sender, AsyncEventArgs @event)
     {
-        logger.LogWarning("A RabbitMQ connection is blocked. Trying to re-connect...");
-        return TryConnectIfNotDisposed();
+        logger.LogInformation("RabbitMQ connection unblocked by broker");
+        return Task.CompletedTask;
     }
 
-    private Task TryConnectIfNotDisposed()
+    private Task OnRecoverySucceededAsync(object sender, AsyncEventArgs @event)
     {
-        if (!_disposed) return TryConnectAsync();
+        logger.LogInformation("RabbitMQ connection automatic recovery succeeded");
+        return Task.CompletedTask;
+    }
 
-        logger.LogInformation("RabbitMQ client is disposed. No action will be taken.");
+    private Task OnConnectionRecoveryErrorAsync(object sender, ConnectionRecoveryErrorEventArgs @event)
+    {
+        logger.LogWarning("RabbitMQ connection automatic recovery attempt failed, will retry: {Error}", @event?.Exception.Message ?? "UNKNOWN");
         return Task.CompletedTask;
     }
 }
