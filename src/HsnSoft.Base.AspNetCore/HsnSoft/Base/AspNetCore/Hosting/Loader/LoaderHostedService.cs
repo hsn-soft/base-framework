@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using HsnSoft.Base.Logging;
 using HsnSoft.Base.Logging.Abstracts;
+using HsnSoft.Base.Tracing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -29,9 +30,9 @@ public class LoaderHostedService : IHostedService
 
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: $"{nameof(LoaderHostedService)} | Started",
-            reference: null,
+            reference: new { Type = ApplicationIdentifier.AppName, Key = ApplicationIdentifier.AppId, InstanceId = _instanceId.ToString() },
             facility: "APPLICATION_LOADER_STARTED",
-            correlationId: _instanceId.ToString(),
+            correlationId: null,
             exception: null
         ));
 
@@ -43,15 +44,17 @@ public class LoaderHostedService : IHostedService
                 _logger.LogDebug("{Loader} | {OperationStatus} | {OperationTime}", nameof(LoaderHostedService), "COMPLETED", $"{DateTime.UtcNow:yyyyMMdd hh:mm:ss}");
                 break;
             }
-            catch (OperationCanceledException) { }
+            catch (OperationCanceledException)
+            {
+            }
 
             _logger.LogError("{Loader} | {OperationStatus} | {OperationTime}", nameof(LoaderHostedService), "FAILED", $"{DateTime.UtcNow:yyyyMMdd hh:mm:ss}");
 
             _logger.FrameworkErrorLog(LogHelper.Generate(
                 message: $"{nameof(LoaderHostedService)} | Failed",
-                reference: null,
+                reference: new { Type = ApplicationIdentifier.AppName, Key = ApplicationIdentifier.AppId, InstanceId = _instanceId.ToString() },
                 facility: "APPLICATION_LOADER_FAILED",
-                correlationId: _instanceId.ToString(),
+                correlationId: null,
                 exception: null
             ));
             break;
@@ -64,9 +67,9 @@ public class LoaderHostedService : IHostedService
 
         _logger.FrameworkInfoLog(LogHelper.Generate(
             message: $"{nameof(LoaderHostedService)} | Stopped",
-            reference: null,
+            reference: new { Type = ApplicationIdentifier.AppName, Key = ApplicationIdentifier.AppId, InstanceId = _instanceId.ToString() },
             facility: "APPLICATION_LOADER_STOPPED",
-            correlationId: _instanceId.ToString(),
+            correlationId: null,
             exception: null
         ));
 

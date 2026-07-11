@@ -7,28 +7,54 @@ using Serilog.Events;
 
 namespace HsnSoft.Base.Serilog.Loggers;
 
-public abstract class PersistentLogger : IBaseLogger
+public abstract class PersistentLogger : IBaseLogger, IRefreshableLogger
 {
-    protected readonly ILogger Logger;
+    protected volatile ILogger Logger;
 
-    protected PersistentLogger(IConfiguration configuration, string loggerName,bool usePropertyConsoleTemplate)
+    private readonly IConfiguration _configuration;
+    private readonly string _loggerName;
+    private readonly bool _usePropertyConsoleTemplate;
+
+    protected PersistentLogger(IConfiguration configuration, string loggerName, bool usePropertyConsoleTemplate)
+    {
+        _configuration = configuration;
+        _loggerName = loggerName;
+        _usePropertyConsoleTemplate = usePropertyConsoleTemplate;
+
+        Logger = BuildLogger();
+    }
+
+    // Rebuilds the sink pipeline from scratch and swaps it in, disposing the old one. Some
+    // third-party sinks (e.g. Serilog.Sinks.Graylog.Core's HttpTransportClient) have an unlocked
+    // lazy-init race that can leave the transport permanently unconfigured for the rest of the
+    // process's life if lost once at startup; periodically calling this (see
+    // PersistentLoggerSinkRefreshWorker) bounds the outage to one refresh interval instead of
+    // requiring a manual restart.
+    public void RefreshSink()
+    {
+        ILogger oldLogger = Logger;
+        Logger = BuildLogger();
+        (oldLogger as IDisposable)?.Dispose();
+    }
+
+    private ILogger BuildLogger()
     {
         try
         {
-            Logger = SerilogConfigurationHelper
-                .ConfigureConsoleWithPersistentLogger(configuration, loggerName)
+            return SerilogConfigurationHelper
+                .ConfigureConsoleWithPersistentLogger(_configuration, _loggerName)
                 .ForContext("IsPersistentLogger", true)
-                .ForContext("UsePropertyConsole", usePropertyConsoleTemplate);
+                .ForContext("UsePropertyConsole", _usePropertyConsoleTemplate);
         }
         catch (Exception exception)
         {
             Console.WriteLine($"LogManager is not initialized, please configure appsettings.json. Ex: {exception}");
 
-            Logger = new LoggerConfiguration()
+            return new LoggerConfiguration()
                 .WriteTo.Console(
                     outputTemplate: "[{Timestamp:HH:mm:ss.fff zzz} {Level:u3}] {LoggerName} [{SourceContext}] | {Message:lj}{NewLine}{Exception}{NewLine}")
                 .CreateLogger()
-                .ForContext("LoggerName", loggerName)
+                .ForContext("LoggerName", _loggerName)
                 .ForContext("IsPersistentLogger", true);
         }
     }
