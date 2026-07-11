@@ -3,6 +3,7 @@ using Hhs.EventManagerService.Application.Contracts.EventDomain.Dtos;
 using Hhs.EventManagerService.Application.Contracts.EventDomain.Dtos.Filters;
 using Hhs.EventManagerService.Application.Contracts.EventDomain.Dtos.Submits;
 using Hhs.EventManagerService.Application.Contracts.EventDomain.Interfaces;
+using Hhs.EventManagerService.Domain.Configuration;
 using Hhs.EventManagerService.Domain.Enums;
 using Hhs.EventManagerService.Domain.EventDomain.Consts;
 using Hhs.EventManagerService.Domain.EventDomain.Entities;
@@ -23,6 +24,7 @@ public sealed class FailedIntegrationEventAppService : ApplicationServiceBase, I
 {
     private readonly IFrameworkLogger _logger;
     private readonly IFailedIntegrationEventRepository _failedIntegrationEventRepository;
+    private readonly EventManagerRetrySettings _retrySettings;
 
     public FailedIntegrationEventAppService(IServiceProvider provider,
         IFailedIntegrationEventRepository failedIntegrationEventRepository
@@ -30,6 +32,7 @@ public sealed class FailedIntegrationEventAppService : ApplicationServiceBase, I
     {
         ArgumentNullException.ThrowIfNull(provider);
         _logger = provider.GetRequiredService<IFrameworkLogger>();
+        _retrySettings = provider.GetRequiredService<EventManagerRetrySettings>();
 
         _failedIntegrationEventRepository = failedIntegrationEventRepository;
     }
@@ -156,6 +159,17 @@ public sealed class FailedIntegrationEventAppService : ApplicationServiceBase, I
         if (failedIntegrationEventItem == null)
         {
             throw new BaseHttpException((int)HttpStatusCode.NotFound);
+        }
+
+        // Every manual requeue mints a brand-new message id (ReQueuedEtoHandler.BuildOriginalEnvelope),
+        // so RetrySettingsBase.MaxRetryCount (which only bounds broker-level redelivery of the SAME
+        // message id) never applies here — without this separate ceiling, a permanently-broken event
+        // could be requeued forever. ReQueuedCount is carried forward across requeue generations via
+        // the envelope, so this check catches the cumulative count regardless of how many separate
+        // FailedIntegrationEvent rows were created along the way.
+        if (failedIntegrationEventItem.ReQueuedCount >= _retrySettings.MaxReQueueCount)
+        {
+            throw new BaseHttpException((int)HttpStatusCode.Conflict);
         }
 
         bool reQueuedOperationSuccess;
