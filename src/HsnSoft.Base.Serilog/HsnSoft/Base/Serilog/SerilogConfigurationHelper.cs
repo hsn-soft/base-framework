@@ -4,6 +4,7 @@ using Destructurama;
 using HsnSoft.Base.Serilog.Mask;
 using Microsoft.Extensions.Configuration;
 using Serilog;
+using Serilog.Debugging;
 using Serilog.Events;
 using Serilog.Sinks.Graylog;
 using Serilog.Sinks.Graylog.Core.Transport;
@@ -60,6 +61,15 @@ public static class SerilogConfigurationHelper
 
     private static ILogger BaseConfigureLogger(IConfiguration configuration, string loggerName, bool isEnabledPersistent)
     {
+        if (GetSelfLogIsActive(configuration))
+        {
+            // Serilog swallows sink-level exceptions (e.g. the Graylog HTTP sink's fire-and-forget
+            // Emit) by design, so a connectivity failure otherwise leaves zero trace anywhere.
+            // SelfLog surfaces those internal errors to the console. Opt-in per environment via
+            // FrameworkLogger:IsSelfLogActive — not meant to stay on in production by default.
+            SelfLog.Enable(msg => Console.Error.WriteLine($"[Serilog SelfLog] {msg}"));
+        }
+
         LogEventLevel configuredLevel = GetFrameworkLogLevel(configuration);
         var dependencyAssemblyLogLevel = GetDependencyAssemblyLogLevel(configuredLevel);
 
@@ -241,6 +251,18 @@ public static class SerilogConfigurationHelper
         catch
         {
             return LogEventLevel.Verbose;
+        }
+    }
+
+    private static bool GetSelfLogIsActive(IConfiguration configuration)
+    {
+        try
+        {
+            return bool.Parse(configuration["FrameworkLogger:IsSelfLogActive"] ?? "false");
+        }
+        catch
+        {
+            return false;
         }
     }
 

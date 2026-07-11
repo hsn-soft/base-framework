@@ -15,7 +15,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="PuppeteerSharp" Version="25.1.1" />
+        <PackageReference Include="PuppeteerSharp" Version="25.3.3" />
     </ItemGroup>
 
     <ItemGroup>
