@@ -16,10 +16,12 @@ public sealed class FrameworkLogger(IConfiguration configuration) : PersistentLo
     private void Write<T>(LogEventLevel logLevel, T log)
         => Logger
             .ForContext("LogType", "FrameworkLog")
+            .ForContext("MessageType", "Structured")
             .Write(logLevel, "{@Log}", log);
 
     protected override void Write(LogEventLevel logLevel, Exception exception, string messageTemplate, params object[] args)
         => Logger
             .ForContext("LogType", "FrameworkLog")
+            .ForContext("MessageType", "Args")
             .Write(logLevel, exception, messageTemplate, args);
 }

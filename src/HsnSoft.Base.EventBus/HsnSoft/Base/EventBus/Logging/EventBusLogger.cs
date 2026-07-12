@@ -16,10 +16,12 @@ public sealed class EventBusLogger(IConfiguration configuration) : PersistentLog
     private void Write<T>(LogEventLevel logLevel, T log)
         => Logger
             .ForContext("LogType", "EventBusLog")
+            .ForContext("MessageType", "Structured")
             .Write(logLevel, "{@Log}", log);
 
     protected override void Write(LogEventLevel logLevel, Exception exception, string messageTemplate, params object[] args)
         => Logger
             .ForContext("LogType", "EventBusLog")
-            .Write(LogEventLevel.Debug, exception, messageTemplate, args);
+            .ForContext("MessageType", "Args")
+            .Write(logLevel, exception, messageTemplate, args);
 }
