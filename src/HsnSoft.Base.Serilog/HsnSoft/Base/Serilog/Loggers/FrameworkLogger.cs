@@ -21,5 +21,5 @@ public sealed class FrameworkLogger(IConfiguration configuration) : PersistentLo
     protected override void Write(LogEventLevel logLevel, Exception exception, string messageTemplate, params object[] args)
         => Logger
             .ForContext("LogType", "FrameworkLog")
-            .Write(LogEventLevel.Debug, exception, messageTemplate, args);
+            .Write(logLevel, exception, messageTemplate, args);
 }
