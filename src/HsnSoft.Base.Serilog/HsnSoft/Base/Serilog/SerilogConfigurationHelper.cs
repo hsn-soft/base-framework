@@ -92,7 +92,7 @@ public static class SerilogConfigurationHelper
 
         if (isEnabledPersistent)
         {
-            loggerConfiguration = ConfigurePersistentSink(loggerName, loggerConfiguration, configuration);
+            loggerConfiguration = ConfigurePersistentSink(loggerName, loggerConfiguration, configuration, configuredLevel);
         }
 
         loggerConfiguration = ConfigureConsoleSink(loggerConfiguration, configuredLevel);
@@ -140,7 +140,8 @@ public static class SerilogConfigurationHelper
     private static LoggerConfiguration ConfigurePersistentSink(
         string loggerName,
         LoggerConfiguration loggerConfiguration,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        LogEventLevel configuredLevel)
     {
         bool isGrayLogActive = GetGraylogIsActive(configuration);
 
@@ -157,9 +158,9 @@ public static class SerilogConfigurationHelper
                 if (!int.TryParse(portText, out int grayLogPort))
                     throw new InvalidOperationException("FrameworkLogger:GrayLog:Port invalid.");
 
-                // SADECE persistent logger'lar Graylog'a gitsin
+                // SADECE persistent logger'lar VE configuredLevel (FrameworkLogger:LogLevel) esigini gecen event'ler Graylog'a gitsin
                 loggerConfiguration = loggerConfiguration.WriteTo.Conditional(
-                    IsPersistentLogger,
+                    logEvent => (byte)logEvent.Level >= (byte)configuredLevel && IsPersistentLogger(logEvent),
                     sinkConfiguration =>
                     {
                         sinkConfiguration.Graylog(
