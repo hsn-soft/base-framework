@@ -4,6 +4,8 @@ on:
     pull_request:
         branches: [ "dev" ]
         types: [ opened, synchronize, reopened ]
+    push:
+        branches: [ "dev" ]   # the state of dev (the main tracking branch) is what the README badge shows
     workflow_dispatch:
 
 permissions:
@@ -11,7 +13,8 @@ permissions:
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
-    cancel-in-progress: true
+    # Only supersede PR runs; every push to dev should finish and report
+    cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
     # Raise this as coverage grows; the PR fails when line coverage of src drops below it.
