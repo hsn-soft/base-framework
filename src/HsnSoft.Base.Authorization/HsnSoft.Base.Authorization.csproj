@@ -20,11 +20,12 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\HsnSoft.Base.Authorization.Abstractions\HsnSoft.Base.Authorization.Abstractions.csproj" />
+        <PackageReference Include="Microsoft.AspNetCore.Authorization" Version="$(MicrosoftAspNetCorePackageVersion)" />
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\HsnSoft.Base.Localization\HsnSoft.Base.Localization.csproj" />
+        <ProjectReference Include="..\HsnSoft.Base.MultiTenancy\HsnSoft.Base.MultiTenancy.csproj" />
         <ProjectReference Include="..\HsnSoft.Base.Security\HsnSoft.Base.Security.csproj" />
     </ItemGroup>
 

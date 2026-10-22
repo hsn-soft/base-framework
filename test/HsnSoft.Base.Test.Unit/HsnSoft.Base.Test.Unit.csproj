@@ -36,7 +36,6 @@
       <ProjectReference Include="..\..\src\HsnSoft.Base.AspNetCore.Mvc\HsnSoft.Base.AspNetCore.Mvc.csproj" />
       <ProjectReference Include="..\..\src\HsnSoft.Base.AspNetCore\HsnSoft.Base.AspNetCore.csproj" />
       <ProjectReference Include="..\..\src\HsnSoft.Base.Auditing\HsnSoft.Base.Auditing.csproj" />
-      <ProjectReference Include="..\..\src\HsnSoft.Base.Authorization.Abstractions\HsnSoft.Base.Authorization.Abstractions.csproj" />
       <ProjectReference Include="..\..\src\HsnSoft.Base.Authorization\HsnSoft.Base.Authorization.csproj" />
       <ProjectReference Include="..\..\src\HsnSoft.Base.AutoMapper\HsnSoft.Base.AutoMapper.csproj" />
       <ProjectReference Include="..\..\src\HsnSoft.Base.BlobStoring.Aws\HsnSoft.Base.BlobStoring.Aws.csproj" />
@@ -59,7 +58,6 @@
       <ProjectReference Include="..\..\src\HsnSoft.Base.EventBus\HsnSoft.Base.EventBus.csproj" />
       <ProjectReference Include="..\..\src\HsnSoft.Base.ExceptionHandling\HsnSoft.Base.ExceptionHandling.csproj" />
       <ProjectReference Include="..\..\src\HsnSoft.Base.Http.Client\HsnSoft.Base.Http.Client.csproj" />
-      <ProjectReference Include="..\..\src\HsnSoft.Base.Json.Abstractions\HsnSoft.Base.Json.Abstractions.csproj" />
       <ProjectReference Include="..\..\src\HsnSoft.Base.Json.Newtonsoft\HsnSoft.Base.Json.Newtonsoft.csproj" />
       <ProjectReference Include="..\..\src\HsnSoft.Base.Json.SystemTextJson\HsnSoft.Base.Json.SystemTextJson.csproj" />
       <ProjectReference Include="..\..\src\HsnSoft.Base.Json\HsnSoft.Base.Json.csproj" />

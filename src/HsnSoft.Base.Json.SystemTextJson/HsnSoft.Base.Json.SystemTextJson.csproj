@@ -15,7 +15,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\HsnSoft.Base.Json.Abstractions\HsnSoft.Base.Json.Abstractions.csproj" />
         <ProjectReference Include="..\HsnSoft.Base.Timing\HsnSoft.Base.Timing.csproj" />
         <PackageReference Include="System.Text.Json" Version="$(MicrosoftAspNetCorePackageVersion)" />
     </ItemGroup>
