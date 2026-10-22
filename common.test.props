@@ -22,6 +22,9 @@
         <WarningsNotAsErrors>$(WarningsNotAsErrors);CS0618;CS0612;NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
         <IsPackable>false</IsPackable>
         <IsTestProject>true</IsTestProject>
+        <!-- Needed by the build-time IDE0005 (unused usings) check; CS1591 is not interesting for tests -->
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <NoWarn>$(NoWarn);CS1591</NoWarn>
         <!-- Run the .editorconfig code style rules and the quality analyzers during dotnet build, not only in the IDE -->
         <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
         <AnalysisLevel>latest-recommended</AnalysisLevel>

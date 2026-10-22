@@ -10,6 +10,8 @@ COPY ["./assets/hsn-base.png", "./assets/"]
 COPY ["./README.md", "./"]
 COPY ["./NuGet.Config", "./"]
 COPY ["./common.props", "./"]
+COPY ["./common.test.props", "./"]
+COPY ["./.editorconfig", "./"]
 COPY ["./HsnSoft.Base.sln", "./"]
 
 COPY ["./src/.", "./src/"]
@@ -20,7 +22,7 @@ RUN dotnet restore "./HsnSoft.Base.sln" --force --verbosity minimal --configfile
 RUN dotnet build "./HsnSoft.Base.sln" --no-restore --no-incremental --verbosity minimal --configuration Release
 
 # Only the hermetic unit tests run here.
-RUN dotnet test "./test/HsnSoft.Base.Test.Unit/HsnSoft.Base.Test.Unit.csproj" --no-restore --no-build --verbosity minimal --configuration Release
+RUN dotnet test "./HsnSoft.Base.sln" --no-restore --no-build --verbosity minimal --configuration Release
 
 RUN --mount=type=secret,id=VERSION_NUMBER \
     export VERSION_NUMBER=$(cat /run/secrets/VERSION_NUMBER) && \

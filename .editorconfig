@@ -233,3 +233,7 @@ dotnet_diagnostic.IDE0051.severity = warning
 dotnet_diagnostic.IDE0052.severity = warning
 dotnet_diagnostic.IDE0059.severity = warning
 dotnet_diagnostic.IDE0060.severity = warning
+
+# Tests are named Method_Scenario_Expectation, underscores are fine there
+[test/**/*.cs]
+dotnet_diagnostic.CA1707.severity = none

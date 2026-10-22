@@ -42,19 +42,19 @@ jobs:
 
             -   name: Unit Tests With Coverage
                 run: >
-                    dotnet test test/HsnSoft.Base.Test.Unit
+                    dotnet test HsnSoft.Base.sln
                     --no-restore --no-build --configuration Release --verbosity minimal
                     --settings test/coverlet.runsettings
                     --collect:"XPlat Code Coverage"
-                    --results-directory ./TestResults/unit
-                    --logger "trx;LogFileName=unit.trx"
+                    --results-directory ./TestResults
+                    --logger "trx;LogFileName=tests.trx"
 
             -   name: Coverage Gate
-                run: python3 scripts/check-coverage.py "$COVERAGE_THRESHOLD" $(find TestResults/unit -name 'coverage.cobertura.xml')
+                run: python3 scripts/check-coverage.py "$COVERAGE_THRESHOLD" $(find TestResults -name 'coverage.cobertura.xml')
 
             -   name: Upload Test Results
                 if: always()
                 uses: actions/upload-artifact@v4
                 with:
-                    name: unit-test-results
-                    path: TestResults/unit
+                    name: test-results
+                    path: TestResults
