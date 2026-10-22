@@ -73,10 +73,10 @@ foreach ($proj in $testProjects)
     " "
     dotnet test $proj.FullName `
         --no-build --no-restore --configuration Release `
+        --settings "$rootFolder/test/coverlet.runsettings" `
         --collect:"XPlat Code Coverage" `
         --results-directory $outDir `
-        --logger "trx;LogFileName=$projName.trx" `
-        -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+        --logger "trx;LogFileName=$projName.trx"
 }
 " "
 Write-Info "## DOTNET TEST COMPLETED -------------------------------------------------------"

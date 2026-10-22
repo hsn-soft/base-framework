@@ -24,10 +24,10 @@ dotnet build --no-restore --no-incremental --verbosity minimal -c Release
 for proj in "$ROOT"/test/*/*.csproj; do
     name="$(basename "$proj" .csproj)"
     dotnet test "$proj" --no-build --no-restore -c Release \
+        --settings "$ROOT/test/coverlet.runsettings" \
         --collect:"XPlat Code Coverage" \
         --results-directory "$ROOT/TestResults/$name" \
-        --logger "trx;LogFileName=$name.trx" \
-        -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+        --logger "trx;LogFileName=$name.trx"
 done
 
 dotnet sonarscanner end /d:sonar.token="$SONAR_TOKEN"

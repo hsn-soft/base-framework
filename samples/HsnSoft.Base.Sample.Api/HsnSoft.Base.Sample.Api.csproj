@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <IsPackable>false</IsPackable>
+        <RootNamespace>HsnSoft.Base.Sample.Api</RootNamespace>
+        <NoWarn>$(NoWarn);CS1591;CS1998;</NoWarn>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\HsnSoft.Base.Sample.Api.Hosting\HsnSoft.Base.Sample.Api.Hosting.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\HsnSoft.Base.Sample.Api.Application\HsnSoft.Base.Sample.Api.Application.csproj" />
+        <ProjectReference Include="..\HsnSoft.Base.Sample.Api.EfCore\HsnSoft.Base.Sample.Api.EfCore.csproj" />
+        <ProjectReference Include="..\HsnSoft.Base.Sample.Api.MongoDb\HsnSoft.Base.Sample.Api.MongoDb.csproj" />
+    </ItemGroup>
+
+</Project>

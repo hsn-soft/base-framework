@@ -4,36 +4,85 @@ on:
     pull_request:
         branches: [ "dev" ]
         types: [ opened, synchronize, reopened ]
+    workflow_dispatch:
+
+env:
+    # Raise this as coverage grows; the PR fails when line coverage of src drops below it.
+    COVERAGE_THRESHOLD: '22'
 
 jobs:
-    build:
-        name: 'Build And Test JOB'
+    unit-tests:
+        name: 'Build And Unit Test JOB'
         runs-on: ubuntu-latest
 
         steps:
             -   name: Checkout Repository
-                uses: actions/checkout@v3
+                uses: actions/checkout@v4
                 with:
-                    fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+                    fetch-depth: 0
 
             -   name: Setup .NET
                 uses: actions/setup-dotnet@v4
                 with:
                     dotnet-version: '10.0.x'
 
-            -   name: Cache Search
-                uses: actions/cache@v3
+            -   name: Cache NuGet
+                uses: actions/cache@v4
                 with:
                     path: ~/.nuget/packages
-                    key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+                    key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'common.props') }}
                     restore-keys: |
                         ${{ runner.os }}-nuget
 
             -   name: Restore Dependencies
-                run: dotnet restore --force --verbosity minimal --configfile NuGet.Config
+                run: dotnet restore --verbosity minimal --configfile NuGet.Config
 
             -   name: Build Solution
-                run: dotnet build --no-restore --no-incremental --verbosity minimal --configuration Release
+                run: dotnet build --no-restore --verbosity minimal --configuration Release
 
-            -   name: Test Solution
-                run: dotnet test --no-restore --no-build --verbosity minimal --configuration Release --filter "category!=integration"
+            -   name: Unit Tests With Coverage
+                run: >
+                    dotnet test test/HsnSoft.Base.Test.Unit
+                    --no-restore --no-build --configuration Release --verbosity minimal
+                    --settings test/coverlet.runsettings
+                    --collect:"XPlat Code Coverage"
+                    --results-directory ./TestResults/unit
+                    --logger "trx;LogFileName=unit.trx"
+
+            -   name: Coverage Gate
+                run: python3 scripts/check-coverage.py "$COVERAGE_THRESHOLD" $(find TestResults/unit -name 'coverage.cobertura.xml')
+
+            -   name: Upload Test Results
+                if: always()
+                uses: actions/upload-artifact@v4
+                with:
+                    name: unit-test-results
+                    path: TestResults/unit
+
+    integration-tests:
+        name: 'Integration Test JOB'
+        runs-on: ubuntu-latest   # Docker is available; Testcontainers starts the dependencies it needs.
+        needs: unit-tests
+
+        steps:
+            -   name: Checkout Repository
+                uses: actions/checkout@v4
+
+            -   name: Setup .NET
+                uses: actions/setup-dotnet@v4
+                with:
+                    dotnet-version: '10.0.x'
+
+            -   name: Integration Tests
+                run: >
+                    dotnet test test/HsnSoft.Base.Test.Integration
+                    --configuration Release --verbosity minimal
+                    --logger "trx;LogFileName=integration.trx"
+                    --results-directory ./TestResults/integration
+
+            -   name: Upload Test Results
+                if: always()
+                uses: actions/upload-artifact@v4
+                with:
+                    name: integration-test-results
+                    path: TestResults/integration

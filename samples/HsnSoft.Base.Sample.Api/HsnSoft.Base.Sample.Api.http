@@ -1,0 +1,6 @@
+@HsnSoft.Base.Sample.Api_HostAddress = http://localhost:6680
+
+GET {{HsnSoft.Base.Sample.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
