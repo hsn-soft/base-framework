@@ -17,7 +17,6 @@
     <ItemGroup>
         <ProjectReference Include="..\HsnSoft.Base.Serilog\HsnSoft.Base.Serilog.csproj" />
         <ProjectReference Include="..\HsnSoft.Base.Json\HsnSoft.Base.Json.csproj" />
-        <ProjectReference Include="..\HsnSoft.Base.MultiTenancy\HsnSoft.Base.MultiTenancy.csproj" />
     </ItemGroup>
 
 </Project>

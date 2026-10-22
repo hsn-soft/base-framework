@@ -15,11 +15,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\HsnSoft.Base.Data\HsnSoft.Base.Data.csproj" />
         <ProjectReference Include="..\HsnSoft.Base.Json\HsnSoft.Base.Json.csproj" />
-        <ProjectReference Include="..\HsnSoft.Base.MultiTenancy\HsnSoft.Base.MultiTenancy.csproj" />
-        <ProjectReference Include="..\HsnSoft.Base.Security\HsnSoft.Base.Security.csproj" />
-        <ProjectReference Include="..\HsnSoft.Base.Timing\HsnSoft.Base.Timing.csproj" />
     </ItemGroup>
 
 </Project>

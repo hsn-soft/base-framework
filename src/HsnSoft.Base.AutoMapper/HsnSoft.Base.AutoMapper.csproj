@@ -20,7 +20,6 @@
 
     <ItemGroup>
         <ProjectReference Include="..\HsnSoft.Base.Auditing\HsnSoft.Base.Auditing.csproj" />
-        <ProjectReference Include="..\HsnSoft.Base.ObjectMapping\HsnSoft.Base.ObjectMapping.csproj" />
     </ItemGroup>
 
 </Project>

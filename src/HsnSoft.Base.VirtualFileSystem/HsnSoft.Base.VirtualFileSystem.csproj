@@ -16,7 +16,6 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.Extensions.FileProviders.Composite" Version="$(MicrosoftAspNetCorePackageVersion)" />
-        <PackageReference Include="Microsoft.Extensions.FileProviders.Physical" Version="$(MicrosoftAspNetCorePackageVersion)" />
         <PackageReference Include="Microsoft.Extensions.FileProviders.Embedded" Version="$(MicrosoftAspNetCorePackageVersion)" />
     </ItemGroup>
 
