@@ -24,6 +24,9 @@
         <Product>HsnSoft Base Framework</Product>
     </PropertyGroup>
     <ItemGroup>
+        <InternalsVisibleTo Include="HsnSoft.Base.Test.Unit" />
+    </ItemGroup>
+    <ItemGroup>
         <None Include="..\..\assets\hsn-base.png" Pack="true" Visible="false" PackagePath="assets\hsn-base.png" />
     </ItemGroup>
 </Project>
