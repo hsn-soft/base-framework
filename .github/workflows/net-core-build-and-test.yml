@@ -6,6 +6,13 @@ on:
         types: [ opened, synchronize, reopened ]
     workflow_dispatch:
 
+permissions:
+    contents: read
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
 env:
     # Raise this as coverage grows; the PR fails when line coverage of src drops below it.
     COVERAGE_THRESHOLD: '99'
@@ -42,19 +49,57 @@ jobs:
 
             -   name: Unit Tests With Coverage
                 run: >
-                    dotnet test HsnSoft.Base.sln
+                    ./scripts/run-tests.sh unit
                     --no-restore --no-build --configuration Release --verbosity minimal
                     --settings test/coverlet.runsettings
                     --collect:"XPlat Code Coverage"
-                    --results-directory ./TestResults
-                    --logger "trx;LogFileName=tests.trx"
+                    --results-directory ./TestResults/unit
+                    --logger "trx;LogFileName=unit.trx"
 
             -   name: Coverage Gate
-                run: python3 scripts/check-coverage.py "$COVERAGE_THRESHOLD" $(find TestResults -name 'coverage.cobertura.xml')
+                run: python3 scripts/check-coverage.py "$COVERAGE_THRESHOLD" $(find TestResults/unit -name 'coverage.cobertura.xml')
 
             -   name: Upload Test Results
                 if: always()
                 uses: actions/upload-artifact@v4
                 with:
-                    name: test-results
-                    path: TestResults
+                    name: unit-test-results
+                    path: TestResults/unit
+
+    integration-tests:
+        name: 'Integration Test JOB'
+        runs-on: ubuntu-latest   # Docker is available; Testcontainers starts the services the tests need.
+        needs: unit-tests
+
+        steps:
+            -   name: Checkout Repository
+                uses: actions/checkout@v4
+
+            -   name: Setup .NET
+                uses: actions/setup-dotnet@v4
+                with:
+                    dotnet-version: '10.0.x'
+
+            -   name: Cache NuGet
+                uses: actions/cache@v4
+                with:
+                    path: ~/.nuget/packages
+                    key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'common.props', 'common.test.props') }}
+                    restore-keys: |
+                        ${{ runner.os }}-nuget
+
+            # Does nothing (and succeeds) while the repository has no *.IntegrationTests project.
+            -   name: Integration Tests
+                run: >
+                    ./scripts/run-tests.sh integration
+                    --configuration Release --verbosity minimal
+                    --logger "trx;LogFileName=integration.trx"
+                    --results-directory ./TestResults/integration
+
+            -   name: Upload Test Results
+                if: always()
+                uses: actions/upload-artifact@v4
+                with:
+                    name: integration-test-results
+                    path: TestResults/integration
+                    if-no-files-found: ignore

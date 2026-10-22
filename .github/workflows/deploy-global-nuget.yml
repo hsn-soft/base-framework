@@ -9,17 +9,20 @@ env:
   PACKAGE_OUTPUT_DIRECTORY: ${{ github.workspace }}/output
   GLOBAL_NUGET_SOURCE_URL: 'https://api.nuget.org/v3/index.json'
 
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
 jobs:
   deploy:
     name: 'Global NuGet Deploy JOB'
     runs-on: ubuntu-latest
     permissions:
-      packages: write
       contents: read
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
 
@@ -29,10 +32,10 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Cache Search
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'common.props', 'common.test.props') }}
           restore-keys: |
             ${{ runner.os }}-nuget
 
@@ -42,8 +45,8 @@ jobs:
       - name: Build Solution
         run: dotnet build --no-restore --no-incremental --verbosity minimal --configuration Release
 
-      - name: Test Solution
-        run: dotnet test --no-restore --no-build --verbosity minimal --configuration Release --filter "category!=integration"
+      - name: Unit Tests
+        run: ./scripts/run-tests.sh unit --no-restore --no-build --verbosity minimal --configuration Release
 
       - name: Pack Solution
         run: dotnet pack --no-restore --no-build --configuration Release --output ${{ env.PACKAGE_OUTPUT_DIRECTORY }}
