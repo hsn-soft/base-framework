@@ -3,10 +3,10 @@
     <Import Project="..\..\common.props" />
 
     <PropertyGroup>
-        <TargetFramework>net10.0</TargetFramework>
         <AssemblyName>HsnSoft.Base.Core</AssemblyName>
         <PackageId>HsnSoft.Base.Core</PackageId>
         <RootNamespace />
+        <Description>Core building blocks of the HsnSoft Base Framework: the shared abstractions used across HsnSoft microservices.</Description>
         <Title>HsnSoft Base Framework Core</Title>
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <PackageTags>HsnSoft Base Framework Core</PackageTags>
