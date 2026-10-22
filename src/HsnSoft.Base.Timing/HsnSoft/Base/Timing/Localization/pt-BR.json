@@ -1,7 +1,0 @@
-{
-  "culture": "pt-BR",
-  "texts": {
-    "DisplayName:Base.Timing.Timezone": "Fuso horário",
-    "Description:Base.Timing.Timezone": "Fuso horário do aplicativo"
-  }
-}

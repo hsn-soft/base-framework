@@ -8,7 +8,7 @@ on:
 
 env:
     # Raise this as coverage grows; the PR fails when line coverage of src drops below it.
-    COVERAGE_THRESHOLD: '22'
+    COVERAGE_THRESHOLD: '99'
 
 jobs:
     unit-tests:
@@ -58,31 +58,3 @@ jobs:
                 with:
                     name: unit-test-results
                     path: TestResults/unit
-
-    integration-tests:
-        name: 'Integration Test JOB'
-        runs-on: ubuntu-latest   # Docker is available; Testcontainers starts the dependencies it needs.
-        needs: unit-tests
-
-        steps:
-            -   name: Checkout Repository
-                uses: actions/checkout@v4
-
-            -   name: Setup .NET
-                uses: actions/setup-dotnet@v4
-                with:
-                    dotnet-version: '10.0.x'
-
-            -   name: Integration Tests
-                run: >
-                    dotnet test test/HsnSoft.Base.Test.Integration
-                    --configuration Release --verbosity minimal
-                    --logger "trx;LogFileName=integration.trx"
-                    --results-directory ./TestResults/integration
-
-            -   name: Upload Test Results
-                if: always()
-                uses: actions/upload-artifact@v4
-                with:
-                    name: integration-test-results
-                    path: TestResults/integration

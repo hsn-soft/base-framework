@@ -1,30 +1,23 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <IsPackable>false</IsPackable>
         <RootNamespace>HsnSoft.Base.Test.Unit</RootNamespace>
-        <GenerateEmbeddedFilesManifest>true</GenerateEmbeddedFilesManifest>
     </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="coverlet.collector" Version="10.0.1">
-          <PrivateAssets>all</PrivateAssets>
-          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.7.0" />
         <PackageReference Include="xunit" Version="2.9.3" />
         <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5" />
-    </ItemGroup>
-
-    <ItemGroup>
         <PackageReference Include="Moq" Version="4.20.72" />
         <PackageReference Include="FluentAssertions" Version="8.10.0" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <EmbeddedResource Include="Resources\embedded.txt" />
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.5" />
     </ItemGroup>
 
     <ItemGroup>
@@ -32,50 +25,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\src\HsnSoft.Base.AspNetCore.Mvc.UI\HsnSoft.Base.AspNetCore.Mvc.UI.csproj" />
-      <ProjectReference Include="..\..\src\HsnSoft.Base.AspNetCore.Mvc\HsnSoft.Base.AspNetCore.Mvc.csproj" />
-      <ProjectReference Include="..\..\src\HsnSoft.Base.AspNetCore\HsnSoft.Base.AspNetCore.csproj" />
-      <ProjectReference Include="..\..\src\HsnSoft.Base.Auditing\HsnSoft.Base.Auditing.csproj" />
-      <ProjectReference Include="..\..\src\HsnSoft.Base.Authorization\HsnSoft.Base.Authorization.csproj" />
-      <ProjectReference Include="..\..\src\HsnSoft.Base.AutoMapper\HsnSoft.Base.AutoMapper.csproj" />
-      <ProjectReference Include="..\..\src\HsnSoft.Base.BlobStoring.Aws\HsnSoft.Base.BlobStoring.Aws.csproj" />
-      <ProjectReference Include="..\..\src\HsnSoft.Base.BlobStoring.Azure\HsnSoft.Base.BlobStoring.Azure.csproj" />
-      <ProjectReference Include="..\..\src\HsnSoft.Base.BlobStoring.FileSystem\HsnSoft.Base.BlobStoring.FileSystem.csproj" />
-      <ProjectReference Include="..\..\src\HsnSoft.Base.BlobStoring.Minio\HsnSoft.Base.BlobStoring.Minio.csproj" />
-      <ProjectReference Include="..\..\src\HsnSoft.Base.BlobStoring\HsnSoft.Base.BlobStoring.csproj" />
-      <ProjectReference Include="..\..\src\HsnSoft.Base.Caching.StackExchangeRedis\HsnSoft.Base.Caching.StackExchangeRedis.csproj" />
-      <ProjectReference Include="..\..\src\HsnSoft.Base.Core\HsnSoft.Base.Core.csproj" />
-      <ProjectReference Include="..\..\src\HsnSoft.Base.Data\HsnSoft.Base.Data.csproj" />
-      <ProjectReference Include="..\..\src\HsnSoft.Base.Ddd.Application\HsnSoft.Base.Ddd.Application.csproj" />
-      <ProjectReference Include="..\..\src\HsnSoft.Base.Ddd.Domain\HsnSoft.Base.Ddd.Domain.csproj" />
-      <ProjectReference Include="..\..\src\HsnSoft.Base.EntityFrameworkCore.MySQL\HsnSoft.Base.EntityFrameworkCore.MySQL.csproj" />
-      <ProjectReference Include="..\..\src\HsnSoft.Base.EntityFrameworkCore.SqlServer\HsnSoft.Base.EntityFrameworkCore.SqlServer.csproj" />
-      <ProjectReference Include="..\..\src\HsnSoft.Base.EntityFrameworkCore.Sqlite\HsnSoft.Base.EntityFrameworkCore.Sqlite.csproj" />
-      <ProjectReference Include="..\..\src\HsnSoft.Base.EntityFrameworkCore\HsnSoft.Base.EntityFrameworkCore.csproj" />
-      <ProjectReference Include="..\..\src\HsnSoft.Base.EventBus.Azure\HsnSoft.Base.EventBus.Azure.csproj" />
-      <ProjectReference Include="..\..\src\HsnSoft.Base.EventBus.Kafka\HsnSoft.Base.EventBus.Kafka.csproj" />
-      <ProjectReference Include="..\..\src\HsnSoft.Base.EventBus.RabbitMQ\HsnSoft.Base.EventBus.RabbitMQ.csproj" />
-      <ProjectReference Include="..\..\src\HsnSoft.Base.EventBus\HsnSoft.Base.EventBus.csproj" />
-      <ProjectReference Include="..\..\src\HsnSoft.Base.ExceptionHandling\HsnSoft.Base.ExceptionHandling.csproj" />
-      <ProjectReference Include="..\..\src\HsnSoft.Base.Http.Client\HsnSoft.Base.Http.Client.csproj" />
-      <ProjectReference Include="..\..\src\HsnSoft.Base.Json.Newtonsoft\HsnSoft.Base.Json.Newtonsoft.csproj" />
-      <ProjectReference Include="..\..\src\HsnSoft.Base.Json.SystemTextJson\HsnSoft.Base.Json.SystemTextJson.csproj" />
-      <ProjectReference Include="..\..\src\HsnSoft.Base.Json\HsnSoft.Base.Json.csproj" />
-      <ProjectReference Include="..\..\src\HsnSoft.Base.Localization\HsnSoft.Base.Localization.csproj" />
-      <ProjectReference Include="..\..\src\HsnSoft.Base.MultiTenancy\HsnSoft.Base.MultiTenancy.csproj" />
-      <ProjectReference Include="..\..\src\HsnSoft.Base.ObjectMapping\HsnSoft.Base.ObjectMapping.csproj" />
-      <ProjectReference Include="..\..\src\HsnSoft.Base.PuppeTeer\HsnSoft.Base.PuppeTeer.csproj" />
-      <ProjectReference Include="..\..\src\HsnSoft.Base.Security\HsnSoft.Base.Security.csproj" />
-      <ProjectReference Include="..\..\src\HsnSoft.Base.Serilog\HsnSoft.Base.Serilog.csproj" />
-      <ProjectReference Include="..\..\src\HsnSoft.Base.Swashbuckle\HsnSoft.Base.Swashbuckle.csproj" />
-      <ProjectReference Include="..\..\src\HsnSoft.Base.Timing\HsnSoft.Base.Timing.csproj" />
-      <ProjectReference Include="..\..\src\HsnSoft.Base.UI.Navigation\HsnSoft.Base.UI.Navigation.csproj" />
-      <ProjectReference Include="..\..\src\HsnSoft.Base.UI\HsnSoft.Base.UI.csproj" />
-      <ProjectReference Include="..\..\src\HsnSoft.Base.Validation\HsnSoft.Base.Validation.csproj" />
-      <ProjectReference Include="..\..\src\HsnSoft.Base.VirtualFileSystem\HsnSoft.Base.VirtualFileSystem.csproj" />
-      <ProjectReference Include="..\..\src\HsnSoft.Base\HsnSoft.Base.csproj" />
-      <ProjectReference Include="..\..\src\HsnSoft.Base.MongoDB\HsnSoft.Base.MongoDB.csproj" />
-      <ProjectReference Include="..\..\src\HsnSoft.Base.EntityFrameworkCore.PostgreSql\HsnSoft.Base.EntityFrameworkCore.PostgreSql.csproj" />
+        <ProjectReference Include="..\..\src\HsnSoft.Base\HsnSoft.Base.csproj" />
+        <ProjectReference Include="..\..\src\HsnSoft.Base.Core\HsnSoft.Base.Core.csproj" />
     </ItemGroup>
 
 </Project>

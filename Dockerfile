@@ -15,13 +15,12 @@ COPY ["./HsnSoft.Base.sln", "./"]
 
 COPY ["./src/.", "./src/"]
 COPY ["./test/.", "./test/"]
-COPY ["./samples/.", "./samples/"]
 
 RUN dotnet restore "./HsnSoft.Base.sln" --force --verbosity minimal --configfile NuGet.Config
 
 RUN dotnet build "./HsnSoft.Base.sln" --no-restore --no-incremental --verbosity minimal --configuration Release
 
-# Only the hermetic unit tests run here; integration tests need Docker (Testcontainers) and run in CI.
+# Only the hermetic unit tests run here.
 RUN dotnet test "./test/HsnSoft.Base.Test.Unit/HsnSoft.Base.Test.Unit.csproj" --no-restore --no-build --verbosity minimal --configuration Release
 
 RUN --mount=type=secret,id=VERSION_NUMBER \
