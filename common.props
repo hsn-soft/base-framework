@@ -1,32 +1,48 @@
 <Project>
-    <PropertyGroup>
+    <!--
+        Shared settings of every library (NuGet package) project under src/.
+        Import it from the project file:  <Import Project="..\..\common.props" />
+        Test projects use common.test.props instead.
+    -->
+
+    <PropertyGroup Label="Language and build">
         <LangVersion>latest</LangVersion>
-        <Version>2026.10.40</Version>
+        <Deterministic>true</Deterministic>
+        <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
+        <TreatWarningsAsErrors Condition="'$(ContinuousIntegrationBuild)' == 'true'">true</TreatWarningsAsErrors>
+        <!-- CS1591: missing XML comment on public member -->
+        <NoWarn>$(NoWarn);CS1591</NoWarn>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    </PropertyGroup>
+
+    <PropertyGroup Label="Package versions shared by the projects">
         <MicrosoftAspNetCorePackageVersion>10.0.5</MicrosoftAspNetCorePackageVersion>
-        <MicrosoftEntityFrameworkCorePackageVersion>10.0.5</MicrosoftEntityFrameworkCorePackageVersion>
-        <NoWarn>$(NoWarn);CS1591;CS1998;CS0436</NoWarn>
+    </PropertyGroup>
+
+    <PropertyGroup Label="NuGet package">
+        <Version>2026.10.40</Version>
+        <Authors>HsnSoft</Authors>
+        <Company>HsnSoft</Company>
+        <Product>HsnSoft Base Framework</Product>
+        <Copyright>Copyright (c) HsnSoft</Copyright>
+        <IsPackable>true</IsPackable>
         <PackageProjectUrl>https://hhsahin.com/</PackageProjectUrl>
-        <!--<PackageIconUrl>https://hhsahin.com/assets/hsn-base.png</PackageIconUrl>-->
-        <PackageIcon>assets\hsn-base.png</PackageIcon>
         <PackageLicenseExpression>LGPL-3.0-only</PackageLicenseExpression>
+        <PackageIcon>assets\hsn-base.png</PackageIcon>
         <RepositoryType>git</RepositoryType>
         <RepositoryUrl>https://github.com/hsn-soft/base-framework/</RepositoryUrl>
-        <GenerateDocumentationFile>true</GenerateDocumentationFile>
-        <!-- Include symbol files (*.pdb) in the built .nupkg -->
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
+        <!-- Ship the symbol file (*.pdb) inside the .nupkg -->
         <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
-        <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-        <GenerateEmbeddedFilesManifest>true</GenerateEmbeddedFilesManifest>
-        <IsPackable>true</IsPackable>
-        <OutputType>Library</OutputType>
-        <NoDefaultLaunchSettingsFile>true</NoDefaultLaunchSettingsFile>
-        <Authors>HsnSoft</Authors>
-        <Copyright>2023</Copyright>
-        <Product>HsnSoft Base Framework</Product>
     </PropertyGroup>
-    <ItemGroup>
-        <InternalsVisibleTo Include="HsnSoft.Base.Test.Unit" />
+
+    <ItemGroup Label="Package content">
+        <None Include="$(MSBuildThisFileDirectory)assets\hsn-base.png" Pack="true" Visible="false" PackagePath="assets\" />
     </ItemGroup>
-    <ItemGroup>
-        <None Include="..\..\assets\hsn-base.png" Pack="true" Visible="false" PackagePath="assets\hsn-base.png" />
+
+    <ItemGroup Label="Tests">
+        <!-- Convention: the tests of <Project> live in <Project>.Tests and may use its internals -->
+        <InternalsVisibleTo Include="$(MSBuildProjectName).Tests" />
     </ItemGroup>
 </Project>

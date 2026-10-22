@@ -10,7 +10,6 @@ COPY ["./assets/hsn-base.png", "./assets/"]
 COPY ["./README.md", "./"]
 COPY ["./NuGet.Config", "./"]
 COPY ["./common.props", "./"]
-COPY ["./configureawait.props", "./"]
 COPY ["./HsnSoft.Base.sln", "./"]
 
 COPY ["./src/.", "./src/"]
