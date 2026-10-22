@@ -1,12 +1,12 @@
 using Xyz.ServiceShipment.Host.Persistence;
 using Xyz.Shared.Events;
-using Xyz.Shared.Messaging;
+using HsnSoft.Base.EventBus;
 
 namespace Xyz.ServiceShipment.Host.Handlers;
 
 /// <summary>Once the stock is reserved the goods are dispatched, and the order is told with ShipmentDispatched.</summary>
 public sealed class StockReservedHandler(ShipmentStore store, IEventBus eventBus, ILogger<StockReservedHandler> logger)
-    : IEventHandler<StockReserved>
+    : IIntegrationEventHandler<StockReserved>
 {
     public async Task HandleAsync(StockReserved @event, CancellationToken cancellationToken)
     {

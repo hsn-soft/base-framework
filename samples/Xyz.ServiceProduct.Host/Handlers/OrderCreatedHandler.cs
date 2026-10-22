@@ -3,13 +3,13 @@ using Xyz.ServiceProduct.Host.Domain;
 using Xyz.ServiceProduct.Host.Endpoints;
 using Xyz.ServiceProduct.Host.Persistence;
 using Xyz.Shared.Events;
-using Xyz.Shared.Messaging;
+using HsnSoft.Base.EventBus;
 
 namespace Xyz.ServiceProduct.Host.Handlers;
 
 /// <summary>Checks the stock of a new order and answers with StockReserved or StockRejected.</summary>
 public sealed class OrderCreatedHandler(ProductStore store, IEventBus eventBus, IDistributedCache cache, ILogger<OrderCreatedHandler> logger)
-    : IEventHandler<OrderCreated>
+    : IIntegrationEventHandler<OrderCreated>
 {
     public async Task HandleAsync(OrderCreated @event, CancellationToken cancellationToken)
     {

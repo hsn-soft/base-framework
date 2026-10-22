@@ -5,7 +5,7 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
-using Xyz.Shared.Security;
+using HsnSoft.Base.Authentication;
 
 namespace Xyz.AuthServer.Host.Services;
 

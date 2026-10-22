@@ -237,3 +237,7 @@ dotnet_diagnostic.IDE0060.severity = warning
 # Tests are named Method_Scenario_Expectation, underscores are fine there
 [test/**/*.cs]
 dotnet_diagnostic.CA1707.severity = none
+
+# CA1711 reserves the "EventHandler" suffix for delegates; IIntegrationEventHandler is an interface and the natural name
+[*.cs]
+dotnet_diagnostic.CA1711.severity = none

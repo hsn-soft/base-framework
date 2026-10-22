@@ -1,13 +1,15 @@
 using System.Security.Claims;
+using HsnSoft.Base.Security;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Xyz.ServiceOrder.Host.Domain;
 using Xyz.ServiceOrder.Host.Persistence;
+using HsnSoft.Base;
+using HsnSoft.Base.Authentication;
+using HsnSoft.Base.EventBus;
+using Xyz.Shared;
 using Xyz.Shared.Events;
-using Xyz.Shared.Hosting;
-using Xyz.Shared.Messaging;
-using Xyz.Shared.Security;
 
 namespace Xyz.ServiceOrder.Host.Endpoints;
 
@@ -33,7 +35,7 @@ public static class OrderEndpoints
 {
     public static void MapOrderEndpoints(this WebApplication app)
     {
-        var group = app.MapGroup("/api/orders").RequireAuthorization(ServiceRegister.AuthenticatedPolicy);
+        var group = app.MapGroup("/api/orders").RequireAuthorization(BasePolicies.Authenticated);
 
         group.MapPost("/", PlaceOrderAsync);
         group.MapGet("/", ListOrdersAsync);
@@ -108,6 +110,5 @@ public static class OrderEndpoints
         return Results.Ok(orders.Select(OrderResponse.From));
     }
 
-    private static string CustomerId(ClaimsPrincipal user)
-        => user.FindFirstValue("sub") ?? throw new BusinessRuleException("The token has no subject.");
+    private static string CustomerId(ClaimsPrincipal user) => user.GetRequiredUserId();
 }

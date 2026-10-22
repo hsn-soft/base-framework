@@ -1,20 +1,17 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-    <!-- The code every Xyz service shares: contracts (events), messaging, and the ServiceRegister extensions. -->
+    <!--
+        The Xyz product's own choice from the framework: every Xyz service is a JWT-secured web api with a Redis cache and
+        events. Shared fixes that composition (what is registered, in which order) once for all hosts. The stores a host
+        uses (PostgreSQL, MongoDB) and its broker are added by the host itself.
+    -->
 
     <ItemGroup>
-        <FrameworkReference Include="Microsoft.AspNetCore.App" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
-        <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore" />
-        <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" />
-        <PackageReference Include="MongoDB.Driver" />
-        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
-        <PackageReference Include="RabbitMQ.Client" />
-        <PackageReference Include="StackExchange.Redis" />
+        <ProjectReference Include="..\..\src\HsnSoft.Base.AspNetCore\HsnSoft.Base.AspNetCore.csproj" />
+        <ProjectReference Include="..\..\src\HsnSoft.Base.AspNetCore.WebApi\HsnSoft.Base.AspNetCore.WebApi.csproj" />
+        <ProjectReference Include="..\..\src\HsnSoft.Base.Authentication\HsnSoft.Base.Authentication.csproj" />
+        <ProjectReference Include="..\..\src\HsnSoft.Base.Caching.StackExchangeRedis\HsnSoft.Base.Caching.StackExchangeRedis.csproj" />
+        <ProjectReference Include="..\..\src\HsnSoft.Base.EventBus\HsnSoft.Base.EventBus.csproj" />
     </ItemGroup>
 
 </Project>

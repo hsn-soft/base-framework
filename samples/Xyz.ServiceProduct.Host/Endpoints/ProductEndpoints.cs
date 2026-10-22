@@ -2,7 +2,9 @@ using System.Text.Json;
 using Microsoft.Extensions.Caching.Distributed;
 using Xyz.ServiceProduct.Host.Domain;
 using Xyz.ServiceProduct.Host.Persistence;
-using Xyz.Shared.Hosting;
+using HsnSoft.Base;
+using HsnSoft.Base.Authentication;
+using Xyz.Shared;
 
 namespace Xyz.ServiceProduct.Host.Endpoints;
 
@@ -16,7 +18,7 @@ public static class ProductEndpoints
 
     public static void MapProductEndpoints(this WebApplication app)
     {
-        var group = app.MapGroup("/api/products").RequireAuthorization(ServiceRegister.AuthenticatedPolicy);
+        var group = app.MapGroup("/api/products").RequireAuthorization(BasePolicies.Authenticated);
 
         group.MapGet("/", async (ProductStore store, CancellationToken cancellationToken) => Results.Ok(await store.ListAsync(cancellationToken)));
         group.MapGet("/{id:guid}", GetProductAsync);

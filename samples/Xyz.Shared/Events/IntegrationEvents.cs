@@ -1,12 +1,6 @@
+using HsnSoft.Base.EventBus;
+
 namespace Xyz.Shared.Events;
-
-/// <summary>Base of every message that travels through the broker.</summary>
-public abstract record IntegrationEvent
-{
-    public Guid EventId { get; init; } = Guid.CreateVersion7();
-
-    public DateTimeOffset OccurredAt { get; init; } = DateTimeOffset.UtcNow;
-}
 
 // The order flow:
 //   Order    --OrderCreated-->      Product

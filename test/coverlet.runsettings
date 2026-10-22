@@ -8,7 +8,7 @@
                     <Format>cobertura,opencover</Format>
                     <Include>[HsnSoft.Base*]*</Include>
                     <Exclude>[*Tests]*</Exclude>
-                    <ExcludeByFile>**/Migrations/**,**/*Tests.cs,**/tmp/**,**/Tmp/**</ExcludeByFile>
+                    <ExcludeByFile>**/obj/**,**/*.g.cs,**/Migrations/**,**/*Tests.cs,**/tmp/**,**/Tmp/**</ExcludeByFile>
                     <ExcludeByAttribute>GeneratedCodeAttribute,CompilerGeneratedAttribute,ExcludeFromCodeCoverageAttribute</ExcludeByAttribute>
                 </Configuration>
             </DataCollector>

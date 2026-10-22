@@ -1,6 +1,7 @@
 using System.Security.Claims;
+using HsnSoft.Base.Security;
 using Xyz.AuthServer.Host.Services;
-using Xyz.Shared.Hosting;
+using HsnSoft.Base.Authentication;
 
 namespace Xyz.AuthServer.Host.Endpoints;
 
@@ -21,9 +22,9 @@ public static class AuthEndpoints
         group.MapPost("/logout", LogoutAsync);
         group.MapGet("/me", (ClaimsPrincipal user) => Results.Ok(new
         {
-            Subject = user.FindFirstValue("sub"),
-            Roles = user.FindAll("role").Select(x => x.Value),
-        })).RequireAuthorization(ServiceRegister.AuthenticatedPolicy);
+            Subject = user.GetUserId(),
+            Roles = user.GetRoles(),
+        })).RequireAuthorization(BasePolicies.Authenticated);
     }
 
     private static async Task<IResult> LoginAsync(LoginRequest request, TokenService tokens, CancellationToken cancellationToken)

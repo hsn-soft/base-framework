@@ -1,26 +1,27 @@
+using HsnSoft.Base.EventBus;
+using HsnSoft.Base.EventBus.RabbitMQ;
+using HsnSoft.Base.Hosting;
+using HsnSoft.Base.MongoDB;
 using Xyz.ServiceShipment.Host.Endpoints;
 using Xyz.ServiceShipment.Host.Handlers;
 using Xyz.ServiceShipment.Host.Persistence;
+using Xyz.Shared;
 using Xyz.Shared.Events;
-using Xyz.Shared.Hosting;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services
-    .AddSharedWebApi("shipment-service")
-    .AddSharedJwtAuthentication(builder.Configuration)
-    .AddSharedRedis(builder.Configuration)
-    .AddSharedMongo(builder.Configuration)
-    .AddSharedRabbitMq(builder.Configuration)
+    .AddXyzApi(builder.Configuration)
+    .AddBaseMongo(builder.Configuration)
+    .AddRabbitMqEventBus(builder.Configuration, "shipment-service")
     .AddSingleton<ShipmentStore>()
     .AddEventHandler<StockReserved, StockReservedHandler>();
 
 var app = builder.Build();
 
-await app.RunStartupStepAsync("ShipmentStore setup", app.Services.GetRequiredService<ShipmentStore>().InitializeAsync);
+await app.Services.RunStartupStepAsync("ShipmentStore setup", app.Services.GetRequiredService<ShipmentStore>().InitializeAsync);
 
-app.UseSharedPipeline();
-app.MapSharedHealth();
+app.UseXyzApi();
 app.MapShipmentEndpoints();
 
 await app.RunAsync();

@@ -28,7 +28,8 @@
     </PropertyGroup>
 
     <PropertyGroup Label="Package versions shared by the projects">
-        <MicrosoftAspNetCorePackageVersion>10.0.5</MicrosoftAspNetCorePackageVersion>
+        <MicrosoftAspNetCorePackageVersion>10.0.13</MicrosoftAspNetCorePackageVersion>
+        <MicrosoftEntityFrameworkCorePackageVersion>10.0.13</MicrosoftEntityFrameworkCorePackageVersion>
     </PropertyGroup>
 
     <PropertyGroup Label="NuGet package">

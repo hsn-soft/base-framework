@@ -1,7 +1,7 @@
 # Xyz samples
 
-A small event-driven microservice system that uses only plain NuGet packages. It is the reference we will turn into
-framework code: whatever the services repeat lives in `Xyz.Shared`, and that is what moves into the framework next.
+A small event-driven microservice system built on the `HsnSoft.Base.*` framework projects. It is the proof that the
+framework is product-independent: everything generic is in `src/`, everything about orders and shipments is here.
 
 ```
                  +-----------+      +-------------+
@@ -23,12 +23,12 @@ framework code: whatever the services repeat lives in `Xyz.Shared`, and that is 
 
 | Project | Port | Stores | Role |
 |---|---|---|---|
-| `Xyz.Gateway.Host` | 5100 | Redis | Single entry point (YARP). Validates the JWT, rate-limits per caller in Redis. |
+| `Xyz.Gateway.Host` | 5100 | Redis | Single entry point (YARP). Validates the JWT, rate-limits per caller in Redis (`Xyz.Shared/RateLimiting`). |
 | `Xyz.AuthServer.Host` | 5110 | Redis | `POST /api/auth/login`, `/refresh`, `/logout`, `GET /me`. Refresh tokens live in Redis. |
 | `Xyz.ServiceOrder.Host` | 5120 | PostgreSQL, Redis, RabbitMQ | Places orders, follows their status. |
 | `Xyz.ServiceProduct.Host` | 5130 | MongoDB, Redis, RabbitMQ | Products and stock; reserves stock for an order. |
 | `Xyz.ServiceShipment.Host` | 5140 | MongoDB, Redis, RabbitMQ | Dispatches reserved orders. |
-| `Xyz.Shared` | - | - | Contracts (events) and the **ServiceRegister** extensions every host uses. |
+| `Xyz.Shared` | - | - | Product-specific: the composition of the framework, event contracts, roles, the "admin" policy. |
 
 ## The order flow
 
@@ -41,27 +41,39 @@ Properties worth knowing:
 
 - Handlers are **idempotent**: stock is reserved once per order id, a shipment exists once per order id, and an order
   only moves forward. RabbitMQ delivers at least once, so every message may arrive twice.
-- A failing handler is retried 3 times, then the message goes to the dead-letter queue `xyz.dead-letter`.
+- A failing handler is retried 3 times, then the message goes to the dead-letter queue `xyz.events.dead-letter`.
 - `Idempotency-Key` header on `POST /api/orders` (kept in Redis) makes a client retry safe.
 - Not covered on purpose: the transactional outbox. The order is saved first and the event is published after it;
   a crash in between loses the event. It is the first thing the framework version should add.
 
-## Xyz.Shared: what a host writes
+## What is where
+
+The infrastructure is **not** in the sample: it comes from the framework projects under `src/` (`HsnSoft.Base.*`), which
+know nothing about Xyz. A second product ("Abc") would reference the same projects and write none of it again.
+
+`Xyz.Shared` is the product's own decision about the framework: which capabilities every Xyz service uses (JWT-secured web
+api, Redis cache, events) and in which order they are registered and run (`AddXyzApi`, `UseXyzApi`), plus the event
+contracts, the role names and the "admin" policy. A host adds what is specific to it:
+
+| Host | On top of Xyz.Shared |
+|---|---|
+| Gateway | - (its Redis rate limit is product code in `Xyz.Shared/RateLimiting`) |
+| Auth server | - |
+| Order | `EntityFrameworkCore.PostgreSql`, `EventBus.RabbitMQ` |
+| Product, Shipment | `MongoDB`, `EventBus.RabbitMQ` |
+
+Product-specific values are configuration: the key prefix (`Redis:InstanceName = "xyz:"`) and the exchange
+(`RabbitMq:ExchangeName = "xyz.events"`) are in each `appsettings.json`.
 
 ```csharp
 builder.Services
-    .AddSharedWebApi("order-service")           // problem details, exception handler, OpenAPI, health checks
-    .AddSharedJwtAuthentication(config)         // JWT bearer + "authenticated" / "admin" policies
-    .AddSharedRedis(config)                     // IDistributedCache + IConnectionMultiplexer
-    .AddSharedPostgres<OrderDbContext>(config)  // or .AddSharedMongo(config)
-    .AddSharedRabbitMq(config)                  // event bus + background subscriber
+    .AddXyzApi(builder.Configuration)                          // web api, OpenAPI, health, JWT, Redis
+    .AddBasePostgres<OrderDbContext>(builder.Configuration)    // or .AddBaseMongo(builder.Configuration)
+    .AddRabbitMqEventBus(builder.Configuration, "order-service")
     .AddEventHandler<StockReserved, StockReservedHandler>();
 
-app.UseSharedPipeline();                        // exception handling, auth
-app.MapSharedHealth();                          // /health/live, /health/ready
+app.UseXyzApi();   // exceptions, authentication, authorization, health, in that order
 ```
-
-Each `AddShared...` is one file in `Xyz.Shared/Hosting/ServiceRegister.*.cs`.
 
 ## Run it
 
@@ -86,3 +98,29 @@ curl -s -X POST localhost:5100/api/orders -H "Authorization: Bearer $TOKEN" -H '
 ```
 
 The JWT signing key in the `appsettings.json` files is a sample value; a real system keeps it in a secret store.
+
+## Agt.Scheduler.Host: an agent
+
+A second product ("Agt") with a different shape: no api, no authentication, no event bus. It takes **three** framework
+packages, `AspNetCore` (only for the health endpoints), `Hosting` (the worker base) and `MongoDB`; no JWT, OpenAPI, broker or cache
+package is loaded. Its output folder contains `HsnSoft.Base.AspNetCore/Core/Hosting/MongoDB` and the Mongo driver, nothing else.
+
+The ASP.NET Core host gives it the lifetime, configuration, logging and the health endpoints a platform probes
+(`/health/live`, `/health/ready` on port 5200). Every `Scheduler:PollIntervalSeconds` its worker (`RecentRecordsWorker`, built on
+`PeriodicBackgroundService`) looks into the MongoDB collection `sample_records` and writes the ids of the records created in the
+last `Scheduler:LookbackMinutes` minutes to its log. A failed run is logged and retried at the next tick.
+
+```bash
+dotnet run --project samples/Agt.Scheduler.Host
+```
+```bash
+# in another terminal: add a record (other applications write them, the agent only reads)
+docker exec infra-mongo_container mongosh --quiet agt_scheduler \
+    --eval 'db.sample_records.insertOne({name: "demo", createdAt: new Date()})'
+```
+```
+info: Agt.Scheduler.Host.RecentRecordsWorker
+      1 record(s) created in the last 5 minute(s): 6ada9c4caa3b2dd7783d88b3
+```
+
+The documents must carry a `createdAt` date; the field name is part of the contract with the writers.
