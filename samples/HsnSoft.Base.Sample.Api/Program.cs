@@ -1,132 +1,94 @@
+using HsnSoft.Base.Sample.Api;
+using HsnSoft.Base.Sample.Api.Application;
+using HsnSoft.Base.Sample.Api.EfCore;
+using HsnSoft.Base.Sample.Api.Hosting.Extensions;
+using HsnSoft.Base.Sample.Api.MongoDb;
 using HsnSoft.Base.Serilog;
-using HsnSoft.Base.Sample.Api.EfCore.Context;
-using HsnSoft.Base.Sample.Api.MongoDb.Context;
 using HsnSoft.Base.Tracing;
-using Microsoft.AspNetCore;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi;
 using Serilog;
 
-namespace HsnSoft.Base.Sample.Api;
+var builder = WebApplication.CreateBuilder(args);
 
-public static class Program
+// App info
+string workspace = typeof(FakeUserMiddleware).Namespace;
+ApplicationIdentifier.AppId = Guid.CreateVersion7().ToString("N");
+ApplicationIdentifier.AppName = workspace?[(workspace.IndexOf('.') + 1)..];
+
+// Serilog
+Log.Logger = SerilogConfigurationHelper.ConfigureConsoleLogger(builder.Configuration, "Host");
+builder.Logging.ClearProviders();
+builder.Logging.AddSerilog(Log.Logger);
+
+// Kestrel
+builder.WebHost.ConfigureKestrel((context, options) =>
 {
-    public static async Task<int> Main(string[] args)
+    options.Limits.MaxRequestBufferSize = long.MaxValue;
+    options.Limits.MaxRequestBodySize = long.MaxValue;
+
+    if (!context.HostingEnvironment.IsDevelopment()) return;
+
+    options.ListenAnyIP(6680);
+});
+
+// =======================
+// ConfigureServices
+// =======================
+builder.Services.AddSampleMicroserviceHosting(typeof(Program))
+    .AddServiceApplicationConfiguration(builder.Configuration);
+builder.Services.AddServiceEfCoreDatabaseConfiguration(builder.Configuration);
+builder.Services.AddServiceMongoDbDatabaseConfiguration(builder.Configuration);
+
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c => c.SwaggerDoc("v1", new OpenApiInfo { Title = $"{ApplicationIdentifier.AppName} API", Version = "v1" }));
+
+// =======================
+// Build
+// =======================
+try
+{
+    Log.Information("Configuring web host ({ApplicationContext})...", ApplicationIdentifier.AppName);
+
+    var app = builder.Build();
+
+    if (builder.Configuration.GetValue("Database:AutoInitialize", true))
     {
-        string workspace = typeof(Startup).Namespace;
-        ApplicationIdentifier.AppId = Guid.CreateVersion7().ToString("N");
-        ApplicationIdentifier.AppName = workspace?[(workspace.IndexOf('.') + 1)..];
-
-        Log.Logger = SerilogConfigurationHelper.ConfigureConsoleLogger(GetConfiguration(),"Host");
-
-        try
-        {
-            Log.Information("Configuring web host ({ApplicationContext})...", ApplicationIdentifier.AppName);
-            var host = CreateHostBuilder(args);
-
-            // Seed Data
-            using (var scope = host.Services.CreateScope())
-            {
-                bool isReadyDatabase = false;
-                var efCoreDbContext = scope.ServiceProvider.GetRequiredService<AppEfCoreDbContext>();
-                try
-                {
-                    if (efCoreDbContext.Database.CanConnectAsync().GetAwaiter().GetResult())
-                    {
-                        if ((await efCoreDbContext.Database.GetPendingMigrationsAsync()).Any())
-                        {
-                            // apply pending migrations
-                            await efCoreDbContext.Database.MigrateAsync();
-                            Log.Information("{WorkerName} | PENDING MIGRATIONS SUCCESSFULLY APPLIED", "EfCoreSeederService");
-                        }
-                        else
-                        {
-                            Log.Information("{WorkerName} | EVERYTHING IS UP TO DATE", "EfCoreSeederService");
-                        }
-                    }
-                    else
-                    {
-                        // first creation
-                        await efCoreDbContext.Database.MigrateAsync();
-                        Log.Information("{WorkerName} | INITIALIZE SUCCESSFULLY COMPLETED", "EfCoreSeederService");
-                    }
-
-                    isReadyDatabase = true;
-                }
-                catch (Exception e)
-                {
-                    Log.Error("{WorkerName} | {OperationStatus} | {Error}", "EfCoreSeederService", "FAIL", e.Message);
-                }
-
-                if (isReadyDatabase)
-                {
-                    if (!efCoreDbContext.Users.Any())
-                    {
-                        efCoreDbContext.Users.AddRange(SeedData.GenerateUserData(5));
-                        await efCoreDbContext.SaveChangesAsync();
-                    }
-                }
-
-                var mongoDbContext = scope.ServiceProvider.GetRequiredService<AppMongoDbContext>();
-                try
-                {
-                    // Check - Is NormalizedRequest Collection Initialized
-                    long estimatedUserDocCount = await mongoDbContext.Users.EstimatedDocumentCountAsync();
-                    if (estimatedUserDocCount < 1)
-                    {
-                        await mongoDbContext.Users.InsertManyAsync(SeedData.GenerateUserData(5));
-                    }
-                }
-                catch (Exception e)
-                {
-                    Log.Error("{WorkerName} | {OperationStatus} | {Error}", "EfCoreSeederService", "FAIL", e.Message);
-                }
-            }
-
-            Log.Information("Starting web host ({ApplicationContext})...", ApplicationIdentifier.AppName);
-            await host.RunAsync();
-
-            Log.Information("Program terminated successfully ({ApplicationContext}).", ApplicationIdentifier.AppName);
-            return 0;
-        }
-        catch (Exception ex)
-        {
-            Log.Fatal(ex, "Program terminated unexpectedly ({ApplicationContext})!", ApplicationIdentifier.AppName);
-            return 1;
-        }
-        finally
-        {
-            await Log.CloseAndFlushAsync();
-        }
+        await DatabaseInitializer.InitializeAsync(app.Services);
     }
 
-    private static IWebHost CreateHostBuilder(string[] args) =>
-        WebHost.CreateDefaultBuilder(args)
-            .CaptureStartupErrors(false)
-            .ConfigureKestrel((context, options) =>
-            {
-                options.Limits.MaxRequestBufferSize = long.MaxValue;
-                options.Limits.MaxRequestBodySize = long.MaxValue;
+    // =======================
+    // Configure (Middleware)
+    // =======================
+    app.UseCustomExceptionHandler();
 
-                var env = context.HostingEnvironment;
-                if (!env.IsDevelopment()) return;
+    if (app.Environment.IsDevelopment())
+    {
+        app.UseSwagger();
+        app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", $"{ApplicationIdentifier.AppName} API"));
+    }
 
-                options.ListenAnyIP(6680);
-            })
-            .ConfigureAppConfiguration(x => x.AddConfiguration(GetConfiguration()))
-            .UseStartup<Startup>()
-            .UseContentRoot(Directory.GetCurrentDirectory())
-            .ConfigureLogging(logging =>
-            {
-                logging.ClearProviders();
-                logging.AddSerilog(Log.Logger);
-            })
-            .Build();
+    app.UseRouting();
+    app.UseMiddleware<FakeUserMiddleware>();
+    app.UseAuthorization();
+    app.MapControllers();
 
-    private static IConfiguration GetConfiguration() =>
-        new ConfigurationBuilder()
-            .SetBasePath(Directory.GetCurrentDirectory())
-            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-            .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")}.json")
-            .AddEnvironmentVariables()
-            .Build();
+    app.Lifetime.ApplicationStopping.Register(() => Log.Information("Stopping web host ({ApplicationContext})...", ApplicationIdentifier.AppName));
+
+    Log.Information("Starting web host ({ApplicationContext})...", ApplicationIdentifier.AppName);
+    await app.RunAsync();
+
+    Log.Information("Program terminated successfully ({ApplicationContext}).", ApplicationIdentifier.AppName);
+    return 0;
 }
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Program terminated unexpectedly ({ApplicationContext})!", ApplicationIdentifier.AppName);
+    return 1;
+}
+finally
+{
+    await Log.CloseAndFlushAsync();
+}
+
+// Entry point marker for WebApplicationFactory<Program> in the integration tests.
+public partial class Program;

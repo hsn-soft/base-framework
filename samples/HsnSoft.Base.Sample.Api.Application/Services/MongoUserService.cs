@@ -10,13 +10,18 @@ namespace HsnSoft.Base.Sample.Api.Application.Services;
 
 public class MongoUserService(IMongoUserRepository userRepository, IMapper mapper) : IMongoUserService
 {
-    public Task<UserDto> GetUserByIdAsync(Guid id, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+    public async Task<UserDto> GetUserByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var user = await userRepository.GetByIdAsync(id, cancellationToken: cancellationToken);
+        return mapper.Map<UserDto>(user);
+    }
 
     public Task<UserDto> FindFirstUserAsync(GetOrderedUserFilterDto input, CancellationToken cancellationToken = default) => throw new NotImplementedException();
 
-    public Task<List<UserDto>> GetUserListAsync(GetOrderedUserFilterDto input, CancellationToken cancellationToken = default)
+    public async Task<List<UserDto>> GetUserListAsync(GetOrderedUserFilterDto input, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var users = await userRepository.GetListAsync(new ListQueryOptions<User>(), cancellationToken: cancellationToken);
+        return mapper.Map<List<UserDto>>(users);
     }
 
     public Task<List<UserSearchResultDto>> SearchUserListAsync(SearchOrderedFilterDto input, CancellationToken cancellationToken = default) => throw new NotImplementedException();

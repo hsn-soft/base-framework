@@ -12,7 +12,8 @@ public class FakeUserMiddleware(RequestDelegate next)
 
         var claims = new List<Claim>
         {
-            new(BaseClaimTypes.TenantId,Guid.Empty.ToString()),
+            new(BaseClaimTypes.TenantId, Guid.Empty.ToString()),
+            new(BaseClaimTypes.IsSystemTenant, "true"), // system tenant sees every tenant's data, as in a real deployment
             new(ClaimTypes.NameIdentifier, fakeUserId), new(ClaimTypes.Name, fakeUserName), new(ClaimTypes.Role, "Tester") // istersen rol ekle
         };
 
