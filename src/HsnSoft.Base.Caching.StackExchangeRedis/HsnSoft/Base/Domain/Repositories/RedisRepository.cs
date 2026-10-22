@@ -13,7 +13,7 @@ public class RedisRepository<T> : IRedisRepository<T> where T : class, new()
     private readonly IAppConsoleLogger _logger;
     protected readonly IDatabase Database;
 
-    protected RedisRepository(IAppConsoleLogger logger, IConnectionMultiplexer redis)
+    public RedisRepository(IAppConsoleLogger logger, IConnectionMultiplexer redis)
     {
         _logger = logger;
         Database = redis.GetDatabase();

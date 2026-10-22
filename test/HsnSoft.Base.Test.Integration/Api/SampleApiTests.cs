@@ -6,7 +6,8 @@ using FluentAssertions;
 namespace HsnSoft.Base.Test.Integration.Api;
 
 [Trait("category", "integration")]
-public class SampleApiTests(SampleApiFactory factory) : IClassFixture<SampleApiFactory>
+[Collection(SampleApiCollection.Name)]
+public class SampleApiTests(SampleApiFactory factory)
 {
     private readonly HttpClient _client = factory.CreateClient();
 

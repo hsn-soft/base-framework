@@ -4,27 +4,12 @@ using HsnSoft.Base.Sample.Api.Application.Contracts.Events;
 
 namespace HsnSoft.Base.Sample.Api.EventHandlers;
 
-public sealed class ForgotPasswordMailSendEtoHandler : IIntegrationEventHandler<ForgotPasswordMailSendEto>
+public sealed class ForgotPasswordMailSendEtoHandler(ReceivedEventStore store) : IIntegrationEventHandler<ForgotPasswordMailSendEto>
 {
-    // private readonly IAppConsoleLogger _logger;
-    // private readonly IAuthAppService _authAppService;
-    //
-    // public ForgotPasswordMailSendEtoHandler(IAppConsoleLogger logger, IAuthAppService authAppService)
-    // {
-    //     _logger = logger;
-    //     _authAppService = authAppService;
-    // }
-
-    public async Task HandleAsync(MessageEnvelope<ForgotPasswordMailSendEto> @event)
+    public Task HandleAsync(MessageEnvelope<ForgotPasswordMailSendEto> @event)
     {
-        // _logger.LogDebug("{Producer} Event[ {EventName} ] => CorrelationId[{CorrelationId}], MessageId[{MessageId}], RelatedMessageId[{RelatedMessageId}]",
-        //     @event.Producer,
-        //     nameof(ForgotPasswordMailSendEto)[..^"Eto".Length],
-        //     @event.CorrelationId ?? string.Empty,
-        //     @event.MessageId.ToString(),
-        //     @event.ParentMessageId != null ? @event.ParentMessageId.Value.ToString() : string.Empty);
-        //
-        // _authAppService.SetParentIntegrationEvent(@event);
-        // await _authAppService.SendForgotPasswordMailAsync(@event.Message);
+        // A real service would send the mail here.
+        store.Add(@event);
+        return Task.CompletedTask;
     }
 }

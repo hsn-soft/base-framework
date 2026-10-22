@@ -18,6 +18,8 @@
     <ItemGroup>
         <ProjectReference Include="..\..\src\HsnSoft.Base.AspNetCore\HsnSoft.Base.AspNetCore.csproj" />
         <ProjectReference Include="..\..\src\HsnSoft.Base.Serilog\HsnSoft.Base.Serilog.csproj" />
+        <ProjectReference Include="..\..\src\HsnSoft.Base.EventBus.RabbitMQ\HsnSoft.Base.EventBus.RabbitMQ.csproj" />
+        <ProjectReference Include="..\..\src\HsnSoft.Base.Caching.StackExchangeRedis\HsnSoft.Base.Caching.StackExchangeRedis.csproj" />
         <ProjectReference Include="..\..\src\HsnSoft.Base.Ddd.Application\HsnSoft.Base.Ddd.Application.csproj" />
     </ItemGroup>
 

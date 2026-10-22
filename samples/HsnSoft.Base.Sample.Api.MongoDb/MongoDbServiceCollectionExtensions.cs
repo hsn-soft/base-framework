@@ -80,9 +80,15 @@ public static class MongoDbServiceCollectionExtensions
         ConventionRegistry.Register("EnumStringConvention", new ConventionPack { new EnumRepresentationConvention(BsonType.String) }, t => true);
     }
 
+    private static readonly object ClassMapLock = new();
+
+    // Class maps are process-wide; the lock keeps registration safe when several hosts start in one process (tests).
     private static void RegisterClassMaps()
     {
-        EntityClassMap.Register();
-        UserClassMap.Register();
+        lock (ClassMapLock)
+        {
+            EntityClassMap.Register();
+            UserClassMap.Register();
+        }
     }
 }

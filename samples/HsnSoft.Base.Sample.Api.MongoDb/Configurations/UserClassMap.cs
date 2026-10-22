@@ -7,6 +7,11 @@ public static class UserClassMap
 {
     public static void Register()
     {
+        if (BsonClassMap.IsClassMapRegistered(typeof(User)))
+        {
+            return;
+        }
+
         BsonClassMap.RegisterClassMap<User>(map =>
         {
             map.AutoMap();

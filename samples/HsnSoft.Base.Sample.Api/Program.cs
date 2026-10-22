@@ -1,4 +1,5 @@
 using HsnSoft.Base.Sample.Api;
+using HsnSoft.Base.Sample.Api.EventHandlers;
 using HsnSoft.Base.Sample.Api.Application;
 using HsnSoft.Base.Sample.Api.EfCore;
 using HsnSoft.Base.Sample.Api.Hosting.Extensions;
@@ -39,6 +40,11 @@ builder.Services.AddSampleMicroserviceHosting(typeof(Program))
 builder.Services.AddServiceEfCoreDatabaseConfiguration(builder.Configuration);
 builder.Services.AddServiceMongoDbDatabaseConfiguration(builder.Configuration);
 
+// Infrastructure: Redis cache + RabbitMQ event bus
+builder.Services.AddSampleRedis(builder.Configuration);
+builder.Services.AddSingleton<ReceivedEventStore>();
+builder.Services.AddSampleEventBus(builder.Configuration, typeof(ForgotPasswordMailSendEtoHandler).Assembly);
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c => c.SwaggerDoc("v1", new OpenApiInfo { Title = $"{ApplicationIdentifier.AppName} API", Version = "v1" }));
 
@@ -71,6 +77,8 @@ try
     app.UseMiddleware<FakeUserMiddleware>();
     app.UseAuthorization();
     app.MapControllers();
+
+    app.UseSampleEventBus(typeof(ForgotPasswordMailSendEtoHandler).Assembly);
 
     app.Lifetime.ApplicationStopping.Register(() => Log.Information("Stopping web host ({ApplicationContext})...", ApplicationIdentifier.AppName));
 
