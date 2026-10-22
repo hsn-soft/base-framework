@@ -1,0 +1,9 @@
+# Sample applications: the root .editorconfig applies; these rules are library-design or micro-optimisation
+# guidance that only adds noise to application code.
+[*.cs]
+# Names are part of the sample's vocabulary (Xyz.Shared, IEventHandler, "event" parameters)
+dotnet_diagnostic.CA1716.severity = none
+dotnet_diagnostic.CA1711.severity = none
+# LoggerMessage source generators are a performance optimisation, not needed here
+dotnet_diagnostic.CA1848.severity = none
+dotnet_diagnostic.CA1873.severity = none
