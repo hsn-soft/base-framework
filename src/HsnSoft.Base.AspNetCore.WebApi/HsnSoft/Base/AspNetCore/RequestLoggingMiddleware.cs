@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Security.Claims;
@@ -10,9 +11,11 @@ using System.Threading.Tasks;
 using HsnSoft.Base.Logging;
 using HsnSoft.Base.Logging.Masking;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.Net.Http.Headers;
 
 namespace HsnSoft.Base.AspNetCore;
 
@@ -30,9 +33,10 @@ public sealed partial class RequestLoggingMiddleware(
     IServiceProvider services)
 {
     private const int MaxCorrelationIdLength = 128;
+    private const string GrpcContentType = "application/grpc";
 
     // the text is for people reading a log, not for a web page: no \u002B for a plus
-    private static readonly JsonSerializerOptions s_headerJson = new() { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
+    private static readonly JsonSerializerOptions s_headerJson = new() { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping, PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
     private readonly RequestLoggingOptions _options = options.Value;
     private readonly ILogMasker? _masker = (ILogMasker?)services.GetService(typeof(ILogMasker));
@@ -86,12 +90,13 @@ public sealed partial class RequestLoggingMiddleware(
             LogRequest(logger, from, to, method, path);
         }
 
-        Stream originalBody = response.Body;
-        MemoryStream? capture = _options.LogBodies && _masker is not null ? new MemoryStream() : null;
-        if (capture is not null)
-        {
-            response.Body = capture;
-        }
+        // measure what goes in and out without holding any of it back: a file is streamed, not buffered
+        Stream originalRequestBody = request.Body;
+        CountingReadStream requestBytes = new(originalRequestBody);
+        request.Body = requestBytes;
+        IHttpResponseBodyFeature originalResponseBody = context.Features.GetRequiredFeature<IHttpResponseBodyFeature>();
+        ResponseBodyTee responseBytes = new(originalResponseBody, () => CapturesResponseBody(context), _options.MaxBodyReadBytes);
+        context.Features.Set<IHttpResponseBodyFeature>(responseBytes);
 
         Exception? failure = null;
         try
@@ -105,9 +110,11 @@ public sealed partial class RequestLoggingMiddleware(
         }
         finally
         {
-            string? responseBody = capture is null ? null : await ReleaseResponseBodyAsync(response, capture, originalBody).ConfigureAwait(false);
             watch.Stop();
-            WriteResponseLog(context, from, to, watch.ElapsedMilliseconds, responseBody, failure);
+            string? responseBody = responseBytes.Body is { } text ? MaskBody(text) : null;
+            WriteResponseLog(context, from, to, watch.ElapsedMilliseconds, responseBody, requestBytes.Count, responseBytes.Count, failure);
+            request.Body = originalRequestBody;
+            context.Features.Set(originalResponseBody);
         }
 
         if (failure is not null)
@@ -117,30 +124,145 @@ public sealed partial class RequestLoggingMiddleware(
         }
     }
 
-    private void WriteResponseLog(HttpContext context, string from, string to, long elapsedMs, string? responseBody, Exception? failure)
+    // only a small JSON answer that is not compressed and not a file is worth a copy; everything else is only counted
+    private bool CapturesResponseBody(HttpContext context)
+    {
+        HttpResponse response = context.Response;
+        return _options.LogBodies && _masker is not null && IsJson(response.ContentType)
+               && !response.Headers.ContainsKey(HeaderNames.ContentEncoding)
+               && !response.Headers.ContainsKey(HeaderNames.ContentDisposition)
+               && !context.Items.ContainsKey(FileResultLogFilter.ItemKey);
+    }
+
+    private void WriteResponseLog(HttpContext context, string from, string to, long elapsedMs, string? responseBody, long requestBytes, long responseBytes, Exception? failure)
     {
         HttpResponse response = context.Response;
         int status = response.StatusCode;
         string headers = Headers(response.Headers, isResponse: true);
         string? userId = context.User.FindFirstValue("sub") ?? context.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        GrpcResult? grpc = GrpcResult.From(context);
+        IReadOnlyList<LoggedFile> files = Files(context, requestBytes, responseBytes);
 
         LogLevel level = failure is not null || status >= StatusCodes.Status500InternalServerError ? LogLevel.Error
             : status >= StatusCodes.Status400BadRequest ? LogLevel.Warning
             : LogLevel.Information;
+        if (grpc is not null && level == LogLevel.Information)
+        {
+            // a gRPC call always answers 200: how it went is in its own status
+            level = grpc.Level;
+        }
+
         Dictionary<string, object?> fields = new()
         {
             [LogFields.LogType] = LogTypes.HttpResponse,
             ["UserId"] = userId,
             ["ContentLength"] = response.ContentLength ?? 0,
+            ["RequestBytes"] = requestBytes,
+            ["ResponseBytes"] = responseBytes,
             ["ResponseHeaders"] = headers,
             ["ResponseBody"] = responseBody,
+            ["GrpcStatus"] = grpc?.Status,
+            ["Files"] = files.Count == 0 ? null : LogFields.Text(JsonSerializer.Serialize(files, s_headerJson), _options.MaxBodyLength),
+            ["FileCount"] = files.Count == 0 ? null : files.Count,
+            ["FileBytes"] = files.Count == 0 ? null : files.Sum(file => file.Size),
         };
 
+        string details = grpc is not null ? grpc.Summary : FileSummary(files);
         using (logger.BeginScope(fields))
         {
-            LogResponse(logger, level, failure, from, to, status, elapsedMs);
+            LogResponse(logger, level, failure, from, to, status, elapsedMs, details);
         }
     }
+
+    // the files that went through: what the application read from a form, a raw upload, a download
+    private static List<LoggedFile> Files(HttpContext context, long requestBytes, long responseBytes)
+    {
+        List<LoggedFile> files = [];
+        HttpRequest request = context.Request;
+        HttpResponse response = context.Response;
+
+        // a form is only there if the application read it: reading it here would buffer an upload nobody asked to buffer
+        if (context.Features.Get<IFormFeature>()?.Form is { Files.Count: > 0 } form)
+        {
+            files.AddRange(form.Files.Select(file => new LoggedFile("upload", file.Name, FileNameOf(file.FileName), file.Length, file.ContentType)));
+        }
+        else if (IsRaw(request.ContentType) && requestBytes > 0 && request.Method is "POST" or "PUT" or "PATCH")
+        {
+            files.Add(new LoggedFile("upload", null, DispositionFileName(request.Headers.ContentDisposition), requestBytes, request.ContentType));
+        }
+
+        string? disposition = response.Headers.ContentDisposition;
+        FileResultLogFilter.DownloadedFile? served = context.Items.TryGetValue(FileResultLogFilter.ItemKey, out object? item) ? item as FileResultLogFilter.DownloadedFile : null;
+        bool isDownload = response.StatusCode is >= 200 and < 300 && responseBytes > 0 && (served is not null || disposition is not null || IsRaw(response.ContentType));
+        if (isDownload)
+        {
+            files.Add(new LoggedFile("download", null, served?.FileName ?? DispositionFileName(disposition), responseBytes, response.ContentType));
+        }
+
+        return files;
+    }
+
+    private static string FileSummary(IReadOnlyList<LoggedFile> files)
+        => files.Count == 0
+            ? string.Empty
+            : ", " + string.Join("; ", files.Select(file => string.Create(CultureInfo.InvariantCulture, $"{file.Direction} {file.FileName ?? file.Name ?? "(no name)"} ({file.Size} bytes)")));
+
+    private static string? FileNameOf(string? name) => string.IsNullOrWhiteSpace(name) ? null : name;
+
+    // a name the client chose is text from outside: it is cut like every other field
+    private static string? DispositionFileName(string? header)
+    {
+        if (header is null || !ContentDispositionHeaderValue.TryParse(header, out ContentDispositionHeaderValue? parsed))
+        {
+            return null;
+        }
+
+        string? name = parsed.FileNameStar.HasValue ? parsed.FileNameStar.Value : parsed.FileName.Value;
+        return string.IsNullOrWhiteSpace(name) ? null : LogFields.Text(name.Trim('"'), 256);
+    }
+
+    // not text, not JSON, not a form, not a gRPC message: bytes of a file
+    private static bool IsRaw(string? contentType)
+        => !string.IsNullOrWhiteSpace(contentType)
+           && !contentType.StartsWith("text/", StringComparison.OrdinalIgnoreCase)
+           && !contentType.Contains("json", StringComparison.OrdinalIgnoreCase)
+           && !contentType.Contains("xml", StringComparison.OrdinalIgnoreCase)
+           && !contentType.Contains("javascript", StringComparison.OrdinalIgnoreCase)
+           && !contentType.Contains("x-www-form-urlencoded", StringComparison.OrdinalIgnoreCase)
+           && !contentType.StartsWith("multipart/", StringComparison.OrdinalIgnoreCase)
+           && !contentType.StartsWith(GrpcContentType, StringComparison.OrdinalIgnoreCase);
+
+    private sealed record LoggedFile(string Direction, string? Name, string? FileName, long Size, string? ContentType);
+
+    /// <summary>How a gRPC call went: it answers HTTP 200 whatever happened, the result is the <c>grpc-status</c> header or trailer.</summary>
+    private sealed record GrpcResult(int Status, string? Message)
+    {
+        public LogLevel Level => Status switch
+        {
+            0 => LogLevel.Information,
+            1 or 3 or 5 or 6 or 7 or 9 or 11 or 16 => LogLevel.Warning,
+            _ => LogLevel.Error,
+        };
+
+        public string Summary => string.Create(CultureInfo.InvariantCulture, $", grpc-status {Status}{(string.IsNullOrEmpty(Message) ? string.Empty : $" ({Message})")}");
+
+        public static GrpcResult? From(HttpContext context)
+        {
+            if (!IsGrpc(context.Request))
+            {
+                return null;
+            }
+
+            // an error before the first message is "trailers only": the status is in the headers
+            IHeaderDictionary? trailers = context.Features.Get<IHttpResponseTrailersFeature>()?.Trailers;
+            string? status = context.Response.Headers["grpc-status"].FirstOrDefault() ?? trailers?["grpc-status"].FirstOrDefault();
+            string? message = context.Response.Headers["grpc-message"].FirstOrDefault() ?? trailers?["grpc-message"].FirstOrDefault();
+            return int.TryParse(status, NumberStyles.None, CultureInfo.InvariantCulture, out int code) ? new GrpcResult(code, LogFields.Text(message, 200)) : null;
+        }
+    }
+
+    private static bool IsGrpc(HttpRequest request)
+        => request.ContentType?.StartsWith(GrpcContentType, StringComparison.OrdinalIgnoreCase) == true;
 
     private string CorrelationId(HttpRequest request)
     {
@@ -171,9 +293,19 @@ public sealed partial class RequestLoggingMiddleware(
     internal static string StepName(HttpContext context)
     {
         ControllerActionDescriptor? action = context.GetEndpoint()?.Metadata.GetMetadata<ControllerActionDescriptor>();
-        return action is not null
-            ? LogFields.StepName(action.ControllerName, action.ActionName)
-            : context.Request.Path.Value?.ToLowerInvariant() ?? "/";
+        if (action is not null)
+        {
+            return LogFields.StepName(action.ControllerName, action.ActionName);
+        }
+
+        // gRPC: /package.Service/Method is service-method, like a controller action
+        string[] segments = (context.Request.Path.Value ?? string.Empty).Split('/', StringSplitOptions.RemoveEmptyEntries);
+        if (IsGrpc(context.Request) && segments.Length == 2)
+        {
+            return LogFields.StepName(segments[0][(segments[0].LastIndexOf('.') + 1)..], segments[1]);
+        }
+
+        return context.Request.Path.Value?.ToLowerInvariant() ?? "/";
     }
 
     private async Task<string?> ReadRequestBodyAsync(HttpRequest request)
@@ -188,27 +320,6 @@ public sealed partial class RequestLoggingMiddleware(
         string text = await reader.ReadToEndAsync().ConfigureAwait(false);
         request.Body.Position = 0;
         return MaskBody(text);
-    }
-
-    // hands the captured bytes to the real response stream and returns them as the (masked) text to log
-    private async Task<string?> ReleaseResponseBodyAsync(HttpResponse response, MemoryStream capture, Stream originalBody)
-    {
-        try
-        {
-            capture.Position = 0;
-            string? body = IsJson(response.ContentType) && capture.Length <= _options.MaxBodyReadBytes
-                ? MaskBody(Encoding.UTF8.GetString(capture.GetBuffer(), 0, (int)capture.Length))
-                : null;
-
-            capture.Position = 0;
-            await capture.CopyToAsync(originalBody).ConfigureAwait(false);
-            return body;
-        }
-        finally
-        {
-            response.Body = originalBody;
-            await capture.DisposeAsync().ConfigureAwait(false);
-        }
     }
 
     private string? MaskBody(string text)
@@ -277,6 +388,7 @@ public sealed partial class RequestLoggingMiddleware(
     private static partial void LogRequest(ILogger logger, string from, string to, string method, string? path);
 
     // the level is the outcome: 5xx and exceptions are errors, 4xx are warnings
-    [LoggerMessage(EventId = 3001, EventName = "HTTP_RESPONSE", Message = "{From} -> {To}: {Status} in {ElapsedMs} ms")]
-    private static partial void LogResponse(ILogger logger, LogLevel level, Exception? exception, string from, string to, int status, long elapsedMs);
+    // Details: what is worth a word next to the status: the files that went through, a gRPC status
+    [LoggerMessage(EventId = 3001, EventName = "HTTP_RESPONSE", Message = "{From} -> {To}: {Status} in {ElapsedMs} ms{Details}")]
+    private static partial void LogResponse(ILogger logger, LogLevel level, Exception? exception, string from, string to, int status, long elapsedMs, string details);
 }

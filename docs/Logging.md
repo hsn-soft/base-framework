@@ -95,6 +95,22 @@ envelope, the same for RabbitMQ and Kafka. Where a message comes from travels in
 Request and response bodies are logged only with `RequestLogging:LogBodies` and an `ILogMasker` (`AddBaseLogging()`): masked, JSON only,
 cut to `MaxBodyLength`. Headers are written as one JSON text; `Authorization` and cookies are summarized, never written.
 
+### Files, gRPC and MVC
+
+- **Files never log their body.** A download or an upload is logged with what it is, not what is in it: the response log says
+  `..., download report.pdf (1048576 bytes)` or `..., upload a.txt (5 bytes); upload scan.png (20480 bytes)` and carries `Files` (a JSON
+  list of `direction`, `name`, `fileName`, `size`, `contentType`), `FileCount` and `FileBytes`. A download is a response with a
+  `Content-Disposition` or a binary content type; an upload is a form with files (only when the application has read the form: logging
+  never buffers an upload by itself), or a raw upload (`application/octet-stream`, `application/pdf`, ...) named by its
+  `Content-Disposition`. `RequestBytes` and `ResponseBytes` are counted for every request, as the bytes really read and written. Response
+  bodies are streamed as before, never held back: only a small, uncompressed JSON answer is kept for the log (with `LogBodies`).
+- **MVC** applications (views, Razor Pages) work the same: the controller action names the step (`home-index`), an HTML page is text and
+  its body is never logged.
+- **gRPC** calls are named `service-method` (`/orders.Orders/GetOrder` is `orders-getorder`). A gRPC call answers HTTP 200 whatever
+  happened, so the response log judges it by `grpc-status` (header or trailer; Warning for the client's mistakes such as NotFound and
+  Unauthenticated, Error for the server's) and says it in the message (`, grpc-status 5 (order not found)`) and in `GrpcStatus`.
+  The messages of a stream are counted, not logged.
+
 ### A log has a fixed set of fields
 
 Graylog turns every property of a log into a field, and an object logged with `{@Object}` into a field per property. An object whose
