@@ -57,6 +57,15 @@ public sealed class LogTypesAndFlowTests
     }
 
     [Fact]
+    public void NewId_IsLowerCaseHexWithoutDashes_AndUnique()
+    {
+        string first = LogFields.NewId();
+
+        Assert.Matches("^[0-9a-f]{32}$", first);
+        Assert.NotEqual(first, LogFields.NewId());
+    }
+
+    [Fact]
     public void StepName_IsControllerAndActionInLowerCase()
         => Assert.Equal("token-login", LogFields.StepName("Token", "Login"));
 

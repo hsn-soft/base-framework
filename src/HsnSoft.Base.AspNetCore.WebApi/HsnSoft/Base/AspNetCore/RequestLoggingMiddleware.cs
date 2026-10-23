@@ -11,7 +11,6 @@ using HsnSoft.Base.Logging;
 using HsnSoft.Base.Logging.Masking;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Controllers;
-using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -21,7 +20,7 @@ namespace HsnSoft.Base.AspNetCore;
 /// Writes two logs for every request: <c>HttpRequest</c> when it arrives and <c>HttpResponse</c> when it is answered (with the status
 /// and how long it took), tied together by a <c>ScopeId</c>; all the requests and messages of one chain share the <c>CorrelationId</c>.
 /// The request log is written first on purpose: if the pod dies in the middle (out of memory), it says what was in flight.
-/// <c>From</c> is <c>httpclient</c>, <c>To</c> is the endpoint: <c>controller-action</c> in lower case. What the request publishes
+/// <c>From</c> is <c>httpclient</c>, <c>To</c> is the endpoint: <c>controller-action</c> in lower case, or the request path. What the request publishes
 /// comes from that endpoint.
 /// </summary>
 public sealed partial class RequestLoggingMiddleware(
@@ -49,7 +48,7 @@ public sealed partial class RequestLoggingMiddleware(
             return Task.CompletedTask;
         });
 
-        string scopeId = Guid.CreateVersion7().ToString();
+        string scopeId = LogFields.NewId();
         string to = StepName(context);
         using IDisposable? scope = logger.BeginScope(new Dictionary<string, object> { [LogFields.CorrelationId] = correlationId, [LogFields.ScopeId] = scopeId });
         using IDisposable flow = LogFlow.Begin(correlationId, scopeId, to);
@@ -146,7 +145,7 @@ public sealed partial class RequestLoggingMiddleware(
     private string CorrelationId(HttpRequest request)
     {
         string? incoming = request.Headers[_options.CorrelationIdHeader].FirstOrDefault();
-        return string.IsNullOrWhiteSpace(incoming) ? Guid.CreateVersion7().ToString() : LogFields.Text(incoming.Trim(), MaxCorrelationIdLength)!;
+        return string.IsNullOrWhiteSpace(incoming) ? LogFields.NewId() : LogFields.Text(incoming.Trim(), MaxCorrelationIdLength)!;
     }
 
     private bool IsLogged(HttpRequest request)
@@ -165,23 +164,16 @@ public sealed partial class RequestLoggingMiddleware(
         return !_options.ExcludedPaths.Any(excluded => path.StartsWithSegments(excluded, StringComparison.OrdinalIgnoreCase));
     }
 
-    /// <summary><c>controller-action</c> for a controller, the endpoint's name for a named one, else <c>method-route</c>; all lower case.</summary>
+    /// <summary>
+    /// <c>controller-action</c> in lower case for a controller action (<c>token-login</c>); for anything else (a minimal API endpoint, a
+    /// proxied route) the request path in lower case, as it was asked for.
+    /// </summary>
     internal static string StepName(HttpContext context)
     {
-        Endpoint? endpoint = context.GetEndpoint();
-        ControllerActionDescriptor? action = endpoint?.Metadata.GetMetadata<ControllerActionDescriptor>();
-        if (action is not null)
-        {
-            return LogFields.StepName(action.ControllerName, action.ActionName);
-        }
-
-        if (endpoint?.Metadata.GetMetadata<IEndpointNameMetadata>()?.EndpointName is { Length: > 0 } name)
-        {
-            return name.ToLowerInvariant();
-        }
-
-        string route = (endpoint as RouteEndpoint)?.RoutePattern.RawText ?? context.Request.Path.Value ?? string.Empty;
-        return LogFields.StepName(context.Request.Method, route.Trim('/').Replace('/', '-'));
+        ControllerActionDescriptor? action = context.GetEndpoint()?.Metadata.GetMetadata<ControllerActionDescriptor>();
+        return action is not null
+            ? LogFields.StepName(action.ControllerName, action.ActionName)
+            : context.Request.Path.Value?.ToLowerInvariant() ?? "/";
     }
 
     private async Task<string?> ReadRequestBodyAsync(HttpRequest request)

@@ -100,7 +100,7 @@ public sealed class EventDispatcherTests : IDisposable
 
         IReadOnlyDictionary<string, object?> scope = logger.Scopes[0];
         Assert.Equal("corr", scope["CorrelationId"]);
-        Assert.False(string.IsNullOrEmpty((string?)scope["ScopeId"]));
+        Assert.Matches("^[0-9a-f]{32}$", (string)scope["ScopeId"]!);
         Assert.Equal(envelope.MessageId, scope["MessageId"]);
         Assert.Equal(parent, scope["ParentMessageId"]);
         Assert.Equal("Sample", scope["EventName"]);

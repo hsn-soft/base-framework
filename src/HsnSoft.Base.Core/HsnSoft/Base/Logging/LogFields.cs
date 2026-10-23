@@ -33,6 +33,9 @@ public static class LogFields
             [To] = to,
         };
 
+    /// <summary>A new id for a chain or a step: a time-ordered GUID as 32 lower-case hex digits, without dashes.</summary>
+    public static string NewId() => Guid.CreateVersion7().ToString("N", CultureInfo.InvariantCulture);
+
     /// <summary>The name of a request's step: <c>controller-action</c> in lower case, like <c>token-login</c>.</summary>
     public static string StepName(string first, string second) => string.Create(CultureInfo.InvariantCulture, $"{first}-{second}").ToLowerInvariant();
 

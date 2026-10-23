@@ -81,9 +81,9 @@ log reader can follow it, and so a pod that dies in the middle (out of memory) l
 
 | Field | Meaning |
 |---|---|
-| `CorrelationId` | the same along the whole chain, however many hops. An HTTP request takes it from `X-Correlation-Id` or starts a chain; the response carries it back. |
-| `ScopeId` | the same in the two logs of one step (`HttpRequest` + `HttpResponse`, `ConsumeStart` + `ConsumeEnd`), different for every step. Every other log written during the step carries it too. |
-| `From`, `To` | `httpclient -> token-login` for a request (`controller-action` in lower case; a minimal API endpoint is its name, or `method-route`). A message: `token-login -> ordercreated` (where it was published from, the event) and, one hop later, `ordercreated -> stockreserved`. A message published outside any request or message (an agent, a scheduler) comes from `agent`. |
+| `CorrelationId` | a text of 32 lower-case hex digits (a GUID without dashes), the same along the whole chain, however many hops. An HTTP request takes it from `X-Correlation-Id` or starts a chain; the response carries it back. |
+| `ScopeId` | also 32 hex digits; the same in the two logs of one step (`HttpRequest` + `HttpResponse`, `ConsumeStart` + `ConsumeEnd`), different for every step. Every other log written during the step carries it too. |
+| `From`, `To` | `httpclient -> token-login` for a request (`controller-action` in lower case; for anything that is not a controller action, such as a minimal API endpoint or a proxied route, the request path in lower case). A message: `token-login -> ordercreated` (where it was published from, the event) and, one hop later, `ordercreated -> stockreserved`. A message published outside any request or message (an agent, a scheduler) comes from `agent`. |
 | `ElapsedMs` | how long the step took (`HttpResponse`, `ConsumeEnd`) |
 | `Facility` | `HTTP_REQUEST`, `HTTP_RESPONSE`, `CONSUME_EVENT_START`, `CONSUME_EVENT_SUCCESS` / `CONSUME_EVENT_ERROR` (the end), `CONSUME_EVENT_RETRY` |
 

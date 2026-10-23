@@ -52,7 +52,7 @@ public sealed partial class EventDispatcher(
         ArgumentNullException.ThrowIfNull(messageEnvelope);
 
         ParentMessageEnvelope envelope = (ParentMessageEnvelope)messageEnvelope;
-        string scopeId = Guid.CreateVersion7().ToString();
+        string scopeId = LogFields.NewId();
         string to = trimmedEventName.ToLowerInvariant();
         string from = (envelope.GetHeader(ParentMessageEnvelope.FlowHeader) ?? envelope.Producer ?? "unknown").ToLowerInvariant();
 

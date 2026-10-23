@@ -179,9 +179,9 @@ public sealed class RequestLoggingTests
         Assert.Equal(request.Properties["ScopeId"], answer.Properties["ScopeId"]);
         Assert.Equal(request.Properties["CorrelationId"], answer.Properties["CorrelationId"]);
         Assert.Equal(request.Properties["CorrelationId"], response.Headers.GetValues("X-Correlation-Id").Single());
-        Assert.Equal("httpclient -> get-api-orders-{id}: GET /api/orders/7", request.Message);
+        Assert.Equal("httpclient -> /api/orders/7: GET /api/orders/7", request.Message);
         Assert.Equal("httpclient", request.Properties["From"]);
-        Assert.Equal("get-api-orders-{id}", request.Properties["To"]);
+        Assert.Equal("/api/orders/7", request.Properties["To"]);
         Assert.Equal("?x=1", request.Properties["Query"]);
         Assert.Equal("200", answer.Properties["Status"]?.ToString());
         Assert.IsType<long>(answer.Properties["ElapsedMs"]);
@@ -201,14 +201,14 @@ public sealed class RequestLoggingTests
     }
 
     [Fact]
-    public async Task ANamedEndpoint_IsNamedByItsName_AndAnUnknownPathByItsMethodAndPath()
+    public async Task AnythingButAControllerAction_IsNamedByItsRequestPath_InLowerCase()
     {
         await using Rig rig = await StartAsync();
 
-        await rig.Client.GetAsync("/named");
-        await rig.Client.GetAsync("/nowhere/at-all");
+        await rig.Client.GetAsync("/Named");
+        await rig.Client.GetAsync("/nowhere/At-All");
 
-        Assert.Equal(["get-named", "get-nowhere-at-all"], rig.Http.Where(log => log.EventName == "HTTP_REQUEST").Select(log => log.Properties["To"]));
+        Assert.Equal(["/named", "/nowhere/at-all"], rig.Http.Where(log => log.EventName == "HTTP_REQUEST").Select(log => log.Properties["To"]));
     }
 
     [Fact]
@@ -228,7 +228,8 @@ public sealed class RequestLoggingTests
 
         Assert.Equal("chain-1", keptResponse.Headers.GetValues("X-Correlation-Id").Single());
         Assert.Equal(128 + "...(+372)".Length, cutResponse.Headers.GetValues("X-Correlation-Id").Single().Length);
-        Assert.True(Guid.TryParse(newResponse.Headers.GetValues("X-Correlation-Id").Single(), out _));
+        Assert.Matches("^[0-9a-f]{32}$", newResponse.Headers.GetValues("X-Correlation-Id").Single());
+        Assert.Matches("^[0-9a-f]{32}$", (string)rig.Http[^1].Properties["ScopeId"]!);
     }
 
     [Fact]
@@ -243,7 +244,7 @@ public sealed class RequestLoggingTests
 
         await rig.Client.GetAsync("/flow");
 
-        Assert.Equal("get-flow", seen?.Name);
+        Assert.Equal("/flow", seen?.Name);
         Assert.Equal(rig.Request.Properties["ScopeId"], seen?.ScopeId);
         Assert.Equal(rig.Request.Properties["CorrelationId"], seen?.CorrelationId);
         Assert.Null(LogFlow.Current);
