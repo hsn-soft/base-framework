@@ -1,6 +1,7 @@
 using HsnSoft.Base.AspNetCore;
 using HsnSoft.Base.Authentication;
 using HsnSoft.Base.Caching.StackExchangeRedis;
+using HsnSoft.Base.Logging;
 using HsnSoft.Base.Logging.Serilog;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
@@ -21,6 +22,8 @@ public static class ServiceRegister
     /// <summary>The shell of every Xyz service: error handling, OpenAPI, health checks, JWT authentication and the Redis cache.</summary>
     public static IServiceCollection AddXyzApi(this IServiceCollection services, IConfiguration configuration)
         => services
+            .AddBaseLogging()
+            .AddBaseRequestLogging(configuration)
             .AddBaseWebApi()
             .AddBaseOpenApi()
             .AddBaseHealthChecks()
@@ -52,6 +55,7 @@ public static class ServiceRegister
     /// </summary>
     public static WebApplication UseXyzApi(this WebApplication app, Action<WebApplication>? beforeAuthorization = null)
     {
+        app.UseBaseRequestLogging();   // outside the exception handler: the response log has the status the client gets
         app.UseBaseExceptionHandling();
         app.MapBaseOpenApi();
         app.UseBaseAuthentication();

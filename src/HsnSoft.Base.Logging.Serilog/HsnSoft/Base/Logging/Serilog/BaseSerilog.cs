@@ -52,7 +52,8 @@ internal static class BaseSerilog
             .Enrich.WithProperty("Solution", AppDomain.CurrentDomain.FriendlyName.Split('.')[0])
             .Enrich.WithProperty("Assembly", AppDomain.CurrentDomain.FriendlyName)
             .Enrich.With(new LoggerNameEnricher(loggerName))
-            .Enrich.With<FacilityEnricher>();
+            .Enrich.With<FacilityEnricher>()
+            .Enrich.With<LogShapeEnricher>();
 
         foreach (KeyValuePair<string, LogLevel> level in Overrides(options))
         {
@@ -62,7 +63,7 @@ internal static class BaseSerilog
         configuration = configuration
             .WriteTo.Conditional(logEvent => SerilogRouting.ForConsole(logEvent, console) && SerilogRouting.ShowsProperties(logEvent), sink => sink.Sink(resolved.ConsoleWithProperties))
             .WriteTo.Conditional(logEvent => SerilogRouting.ForConsole(logEvent, console) && !SerilogRouting.ShowsProperties(logEvent), sink => sink.Sink(resolved.Console))
-            .WriteTo.Conditional(logEvent => SerilogRouting.ForPersistent(logEvent, persistent), sink => sink.Sink(resolved.Persistent));
+            .WriteTo.Conditional(logEvent => SerilogRouting.ForPersistent(logEvent, persistent), sink => sink.Sink(new FieldGuardSink(resolved.Persistent, options.MaxPersistentFieldLength)));
 
         configure?.Invoke(configuration);
         return new BaseSerilogSetup(configuration.CreateLogger(), resolved.Refreshable);

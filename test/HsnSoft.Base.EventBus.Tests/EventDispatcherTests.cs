@@ -1,4 +1,5 @@
 using HsnSoft.Base.Domain.Entities.Events;
+using HsnSoft.Base.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -70,7 +71,7 @@ public sealed class EventDispatcherTests : IDisposable
         await dispatcher.DispatchAsync("Sample", typeof(SampleEto), envelope);
 
         Assert.Same(envelope, Assert.Single(handler.Handled));
-        Assert.Contains(logger.Entries, entry => entry.Level == LogLevel.Information && entry.Message.Contains("RecordingHandler handled Sample", StringComparison.Ordinal));
+        Assert.Contains(logger.Entries, entry => entry.Level == LogLevel.Information && entry.Message.Contains("handled by RecordingHandler", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -86,21 +87,108 @@ public sealed class EventDispatcherTests : IDisposable
     }
 
     [Fact]
-    public async Task LogScope_CarriesTheCorrelationAndMessageIds()
+    public async Task LogScope_CarriesTheChainAndTheMessage()
     {
         (EventDispatcher dispatcher, _, ListLogger<EventDispatcher> logger) = CreateRecording();
         MessageEnvelope<SampleEto> envelope = NewEnvelope();
         envelope.Producer = "OrderService";
         envelope.HopLevel = 2;
+        Guid parent = Guid.NewGuid();
+        envelope.ParentMessageId = parent;
 
         await dispatcher.DispatchAsync("Sample", typeof(SampleEto), envelope);
 
-        IReadOnlyDictionary<string, object?> scope = Assert.Single(logger.Scopes);
+        IReadOnlyDictionary<string, object?> scope = logger.Scopes[0];
         Assert.Equal("corr", scope["CorrelationId"]);
+        Assert.False(string.IsNullOrEmpty((string?)scope["ScopeId"]));
         Assert.Equal(envelope.MessageId, scope["MessageId"]);
+        Assert.Equal(parent, scope["ParentMessageId"]);
         Assert.Equal("Sample", scope["EventName"]);
-        Assert.Equal(envelope.Producer, scope["Producer"]);
-        Assert.Equal(envelope.HopLevel, scope["HopLevel"]);
+        Assert.Equal("OrderService", scope["Producer"]);
+        Assert.Equal((ushort)2, scope["HopLevel"]);
+    }
+
+    [Fact]
+    public async Task Handling_IsLoggedAsAStartAndAnEnd_ThatShareTheScopeId()
+    {
+        (EventDispatcher dispatcher, _, ListLogger<EventDispatcher> logger) = CreateRecording();
+        MessageEnvelope<SampleEto> envelope = NewEnvelope();
+        envelope.SetHeader(ParentMessageEnvelope.FlowHeader, "Token-Login");
+
+        await dispatcher.DispatchAsync("Sample", typeof(SampleEto), envelope);
+
+        ListLogger<EventDispatcher>.LoggedEvent start = Assert.Single(logger.Events, e => e.EventName == "CONSUME_EVENT_START");
+        ListLogger<EventDispatcher>.LoggedEvent end = Assert.Single(logger.Events, e => e.EventName == "CONSUME_EVENT_SUCCESS");
+        Assert.Equal("ConsumeStart", start.Properties["LogType"]);
+        Assert.Equal("ConsumeEnd", end.Properties["LogType"]);
+        Assert.Equal(start.Properties["ScopeId"], end.Properties["ScopeId"]);
+        Assert.Equal("corr", start.Properties["CorrelationId"]);
+        Assert.Equal("token-login -> sample: started", start.Message);
+        Assert.Equal("token-login", start.Properties["From"]);
+        Assert.Equal("sample", end.Properties["To"]);
+        Assert.IsType<long>(end.Properties["ElapsedMs"]);
+        Assert.Equal(LogLevel.Information, end.Level);
+    }
+
+    [Fact]
+    public async Task EachHandling_HasItsOwnScopeId()
+    {
+        (EventDispatcher dispatcher, _, ListLogger<EventDispatcher> logger) = CreateRecording();
+
+        await dispatcher.DispatchAsync("Sample", typeof(SampleEto), NewEnvelope());
+        await dispatcher.DispatchAsync("Sample", typeof(SampleEto), NewEnvelope());
+
+        string?[] scopeIds = [.. logger.Events.Where(e => e.EventName == "CONSUME_EVENT_START").Select(e => e.Properties["ScopeId"] as string)];
+        Assert.Equal(2, scopeIds.Distinct().Count());
+    }
+
+    [Fact]
+    public async Task MessageWithoutAFlowHeader_ComesFromItsProducer_OrIsUnknown()
+    {
+        (EventDispatcher dispatcher, _, ListLogger<EventDispatcher> logger) = CreateRecording();
+        MessageEnvelope<SampleEto> fromProducer = NewEnvelope();
+        fromProducer.Producer = "HHS_OrderService";
+        MessageEnvelope<SampleEto> anonymous = NewEnvelope();
+        anonymous.Producer = null;
+
+        await dispatcher.DispatchAsync("Sample", typeof(SampleEto), fromProducer);
+        await dispatcher.DispatchAsync("Sample", typeof(SampleEto), anonymous);
+
+        Assert.Equal(["hhs_orderservice", "unknown"], logger.Events.Where(e => e.EventName == "CONSUME_EVENT_START").Select(e => e.Properties["From"]));
+    }
+
+    [Fact]
+    public async Task WhatTheHandlerPublishes_ComesFromTheEventItHandles()
+    {
+        (EventDispatcher dispatcher, RecordingHandler handler, _) = CreateRecording();
+
+        await dispatcher.DispatchAsync("Sample", typeof(SampleEto), NewEnvelope());
+
+        Assert.Equal("sample", handler.FlowDuringHandling?.Name);
+        Assert.Equal("corr", handler.FlowDuringHandling?.CorrelationId);
+        Assert.Null(LogFlow.Current);
+    }
+
+    [Fact]
+    public async Task FailedHandling_EndsWithAnErrorLog_AndAnInterruptedOneHasNoEnd()
+    {
+        (EventDispatcher failing, RecordingHandler failingHandler, ListLogger<EventDispatcher> failedLog) = CreateRecording();
+        failingHandler.FailTimes = 1;
+        failingHandler.Failure = new InvalidOperationException("boom");
+        await Assert.ThrowsAsync<InvalidOperationException>(() => failing.DispatchAsync("Sample", typeof(SampleEto), NewEnvelope()));
+
+        ListLogger<EventDispatcher>.LoggedEvent error = Assert.Single(failedLog.Events, e => e.EventName == "CONSUME_EVENT_ERROR");
+        Assert.Equal(LogLevel.Error, error.Level);
+        Assert.Equal("ConsumeEnd", error.Properties["LogType"]);
+        Assert.Equal("boom", error.Exception?.Message);
+
+        (EventDispatcher interrupted, RecordingHandler interruptedHandler, ListLogger<EventDispatcher> interruptedLog) = CreateRecording();
+        interruptedHandler.FailTimes = 1;
+        interruptedHandler.Failure = new OperationCanceledException();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => interrupted.DispatchAsync("Sample", typeof(SampleEto), NewEnvelope()));
+
+        Assert.Single(interruptedLog.Events, e => e.EventName == "CONSUME_EVENT_START");
+        Assert.DoesNotContain(interruptedLog.Events, e => e.EventName is "CONSUME_EVENT_SUCCESS" or "CONSUME_EVENT_ERROR");
     }
 
     [Fact]

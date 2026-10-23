@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using HsnSoft.Base.Domain.Entities.Events;
+using HsnSoft.Base.Logging;
 using Microsoft.Extensions.Options;
 
 namespace HsnSoft.Base.EventBus;
@@ -29,7 +30,7 @@ public sealed class EventEnvelopeFactory(IOptions<EventBusOptions> options, IEnu
             MessageTime = DateTime.UtcNow,
             Message = message,
             Producer = _options.ConsumerClientInfo,
-            CorrelationId = correlationId ?? parent?.CorrelationId ?? FirstCorrelationId(),
+            CorrelationId = correlationId ?? parent?.CorrelationId ?? LogFlow.Current?.CorrelationId ?? FirstCorrelationId(),
             HopLevel = parent is null ? (ushort)1 : (ushort)(parent.HopLevel + 1),
             ReQueuedCount = (ushort)((parent?.ReQueuedCount ?? 0) + (isReQueuePublish ? 1 : 0)),
         };
@@ -66,6 +67,8 @@ public sealed class EventEnvelopeFactory(IOptions<EventBusOptions> options, IEnu
             }
         }
 
+        // where it comes from is what is running now, whatever the parent said about itself
+        envelope.SetHeader(ParentMessageEnvelope.FlowHeader, LogFlow.Current?.Name ?? LogFlow.AgentName);
         return envelope;
     }
 

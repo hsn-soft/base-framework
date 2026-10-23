@@ -76,7 +76,6 @@ public class LoggersTests
         Assert.Contains(state, pair => pair.Key == "@Log" && ReferenceEquals(pair.Value, log));
         IReadOnlyDictionary<string, object> scope = Assert.Single(entry.Scopes);
         Assert.Equal("FrameworkLog", scope["LogType"]);
-        Assert.Equal("Structured", scope["MessageType"]);
     }
 
     [Fact]
@@ -95,7 +94,7 @@ public class LoggersTests
             [LogLevel.Debug, LogLevel.Information, LogLevel.Warning, LogLevel.Error, LogLevel.Error],
             factory.Entries.Select(entry => entry.Level));
         Assert.Equal(["debug 1", "information 2", "warning 3", "error 4", "failed 5"], factory.Entries.Select(entry => entry.Message));
-        Assert.All(factory.Entries, entry => Assert.Equal("Args", Assert.Single(entry.Scopes)["MessageType"]));
+        Assert.All(factory.Entries, entry => Assert.Equal("FrameworkLog", Assert.Single(entry.Scopes)["LogType"]));
         Assert.Equal("boom", factory.Entries[^1].Exception?.Message);
     }
 

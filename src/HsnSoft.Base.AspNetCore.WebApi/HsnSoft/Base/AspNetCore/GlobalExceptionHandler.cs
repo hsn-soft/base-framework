@@ -47,6 +47,6 @@ public sealed partial class GlobalExceptionHandler(IProblemDetailsService proble
         }).ConfigureAwait(false);
     }
 
-    [LoggerMessage(Level = LogLevel.Error, Message = "Unhandled exception on {Path}")]
+    [LoggerMessage(EventId = 5201, EventName = "HTTP_UNHANDLED", Level = LogLevel.Error, Message = "Unhandled exception on {Path}")]
     private static partial void LogUnhandled(ILogger logger, Exception exception, PathString path);
 }

@@ -13,6 +13,12 @@ namespace HsnSoft.Base.Domain.Entities.Events;
 /// </summary>
 public record ParentMessageEnvelope
 {
+    /// <summary>
+    /// The header that says what was running when the message was published: the step of a request (<c>token-login</c>), the event
+    /// a handler was handling (<c>ordercreated</c>), or <c>agent</c>. It is where the message "comes from" in the logs.
+    /// </summary>
+    public const string FlowHeader = "Flow";
+
     /// <summary>How many messages deep the chain is: 1 for a message nobody caused, the cause's level + 1 otherwise.</summary>
     public ushort HopLevel { get; set; }
 
@@ -84,9 +90,9 @@ public record ParentMessageEnvelope
         => string.Equals(name, "Message", StringComparison.OrdinalIgnoreCase)
            || string.Equals(name, "ParentMessageId", StringComparison.OrdinalIgnoreCase);
 
-    /// <summary>The headers worth passing on to a message this one causes.</summary>
+    /// <summary>The headers worth passing on to a message this one causes (not <see cref="FlowHeader"/>: every message says where it comes from itself).</summary>
     internal IEnumerable<KeyValuePair<string, JsonElement>> HeadersToInherit()
         => Headers is null
             ? []
-            : Headers.Where(header => !IsEnvelopeProperty(header.Key));
+            : Headers.Where(header => !IsEnvelopeProperty(header.Key) && !string.Equals(header.Key, FlowHeader, StringComparison.OrdinalIgnoreCase));
 }

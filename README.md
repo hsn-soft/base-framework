@@ -21,7 +21,7 @@ JWT, OpenAPI, a broker or a cache.
 | `HsnSoft.Base.Hosting` | Generic Host workers: `PeriodicBackgroundService` | Core |
 | `HsnSoft.Base.Authentication` | JWT bearer authentication, claim names and `ClaimsPrincipal` helpers | Core |
 | `HsnSoft.Base.AspNetCore` | Health endpoints (`/health/live`, `/health/ready`) | Core |
-| `HsnSoft.Base.AspNetCore.WebApi` | Problem-details errors, global exception handler, the OpenAPI document | Core |
+| `HsnSoft.Base.AspNetCore.WebApi` | Problem-details errors, global exception handler, the OpenAPI document, request/response logging ([docs](docs/Logging.md)) | Core |
 | `HsnSoft.Base.EventBus` | Event bus core: message envelope, handlers, dispatcher, naming, publish retry ([docs](docs/EventBus.md)) | Core |
 | `HsnSoft.Base.EventBus.RabbitMQ` | RabbitMQ broker, wire and topology compatible with the production services | EventBus |
 | `HsnSoft.Base.EventBus.Kafka` | Kafka broker: producer, consumer group, dead-letter topic | EventBus |

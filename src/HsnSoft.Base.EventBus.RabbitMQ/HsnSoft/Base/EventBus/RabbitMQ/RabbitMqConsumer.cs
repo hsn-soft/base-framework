@@ -359,60 +359,60 @@ public sealed partial class RabbitMqConsumer(
     private static string ResolveEventName(BasicDeliverEventArgs args)
         => string.IsNullOrWhiteSpace(args.Exchange) ? args.RoutingKey.Split('_').Last() : args.RoutingKey;
 
-    [LoggerMessage(Level = LogLevel.Information, Message = "{Queue} => channel {Channel}: SUBSCRIBED")]
+    [LoggerMessage(EventId = 4001, EventName = "RABBITMQ_CONSUMER_SUBSCRIBED", Level = LogLevel.Information, Message = "{Queue} => channel {Channel}: SUBSCRIBED")]
     private static partial void LogSubscribed(ILogger logger, string queue, int channel);
 
-    [LoggerMessage(Level = LogLevel.Information, Message = "{Queue} => consumer {ConsumerTag}: TERMINATING")]
+    [LoggerMessage(EventId = 4002, EventName = "RABBITMQ_CONSUMER_TERMINATING", Level = LogLevel.Information, Message = "{Queue} => consumer {ConsumerTag}: TERMINATING")]
     private static partial void LogTerminating(ILogger logger, string queue, string consumerTag);
 
-    [LoggerMessage(Level = LogLevel.Information, Message = "{Queue}: TERMINATED")]
+    [LoggerMessage(EventId = 4003, EventName = "RABBITMQ_CONSUMER_TERMINATED", Level = LogLevel.Information, Message = "{Queue}: TERMINATED")]
     private static partial void LogTerminated(ILogger logger, string queue);
 
-    [LoggerMessage(Level = LogLevel.Debug, Message = "{Queue}: waiting for {Count} message(s) in flight")]
+    [LoggerMessage(EventId = 4004, EventName = "RABBITMQ_CONSUMER_WAITING_FOR_MESSAGES", Level = LogLevel.Debug, Message = "{Queue}: waiting for {Count} message(s) in flight")]
     private static partial void LogWaitingForMessages(ILogger logger, string queue, int count);
 
-    [LoggerMessage(Level = LogLevel.Warning, Message = "{Queue}: the consumer could not be cancelled, the channel is closed instead: {Error}")]
+    [LoggerMessage(EventId = 4005, EventName = "RABBITMQ_CONSUMER_CANCEL_FAILED", Level = LogLevel.Warning, Message = "{Queue}: the consumer could not be cancelled, the channel is closed instead: {Error}")]
     private static partial void LogCancelFailed(ILogger logger, string queue, string error);
 
-    [LoggerMessage(Level = LogLevel.Error, Message = "{Queue}: the channel could not be closed cleanly: {Error}")]
+    [LoggerMessage(EventId = 4006, EventName = "RABBITMQ_CONSUMER_CLOSE_FAILED", Level = LogLevel.Error, Message = "{Queue}: the channel could not be closed cleanly: {Error}")]
     private static partial void LogCloseFailed(ILogger logger, string queue, string error);
 
     [LoggerMessage(Level = LogLevel.Debug, Message = "{Queue}: received {EventName} ({Size} bytes)")]
     private static partial void LogReceived(ILogger logger, string queue, string eventName, int size);
 
-    [LoggerMessage(Level = LogLevel.Debug, Message = "{Queue}: received {Message}")]
+    [LoggerMessage(EventId = 4007, EventName = "RABBITMQ_CONSUMER_RECEIVED_WITH_BODY", Level = LogLevel.Debug, Message = "{Queue}: received {Message}")]
     private static partial void LogReceivedWithBody(ILogger logger, string queue, string message);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "{Queue}: message without a subscription for event {EventName}")]
     private static partial void LogNoSubscription(ILogger logger, string queue, string eventName);
 
-    [LoggerMessage(Level = LogLevel.Warning, Message = "{Queue}: TIMEOUT, the message goes back on the queue ({Error})")]
+    [LoggerMessage(EventId = 4008, EventName = "RABBITMQ_CONSUMER_TIMEOUT", Level = LogLevel.Warning, Message = "{Queue}: TIMEOUT, the message goes back on the queue ({Error})")]
     private static partial void LogTimeout(ILogger logger, string queue, string error);
 
-    [LoggerMessage(Level = LogLevel.Error, Message = "{Queue}: ERROR ({Error})")]
+    [LoggerMessage(EventId = 4009, EventName = "RABBITMQ_CONSUMER_FAILED", Level = LogLevel.Error, Message = "{Queue}: ERROR ({Error})")]
     private static partial void LogFailed(ILogger logger, Exception exception, string queue, string error);
 
     [LoggerMessage(Level = LogLevel.Critical, Message = "{Queue}: a failed {EventName} event could not be handled and is dropped: {Message} ({Error})")]
     private static partial void LogFailedEventLoop(ILogger logger, string queue, string eventName, string message, string error);
 
-    [LoggerMessage(Level = LogLevel.Warning, Message = "{Queue}: message moved to the error queue")]
+    [LoggerMessage(EventId = 4010, EventName = "RABBITMQ_CONSUMER_MOVED_TO_ERROR_QUEUE", Level = LogLevel.Warning, Message = "{Queue}: message moved to the error queue")]
     private static partial void LogMovedToErrorQueue(ILogger logger, string queue);
 
-    [LoggerMessage(Level = LogLevel.Error, Message = "{Queue}: the message was handled but could not be acknowledged: {Error}")]
+    [LoggerMessage(EventId = 4011, EventName = "RABBITMQ_CONSUMER_ACK_FAILED", Level = LogLevel.Error, Message = "{Queue}: the message was handled but could not be acknowledged: {Error}")]
     private static partial void LogAckFailed(ILogger logger, string queue, string error);
 
-    [LoggerMessage(Level = LogLevel.Warning, Message = "{Queue}: requeue after {DelaySeconds} s")]
+    [LoggerMessage(EventId = 4012, EventName = "RABBITMQ_CONSUMER_REQUEUE", Level = LogLevel.Warning, Message = "{Queue}: requeue after {DelaySeconds} s")]
     private static partial void LogRequeue(ILogger logger, string queue, double delaySeconds);
 
-    [LoggerMessage(Level = LogLevel.Error, Message = "{Queue}: the message could not be put back on the queue: {Error}")]
+    [LoggerMessage(EventId = 4013, EventName = "RABBITMQ_CONSUMER_REQUEUE_FAILED", Level = LogLevel.Error, Message = "{Queue}: the message could not be put back on the queue: {Error}")]
     private static partial void LogRequeueFailed(ILogger logger, string queue, string error);
 
-    [LoggerMessage(Level = LogLevel.Warning, Message = "{Queue}: channel shut down ({Reason})")]
+    [LoggerMessage(EventId = 4014, EventName = "RABBITMQ_CONSUMER_CHANNEL_SHUTDOWN", Level = LogLevel.Warning, Message = "{Queue}: channel shut down ({Reason})")]
     private static partial void LogChannelShutdown(ILogger logger, string queue, string reason);
 
-    [LoggerMessage(Level = LogLevel.Error, Message = "{Queue}: the channel could not be recovered, trying again: {Error}")]
+    [LoggerMessage(EventId = 4015, EventName = "RABBITMQ_CONSUMER_RECOVERY_FAILED", Level = LogLevel.Error, Message = "{Queue}: the channel could not be recovered, trying again: {Error}")]
     private static partial void LogRecoveryFailed(ILogger logger, string queue, string error);
 
-    [LoggerMessage(Level = LogLevel.Information, Message = "{Queue}: the channel died and was rebuilt")]
+    [LoggerMessage(EventId = 4016, EventName = "RABBITMQ_CONSUMER_CHANNEL_REBUILT", Level = LogLevel.Information, Message = "{Queue}: the channel died and was rebuilt")]
     private static partial void LogChannelRebuilt(ILogger logger, string queue);
 }

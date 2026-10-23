@@ -100,12 +100,12 @@ internal sealed partial class RabbitMqClientLogBridge : EventListener
         return string.Create(CultureInfo.InvariantCulture, $"{type}: {message}{Environment.NewLine}{stackTrace}");
     }
 
-    [LoggerMessage(Level = LogLevel.Debug, Message = "RabbitMQ client: {Message}")]
+    [LoggerMessage(EventId = 4301, EventName = "RABBITMQ_CLIENT_INFORMATION", Level = LogLevel.Debug, Message = "RabbitMQ client: {Message}")]
     private static partial void LogInformation(ILogger logger, string message);
 
-    [LoggerMessage(Level = LogLevel.Warning, Message = "RabbitMQ client: {Message}")]
+    [LoggerMessage(EventId = 4302, EventName = "RABBITMQ_CLIENT_WARNING", Level = LogLevel.Warning, Message = "RabbitMQ client: {Message}")]
     private static partial void LogWarning(ILogger logger, string message);
 
-    [LoggerMessage(Level = LogLevel.Error, Message = "RabbitMQ client: {Message} {Exception}")]
+    [LoggerMessage(EventId = 4303, EventName = "RABBITMQ_CLIENT_ERROR", Level = LogLevel.Error, Message = "RabbitMQ client: {Message} {Exception}")]
     private static partial void LogError(ILogger logger, string message, string exception);
 }

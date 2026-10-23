@@ -51,6 +51,6 @@ public static partial class StartupSteps
         }
     }
 
-    [LoggerMessage(Level = LogLevel.Warning, Message = "{Step} is waiting for its dependency (attempt {Attempt}/{Max}): {Reason}")]
+    [LoggerMessage(EventId = 5101, EventName = "STARTUP_WAITING", Level = LogLevel.Warning, Message = "{Step} is waiting for its dependency (attempt {Attempt}/{Max}): {Reason}")]
     private static partial void LogWaiting(ILogger logger, string step, int attempt, int max, string reason);
 }

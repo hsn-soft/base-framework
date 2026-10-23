@@ -1,4 +1,5 @@
 using HsnSoft.Base.Domain.Entities.Events;
+using HsnSoft.Base.Logging;
 using Microsoft.Extensions.Options;
 
 namespace HsnSoft.Base.EventBus.Tests;
@@ -23,7 +24,29 @@ public class EventEnvelopeFactoryTests
         Assert.Same(s_message, envelope.Message);
         Assert.True((DateTime.UtcNow - envelope.MessageTime).Duration() < TimeSpan.FromMinutes(1));
         Assert.Null(envelope.CorrelationId);
-        Assert.Null(envelope.Headers);
+        // the only header of a message from nowhere: it says it comes from an agent
+        Assert.Equal("agent", envelope.GetHeader(ParentMessageEnvelope.FlowHeader));
+        Assert.Single(envelope.Headers!);
+    }
+
+    [Fact]
+    public void MessagePublishedWhileAStepRuns_ComesFromThatStep_AndTakesItsCorrelationId()
+    {
+        EventEnvelopeFactory factory = NewFactory(new FixedHeaderProvider("from-provider"));
+        ParentMessageEnvelope parent = new() { CorrelationId = null };
+        parent.SetHeader(ParentMessageEnvelope.FlowHeader, "token-login");
+
+        using (LogFlow.Begin("flow-corr", "scope", "ordercreated"))
+        {
+            MessageEnvelope<SampleEto> fromFlow = factory.Create(s_message, null, null, false);
+            MessageEnvelope<SampleEto> fromParent = factory.Create(s_message, parent, null, false);
+
+            Assert.Equal("flow-corr", fromFlow.CorrelationId);
+            Assert.Equal("ordercreated", fromFlow.GetHeader(ParentMessageEnvelope.FlowHeader));
+            // a parent's own flow is not inherited: this message comes from what is running now
+            Assert.Equal("ordercreated", fromParent.GetHeader(ParentMessageEnvelope.FlowHeader));
+            Assert.Equal("flow-corr", fromParent.CorrelationId);
+        }
     }
 
     [Fact]

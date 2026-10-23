@@ -57,16 +57,58 @@ builder.Logging.AddBaseSerilog(builder.Configuration, "OrderService"); // everyt
 
 `LogLevel` values may be Microsoft's (`Trace`, `Critical`) or Serilog's (`Verbose`, `Fatal`), in any case.
 
+## The log types
+
+Every log in Graylog has a `Solution` (the first part of the assembly name: `Hhs`, `Xyz`), an `Assembly` (`Hhs.AuthServer.Http.Host`: which
+service, auth server or agent wrote it) and a `LogType`:
+
+| `LogType` | What it is | Written by |
+|---|---|---|
+| `FrameworkLog` | a framework library (`HsnSoft.Base.*`) talking about itself; the `Facility` says what: `RABBITMQ_CONSUMER_SUBSCRIBED`, `PRODUCE_EVENT_ERROR`, ... | the library, nobody has to do anything |
+| `HttpRequest`, `HttpResponse` | an HTTP request when it arrives, and when it is answered | `UseBaseRequestLogging()` ([`HsnSoft.Base.AspNetCore.WebApi`]) |
+| `ConsumeStart`, `ConsumeEnd` | a message when its handler starts, and when it ends | the event bus |
+| `AppLog` | what the developer of the application logs with `ILogger` | the application |
+| `PlatformLog` | ASP.NET Core, Entity Framework, a database driver, ... | the platform |
+
+The provider decides `LogType` from the category of a log (`HsnSoft.Base.*` is `FrameworkLog`, `System`, `Microsoft`, `Npgsql`,
+`MongoDB`, ... are `PlatformLog`, the rest is `AppLog`); the four chain types say it themselves. `MessageType` is `Structured` when an
+object was logged with `{@Object}` and `Args` when only plain values were.
+
+### The chain logs
+
+A request that publishes an event whose handler publishes another event is one chain. The four chain logs are written in pairs so a
+log reader can follow it, and so a pod that dies in the middle (out of memory) leaves its start without an end:
+
+| Field | Meaning |
+|---|---|
+| `CorrelationId` | the same along the whole chain, however many hops. An HTTP request takes it from `X-Correlation-Id` or starts a chain; the response carries it back. |
+| `ScopeId` | the same in the two logs of one step (`HttpRequest` + `HttpResponse`, `ConsumeStart` + `ConsumeEnd`), different for every step. Every other log written during the step carries it too. |
+| `From`, `To` | `httpclient -> token-login` for a request (`controller-action` in lower case; a minimal API endpoint is its name, or `method-route`). A message: `token-login -> ordercreated` (where it was published from, the event) and, one hop later, `ordercreated -> stockreserved`. A message published outside any request or message (an agent, a scheduler) comes from `agent`. |
+| `ElapsedMs` | how long the step took (`HttpResponse`, `ConsumeEnd`) |
+| `Facility` | `HTTP_REQUEST`, `HTTP_RESPONSE`, `CONSUME_EVENT_START`, `CONSUME_EVENT_SUCCESS` / `CONSUME_EVENT_ERROR` (the end), `CONSUME_EVENT_RETRY` |
+
+`ConsumeStart`/`ConsumeEnd` also carry `HopLevel`, `MessageId`, `ParentMessageId`, `EventName` and `Producer`; the response log has `Status`
+(the level follows it: 4xx Warning, 5xx and exceptions Error) and the user. The message id is the id of the broker-independent
+envelope, the same for RabbitMQ and Kafka. Where a message comes from travels in its `Flow` header; a message from an older producer
+(without it) comes from its `Producer`.
+
+Request and response bodies are logged only with `RequestLogging:LogBodies` and an `ILogMasker` (`AddBaseLogging()`): masked, JSON only,
+cut to `MaxBodyLength`. Headers are written as one JSON text; `Authorization` and cookies are summarized, never written.
+
+### A log has a fixed set of fields
+
+Graylog turns every property of a log into a field, and an object logged with `{@Object}` into a field per property. An object whose
+shape is the developer's would create fields without end, so the persistent sink writes an object (and a dictionary, and a list) as
+the **one field of its name holding its JSON**, and cuts every text to `FrameworkLogger:MaxPersistentFieldLength` (8192). The console
+still shows the readable object. A body with two hundred properties is one field.
+
 ## Facility: what a log is about
 
-`Facility` (and `CorrelationId`) are top-level fields of a log in Graylog, so `Facility:CONSUME_EVENT_ERROR` finds every handler that
-failed. A log gets its facility from the name of its event (`[LoggerMessage(EventName = "CONSUME_EVENT_SUCCESS")]`, only names written
-in capitals count: the platform's own `ExecutedEndpoint` is not a facility) or from the `Facility` of a structured log written with
-`IFrameworkLogger` (`LogHelper.Generate(message, reference, facility: "ORDER_IMPORTED", correlationId)`); the rest of such a log
-arrives as `Log_Message`, `Log_Reference_...`. The event bus facilities are the ones the production services already search for:
-`PRODUCE_EVENT_STARTED`, `PRODUCE_EVENT_COMPLETED`, `PRODUCE_EVENT_ERROR`, `CONSUME_EVENT_SUCCESS`, `CONSUME_EVENT_RETRY`,
-`CONSUME_EVENT_ERROR`. A consume log also carries `Handler`, `EventName`, `MessageId`, `CorrelationId`, `Producer`, `HopLevel` and
-`ElapsedMs`.
+`Facility` is a top-level field, so `Facility:CONSUME_EVENT_ERROR` finds every handler that failed, and the facilities of a chain in
+order tell the story. A log gets it from the name of its event (`[LoggerMessage(EventName = "CONSUME_EVENT_SUCCESS")]`; only names
+written in capitals count, the platform's own `ExecutedEndpoint` is not a facility) or from the `Facility` of a structured log written
+with `IFrameworkLogger` (`LogHelper.Generate(message, reference, facility: "ORDER_IMPORTED", correlationId)`). A framework library
+gives every log an event name: use `RABBITMQ_CONSUMER_SUBSCRIBED`-style names for new ones.
 
 ## What the framework packages log
 

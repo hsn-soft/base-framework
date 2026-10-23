@@ -191,13 +191,15 @@ public sealed class RabbitMqTests(RabbitMqFixture fixture) : IClassFixture<Rabbi
         BasicGetResult message = await GetAsync(channel, probe.QueueName);
         using JsonDocument document = JsonDocument.Parse(Text(message));
         JsonElement root = document.RootElement;
-        string[] expected = ["CorrelationId", "HopLevel", "Message", "MessageId", "MessageTime", "ParentMessageId", "Producer", "ReQueuedCount", "UserId"];
+        // Flow is the one property the framework added to the production shape (where the message was published from, for the logs); readers ignore what they do not know
+        string[] expected = ["CorrelationId", "Flow", "HopLevel", "Message", "MessageId", "MessageTime", "ParentMessageId", "Producer", "ReQueuedCount", "UserId"];
         string[] actual = [.. root.EnumerateObject().Select(property => property.Name).Order(StringComparer.Ordinal)];
         Assert.Equal(expected, actual);
         Assert.Equal("corr-shape", root.GetProperty("CorrelationId").GetString());
         Assert.Equal(1, root.GetProperty("HopLevel").GetInt32());
         Assert.Equal($"{exchange}_it-service", root.GetProperty("Producer").GetString());
         Assert.Equal("user-9", root.GetProperty("UserId").GetString());
+        Assert.Equal("agent", root.GetProperty("Flow").GetString());
         Assert.Equal("shape", root.GetProperty("Message").GetProperty("Text").GetString());
         Assert.Equal(DeliveryModes.Persistent, message.BasicProperties.DeliveryMode);
     }

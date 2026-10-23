@@ -1,0 +1,441 @@
+using System.Net;
+using System.Security.Claims;
+using System.Text;
+using HsnSoft.Base.Logging;
+using HsnSoft.Base.Logging.Masking;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+
+namespace HsnSoft.Base.AspNetCore.WebApi.Tests;
+
+[ApiController]
+[Route("api/[controller]")]
+public sealed class TokenController : ControllerBase
+{
+    [HttpPost("login")]
+    public IActionResult Login() => Ok(new { token = "abc" });
+}
+
+public sealed class RequestLoggingTests
+{
+    private sealed record Logged(LogLevel Level, string? EventName, string Message, Exception? Exception, IReadOnlyDictionary<string, object?> Properties);
+
+    private sealed class CaptureProvider : ILoggerProvider, ISupportExternalScope
+    {
+        private IExternalScopeProvider _scopes = new LoggerExternalScopeProvider();
+
+        public List<Logged> Logs { get; } = [];
+
+        public ILogger CreateLogger(string categoryName) => new CaptureLogger(this);
+
+        public void SetScopeProvider(IExternalScopeProvider scopeProvider) => _scopes = scopeProvider;
+
+        public void Dispose()
+        {
+        }
+
+        private sealed class CaptureLogger(CaptureProvider owner) : ILogger
+        {
+            public IDisposable? BeginScope<TState>(TState state)
+                where TState : notnull
+                => owner._scopes.Push(state);
+
+            public bool IsEnabled(LogLevel logLevel) => true;
+
+            public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+            {
+                Dictionary<string, object?> properties = [];
+                owner._scopes.ForEachScope(
+                    (scope, target) =>
+                    {
+                        if (scope is IEnumerable<KeyValuePair<string, object?>> values)
+                        {
+                            foreach (KeyValuePair<string, object?> pair in values)
+                            {
+                                target[pair.Key] = pair.Value;
+                            }
+                        }
+                    },
+                    properties);
+                if (state is IEnumerable<KeyValuePair<string, object?>> own)
+                {
+                    foreach (KeyValuePair<string, object?> pair in own)
+                    {
+                        properties[pair.Key] = pair.Value;
+                    }
+                }
+
+                lock (owner.Logs)
+                {
+                    owner.Logs.Add(new Logged(logLevel, eventId.Name, formatter(state, exception), exception, properties));
+                }
+            }
+        }
+    }
+
+    private sealed class MaskingStub : ILogMasker
+    {
+        public string MaskText(string? text) => (text ?? string.Empty).Replace("hunter2", "*****", StringComparison.Ordinal);
+
+        public object MaskObject<T>(T value) => value!;
+    }
+
+    private sealed class Rig(WebApplication app, CaptureProvider logs) : IAsyncDisposable
+    {
+        public HttpClient Client { get; } = app.GetTestClient();
+
+        public IReadOnlyList<Logged> Http
+        {
+            get
+            {
+                lock (logs.Logs)
+                {
+                    return [.. logs.Logs.Where(log => log.EventName is "HTTP_REQUEST" or "HTTP_RESPONSE")];
+                }
+            }
+        }
+
+        public Logged Request => Assert.Single(Http, log => log.EventName == "HTTP_REQUEST");
+
+        public Logged Response => Assert.Single(Http, log => log.EventName == "HTTP_RESPONSE");
+
+        public ValueTask DisposeAsync() => app.DisposeAsync();
+    }
+
+    private static async Task<Rig> StartAsync(
+        Dictionary<string, string?>? settings = null,
+        bool masker = true,
+        bool exceptionHandler = true,
+        Action<WebApplication>? map = null,
+        ClaimsPrincipal? user = null)
+    {
+        WebApplicationBuilder builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseTestServer();
+        CaptureProvider logs = new();
+        builder.Logging.ClearProviders().AddProvider(logs);
+        IConfiguration configuration = new ConfigurationBuilder().AddInMemoryCollection(settings ?? []).Build();
+        builder.Services.AddBaseRequestLogging(configuration).AddBaseWebApi();
+        builder.Services.AddControllers().AddApplicationPart(typeof(TokenController).Assembly);
+        if (masker)
+        {
+            builder.Services.AddSingleton<ILogMasker, MaskingStub>();
+        }
+
+        WebApplication app = builder.Build();
+        if (user is not null)
+        {
+            app.Use((context, next) =>
+            {
+                context.User = user;
+                return next(context);
+            });
+        }
+
+        app.UseBaseRequestLogging();
+        if (exceptionHandler)
+        {
+            app.UseBaseExceptionHandling();
+        }
+
+        app.MapControllers();
+        app.MapGet("/api/orders/{id}", (string id) => Results.Ok(new { id }));
+        app.MapGet("/named", () => "named").WithName("Get-Named");
+        app.MapGet("/boom", () => { throw new InvalidOperationException("boom"); });
+        app.MapGet("/missing", () => Results.NotFound());
+        app.MapGet("/health/live", () => "ok");
+        app.MapGet("/openapi/v1.json", () => "{}");
+        app.MapPost("/echo", async (HttpRequest request) => Results.Text(await new StreamReader(request.Body).ReadToEndAsync(), "application/json"));
+        app.MapGet("/json", () => Results.Text("""{"password":"hunter2","name":"alice"}""", "application/json"));
+        app.MapGet("/text", () => Results.Text("hunter2", "text/plain"));
+        app.MapGet("/cookie", (HttpContext context) =>
+        {
+            context.Response.Headers.SetCookie = "session=abc; path=/; httponly";
+            return "ok";
+        });
+        map?.Invoke(app);
+        await app.StartAsync();
+        return new Rig(app, logs);
+    }
+
+    [Fact]
+    public async Task ARequest_IsLoggedAsARequestAndAResponse_ThatShareTheScopeId_AndTheCorrelationId()
+    {
+        await using Rig rig = await StartAsync();
+
+        HttpResponseMessage response = await rig.Client.GetAsync("/api/orders/7?x=1");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(2, rig.Http.Count);
+        Logged request = rig.Request;
+        Logged answer = rig.Response;
+        Assert.Equal("HttpRequest", request.Properties["LogType"]);
+        Assert.Equal("HttpResponse", answer.Properties["LogType"]);
+        Assert.Equal(request.Properties["ScopeId"], answer.Properties["ScopeId"]);
+        Assert.Equal(request.Properties["CorrelationId"], answer.Properties["CorrelationId"]);
+        Assert.Equal(request.Properties["CorrelationId"], response.Headers.GetValues("X-Correlation-Id").Single());
+        Assert.Equal("httpclient -> get-api-orders-{id}: GET /api/orders/7", request.Message);
+        Assert.Equal("httpclient", request.Properties["From"]);
+        Assert.Equal("get-api-orders-{id}", request.Properties["To"]);
+        Assert.Equal("?x=1", request.Properties["Query"]);
+        Assert.Equal("200", answer.Properties["Status"]?.ToString());
+        Assert.IsType<long>(answer.Properties["ElapsedMs"]);
+        Assert.Equal(LogLevel.Information, request.Level);
+        Assert.Equal(LogLevel.Information, answer.Level);
+    }
+
+    [Fact]
+    public async Task AControllerAction_IsNamedControllerDashAction_InLowerCase()
+    {
+        await using Rig rig = await StartAsync();
+
+        await rig.Client.PostAsync("/api/token/login", null);
+
+        Assert.Equal("token-login", rig.Request.Properties["To"]);
+        Assert.Equal("token-login", rig.Response.Properties["To"]);
+    }
+
+    [Fact]
+    public async Task ANamedEndpoint_IsNamedByItsName_AndAnUnknownPathByItsMethodAndPath()
+    {
+        await using Rig rig = await StartAsync();
+
+        await rig.Client.GetAsync("/named");
+        await rig.Client.GetAsync("/nowhere/at-all");
+
+        Assert.Equal(["get-named", "get-nowhere-at-all"], rig.Http.Where(log => log.EventName == "HTTP_REQUEST").Select(log => log.Properties["To"]));
+    }
+
+    [Fact]
+    public async Task TheCorrelationIdOfTheCaller_IsKept_ALongOneIsCut_AndABlankOneIsReplaced()
+    {
+        await using Rig rig = await StartAsync();
+
+        HttpRequestMessage given = new(HttpMethod.Get, "/named");
+        given.Headers.Add("X-Correlation-Id", "chain-1");
+        HttpResponseMessage keptResponse = await rig.Client.SendAsync(given);
+        HttpRequestMessage tooLong = new(HttpMethod.Get, "/named");
+        tooLong.Headers.Add("X-Correlation-Id", new string('x', 500));
+        HttpResponseMessage cutResponse = await rig.Client.SendAsync(tooLong);
+        HttpRequestMessage blank = new(HttpMethod.Get, "/named");
+        blank.Headers.Add("X-Correlation-Id", " ");
+        HttpResponseMessage newResponse = await rig.Client.SendAsync(blank);
+
+        Assert.Equal("chain-1", keptResponse.Headers.GetValues("X-Correlation-Id").Single());
+        Assert.Equal(128 + "...(+372)".Length, cutResponse.Headers.GetValues("X-Correlation-Id").Single().Length);
+        Assert.True(Guid.TryParse(newResponse.Headers.GetValues("X-Correlation-Id").Single(), out _));
+    }
+
+    [Fact]
+    public async Task WhatRunsInTheRequest_KnowsItsChain()
+    {
+        LogFlowStep? seen = null;
+        await using Rig rig = await StartAsync(map: app => app.MapGet("/flow", (ILoggerFactory factory) =>
+        {
+            seen = LogFlow.Current;
+            return factory is null ? "none" : "ok";
+        }));
+
+        await rig.Client.GetAsync("/flow");
+
+        Assert.Equal("get-flow", seen?.Name);
+        Assert.Equal(rig.Request.Properties["ScopeId"], seen?.ScopeId);
+        Assert.Equal(rig.Request.Properties["CorrelationId"], seen?.CorrelationId);
+        Assert.Null(LogFlow.Current);
+    }
+
+    [Theory]
+    [InlineData("/missing", LogLevel.Warning)]
+    [InlineData("/api/orders/1", LogLevel.Information)]
+    public async Task TheResponseLogLevel_FollowsTheStatus(string path, LogLevel level)
+    {
+        await using Rig rig = await StartAsync();
+
+        await rig.Client.GetAsync(path);
+
+        Assert.Equal(level, rig.Response.Level);
+    }
+
+    [Fact]
+    public async Task AFailedRequest_IsAnErrorResponse_WithTheStatusTheClientGets()
+    {
+        await using Rig rig = await StartAsync();
+
+        HttpResponseMessage response = await rig.Client.GetAsync("/boom");
+
+        Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+        Assert.Equal(LogLevel.Error, rig.Response.Level);
+        Assert.Equal("500", rig.Response.Properties["Status"]?.ToString());
+    }
+
+    [Fact]
+    public async Task AnExceptionNobodyHandles_IsLoggedAsAnError_AndStillThrown()
+    {
+        await using Rig rig = await StartAsync(exceptionHandler: false);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => rig.Client.GetAsync("/boom"));
+
+        Assert.Equal(LogLevel.Error, rig.Response.Level);
+        Assert.Equal("boom", rig.Response.Exception?.Message);
+        Assert.Equal("500", rig.Response.Properties["Status"]?.ToString());
+    }
+
+    [Fact]
+    public async Task TheUserOfTheRequest_IsInTheResponseLog()
+    {
+        ClaimsPrincipal user = new(new ClaimsIdentity([new Claim("sub", "alice")], "test"));
+        ClaimsPrincipal other = new(new ClaimsIdentity([new Claim(ClaimTypes.NameIdentifier, "bob")], "test"));
+
+        await using Rig subject = await StartAsync(user: user);
+        await subject.Client.GetAsync("/named");
+        await using Rig nameIdentifier = await StartAsync(user: other);
+        await nameIdentifier.Client.GetAsync("/named");
+        await using Rig anonymous = await StartAsync();
+        await anonymous.Client.GetAsync("/named");
+
+        Assert.Equal("alice", subject.Response.Properties["UserId"]);
+        Assert.Equal("bob", nameIdentifier.Response.Properties["UserId"]);
+        Assert.Null(anonymous.Response.Properties["UserId"]);
+    }
+
+    [Fact]
+    public async Task HealthChecksAndExcludedPaths_AreNotLogged_ButStillGetACorrelationId()
+    {
+        await using Rig rig = await StartAsync();
+
+        HttpResponseMessage health = await rig.Client.GetAsync("/health/live");
+        await rig.Client.GetAsync("/openapi/v1.json");
+
+        Assert.Empty(rig.Http);
+        Assert.True(health.Headers.Contains("X-Correlation-Id"));
+    }
+
+    [Fact]
+    public async Task HealthChecks_CanBeLogged()
+    {
+        await using Rig rig = await StartAsync(new() { ["RequestLogging:LogHealthChecks"] = "true" });
+
+        await rig.Client.GetAsync("/health/live");
+
+        Assert.Equal(2, rig.Http.Count);
+    }
+
+    [Fact]
+    public async Task WhenDisabled_NothingIsLogged_ButTheChainIsStillSet()
+    {
+        await using Rig rig = await StartAsync(new() { ["RequestLogging:Enabled"] = "false" });
+
+        HttpResponseMessage response = await rig.Client.GetAsync("/named");
+
+        Assert.Empty(rig.Http);
+        Assert.True(response.Headers.Contains("X-Correlation-Id"));
+    }
+
+    [Fact]
+    public async Task Headers_AreOneJsonField_WithCredentialsSummarizedAndLongValuesCut()
+    {
+        await using Rig rig = await StartAsync();
+
+        HttpRequestMessage request = new(HttpMethod.Get, "/cookie");
+        request.Headers.Add("Authorization", "Bearer abcdefgh");
+        request.Headers.Add("Cookie", "a=1; b=2; a=3");
+        request.Headers.Add("X-Long", new string('v', 400));
+        await rig.Client.SendAsync(request);
+        HttpRequestMessage basic = new(HttpMethod.Get, "/named");
+        basic.Headers.Add("Authorization", "Basic dXNlcjpwYXNz");
+        basic.Headers.Add("Cookie", "=");
+        await rig.Client.SendAsync(basic);
+
+        string first = (string)rig.Http.First(log => log.EventName == "HTTP_REQUEST").Properties["RequestHeaders"]!;
+        Assert.Contains("Bearer (length: 8)", first, StringComparison.Ordinal);
+        Assert.DoesNotContain("abcdefgh", first, StringComparison.Ordinal);
+        Assert.Contains("Cookies: a, b", first, StringComparison.Ordinal);
+        Assert.Contains("...(+144)", first, StringComparison.Ordinal);
+        Assert.True(first.Length < 800);
+        string second = (string)rig.Http.Where(log => log.EventName == "HTTP_REQUEST").ElementAt(1).Properties["RequestHeaders"]!;
+        Assert.Contains("AuthHeader (length: 18)", second, StringComparison.Ordinal);
+        Assert.Contains("Cookies: <unknown>", second, StringComparison.Ordinal);
+        string setCookie = (string)rig.Http.First(log => log.EventName == "HTTP_RESPONSE").Properties["ResponseHeaders"]!;
+        Assert.Contains("Set-Cookie: session", setCookie, StringComparison.Ordinal);
+        Assert.DoesNotContain("abc;", setCookie, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Bodies_AreNotLogged_ByDefault()
+    {
+        await using Rig rig = await StartAsync();
+
+        await rig.Client.PostAsync("/echo", new StringContent("""{"password":"hunter2"}""", Encoding.UTF8, "application/json"));
+
+        Assert.Null(rig.Request.Properties["RequestBody"]);
+        Assert.Null(rig.Response.Properties["ResponseBody"]);
+    }
+
+    [Fact]
+    public async Task Bodies_AreLoggedMasked_WhenTurnedOn_AndStillReachTheirReader()
+    {
+        await using Rig rig = await StartAsync(new() { ["RequestLogging:LogBodies"] = "true" });
+
+        HttpResponseMessage response = await rig.Client.PostAsync("/echo", new StringContent("""{"password":"hunter2"}""", Encoding.UTF8, "application/json"));
+
+        Assert.Equal("""{"password":"hunter2"}""", await response.Content.ReadAsStringAsync());
+        Assert.Equal("""{"password":"*****"}""", rig.Request.Properties["RequestBody"]);
+        Assert.Equal("""{"password":"*****"}""", rig.Response.Properties["ResponseBody"]);
+    }
+
+    [Fact]
+    public async Task Bodies_AreCut_AndOnlyJsonOnesAreLogged()
+    {
+        await using Rig rig = await StartAsync(new() { ["RequestLogging:LogBodies"] = "true", ["RequestLogging:MaxBodyLength"] = "10" });
+
+        await rig.Client.GetAsync("/json");
+        await rig.Client.GetAsync("/text");
+
+        Logged[] responses = [.. rig.Http.Where(log => log.EventName == "HTTP_RESPONSE")];
+        Assert.Equal("""{"password...(+25)""", responses[0].Properties["ResponseBody"]);
+        Assert.Null(responses[1].Properties["ResponseBody"]);
+    }
+
+    [Fact]
+    public async Task ABodyThatIsTooBigToRead_IsNotLogged()
+    {
+        await using Rig rig = await StartAsync(new() { ["RequestLogging:LogBodies"] = "true", ["RequestLogging:MaxBodyReadBytes"] = "8" });
+
+        HttpResponseMessage response = await rig.Client.PostAsync("/echo", new StringContent("""{"password":"hunter2"}""", Encoding.UTF8, "application/json"));
+        HttpResponseMessage empty = await rig.Client.PostAsync("/echo", new StringContent(string.Empty, Encoding.UTF8, "application/json"));
+
+        Assert.Equal("""{"password":"hunter2"}""", await response.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, empty.StatusCode);
+        Assert.All(rig.Http.Where(log => log.EventName == "HTTP_REQUEST"), log => Assert.Null(log.Properties["RequestBody"]));
+        Assert.All(rig.Http.Where(log => log.EventName == "HTTP_RESPONSE"), log => Assert.Null(log.Properties["ResponseBody"]));
+    }
+
+    [Fact]
+    public async Task WithoutAMasker_NoBodyIsEverLogged()
+    {
+        await using Rig rig = await StartAsync(new() { ["RequestLogging:LogBodies"] = "true" }, masker: false);
+
+        HttpResponseMessage response = await rig.Client.PostAsync("/echo", new StringContent("""{"password":"hunter2"}""", Encoding.UTF8, "application/json"));
+
+        Assert.Equal("""{"password":"hunter2"}""", await response.Content.ReadAsStringAsync());
+        Assert.Null(rig.Request.Properties["RequestBody"]);
+        Assert.Null(rig.Response.Properties["ResponseBody"]);
+    }
+
+    [Fact]
+    public void TheMiddlewareAndTheOptions_NeedTheirArguments()
+    {
+        Assert.Throws<ArgumentNullException>(() => RequestLoggingExtensions.AddBaseRequestLogging(null!, new ConfigurationBuilder().Build()));
+        Assert.Throws<ArgumentNullException>(() => new ServiceCollection().AddBaseRequestLogging(null!));
+        Assert.Throws<ArgumentNullException>(() => RequestLoggingExtensions.UseBaseRequestLogging(null!));
+        RequestLoggingOptions defaults = new();
+        Assert.True(defaults.Enabled);
+        Assert.False(defaults.LogBodies);
+        Assert.Equal("X-Correlation-Id", defaults.CorrelationIdHeader);
+    }
+}

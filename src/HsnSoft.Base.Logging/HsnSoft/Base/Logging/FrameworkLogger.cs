@@ -48,17 +48,17 @@ public sealed class FrameworkLogger : IFrameworkLogger
     {
         ArgumentNullException.ThrowIfNull(log);
 
-        using IDisposable? scope = _logger.BeginScope(Scope("Structured"));
+        using IDisposable? scope = _logger.BeginScope(s_scope);
         _logger.Log(level, "{@Log}", log);
     }
 
     private void Arguments(LogLevel level, Exception? exception, string messageTemplate, object?[] args)
     {
-        using IDisposable? scope = _logger.BeginScope(Scope("Args"));
+        using IDisposable? scope = _logger.BeginScope(s_scope);
         _logger.Log(level, exception, messageTemplate, args);
     }
 
-    private static Dictionary<string, object> Scope(string messageType)
-        => new() { ["LogType"] = LogCategories.FrameworkLog, ["MessageType"] = messageType };
+    // MessageType (Structured or Args) is told by the provider from what was logged
+    private static readonly Dictionary<string, object> s_scope = new() { [LogFields.LogType] = LogTypes.FrameworkLog };
 }
 #pragma warning restore CA1848, CA1873, CA2254

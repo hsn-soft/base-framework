@@ -194,36 +194,36 @@ public sealed partial class RabbitMqPersistentConnection : IRabbitMqPersistentCo
         return Task.CompletedTask;
     }
 
-    [LoggerMessage(Level = LogLevel.Information, Message = "RabbitMQ client is connecting to {HostName}:{Port}")]
+    [LoggerMessage(EventId = 4101, EventName = "RABBITMQ_CONNECTION_CONNECTING", Level = LogLevel.Information, Message = "RabbitMQ client is connecting to {HostName}:{Port}")]
     private static partial void LogConnecting(ILogger logger, string hostName, int port);
 
-    [LoggerMessage(Level = LogLevel.Warning, Message = "RabbitMQ is not reachable, retry {Retry} after {DelaySeconds} s")]
+    [LoggerMessage(EventId = 4102, EventName = "RABBITMQ_CONNECTION_NOT_REACHABLE", Level = LogLevel.Warning, Message = "RabbitMQ is not reachable, retry {Retry} after {DelaySeconds} s")]
     private static partial void LogNotReachable(ILogger logger, Exception exception, int retry, double delaySeconds);
 
-    [LoggerMessage(Level = LogLevel.Information, Message = "RabbitMQ client holds a persistent connection to {HostName}")]
+    [LoggerMessage(EventId = 4103, EventName = "RABBITMQ_CONNECTION_CONNECTED", Level = LogLevel.Information, Message = "RabbitMQ client holds a persistent connection to {HostName}")]
     private static partial void LogConnected(ILogger logger, string hostName);
 
-    [LoggerMessage(Level = LogLevel.Debug, Message = "RabbitMQ connection is closed")]
+    [LoggerMessage(EventId = 4104, EventName = "RABBITMQ_CONNECTION_CLOSED", Level = LogLevel.Debug, Message = "RabbitMQ connection is closed")]
     private static partial void LogClosed(ILogger logger);
 
-    [LoggerMessage(Level = LogLevel.Error, Message = "RabbitMQ connection could not be closed cleanly: {Error}")]
+    [LoggerMessage(EventId = 4105, EventName = "RABBITMQ_CONNECTION_CLOSE_FAILED", Level = LogLevel.Error, Message = "RabbitMQ connection could not be closed cleanly: {Error}")]
     private static partial void LogCloseFailed(ILogger logger, string error);
 
-    [LoggerMessage(Level = LogLevel.Warning, Message = "A RabbitMQ connection callback threw an exception: {Error}")]
+    [LoggerMessage(EventId = 4106, EventName = "RABBITMQ_CONNECTION_CALLBACK_EXCEPTION", Level = LogLevel.Warning, Message = "A RabbitMQ connection callback threw an exception: {Error}")]
     private static partial void LogCallbackException(ILogger logger, string error);
 
-    [LoggerMessage(Level = LogLevel.Warning, Message = "The RabbitMQ connection is shutting down ({Reason}); automatic recovery reconnects")]
+    [LoggerMessage(EventId = 4107, EventName = "RABBITMQ_CONNECTION_SHUTDOWN", Level = LogLevel.Warning, Message = "The RabbitMQ connection is shutting down ({Reason}); automatic recovery reconnects")]
     private static partial void LogShutdown(ILogger logger, string reason);
 
-    [LoggerMessage(Level = LogLevel.Warning, Message = "RabbitMQ blocked the connection: {Reason}")]
+    [LoggerMessage(EventId = 4108, EventName = "RABBITMQ_CONNECTION_BLOCKED", Level = LogLevel.Warning, Message = "RabbitMQ blocked the connection: {Reason}")]
     private static partial void LogBlocked(ILogger logger, string reason);
 
-    [LoggerMessage(Level = LogLevel.Information, Message = "RabbitMQ unblocked the connection")]
+    [LoggerMessage(EventId = 4109, EventName = "RABBITMQ_CONNECTION_UNBLOCKED", Level = LogLevel.Information, Message = "RabbitMQ unblocked the connection")]
     private static partial void LogUnblocked(ILogger logger);
 
-    [LoggerMessage(Level = LogLevel.Information, Message = "RabbitMQ connection recovered")]
+    [LoggerMessage(EventId = 4110, EventName = "RABBITMQ_CONNECTION_RECOVERED", Level = LogLevel.Information, Message = "RabbitMQ connection recovered")]
     private static partial void LogRecovered(ILogger logger);
 
-    [LoggerMessage(Level = LogLevel.Warning, Message = "A RabbitMQ connection recovery attempt failed, it will be repeated: {Error}")]
+    [LoggerMessage(EventId = 4111, EventName = "RABBITMQ_CONNECTION_RECOVERY_FAILED", Level = LogLevel.Warning, Message = "A RabbitMQ connection recovery attempt failed, it will be repeated: {Error}")]
     private static partial void LogRecoveryFailed(ILogger logger, string error);
 }

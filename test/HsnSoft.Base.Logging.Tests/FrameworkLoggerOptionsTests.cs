@@ -18,11 +18,19 @@ public class FrameworkLoggerOptionsTests
         Assert.False(options.IsGrayLogActive);
         Assert.False(options.IsSelfLogActive);
         Assert.Equal("Logs/logs.txt", options.FilePath);
+        Assert.Equal(8192, options.MaxPersistentFieldLength);
         Assert.Null(options.GrayLog.Address);
         Assert.Equal(12201, options.GrayLog.Port);
         Assert.Equal(5, options.GrayLog.SinkRefreshIntervalMinutes);
         Assert.Empty(options.LevelOverrides);
     }
+
+    [Theory]
+    [InlineData("0")]
+    [InlineData("-5")]
+    [InlineData("many")]
+    public void AFieldLengthThatMakesNoSense_KeepsTheDefault(string text)
+        => Assert.Equal(8192, FrameworkLoggerOptions.FromConfiguration(Configuration(("MaxPersistentFieldLength", text))).MaxPersistentFieldLength);
 
     [Fact]
     public void Values_AreRead()
@@ -33,6 +41,7 @@ public class FrameworkLoggerOptionsTests
             ("IsGrayLogActive", "true"),
             ("IsSelfLogActive", "True"),
             ("FilePath", "logs/app.txt"),
+            ("MaxPersistentFieldLength", "1000"),
             ("GrayLog:Address", "http://graylog"),
             ("GrayLog:Port", "12345"),
             ("GrayLog:SinkRefreshIntervalMinutes", "2"),
@@ -44,6 +53,7 @@ public class FrameworkLoggerOptionsTests
         Assert.True(options.IsGrayLogActive);
         Assert.True(options.IsSelfLogActive);
         Assert.Equal("logs/app.txt", options.FilePath);
+        Assert.Equal(1000, options.MaxPersistentFieldLength);
         Assert.Equal("http://graylog", options.GrayLog.Address);
         Assert.Equal(12345, options.GrayLog.Port);
         Assert.Equal(2, options.GrayLog.SinkRefreshIntervalMinutes);

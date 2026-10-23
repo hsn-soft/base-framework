@@ -59,6 +59,6 @@ public abstract partial class PeriodicBackgroundService : BackgroundService
         }
     }
 
-    [LoggerMessage(Level = LogLevel.Error, Message = "{Worker} run failed, trying again at the next tick")]
+    [LoggerMessage(EventId = 5001, EventName = "PERIODIC_SERVICE_RUN_FAILED", Level = LogLevel.Error, Message = "{Worker} run failed, trying again at the next tick")]
     private static partial void LogRunFailed(ILogger logger, Exception exception, string worker);
 }

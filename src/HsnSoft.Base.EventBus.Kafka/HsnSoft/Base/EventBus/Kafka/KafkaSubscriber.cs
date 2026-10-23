@@ -95,9 +95,9 @@ public sealed partial class KafkaSubscriber(
         }
     }
 
-    [LoggerMessage(Level = LogLevel.Information, Message = "{Service} listens to topics {Topics}")]
+    [LoggerMessage(EventId = 4501, EventName = "KAFKA_SUBSCRIBER_LISTENING", Level = LogLevel.Information, Message = "{Service} listens to topics {Topics}")]
     private static partial void LogListening(ILogger logger, string service, string topics);
 
-    [LoggerMessage(Level = LogLevel.Error, Message = "A message from {Topic} could not be handled, moving it to the dead-letter topic")]
+    [LoggerMessage(EventId = 4502, EventName = "KAFKA_SUBSCRIBER_DEAD_LETTERED", Level = LogLevel.Error, Message = "A message from {Topic} could not be handled, moving it to the dead-letter topic")]
     private static partial void LogDeadLettered(ILogger logger, Exception exception, string topic);
 }

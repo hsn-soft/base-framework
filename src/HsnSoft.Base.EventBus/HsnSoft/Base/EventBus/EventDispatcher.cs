@@ -2,10 +2,12 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using HsnSoft.Base.Domain.Entities.Events;
+using HsnSoft.Base.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -33,6 +35,9 @@ public sealed partial class EventDispatcher(
     IOptions<EventBusOptions> options,
     ILogger<EventDispatcher> logger) : IEventDispatcher
 {
+    private static readonly Dictionary<string, object> s_consumeStart = new() { [LogFields.LogType] = LogTypes.ConsumeStart };
+    private static readonly Dictionary<string, object> s_consumeEnd = new() { [LogFields.LogType] = LogTypes.ConsumeEnd };
+
     private static readonly ConcurrentDictionary<Type, Func<object, object, CancellationToken, Task>> s_invokers = new();
 
     private readonly IServiceScopeFactory _scopeFactory = scopeFactory;
@@ -47,19 +52,55 @@ public sealed partial class EventDispatcher(
         ArgumentNullException.ThrowIfNull(messageEnvelope);
 
         ParentMessageEnvelope envelope = (ParentMessageEnvelope)messageEnvelope;
+        string scopeId = Guid.CreateVersion7().ToString();
+        string to = trimmedEventName.ToLowerInvariant();
+        string from = (envelope.GetHeader(ParentMessageEnvelope.FlowHeader) ?? envelope.Producer ?? "unknown").ToLowerInvariant();
+
+        // every log of the handling carries these: the application logs of the handler too
         Dictionary<string, object?> scopeValues = new()
         {
-            ["CorrelationId"] = envelope.CorrelationId,
+            [LogFields.CorrelationId] = envelope.CorrelationId,
+            [LogFields.ScopeId] = scopeId,
             ["MessageId"] = envelope.MessageId,
+            ["ParentMessageId"] = (messageEnvelope as IHasParentMessageId)?.ParentMessageId,
             ["EventName"] = trimmedEventName,
             ["Producer"] = envelope.Producer,
             ["HopLevel"] = envelope.HopLevel,
         };
 
         using IDisposable? logScope = _logger.BeginScope(scopeValues);
-        foreach (IntegrationEventHandlerInfo handler in _subscriptions.GetHandlersForEvent(trimmedEventName))
+        // what the handler publishes is caused by this step and comes from it
+        using IDisposable flow = LogFlow.Begin(envelope.CorrelationId, scopeId, to);
+        IReadOnlyList<IntegrationEventHandlerInfo> handlers = [.. _subscriptions.GetHandlersForEvent(trimmedEventName)];
+        string handlerNames = string.Join(", ", handlers.Select(handler => handler.HandlerType.Name));
+        Stopwatch watch = Stopwatch.StartNew();
+
+        using (_logger.BeginScope(s_consumeStart))
         {
-            await RunHandlerAsync(handler, trimmedEventName, eventType, envelope, messageEnvelope, cancellationToken).ConfigureAwait(false);
+            LogStarted(_logger, from, to);
+        }
+
+        try
+        {
+            foreach (IntegrationEventHandlerInfo handler in handlers)
+            {
+                await RunHandlerAsync(handler, trimmedEventName, eventType, envelope, messageEnvelope, cancellationToken).ConfigureAwait(false);
+            }
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            // a handling cut short by a shutdown has no end log on purpose: its start log without an end is how an interrupted message is found
+            using (_logger.BeginScope(s_consumeEnd))
+            {
+                LogFailed(_logger, exception, from, to, handlerNames, watch.ElapsedMilliseconds);
+            }
+
+            throw;
+        }
+
+        using (_logger.BeginScope(s_consumeEnd))
+        {
+            LogHandled(_logger, from, to, handlerNames, watch.ElapsedMilliseconds);
         }
     }
 
@@ -72,7 +113,6 @@ public sealed partial class EventDispatcher(
         CancellationToken cancellationToken)
     {
         int maxAttempts = Math.Max(1, _options.MaxHandlerAttempts);
-        Stopwatch watch = Stopwatch.StartNew();
 
         for (int attempt = 1; ; attempt++)
         {
@@ -92,18 +132,12 @@ public sealed partial class EventDispatcher(
                     }
                 }
 
-                LogHandled(_logger, handler.HandlerType.Name, eventName, watch.ElapsedMilliseconds);
                 return;
             }
             catch (Exception exception) when (attempt < maxAttempts && exception is not (OperationCanceledException or HandlerNotResolvedException))
             {
                 LogAttemptFailed(_logger, exception, handler.HandlerType.Name, eventName, attempt, maxAttempts);
                 await Task.Delay(_options.RetryDelay * attempt, cancellationToken).ConfigureAwait(false);
-            }
-            catch (Exception exception) when (exception is not OperationCanceledException)
-            {
-                LogFailed(_logger, exception, handler.HandlerType.Name, eventName, watch.ElapsedMilliseconds);
-                throw;
             }
         }
     }
@@ -118,14 +152,17 @@ public sealed partial class EventDispatcher(
         where TEvent : IIntegrationEventMessage
         => ((IIntegrationEventHandler<TEvent>)handler).HandleAsync((MessageEnvelope<TEvent>)envelope, cancellationToken);
 
-    [LoggerMessage(EventId = 2000, EventName = "CONSUME_EVENT_SUCCESS", Level = LogLevel.Information, Message = "{Handler} handled {EventName} in {ElapsedMs} ms")]
-    private static partial void LogHandled(ILogger logger, string handler, string eventName, long elapsedMs);
+    [LoggerMessage(EventId = 2000, EventName = "CONSUME_EVENT_START", Level = LogLevel.Information, Message = "{From} -> {To}: started")]
+    private static partial void LogStarted(ILogger logger, string from, string to);
 
-    [LoggerMessage(EventId = 2001, EventName = "CONSUME_EVENT_RETRY", Level = LogLevel.Warning, Message = "{Handler} failed on {EventName}, attempt {Attempt}/{Max}")]
+    [LoggerMessage(EventId = 2001, EventName = "CONSUME_EVENT_SUCCESS", Level = LogLevel.Information, Message = "{From} -> {To}: handled by {Handler} in {ElapsedMs} ms")]
+    private static partial void LogHandled(ILogger logger, string from, string to, string handler, long elapsedMs);
+
+    [LoggerMessage(EventId = 2002, EventName = "CONSUME_EVENT_ERROR", Level = LogLevel.Error, Message = "{From} -> {To}: {Handler} failed after {ElapsedMs} ms")]
+    private static partial void LogFailed(ILogger logger, Exception exception, string from, string to, string handler, long elapsedMs);
+
+    [LoggerMessage(EventId = 2003, EventName = "CONSUME_EVENT_RETRY", Level = LogLevel.Warning, Message = "{Handler} failed on {EventName}, attempt {Attempt}/{Max}")]
     private static partial void LogAttemptFailed(ILogger logger, Exception exception, string handler, string eventName, int attempt, int max);
-
-    [LoggerMessage(EventId = 2002, EventName = "CONSUME_EVENT_ERROR", Level = LogLevel.Error, Message = "{Handler} failed on {EventName} after {ElapsedMs} ms")]
-    private static partial void LogFailed(ILogger logger, Exception exception, string handler, string eventName, long elapsedMs);
 
     /// <summary>The container cannot create the handler: a problem of the service, not of the message, so it is not retried.</summary>
     private sealed class HandlerNotResolvedException(Type handlerType, string eventName)

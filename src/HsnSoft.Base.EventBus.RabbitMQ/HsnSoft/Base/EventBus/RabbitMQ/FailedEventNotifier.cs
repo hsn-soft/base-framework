@@ -99,12 +99,12 @@ public sealed partial class FailedEventNotifier(
         LogNotified(_logger, queueName, envelope.MessageId);
     }
 
-    [LoggerMessage(Level = LogLevel.Warning, Message = "Reporting a failed message to {Queue}, message {MessageId}")]
+    [LoggerMessage(EventId = 4201, EventName = "RABBITMQ_FAILED_EVENT_NOTIFYING", Level = LogLevel.Warning, Message = "Reporting a failed message to {Queue}, message {MessageId}")]
     private static partial void LogNotifying(ILogger logger, string queue, Guid messageId);
 
-    [LoggerMessage(Level = LogLevel.Warning, Message = "Reported a failed message to {Queue}, message {MessageId}")]
+    [LoggerMessage(EventId = 4202, EventName = "RABBITMQ_FAILED_EVENT_NOTIFIED", Level = LogLevel.Warning, Message = "Reported a failed message to {Queue}, message {MessageId}")]
     private static partial void LogNotified(ILogger logger, string queue, Guid messageId);
 
-    [LoggerMessage(Level = LogLevel.Error, Message = "Could not report the failed message to {Queue}: retry {Retry} after {DelaySeconds} s")]
+    [LoggerMessage(EventId = 4203, EventName = "RABBITMQ_FAILED_EVENT_NOTIFY_RETRY", Level = LogLevel.Error, Message = "Could not report the failed message to {Queue}: retry {Retry} after {DelaySeconds} s")]
     private static partial void LogNotifyRetry(ILogger logger, Exception exception, string queue, int retry, double delaySeconds);
 }

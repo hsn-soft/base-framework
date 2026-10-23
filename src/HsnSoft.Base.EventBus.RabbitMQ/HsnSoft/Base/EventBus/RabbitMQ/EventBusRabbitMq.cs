@@ -84,6 +84,6 @@ public sealed partial class EventBusRabbitMq(
         }
     }
 
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Waiting for the publishers to finish...")]
+    [LoggerMessage(EventId = 4401, EventName = "RABBITMQ_BUS_WAITING_FOR_PUBLISHERS", Level = LogLevel.Debug, Message = "Waiting for the publishers to finish...")]
     private static partial void LogWaitingForPublishers(ILogger logger);
 }
