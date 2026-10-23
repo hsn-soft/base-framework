@@ -64,7 +64,7 @@ To format everything yourself:
 ```bash
 dotnet format whitespace HsnSoft.Base.sln
 dotnet format style HsnSoft.Base.sln --severity info
-dotnet run scripts/check-json-format.cs -- --all
+dotnet run scripts/format-json.cs -- --all
 ```
 
 Format on save is worth switching on, so the hook has nothing left to do:

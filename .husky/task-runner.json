@@ -40,7 +40,7 @@
       "command": "dotnet",
       "args": [
         "run",
-        "scripts/check-json-format.cs",
+        "scripts/format-json.cs",
         "--",
         "${staged}"
       ],
