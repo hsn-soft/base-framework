@@ -8,7 +8,7 @@ on your own machine: build, **all** tests (unit and integration) with coverage, 
 | `analysis_mac.sh` | Linux, macOS (bash) |
 | `analysis_win.ps1` | Windows (PowerShell 7; also works with `pwsh` on macOS/Linux) |
 
-The CI does not use them (CI gates coverage with `scripts/check-coverage.py`). They are for looking at the code quality dashboard
+The CI does not use them (CI gates coverage with `scripts/ci-check-coverage.py`). They are for looking at the code quality dashboard
 while you work.
 
 ## What you need
@@ -90,7 +90,7 @@ sync when you change one.
 | `401` while uploading | The token was revoked or typed wrongly; generate a new one. |
 | An integration test fails to start a container | Not enough memory for Docker (SQL Server needs ~2 GB), or the image is still downloading. Re-run. MongoDB 8 does not start on Linux kernel 6.19+; the tests use `mongo:7.0`. |
 | The project is not on the dashboard yet | The report is still being processed; refresh after a few seconds. |
-| Coverage is a little lower than `scripts/check-coverage.py` reports | Sonar counts the lines of auto-property initializers in the option classes that coverlet does not report. These are not real gaps. |
+| Coverage is a little lower than `scripts/ci-check-coverage.py` reports | Sonar counts the lines of auto-property initializers in the option classes that coverlet does not report. These are not real gaps. |
 
 ## Starting from scratch
 

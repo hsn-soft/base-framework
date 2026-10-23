@@ -1,9 +1,9 @@
 // Formats JSON files the way the .editorconfig asks (2 spaces, LF, one final newline). Property order and number text are kept.
 // Runs with only the .NET SDK, so it is the same on every platform:
 //
-//   dotnet run scripts/format-json.cs -- <file>...          rewrite the given files
-//   dotnet run scripts/format-json.cs -- --check <file>...  only report files that would change (exit code 1)
-//   dotnet run scripts/format-json.cs -- --all [--check]    every tracked *.json (.vscode/ is skipped: it allows comments)
+//   dotnet run scripts/husky-format-json.cs -- <file>...          rewrite the given files
+//   dotnet run scripts/husky-format-json.cs -- --check <file>...  only report files that would change (exit code 1)
+//   dotnet run scripts/husky-format-json.cs -- --all [--check]    every tracked *.json (.vscode/ is skipped: it allows comments)
 //
 // A file with comments or other non-standard JSON is reported as invalid and left alone.
 using System.Diagnostics;

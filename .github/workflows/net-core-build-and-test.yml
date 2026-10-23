@@ -57,7 +57,7 @@ jobs:
                     dotnet format style HsnSoft.Base.sln --verify-no-changes --severity info --no-restore
 
             -   name: Format Check (JSON)
-                run: dotnet run scripts/format-json.cs -- --all --check
+                run: dotnet run scripts/husky-format-json.cs -- --all --check
 
             -   name: Build Solution
                 run: dotnet build --no-restore --verbosity minimal --configuration Release
@@ -133,4 +133,4 @@ jobs:
 
             # A line counts as covered when the unit or the integration tests ran it (the broker/database code is only reachable with the real service).
             -   name: Coverage Gate
-                run: python3 scripts/check-coverage.py "$COVERAGE_THRESHOLD" $(find TestResults -name 'coverage.cobertura.xml')
+                run: python3 scripts/ci-check-coverage.py "$COVERAGE_THRESHOLD" $(find TestResults -name 'coverage.cobertura.xml')

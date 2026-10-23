@@ -40,7 +40,7 @@
       "command": "dotnet",
       "args": [
         "run",
-        "scripts/format-json.cs",
+        "scripts/husky-format-json.cs",
         "--",
         "${staged}"
       ],

@@ -3,7 +3,7 @@
 
 Several reports (one per test project) are merged: a line counts as covered when any report covered it.
 
-Usage: check-coverage.py <threshold-percent> <coverage.cobertura.xml> [...]
+Usage: ci-check-coverage.py <threshold-percent> <coverage.cobertura.xml> [...]
 """
 import os
 import sys
