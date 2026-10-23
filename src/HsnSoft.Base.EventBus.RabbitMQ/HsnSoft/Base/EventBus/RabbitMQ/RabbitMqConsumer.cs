@@ -168,7 +168,14 @@ public sealed partial class RabbitMqConsumer(
         {
             string eventName = ResolveEventName(args);
             string message = Encoding.UTF8.GetString(args.Body.Span);
-            LogReceived(_logger, QueueName, message);
+            if (_options.LogMessageBody)
+            {
+                LogReceivedWithBody(_logger, QueueName, message);
+            }
+            else
+            {
+                LogReceived(_logger, QueueName, eventName, args.Body.Length);
+            }
 
             try
             {
@@ -221,7 +228,7 @@ public sealed partial class RabbitMqConsumer(
             if (eventName == EventNames.For(_options, typeof(FailedEto)))
             {
                 // a failed FailedEto must not be reported again, that would loop forever
-                LogFailedEventLoop(_logger, QueueName, message, failure.Message);
+                LogFailedEventLoop(_logger, QueueName, eventName, _options.LogMessageBody ? message : "(body not logged)", failure.Message);
             }
             else
             {
@@ -370,8 +377,11 @@ public sealed partial class RabbitMqConsumer(
     [LoggerMessage(Level = LogLevel.Error, Message = "{Queue}: the channel could not be closed cleanly: {Error}")]
     private static partial void LogCloseFailed(ILogger logger, string queue, string error);
 
+    [LoggerMessage(Level = LogLevel.Debug, Message = "{Queue}: received {EventName} ({Size} bytes)")]
+    private static partial void LogReceived(ILogger logger, string queue, string eventName, int size);
+
     [LoggerMessage(Level = LogLevel.Debug, Message = "{Queue}: received {Message}")]
-    private static partial void LogReceived(ILogger logger, string queue, string message);
+    private static partial void LogReceivedWithBody(ILogger logger, string queue, string message);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "{Queue}: message without a subscription for event {EventName}")]
     private static partial void LogNoSubscription(ILogger logger, string queue, string eventName);
@@ -382,8 +392,8 @@ public sealed partial class RabbitMqConsumer(
     [LoggerMessage(Level = LogLevel.Error, Message = "{Queue}: ERROR ({Error})")]
     private static partial void LogFailed(ILogger logger, Exception exception, string queue, string error);
 
-    [LoggerMessage(Level = LogLevel.Critical, Message = "{Queue}: a failed event could not be handled and is dropped: {Message} ({Error})")]
-    private static partial void LogFailedEventLoop(ILogger logger, string queue, string message, string error);
+    [LoggerMessage(Level = LogLevel.Critical, Message = "{Queue}: a failed {EventName} event could not be handled and is dropped: {Message} ({Error})")]
+    private static partial void LogFailedEventLoop(ILogger logger, string queue, string eventName, string message, string error);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "{Queue}: message moved to the error queue")]
     private static partial void LogMovedToErrorQueue(ILogger logger, string queue);

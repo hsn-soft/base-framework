@@ -184,6 +184,44 @@ public sealed class RabbitMqConsumerTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task ReceivedMessage_IsLoggedWithoutItsBody_ByDefault()
+    {
+        Rig rig = await StartAsync();
+
+        await rig.Deliver();
+
+        Assert.Contains(rig.Logger.Entries, entry => entry.Level == LogLevel.Debug && entry.Message.Contains("received Sample", StringComparison.Ordinal));
+        Assert.DoesNotContain(rig.Logger.Entries, entry => entry.Message.Contains("keyboard", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task ReceivedMessage_IsLoggedWithItsBody_WhenLogMessageBodyIsOn()
+    {
+        Rig rig = await StartAsync(configureOptions: options => options.LogMessageBody = true);
+
+        await rig.Deliver();
+
+        Assert.Contains(rig.Logger.Entries, entry => entry.Level == LogLevel.Debug && entry.Message.Contains("keyboard", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task DroppedFailedEvent_IsLoggedWithoutItsBody_ByDefault_AndWithItWhenLogMessageBodyIsOn()
+    {
+        const string Body = """{"HopLevel":1,"Message":{"FailedReason":"secret-reason"}}""";
+
+        Rig quiet = await StartAsync(eventType: typeof(FailedEto), eventName: "Failed");
+        quiet.Dispatcher.Behavior = () => throw new InvalidOperationException("broke");
+        await quiet.Deliver(Body, routingKey: "Failed");
+        Assert.DoesNotContain(quiet.Logger.Entries, entry => entry.Message.Contains("secret-reason", StringComparison.Ordinal));
+        Assert.Contains(quiet.Logger.Entries, entry => entry.Level == LogLevel.Critical && entry.Message.Contains("body not logged", StringComparison.Ordinal));
+
+        Rig verbose = await StartAsync(configureOptions: options => options.LogMessageBody = true, eventType: typeof(FailedEto), eventName: "Failed");
+        verbose.Dispatcher.Behavior = () => throw new InvalidOperationException("broke");
+        await verbose.Deliver(Body, routingKey: "Failed");
+        Assert.Contains(verbose.Logger.Entries, entry => entry.Level == LogLevel.Critical && entry.Message.Contains("secret-reason", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public async Task FailedEventThatFails_IsNotReportedAgain()
     {
         Rig rig = await StartAsync(eventType: typeof(FailedEto), eventName: "Failed");

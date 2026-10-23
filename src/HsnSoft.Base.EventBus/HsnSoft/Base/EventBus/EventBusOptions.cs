@@ -49,4 +49,10 @@ public sealed class EventBusOptions
 
     /// <summary>How long a stopping service waits for the messages being handled and published to finish.</summary>
     public TimeSpan ShutdownTimeout { get; set; } = TimeSpan.FromSeconds(30);
+
+    /// <summary>
+    /// Writes the whole message body into the logs (the Debug log of a received message, the log of a dropped failed event).
+    /// Off by default: a message may carry personal data, and the console is a log too. Turn it on to debug a service.
+    /// </summary>
+    public bool LogMessageBody { get; set; }
 }
