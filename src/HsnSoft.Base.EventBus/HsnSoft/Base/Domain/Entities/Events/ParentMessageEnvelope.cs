@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -32,6 +33,7 @@ public record ParentMessageEnvelope
     /// Every other top-level property of the message: the information a product adds (user, roles, client details) and keeps on the
     /// wire under its own names. The framework carries it from a message to the ones it causes but does not interpret it.
     /// </summary>
+    [IgnoreDataMember] // other serializers (the services copy an envelope through Newtonsoft) must leave it alone; it only exists on the wire
     [JsonExtensionData]
     public Dictionary<string, JsonElement>? Headers { get; set; }
 

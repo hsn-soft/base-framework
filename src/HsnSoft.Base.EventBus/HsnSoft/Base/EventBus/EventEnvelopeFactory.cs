@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
 using HsnSoft.Base.Domain.Entities.Events;
 using Microsoft.Extensions.Options;
@@ -18,7 +19,8 @@ public sealed class EventEnvelopeFactory(IOptions<EventBusOptions> options, IEnu
         ArgumentNullException.ThrowIfNull(message);
 
         // the message being handled is the parent unless the caller says otherwise
-        ParentMessageEnvelope? parent = parentMessage ?? EventContext.Current;
+        ParentMessageEnvelope? handling = EventContext.Current;
+        ParentMessageEnvelope? parent = parentMessage ?? handling;
 
         MessageEnvelope<T> envelope = new()
         {
@@ -50,6 +52,17 @@ public sealed class EventEnvelopeFactory(IOptions<EventBusOptions> options, IEnu
             {
                 envelope.Headers ??= [];
                 envelope.Headers[header.Key] = header.Value;
+            }
+
+            // A parent that is a copy of the message being handled (made by another serializer) has lost its headers; the message
+            // itself still has them. What the copy does have wins.
+            if (handling is not null && !ReferenceEquals(handling, parent) && handling.MessageId == parent.MessageId)
+            {
+                foreach (KeyValuePair<string, JsonElement> header in handling.HeadersToInherit().Where(header => parent.Headers?.ContainsKey(header.Key) != true))
+                {
+                    envelope.Headers ??= [];
+                    envelope.Headers[header.Key] = header.Value;
+                }
             }
         }
 
