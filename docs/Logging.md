@@ -64,8 +64,12 @@ Categories are the class names (`HsnSoft.Base.EventBus.RabbitMQ.RabbitMqConsumer
 `CONSUME_EVENT_SUCCESS`, ...) and puts `CorrelationId`, `MessageId` and `EventName` in the log scope, which Serilog turns into
 properties (Graylog fields).
 
-The RabbitMQ consumer logs the whole message body at Debug, as before. Debug is never persistent, so it stays in the console; keep
-it that way if messages carry personal data.
+The RabbitMQ client library does not use `ILogger`, it only writes to an `EventSource` (`rabbitmq-client`). The RabbitMQ package
+listens to it while the host runs and passes it on under the category `HsnSoft.Base.EventBus.RabbitMQ.Client`: its information as
+Debug (console only), its warnings and errors as they are, so a connection the client gives up on shows up in Graylog.
+
+The message body is not logged unless `EventBusOptions.LogMessageBody` is `true` (see [EventBus.md](EventBus.md)): a message may carry
+personal data, and the console is a log too.
 
 ## Another provider (NLog, ...)
 

@@ -37,6 +37,7 @@ public static class RabbitMqServiceCollectionExtensions
         services.TryAddSingleton<IRabbitMqPersistentConnection, RabbitMqPersistentConnection>();
         services.TryAddSingleton<IFailedEventNotifier, FailedEventNotifier>();
         services.TryAddSingleton<IEventBus, EventBusRabbitMq>();
+        services.AddHostedService<RabbitMqClientLogService>();
         services.AddHostedService<RabbitMqSubscriber>();
         services.AddHealthChecks().AddCheck<RabbitMqHealthCheck>("rabbitmq", tags: [HealthCheckTags.Ready]);
         return services;

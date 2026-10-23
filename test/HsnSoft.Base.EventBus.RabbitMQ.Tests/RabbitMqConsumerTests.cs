@@ -265,7 +265,8 @@ public sealed class RabbitMqConsumerTests : IAsyncDisposable
     [Fact]
     public async Task Timeout_OnAChannelThatIsGone_IsLogged()
     {
-        Rig rig = await StartAsync();
+        // the recovery worker must not rebuild the closed channel during the requeue delay
+        Rig rig = await StartAsync(configureConfig: config => config.RecoveryProbeInterval = TimeSpan.FromMinutes(1));
         rig.Dispatcher.Behavior = () =>
         {
             rig.Channel.IsClosed = true;
