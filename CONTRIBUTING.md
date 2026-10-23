@@ -19,9 +19,12 @@ Thank you for helping with the HsnSoft Base Framework. This page is the short ve
 ## Branches and pull requests
 
 1. Branch from `dev` (`feat/...`, `fix/...`, `refactor/...`).
-2. Open the pull request against `dev`. The `.NETCore Build & Test` workflow must be green: build, unit tests, integration tests and
+2. **Run the detector before you open the pull request**: `./scripts/detector/detector_mac.sh` (Windows:
+   `./scripts/detector/detector_win.ps1`). It runs the CI's checks on your machine and shows in one table what would fail, so you
+   do not discover it on the pull request. See [scripts/detector](scripts/detector/README.md).
+3. Open the pull request against `dev`. The `.NETCore Build & Test` workflow must be green: build, unit tests, integration tests and
    the coverage gate.
-3. `rel/nuget` holds what is published to NuGet; pushing to it runs the deploy workflow. Do not open pull requests against it.
+4. `rel/nuget` holds what is published to NuGet; pushing to it runs the deploy workflow. Do not open pull requests against it.
 
 Commit messages follow the Conventional Commits style used in the history: `feat:`, `fix:`, `refactor:`, `test:`, `ci:`, `style:`,
 `docs:`, with a short subject in the imperative.
@@ -105,5 +108,6 @@ reference the local build and be debugged against it. Details are at the top of 
 | Folder | What it is |
 | --- | --- |
 | `scripts/sonar/` | Local SonarQube analysis for Linux/macOS and Windows |
+| `scripts/detector/` | Runs the CI's checks on your machine before you open a pull request |
 | `scripts/clean/` | Deletes build output, test results and editor leftovers |
 | `samples/` | Example systems built only from the framework packages; see `samples/README.md` |

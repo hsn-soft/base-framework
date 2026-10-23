@@ -1,0 +1,197 @@
+#!/usr/bin/env bash
+# Pre-PR check (Linux/macOS): runs on your machine what the CI will run on the pull request, and shows one table of what passed and
+# where it would break. The Windows twin is detector_win.ps1; both run the same stages and print the same tables.
+# See README.md in this folder.
+#
+# Usage: ./scripts/detector/detector_mac.sh [--skip-integration]
+#   --skip-integration   do not run the integration tests (no Docker needed); the coverage gate is then skipped too
+#
+# Keep it in step with .github/workflows/net-core-build-and-test.yml: when a step is added there, add the stage here.
+set -uo pipefail
+
+SKIP_INTEGRATION=false
+case "${1:-}" in
+    "") ;;
+    --skip-integration) SKIP_INTEGRATION=true ;;
+    *) echo "Usage: $0 [--skip-integration]" >&2; exit 2 ;;
+esac
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+OUT="$ROOT/TestResults/detector"
+LOGS="$OUT/logs"
+cd "$ROOT"
+
+if [ -t 1 ]; then
+    BLUE=$'\033[34m'; GREEN=$'\033[32m'; RED=$'\033[31m'; YELLOW=$'\033[33m'; BOLD=$'\033[1m'; RESET=$'\033[0m'
+else
+    BLUE=''; GREEN=''; RED=''; YELLOW=''; BOLD=''; RESET=''
+fi
+info() { printf '%s[INFO] %s%s\n' "$BLUE" "$1" "$RESET"; }
+bar() { info "================================================================================"; }
+
+THRESHOLD="$(sed -n "s/.*COVERAGE_THRESHOLD: '\([0-9.]*\)'.*/\1/p" .github/workflows/net-core-build-and-test.yml | head -n 1)"
+THRESHOLD="${THRESHOLD:-99}"
+
+echo; bar
+info "== DETECTOR => '$ROOT' START"
+bar; echo
+
+info "## CHECKING THE TOOLS ----------------------------------------------------------"
+missing=false
+for tool in dotnet git python3; do
+    if command -v "$tool" >/dev/null 2>&1; then echo "$tool found"; else echo "$tool NOT found" >&2; missing=true; fi
+done
+if [ "$SKIP_INTEGRATION" = false ]; then
+    if docker info >/dev/null 2>&1; then echo "docker is running"; else echo "docker is NOT running (needed by the integration tests; or use --skip-integration)" >&2; missing=true; fi
+fi
+[ "$missing" = true ] && { echo "Fix the above and run again." >&2; exit 2; }
+echo
+
+rm -rf "$OUT"; mkdir -p "$LOGS"
+
+NAMES=(); RESULTS=(); TIMES=(); DETAILS=()
+record() { NAMES+=("$1"); RESULTS+=("$2"); TIMES+=("$3"); DETAILS+=("$4"); }
+
+# stage <id> <title> <command...>: runs it, keeps its output in logs/<id>.log, records PASS/FAIL
+stage() {
+    local id="$1" title="$2"; shift 2
+    printf '  %-36s ' "$title"
+    local started=$SECONDS
+    if "$@" > "$LOGS/$id.log" 2>&1; then
+        local took=$((SECONDS - started))
+        printf '%sPASS%s  (%ss)\n' "$GREEN" "$RESET" "$took"
+        record "$title" PASS "${took}s" ""
+        return 0
+    fi
+    local took=$((SECONDS - started))
+    printf '%sFAIL%s  (%ss)\n' "$RED" "$RESET" "$took"
+    record "$title" FAIL "${took}s" "TestResults/detector/logs/$id.log"
+    return 1
+}
+skip() { printf '  %-36s %sSKIPPED%s  (%s)\n' "$2" "$YELLOW" "$RESET" "$3"; record "$2" SKIPPED "-" "$3"; }
+
+format_cs() {
+    dotnet format whitespace HsnSoft.Base.sln --verify-no-changes --no-restore &&
+        dotnet format style HsnSoft.Base.sln --verify-no-changes --severity info --no-restore
+}
+run_unit() {
+    ./scripts/run-tests.sh unit --no-build --configuration Release --verbosity minimal \
+        --settings test/coverlet.runsettings --collect:"XPlat Code Coverage" --results-directory "$OUT/unit"
+}
+run_integration() {
+    ./scripts/run-tests.sh integration --no-build --configuration Release --verbosity minimal \
+        --settings test/coverlet.runsettings --collect:"XPlat Code Coverage" --results-directory "$OUT/integration"
+}
+reports() { find "$OUT/$1" -name coverage.cobertura.xml -not -path '*/In/*' 2>/dev/null; }
+gate() { python3 scripts/ci-check-coverage.py "$THRESHOLD" $(reports unit) $(reports integration); }
+
+info "## STAGES ----------------------------------------------------------------------"
+stage restore "Restore" dotnet restore HsnSoft.Base.sln --verbosity minimal && RESTORED=true || RESTORED=false
+
+stage test-projects "Every package has a test project" ./scripts/ci-check-test-projects.sh
+if [ "$RESTORED" = true ]; then
+    stage format-cs "Format (C#)" format_cs
+else
+    skip format-cs "Format (C#)" "restore failed"
+fi
+stage format-json "Format (JSON)" dotnet run scripts/format-json.cs -- --all --check
+
+BUILT=false
+if [ "$RESTORED" = true ]; then
+    stage build "Build (Release, warnings are errors)" dotnet build HsnSoft.Base.sln --no-restore --no-incremental \
+        --configuration Release --verbosity minimal -p:TreatWarningsAsErrors=true && BUILT=true
+else
+    skip build "Build (Release, warnings are errors)" "restore failed"
+fi
+
+UNIT_OK=false; INTEGRATION_OK=false
+if [ "$BUILT" = true ]; then
+    stage unit "Unit tests" run_unit && UNIT_OK=true
+    if [ "$SKIP_INTEGRATION" = true ]; then
+        skip integration "Integration tests" "--skip-integration"
+    else
+        stage integration "Integration tests" run_integration && INTEGRATION_OK=true
+    fi
+else
+    skip unit "Unit tests" "build did not pass"
+    skip integration "Integration tests" "build did not pass"
+fi
+
+if [ "$UNIT_OK" = true ] && [ "$INTEGRATION_OK" = true ]; then
+    stage coverage "Coverage gate (>= ${THRESHOLD} %)" gate
+elif [ "$SKIP_INTEGRATION" = true ]; then
+    skip coverage "Coverage gate (>= ${THRESHOLD} %)" "needs the integration tests"
+else
+    skip coverage "Coverage gate (>= ${THRESHOLD} %)" "tests did not pass"
+fi
+echo
+
+# ---- the table ------------------------------------------------------------------------------------------------------------
+failed=0; skipped=0
+for i in "${!RESULTS[@]}"; do
+    [ "${RESULTS[$i]}" = FAIL ] && failed=$((failed + 1))
+    [ "${RESULTS[$i]}" = SKIPPED ] && skipped=$((skipped + 1))
+done
+
+info "## RESULT ----------------------------------------------------------------------"
+printf '  %-38s %-9s %-7s %s\n' "Stage" "Result" "Time" "Detail"
+printf '  %-38s %-9s %-7s %s\n' "--------------------------------------" "---------" "-------" "------"
+for i in "${!NAMES[@]}"; do
+    case "${RESULTS[$i]}" in PASS) color=$GREEN ;; FAIL) color=$RED ;; *) color=$YELLOW ;; esac
+    printf '  %-38s %s%-9s%s %-7s %s\n' "${NAMES[$i]}" "$color" "${RESULTS[$i]}" "$RESET" "${TIMES[$i]}" "${DETAILS[$i]}"
+done
+echo
+
+# totals of "Passed!/Failed!" lines of dotnet test, e.g. "Passed!  - Failed: 0, Passed: 4, Skipped: 0, Total: 4"
+count() { # <log> <field>
+    [ -f "$1" ] && sed -n "s/.*$2: *\\([0-9][0-9]*\\).*/\\1/p" "$1" | awk '{s += $1} END {print s + 0}' || echo 0
+}
+coverage_of() { python3 scripts/ci-check-coverage.py 0 $(reports "$1") 2>/dev/null | sed -n 's/^Line coverage: \(.*\) (threshold.*/\1/p'; }
+
+if [ -f "$LOGS/unit.log" ]; then
+    info "## TESTS ----------------------------------------------------------------------"
+    printf '  %-20s %7s %7s %7s %7s\n' "" total passed failed skipped
+    for kind in unit integration; do
+        [ -f "$LOGS/$kind.log" ] || continue
+        printf '  %-20s %7s %7s %7s %7s\n' "$kind" "$(count "$LOGS/$kind.log" Total)" "$(count "$LOGS/$kind.log" Passed)" "$(count "$LOGS/$kind.log" Failed)" "$(count "$LOGS/$kind.log" Skipped)"
+    done
+    echo
+fi
+if [ "$UNIT_OK" = true ]; then
+    info "## LINE COVERAGE (src) ---------------------------------------------------------"
+    echo "  unit tests only        $(coverage_of unit)"
+    [ "$INTEGRATION_OK" = true ] && echo "  integration tests only $(coverage_of integration)"
+    if [ "$INTEGRATION_OK" = true ]; then
+        merged="$(python3 scripts/ci-check-coverage.py 0 $(reports unit) $(reports integration) | sed -n 's/^Line coverage: \(.*\) (threshold.*/\1/p')"
+        echo "  merged (what CI gates) $merged   threshold ${THRESHOLD} %"
+    fi
+    echo
+fi
+
+for i in "${!RESULTS[@]}"; do
+    if [ "${RESULTS[$i]}" = FAIL ]; then
+        info "## ${NAMES[$i]}: last lines of ${DETAILS[$i]}"
+        # the lines that say what broke (errors, failed tests and their expected/actual values); the end of the log if there are none
+        clean="$(sed 's/\x1b\[[0-9;]*m//g' "$ROOT/${DETAILS[$i]}" | grep -v '^\s*$')"
+        picked="$(printf '%s\n' "$clean" | grep -E ' error |^ *Failed [A-Za-z]|Expected:|Actual:|Error Message|Assert\.|Unable to fix' | awk '!seen[$0]++' | head -n 12)"
+        printf '%s\n' "${picked:-$(printf '%s\n' "$clean" | tail -n 12)}" | cut -c1-200 | sed 's/^/    /'
+        echo
+    fi
+done
+
+if [ "$failed" -gt 0 ]; then
+    printf '%s%s%d stage(s) would fail in the CI. Fix them and run the detector again before you open the pull request.%s\n' "$BOLD" "$RED" "$failed" "$RESET"
+    code=1
+elif [ "$skipped" -gt 0 ]; then
+    printf '%s%sNothing failed, but %d stage(s) were skipped: this is not the full check. Run it without --skip-integration before you open the pull request.%s\n' "$BOLD" "$YELLOW" "$skipped" "$RESET"
+    code=0
+else
+    printf '%s%sEvery stage passed. The pull request is safe to open.%s\n' "$BOLD" "$GREEN" "$RESET"
+    code=0
+fi
+echo
+
+bar
+info "== DETECTOR FINISHED"
+bar; echo
+exit "$code"

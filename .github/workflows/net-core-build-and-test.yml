@@ -1,5 +1,7 @@
 name: '.NETCore Build & Test'
 
+# The same steps run on a developer's machine with scripts/detector/ (detector_mac.sh, detector_win.ps1): keep them in step.
+
 on:
     pull_request:
         branches: [ "dev" ]
