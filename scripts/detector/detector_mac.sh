@@ -16,6 +16,9 @@ case "${1:-}" in
     *) echo "Usage: $0 [--skip-integration]" >&2; exit 2 ;;
 esac
 
+# dotnet prints its messages in the language of the machine; the detector reads some of them, so ask for English
+export DOTNET_CLI_UI_LANGUAGE=en VSLANG=1033
+
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 OUT="$ROOT/TestResults/detector"
 LOGS="$OUT/logs"
@@ -76,11 +79,11 @@ format_cs() {
 }
 run_unit() {
     ./scripts/run-tests.sh unit --no-build --configuration Release --verbosity minimal \
-        --settings test/coverlet.runsettings --collect:"XPlat Code Coverage" --results-directory "$OUT/unit"
+        --settings test/coverlet.runsettings --collect:"XPlat Code Coverage" --logger trx --results-directory "$OUT/unit"
 }
 run_integration() {
     ./scripts/run-tests.sh integration --no-build --configuration Release --verbosity minimal \
-        --settings test/coverlet.runsettings --collect:"XPlat Code Coverage" --results-directory "$OUT/integration"
+        --settings test/coverlet.runsettings --collect:"XPlat Code Coverage" --logger trx --results-directory "$OUT/integration"
 }
 reports() { find "$OUT/$1" -name coverage.cobertura.xml -not -path '*/In/*' 2>/dev/null; }
 gate() { python3 scripts/ci-check-coverage.py "$THRESHOLD" $(reports unit) $(reports integration); }
@@ -142,9 +145,19 @@ for i in "${!NAMES[@]}"; do
 done
 echo
 
-# totals of "Passed!/Failed!" lines of dotnet test, e.g. "Passed!  - Failed: 0, Passed: 4, Skipped: 0, Total: 4"
-count() { # <log> <field>
-    [ -f "$1" ] && sed -n "s/.*$2: *\\([0-9][0-9]*\\).*/\\1/p" "$1" | awk '{s += $1} END {print s + 0}' || echo 0
+# totals from the .trx result files, which are the same in every language
+counts() { # <unit|integration> -> "total passed failed skipped"
+    python3 - "$OUT/$1" <<'PY'
+import glob, sys
+import xml.etree.ElementTree as ET
+total = passed = failed = skipped = 0
+for path in glob.glob(sys.argv[1] + "/**/*.trx", recursive=True):
+    root = ET.parse(path).getroot()
+    counters = root.find(".//{*}ResultSummary/{*}Counters")
+    total += int(counters.get("total")); passed += int(counters.get("passed"))
+    failed += int(counters.get("failed")); skipped += int(counters.get("notExecuted"))
+print(total, passed, failed, skipped)
+PY
 }
 coverage_of() { python3 scripts/ci-check-coverage.py 0 $(reports "$1") 2>/dev/null | sed -n 's/^Line coverage: \(.*\) (threshold.*/\1/p'; }
 
@@ -153,7 +166,8 @@ if [ -f "$LOGS/unit.log" ]; then
     printf '  %-20s %7s %7s %7s %7s\n' "" total passed failed skipped
     for kind in unit integration; do
         [ -f "$LOGS/$kind.log" ] || continue
-        printf '  %-20s %7s %7s %7s %7s\n' "$kind" "$(count "$LOGS/$kind.log" Total)" "$(count "$LOGS/$kind.log" Passed)" "$(count "$LOGS/$kind.log" Failed)" "$(count "$LOGS/$kind.log" Skipped)"
+        read -r total passed failed_tests skipped_tests <<< "$(counts "$kind")"
+        printf '  %-20s %7s %7s %7s %7s\n' "$kind" "$total" "$passed" "$failed_tests" "$skipped_tests"
     done
     echo
 fi

@@ -69,6 +69,9 @@ First a line per stage as it finishes, then the table:
 - **`--skip-integration`:** nothing fails, but the integration stage and the coverage gate show SKIPPED and the closing line says that
   this is not the full check. Run the full check once before the pull request.
 
+The scripts ask dotnet for English messages and read the test counts from the `.trx` result files, so the output is the same on a
+machine whose language is not English.
+
 The results are written to `TestResults/detector/` (git ignores it); each run starts clean.
 
 ## Fixing what it finds

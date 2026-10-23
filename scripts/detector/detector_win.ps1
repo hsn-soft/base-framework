@@ -9,6 +9,10 @@
 param([switch]$SkipIntegration)
 $ErrorActionPreference = "Continue"
 
+# dotnet prints its messages in the language of the machine; the detector reads some of them, so ask for English
+$env:DOTNET_CLI_UI_LANGUAGE = "en"
+$env:VSLANG = "1033"
+
 $root = (Resolve-Path (Join-Path $PSScriptRoot "../..")).Path
 $out = Join-Path $root "TestResults/detector"
 $logs = Join-Path $out "logs"
@@ -106,7 +110,7 @@ function Get-Coverage
     & $python scripts/ci-check-coverage.py $Gate @Reports 2>$null
 }
 
-$testArgs = @("--no-build", "--configuration", "Release", "--verbosity", "minimal", "--settings", "test/coverlet.runsettings", "--collect:XPlat Code Coverage")
+$testArgs = @("--no-build", "--configuration", "Release", "--verbosity", "minimal", "--settings", "test/coverlet.runsettings", "--collect:XPlat Code Coverage", "--logger", "trx")
 
 Write-Info "## STAGES ----------------------------------------------------------------------"
 $restored = Invoke-Stage "restore" "Restore" { dotnet restore HsnSoft.Base.sln --verbosity minimal }
@@ -188,14 +192,18 @@ foreach ($row in $script:results)
 }
 " "
 
-function Get-Count
+# totals from the .trx result files, which are the same in every language
+function Get-Counts
 {
-    param([string]$Log, [string]$Field)
-    if (-not (Test-Path $Log)) { return 0 }
-    $sum = 0
-    foreach ($match in (Select-String -Path $Log -Pattern "${Field}:\s*(\d+)" -AllMatches))
+    param([string]$Kind)
+    $sum = [ordered]@{ total = 0; passed = 0; failed = 0; skipped = 0 }
+    foreach ($file in (Get-ChildItem (Join-Path $out $Kind) -Recurse -Filter *.trx -ErrorAction SilentlyContinue))
     {
-        $sum += [int]$match.Matches[-1].Groups[1].Value
+        $counters = ([xml](Get-Content $file.FullName -Raw)).TestRun.ResultSummary.Counters
+        $sum.total += [int]$counters.total
+        $sum.passed += [int]$counters.passed
+        $sum.failed += [int]$counters.failed
+        $sum.skipped += [int]$counters.notExecuted
     }
     return $sum
 }
@@ -208,7 +216,8 @@ if (Test-Path (Join-Path $logs "unit.log"))
     {
         $log = Join-Path $logs "$kind.log"
         if (-not (Test-Path $log)) { continue }
-        Write-Host ("  {0,-20} {1,7} {2,7} {3,7} {4,7}" -f $kind, (Get-Count $log "Total"), (Get-Count $log "Passed"), (Get-Count $log "Failed"), (Get-Count $log "Skipped"))
+        $c = Get-Counts $kind
+        Write-Host ("  {0,-20} {1,7} {2,7} {3,7} {4,7}" -f $kind, $c.total, $c.passed, $c.failed, $c.skipped)
     }
     " "
 }
