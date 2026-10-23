@@ -82,6 +82,34 @@
       "include": [
         "**/*.cs"
       ]
+    },
+    {
+      "name": "build",
+      "group": "pre-push",
+      "command": "dotnet",
+      "args": [
+        "build",
+        "HsnSoft.Base.sln",
+        "--configuration",
+        "Release",
+        "--verbosity",
+        "minimal",
+        "-p:TreatWarningsAsErrors=true"
+      ]
+    },
+    {
+      "name": "unit-tests",
+      "group": "pre-push",
+      "command": "bash",
+      "args": [
+        "scripts/run-tests.sh",
+        "unit",
+        "--configuration",
+        "Release",
+        "--no-build",
+        "--verbosity",
+        "minimal"
+      ]
     }
   ]
 }

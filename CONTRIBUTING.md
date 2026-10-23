@@ -54,6 +54,11 @@ It is installed for you the first time you build or restore the solution (`dotne
 install it by hand run those two commands in the repository root. A commit takes a few seconds longer because of it. Set `HUSKY=0`
 to skip it in an emergency; CI runs the same checks and fails the pull request anyway.
 
+**Before every push** a second hook builds the solution in `Release` with warnings as errors (as CI does) and runs the unit tests;
+the push is refused if either fails, so a broken branch never reaches the remote. It takes about 30 seconds. The integration tests
+are not part of it (they need Docker and take longer); CI runs them on the pull request. `HUSKY=0 git push` skips the hook when you
+really must, CI will still fail the pull request.
+
 To format everything yourself:
 
 ```bash
