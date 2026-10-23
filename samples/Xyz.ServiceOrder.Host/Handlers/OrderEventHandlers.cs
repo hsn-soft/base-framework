@@ -8,7 +8,7 @@ using Xyz.Shared.Events;
 namespace Xyz.ServiceOrder.Host.Handlers;
 
 // The results of the other services come back as events; each handler moves the order one step forward.
-// A concurrent update of the same order throws DbUpdateConcurrencyException; the subscriber simply retries the handler.
+// A concurrent update of the same order throws DbUpdateConcurrencyException; the host sets RabbitMq:EventBus:MaxHandlerAttempts so the handler is tried again.
 
 public sealed class StockReservedHandler(OrderDbContext db, ILogger<StockReservedHandler> logger) : IIntegrationEventHandler<StockReserved>
 {

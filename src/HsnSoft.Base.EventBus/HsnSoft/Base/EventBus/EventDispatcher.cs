@@ -52,6 +52,8 @@ public sealed partial class EventDispatcher(
             ["CorrelationId"] = envelope.CorrelationId,
             ["MessageId"] = envelope.MessageId,
             ["EventName"] = trimmedEventName,
+            ["Producer"] = envelope.Producer,
+            ["HopLevel"] = envelope.HopLevel,
         };
 
         using IDisposable? logScope = _logger.BeginScope(scopeValues);

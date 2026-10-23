@@ -57,6 +57,17 @@ builder.Logging.AddBaseSerilog(builder.Configuration, "OrderService"); // everyt
 
 `LogLevel` values may be Microsoft's (`Trace`, `Critical`) or Serilog's (`Verbose`, `Fatal`), in any case.
 
+## Facility: what a log is about
+
+`Facility` (and `CorrelationId`) are top-level fields of a log in Graylog, so `Facility:CONSUME_EVENT_ERROR` finds every handler that
+failed. A log gets its facility from the name of its event (`[LoggerMessage(EventName = "CONSUME_EVENT_SUCCESS")]`, only names written
+in capitals count: the platform's own `ExecutedEndpoint` is not a facility) or from the `Facility` of a structured log written with
+`IFrameworkLogger` (`LogHelper.Generate(message, reference, facility: "ORDER_IMPORTED", correlationId)`); the rest of such a log
+arrives as `Log_Message`, `Log_Reference_...`. The event bus facilities are the ones the production services already search for:
+`PRODUCE_EVENT_STARTED`, `PRODUCE_EVENT_COMPLETED`, `PRODUCE_EVENT_ERROR`, `CONSUME_EVENT_SUCCESS`, `CONSUME_EVENT_RETRY`,
+`CONSUME_EVENT_ERROR`. A consume log also carries `Handler`, `EventName`, `MessageId`, `CorrelationId`, `Producer`, `HopLevel` and
+`ElapsedMs`.
+
 ## What the framework packages log
 
 Categories are the class names (`HsnSoft.Base.EventBus.RabbitMQ.RabbitMqConsumer`), so a category prefix controls a whole package

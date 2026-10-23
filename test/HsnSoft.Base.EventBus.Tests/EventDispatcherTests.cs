@@ -90,6 +90,8 @@ public sealed class EventDispatcherTests : IDisposable
     {
         (EventDispatcher dispatcher, _, ListLogger<EventDispatcher> logger) = CreateRecording();
         MessageEnvelope<SampleEto> envelope = NewEnvelope();
+        envelope.Producer = "OrderService";
+        envelope.HopLevel = 2;
 
         await dispatcher.DispatchAsync("Sample", typeof(SampleEto), envelope);
 
@@ -97,6 +99,8 @@ public sealed class EventDispatcherTests : IDisposable
         Assert.Equal("corr", scope["CorrelationId"]);
         Assert.Equal(envelope.MessageId, scope["MessageId"]);
         Assert.Equal("Sample", scope["EventName"]);
+        Assert.Equal(envelope.Producer, scope["Producer"]);
+        Assert.Equal(envelope.HopLevel, scope["HopLevel"]);
     }
 
     [Fact]
