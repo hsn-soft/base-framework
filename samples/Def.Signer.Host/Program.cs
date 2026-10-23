@@ -10,8 +10,10 @@ using HsnSoft.Base.EntityFrameworkCore;
 using HsnSoft.Base.EntityFrameworkCore.SqlServer;
 using HsnSoft.Base.EventBus;
 using HsnSoft.Base.EventBus.Kafka;
+using HsnSoft.Base.Logging.Serilog;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+builder.Logging.AddBaseSerilog(builder.Configuration, "Def.Signer");
 
 // One host, so it picks its pieces itself: Redis (API keys), SQL Server (metadata), MinIO (documents), Kafka (the queue).
 builder.Services

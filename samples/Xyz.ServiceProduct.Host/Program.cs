@@ -9,6 +9,7 @@ using Xyz.Shared;
 using Xyz.Shared.Events;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+builder.Logging.AddXyzLogging(builder.Configuration, "Xyz.ServiceProduct");
 
 builder.Services
     .AddXyzApi(builder.Configuration)

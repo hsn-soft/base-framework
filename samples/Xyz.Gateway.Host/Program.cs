@@ -2,6 +2,7 @@ using Xyz.Shared;
 using Xyz.Shared.RateLimiting;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+builder.Logging.AddXyzLogging(builder.Configuration, "Xyz.Gateway");
 
 builder.Services
     .AddXyzApi(builder.Configuration)

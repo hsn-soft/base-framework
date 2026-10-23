@@ -3,6 +3,7 @@ using Xyz.AuthServer.Host.Services;
 using Xyz.Shared;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+builder.Logging.AddXyzLogging(builder.Configuration, "Xyz.AuthServer");
 
 builder.Services
     .AddXyzApi(builder.Configuration)

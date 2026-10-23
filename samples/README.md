@@ -75,6 +75,19 @@ builder.Services
 app.UseXyzApi();   // exceptions, authentication, authorization, health, in that order
 ```
 
+## Logging
+
+Every host logs through `HsnSoft.Base.Logging.Serilog` (`FrameworkLogger` section of its `appsettings.json`, see
+[docs/Logging.md](../docs/Logging.md)). The console gets everything from Debug up; Information and above go to
+**Graylog** when `FrameworkLogger:IsGrayLogActive` is `true` (GELF HTTP input `127.0.0.1:12202`, the local `infra-graylog`),
+otherwise to `Logs/<service>.txt` in the folder the host runs from. Debug never leaves the console. Every log carries
+`Solution` (`Xyz`, `Agt`, `Def`: the first part of the assembly name), `Assembly` and `LoggerName`, so in Graylog
+`Solution:Xyz` finds the whole Xyz system.
+
+```bash
+FrameworkLogger__IsGrayLogActive=true ./samples/run-all.sh      # without the variable: log files
+```
+
 ## Run it
 
 The services use the local infrastructure on its default ports: PostgreSQL `5432` (`postgres`/`postgres`),

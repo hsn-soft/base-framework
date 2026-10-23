@@ -1,9 +1,11 @@
 using HsnSoft.Base.AspNetCore;
 using HsnSoft.Base.Authentication;
 using HsnSoft.Base.Caching.StackExchangeRedis;
+using HsnSoft.Base.Logging.Serilog;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Xyz.Shared.RateLimiting;
 
 namespace Xyz.Shared;
@@ -24,6 +26,13 @@ public static class ServiceRegister
             .AddBaseHealthChecks()
             .AddBaseJwtAuthentication(configuration)
             .AddBaseRedis(configuration);
+
+    /// <summary>
+    /// Every Xyz service logs the same way: the console gets everything, Graylog (or the log file) gets Information and above,
+    /// and every log carries <c>Solution = Xyz</c> (the first part of the assembly name) so it can be found in Graylog.
+    /// </summary>
+    public static ILoggingBuilder AddXyzLogging(this ILoggingBuilder logging, IConfiguration configuration, string serviceName)
+        => logging.AddBaseSerilog(configuration, serviceName);
 
     /// <summary>Reads the <c>RateLimit</c> section for <see cref="RedisRateLimitMiddleware"/>; use it with <c>UseXyzApi</c>'s hook.</summary>
     public static IServiceCollection AddXyzRateLimiting(this IServiceCollection services, IConfiguration configuration)

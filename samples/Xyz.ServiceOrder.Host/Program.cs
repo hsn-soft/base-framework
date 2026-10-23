@@ -9,6 +9,7 @@ using Xyz.Shared;
 using Xyz.Shared.Events;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+builder.Logging.AddXyzLogging(builder.Configuration, "Xyz.ServiceOrder");
 
 // Everything infrastructural comes from HsnSoft.Base.*; the service only says what it uses.
 builder.Services

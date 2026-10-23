@@ -1,9 +1,11 @@
 using Agt.Scheduler.Host;
 using HsnSoft.Base.AspNetCore;
 using HsnSoft.Base.Hosting;
+using HsnSoft.Base.Logging.Serilog;
 using HsnSoft.Base.MongoDB;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+builder.Logging.AddBaseSerilog(builder.Configuration, "Agt.Scheduler");
 
 builder.Services
     .AddBaseHealthChecks()
