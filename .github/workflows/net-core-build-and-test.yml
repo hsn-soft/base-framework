@@ -57,7 +57,7 @@ jobs:
                     dotnet format style HsnSoft.Base.sln --verify-no-changes --severity info --no-restore
 
             -   name: Format Check (JSON)
-                run: dotnet run scripts/husky-format-json.cs -- --all --check
+                run: dotnet run scripts/check-json-format.cs -- --all --check
 
             -   name: Build Solution
                 run: dotnet build --no-restore --verbosity minimal --configuration Release
