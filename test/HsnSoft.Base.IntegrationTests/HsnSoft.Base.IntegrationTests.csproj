@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!--
+        Runs the framework's infrastructure packages against the real services, started in Docker by Testcontainers:
+        scripts/run-tests.sh integration (needs a running Docker). One project for all of them, one folder per capability.
+    -->
+
+    <Import Project="..\..\common.test.props" />
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.13" />
+        <PackageReference Include="Testcontainers.Kafka" Version="4.16.0" />
+        <PackageReference Include="Testcontainers.Minio" Version="4.15.0" />
+        <PackageReference Include="Testcontainers.MongoDb" Version="4.16.0" />
+        <PackageReference Include="Testcontainers.MsSql" Version="4.16.0" />
+        <PackageReference Include="Testcontainers.PostgreSql" Version="4.16.0" />
+        <PackageReference Include="Testcontainers.RabbitMq" Version="4.16.0" />
+        <PackageReference Include="Testcontainers.Redis" Version="4.16.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Using Include="Microsoft.Extensions.Hosting" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\src\HsnSoft.Base.BlobStoring.Minio\HsnSoft.Base.BlobStoring.Minio.csproj" />
+        <ProjectReference Include="..\..\src\HsnSoft.Base.Caching.StackExchangeRedis\HsnSoft.Base.Caching.StackExchangeRedis.csproj" />
+        <ProjectReference Include="..\..\src\HsnSoft.Base.EntityFrameworkCore.PostgreSql\HsnSoft.Base.EntityFrameworkCore.PostgreSql.csproj" />
+        <ProjectReference Include="..\..\src\HsnSoft.Base.EntityFrameworkCore.SqlServer\HsnSoft.Base.EntityFrameworkCore.SqlServer.csproj" />
+        <ProjectReference Include="..\..\src\HsnSoft.Base.EventBus.Kafka\HsnSoft.Base.EventBus.Kafka.csproj" />
+        <ProjectReference Include="..\..\src\HsnSoft.Base.EventBus.RabbitMQ\HsnSoft.Base.EventBus.RabbitMQ.csproj" />
+        <ProjectReference Include="..\..\src\HsnSoft.Base.MongoDB\HsnSoft.Base.MongoDB.csproj" />
+    </ItemGroup>
+
+</Project>

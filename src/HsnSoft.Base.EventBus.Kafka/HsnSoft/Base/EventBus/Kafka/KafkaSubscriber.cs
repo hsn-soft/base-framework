@@ -48,15 +48,10 @@ public sealed partial class KafkaSubscriber : BackgroundService
         var byTopic = _subscriptions.ToDictionary(subscription => KafkaTopology.TopicFor(_options, subscription.EventType));
         var deadLetterTopic = KafkaTopology.DeadLetterTopic(_options);
 
-        try
-        {
-            await KafkaTopology.EnsureTopicsAsync(_options, byTopic.Keys.Append(deadLetterTopic)).ConfigureAwait(false);
-            await Task.Run(() => ConsumeLoopAsync(byTopic, deadLetterTopic, stoppingToken), stoppingToken).ConfigureAwait(false);
-        }
-        catch (OperationCanceledException)
-        {
-            // the host is shutting down
-        }
+        await KafkaTopology.EnsureTopicsAsync(_options, byTopic.Keys.Append(deadLetterTopic)).ConfigureAwait(false);
+
+        // consuming blocks a thread, so it must not run on the one that started the host
+        await Task.Run(() => ConsumeLoopAsync(byTopic, deadLetterTopic, stoppingToken), CancellationToken.None).ConfigureAwait(false);
     }
 
     private async Task ConsumeLoopAsync(Dictionary<string, EventSubscription> byTopic, string deadLetterTopic, CancellationToken stoppingToken)
@@ -76,7 +71,7 @@ public sealed partial class KafkaSubscriber : BackgroundService
 
         try
         {
-            while (!stoppingToken.IsCancellationRequested)
+            while (true)
             {
                 var result = consumer.Consume(stoppingToken);
                 try
@@ -96,6 +91,10 @@ public sealed partial class KafkaSubscriber : BackgroundService
 
                 consumer.Commit(result);
             }
+        }
+        catch (OperationCanceledException)
+        {
+            // the host is shutting down
         }
         finally
         {

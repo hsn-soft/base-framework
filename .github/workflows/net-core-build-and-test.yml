@@ -44,6 +44,9 @@ jobs:
                     restore-keys: |
                         ${{ runner.os }}-nuget
 
+            -   name: Every Package Has Unit Tests
+                run: ./scripts/check-test-projects.sh
+
             -   name: Restore Dependencies
                 run: dotnet restore --verbosity minimal --configfile NuGet.Config
 
@@ -59,9 +62,6 @@ jobs:
                     --results-directory ./TestResults/unit
                     --logger "trx;LogFileName=unit.trx"
 
-            -   name: Coverage Gate
-                run: python3 scripts/check-coverage.py "$COVERAGE_THRESHOLD" $(find TestResults/unit -name 'coverage.cobertura.xml')
-
             -   name: Upload Test Results
                 if: always()
                 uses: actions/upload-artifact@v4
@@ -72,7 +72,6 @@ jobs:
     integration-tests:
         name: 'Integration Test JOB'
         runs-on: ubuntu-latest   # Docker is available; Testcontainers starts the services the tests need.
-        needs: unit-tests
 
         steps:
             -   name: Checkout Repository
@@ -91,11 +90,12 @@ jobs:
                     restore-keys: |
                         ${{ runner.os }}-nuget
 
-            # Does nothing (and succeeds) while the repository has no *.IntegrationTests project.
-            -   name: Integration Tests
+            -   name: Integration Tests With Coverage
                 run: >
                     ./scripts/run-tests.sh integration
                     --configuration Release --verbosity minimal
+                    --settings test/coverlet.runsettings
+                    --collect:"XPlat Code Coverage"
                     --logger "trx;LogFileName=integration.trx"
                     --results-directory ./TestResults/integration
 
@@ -106,3 +106,22 @@ jobs:
                     name: integration-test-results
                     path: TestResults/integration
                     if-no-files-found: ignore
+
+    coverage-gate:
+        name: 'Coverage Gate JOB'
+        runs-on: ubuntu-latest
+        needs: [ unit-tests, integration-tests ]
+
+        steps:
+            -   name: Checkout Repository
+                uses: actions/checkout@v4
+
+            -   name: Download Test Results
+                uses: actions/download-artifact@v4
+                with:
+                    pattern: '*-test-results'
+                    path: TestResults
+
+            # A line counts as covered when the unit or the integration tests ran it (the broker/database code is only reachable with the real service).
+            -   name: Coverage Gate
+                run: python3 scripts/check-coverage.py "$COVERAGE_THRESHOLD" $(find TestResults -name 'coverage.cobertura.xml')

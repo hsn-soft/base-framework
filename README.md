@@ -36,6 +36,21 @@ Abstractions and their implementations are separate packages (`EventBus` / `Even
 `BlobStoring.Minio`), so a product picks the broker or the storage per service and can change it with one registration. A package never depends on a sibling it does not need. Anything only one product needs (the Xyz gateway's rate
 limit, for example) is that product's shared code, not a framework package.
 
+## Tests
+
+Every package has a unit test project (`test/<Package>.Tests`; `scripts/check-test-projects.sh` fails the build when one is missing).
+The code that only runs against a real service (brokers, databases, MinIO) is tested by `test/HsnSoft.Base.IntegrationTests`, which
+starts the services in Docker with Testcontainers.
+
+```bash
+./scripts/run-tests.sh unit          # fast, no Docker
+./scripts/run-tests.sh integration   # needs a running Docker
+```
+
+CI runs both and merges their coverage: a line counts as covered when either kind of test ran it, and the build fails below
+`COVERAGE_THRESHOLD` (99 %) of the lines of `src`. Add a test project for every new package, and an integration test for every
+new provider.
+
 ## The product decides the composition
 
 The framework offers building blocks; the product's shared library chooses which ones its services use and in which order they

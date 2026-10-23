@@ -77,14 +77,8 @@ public sealed partial class RabbitMqSubscriber : BackgroundService
                 LogListening(_logger, _eventBusOptions.ServiceName, eventName, queue);
             }
 
-            try
-            {
-                await Task.Delay(Timeout.Infinite, stoppingToken).ConfigureAwait(false);
-            }
-            catch (OperationCanceledException)
-            {
-                // the host is shutting down
-            }
+            // hold the channel (and its consumers) open until the host shuts down
+            await Task.Delay(Timeout.Infinite, stoppingToken).ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
         }
     }
 
