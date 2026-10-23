@@ -124,3 +124,25 @@ info: Agt.Scheduler.Host.RecentRecordsWorker
 ```
 
 The documents must carry a `createdAt` date; the field name is part of the contract with the writers.
+
+## Def.Signer.Host: a monolith web api
+
+A third product ("Def"): one host that answers fast and does the slow work later. Packages: `AspNetCore`, `AspNetCore.WebApi`,
+`Caching.StackExchangeRedis`, `EventBus.Kafka`, `BlobStoring.Minio`, `EntityFrameworkCore.SqlServer`. There is no `Def.Shared`: one
+host has nothing to share, so it composes the framework in its own `Program.cs`.
+
+| Step | What happens |
+|---|---|
+| `POST /documents` | The `X-Api-Key` header is looked up in Redis (`def:apikey:{sha256 of the key}` -> owner; the keys are never stored). The request is published to Kafka (`def.SignRequested`) and answered with `202` and a request id. |
+| Consumer | `SignRequestedHandler` runs on the Kafka consumer group `signer`, takes `Signer:ProcessingDelay` (2 s, standing in for slow work), builds a JSON document and saves it to MinIO (`signer-documents/{owner}/{requestId}.json`). |
+| Metadata | The file's name, size and SHA-256 go to SQL Server (`documents`, unique on the request id, so a re-delivered message changes nothing). |
+| `GET /documents/{id}` | `404` while queued, then the metadata. `GET /documents/{id}/content` streams the JSON from MinIO. A caller only sees its own documents. |
+
+```bash
+dotnet run --project samples/Def.Signer.Host      # http://localhost:5300, sample keys: acme-sample-api-key, globex-sample-api-key
+curl -X POST localhost:5300/documents -H 'X-Api-Key: acme-sample-api-key' -H 'Content-Type: application/json' \
+     -d '{"title":"Contract","content":"hello"}'
+curl localhost:5300/documents/<requestId> -H 'X-Api-Key: acme-sample-api-key'
+```
+
+SQL Server needs about 2 GB of memory; a container limited to 1 GB restarts in a loop (error 17300 in its log).

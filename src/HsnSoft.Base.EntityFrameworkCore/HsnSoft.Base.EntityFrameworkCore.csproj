@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <Import Project="..\..\common.props" />
+
+    <PropertyGroup>
+        <AssemblyName>HsnSoft.Base.EntityFrameworkCore</AssemblyName>
+        <PackageId>HsnSoft.Base.EntityFrameworkCore</PackageId>
+        <RootNamespace />
+        <Title>HsnSoft Base Framework EF Core</Title>
+        <Description>What every HsnSoft EF Core provider shares: DbContext health check and startup schema creation. Add a provider package (SqlServer, PostgreSql) for the database.</Description>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageTags>HsnSoft Base Framework EntityFrameworkCore</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="..\..\README.md" Pack="true" Visible="false" PackagePath="README.md" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="$(MicrosoftEntityFrameworkCorePackageVersion)" />
+        <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="$(MicrosoftAspNetCorePackageVersion)" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\HsnSoft.Base.Core\HsnSoft.Base.Core.csproj" />
+    </ItemGroup>
+
+</Project>

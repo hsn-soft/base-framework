@@ -7,7 +7,7 @@
         <PackageId>HsnSoft.Base.EntityFrameworkCore.PostgreSql</PackageId>
         <RootNamespace />
         <Title>HsnSoft Base Framework EF Core PostgreSQL</Title>
-        <Description>PostgreSQL for HsnSoft services: DbContext registration with retries, health check and startup schema creation.</Description>
+        <Description>PostgreSQL for HsnSoft services: DbContext registration with retries and a health check.</Description>
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <PackageTags>HsnSoft Base Framework EntityFrameworkCore PostgreSQL</PackageTags>
     </PropertyGroup>
@@ -17,14 +17,12 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="$(MicrosoftEntityFrameworkCorePackageVersion)" />
         <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="$(MicrosoftAspNetCorePackageVersion)" />
-        <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="$(MicrosoftAspNetCorePackageVersion)" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\HsnSoft.Base.Core\HsnSoft.Base.Core.csproj" />
+        <ProjectReference Include="..\HsnSoft.Base.EntityFrameworkCore\HsnSoft.Base.EntityFrameworkCore.csproj" />
     </ItemGroup>
 
 </Project>

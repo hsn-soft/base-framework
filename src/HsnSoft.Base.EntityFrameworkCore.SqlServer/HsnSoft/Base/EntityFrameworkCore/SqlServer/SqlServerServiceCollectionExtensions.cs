@@ -1,0 +1,29 @@
+using System;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace HsnSoft.Base.EntityFrameworkCore.SqlServer;
+
+public static class SqlServerServiceCollectionExtensions
+{
+    /// <summary>
+    /// Registers a SQL Server <see cref="DbContext"/> that retries transient failures, and a readiness health check.
+    /// </summary>
+    /// <typeparam name="TContext">The service's DbContext.</typeparam>
+    /// <param name="services">The service collection.</param>
+    /// <param name="configuration">Holds <c>ConnectionStrings:{connectionName}</c>.</param>
+    /// <param name="connectionName">The name of the connection string.</param>
+    public static IServiceCollection AddBaseSqlServer<TContext>(this IServiceCollection services, IConfiguration configuration, string connectionName = "SqlServer")
+        where TContext : DbContext
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(configuration);
+
+        var connectionString = configuration.GetConnectionString(connectionName)
+                               ?? throw new InvalidOperationException($"ConnectionStrings:{connectionName} is required.");
+
+        services.AddDbContext<TContext>(options => options.UseSqlServer(connectionString, sql => sql.EnableRetryOnFailure()));
+        return services.AddDbContextHealthCheck<TContext>("sqlserver");
+    }
+}

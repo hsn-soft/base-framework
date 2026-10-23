@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <Import Project="..\..\common.props" />
+
+    <PropertyGroup>
+        <AssemblyName>HsnSoft.Base.EntityFrameworkCore.SqlServer</AssemblyName>
+        <PackageId>HsnSoft.Base.EntityFrameworkCore.SqlServer</PackageId>
+        <RootNamespace />
+        <Title>HsnSoft Base Framework EF Core SQL Server</Title>
+        <Description>SQL Server for HsnSoft services: DbContext registration with retries and a health check.</Description>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageTags>HsnSoft Base Framework EntityFrameworkCore SqlServer MSSQL</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="..\..\README.md" Pack="true" Visible="false" PackagePath="README.md" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="$(MicrosoftEntityFrameworkCorePackageVersion)" />
+        <!-- Microsoft.Data.SqlClient still pulls a vulnerable 9.0.x of this; raise the floor until it moves on -->
+        <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="$(MicrosoftAspNetCorePackageVersion)" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\HsnSoft.Base.EntityFrameworkCore\HsnSoft.Base.EntityFrameworkCore.csproj" />
+    </ItemGroup>
+
+</Project>

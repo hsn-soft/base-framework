@@ -1,3 +1,4 @@
+using HsnSoft.Base.EntityFrameworkCore;
 using HsnSoft.Base.EntityFrameworkCore.PostgreSql;
 using HsnSoft.Base.EventBus;
 using HsnSoft.Base.EventBus.RabbitMQ;

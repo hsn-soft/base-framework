@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
-namespace HsnSoft.Base.EntityFrameworkCore.PostgreSql;
+namespace HsnSoft.Base.EntityFrameworkCore;
 
 internal sealed class DbContextHealthCheck<TContext> : IHealthCheck
     where TContext : DbContext

@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <Import Project="..\..\common.props" />
+
+    <PropertyGroup>
+        <AssemblyName>HsnSoft.Base.BlobStoring</AssemblyName>
+        <PackageId>HsnSoft.Base.BlobStoring</PackageId>
+        <RootNamespace />
+        <Title>HsnSoft Base Framework Blob Storing</Title>
+        <Description>Provider-independent object storage abstraction (IBlobStore). Add a provider package (Minio) for the storage.</Description>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageTags>HsnSoft Base Framework BlobStoring</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="..\..\README.md" Pack="true" Visible="false" PackagePath="README.md" />
+    </ItemGroup>
+
+</Project>

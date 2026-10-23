@@ -21,14 +21,19 @@ JWT, OpenAPI, a broker or a cache.
 | `HsnSoft.Base.AspNetCore` | Health endpoints (`/health/live`, `/health/ready`) | Core |
 | `HsnSoft.Base.AspNetCore.WebApi` | Problem-details errors, global exception handler, the OpenAPI document | Core |
 | `HsnSoft.Base.EventBus` | Event bus contracts, dispatcher with retry, wire format | Core |
-| `HsnSoft.Base.EventBus.RabbitMQ` | RabbitMQ broker (a Kafka package would sit next to it) | EventBus |
+| `HsnSoft.Base.EventBus.RabbitMQ` | RabbitMQ broker | EventBus |
+| `HsnSoft.Base.EventBus.Kafka` | Kafka broker: producer, consumer group, dead-letter topic | EventBus |
 | `HsnSoft.Base.Caching.StackExchangeRedis` | `IDistributedCache`, connection, health check | Core |
-| `HsnSoft.Base.EntityFrameworkCore.PostgreSql` | PostgreSQL `DbContext` with retries and health check | Core |
+| `HsnSoft.Base.EntityFrameworkCore` | What the EF Core providers share: `DbContext` health check, startup schema creation | Core |
+| `HsnSoft.Base.EntityFrameworkCore.PostgreSql` | PostgreSQL `DbContext` with retries | EntityFrameworkCore |
+| `HsnSoft.Base.EntityFrameworkCore.SqlServer` | SQL Server `DbContext` with retries | EntityFrameworkCore |
+| `HsnSoft.Base.BlobStoring` | `IBlobStore`: save, read and delete files in containers | - |
+| `HsnSoft.Base.BlobStoring.Minio` | MinIO (S3) implementation of `IBlobStore`; Azure would be a sibling package | BlobStoring, Core |
 | `HsnSoft.Base.MongoDB` | `IMongoDatabase` registration and health check | Core |
 | `HsnSoft.Base` | Name holder that references `HsnSoft.Base.Core` | Core |
 
-The broker abstraction and its implementations are separate packages (`EventBus` / `EventBus.RabbitMQ`), so a product picks the
-broker per service. A package never depends on a sibling it does not need. Anything only one product needs (the Xyz gateway's rate
+Abstractions and their implementations are separate packages (`EventBus` / `EventBus.RabbitMQ` / `EventBus.Kafka`, `BlobStoring` /
+`BlobStoring.Minio`), so a product picks the broker or the storage per service and can change it with one registration. A package never depends on a sibling it does not need. Anything only one product needs (the Xyz gateway's rate
 limit, for example) is that product's shared code, not a framework package.
 
 ## The product decides the composition
