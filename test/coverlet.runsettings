@@ -9,7 +9,7 @@
                     <Include>[HsnSoft.Base*]*</Include>
                     <Exclude>[*Tests]*</Exclude>
                     <ExcludeByFile>**/obj/**,**/*.g.cs,**/Migrations/**,**/*Tests.cs,**/tmp/**,**/Tmp/**</ExcludeByFile>
-                    <ExcludeByAttribute>GeneratedCodeAttribute,CompilerGeneratedAttribute,ExcludeFromCodeCoverageAttribute</ExcludeByAttribute>
+                    <ExcludeByAttribute>GeneratedCodeAttribute,ExcludeFromCodeCoverageAttribute</ExcludeByAttribute>
                 </Configuration>
             </DataCollector>
         </DataCollectors>

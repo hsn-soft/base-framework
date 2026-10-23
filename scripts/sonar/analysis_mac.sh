@@ -82,7 +82,7 @@ dotnet restore --force --verbosity minimal
 echo
 
 info "## DOTNET BUILD ----------------------------------------------------------------"
-dotnet build --no-restore --no-incremental --verbosity minimal -c Release
+dotnet build --no-restore --no-incremental --verbosity minimal -c Release -p:TreatWarningsAsErrors=true
 echo
 
 info "## DOTNET TEST -----------------------------------------------------------------"

@@ -56,6 +56,22 @@ A full run takes about 3-4 minutes. When it ends it prints the dashboard link, e
 `http://localhost:8031/dashboard?id=hsnsoft-base-framework`. SonarQube processes the uploaded report in the background, so the
 numbers may appear a few seconds after the script finishes.
 
+## Sonar and CI show the same results
+
+Sonar and the CI run the same tests with the same settings (`test/coverlet.runsettings`) in `Release`, with warnings as errors, so the
+numbers match:
+
+| What | CI (GitHub Actions) | Sonar dashboard |
+| --- | --- | --- |
+| Build | `dotnet build`, warnings are errors | the script builds the same way and stops on a warning |
+| Tests | `run-tests.sh unit` and `integration` | all test projects, unit and integration |
+| Passed tests | the sum over the test jobs | *Unit Tests* in Measures (`tests`) |
+| Lines to cover | `ci-check-coverage.py` line count | *Lines to cover* |
+| Line coverage | `ci-check-coverage.py` (gate: 99 %) | *Line coverage* (not the overall *Coverage*) |
+
+When they differ, look at the test count first: a skipped Docker, a failed container start or a project missing from `test/` is
+the usual reason.
+
 ## What the scripts do
 
 Each step prints a blue `[INFO]` banner, so you can see where a run is:
@@ -90,7 +106,7 @@ sync when you change one.
 | `401` while uploading | The token was revoked or typed wrongly; generate a new one. |
 | An integration test fails to start a container | Not enough memory for Docker (SQL Server needs ~2 GB), or the image is still downloading. Re-run. MongoDB 8 does not start on Linux kernel 6.19+; the tests use `mongo:7.0`. |
 | The project is not on the dashboard yet | The report is still being processed; refresh after a few seconds. |
-| Coverage is a little lower than `scripts/ci-check-coverage.py` reports | Sonar counts the lines of auto-property initializers in the option classes that coverlet does not report. These are not real gaps. |
+| The *Coverage* figure is lower than the CI says | Sonar's *Coverage* counts lines **and** branches; the CI gate counts lines. Compare with *Line coverage* in Sonar (Measures > Coverage). |
 
 ## Starting from scratch
 

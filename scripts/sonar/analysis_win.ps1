@@ -108,7 +108,7 @@ dotnet restore --force --verbosity minimal
 Assert-LastExitCode "dotnet restore"
 " "
 Write-Info "## DOTNET BUILD ----------------------------------------------------------------"
-dotnet build --no-restore --no-incremental --verbosity minimal -c Release
+dotnet build --no-restore --no-incremental --verbosity minimal -c Release -p:TreatWarningsAsErrors=true
 Assert-LastExitCode "dotnet build"
 " "
 Write-Info "## DOTNET TEST -----------------------------------------------------------------"
