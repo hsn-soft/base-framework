@@ -1,4 +1,3 @@
-using Xyz.AuthServer.Host.Endpoints;
 using Xyz.AuthServer.Host.Services;
 using Xyz.Shared;
 
@@ -13,6 +12,6 @@ builder.Services
 WebApplication app = builder.Build();
 
 app.UseXyzApi();
-app.MapAuthEndpoints();
+app.MapControllers();
 
 await app.RunAsync();

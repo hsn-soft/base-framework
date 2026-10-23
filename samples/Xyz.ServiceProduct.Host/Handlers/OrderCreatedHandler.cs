@@ -1,8 +1,8 @@
 using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.EventBus;
 using Microsoft.Extensions.Caching.Distributed;
+using Xyz.ServiceProduct.Host.Controllers;
 using Xyz.ServiceProduct.Host.Domain;
-using Xyz.ServiceProduct.Host.Endpoints;
 using Xyz.ServiceProduct.Host.Persistence;
 using Xyz.Shared.Events;
 
@@ -15,7 +15,7 @@ public sealed class OrderCreatedHandler(ProductStore store, IEventBus eventBus, 
     public async Task HandleAsync(MessageEnvelope<OrderCreated> envelope, CancellationToken cancellationToken)
     {
         StockReservation reservation = await store.ReserveAsync(envelope.Message.OrderId, envelope.Message.ProductId, envelope.Message.Quantity, cancellationToken);
-        await cache.RemoveAsync(ProductEndpoints.CacheKey(envelope.Message.ProductId), cancellationToken);
+        await cache.RemoveAsync(ProductsController.CacheKey(envelope.Message.ProductId), cancellationToken);
 
         switch (reservation.Status)
         {

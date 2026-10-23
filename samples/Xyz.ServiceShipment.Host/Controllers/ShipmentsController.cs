@@ -1,31 +1,31 @@
 using System.Text.Json;
 using HsnSoft.Base;
 using HsnSoft.Base.Authentication;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Distributed;
 using Xyz.ServiceShipment.Host.Domain;
 using Xyz.ServiceShipment.Host.Persistence;
 
-namespace Xyz.ServiceShipment.Host.Endpoints;
+namespace Xyz.ServiceShipment.Host.Controllers;
 
-public static class ShipmentEndpoints
+[ApiController]
+[Route("api/shipments")]
+[Authorize(Policy = BasePolicies.Authenticated)]
+public sealed class ShipmentsController(ShipmentStore store, IDistributedCache cache) : ControllerBase
 {
-    public static void MapShipmentEndpoints(this WebApplication app)
-    {
-        RouteGroupBuilder group = app.MapGroup("/api/shipments").RequireAuthorization(BasePolicies.Authenticated);
-
-        group.MapGet("/{id:guid}", async (Guid id, ShipmentStore store, CancellationToken cancellationToken)
-            => Results.Ok(await store.FindAsync(id, cancellationToken) ?? throw new NotFoundException($"Shipment {id} was not found.")));
-
-        group.MapGet("/by-order/{orderId:guid}", GetByOrderAsync);
-    }
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> GetAsync(Guid id, CancellationToken cancellationToken)
+        => Ok(await store.FindAsync(id, cancellationToken) ?? throw new NotFoundException($"Shipment {id} was not found."));
 
     /// <summary>Tracking lookups are read far more often than shipments change, so they are cached in redis.</summary>
-    private static async Task<IResult> GetByOrderAsync(Guid orderId, ShipmentStore store, IDistributedCache cache, CancellationToken cancellationToken)
+    [HttpGet("by-order/{orderId:guid}")]
+    public async Task<IActionResult> GetByOrderAsync(Guid orderId, CancellationToken cancellationToken)
     {
         string key = $"shipment-by-order:{orderId}";
         if (await cache.GetStringAsync(key, cancellationToken) is { } cached)
         {
-            return Results.Ok(JsonSerializer.Deserialize<Shipment>(cached, JsonSerializerOptions.Web));
+            return Ok(JsonSerializer.Deserialize<Shipment>(cached, JsonSerializerOptions.Web));
         }
 
         Shipment shipment = await store.FindByOrderAsync(orderId, cancellationToken)
@@ -35,6 +35,6 @@ public static class ShipmentEndpoints
             JsonSerializer.Serialize(shipment, JsonSerializerOptions.Web),
             new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5) },
             cancellationToken);
-        return Results.Ok(shipment);
+        return Ok(shipment);
     }
 }

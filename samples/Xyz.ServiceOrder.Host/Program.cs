@@ -2,7 +2,6 @@ using HsnSoft.Base.EntityFrameworkCore;
 using HsnSoft.Base.EntityFrameworkCore.PostgreSql;
 using HsnSoft.Base.EventBus;
 using HsnSoft.Base.EventBus.RabbitMQ;
-using Xyz.ServiceOrder.Host.Endpoints;
 using Xyz.ServiceOrder.Host.Handlers;
 using Xyz.ServiceOrder.Host.Persistence;
 using Xyz.Shared;
@@ -25,6 +24,6 @@ WebApplication app = builder.Build();
 await app.Services.EnsureDatabaseCreatedAsync<OrderDbContext>();
 
 app.UseXyzApi();
-app.MapOrderEndpoints();
+app.MapControllers();
 
 await app.RunAsync();

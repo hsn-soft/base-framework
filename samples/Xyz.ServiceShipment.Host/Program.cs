@@ -2,7 +2,6 @@ using HsnSoft.Base.EventBus;
 using HsnSoft.Base.EventBus.RabbitMQ;
 using HsnSoft.Base.Hosting;
 using HsnSoft.Base.MongoDB;
-using Xyz.ServiceShipment.Host.Endpoints;
 using Xyz.ServiceShipment.Host.Handlers;
 using Xyz.ServiceShipment.Host.Persistence;
 using Xyz.Shared;
@@ -23,6 +22,6 @@ WebApplication app = builder.Build();
 await app.Services.RunStartupStepAsync("ShipmentStore setup", app.Services.GetRequiredService<ShipmentStore>().InitializeAsync);
 
 app.UseXyzApi();
-app.MapShipmentEndpoints();
+app.MapControllers();
 
 await app.RunAsync();

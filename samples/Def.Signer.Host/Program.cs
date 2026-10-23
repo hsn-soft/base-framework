@@ -1,4 +1,3 @@
-using Def.Signer.Host.Endpoints;
 using Def.Signer.Host.Events;
 using Def.Signer.Host.Handlers;
 using Def.Signer.Host.Persistence;
@@ -42,6 +41,6 @@ app.MapBaseOpenApi();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapBaseHealth();
-app.MapDocumentEndpoints();
+app.MapControllers();
 
 await app.RunAsync();

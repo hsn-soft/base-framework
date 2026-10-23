@@ -1,8 +1,8 @@
-using System.Security.Claims;
 using HsnSoft.Base;
 using HsnSoft.Base.Authentication;
 using HsnSoft.Base.EventBus;
 using HsnSoft.Base.Security;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
@@ -11,7 +11,7 @@ using Xyz.ServiceOrder.Host.Persistence;
 using Xyz.Shared;
 using Xyz.Shared.Events;
 
-namespace Xyz.ServiceOrder.Host.Endpoints;
+namespace Xyz.ServiceOrder.Host.Controllers;
 
 public sealed record PlaceOrderRequest(Guid ProductId, int Quantity);
 
@@ -31,27 +31,18 @@ public sealed record OrderResponse(
         order.RejectReason, order.TrackingNumber, order.CreatedAt, order.UpdatedAt);
 }
 
-public static class OrderEndpoints
+[ApiController]
+[Route("api/orders")]
+[Authorize(Policy = BasePolicies.Authenticated)]
+public sealed class OrdersController(OrderDbContext db, IEventBus eventBus, IDistributedCache cache) : ControllerBase
 {
-    public static void MapOrderEndpoints(this WebApplication app)
-    {
-        RouteGroupBuilder group = app.MapGroup("/api/orders").RequireAuthorization(BasePolicies.Authenticated);
-
-        group.MapPost("/", PlaceOrderAsync);
-        group.MapGet("/", ListOrdersAsync);
-        group.MapGet("/{id:guid}", GetOrderAsync);
-    }
-
     /// <summary>
     /// Saves the order as Pending and announces it. The answer is "202 Accepted": whether the stock is enough is decided
     /// later by the product service. A client that retries with the same Idempotency-Key gets the first order back.
     /// </summary>
-    private static async Task<IResult> PlaceOrderAsync(
+    [HttpPost]
+    public async Task<IActionResult> PlaceAsync(
         PlaceOrderRequest request,
-        ClaimsPrincipal user,
-        OrderDbContext db,
-        IEventBus eventBus,
-        IDistributedCache cache,
         [FromHeader(Name = "Idempotency-Key")] string? idempotencyKey,
         CancellationToken cancellationToken)
     {
@@ -60,13 +51,13 @@ public static class OrderEndpoints
             throw new BusinessRuleException("The quantity must be greater than zero.");
         }
 
-        string customerId = CustomerId(user);
+        string customerId = User.GetRequiredUserId();
         string? cacheKey = string.IsNullOrWhiteSpace(idempotencyKey) ? null : $"idempotency:{customerId}:{idempotencyKey}";
 
         if (cacheKey is not null && await cache.GetStringAsync(cacheKey, cancellationToken) is { } existingId
             && await db.Orders.FindAsync([Guid.Parse(existingId)], cancellationToken) is { } existing)
         {
-            return Results.Accepted($"/api/orders/{existing.Id}", OrderResponse.From(existing));
+            return Accepted($"/api/orders/{existing.Id}", OrderResponse.From(existing));
         }
 
         var order = Order.Place(customerId, request.ProductId, request.Quantity);
@@ -80,35 +71,35 @@ public static class OrderEndpoints
 
         await eventBus.PublishAsync(new OrderCreated(order.Id, order.ProductId, order.Quantity), cancellationToken: cancellationToken);
 
-        return Results.Accepted($"/api/orders/{order.Id}", OrderResponse.From(order));
+        return Accepted($"/api/orders/{order.Id}", OrderResponse.From(order));
     }
 
-    private static async Task<IResult> GetOrderAsync(Guid id, ClaimsPrincipal user, OrderDbContext db, CancellationToken cancellationToken)
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> GetAsync(Guid id, CancellationToken cancellationToken)
     {
         Order order = await db.Orders.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, cancellationToken)
                     ?? throw new NotFoundException($"Order {id} was not found.");
 
         // a customer sees only their own orders; an admin sees all
-        if (!user.IsInRole(Roles.Admin) && order.CustomerId != CustomerId(user))
+        if (!User.IsInRole(Roles.Admin) && order.CustomerId != User.GetRequiredUserId())
         {
             throw new NotFoundException($"Order {id} was not found.");
         }
 
-        return Results.Ok(OrderResponse.From(order));
+        return Ok(OrderResponse.From(order));
     }
 
-    private static async Task<IResult> ListOrdersAsync(ClaimsPrincipal user, OrderDbContext db, CancellationToken cancellationToken)
+    [HttpGet]
+    public async Task<IActionResult> ListAsync(CancellationToken cancellationToken)
     {
         IQueryable<Order> query = db.Orders.AsNoTracking();
-        if (!user.IsInRole(Roles.Admin))
+        if (!User.IsInRole(Roles.Admin))
         {
-            string customerId = CustomerId(user);
+            string customerId = User.GetRequiredUserId();
             query = query.Where(x => x.CustomerId == customerId);
         }
 
         List<Order> orders = await query.OrderByDescending(x => x.CreatedAt).Take(100).ToListAsync(cancellationToken);
-        return Results.Ok(orders.Select(OrderResponse.From));
+        return Ok(orders.Select(OrderResponse.From));
     }
-
-    private static string CustomerId(ClaimsPrincipal user) => user.GetRequiredUserId();
 }
