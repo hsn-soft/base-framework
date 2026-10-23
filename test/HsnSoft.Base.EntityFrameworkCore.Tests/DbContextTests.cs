@@ -23,7 +23,7 @@ public sealed class DbContextTests : IDisposable
 
     private static ServiceProvider BuildProvider(string dataSource)
     {
-        var services = new ServiceCollection().AddLogging();
+        IServiceCollection services = new ServiceCollection().AddLogging();
         services.AddDbContext<TestContext>(options => options.UseSqlite($"Data Source={dataSource}"));
         services.AddDbContextHealthCheck<TestContext>("test-db");
         return services.BuildServiceProvider();
@@ -32,13 +32,13 @@ public sealed class DbContextTests : IDisposable
     [Fact]
     public async Task EnsureDatabaseCreated_CreatesTheSchema_AndIsRepeatable()
     {
-        await using var provider = BuildProvider(Path.Combine(_directory, "app.db"));
+        await using ServiceProvider provider = BuildProvider(Path.Combine(_directory, "app.db"));
 
         await provider.EnsureDatabaseCreatedAsync<TestContext>();
         await provider.EnsureDatabaseCreatedAsync<TestContext>();
 
-        await using var scope = provider.CreateAsyncScope();
-        var context = scope.ServiceProvider.GetRequiredService<TestContext>();
+        await using AsyncServiceScope scope = provider.CreateAsyncScope();
+        TestContext context = scope.ServiceProvider.GetRequiredService<TestContext>();
         context.Items.Add(new Item());
         Assert.Equal(1, await context.SaveChangesAsync());
     }
@@ -46,10 +46,10 @@ public sealed class DbContextTests : IDisposable
     [Fact]
     public async Task HealthCheck_IsHealthy_WhenTheDatabaseIsReachable()
     {
-        await using var provider = BuildProvider(Path.Combine(_directory, "app.db"));
+        await using ServiceProvider provider = BuildProvider(Path.Combine(_directory, "app.db"));
         await provider.EnsureDatabaseCreatedAsync<TestContext>();
 
-        var result = await Check(provider);
+        HealthCheckResult result = await Check(provider);
 
         Assert.Equal(HealthStatus.Healthy, result.Status);
     }
@@ -57,9 +57,9 @@ public sealed class DbContextTests : IDisposable
     [Fact]
     public async Task HealthCheck_IsUnhealthy_WhenTheDatabaseCannotBeReached()
     {
-        await using var provider = BuildProvider(Path.Combine(_directory, "missing", "app.db"));
+        await using ServiceProvider provider = BuildProvider(Path.Combine(_directory, "missing", "app.db"));
 
-        var result = await Check(provider);
+        HealthCheckResult result = await Check(provider);
 
         Assert.Equal(HealthStatus.Unhealthy, result.Status);
     }
@@ -67,9 +67,9 @@ public sealed class DbContextTests : IDisposable
     [Fact]
     public async Task HealthCheck_IsRegisteredAsAReadinessCheck()
     {
-        await using var provider = BuildProvider(Path.Combine(_directory, "app.db"));
+        await using ServiceProvider provider = BuildProvider(Path.Combine(_directory, "app.db"));
 
-        var registration = Assert.Single(provider.GetRequiredService<IOptions<HealthCheckServiceOptions>>().Value.Registrations);
+        HealthCheckRegistration registration = Assert.Single(provider.GetRequiredService<IOptions<HealthCheckServiceOptions>>().Value.Registrations);
 
         Assert.Equal("test-db", registration.Name);
         Assert.Contains("ready", registration.Tags);
@@ -84,9 +84,9 @@ public sealed class DbContextTests : IDisposable
 
     private static async Task<HealthCheckResult> Check(ServiceProvider provider)
     {
-        var registration = provider.GetRequiredService<IOptions<HealthCheckServiceOptions>>().Value.Registrations.Single();
-        await using var scope = provider.CreateAsyncScope();
-        var check = registration.Factory(scope.ServiceProvider);
+        HealthCheckRegistration registration = provider.GetRequiredService<IOptions<HealthCheckServiceOptions>>().Value.Registrations.Single();
+        await using AsyncServiceScope scope = provider.CreateAsyncScope();
+        IHealthCheck check = registration.Factory(scope.ServiceProvider);
         return await check.CheckHealthAsync(new HealthCheckContext { Registration = registration });
     }
 }

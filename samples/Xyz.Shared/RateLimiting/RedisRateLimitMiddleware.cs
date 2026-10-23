@@ -31,7 +31,7 @@ public sealed class RedisRateLimitMiddleware(
         long count;
         try
         {
-            var database = redis.GetDatabase();
+            IDatabase database = redis.GetDatabase();
             string key = $"{redisOptions.Value.InstanceName}ratelimit:{caller}:{now / 60}";
             count = await database.StringIncrementAsync(key);
             if (count == 1)

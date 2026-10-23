@@ -16,8 +16,8 @@ internal static class KafkaTopology
     /// <summary>Creates the topics that do not exist yet; a topic that already exists is fine.</summary>
     public static async Task EnsureTopicsAsync(KafkaOptions options, IEnumerable<string> topics)
     {
-        using var admin = new AdminClientBuilder(new AdminClientConfig { BootstrapServers = options.BootstrapServers }).Build();
-        var specifications = topics.Distinct().Select(topic => new TopicSpecification
+        using IAdminClient admin = new AdminClientBuilder(new AdminClientConfig { BootstrapServers = options.BootstrapServers }).Build();
+        IEnumerable<TopicSpecification> specifications = topics.Distinct().Select(topic => new TopicSpecification
         {
             Name = topic,
             NumPartitions = options.Partitions,

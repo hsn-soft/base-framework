@@ -1,7 +1,7 @@
 using System.Security.Claims;
+using HsnSoft.Base.Authentication;
 using HsnSoft.Base.Security;
 using Xyz.AuthServer.Host.Services;
-using HsnSoft.Base.Authentication;
 
 namespace Xyz.AuthServer.Host.Endpoints;
 
@@ -15,7 +15,7 @@ public static class AuthEndpoints
 {
     public static void MapAuthEndpoints(this WebApplication app)
     {
-        var group = app.MapGroup("/api/auth");
+        RouteGroupBuilder group = app.MapGroup("/api/auth");
 
         group.MapPost("/login", LoginAsync);
         group.MapPost("/refresh", RefreshAsync);
@@ -29,7 +29,7 @@ public static class AuthEndpoints
 
     private static async Task<IResult> LoginAsync(LoginRequest request, TokenService tokens, CancellationToken cancellationToken)
     {
-        var account = tokens.ValidateCredentials(request.Username, request.Password);
+        UserAccount? account = tokens.ValidateCredentials(request.Username, request.Password);
         if (account is null)
         {
             return Results.Problem(statusCode: StatusCodes.Status401Unauthorized, title: "Invalid credentials");
@@ -40,7 +40,7 @@ public static class AuthEndpoints
 
     private static async Task<IResult> RefreshAsync(RefreshRequest request, TokenService tokens, CancellationToken cancellationToken)
     {
-        var pair = await tokens.RefreshAsync(request.RefreshToken, cancellationToken);
+        TokenPair? pair = await tokens.RefreshAsync(request.RefreshToken, cancellationToken);
         return pair is null
             ? Results.Problem(statusCode: StatusCodes.Status401Unauthorized, title: "Invalid or expired refresh token")
             : Results.Ok(ToResponse(pair));

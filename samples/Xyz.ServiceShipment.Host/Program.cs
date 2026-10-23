@@ -8,7 +8,7 @@ using Xyz.ServiceShipment.Host.Persistence;
 using Xyz.Shared;
 using Xyz.Shared.Events;
 
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Services
     .AddXyzApi(builder.Configuration)
@@ -17,7 +17,7 @@ builder.Services
     .AddSingleton<ShipmentStore>()
     .AddEventHandler<StockReserved, StockReservedHandler>();
 
-var app = builder.Build();
+WebApplication app = builder.Build();
 
 await app.Services.RunStartupStepAsync("ShipmentStore setup", app.Services.GetRequiredService<ShipmentStore>().InitializeAsync);
 

@@ -10,7 +10,7 @@ public class EventSerializerTests
     {
         var original = new SampleEvent("order", 3);
 
-        var restored = Assert.IsType<SampleEvent>(EventSerializer.Deserialize(EventSerializer.Serialize(original), typeof(SampleEvent)));
+        SampleEvent restored = Assert.IsType<SampleEvent>(EventSerializer.Deserialize(EventSerializer.Serialize(original), typeof(SampleEvent)));
 
         Assert.Equal(original, restored);
         Assert.Equal(original.EventId, restored.EventId);

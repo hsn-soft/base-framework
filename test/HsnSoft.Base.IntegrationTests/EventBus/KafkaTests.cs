@@ -1,6 +1,7 @@
 using Confluent.Kafka;
 using HsnSoft.Base.EventBus;
 using HsnSoft.Base.EventBus.Kafka;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Testcontainers.Kafka;
@@ -17,7 +18,7 @@ public sealed class KafkaTests : IAsyncLifetime
 
     private Task<IHost> StartAsync(string prefix, Action<IServiceCollection> handlers)
     {
-        var configuration = Support.Configuration(
+        IConfiguration configuration = Support.Configuration(
             ("Kafka:BootstrapServers", _container.GetBootstrapAddress()),
             ("Kafka:TopicPrefix", prefix));
         return Support.StartHostAsync(services =>
@@ -35,7 +36,7 @@ public sealed class KafkaTests : IAsyncLifetime
     public async Task PublishedEvent_ReachesTheHandler_AndTheServiceIsReady()
     {
         var recorder = new Recorder();
-        using var host = await StartAsync($"it{Guid.NewGuid():N}.", services =>
+        using IHost host = await StartAsync($"it{Guid.NewGuid():N}.", services =>
         {
             services.AddSingleton(recorder);
             services.AddEventHandler<Pinged, RecordingHandler>();
@@ -54,13 +55,13 @@ public sealed class KafkaTests : IAsyncLifetime
     [Fact]
     public async Task EventTheHandlerCannotHandle_EndsInTheDeadLetterTopic()
     {
-        var prefix = $"it{Guid.NewGuid():N}.";
-        using var host = await StartAsync(prefix, services => services.AddEventHandler<Pinged, FailingHandler>());
+        string prefix = $"it{Guid.NewGuid():N}.";
+        using IHost host = await StartAsync(prefix, services => services.AddEventHandler<Pinged, FailingHandler>());
         var ping = new Pinged("doomed");
 
         await host.Services.GetRequiredService<IEventBus>().PublishAsync(ping);
 
-        using var consumer = new ConsumerBuilder<string, byte[]>(new ConsumerConfig
+        using IConsumer<string, byte[]> consumer = new ConsumerBuilder<string, byte[]>(new ConsumerConfig
         {
             BootstrapServers = _container.GetBootstrapAddress(),
             GroupId = $"probe-{Guid.NewGuid():N}",
@@ -70,7 +71,7 @@ public sealed class KafkaTests : IAsyncLifetime
 
         await Support.EventuallyAsync(() =>
         {
-            var message = consumer.Consume(TimeSpan.FromSeconds(1));
+            ConsumeResult<string, byte[]> message = consumer.Consume(TimeSpan.FromSeconds(1));
             return Task.FromResult(message?.Message.Key == ping.EventId.ToString()
                                    && System.Text.Encoding.UTF8.GetString(message.Message.Headers.GetLastBytes("x-original-topic")) == $"{prefix}Pinged");
         }, "the message on the dead-letter topic");

@@ -10,7 +10,7 @@ public class StartupStepsTests
     [Fact]
     public async Task RunStartupStepAsync_RunsTheStepOnce_WhenItSucceeds()
     {
-        var calls = 0;
+        int calls = 0;
 
         await new ServiceCollection().BuildServiceProvider().RunStartupStepAsync("step", _ => { calls++; return Task.CompletedTask; }, retryDelay: NoDelay);
 
@@ -20,8 +20,8 @@ public class StartupStepsTests
     [Fact]
     public async Task RunStartupStepAsync_RetriesUntilTheDependencyIsReady()
     {
-        var calls = 0;
-        var provider = new ServiceCollection().AddLogging().BuildServiceProvider();
+        int calls = 0;
+        ServiceProvider provider = new ServiceCollection().AddLogging().BuildServiceProvider();
 
         await provider.RunStartupStepAsync(
             "step",
@@ -34,9 +34,9 @@ public class StartupStepsTests
     [Fact]
     public async Task RunStartupStepAsync_AfterTheLastAttempt_ThrowsTheLastException()
     {
-        var calls = 0;
+        int calls = 0;
 
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => new ServiceCollection().BuildServiceProvider().RunStartupStepAsync(
+        InvalidOperationException exception = await Assert.ThrowsAsync<InvalidOperationException>(() => new ServiceCollection().BuildServiceProvider().RunStartupStepAsync(
             "step",
             _ => throw new InvalidOperationException($"failure {++calls}"),
             maxAttempts: 3,
@@ -49,8 +49,8 @@ public class StartupStepsTests
     [Fact]
     public async Task RunStartupStepAsync_UsesTheDefaultDelayBetweenAttempts()
     {
-        var calls = 0;
-        var started = DateTime.UtcNow;
+        int calls = 0;
+        DateTime started = DateTime.UtcNow;
 
         await new ServiceCollection().BuildServiceProvider().RunStartupStepAsync(
             "step", _ => ++calls < 2 ? throw new InvalidOperationException("not ready") : Task.CompletedTask);
@@ -61,7 +61,7 @@ public class StartupStepsTests
     [Fact]
     public async Task RunStartupStepAsync_ChecksItsArguments()
     {
-        var provider = new ServiceCollection().BuildServiceProvider();
+        ServiceProvider provider = new ServiceCollection().BuildServiceProvider();
 
         await Assert.ThrowsAsync<ArgumentNullException>(() => StartupSteps.RunStartupStepAsync(null!, "step", _ => Task.CompletedTask));
         await Assert.ThrowsAsync<ArgumentException>(() => provider.RunStartupStepAsync(" ", _ => Task.CompletedTask));

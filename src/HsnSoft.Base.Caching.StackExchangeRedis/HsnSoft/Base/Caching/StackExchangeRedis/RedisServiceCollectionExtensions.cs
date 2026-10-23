@@ -22,7 +22,7 @@ public static class RedisServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(configuration);
 
-        var connectionString = configuration.GetConnectionString(connectionName)
+        string connectionString = configuration.GetConnectionString(connectionName)
                                ?? throw new InvalidOperationException($"ConnectionStrings:{connectionName} is required.");
 
         services.Configure<RedisOptions>(configuration.GetSection("Redis"));

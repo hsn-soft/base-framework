@@ -19,10 +19,10 @@ public sealed class RabbitMqEventBus : IEventBus
     public async Task PublishAsync<TEvent>(TEvent integrationEvent, CancellationToken cancellationToken = default)
         where TEvent : IntegrationEvent
     {
-        var eventName = typeof(TEvent).Name;
+        string eventName = typeof(TEvent).Name;
 
-        var rabbit = await _connection.GetAsync(cancellationToken).ConfigureAwait(false);
-        var channel = await rabbit.CreateChannelAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+        IConnection rabbit = await _connection.GetAsync(cancellationToken).ConfigureAwait(false);
+        IChannel channel = await rabbit.CreateChannelAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
         await using (channel.ConfigureAwait(false))
         {
             await RabbitMqTopology.DeclareExchangeAsync(channel, _options, cancellationToken).ConfigureAwait(false);

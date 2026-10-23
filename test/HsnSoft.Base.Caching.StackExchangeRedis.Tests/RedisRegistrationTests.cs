@@ -14,11 +14,11 @@ public class RedisRegistrationTests
     [Fact]
     public void ConnectionStringAndInstanceName_ReachTheCacheOptions()
     {
-        var services = new ServiceCollection().AddLogging();
+        IServiceCollection services = new ServiceCollection().AddLogging();
         services.AddBaseRedis(Configuration(("ConnectionStrings:Redis", "localhost:6390"), ("Redis:InstanceName", "acme:")));
-        using var provider = services.BuildServiceProvider();
+        using ServiceProvider provider = services.BuildServiceProvider();
 
-        var cache = provider.GetRequiredService<IOptions<RedisCacheOptions>>().Value;
+        RedisCacheOptions cache = provider.GetRequiredService<IOptions<RedisCacheOptions>>().Value;
 
         Assert.Equal("localhost:6390", cache.Configuration);
         Assert.Equal("acme:", cache.InstanceName);
@@ -27,9 +27,9 @@ public class RedisRegistrationTests
     [Fact]
     public void InstanceName_DefaultsToNoPrefix()
     {
-        var services = new ServiceCollection().AddLogging();
+        IServiceCollection services = new ServiceCollection().AddLogging();
         services.AddBaseRedis(Configuration(("ConnectionStrings:Redis", "localhost:6390")));
-        using var provider = services.BuildServiceProvider();
+        using ServiceProvider provider = services.BuildServiceProvider();
 
         Assert.Equal(string.Empty, provider.GetRequiredService<IOptions<RedisCacheOptions>>().Value.InstanceName);
         Assert.Equal(string.Empty, new RedisOptions().InstanceName);
@@ -38,11 +38,11 @@ public class RedisRegistrationTests
     [Fact]
     public void ReadinessCheck_IsRegistered()
     {
-        var services = new ServiceCollection().AddLogging();
+        IServiceCollection services = new ServiceCollection().AddLogging();
         services.AddBaseRedis(Configuration(("ConnectionStrings:Redis", "localhost:6390")));
-        using var provider = services.BuildServiceProvider();
+        using ServiceProvider provider = services.BuildServiceProvider();
 
-        var registration = Assert.Single(provider.GetRequiredService<IOptions<HealthCheckServiceOptions>>().Value.Registrations);
+        HealthCheckRegistration registration = Assert.Single(provider.GetRequiredService<IOptions<HealthCheckServiceOptions>>().Value.Registrations);
 
         Assert.Equal("redis", registration.Name);
         Assert.Contains("ready", registration.Tags);
@@ -51,9 +51,9 @@ public class RedisRegistrationTests
     [Fact]
     public void ConnectionNameIsConfigurable()
     {
-        var services = new ServiceCollection().AddLogging();
+        IServiceCollection services = new ServiceCollection().AddLogging();
         services.AddBaseRedis(Configuration(("ConnectionStrings:Sessions", "sessions:6379")), "Sessions");
-        using var provider = services.BuildServiceProvider();
+        using ServiceProvider provider = services.BuildServiceProvider();
 
         Assert.Equal("sessions:6379", provider.GetRequiredService<IOptions<RedisCacheOptions>>().Value.Configuration);
     }
@@ -61,7 +61,7 @@ public class RedisRegistrationTests
     [Fact]
     public void MissingConnectionString_IsAnError()
     {
-        var exception = Assert.Throws<InvalidOperationException>(() => new ServiceCollection().AddBaseRedis(Configuration()));
+        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => new ServiceCollection().AddBaseRedis(Configuration()));
 
         Assert.Contains("ConnectionStrings:Redis", exception.Message, StringComparison.Ordinal);
     }

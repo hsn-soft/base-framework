@@ -1,5 +1,6 @@
 using HsnSoft.Base.EventBus;
 using HsnSoft.Base.EventBus.RabbitMQ;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -21,7 +22,7 @@ public sealed class RabbitMqTests : IAsyncLifetime
 
     private Task<IHost> StartAsync(string exchange, Action<IServiceCollection> handlers)
     {
-        var configuration = Support.Configuration(
+        IConfiguration configuration = Support.Configuration(
             ("RabbitMq:Host", Endpoint.Host),
             ("RabbitMq:Port", Endpoint.Port),
             ("RabbitMq:ExchangeName", exchange));
@@ -40,12 +41,12 @@ public sealed class RabbitMqTests : IAsyncLifetime
     public async Task PublishedEvent_ReachesTheHandler_AndTheServiceIsReady()
     {
         var recorder = new Recorder();
-        using var host = await StartAsync($"it.{Guid.NewGuid():N}", services =>
+        using IHost host = await StartAsync($"it.{Guid.NewGuid():N}", services =>
         {
             services.AddSingleton(recorder);
             services.AddEventHandler<Pinged, RecordingHandler>();
         });
-        var bus = host.Services.GetRequiredService<IEventBus>();
+        IEventBus bus = host.Services.GetRequiredService<IEventBus>();
         var ping = new Pinged("hello");
 
         // the subscriber declares its queue in the background; publish until it is bound
@@ -64,20 +65,20 @@ public sealed class RabbitMqTests : IAsyncLifetime
     [Fact]
     public async Task EventTheHandlerCannotHandle_EndsInTheDeadLetterQueue()
     {
-        var exchange = $"it.{Guid.NewGuid():N}";
-        using var host = await StartAsync(exchange, services => services.AddEventHandler<Pinged, FailingHandler>());
-        var bus = host.Services.GetRequiredService<IEventBus>();
+        string exchange = $"it.{Guid.NewGuid():N}";
+        using IHost host = await StartAsync(exchange, services => services.AddEventHandler<Pinged, FailingHandler>());
+        IEventBus bus = host.Services.GetRequiredService<IEventBus>();
         var ping = new Pinged("doomed");
 
         var factory = new ConnectionFactory { HostName = Endpoint.Host, Port = int.Parse(Endpoint.Port, System.Globalization.CultureInfo.InvariantCulture) };
-        await using var connection = await factory.CreateConnectionAsync();
-        await using var channel = await connection.CreateChannelAsync();
+        await using IConnection connection = await factory.CreateConnectionAsync();
+        await using IChannel channel = await connection.CreateChannelAsync();
 
         await Support.EventuallyAsync(async () =>
         {
             await bus.PublishAsync(ping);
             await Task.Delay(300);
-            var message = await channel.BasicGetAsync($"{exchange}.dead-letter", autoAck: true);
+            BasicGetResult? message = await channel.BasicGetAsync($"{exchange}.dead-letter", autoAck: true);
             return message is not null && message.BasicProperties.MessageId == ping.EventId.ToString();
         }, "the message in the dead-letter queue");
         await host.StopAsync();

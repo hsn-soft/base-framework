@@ -14,11 +14,11 @@ public class MinioRegistrationTests
     [Fact]
     public void MinioSection_IsBoundToTheOptions()
     {
-        var services = new ServiceCollection().AddLogging().AddMinioBlobStoring(Configuration(
+        IServiceCollection services = new ServiceCollection().AddLogging().AddMinioBlobStoring(Configuration(
             ("Minio:Endpoint", "minio.internal:9000"), ("Minio:AccessKey", "key"), ("Minio:SecretKey", "secret"), ("Minio:UseSsl", "true")));
-        using var provider = services.BuildServiceProvider();
+        using ServiceProvider provider = services.BuildServiceProvider();
 
-        var options = provider.GetRequiredService<IOptions<MinioOptions>>().Value;
+        MinioOptions options = provider.GetRequiredService<IOptions<MinioOptions>>().Value;
 
         Assert.Equal("minio.internal:9000", options.Endpoint);
         Assert.Equal("key", options.AccessKey);
@@ -40,8 +40,8 @@ public class MinioRegistrationTests
     [Fact]
     public void BlobStoreAndClient_AreResolvable()
     {
-        var services = new ServiceCollection().AddLogging().AddMinioBlobStoring(Configuration(("Minio:AccessKey", "key"), ("Minio:SecretKey", "secret")));
-        using var provider = services.BuildServiceProvider();
+        IServiceCollection services = new ServiceCollection().AddLogging().AddMinioBlobStoring(Configuration(("Minio:AccessKey", "key"), ("Minio:SecretKey", "secret")));
+        using ServiceProvider provider = services.BuildServiceProvider();
 
         Assert.IsType<MinioBlobStore>(provider.GetRequiredService<IBlobStore>());
         Assert.NotNull(provider.GetRequiredService<IMinioClient>());
@@ -50,10 +50,10 @@ public class MinioRegistrationTests
     [Fact]
     public void ReadinessCheck_IsRegistered()
     {
-        var services = new ServiceCollection().AddLogging().AddMinioBlobStoring(Configuration());
-        using var provider = services.BuildServiceProvider();
+        IServiceCollection services = new ServiceCollection().AddLogging().AddMinioBlobStoring(Configuration());
+        using ServiceProvider provider = services.BuildServiceProvider();
 
-        var registration = Assert.Single(provider.GetRequiredService<IOptions<HealthCheckServiceOptions>>().Value.Registrations);
+        HealthCheckRegistration registration = Assert.Single(provider.GetRequiredService<IOptions<HealthCheckServiceOptions>>().Value.Registrations);
 
         Assert.Equal("minio", registration.Name);
         Assert.Contains("ready", registration.Tags);

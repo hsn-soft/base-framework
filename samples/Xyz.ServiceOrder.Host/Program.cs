@@ -8,7 +8,7 @@ using Xyz.ServiceOrder.Host.Persistence;
 using Xyz.Shared;
 using Xyz.Shared.Events;
 
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Everything infrastructural comes from HsnSoft.Base.*; the service only says what it uses.
 builder.Services
@@ -19,7 +19,7 @@ builder.Services
     .AddEventHandler<StockRejected, StockRejectedHandler>()
     .AddEventHandler<ShipmentDispatched, ShipmentDispatchedHandler>();
 
-var app = builder.Build();
+WebApplication app = builder.Build();
 
 await app.Services.EnsureDatabaseCreatedAsync<OrderDbContext>();
 

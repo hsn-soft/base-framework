@@ -13,7 +13,7 @@ public class MinioBlobStoreTests
 
         protected override object? Invoke(MethodInfo? targetMethod, object?[]? args)
         {
-            var name = targetMethod!.Name;
+            string name = targetMethod!.Name;
             Calls.Add(name);
 
             if (name == "MakeBucketAsync")
@@ -33,13 +33,13 @@ public class MinioBlobStoreTests
     [Fact]
     public async Task BucketCreatedByAnotherInstanceMeanwhile_DoesNotFailTheSave()
     {
-        var client = DispatchProxy.Create<IMinioClient, RacingClient>();
+        IMinioClient client = DispatchProxy.Create<IMinioClient, RacingClient>();
         var store = new MinioBlobStore(client);
 
         await store.SaveAsync("shared", "a.txt", new MemoryStream("x"u8.ToArray()), "text/plain");
         await store.SaveAsync("shared", "b.txt", new MemoryStream("y"u8.ToArray()), "text/plain");
 
-        var calls = ((RacingClient)(object)client).Calls;
+        List<string> calls = ((RacingClient)(object)client).Calls;
         Assert.Equal(1, calls.Count(call => call == "MakeBucketAsync"));
         Assert.Equal(2, calls.Count(call => call == "PutObjectAsync"));
     }

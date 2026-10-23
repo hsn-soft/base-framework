@@ -1,7 +1,7 @@
 using Xyz.Shared;
 using Xyz.Shared.RateLimiting;
 
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Services
     .AddXyzApi(builder.Configuration)
@@ -10,7 +10,7 @@ builder.Services
 // The routes and the downstream addresses are configuration (ReverseProxy section), not code.
 builder.Services.AddReverseProxy().LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
 
-var app = builder.Build();
+WebApplication app = builder.Build();
 
 // the rate limit needs the caller (authentication) but must also count requests that authorization will reject
 app.UseXyzApi(pipeline => pipeline.UseMiddleware<RedisRateLimitMiddleware>());

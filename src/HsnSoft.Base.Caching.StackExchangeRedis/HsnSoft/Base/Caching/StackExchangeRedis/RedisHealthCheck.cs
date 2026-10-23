@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -13,7 +14,7 @@ internal sealed class RedisHealthCheck : IHealthCheck
 
     public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
     {
-        var latency = await _redis.GetDatabase().PingAsync().ConfigureAwait(false);
+        TimeSpan latency = await _redis.GetDatabase().PingAsync().ConfigureAwait(false);
         return HealthCheckResult.Healthy($"ping {latency.TotalMilliseconds:F0} ms");
     }
 }

@@ -8,10 +8,10 @@ public class EventBusServiceCollectionExtensionsTests
     [Fact]
     public void AddEventBusCore_RegistersTheDispatcherAndTheDefaults()
     {
-        var provider = new ServiceCollection().AddLogging().AddEventBusCore().BuildServiceProvider();
+        ServiceProvider provider = new ServiceCollection().AddLogging().AddEventBusCore().BuildServiceProvider();
 
         Assert.IsType<EventDispatcher>(provider.GetRequiredService<IEventDispatcher>());
-        var options = provider.GetRequiredService<IOptions<EventBusOptions>>().Value;
+        EventBusOptions options = provider.GetRequiredService<IOptions<EventBusOptions>>().Value;
         Assert.Equal("service", options.ServiceName);
         Assert.Equal(3, options.MaxHandlerAttempts);
         Assert.Equal(TimeSpan.FromMilliseconds(200), options.RetryDelay);
@@ -20,7 +20,7 @@ public class EventBusServiceCollectionExtensionsTests
     [Fact]
     public void AddEventBusCore_AppliesTheConfiguration()
     {
-        var provider = new ServiceCollection().AddLogging().AddEventBusCore(o => o.ServiceName = "order-service").BuildServiceProvider();
+        ServiceProvider provider = new ServiceCollection().AddLogging().AddEventBusCore(o => o.ServiceName = "order-service").BuildServiceProvider();
 
         Assert.Equal("order-service", provider.GetRequiredService<IOptions<EventBusOptions>>().Value.ServiceName);
     }
@@ -28,7 +28,7 @@ public class EventBusServiceCollectionExtensionsTests
     [Fact]
     public void AddEventBusCore_CalledTwice_KeepsTheFirstDispatcher()
     {
-        var services = new ServiceCollection().AddLogging().AddEventBusCore().AddEventBusCore();
+        IServiceCollection services = new ServiceCollection().AddLogging().AddEventBusCore().AddEventBusCore();
 
         Assert.Single(services, descriptor => descriptor.ServiceType == typeof(IEventDispatcher));
     }
@@ -36,11 +36,11 @@ public class EventBusServiceCollectionExtensionsTests
     [Fact]
     public async Task AddEventHandler_RegistersASubscriptionThatInvokesTheHandler()
     {
-        var provider = new ServiceCollection().AddEventHandler<SampleEvent, RecordingHandler>().BuildServiceProvider();
-        var subscription = provider.GetRequiredService<EventSubscription>();
+        ServiceProvider provider = new ServiceCollection().AddEventHandler<SampleEvent, RecordingHandler>().BuildServiceProvider();
+        EventSubscription subscription = provider.GetRequiredService<EventSubscription>();
         var sent = new SampleEvent("a", 1);
 
-        await using var scope = provider.CreateAsyncScope();
+        await using AsyncServiceScope scope = provider.CreateAsyncScope();
         await subscription.Handle(scope.ServiceProvider, sent, CancellationToken.None);
 
         Assert.Equal(typeof(SampleEvent), subscription.EventType);
@@ -51,7 +51,7 @@ public class EventBusServiceCollectionExtensionsTests
     [Fact]
     public void AddEventHandler_ForSeveralEvents_RegistersOneSubscriptionEach()
     {
-        var provider = new ServiceCollection()
+        ServiceProvider provider = new ServiceCollection()
             .AddEventHandler<SampleEvent, RecordingHandler>()
             .AddEventHandler<OtherEvent, OtherHandler>()
             .BuildServiceProvider();

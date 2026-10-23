@@ -1,7 +1,8 @@
+using HsnSoft.Base.EventBus;
 using Microsoft.EntityFrameworkCore;
+using Xyz.ServiceOrder.Host.Domain;
 using Xyz.ServiceOrder.Host.Persistence;
 using Xyz.Shared.Events;
-using HsnSoft.Base.EventBus;
 
 namespace Xyz.ServiceOrder.Host.Handlers;
 
@@ -12,7 +13,7 @@ public sealed class StockReservedHandler(OrderDbContext db, ILogger<StockReserve
 {
     public async Task HandleAsync(StockReserved @event, CancellationToken cancellationToken)
     {
-        var order = await db.Orders.FirstOrDefaultAsync(x => x.Id == @event.OrderId, cancellationToken);
+        Order? order = await db.Orders.FirstOrDefaultAsync(x => x.Id == @event.OrderId, cancellationToken);
         if (order is null)
         {
             logger.LogWarning("StockReserved for unknown order {OrderId}", @event.OrderId);
@@ -28,7 +29,7 @@ public sealed class StockRejectedHandler(OrderDbContext db, ILogger<StockRejecte
 {
     public async Task HandleAsync(StockRejected @event, CancellationToken cancellationToken)
     {
-        var order = await db.Orders.FirstOrDefaultAsync(x => x.Id == @event.OrderId, cancellationToken);
+        Order? order = await db.Orders.FirstOrDefaultAsync(x => x.Id == @event.OrderId, cancellationToken);
         if (order is null)
         {
             logger.LogWarning("StockRejected for unknown order {OrderId}", @event.OrderId);
@@ -44,7 +45,7 @@ public sealed class ShipmentDispatchedHandler(OrderDbContext db, ILogger<Shipmen
 {
     public async Task HandleAsync(ShipmentDispatched @event, CancellationToken cancellationToken)
     {
-        var order = await db.Orders.FirstOrDefaultAsync(x => x.Id == @event.OrderId, cancellationToken);
+        Order? order = await db.Orders.FirstOrDefaultAsync(x => x.Id == @event.OrderId, cancellationToken);
         if (order is null)
         {
             logger.LogWarning("ShipmentDispatched for unknown order {OrderId}", @event.OrderId);

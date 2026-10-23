@@ -48,9 +48,9 @@ dotnet sonarscanner begin `
     /d:sonar.token="$env:SONAR_TOKEN" `
     /d:sonar.cs.vstest.reportsPaths="$rootFolder/TestResults/**/*.trx" `
     /d:sonar.cs.opencover.reportsPaths="$rootFolder/TestResults/**/coverage.opencover.xml" `
-    /d:sonar.coverage.exclusions="test/**,**/Migrations/**,**/*Test*.cs,**/*Test*/**,**/tmp/**,**/Tmp/**,**/TMP/**" `
+    /d:sonar.coverage.exclusions="test/**,samples/**,scripts/**,**/Migrations/**,**/*Test*.cs,**/*Test*/**,**/tmp/**,**/Tmp/**,**/TMP/**" `
     /d:sonar.inclusions="**/*.cs,**/*.js,**/*.css" `
-    /d:sonar.exclusions="test/**,**/Migrations/**,**/*Test*.cs,**/*Test*/**,**/tmp/**,**/Tmp/**,**/TMP/**,**/data/**,**/logs/**,**/sample/**"
+    /d:sonar.exclusions="test/**,samples/**,scripts/**,**/Migrations/**,**/*Test*.cs,**/*Test*/**,**/tmp/**,**/Tmp/**,**/TMP/**,**/data/**,**/logs/**,**/sample/**"
 " "
 Write-Info "## DOTNET RESTORE --------------------------------------------------------------"
 " "

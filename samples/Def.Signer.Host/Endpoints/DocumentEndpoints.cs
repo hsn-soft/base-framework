@@ -12,7 +12,7 @@ public static class DocumentEndpoints
 {
     public static IEndpointRouteBuilder MapDocumentEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/documents").RequireAuthorization();
+        RouteGroupBuilder group = app.MapGroup("/documents").RequireAuthorization();
 
         // answers as soon as Kafka has the request; the document appears later
         group.MapPost("/", async (CreateDocumentRequest request, HttpContext http, IEventBus bus, CancellationToken cancellationToken) =>
@@ -41,7 +41,7 @@ public static class DocumentEndpoints
         group.MapGet("/{requestId:guid}", async (Guid requestId, HttpContext http, SignerDbContext db, CancellationToken cancellationToken) =>
         {
             var owner = Owner(http);
-            var document = await db.Documents.AsNoTracking()
+            SignedDocument? document = await db.Documents.AsNoTracking()
                 .FirstOrDefaultAsync(x => x.RequestId == requestId && x.Owner == owner, cancellationToken);
             return document is null ? Results.NotFound() : Results.Ok(document);
         });
@@ -49,14 +49,14 @@ public static class DocumentEndpoints
         group.MapGet("/{requestId:guid}/content", async (Guid requestId, HttpContext http, SignerDbContext db, IBlobStore blobs, CancellationToken cancellationToken) =>
         {
             var owner = Owner(http);
-            var document = await db.Documents.AsNoTracking()
+            SignedDocument? document = await db.Documents.AsNoTracking()
                 .FirstOrDefaultAsync(x => x.RequestId == requestId && x.Owner == owner, cancellationToken);
             if (document is null)
             {
                 return Results.NotFound();
             }
 
-            var content = await blobs.OpenReadAsync(document.Container, document.BlobName, cancellationToken);
+            Stream? content = await blobs.OpenReadAsync(document.Container, document.BlobName, cancellationToken);
             return content is null ? Results.NotFound() : Results.File(content, document.ContentType);
         });
 

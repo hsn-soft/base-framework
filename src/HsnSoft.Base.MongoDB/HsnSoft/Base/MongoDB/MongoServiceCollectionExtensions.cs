@@ -24,10 +24,10 @@ public static class MongoServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(configuration);
 
-        var connectionString = configuration.GetConnectionString(connectionName)
+        string connectionString = configuration.GetConnectionString(connectionName)
                                ?? throw new InvalidOperationException($"ConnectionStrings:{connectionName} is required.");
         var url = new MongoUrl(connectionString);
-        var databaseName = url.DatabaseName
+        string databaseName = url.DatabaseName
                            ?? throw new InvalidOperationException($"ConnectionStrings:{connectionName} must contain a database name.");
 
         BsonSerializer.TryRegisterSerializer(new GuidSerializer(GuidRepresentation.Standard));

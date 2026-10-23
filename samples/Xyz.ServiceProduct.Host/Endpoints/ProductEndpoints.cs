@@ -1,9 +1,9 @@
 using System.Text.Json;
+using HsnSoft.Base;
+using HsnSoft.Base.Authentication;
 using Microsoft.Extensions.Caching.Distributed;
 using Xyz.ServiceProduct.Host.Domain;
 using Xyz.ServiceProduct.Host.Persistence;
-using HsnSoft.Base;
-using HsnSoft.Base.Authentication;
 using Xyz.Shared;
 
 namespace Xyz.ServiceProduct.Host.Endpoints;
@@ -18,7 +18,7 @@ public static class ProductEndpoints
 
     public static void MapProductEndpoints(this WebApplication app)
     {
-        var group = app.MapGroup("/api/products").RequireAuthorization(BasePolicies.Authenticated);
+        RouteGroupBuilder group = app.MapGroup("/api/products").RequireAuthorization(BasePolicies.Authenticated);
 
         group.MapGet("/", async (ProductStore store, CancellationToken cancellationToken) => Results.Ok(await store.ListAsync(cancellationToken)));
         group.MapGet("/{id:guid}", GetProductAsync);
@@ -35,7 +35,7 @@ public static class ProductEndpoints
             return Results.Ok(JsonSerializer.Deserialize<Product>(cached, JsonSerializerOptions.Web));
         }
 
-        var product = await store.FindAsync(id, cancellationToken) ?? throw new NotFoundException($"Product {id} was not found.");
+        Product product = await store.FindAsync(id, cancellationToken) ?? throw new NotFoundException($"Product {id} was not found.");
         await cache.SetStringAsync(
             CacheKey(id),
             JsonSerializer.Serialize(product, JsonSerializerOptions.Web),
@@ -58,7 +58,7 @@ public static class ProductEndpoints
 
     private static async Task<IResult> AdjustStockAsync(Guid id, AdjustStockRequest request, ProductStore store, IDistributedCache cache, CancellationToken cancellationToken)
     {
-        var product = await store.AdjustStockAsync(id, request.Delta, cancellationToken)
+        Product product = await store.AdjustStockAsync(id, request.Delta, cancellationToken)
                       ?? throw new BusinessRuleException("The product does not exist or the stock would become negative.");
         await cache.RemoveAsync(CacheKey(id), cancellationToken);
         return Results.Ok(product);

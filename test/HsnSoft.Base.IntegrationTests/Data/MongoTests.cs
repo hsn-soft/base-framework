@@ -1,4 +1,5 @@
 using HsnSoft.Base.MongoDB;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using MongoDB.Bson;
@@ -23,15 +24,15 @@ public sealed class MongoTests : IAsyncLifetime
     [Fact]
     public async Task Database_IsUsable_GuidsAreStandardBinary_AndTheServiceIsReady()
     {
-        var url = new MongoUrlBuilder(_container.GetConnectionString()) { DatabaseName = "it", AuthenticationSource = "admin" }.ToString();
-        var configuration = Support.Configuration(("ConnectionStrings:Mongo", url));
-        using var host = await Support.StartHostAsync(services => services.AddBaseMongo(configuration));
-        var database = host.Services.GetRequiredService<IMongoDatabase>();
+        string url = new MongoUrlBuilder(_container.GetConnectionString()) { DatabaseName = "it", AuthenticationSource = "admin" }.ToString();
+        IConfiguration configuration = Support.Configuration(("ConnectionStrings:Mongo", url));
+        using IHost host = await Support.StartHostAsync(services => services.AddBaseMongo(configuration));
+        IMongoDatabase database = host.Services.GetRequiredService<IMongoDatabase>();
         var item = new Item { Id = Guid.NewGuid() };
 
         await database.GetCollection<Item>("items").InsertOneAsync(item);
 
-        var raw = await database.GetCollection<BsonDocument>("items").Find(FilterDefinition<BsonDocument>.Empty).SingleAsync();
+        BsonDocument raw = await database.GetCollection<BsonDocument>("items").Find(FilterDefinition<BsonDocument>.Empty).SingleAsync();
         Assert.Equal(BsonBinarySubType.UuidStandard, raw["_id"].AsBsonBinaryData.SubType);
         Assert.Equal(item.Id, raw["_id"].AsGuid);
         Assert.Equal(HealthStatus.Healthy, (await Support.ReadyReportAsync(host.Services)).Status);

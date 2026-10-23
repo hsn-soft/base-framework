@@ -20,7 +20,7 @@ public static class SqlServerServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(configuration);
 
-        var connectionString = configuration.GetConnectionString(connectionName)
+        string connectionString = configuration.GetConnectionString(connectionName)
                                ?? throw new InvalidOperationException($"ConnectionStrings:{connectionName} is required.");
 
         services.AddDbContext<TContext>(options => options.UseSqlServer(connectionString, sql => sql.EnableRetryOnFailure()));

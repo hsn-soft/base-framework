@@ -40,11 +40,11 @@ public class RabbitMqTests
     [Fact]
     public async Task Registration_BindsTheSection_AndNamesTheService()
     {
-        var services = new ServiceCollection().AddLogging().AddRabbitMqEventBus(
+        IServiceCollection services = new ServiceCollection().AddLogging().AddRabbitMqEventBus(
             Configuration(("RabbitMq:Host", "broker"), ("RabbitMq:ExchangeName", "acme.events")),
             "order-service",
             options => options.RetryDelay = TimeSpan.FromSeconds(1));
-        await using var provider = services.BuildServiceProvider();
+        await using ServiceProvider provider = services.BuildServiceProvider();
 
         Assert.Equal("broker", provider.GetRequiredService<IOptions<RabbitMqOptions>>().Value.Host);
         Assert.Equal("order-service", provider.GetRequiredService<IOptions<EventBusOptions>>().Value.ServiceName);
@@ -56,10 +56,10 @@ public class RabbitMqTests
     [Fact]
     public async Task HealthCheck_IsUnhealthy_UntilAConnectionIsOpen()
     {
-        await using var connection = NewConnection();
+        await using RabbitMqConnection connection = NewConnection();
         var check = new RabbitMqHealthCheck(connection);
 
-        var result = await check.CheckHealthAsync(new HealthCheckContext());
+        HealthCheckResult result = await check.CheckHealthAsync(new HealthCheckContext());
 
         Assert.False(connection.IsConnected);
         Assert.Equal(HealthStatus.Unhealthy, result.Status);
@@ -68,10 +68,10 @@ public class RabbitMqTests
     [Fact]
     public async Task Registration_AddsAReadinessCheck()
     {
-        var services = new ServiceCollection().AddLogging().AddRabbitMqEventBus(Configuration(), "svc");
-        await using var provider = services.BuildServiceProvider();
+        IServiceCollection services = new ServiceCollection().AddLogging().AddRabbitMqEventBus(Configuration(), "svc");
+        await using ServiceProvider provider = services.BuildServiceProvider();
 
-        var registration = Assert.Single(provider.GetRequiredService<IOptions<HealthCheckServiceOptions>>().Value.Registrations);
+        HealthCheckRegistration registration = Assert.Single(provider.GetRequiredService<IOptions<HealthCheckServiceOptions>>().Value.Registrations);
 
         Assert.Equal("rabbitmq", registration.Name);
         Assert.Contains("ready", registration.Tags);
@@ -80,7 +80,7 @@ public class RabbitMqTests
     [Fact]
     public async Task Subscriber_WithoutSubscriptions_ReturnsImmediately()
     {
-        await using var connection = NewConnection();
+        await using RabbitMqConnection connection = NewConnection();
         var subscriber = new RabbitMqSubscriber(
             connection,
             [],

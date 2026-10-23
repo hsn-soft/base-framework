@@ -1,6 +1,7 @@
 using System.Text;
 using HsnSoft.Base.BlobStoring;
 using HsnSoft.Base.BlobStoring.Minio;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Testcontainers.Minio;
@@ -15,7 +16,7 @@ public sealed class MinioTests : IAsyncLifetime
     public async Task InitializeAsync()
     {
         await _container.StartAsync();
-        var configuration = Support.Configuration(
+        IConfiguration configuration = Support.Configuration(
             ("Minio:Endpoint", $"{_container.Hostname}:{_container.GetMappedPublicPort(9000)}"),
             ("Minio:AccessKey", _container.GetAccessKey()),
             ("Minio:SecretKey", _container.GetSecretKey()));
@@ -74,7 +75,7 @@ public sealed class MinioTests : IAsyncLifetime
     [Fact]
     public async Task SavedBlob_CanBeReadBack_AndTheBucketIsCreatedOnTheFly()
     {
-        var bucket = NewBucket();
+        string bucket = NewBucket();
 
         await Store.SaveAsync(bucket, "a/one.json", new MemoryStream(Encoding.UTF8.GetBytes("{\"n\":1}")), "application/json");
         await Store.SaveAsync(bucket, "a/two.json", new MemoryStream(Encoding.UTF8.GetBytes("{\"n\":2}")), "application/json");
@@ -86,7 +87,7 @@ public sealed class MinioTests : IAsyncLifetime
     [Fact]
     public async Task SavingTheSameNameAgain_ReplacesTheBlob()
     {
-        var bucket = NewBucket();
+        string bucket = NewBucket();
 
         await Store.SaveAsync(bucket, "x.txt", new MemoryStream("old"u8.ToArray()), "text/plain");
         await Store.SaveAsync(bucket, "x.txt", new MemoryStream("new"u8.ToArray()), "text/plain");
@@ -97,7 +98,7 @@ public sealed class MinioTests : IAsyncLifetime
     [Fact]
     public async Task StreamThatCannotSeek_IsBufferedAndSaved()
     {
-        var bucket = NewBucket();
+        string bucket = NewBucket();
 
         await Store.SaveAsync(bucket, "body.txt", new ForwardOnlyStream("streamed"u8.ToArray()), "text/plain");
 
@@ -107,7 +108,7 @@ public sealed class MinioTests : IAsyncLifetime
     [Fact]
     public async Task MissingBlobOrBucket_ReadsAsNull()
     {
-        var bucket = NewBucket();
+        string bucket = NewBucket();
         await Store.SaveAsync(bucket, "exists.txt", new MemoryStream("x"u8.ToArray()), "text/plain");
 
         Assert.Null(await Store.OpenReadAsync(bucket, "missing.txt"));
@@ -117,7 +118,7 @@ public sealed class MinioTests : IAsyncLifetime
     [Fact]
     public async Task DeletedBlob_IsGone_AndDeletingTwiceOrFromAMissingBucketIsFine()
     {
-        var bucket = NewBucket();
+        string bucket = NewBucket();
         await Store.SaveAsync(bucket, "gone.txt", new MemoryStream("x"u8.ToArray()), "text/plain");
 
         await Store.DeleteAsync(bucket, "gone.txt");

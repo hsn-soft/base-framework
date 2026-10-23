@@ -1,6 +1,7 @@
 using System;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 
 namespace HsnSoft.Base.EventBus;
 
@@ -14,7 +15,7 @@ public static class EventBusServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        var options = services.AddOptions<EventBusOptions>();
+        OptionsBuilder<EventBusOptions> options = services.AddOptions<EventBusOptions>();
         if (configure is not null)
         {
             options.Configure(configure);

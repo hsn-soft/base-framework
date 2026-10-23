@@ -1,11 +1,11 @@
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using HsnSoft.Base.Authentication;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
-using HsnSoft.Base.Authentication;
 
 namespace Xyz.AuthServer.Host.Services;
 
@@ -18,7 +18,7 @@ public sealed class TokenService(IOptions<JwtOptions> jwt, IOptions<AuthOptions>
 
     public UserAccount? ValidateCredentials(string username, string password)
     {
-        var account = auth.Value.Users.FirstOrDefault(x => string.Equals(x.Username, username, StringComparison.OrdinalIgnoreCase));
+        UserAccount? account = auth.Value.Users.FirstOrDefault(x => string.Equals(x.Username, username, StringComparison.OrdinalIgnoreCase));
 
         // constant-time comparison, and the same work whether or not the user exists
         byte[] expected = Encoding.UTF8.GetBytes(account?.Password ?? string.Empty);
@@ -29,8 +29,8 @@ public sealed class TokenService(IOptions<JwtOptions> jwt, IOptions<AuthOptions>
 
     public async Task<TokenPair> IssueAsync(UserAccount account, CancellationToken cancellationToken)
     {
-        var settings = jwt.Value;
-        var expires = DateTime.UtcNow.AddMinutes(settings.AccessTokenMinutes);
+        JwtOptions settings = jwt.Value;
+        DateTime expires = DateTime.UtcNow.AddMinutes(settings.AccessTokenMinutes);
 
         var claims = new List<Claim> { new("sub", account.Username), new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString("N")) };
         claims.AddRange(account.Roles.Select(role => new Claim("role", role)));
@@ -58,7 +58,7 @@ public sealed class TokenService(IOptions<JwtOptions> jwt, IOptions<AuthOptions>
     public async Task<TokenPair?> RefreshAsync(string refreshToken, CancellationToken cancellationToken)
     {
         string? username = await cache.GetStringAsync(RefreshPrefix + refreshToken, cancellationToken);
-        var account = username is null ? null : auth.Value.Users.FirstOrDefault(x => x.Username == username);
+        UserAccount? account = username is null ? null : auth.Value.Users.FirstOrDefault(x => x.Username == username);
         if (account is null)
         {
             return null;

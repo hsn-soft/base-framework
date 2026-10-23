@@ -34,14 +34,14 @@ public sealed partial class EventDispatcher : IEventDispatcher
     {
         ArgumentNullException.ThrowIfNull(subscription);
 
-        var integrationEvent = EventSerializer.Deserialize(body.Span, subscription.EventType);
-        var maxAttempts = Math.Max(1, _options.MaxHandlerAttempts);
+        IntegrationEvent integrationEvent = EventSerializer.Deserialize(body.Span, subscription.EventType);
+        int maxAttempts = Math.Max(1, _options.MaxHandlerAttempts);
 
-        for (var attempt = 1; ; attempt++)
+        for (int attempt = 1; ; attempt++)
         {
             try
             {
-                var scope = _scopeFactory.CreateAsyncScope();
+                AsyncServiceScope scope = _scopeFactory.CreateAsyncScope();
                 await using (scope.ConfigureAwait(false))
                 {
                     await subscription.Handle(scope.ServiceProvider, integrationEvent, cancellationToken).ConfigureAwait(false);

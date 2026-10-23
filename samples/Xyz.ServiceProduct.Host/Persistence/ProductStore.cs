@@ -63,7 +63,7 @@ public sealed class ProductStore(IMongoDatabase database)
         }
 
         // The filter and the decrement are one atomic operation: two orders can never both take the last item.
-        var product = await _products.FindOneAndUpdateAsync(
+        Product? product = await _products.FindOneAndUpdateAsync(
             Builders<Product>.Filter.Eq(x => x.Id, productId) & Builders<Product>.Filter.Gte(x => x.Stock, quantity),
             Builders<Product>.Update.Inc(x => x.Stock, -quantity),
             new FindOneAndUpdateOptions<Product> { ReturnDocument = ReturnDocument.After },

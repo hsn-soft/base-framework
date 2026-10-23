@@ -23,7 +23,7 @@ public sealed class MinioBlobStore : IBlobStore
         await EnsureBucketAsync(container, cancellationToken).ConfigureAwait(false);
 
         // S3 needs the size up front; buffer when the stream cannot tell it
-        var stream = content;
+        Stream stream = content;
         if (!content.CanSeek)
         {
             stream = new MemoryStream();
@@ -33,7 +33,7 @@ public sealed class MinioBlobStore : IBlobStore
 
         await using (stream.ConfigureAwait(false))
         {
-            var arguments = new PutObjectArgs()
+            PutObjectArgs arguments = new PutObjectArgs()
                 .WithBucket(container)
                 .WithObject(name)
                 .WithStreamData(stream)
@@ -48,7 +48,7 @@ public sealed class MinioBlobStore : IBlobStore
         var buffer = new MemoryStream();
         try
         {
-            var arguments = new GetObjectArgs()
+            GetObjectArgs arguments = new GetObjectArgs()
                 .WithBucket(container)
                 .WithObject(name)
                 .WithCallbackStream((source, token) => source.CopyToAsync(buffer, token));

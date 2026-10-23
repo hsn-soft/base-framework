@@ -15,11 +15,11 @@ internal static class Support
 
     public static async Task<IHost> StartHostAsync(Action<IServiceCollection> configure)
     {
-        var builder = Host.CreateApplicationBuilder();
+        HostApplicationBuilder builder = Host.CreateApplicationBuilder();
         builder.Logging.ClearProviders();
         configure(builder.Services);
 
-        var host = builder.Build();
+        IHost host = builder.Build();
         await host.StartAsync();
         return host;
     }
@@ -27,7 +27,7 @@ internal static class Support
     /// <summary>Retries <paramref name="attempt"/> until it returns true; fails the test after <paramref name="timeout"/>.</summary>
     public static async Task EventuallyAsync(Func<Task<bool>> attempt, string what, TimeSpan? timeout = null)
     {
-        var deadline = DateTime.UtcNow + (timeout ?? TimeSpan.FromSeconds(60));
+        DateTime deadline = DateTime.UtcNow + (timeout ?? TimeSpan.FromSeconds(60));
         while (!await attempt())
         {
             if (DateTime.UtcNow > deadline)

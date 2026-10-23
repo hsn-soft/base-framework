@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -16,11 +17,11 @@ public class RegistrationTests
     [Fact]
     public void DbContext_UsesTheProvider_AndRetriesTransientFailures()
     {
-        var services = new ServiceCollection().AddLogging().AddBaseSqlServer<TestContext>(Configuration("Server=localhost,1499;Database=x;User Id=u;Password=p;TrustServerCertificate=True"));
-        using var provider = services.BuildServiceProvider();
-        using var scope = provider.CreateScope();
+        IServiceCollection services = new ServiceCollection().AddLogging().AddBaseSqlServer<TestContext>(Configuration("Server=localhost,1499;Database=x;User Id=u;Password=p;TrustServerCertificate=True"));
+        using ServiceProvider provider = services.BuildServiceProvider();
+        using IServiceScope scope = provider.CreateScope();
 
-        var database = scope.ServiceProvider.GetRequiredService<TestContext>().Database;
+        DatabaseFacade database = scope.ServiceProvider.GetRequiredService<TestContext>().Database;
 
         Assert.Equal("Microsoft.EntityFrameworkCore.SqlServer", database.ProviderName);
         Assert.True(database.CreateExecutionStrategy().RetriesOnFailure);
@@ -29,10 +30,10 @@ public class RegistrationTests
     [Fact]
     public void ReadinessCheck_IsRegistered()
     {
-        var services = new ServiceCollection().AddLogging().AddBaseSqlServer<TestContext>(Configuration("Server=localhost,1499;Database=x;User Id=u;Password=p;TrustServerCertificate=True"));
-        using var provider = services.BuildServiceProvider();
+        IServiceCollection services = new ServiceCollection().AddLogging().AddBaseSqlServer<TestContext>(Configuration("Server=localhost,1499;Database=x;User Id=u;Password=p;TrustServerCertificate=True"));
+        using ServiceProvider provider = services.BuildServiceProvider();
 
-        var registration = Assert.Single(provider.GetRequiredService<IOptions<HealthCheckServiceOptions>>().Value.Registrations);
+        HealthCheckRegistration registration = Assert.Single(provider.GetRequiredService<IOptions<HealthCheckServiceOptions>>().Value.Registrations);
 
         Assert.Equal("sqlserver", registration.Name);
         Assert.Contains("ready", registration.Tags);
@@ -41,9 +42,9 @@ public class RegistrationTests
     [Fact]
     public void ConnectionNameIsConfigurable()
     {
-        var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?> { ["ConnectionStrings:Other"] = "Server=localhost,1499;Database=x;User Id=u;Password=p;TrustServerCertificate=True" }).Build();
+        IConfigurationRoot configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?> { ["ConnectionStrings:Other"] = "Server=localhost,1499;Database=x;User Id=u;Password=p;TrustServerCertificate=True" }).Build();
 
-        var services = new ServiceCollection().AddLogging().AddBaseSqlServer<TestContext>(configuration, "Other");
+        IServiceCollection services = new ServiceCollection().AddLogging().AddBaseSqlServer<TestContext>(configuration, "Other");
 
         Assert.NotEmpty(services);
     }
@@ -51,7 +52,7 @@ public class RegistrationTests
     [Fact]
     public void MissingConnectionString_IsAnError()
     {
-        var exception = Assert.Throws<InvalidOperationException>(() => new ServiceCollection().AddBaseSqlServer<TestContext>(Configuration(null)));
+        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => new ServiceCollection().AddBaseSqlServer<TestContext>(Configuration(null)));
 
         Assert.Contains("ConnectionStrings:SqlServer", exception.Message, StringComparison.Ordinal);
     }

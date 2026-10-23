@@ -19,11 +19,11 @@ public class WebApiTests
 
     private static async Task<WebApplication> StartAsync(string environment = "Production")
     {
-        var builder = WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = environment });
+        WebApplicationBuilder builder = WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = environment });
         builder.WebHost.UseTestServer();
         builder.Services.AddBaseWebApi().AddBaseOpenApi();
 
-        var app = builder.Build();
+        WebApplication app = builder.Build();
         app.UseBaseExceptionHandling();
         app.MapBaseOpenApi();
         app.MapGet("/not-found", () => { throw new NotFoundException("order 7 is missing"); });
@@ -41,10 +41,10 @@ public class WebApiTests
     [InlineData("/bad-request", HttpStatusCode.BadRequest, "Bad request", "malformed")]
     public async Task KnownExceptions_BecomeProblemsWithTheirMessage(string path, HttpStatusCode status, string title, string detail)
     {
-        await using var app = await StartAsync();
+        await using WebApplication app = await StartAsync();
 
-        var response = await app.GetTestClient().GetAsync(path);
-        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        HttpResponseMessage response = await app.GetTestClient().GetAsync(path);
+        ProblemDetails? problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
 
         Assert.Equal(status, response.StatusCode);
         Assert.Equal(title, problem!.Title);
@@ -54,10 +54,10 @@ public class WebApiTests
     [Fact]
     public async Task UnexpectedExceptions_Become500_WithoutLeakingTheMessage()
     {
-        await using var app = await StartAsync();
+        await using WebApplication app = await StartAsync();
 
-        var response = await app.GetTestClient().GetAsync("/boom");
-        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        HttpResponseMessage response = await app.GetTestClient().GetAsync("/boom");
+        ProblemDetails? problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
 
         Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
         Assert.Equal("Unexpected error", problem!.Title);
@@ -67,9 +67,9 @@ public class WebApiTests
     [Fact]
     public async Task UnknownRoute_GetsAProblemBody()
     {
-        await using var app = await StartAsync();
+        await using WebApplication app = await StartAsync();
 
-        var response = await app.GetTestClient().GetAsync("/nowhere");
+        HttpResponseMessage response = await app.GetTestClient().GetAsync("/nowhere");
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
@@ -78,9 +78,9 @@ public class WebApiTests
     [Fact]
     public async Task Enums_AreWrittenAsStrings()
     {
-        await using var app = await StartAsync();
+        await using WebApplication app = await StartAsync();
 
-        var json = await app.GetTestClient().GetStringAsync("/color");
+        string json = await app.GetTestClient().GetStringAsync("/color");
 
         Assert.Equal("Red", JsonDocument.Parse(json).RootElement.GetProperty("color").GetString());
     }
@@ -88,8 +88,8 @@ public class WebApiTests
     [Fact]
     public async Task OpenApiDocument_IsServedInDevelopmentOnly()
     {
-        await using var development = await StartAsync("Development");
-        await using var production = await StartAsync();
+        await using WebApplication development = await StartAsync("Development");
+        await using WebApplication production = await StartAsync();
 
         Assert.Equal(HttpStatusCode.OK, (await development.GetTestClient().GetAsync("/openapi/v1.json")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await production.GetTestClient().GetAsync("/openapi/v1.json")).StatusCode);
@@ -98,7 +98,7 @@ public class WebApiTests
     [Fact]
     public async Task HandlerRejectsNullArguments()
     {
-        await using var app = await StartAsync();
+        await using WebApplication app = await StartAsync();
         var handler = new GlobalExceptionHandler(app.Services.GetRequiredService<IProblemDetailsService>(), NullLogger<GlobalExceptionHandler>.Instance);
 
         await Assert.ThrowsAsync<ArgumentNullException>(async () => await handler.TryHandleAsync(null!, new InvalidOperationException(), default));

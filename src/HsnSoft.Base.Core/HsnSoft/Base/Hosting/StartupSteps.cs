@@ -29,10 +29,10 @@ public static partial class StartupSteps
         ArgumentNullException.ThrowIfNull(step);
         ArgumentOutOfRangeException.ThrowIfLessThan(maxAttempts, 1);
 
-        var logger = services.GetService<ILoggerFactory>()?.CreateLogger(typeof(StartupSteps).FullName!);
-        var delay = retryDelay ?? TimeSpan.FromSeconds(2);
+        ILogger? logger = services.GetService<ILoggerFactory>()?.CreateLogger(typeof(StartupSteps).FullName!);
+        TimeSpan delay = retryDelay ?? TimeSpan.FromSeconds(2);
 
-        for (var attempt = 1; ; attempt++)
+        for (int attempt = 1; ; attempt++)
         {
             try
             {

@@ -1,9 +1,9 @@
 using System.Text.Json;
+using HsnSoft.Base;
+using HsnSoft.Base.Authentication;
 using Microsoft.Extensions.Caching.Distributed;
 using Xyz.ServiceShipment.Host.Domain;
 using Xyz.ServiceShipment.Host.Persistence;
-using HsnSoft.Base;
-using HsnSoft.Base.Authentication;
 
 namespace Xyz.ServiceShipment.Host.Endpoints;
 
@@ -11,7 +11,7 @@ public static class ShipmentEndpoints
 {
     public static void MapShipmentEndpoints(this WebApplication app)
     {
-        var group = app.MapGroup("/api/shipments").RequireAuthorization(BasePolicies.Authenticated);
+        RouteGroupBuilder group = app.MapGroup("/api/shipments").RequireAuthorization(BasePolicies.Authenticated);
 
         group.MapGet("/{id:guid}", async (Guid id, ShipmentStore store, CancellationToken cancellationToken)
             => Results.Ok(await store.FindAsync(id, cancellationToken) ?? throw new NotFoundException($"Shipment {id} was not found.")));
@@ -28,7 +28,7 @@ public static class ShipmentEndpoints
             return Results.Ok(JsonSerializer.Deserialize<Shipment>(cached, JsonSerializerOptions.Web));
         }
 
-        var shipment = await store.FindByOrderAsync(orderId, cancellationToken)
+        Shipment shipment = await store.FindByOrderAsync(orderId, cancellationToken)
                        ?? throw new NotFoundException($"There is no shipment for order {orderId}.");
         await cache.SetStringAsync(
             key,

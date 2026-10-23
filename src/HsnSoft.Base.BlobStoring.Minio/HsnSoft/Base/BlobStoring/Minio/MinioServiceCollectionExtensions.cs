@@ -21,7 +21,7 @@ public static class MinioServiceCollectionExtensions
         services.Configure<MinioOptions>(configuration.GetSection("Minio"));
         services.TryAddSingleton<IMinioClient>(provider =>
         {
-            var options = provider.GetRequiredService<IOptions<MinioOptions>>().Value;
+            MinioOptions options = provider.GetRequiredService<IOptions<MinioOptions>>().Value;
             return new MinioClient()
                 .WithEndpoint(options.Endpoint)
                 .WithCredentials(options.AccessKey, options.SecretKey)

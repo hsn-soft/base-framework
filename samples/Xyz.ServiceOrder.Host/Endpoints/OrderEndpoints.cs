@@ -1,13 +1,13 @@
 using System.Security.Claims;
+using HsnSoft.Base;
+using HsnSoft.Base.Authentication;
+using HsnSoft.Base.EventBus;
 using HsnSoft.Base.Security;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Xyz.ServiceOrder.Host.Domain;
 using Xyz.ServiceOrder.Host.Persistence;
-using HsnSoft.Base;
-using HsnSoft.Base.Authentication;
-using HsnSoft.Base.EventBus;
 using Xyz.Shared;
 using Xyz.Shared.Events;
 
@@ -35,7 +35,7 @@ public static class OrderEndpoints
 {
     public static void MapOrderEndpoints(this WebApplication app)
     {
-        var group = app.MapGroup("/api/orders").RequireAuthorization(BasePolicies.Authenticated);
+        RouteGroupBuilder group = app.MapGroup("/api/orders").RequireAuthorization(BasePolicies.Authenticated);
 
         group.MapPost("/", PlaceOrderAsync);
         group.MapGet("/", ListOrdersAsync);
@@ -85,7 +85,7 @@ public static class OrderEndpoints
 
     private static async Task<IResult> GetOrderAsync(Guid id, ClaimsPrincipal user, OrderDbContext db, CancellationToken cancellationToken)
     {
-        var order = await db.Orders.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, cancellationToken)
+        Order order = await db.Orders.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, cancellationToken)
                     ?? throw new NotFoundException($"Order {id} was not found.");
 
         // a customer sees only their own orders; an admin sees all
@@ -99,14 +99,14 @@ public static class OrderEndpoints
 
     private static async Task<IResult> ListOrdersAsync(ClaimsPrincipal user, OrderDbContext db, CancellationToken cancellationToken)
     {
-        var query = db.Orders.AsNoTracking();
+        IQueryable<Order> query = db.Orders.AsNoTracking();
         if (!user.IsInRole(Roles.Admin))
         {
             string customerId = CustomerId(user);
             query = query.Where(x => x.CustomerId == customerId);
         }
 
-        var orders = await query.OrderByDescending(x => x.CreatedAt).Take(100).ToListAsync(cancellationToken);
+        List<Order> orders = await query.OrderByDescending(x => x.CreatedAt).Take(100).ToListAsync(cancellationToken);
         return Results.Ok(orders.Select(OrderResponse.From));
     }
 

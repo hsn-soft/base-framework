@@ -27,7 +27,7 @@ public sealed class KafkaEventBus : IEventBus, IDisposable
     public async Task PublishAsync<TEvent>(TEvent integrationEvent, CancellationToken cancellationToken = default)
         where TEvent : IntegrationEvent
     {
-        var topic = KafkaTopology.TopicFor(_options, typeof(TEvent));
+        string topic = KafkaTopology.TopicFor(_options, typeof(TEvent));
         if (!_knownTopics.ContainsKey(topic))
         {
             await KafkaTopology.EnsureTopicsAsync(_options, [topic]).ConfigureAwait(false);

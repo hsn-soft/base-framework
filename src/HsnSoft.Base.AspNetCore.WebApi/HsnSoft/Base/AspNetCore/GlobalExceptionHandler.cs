@@ -25,7 +25,7 @@ public sealed partial class GlobalExceptionHandler : IExceptionHandler
         ArgumentNullException.ThrowIfNull(httpContext);
         ArgumentNullException.ThrowIfNull(exception);
 
-        var (status, title) = exception switch
+        (int status, string? title) = exception switch
         {
             NotFoundException => (StatusCodes.Status404NotFound, "Not found"),
             BusinessRuleException => (StatusCodes.Status400BadRequest, "Business rule violated"),

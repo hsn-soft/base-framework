@@ -47,8 +47,8 @@ public sealed partial class RabbitMqSubscriber : BackgroundService
             return;
         }
 
-        var rabbit = await _connection.GetAsync(stoppingToken).ConfigureAwait(false);
-        var channel = await rabbit.CreateChannelAsync(cancellationToken: stoppingToken).ConfigureAwait(false);
+        IConnection rabbit = await _connection.GetAsync(stoppingToken).ConfigureAwait(false);
+        IChannel channel = await rabbit.CreateChannelAsync(cancellationToken: stoppingToken).ConfigureAwait(false);
         await using (channel.ConfigureAwait(false))
         {
             await channel.BasicQosAsync(prefetchSize: 0, prefetchCount: 10, global: false, cancellationToken: stoppingToken).ConfigureAwait(false);
@@ -56,10 +56,10 @@ public sealed partial class RabbitMqSubscriber : BackgroundService
             await RabbitMqTopology.DeclareExchangeAsync(channel, _options, stoppingToken).ConfigureAwait(false);
             await RabbitMqTopology.DeclareDeadLetterAsync(channel, _options, stoppingToken).ConfigureAwait(false);
 
-            foreach (var subscription in _subscriptions)
+            foreach (EventSubscription subscription in _subscriptions)
             {
-                var eventName = subscription.EventType.Name;
-                var queue = $"{_eventBusOptions.ServiceName}.{eventName}";
+                string eventName = subscription.EventType.Name;
+                string queue = $"{_eventBusOptions.ServiceName}.{eventName}";
 
                 await channel.QueueDeclareAsync(
                     queue,

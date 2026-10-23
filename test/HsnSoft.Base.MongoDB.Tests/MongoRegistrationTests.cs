@@ -17,8 +17,8 @@ public class MongoRegistrationTests
     [Fact]
     public void DatabaseNamedInTheConnectionString_IsRegistered()
     {
-        var services = new ServiceCollection().AddLogging().AddBaseMongo(Configuration("mongodb://localhost:27099/acme"));
-        using var provider = services.BuildServiceProvider();
+        IServiceCollection services = new ServiceCollection().AddLogging().AddBaseMongo(Configuration("mongodb://localhost:27099/acme"));
+        using ServiceProvider provider = services.BuildServiceProvider();
 
         Assert.Equal("acme", provider.GetRequiredService<IMongoDatabase>().DatabaseNamespace.DatabaseName);
         Assert.NotNull(provider.GetRequiredService<IMongoClient>());
@@ -29,7 +29,7 @@ public class MongoRegistrationTests
     {
         new ServiceCollection().AddBaseMongo(Configuration("mongodb://localhost:27099/acme"));
 
-        var serializer = Assert.IsType<GuidSerializer>(BsonSerializer.LookupSerializer<Guid>());
+        GuidSerializer serializer = Assert.IsType<GuidSerializer>(BsonSerializer.LookupSerializer<Guid>());
 
         Assert.Equal(GuidRepresentation.Standard, serializer.GuidRepresentation);
     }
@@ -37,10 +37,10 @@ public class MongoRegistrationTests
     [Fact]
     public void ReadinessCheck_IsRegistered()
     {
-        var services = new ServiceCollection().AddLogging().AddBaseMongo(Configuration("mongodb://localhost:27099/acme"));
-        using var provider = services.BuildServiceProvider();
+        IServiceCollection services = new ServiceCollection().AddLogging().AddBaseMongo(Configuration("mongodb://localhost:27099/acme"));
+        using ServiceProvider provider = services.BuildServiceProvider();
 
-        var registration = Assert.Single(provider.GetRequiredService<IOptions<HealthCheckServiceOptions>>().Value.Registrations);
+        HealthCheckRegistration registration = Assert.Single(provider.GetRequiredService<IOptions<HealthCheckServiceOptions>>().Value.Registrations);
 
         Assert.Equal("mongo", registration.Name);
         Assert.Contains("ready", registration.Tags);
@@ -49,7 +49,7 @@ public class MongoRegistrationTests
     [Fact]
     public void MissingConnectionString_IsAnError()
     {
-        var exception = Assert.Throws<InvalidOperationException>(() => new ServiceCollection().AddBaseMongo(Configuration(null)));
+        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => new ServiceCollection().AddBaseMongo(Configuration(null)));
 
         Assert.Contains("ConnectionStrings:Mongo", exception.Message, StringComparison.Ordinal);
     }
@@ -57,7 +57,7 @@ public class MongoRegistrationTests
     [Fact]
     public void ConnectionStringWithoutDatabase_IsAnError()
     {
-        var exception = Assert.Throws<InvalidOperationException>(() => new ServiceCollection().AddBaseMongo(Configuration("mongodb://localhost:27099")));
+        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => new ServiceCollection().AddBaseMongo(Configuration("mongodb://localhost:27099")));
 
         Assert.Contains("database name", exception.Message, StringComparison.Ordinal);
     }

@@ -11,7 +11,7 @@ using HsnSoft.Base.EntityFrameworkCore.SqlServer;
 using HsnSoft.Base.EventBus;
 using HsnSoft.Base.EventBus.Kafka;
 
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // One host, so it picks its pieces itself: Redis (API keys), SQL Server (metadata), MinIO (documents), Kafka (the queue).
 builder.Services
@@ -26,7 +26,7 @@ builder.Services
     .AddEventHandler<SignRequested, SignRequestedHandler>()
     .Configure<SignerOptions>(builder.Configuration.GetSection("Signer"));
 
-var app = builder.Build();
+WebApplication app = builder.Build();
 
 await app.Services.EnsureDatabaseCreatedAsync<SignerDbContext>();
 await app.Services.SeedApiKeysAsync(app.Configuration);

@@ -25,7 +25,7 @@ public class PeriodicBackgroundServiceTests
 
     private static async Task WaitUntilAsync(Func<bool> condition)
     {
-        var deadline = DateTime.UtcNow.AddSeconds(10);
+        DateTime deadline = DateTime.UtcNow.AddSeconds(10);
         while (!condition())
         {
             Assert.True(DateTime.UtcNow < deadline, "The condition was not met in time.");

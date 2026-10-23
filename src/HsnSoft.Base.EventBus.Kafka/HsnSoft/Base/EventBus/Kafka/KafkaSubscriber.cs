@@ -46,7 +46,7 @@ public sealed partial class KafkaSubscriber : BackgroundService
         }
 
         var byTopic = _subscriptions.ToDictionary(subscription => KafkaTopology.TopicFor(_options, subscription.EventType));
-        var deadLetterTopic = KafkaTopology.DeadLetterTopic(_options);
+        string deadLetterTopic = KafkaTopology.DeadLetterTopic(_options);
 
         await KafkaTopology.EnsureTopicsAsync(_options, byTopic.Keys.Append(deadLetterTopic)).ConfigureAwait(false);
 
@@ -56,24 +56,24 @@ public sealed partial class KafkaSubscriber : BackgroundService
 
     private async Task ConsumeLoopAsync(Dictionary<string, EventSubscription> byTopic, string deadLetterTopic, CancellationToken stoppingToken)
     {
-        using var consumer = new ConsumerBuilder<string, byte[]>(new ConsumerConfig
+        using IConsumer<string, byte[]> consumer = new ConsumerBuilder<string, byte[]>(new ConsumerConfig
         {
             BootstrapServers = _options.BootstrapServers,
             GroupId = _eventBusOptions.ServiceName,
             EnableAutoCommit = false,
             AutoOffsetReset = AutoOffsetReset.Earliest,
         }).Build();
-        using var deadLetters = new ProducerBuilder<string, byte[]>(new ProducerConfig { BootstrapServers = _options.BootstrapServers }).Build();
+        using IProducer<string, byte[]> deadLetters = new ProducerBuilder<string, byte[]>(new ProducerConfig { BootstrapServers = _options.BootstrapServers }).Build();
 
         consumer.Subscribe(byTopic.Keys);
-        var topics = string.Join(", ", byTopic.Keys);
+        string topics = string.Join(", ", byTopic.Keys);
         LogListening(_logger, _eventBusOptions.ServiceName, topics);
 
         try
         {
             while (true)
             {
-                var result = consumer.Consume(stoppingToken);
+                ConsumeResult<string, byte[]> result = consumer.Consume(stoppingToken);
                 try
                 {
                     await _dispatcher.DispatchAsync(byTopic[result.Topic], result.Message.Value, stoppingToken).ConfigureAwait(false);

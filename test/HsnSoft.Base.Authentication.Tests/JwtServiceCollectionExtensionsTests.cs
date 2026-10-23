@@ -17,7 +17,7 @@ public class JwtServiceCollectionExtensionsTests
 
     private static ServiceProvider BuildProvider(Dictionary<string, string?>? settings = null)
     {
-        var configuration = new ConfigurationBuilder()
+        IConfigurationRoot configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(settings ?? new Dictionary<string, string?>
             {
                 ["Jwt:Issuer"] = "test-issuer",
@@ -50,9 +50,9 @@ public class JwtServiceCollectionExtensionsTests
     [Fact]
     public void JwtSection_IsBoundToTheOptions()
     {
-        using var provider = BuildProvider();
+        using ServiceProvider provider = BuildProvider();
 
-        var options = provider.GetRequiredService<IOptions<JwtOptions>>().Value;
+        JwtOptions options = provider.GetRequiredService<IOptions<JwtOptions>>().Value;
 
         Assert.Equal("test-issuer", options.Issuer);
         Assert.Equal("test-audience", options.Audience);
@@ -74,10 +74,10 @@ public class JwtServiceCollectionExtensionsTests
     [Fact]
     public void BearerOptions_UseTheConfiguredIssuerAudienceAndShortClaimNames()
     {
-        using var provider = BuildProvider();
+        using ServiceProvider provider = BuildProvider();
 
-        var bearer = provider.GetRequiredService<IOptionsMonitor<JwtBearerOptions>>().Get(JwtBearerDefaults.AuthenticationScheme);
-        var parameters = bearer.TokenValidationParameters;
+        JwtBearerOptions bearer = provider.GetRequiredService<IOptionsMonitor<JwtBearerOptions>>().Get(JwtBearerDefaults.AuthenticationScheme);
+        TokenValidationParameters parameters = bearer.TokenValidationParameters;
 
         Assert.Equal("test-issuer", parameters.ValidIssuer);
         Assert.Equal("test-audience", parameters.ValidAudience);
@@ -90,9 +90,9 @@ public class JwtServiceCollectionExtensionsTests
     [Fact]
     public async Task ATokenSignedWithTheConfiguredKey_IsValid()
     {
-        using var provider = BuildProvider();
+        using ServiceProvider provider = BuildProvider();
 
-        var result = await new JsonWebTokenHandler().ValidateTokenAsync(CreateToken(Key), Parameters(provider));
+        TokenValidationResult result = await new JsonWebTokenHandler().ValidateTokenAsync(CreateToken(Key), Parameters(provider));
 
         Assert.True(result.IsValid);
         Assert.Equal("alice", result.ClaimsIdentity.Name);
@@ -105,9 +105,9 @@ public class JwtServiceCollectionExtensionsTests
     [InlineData(Key, "test-issuer", "another-audience")]
     public async Task ATokenWithAWrongKeyIssuerOrAudience_IsRejected(string key, string issuer, string audience)
     {
-        using var provider = BuildProvider();
+        using ServiceProvider provider = BuildProvider();
 
-        var result = await new JsonWebTokenHandler().ValidateTokenAsync(CreateToken(key, issuer, audience), Parameters(provider));
+        TokenValidationResult result = await new JsonWebTokenHandler().ValidateTokenAsync(CreateToken(key, issuer, audience), Parameters(provider));
 
         Assert.False(result.IsValid);
     }
@@ -115,9 +115,9 @@ public class JwtServiceCollectionExtensionsTests
     [Fact]
     public async Task TheAuthenticatedPolicy_RequiresAnAuthenticatedUser()
     {
-        using var provider = BuildProvider();
+        using ServiceProvider provider = BuildProvider();
 
-        var policy = await provider.GetRequiredService<IAuthorizationPolicyProvider>().GetPolicyAsync(BasePolicies.Authenticated);
+        AuthorizationPolicy? policy = await provider.GetRequiredService<IAuthorizationPolicyProvider>().GetPolicyAsync(BasePolicies.Authenticated);
 
         Assert.NotNull(policy);
         Assert.Contains(policy.Requirements, requirement => requirement is Microsoft.AspNetCore.Authorization.Infrastructure.DenyAnonymousAuthorizationRequirement);
@@ -127,9 +127,9 @@ public class JwtServiceCollectionExtensionsTests
     [Fact]
     public async Task ThePipelineMiddleware_RunsWithoutAToken()
     {
-        using var provider = BuildProvider();
+        using ServiceProvider provider = BuildProvider();
         var app = new ApplicationBuilder(provider);
-        var reached = false;
+        bool reached = false;
 
         Assert.Same(app, app.UseBaseAuthentication());
         Assert.Same(app, app.UseBaseAuthorization());

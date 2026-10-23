@@ -50,7 +50,7 @@ public sealed partial class RabbitMqConnection : IAsyncDisposable
                 AutomaticRecoveryEnabled = true,
             };
 
-            for (var attempt = 1; ; attempt++)
+            for (int attempt = 1; ; attempt++)
             {
                 try
                 {

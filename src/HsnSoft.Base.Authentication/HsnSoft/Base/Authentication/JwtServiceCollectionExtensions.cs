@@ -30,7 +30,7 @@ public static class JwtServiceCollectionExtensions
         services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
             .Configure<IOptions<JwtOptions>>((bearer, jwt) =>
             {
-                var settings = jwt.Value;
+                JwtOptions settings = jwt.Value;
                 bearer.MapInboundClaims = false;
                 bearer.TokenValidationParameters = new TokenValidationParameters
                 {

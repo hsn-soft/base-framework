@@ -5,6 +5,7 @@ using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Primitives;
 
 namespace Def.Signer.Host.Security;
 
@@ -36,7 +37,7 @@ public sealed class ApiKeyAuthenticationHandler(
 {
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
     {
-        if (!Request.Headers.TryGetValue(ApiKeyDefaults.HeaderName, out var apiKey) || string.IsNullOrWhiteSpace(apiKey))
+        if (!Request.Headers.TryGetValue(ApiKeyDefaults.HeaderName, out StringValues apiKey) || string.IsNullOrWhiteSpace(apiKey))
         {
             return AuthenticateResult.NoResult();
         }
@@ -65,8 +66,8 @@ public static class ApiKeyExtensions
     /// <summary>Puts the keys of the <c>ApiKeys:Seed</c> section (owner -> key) into Redis. A sample convenience: a real product issues keys through its own admin flow.</summary>
     public static async Task SeedApiKeysAsync(this IServiceProvider services, IConfiguration configuration)
     {
-        var store = services.GetRequiredService<ApiKeyStore>();
-        foreach (var entry in configuration.GetSection("ApiKeys:Seed").GetChildren())
+        ApiKeyStore store = services.GetRequiredService<ApiKeyStore>();
+        foreach (IConfigurationSection entry in configuration.GetSection("ApiKeys:Seed").GetChildren())
         {
             if (entry.Value is { Length: > 0 } apiKey)
             {

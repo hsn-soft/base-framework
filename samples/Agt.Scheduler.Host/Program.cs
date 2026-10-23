@@ -3,7 +3,7 @@ using HsnSoft.Base.AspNetCore;
 using HsnSoft.Base.Hosting;
 using HsnSoft.Base.MongoDB;
 
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Services
     .AddBaseHealthChecks()
@@ -13,7 +13,7 @@ builder.Services
     .AddSingleton<RecordStore>()
     .AddHostedService<RecentRecordsWorker>();
 
-var app = builder.Build();
+WebApplication app = builder.Build();
 
 await app.Services.RunStartupStepAsync("record index", app.Services.GetRequiredService<RecordStore>().InitializeAsync);
 

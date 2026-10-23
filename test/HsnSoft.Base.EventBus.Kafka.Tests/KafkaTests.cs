@@ -37,11 +37,11 @@ public class KafkaTests
     [Fact]
     public void Registration_BindsTheSection_AndNamesTheService()
     {
-        var services = new ServiceCollection().AddLogging().AddKafkaEventBus(
+        IServiceCollection services = new ServiceCollection().AddLogging().AddKafkaEventBus(
             Configuration(("Kafka:BootstrapServers", "broker:9093"), ("Kafka:TopicPrefix", "acme.")),
             "order-service",
             options => options.MaxHandlerAttempts = 7);
-        using var provider = services.BuildServiceProvider();
+        using ServiceProvider provider = services.BuildServiceProvider();
 
         Assert.Equal("broker:9093", provider.GetRequiredService<IOptions<KafkaOptions>>().Value.BootstrapServers);
         Assert.Equal("acme.", provider.GetRequiredService<IOptions<KafkaOptions>>().Value.TopicPrefix);
@@ -54,10 +54,10 @@ public class KafkaTests
     [Fact]
     public void Registration_AddsAReadinessCheck()
     {
-        var services = new ServiceCollection().AddLogging().AddKafkaEventBus(Configuration(), "svc");
-        using var provider = services.BuildServiceProvider();
+        IServiceCollection services = new ServiceCollection().AddLogging().AddKafkaEventBus(Configuration(), "svc");
+        using ServiceProvider provider = services.BuildServiceProvider();
 
-        var registration = Assert.Single(provider.GetRequiredService<IOptions<HealthCheckServiceOptions>>().Value.Registrations);
+        HealthCheckRegistration registration = Assert.Single(provider.GetRequiredService<IOptions<HealthCheckServiceOptions>>().Value.Registrations);
 
         Assert.Equal("kafka", registration.Name);
         Assert.Contains("ready", registration.Tags);
@@ -68,7 +68,7 @@ public class KafkaTests
     {
         var check = new KafkaHealthCheck(Options.Create(new KafkaOptions { BootstrapServers = "127.0.0.1:1" }));
 
-        var result = await check.CheckHealthAsync(new HealthCheckContext());
+        HealthCheckResult result = await check.CheckHealthAsync(new HealthCheckContext());
 
         Assert.Equal(HealthStatus.Unhealthy, result.Status);
     }
@@ -95,7 +95,7 @@ public class KafkaTests
     {
         var bus = new KafkaEventBus(Options.Create(new KafkaOptions()));
 
-        bus.Dispose();
+        Assert.Null(Record.Exception(bus.Dispose));
     }
 
     [Fact]

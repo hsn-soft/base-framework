@@ -2,6 +2,7 @@ using HsnSoft.Base.EntityFrameworkCore;
 using HsnSoft.Base.EntityFrameworkCore.PostgreSql;
 using HsnSoft.Base.EntityFrameworkCore.SqlServer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Testcontainers.MsSql;
@@ -25,18 +26,18 @@ internal static class RelationalChecks
 {
     public static async Task AssertWorksAsync(Action<IServiceCollection> register)
     {
-        using var host = await Support.StartHostAsync(register);
+        using IHost host = await Support.StartHostAsync(register);
 
         await host.Services.EnsureDatabaseCreatedAsync<ItemContext>();
 
-        await using (var scope = host.Services.CreateAsyncScope())
+        await using (AsyncServiceScope scope = host.Services.CreateAsyncScope())
         {
-            var context = scope.ServiceProvider.GetRequiredService<ItemContext>();
+            ItemContext context = scope.ServiceProvider.GetRequiredService<ItemContext>();
             context.Items.Add(new Item { Name = "first" });
             await context.SaveChangesAsync();
         }
 
-        await using (var scope = host.Services.CreateAsyncScope())
+        await using (AsyncServiceScope scope = host.Services.CreateAsyncScope())
         {
             Assert.Equal("first", await scope.ServiceProvider.GetRequiredService<ItemContext>().Items.Select(x => x.Name).SingleAsync());
         }
@@ -56,7 +57,7 @@ public sealed class PostgreSqlTests : IAsyncLifetime
     [Fact]
     public Task DbContext_CreatesItsSchema_StoresRows_AndTheServiceIsReady()
     {
-        var configuration = Support.Configuration(("ConnectionStrings:Postgres", _container.GetConnectionString()));
+        IConfiguration configuration = Support.Configuration(("ConnectionStrings:Postgres", _container.GetConnectionString()));
         return RelationalChecks.AssertWorksAsync(services => services.AddBasePostgres<ItemContext>(configuration));
     }
 }
@@ -72,7 +73,7 @@ public sealed class SqlServerTests : IAsyncLifetime
     [Fact]
     public Task DbContext_CreatesItsSchema_StoresRows_AndTheServiceIsReady()
     {
-        var configuration = Support.Configuration(("ConnectionStrings:SqlServer", _container.GetConnectionString()));
+        IConfiguration configuration = Support.Configuration(("ConnectionStrings:SqlServer", _container.GetConnectionString()));
         return RelationalChecks.AssertWorksAsync(services => services.AddBaseSqlServer<ItemContext>(configuration));
     }
 }

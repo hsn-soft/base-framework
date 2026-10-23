@@ -29,7 +29,7 @@ public static class DbContextExtensions
 
         return services.RunStartupStepAsync($"{typeof(TContext).Name} schema", async cancellationToken =>
         {
-            var scope = services.CreateAsyncScope();
+            AsyncServiceScope scope = services.CreateAsyncScope();
             await using (scope.ConfigureAwait(false))
             {
                 await scope.ServiceProvider.GetRequiredService<TContext>().Database.EnsureCreatedAsync(cancellationToken).ConfigureAwait(false);

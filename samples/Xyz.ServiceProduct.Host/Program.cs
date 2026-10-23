@@ -8,7 +8,7 @@ using Xyz.ServiceProduct.Host.Persistence;
 using Xyz.Shared;
 using Xyz.Shared.Events;
 
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Services
     .AddXyzApi(builder.Configuration)
@@ -18,7 +18,7 @@ builder.Services
     .AddSingleton<ProductStore>()
     .AddEventHandler<OrderCreated, OrderCreatedHandler>();
 
-var app = builder.Build();
+WebApplication app = builder.Build();
 
 await app.Services.RunStartupStepAsync("ProductStore setup", app.Services.GetRequiredService<ProductStore>().InitializeAsync);
 

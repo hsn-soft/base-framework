@@ -1,5 +1,6 @@
 using HsnSoft.Base.Hosting;
 using Microsoft.Extensions.Options;
+using MongoDB.Bson;
 
 namespace Agt.Scheduler.Host;
 
@@ -15,10 +16,10 @@ public sealed class RecentRecordsWorker(
 
     protected override async Task RunOnceAsync(CancellationToken cancellationToken)
     {
-        var since = timeProvider.GetUtcNow().UtcDateTime.AddMinutes(-_options.LookbackMinutes);
+        DateTime since = timeProvider.GetUtcNow().UtcDateTime.AddMinutes(-_options.LookbackMinutes);
 
         // one more than we log, so we can tell "exactly the limit" from "more than the limit"
-        var ids = await store.FindIdsCreatedSinceAsync(since, _options.MaxLoggedIds + 1, cancellationToken);
+        List<ObjectId> ids = await store.FindIdsCreatedSinceAsync(since, _options.MaxLoggedIds + 1, cancellationToken);
 
         if (ids.Count == 0)
         {
@@ -26,7 +27,7 @@ public sealed class RecentRecordsWorker(
             return;
         }
 
-        var shown = ids.Take(_options.MaxLoggedIds).Select(id => id.ToString());
+        IEnumerable<string> shown = ids.Take(_options.MaxLoggedIds).Select(id => id.ToString());
         logger.LogInformation(
             "{Count}{More} record(s) created in the last {Minutes} minute(s): {Ids}",
             Math.Min(ids.Count, _options.MaxLoggedIds),

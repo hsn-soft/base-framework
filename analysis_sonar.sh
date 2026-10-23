@@ -15,8 +15,8 @@ dotnet sonarscanner begin \
     /d:sonar.token="$SONAR_TOKEN" \
     /d:sonar.cs.vstest.reportsPaths="$ROOT/TestResults/**/*.trx" \
     /d:sonar.cs.opencover.reportsPaths="$ROOT/TestResults/**/coverage.opencover.xml" \
-    /d:sonar.exclusions="test/**,**/Migrations/**,**/*Test*.cs,**/*Test*/**,**/tmp/**,**/Tmp/**,**/TMP/**,**/data/**,**/logs/**,**/sample/**" \
-    /d:sonar.coverage.exclusions="test/**,**/Migrations/**,**/*Test*.cs,**/*Test*/**,**/tmp/**,**/Tmp/**,**/TMP/**"
+    /d:sonar.exclusions="test/**,samples/**,scripts/**,**/Migrations/**,**/*Test*.cs,**/*Test*/**,**/tmp/**,**/Tmp/**,**/TMP/**,**/data/**,**/logs/**,**/sample/**" \
+    /d:sonar.coverage.exclusions="test/**,samples/**,scripts/**,**/Migrations/**,**/*Test*.cs,**/*Test*/**,**/tmp/**,**/Tmp/**,**/TMP/**"
 
 dotnet restore --force --verbosity minimal
 dotnet build --no-restore --no-incremental --verbosity minimal -c Release

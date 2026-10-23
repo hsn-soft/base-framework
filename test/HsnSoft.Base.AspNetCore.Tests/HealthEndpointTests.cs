@@ -10,14 +10,14 @@ public class HealthEndpointTests
 {
     private static async Task<WebApplication> StartAsync(HealthStatus readyCheck)
     {
-        var builder = WebApplication.CreateBuilder();
+        WebApplicationBuilder builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
         builder.Services.AddBaseHealthChecks();
         builder.Services.AddHealthChecks()
             .AddCheck("dependency", () => new HealthCheckResult(readyCheck), tags: ["ready"])
             .AddCheck("untagged", () => HealthCheckResult.Unhealthy());
 
-        var app = builder.Build();
+        WebApplication app = builder.Build();
         app.MapBaseHealth();
         await app.StartAsync();
         return app;
@@ -26,9 +26,9 @@ public class HealthEndpointTests
     [Fact]
     public async Task Live_IsOk_EvenWhenADependencyIsDown()
     {
-        await using var app = await StartAsync(HealthStatus.Unhealthy);
+        await using WebApplication app = await StartAsync(HealthStatus.Unhealthy);
 
-        var response = await app.GetTestClient().GetAsync("/health/live");
+        HttpResponseMessage response = await app.GetTestClient().GetAsync("/health/live");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
@@ -36,9 +36,9 @@ public class HealthEndpointTests
     [Fact]
     public async Task Ready_IsOk_WhenTheReadyChecksPass_AndIgnoresUntaggedChecks()
     {
-        await using var app = await StartAsync(HealthStatus.Healthy);
+        await using WebApplication app = await StartAsync(HealthStatus.Healthy);
 
-        var response = await app.GetTestClient().GetAsync("/health/ready");
+        HttpResponseMessage response = await app.GetTestClient().GetAsync("/health/ready");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
@@ -46,9 +46,9 @@ public class HealthEndpointTests
     [Fact]
     public async Task Ready_IsUnavailable_WhenAReadyCheckFails()
     {
-        await using var app = await StartAsync(HealthStatus.Unhealthy);
+        await using WebApplication app = await StartAsync(HealthStatus.Unhealthy);
 
-        var response = await app.GetTestClient().GetAsync("/health/ready");
+        HttpResponseMessage response = await app.GetTestClient().GetAsync("/health/ready");
 
         Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
     }
