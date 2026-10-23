@@ -1,7 +1,7 @@
 # Local SonarQube analysis (Windows / PowerShell 7). The Linux/macOS twin is analysis_mac.sh; both do the same steps and print the same messages.
 # See README.md in this folder.
 #
-# Usage:    $env:SONAR_TOKEN = "<token>"; ./scripts/sonar/analysis_win.ps1
+# Usage:    ./scripts/sonar/analysis_win.ps1      (SONAR_TOKEN comes from scripts/sonar/.env, or from the environment)
 # Optional: $env:SONAR_HOST_URL (default http://localhost:8031), $env:SONAR_PROJECT_KEY (default hsnsoft-base-framework)
 $ErrorActionPreference = "Stop"
 
@@ -20,9 +20,22 @@ function Assert-LastExitCode
     }
 }
 
+# Settings from the git-ignored .env next to this script; a variable already set in the environment wins.
+$envFile = Join-Path $PSScriptRoot ".env"
+if (Test-Path $envFile)
+{
+    foreach ($line in Get-Content $envFile)
+    {
+        if ($line -match '^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*"?(.*?)"?\s*$' -and -not [Environment]::GetEnvironmentVariable($Matches[1]))
+        {
+            [Environment]::SetEnvironmentVariable($Matches[1], $Matches[2])
+        }
+    }
+}
+
 if (-not $env:SONAR_TOKEN)
 {
-    throw "SONAR_TOKEN is required (a user token from SonarQube: My Account > Security)"
+    throw "SONAR_TOKEN is required (put it in scripts/sonar/.env, see .env.example; a user token from SonarQube: My Account > Security)"
 }
 $sonarHostUrl = if ($env:SONAR_HOST_URL) { $env:SONAR_HOST_URL } else { "http://localhost:8031" }
 $sonarProjectKey = if ($env:SONAR_PROJECT_KEY) { $env:SONAR_PROJECT_KEY } else { "hsnsoft-base-framework" }

@@ -2,11 +2,21 @@
 # Local SonarQube analysis (Linux/macOS). The Windows twin is analysis_win.ps1; both do the same steps and print the same messages.
 # See README.md in this folder.
 #
-# Usage:   SONAR_TOKEN=<token> ./scripts/sonar/analysis_mac.sh
+# Usage:   ./scripts/sonar/analysis_mac.sh      (SONAR_TOKEN comes from scripts/sonar/.env, or from the environment)
 # Optional: SONAR_HOST_URL (default http://localhost:8031), SONAR_PROJECT_KEY (default hsnsoft-base-framework)
 set -euo pipefail
 
-: "${SONAR_TOKEN:?SONAR_TOKEN is required (a user token from SonarQube: My Account > Security)}"
+# Settings from the git-ignored .env next to this script; a variable already set in the environment wins.
+ENV_FILE="$(dirname "${BASH_SOURCE[0]}")/.env"
+if [ -f "$ENV_FILE" ]; then
+    while IFS='=' read -r key value || [ -n "$key" ]; do
+        case "$key" in ''|\#*) continue ;; esac
+        value="${value%\"}"; value="${value#\"}"
+        [ -z "${!key:-}" ] && export "$key=$value"
+    done < "$ENV_FILE"
+fi
+
+: "${SONAR_TOKEN:?SONAR_TOKEN is required (put it in scripts/sonar/.env, see .env.example; a user token from SonarQube: My Account > Security)}"
 SONAR_HOST_URL="${SONAR_HOST_URL:-http://localhost:8031}"
 SONAR_PROJECT_KEY="${SONAR_PROJECT_KEY:-hsnsoft-base-framework}"
 

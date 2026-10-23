@@ -23,29 +23,32 @@ while you work.
   The first start takes about a minute. Log in at `http://localhost:8031` (`admin` / `admin` on a fresh install; SonarQube asks you to
   change the password).
 - **A token.** In SonarQube: *My Account > Security > Generate Tokens* (type *User token*). Treat it like a password and never
-  commit it.
+  commit it. Keep it in `scripts/sonar/.env` (next to the scripts; copy `.env.example` and fill in `SONAR_TOKEN=`). Git ignores
+  `*.env` files, so it is never uploaded. A variable already set in your shell wins over the file.
 - **Docker running**, because the integration tests start their services (RabbitMQ, Kafka, Redis, MongoDB, PostgreSQL, SQL Server,
   MinIO) with Testcontainers. SQL Server needs about 2 GB of memory in Docker.
 - The .NET SDK. The scripts install the `dotnet-sonarscanner` global tool on first use.
 
 ## How to run
 
-From anywhere (the scripts find the repository root themselves):
+From anywhere (the scripts find the repository root and the `.env` themselves):
 
 ```bash
 # Linux / macOS
-SONAR_TOKEN=<your-token> ./scripts/sonar/analysis_mac.sh
+./scripts/sonar/analysis_mac.sh
 ```
 
 ```powershell
 # Windows
-$env:SONAR_TOKEN = "<your-token>"
 ./scripts/sonar/analysis_win.ps1
 ```
 
+Without a `.env` file, pass the token through the environment instead: `SONAR_TOKEN=<token> ./scripts/sonar/analysis_mac.sh` or
+`$env:SONAR_TOKEN = "<token>"` before the PowerShell script.
+
 | Setting | Default | Meaning |
 |---|---|---|
-| `SONAR_TOKEN` | required | Token of the user that owns the analysis |
+| `SONAR_TOKEN` | required (`.env` or environment) | Token of the user that owns the analysis |
 | `SONAR_HOST_URL` | `http://localhost:8031` | Where SonarQube runs |
 | `SONAR_PROJECT_KEY` | `hsnsoft-base-framework` | The project key; the project is created on the first analysis |
 
@@ -83,7 +86,7 @@ sync when you change one.
 |---|---|
 | `SonarQube is not reachable` | The container is not running or is still starting. `docker compose -f docker/sonarqube.compose.yml up -d`, wait for `UP` at `/api/system/status`. |
 | `Docker is not running` | Start Docker Desktop / the daemon. |
-| `SONAR_TOKEN is required` | Set the variable as shown above. |
+| `SONAR_TOKEN is required` | Create `scripts/sonar/.env` from `.env.example` and set the token, or export the variable. |
 | `401` while uploading | The token was revoked or typed wrongly; generate a new one. |
 | An integration test fails to start a container | Not enough memory for Docker (SQL Server needs ~2 GB), or the image is still downloading. Re-run. MongoDB 8 does not start on Linux kernel 6.19+; the tests use `mongo:7.0`. |
 | The project is not on the dashboard yet | The report is still being processed; refresh after a few seconds. |
