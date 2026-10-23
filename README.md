@@ -38,7 +38,7 @@ limit, for example) is that product's shared code, not a framework package.
 
 ## Tests
 
-Every package has a unit test project (`test/<Package>.Tests`; `scripts/check-test-projects.sh` fails the build when one is missing).
+Every package has a unit test project (`test/<Package>.Tests`; `scripts/ci-check-test-projects.sh` fails the build when one is missing).
 The code that only runs against a real service (brokers, databases, MinIO) is tested by `test/HsnSoft.Base.IntegrationTests`, which
 starts the services in Docker with Testcontainers.
 

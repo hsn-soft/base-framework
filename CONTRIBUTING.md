@@ -36,7 +36,7 @@ dotnet build
 ./scripts/run-tests.sh integration   # starts RabbitMQ, Kafka, Redis, MongoDB, PostgreSQL, SQL Server, MinIO (Testcontainers)
 ```
 
-- **Every package has a unit test project**, `test/<Package>.Tests`. `scripts/check-test-projects.sh` fails the build when one is
+- **Every package has a unit test project**, `test/<Package>.Tests`. `scripts/ci-check-test-projects.sh` fails the build when one is
   missing.
 - **Every provider has integration tests** in `test/HsnSoft.Base.IntegrationTests`, against the real service.
 - **Coverage:** CI merges the coverage of both kinds of tests and fails below 99 % of the lines of `src`. New code comes with tests;
