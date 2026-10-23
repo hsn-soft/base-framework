@@ -46,6 +46,9 @@ public sealed partial class RequestLoggingMiddleware(
         ArgumentNullException.ThrowIfNull(context);
 
         string correlationId = CorrelationId(context.Request);
+
+        // what this service forwards (a proxy copies the request headers) carries the chain on to the next one
+        context.Request.Headers[_options.CorrelationIdHeader] = correlationId;
         context.Response.OnStarting(() =>
         {
             context.Response.Headers[_options.CorrelationIdHeader] = correlationId;
@@ -343,11 +346,6 @@ public sealed partial class RequestLoggingMiddleware(
 
     private string HeaderValue(string name, string value, bool isResponse)
     {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return value;
-        }
-
         if (!isResponse && name.Equals("Authorization", StringComparison.OrdinalIgnoreCase))
         {
             return AuthorizationSummary(value);

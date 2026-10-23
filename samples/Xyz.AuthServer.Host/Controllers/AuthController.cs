@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+using HsnSoft.Base;
 using HsnSoft.Base.Authentication;
 using HsnSoft.Base.Security;
 using Microsoft.AspNetCore.Authorization;
@@ -6,9 +8,9 @@ using Xyz.AuthServer.Host.Services;
 
 namespace Xyz.AuthServer.Host.Controllers;
 
-public sealed record LoginRequest(string Username, string Password);
+public sealed record LoginRequest([property: Required] string Username, [property: Required] string Password);
 
-public sealed record RefreshRequest(string RefreshToken);
+public sealed record RefreshRequest([property: Required] string RefreshToken);
 
 public sealed record TokenResponse(string AccessToken, string TokenType, int ExpiresIn, string RefreshToken);
 
@@ -19,11 +21,8 @@ public sealed class AuthController(TokenService tokens) : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> LoginAsync(LoginRequest request, CancellationToken cancellationToken)
     {
-        UserAccount? account = tokens.ValidateCredentials(request.Username, request.Password);
-        if (account is null)
-        {
-            return Problem(statusCode: StatusCodes.Status401Unauthorized, title: "Invalid credentials");
-        }
+        UserAccount account = tokens.ValidateCredentials(request.Username, request.Password)
+                              ?? throw new BaseHttpException(StatusCodes.Status401Unauthorized, "Invalid credentials");
 
         return Ok(ToResponse(await tokens.IssueAsync(account, cancellationToken)));
     }
@@ -33,7 +32,7 @@ public sealed class AuthController(TokenService tokens) : ControllerBase
     {
         TokenPair? pair = await tokens.RefreshAsync(request.RefreshToken, cancellationToken);
         return pair is null
-            ? Problem(statusCode: StatusCodes.Status401Unauthorized, title: "Invalid or expired refresh token")
+            ? throw new BaseHttpException(StatusCodes.Status401Unauthorized, "Invalid or expired refresh token")
             : Ok(ToResponse(pair));
     }
 

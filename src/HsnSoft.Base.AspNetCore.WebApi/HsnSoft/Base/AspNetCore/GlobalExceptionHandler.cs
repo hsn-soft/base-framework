@@ -1,52 +1,43 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using HsnSoft.Base.AspNetCore.Responses;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace HsnSoft.Base.AspNetCore;
 
-/// <summary>Last line of defence: every unhandled exception becomes an RFC 7807 problem response.</summary>
-public sealed partial class GlobalExceptionHandler(IProblemDetailsService problemDetails, ILogger<GlobalExceptionHandler> logger) : IExceptionHandler
+/// <summary>Last line of defence: every unhandled exception becomes a <c>BaseResponse</c> with the status and the error code the mapper decided.</summary>
+public sealed partial class GlobalExceptionHandler(
+    IApiExceptionMapper mapper,
+    IApiResponseWriter writer,
+    IHostEnvironment environment,
+    ILogger<GlobalExceptionHandler> logger) : IExceptionHandler
 {
-    private readonly IProblemDetailsService _problemDetails = problemDetails;
-    private readonly ILogger<GlobalExceptionHandler> _logger = logger;
-
     public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(httpContext);
         ArgumentNullException.ThrowIfNull(exception);
 
-        (int status, string? title) = exception switch
-        {
-            NotFoundException => (StatusCodes.Status404NotFound, "Not found"),
-            BusinessRuleException => (StatusCodes.Status400BadRequest, "Business rule violated"),
-            BadHttpRequestException => (StatusCodes.Status400BadRequest, "Bad request"),
-            _ => (StatusCodes.Status500InternalServerError, "Unexpected error"),
-        };
+        (int status, string? errorCode, System.Collections.Generic.List<string> messages) = mapper.Map(exception, environment);
 
         if (status >= StatusCodes.Status500InternalServerError)
         {
-            LogUnhandled(_logger, exception, httpContext.Request.Path);
+            LogUnhandled(logger, exception, httpContext.Request.Path, status);
         }
 
-        httpContext.Response.StatusCode = status;
-        return await _problemDetails.TryWriteAsync(new ProblemDetailsContext
+        if (httpContext.Response.HasStarted)
         {
-            HttpContext = httpContext,
-            Exception = exception,
-            ProblemDetails = new ProblemDetails
-            {
-                Status = status,
-                Title = title,
-                // the message of an unexpected error may leak internals
-                Detail = status < StatusCodes.Status500InternalServerError ? exception.Message : null,
-            },
-        }).ConfigureAwait(false);
+            // too late to say anything else: the connection is cut by the server
+            return false;
+        }
+
+        await writer.WriteErrorAsync(httpContext, status, messages, errorCode).ConfigureAwait(false);
+        return true;
     }
 
-    [LoggerMessage(EventId = 5201, EventName = "HTTP_UNHANDLED", Level = LogLevel.Error, Message = "Unhandled exception on {Path}")]
-    private static partial void LogUnhandled(ILogger logger, Exception exception, PathString path);
+    [LoggerMessage(EventId = 5201, EventName = "GLOBAL_EXCEPTION_HANDLER", Level = LogLevel.Error, Message = "Unhandled exception on {Path}: status {Status}")]
+    private static partial void LogUnhandled(ILogger logger, Exception exception, PathString path, int status);
 }

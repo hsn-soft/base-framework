@@ -1,4 +1,5 @@
 using System.Globalization;
+using HsnSoft.Base.AspNetCore.Responses;
 using HsnSoft.Base.Caching.StackExchangeRedis;
 using HsnSoft.Base.Security;
 using Microsoft.AspNetCore.Http;
@@ -22,7 +23,7 @@ public sealed class RedisRateLimitMiddleware(
 {
     private static readonly TimeSpan s_counterLifetime = TimeSpan.FromMinutes(2);
 
-    public async Task InvokeAsync(HttpContext context)
+    public async Task InvokeAsync(HttpContext context, IApiResponseWriter writer)
     {
         int limit = rateLimit.Value.RequestsPerMinute;
         string caller = context.User.GetUserId() ?? context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
@@ -54,7 +55,7 @@ public sealed class RedisRateLimitMiddleware(
             int retryAfter = 60 - (int)(now % 60);
             context.Response.Headers.RetryAfter = retryAfter.ToString(CultureInfo.InvariantCulture);
             context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
-            await context.Response.WriteAsJsonAsync(new { title = "Too many requests", status = 429, retryAfterSeconds = retryAfter });
+            await writer.WriteErrorAsync(context, StatusCodes.Status429TooManyRequests, [$"Too many requests, try again in {retryAfter} seconds."], "rate_limited");
             return;
         }
 

@@ -105,7 +105,7 @@ Seeded products: keyboard `11111111-1111-1111-1111-111111111111` (stock 100), mo
 
 ```bash
 TOKEN=$(curl -s -X POST localhost:5100/api/auth/login -H 'Content-Type: application/json' \
-        -d '{"username":"alice","password":"alice123"}' | python3 -c 'import json,sys;print(json.load(sys.stdin)["accessToken"])')
+        -d '{"username":"alice","password":"alice123"}' | python3 -c 'import json,sys;print(json.load(sys.stdin)["payload"]["accessToken"])')
 curl -s -X POST localhost:5100/api/orders -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
      -d '{"productId":"11111111-1111-1111-1111-111111111111","quantity":2}'
 ```

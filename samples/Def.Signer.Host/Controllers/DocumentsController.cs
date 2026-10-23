@@ -1,5 +1,6 @@
 using Def.Signer.Host.Events;
 using Def.Signer.Host.Persistence;
+using HsnSoft.Base;
 using HsnSoft.Base.BlobStoring;
 using HsnSoft.Base.EventBus;
 using Microsoft.AspNetCore.Authorization;
@@ -23,7 +24,7 @@ public sealed class DocumentsController(IEventBus bus, SignerDbContext db, IBlob
     {
         if (string.IsNullOrWhiteSpace(request.Title))
         {
-            return BadRequest(new { error = "Title is required." });
+            throw new BusinessRuleException("Title is required.");
         }
 
         SignRequested requested = new(Guid.CreateVersion7(), Owner, request.Title.Trim(), request.Content ?? string.Empty);

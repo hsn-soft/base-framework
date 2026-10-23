@@ -20,42 +20,42 @@ echo "Gateway: $GATEWAY"
 
 echo "1. Authentication"
 check "orders need a token" "$(status "$GATEWAY/api/orders")" "401"
-alice="$(curl -s -X POST "$GATEWAY/api/auth/login" -H 'Content-Type: application/json' -d '{"username":"alice","password":"alice123"}' | json accessToken)"
-admin="$(curl -s -X POST "$GATEWAY/api/auth/login" -H 'Content-Type: application/json' -d '{"username":"admin","password":"admin123"}' | json accessToken)"
+alice="$(curl -s -X POST "$GATEWAY/api/auth/login" -H 'Content-Type: application/json' -d '{"username":"alice","password":"alice123"}' | json payload.accessToken)"
+admin="$(curl -s -X POST "$GATEWAY/api/auth/login" -H 'Content-Type: application/json' -d '{"username":"admin","password":"admin123"}' | json payload.accessToken)"
 check "wrong password is rejected" "$(status -X POST "$GATEWAY/api/auth/login" -H 'Content-Type: application/json' -d '{"username":"alice","password":"nope"}')" "401"
 [ -n "$alice" ] && pass "alice got a token" || fail "alice got a token"
 
 echo "2. Order with enough stock: order -> stock -> shipment -> order"
 key="smoke-$(date +%s)"
 order="$(curl -s -X POST "$GATEWAY/api/orders" -H "Authorization: Bearer $alice" -H "Idempotency-Key: $key" -H 'Content-Type: application/json' -d "{\"productId\":\"$KEYBOARD\",\"quantity\":2}")"
-order_id="$(echo "$order" | json id)"
-check "a new order starts as Pending" "$(echo "$order" | json status)" "Pending"
-again="$(curl -s -X POST "$GATEWAY/api/orders" -H "Authorization: Bearer $alice" -H "Idempotency-Key: $key" -H 'Content-Type: application/json' -d "{\"productId\":\"$KEYBOARD\",\"quantity\":2}" | json id)"
+order_id="$(echo "$order" | json payload.id)"
+check "a new order starts as Pending" "$(echo "$order" | json payload.status)" "Pending"
+again="$(curl -s -X POST "$GATEWAY/api/orders" -H "Authorization: Bearer $alice" -H "Idempotency-Key: $key" -H 'Content-Type: application/json' -d "{\"productId\":\"$KEYBOARD\",\"quantity\":2}" | json payload.id)"
 check "the same Idempotency-Key returns the same order" "$again" "$order_id"
 
 final=""
 for _ in $(seq 1 40); do
     final="$(curl -s "$GATEWAY/api/orders/$order_id" -H "Authorization: Bearer $alice")"
-    [ "$(echo "$final" | json status)" = "Shipped" ] && break
+    [ "$(echo "$final" | json payload.status)" = "Shipped" ] && break
     sleep 0.5
 done
-check "the order ends as Shipped" "$(echo "$final" | json status)" "Shipped"
-check "total price = 2 x 89.90" "$(echo "$final" | json totalPrice)" "179.8"
-tracking="$(echo "$final" | json trackingNumber)"
+check "the order ends as Shipped" "$(echo "$final" | json payload.status)" "Shipped"
+check "total price = 2 x 89.90" "$(echo "$final" | json payload.totalPrice)" "179.8"
+tracking="$(echo "$final" | json payload.trackingNumber)"
 [ -n "$tracking" ] && pass "tracking number $tracking" || fail "tracking number is set"
 check "the shipment service knows the same tracking number" \
-    "$(curl -s "$GATEWAY/api/shipments/by-order/$order_id" -H "Authorization: Bearer $alice" | json trackingNumber)" "$tracking"
+    "$(curl -s "$GATEWAY/api/shipments/by-order/$order_id" -H "Authorization: Bearer $alice" | json payload.trackingNumber)" "$tracking"
 
 echo "3. Order without enough stock"
-reject="$(curl -s -X POST "$GATEWAY/api/orders" -H "Authorization: Bearer $alice" -H 'Content-Type: application/json' -d "{\"productId\":\"$MOUSE\",\"quantity\":50}" | json id)"
+reject="$(curl -s -X POST "$GATEWAY/api/orders" -H "Authorization: Bearer $alice" -H 'Content-Type: application/json' -d "{\"productId\":\"$MOUSE\",\"quantity\":50}" | json payload.id)"
 final=""
 for _ in $(seq 1 40); do
     final="$(curl -s "$GATEWAY/api/orders/$reject" -H "Authorization: Bearer $alice")"
-    [ "$(echo "$final" | json status)" = "Rejected" ] && break
+    [ "$(echo "$final" | json payload.status)" = "Rejected" ] && break
     sleep 0.5
 done
-check "the order ends as Rejected" "$(echo "$final" | json status)" "Rejected"
-check "with the reason" "$(echo "$final" | json rejectReason)" "Not enough stock."
+check "the order ends as Rejected" "$(echo "$final" | json payload.status)" "Rejected"
+check "with the reason" "$(echo "$final" | json payload.rejectReason)" "Not enough stock."
 
 echo "4. Authorization"
 check "a customer cannot create products" "$(status -X POST "$GATEWAY/api/products" -H "Authorization: Bearer $alice" -H 'Content-Type: application/json' -d '{"name":"X","sku":"X-1","unitPrice":1,"stock":1}')" "403"

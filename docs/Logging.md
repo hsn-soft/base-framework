@@ -95,6 +95,15 @@ envelope, the same for RabbitMQ and Kafka. Where a message comes from travels in
 Request and response bodies are logged only with `RequestLogging:LogBodies` and an `ILogMasker` (`AddBaseLogging()`): masked, JSON only,
 cut to `MaxBodyLength`. Headers are written as one JSON text; `Authorization` and cookies are summarized, never written.
 
+### Where the request and response logs belong
+
+In a system with a gateway, write them at the **gateway** (and at the auth server, the other public entry) and turn them off in the
+services: `"RequestLogging": { "Enabled": false }`. The chain is still there (the middleware still sets the correlation id and the
+step, and puts the id on the request it forwards, so a proxy hands it on), so the service's own logs, its `ConsumeStart` and
+`ConsumeEnd` and its handlers stay tied to the gateway's. If a service dies in the middle of a request (out of memory, a restart), the
+gateway has the `HttpRequest` and then an `HttpResponse` with 502 or 504 (or, if the gateway dies, no `HttpResponse` at all); the same
+works for a message: a `ConsumeStart` without a `ConsumeEnd`.
+
 ### Files, gRPC and MVC
 
 - **Files never log their body.** A download or an upload is logged with what it is, not what is in it: the response log says

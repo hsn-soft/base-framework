@@ -146,6 +146,7 @@ public sealed class RequestLoggingTests
         app.MapControllers();
         app.MapGet("/api/orders/{id}", (string id) => Results.Ok(new { id }));
         app.MapGet("/named", () => "named").WithName("Get-Named");
+        app.MapGet("/echo-correlation", (HttpRequest request) => request.Headers["X-Correlation-Id"].ToString());
         app.MapGet("/boom", () => { throw new InvalidOperationException("boom"); });
         app.MapGet("/missing", () => Results.NotFound());
         app.MapGet("/health/live", () => "ok");
@@ -230,6 +231,21 @@ public sealed class RequestLoggingTests
         Assert.Equal(128 + "...(+372)".Length, cutResponse.Headers.GetValues("X-Correlation-Id").Single().Length);
         Assert.Matches("^[0-9a-f]{32}$", newResponse.Headers.GetValues("X-Correlation-Id").Single());
         Assert.Matches("^[0-9a-f]{32}$", (string)rig.Http[^1].Properties["ScopeId"]!);
+    }
+
+    [Fact]
+    public async Task TheChainIsPutOnTheRequest_SoWhatIsForwardedCarriesIt()
+    {
+        await using Rig rig = await StartAsync();
+
+        HttpResponseMessage started = await rig.Client.GetAsync("/echo-correlation");
+        HttpRequestMessage given = new(HttpMethod.Get, "/echo-correlation");
+        given.Headers.Add("X-Correlation-Id", "chain-7");
+        HttpResponseMessage continued = await rig.Client.SendAsync(given);
+
+        Assert.Matches("^[0-9a-f]{32}$", await started.Content.ReadAsStringAsync());
+        Assert.Equal(started.Headers.GetValues("X-Correlation-Id").Single(), await started.Content.ReadAsStringAsync());
+        Assert.Equal("chain-7", await continued.Content.ReadAsStringAsync());
     }
 
     [Fact]
