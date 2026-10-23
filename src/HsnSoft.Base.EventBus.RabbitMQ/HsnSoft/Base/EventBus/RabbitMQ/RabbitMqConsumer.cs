@@ -67,6 +67,9 @@ public sealed partial class RabbitMqConsumer(
         _disposed = true;
         LogTerminating(_logger, QueueName, _consumerTag);
 
+        // no new work from here on: the broker stops delivering to this consumer, what it already delivered is finished below
+        await CancelConsumerAsync().ConfigureAwait(false);
+
         await _recoveryCts.CancelAsync().ConfigureAwait(false);
         if (_recoveryTask is not null)
         {
@@ -107,6 +110,24 @@ public sealed partial class RabbitMqConsumer(
         _recoveryCts.Dispose();
         _handlerCts.Dispose();
         LogTerminated(_logger, QueueName);
+    }
+
+    private async Task CancelConsumerAsync()
+    {
+        IChannel? channel = _channel;
+        if (channel is null || channel.IsClosed)
+        {
+            return;
+        }
+
+        try
+        {
+            await channel.BasicCancelAsync(_consumerTag).ConfigureAwait(false);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            LogCancelFailed(_logger, QueueName, exception.Message);
+        }
     }
 
     private async Task<IChannel> CreateChannelAsync(CancellationToken cancellationToken)
@@ -342,6 +363,9 @@ public sealed partial class RabbitMqConsumer(
 
     [LoggerMessage(Level = LogLevel.Debug, Message = "{Queue}: waiting for {Count} message(s) in flight")]
     private static partial void LogWaitingForMessages(ILogger logger, string queue, int count);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "{Queue}: the consumer could not be cancelled, the channel is closed instead: {Error}")]
+    private static partial void LogCancelFailed(ILogger logger, string queue, string error);
 
     [LoggerMessage(Level = LogLevel.Error, Message = "{Queue}: the channel could not be closed cleanly: {Error}")]
     private static partial void LogCloseFailed(ILogger logger, string queue, string error);

@@ -74,7 +74,7 @@ persistent, `mandatory`.
 | The report cannot be published | The message goes back on the queue after `RequeueDelay`. |
 | The broker is not reachable while publishing | Retried `PublishRetryCount` times (default 5) with `2^n` seconds between tries. |
 | The connection is cut | The client reconnects and recovers channels and consumers; a consumer whose channel dies alone rebuilds it. |
-| The service stops | Consumers finish the messages they are handling (up to `ShutdownTimeout`, 30 s) before the channel is closed; what is not finished stays unacknowledged. |
+| The service stops | Each consumer is cancelled on the broker first (no new messages), then finishes the messages it is handling (up to `EventBusOptions.ShutdownTimeout`, 30 s) before the channel is closed; what is not finished stays unacknowledged and is delivered again. In Kubernetes the pod's `terminationGracePeriodSeconds` and the host's `HostOptions.ShutdownTimeout` (30 s by default) must be at least as long as the slowest handler. |
 
 `MaxHandlerAttempts` (default 1) can make the framework retry a handler before it counts as failed; the services in production leave
 retrying to their handlers.

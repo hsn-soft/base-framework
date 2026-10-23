@@ -301,6 +301,41 @@ public sealed class RabbitMqConsumerTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task Dispose_StopsTheBrokerFromDelivering_BeforeWaitingForTheMessagesInFlight()
+    {
+        Rig rig = await StartAsync();
+
+        await rig.Consumer.DisposeAsync();
+
+        string[] order = [.. rig.Channel.Calls.Select(call => call.Name).Where(name => name is "BasicCancelAsync" or "CloseAsync")];
+        Assert.Equal(["BasicCancelAsync", "CloseAsync"], order);
+        Assert.Equal("consumer-tag", rig.Channel.Named("BasicCancelAsync").Single().Args[0]);
+    }
+
+    [Fact]
+    public async Task Dispose_ClosesTheChannelEvenWhenTheConsumerCannotBeCancelled()
+    {
+        Rig rig = await StartAsync();
+        rig.Channel.Failure = call => call.Name == "BasicCancelAsync" ? new InvalidOperationException("channel is gone") : null;
+
+        await rig.Consumer.DisposeAsync();
+
+        Assert.Single(rig.Channel.Named("CloseAsync"));
+        Assert.Contains(rig.Logger.Entries, entry => entry.Message.Contains("could not be cancelled", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task Dispose_OfAChannelThatIsAlreadyClosed_DoesNotTryToCancel()
+    {
+        Rig rig = await StartAsync();
+        rig.Channel.IsClosed = true;
+
+        await rig.Consumer.DisposeAsync();
+
+        Assert.Empty(rig.Channel.Named("BasicCancelAsync"));
+    }
+
+    [Fact]
     public async Task HandlerThatRunsOutOfTime_IsCancelled_AndItsMessageStaysUnacknowledged()
     {
         Rig rig = await StartAsync(configureOptions: options => options.ShutdownTimeout = TimeSpan.FromMilliseconds(150));
