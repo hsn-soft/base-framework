@@ -27,8 +27,8 @@ JWT, OpenAPI, a broker or a cache.
 | `HsnSoft.Base.EntityFrameworkCore` | What the EF Core providers share: `DbContext` health check, startup schema creation | Core |
 | `HsnSoft.Base.EntityFrameworkCore.PostgreSql` | PostgreSQL `DbContext` with retries | EntityFrameworkCore |
 | `HsnSoft.Base.EntityFrameworkCore.SqlServer` | SQL Server `DbContext` with retries | EntityFrameworkCore |
-| `HsnSoft.Base.BlobStoring` | `IBlobStore`: save, read and delete files in containers | - |
-| `HsnSoft.Base.BlobStoring.Minio` | MinIO (S3) implementation of `IBlobStore`; Azure would be a sibling package | BlobStoring, Core |
+| `HsnSoft.Base.BlobStoring` | `IBlobStore`: save, read and delete files in containers | Core |
+| `HsnSoft.Base.BlobStoring.Minio` | MinIO (S3) implementation of `IBlobStore`; Azure would be a sibling package | BlobStoring |
 | `HsnSoft.Base.MongoDB` | `IMongoDatabase` registration and health check | Core |
 | `HsnSoft.Base` | Name holder that references `HsnSoft.Base.Core` | Core |
 

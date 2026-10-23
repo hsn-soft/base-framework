@@ -16,4 +16,8 @@
         <None Include="..\..\README.md" Pack="true" Visible="false" PackagePath="README.md" />
     </ItemGroup>
 
+    <ItemGroup>
+        <ProjectReference Include="..\HsnSoft.Base.Core\HsnSoft.Base.Core.csproj" />
+    </ItemGroup>
+
 </Project>
