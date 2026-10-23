@@ -8,9 +8,9 @@ using Xyz.AuthServer.Host.Services;
 
 namespace Xyz.AuthServer.Host.Controllers;
 
-public sealed record LoginRequest([property: Required] string Username, [property: Required] string Password);
+public sealed record LoginRequest([Required] string Username, [Required] string Password);
 
-public sealed record RefreshRequest([property: Required] string RefreshToken);
+public sealed record RefreshRequest([Required] string RefreshToken);
 
 public sealed record TokenResponse(string AccessToken, string TokenType, int ExpiresIn, string RefreshToken);
 
