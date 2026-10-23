@@ -106,6 +106,59 @@ info "## SONAR SCANNER ANALYSIS COMPLETED --------------------------------------
 info "## DASHBOARD => $SONAR_HOST_URL/dashboard?id=$SONAR_PROJECT_KEY"
 echo
 
+info "## SONAR OVERVIEW --------------------------------------------------------------"
+# SonarQube processes the uploaded report in the background: wait for that task, then read the project's measures.
+CE_TASK_URL="$(sed -n 's/^ceTaskUrl=//p' "$ROOT/.sonarqube/out/.sonar/report-task.txt")"
+SONAR_HOST_URL="$SONAR_HOST_URL" SONAR_TOKEN="$SONAR_TOKEN" SONAR_PROJECT_KEY="$SONAR_PROJECT_KEY" CE_TASK_URL="$CE_TASK_URL" python3 - <<'PY'
+import base64, json, os, sys, time, urllib.parse, urllib.request
+
+host, project, task_url = os.environ["SONAR_HOST_URL"], os.environ["SONAR_PROJECT_KEY"], os.environ["CE_TASK_URL"]
+auth = "Basic " + base64.b64encode((os.environ["SONAR_TOKEN"] + ":").encode()).decode()
+
+
+def get(url):
+    return json.load(urllib.request.urlopen(urllib.request.Request(url, headers={"Authorization": auth}), timeout=30))
+
+
+status = "PENDING"
+for _ in range(60):
+    status = get(task_url)["task"]["status"]
+    if status not in ("PENDING", "IN_PROGRESS"):
+        break
+    time.sleep(2)
+if status != "SUCCESS":
+    print(f"SonarQube did not finish processing the report (status {status}); the numbers are not shown.")
+    sys.exit(0)
+
+keys = ["alert_status", "software_quality_security_rating", "software_quality_reliability_rating",
+        "software_quality_maintainability_rating", "security_hotspots_reviewed", "security_review_rating",
+        "coverage", "line_coverage", "tests", "test_failures", "duplicated_lines_density", "ncloc",
+        "software_quality_security_issues", "software_quality_reliability_issues", "software_quality_maintainability_issues"]
+query = urllib.parse.urlencode({"component": project, "metricKeys": ",".join(keys)})
+m = {x["metric"]: x.get("value", "") for x in get(f"{host}/api/measures/component?{query}")["component"]["measures"]}
+rating = lambda key: "ABCDE"[int(float(m[key])) - 1] if key in m else "-"
+percent = lambda key: f"{float(m[key]):.1f} %" if key in m else "-"
+value = lambda key: m.get(key, "-")
+
+rows = [
+    ("Quality Gate", "Passed" if value("alert_status") == "OK" else "FAILED"),
+    ("Security", f"{rating('software_quality_security_rating')}   ({value('software_quality_security_issues')} open issues)"),
+    ("Reliability", f"{rating('software_quality_reliability_rating')}   ({value('software_quality_reliability_issues')} open issues)"),
+    ("Maintainability", f"{rating('software_quality_maintainability_rating')}   ({value('software_quality_maintainability_issues')} open issues)"),
+    ("Security hotspots", f"{rating('security_review_rating')}   ({percent('security_hotspots_reviewed')} reviewed)"),
+    ("Coverage (lines + branches)", percent("coverage")),
+    ("Line coverage", percent("line_coverage")),
+    ("Tests", f"{value('tests')}   ({value('test_failures')} failed)"),
+    ("Duplications", percent("duplicated_lines_density")),
+    ("Lines of code", value("ncloc")),
+]
+width = max(len(name) for name, _ in rows)
+for name, text in rows:
+    print(f"  {name.ljust(width)}  {text}")
+PY
+info "## SONAR OVERVIEW COMPLETED ----------------------------------------------------"
+echo
+
 bar
 info "== PROJECT FOLDER => '$ROOT' FINISHED"
 bar; echo

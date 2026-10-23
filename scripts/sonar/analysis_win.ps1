@@ -140,6 +140,58 @@ Assert-LastExitCode "sonarscanner end"
 Write-Info "## SONAR SCANNER ANALYSIS COMPLETED --------------------------------------------"
 Write-Info "## DASHBOARD => $sonarHostUrl/dashboard?id=$sonarProjectKey"
 " "
+Write-Info "## SONAR OVERVIEW --------------------------------------------------------------"
+# SonarQube processes the uploaded report in the background: wait for that task, then read the project's measures.
+$ceTaskUrl = (Select-String -Path (Join-Path $rootFolder ".sonarqube/out/.sonar/report-task.txt") -Pattern "^ceTaskUrl=(.*)$").Matches[0].Groups[1].Value.Trim()
+$basic = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes("$($env:SONAR_TOKEN):"))
+$headers = @{ Authorization = "Basic $basic" }
+$taskStatus = "PENDING"
+for ($i = 0; $i -lt 60; $i++)
+{
+    $taskStatus = (Invoke-RestMethod $ceTaskUrl -Headers $headers).task.status
+    if ($taskStatus -notin @("PENDING", "IN_PROGRESS"))
+    {
+        break
+    }
+    Start-Sleep -Seconds 2
+}
+if ($taskStatus -ne "SUCCESS")
+{
+    Write-Host "SonarQube did not finish processing the report (status $taskStatus); the numbers are not shown."
+}
+else
+{
+    $keys = "alert_status,software_quality_security_rating,software_quality_reliability_rating,software_quality_maintainability_rating,security_hotspots_reviewed,security_review_rating,coverage,line_coverage,tests,test_failures,duplicated_lines_density,ncloc,software_quality_security_issues,software_quality_reliability_issues,software_quality_maintainability_issues"
+    $response = Invoke-RestMethod "$sonarHostUrl/api/measures/component?component=$sonarProjectKey&metricKeys=$keys" -Headers $headers
+    $m = @{}
+    foreach ($measure in $response.component.measures)
+    {
+        $m[$measure.metric] = $measure.value
+    }
+    function Get-Rating($key) { if ($m.ContainsKey($key)) { "ABCDE"[[int][double]::Parse($m[$key], [Globalization.CultureInfo]::InvariantCulture) - 1] } else { "-" } }
+    function Get-Percent($key) { if ($m.ContainsKey($key)) { ([double]::Parse($m[$key], [Globalization.CultureInfo]::InvariantCulture)).ToString("0.0", [Globalization.CultureInfo]::InvariantCulture) + " %" } else { "-" } }
+    function Get-Value($key) { if ($m.ContainsKey($key)) { $m[$key] } else { "-" } }
+
+    $rows = [ordered]@{
+        "Quality Gate"                = $(if ((Get-Value "alert_status") -eq "OK") { "Passed" } else { "FAILED" })
+        "Security"                    = "$(Get-Rating 'software_quality_security_rating')   ($(Get-Value 'software_quality_security_issues') open issues)"
+        "Reliability"                 = "$(Get-Rating 'software_quality_reliability_rating')   ($(Get-Value 'software_quality_reliability_issues') open issues)"
+        "Maintainability"             = "$(Get-Rating 'software_quality_maintainability_rating')   ($(Get-Value 'software_quality_maintainability_issues') open issues)"
+        "Security hotspots"           = "$(Get-Rating 'security_review_rating')   ($(Get-Percent 'security_hotspots_reviewed') reviewed)"
+        "Coverage (lines + branches)" = Get-Percent "coverage"
+        "Line coverage"               = Get-Percent "line_coverage"
+        "Tests"                       = "$(Get-Value 'tests')   ($(Get-Value 'test_failures') failed)"
+        "Duplications"                = Get-Percent "duplicated_lines_density"
+        "Lines of code"               = Get-Value "ncloc"
+    }
+    $width = ($rows.Keys | Measure-Object -Property Length -Maximum).Maximum
+    foreach ($name in $rows.Keys)
+    {
+        Write-Host "  $($name.PadRight($width))  $($rows[$name])"
+    }
+}
+Write-Info "## SONAR OVERVIEW COMPLETED ----------------------------------------------------"
+" "
 Write-Info "================================================================================"
 Write-Info "== PROJECT FOLDER => '$rootFolder' FINISHED"
 Write-Info "================================================================================"

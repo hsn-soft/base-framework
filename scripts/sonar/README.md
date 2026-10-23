@@ -56,6 +56,10 @@ A full run takes about 3-4 minutes. When it ends it prints the dashboard link, e
 `http://localhost:8031/dashboard?id=hsnsoft-base-framework`. SonarQube processes the uploaded report in the background, so the
 numbers may appear a few seconds after the script finishes.
 
+Before the closing banner the scripts print an overview like the dashboard's: quality gate, security / reliability /
+maintainability ratings, hotspots, coverage, tests, duplications and lines of code. They wait for SonarQube to finish processing the
+uploaded report and read the figures from its API, because the ratings, issues and duplications are computed by SonarQube itself.
+
 ## Sonar and CI show the same results
 
 Sonar and the CI run the same tests with the same settings (`test/coverlet.runsettings`) in `Release`, with warnings as errors, so the
