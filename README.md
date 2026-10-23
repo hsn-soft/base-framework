@@ -16,6 +16,8 @@ JWT, OpenAPI, a broker or a cache.
 | Package | Capability | Depends on |
 |---|---|---|
 | `HsnSoft.Base.Core` | Bare essentials: shared exceptions, health-check tag, startup retry | - |
+| `HsnSoft.Base.Logging` | Logger interfaces and models, masking of sensitive data, the `FrameworkLogger` settings; independent of any logging library ([docs](docs/Logging.md)) | Core |
+| `HsnSoft.Base.Logging.Serilog` | Serilog provider: console, Graylog or file, Debug/Verbose stay in the console | Logging, Hosting |
 | `HsnSoft.Base.Hosting` | Generic Host workers: `PeriodicBackgroundService` | Core |
 | `HsnSoft.Base.Authentication` | JWT bearer authentication, claim names and `ClaimsPrincipal` helpers | Core |
 | `HsnSoft.Base.AspNetCore` | Health endpoints (`/health/live`, `/health/ready`) | Core |
