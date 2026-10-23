@@ -25,7 +25,7 @@ public sealed partial class SignRequestedHandler(
     ILogger<SignRequestedHandler> logger) : IIntegrationEventHandler<SignRequested>
 {
     private const string ContentType = "application/json";
-    private static readonly JsonSerializerOptions Indented = new(JsonSerializerOptions.Web) { WriteIndented = true };
+    private static readonly JsonSerializerOptions s_indented = new(JsonSerializerOptions.Web) { WriteIndented = true };
 
     public async Task HandleAsync(SignRequested integrationEvent, CancellationToken cancellationToken)
     {
@@ -37,7 +37,7 @@ public sealed partial class SignRequestedHandler(
 
         await Task.Delay(options.Value.ProcessingDelay, cancellationToken);
 
-        var bytes = JsonSerializer.SerializeToUtf8Bytes(
+        byte[] bytes = JsonSerializer.SerializeToUtf8Bytes(
             new
             {
                 requestId = integrationEvent.EventId,
@@ -48,10 +48,10 @@ public sealed partial class SignRequestedHandler(
                 signedAt = DateTimeOffset.UtcNow,
                 contentDigest = Convert.ToHexString(SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(integrationEvent.Content))),
             },
-            Indented);
+            s_indented);
 
-        var container = options.Value.Bucket;
-        var blobName = $"{integrationEvent.Owner}/{integrationEvent.EventId}.json";
+        string container = options.Value.Bucket;
+        string blobName = $"{integrationEvent.Owner}/{integrationEvent.EventId}.json";
 
         // same name on a retry, so a failed database write below cannot leave a second file behind
         await blobs.SaveAsync(container, blobName, new MemoryStream(bytes), ContentType, cancellationToken);

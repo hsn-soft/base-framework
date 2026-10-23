@@ -16,27 +16,18 @@ namespace HsnSoft.Base.EventBus.Kafka;
 /// each to the <see cref="IEventDispatcher"/>. A message the dispatcher gives up on is copied to the dead-letter topic, then
 /// the offset moves on. Offsets are committed only after a message is dealt with, so a crash re-delivers it.
 /// </summary>
-public sealed partial class KafkaSubscriber : BackgroundService
+public sealed partial class KafkaSubscriber(
+    IEnumerable<EventSubscription> subscriptions,
+    IEventDispatcher dispatcher,
+    IOptions<KafkaOptions> options,
+    IOptions<EventBusOptions> eventBusOptions,
+    ILogger<KafkaSubscriber> logger) : BackgroundService
 {
-    private readonly List<EventSubscription> _subscriptions;
-    private readonly IEventDispatcher _dispatcher;
-    private readonly KafkaOptions _options;
-    private readonly EventBusOptions _eventBusOptions;
-    private readonly ILogger<KafkaSubscriber> _logger;
-
-    public KafkaSubscriber(
-        IEnumerable<EventSubscription> subscriptions,
-        IEventDispatcher dispatcher,
-        IOptions<KafkaOptions> options,
-        IOptions<EventBusOptions> eventBusOptions,
-        ILogger<KafkaSubscriber> logger)
-    {
-        _subscriptions = subscriptions.ToList();
-        _dispatcher = dispatcher;
-        _options = options.Value;
-        _eventBusOptions = eventBusOptions.Value;
-        _logger = logger;
-    }
+    private readonly List<EventSubscription> _subscriptions = [.. subscriptions];
+    private readonly IEventDispatcher _dispatcher = dispatcher;
+    private readonly KafkaOptions _options = options.Value;
+    private readonly EventBusOptions _eventBusOptions = eventBusOptions.Value;
+    private readonly ILogger<KafkaSubscriber> _logger = logger;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {

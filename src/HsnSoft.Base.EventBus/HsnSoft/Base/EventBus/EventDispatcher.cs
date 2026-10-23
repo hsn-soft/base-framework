@@ -17,18 +17,11 @@ public interface IEventDispatcher
     Task DispatchAsync(EventSubscription subscription, ReadOnlyMemory<byte> body, CancellationToken cancellationToken);
 }
 
-public sealed partial class EventDispatcher : IEventDispatcher
+public sealed partial class EventDispatcher(IServiceScopeFactory scopeFactory, IOptions<EventBusOptions> options, ILogger<EventDispatcher> logger) : IEventDispatcher
 {
-    private readonly IServiceScopeFactory _scopeFactory;
-    private readonly EventBusOptions _options;
-    private readonly ILogger<EventDispatcher> _logger;
-
-    public EventDispatcher(IServiceScopeFactory scopeFactory, IOptions<EventBusOptions> options, ILogger<EventDispatcher> logger)
-    {
-        _scopeFactory = scopeFactory;
-        _options = options.Value;
-        _logger = logger;
-    }
+    private readonly IServiceScopeFactory _scopeFactory = scopeFactory;
+    private readonly EventBusOptions _options = options.Value;
+    private readonly ILogger<EventDispatcher> _logger = logger;
 
     public async Task DispatchAsync(EventSubscription subscription, ReadOnlyMemory<byte> body, CancellationToken cancellationToken)
     {

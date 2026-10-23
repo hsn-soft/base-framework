@@ -6,11 +6,9 @@ using StackExchange.Redis;
 
 namespace HsnSoft.Base.Caching.StackExchangeRedis;
 
-internal sealed class RedisHealthCheck : IHealthCheck
+internal sealed class RedisHealthCheck(IConnectionMultiplexer redis) : IHealthCheck
 {
-    private readonly IConnectionMultiplexer _redis;
-
-    public RedisHealthCheck(IConnectionMultiplexer redis) => _redis = redis;
+    private readonly IConnectionMultiplexer _redis = redis;
 
     public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
     {

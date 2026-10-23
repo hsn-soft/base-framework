@@ -1,0 +1,87 @@
+{
+  "$schema": "https://alirezanet.github.io/Husky.Net/schema.json",
+  "tasks": [
+    {
+      "name": "format-cs-whitespace",
+      "group": "pre-commit",
+      "command": "dotnet",
+      "args": [
+        "format",
+        "whitespace",
+        "HsnSoft.Base.sln",
+        "--include",
+        "${staged}"
+      ],
+      "include": [
+        "**/*.cs"
+      ]
+    },
+    {
+      "name": "format-cs-style",
+      "group": "pre-commit",
+      "command": "dotnet",
+      "args": [
+        "format",
+        "style",
+        "HsnSoft.Base.sln",
+        "--severity",
+        "info",
+        "--no-restore",
+        "--include",
+        "${staged}"
+      ],
+      "include": [
+        "**/*.cs"
+      ]
+    },
+    {
+      "name": "format-json",
+      "group": "pre-commit",
+      "command": "dotnet",
+      "args": [
+        "run",
+        "scripts/format-json.cs",
+        "--",
+        "${staged}"
+      ],
+      "include": [
+        "**/*.json"
+      ],
+      "exclude": [
+        ".vscode/**"
+      ]
+    },
+    {
+      "name": "stage-formatted-files",
+      "group": "pre-commit",
+      "command": "git",
+      "args": [
+        "add",
+        "${staged}"
+      ],
+      "include": [
+        "**/*.cs",
+        "**/*.json"
+      ]
+    },
+    {
+      "name": "check-cs-rules",
+      "group": "pre-commit",
+      "command": "dotnet",
+      "args": [
+        "format",
+        "style",
+        "HsnSoft.Base.sln",
+        "--severity",
+        "info",
+        "--no-restore",
+        "--verify-no-changes",
+        "--include",
+        "${staged}"
+      ],
+      "include": [
+        "**/*.cs"
+      ]
+    }
+  ]
+}

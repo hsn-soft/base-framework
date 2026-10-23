@@ -5,14 +5,14 @@ namespace HsnSoft.Base.Core.Tests.Hosting;
 
 public class StartupStepsTests
 {
-    private static readonly TimeSpan NoDelay = TimeSpan.Zero;
+    private static readonly TimeSpan s_noDelay = TimeSpan.Zero;
 
     [Fact]
     public async Task RunStartupStepAsync_RunsTheStepOnce_WhenItSucceeds()
     {
         int calls = 0;
 
-        await new ServiceCollection().BuildServiceProvider().RunStartupStepAsync("step", _ => { calls++; return Task.CompletedTask; }, retryDelay: NoDelay);
+        await new ServiceCollection().BuildServiceProvider().RunStartupStepAsync("step", _ => { calls++; return Task.CompletedTask; }, retryDelay: s_noDelay);
 
         Assert.Equal(1, calls);
     }
@@ -26,7 +26,7 @@ public class StartupStepsTests
         await provider.RunStartupStepAsync(
             "step",
             _ => ++calls < 3 ? throw new InvalidOperationException("not ready") : Task.CompletedTask,
-            retryDelay: NoDelay);
+            retryDelay: s_noDelay);
 
         Assert.Equal(3, calls);
     }
@@ -40,7 +40,7 @@ public class StartupStepsTests
             "step",
             _ => throw new InvalidOperationException($"failure {++calls}"),
             maxAttempts: 3,
-            retryDelay: NoDelay));
+            retryDelay: s_noDelay));
 
         Assert.Equal(3, calls);
         Assert.Equal("failure 3", exception.Message);

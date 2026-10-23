@@ -9,12 +9,10 @@ using Minio.Exceptions;
 
 namespace HsnSoft.Base.BlobStoring.Minio;
 
-public sealed class MinioBlobStore : IBlobStore
+public sealed class MinioBlobStore(IMinioClient client) : IBlobStore
 {
-    private readonly IMinioClient _client;
+    private readonly IMinioClient _client = client;
     private readonly ConcurrentDictionary<string, bool> _knownBuckets = new();
-
-    public MinioBlobStore(IMinioClient client) => _client = client;
 
     public async Task SaveAsync(string container, string name, Stream content, string contentType, CancellationToken cancellationToken = default)
     {

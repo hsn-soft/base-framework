@@ -6,11 +6,9 @@ using MongoDB.Driver;
 
 namespace HsnSoft.Base.MongoDB;
 
-internal sealed class MongoHealthCheck : IHealthCheck
+internal sealed class MongoHealthCheck(IMongoDatabase database) : IHealthCheck
 {
-    private readonly IMongoDatabase _database;
-
-    public MongoHealthCheck(IMongoDatabase database) => _database = database;
+    private readonly IMongoDatabase _database = database;
 
     public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
     {

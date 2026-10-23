@@ -5,11 +5,9 @@ using Minio;
 
 namespace HsnSoft.Base.BlobStoring.Minio;
 
-internal sealed class MinioHealthCheck : IHealthCheck
+internal sealed class MinioHealthCheck(IMinioClient client) : IHealthCheck
 {
-    private readonly IMinioClient _client;
-
-    public MinioHealthCheck(IMinioClient client) => _client = client;
+    private readonly IMinioClient _client = client;
 
     public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
     {

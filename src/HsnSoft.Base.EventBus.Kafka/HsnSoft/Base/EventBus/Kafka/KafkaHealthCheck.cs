@@ -7,11 +7,9 @@ using Microsoft.Extensions.Options;
 
 namespace HsnSoft.Base.EventBus.Kafka;
 
-internal sealed class KafkaHealthCheck : IHealthCheck
+internal sealed class KafkaHealthCheck(IOptions<KafkaOptions> options) : IHealthCheck
 {
-    private readonly KafkaOptions _options;
-
-    public KafkaHealthCheck(IOptions<KafkaOptions> options) => _options = options.Value;
+    private readonly KafkaOptions _options = options.Value;
 
     public Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
     {

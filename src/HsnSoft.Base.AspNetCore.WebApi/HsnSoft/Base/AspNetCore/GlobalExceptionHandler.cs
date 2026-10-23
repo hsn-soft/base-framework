@@ -9,16 +9,10 @@ using Microsoft.Extensions.Logging;
 namespace HsnSoft.Base.AspNetCore;
 
 /// <summary>Last line of defence: every unhandled exception becomes an RFC 7807 problem response.</summary>
-public sealed partial class GlobalExceptionHandler : IExceptionHandler
+public sealed partial class GlobalExceptionHandler(IProblemDetailsService problemDetails, ILogger<GlobalExceptionHandler> logger) : IExceptionHandler
 {
-    private readonly IProblemDetailsService _problemDetails;
-    private readonly ILogger<GlobalExceptionHandler> _logger;
-
-    public GlobalExceptionHandler(IProblemDetailsService problemDetails, ILogger<GlobalExceptionHandler> logger)
-    {
-        _problemDetails = problemDetails;
-        _logger = logger;
-    }
+    private readonly IProblemDetailsService _problemDetails = problemDetails;
+    private readonly ILogger<GlobalExceptionHandler> _logger = logger;
 
     public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
     {

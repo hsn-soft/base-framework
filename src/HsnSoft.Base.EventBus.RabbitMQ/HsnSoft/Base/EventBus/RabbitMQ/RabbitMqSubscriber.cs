@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
@@ -15,30 +14,20 @@ namespace HsnSoft.Base.EventBus.RabbitMQ;
 /// Creates one durable queue per (service, event) pair, consumes it and gives each message to the
 /// <see cref="IEventDispatcher"/>. A message the dispatcher gives up on goes to the dead-letter queue.
 /// </summary>
-public sealed partial class RabbitMqSubscriber : BackgroundService
+public sealed partial class RabbitMqSubscriber(
+    RabbitMqConnection connection,
+    IEnumerable<EventSubscription> subscriptions,
+    IEventDispatcher dispatcher,
+    IOptions<RabbitMqOptions> options,
+    IOptions<EventBusOptions> eventBusOptions,
+    ILogger<RabbitMqSubscriber> logger) : BackgroundService
 {
-    private readonly RabbitMqConnection _connection;
-    private readonly List<EventSubscription> _subscriptions;
-    private readonly IEventDispatcher _dispatcher;
-    private readonly RabbitMqOptions _options;
-    private readonly EventBusOptions _eventBusOptions;
-    private readonly ILogger<RabbitMqSubscriber> _logger;
-
-    public RabbitMqSubscriber(
-        RabbitMqConnection connection,
-        IEnumerable<EventSubscription> subscriptions,
-        IEventDispatcher dispatcher,
-        IOptions<RabbitMqOptions> options,
-        IOptions<EventBusOptions> eventBusOptions,
-        ILogger<RabbitMqSubscriber> logger)
-    {
-        _connection = connection;
-        _subscriptions = subscriptions.ToList();
-        _dispatcher = dispatcher;
-        _options = options.Value;
-        _eventBusOptions = eventBusOptions.Value;
-        _logger = logger;
-    }
+    private readonly RabbitMqConnection _connection = connection;
+    private readonly List<EventSubscription> _subscriptions = [.. subscriptions];
+    private readonly IEventDispatcher _dispatcher = dispatcher;
+    private readonly RabbitMqOptions _options = options.Value;
+    private readonly EventBusOptions _eventBusOptions = eventBusOptions.Value;
+    private readonly ILogger<RabbitMqSubscriber> _logger = logger;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {

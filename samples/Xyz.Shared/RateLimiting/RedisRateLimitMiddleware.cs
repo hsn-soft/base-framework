@@ -20,7 +20,7 @@ public sealed class RedisRateLimitMiddleware(
     IOptions<RedisOptions> redisOptions,
     ILogger<RedisRateLimitMiddleware> logger)
 {
-    private static readonly TimeSpan CounterLifetime = TimeSpan.FromMinutes(2);
+    private static readonly TimeSpan s_counterLifetime = TimeSpan.FromMinutes(2);
 
     public async Task InvokeAsync(HttpContext context)
     {
@@ -36,7 +36,7 @@ public sealed class RedisRateLimitMiddleware(
             count = await database.StringIncrementAsync(key);
             if (count == 1)
             {
-                await database.KeyExpireAsync(key, CounterLifetime);
+                await database.KeyExpireAsync(key, s_counterLifetime);
             }
         }
         catch (RedisException exception)

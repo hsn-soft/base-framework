@@ -21,4 +21,13 @@
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="$(MicrosoftAspNetCorePackageVersion)" />
     </ItemGroup>
 
+    <!--
+        Installs the Git hooks (Husky.Net) the first time a developer restores the solution: formatting is fixed and checked
+        before every commit. Skipped in CI, outside a Git checkout, and when HUSKY=0.
+    -->
+    <Target Name="InstallGitHooks" BeforeTargets="Restore;CollectPackageReferences" Condition="'$(HUSKY)' != '0' And '$(GITHUB_ACTIONS)' != 'true' And '$(IsCrossTargetingBuild)' != 'true' And Exists('$(MSBuildThisFileDirectory)..\..\.git')">
+        <Exec Command="dotnet tool restore" WorkingDirectory="$(MSBuildThisFileDirectory)..\.." StandardOutputImportance="Low" StandardErrorImportance="Low" IgnoreExitCode="true" />
+        <Exec Command="dotnet husky install" WorkingDirectory="$(MSBuildThisFileDirectory)..\.." StandardOutputImportance="Low" StandardErrorImportance="Low" IgnoreExitCode="true" />
+    </Target>
+
 </Project>

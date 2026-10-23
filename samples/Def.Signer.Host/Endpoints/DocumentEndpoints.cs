@@ -29,7 +29,7 @@ public static class DocumentEndpoints
 
         group.MapGet("/", async (HttpContext http, SignerDbContext db, CancellationToken cancellationToken) =>
         {
-            var owner = Owner(http);
+            string owner = Owner(http);
             return await db.Documents.AsNoTracking()
                 .Where(x => x.Owner == owner)
                 .OrderByDescending(x => x.CreatedAt)
@@ -40,7 +40,7 @@ public static class DocumentEndpoints
         // 404 while the request is still queued: poll until it is there
         group.MapGet("/{requestId:guid}", async (Guid requestId, HttpContext http, SignerDbContext db, CancellationToken cancellationToken) =>
         {
-            var owner = Owner(http);
+            string owner = Owner(http);
             SignedDocument? document = await db.Documents.AsNoTracking()
                 .FirstOrDefaultAsync(x => x.RequestId == requestId && x.Owner == owner, cancellationToken);
             return document is null ? Results.NotFound() : Results.Ok(document);
@@ -48,7 +48,7 @@ public static class DocumentEndpoints
 
         group.MapGet("/{requestId:guid}/content", async (Guid requestId, HttpContext http, SignerDbContext db, IBlobStore blobs, CancellationToken cancellationToken) =>
         {
-            var owner = Owner(http);
+            string owner = Owner(http);
             SignedDocument? document = await db.Documents.AsNoTracking()
                 .FirstOrDefaultAsync(x => x.RequestId == requestId && x.Owner == owner, cancellationToken);
             if (document is null)

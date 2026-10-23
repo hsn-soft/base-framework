@@ -5,16 +5,10 @@ using RabbitMQ.Client;
 
 namespace HsnSoft.Base.EventBus.RabbitMQ;
 
-public sealed class RabbitMqEventBus : IEventBus
+public sealed class RabbitMqEventBus(RabbitMqConnection connection, IOptions<RabbitMqOptions> options) : IEventBus
 {
-    private readonly RabbitMqConnection _connection;
-    private readonly RabbitMqOptions _options;
-
-    public RabbitMqEventBus(RabbitMqConnection connection, IOptions<RabbitMqOptions> options)
-    {
-        _connection = connection;
-        _options = options.Value;
-    }
+    private readonly RabbitMqConnection _connection = connection;
+    private readonly RabbitMqOptions _options = options.Value;
 
     public async Task PublishAsync<TEvent>(TEvent integrationEvent, CancellationToken cancellationToken = default)
         where TEvent : IntegrationEvent

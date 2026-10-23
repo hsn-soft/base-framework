@@ -29,7 +29,7 @@ public static class ProductEndpoints
     /// <summary>Cache-aside read: redis first, the database on a miss. The entry is dropped whenever the stock changes.</summary>
     private static async Task<IResult> GetProductAsync(Guid id, ProductStore store, IDistributedCache cache, CancellationToken cancellationToken)
     {
-        var cached = await cache.GetStringAsync(CacheKey(id), cancellationToken);
+        string? cached = await cache.GetStringAsync(CacheKey(id), cancellationToken);
         if (cached is not null)
         {
             return Results.Ok(JsonSerializer.Deserialize<Product>(cached, JsonSerializerOptions.Web));

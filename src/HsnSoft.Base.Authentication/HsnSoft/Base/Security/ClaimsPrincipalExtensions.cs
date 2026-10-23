@@ -24,6 +24,6 @@ public static class ClaimsPrincipalExtensions
     {
         ArgumentNullException.ThrowIfNull(principal);
 
-        return principal.FindAll(BaseClaimTypes.Role).Select(claim => claim.Value).ToList();
+        return [.. principal.FindAll(BaseClaimTypes.Role).Select(claim => claim.Value)];
     }
 }

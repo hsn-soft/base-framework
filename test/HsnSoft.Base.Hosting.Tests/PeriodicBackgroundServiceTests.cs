@@ -4,7 +4,7 @@ namespace HsnSoft.Base.Hosting.Tests;
 
 public class PeriodicBackgroundServiceTests
 {
-    private static readonly TimeSpan Fast = TimeSpan.FromMilliseconds(10);
+    private static readonly TimeSpan s_fast = TimeSpan.FromMilliseconds(10);
 
     private sealed class CountingWorker(TimeSpan interval, Func<int, CancellationToken, Task>? work = null)
         : PeriodicBackgroundService(interval, NullLogger.Instance)
@@ -36,7 +36,7 @@ public class PeriodicBackgroundServiceTests
     [Fact]
     public async Task Runs_Immediately_And_Then_Repeatedly()
     {
-        var worker = new CountingWorker(Fast);
+        var worker = new CountingWorker(s_fast);
 
         await worker.StartAsync(CancellationToken.None);
         await WaitUntilAsync(() => worker.Runs >= 3);
@@ -60,7 +60,7 @@ public class PeriodicBackgroundServiceTests
     [Fact]
     public async Task A_Failed_Run_Is_Logged_And_The_Next_Run_Still_Happens()
     {
-        var worker = new CountingWorker(Fast, (run, _) => run == 1 ? throw new InvalidOperationException("boom") : Task.CompletedTask);
+        var worker = new CountingWorker(s_fast, (run, _) => run == 1 ? throw new InvalidOperationException("boom") : Task.CompletedTask);
 
         await worker.StartAsync(CancellationToken.None);
         await WaitUntilAsync(() => worker.Runs >= 3);
@@ -73,7 +73,7 @@ public class PeriodicBackgroundServiceTests
     public async Task Stopping_Cancels_A_Run_That_Is_In_Progress()
     {
         var started = new TaskCompletionSource();
-        var worker = new CountingWorker(Fast, async (_, token) =>
+        var worker = new CountingWorker(s_fast, async (_, token) =>
         {
             started.TrySetResult();
             await Task.Delay(Timeout.Infinite, token);
@@ -109,7 +109,7 @@ public class PeriodicBackgroundServiceTests
     public void The_Logger_Is_Required()
         => Assert.Throws<ArgumentNullException>(() => new NullLoggerWorker());
 
-    private sealed class NullLoggerWorker() : PeriodicBackgroundService(Fast, null!)
+    private sealed class NullLoggerWorker() : PeriodicBackgroundService(s_fast, null!)
     {
         protected override Task RunOnceAsync(CancellationToken cancellationToken) => Task.CompletedTask;
     }

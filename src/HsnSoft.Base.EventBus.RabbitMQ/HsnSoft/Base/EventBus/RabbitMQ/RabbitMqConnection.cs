@@ -8,20 +8,14 @@ using RabbitMQ.Client;
 namespace HsnSoft.Base.EventBus.RabbitMQ;
 
 /// <summary>One shared, lazily opened broker connection. The first connect retries because the broker may still be starting.</summary>
-public sealed partial class RabbitMqConnection : IAsyncDisposable
+public sealed partial class RabbitMqConnection(IOptions<RabbitMqOptions> options, ILogger<RabbitMqConnection> logger) : IAsyncDisposable
 {
     private const int MaxConnectAttempts = 15;
 
-    private readonly RabbitMqOptions _options;
-    private readonly ILogger<RabbitMqConnection> _logger;
+    private readonly RabbitMqOptions _options = options.Value;
+    private readonly ILogger<RabbitMqConnection> _logger = logger;
     private readonly SemaphoreSlim _gate = new(1, 1);
     private IConnection? _connection;
-
-    public RabbitMqConnection(IOptions<RabbitMqOptions> options, ILogger<RabbitMqConnection> logger)
-    {
-        _options = options.Value;
-        _logger = logger;
-    }
 
     public bool IsConnected => _connection is { IsOpen: true };
 

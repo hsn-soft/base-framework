@@ -42,7 +42,7 @@ public sealed class ApiKeyAuthenticationHandler(
             return AuthenticateResult.NoResult();
         }
 
-        var owner = await store.FindOwnerAsync(apiKey.ToString(), Context.RequestAborted);
+        string? owner = await store.FindOwnerAsync(apiKey.ToString(), Context.RequestAborted);
         if (owner is null)
         {
             return AuthenticateResult.Fail("Unknown API key.");

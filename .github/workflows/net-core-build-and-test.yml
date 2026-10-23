@@ -50,6 +50,15 @@ jobs:
             -   name: Restore Dependencies
                 run: dotnet restore --verbosity minimal --configfile NuGet.Config
 
+            # The same rules the pre-commit hook fixes; this catches commits made without the hook (--no-verify, a missing install).
+            -   name: Format Check (C#)
+                run: |
+                    dotnet format whitespace HsnSoft.Base.sln --verify-no-changes --no-restore
+                    dotnet format style HsnSoft.Base.sln --verify-no-changes --severity info --no-restore
+
+            -   name: Format Check (JSON)
+                run: dotnet run scripts/format-json.cs -- --all --check
+
             -   name: Build Solution
                 run: dotnet build --no-restore --verbosity minimal --configuration Release
 
