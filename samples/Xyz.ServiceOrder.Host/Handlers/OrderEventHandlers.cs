@@ -1,3 +1,4 @@
+using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.EventBus;
 using Microsoft.EntityFrameworkCore;
 using Xyz.ServiceOrder.Host.Domain;
@@ -11,48 +12,48 @@ namespace Xyz.ServiceOrder.Host.Handlers;
 
 public sealed class StockReservedHandler(OrderDbContext db, ILogger<StockReservedHandler> logger) : IIntegrationEventHandler<StockReserved>
 {
-    public async Task HandleAsync(StockReserved @event, CancellationToken cancellationToken)
+    public async Task HandleAsync(MessageEnvelope<StockReserved> envelope, CancellationToken cancellationToken)
     {
-        Order? order = await db.Orders.FirstOrDefaultAsync(x => x.Id == @event.OrderId, cancellationToken);
+        Order? order = await db.Orders.FirstOrDefaultAsync(x => x.Id == envelope.Message.OrderId, cancellationToken);
         if (order is null)
         {
-            logger.LogWarning("StockReserved for unknown order {OrderId}", @event.OrderId);
+            logger.LogWarning("StockReserved for unknown order {OrderId}", envelope.Message.OrderId);
             return;
         }
 
-        order.ApplyStockReserved(@event.UnitPrice);
+        order.ApplyStockReserved(envelope.Message.UnitPrice);
         await db.SaveChangesAsync(cancellationToken);
     }
 }
 
 public sealed class StockRejectedHandler(OrderDbContext db, ILogger<StockRejectedHandler> logger) : IIntegrationEventHandler<StockRejected>
 {
-    public async Task HandleAsync(StockRejected @event, CancellationToken cancellationToken)
+    public async Task HandleAsync(MessageEnvelope<StockRejected> envelope, CancellationToken cancellationToken)
     {
-        Order? order = await db.Orders.FirstOrDefaultAsync(x => x.Id == @event.OrderId, cancellationToken);
+        Order? order = await db.Orders.FirstOrDefaultAsync(x => x.Id == envelope.Message.OrderId, cancellationToken);
         if (order is null)
         {
-            logger.LogWarning("StockRejected for unknown order {OrderId}", @event.OrderId);
+            logger.LogWarning("StockRejected for unknown order {OrderId}", envelope.Message.OrderId);
             return;
         }
 
-        order.ApplyStockRejected(@event.Reason);
+        order.ApplyStockRejected(envelope.Message.Reason);
         await db.SaveChangesAsync(cancellationToken);
     }
 }
 
 public sealed class ShipmentDispatchedHandler(OrderDbContext db, ILogger<ShipmentDispatchedHandler> logger) : IIntegrationEventHandler<ShipmentDispatched>
 {
-    public async Task HandleAsync(ShipmentDispatched @event, CancellationToken cancellationToken)
+    public async Task HandleAsync(MessageEnvelope<ShipmentDispatched> envelope, CancellationToken cancellationToken)
     {
-        Order? order = await db.Orders.FirstOrDefaultAsync(x => x.Id == @event.OrderId, cancellationToken);
+        Order? order = await db.Orders.FirstOrDefaultAsync(x => x.Id == envelope.Message.OrderId, cancellationToken);
         if (order is null)
         {
-            logger.LogWarning("ShipmentDispatched for unknown order {OrderId}", @event.OrderId);
+            logger.LogWarning("ShipmentDispatched for unknown order {OrderId}", envelope.Message.OrderId);
             return;
         }
 
-        order.ApplyShipped(@event.TrackingNumber);
+        order.ApplyShipped(envelope.Message.TrackingNumber);
         await db.SaveChangesAsync(cancellationToken);
     }
 }

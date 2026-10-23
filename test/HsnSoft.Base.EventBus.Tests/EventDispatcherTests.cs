@@ -1,100 +1,214 @@
-using System.Text.Json;
+using HsnSoft.Base.Domain.Entities.Events;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace HsnSoft.Base.EventBus.Tests;
 
-public class EventDispatcherTests
+public sealed class EventDispatcherTests : IDisposable
 {
-    private readonly RecordingHandler _handler = new();
-    private readonly ServiceProvider _provider;
-    private readonly EventSubscription _subscription;
+    private readonly List<ServiceProvider> _providers = [];
 
-    public EventDispatcherTests()
+    public void Dispose()
     {
-        var services = new ServiceCollection();
-        services.AddSingleton(_handler);
-        services.AddEventHandler<SampleEvent, RecordingHandler>();
-        // the handler instance is shared with the test, so replace the scoped registration with the singleton
-        services.AddScoped<IIntegrationEventHandler<SampleEvent>>(provider => provider.GetRequiredService<RecordingHandler>());
-        _provider = services.BuildServiceProvider();
-        _subscription = _provider.GetServices<EventSubscription>().Single();
+        foreach (ServiceProvider provider in _providers)
+        {
+            provider.Dispose();
+        }
     }
 
-    private EventDispatcher CreateDispatcher(int maxAttempts = 3)
-        => new(_provider.GetRequiredService<IServiceScopeFactory>(),
-            Options.Create(new EventBusOptions { MaxHandlerAttempts = maxAttempts, RetryDelay = TimeSpan.Zero }),
-            NullLogger<EventDispatcher>.Instance);
-
-    private static byte[] Body(SampleEvent integrationEvent) => EventSerializer.Serialize(integrationEvent);
-
-    [Fact]
-    public async Task Dispatch_HandsTheEventToItsHandler()
+    private static MessageEnvelope<SampleEto> NewEnvelope() => new()
     {
-        var sent = new SampleEvent("a", 1);
+        MessageId = Guid.CreateVersion7(),
+        CorrelationId = "corr",
+        HopLevel = 1,
+        Message = new SampleEto("m", 1),
+    };
 
-        await CreateDispatcher().DispatchAsync(_subscription, Body(sent), CancellationToken.None);
+    private (EventDispatcher Dispatcher, ServiceProvider Provider, ListLogger<EventDispatcher> Logger) Create(
+        Action<IServiceCollection> register,
+        int maxHandlerAttempts = 1,
+        TimeSpan? retryDelay = null)
+    {
+        EventBusOptions options = new() { MaxHandlerAttempts = maxHandlerAttempts, RetryDelay = retryDelay ?? TimeSpan.FromMilliseconds(1) };
 
-        Assert.Equal(sent, Assert.Single(_handler.Handled));
+        ServiceCollection services = new();
+        services.AddSingleton(Options.Create(options));
+        services.AddLogging();
+        register(services);
+        services.AddSingleton<IEventBusSubscriptionManager, InMemoryEventBusSubscriptionManager>();
+
+        ServiceProvider provider = services.BuildServiceProvider();
+        _providers.Add(provider);
+        ListLogger<EventDispatcher> logger = new();
+        EventDispatcher dispatcher = new(
+            provider.GetRequiredService<IServiceScopeFactory>(),
+            provider.GetRequiredService<IEventBusSubscriptionManager>(),
+            Options.Create(options),
+            logger);
+        return (dispatcher, provider, logger);
     }
 
-    [Fact]
-    public async Task Dispatch_RetriesUntilTheHandlerSucceeds()
+    private (EventDispatcher Dispatcher, RecordingHandler Handler, ListLogger<EventDispatcher> Logger) CreateRecording(int maxHandlerAttempts = 1)
     {
-        _handler.FailTimes = 2;
-
-        await CreateDispatcher(maxAttempts: 3).DispatchAsync(_subscription, Body(new SampleEvent("a", 1)), CancellationToken.None);
-
-        Assert.Equal(3, _handler.Calls);
-        Assert.Single(_handler.Handled);
-    }
-
-    [Fact]
-    public async Task Dispatch_AfterTheLastAttempt_ThrowsTheHandlerException()
-    {
-        _handler.FailTimes = 10;
-
-        await Assert.ThrowsAsync<InvalidOperationException>(
-            () => CreateDispatcher(maxAttempts: 3).DispatchAsync(_subscription, Body(new SampleEvent("a", 1)), CancellationToken.None));
-
-        Assert.Equal(3, _handler.Calls);
-        Assert.Empty(_handler.Handled);
-    }
-
-    [Fact]
-    public async Task Dispatch_WithZeroAttempts_StillTriesOnce()
-    {
-        _handler.FailTimes = 10;
-
-        await Assert.ThrowsAsync<InvalidOperationException>(
-            () => CreateDispatcher(maxAttempts: 0).DispatchAsync(_subscription, Body(new SampleEvent("a", 1)), CancellationToken.None));
-
-        Assert.Equal(1, _handler.Calls);
+        (EventDispatcher dispatcher, ServiceProvider provider, ListLogger<EventDispatcher> logger) = Create(
+            services =>
+            {
+                services.AddSingleton<RecordingHandler>();
+                services.AddEventHandler<SampleEto, RecordingHandler>();
+            },
+            maxHandlerAttempts);
+        return (dispatcher, provider.GetRequiredService<RecordingHandler>(), logger);
     }
 
     [Fact]
-    public async Task Dispatch_DoesNotRetryACancellation()
+    public async Task Handler_ReceivesTheEnvelope_AndSuccessIsLogged()
     {
-        _handler.FailTimes = 10;
-        _handler.Failure = new OperationCanceledException();
+        (EventDispatcher dispatcher, RecordingHandler handler, ListLogger<EventDispatcher> logger) = CreateRecording();
+        MessageEnvelope<SampleEto> envelope = NewEnvelope();
 
-        await Assert.ThrowsAsync<OperationCanceledException>(
-            () => CreateDispatcher().DispatchAsync(_subscription, Body(new SampleEvent("a", 1)), CancellationToken.None));
+        await dispatcher.DispatchAsync("Sample", typeof(SampleEto), envelope);
 
-        Assert.Equal(1, _handler.Calls);
+        Assert.Same(envelope, Assert.Single(handler.Handled));
+        Assert.Contains(logger.Entries, entry => entry.Level == LogLevel.Information && entry.Message.Contains("RecordingHandler handled Sample", StringComparison.Ordinal));
     }
 
     [Fact]
-    public async Task Dispatch_UnreadableMessage_ThrowsWithoutCallingTheHandler()
+    public async Task Handler_RunsWithTheMessageAsTheCurrentContext_ThatEndsAfterwards()
     {
-        await Assert.ThrowsAnyAsync<JsonException>(
-            () => CreateDispatcher().DispatchAsync(_subscription, "{ broken"u8.ToArray(), CancellationToken.None));
+        (EventDispatcher dispatcher, RecordingHandler handler, _) = CreateRecording();
+        MessageEnvelope<SampleEto> envelope = NewEnvelope();
 
-        Assert.Equal(0, _handler.Calls);
+        await dispatcher.DispatchAsync("Sample", typeof(SampleEto), envelope);
+
+        Assert.Same(envelope, handler.ContextDuringHandling);
+        Assert.Null(EventContext.Current);
     }
 
     [Fact]
-    public async Task Dispatch_NullSubscription_Throws()
-        => await Assert.ThrowsAsync<ArgumentNullException>(() => CreateDispatcher().DispatchAsync(null!, Body(new SampleEvent("a", 1)), CancellationToken.None));
+    public async Task LogScope_CarriesTheCorrelationAndMessageIds()
+    {
+        (EventDispatcher dispatcher, _, ListLogger<EventDispatcher> logger) = CreateRecording();
+        MessageEnvelope<SampleEto> envelope = NewEnvelope();
+
+        await dispatcher.DispatchAsync("Sample", typeof(SampleEto), envelope);
+
+        IReadOnlyDictionary<string, object?> scope = Assert.Single(logger.Scopes);
+        Assert.Equal("corr", scope["CorrelationId"]);
+        Assert.Equal(envelope.MessageId, scope["MessageId"]);
+        Assert.Equal("Sample", scope["EventName"]);
+    }
+
+    [Fact]
+    public async Task EventNobodyListensTo_DoesNothing()
+    {
+        (EventDispatcher dispatcher, RecordingHandler handler, _) = CreateRecording();
+
+        await dispatcher.DispatchAsync("Unknown", typeof(OtherEto), new MessageEnvelope<OtherEto> { Message = new OtherEto(Guid.NewGuid()) });
+
+        Assert.Empty(handler.Handled);
+    }
+
+    [Fact]
+    public async Task HandlerThatFails_IsRethrown_WithoutRetryByDefault()
+    {
+        (EventDispatcher dispatcher, RecordingHandler handler, ListLogger<EventDispatcher> logger) = CreateRecording();
+        handler.FailTimes = 5;
+
+        InvalidOperationException failure = await Assert.ThrowsAsync<InvalidOperationException>(() => dispatcher.DispatchAsync("Sample", typeof(SampleEto), NewEnvelope()));
+
+        Assert.Equal("failure 1", failure.Message);
+        Assert.Equal(1, handler.Calls);
+        Assert.Contains(logger.Entries, entry => entry.Level == LogLevel.Error);
+    }
+
+    [Fact]
+    public async Task HandlerThatFailsTwice_IsRetriedWhenAttemptsAreAllowed()
+    {
+        (EventDispatcher dispatcher, RecordingHandler handler, ListLogger<EventDispatcher> logger) = CreateRecording(maxHandlerAttempts: 3);
+        handler.FailTimes = 2;
+
+        await dispatcher.DispatchAsync("Sample", typeof(SampleEto), NewEnvelope());
+
+        Assert.Equal(3, handler.Calls);
+        Assert.Single(handler.Handled);
+        Assert.Equal(2, logger.Entries.Count(entry => entry.Level == LogLevel.Warning));
+    }
+
+    [Fact]
+    public async Task HandlerThatKeepsFailing_IsThrownAfterAllAttempts()
+    {
+        (EventDispatcher dispatcher, RecordingHandler handler, _) = CreateRecording(maxHandlerAttempts: 3);
+        handler.FailTimes = 10;
+
+        InvalidOperationException failure = await Assert.ThrowsAsync<InvalidOperationException>(() => dispatcher.DispatchAsync("Sample", typeof(SampleEto), NewEnvelope()));
+
+        Assert.Equal("failure 3", failure.Message);
+        Assert.Equal(3, handler.Calls);
+    }
+
+    [Fact]
+    public async Task HandlerThatThrowsBeforeItsFirstAwait_FailsWithItsOwnException()
+    {
+        (EventDispatcher dispatcher, _, _) = Create(services => services.AddEventHandler<SampleEto, ThrowingSynchronouslyHandler>());
+
+        InvalidOperationException failure = await Assert.ThrowsAsync<InvalidOperationException>(() => dispatcher.DispatchAsync("Sample", typeof(SampleEto), NewEnvelope()));
+
+        Assert.Equal("thrown synchronously", failure.Message);
+    }
+
+    [Fact]
+    public async Task HandlerTheContainerCannotCreate_IsNotRetried_AndSaysSo()
+    {
+        (EventDispatcher dispatcher, _, _) = Create(
+            services => services.AddSingleton(new EventSubscription(typeof(SampleEto), typeof(RecordingHandler), 1)),
+            maxHandlerAttempts: 5,
+            retryDelay: TimeSpan.FromMinutes(10));
+
+        InvalidOperationException failure = await Assert.ThrowsAnyAsync<InvalidOperationException>(() => dispatcher.DispatchAsync("Sample", typeof(SampleEto), NewEnvelope()));
+
+        Assert.Contains("No handler resolved for", failure.Message, StringComparison.Ordinal);
+        Assert.Contains("RecordingHandler", failure.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Cancellation_IsPassedOn_AndNotLoggedAsAFailure()
+    {
+        (EventDispatcher dispatcher, _, ListLogger<EventDispatcher> logger) = Create(
+            services => services.AddEventHandler<SampleEto, CancellingHandler>(),
+            maxHandlerAttempts: 3);
+
+        await Assert.ThrowsAsync<OperationCanceledException>(() => dispatcher.DispatchAsync("Sample", typeof(SampleEto), NewEnvelope()));
+
+        Assert.DoesNotContain(logger.Entries, entry => entry.Level >= LogLevel.Warning);
+    }
+
+    [Fact]
+    public async Task EveryAttempt_RunsInItsOwnScope()
+    {
+        List<Guid> seen = [];
+        (EventDispatcher dispatcher, _, _) = Create(
+            services =>
+            {
+                services.AddSingleton(seen);
+                services.AddScoped<ScopedMarker>();
+                services.AddEventHandler<SampleEto, ScopedHandler>();
+            },
+            maxHandlerAttempts: 3);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => dispatcher.DispatchAsync("Sample", typeof(SampleEto), NewEnvelope()));
+
+        Assert.Equal(3, seen.Count);
+        Assert.Equal(3, seen.Distinct().Count());
+    }
+
+    [Fact]
+    public async Task NullArguments_AreRejected()
+    {
+        (EventDispatcher dispatcher, _, _) = CreateRecording();
+
+        await Assert.ThrowsAsync<ArgumentNullException>(() => dispatcher.DispatchAsync(null!, typeof(SampleEto), NewEnvelope()));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => dispatcher.DispatchAsync("Sample", null!, NewEnvelope()));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => dispatcher.DispatchAsync("Sample", typeof(SampleEto), null!));
+    }
 }

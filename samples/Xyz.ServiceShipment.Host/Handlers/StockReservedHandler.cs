@@ -1,3 +1,4 @@
+using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.EventBus;
 using Xyz.ServiceShipment.Host.Domain;
 using Xyz.ServiceShipment.Host.Persistence;
@@ -9,11 +10,11 @@ namespace Xyz.ServiceShipment.Host.Handlers;
 public sealed class StockReservedHandler(ShipmentStore store, IEventBus eventBus, ILogger<StockReservedHandler> logger)
     : IIntegrationEventHandler<StockReserved>
 {
-    public async Task HandleAsync(StockReserved @event, CancellationToken cancellationToken)
+    public async Task HandleAsync(MessageEnvelope<StockReserved> envelope, CancellationToken cancellationToken)
     {
-        Shipment shipment = await store.DispatchAsync(@event.OrderId, @event.ProductId, @event.Quantity, cancellationToken);
-        logger.LogInformation("Order {OrderId}: dispatched as {TrackingNumber}", @event.OrderId, shipment.TrackingNumber);
+        Shipment shipment = await store.DispatchAsync(envelope.Message.OrderId, envelope.Message.ProductId, envelope.Message.Quantity, cancellationToken);
+        logger.LogInformation("Order {OrderId}: dispatched as {TrackingNumber}", envelope.Message.OrderId, shipment.TrackingNumber);
 
-        await eventBus.PublishAsync(new ShipmentDispatched(@event.OrderId, shipment.Id, shipment.TrackingNumber), cancellationToken);
+        await eventBus.PublishAsync(new ShipmentDispatched(envelope.Message.OrderId, shipment.Id, shipment.TrackingNumber), cancellationToken: cancellationToken);
     }
 }

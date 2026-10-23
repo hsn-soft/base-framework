@@ -3,6 +3,7 @@ using System.Text.Json;
 using Def.Signer.Host.Events;
 using Def.Signer.Host.Persistence;
 using HsnSoft.Base.BlobStoring;
+using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.EventBus;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -27,10 +28,11 @@ public sealed partial class SignRequestedHandler(
     private const string ContentType = "application/json";
     private static readonly JsonSerializerOptions s_indented = new(JsonSerializerOptions.Web) { WriteIndented = true };
 
-    public async Task HandleAsync(SignRequested integrationEvent, CancellationToken cancellationToken)
+    public async Task HandleAsync(MessageEnvelope<SignRequested> envelope, CancellationToken cancellationToken)
     {
+        SignRequested request = envelope.Message;
         // idempotent: a re-delivered message finds its document and stops
-        if (await db.Documents.AnyAsync(x => x.RequestId == integrationEvent.EventId, cancellationToken))
+        if (await db.Documents.AnyAsync(x => x.RequestId == request.RequestId, cancellationToken))
         {
             return;
         }
@@ -40,27 +42,27 @@ public sealed partial class SignRequestedHandler(
         byte[] bytes = JsonSerializer.SerializeToUtf8Bytes(
             new
             {
-                requestId = integrationEvent.EventId,
-                owner = integrationEvent.Owner,
-                title = integrationEvent.Title,
-                content = integrationEvent.Content,
-                requestedAt = integrationEvent.OccurredAt,
+                requestId = request.RequestId,
+                owner = request.Owner,
+                title = request.Title,
+                content = request.Content,
+                requestedAt = envelope.MessageTime,
                 signedAt = DateTimeOffset.UtcNow,
-                contentDigest = Convert.ToHexString(SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(integrationEvent.Content))),
+                contentDigest = Convert.ToHexString(SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(request.Content))),
             },
             s_indented);
 
         string container = options.Value.Bucket;
-        string blobName = $"{integrationEvent.Owner}/{integrationEvent.EventId}.json";
+        string blobName = $"{request.Owner}/{request.RequestId}.json";
 
         // same name on a retry, so a failed database write below cannot leave a second file behind
         await blobs.SaveAsync(container, blobName, new MemoryStream(bytes), ContentType, cancellationToken);
 
         db.Documents.Add(new SignedDocument
         {
-            RequestId = integrationEvent.EventId,
-            Owner = integrationEvent.Owner,
-            Title = integrationEvent.Title,
+            RequestId = request.RequestId,
+            Owner = request.Owner,
+            Title = request.Title,
             Container = container,
             BlobName = blobName,
             ContentType = ContentType,
@@ -69,7 +71,7 @@ public sealed partial class SignRequestedHandler(
         });
         await db.SaveChangesAsync(cancellationToken);
 
-        LogStored(logger, integrationEvent.EventId, container, blobName);
+        LogStored(logger, request.RequestId, container, blobName);
     }
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Request {RequestId} stored as {Container}/{BlobName}")]

@@ -13,7 +13,7 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.Services
     .AddXyzApi(builder.Configuration)
     .AddBaseMongo(builder.Configuration)
-    .AddRabbitMqEventBus(builder.Configuration, "shipment-service")
+    .AddRabbitMqEventBus(builder.Configuration)
     .AddSingleton<ShipmentStore>()
     .AddEventHandler<StockReserved, StockReservedHandler>();
 

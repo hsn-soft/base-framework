@@ -17,13 +17,13 @@ namespace HsnSoft.Base.EventBus.Kafka;
 /// the offset moves on. Offsets are committed only after a message is dealt with, so a crash re-delivers it.
 /// </summary>
 public sealed partial class KafkaSubscriber(
-    IEnumerable<EventSubscription> subscriptions,
+    IEventBusSubscriptionManager subscriptions,
     IEventDispatcher dispatcher,
     IOptions<KafkaOptions> options,
     IOptions<EventBusOptions> eventBusOptions,
     ILogger<KafkaSubscriber> logger) : BackgroundService
 {
-    private readonly List<EventSubscription> _subscriptions = [.. subscriptions];
+    private readonly IEventBusSubscriptionManager _subscriptions = subscriptions;
     private readonly IEventDispatcher _dispatcher = dispatcher;
     private readonly KafkaOptions _options = options.Value;
     private readonly EventBusOptions _eventBusOptions = eventBusOptions.Value;
@@ -31,12 +31,12 @@ public sealed partial class KafkaSubscriber(
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        if (_subscriptions.Count == 0)
+        if (_subscriptions.IsEmpty)
         {
             return;
         }
 
-        var byTopic = _subscriptions.ToDictionary(subscription => KafkaTopology.TopicFor(_options, subscription.EventType));
+        Dictionary<string, IntegrationEventInfo> byTopic = _subscriptions.Events.ToDictionary(info => KafkaTopology.TopicFor(_options, info.EventName));
         string deadLetterTopic = KafkaTopology.DeadLetterTopic(_options);
 
         await KafkaTopology.EnsureTopicsAsync(_options, byTopic.Keys.Append(deadLetterTopic)).ConfigureAwait(false);
@@ -45,12 +45,12 @@ public sealed partial class KafkaSubscriber(
         await Task.Run(() => ConsumeLoopAsync(byTopic, deadLetterTopic, stoppingToken), CancellationToken.None).ConfigureAwait(false);
     }
 
-    private async Task ConsumeLoopAsync(Dictionary<string, EventSubscription> byTopic, string deadLetterTopic, CancellationToken stoppingToken)
+    private async Task ConsumeLoopAsync(Dictionary<string, IntegrationEventInfo> byTopic, string deadLetterTopic, CancellationToken stoppingToken)
     {
         using IConsumer<string, byte[]> consumer = new ConsumerBuilder<string, byte[]>(new ConsumerConfig
         {
             BootstrapServers = _options.BootstrapServers,
-            GroupId = _eventBusOptions.ServiceName,
+            GroupId = _eventBusOptions.ConsumerClientInfo,
             EnableAutoCommit = false,
             AutoOffsetReset = AutoOffsetReset.Earliest,
         }).Build();
@@ -58,7 +58,7 @@ public sealed partial class KafkaSubscriber(
 
         consumer.Subscribe(byTopic.Keys);
         string topics = string.Join(", ", byTopic.Keys);
-        LogListening(_logger, _eventBusOptions.ServiceName, topics);
+        LogListening(_logger, _eventBusOptions.ConsumerClientInfo, topics);
 
         try
         {
@@ -67,7 +67,9 @@ public sealed partial class KafkaSubscriber(
                 ConsumeResult<string, byte[]> result = consumer.Consume(stoppingToken);
                 try
                 {
-                    await _dispatcher.DispatchAsync(byTopic[result.Topic], result.Message.Value, stoppingToken).ConfigureAwait(false);
+                    IntegrationEventInfo info = byTopic[result.Topic];
+                    object envelope = EventSerializer.DeserializeEnvelope(result.Message.Value, info.EventType);
+                    await _dispatcher.DispatchAsync(info.EventName, info.EventType, envelope, stoppingToken).ConfigureAwait(false);
                 }
                 catch (Exception exception) when (exception is not OperationCanceledException)
                 {

@@ -13,25 +13,19 @@ public static class KafkaServiceCollectionExtensions
     /// <c>AddEventHandler</c>, and a readiness health check.
     /// </summary>
     /// <param name="services">The service collection.</param>
-    /// <param name="configuration">Holds the <c>Kafka</c> section (<see cref="KafkaOptions"/>).</param>
-    /// <param name="serviceName">The logical service name; it is the consumer group.</param>
-    /// <param name="configureEventBus">Optional broker-independent settings (retry attempts, delay).</param>
+    /// <param name="configuration">Holds the <c>Kafka</c> section (<see cref="KafkaOptions"/>) and the <c>Kafka:EventBus</c> section (<see cref="EventBusOptions"/>; the consumer group is its <c>ConsumerClientInfo</c>).</param>
+    /// <param name="configureEventBus">Optional code to set <see cref="EventBusOptions"/>; runs after the configuration is read.</param>
     public static IServiceCollection AddKafkaEventBus(
         this IServiceCollection services,
         IConfiguration configuration,
-        string serviceName,
         Action<EventBusOptions>? configureEventBus = null)
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(configuration);
-        ArgumentException.ThrowIfNullOrWhiteSpace(serviceName);
 
         services.Configure<KafkaOptions>(configuration.GetSection("Kafka"));
-        services.AddEventBusCore(options =>
-        {
-            options.ServiceName = serviceName;
-            configureEventBus?.Invoke(options);
-        });
+        services.AddOptions<EventBusOptions>().Bind(configuration.GetSection("Kafka:EventBus"));
+        services.AddEventBusCore(configureEventBus);
 
         services.TryAddSingleton<IEventBus, KafkaEventBus>();
         services.AddHostedService<KafkaSubscriber>();

@@ -78,7 +78,7 @@ public static class OrderEndpoints
             await cache.SetStringAsync(cacheKey, order.Id.ToString(), new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(24) }, cancellationToken);
         }
 
-        await eventBus.PublishAsync(new OrderCreated(order.Id, order.ProductId, order.Quantity), cancellationToken);
+        await eventBus.PublishAsync(new OrderCreated(order.Id, order.ProductId, order.Quantity), cancellationToken: cancellationToken);
 
         return Results.Accepted($"/api/orders/{order.Id}", OrderResponse.From(order));
     }

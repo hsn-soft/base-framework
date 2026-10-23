@@ -1,93 +1,62 @@
-using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using HsnSoft.Base.EventBus.RabbitMQ.Configs;
+using HsnSoft.Base.EventBus.RabbitMQ.Connection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using RabbitMQ.Client;
-using RabbitMQ.Client.Events;
 
 namespace HsnSoft.Base.EventBus.RabbitMQ;
 
 /// <summary>
-/// Creates one durable queue per (service, event) pair, consumes it and gives each message to the
-/// <see cref="IEventDispatcher"/>. A message the dispatcher gives up on goes to the dead-letter queue.
+/// Starts one <see cref="RabbitMqConsumer"/> per event the service listens to when the host starts, and stops them (waiting for the
+/// messages in flight) when it stops. Fails the start when the broker cannot be reached.
 /// </summary>
-public sealed partial class RabbitMqSubscriber(
-    RabbitMqConnection connection,
-    IEnumerable<EventSubscription> subscriptions,
+public sealed class RabbitMqSubscriber(
+    IRabbitMqPersistentConnection connection,
+    IEventBusSubscriptionManager subscriptions,
     IEventDispatcher dispatcher,
-    IOptions<RabbitMqOptions> options,
-    IOptions<EventBusOptions> eventBusOptions,
-    ILogger<RabbitMqSubscriber> logger) : BackgroundService
+    IFailedEventNotifier failedEventNotifier,
+    IOptions<EventBusOptions> options,
+    IOptions<RabbitMqEventBusConfig> config,
+    ILoggerFactory loggerFactory) : IHostedService
 {
-    private readonly RabbitMqConnection _connection = connection;
-    private readonly List<EventSubscription> _subscriptions = [.. subscriptions];
+    private readonly IRabbitMqPersistentConnection _connection = connection;
+    private readonly IEventBusSubscriptionManager _subscriptions = subscriptions;
     private readonly IEventDispatcher _dispatcher = dispatcher;
-    private readonly RabbitMqOptions _options = options.Value;
-    private readonly EventBusOptions _eventBusOptions = eventBusOptions.Value;
-    private readonly ILogger<RabbitMqSubscriber> _logger = logger;
+    private readonly IFailedEventNotifier _failedEventNotifier = failedEventNotifier;
+    private readonly EventBusOptions _options = options.Value;
+    private readonly RabbitMqEventBusConfig _config = config.Value;
+    private readonly ILoggerFactory _loggerFactory = loggerFactory;
+    private readonly List<RabbitMqConsumer> _consumers = [];
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    public async Task StartAsync(CancellationToken cancellationToken)
     {
-        if (_subscriptions.Count == 0)
+        if (_subscriptions.IsEmpty)
         {
             return;
         }
 
-        IConnection rabbit = await _connection.GetAsync(stoppingToken).ConfigureAwait(false);
-        IChannel channel = await rabbit.CreateChannelAsync(cancellationToken: stoppingToken).ConfigureAwait(false);
-        await using (channel.ConfigureAwait(false))
+        if (!_connection.IsConnected)
         {
-            await channel.BasicQosAsync(prefetchSize: 0, prefetchCount: 10, global: false, cancellationToken: stoppingToken).ConfigureAwait(false);
+            await _connection.TryConnectAsync(cancellationToken).ConfigureAwait(false);
+        }
 
-            await RabbitMqTopology.DeclareExchangeAsync(channel, _options, stoppingToken).ConfigureAwait(false);
-            await RabbitMqTopology.DeclareDeadLetterAsync(channel, _options, stoppingToken).ConfigureAwait(false);
-
-            foreach (EventSubscription subscription in _subscriptions)
-            {
-                string eventName = subscription.EventType.Name;
-                string queue = $"{_eventBusOptions.ServiceName}.{eventName}";
-
-                await channel.QueueDeclareAsync(
-                    queue,
-                    durable: true,
-                    exclusive: false,
-                    autoDelete: false,
-                    arguments: new Dictionary<string, object?> { ["x-dead-letter-exchange"] = RabbitMqTopology.DeadLetterExchange(_options) },
-                    cancellationToken: stoppingToken).ConfigureAwait(false);
-                await channel.QueueBindAsync(queue, _options.ExchangeName, eventName, cancellationToken: stoppingToken).ConfigureAwait(false);
-
-                var consumer = new AsyncEventingBasicConsumer(channel);
-                consumer.ReceivedAsync += (_, delivery) => ConsumeAsync(channel, subscription, delivery, stoppingToken);
-                await channel.BasicConsumeAsync(queue, autoAck: false, consumer, stoppingToken).ConfigureAwait(false);
-
-                LogListening(_logger, _eventBusOptions.ServiceName, eventName, queue);
-            }
-
-            // hold the channel (and its consumers) open until the host shuts down
-            await Task.Delay(Timeout.Infinite, stoppingToken).ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
+        ILogger logger = _loggerFactory.CreateLogger<RabbitMqConsumer>();
+        foreach (IntegrationEventInfo info in _subscriptions.Events)
+        {
+            RabbitMqConsumer consumer = new(_connection, _subscriptions, _dispatcher, _failedEventNotifier, _options, _config, logger, info);
+            _consumers.Add(consumer);
+            await consumer.StartAsync(cancellationToken).ConfigureAwait(false);
         }
     }
 
-    private async Task ConsumeAsync(IChannel channel, EventSubscription subscription, BasicDeliverEventArgs delivery, CancellationToken stoppingToken)
+    public async Task StopAsync(CancellationToken cancellationToken)
     {
-        try
-        {
-            await _dispatcher.DispatchAsync(subscription, delivery.Body, stoppingToken).ConfigureAwait(false);
-            await channel.BasicAckAsync(delivery.DeliveryTag, multiple: false, stoppingToken).ConfigureAwait(false);
-        }
-        catch (Exception exception) when (exception is not OperationCanceledException)
-        {
-            LogDeadLettered(_logger, exception, subscription.EventType.Name);
-            await channel.BasicNackAsync(delivery.DeliveryTag, multiple: false, requeue: false, stoppingToken).ConfigureAwait(false);
-        }
+        // in parallel: one after the other the waits for the messages in flight would add up
+        await Task.WhenAll(_consumers.Select(consumer => consumer.DisposeAsync().AsTask())).ConfigureAwait(false);
+        _consumers.Clear();
     }
-
-    [LoggerMessage(Level = LogLevel.Information, Message = "{Service} listens to {Event} on queue {Queue}")]
-    private static partial void LogListening(ILogger logger, string service, string @event, string queue);
-
-    [LoggerMessage(Level = LogLevel.Error, Message = "{Event} could not be handled, moving it to the dead-letter queue")]
-    private static partial void LogDeadLettered(ILogger logger, Exception exception, string @event);
 }

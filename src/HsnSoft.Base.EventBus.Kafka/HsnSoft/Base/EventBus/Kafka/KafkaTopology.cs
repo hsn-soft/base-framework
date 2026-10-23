@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -9,7 +8,7 @@ namespace HsnSoft.Base.EventBus.Kafka;
 
 internal static class KafkaTopology
 {
-    public static string TopicFor(KafkaOptions options, Type eventType) => options.TopicPrefix + eventType.Name;
+    public static string TopicFor(KafkaOptions options, string eventName) => options.TopicPrefix + eventName;
 
     public static string DeadLetterTopic(KafkaOptions options) => options.TopicPrefix + "dead-letter";
 

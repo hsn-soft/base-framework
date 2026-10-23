@@ -22,7 +22,7 @@ builder.Services
     .AddApiKeyAuthentication()
     .AddBaseSqlServer<SignerDbContext>(builder.Configuration)
     .AddMinioBlobStoring(builder.Configuration)
-    .AddKafkaEventBus(builder.Configuration, "signer")
+    .AddKafkaEventBus(builder.Configuration)
     .AddEventHandler<SignRequested, SignRequestedHandler>()
     .Configure<SignerOptions>(builder.Configuration.GetSection("Signer"));
 

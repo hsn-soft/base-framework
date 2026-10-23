@@ -14,7 +14,7 @@ builder.Services
     .AddXyzApi(builder.Configuration)
     .AddXyzAuthorization()
     .AddBaseMongo(builder.Configuration)
-    .AddRabbitMqEventBus(builder.Configuration, "product-service")
+    .AddRabbitMqEventBus(builder.Configuration)
     .AddSingleton<ProductStore>()
     .AddEventHandler<OrderCreated, OrderCreatedHandler>();
 

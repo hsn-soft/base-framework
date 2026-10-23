@@ -63,13 +63,13 @@ contracts, the role names and the "admin" policy. A host adds what is specific t
 | Product, Shipment | `MongoDB`, `EventBus.RabbitMQ` |
 
 Product-specific values are configuration: the key prefix (`Redis:InstanceName = "xyz:"`) and the exchange
-(`RabbitMq:ExchangeName = "xyz.events"`) are in each `appsettings.json`.
+(`RabbitMq:EventBus:ExchangeName = "xyz.events"`) are in each `appsettings.json`.
 
 ```csharp
 builder.Services
     .AddXyzApi(builder.Configuration)                          // web api, OpenAPI, health, JWT, Redis
     .AddBasePostgres<OrderDbContext>(builder.Configuration)    // or .AddBaseMongo(builder.Configuration)
-    .AddRabbitMqEventBus(builder.Configuration, "order-service")
+    .AddRabbitMqEventBus(builder.Configuration)
     .AddEventHandler<StockReserved, StockReservedHandler>();
 
 app.UseXyzApi();   // exceptions, authentication, authorization, health, in that order

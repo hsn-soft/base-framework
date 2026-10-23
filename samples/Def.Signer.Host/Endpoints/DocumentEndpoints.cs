@@ -22,9 +22,9 @@ public static class DocumentEndpoints
                 return Results.BadRequest(new { error = "Title is required." });
             }
 
-            var requested = new SignRequested(Owner(http), request.Title.Trim(), request.Content ?? string.Empty);
-            await bus.PublishAsync(requested, cancellationToken);
-            return Results.Accepted($"/documents/{requested.EventId}", new { requestId = requested.EventId, status = "queued" });
+            SignRequested requested = new(Guid.CreateVersion7(), Owner(http), request.Title.Trim(), request.Content ?? string.Empty);
+            await bus.PublishAsync(requested, cancellationToken: cancellationToken);
+            return Results.Accepted($"/documents/{requested.RequestId}", new { requestId = requested.RequestId, status = "queued" });
         });
 
         group.MapGet("/", async (HttpContext http, SignerDbContext db, CancellationToken cancellationToken) =>

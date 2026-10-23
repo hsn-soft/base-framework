@@ -20,8 +20,8 @@ JWT, OpenAPI, a broker or a cache.
 | `HsnSoft.Base.Authentication` | JWT bearer authentication, claim names and `ClaimsPrincipal` helpers | Core |
 | `HsnSoft.Base.AspNetCore` | Health endpoints (`/health/live`, `/health/ready`) | Core |
 | `HsnSoft.Base.AspNetCore.WebApi` | Problem-details errors, global exception handler, the OpenAPI document | Core |
-| `HsnSoft.Base.EventBus` | Event bus contracts, dispatcher with retry, wire format | Core |
-| `HsnSoft.Base.EventBus.RabbitMQ` | RabbitMQ broker | EventBus |
+| `HsnSoft.Base.EventBus` | Event bus core: message envelope, handlers, dispatcher, naming, publish retry ([docs](docs/EventBus.md)) | Core |
+| `HsnSoft.Base.EventBus.RabbitMQ` | RabbitMQ broker, wire and topology compatible with the production services | EventBus |
 | `HsnSoft.Base.EventBus.Kafka` | Kafka broker: producer, consumer group, dead-letter topic | EventBus |
 | `HsnSoft.Base.Caching.StackExchangeRedis` | `IDistributedCache`, connection, health check | Core |
 | `HsnSoft.Base.EntityFrameworkCore` | What the EF Core providers share: `DbContext` health check, startup schema creation | Core |
@@ -78,7 +78,7 @@ A service then adds its own store and broker:
 builder.Services
     .AddXyzApi(builder.Configuration)
     .AddBasePostgres<OrderDbContext>(builder.Configuration)
-    .AddRabbitMqEventBus(builder.Configuration, "order-service")
+    .AddRabbitMqEventBus(builder.Configuration)
     .AddEventHandler<StockReserved, StockReservedHandler>();
 ```
 
@@ -88,6 +88,6 @@ builder.Services
 |---|---|
 | `ConnectionStrings:Redis` / `Postgres` / `Mongo` | the matching `AddBase...` registration (the name is a parameter) |
 | `Redis:InstanceName` | key prefix, e.g. `myproduct:` |
-| `RabbitMq` (`Host`, `Port`, `UserName`, `Password`, `VirtualHost`, `ExchangeName`) | `AddRabbitMqEventBus` |
+| `RabbitMq:Connection` (`HostName`, `Port`, `UserName`, `Password`, `VirtualHost`) and `RabbitMq:EventBus` (`ExchangeName`, `ConsumerClientName`, `ErrorClientName`, ...) | `AddRabbitMqEventBus` |
 | `Jwt` (`Issuer`, `Audience`, `Key`) | `AddBaseJwtAuthentication` |
-| `EventBus` options in code (`ServiceName`, retries) | `AddRabbitMqEventBus` |
+| `EventBusOptions` (retries, naming, timeouts), see [docs/EventBus.md](docs/EventBus.md) | `AddRabbitMqEventBus` |

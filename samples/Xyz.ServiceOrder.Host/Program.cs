@@ -14,7 +14,7 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.Services
     .AddXyzApi(builder.Configuration)
     .AddBasePostgres<OrderDbContext>(builder.Configuration)
-    .AddRabbitMqEventBus(builder.Configuration, "order-service")
+    .AddRabbitMqEventBus(builder.Configuration)
     .AddEventHandler<StockReserved, StockReservedHandler>()
     .AddEventHandler<StockRejected, StockRejectedHandler>()
     .AddEventHandler<ShipmentDispatched, ShipmentDispatchedHandler>();
