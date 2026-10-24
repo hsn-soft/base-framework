@@ -20,6 +20,9 @@ public sealed class User
 
     public string Email { get; private set; } = string.Empty;
 
+    /// <summary>The email in capitals, so the lists can look for part of it without regard to case.</summary>
+    public string NormalizedEmail { get; private set; } = string.Empty;
+
     public string DisplayName { get; private set; } = string.Empty;
 
     public bool IsActive { get; private set; }
@@ -42,7 +45,8 @@ public sealed class User
         return user;
     }
 
-    public static string Normalize(string userName) => userName.Trim().ToUpperInvariant();
+    /// <summary>A user name or an email as it is compared and searched: trimmed, in capitals.</summary>
+    public static string Normalize(string text) => text.Trim().ToUpperInvariant();
 
     public void Update(string email, string displayName, bool isActive, DateTimeOffset now)
     {
@@ -53,6 +57,7 @@ public sealed class User
     private void Change(string email, string displayName, DateTimeOffset now)
     {
         Email = Required(email, UserConsts.EmailMaxLength, nameof(Email));
+        NormalizedEmail = Normalize(Email);
         DisplayName = Required(displayName, UserConsts.DisplayNameMaxLength, nameof(DisplayName));
         UpdatedAt = now;
     }

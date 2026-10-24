@@ -201,7 +201,9 @@ The first use case is the CRUD of the users (PostgreSQL `abc_identity`, created 
 |---|---|
 | `POST /api/users/create` | creates a user (a taken name, in any case: 400 `user_name_duplicate`) |
 | `POST /api/users/get/{id}` | one user (404 when there is none) |
-| `POST /api/users/paged-list` | a page of the users, `{ "skip": 0, "take": 20, "isActive": true }` |
+| `POST /api/users/paged-list` | a page of the users and how many there are in all: `{ "skip": 0, "take": 20, "userName": "ad", "email": "abc", "isActive": true }` (names and emails by a part of them, in any case) |
+| `POST /api/users/filter-list` | all the users that match the same filters, not paged, `limit` at most (1000): `{ "email": "abc", "limit": 50 }` |
+| `POST /api/users/search-list` | the users that have the text in their user name or email, shown briefly (`id`, `userName`, `email`), for a box that suggests while one types: `{ "searchText": "ada", "limit": 20 }` |
 | `PUT /api/users` | updates the email, the display name and the state (204) |
 | `DELETE /api/users/{id}` | deletes (204) |
 

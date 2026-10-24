@@ -11,7 +11,14 @@ public interface IUserAppService
     /// <exception cref="HsnSoft.Base.NotFoundException">There is no such user.</exception>
     Task<UserDto> GetAsync(Guid id, CancellationToken cancellationToken = default);
 
+    /// <summary>A page of the users that match the filters, with how many match in all.</summary>
     Task<PagedDataResultDto<UserDto>> GetPagedListAsync(GetUsersPaged pagedInput, CancellationToken cancellationToken = default);
+
+    /// <summary>All the users that match the filters (at most <c>Limit</c>), not paged.</summary>
+    Task<List<UserDto>> GetFilterListAsync(GetUsersFilter filterInput, CancellationToken cancellationToken = default);
+
+    /// <summary>The users that have the text in their user name or email, shown briefly.</summary>
+    Task<List<UserSearchDto>> GetSearchListAsync(GetUsersSearch searchInput, CancellationToken cancellationToken = default);
 
     /// <exception cref="Abc.IdentityService.Domain.UserDomain.Exceptions.UserUserNameDuplicateException">The user name is taken.</exception>
     Task<UserDto> CreateAsync(UserCreateDto input, CancellationToken cancellationToken = default);

@@ -7,10 +7,14 @@ public interface IUserRepository
 {
     Task<User?> FindAsync(Guid id, CancellationToken cancellationToken = default);
 
-    /// <summary>A page of the users by name, only the active (or only the inactive) ones when <paramref name="isActive"/> is given.</summary>
-    Task<IReadOnlyList<User>> GetPagedListAsync(int skip, int take, bool? isActive, CancellationToken cancellationToken = default);
+    /// <summary>The users that match <paramref name="filter"/>, by user name, from <paramref name="skip"/> on, at most <paramref name="take"/>.</summary>
+    Task<IReadOnlyList<User>> GetListAsync(UserFilter filter, int skip, int take, CancellationToken cancellationToken = default);
 
-    Task<int> CountAsync(bool? isActive, CancellationToken cancellationToken = default);
+    /// <summary>How many users match <paramref name="filter"/>.</summary>
+    Task<int> CountAsync(UserFilter filter, CancellationToken cancellationToken = default);
+
+    /// <summary>The users whose user name or email has <paramref name="searchText"/> in it (all of them when it is empty), by user name, at most <paramref name="limit"/>.</summary>
+    Task<IReadOnlyList<User>> SearchAsync(string? searchText, int limit, CancellationToken cancellationToken = default);
 
     /// <summary>Whether a user has this name (names are compared without regard to case); <paramref name="exceptId"/> leaves one user out.</summary>
     Task<bool> UserNameExistsAsync(string userName, Guid? exceptId = null, CancellationToken cancellationToken = default);

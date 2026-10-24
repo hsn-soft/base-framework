@@ -18,9 +18,27 @@ public sealed class UserAppService(IUserRepository users, TimeProvider clock) : 
     {
         ArgumentNullException.ThrowIfNull(pagedInput);
 
-        IReadOnlyList<User> page = await users.GetPagedListAsync(pagedInput.Skip, pagedInput.Take, pagedInput.IsActive, cancellationToken).ConfigureAwait(false);
-        int total = await users.CountAsync(pagedInput.IsActive, cancellationToken).ConfigureAwait(false);
+        UserFilter filter = new(pagedInput.UserName, pagedInput.Email, pagedInput.IsActive);
+        IReadOnlyList<User> page = await users.GetListAsync(filter, pagedInput.Skip, pagedInput.Take, cancellationToken).ConfigureAwait(false);
+        int total = await users.CountAsync(filter, cancellationToken).ConfigureAwait(false);
         return new PagedDataResultDto<UserDto> { Items = [.. page.Select(ToDto)], TotalCount = total, Skip = pagedInput.Skip, Take = pagedInput.Take };
+    }
+
+    public async Task<List<UserDto>> GetFilterListAsync(GetUsersFilter filterInput, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(filterInput);
+
+        UserFilter filter = new(filterInput.UserName, filterInput.Email, filterInput.IsActive);
+        IReadOnlyList<User> all = await users.GetListAsync(filter, 0, filterInput.Limit, cancellationToken).ConfigureAwait(false);
+        return [.. all.Select(ToDto)];
+    }
+
+    public async Task<List<UserSearchDto>> GetSearchListAsync(GetUsersSearch searchInput, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(searchInput);
+
+        IReadOnlyList<User> found = await users.SearchAsync(searchInput.SearchText, searchInput.Limit, cancellationToken).ConfigureAwait(false);
+        return [.. found.Select(user => new UserSearchDto { Id = user.Id, UserName = user.UserName, Email = user.Email })];
     }
 
     public async Task<UserDto> CreateAsync(UserCreateDto input, CancellationToken cancellationToken = default)

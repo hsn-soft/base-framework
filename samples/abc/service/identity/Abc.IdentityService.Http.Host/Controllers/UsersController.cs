@@ -22,6 +22,16 @@ public sealed class UsersController(IUserAppService userAppService) : BaseServic
     public Task<PagedDataResultDto<UserDto>> GetPagedListAsync([FromBody] GetUsersPaged pagedInput, CancellationToken cancellationToken = default)
         => userAppService.GetPagedListAsync(pagedInput, cancellationToken);
 
+    [HttpPost("filter-list")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public Task<List<UserDto>> GetFilterListAsync([FromBody] GetUsersFilter filterInput, CancellationToken cancellationToken = default)
+        => userAppService.GetFilterListAsync(filterInput, cancellationToken);
+
+    [HttpPost("search-list")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public Task<List<UserSearchDto>> GetSearchListAsync([FromBody] GetUsersSearch searchInput, CancellationToken cancellationToken = default)
+        => userAppService.GetSearchListAsync(searchInput, cancellationToken);
+
     [HttpPost("create")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     public async Task<IActionResult> CreateAsync([FromBody] UserCreateDto input, CancellationToken cancellationToken = default)
