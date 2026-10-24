@@ -8,23 +8,30 @@ using Microsoft.Extensions.Logging;
 namespace HsnSoft.Base.Logging;
 
 /// <summary>
-/// What every logging provider reads (section <c>FrameworkLogger</c>), so moving from one provider to another does not change the
-/// configuration. A provider decides how to do what the settings ask.
+/// What every logging provider reads, so moving from one provider to another does not change the configuration. Two sets of settings, one per place a log goes to:
+/// the console is told by the standard <c>Logging:LogLevel</c> (<see cref="ConsoleLevels"/>: a default and a level per category, like
+/// <c>"Microsoft.AspNetCore": "Warning"</c>), and what is kept (Graylog or the file) by this section, <c>PersistentLogger</c>. A provider decides how to do what the settings ask.
 /// </summary>
-public sealed class FrameworkLoggerOptions
+public sealed class PersistentLoggerOptions
 {
-    public const string SectionName = "FrameworkLogger";
+    public const string SectionName = "PersistentLogger";
 
-    /// <summary>The lowest level written anywhere. Default: everything.</summary>
-    public LogLevel LogLevel { get; set; } = LogLevel.Trace;
+    /// <summary>
+    /// What the console shows: the <c>Logging:LogLevel</c> section (<c>Default</c> and a level per category), as every .NET service has it. Not part of the <c>PersistentLogger</c>
+    /// section: it is read from <c>Logging</c>.
+    /// </summary>
+    public LogLevelRules ConsoleLevels { get; set; } = new(LogLevel.Information);
 
-    /// <summary>The lowest level of the persistent sink. It never goes below <see cref="LogCategories.PersistentFloor"/>: Debug and Trace stay in the console.</summary>
-    public LogLevel PersistentMinimumLevel { get; set; } = LogCategories.PersistentFloor;
+    /// <summary>
+    /// The lowest level of the logs that are kept (Graylog or the file), for every category that <see cref="LevelOverrides"/> does not name. It never goes below
+    /// <see cref="LogCategories.PersistentFloor"/> (Information): Debug and Trace stay in the console. Default Information.
+    /// </summary>
+    public LogLevel LogLevel { get; set; } = LogCategories.PersistentFloor;
 
     /// <summary>
     /// The lowest level of the logs of the platform (ASP.NET Core, Entity Framework, YARP, the drivers: <c>PlatformLog</c>) that reach the persistent sink; they
-    /// all stay in the console. Default Warning: what the platform says at Information is noise next to the logs of the request and the message. It is
-    /// never below <see cref="EffectivePersistentLevel"/>.
+    /// all stay in the console (what they show there is told by <c>Logging:LogLevel</c>). Default Warning: what the platform says at Information is noise next to the logs of the request and the message.
+    /// A category named in <see cref="LevelOverrides"/> is not held to it. Never below <see cref="LogLevel"/>.
     /// </summary>
     public LogLevel PlatformMinimumLevel { get; set; } = LogLevel.Warning;
 
@@ -79,27 +86,27 @@ public sealed class FrameworkLoggerOptions
     /// <summary>Show errors of the logging library itself (a sink that cannot reach its server) in the console.</summary>
     public bool IsSelfLogActive { get; set; }
 
-    /// <summary>Per category prefix, the lowest level written for it (e.g. <c>Microsoft.AspNetCore</c> = Warning); added to the defaults of the provider.</summary>
+    /// <summary>Per category prefix, the lowest level that is kept for it (e.g. <c>Microsoft.AspNetCore</c> = Error), instead of <see cref="LogLevel"/>; it counts below that prefix too. The console has its own, <c>Logging:LogLevel</c>.</summary>
     public Dictionary<string, LogLevel> LevelOverrides { get; set; } = [];
 
     /// <summary>
-    /// Reads the <c>FrameworkLogger</c> section. It is forgiving, as the services in production rely on: level names may be Serilog's
+    /// Reads the <c>PersistentLogger</c> section. It is forgiving, as the services in production rely on: level names may be Serilog's
     /// (<c>Verbose</c> is Trace, <c>Fatal</c> is Critical) in any case, and a missing or unreadable value keeps its default.
     /// </summary>
-    public static FrameworkLoggerOptions FromConfiguration(IConfiguration configuration)
+    public static PersistentLoggerOptions FromConfiguration(IConfiguration configuration)
     {
         ArgumentNullException.ThrowIfNull(configuration);
 
         IConfigurationSection section = configuration.GetSection(SectionName);
-        FrameworkLoggerOptions options = new()
+        PersistentLoggerOptions options = new()
         {
-            LogLevel = ParseLevel(section["LogLevel"], LogLevel.Trace),
+            ConsoleLevels = LogLevelRules.FromConfiguration(configuration.GetSection("Logging:LogLevel"), LogLevel.Information),
+            LogLevel = ParseLevel(section["LogLevel"], LogCategories.PersistentFloor),
             IsGrayLogActive = bool.TryParse(section["IsGrayLogActive"], out bool grayLog) && grayLog,
             IsSelfLogActive = bool.TryParse(section["IsSelfLogActive"], out bool selfLog) && selfLog,
             Version = section["Version"],
             VersionVariable = string.IsNullOrWhiteSpace(section["VersionVariable"]) ? "BUILD_NUMBER" : section["VersionVariable"]!,
             FilePath = string.IsNullOrWhiteSpace(section["FilePath"]) ? "Logs/logs.txt" : section["FilePath"]!,
-            PersistentMinimumLevel = ParseLevel(section["PersistentMinimumLevel"], LogCategories.PersistentFloor),
             PlatformMinimumLevel = ParseLevel(section["PlatformMinimumLevel"], LogLevel.Warning),
             AppNamespace = string.IsNullOrWhiteSpace(section["AppNamespace"]) ? null : section["AppNamespace"],
             MaxPersistentFieldLength = int.TryParse(section["MaxPersistentFieldLength"], CultureInfo.InvariantCulture, out int maxLength) && maxLength > 0 ? maxLength : 16 * 1024,
@@ -123,7 +130,7 @@ public sealed class FrameworkLoggerOptions
 
     private static LogLevel ParseLevel(string? text, LogLevel fallback) => TryParseLevel(text, out LogLevel level) ? level : fallback;
 
-    private static bool TryParseLevel(string? text, out LogLevel level)
+    internal static bool TryParseLevel(string? text, out LogLevel level)
     {
         switch (text?.Trim().ToLowerInvariant())
         {
@@ -137,13 +144,6 @@ public sealed class FrameworkLoggerOptions
                 return Enum.TryParse(text, ignoreCase: true, out level) && Enum.IsDefined(level);
         }
     }
-
-    /// <summary>The level a log must have to be persistent: <see cref="PersistentMinimumLevel"/>, at least <see cref="LogLevel"/>, and never below the floor.</summary>
-    public LogLevel EffectivePersistentLevel
-        => (LogLevel)System.Math.Max((int)PersistentMinimumLevel, System.Math.Max((int)LogLevel, (int)LogCategories.PersistentFloor));
-
-    /// <summary>The level a log of the platform must have to be persistent: <see cref="PlatformMinimumLevel"/>, and never below <see cref="EffectivePersistentLevel"/>.</summary>
-    public LogLevel EffectivePlatformLevel => (LogLevel)System.Math.Max((int)PlatformMinimumLevel, (int)EffectivePersistentLevel);
 }
 
 public sealed class GrayLogOptions

@@ -21,8 +21,8 @@ public sealed class AddBaseSerilogTests : IDisposable
         => new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["FrameworkLogger:FilePath"] = Path.Combine(_directory, "service.txt"),
-                ["FrameworkLogger:LogLevel"] = "Verbose",
+                ["PersistentLogger:FilePath"] = Path.Combine(_directory, "service.txt"),
+                ["PersistentLogger:LogLevel"] = "Verbose",
             })
             .AddInMemoryCollection(settings.ToDictionary(setting => setting.Key, setting => (string?)setting.Value))
             .Build();
@@ -77,7 +77,7 @@ public sealed class AddBaseSerilogTests : IDisposable
     [Fact]
     public void ConfiguredLevel_IsHonoured()
     {
-        ServiceProvider provider = Build(Configuration(("FrameworkLogger:LogLevel", "Error")));
+        ServiceProvider provider = Build(Configuration(("PersistentLogger:LogLevel", "Error")));
         ILogger<AddBaseSerilogTests> logger = provider.GetRequiredService<ILogger<AddBaseSerilogTests>>();
 
         logger.LogWarning("a warning");
@@ -93,9 +93,9 @@ public sealed class AddBaseSerilogTests : IDisposable
     public void WithGraylog_ThePersistentSinkIsRefreshedByAHostedService()
     {
         using ServiceProvider provider = Build(Configuration(
-            ("FrameworkLogger:IsGrayLogActive", "true"),
-            ("FrameworkLogger:GrayLog:Address", "http://127.0.0.1"),
-            ("FrameworkLogger:GrayLog:Port", "1")));
+            ("PersistentLogger:IsGrayLogActive", "true"),
+            ("PersistentLogger:GrayLog:Address", "http://127.0.0.1"),
+            ("PersistentLogger:GrayLog:Port", "1")));
 
         Assert.Contains(provider.GetServices<IHostedService>(), service => service is GraylogSinkRefreshService);
     }
@@ -111,7 +111,7 @@ public sealed class AddBaseSerilogTests : IDisposable
     [Fact]
     public void Graylog_WithoutAnAddress_StopsTheStartup()
     {
-        Assert.Throws<InvalidOperationException>(() => Build(Configuration(("FrameworkLogger:IsGrayLogActive", "true"))));
+        Assert.Throws<InvalidOperationException>(() => Build(Configuration(("PersistentLogger:IsGrayLogActive", "true"))));
     }
 
     [Fact]
@@ -137,7 +137,7 @@ public sealed class AddBaseSerilogTests : IDisposable
     [Fact]
     public void SerilogsOwnLevels_AreAcceptedInTheConfiguration()
     {
-        ServiceProvider provider = Build(Configuration(("FrameworkLogger:LogLevel", "Fatal")));
+        ServiceProvider provider = Build(Configuration(("PersistentLogger:LogLevel", "Fatal")));
         ILogger<AddBaseSerilogTests> logger = provider.GetRequiredService<ILogger<AddBaseSerilogTests>>();
 
         logger.LogError("not fatal");

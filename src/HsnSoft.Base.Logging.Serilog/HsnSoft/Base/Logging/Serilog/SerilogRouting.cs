@@ -28,15 +28,25 @@ internal static class SerilogRouting
     internal static bool IsConsoleOnly(LogEvent logEvent)
         => SourceContext(logEvent).StartsWith(LogCategories.ConsoleOnlyPrefix, StringComparison.Ordinal);
 
-    /// <summary>The console shows everything from the configured level up.</summary>
-    internal static bool ForConsole(LogEvent logEvent, LogEventLevel minimum) => logEvent.Level >= minimum;
+    internal static LogLevel ToLogLevel(LogEventLevel level) => level switch
+    {
+        LogEventLevel.Verbose => LogLevel.Trace,
+        LogEventLevel.Debug => LogLevel.Debug,
+        LogEventLevel.Information => LogLevel.Information,
+        LogEventLevel.Warning => LogLevel.Warning,
+        LogEventLevel.Error => LogLevel.Error,
+        _ => LogLevel.Critical,
+    };
+
+    /// <summary>The console shows a log when its level reaches what <c>Logging:LogLevel</c> says for its category (nothing at all for <c>None</c>).</summary>
+    internal static bool ForConsole(LogEvent logEvent, LogLevelRules rules) => ToLogLevel(logEvent.Level) >= rules.For(SourceContext(logEvent));
 
     /// <summary>
-    /// The persistent sink (Graylog, file) gets what is at least at the persistent level and is not for the console only. The level
-    /// is never below Information, so Debug and Verbose logs stay in the console whatever the configuration says.
+    /// The persistent sink (Graylog, file) gets a log when its level reaches what <see cref="PersistentLevelRules"/> says for its category (never below Information, so
+    /// Debug and Verbose logs stay in the console whatever the configuration says) and it is not for the console only.
     /// </summary>
-    internal static bool ForPersistent(LogEvent logEvent, LogEventLevel persistentMinimum, LogEventLevel? platformMinimum = null)
-        => logEvent.Level >= persistentMinimum && !IsConsoleOnly(logEvent) && (platformMinimum is null || logEvent.Level >= platformMinimum || !IsPlatform(logEvent));
+    internal static bool ForPersistent(LogEvent logEvent, PersistentLevelRules rules)
+        => !IsConsoleOnly(logEvent) && ToLogLevel(logEvent.Level) >= rules.For(SourceContext(logEvent), IsPlatform(logEvent));
 
     /// <summary>A log of the platform (ASP.NET Core, a driver, ...): the <c>LogType</c> every log has when it reaches a sink.</summary>
     internal static bool IsPlatform(LogEvent logEvent)

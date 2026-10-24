@@ -6,23 +6,45 @@ Graylog in one service, NLog in another. Two packages help with that; both are o
 
 | Package | What it is |
 |---|---|
-| `HsnSoft.Base.Logging` | Independent of any logging library: `IAppConsoleLogger` (console only), the settings every provider reads (`FrameworkLogger` section), masking of sensitive data. |
+| `HsnSoft.Base.Logging` | Independent of any logging library: `IAppConsoleLogger` (console only), the settings every provider reads (`Logging:LogLevel` for the console, the `PersistentLogger` section for what is kept), masking of sensitive data. |
 | `HsnSoft.Base.Logging.Serilog` | Serilog as the provider: the console, the persistent sink (Graylog, or a file), the routing rule below, the self-healing Graylog sink. |
 
-## The rule: Debug and Verbose stay in the console
+## Two levels: what the console shows, and what is kept
 
-| Log | Console | Persistent sink (Graylog, or a file) |
+A log goes to two places, and **each has its own level**:
+
+| | Told by | Default | Can be lowered to |
+|---|---|---|---|
+| **The console** (the pod's log, `kubectl logs`) | the standard **`Logging:LogLevel`** of every .NET service: a `Default` and a level per category | Information | anything (`Debug`, `Trace`), or `None` for a category |
+| **The persistent sink** (Graylog, or a file when Graylog is off) | **`PersistentLogger:LogLevel`**, with `PersistentLogger:LevelOverrides` per category | Information | Information: **never below it**, Debug and Trace stay in the console |
+
+```json
+"Logging": {
+  "LogLevel": { "Default": "Information", "Microsoft.AspNetCore": "Warning", "Yarp": "Warning" }
+},
+"PersistentLogger": {
+  "LogLevel": "Information",
+  "IsGrayLogActive": true
+}
+```
+
+So a pod can show only warnings and errors (`"Default": "Warning"`) while Graylog still keeps Information and above, and the other way round. A category
+rule counts for everything below it (`Microsoft.AspNetCore` is also `Microsoft.AspNetCore.Routing`), the longest rule that fits wins. Graylog is turned on and off with
+`PersistentLogger:IsGrayLogActive`; off, what is kept goes to `PersistentLogger:FilePath`.
+
+More on what is kept:
+
+| Log | Console | Persistent sink |
 |---|---|---|
-| Debug, Trace (Serilog: Verbose) | yes | **never** |
-| Information and above | yes | yes |
-| Platform logs (`PlatformLog`: ASP.NET Core, Entity Framework, YARP, the drivers) below Warning | yes | **no** (`FrameworkLogger:PlatformMinimumLevel`, default `Warning`) |
-| Anything written through `IAppConsoleLogger` | yes | **never** (it is the console logger) |
-| Anything below `FrameworkLogger:LogLevel` | no | no |
+| Information and above (or what `LevelOverrides` says for its category) | by `Logging:LogLevel` | yes |
+| Debug, Trace (Serilog: Verbose) | by `Logging:LogLevel` | **never** |
+| Platform logs (`PlatformLog`: ASP.NET Core, Entity Framework, YARP, the drivers, any library) below Warning | by `Logging:LogLevel` | **no** (`PersistentLogger:PlatformMinimumLevel`, default `Warning`), unless `LevelOverrides` names their category |
+| Anything written through `IAppConsoleLogger` | by `Logging:LogLevel` (its category is `ConsoleOnly.<name>`) | **never** (it is the console logger) |
 
-The persistent level can be raised (`FrameworkLogger:PersistentMinimumLevel`, e.g. `Warning`) but never lowered below Information.
-The rule lives in the logging provider, not in the framework packages: they only write logs and do not know what is persistent.
-A provider recognizes console-only logs by their **category** (`LogCategories.ConsoleOnlyPrefix`), the one thing every logging
-library has, so another provider can apply the same rule.
+`Microsoft.Extensions.Logging`'s own filter is opened wide by `AddBaseSerilog`: it would decide for both places at once. The rule lives in the logging provider, not in the framework
+packages: they only write logs and do not know what is shown or kept. A provider recognizes console-only logs by their **category**
+(`LogCategories.ConsoleOnlyPrefix`), the one thing every logging library has, so another provider can apply the same rules (`LogLevelRules` for the console,
+`PersistentLevelRules` for what is kept).
 
 ## Using it (Serilog)
 
@@ -32,9 +54,11 @@ builder.Logging.AddBaseSerilog(builder.Configuration, "OrderService"); // everyt
 ```
 
 ```json
-"FrameworkLogger": {
-  "LogLevel": "Debug",
-  "PersistentMinimumLevel": "Information",
+"Logging": {
+  "LogLevel": { "Default": "Information", "Microsoft.AspNetCore": "Warning" }
+},
+"PersistentLogger": {
+  "LogLevel": "Information",
   "PlatformMinimumLevel": "Warning",
   "AppNamespace": "Hhs",
   "IsGrayLogActive": true,
@@ -64,7 +88,7 @@ builder.Logging.AddBaseSerilog(builder.Configuration, "OrderService"); // everyt
 
 Every log in Graylog has a `Solution` (the first part of the assembly name: `Hhs`, `Xyz`), an `Assembly` (`Hhs.AuthServer.Http.Host`: which
 service, auth server or agent wrote it), a `Version` (the build that wrote it: the environment variable `BUILD_NUMBER`, which the CI of the
-services sets to the image tag `{yyMMddHHmm}-sha-{git short sha}`; else `FrameworkLogger:Version`, else the version of the entry assembly: with it the
+services sets to the image tag `{yyMMddHHmm}-sha-{git short sha}`; else `PersistentLogger:Version`, else the version of the entry assembly: with it the
 `Line` of a failure is read in the code that ran) and a `LogType`:
 
 | `LogType` | What it is | Written by |
@@ -77,7 +101,7 @@ services sets to the image tag `{yyMMddHHmm}-sha-{git short sha}`; else `Framewo
 | `PlatformLog` | ASP.NET Core, Entity Framework, a database driver, ... | the platform |
 
 The provider decides `LogType` from the category of a log, that is from the class that wrote it: what is under **`HsnSoft.Base`** is `FrameworkLog`, what is under
-**the namespace of the application** (`FrameworkLogger:AppNamespace`, `Hhs`) is `AppLog`, except what is under **`{AppNamespace}.Shared`** (`Hhs.Shared.*`), which is `SharedLog`, and **everything else is `PlatformLog`**: no list of libraries
+**the namespace of the application** (`PersistentLogger:AppNamespace`, `Hhs`) is `AppLog`, except what is under **`{AppNamespace}.Shared`** (`Hhs.Shared.*`), which is `SharedLog`, and **everything else is `PlatformLog`**: no list of libraries
 to keep up to date, a new library is the platform's the moment it logs. Without `AppNamespace` it is the first part of the name of the assembly that runs
 (`Hhs.IdentityService.Http.Host` is `Hhs`); set it when the code of the product does not start with that. A log written without a category (the static `Log`) and the
 console logger's are the application's. The chain types say theirs themselves. `MessageType` is `Structured` when an
@@ -186,7 +210,7 @@ For a 500 these two are what to look at; for a 400 (an error the caller made) th
 
 Graylog turns every property of a log into a field, and an object logged with `{@Object}` into a field per property. An object whose
 shape is the developer's would create fields without end, so the persistent sink writes an object (and a dictionary, and a list) as
-the **one field of its name holding its JSON**, and cuts every text to `FrameworkLogger:MaxPersistentFieldLength` (16384, above the 8192 of a body or a reason, so those are not cut twice). The console
+the **one field of its name holding its JSON**, and cuts every text to `PersistentLogger:MaxPersistentFieldLength` (16384, above the 8192 of a body or a reason, so those are not cut twice). The console
 still shows the readable object. A body with two hundred properties is one field.
 
 ## Where each decision is made
@@ -196,8 +220,8 @@ arguments**, and the **category** (the class: `ILogger<UsersController>`). Every
 
 | Decision | Where | Decided by |
 |---|---|---|
-| Which sinks get it (console, file, Graylog) | `BaseSerilog.Create` and `SerilogRouting` (`HsnSoft.Base.Logging.Serilog`) | the **level** and the **category** of the log, with the `FrameworkLogger` section: the console gets everything from `LogLevel`, the persistent sink (Graylog when `IsGrayLogActive`, else the file) from `PersistentMinimumLevel` (never below Information), `PlatformLog`s from `PlatformMinimumLevel`; the category `ConsoleOnly.*` (`IAppConsoleLogger`) never reaches it |
-| Its `LogType` | `LogShapeEnricher`, or the writer for the chain types | the **category**: `HsnSoft.Base.*` is `FrameworkLog`, what is under `FrameworkLogger:AppNamespace` is `AppLog` (`{AppNamespace}.Shared.*`: `SharedLog`), everything else is `PlatformLog`. `HttpRequest`, `HttpResponse`, `HttpRequestResponse`, `ConsumeStart` and `ConsumeEnd` are said by the code that writes them (the request logging middleware and the event bus): a developer cannot choose a type on the line of a log |
+| Which sinks get it (console, file, Graylog) | `BaseSerilog.Create` and `SerilogRouting` (`HsnSoft.Base.Logging.Serilog`) | the **level** and the **category** of the log: the console by `Logging:LogLevel` (a default and a level per category), the persistent sink (Graylog when `PersistentLogger:IsGrayLogActive`, else the file) by `PersistentLogger:LogLevel` and `LevelOverrides` (never below Information), `PlatformLog`s also by `PlatformMinimumLevel`; the category `ConsoleOnly.*` (`IAppConsoleLogger`) never reaches it |
+| Its `LogType` | `LogShapeEnricher`, or the writer for the chain types | the **category**: `HsnSoft.Base.*` is `FrameworkLog`, what is under `PersistentLogger:AppNamespace` is `AppLog` (`{AppNamespace}.Shared.*`: `SharedLog`), everything else is `PlatformLog`. `HttpRequest`, `HttpResponse`, `HttpRequestResponse`, `ConsumeStart` and `ConsumeEnd` are said by the code that writes them (the request logging middleware and the event bus): a developer cannot choose a type on the line of a log |
 | Which fields it has | the pipeline of `BaseSerilog.Create`, in this order | below |
 
 The pipeline, for every log: **scopes** (`BeginScope`, what the middleware and the event bus put there: `CorrelationId`, `TraceId`, the `Facility` of
@@ -245,8 +269,8 @@ personal data, and the console is a log too.
 
 ## Another provider (NLog, ...)
 
-A provider has to do what `HsnSoft.Base.Logging.Serilog` does, with its own tools: read `FrameworkLoggerOptions.FromConfiguration`,
-write everything to the console, keep Debug/Trace and the `ConsoleOnly.` categories out of the persistent target, and mask
+A provider has to do what `HsnSoft.Base.Logging.Serilog` does, with its own tools: read `PersistentLoggerOptions.FromConfiguration`,
+write to the console what `ConsoleLevels` says, keep what `PersistentLevelRules` does not let through (Debug/Trace) and the `ConsoleOnly.` categories out of the persistent target, and mask
 `[SensitiveData]` properties. In NLog that is a rule order, sketched here (not run in this repository):
 
 ```xml
@@ -268,7 +292,7 @@ write everything to the console, keep Debug/Trace and the `ConsoleOnly.` categor
 | Persistent logs: only what was written with `IFrameworkLogger` (`IsPersistentLogger`) | by level: everything of Information and above except what `IAppConsoleLogger` wrote; ASP.NET Core, EF Core and the HsnSoft packages now reach Graylog from Information (libraries from Warning) |
 | `IRefreshableLogger`, `PersistentLoggerSinkRefreshWorker` in Shared | built in: a hosted service refreshes the Graylog sink |
 | `HsnSoft.Base.Serilog.Mask.SensitiveDataAttribute` | `HsnSoft.Base.Logging.Masking.SensitiveDataAttribute` (a property now, usable the same way) |
-| `FrameworkLogger:*` settings | the same keys; new: `PersistentMinimumLevel`, `LevelOverrides` |
+| `FrameworkLogger:*` settings | renamed `PersistentLogger:*`. `FrameworkLogger:LogLevel` (what the console showed) is now the standard `Logging:LogLevel`, and `PersistentLogger:LogLevel` is the level of what is kept (it replaces `PersistentMinimumLevel`); `LevelOverrides` is for what is kept too, the console has its own category rules |
 | `IEventBusLogger` and its persisted log models | `ILogger` (see above) |
 | `HsnSoft.Base.Json.*` | not ported: no product uses `IJsonSerializer`; they use Newtonsoft or `System.Text.Json` directly |
 

@@ -15,7 +15,7 @@ public static class LogTypes
     /// <summary>A log of the shared library of the application (the classes under <c>{AppNamespace}.Shared</c>: the policies and helpers every service of a product uses).</summary>
     public const string SharedLog = "SharedLog";
 
-    /// <summary>A log written by the code of the application (the classes under <c>FrameworkLogger:AppNamespace</c>) with <c>ILogger</c>.</summary>
+    /// <summary>A log written by the code of the application (the classes under <c>PersistentLogger:AppNamespace</c>) with <c>ILogger</c>.</summary>
     public const string AppLog = "AppLog";
 
     /// <summary>The start of an HTTP request. Pairs with <see cref="HttpResponse"/> through <c>ScopeId</c>.</summary>

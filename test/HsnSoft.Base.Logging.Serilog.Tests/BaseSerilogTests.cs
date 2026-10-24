@@ -11,7 +11,6 @@ namespace HsnSoft.Base.Logging.Serilog.Tests;
 [Collection(ProcessWideCollection.Name)]
 public sealed class BaseSerilogTests : IDisposable
 {
-    private static readonly string[] s_dependencyCategories = ["System", "Microsoft", "Microsoft.AspNetCore", "Microsoft.EntityFrameworkCore", "Npgsql", "HsnSoft.Base.MongoDB", "MongoDB"];
 
     private readonly CaptureSink _console = new();
     private readonly CaptureSink _persistent = new();
@@ -33,9 +32,10 @@ public sealed class BaseSerilogTests : IDisposable
         public string? Password { get; set; }
     }
 
-    private Logger Create(Action<FrameworkLoggerOptions>? configure = null, Action<LoggerConfiguration>? configureSerilog = null, string loggerName = "Host")
+    private Logger Create(Action<PersistentLoggerOptions>? configure = null, Action<LoggerConfiguration>? configureSerilog = null, string loggerName = "Host")
     {
-        FrameworkLoggerOptions options = new();
+        // what is not about the level of the console sees everything in it (Logging:LogLevel is tested below)
+        PersistentLoggerOptions options = new() { ConsoleLevels = new LogLevelRules(LogLevel.Trace) };
         configure?.Invoke(options);
         SerilogSinks sinks = new(_console, _persistent, null);
         Logger logger = BaseSerilog.Create(options, loggerName, configureSerilog, sinks).Logger;
@@ -109,81 +109,92 @@ public sealed class BaseSerilogTests : IDisposable
     }
 
     [Fact]
-    public void ConfiguredLevel_DecidesWhatAnythingWrites()
+    public void TheConsole_IsToldByLoggingLogLevel_ADefaultAndALevelPerCategory()
     {
-        ILogger logger = Create(options => options.LogLevel = LogLevel.Warning);
+        ILogger logger = Create(options => options.ConsoleLevels = new LogLevelRules(LogLevel.Warning, [new("Microsoft.AspNetCore", LogLevel.Error), new("Orders", LogLevel.Debug)]));
 
-        logger.Debug("debug");
-        logger.Information("information");
-        logger.Warning("warning");
+        logger.ForContext(Constants.SourceContextPropertyName, "Some.Library").Information("hidden, below the default");
+        logger.ForContext(Constants.SourceContextPropertyName, "Some.Library").Warning("shown, the default");
+        logger.ForContext(Constants.SourceContextPropertyName, "Microsoft.AspNetCore.Routing").Warning("hidden, the category wants Error");
+        logger.ForContext(Constants.SourceContextPropertyName, "Microsoft.AspNetCore.Routing").Error("shown, error");
+        logger.ForContext(Constants.SourceContextPropertyName, "Orders.Checkout").Debug("shown, the application asks for Debug");
 
-        Assert.Equal(["warning"], _console.Messages);
-        Assert.Equal(["warning"], _persistent.Messages);
+        Assert.Equal(["shown, the default", "shown, error", "shown, the application asks for Debug"], _console.Messages);
     }
 
     [Fact]
-    public void PersistentLevelBelowInformation_IsIgnored()
+    public void TheConsoleLevel_AndThePersistentLevel_AreIndependent()
     {
-        ILogger logger = Create(options => options.PersistentMinimumLevel = LogLevel.Trace);
+        // the console shows only errors; what is kept is still Information and above
+        ILogger logger = Create(options => options.ConsoleLevels = new LogLevelRules(LogLevel.Error));
 
-        logger.Debug("debug");
         logger.Information("information");
-
-        Assert.Equal(["information"], _persistent.Messages);
-    }
-
-    [Fact]
-    public void StricterPersistentLevel_IsKept()
-    {
-        ILogger logger = Create(options => options.PersistentMinimumLevel = LogLevel.Error);
-
-        logger.Warning("warning");
         logger.Error("error");
+
+        Assert.Equal(["error"], _console.Messages);
+        Assert.Equal(["information", "error"], _persistent.Messages);
+    }
+
+    [Fact]
+    public void TheConsole_CanBeSilencedForACategory_WithNone()
+    {
+        ILogger logger = Create(options => options.ConsoleLevels = new LogLevelRules(LogLevel.Information, [new("Chatty", LogLevel.None)]));
+
+        logger.ForContext(Constants.SourceContextPropertyName, "Chatty.Library").Fatal("silent");
+        logger.Information("shown");
+
+        Assert.Equal(["shown"], _console.Messages);
+    }
+
+    [Fact]
+    public void ThePersistentLevel_IsWhatPersistentLoggerLogLevelSays_AndNeverBelowInformation()
+    {
+        ILogger stricter = Create(options => options.LogLevel = LogLevel.Error);
+        stricter.Warning("warning");
+        stricter.Error("error");
 
         Assert.Equal(["warning", "error"], _console.Messages);
         Assert.Equal(["error"], _persistent.Messages);
     }
 
     [Fact]
-    public void LibrariesAreQuieter_ThanTheApplication()
+    public void PersistentLevelBelowInformation_IsIgnored()
     {
-        ILogger logger = Create();
+        ILogger logger = Create(options => options.LogLevel = LogLevel.Trace);
 
-        logger.ForContext(Constants.SourceContextPropertyName, "Microsoft.AspNetCore.Hosting").Verbose("hidden");
-        logger.ForContext(Constants.SourceContextPropertyName, "Microsoft.AspNetCore.Hosting").Debug("shown");
-        logger.ForContext(Constants.SourceContextPropertyName, "HsnSoft.Base.EventBus.RabbitMQ.RabbitMqConsumer").Verbose("application");
+        logger.Debug("debug");
+        logger.Information("information");
 
-        Assert.Equal(["shown", "application"], _console.Messages);
-    }
-
-    [Theory]
-    [InlineData(LogLevel.Trace, LogLevel.Debug)]
-    [InlineData(LogLevel.Debug, LogLevel.Information)]
-    [InlineData(LogLevel.Information, LogLevel.Warning)]
-    [InlineData(LogLevel.Error, LogLevel.Warning)]
-    public void LibraryLevel_FollowsTheApplicationsLevel(LogLevel configured, LogLevel expected)
-    {
-        FrameworkLoggerOptions options = new() { LogLevel = configured };
-
-        Dictionary<string, LogLevel> levels = BaseSerilog.Overrides(options).ToDictionary(pair => pair.Key, pair => pair.Value);
-
-        Assert.All(s_dependencyCategories, category => Assert.Equal(expected, levels[category]));
+        Assert.Equal(["debug", "information"], _console.Messages);
+        Assert.Equal(["information"], _persistent.Messages);
     }
 
     [Fact]
-    public void ConfiguredOverrides_BeatTheDefaults_AndAddCategories()
+    public void PersistentOverrides_ArePerCategory_AndDoNotTouchTheConsole()
     {
         ILogger logger = Create(options =>
         {
-            options.LevelOverrides["Microsoft"] = LogLevel.Error;
-            options.LevelOverrides["MyApp.Noisy"] = LogLevel.Warning;
+            options.AppNamespace = "Orders";
+            options.LevelOverrides["Orders.Noisy"] = LogLevel.Warning;
         });
 
-        logger.ForContext(Constants.SourceContextPropertyName, "Microsoft.Extensions.Http").Warning("hidden");
-        logger.ForContext(Constants.SourceContextPropertyName, "MyApp.Noisy.Part").Information("hidden too");
-        logger.ForContext(Constants.SourceContextPropertyName, "MyApp.Noisy.Part").Warning("shown");
+        logger.ForContext(Constants.SourceContextPropertyName, "Orders.Noisy.Part").Information("not kept");
+        logger.ForContext(Constants.SourceContextPropertyName, "Orders.Noisy.Part").Warning("kept");
+        logger.ForContext(Constants.SourceContextPropertyName, "Orders.Other").Information("kept too");
 
-        Assert.Equal(["shown"], _console.Messages);
+        Assert.Equal(3, _console.Events.Count);
+        Assert.Equal(["kept", "kept too"], _persistent.Messages);
+    }
+
+    [Fact]
+    public void ThePlatformsInformation_IsNotKept_UnlessItsCategoryIsNamed()
+    {
+        ILogger logger = Create(options => options.LevelOverrides["Microsoft.AspNetCore.Hosting"] = LogLevel.Information);
+
+        logger.ForContext(Constants.SourceContextPropertyName, "Microsoft.AspNetCore.Routing").Information("platform, not kept");
+        logger.ForContext(Constants.SourceContextPropertyName, "Microsoft.AspNetCore.Hosting.Diagnostics").Information("platform, named, kept");
+
+        Assert.Equal(["platform, named, kept"], _persistent.Messages);
     }
 
     [Fact]
@@ -262,6 +273,6 @@ public sealed class BaseSerilogTests : IDisposable
     public void NullOptions_AndABlankName_AreRejected()
     {
         Assert.Throws<ArgumentNullException>(() => BaseSerilog.Create(null!, "Host", null));
-        Assert.Throws<ArgumentException>(() => BaseSerilog.Create(new FrameworkLoggerOptions(), " ", null));
+        Assert.Throws<ArgumentException>(() => BaseSerilog.Create(new PersistentLoggerOptions(), " ", null));
     }
 }

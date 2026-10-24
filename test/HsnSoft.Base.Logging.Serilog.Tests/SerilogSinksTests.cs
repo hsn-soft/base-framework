@@ -108,9 +108,9 @@ public sealed class SerilogSinksTests : IDisposable
                 .. properties.Select(property => new LogEventProperty(property.Name, new ScalarValue(property.Value))),
             ]);
 
-    private FrameworkLoggerOptions Options(Action<FrameworkLoggerOptions>? configure = null)
+    private PersistentLoggerOptions Options(Action<PersistentLoggerOptions>? configure = null)
     {
-        FrameworkLoggerOptions options = new() { FilePath = Path.Combine(_directory, "app.txt") };
+        PersistentLoggerOptions options = new() { FilePath = Path.Combine(_directory, "app.txt") };
         configure?.Invoke(options);
         return options;
     }

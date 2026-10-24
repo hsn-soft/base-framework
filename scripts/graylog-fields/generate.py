@@ -2,7 +2,7 @@
 """
 Writes docs/GraylogFields.md: which fields each log type has, MEASURED from the logs of one run in Graylog (not declared anywhere in the code).
 
-Run the samples against Graylog with a build number of your own (`BUILD_NUMBER=tbl123 FrameworkLogger__IsGrayLogActive=true ...`: the build number is
+Run the samples against Graylog with a build number of your own (`BUILD_NUMBER=tbl123 PersistentLogger__IsGrayLogActive=true ...`: the build number is
 the `Version` field of every log), exercise every scenario, then:
 
     GRAYLOG_USER=... GRAYLOG_PASSWORD=... scripts/graylog-fields/generate.py tbl123 > docs/GraylogFields.md

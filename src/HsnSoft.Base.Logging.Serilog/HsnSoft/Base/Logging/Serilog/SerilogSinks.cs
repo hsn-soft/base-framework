@@ -17,7 +17,7 @@ internal sealed record SerilogSinks(ILogEventSink Console, ILogEventSink Persist
     private const string PlainTemplate = "[{Timestamp:HH:mm:ss.fff zzz} {Level:u3}] {LoggerName} | {Message:lj}{NewLine}{Exception}{NewLine}";
     private const string FileTemplate = "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} {Level:u3}] {LoggerName} [{SourceContext}] | {Message:lj}{NewLine}{Exception}";
 
-    internal static SerilogSinks Create(FrameworkLoggerOptions options)
+    internal static SerilogSinks Create(PersistentLoggerOptions options)
     {
         ILogEventSink plain = ConsoleSink(PlainTemplate);
 
@@ -36,7 +36,7 @@ internal sealed record SerilogSinks(ILogEventSink Console, ILogEventSink Persist
             .WriteTo.Console(outputTemplate: template, formatProvider: CultureInfo.InvariantCulture, theme: AnsiConsoleTheme.Sixteen)
             .CreateLogger();
 
-    private static Logger FileSink(FrameworkLoggerOptions options)
+    private static Logger FileSink(PersistentLoggerOptions options)
         => new LoggerConfiguration()
             .MinimumLevel.Verbose()
             .WriteTo.File(
@@ -48,11 +48,11 @@ internal sealed record SerilogSinks(ILogEventSink Console, ILogEventSink Persist
                 outputTemplate: FileTemplate)
             .CreateLogger();
 
-    private static Logger GraylogSink(FrameworkLoggerOptions options)
+    private static Logger GraylogSink(PersistentLoggerOptions options)
     {
         if (string.IsNullOrWhiteSpace(options.GrayLog.Address))
         {
-            throw new InvalidOperationException($"{FrameworkLoggerOptions.SectionName}:GrayLog:Address is required when {FrameworkLoggerOptions.SectionName}:IsGrayLogActive is true.");
+            throw new InvalidOperationException($"{PersistentLoggerOptions.SectionName}:GrayLog:Address is required when {PersistentLoggerOptions.SectionName}:IsGrayLogActive is true.");
         }
 
         return new LoggerConfiguration()

@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using Microsoft.Extensions.Logging;
 using Serilog;
 using Serilog.Core;
 using Serilog.Debugging;
@@ -15,21 +13,7 @@ internal sealed record BaseSerilogSetup(Logger Logger, RefreshableSink? Refresha
 
 internal static class BaseSerilog
 {
-    // what the services in production always did: the libraries under the application talk less than the application
-    private static readonly string[] s_dependencyCategories =
-    [
-        "System",
-        "Microsoft",
-        "Microsoft.Hosting",
-        "Microsoft.AspNetCore",
-        "Microsoft.EntityFrameworkCore",
-        "Npgsql",
-        "HsnSoft.Base.EntityFrameworkCore",
-        "MongoDB",
-        "HsnSoft.Base.MongoDB",
-    ];
-
-    internal static BaseSerilogSetup Create(FrameworkLoggerOptions options, string loggerName, Action<LoggerConfiguration>? configure, SerilogSinks? sinks = null)
+    internal static BaseSerilogSetup Create(PersistentLoggerOptions options, string loggerName, Action<LoggerConfiguration>? configure, SerilogSinks? sinks = null)
     {
         ArgumentNullException.ThrowIfNull(options);
         ArgumentException.ThrowIfNullOrWhiteSpace(loggerName);
@@ -42,9 +26,8 @@ internal static class BaseSerilog
         }
 
         SerilogSinks resolved = sinks ?? SerilogSinks.Create(options);
-        LogEventLevel console = SerilogRouting.ToSerilog(options.LogLevel);
-        LogEventLevel persistent = SerilogRouting.ToSerilog(options.EffectivePersistentLevel);
-        LogEventLevel platform = SerilogRouting.ToSerilog(options.EffectivePlatformLevel);
+        LogLevelRules console = options.ConsoleLevels;
+        PersistentLevelRules persistent = new(options);
 
         string solution = AppDomain.CurrentDomain.FriendlyName.Split('.')[0];
         LoggerConfiguration configuration = new LoggerConfiguration()
@@ -59,41 +42,12 @@ internal static class BaseSerilog
             .Enrich.With(new LogShapeEnricher(string.IsNullOrWhiteSpace(options.AppNamespace) ? solution : options.AppNamespace.Trim()))
             .Enrich.With<NoiseEnricher>();
 
-        foreach (KeyValuePair<string, LogLevel> level in Overrides(options))
-        {
-            configuration = configuration.MinimumLevel.Override(level.Key, SerilogRouting.ToSerilog(level.Value));
-        }
-
         configuration = configuration
             .WriteTo.Conditional(logEvent => SerilogRouting.ForConsole(logEvent, console), sink => sink.Sink(resolved.Console))
-            .WriteTo.Conditional(logEvent => SerilogRouting.ForPersistent(logEvent, persistent, platform), sink => sink.Sink(new FieldGuardSink(resolved.Persistent, options.MaxPersistentFieldLength)));
+            .WriteTo.Conditional(logEvent => SerilogRouting.ForPersistent(logEvent, persistent), sink => sink.Sink(new FieldGuardSink(resolved.Persistent, options.MaxPersistentFieldLength)));
 
         configure?.Invoke(configuration);
         return new BaseSerilogSetup(configuration.CreateLogger(), resolved.Refreshable);
-    }
-
-    /// <summary>The defaults (libraries one step quieter than the application, Warning once the application is quiet itself) then what the configuration says.</summary>
-    internal static IEnumerable<KeyValuePair<string, LogLevel>> Overrides(FrameworkLoggerOptions options)
-    {
-        LogLevel dependencies = options.LogLevel switch
-        {
-            LogLevel.Trace => LogLevel.Debug,
-            LogLevel.Debug => LogLevel.Information,
-            _ => LogLevel.Warning,
-        };
-
-        Dictionary<string, LogLevel> levels = [];
-        foreach (string category in s_dependencyCategories)
-        {
-            levels[category] = dependencies;
-        }
-
-        foreach (KeyValuePair<string, LogLevel> level in options.LevelOverrides)
-        {
-            levels[level.Key] = level.Value;
-        }
-
-        return levels;
     }
 
     private sealed class VersionEnricher(string? version) : ILogEventEnricher

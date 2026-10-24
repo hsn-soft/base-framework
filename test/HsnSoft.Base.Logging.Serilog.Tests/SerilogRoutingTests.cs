@@ -40,13 +40,27 @@ public class SerilogRoutingTests
     }
 
     [Theory]
-    [InlineData(LogEventLevel.Verbose, LogEventLevel.Verbose, true)]
-    [InlineData(LogEventLevel.Debug, LogEventLevel.Information, false)]
-    [InlineData(LogEventLevel.Information, LogEventLevel.Information, true)]
-    [InlineData(LogEventLevel.Warning, LogEventLevel.Error, false)]
-    public void Console_ShowsWhatIsAtLeastTheConfiguredLevel(LogEventLevel level, LogEventLevel minimum, bool expected)
+    [InlineData(LogEventLevel.Verbose, LogLevel.Trace, true)]
+    [InlineData(LogEventLevel.Debug, LogLevel.Information, false)]
+    [InlineData(LogEventLevel.Information, LogLevel.Information, true)]
+    [InlineData(LogEventLevel.Warning, LogLevel.Error, false)]
+    [InlineData(LogEventLevel.Fatal, LogLevel.Critical, true)]
+    [InlineData(LogEventLevel.Fatal, LogLevel.None, false)]
+    public void Console_ShowsWhatIsAtLeastTheLevelOfItsCategory(LogEventLevel level, LogLevel minimum, bool expected)
     {
-        Assert.Equal(expected, SerilogRouting.ForConsole(Events.Create(level), minimum));
+        Assert.Equal(expected, SerilogRouting.ForConsole(Events.Create(level, "Any.Category"), new LogLevelRules(minimum)));
+    }
+
+    [Fact]
+    public void Console_TakesTheLevelOfTheCategory_AndOfTheDefaultForTheOthers()
+    {
+        LogLevelRules rules = new(LogLevel.Warning, [new("Microsoft.AspNetCore", LogLevel.Error)]);
+
+        Assert.False(SerilogRouting.ForConsole(Events.Create(LogEventLevel.Warning, "Microsoft.AspNetCore.Routing"), rules));
+        Assert.True(SerilogRouting.ForConsole(Events.Create(LogEventLevel.Error, "Microsoft.AspNetCore.Routing"), rules));
+        Assert.True(SerilogRouting.ForConsole(Events.Create(LogEventLevel.Warning, "Other"), rules));
+        // a log without a category has the default's level
+        Assert.False(SerilogRouting.ForConsole(Events.Create(LogEventLevel.Information), rules));
     }
 
     [Theory]
@@ -59,7 +73,7 @@ public class SerilogRoutingTests
     [InlineData(LogEventLevel.Error, "ConsoleOnly.Any", false)]
     public void PersistentSink_NeverGetsDebugOrVerbose_NorTheConsoleLoggersLogs(LogEventLevel level, string category, bool expected)
     {
-        Assert.Equal(expected, SerilogRouting.ForPersistent(Events.Create(level, category), LogEventLevel.Information));
+        Assert.Equal(expected, SerilogRouting.ForPersistent(Events.Create(level, category), new PersistentLevelRules(new PersistentLoggerOptions())));
     }
 
     [Theory]
@@ -67,6 +81,7 @@ public class SerilogRoutingTests
     [InlineData(LogEventLevel.Warning, "PlatformLog", true)]
     [InlineData(LogEventLevel.Error, "PlatformLog", true)]
     [InlineData(LogEventLevel.Information, "AppLog", true)]
+    [InlineData(LogEventLevel.Information, "SharedLog", true)]
     [InlineData(LogEventLevel.Information, "FrameworkLog", true)]
     [InlineData(LogEventLevel.Information, "HttpRequest", true)]
     [InlineData(LogEventLevel.Information, "ConsumeStart", true)]
@@ -75,20 +90,22 @@ public class SerilogRoutingTests
         // by the time a log reaches a sink the enrichers have given it its LogType, and that is what says whether it is the platform's
         LogEvent logEvent = Events.Create(level, "Any.Category", new LogEventProperty("LogType", new ScalarValue(logType)));
 
-        Assert.Equal(expected, SerilogRouting.ForPersistent(logEvent, LogEventLevel.Information, LogEventLevel.Warning));
+        Assert.Equal(expected, SerilogRouting.ForPersistent(logEvent, new PersistentLevelRules(new PersistentLoggerOptions())));
     }
 
     [Fact]
     public void ALogWithoutAType_IsNotThePlatforms()
     {
-        Assert.True(SerilogRouting.ForPersistent(Events.Create(LogEventLevel.Information, "Microsoft.X"), LogEventLevel.Information, LogEventLevel.Warning));
+        Assert.True(SerilogRouting.ForPersistent(Events.Create(LogEventLevel.Information, "Microsoft.X"), new PersistentLevelRules(new PersistentLoggerOptions())));
     }
 
     [Fact]
     public void PersistentSink_CanBeStricter()
     {
-        Assert.False(SerilogRouting.ForPersistent(Events.Create(LogEventLevel.Information, "Any"), LogEventLevel.Warning));
-        Assert.True(SerilogRouting.ForPersistent(Events.Create(LogEventLevel.Error, "Any"), LogEventLevel.Warning));
+        PersistentLevelRules rules = new(new PersistentLoggerOptions { LogLevel = LogLevel.Warning });
+
+        Assert.False(SerilogRouting.ForPersistent(Events.Create(LogEventLevel.Information, "Any"), rules));
+        Assert.True(SerilogRouting.ForPersistent(Events.Create(LogEventLevel.Error, "Any"), rules));
     }
 
     [Fact]
