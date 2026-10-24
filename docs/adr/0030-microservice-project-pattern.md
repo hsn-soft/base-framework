@@ -28,7 +28,7 @@ A microservice `X` lives in `samples/abc/service/<x>/` and has **four projects**
 ## Consequences
 
 - A new service is the same four projects, in the same places, with the same registrations; reviews check the dependency directions.
-- The order, product and shipment services are **skeletons**: the layers are wired and run (health, Swagger, the database connection is checked by `/health/ready`) and have no domain yet; their domains, endpoints and gateway routes come as the use cases do.
+- The order, product and shipment services were **skeletons** (layers wired, no domain); they have their domains and endpoints now, [ADR-0033](0033-the-abc-services-crud-pattern.md).
 - The namespace of a MongoDB project (`Abc.ProductService.MongoDB`) hides the driver's `MongoDB` namespace for fully qualified names inside it; use `using MongoDB.Driver;` and simple names there.
 - The solution file lists the four projects of each service in the `abc` solution folder ([ADR-0006](0006-repository-and-solution-layout.md)).
 

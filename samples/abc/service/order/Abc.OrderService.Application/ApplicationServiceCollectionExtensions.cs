@@ -1,3 +1,5 @@
+using Abc.OrderService.Application.Contracts.OrderDomain.Services;
+using Abc.OrderService.Application.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -11,6 +13,7 @@ public static class ApplicationServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
 
         services.TryAddSingleton(TimeProvider.System);
+        services.AddScoped<IOrderAppService, OrderAppService>();
         return services;
     }
 }

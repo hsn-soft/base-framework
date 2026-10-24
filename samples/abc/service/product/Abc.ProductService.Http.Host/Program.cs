@@ -1,4 +1,6 @@
 using Abc.ProductService.Application;
+using Abc.ProductService.Application.Security;
+using Abc.ProductService.Http.Host.Security;
 using Abc.ProductService.MongoDB;
 using Abc.Shared.Hosting.Microservices;
 using HsnSoft.Base.Logging.Serilog;
@@ -11,10 +13,15 @@ builder.Logging.AddBaseSerilog(builder.Configuration, "Abc.ProductService");
 builder.Services
     .AddAbcMicroservice(builder.Configuration, "Abc.ProductService API")
     .AddBaseMongo(builder.Configuration)
+    .AddHttpContextAccessor()
+    .AddScoped<ICurrentUser, HttpContextCurrentUser>()
     .AddProductPersistence()
     .AddProductApplication();
 
 WebApplication app = builder.Build();
+
+// the unique index on the sku, and two products to try the service with when there is none
+await app.Services.EnsureProductDatabaseAsync();
 
 app.UseAbcMicroservice();
 app.MapControllers();

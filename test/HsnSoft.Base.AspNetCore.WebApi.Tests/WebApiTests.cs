@@ -55,6 +55,9 @@ public sealed class AnswersController : ControllerBase
     [HttpGet("status")]
     public IActionResult OnlyAStatus() => StatusCode(StatusCodes.Status409Conflict);
 
+    [HttpGet("no-content")]
+    public IActionResult NoContentAnswer() => NoContent();
+
     [HttpGet("empty")]
     public IActionResult EmptyAnswer() => new EmptyResult();
 
@@ -177,14 +180,17 @@ public class WebApiTests
         Assert.Equal(message, body.GetProperty("statusMessages")[0].GetString());
     }
 
-    [Fact]
-    public async Task AnEmptyResult_IsNoContent_WithoutABodyTheClientCouldReadButTheEnvelopeSet()
+    [Theory]
+    [InlineData("/api/answers/empty")]
+    [InlineData("/api/answers/no-content")]
+    public async Task AnEmptyResult_AndNoContent_AreA204WithoutABody_AsKestrelRefusesToWriteOne(string path)
     {
         await using WebApplication app = await StartAsync();
 
-        HttpResponseMessage response = await app.GetTestClient().GetAsync("/api/answers/empty");
+        HttpResponseMessage response = await app.GetTestClient().GetAsync(path);
 
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        Assert.Equal(string.Empty, await response.Content.ReadAsStringAsync());
     }
 
     [Theory]

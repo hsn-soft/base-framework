@@ -8,7 +8,7 @@ namespace HsnSoft.Base.AspNetCore.Responses;
 
 /// <summary>
 /// Puts every result of a controller action into the one response type: an object becomes the payload of a
-/// <see cref="BaseResponse{TPayload}"/>, an empty result or a bare status becomes a <see cref="BaseResponse"/>. What already is a
+/// <see cref="BaseResponse{TPayload}"/>, a bare status becomes a <see cref="BaseResponse"/> (except 204, 205 and 304, which have no body, and an empty result is a 204). What already is a
 /// <see cref="BaseResponse"/> or a problem, files and redirects are left as they are. A gateway that only forwards what the services
 /// answer does not need it.
 /// </summary>
@@ -38,18 +38,21 @@ public sealed class UnifiedApiResponseFilter(IStatusMessageProvider statusMessag
                         break;
                     }
 
-                case StatusCodeResult statusCodeResult:
+                // a status that has no body by the rules of HTTP (204, 205, 304) stays as it is: the server refuses to write one
+                case StatusCodeResult statusCodeResult when !HasNoBody(statusCodeResult.StatusCode):
                     context.Result = Envelope(statusCodeResult.StatusCode, traceId);
                     break;
 
                 case EmptyResult:
-                    context.Result = Envelope(StatusCodes.Status204NoContent, traceId);
+                    context.Result = new StatusCodeResult(StatusCodes.Status204NoContent);
                     break;
             }
         }
 
         await next().ConfigureAwait(false);
     }
+
+    private static bool HasNoBody(int statusCode) => statusCode is StatusCodes.Status204NoContent or StatusCodes.Status205ResetContent or StatusCodes.Status304NotModified;
 
     // the request log hides what the class of the answer marks as sensitive, so it needs to know the class
     private static void RememberShape(ResultExecutingContext context, object? payload)

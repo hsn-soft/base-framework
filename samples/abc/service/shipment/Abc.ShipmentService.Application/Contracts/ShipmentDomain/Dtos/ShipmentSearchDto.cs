@@ -1,0 +1,12 @@
+namespace Abc.ShipmentService.Application.Contracts.ShipmentDomain.Dtos;
+
+public sealed class ShipmentSearchDto
+{
+    public Guid Id { get; init; }
+
+    public string TrackingNumber { get; init; } = string.Empty;
+
+    public string Carrier { get; init; } = string.Empty;
+
+    public string Status { get; init; } = string.Empty;
+}

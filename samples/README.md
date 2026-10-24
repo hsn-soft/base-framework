@@ -278,11 +278,13 @@ application lasts as long as the token (15 minutes); when the token is no longer
 | Service | Persistence | Port | State |
 |---|---|---|---|
 | `identity` | `EntityFrameworkCore` (PostgreSQL `abc_identity`) | 5400 | users CRUD, a public endpoint |
-| `order` | `EntityFrameworkCore` (PostgreSQL `abc_order`) | 5420 | skeleton: wired, no domain yet |
-| `product` | `MongoDB` (`abc_product`) | 5430 | skeleton |
-| `shipment` | `MongoDB` (`abc_shipment`) | 5440 | skeleton |
+| `order` | `EntityFrameworkCore` (PostgreSQL `abc_order`) | 5420 | orders with lines, CRUD |
+| `product` | `MongoDB` (`abc_product`) | 5430 | products and stock, CRUD; two seeded products (`LAMP-001` with 10 in stock, `CHAIR-001` with 0) |
+| `shipment` | `MongoDB` (`abc_shipment`) | 5440 | shipments of an order, CRUD |
 
-A skeleton runs (`/health/live`, `/health/ready` checks its database, `/swagger`) and answers 404 for what is not there yet; it has no endpoints, and no route in the gateways yet.
+Every service has the same endpoints as the users (`create`, `get/{id}`, `paged-list`, `filter-list`, `search-list`, `PUT`, `DELETE`) under `/api/{service}-service/v1/commercial/...`, and the commercial gateway forwards them as
+`/order-service/v1/orders/...`, `/product-service/v1/products/...`, `/shipment-service/v1/shipments/...` ([ADR-0033](../docs/adr/0033-the-abc-services-crud-pattern.md)). A token is needed; `CreatedBy` / `UpdatedBy` are its `sub`. A database
+made before this change must be dropped (`drop database abc_order`); the MongoDB services need nothing.
 
 ```bash
 dotnet run --project samples/abc/service/order/Abc.OrderService.Http.Host         # http://localhost:5420

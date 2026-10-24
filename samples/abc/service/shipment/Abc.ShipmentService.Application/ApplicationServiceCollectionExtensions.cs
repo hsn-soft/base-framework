@@ -1,3 +1,5 @@
+using Abc.ShipmentService.Application.Contracts.ShipmentDomain.Services;
+using Abc.ShipmentService.Application.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -11,6 +13,7 @@ public static class ApplicationServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
 
         services.TryAddSingleton(TimeProvider.System);
+        services.AddScoped<IShipmentAppService, ShipmentAppService>();
         return services;
     }
 }

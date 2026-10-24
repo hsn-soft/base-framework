@@ -1,5 +1,7 @@
 using Abc.Shared.Hosting.Microservices;
 using Abc.ShipmentService.Application;
+using Abc.ShipmentService.Application.Security;
+using Abc.ShipmentService.Http.Host.Security;
 using Abc.ShipmentService.MongoDB;
 using HsnSoft.Base.Logging.Serilog;
 using HsnSoft.Base.MongoDB;
@@ -11,10 +13,15 @@ builder.Logging.AddBaseSerilog(builder.Configuration, "Abc.ShipmentService");
 builder.Services
     .AddAbcMicroservice(builder.Configuration, "Abc.ShipmentService API")
     .AddBaseMongo(builder.Configuration)
+    .AddHttpContextAccessor()
+    .AddScoped<ICurrentUser, HttpContextCurrentUser>()
     .AddShipmentPersistence()
     .AddShipmentApplication();
 
 WebApplication app = builder.Build();
+
+// the indexes of the shipments
+await app.Services.EnsureShipmentDatabaseAsync();
 
 app.UseAbcMicroservice();
 app.MapControllers();
