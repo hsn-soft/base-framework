@@ -84,7 +84,7 @@ log reader can follow it, and so a pod that dies in the middle (out of memory) l
 
 | Field | Meaning |
 |---|---|
-| `CorrelationId` | a text of 32 lower-case hex digits (a GUID without dashes), the same along the whole chain, however many hops. An HTTP request takes it from `X-Correlation-Id` or starts a chain; the response carries it back. |
+| `CorrelationId` | the same along the whole chain, however many hops. A client (a mobile app) that sends `X-Correlation-Id` has its own id kept, so it finds its whole chain in the logs; a request without one takes the `TraceId` of the request (32 hex digits), not a new id: the same value is the `TraceId` of the logs of the gateway and of the services, and of the consume logs (a message carries only the correlation id, so a consume log gets `TraceId` when it is one). The response carries it back. |
 | `ScopeId` | also 32 hex digits; the same in the start and end log of one message (`ConsumeStart` + `ConsumeEnd`), different for every message; every other log written while the message is handled carries it too. An HTTP request has no `ScopeId`: ASP.NET Core puts its `RequestId` on every log of the request, and `HttpRequest` + `HttpResponse` (and the exception log) share it. |
 | `From`, `To` | `httpclient -> token-login` for a request (`controller-action` in lower case; for anything that is not a controller action, such as a minimal API endpoint or a proxied route, the request path in lower case). A message: `token-login -> ordercreated` (where it was published from, the event) and, one hop later, `ordercreated -> stockreserved`. A message published outside any request or message (an agent, a scheduler) comes from `agent`. |
 | `ElapsedMs` | how long the step took (`HttpResponse`, `ConsumeEnd`) |

@@ -507,6 +507,30 @@ public sealed class RequestLoggingTests
     }
 
     [Fact]
+    public async Task ARequestWithoutACorrelationId_UsesItsTraceId_AMobileAppsIdIsKeptAsItIs()
+    {
+        using System.Diagnostics.ActivityListener listener = new()
+        {
+            ShouldListenTo = _ => true,
+            Sample = (ref _) => System.Diagnostics.ActivitySamplingResult.AllData,
+        };
+        System.Diagnostics.ActivitySource.AddActivityListener(listener);
+        await using Rig rig = await StartAsync();
+        HttpRequestMessage mobile = new(HttpMethod.Get, "/named");
+        mobile.Headers.Add("X-Correlation-Id", "mobile-app-7");
+
+        HttpResponseMessage fresh = await rig.Client.GetAsync("/named");
+        HttpResponseMessage fromMobile = await rig.Client.SendAsync(mobile);
+
+        Logged first = rig.Http.First(log => log.EventName == "HTTP_REQUEST");
+        Assert.Equal(first.Properties["TraceId"], fresh.Headers.GetValues("X-Correlation-Id").Single());
+        Assert.Equal(first.Properties["TraceId"], first.Properties["CorrelationId"]);
+        Assert.Equal("mobile-app-7", fromMobile.Headers.GetValues("X-Correlation-Id").Single());
+        Assert.All(rig.Http.Where(log => (string?)log.Properties["CorrelationId"] == "mobile-app-7"), log => Assert.Equal("mobile-app-7", log.Properties["CorrelationId"]));
+        Assert.Equal(2, rig.Http.Count(log => (string?)log.Properties["CorrelationId"] == "mobile-app-7"));
+    }
+
+    [Fact]
     public async Task TheChainIsPutOnTheRequest_SoWhatIsForwardedCarriesIt()
     {
         await using Rig rig = await StartAsync();

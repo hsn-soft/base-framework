@@ -97,6 +97,17 @@ public sealed class LogShapeTests
     }
 
     [Fact]
+    public void TheConnectionId_IsNotAFieldOfEveryLog()
+    {
+        LogEvent logEvent = Event(new LogEventProperty("ConnectionId", new ScalarValue("0HN")), new LogEventProperty("RequestId", new ScalarValue("0HN:1")));
+
+        new NoiseEnricher().Enrich(logEvent, new Factory());
+
+        Assert.False(logEvent.Properties.ContainsKey("ConnectionId"));
+        Assert.True(logEvent.Properties.ContainsKey("RequestId"));
+    }
+
+    [Fact]
     public void FieldGuard_WritesTheMessageAsPeopleReadIt()
     {
         CollectSink inner = new();

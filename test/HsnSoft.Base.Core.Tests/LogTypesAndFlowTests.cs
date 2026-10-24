@@ -66,6 +66,38 @@ public sealed class LogTypesAndFlowTests
     }
 
     [Fact]
+    public void ACorrelationId_IsTheTraceOfTheRequest_WhenThereIsOne_ElseANewId()
+    {
+        using System.Diagnostics.ActivitySource source = new("test-correlation");
+        using System.Diagnostics.ActivityListener listener = new()
+        {
+            ShouldListenTo = candidate => candidate.Name == "test-correlation",
+            Sample = (ref _) => System.Diagnostics.ActivitySamplingResult.AllData,
+        };
+        System.Diagnostics.ActivitySource.AddActivityListener(listener);
+
+        string withoutTrace = LogFields.NewCorrelationId();
+        using System.Diagnostics.Activity? activity = source.StartActivity("request");
+        string withTrace = LogFields.NewCorrelationId();
+
+        Assert.Matches("^[0-9a-f]{32}$", withoutTrace);
+        Assert.Equal(activity!.TraceId.ToHexString(), withTrace);
+        Assert.True(LogFields.IsTraceId(withTrace));
+    }
+
+    [Theory]
+    [InlineData("cc55d74f7c0c25f06cef2eb55e0c6c23", true)]
+    [InlineData("00000000000000000000000000000000", false)]
+    [InlineData("CC55D74F7C0C25F06CEF2EB55E0C6C23", false)]
+    [InlineData("cc55d74f7c0c25f06cef2eb55e0c6c2", false)]
+    [InlineData("zz55d74f7c0c25f06cef2eb55e0c6c23", false)]
+    [InlineData("mobile-app-7", false)]
+    [InlineData("", false)]
+    [InlineData(null, false)]
+    public void ATraceId_Is32LowerCaseHexDigitsNotAllZero(string? value, bool expected)
+        => Assert.Equal(expected, LogFields.IsTraceId(value));
+
+    [Fact]
     public void StepName_IsControllerAndActionInLowerCase()
         => Assert.Equal("token-login", LogFields.StepName("Token", "Login"));
 

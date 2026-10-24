@@ -452,7 +452,7 @@ public sealed partial class RequestLoggingMiddleware(
     private string CorrelationId(HttpRequest request)
     {
         string? incoming = request.Headers[_options.CorrelationIdHeader].FirstOrDefault();
-        return string.IsNullOrWhiteSpace(incoming) ? LogFields.NewId() : LogFields.Text(incoming.Trim(), MaxCorrelationIdLength)!;
+        return string.IsNullOrWhiteSpace(incoming) ? LogFields.NewCorrelationId() : LogFields.Text(incoming.Trim(), MaxCorrelationIdLength)!;
     }
 
     private bool IsLogged(HttpRequest request)

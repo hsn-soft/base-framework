@@ -53,7 +53,8 @@ internal static class BaseSerilog
             .Enrich.WithProperty("Assembly", AppDomain.CurrentDomain.FriendlyName)
             .Enrich.With(new LoggerNameEnricher(loggerName))
             .Enrich.With<FacilityEnricher>()
-            .Enrich.With<LogShapeEnricher>();
+            .Enrich.With<LogShapeEnricher>()
+            .Enrich.With<NoiseEnricher>();
 
         foreach (KeyValuePair<string, LogLevel> level in Overrides(options))
         {

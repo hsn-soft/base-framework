@@ -70,6 +70,11 @@ public sealed partial class EventDispatcher(
             ["Producer"] = envelope.Producer,
             ["HopLevel"] = envelope.HopLevel,
         };
+        if (LogFields.IsTraceId(envelope.CorrelationId))
+        {
+            // a chain that started as a W3C trace keeps its TraceId across the messages, where no header carries it
+            scopeValues["TraceId"] = envelope.CorrelationId;
+        }
 
         using IDisposable? logScope = _logger.BeginScope(scopeValues);
         // what the handler publishes is caused by this step and comes from it

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 
 namespace HsnSoft.Base.Logging;
 
@@ -35,6 +36,13 @@ public static class LogFields
 
     /// <summary>A new id for a chain or a step: a time-ordered GUID as 32 lower-case hex digits, without dashes.</summary>
     public static string NewId() => Guid.CreateVersion7().ToString("N", CultureInfo.InvariantCulture);
+
+    /// <summary>The trace id of the request being handled (the W3C trace ASP.NET Core started or continued), or a new id when there is no trace.</summary>
+    public static string NewCorrelationId() => System.Diagnostics.Activity.Current?.TraceId.ToHexString() is { } traceId && traceId != new string('0', 32) ? traceId : NewId();
+
+    /// <summary>Whether a text is a W3C trace id: 32 lower-case hex digits that are not all zero. A correlation id that is one is also the <c>TraceId</c> of the logs.</summary>
+    public static bool IsTraceId(string? value)
+        => value is { Length: 32 } && value.All(character => character is (>= '0' and <= '9') or (>= 'a' and <= 'f')) && value.Any(character => character != '0');
 
     /// <summary>The name of a request's step: <c>controller-action</c> in lower case, like <c>token-login</c>.</summary>
     public static string StepName(string first, string second) => string.Create(CultureInfo.InvariantCulture, $"{first}-{second}").ToLowerInvariant();

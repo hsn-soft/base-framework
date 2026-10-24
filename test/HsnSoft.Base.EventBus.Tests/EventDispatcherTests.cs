@@ -109,6 +109,23 @@ public sealed class EventDispatcherTests : IDisposable
     }
 
     [Fact]
+    public async Task ACorrelationIdThatIsATraceId_IsTheTraceIdOfTheConsumeLogsToo()
+    {
+        (EventDispatcher dispatcher, _, ListLogger<EventDispatcher> logger) = CreateRecording();
+        MessageEnvelope<SampleEto> traced = NewEnvelope();
+        traced.CorrelationId = "cc55d74f7c0c25f06cef2eb55e0c6c23";
+        MessageEnvelope<SampleEto> custom = NewEnvelope();
+        custom.CorrelationId = "mobile-app-7";
+
+        await dispatcher.DispatchAsync("Sample", typeof(SampleEto), traced);
+        await dispatcher.DispatchAsync("Sample", typeof(SampleEto), custom);
+
+        Assert.Equal("cc55d74f7c0c25f06cef2eb55e0c6c23", logger.Scopes[0]["TraceId"]);
+        Assert.False(logger.Scopes.Last(scope => scope.ContainsKey("CorrelationId")).ContainsKey("TraceId"));
+        Assert.Equal("mobile-app-7", logger.Scopes.Last(scope => scope.ContainsKey("CorrelationId"))["CorrelationId"]);
+    }
+
+    [Fact]
     public async Task Handling_IsLoggedAsAStartAndAnEnd_ThatShareTheScopeId()
     {
         (EventDispatcher dispatcher, _, ListLogger<EventDispatcher> logger) = CreateRecording();
