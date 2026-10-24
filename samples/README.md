@@ -207,6 +207,10 @@ The first use case is the CRUD of the users (PostgreSQL `abc_identity`, created 
 | `PUT /api/users` | updates the email, the display name and the state (204) |
 | `DELETE /api/users/{id}` | deletes (204) |
 
+Every controller derives from `BaseServiceController` (area `identity-service`, `[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]`), so the endpoints above need a valid
+JWT bearer token (no token or a bad one is a 401); `LogExamplesController` is `[AllowAnonymous]` and the health endpoints are open. Abc has no auth server yet, so its `Jwt` settings are the Xyz ones
+(sample values): a token from `Xyz.AuthServer` (`POST http://localhost:5110/api/auth/login`, `alice` / `alice123`) is accepted; Swagger has an *Authorize* button for it.
+
 ```bash
 dotnet run --project samples/abc/service/identity/Abc.IdentityService.Http.Host      # http://localhost:5400, Swagger at /swagger in Development
 ```

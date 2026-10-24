@@ -2,6 +2,7 @@ using Abc.IdentityService.Application;
 using Abc.IdentityService.EntityFrameworkCore;
 using Abc.IdentityService.EntityFrameworkCore.Context;
 using HsnSoft.Base.AspNetCore;
+using HsnSoft.Base.Authentication;
 using HsnSoft.Base.EntityFrameworkCore;
 using HsnSoft.Base.EntityFrameworkCore.PostgreSql;
 using HsnSoft.Base.Logging;
@@ -14,7 +15,8 @@ builder.Services
     .AddBaseLogging()
     .AddBaseRequestLogging(builder.Configuration)
     .AddBaseWebApi()
-    .AddBaseSwagger("Abc.IdentityService API", builder.Configuration)
+    .AddBaseJwtAuthentication(builder.Configuration)
+    .AddBaseSwaggerWithBearer("Abc.IdentityService API", "Enter a valid token", builder.Configuration)
     .AddBaseHealthChecks()
     .AddBasePostgres<IdentityDbContext>(builder.Configuration)
     .AddIdentityPersistence()
@@ -27,6 +29,8 @@ await app.Services.EnsureDatabaseCreatedAsync<IdentityDbContext>();
 app.UseBaseRequestLogging();   // outside the exception handler: the response log has the status the client gets
 app.UseBaseExceptionHandling();
 app.UseBaseSwagger();
+app.UseBaseAuthentication();
+app.UseBaseAuthorization();
 app.MapBaseHealth();
 app.MapControllers();
 

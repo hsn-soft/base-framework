@@ -1,6 +1,7 @@
 using Abc.IdentityService.Http.Host.Controllers.Base;
 using HsnSoft.Base.Logging;
 using HsnSoft.Base.Logging.Masking;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Abc.IdentityService.Http.Host.Controllers;
@@ -20,6 +21,7 @@ public sealed class ExampleOrder
 /// How a controller writes its application logs (they are the <c>AppLog</c>s of the service). <c>POST /api/log-examples/run</c> writes one of each (they are all written with <c>Logger</c>, the <c>ILogger</c> of the base controller), so they can be looked
 /// at in Graylog (<c>Facility:LOG_EXAMPLE_*</c>). Delete this controller when you have seen them.
 /// </summary>
+[AllowAnonymous]   // a demo: it can be called without a token
 [Route("api/log-examples")]
 public sealed class LogExamplesController : BaseServiceController
 {
