@@ -24,6 +24,12 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 | [0005](0005-where-code-lives.md) | Where a piece of code lives: the framework, a product's shared project, or a service | Accepted | 2026-10-22 |
 | [0006](0006-repository-and-solution-layout.md) | Repository folders, the solution file and the sample systems | Accepted | 2026-10-25 |
 
+## Branching
+
+| ADR | Decision | Status | Date |
+|---|---|---|---|
+| [0025](0025-the-rewrite-lives-on-feat-new-framework.md) | The rewrite lives on `feat/new-framework` and is not merged into `dev` until the whole framework exists | Accepted | 2026-10-25 |
+
 ## Build, tests, CI and the developer workflow
 
 | ADR | Decision | Status | Date |
@@ -71,4 +77,4 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 - A test that fixes the allowed fields per log type, and configurable per-type `RemoveFields`/`AddFields` ([ADR-0019](0019-log-fields-pipeline.md)).
 - A `SharedLog` in a measured run (the Xyz shared library logs only when Redis is down), so its column of `docs/GraylogFields.md` has data.
 - Revoke and rotate the SonarQube token that was once pasted in a conversation; keep tokens in `scripts/sonar/.env` only.
-- Pushing `feat/new-framework` and opening the pull request into `dev`, to see the CI run on Linux for the first time.
+- A **draft** pull request from `feat/new-framework` into `dev` (never merged until the framework is complete, [ADR-0025](0025-the-rewrite-lives-on-feat-new-framework.md)), to see the CI run on Linux for the first time.
