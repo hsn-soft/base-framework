@@ -188,3 +188,12 @@ curl localhost:5300/documents/<requestId> -H 'X-Api-Key: acme-sample-api-key'
 ```
 
 SQL Server needs about 2 GB of memory; a container limited to 1 GB restarts in a loop (error 17300 in its log).
+
+## Abc: the identity service (in the making)
+
+`samples/abc/service/identity/Abc.IdentityService.Http.Host` is the start of a new system: a web api that composes the framework directly (logging,
+the web api shell, Swagger, health endpoints) and has one endpoint, `GET /api/identity/ping`. It is where the next sample grows.
+
+```bash
+dotnet run --project samples/abc/service/identity/Abc.IdentityService.Http.Host      # http://localhost:5400, Swagger at /swagger in Development
+```

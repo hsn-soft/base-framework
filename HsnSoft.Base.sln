@@ -103,6 +103,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HsnSoft.Base.AspNetCore.Swa
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HsnSoft.Base.AspNetCore.SwaggerGateway.Tests", "test\HsnSoft.Base.AspNetCore.SwaggerGateway.Tests\HsnSoft.Base.AspNetCore.SwaggerGateway.Tests.csproj", "{4F84A3E6-C290-4473-981B-98E8CDDF7DAA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Abc.IdentityService.Http.Host", "samples\abc\service\identity\Abc.IdentityService.Http.Host\Abc.IdentityService.Http.Host.csproj", "{DA7D5CCB-A713-4EBC-9496-DB7AE860D12B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -677,6 +679,18 @@ Global
 		{4F84A3E6-C290-4473-981B-98E8CDDF7DAA}.Release|x64.Build.0 = Release|Any CPU
 		{4F84A3E6-C290-4473-981B-98E8CDDF7DAA}.Release|x86.ActiveCfg = Release|Any CPU
 		{4F84A3E6-C290-4473-981B-98E8CDDF7DAA}.Release|x86.Build.0 = Release|Any CPU
+		{DA7D5CCB-A713-4EBC-9496-DB7AE860D12B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DA7D5CCB-A713-4EBC-9496-DB7AE860D12B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DA7D5CCB-A713-4EBC-9496-DB7AE860D12B}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{DA7D5CCB-A713-4EBC-9496-DB7AE860D12B}.Debug|x64.Build.0 = Debug|Any CPU
+		{DA7D5CCB-A713-4EBC-9496-DB7AE860D12B}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{DA7D5CCB-A713-4EBC-9496-DB7AE860D12B}.Debug|x86.Build.0 = Debug|Any CPU
+		{DA7D5CCB-A713-4EBC-9496-DB7AE860D12B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DA7D5CCB-A713-4EBC-9496-DB7AE860D12B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DA7D5CCB-A713-4EBC-9496-DB7AE860D12B}.Release|x64.ActiveCfg = Release|Any CPU
+		{DA7D5CCB-A713-4EBC-9496-DB7AE860D12B}.Release|x64.Build.0 = Release|Any CPU
+		{DA7D5CCB-A713-4EBC-9496-DB7AE860D12B}.Release|x86.ActiveCfg = Release|Any CPU
+		{DA7D5CCB-A713-4EBC-9496-DB7AE860D12B}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -729,5 +743,6 @@ Global
 		{DEBB19D1-670B-4237-AD8B-82AE3EDA63BF} = {0C88DD14-F956-CE84-757C-A364CCF449FC}
 		{5C960023-5AFC-453F-AA5C-9B36972AD391} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{4F84A3E6-C290-4473-981B-98E8CDDF7DAA} = {0C88DD14-F956-CE84-757C-A364CCF449FC}
+		{DA7D5CCB-A713-4EBC-9496-DB7AE860D12B} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
 	EndGlobalSection
 EndGlobal
