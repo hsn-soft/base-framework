@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using HsnSoft.Base;
 using HsnSoft.Base.Authentication;
+using HsnSoft.Base.Logging.Masking;
 using HsnSoft.Base.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -8,11 +9,11 @@ using Xyz.AuthServer.Host.Services;
 
 namespace Xyz.AuthServer.Host.Controllers;
 
-public sealed record LoginRequest([Required] string Username, [Required] string Password);
+public sealed record LoginRequest([Required] string Username, [property: SensitiveData][Required] string Password);
 
-public sealed record RefreshRequest([Required] string RefreshToken);
+public sealed record RefreshRequest([property: SensitiveData][Required] string RefreshToken);
 
-public sealed record TokenResponse(string AccessToken, string TokenType, int ExpiresIn, string RefreshToken);
+public sealed record TokenResponse([property: SensitiveData] string AccessToken, string TokenType, int ExpiresIn, [property: SensitiveData] string RefreshToken);
 
 [ApiController]
 [Route("api/auth")]

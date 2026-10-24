@@ -61,4 +61,27 @@ public class ExceptionsTests
         Assert.Empty(new BaseResponse().StatusMessages);
         Assert.Null(new BaseResponse().ErrorCode);
     }
+
+    [Fact]
+    public void KnownExceptions_AreTheOnesTheCallerCausedAndNoOtherOnes()
+    {
+        Assert.True(KnownExceptions.IsKnown(new NotFoundException("x")));
+        Assert.True(KnownExceptions.IsKnown(new BusinessRuleException("x")));
+        Assert.True(KnownExceptions.IsKnown(new BusinessException("code", "x")));
+        Assert.True(KnownExceptions.IsKnown(new DomainException("x")));
+        Assert.True(KnownExceptions.IsKnown(new ArgumentNullException("x")));
+        Assert.True(KnownExceptions.IsKnown(new UnauthorizedAccessException()));
+        Assert.True(KnownExceptions.IsKnown(new BaseHttpException(409)));
+        Assert.True(KnownExceptions.IsKnown(new DerivedBusinessException()));
+
+        Assert.False(KnownExceptions.IsKnown(new BaseHttpException(503)));
+#pragma warning disable CA2201 // the exception a bug throws, on purpose
+        Assert.False(KnownExceptions.IsKnown(new NullReferenceException()));
+#pragma warning restore CA2201
+        Assert.False(KnownExceptions.IsKnown(new InvalidOperationException()));
+        Assert.False(KnownExceptions.IsKnown(new TimeoutException()));
+        Assert.Throws<ArgumentNullException>(() => KnownExceptions.IsKnown(null!));
+    }
+
+    private sealed class DerivedBusinessException : BusinessException;
 }

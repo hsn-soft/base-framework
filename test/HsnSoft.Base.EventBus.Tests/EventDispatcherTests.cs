@@ -170,6 +170,54 @@ public sealed class EventDispatcherTests : IDisposable
     }
 
     [Fact]
+    public async Task AKnownError_RejectsTheMessage_AsAWarning_WithoutRetryAndWithoutThrowing()
+    {
+        (EventDispatcher dispatcher, RecordingHandler handler, ListLogger<EventDispatcher> logger) = CreateRecording(maxHandlerAttempts: 3);
+        handler.FailTimes = 5;
+        handler.Failure = new BusinessException("no_product", "The order has no product.");
+
+        await dispatcher.DispatchAsync("Sample", typeof(SampleEto), NewEnvelope());
+
+        Assert.Equal(1, handler.Calls);
+        ListLogger<EventDispatcher>.LoggedEvent end = Assert.Single(logger.Events, e => e.EventName == "CONSUME_EVENT_REJECTED");
+        Assert.Equal(LogLevel.Warning, end.Level);
+        Assert.Equal("ConsumeEnd", end.Properties["LogType"]);
+        Assert.Equal("HsnSoft.Base.BusinessException", end.Properties["ExceptionType"]);
+        Assert.Equal("no_product", end.Properties["ErrorCode"]);
+        Assert.EndsWith("rejected the message after " + end.Properties["ElapsedMs"] + " ms: The order has no product.", end.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain(logger.Events, e => e.EventName is "CONSUME_EVENT_SUCCESS" or "CONSUME_EVENT_ERROR" or "CONSUME_EVENT_RETRY");
+    }
+
+    [Fact]
+    public async Task AKnownErrorWithoutACode_IsRejectedToo()
+    {
+        (EventDispatcher dispatcher, RecordingHandler handler, ListLogger<EventDispatcher> logger) = CreateRecording();
+        handler.FailTimes = 1;
+        handler.Failure = new DomainException("a rule");
+
+        await dispatcher.DispatchAsync("Sample", typeof(SampleEto), NewEnvelope());
+
+        Assert.Null(Assert.Single(logger.Events, e => e.EventName == "CONSUME_EVENT_REJECTED").Properties["ErrorCode"]);
+    }
+
+    [Fact]
+    public async Task AnUnknownError_IsRetried_AndEndsAsAnError()
+    {
+        (EventDispatcher dispatcher, RecordingHandler handler, ListLogger<EventDispatcher> logger) = CreateRecording(maxHandlerAttempts: 2);
+        handler.FailTimes = 5;
+#pragma warning disable CA2201 // the exception a bug throws, on purpose
+        handler.Failure = new NullReferenceException();
+#pragma warning restore CA2201
+
+        await Assert.ThrowsAsync<NullReferenceException>(() => dispatcher.DispatchAsync("Sample", typeof(SampleEto), NewEnvelope()));
+
+        Assert.Equal(2, handler.Calls);
+        Assert.Equal(LogLevel.Error, Assert.Single(logger.Events, e => e.EventName == "CONSUME_EVENT_ERROR").Level);
+        Assert.True(handler.Failure!.Data.Contains(EventDispatcher.ErrorLoggedKey));
+        Assert.DoesNotContain(logger.Events, e => e.EventName == "CONSUME_EVENT_REJECTED");
+    }
+
+    [Fact]
     public async Task FailedHandling_EndsWithAnErrorLog_AndAnInterruptedOneHasNoEnd()
     {
         (EventDispatcher failing, RecordingHandler failingHandler, ListLogger<EventDispatcher> failedLog) = CreateRecording();

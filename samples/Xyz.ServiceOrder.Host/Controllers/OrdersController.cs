@@ -9,11 +9,10 @@ using Microsoft.Extensions.Caching.Distributed;
 using Xyz.ServiceOrder.Host.Domain;
 using Xyz.ServiceOrder.Host.Persistence;
 using Xyz.Shared;
+using Xyz.Shared.Contracts;
 using Xyz.Shared.Events;
 
 namespace Xyz.ServiceOrder.Host.Controllers;
-
-public sealed record PlaceOrderRequest(Guid ProductId, int Quantity);
 
 public sealed record OrderResponse(
     Guid Id,
@@ -51,10 +50,11 @@ public sealed class OrdersController(OrderDbContext db, IEventBus eventBus, IDis
             throw new BusinessRuleException("The quantity must be greater than zero.");
         }
 
-        // failure demo: a request that throws, to see what the logs say (see samples/README.md)
+        // failure demo: a bug nobody expected (an object that is null), to see what the logs say (see samples/README.md)
         if (request.Quantity == FailureDemo.RequestQuantity)
         {
-            throw new InvalidOperationException($"Quantity {FailureDemo.RequestQuantity} is not supported (failure demo).");
+            Dictionary<string, string>? limits = null;
+            _ = limits!.Count;
         }
 
         string customerId = User.GetRequiredUserId();

@@ -22,6 +22,21 @@ public sealed class TokenController : ControllerBase
     public IActionResult Login() => Ok(new { token = "abc" });
 }
 
+public sealed record ShapedRequest(string Name, string Secret);
+
+public sealed record ShapedResponse(string Id, string Token);
+
+[ApiController]
+[Route("api/shaped")]
+public sealed class ShapedController : ControllerBase
+{
+    [HttpPost]
+    public IActionResult Post(ShapedRequest request) => Ok(new ShapedResponse("1", request.Secret));
+
+    [HttpGet("nothing")]
+    public IActionResult Nothing() => Ok();
+}
+
 public sealed class RequestLoggingTests
 {
     private sealed record Logged(LogLevel Level, string? EventName, string Message, Exception? Exception, IReadOnlyDictionary<string, object?> Properties);
@@ -81,7 +96,19 @@ public sealed class RequestLoggingTests
 
     private sealed class MaskingStub : ILogMasker
     {
+        public List<Type?> Shapes { get; } = [];
+
         public string MaskText(string? text) => (text ?? string.Empty).Replace("hunter2", "*****", StringComparison.Ordinal);
+
+        public string MaskText(string? text, Type? shape)
+        {
+            lock (Shapes)
+            {
+                Shapes.Add(shape);
+            }
+
+            return MaskText(text);
+        }
 
         public object MaskObject<T>(T value) => value!;
     }
@@ -89,6 +116,8 @@ public sealed class RequestLoggingTests
     private sealed class Rig(WebApplication app, CaptureProvider logs) : IAsyncDisposable
     {
         public HttpClient Client { get; } = app.GetTestClient();
+
+        public MaskingStub Masker => (MaskingStub)app.Services.GetRequiredService<ILogMasker>();
 
         public IReadOnlyList<Logged> Http
         {
@@ -113,7 +142,8 @@ public sealed class RequestLoggingTests
         bool masker = true,
         bool exceptionHandler = true,
         Action<WebApplication>? map = null,
-        ClaimsPrincipal? user = null)
+        ClaimsPrincipal? user = null,
+        Action<IServiceCollection>? configure = null)
     {
         WebApplicationBuilder builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
@@ -121,6 +151,7 @@ public sealed class RequestLoggingTests
         builder.Logging.ClearProviders().AddProvider(logs);
         IConfiguration configuration = new ConfigurationBuilder().AddInMemoryCollection(settings ?? []).Build();
         builder.Services.AddBaseRequestLogging(configuration).AddBaseWebApi();
+        configure?.Invoke(builder.Services);
         builder.Services.AddControllers().AddApplicationPart(typeof(TokenController).Assembly);
         if (masker)
         {
@@ -148,6 +179,7 @@ public sealed class RequestLoggingTests
         app.MapGet("/named", () => "named").WithName("Get-Named");
         app.MapGet("/echo-correlation", (HttpRequest request) => request.Headers["X-Correlation-Id"].ToString());
         app.MapGet("/status/{code:int}", (int code) => Results.StatusCode(code));
+        app.MapGet("/known", () => { throw new BusinessException("order_closed", "The order is closed."); });
         app.MapGet("/boom", () => { throw new InvalidOperationException("boom"); });
         app.MapGet("/missing", () => Results.NotFound());
         app.MapGet("/health/live", () => "ok");
@@ -189,6 +221,64 @@ public sealed class RequestLoggingTests
         Assert.IsType<long>(answer.Properties["ElapsedMs"]);
         Assert.Equal(LogLevel.Information, request.Level);
         Assert.Equal(LogLevel.Information, answer.Level);
+    }
+
+    private sealed class ChannelEnricher : IRequestLogEnricher
+    {
+        public void Enrich(HttpContext context, string logType, IDictionary<string, object?> fields)
+            => fields["ClientChannel"] = $"{logType}:{context.Request.Headers["X-Client-Channel"]}";
+    }
+
+    [Fact]
+    public async Task TheRequestLog_SaysWhoAsked_AndAProductAddsItsOwnFields()
+    {
+        await using Rig rig = await StartAsync(configure: services => services.AddSingleton<IRequestLogEnricher, ChannelEnricher>());
+        HttpRequestMessage request = new(HttpMethod.Get, "/named");
+        request.Headers.Add("X-Forwarded-For", "203.0.113.7");
+        request.Headers.Add("User-Agent", "TestAgent/1.0");
+        request.Headers.Add("Accept-Language", "tr-TR");
+        request.Headers.Add("Origin", "https://www.Example.com/");
+        request.Headers.Add("Referer", "https://other.example.org/page");
+        request.Headers.Add("X-Client-Channel", "mobile");
+
+        await rig.Client.SendAsync(request);
+
+        Logged log = rig.Request;
+        Assert.Equal("203.0.113.7", log.Properties["ForwardedFor"]);
+        Assert.Equal("TestAgent/1.0", log.Properties["UserAgent"]);
+        Assert.Equal("tr-TR", log.Properties["AcceptLanguage"]);
+        Assert.Equal("example.com", log.Properties["Origin"]);
+        Assert.Equal("other.example.org", log.Properties["Referer"]);
+        Assert.Equal("http", log.Properties["Scheme"]);
+        Assert.Equal("localhost", log.Properties["Host"]);
+        Assert.False(string.IsNullOrEmpty((string?)log.Properties["TraceId"]));
+        Assert.Equal("HttpRequest:mobile", log.Properties["ClientChannel"]);
+        Assert.Equal("HttpResponse:mobile", rig.Response.Properties["ClientChannel"]);
+    }
+
+    [Theory]
+    [InlineData("https://www.Example.com/path", "example.com")]
+    [InlineData("http://api.example.com", "api.example.com")]
+    [InlineData("null", null)]
+    [InlineData("https:///", null)]
+    [InlineData("", null)]
+    [InlineData(null, null)]
+    public void AnOriginIsAHost(string? value, string? expected)
+        => Assert.Equal(expected, RequestLoggingMiddleware.HostOf(value));
+
+    [Fact]
+    public async Task TheOriginIsTheReferer_OrTheFromHeader_WhenThereIsNone()
+    {
+        await using Rig rig = await StartAsync();
+        HttpRequestMessage viaReferer = new(HttpMethod.Get, "/named");
+        viaReferer.Headers.Add("Referer", "https://ref.example.com/x");
+        HttpRequestMessage viaFrom = new(HttpMethod.Get, "/named");
+        viaFrom.Headers.Add("From", "bot@crawler.example.net");
+
+        await rig.Client.SendAsync(viaReferer);
+        await rig.Client.SendAsync(viaFrom);
+
+        Assert.Equal(["ref.example.com", "bot@crawler.example.net"], rig.Http.Where(log => log.EventName == "HTTP_REQUEST").Select(log => log.Properties["Origin"]));
     }
 
     [Fact]
@@ -269,7 +359,10 @@ public sealed class RequestLoggingTests
 
     [Theory]
     [InlineData("/missing", LogLevel.Warning)]
-    [InlineData("/status/500", LogLevel.Warning)]
+    [InlineData("/status/399", LogLevel.Information)]
+    [InlineData("/status/400", LogLevel.Warning)]
+    [InlineData("/status/499", LogLevel.Warning)]
+    [InlineData("/status/500", LogLevel.Error)]
     [InlineData("/status/502", LogLevel.Error)]
     [InlineData("/status/503", LogLevel.Error)]
     [InlineData("/status/504", LogLevel.Error)]
@@ -290,10 +383,25 @@ public sealed class RequestLoggingTests
 
         HttpResponseMessage response = await rig.Client.GetAsync("/boom");
 
-        // the exception handler logs the failure as the one Error (GLOBAL_EXCEPTION_HANDLER); the response only says what the client got
+        // the level is the status: 500 is an Error
         Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
-        Assert.Equal(LogLevel.Warning, rig.Response.Level);
+        Assert.Equal(LogLevel.Error, rig.Response.Level);
         Assert.Equal("500", rig.Response.Properties["Status"]?.ToString());
+        Assert.Equal("System.InvalidOperationException", rig.Response.Properties["ExceptionType"]);
+        Assert.Null(rig.Response.Properties["ErrorCode"]);
+    }
+
+    [Fact]
+    public async Task AKnownError_EndsTheRequestAsAWarning_WithItsTypeAndCode()
+    {
+        await using Rig rig = await StartAsync();
+
+        HttpResponseMessage response = await rig.Client.GetAsync("/known");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal(LogLevel.Warning, rig.Response.Level);
+        Assert.Equal("HsnSoft.Base.BusinessException", rig.Response.Properties["ExceptionType"]);
+        Assert.Equal("order_closed", rig.Response.Properties["ErrorCode"]);
     }
 
     [Fact]
@@ -409,6 +517,22 @@ public sealed class RequestLoggingTests
         Assert.Equal("""{"password":"hunter2"}""", await response.Content.ReadAsStringAsync());
         Assert.Equal("""{"password":"*****"}""", rig.Request.Properties["RequestBody"]);
         Assert.Equal("""{"password":"*****"}""", rig.Response.Properties["ResponseBody"]);
+    }
+
+    [Fact]
+    public async Task TheMasker_IsToldWhichClassTheBodyIs_SoItsAttributesCanBeUsed()
+    {
+        await using Rig rig = await StartAsync(new() { ["RequestLogging:LogBodies"] = "true" });
+
+        await rig.Client.PostAsync("/api/shaped", new StringContent("""{"name":"n","secret":"hunter2"}""", Encoding.UTF8, "application/json"));
+        await rig.Client.GetAsync("/api/shaped/nothing");
+
+        // the request is the class the action reads its body into; the answer is the class of what the action returned
+        Type?[] shapes = [.. rig.Masker.Shapes];
+        Assert.Contains(typeof(ShapedRequest), shapes);
+        Assert.Contains(typeof(ShapedResponse), shapes);
+        Assert.Equal("""{"name":"n","secret":"*****"}""", rig.Http.First(log => log.EventName == "HTTP_REQUEST").Properties["RequestBody"]);
+        Assert.Equal(2, shapes.Count(shape => shape is not null));
     }
 
     [Fact]

@@ -12,7 +12,10 @@ using HsnSoft.Base.Logging;
 using HsnSoft.Base.Logging.Masking;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.Controllers;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Net.Http.Headers;
@@ -33,6 +36,12 @@ public sealed partial class RequestLoggingMiddleware(
     IServiceProvider services)
 {
     private const int MaxCorrelationIdLength = 128;
+
+    /// <summary>Where <see cref="GlobalExceptionHandler"/> leaves the exception it answered, so the response log can say it.</summary>
+    internal const string HandledExceptionKey = "HsnSoft.Base.AspNetCore.HandledException";
+
+    /// <summary>Where the result filter leaves the class of the payload it wrapped, so the response body is masked by what that class says.</summary>
+    internal const string ResponseShapeKey = "HsnSoft.Base.AspNetCore.ResponseShape";
     private const string GrpcContentType = "application/grpc";
 
     // the text is for people reading a log, not for a web page: no \u002B for a plus
@@ -40,6 +49,7 @@ public sealed partial class RequestLoggingMiddleware(
 
     private readonly RequestLoggingOptions _options = options.Value;
     private readonly ILogMasker? _masker = (ILogMasker?)services.GetService(typeof(ILogMasker));
+    private readonly IRequestLogEnricher[] _enrichers = [.. services.GetServices<IRequestLogEnricher>()];
 
     public async Task InvokeAsync(HttpContext context)
     {
@@ -76,7 +86,7 @@ public sealed partial class RequestLoggingMiddleware(
         string from = LogFlow.HttpClientName;
         Stopwatch watch = Stopwatch.StartNew();
 
-        string? requestBody = _options.LogBodies && _masker is not null ? await ReadRequestBodyAsync(request).ConfigureAwait(false) : null;
+        string? requestBody = _options.LogBodies && _masker is not null ? await ReadRequestBodyAsync(request, BodyType(context)).ConfigureAwait(false) : null;
         string method = request.Method;
         string? path = request.Path.Value;
         Dictionary<string, object?> requestFields = new()
@@ -85,9 +95,23 @@ public sealed partial class RequestLoggingMiddleware(
             ["Query"] = request.QueryString.Value,
             ["ContentLength"] = request.ContentLength ?? 0,
             ["ClientIp"] = context.Connection.RemoteIpAddress?.ToString(),
+            ["TraceId"] = context.TraceIdentifier,
+            ["Host"] = request.Host.ToString(),
+            ["Scheme"] = request.Scheme,
+            ["ContentType"] = request.ContentType,
+            ["ForwardedFor"] = HeaderText(request, "X-Forwarded-For"),
+            ["UserAgent"] = HeaderText(request, HeaderNames.UserAgent),
+            ["AcceptLanguage"] = HeaderText(request, HeaderNames.AcceptLanguage),
+            ["Origin"] = ClientOrigin(request),
+            ["Referer"] = HostOf(request.Headers.Referer.ToString()),
             ["RequestHeaders"] = Headers(request.Headers, isResponse: false),
             ["RequestBody"] = requestBody,
         };
+        foreach (IRequestLogEnricher enricher in _enrichers)
+        {
+            enricher.Enrich(context, LogTypes.HttpRequest, requestFields);
+        }
+
         using (logger.BeginScope(requestFields))
         {
             LogRequest(logger, from, to, method, path);
@@ -114,7 +138,7 @@ public sealed partial class RequestLoggingMiddleware(
         finally
         {
             watch.Stop();
-            string? responseBody = responseBytes.Body is { } text ? MaskBody(text) : null;
+            string? responseBody = responseBytes.Body is { } text ? MaskBody(text, context.Items.TryGetValue(ResponseShapeKey, out object? shape) ? shape as Type : null) : null;
             WriteResponseLog(context, from, to, watch.ElapsedMilliseconds, responseBody, requestBytes.Count, responseBytes.Count, failure);
             request.Body = originalRequestBody;
             context.Features.Set(originalResponseBody);
@@ -146,10 +170,12 @@ public sealed partial class RequestLoggingMiddleware(
         GrpcResult? grpc = GrpcResult.From(context);
         IReadOnlyList<LoggedFile> files = Files(context, requestBytes, responseBytes);
 
-        // One failure is one Error: the log of whoever threw (GLOBAL_EXCEPTION_HANDLER, with the exception). A 500 that passes by here is
-        // only reported as a Warning, as it may come from a service behind this one that already logged its error. An exception that went
-        // through this middleware, and a gateway that cannot reach its service (502, 503, 504), are failures of this service.
-        LogLevel level = failure is not null || status is StatusCodes.Status502BadGateway or StatusCodes.Status503ServiceUnavailable or StatusCodes.Status504GatewayTimeout ? LogLevel.Error
+        // The level is the status, wherever it is logged (the gateway, a service): 2xx and 3xx are Information, 4xx are Warnings (the caller's
+        // known errors), 5xx are Errors. A service answers with the status its global exception handler decided, so the log of the
+        // response says the same thing in every place it is written.
+        context.Items.TryGetValue(HandledExceptionKey, out object? handled);
+        Exception? answered = handled as Exception;
+        LogLevel level = failure is not null || status >= StatusCodes.Status500InternalServerError ? LogLevel.Error
             : status >= StatusCodes.Status400BadRequest ? LogLevel.Warning
             : LogLevel.Information;
         if (grpc is not null && level == LogLevel.Information)
@@ -168,10 +194,17 @@ public sealed partial class RequestLoggingMiddleware(
             ["ResponseHeaders"] = headers,
             ["ResponseBody"] = responseBody,
             ["GrpcStatus"] = grpc?.Status,
+            ["ExceptionType"] = (failure ?? answered)?.GetType().FullName,
+            ["ErrorCode"] = (failure ?? answered) is BusinessException business ? business.ErrorCode : null,
             ["Files"] = files.Count == 0 ? null : LogFields.Text(JsonSerializer.Serialize(files, s_headerJson), _options.MaxBodyLength),
             ["FileCount"] = files.Count == 0 ? null : files.Count,
             ["FileBytes"] = files.Count == 0 ? null : files.Sum(file => file.Size),
         };
+
+        foreach (IRequestLogEnricher enricher in _enrichers)
+        {
+            enricher.Enrich(context, LogTypes.HttpResponse, fields);
+        }
 
         string details = grpc is not null ? grpc.Summary : FileSummary(files);
         using (logger.BeginScope(fields))
@@ -270,6 +303,28 @@ public sealed partial class RequestLoggingMiddleware(
     private static bool IsGrpc(HttpRequest request)
         => request.ContentType?.StartsWith(GrpcContentType, StringComparison.OrdinalIgnoreCase) == true;
 
+    private string? HeaderText(HttpRequest request, string name)
+        => request.Headers[name].ToString() is { Length: > 0 } value ? LogFields.Text(value, _options.MaxHeaderValueLength) : null;
+
+    // who is asking, as a host: the Origin, else the Referer, else the From header; without the scheme and "www."
+    private string? ClientOrigin(HttpRequest request)
+        => LogFields.Text(HostOf(request.Headers.Origin.ToString()) ?? HostOf(request.Headers.Referer.ToString()) ?? HostOf(request.Headers.From.ToString()), _options.MaxHeaderValueLength);
+
+    internal static string? HostOf(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        string host = value.ToLowerInvariant()
+            .Replace("http://", string.Empty, StringComparison.Ordinal)
+            .Replace("https://", string.Empty, StringComparison.Ordinal)
+            .Replace("www.", string.Empty, StringComparison.Ordinal)
+            .Split('/')[0];
+        return host is "" or "null" ? null : host;
+    }
+
     private string CorrelationId(HttpRequest request)
     {
         string? incoming = request.Headers[_options.CorrelationIdHeader].FirstOrDefault();
@@ -314,7 +369,7 @@ public sealed partial class RequestLoggingMiddleware(
         return context.Request.Path.Value?.ToLowerInvariant() ?? "/";
     }
 
-    private async Task<string?> ReadRequestBodyAsync(HttpRequest request)
+    private async Task<string?> ReadRequestBodyAsync(HttpRequest request, Type? shape)
     {
         if (!IsJson(request.ContentType) || request.ContentLength is null or 0 || request.ContentLength > _options.MaxBodyReadBytes)
         {
@@ -325,11 +380,18 @@ public sealed partial class RequestLoggingMiddleware(
         using StreamReader reader = new(request.Body, Encoding.UTF8, detectEncodingFromByteOrderMarks: false, leaveOpen: true);
         string text = await reader.ReadToEndAsync().ConfigureAwait(false);
         request.Body.Position = 0;
-        return MaskBody(text);
+        return MaskBody(text, shape);
     }
 
-    private string? MaskBody(string text)
-        => string.IsNullOrWhiteSpace(text) ? null : LogFields.Text(_masker!.MaskText(text), _options.MaxBodyLength);
+    private string? MaskBody(string text, Type? shape)
+        => string.IsNullOrWhiteSpace(text) ? null : LogFields.Text(_masker!.MaskText(text, shape), _options.MaxBodyLength);
+
+    // the class the action reads its body into: what it marks as sensitive is hidden in the logged request
+    private static Type? BodyType(HttpContext context)
+    {
+        IList<ParameterDescriptor>? parameters = context.GetEndpoint()?.Metadata.GetMetadata<ControllerActionDescriptor>()?.Parameters;
+        return parameters?.FirstOrDefault(parameter => parameter.BindingInfo?.BindingSource == BindingSource.Body)?.ParameterType;
+    }
 
     private static bool IsJson(string? contentType)
         => contentType is not null

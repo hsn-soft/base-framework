@@ -75,12 +75,25 @@ builder.Services
 app.UseXyzApi();   // exceptions, authentication, authorization, health, in that order
 ```
 
-## Failure demo
+## What the logs say when something goes wrong
 
-To look at what the logs say when something fails, order a quantity the sample refuses on purpose: **13** makes the order request throw
-(an `HttpResponse` with status 500 and a `GLOBAL_EXCEPTION_HANDLER` log with the exception), **14** makes the handler of the product
-service throw (`ConsumeStart`, two `CONSUME_EVENT_RETRY`, a `ConsumeEnd` with level Error and the exception, then the message goes to
-the error queue). The services log requests only when `RequestLogging__Enabled=true` is set; the gateway always does.
+Errors the application expects (`KnownExceptions`: a rule that says no, a missing value, an unknown id, bad input, no token) are the
+caller's: a service answers them with a 4xx and the response is logged as a **Warning**. Anything else (a null reference) is a bug of the
+service: its global exception handler answers 500 and the response is an **Error**. The level of a response log is its status (2xx and 3xx
+Information, 4xx Warning, 5xx Error), the same at the gateway and in a service, so an alert can count on it.
+
+| Try | What happens | Level |
+|---|---|---|
+| a good order | `HttpRequest`, `HttpResponse` 202, then `ConsumeStart`/`ConsumeEnd` along the chain | Information |
+| `quantity: 0` | the rule says no: 400 `BusinessRuleException` | Warning (`HttpResponse`) |
+| `productId: "x"` | validation: 400 `validation_error` | Warning |
+| no token | 401 | Warning |
+| `productId` all zeros | the product service **rejects the message**: `CONSUME_EVENT_REJECTED`, no retry, not in the error queue | Warning (`ConsumeEnd`) |
+| `quantity: 13` | a null reference in the order request: 500 | Error: `GLOBAL_EXCEPTION_HANDLER` (the cause, with the stack) and the `HttpResponse` 500 of the gateway (and of the service when it logs requests): the level of a response is its status |
+| `quantity: 14` | a null reference in the handler of the product service: three attempts (`CONSUME_EVENT_RETRY`), `CONSUME_EVENT_ERROR`, then the error queue | Error (`ConsumeEnd`) |
+
+`cardNumber` and `phone` of the order request are hidden in the logged bodies (`FrameworkLogger:SensitiveKeys`). The services log
+requests only when `RequestLogging__Enabled=true` is set; the gateway always does.
 
 ## Logging
 

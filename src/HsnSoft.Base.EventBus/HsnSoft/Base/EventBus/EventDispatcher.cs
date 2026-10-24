@@ -35,6 +35,9 @@ public sealed partial class EventDispatcher(
     IOptions<EventBusOptions> options,
     ILogger<EventDispatcher> logger) : IEventDispatcher
 {
+    /// <summary>Set in the <c>Data</c> of an exception whose Error the dispatcher has logged already (<c>CONSUME_EVENT_ERROR</c>).</summary>
+    public const string ErrorLoggedKey = "HsnSoft.Base.EventBus.ErrorLogged";
+
     private static readonly Dictionary<string, object> s_consumeStart = new() { [LogFields.LogType] = LogTypes.ConsumeStart };
     private static readonly Dictionary<string, object> s_consumeEnd = new() { [LogFields.LogType] = LogTypes.ConsumeEnd };
 
@@ -87,6 +90,23 @@ public sealed partial class EventDispatcher(
                 await RunHandlerAsync(handler, trimmedEventName, eventType, envelope, messageEnvelope, cancellationToken).ConfigureAwait(false);
             }
         }
+        catch (Exception exception) when (exception is not OperationCanceledException && KnownExceptions.IsKnown(exception))
+        {
+            // the message asked for something the application says no to (a rule, a missing value): that is how it is handled, not a failure.
+            // It ends here as a Warning and is not retried, not reported to the error client; the message is done.
+            Dictionary<string, object?> end = new()
+            {
+                [LogFields.LogType] = LogTypes.ConsumeEnd,
+                ["ExceptionType"] = exception.GetType().FullName,
+                ["ErrorCode"] = (exception as BusinessException)?.ErrorCode,
+            };
+            using (_logger.BeginScope(end))
+            {
+                LogRejected(_logger, from, to, handlerNames, watch.ElapsedMilliseconds, exception.Message);
+            }
+
+            return;
+        }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
             // a handling cut short by a shutdown has no end log on purpose: its start log without an end is how an interrupted message is found
@@ -95,6 +115,8 @@ public sealed partial class EventDispatcher(
                 LogFailed(_logger, exception, from, to, handlerNames, watch.ElapsedMilliseconds);
             }
 
+            // the broker project reports the failure to the error client; the Error is already written, it must not be written twice
+            exception.Data[ErrorLoggedKey] = true;
             throw;
         }
 
@@ -134,7 +156,7 @@ public sealed partial class EventDispatcher(
 
                 return;
             }
-            catch (Exception exception) when (attempt < maxAttempts && exception is not (OperationCanceledException or HandlerNotResolvedException))
+            catch (Exception exception) when (attempt < maxAttempts && exception is not (OperationCanceledException or HandlerNotResolvedException) && !KnownExceptions.IsKnown(exception))
             {
                 LogAttemptFailed(_logger, exception, handler.HandlerType.Name, eventName, attempt, maxAttempts);
                 await Task.Delay(_options.RetryDelay * attempt, cancellationToken).ConfigureAwait(false);
@@ -160,6 +182,9 @@ public sealed partial class EventDispatcher(
 
     [LoggerMessage(EventId = 2002, EventName = "CONSUME_EVENT_ERROR", Level = LogLevel.Error, Message = "{From} -> {To}: {Handler} failed after {ElapsedMs} ms")]
     private static partial void LogFailed(ILogger logger, Exception exception, string from, string to, string handler, long elapsedMs);
+
+    [LoggerMessage(EventId = 2004, EventName = "CONSUME_EVENT_REJECTED", Level = LogLevel.Warning, Message = "{From} -> {To}: {Handler} rejected the message after {ElapsedMs} ms: {Reason}")]
+    private static partial void LogRejected(ILogger logger, string from, string to, string handler, long elapsedMs, string reason);
 
     [LoggerMessage(EventId = 2003, EventName = "CONSUME_EVENT_RETRY", Level = LogLevel.Warning, Message = "{Handler} failed on {EventName}, attempt {Attempt}/{Max}")]
     private static partial void LogAttemptFailed(ILogger logger, Exception exception, string handler, string eventName, int attempt, int max);

@@ -25,6 +25,7 @@ public sealed class UnifiedApiResponseFilter(IStatusMessageProvider statusMessag
                 case ObjectResult { Value: not (BaseResponse or ProblemDetails) } objectResult:
                     {
                         int statusCode = objectResult.StatusCode ?? StatusCodes.Status200OK;
+                        RememberShape(context, objectResult.Value);
                         context.Result = Wrap(statusCode, traceId, objectResult.Value);
                         break;
                     }
@@ -32,6 +33,7 @@ public sealed class UnifiedApiResponseFilter(IStatusMessageProvider statusMessag
                 case JsonResult { Value: not BaseResponse } jsonResult:
                     {
                         int statusCode = jsonResult.StatusCode ?? StatusCodes.Status200OK;
+                        RememberShape(context, jsonResult.Value);
                         context.Result = Wrap(statusCode, traceId, jsonResult.Value);
                         break;
                     }
@@ -47,6 +49,15 @@ public sealed class UnifiedApiResponseFilter(IStatusMessageProvider statusMessag
         }
 
         await next().ConfigureAwait(false);
+    }
+
+    // the request log hides what the class of the answer marks as sensitive, so it needs to know the class
+    private static void RememberShape(ResultExecutingContext context, object? payload)
+    {
+        if (payload is not null)
+        {
+            context.HttpContext.Items[RequestLoggingMiddleware.ResponseShapeKey] = payload.GetType();
+        }
     }
 
     private ObjectResult Wrap(int statusCode, string traceId, object? payload)

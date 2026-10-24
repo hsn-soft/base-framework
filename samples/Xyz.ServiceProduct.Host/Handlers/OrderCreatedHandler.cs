@@ -1,3 +1,4 @@
+using HsnSoft.Base;
 using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.EventBus;
 using Microsoft.Extensions.Caching.Distributed;
@@ -15,10 +16,17 @@ public sealed class OrderCreatedHandler(ProductStore store, IEventBus eventBus, 
 {
     public async Task HandleAsync(MessageEnvelope<OrderCreated> envelope, CancellationToken cancellationToken)
     {
-        // failure demo: a handler that throws, to see what the logs say
+        // a message that lacks what the handler needs is a known error: the message is rejected, not retried
+        if (envelope.Message.ProductId == Guid.Empty)
+        {
+            throw new DomainException($"Order {envelope.Message.OrderId} has no product.");
+        }
+
+        // failure demo: a bug nobody expected (an object that is null), to see what the logs say
         if (envelope.Message.Quantity == FailureDemo.HandlerQuantity)
         {
-            throw new InvalidOperationException($"Quantity {FailureDemo.HandlerQuantity} is not supported (failure demo), order {envelope.Message.OrderId}.");
+            Dictionary<string, string>? limits = null;
+            _ = limits!.Count;
         }
 
         StockReservation reservation = await store.ReserveAsync(envelope.Message.OrderId, envelope.Message.ProductId, envelope.Message.Quantity, cancellationToken);

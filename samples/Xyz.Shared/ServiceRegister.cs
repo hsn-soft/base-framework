@@ -22,7 +22,7 @@ public static class ServiceRegister
     /// <summary>The shell of every Xyz service: error handling, OpenAPI, health checks, JWT authentication and the Redis cache.</summary>
     public static IServiceCollection AddXyzApi(this IServiceCollection services, IConfiguration configuration)
         => services
-            .AddBaseLogging()
+            .AddBaseLogging(typeof(ServiceRegister).Assembly)   // the contracts say what is secret: the gateway hides it in the bodies it logs too
             .AddBaseRequestLogging(configuration)
             .AddBaseWebApi()
             .AddBaseOpenApi()

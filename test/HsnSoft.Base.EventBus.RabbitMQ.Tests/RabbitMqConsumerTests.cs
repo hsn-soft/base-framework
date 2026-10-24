@@ -172,6 +172,21 @@ public sealed class RabbitMqConsumerTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task HandlerFailureThatTheHandlingAlreadyLoggedAsAnError_IsOnlyAWarningHere()
+    {
+        Rig rig = await StartAsync();
+        InvalidOperationException failure = new("handler broke");
+        failure.Data[EventDispatcher.ErrorLoggedKey] = true;
+        rig.Dispatcher.Behavior = () => throw failure;
+
+        await rig.Deliver(tag: 4);
+
+        Assert.Single(rig.Notifier.Notified);
+        Assert.Contains(rig.Logger.Entries, entry => entry.Level == LogLevel.Warning && entry.Message.Contains("already logged by the handling", StringComparison.Ordinal));
+        Assert.DoesNotContain(rig.Logger.Entries, entry => entry.Level == LogLevel.Error);
+    }
+
+    [Fact]
     public async Task MessageThatCannotBeRead_IsReportedWithItsRawContent()
     {
         Rig rig = await StartAsync();
