@@ -163,12 +163,11 @@ public sealed partial class RequestLoggingMiddleware(
         {
             [LogFields.LogType] = logType,
             ["Query"] = LogFields.Text(request.QueryString.Value, _options.MaxUrlLength),
-            ["ContentLength"] = request.ContentLength ?? 0,
+            ["RequestBytes"] = request.ContentLength ?? 0,   // what the request says it is: the body is not read yet
             ["ClientIp"] = context.Connection.RemoteIpAddress?.ToString(),
             ["UserId"] = UserId(user),
             ["UserRoles"] = Roles(user),
             ["Host"] = request.Host.ToString(),
-            ["Scheme"] = request.Scheme,
             ["ContentType"] = request.ContentType,
             ["ForwardedFor"] = HeaderText(request, "X-Forwarded-For"),
             ["UserAgent"] = HeaderText(request, HeaderNames.UserAgent),
@@ -305,9 +304,6 @@ public sealed partial class RequestLoggingMiddleware(
             [LogFields.LogType] = combined is null ? LogTypes.HttpResponse : LogTypes.HttpRequestResponse,
             ["UserId"] = userId,
             ["UserRoles"] = Roles(context.User),
-            ["ContentType"] = response.ContentType,
-            ["ContentLength"] = response.ContentLength ?? 0,
-            ["RequestBytes"] = requestBytes,
             ["ResponseBytes"] = responseBytes,
             ["ResponseHeaders"] = headers,
             ["ResponseBody"] = responseBody,

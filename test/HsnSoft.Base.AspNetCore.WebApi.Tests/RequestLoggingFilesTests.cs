@@ -331,7 +331,7 @@ public sealed class RequestLoggingFilesTests
         await rig.Client.SendAsync(request);
 
         Assert.Contains(", upload backup.zip (3000 bytes)", rig.Response.Message, StringComparison.Ordinal);
-        Assert.Equal(3000L, rig.Response.Properties["RequestBytes"]);
+        Assert.Equal(3000L, rig.Request.Properties["RequestBytes"]);
     }
 
     [Fact]
@@ -356,7 +356,8 @@ public sealed class RequestLoggingFilesTests
         await rig.Client.PostAsync("/upload/raw", new StringContent("""{"a":1}""", Encoding.UTF8, "application/json"));
 
         Assert.Null(rig.Response.Properties["Files"]);
-        Assert.Equal(7L, rig.Response.Properties["RequestBytes"]);
+        Assert.Equal(7L, rig.Request.Properties["RequestBytes"]);
+        Assert.False(rig.Response.Properties.ContainsKey("RequestBytes"));
     }
 
     [Fact]
@@ -408,7 +409,8 @@ public sealed class RequestLoggingFilesTests
         Assert.Equal(level, rig.Response.Level);
         Assert.EndsWith(details, rig.Response.Message, StringComparison.Ordinal);
         Assert.Equal(int.Parse(status, System.Globalization.CultureInfo.InvariantCulture), rig.Response.Properties["GrpcStatus"]);
-        Assert.Equal(7L, rig.Response.Properties["RequestBytes"]);
+        Assert.Equal(7L, rig.Request.Properties["RequestBytes"]);
+        Assert.False(rig.Response.Properties.ContainsKey("RequestBytes"));
         Assert.Null(rig.Response.Properties["Files"]);
     }
 

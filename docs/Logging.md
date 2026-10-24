@@ -99,7 +99,7 @@ Request and response bodies are logged only with `RequestLogging:LogBodies` and 
 cut to `MaxBodyLength`. Headers are written as one JSON text; `Authorization` and cookies are summarized, never written.
 
 The request log also says who asked: `ClientIp`, `ForwardedFor`, `UserAgent`, `AcceptLanguage`, `Origin` (the host of the `Origin`, else the `Referer`,
-else the `From` header), `Referer`, `Host`, `Scheme`, `ContentType`, `TraceId`. What only a product knows (the channel and version of the client, the
+else the `From` header), `Referer`, `Host`, `ContentType`, `RequestBytes` (the size the request says it has). What only a product knows (the channel and version of the client, the
 device, the roles, a location) is added with an `IRequestLogEnricher`, called for both logs.
 
 ### Who writes the request and response logs
@@ -136,7 +136,7 @@ leaves its `HttpRequest` without an `HttpResponse`, and the gateway's `HttpReque
 | `ClientChannelHeader`, `ClientVersionHeader`, `ClientLatHeader`, `ClientLongHeader` | `X-Channel`, `X-Client-Version`, `X-Client-Request-Lat`, `X-Client-Request-Long` | the headers a client tells about itself; they become `ClientChannel`, `ClientVersion`, `ClientLat`, `ClientLong` |
 | `CorrelationIdHeader`, `LoggedByHeader` | `X-Correlation-Id`, `X-Logged-By` | |
 
-`UserId` and `UserRoles` (the role claims, distinct, comma separated) are in the request log too, when the request is authenticated: authentication runs after the logging middleware in the pipeline, so the middleware asks for it first (the answer is remembered for the request, asking again costs nothing; if it fails the log is simply written without a user). The response log also has `ContentType`. What a message's headers say about who
+`UserId` and `UserRoles` (the role claims, distinct, comma separated) are in the request log too, when the request is authenticated: authentication runs after the logging middleware in the pipeline, so the middleware asks for it first (the answer is remembered for the request, asking again costs nothing; if it fails the log is simply written without a user).  What a message's headers say about who
 caused it (`UserId`, `UserRoles`, `ClientChannel`, `ClientVersion`, `ClientLat`, `ClientLong`, as the production wire always named them) is on the
 consume logs too. The device type of the client needs a user-agent parser, so a product adds it with an `IRequestLogEnricher`.
 
@@ -147,7 +147,7 @@ consume logs too. The device type of the client needs a user-agent parser, so a 
   list of `direction`, `name`, `fileName`, `size`, `contentType`), `FileCount` and `FileBytes`. A download is a response with a
   `Content-Disposition` or a binary content type; an upload is a form with files (only when the application has read the form: logging
   never buffers an upload by itself), or a raw upload (`application/octet-stream`, `application/pdf`, ...) named by its
-  `Content-Disposition`. `RequestBytes` and `ResponseBytes` are counted for every request, as the bytes really read and written. Response
+  `Content-Disposition`. `ResponseBytes` is what was really written (a download is measured as it is sent). Response
   bodies are streamed as before, never held back: only a small, uncompressed JSON answer is kept for the log (with `LogBodies`).
 - **MVC** applications (views, Razor Pages) work the same: the controller action names the step (`home-index`), an HTML page is text and
   its body is never logged.

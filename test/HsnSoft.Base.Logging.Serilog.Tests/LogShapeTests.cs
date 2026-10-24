@@ -93,7 +93,7 @@ public sealed class LogShapeTests
         Assert.Equal("xxxxxxxxxxxxxxxxxxxx...(+30)", Value(written, "Text"));
         Assert.Equal("ok", Value(written, "Short"));
         Assert.Equal(7, ((ScalarValue)written.Properties["Count"]).Value);
-        Assert.IsType<StructureValue>(written.Properties["EventId"]);
+        Assert.False(written.Properties.ContainsKey("EventId"));
     }
 
     [Fact]

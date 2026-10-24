@@ -287,6 +287,11 @@ public sealed class RequestLoggingTests
         Assert.Equal("httpclient", request.Properties["From"]);
         Assert.Equal("/api/orders/7", request.Properties["To"]);
         Assert.Equal("?x=1", request.Properties["Query"]);
+        // the request says its size as RequestBytes, the response as ResponseBytes; there is no ContentLength in either
+        Assert.Equal(0L, request.Properties["RequestBytes"]);
+        Assert.False(request.Properties.ContainsKey("ContentLength"));
+        Assert.True(answer.Properties.ContainsKey("ResponseBytes"));
+        Assert.False(answer.Properties.ContainsKey("RequestBytes"));
         Assert.Equal("200", answer.Properties["Status"]?.ToString());
         Assert.IsType<long>(answer.Properties["ElapsedMs"]);
         Assert.Equal(LogLevel.Information, request.Level);
@@ -319,7 +324,7 @@ public sealed class RequestLoggingTests
         Assert.Equal("tr-TR", log.Properties["AcceptLanguage"]);
         Assert.Equal("example.com", log.Properties["Origin"]);
         Assert.Equal("other.example.org", log.Properties["Referer"]);
-        Assert.Equal("http", log.Properties["Scheme"]);
+        Assert.False(log.Properties.ContainsKey("Scheme"));
         Assert.Equal("localhost", log.Properties["Host"]);
         // TraceId is the W3C trace id ASP.NET Core adds, not a second name for the RequestId
         Assert.NotEqual(log.Properties["RequestId"], log.Properties.GetValueOrDefault("TraceId"));
@@ -538,7 +543,8 @@ public sealed class RequestLoggingTests
         Assert.Equal("41.0082", rig.Request.Properties["ClientLat"]);
         Assert.Equal("28.9784", rig.Request.Properties["ClientLong"]);
         Assert.Equal("admin,customer,auditor", rig.Response.Properties["UserRoles"]);
-        Assert.StartsWith("application/json", (string?)rig.Response.Properties["ContentType"], StringComparison.Ordinal);
+        Assert.False(rig.Response.Properties.ContainsKey("ContentType"));
+        Assert.False(rig.Response.Properties.ContainsKey("ContentLength"));
     }
 
     [Fact]

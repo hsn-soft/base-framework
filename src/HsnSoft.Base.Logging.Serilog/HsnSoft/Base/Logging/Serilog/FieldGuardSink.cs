@@ -22,15 +22,14 @@ internal sealed class FieldGuardSink(ILogEventSink inner, int maxLength) : ILogE
     {
         ArgumentNullException.ThrowIfNull(logEvent);
 
-        LogEventProperty[] properties = [.. logEvent.Properties.Select(property => new LogEventProperty(property.Key, Guard(property.Key, property.Value)))];
+        // the event id (EventId_Id, EventId_Name) is not a field: its name is the Facility, and an id the compiler makes up says nothing
+        LogEventProperty[] properties = [.. logEvent.Properties.Where(property => property.Key != "EventId").Select(property => new LogEventProperty(property.Key, Guard(property.Value)))];
         inner.Emit(new LogEvent(logEvent.Timestamp, logEvent.Level, logEvent.Exception, PlainMessage(logEvent), properties, logEvent.TraceId ?? default, logEvent.SpanId ?? default));
     }
 
-    private LogEventPropertyValue Guard(string name, LogEventPropertyValue value)
+    private LogEventPropertyValue Guard(LogEventPropertyValue value)
         => value switch
         {
-            // the event id is two fields (EventId_Id, EventId_Name) by design
-            StructureValue when name == "EventId" => value,
             StructureValue or DictionaryValue or SequenceValue => new ScalarValue(Cut(Json(value))),
             ScalarValue { Value: string text } => new ScalarValue(Cut(text)),
             _ => value,
