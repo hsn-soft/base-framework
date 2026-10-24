@@ -136,7 +136,7 @@ leaves its `HttpRequest` without an `HttpResponse`, and the gateway's `HttpReque
 | `ClientChannelHeader`, `ClientVersionHeader`, `ClientLatHeader`, `ClientLongHeader` | `X-Channel`, `X-Client-Version`, `X-Client-Request-Lat`, `X-Client-Request-Long` | the headers a client tells about itself; they become `ClientChannel`, `ClientVersion`, `ClientLat`, `ClientLong` |
 | `CorrelationIdHeader`, `LoggedByHeader` | `X-Correlation-Id`, `X-Logged-By` | |
 
-The response log also has `UserId`, `UserRoles` (the role claims, distinct, comma separated) and `ContentType`. What a message's headers say about who
+`UserId` and `UserRoles` (the role claims, distinct, comma separated) are in the request log too, when the request is authenticated: authentication runs after the logging middleware in the pipeline, so the middleware asks for it first (the answer is remembered for the request, asking again costs nothing; if it fails the log is simply written without a user). The response log also has `ContentType`. What a message's headers say about who
 caused it (`UserId`, `UserRoles`, `ClientChannel`, `ClientVersion`, `ClientLat`, `ClientLong`, as the production wire always named them) is on the
 consume logs too. The device type of the client needs a user-agent parser, so a product adds it with an `IRequestLogEnricher`.
 

@@ -94,6 +94,38 @@ public sealed class RequestLoggingTests
         }
     }
 
+    private sealed class AuthCounter
+    {
+        public int Calls { get; set; }
+    }
+
+    // authenticates a request that says who it is in the X-User header (and what it may in X-Role)
+    private sealed class HeaderAuthentication(
+        Microsoft.Extensions.Options.IOptionsMonitor<Microsoft.AspNetCore.Authentication.AuthenticationSchemeOptions> options,
+        ILoggerFactory loggerFactory,
+        System.Text.Encodings.Web.UrlEncoder encoder,
+        AuthCounter counter,
+        bool fails = false)
+        : Microsoft.AspNetCore.Authentication.AuthenticationHandler<Microsoft.AspNetCore.Authentication.AuthenticationSchemeOptions>(options, loggerFactory, encoder)
+    {
+        protected override Task<Microsoft.AspNetCore.Authentication.AuthenticateResult> HandleAuthenticateAsync()
+        {
+            counter.Calls++;
+            if (fails || Request.Headers["X-Boom"].Count > 0)
+            {
+                throw new InvalidOperationException("the identity provider is down");
+            }
+
+            if (!Request.Headers.TryGetValue("X-User", out Microsoft.Extensions.Primitives.StringValues user))
+            {
+                return Task.FromResult(Microsoft.AspNetCore.Authentication.AuthenticateResult.NoResult());
+            }
+
+            ClaimsPrincipal principal = new(new ClaimsIdentity([new Claim("sub", user.ToString()), new Claim(ClaimTypes.Role, "customer")], Scheme.Name));
+            return Task.FromResult(Microsoft.AspNetCore.Authentication.AuthenticateResult.Success(new Microsoft.AspNetCore.Authentication.AuthenticationTicket(principal, Scheme.Name)));
+        }
+    }
+
     private sealed class MaskingStub : ILogMasker
     {
         public List<Type?> Shapes { get; } = [];
@@ -116,6 +148,8 @@ public sealed class RequestLoggingTests
     private sealed class Rig(WebApplication app, CaptureProvider logs) : IAsyncDisposable
     {
         public HttpClient Client { get; } = app.GetTestClient();
+
+        public IServiceProvider Services => app.Services;
 
         public MaskingStub Masker => (MaskingStub)app.Services.GetRequiredService<ILogMasker>();
 
@@ -489,7 +523,7 @@ public sealed class RequestLoggingTests
     [Fact]
     public async Task TheRequestLog_HasWhatTheClientSaysAboutItself_AndTheResponseLogItsUserRolesAndContentType()
     {
-        ClaimsPrincipal user = new(new ClaimsIdentity([new Claim("sub", "alice"), new Claim(ClaimTypes.Role, "admin"), new Claim(ClaimTypes.Role, "customer"), new Claim(ClaimTypes.Role, "admin")], "test"));
+        ClaimsPrincipal user = new(new ClaimsIdentity([new Claim("sub", "alice"), new Claim(ClaimTypes.Role, "admin"), new Claim(ClaimTypes.Role, "customer"), new Claim("role", "auditor"), new Claim(ClaimTypes.Role, "admin")], "test"));
         await using Rig rig = await StartAsync(user: user);
         HttpRequestMessage request = new(HttpMethod.Get, "/json?a=1");
         request.Headers.Add("X-Channel", "mobile");
@@ -503,7 +537,7 @@ public sealed class RequestLoggingTests
         Assert.Equal("3.2.1", rig.Request.Properties["ClientVersion"]);
         Assert.Equal("41.0082", rig.Request.Properties["ClientLat"]);
         Assert.Equal("28.9784", rig.Request.Properties["ClientLong"]);
-        Assert.Equal("admin,customer", rig.Response.Properties["UserRoles"]);
+        Assert.Equal("admin,customer,auditor", rig.Response.Properties["UserRoles"]);
         Assert.StartsWith("application/json", (string?)rig.Response.Properties["ContentType"], StringComparison.Ordinal);
     }
 
@@ -570,6 +604,46 @@ public sealed class RequestLoggingTests
 
         // /LivenessCheck is a probe now and /health is not: it is logged
         Assert.Equal(["/health/li...(+2)", "/api/order...(+10)"], rig.Http.Where(log => log.EventName == "HTTP_REQUEST").Select(log => log.Properties["RequestPath"]));
+    }
+
+    private static void WithHeaderAuthentication(IServiceCollection services)
+    {
+        services.AddSingleton<AuthCounter>();
+        services.AddAuthentication("Header").AddScheme<Microsoft.AspNetCore.Authentication.AuthenticationSchemeOptions, HeaderAuthentication>("Header", _ => { });
+    }
+
+    [Fact]
+    public async Task TheRequestLog_HasTheUser_WhenTheRequestIsAuthenticated_AndTheIdentityIsAskedForOnlyOnce()
+    {
+        await using Rig rig = await StartAsync(configure: WithHeaderAuthentication, map: app => app.UseAuthentication());
+        HttpRequestMessage known = new(HttpMethod.Get, "/named");
+        known.Headers.Add("X-User", "alice");
+
+        await rig.Client.SendAsync(known);
+        await rig.Client.GetAsync("/named");
+
+        Logged[] requests = [.. rig.Http.Where(log => log.EventName == "HTTP_REQUEST")];
+        Assert.Equal("alice", requests[0].Properties["UserId"]);
+        Assert.Equal("customer", requests[0].Properties["UserRoles"]);
+        Assert.Null(requests[1].Properties["UserId"]);
+        Assert.Equal("alice", rig.Http.First(log => log.EventName == "HTTP_RESPONSE").Properties["UserId"]);
+        // two requests, each authenticated once: the middleware asks first and the authentication middleware gets the same answer
+        Assert.Equal(2, rig.Services.GetRequiredService<AuthCounter>().Calls);
+    }
+
+    [Fact]
+    public async Task AnIdentityProviderThatFails_IsNoReasonToLoseTheRequestLog()
+    {
+        await using Rig rig = await StartAsync(configure: WithHeaderAuthentication, map: app => app.UseAuthentication());
+        HttpRequestMessage broken = new(HttpMethod.Get, "/named");
+        broken.Headers.Add("X-Boom", "1");
+
+        HttpResponseMessage response = await rig.Client.SendAsync(broken);
+
+        // the authentication middleware of the application fails the request, as it would without any logging; the log is written all the same
+        Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+        Assert.Null(rig.Request.Properties["UserId"]);
+        Assert.Equal(LogLevel.Error, rig.Response.Level);
     }
 
     [Fact]

@@ -10,6 +10,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using HsnSoft.Base.Logging;
 using HsnSoft.Base.Logging.Masking;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc.Abstractions;
@@ -49,6 +50,7 @@ public sealed partial class RequestLoggingMiddleware(
 
     private readonly RequestLoggingOptions _options = options.Value;
     private readonly ILogMasker? _masker = (ILogMasker?)services.GetService(typeof(ILogMasker));
+    private readonly IAuthenticationSchemeProvider? _schemes = services.GetService<IAuthenticationSchemeProvider>();
     private readonly IRequestLogEnricher[] _enrichers = [.. services.GetServices<IRequestLogEnricher>()];
 
     public async Task InvokeAsync(HttpContext context)
@@ -102,7 +104,7 @@ public sealed partial class RequestLoggingMiddleware(
         string? requestBody = _options.LogBodies && _masker is not null ? await ReadRequestBodyAsync(request, BodyType(context)).ConfigureAwait(false) : null;
         string method = request.Method;
         string? shownPath = LogFields.Text(request.Path.Value, _options.MaxUrlLength);
-        Dictionary<string, object?> requestFields = RequestFields(context, LogTypes.HttpRequest, requestBody);
+        Dictionary<string, object?> requestFields = RequestFields(context, LogTypes.HttpRequest, requestBody, await AuthenticatedUserAsync(context).ConfigureAwait(false));
 
         using (logger.BeginScope(requestFields))
         {
@@ -154,7 +156,7 @@ public sealed partial class RequestLoggingMiddleware(
     }
 
     // what is known of a request: the same fields in the log of a service and in the log a gateway writes for what it answered itself
-    private Dictionary<string, object?> RequestFields(HttpContext context, string logType, string? requestBody)
+    private Dictionary<string, object?> RequestFields(HttpContext context, string logType, string? requestBody, ClaimsPrincipal? user)
     {
         HttpRequest request = context.Request;
         Dictionary<string, object?> requestFields = new()
@@ -163,6 +165,8 @@ public sealed partial class RequestLoggingMiddleware(
             ["Query"] = LogFields.Text(request.QueryString.Value, _options.MaxUrlLength),
             ["ContentLength"] = request.ContentLength ?? 0,
             ["ClientIp"] = context.Connection.RemoteIpAddress?.ToString(),
+            ["UserId"] = UserId(user),
+            ["UserRoles"] = Roles(user),
             ["Host"] = request.Host.ToString(),
             ["Scheme"] = request.Scheme,
             ["ContentType"] = request.ContentType,
@@ -242,7 +246,7 @@ public sealed partial class RequestLoggingMiddleware(
                     ? await ReadBufferedBodyAsync(request, BodyType(context)).ConfigureAwait(false)
                     : null;
                 string? responseBody = responseBytes.Body is { } text ? MaskBody(text, context.Items.TryGetValue(ResponseShapeKey, out object? shape) ? shape as Type : null, _options.MaxResponseBodyLength) : null;
-                WriteResponseLog(context, LogFlow.HttpClientName, to, watch.ElapsedMilliseconds, responseBody, readBytes, responseBytes.Count, failure, RequestFields(context, LogTypes.HttpRequestResponse, requestBody));
+                WriteResponseLog(context, LogFlow.HttpClientName, to, watch.ElapsedMilliseconds, responseBody, readBytes, responseBytes.Count, failure, RequestFields(context, LogTypes.HttpRequestResponse, requestBody, context.User));
             }
 
             request.Body = originalRequestBody;
@@ -278,7 +282,7 @@ public sealed partial class RequestLoggingMiddleware(
         HttpResponse response = context.Response;
         int status = response.StatusCode;
         string headers = Headers(response.Headers, isResponse: true);
-        string? userId = context.User.FindFirstValue("sub") ?? context.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        string? userId = UserId(context.User);
         GrpcResult? grpc = GrpcResult.From(context);
         IReadOnlyList<LoggedFile> files = Files(context, requestBytes, responseBytes);
 
@@ -300,7 +304,7 @@ public sealed partial class RequestLoggingMiddleware(
         {
             [LogFields.LogType] = combined is null ? LogTypes.HttpResponse : LogTypes.HttpRequestResponse,
             ["UserId"] = userId,
-            ["UserRoles"] = Roles(context),
+            ["UserRoles"] = Roles(context.User),
             ["ContentType"] = response.ContentType,
             ["ContentLength"] = response.ContentLength ?? 0,
             ["RequestBytes"] = requestBytes,
@@ -434,10 +438,34 @@ public sealed partial class RequestLoggingMiddleware(
     private static bool IsGrpc(HttpRequest request)
         => request.ContentType?.StartsWith(GrpcContentType, StringComparison.OrdinalIgnoreCase) == true;
 
-    // the roles of the user, as the old logs had them: distinct, comma separated
-    private string? Roles(HttpContext context)
+    // The user is only known once the request is authenticated, which the pipeline does after this middleware. Authentication is asked for
+    // here, early: the handler remembers its answer for the request, so asking again later costs nothing. Whatever goes wrong here is no
+    // reason to fail the request: the log is then written without a user.
+    private async Task<ClaimsPrincipal?> AuthenticatedUserAsync(HttpContext context)
     {
-        string roles = string.Join(',', context.User.FindAll(ClaimTypes.Role).Select(claim => claim.Value).Distinct());
+        try
+        {
+            if (_schemes is null || await _schemes.GetDefaultAuthenticateSchemeAsync().ConfigureAwait(false) is null)
+            {
+                return null;
+            }
+
+            AuthenticateResult result = await context.AuthenticateAsync().ConfigureAwait(false);
+            return result.Succeeded ? result.Principal : null;
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            return null;
+        }
+    }
+
+    private static string? UserId(ClaimsPrincipal? user)
+        => user?.FindFirstValue("sub") ?? user?.FindFirstValue(ClaimTypes.NameIdentifier);
+
+    // the roles of the user, as the old logs had them: distinct, comma separated; a JWT says "role", the platform maps it to ClaimTypes.Role
+    private string? Roles(ClaimsPrincipal? user)
+    {
+        string roles = user is null ? string.Empty : string.Join(',', user.Claims.Where(claim => claim.Type is "role" or ClaimTypes.Role).Select(claim => claim.Value).Distinct());
         return roles.Length == 0 ? null : LogFields.Text(roles, _options.MaxHeaderValueLength);
     }
 
