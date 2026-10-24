@@ -47,6 +47,14 @@ public sealed class LogExamplesController : BaseServiceController
             Logger.LogInformation("Order was checked {@Order}", order);
         }
 
+        // 3b. Debug and Trace are for the console only: they never reach Graylog or the file, whatever the settings say. The console shows them when
+        //     Logging:LogLevel allows it for this namespace ("Abc": "Debug"); with the default (Information) they are not shown at all.
+        using (Logger.BeginFacility("LOG_EXAMPLE_DEBUG"))
+        {
+            Logger.LogDebug("Debug: order {OrderNo} was read from the cache", order.OrderNo);
+            Logger.LogTrace("Trace: order {OrderNo} has {Lines} lines", order.OrderNo, 3);
+        }
+
         // 4. Levels, and an exception: the exception is the first argument; its type, where it was thrown and why are fields of the log.
         using (Logger.BeginFacility("LOG_EXAMPLE_WARNING"))
         {
