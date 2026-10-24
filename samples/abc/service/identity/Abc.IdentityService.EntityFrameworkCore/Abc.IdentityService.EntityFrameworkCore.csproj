@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!-- How the identity service keeps the domain: its DbContext and mappings. The database provider is chosen by the host. -->
+
+    <ItemGroup>
+        <ProjectReference Include="..\Abc.IdentityService.Domain\Abc.IdentityService.Domain.csproj" />
+        <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.EntityFrameworkCore\HsnSoft.Base.EntityFrameworkCore.csproj" />
+    </ItemGroup>
+
+</Project>

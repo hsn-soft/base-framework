@@ -12,4 +12,9 @@
         <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.AspNetCore.Swashbuckle\HsnSoft.Base.AspNetCore.Swashbuckle.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+        <ProjectReference Include="..\Abc.IdentityService.Application\Abc.IdentityService.Application.csproj" />
+        <ProjectReference Include="..\Abc.IdentityService.EntityFrameworkCore\Abc.IdentityService.EntityFrameworkCore.csproj" />
+    </ItemGroup>
+
 </Project>
