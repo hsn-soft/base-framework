@@ -6,6 +6,11 @@
     -->
 
     <ItemGroup>
+        <!-- the public key every host checks tokens with (made with scripts/generate-rsa-keys.cs, not in git); copied next to the assemblies of the hosts -->
+        <Content Include="public_key.xml" Condition="Exists('public_key.xml')" CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
+
+    <ItemGroup>
         <FrameworkReference Include="Microsoft.AspNetCore.App" />
     </ItemGroup>
 

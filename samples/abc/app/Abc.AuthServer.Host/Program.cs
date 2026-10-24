@@ -13,6 +13,9 @@ builder.Services
 
 WebApplication app = builder.Build();
 
+// the private key is loaded now: a missing key stops the host here, not at the first login
+_ = app.Services.GetRequiredService<TokenService>();
+
 app.UseAbcMicroservice();
 app.MapControllers();
 

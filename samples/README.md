@@ -232,6 +232,17 @@ curl -X POST http://localhost:5600/identity-service/v1/users/check-user-name -H 
 
 Each gateway reaches only the endpoints of its own segment (the other one answers 404), and its Swagger UI (`/swagger`) shows the identity service's document with the gateway's paths.
 
+### The keys of the Abc tokens
+
+The auth server signs its tokens with an RSA **private** key and every other Abc host checks them with the **public** key ([ADR-0031](../docs/adr/0031-jwt-signed-with-an-rsa-private-key.md)); the files are not in git. Make a pair once after a clone:
+
+```bash
+dotnet run scripts/generate-rsa-keys.cs -- samples/abc/app/Abc.AuthServer.Host/private_key.xml samples/abc/shared/Abc.Shared.Hosting/public_key.xml
+```
+
+The private key stays in `Abc.AuthServer.Host` (and is copied only to its output); the public key is copied next to every host that uses `Abc.Shared.Hosting`. A host whose key file is missing does not start and says which file. Never use the key of
+another system here, and never commit a private key.
+
 ### The Abc apps
 
 `samples/abc/app` has what people use: the auth server and the two web applications ([ADR-0029](../docs/adr/0029-one-auth-server-issues-the-token.md)).

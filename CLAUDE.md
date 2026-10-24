@@ -10,4 +10,4 @@ shape the repository (package rules, where code lives, the build, tests, CI, hoo
 - **Run `./scripts/detector/detector_mac.sh` before you call a change done** (and `dotnet format`); it runs the CI's checks. After a change that touches the samples, run them (`samples/xyz/run-all.sh`, `smoke-test.sh`) too: the detector only builds them.
 - **When you add a folder or a project, add it to `HsnSoft.Base.sln` in the matching solution folder** (`src`, `test`, `samples/<system>`); read the file first, the maintainer edits it by hand (ADR-0006).
 - Documents and code comments are in English; the maintainer talks Turkish in conversation.
-- Never write tokens, passwords or connection strings with real values into a file; Graylog and SonarQube credentials come from the environment or an ignored `.env`.
+- Never write tokens, passwords, private keys or connection strings with real values into a file; Graylog and SonarQube credentials come from the environment or an ignored `.env`. RSA keys of the samples are made with `scripts/generate-rsa-keys.cs` and are git-ignored (ADR-0031); never reuse a key of another system.

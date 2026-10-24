@@ -23,7 +23,7 @@ JWT, Swagger, a broker or a cache.
 | `HsnSoft.Base.Logging` | Logger interfaces and models, masking of sensitive data, the settings every provider reads (`Logging:LogLevel` for the console, `PersistentLogger` for what is kept); independent of any logging library ([docs](docs/Logging.md)) | Core |
 | `HsnSoft.Base.Logging.Serilog` | Serilog provider: console, Graylog or file, Debug/Verbose stay in the console | Logging, Hosting |
 | `HsnSoft.Base.Hosting` | Generic Host workers: `PeriodicBackgroundService` | Core |
-| `HsnSoft.Base.Authentication` | JWT bearer authentication, claim names and `ClaimsPrincipal` helpers | Core |
+| `HsnSoft.Base.Authentication` | JWT bearer authentication (a shared key, or the RSA public key of the auth server), claim names and `ClaimsPrincipal` helpers | Core |
 | `HsnSoft.Base.AspNetCore` | Health endpoints (`/health/live`, `/health/ready`) | Core |
 | `HsnSoft.Base.AspNetCore.WebApi` | Controllers, every answer in one `BaseResponse` type (results, validation, exceptions), global exception handler, request/response logging ([docs](docs/WebApi.md)) | Core |
 | `HsnSoft.Base.AspNetCore.Swashbuckle` | Swagger document and UI (Swashbuckle), Bearer or OAuth2 button, off in production-like environments ([docs](docs/Swagger.md)) | Core |
