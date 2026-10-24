@@ -23,10 +23,16 @@ public sealed class PagedUsers
 public sealed class TokenPayload
 {
     public string AccessToken { get; init; } = string.Empty;
+
+    /// <summary>How long the token is valid, in seconds: the sign-in of the page lasts as long.</summary>
+    public int ExpiresIn { get; init; }
 }
 
 public sealed class LoginModel
 {
+    /// <summary>The sign-in ended (the token expired or the gateway did not accept it): the page says so.</summary>
+    public bool Expired { get; set; }
+
     public string UserName { get; set; } = string.Empty;
 
     public string Password { get; set; } = string.Empty;

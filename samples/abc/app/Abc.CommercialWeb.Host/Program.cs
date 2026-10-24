@@ -14,7 +14,11 @@ builder.Services
     .AddBaseHealthChecks()
     .AddHttpContextAccessor();
 builder.Services.AddControllersWithViews(options => options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute()));
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie(options => options.LoginPath = "/account/login");
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie(options =>
+{
+    options.LoginPath = "/account/login";
+    options.SlidingExpiration = false;   // the sign-in ends when its token does
+});
 builder.Services.AddAuthorization();
 
 // every call to the commercial gateway carries the correlation id of the page being served and the token of the signed-in user

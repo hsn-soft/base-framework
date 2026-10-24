@@ -16,8 +16,10 @@ and the web applications have users who sign in. Something has to check a passwo
 - **Callers reach the auth server through the commercial gateway** (`/auth-server/v1/auth/login` is mapped to its `commercial` endpoint), like any other service; the commercial web application signs its employees in that way.
 - **A web application keeps the token in its own cookie** (the cookie belongs to the page, the token is a claim of it) and sends it as `Authorization: Bearer` with every call to the gateway. The correlation id of the page request goes with it, so the page, the gateway and
   the services behind it are one chain in the logs ([ADR-0018](0018-chain-logs.md)).
+- **The sign-in of a page lasts as long as its token** (`expires_in` of the login answer), and the cookie does not slide past it. When the gateway or a service does not accept the token anyway (it expired, the key changed), the page signs the user out and sends him to the sign-in page with a message, rather than showing an error.
 - The sample's users are a short list in the `Auth` section of the auth server, and the signing key in `appsettings.json` is a sample value. **A real auth server asks a store, and the key lives in a secret store, never in the repository.**
-- No refresh token in the sample (the Xyz auth server has one, with Redis).
+- No refresh token in the sample (the Xyz auth server has one, with Redis): a user signs in again when the token ends (15 minutes).
+- **Nothing in the Abc system is open by accident**: the open endpoints are the login of the auth server, `PublicUsersController` of the identity service and the health endpoints; a demo controller needs a token like the rest.
 
 ## Consequences
 
