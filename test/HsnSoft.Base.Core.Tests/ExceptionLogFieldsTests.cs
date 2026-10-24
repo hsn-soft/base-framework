@@ -27,7 +27,7 @@ public class ExceptionLogFieldsTests
 
         string identifier = ExceptionLogFields.Identifier(exception, "HsnSoft");
 
-        Assert.Equal($"Solution:HsnSoft|Assembly:HsnSoft.Base.Core.Tests|File:ExceptionLogFieldsTests.cs|Line:{line}", identifier);
+        Assert.Equal($"Solution:HsnSoft|Assembly:HsnSoft.Base.Core.Tests|File:ExceptionLogFieldsTests.cs|Line:{line}|Method:ExceptionLogFieldsTests.Thrown", identifier);
     }
 
     [Fact]
@@ -36,7 +36,7 @@ public class ExceptionLogFieldsTests
         (Exception cause, int causeLine) = Thrown(new KeyNotFoundException("missing"));
         (Exception wrapper, _) = Thrown(new InvalidOperationException("wrapped", cause));
 
-        Assert.EndsWith($"|File:ExceptionLogFieldsTests.cs|Line:{causeLine}", ExceptionLogFields.Identifier(wrapper, "HsnSoft"), StringComparison.Ordinal);
+        Assert.Contains($"|File:ExceptionLogFieldsTests.cs|Line:{causeLine}|", ExceptionLogFields.Identifier(wrapper, "HsnSoft"), StringComparison.Ordinal);
     }
 
     // the library (xunit) throws, from sources it carries in its symbols, and the application called it
@@ -73,6 +73,56 @@ public class ExceptionLogFieldsTests
         Assert.Equal("Solution:System|Assembly:System.Private.CoreLib|Type:System.InvalidOperationException", neverThrown);
     }
 
+#pragma warning disable CA1822 // instance methods on purpose: the repository of the application is not static
+    private sealed class Repository
+    {
+        public async Task InsertAsync()
+        {
+            await Task.Yield();
+            throw new InvalidOperationException("async");
+        }
+
+        public void Sync() => throw new InvalidOperationException("sync");
+
+        public Action Lambda() => () => throw new InvalidOperationException("lambda");
+
+        public void LocalFunction()
+        {
+            Local();
+            static void Local() => throw new InvalidOperationException("local");
+        }
+
+        public async Task AsyncLambdaAsync()
+        {
+            await Task.Yield();
+            static async Task inner()
+            {
+                await Task.Yield();
+                throw new InvalidOperationException("async lambda");
+            }
+            await inner();
+        }
+    }
+
+#pragma warning restore CA1822
+
+    [Fact]
+    public async Task Method_IsTheMethodTheDeveloperWrote_NotTheOneTheCompilerMade()
+    {
+        Repository repository = new();
+        Exception async = await Assert.ThrowsAsync<InvalidOperationException>(repository.InsertAsync);
+        Exception sync = Assert.Throws<InvalidOperationException>(repository.Sync);
+        Exception lambda = Assert.Throws<InvalidOperationException>(repository.Lambda());
+        Exception local = Assert.Throws<InvalidOperationException>(repository.LocalFunction);
+        Exception asyncLambda = await Assert.ThrowsAsync<InvalidOperationException>(repository.AsyncLambdaAsync);
+
+        Assert.EndsWith("|Method:Repository.InsertAsync", ExceptionLogFields.Identifier(async, "HsnSoft"), StringComparison.Ordinal);
+        Assert.EndsWith("|Method:Repository.Sync", ExceptionLogFields.Identifier(sync, "HsnSoft"), StringComparison.Ordinal);
+        Assert.EndsWith("|Method:Repository.Lambda", ExceptionLogFields.Identifier(lambda, "HsnSoft"), StringComparison.Ordinal);
+        Assert.EndsWith("|Method:Repository.LocalFunction", ExceptionLogFields.Identifier(local, "HsnSoft"), StringComparison.Ordinal);
+        Assert.EndsWith("|Method:Repository.AsyncLambdaAsync", ExceptionLogFields.Identifier(asyncLambda, "HsnSoft"), StringComparison.Ordinal);
+    }
+
     [Fact]
     public void Reason_IsEveryMessageDownToTheInnermost_JoinedWithTheSeparator()
     {
@@ -103,7 +153,7 @@ public class ExceptionLogFieldsTests
         ExceptionLogFields.AddTo(fields, exception);
 
         Assert.Equal("System.ArgumentException", fields["ExceptionType"]);
-        Assert.EndsWith($"|Line:{line}", (string)fields["ExceptionIdentifier"]!, StringComparison.Ordinal);
+        Assert.Contains($"|Line:{line}|", (string)fields["ExceptionIdentifier"]!, StringComparison.Ordinal);
         Assert.Equal("bad", fields["Reason"]);
         Assert.Throws<ArgumentNullException>(() => ExceptionLogFields.AddTo(null!, exception));
         Assert.Throws<ArgumentNullException>(() => ExceptionLogFields.AddTo(fields, null!));
