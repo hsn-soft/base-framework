@@ -1,0 +1,74 @@
+# Architecture decision records
+
+The decisions behind this repository, one short file each: **why** it is the way it is, what was decided, and what it costs. They are the memory of the project: a new session, or a new maintainer, starts here.
+The reference documents in [`docs/`](../README.md) say *how to use* a feature; these say *why*, and the reference documents link here.
+
+**Read this index first**, then the ADRs of the area you are about to touch. **Every new architecture decision is added here when it is taken** (see [ADR-0001](0001-record-architecture-decisions.md) for what deserves one and
+how to supersede one), in the same pull request as the change, and the table below is updated.
+
+New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the next number), fill it in, add a row.
+
+## Process
+
+| ADR | Decision | Status | Date |
+|---|---|---|---|
+| [0001](0001-record-architecture-decisions.md) | Architecture decisions are recorded as ADRs in `docs/adr` | Accepted | 2026-10-25 |
+
+## Packages and where code lives
+
+| ADR | Decision | Status | Date |
+|---|---|---|---|
+| [0002](0002-one-package-one-capability.md) | One package, one capability | Accepted | 2026-10-22 |
+| [0003](0003-abstractions-separate-from-providers.md) | Abstractions are separate from their providers | Accepted | 2026-10-22 |
+| [0004](0004-core-once-and-the-dependency-graph.md) | Packages reference `HsnSoft.Base.Core` once, and form this dependency graph | Accepted | 2026-10-22 |
+| [0005](0005-where-code-lives.md) | Where a piece of code lives: the framework, a product's shared project, or a service | Accepted | 2026-10-22 |
+| [0006](0006-repository-and-solution-layout.md) | Repository folders, the solution file and the sample systems | Accepted | 2026-10-25 |
+
+## Build, tests, CI and the developer workflow
+
+| ADR | Decision | Status | Date |
+|---|---|---|---|
+| [0007](0007-build-settings-and-versioning.md) | Shared build settings, one version, and how a package is published | Accepted | 2026-10-22 |
+| [0008](0008-code-style-and-analyzers.md) | Code style: the `.editorconfig` is the only source, analyzers run in the build | Accepted | 2026-10-22 |
+| [0009](0009-unit-tests-every-package.md) | Every package has a unit test project, found by name | Accepted | 2026-10-22 |
+| [0010](0010-integration-tests-with-testcontainers.md) | Integration tests start the real services with Testcontainers | Accepted | 2026-10-22 |
+| [0011](0011-coverage-gate.md) | The coverage gate merges unit and integration coverage and fails below 99 % of `src` | Accepted | 2026-10-22 |
+| [0012](0012-ci-workflow-and-what-breaks-a-pull-request.md) | The CI workflow, and what breaks a pull request | Accepted | 2026-10-22 |
+| [0013](0013-git-hooks.md) | Git hooks: format on commit, build and unit tests on push | Accepted | 2026-10-22 |
+| [0014](0014-detector-before-a-pull-request.md) | The detector runs the CI's checks on the developer's machine before a pull request | Accepted | 2026-10-23 |
+
+## Logging
+
+| ADR | Decision | Status | Date |
+|---|---|---|---|
+| [0015](0015-logging-architecture.md) | Everything logs through `ILogger`; a provider decides what a log is and where it goes | Accepted | 2026-10-24 |
+| [0016](0016-log-types-by-namespace.md) | The log type is told by the namespace of the class that wrote it | Accepted | 2026-10-25 |
+| [0017](0017-two-places-two-levels.md) | The console and what is kept have separate levels | Accepted | 2026-10-25 |
+| [0018](0018-chain-logs.md) | The chain logs: a request and a message are each a pair of logs, with ids that tie a whole chain together | Accepted | 2026-10-24 |
+| [0019](0019-log-fields-pipeline.md) | Which fields a log has: a pipeline, a noise filter by type, and a map measured from a run | Accepted | 2026-10-25 |
+| [0020](0020-failure-logged-once.md) | A failure is logged once, with where it was thrown and why; a known error is a Warning | Accepted | 2026-10-24 |
+| [0021](0021-sensitive-data-by-attributes.md) | What is sensitive is said by the classes, never by settings | Accepted | 2026-10-23 |
+
+## Web api, events, Swagger
+
+| ADR | Decision | Status | Date |
+|---|---|---|---|
+| [0022](0022-web-api-answers.md) | Every answer is a `BaseResponse`; what a client learns of a 500 is a key and a trace id | Accepted | 2026-10-24 |
+| [0023](0023-event-bus.md) | The event bus is a port of the production code: same wire, same topology, same failure handling | Accepted | 2026-10-23 |
+| [0024](0024-swagger.md) | Swagger is its own package, off where a service runs for real, and a gateway shows its services | Accepted | 2026-10-25 |
+
+## The decisions in a few lines
+
+- **Packages:** one capability each, no forced dependencies; abstractions and providers apart; everything references Core once; the framework knows no product. Code goes to the framework, the product's shared project or a service by the test in ADR-0005.
+- **Build and workflow:** `.editorconfig` is the only style, warnings are errors in CI, pre-commit formats, pre-push builds and runs unit tests, the detector runs the whole CI locally, the CI merges unit and integration coverage and fails below 99 %.
+- **Logging:** everything uses `ILogger`; the type of a log is the namespace of its writer (`HsnSoft.Base` framework, `{App}.Shared` shared, `{App}` app, the rest platform); the console is told by `Logging:LogLevel`, Graylog/file by `PersistentLogger`; Debug and Trace are never kept;
+  a failure is logged once; sensitive data is said by `[SensitiveData]`; the field map is measured.
+
+## Open items (not decided or not done)
+
+- Port the Kafka consumer and add an Azure Service Bus project the same way as RabbitMQ ([ADR-0023](0023-event-bus.md)); bridge the Kafka client's logs to `ILogger`.
+- Show the `BaseResponse` envelope in the Swagger document ([ADR-0024](0024-swagger.md)).
+- A test that fixes the allowed fields per log type, and configurable per-type `RemoveFields`/`AddFields` ([ADR-0019](0019-log-fields-pipeline.md)).
+- A `SharedLog` in a measured run (the Xyz shared library logs only when Redis is down), so its column of `docs/GraylogFields.md` has data.
+- Revoke and rotate the SonarQube token that was once pasted in a conversation; keep tokens in `scripts/sonar/.env` only.
+- Pushing `feat/new-framework` and opening the pull request into `dev`, to see the CI run on Linux for the first time.

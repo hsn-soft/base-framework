@@ -16,6 +16,9 @@ Thank you for helping with the HsnSoft Base Framework. This page is the short ve
 - **Reference `HsnSoft.Base.Core` once.** Every package depends on it, directly or through another framework package. If the
   package already references a sibling that references Core, do not add Core again.
 
+- **Write down architecture decisions.** A rule other code must follow, or a choice between real alternatives, gets a short record in [`docs/adr`](docs/adr/README.md)
+  (see [ADR-0001](docs/adr/0001-record-architecture-decisions.md)), in the same pull request as the change.
+
 ## Branches and pull requests
 
 1. Branch from `dev` (`feat/...`, `fix/...`, `refactor/...`).

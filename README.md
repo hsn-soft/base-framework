@@ -8,6 +8,10 @@
 HsnSoft Base Framework is the infrastructure code a company's services repeat, written once and independent of any product.
 A service picks the packages for the technologies it uses; nothing forces a broker, a database or a cache on it.
 
+## Documentation
+
+[`docs/`](docs/README.md) has the reference documents and, in [`docs/adr`](docs/adr/README.md), the architecture decision records: why the repository is the way it is.
+
 ## Packages
 
 An application takes only the capabilities it uses. Each package is one capability; an agent that reads MongoDB never loads
@@ -16,7 +20,7 @@ JWT, Swagger, a broker or a cache.
 | Package | Capability | Depends on |
 |---|---|---|
 | `HsnSoft.Base.Core` | Bare essentials: shared exceptions, health-check tag, startup retry | - |
-| `HsnSoft.Base.Logging` | Logger interfaces and models, masking of sensitive data, the `FrameworkLogger` settings; independent of any logging library ([docs](docs/Logging.md)) | Core |
+| `HsnSoft.Base.Logging` | Logger interfaces and models, masking of sensitive data, the settings every provider reads (`Logging:LogLevel` for the console, `PersistentLogger` for what is kept); independent of any logging library ([docs](docs/Logging.md)) | Core |
 | `HsnSoft.Base.Logging.Serilog` | Serilog provider: console, Graylog or file, Debug/Verbose stay in the console | Logging, Hosting |
 | `HsnSoft.Base.Hosting` | Generic Host workers: `PeriodicBackgroundService` | Core |
 | `HsnSoft.Base.Authentication` | JWT bearer authentication, claim names and `ClaimsPrincipal` helpers | Core |
