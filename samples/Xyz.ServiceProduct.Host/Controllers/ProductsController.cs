@@ -57,6 +57,35 @@ public sealed class ProductsController(ProductStore store, IDistributedCache cac
         return Created($"/api/products/{product.Id}", product);
     }
 
+    /// <summary>File upload demo: the image of a product (kept in Redis for an hour). The logs say the name and the size of the file, never its content.</summary>
+    [HttpPost("{id:guid}/image")]
+    [Authorize(Policy = ServiceRegister.AdminPolicy)]
+    public async Task<IActionResult> UploadImageAsync(Guid id, IFormFile file, CancellationToken cancellationToken)
+    {
+        if (file.Length == 0)
+        {
+            throw new BusinessRuleException("The file is empty.");
+        }
+
+        using MemoryStream content = new();
+        await file.CopyToAsync(content, cancellationToken);
+        DistributedCacheEntryOptions hour = new() { AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1) };
+        await cache.SetAsync(ImageKey(id), content.ToArray(), hour, cancellationToken);
+        await cache.SetStringAsync(ImageKey(id) + ":file", $"{file.FileName}|{file.ContentType}", hour, cancellationToken);
+        return Ok(new { id, file.FileName, Size = file.Length });
+    }
+
+    /// <summary>File download demo: the image that was uploaded.</summary>
+    [HttpGet("{id:guid}/image")]
+    public async Task<IActionResult> DownloadImageAsync(Guid id, CancellationToken cancellationToken)
+    {
+        byte[] content = await cache.GetAsync(ImageKey(id), cancellationToken) ?? throw new NotFoundException($"Product {id} has no image.");
+        string[] file = (await cache.GetStringAsync(ImageKey(id) + ":file", cancellationToken) ?? "image|application/octet-stream").Split('|');
+        return File(content, file[1], file[0]);
+    }
+
+    private static string ImageKey(Guid id) => $"product-image:{id}";
+
     [HttpPut("{id:guid}/stock")]
     [Authorize(Policy = ServiceRegister.AdminPolicy)]
     public async Task<IActionResult> AdjustStockAsync(Guid id, AdjustStockRequest request, CancellationToken cancellationToken)

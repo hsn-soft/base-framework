@@ -75,6 +75,13 @@ builder.Services
 app.UseXyzApi();   // exceptions, authentication, authorization, health, in that order
 ```
 
+## File upload and download
+
+`POST /api/products/{id}/image` (admin, `multipart/form-data`, a `file` part) and `GET /api/products/{id}/image` show how files are logged: never their
+content, but the name and the size. The request log says the size the request declares (`RequestBytes`, the whole multipart body); the response log says
+`..., upload urun-foto.jpg (2097152 bytes)` (the exact size of the file, known once the form is read) or `..., download urun-foto.jpg (2097152 bytes)`,
+with `Files`, `FileCount`, `FileBytes` and `ResponseBytes`.
+
 ## What the logs say when something goes wrong
 
 Errors the application expects (`KnownExceptions`: a rule that says no, a missing value, an unknown id, bad input, no token) are the
