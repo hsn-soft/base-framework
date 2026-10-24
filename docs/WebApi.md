@@ -24,7 +24,15 @@ whatever happened:
 | `BusinessException(errorCode, message)` | 400, with `errorCode` and the `WithData(...)` values |
 | `BaseHttpException(status, message)` | the status |
 | `UnauthorizedAccessException` | 401 |
-| anything else | 500, "Internal server error." and nothing of the message (logged as `GLOBAL_EXCEPTION_HANDLER`) |
+| anything else | 500, `INTERNAL_SERVER_ERROR` (a key, the client shows its own text); the trace id is how support finds it (logged as `GLOBAL_EXCEPTION_HANDLER`) |
+
+**What the client learns of a 500.** In production it learns the status 500, the key `INTERNAL_SERVER_ERROR` and the `traceId`, nothing of the exception. The
+`traceId` of every answer (success or failure) is the `TraceId` of the logs of that request: the W3C trace id a gateway passes on, so the logs of the
+gateway and of every service it went through have it (without a trace, the `RequestId` of ASP.NET Core). Support asks for it and searches `TraceId:<value>` in Graylog,
+where the log of the failure has the exception, `ExceptionIdentifier` (file and line) and `Reason`. Where the service does not run for real (development, a
+developer's docker) the answer also says why and where (`Reason` and `ExceptionIdentifier` as two more messages), so the developer sees it at once. The environments
+that hide the details are `Production`, `Staging`, `stage` and `uat`; change them with `ApiErrors:HideDetailsIn` (`AddBaseWebApi(configuration)`; a list in the
+configuration replaces the default). A 4xx always tells its message (it is the caller's error); a validation failure names the fields only where details are shown.
 
 JSON is camel case, without nulls, enums as text. A string a request leaves out is not an error by itself (mark what is required with
 `[Required]`), as in the services in production. Register your own `IStatusMessageProvider` (the texts, e.g. localized) or

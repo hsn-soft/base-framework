@@ -18,7 +18,7 @@ public sealed class UnifiedApiResponseFilter(IStatusMessageProvider statusMessag
     {
         if (!context.HttpContext.Response.HasStarted)
         {
-            string traceId = context.HttpContext.TraceIdentifier;
+            string traceId = ResponseTrace.Of(context.HttpContext);
 
             switch (context.Result)
             {

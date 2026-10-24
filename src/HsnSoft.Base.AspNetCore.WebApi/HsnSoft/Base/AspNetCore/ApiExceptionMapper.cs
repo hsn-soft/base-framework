@@ -3,8 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using HsnSoft.Base.AspNetCore.Responses;
+using HsnSoft.Base.Logging;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 
 namespace HsnSoft.Base.AspNetCore;
 
@@ -14,7 +16,7 @@ public interface IApiExceptionMapper
     (int StatusCode, string? ErrorCode, List<string> Messages) Map(Exception exception, IHostEnvironment environment);
 }
 
-public sealed class ApiExceptionMapper(IStatusMessageProvider statusMessages) : IApiExceptionMapper
+public sealed class ApiExceptionMapper(IStatusMessageProvider statusMessages, IOptions<ApiErrorOptions> errorOptions) : IApiExceptionMapper
 {
     public (int StatusCode, string? ErrorCode, List<string> Messages) Map(Exception exception, IHostEnvironment environment)
     {
@@ -40,10 +42,18 @@ public sealed class ApiExceptionMapper(IStatusMessageProvider statusMessages) : 
 
         messages.AddRange(exception.Data.Cast<DictionaryEntry>().Select(entry => $"{entry.Key}: {entry.Value}"));
 
-        // how it happened is for the developer, not for production
-        if (!environment.IsProduction())
+        // why and where is for the developer: where the service runs for real (production, uat, stage) the client gets the key and the trace id only
+        if (!errorOptions.Value.HidesDetails(environment))
         {
-            messages.AddRange(InnerMessages(exception.InnerException));
+            if (status >= StatusCodes.Status500InternalServerError)
+            {
+                messages.Add(ExceptionLogFields.ReasonOf(exception));
+                messages.Add(ExceptionLogFields.Identifier(exception));
+            }
+            else
+            {
+                messages.AddRange(InnerMessages(exception.InnerException));
+            }
         }
 
         return (status, errorCode, messages);

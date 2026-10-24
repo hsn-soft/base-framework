@@ -37,7 +37,7 @@ public sealed class ApiResponseWriter : IApiResponseWriter
         {
             StatusCode = statusCode,
             StatusMessages = [.. messages.Distinct()],
-            TraceId = context.TraceIdentifier,
+            TraceId = ResponseTrace.Of(context),
             ErrorCode = errorCode,
         };
         await WriteAsync(context, statusCode, JsonSerializer.Serialize(body, s_jsonOptions)).ConfigureAwait(false);
@@ -52,7 +52,7 @@ public sealed class ApiResponseWriter : IApiResponseWriter
         {
             StatusCode = statusCode,
             StatusMessages = [.. messages.Distinct()],
-            TraceId = context.TraceIdentifier,
+            TraceId = ResponseTrace.Of(context),
             Payload = payload,
         };
         await WriteAsync(context, statusCode, JsonSerializer.Serialize(body, s_jsonOptions)).ConfigureAwait(false);

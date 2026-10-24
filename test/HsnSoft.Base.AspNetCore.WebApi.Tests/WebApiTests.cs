@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 
 namespace HsnSoft.Base.AspNetCore.WebApi.Tests;
 
@@ -90,6 +91,12 @@ public sealed class AnswersController : ControllerBase
 
     [HttpGet("not-found")]
     public IActionResult Missing() => throw new NotFoundException("order 7 is missing");
+
+    [HttpGet("rule-inner")]
+    public IActionResult RuleWithInner() => throw new BusinessRuleException("stock is empty");
+
+    [HttpGet("domain-inner")]
+    public IActionResult DomainWithInner() => throw new DomainException("the rule", new InvalidOperationException("because of this", new KeyNotFoundException("and this")));
 
     [HttpGet("rule")]
     public IActionResult Rule() => throw new BusinessRuleException("stock is empty");
@@ -271,20 +278,101 @@ public class WebApiTests
     }
 
     [Fact]
-    public async Task UnexpectedExceptions_Become500_WithoutLeakingTheMessage_OrTheInnerOnesInProduction()
+    public async Task UnexpectedExceptions_Become500_WithTheKeyAndTheTraceId_AndNothingElseWhereTheServiceRunsForReal()
     {
-        await using WebApplication production = await StartAsync();
+        foreach (string environment in new[] { "Production", "Staging", "stage", "uat" })
+        {
+            await using WebApplication app = await StartAsync(environment);
+
+            (HttpStatusCode status, JsonElement body) = await GetAsync(app, "/api/answers/boom");
+
+            Assert.Equal(HttpStatusCode.InternalServerError, status);
+            Assert.Equal(500, body.GetProperty("statusCode").GetInt32());
+            Assert.Equal(["INTERNAL_SERVER_ERROR"], body.GetProperty("statusMessages").EnumerateArray().Select(m => m.GetString()));
+            Assert.False(string.IsNullOrEmpty(body.GetProperty("traceId").GetString()));
+            Assert.DoesNotContain("secret", body.GetRawText(), StringComparison.Ordinal);
+            Assert.DoesNotContain("inner detail", body.GetRawText(), StringComparison.Ordinal);
+            Assert.DoesNotContain("File:", body.GetRawText(), StringComparison.Ordinal);
+        }
+    }
+
+    [Theory]
+    [InlineData("Development")]
+    [InlineData("docker")]
+    public async Task UnexpectedExceptions_Tell_WhyAndWhere_ToTheDeveloper(string environment)
+    {
+        await using WebApplication app = await StartAsync(environment);
+
+        (_, JsonElement body) = await GetAsync(app, "/api/answers/boom");
+
+        string?[] messages = [.. body.GetProperty("statusMessages").EnumerateArray().Select(m => m.GetString())];
+        Assert.Equal("INTERNAL_SERVER_ERROR", messages[0]);
+        Assert.Equal("secret internals >> inner detail", messages[1]);
+        Assert.Contains("|File:WebApiTests.cs|Line:", messages[2], StringComparison.Ordinal);
+        Assert.False(string.IsNullOrEmpty(body.GetProperty("traceId").GetString()));
+    }
+
+    [Fact]
+    public async Task AKnownError_TellsWhatLiesBehindIt_OnlyWhereDetailsAreShown()
+    {
         await using WebApplication development = await StartAsync("Development");
+        await using WebApplication production = await StartAsync();
 
-        (HttpStatusCode status, JsonElement hidden) = await GetAsync(production, "/api/answers/boom");
-        (_, JsonElement shown) = await GetAsync(development, "/api/answers/boom");
+        (_, JsonElement shown) = await GetAsync(development, "/api/answers/domain-inner");
+        (_, JsonElement hidden) = await GetAsync(production, "/api/answers/domain-inner");
 
-        Assert.Equal(HttpStatusCode.InternalServerError, status);
-        Assert.Equal("Internal server error.", hidden.GetProperty("statusMessages")[0].GetString());
-        Assert.Single(hidden.GetProperty("statusMessages").EnumerateArray());
-        Assert.DoesNotContain("secret", hidden.GetRawText(), StringComparison.Ordinal);
-        Assert.Contains("inner detail", shown.GetRawText(), StringComparison.Ordinal);
-        Assert.DoesNotContain("secret", shown.GetRawText(), StringComparison.Ordinal);
+        Assert.Equal(["the rule", "because of this", "and this"], shown.GetProperty("statusMessages").EnumerateArray().Select(m => m.GetString()));
+        Assert.Equal(["the rule"], hidden.GetProperty("statusMessages").EnumerateArray().Select(m => m.GetString()));
+    }
+
+    [Fact]
+    public async Task TheHiddenEnvironments_AreReadFromTheConfiguration()
+    {
+        WebApplicationBuilder builder = WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = "Development" });
+        builder.WebHost.UseTestServer();
+        builder.Configuration["ApiErrors:HideDetailsIn:0"] = "Development";
+        builder.Services.AddBaseWebApi(builder.Configuration);
+        builder.Services.AddControllers().AddApplicationPart(typeof(AnswersController).Assembly);
+        await using WebApplication app = builder.Build();
+        app.UseBaseExceptionHandling();
+        app.MapControllers();
+        await app.StartAsync();
+
+        (_, JsonElement body) = await GetAsync(app, "/api/answers/boom");
+
+        Assert.Single(body.GetProperty("statusMessages").EnumerateArray());
+    }
+
+    [Fact]
+    public async Task TheEnvironmentsThatHideTheDetails_CanBeChosen()
+    {
+        await using WebApplication hidden = await StartAsync("Development", services => services.Configure<ApiErrorOptions>(options => options.HideDetailsIn.Add("Development")));
+        await using WebApplication shown = await StartAsync("Production", services => services.Configure<ApiErrorOptions>(options => options.HideDetailsIn.Add("Staging")));
+
+        (_, JsonElement hiddenBody) = await GetAsync(hidden, "/api/answers/boom");
+        (_, JsonElement shownBody) = await GetAsync(shown, "/api/answers/boom");
+
+        Assert.Single(hiddenBody.GetProperty("statusMessages").EnumerateArray());
+        Assert.Equal(3, shownBody.GetProperty("statusMessages").GetArrayLength());
+    }
+
+    [Fact]
+    public async Task TheTraceIdOfAnAnswer_IsTheTraceIdOfItsLogs_WhenThereIsATrace()
+    {
+        using System.Diagnostics.ActivityListener listener = new()
+        {
+            ShouldListenTo = _ => true,
+            Sample = (ref _) => System.Diagnostics.ActivitySamplingResult.AllData,
+        };
+        System.Diagnostics.ActivitySource.AddActivityListener(listener);
+        await using WebApplication app = await StartAsync();
+        HttpRequestMessage request = new(HttpMethod.Get, "/api/answers/object");
+        request.Headers.Add("traceparent", "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01");
+
+        HttpResponseMessage response = await app.GetTestClient().SendAsync(request);
+
+        // the trace the caller (a gateway) continues, so the logs of every service it passed through can be found with it
+        Assert.Equal("0af7651916cd43dd8448eb211c80319c", JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement.GetProperty("traceId").GetString());
     }
 
     [Fact]
@@ -397,10 +485,10 @@ public class WebApiTests
     [InlineData(408, "Request timeout.")]
     [InlineData(415, "Unsupported media type.")]
     [InlineData(429, "Too many requests.")]
-    [InlineData(500, "Internal server error.")]
-    [InlineData(502, "Bad gateway.")]
-    [InlineData(503, "Service unavailable.")]
-    [InlineData(504, "Gateway timeout.")]
+    [InlineData(500, "INTERNAL_SERVER_ERROR")]
+    [InlineData(502, "BAD_GATEWAY")]
+    [InlineData(503, "SERVICE_UNAVAILABLE")]
+    [InlineData(504, "GATEWAY_TIMEOUT")]
     [InlineData(418, "Request failed.")]
     public void StatusMessages_AreThereForTheCodesServicesAnswerWith(int code, string message)
         => Assert.Equal(message, new StatusMessageProvider().GetMessage(code));
@@ -433,7 +521,7 @@ public class WebApiTests
             app.Services.GetRequiredService<IApiResponseWriter>(),
             app.Services.GetRequiredService<IHostEnvironment>(),
             NullLogger<GlobalExceptionHandler>.Instance);
-        ApiExceptionMapper mapper = new(new StatusMessageProvider());
+        ApiExceptionMapper mapper = new(new StatusMessageProvider(), Options.Create(new ApiErrorOptions()));
 
         await Assert.ThrowsAsync<ArgumentNullException>(async () => await handler.TryHandleAsync(null!, new InvalidOperationException(), default));
         await Assert.ThrowsAsync<ArgumentNullException>(async () => await handler.TryHandleAsync(new DefaultHttpContext(), null!, default));

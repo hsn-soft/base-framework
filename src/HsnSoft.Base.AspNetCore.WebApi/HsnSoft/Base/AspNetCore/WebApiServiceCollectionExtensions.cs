@@ -9,9 +9,11 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 
 namespace HsnSoft.Base.AspNetCore;
 
@@ -23,9 +25,15 @@ public static class WebApiServiceCollectionExtensions
     /// enums as text. Map the controllers with <c>app.MapControllers()</c>. Register your own <see cref="IStatusMessageProvider"/> or
     /// <see cref="IApiExceptionMapper"/> before this to change the texts or add exceptions.
     /// </summary>
-    public static IServiceCollection AddBaseWebApi(this IServiceCollection services)
+    public static IServiceCollection AddBaseWebApi(this IServiceCollection services, IConfiguration? configuration = null)
     {
         ArgumentNullException.ThrowIfNull(services);
+
+        OptionsBuilder<ApiErrorOptions> errors = services.AddOptions<ApiErrorOptions>();
+        if (configuration is not null)
+        {
+            errors.Bind(configuration.GetSection(ApiErrorOptions.SectionName));
+        }
 
         services.TryAddSingleton<IStatusMessageProvider, StatusMessageProvider>();
         services.TryAddSingleton<IApiResponseWriter, ApiResponseWriter>();
@@ -78,8 +86,8 @@ public static class WebApiServiceCollectionExtensions
         IHostEnvironment environment = context.HttpContext.RequestServices.GetRequiredService<IHostEnvironment>();
         System.Collections.Generic.List<string> messages = ["Validation failed."];
 
-        // which field is wrong helps the developer; production does not tell
-        if (!environment.IsProduction())
+        // which field is wrong helps the developer; where the service runs for real the client is not told
+        if (!context.HttpContext.RequestServices.GetRequiredService<IOptions<ApiErrorOptions>>().Value.HidesDetails(environment))
         {
             messages.AddRange(context.ModelState
                 .Where(entry => entry.Value?.Errors.Count > 0)
@@ -90,7 +98,7 @@ public static class WebApiServiceCollectionExtensions
         {
             StatusCode = StatusCodes.Status400BadRequest,
             StatusMessages = [.. messages.Distinct()],
-            TraceId = context.HttpContext.TraceIdentifier,
+            TraceId = ResponseTrace.Of(context.HttpContext),
             ErrorCode = "validation_error",
         });
     }

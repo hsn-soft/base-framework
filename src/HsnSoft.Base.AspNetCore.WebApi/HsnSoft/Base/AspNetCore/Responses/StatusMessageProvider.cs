@@ -1,6 +1,9 @@
 namespace HsnSoft.Base.AspNetCore.Responses;
 
-/// <summary>The text for a status code. Register your own (localized) one to replace the English default.</summary>
+/// <summary>
+/// The text for a status code. Register your own (localized) one to replace the English default. A failure of the service (5xx) is a key, not a sentence:
+/// the client shows its own text for it and the trace id is what to tell support.
+/// </summary>
 public interface IStatusMessageProvider
 {
     string GetMessage(int statusCode);
@@ -23,10 +26,10 @@ public sealed class StatusMessageProvider : IStatusMessageProvider
         408 => "Request timeout.",
         415 => "Unsupported media type.",
         429 => "Too many requests.",
-        500 => "Internal server error.",
-        502 => "Bad gateway.",
-        503 => "Service unavailable.",
-        504 => "Gateway timeout.",
+        500 => "INTERNAL_SERVER_ERROR",
+        502 => "BAD_GATEWAY",
+        503 => "SERVICE_UNAVAILABLE",
+        504 => "GATEWAY_TIMEOUT",
         _ => "Request failed.",
     };
 }
