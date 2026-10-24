@@ -231,7 +231,7 @@ public sealed class RequestLoggingTests
     }
 
     [Fact]
-    public async Task ARequest_IsLoggedAsARequestAndAResponse_ThatShareTheScopeId_AndTheCorrelationId()
+    public async Task ARequest_IsLoggedAsARequestAndAResponse_ThatShareTheRequestId_AndTheCorrelationId()
     {
         await using Rig rig = await StartAsync();
 
@@ -243,7 +243,9 @@ public sealed class RequestLoggingTests
         Logged answer = rig.Response;
         Assert.Equal("HttpRequest", request.Properties["LogType"]);
         Assert.Equal("HttpResponse", answer.Properties["LogType"]);
-        Assert.Equal(request.Properties["ScopeId"], answer.Properties["ScopeId"]);
+        Assert.False(string.IsNullOrEmpty((string?)request.Properties["RequestId"]));
+        Assert.Equal(request.Properties["RequestId"], answer.Properties["RequestId"]);
+        Assert.False(request.Properties.ContainsKey("ScopeId"));
         Assert.Equal(request.Properties["CorrelationId"], answer.Properties["CorrelationId"]);
         Assert.Equal(request.Properties["CorrelationId"], response.Headers.GetValues("X-Correlation-Id").Single());
         Assert.Equal("httpclient -> /api/orders/7: GET /api/orders/7", request.Message);
@@ -284,7 +286,8 @@ public sealed class RequestLoggingTests
         Assert.Equal("other.example.org", log.Properties["Referer"]);
         Assert.Equal("http", log.Properties["Scheme"]);
         Assert.Equal("localhost", log.Properties["Host"]);
-        Assert.False(string.IsNullOrEmpty((string?)log.Properties["TraceId"]));
+        // TraceId is the W3C trace id ASP.NET Core adds, not a second name for the RequestId
+        Assert.NotEqual(log.Properties["RequestId"], log.Properties.GetValueOrDefault("TraceId"));
         Assert.Equal("HttpRequest:mobile", log.Properties["ClientChannel"]);
         Assert.Equal("HttpResponse:mobile", rig.Response.Properties["ClientChannel"]);
     }
@@ -500,7 +503,7 @@ public sealed class RequestLoggingTests
         Assert.Equal("chain-1", keptResponse.Headers.GetValues("X-Correlation-Id").Single());
         Assert.Equal(128 + "...(+372)".Length, cutResponse.Headers.GetValues("X-Correlation-Id").Single().Length);
         Assert.Matches("^[0-9a-f]{32}$", newResponse.Headers.GetValues("X-Correlation-Id").Single());
-        Assert.Matches("^[0-9a-f]{32}$", (string)rig.Http[^1].Properties["ScopeId"]!);
+        Assert.NotNull(rig.Http[^1].Properties["RequestId"]);
     }
 
     [Fact]
@@ -531,7 +534,7 @@ public sealed class RequestLoggingTests
         await rig.Client.GetAsync("/flow");
 
         Assert.Equal("/flow", seen?.Name);
-        Assert.Equal(rig.Request.Properties["ScopeId"], seen?.ScopeId);
+        Assert.Equal(rig.Request.Properties["RequestId"], seen?.ScopeId);
         Assert.Equal(rig.Request.Properties["CorrelationId"], seen?.CorrelationId);
         Assert.Null(LogFlow.Current);
     }

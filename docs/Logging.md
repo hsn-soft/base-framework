@@ -76,13 +76,16 @@ object was logged with `{@Object}` and `Args` when only plain values were.
 
 ### The chain logs
 
+Fields ASP.NET Core already adds to every log of a request are used as they are and not written twice: `RequestId` (the key of one request),
+`RequestPath`, `ConnectionId`, and the W3C trace (`TraceId`, `SpanId`, `ParentId`, which a gateway passes on in `traceparent`).
+
 A request that publishes an event whose handler publishes another event is one chain. The four chain logs are written in pairs so a
 log reader can follow it, and so a pod that dies in the middle (out of memory) leaves its start without an end:
 
 | Field | Meaning |
 |---|---|
 | `CorrelationId` | a text of 32 lower-case hex digits (a GUID without dashes), the same along the whole chain, however many hops. An HTTP request takes it from `X-Correlation-Id` or starts a chain; the response carries it back. |
-| `ScopeId` | also 32 hex digits; the same in the two logs of one step (`HttpRequest` + `HttpResponse`, `ConsumeStart` + `ConsumeEnd`), different for every step. Every other log written during the step carries it too. |
+| `ScopeId` | also 32 hex digits; the same in the start and end log of one message (`ConsumeStart` + `ConsumeEnd`), different for every message; every other log written while the message is handled carries it too. An HTTP request has no `ScopeId`: ASP.NET Core puts its `RequestId` on every log of the request, and `HttpRequest` + `HttpResponse` (and the exception log) share it. |
 | `From`, `To` | `httpclient -> token-login` for a request (`controller-action` in lower case; for anything that is not a controller action, such as a minimal API endpoint or a proxied route, the request path in lower case). A message: `token-login -> ordercreated` (where it was published from, the event) and, one hop later, `ordercreated -> stockreserved`. A message published outside any request or message (an agent, a scheduler) comes from `agent`. |
 | `ElapsedMs` | how long the step took (`HttpResponse`, `ConsumeEnd`) |
 | `Facility` | `HTTP_REQUEST`, `HTTP_RESPONSE`, `CONSUME_EVENT_START`, `CONSUME_EVENT_SUCCESS` / `CONSUME_EVENT_ERROR` (the end), `CONSUME_EVENT_RETRY` |

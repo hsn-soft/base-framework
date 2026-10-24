@@ -65,9 +65,10 @@ public sealed partial class RequestLoggingMiddleware(
             return Task.CompletedTask;
         });
 
-        string scopeId = LogFields.NewId();
+        // a request is told from the others by the RequestId ASP.NET Core puts on every log of it; its request and response logs share it
+        string scopeId = context.TraceIdentifier;
         string to = StepName(context);
-        using IDisposable? scope = logger.BeginScope(new Dictionary<string, object> { [LogFields.CorrelationId] = correlationId, [LogFields.ScopeId] = scopeId });
+        using IDisposable? scope = logger.BeginScope(new Dictionary<string, object> { [LogFields.CorrelationId] = correlationId });
         using IDisposable flow = LogFlow.Begin(correlationId, scopeId, to);
 
         if (!IsLogged(context.Request))
@@ -162,7 +163,6 @@ public sealed partial class RequestLoggingMiddleware(
             ["Query"] = request.QueryString.Value,
             ["ContentLength"] = request.ContentLength ?? 0,
             ["ClientIp"] = context.Connection.RemoteIpAddress?.ToString(),
-            ["TraceId"] = context.TraceIdentifier,
             ["Host"] = request.Host.ToString(),
             ["Scheme"] = request.Scheme,
             ["ContentType"] = request.ContentType,
@@ -571,12 +571,12 @@ public sealed partial class RequestLoggingMiddleware(
         return names.Length == 0 ? "Cookies: <unknown>" : "Cookies: " + string.Join(", ", names);
     }
 
-    [LoggerMessage(EventId = 3000, EventName = "HTTP_REQUEST", Level = LogLevel.Information, Message = "{From} -> {To}: {Method} {Path}")]
-    private static partial void LogRequest(ILogger logger, string from, string to, string method, string? path);
+    [LoggerMessage(EventId = 3000, EventName = "HTTP_REQUEST", Level = LogLevel.Information, Message = "{From} -> {To}: {Method} {RequestPath}")]
+    private static partial void LogRequest(ILogger logger, string from, string to, string method, string? requestPath);
 
     // the level is the outcome: 5xx and exceptions are errors, 4xx are warnings
-    [LoggerMessage(EventId = 3002, EventName = "HTTP_REQUEST_RESPONSE", Message = "{From} -> {To}: {Method} {Path} {Status} in {ElapsedMs} ms{Details}")]
-    private static partial void LogRequestResponse(ILogger logger, LogLevel level, Exception? exception, string from, string to, string method, string? path, int status, long elapsedMs, string details);
+    [LoggerMessage(EventId = 3002, EventName = "HTTP_REQUEST_RESPONSE", Message = "{From} -> {To}: {Method} {RequestPath} {Status} in {ElapsedMs} ms{Details}")]
+    private static partial void LogRequestResponse(ILogger logger, LogLevel level, Exception? exception, string from, string to, string method, string? requestPath, int status, long elapsedMs, string details);
 
     // Details: what is worth a word next to the status: the files that went through, a gRPC status
     [LoggerMessage(EventId = 3001, EventName = "HTTP_RESPONSE", Message = "{From} -> {To}: {Status} in {ElapsedMs} ms{Details}")]
