@@ -20,7 +20,7 @@ builder.Services
     .AddBaseLogging()
     .AddBaseRequestLogging(builder.Configuration)
     .AddBaseWebApi()
-    .AddBaseOpenApi()
+    .AddBaseSwagger("Def.Signer API", builder.Configuration)
     .AddBaseHealthChecks()
     .AddBaseRedis(builder.Configuration)
     .AddApiKeyAuthentication()
@@ -37,7 +37,7 @@ await app.Services.SeedApiKeysAsync(app.Configuration);
 
 app.UseBaseRequestLogging();   // outside the exception handler: the response log has the status the client gets
 app.UseBaseExceptionHandling();
-app.MapBaseOpenApi();
+app.UseBaseSwagger();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapBaseHealth();

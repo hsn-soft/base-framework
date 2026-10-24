@@ -67,7 +67,7 @@ Product-specific values are configuration: the key prefix (`Redis:InstanceName =
 
 ```csharp
 builder.Services
-    .AddXyzApi(builder.Configuration)                          // web api, OpenAPI, health, JWT, Redis
+    .AddXyzApi(builder.Configuration)                          // web api, Swagger, health, JWT, Redis
     .AddBasePostgres<OrderDbContext>(builder.Configuration)    // or .AddBaseMongo(builder.Configuration)
     .AddRabbitMqEventBus(builder.Configuration)
     .AddEventHandler<StockReserved, StockReservedHandler>();
@@ -144,7 +144,7 @@ The JWT signing key in the `appsettings.json` files is a sample value; a real sy
 ## Agt.Scheduler.Host: an agent
 
 A second product ("Agt") with a different shape: no api, no authentication, no event bus. It takes **three** framework
-packages, `AspNetCore` (only for the health endpoints), `Hosting` (the worker base) and `MongoDB`; no JWT, OpenAPI, broker or cache
+packages, `AspNetCore` (only for the health endpoints), `Hosting` (the worker base) and `MongoDB`; no JWT, Swagger, broker or cache
 package is loaded. Its output folder contains `HsnSoft.Base.AspNetCore/Core/Hosting/MongoDB` and the Mongo driver, nothing else.
 
 The ASP.NET Core host gives it the lifetime, configuration, logging and the health endpoints a platform probes

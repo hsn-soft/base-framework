@@ -20,13 +20,13 @@ public static class ServiceRegister
 {
     public const string AdminPolicy = "admin";
 
-    /// <summary>The shell of every Xyz service: error handling, OpenAPI, health checks, JWT authentication and the Redis cache.</summary>
+    /// <summary>The shell of every Xyz service: error handling, Swagger (off where the service runs for real), health checks, JWT authentication and the Redis cache.</summary>
     public static IServiceCollection AddXyzApi(this IServiceCollection services, IConfiguration configuration)
         => services
             .AddBaseLogging(typeof(ServiceRegister).Assembly)   // the contracts say what is secret: the gateway hides it in the bodies it logs too
             .AddBaseRequestLogging(configuration)
             .AddBaseWebApi()
-            .AddBaseOpenApi()
+            .AddBaseSwaggerWithBearer($"{AppDomain.CurrentDomain.FriendlyName} API", "Enter a valid token", configuration)
             .AddBaseHealthChecks()
             .AddBaseJwtAuthentication(configuration)
             .AddBaseRedis(configuration)
@@ -60,7 +60,7 @@ public static class ServiceRegister
     {
         app.UseBaseRequestLogging();   // outside the exception handler: the response log has the status the client gets
         app.UseBaseExceptionHandling();
-        app.MapBaseOpenApi();
+        app.UseBaseSwagger();
         app.UseBaseAuthentication();
         beforeAuthorization?.Invoke(app);
         app.UseBaseAuthorization();

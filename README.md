@@ -11,7 +11,7 @@ A service picks the packages for the technologies it uses; nothing forces a brok
 ## Packages
 
 An application takes only the capabilities it uses. Each package is one capability; an agent that reads MongoDB never loads
-JWT, OpenAPI, a broker or a cache.
+JWT, Swagger, a broker or a cache.
 
 | Package | Capability | Depends on |
 |---|---|---|
@@ -21,7 +21,8 @@ JWT, OpenAPI, a broker or a cache.
 | `HsnSoft.Base.Hosting` | Generic Host workers: `PeriodicBackgroundService` | Core |
 | `HsnSoft.Base.Authentication` | JWT bearer authentication, claim names and `ClaimsPrincipal` helpers | Core |
 | `HsnSoft.Base.AspNetCore` | Health endpoints (`/health/live`, `/health/ready`) | Core |
-| `HsnSoft.Base.AspNetCore.WebApi` | Controllers, every answer in one `BaseResponse` type (results, validation, exceptions), global exception handler, the OpenAPI document, request/response logging ([docs](docs/WebApi.md)) | Core |
+| `HsnSoft.Base.AspNetCore.WebApi` | Controllers, every answer in one `BaseResponse` type (results, validation, exceptions), global exception handler, request/response logging ([docs](docs/WebApi.md)) | Core |
+| `HsnSoft.Base.AspNetCore.Swashbuckle` | Swagger document and UI (Swashbuckle), Bearer or OAuth2 button, off in production-like environments ([docs](docs/Swagger.md)) | Core |
 | `HsnSoft.Base.EventBus` | Event bus core: message envelope, handlers, dispatcher, naming, publish retry ([docs](docs/EventBus.md)) | Core |
 | `HsnSoft.Base.EventBus.RabbitMQ` | RabbitMQ broker, wire and topology compatible with the production services | EventBus |
 | `HsnSoft.Base.EventBus.Kafka` | Kafka broker: producer, consumer group, dead-letter topic | EventBus |
@@ -62,12 +63,12 @@ takes only three packages.
 ```csharp
 // product shared library: one composition for every service of the product
 public static IServiceCollection AddXyzApi(this IServiceCollection services, IConfiguration configuration)
-    => services.AddBaseWebApi().AddBaseOpenApi().AddBaseHealthChecks()
+    => services.AddBaseWebApi().AddBaseSwaggerWithBearer("Orders API", "Enter a valid token", configuration).AddBaseHealthChecks()
                .AddBaseJwtAuthentication(configuration).AddBaseRedis(configuration);
 
 public static WebApplication UseXyzApi(this WebApplication app, Action<WebApplication>? beforeAuthorization = null)
 {
-    app.UseBaseExceptionHandling(); app.MapBaseOpenApi();
+    app.UseBaseExceptionHandling(); app.UseBaseSwagger();
     app.UseBaseAuthentication(); beforeAuthorization?.Invoke(app); app.UseBaseAuthorization();
     app.MapBaseHealth();
     return app;

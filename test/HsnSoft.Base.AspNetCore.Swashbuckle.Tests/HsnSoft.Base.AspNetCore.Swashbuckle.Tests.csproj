@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <Import Project="..\..\common.test.props" />
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="10.0.13" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\src\HsnSoft.Base.AspNetCore.Swashbuckle\HsnSoft.Base.AspNetCore.Swashbuckle.csproj" />
+    </ItemGroup>
+
+</Project>

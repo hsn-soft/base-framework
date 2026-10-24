@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <Import Project="..\..\common.props" />
+
+    <PropertyGroup>
+        <AssemblyName>HsnSoft.Base.AspNetCore.Swashbuckle</AssemblyName>
+        <PackageId>HsnSoft.Base.AspNetCore.Swashbuckle</PackageId>
+        <RootNamespace />
+        <Title>HsnSoft Base Framework ASP.NET Core Swashbuckle</Title>
+        <Description>Swagger (Swashbuckle) for HsnSoft web apis: the document and the UI in one call each, an optional Bearer or OAuth2 authorization, off in production-like environments.</Description>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageTags>HsnSoft Base Framework AspNetCore Swagger Swashbuckle OpenAPI</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="..\..\README.md" Pack="true" Visible="false" PackagePath="README.md" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\HsnSoft.Base.Core\HsnSoft.Base.Core.csproj" />
+    </ItemGroup>
+
+</Project>

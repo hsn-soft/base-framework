@@ -120,12 +120,11 @@ public class WebApiTests
         WebApplicationBuilder builder = WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = environment });
         builder.WebHost.UseTestServer();
         configure?.Invoke(builder.Services);
-        builder.Services.AddBaseWebApi().AddBaseOpenApi();
+        builder.Services.AddBaseWebApi();
         builder.Services.AddControllers().AddApplicationPart(typeof(AnswersController).Assembly);
 
         WebApplication app = builder.Build();
         app.UseBaseExceptionHandling();
-        app.MapBaseOpenApi();
         app.MapControllers();
         app.MapGet("/minimal-color", () => new { color = Color.Red });
         app.MapGet("/binary", context =>
@@ -430,16 +429,6 @@ public class WebApiTests
     }
 
     [Fact]
-    public async Task OpenApiDocument_IsServedInDevelopmentOnly()
-    {
-        await using WebApplication development = await StartAsync("Development");
-        await using WebApplication production = await StartAsync();
-
-        Assert.Equal(HttpStatusCode.OK, (await development.GetTestClient().GetAsync("/openapi/v1.json")).StatusCode);
-        Assert.Equal(HttpStatusCode.NotFound, (await production.GetTestClient().GetAsync("/openapi/v1.json")).StatusCode);
-    }
-
-    [Fact]
     public async Task TheWriter_WritesErrorsAndSuccessesInTheEnvelope_ButNothingOnceTheResponseStarted()
     {
         ApiResponseWriter writer = new();
@@ -531,7 +520,5 @@ public class WebApiTests
     {
         Assert.Throws<ArgumentNullException>(() => WebApiServiceCollectionExtensions.AddBaseWebApi(null!));
         Assert.Throws<ArgumentNullException>(() => WebApiServiceCollectionExtensions.UseBaseExceptionHandling(null!));
-        Assert.Throws<ArgumentNullException>(() => OpenApiExtensions.AddBaseOpenApi(null!));
-        Assert.Throws<ArgumentNullException>(() => OpenApiExtensions.MapBaseOpenApi(null!));
     }
 }
