@@ -1,3 +1,4 @@
+using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -31,6 +32,33 @@ public class FrameworkLoggerOptionsTests
     [InlineData("many")]
     public void AFieldLengthThatMakesNoSense_KeepsTheDefault(string text)
         => Assert.Equal(16384, FrameworkLoggerOptions.FromConfiguration(Configuration(("MaxPersistentFieldLength", text))).MaxPersistentFieldLength);
+
+    [Fact]
+    public void TheVersion_IsTheSetting_ThenTheEnvironmentVariable_ThenTheVersionOfTheAssembly()
+    {
+        Assembly assembly = typeof(FrameworkLoggerOptionsTests).Assembly;
+        string? informational = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+        static string? Environment(string name) => name == "BUILD_NUMBER" ? "2610241530-sha-ab12cd3" : name == "MY_VERSION" ? "7" : null;
+
+        Assert.Equal("1.2.3", new FrameworkLoggerOptions { Version = "1.2.3" }.ResolveVersion(Environment, assembly));
+        Assert.Equal("2610241530-sha-ab12cd3", new FrameworkLoggerOptions().ResolveVersion(Environment, assembly));
+        Assert.Equal("7", new FrameworkLoggerOptions { VersionVariable = "MY_VERSION" }.ResolveVersion(Environment, assembly));
+        Assert.Equal(informational, new FrameworkLoggerOptions().ResolveVersion(_ => null, assembly));
+        Assert.Equal(informational, new FrameworkLoggerOptions().ResolveVersion(_ => " ", assembly));
+        Assert.NotNull(new FrameworkLoggerOptions().ResolveVersion());
+    }
+
+    [Fact]
+    public void TheVersionSettings_AreRead()
+    {
+        FrameworkLoggerOptions options = FrameworkLoggerOptions.FromConfiguration(Configuration(("Version", "9.9"), ("VersionVariable", "IMAGE_TAG")));
+        FrameworkLoggerOptions defaults = FrameworkLoggerOptions.FromConfiguration(Configuration());
+
+        Assert.Equal("9.9", options.Version);
+        Assert.Equal("IMAGE_TAG", options.VersionVariable);
+        Assert.Null(defaults.Version);
+        Assert.Equal("BUILD_NUMBER", defaults.VersionVariable);
+    }
 
     [Fact]
     public void Values_AreRead()

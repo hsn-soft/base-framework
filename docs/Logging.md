@@ -60,7 +60,9 @@ builder.Logging.AddBaseSerilog(builder.Configuration, "OrderService"); // everyt
 ## The log types
 
 Every log in Graylog has a `Solution` (the first part of the assembly name: `Hhs`, `Xyz`), an `Assembly` (`Hhs.AuthServer.Http.Host`: which
-service, auth server or agent wrote it) and a `LogType`:
+service, auth server or agent wrote it), a `Version` (the build that wrote it: the environment variable `BUILD_NUMBER`, which the CI of the
+services sets to the image tag `{yyMMddHHmm}-sha-{git short sha}`; else `FrameworkLogger:Version`, else the version of the entry assembly: with it the
+`Line` of a failure is read in the code that ran) and a `LogType`:
 
 | `LogType` | What it is | Written by |
 |---|---|---|

@@ -51,6 +51,7 @@ internal static class BaseSerilog
             .Enrich.FromLogContext()
             .Enrich.WithProperty("Solution", AppDomain.CurrentDomain.FriendlyName.Split('.')[0])
             .Enrich.WithProperty("Assembly", AppDomain.CurrentDomain.FriendlyName)
+            .Enrich.With(new VersionEnricher(options.ResolveVersion()))
             .Enrich.With(new LoggerNameEnricher(loggerName))
             .Enrich.With<FacilityEnricher>()
             .Enrich.With<LogShapeEnricher>()
@@ -92,6 +93,17 @@ internal static class BaseSerilog
         }
 
         return levels;
+    }
+
+    private sealed class VersionEnricher(string? version) : ILogEventEnricher
+    {
+        public void Enrich(LogEvent logEvent, ILogEventPropertyFactory propertyFactory)
+        {
+            if (version is not null)
+            {
+                logEvent.AddPropertyIfAbsent(propertyFactory.CreateProperty("Version", version));
+            }
+        }
     }
 
     private sealed class LoggerNameEnricher(string hostName) : ILogEventEnricher

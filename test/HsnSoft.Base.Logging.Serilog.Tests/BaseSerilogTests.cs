@@ -187,6 +187,16 @@ public sealed class BaseSerilogTests : IDisposable
     }
 
     [Fact]
+    public void Logs_CarryTheVersionOfTheBuild()
+    {
+        ILogger logger = Create(configure: options => options.Version = "2610241530-sha-ab12cd3");
+
+        logger.Information("hello");
+
+        Assert.Equal("2610241530-sha-ab12cd3", Assert.Single(_console.Events).Properties["Version"].ToString().Trim('"'));
+    }
+
+    [Fact]
     public void ObjectsLoggedWithTheAtSign_HaveTheirSensitiveDataMasked()
     {
         ILogger logger = Create();

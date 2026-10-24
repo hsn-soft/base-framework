@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -34,6 +35,33 @@ public sealed class FrameworkLoggerOptions
     /// </summary>
     public int MaxPersistentFieldLength { get; set; } = 16 * 1024;
 
+    /// <summary>
+    /// The version of the running build, written on every log (<c>Version</c>) so a line number in a failure is read in the code that ran. When it
+    /// is not given: the environment variable <see cref="VersionVariable"/> (the CI puts the image tag there), else the version of the entry assembly.
+    /// </summary>
+    public string? Version { get; set; }
+
+    /// <summary>The environment variable that holds the version of the build.</summary>
+    public string VersionVariable { get; set; } = "BUILD_NUMBER";
+
+    /// <summary>The version to write on the logs: the setting, the environment variable, the assembly, in that order; <see langword="null"/> when there is none.</summary>
+    public string? ResolveVersion(Func<string, string?>? environment = null, Assembly? entry = null)
+    {
+        if (!string.IsNullOrWhiteSpace(Version))
+        {
+            return Version;
+        }
+
+        string? fromEnvironment = (environment ?? Environment.GetEnvironmentVariable)(VersionVariable);
+        if (!string.IsNullOrWhiteSpace(fromEnvironment))
+        {
+            return fromEnvironment;
+        }
+
+        string? assembly = (entry ?? Assembly.GetEntryAssembly())?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+        return string.IsNullOrWhiteSpace(assembly) ? null : assembly;
+    }
+
     /// <summary>Show errors of the logging library itself (a sink that cannot reach its server) in the console.</summary>
     public bool IsSelfLogActive { get; set; }
 
@@ -54,6 +82,8 @@ public sealed class FrameworkLoggerOptions
             LogLevel = ParseLevel(section["LogLevel"], LogLevel.Trace),
             IsGrayLogActive = bool.TryParse(section["IsGrayLogActive"], out bool grayLog) && grayLog,
             IsSelfLogActive = bool.TryParse(section["IsSelfLogActive"], out bool selfLog) && selfLog,
+            Version = section["Version"],
+            VersionVariable = string.IsNullOrWhiteSpace(section["VersionVariable"]) ? "BUILD_NUMBER" : section["VersionVariable"]!,
             FilePath = string.IsNullOrWhiteSpace(section["FilePath"]) ? "Logs/logs.txt" : section["FilePath"]!,
             PersistentMinimumLevel = ParseLevel(section["PersistentMinimumLevel"], LogCategories.PersistentFloor),
             MaxPersistentFieldLength = int.TryParse(section["MaxPersistentFieldLength"], CultureInfo.InvariantCulture, out int maxLength) && maxLength > 0 ? maxLength : 16 * 1024,
