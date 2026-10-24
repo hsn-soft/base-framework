@@ -41,6 +41,27 @@ More on what is kept:
 | Platform logs (`PlatformLog`: ASP.NET Core, Entity Framework, YARP, the drivers, any library) below Warning | by `Logging:LogLevel` | **no** (`PersistentLogger:PlatformMinimumLevel`, default `Warning`), unless `LevelOverrides` names their category |
 | Anything written through `IAppConsoleLogger` | by `Logging:LogLevel` (its category is `ConsoleOnly.<name>`) | **never** (it is the console logger) |
 
+### Example: the Information of a library in Graylog too
+
+The logs of a library (the platform's: ASP.NET Core, a driver, YARP) reach Graylog only from Warning, because `PlatformMinimumLevel` says so. To keep the Information of one
+of them (the MongoDB driver, categories `MongoDB.*`), name its category in `PersistentLogger:LevelOverrides`; and, if the console's `Default` is higher, in `Logging:LogLevel` to see it in the pod:
+
+```json
+"Logging": {
+  "LogLevel": { "Default": "Warning", "MongoDB": "Information" }
+},
+"PersistentLogger": {
+  "LogLevel": "Information",
+  "IsGrayLogActive": true,
+  "LevelOverrides": { "MongoDB": "Information" }
+}
+```
+
+The two are independent: the first line shows it in the console, the second keeps it in Graylog. A rule counts for the category and everything below it (`MongoDB` is also `MongoDB.Command`;
+write `MongoDB.Connection` for one), and the longest rule that fits wins. What is kept is never below Information, whatever a rule says: a `"MongoDB": "Debug"` is kept from Information. The name of
+a category is in the `SourceContext` of a log in Graylog (`Yarp.ReverseProxy.Forwarder.HttpForwarder`); the start of it is enough. The same works the other way, for the code of the
+application: `"Hhs.Orders.Noisy": "Warning"` in `LevelOverrides` keeps only the warnings of that namespace in Graylog and leaves the console to `Logging:LogLevel`.
+
 `Microsoft.Extensions.Logging`'s own filter is opened wide by `AddBaseSerilog`: it would decide for both places at once. The rule lives in the logging provider, not in the framework
 packages: they only write logs and do not know what is shown or kept. A provider recognizes console-only logs by their **category**
 (`LogCategories.ConsoleOnlyPrefix`), the one thing every logging library has, so another provider can apply the same rules (`LogLevelRules` for the console,
