@@ -28,6 +28,7 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
+| [0029](0029-one-auth-server-issues-the-token.md) | One auth server issues the JWT; every other host only validates it | Accepted | 2026-10-25 |
 | [0028](0028-shared-hosting-projects.md) | A product's hosts share their composition in `{Product}.Shared.Hosting`, with one specialization per kind of host | Accepted | 2026-10-25 |
 | [0027](0027-gateways-per-audience.md) | One gateway per audience, built from a route registry; the gateway forwards, the services decide who may call | Accepted | 2026-10-25 |
 | [0026](0026-route-pattern-and-jwt-by-default.md) | Routes are `api/{area}/v1/{commercial|public}/{controller}`, and every endpoint needs a JWT unless it says otherwise | Accepted | 2026-10-25 |

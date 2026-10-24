@@ -21,6 +21,7 @@ The product's **shared hosting projects** live in `samples/abc/shared/` and are 
 
 - **A specialization references `Abc.Shared.Hosting` and nothing of the other**: `.Gateways` and `.Microservices` never reference each other. A host references the one that fits it; the framework packages come with it.
 - **A host is thin:** its `Program.cs` adds the shared composition and then only what is its own (a service its stores and application services, a gateway nothing but its settings). The service's controllers and its base controller stay in the service ([ADR-0026](0026-route-pattern-and-jwt-by-default.md)).
+- **The MVC web applications (`samples/abc/app`) do not use them**: they answer pages, not `BaseResponse`, so the web api shell of `Abc.Shared.Hosting` does not fit; each takes the framework's logging, request log and health directly.
 - A new kind of host (an agent) uses `Abc.Shared.Hosting` directly or gets its own `Abc.Shared.Hosting.<Kind>`.
 - Names follow the production ones (`{Product}.Shared.Hosting`, `.Gateways`, `.Microservices`). **A project that is the only host of its kind has no folder level of its own**: `samples/abc/gateway/Abc.Gateway.Commercial.Host`, `.../Abc.Gateway.Public.Host`;
   a service has its layers beside its host (`samples/abc/service/identity/...`) ([ADR-0006](0006-repository-and-solution-layout.md)).

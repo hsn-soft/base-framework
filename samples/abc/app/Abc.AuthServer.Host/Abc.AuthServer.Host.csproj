@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <!--
+        The auth server of the Abc system: a web api that checks a user name and a password and issues the JWT access token every other Abc host validates (the Jwt section is the same everywhere).
+        It is a microservice like the others: what every Abc microservice has comes from Abc.Shared.Hosting.Microservices.
+    -->
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\shared\Abc.Shared.Hosting.Microservices\Abc.Shared.Hosting.Microservices.csproj" />
+        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.Logging.Serilog\HsnSoft.Base.Logging.Serilog.csproj" />
+    </ItemGroup>
+
+</Project>

@@ -208,15 +208,14 @@ The first use case is the CRUD of the users (PostgreSQL `abc_identity`, created 
 | `DELETE /api/identity-service/v1/commercial/users/{id}` | deletes (204) |
 
 Every controller derives from `BaseServiceController` (area `identity-service`, `[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]`), so the endpoints above need a valid
-JWT bearer token (no token or a bad one is a 401); `LogExamplesController` is `[AllowAnonymous]` and the health endpoints are open. Abc has no auth server yet, so its `Jwt` settings are the Xyz ones
-(sample values): a token from `Xyz.AuthServer` (`POST http://localhost:5110/api/auth/login`, `alice` / `alice123`) is accepted; Swagger has an *Authorize* button for it.
+JWT bearer token (no token or a bad one is a 401); `LogExamplesController` is `[AllowAnonymous]` and the health endpoints are open. The `Jwt` settings are the Abc ones (sample values, the same in every Abc host that reads a token): a token from `Abc.AuthServer.Host` (`POST http://localhost:5410/api/auth-server/v1/commercial/auth/login`, `alice` / `alice123`, or through the commercial gateway) is accepted; Swagger has an *Authorize* button for it.
 
 `PublicUsersController` (`[AllowAnonymous]`, route `api/identity-service/v1/public/users`) has `POST check-user-name`: whether a user name is free, for what a public sign-up form asks.
 
 ```bash
 dotnet run --project samples/abc/service/identity/Abc.IdentityService.Http.Host      # http://localhost:5400, Swagger at /swagger in Development
-dotnet run --project samples/abc/gateway/commercial/Abc.Gateway.Commercial.Host      # http://localhost:5500
-dotnet run --project samples/abc/gateway/public/Abc.Gateway.Public.Host              # http://localhost:5600
+dotnet run --project samples/abc/gateway/Abc.Gateway.Commercial.Host                 # http://localhost:5500
+dotnet run --project samples/abc/gateway/Abc.Gateway.Public.Host                     # http://localhost:5600
 ```
 
 ### The Abc gateways
@@ -232,3 +231,23 @@ curl -X POST http://localhost:5600/identity-service/v1/users/check-user-name -H 
 ```
 
 Each gateway reaches only the endpoints of its own segment (the other one answers 404), and its Swagger UI (`/swagger`) shows the identity service's document with the gateway's paths.
+
+### The Abc apps
+
+`samples/abc/app` has what people use: the auth server and the two web applications ([ADR-0029](../docs/adr/0029-one-auth-server-issues-the-token.md)).
+
+| Project | Is | Port |
+|---|---|---|
+| `Abc.AuthServer.Host` | a web api: `POST /api/auth-server/v1/commercial/auth/login` (open) gives a JWT access token for a user name and password, `GET .../auth/me` says who the token is. The sample users (`admin` / `admin123`, `alice` / `alice123`) are in its `Auth` section | 5410 |
+| `Abc.CommercialWeb.Host` | an MVC application for employees: sign in (the token is kept in the cookie), then a page of the users of the identity service, with a search. It calls **only the commercial gateway** (`http://localhost:5500`) | 5700 |
+| `Abc.PublicWeb.Host` | an MVC application for everyone, no sign-in: a form that asks whether a user name is free. It calls **only the public gateway** (`http://localhost:5600`) | 5800 |
+
+```bash
+# the order: the identity service, the auth server, the two gateways, then the pages
+dotnet run --project samples/abc/app/Abc.AuthServer.Host            # http://localhost:5410
+dotnet run --project samples/abc/app/Abc.CommercialWeb.Host         # http://localhost:5700  (sign in as alice / alice123)
+dotnet run --project samples/abc/app/Abc.PublicWeb.Host             # http://localhost:5800
+```
+
+The commercial gateway also maps `/auth-server/v1/...` to the auth server. Every call a page makes to its gateway carries the correlation id of the page request (and, in the commercial application, the bearer token), so the page, the gateway and
+the service behind it are one chain in the logs. The web applications answer pages, so they do not use `Abc.Shared.Hosting` (its web api shell answers `BaseResponse`).

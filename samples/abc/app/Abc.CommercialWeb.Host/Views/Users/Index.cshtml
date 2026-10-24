@@ -1,0 +1,19 @@
+@model UsersModel
+@{
+    ViewData["Title"] = "Users";
+}
+<h1>Users</h1>
+<form method="get" action="/users">
+    <input name="search" value="@Model.Search" placeholder="part of the user name" />
+    <button class="primary" type="submit">Search</button>
+</form>
+<p class="muted">@Model.Users.TotalCount in all</p>
+<table>
+    <thead><tr><th>User name</th><th>Display name</th><th>Email</th><th>Active</th></tr></thead>
+    <tbody>
+    @foreach (UserItem user in Model.Users.Items)
+    {
+        <tr><td>@user.UserName</td><td>@user.DisplayName</td><td>@user.Email</td><td>@(user.IsActive ? "yes" : "no")</td></tr>
+    }
+    </tbody>
+</table>
