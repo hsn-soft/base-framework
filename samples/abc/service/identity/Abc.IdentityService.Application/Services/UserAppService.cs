@@ -3,13 +3,14 @@ using Abc.IdentityService.Application.Contracts.UserDomain.Dtos;
 using Abc.IdentityService.Application.Contracts.UserDomain.Dtos.Filters;
 using Abc.IdentityService.Application.Contracts.UserDomain.Dtos.Submits;
 using Abc.IdentityService.Application.Contracts.UserDomain.Services;
+using Abc.IdentityService.Application.Security;
 using Abc.IdentityService.Domain.UserDomain.Entities;
 using Abc.IdentityService.Domain.UserDomain.Exceptions;
 using Abc.IdentityService.Domain.UserDomain.Repositories;
 
 namespace Abc.IdentityService.Application.Services;
 
-public sealed class UserAppService(IUserRepository users, TimeProvider clock) : IUserAppService
+public sealed class UserAppService(IUserRepository users, TimeProvider clock, ICurrentUser currentUser) : IUserAppService
 {
     public async Task<UserDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
         => ToDto(await FindAsync(id, cancellationToken).ConfigureAwait(false));
@@ -51,7 +52,7 @@ public sealed class UserAppService(IUserRepository users, TimeProvider clock) : 
             throw new UserUserNameDuplicateException(userName);
         }
 
-        User user = User.Create(userName, input.Email, input.DisplayName, clock.GetUtcNow());
+        User user = User.Create(userName, input.Email, input.DisplayName, input.Password, input.Roles, clock.GetUtcNow(), currentUser.UserName);
         await users.AddAsync(user, cancellationToken).ConfigureAwait(false);
         await users.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return ToDto(user);
@@ -71,7 +72,7 @@ public sealed class UserAppService(IUserRepository users, TimeProvider clock) : 
         ArgumentNullException.ThrowIfNull(input);
 
         User user = await FindAsync(input.Id, cancellationToken).ConfigureAwait(false);
-        user.Update(input.Email, input.DisplayName, input.IsActive, clock.GetUtcNow());
+        user.Update(input.Email, input.DisplayName, input.IsActive, input.Roles, clock.GetUtcNow(), currentUser.UserName);
         await users.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
@@ -91,8 +92,11 @@ public sealed class UserAppService(IUserRepository users, TimeProvider clock) : 
         UserName = user.UserName,
         Email = user.Email,
         DisplayName = user.DisplayName,
+        Roles = user.Roles,
         IsActive = user.IsActive,
         CreatedAt = user.CreatedAt,
+        CreatedBy = user.CreatedBy,
         UpdatedAt = user.UpdatedAt,
+        UpdatedBy = user.UpdatedBy,
     };
 }

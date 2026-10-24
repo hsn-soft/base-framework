@@ -7,6 +7,9 @@ public interface IUserRepository
 {
     Task<User?> FindAsync(Guid id, CancellationToken cancellationToken = default);
 
+    /// <summary>The user with this name (compared without regard to case), not tracked; <see langword="null"/> when there is none. What the auth server signs in with.</summary>
+    Task<User?> FindByUserNameAsync(string userName, CancellationToken cancellationToken = default);
+
     /// <summary>The users that match <paramref name="filter"/>, by user name, from <paramref name="skip"/> on, at most <paramref name="take"/>.</summary>
     Task<IReadOnlyList<User>> GetListAsync(UserFilter filter, int skip, int take, CancellationToken cancellationToken = default);
 

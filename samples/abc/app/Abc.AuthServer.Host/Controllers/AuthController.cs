@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using Abc.AuthServer.Host.Controllers.Base;
-using Abc.AuthServer.Host.Options;
+using Abc.AuthServer.Host.Security;
 using Abc.AuthServer.Host.Services;
 using HsnSoft.Base;
 using HsnSoft.Base.Logging.Masking;
@@ -38,19 +38,19 @@ public sealed class MeDto
 }
 
 [Route("api/auth-server/v1/commercial/auth")]
-public sealed class AuthController(TokenService tokens) : BaseServiceController
+public sealed class AuthController(UserAuthenticator authenticator, TokenService tokens) : BaseServiceController
 {
-    /// <summary>The one open endpoint: a user name and a password for an access token.</summary>
+    /// <summary>The one open endpoint: a user name and a password (of a user of the identity service) for an access token.</summary>
     [AllowAnonymous]
     [HttpPost("login")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public TokenDto Login([FromBody] LoginDto input)
+    public async Task<TokenDto> LoginAsync([FromBody] LoginDto input, CancellationToken cancellationToken = default)
     {
-        UserAccount account = tokens.ValidateCredentials(input.Username, input.Password)
-                              ?? throw new BaseHttpException(StatusCodes.Status401Unauthorized, "Invalid credentials");
+        AuthenticatedUser user = await authenticator.AuthenticateAsync(input.Username, input.Password, cancellationToken)
+                                 ?? throw new BaseHttpException(StatusCodes.Status401Unauthorized, "Invalid credentials");
 
-        AccessToken token = tokens.Issue(account);
-        Logger.LogInformation("{Account} signed in", account.Username);
+        AccessToken token = tokens.Issue(user);
+        Logger.LogInformation("{Account} signed in", user.UserName);
         return new TokenDto { AccessToken = token.Value, ExpiresIn = token.ExpiresInSeconds };
     }
 

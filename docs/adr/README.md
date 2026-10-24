@@ -28,6 +28,7 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
+| [0032](0032-the-auth-server-reads-the-users-of-the-identity-service.md) | The auth server reads the users of the identity service; the author of a row is the `sub` of the token | Accepted | 2026-10-25 |
 | [0031](0031-jwt-signed-with-an-rsa-private-key.md) | The JWT is signed with an RSA private key; the other hosts only have the public key | Accepted | 2026-10-25 |
 | [0030](0030-microservice-project-pattern.md) | Every microservice has the same four projects; only the persistence project varies | Accepted | 2026-10-25 |
 | [0029](0029-one-auth-server-issues-the-token.md) | One auth server issues the JWT; every other host only validates it | Accepted | 2026-10-25 |

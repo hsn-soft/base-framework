@@ -1,6 +1,7 @@
 using Abc.IdentityService.Domain.UserDomain.Consts;
 using Abc.IdentityService.Domain.UserDomain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace Abc.IdentityService.EntityFrameworkCore.Configurations;
 
@@ -20,6 +21,18 @@ public static class UserDomainConfiguration
             user.Property(entity => entity.Email).HasMaxLength(UserConsts.EmailMaxLength).IsRequired();
             user.Property(entity => entity.NormalizedEmail).HasMaxLength(UserConsts.EmailMaxLength).IsRequired();
             user.Property(entity => entity.DisplayName).HasMaxLength(UserConsts.DisplayNameMaxLength).IsRequired();
+            user.Property(entity => entity.PasswordHash).HasMaxLength(UserConsts.PasswordHashMaxLength).IsRequired();
+            user.Property(entity => entity.CreatedBy).HasMaxLength(UserConsts.CreatedByMaxLength);
+            user.Property(entity => entity.UpdatedBy).HasMaxLength(UserConsts.CreatedByMaxLength);
+
+            // the roles are one column of names with a comma between them (a role cannot have a comma, the user checks it)
+            user.Property(entity => entity.Roles)
+                .HasConversion(
+                    roles => string.Join(',', roles),
+                    text => text.Split(',', StringSplitOptions.RemoveEmptyEntries),
+                    new ValueComparer<IReadOnlyList<string>>((left, right) => left!.SequenceEqual(right!), roles => string.Join(',', roles).GetHashCode(StringComparison.Ordinal), roles => roles.ToArray()))
+                .HasMaxLength(256)
+                .IsRequired();
             user.HasIndex(entity => entity.NormalizedUserName).IsUnique();
         });
     }

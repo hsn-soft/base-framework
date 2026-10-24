@@ -232,6 +232,12 @@ curl -X POST http://localhost:5600/identity-service/v1/users/check-user-name -H 
 
 Each gateway reaches only the endpoints of its own segment (the other one answers 404), and its Swagger UI (`/swagger`) shows the identity service's document with the gateway's paths.
 
+### The users of Abc
+
+The auth server and the identity service share one PostgreSQL database (`ConnectionStrings:Postgres`, `abc_identity`). Whichever of the two starts first creates it and, when it has no user, adds `admin` / `admin123` and `alice` / `alice123`
+(passwords are kept as PBKDF2 hashes). `EnsureCreated` does not change a table that exists: a database made before this change has to be dropped (`drop database abc_identity`). The `CreatedBy` and `UpdatedBy` of a user are the
+`sub` of the token of whoever made the request.
+
 ### The keys of the Abc tokens
 
 The auth server signs its tokens with an RSA **private** key and every other Abc host checks them with the **public** key ([ADR-0031](../docs/adr/0031-jwt-signed-with-an-rsa-private-key.md)); the files are not in git. Make a pair once after a clone:
@@ -249,7 +255,7 @@ another system here, and never commit a private key.
 
 | Project | Is | Port |
 |---|---|---|
-| `Abc.AuthServer.Host` | a web api: `POST /api/auth-server/v1/commercial/auth/login` (open) gives a JWT access token for a user name and password, `GET .../auth/me` says who the token is. The sample users (`admin` / `admin123`, `alice` / `alice123`) are in its `Auth` section | 5410 |
+| `Abc.AuthServer.Host` | a web api: `POST /api/auth-server/v1/commercial/auth/login` (open) gives a JWT access token for a user name and password, `GET .../auth/me` says who the token is. The users are the identity service's, read from its database ([ADR-0032](../docs/adr/0032-the-auth-server-reads-the-users-of-the-identity-service.md)); the first start makes the database and the users `admin` / `admin123` (admin, customer) and `alice` / `alice123` (customer) | 5410 |
 | `Abc.CommercialWeb.Host` | an MVC application for employees: sign in (the token is kept in the cookie), then a page of the users of the identity service, with a search. It calls **only the commercial gateway** (`http://localhost:5500`) | 5700 |
 | `Abc.PublicWeb.Host` | an MVC application for everyone, no sign-in: a form that asks whether a user name is free. It calls **only the public gateway** (`http://localhost:5600`) | 5800 |
 

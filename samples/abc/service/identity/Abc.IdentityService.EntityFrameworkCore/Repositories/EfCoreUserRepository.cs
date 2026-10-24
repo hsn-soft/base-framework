@@ -10,6 +10,12 @@ public sealed class EfCoreUserRepository(IdentityDbContext db) : IUserRepository
     public Task<User?> FindAsync(Guid id, CancellationToken cancellationToken = default)
         => db.Users.FirstOrDefaultAsync(user => user.Id == id, cancellationToken);
 
+    public Task<User?> FindByUserNameAsync(string userName, CancellationToken cancellationToken = default)
+    {
+        string name = User.Normalize(userName);
+        return db.Users.AsNoTracking().FirstOrDefaultAsync(user => user.NormalizedUserName == name, cancellationToken);
+    }
+
     public async Task<IReadOnlyList<User>> GetListAsync(UserFilter filter, int skip, int take, CancellationToken cancellationToken = default)
         => await Filter(filter).AsNoTracking().OrderBy(user => user.UserName).Skip(skip).Take(take).ToListAsync(cancellationToken).ConfigureAwait(false);
 

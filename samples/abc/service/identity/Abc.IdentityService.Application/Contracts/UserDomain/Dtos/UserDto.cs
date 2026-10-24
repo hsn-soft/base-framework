@@ -10,9 +10,15 @@ public sealed class UserDto
 
     public string DisplayName { get; init; } = string.Empty;
 
+    public IReadOnlyList<string> Roles { get; init; } = [];
+
     public bool IsActive { get; init; }
 
     public DateTimeOffset CreatedAt { get; init; }
 
+    public string? CreatedBy { get; init; }
+
     public DateTimeOffset UpdatedAt { get; init; }
+
+    public string? UpdatedBy { get; init; }
 }

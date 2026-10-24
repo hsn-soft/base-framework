@@ -1,6 +1,6 @@
 # ADR-0029: One auth server issues the JWT; every other host only validates it
 
-- **Status:** Accepted (the shared signing key it describes is replaced by an RSA key pair, [ADR-0031](0031-jwt-signed-with-an-rsa-private-key.md))
+- **Status:** Accepted (the shared signing key it describes is replaced by an RSA key pair, [ADR-0031](0031-jwt-signed-with-an-rsa-private-key.md); the user list of its settings by the users of the identity service, [ADR-0032](0032-the-auth-server-reads-the-users-of-the-identity-service.md))
 - **Date:** 2026-10-25
 
 ## Context

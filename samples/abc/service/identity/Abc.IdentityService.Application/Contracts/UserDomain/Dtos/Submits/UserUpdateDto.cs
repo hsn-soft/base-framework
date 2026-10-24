@@ -18,4 +18,7 @@ public sealed class UserUpdateDto
     public string DisplayName { get; set; } = string.Empty;
 
     public bool IsActive { get; set; }
+
+    /// <summary>The roles of the user after the change (<c>customer</c> when none is given).</summary>
+    public List<string>? Roles { get; set; }
 }
