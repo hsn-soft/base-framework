@@ -44,6 +44,7 @@ internal static class BaseSerilog
         SerilogSinks resolved = sinks ?? SerilogSinks.Create(options);
         LogEventLevel console = SerilogRouting.ToSerilog(options.LogLevel);
         LogEventLevel persistent = SerilogRouting.ToSerilog(options.EffectivePersistentLevel);
+        LogEventLevel platform = SerilogRouting.ToSerilog(options.EffectivePlatformLevel);
 
         LoggerConfiguration configuration = new LoggerConfiguration()
             .Destructure.With<SensitiveDataDestructuringPolicy>()
@@ -65,7 +66,7 @@ internal static class BaseSerilog
         configuration = configuration
             .WriteTo.Conditional(logEvent => SerilogRouting.ForConsole(logEvent, console) && SerilogRouting.ShowsProperties(logEvent), sink => sink.Sink(resolved.ConsoleWithProperties))
             .WriteTo.Conditional(logEvent => SerilogRouting.ForConsole(logEvent, console) && !SerilogRouting.ShowsProperties(logEvent), sink => sink.Sink(resolved.Console))
-            .WriteTo.Conditional(logEvent => SerilogRouting.ForPersistent(logEvent, persistent), sink => sink.Sink(new FieldGuardSink(resolved.Persistent, options.MaxPersistentFieldLength)));
+            .WriteTo.Conditional(logEvent => SerilogRouting.ForPersistent(logEvent, persistent, platform), sink => sink.Sink(new FieldGuardSink(resolved.Persistent, options.MaxPersistentFieldLength)));
 
         configure?.Invoke(configuration);
         return new BaseSerilogSetup(configuration.CreateLogger(), resolved.Refreshable);

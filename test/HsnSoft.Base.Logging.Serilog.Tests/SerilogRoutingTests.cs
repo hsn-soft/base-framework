@@ -70,6 +70,26 @@ public class SerilogRoutingTests
         Assert.Equal(expected, SerilogRouting.ForPersistent(Events.Create(level, category), LogEventLevel.Information));
     }
 
+    [Theory]
+    [InlineData(LogEventLevel.Information, "Microsoft.AspNetCore.Routing.EndpointMiddleware", false)]
+    [InlineData(LogEventLevel.Information, "Yarp.ReverseProxy.Forwarder.HttpForwarder", false)]
+    [InlineData(LogEventLevel.Information, "Npgsql.Command", false)]
+    [InlineData(LogEventLevel.Warning, "Microsoft.AspNetCore.Routing.EndpointMiddleware", true)]
+    [InlineData(LogEventLevel.Error, "System.Net.Http.HttpClient", true)]
+    [InlineData(LogEventLevel.Information, "Orders.OrderService", true)]
+    [InlineData(LogEventLevel.Information, "HsnSoft.Base.EventBus.EventDispatcher", true)]
+    public void TheInformationOfThePlatform_StaysInTheConsole_WhateverElseIsPersistent(LogEventLevel level, string category, bool expected)
+    {
+        Assert.Equal(expected, SerilogRouting.ForPersistent(Events.Create(level, category), LogEventLevel.Information, LogEventLevel.Warning));
+    }
+
+    [Fact]
+    public void ALogThatNamesItsType_IsJudgedByIt_NotByItsCategory()
+    {
+        Assert.False(SerilogRouting.ForPersistent(Events.Create(LogEventLevel.Information, "Orders.X", new LogEventProperty("LogType", new ScalarValue("PlatformLog"))), LogEventLevel.Information, LogEventLevel.Warning));
+        Assert.True(SerilogRouting.ForPersistent(Events.Create(LogEventLevel.Information, "Microsoft.X", new LogEventProperty("LogType", new ScalarValue("HttpRequest"))), LogEventLevel.Information, LogEventLevel.Warning));
+    }
+
     [Fact]
     public void PersistentSink_CanBeStricter()
     {

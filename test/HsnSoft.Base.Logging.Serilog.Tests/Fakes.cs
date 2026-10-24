@@ -51,8 +51,14 @@ public sealed class DisposableSink : ILogEventSink, IDisposable
 internal static class Events
 {
     internal static LogEvent Create(LogEventLevel level, string? sourceContext = null, string message = "message")
+        => Create(level, sourceContext, message, []);
+
+    internal static LogEvent Create(LogEventLevel level, string? sourceContext, params LogEventProperty[] extra)
+        => Create(level, sourceContext, "message", extra);
+
+    private static LogEvent Create(LogEventLevel level, string? sourceContext, string message, LogEventProperty[] extra)
     {
-        List<LogEventProperty> properties = [];
+        List<LogEventProperty> properties = [.. extra];
         if (sourceContext is not null)
         {
             properties.Add(new LogEventProperty(Constants.SourceContextPropertyName, new ScalarValue(sourceContext)));

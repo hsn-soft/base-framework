@@ -15,6 +15,7 @@ Graylog in one service, NLog in another. Two packages help with that; both are o
 |---|---|---|
 | Debug, Trace (Serilog: Verbose) | yes | **never** |
 | Information and above | yes | yes |
+| Platform logs (`PlatformLog`: ASP.NET Core, Entity Framework, YARP, the drivers) below Warning | yes | **no** (`FrameworkLogger:PlatformMinimumLevel`, default `Warning`) |
 | Anything written through `IAppConsoleLogger` | yes | **never** (it is the console logger) |
 | Anything below `FrameworkLogger:LogLevel` | no | no |
 
@@ -34,6 +35,7 @@ builder.Logging.AddBaseSerilog(builder.Configuration, "OrderService"); // everyt
 "FrameworkLogger": {
   "LogLevel": "Debug",
   "PersistentMinimumLevel": "Information",
+  "PlatformMinimumLevel": "Warning",
   "IsGrayLogActive": true,
   "GrayLog": { "Address": "http://graylog", "Port": 12201, "SinkRefreshIntervalMinutes": 5 },
   "FilePath": "Logs/logs.txt",

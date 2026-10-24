@@ -21,6 +21,13 @@ public sealed class FrameworkLoggerOptions
     /// <summary>The lowest level of the persistent sink. It never goes below <see cref="LogCategories.PersistentFloor"/>: Debug and Trace stay in the console.</summary>
     public LogLevel PersistentMinimumLevel { get; set; } = LogCategories.PersistentFloor;
 
+    /// <summary>
+    /// The lowest level of the logs of the platform (ASP.NET Core, Entity Framework, YARP, the drivers: <c>PlatformLog</c>) that reach the persistent sink; they
+    /// all stay in the console. Default Warning: what the platform says at Information is noise next to the logs of the request and the message. It is
+    /// never below <see cref="EffectivePersistentLevel"/>.
+    /// </summary>
+    public LogLevel PlatformMinimumLevel { get; set; } = LogLevel.Warning;
+
     /// <summary>Send persistent logs to Graylog; when it is off they go to <see cref="FilePath"/>.</summary>
     public bool IsGrayLogActive { get; set; }
 
@@ -86,6 +93,7 @@ public sealed class FrameworkLoggerOptions
             VersionVariable = string.IsNullOrWhiteSpace(section["VersionVariable"]) ? "BUILD_NUMBER" : section["VersionVariable"]!,
             FilePath = string.IsNullOrWhiteSpace(section["FilePath"]) ? "Logs/logs.txt" : section["FilePath"]!,
             PersistentMinimumLevel = ParseLevel(section["PersistentMinimumLevel"], LogCategories.PersistentFloor),
+            PlatformMinimumLevel = ParseLevel(section["PlatformMinimumLevel"], LogLevel.Warning),
             MaxPersistentFieldLength = int.TryParse(section["MaxPersistentFieldLength"], CultureInfo.InvariantCulture, out int maxLength) && maxLength > 0 ? maxLength : 16 * 1024,
         };
         options.GrayLog.Address = section["GrayLog:Address"];
@@ -125,6 +133,9 @@ public sealed class FrameworkLoggerOptions
     /// <summary>The level a log must have to be persistent: <see cref="PersistentMinimumLevel"/>, at least <see cref="LogLevel"/>, and never below the floor.</summary>
     public LogLevel EffectivePersistentLevel
         => (LogLevel)System.Math.Max((int)PersistentMinimumLevel, System.Math.Max((int)LogLevel, (int)LogCategories.PersistentFloor));
+
+    /// <summary>The level a log of the platform must have to be persistent: <see cref="PlatformMinimumLevel"/>, and never below <see cref="EffectivePersistentLevel"/>.</summary>
+    public LogLevel EffectivePlatformLevel => (LogLevel)System.Math.Max((int)PlatformMinimumLevel, (int)EffectivePersistentLevel);
 }
 
 public sealed class GrayLogOptions

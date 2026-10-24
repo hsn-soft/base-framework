@@ -16,6 +16,7 @@ public class FrameworkLoggerOptionsTests
 
         Assert.Equal(LogLevel.Trace, options.LogLevel);
         Assert.Equal(LogLevel.Information, options.PersistentMinimumLevel);
+        Assert.Equal(LogLevel.Warning, options.PlatformMinimumLevel);
         Assert.False(options.IsGrayLogActive);
         Assert.False(options.IsSelfLogActive);
         Assert.Equal("Logs/logs.txt", options.FilePath);
@@ -144,6 +145,19 @@ public class FrameworkLoggerOptionsTests
         FrameworkLoggerOptions options = new() { LogLevel = configured, PersistentMinimumLevel = persistent };
 
         Assert.Equal(expected, options.EffectivePersistentLevel);
+    }
+
+    [Theory]
+    [InlineData(LogLevel.Information, LogLevel.Information, LogLevel.Information, LogLevel.Information)]
+    [InlineData(LogLevel.Warning, LogLevel.Information, LogLevel.Information, LogLevel.Warning)]
+    [InlineData(LogLevel.Warning, LogLevel.Error, LogLevel.Information, LogLevel.Error)]
+    [InlineData(LogLevel.Trace, LogLevel.Information, LogLevel.Error, LogLevel.Error)]
+    public void PlatformLevel_IsNeverBelowThePersistentLevel(LogLevel platform, LogLevel persistent, LogLevel configured, LogLevel expected)
+    {
+        FrameworkLoggerOptions options = new() { LogLevel = configured, PersistentMinimumLevel = persistent, PlatformMinimumLevel = platform };
+
+        Assert.Equal(expected, options.EffectivePlatformLevel);
+        Assert.Equal(LogLevel.Error, FrameworkLoggerOptions.FromConfiguration(Configuration(("PlatformMinimumLevel", "Error"))).PlatformMinimumLevel);
     }
 
     [Fact]
