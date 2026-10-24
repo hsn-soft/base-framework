@@ -363,8 +363,22 @@ public sealed class ListLogger : ILogger
 {
     public List<(LogLevel Level, string Message)> Entries { get; } = [];
 
+    /// <summary>Every scope that was started, as its properties.</summary>
+    public List<IReadOnlyDictionary<string, object?>> Scopes { get; } = [];
+
     public IDisposable? BeginScope<TState>(TState state)
-        where TState : notnull => null;
+        where TState : notnull
+    {
+        if (state is IEnumerable<KeyValuePair<string, object?>> values)
+        {
+            lock (Scopes)
+            {
+                Scopes.Add(values.ToDictionary(pair => pair.Key, pair => pair.Value));
+            }
+        }
+
+        return null;
+    }
 
     public bool IsEnabled(LogLevel logLevel) => true;
 

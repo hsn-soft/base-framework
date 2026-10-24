@@ -51,6 +51,12 @@ public sealed class OrdersController(OrderDbContext db, IEventBus eventBus, IDis
             throw new BusinessRuleException("The quantity must be greater than zero.");
         }
 
+        // failure demo: a request that throws, to see what the logs say (see samples/README.md)
+        if (request.Quantity == FailureDemo.RequestQuantity)
+        {
+            throw new InvalidOperationException($"Quantity {FailureDemo.RequestQuantity} is not supported (failure demo).");
+        }
+
         string customerId = User.GetRequiredUserId();
         string? cacheKey = string.IsNullOrWhiteSpace(idempotencyKey) ? null : $"idempotency:{customerId}:{idempotencyKey}";
 

@@ -32,7 +32,7 @@ public record ParentMessageEnvelope
     /// <summary>Ties together every message that came out of one request.</summary>
     public string? CorrelationId { get; set; }
 
-    /// <summary>Who produced it: <c>{ExchangeName}_{ConsumerClientName}</c>.</summary>
+    /// <summary>Who produced it: the <c>ConsumerClientName</c> of the service (<c>shipment-service</c>).</summary>
     public string? Producer { get; set; }
 
     /// <summary>

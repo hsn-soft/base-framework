@@ -67,7 +67,7 @@ public class FailedEventNotifierTests
         Assert.Equal((ushort)1, envelope.ReQueuedCount);
         Assert.Equal("corr-1", envelope.CorrelationId);
         Assert.Equal("user-7", envelope.GetHeader("UserId"));
-        Assert.Equal("HHS_OrderService", envelope.Producer);
+        Assert.Equal("OrderService", envelope.Producer);
     }
 
     [Fact]

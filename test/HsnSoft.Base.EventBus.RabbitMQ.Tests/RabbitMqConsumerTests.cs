@@ -184,6 +184,23 @@ public sealed class RabbitMqConsumerTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task WhatTheConsumerLogs_BelongsToTheChainOfTheMessage()
+    {
+        Rig rig = await StartAsync();
+
+        await rig.Deliver();
+        await rig.Deliver("not json at all", tag: 2);
+
+        IReadOnlyDictionary<string, object?> readable = rig.Logger.Scopes[0];
+        IReadOnlyDictionary<string, object?> unreadable = rig.Logger.Scopes[1];
+        Assert.Equal("corr", readable["CorrelationId"]);
+        Assert.Equal(Guid.Parse("0190a2f4-8c1e-7b3a-9d5e-2f6a4c8e1b07"), readable["MessageId"]);
+        Assert.Equal("Sample", readable["EventName"]);
+        Assert.Equal("Sample", unreadable["EventName"]);
+        Assert.False(unreadable.ContainsKey("CorrelationId"));
+    }
+
+    [Fact]
     public async Task ReceivedMessage_IsLoggedWithoutItsBody_ByDefault()
     {
         Rig rig = await StartAsync();
@@ -265,8 +282,9 @@ public sealed class RabbitMqConsumerTests : IAsyncDisposable
     [Fact]
     public async Task Timeout_OnAChannelThatIsGone_IsLogged()
     {
-        // the recovery worker must not rebuild the closed channel during the requeue delay
-        Rig rig = await StartAsync(configureConfig: config => config.RecoveryProbeInterval = TimeSpan.FromMinutes(1));
+        // the connection is down, so the recovery worker leaves the closed channel alone whenever it looks at it
+        Rig rig = await StartAsync();
+        rig.Connection.IsConnected = false;
         rig.Dispatcher.Behavior = () =>
         {
             rig.Channel.IsClosed = true;
@@ -448,6 +466,8 @@ public sealed class RabbitMqConsumerTests : IAsyncDisposable
         Rig rig = await StartAsync();
         rig.Connection.IsConnected = false;
 
+        // let the recovery worker see the lost connection first: it reads the connection and the channel one after the other
+        await Task.Delay(100);
         rig.Channel.IsClosed = true;
         await Task.Delay(200);
 

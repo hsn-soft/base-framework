@@ -4,6 +4,7 @@ using Microsoft.Extensions.Caching.Distributed;
 using Xyz.ServiceProduct.Host.Controllers;
 using Xyz.ServiceProduct.Host.Domain;
 using Xyz.ServiceProduct.Host.Persistence;
+using Xyz.Shared;
 using Xyz.Shared.Events;
 
 namespace Xyz.ServiceProduct.Host.Handlers;
@@ -14,6 +15,12 @@ public sealed class OrderCreatedHandler(ProductStore store, IEventBus eventBus, 
 {
     public async Task HandleAsync(MessageEnvelope<OrderCreated> envelope, CancellationToken cancellationToken)
     {
+        // failure demo: a handler that throws, to see what the logs say
+        if (envelope.Message.Quantity == FailureDemo.HandlerQuantity)
+        {
+            throw new InvalidOperationException($"Quantity {FailureDemo.HandlerQuantity} is not supported (failure demo), order {envelope.Message.OrderId}.");
+        }
+
         StockReservation reservation = await store.ReserveAsync(envelope.Message.OrderId, envelope.Message.ProductId, envelope.Message.Quantity, cancellationToken);
         await cache.RemoveAsync(ProductsController.CacheKey(envelope.Message.ProductId), cancellationToken);
 

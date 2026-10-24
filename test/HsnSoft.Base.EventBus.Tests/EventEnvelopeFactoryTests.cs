@@ -20,7 +20,7 @@ public class EventEnvelopeFactoryTests
         Assert.Equal((ushort)0, envelope.ReQueuedCount);
         Assert.Null(envelope.ParentMessageId);
         Assert.NotEqual(Guid.Empty, envelope.MessageId);
-        Assert.Equal("HHS_OrderService", envelope.Producer);
+        Assert.Equal("OrderService", envelope.Producer);
         Assert.Same(s_message, envelope.Message);
         Assert.True((DateTime.UtcNow - envelope.MessageTime).Duration() < TimeSpan.FromMinutes(1));
         Assert.Null(envelope.CorrelationId);

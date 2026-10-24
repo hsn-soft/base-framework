@@ -29,7 +29,7 @@ public sealed class EventEnvelopeFactory(IOptions<EventBusOptions> options, IEnu
             MessageId = Guid.CreateVersion7(),
             MessageTime = DateTime.UtcNow,
             Message = message,
-            Producer = _options.ConsumerClientInfo,
+            Producer = _options.ConsumerClientName,
             CorrelationId = correlationId ?? parent?.CorrelationId ?? LogFlow.Current?.CorrelationId ?? FirstCorrelationId(),
             HopLevel = parent is null ? (ushort)1 : (ushort)(parent.HopLevel + 1),
             ReQueuedCount = (ushort)((parent?.ReQueuedCount ?? 0) + (isReQueuePublish ? 1 : 0)),

@@ -43,7 +43,7 @@ Pass `parentMessage:` to choose a different parent.
 One flat JSON object, property names as the C# properties (PascalCase); reading ignores case.
 
 ```json
-{ "HopLevel": 2, "ReQueuedCount": 0, "MessageId": "…", "MessageTime": "…Z", "CorrelationId": "…", "Producer": "HHS_OrderService",
+{ "HopLevel": 2, "ReQueuedCount": 0, "MessageId": "…", "MessageTime": "…Z", "CorrelationId": "…", "Producer": "OrderService",
   "ParentMessageId": "…", "UserId": "…", "ClientChannel": "web", "Message": { "OrderId": "…" } }
 ```
 

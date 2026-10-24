@@ -1,11 +1,14 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.EventBus.RabbitMQ.Configs;
 using HsnSoft.Base.EventBus.RabbitMQ.Connection;
+using HsnSoft.Base.Logging;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -168,6 +171,9 @@ public sealed partial class RabbitMqConsumer(
         {
             string eventName = ResolveEventName(args);
             string message = Encoding.UTF8.GetString(args.Body.Span);
+
+            // what the consumer itself says about this message (it failed, it was put back) belongs to its chain too
+            using IDisposable? scope = _logger.BeginScope(MessageScope(eventName, args.Body.Span));
             if (_options.LogMessageBody)
             {
                 LogReceivedWithBody(_logger, QueueName, message);
@@ -204,6 +210,23 @@ public sealed partial class RabbitMqConsumer(
         {
             _prefetch.Release();
         }
+    }
+
+    private static Dictionary<string, object?> MessageScope(string eventName, ReadOnlySpan<byte> body)
+    {
+        Dictionary<string, object?> scope = new() { ["EventName"] = eventName };
+        try
+        {
+            ParentMessageEnvelope parent = EventSerializer.DeserializeParent(body);
+            scope[LogFields.CorrelationId] = parent.CorrelationId;
+            scope["MessageId"] = parent.MessageId;
+        }
+        catch (JsonException)
+        {
+            // a message that cannot be read has no chain to say; handling it reports that
+        }
+
+        return scope;
     }
 
     private async Task ProcessEventAsync(string eventName, byte[] body)

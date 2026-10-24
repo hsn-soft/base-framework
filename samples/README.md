@@ -75,6 +75,13 @@ builder.Services
 app.UseXyzApi();   // exceptions, authentication, authorization, health, in that order
 ```
 
+## Failure demo
+
+To look at what the logs say when something fails, order a quantity the sample refuses on purpose: **13** makes the order request throw
+(an `HttpResponse` with status 500 and a `GLOBAL_EXCEPTION_HANDLER` log with the exception), **14** makes the handler of the product
+service throw (`ConsumeStart`, two `CONSUME_EVENT_RETRY`, a `ConsumeEnd` with level Error and the exception, then the message goes to
+the error queue). The services log requests only when `RequestLogging__Enabled=true` is set; the gateway always does.
+
 ## Logging
 
 Every host logs through `HsnSoft.Base.Logging.Serilog` (`FrameworkLogger` section of its `appsettings.json`, see

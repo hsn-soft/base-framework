@@ -112,7 +112,7 @@ public sealed class RabbitMqTests(RabbitMqFixture fixture) : IClassFixture<Rabbi
         Assert.Equal("hello", envelope!.Message.Text);
         Assert.Equal("corr-1", envelope.CorrelationId);
         Assert.Equal((ushort)1, envelope.HopLevel);
-        Assert.Equal($"{exchange}_it-service", envelope.Producer);
+        Assert.Equal("it-service", envelope.Producer);
         Assert.Null(envelope.ParentMessageId);
         Assert.NotEqual(Guid.Empty, envelope.MessageId);
         Assert.Equal(HealthStatus.Healthy, (await Support.ReadyReportAsync(host.Services)).Status);
@@ -197,7 +197,7 @@ public sealed class RabbitMqTests(RabbitMqFixture fixture) : IClassFixture<Rabbi
         Assert.Equal(expected, actual);
         Assert.Equal("corr-shape", root.GetProperty("CorrelationId").GetString());
         Assert.Equal(1, root.GetProperty("HopLevel").GetInt32());
-        Assert.Equal($"{exchange}_it-service", root.GetProperty("Producer").GetString());
+        Assert.Equal("it-service", root.GetProperty("Producer").GetString());
         Assert.Equal("user-9", root.GetProperty("UserId").GetString());
         Assert.Equal("agent", root.GetProperty("Flow").GetString());
         Assert.Equal("shape", root.GetProperty("Message").GetProperty("Text").GetString());
@@ -249,7 +249,7 @@ public sealed class RabbitMqTests(RabbitMqFixture fixture) : IClassFixture<Rabbi
         Assert.NotNull(envelope.ParentMessageId);
         Assert.Equal((ushort)2, envelope.HopLevel);
         Assert.Equal("fail-corr", envelope.CorrelationId);
-        Assert.Equal($"{exchange}_it-service", envelope.Producer);
+        Assert.Equal("it-service", envelope.Producer);
 
         QueueDeclareOk work = await channel.QueueDeclarePassiveAsync($"{exchange}_it-service_Pinged");
         Assert.Equal(0u, work.MessageCount);
