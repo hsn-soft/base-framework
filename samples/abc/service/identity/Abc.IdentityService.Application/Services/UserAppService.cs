@@ -57,6 +57,15 @@ public sealed class UserAppService(IUserRepository users, TimeProvider clock) : 
         return ToDto(user);
     }
 
+    public async Task<UserNameAvailabilityDto> CheckUserNameAsync(UserNameCheckDto input, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+
+        string userName = input.UserName.Trim();
+        bool taken = await users.UserNameExistsAsync(userName, null, cancellationToken).ConfigureAwait(false);
+        return new UserNameAvailabilityDto { UserName = userName, IsAvailable = !taken };
+    }
+
     public async Task UpdateAsync(UserUpdateDto input, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(input);

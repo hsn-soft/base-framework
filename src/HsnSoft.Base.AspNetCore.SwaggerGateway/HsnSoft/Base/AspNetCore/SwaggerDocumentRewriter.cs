@@ -90,7 +90,11 @@ internal sealed partial class SwaggerDocumentRewriter(
             JsonObject rewritten = [];
             foreach (KeyValuePair<string, JsonNode?> path in paths)
             {
-                rewritten[ShownPath(path.Key, service)] = path.Value?.DeepClone();
+                // a path outside the prefix is one this gateway does not forward (the service's other gateway's, a health endpoint): it is not shown
+                if (path.Key.StartsWith(service.DownstreamPathPrefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    rewritten[service.GatewayPathPrefix + path.Key[service.DownstreamPathPrefix.Length..]] = path.Value?.DeepClone();
+                }
             }
 
             root["paths"] = rewritten;
@@ -98,11 +102,6 @@ internal sealed partial class SwaggerDocumentRewriter(
 
         return root.ToJsonString(s_write);
     }
-
-    private static string ShownPath(string path, SwaggerServiceDefinition service)
-        => path.StartsWith(service.DownstreamPathPrefix, StringComparison.OrdinalIgnoreCase)
-            ? service.GatewayPathPrefix + path[service.DownstreamPathPrefix.Length..]
-            : path;
 
     [LoggerMessage(EventId = 5301, EventName = "SWAGGER_GATEWAY_FETCH_FAILED", Level = LogLevel.Warning, Message = "The Swagger document of {Service} could not be fetched (try {Attempt} of {Attempts})")]
     private static partial void LogFetchFailed(ILogger logger, Exception? exception, string service, int attempt, int attempts);

@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!-- What every Abc microservice shares on top of Abc.Shared.Hosting: it reads the bearer token, its endpoints need it, and its Swagger has the button for it. -->
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Abc.Shared.Hosting\Abc.Shared.Hosting.csproj" />
+    </ItemGroup>
+
+</Project>

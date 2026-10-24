@@ -23,6 +23,9 @@ public interface IUserAppService
     /// <exception cref="Abc.IdentityService.Domain.UserDomain.Exceptions.UserUserNameDuplicateException">The user name is taken.</exception>
     Task<UserDto> CreateAsync(UserCreateDto input, CancellationToken cancellationToken = default);
 
+    /// <summary>Whether nobody has this user name yet (names are compared without regard to case): what a sign-up form asks before it submits.</summary>
+    Task<UserNameAvailabilityDto> CheckUserNameAsync(UserNameCheckDto input, CancellationToken cancellationToken = default);
+
     /// <exception cref="HsnSoft.Base.NotFoundException">There is no such user.</exception>
     Task UpdateAsync(UserUpdateDto input, CancellationToken cancellationToken = default);
 

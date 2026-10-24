@@ -211,6 +211,24 @@ Every controller derives from `BaseServiceController` (area `identity-service`, 
 JWT bearer token (no token or a bad one is a 401); `LogExamplesController` is `[AllowAnonymous]` and the health endpoints are open. Abc has no auth server yet, so its `Jwt` settings are the Xyz ones
 (sample values): a token from `Xyz.AuthServer` (`POST http://localhost:5110/api/auth/login`, `alice` / `alice123`) is accepted; Swagger has an *Authorize* button for it.
 
+`PublicUsersController` (`[AllowAnonymous]`, route `api/identity-service/v1/public/users`) has `POST check-user-name`: whether a user name is free, for what a public sign-up form asks.
+
 ```bash
 dotnet run --project samples/abc/service/identity/Abc.IdentityService.Http.Host      # http://localhost:5400, Swagger at /swagger in Development
+dotnet run --project samples/abc/gateway/commercial/Abc.Gateway.Commercial.Host      # http://localhost:5500
+dotnet run --project samples/abc/gateway/public/Abc.Gateway.Public.Host              # http://localhost:5600
 ```
+
+### The Abc gateways
+
+`samples/abc/gateway` has the two gateways of the Abc system, one per audience, built like the production gateway ([ADR-0027](../docs/adr/0027-gateways-per-audience.md)):
+`Abc.Gateway.Commercial.Host` (port 5500, maps to the `commercial` segment of the services) and `Abc.Gateway.Public.Host` (port 5600, maps to `public`); what they share is `Abc.Shared.Hosting.Gateways` (on top of `Abc.Shared.Hosting`, which the identity service shares through `Abc.Shared.Hosting.Microservices`: [ADR-0028](../docs/adr/0028-shared-hosting-projects.md)).
+Their routes are settings (`ReverseProxyRoutes`, `ServiceEndpoints`): a client calls `/identity-service/v1/...` and the gateway asks the service `/api/identity-service/v1/commercial/...` (or `public`).
+
+```bash
+# the identity service (5400), then a gateway; a token for the commercial one comes from Xyz.AuthServer (5110)
+curl -X POST http://localhost:5500/identity-service/v1/users/paged-list -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d '{}'   # commercial: needs the token (the service checks it)
+curl -X POST http://localhost:5600/identity-service/v1/users/check-user-name -H 'Content-Type: application/json' -d '{"userName":"ada"}'            # public: open, a PublicUsersController endpoint
+```
+
+Each gateway reaches only the endpoints of its own segment (the other one answers 404), and its Swagger UI (`/swagger`) shows the identity service's document with the gateway's paths.

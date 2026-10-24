@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!--
+        What the two gateways of the Abc system share (the commercial one and the public one), on top of Abc.Shared.Hosting: the route registry that builds the reverse proxy, the
+        limits of the public network, and the Swagger that shows the services behind the gateway.
+    -->
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Yarp.ReverseProxy" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Abc.Shared.Hosting\Abc.Shared.Hosting.csproj" />
+        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.AspNetCore.SwaggerGateway\HsnSoft.Base.AspNetCore.SwaggerGateway.csproj" />
+    </ItemGroup>
+
+</Project>

@@ -53,7 +53,7 @@ app.UseBaseSwagger();                                // the same call: the UI li
 - `Origin` is the **internal** address of the service: the gateway fetches `/swagger/v1/swagger.json` from there (`SwaggerPath` changes it); `PublicOrigin` is the
   address clients use, written in every document (when it is not given, the address the document was asked at).
 - `DownstreamPathPrefix` / `GatewayPathPrefix`: the paths the service has start with the first and the gateway has the second (the route that forwards
-  `/identity-service/v1/...` to `/api/identity-service/v1/commercial/...`, see [ADR-0026](adr/0026-route-pattern-and-jwt-by-default.md)). Both empty when the gateway forwards the paths as they are.
+  `/identity-service/v1/...` to `/api/identity-service/v1/commercial/...`, see [ADR-0026](adr/0026-route-pattern-and-jwt-by-default.md)). Both empty when the gateway forwards the paths as they are. **With a `DownstreamPathPrefix`, the paths of the service that are not under it are left out** of the gateway's document: they are not forwarded by this gateway (the service's `public` endpoints on the commercial gateway, and the other way round).
 - The rewritten document is kept `CacheDurationSeconds` (60); a temporary failure of a service is tried `RetryCount` (2) times more; a service that is down is
   a 502 where its document should be, the other documents are not affected. The settings are checked when the host starts.
 - The documents are at `/swagger/services/{Key}/swagger.json`, behind the same rule as the UI: nothing in production-like environments. Who may open `/swagger`

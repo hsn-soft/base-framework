@@ -126,7 +126,8 @@ public class SwaggerGatewayTests
 
         JsonElement paths = JsonDocument.Parse(await (await GetAsync(app)).Content.ReadAsStringAsync()).RootElement.GetProperty("paths");
 
-        Assert.Equal(["/orders/v1", "/orders/v1/{id}", "/health"], paths.EnumerateObject().Select(path => path.Name));
+        // /health is not under /api/orders: this gateway does not forward it, so its document does not show it
+        Assert.Equal(["/orders/v1", "/orders/v1/{id}"], paths.EnumerateObject().Select(path => path.Name));
     }
 
     [Fact]
