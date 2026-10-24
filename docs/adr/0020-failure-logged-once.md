@@ -31,4 +31,4 @@ line that failed even when a platform library threw it, and the framework's own 
 
 ## Related
 
-[ADR-0018](0018-chain-logs.md), [ADR-0022](0022-web-api-answers.md), `docs/Logging.md` (What a failure's logs say, One Error for a failure), `ExceptionLogFields`, `KnownExceptions`.
+[ADR-0018](0018-chain-logs.md), [ADR-0022](0022-web-api-answers.md), `docs/Logging.md` (What a failure's logs say), `ExceptionLogFields`, `KnownExceptions`.

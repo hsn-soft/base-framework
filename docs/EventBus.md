@@ -119,5 +119,4 @@ messages being published is counted correctly when several are published at once
 
 ## Not done yet
 
-The Kafka project builds on the same core but still has its first, simple consumer. It and an Azure Service Bus project will be ported
-the same way: the same envelope, naming, failure handling and shutdown, with the broker's own topology.
+The Kafka consumer and an Azure Service Bus project are still to be ported the same way ([ADR-0023](adr/0023-event-bus.md)).

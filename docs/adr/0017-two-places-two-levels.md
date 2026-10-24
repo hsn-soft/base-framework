@@ -32,4 +32,4 @@ section. People expect the standard .NET `Logging:LogLevel` to limit what the po
 
 ## Related
 
-[ADR-0015](0015-logging-architecture.md), [ADR-0016](0016-log-types-by-namespace.md), `docs/LogLevels.md`, `docs/Logging.md` (Two levels), `LogLevelRules`, `PersistentLevelRules`, `PersistentLoggerOptions`.
+[ADR-0015](0015-logging-architecture.md), [ADR-0016](0016-log-types-by-namespace.md), `docs/LogLevels.md`, `docs/Logging.md` (Using it), `LogLevelRules`, `PersistentLevelRules`, `PersistentLoggerOptions`.

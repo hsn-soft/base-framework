@@ -32,4 +32,4 @@ would create fields without end. We also noticed that a field list kept by hand 
 
 ## Related
 
-[ADR-0015](0015-logging-architecture.md), [ADR-0016](0016-log-types-by-namespace.md), [ADR-0018](0018-chain-logs.md), `docs/GraylogFields.md`, `docs/Logging.md` (Where each decision is made), `scripts/graylog-fields/generate.py`.
+[ADR-0015](0015-logging-architecture.md), [ADR-0016](0016-log-types-by-namespace.md), [ADR-0018](0018-chain-logs.md), `docs/GraylogFields.md`, `docs/Logging.md` (Fields and facility), `scripts/graylog-fields/generate.py`.

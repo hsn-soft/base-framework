@@ -1,73 +1,16 @@
 # Logging
 
-The framework packages (EventBus, RabbitMQ, Kafka, PostgreSQL, MongoDB, ...) do not know which logging library a product uses. They
-write through `Microsoft.Extensions.Logging` (`ILogger<T>`, `[LoggerMessage]`), and the product decides where the logs go: Serilog and
-Graylog in one service, NLog in another. Two packages help with that; both are optional.
+How to use the logging of the framework and what its logs look like. **Why it is this way** is in the ADRs: [0015](adr/0015-logging-architecture.md) (everything uses `ILogger`),
+[0016](adr/0016-log-types-by-namespace.md) (the log types), [0017](adr/0017-two-places-two-levels.md) (the console and what is kept), [0018](adr/0018-chain-logs.md) (the chain logs),
+[0019](adr/0019-log-fields-pipeline.md) (the fields), [0020](adr/0020-failure-logged-once.md) (failures), [0021](adr/0021-sensitive-data-by-attributes.md) (sensitive data).
+
+The framework packages (EventBus, RabbitMQ, Kafka, PostgreSQL, MongoDB, ...) do not know which logging library a product uses. They write through `Microsoft.Extensions.Logging`
+(`ILogger<T>`, `[LoggerMessage]`), and the product decides where the logs go: Serilog and Graylog in one service, NLog in another. Two packages help with that; both are optional.
 
 | Package | What it is |
 |---|---|
 | `HsnSoft.Base.Logging` | Independent of any logging library: `IAppConsoleLogger` (console only), the settings every provider reads (`Logging:LogLevel` for the console, the `PersistentLogger` section for what is kept), masking of sensitive data. |
-| `HsnSoft.Base.Logging.Serilog` | Serilog as the provider: the console, the persistent sink (Graylog, or a file), the routing rule below, the self-healing Graylog sink. |
-
-## Two levels: what the console shows, and what is kept
-
-A log goes to two places, and **each has its own level**:
-
-| | Told by | Default | Can be lowered to |
-|---|---|---|---|
-| **The console** (the pod's log, `kubectl logs`) | the standard **`Logging:LogLevel`** of every .NET service: a `Default` and a level per category | Information | anything (`Debug`, `Trace`), or `None` for a category |
-| **The persistent sink** (Graylog, or a file when Graylog is off) | **`PersistentLogger:LogLevel`**, with `PersistentLogger:LevelOverrides` per category | Information | Information: **never below it**, Debug and Trace stay in the console |
-
-```json
-"Logging": {
-  "LogLevel": { "Default": "Information", "Microsoft.AspNetCore": "Warning", "Yarp": "Warning" }
-},
-"PersistentLogger": {
-  "LogLevel": "Information",
-  "IsGrayLogActive": true
-}
-```
-
-So a pod can show only warnings and errors (`"Default": "Warning"`) while Graylog still keeps Information and above, and the other way round. A category
-rule counts for everything below it (`Microsoft.AspNetCore` is also `Microsoft.AspNetCore.Routing`), the longest rule that fits wins. Graylog is turned on and off with
-`PersistentLogger:IsGrayLogActive`; off, what is kept goes to `PersistentLogger:FilePath`.
-
-What each setting changes, where a log of each level can be seen, and settings for the usual cases are in [LogLevels.md](LogLevels.md).
-
-More on what is kept:
-
-| Log | Console | Persistent sink |
-|---|---|---|
-| Information and above (or what `LevelOverrides` says for its category) | by `Logging:LogLevel` | yes |
-| Debug, Trace (Serilog: Verbose) | by `Logging:LogLevel` | **never** |
-| Platform logs (`PlatformLog`: ASP.NET Core, Entity Framework, YARP, the drivers, any library) below Warning | by `Logging:LogLevel` | **no** (`PersistentLogger:PlatformMinimumLevel`, default `Warning`), unless `LevelOverrides` names their category |
-| Anything written through `IAppConsoleLogger` | by `Logging:LogLevel` (its category is `ConsoleOnly.<name>`) | **never** (it is the console logger) |
-
-### Example: the Information of a library in Graylog too
-
-The logs of a library (the platform's: ASP.NET Core, a driver, YARP) reach Graylog only from Warning, because `PlatformMinimumLevel` says so. To keep the Information of one
-of them (the MongoDB driver, categories `MongoDB.*`), name its category in `PersistentLogger:LevelOverrides`; and, if the console's `Default` is higher, in `Logging:LogLevel` to see it in the pod:
-
-```json
-"Logging": {
-  "LogLevel": { "Default": "Warning", "MongoDB": "Information" }
-},
-"PersistentLogger": {
-  "LogLevel": "Information",
-  "IsGrayLogActive": true,
-  "LevelOverrides": { "MongoDB": "Information" }
-}
-```
-
-The two are independent: the first line shows it in the console, the second keeps it in Graylog. A rule counts for the category and everything below it (`MongoDB` is also `MongoDB.Command`;
-write `MongoDB.Connection` for one), and the longest rule that fits wins. What is kept is never below Information, whatever a rule says: a `"MongoDB": "Debug"` is kept from Information. The name of
-a category is in the `SourceContext` of a log in Graylog (`Yarp.ReverseProxy.Forwarder.HttpForwarder`); the start of it is enough. The same works the other way, for the code of the
-application: `"Hhs.Orders.Noisy": "Warning"` in `LevelOverrides` keeps only the warnings of that namespace in Graylog and leaves the console to `Logging:LogLevel`.
-
-`Microsoft.Extensions.Logging`'s own filter is opened wide by `AddBaseSerilog`: it would decide for both places at once. The rule lives in the logging provider, not in the framework
-packages: they only write logs and do not know what is shown or kept. A provider recognizes console-only logs by their **category**
-(`LogCategories.ConsoleOnlyPrefix`), the one thing every logging library has, so another provider can apply the same rules (`LogLevelRules` for the console,
-`PersistentLevelRules` for what is kept).
+| `HsnSoft.Base.Logging.Serilog` | Serilog as the provider: the console, the persistent sink (Graylog, or a file), the routing rules, the self-healing Graylog sink. |
 
 ## Using it (Serilog)
 
@@ -92,90 +35,62 @@ builder.Logging.AddBaseSerilog(builder.Configuration, "OrderService"); // everyt
 }
 ```
 
-- Without Graylog the persistent sink is the file (`FilePath`, rolling daily, 30 days).
-- Libraries are quieter than the application, as before: `System`, `Microsoft*`, `Npgsql`, `MongoDB` and the HsnSoft EF Core and
-  MongoDB packages log one level up from the configured level (Warning once that is Information); `LevelOverrides` changes or adds.
-- `AddBaseSerilog` also removes the other logging providers, lifts the default filter of `Microsoft.Extensions.Logging` (it would hide
-  Debug logs before Serilog sees them) and, unless you pass `replaceGlobalLogger: false`, assigns Serilog's static `Log.Logger`.
-- Objects logged with `{@Object}` have their `[SensitiveData]` properties masked.
-- The Graylog sink is rebuilt every `SinkRefreshIntervalMinutes` (a third-party sink can stay broken after a failed start); the
-  replaced sink lives on for ten seconds so what it was sending is not lost.
-- `IsSelfLogActive` prints the errors of the logging library itself (e.g. Graylog not reachable) to the error output, never to a sink:
-  a failing sink must not log into itself.
+- **The console** is told by `Logging:LogLevel` (a default and a level per namespace), **what is kept** (Graylog, or the file `FilePath` when `IsGrayLogActive` is `false`) by `PersistentLogger:LogLevel` and
+  `LevelOverrides`, never below Information. What each setting changes, where a log of each level can be seen and settings for the usual cases are in **[LogLevels.md](LogLevels.md)**.
+- `AddBaseSerilog` removes the other logging providers, opens the filter of `Microsoft.Extensions.Logging` (Serilog decides, per place) and, unless you pass `replaceGlobalLogger: false`, assigns Serilog's static `Log.Logger`.
+- The file is rolled daily and kept 30 days. The Graylog sink is rebuilt every `SinkRefreshIntervalMinutes` (a third-party sink can stay broken after a failed start); the replaced sink lives on for ten seconds so what it
+  was sending is not lost.
+- `IsSelfLogActive` prints the errors of the logging library itself (e.g. Graylog not reachable) to the error output, never to a sink: a failing sink must not log into itself.
 - A product that logs Newtonsoft objects adds the destructuring itself, the framework does not depend on Newtonsoft:
   `builder.Logging.AddBaseSerilog(configuration, "Host", serilog => serilog.Destructure.JsonNetTypes())`.
-
-`LogLevel` values may be Microsoft's (`Trace`, `Critical`) or Serilog's (`Verbose`, `Fatal`), in any case.
+- Level values may be Microsoft's (`Trace`, `Critical`) or Serilog's (`Verbose`, `Fatal`), in any case.
 
 ## The log types
 
-Every log in Graylog has a `Solution` (the first part of the assembly name: `Hhs`, `Xyz`), an `Assembly` (`Hhs.AuthServer.Http.Host`: which
-service, auth server or agent wrote it), a `Version` (the build that wrote it: the environment variable `BUILD_NUMBER`, which the CI of the
-services sets to the image tag `{yyMMddHHmm}-sha-{git short sha}`; else `PersistentLogger:Version`, else the version of the entry assembly: with it the
-`Line` of a failure is read in the code that ran) and a `LogType`:
+Every log in Graylog has a `Solution` (the first part of the assembly name: `Hhs`, `Xyz`), an `Assembly` (`Hhs.AuthServer.Http.Host`: which service, auth server or agent wrote it), a `Version` (the build that wrote it: the
+environment variable `BUILD_NUMBER`, which the CI of the services sets to the image tag `{yyMMddHHmm}-sha-{git short sha}`; else `PersistentLogger:Version`, else the version of the entry assembly: with it the `Line` of a failure
+is read in the code that ran) and a `LogType`:
 
 | `LogType` | What it is | Written by |
 |---|---|---|
 | `FrameworkLog` | a framework library (`HsnSoft.Base.*`) talking about itself; the `Facility` says what: `RABBITMQ_CONSUMER_SUBSCRIBED`, `PRODUCE_EVENT_ERROR`, ... | the library, nobody has to do anything |
-| `HttpRequest`, `HttpResponse` | an HTTP request when it arrives, and when it is answered | `UseBaseRequestLogging()` ([`HsnSoft.Base.AspNetCore.WebApi`]) |
+| `HttpRequest`, `HttpResponse`, `HttpRequestResponse` | an HTTP request when it arrives, and when it is answered; one log for what a gateway answered itself | `UseBaseRequestLogging()` (`HsnSoft.Base.AspNetCore.WebApi`) |
 | `ConsumeStart`, `ConsumeEnd` | a message when its handler starts, and when it ends | the event bus |
 | `SharedLog` | the shared library of the product (`{AppNamespace}.Shared.*`: its rate limit, its helpers) | the shared library |
 | `AppLog` | what the developer of the application logs with `ILogger` | the application |
-| `PlatformLog` | ASP.NET Core, Entity Framework, a database driver, ... | the platform |
+| `PlatformLog` | ASP.NET Core, Entity Framework, a database driver, any other library | the platform |
 
-The provider decides `LogType` from the category of a log, that is from the class that wrote it: what is under **`HsnSoft.Base`** is `FrameworkLog`, what is under
-**the namespace of the application** (`PersistentLogger:AppNamespace`, `Hhs`) is `AppLog`, except what is under **`{AppNamespace}.Shared`** (`Hhs.Shared.*`), which is `SharedLog`, and **everything else is `PlatformLog`**: no list of libraries
-to keep up to date, a new library is the platform's the moment it logs. Without `AppNamespace` it is the first part of the name of the assembly that runs
-(`Hhs.IdentityService.Http.Host` is `Hhs`); set it when the code of the product does not start with that. A log written without a category (the static `Log`) and the
-console logger's are the application's. The chain types say theirs themselves. `MessageType` is `Structured` when an
-object was logged with `{@Object}` and `Args` when only plain values were.
+The type is told from the **namespace of the class that wrote the log**: `HsnSoft.Base.*` is the framework's, `{AppNamespace}.Shared.*` the shared library's, `{AppNamespace}.*` the application's (`PersistentLogger:AppNamespace`; without it the
+first part of the assembly name), everything else the platform's. The chain types say theirs themselves; a developer cannot choose a type on a log line. See [ADR-0016](adr/0016-log-types-by-namespace.md).
+`MessageType` is `Structured` when an object was logged with `{@Object}` and `Args` when only plain values were.
 
-What is a framework library is only `HsnSoft.Base.*`. The shared library of a product (`Xyz.Shared`) is not the framework's: its logs are `SharedLog`s, told from the logs of the services (`AppLog`) so what a shared policy says can be found on its own. Both are the product's code and have the same fields: who asked, the facility and the arguments, without the endpoint and the span of ASP.NET Core.
+## The chain logs
 
-### The chain logs
-
-Fields ASP.NET Core already adds to every log of a request are used as they are and not written twice: `RequestId` (the key of one request),
-`RequestPath`, `ConnectionId`, and the W3C trace (`TraceId`, `SpanId`, `ParentId`, which a gateway passes on in `traceparent`).
-
-A request that publishes an event whose handler publishes another event is one chain. The four chain logs are written in pairs so a
-log reader can follow it, and so a pod that dies in the middle (out of memory) leaves its start without an end:
+A request that publishes an event whose handler publishes another event is one chain. The chain logs are written in pairs so a log reader can follow it, and so a pod that dies in the middle (out of memory) leaves its start
+without an end. The `RequestId` of ASP.NET Core is the key of one HTTP request (`HttpRequest` + `HttpResponse` share it); the W3C trace (`TraceId`, and `SpanId`, `ParentId` on the request logs) is what a gateway passes on in `traceparent`.
 
 | Field | Meaning |
 |---|---|
 | `CorrelationId` | the same along the whole chain, however many hops. A client (a mobile app) that sends `X-Correlation-Id` has its own id kept, so it finds its whole chain in the logs; a request without one takes the `TraceId` of the request (32 hex digits), not a new id: the same value is the `TraceId` of the logs of the gateway and of the services, and of the consume logs (a message carries only the correlation id, so a consume log gets `TraceId` when it is one). The response carries it back. |
-| `ScopeId` | also 32 hex digits; the same in the start and end log of one message (`ConsumeStart` + `ConsumeEnd`), different for every message; every other log written while the message is handled carries it too. An HTTP request has no `ScopeId`: ASP.NET Core puts its `RequestId` on every log of the request, and `HttpRequest` + `HttpResponse` (and the exception log) share it. |
-| `From`, `To` | `httpclient -> token-login` for a request (`controller-action` in lower case; for anything that is not a controller action, such as a minimal API endpoint or a proxied route, the request path in lower case). A message: `token-login -> ordercreated` (where it was published from, the event) and, one hop later, `ordercreated -> stockreserved`. A message published outside any request or message (an agent, a scheduler) comes from `agent`. |
+| `ScopeId` | also 32 hex digits; the same in the start and end log of one message (`ConsumeStart` + `ConsumeEnd`), different for every message; every other log written while the message is handled carries it too. An HTTP request has no `ScopeId`: it has the `RequestId`. |
+| `From`, `To` | `httpclient -> token-login` for a request (`controller-action` in lower case; for anything that is not a controller action, such as a proxied route, the request path in lower case). A message: `token-login -> ordercreated` (where it was published from, the event) and, one hop later, `ordercreated -> stockreserved`. A message published outside any request or message (an agent, a scheduler) comes from `agent`. |
 | `ElapsedMs` | how long the step took (`HttpResponse`, `ConsumeEnd`) |
-| `Facility` | `HTTP_REQUEST`, `HTTP_RESPONSE`, `CONSUME_EVENT_START`, `CONSUME_EVENT_SUCCESS` / `CONSUME_EVENT_ERROR` (the end), `CONSUME_EVENT_RETRY` |
+| `Facility` | `HTTP_REQUEST`, `HTTP_RESPONSE`, `HTTP_REQUEST_RESPONSE`, `CONSUME_EVENT_START`, `CONSUME_EVENT_SUCCESS` / `CONSUME_EVENT_ERROR` (the end), `CONSUME_EVENT_RETRY` |
 
-`ConsumeStart`/`ConsumeEnd` also carry `HopLevel`, `MessageId`, `ParentMessageId`, `EventName` and `Producer`; the response log has `Status`
-(the level follows it, wherever it is logged: 2xx and 3xx Information, 4xx Warning, 5xx Error) and the user. The message id is the id of the broker-independent
-envelope, the same for RabbitMQ and Kafka. Where a message comes from travels in its `Flow` header; a message from an older producer
-(without it) comes from its `Producer`.
+`ConsumeStart`/`ConsumeEnd` also carry `HopLevel`, `MessageId`, `ParentMessageId`, `EventName` and `Producer`; where a message comes from travels in its `Flow` header (a message from an older producer, without it, comes from its
+`Producer`). The response log has `Status` (the level follows it, wherever it is logged: 2xx and 3xx Information, 4xx Warning, 5xx Error) and the user. The request log says who asked: `ClientIp`, `ForwardedFor`, `UserAgent`,
+`AcceptLanguage`, `Origin` (the host of the `Origin`, else the `Referer`, else the `From` header), `Referer`, `Host`, `ContentType`, `RequestBytes` (the size the request says it has: 0 without a body, absent when nobody knows it
+beforehand, such as a chunked upload or a gRPC stream) and the client's own words (`ClientChannel`, `ClientVersion`, `ClientLat`, `ClientLong`, from the headers below). What only a product knows (the device, a location) is added with
+an `IRequestLogEnricher`, called for both logs. `UserId` and `UserRoles` (the role claims, distinct, comma separated) are on the request log too when the request is authenticated: authentication runs after the logging middleware, so the
+middleware asks for it first. What a message's headers say about who caused it is on the consume logs.
 
-Request and response bodies are logged only with `RequestLogging:LogBodies` and an `ILogMasker` (`AddBaseLogging()`): masked, JSON only,
-cut to `MaxBodyLength`. Headers are written as one JSON text; `Authorization` and cookies are summarized, never written.
+Request and response bodies are logged only with `RequestLogging:LogBodies` and an `ILogMasker` (`AddBaseLogging()`): masked, JSON only, cut to the body limits. Headers are one JSON text; `Authorization` and cookies are summarized, never written.
 
-The request log also says who asked: `ClientIp`, `ForwardedFor`, `UserAgent`, `AcceptLanguage`, `Origin` (the host of the `Origin`, else the `Referer`,
-else the `From` header), `Referer`, `Host`, `ContentType`, `RequestBytes` (the size the request says it has: 0 without a body, absent when the body has a size nobody knows beforehand, such as a chunked upload or a gRPC stream). What only a product knows (the channel and version of the client, the
-device, the roles, a location) is added with an `IRequestLogEnricher`, called for both logs.
-
-### Who writes the request and response logs
-
-In a system with a gateway, the **services** write them (`HttpRequest` when a request arrives, `HttpResponse` when it is answered: they know the
-action, the user, the exception, and the classes of the bodies, so their `[SensitiveData]` masks them exactly). Every answer of a service that
-logged carries the header `X-Logged-By`. The **gateway** (`"RequestLogging": { "Role": "Gateway" }`) stays quiet for those and removes the
-header; for every request it answered **itself**, which no service saw or logged (a rejected token, a rate limit, an unknown route, a service that
-cannot be reached or died), it writes one `HttpRequestResponse` with the whole request and its answer, its level the status of the answer.
-When a service does not log (`Enabled: false`, it is down) the gateway logs: a log twice is better than none.
-
-If the answer of the gateway is a 5xx (the service was unreachable, or died on this request: out of memory, a restart) the log also has the
-**body of the request**, masked, so what was asked is known. For that a gateway keeps the JSON bodies it forwards (up to `MaxBodyReadBytes`)
-in a buffer when `LogBodies` is on, and only writes them when the answer is a 5xx; a rejected request (4xx) does not write its body. The gateway
-does not have the classes of the services: it masks by the usual key names and by the contract assemblies given to `AddBaseLogging(...)`.
-
-The chain does not depend on any of this: the correlation id is set and passed on in every role. A service that dies in the middle of a request
-leaves its `HttpRequest` without an `HttpResponse`, and the gateway's `HttpRequestResponse` with 502 or 504.
+**Who writes them.** In a system with a gateway the **services** write `HttpRequest` and `HttpResponse` (they know the action, the user, the exception and the classes of the bodies, so their `[SensitiveData]` masks exactly); every answer of
+a service that logged carries the header `X-Logged-By`. The **gateway** (`"RequestLogging": { "Role": "Gateway" }`) stays quiet for those and removes the header; for what it answered **itself** it writes one `HttpRequestResponse` with the
+whole request and its answer, its level the status of the answer. If that answer is a 5xx the log also has the masked request body (the gateway keeps the JSON bodies it forwards, up to `MaxBodyReadBytes`, only for this), and
+`Reason`/`ExceptionType` say why the service did not answer. A service that does not log (`Enabled: false`, down) leaves the gateway to log: a log twice is better than none. The correlation id is set and passed on in every role. See
+[ADR-0018](adr/0018-chain-logs.md).
 
 ### The settings of the request log (section `RequestLogging`)
 
@@ -194,10 +109,6 @@ leaves its `HttpRequest` without an `HttpResponse`, and the gateway's `HttpReque
 | `ClientChannelHeader`, `ClientVersionHeader`, `ClientLatHeader`, `ClientLongHeader` | `X-Channel`, `X-Client-Version`, `X-Client-Request-Lat`, `X-Client-Request-Long` | the headers a client tells about itself; they become `ClientChannel`, `ClientVersion`, `ClientLat`, `ClientLong` |
 | `CorrelationIdHeader`, `LoggedByHeader` | `X-Correlation-Id`, `X-Logged-By` | |
 
-`UserId` and `UserRoles` (the role claims, distinct, comma separated) are in the request log too, when the request is authenticated: authentication runs after the logging middleware in the pipeline, so the middleware asks for it first (the answer is remembered for the request, asking again costs nothing; if it fails the log is simply written without a user).  What a message's headers say about who
-caused it (`UserId`, `UserRoles`, `ClientChannel`, `ClientVersion`, `ClientLat`, `ClientLong`, as the production wire always named them) is on the
-consume logs too. The device type of the client needs a user-agent parser, so a product adds it with an `IRequestLogEnricher`.
-
 ### Files, gRPC and MVC
 
 - **Files never log their body.** A download or an upload is logged with what it is, not what is in it: the response log says
@@ -214,63 +125,36 @@ consume logs too. The device type of the client needs a user-agent parser, so a 
   Unauthenticated, Error for the server's) and says it in the message (`, grpc-status 5 (order not found)`) and in `GrpcStatus`.
   The messages of a stream are counted, not logged.
 
-### What a failure's logs say
+## What a failure's logs say
 
-Every log of a failure (the `HttpResponse` of a 400 or 500, the exception handler's log, `CONSUME_EVENT_REJECTED`, `CONSUME_EVENT_ERROR`,
-`CONSUME_EVENT_RETRY`) has, besides `ExceptionType`:
+A failure is logged **once**: a request that ends in a 500 is the `HttpResponse` Error, a message whose handler failed after its attempts is the `ConsumeEnd` `CONSUME_EVENT_ERROR` (with `Attempts`); both carry the stack. Each failed attempt
+is a `CONSUME_EVENT_RETRY` Warning, and what follows a failed message (`RABBITMQ_CONSUMER_MOVED_TO_ERROR_QUEUE`, which names the error queue) is its consequence, not a second Error. A known error (a 4xx, a rejected message) is a Warning without a stack.
+Besides `ExceptionType`, every log of a failure has:
 
-- `ExceptionIdentifier`: where it was thrown, like `Solution:Xyz|Assembly:Xyz.ServiceOrder.Host|File:OrdersController.cs|Line:92`. It is the
-  first place with a source file in the code of the application that runs (the solution of its entry assembly), looking at the innermost exception (the
-  cause) first; a throw deep inside a library is reported where the application called it, and when no code of the application has sources, the first
-  code that has. It needs the symbols (`.pdb`) next to the assemblies, which `dotnet publish` copies; without them the method is told
-  (`...|Method:Type.Method`), and an exception that was never thrown has only its type. It has no length limit.
-- `Reason`: the message of the exception and of every exception inside it, down to the one that has none inside, joined with `" >> "`
-  (`outer >> middle >> inner`), up to 8192 characters.
+- `ExceptionIdentifier`: where it was thrown, like `Solution:Xyz|Assembly:Xyz.ServiceOrder.Host|File:OrdersController.cs|Line:92`: the first place with a source file in the code of the application that runs, looking at the innermost exception
+  first, so a throw deep inside a library is reported where the application called it. It needs the symbols (`.pdb`) next to the assemblies, which `dotnet publish` copies; without them the method is told, and an exception that was never
+  thrown has only its type. Use `throw;`, not `throw ex;`, which resets the line. It has no length limit.
+- `Reason`: the message of the exception and of every exception inside it joined with `" >> "` (`outer >> middle >> inner`), up to 8192 characters.
 
-For a 500 these two are what to look at; for a 400 (an error the caller made) they are there when they can be told, and not what matters.
+For a 500 these two are what to look at; for a 400 they are there when they can be told. See [ADR-0020](adr/0020-failure-logged-once.md).
 
-### A log has a fixed set of fields
+## Fields and facility
 
-Graylog turns every property of a log into a field, and an object logged with `{@Object}` into a field per property. An object whose
-shape is the developer's would create fields without end, so the persistent sink writes an object (and a dictionary, and a list) as
-the **one field of its name holding its JSON**, and cuts every text to `PersistentLogger:MaxPersistentFieldLength` (16384, above the 8192 of a body or a reason, so those are not cut twice). The console
-still shows the readable object. A body with two hundred properties is one field.
+A log has the fields the writer put on it (the arguments of the message, the scopes), the common ones the enrichers add, and what `NoiseEnricher` and `FieldGuardSink` leave (see [ADR-0019](adr/0019-log-fields-pipeline.md)). An object, a dictionary
+or a list is written as **one field of its name holding its JSON**, texts are cut at `PersistentLogger:MaxPersistentFieldLength` (16384; the console still shows the readable object), and an `AppLog` (and a `SharedLog`) has what its developer
+wrote, the `Facility`, the `CorrelationId` and `TraceId` of its chain and its category (`SourceContext`), not the endpoint, span and request fields ASP.NET Core puts on every log. **What each type really has is
+[GraylogFields.md](GraylogFields.md), measured from a run.**
 
-## Where each decision is made
+**To add or remove a field**
 
-The code that writes a log (`logger.LogInformation(...)` in a controller, an application service, a repository) decides only the **level**, the **message and its
-arguments**, and the **category** (the class: `ILogger<UsersController>`). Everything else is decided once, in the provider, for every log:
+- For one log: put it in the arguments (`"Order {OrderNo}"`), or in a scope for a group of logs (`BeginScope`, `BeginFacility`).
+- For every log, a new field: an enricher added in `AddBaseSerilog(configuration, name, configure: serilog => serilog.Enrich.With(new MyEnricher()))`.
+- For every log, take a field away: the same, with `logEvent.RemovePropertyIfPresent("Name")` in the enricher (it runs after `NoiseEnricher`, so it can remove what the framework leaves). What the framework itself must never put on a type is in `NoiseEnricher`.
+- A field nobody wrote on purpose (it came from a library) shows in the map, in the column of the type that carries it: look at it after adding a package.
 
-| Decision | Where | Decided by |
-|---|---|---|
-| Which sinks get it (console, file, Graylog) | `BaseSerilog.Create` and `SerilogRouting` (`HsnSoft.Base.Logging.Serilog`) | the **level** and the **category** of the log: the console by `Logging:LogLevel` (a default and a level per category), the persistent sink (Graylog when `PersistentLogger:IsGrayLogActive`, else the file) by `PersistentLogger:LogLevel` and `LevelOverrides` (never below Information), `PlatformLog`s also by `PlatformMinimumLevel`; the category `ConsoleOnly.*` (`IAppConsoleLogger`) never reaches it |
-| Its `LogType` | `LogShapeEnricher`, or the writer for the chain types | the **category**: `HsnSoft.Base.*` is `FrameworkLog`, what is under `PersistentLogger:AppNamespace` is `AppLog` (`{AppNamespace}.Shared.*`: `SharedLog`), everything else is `PlatformLog`. `HttpRequest`, `HttpResponse`, `HttpRequestResponse`, `ConsumeStart` and `ConsumeEnd` are said by the code that writes them (the request logging middleware and the event bus): a developer cannot choose a type on the line of a log |
-| Which fields it has | the pipeline of `BaseSerilog.Create`, in this order | below |
-
-The pipeline, for every log: **scopes** (`BeginScope`, what the middleware and the event bus put there: `CorrelationId`, `TraceId`, the `Facility` of
-`BeginFacility`) and the arguments of the message become properties; the enrichers add `Solution`, `Assembly`, `Version`, `LoggerName`, `Facility` (from the name of an event
-written in capitals), `LogType` and `MessageType`; **`NoiseEnricher` removes** what a type must not have (`ConnectionId` from all, the fields of who asked from `FrameworkLog` and
-`PlatformLog`, the endpoint, span and request fields of ASP.NET Core from `AppLog`); a product's own enrichers (the `configure` of `AddBaseSerilog`) run after them; and
-for the persistent sink `FieldGuardSink` turns an object into one JSON field, cuts long texts and drops what is only for the message (`EventId`, `MessageDetails`).
-
-### To add or remove a field
-
-- **For one log:** put it in the arguments (`"Order {OrderNo}"`), or in a scope for a group of logs (`BeginScope`, `BeginFacility`).
-- **For every log, a new field:** an enricher added in `AddBaseSerilog(configuration, name, configure: serilog => serilog.Enrich.With(new MyEnricher()))`.
-- **For every log, take a field away:** the same, with `logEvent.RemovePropertyIfPresent("Name")` in the enricher (it runs after `NoiseEnricher`, so it can remove what the
-  framework leaves); what the framework itself must never put on a type is in `NoiseEnricher`.
-- **What a type really has now:** [GraylogFields.md](GraylogFields.md), measured from a run. Look at it after adding a package or a field: a field that nobody wrote on
-  purpose (it came from a library) shows in the table, in the column of the type that carries it.
-
-## Facility: what a log is about
-
-`Facility` is a top-level field, so `Facility:CONSUME_EVENT_ERROR` finds every handler that failed, and the facilities of a chain in
-order tell the story. A log gets it from the name of its event (`[LoggerMessage(EventName = "CONSUME_EVENT_SUCCESS")]`; only names
-written in capitals count, the platform's own `ExecutedEndpoint` is not a facility). A framework library
-gives every log an event name: use `RABBITMQ_CONSUMER_SUBSCRIBED`-style names for new ones.
-
-The application names the logs of an operation with `logger.BeginFacility("ORDER_IMPORTED")` (a scope: every log written inside it has that `Facility`).
-The fields of all the log types are in [GraylogFields.md](GraylogFields.md).
+**Facility: what a log is about.** `Facility` is a top-level field, so `Facility:CONSUME_EVENT_ERROR` finds every handler that failed, and the facilities of a chain in order tell the story. A log gets it from the name of its event
+(`[LoggerMessage(EventName = "CONSUME_EVENT_SUCCESS")]`; only names written in capitals count, the platform's own `ExecutedEndpoint` is not a facility): a framework library gives every log an event name, use `RABBITMQ_CONSUMER_SUBSCRIBED`-style
+names for new ones. The application names the logs of an operation with `logger.BeginFacility("ORDER_IMPORTED")` (a scope: every log written inside it has that `Facility`).
 
 ## What the framework packages log
 
@@ -283,12 +167,7 @@ The RabbitMQ client library does not use `ILogger`, it only writes to an `EventS
 listens to it while the host runs and passes it on under the category `HsnSoft.Base.EventBus.RabbitMQ.Client`: its information as
 Debug (console only), its warnings and errors as they are, so a connection the client gives up on shows up in Graylog.
 
-An `AppLog` (and a `SharedLog`) has what its developer wrote (the arguments as fields, `{@Object}` as one JSON field), the `Facility` (`BeginFacility`), the `CorrelationId` and `TraceId`
-of its chain and the category it was written under (`SourceContext`). The endpoint (`ActionId`, `ActionName`), the span (`SpanId`, `ParentId`) and the request
-(`RequestId`, `RequestPath`) that ASP.NET Core and the tracing put on every log are removed from it: they are on the `HttpRequest` and `HttpResponse` of the same request.
-
-The `ConsumeStart` log carries the message (envelope and event, masked) as `MessageBody`; see [EventBus.md](EventBus.md). The raw body is not logged unless `EventBusOptions.LogMessageBody` is `true` (see [EventBus.md](EventBus.md)): a message may carry
-personal data, and the console is a log too.
+The `ConsumeStart` log carries the message (envelope and event, masked) as `MessageBody`; the raw body is only logged with `EventBusOptions.LogMessageBody` (see [EventBus.md](EventBus.md)).
 
 ## Another provider (NLog, ...)
 
@@ -318,10 +197,3 @@ write to the console what `ConsoleLevels` says, keep what `PersistentLevelRules`
 | `FrameworkLogger:*` settings | renamed `PersistentLogger:*`. `FrameworkLogger:LogLevel` (what the console showed) is now the standard `Logging:LogLevel`, and `PersistentLogger:LogLevel` is the level of what is kept (it replaces `PersistentMinimumLevel`); `LevelOverrides` is for what is kept too, the console has its own category rules |
 | `IEventBusLogger` and its persisted log models | `ILogger` (see above) |
 | `HsnSoft.Base.Json.*` | not ported: no product uses `IJsonSerializer`; they use Newtonsoft or `System.Text.Json` directly |
-
-## One Error for a failure
-
-A failure is logged once: the log that ends the pair carries the stack. A request that ends in a 500 is the `HttpResponse` Error (`Reason`,
-`ExceptionIdentifier`, `ExceptionType` and the stack); a message whose handler failed after its attempts is the `ConsumeEnd` `CONSUME_EVENT_ERROR` (with `Attempts`, how many times the handler ran). Each failed
-attempt is a `CONSUME_EVENT_RETRY` Warning, and what follows a failed message (`RABBITMQ_CONSUMER_MOVED_TO_ERROR_QUEUE`, a Warning that names the error queue; the report itself is only a Debug) is the
-consequence, not a second Error. A known error (4xx, a rejected message) is a Warning without a stack.
