@@ -199,13 +199,13 @@ The first use case is the CRUD of the users (PostgreSQL `abc_identity`, created 
 
 | Endpoint | Does |
 |---|---|
-| `POST /api/users/create` | creates a user (a taken name, in any case: 400 `user_name_duplicate`) |
-| `POST /api/users/get/{id}` | one user (404 when there is none) |
-| `POST /api/users/paged-list` | a page of the users and how many there are in all: `{ "skip": 0, "take": 20, "userName": "ad", "email": "abc", "isActive": true }` (names and emails by a part of them, in any case) |
-| `POST /api/users/filter-list` | all the users that match the same filters, not paged, `limit` at most (1000): `{ "email": "abc", "limit": 50 }` |
-| `POST /api/users/search-list` | the users that have the text in their user name or email, shown briefly (`id`, `userName`, `email`), for a box that suggests while one types: `{ "searchText": "ada", "limit": 20 }` |
-| `PUT /api/users` | updates the email, the display name and the state (204) |
-| `DELETE /api/users/{id}` | deletes (204) |
+| `POST /api/identity-service/v1/commercial/users/create` | creates a user (a taken name, in any case: 400 `user_name_duplicate`) |
+| `POST /api/identity-service/v1/commercial/users/get/{id}` | one user (404 when there is none) |
+| `POST /api/identity-service/v1/commercial/users/paged-list` | a page of the users and how many there are in all: `{ "skip": 0, "take": 20, "userName": "ad", "email": "abc", "isActive": true }` (names and emails by a part of them, in any case) |
+| `POST /api/identity-service/v1/commercial/users/filter-list` | all the users that match the same filters, not paged, `limit` at most (1000): `{ "email": "abc", "limit": 50 }` |
+| `POST /api/identity-service/v1/commercial/users/search-list` | the users that have the text in their user name or email, shown briefly (`id`, `userName`, `email`), for a box that suggests while one types: `{ "searchText": "ada", "limit": 20 }` |
+| `PUT /api/identity-service/v1/commercial/users` | updates the email, the display name and the state (204) |
+| `DELETE /api/identity-service/v1/commercial/users/{id}` | deletes (204) |
 
 Every controller derives from `BaseServiceController` (area `identity-service`, `[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]`), so the endpoints above need a valid
 JWT bearer token (no token or a bad one is a 401); `LogExamplesController` is `[AllowAnonymous]` and the health endpoints are open. Abc has no auth server yet, so its `Jwt` settings are the Xyz ones

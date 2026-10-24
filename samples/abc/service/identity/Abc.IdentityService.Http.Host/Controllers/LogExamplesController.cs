@@ -18,11 +18,11 @@ public sealed class ExampleOrder
 }
 
 /// <summary>
-/// How a controller writes its application logs (they are the <c>AppLog</c>s of the service). <c>POST /api/log-examples/run</c> writes one of each (they are all written with <c>Logger</c>, the <c>ILogger</c> of the base controller), so they can be looked
+/// How a controller writes its application logs (they are the <c>AppLog</c>s of the service). <c>POST /api/identity-service/v1/commercial/log-examples/run</c> writes one of each (they are all written with <c>Logger</c>, the <c>ILogger</c> of the base controller), so they can be looked
 /// at in Graylog (<c>Facility:LOG_EXAMPLE_*</c>). Delete this controller when you have seen them.
 /// </summary>
 [AllowAnonymous]   // a demo: it can be called without a token
-[Route("api/log-examples")]
+[Route("api/identity-service/v1/commercial/log-examples")]
 public sealed class LogExamplesController : BaseServiceController
 {
     [HttpPost("run")]

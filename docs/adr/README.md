@@ -24,6 +24,12 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 | [0005](0005-where-code-lives.md) | Where a piece of code lives: the framework, a product's shared project, or a service | Accepted | 2026-10-22 |
 | [0006](0006-repository-and-solution-layout.md) | Repository folders, the solution file and the sample systems | Accepted | 2026-10-25 |
 
+## Services
+
+| ADR | Decision | Status | Date |
+|---|---|---|---|
+| [0026](0026-route-pattern-and-jwt-by-default.md) | Routes are `api/{area}/v1/{commercial|public}/{controller}`, and every endpoint needs a JWT unless it says otherwise | Accepted | 2026-10-25 |
+
 ## Branching
 
 | ADR | Decision | Status | Date |

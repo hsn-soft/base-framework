@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Abc.IdentityService.Http.Host.Controllers;
 
 /// <summary>The users: every action only calls the application service, which holds the rules.</summary>
-[Route("api/users")]
+[Route("api/identity-service/v1/commercial/users")]
 public sealed class UsersController(IUserAppService userAppService) : BaseServiceController
 {
     [HttpPost("get/{id:guid}")]
