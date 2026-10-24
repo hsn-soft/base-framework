@@ -99,7 +99,7 @@ Request and response bodies are logged only with `RequestLogging:LogBodies` and 
 cut to `MaxBodyLength`. Headers are written as one JSON text; `Authorization` and cookies are summarized, never written.
 
 The request log also says who asked: `ClientIp`, `ForwardedFor`, `UserAgent`, `AcceptLanguage`, `Origin` (the host of the `Origin`, else the `Referer`,
-else the `From` header), `Referer`, `Host`, `ContentType`, `RequestBytes` (the size the request says it has). What only a product knows (the channel and version of the client, the
+else the `From` header), `Referer`, `Host`, `ContentType`, `RequestBytes` (the size the request says it has: 0 without a body, absent when the body has a size nobody knows beforehand, such as a chunked upload or a gRPC stream). What only a product knows (the channel and version of the client, the
 device, the roles, a location) is added with an `IRequestLogEnricher`, called for both logs.
 
 ### Who writes the request and response logs

@@ -155,6 +155,11 @@ public sealed partial class RequestLoggingMiddleware(
                && !context.Items.ContainsKey(FileResultLogFilter.ItemKey);
     }
 
+    // The size the request says it has (the body is not read yet): 0 for a request without a body, nothing for one that has a body of an
+    // unknown size (a chunked upload, a gRPC stream): a 0 there would say "empty" about a request that is not.
+    private static long? DeclaredBytes(HttpRequest request)
+        => request.ContentLength ?? (request.ContentType is not null || request.Headers.ContainsKey(HeaderNames.TransferEncoding) ? null : 0L);
+
     // what is known of a request: the same fields in the log of a service and in the log a gateway writes for what it answered itself
     private Dictionary<string, object?> RequestFields(HttpContext context, string logType, string? requestBody, ClaimsPrincipal? user)
     {
@@ -163,7 +168,7 @@ public sealed partial class RequestLoggingMiddleware(
         {
             [LogFields.LogType] = logType,
             ["Query"] = LogFields.Text(request.QueryString.Value, _options.MaxUrlLength),
-            ["RequestBytes"] = request.ContentLength ?? 0,   // what the request says it is: the body is not read yet
+            ["RequestBytes"] = DeclaredBytes(request),
             ["ClientIp"] = context.Connection.RemoteIpAddress?.ToString(),
             ["UserId"] = UserId(user),
             ["UserRoles"] = Roles(user),

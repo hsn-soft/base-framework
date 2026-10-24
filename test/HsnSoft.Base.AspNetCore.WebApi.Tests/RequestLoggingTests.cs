@@ -504,6 +504,52 @@ public sealed class RequestLoggingTests
     }
 
     [Fact]
+    public async Task RequestBytes_IsTheDeclaredSize_ZeroWithoutABody_AndNothingWhenTheSizeIsUnknown()
+    {
+        await using Rig rig = await StartAsync();
+        MemoryStream body = new(Encoding.UTF8.GetBytes("""{"a":1}"""));
+        // a stream has no length the client knows beforehand: it is sent chunked
+        HttpRequestMessage chunked = new(HttpMethod.Post, "/echo") { Content = new StreamContent(new NoLengthStream(body)) };
+        chunked.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
+
+        await rig.Client.GetAsync("/named");
+        await rig.Client.PostAsync("/echo", new StringContent("""{"a":1}""", Encoding.UTF8, "application/json"));
+        await rig.Client.SendAsync(chunked);
+
+        long?[] sizes = [.. rig.Http.Where(log => log.EventName == "HTTP_REQUEST").Select(log => (long?)log.Properties["RequestBytes"])];
+        Assert.Equal([0L, 7L, null], sizes);
+    }
+
+    private sealed class NoLengthStream(Stream inner) : Stream
+    {
+        public override bool CanRead => true;
+
+        public override bool CanSeek => false;
+
+        public override bool CanWrite => false;
+
+        public override long Length => throw new NotSupportedException();
+
+        public override long Position
+        {
+            get => throw new NotSupportedException();
+            set => throw new NotSupportedException();
+        }
+
+        public override int Read(byte[] buffer, int offset, int count) => inner.Read(buffer, offset, count);
+
+        public override void Flush()
+        {
+        }
+
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+
+        public override void SetLength(long value) => throw new NotSupportedException();
+
+        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+    }
+
+    [Fact]
     public async Task AControllerAction_IsNamedControllerDashAction_InLowerCase()
     {
         await using Rig rig = await StartAsync();
