@@ -184,6 +184,32 @@ shape is the developer's would create fields without end, so the persistent sink
 the **one field of its name holding its JSON**, and cuts every text to `FrameworkLogger:MaxPersistentFieldLength` (16384, above the 8192 of a body or a reason, so those are not cut twice). The console
 still shows the readable object. A body with two hundred properties is one field.
 
+## Where each decision is made
+
+The code that writes a log (`logger.LogInformation(...)` in a controller, an application service, a repository) decides only the **level**, the **message and its
+arguments**, and the **category** (the class: `ILogger<UsersController>`). Everything else is decided once, in the provider, for every log:
+
+| Decision | Where | Decided by |
+|---|---|---|
+| Which sinks get it (console, file, Graylog) | `BaseSerilog.Create` and `SerilogRouting` (`HsnSoft.Base.Logging.Serilog`) | the **level** and the **category** of the log, with the `FrameworkLogger` section: the console gets everything from `LogLevel`, the persistent sink (Graylog when `IsGrayLogActive`, else the file) from `PersistentMinimumLevel` (never below Information), `PlatformLog`s from `PlatformMinimumLevel`; the category `ConsoleOnly.*` (`IAppConsoleLogger`) never reaches it |
+| Its `LogType` | `LogShapeEnricher`, or the writer for the chain types | the **category**: `HsnSoft.Base.*` is `FrameworkLog`, `System`, `Microsoft`, `Npgsql`, ... are `PlatformLog`, the rest is `AppLog`. `HttpRequest`, `HttpResponse`, `HttpRequestResponse`, `ConsumeStart` and `ConsumeEnd` are said by the code that writes them (the request logging middleware and the event bus): a developer cannot choose a type on the line of a log |
+| Which fields it has | the pipeline of `BaseSerilog.Create`, in this order | below |
+
+The pipeline, for every log: **scopes** (`BeginScope`, what the middleware and the event bus put there: `CorrelationId`, `TraceId`, the `Facility` of
+`BeginFacility`) and the arguments of the message become properties; the enrichers add `Solution`, `Assembly`, `Version`, `LoggerName`, `Facility` (from the name of an event
+written in capitals), `LogType` and `MessageType`; **`NoiseEnricher` removes** what a type must not have (`ConnectionId` from all, the fields of who asked from `FrameworkLog` and
+`PlatformLog`, the endpoint, span and request fields of ASP.NET Core from `AppLog`); a product's own enrichers (the `configure` of `AddBaseSerilog`) run after them; and
+for the persistent sink `FieldGuardSink` turns an object into one JSON field, cuts long texts and drops what is only for the message (`EventId`, `MessageDetails`).
+
+### To add or remove a field
+
+- **For one log:** put it in the arguments (`"Order {OrderNo}"`), or in a scope for a group of logs (`BeginScope`, `BeginFacility`).
+- **For every log, a new field:** an enricher added in `AddBaseSerilog(configuration, name, configure: serilog => serilog.Enrich.With(new MyEnricher()))`.
+- **For every log, take a field away:** the same, with `logEvent.RemovePropertyIfPresent("Name")` in the enricher (it runs after `NoiseEnricher`, so it can remove what the
+  framework leaves); what the framework itself must never put on a type is in `NoiseEnricher`.
+- **What a type really has now:** [GraylogFields.md](GraylogFields.md), measured from a run. Look at it after adding a package or a field: a field that nobody wrote on
+  purpose (it came from a library) shows in the table, in the column of the type that carries it.
+
 ## Facility: what a log is about
 
 `Facility` is a top-level field, so `Facility:CONSUME_EVENT_ERROR` finds every handler that failed, and the facilities of a chain in
