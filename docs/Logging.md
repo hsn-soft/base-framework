@@ -204,6 +204,10 @@ The RabbitMQ client library does not use `ILogger`, it only writes to an `EventS
 listens to it while the host runs and passes it on under the category `HsnSoft.Base.EventBus.RabbitMQ.Client`: its information as
 Debug (console only), its warnings and errors as they are, so a connection the client gives up on shows up in Graylog.
 
+An `AppLog` has what its developer wrote (the arguments as fields, `{@Object}` as one JSON field), the `Facility` (`BeginFacility`), the `CorrelationId` and `TraceId`
+of its chain and the category it was written under (`SourceContext`). The endpoint (`ActionId`, `ActionName`), the span (`SpanId`, `ParentId`) and the request
+(`RequestId`, `RequestPath`) that ASP.NET Core and the tracing put on every log are removed from it: they are on the `HttpRequest` and `HttpResponse` of the same request.
+
 The `ConsumeStart` log carries the message (envelope and event, masked) as `MessageBody`; see [EventBus.md](EventBus.md). The raw body is not logged unless `EventBusOptions.LogMessageBody` is `true` (see [EventBus.md](EventBus.md)): a message may carry
 personal data, and the console is a log too.
 

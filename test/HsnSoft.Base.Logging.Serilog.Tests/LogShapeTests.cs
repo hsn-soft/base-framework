@@ -135,6 +135,35 @@ public sealed class LogShapeTests
         Assert.True(logEvent.Properties.ContainsKey("CorrelationId"));
     }
 
+    [Theory]
+    [InlineData("AppLog", false)]
+    [InlineData("HttpRequest", true)]
+    [InlineData("HttpResponse", true)]
+    [InlineData("PlatformLog", true)]
+    [InlineData("FrameworkLog", true)]
+    public void TheEndpointTheSpanAndTheRequestOfALog_AreNotOnAnAppLog(string logType, bool kept)
+    {
+        string[] fields = ["ActionId", "ActionName", "ParentId", "RequestId", "RequestPath", "SpanId"];
+        LogEvent logEvent = Event([new LogEventProperty("LogType", new ScalarValue(logType)), new LogEventProperty("OrderNo", new ScalarValue("A-1")), new LogEventProperty("TraceId", new ScalarValue("t")), .. fields.Select(field => new LogEventProperty(field, new ScalarValue("x")))]);
+
+        new NoiseEnricher().Enrich(logEvent, new Factory());
+
+        Assert.All(fields, field => Assert.Equal(kept, logEvent.Properties.ContainsKey(field)));
+        // what the developer wrote and the chain's ids stay
+        Assert.True(logEvent.Properties.ContainsKey("OrderNo"));
+        Assert.True(logEvent.Properties.ContainsKey("TraceId"));
+    }
+
+    [Fact]
+    public void ALogWithoutAType_IsLeftAlone()
+    {
+        LogEvent logEvent = Event(new LogEventProperty("SpanId", new ScalarValue("x")));
+
+        new NoiseEnricher().Enrich(logEvent, new Factory());
+
+        Assert.True(logEvent.Properties.ContainsKey("SpanId"));
+    }
+
     [Fact]
     public void TheDetailsOfAMessage_AreInTheMessageAndNotAField()
     {
