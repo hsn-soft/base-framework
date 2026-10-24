@@ -5,5 +5,7 @@
     </PropertyGroup>
     <ItemGroup>
         <PackageVersion Include="Yarp.ReverseProxy" Version="2.3.0" />
+        <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.13" />
+        <PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.13" />
     </ItemGroup>
 </Project>

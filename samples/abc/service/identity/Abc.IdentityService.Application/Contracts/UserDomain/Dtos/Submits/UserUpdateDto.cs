@@ -1,0 +1,21 @@
+using System.ComponentModel.DataAnnotations;
+using Abc.IdentityService.Domain.UserDomain.Consts;
+
+namespace Abc.IdentityService.Application.Contracts.UserDomain.Dtos.Submits;
+
+public sealed class UserUpdateDto
+{
+    [Required]
+    public Guid Id { get; set; }
+
+    [Required]
+    [EmailAddress]
+    [StringLength(UserConsts.EmailMaxLength)]
+    public string Email { get; set; } = string.Empty;
+
+    [Required]
+    [StringLength(UserConsts.DisplayNameMaxLength)]
+    public string DisplayName { get; set; } = string.Empty;
+
+    public bool IsActive { get; set; }
+}

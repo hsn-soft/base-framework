@@ -3,6 +3,10 @@
     <!-- How the identity service keeps the domain: its DbContext and mappings. The database provider is chosen by the host. -->
 
     <ItemGroup>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+    </ItemGroup>
+
+    <ItemGroup>
         <ProjectReference Include="..\Abc.IdentityService.Domain\Abc.IdentityService.Domain.csproj" />
         <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.EntityFrameworkCore\HsnSoft.Base.EntityFrameworkCore.csproj" />
     </ItemGroup>

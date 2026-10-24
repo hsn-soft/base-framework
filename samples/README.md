@@ -191,8 +191,19 @@ SQL Server needs about 2 GB of memory; a container limited to 1 GB restarts in a
 
 ## Abc: the identity service (in the making)
 
-`samples/abc/service/identity/Abc.IdentityService.Http.Host` is the start of a new system: a web api that composes the framework directly (logging,
-the web api shell, Swagger, health endpoints) and has one endpoint, `GET /api/identity/ping`. It is where the next sample grows.
+`samples/abc/service/identity` is the start of a new system, laid out as the production identity service is: `Domain` (`UserDomain/{Consts,Entities,Exceptions,Repositories}`),
+`Application` (`Contracts/UserDomain/{Dtos,Services}` for the DTOs and the service interface, `Services/` for the implementation), `EntityFrameworkCore`
+(`Context`, `Configurations`, `Repositories`) and `Http.Host` (`Controllers`). The host references Application and EntityFrameworkCore, both reference Domain.
+
+The first use case is the CRUD of the users (PostgreSQL `abc_identity`, created at start); the controller only calls `IUserAppService`:
+
+| Endpoint | Does |
+|---|---|
+| `POST /api/users/create` | creates a user (a taken name, in any case: 400 `user_name_duplicate`) |
+| `POST /api/users/get/{id}` | one user (404 when there is none) |
+| `POST /api/users/paged-list` | a page of the users, `{ "skip": 0, "take": 20, "isActive": true }` |
+| `PUT /api/users` | updates the email, the display name and the state (204) |
+| `DELETE /api/users/{id}` | deletes (204) |
 
 ```bash
 dotnet run --project samples/abc/service/identity/Abc.IdentityService.Http.Host      # http://localhost:5400, Swagger at /swagger in Development
