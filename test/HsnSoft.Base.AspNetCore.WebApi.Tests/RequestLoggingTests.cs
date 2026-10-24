@@ -130,6 +130,17 @@ public sealed class RequestLoggingTests
             }
         }
 
+        public IReadOnlyList<Logged> Combined
+        {
+            get
+            {
+                lock (logs.Logs)
+                {
+                    return [.. logs.Logs.Where(log => log.EventName == "HTTP_REQUEST_RESPONSE")];
+                }
+            }
+        }
+
         public Logged Request => Assert.Single(Http, log => log.EventName == "HTTP_REQUEST");
 
         public Logged Response => Assert.Single(Http, log => log.EventName == "HTTP_RESPONSE");
@@ -143,7 +154,8 @@ public sealed class RequestLoggingTests
         bool exceptionHandler = true,
         Action<WebApplication>? map = null,
         ClaimsPrincipal? user = null,
-        Action<IServiceCollection>? configure = null)
+        Action<IServiceCollection>? configure = null,
+        Func<HttpContext, Task>? beforeLogging = null)
     {
         WebApplicationBuilder builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
@@ -168,6 +180,15 @@ public sealed class RequestLoggingTests
             });
         }
 
+        if (beforeLogging is not null)
+        {
+            app.Use(async (context, next) =>
+            {
+                await beforeLogging(context);
+                await next(context);
+            });
+        }
+
         app.UseBaseRequestLogging();
         if (exceptionHandler)
         {
@@ -178,7 +199,19 @@ public sealed class RequestLoggingTests
         app.MapGet("/api/orders/{id}", (string id) => Results.Ok(new { id }));
         app.MapGet("/named", () => "named").WithName("Get-Named");
         app.MapGet("/echo-correlation", (HttpRequest request) => request.Headers["X-Correlation-Id"].ToString());
-        app.MapGet("/status/{code:int}", (int code) => Results.StatusCode(code));
+        app.MapMethods("/status/{code:int}", ["GET", "POST"], (int code) => Results.StatusCode(code));
+        app.MapGet("/served", (HttpContext context) =>
+        {
+            // what a service behind a gateway says in every answer it logged
+            context.Response.Headers["X-Logged-By"] = "order-service";
+            return Results.Ok();
+        });
+        app.MapPost("/echo-502", async (HttpRequest request) =>
+        {
+            using MemoryStream copy = new();
+            await request.Body.CopyToAsync(copy);
+            return Results.Text(Encoding.UTF8.GetString(copy.ToArray()), "application/json", statusCode: 502);
+        });
         app.MapGet("/known", () => { throw new BusinessException("order_closed", "The order is closed."); });
         app.MapGet("/boom", () => { throw new InvalidOperationException("boom"); });
         app.MapGet("/missing", () => Results.NotFound());
@@ -279,6 +312,152 @@ public sealed class RequestLoggingTests
         await rig.Client.SendAsync(viaFrom);
 
         Assert.Equal(["ref.example.com", "bot@crawler.example.net"], rig.Http.Where(log => log.EventName == "HTTP_REQUEST").Select(log => log.Properties["Origin"]));
+    }
+
+    [Fact]
+    public async Task AServiceSaysItLoggedTheRequest_AndOneThatDoesNotLogSaysNothing()
+    {
+        await using Rig logging = await StartAsync();
+        await using Rig silent = await StartAsync(new() { ["RequestLogging:Enabled"] = "false" });
+
+        HttpResponseMessage logged = await logging.Client.GetAsync("/named");
+        HttpResponseMessage notLogged = await silent.Client.GetAsync("/named");
+
+        Assert.Equal("testhost", logged.Headers.GetValues("X-Logged-By").Single(), ignoreCase: true);
+        Assert.False(notLogged.Headers.Contains("X-Logged-By"));
+    }
+
+    [Fact]
+    public async Task AGateway_LogsNothingForWhatAServiceLogged_AndDoesNotShowTheSignToTheClient()
+    {
+        await using Rig rig = await StartAsync(new() { ["RequestLogging:Role"] = "Gateway" });
+
+        HttpResponseMessage response = await rig.Client.GetAsync("/served");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.False(response.Headers.Contains("X-Logged-By"));
+        Assert.Empty(rig.Http);
+        Assert.Empty(rig.Combined);
+        Assert.True(response.Headers.Contains("X-Correlation-Id"));
+    }
+
+    [Theory]
+    [InlineData("/status/401", LogLevel.Warning)]
+    [InlineData("/status/429", LogLevel.Warning)]
+    [InlineData("/missing", LogLevel.Warning)]
+    [InlineData("/status/502", LogLevel.Error)]
+    [InlineData("/status/504", LogLevel.Error)]
+    public async Task AGateway_LogsOneRecordForWhatItAnsweredItself_ByItsStatus(string path, LogLevel level)
+    {
+        await using Rig rig = await StartAsync(new() { ["RequestLogging:Role"] = "Gateway" });
+
+        await rig.Client.GetAsync(path);
+
+        Logged log = Assert.Single(rig.Combined);
+        Assert.Empty(rig.Http);
+        Assert.Equal(level, log.Level);
+        Assert.Equal("HttpRequestResponse", log.Properties["LogType"]);
+        Assert.Equal("HTTP_REQUEST_RESPONSE", log.EventName);
+        Assert.Equal("httpclient", log.Properties["From"]);
+        Assert.Equal(path, log.Properties["To"]);
+        Assert.Equal("GET", log.Properties["Method"]);
+        Assert.IsType<long>(log.Properties["ElapsedMs"]);
+        Assert.NotNull(log.Properties["RequestHeaders"]);
+        Assert.NotNull(log.Properties["ResponseHeaders"]);
+        Assert.StartsWith($"httpclient -> {path}: GET {path} ", log.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task WhenTheServiceCouldNotBeReached_TheGatewayLogsWhatWasAsked_Masked_AndTheServiceStillReadsIt()
+    {
+        await using Rig rig = await StartAsync(new() { ["RequestLogging:Role"] = "Gateway", ["RequestLogging:LogBodies"] = "true" });
+
+        HttpResponseMessage response = await rig.Client.PostAsync("/echo-502", new StringContent("""{"item":"keyboard","password":"hunter2"}""", Encoding.UTF8, "application/json"));
+
+        Assert.Equal("""{"item":"keyboard","password":"hunter2"}""", await response.Content.ReadAsStringAsync());
+        Logged log = Assert.Single(rig.Combined);
+        Assert.Equal(LogLevel.Error, log.Level);
+        Assert.Equal("""{"item":"keyboard","password":"*****"}""", log.Properties["RequestBody"]);
+        Assert.Equal("""{"item":"keyboard","password":"*****"}""", log.Properties["ResponseBody"]);
+    }
+
+    private sealed class BrokenBody : Stream
+    {
+        public override bool CanRead => true;
+
+        public override bool CanSeek => false;
+
+        public override bool CanWrite => false;
+
+        public override long Length => throw new NotSupportedException();
+
+        public override long Position
+        {
+            get => throw new NotSupportedException();
+            set => throw new NotSupportedException();
+        }
+
+        public override int Read(byte[] buffer, int offset, int count) => throw new IOException("the connection broke");
+
+        public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default) => throw new IOException("the connection broke");
+
+        public override void Flush()
+        {
+        }
+
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+
+        public override void SetLength(long value) => throw new NotSupportedException();
+
+        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+    }
+
+    [Fact]
+    public async Task ARequestThatCannotBeReadAgain_IsLoggedWithoutItsBody_AndTheAnswerStaysWhatItWas()
+    {
+        await using Rig rig = await StartAsync(
+            new() { ["RequestLogging:Role"] = "Gateway", ["RequestLogging:LogBodies"] = "true" },
+            beforeLogging: context =>
+            {
+                context.Request.Body = new BrokenBody();
+                return Task.CompletedTask;
+            });
+
+        HttpResponseMessage response = await rig.Client.PostAsync("/status/502", new StringContent("""{"a":1}""", Encoding.UTF8, "application/json"));
+
+        Assert.Equal(HttpStatusCode.BadGateway, response.StatusCode);
+        Logged log = Assert.Single(rig.Combined);
+        Assert.Equal(LogLevel.Error, log.Level);
+        Assert.Null(log.Properties["RequestBody"]);
+    }
+
+    [Fact]
+    public async Task TheGateway_DoesNotLogTheBodyOfARequestItRejected_OrOneThatIsNotJson_OrTooBig_OrWithoutBodiesOn()
+    {
+        await using Rig on = await StartAsync(new() { ["RequestLogging:Role"] = "Gateway", ["RequestLogging:LogBodies"] = "true", ["RequestLogging:MaxBodyReadBytes"] = "20" });
+        await using Rig off = await StartAsync(new() { ["RequestLogging:Role"] = "Gateway" });
+        StringContent json = new("""{"a":1}""", Encoding.UTF8, "application/json");
+
+        await on.Client.PostAsync("/status/401", json);
+        await on.Client.PostAsync("/echo-502", new StringContent("plain text", Encoding.UTF8, "text/plain"));
+        await on.Client.PostAsync("/echo-502", new StringContent("""{"a":"this is longer than twenty bytes"}""", Encoding.UTF8, "application/json"));
+        await off.Client.PostAsync("/echo-502", new StringContent("""{"a":1}""", Encoding.UTF8, "application/json"));
+
+        Assert.All(on.Combined, log => Assert.Null(log.Properties["RequestBody"]));
+        Assert.Equal(3, on.Combined.Count);
+        Assert.Null(Assert.Single(off.Combined).Properties["RequestBody"]);
+    }
+
+    [Fact]
+    public async Task AGateway_LogsAnExceptionNobodyHandled_AsAnError_AndStillThrowsIt()
+    {
+        await using Rig rig = await StartAsync(new() { ["RequestLogging:Role"] = "Gateway" }, exceptionHandler: false);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => rig.Client.GetAsync("/boom"));
+
+        Logged log = Assert.Single(rig.Combined);
+        Assert.Equal(LogLevel.Error, log.Level);
+        Assert.Equal("500", log.Properties["Status"]?.ToString());
     }
 
     [Fact]

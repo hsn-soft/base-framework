@@ -76,6 +76,18 @@ public sealed partial class RequestLoggingMiddleware(
             return;
         }
 
+        if (_options.Role == RequestLoggingRole.Gateway)
+        {
+            await InvokeGatewayAsync(context, to).ConfigureAwait(false);
+            return;
+        }
+
+        // the gateway in front of this service logs only what a service did not: this one says it logged the request
+        context.Response.OnStarting(() =>
+        {
+            context.Response.Headers[_options.LoggedByHeader] = AppDomain.CurrentDomain.FriendlyName;
+            return Task.CompletedTask;
+        });
         await InvokeLoggedAsync(context, to).ConfigureAwait(false);
     }
 
@@ -89,28 +101,7 @@ public sealed partial class RequestLoggingMiddleware(
         string? requestBody = _options.LogBodies && _masker is not null ? await ReadRequestBodyAsync(request, BodyType(context)).ConfigureAwait(false) : null;
         string method = request.Method;
         string? path = request.Path.Value;
-        Dictionary<string, object?> requestFields = new()
-        {
-            [LogFields.LogType] = LogTypes.HttpRequest,
-            ["Query"] = request.QueryString.Value,
-            ["ContentLength"] = request.ContentLength ?? 0,
-            ["ClientIp"] = context.Connection.RemoteIpAddress?.ToString(),
-            ["TraceId"] = context.TraceIdentifier,
-            ["Host"] = request.Host.ToString(),
-            ["Scheme"] = request.Scheme,
-            ["ContentType"] = request.ContentType,
-            ["ForwardedFor"] = HeaderText(request, "X-Forwarded-For"),
-            ["UserAgent"] = HeaderText(request, HeaderNames.UserAgent),
-            ["AcceptLanguage"] = HeaderText(request, HeaderNames.AcceptLanguage),
-            ["Origin"] = ClientOrigin(request),
-            ["Referer"] = HostOf(request.Headers.Referer.ToString()),
-            ["RequestHeaders"] = Headers(request.Headers, isResponse: false),
-            ["RequestBody"] = requestBody,
-        };
-        foreach (IRequestLogEnricher enricher in _enrichers)
-        {
-            enricher.Enrich(context, LogTypes.HttpRequest, requestFields);
-        }
+        Dictionary<string, object?> requestFields = RequestFields(context, LogTypes.HttpRequest, requestBody);
 
         using (logger.BeginScope(requestFields))
         {
@@ -161,7 +152,124 @@ public sealed partial class RequestLoggingMiddleware(
                && !context.Items.ContainsKey(FileResultLogFilter.ItemKey);
     }
 
-    private void WriteResponseLog(HttpContext context, string from, string to, long elapsedMs, string? responseBody, long requestBytes, long responseBytes, Exception? failure)
+    // what is known of a request: the same fields in the log of a service and in the log a gateway writes for what it answered itself
+    private Dictionary<string, object?> RequestFields(HttpContext context, string logType, string? requestBody)
+    {
+        HttpRequest request = context.Request;
+        Dictionary<string, object?> requestFields = new()
+        {
+            [LogFields.LogType] = logType,
+            ["Query"] = request.QueryString.Value,
+            ["ContentLength"] = request.ContentLength ?? 0,
+            ["ClientIp"] = context.Connection.RemoteIpAddress?.ToString(),
+            ["TraceId"] = context.TraceIdentifier,
+            ["Host"] = request.Host.ToString(),
+            ["Scheme"] = request.Scheme,
+            ["ContentType"] = request.ContentType,
+            ["ForwardedFor"] = HeaderText(request, "X-Forwarded-For"),
+            ["UserAgent"] = HeaderText(request, HeaderNames.UserAgent),
+            ["AcceptLanguage"] = HeaderText(request, HeaderNames.AcceptLanguage),
+            ["Origin"] = ClientOrigin(request),
+            ["Referer"] = HostOf(request.Headers.Referer.ToString()),
+            ["RequestHeaders"] = Headers(request.Headers, isResponse: false),
+            ["RequestBody"] = requestBody,
+        };
+        foreach (IRequestLogEnricher enricher in _enrichers)
+        {
+            enricher.Enrich(context, logType, requestFields);
+        }
+
+        return requestFields;
+    }
+
+    // The gateway leaves the logging to the services. It writes one log, for a request it answered itself: the service did not say it
+    // logged it (it never got it, it is down, it did not answer). The body of the request is kept in a buffer for that, and only written
+    // when the answer is a 5xx: what was asked when the service died.
+    private async Task InvokeGatewayAsync(HttpContext context, string to)
+    {
+        HttpRequest request = context.Request;
+        HttpResponse response = context.Response;
+        Stopwatch watch = Stopwatch.StartNew();
+        bool buffersBody = _options.LogBodies && _masker is not null && IsJson(request.ContentType) && request.ContentLength is > 0 && request.ContentLength <= _options.MaxBodyReadBytes;
+        if (buffersBody)
+        {
+            request.EnableBuffering();
+        }
+
+        Stream originalRequestBody = request.Body;
+        CountingReadStream requestBytes = new(originalRequestBody);
+        request.Body = requestBytes;
+        IHttpResponseBodyFeature originalResponseBody = context.Features.GetRequiredFeature<IHttpResponseBodyFeature>();
+        ResponseBodyTee responseBytes = new(originalResponseBody, () => CapturesResponseBody(context), _options.MaxBodyReadBytes);
+        context.Features.Set<IHttpResponseBodyFeature>(responseBytes);
+
+        bool loggedByService = false;
+        response.OnStarting(() =>
+        {
+            // the sign is for the gateway, not for the client
+            loggedByService = response.Headers.Remove(_options.LoggedByHeader);
+            return Task.CompletedTask;
+        });
+
+        Exception? failure = null;
+        try
+        {
+            await next(context).ConfigureAwait(false);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            failure = exception;
+            response.StatusCode = StatusCodes.Status500InternalServerError;
+        }
+        finally
+        {
+            watch.Stop();
+
+            // an answer without a body starts after this middleware is done: then the sign is still in the headers
+            if (!loggedByService && !response.HasStarted && response.Headers.Remove(_options.LoggedByHeader))
+            {
+                loggedByService = true;
+            }
+
+            if (!loggedByService)
+            {
+                long readBytes = requestBytes.Count;
+                string? requestBody = buffersBody && (failure is not null || response.StatusCode >= StatusCodes.Status500InternalServerError)
+                    ? await ReadBufferedBodyAsync(request, BodyType(context)).ConfigureAwait(false)
+                    : null;
+                string? responseBody = responseBytes.Body is { } text ? MaskBody(text, context.Items.TryGetValue(ResponseShapeKey, out object? shape) ? shape as Type : null) : null;
+                WriteResponseLog(context, LogFlow.HttpClientName, to, watch.ElapsedMilliseconds, responseBody, readBytes, responseBytes.Count, failure, RequestFields(context, LogTypes.HttpRequestResponse, requestBody));
+            }
+
+            request.Body = originalRequestBody;
+            context.Features.Set(originalResponseBody);
+        }
+
+        if (failure is not null)
+        {
+            System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(failure).Throw();
+        }
+    }
+
+    // The request was buffered (EnableBuffering) while the service read it: read it again, from its start. A service that never read it
+    // (it could not be reached) leaves the rest of it in the connection, so this reads asynchronously, and nothing that goes wrong here may
+    // change the answer the client gets.
+    private async Task<string?> ReadBufferedBodyAsync(HttpRequest request, Type? shape)
+    {
+        try
+        {
+            request.Body.Position = 0;
+            using StreamReader reader = new(request.Body, Encoding.UTF8, detectEncodingFromByteOrderMarks: false, leaveOpen: true);
+            return MaskBody(await reader.ReadToEndAsync().ConfigureAwait(false), shape);
+        }
+        catch (Exception exception) when (exception is IOException or InvalidOperationException or BadHttpRequestException)
+        {
+            return null;
+        }
+    }
+
+    private void WriteResponseLog(
+        HttpContext context, string from, string to, long elapsedMs, string? responseBody, long requestBytes, long responseBytes, Exception? failure, Dictionary<string, object?>? combined = null)
     {
         HttpResponse response = context.Response;
         int status = response.StatusCode;
@@ -186,7 +294,7 @@ public sealed partial class RequestLoggingMiddleware(
 
         Dictionary<string, object?> fields = new()
         {
-            [LogFields.LogType] = LogTypes.HttpResponse,
+            [LogFields.LogType] = combined is null ? LogTypes.HttpResponse : LogTypes.HttpRequestResponse,
             ["UserId"] = userId,
             ["ContentLength"] = response.ContentLength ?? 0,
             ["RequestBytes"] = requestBytes,
@@ -207,6 +315,22 @@ public sealed partial class RequestLoggingMiddleware(
         }
 
         string details = grpc is not null ? grpc.Summary : FileSummary(files);
+        if (combined is not null)
+        {
+            // one log for the whole request: what is known of it, and how it was answered
+            foreach (KeyValuePair<string, object?> field in fields.Where(field => field.Key != LogFields.LogType))
+            {
+                combined[field.Key] = field.Value;
+            }
+
+            using (logger.BeginScope(combined))
+            {
+                LogRequestResponse(logger, level, failure, from, to, context.Request.Method, context.Request.Path.Value, status, elapsedMs, details);
+            }
+
+            return;
+        }
+
         using (logger.BeginScope(fields))
         {
             LogResponse(logger, level, failure, from, to, status, elapsedMs, details);
@@ -451,6 +575,9 @@ public sealed partial class RequestLoggingMiddleware(
     private static partial void LogRequest(ILogger logger, string from, string to, string method, string? path);
 
     // the level is the outcome: 5xx and exceptions are errors, 4xx are warnings
+    [LoggerMessage(EventId = 3002, EventName = "HTTP_REQUEST_RESPONSE", Message = "{From} -> {To}: {Method} {Path} {Status} in {ElapsedMs} ms{Details}")]
+    private static partial void LogRequestResponse(ILogger logger, LogLevel level, Exception? exception, string from, string to, string method, string? path, int status, long elapsedMs, string details);
+
     // Details: what is worth a word next to the status: the files that went through, a gRPC status
     [LoggerMessage(EventId = 3001, EventName = "HTTP_RESPONSE", Message = "{From} -> {To}: {Status} in {ElapsedMs} ms{Details}")]
     private static partial void LogResponse(ILogger logger, LogLevel level, Exception? exception, string from, string to, int status, long elapsedMs, string details);

@@ -99,14 +99,22 @@ The request log also says who asked: `ClientIp`, `ForwardedFor`, `UserAgent`, `A
 else the `From` header), `Referer`, `Host`, `Scheme`, `ContentType`, `TraceId`. What only a product knows (the channel and version of the client, the
 device, the roles, a location) is added with an `IRequestLogEnricher`, called for both logs.
 
-### Where the request and response logs belong
+### Who writes the request and response logs
 
-In a system with a gateway, write them at the **gateway** (and at the auth server, the other public entry) and turn them off in the
-services: `"RequestLogging": { "Enabled": false }`. The chain is still there (the middleware still sets the correlation id and the
-step, and puts the id on the request it forwards, so a proxy hands it on), so the service's own logs, its `ConsumeStart` and
-`ConsumeEnd` and its handlers stay tied to the gateway's. If a service dies in the middle of a request (out of memory, a restart), the
-gateway has the `HttpRequest` and then an `HttpResponse` with 502 or 504 (or, if the gateway dies, no `HttpResponse` at all); the same
-works for a message: a `ConsumeStart` without a `ConsumeEnd`.
+In a system with a gateway, the **services** write them (`HttpRequest` when a request arrives, `HttpResponse` when it is answered: they know the
+action, the user, the exception, and the classes of the bodies, so their `[SensitiveData]` masks them exactly). Every answer of a service that
+logged carries the header `X-Logged-By`. The **gateway** (`"RequestLogging": { "Role": "Gateway" }`) stays quiet for those and removes the
+header; for every request it answered **itself**, which no service saw or logged (a rejected token, a rate limit, an unknown route, a service that
+cannot be reached or died), it writes one `HttpRequestResponse` with the whole request and its answer, its level the status of the answer.
+When a service does not log (`Enabled: false`, it is down) the gateway logs: a log twice is better than none.
+
+If the answer of the gateway is a 5xx (the service was unreachable, or died on this request: out of memory, a restart) the log also has the
+**body of the request**, masked, so what was asked is known. For that a gateway keeps the JSON bodies it forwards (up to `MaxBodyReadBytes`)
+in a buffer when `LogBodies` is on, and only writes them when the answer is a 5xx; a rejected request (4xx) does not write its body. The gateway
+does not have the classes of the services: it masks by the usual key names and by the contract assemblies given to `AddBaseLogging(...)`.
+
+The chain does not depend on any of this: the correlation id is set and passed on in every role. A service that dies in the middle of a request
+leaves its `HttpRequest` without an `HttpResponse`, and the gateway's `HttpRequestResponse` with 502 or 504.
 
 ### Files, gRPC and MVC
 

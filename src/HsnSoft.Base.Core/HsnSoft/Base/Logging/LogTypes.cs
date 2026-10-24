@@ -21,6 +21,12 @@ public static class LogTypes
     /// <summary>The end of an HTTP request, with its status and how long it took.</summary>
     public const string HttpResponse = "HttpResponse";
 
+    /// <summary>
+    /// One log for a whole request that a gateway answered itself (a 401, a 429, a 404, a 502 because the service could not be reached): the
+    /// service that would have logged <see cref="HttpRequest"/> and <see cref="HttpResponse"/> never saw it.
+    /// </summary>
+    public const string HttpRequestResponse = "HttpRequestResponse";
+
     /// <summary>The start of the handling of a message. Pairs with <see cref="ConsumeEnd"/> through <c>ScopeId</c>.</summary>
     public const string ConsumeStart = "ConsumeStart";
 
