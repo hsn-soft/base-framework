@@ -52,6 +52,6 @@ public sealed partial class GlobalExceptionHandler(
         return true;
     }
 
-    [LoggerMessage(EventId = 5201, EventName = "GLOBAL_EXCEPTION_HANDLER", Level = LogLevel.Error, Message = "Unhandled exception on {Path}: status {Status}")]
-    private static partial void LogUnhandled(ILogger logger, Exception exception, PathString path, int status);
+    [LoggerMessage(EventId = 5201, EventName = "GLOBAL_EXCEPTION_HANDLER", Level = LogLevel.Error, Message = "Unhandled exception on {RequestPath}: status {Status}")]
+    private static partial void LogUnhandled(ILogger logger, Exception exception, PathString requestPath, int status);
 }

@@ -188,6 +188,9 @@ written in capitals count, the platform's own `ExecutedEndpoint` is not a facili
 with `IFrameworkLogger` (`LogHelper.Generate(message, reference, facility: "ORDER_IMPORTED", correlationId)`). A framework library
 gives every log an event name: use `RABBITMQ_CONSUMER_SUBSCRIBED`-style names for new ones.
 
+The application names the logs of an operation with `logger.BeginFacility("ORDER_IMPORTED")` (a scope: every log written inside it has that `Facility`).
+The fields of all the log types are in [GraylogFields.md](GraylogFields.md).
+
 ## What the framework packages log
 
 Categories are the class names (`HsnSoft.Base.EventBus.RabbitMQ.RabbitMqConsumer`), so a category prefix controls a whole package

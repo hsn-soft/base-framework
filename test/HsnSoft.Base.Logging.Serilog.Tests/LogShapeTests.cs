@@ -107,6 +107,54 @@ public sealed class LogShapeTests
         Assert.True(logEvent.Properties.ContainsKey("RequestId"));
     }
 
+    [Theory]
+    [InlineData("FrameworkLog", false)]
+    [InlineData("PlatformLog", false)]
+    [InlineData("AppLog", true)]
+    [InlineData("HttpRequest", true)]
+    [InlineData("HttpResponse", true)]
+    [InlineData("HttpRequestResponse", true)]
+    [InlineData("ConsumeStart", true)]
+    [InlineData("ConsumeEnd", true)]
+    public void WhoAsked_IsOnlyOnTheLogsOfTheRequestTheMessageAndTheApplication(string logType, bool kept)
+    {
+        LogEvent logEvent = Event(
+            new LogEventProperty("LogType", new ScalarValue(logType)),
+            new LogEventProperty("UserId", new ScalarValue("u1")),
+            new LogEventProperty("UserRoles", new ScalarValue("admin")),
+            new LogEventProperty("ClientChannel", new ScalarValue("ios")),
+            new LogEventProperty("ClientVersion", new ScalarValue("1.2")),
+            new LogEventProperty("ClientLat", new ScalarValue("1")),
+            new LogEventProperty("ClientLong", new ScalarValue("2")),
+            new LogEventProperty("CorrelationId", new ScalarValue("c")));
+
+        new NoiseEnricher().Enrich(logEvent, new Factory());
+
+        Assert.Equal(kept, logEvent.Properties.ContainsKey("UserId"));
+        Assert.Equal(kept, logEvent.Properties.ContainsKey("ClientLat"));
+        Assert.True(logEvent.Properties.ContainsKey("CorrelationId"));
+    }
+
+    [Fact]
+    public void TheDetailsOfAMessage_AreInTheMessageAndNotAField()
+    {
+        CollectSink inner = new();
+        FieldGuardSink guard = new(inner, maxLength: 100);
+        LogEvent logEvent = new(
+            DateTimeOffset.UtcNow,
+            LogEventLevel.Information,
+            null,
+            new MessageTemplateParser().Parse("done{MessageDetails}"),
+            [new LogEventProperty("MessageDetails", new ScalarValue(" (2 files)")), new LogEventProperty("Kept", new ScalarValue(1))]);
+
+        guard.Emit(logEvent);
+
+        LogEvent written = Assert.Single(inner.Events);
+        Assert.Equal("done (2 files)", written.MessageTemplate.Text);
+        Assert.False(written.Properties.ContainsKey("MessageDetails"));
+        Assert.True(written.Properties.ContainsKey("Kept"));
+    }
+
     [Fact]
     public void FieldGuard_WritesTheMessageAsPeopleReadIt()
     {

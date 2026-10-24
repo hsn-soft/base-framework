@@ -22,8 +22,8 @@ internal sealed class FieldGuardSink(ILogEventSink inner, int maxLength) : ILogE
     {
         ArgumentNullException.ThrowIfNull(logEvent);
 
-        // the event id (EventId_Id, EventId_Name) is not a field: its name is the Facility, and an id the compiler makes up says nothing
-        LogEventProperty[] properties = [.. logEvent.Properties.Where(property => property.Key != "EventId").Select(property => new LogEventProperty(property.Key, Guard(property.Value)))];
+        // the event id (EventId_Id, EventId_Name) is not a field: its name is the Facility, and an id the compiler makes up says nothing; the details of a message are in the message
+        LogEventProperty[] properties = [.. logEvent.Properties.Where(property => property.Key is not ("EventId" or LogFields.MessageDetails)).Select(property => new LogEventProperty(property.Key, Guard(property.Value)))];
         inner.Emit(new LogEvent(logEvent.Timestamp, logEvent.Level, logEvent.Exception, PlainMessage(logEvent), properties, logEvent.TraceId ?? default, logEvent.SpanId ?? default));
     }
 

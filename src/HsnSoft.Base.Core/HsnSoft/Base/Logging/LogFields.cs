@@ -17,6 +17,16 @@ public static class LogFields
     public const string From = nameof(From);
     public const string To = nameof(To);
     public const string ElapsedMs = nameof(ElapsedMs);
+    public const string Facility = nameof(Facility);
+
+    /// <summary>
+    /// A placeholder that only builds the text of a message (what is worth a word after the status): it is not a field of the persistent sink, the
+    /// message has it.
+    /// </summary>
+    public const string MessageDetails = nameof(MessageDetails);
+
+    /// <summary>The fields about who asked; they belong to the logs of a request or a message and of the application, not to the logs of the framework and the platform.</summary>
+    public static readonly string[] WhoFields = ["UserId", "UserRoles", "ClientChannel", "ClientVersion", "ClientLat", "ClientLong"];
 
     /// <summary>The fields every log of a chain carries; add the ones of the log type to the result.</summary>
     /// <param name="logType">One of <see cref="LogTypes"/>.</param>

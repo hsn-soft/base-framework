@@ -8,6 +8,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using HsnSoft.Base.AspNetCore.Responses;
 using HsnSoft.Base.Logging;
 using HsnSoft.Base.Logging.Masking;
 using Microsoft.AspNetCore.Authentication;
@@ -50,6 +51,7 @@ public sealed partial class RequestLoggingMiddleware(
 
     private readonly RequestLoggingOptions _options = options.Value;
     private readonly ILogMasker? _masker = (ILogMasker?)services.GetService(typeof(ILogMasker));
+    private readonly IStatusMessageProvider? _statusMessages = services.GetService<IStatusMessageProvider>();
     private readonly IAuthenticationSchemeProvider? _schemes = services.GetService<IAuthenticationSchemeProvider>();
     private readonly IRequestLogEnricher[] _enrichers = [.. services.GetServices<IRequestLogEnricher>()];
 
@@ -324,6 +326,10 @@ public sealed partial class RequestLoggingMiddleware(
         {
             ExceptionLogFields.AddTo(fields, cause);
         }
+        else if (combined is not null && status >= StatusCodes.Status500InternalServerError)
+        {
+            AddUpstreamFailure(fields, context, status);
+        }
 
         foreach (IRequestLogEnricher enricher in _enrichers)
         {
@@ -467,6 +473,26 @@ public sealed partial class RequestLoggingMiddleware(
 
     private static string? UserId(ClaimsPrincipal? user)
         => user?.FindFirstValue("sub") ?? user?.FindFirstValue(ClaimTypes.NameIdentifier);
+
+    // A gateway that answered a 5xx itself got no answer from its service: it is a failure like a 500 with an exception, so it says why. When the
+    // reverse proxy told (YARP's IForwarderErrorFeature, found by name: this package does not depend on it) it is the error and the exception it
+    // met; else the text of the status.
+    private void AddUpstreamFailure(Dictionary<string, object?> fields, HttpContext context, int status)
+    {
+        string? error = null;
+        Exception? exception = null;
+        foreach (KeyValuePair<Type, object> feature in context.Features.Where(feature => feature.Key.FullName == "Yarp.ReverseProxy.Forwarder.IForwarderErrorFeature"))
+        {
+            error = feature.Key.GetProperty("Error")?.GetValue(feature.Value)?.ToString();
+            exception = feature.Key.GetProperty("Exception")?.GetValue(feature.Value) as Exception;
+        }
+
+        string reason = exception is null
+            ? error ?? _statusMessages?.GetMessage(status) ?? string.Create(CultureInfo.InvariantCulture, $"HTTP {status}")
+            : $"{error}: {ExceptionLogFields.ReasonOf(exception)}";
+        fields[ExceptionLogFields.Reason] = LogFields.Text(reason, ExceptionLogFields.MaxReasonLength);
+        fields["ExceptionType"] = exception?.GetType().FullName;
+    }
 
     // the roles of the user, as the old logs had them: distinct, comma separated; a JWT says "role", the platform maps it to ClaimTypes.Role
     private string? Roles(ClaimsPrincipal? user)
@@ -623,10 +649,10 @@ public sealed partial class RequestLoggingMiddleware(
     private static partial void LogRequest(ILogger logger, string from, string to, string method, string? requestPath);
 
     // the level is the outcome: 5xx and exceptions are errors, 4xx are warnings
-    [LoggerMessage(EventId = 3002, EventName = "HTTP_REQUEST_RESPONSE", Message = "{From} -> {To}: {Method} {RequestPath} {Status} in {ElapsedMs} ms{Details}")]
-    private static partial void LogRequestResponse(ILogger logger, LogLevel level, Exception? exception, string from, string to, string method, string? requestPath, int status, long elapsedMs, string details);
+    [LoggerMessage(EventId = 3002, EventName = "HTTP_REQUEST_RESPONSE", Message = "{From} -> {To}: {Method} {RequestPath} {Status} in {ElapsedMs} ms{MessageDetails}")]
+    private static partial void LogRequestResponse(ILogger logger, LogLevel level, Exception? exception, string from, string to, string method, string? requestPath, int status, long elapsedMs, string messageDetails);
 
-    // Details: what is worth a word next to the status: the files that went through, a gRPC status
-    [LoggerMessage(EventId = 3001, EventName = "HTTP_RESPONSE", Message = "{From} -> {To}: {Status} in {ElapsedMs} ms{Details}")]
-    private static partial void LogResponse(ILogger logger, LogLevel level, Exception? exception, string from, string to, int status, long elapsedMs, string details);
+    // MessageDetails: what is worth a word next to the status: the files that went through, a gRPC status
+    [LoggerMessage(EventId = 3001, EventName = "HTTP_RESPONSE", Message = "{From} -> {To}: {Status} in {ElapsedMs} ms{MessageDetails}")]
+    private static partial void LogResponse(ILogger logger, LogLevel level, Exception? exception, string from, string to, int status, long elapsedMs, string messageDetails);
 }

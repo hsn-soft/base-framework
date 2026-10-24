@@ -435,6 +435,49 @@ public sealed class RequestLoggingTests
         Assert.Equal("""{"item":"keyboard","password":"*****"}""", log.Properties["ResponseBody"]);
     }
 
+    private sealed class StuckForwarder(Exception? exception) : Yarp.ReverseProxy.Forwarder.IForwarderErrorFeature
+    {
+        public Yarp.ReverseProxy.Forwarder.ForwarderError Error => Yarp.ReverseProxy.Forwarder.ForwarderError.Request;
+
+        public Exception? Exception => exception;
+    }
+
+    [Fact]
+    public async Task TheCombinedLog_HasEveryFieldOfTheRequestAndTheResponse_AndSaysWhyTheServiceDidNotAnswer()
+    {
+        await using Rig rig = await StartAsync(
+            new() { ["RequestLogging:Role"] = "Gateway" },
+            beforeLogging: context =>
+            {
+                context.Features.Set<Yarp.ReverseProxy.Forwarder.IForwarderErrorFeature>(new StuckForwarder(new HttpRequestException("refused", new IOException("no route"))));
+                return Task.CompletedTask;
+            });
+
+        await rig.Client.PostAsync("/status/502", new StringContent("""{"a":1}""", Encoding.UTF8, "application/json"));
+
+        Logged log = Assert.Single(rig.Combined);
+        Assert.Equal("Request: refused >> no route", log.Properties["Reason"]);
+        Assert.Equal("System.Net.Http.HttpRequestException", log.Properties["ExceptionType"]);
+        foreach (string field in new[] { "RequestPath", "RequestBytes", "ResponseBytes", "ResponseHeaders", "Reason", "ExceptionType" })
+        {
+            Assert.True(log.Properties.ContainsKey(field), field);
+        }
+
+        Assert.False(log.Properties.ContainsKey("Details"));
+        Assert.False(log.Properties.ContainsKey("MessageDetails") && log.Properties["MessageDetails"] is null);
+    }
+
+    [Fact]
+    public async Task TheCombinedLog_WithoutTheReverseProxysWord_SaysTheStatusAsTheReason()
+    {
+        await using Rig rig = await StartAsync(new() { ["RequestLogging:Role"] = "Gateway" });
+
+        await rig.Client.GetAsync("/status/503");
+
+        Logged log = Assert.Single(rig.Combined);
+        Assert.False(string.IsNullOrWhiteSpace((string?)log.Properties["Reason"]));
+    }
+
     private sealed class BrokenBody : Stream
     {
         public override bool CanRead => true;
@@ -826,6 +869,10 @@ public sealed class RequestLoggingTests
         Assert.Equal(LogLevel.Error, handled.Level);
         Assert.Equal(rig.Response.Properties["ExceptionIdentifier"], handled.Properties["ExceptionIdentifier"]);
         Assert.Equal("boom", handled.Properties["Reason"]);
+        // the path is named as on the request and response logs, and a response has no Details field (its details are in its message)
+        Assert.Equal(rig.Request.Properties["RequestPath"]?.ToString(), handled.Properties["RequestPath"]?.ToString());
+        Assert.False(handled.Properties.ContainsKey("Path"));
+        Assert.False(rig.Response.Properties.ContainsKey("Details"));
     }
 
     [Fact]
