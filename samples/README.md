@@ -114,7 +114,7 @@ otherwise to `Logs/<service>.txt` in the folder the host runs from. Debug never 
 `Solution:Xyz` finds the whole Xyz system.
 
 ```bash
-FrameworkLogger__IsGrayLogActive=true ./samples/run-all.sh      # without the variable: log files
+FrameworkLogger__IsGrayLogActive=true ./samples/xyz/run-all.sh      # without the variable: log files
 ```
 
 ## Run it
@@ -125,8 +125,8 @@ MongoDB `27017`, Redis `6379`, RabbitMQ `5672` (`guest`/`guest`). They create th
 still starting.
 
 ```bash
-./samples/run-all.sh        # builds and starts the five hosts, Ctrl+C stops them
-./samples/smoke-test.sh     # in another terminal: runs the whole flow through the gateway
+./samples/xyz/run-all.sh        # builds and starts the five hosts, Ctrl+C stops them
+./samples/xyz/smoke-test.sh     # in another terminal: runs the whole flow through the gateway
 ```
 
 Demo accounts: `alice` / `alice123` (customer) and `admin` / `admin123` (admin, can create products).
@@ -153,7 +153,7 @@ The ASP.NET Core host gives it the lifetime, configuration, logging and the heal
 last `Scheduler:LookbackMinutes` minutes to its log. A failed run is logged and retried at the next tick.
 
 ```bash
-dotnet run --project samples/Agt.Scheduler.Host
+dotnet run --project samples/agent/Agt.Scheduler.Host
 ```
 ```bash
 # in another terminal: add a record (other applications write them, the agent only reads)
@@ -181,7 +181,7 @@ host has nothing to share, so it composes the framework in its own `Program.cs`.
 | `GET /documents/{id}` | `404` while queued, then the metadata. `GET /documents/{id}/content` streams the JSON from MinIO. A caller only sees its own documents. |
 
 ```bash
-dotnet run --project samples/Def.Signer.Host      # http://localhost:5300, sample keys: acme-sample-api-key, globex-sample-api-key
+dotnet run --project samples/def/Def.Signer.Host      # http://localhost:5300, sample keys: acme-sample-api-key, globex-sample-api-key
 curl -X POST localhost:5300/documents -H 'X-Api-Key: acme-sample-api-key' -H 'Content-Type: application/json' \
      -d '{"title":"Contract","content":"hello"}'
 curl localhost:5300/documents/<requestId> -H 'X-Api-Key: acme-sample-api-key'

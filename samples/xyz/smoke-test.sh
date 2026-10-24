@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # End-to-end check of the whole flow through the gateway. Start the infrastructure and the six services first
-# (see samples/README.md), then run:   ./samples/smoke-test.sh [gateway-url]
+# (see samples/README.md), then run:   ./samples/xyz/smoke-test.sh [gateway-url]
 set -euo pipefail
 
 GATEWAY="${1:-http://localhost:5100}"

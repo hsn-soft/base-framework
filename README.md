@@ -58,7 +58,7 @@ new provider.
 ## The product decides the composition
 
 The framework offers building blocks; the product's shared library chooses which ones its services use and in which order they
-are registered and run. `samples/Xyz.Shared` does it for a JWT-secured web api; `samples/Agt.Scheduler.Host` is an agent that
+are registered and run. `samples/xyz/Xyz.Shared` does it for a JWT-secured web api; `samples/agent/Agt.Scheduler.Host` is an agent that
 takes only three packages.
 
 ```csharp

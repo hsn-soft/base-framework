@@ -15,17 +15,17 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HsnSoft.Base.Core.Tests", "
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{5D20AA90-6969-D8BD-9DCD-8634F4692FDA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Xyz.Shared", "samples\Xyz.Shared\Xyz.Shared.csproj", "{A35FAECD-8CD9-4FBF-B44F-718414BF6BEE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Xyz.Shared", "samples\xyz\Xyz.Shared\Xyz.Shared.csproj", "{A35FAECD-8CD9-4FBF-B44F-718414BF6BEE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Xyz.Gateway.Host", "samples\Xyz.Gateway.Host\Xyz.Gateway.Host.csproj", "{F50E0150-B8D3-471B-A891-CBEC49C6D1A4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Xyz.Gateway.Host", "samples\xyz\Xyz.Gateway.Host\Xyz.Gateway.Host.csproj", "{F50E0150-B8D3-471B-A891-CBEC49C6D1A4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Xyz.AuthServer.Host", "samples\Xyz.AuthServer.Host\Xyz.AuthServer.Host.csproj", "{BDD6C73E-C3B5-45D1-BA31-9053DAC93383}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Xyz.AuthServer.Host", "samples\xyz\Xyz.AuthServer.Host\Xyz.AuthServer.Host.csproj", "{BDD6C73E-C3B5-45D1-BA31-9053DAC93383}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Xyz.ServiceShipment.Host", "samples\Xyz.ServiceShipment.Host\Xyz.ServiceShipment.Host.csproj", "{522ED941-0FC6-411E-A298-5C09149C9BCB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Xyz.ServiceShipment.Host", "samples\xyz\Xyz.ServiceShipment.Host\Xyz.ServiceShipment.Host.csproj", "{522ED941-0FC6-411E-A298-5C09149C9BCB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Xyz.ServiceOrder.Host", "samples\Xyz.ServiceOrder.Host\Xyz.ServiceOrder.Host.csproj", "{1868537E-581E-4830-983D-A56E6D1F8E35}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Xyz.ServiceOrder.Host", "samples\xyz\Xyz.ServiceOrder.Host\Xyz.ServiceOrder.Host.csproj", "{1868537E-581E-4830-983D-A56E6D1F8E35}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Xyz.ServiceProduct.Host", "samples\Xyz.ServiceProduct.Host\Xyz.ServiceProduct.Host.csproj", "{EC0AC1BC-0057-4671-8E97-8D631042071A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Xyz.ServiceProduct.Host", "samples\xyz\Xyz.ServiceProduct.Host\Xyz.ServiceProduct.Host.csproj", "{EC0AC1BC-0057-4671-8E97-8D631042071A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HsnSoft.Base.AspNetCore", "src\HsnSoft.Base.AspNetCore\HsnSoft.Base.AspNetCore.csproj", "{E1200E5F-C010-413C-927A-05C2E9270DEB}"
 EndProject
@@ -37,7 +37,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HsnSoft.Base.EntityFramewor
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HsnSoft.Base.MongoDB", "src\HsnSoft.Base.MongoDB\HsnSoft.Base.MongoDB.csproj", "{5B75BA0F-650A-4401-B01F-2E2F74D58D04}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Agt.Scheduler.Host", "samples\Agt.Scheduler.Host\Agt.Scheduler.Host.csproj", "{A7E2267D-07D6-469B-A1FB-6E72AD29743C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Agt.Scheduler.Host", "samples\agent\Agt.Scheduler.Host\Agt.Scheduler.Host.csproj", "{A7E2267D-07D6-469B-A1FB-6E72AD29743C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HsnSoft.Base.Hosting", "src\HsnSoft.Base.Hosting\HsnSoft.Base.Hosting.csproj", "{500104C3-44CA-4161-9E76-678F3AC02091}"
 EndProject
@@ -63,7 +63,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HsnSoft.Base.BlobStoring.Mi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HsnSoft.Base.EventBus.Kafka", "src\HsnSoft.Base.EventBus.Kafka\HsnSoft.Base.EventBus.Kafka.csproj", "{0D93C917-5DA7-4F91-865E-A3491DA5E0F3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Def.Signer.Host", "samples\Def.Signer.Host\Def.Signer.Host.csproj", "{E61A6FB1-C00C-48A6-8A51-AB13FC8BABBA}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Def.Signer.Host", "samples\def\Def.Signer.Host\Def.Signer.Host.csproj", "{E61A6FB1-C00C-48A6-8A51-AB13FC8BABBA}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HsnSoft.Base.AspNetCore.Tests", "test\HsnSoft.Base.AspNetCore.Tests\HsnSoft.Base.AspNetCore.Tests.csproj", "{2FFC0234-0688-4D4B-8FD1-A6A0D9B1C165}"
 EndProject
