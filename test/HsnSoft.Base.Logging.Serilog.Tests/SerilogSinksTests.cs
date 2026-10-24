@@ -142,7 +142,6 @@ public sealed class SerilogSinksTests : IDisposable
             SerilogSinks sinks = SerilogSinks.Create(Options());
 
             sinks.Console.Emit(Event(LogEventLevel.Error, "plain message", ("Extra", "hidden-in-plain")));
-            sinks.ConsoleWithProperties.Emit(Event(LogEventLevel.Information, "structured message", ("Extra", "shown-with-properties")));
         }
         finally
         {
@@ -154,8 +153,6 @@ public sealed class SerilogSinksTests : IDisposable
         Assert.Contains("ERR", output, StringComparison.Ordinal);
         Assert.Contains("Host", output, StringComparison.Ordinal);
         Assert.DoesNotContain("hidden-in-plain", output, StringComparison.Ordinal);
-        Assert.Contains("structured message", output, StringComparison.Ordinal);
-        Assert.Contains("shown-with-properties", output, StringComparison.Ordinal);
     }
 
     [Fact]

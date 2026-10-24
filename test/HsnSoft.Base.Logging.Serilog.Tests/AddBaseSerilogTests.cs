@@ -1,6 +1,5 @@
 #pragma warning disable CA1848 // the tests call the logger the way a service does
 using HsnSoft.Base.Logging.Abstracts;
-using HsnSoft.Base.Logging.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -51,7 +50,6 @@ public sealed class AddBaseSerilogTests : IDisposable
         ServiceProvider provider = Build(Configuration(), configure => configure.WriteTo.Sink(everything));
         ILogger<AddBaseSerilogTests> logger = provider.GetRequiredService<ILogger<AddBaseSerilogTests>>();
         IAppConsoleLogger console = provider.GetRequiredService<IAppConsoleLogger>();
-        IFrameworkLogger framework = provider.GetRequiredService<IFrameworkLogger>();
 
         logger.LogTrace("trace message");
         logger.LogDebug("debug message");
@@ -59,7 +57,7 @@ public sealed class AddBaseSerilogTests : IDisposable
         logger.LogWarning("warning message");
         console.LogInformation("console-only message");
         console.LogError("console-only error");
-        framework.FrameworkErrorLog(LogHelper.Generate("structured-failure", new { Order = 7 }, "SHIPPING", "corr-9"));
+        logger.LogError("order failure {Order}", 7);
         provider.Dispose();
 
         // everything reached the logging pipeline, Debug and Trace included (the default filter of Microsoft.Extensions.Logging is out of the way)
@@ -70,8 +68,7 @@ public sealed class AddBaseSerilogTests : IDisposable
         string persistent = PersistentText();
         Assert.Contains("information message", persistent, StringComparison.Ordinal);
         Assert.Contains("warning message", persistent, StringComparison.Ordinal);
-        Assert.Contains("structured-failure", persistent, StringComparison.Ordinal);
-        Assert.Contains("corr-9", persistent, StringComparison.Ordinal);
+        Assert.Contains("order failure 7", persistent, StringComparison.Ordinal);
         Assert.DoesNotContain("trace message", persistent, StringComparison.Ordinal);
         Assert.DoesNotContain("debug message", persistent, StringComparison.Ordinal);
         Assert.DoesNotContain("console-only", persistent, StringComparison.Ordinal);
@@ -163,13 +160,5 @@ public sealed class AddBaseSerilogTests : IDisposable
             Assert.Throws<ArgumentNullException>(() => SerilogLoggingBuilderExtensions.AddBaseSerilog(null!, Configuration()));
             Assert.Throws<ArgumentNullException>(() => builder.AddBaseSerilog(null!));
         });
-    }
-
-    [Fact]
-    public void FrameworkLogModel_IsLoggedAsAnObject()
-    {
-        FrameworkLogModel model = LogHelper.Generate("shape", null, "FACILITY");
-
-        Assert.Equal("FACILITY", model.Facility);
     }
 }

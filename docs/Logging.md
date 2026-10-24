@@ -6,7 +6,7 @@ Graylog in one service, NLog in another. Two packages help with that; both are o
 
 | Package | What it is |
 |---|---|
-| `HsnSoft.Base.Logging` | Independent of any logging library: `IAppConsoleLogger`, `IFrameworkLogger`, `LogHelper`, the settings every provider reads (`FrameworkLogger` section), masking of sensitive data. |
+| `HsnSoft.Base.Logging` | Independent of any logging library: `IAppConsoleLogger` (console only), the settings every provider reads (`FrameworkLogger` section), masking of sensitive data. |
 | `HsnSoft.Base.Logging.Serilog` | Serilog as the provider: the console, the persistent sink (Graylog, or a file), the routing rule below, the self-healing Graylog sink. |
 
 ## The rule: Debug and Verbose stay in the console
@@ -27,7 +27,7 @@ library has, so another provider can apply the same rule.
 ## Using it (Serilog)
 
 ```csharp
-builder.Services.AddBaseLogging();                                   // IAppConsoleLogger, IFrameworkLogger, ILogMasker
+builder.Services.AddBaseLogging();                                   // IAppConsoleLogger, ILogMasker
 builder.Logging.AddBaseSerilog(builder.Configuration, "OrderService"); // everything that logs through ILogger goes through Serilog
 ```
 
@@ -77,6 +77,8 @@ services sets to the image tag `{yyMMddHHmm}-sha-{git short sha}`; else `Framewo
 The provider decides `LogType` from the category of a log (`HsnSoft.Base.*` is `FrameworkLog`, `System`, `Microsoft`, `Npgsql`,
 `MongoDB`, ... are `PlatformLog`, the rest is `AppLog`); the four chain types say it themselves. `MessageType` is `Structured` when an
 object was logged with `{@Object}` and `Args` when only plain values were.
+
+What is a framework library is only `HsnSoft.Base.*`. The shared library of a product (`Xyz.Shared`) is part of the application: its logs are `AppLog`s, like the logs of the services.
 
 ### The chain logs
 
@@ -186,8 +188,7 @@ still shows the readable object. A body with two hundred properties is one field
 
 `Facility` is a top-level field, so `Facility:CONSUME_EVENT_ERROR` finds every handler that failed, and the facilities of a chain in
 order tell the story. A log gets it from the name of its event (`[LoggerMessage(EventName = "CONSUME_EVENT_SUCCESS")]`; only names
-written in capitals count, the platform's own `ExecutedEndpoint` is not a facility) or from the `Facility` of a structured log written
-with `IFrameworkLogger` (`LogHelper.Generate(message, reference, facility: "ORDER_IMPORTED", correlationId)`). A framework library
+written in capitals count, the platform's own `ExecutedEndpoint` is not a facility). A framework library
 gives every log an event name: use `RABBITMQ_CONSUMER_SUBSCRIBED`-style names for new ones.
 
 The application names the logs of an operation with `logger.BeginFacility("ORDER_IMPORTED")` (a scope: every log written inside it has that `Facility`).
@@ -229,8 +230,9 @@ write everything to the console, keep Debug/Trace and the `ConsoleOnly.` categor
 
 | Previous | Now |
 |---|---|
-| `HsnSoft.Base.Serilog` (`SerilogConfigurationHelper`, `AppLogger`, `FrameworkLogger`) | `HsnSoft.Base.Logging.Serilog`: `AddBaseSerilog(...)`; the loggers are `AppConsoleLogger` and `FrameworkLogger` of `HsnSoft.Base.Logging`, on `ILogger` |
-| `IAppConsoleLogger`, `IFrameworkLogger`, `LogHelper`, `FrameworkLogModel` in `HsnSoft.Base.Core` | the same names and namespaces (`HsnSoft.Base.Logging...`), in `HsnSoft.Base.Logging` |
+| `HsnSoft.Base.Serilog` (`SerilogConfigurationHelper`, `AppLogger`, `FrameworkLogger`) | `HsnSoft.Base.Logging.Serilog`: `AddBaseSerilog(...)`; the console logger is `AppConsoleLogger` of `HsnSoft.Base.Logging`, on `ILogger`; the application writes with `ILogger` |
+| `IAppConsoleLogger` in `HsnSoft.Base.Core` | the same name and namespace (`HsnSoft.Base.Logging...`), in `HsnSoft.Base.Logging` |
+| `IFrameworkLogger`, `LogHelper`, `FrameworkLogModel` (structured logs a developer wrote on purpose) | gone: the application writes with `ILogger` (`{@Object}` for an object, `BeginFacility` for the `Facility`), and the log type and its fields are decided by the provider |
 | `new AppLogger(configuration, "ThreadPool")` | `new AppConsoleLogger(loggerFactory, "ThreadPool")` |
 | Persistent logs: only what was written with `IFrameworkLogger` (`IsPersistentLogger`) | by level: everything of Information and above except what `IAppConsoleLogger` wrote; ASP.NET Core, EF Core and the HsnSoft packages now reach Graylog from Information (libraries from Warning) |
 | `IRefreshableLogger`, `PersistentLoggerSinkRefreshWorker` in Shared | built in: a hosted service refreshes the Graylog sink |

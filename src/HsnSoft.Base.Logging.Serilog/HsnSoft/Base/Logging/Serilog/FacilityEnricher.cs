@@ -5,30 +5,23 @@ using Serilog.Events;
 namespace HsnSoft.Base.Logging.Serilog;
 
 /// <summary>
-/// Makes <c>Facility</c> (what the log is about: <c>CONSUME_EVENT_SUCCESS</c>, <c>APPLICATION_LOADER_STARTED</c>) and
-/// <c>CorrelationId</c> top-level properties, so Graylog can search them as fields. A log has them in two places: the name of its
-/// event, when it is written in capitals (<c>[LoggerMessage(EventName = "...")]</c>) and the <c>Facility</c> and <c>CorrelationId</c> of a structured log written
-/// with <c>IFrameworkLogger</c>; a property the log already carries on its own is left as it is.
+/// Makes <c>Facility</c> (what the log is about: <c>CONSUME_EVENT_SUCCESS</c>) a top-level property, so Graylog can search it as a field, from the name of
+/// the event of the log when it is written in capitals (<c>[LoggerMessage(EventName = "...")]</c>). A log that already has a <c>Facility</c>
+/// (<c>logger.BeginFacility("...")</c>) is left as it is.
 /// </summary>
 internal sealed class FacilityEnricher : ILogEventEnricher
 {
     internal const string FacilityProperty = "Facility";
-    internal const string CorrelationIdProperty = "CorrelationId";
 
     public void Enrich(LogEvent logEvent, ILogEventPropertyFactory propertyFactory)
     {
         if (!logEvent.Properties.ContainsKey(FacilityProperty))
         {
-            string? facility = Text(Member(logEvent, "Log", FacilityProperty)) ?? FacilityName(Text(Member(logEvent, "EventId", "Name")));
+            string? facility = FacilityName(Text(Member(logEvent, "EventId", "Name")));
             if (facility is not null)
             {
                 logEvent.AddPropertyIfAbsent(propertyFactory.CreateProperty(FacilityProperty, facility));
             }
-        }
-
-        if (!logEvent.Properties.ContainsKey(CorrelationIdProperty) && Text(Member(logEvent, "Log", CorrelationIdProperty)) is { } correlationId)
-        {
-            logEvent.AddPropertyIfAbsent(propertyFactory.CreateProperty(CorrelationIdProperty, correlationId));
         }
     }
 

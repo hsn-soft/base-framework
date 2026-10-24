@@ -12,7 +12,7 @@ public static class SerilogLoggingBuilderExtensions
     /// <summary>
     /// Makes Serilog the logging provider of the service, configured from the <c>FrameworkLogger</c> section (see
     /// <see cref="FrameworkLoggerOptions"/>). Everything that logs through <c>ILogger</c> (the HsnSoft packages, ASP.NET Core, EF Core) goes
-    /// through it, as do <c>IAppConsoleLogger</c> and <c>IFrameworkLogger</c>.
+    /// through it, as does <c>IAppConsoleLogger</c>.
     /// <list type="bullet">
     /// <item>The console shows everything from <c>FrameworkLogger:LogLevel</c> up.</item>
     /// <item>The persistent sink (Graylog, or a file when Graylog is off) gets Information and above, except what <c>IAppConsoleLogger</c> wrote. Debug and Verbose logs never leave the console.</item>

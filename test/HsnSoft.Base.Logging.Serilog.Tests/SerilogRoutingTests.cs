@@ -31,20 +31,12 @@ public class SerilogRoutingTests
     [Theory]
     [InlineData("ConsoleOnly.ThreadPool", true)]
     [InlineData("ConsoleOnly.", true)]
-    [InlineData("FrameworkLog", false)]
     [InlineData("HsnSoft.Base.EventBus.RabbitMQ.RabbitMqConsumer", false)]
     [InlineData("MyConsoleOnly.X", false)]
     [InlineData("", false)]
     public void ConsoleOnlyCategories_AreRecognizedByTheirPrefix(string category, bool expected)
     {
         Assert.Equal(expected, SerilogRouting.IsConsoleOnly(Events.Create(LogEventLevel.Information, category)));
-    }
-
-    [Fact]
-    public void StructuredLogs_ShowTheirProperties()
-    {
-        Assert.True(SerilogRouting.ShowsProperties(Events.Create(LogEventLevel.Information, "FrameworkLog")));
-        Assert.False(SerilogRouting.ShowsProperties(Events.Create(LogEventLevel.Information, "Other")));
     }
 
     [Theory]
@@ -98,10 +90,9 @@ public class SerilogRoutingTests
     }
 
     [Fact]
-    public void LoggerName_IsTheConsoleLoggersName_TheStructuredLoggersOrTheHosts()
+    public void LoggerName_IsTheConsoleLoggersName_OrTheHosts()
     {
         Assert.Equal("ThreadPool", SerilogRouting.LoggerName(Events.Create(LogEventLevel.Information, "ConsoleOnly.ThreadPool"), "Host"));
-        Assert.Equal("FrameworkLogger", SerilogRouting.LoggerName(Events.Create(LogEventLevel.Information, "FrameworkLog"), "Host"));
         Assert.Equal("Host", SerilogRouting.LoggerName(Events.Create(LogEventLevel.Information, "Some.Library"), "Host"));
         Assert.Equal("Host", SerilogRouting.LoggerName(Events.Create(LogEventLevel.Information), "Host"));
     }

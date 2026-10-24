@@ -36,29 +36,12 @@ public sealed class FacilityEnricherTests
     }
 
     [Fact]
-    public void TheFacilityAndTheCorrelationIdOfAStructuredLog_BecomeTopLevelProperties()
-    {
-        LogEvent logEvent = Enriched(Structure("Log", ("Facility", "APPLICATION_LOADER_STARTED"), ("CorrelationId", "corr-1")));
-
-        Assert.Equal("APPLICATION_LOADER_STARTED", Value(logEvent, "Facility"));
-        Assert.Equal("corr-1", Value(logEvent, "CorrelationId"));
-    }
-
-    [Fact]
-    public void TheFacilityOfAStructuredLog_WinsOverTheNameOfItsEvent()
-    {
-        LogEvent logEvent = Enriched(Structure("Log", ("Facility", "FROM_LOG")), Structure("EventId", ("Name", "FROM_EVENT")));
-
-        Assert.Equal("FROM_LOG", Value(logEvent, "Facility"));
-    }
-
-    [Fact]
     public void AFacilityTheLogAlreadyHas_IsLeftAlone()
     {
-        LogEvent logEvent = Enriched(new LogEventProperty("Facility", new ScalarValue("OWN")), new LogEventProperty("CorrelationId", new ScalarValue("own-corr")), Structure("Log", ("Facility", "OTHER"), ("CorrelationId", "other")));
+        // BeginFacility("OWN") puts it on the log; the name of the event does not replace it
+        LogEvent logEvent = Enriched(new LogEventProperty("Facility", new ScalarValue("OWN")), Structure("EventId", ("Name", "FROM_EVENT")));
 
         Assert.Equal("OWN", Value(logEvent, "Facility"));
-        Assert.Equal("own-corr", Value(logEvent, "CorrelationId"));
     }
 
     [Theory]
@@ -77,13 +60,10 @@ public sealed class FacilityEnricherTests
     {
         LogEvent plain = Enriched();
         LogEvent unnamedEvent = Enriched(Structure("EventId", ("Id", 5), ("Name", null)));
-        LogEvent emptyFacility = Enriched(Structure("Log", ("Facility", ""), ("CorrelationId", null)));
-        LogEvent scalarLog = Enriched(new LogEventProperty("Log", new ScalarValue("text")));
 
-        foreach (LogEvent logEvent in new[] { plain, unnamedEvent, emptyFacility, scalarLog })
+        foreach (LogEvent logEvent in new[] { plain, unnamedEvent })
         {
             Assert.False(logEvent.Properties.ContainsKey("Facility"));
-            Assert.False(logEvent.Properties.ContainsKey("CorrelationId"));
         }
     }
 }

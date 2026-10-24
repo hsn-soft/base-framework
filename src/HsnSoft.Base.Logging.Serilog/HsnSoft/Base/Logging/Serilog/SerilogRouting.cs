@@ -28,10 +28,6 @@ internal static class SerilogRouting
     internal static bool IsConsoleOnly(LogEvent logEvent)
         => SourceContext(logEvent).StartsWith(LogCategories.ConsoleOnlyPrefix, StringComparison.Ordinal);
 
-    /// <summary>Structured logs (<c>IFrameworkLogger</c>) are printed with their properties.</summary>
-    internal static bool ShowsProperties(LogEvent logEvent)
-        => string.Equals(SourceContext(logEvent), LogCategories.FrameworkLog, StringComparison.Ordinal);
-
     /// <summary>The console shows everything from the configured level up.</summary>
     internal static bool ForConsole(LogEvent logEvent, LogEventLevel minimum) => logEvent.Level >= minimum;
 
@@ -56,6 +52,6 @@ internal static class SerilogRouting
             return source[LogCategories.ConsoleOnlyPrefix.Length..];
         }
 
-        return string.Equals(source, LogCategories.FrameworkLog, StringComparison.Ordinal) ? "FrameworkLogger" : hostName;
+        return hostName;
     }
 }

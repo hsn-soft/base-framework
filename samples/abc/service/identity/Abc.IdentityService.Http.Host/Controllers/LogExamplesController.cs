@@ -1,6 +1,5 @@
 using Abc.IdentityService.Http.Host.Controllers.Base;
 using HsnSoft.Base.Logging;
-using HsnSoft.Base.Logging.Abstracts;
 using HsnSoft.Base.Logging.Masking;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,11 +17,11 @@ public sealed class ExampleOrder
 }
 
 /// <summary>
-/// How a controller writes its application logs (they are the <c>AppLog</c>s of the service). <c>POST /api/log-examples/run</c> writes one of each, so they can be looked
+/// How a controller writes its application logs (they are the <c>AppLog</c>s of the service). <c>POST /api/log-examples/run</c> writes one of each (they are all written with <c>Logger</c>, the <c>ILogger</c> of the base controller), so they can be looked
 /// at in Graylog (<c>Facility:LOG_EXAMPLE_*</c>). Delete this controller when you have seen them.
 /// </summary>
 [Route("api/log-examples")]
-public sealed class LogExamplesController(IFrameworkLogger frameworkLogger) : BaseServiceController
+public sealed class LogExamplesController : BaseServiceController
 {
     [HttpPost("run")]
     public IActionResult Run()
@@ -65,14 +64,6 @@ public sealed class LogExamplesController(IFrameworkLogger frameworkLogger) : Ba
                 Logger.LogError(exception, "Order {OrderNo} could not be paid", order.OrderNo);
             }
         }
-
-        // 5. The interface of the old system, IFrameworkLogger (injected): the same four calls without a Facility, and a structured log with one.
-        frameworkLogger.LogInformation("Order {OrderNo} was seen by the framework logger", order.OrderNo);
-        frameworkLogger.FrameworkInfoLog(LogHelper.Generate(
-            "The order was checked",
-            reference: order,
-            facility: "LOG_EXAMPLE_FRAMEWORK",
-            correlationId: Request.Headers["X-Correlation-Id"].ToString()));
 
         return Ok(new { facilities = "LOG_EXAMPLE_*" });
     }

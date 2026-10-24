@@ -14,7 +14,6 @@ public sealed class BaseSerilogTests : IDisposable
     private static readonly string[] s_dependencyCategories = ["System", "Microsoft", "Microsoft.AspNetCore", "Microsoft.EntityFrameworkCore", "Npgsql", "HsnSoft.Base.MongoDB", "MongoDB"];
 
     private readonly CaptureSink _console = new();
-    private readonly CaptureSink _consoleWithProperties = new();
     private readonly CaptureSink _persistent = new();
     private readonly List<Logger> _loggers = [];
 
@@ -38,7 +37,7 @@ public sealed class BaseSerilogTests : IDisposable
     {
         FrameworkLoggerOptions options = new();
         configure?.Invoke(options);
-        SerilogSinks sinks = new(_console, _consoleWithProperties, _persistent, null);
+        SerilogSinks sinks = new(_console, _persistent, null);
         Logger logger = BaseSerilog.Create(options, loggerName, configureSerilog, sinks).Logger;
         _loggers.Add(logger);
         return logger;
@@ -80,19 +79,6 @@ public sealed class BaseSerilogTests : IDisposable
         LogEvent shown = Assert.Single(_console.Events);
         Assert.Equal("ThreadPool", shown.Properties["LoggerName"].ToString().Trim('"'));
         Assert.Empty(_persistent.Events);
-    }
-
-    [Fact]
-    public void StructuredLogs_UseTheConsoleThatShowsProperties_AndArePersistent()
-    {
-        ILogger logger = Create();
-
-        logger.ForContext(Constants.SourceContextPropertyName, "FrameworkLog").Information("structured");
-
-        Assert.Empty(_console.Events);
-        LogEvent shown = Assert.Single(_consoleWithProperties.Events);
-        Assert.Equal("FrameworkLogger", shown.Properties["LoggerName"].ToString().Trim('"'));
-        Assert.Single(_persistent.Events);
     }
 
     [Fact]

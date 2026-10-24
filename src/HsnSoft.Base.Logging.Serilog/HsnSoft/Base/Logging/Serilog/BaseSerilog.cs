@@ -64,8 +64,7 @@ internal static class BaseSerilog
         }
 
         configuration = configuration
-            .WriteTo.Conditional(logEvent => SerilogRouting.ForConsole(logEvent, console) && SerilogRouting.ShowsProperties(logEvent), sink => sink.Sink(resolved.ConsoleWithProperties))
-            .WriteTo.Conditional(logEvent => SerilogRouting.ForConsole(logEvent, console) && !SerilogRouting.ShowsProperties(logEvent), sink => sink.Sink(resolved.Console))
+            .WriteTo.Conditional(logEvent => SerilogRouting.ForConsole(logEvent, console), sink => sink.Sink(resolved.Console))
             .WriteTo.Conditional(logEvent => SerilogRouting.ForPersistent(logEvent, persistent, platform), sink => sink.Sink(new FieldGuardSink(resolved.Persistent, options.MaxPersistentFieldLength)));
 
         configure?.Invoke(configuration);

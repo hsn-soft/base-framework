@@ -11,8 +11,7 @@ namespace HsnSoft.Base.Logging;
 public static class LoggingServiceCollectionExtensions
 {
     /// <summary>
-    /// Registers the logger interfaces products use (<see cref="IAppConsoleLogger"/>, <see cref="IFrameworkLogger"/>) and the
-    /// <see cref="ILogMasker"/>. They write through <c>Microsoft.Extensions.Logging</c>: choose where the logs go with a logging
+    /// Registers the console-only logger (<see cref="IAppConsoleLogger"/>) and the <see cref="ILogMasker"/>. They write through <c>Microsoft.Extensions.Logging</c>: choose where the logs go with a logging
     /// provider (<c>HsnSoft.Base.Logging.Serilog</c>, NLog, ...). What is secret is said by the classes, with
     /// <see cref="SensitiveDataAttribute"/> on a property; a place that sees only JSON and not the classes (a gateway) hides the properties of the
     /// contract classes in <paramref name="sensitiveDataAssemblies"/> too.
@@ -22,7 +21,6 @@ public static class LoggingServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
 
         services.TryAddSingleton<IAppConsoleLogger>(provider => new AppConsoleLogger(provider.GetRequiredService<ILoggerFactory>()));
-        services.TryAddSingleton<IFrameworkLogger>(provider => new FrameworkLogger(provider.GetRequiredService<ILoggerFactory>()));
         services.TryAddSingleton(_ =>
         {
             SensitiveDataRegistry registry = new();
