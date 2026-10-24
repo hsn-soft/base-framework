@@ -252,7 +252,12 @@ public sealed partial class RabbitMqConsumer(
         }
         else
         {
-            LogFailed(_logger, failure, QueueName, failure.Message);
+            Dictionary<string, object?> fields = [];
+            ExceptionLogFields.AddTo(fields, failure);
+            using (_logger.BeginScope(fields))
+            {
+                LogFailed(_logger, failure, QueueName, failure.Message);
+            }
         }
 
         try

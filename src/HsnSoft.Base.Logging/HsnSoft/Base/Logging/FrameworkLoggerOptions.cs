@@ -28,10 +28,11 @@ public sealed class FrameworkLoggerOptions
     public string FilePath { get; set; } = "Logs/logs.txt";
 
     /// <summary>
-    /// The longest text a field of the persistent sink may hold (longer text is cut and the cut is marked), and the room an object logged
+    /// The longest text a field of the persistent sink may hold (longer text is cut and the cut is marked; it is above the limits the logs
+    /// have for their own fields, a body or a reason of 8 KB, so those are not cut twice), and the room an object logged
     /// with <c>{@Object}</c> gets as the JSON of one field.
     /// </summary>
-    public int MaxPersistentFieldLength { get; set; } = 8192;
+    public int MaxPersistentFieldLength { get; set; } = 16 * 1024;
 
     /// <summary>Show errors of the logging library itself (a sink that cannot reach its server) in the console.</summary>
     public bool IsSelfLogActive { get; set; }
@@ -55,7 +56,7 @@ public sealed class FrameworkLoggerOptions
             IsSelfLogActive = bool.TryParse(section["IsSelfLogActive"], out bool selfLog) && selfLog,
             FilePath = string.IsNullOrWhiteSpace(section["FilePath"]) ? "Logs/logs.txt" : section["FilePath"]!,
             PersistentMinimumLevel = ParseLevel(section["PersistentMinimumLevel"], LogCategories.PersistentFloor),
-            MaxPersistentFieldLength = int.TryParse(section["MaxPersistentFieldLength"], CultureInfo.InvariantCulture, out int maxLength) && maxLength > 0 ? maxLength : 8192,
+            MaxPersistentFieldLength = int.TryParse(section["MaxPersistentFieldLength"], CultureInfo.InvariantCulture, out int maxLength) && maxLength > 0 ? maxLength : 16 * 1024,
         };
         options.GrayLog.Address = section["GrayLog:Address"];
         options.GrayLog.Port = int.TryParse(section["GrayLog:Port"], CultureInfo.InvariantCulture, out int port) ? port : options.GrayLog.Port;

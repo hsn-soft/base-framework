@@ -175,6 +175,17 @@ public sealed class RequestLoggingTests
             }
         }
 
+        public Logged Handled
+        {
+            get
+            {
+                lock (logs.Logs)
+                {
+                    return Assert.Single(logs.Logs, log => log.EventName == "GLOBAL_EXCEPTION_HANDLER");
+                }
+            }
+        }
+
         public Logged Request => Assert.Single(Http, log => log.EventName == "HTTP_REQUEST");
 
         public Logged Response => Assert.Single(Http, log => log.EventName == "HTTP_RESPONSE");
@@ -808,6 +819,13 @@ public sealed class RequestLoggingTests
         Assert.Equal("500", rig.Response.Properties["Status"]?.ToString());
         Assert.Equal("System.InvalidOperationException", rig.Response.Properties["ExceptionType"]);
         Assert.Null(rig.Response.Properties["ErrorCode"]);
+        // where it was thrown and why, on the response log and on the log of the exception handler
+        Assert.Contains("|File:RequestLoggingTests.cs|Line:", (string)rig.Response.Properties["ExceptionIdentifier"]!, StringComparison.Ordinal);
+        Assert.Equal("boom", rig.Response.Properties["Reason"]);
+        Logged handled = rig.Handled;
+        Assert.Equal(LogLevel.Error, handled.Level);
+        Assert.Equal(rig.Response.Properties["ExceptionIdentifier"], handled.Properties["ExceptionIdentifier"]);
+        Assert.Equal("boom", handled.Properties["Reason"]);
     }
 
     [Fact]
@@ -821,6 +839,8 @@ public sealed class RequestLoggingTests
         Assert.Equal(LogLevel.Warning, rig.Response.Level);
         Assert.Equal("HsnSoft.Base.BusinessException", rig.Response.Properties["ExceptionType"]);
         Assert.Equal("order_closed", rig.Response.Properties["ErrorCode"]);
+        Assert.Equal("The order is closed.", rig.Response.Properties["Reason"]);
+        Assert.NotNull(rig.Response.Properties["ExceptionIdentifier"]);
     }
 
     [Fact]

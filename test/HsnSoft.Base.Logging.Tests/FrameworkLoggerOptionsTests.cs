@@ -18,7 +18,7 @@ public class FrameworkLoggerOptionsTests
         Assert.False(options.IsGrayLogActive);
         Assert.False(options.IsSelfLogActive);
         Assert.Equal("Logs/logs.txt", options.FilePath);
-        Assert.Equal(8192, options.MaxPersistentFieldLength);
+        Assert.Equal(16384, options.MaxPersistentFieldLength);
         Assert.Null(options.GrayLog.Address);
         Assert.Equal(12201, options.GrayLog.Port);
         Assert.Equal(5, options.GrayLog.SinkRefreshIntervalMinutes);
@@ -30,7 +30,7 @@ public class FrameworkLoggerOptionsTests
     [InlineData("-5")]
     [InlineData("many")]
     public void AFieldLengthThatMakesNoSense_KeepsTheDefault(string text)
-        => Assert.Equal(8192, FrameworkLoggerOptions.FromConfiguration(Configuration(("MaxPersistentFieldLength", text))).MaxPersistentFieldLength);
+        => Assert.Equal(16384, FrameworkLoggerOptions.FromConfiguration(Configuration(("MaxPersistentFieldLength", text))).MaxPersistentFieldLength);
 
     [Fact]
     public void Values_AreRead()

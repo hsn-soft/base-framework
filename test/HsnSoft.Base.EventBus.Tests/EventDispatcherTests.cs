@@ -236,6 +236,8 @@ public sealed class EventDispatcherTests : IDisposable
         Assert.Equal("ConsumeEnd", end.Properties["LogType"]);
         Assert.Equal("HsnSoft.Base.BusinessException", end.Properties["ExceptionType"]);
         Assert.Equal("no_product", end.Properties["ErrorCode"]);
+        Assert.Equal("The order has no product.", end.Properties["Reason"]);
+        Assert.StartsWith("Solution:", (string)end.Properties["ExceptionIdentifier"]!, StringComparison.Ordinal);
         Assert.EndsWith("rejected the message after " + end.Properties["ElapsedMs"] + " ms: The order has no product.", end.Message, StringComparison.Ordinal);
         Assert.DoesNotContain(logger.Events, e => e.EventName is "CONSUME_EVENT_SUCCESS" or "CONSUME_EVENT_ERROR" or "CONSUME_EVENT_RETRY");
     }
@@ -266,6 +268,11 @@ public sealed class EventDispatcherTests : IDisposable
         Assert.Equal(2, handler.Calls);
         Assert.Equal(LogLevel.Error, Assert.Single(logger.Events, e => e.EventName == "CONSUME_EVENT_ERROR").Level);
         Assert.True(handler.Failure!.Data.Contains(EventDispatcher.ErrorLoggedKey));
+        ListLogger<EventDispatcher>.LoggedEvent failed = Assert.Single(logger.Events, e => e.EventName == "CONSUME_EVENT_ERROR");
+        Assert.Equal("Object reference not set to an instance of an object.", failed.Properties["Reason"]);
+        Assert.NotNull(failed.Properties["ExceptionIdentifier"]);
+        ListLogger<EventDispatcher>.LoggedEvent retried = Assert.Single(logger.Events, e => e.EventName == "CONSUME_EVENT_RETRY");
+        Assert.Equal("Object reference not set to an instance of an object.", retried.Properties["Reason"]);
         Assert.DoesNotContain(logger.Events, e => e.EventName == "CONSUME_EVENT_REJECTED");
     }
 

@@ -313,12 +313,17 @@ public sealed partial class RequestLoggingMiddleware(
             ["ResponseHeaders"] = headers,
             ["ResponseBody"] = responseBody,
             ["GrpcStatus"] = grpc?.Status,
-            ["ExceptionType"] = (failure ?? answered)?.GetType().FullName,
             ["ErrorCode"] = (failure ?? answered) is BusinessException business ? business.ErrorCode : null,
             ["Files"] = files.Count == 0 ? null : LogFields.Text(JsonSerializer.Serialize(files, s_headerJson), _options.MaxHeadersLength),
             ["FileCount"] = files.Count == 0 ? null : files.Count,
             ["FileBytes"] = files.Count == 0 ? null : files.Sum(file => file.Size),
         };
+
+        Exception? cause = failure ?? answered;
+        if (cause is not null)
+        {
+            ExceptionLogFields.AddTo(fields, cause);
+        }
 
         foreach (IRequestLogEnricher enricher in _enrichers)
         {

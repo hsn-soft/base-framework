@@ -156,11 +156,26 @@ consume logs too. The device type of the client needs a user-agent parser, so a 
   Unauthenticated, Error for the server's) and says it in the message (`, grpc-status 5 (order not found)`) and in `GrpcStatus`.
   The messages of a stream are counted, not logged.
 
+### What a failure's logs say
+
+Every log of a failure (the `HttpResponse` of a 400 or 500, the exception handler's log, `CONSUME_EVENT_REJECTED`, `CONSUME_EVENT_ERROR`,
+`CONSUME_EVENT_RETRY`) has, besides `ExceptionType`:
+
+- `ExceptionIdentifier`: where it was thrown, like `Solution:Xyz|Assembly:Xyz.ServiceOrder.Host|File:OrdersController.cs|Line:92`. It is the
+  first place with a source file in the code of the application that runs (the solution of its entry assembly), looking at the innermost exception (the
+  cause) first; a throw deep inside a library is reported where the application called it, and when no code of the application has sources, the first
+  code that has. It needs the symbols (`.pdb`) next to the assemblies, which `dotnet publish` copies; without them the method is told
+  (`...|Method:Type.Method`), and an exception that was never thrown has only its type. It has no length limit.
+- `Reason`: the message of the exception and of every exception inside it, down to the one that has none inside, joined with `" >> "`
+  (`outer >> middle >> inner`), up to 8192 characters.
+
+For a 500 these two are what to look at; for a 400 (an error the caller made) they are there when they can be told, and not what matters.
+
 ### A log has a fixed set of fields
 
 Graylog turns every property of a log into a field, and an object logged with `{@Object}` into a field per property. An object whose
 shape is the developer's would create fields without end, so the persistent sink writes an object (and a dictionary, and a list) as
-the **one field of its name holding its JSON**, and cuts every text to `FrameworkLogger:MaxPersistentFieldLength` (8192). The console
+the **one field of its name holding its JSON**, and cuts every text to `FrameworkLogger:MaxPersistentFieldLength` (16384, above the 8192 of a body or a reason, so those are not cut twice). The console
 still shows the readable object. A body with two hundred properties is one field.
 
 ## Facility: what a log is about

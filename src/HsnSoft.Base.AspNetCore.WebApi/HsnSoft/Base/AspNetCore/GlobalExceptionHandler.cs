@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using HsnSoft.Base.AspNetCore.Responses;
+using HsnSoft.Base.Logging;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Hosting;
@@ -32,7 +34,12 @@ public sealed partial class GlobalExceptionHandler(
 
         if (status >= StatusCodes.Status500InternalServerError)
         {
-            LogUnhandled(logger, exception, httpContext.Request.Path, status);
+            Dictionary<string, object?> failure = [];
+            ExceptionLogFields.AddTo(failure, exception);
+            using (logger.BeginScope(failure))
+            {
+                LogUnhandled(logger, exception, httpContext.Request.Path, status);
+            }
         }
 
         if (httpContext.Response.HasStarted)

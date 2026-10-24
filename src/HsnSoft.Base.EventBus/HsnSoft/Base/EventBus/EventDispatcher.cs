@@ -113,9 +113,9 @@ public sealed partial class EventDispatcher(
             Dictionary<string, object?> end = new()
             {
                 [LogFields.LogType] = LogTypes.ConsumeEnd,
-                ["ExceptionType"] = exception.GetType().FullName,
                 ["ErrorCode"] = (exception as BusinessException)?.ErrorCode,
             };
+            ExceptionLogFields.AddTo(end, exception);
             using (_logger.BeginScope(end))
             {
                 LogRejected(_logger, from, to, handlerNames, watch.ElapsedMilliseconds, exception.Message);
@@ -126,7 +126,9 @@ public sealed partial class EventDispatcher(
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
             // a handling cut short by a shutdown has no end log on purpose: its start log without an end is how an interrupted message is found
-            using (_logger.BeginScope(s_consumeEnd))
+            Dictionary<string, object?> failed = new() { [LogFields.LogType] = LogTypes.ConsumeEnd };
+            ExceptionLogFields.AddTo(failed, exception);
+            using (_logger.BeginScope(failed))
             {
                 LogFailed(_logger, exception, from, to, handlerNames, watch.ElapsedMilliseconds);
             }
@@ -174,7 +176,13 @@ public sealed partial class EventDispatcher(
             }
             catch (Exception exception) when (attempt < maxAttempts && exception is not (OperationCanceledException or HandlerNotResolvedException) && !KnownExceptions.IsKnown(exception))
             {
-                LogAttemptFailed(_logger, exception, handler.HandlerType.Name, eventName, attempt, maxAttempts);
+                Dictionary<string, object?> retried = [];
+                ExceptionLogFields.AddTo(retried, exception);
+                using (_logger.BeginScope(retried))
+                {
+                    LogAttemptFailed(_logger, exception, handler.HandlerType.Name, eventName, attempt, maxAttempts);
+                }
+
                 await Task.Delay(_options.RetryDelay * attempt, cancellationToken).ConfigureAwait(false);
             }
         }
