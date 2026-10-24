@@ -29,6 +29,12 @@ public interface IEventDispatcher
     Task DispatchAsync(string trimmedEventName, Type eventType, object messageEnvelope, CancellationToken cancellationToken = default);
 }
 
+/// <summary>How many times the handler that failed was run (the attempts of the last handler), for the log that ends the handling.</summary>
+internal sealed class AttemptCounter
+{
+    public int Count { get; set; }
+}
+
 public sealed partial class EventDispatcher(
     IServiceScopeFactory scopeFactory,
     IEventBusSubscriptionManager subscriptions,
@@ -99,11 +105,12 @@ public sealed partial class EventDispatcher(
             LogStarted(_logger, from, to);
         }
 
+        AttemptCounter attempts = new();
         try
         {
             foreach (IntegrationEventHandlerInfo handler in handlers)
             {
-                await RunHandlerAsync(handler, trimmedEventName, eventType, envelope, messageEnvelope, cancellationToken).ConfigureAwait(false);
+                await RunHandlerAsync(handler, trimmedEventName, eventType, envelope, messageEnvelope, attempts, cancellationToken).ConfigureAwait(false);
             }
         }
         catch (Exception exception) when (exception is not OperationCanceledException && KnownExceptions.IsKnown(exception))
@@ -126,7 +133,7 @@ public sealed partial class EventDispatcher(
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
             // a handling cut short by a shutdown has no end log on purpose: its start log without an end is how an interrupted message is found
-            Dictionary<string, object?> failed = new() { [LogFields.LogType] = LogTypes.ConsumeEnd };
+            Dictionary<string, object?> failed = new() { [LogFields.LogType] = LogTypes.ConsumeEnd, ["Attempts"] = attempts.Count };
             ExceptionLogFields.AddTo(failed, exception);
             using (_logger.BeginScope(failed))
             {
@@ -150,12 +157,14 @@ public sealed partial class EventDispatcher(
         Type eventType,
         ParentMessageEnvelope envelope,
         object messageEnvelope,
+        AttemptCounter attempts,
         CancellationToken cancellationToken)
     {
         int maxAttempts = Math.Max(1, _options.MaxHandlerAttempts);
 
         for (int attempt = 1; ; attempt++)
         {
+            attempts.Count = attempt;
             try
             {
                 AsyncServiceScope scope = _scopeFactory.CreateAsyncScope();

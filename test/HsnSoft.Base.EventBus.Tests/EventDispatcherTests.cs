@@ -271,6 +271,8 @@ public sealed class EventDispatcherTests : IDisposable
         ListLogger<EventDispatcher>.LoggedEvent failed = Assert.Single(logger.Events, e => e.EventName == "CONSUME_EVENT_ERROR");
         Assert.Equal("Object reference not set to an instance of an object.", failed.Properties["Reason"]);
         Assert.NotNull(failed.Properties["ExceptionIdentifier"]);
+        // how many times the handler was run before it gave up
+        Assert.Equal(2, failed.Properties["Attempts"]);
         ListLogger<EventDispatcher>.LoggedEvent retried = Assert.Single(logger.Events, e => e.EventName == "CONSUME_EVENT_RETRY");
         Assert.Equal("Object reference not set to an instance of an object.", retried.Properties["Reason"]);
         Assert.DoesNotContain(logger.Events, e => e.EventName == "CONSUME_EVENT_REJECTED");

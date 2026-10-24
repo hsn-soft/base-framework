@@ -266,7 +266,7 @@ public sealed partial class RabbitMqConsumer(
             else
             {
                 await _failedEventNotifier.NotifyAsync(failure.Message, eventName, message, _handlerCts.Token).ConfigureAwait(false);
-                LogMovedToErrorQueue(_logger, QueueName);
+                LogMovedToErrorQueue(_logger, QueueName, EventNameHelper.GetErrorEventQueueName(_options, EventNames.For(_options, typeof(FailedEto))));
             }
 
             await AcknowledgeChannelAsync(deliveryTag).ConfigureAwait(false);
@@ -428,8 +428,8 @@ public sealed partial class RabbitMqConsumer(
     [LoggerMessage(Level = LogLevel.Critical, Message = "{Queue}: a failed {EventName} event could not be handled and is dropped: {Message} ({Error})")]
     private static partial void LogFailedEventLoop(ILogger logger, string queue, string eventName, string message, string error);
 
-    [LoggerMessage(EventId = 4010, EventName = "RABBITMQ_CONSUMER_MOVED_TO_ERROR_QUEUE", Level = LogLevel.Warning, Message = "{Queue}: message moved to the error queue")]
-    private static partial void LogMovedToErrorQueue(ILogger logger, string queue);
+    [LoggerMessage(EventId = 4010, EventName = "RABBITMQ_CONSUMER_MOVED_TO_ERROR_QUEUE", Level = LogLevel.Warning, Message = "{Queue}: message reported to {ErrorQueue} and taken off the queue (moved to the error queue)")]
+    private static partial void LogMovedToErrorQueue(ILogger logger, string queue, string errorQueue);
 
     [LoggerMessage(EventId = 4011, EventName = "RABBITMQ_CONSUMER_ACK_FAILED", Level = LogLevel.Error, Message = "{Queue}: the message was handled but could not be acknowledged: {Error}")]
     private static partial void LogAckFailed(ILogger logger, string queue, string error);

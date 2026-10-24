@@ -183,7 +183,7 @@ public sealed class RabbitMqConsumerTests : IAsyncDisposable
 
         Assert.Single(rig.Notifier.Notified);
         // only the consequence is said (the Error is the ConsumeEnd of the handling)
-        Assert.Contains(rig.Logger.Entries, entry => entry.Level == LogLevel.Warning && entry.Message.Contains("moved to the error queue", StringComparison.Ordinal));
+        Assert.Contains(rig.Logger.Entries, entry => entry.Level == LogLevel.Warning && entry.Message.Contains("moved to the error queue", StringComparison.Ordinal) && entry.Message.Contains("_Failed", StringComparison.Ordinal));
         Assert.DoesNotContain(rig.Logger.Entries, entry => entry.Level == LogLevel.Error || entry.Message.Contains("ERROR (", StringComparison.Ordinal));
     }
 
