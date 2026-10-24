@@ -232,3 +232,10 @@ write everything to the console, keep Debug/Trace and the `ConsoleOnly.` categor
 | `FrameworkLogger:*` settings | the same keys; new: `PersistentMinimumLevel`, `LevelOverrides` |
 | `IEventBusLogger` and its persisted log models | `ILogger` (see above) |
 | `HsnSoft.Base.Json.*` | not ported: no product uses `IJsonSerializer`; they use Newtonsoft or `System.Text.Json` directly |
+
+## One Error for a failure
+
+A failure is logged once: the log that ends the pair carries the stack. A request that ends in a 500 is the `HttpResponse` Error (`Reason`,
+`ExceptionIdentifier`, `ExceptionType` and the stack); a message whose handler failed after its attempts is the `ConsumeEnd` `CONSUME_EVENT_ERROR`. Each failed
+attempt is a `CONSUME_EVENT_RETRY` Warning, and what follows a failed message (`RABBITMQ_FAILED_EVENT_*`, `RABBITMQ_CONSUMER_MOVED_TO_ERROR_QUEUE`) is the
+consequence, not a second Error. A known error (4xx, a rejected message) is a Warning without a stack.

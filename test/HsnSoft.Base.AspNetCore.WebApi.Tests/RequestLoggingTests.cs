@@ -164,6 +164,17 @@ public sealed class RequestLoggingTests
             }
         }
 
+        public IReadOnlyList<Logged> Logged
+        {
+            get
+            {
+                lock (logs.Logs)
+                {
+                    return [.. logs.Logs];
+                }
+            }
+        }
+
         public IReadOnlyList<Logged> Combined
         {
             get
@@ -171,17 +182,6 @@ public sealed class RequestLoggingTests
                 lock (logs.Logs)
                 {
                     return [.. logs.Logs.Where(log => log.EventName == "HTTP_REQUEST_RESPONSE")];
-                }
-            }
-        }
-
-        public Logged Handled
-        {
-            get
-            {
-                lock (logs.Logs)
-                {
-                    return Assert.Single(logs.Logs, log => log.EventName == "GLOBAL_EXCEPTION_HANDLER");
                 }
             }
         }
@@ -865,13 +865,9 @@ public sealed class RequestLoggingTests
         // where it was thrown and why, on the response log and on the log of the exception handler
         Assert.Contains("|File:RequestLoggingTests.cs|Line:", (string)rig.Response.Properties["ExceptionIdentifier"]!, StringComparison.Ordinal);
         Assert.Equal("boom", rig.Response.Properties["Reason"]);
-        Logged handled = rig.Handled;
-        Assert.Equal(LogLevel.Error, handled.Level);
-        Assert.Equal(rig.Response.Properties["ExceptionIdentifier"], handled.Properties["ExceptionIdentifier"]);
-        Assert.Equal("boom", handled.Properties["Reason"]);
-        // the path is named as on the request and response logs, and a response has no Details field (its details are in its message)
-        Assert.Equal(rig.Request.Properties["RequestPath"]?.ToString(), handled.Properties["RequestPath"]?.ToString());
-        Assert.False(handled.Properties.ContainsKey("Path"));
+        // the Error response log is the only log of the failure, and it carries the stack
+        Assert.IsType<InvalidOperationException>(rig.Response.Exception);
+        Assert.DoesNotContain(rig.Logged, log => log.EventName == "GLOBAL_EXCEPTION_HANDLER");
         Assert.False(rig.Response.Properties.ContainsKey("Details"));
     }
 
@@ -888,6 +884,8 @@ public sealed class RequestLoggingTests
         Assert.Equal("order_closed", rig.Response.Properties["ErrorCode"]);
         Assert.Equal("The order is closed.", rig.Response.Properties["Reason"]);
         Assert.NotNull(rig.Response.Properties["ExceptionIdentifier"]);
+        // a known error is a Warning without a stack
+        Assert.Null(rig.Response.Exception);
     }
 
     [Fact]

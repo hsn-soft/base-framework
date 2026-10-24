@@ -11,7 +11,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 
 namespace HsnSoft.Base.AspNetCore.WebApi.Tests;
@@ -500,8 +499,7 @@ public class WebApiTests
         GlobalExceptionHandler handler = new(
             app.Services.GetRequiredService<IApiExceptionMapper>(),
             app.Services.GetRequiredService<IApiResponseWriter>(),
-            app.Services.GetRequiredService<IHostEnvironment>(),
-            NullLogger<GlobalExceptionHandler>.Instance);
+            app.Services.GetRequiredService<IHostEnvironment>());
         DefaultHttpContext started = new();
         started.Features.Set<IHttpResponseFeature>(new StartedResponse());
         started.Response.Body = new MemoryStream();
@@ -519,8 +517,7 @@ public class WebApiTests
         GlobalExceptionHandler handler = new(
             app.Services.GetRequiredService<IApiExceptionMapper>(),
             app.Services.GetRequiredService<IApiResponseWriter>(),
-            app.Services.GetRequiredService<IHostEnvironment>(),
-            NullLogger<GlobalExceptionHandler>.Instance);
+            app.Services.GetRequiredService<IHostEnvironment>());
         ApiExceptionMapper mapper = new(new StatusMessageProvider(), Options.Create(new ApiErrorOptions()));
 
         await Assert.ThrowsAsync<ArgumentNullException>(async () => await handler.TryHandleAsync(null!, new InvalidOperationException(), default));

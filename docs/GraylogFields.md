@@ -117,6 +117,6 @@ sets with `logger.BeginFacility("ORDER_IMPORTED")`.
 
 **Only `FrameworkLog` has** (the fields of the RabbitMQ logs and of retries): `Attempt`, `Channel`, `ConsumerTag`, `Error`, `HostName`, `Max`, `Port`, `Queue`.
 
-`FrameworkLog` is not one shape: its `Facility` says which (`GLOBAL_EXCEPTION_HANDLER`, `CONSUME_EVENT_RETRY`, `RABBITMQ_CONSUMER_*`,
+`FrameworkLog` is not one shape: its `Facility` says which (`CONSUME_EVENT_RETRY`, `RABBITMQ_CONSUMER_*`,
 `RABBITMQ_FAILED_EVENT_*`, `RABBITMQ_CONNECTION_*`, ...) and the fields follow it. `AppLog` carries, besides what the developer wrote (`OrderId`, `ProductId`,
 `Quantity`, `TrackingNumber` here), the fields of the request or message the code runs in.

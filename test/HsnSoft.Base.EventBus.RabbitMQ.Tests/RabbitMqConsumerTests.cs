@@ -172,7 +172,7 @@ public sealed class RabbitMqConsumerTests : IAsyncDisposable
     }
 
     [Fact]
-    public async Task HandlerFailureThatTheHandlingAlreadyLoggedAsAnError_IsOnlyAWarningHere()
+    public async Task HandlerFailureThatTheHandlingAlreadyLoggedAsAnError_IsNotLoggedAgainHere()
     {
         Rig rig = await StartAsync();
         InvalidOperationException failure = new("handler broke");
@@ -182,8 +182,9 @@ public sealed class RabbitMqConsumerTests : IAsyncDisposable
         await rig.Deliver(tag: 4);
 
         Assert.Single(rig.Notifier.Notified);
-        Assert.Contains(rig.Logger.Entries, entry => entry.Level == LogLevel.Warning && entry.Message.Contains("already logged by the handling", StringComparison.Ordinal));
-        Assert.DoesNotContain(rig.Logger.Entries, entry => entry.Level == LogLevel.Error);
+        // only the consequence is said (the Error is the ConsumeEnd of the handling)
+        Assert.Contains(rig.Logger.Entries, entry => entry.Level == LogLevel.Warning && entry.Message.Contains("moved to the error queue", StringComparison.Ordinal));
+        Assert.DoesNotContain(rig.Logger.Entries, entry => entry.Level == LogLevel.Error || entry.Message.Contains("ERROR (", StringComparison.Ordinal));
     }
 
     [Fact]

@@ -331,6 +331,9 @@ public sealed partial class RequestLoggingMiddleware(
             AddUpstreamFailure(fields, context, status);
         }
 
+        // the one Error of a failure carries the stack: a known error (4xx) is a Warning without one
+        Exception? stack = status >= StatusCodes.Status500InternalServerError ? cause : null;
+
         foreach (IRequestLogEnricher enricher in _enrichers)
         {
             enricher.Enrich(context, LogTypes.HttpResponse, fields);
@@ -348,7 +351,7 @@ public sealed partial class RequestLoggingMiddleware(
             string? shownPath = LogFields.Text(context.Request.Path.Value, _options.MaxUrlLength);
             using (logger.BeginScope(combined))
             {
-                LogRequestResponse(logger, level, failure, from, to, context.Request.Method, shownPath, status, elapsedMs, details);
+                LogRequestResponse(logger, level, stack, from, to, context.Request.Method, shownPath, status, elapsedMs, details);
             }
 
             return;
@@ -356,7 +359,7 @@ public sealed partial class RequestLoggingMiddleware(
 
         using (logger.BeginScope(fields))
         {
-            LogResponse(logger, level, failure, from, to, status, elapsedMs, details);
+            LogResponse(logger, level, stack, from, to, status, elapsedMs, details);
         }
     }
 

@@ -245,12 +245,8 @@ public sealed partial class RabbitMqConsumer(
     /// <summary>The message could not be handled: tell the error client, then take it off the queue. When even that fails, try again later.</summary>
     private async Task ReportFailureAsync(ulong deliveryTag, string eventName, string message, Exception failure)
     {
-        if (failure.Data.Contains(EventDispatcher.ErrorLoggedKey))
-        {
-            // the handling logged its Error (CONSUME_EVENT_ERROR); what follows is only the consequence
-            LogFailedAfterError(_logger, QueueName, failure.Message);
-        }
-        else
+        // a handling that failed logged its Error already (the ConsumeEnd, CONSUME_EVENT_ERROR): what follows is only the consequence, said below
+        if (!failure.Data.Contains(EventDispatcher.ErrorLoggedKey))
         {
             Dictionary<string, object?> fields = [];
             ExceptionLogFields.AddTo(fields, failure);
@@ -425,9 +421,6 @@ public sealed partial class RabbitMqConsumer(
 
     [LoggerMessage(EventId = 4008, EventName = "RABBITMQ_CONSUMER_TIMEOUT", Level = LogLevel.Warning, Message = "{Queue}: TIMEOUT, the message goes back on the queue ({Error})")]
     private static partial void LogTimeout(ILogger logger, string queue, string error);
-
-    [LoggerMessage(EventId = 4026, EventName = "RABBITMQ_CONSUMER_FAILED_AFTER_ERROR", Level = LogLevel.Warning, Message = "{Queue}: ERROR ({Error}), already logged by the handling")]
-    private static partial void LogFailedAfterError(ILogger logger, string queue, string error);
 
     [LoggerMessage(EventId = 4009, EventName = "RABBITMQ_CONSUMER_FAILED", Level = LogLevel.Error, Message = "{Queue}: ERROR ({Error})")]
     private static partial void LogFailed(ILogger logger, Exception exception, string queue, string error);

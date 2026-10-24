@@ -24,7 +24,7 @@ whatever happened:
 | `BusinessException(errorCode, message)` | 400, with `errorCode` and the `WithData(...)` values |
 | `BaseHttpException(status, message)` | the status |
 | `UnauthorizedAccessException` | 401 |
-| anything else | 500, `INTERNAL_SERVER_ERROR` (a key, the client shows its own text); the trace id is how support finds it (logged as `GLOBAL_EXCEPTION_HANDLER`) |
+| anything else | 500, `INTERNAL_SERVER_ERROR` (a key, the client shows its own text); the trace id is how support finds it (it is on the `HttpResponse` Error log, which carries the stack) |
 
 **What the client learns of a 500.** In production it learns the status 500, the key `INTERNAL_SERVER_ERROR` and the `traceId`, nothing of the exception. The
 `traceId` of every answer (success or failure) is the `TraceId` of the logs of that request: the W3C trace id a gateway passes on, so the logs of the

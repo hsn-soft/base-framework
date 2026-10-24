@@ -96,8 +96,8 @@ Information, 4xx Warning, 5xx Error), the same at the gateway and in a service, 
 | `productId: "x"` | validation: 400 `validation_error` | Warning |
 | no token | 401 | Warning |
 | `productId` all zeros | the product service **rejects the message**: `CONSUME_EVENT_REJECTED`, no retry, not in the error queue | Warning (`ConsumeEnd`) |
-| `quantity: 13` | a null reference in the order request: 500 | Error: `GLOBAL_EXCEPTION_HANDLER` (the cause, with the stack) and the `HttpResponse` 500 of the service: the level of a response is its status |
-| `quantity: 14` | a null reference in the handler of the product service: three attempts (`CONSUME_EVENT_RETRY`), `CONSUME_EVENT_ERROR`, then the error queue | Error (`ConsumeEnd`) |
+| `quantity: 13` | a null reference in the order request: 500 | Error: the `HttpResponse` 500 of the service, the only log of the failure, with the cause and its stack (the level of a response is its status) |
+| `quantity: 14` | a null reference in the handler of the product service: three attempts (`CONSUME_EVENT_RETRY`), `CONSUME_EVENT_ERROR` (the `ConsumeEnd`, with the stack), then the error queue (`RABBITMQ_CONSUMER_MOVED_TO_ERROR_QUEUE`) | Error (`ConsumeEnd`) |
 
 `CardNumber` and `Phone` of the order request carry `[SensitiveData]` (`Xyz.Shared/Contracts`): they are hidden in the logged bodies. The
 services write the request and response logs; the gateway writes one `HttpRequestResponse` only for what it answered itself (a rejected token,
