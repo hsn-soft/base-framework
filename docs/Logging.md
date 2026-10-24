@@ -32,6 +32,8 @@ So a pod can show only warnings and errors (`"Default": "Warning"`) while Graylo
 rule counts for everything below it (`Microsoft.AspNetCore` is also `Microsoft.AspNetCore.Routing`), the longest rule that fits wins. Graylog is turned on and off with
 `PersistentLogger:IsGrayLogActive`; off, what is kept goes to `PersistentLogger:FilePath`.
 
+What each setting changes, where a log of each level can be seen, and settings for the usual cases are in [LogLevels.md](LogLevels.md).
+
 More on what is kept:
 
 | Log | Console | Persistent sink |
