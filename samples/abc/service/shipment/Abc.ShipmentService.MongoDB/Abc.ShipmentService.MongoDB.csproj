@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!-- How the service keeps the domain: its MongoDB collections. The connection is registered by the host (AddBaseMongo). -->
+
+    <ItemGroup>
+        <ProjectReference Include="..\Abc.ShipmentService.Domain\Abc.ShipmentService.Domain.csproj" />
+        <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.MongoDB\HsnSoft.Base.MongoDB.csproj" />
+    </ItemGroup>
+
+</Project>

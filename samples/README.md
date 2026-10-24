@@ -251,3 +251,23 @@ dotnet run --project samples/abc/app/Abc.PublicWeb.Host             # http://loc
 
 The commercial gateway also maps `/auth-server/v1/...` to the auth server. Every call a page makes to its gateway carries the correlation id of the page request (and, in the commercial application, the bearer token), so the page, the gateway and
 the service behind it are one chain in the logs. The web applications answer pages, so they do not use `Abc.Shared.Hosting` (its web api shell answers `BaseResponse`).
+
+### The Abc services
+
+`samples/abc/service` has the five-service shape of the system; each microservice is **four projects** ([ADR-0030](../docs/adr/0030-microservice-project-pattern.md)): `Abc.<X>Service.Domain`, `.Application`, a persistence project
+(`.EntityFrameworkCore` or `.MongoDB`, the only thing that varies) and `.Http.Host`.
+
+| Service | Persistence | Port | State |
+|---|---|---|---|
+| `identity` | `EntityFrameworkCore` (PostgreSQL `abc_identity`) | 5400 | users CRUD, a public endpoint |
+| `order` | `EntityFrameworkCore` (PostgreSQL `abc_order`) | 5420 | skeleton: wired, no domain yet |
+| `product` | `MongoDB` (`abc_product`) | 5430 | skeleton |
+| `shipment` | `MongoDB` (`abc_shipment`) | 5440 | skeleton |
+
+A skeleton runs (`/health/live`, `/health/ready` checks its database, `/swagger`) and answers 404 for what is not there yet; it has no endpoints, and no route in the gateways yet.
+
+```bash
+dotnet run --project samples/abc/service/order/Abc.OrderService.Http.Host         # http://localhost:5420
+dotnet run --project samples/abc/service/product/Abc.ProductService.Http.Host     # http://localhost:5430
+dotnet run --project samples/abc/service/shipment/Abc.ShipmentService.Http.Host   # http://localhost:5440
+```

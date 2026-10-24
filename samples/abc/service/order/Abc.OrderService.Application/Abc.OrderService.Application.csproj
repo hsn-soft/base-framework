@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!-- What the service does: its use cases, on top of the domain. -->
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Abc.OrderService.Domain\Abc.OrderService.Domain.csproj" />
+    </ItemGroup>
+
+</Project>
