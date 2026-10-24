@@ -4,9 +4,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Text;
-using System.Text.RegularExpressions;
 
 namespace HsnSoft.Base.Logging;
 
@@ -15,7 +13,7 @@ namespace HsnSoft.Base.Logging;
 /// exceptions say. They are built from the exception itself, so the logs of a request, of a message and of the exception handler tell the
 /// same thing.
 /// </summary>
-public static partial class ExceptionLogFields
+public static class ExceptionLogFields
 {
     public const string ExceptionIdentifier = nameof(ExceptionIdentifier);
     public const string Reason = nameof(Reason);
@@ -37,7 +35,7 @@ public static partial class ExceptionLogFields
     }
 
     /// <summary>
-    /// Where it started, as <c>Solution:Xyz|Assembly:Xyz.ServiceOrder.Host|File:OrdersController.cs|Line:92|Method:OrdersController.PlaceAsync</c>: the place in the code of the first
+    /// Where it started, as <c>Solution:Xyz|Assembly:Xyz.ServiceOrder.Host|File:OrdersController.cs|Line:92</c>: the place in the code of the first
     /// frame that has a source file, looking at the innermost exception (the cause) first. Without symbols there is no file: the method is told
     /// instead, and an exception that was never thrown has only its type.
     /// </summary>
@@ -64,7 +62,7 @@ public static partial class ExceptionLogFields
                 {
                     if (frame.GetFileName() is { Length: > 0 } file && AssemblyOf(frame.GetMethod()) is { } assembly && (!onlyWanted || SolutionOf(assembly) == wanted))
                     {
-                        return string.Create(CultureInfo.InvariantCulture, $"Solution:{SolutionOf(assembly)}|Assembly:{assembly}|File:{Path.GetFileName(file)}|Line:{frame.GetFileLineNumber()}|Method:{MethodName(frame.GetMethod()!)}");
+                        return string.Create(CultureInfo.InvariantCulture, $"Solution:{SolutionOf(assembly)}|Assembly:{assembly}|File:{Path.GetFileName(file)}|Line:{frame.GetFileLineNumber()}");
                     }
                 }
             }
@@ -75,7 +73,7 @@ public static partial class ExceptionLogFields
         string name = AssemblyOf(method) ?? cause.GetType().Assembly.GetName().Name ?? "unknown";
         return method is null
             ? $"Solution:{SolutionOf(name)}|Assembly:{name}|Type:{cause.GetType().FullName}"
-            : $"Solution:{SolutionOf(name)}|Assembly:{name}|Method:{MethodName(method)}";
+            : $"Solution:{SolutionOf(name)}|Assembly:{name}|Method:{method.DeclaringType?.FullName}.{method.Name}";
     }
 
     /// <summary>The message of the exception and of every exception inside it, down to the one that has none inside, joined with <c>" >> "</c>.</summary>
@@ -107,34 +105,6 @@ public static partial class ExceptionLogFields
 
         return chain;
     }
-
-    /// <summary>
-    /// <c>OrderRepository.InsertAsync</c>: the type and the method the developer wrote. The compiler turns an async method into a class (<c>&lt;InsertAsync&gt;d__5</c>)
-    /// and a lambda into a method of a hidden class (<c>&lt;Handle&gt;b__0</c>): the name of what was written is taken out of those.
-    /// </summary>
-    internal static string MethodName(MethodBase method)
-    {
-        Type? type = method.DeclaringType;
-        string name = method.Name;
-
-        // a state machine is named after its method; a lambda or a local function is a method named after the method it is in
-        string source = type is not null && typeof(IAsyncStateMachine).IsAssignableFrom(type) ? type.Name : name;
-        if (HiddenName().Match(source) is { Success: true } match)
-        {
-            name = match.Groups["name"].Value;
-        }
-
-        // the hidden classes of the compiler (closures, state machines) live inside the class that was written
-        while (type is not null && (type.Name.StartsWith('<') || type.IsDefined(typeof(CompilerGeneratedAttribute), inherit: false)))
-        {
-            type = type.DeclaringType;
-        }
-
-        return type is null ? name : $"{type.Name}.{name}";
-    }
-
-    [GeneratedRegex("^<+(?<name>[^<>]+)>")]
-    private static partial Regex HiddenName();
 
     private static string? AssemblyOf(MethodBase? method) => method?.DeclaringType?.Assembly.GetName().Name;
 

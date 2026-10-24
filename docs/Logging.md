@@ -161,7 +161,7 @@ consume logs too. The device type of the client needs a user-agent parser, so a 
 Every log of a failure (the `HttpResponse` of a 400 or 500, the exception handler's log, `CONSUME_EVENT_REJECTED`, `CONSUME_EVENT_ERROR`,
 `CONSUME_EVENT_RETRY`) has, besides `ExceptionType`:
 
-- `ExceptionIdentifier`: where it was thrown, like `Solution:Xyz|Assembly:Xyz.ServiceOrder.Host|File:OrdersController.cs|Line:92|Method:OrdersController.PlaceAsync`. It is the
+- `ExceptionIdentifier`: where it was thrown, like `Solution:Xyz|Assembly:Xyz.ServiceOrder.Host|File:OrdersController.cs|Line:92`. It is the
   first place with a source file in the code of the application that runs (the solution of its entry assembly), looking at the innermost exception (the
   cause) first; a throw deep inside a library is reported where the application called it, and when no code of the application has sources, the first
   code that has. It needs the symbols (`.pdb`) next to the assemblies, which `dotnet publish` copies; without them the method is told
