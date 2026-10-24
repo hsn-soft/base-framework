@@ -101,12 +101,12 @@ public sealed partial class RequestLoggingMiddleware(
 
         string? requestBody = _options.LogBodies && _masker is not null ? await ReadRequestBodyAsync(request, BodyType(context)).ConfigureAwait(false) : null;
         string method = request.Method;
-        string? path = request.Path.Value;
+        string? shownPath = LogFields.Text(request.Path.Value, _options.MaxUrlLength);
         Dictionary<string, object?> requestFields = RequestFields(context, LogTypes.HttpRequest, requestBody);
 
         using (logger.BeginScope(requestFields))
         {
-            LogRequest(logger, from, to, method, path);
+            LogRequest(logger, from, to, method, shownPath);
         }
 
         // measure what goes in and out without holding any of it back: a file is streamed, not buffered
@@ -130,7 +130,7 @@ public sealed partial class RequestLoggingMiddleware(
         finally
         {
             watch.Stop();
-            string? responseBody = responseBytes.Body is { } text ? MaskBody(text, context.Items.TryGetValue(ResponseShapeKey, out object? shape) ? shape as Type : null) : null;
+            string? responseBody = responseBytes.Body is { } text ? MaskBody(text, context.Items.TryGetValue(ResponseShapeKey, out object? shape) ? shape as Type : null, _options.MaxResponseBodyLength) : null;
             WriteResponseLog(context, from, to, watch.ElapsedMilliseconds, responseBody, requestBytes.Count, responseBytes.Count, failure);
             request.Body = originalRequestBody;
             context.Features.Set(originalResponseBody);
@@ -160,7 +160,7 @@ public sealed partial class RequestLoggingMiddleware(
         Dictionary<string, object?> requestFields = new()
         {
             [LogFields.LogType] = logType,
-            ["Query"] = request.QueryString.Value,
+            ["Query"] = LogFields.Text(request.QueryString.Value, _options.MaxUrlLength),
             ["ContentLength"] = request.ContentLength ?? 0,
             ["ClientIp"] = context.Connection.RemoteIpAddress?.ToString(),
             ["Host"] = request.Host.ToString(),
@@ -170,7 +170,11 @@ public sealed partial class RequestLoggingMiddleware(
             ["UserAgent"] = HeaderText(request, HeaderNames.UserAgent),
             ["AcceptLanguage"] = HeaderText(request, HeaderNames.AcceptLanguage),
             ["Origin"] = ClientOrigin(request),
-            ["Referer"] = HostOf(request.Headers.Referer.ToString()),
+            ["Referer"] = LogFields.Text(HostOf(request.Headers.Referer.ToString()), _options.MaxHeaderValueLength),
+            ["ClientChannel"] = HeaderText(request, _options.ClientChannelHeader),
+            ["ClientVersion"] = HeaderText(request, _options.ClientVersionHeader),
+            ["ClientLat"] = HeaderText(request, _options.ClientLatHeader),
+            ["ClientLong"] = HeaderText(request, _options.ClientLongHeader),
             ["RequestHeaders"] = Headers(request.Headers, isResponse: false),
             ["RequestBody"] = requestBody,
         };
@@ -237,7 +241,7 @@ public sealed partial class RequestLoggingMiddleware(
                 string? requestBody = buffersBody && (failure is not null || response.StatusCode >= StatusCodes.Status500InternalServerError)
                     ? await ReadBufferedBodyAsync(request, BodyType(context)).ConfigureAwait(false)
                     : null;
-                string? responseBody = responseBytes.Body is { } text ? MaskBody(text, context.Items.TryGetValue(ResponseShapeKey, out object? shape) ? shape as Type : null) : null;
+                string? responseBody = responseBytes.Body is { } text ? MaskBody(text, context.Items.TryGetValue(ResponseShapeKey, out object? shape) ? shape as Type : null, _options.MaxResponseBodyLength) : null;
                 WriteResponseLog(context, LogFlow.HttpClientName, to, watch.ElapsedMilliseconds, responseBody, readBytes, responseBytes.Count, failure, RequestFields(context, LogTypes.HttpRequestResponse, requestBody));
             }
 
@@ -260,7 +264,7 @@ public sealed partial class RequestLoggingMiddleware(
         {
             request.Body.Position = 0;
             using StreamReader reader = new(request.Body, Encoding.UTF8, detectEncodingFromByteOrderMarks: false, leaveOpen: true);
-            return MaskBody(await reader.ReadToEndAsync().ConfigureAwait(false), shape);
+            return MaskBody(await reader.ReadToEndAsync().ConfigureAwait(false), shape, _options.MaxRequestBodyLength);
         }
         catch (Exception exception) when (exception is IOException or InvalidOperationException or BadHttpRequestException)
         {
@@ -296,6 +300,8 @@ public sealed partial class RequestLoggingMiddleware(
         {
             [LogFields.LogType] = combined is null ? LogTypes.HttpResponse : LogTypes.HttpRequestResponse,
             ["UserId"] = userId,
+            ["UserRoles"] = Roles(context),
+            ["ContentType"] = response.ContentType,
             ["ContentLength"] = response.ContentLength ?? 0,
             ["RequestBytes"] = requestBytes,
             ["ResponseBytes"] = responseBytes,
@@ -304,7 +310,7 @@ public sealed partial class RequestLoggingMiddleware(
             ["GrpcStatus"] = grpc?.Status,
             ["ExceptionType"] = (failure ?? answered)?.GetType().FullName,
             ["ErrorCode"] = (failure ?? answered) is BusinessException business ? business.ErrorCode : null,
-            ["Files"] = files.Count == 0 ? null : LogFields.Text(JsonSerializer.Serialize(files, s_headerJson), _options.MaxBodyLength),
+            ["Files"] = files.Count == 0 ? null : LogFields.Text(JsonSerializer.Serialize(files, s_headerJson), _options.MaxHeadersLength),
             ["FileCount"] = files.Count == 0 ? null : files.Count,
             ["FileBytes"] = files.Count == 0 ? null : files.Sum(file => file.Size),
         };
@@ -323,9 +329,10 @@ public sealed partial class RequestLoggingMiddleware(
                 combined[field.Key] = field.Value;
             }
 
+            string? shownPath = LogFields.Text(context.Request.Path.Value, _options.MaxUrlLength);
             using (logger.BeginScope(combined))
             {
-                LogRequestResponse(logger, level, failure, from, to, context.Request.Method, context.Request.Path.Value, status, elapsedMs, details);
+                LogRequestResponse(logger, level, failure, from, to, context.Request.Method, shownPath, status, elapsedMs, details);
             }
 
             return;
@@ -427,6 +434,13 @@ public sealed partial class RequestLoggingMiddleware(
     private static bool IsGrpc(HttpRequest request)
         => request.ContentType?.StartsWith(GrpcContentType, StringComparison.OrdinalIgnoreCase) == true;
 
+    // the roles of the user, as the old logs had them: distinct, comma separated
+    private string? Roles(HttpContext context)
+    {
+        string roles = string.Join(',', context.User.FindAll(ClaimTypes.Role).Select(claim => claim.Value).Distinct());
+        return roles.Length == 0 ? null : LogFields.Text(roles, _options.MaxHeaderValueLength);
+    }
+
     private string? HeaderText(HttpRequest request, string name)
         => request.Headers[name].ToString() is { Length: > 0 } value ? LogFields.Text(value, _options.MaxHeaderValueLength) : null;
 
@@ -463,7 +477,7 @@ public sealed partial class RequestLoggingMiddleware(
         }
 
         PathString path = request.Path;
-        if (!_options.LogHealthChecks && path.StartsWithSegments("/health", StringComparison.OrdinalIgnoreCase))
+        if (!_options.LogHealthChecks && _options.EffectiveHealthCheckPaths.Any(health => path.StartsWithSegments(health, StringComparison.OrdinalIgnoreCase)))
         {
             return false;
         }
@@ -504,11 +518,11 @@ public sealed partial class RequestLoggingMiddleware(
         using StreamReader reader = new(request.Body, Encoding.UTF8, detectEncodingFromByteOrderMarks: false, leaveOpen: true);
         string text = await reader.ReadToEndAsync().ConfigureAwait(false);
         request.Body.Position = 0;
-        return MaskBody(text, shape);
+        return MaskBody(text, shape, _options.MaxRequestBodyLength);
     }
 
-    private string? MaskBody(string text, Type? shape)
-        => string.IsNullOrWhiteSpace(text) ? null : LogFields.Text(_masker!.MaskText(text, shape), _options.MaxBodyLength);
+    private string? MaskBody(string text, Type? shape, int maxLength)
+        => string.IsNullOrWhiteSpace(text) ? null : LogFields.Text(_masker!.MaskText(text, shape), maxLength);
 
     // the class the action reads its body into: what it marks as sensitive is hidden in the logged request
     private static Type? BodyType(HttpContext context)
@@ -530,7 +544,7 @@ public sealed partial class RequestLoggingMiddleware(
             shown[header.Key] = HeaderValue(header.Key, header.Value.ToString(), isResponse);
         }
 
-        return LogFields.Text(JsonSerializer.Serialize(shown, s_headerJson), _options.MaxBodyLength)!;
+        return LogFields.Text(JsonSerializer.Serialize(shown, s_headerJson), _options.MaxHeadersLength)!;
     }
 
     private string HeaderValue(string name, string value, bool isResponse)

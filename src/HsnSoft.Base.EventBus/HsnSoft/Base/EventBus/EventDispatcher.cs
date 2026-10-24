@@ -38,6 +38,8 @@ public sealed partial class EventDispatcher(
     /// <summary>Set in the <c>Data</c> of an exception whose Error the dispatcher has logged already (<c>CONSUME_EVENT_ERROR</c>).</summary>
     public const string ErrorLoggedKey = "HsnSoft.Base.EventBus.ErrorLogged";
 
+    private static readonly string[] s_clientHeaders = ["UserId", "UserRoles", "ClientChannel", "ClientVersion", "ClientLat", "ClientLong"];
+
     private static readonly Dictionary<string, object> s_consumeStart = new() { [LogFields.LogType] = LogTypes.ConsumeStart };
     private static readonly Dictionary<string, object> s_consumeEnd = new() { [LogFields.LogType] = LogTypes.ConsumeEnd };
 
@@ -70,6 +72,15 @@ public sealed partial class EventDispatcher(
             ["Producer"] = envelope.Producer,
             ["HopLevel"] = envelope.HopLevel,
         };
+        // who caused it, under the names these have always had on the wire; a product that fills them (IEventHeaderProvider) finds them in the logs
+        foreach (string header in s_clientHeaders)
+        {
+            if (envelope.GetHeader(header) is { Length: > 0 } value)
+            {
+                scopeValues[header] = LogFields.Text(value, 256);
+            }
+        }
+
         if (LogFields.IsTraceId(envelope.CorrelationId))
         {
             // a chain that started as a W3C trace keeps its TraceId across the messages, where no header carries it

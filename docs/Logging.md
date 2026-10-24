@@ -119,6 +119,27 @@ does not have the classes of the services: it masks by the usual key names and b
 The chain does not depend on any of this: the correlation id is set and passed on in every role. A service that dies in the middle of a request
 leaves its `HttpRequest` without an `HttpResponse`, and the gateway's `HttpRequestResponse` with 502 or 504.
 
+### The settings of the request log (section `RequestLogging`)
+
+| Setting | Default | |
+|---|---|---|
+| `Role` | `Service` | `Service` or `Gateway` (see above) |
+| `Enabled` | `true` | off: a service logs nothing (the gateway logs what it did not) |
+| `LogHealthChecks`, `HealthCheckPaths` | `false`; `/health`, `/StartupCheck`, `/LivenessCheck`, `/ReadinessCheck` | health probes are not logged unless on |
+| `ExcludedPaths` | `/openapi`, `/swagger` | prefixes that are never logged |
+| `LogBodies` | `false` | JSON bodies, masked; needs an `ILogMasker` |
+| `MaxRequestBodyLength`, `MaxResponseBodyLength` | 8192 each | longer bodies are cut (the cut is marked `...(+N)`) |
+| `MaxBodyReadBytes` | 256 KB | a bigger body is not read for the log |
+| `MaxHeaderValueLength` | 128 | every header value, and `UserAgent`, `Origin`, `Referer`, `ForwardedFor`, the client fields |
+| `MaxHeadersLength` | 4096 | all the headers together (one field) |
+| `MaxUrlLength` | 512 | query string and path |
+| `ClientChannelHeader`, `ClientVersionHeader`, `ClientLatHeader`, `ClientLongHeader` | `X-Channel`, `X-Client-Version`, `X-Client-Request-Lat`, `X-Client-Request-Long` | the headers a client tells about itself; they become `ClientChannel`, `ClientVersion`, `ClientLat`, `ClientLong` |
+| `CorrelationIdHeader`, `LoggedByHeader` | `X-Correlation-Id`, `X-Logged-By` | |
+
+The response log also has `UserId`, `UserRoles` (the role claims, distinct, comma separated) and `ContentType`. What a message's headers say about who
+caused it (`UserId`, `UserRoles`, `ClientChannel`, `ClientVersion`, `ClientLat`, `ClientLong`, as the production wire always named them) is on the
+consume logs too. The device type of the client needs a user-agent parser, so a product adds it with an `IRequestLogEnricher`.
+
 ### Files, gRPC and MVC
 
 - **Files never log their body.** A download or an upload is logged with what it is, not what is in it: the response log says

@@ -216,6 +216,7 @@ public sealed class RequestLoggingTests
         app.MapGet("/boom", () => { throw new InvalidOperationException("boom"); });
         app.MapGet("/missing", () => Results.NotFound());
         app.MapGet("/health/live", () => "ok");
+        app.MapGet("/LivenessCheck", () => "ok");
         app.MapGet("/openapi/v1.json", () => "{}");
         app.MapPost("/echo", async (HttpRequest request) => Results.Text(await new StreamReader(request.Body).ReadToEndAsync(), "application/json"));
         app.MapGet("/json", () => Results.Text("""{"password":"hunter2","name":"alice"}""", "application/json"));
@@ -486,6 +487,92 @@ public sealed class RequestLoggingTests
     }
 
     [Fact]
+    public async Task TheRequestLog_HasWhatTheClientSaysAboutItself_AndTheResponseLogItsUserRolesAndContentType()
+    {
+        ClaimsPrincipal user = new(new ClaimsIdentity([new Claim("sub", "alice"), new Claim(ClaimTypes.Role, "admin"), new Claim(ClaimTypes.Role, "customer"), new Claim(ClaimTypes.Role, "admin")], "test"));
+        await using Rig rig = await StartAsync(user: user);
+        HttpRequestMessage request = new(HttpMethod.Get, "/json?a=1");
+        request.Headers.Add("X-Channel", "mobile");
+        request.Headers.Add("X-Client-Version", "3.2.1");
+        request.Headers.Add("X-Client-Request-Lat", "41.0082");
+        request.Headers.Add("X-Client-Request-Long", "28.9784");
+
+        await rig.Client.SendAsync(request);
+
+        Assert.Equal("mobile", rig.Request.Properties["ClientChannel"]);
+        Assert.Equal("3.2.1", rig.Request.Properties["ClientVersion"]);
+        Assert.Equal("41.0082", rig.Request.Properties["ClientLat"]);
+        Assert.Equal("28.9784", rig.Request.Properties["ClientLong"]);
+        Assert.Equal("admin,customer", rig.Response.Properties["UserRoles"]);
+        Assert.StartsWith("application/json", (string?)rig.Response.Properties["ContentType"], StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task TheClientHeaders_AreConfigurable_AndAnAnonymousResponseHasNoRoles()
+    {
+        await using Rig rig = await StartAsync(new() { ["RequestLogging:ClientChannelHeader"] = "X-App" });
+        HttpRequestMessage request = new(HttpMethod.Get, "/named");
+        request.Headers.Add("X-App", "web");
+        request.Headers.Add("X-Channel", "ignored");
+
+        await rig.Client.SendAsync(request);
+
+        Assert.Equal("web", rig.Request.Properties["ClientChannel"]);
+        Assert.Null(rig.Response.Properties["UserRoles"]);
+    }
+
+    [Fact]
+    public async Task WithoutConfiguredPaths_TheOldHealthPathsAreProbes()
+    {
+        await using Rig rig = await StartAsync();
+
+        await rig.Client.GetAsync("/LivenessCheck");
+        await rig.Client.GetAsync("/health/live");
+
+        Assert.Empty(rig.Http);
+    }
+
+    [Fact]
+    public async Task RequestsAndResponsesHaveTheirOwnBodyLimits_AndLongValuesAreCut()
+    {
+        await using Rig rig = await StartAsync(new()
+        {
+            ["RequestLogging:LogBodies"] = "true",
+            ["RequestLogging:MaxRequestBodyLength"] = "12",
+            ["RequestLogging:MaxResponseBodyLength"] = "30",
+            ["RequestLogging:MaxUrlLength"] = "20",
+            ["RequestLogging:MaxHeaderValueLength"] = "8",
+        });
+        HttpRequestMessage request = new(HttpMethod.Post, "/echo?query=" + new string('q', 100)) { Content = new StringContent("""{"name":"alice","note":"a long one"}""", Encoding.UTF8, "application/json") };
+        request.Headers.Add("User-Agent", "VeryLongUserAgent/1.0");
+
+        await rig.Client.SendAsync(request);
+
+        Assert.Equal("""{"name":"ali...(+24)""", rig.Request.Properties["RequestBody"]);
+        Assert.Equal("""{"name":"alice","note":"a long...(+6)""", rig.Response.Properties["ResponseBody"]);
+        Assert.Equal("?query=qqqqqqqqqqqqq...(+87)", rig.Request.Properties["Query"]);
+        Assert.Equal("VeryLong...(+13)", rig.Request.Properties["UserAgent"]);
+    }
+
+    [Fact]
+    public async Task ThePathIsCut_AndTheHealthPathsAreConfigurable()
+    {
+        await using Rig rig = await StartAsync(new()
+        {
+            ["RequestLogging:MaxUrlLength"] = "10",
+            ["RequestLogging:HealthCheckPaths:0"] = "/LivenessCheck",
+        });
+        rig.Client.DefaultRequestHeaders.Add("X-Test", "1");
+
+        await rig.Client.GetAsync("/LivenessCheck");
+        await rig.Client.GetAsync("/health/live");
+        await rig.Client.GetAsync("/api/orders/12345678");
+
+        // /LivenessCheck is a probe now and /health is not: it is logged
+        Assert.Equal(["/health/li...(+2)", "/api/order...(+10)"], rig.Http.Where(log => log.EventName == "HTTP_REQUEST").Select(log => log.Properties["RequestPath"]));
+    }
+
+    [Fact]
     public async Task TheCorrelationIdOfTheCaller_IsKept_ALongOneIsCut_AndABlankOneIsReplaced()
     {
         await using Rig rig = await StartAsync();
@@ -692,7 +779,7 @@ public sealed class RequestLoggingTests
         Assert.Contains("Bearer (length: 8)", first, StringComparison.Ordinal);
         Assert.DoesNotContain("abcdefgh", first, StringComparison.Ordinal);
         Assert.Contains("Cookies: a, b", first, StringComparison.Ordinal);
-        Assert.Contains("...(+144)", first, StringComparison.Ordinal);
+        Assert.Contains("...(+272)", first, StringComparison.Ordinal);
         Assert.True(first.Length < 800);
         string second = (string)rig.Http.Where(log => log.EventName == "HTTP_REQUEST").ElementAt(1).Properties["RequestHeaders"]!;
         Assert.Contains("AuthHeader (length: 18)", second, StringComparison.Ordinal);
@@ -744,7 +831,7 @@ public sealed class RequestLoggingTests
     [Fact]
     public async Task Bodies_AreCut_AndOnlyJsonOnesAreLogged()
     {
-        await using Rig rig = await StartAsync(new() { ["RequestLogging:LogBodies"] = "true", ["RequestLogging:MaxBodyLength"] = "10" });
+        await using Rig rig = await StartAsync(new() { ["RequestLogging:LogBodies"] = "true", ["RequestLogging:MaxResponseBodyLength"] = "10" });
 
         await rig.Client.GetAsync("/json");
         await rig.Client.GetAsync("/text");

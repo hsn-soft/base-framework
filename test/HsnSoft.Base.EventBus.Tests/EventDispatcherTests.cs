@@ -109,6 +109,41 @@ public sealed class EventDispatcherTests : IDisposable
     }
 
     [Fact]
+    public async Task WhoCausedTheMessage_IsInTheLogs_UnderTheNamesTheWireAlwaysHad()
+    {
+        (EventDispatcher dispatcher, _, ListLogger<EventDispatcher> logger) = CreateRecording();
+        MessageEnvelope<SampleEto> envelope = NewEnvelope();
+        envelope.SetHeader("UserId", "alice");
+        envelope.SetHeader("UserRoles", "admin,customer");
+        envelope.SetHeader("ClientChannel", "mobile");
+        envelope.SetHeader("ClientVersion", "3.2.1");
+        envelope.SetHeader("ClientLat", "41.0");
+        envelope.SetHeader("ClientLong", "29.0");
+        envelope.SetHeader("Unrelated", "x");
+
+        await dispatcher.DispatchAsync("Sample", typeof(SampleEto), envelope);
+
+        IReadOnlyDictionary<string, object?> scope = logger.Scopes[0];
+        Assert.Equal("alice", scope["UserId"]);
+        Assert.Equal("admin,customer", scope["UserRoles"]);
+        Assert.Equal("mobile", scope["ClientChannel"]);
+        Assert.Equal("3.2.1", scope["ClientVersion"]);
+        Assert.Equal("41.0", scope["ClientLat"]);
+        Assert.Equal("29.0", scope["ClientLong"]);
+        Assert.False(scope.ContainsKey("Unrelated"));
+    }
+
+    [Fact]
+    public async Task MessagesWithoutClientHeaders_HaveNoSuchFields()
+    {
+        (EventDispatcher dispatcher, _, ListLogger<EventDispatcher> logger) = CreateRecording();
+
+        await dispatcher.DispatchAsync("Sample", typeof(SampleEto), NewEnvelope());
+
+        Assert.False(logger.Scopes[0].ContainsKey("UserId"));
+    }
+
+    [Fact]
     public async Task ACorrelationIdThatIsATraceId_IsTheTraceIdOfTheConsumeLogsToo()
     {
         (EventDispatcher dispatcher, _, ListLogger<EventDispatcher> logger) = CreateRecording();

@@ -34,6 +34,13 @@ public sealed class RequestLoggingOptions
     /// <summary>Health probes are called every few seconds; their logs are off unless this is on.</summary>
     public bool LogHealthChecks { get; set; }
 
+    /// <summary>The paths (prefixes) of the health probes. When none are given: <c>/health</c>, <c>/StartupCheck</c>, <c>/LivenessCheck</c> and <c>/ReadinessCheck</c> (a list from configuration adds to a default list, so the default is not a list).</summary>
+    public List<string> HealthCheckPaths { get; set; } = [];
+
+    internal IReadOnlyList<string> EffectiveHealthCheckPaths => HealthCheckPaths.Count > 0 ? HealthCheckPaths : s_defaultHealthCheckPaths;
+
+    private static readonly string[] s_defaultHealthCheckPaths = ["/health", "/StartupCheck", "/LivenessCheck", "/ReadinessCheck"];
+
     /// <summary>Paths (prefixes) that are never logged, e.g. <c>/openapi</c>.</summary>
     public List<string> ExcludedPaths { get; set; } = ["/openapi", "/swagger"];
 
@@ -44,14 +51,32 @@ public sealed class RequestLoggingOptions
     /// </summary>
     public bool LogBodies { get; set; }
 
-    /// <summary>The longest body written (characters, after masking); a longer one is cut and the cut is marked.</summary>
-    public int MaxBodyLength { get; set; } = 4096;
+    /// <summary>The longest request body written (characters, after masking); a longer one is cut and the cut is marked.</summary>
+    public int MaxRequestBodyLength { get; set; } = 8 * 1024;
+
+    /// <summary>The longest response body written (characters, after masking).</summary>
+    public int MaxResponseBodyLength { get; set; } = 8 * 1024;
 
     /// <summary>The most bytes of a request or response body that are read to be logged; a bigger body is not logged.</summary>
     public int MaxBodyReadBytes { get; set; } = 256 * 1024;
 
-    /// <summary>The longest value of a header written.</summary>
-    public int MaxHeaderValueLength { get; set; } = 256;
+    /// <summary>The longest value of a header written (also of <c>UserAgent</c>, <c>Origin</c>, <c>ForwardedFor</c> and the other fields taken from headers).</summary>
+    public int MaxHeaderValueLength { get; set; } = 128;
+
+    /// <summary>The longest text of all the headers together (they are one JSON field).</summary>
+    public int MaxHeadersLength { get; set; } = 4096;
+
+    /// <summary>The longest query string and path written.</summary>
+    public int MaxUrlLength { get; set; } = 512;
+
+    /// <summary>The headers the client sends about itself, written as <c>ClientChannel</c>, <c>ClientVersion</c>, <c>ClientLat</c> and <c>ClientLong</c> when they are there.</summary>
+    public string ClientChannelHeader { get; set; } = "X-Channel";
+
+    public string ClientVersionHeader { get; set; } = "X-Client-Version";
+
+    public string ClientLatHeader { get; set; } = "X-Client-Request-Lat";
+
+    public string ClientLongHeader { get; set; } = "X-Client-Request-Long";
 
     /// <summary>The header that carries the correlation id of a chain in and out. A request without one starts a new chain.</summary>
     public string CorrelationIdHeader { get; set; } = "X-Correlation-Id";
