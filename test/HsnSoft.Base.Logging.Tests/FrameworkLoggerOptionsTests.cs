@@ -17,6 +17,7 @@ public class FrameworkLoggerOptionsTests
         Assert.Equal(LogLevel.Trace, options.LogLevel);
         Assert.Equal(LogLevel.Information, options.PersistentMinimumLevel);
         Assert.Equal(LogLevel.Warning, options.PlatformMinimumLevel);
+        Assert.Null(options.AppNamespace);
         Assert.False(options.IsGrayLogActive);
         Assert.False(options.IsSelfLogActive);
         Assert.Equal("Logs/logs.txt", options.FilePath);
@@ -67,6 +68,7 @@ public class FrameworkLoggerOptionsTests
         FrameworkLoggerOptions options = FrameworkLoggerOptions.FromConfiguration(Configuration(
             ("LogLevel", "Information"),
             ("PersistentMinimumLevel", "Error"),
+            ("AppNamespace", "Hhs"),
             ("IsGrayLogActive", "true"),
             ("IsSelfLogActive", "True"),
             ("FilePath", "logs/app.txt"),
@@ -79,6 +81,7 @@ public class FrameworkLoggerOptionsTests
 
         Assert.Equal(LogLevel.Information, options.LogLevel);
         Assert.Equal(LogLevel.Error, options.PersistentMinimumLevel);
+        Assert.Equal("Hhs", options.AppNamespace);
         Assert.True(options.IsGrayLogActive);
         Assert.True(options.IsSelfLogActive);
         Assert.Equal("logs/app.txt", options.FilePath);

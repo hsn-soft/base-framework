@@ -17,7 +17,7 @@ import sys
 import urllib.parse
 import urllib.request
 
-TYPES = ["HttpRequest", "HttpResponse", "HttpRequestResponse", "ConsumeStart", "ConsumeEnd", "FrameworkLog", "PlatformLog", "AppLog"]
+TYPES = ["HttpRequest", "HttpResponse", "HttpRequestResponse", "ConsumeStart", "ConsumeEnd", "FrameworkLog", "PlatformLog", "SharedLog", "AppLog"]
 SKIP = lambda key: key.startswith("gl2") or key in ("streams", "_id", "source", "timestamp", "version", "host", "full_message", "message", "level", "stringLevel")
 
 

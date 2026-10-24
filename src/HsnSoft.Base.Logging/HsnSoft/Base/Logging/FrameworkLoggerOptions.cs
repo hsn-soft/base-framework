@@ -28,6 +28,13 @@ public sealed class FrameworkLoggerOptions
     /// </summary>
     public LogLevel PlatformMinimumLevel { get; set; } = LogLevel.Warning;
 
+    /// <summary>
+    /// The start of the namespaces of the application (<c>Hhs</c>): the logs written by the classes under it are <c>AppLog</c>s, <c>HsnSoft.Base.*</c> is the framework's and everything
+    /// else (ASP.NET Core, Entity Framework, a driver, any library) is the platform's. When it is not given it is the first part of the name of the assembly
+    /// that runs (<c>Hhs.IdentityService.Http.Host</c> is <c>Hhs</c>), which is right where the code of a product has one namespace.
+    /// </summary>
+    public string? AppNamespace { get; set; }
+
     /// <summary>Send persistent logs to Graylog; when it is off they go to <see cref="FilePath"/>.</summary>
     public bool IsGrayLogActive { get; set; }
 
@@ -94,6 +101,7 @@ public sealed class FrameworkLoggerOptions
             FilePath = string.IsNullOrWhiteSpace(section["FilePath"]) ? "Logs/logs.txt" : section["FilePath"]!,
             PersistentMinimumLevel = ParseLevel(section["PersistentMinimumLevel"], LogCategories.PersistentFloor),
             PlatformMinimumLevel = ParseLevel(section["PlatformMinimumLevel"], LogLevel.Warning),
+            AppNamespace = string.IsNullOrWhiteSpace(section["AppNamespace"]) ? null : section["AppNamespace"],
             MaxPersistentFieldLength = int.TryParse(section["MaxPersistentFieldLength"], CultureInfo.InvariantCulture, out int maxLength) && maxLength > 0 ? maxLength : 16 * 1024,
         };
         options.GrayLog.Address = section["GrayLog:Address"];

@@ -31,20 +31,29 @@ public sealed class LogShapeTests
     private static LogEvent Enriched(params LogEventProperty[] properties)
     {
         LogEvent logEvent = Event(properties);
-        new LogShapeEnricher().Enrich(logEvent, new Factory());
+        new LogShapeEnricher("Orders").Enrich(logEvent, new Factory());
         return logEvent;
     }
 
     [Theory]
     [InlineData("HsnSoft.Base.EventBus.RabbitMQ.RabbitMqConsumer", "FrameworkLog")]
     [InlineData("HsnSoft.Base", "FrameworkLog")]
+    [InlineData("Orders.Checkout.OrderService", "AppLog")]
+    [InlineData("Orders", "AppLog")]
+    [InlineData("Orders.Shared.RateLimiting.RateLimitMiddleware", "SharedLog")]
+    [InlineData("Orders.Shared", "SharedLog")]
+    [InlineData("Orders.SharedExtras.Thing", "AppLog")]
+    [InlineData("Orders.Checkout.Shared.Thing", "AppLog")]
+    [InlineData("ConsoleOnly.ThreadPool", "AppLog")]
+    [InlineData("", "AppLog")]
+    // everything else is the platform's: no list of libraries
     [InlineData("Microsoft.AspNetCore.Routing.EndpointMiddleware", "PlatformLog")]
     [InlineData("System.Net.Http.HttpClient", "PlatformLog")]
     [InlineData("Npgsql.Command", "PlatformLog")]
-    [InlineData("Orders.Checkout.OrderService", "AppLog")]
-    [InlineData("MicrosoftExtras.Thing", "AppLog")]
-    [InlineData("HsnSoft.BaseCamp.Thing", "AppLog")]
-    [InlineData("", "AppLog")]
+    [InlineData("Polly.Retry", "PlatformLog")]
+    [InlineData("OrdersExtras.Thing", "PlatformLog")]
+    [InlineData("HsnSoft.BaseCamp.Thing", "PlatformLog")]
+    [InlineData("Xyz.Other", "PlatformLog")]
     public void TheCategory_DecidesTheLogType(string category, string expected)
     {
         LogEvent logEvent = category.Length == 0 ? Enriched() : Enriched(Source(category));
@@ -111,6 +120,7 @@ public sealed class LogShapeTests
     [InlineData("FrameworkLog", false)]
     [InlineData("PlatformLog", false)]
     [InlineData("AppLog", true)]
+    [InlineData("SharedLog", true)]
     [InlineData("HttpRequest", true)]
     [InlineData("HttpResponse", true)]
     [InlineData("HttpRequestResponse", true)]
@@ -137,6 +147,7 @@ public sealed class LogShapeTests
 
     [Theory]
     [InlineData("AppLog", false)]
+    [InlineData("SharedLog", false)]
     [InlineData("HttpRequest", true)]
     [InlineData("HttpResponse", true)]
     [InlineData("PlatformLog", true)]

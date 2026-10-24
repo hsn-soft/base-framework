@@ -6,7 +6,7 @@ namespace HsnSoft.Base.Logging.Serilog;
 /// <summary>
 /// Removes what is on a log and nobody searches for: the id of the TCP connection that ASP.NET Core puts on every log, and, from the logs of the framework and of the
 /// platform, who asked (the user and the client of the request or message they happened in): that is for the logs of the request, of the message and of the application.
-/// An application log keeps what its developer wrote and the ids of its chain: the endpoint, the id of the span and the request it happened in
+/// An application log (and a shared library's) keeps what its developer wrote and the ids of its chain: the endpoint, the id of the span and the request it happened in
 /// (which ASP.NET Core and the tracing put on every log) are left to the logs of the request and of the platform.
 /// </summary>
 internal sealed class NoiseEnricher : ILogEventEnricher
@@ -31,7 +31,7 @@ internal sealed class NoiseEnricher : ILogEventEnricher
                 logEvent.RemovePropertyIfPresent(field);
             }
         }
-        else if (logType == LogTypes.AppLog)
+        else if (logType is LogTypes.AppLog or LogTypes.SharedLog)
         {
             foreach (string field in s_notForAppLogs)
             {

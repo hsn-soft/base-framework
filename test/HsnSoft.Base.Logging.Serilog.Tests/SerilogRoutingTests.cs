@@ -63,23 +63,25 @@ public class SerilogRoutingTests
     }
 
     [Theory]
-    [InlineData(LogEventLevel.Information, "Microsoft.AspNetCore.Routing.EndpointMiddleware", false)]
-    [InlineData(LogEventLevel.Information, "Yarp.ReverseProxy.Forwarder.HttpForwarder", false)]
-    [InlineData(LogEventLevel.Information, "Npgsql.Command", false)]
-    [InlineData(LogEventLevel.Warning, "Microsoft.AspNetCore.Routing.EndpointMiddleware", true)]
-    [InlineData(LogEventLevel.Error, "System.Net.Http.HttpClient", true)]
-    [InlineData(LogEventLevel.Information, "Orders.OrderService", true)]
-    [InlineData(LogEventLevel.Information, "HsnSoft.Base.EventBus.EventDispatcher", true)]
-    public void TheInformationOfThePlatform_StaysInTheConsole_WhateverElseIsPersistent(LogEventLevel level, string category, bool expected)
+    [InlineData(LogEventLevel.Information, "PlatformLog", false)]
+    [InlineData(LogEventLevel.Warning, "PlatformLog", true)]
+    [InlineData(LogEventLevel.Error, "PlatformLog", true)]
+    [InlineData(LogEventLevel.Information, "AppLog", true)]
+    [InlineData(LogEventLevel.Information, "FrameworkLog", true)]
+    [InlineData(LogEventLevel.Information, "HttpRequest", true)]
+    [InlineData(LogEventLevel.Information, "ConsumeStart", true)]
+    public void TheInformationOfThePlatform_StaysInTheConsole_WhateverElseIsPersistent(LogEventLevel level, string logType, bool expected)
     {
-        Assert.Equal(expected, SerilogRouting.ForPersistent(Events.Create(level, category), LogEventLevel.Information, LogEventLevel.Warning));
+        // by the time a log reaches a sink the enrichers have given it its LogType, and that is what says whether it is the platform's
+        LogEvent logEvent = Events.Create(level, "Any.Category", new LogEventProperty("LogType", new ScalarValue(logType)));
+
+        Assert.Equal(expected, SerilogRouting.ForPersistent(logEvent, LogEventLevel.Information, LogEventLevel.Warning));
     }
 
     [Fact]
-    public void ALogThatNamesItsType_IsJudgedByIt_NotByItsCategory()
+    public void ALogWithoutAType_IsNotThePlatforms()
     {
-        Assert.False(SerilogRouting.ForPersistent(Events.Create(LogEventLevel.Information, "Orders.X", new LogEventProperty("LogType", new ScalarValue("PlatformLog"))), LogEventLevel.Information, LogEventLevel.Warning));
-        Assert.True(SerilogRouting.ForPersistent(Events.Create(LogEventLevel.Information, "Microsoft.X", new LogEventProperty("LogType", new ScalarValue("HttpRequest"))), LogEventLevel.Information, LogEventLevel.Warning));
+        Assert.True(SerilogRouting.ForPersistent(Events.Create(LogEventLevel.Information, "Microsoft.X"), LogEventLevel.Information, LogEventLevel.Warning));
     }
 
     [Fact]

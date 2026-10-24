@@ -46,16 +46,17 @@ internal static class BaseSerilog
         LogEventLevel persistent = SerilogRouting.ToSerilog(options.EffectivePersistentLevel);
         LogEventLevel platform = SerilogRouting.ToSerilog(options.EffectivePlatformLevel);
 
+        string solution = AppDomain.CurrentDomain.FriendlyName.Split('.')[0];
         LoggerConfiguration configuration = new LoggerConfiguration()
             .Destructure.With<SensitiveDataDestructuringPolicy>()
             .MinimumLevel.Verbose()
             .Enrich.FromLogContext()
-            .Enrich.WithProperty("Solution", AppDomain.CurrentDomain.FriendlyName.Split('.')[0])
+            .Enrich.WithProperty("Solution", solution)
             .Enrich.WithProperty("Assembly", AppDomain.CurrentDomain.FriendlyName)
             .Enrich.With(new VersionEnricher(options.ResolveVersion()))
             .Enrich.With(new LoggerNameEnricher(loggerName))
             .Enrich.With<FacilityEnricher>()
-            .Enrich.With<LogShapeEnricher>()
+            .Enrich.With(new LogShapeEnricher(string.IsNullOrWhiteSpace(options.AppNamespace) ? solution : options.AppNamespace.Trim()))
             .Enrich.With<NoiseEnricher>();
 
         foreach (KeyValuePair<string, LogLevel> level in Overrides(options))

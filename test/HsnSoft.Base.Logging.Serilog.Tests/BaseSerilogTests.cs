@@ -44,6 +44,33 @@ public sealed class BaseSerilogTests : IDisposable
     }
 
     [Fact]
+    public void TheTypeOfALog_IsTold_ByTheNamespaceOfTheApplication_AndWhatIsPersistentFollowsIt()
+    {
+        ILogger logger = Create(options => options.AppNamespace = "Orders");
+
+        logger.ForContext(Constants.SourceContextPropertyName, "Orders.Checkout.OrderService").Information("the application");
+        logger.ForContext(Constants.SourceContextPropertyName, "HsnSoft.Base.EventBus.EventDispatcher").Information("the framework");
+        logger.ForContext(Constants.SourceContextPropertyName, "Polly.Retry").Information("the platform, information");
+        logger.ForContext(Constants.SourceContextPropertyName, "Polly.Retry").Warning("the platform, warning");
+
+        // the console sees all four; the platform's information stays there, as its level says
+        Assert.Equal(4, _console.Events.Count);
+        Assert.Equal(["the application", "the framework", "the platform, warning"], _persistent.Messages);
+        Assert.Equal(["AppLog", "FrameworkLog", "PlatformLog"], _persistent.Events.Select(logEvent => ((ScalarValue)logEvent.Properties["LogType"]).Value));
+    }
+
+    [Fact]
+    public void WithoutAnAppNamespace_ItIsTheFirstPartOfTheAssemblyName()
+    {
+        string solution = AppDomain.CurrentDomain.FriendlyName.Split('.')[0];
+        ILogger logger = Create();
+
+        logger.ForContext(Constants.SourceContextPropertyName, $"{solution}.Orders.OrderService").Information("the application");
+
+        Assert.Equal("AppLog", ((ScalarValue)Assert.Single(_persistent.Events).Properties["LogType"]).Value);
+    }
+
+    [Fact]
     public void DebugAndVerbose_StayInTheConsole()
     {
         ILogger logger = Create();

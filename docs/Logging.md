@@ -36,6 +36,7 @@ builder.Logging.AddBaseSerilog(builder.Configuration, "OrderService"); // everyt
   "LogLevel": "Debug",
   "PersistentMinimumLevel": "Information",
   "PlatformMinimumLevel": "Warning",
+  "AppNamespace": "Hhs",
   "IsGrayLogActive": true,
   "GrayLog": { "Address": "http://graylog", "Port": 12201, "SinkRefreshIntervalMinutes": 5 },
   "FilePath": "Logs/logs.txt",
@@ -71,14 +72,18 @@ services sets to the image tag `{yyMMddHHmm}-sha-{git short sha}`; else `Framewo
 | `FrameworkLog` | a framework library (`HsnSoft.Base.*`) talking about itself; the `Facility` says what: `RABBITMQ_CONSUMER_SUBSCRIBED`, `PRODUCE_EVENT_ERROR`, ... | the library, nobody has to do anything |
 | `HttpRequest`, `HttpResponse` | an HTTP request when it arrives, and when it is answered | `UseBaseRequestLogging()` ([`HsnSoft.Base.AspNetCore.WebApi`]) |
 | `ConsumeStart`, `ConsumeEnd` | a message when its handler starts, and when it ends | the event bus |
+| `SharedLog` | the shared library of the product (`{AppNamespace}.Shared.*`: its rate limit, its helpers) | the shared library |
 | `AppLog` | what the developer of the application logs with `ILogger` | the application |
 | `PlatformLog` | ASP.NET Core, Entity Framework, a database driver, ... | the platform |
 
-The provider decides `LogType` from the category of a log (`HsnSoft.Base.*` is `FrameworkLog`, `System`, `Microsoft`, `Npgsql`,
-`MongoDB`, ... are `PlatformLog`, the rest is `AppLog`); the four chain types say it themselves. `MessageType` is `Structured` when an
+The provider decides `LogType` from the category of a log, that is from the class that wrote it: what is under **`HsnSoft.Base`** is `FrameworkLog`, what is under
+**the namespace of the application** (`FrameworkLogger:AppNamespace`, `Hhs`) is `AppLog`, except what is under **`{AppNamespace}.Shared`** (`Hhs.Shared.*`), which is `SharedLog`, and **everything else is `PlatformLog`**: no list of libraries
+to keep up to date, a new library is the platform's the moment it logs. Without `AppNamespace` it is the first part of the name of the assembly that runs
+(`Hhs.IdentityService.Http.Host` is `Hhs`); set it when the code of the product does not start with that. A log written without a category (the static `Log`) and the
+console logger's are the application's. The chain types say theirs themselves. `MessageType` is `Structured` when an
 object was logged with `{@Object}` and `Args` when only plain values were.
 
-What is a framework library is only `HsnSoft.Base.*`. The shared library of a product (`Xyz.Shared`) is part of the application: its logs are `AppLog`s, like the logs of the services.
+What is a framework library is only `HsnSoft.Base.*`. The shared library of a product (`Xyz.Shared`) is not the framework's: its logs are `SharedLog`s, told from the logs of the services (`AppLog`) so what a shared policy says can be found on its own. Both are the product's code and have the same fields: who asked, the facility and the arguments, without the endpoint and the span of ASP.NET Core.
 
 ### The chain logs
 
@@ -192,7 +197,7 @@ arguments**, and the **category** (the class: `ILogger<UsersController>`). Every
 | Decision | Where | Decided by |
 |---|---|---|
 | Which sinks get it (console, file, Graylog) | `BaseSerilog.Create` and `SerilogRouting` (`HsnSoft.Base.Logging.Serilog`) | the **level** and the **category** of the log, with the `FrameworkLogger` section: the console gets everything from `LogLevel`, the persistent sink (Graylog when `IsGrayLogActive`, else the file) from `PersistentMinimumLevel` (never below Information), `PlatformLog`s from `PlatformMinimumLevel`; the category `ConsoleOnly.*` (`IAppConsoleLogger`) never reaches it |
-| Its `LogType` | `LogShapeEnricher`, or the writer for the chain types | the **category**: `HsnSoft.Base.*` is `FrameworkLog`, `System`, `Microsoft`, `Npgsql`, ... are `PlatformLog`, the rest is `AppLog`. `HttpRequest`, `HttpResponse`, `HttpRequestResponse`, `ConsumeStart` and `ConsumeEnd` are said by the code that writes them (the request logging middleware and the event bus): a developer cannot choose a type on the line of a log |
+| Its `LogType` | `LogShapeEnricher`, or the writer for the chain types | the **category**: `HsnSoft.Base.*` is `FrameworkLog`, what is under `FrameworkLogger:AppNamespace` is `AppLog` (`{AppNamespace}.Shared.*`: `SharedLog`), everything else is `PlatformLog`. `HttpRequest`, `HttpResponse`, `HttpRequestResponse`, `ConsumeStart` and `ConsumeEnd` are said by the code that writes them (the request logging middleware and the event bus): a developer cannot choose a type on the line of a log |
 | Which fields it has | the pipeline of `BaseSerilog.Create`, in this order | below |
 
 The pipeline, for every log: **scopes** (`BeginScope`, what the middleware and the event bus put there: `CorrelationId`, `TraceId`, the `Facility` of
@@ -231,7 +236,7 @@ The RabbitMQ client library does not use `ILogger`, it only writes to an `EventS
 listens to it while the host runs and passes it on under the category `HsnSoft.Base.EventBus.RabbitMQ.Client`: its information as
 Debug (console only), its warnings and errors as they are, so a connection the client gives up on shows up in Graylog.
 
-An `AppLog` has what its developer wrote (the arguments as fields, `{@Object}` as one JSON field), the `Facility` (`BeginFacility`), the `CorrelationId` and `TraceId`
+An `AppLog` (and a `SharedLog`) has what its developer wrote (the arguments as fields, `{@Object}` as one JSON field), the `Facility` (`BeginFacility`), the `CorrelationId` and `TraceId`
 of its chain and the category it was written under (`SourceContext`). The endpoint (`ActionId`, `ActionName`), the span (`SpanId`, `ParentId`) and the request
 (`RequestId`, `RequestPath`) that ASP.NET Core and the tracing put on every log are removed from it: they are on the `HttpRequest` and `HttpResponse` of the same request.
 

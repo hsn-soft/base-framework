@@ -38,10 +38,9 @@ internal static class SerilogRouting
     internal static bool ForPersistent(LogEvent logEvent, LogEventLevel persistentMinimum, LogEventLevel? platformMinimum = null)
         => logEvent.Level >= persistentMinimum && !IsConsoleOnly(logEvent) && (platformMinimum is null || logEvent.Level >= platformMinimum || !IsPlatform(logEvent));
 
-    /// <summary>A log of the platform (ASP.NET Core, a driver, ...), by the category it was written under; one that names its own type is not.</summary>
+    /// <summary>A log of the platform (ASP.NET Core, a driver, ...): the <c>LogType</c> every log has when it reaches a sink.</summary>
     internal static bool IsPlatform(LogEvent logEvent)
-        => !logEvent.Properties.ContainsKey(LogFields.LogType) && LogShapeEnricher.LogType(SourceContext(logEvent)) == LogTypes.PlatformLog
-           || logEvent.Properties.TryGetValue(LogFields.LogType, out LogEventPropertyValue? type) && type is ScalarValue { Value: LogTypes.PlatformLog };
+        => logEvent.Properties.TryGetValue(LogFields.LogType, out LogEventPropertyValue? type) && type is ScalarValue { Value: LogTypes.PlatformLog };
 
     /// <summary>The name shown next to the level: the console logger's own name, the structured logger's, or the host's.</summary>
     internal static string LoggerName(LogEvent logEvent, string hostName)

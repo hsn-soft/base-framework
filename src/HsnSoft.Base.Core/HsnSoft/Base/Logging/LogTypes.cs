@@ -9,10 +9,13 @@ public static class LogTypes
     /// <summary>A log of a framework library (<c>HsnSoft.Base.*</c>) that nobody wrote on purpose: its <c>Facility</c> says what it is about.</summary>
     public const string FrameworkLog = "FrameworkLog";
 
-    /// <summary>A log of the platform or a third-party library (ASP.NET Core, Entity Framework, a database driver).</summary>
+    /// <summary>A log of anything that is neither the framework nor the application (ASP.NET Core, Entity Framework, a database driver, any library).</summary>
     public const string PlatformLog = "PlatformLog";
 
-    /// <summary>A log the application's developer wrote with <c>ILogger</c>.</summary>
+    /// <summary>A log of the shared library of the application (the classes under <c>{AppNamespace}.Shared</c>: the policies and helpers every service of a product uses).</summary>
+    public const string SharedLog = "SharedLog";
+
+    /// <summary>A log written by the code of the application (the classes under <c>FrameworkLogger:AppNamespace</c>) with <c>ILogger</c>.</summary>
     public const string AppLog = "AppLog";
 
     /// <summary>The start of an HTTP request. Pairs with <see cref="HttpResponse"/> through <c>ScopeId</c>.</summary>
