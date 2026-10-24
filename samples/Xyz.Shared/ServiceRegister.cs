@@ -1,6 +1,7 @@
 using HsnSoft.Base.AspNetCore;
 using HsnSoft.Base.Authentication;
 using HsnSoft.Base.Caching.StackExchangeRedis;
+using HsnSoft.Base.EventBus;
 using HsnSoft.Base.Logging;
 using HsnSoft.Base.Logging.Serilog;
 using Microsoft.AspNetCore.Builder;
@@ -28,7 +29,9 @@ public static class ServiceRegister
             .AddBaseOpenApi()
             .AddBaseHealthChecks()
             .AddBaseJwtAuthentication(configuration)
-            .AddBaseRedis(configuration);
+            .AddBaseRedis(configuration)
+            .AddHttpContextAccessor()
+            .AddSingleton<IEventHeaderProvider, HttpContextEventHeaderProvider>();   // who started a chain travels with its events
 
     /// <summary>
     /// Every Xyz service logs the same way: the console gets everything, Graylog (or the log file) gets Information and above,
