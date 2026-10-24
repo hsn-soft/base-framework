@@ -37,6 +37,7 @@ public sealed class UsersController(IUserAppService userAppService) : BaseServic
     public async Task<IActionResult> CreateAsync([FromBody] UserCreateDto input, CancellationToken cancellationToken = default)
     {
         UserDto created = await userAppService.CreateAsync(input, cancellationToken);
+        Logger.LogInformation("User {CreatedUserId} ({CreatedUserName}) was created", created.Id, created.UserName);
         return CreatedAtAction(nameof(GetAsync), new { id = created.Id }, created);
     }
 
