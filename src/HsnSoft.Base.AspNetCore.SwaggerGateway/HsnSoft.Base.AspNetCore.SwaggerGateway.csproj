@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <Import Project="..\..\common.props" />
+
+    <PropertyGroup>
+        <AssemblyName>HsnSoft.Base.AspNetCore.SwaggerGateway</AssemblyName>
+        <PackageId>HsnSoft.Base.AspNetCore.SwaggerGateway</PackageId>
+        <RootNamespace />
+        <Title>HsnSoft Base Framework ASP.NET Core Swagger Gateway</Title>
+        <Description>One Swagger UI for a gateway and the services behind it: the documents of the services are fetched from their internal addresses and shown with the gateway's paths and address.</Description>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageTags>HsnSoft Base Framework AspNetCore Swagger Gateway</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="..\..\README.md" Pack="true" Visible="false" PackagePath="README.md" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\HsnSoft.Base.Core\HsnSoft.Base.Core.csproj" />
+        <ProjectReference Include="..\HsnSoft.Base.AspNetCore.Swashbuckle\HsnSoft.Base.AspNetCore.Swashbuckle.csproj" />
+    </ItemGroup>
+
+</Project>

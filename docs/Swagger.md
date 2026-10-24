@@ -29,6 +29,37 @@ environment, so no `if (!IsHostProduction())` is repeated in `Program.cs`. The `
 
 `/swagger` is already in `RequestLogging:ExcludedPaths`, so opening the UI writes no request logs.
 
+## A gateway and its services
+
+Every service serves its own document (`UseBaseSwagger`), and the gateway shows them all in **its** Swagger UI, each as if it were the gateway's: the
+paths and the address of the gateway, so "Try it out" goes through the gateway. That is `HsnSoft.Base.AspNetCore.SwaggerGateway`, in the gateway only:
+
+```csharp
+services.AddBaseSwaggerWithBearer("Gateway API", "Enter a valid token", configuration, name: "gateway");
+services.AddBaseSwaggerGateway(configuration);      // reads SwaggerGateway
+app.UseBaseSwagger();                                // the same call: the UI lists the gateway's document and the services' too
+```
+
+```json
+"SwaggerGateway": {
+  "PublicOrigin": "https://api.example.com",
+  "Services": [
+    { "Key": "orders", "DisplayName": "Orders API", "Origin": "http://orders:8080",
+      "DownstreamPathPrefix": "/api/orders/v1", "GatewayPathPrefix": "/orders/v1" }
+  ]
+}
+```
+
+- `Origin` is the **internal** address of the service: the gateway fetches `/swagger/v1/swagger.json` from there (`SwaggerPath` changes it); `PublicOrigin` is the
+  address clients use, written in every document (when it is not given, the address the document was asked at).
+- `DownstreamPathPrefix` / `GatewayPathPrefix`: the paths the service has start with the first and the gateway has the second (the route that forwards
+  `/orders/v1/...` to `/api/orders/v1/...`). Both empty when the gateway forwards the paths as they are.
+- The rewritten document is kept `CacheDurationSeconds` (60); a temporary failure of a service is tried `RetryCount` (2) times more; a service that is down is
+  a 502 where its document should be, the other documents are not affected. The settings are checked when the host starts.
+- The documents are at `/swagger/services/{Key}/swagger.json`, behind the same rule as the UI: nothing in production-like environments. Who may open `/swagger`
+  is the gateway's business (put its authorization before `UseBaseSwagger`).
+- A landing page with the live state of every service, as the old gateway had at `/docs`, is not here: it is a product's page, built on the same settings.
+
 ## Coming from the old `HsnSoft.Base.Swashbuckle`
 
 | Before | Now |

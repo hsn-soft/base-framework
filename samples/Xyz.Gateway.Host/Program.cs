@@ -1,3 +1,4 @@
+using HsnSoft.Base.AspNetCore;
 using Xyz.Shared;
 using Xyz.Shared.RateLimiting;
 
@@ -6,7 +7,8 @@ builder.Logging.AddXyzLogging(builder.Configuration, "Xyz.Gateway");
 
 builder.Services
     .AddXyzApi(builder.Configuration)
-    .AddXyzRateLimiting(builder.Configuration);
+    .AddXyzRateLimiting(builder.Configuration)
+    .AddBaseSwaggerGateway(builder.Configuration);   // the Swagger UI of the gateway shows the documents of the services too
 
 // The routes and the downstream addresses are configuration (ReverseProxy section), not code.
 builder.Services.AddReverseProxy().LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));

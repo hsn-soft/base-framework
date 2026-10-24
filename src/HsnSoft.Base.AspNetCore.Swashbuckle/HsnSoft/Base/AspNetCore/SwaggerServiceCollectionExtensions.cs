@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -104,11 +105,21 @@ public static class SwaggerServiceCollectionExtensions
             return app;
         }
 
+        ISwaggerExtension[] extensions = [.. app.ApplicationServices.GetServices<ISwaggerExtension>()];
+        foreach (ISwaggerExtension extension in extensions)
+        {
+            extension.Use(app);
+        }
+
         app.UseSwagger();
         app.UseSwaggerUI(ui =>
         {
             ui.RoutePrefix = options.RoutePrefix;
             ui.SwaggerEndpoint($"/swagger/{document.Name}/swagger.json", document.Title);
+            foreach ((string url, string name) in extensions.SelectMany(extension => extension.UiEndpoints))
+            {
+                ui.SwaggerEndpoint(url, name);
+            }
         });
         return app;
     }
