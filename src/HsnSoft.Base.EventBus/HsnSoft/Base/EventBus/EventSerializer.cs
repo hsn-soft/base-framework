@@ -13,6 +13,9 @@ public static class EventSerializer
 {
     private static readonly JsonSerializerOptions s_options = new() { PropertyNameCaseInsensitive = true };
 
+    /// <summary>A message as JSON text, whatever its type (to be masked and logged).</summary>
+    internal static string ToJson(object envelope) => JsonSerializer.Serialize(envelope, envelope.GetType(), s_options);
+
     public static byte[] Serialize<T>(MessageEnvelope<T> envelope)
         where T : IIntegrationEventMessage
     {

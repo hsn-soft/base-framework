@@ -1,5 +1,6 @@
 using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.Logging;
+using HsnSoft.Base.Logging.Masking;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -240,6 +241,43 @@ public sealed class EventDispatcherTests : IDisposable
         Assert.StartsWith("Solution:", (string)end.Properties["ExceptionIdentifier"]!, StringComparison.Ordinal);
         Assert.EndsWith("rejected the message after " + end.Properties["ElapsedMs"] + " ms: The order has no product.", end.Message, StringComparison.Ordinal);
         Assert.DoesNotContain(logger.Events, e => e.EventName is "CONSUME_EVENT_SUCCESS" or "CONSUME_EVENT_ERROR" or "CONSUME_EVENT_RETRY");
+    }
+
+    private sealed class UpperMasker : ILogMasker
+    {
+        public string MaskText(string? text) => text?.Replace("\"m\"", "\"*****\"", StringComparison.Ordinal) ?? string.Empty;
+
+        public object MaskObject<T>(T value) => value!;
+    }
+
+    [Theory]
+    [InlineData(true, true, true)]
+    [InlineData(false, true, false)]
+    [InlineData(true, false, false)]
+    public async Task TheConsumeStartLog_HasTheMessageItStartedWith_Masked_UnlessItIsOffOrThereIsNoMasker(bool on, bool masker, bool logged)
+    {
+        EventBusOptions options = new() { LogConsumedMessage = on, MaxLoggedMessageLength = 200 };
+        ServiceCollection services = new();
+        services.AddSingleton<RecordingHandler>();
+        services.AddEventHandler<SampleEto, RecordingHandler>();
+        services.AddSingleton<IEventBusSubscriptionManager, InMemoryEventBusSubscriptionManager>();
+        services.AddLogging();
+        ServiceProvider provider = services.BuildServiceProvider();
+        _providers.Add(provider);
+        ListLogger<EventDispatcher> logger = new();
+        EventDispatcher dispatcher = new(provider.GetRequiredService<IServiceScopeFactory>(), provider.GetRequiredService<IEventBusSubscriptionManager>(), Options.Create(options), logger, masker ? new UpperMasker() : null);
+
+        await dispatcher.DispatchAsync("Sample", typeof(SampleEto), NewEnvelope());
+
+        ListLogger<EventDispatcher>.LoggedEvent start = Assert.Single(logger.Events, e => e.EventName == "CONSUME_EVENT_START");
+        Assert.Equal(logged, start.Properties.ContainsKey("MessageBody"));
+        if (logged)
+        {
+            string body = (string)start.Properties["MessageBody"]!;
+            Assert.Contains("\"messageId\"", body, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("\"*****\"", body, StringComparison.Ordinal);
+            Assert.DoesNotContain("\"m\"", body, StringComparison.Ordinal);
+        }
     }
 
     [Fact]

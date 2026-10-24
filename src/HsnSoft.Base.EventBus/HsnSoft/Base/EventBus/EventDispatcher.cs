@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.Logging;
+using HsnSoft.Base.Logging.Masking;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -39,14 +40,14 @@ public sealed partial class EventDispatcher(
     IServiceScopeFactory scopeFactory,
     IEventBusSubscriptionManager subscriptions,
     IOptions<EventBusOptions> options,
-    ILogger<EventDispatcher> logger) : IEventDispatcher
+    ILogger<EventDispatcher> logger,
+    ILogMasker? masker = null) : IEventDispatcher
 {
     /// <summary>Set in the <c>Data</c> of an exception whose Error the dispatcher has logged already (<c>CONSUME_EVENT_ERROR</c>).</summary>
     public const string ErrorLoggedKey = "HsnSoft.Base.EventBus.ErrorLogged";
 
     private static readonly string[] s_clientHeaders = ["UserId", "UserRoles", "ClientChannel", "ClientVersion", "ClientLat", "ClientLong"];
 
-    private static readonly Dictionary<string, object> s_consumeStart = new() { [LogFields.LogType] = LogTypes.ConsumeStart };
     private static readonly Dictionary<string, object> s_consumeEnd = new() { [LogFields.LogType] = LogTypes.ConsumeEnd };
 
     private static readonly ConcurrentDictionary<Type, Func<object, object, CancellationToken, Task>> s_invokers = new();
@@ -55,6 +56,7 @@ public sealed partial class EventDispatcher(
     private readonly IEventBusSubscriptionManager _subscriptions = subscriptions;
     private readonly EventBusOptions _options = options.Value;
     private readonly ILogger<EventDispatcher> _logger = logger;
+    private readonly ILogMasker? _masker = masker;
 
     public async Task DispatchAsync(string trimmedEventName, Type eventType, object messageEnvelope, CancellationToken cancellationToken = default)
     {
@@ -100,7 +102,7 @@ public sealed partial class EventDispatcher(
         string handlerNames = string.Join(", ", handlers.Select(handler => handler.HandlerType.Name));
         Stopwatch watch = Stopwatch.StartNew();
 
-        using (_logger.BeginScope(s_consumeStart))
+        using (_logger.BeginScope(ConsumeStartFields(messageEnvelope)))
         {
             LogStarted(_logger, from, to);
         }
@@ -149,6 +151,18 @@ public sealed partial class EventDispatcher(
         {
             LogHandled(_logger, from, to, handlerNames, watch.ElapsedMilliseconds);
         }
+    }
+
+    // the message the handling starts with, with what is sensitive in it hidden by what its classes say
+    private Dictionary<string, object?> ConsumeStartFields(object messageEnvelope)
+    {
+        Dictionary<string, object?> fields = new() { [LogFields.LogType] = LogTypes.ConsumeStart };
+        if (_options.LogConsumedMessage && _masker is not null)
+        {
+            fields["MessageBody"] = LogFields.Text(_masker.MaskText(EventSerializer.ToJson(messageEnvelope), messageEnvelope.GetType()), _options.MaxLoggedMessageLength);
+        }
+
+        return fields;
     }
 
     private async Task RunHandlerAsync(

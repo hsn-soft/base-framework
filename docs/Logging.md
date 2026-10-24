@@ -202,7 +202,7 @@ The RabbitMQ client library does not use `ILogger`, it only writes to an `EventS
 listens to it while the host runs and passes it on under the category `HsnSoft.Base.EventBus.RabbitMQ.Client`: its information as
 Debug (console only), its warnings and errors as they are, so a connection the client gives up on shows up in Graylog.
 
-The message body is not logged unless `EventBusOptions.LogMessageBody` is `true` (see [EventBus.md](EventBus.md)): a message may carry
+The `ConsumeStart` log carries the message (envelope and event, masked) as `MessageBody`; see [EventBus.md](EventBus.md). The raw body is not logged unless `EventBusOptions.LogMessageBody` is `true` (see [EventBus.md](EventBus.md)): a message may carry
 personal data, and the console is a log too.
 
 ## Another provider (NLog, ...)

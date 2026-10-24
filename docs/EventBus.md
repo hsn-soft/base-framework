@@ -80,6 +80,11 @@ persistent, `mandatory`.
 received message and the Critical log of a failed event that is dropped. A message may carry personal data and the console is a log
 too, so the body is off unless a service turns it on to debug.
 
+The `ConsumeStart` log carries the message the handling started with as `MessageBody`: the envelope (`messageId`, `correlationId`, `headers`, ...) and the event
+together, as JSON, with what is sensitive hidden first (`[SensitiveData]` properties of the event and the usual keys, as in the request logs). It is on
+by default (`EventBusOptions.LogConsumedMessage`), is cut at `MaxLoggedMessageLength` (8192), and is left out when no `ILogMasker` is registered, so nothing
+unmasked is written. `LogMessageBody` above is a different switch: the raw body, for debugging only.
+
 `MaxHandlerAttempts` (default 1) can make the framework retry a handler before it counts as failed; the services in production leave
 retrying to their handlers.
 

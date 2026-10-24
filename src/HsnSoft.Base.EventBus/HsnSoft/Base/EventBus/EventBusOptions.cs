@@ -55,4 +55,14 @@ public sealed class EventBusOptions
     /// Off by default: a message may carry personal data, and the console is a log too. Turn it on to debug a service.
     /// </summary>
     public bool LogMessageBody { get; set; }
+
+    /// <summary>
+    /// Puts the message that is handled (the envelope with its headers and the event) in the <c>ConsumeStart</c> log as <c>MessageBody</c>, so the
+    /// state a handling started in is known. The sensitive data of the message is hidden first (<c>[SensitiveData]</c> and the usual keys); when
+    /// no <see cref="HsnSoft.Base.Logging.Masking.ILogMasker"/> is registered the message is not logged. On by default; unlike <see cref="LogMessageBody"/> it is masked.
+    /// </summary>
+    public bool LogConsumedMessage { get; set; } = true;
+
+    /// <summary>The longest <c>MessageBody</c> of a <c>ConsumeStart</c> log, in characters; a longer message is cut (and says by how much).</summary>
+    public int MaxLoggedMessageLength { get; set; } = 8192;
 }
