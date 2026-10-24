@@ -146,7 +146,10 @@ public sealed partial class RequestLoggingMiddleware(
         GrpcResult? grpc = GrpcResult.From(context);
         IReadOnlyList<LoggedFile> files = Files(context, requestBytes, responseBytes);
 
-        LogLevel level = failure is not null || status >= StatusCodes.Status500InternalServerError ? LogLevel.Error
+        // One failure is one Error: the log of whoever threw (GLOBAL_EXCEPTION_HANDLER, with the exception). A 500 that passes by here is
+        // only reported as a Warning, as it may come from a service behind this one that already logged its error. An exception that went
+        // through this middleware, and a gateway that cannot reach its service (502, 503, 504), are failures of this service.
+        LogLevel level = failure is not null || status is StatusCodes.Status502BadGateway or StatusCodes.Status503ServiceUnavailable or StatusCodes.Status504GatewayTimeout ? LogLevel.Error
             : status >= StatusCodes.Status400BadRequest ? LogLevel.Warning
             : LogLevel.Information;
         if (grpc is not null && level == LogLevel.Information)

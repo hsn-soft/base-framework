@@ -147,6 +147,7 @@ public sealed class RequestLoggingTests
         app.MapGet("/api/orders/{id}", (string id) => Results.Ok(new { id }));
         app.MapGet("/named", () => "named").WithName("Get-Named");
         app.MapGet("/echo-correlation", (HttpRequest request) => request.Headers["X-Correlation-Id"].ToString());
+        app.MapGet("/status/{code:int}", (int code) => Results.StatusCode(code));
         app.MapGet("/boom", () => { throw new InvalidOperationException("boom"); });
         app.MapGet("/missing", () => Results.NotFound());
         app.MapGet("/health/live", () => "ok");
@@ -268,6 +269,10 @@ public sealed class RequestLoggingTests
 
     [Theory]
     [InlineData("/missing", LogLevel.Warning)]
+    [InlineData("/status/500", LogLevel.Warning)]
+    [InlineData("/status/502", LogLevel.Error)]
+    [InlineData("/status/503", LogLevel.Error)]
+    [InlineData("/status/504", LogLevel.Error)]
     [InlineData("/api/orders/1", LogLevel.Information)]
     public async Task TheResponseLogLevel_FollowsTheStatus(string path, LogLevel level)
     {
@@ -285,8 +290,9 @@ public sealed class RequestLoggingTests
 
         HttpResponseMessage response = await rig.Client.GetAsync("/boom");
 
+        // the exception handler logs the failure as the one Error (GLOBAL_EXCEPTION_HANDLER); the response only says what the client got
         Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
-        Assert.Equal(LogLevel.Error, rig.Response.Level);
+        Assert.Equal(LogLevel.Warning, rig.Response.Level);
         Assert.Equal("500", rig.Response.Properties["Status"]?.ToString());
     }
 

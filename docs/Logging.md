@@ -88,7 +88,7 @@ log reader can follow it, and so a pod that dies in the middle (out of memory) l
 | `Facility` | `HTTP_REQUEST`, `HTTP_RESPONSE`, `CONSUME_EVENT_START`, `CONSUME_EVENT_SUCCESS` / `CONSUME_EVENT_ERROR` (the end), `CONSUME_EVENT_RETRY` |
 
 `ConsumeStart`/`ConsumeEnd` also carry `HopLevel`, `MessageId`, `ParentMessageId`, `EventName` and `Producer`; the response log has `Status`
-(the level follows it: 4xx Warning, 5xx and exceptions Error) and the user. The message id is the id of the broker-independent
+(the level follows it: 4xx and 5xx are Warning, and Error only for an exception that went through the middleware and for 502, 503 and 504; the Error of a failure is the log of whoever threw, `GLOBAL_EXCEPTION_HANDLER`, so one failure is one Error) and the user. The message id is the id of the broker-independent
 envelope, the same for RabbitMQ and Kafka. Where a message comes from travels in its `Flow` header; a message from an older producer
 (without it) comes from its `Producer`.
 
