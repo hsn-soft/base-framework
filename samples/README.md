@@ -94,7 +94,8 @@ Information, 4xx Warning, 5xx Error), the same at the gateway and in a service, 
 
 `CardNumber` and `Phone` of the order request carry `[SensitiveData]` (`Xyz.Shared/Contracts`): they are hidden in the logged bodies. The
 services write the request and response logs; the gateway writes one `HttpRequestResponse` only for what it answered itself (a rejected token,
-an unknown route, a service that cannot be reached; for a 5xx it adds the masked body of the request).
+an unknown route, a service that cannot be reached). The gateway of the sample does not log bodies; with `RequestLogging:LogBodies` on, it adds the
+masked body of the request to a 5xx.
 
 ## Logging
 
