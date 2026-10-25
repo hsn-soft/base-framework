@@ -291,7 +291,7 @@ application lasts as long as the token (15 minutes); when the token is no longer
 
 ### Redis and RabbitMQ in Abc
 
-Every Abc microservice (and the auth server) and the commercial gateway are connected to **Redis** (`ConnectionStrings:Redis`, key prefix `abc:`); the four services (identity, order, product, shipment) are also connected to the **RabbitMQ** event bus (exchange `abc.events`, the
+Every Abc microservice (and the auth server) and the commercial gateway are connected to **Redis** (`ConnectionStrings:Redis`, key prefix `abc:`); the four services (identity, order, product, shipment) are also connected to the **RabbitMQ** event bus (exchange `ABC`, the
 client name of the service, `RabbitMq` section) ([ADR-0034](../docs/adr/0034-redis-and-rabbitmq-in-the-abc-hosts.md)). Both are checked by `/health/ready`, so a host without one is not ready (and `/health/live` stays 200). The infrastructure is the local one on its default ports:
 Redis `6379`, RabbitMQ `5672` (`guest` / `guest`). Nothing publishes or consumes an event yet, and nothing reads the cache yet: the connections are what is there.
 
@@ -333,7 +333,7 @@ with the suffix `Dev` (development and docker), `Uat`, `Stage` or `Prod`: `Abc_I
 
 ### The order flow ([ADR-0054](../docs/adr/0054-the-order-flow-through-events.md))
 
-A signed-in customer (for example `alice`, of Acme, who gets her token from the auth server) makes an order; the services answer each other through RabbitMQ (exchange `abc.events`):
+A signed-in customer (for example `alice`, of Acme, who gets her token from the auth server) makes an order; the services answer each other through RabbitMQ (exchange `ABC`):
 
 ```
 order    --OrderCreatedEto-->         product    stock of every line checked and set aside (stock history: "reserved")
@@ -345,7 +345,7 @@ shipment --ShipmentCompletedEto-->    order      Confirmed -> Delivered, or Canc
 
 `POST /api/order-service/v1/commercial/orders/create` with `{ "shippingAddress": "Ankara", "lines": [{ "productId": "...", "productName": "Desk Lamp", "unitPrice": 10, "quantity": 2 }] }`: a few seconds later the order is `Delivered`, the lamp has 2 less
 in stock, and there is a `delivered` record in the shipment history. An address with `fail` in it is returned by the (simulated) carrier and the order is cancelled; an out of stock product (the Office Chair has 0) cancels it at the stock check.
-The RabbitMQ management page (`localhost:15672`) shows the queues `abc.events_<service>_<Event>`. Who made the order (the tenant, the user, the roles) travels in the envelope of every message, and each handler runs as that user: the records the handlers write have `CreatedBy` and `UpdatedBy` ([ADR-0057](../docs/adr/0057-the-caller-of-a-message-and-publish-or-send.md)). The order has a `ShippingAddress` now: a database made before this change has to be dropped (`drop database Abc_Order_Dev`).
+The RabbitMQ management page (`localhost:15672`) shows the queues `ABC_<Service>_<Event>` (`ABC_ProductService_OrderCreated`). Who made the order (the tenant, the user, the roles) travels in the envelope of every message, and each handler runs as that user: the records the handlers write have `CreatedBy` and `UpdatedBy` ([ADR-0057](../docs/adr/0057-the-caller-of-a-message-and-publish-or-send.md)). The order has a `ShippingAddress` now: a database made before this change has to be dropped (`drop database Abc_Order_Dev`).
 
 ### More than one store in a service ([ADR-0053](../docs/adr/0053-more-than-one-store-in-a-service.md))
 

@@ -22,7 +22,7 @@ public static class MicroserviceRegister
             .AddAbcRedis(configuration);
 
     /// <summary>
-    /// Connects a service to the RabbitMQ event bus of the system (sections <c>RabbitMq:Connection</c> and <c>RabbitMq:EventBus</c>: the exchange <c>abc.events</c> and the client name of the service) and makes the
+    /// Connects a service to the RabbitMQ event bus of the system (sections <c>RabbitMq:Connection</c> and <c>RabbitMq:EventBus</c>: the exchange <c>ABC</c> and the client name of the service (<c>IdentityService</c>, <c>OrderService</c>, ...)) and makes the
     /// events it publishes carry who started the chain (<see cref="AbcEventHeaderProvider"/>). The service adds its handlers with <c>AddEventHandler</c>. The auth server does not use it.
     /// </summary>
     public static IServiceCollection AddAbcEventBus(this IServiceCollection services, IConfiguration configuration)
