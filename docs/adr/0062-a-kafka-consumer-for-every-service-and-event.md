@@ -19,8 +19,12 @@ service, and the offsets of the events were one commit of one group. The RabbitM
 ## Consequences
 
 - A stuck handler holds back only its own event. A service now has one connection and one thread per handled event instead of one in all (Kafka's groups, not partitions, are what separates them; partitions of a topic still spread one group over instances).
-- More groups on the broker (services x events) and, on the first start after this change, groups that begin at the earliest offset: a service that ran before reads its topics again from the start, and the old per-service groups stay on the broker unused until somebody deletes them. A handler must stand a redelivery; the stock reservation of the Xyz product service does not (it takes the stock again for every `OrderCreated`), so replaying old messages emptied the stock of the sample: reset the sample's topics, groups and databases together (or make that handler idempotent by order id, which is still to do).
+- More groups on the broker (services x events) and, on the first start after this change, groups that begin at the earliest offset: a service that ran before reads its topics again from the start, and the old per-service groups stay on the broker unused until somebody deletes them. A handler must stand a redelivery, and the stock reservation of the product services does: a line is taken once per order and product (its stock history record, `order:<orderId>:<productId>`, says so), so reading the whole topic again changes nothing (checked by resetting the offsets of `XYZ_ProductService_OrderCreated` to the earliest: the stock and the history stayed as they were).
 - Tests: two services read the same event each with its own offset, and a blocked event does not hold back another one of the same service (integration, a real Kafka).
+
+## Known gap
+
+The reservation is not atomic over the products and their history (two databases): a crash between taking the stock and writing the history record lets the next attempt take it again. Closing it needs a transaction or an outbox, which is still to be discussed.
 
 ## Related
 
