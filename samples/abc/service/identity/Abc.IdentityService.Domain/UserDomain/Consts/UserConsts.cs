@@ -2,7 +2,7 @@ namespace Abc.IdentityService.Domain.UserDomain.Consts;
 
 public static class UserConsts
 {
-    public const string TableName = "users";
+    public const string TableName = "User";
 
     public const int UserNameMaxLength = 64;
     public const int EmailMaxLength = 256;

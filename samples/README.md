@@ -329,7 +329,7 @@ The connection strings are `EfCore-IdentityService` (SQL Server), `EfCore-Histor
 
 Every host has `appsettings.json` (what is the same everywhere) and `appsettings.development.json`, `.docker.json`, `.uat.json`, `.stage.json`, `.production.json` (what differs: urls, connection strings, RabbitMQ, Graylog, the services behind a gateway). The names are in small letters;
 `development` has the values of a developer's machine and is what `dotnet run` and the IDE use (`Properties/launchSettings.json`); the others have fake values (`*.abc.example.com`, `CHANGE_ME`) to be overridden by environment variables or a secret store. The databases are `Abc_<Context>_<Suffix>`
-with the suffix `Dev` (development and docker), `Uat`, `Stage` or `Prod`: `Abc_Identity_Dev` (SQL Server), `Abc_History_Dev`, `Abc_Order_Dev`, `Abc_ShipmentHistory_Dev` (PostgreSQL), `Abc_Product_Dev`, `Abc_Stock_Dev`, `Abc_Shipment_Dev` (MongoDB).
+with the suffix `Dev` (development and docker), `Uat`, `Stage` or `Prod`: `Abc_Identity_Dev` (SQL Server), `Abc_History_Dev`, `Abc_Order_Dev`, `Abc_ShipmentHistory_Dev` (PostgreSQL), `Abc_Product_Dev`, `Abc_Stock_Dev`, `Abc_Shipment_Dev` (MongoDB). The tables and the collections are named like their entity, in Pascal case and singular (`User`, `UserHistory`, `Order`, `OrderLine`, `Product`, `ProductStockHistory`, `Shipment`, `ShipmentHistory`, [ADR-0056](../docs/adr/0056-tables-and-collections-are-named-like-the-entity.md)); a database made before has to be dropped.
 
 ### The order flow ([ADR-0054](../docs/adr/0054-the-order-flow-through-events.md))
 

@@ -28,6 +28,7 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
+| [0056](0056-tables-and-collections-are-named-like-the-entity.md) | Tables and collections are named like the entity | Accepted | 2026-10-25 |
 | [0055](0055-environments-of-the-abc-sample.md) | The environments of the Abc sample, and the names of its databases | Accepted | 2026-10-25 |
 | [0054](0054-the-order-flow-through-events.md) | The order flow runs through events: order, product, shipment, order | Accepted | 2026-10-25 |
 | [0053](0053-more-than-one-store-in-a-service.md) | More than one store in a service: a second MongoDB under a key, a relational project beside a MongoDB one | Accepted | 2026-10-25 |

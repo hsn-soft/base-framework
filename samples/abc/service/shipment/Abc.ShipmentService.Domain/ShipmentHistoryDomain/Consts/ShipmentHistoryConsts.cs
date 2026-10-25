@@ -2,7 +2,7 @@ namespace Abc.ShipmentService.Domain.ShipmentHistoryDomain.Consts;
 
 public static class ShipmentHistoryConsts
 {
-    public const string TableName = "shipment_history";
+    public const string TableName = "ShipmentHistory";
 
     public const int TrackingNumberMaxLength = 32;
     public const int OutcomeMaxLength = 32;

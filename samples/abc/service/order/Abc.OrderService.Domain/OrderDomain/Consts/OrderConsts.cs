@@ -2,8 +2,8 @@ namespace Abc.OrderService.Domain.OrderDomain.Consts;
 
 public static class OrderConsts
 {
-    public const string TableName = "orders";
-    public const string LineTableName = "order_lines";
+    public const string TableName = "Order";
+    public const string LineTableName = "OrderLine";
 
     public const int CustomerUserNameMaxLength = 64;
     public const int NoteMaxLength = 512;

@@ -2,7 +2,7 @@ namespace Abc.ProductService.Domain.ProductStockHistoryDomain.Consts;
 
 public static class ProductStockHistoryConsts
 {
-    public const string CollectionName = "product_stock_history";
+    public const string CollectionName = "ProductStockHistory";
 
     public const int ProductNameMaxLength = 128;
     public const int ReasonMaxLength = 32;

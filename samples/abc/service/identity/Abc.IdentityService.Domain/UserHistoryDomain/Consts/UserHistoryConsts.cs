@@ -2,7 +2,7 @@ namespace Abc.IdentityService.Domain.UserHistoryDomain.Consts;
 
 public static class UserHistoryConsts
 {
-    public const string TableName = "user_history";
+    public const string TableName = "UserHistory";
 
     public const int ActionMaxLength = 32;
     public const int UserNameMaxLength = 64;
