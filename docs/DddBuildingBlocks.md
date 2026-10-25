@@ -63,6 +63,8 @@ A client sends `"price desc, name"`; a field that is not in `Fields` is refused 
 
 - **EF Core:** `EfCoreRepository<TContext, TEntity, TKey>`; derive it for a method of your own (`class EfCoreUserRepository(IdentityDbContext db) : EfCoreRepository<IdentityDbContext, User, Guid>(db), IUserRepository`). `IEfCoreRepository<,>` adds the reads with an `include` (`query => query.Include(order => order.Lines)`); nothing is joined unless one says so.
 
+The relational database is a setting: `services.AddBaseEfCore<IdentityDbContext>(configuration, providers => providers.UsePostgres().UseSqlServer())` registers the context on the provider that `Database:Provider` names (`postgres`, `sqlserver`) with its connection string (`ConnectionStrings:Postgres`, `ConnectionStrings:SqlServer`); the application code does not change when it moves ([ADR-0047](adr/0047-relational-provider-chosen-by-a-setting.md)).
+
 ### Reading a DTO without a mapper
 
 `GetPagedListAsync<ProductListDto>(options)` reads only the columns of `ProductListDto` (and joins only what it reaches): its properties are filled from the entity's of the same name, `CustomerName` from `Customer.Name`, lists and objects member by member; `[NotMapped]` leaves one out; a property nothing answers is an error that names it. A `selector` argument says what a name cannot ([ADR-0046](adr/0046-dto-projection-without-a-mapper.md)).

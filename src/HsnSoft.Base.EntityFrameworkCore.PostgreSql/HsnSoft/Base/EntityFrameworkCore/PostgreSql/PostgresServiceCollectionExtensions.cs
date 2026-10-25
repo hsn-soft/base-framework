@@ -8,7 +8,7 @@ namespace HsnSoft.Base.EntityFrameworkCore.PostgreSql;
 public static class PostgresServiceCollectionExtensions
 {
     /// <summary>
-    /// Registers a PostgreSQL <see cref="DbContext"/> that retries transient failures, with the concepts of the framework (audit fields, soft delete, tenants: see <see cref="BaseDbContext"/>), and a readiness health check.
+    /// Registers a PostgreSQL <see cref="DbContext"/> that retries transient failures, with the concepts of the framework (audit fields, soft delete, tenants: see <see cref="BaseDbContext"/>), and a readiness health check. A service that can run on more than one database uses <c>AddBaseEfCore</c> instead.
     /// </summary>
     /// <typeparam name="TContext">The service's DbContext.</typeparam>
     /// <param name="services">The service collection.</param>
@@ -16,15 +16,25 @@ public static class PostgresServiceCollectionExtensions
     /// <param name="connectionName">The name of the connection string.</param>
     public static IServiceCollection AddBasePostgres<TContext>(this IServiceCollection services, IConfiguration configuration, string connectionName = "Postgres")
         where TContext : DbContext
+        => services.AddBaseEfCore<TContext>(configuration, providers => providers.UsePostgres(connectionName));
+
+    /// <summary>Offers PostgreSQL to <c>AddBaseEfCore</c> (selected by <c>Database:Provider</c> = <c>postgres</c>), with the connection string <c>ConnectionStrings:{connectionName}</c>.</summary>
+    public static EfCoreProviderOptions UsePostgres(this EfCoreProviderOptions providers, string connectionName = "Postgres")
     {
-        ArgumentNullException.ThrowIfNull(services);
-        ArgumentNullException.ThrowIfNull(configuration);
+        ArgumentNullException.ThrowIfNull(providers);
 
-        string connectionString = configuration.GetConnectionString(connectionName)
-                               ?? throw new InvalidOperationException($"ConnectionStrings:{connectionName} is required.");
+        return providers.Add(PostgresProvider.Instance, connectionName);
+    }
 
-        services.AddBaseEntityFramework();
-        services.AddDbContext<TContext>((provider, options) => options.UseNpgsql(connectionString, npgsql => npgsql.EnableRetryOnFailure()).UseBaseEntityConcepts(provider));
-        return services.AddDbContextHealthCheck<TContext>("postgres");
+    private sealed class PostgresProvider : IEfCoreProvider
+    {
+        public static readonly PostgresProvider Instance = new();
+
+        public string Name => "postgres";
+
+        public string ConnectionName => "Postgres";
+
+        public void Configure(DbContextOptionsBuilder options, string connectionString)
+            => options.UseNpgsql(connectionString, npgsql => npgsql.EnableRetryOnFailure());
     }
 }
