@@ -12,6 +12,7 @@ builder.Logging.AddBaseSerilog(builder.Configuration, "Abc.ShipmentService");
 // what every Abc microservice has (logging, the web api shell, JWT, Swagger, health), then what this service has
 builder.Services
     .AddAbcMicroservice(builder.Configuration, "Abc.ShipmentService API")
+    .AddAbcEventBus(builder.Configuration)
     .AddBaseMongo(builder.Configuration)
     .AddHttpContextAccessor()
     .AddScoped<ICurrentUser, HttpContextCurrentUser>()

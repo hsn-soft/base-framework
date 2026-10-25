@@ -28,6 +28,7 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
+| [0034](0034-redis-and-rabbitmq-in-the-abc-hosts.md) | Redis and RabbitMQ in the Abc hosts | Accepted | 2026-10-25 |
 | [0033](0033-the-abc-services-crud-pattern.md) | The CRUD pattern of the Abc services: order, product and shipment follow the identity service | Accepted | 2026-10-25 |
 | [0032](0032-the-auth-server-reads-the-users-of-the-identity-service.md) | The auth server reads the users of the identity service; the author of a row is the `sub` of the token | Accepted | 2026-10-25 |
 | [0031](0031-jwt-signed-with-an-rsa-private-key.md) | The JWT is signed with an RSA private key; the other hosts only have the public key | Accepted | 2026-10-25 |

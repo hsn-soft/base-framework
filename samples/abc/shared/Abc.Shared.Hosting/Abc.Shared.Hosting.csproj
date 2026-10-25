@@ -20,6 +20,7 @@
         <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.AspNetCore.WebApi\HsnSoft.Base.AspNetCore.WebApi.csproj" />
         <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.AspNetCore.Swashbuckle\HsnSoft.Base.AspNetCore.Swashbuckle.csproj" />
         <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.Authentication\HsnSoft.Base.Authentication.csproj" />
+        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.Caching.StackExchangeRedis\HsnSoft.Base.Caching.StackExchangeRedis.csproj" />
     </ItemGroup>
 
 </Project>

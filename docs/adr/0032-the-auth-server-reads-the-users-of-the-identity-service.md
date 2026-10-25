@@ -17,8 +17,7 @@ shows a password in a settings file, is not what a system is built like.
   changed later. A password is 8 to 128 characters; it is `[SensitiveData]` in the create DTO, so it is never in a log. There is no endpoint to change a password yet.
 - **A user has `Roles`** (`admin`, `customer`; `customer` when none is given), kept in one column of names with commas, and **the token has the claims of the user:** `sub` (the user name), `user_id`, `name`, `email`, one `role` per role, `jti`.
 - **`CreatedBy` and `UpdatedBy`** are the `sub` of the token of whoever made the request (`ICurrentUser` in the application layer, answered by the host from `HttpContext`); `null` without a signed-in user. The seed writes `system`.
-- **The database and two users are made on start:** `EnsureIdentityDatabaseAsync` creates the schema when it is not there and, when there is no user, adds `admin` / `admin123` (admin, customer) and `alice` / `alice123` (customer). Both the identity service and the auth server call
-  it, so whichever starts first makes the database. The passwords are sample values for a development database.
+- **The database and two users are made on start:** `EnsureIdentityDatabaseAsync` creates the schema when it is not there and, when there is no user, adds `admin` / `admin123` (admin, customer) and `alice` / `alice123` (customer). Only the identity service does this: the database is its, and the auth server only reads it. The passwords are sample values for a development database.
 - The `Auth` section of the auth server is gone; its `ConnectionStrings:Postgres` is the identity service's.
 
 ## Consequences
@@ -26,7 +25,7 @@ shows a password in a settings file, is not what a system is built like.
 - The two hosts are coupled by one database schema (the identity service owns it): a change of the `users` table is a change that the auth server has to be built with. A service of its own for the check (an HTTP call from the auth server to the identity service) was not chosen: it
   would need a token to get a token, or an open endpoint that returns hashes.
 - `EnsureCreated` does not change a table that exists: a database made before this decision has no password column and has to be dropped (`drop database abc_identity`); a system that keeps data uses migrations.
-- Two hosts that start at the same moment on an empty server can both try to make the database; start one, then the other.
+- The auth server does not make the database: until the identity service has started once (it makes the schema and the users), a login finds no table and fails; the readiness check of the auth server (`/health/ready`) shows the database is not ready.
 - Who may create, change or delete users (an `admin` policy) is not decided yet: every signed-in user can.
 
 ## Related

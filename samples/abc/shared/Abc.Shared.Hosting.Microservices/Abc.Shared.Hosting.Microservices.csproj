@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-    <!-- What every Abc microservice shares on top of Abc.Shared.Hosting: it reads the bearer token, its endpoints need it, and its Swagger has the button for it. -->
+    <!-- What every Abc microservice shares on top of Abc.Shared.Hosting: it reads the bearer token, its endpoints need it, its Swagger has the button for it, and it is connected to Redis; with the event bus (RabbitMQ) when it asks for it. -->
 
     <ItemGroup>
         <FrameworkReference Include="Microsoft.AspNetCore.App" />
@@ -8,6 +8,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Abc.Shared.Hosting\Abc.Shared.Hosting.csproj" />
+        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.EventBus.RabbitMQ\HsnSoft.Base.EventBus.RabbitMQ.csproj" />
     </ItemGroup>
 
 </Project>

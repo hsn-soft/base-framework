@@ -234,7 +234,7 @@ Each gateway reaches only the endpoints of its own segment (the other one answer
 
 ### The users of Abc
 
-The auth server and the identity service share one PostgreSQL database (`ConnectionStrings:Postgres`, `abc_identity`). Whichever of the two starts first creates it and, when it has no user, adds `admin` / `admin123` and `alice` / `alice123`
+The auth server (which only reads) and the identity service (which owns the database) share one PostgreSQL database (`ConnectionStrings:Postgres`, `abc_identity`). The identity service creates it on its first start and, when it has no user, adds `admin` / `admin123` and `alice` / `alice123`
 (passwords are kept as PBKDF2 hashes). `EnsureCreated` does not change a table that exists: a database made before this change has to be dropped (`drop database abc_identity`). The `CreatedBy` and `UpdatedBy` of a user are the
 `sub` of the token of whoever made the request.
 
@@ -255,7 +255,7 @@ another system here, and never commit a private key.
 
 | Project | Is | Port |
 |---|---|---|
-| `Abc.AuthServer.Host` | a web api: `POST /api/auth-server/v1/commercial/auth/login` (open) gives a JWT access token for a user name and password, `GET .../auth/me` says who the token is. The users are the identity service's, read from its database ([ADR-0032](../docs/adr/0032-the-auth-server-reads-the-users-of-the-identity-service.md)); the first start makes the database and the users `admin` / `admin123` (admin, customer) and `alice` / `alice123` (customer) | 5410 |
+| `Abc.AuthServer.Host` | a web api: `POST /api/auth-server/v1/commercial/auth/login` (open) gives a JWT access token for a user name and password, `GET .../auth/me` says who the token is. The users are the identity service's, read from its database ([ADR-0032](../docs/adr/0032-the-auth-server-reads-the-users-of-the-identity-service.md)); the identity service makes the database and the users `admin` / `admin123` (admin, customer) and `alice` / `alice123` (customer) on its first start; start it before the first login | 5410 |
 | `Abc.CommercialWeb.Host` | an MVC application for employees: sign in (the token is kept in the cookie), then a page of the users of the identity service, with a search. It calls **only the commercial gateway** (`http://localhost:5500`) | 5700 |
 | `Abc.PublicWeb.Host` | an MVC application for everyone, no sign-in: a form that asks whether a user name is free. It calls **only the public gateway** (`http://localhost:5600`) | 5800 |
 
@@ -269,6 +269,12 @@ dotnet run --project samples/abc/app/Abc.PublicWeb.Host             # http://loc
 The commercial gateway also maps `/auth-server/v1/...` to the auth server. Every call a page makes to its gateway carries the correlation id of the page request (and, in the commercial application, the bearer token), so the page, the gateway and
 the service behind it are one chain in the logs (the pages and the service share one `CorrelationId` in Graylog; the gateway stays silent for what a service logged). The sign-in of the commercial
 application lasts as long as the token (15 minutes); when the token is no longer accepted the page signs out and says so. The web applications answer pages, so they do not use `Abc.Shared.Hosting` (its web api shell answers `BaseResponse`).
+
+### Redis and RabbitMQ in Abc
+
+Every Abc microservice (and the auth server) and the commercial gateway are connected to **Redis** (`ConnectionStrings:Redis`, key prefix `abc:`); the four services (identity, order, product, shipment) are also connected to the **RabbitMQ** event bus (exchange `abc.events`, the
+client name of the service, `RabbitMq` section) ([ADR-0034](../docs/adr/0034-redis-and-rabbitmq-in-the-abc-hosts.md)). Both are checked by `/health/ready`, so a host without one is not ready (and `/health/live` stays 200). The infrastructure is the local one on its default ports:
+Redis `6379`, RabbitMQ `5672` (`guest` / `guest`). Nothing publishes or consumes an event yet, and nothing reads the cache yet: the connections are what is there.
 
 ### The Abc services
 

@@ -14,7 +14,7 @@ public static class IdentityDatabase
 
     /// <summary>
     /// Creates the database and its tables when they are not there and, when there is no user yet, adds two to sign in as: <c>admin</c> / <c>admin123</c> (roles admin and customer)
-    /// and <c>alice</c> / <c>alice123</c> (customer). Both the identity service and the auth server call it, so whichever starts first makes the database. These passwords are sample
+    /// and <c>alice</c> / <c>alice123</c> (customer). Only the identity service calls it: the database is the identity service's, the auth server only reads it (so it needs the identity service to have started once). These passwords are sample
     /// values, for a development database; a real system makes its first administrator some other way.
     /// </summary>
     public static async Task EnsureIdentityDatabaseAsync(this IServiceProvider services, CancellationToken cancellationToken = default)
@@ -39,4 +39,5 @@ public static class IdentityDatabase
             await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
     }
+
 }

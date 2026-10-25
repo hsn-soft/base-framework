@@ -1,5 +1,6 @@
 using HsnSoft.Base.AspNetCore;
 using HsnSoft.Base.Authentication;
+using HsnSoft.Base.Caching.StackExchangeRedis;
 using HsnSoft.Base.Logging;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
@@ -53,6 +54,13 @@ public static class HostingRegister
 
         return services;
     }
+
+    /// <summary>
+    /// Connects the host to Redis: <c>IDistributedCache</c>, the raw connection and a readiness check (<c>ConnectionStrings:Redis</c>, and <c>Redis:InstanceName</c>, <c>abc:</c> for every Abc host so the keys
+    /// of the system have one prefix). Every microservice and the commercial gateway have it; the host decides, as the public gateway does not.
+    /// </summary>
+    public static IServiceCollection AddAbcRedis(this IServiceCollection services, IConfiguration configuration)
+        => services.AddBaseRedis(configuration);
 
     /// <summary>
     /// The middleware every Abc host has, in this order: the request log (outside the exception handler, so its response log has the status the client gets), the exception handling, Swagger,

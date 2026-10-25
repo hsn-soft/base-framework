@@ -21,9 +21,6 @@ WebApplication app = builder.Build();
 // the private key is loaded now: a missing key stops the host here, not at the first login
 _ = app.Services.GetRequiredService<TokenService>();
 
-// the users are the identity service's, in its database: it is made here too, so whichever of the two starts first has it
-await app.Services.EnsureIdentityDatabaseAsync();
-
 app.UseAbcMicroservice();
 app.MapControllers();
 
