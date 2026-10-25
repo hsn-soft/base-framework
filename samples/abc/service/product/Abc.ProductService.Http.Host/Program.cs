@@ -1,8 +1,10 @@
 using Abc.ProductService.Application;
 using Abc.ProductService.Domain.ProductDomain.Entities;
+using Abc.ProductService.Http.Host.EventHandlers;
 using Abc.ProductService.MongoDB;
 using Abc.Shared.Hosting;
 using Abc.Shared.Hosting.Microservices;
+using HsnSoft.Base.EventBus;
 using HsnSoft.Base.Logging.Serilog;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -12,6 +14,7 @@ builder.Logging.AddBaseSerilog(builder.Configuration, "Abc.ProductService");
 builder.Services
     .AddAbcMicroservice(builder.Configuration, "Abc.ProductService API", typeof(Product).Assembly)
     .AddAbcEventBus(builder.Configuration)
+    .AddEventHandlers(typeof(EventHandlersAssemblyMarker).Assembly)
     .AddProductPersistence(builder.Configuration)
     .AddProductStockPersistence(builder.Configuration)
     .AddProductApplication();

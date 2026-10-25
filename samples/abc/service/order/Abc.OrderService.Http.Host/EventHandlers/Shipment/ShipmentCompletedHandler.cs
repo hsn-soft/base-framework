@@ -1,11 +1,11 @@
 using Abc.OrderService.Domain.OrderDomain.Entities;
 using Abc.OrderService.Domain.OrderDomain.Exceptions;
-using Abc.Shared.Events;
+using Abc.Shared.Contracts.Events.Shipment;
 using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.Domain.Repositories;
 using HsnSoft.Base.EventBus;
 
-namespace Abc.OrderService.Application.EventHandlers;
+namespace Abc.OrderService.Http.Host.EventHandlers.Shipment;
 
 /// <summary>The shipment service says how the delivery of an order ended: the order is delivered, or cancelled with the reason. It runs as the user who made the order.</summary>
 public sealed class ShipmentCompletedHandler(IRepository<Order, Guid> orders) : IIntegrationEventHandler<ShipmentCompletedEto>

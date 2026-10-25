@@ -1,9 +1,10 @@
 using Abc.ProductService.Application.Services;
-using Abc.Shared.Events;
+using Abc.Shared.Contracts.Events.Order;
+using Abc.Shared.Contracts.Events.Product;
 using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.EventBus;
 
-namespace Abc.ProductService.Application.EventHandlers;
+namespace Abc.ProductService.Http.Host.EventHandlers.Order;
 
 /// <summary>
 /// A new order: sets the stock of its lines aside and says what happened, as a fact for whoever cares: <see cref="OrderStockReservedEto"/> (the order is confirmed, the shipment is sent) or <see cref="OrderStockRejectedEto"/> (the order is

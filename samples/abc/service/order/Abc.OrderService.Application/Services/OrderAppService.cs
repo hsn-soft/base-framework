@@ -6,7 +6,7 @@ using Abc.OrderService.Application.Contracts.OrderDomain.Services;
 using Abc.OrderService.Domain.OrderDomain.Entities;
 using Abc.OrderService.Domain.OrderDomain.Exceptions;
 using Abc.OrderService.Domain.OrderDomain.Repositories;
-using Abc.Shared.Events;
+using Abc.Shared.Contracts.Events.Order;
 using HsnSoft.Base;
 using HsnSoft.Base.Application;
 using HsnSoft.Base.Application.Dtos;

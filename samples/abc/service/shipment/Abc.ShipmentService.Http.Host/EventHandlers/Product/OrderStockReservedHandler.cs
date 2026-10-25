@@ -1,4 +1,5 @@
-using Abc.Shared.Events;
+using Abc.Shared.Contracts.Events.Product;
+using Abc.Shared.Contracts.Events.Shipment;
 using Abc.ShipmentService.Application.Contracts.ShipmentDomain.Dtos;
 using Abc.ShipmentService.Application.Contracts.ShipmentDomain.Dtos.Submits;
 using Abc.ShipmentService.Application.Contracts.ShipmentDomain.Services;
@@ -7,7 +8,7 @@ using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.Domain.Repositories;
 using HsnSoft.Base.EventBus;
 
-namespace Abc.ShipmentService.Application.EventHandlers;
+namespace Abc.ShipmentService.Http.Host.EventHandlers.Product;
 
 /// <summary>
 /// The stock of an order was set aside (the product service published it for whoever cares): makes the shipment, sends it (the carrier is simulated: the parcel is delivered, unless the address says <c>fail</c>, which the carrier cannot reach), and tells the order service how it ended

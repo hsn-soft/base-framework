@@ -1,8 +1,5 @@
 using Abc.OrderService.Application.Contracts.OrderDomain.Services;
-using Abc.OrderService.Application.EventHandlers;
 using Abc.OrderService.Application.Services;
-using Abc.Shared.Events;
-using HsnSoft.Base.EventBus;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Abc.OrderService.Application;
@@ -15,11 +12,6 @@ public static class ApplicationServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
 
         services.AddScoped<IOrderAppService, OrderAppService>();
-
-        // the answers of the other services to an order: each handler runs in its own scope, per message
-        services.AddEventHandler<OrderStockReservedEto, OrderStockReservedHandler>();
-        services.AddEventHandler<OrderStockRejectedEto, OrderStockRejectedHandler>();
-        services.AddEventHandler<ShipmentCompletedEto, ShipmentCompletedHandler>();
         return services;
     }
 }

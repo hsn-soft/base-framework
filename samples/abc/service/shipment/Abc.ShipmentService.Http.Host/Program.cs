@@ -2,7 +2,9 @@ using Abc.Shared.Hosting.Microservices;
 using Abc.ShipmentService.Application;
 using Abc.ShipmentService.Domain.ShipmentDomain.Entities;
 using Abc.ShipmentService.EntityFrameworkCore;
+using Abc.ShipmentService.Http.Host.EventHandlers;
 using Abc.ShipmentService.MongoDB;
+using HsnSoft.Base.EventBus;
 using HsnSoft.Base.Logging.Serilog;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -12,6 +14,7 @@ builder.Logging.AddBaseSerilog(builder.Configuration, "Abc.ShipmentService");
 builder.Services
     .AddAbcMicroservice(builder.Configuration, "Abc.ShipmentService API", typeof(Shipment).Assembly)
     .AddAbcEventBus(builder.Configuration)
+    .AddEventHandlers(typeof(EventHandlersAssemblyMarker).Assembly)
     .AddShipmentPersistence(builder.Configuration)
     .AddShipmentHistoryPersistence(builder.Configuration)
     .AddShipmentApplication();

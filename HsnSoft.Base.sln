@@ -125,7 +125,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Abc.Gateway.Public.Host", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Abc.Shared.Hosting", "samples\abc\shared\Abc.Shared.Hosting\Abc.Shared.Hosting.csproj", "{B93A268E-9C8F-4271-8C75-9B1164089F48}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Abc.Shared.Events", "samples\abc\shared\Abc.Shared.Events\Abc.Shared.Events.csproj", "{DF192FF0-CE65-4239-9041-F56B6C60CAA3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Abc.Shared.Contracts", "samples\abc\shared\Abc.Shared.Contracts\Abc.Shared.Contracts.csproj", "{DF192FF0-CE65-4239-9041-F56B6C60CAA3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Abc.Shared.Hosting.Gateways", "samples\abc\shared\Abc.Shared.Hosting.Gateways\Abc.Shared.Hosting.Gateways.csproj", "{784C8750-49EB-46F7-811D-4E9434643884}"
 EndProject

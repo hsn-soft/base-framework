@@ -331,7 +331,7 @@ Every host has `appsettings.json` (what is the same everywhere) and `appsettings
 `development` has the values of a developer's machine and is what `dotnet run` and the IDE use (`Properties/launchSettings.json`); the others have fake values (`*.abc.example.com`, `CHANGE_ME`) to be overridden by environment variables or a secret store. The databases are `Abc_<Context>_<Suffix>`
 with the suffix `Dev` (development and docker), `Uat`, `Stage` or `Prod`: `Abc_Identity_Dev` (SQL Server), `Abc_History_Dev`, `Abc_Order_Dev`, `Abc_ShipmentHistory_Dev` (PostgreSQL), `Abc_Product_Dev`, `Abc_Stock_Dev`, `Abc_Shipment_Dev` (MongoDB). The tables and the collections are named like their entity, in Pascal case and singular (`User`, `UserHistory`, `Order`, `OrderLine`, `Product`, `ProductStockHistory`, `Shipment`, `ShipmentHistory`, [ADR-0056](../docs/adr/0056-tables-and-collections-are-named-like-the-entity.md)); a database made before has to be dropped.
 
-### The order flow ([ADR-0054](../docs/adr/0054-the-order-flow-through-events.md))
+### The order flow ([ADR-0054](../docs/adr/0054-the-order-flow-through-events.md), where the events and the handlers live: [ADR-0059](../docs/adr/0059-where-events-and-their-handlers-live.md))
 
 A signed-in customer (for example `alice`, of Acme, who gets her token from the auth server) makes an order; the services answer each other through RabbitMQ (exchange `ABC`):
 
@@ -345,7 +345,7 @@ shipment --ShipmentCompletedEto-->    order      Confirmed -> Delivered, or Canc
 
 `POST /api/order-service/v1/commercial/orders/create` with `{ "shippingAddress": "Ankara", "lines": [{ "productId": "...", "productName": "Desk Lamp", "unitPrice": 10, "quantity": 2 }] }`: a few seconds later the order is `Delivered`, the lamp has 2 less
 in stock, and there is a `delivered` record in the shipment history. An address with `fail` in it is returned by the (simulated) carrier and the order is cancelled; an out of stock product (the Office Chair has 0) cancels it at the stock check.
-The RabbitMQ management page (`localhost:15672`) shows the queues `ABC_<Service>_<Event>` (`ABC_ProductService_OrderCreated`). Who made the order (the tenant, the user, the roles) travels in the envelope of every message, and each handler runs as that user: the records the handlers write have `CreatedBy` and `UpdatedBy` ([ADR-0057](../docs/adr/0057-the-caller-of-a-message-and-publish-or-send.md)). The order has a `ShippingAddress` now: a database made before this change has to be dropped (`drop database Abc_Order_Dev`).
+The RabbitMQ management page (`localhost:15672`) shows the queues `ABC_<Service>_<Event>` (`ABC_ProductService_OrderCreated`). The events are in `Abc.Shared.Contracts/Events/<publishing service>/`, the handlers in the Host project of the service that handles them, `EventHandlers/<publishing service>/`. Who made the order (the tenant, the user, the roles) travels in the envelope of every message, and each handler runs as that user: the records the handlers write have `CreatedBy` and `UpdatedBy` ([ADR-0057](../docs/adr/0057-the-caller-of-a-message-and-publish-or-send.md)). The order has a `ShippingAddress` now: a database made before this change has to be dropped (`drop database Abc_Order_Dev`).
 
 ### More than one store in a service ([ADR-0053](../docs/adr/0053-more-than-one-store-in-a-service.md))
 

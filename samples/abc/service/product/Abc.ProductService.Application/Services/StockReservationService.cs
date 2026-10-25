@@ -1,7 +1,7 @@
 using Abc.ProductService.Domain.ProductDomain.Entities;
 using Abc.ProductService.Domain.ProductStockHistoryDomain.Consts;
 using Abc.ProductService.Domain.ProductStockHistoryDomain.Entities;
-using Abc.Shared.Events;
+using Abc.Shared.Contracts.Events.Order;
 using HsnSoft.Base.Domain.Repositories;
 
 namespace Abc.ProductService.Application.Services;
