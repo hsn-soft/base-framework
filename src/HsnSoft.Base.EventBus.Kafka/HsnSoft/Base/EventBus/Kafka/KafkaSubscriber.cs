@@ -60,6 +60,10 @@ public sealed partial class KafkaSubscriber(
         consumer.Subscribe(topic);
         LogListening(_logger, group, topic);
 
+        // a stopping service reads no new message, but the one it is handling is let finish: its handler is cancelled only when the shutdown timeout has passed (and the message is then handled again later, as it was not committed)
+        using CancellationTokenSource handlerCts = new();
+        await using CancellationTokenRegistration stopping = stoppingToken.Register(() => handlerCts.CancelAfter(_eventBusOptions.ShutdownTimeout));
+
         try
         {
             while (true)
@@ -68,7 +72,7 @@ public sealed partial class KafkaSubscriber(
                 try
                 {
                     object envelope = EventSerializer.DeserializeEnvelope(result.Message.Value, info.EventType);
-                    await _dispatcher.DispatchAsync(info.EventName, info.EventType, envelope, stoppingToken).ConfigureAwait(false);
+                    await _dispatcher.DispatchAsync(info.EventName, info.EventType, envelope, handlerCts.Token).ConfigureAwait(false);
                 }
                 catch (Exception exception) when (exception is not OperationCanceledException)
                 {
@@ -78,7 +82,7 @@ public sealed partial class KafkaSubscriber(
                         Key = result.Message.Key,
                         Value = result.Message.Value,
                         Headers = new Headers { { "x-original-topic", Encoding.UTF8.GetBytes(result.Topic) } },
-                    }, stoppingToken).ConfigureAwait(false);
+                    }, handlerCts.Token).ConfigureAwait(false);
                 }
 
                 consumer.Commit(result);

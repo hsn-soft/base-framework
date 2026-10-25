@@ -69,4 +69,9 @@ The provider of a relational context is said by the code of the service, not by 
 
 `GetPagedListAsync<ProductListDto>(options)` reads only the columns of `ProductListDto` (and joins only what it reaches): its properties are filled from the entity's of the same name, `CustomerName` from `Customer.Name`, lists and objects member by member; `[NotMapped]` leaves one out; a property nothing answers is an error that names it. A `selector` argument says what a name cannot ([ADR-0046](adr/0046-dto-projection-without-a-mapper.md)).
 - **MongoDB:** `MongoRepository<TEntity, TKey>`; call `MongoEntityMaps.RegisterBases<TKey>()` before the class maps of the entities (the driver wants the members of a base class mapped in its own map), and map only what is the entity's own
-  (`map.MapProperty(p => p.Name)`, `TenantId`). `AddMongoRepository` calls it too.
+  (`map.MapProperty(p => p.Name)`, `TenantId`). `AddMongoRepository` calls it too. `IMongoRepository<,>` adds `UpdateWhereAsync(filter, set => set.Inc(p => p.Stock, -3))`: the check of the filter and the change are one statement of the database, audit fields written.
+
+### The change of a counter ([ADR-0064](adr/0064-the-stock-is-changed-in-one-step.md))
+
+Two requests, or two copies of one message, can reach a service at once, and a broker may run several handlers of an event at the same time (`fetchCount`). A value that the code reads, checks and writes back (a stock) is then wrong; the service changes it in one step of the store
+(`UpdateWhereAsync` with the check in the filter, as `IProductRepository.TryTakeStockAsync` does in the samples).

@@ -1,8 +1,11 @@
+using HsnSoft.Base.Domain.Repositories;
 using HsnSoft.Base.EntityFrameworkCore;
 using HsnSoft.Base.EntityFrameworkCore.PostgreSql;
 using Xyz.ProductService.Domain.ProductDomain.Entities;
+using Xyz.ProductService.Domain.ProductDomain.Repositories;
 using Xyz.ProductService.Domain.ProductStockHistoryDomain.Entities;
 using Xyz.ProductService.Infrastructure.Context;
+using Xyz.ProductService.Infrastructure.Repositories;
 
 namespace Xyz.ProductService.Infrastructure;
 
@@ -17,7 +20,8 @@ public static class EfCoreServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(configuration);
 
         services.AddBaseEfCore<ProductDbContext>(configuration, providers => providers.UsePostgres(), EfCoreProductDbProperties.Provider, EfCoreProductDbProperties.ConnectionStringName);
-        return services.AddEfCoreRepository<ProductDbContext, Product, Guid>();
+        services.AddScoped<IProductRepository, EfCoreProductRepository>();
+        return services.AddScoped<IRepository<Product, Guid>>(provider => provider.GetRequiredService<IProductRepository>());
     }
 
     /// <summary>

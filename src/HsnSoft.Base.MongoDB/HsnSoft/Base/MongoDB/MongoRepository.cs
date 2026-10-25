@@ -16,7 +16,7 @@ namespace HsnSoft.Base.MongoDB;
 /// but <c>AnyAsync(..., ignoreFilters: true)</c>, and the audit fields and the tenant are written before a write. The entity needs a class map (the domain has no attribute of the driver) that maps <c>Id</c> as the id.
 /// A service that needs more derives from it and adds its own methods.
 /// </summary>
-public class MongoRepository<TEntity, TKey>(IMongoDatabase database, MongoEntityConcepts concepts, string collectionName) : IRepository<TEntity, TKey>
+public class MongoRepository<TEntity, TKey>(IMongoDatabase database, MongoEntityConcepts concepts, string collectionName) : IMongoRepository<TEntity, TKey>
     where TEntity : class, IEntity<TKey>
 {
     private const string IdField = nameof(IEntity<>.Id);
@@ -183,6 +183,15 @@ public class MongoRepository<TEntity, TKey>(IMongoDatabase database, MongoEntity
         return (await Collection.UpdateManyAsync(matched, Concepts.Deletion<TEntity>(), cancellationToken: cancellationToken).ConfigureAwait(false)).ModifiedCount;
     }
 
+    public async Task<long> UpdateWhereAsync(Expression<Func<TEntity, bool>> filter, Func<UpdateDefinitionBuilder<TEntity>, UpdateDefinition<TEntity>> update, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(filter);
+        ArgumentNullException.ThrowIfNull(update);
+
+        FilterDefinition<TEntity> matched = Concepts.Visible(Builders<TEntity>.Filter.Where(filter));
+        return (await Collection.UpdateManyAsync(matched, Concepts.Modification(update(Builders<TEntity>.Update)), cancellationToken: cancellationToken).ConfigureAwait(false)).MatchedCount;
+    }
+
     private async Task WriteAsync(List<WriteModel<TEntity>> models, CancellationToken cancellationToken)
     {
         if (models.Count > 0)
@@ -228,7 +237,7 @@ public class MongoRepository<TEntity, TKey>(IMongoDatabase database, MongoEntity
 public static class MongoRepositoryServiceCollectionExtensions
 {
     /// <summary>
-    /// Registers <see cref="MongoRepository{TEntity, TKey}"/> over the collection <paramref name="collectionName"/> as the <see cref="IRepository{TEntity, TKey}"/> of an entity (after <c>AddBaseMongo</c>), and registers the maps of the base classes
+    /// Registers <see cref="MongoRepository{TEntity, TKey}"/> over the collection <paramref name="collectionName"/> as the <see cref="IRepository{TEntity, TKey}"/> (and <see cref="IMongoRepository{TEntity, TKey}"/>) of an entity (after <c>AddBaseMongo</c>), and registers the maps of the base classes
     /// of the entities (<see cref="MongoEntityMaps"/>). <paramref name="serviceKey"/> is the key of the <c>AddBaseMongo</c> that registered the database the collection is in, when the service has more than one.
     /// </summary>
     public static IServiceCollection AddMongoRepository<TEntity, TKey>(this IServiceCollection services, string collectionName, string? serviceKey = null)
@@ -238,7 +247,8 @@ public static class MongoRepositoryServiceCollectionExtensions
         ArgumentException.ThrowIfNullOrWhiteSpace(collectionName);
 
         MongoEntityMaps.RegisterBases<TKey>();
-        return services.AddScoped<IRepository<TEntity, TKey>>(provider => new MongoRepository<TEntity, TKey>(
+        services.AddScoped<IMongoRepository<TEntity, TKey>>(provider => new MongoRepository<TEntity, TKey>(
             serviceKey is null ? provider.GetRequiredService<IMongoDatabase>() : provider.GetRequiredKeyedService<IMongoDatabase>(serviceKey), provider.GetRequiredService<MongoEntityConcepts>(), collectionName));
+        return services.AddScoped<IRepository<TEntity, TKey>>(provider => provider.GetRequiredService<IMongoRepository<TEntity, TKey>>());
     }
 }

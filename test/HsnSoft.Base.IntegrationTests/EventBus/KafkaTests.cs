@@ -16,7 +16,7 @@ public sealed class KafkaTests : IAsyncLifetime
 
     public Task DisposeAsync() => _container.DisposeAsync().AsTask();
 
-    private Task<IHost> StartAsync(string exchange, Action<IServiceCollection> handlers, string? service = null)
+    private Task<IHost> StartAsync(string exchange, Action<IServiceCollection> handlers, string? service = null, TimeSpan? shutdownTimeout = null)
     {
         IConfiguration configuration = Support.Configuration(
             ("Kafka:BootstrapServers", _container.GetBootstrapAddress()),
@@ -28,6 +28,7 @@ public sealed class KafkaTests : IAsyncLifetime
             {
                 options.MaxHandlerAttempts = 2;
                 options.RetryDelay = TimeSpan.FromMilliseconds(10);
+                options.ShutdownTimeout = shutdownTimeout ?? options.ShutdownTimeout;
             });
             handlers(services);
         });
@@ -123,5 +124,42 @@ public sealed class KafkaTests : IAsyncLifetime
         gate.Released.SetResult();
         await Support.EventuallyAsync(() => Task.FromResult(recorder.Received.Count == 1), "the first event to be handled once it is released");
         await host.StopAsync();
+    }
+
+    [Fact]
+    public async Task ASevice_ThatStops_LetsTheMessageItIsHandlingFinish()
+    {
+        StopProbe probe = new();
+        using IHost host = await StartAsync($"it{Guid.NewGuid():N}", services =>
+        {
+            services.AddSingleton(probe);
+            services.AddEventHandler<Pinged, LongRunningHandler>();
+        });
+        await host.Services.GetRequiredService<IEventBus>().PublishAsync(new Pinged("in flight"));
+        await probe.Started.Task.WaitAsync(TimeSpan.FromSeconds(30));
+
+        // the handler needs three seconds; the host is asked to stop one second into them
+        await host.StopAsync();
+
+        Assert.True(probe.Completed, "the message being handled was not allowed to finish");
+        Assert.False(probe.Cancelled);
+    }
+
+    [Fact]
+    public async Task ASevice_ThatStops_CancelsAHandlerThatIsStillWorkingWhenTheShutdownTimeoutHasPassed()
+    {
+        StopProbe probe = new();
+        using IHost host = await StartAsync($"it{Guid.NewGuid():N}", services =>
+        {
+            services.AddSingleton(probe);
+            services.AddEventHandler<Pinged, LongRunningHandler>();
+        }, shutdownTimeout: TimeSpan.FromMilliseconds(500));
+        await host.Services.GetRequiredService<IEventBus>().PublishAsync(new Pinged("too slow"));
+        await probe.Started.Task.WaitAsync(TimeSpan.FromSeconds(30));
+
+        await host.StopAsync();
+
+        Assert.True(probe.Cancelled, "the handler was not cancelled after the shutdown timeout");
+        Assert.False(probe.Completed);
     }
 }

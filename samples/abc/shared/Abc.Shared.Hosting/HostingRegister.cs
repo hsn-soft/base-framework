@@ -7,6 +7,7 @@ using HsnSoft.Base.Logging;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace Abc.Shared.Hosting;
 
@@ -33,6 +34,10 @@ public static class HostingRegister
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(configuration);
+
+        // how long a stopping host waits for its hosted services, the consumers of the event bus among them (they finish the messages they are handling): Hosting:ShutdownTimeoutSeconds, 30 s. The pod's terminationGracePeriodSeconds has to cover
+        // this, the wait of the event bus for what it is publishing (EventBus:ShutdownTimeout) and the preStop.
+        services.Configure<HostOptions>(options => options.ShutdownTimeout = TimeSpan.FromSeconds(configuration.GetValue("Hosting:ShutdownTimeoutSeconds", 30)));
 
         services
             .AddBaseLogging()

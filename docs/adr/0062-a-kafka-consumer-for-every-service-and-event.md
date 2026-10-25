@@ -22,9 +22,12 @@ service, and the offsets of the events were one commit of one group. The RabbitM
 - More groups on the broker (services x events) and, on the first start after this change, groups that begin at the earliest offset: a service that ran before reads its topics again from the start, and the old per-service groups stay on the broker unused until somebody deletes them. A handler must stand a redelivery, and the stock reservation of the product services does: a line is taken once per order and product (its stock history record, `order:<orderId>:<productId>`, says so), so reading the whole topic again changes nothing (checked by resetting the offsets of `XYZ_ProductService_OrderCreated` to the earliest: the stock and the history stayed as they were).
 - Tests: two services read the same event each with its own offset, and a blocked event does not hold back another one of the same service (integration, a real Kafka).
 
+- **Stopping:** a stopping service reads no new message, but the one a consumer is handling is let finish; its handler is cancelled only when `EventBusOptions.ShutdownTimeout` has passed (the message is then not committed and is handled again later), as on RabbitMQ. A first version cancelled the handler as soon as the host stopped; an
+  integration test (a real Kafka, a handler of three seconds) showed it and covers both ways.
+
 ## Known gap
 
-The reservation is not atomic over the products and their history (two databases): a crash between taking the stock and writing the history record lets the next attempt take it again. Closing it needs a transaction or an outbox, which is still to be discussed.
+The reservation is not atomic over the products and their history (two databases): a crash between taking the stock and writing the history record lets the next attempt take it again. Closing it needs a transaction or an outbox, which is still to be discussed. [ADR-0064](0064-the-stock-is-changed-in-one-step.md) made the take of the stock atomic; this gap is one of those that stay.
 
 ## Related
 

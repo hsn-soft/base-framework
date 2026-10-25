@@ -1,4 +1,5 @@
 using Abc.ProductService.Domain.ProductDomain.Entities;
+using Abc.ProductService.Domain.ProductDomain.Repositories;
 using Abc.ProductService.Domain.ProductStockHistoryDomain.Consts;
 using Abc.ProductService.Domain.ProductStockHistoryDomain.Entities;
 using Abc.Shared.Contracts.Events.Order;
@@ -11,9 +12,10 @@ public sealed record StockReservation(bool IsReserved, string? Reason, decimal T
 
 /// <summary>
 /// Sets the stock of an order aside: every line is checked first (the product exists, is for sale and has enough), and only when all can be given is any taken, each with a record in the stock history. A line that an earlier attempt
-/// took already (its record is there) is not taken again, so a message that comes twice does no harm. There is no transaction over the products and their history (two databases): a failure in the middle is finished by the next attempt.
+/// took already (its record is there) is not taken again, so a message that comes twice does no harm. The taking itself is one step in the store (<see cref="IProductRepository.TryTakeStockAsync"/>), so orders that arrive at the same
+/// time cannot take the same piece twice; an order that loses a piece to another one between the check and the taking is rejected. There is no transaction over the products and their history (two databases).
 /// </summary>
-public sealed class StockReservationService(IRepository<Product, Guid> products, IRepository<ProductStockHistory, Guid> stockHistory)
+public sealed class StockReservationService(IProductRepository products, IRepository<ProductStockHistory, Guid> stockHistory)
 {
     public async Task<StockReservation> ReserveAsync(Guid orderId, IReadOnlyList<OrderLineEto> lines, CancellationToken cancellationToken = default)
     {
@@ -62,10 +64,12 @@ public sealed class StockReservationService(IRepository<Product, Guid> products,
 
         foreach ((Product product, int quantity, string reference) in toTake)
         {
-            int before = product.Stock;
-            product.Reserve(quantity);
-            await products.UpdateAsync(product, cancellationToken).ConfigureAwait(false);
-            await stockHistory.AddAsync(ProductStockHistory.Record(product.Id, product.Name, before, product.Stock, ProductStockHistoryConsts.Reserved, $"order {orderId}", reference), cancellationToken).ConfigureAwait(false);
+            if (!await products.TryTakeStockAsync(product.Id, quantity, cancellationToken).ConfigureAwait(false))
+            {
+                return new StockReservation(false, $"{product.Name}: not enough in stock, {quantity} asked for.");
+            }
+
+            await stockHistory.AddAsync(ProductStockHistory.Record(product.Id, product.Name, product.Stock, product.Stock - quantity, ProductStockHistoryConsts.Reserved, $"order {orderId}", reference), cancellationToken).ConfigureAwait(false);
         }
 
         return new StockReservation(true, null, total);

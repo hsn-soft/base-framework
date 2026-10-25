@@ -28,6 +28,7 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
+| [0064](0064-the-stock-is-changed-in-one-step.md) | The stock is changed in one step of the store (an atomic update on MongoDB too) | Accepted | 2026-10-26 |
 | [0063](0063-kafka-topics-are-named-after-the-exchange.md) | Kafka topics are named after the exchange; the topic prefix setting is gone | Accepted | 2026-10-25 |
 | [0062](0062-a-kafka-consumer-for-every-service-and-event.md) | A Kafka consumer, in a group of its own, for every service and event | Accepted | 2026-10-25 |
 | [0061](0061-the-xyz-sample-beside-abc.md) | The Xyz sample beside Abc | Accepted | 2026-10-25 |

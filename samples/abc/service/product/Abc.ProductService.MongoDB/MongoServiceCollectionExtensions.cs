@@ -1,9 +1,12 @@
 using Abc.ProductService.Domain.ProductDomain.Consts;
 using Abc.ProductService.Domain.ProductDomain.Entities;
+using Abc.ProductService.Domain.ProductDomain.Repositories;
 using Abc.ProductService.MongoDB.Configurations;
+using HsnSoft.Base.Domain.Repositories;
 using HsnSoft.Base.MongoDB;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using MongoDB.Driver;
 
 namespace Abc.ProductService.MongoDB;
 
@@ -20,7 +23,9 @@ public static class MongoServiceCollectionExtensions
         services.AddBaseMongo(configuration, MongoProductDbProperties.ConnectionStringName);
 
         ProductClassMap.Register();
-        services.AddMongoRepository<Product, Guid>(MongoProductDbProperties.CollectionPrefix + ProductConsts.CollectionName);
+        services.AddScoped<IProductRepository>(provider => new MongoProductRepository(
+            provider.GetRequiredService<IMongoDatabase>(), provider.GetRequiredService<MongoEntityConcepts>(), MongoProductDbProperties.CollectionPrefix + ProductConsts.CollectionName));
+        services.AddScoped<IRepository<Product, Guid>>(provider => provider.GetRequiredService<IProductRepository>());
         return services;
     }
 }

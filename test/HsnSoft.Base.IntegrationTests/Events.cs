@@ -132,3 +132,31 @@ public sealed class BlockedGate
 {
     public TaskCompletionSource Released { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
 }
+
+/// <summary>Works on a <see cref="Pinged"/> for a while and says whether it was allowed to finish or was cancelled on the way.</summary>
+public sealed class StopProbe
+{
+    public TaskCompletionSource Started { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+    public bool Completed { get; set; }
+
+    public bool Cancelled { get; set; }
+}
+
+public sealed class LongRunningHandler(StopProbe probe) : IIntegrationEventHandler<Pinged>
+{
+    public async Task HandleAsync(MessageEnvelope<Pinged> envelope, CancellationToken cancellationToken)
+    {
+        probe.Started.SetResult();
+        try
+        {
+            await Task.Delay(TimeSpan.FromSeconds(3), cancellationToken);
+            probe.Completed = true;
+        }
+        catch (OperationCanceledException)
+        {
+            probe.Cancelled = true;
+            throw;
+        }
+    }
+}

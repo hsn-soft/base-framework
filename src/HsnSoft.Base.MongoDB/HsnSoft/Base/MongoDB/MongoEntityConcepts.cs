@@ -69,6 +69,21 @@ public sealed class MongoEntityConcepts(IAuditPropertySetter audit, ICurrentTena
         return builder.Combine(sets);
     }
 
+    /// <summary>The update with the modification fields (<see cref="IModificationAudited"/>) written beside it, for an update that loads nothing.</summary>
+    public UpdateDefinition<T> Modification<T>(UpdateDefinition<T> update)
+    {
+        ArgumentNullException.ThrowIfNull(update);
+
+        if (!typeof(IModificationAudited).IsAssignableFrom(typeof(T)))
+        {
+            return update;
+        }
+
+        UpdateDefinitionBuilder<T> builder = Builders<T>.Update;
+        AuditStamp stamp = audit.Stamp();
+        return builder.Combine(update, builder.Set(nameof(IModificationAudited.UpdatedAt), stamp.At), builder.Set(nameof(IModificationAudited.UpdatedBy), stamp.By));
+    }
+
     /// <summary>Before a replace: the modification fields.</summary>
     public void Modified(object entity)
     {

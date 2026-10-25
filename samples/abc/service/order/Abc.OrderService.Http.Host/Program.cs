@@ -3,6 +3,7 @@ using Abc.OrderService.Domain.OrderDomain.Entities;
 using Abc.OrderService.EntityFrameworkCore;
 using Abc.OrderService.EntityFrameworkCore.Context;
 using Abc.OrderService.Http.Host.EventHandlers;
+using Abc.Shared.Contracts.Events.Product;
 using Abc.Shared.Hosting.Microservices;
 using HsnSoft.Base.EntityFrameworkCore;
 using HsnSoft.Base.EventBus;
@@ -15,7 +16,8 @@ builder.Logging.AddBaseSerilog(builder.Configuration, "Abc.OrderService");
 builder.Services
     .AddAbcMicroservice(builder.Configuration, "Abc.OrderService API", typeof(Order).Assembly)
     .AddAbcEventBus(builder.Configuration)
-    .AddEventHandlers(typeof(EventHandlersAssemblyMarker).Assembly)
+    // an event that is not named here is handled one message at a time; this one five at a time (each message changes its own order)
+    .AddEventHandlers(typeof(EventHandlersAssemblyMarker).Assembly, new Dictionary<string, ushort> { [nameof(OrderStockReservedEto)] = 5 })
     .AddOrderPersistence(builder.Configuration)
     .AddOrderApplication();
 

@@ -2,6 +2,7 @@ using Abc.ProductService.Application;
 using Abc.ProductService.Domain.ProductDomain.Entities;
 using Abc.ProductService.Http.Host.EventHandlers;
 using Abc.ProductService.MongoDB;
+using Abc.Shared.Contracts.Events.Order;
 using Abc.Shared.Hosting;
 using Abc.Shared.Hosting.Microservices;
 using HsnSoft.Base.EventBus;
@@ -14,7 +15,8 @@ builder.Logging.AddBaseSerilog(builder.Configuration, "Abc.ProductService");
 builder.Services
     .AddAbcMicroservice(builder.Configuration, "Abc.ProductService API", typeof(Product).Assembly)
     .AddAbcEventBus(builder.Configuration)
-    .AddEventHandlers(typeof(EventHandlersAssemblyMarker).Assembly)
+    // ten orders are set aside at the same time: the stock is taken in one step of the database (IProductRepository), so the number at once does not change the result
+    .AddEventHandlers(typeof(EventHandlersAssemblyMarker).Assembly, new Dictionary<string, ushort> { [nameof(OrderCreatedEto)] = 10 })
     .AddProductPersistence(builder.Configuration)
     .AddProductStockPersistence(builder.Configuration)
     .AddProductApplication();

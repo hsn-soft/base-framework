@@ -54,23 +54,6 @@ public sealed class Product : FullAuditedEntity<Guid>, IMultiTenant
         IsActive = isActive;
     }
 
-    /// <summary>Takes <paramref name="quantity"/> out of the stock for an order: only an active product with enough in stock gives it.</summary>
-    public void Reserve(int quantity)
-    {
-        Guard.Range(quantity, nameof(quantity), 1, int.MaxValue);
-        if (!IsActive)
-        {
-            throw new DomainException($"The product {Name} is not for sale.").WithKey("product_not_active", Name);
-        }
-
-        if (Stock < quantity)
-        {
-            throw new DomainException($"There are {Stock} of {Name} in stock, {quantity} were asked for.").WithKey("product_stock_insufficient", Name, Stock, quantity);
-        }
-
-        Stock -= quantity;
-    }
-
     private void Change(string name, string? description, decimal price, int stock)
     {
         Name = Guard.NotNullOrWhiteSpace(name, nameof(Name), ProductConsts.NameMaxLength);

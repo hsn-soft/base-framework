@@ -299,4 +299,31 @@ public sealed class MongoRepositoryTests : IAsyncLifetime
         Assert.Equal(2, await tags.DeleteWhereAsync(tag => tag.Label != "x"));
         Assert.Equal(1, await tags.CountAsync());
     }
+
+    [Fact]
+    public async Task UpdateWhere_ChangesACounterOnlyWhileTheConditionHolds_WhateverTheNumberOfCallersAtOnce()
+    {
+        Product product = new("counter", 10);
+        await using (AsyncServiceScope seed = Scope())
+        {
+            await Products(seed).AddAsync(product);
+        }
+
+        // twenty callers, each wants one of the ten that are there: the test and the change are one step, so exactly ten get one
+        long[] changed = await Task.WhenAll(Enumerable.Range(0, 20).Select(async _ =>
+        {
+            await using AsyncServiceScope scope = Scope();
+            return await scope.ServiceProvider.GetRequiredService<IMongoRepository<Product, Guid>>()
+                .UpdateWhereAsync(candidate => candidate.Id == product.Id && candidate.Price >= 1, set => set.Inc(candidate => candidate.Price, -1));
+        }));
+
+        await using AsyncServiceScope read = Scope();
+        Product? stored = await Products(read).FindAsync(product.Id);
+        Assert.Equal(10, changed.Count(count => count == 1));
+        Assert.Equal(10, changed.Count(count => count == 0));
+        Assert.Equal(0, stored!.Price);
+        Assert.Equal(_user.Id, stored.UpdatedBy);
+        await Assert.ThrowsAsync<ArgumentNullException>(() => read.ServiceProvider.GetRequiredService<IMongoRepository<Product, Guid>>().UpdateWhereAsync(null!, set => set.Inc(candidate => candidate.Price, 1)));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => read.ServiceProvider.GetRequiredService<IMongoRepository<Product, Guid>>().UpdateWhereAsync(candidate => true, null!));
+    }
 }
