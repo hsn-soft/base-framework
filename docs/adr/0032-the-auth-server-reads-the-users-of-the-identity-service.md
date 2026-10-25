@@ -1,6 +1,6 @@
 # ADR-0032: The auth server reads the users of the identity service; the author of a row is the `sub` of the token
 
-- **Status:** Accepted (`CreatedBy`/`UpdatedBy` are now the id of the user, and the token has tenant claims, [ADR-0037](0037-audit-soft-delete-and-tenants.md))
+- **Status:** Accepted (`CreatedBy`/`UpdatedBy` are now the id of the user, and the token has tenant claims, [ADR-0037](0037-audit-soft-delete-and-tenants.md); the database is SQL Server now, [ADR-0049](0049-abc-databases-and-provider-references.md))
 - **Date:** 2026-10-25 (replaces the user list in the `Auth` section of [ADR-0029](0029-one-auth-server-issues-the-token.md))
 
 ## Context

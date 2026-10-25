@@ -195,7 +195,7 @@ SQL Server needs about 2 GB of memory; a container limited to 1 GB restarts in a
 `Application` (`Contracts/UserDomain/{Dtos,Services}` for the DTOs and the service interface, `Services/` for the implementation), `EntityFrameworkCore`
 (`Context`, `Configurations`, `Repositories`) and `Http.Host` (`Controllers`). The host references Application and EntityFrameworkCore, both reference Domain.
 
-The first use case is the CRUD of the users (PostgreSQL `abc_identity`, created at start); the controller only calls `IUserAppService`:
+The first use case is the CRUD of the users (SQL Server `abc_identity`, created at start); the controller only calls `IUserAppService`:
 
 | Endpoint | Does |
 |---|---|
@@ -253,7 +253,7 @@ Every Abc entity (`User`, `Product`, `Order`, `Shipment`) has the audit fields (
 
 ### The users of Abc
 
-The auth server (which only reads) and the identity service (which owns the database) share one PostgreSQL database (`ConnectionStrings:Postgres`, `abc_identity`). The identity service creates it on its first start and, when it has no user, adds `admin` / `admin123` and `alice` / `alice123`
+The auth server (which only reads) and the identity service (which owns the database) share one SQL Server database (`ConnectionStrings:SqlServer`, `abc_identity`). The identity service creates it on its first start and, when it has no user, adds `admin` / `admin123` and `alice` / `alice123`
 (passwords are kept as PBKDF2 hashes). `EnsureCreated` does not change a table that exists: a database made before this change has to be dropped (`drop database abc_identity`). The `CreatedBy` and `UpdatedBy` of a user are the
 `sub` of the token of whoever made the request.
 
@@ -302,7 +302,7 @@ Redis `6379`, RabbitMQ `5672` (`guest` / `guest`). Nothing publishes or consumes
 
 | Service | Persistence | Port | State |
 |---|---|---|---|
-| `identity` | `EntityFrameworkCore` (PostgreSQL `abc_identity`) | 5400 | users CRUD, a public endpoint |
+| `identity` | `EntityFrameworkCore` (SQL Server `abc_identity`) | 5400 | users CRUD, a public endpoint |
 | `order` | `EntityFrameworkCore` (PostgreSQL `abc_order`) | 5420 | orders with lines, CRUD |
 | `product` | `MongoDB` (`abc_product`) | 5430 | products and stock, CRUD; two seeded products (`LAMP-001` with 10 in stock, `CHAIR-001` with 0) |
 | `shipment` | `MongoDB` (`abc_shipment`) | 5440 | shipments of an order, CRUD |

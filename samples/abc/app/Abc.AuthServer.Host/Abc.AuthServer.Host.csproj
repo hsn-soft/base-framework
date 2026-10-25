@@ -11,7 +11,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.EntityFrameworkCore.PostgreSql\HsnSoft.Base.EntityFrameworkCore.PostgreSql.csproj" />
         <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.Logging.Serilog\HsnSoft.Base.Logging.Serilog.csproj" />
     </ItemGroup>
 
