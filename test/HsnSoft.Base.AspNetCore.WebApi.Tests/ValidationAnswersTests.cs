@@ -9,8 +9,17 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace HsnSoft.Base.AspNetCore.WebApi.Tests;
 
+public enum Plan
+{
+    Free = 1,
+    Paid = 2,
+}
+
 public sealed class SignUp : IValidatableObject
 {
+    [EnumDataType(typeof(Plan))]
+    public Plan? Plan { get; set; }
+
     [Required]
     [StringLength(8)]
     public string? UserName { get; set; }
@@ -215,5 +224,22 @@ public sealed class ValidationAnswersTests
         Assert.Contains("Nickname must not be empty.", Messages(blank));
         Assert.Contains("Roles must not have an empty item.", Messages(blank));
         Assert.Equal(HttpStatusCode.OK, status);
+    }
+
+    [Theory]
+    [InlineData("\"plan\":99", "Plan has an invalid value.")]
+    [InlineData("\"plan\":\"Gold\"", "Plan has an invalid value.")]
+    [InlineData("\"plan\":\"Paid\"", null)]
+    public async Task AnEnum_ThatIsNotDefined_IsAnInvalidValue(string plan, string? message)
+    {
+        await using WebApplication app = await StartAsync("Production");
+
+        (HttpStatusCode status, JsonElement body) = await PostAsync(app, "/api/validation/sign-up", "{\"userName\":\"ada\",\"email\":\"a@b.co\",\"tenantId\":\"6f0e1d52-1d9e-4f0b-8f0a-2b8d6f1a9c11\"," + plan + "}");
+
+        Assert.Equal(message is null ? HttpStatusCode.OK : HttpStatusCode.BadRequest, status);
+        if (message is not null)
+        {
+            Assert.Equal(["Validation failed.", message], Messages(body));
+        }
     }
 }

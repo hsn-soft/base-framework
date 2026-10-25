@@ -71,6 +71,7 @@ A request that has things wrong with it is answered **400**, `errorCode: validat
 
 - `statusMessages` has the translated messages, one for each wrong field (the language of the request); there is no `payload` in an error. It is the same in every environment.
 - Attributes (`Required`, `StringLength`, `Range`, `EmailAddress`, `Phone`, `Url`, `RegularExpression`, `Compare`) are translated from the framework texts `Validation:*`; a value that cannot be read (a bad guid, a broken JSON) is `Validation:InvalidValue` / `Validation:InvalidJson`.
+- An enum is declared nullable with `[EnumDataType(typeof(...))]`: a name that is not defined is an invalid value (the JSON converter), and so is a number that is not defined (the attribute). Any other standard attribute that has no text of its own (`AllowedValues`, `DeniedValues`, `CreditCard`, ...) is told as an invalid value too; an attribute of your own keeps its own message.
 - A value type that must be sent is nullable with `[Required]` (`Guid?`, `decimal?`, `bool?`), so a missing value is not the default one; `[NotDefault]` refuses `Guid.Empty` (or `0`) as an invalid value.
 - `[NotWhiteSpace]`: an optional text, when given, is not blank (a required one is already refused by `[Required]`). `[NoBlankItems]`: no empty item in a list of texts.
 - A rule about the elements of a list (the roles of a user: no empty one, no comma) is a rule of that DTO: the member is the list and the argument names the element (`Roles[1] has an invalid value.`).

@@ -79,12 +79,15 @@ internal static class ModelStateTranslator
         StringLengthAttribute length => ("Validation:Length", [label, length.MinimumLength, length.MaximumLength]),
         MaxLengthAttribute max => ("Validation:MaxLength", [label, max.Length]),
         MinLengthAttribute min => ("Validation:MinLength", [label, min.Length]),
+        LengthAttribute length => ("Validation:Length", [label, length.MinimumLength, length.MaximumLength]),
         RangeAttribute range => ("Validation:Range", [label, range.Minimum, range.Maximum]),
         EmailAddressAttribute => ("Validation:Email", [label]),
         PhoneAttribute => ("Validation:Phone", [label]),
         UrlAttribute => ("Validation:Url", [label]),
         RegularExpressionAttribute => ("Validation:Pattern", [label]),
         CompareAttribute compare => ("Validation:Compare", [label, compare.OtherProperty]),
+        // the others of the standard ones (EnumDataType, AllowedValues, DeniedValues, CreditCard, Base64String, FileExtensions, ...) have no text of their own: the value is not a valid one
+        _ when attribute.GetType().Namespace is "System.ComponentModel.DataAnnotations" => ("Validation:InvalidValue", [label]),
         _ => null,
     };
 
