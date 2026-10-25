@@ -158,7 +158,7 @@ public sealed class EfCoreRepositoryTests : IAsyncLifetime, IDisposable
     }
 
     [Fact]
-    public async Task AListHasASortingAFilterAndALimit_AndAnIncludeThatDoesNotChangeIt()
+    public async Task AListHasASortingAFilterAndALimit()
     {
         await SeedAsync(8);
         await using AsyncServiceScope scope = _provider.CreateAsyncScope();
@@ -168,7 +168,6 @@ public sealed class EfCoreRepositoryTests : IAsyncLifetime, IDisposable
             Filter = item => item.Price >= 30,
             Sort = s_sort.Parse("price desc, name", "name"),
             MaxResultCount = 3,
-            Include = query => query,
         });
         IReadOnlyList<Item> all = await Items(scope).GetListAsync(new ListQueryOptions<Item>());
 

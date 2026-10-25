@@ -35,7 +35,7 @@ public sealed class GetProductsPaged : PagedDataRequestDto { public string? Name
 
 ## The repository (`IRepository<TEntity, TKey>`)
 
-`FindAsync(id | predicate)`, `AnyAsync(predicate, ignoreFilters)`, `CountAsync`, `GetListAsync(ListQueryOptions)`, `GetPagedListAsync(PagedQueryOptions)`, `AddAsync`, `UpdateAsync`, `DeleteAsync`. Registered with `AddEfCoreRepository<TContext, TEntity, TKey>()` or
+`IReadOnlyRepository` (`FindAsync(id | predicate)`, `AnyAsync(predicate, ignoreFilters)`, `CountAsync`, `GetListAsync(ListQueryOptions)`, `GetPagedListAsync(PagedQueryOptions)`, and the same for a DTO: `FindAsync<TDto>`, `GetListAsync<TDto>`, `GetPagedListAsync<TDto>`) and `IRepository` (`AddAsync`, `UpdateAsync`, `DeleteAsync`); what only one kind of store does is on its own interface (`IEfCoreRepository`, [ADR-0045](adr/0045-repository-levels-relational-and-document.md)). Registered with `AddEfCoreRepository<TContext, TEntity, TKey>()` or
 `AddMongoRepository<TEntity, TKey>("collection")`; soft-deleted and other tenants' entities are never found, except by `AnyAsync(..., ignoreFilters: true)` (a value that is unique in the whole store). Each method that changes saves.
 
 An application service builds the filter and asks:
@@ -61,6 +61,10 @@ A client sends `"price desc, name"`; a field that is not in `Fields` is refused 
 
 ### Stores
 
-- **EF Core:** `EfCoreRepository<TContext, TEntity, TKey>`; derive it for a method of your own (`class EfCoreUserRepository(IdentityDbContext db) : EfCoreRepository<IdentityDbContext, User, Guid>(db), IUserRepository`). `Include` of the options loads what the query says.
+- **EF Core:** `EfCoreRepository<TContext, TEntity, TKey>`; derive it for a method of your own (`class EfCoreUserRepository(IdentityDbContext db) : EfCoreRepository<IdentityDbContext, User, Guid>(db), IUserRepository`). `IEfCoreRepository<,>` adds the reads with an `include` (`query => query.Include(order => order.Lines)`); nothing is joined unless one says so.
+
+### Reading a DTO without a mapper
+
+`GetPagedListAsync<ProductListDto>(options)` reads only the columns of `ProductListDto` (and joins only what it reaches): its properties are filled from the entity's of the same name, `CustomerName` from `Customer.Name`, lists and objects member by member; `[NotMapped]` leaves one out; a property nothing answers is an error that names it. A `selector` argument says what a name cannot ([ADR-0046](adr/0046-dto-projection-without-a-mapper.md)).
 - **MongoDB:** `MongoRepository<TEntity, TKey>`; call `MongoEntityMaps.RegisterBases<TKey>()` before the class maps of the entities (the driver wants the members of a base class mapped in its own map), and map only what is the entity's own
   (`map.MapProperty(p => p.Name)`, `TenantId`). `AddMongoRepository` calls it too.

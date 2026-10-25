@@ -200,4 +200,34 @@ public sealed class MongoRepositoryTests : IAsyncLifetime
         Assert.Throws<ArgumentNullException>(() => ((IServiceCollection)null!).AddMongoRepository<Tag, Guid>("tags"));
         Assert.Throws<ArgumentException>(() => new ServiceCollection().AddMongoRepository<Tag, Guid>(" "));
     }
+
+    public sealed class ProductDto
+    {
+        public Guid Id { get; set; }
+
+        public string Name { get; set; } = string.Empty;
+    }
+
+    [Fact]
+    public async Task ADto_IsReadByTheDocumentStore_WithOnlyItsFields()
+    {
+        await SeedAsync(5);
+        await using AsyncServiceScope scope = Scope();
+        IRepository<Product, Guid> products = Products(scope);
+        Product first = (await products.GetListAsync(new ListQueryOptions<Product> { Sort = s_sort.Parse("name", "name"), MaxResultCount = 1 })).Single();
+
+        ProductDto? one = await products.FindAsync<ProductDto>(first.Id);
+        IReadOnlyList<ProductDto> list = await products.GetListAsync<ProductDto>(new ListQueryOptions<Product> { Sort = s_sort.Parse("name desc", "name"), MaxResultCount = 2 });
+        PagedQueryResult<ProductDto> page = await products.GetPagedListAsync<ProductDto>(new PagedQueryOptions<Product> { Sort = s_sort.Parse("name", "name"), PageNumber = 2, MaxResultCount = 2 });
+        IReadOnlyList<ProductDto> given = await products.GetListAsync<ProductDto>(new ListQueryOptions<Product> { MaxResultCount = 1 }, product => new ProductDto { Name = "x" + product.Name });
+
+        Assert.Equal(("item-01", first.Id), (one?.Name, one?.Id));
+        Assert.Equal(["item-05", "item-04"], list.Select(product => product.Name));
+        Assert.Equal(5, page.TotalCount);
+        Assert.Equal(["item-03", "item-04"], page.Items.Select(product => product.Name));
+        Assert.StartsWith("xitem-", given.Single().Name);
+        Assert.Null(await products.FindAsync<ProductDto>(Guid.NewGuid()));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => products.GetListAsync<ProductDto>(null!));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => products.GetPagedListAsync<ProductDto>(null!));
+    }
 }

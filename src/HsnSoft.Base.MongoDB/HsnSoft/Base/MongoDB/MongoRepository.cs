@@ -35,6 +35,10 @@ public class MongoRepository<TEntity, TKey>(IMongoDatabase database, MongoEntity
         return await Collection.Find(Concepts.Visible(Builders<TEntity>.Filter.Where(predicate))).FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
     }
 
+    public async Task<TDto?> FindAsync<TDto>(TKey id, Expression<Func<TEntity, TDto>>? selector = null, CancellationToken cancellationToken = default)
+        where TDto : class
+        => await Collection.Find(Concepts.Visible(Builders<TEntity>.Filter.Eq(IdField, id))).Project(selector ?? EntityProjection.For<TEntity, TDto>()).FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+
     public Task<bool> AnyAsync(Expression<Func<TEntity, bool>> predicate, bool ignoreFilters = false, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(predicate);
@@ -57,6 +61,32 @@ public class MongoRepository<TEntity, TKey>(IMongoDatabase database, MongoEntity
         }
 
         return await find.ToListAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<IReadOnlyList<TDto>> GetListAsync<TDto>(Domain.Repositories.ListQueryOptions<TEntity> options, Expression<Func<TEntity, TDto>>? selector = null, CancellationToken cancellationToken = default)
+        where TDto : class
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        IFindFluent<TEntity, TDto> find = Collection.Find(Concepts.Visible(Narrowed(options.Filter))).Sort(Sorting(options)).Project(selector ?? EntityProjection.For<TEntity, TDto>());
+        if (options.MaxResultCount is { } limit)
+        {
+            find = find.Limit(limit);
+        }
+
+        return await find.ToListAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<PagedQueryResult<TDto>> GetPagedListAsync<TDto>(PagedQueryOptions<TEntity> options, Expression<Func<TEntity, TDto>>? selector = null, CancellationToken cancellationToken = default)
+        where TDto : class
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        int pageSize = Math.Max(options.MaxResultCount ?? PagedQueryOptions<TEntity>.DefaultPageSize, 1);
+        FilterDefinition<TEntity> filter = Concepts.Visible(Narrowed(options.Filter));
+        long total = await Collection.CountDocumentsAsync(filter, cancellationToken: cancellationToken).ConfigureAwait(false);
+        List<TDto> items = await Collection.Find(filter).Sort(Sorting(options)).Skip((Math.Max(options.PageNumber, 1) - 1) * pageSize).Limit(pageSize).Project(selector ?? EntityProjection.For<TEntity, TDto>()).ToListAsync(cancellationToken).ConfigureAwait(false);
+        return new PagedQueryResult<TDto>(items, total);
     }
 
     public async Task<PagedQueryResult<TEntity>> GetPagedListAsync(PagedQueryOptions<TEntity> options, CancellationToken cancellationToken = default)

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
 using HsnSoft.Base.Domain.Sorting;
 
@@ -14,9 +13,6 @@ public class ListQueryOptions<TEntity>
 
     /// <summary>The sorting (<c>SortFields.Parse</c>); the order of the key when <see langword="null"/>.</summary>
     public SortSpec<TEntity>? Sort { get; init; }
-
-    /// <summary>For a relational store: what to load with the entity (<c>query =&gt; query.Include(entity =&gt; entity.Parent)</c>). A document store ignores it.</summary>
-    public Func<IQueryable<TEntity>, IQueryable<TEntity>>? Include { get; init; }
 
     /// <summary>At most this many; all when <see langword="null"/>.</summary>
     public int? MaxResultCount { get; init; }

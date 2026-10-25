@@ -16,7 +16,7 @@ namespace HsnSoft.Base.EntityFrameworkCore;
 /// <see cref="IRepository{TEntity, TKey}"/> for a relational store: the queries of a service's entity, written once. The query filters of the context (soft delete, tenants: <see cref="BaseDbContext"/>) apply to every
 /// method but <c>AnyAsync(..., ignoreFilters: true)</c>. A service that needs more derives from it and adds its own methods (<c>class EfCoreUserRepository(IdentityDbContext db) : EfCoreRepository&lt;IdentityDbContext, User, Guid&gt;(db), IUserRepository</c>).
 /// </summary>
-public class EfCoreRepository<TContext, TEntity, TKey>(TContext db) : IRepository<TEntity, TKey>
+public class EfCoreRepository<TContext, TEntity, TKey>(TContext db) : IEfCoreRepository<TEntity, TKey>
     where TContext : DbContext
     where TEntity : class, IEntity<TKey>
 {
@@ -26,6 +26,17 @@ public class EfCoreRepository<TContext, TEntity, TKey>(TContext db) : IRepositor
 
     public Task<TEntity?> FindAsync(TKey id, CancellationToken cancellationToken = default)
         => Set.FirstOrDefaultAsync(IdEquals(id), cancellationToken);
+
+    public Task<TEntity?> FindAsync(TKey id, Func<IQueryable<TEntity>, IQueryable<TEntity>> include, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(include);
+
+        return include(Set).FirstOrDefaultAsync(IdEquals(id), cancellationToken);
+    }
+
+    public Task<TDto?> FindAsync<TDto>(TKey id, Expression<Func<TEntity, TDto>>? selector = null, CancellationToken cancellationToken = default)
+        where TDto : class
+        => Set.AsNoTracking().Where(IdEquals(id)).Select(selector ?? EntityProjection.For<TEntity, TDto>()).FirstOrDefaultAsync(cancellationToken);
 
     public Task<TEntity?> FindAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
     {
@@ -44,11 +55,55 @@ public class EfCoreRepository<TContext, TEntity, TKey>(TContext db) : IRepositor
     public Task<long> CountAsync(Expression<Func<TEntity, bool>>? filter = null, CancellationToken cancellationToken = default)
         => (filter is null ? Set : Set.Where(filter)).LongCountAsync(cancellationToken);
 
-    public async Task<IReadOnlyList<TEntity>> GetListAsync(ListQueryOptions<TEntity> options, CancellationToken cancellationToken = default)
+    public Task<IReadOnlyList<TEntity>> GetListAsync(ListQueryOptions<TEntity> options, CancellationToken cancellationToken = default)
+        => ListAsync(options, null, cancellationToken);
+
+    public Task<IReadOnlyList<TEntity>> GetListAsync(ListQueryOptions<TEntity> options, Func<IQueryable<TEntity>, IQueryable<TEntity>> include, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(include);
+
+        return ListAsync(options, include, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<TDto>> GetListAsync<TDto>(ListQueryOptions<TEntity> options, Expression<Func<TEntity, TDto>>? selector = null, CancellationToken cancellationToken = default)
+        where TDto : class
     {
         ArgumentNullException.ThrowIfNull(options);
 
-        IQueryable<TEntity> query = Sorted(Narrowed(options), options);
+        IQueryable<TEntity> query = Sorted(Narrowed(options, null), options);
+        if (options.MaxResultCount is { } limit)
+        {
+            query = query.Take(limit);
+        }
+
+        return await query.Select(selector ?? EntityProjection.For<TEntity, TDto>()).ToListAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    public Task<PagedQueryResult<TEntity>> GetPagedListAsync(PagedQueryOptions<TEntity> options, CancellationToken cancellationToken = default)
+        => PagedAsync(options, null, cancellationToken);
+
+    public Task<PagedQueryResult<TEntity>> GetPagedListAsync(PagedQueryOptions<TEntity> options, Func<IQueryable<TEntity>, IQueryable<TEntity>> include, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(include);
+
+        return PagedAsync(options, include, cancellationToken);
+    }
+
+    public async Task<PagedQueryResult<TDto>> GetPagedListAsync<TDto>(PagedQueryOptions<TEntity> options, Expression<Func<TEntity, TDto>>? selector = null, CancellationToken cancellationToken = default)
+        where TDto : class
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        (IQueryable<TEntity> page, long total) = await PageOf(options, null, cancellationToken).ConfigureAwait(false);
+        IReadOnlyList<TDto> items = await page.Select(selector ?? EntityProjection.For<TEntity, TDto>()).ToListAsync(cancellationToken).ConfigureAwait(false);
+        return new PagedQueryResult<TDto>(items, total);
+    }
+
+    private async Task<IReadOnlyList<TEntity>> ListAsync(ListQueryOptions<TEntity> options, Func<IQueryable<TEntity>, IQueryable<TEntity>>? include, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        IQueryable<TEntity> query = Sorted(Narrowed(options, include), options);
         if (options.MaxResultCount is { } limit)
         {
             query = query.Take(limit);
@@ -57,15 +112,20 @@ public class EfCoreRepository<TContext, TEntity, TKey>(TContext db) : IRepositor
         return await query.ToListAsync(cancellationToken).ConfigureAwait(false);
     }
 
-    public async Task<PagedQueryResult<TEntity>> GetPagedListAsync(PagedQueryOptions<TEntity> options, CancellationToken cancellationToken = default)
+    private async Task<PagedQueryResult<TEntity>> PagedAsync(PagedQueryOptions<TEntity> options, Func<IQueryable<TEntity>, IQueryable<TEntity>>? include, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(options);
 
+        (IQueryable<TEntity> page, long total) = await PageOf(options, include, cancellationToken).ConfigureAwait(false);
+        return new PagedQueryResult<TEntity>(await page.ToListAsync(cancellationToken).ConfigureAwait(false), total);
+    }
+
+    // the query of one page, and how many there are in all (counted without the include: a join does not change how many entities match)
+    private async Task<(IQueryable<TEntity> Page, long Total)> PageOf(PagedQueryOptions<TEntity> options, Func<IQueryable<TEntity>, IQueryable<TEntity>>? include, CancellationToken cancellationToken)
+    {
         int pageSize = Math.Max(options.MaxResultCount ?? PagedQueryOptions<TEntity>.DefaultPageSize, 1);
-        IQueryable<TEntity> narrowed = Narrowed(options);
         long total = await (options.Filter is null ? Set : Set.Where(options.Filter)).LongCountAsync(cancellationToken).ConfigureAwait(false);
-        IReadOnlyList<TEntity> items = await Sorted(narrowed, options).Skip((Math.Max(options.PageNumber, 1) - 1) * pageSize).Take(pageSize).ToListAsync(cancellationToken).ConfigureAwait(false);
-        return new PagedQueryResult<TEntity>(items, total);
+        return (Sorted(Narrowed(options, include), options).Skip((Math.Max(options.PageNumber, 1) - 1) * pageSize).Take(pageSize), total);
     }
 
     public async Task AddAsync(TEntity entity, CancellationToken cancellationToken = default)
@@ -97,12 +157,12 @@ public class EfCoreRepository<TContext, TEntity, TKey>(TContext db) : IRepositor
         await Db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
-    private IQueryable<TEntity> Narrowed(ListQueryOptions<TEntity> options)
+    private IQueryable<TEntity> Narrowed(ListQueryOptions<TEntity> options, Func<IQueryable<TEntity>, IQueryable<TEntity>>? include)
     {
         IQueryable<TEntity> query = Set.AsNoTracking();
-        if (options.Include is not null)
+        if (include is not null)
         {
-            query = options.Include(query);
+            query = include(query);
         }
 
         return options.Filter is null ? query : query.Where(options.Filter);
@@ -148,13 +208,15 @@ public class EfCoreRepository<TContext, TEntity, TKey>(TContext db) : IRepositor
 
 public static class EfCoreRepositoryServiceCollectionExtensions
 {
-    /// <summary>Registers <see cref="EfCoreRepository{TContext, TEntity, TKey}"/> as the <see cref="IRepository{TEntity, TKey}"/> of an entity. A service that has a repository of its own registers that one instead.</summary>
+    /// <summary>Registers <see cref="EfCoreRepository{TContext, TEntity, TKey}"/> as the <see cref="IRepository{TEntity, TKey}"/> and the <see cref="IEfCoreRepository{TEntity, TKey}"/> of an entity. A service that has a repository of its own registers that one instead.</summary>
     public static IServiceCollection AddEfCoreRepository<TContext, TEntity, TKey>(this IServiceCollection services)
         where TContext : DbContext
         where TEntity : class, IEntity<TKey>
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        return services.AddScoped<IRepository<TEntity, TKey>, EfCoreRepository<TContext, TEntity, TKey>>();
+        services.AddScoped<EfCoreRepository<TContext, TEntity, TKey>>();
+        services.AddScoped<IEfCoreRepository<TEntity, TKey>>(provider => provider.GetRequiredService<EfCoreRepository<TContext, TEntity, TKey>>());
+        return services.AddScoped<IRepository<TEntity, TKey>>(provider => provider.GetRequiredService<EfCoreRepository<TContext, TEntity, TKey>>());
     }
 }

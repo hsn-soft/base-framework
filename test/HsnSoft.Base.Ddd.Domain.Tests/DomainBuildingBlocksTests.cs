@@ -120,7 +120,6 @@ public class DomainBuildingBlocksTests
 
         Assert.Null(paged.Filter);
         Assert.Null(paged.Sort);
-        Assert.Null(paged.Include);
         Assert.Null(paged.MaxResultCount);
         Assert.Equal(1, paged.PageNumber);
         Assert.Equal(10, PagedQueryOptions<Product>.DefaultPageSize);
