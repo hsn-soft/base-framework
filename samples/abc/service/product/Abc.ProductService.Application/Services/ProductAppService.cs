@@ -7,11 +7,9 @@ using Abc.ProductService.Domain.ProductDomain.Entities;
 using Abc.ProductService.Domain.ProductDomain.Exceptions;
 using Abc.ProductService.Domain.ProductDomain.Repositories;
 
-using HsnSoft.Base.Security;
-
 namespace Abc.ProductService.Application.Services;
 
-public sealed class ProductAppService(IProductRepository products, TimeProvider clock, ICurrentUser currentUser) : IProductAppService
+public sealed class ProductAppService(IProductRepository products) : IProductAppService
 {
     public async Task<ProductDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
         => ToDto(await FindAsync(id, cancellationToken).ConfigureAwait(false));
@@ -52,7 +50,7 @@ public sealed class ProductAppService(IProductRepository products, TimeProvider 
             throw new ProductSkuDuplicateException(input.Sku.Trim());
         }
 
-        Product product = Product.Create(input.Name, input.Sku, input.Description, input.Price, input.Stock, clock.GetUtcNow(), currentUser.UserId);
+        Product product = Product.Create(input.Name, input.Sku, input.Description, input.Price, input.Stock);
         await products.AddAsync(product, cancellationToken).ConfigureAwait(false);
         return ToDto(product);
     }
@@ -62,7 +60,7 @@ public sealed class ProductAppService(IProductRepository products, TimeProvider 
         ArgumentNullException.ThrowIfNull(input);
 
         Product product = await FindAsync(input.Id, cancellationToken).ConfigureAwait(false);
-        product.Update(input.Name, input.Description, input.Price, input.Stock, input.IsActive, clock.GetUtcNow(), currentUser.UserId);
+        product.Update(input.Name, input.Description, input.Price, input.Stock, input.IsActive);
         await products.UpdateAsync(product, cancellationToken).ConfigureAwait(false);
     }
 
@@ -84,6 +82,7 @@ public sealed class ProductAppService(IProductRepository products, TimeProvider 
         Price = product.Price,
         Stock = product.Stock,
         IsActive = product.IsActive,
+        TenantId = product.TenantId,
         CreatedAt = product.CreatedAt,
         CreatedBy = product.CreatedBy,
         UpdatedAt = product.UpdatedAt,

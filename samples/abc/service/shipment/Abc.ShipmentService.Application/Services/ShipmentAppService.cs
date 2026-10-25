@@ -8,11 +8,9 @@ using Abc.ShipmentService.Domain.ShipmentDomain.Exceptions;
 using Abc.ShipmentService.Domain.ShipmentDomain.Repositories;
 using HsnSoft.Base;
 
-using HsnSoft.Base.Security;
-
 namespace Abc.ShipmentService.Application.Services;
 
-public sealed class ShipmentAppService(IShipmentRepository shipments, TimeProvider clock, ICurrentUser currentUser) : IShipmentAppService
+public sealed class ShipmentAppService(IShipmentRepository shipments) : IShipmentAppService
 {
     public async Task<ShipmentDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
         => ToDto(await FindAsync(id, cancellationToken).ConfigureAwait(false));
@@ -48,7 +46,7 @@ public sealed class ShipmentAppService(IShipmentRepository shipments, TimeProvid
     {
         ArgumentNullException.ThrowIfNull(input);
 
-        Shipment shipment = Shipment.Create(input.OrderId, input.Carrier, input.Address, clock.GetUtcNow(), currentUser.UserId);
+        Shipment shipment = Shipment.Create(input.OrderId, input.Carrier, input.Address);
         await shipments.AddAsync(shipment, cancellationToken).ConfigureAwait(false);
         return ToDto(shipment);
     }
@@ -58,7 +56,7 @@ public sealed class ShipmentAppService(IShipmentRepository shipments, TimeProvid
         ArgumentNullException.ThrowIfNull(input);
 
         Shipment shipment = await FindAsync(input.Id, cancellationToken).ConfigureAwait(false);
-        shipment.Update(input.Carrier, input.Address, ParseStatus(input.Status) ?? throw new DomainException("Status is required."), clock.GetUtcNow(), currentUser.UserId);
+        shipment.Update(input.Carrier, input.Address, ParseStatus(input.Status) ?? throw new DomainException("Status is required."));
         await shipments.UpdateAsync(shipment, cancellationToken).ConfigureAwait(false);
     }
 
@@ -86,6 +84,7 @@ public sealed class ShipmentAppService(IShipmentRepository shipments, TimeProvid
         Carrier = shipment.Carrier,
         Address = shipment.Address,
         Status = shipment.Status.ToString(),
+        TenantId = shipment.TenantId,
         CreatedAt = shipment.CreatedAt,
         CreatedBy = shipment.CreatedBy,
         UpdatedAt = shipment.UpdatedAt,

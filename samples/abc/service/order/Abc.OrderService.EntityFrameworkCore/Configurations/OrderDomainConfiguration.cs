@@ -20,10 +20,9 @@ public static class OrderDomainConfiguration
             order.Property(entity => entity.Status).HasConversion<string>().HasMaxLength(20).IsRequired();
             order.Property(entity => entity.Note).HasMaxLength(OrderConsts.NoteMaxLength);
             order.Property(entity => entity.TotalAmount).HasPrecision(18, 2);
-            order.Property(entity => entity.CreatedBy).HasMaxLength(OrderConsts.AuthorMaxLength);
-            order.Property(entity => entity.UpdatedBy).HasMaxLength(OrderConsts.AuthorMaxLength);
             order.HasIndex(entity => entity.NormalizedCustomerUserName);
             order.HasIndex(entity => entity.CreatedAt);
+            order.HasIndex(entity => entity.TenantId);
 
             // the lines belong to the order: they are read, saved and deleted with it
             order.OwnsMany(entity => entity.Lines, line =>

@@ -1,7 +1,6 @@
 using Abc.IdentityService.Application.Contracts.UserDomain.Services;
 using Abc.IdentityService.Application.Services;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Abc.IdentityService.Application;
 
@@ -12,7 +11,6 @@ public static class ApplicationServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        services.TryAddSingleton(TimeProvider.System);
         services.AddScoped<IUserAppService, UserAppService>();
         return services;
     }

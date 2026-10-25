@@ -1,5 +1,6 @@
 using Abc.ProductService.Application;
 using Abc.ProductService.MongoDB;
+using Abc.Shared.Hosting;
 using Abc.Shared.Hosting.Microservices;
 using HsnSoft.Base.Logging.Serilog;
 
@@ -15,8 +16,8 @@ builder.Services
 
 WebApplication app = builder.Build();
 
-// the unique index on the sku, and two products to try the service with when there is none
-await app.Services.EnsureProductDatabaseAsync();
+// the indexes, and two products of Acme to try the service with when there is none
+await app.Services.EnsureProductDatabaseAsync(AbcTenants.Acme);
 
 app.UseAbcMicroservice();
 app.MapControllers();

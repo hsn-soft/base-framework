@@ -25,10 +25,14 @@ public static class ProductClassMap
             map.MapProperty(product => product.Price).SetSerializer(new DecimalSerializer(BsonType.Decimal128));
             map.MapProperty(product => product.Stock);
             map.MapProperty(product => product.IsActive);
+            map.MapProperty(product => product.TenantId);
             map.MapProperty(product => product.CreatedAt);
             map.MapProperty(product => product.CreatedBy);
             map.MapProperty(product => product.UpdatedAt);
             map.MapProperty(product => product.UpdatedBy);
+            map.MapProperty(product => product.IsDeleted);
+            map.MapProperty(product => product.DeletedAt);
+            map.MapProperty(product => product.DeletedBy);
         });
     }
 }

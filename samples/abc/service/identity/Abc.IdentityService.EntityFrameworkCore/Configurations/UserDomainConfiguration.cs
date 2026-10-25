@@ -22,8 +22,6 @@ public static class UserDomainConfiguration
             user.Property(entity => entity.NormalizedEmail).HasMaxLength(UserConsts.EmailMaxLength).IsRequired();
             user.Property(entity => entity.DisplayName).HasMaxLength(UserConsts.DisplayNameMaxLength).IsRequired();
             user.Property(entity => entity.PasswordHash).HasMaxLength(UserConsts.PasswordHashMaxLength).IsRequired();
-            user.Property(entity => entity.CreatedBy).HasMaxLength(UserConsts.CreatedByMaxLength);
-            user.Property(entity => entity.UpdatedBy).HasMaxLength(UserConsts.CreatedByMaxLength);
 
             // the roles are one column of names with a comma between them (a role cannot have a comma, the user checks it)
             user.Property(entity => entity.Roles)
@@ -34,6 +32,7 @@ public static class UserDomainConfiguration
                 .HasMaxLength(256)
                 .IsRequired();
             user.HasIndex(entity => entity.NormalizedUserName).IsUnique();
+            user.HasIndex(entity => entity.TenantId);
         });
     }
 }

@@ -7,5 +7,4 @@ public static class ProductConsts
     public const int NameMaxLength = 128;
     public const int SkuMaxLength = 32;
     public const int DescriptionMaxLength = 1024;
-    public const int AuthorMaxLength = 64;
 }

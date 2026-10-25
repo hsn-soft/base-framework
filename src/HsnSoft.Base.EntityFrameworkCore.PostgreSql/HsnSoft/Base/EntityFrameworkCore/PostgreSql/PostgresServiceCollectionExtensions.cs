@@ -8,7 +8,7 @@ namespace HsnSoft.Base.EntityFrameworkCore.PostgreSql;
 public static class PostgresServiceCollectionExtensions
 {
     /// <summary>
-    /// Registers a PostgreSQL <see cref="DbContext"/> that retries transient failures, and a readiness health check.
+    /// Registers a PostgreSQL <see cref="DbContext"/> that retries transient failures, with the concepts of the framework (audit fields, soft delete, tenants: see <see cref="BaseDbContext"/>), and a readiness health check.
     /// </summary>
     /// <typeparam name="TContext">The service's DbContext.</typeparam>
     /// <param name="services">The service collection.</param>
@@ -23,7 +23,8 @@ public static class PostgresServiceCollectionExtensions
         string connectionString = configuration.GetConnectionString(connectionName)
                                ?? throw new InvalidOperationException($"ConnectionStrings:{connectionName} is required.");
 
-        services.AddDbContext<TContext>(options => options.UseNpgsql(connectionString, npgsql => npgsql.EnableRetryOnFailure()));
+        services.AddBaseEntityFramework();
+        services.AddDbContext<TContext>((provider, options) => options.UseNpgsql(connectionString, npgsql => npgsql.EnableRetryOnFailure()).UseBaseEntityConcepts(provider));
         return services.AddDbContextHealthCheck<TContext>("postgres");
     }
 }

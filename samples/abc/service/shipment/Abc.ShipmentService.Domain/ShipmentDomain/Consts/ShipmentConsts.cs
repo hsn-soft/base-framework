@@ -7,5 +7,4 @@ public static class ShipmentConsts
     public const int TrackingNumberMaxLength = 32;
     public const int CarrierMaxLength = 64;
     public const int AddressMaxLength = 512;
-    public const int AuthorMaxLength = 64;
 }

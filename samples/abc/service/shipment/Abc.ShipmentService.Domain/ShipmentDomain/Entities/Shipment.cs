@@ -1,10 +1,16 @@
 using Abc.ShipmentService.Domain.ShipmentDomain.Consts;
 using HsnSoft.Base;
+using HsnSoft.Base.Auditing;
+using HsnSoft.Base.MultiTenancy;
 
 namespace Abc.ShipmentService.Domain.ShipmentDomain.Entities;
 
-/// <summary>A parcel on its way to the customer of an order.</summary>
-public sealed class Shipment
+/// <summary>
+/// A parcel on its way to the customer of an order.
+/// The audit fields, the soft delete and the tenant are done by the persistence (<see cref="ICreationAudited"/>, <see cref="IModificationAudited"/>, <see cref="ISoftDelete"/>,
+/// <see cref="IMultiTenant"/>): the entity only keeps them.
+/// </summary>
+public sealed class Shipment : ICreationAudited, IModificationAudited, ISoftDelete, IMultiTenant
 {
     // for the database driver
     private Shipment()
@@ -28,17 +34,31 @@ public sealed class Shipment
 
     public ShipmentStatus Status { get; private set; }
 
+    public Guid TenantId { get; private set; }
+
     public DateTimeOffset CreatedAt { get; private set; }
 
-    /// <summary>The user name in the <c>sub</c> claim of the token of who made the shipment; <see langword="null"/> when nobody signed in did.</summary>
-    public string? CreatedBy { get; private set; }
+    public Guid? CreatedBy { get; private set; }
 
     public DateTimeOffset UpdatedAt { get; private set; }
 
-    /// <summary>The same for the last change.</summary>
-    public string? UpdatedBy { get; private set; }
+    public Guid? UpdatedBy { get; private set; }
 
-    public static Shipment Create(Guid orderId, string carrier, string address, DateTimeOffset now, string? by)
+    public bool IsDeleted { get; private set; }
+
+    public DateTimeOffset? DeletedAt { get; private set; }
+
+    public Guid? DeletedBy { get; private set; }
+
+    public void AssignTenant(Guid tenantId) => TenantId = tenantId;
+
+    public void MarkCreated(DateTimeOffset at, Guid? by) => (CreatedAt, CreatedBy) = (at, by);
+
+    public void MarkModified(DateTimeOffset at, Guid? by) => (UpdatedAt, UpdatedBy) = (at, by);
+
+    public void MarkDeleted(DateTimeOffset at, Guid? by) => (IsDeleted, DeletedAt, DeletedBy) = (true, at, by);
+
+    public static Shipment Create(Guid orderId, string carrier, string address)
     {
         if (orderId == Guid.Empty)
         {
@@ -51,10 +71,8 @@ public sealed class Shipment
             OrderId = orderId,
             TrackingNumber = $"SHP-{Guid.NewGuid():N}"[..14].ToUpperInvariant(),
             Status = ShipmentStatus.Preparing,
-            CreatedAt = now,
-            CreatedBy = Author(by),
         };
-        shipment.Change(carrier, address, now, by);
+        shipment.Change(carrier, address);
         return shipment;
     }
 
@@ -62,27 +80,23 @@ public sealed class Shipment
     public static string Normalize(string text) => text.Trim().ToUpperInvariant();
 
     /// <summary>Changes the carrier, the address and the status; a delivered or returned shipment is final.</summary>
-    public void Update(string carrier, string address, ShipmentStatus status, DateTimeOffset now, string? by)
+    public void Update(string carrier, string address, ShipmentStatus status)
     {
         if (Status is ShipmentStatus.Delivered or ShipmentStatus.Returned && status != Status)
         {
             throw new DomainException($"A {Status.ToString().ToLowerInvariant()} shipment cannot change its status.");
         }
 
-        Change(carrier, address, now, by);
+        Change(carrier, address);
         Status = status;
     }
 
-    private void Change(string carrier, string address, DateTimeOffset now, string? by)
+    private void Change(string carrier, string address)
     {
         Carrier = Required(carrier, ShipmentConsts.CarrierMaxLength, nameof(Carrier));
         NormalizedCarrier = Normalize(Carrier);
         Address = Required(address, ShipmentConsts.AddressMaxLength, nameof(Address));
-        UpdatedAt = now;
-        UpdatedBy = Author(by);
     }
-
-    private static string? Author(string? by) => string.IsNullOrWhiteSpace(by) ? null : by.Trim()[..Math.Min(by.Trim().Length, ShipmentConsts.AuthorMaxLength)];
 
     private static string Required(string value, int maxLength, string name)
     {

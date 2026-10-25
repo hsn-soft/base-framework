@@ -1,15 +1,20 @@
+using System;
+
 namespace HsnSoft.Base;
 
 /// <summary>
-/// Used to standardize soft deleting entities.
-/// Soft-delete entities are not actually deleted,
-/// marked as IsDeleted = true in the database,
-/// but can not be retrieved to the application normally.
+/// An entity that is not removed when it is deleted: it is marked as deleted, and the lists no longer show it (the query filter of the persistence;
+/// <see cref="Data.IDataFilter"/> lets a piece of code see the deleted ones too). Who deleted it and when is kept.
 /// </summary>
 public interface ISoftDelete
 {
-    /// <summary>
-    /// Used to mark an Entity as 'Deleted'.
-    /// </summary>
     bool IsDeleted { get; }
+
+    DateTimeOffset? DeletedAt { get; }
+
+    /// <summary>The id of the user who deleted it; <see langword="null"/> when nobody signed in did.</summary>
+    Guid? DeletedBy { get; }
+
+    /// <summary>Marks the entity as deleted. Called by the persistence when the entity is deleted, not by the application.</summary>
+    void MarkDeleted(DateTimeOffset at, Guid? by);
 }

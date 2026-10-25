@@ -12,7 +12,7 @@ using HsnSoft.Base.Security;
 
 namespace Abc.OrderService.Application.Services;
 
-public sealed class OrderAppService(IOrderRepository orders, TimeProvider clock, ICurrentUser currentUser) : IOrderAppService
+public sealed class OrderAppService(IOrderRepository orders, ICurrentUser currentUser) : IOrderAppService
 {
     public async Task<OrderDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
         => ToDto(await FindAsync(id, cancellationToken).ConfigureAwait(false));
@@ -49,7 +49,7 @@ public sealed class OrderAppService(IOrderRepository orders, TimeProvider clock,
         ArgumentNullException.ThrowIfNull(input);
 
         IEnumerable<OrderLine> lines = input.Lines.Select(line => OrderLine.Create(line.ProductId, line.ProductName, line.UnitPrice, line.Quantity));
-        Order order = Order.Create(currentUser.UserId ?? string.Empty, input.Note, lines, clock.GetUtcNow(), currentUser.UserId);
+        Order order = Order.Create(currentUser.UserName ?? string.Empty, input.Note, lines);
         await orders.AddAsync(order, cancellationToken).ConfigureAwait(false);
         return ToDto(order);
     }
@@ -59,7 +59,7 @@ public sealed class OrderAppService(IOrderRepository orders, TimeProvider clock,
         ArgumentNullException.ThrowIfNull(input);
 
         Order order = await FindAsync(input.Id, cancellationToken).ConfigureAwait(false);
-        order.Update(ParseStatus(input.Status) ?? throw new DomainException("Status is required."), input.Note, clock.GetUtcNow(), currentUser.UserId);
+        order.Update(ParseStatus(input.Status) ?? throw new DomainException("Status is required."), input.Note);
         await orders.UpdateAsync(order, cancellationToken).ConfigureAwait(false);
     }
 
@@ -87,6 +87,7 @@ public sealed class OrderAppService(IOrderRepository orders, TimeProvider clock,
         Note = order.Note,
         TotalAmount = order.TotalAmount,
         Lines = [.. order.Lines.Select(line => new OrderLineDto { ProductId = line.ProductId, ProductName = line.ProductName, UnitPrice = line.UnitPrice, Quantity = line.Quantity, Total = line.Total })],
+        TenantId = order.TenantId,
         CreatedAt = order.CreatedAt,
         CreatedBy = order.CreatedBy,
         UpdatedAt = order.UpdatedAt,

@@ -24,10 +24,14 @@ public static class ShipmentClassMap
             map.MapProperty(shipment => shipment.NormalizedCarrier);
             map.MapProperty(shipment => shipment.Address);
             map.MapProperty(shipment => shipment.Status).SetSerializer(new EnumSerializer<ShipmentStatus>(BsonType.String));
+            map.MapProperty(shipment => shipment.TenantId);
             map.MapProperty(shipment => shipment.CreatedAt);
             map.MapProperty(shipment => shipment.CreatedBy);
             map.MapProperty(shipment => shipment.UpdatedAt);
             map.MapProperty(shipment => shipment.UpdatedBy);
+            map.MapProperty(shipment => shipment.IsDeleted);
+            map.MapProperty(shipment => shipment.DeletedAt);
+            map.MapProperty(shipment => shipment.DeletedBy);
         });
     }
 }

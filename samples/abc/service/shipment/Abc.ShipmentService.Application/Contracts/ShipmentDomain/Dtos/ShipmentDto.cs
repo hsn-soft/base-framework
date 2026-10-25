@@ -15,11 +15,13 @@ public sealed class ShipmentDto
     /// <summary>Preparing, InTransit, Delivered or Returned.</summary>
     public string Status { get; init; } = string.Empty;
 
+    public Guid TenantId { get; init; }
+
     public DateTimeOffset CreatedAt { get; init; }
 
-    public string? CreatedBy { get; init; }
+    public Guid? CreatedBy { get; init; }
 
     public DateTimeOffset UpdatedAt { get; init; }
 
-    public string? UpdatedBy { get; init; }
+    public Guid? UpdatedBy { get; init; }
 }

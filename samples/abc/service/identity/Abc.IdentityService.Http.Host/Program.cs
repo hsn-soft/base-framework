@@ -1,5 +1,6 @@
 using Abc.IdentityService.Application;
 using Abc.IdentityService.EntityFrameworkCore;
+using Abc.Shared.Hosting;
 using Abc.Shared.Hosting.Microservices;
 using HsnSoft.Base.Logging.Serilog;
 
@@ -15,8 +16,8 @@ builder.Services
 
 WebApplication app = builder.Build();
 
-// the schema, and two users to sign in as when there is none (the auth server reads the same database)
-await app.Services.EnsureIdentityDatabaseAsync();
+// the schema, and two users to sign in as when there is none: admin of the system tenant, alice of Acme (the auth server reads the same database)
+await app.Services.EnsureIdentityDatabaseAsync(AbcTenants.System, AbcTenants.Acme);
 
 app.UseAbcMicroservice();
 app.MapControllers();

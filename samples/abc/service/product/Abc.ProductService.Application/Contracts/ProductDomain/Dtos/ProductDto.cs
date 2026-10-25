@@ -16,11 +16,13 @@ public sealed class ProductDto
 
     public bool IsActive { get; init; }
 
+    public Guid TenantId { get; init; }
+
     public DateTimeOffset CreatedAt { get; init; }
 
-    public string? CreatedBy { get; init; }
+    public Guid? CreatedBy { get; init; }
 
     public DateTimeOffset UpdatedAt { get; init; }
 
-    public string? UpdatedBy { get; init; }
+    public Guid? UpdatedBy { get; init; }
 }

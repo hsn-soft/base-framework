@@ -12,8 +12,9 @@ public sealed class EfCoreUserRepository(IdentityDbContext db) : IUserRepository
 
     public Task<User?> FindByUserNameAsync(string userName, CancellationToken cancellationToken = default)
     {
+        // nobody is signed in yet, so no tenant to look in: the user is found in every tenant, but a deleted user is not found
         string name = User.Normalize(userName);
-        return db.Users.AsNoTracking().FirstOrDefaultAsync(user => user.NormalizedUserName == name, cancellationToken);
+        return db.Users.IgnoreQueryFilters().AsNoTracking().FirstOrDefaultAsync(user => !user.IsDeleted && user.NormalizedUserName == name, cancellationToken);
     }
 
     public async Task<IReadOnlyList<User>> GetListAsync(UserFilter filter, int skip, int take, CancellationToken cancellationToken = default)
@@ -36,7 +37,9 @@ public sealed class EfCoreUserRepository(IdentityDbContext db) : IUserRepository
     public Task<bool> UserNameExistsAsync(string userName, Guid? exceptId = null, CancellationToken cancellationToken = default)
     {
         string name = User.Normalize(userName);
-        return db.Users.AnyAsync(user => user.NormalizedUserName == name && (exceptId == null || user.Id != exceptId), cancellationToken);
+
+        // a user name is unique in the whole system, so a deleted user's name and another tenant's are taken too
+        return db.Users.IgnoreQueryFilters().AnyAsync(user => user.NormalizedUserName == name && (exceptId == null || user.Id != exceptId), cancellationToken);
     }
 
     public async Task AddAsync(User user, CancellationToken cancellationToken = default)

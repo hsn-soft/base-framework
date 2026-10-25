@@ -13,7 +13,7 @@ namespace HsnSoft.Base.MongoDB;
 public static class MongoServiceCollectionExtensions
 {
     /// <summary>
-    /// Registers <see cref="IMongoClient"/>, the <see cref="IMongoDatabase"/> named in the connection string and a readiness
+    /// Registers <see cref="IMongoClient"/>, the <see cref="IMongoDatabase"/> named in the connection string, <see cref="MongoEntityConcepts"/> (audit fields, soft delete and tenants for the repositories) and a readiness
     /// health check. Guids are stored as standard (UUID) binary values.
     /// </summary>
     /// <param name="services">The service collection.</param>
@@ -32,6 +32,8 @@ public static class MongoServiceCollectionExtensions
 
         BsonSerializer.TryRegisterSerializer(new GuidSerializer(GuidRepresentation.Standard));
 
+        services.AddBaseEntityConcepts();
+        services.TryAddSingleton<MongoEntityConcepts>();
         services.TryAddSingleton<IMongoClient>(_ => new MongoClient(MongoClientSettings.FromUrl(url)));
         services.TryAddSingleton(provider => provider.GetRequiredService<IMongoClient>().GetDatabase(databaseName));
         services.AddHealthChecks().AddCheck<MongoHealthCheck>("mongo", tags: [HealthCheckTags.Ready]);

@@ -1,11 +1,16 @@
 using Abc.IdentityService.Domain.UserDomain.Consts;
 using Abc.IdentityService.Domain.UserDomain.Security;
 using HsnSoft.Base;
+using HsnSoft.Base.Auditing;
+using HsnSoft.Base.MultiTenancy;
 
 namespace Abc.IdentityService.Domain.UserDomain.Entities;
 
-/// <summary>A person who can sign in to the Abc system.</summary>
-public sealed class User
+/// <summary>
+/// A person who can sign in to the Abc system. The audit fields, the soft delete and the tenant are done by the persistence (<see cref="ICreationAudited"/>, <see cref="IModificationAudited"/>,
+/// <see cref="ISoftDelete"/>, <see cref="IMultiTenant"/>): the entity only keeps them.
+/// </summary>
+public sealed class User : ICreationAudited, IModificationAudited, ISoftDelete, IMultiTenant
 {
     // for EF Core
     private User()
@@ -34,29 +39,41 @@ public sealed class User
 
     public bool IsActive { get; private set; }
 
+    public Guid TenantId { get; private set; }
+
     public DateTimeOffset CreatedAt { get; private set; }
 
-    /// <summary>The user name in the <c>sub</c> claim of the token of who made the user; <see langword="null"/> when nobody signed in did.</summary>
-    public string? CreatedBy { get; private set; }
+    public Guid? CreatedBy { get; private set; }
 
     public DateTimeOffset UpdatedAt { get; private set; }
 
-    /// <summary>The same for the last change.</summary>
-    public string? UpdatedBy { get; private set; }
+    public Guid? UpdatedBy { get; private set; }
 
-    public static User Create(string userName, string email, string displayName, string password, IEnumerable<string>? roles, DateTimeOffset now, string? by)
+    public bool IsDeleted { get; private set; }
+
+    public DateTimeOffset? DeletedAt { get; private set; }
+
+    public Guid? DeletedBy { get; private set; }
+
+    public void AssignTenant(Guid tenantId) => TenantId = tenantId;
+
+    public void MarkCreated(DateTimeOffset at, Guid? by) => (CreatedAt, CreatedBy) = (at, by);
+
+    public void MarkModified(DateTimeOffset at, Guid? by) => (UpdatedAt, UpdatedBy) = (at, by);
+
+    public void MarkDeleted(DateTimeOffset at, Guid? by) => (IsDeleted, DeletedAt, DeletedBy) = (true, at, by);
+
+    public static User Create(string userName, string email, string displayName, string password, IEnumerable<string>? roles)
     {
         User user = new()
         {
             Id = Guid.CreateVersion7(),
             UserName = Required(userName, UserConsts.UserNameMaxLength, nameof(UserName)),
             IsActive = true,
-            CreatedAt = now,
-            CreatedBy = Author(by),
             PasswordHash = PasswordHasher.Hash(ValidPassword(password)),
         };
         user.NormalizedUserName = Normalize(user.UserName);
-        user.Change(email, displayName, roles, now, by);
+        user.Change(email, displayName, roles);
         return user;
     }
 
@@ -66,20 +83,18 @@ public sealed class User
     /// <summary>A user name or an email as it is compared and searched: trimmed, in capitals.</summary>
     public static string Normalize(string text) => text.Trim().ToUpperInvariant();
 
-    public void Update(string email, string displayName, bool isActive, IEnumerable<string>? roles, DateTimeOffset now, string? by)
+    public void Update(string email, string displayName, bool isActive, IEnumerable<string>? roles)
     {
-        Change(email, displayName, roles, now, by);
+        Change(email, displayName, roles);
         IsActive = isActive;
     }
 
-    private void Change(string email, string displayName, IEnumerable<string>? roles, DateTimeOffset now, string? by)
+    private void Change(string email, string displayName, IEnumerable<string>? roles)
     {
         Roles = NormalizeRoles(roles);
-        UpdatedBy = Author(by);
         Email = Required(email, UserConsts.EmailMaxLength, nameof(Email));
         NormalizedEmail = Normalize(Email);
         DisplayName = Required(displayName, UserConsts.DisplayNameMaxLength, nameof(DisplayName));
-        UpdatedAt = now;
     }
 
     private static string[] NormalizeRoles(IEnumerable<string>? roles)
@@ -94,8 +109,6 @@ public sealed class User
         => password is null || password.Length < UserConsts.PasswordMinLength || password.Length > UserConsts.PasswordMaxLength
             ? throw new DomainException($"The password is {UserConsts.PasswordMinLength} to {UserConsts.PasswordMaxLength} characters.")
             : password;
-
-    private static string? Author(string? by) => string.IsNullOrWhiteSpace(by) ? null : by.Trim()[..Math.Min(by.Trim().Length, UserConsts.CreatedByMaxLength)];
 
     private static string Required(string value, int maxLength, string name)
     {

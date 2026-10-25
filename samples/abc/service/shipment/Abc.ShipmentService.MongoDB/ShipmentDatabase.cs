@@ -8,7 +8,7 @@ namespace Abc.ShipmentService.MongoDB;
 
 public static class ShipmentDatabase
 {
-    /// <summary>Makes the indexes of the shipments (the tracking number is unique; the order is looked up). MongoDB creates the database and the collection when the first index or shipment is written.</summary>
+    /// <summary>Makes the indexes of the shipments (the tracking number is unique; the order and the tenant are looked up). MongoDB creates the database and the collection when the first index or shipment is written.</summary>
     public static Task EnsureShipmentDatabaseAsync(this IServiceProvider services)
     {
         ArgumentNullException.ThrowIfNull(services);
@@ -20,6 +20,7 @@ public static class ShipmentDatabase
                 [
                     new CreateIndexModel<Shipment>(Builders<Shipment>.IndexKeys.Ascending(shipment => shipment.TrackingNumber), new CreateIndexOptions { Unique = true }),
                     new CreateIndexModel<Shipment>(Builders<Shipment>.IndexKeys.Ascending(shipment => shipment.OrderId)),
+                    new CreateIndexModel<Shipment>(Builders<Shipment>.IndexKeys.Ascending(shipment => shipment.TenantId)),
                 ],
                 cancellationToken).ConfigureAwait(false);
         });

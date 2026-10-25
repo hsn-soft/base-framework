@@ -1,10 +1,16 @@
 using Abc.ProductService.Domain.ProductDomain.Consts;
 using HsnSoft.Base;
+using HsnSoft.Base.Auditing;
+using HsnSoft.Base.MultiTenancy;
 
 namespace Abc.ProductService.Domain.ProductDomain.Entities;
 
-/// <summary>Something the Abc system sells, and how many of it there are.</summary>
-public sealed class Product
+/// <summary>
+/// Something the Abc system sells, and how many of it there are.
+/// The audit fields, the soft delete and the tenant are done by the persistence (<see cref="ICreationAudited"/>, <see cref="IModificationAudited"/>, <see cref="ISoftDelete"/>,
+/// <see cref="IMultiTenant"/>): the entity only keeps them.
+/// </summary>
+public sealed class Product : ICreationAudited, IModificationAudited, ISoftDelete, IMultiTenant
 {
     // for the database driver
     private Product()
@@ -30,40 +36,52 @@ public sealed class Product
 
     public bool IsActive { get; private set; }
 
+    public Guid TenantId { get; private set; }
+
     public DateTimeOffset CreatedAt { get; private set; }
 
-    /// <summary>The user name in the <c>sub</c> claim of the token of who made the product; <see langword="null"/> when nobody signed in did.</summary>
-    public string? CreatedBy { get; private set; }
+    public Guid? CreatedBy { get; private set; }
 
     public DateTimeOffset UpdatedAt { get; private set; }
 
-    /// <summary>The same for the last change.</summary>
-    public string? UpdatedBy { get; private set; }
+    public Guid? UpdatedBy { get; private set; }
 
-    public static Product Create(string name, string sku, string? description, decimal price, int stock, DateTimeOffset now, string? by)
+    public bool IsDeleted { get; private set; }
+
+    public DateTimeOffset? DeletedAt { get; private set; }
+
+    public Guid? DeletedBy { get; private set; }
+
+    public void AssignTenant(Guid tenantId) => TenantId = tenantId;
+
+    public void MarkCreated(DateTimeOffset at, Guid? by) => (CreatedAt, CreatedBy) = (at, by);
+
+    public void MarkModified(DateTimeOffset at, Guid? by) => (UpdatedAt, UpdatedBy) = (at, by);
+
+    public void MarkDeleted(DateTimeOffset at, Guid? by) => (IsDeleted, DeletedAt, DeletedBy) = (true, at, by);
+
+    public static Product Create(string name, string sku, string? description, decimal price, int stock)
     {
         Product product = new()
         {
             Id = Guid.CreateVersion7(),
             Sku = Normalize(Required(sku, ProductConsts.SkuMaxLength, nameof(Sku))),
             IsActive = true,
-            CreatedAt = now,
-            CreatedBy = Author(by),
         };
-        product.Change(name, description, price, stock, now, by);
+        product.Change(name, description, price, stock);
         return product;
     }
 
     /// <summary>A name or a sku as it is compared and searched: trimmed, in capitals.</summary>
     public static string Normalize(string text) => text.Trim().ToUpperInvariant();
 
-    public void Update(string name, string? description, decimal price, int stock, bool isActive, DateTimeOffset now, string? by)
+    public void Update(string name, string? description, decimal price, int stock, bool isActive)
     {
-        Change(name, description, price, stock, now, by);
+        Change(name, description, price, stock);
         IsActive = isActive;
     }
 
-    private void Change(string name, string? description, decimal price, int stock, DateTimeOffset now, string? by)
+    private void Change(string name, string? description, decimal price, int stock)
     {
         Name = Required(name, ProductConsts.NameMaxLength, nameof(Name));
         NormalizedName = Normalize(Name);
@@ -72,11 +90,7 @@ public sealed class Product
             : description.Trim();
         Price = price < 0 ? throw new DomainException("Price cannot be negative.") : price;
         Stock = stock < 0 ? throw new DomainException("Stock cannot be negative.") : stock;
-        UpdatedAt = now;
-        UpdatedBy = Author(by);
     }
-
-    private static string? Author(string? by) => string.IsNullOrWhiteSpace(by) ? null : by.Trim()[..Math.Min(by.Trim().Length, ProductConsts.AuthorMaxLength)];
 
     private static string Required(string value, int maxLength, string name)
     {

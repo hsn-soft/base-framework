@@ -1,10 +1,16 @@
 using Abc.OrderService.Domain.OrderDomain.Consts;
 using HsnSoft.Base;
+using HsnSoft.Base.Auditing;
+using HsnSoft.Base.MultiTenancy;
 
 namespace Abc.OrderService.Domain.OrderDomain.Entities;
 
-/// <summary>What a customer ordered: its lines (fixed once the order is made), its status and a note.</summary>
-public sealed class Order
+/// <summary>
+/// What a customer ordered: its lines (fixed once the order is made), its status and a note.
+/// The audit fields, the soft delete and the tenant are done by the persistence (<see cref="ICreationAudited"/>, <see cref="IModificationAudited"/>, <see cref="ISoftDelete"/>,
+/// <see cref="IMultiTenant"/>): the entity only keeps them.
+/// </summary>
+public sealed class Order : ICreationAudited, IModificationAudited, ISoftDelete, IMultiTenant
 {
     private readonly List<OrderLine> _lines = [];
 
@@ -29,17 +35,31 @@ public sealed class Order
 
     public IReadOnlyList<OrderLine> Lines => _lines;
 
+    public Guid TenantId { get; private set; }
+
     public DateTimeOffset CreatedAt { get; private set; }
 
-    /// <summary>The user name in the <c>sub</c> claim of the token of who made the order; <see langword="null"/> when nobody signed in did.</summary>
-    public string? CreatedBy { get; private set; }
+    public Guid? CreatedBy { get; private set; }
 
     public DateTimeOffset UpdatedAt { get; private set; }
 
-    /// <summary>The same for the last change.</summary>
-    public string? UpdatedBy { get; private set; }
+    public Guid? UpdatedBy { get; private set; }
 
-    public static Order Create(string customerUserName, string? note, IEnumerable<OrderLine> lines, DateTimeOffset now, string? by)
+    public bool IsDeleted { get; private set; }
+
+    public DateTimeOffset? DeletedAt { get; private set; }
+
+    public Guid? DeletedBy { get; private set; }
+
+    public void AssignTenant(Guid tenantId) => TenantId = tenantId;
+
+    public void MarkCreated(DateTimeOffset at, Guid? by) => (CreatedAt, CreatedBy) = (at, by);
+
+    public void MarkModified(DateTimeOffset at, Guid? by) => (UpdatedAt, UpdatedBy) = (at, by);
+
+    public void MarkDeleted(DateTimeOffset at, Guid? by) => (IsDeleted, DeletedAt, DeletedBy) = (true, at, by);
+
+    public static Order Create(string customerUserName, string? note, IEnumerable<OrderLine> lines)
     {
         string customer = customerUserName?.Trim() ?? string.Empty;
         if (customer.Length == 0 || customer.Length > OrderConsts.CustomerUserNameMaxLength)
@@ -53,8 +73,6 @@ public sealed class Order
             CustomerUserName = customer,
             NormalizedCustomerUserName = Normalize(customer),
             Status = OrderStatus.Pending,
-            CreatedAt = now,
-            CreatedBy = Author(by),
         };
         order._lines.AddRange(lines ?? []);
         if (order._lines.Count == 0)
@@ -63,7 +81,7 @@ public sealed class Order
         }
 
         order.TotalAmount = order._lines.Sum(line => line.Total);
-        order.Touch(note, now, by);
+        order.SetNote(note);
         return order;
     }
 
@@ -71,7 +89,7 @@ public sealed class Order
     public static string Normalize(string text) => text.Trim().ToUpperInvariant();
 
     /// <summary>Changes the status and the note; a delivered or cancelled order is final.</summary>
-    public void Update(OrderStatus status, string? note, DateTimeOffset now, string? by)
+    public void Update(OrderStatus status, string? note)
     {
         if (Status is OrderStatus.Delivered or OrderStatus.Cancelled && status != Status)
         {
@@ -79,17 +97,13 @@ public sealed class Order
         }
 
         Status = status;
-        Touch(note, now, by);
+        SetNote(note);
     }
 
-    private void Touch(string? note, DateTimeOffset now, string? by)
+    private void SetNote(string? note)
     {
         Note = string.IsNullOrWhiteSpace(note) ? null : note.Trim().Length > OrderConsts.NoteMaxLength
             ? throw new DomainException($"Note is at most {OrderConsts.NoteMaxLength} characters.")
             : note.Trim();
-        UpdatedAt = now;
-        UpdatedBy = Author(by);
     }
-
-    private static string? Author(string? by) => string.IsNullOrWhiteSpace(by) ? null : by.Trim()[..Math.Min(by.Trim().Length, OrderConsts.AuthorMaxLength)];
 }

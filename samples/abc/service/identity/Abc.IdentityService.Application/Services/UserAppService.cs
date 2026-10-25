@@ -7,11 +7,9 @@ using Abc.IdentityService.Domain.UserDomain.Entities;
 using Abc.IdentityService.Domain.UserDomain.Exceptions;
 using Abc.IdentityService.Domain.UserDomain.Repositories;
 
-using HsnSoft.Base.Security;
-
 namespace Abc.IdentityService.Application.Services;
 
-public sealed class UserAppService(IUserRepository users, TimeProvider clock, ICurrentUser currentUser) : IUserAppService
+public sealed class UserAppService(IUserRepository users) : IUserAppService
 {
     public async Task<UserDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
         => ToDto(await FindAsync(id, cancellationToken).ConfigureAwait(false));
@@ -53,7 +51,7 @@ public sealed class UserAppService(IUserRepository users, TimeProvider clock, IC
             throw new UserUserNameDuplicateException(userName);
         }
 
-        User user = User.Create(userName, input.Email, input.DisplayName, input.Password, input.Roles, clock.GetUtcNow(), currentUser.UserId);
+        User user = User.Create(userName, input.Email, input.DisplayName, input.Password, input.Roles);
         await users.AddAsync(user, cancellationToken).ConfigureAwait(false);
         await users.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return ToDto(user);
@@ -73,7 +71,7 @@ public sealed class UserAppService(IUserRepository users, TimeProvider clock, IC
         ArgumentNullException.ThrowIfNull(input);
 
         User user = await FindAsync(input.Id, cancellationToken).ConfigureAwait(false);
-        user.Update(input.Email, input.DisplayName, input.IsActive, input.Roles, clock.GetUtcNow(), currentUser.UserId);
+        user.Update(input.Email, input.DisplayName, input.IsActive, input.Roles);
         await users.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
@@ -95,6 +93,7 @@ public sealed class UserAppService(IUserRepository users, TimeProvider clock, IC
         DisplayName = user.DisplayName,
         Roles = user.Roles,
         IsActive = user.IsActive,
+        TenantId = user.TenantId,
         CreatedAt = user.CreatedAt,
         CreatedBy = user.CreatedBy,
         UpdatedAt = user.UpdatedAt,
