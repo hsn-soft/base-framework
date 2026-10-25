@@ -1,11 +1,13 @@
 using System.ComponentModel.DataAnnotations;
 using Abc.ShipmentService.Domain.ShipmentDomain.Consts;
+using HsnSoft.Base;
 
 namespace Abc.ShipmentService.Application.Contracts.ShipmentDomain.Dtos.Submits;
 
 public sealed class ShipmentUpdateDto
 {
     [Required]
+    [NotDefault]
     public Guid? Id { get; set; }
 
     [Required]

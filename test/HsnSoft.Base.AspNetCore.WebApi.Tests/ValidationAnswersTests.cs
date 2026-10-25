@@ -20,6 +20,7 @@ public sealed class SignUp : IValidatableObject
     public string? Email { get; set; }
 
     [Required]
+    [NotDefault]
     public Guid? TenantId { get; set; }
 
     [Range(1, 10)]
@@ -184,5 +185,15 @@ public sealed class ValidationAnswersTests
         Assert.Equal(HttpStatusCode.BadRequest, status);
         Assert.Equal(3, Messages(body).Length);
         Assert.Equal(header, Messages(body)[0]);
+    }
+
+    [Fact]
+    public async Task TheEmptyGuid_IsRefused_ByNotDefault_AsAnInvalidValue()
+    {
+        await using WebApplication app = await StartAsync("Production");
+
+        (_, JsonElement body) = await PostAsync(app, "/api/validation/sign-up", """{"userName":"ada","email":"a@b.co","tenantId":"00000000-0000-0000-0000-000000000000"}""");
+
+        Assert.Equal(["Validation failed.", "TenantId has an invalid value."], Messages(body));
     }
 }

@@ -1,11 +1,13 @@
 using System.ComponentModel.DataAnnotations;
 using Abc.ProductService.Domain.ProductDomain.Consts;
+using HsnSoft.Base;
 
 namespace Abc.ProductService.Application.Contracts.ProductDomain.Dtos.Submits;
 
 public sealed class ProductUpdateDto
 {
     [Required]
+    [NotDefault]
     public Guid? Id { get; set; }
 
     [Required]

@@ -1,11 +1,13 @@
 using System.ComponentModel.DataAnnotations;
 using Abc.OrderService.Domain.OrderDomain.Consts;
+using HsnSoft.Base;
 
 namespace Abc.OrderService.Application.Contracts.OrderDomain.Dtos.Submits;
 
 public sealed class OrderLineCreateDto
 {
     [Required]
+    [NotDefault]
     public Guid? ProductId { get; set; }
 
     [Required]

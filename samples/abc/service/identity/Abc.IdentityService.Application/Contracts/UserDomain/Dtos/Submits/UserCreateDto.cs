@@ -4,7 +4,7 @@ using HsnSoft.Base.Logging.Masking;
 
 namespace Abc.IdentityService.Application.Contracts.UserDomain.Dtos.Submits;
 
-public sealed class UserCreateDto
+public sealed class UserCreateDto : IValidatableObject
 {
     [Required]
     [StringLength(UserConsts.UserNameMaxLength)]
@@ -30,4 +30,6 @@ public sealed class UserCreateDto
     /// <summary>The language the user is answered in (<c>en</c>, <c>tr</c>, <c>ru</c>); <c>en</c> when none is given.</summary>
     [StringLength(UserConsts.LanguageMaxLength)]
     public string? Language { get; set; }
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext) => UserRoleRules.Check(Roles);
 }
