@@ -76,3 +76,5 @@ A request that has things wrong with it is answered **400**, `errorCode: validat
 - `[NotWhiteSpace]`: an optional text, when given, is not blank (a required one is already refused by `[Required]`). `[NoBlankItems]`: no empty item in a list of texts.
 - A rule about the elements of a list (the roles of a user: no empty one, no comma) is a rule of that DTO: the member is the list and the argument names the element (`Roles[1] has an invalid value.`).
 - A rule of the DTO: `IValidatableObject` returning `ValidationRule.Failed(nameof(Email), "email_taken", Email)`. A rule of the data or the business: `ValidationErrors` in the application service, `errors.AddIf(taken, nameof(input.Sku), "The sku is taken.", "sku_taken", input.Sku); errors.ThrowIfAny();`.
+
+A DTO that uses every rule, with a comment on each field, is `SampleUpdateDto` in the product service of the Abc sample (`samples/abc/service/product/.../Dtos/Submits/SampleUpdateDto.cs`); `SampleUpdateTests` in the web api tests runs a copy of it. A value that cannot be read (`"abc"` for an int) stops the reading of the body, so it is told alone; the other rules run once every value could be read.
