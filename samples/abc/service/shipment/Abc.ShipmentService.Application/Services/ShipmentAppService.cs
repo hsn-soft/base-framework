@@ -3,11 +3,12 @@ using Abc.ShipmentService.Application.Contracts.ShipmentDomain.Dtos;
 using Abc.ShipmentService.Application.Contracts.ShipmentDomain.Dtos.Filters;
 using Abc.ShipmentService.Application.Contracts.ShipmentDomain.Dtos.Submits;
 using Abc.ShipmentService.Application.Contracts.ShipmentDomain.Services;
-using Abc.ShipmentService.Application.Security;
 using Abc.ShipmentService.Domain.ShipmentDomain.Entities;
 using Abc.ShipmentService.Domain.ShipmentDomain.Exceptions;
 using Abc.ShipmentService.Domain.ShipmentDomain.Repositories;
 using HsnSoft.Base;
+
+using HsnSoft.Base.Security;
 
 namespace Abc.ShipmentService.Application.Services;
 
@@ -47,7 +48,7 @@ public sealed class ShipmentAppService(IShipmentRepository shipments, TimeProvid
     {
         ArgumentNullException.ThrowIfNull(input);
 
-        Shipment shipment = Shipment.Create(input.OrderId, input.Carrier, input.Address, clock.GetUtcNow(), currentUser.UserName);
+        Shipment shipment = Shipment.Create(input.OrderId, input.Carrier, input.Address, clock.GetUtcNow(), currentUser.UserId);
         await shipments.AddAsync(shipment, cancellationToken).ConfigureAwait(false);
         return ToDto(shipment);
     }
@@ -57,7 +58,7 @@ public sealed class ShipmentAppService(IShipmentRepository shipments, TimeProvid
         ArgumentNullException.ThrowIfNull(input);
 
         Shipment shipment = await FindAsync(input.Id, cancellationToken).ConfigureAwait(false);
-        shipment.Update(input.Carrier, input.Address, ParseStatus(input.Status) ?? throw new DomainException("Status is required."), clock.GetUtcNow(), currentUser.UserName);
+        shipment.Update(input.Carrier, input.Address, ParseStatus(input.Status) ?? throw new DomainException("Status is required."), clock.GetUtcNow(), currentUser.UserId);
         await shipments.UpdateAsync(shipment, cancellationToken).ConfigureAwait(false);
     }
 

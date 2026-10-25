@@ -3,11 +3,12 @@ using Abc.OrderService.Application.Contracts.OrderDomain.Dtos;
 using Abc.OrderService.Application.Contracts.OrderDomain.Dtos.Filters;
 using Abc.OrderService.Application.Contracts.OrderDomain.Dtos.Submits;
 using Abc.OrderService.Application.Contracts.OrderDomain.Services;
-using Abc.OrderService.Application.Security;
 using Abc.OrderService.Domain.OrderDomain.Entities;
 using Abc.OrderService.Domain.OrderDomain.Exceptions;
 using Abc.OrderService.Domain.OrderDomain.Repositories;
 using HsnSoft.Base;
+
+using HsnSoft.Base.Security;
 
 namespace Abc.OrderService.Application.Services;
 
@@ -48,7 +49,7 @@ public sealed class OrderAppService(IOrderRepository orders, TimeProvider clock,
         ArgumentNullException.ThrowIfNull(input);
 
         IEnumerable<OrderLine> lines = input.Lines.Select(line => OrderLine.Create(line.ProductId, line.ProductName, line.UnitPrice, line.Quantity));
-        Order order = Order.Create(currentUser.UserName ?? string.Empty, input.Note, lines, clock.GetUtcNow(), currentUser.UserName);
+        Order order = Order.Create(currentUser.UserId ?? string.Empty, input.Note, lines, clock.GetUtcNow(), currentUser.UserId);
         await orders.AddAsync(order, cancellationToken).ConfigureAwait(false);
         return ToDto(order);
     }
@@ -58,7 +59,7 @@ public sealed class OrderAppService(IOrderRepository orders, TimeProvider clock,
         ArgumentNullException.ThrowIfNull(input);
 
         Order order = await FindAsync(input.Id, cancellationToken).ConfigureAwait(false);
-        order.Update(ParseStatus(input.Status) ?? throw new DomainException("Status is required."), input.Note, clock.GetUtcNow(), currentUser.UserName);
+        order.Update(ParseStatus(input.Status) ?? throw new DomainException("Status is required."), input.Note, clock.GetUtcNow(), currentUser.UserId);
         await orders.UpdateAsync(order, cancellationToken).ConfigureAwait(false);
     }
 

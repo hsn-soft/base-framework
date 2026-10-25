@@ -1,7 +1,5 @@
 using Abc.IdentityService.Application;
-using Abc.IdentityService.Application.Security;
 using Abc.IdentityService.EntityFrameworkCore;
-using Abc.IdentityService.Http.Host.Security;
 using Abc.Shared.Hosting.Microservices;
 using HsnSoft.Base.Logging.Serilog;
 
@@ -12,8 +10,6 @@ builder.Logging.AddBaseSerilog(builder.Configuration, "Abc.IdentityService");
 builder.Services
     .AddAbcMicroservice(builder.Configuration, "Abc.IdentityService API")
     .AddAbcEventBus(builder.Configuration)
-    .AddHttpContextAccessor()
-    .AddScoped<ICurrentUser, HttpContextCurrentUser>()
     .AddIdentityPersistence(builder.Configuration)
     .AddIdentityApplication();
 

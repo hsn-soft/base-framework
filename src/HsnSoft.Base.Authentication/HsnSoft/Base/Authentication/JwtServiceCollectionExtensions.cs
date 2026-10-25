@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
@@ -13,7 +14,7 @@ namespace HsnSoft.Base.Authentication;
 public static class JwtServiceCollectionExtensions
 {
     /// <summary>
-    /// JWT bearer validation (issuer, audience, signature, lifetime) and the <see cref="BasePolicies.Authenticated"/> policy.
+    /// JWT bearer validation (issuer, audience, signature, lifetime) and the <see cref="BasePolicies.Authenticated"/> policy, and <see cref="ICurrentUser"/> (the user of the request).
     /// Claims keep their token names: the user name is <c>sub</c>, roles are <c>role</c>. Add your own policies with
     /// <c>services.AddAuthorizationBuilder()</c>. Tokens are checked with the shared <c>Jwt:Key</c> (HMAC) or, when <c>Jwt:PublicKeyFile</c> is given, with that RSA public key (RS256 only):
     /// a missing or unreadable key file stops the application when it starts.
@@ -26,6 +27,10 @@ public static class JwtServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(configuration);
 
         services.Configure<JwtOptions>(configuration.GetSection("Jwt"));
+
+        // who is making the request, for the code that does not know HTTP
+        services.AddHttpContextAccessor();
+        services.TryAddSingleton<ICurrentUser, HttpContextCurrentUser>();
 
         // a key file that is not there is found now, not at the first request
         if (configuration.GetSection("Jwt").Get<JwtOptions>()?.PublicKeyFile is { Length: > 0 } publicKeyFile)

@@ -3,10 +3,11 @@ using Abc.IdentityService.Application.Contracts.UserDomain.Dtos;
 using Abc.IdentityService.Application.Contracts.UserDomain.Dtos.Filters;
 using Abc.IdentityService.Application.Contracts.UserDomain.Dtos.Submits;
 using Abc.IdentityService.Application.Contracts.UserDomain.Services;
-using Abc.IdentityService.Application.Security;
 using Abc.IdentityService.Domain.UserDomain.Entities;
 using Abc.IdentityService.Domain.UserDomain.Exceptions;
 using Abc.IdentityService.Domain.UserDomain.Repositories;
+
+using HsnSoft.Base.Security;
 
 namespace Abc.IdentityService.Application.Services;
 
@@ -52,7 +53,7 @@ public sealed class UserAppService(IUserRepository users, TimeProvider clock, IC
             throw new UserUserNameDuplicateException(userName);
         }
 
-        User user = User.Create(userName, input.Email, input.DisplayName, input.Password, input.Roles, clock.GetUtcNow(), currentUser.UserName);
+        User user = User.Create(userName, input.Email, input.DisplayName, input.Password, input.Roles, clock.GetUtcNow(), currentUser.UserId);
         await users.AddAsync(user, cancellationToken).ConfigureAwait(false);
         await users.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return ToDto(user);
@@ -72,7 +73,7 @@ public sealed class UserAppService(IUserRepository users, TimeProvider clock, IC
         ArgumentNullException.ThrowIfNull(input);
 
         User user = await FindAsync(input.Id, cancellationToken).ConfigureAwait(false);
-        user.Update(input.Email, input.DisplayName, input.IsActive, input.Roles, clock.GetUtcNow(), currentUser.UserName);
+        user.Update(input.Email, input.DisplayName, input.IsActive, input.Roles, clock.GetUtcNow(), currentUser.UserId);
         await users.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 

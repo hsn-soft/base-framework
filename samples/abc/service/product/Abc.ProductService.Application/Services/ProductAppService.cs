@@ -3,10 +3,11 @@ using Abc.ProductService.Application.Contracts.ProductDomain.Dtos;
 using Abc.ProductService.Application.Contracts.ProductDomain.Dtos.Filters;
 using Abc.ProductService.Application.Contracts.ProductDomain.Dtos.Submits;
 using Abc.ProductService.Application.Contracts.ProductDomain.Services;
-using Abc.ProductService.Application.Security;
 using Abc.ProductService.Domain.ProductDomain.Entities;
 using Abc.ProductService.Domain.ProductDomain.Exceptions;
 using Abc.ProductService.Domain.ProductDomain.Repositories;
+
+using HsnSoft.Base.Security;
 
 namespace Abc.ProductService.Application.Services;
 
@@ -51,7 +52,7 @@ public sealed class ProductAppService(IProductRepository products, TimeProvider 
             throw new ProductSkuDuplicateException(input.Sku.Trim());
         }
 
-        Product product = Product.Create(input.Name, input.Sku, input.Description, input.Price, input.Stock, clock.GetUtcNow(), currentUser.UserName);
+        Product product = Product.Create(input.Name, input.Sku, input.Description, input.Price, input.Stock, clock.GetUtcNow(), currentUser.UserId);
         await products.AddAsync(product, cancellationToken).ConfigureAwait(false);
         return ToDto(product);
     }
@@ -61,7 +62,7 @@ public sealed class ProductAppService(IProductRepository products, TimeProvider 
         ArgumentNullException.ThrowIfNull(input);
 
         Product product = await FindAsync(input.Id, cancellationToken).ConfigureAwait(false);
-        product.Update(input.Name, input.Description, input.Price, input.Stock, input.IsActive, clock.GetUtcNow(), currentUser.UserName);
+        product.Update(input.Name, input.Description, input.Price, input.Stock, input.IsActive, clock.GetUtcNow(), currentUser.UserId);
         await products.UpdateAsync(product, cancellationToken).ConfigureAwait(false);
     }
 

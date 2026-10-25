@@ -28,6 +28,7 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
+| [0036](0036-icurrentuser-in-the-framework.md) | `ICurrentUser` is the framework's; the JWT authentication registers it | Accepted | 2026-10-25 |
 | [0035](0035-the-persistence-project-registers-its-database.md) | The persistence project registers its database provider | Accepted | 2026-10-25 |
 | [0034](0034-redis-and-rabbitmq-in-the-abc-hosts.md) | Redis and RabbitMQ in the Abc hosts | Accepted | 2026-10-25 |
 | [0033](0033-the-abc-services-crud-pattern.md) | The CRUD pattern of the Abc services: order, product and shipment follow the identity service | Accepted | 2026-10-25 |

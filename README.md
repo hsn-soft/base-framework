@@ -19,7 +19,7 @@ JWT, Swagger, a broker or a cache.
 
 | Package | Capability | Depends on |
 |---|---|---|
-| `HsnSoft.Base.Core` | Bare essentials: shared exceptions, health-check tag, startup retry | - |
+| `HsnSoft.Base.Core` | Bare essentials: shared exceptions, health-check tag, startup retry, `ICurrentUser` | - |
 | `HsnSoft.Base.Logging` | Logger interfaces and models, masking of sensitive data, the settings every provider reads (`Logging:LogLevel` for the console, `PersistentLogger` for what is kept); independent of any logging library ([docs](docs/Logging.md)) | Core |
 | `HsnSoft.Base.Logging.Serilog` | Serilog provider: console, Graylog or file, Debug/Verbose stay in the console | Logging, Hosting |
 | `HsnSoft.Base.Hosting` | Generic Host workers: `PeriodicBackgroundService` | Core |

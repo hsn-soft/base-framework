@@ -1,6 +1,6 @@
 # ADR-0033: The CRUD pattern of the Abc services: order, product and shipment follow the identity service
 
-- **Status:** Accepted
+- **Status:** Accepted (the per-service `ICurrentUser` is replaced by the framework's, [ADR-0036](0036-icurrentuser-in-the-framework.md))
 - **Date:** 2026-10-25 (completes the skeletons of [ADR-0030](0030-microservice-project-pattern.md))
 
 ## Context
