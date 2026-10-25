@@ -10,6 +10,7 @@ builder.Logging.AddBaseSerilog(builder.Configuration, "Abc.AuthServer");
 builder.Services
     .AddAbcMicroservice(builder.Configuration, "Abc.AuthServer API")
     .AddIdentityPersistence(builder.Configuration)
+    .AddIdentityHistoryPersistence(builder.Configuration)
     .AddScoped<UserAuthenticator>()
     .AddSingleton<TokenService>();
 

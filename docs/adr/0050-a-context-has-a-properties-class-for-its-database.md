@@ -1,6 +1,6 @@
 # ADR-0050: A context has a properties class that says where and on what its data is
 
-- **Status:** Accepted
+- **Status:** Accepted (the overload that read the setting was removed: [ADR-0051](0051-every-context-is-named-by-its-properties-class.md))
 - **Date:** 2026-10-25 (adds to [ADR-0047](0047-relational-provider-chosen-by-a-setting.md); [ADR-0049](0049-abc-databases-and-provider-references.md) is changed by it for the identity service)
 
 ## Context

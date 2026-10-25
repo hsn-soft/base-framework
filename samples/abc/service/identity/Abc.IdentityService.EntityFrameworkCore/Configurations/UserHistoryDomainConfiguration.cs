@@ -16,6 +16,8 @@ public static class UserHistoryDomainConfiguration
             history.HasKey(entity => entity.Id);
             history.Property(entity => entity.Id).ValueGeneratedNever();
             history.Property(entity => entity.UserName).HasMaxLength(UserHistoryConsts.UserNameMaxLength).IsRequired();
+            history.Property(entity => entity.NormalizedUserName).HasMaxLength(UserHistoryConsts.UserNameMaxLength).IsRequired();
+            history.Property(entity => entity.Note).HasMaxLength(UserHistoryConsts.NoteMaxLength);
             history.Property(entity => entity.Action).HasMaxLength(UserHistoryConsts.ActionMaxLength).IsRequired();
             history.HasIndex(entity => entity.UserId);
             history.HasIndex(entity => entity.TenantId);

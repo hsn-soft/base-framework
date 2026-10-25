@@ -16,14 +16,14 @@ public static class PostgresServiceCollectionExtensions
     /// <param name="connectionName">The name of the connection string.</param>
     public static IServiceCollection AddBasePostgres<TContext>(this IServiceCollection services, IConfiguration configuration, string connectionName = "Postgres")
         where TContext : DbContext
-        => services.AddBaseEfCore<TContext>(configuration, providers => providers.UsePostgres(connectionName));
+        => services.AddBaseEfCore<TContext>(configuration, providers => providers.UsePostgres(), EfCoreProviderNames.Postgres, connectionName);
 
-    /// <summary>Offers PostgreSQL to <c>AddBaseEfCore</c> (selected by <c>Database:Provider</c> = <c>postgres</c>), with the connection string <c>ConnectionStrings:{connectionName}</c>.</summary>
-    public static EfCoreProviderOptions UsePostgres(this EfCoreProviderOptions providers, string connectionName = "Postgres")
+    /// <summary>Offers PostgreSQL to <c>AddBaseEfCore</c> (selected by <see cref="EfCoreProviderNames.Postgres"/>).</summary>
+    public static EfCoreProviderOptions UsePostgres(this EfCoreProviderOptions providers)
     {
         ArgumentNullException.ThrowIfNull(providers);
 
-        return providers.Add(PostgresProvider.Instance, connectionName);
+        return providers.Add(PostgresProvider.Instance);
     }
 
     private sealed class PostgresProvider : IEfCoreProvider
@@ -31,8 +31,6 @@ public static class PostgresServiceCollectionExtensions
         public static readonly PostgresProvider Instance = new();
 
         public string Name => EfCoreProviderNames.Postgres;
-
-        public string ConnectionName => "Postgres";
 
         public void Configure(DbContextOptionsBuilder options, string connectionString)
             => options.UseNpgsql(connectionString, npgsql => npgsql.EnableRetryOnFailure());

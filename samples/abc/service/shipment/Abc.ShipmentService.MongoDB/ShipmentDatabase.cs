@@ -15,7 +15,7 @@ public static class ShipmentDatabase
 
         return services.RunStartupStepAsync("Shipment collection", async cancellationToken =>
         {
-            IMongoCollection<Shipment> shipments = services.GetRequiredService<IMongoDatabase>().GetCollection<Shipment>(ShipmentConsts.CollectionName);
+            IMongoCollection<Shipment> shipments = services.GetRequiredService<IMongoDatabase>().GetCollection<Shipment>(MongoShipmentDbProperties.CollectionPrefix + ShipmentConsts.CollectionName);
             await shipments.Indexes.CreateManyAsync(
                 [
                     new CreateIndexModel<Shipment>(Builders<Shipment>.IndexKeys.Ascending(shipment => shipment.TrackingNumber), new CreateIndexOptions { Unique = true }),

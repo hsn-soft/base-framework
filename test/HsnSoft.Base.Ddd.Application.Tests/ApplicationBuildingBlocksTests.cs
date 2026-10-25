@@ -143,6 +143,9 @@ public class ApplicationBuildingBlocksTests
 
         Assert.Equal(["A", "B"], dto.Items);
         Assert.Equal((12L, 3, 6, 7), (dto.DataTotalCount, dto.PageTotalCount, dto.ResultDataStartNumber, dto.ResultDataEndNumber));
+        PagedQueryResult<string> ready = new(["x", "y"], 7);
+        Assert.Equal(7, ready.ToPagedDto(request).DataTotalCount);
+        Assert.Equal(["x", "y"], ready.ToPagedDto(request).Items);
         Assert.Throws<ArgumentNullException>(() => ((PagedQueryResult<Row>)null!).ToPagedDto(request, row => row.Name));
         Assert.Throws<ArgumentNullException>(() => result.ToPagedDto(null!, row => row.Name));
         Assert.Throws<ArgumentNullException>(() => result.ToPagedDto<Row, string>(request, null!));

@@ -1,6 +1,6 @@
 # ADR-0047: The relational provider is chosen by a setting
 
-- **Status:** Accepted
+- **Status:** Superseded in part: the setting `Database:Provider` was replaced by the properties class of a context ([ADR-0050](0050-a-context-has-a-properties-class-for-its-database.md), [ADR-0051](0051-every-context-is-named-by-its-properties-class.md)); the provider packages and `Use...` stay
 - **Date:** 2026-10-25 (follows [ADR-0045](0045-repository-levels-relational-and-document.md))
 
 ## Context

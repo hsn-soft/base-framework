@@ -12,7 +12,7 @@ public static class OrderDomainConfiguration
 
         modelBuilder.Entity<Order>(order =>
         {
-            order.ToTable(OrderConsts.TableName);
+            order.ToTable(EfCoreOrderDbProperties.DbTablePrefix + OrderConsts.TableName, EfCoreOrderDbProperties.DbSchema);
             order.HasKey(entity => entity.Id);
             order.Property(entity => entity.Id).ValueGeneratedNever();
             order.Property(entity => entity.CustomerUserName).HasMaxLength(OrderConsts.CustomerUserNameMaxLength).IsRequired();
@@ -27,7 +27,7 @@ public static class OrderDomainConfiguration
             // the lines belong to the order: they are read, saved and deleted with it
             order.OwnsMany(entity => entity.Lines, line =>
             {
-                line.ToTable(OrderConsts.LineTableName);
+                line.ToTable(EfCoreOrderDbProperties.DbTablePrefix + OrderConsts.LineTableName, EfCoreOrderDbProperties.DbSchema);
                 line.WithOwner().HasForeignKey("OrderId");
                 line.Property<int>("Id").ValueGeneratedOnAdd();
                 line.HasKey("Id");

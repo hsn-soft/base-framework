@@ -63,7 +63,7 @@ A client sends `"price desc, name"`; a field that is not in `Fields` is refused 
 
 - **EF Core:** `EfCoreRepository<TContext, TEntity, TKey>`; derive it for a method of your own (`class EfCoreUserRepository(IdentityDbContext db) : EfCoreRepository<IdentityDbContext, User, Guid>(db), IUserRepository`). `IEfCoreRepository<,>` adds `UpdateWhereAsync(filter, set => set.SetProperty(...))` (one statement, audit fields written) and the reads with an `include` (`query => query.Include(order => order.Lines)`); nothing is joined unless one says so.
 
-The relational database is a setting: `services.AddBaseEfCore<IdentityDbContext>(configuration, providers => providers.UsePostgres().UseSqlServer())` registers the context on the provider that `Database:Provider` names (`postgres`, `sqlserver`) with its connection string (`ConnectionStrings:Postgres`, `ConnectionStrings:SqlServer`); the application code does not change when it moves ([ADR-0047](adr/0047-relational-provider-chosen-by-a-setting.md)).
+The provider of a relational context is said by the code of the service, not by a setting: `services.AddBaseEfCore<IdentityDbContext>(configuration, providers => providers.UseSqlServer(), EfCoreIdentityDbProperties.Provider, EfCoreIdentityDbProperties.ConnectionStringName)`, where the properties class of the context also has its table prefix and schema ([ADR-0050](adr/0050-a-context-has-a-properties-class-for-its-database.md), [ADR-0051](adr/0051-every-context-is-named-by-its-properties-class.md)). The application code does not change when a context moves to another provider.
 
 ### Reading a DTO without a mapper
 

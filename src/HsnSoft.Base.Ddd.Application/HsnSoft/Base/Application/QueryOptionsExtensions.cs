@@ -40,6 +40,10 @@ public static class QueryOptionsExtensions
         return new PagedDataResultDto<TDto>(result.TotalCount, request.PageNumber, request.MaxResultCount, [.. result.Items.Select(map)]);
     }
 
+    /// <summary>The page a repository answered with DTOs already (<c>GetPagedListAsync&lt;TDto&gt;</c>), as the client is sent it.</summary>
+    public static PagedDataResultDto<TDto> ToPagedDto<TDto>(this PagedQueryResult<TDto> result, IPagedDataRequest request)
+        => ToPagedDto(result, request, dto => dto);
+
     /// <summary>Reads the <c>Paging</c> section: the most a client may ask for in a list.</summary>
     public static IServiceCollection AddBasePaging(this IServiceCollection services, Microsoft.Extensions.Configuration.IConfiguration? configuration = null)
     {

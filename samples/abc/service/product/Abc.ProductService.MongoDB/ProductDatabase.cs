@@ -20,7 +20,7 @@ public static class ProductDatabase
 
         return services.RunStartupStepAsync("Product collection", async cancellationToken =>
         {
-            IMongoCollection<Product> products = services.GetRequiredService<IMongoDatabase>().GetCollection<Product>(ProductConsts.CollectionName);
+            IMongoCollection<Product> products = services.GetRequiredService<IMongoDatabase>().GetCollection<Product>(MongoProductDbProperties.CollectionPrefix + ProductConsts.CollectionName);
             await products.Indexes.CreateManyAsync(
                 [
                     new CreateIndexModel<Product>(Builders<Product>.IndexKeys.Ascending(product => product.Sku), new CreateIndexOptions { Unique = true }),

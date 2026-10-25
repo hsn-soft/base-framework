@@ -16,14 +16,14 @@ public static class SqlServerServiceCollectionExtensions
     /// <param name="connectionName">The name of the connection string.</param>
     public static IServiceCollection AddBaseSqlServer<TContext>(this IServiceCollection services, IConfiguration configuration, string connectionName = "SqlServer")
         where TContext : DbContext
-        => services.AddBaseEfCore<TContext>(configuration, providers => providers.UseSqlServer(connectionName));
+        => services.AddBaseEfCore<TContext>(configuration, providers => providers.UseSqlServer(), EfCoreProviderNames.SqlServer, connectionName);
 
-    /// <summary>Offers SQL Server to <c>AddBaseEfCore</c> (selected by <c>Database:Provider</c> = <c>sqlserver</c>), with the connection string <c>ConnectionStrings:{connectionName}</c>.</summary>
-    public static EfCoreProviderOptions UseSqlServer(this EfCoreProviderOptions providers, string connectionName = "SqlServer")
+    /// <summary>Offers SQL Server to <c>AddBaseEfCore</c> (selected by <see cref="EfCoreProviderNames.SqlServer"/>).</summary>
+    public static EfCoreProviderOptions UseSqlServer(this EfCoreProviderOptions providers)
     {
         ArgumentNullException.ThrowIfNull(providers);
 
-        return providers.Add(SqlServerProvider.Instance, connectionName);
+        return providers.Add(SqlServerProvider.Instance);
     }
 
     private sealed class SqlServerProvider : IEfCoreProvider
@@ -31,8 +31,6 @@ public static class SqlServerServiceCollectionExtensions
         public static readonly SqlServerProvider Instance = new();
 
         public string Name => EfCoreProviderNames.SqlServer;
-
-        public string ConnectionName => "SqlServer";
 
         public void Configure(DbContextOptionsBuilder options, string connectionString)
             => options.UseSqlServer(connectionString, sql => sql.EnableRetryOnFailure());

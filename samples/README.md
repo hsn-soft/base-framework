@@ -316,3 +316,11 @@ dotnet run --project samples/abc/service/order/Abc.OrderService.Http.Host       
 dotnet run --project samples/abc/service/product/Abc.ProductService.Http.Host     # http://localhost:5430
 dotnet run --project samples/abc/service/shipment/Abc.ShipmentService.Http.Host   # http://localhost:5440
 ```
+
+### The history of the users (a second context on PostgreSQL)
+
+`HistoryDbContext` (PostgreSQL `abc_history`, `ConnectionStrings:EfCore-HistoryService`) keeps what happened to the users: the identity service writes a record for each create, update and delete, and the auth server writes a `login` record for every token it
+issues ([ADR-0052](../docs/adr/0052-the-history-of-the-users.md)). The records have a CRUD of their own, like the users': `POST /api/identity-service/v1/commercial/user-histories/{get/{id}, paged-list, filter-list, search-list, create}`, `PUT`, `DELETE /{id}`
+(`IUserHistoryAppService`; the lists read only the columns of their DTO). Every context of a service has a properties class (`EfCoreIdentityDbProperties`, `EfCoreHistoryDbProperties`, `EfCoreOrderDbProperties`, `MongoProductDbProperties`,
+`MongoShipmentDbProperties`) with the table (or collection) prefix, the schema, the provider and the connection name: no setting says which provider runs ([ADR-0051](../docs/adr/0051-every-context-is-named-by-its-properties-class.md)).
+The connection strings are `EfCore-IdentityService` (SQL Server), `EfCore-HistoryService` (PostgreSQL), `EfCore-OrderService` (PostgreSQL), `Mongo-ProductService` and `Mongo-ShipmentService`.

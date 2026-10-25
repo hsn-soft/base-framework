@@ -1,4 +1,5 @@
 using Abc.IdentityService.Application.Contracts.UserDomain.Services;
+using Abc.IdentityService.Application.Contracts.UserHistoryDomain.Services;
 using Abc.IdentityService.Application.Services;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -12,6 +13,7 @@ public static class ApplicationServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
 
         services.AddScoped<IUserAppService, UserAppService>();
+        services.AddScoped<IUserHistoryAppService, UserHistoryAppService>();
         return services;
     }
 }
