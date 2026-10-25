@@ -28,6 +28,7 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
+| [0054](0054-the-order-flow-through-events.md) | The order flow runs through events: order, product, shipment, order | Accepted | 2026-10-25 |
 | [0053](0053-more-than-one-store-in-a-service.md) | More than one store in a service: a second MongoDB under a key, a relational project beside a MongoDB one | Accepted | 2026-10-25 |
 | [0052](0052-the-history-of-the-users.md) | The history of the users: a CRUD of its own, written by the identity service and the auth server | Accepted | 2026-10-25 |
 | [0051](0051-every-context-is-named-by-its-properties-class.md) | Every context of a sample is named by its properties class; the provider setting is gone | Accepted | 2026-10-25 |

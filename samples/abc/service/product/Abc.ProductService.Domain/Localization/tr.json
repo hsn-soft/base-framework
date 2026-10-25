@@ -3,6 +3,8 @@
   "texts": {
     "product_not_found": "{0} numaralı ürün bulunamadı.",
     "product_stock_history_not_found": "{0} numaralı stok geçmişi kaydı bulunamadı.",
+    "product_not_active": "{0} ürünü satışta değil.",
+    "product_stock_insufficient": "{0} ürününden stokta {1} adet var, {2} adet istendi.",
     "product_sku_duplicate": "'{0}' stok kodu kullanılıyor."
   }
 }

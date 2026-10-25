@@ -18,5 +18,7 @@ public sealed class ProductStockHistoryDto : AuditedEntityDto<Guid>
 
     public string? Note { get; init; }
 
+    public string? Reference { get; init; }
+
     public Guid TenantId { get; init; }
 }

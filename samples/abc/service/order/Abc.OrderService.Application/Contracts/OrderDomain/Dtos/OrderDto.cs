@@ -12,6 +12,8 @@ public sealed class OrderDto : AuditedEntityDto<Guid>
     /// <summary>The status in the language of the request (translated by the application service).</summary>
     public string StatusText { get; init; } = string.Empty;
 
+    public string ShippingAddress { get; init; } = string.Empty;
+
     public string? Note { get; init; }
 
     public decimal TotalAmount { get; init; }

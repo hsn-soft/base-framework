@@ -14,6 +14,7 @@ public static class OrderDomainConfiguration
         {
             order.ToTable(EfCoreOrderDbProperties.DbTablePrefix + OrderConsts.TableName, EfCoreOrderDbProperties.DbSchema);
             order.HasKey(entity => entity.Id);
+            order.Property(entity => entity.ShippingAddress).HasMaxLength(OrderConsts.ShippingAddressMaxLength).IsRequired();
             order.Property(entity => entity.Id).ValueGeneratedNever();
             order.Property(entity => entity.CustomerUserName).HasMaxLength(OrderConsts.CustomerUserNameMaxLength).IsRequired();
             order.Property(entity => entity.NormalizedCustomerUserName).HasMaxLength(OrderConsts.CustomerUserNameMaxLength).IsRequired();

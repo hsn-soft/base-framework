@@ -6,16 +6,18 @@ using Abc.OrderService.Application.Contracts.OrderDomain.Services;
 using Abc.OrderService.Domain.OrderDomain.Entities;
 using Abc.OrderService.Domain.OrderDomain.Exceptions;
 using Abc.OrderService.Domain.OrderDomain.Repositories;
+using Abc.Shared.Events;
 using HsnSoft.Base;
 using HsnSoft.Base.Application;
 using HsnSoft.Base.Application.Dtos;
 using HsnSoft.Base.Domain.Repositories;
+using HsnSoft.Base.EventBus;
 using HsnSoft.Base.Reflection;
 using HsnSoft.Base.Text;
 
 namespace Abc.OrderService.Application.Services;
 
-public sealed class OrderAppService(IRepository<Order, Guid> orders, IServiceProvider services) : ApplicationServiceBase(services), IOrderAppService
+public sealed class OrderAppService(IRepository<Order, Guid> orders, IEventBus eventBus, IServiceProvider services) : ApplicationServiceBase(services), IOrderAppService
 {
     public async Task<OrderDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
         => ToDto(await FindAsync(id, cancellationToken).ConfigureAwait(false));
@@ -52,8 +54,13 @@ public sealed class OrderAppService(IRepository<Order, Guid> orders, IServicePro
         ArgumentNullException.ThrowIfNull(input);
 
         IEnumerable<OrderLine> lines = input.Lines.Select(line => OrderLine.Create(line.ProductId.GetValueOrDefault(), line.ProductName, line.UnitPrice.GetValueOrDefault(), line.Quantity.GetValueOrDefault()));
-        Order order = Order.Create(CurrentUser.UserName ?? string.Empty, input.Note, lines);
+        Order order = Order.Create(CurrentUser.UserName ?? string.Empty, input.ShippingAddress, input.Note, lines);
         await orders.AddAsync(order, cancellationToken).ConfigureAwait(false);
+
+        // the product service checks the stock of the order; the answer comes back as an event (there is no outbox yet: an order saved whose event was not published waits as Pending)
+        await eventBus.PublishAsync(
+            new OrderCreatedEto(order.Id, order.TenantId, order.CustomerUserName, order.ShippingAddress, [.. order.Lines.Select(line => new OrderLineEto(line.ProductId, line.Quantity))]),
+            cancellationToken: cancellationToken).ConfigureAwait(false);
         return ToDto(order);
     }
 
@@ -102,6 +109,7 @@ public sealed class OrderAppService(IRepository<Order, Guid> orders, IServicePro
         CustomerUserName = order.CustomerUserName,
         Status = order.Status.ToString(),
         StatusText = L[$"OrderStatus:{order.Status}"].Value,
+        ShippingAddress = order.ShippingAddress,
         Note = order.Note,
         TotalAmount = order.TotalAmount,
         Lines = [.. order.Lines.Select(line => new OrderLineDto { ProductId = line.ProductId, ProductName = line.ProductName, UnitPrice = line.UnitPrice, Quantity = line.Quantity, Total = line.Total })],

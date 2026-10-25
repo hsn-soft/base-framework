@@ -325,6 +325,21 @@ issues ([ADR-0052](../docs/adr/0052-the-history-of-the-users.md)). The records h
 `MongoShipmentDbProperties`) with the table (or collection) prefix, the schema, the provider and the connection name: no setting says which provider runs ([ADR-0051](../docs/adr/0051-every-context-is-named-by-its-properties-class.md)).
 The connection strings are `EfCore-IdentityService` (SQL Server), `EfCore-HistoryService` (PostgreSQL), `EfCore-OrderService` (PostgreSQL), `Mongo-ProductService` and `Mongo-ShipmentService`.
 
+### The order flow ([ADR-0054](../docs/adr/0054-the-order-flow-through-events.md))
+
+A signed-in customer (for example `alice`, of Acme, who gets her token from the auth server) makes an order; the services answer each other through RabbitMQ (exchange `abc.events`):
+
+```
+order    --OrderCreatedEto-->       product    stock of every line checked and set aside (stock history: "reserved")
+product  --OrderStockCheckedEto-->  order      Pending -> Confirmed, or Cancelled with the reason
+product  --ShipmentRequestedEto-->  shipment   only when the stock was set aside: the shipment is made and sent (shipment history: delivered / failed)
+shipment --ShipmentCompletedEto-->  order      Confirmed -> Delivered, or Cancelled ("delivery failed")
+```
+
+`POST /api/order-service/v1/commercial/orders/create` with `{ "shippingAddress": "Ankara", "lines": [{ "productId": "...", "productName": "Desk Lamp", "unitPrice": 10, "quantity": 2 }] }`: a few seconds later the order is `Delivered`, the lamp has 2 less
+in stock, and there is a `delivered` record in the shipment history. An address with `fail` in it is returned by the (simulated) carrier and the order is cancelled; an out of stock product (the Office Chair has 0) cancels it at the stock check.
+The RabbitMQ management page (`localhost:15672`) shows the four queues `abc.events_<service>_<Event>`. The order has a `ShippingAddress` now: a database made before this change has to be dropped (`drop database abc_order`).
+
 ### More than one store in a service ([ADR-0053](../docs/adr/0053-more-than-one-store-in-a-service.md))
 
 | Service | Entity (store) | History (store) | Written when |

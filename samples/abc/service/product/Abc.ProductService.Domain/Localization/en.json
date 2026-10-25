@@ -3,6 +3,8 @@
   "texts": {
     "product_not_found": "Product {0} was not found.",
     "product_stock_history_not_found": "Stock history record {0} was not found.",
+    "product_not_active": "The product {0} is not for sale.",
+    "product_stock_insufficient": "There are {1} of {0} in stock, {2} were asked for.",
     "product_sku_duplicate": "The sku '{0}' is taken."
   }
 }

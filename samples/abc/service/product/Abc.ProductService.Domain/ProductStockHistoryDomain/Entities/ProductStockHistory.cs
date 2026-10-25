@@ -37,9 +37,12 @@ public sealed class ProductStockHistory : FullAuditedEntity<Guid>, IMultiTenant
 
     public string? Note { get; private set; }
 
+    /// <summary>What caused the change, so it is not made twice (<c>order:{orderId}:{productId}</c> when an order took the stock); <see langword="null"/> for a change somebody made by hand.</summary>
+    public string? Reference { get; private set; }
+
     public Guid TenantId { get; private set; }
 
-    public static ProductStockHistory Record(Guid productId, string productName, int oldStock, int newStock, string reason, string? note = null)
+    public static ProductStockHistory Record(Guid productId, string productName, int oldStock, int newStock, string reason, string? note = null, string? reference = null)
     {
         ProductStockHistory history = new()
         {
@@ -51,6 +54,7 @@ public sealed class ProductStockHistory : FullAuditedEntity<Guid>, IMultiTenant
         };
         history.Change = history.NewStock - history.OldStock;
         history.NormalizedProductName = StringHelper.Normalize(history.ProductName);
+        history.Reference = string.IsNullOrWhiteSpace(reference) ? null : Guard.Length(reference.Trim(), nameof(Reference), ProductStockHistoryConsts.ReferenceMaxLength);
         history.Describe(reason, note);
         return history;
     }

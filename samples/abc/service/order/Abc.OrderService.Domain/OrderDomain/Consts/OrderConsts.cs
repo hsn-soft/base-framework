@@ -7,5 +7,6 @@ public static class OrderConsts
 
     public const int CustomerUserNameMaxLength = 64;
     public const int NoteMaxLength = 512;
+    public const int ShippingAddressMaxLength = 256;
     public const int ProductNameMaxLength = 128;
 }

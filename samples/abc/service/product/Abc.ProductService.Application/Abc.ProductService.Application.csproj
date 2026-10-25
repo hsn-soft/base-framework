@@ -9,6 +9,11 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.Ddd.Application\HsnSoft.Base.Ddd.Application.csproj" />
+        <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.EventBus\HsnSoft.Base.EventBus.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\shared\Abc.Shared.Events\Abc.Shared.Events.csproj" />
     </ItemGroup>
 
     <ItemGroup>

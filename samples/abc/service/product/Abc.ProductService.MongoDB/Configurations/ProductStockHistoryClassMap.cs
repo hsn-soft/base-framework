@@ -25,6 +25,7 @@ public static class ProductStockHistoryClassMap
             map.MapProperty(history => history.Change);
             map.MapProperty(history => history.Reason);
             map.MapProperty(history => history.Note);
+            map.MapProperty(history => history.Reference);
             map.MapProperty(history => history.TenantId);
         });
     }

@@ -5,6 +5,11 @@ namespace Abc.OrderService.Application.Contracts.OrderDomain.Dtos.Submits;
 
 public sealed class OrderCreateDto
 {
+    /// <summary>Where the parcel goes (the shipment service sends it there once the stock is set aside).</summary>
+    [Required]
+    [StringLength(OrderConsts.ShippingAddressMaxLength)]
+    public string ShippingAddress { get; set; } = string.Empty;
+
     [StringLength(OrderConsts.NoteMaxLength)]
     public string? Note { get; set; }
 
