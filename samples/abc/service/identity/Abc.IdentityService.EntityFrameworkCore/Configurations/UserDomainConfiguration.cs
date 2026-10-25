@@ -13,7 +13,7 @@ public static class UserDomainConfiguration
 
         modelBuilder.Entity<User>(user =>
         {
-            user.ToTable(UserConsts.TableName);
+            user.ToTable(EfCoreIdentityDbProperties.DbTablePrefix + UserConsts.TableName, EfCoreIdentityDbProperties.DbSchema);
             user.HasKey(entity => entity.Id);
             user.Property(entity => entity.Id).ValueGeneratedNever();
             user.Property(entity => entity.UserName).HasMaxLength(UserConsts.UserNameMaxLength).IsRequired();

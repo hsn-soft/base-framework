@@ -13,12 +13,14 @@ builder.Services
     .AddAbcMicroservice(builder.Configuration, "Abc.IdentityService API", typeof(User).Assembly)
     .AddAbcEventBus(builder.Configuration)
     .AddIdentityPersistence(builder.Configuration)
+    .AddIdentityHistoryPersistence(builder.Configuration)
     .AddIdentityApplication();
 
 WebApplication app = builder.Build();
 
 // the schema, and two users to sign in as when there is none: admin of the system tenant, alice of Acme (the auth server reads the same database)
 await app.Services.EnsureIdentityDatabaseAsync(AbcTenants.System, AbcTenants.Acme);
+await app.Services.EnsureHistoryDatabaseAsync();
 
 app.UseAbcMicroservice();
 app.MapControllers();

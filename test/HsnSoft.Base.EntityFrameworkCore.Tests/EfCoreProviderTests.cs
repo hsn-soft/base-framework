@@ -93,6 +93,18 @@ public sealed class EfCoreProviderTests
     }
 
     [Fact]
+    public void AProviderAndAConnectionNameGivenByTheCode_AreUsedWhateverTheSettingsSay()
+    {
+        IConfiguration configuration = Configuration(("Database:Provider", "alpha"), ("ConnectionStrings:Alpha", "Data Source=a.db"), ("ConnectionStrings:EfCore-Own", "Data Source=own.db"));
+
+        IServiceCollection services = new ServiceCollection().AddLogging().AddBaseEfCore<ProviderContext>(configuration, Both, "beta", "EfCore-Own");
+
+        Assert.Equal("Data Source=own.db", ConnectionOf(services));
+        Assert.Contains("'oracle'", Assert.Throws<InvalidOperationException>(() => new ServiceCollection().AddBaseEfCore<ProviderContext>(configuration, Both, "oracle", "EfCore-Own")).Message, StringComparison.Ordinal);
+        Assert.Contains("ConnectionStrings:Missing", Assert.Throws<InvalidOperationException>(() => new ServiceCollection().AddBaseEfCore<ProviderContext>(configuration, Both, "beta", "Missing")).Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void NullArguments_AreRefused()
     {
         IConfiguration configuration = Configuration();
@@ -101,5 +113,10 @@ public sealed class EfCoreProviderTests
         Assert.Throws<ArgumentNullException>(() => new ServiceCollection().AddBaseEfCore<ProviderContext>(null!, Both));
         Assert.Throws<ArgumentNullException>(() => new ServiceCollection().AddBaseEfCore<ProviderContext>(configuration, null!));
         Assert.Throws<ArgumentNullException>(() => new EfCoreProviderOptions().Add(null!));
+        Assert.Throws<ArgumentNullException>(() => ((IServiceCollection)null!).AddBaseEfCore<ProviderContext>(configuration, Both, "alpha", "Alpha"));
+        Assert.Throws<ArgumentNullException>(() => new ServiceCollection().AddBaseEfCore<ProviderContext>(null!, Both, "alpha", "Alpha"));
+        Assert.Throws<ArgumentNullException>(() => new ServiceCollection().AddBaseEfCore<ProviderContext>(configuration, null!, "alpha", "Alpha"));
+        Assert.Throws<ArgumentException>(() => new ServiceCollection().AddBaseEfCore<ProviderContext>(configuration, Both, " ", "Alpha"));
+        Assert.Throws<ArgumentException>(() => new ServiceCollection().AddBaseEfCore<ProviderContext>(configuration, Both, "alpha", " "));
     }
 }

@@ -1,6 +1,6 @@
 # ADR-0049: The Abc services' databases, and a project references only the provider it uses
 
-- **Status:** Accepted
+- **Status:** Accepted (the settings of the identity databases changed: [ADR-0050](0050-a-context-has-a-properties-class-for-its-database.md))
 - **Date:** 2026-10-25 (changes the database of the identity service of [ADR-0032](0032-the-auth-server-reads-the-users-of-the-identity-service.md); uses [ADR-0047](0047-relational-provider-chosen-by-a-setting.md))
 
 ## Context

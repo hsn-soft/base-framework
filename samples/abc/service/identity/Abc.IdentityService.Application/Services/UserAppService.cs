@@ -6,6 +6,8 @@ using Abc.IdentityService.Application.Contracts.UserDomain.Services;
 using Abc.IdentityService.Domain.UserDomain.Entities;
 using Abc.IdentityService.Domain.UserDomain.Exceptions;
 using Abc.IdentityService.Domain.UserDomain.Repositories;
+using Abc.IdentityService.Domain.UserHistoryDomain.Consts;
+using Abc.IdentityService.Domain.UserHistoryDomain.Entities;
 using HsnSoft.Base.Application;
 using HsnSoft.Base.Application.Dtos;
 using HsnSoft.Base.Domain.Repositories;
@@ -14,7 +16,7 @@ using HsnSoft.Base.Text;
 
 namespace Abc.IdentityService.Application.Services;
 
-public sealed class UserAppService(IRepository<User, Guid> users, IServiceProvider services) : ApplicationServiceBase(services), IUserAppService
+public sealed class UserAppService(IRepository<User, Guid> users, IRepository<UserHistory, Guid> history, IServiceProvider services) : ApplicationServiceBase(services), IUserAppService
 {
     public async Task<UserDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
         => ToDto(await FindAsync(id, cancellationToken).ConfigureAwait(false));
@@ -58,6 +60,7 @@ public sealed class UserAppService(IRepository<User, Guid> users, IServiceProvid
 
         User user = User.Create(userName, input.Email, input.DisplayName, input.Password, input.Roles, input.Language);
         await users.AddAsync(user, cancellationToken).ConfigureAwait(false);
+        await RecordAsync(user, UserHistoryConsts.Created, cancellationToken).ConfigureAwait(false);
         return ToDto(user);
     }
 
@@ -76,13 +79,19 @@ public sealed class UserAppService(IRepository<User, Guid> users, IServiceProvid
         User user = await FindAsync(input.Id.GetValueOrDefault(), cancellationToken).ConfigureAwait(false);
         user.Update(input.Email, input.DisplayName, input.IsActive.GetValueOrDefault(), input.Roles, input.Language);
         await users.UpdateAsync(user, cancellationToken).ConfigureAwait(false);
+        await RecordAsync(user, UserHistoryConsts.Updated, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
         User user = await FindAsync(id, cancellationToken).ConfigureAwait(false);
         await users.DeleteAsync(user, cancellationToken).ConfigureAwait(false);
+        await RecordAsync(user, UserHistoryConsts.Deleted, cancellationToken).ConfigureAwait(false);
     }
+
+    // the history is another database: there is no transaction over both, so a failure here leaves the change made and the history without it
+    private Task RecordAsync(User user, string action, CancellationToken cancellationToken)
+        => history.AddAsync(UserHistory.Record(user.Id, user.UserName, action), cancellationToken);
 
     private async Task<User> FindAsync(Guid id, CancellationToken cancellationToken)
         => await users.FindAsync(id, cancellationToken).ConfigureAwait(false) ?? throw UserNotFound.For(id);

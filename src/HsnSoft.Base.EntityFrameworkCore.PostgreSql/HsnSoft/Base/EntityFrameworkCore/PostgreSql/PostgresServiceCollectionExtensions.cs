@@ -30,7 +30,7 @@ public static class PostgresServiceCollectionExtensions
     {
         public static readonly PostgresProvider Instance = new();
 
-        public string Name => "postgres";
+        public string Name => EfCoreProviderNames.Postgres;
 
         public string ConnectionName => "Postgres";
 

@@ -30,7 +30,7 @@ public static class SqlServerServiceCollectionExtensions
     {
         public static readonly SqlServerProvider Instance = new();
 
-        public string Name => "sqlserver";
+        public string Name => EfCoreProviderNames.SqlServer;
 
         public string ConnectionName => "SqlServer";
 

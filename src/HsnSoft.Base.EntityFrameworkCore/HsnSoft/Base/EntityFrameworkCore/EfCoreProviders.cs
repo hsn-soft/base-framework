@@ -7,6 +7,14 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace HsnSoft.Base.EntityFrameworkCore;
 
+/// <summary>The names of the providers of the framework: what <c>Database:Provider</c> (or the <c>Provider</c> of a service's own properties class) says.</summary>
+public static class EfCoreProviderNames
+{
+    public const string Postgres = "postgres";
+
+    public const string SqlServer = "sqlserver";
+}
+
 /// <summary>A relational database the service can run on: what a provider package (<c>EntityFrameworkCore.PostgreSql</c>, <c>EntityFrameworkCore.SqlServer</c>, ...) says about itself and how it configures a context.</summary>
 public interface IEfCoreProvider
 {
@@ -19,7 +27,7 @@ public interface IEfCoreProvider
     void Configure(DbContextOptionsBuilder options, string connectionString);
 }
 
-/// <summary>The providers a service offers; the setting <c>Database:Provider</c> says which one runs (<see cref="EfCoreProviderServiceCollectionExtensions.AddBaseEfCore"/>).</summary>
+/// <summary>The providers a service offers; the setting <c>Database:Provider</c> says which one runs (<c>AddBaseEfCore</c>).</summary>
 public sealed class EfCoreProviderOptions
 {
     private readonly List<IEfCoreProvider> _providers = [];
@@ -65,9 +73,33 @@ public static class EfCoreProviderServiceCollectionExtensions
 
         EfCoreProviderOptions options = new();
         providers(options);
-        IEfCoreProvider provider = Select(options.Providers, configuration[ProviderSetting]);
-        string connectionString = configuration.GetConnectionString(provider.ConnectionName)
-                               ?? throw new InvalidOperationException($"ConnectionStrings:{provider.ConnectionName} is required (the provider is {provider.Name}).");
+        return Register<TContext>(services, configuration, Select(options.Providers, configuration[ProviderSetting]), null);
+    }
+
+    /// <summary>
+    /// The same, for a context whose provider and connection string are not settings but properties of the service's code (<c>EfCoreIdentityDbProperties.Provider</c>, <c>EfCoreIdentityDbProperties.ConnectionStringName</c>): a service with
+    /// more than one context, each on its own database, says for each which one and where. <paramref name="provider"/> is one of the names offered (<see cref="EfCoreProviderNames"/>), <paramref name="connectionName"/> the name of its connection string.
+    /// </summary>
+    public static IServiceCollection AddBaseEfCore<TContext>(this IServiceCollection services, IConfiguration configuration, Action<EfCoreProviderOptions> providers, string provider, string connectionName)
+        where TContext : DbContext
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(configuration);
+        ArgumentNullException.ThrowIfNull(providers);
+        ArgumentException.ThrowIfNullOrWhiteSpace(provider);
+        ArgumentException.ThrowIfNullOrWhiteSpace(connectionName);
+
+        EfCoreProviderOptions options = new();
+        providers(options);
+        return Register<TContext>(services, configuration, Select(options.Providers, provider), connectionName);
+    }
+
+    private static IServiceCollection Register<TContext>(IServiceCollection services, IConfiguration configuration, IEfCoreProvider provider, string? connectionName)
+        where TContext : DbContext
+    {
+        string name = connectionName ?? provider.ConnectionName;
+        string connectionString = configuration.GetConnectionString(name)
+                               ?? throw new InvalidOperationException($"ConnectionStrings:{name} is required (the provider is {provider.Name}).");
 
         services.AddBaseEntityFramework();
         services.AddDbContext<TContext>((serviceProvider, builder) =>
