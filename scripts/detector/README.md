@@ -78,12 +78,14 @@ The results are written to `TestResults/detector/` (git ignores it); each run st
 
 | Stage | Usual fix |
 | --- | --- |
+| Project file reference order | the references of every project file are in groups: external, framework, shared, own, each in alphabetical order | `Project File Reference Order` |
 | Format (C#) | `dotnet format whitespace HsnSoft.Base.sln` and `dotnet format style HsnSoft.Base.sln --severity info` (the pre-commit hook does it for staged files). A naming rule (IDE1006) has to be fixed by hand. |
 | Format (JSON) | `dotnet run scripts/format-json.cs -- --all` |
 | Build | read the errors in the log; a warning is an error here, as in the CI |
 | Unit / integration tests | run the failing project alone: `dotnet test test/<Project>` |
 | Coverage gate | the log lists the lines nobody ran (`not covered: file:line`); add a test |
 | Every package has a test project | add `test/<Package>.Tests` |
+| Project file reference order | `python3 scripts/ci-check-csproj-order.py --fix` puts the references in order |
 
 Like the CI, the test scripts stop at the first failing test project, so the counts of a failed run only cover the projects that ran.
 

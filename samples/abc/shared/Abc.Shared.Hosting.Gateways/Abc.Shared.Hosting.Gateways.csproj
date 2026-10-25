@@ -7,15 +7,15 @@
 
     <ItemGroup>
         <FrameworkReference Include="Microsoft.AspNetCore.App" />
-    </ItemGroup>
-
-    <ItemGroup>
         <PackageReference Include="Yarp.ReverseProxy" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Abc.Shared.Hosting\Abc.Shared.Hosting.csproj" />
         <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.AspNetCore.SwaggerGateway\HsnSoft.Base.AspNetCore.SwaggerGateway.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Abc.Shared.Hosting\Abc.Shared.Hosting.csproj" />
     </ItemGroup>
 
 </Project>

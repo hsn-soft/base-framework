@@ -6,9 +6,9 @@
     -->
 
     <ItemGroup>
-        <ProjectReference Include="..\..\..\src\HsnSoft.Base.Logging.Serilog\HsnSoft.Base.Logging.Serilog.csproj" />
         <ProjectReference Include="..\..\..\src\HsnSoft.Base.AspNetCore\HsnSoft.Base.AspNetCore.csproj" />
         <ProjectReference Include="..\..\..\src\HsnSoft.Base.Hosting\HsnSoft.Base.Hosting.csproj" />
+        <ProjectReference Include="..\..\..\src\HsnSoft.Base.Logging.Serilog\HsnSoft.Base.Logging.Serilog.csproj" />
         <ProjectReference Include="..\..\..\src\HsnSoft.Base.MongoDB\HsnSoft.Base.MongoDB.csproj" />
     </ItemGroup>
 

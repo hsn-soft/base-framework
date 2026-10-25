@@ -8,8 +8,11 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Abc.ShipmentService.Domain\Abc.ShipmentService.Domain.csproj" />
         <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.Ddd.Application\HsnSoft.Base.Ddd.Application.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Abc.ShipmentService.Domain\Abc.ShipmentService.Domain.csproj" />
     </ItemGroup>
 
 </Project>

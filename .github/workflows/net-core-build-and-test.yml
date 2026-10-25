@@ -49,6 +49,9 @@ jobs:
             -   name: Every Package Has Unit Tests
                 run: ./scripts/ci-check-test-projects.sh
 
+            -   name: Project File Reference Order
+                run: python3 scripts/ci-check-csproj-order.py
+
             -   name: Restore Dependencies
                 run: dotnet restore --verbosity minimal --configfile NuGet.Config
 

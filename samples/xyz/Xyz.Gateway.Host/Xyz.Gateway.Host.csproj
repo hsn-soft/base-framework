@@ -5,8 +5,11 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Xyz.Shared\Xyz.Shared.csproj" />
         <ProjectReference Include="..\..\..\src\HsnSoft.Base.AspNetCore.SwaggerGateway\HsnSoft.Base.AspNetCore.SwaggerGateway.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Xyz.Shared\Xyz.Shared.csproj" />
     </ItemGroup>
 
 </Project>

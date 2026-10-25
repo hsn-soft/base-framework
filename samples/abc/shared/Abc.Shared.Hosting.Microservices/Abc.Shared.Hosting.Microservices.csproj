@@ -7,8 +7,11 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Abc.Shared.Hosting\Abc.Shared.Hosting.csproj" />
         <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.EventBus.RabbitMQ\HsnSoft.Base.EventBus.RabbitMQ.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Abc.Shared.Hosting\Abc.Shared.Hosting.csproj" />
     </ItemGroup>
 
 </Project>

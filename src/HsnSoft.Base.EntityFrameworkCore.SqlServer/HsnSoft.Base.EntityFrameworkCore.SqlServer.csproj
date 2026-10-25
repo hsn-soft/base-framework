@@ -18,9 +18,9 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="$(MicrosoftEntityFrameworkCorePackageVersion)" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="$(MicrosoftAspNetCorePackageVersion)" />
         <!-- Microsoft.Data.SqlClient still pulls a vulnerable 9.0.x of this; raise the floor until it moves on -->
         <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
-        <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="$(MicrosoftAspNetCorePackageVersion)" />
     </ItemGroup>
 
     <ItemGroup>

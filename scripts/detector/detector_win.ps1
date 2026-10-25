@@ -116,6 +116,7 @@ Write-Info "## STAGES ----------------------------------------------------------
 $restored = Invoke-Stage "restore" "Restore" { dotnet restore HsnSoft.Base.sln --verbosity minimal }
 
 Invoke-Stage "test-projects" "Every package has a test project" { bash ./scripts/ci-check-test-projects.sh } | Out-Null
+Invoke-Stage "csproj-order" "Project file reference order" { & $python scripts/ci-check-csproj-order.py } | Out-Null
 if ($restored)
 {
     Invoke-Stage "format-cs" "Format (C#)" {
