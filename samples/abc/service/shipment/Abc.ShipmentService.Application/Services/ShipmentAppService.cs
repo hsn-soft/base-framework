@@ -6,6 +6,8 @@ using Abc.ShipmentService.Application.Contracts.ShipmentDomain.Services;
 using Abc.ShipmentService.Domain.ShipmentDomain.Entities;
 using Abc.ShipmentService.Domain.ShipmentDomain.Exceptions;
 using Abc.ShipmentService.Domain.ShipmentDomain.Repositories;
+using Abc.ShipmentService.Domain.ShipmentHistoryDomain.Consts;
+using Abc.ShipmentService.Domain.ShipmentHistoryDomain.Entities;
 using HsnSoft.Base;
 using HsnSoft.Base.Application;
 using HsnSoft.Base.Application.Dtos;
@@ -15,7 +17,7 @@ using HsnSoft.Base.Text;
 
 namespace Abc.ShipmentService.Application.Services;
 
-public sealed class ShipmentAppService(IRepository<Shipment, Guid> shipments, IServiceProvider services) : ApplicationServiceBase(services), IShipmentAppService
+public sealed class ShipmentAppService(IRepository<Shipment, Guid> shipments, IRepository<ShipmentHistory, Guid> history, IServiceProvider services) : ApplicationServiceBase(services), IShipmentAppService
 {
     public async Task<ShipmentDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
         => ToDto(await FindAsync(id, cancellationToken).ConfigureAwait(false));
@@ -61,8 +63,16 @@ public sealed class ShipmentAppService(IRepository<Shipment, Guid> shipments, IS
         ArgumentNullException.ThrowIfNull(input);
 
         Shipment shipment = await FindAsync(input.Id.GetValueOrDefault(), cancellationToken).ConfigureAwait(false);
+        ShipmentStatus before = shipment.Status;
         shipment.Update(input.Carrier, input.Address, ParseStatus(input.Status) ?? throw new DomainException("Status is required.").WithKey("status_required"));
         await shipments.UpdateAsync(shipment, cancellationToken).ConfigureAwait(false);
+
+        // how a delivery ended is written to the shipment history (its own database): delivered, or failed when the parcel was returned. There is no transaction over the two databases.
+        if (shipment.Status != before && shipment.Status is ShipmentStatus.Delivered or ShipmentStatus.Returned)
+        {
+            string outcome = shipment.Status == ShipmentStatus.Delivered ? ShipmentHistoryConsts.Delivered : ShipmentHistoryConsts.Failed;
+            await history.AddAsync(ShipmentHistory.Record(shipment.Id, shipment.OrderId, shipment.TrackingNumber, outcome), cancellationToken).ConfigureAwait(false);
+        }
     }
 
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)

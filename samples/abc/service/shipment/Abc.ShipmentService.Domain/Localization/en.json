@@ -1,6 +1,7 @@
 {
   "culture": "en",
   "texts": {
+    "shipment_history_not_found": "Shipment history record {0} was not found.",
     "shipment_not_found": "Shipment {0} was not found.",
     "shipment_order_required": "A shipment needs an order.",
     "shipment_status_final": "A shipment that is {0} cannot change its status.",

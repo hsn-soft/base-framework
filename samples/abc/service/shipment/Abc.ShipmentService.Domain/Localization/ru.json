@@ -1,6 +1,7 @@
 {
   "culture": "ru",
   "texts": {
+    "shipment_history_not_found": "Запись истории отправки {0} не найдена.",
     "shipment_not_found": "Отправление {0} не найдено.",
     "shipment_order_required": "Для отправления нужен заказ.",
     "shipment_status_final": "Статус отправления в состоянии {0} изменить нельзя.",

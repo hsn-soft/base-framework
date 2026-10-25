@@ -1,6 +1,7 @@
 {
   "culture": "tr",
   "texts": {
+    "shipment_history_not_found": "{0} numaralı sevkiyat geçmişi kaydı bulunamadı.",
     "shipment_not_found": "{0} numaralı gönderi bulunamadı.",
     "shipment_order_required": "Gönderi için bir sipariş gerekir.",
     "shipment_status_final": "Durumu {0} olan bir gönderinin durumu değiştirilemez.",

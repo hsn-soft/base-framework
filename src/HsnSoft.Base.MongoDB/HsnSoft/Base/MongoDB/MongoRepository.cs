@@ -227,14 +227,18 @@ public class MongoRepository<TEntity, TKey>(IMongoDatabase database, MongoEntity
 
 public static class MongoRepositoryServiceCollectionExtensions
 {
-    /// <summary>Registers <see cref="MongoRepository{TEntity, TKey}"/> over the collection <paramref name="collectionName"/> as the <see cref="IRepository{TEntity, TKey}"/> of an entity (after <c>AddBaseMongo</c>), and registers the maps of the base classes of the entities (<see cref="MongoEntityMaps"/>).</summary>
-    public static IServiceCollection AddMongoRepository<TEntity, TKey>(this IServiceCollection services, string collectionName)
+    /// <summary>
+    /// Registers <see cref="MongoRepository{TEntity, TKey}"/> over the collection <paramref name="collectionName"/> as the <see cref="IRepository{TEntity, TKey}"/> of an entity (after <c>AddBaseMongo</c>), and registers the maps of the base classes
+    /// of the entities (<see cref="MongoEntityMaps"/>). <paramref name="serviceKey"/> is the key of the <c>AddBaseMongo</c> that registered the database the collection is in, when the service has more than one.
+    /// </summary>
+    public static IServiceCollection AddMongoRepository<TEntity, TKey>(this IServiceCollection services, string collectionName, string? serviceKey = null)
         where TEntity : class, IEntity<TKey>
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentException.ThrowIfNullOrWhiteSpace(collectionName);
 
         MongoEntityMaps.RegisterBases<TKey>();
-        return services.AddScoped<IRepository<TEntity, TKey>>(provider => new MongoRepository<TEntity, TKey>(provider.GetRequiredService<IMongoDatabase>(), provider.GetRequiredService<MongoEntityConcepts>(), collectionName));
+        return services.AddScoped<IRepository<TEntity, TKey>>(provider => new MongoRepository<TEntity, TKey>(
+            serviceKey is null ? provider.GetRequiredService<IMongoDatabase>() : provider.GetRequiredKeyedService<IMongoDatabase>(serviceKey), provider.GetRequiredService<MongoEntityConcepts>(), collectionName));
     }
 }

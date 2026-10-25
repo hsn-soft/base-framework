@@ -1,4 +1,5 @@
 using Abc.ShipmentService.Application.Contracts.ShipmentDomain.Services;
+using Abc.ShipmentService.Application.Contracts.ShipmentHistoryDomain.Services;
 using Abc.ShipmentService.Application.Services;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -12,6 +13,7 @@ public static class ApplicationServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
 
         services.AddScoped<IShipmentAppService, ShipmentAppService>();
+        services.AddScoped<IShipmentHistoryAppService, ShipmentHistoryAppService>();
         return services;
     }
 }

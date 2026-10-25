@@ -1,4 +1,5 @@
 using Abc.ProductService.Application.Contracts.ProductDomain.Services;
+using Abc.ProductService.Application.Contracts.ProductStockHistoryDomain.Services;
 using Abc.ProductService.Application.Services;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -12,6 +13,7 @@ public static class ApplicationServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
 
         services.AddScoped<IProductAppService, ProductAppService>();
+        services.AddScoped<IProductStockHistoryAppService, ProductStockHistoryAppService>();
         return services;
     }
 }

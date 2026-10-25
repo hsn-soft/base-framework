@@ -13,12 +13,14 @@ builder.Services
     .AddAbcMicroservice(builder.Configuration, "Abc.ProductService API", typeof(Product).Assembly)
     .AddAbcEventBus(builder.Configuration)
     .AddProductPersistence(builder.Configuration)
+    .AddProductStockPersistence(builder.Configuration)
     .AddProductApplication();
 
 WebApplication app = builder.Build();
 
 // the indexes, and two products of Acme to try the service with when there is none
 await app.Services.EnsureProductDatabaseAsync(AbcTenants.Acme);
+await app.Services.EnsureProductStockDatabaseAsync();
 
 app.UseAbcMicroservice();
 app.MapControllers();

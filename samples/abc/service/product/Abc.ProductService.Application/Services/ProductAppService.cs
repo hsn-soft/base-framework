@@ -6,6 +6,8 @@ using Abc.ProductService.Application.Contracts.ProductDomain.Services;
 using Abc.ProductService.Domain.ProductDomain.Entities;
 using Abc.ProductService.Domain.ProductDomain.Exceptions;
 using Abc.ProductService.Domain.ProductDomain.Repositories;
+using Abc.ProductService.Domain.ProductStockHistoryDomain.Consts;
+using Abc.ProductService.Domain.ProductStockHistoryDomain.Entities;
 using HsnSoft.Base.Application;
 using HsnSoft.Base.Application.Dtos;
 using HsnSoft.Base.Domain.Repositories;
@@ -14,7 +16,7 @@ using HsnSoft.Base.Text;
 
 namespace Abc.ProductService.Application.Services;
 
-public sealed class ProductAppService(IRepository<Product, Guid> products, IServiceProvider services) : ApplicationServiceBase(services), IProductAppService
+public sealed class ProductAppService(IRepository<Product, Guid> products, IRepository<ProductStockHistory, Guid> stockHistory, IServiceProvider services) : ApplicationServiceBase(services), IProductAppService
 {
     public async Task<ProductDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
         => ToDto(await FindAsync(id, cancellationToken).ConfigureAwait(false));
@@ -59,6 +61,7 @@ public sealed class ProductAppService(IRepository<Product, Guid> products, IServ
 
         Product product = Product.Create(input.Name, input.Sku, input.Description, input.Price.GetValueOrDefault(), input.Stock.GetValueOrDefault());
         await products.AddAsync(product, cancellationToken).ConfigureAwait(false);
+        await RecordStockAsync(product, 0, ProductStockHistoryConsts.Created, cancellationToken).ConfigureAwait(false);
         return ToDto(product);
     }
 
@@ -67,8 +70,13 @@ public sealed class ProductAppService(IRepository<Product, Guid> products, IServ
         ArgumentNullException.ThrowIfNull(input);
 
         Product product = await FindAsync(input.Id.GetValueOrDefault(), cancellationToken).ConfigureAwait(false);
+        int stockBefore = product.Stock;
         product.Update(input.Name, input.Description, input.Price.GetValueOrDefault(), input.Stock.GetValueOrDefault(), input.IsActive.GetValueOrDefault());
         await products.UpdateAsync(product, cancellationToken).ConfigureAwait(false);
+        if (product.Stock != stockBefore)
+        {
+            await RecordStockAsync(product, stockBefore, ProductStockHistoryConsts.Updated, cancellationToken).ConfigureAwait(false);
+        }
     }
 
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
@@ -76,6 +84,10 @@ public sealed class ProductAppService(IRepository<Product, Guid> products, IServ
         Product product = await FindAsync(id, cancellationToken).ConfigureAwait(false);
         await products.DeleteAsync(product, cancellationToken).ConfigureAwait(false);
     }
+
+    // every change of the stock is written to the stock history (its own MongoDB): there is no transaction over the two, so a failure here leaves the change made and the record not
+    private Task RecordStockAsync(Product product, int stockBefore, string reason, CancellationToken cancellationToken)
+        => stockHistory.AddAsync(ProductStockHistory.Record(product.Id, product.Name, stockBefore, product.Stock, reason), cancellationToken);
 
     private async Task<Product> FindAsync(Guid id, CancellationToken cancellationToken)
         => await products.FindAsync(id, cancellationToken).ConfigureAwait(false) ?? throw ProductNotFound.For(id);

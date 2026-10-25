@@ -2,6 +2,7 @@
   "culture": "ru",
   "texts": {
     "product_not_found": "Товар {0} не найден.",
+    "product_stock_history_not_found": "Запись истории остатков {0} не найдена.",
     "product_sku_duplicate": "Артикул '{0}' занят."
   }
 }

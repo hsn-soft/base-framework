@@ -1,6 +1,7 @@
 using Abc.Shared.Hosting.Microservices;
 using Abc.ShipmentService.Application;
 using Abc.ShipmentService.Domain.ShipmentDomain.Entities;
+using Abc.ShipmentService.EntityFrameworkCore;
 using Abc.ShipmentService.MongoDB;
 using HsnSoft.Base.Logging.Serilog;
 
@@ -12,12 +13,14 @@ builder.Services
     .AddAbcMicroservice(builder.Configuration, "Abc.ShipmentService API", typeof(Shipment).Assembly)
     .AddAbcEventBus(builder.Configuration)
     .AddShipmentPersistence(builder.Configuration)
+    .AddShipmentHistoryPersistence(builder.Configuration)
     .AddShipmentApplication();
 
 WebApplication app = builder.Build();
 
 // the indexes of the shipments
 await app.Services.EnsureShipmentDatabaseAsync();
+await app.Services.EnsureShipmentHistoryDatabaseAsync();
 
 app.UseAbcMicroservice();
 app.MapControllers();

@@ -15,6 +15,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Abc.ShipmentService.Application\Abc.ShipmentService.Application.csproj" />
+        <ProjectReference Include="..\Abc.ShipmentService.EntityFrameworkCore\Abc.ShipmentService.EntityFrameworkCore.csproj" />
         <ProjectReference Include="..\Abc.ShipmentService.MongoDB\Abc.ShipmentService.MongoDB.csproj" />
     </ItemGroup>
 

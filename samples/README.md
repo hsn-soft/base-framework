@@ -324,3 +324,15 @@ issues ([ADR-0052](../docs/adr/0052-the-history-of-the-users.md)). The records h
 (`IUserHistoryAppService`; the lists read only the columns of their DTO). Every context of a service has a properties class (`EfCoreIdentityDbProperties`, `EfCoreHistoryDbProperties`, `EfCoreOrderDbProperties`, `MongoProductDbProperties`,
 `MongoShipmentDbProperties`) with the table (or collection) prefix, the schema, the provider and the connection name: no setting says which provider runs ([ADR-0051](../docs/adr/0051-every-context-is-named-by-its-properties-class.md)).
 The connection strings are `EfCore-IdentityService` (SQL Server), `EfCore-HistoryService` (PostgreSQL), `EfCore-OrderService` (PostgreSQL), `Mongo-ProductService` and `Mongo-ShipmentService`.
+
+### More than one store in a service ([ADR-0053](../docs/adr/0053-more-than-one-store-in-a-service.md))
+
+| Service | Entity (store) | History (store) | Written when |
+|---|---|---|---|
+| identity | `User` (EF Core, SQL Server `abc_identity`) | `UserHistory` (EF Core, PostgreSQL `abc_history`) | a user is created, changed or deleted; the auth server issues a token (`login`) |
+| order | `Order` (EF Core, PostgreSQL `abc_order`) | | |
+| product | `Product` (MongoDB `Mongo-ProductService`, `abc_product`) | `ProductStockHistory` (MongoDB `Mongo-StockService`, `abc_stock`, registered under the key `stock`) | a product is created, or an update changes its stock |
+| shipment | `Shipment` (MongoDB `abc_shipment`, project `Abc.ShipmentService.MongoDB`) | `ShipmentHistory` (EF Core, PostgreSQL `abc_shipment_history`, project `Abc.ShipmentService.EntityFrameworkCore`) | a shipment is delivered (`delivered`) or returned (`failed`) |
+
+Each history has the CRUD of its entity: `POST .../user-histories`, `.../product-stock-histories`, `.../shipment-histories` with `get/{id}`, `paged-list`, `filter-list`, `search-list`, `create`, then `PUT` and `DELETE /{id}`. The connection strings of the new stores are
+`Mongo-StockService` and `EfCore-ShipmentHistoryService`.
