@@ -1,5 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using Abc.ProductService.Application.Contracts.Dtos;
+using HsnSoft.Base.Application.Dtos;
 
 namespace Abc.ProductService.Application.Contracts.ProductDomain.Dtos.Filters;
 

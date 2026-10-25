@@ -1,9 +1,9 @@
 using System.ComponentModel.DataAnnotations;
-using Abc.IdentityService.Application.Contracts.Dtos;
+using HsnSoft.Base.Application.Dtos;
 
 namespace Abc.IdentityService.Application.Contracts.UserDomain.Dtos.Filters;
 
-public sealed class GetUsersFilter : LimitedDataRequestDto
+public sealed class GetUsersFilter : SortedAndLimitedDataRequestDto
 {
     /// <summary>A part of the user name.</summary>
     [StringLength(100)]

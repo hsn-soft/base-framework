@@ -1,9 +1,9 @@
+using HsnSoft.Base.Application.Dtos;
+
 namespace Abc.ShipmentService.Application.Contracts.ShipmentDomain.Dtos;
 
-public sealed class ShipmentDto
+public sealed class ShipmentDto : AuditedEntityDto<Guid>
 {
-    public Guid Id { get; init; }
-
     public Guid OrderId { get; init; }
 
     public string TrackingNumber { get; init; } = string.Empty;
@@ -20,11 +20,4 @@ public sealed class ShipmentDto
 
     public Guid TenantId { get; init; }
 
-    public DateTimeOffset CreatedAt { get; init; }
-
-    public Guid? CreatedBy { get; init; }
-
-    public DateTimeOffset UpdatedAt { get; init; }
-
-    public Guid? UpdatedBy { get; init; }
 }

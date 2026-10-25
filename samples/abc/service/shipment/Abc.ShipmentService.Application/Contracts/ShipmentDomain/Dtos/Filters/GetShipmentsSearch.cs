@@ -1,4 +1,4 @@
-using Abc.ShipmentService.Application.Contracts.Dtos;
+using HsnSoft.Base.Application.Dtos;
 
 namespace Abc.ShipmentService.Application.Contracts.ShipmentDomain.Dtos.Filters;
 

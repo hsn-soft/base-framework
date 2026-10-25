@@ -1,6 +1,6 @@
-using Abc.ShipmentService.Domain.ShipmentDomain.Repositories;
+using Abc.ShipmentService.Domain.ShipmentDomain.Consts;
+using Abc.ShipmentService.Domain.ShipmentDomain.Entities;
 using Abc.ShipmentService.MongoDB.Configurations;
-using Abc.ShipmentService.MongoDB.Repositories;
 using HsnSoft.Base.MongoDB;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,7 +20,7 @@ public static class MongoServiceCollectionExtensions
         services.AddBaseMongo(configuration);
 
         ShipmentClassMap.Register();
-        services.AddScoped<IShipmentRepository, MongoShipmentRepository>();
+        services.AddMongoRepository<Shipment, Guid>(ShipmentConsts.CollectionName);
         return services;
     }
 }

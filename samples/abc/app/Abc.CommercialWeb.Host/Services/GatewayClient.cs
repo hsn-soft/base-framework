@@ -20,7 +20,7 @@ public sealed class GatewayClient(HttpClient http)
 
     public async Task<PagedUsers> ListUsersAsync(string? userName, CancellationToken cancellationToken)
     {
-        using HttpResponseMessage response = await http.PostAsJsonAsync("/identity-service/v1/users/paged-list", new { take = 50, userName }, cancellationToken).ConfigureAwait(false);
+        using HttpResponseMessage response = await http.PostAsJsonAsync("/identity-service/v1/users/paged-list", new { maxResultCount = 50, userName }, cancellationToken).ConfigureAwait(false);
         if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
         {
             throw new GatewayUnauthorizedException();

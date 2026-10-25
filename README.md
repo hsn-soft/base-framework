@@ -23,6 +23,8 @@ JWT, Swagger, a broker or a cache.
 | `HsnSoft.Base.Logging` | Logger interfaces and models, masking of sensitive data, the settings every provider reads (`Logging:LogLevel` for the console, `PersistentLogger` for what is kept); independent of any logging library ([docs](docs/Logging.md)) | Core |
 | `HsnSoft.Base.Logging.Serilog` | Serilog provider: console, Graylog or file, Debug/Verbose stay in the console | Logging, Hosting |
 | `HsnSoft.Base.Hosting` | Generic Host workers: `PeriodicBackgroundService` | Core |
+| `HsnSoft.Base.Ddd.Domain` | The domain layer's building blocks: entity bases with audit and soft delete, the repository contract with paging, filtering and safe sorting | Core |
+| `HsnSoft.Base.Ddd.Application` | The application layer's building blocks: the DTOs of an entity, of a list request and of its result; the paging model | Ddd.Domain |
 | `HsnSoft.Base.Authentication` | JWT bearer authentication (a shared key, or the RSA public key of the auth server), claim names and `ClaimsPrincipal` helpers | Core |
 | `HsnSoft.Base.AspNetCore` | Health endpoints (`/health/live`, `/health/ready`) | Core |
 | `HsnSoft.Base.AspNetCore.WebApi` | Controllers, every answer in one `BaseResponse` type (results, validation, exceptions), global exception handler, `ApiControllerBase` (logger, current user and tenant), request/response logging ([docs](docs/WebApi.md)) | Core |
@@ -32,13 +34,13 @@ JWT, Swagger, a broker or a cache.
 | `HsnSoft.Base.EventBus.RabbitMQ` | RabbitMQ broker, wire and topology compatible with the production services | EventBus |
 | `HsnSoft.Base.EventBus.Kafka` | Kafka broker: producer, consumer group, dead-letter topic | EventBus |
 | `HsnSoft.Base.Caching.StackExchangeRedis` | `IDistributedCache`, connection, health check | Core |
-| `HsnSoft.Base.EntityFrameworkCore` | What the EF Core providers share: `DbContext` health check, startup schema creation, `BaseDbContext` and the interceptor for audit, soft delete and tenants | Core |
+| `HsnSoft.Base.EntityFrameworkCore` | What the EF Core providers share: `DbContext` health check, startup schema creation, `BaseDbContext` and the interceptor for audit, soft delete and tenants, the generic repository (`EfCoreRepository`) | Core, Ddd.Domain |
 | `HsnSoft.Base.EntityFrameworkCore.PostgreSql` | PostgreSQL `DbContext` with retries | EntityFrameworkCore |
 | `HsnSoft.Base.EntityFrameworkCore.SqlServer` | SQL Server `DbContext` with retries | EntityFrameworkCore |
 | `HsnSoft.Base.BlobStoring` | `IBlobStore`: save, read and delete files in containers | Core |
 | `HsnSoft.Base.BlobStoring.Minio` | MinIO (S3) implementation of `IBlobStore`; Azure would be a sibling package | BlobStoring |
 | `HsnSoft.Base.Localization` | JSON texts embedded in the assemblies, merged from the innermost layer out, found by key in the language of the request | Core |
-| `HsnSoft.Base.MongoDB` | `IMongoDatabase` registration and health check, `MongoEntityConcepts` (audit, soft delete and tenants for repositories) | Core |
+| `HsnSoft.Base.MongoDB` | `IMongoDatabase` registration and health check, `MongoEntityConcepts` (audit, soft delete and tenants for repositories), the generic repository (`MongoRepository`) | Core, Ddd.Domain |
 | `HsnSoft.Base` | Name holder that references `HsnSoft.Base.Core` | Core |
 
 Abstractions and their implementations are separate packages (`EventBus` / `EventBus.RabbitMQ` / `EventBus.Kafka`, `BlobStoring` /

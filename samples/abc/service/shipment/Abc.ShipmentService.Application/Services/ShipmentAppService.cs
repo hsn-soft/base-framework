@@ -1,4 +1,4 @@
-using Abc.ShipmentService.Application.Contracts.Dtos;
+using System.Linq.Expressions;
 using Abc.ShipmentService.Application.Contracts.ShipmentDomain.Dtos;
 using Abc.ShipmentService.Application.Contracts.ShipmentDomain.Dtos.Filters;
 using Abc.ShipmentService.Application.Contracts.ShipmentDomain.Dtos.Submits;
@@ -7,10 +7,15 @@ using Abc.ShipmentService.Domain.ShipmentDomain.Entities;
 using Abc.ShipmentService.Domain.ShipmentDomain.Exceptions;
 using Abc.ShipmentService.Domain.ShipmentDomain.Repositories;
 using HsnSoft.Base;
+using HsnSoft.Base.Application;
+using HsnSoft.Base.Application.Dtos;
+using HsnSoft.Base.Domain.Repositories;
+using HsnSoft.Base.Reflection;
+using HsnSoft.Base.Text;
 
 namespace Abc.ShipmentService.Application.Services;
 
-public sealed class ShipmentAppService(IShipmentRepository shipments, IServiceProvider services) : ApplicationServiceBase(services), IShipmentAppService
+public sealed class ShipmentAppService(IRepository<Shipment, Guid> shipments, IServiceProvider services) : ApplicationServiceBase(services), IShipmentAppService
 {
     public async Task<ShipmentDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
         => ToDto(await FindAsync(id, cancellationToken).ConfigureAwait(false));
@@ -19,18 +24,17 @@ public sealed class ShipmentAppService(IShipmentRepository shipments, IServicePr
     {
         ArgumentNullException.ThrowIfNull(pagedInput);
 
-        ShipmentFilter filter = new(pagedInput.OrderId, pagedInput.TrackingNumber, pagedInput.Carrier, ParseStatus(pagedInput.Status));
-        IReadOnlyList<Shipment> page = await shipments.GetListAsync(filter, pagedInput.Skip, pagedInput.Take, cancellationToken).ConfigureAwait(false);
-        long total = await shipments.CountAsync(filter, cancellationToken).ConfigureAwait(false);
-        return new PagedDataResultDto<ShipmentDto> { Items = [.. page.Select(ToDto)], TotalCount = (int)total, Skip = pagedInput.Skip, Take = pagedInput.Take };
+        PagedQueryResult<Shipment> page = await shipments.GetPagedListAsync(
+            pagedInput.ToPagedOptions(Filter(pagedInput.SearchText, pagedInput.OrderId, pagedInput.TrackingNumber, pagedInput.Carrier, ParseStatus(pagedInput.Status)), ShipmentSorting.Fields, ShipmentSorting.Default), cancellationToken).ConfigureAwait(false);
+        return page.ToPagedDto(pagedInput, ToDto);
     }
 
     public async Task<List<ShipmentDto>> GetFilterListAsync(GetShipmentsFilter filterInput, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(filterInput);
 
-        ShipmentFilter filter = new(filterInput.OrderId, filterInput.TrackingNumber, filterInput.Carrier, ParseStatus(filterInput.Status));
-        IReadOnlyList<Shipment> all = await shipments.GetListAsync(filter, 0, filterInput.Limit, cancellationToken).ConfigureAwait(false);
+        IReadOnlyList<Shipment> all = await shipments.GetListAsync(
+            filterInput.ToListOptions(Filter(null, filterInput.OrderId, filterInput.TrackingNumber, filterInput.Carrier, ParseStatus(filterInput.Status)), ShipmentSorting.Fields, ShipmentSorting.Default), cancellationToken).ConfigureAwait(false);
         return [.. all.Select(ToDto)];
     }
 
@@ -38,7 +42,8 @@ public sealed class ShipmentAppService(IShipmentRepository shipments, IServicePr
     {
         ArgumentNullException.ThrowIfNull(searchInput);
 
-        IReadOnlyList<Shipment> found = await shipments.SearchAsync(searchInput.SearchText, searchInput.Limit, cancellationToken).ConfigureAwait(false);
+        IReadOnlyList<Shipment> found = await shipments.GetListAsync(
+            searchInput.ToListOptions(Filter(searchInput.SearchText, null, null, null, null), ShipmentSorting.Fields, ShipmentSorting.Default), cancellationToken).ConfigureAwait(false);
         return [.. found.Select(shipment => new ShipmentSearchDto { Id = shipment.Id, TrackingNumber = shipment.TrackingNumber, Carrier = shipment.Carrier, Status = shipment.Status.ToString() })];
     }
 
@@ -68,6 +73,23 @@ public sealed class ShipmentAppService(IShipmentRepository shipments, IServicePr
 
     private async Task<Shipment> FindAsync(Guid id, CancellationToken cancellationToken)
         => await shipments.FindAsync(id, cancellationToken).ConfigureAwait(false) ?? throw ShipmentNotFound.For(id);
+
+    // what the client gave narrows the list; what it left out does not
+    private static Expression<Func<Shipment, bool>> Filter(string? searchText, Guid? orderId, string? trackingNumber, string? carrier, ShipmentStatus? status)
+    {
+        string? search = Normalized(searchText);
+        string? tracking = Normalized(trackingNumber);
+        string? carrierText = Normalized(carrier);
+        return new FilterBuilder<Shipment>()
+            .And(search is null ? null : shipment => shipment.TrackingNumber.Contains(search) || shipment.NormalizedCarrier.Contains(search))
+            .And(orderId is null ? null : shipment => shipment.OrderId == orderId.Value)
+            .And(tracking is null ? null : shipment => shipment.TrackingNumber.Contains(tracking))
+            .And(carrierText is null ? null : shipment => shipment.NormalizedCarrier.Contains(carrierText))
+            .And(status is null ? null : shipment => shipment.Status == status.Value)
+            .Build();
+    }
+
+    private static string? Normalized(string? text) => string.IsNullOrWhiteSpace(text) ? null : StringHelper.Normalize(text);
 
     private static ShipmentStatus? ParseStatus(string? status)
         => string.IsNullOrWhiteSpace(status)

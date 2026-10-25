@@ -1,3 +1,4 @@
+using HsnSoft.Base.Application;
 using HsnSoft.Base.AspNetCore;
 using HsnSoft.Base.Authentication;
 using HsnSoft.Base.Caching.StackExchangeRedis;
@@ -38,6 +39,7 @@ public static class HostingRegister
             .AddBaseRequestLogging(configuration)
             .AddBaseWebApi()
             .AddBaseHealthChecks()
+            .AddBasePaging(configuration)
             .AddBaseLocalization(configuration, options => options.AddEmbedded(typeof(AbcTenants).Assembly));   // the shared layer of the texts; a service adds its own after it
 
         if (swaggerBearerButton)

@@ -1,9 +1,9 @@
+using HsnSoft.Base.Application.Dtos;
+
 namespace Abc.ProductService.Application.Contracts.ProductDomain.Dtos;
 
-public sealed class ProductDto
+public sealed class ProductDto : AuditedEntityDto<Guid>
 {
-    public Guid Id { get; init; }
-
     public string Name { get; init; } = string.Empty;
 
     public string Sku { get; init; } = string.Empty;
@@ -18,11 +18,4 @@ public sealed class ProductDto
 
     public Guid TenantId { get; init; }
 
-    public DateTimeOffset CreatedAt { get; init; }
-
-    public Guid? CreatedBy { get; init; }
-
-    public DateTimeOffset UpdatedAt { get; init; }
-
-    public Guid? UpdatedBy { get; init; }
 }

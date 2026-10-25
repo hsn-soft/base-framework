@@ -1,6 +1,6 @@
-using Abc.OrderService.Domain.OrderDomain.Repositories;
+using Abc.OrderService.Domain.OrderDomain.Entities;
 using Abc.OrderService.EntityFrameworkCore.Context;
-using Abc.OrderService.EntityFrameworkCore.Repositories;
+using HsnSoft.Base.EntityFrameworkCore;
 using HsnSoft.Base.EntityFrameworkCore.PostgreSql;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,7 +19,7 @@ public static class EfCoreServiceCollectionExtensions
 
         services.AddBasePostgres<OrderDbContext>(configuration);
 
-        services.AddScoped<IOrderRepository, EfCoreOrderRepository>();
+        services.AddEfCoreRepository<OrderDbContext, Order, Guid>();
         return services;
     }
 }

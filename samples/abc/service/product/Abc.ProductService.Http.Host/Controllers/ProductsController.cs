@@ -1,9 +1,9 @@
-using Abc.ProductService.Application.Contracts.Dtos;
 using Abc.ProductService.Application.Contracts.ProductDomain.Dtos;
 using Abc.ProductService.Application.Contracts.ProductDomain.Dtos.Filters;
 using Abc.ProductService.Application.Contracts.ProductDomain.Dtos.Submits;
 using Abc.ProductService.Application.Contracts.ProductDomain.Services;
 using Abc.ProductService.Http.Host.Controllers.Base;
+using HsnSoft.Base.Application.Dtos;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Abc.ProductService.Http.Host.Controllers;

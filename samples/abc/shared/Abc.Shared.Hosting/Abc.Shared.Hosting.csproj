@@ -26,6 +26,7 @@
         <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.AspNetCore.Swashbuckle\HsnSoft.Base.AspNetCore.Swashbuckle.csproj" />
         <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.Authentication\HsnSoft.Base.Authentication.csproj" />
         <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.Localization\HsnSoft.Base.Localization.csproj" />
+        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.Ddd.Application\HsnSoft.Base.Ddd.Application.csproj" />
         <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.Caching.StackExchangeRedis\HsnSoft.Base.Caching.StackExchangeRedis.csproj" />
     </ItemGroup>
 

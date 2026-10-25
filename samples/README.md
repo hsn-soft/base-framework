@@ -232,6 +232,12 @@ curl -X POST http://localhost:5600/identity-service/v1/users/check-user-name -H 
 
 Each gateway reaches only the endpoints of its own segment (the other one answers 404), and its Swagger UI (`/swagger`) shows the identity service's document with the gateway's paths.
 
+### Entities, DTOs and repositories in Abc
+
+The entities derive from `FullAuditedEntity<Guid>` (and implement `IMultiTenant`), the lists use the framework's DTOs and the generic repository ([ADR-0042](../docs/adr/0042-ddd-domain-and-application-packages.md), [docs/DddBuildingBlocks.md](../docs/DddBuildingBlocks.md)). A list is asked for with
+`pageNumber` (from 1), `maxResultCount` (10 by default, at most 100), `sortingText` (`"price desc, name"`: only the fields the service offers, `Validation:UnknownSortField` otherwise) and `searchText`, and answers `items`, `dataTotalCount`, `pageTotalCount`,
+`resultDataStartNumber`, `resultDataEndNumber`.
+
 ### Localization in Abc
 
 The answers are told in the language of the request: the `locale` claim of the token (a user has a `Language`: `admin` is `en`, `alice` is `tr`), else `Accept-Language`, else `en`; the languages are `en`, `tr`, `ru` ([ADR-0038](../docs/adr/0038-localization.md),

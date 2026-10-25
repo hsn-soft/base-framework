@@ -1,9 +1,9 @@
 using System.ComponentModel.DataAnnotations;
-using Abc.ProductService.Application.Contracts.Dtos;
+using HsnSoft.Base.Application.Dtos;
 
 namespace Abc.ProductService.Application.Contracts.ProductDomain.Dtos.Filters;
 
-public sealed class GetProductsFilter : LimitedDataRequestDto
+public sealed class GetProductsFilter : SortedAndLimitedDataRequestDto
 {
     /// <summary>A part of the name.</summary>
     [StringLength(100)]

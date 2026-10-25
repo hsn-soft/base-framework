@@ -28,6 +28,7 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
+| [0042](0042-ddd-domain-and-application-packages.md) | `Ddd.Domain` and `Ddd.Application`: entity bases, DTO bases, and the generic repository | Accepted | 2026-10-25 |
 | [0041](0041-application-service-base-in-the-framework.md) | `ApplicationService` is the framework's; the application services of a service derive from its base | Accepted | 2026-10-25 |
 | [0040](0040-api-controller-base-in-the-framework.md) | `ApiControllerBase` is the framework's; a service's base controller derives from it | Accepted | 2026-10-25 |
 | [0039](0039-guard-and-translating-a-response-body.md) | `Guard` for the checks of the domain, and translating a text in a response body | Accepted | 2026-10-25 |

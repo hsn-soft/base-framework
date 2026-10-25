@@ -1,23 +1,21 @@
 using Abc.IdentityService.Domain.UserDomain.Consts;
 using Abc.IdentityService.Domain.UserDomain.Security;
 using HsnSoft.Base;
-using HsnSoft.Base.Auditing;
+using HsnSoft.Base.Domain.Entities;
 using HsnSoft.Base.MultiTenancy;
+using HsnSoft.Base.Text;
 
 namespace Abc.IdentityService.Domain.UserDomain.Entities;
 
 /// <summary>
-/// A person who can sign in to the Abc system. The audit fields, the soft delete and the tenant are done by the persistence (<see cref="ICreationAudited"/>, <see cref="IModificationAudited"/>,
-/// <see cref="ISoftDelete"/>, <see cref="IMultiTenant"/>): the entity only keeps them.
+/// A person who can sign in to the Abc system. The audit fields and the soft delete come from <see cref="FullAuditedEntity{TKey}"/>; the tenant is kept here and given by the persistence.
 /// </summary>
-public sealed class User : ICreationAudited, IModificationAudited, ISoftDelete, IMultiTenant
+public sealed class User : FullAuditedEntity<Guid>, IMultiTenant
 {
     // for EF Core
     private User()
     {
     }
-
-    public Guid Id { get; private set; }
 
     public string UserName { get; private set; } = string.Empty;
 
@@ -44,28 +42,6 @@ public sealed class User : ICreationAudited, IModificationAudited, ISoftDelete, 
 
     public Guid TenantId { get; private set; }
 
-    public DateTimeOffset CreatedAt { get; private set; }
-
-    public Guid? CreatedBy { get; private set; }
-
-    public DateTimeOffset UpdatedAt { get; private set; }
-
-    public Guid? UpdatedBy { get; private set; }
-
-    public bool IsDeleted { get; private set; }
-
-    public DateTimeOffset? DeletedAt { get; private set; }
-
-    public Guid? DeletedBy { get; private set; }
-
-    public void AssignTenant(Guid tenantId) => TenantId = tenantId;
-
-    public void MarkCreated(DateTimeOffset at, Guid? by) => (CreatedAt, CreatedBy) = (at, by);
-
-    public void MarkModified(DateTimeOffset at, Guid? by) => (UpdatedAt, UpdatedBy) = (at, by);
-
-    public void MarkDeleted(DateTimeOffset at, Guid? by) => (IsDeleted, DeletedAt, DeletedBy) = (true, at, by);
-
     public static User Create(string userName, string email, string displayName, string password, IEnumerable<string>? roles, string? language = null)
     {
         User user = new()
@@ -75,16 +51,13 @@ public sealed class User : ICreationAudited, IModificationAudited, ISoftDelete, 
             IsActive = true,
             PasswordHash = PasswordHasher.Hash(Guard.Length(password, nameof(password), UserConsts.PasswordMaxLength, UserConsts.PasswordMinLength)!),
         };
-        user.NormalizedUserName = Normalize(user.UserName);
+        user.NormalizedUserName = StringHelper.Normalize(user.UserName);
         user.Change(email, displayName, roles, language);
         return user;
     }
 
     /// <summary>Whether <paramref name="password"/> is the user's.</summary>
     public bool CheckPassword(string password) => PasswordHasher.Verify(PasswordHash, password);
-
-    /// <summary>A user name or an email as it is compared and searched: trimmed, in capitals.</summary>
-    public static string Normalize(string text) => text.Trim().ToUpperInvariant();
 
     public void Update(string email, string displayName, bool isActive, IEnumerable<string>? roles, string? language = null)
     {
@@ -97,7 +70,7 @@ public sealed class User : ICreationAudited, IModificationAudited, ISoftDelete, 
         Language = string.IsNullOrWhiteSpace(language) ? UserConsts.DefaultLanguage : Guard.NotNullOrWhiteSpace(language, nameof(Language), UserConsts.LanguageMaxLength).ToLowerInvariant();
         Roles = NormalizeRoles(roles);
         Email = Guard.NotNullOrWhiteSpace(email, nameof(Email), UserConsts.EmailMaxLength);
-        NormalizedEmail = Normalize(Email);
+        NormalizedEmail = StringHelper.Normalize(Email);
         DisplayName = Guard.NotNullOrWhiteSpace(displayName, nameof(DisplayName), UserConsts.DisplayNameMaxLength);
     }
 

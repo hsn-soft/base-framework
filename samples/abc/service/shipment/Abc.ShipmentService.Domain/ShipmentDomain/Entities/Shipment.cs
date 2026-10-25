@@ -1,23 +1,21 @@
 using Abc.ShipmentService.Domain.ShipmentDomain.Consts;
 using HsnSoft.Base;
-using HsnSoft.Base.Auditing;
+using HsnSoft.Base.Domain.Entities;
 using HsnSoft.Base.MultiTenancy;
+using HsnSoft.Base.Text;
 
 namespace Abc.ShipmentService.Domain.ShipmentDomain.Entities;
 
 /// <summary>
 /// A parcel on its way to the customer of an order.
-/// The audit fields, the soft delete and the tenant are done by the persistence (<see cref="ICreationAudited"/>, <see cref="IModificationAudited"/>, <see cref="ISoftDelete"/>,
-/// <see cref="IMultiTenant"/>): the entity only keeps them.
+/// The audit fields and the soft delete come from <see cref="FullAuditedEntity{TKey}"/>; the tenant is kept here and given by the persistence.
 /// </summary>
-public sealed class Shipment : ICreationAudited, IModificationAudited, ISoftDelete, IMultiTenant
+public sealed class Shipment : FullAuditedEntity<Guid>, IMultiTenant
 {
     // for the database driver
     private Shipment()
     {
     }
-
-    public Guid Id { get; private set; }
 
     /// <summary>The order this shipment carries (the order service's; this service keeps only the id).</summary>
     public Guid OrderId { get; private set; }
@@ -35,28 +33,6 @@ public sealed class Shipment : ICreationAudited, IModificationAudited, ISoftDele
     public ShipmentStatus Status { get; private set; }
 
     public Guid TenantId { get; private set; }
-
-    public DateTimeOffset CreatedAt { get; private set; }
-
-    public Guid? CreatedBy { get; private set; }
-
-    public DateTimeOffset UpdatedAt { get; private set; }
-
-    public Guid? UpdatedBy { get; private set; }
-
-    public bool IsDeleted { get; private set; }
-
-    public DateTimeOffset? DeletedAt { get; private set; }
-
-    public Guid? DeletedBy { get; private set; }
-
-    public void AssignTenant(Guid tenantId) => TenantId = tenantId;
-
-    public void MarkCreated(DateTimeOffset at, Guid? by) => (CreatedAt, CreatedBy) = (at, by);
-
-    public void MarkModified(DateTimeOffset at, Guid? by) => (UpdatedAt, UpdatedBy) = (at, by);
-
-    public void MarkDeleted(DateTimeOffset at, Guid? by) => (IsDeleted, DeletedAt, DeletedBy) = (true, at, by);
 
     public static Shipment Create(Guid orderId, string carrier, string address)
     {
@@ -76,9 +52,6 @@ public sealed class Shipment : ICreationAudited, IModificationAudited, ISoftDele
         return shipment;
     }
 
-    /// <summary>A carrier or a tracking number as it is compared and searched: trimmed, in capitals.</summary>
-    public static string Normalize(string text) => text.Trim().ToUpperInvariant();
-
     /// <summary>Changes the carrier, the address and the status; a delivered or returned shipment is final.</summary>
     public void Update(string carrier, string address, ShipmentStatus status)
     {
@@ -94,7 +67,7 @@ public sealed class Shipment : ICreationAudited, IModificationAudited, ISoftDele
     private void Change(string carrier, string address)
     {
         Carrier = Guard.NotNullOrWhiteSpace(carrier, nameof(Carrier), ShipmentConsts.CarrierMaxLength);
-        NormalizedCarrier = Normalize(Carrier);
+        NormalizedCarrier = StringHelper.Normalize(Carrier);
         Address = Guard.NotNullOrWhiteSpace(address, nameof(Address), ShipmentConsts.AddressMaxLength);
     }
 }

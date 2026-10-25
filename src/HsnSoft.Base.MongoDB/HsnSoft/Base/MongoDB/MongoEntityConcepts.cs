@@ -41,9 +41,9 @@ public sealed class MongoEntityConcepts(IAuditPropertySetter audit, ICurrentTena
         ArgumentNullException.ThrowIfNull(entity);
 
         audit.SetCreation(entity);
-        if (entity is IMultiTenant { TenantId: var tenantId } multiTenant && tenantId == Guid.Empty && tenant.Id is { } current)
+        if (entity is IMultiTenant multiTenant && tenant.Id is { } current)
         {
-            multiTenant.AssignTenant(current);
+            TenantAssigner.Assign(multiTenant, current);
         }
     }
 

@@ -1,16 +1,16 @@
 using Abc.OrderService.Domain.OrderDomain.Consts;
 using HsnSoft.Base;
-using HsnSoft.Base.Auditing;
+using HsnSoft.Base.Domain.Entities;
 using HsnSoft.Base.MultiTenancy;
+using HsnSoft.Base.Text;
 
 namespace Abc.OrderService.Domain.OrderDomain.Entities;
 
 /// <summary>
 /// What a customer ordered: its lines (fixed once the order is made), its status and a note.
-/// The audit fields, the soft delete and the tenant are done by the persistence (<see cref="ICreationAudited"/>, <see cref="IModificationAudited"/>, <see cref="ISoftDelete"/>,
-/// <see cref="IMultiTenant"/>): the entity only keeps them.
+/// The audit fields and the soft delete come from <see cref="FullAuditedEntity{TKey}"/>; the tenant is kept here and given by the persistence.
 /// </summary>
-public sealed class Order : ICreationAudited, IModificationAudited, ISoftDelete, IMultiTenant
+public sealed class Order : FullAuditedEntity<Guid>, IMultiTenant
 {
     private readonly List<OrderLine> _lines = [];
 
@@ -18,8 +18,6 @@ public sealed class Order : ICreationAudited, IModificationAudited, ISoftDelete,
     private Order()
     {
     }
-
-    public Guid Id { get; private set; }
 
     /// <summary>The user name (the <c>sub</c> of the token) of the customer who made the order.</summary>
     public string CustomerUserName { get; private set; } = string.Empty;
@@ -37,28 +35,6 @@ public sealed class Order : ICreationAudited, IModificationAudited, ISoftDelete,
 
     public Guid TenantId { get; private set; }
 
-    public DateTimeOffset CreatedAt { get; private set; }
-
-    public Guid? CreatedBy { get; private set; }
-
-    public DateTimeOffset UpdatedAt { get; private set; }
-
-    public Guid? UpdatedBy { get; private set; }
-
-    public bool IsDeleted { get; private set; }
-
-    public DateTimeOffset? DeletedAt { get; private set; }
-
-    public Guid? DeletedBy { get; private set; }
-
-    public void AssignTenant(Guid tenantId) => TenantId = tenantId;
-
-    public void MarkCreated(DateTimeOffset at, Guid? by) => (CreatedAt, CreatedBy) = (at, by);
-
-    public void MarkModified(DateTimeOffset at, Guid? by) => (UpdatedAt, UpdatedBy) = (at, by);
-
-    public void MarkDeleted(DateTimeOffset at, Guid? by) => (IsDeleted, DeletedAt, DeletedBy) = (true, at, by);
-
     public static Order Create(string customerUserName, string? note, IEnumerable<OrderLine> lines)
     {
         string customer = customerUserName?.Trim() ?? string.Empty;
@@ -71,7 +47,7 @@ public sealed class Order : ICreationAudited, IModificationAudited, ISoftDelete,
         {
             Id = Guid.CreateVersion7(),
             CustomerUserName = customer,
-            NormalizedCustomerUserName = Normalize(customer),
+            NormalizedCustomerUserName = StringHelper.Normalize(customer),
             Status = OrderStatus.Pending,
         };
         order._lines.AddRange(lines ?? []);
@@ -84,9 +60,6 @@ public sealed class Order : ICreationAudited, IModificationAudited, ISoftDelete,
         order.SetNote(note);
         return order;
     }
-
-    /// <summary>A user name as it is compared and searched: trimmed, in capitals.</summary>
-    public static string Normalize(string text) => text.Trim().ToUpperInvariant();
 
     /// <summary>Changes the status and the note; a delivered or cancelled order is final.</summary>
     public void Update(OrderStatus status, string? note)

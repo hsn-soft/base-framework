@@ -46,9 +46,10 @@ public sealed class BaseEntityInterceptor(IAuditPropertySetter audit, ICurrentTe
             {
                 case EntityState.Added:
                     audit.SetCreation(entry.Entity);
-                    if (entry.Entity is IMultiTenant { TenantId: var tenantId } multiTenant && tenantId == Guid.Empty && tenant.Id is { } current)
+                    if (entry.Entity is IMultiTenant { TenantId: var tenantId } && tenantId == Guid.Empty && tenant.Id is { } current)
                     {
-                        multiTenant.AssignTenant(current);
+                        // the entity has no method for it: the property is written through the change tracker, whatever its setter
+                        entry.Property(nameof(IMultiTenant.TenantId)).CurrentValue = current;
                     }
 
                     break;

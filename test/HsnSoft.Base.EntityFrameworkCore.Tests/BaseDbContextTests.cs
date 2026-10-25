@@ -51,8 +51,6 @@ public sealed class BaseDbContextTests : IAsyncLifetime, IDisposable
 
         public void AddLine(string product) => _lines.Add(new Line { Product = product });
 
-        public void AssignTenant(Guid tenantId) => TenantId = tenantId;
-
         public void MarkCreated(DateTimeOffset at, Guid? by) => (CreatedAt, CreatedBy) = (at, by);
 
         public void MarkModified(DateTimeOffset at, Guid? by) => (UpdatedAt, UpdatedBy) = (at, by);
@@ -75,13 +73,11 @@ public sealed class BaseDbContextTests : IAsyncLifetime, IDisposable
     }
 
     /// <summary>Only tenant: no soft delete.</summary>
-    public sealed class Doc : IMultiTenant
+    public sealed class Doc(Guid tenantId = default) : IMultiTenant
     {
         public int Id { get; set; }
 
-        public Guid TenantId { get; private set; }
-
-        public void AssignTenant(Guid tenantId) => TenantId = tenantId;
+        public Guid TenantId { get; private set; } = tenantId;
     }
 
     public sealed class Plain
@@ -309,8 +305,7 @@ public sealed class BaseDbContextTests : IAsyncLifetime, IDisposable
     {
         await using (AsyncServiceScope scope = Scope())
         {
-            Doc doc = new();
-            doc.AssignTenant(s_tenantB);
+            Doc doc = new(s_tenantB);
             Db(scope).Docs.Add(doc);
             await Db(scope).SaveChangesAsync();
         }

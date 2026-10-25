@@ -21,6 +21,8 @@
     "Validation:MaxLength": "{0} en fazla {1} karakter olabilir.",
     "Validation:MinLength": "{0} en az {1} karakter olmalı.",
     "Validation:Range": "{0} {1} ile {2} arasında olmalı.",
-    "Validation:NotNegative": "{0} negatif olamaz."
+    "Validation:NotNegative": "{0} negatif olamaz.",
+    "Validation:UnknownSortField": "'{0}' ile sıralanamaz (sıralanabilen alanlar: {1}).",
+    "Validation:UnknownSortDirection": "'{0}' bir yön değil (asc veya desc)."
   }
 }

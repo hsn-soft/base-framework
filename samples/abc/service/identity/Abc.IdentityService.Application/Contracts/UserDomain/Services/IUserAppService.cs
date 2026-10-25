@@ -1,7 +1,7 @@
-using Abc.IdentityService.Application.Contracts.Dtos;
 using Abc.IdentityService.Application.Contracts.UserDomain.Dtos;
 using Abc.IdentityService.Application.Contracts.UserDomain.Dtos.Filters;
 using Abc.IdentityService.Application.Contracts.UserDomain.Dtos.Submits;
+using HsnSoft.Base.Application.Dtos;
 
 namespace Abc.IdentityService.Application.Contracts.UserDomain.Services;
 

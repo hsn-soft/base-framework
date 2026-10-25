@@ -21,6 +21,8 @@
     "Validation:MaxLength": "{0} не длиннее {1} символов.",
     "Validation:MinLength": "{0} не короче {1} символов.",
     "Validation:Range": "{0} должно быть от {1} до {2}.",
-    "Validation:NotNegative": "{0} не может быть отрицательным."
+    "Validation:NotNegative": "{0} не может быть отрицательным.",
+    "Validation:UnknownSortField": "По полю '{0}' сортировать нельзя (доступные поля: {1}).",
+    "Validation:UnknownSortDirection": "'{0}' не является направлением (asc или desc)."
   }
 }

@@ -1,9 +1,9 @@
 using System.ComponentModel.DataAnnotations;
-using Abc.OrderService.Application.Contracts.Dtos;
+using HsnSoft.Base.Application.Dtos;
 
 namespace Abc.OrderService.Application.Contracts.OrderDomain.Dtos.Filters;
 
-public sealed class GetOrdersFilter : LimitedDataRequestDto
+public sealed class GetOrdersFilter : SortedAndLimitedDataRequestDto
 {
     /// <summary>A part of the customer's user name.</summary>
     [StringLength(100)]

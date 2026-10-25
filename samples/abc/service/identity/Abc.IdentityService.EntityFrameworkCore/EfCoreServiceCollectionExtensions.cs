@@ -1,6 +1,8 @@
+using Abc.IdentityService.Domain.UserDomain.Entities;
 using Abc.IdentityService.Domain.UserDomain.Repositories;
 using Abc.IdentityService.EntityFrameworkCore.Context;
 using Abc.IdentityService.EntityFrameworkCore.Repositories;
+using HsnSoft.Base.Domain.Repositories;
 using HsnSoft.Base.EntityFrameworkCore.PostgreSql;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,6 +22,7 @@ public static class EfCoreServiceCollectionExtensions
         services.AddBasePostgres<IdentityDbContext>(configuration);
 
         services.AddScoped<IUserRepository, EfCoreUserRepository>();
+        services.AddScoped<IRepository<User, Guid>>(provider => provider.GetRequiredService<IUserRepository>());
         return services;
     }
 }

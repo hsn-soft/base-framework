@@ -1,7 +1,7 @@
-using Abc.ProductService.Application.Contracts.Dtos;
 using Abc.ProductService.Application.Contracts.ProductDomain.Dtos;
 using Abc.ProductService.Application.Contracts.ProductDomain.Dtos.Filters;
 using Abc.ProductService.Application.Contracts.ProductDomain.Dtos.Submits;
+using HsnSoft.Base.Application.Dtos;
 
 namespace Abc.ProductService.Application.Contracts.ProductDomain.Services;
 

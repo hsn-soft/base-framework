@@ -1,7 +1,7 @@
-using Abc.ShipmentService.Application.Contracts.Dtos;
 using Abc.ShipmentService.Application.Contracts.ShipmentDomain.Dtos;
 using Abc.ShipmentService.Application.Contracts.ShipmentDomain.Dtos.Filters;
 using Abc.ShipmentService.Application.Contracts.ShipmentDomain.Dtos.Submits;
+using HsnSoft.Base.Application.Dtos;
 
 namespace Abc.ShipmentService.Application.Contracts.ShipmentDomain.Services;
 

@@ -1,7 +1,7 @@
-using Abc.OrderService.Application.Contracts.Dtos;
 using Abc.OrderService.Application.Contracts.OrderDomain.Dtos;
 using Abc.OrderService.Application.Contracts.OrderDomain.Dtos.Filters;
 using Abc.OrderService.Application.Contracts.OrderDomain.Dtos.Submits;
+using HsnSoft.Base.Application.Dtos;
 
 namespace Abc.OrderService.Application.Contracts.OrderDomain.Services;
 

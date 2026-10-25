@@ -1,9 +1,9 @@
-using Abc.ShipmentService.Application.Contracts.Dtos;
 using Abc.ShipmentService.Application.Contracts.ShipmentDomain.Dtos;
 using Abc.ShipmentService.Application.Contracts.ShipmentDomain.Dtos.Filters;
 using Abc.ShipmentService.Application.Contracts.ShipmentDomain.Dtos.Submits;
 using Abc.ShipmentService.Application.Contracts.ShipmentDomain.Services;
 using Abc.ShipmentService.Http.Host.Controllers.Base;
+using HsnSoft.Base.Application.Dtos;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Abc.ShipmentService.Http.Host.Controllers;

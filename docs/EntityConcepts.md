@@ -10,7 +10,7 @@ Three concepts an entity can have, each one by an interface of `HsnSoft.Base.Cor
 | `ISoftDelete` | `IsDeleted`, `DeletedAt`, `DeletedBy` | a delete marks it; the lists do not show it |
 | `IMultiTenant` | `TenantId` | a new one gets the current tenant; a caller sees only the tenants it may |
 
-The entity keeps the fields with private setters and implements the `Mark...` / `AssignTenant` methods (`public void MarkCreated(DateTimeOffset at, Guid? by) => (CreatedAt, CreatedBy) = (at, by);`).
+The entity keeps the fields with private setters and implements the `Mark...` methods (the base classes of [DddBuildingBlocks.md](DddBuildingBlocks.md) do it for the audit and the soft delete); the tenant is just `TenantId { get; private set; }`, which the persistence writes (`public void MarkCreated(DateTimeOffset at, Guid? by) => (CreatedAt, CreatedBy) = (at, by);`).
 **`CreatedBy`, `UpdatedBy` and `DeletedBy` are the id of the user** (`user_id` claim, a guid), `null` when nobody signed in did (a seed, a worker).
 
 ## Who and which tenant: `ICurrentUser` and `ICurrentTenant`

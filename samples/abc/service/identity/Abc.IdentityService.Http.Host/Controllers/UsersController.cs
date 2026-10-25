@@ -1,9 +1,9 @@
-using Abc.IdentityService.Application.Contracts.Dtos;
 using Abc.IdentityService.Application.Contracts.UserDomain.Dtos;
 using Abc.IdentityService.Application.Contracts.UserDomain.Dtos.Filters;
 using Abc.IdentityService.Application.Contracts.UserDomain.Dtos.Submits;
 using Abc.IdentityService.Application.Contracts.UserDomain.Services;
 using Abc.IdentityService.Http.Host.Controllers.Base;
+using HsnSoft.Base.Application.Dtos;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Abc.IdentityService.Http.Host.Controllers;

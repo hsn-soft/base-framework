@@ -1,6 +1,6 @@
 # ADR-0030: Every microservice has the same four projects; only the persistence project varies
 
-- **Status:** Accepted (the host no longer picks the database provider: the persistence project registers it, [ADR-0035](0035-the-persistence-project-registers-its-database.md))
+- **Status:** Accepted (the domain project depends on Core and `Ddd.Domain`, the application project on `Ddd.Application`: [ADR-0042](0042-ddd-domain-and-application-packages.md)) (the host no longer picks the database provider: the persistence project registers it, [ADR-0035](0035-the-persistence-project-registers-its-database.md))
 - **Date:** 2026-10-25
 
 ## Context

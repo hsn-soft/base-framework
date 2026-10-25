@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-    <!-- The heart of the service: its entities and rules. It depends on nothing but the framework's Core. -->
+    <!-- The heart of the service: its entities and rules. It depends on nothing but the framework's Core and Ddd.Domain. -->
 
     <ItemGroup>
         <!-- the texts of this layer (Localization/en.json, tr.json, ru.json), read by the localization at start -->
@@ -8,7 +8,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.Core\HsnSoft.Base.Core.csproj" />
+        <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.Ddd.Domain\HsnSoft.Base.Ddd.Domain.csproj" />
     </ItemGroup>
 
 </Project>

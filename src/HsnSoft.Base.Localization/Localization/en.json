@@ -21,6 +21,8 @@
     "Validation:MaxLength": "{0} is at most {1} characters.",
     "Validation:MinLength": "{0} is at least {1} characters.",
     "Validation:Range": "{0} must be between {1} and {2}.",
-    "Validation:NotNegative": "{0} cannot be negative."
+    "Validation:NotNegative": "{0} cannot be negative.",
+    "Validation:UnknownSortField": "'{0}' is not a field to sort by ({1}).",
+    "Validation:UnknownSortDirection": "'{0}' is not a direction (asc or desc)."
   }
 }

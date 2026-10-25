@@ -1,4 +1,4 @@
-using Abc.ProductService.Application.Contracts.Dtos;
+using System.Linq.Expressions;
 using Abc.ProductService.Application.Contracts.ProductDomain.Dtos;
 using Abc.ProductService.Application.Contracts.ProductDomain.Dtos.Filters;
 using Abc.ProductService.Application.Contracts.ProductDomain.Dtos.Submits;
@@ -6,10 +6,15 @@ using Abc.ProductService.Application.Contracts.ProductDomain.Services;
 using Abc.ProductService.Domain.ProductDomain.Entities;
 using Abc.ProductService.Domain.ProductDomain.Exceptions;
 using Abc.ProductService.Domain.ProductDomain.Repositories;
+using HsnSoft.Base.Application;
+using HsnSoft.Base.Application.Dtos;
+using HsnSoft.Base.Domain.Repositories;
+using HsnSoft.Base.Reflection;
+using HsnSoft.Base.Text;
 
 namespace Abc.ProductService.Application.Services;
 
-public sealed class ProductAppService(IProductRepository products, IServiceProvider services) : ApplicationServiceBase(services), IProductAppService
+public sealed class ProductAppService(IRepository<Product, Guid> products, IServiceProvider services) : ApplicationServiceBase(services), IProductAppService
 {
     public async Task<ProductDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
         => ToDto(await FindAsync(id, cancellationToken).ConfigureAwait(false));
@@ -18,18 +23,17 @@ public sealed class ProductAppService(IProductRepository products, IServiceProvi
     {
         ArgumentNullException.ThrowIfNull(pagedInput);
 
-        ProductFilter filter = new(pagedInput.Name, pagedInput.Sku, pagedInput.IsActive, pagedInput.InStock);
-        IReadOnlyList<Product> page = await products.GetListAsync(filter, pagedInput.Skip, pagedInput.Take, cancellationToken).ConfigureAwait(false);
-        long total = await products.CountAsync(filter, cancellationToken).ConfigureAwait(false);
-        return new PagedDataResultDto<ProductDto> { Items = [.. page.Select(ToDto)], TotalCount = (int)total, Skip = pagedInput.Skip, Take = pagedInput.Take };
+        PagedQueryResult<Product> page = await products.GetPagedListAsync(
+            pagedInput.ToPagedOptions(Filter(pagedInput.SearchText, pagedInput.Name, pagedInput.Sku, pagedInput.IsActive, pagedInput.InStock), ProductSorting.Fields, ProductSorting.Default), cancellationToken).ConfigureAwait(false);
+        return page.ToPagedDto(pagedInput, ToDto);
     }
 
     public async Task<List<ProductDto>> GetFilterListAsync(GetProductsFilter filterInput, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(filterInput);
 
-        ProductFilter filter = new(filterInput.Name, filterInput.Sku, filterInput.IsActive, filterInput.InStock);
-        IReadOnlyList<Product> all = await products.GetListAsync(filter, 0, filterInput.Limit, cancellationToken).ConfigureAwait(false);
+        IReadOnlyList<Product> all = await products.GetListAsync(
+            filterInput.ToListOptions(Filter(null, filterInput.Name, filterInput.Sku, filterInput.IsActive, filterInput.InStock), ProductSorting.Fields, ProductSorting.Default), cancellationToken).ConfigureAwait(false);
         return [.. all.Select(ToDto)];
     }
 
@@ -37,7 +41,8 @@ public sealed class ProductAppService(IProductRepository products, IServiceProvi
     {
         ArgumentNullException.ThrowIfNull(searchInput);
 
-        IReadOnlyList<Product> found = await products.SearchAsync(searchInput.SearchText, searchInput.Limit, cancellationToken).ConfigureAwait(false);
+        IReadOnlyList<Product> found = await products.GetListAsync(
+            searchInput.ToListOptions(Filter(searchInput.SearchText, null, null, null, null), ProductSorting.Fields, ProductSorting.Default), cancellationToken).ConfigureAwait(false);
         return [.. found.Select(product => new ProductSearchDto { Id = product.Id, Name = product.Name, Sku = product.Sku })];
     }
 
@@ -45,7 +50,9 @@ public sealed class ProductAppService(IProductRepository products, IServiceProvi
     {
         ArgumentNullException.ThrowIfNull(input);
 
-        if (await products.SkuExistsAsync(input.Sku, null, cancellationToken).ConfigureAwait(false))
+        // a sku is unique in the whole system: a deleted product's sku and another tenant's are taken too
+        string sku = StringHelper.Normalize(input.Sku);
+        if (await products.AnyAsync(product => product.Sku == sku, ignoreFilters: true, cancellationToken).ConfigureAwait(false))
         {
             throw new ProductSkuDuplicateException(input.Sku.Trim());
         }
@@ -72,6 +79,23 @@ public sealed class ProductAppService(IProductRepository products, IServiceProvi
 
     private async Task<Product> FindAsync(Guid id, CancellationToken cancellationToken)
         => await products.FindAsync(id, cancellationToken).ConfigureAwait(false) ?? throw ProductNotFound.For(id);
+
+    // what the client gave narrows the list; what it left out does not
+    private static Expression<Func<Product, bool>> Filter(string? searchText, string? name, string? sku, bool? isActive, bool? inStock)
+    {
+        string? search = Normalized(searchText);
+        string? nameText = Normalized(name);
+        string? skuText = Normalized(sku);
+        return new FilterBuilder<Product>()
+            .And(search is null ? null : product => product.NormalizedName.Contains(search) || product.Sku.Contains(search))
+            .And(nameText is null ? null : product => product.NormalizedName.Contains(nameText))
+            .And(skuText is null ? null : product => product.Sku.Contains(skuText))
+            .And(isActive is null ? null : product => product.IsActive == isActive.Value)
+            .And(inStock is null ? null : inStock.Value ? product => product.Stock > 0 : product => product.Stock <= 0)
+            .Build();
+    }
+
+    private static string? Normalized(string? text) => string.IsNullOrWhiteSpace(text) ? null : StringHelper.Normalize(text);
 
     private static ProductDto ToDto(Product product) => new()
     {

@@ -1,6 +1,6 @@
-using Abc.ProductService.Domain.ProductDomain.Repositories;
+using Abc.ProductService.Domain.ProductDomain.Consts;
+using Abc.ProductService.Domain.ProductDomain.Entities;
 using Abc.ProductService.MongoDB.Configurations;
-using Abc.ProductService.MongoDB.Repositories;
 using HsnSoft.Base.MongoDB;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,7 +20,7 @@ public static class MongoServiceCollectionExtensions
         services.AddBaseMongo(configuration);
 
         ProductClassMap.Register();
-        services.AddScoped<IProductRepository, MongoProductRepository>();
+        services.AddMongoRepository<Product, Guid>(ProductConsts.CollectionName);
         return services;
     }
 }

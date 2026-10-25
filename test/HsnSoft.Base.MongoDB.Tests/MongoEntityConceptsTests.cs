@@ -33,8 +33,6 @@ public class MongoEntityConceptsTests
 
         public Guid? DeletedBy { get; set; }
 
-        public void AssignTenant(Guid tenantId) => TenantId = tenantId;
-
         public void MarkCreated(DateTimeOffset at, Guid? by) => (CreatedAt, CreatedBy) = (at, by);
 
         public void MarkModified(DateTimeOffset at, Guid? by) => (UpdatedAt, UpdatedBy) = (at, by);

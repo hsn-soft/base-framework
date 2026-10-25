@@ -17,7 +17,7 @@ public sealed class PagedUsers
 {
     public List<UserItem> Items { get; init; } = [];
 
-    public int TotalCount { get; init; }
+    public int DataTotalCount { get; init; }
 }
 
 public sealed class TokenPayload

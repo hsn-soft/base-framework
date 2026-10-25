@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <Import Project="..\..\common.props" />
+
+    <PropertyGroup>
+        <AssemblyName>HsnSoft.Base.Ddd.Domain</AssemblyName>
+        <PackageId>HsnSoft.Base.Ddd.Domain</PackageId>
+        <RootNamespace />
+        <Title>HsnSoft Base Framework Ddd Domain</Title>
+        <Description>The building blocks of the domain layer of an HsnSoft service: entity base classes with audit and soft delete, and the repository contract with its paging, filtering and safe sorting.</Description>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageTags>HsnSoft Base Framework Ddd Domain Entity Repository</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="..\..\README.md" Pack="true" Visible="false" PackagePath="README.md" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\HsnSoft.Base.Core\HsnSoft.Base.Core.csproj" />
+    </ItemGroup>
+
+</Project>

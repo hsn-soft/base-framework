@@ -1,6 +1,6 @@
 # ADR-0037: Audit, soft delete and tenants of an entity
 
-- **Status:** Accepted
+- **Status:** Accepted (`IMultiTenant` has no `AssignTenant` now: the persistence writes `TenantId`; the entity bases are in `Ddd.Domain`, [ADR-0042](0042-ddd-domain-and-application-packages.md))
 - **Date:** 2026-10-25 (replaces the hand-written `CreatedBy`/`UpdatedBy` of [ADR-0033](0033-the-abc-services-crud-pattern.md) and the shape of `ICurrentUser` of [ADR-0036](0036-icurrentuser-in-the-framework.md))
 
 ## Context

@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <Import Project="..\..\common.props" />
+
+    <PropertyGroup>
+        <AssemblyName>HsnSoft.Base.Ddd.Application</AssemblyName>
+        <PackageId>HsnSoft.Base.Ddd.Application</PackageId>
+        <RootNamespace />
+        <Title>HsnSoft.Base Framework Ddd Application</Title>
+        <Description>The building blocks of the application layer of an HsnSoft service: the data transfer objects of an entity, of a list request (limit, sorting, search, page) and of its result, so no service writes them again.</Description>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageTags>HsnSoft Base Framework Ddd Application Dto Paging</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="..\..\README.md" Pack="true" Visible="false" PackagePath="README.md" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="$(MicrosoftAspNetCorePackageVersion)" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\HsnSoft.Base.Ddd.Domain\HsnSoft.Base.Ddd.Domain.csproj" />
+    </ItemGroup>
+
+</Project>
