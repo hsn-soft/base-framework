@@ -1,9 +1,9 @@
+using HsnSoft.Base.Application.Dtos;
+
 namespace Abc.OrderService.Application.Contracts.OrderDomain.Dtos;
 
-public sealed class OrderSearchDto
+public sealed class OrderSearchDto : EntityDto<Guid>
 {
-    public Guid Id { get; init; }
-
     public string CustomerUserName { get; init; } = string.Empty;
 
     public string Status { get; init; } = string.Empty;
