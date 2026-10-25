@@ -45,7 +45,15 @@ public sealed partial class KafkaSubscriber(
         await Task.WhenAll(events.Select(info => Task.Run(() => ConsumeLoopAsync(info, deadLetters, deadLetterTopic, stoppingToken), CancellationToken.None))).ConfigureAwait(false);
     }
 
-    private async Task ConsumeLoopAsync(IntegrationEventInfo info, IProducer<string, byte[]> deadLetters, string deadLetterTopic, CancellationToken stoppingToken)
+    // a consumer that fails on its own (the broker could not be read, an offset could not be committed) is built again after a pause, so one failure does not stop the host and the other events with it
+    private Task ConsumeLoopAsync(IntegrationEventInfo info, IProducer<string, byte[]> deadLetters, string deadLetterTopic, CancellationToken stoppingToken)
+        => KafkaRecovery.RunAsync(
+            cancellationToken => ConsumeAsync(info, deadLetters, deadLetterTopic, cancellationToken),
+            _options.RecoveryDelay,
+            exception => LogConsumerFailed(_logger, exception, KafkaTopology.GroupFor(_eventBusOptions, info.EventName), _options.RecoveryDelay.TotalSeconds),
+            stoppingToken);
+
+    private async Task ConsumeAsync(IntegrationEventInfo info, IProducer<string, byte[]> deadLetters, string deadLetterTopic, CancellationToken stoppingToken)
     {
         string topic = KafkaTopology.TopicFor(_eventBusOptions, info.EventName);
         string group = KafkaTopology.GroupFor(_eventBusOptions, info.EventName);
@@ -100,6 +108,9 @@ public sealed partial class KafkaSubscriber(
 
     [LoggerMessage(EventId = 4501, EventName = "KAFKA_SUBSCRIBER_LISTENING", Level = LogLevel.Information, Message = "{Group} listens to topic {Topic}")]
     private static partial void LogListening(ILogger logger, string group, string topic);
+
+    [LoggerMessage(EventId = 4503, EventName = "KAFKA_SUBSCRIBER_CONSUMER_FAILED", Level = LogLevel.Error, Message = "{Group}: the consumer failed, it starts again in {Seconds} s")]
+    private static partial void LogConsumerFailed(ILogger logger, Exception exception, string group, double seconds);
 
     [LoggerMessage(EventId = 4502, EventName = "KAFKA_SUBSCRIBER_DEAD_LETTERED", Level = LogLevel.Error, Message = "A message from {Topic} could not be handled, moving it to the dead-letter topic")]
     private static partial void LogDeadLettered(ILogger logger, Exception exception, string topic);

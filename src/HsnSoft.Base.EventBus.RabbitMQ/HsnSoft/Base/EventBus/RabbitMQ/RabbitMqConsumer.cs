@@ -167,10 +167,12 @@ public sealed partial class RabbitMqConsumer(
         }
 
         await _prefetch.WaitAsync().ConfigureAwait(false);
+        string eventName = "unknown";
+        string message = string.Empty;
         try
         {
-            string eventName = ResolveEventName(args);
-            string message = Encoding.UTF8.GetString(args.Body.Span);
+            eventName = ResolveEventName(args);
+            message = Encoding.UTF8.GetString(args.Body.Span);
 
             // what the consumer itself says about this message (it failed, it was put back) belongs to its chain too
             using IDisposable? scope = _logger.BeginScope(MessageScope(eventName, args.Body.Span));
@@ -205,6 +207,11 @@ public sealed partial class RabbitMqConsumer(
             }
 
             await AcknowledgeAsync(args.DeliveryTag).ConfigureAwait(false);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            // a step of the framework itself failed before the handler (reading the message, its logs): the message is reported as a failed one and taken off the queue, so it does not stay unacknowledged and the consumer goes on
+            await ReportFailureAsync(args.DeliveryTag, eventName, message, exception).ConfigureAwait(false);
         }
         finally
         {

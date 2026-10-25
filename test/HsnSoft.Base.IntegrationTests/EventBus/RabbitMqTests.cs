@@ -7,6 +7,7 @@ using HsnSoft.Base.EventBus.RabbitMQ.Connection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Exceptions;
 using Testcontainers.RabbitMq;
@@ -27,6 +28,31 @@ public sealed class RabbitMqFixture : IAsyncLifetime
 
     public async Task<IConnection> RawConnectionAsync()
         => await new ConnectionFactory { HostName = Host, Port = Port, UserName = "guest", Password = "guest" }.CreateConnectionAsync();
+}
+
+/// <summary>A logger provider whose first scope of the consumer fails: a step of the framework that fails before the handler is called.</summary>
+public sealed class FailsOnceBeforeTheHandler : ILoggerProvider
+{
+    private int _failed;
+
+    public ILogger CreateLogger(string categoryName) => new FailingLogger(this, categoryName.EndsWith("RabbitMqConsumer", StringComparison.Ordinal));
+
+    public void Dispose()
+    {
+    }
+
+    private sealed class FailingLogger(FailsOnceBeforeTheHandler owner, bool consumer) : ILogger
+    {
+        public IDisposable? BeginScope<TState>(TState state)
+            where TState : notnull
+            => consumer && Interlocked.Exchange(ref owner._failed, 1) == 0 ? throw new InvalidOperationException("a step before the handler failed") : null;
+
+        public bool IsEnabled(LogLevel logLevel) => false;
+
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+        {
+        }
+    }
 }
 
 public sealed class UserHeaders : IEventHeaderProvider
@@ -227,6 +253,33 @@ public sealed class RabbitMqTests(RabbitMqFixture fixture) : IClassFixture<Rabbi
         Assert.Equal("chain-corr", child.CorrelationId);
         Assert.Equal("user-9", child.GetHeader("TraceUser"));
         Assert.Equal("chain", child.Message.Text);
+    }
+
+    [Fact]
+    public async Task AStepOfTheFrameworkThatFailsBeforeTheHandler_ReportsTheMessage_AndTheConsumerGoesOn()
+    {
+        string exchange = NewExchange();
+        Recorder recorder = new();
+        await using RunningHost host = await StartAsync(exchange, services =>
+        {
+            services.AddLogging(logging => logging.AddProvider(new FailsOnceBeforeTheHandler()));
+            services.AddSingleton(recorder);
+            services.AddEventHandler<Pinged, RecordingHandler>();
+        });
+        await using IConnection connection = await fixture.RawConnectionAsync();
+        await using IChannel channel = await connection.CreateChannelAsync();
+        await channel.QueueDeclareAsync($"{exchange}_it-error_Failed", durable: true, exclusive: false, autoDelete: false, arguments: null);
+
+        await host.Services.GetRequiredService<IEventBus>().PublishAsync(new Pinged("first"));
+        BasicGetResult failure = await GetAsync(channel, $"{exchange}_it-error_Failed");
+        await host.Services.GetRequiredService<IEventBus>().PublishAsync(new Pinged("second"));
+
+        MessageEnvelope<FailedEto> envelope = (MessageEnvelope<FailedEto>)EventSerializer.DeserializeEnvelope(failure.Body.Span, typeof(FailedEto));
+        Assert.Contains("a step before the handler failed", envelope.Message.FailedReason, StringComparison.Ordinal);
+        await Support.EventuallyAsync(() => Task.FromResult(recorder.Received.Count == 1), "the next message to be handled");
+        Assert.Equal("second", recorder.Received.Single().Message.Text);
+        QueueDeclareOk work = await channel.QueueDeclarePassiveAsync($"{exchange}_it-service_Pinged");
+        Assert.Equal(0u, work.MessageCount);
     }
 
     [Fact]
