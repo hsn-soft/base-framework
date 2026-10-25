@@ -467,3 +467,4 @@ logs/
 # RSA keys of the sample systems: the private key signs tokens and is a secret; make a pair with scripts/generate-rsa-keys.cs
 private_key.xml
 samples/abc/shared/Abc.Shared.Hosting/public_key.xml
+samples/xyz/Xyz.Shared/Hosting/public_key.xml

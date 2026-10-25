@@ -1,145 +1,77 @@
-# Xyz samples
+# Xyz: the second system ([ADR-0061](../docs/adr/0061-the-xyz-sample-beside-abc.md))
 
-A small event-driven microservice system built on the `HsnSoft.Base.*` framework projects. It is the proof that the
-framework is product-independent: everything generic is in `src/`, everything about orders and shipments is here.
+A second event-driven microservice system on the `HsnSoft.Base.*` framework, written **beside Abc** to do the same job (users, products, orders, shipments, customers, payments, histories, the same order flow) with other choices,
+so the two show that the framework fits more than one product. What differs:
+
+| | Abc | Xyz |
+|---|---|---|
+| Users | an identity service (CRUD) and an auth server that reads its database | **one auth server**: it keeps the users and their history and issues the tokens |
+| Gateways | commercial and public (and two web apps) | **one commercial gateway** (with a Redis rate limit) |
+| Layers of a service | class libraries (Domain, Application, EntityFrameworkCore/MongoDB, Http.Host) | **folders of the Host project** (`Domain`, `Application`, `Infrastructure`, `Controllers`, `EventHandlers`) |
+| Databases | SQL Server, PostgreSQL, MongoDB | **PostgreSQL only** (a service with two stores has two contexts on two databases) |
+| Message broker | RabbitMQ (exchange `ABC`) | **Kafka** (topics `xyz.<Event>`, consumer groups `XYZ_<Service>`) |
+| Redis | rate limit (gateway), refresh tokens | the same: rate limit in the gateway (`Xyz.Shared/RateLimiting`), refresh tokens in the auth server |
+| Shared code | several `Abc.Shared.*` projects | one project, `Xyz.Shared` (hosting, gateway shell, event contracts, rate limit) |
 
 ```
-                 +-----------+      +-------------+
-   client -----> |  Gateway  | ---> | Auth Server |   issues JWTs, refresh tokens in Redis
-                 |  (YARP)   |      +-------------+
-                 | JWT check |
-                 | Redis rate|      +-----------+   OrderCreated    +-----------+
-                 |  limit    | ---> |   Order   | ----------------> |  Product  |
-                 +-----------+      | PostgreSQL|                   |  MongoDB  |
-                       |            +-----------+ <-- StockRejected +-----------+
-                       |                  ^        <-- StockReserved      |
-                       |                  |                               | StockReserved
-                       |                  | ShipmentDispatched            v
-                       +--------------> (Product, Shipment)         +-----------+
-                                                                    | Shipment  |
-                                                                    |  MongoDB  |
-                                                                    +-----------+
+ client --> Xyz.Gateway.Commercial (5100) --> Xyz.AuthServer (5110)      users, user history, tokens (RS256), refresh tokens (Redis)
+                |   rate limit (Redis)  \--> Xyz.OrderService (5120)     orders                      --OrderCreatedEto-->
+                                         \--> Xyz.ProductService (5130)  products, stock history     <--OrderStockReserved/Rejected--
+                                          \-> Xyz.ShipmentService (5140) shipments, customers, payments, shipment history --ShipmentCompletedEto--> order
 ```
 
-| Project | Port | Stores | Role |
+| Host | Port | Databases (PostgreSQL) | Notes |
 |---|---|---|---|
-| `Xyz.Gateway.Host` | 5100 | Redis | Single entry point (YARP). Validates the JWT, rate-limits per caller in Redis (`Xyz.Shared/RateLimiting`). |
-| `Xyz.AuthServer.Host` | 5110 | Redis | `POST /api/auth/login`, `/refresh`, `/logout`, `GET /me`. Refresh tokens live in Redis. |
-| `Xyz.ServiceOrder.Host` | 5120 | PostgreSQL, Redis, RabbitMQ | Places orders, follows their status. |
-| `Xyz.ServiceProduct.Host` | 5130 | MongoDB, Redis, RabbitMQ | Products and stock; reserves stock for an order. |
-| `Xyz.ServiceShipment.Host` | 5140 | MongoDB, Redis, RabbitMQ | Dispatches reserved orders. |
-| `Xyz.Shared` | - | - | Product-specific: the composition of the framework, event contracts, roles, the "admin" policy. |
+| `Xyz.Gateway.Commercial.Host` | 5100 | - (Redis) | `/<service>/v1/...` is `/api/<service>/v1/commercial/...` of the service; routes are settings (`ReverseProxyRoutes`, `ServiceEndpoints`) |
+| `Xyz.AuthServer.Host` | 5110 | `Xyz_AuthServer_<E>`, `Xyz_AuthServerHistory_<E>` | `auth/login`, `auth/refresh`, `auth/logout`, `auth/me`; users CRUD; every token issued is written to the history as the user who signs in |
+| `Xyz.OrderService.Host` | 5120 | `Xyz_Order_<E>` | orders; handles the stock and shipment events |
+| `Xyz.ProductService.Host` | 5130 | `Xyz_Product_<E>`, `Xyz_Stock_<E>` | products; the stock history is a second context on its own database |
+| `Xyz.ShipmentService.Host` | 5140 | `Xyz_Shipment_<E>`, `Xyz_ShipmentHistory_<E>` | shipments, customers, payments; the payment and the parcel are two steps joined by an internal event |
+| `Xyz.Shared` | - | - | what the hosts share |
+
+`<E>` is `Dev`, `Stage`, `Uat` or `Prod`. The environments are the same five as in Abc (`development`, `docker`, `stage`, `uat`, `production`: `appsettings.<environment>.json` next to `appsettings.json`); only `development` has working values
+(local PostgreSQL `postgres`/`postgres`, Redis and Kafka on `localhost`), the others have example host names and `CHANGE_ME` passwords: real ones come from the environment or a secret store, never from a file in git.
+A context names its provider and connection string in code (`EfCore<Name>DbProperties`: `EfCoreProviderNames.Postgres`, `EfCore-OrderService`, ...), not in settings.
 
 ## The order flow
 
-1. `POST /api/orders` saves the order as `Pending`, publishes `OrderCreated` and answers `202 Accepted`.
-2. **Product** reserves the stock atomically and publishes `StockReserved` (or `StockRejected`).
-3. **Shipment** reacts to `StockReserved`, dispatches and publishes `ShipmentDispatched`.
-4. **Order** moves to `StockReserved`, `Rejected` or `Shipped` from those events.
+The same as in Abc ([ADR-0054](../docs/adr/0054-the-order-flow-through-events.md), [ADR-0060](../docs/adr/0060-customer-payment-and-an-internal-event-in-the-shipment-service.md)), over Kafka:
 
-Properties worth knowing:
+1. `orders/create` saves the order `Pending` and publishes `OrderCreatedEto`.
+2. The product service sets the stock aside (and writes the stock history) and publishes `OrderStockReservedEto`, or `OrderStockRejectedEto`.
+3. The shipment service makes the customer when there is none, takes the payment and publishes the internal `PaymentProcessedEto`; its handler sends the parcel and publishes `ShipmentCompletedEto`.
+4. The order becomes `Confirmed`/`Delivered`, or `Cancelled` with the reason. The address of the order picks the outcome: any address is delivered, `nopay` is a declined payment, `fail` a parcel the carrier cannot reach.
 
-- Handlers are **idempotent**: stock is reserved once per order id, a shipment exists once per order id, and an order
-  only moves forward. RabbitMQ delivers at least once, so every message may arrive twice.
-- A failing handler is retried 3 times, then the message goes to the dead-letter queue `xyz.events.dead-letter`.
-- `Idempotency-Key` header on `POST /api/orders` (kept in Redis) makes a client retry safe.
-- Not covered on purpose: the transactional outbox. The order is saved first and the event is published after it;
-  a crash in between loses the event. It is the first thing the framework version should add.
+The caller of a message (tenant, user, roles) travels in its envelope and a handler runs as that user ([ADR-0057](../docs/adr/0057-the-caller-of-a-message-and-publish-or-send.md)), so the audit fields of what a handler writes are the user's. Kafka has no queue per service, so a message
+cannot be *sent* to one service there (`SendAsync` throws `NotSupportedException`); every Xyz event is published to its topic and each consumer group reads it. Events live in `Xyz.Shared/Contracts/Events/<publishing service>`, their handlers in the Host of the handling service
+(`EventHandlers/<publishing service>`, `EventHandlers/Internal`) ([ADR-0059](../docs/adr/0059-where-events-and-their-handlers-live.md)).
 
-## What is where
+## Run it
 
-The infrastructure is **not** in the sample: it comes from the framework projects under `src/` (`HsnSoft.Base.*`), which
-know nothing about Xyz. A second product ("Abc") would reference the same projects and write none of it again.
+The hosts use the local infrastructure on its default ports: PostgreSQL `5432`, Redis `6379`, Kafka `9092`. They create their own databases and topics and wait for a dependency that is still starting (a broker that does not answer yet is tried again).
 
-`Xyz.Shared` is the product's own decision about the framework: which capabilities every Xyz service uses (JWT-secured web
-api, Redis cache, events) and in which order they are registered and run (`AddXyzApi`, `UseXyzApi`), plus the event
-contracts, the role names and the "admin" policy. A host adds what is specific to it:
-
-| Host | On top of Xyz.Shared |
-|---|---|
-| Gateway | - (its Redis rate limit is product code in `Xyz.Shared/RateLimiting`) |
-| Auth server | - |
-| Order | `EntityFrameworkCore.PostgreSql`, `EventBus.RabbitMQ` |
-| Product, Shipment | `MongoDB`, `EventBus.RabbitMQ` |
-
-Product-specific values are configuration: the key prefix (`Redis:InstanceName = "xyz:"`) and the exchange
-(`RabbitMq:EventBus:ExchangeName = "xyz.events"`) are in each `appsettings.json`.
-
-```csharp
-builder.Services
-    .AddXyzApi(builder.Configuration)                          // web api, Swagger, health, JWT, Redis
-    .AddBasePostgres<OrderDbContext>(builder.Configuration)    // or .AddBaseMongo(builder.Configuration)
-    .AddRabbitMqEventBus(builder.Configuration)
-    .AddEventHandler<StockReserved, StockReservedHandler>();
-
-app.UseXyzApi();   // exceptions, authentication, authorization, health, in that order
+```bash
+dotnet run scripts/generate-rsa-keys.cs -- samples/xyz/Xyz.AuthServer.Host/private_key.xml samples/xyz/Xyz.Shared/Hosting/public_key.xml   # once; both files are git-ignored, never reuse a key of another system
+./samples/xyz/run-all.sh        # builds and starts the five hosts, Ctrl+C stops them
+./samples/xyz/smoke-test.sh     # in another terminal: logs in, refreshes, runs the four order outcomes through the gateway
 ```
 
-## File upload and download
+Demo accounts (development database only): `alice` / `alice123` (customer, tenant Acme) and `admin` / `admin123` (admin, system tenant). Seeded products: `LAMP-001` (stock 10) and `CHAIR-001` (stock 0).
 
-`POST /api/products/{id}/image` (admin, `multipart/form-data`, a `file` part) and `GET /api/products/{id}/image` show how files are logged: never their
-content, but the name and the size. The request log says the size the request declares (`RequestBytes`, the whole multipart body); the response log says
-`..., upload urun-foto.jpg (2097152 bytes)` (the exact size of the file, known once the form is read) or `..., download urun-foto.jpg (2097152 bytes)`,
-with `Files`, `FileCount`, `FileBytes` and `ResponseBytes`.
-
-## What the logs say when something goes wrong
-
-Errors the application expects (`KnownExceptions`: a rule that says no, a missing value, an unknown id, bad input, no token) are the
-caller's: a service answers them with a 4xx and the response is logged as a **Warning**. Anything else (a null reference) is a bug of the
-service: its global exception handler answers 500 and the response is an **Error**. The level of a response log is its status (2xx and 3xx
-Information, 4xx Warning, 5xx Error), the same at the gateway and in a service, so an alert can count on it.
-
-| Try | What happens | Level |
-|---|---|---|
-| a good order | `HttpRequest`, `HttpResponse` 202, then `ConsumeStart`/`ConsumeEnd` along the chain | Information |
-| `quantity: 0` | the rule says no: 400 `BusinessRuleException` | Warning (`HttpResponse`) |
-| `productId: "x"` | validation: 400 `validation_error` | Warning |
-| no token | 401 | Warning |
-| `productId` all zeros | the product service **rejects the message**: `CONSUME_EVENT_REJECTED`, no retry, not in the error queue | Warning (`ConsumeEnd`) |
-| `quantity: 13` | a null reference in the order request: 500 | Error: the `HttpResponse` 500 of the service, the only log of the failure, with the cause and its stack (the level of a response is its status) |
-| `quantity: 14` | a null reference in the handler of the product service: three attempts (`CONSUME_EVENT_RETRY`), `CONSUME_EVENT_ERROR` (the `ConsumeEnd`, with the stack), then the error queue (`RABBITMQ_CONSUMER_MOVED_TO_ERROR_QUEUE`) | Error (`ConsumeEnd`) |
-
-`CardNumber` and `Phone` of the order request carry `[SensitiveData]` (`Xyz.Shared/Contracts`): they are hidden in the logged bodies. The
-services write the request and response logs; the gateway writes one `HttpRequestResponse` only for what it answered itself (a rejected token,
-an unknown route, a service that cannot be reached). The gateway of the sample does not log bodies; with `RequestLogging:LogBodies` on, it adds the
-masked body of the request to a 5xx.
+```bash
+TOKEN=$(curl -s -X POST localhost:5100/auth-server/v1/auth/login -H 'Content-Type: application/json' \
+        -d '{"username":"alice","password":"alice123"}' | python3 -c 'import json,sys;print(json.load(sys.stdin)["payload"]["accessToken"])')
+curl -s -X POST localhost:5100/product-service/v1/products/paged-list -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d '{}'
+```
 
 ## Logging
 
-Every host logs through `HsnSoft.Base.Logging.Serilog` (`PersistentLogger` section of its `appsettings.json`, see
-[docs/Logging.md](../docs/Logging.md)). The console gets everything from Debug up; Information and above go to
-**Graylog** when `PersistentLogger:IsGrayLogActive` is `true` (GELF HTTP input `127.0.0.1:12202`, the local `infra-graylog`),
-otherwise to `Logs/<service>.txt` in the folder the host runs from. Debug never leaves the console. Every log carries
-`Solution` (`Xyz`, `Agt`, `Def`: the first part of the assembly name), `Assembly` and `LoggerName`, so in Graylog
-`Solution:Xyz` finds the whole Xyz system.
+Every host logs through `HsnSoft.Base.Logging.Serilog` (`PersistentLogger` section of its `appsettings.json`, see [docs/Logging.md](../docs/Logging.md)). The console gets everything from Debug up; Information and above go to **Graylog** when
+`PersistentLogger:IsGrayLogActive` is `true` (GELF HTTP input `127.0.0.1:12202`, the local `infra-graylog`), otherwise to `Logs/<service>.txt`. Every log carries `Solution` (`Xyz`, `Abc`, ...: the first part of the assembly name), so in Graylog `Solution:Xyz` finds the whole Xyz system.
 
 ```bash
 PersistentLogger__IsGrayLogActive=true ./samples/xyz/run-all.sh      # without the variable: log files
 ```
-
-## Run it
-
-The services use the local infrastructure on its default ports: PostgreSQL `5432` (`postgres`/`postgres`),
-MongoDB `27017`, Redis `6379`, RabbitMQ `5672` (`guest`/`guest`). They create their own databases (`xyz_order`,
-`xyz_product`, `xyz_shipment`), keys (`xyz:*`) and queues (`<service>.<Event>`), and wait for a dependency that is
-still starting.
-
-```bash
-./samples/xyz/run-all.sh        # builds and starts the five hosts, Ctrl+C stops them
-./samples/xyz/smoke-test.sh     # in another terminal: runs the whole flow through the gateway
-```
-
-Demo accounts: `alice` / `alice123` (customer) and `admin` / `admin123` (admin, can create products).
-Seeded products: keyboard `11111111-1111-1111-1111-111111111111` (stock 100), mouse `22222222-2222-2222-2222-222222222222` (stock 3).
-
-```bash
-TOKEN=$(curl -s -X POST localhost:5100/api/auth/login -H 'Content-Type: application/json' \
-        -d '{"username":"alice","password":"alice123"}' | python3 -c 'import json,sys;print(json.load(sys.stdin)["payload"]["accessToken"])')
-curl -s -X POST localhost:5100/api/orders -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
-     -d '{"productId":"11111111-1111-1111-1111-111111111111","quantity":2}'
-```
-
-The JWT signing key in the `appsettings.json` files is a sample value; a real system keeps it in a secret store.
 
 ## Agt.Scheduler.Host: an agent
 
@@ -225,7 +157,7 @@ dotnet run --project samples/abc/gateway/Abc.Gateway.Public.Host                
 Their routes are settings (`ReverseProxyRoutes`, `ServiceEndpoints`): a client calls `/identity-service/v1/...` and the gateway asks the service `/api/identity-service/v1/commercial/...` (or `public`).
 
 ```bash
-# the identity service (5400), then a gateway; a token for the commercial one comes from Xyz.AuthServer (5110)
+# the identity service (5400), then a gateway; a token for the commercial one comes from Abc.AuthServer (5410)
 curl -X POST http://localhost:5500/identity-service/v1/users/paged-list -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d '{}'   # commercial: needs the token (the service checks it)
 curl -X POST http://localhost:5600/identity-service/v1/users/check-user-name -H 'Content-Type: application/json' -d '{"userName":"ada"}'            # public: open, a PublicUsersController endpoint
 ```

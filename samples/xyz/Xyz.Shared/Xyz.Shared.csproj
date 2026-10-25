@@ -1,19 +1,38 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <!--
-        The Xyz product's own choice from the framework: every Xyz service is a JWT-secured web api with a Redis cache and
-        events. Shared fixes that composition (what is registered, in which order) once for all hosts. The stores a host
-        uses (PostgreSQL, MongoDB) and its broker are added by the host itself.
+        What the hosts of the Xyz system share: the shell every host has (logging, the web api, Swagger, health, the JWT, Redis), what a microservice adds (the Kafka event bus), the gateway (the reverse proxy and its limits), the tenants,
+        and the contracts the services share (the integration events, in a folder for each service that publishes them). The framework knows no product; this is Xyz's own choice from it. The services keep their layers (Domain,
+        Application, Infrastructure) as folders of their own Host project.
     -->
 
     <ItemGroup>
+        <!-- the texts of this layer (Hosting/Localization/en.json, tr.json, ru.json), read by the localization at start -->
+        <EmbeddedResource Include="Hosting\Localization\*.json" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <!-- the public key every host checks tokens with (made with scripts/generate-rsa-keys.cs, not in git); copied next to the assemblies of the hosts -->
+        <Content Include="Hosting\public_key.xml" Condition="Exists('Hosting\public_key.xml')" Link="public_key.xml" CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+        <PackageReference Include="Yarp.ReverseProxy" />
+    </ItemGroup>
+
+    <ItemGroup>
         <ProjectReference Include="..\..\..\src\HsnSoft.Base.AspNetCore\HsnSoft.Base.AspNetCore.csproj" />
+        <ProjectReference Include="..\..\..\src\HsnSoft.Base.AspNetCore.SwaggerGateway\HsnSoft.Base.AspNetCore.SwaggerGateway.csproj" />
         <ProjectReference Include="..\..\..\src\HsnSoft.Base.AspNetCore.Swashbuckle\HsnSoft.Base.AspNetCore.Swashbuckle.csproj" />
         <ProjectReference Include="..\..\..\src\HsnSoft.Base.AspNetCore.WebApi\HsnSoft.Base.AspNetCore.WebApi.csproj" />
         <ProjectReference Include="..\..\..\src\HsnSoft.Base.Authentication\HsnSoft.Base.Authentication.csproj" />
         <ProjectReference Include="..\..\..\src\HsnSoft.Base.Caching.StackExchangeRedis\HsnSoft.Base.Caching.StackExchangeRedis.csproj" />
+        <ProjectReference Include="..\..\..\src\HsnSoft.Base.Ddd.Application\HsnSoft.Base.Ddd.Application.csproj" />
         <ProjectReference Include="..\..\..\src\HsnSoft.Base.EventBus\HsnSoft.Base.EventBus.csproj" />
-        <ProjectReference Include="..\..\..\src\HsnSoft.Base.Logging.Serilog\HsnSoft.Base.Logging.Serilog.csproj" />
+        <ProjectReference Include="..\..\..\src\HsnSoft.Base.EventBus.Kafka\HsnSoft.Base.EventBus.Kafka.csproj" />
+        <ProjectReference Include="..\..\..\src\HsnSoft.Base.Localization\HsnSoft.Base.Localization.csproj" />
+        <ProjectReference Include="..\..\..\src\HsnSoft.Base.Logging\HsnSoft.Base.Logging.csproj" />
     </ItemGroup>
 
 </Project>

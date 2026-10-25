@@ -10,6 +10,8 @@ public sealed class EfCoreProviderTests
 {
     private sealed class ProviderContext(DbContextOptions<ProviderContext> options) : DbContext(options);
 
+    private sealed class OtherContext(DbContextOptions<OtherContext> options) : DbContext(options);
+
     // a provider that is SQLite under another name: what is checked is which one runs and with which connection string
     private sealed class FakeProvider(string name) : IEfCoreProvider
     {
@@ -53,6 +55,20 @@ public sealed class EfCoreProviderTests
 
         Assert.Equal("beta", registration.Name);
         Assert.Contains("ready", registration.Tags);
+    }
+
+    [Fact]
+    public void ASecondContextOnTheSameProvider_HasACheckNamedAfterItToo()
+    {
+        IServiceCollection services = new ServiceCollection().AddLogging()
+            .AddBaseEfCore<ProviderContext>(s_connections, Both, "beta", "EfCore-B")
+            .AddBaseEfCore<OtherContext>(s_connections, Both, "beta", "EfCore-A")
+            .AddBaseEfCore<ProviderContext>(s_connections, Both, "alpha", "EfCore-A");
+        using ServiceProvider provider = services.BuildServiceProvider();
+
+        string[] names = [.. provider.GetRequiredService<IOptions<HealthCheckServiceOptions>>().Value.Registrations.Select(registration => registration.Name)];
+
+        Assert.Equal(["beta", "beta-OtherContext", "alpha"], names);
     }
 
     [Fact]

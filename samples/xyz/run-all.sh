@@ -1,23 +1,24 @@
 #!/usr/bin/env bash
-# Builds and starts the gateway, the auth server and the three services; Ctrl+C stops them all.
+# Builds and starts the commercial gateway, the auth server and the three services (environment "development": PostgreSQL, Redis and Kafka on localhost); Ctrl+C stops them all.
 #   ./samples/xyz/run-all.sh
-# Connection settings come from each appsettings.json; override them with environment variables, e.g.
+# The RSA key pair of the tokens must exist first (see samples/README.md, scripts/generate-rsa-keys.cs).
+# Settings come from each appsettings.development.json; override them with environment variables, e.g.
 #   ConnectionStrings__Redis=localhost:6380 ./samples/xyz/run-all.sh
 set -euo pipefail
 
 cd "$(dirname "${BASH_SOURCE[0]}")/../.."
 
-projects=(Xyz.AuthServer.Host Xyz.ServiceProduct.Host Xyz.ServiceShipment.Host Xyz.ServiceOrder.Host Xyz.Gateway.Host)
+projects=(Xyz.AuthServer.Host Xyz.ProductService.Host Xyz.ShipmentService.Host Xyz.OrderService.Host Xyz.Gateway.Commercial.Host)
 
 for project in "${projects[@]}"; do
-    dotnet build "samples/xyz/$project" --configuration Release --verbosity quiet
+    dotnet build "samples/xyz/$project" --verbosity quiet
 done
 
 trap 'echo "Stopping..."; kill 0' INT TERM
 
 for project in "${projects[@]}"; do
     name="${project#Xyz.}"
-    dotnet run --no-build --configuration Release --project "samples/xyz/$project" 2>&1 \
+    ASPNETCORE_ENVIRONMENT=development dotnet run --no-build --project "samples/xyz/$project" 2>&1 \
         | awk -v name="${name%.Host}" '{ printf "[%s] %s\n", name, $0; fflush() }' &
 done
 

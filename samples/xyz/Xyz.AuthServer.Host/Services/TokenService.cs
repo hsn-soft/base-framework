@@ -1,73 +1,97 @@
 using System.Security.Claims;
 using System.Security.Cryptography;
-using System.Text;
 using HsnSoft.Base.Authentication;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
+using Xyz.AuthServer.Security;
 
-namespace Xyz.AuthServer.Host.Services;
+namespace Xyz.AuthServer.Services;
 
 public sealed record TokenPair(string AccessToken, int ExpiresInSeconds, string RefreshToken);
 
-/// <summary>Issues short-lived JWT access tokens and long-lived opaque refresh tokens. Refresh tokens live in redis.</summary>
-public sealed class TokenService(IOptions<JwtOptions> jwt, IOptions<AuthOptions> auth, IDistributedCache cache)
+/// <summary>The settings of the refresh token (<c>Auth</c>).</summary>
+public sealed class AuthOptions
+{
+    public int RefreshTokenDays { get; set; } = 7;
+}
+
+/// <summary>
+/// Issues the short-lived JWT access token of a user the auth server has checked (claims: <c>sub</c> the user name, <c>user_id</c>, <c>name</c>, <c>email</c>, <c>tenant_id</c>, <c>locale</c>, <c>is_system_tenant</c> for the users of
+/// the system tenant, <c>role</c> one per role, <c>jti</c>), signed with the RSA <b>private</b> key (RS256, <c>Jwt:PrivateKeyFile</c>) that only this host has; the other Xyz hosts check it with the public key. The long-lived
+/// opaque refresh token is kept in Redis (the id of its user) and used once: a refresh rotates it.
+/// </summary>
+public sealed class TokenService : IDisposable
 {
     private const string RefreshPrefix = "refresh:";
 
-    public UserAccount? ValidateCredentials(string username, string password)
-    {
-        UserAccount? account = auth.Value.Users.FirstOrDefault(x => string.Equals(x.Username, username, StringComparison.OrdinalIgnoreCase));
+    private readonly JwtOptions _jwt;
+    private readonly AuthOptions _auth;
+    private readonly IDistributedCache _cache;
+    private readonly RSA _privateKey;
 
-        // constant-time comparison, and the same work whether or not the user exists
-        byte[] expected = Encoding.UTF8.GetBytes(account?.Password ?? string.Empty);
-        byte[] actual = Encoding.UTF8.GetBytes(password);
-        bool equal = expected.Length == actual.Length && CryptographicOperations.FixedTimeEquals(expected, actual);
-        return equal ? account : null;
+    public TokenService(IOptions<JwtOptions> jwt, IOptions<AuthOptions> auth, IDistributedCache cache)
+    {
+        _jwt = jwt.Value;
+        _auth = auth.Value;
+        _cache = cache;
+
+        // loaded when the host starts (see Program.cs): a missing key is found now, not at the first login
+        _privateKey = RsaKeys.LoadPrivate(_jwt.PrivateKeyFile ?? throw new InvalidOperationException("Jwt:PrivateKeyFile is required: the auth server signs the tokens with it."));
     }
 
-    public async Task<TokenPair> IssueAsync(UserAccount account, CancellationToken cancellationToken)
-    {
-        JwtOptions settings = jwt.Value;
-        DateTime expires = DateTime.UtcNow.AddMinutes(settings.AccessTokenMinutes);
+    public void Dispose() => _privateKey.Dispose();
 
-        var claims = new List<Claim> { new("sub", account.Username), new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString("N")) };
-        claims.AddRange(account.Roles.Select(role => new Claim("role", role)));
+    public async Task<TokenPair> IssueAsync(AuthenticatedUser user, CancellationToken cancellationToken = default)
+    {
+        List<Claim> claims =
+        [
+            new("sub", user.UserName),
+            new("user_id", user.Id.ToString()),
+            new("name", user.DisplayName),
+            new("email", user.Email),
+            new("tenant_id", user.TenantId.ToString()),
+            new("locale", user.Language),
+            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString("N")),
+            .. user.Roles.Select(role => new Claim("role", role)),
+        ];
+        if (user.IsSystemTenant)
+        {
+            claims.Add(new Claim("is_system_tenant", "true"));
+        }
 
         string accessToken = new JsonWebTokenHandler().CreateToken(new SecurityTokenDescriptor
         {
-            Issuer = settings.Issuer,
-            Audience = settings.Audience,
+            Issuer = _jwt.Issuer,
+            Audience = _jwt.Audience,
             Subject = new ClaimsIdentity(claims),
-            Expires = expires,
-            SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(Encoding.UTF8.GetBytes(settings.Key)), SecurityAlgorithms.HmacSha256),
+            Expires = DateTime.UtcNow.AddMinutes(_jwt.AccessTokenMinutes),
+            SigningCredentials = new SigningCredentials(new RsaSecurityKey(_privateKey), SecurityAlgorithms.RsaSha256),
         });
 
         string refreshToken = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
-        await cache.SetStringAsync(
+        await _cache.SetStringAsync(
             RefreshPrefix + refreshToken,
-            account.Username,
-            new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(auth.Value.RefreshTokenDays) },
-            cancellationToken);
+            user.Id.ToString(),
+            new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_auth.RefreshTokenDays) },
+            cancellationToken).ConfigureAwait(false);
 
-        return new TokenPair(accessToken, settings.AccessTokenMinutes * 60, refreshToken);
+        return new TokenPair(accessToken, _jwt.AccessTokenMinutes * 60, refreshToken);
     }
 
-    /// <summary>Exchanges a refresh token for a new pair. The old refresh token stops working (rotation).</summary>
-    public async Task<TokenPair?> RefreshAsync(string refreshToken, CancellationToken cancellationToken)
+    /// <summary>The id of the user a refresh token was issued to, <see langword="null"/> when it is unknown, expired or used. A token that is found is removed (rotation): it works once.</summary>
+    public async Task<Guid?> ConsumeRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default)
     {
-        string? username = await cache.GetStringAsync(RefreshPrefix + refreshToken, cancellationToken);
-        UserAccount? account = username is null ? null : auth.Value.Users.FirstOrDefault(x => x.Username == username);
-        if (account is null)
+        string? value = await _cache.GetStringAsync(RefreshPrefix + refreshToken, cancellationToken).ConfigureAwait(false);
+        if (value is null)
         {
             return null;
         }
 
-        await cache.RemoveAsync(RefreshPrefix + refreshToken, cancellationToken);
-        return await IssueAsync(account, cancellationToken);
+        await _cache.RemoveAsync(RefreshPrefix + refreshToken, cancellationToken).ConfigureAwait(false);
+        return Guid.TryParse(value, out Guid id) ? id : null;
     }
 
-    public async Task RevokeAsync(string refreshToken, CancellationToken cancellationToken)
-        => await cache.RemoveAsync(RefreshPrefix + refreshToken, cancellationToken);
+    public Task RevokeAsync(string refreshToken, CancellationToken cancellationToken = default) => _cache.RemoveAsync(RefreshPrefix + refreshToken, cancellationToken);
 }

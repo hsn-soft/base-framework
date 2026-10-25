@@ -71,8 +71,14 @@ public static class EfCoreProviderServiceCollectionExtensions
             selected.Configure(builder, connectionString);
             builder.UseBaseEntityConcepts(serviceProvider);
         });
-        return services.AddDbContextHealthCheck<TContext>(selected.Name);
+
+        // a second context on the same provider cannot take the name of the first one: its check is named after the context too
+        bool nameTaken = services.Any(descriptor => descriptor.ServiceType == typeof(HealthCheckName) && descriptor.ImplementationInstance is HealthCheckName taken && taken.Value == selected.Name);
+        services.AddSingleton(new HealthCheckName(selected.Name));
+        return services.AddDbContextHealthCheck<TContext>(nameTaken ? $"{selected.Name}-{typeof(TContext).Name}" : selected.Name);
     }
+
+    private sealed record HealthCheckName(string Value);
 
     private static IEfCoreProvider Select(IReadOnlyList<IEfCoreProvider> providers, string name)
     {

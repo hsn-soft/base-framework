@@ -2,6 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-10-25 (changes [ADR-0047](0047-relational-provider-chosen-by-a-setting.md); completes [ADR-0050](0050-a-context-has-a-properties-class-for-its-database.md))
+- **Note:** [ADR-0061](0061-the-xyz-sample-beside-abc.md): the health check of a second context on the same provider is named `<provider>-<Context>`, so two PostgreSQL contexts can live in one host.
 
 ## Context
 

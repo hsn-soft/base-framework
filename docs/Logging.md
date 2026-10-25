@@ -131,7 +131,7 @@ A failure is logged **once**: a request that ends in a 500 is the `HttpResponse`
 is a `CONSUME_EVENT_RETRY` Warning, and what follows a failed message (`RABBITMQ_CONSUMER_MOVED_TO_ERROR_QUEUE`, which names the error queue) is its consequence, not a second Error. A known error (a 4xx, a rejected message) is a Warning without a stack.
 Besides `ExceptionType`, every log of a failure has:
 
-- `ExceptionIdentifier`: where it was thrown, like `Solution:Xyz|Assembly:Xyz.ServiceOrder.Host|File:OrdersController.cs|Line:92`: the first place with a source file in the code of the application that runs, looking at the innermost exception
+- `ExceptionIdentifier`: where it was thrown, like `Solution:Xyz|Assembly:Xyz.OrderService.Host|File:OrdersController.cs|Line:92`: the first place with a source file in the code of the application that runs, looking at the innermost exception
   first, so a throw deep inside a library is reported where the application called it. It needs the symbols (`.pdb`) next to the assemblies, which `dotnet publish` copies; without them the method is told, and an exception that was never
   thrown has only its type. Use `throw;`, not `throw ex;`, which resets the line. It has no length limit.
 - `Reason`: the message of the exception and of every exception inside it joined with `" >> "` (`outer >> middle >> inner`), up to 8192 characters.

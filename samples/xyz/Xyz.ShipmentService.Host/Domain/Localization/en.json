@@ -1,0 +1,24 @@
+{
+  "culture": "en",
+  "texts": {
+    "customer_not_found": "Customer {0} was not found.",
+    "customer_user_name_duplicate": "A customer with the user name '{0}' exists.",
+    "payment_amount_invalid": "A payment is for an amount above zero.",
+    "payment_not_found": "Payment {0} was not found.",
+    "payment_status_final": "A {0} payment cannot become {1}.",
+    "payment_status_invalid": "'{0}' is not a status of a payment (Pending, Succeeded, Failed, Refunded).",
+    "PaymentStatus:Failed": "Failed",
+    "PaymentStatus:Pending": "Pending",
+    "PaymentStatus:Refunded": "Refunded",
+    "PaymentStatus:Succeeded": "Succeeded",
+    "shipment_history_not_found": "Shipment history record {0} was not found.",
+    "shipment_not_found": "Shipment {0} was not found.",
+    "shipment_order_required": "A shipment needs an order.",
+    "shipment_status_final": "A shipment that is {0} cannot change its status.",
+    "shipment_status_invalid": "'{0}' is not a status of a shipment (Preparing, InTransit, Delivered, Returned).",
+    "ShipmentStatus:Delivered": "Delivered",
+    "ShipmentStatus:InTransit": "In transit",
+    "ShipmentStatus:Preparing": "Preparing",
+    "ShipmentStatus:Returned": "Returned"
+  }
+}

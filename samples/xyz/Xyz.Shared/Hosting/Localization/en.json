@@ -1,0 +1,7 @@
+{
+  "culture": "en",
+  "texts": {
+    "status_required": "The status is required.",
+    "invalid_credentials": "Invalid user name or password."
+  }
+}

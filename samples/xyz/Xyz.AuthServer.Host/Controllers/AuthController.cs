@@ -1,52 +1,109 @@
 using System.ComponentModel.DataAnnotations;
 using HsnSoft.Base;
-using HsnSoft.Base.Authentication;
+using HsnSoft.Base.Domain.Repositories;
 using HsnSoft.Base.Logging.Masking;
 using HsnSoft.Base.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Xyz.AuthServer.Host.Services;
+using Xyz.AuthServer.Controllers.Base;
+using Xyz.AuthServer.Domain.UserHistoryDomain.Consts;
+using Xyz.AuthServer.Domain.UserHistoryDomain.Entities;
+using Xyz.AuthServer.Security;
+using Xyz.AuthServer.Services;
 
-namespace Xyz.AuthServer.Host.Controllers;
+namespace Xyz.AuthServer.Controllers;
 
-public sealed record LoginRequest([Required] string Username, [property: SensitiveData][Required] string Password);
-
-public sealed record RefreshRequest([property: SensitiveData][Required] string RefreshToken);
-
-public sealed record TokenResponse([property: SensitiveData] string AccessToken, string TokenType, int ExpiresIn, [property: SensitiveData] string RefreshToken);
-
-[ApiController]
-[Route("api/auth")]
-public sealed class AuthController(TokenService tokens) : ControllerBase
+public sealed class LoginDto
 {
+    [Required]
+    public string Username { get; set; } = string.Empty;
+
+    [Required]
+    [SensitiveData]
+    public string Password { get; set; } = string.Empty;
+}
+
+public sealed class RefreshDto
+{
+    [Required]
+    [SensitiveData]
+    public string RefreshToken { get; set; } = string.Empty;
+}
+
+public sealed class TokenDto
+{
+    [SensitiveData]
+    public string AccessToken { get; init; } = string.Empty;
+
+    public string TokenType { get; init; } = "Bearer";
+
+    public int ExpiresIn { get; init; }
+
+    [SensitiveData]
+    public string RefreshToken { get; init; } = string.Empty;
+}
+
+public sealed class MeDto
+{
+    public string? Subject { get; init; }
+
+    public IReadOnlyCollection<string> Roles { get; init; } = [];
+}
+
+[Route("api/auth-server/v1/commercial/auth")]
+public sealed class AuthController(UserAuthenticator authenticator, TokenService tokens, IRepository<UserHistory, Guid> histories) : BaseServiceController
+{
+    /// <summary>A user name and a password for an access token and a refresh token.</summary>
+    [AllowAnonymous]
     [HttpPost("login")]
-    public async Task<IActionResult> LoginAsync(LoginRequest request, CancellationToken cancellationToken)
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<TokenDto> LoginAsync([FromBody] LoginDto input, CancellationToken cancellationToken = default)
     {
-        UserAccount account = tokens.ValidateCredentials(request.Username, request.Password)
-                              ?? throw new BaseHttpException(StatusCodes.Status401Unauthorized, "Invalid credentials");
+        AuthenticatedUser user = await authenticator.AuthenticateAsync(input.Username, input.Password, cancellationToken)
+                                 ?? throw new BaseHttpException(StatusCodes.Status401Unauthorized, "Invalid credentials").WithKey("invalid_credentials");
 
-        return Ok(ToResponse(await tokens.IssueAsync(account, cancellationToken)));
+        return await IssueAsync(user, UserHistoryConsts.Login, cancellationToken);
     }
 
+    /// <summary>A refresh token for a new pair; the refresh token that was sent stops working.</summary>
+    [AllowAnonymous]
     [HttpPost("refresh")]
-    public async Task<IActionResult> RefreshAsync(RefreshRequest request, CancellationToken cancellationToken)
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<TokenDto> RefreshAsync([FromBody] RefreshDto input, CancellationToken cancellationToken = default)
     {
-        TokenPair? pair = await tokens.RefreshAsync(request.RefreshToken, cancellationToken);
-        return pair is null
-            ? throw new BaseHttpException(StatusCodes.Status401Unauthorized, "Invalid or expired refresh token")
-            : Ok(ToResponse(pair));
+        Guid? userId = await tokens.ConsumeRefreshTokenAsync(input.RefreshToken, cancellationToken);
+        AuthenticatedUser user = (userId is null ? null : await authenticator.FindActiveAsync(userId.Value, cancellationToken))
+                                 ?? throw new BaseHttpException(StatusCodes.Status401Unauthorized, "Invalid or expired refresh token").WithKey("invalid_refresh_token");
+
+        return await IssueAsync(user, UserHistoryConsts.Refresh, cancellationToken);
     }
 
+    /// <summary>Ends a session: the refresh token stops working.</summary>
+    [AllowAnonymous]
     [HttpPost("logout")]
-    public async Task<IActionResult> LogoutAsync(RefreshRequest request, CancellationToken cancellationToken)
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<NoContentResult> LogoutAsync([FromBody] RefreshDto input, CancellationToken cancellationToken = default)
     {
-        await tokens.RevokeAsync(request.RefreshToken, cancellationToken);
+        await tokens.RevokeAsync(input.RefreshToken, cancellationToken);
         return NoContent();
     }
 
+    /// <summary>Who the token says the caller is.</summary>
     [HttpGet("me")]
-    [Authorize(Policy = BasePolicies.Authenticated)]
-    public IActionResult Me() => Ok(new { Subject = User.GetUserId(), Roles = User.GetRoles() });
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public MeDto Me() => new() { Subject = User.GetUserId(), Roles = [.. User.GetRoles()] };
 
-    private static TokenResponse ToResponse(TokenPair pair) => new(pair.AccessToken, "Bearer", pair.ExpiresInSeconds, pair.RefreshToken);
+    private async Task<TokenDto> IssueAsync(AuthenticatedUser user, string action, CancellationToken cancellationToken)
+    {
+        TokenPair pair = await tokens.IssueAsync(user, cancellationToken);
+
+        // every token that is issued is written to the history (its own database); nobody is signed in yet, so the record is written as the user who signs in (the audit fields and the tenant are theirs)
+        using (ActingUser.Use(new UserContext(user.Id, user.UserName, user.Roles, user.TenantId, user.IsSystemTenant)))
+        {
+            await histories.AddAsync(UserHistory.Record(user.Id, user.UserName, action), cancellationToken);
+        }
+
+        Logger.LogInformation("{Account} was issued a token ({Action})", user.UserName, action);
+        return new TokenDto { AccessToken = pair.AccessToken, ExpiresIn = pair.ExpiresInSeconds, RefreshToken = pair.RefreshToken };
+    }
 }
