@@ -23,11 +23,14 @@ public sealed class RecordingHandler : IIntegrationEventHandler<SampleEto>
 
     public LogFlowStep? FlowDuringHandling { get; private set; }
 
+    public HsnSoft.Base.Security.UserContext? ActingUserDuringHandling { get; private set; }
+
     public Task HandleAsync(MessageEnvelope<SampleEto> envelope, CancellationToken cancellationToken)
     {
         Calls++;
         ContextDuringHandling = EventContext.Current;
         FlowDuringHandling = LogFlow.Current;
+        ActingUserDuringHandling = HsnSoft.Base.Security.ActingUser.Current;
         if (Calls <= FailTimes)
         {
             throw Failure ?? new InvalidOperationException($"failure {Calls}");

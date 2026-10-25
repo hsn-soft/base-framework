@@ -1,9 +1,8 @@
 # Event bus
 
 `HsnSoft.Base.EventBus` is the broker-independent half: the message envelope, the handler contract, the dispatcher, naming, the
-publish retry. A broker project (`HsnSoft.Base.EventBus.RabbitMQ`) only moves the bytes. The RabbitMQ project is a port of the code that
-runs in production: **the exchange and queue names, the parameters they are declared with and the JSON on the wire are the same**, so a
-service built on this framework and a service still on the previous one can talk to each other.
+publish retry. A broker project (`HsnSoft.Base.EventBus.RabbitMQ`) only moves the bytes. The design started from the event bus of the previous framework,
+but it owes it nothing: names, the envelope and the behavior change when a better structure calls for it ([ADR-0057](adr/0057-the-caller-of-a-message-and-publish-or-send.md)).
 
 ## Using it
 
@@ -31,8 +30,19 @@ public sealed class OrderPlacedHandler : IIntegrationEventHandler<OrderPlacedEto
     public Task HandleAsync(MessageEnvelope<OrderPlacedEto> envelope, CancellationToken cancellationToken) { ... }
 }
 
-await eventBus.PublishAsync(new OrderPlacedEto(id), correlationId: "...");
+await eventBus.PublishAsync(new OrderPlacedEto(id));                     // an event: to every service that listens, the publisher does not know who
+await eventBus.SendAsync(new ShipOrderEto(id), toService: "shipment-service");  // a command: straight to the queue of one service, nobody else gets it
 ```
+
+`PublishAsync` is what almost everything is: something happened, whoever cares subscribes. `SendAsync` is for the message that asks one service to do something
+(and for putting a failed message back to the consumer that failed); the queue is made if it is not there yet. Kafka has no such place for a message and refuses it.
+
+**Who is calling travels in the envelope, not in the message.** The tenant, the user and the roles of whoever started the chain are put in the envelope when a message is
+published (from `ICurrentUser`, or from the message being handled), and the dispatcher runs the handler **as that user** (`ActingUser`): `ICurrentUser` and `ICurrentTenant` answer
+in the handler as in a controller, so the query filters and the audit fields (`CreatedBy`, `UpdatedBy`) work without the handler doing anything. A message needs no `TenantId` of its own.
+
+Inbox (a message is handled once) and outbox (a message is published with the change that caused it) are **optional**: the event bus knows neither; a service that needs them
+adds them ([ADR-0057](adr/0057-the-caller-of-a-message-and-publish-or-send.md)).
 
 A handler that publishes another event does not have to say which message caused it: the message being handled is the parent
 automatically (`EventContext.Current`), so `ParentMessageId`, `HopLevel`, the correlation id and the headers follow the chain.
@@ -43,19 +53,20 @@ Pass `parentMessage:` to choose a different parent.
 One flat JSON object, property names as the C# properties (PascalCase); reading ignores case.
 
 ```json
-{ "HopLevel": 2, "ReQueuedCount": 0, "MessageId": "…", "MessageTime": "…Z", "CorrelationId": "…", "Producer": "OrderService",
-  "ParentMessageId": "…", "UserId": "…", "ClientChannel": "web", "Message": { "OrderId": "…" } }
+{ "HopLevel": 2, "ReQueuedCount": 0, "MessageId": "…", "MessageTime": "…Z", "CorrelationId": "…", "Producer": "order-service",
+  "TenantId": "…", "IsSystemTenant": false, "UserId": "…", "UserName": "alice", "UserRoles": ["customer"],
+  "ParentMessageId": "…", "ClientChannel": "mobile", "Message": { "OrderId": "…" } }
 ```
 
-`UserId`, `UserRoles`, `ClientLat`, `ClientLong`, `ClientChannel`, `ClientVersion` and anything else a product puts next to the fixed
-properties are **headers** (`envelope.GetHeader("UserId")`, `SetHeader`). The framework carries them from a message to the ones it
-causes and does not interpret them; the product names them and fills them through `IEventHeaderProvider`.
+`TenantId`, `IsSystemTenant`, `UserId`, `UserName` and `UserRoles` are properties of the envelope (the caller of the chain). `ClientChannel`, `ClientVersion`, `ClientLat`, `ClientLong` and anything else
+a product puts next to them are **headers** (`envelope.GetHeader("ClientChannel")`, `SetHeader`): the framework carries them from a message to the ones it causes and does not interpret them;
+the product names them and fills them through `IEventHeaderProvider`.
 
 ## What is on the RabbitMQ broker
 
 | What | Name | Declared as |
 |---|---|---|
-| Exchange | `{ExchangeName}` | `direct`, not durable (as in production) |
+| Exchange | `{ExchangeName}` | `direct`, not durable |
 | Queue of an event | `{ExchangeName}_{ConsumerClientName}_{EventName}` | durable, no arguments; bound with the event name as routing key |
 | Error queue | `{ExchangeName}_{ErrorClientName}_{FailedEventName}` (e.g. `HHS_EventManagerService_Failed`) | durable, no arguments |
 | Requeue queue | `{ExchangeName}_{ConsumerClientName}_{ReQueuedEventName}` | the consumer's own queue of `ReQueuedEto` |
@@ -105,8 +116,8 @@ The framework leaves these to the product's Shared project, because they know pr
 |---|---|
 | `eventBus.Subscribe<TEvent, THandler>(fetchCount)` at startup, `UseEventBus(assembly, fetchCounts)` | `AddEventHandler<TEvent, THandler>(fetchCount)` / `AddEventHandlers(assembly, fetchCounts)`; a hosted service starts the consumers and stops them |
 | `HandleAsync(MessageEnvelope<T> @event)` | `HandleAsync(MessageEnvelope<T> envelope, CancellationToken)` |
-| `PublishAsync(eventMessage, parentMessage, correlationId, isExchangeEvent, isReQueuePublish)` | the same parameters (same names), plus a trailing `cancellationToken` |
-| `MessageEnvelope.UserId`, `UserRoles`, `Client*` | headers: `GetHeader("UserId")`; filled by an `IEventHeaderProvider` instead of `ICurrentUser` / `ITraceAccesor` |
+| `PublishAsync(eventMessage, parentMessage, correlationId, isExchangeEvent, isReQueuePublish)` | `PublishAsync(eventMessage, parentMessage, correlationId, cancellationToken)` to every service; `SendAsync(eventMessage, toService, ..., isReQueuePublish, cancellationToken)` to one service (no `isExchangeEvent` flag) |
+| `MessageEnvelope.UserId`, `UserRoles`, `Client*` | `TenantId`, `IsSystemTenant`, `UserId`, `UserName`, `UserRoles` are properties of the envelope, filled from `ICurrentUser`; `Client*` are headers (`GetHeader`), filled by an `IEventHeaderProvider` |
 | `IEventBusLogger` with persisted log models | `ILogger`: `PRODUCE_EVENT_*` / `CONSUME_EVENT_*` event names, and `CorrelationId`, `MessageId`, `EventName` in the log scope |
 | `RabbitMqConnectionSettings`, `RabbitMqEventBusConfig : EventBusConfig` | `RabbitMqConnectionSettings` (same section), `EventBusOptions` (same section and property names) and `RabbitMqEventBusConfig` for the RabbitMQ tuning |
 | `IEventBusSubscriptionManager.AddSubscription` / `Clear` | registration is done through the container |

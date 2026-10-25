@@ -33,7 +33,7 @@ public sealed class UserHeaders : IEventHeaderProvider
 {
     public string? GetCorrelationId() => null;
 
-    public void AddHeaders(IDictionary<string, string> headers) => headers["UserId"] = "user-9";
+    public void AddHeaders(IDictionary<string, string> headers) => headers["TraceUser"] = "user-9";
 }
 
 /// <summary>
@@ -151,7 +151,7 @@ public sealed class RabbitMqTests(RabbitMqFixture fixture) : IClassFixture<Rabbi
         });
         string json = $$$"""
             {"HopLevel":3,"ReQueuedCount":0,"MessageId":"{{{Guid.NewGuid()}}}","MessageTime":"2026-05-01T08:30:00Z","CorrelationId":"prod-corr",
-             "UserId":"user-7","UserRoles":null,"ClientLat":null,"ClientChannel":"web","Producer":"HHS_Other","ParentMessageId":null,
+             "TraceUser":"user-7","Region":null,"ClientLat":null,"ClientChannel":"web","Producer":"HHS_Other","ParentMessageId":null,
              "Message":{"Text":"from production"}}
             """;
 
@@ -165,7 +165,7 @@ public sealed class RabbitMqTests(RabbitMqFixture fixture) : IClassFixture<Rabbi
         Assert.Equal("prod-corr", envelope.CorrelationId);
         Assert.Equal((ushort)3, envelope.HopLevel);
         Assert.Equal("HHS_Other", envelope.Producer);
-        Assert.Equal("user-7", envelope.GetHeader("UserId"));
+        Assert.Equal("user-7", envelope.GetHeader("TraceUser"));
         Assert.Equal("web", envelope.GetHeader("ClientChannel"));
     }
 
@@ -192,13 +192,13 @@ public sealed class RabbitMqTests(RabbitMqFixture fixture) : IClassFixture<Rabbi
         using JsonDocument document = JsonDocument.Parse(Text(message));
         JsonElement root = document.RootElement;
         // Flow is the one property the framework added to the production shape (where the message was published from, for the logs); readers ignore what they do not know
-        string[] expected = ["CorrelationId", "Flow", "HopLevel", "Message", "MessageId", "MessageTime", "ParentMessageId", "Producer", "ReQueuedCount", "UserId"];
+        string[] expected = ["CorrelationId", "Flow", "HopLevel", "IsSystemTenant", "Message", "MessageId", "MessageTime", "ParentMessageId", "Producer", "ReQueuedCount", "TraceUser"];
         string[] actual = [.. root.EnumerateObject().Select(property => property.Name).Order(StringComparer.Ordinal)];
         Assert.Equal(expected, actual);
         Assert.Equal("corr-shape", root.GetProperty("CorrelationId").GetString());
         Assert.Equal(1, root.GetProperty("HopLevel").GetInt32());
         Assert.Equal("it-service", root.GetProperty("Producer").GetString());
-        Assert.Equal("user-9", root.GetProperty("UserId").GetString());
+        Assert.Equal("user-9", root.GetProperty("TraceUser").GetString());
         Assert.Equal("agent", root.GetProperty("Flow").GetString());
         Assert.Equal("shape", root.GetProperty("Message").GetProperty("Text").GetString());
         Assert.Equal(DeliveryModes.Persistent, message.BasicProperties.DeliveryMode);
@@ -225,7 +225,7 @@ public sealed class RabbitMqTests(RabbitMqFixture fixture) : IClassFixture<Rabbi
         Assert.Equal(parent!.MessageId, child!.ParentMessageId);
         Assert.Equal((ushort)(parent.HopLevel + 1), child.HopLevel);
         Assert.Equal("chain-corr", child.CorrelationId);
-        Assert.Equal("user-9", child.GetHeader("UserId"));
+        Assert.Equal("user-9", child.GetHeader("TraceUser"));
         Assert.Equal("chain", child.Message.Text);
     }
 
@@ -266,9 +266,9 @@ public sealed class RabbitMqTests(RabbitMqFixture fixture) : IClassFixture<Rabbi
             services.AddEventHandler<ReQueuedEto, ReQueuedHandler>();
         });
 
-        await host.Services.GetRequiredService<IEventBus>().PublishAsync(
+        await host.Services.GetRequiredService<IEventBus>().SendAsync(
             new ReQueuedEto($"{exchange}_it-service", new Pinged("again"), "Pinged"),
-            isExchangeEvent: false,
+            "it-service",
             isReQueuePublish: true);
 
         await Support.EventuallyAsync(() => Has(recorder.ReQueued), "the requeued message");
@@ -392,7 +392,7 @@ public sealed class RabbitMqTests(RabbitMqFixture fixture) : IClassFixture<Rabbi
         Assert.False(persistent.IsConnected);
 
         await host.Services.GetRequiredService<IEventBus>().PublishAsync(new Pinged("only publishing"));
-        await host.Services.GetRequiredService<IEventBus>().PublishAsync(new Pinged("own queue"), isExchangeEvent: false);
+        await host.Services.GetRequiredService<IEventBus>().SendAsync(new Pinged("own queue"), "it-service");
 
         Assert.True(persistent.IsConnected);
         Assert.Contains("only publishing", Text(await GetAsync(channel, probe.QueueName)), StringComparison.Ordinal);

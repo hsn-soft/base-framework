@@ -4,12 +4,13 @@ using System.Linq;
 using System.Text.Json;
 using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.Logging;
+using HsnSoft.Base.Security;
 using Microsoft.Extensions.Options;
 
 namespace HsnSoft.Base.EventBus;
 
 /// <summary>Wraps a message in the envelope it is published with: ids, time, who produced it, and the chain it belongs to.</summary>
-public sealed class EventEnvelopeFactory(IOptions<EventBusOptions> options, IEnumerable<IEventHeaderProvider> headerProviders)
+public sealed class EventEnvelopeFactory(IOptions<EventBusOptions> options, IEnumerable<IEventHeaderProvider> headerProviders, ICurrentUser? currentUser = null)
 {
     private readonly EventBusOptions _options = options.Value;
     private readonly IEventHeaderProvider[] _headerProviders = [.. headerProviders];
@@ -34,6 +35,16 @@ public sealed class EventEnvelopeFactory(IOptions<EventBusOptions> options, IEnu
             HopLevel = parent is null ? (ushort)1 : (ushort)(parent.HopLevel + 1),
             ReQueuedCount = (ushort)((parent?.ReQueuedCount ?? 0) + (isReQueuePublish ? 1 : 0)),
         };
+
+        // who is calling: the one the cause says (a handler publishing what its message caused), else whoever the code acts as now
+        if (parent is { HasCaller: true })
+        {
+            (envelope.TenantId, envelope.IsSystemTenant, envelope.UserId, envelope.UserName, envelope.UserRoles) = (parent.TenantId, parent.IsSystemTenant, parent.UserId, parent.UserName, parent.UserRoles);
+        }
+        else if (currentUser is not null && (currentUser.TenantId is not null || currentUser.Id is not null))
+        {
+            (envelope.TenantId, envelope.IsSystemTenant, envelope.UserId, envelope.UserName, envelope.UserRoles) = (currentUser.TenantId, currentUser.IsSystemTenant, currentUser.Id, currentUser.UserName, currentUser.Roles.Count > 0 ? [.. currentUser.Roles] : null);
+        }
 
         // what the product knows about the caller first, then what the parent carries (the parent wins)
         Dictionary<string, string> provided = [];

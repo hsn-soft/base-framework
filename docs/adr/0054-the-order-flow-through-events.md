@@ -1,6 +1,6 @@
 # ADR-0054: The order flow runs through events: order, product, shipment, order
 
-- **Status:** Accepted
+- **Status:** Accepted (the events and the tenant handling changed: [ADR-0057](0057-the-caller-of-a-message-and-publish-or-send.md))
 - **Date:** 2026-10-25 (uses [ADR-0053](0053-more-than-one-store-in-a-service.md); the event bus is the one of the framework, RabbitMQ)
 
 ## Context

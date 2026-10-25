@@ -2,24 +2,25 @@ using HsnSoft.Base.Domain.Entities.Events;
 
 namespace Abc.Shared.Events;
 
-// The order flow (every message carries the tenant of the order, so the receiving service acts in it):
+// The order flow. Every message is something that happened (an event): it is published to every service that listens, and the publisher does not know who they are. Who started the chain (the user, the tenant) is not in the
+// messages: the envelope carries it, and a handler runs as that user.
 //
-//   Order    --OrderCreatedEto-->        Product
-//   Product  --OrderStockCheckedEto-->   Order      (the stock was enough, or it was not)
-//   Product  --ShipmentRequestedEto-->   Shipment   (only when the stock was enough: ship it)
-//   Shipment --ShipmentCompletedEto-->   Order      (delivered, or it failed)
+//   Order    --OrderCreatedEto-->         Product
+//   Product  --OrderStockReservedEto-->   Order (confirmed), Shipment (sends it)
+//   Product  --OrderStockRejectedEto-->   Order (cancelled)
+//   Shipment --ShipmentCompletedEto-->    Order (delivered, or cancelled when it failed)
 
 /// <summary>One line of an order, as the product service needs it.</summary>
 public sealed record OrderLineEto(Guid ProductId, int Quantity);
 
-/// <summary>An order was made and waits for a stock check.</summary>
-public sealed record OrderCreatedEto(Guid OrderId, Guid TenantId, string CustomerUserName, string ShippingAddress, IReadOnlyList<OrderLineEto> Lines) : IIntegrationEventMessage;
+/// <summary>An order was made.</summary>
+public sealed record OrderCreatedEto(Guid OrderId, string CustomerUserName, string ShippingAddress, IReadOnlyList<OrderLineEto> Lines) : IIntegrationEventMessage;
 
-/// <summary>The answer of the stock check: the stock of every line was taken out for the order (<paramref name="IsAvailable"/>), or nothing was and <paramref name="Reason"/> says why.</summary>
-public sealed record OrderStockCheckedEto(Guid OrderId, Guid TenantId, bool IsAvailable, string? Reason) : IIntegrationEventMessage;
+/// <summary>The stock of every line of an order was set aside.</summary>
+public sealed record OrderStockReservedEto(Guid OrderId, string ShippingAddress) : IIntegrationEventMessage;
 
-/// <summary>The stock of an order is set aside: the parcel can be sent to the address.</summary>
-public sealed record ShipmentRequestedEto(Guid OrderId, Guid TenantId, string ShippingAddress) : IIntegrationEventMessage;
+/// <summary>The stock of an order could not be set aside: nothing was taken, and <paramref name="Reason"/> says why.</summary>
+public sealed record OrderStockRejectedEto(Guid OrderId, string Reason) : IIntegrationEventMessage;
 
 /// <summary>How the delivery of an order ended.</summary>
-public sealed record ShipmentCompletedEto(Guid OrderId, Guid TenantId, Guid ShipmentId, string TrackingNumber, bool IsSuccessful, string? Reason) : IIntegrationEventMessage;
+public sealed record ShipmentCompletedEto(Guid OrderId, Guid ShipmentId, string TrackingNumber, bool IsSuccessful, string? Reason) : IIntegrationEventMessage;

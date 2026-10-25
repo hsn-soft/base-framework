@@ -15,8 +15,8 @@ public class EnvelopeSerializationTests
           "MessageId": "0190a2f4-8c1e-7b3a-9d5e-2f6a4c8e1b07",
           "MessageTime": "2026-05-01T08:30:00Z",
           "CorrelationId": "corr-1",
-          "UserId": "user-7",
-          "UserRoles": "admin,editor",
+          "TraceUser": "user-7",
+          "Region": "admin,editor",
           "ClientLat": "41.01",
           "ClientLong": null,
           "ClientChannel": "web",
@@ -50,8 +50,8 @@ public class EnvelopeSerializationTests
     {
         MessageEnvelope<SampleEto> envelope = (MessageEnvelope<SampleEto>)EventSerializer.DeserializeEnvelope(Bytes(ProductionJson), typeof(SampleEto));
 
-        Assert.Equal("user-7", envelope.GetHeader("UserId"));
-        Assert.Equal("admin,editor", envelope.GetHeader("UserRoles"));
+        Assert.Equal("user-7", envelope.GetHeader("TraceUser"));
+        Assert.Equal("admin,editor", envelope.GetHeader("Region"));
         Assert.Equal("41.01", envelope.GetHeader("ClientLat"));
         Assert.Null(envelope.GetHeader("ClientLong"));
         Assert.Equal("web", envelope.GetHeader("ClientChannel"));
@@ -70,7 +70,7 @@ public class EnvelopeSerializationTests
             Producer = "HHS_OrderService",
             Message = new SampleEto("mouse", 1),
         };
-        envelope.SetHeader("UserId", "user-9");
+        envelope.SetHeader("TraceUser", "user-9");
 
         using JsonDocument written = JsonDocument.Parse(EventSerializer.Serialize(envelope));
 
@@ -78,7 +78,7 @@ public class EnvelopeSerializationTests
         Assert.Equal(1, root.GetProperty("HopLevel").GetInt32());
         Assert.Equal("corr-2", root.GetProperty("CorrelationId").GetString());
         Assert.Equal("HHS_OrderService", root.GetProperty("Producer").GetString());
-        Assert.Equal("user-9", root.GetProperty("UserId").GetString());
+        Assert.Equal("user-9", root.GetProperty("TraceUser").GetString());
         Assert.Equal("mouse", root.GetProperty("Message").GetProperty("Name").GetString());
         Assert.Equal(1, root.GetProperty("Message").GetProperty("Count").GetInt32());
         Assert.False(root.TryGetProperty("Headers", out _));
@@ -128,7 +128,7 @@ public class EnvelopeSerializationTests
         ParentMessageEnvelope parent = EventSerializer.DeserializeParent(Bytes(ProductionJson));
 
         Assert.Equal("corr-1", parent.CorrelationId);
-        Assert.Equal("user-7", parent.GetHeader("UserId"));
+        Assert.Equal("user-7", parent.GetHeader("TraceUser"));
         Assert.Null(parent.GetHeader("Message"));
         Assert.Null(parent.GetHeader("ParentMessageId"));
         Assert.DoesNotContain(parent.Headers!.Keys, key => ParentMessageEnvelope.IsEnvelopeProperty(key));

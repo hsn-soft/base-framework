@@ -2,7 +2,6 @@ using System;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
-using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.EventBus.RabbitMQ.Connection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -12,8 +11,8 @@ using RabbitMQ.Client.Exceptions;
 namespace HsnSoft.Base.EventBus.RabbitMQ;
 
 /// <summary>
-/// Publishes to RabbitMQ the way the production services always did: a <c>direct</c> exchange with the event name as routing key; a
-/// message that is not an exchange event (or is a requeue) goes straight to a queue.
+/// Publishes to RabbitMQ: a <c>direct</c> exchange with the event name as routing key (to every service that listens), or, for a message sent to one service,
+/// straight to the queue that service reads the event from.
 /// </summary>
 public sealed partial class EventBusRabbitMq(
     IRabbitMqPersistentConnection connection,
@@ -28,7 +27,7 @@ public sealed partial class EventBusRabbitMq(
 
     protected override bool IsTransient(Exception exception) => exception is BrokerUnreachableException or SocketException;
 
-    protected override async Task SendAsync(PublishRequest request, CancellationToken cancellationToken)
+    protected override async Task TransmitAsync(PublishRequest request, CancellationToken cancellationToken)
     {
         Interlocked.Increment(ref _publishing);
         try
@@ -47,17 +46,14 @@ public sealed partial class EventBusRabbitMq(
             await using (channel.ConfigureAwait(false))
             {
                 BasicProperties properties = RabbitMqPublisher.Properties(request.Envelope.MessageId, request.Envelope.CorrelationId);
-                if (request.IsExchangeEvent && !request.IsReQueuePublish)
+                if (request.TargetService is null)
                 {
                     await RabbitMqPublisher.PublishToExchangeAsync(channel, Settings.ExchangeName, request.EventName, properties, request.Body, cancellationToken).ConfigureAwait(false);
                 }
                 else
                 {
-                    // a requeue goes to the queue of the consumer that failed, everything else to this service's own queue of the event
-                    string queueName = request.Message is ReQueuedEto reQueued
-                        ? EventNameHelper.GetConsumerReQueuedEventQueueName(reQueued.ReQueuedMessageEnvelopeConsumer, request.EventName)
-                        : EventNameHelper.GetConsumerClientEventQueueName(Settings, request.EventName);
-                    await RabbitMqPublisher.PublishToQueueAsync(channel, queueName, properties, request.Body, cancellationToken).ConfigureAwait(false);
+                    // straight to the queue the service reads the event from: nobody else gets it
+                    await RabbitMqPublisher.PublishToQueueAsync(channel, EventNameHelper.GetConsumerClientEventQueueName(Settings, request.TargetService, request.EventName), properties, request.Body, cancellationToken).ConfigureAwait(false);
                 }
             }
         }

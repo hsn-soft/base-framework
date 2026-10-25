@@ -12,14 +12,14 @@ namespace HsnSoft.Base.EventBus;
 /// <param name="Message">The message (a <see cref="ReQueuedEto"/> tells the broker project which consumer it goes to).</param>
 /// <param name="Envelope">The envelope the body was made from.</param>
 /// <param name="Body">The message on the wire.</param>
-/// <param name="IsExchangeEvent">To everyone who listens, or straight to this service's own queue.</param>
+/// <param name="TargetService">The service that gets the message alone (its queue of the event), or <see langword="null"/> for every service that listens.</param>
 /// <param name="IsReQueuePublish">A failed message put back to one consumer.</param>
 public sealed record PublishRequest(
     string EventName,
     IIntegrationEventMessage Message,
     ParentMessageEnvelope Envelope,
     byte[] Body,
-    bool IsExchangeEvent,
+    string? TargetService,
     bool IsReQueuePublish);
 
 /// <summary>
@@ -33,13 +33,35 @@ public abstract partial class EventBusBase(EventEnvelopeFactory envelopeFactory,
 
     protected EventBusOptions Settings { get; } = options.Value;
 
-    public async Task PublishAsync<TEventMessage>(
+    public Task PublishAsync<TEventMessage>(
         TEventMessage eventMessage,
         ParentMessageEnvelope? parentMessage = null,
         string? correlationId = null,
-        bool isExchangeEvent = true,
+        CancellationToken cancellationToken = default)
+        where TEventMessage : IIntegrationEventMessage
+        => DeliverAsync(eventMessage, null, parentMessage, correlationId, false, cancellationToken);
+
+    public Task SendAsync<TEventMessage>(
+        TEventMessage eventMessage,
+        string toService,
+        ParentMessageEnvelope? parentMessage = null,
+        string? correlationId = null,
         bool isReQueuePublish = false,
         CancellationToken cancellationToken = default)
+        where TEventMessage : IIntegrationEventMessage
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(toService);
+
+        return DeliverAsync(eventMessage, toService, parentMessage, correlationId, isReQueuePublish, cancellationToken);
+    }
+
+    private async Task DeliverAsync<TEventMessage>(
+        TEventMessage eventMessage,
+        string? targetService,
+        ParentMessageEnvelope? parentMessage,
+        string? correlationId,
+        bool isReQueuePublish,
+        CancellationToken cancellationToken)
         where TEventMessage : IIntegrationEventMessage
     {
         ArgumentNullException.ThrowIfNull(eventMessage);
@@ -50,12 +72,12 @@ public abstract partial class EventBusBase(EventEnvelopeFactory envelopeFactory,
             eventMessage,
             envelope,
             EventSerializer.Serialize(envelope),
-            isExchangeEvent,
+            targetService,
             isReQueuePublish);
 
         LogPublishing(_logger, request.EventName, envelope.MessageId);
         await PublishRetry.ExecuteAsync(
-            () => SendAsync(request, cancellationToken),
+            () => TransmitAsync(request, cancellationToken),
             Settings.PublishRetryCount,
             Settings.PublishRetryBaseDelay,
             IsTransient,
@@ -65,9 +87,9 @@ public abstract partial class EventBusBase(EventEnvelopeFactory envelopeFactory,
     }
 
     /// <summary>Sends the message to the broker.</summary>
-    protected abstract Task SendAsync(PublishRequest request, CancellationToken cancellationToken);
+    protected abstract Task TransmitAsync(PublishRequest request, CancellationToken cancellationToken);
 
-    /// <summary>Tells whether a failure of <see cref="SendAsync"/> is worth another try (the broker was not reachable). Nothing is, by default.</summary>
+    /// <summary>Tells whether a failure of <see cref="TransmitAsync"/> is worth another try (the broker was not reachable). Nothing is, by default.</summary>
     protected virtual bool IsTransient(Exception exception) => false;
 
     [LoggerMessage(EventId = 1000, EventName = "PRODUCE_EVENT_STARTED", Level = LogLevel.Debug, Message = "Publishing {EventName}, message {MessageId}")]

@@ -17,7 +17,8 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<IOrderAppService, OrderAppService>();
 
         // the answers of the other services to an order: each handler runs in its own scope, per message
-        services.AddEventHandler<OrderStockCheckedEto, OrderStockCheckedHandler>();
+        services.AddEventHandler<OrderStockReservedEto, OrderStockReservedHandler>();
+        services.AddEventHandler<OrderStockRejectedEto, OrderStockRejectedHandler>();
         services.AddEventHandler<ShipmentCompletedEto, ShipmentCompletedHandler>();
         return services;
     }

@@ -59,7 +59,7 @@ public sealed class OrderAppService(IRepository<Order, Guid> orders, IEventBus e
 
         // the product service checks the stock of the order; the answer comes back as an event (there is no outbox yet: an order saved whose event was not published waits as Pending)
         await eventBus.PublishAsync(
-            new OrderCreatedEto(order.Id, order.TenantId, order.CustomerUserName, order.ShippingAddress, [.. order.Lines.Select(line => new OrderLineEto(line.ProductId, line.Quantity))]),
+            new OrderCreatedEto(order.Id, order.CustomerUserName, order.ShippingAddress, [.. order.Lines.Select(line => new OrderLineEto(line.ProductId, line.Quantity))]),
             cancellationToken: cancellationToken).ConfigureAwait(false);
         return ToDto(order);
     }

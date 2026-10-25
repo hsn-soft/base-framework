@@ -104,6 +104,16 @@ public class KafkaTests
     }
 
     [Fact]
+    public async Task AMessageCannotBeSentToOneService_OnKafka()
+    {
+        var bus = new KafkaEventBus(Options.Create(new KafkaOptions()), new EventEnvelopeFactory(Options.Create(new EventBusOptions()), []), Options.Create(new EventBusOptions()), NullLogger<KafkaEventBus>.Instance);
+
+        NotSupportedException exception = await Assert.ThrowsAsync<NotSupportedException>(() => bus.SendAsync(new OrderPlaced(), "shipment-service"));
+
+        Assert.Contains("shipment-service", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void NullArguments_AreRejected()
     {
         Assert.Throws<ArgumentNullException>(() => KafkaServiceCollectionExtensions.AddKafkaEventBus(null!, Configuration()));

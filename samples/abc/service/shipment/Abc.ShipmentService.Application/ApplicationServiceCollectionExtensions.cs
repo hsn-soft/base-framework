@@ -18,8 +18,8 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<IShipmentAppService, ShipmentAppService>();
         services.AddScoped<IShipmentHistoryAppService, ShipmentHistoryAppService>();
 
-        // the order service asks for a shipment once the stock is set aside (the handler runs in its own scope, per message)
-        services.AddEventHandler<ShipmentRequestedEto, ShipmentRequestedHandler>();
+        // a shipment is sent when the stock of an order was set aside (the handler runs in its own scope, per message)
+        services.AddEventHandler<OrderStockReservedEto, OrderStockReservedHandler>();
         return services;
     }
 }

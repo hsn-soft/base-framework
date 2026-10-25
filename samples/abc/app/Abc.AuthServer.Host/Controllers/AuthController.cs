@@ -54,8 +54,12 @@ public sealed class AuthController(UserAuthenticator authenticator, TokenService
 
         AccessToken token = tokens.Issue(user);
 
-        // every token that is issued is written to the history of the identity service (its own database; nobody is signed in yet, so the tenant is the user's)
-        await histories.AddAsync(UserHistory.Record(user.Id, user.UserName, UserHistoryConsts.Login, tenantId: user.TenantId), cancellationToken);
+        // every token that is issued is written to the history of the identity service (its own database); nobody is signed in yet, so the record is written as the user who signs in (the audit fields and the tenant are theirs)
+        using (ActingUser.Use(new UserContext(user.Id, user.UserName, user.Roles, user.TenantId, user.IsSystemTenant)))
+        {
+            await histories.AddAsync(UserHistory.Record(user.Id, user.UserName, UserHistoryConsts.Login), cancellationToken);
+        }
+
         Logger.LogInformation("{Account} signed in", user.UserName);
         return new TokenDto { AccessToken = token.Value, ExpiresIn = token.ExpiresInSeconds };
     }

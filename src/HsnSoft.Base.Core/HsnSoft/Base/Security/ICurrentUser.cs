@@ -5,7 +5,7 @@ namespace HsnSoft.Base.Security;
 
 /// <summary>
 /// Who is making the request, for the code that does not know HTTP (the persistence that writes who created a row). The host answers it from the token
-/// (<c>HsnSoft.Base.Authentication</c> registers it with the JWT authentication); a test or a worker answers it with its own.
+/// (<c>HsnSoft.Base.Authentication</c> registers it with the JWT authentication); when no user is signed in on the request it answers from <see cref="ActingUser"/>, which a message handler or a worker sets; a test answers it with its own.
 /// </summary>
 public interface ICurrentUser
 {
@@ -26,4 +26,7 @@ public interface ICurrentUser
 
     /// <summary>The other tenants the user may see (the <c>allowed_tenant_id</c> claims).</summary>
     IReadOnlyList<Guid> AllowedTenantIds { get; }
+
+    /// <summary>The roles of the user (the <c>role</c> claims).</summary>
+    IReadOnlyList<string> Roles => [];
 }

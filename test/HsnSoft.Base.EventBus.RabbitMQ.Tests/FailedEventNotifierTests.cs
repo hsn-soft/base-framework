@@ -27,7 +27,7 @@ public class FailedEventNotifierTests
 
     private static string FailedMessageJson() => """
         {"HopLevel":2,"ReQueuedCount":1,"MessageId":"0190a2f4-8c1e-7b3a-9d5e-2f6a4c8e1b07","MessageTime":"2026-05-01T08:30:00Z",
-         "CorrelationId":"corr-1","UserId":"user-7","Producer":"HHS_Other","Message":{"Name":"keyboard","Count":3}}
+         "CorrelationId":"corr-1","TraceUser":"user-7","Producer":"HHS_Other","Message":{"Name":"keyboard","Count":3}}
         """;
 
     private static MessageEnvelope<FailedEto> PublishedFailure(FakeConnection connection, out ChannelCall published)
@@ -66,7 +66,7 @@ public class FailedEventNotifierTests
         Assert.Equal((ushort)3, envelope.HopLevel);
         Assert.Equal((ushort)1, envelope.ReQueuedCount);
         Assert.Equal("corr-1", envelope.CorrelationId);
-        Assert.Equal("user-7", envelope.GetHeader("UserId"));
+        Assert.Equal("user-7", envelope.GetHeader("TraceUser"));
         Assert.Equal("OrderService", envelope.Producer);
     }
 

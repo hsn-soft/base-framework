@@ -1,12 +1,11 @@
-using System.Security.Claims;
 using HsnSoft.Base.EventBus;
 using Microsoft.AspNetCore.Http;
 
 namespace Abc.Shared.Hosting.Microservices;
 
 /// <summary>
-/// Carries who is asking from the request into the events it causes (<c>UserId</c>, <c>UserRoles</c>, <c>ClientChannel</c>, <c>ClientVersion</c>), so the consume logs of the whole chain say who started it.
-/// This is the product's knowledge, so it lives here: the event bus only carries the headers.
+/// Carries what the client says about itself from the request into the events it causes (<c>ClientChannel</c>, <c>ClientVersion</c>) and the correlation id of the request. Who is asking (the user, the roles, the tenant) is not here:
+/// the event bus takes it from the current user and puts it in the envelope itself. This is the product's knowledge, so it lives here: the event bus only carries the headers.
 /// </summary>
 public sealed class AbcEventHeaderProvider(IHttpContextAccessor accessor) : IEventHeaderProvider
 {
@@ -22,8 +21,6 @@ public sealed class AbcEventHeaderProvider(IHttpContextAccessor accessor) : IEve
             return;
         }
 
-        Add(headers, "UserId", context.User.FindFirstValue("sub"));
-        Add(headers, "UserRoles", string.Join(',', context.User.Claims.Where(claim => claim.Type is "role" or ClaimTypes.Role).Select(claim => claim.Value).Distinct()));
         Add(headers, "ClientChannel", context.Request.Headers["X-Channel"].ToString());
         Add(headers, "ClientVersion", context.Request.Headers["X-Client-Version"].ToString());
     }

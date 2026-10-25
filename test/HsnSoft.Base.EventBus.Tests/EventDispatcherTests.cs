@@ -110,12 +110,15 @@ public sealed class EventDispatcherTests : IDisposable
     }
 
     [Fact]
-    public async Task WhoCausedTheMessage_IsInTheLogs_UnderTheNamesTheWireAlwaysHad()
+    public async Task WhoCausedTheMessage_IsInTheLogs()
     {
         (EventDispatcher dispatcher, _, ListLogger<EventDispatcher> logger) = CreateRecording();
         MessageEnvelope<SampleEto> envelope = NewEnvelope();
-        envelope.SetHeader("UserId", "alice");
-        envelope.SetHeader("UserRoles", "admin,customer");
+        Guid user = Guid.NewGuid();
+        Guid tenant = Guid.NewGuid();
+        envelope.UserId = user;
+        envelope.TenantId = tenant;
+        envelope.UserRoles = ["admin", "customer"];
         envelope.SetHeader("ClientChannel", "mobile");
         envelope.SetHeader("ClientVersion", "3.2.1");
         envelope.SetHeader("ClientLat", "41.0");
@@ -125,13 +128,45 @@ public sealed class EventDispatcherTests : IDisposable
         await dispatcher.DispatchAsync("Sample", typeof(SampleEto), envelope);
 
         IReadOnlyDictionary<string, object?> scope = logger.Scopes[0];
-        Assert.Equal("alice", scope["UserId"]);
+        Assert.Equal(user, scope["UserId"]);
+        Assert.Equal(tenant, scope["TenantId"]);
         Assert.Equal("admin,customer", scope["UserRoles"]);
         Assert.Equal("mobile", scope["ClientChannel"]);
         Assert.Equal("3.2.1", scope["ClientVersion"]);
         Assert.Equal("41.0", scope["ClientLat"]);
         Assert.Equal("29.0", scope["ClientLong"]);
         Assert.False(scope.ContainsKey("Unrelated"));
+    }
+
+    [Fact]
+    public async Task TheHandler_RunsAsTheCallerOfTheChain_AndNobodyAfterwards()
+    {
+        (EventDispatcher dispatcher, RecordingHandler handler, _) = CreateRecording();
+        MessageEnvelope<SampleEto> envelope = NewEnvelope();
+        Guid user = Guid.NewGuid();
+        Guid tenant = Guid.NewGuid();
+        (envelope.UserId, envelope.UserName, envelope.UserRoles, envelope.TenantId, envelope.IsSystemTenant) = (user, "alice", ["customer"], tenant, true);
+
+        await dispatcher.DispatchAsync("Sample", typeof(SampleEto), envelope);
+
+        HsnSoft.Base.Security.UserContext acting = Assert.IsType<HsnSoft.Base.Security.UserContext>(handler.ActingUserDuringHandling);
+        Assert.Equal((user, "alice", tenant, true), (acting.Id, acting.UserName, acting.TenantId, acting.IsSystemTenant));
+        Assert.Equal(["customer"], acting.Roles);
+        Assert.Null(HsnSoft.Base.Security.ActingUser.Current);
+    }
+
+    [Fact]
+    public async Task AMessageWithoutACaller_RunsAsNobody_EvenInsideAnotherActingScope()
+    {
+        (EventDispatcher dispatcher, RecordingHandler handler, _) = CreateRecording();
+
+        using (HsnSoft.Base.Security.ActingUser.Use(new HsnSoft.Base.Security.UserContext(Guid.NewGuid(), "someone", [], null, false)))
+        {
+            await dispatcher.DispatchAsync("Sample", typeof(SampleEto), NewEnvelope());
+
+            Assert.Null(handler.ActingUserDuringHandling);
+            Assert.NotNull(HsnSoft.Base.Security.ActingUser.Current);
+        }
     }
 
     [Fact]

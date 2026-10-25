@@ -30,8 +30,14 @@ public sealed class KafkaEventBus : EventBusBase, IDisposable
         }).Build());
     }
 
-    protected override async Task SendAsync(PublishRequest request, CancellationToken cancellationToken)
+    protected override async Task TransmitAsync(PublishRequest request, CancellationToken cancellationToken)
     {
+        // an event is a topic that every consumer group reads; a message for one service has no such place on Kafka
+        if (request.TargetService is not null)
+        {
+            throw new NotSupportedException($"Kafka publishes to the topic of the event, which every consumer group reads: a message cannot be sent to one service ('{request.TargetService}').");
+        }
+
         string topic = _kafkaOptions.TopicPrefix + request.EventName;
         if (!_knownTopics.ContainsKey(topic))
         {

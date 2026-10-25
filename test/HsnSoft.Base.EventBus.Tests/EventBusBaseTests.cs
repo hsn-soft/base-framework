@@ -17,7 +17,7 @@ public class EventBusBaseTests
 
         public CancellationToken LastToken { get; private set; }
 
-        protected override Task SendAsync(PublishRequest request, CancellationToken cancellationToken)
+        protected override Task TransmitAsync(PublishRequest request, CancellationToken cancellationToken)
         {
             LastToken = cancellationToken;
             if (Sent.Count < FailFirst)
@@ -39,7 +39,7 @@ public class EventBusBaseTests
     {
         public int Calls { get; private set; }
 
-        protected override Task SendAsync(PublishRequest request, CancellationToken cancellationToken)
+        protected override Task TransmitAsync(PublishRequest request, CancellationToken cancellationToken)
         {
             Calls++;
             throw new InvalidOperationException("down");
@@ -49,17 +49,29 @@ public class EventBusBaseTests
     private static EventBusOptions FastOptions() => new() { ConsumerClientName = "OrderService", ExchangeName = "HHS", PublishRetryCount = 2, PublishRetryBaseDelay = TimeSpan.FromMilliseconds(1) };
 
     [Fact]
+    public async Task APublishedEvent_HasNoTarget_AndASentOneNeedsAService()
+    {
+        FakeBus bus = new(FastOptions());
+
+        await bus.PublishAsync(new SampleEto("a", 1));
+
+        Assert.Null(Assert.Single(bus.Sent).TargetService);
+        await Assert.ThrowsAsync<ArgumentException>(() => bus.SendAsync(new SampleEto("a", 1), " "));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => bus.SendAsync<SampleEto>(null!, "PaymentService"));
+    }
+
+    [Fact]
     public async Task PublishedMessage_IsSentWithItsEventNameEnvelopeAndBody()
     {
         FakeBus bus = new(FastOptions());
 
-        await bus.PublishAsync(new SampleEto("a", 1), correlationId: "corr", isExchangeEvent: false, isReQueuePublish: true);
+        await bus.SendAsync(new SampleEto("a", 1), "PaymentService", correlationId: "corr", isReQueuePublish: true);
 
         PublishRequest request = Assert.Single(bus.Sent);
         Assert.Equal("Sample", request.EventName);
         Assert.Equal(new SampleEto("a", 1), request.Message);
         Assert.Equal("corr", request.Envelope.CorrelationId);
-        Assert.False(request.IsExchangeEvent);
+        Assert.Equal("PaymentService", request.TargetService);
         Assert.True(request.IsReQueuePublish);
         Assert.Equal((ushort)1, request.Envelope.ReQueuedCount);
         MessageEnvelope<SampleEto> onTheWire = (MessageEnvelope<SampleEto>)EventSerializer.DeserializeEnvelope(request.Body, typeof(SampleEto));

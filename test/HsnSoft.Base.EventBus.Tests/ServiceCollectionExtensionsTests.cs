@@ -113,14 +113,14 @@ public class ServiceCollectionExtensionsTests
         MessageEnvelope<SampleEto> envelope = provider.GetRequiredService<EventEnvelopeFactory>().Create(new SampleEto("a", 1), null, null, false);
 
         Assert.Equal("product-corr", envelope.CorrelationId);
-        Assert.Equal("product-user", envelope.GetHeader("UserId"));
+        Assert.Equal("product-user", envelope.GetHeader("TraceUser"));
     }
 
     private sealed class ProductHeaders : IEventHeaderProvider
     {
         public string? GetCorrelationId() => "product-corr";
 
-        public void AddHeaders(IDictionary<string, string> headers) => headers["UserId"] = "product-user";
+        public void AddHeaders(IDictionary<string, string> headers) => headers["TraceUser"] = "product-user";
     }
 
     [Fact]

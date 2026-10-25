@@ -35,6 +35,26 @@ public record ParentMessageEnvelope
     /// <summary>Who produced it: the <c>ConsumerClientName</c> of the service (<c>shipment-service</c>).</summary>
     public string? Producer { get; set; }
 
+    /// <summary>The tenant the chain acts in: the tenant of the user who started it. The handler of the message runs in it (<see cref="HsnSoft.Base.Security.ActingUser"/>).</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public Guid? TenantId { get; set; }
+
+    /// <summary>Whether the caller belongs to the system tenant, which sees every tenant.</summary>
+    public bool IsSystemTenant { get; set; }
+
+    /// <summary>The id of the user who started the chain (what the audit fields of a handler keep).</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public Guid? UserId { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? UserName { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public List<string>? UserRoles { get; set; }
+
+    /// <summary>Whether the envelope says who the caller is.</summary>
+    internal bool HasCaller => TenantId is not null || UserId is not null;
+
     /// <summary>
     /// Every other top-level property of the message: the information a product adds (user, roles, client details) and keeps on the
     /// wire under its own names. The framework carries it from a message to the ones it causes but does not interpret it.

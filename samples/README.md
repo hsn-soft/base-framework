@@ -336,15 +336,16 @@ with the suffix `Dev` (development and docker), `Uat`, `Stage` or `Prod`: `Abc_I
 A signed-in customer (for example `alice`, of Acme, who gets her token from the auth server) makes an order; the services answer each other through RabbitMQ (exchange `abc.events`):
 
 ```
-order    --OrderCreatedEto-->       product    stock of every line checked and set aside (stock history: "reserved")
-product  --OrderStockCheckedEto-->  order      Pending -> Confirmed, or Cancelled with the reason
-product  --ShipmentRequestedEto-->  shipment   only when the stock was set aside: the shipment is made and sent (shipment history: delivered / failed)
-shipment --ShipmentCompletedEto-->  order      Confirmed -> Delivered, or Cancelled ("delivery failed")
+order    --OrderCreatedEto-->         product    stock of every line checked and set aside (stock history: "reserved")
+product  --OrderStockReservedEto-->   order      Pending -> Confirmed
+product  --OrderStockReservedEto-->   shipment   the shipment is made and sent (shipment history: delivered / failed)
+product  --OrderStockRejectedEto-->   order      Cancelled with the reason
+shipment --ShipmentCompletedEto-->    order      Confirmed -> Delivered, or Cancelled ("delivery failed")
 ```
 
 `POST /api/order-service/v1/commercial/orders/create` with `{ "shippingAddress": "Ankara", "lines": [{ "productId": "...", "productName": "Desk Lamp", "unitPrice": 10, "quantity": 2 }] }`: a few seconds later the order is `Delivered`, the lamp has 2 less
 in stock, and there is a `delivered` record in the shipment history. An address with `fail` in it is returned by the (simulated) carrier and the order is cancelled; an out of stock product (the Office Chair has 0) cancels it at the stock check.
-The RabbitMQ management page (`localhost:15672`) shows the four queues `abc.events_<service>_<Event>`. The order has a `ShippingAddress` now: a database made before this change has to be dropped (`drop database Abc_Order_Dev`).
+The RabbitMQ management page (`localhost:15672`) shows the queues `abc.events_<service>_<Event>`. Who made the order (the tenant, the user, the roles) travels in the envelope of every message, and each handler runs as that user: the records the handlers write have `CreatedBy` and `UpdatedBy` ([ADR-0057](../docs/adr/0057-the-caller-of-a-message-and-publish-or-send.md)). The order has a `ShippingAddress` now: a database made before this change has to be dropped (`drop database Abc_Order_Dev`).
 
 ### More than one store in a service ([ADR-0053](../docs/adr/0053-more-than-one-store-in-a-service.md))
 

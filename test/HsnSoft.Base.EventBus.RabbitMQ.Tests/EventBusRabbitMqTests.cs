@@ -53,19 +53,19 @@ public class EventBusRabbitMqTests
     }
 
     [Fact]
-    public async Task EventNotForTheExchange_GoesStraightToTheServicesOwnQueue()
+    public async Task AMessageSentToAService_GoesStraightToItsQueueOfTheEvent()
     {
         FakeConnection connection = new();
 
-        await NewBus(connection).PublishAsync(new SampleEto("a", 1), isExchangeEvent: false);
+        await NewBus(connection).SendAsync(new SampleEto("a", 1), "ShipmentService");
 
         ChannelState channel = Assert.Single(connection.Channels);
         ChannelCall queue = Assert.Single(channel.Named("QueueDeclareAsync"));
-        Assert.Equal("HHS_OrderService_Sample", queue.Args[0]);
+        Assert.Equal("HHS_ShipmentService_Sample", queue.Args[0]);
         Assert.Equal(true, queue.Args[1]);
         ChannelCall published = Assert.Single(channel.Named("BasicPublishAsync"));
         Assert.Equal(string.Empty, published.Args[0]);
-        Assert.Equal("HHS_OrderService_Sample", published.Args[1]);
+        Assert.Equal("HHS_ShipmentService_Sample", published.Args[1]);
         Assert.Empty(channel.Named("ExchangeDeclareAsync"));
     }
 
@@ -75,7 +75,7 @@ public class EventBusRabbitMqTests
         FakeConnection connection = new();
         ReQueuedEto reQueued = new("HHS_PaymentService", new SampleEto("a", 1), "SampleEto");
 
-        await NewBus(connection).PublishAsync(reQueued, isExchangeEvent: false, isReQueuePublish: true);
+        await NewBus(connection).SendAsync(reQueued, "PaymentService", isReQueuePublish: true);
 
         ChannelCall published = Assert.Single(connection.Channels[0].Named("BasicPublishAsync"));
         Assert.Equal(string.Empty, published.Args[0]);
@@ -87,11 +87,11 @@ public class EventBusRabbitMqTests
     }
 
     [Fact]
-    public async Task ReQueueForThisService_IsNotAnExchangeEither()
+    public async Task ASendToTheServiceItself_IsNotAnExchangeEither()
     {
         FakeConnection connection = new();
 
-        await NewBus(connection).PublishAsync(new SampleEto("a", 1), isExchangeEvent: true, isReQueuePublish: true);
+        await NewBus(connection).SendAsync(new SampleEto("a", 1), "OrderService", isReQueuePublish: true);
 
         ChannelCall published = Assert.Single(connection.Channels[0].Named("BasicPublishAsync"));
         Assert.Equal(string.Empty, published.Args[0]);

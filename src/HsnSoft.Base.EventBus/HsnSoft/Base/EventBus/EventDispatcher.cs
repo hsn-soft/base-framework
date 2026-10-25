@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.Logging;
 using HsnSoft.Base.Logging.Masking;
+using HsnSoft.Base.Security;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -46,7 +47,7 @@ public sealed partial class EventDispatcher(
     /// <summary>Set in the <c>Data</c> of an exception whose Error the dispatcher has logged already (<c>CONSUME_EVENT_ERROR</c>).</summary>
     public const string ErrorLoggedKey = "HsnSoft.Base.EventBus.ErrorLogged";
 
-    private static readonly string[] s_clientHeaders = ["UserId", "UserRoles", "ClientChannel", "ClientVersion", "ClientLat", "ClientLong"];
+    private static readonly string[] s_clientHeaders = ["ClientChannel", "ClientVersion", "ClientLat", "ClientLong"];
 
     private static readonly Dictionary<string, object> s_consumeEnd = new() { [LogFields.LogType] = LogTypes.ConsumeEnd };
 
@@ -80,7 +81,22 @@ public sealed partial class EventDispatcher(
             ["Producer"] = envelope.Producer,
             ["HopLevel"] = envelope.HopLevel,
         };
-        // who caused it, under the names these have always had on the wire; a product that fills them (IEventHeaderProvider) finds them in the logs
+        // who caused it: the caller of the chain, then what a product adds as headers (IEventHeaderProvider)
+        if (envelope.UserId is not null)
+        {
+            scopeValues["UserId"] = envelope.UserId;
+        }
+
+        if (envelope.TenantId is not null)
+        {
+            scopeValues["TenantId"] = envelope.TenantId;
+        }
+
+        if (envelope.UserRoles is { Count: > 0 })
+        {
+            scopeValues["UserRoles"] = LogFields.Text(string.Join(',', envelope.UserRoles), 256);
+        }
+
         foreach (string header in s_clientHeaders)
         {
             if (envelope.GetHeader(header) is { Length: > 0 } value)
@@ -189,7 +205,10 @@ public sealed partial class EventDispatcher(
 
                     // do not run the handler on the thread that delivered the message
                     await Task.Yield();
+
+                    // the handler runs as the caller of the chain (the user and the tenant of whoever started it), so the audit fields and the query filters work as in a request
                     using (EventContext.Use(envelope))
+                    using (ActingUser.Use(envelope.HasCaller ? new UserContext(envelope.UserId, envelope.UserName, envelope.UserRoles ?? [], envelope.TenantId, envelope.IsSystemTenant) : null))
                     {
                         await s_invokers.GetOrAdd(eventType, CreateInvoker)(instance, messageEnvelope, cancellationToken).ConfigureAwait(false);
                     }

@@ -9,6 +9,26 @@ public class EventEnvelopeFactoryTests
     private static EventEnvelopeFactory NewFactory(params IEventHeaderProvider[] providers)
         => new(Options.Create(new EventBusOptions { ExchangeName = "HHS", ConsumerClientName = "OrderService" }), providers);
 
+    private sealed class FakeUser(Guid? id, Guid? tenantId, bool isSystemTenant = false, params string[] roles) : HsnSoft.Base.Security.ICurrentUser
+    {
+        public bool IsAuthenticated => id.HasValue;
+
+        public Guid? Id => id;
+
+        public string? UserName => id.HasValue ? "alice" : null;
+
+        public Guid? TenantId => tenantId;
+
+        public bool IsSystemTenant => isSystemTenant;
+
+        public IReadOnlyList<Guid> AllowedTenantIds => [];
+
+        public IReadOnlyList<string> Roles => roles;
+    }
+
+    private static EventEnvelopeFactory NewFactory(HsnSoft.Base.Security.ICurrentUser user)
+        => new(Options.Create(new EventBusOptions { ExchangeName = "HHS", ConsumerClientName = "OrderService" }), [], user);
+
     private static readonly SampleEto s_message = new("m", 1);
 
     [Fact]
@@ -94,14 +114,14 @@ public class EventEnvelopeFactoryTests
     [Fact]
     public void ProvidedHeaders_AreAdded_AndTheParentsWin()
     {
-        EventEnvelopeFactory factory = NewFactory(new FixedHeaderProvider(null, ("UserId", "provided"), ("ClientChannel", "web")));
+        EventEnvelopeFactory factory = NewFactory(new FixedHeaderProvider(null, ("TraceUser", "provided"), ("ClientChannel", "web")));
         ParentMessageEnvelope parent = new();
-        parent.SetHeader("UserId", "from-parent");
+        parent.SetHeader("TraceUser", "from-parent");
         parent.SetHeader("ClientVersion", "2.0");
 
         MessageEnvelope<SampleEto> envelope = factory.Create(s_message, parent, null, false);
 
-        Assert.Equal("from-parent", envelope.GetHeader("UserId"));
+        Assert.Equal("from-parent", envelope.GetHeader("TraceUser"));
         Assert.Equal("web", envelope.GetHeader("ClientChannel"));
         Assert.Equal("2.0", envelope.GetHeader("ClientVersion"));
     }
@@ -111,12 +131,12 @@ public class EventEnvelopeFactoryTests
     {
         ParentMessageEnvelope parent = new();
         parent.SetHeader("Message", "{}");
-        parent.SetHeader("UserId", "u");
+        parent.SetHeader("TraceUser", "u");
 
         MessageEnvelope<SampleEto> envelope = NewFactory().Create(s_message, parent, null, false);
 
         Assert.Null(envelope.GetHeader("Message"));
-        Assert.Equal("u", envelope.GetHeader("UserId"));
+        Assert.Equal("u", envelope.GetHeader("TraceUser"));
     }
 
     [Fact]
@@ -144,5 +164,52 @@ public class EventEnvelopeFactoryTests
     public void NullMessage_IsRejected()
     {
         Assert.Throws<ArgumentNullException>(() => NewFactory().Create<SampleEto>(null!, null, null, false));
+    }
+
+    [Fact]
+    public void TheCallerOfTheEnvelope_IsWhoeverIsActingNow()
+    {
+        Guid user = Guid.NewGuid();
+        Guid tenant = Guid.NewGuid();
+
+        MessageEnvelope<SampleEto> envelope = NewFactory(new FakeUser(user, tenant, true, "admin", "customer")).Create(s_message, null, null, isReQueuePublish: false);
+
+        Assert.Equal((user, "alice", tenant, true), (envelope.UserId, envelope.UserName, envelope.TenantId, envelope.IsSystemTenant));
+        Assert.Equal(["admin", "customer"], envelope.UserRoles);
+    }
+
+    [Fact]
+    public void WhenNobodyActs_TheEnvelopeHasNoCaller_AndNoRolesList()
+    {
+        MessageEnvelope<SampleEto> envelope = NewFactory(new FakeUser(null, null)).Create(s_message, null, null, isReQueuePublish: false);
+
+        Assert.False(envelope.IsSystemTenant);
+        Assert.Null(envelope.UserId);
+        Assert.Null(envelope.TenantId);
+        Assert.Null(envelope.UserRoles);
+        Assert.Null(NewFactory().Create(s_message, null, null, isReQueuePublish: false).TenantId);
+    }
+
+    [Fact]
+    public void AParentsCaller_WinsOverWhoIsActing()
+    {
+        Guid parentUser = Guid.NewGuid();
+        Guid parentTenant = Guid.NewGuid();
+        ParentMessageEnvelope parent = new() { UserId = parentUser, UserName = "bob", TenantId = parentTenant, UserRoles = ["support"] };
+
+        MessageEnvelope<SampleEto> envelope = NewFactory(new FakeUser(Guid.NewGuid(), Guid.NewGuid())).Create(s_message, parent, null, isReQueuePublish: false);
+
+        Assert.Equal((parentUser, "bob", parentTenant), (envelope.UserId, envelope.UserName, envelope.TenantId));
+        Assert.Equal(["support"], envelope.UserRoles);
+    }
+
+    [Fact]
+    public void AParentWithoutACaller_LeavesItToWhoIsActing()
+    {
+        Guid user = Guid.NewGuid();
+
+        MessageEnvelope<SampleEto> envelope = NewFactory(new FakeUser(user, null)).Create(s_message, new ParentMessageEnvelope(), null, isReQueuePublish: false);
+
+        Assert.Equal(user, envelope.UserId);
     }
 }

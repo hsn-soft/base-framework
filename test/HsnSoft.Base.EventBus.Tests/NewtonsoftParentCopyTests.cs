@@ -21,7 +21,7 @@ public class NewtonsoftParentCopyTests
             Producer = "HHS_Other",
             Message = new SampleEto("m", 1),
         };
-        envelope.SetHeader("UserId", "user-7");
+        envelope.SetHeader("TraceUser", "user-7");
         envelope.SetHeader("ClientChannel", "web");
         return envelope;
     }
@@ -58,7 +58,7 @@ public class NewtonsoftParentCopyTests
             child = NewFactory().Create(new SampleEto("c", 2), copy, null, false);
         }
 
-        Assert.Equal("user-7", child.GetHeader("UserId"));
+        Assert.Equal("user-7", child.GetHeader("TraceUser"));
         Assert.Equal("web", child.GetHeader("ClientChannel"));
     }
 
@@ -75,7 +75,7 @@ public class NewtonsoftParentCopyTests
         }
 
         Assert.Equal(someoneElses.MessageId, child.ParentMessageId);
-        Assert.Null(child.GetHeader("UserId"));
+        Assert.Null(child.GetHeader("TraceUser"));
     }
 
     [Fact]
@@ -83,7 +83,7 @@ public class NewtonsoftParentCopyTests
     {
         MessageEnvelope<SampleEto> handled = HandledMessage();
         ParentMessageEnvelope parent = new() { MessageId = handled.MessageId, HopLevel = 2 };
-        parent.SetHeader("UserId", "from-the-parent");
+        parent.SetHeader("TraceUser", "from-the-parent");
 
         MessageEnvelope<SampleEto> child;
         using (EventContext.Use(handled))
@@ -91,7 +91,7 @@ public class NewtonsoftParentCopyTests
             child = NewFactory().Create(new SampleEto("c", 2), parent, null, false);
         }
 
-        Assert.Equal("from-the-parent", child.GetHeader("UserId"));
+        Assert.Equal("from-the-parent", child.GetHeader("TraceUser"));
         Assert.Equal("web", child.GetHeader("ClientChannel"));
     }
 }
