@@ -195,7 +195,7 @@ SQL Server needs about 2 GB of memory; a container limited to 1 GB restarts in a
 `Application` (`Contracts/UserDomain/{Dtos,Services}` for the DTOs and the service interface, `Services/` for the implementation), `EntityFrameworkCore`
 (`Context`, `Configurations`, `Repositories`) and `Http.Host` (`Controllers`). The host references Application and EntityFrameworkCore, both reference Domain.
 
-The first use case is the CRUD of the users (SQL Server `abc_identity`, created at start; every use is written to a second context, `HistoryDbContext`, on PostgreSQL `abc_history`, with the provider, the table prefix, the schema and the connection name in `EfCoreIdentityDbProperties` and `EfCoreHistoryDbProperties`, [ADR-0050](../docs/adr/0050-a-context-has-a-properties-class-for-its-database.md)); the controller only calls `IUserAppService`:
+The first use case is the CRUD of the users (SQL Server `Abc_Identity_Dev`, created at start; every use is written to a second context, `HistoryDbContext`, on PostgreSQL `Abc_History_Dev`, with the provider, the table prefix, the schema and the connection name in `EfCoreIdentityDbProperties` and `EfCoreHistoryDbProperties`, [ADR-0050](../docs/adr/0050-a-context-has-a-properties-class-for-its-database.md)); the controller only calls `IUserAppService`:
 
 | Endpoint | Does |
 |---|---|
@@ -248,13 +248,13 @@ The answers are told in the language of the request: the `locale` claim of the t
 
 Every Abc entity (`User`, `Product`, `Order`, `Shipment`) has the audit fields (`CreatedBy`, `UpdatedBy`: the id of the user), soft delete (a delete marks the row; the lists do not show it) and a tenant ([ADR-0037](../docs/adr/0037-audit-soft-delete-and-tenants.md),
 [docs/EntityConcepts.md](../docs/EntityConcepts.md)). There are two tenants (`AbcTenants` in `Abc.Shared.Hosting`): the **system tenant** (`admin`: sees every tenant) and **Acme** (`alice`: sees only Acme's data, and the two seeded products are Acme's). The auth server puts
-`tenant_id` (and `is_system_tenant` for `admin`) in the token. A row made by a user gets the tenant of the token; a user name and a sku are unique in the whole system. A database made before this change must be dropped (new columns): `drop database abc_identity`,
-`abc_order`; the MongoDB ones (`abc_product`, `abc_shipment`) too, as their old documents lack the fields.
+`tenant_id` (and `is_system_tenant` for `admin`) in the token. A row made by a user gets the tenant of the token; a user name and a sku are unique in the whole system. A database made before this change must be dropped (new columns): `drop database Abc_Identity_Dev`,
+`Abc_Order_Dev`; the MongoDB ones (`Abc_Product_Dev`, `Abc_Shipment_Dev`) too, as their old documents lack the fields.
 
 ### The users of Abc
 
-The auth server (which only reads) and the identity service (which owns the database) share one SQL Server database (`ConnectionStrings:EfCore-IdentityService`, `abc_identity`). The identity service creates it on its first start and, when it has no user, adds `admin` / `admin123` and `alice` / `alice123`
-(passwords are kept as PBKDF2 hashes). `EnsureCreated` does not change a table that exists: a database made before this change has to be dropped (`drop database abc_identity`). The `CreatedBy` and `UpdatedBy` of a user are the
+The auth server (which only reads) and the identity service (which owns the database) share one SQL Server database (`ConnectionStrings:EfCore-IdentityService`, `Abc_Identity_Dev`). The identity service creates it on its first start and, when it has no user, adds `admin` / `admin123` and `alice` / `alice123`
+(passwords are kept as PBKDF2 hashes). `EnsureCreated` does not change a table that exists: a database made before this change has to be dropped (`drop database Abc_Identity_Dev`). The `CreatedBy` and `UpdatedBy` of a user are the
 `sub` of the token of whoever made the request.
 
 ### The keys of the Abc tokens
@@ -302,14 +302,14 @@ Redis `6379`, RabbitMQ `5672` (`guest` / `guest`). Nothing publishes or consumes
 
 | Service | Persistence | Port | State |
 |---|---|---|---|
-| `identity` | `EntityFrameworkCore` (SQL Server `abc_identity`) | 5400 | users CRUD, a public endpoint |
-| `order` | `EntityFrameworkCore` (PostgreSQL `abc_order`) | 5420 | orders with lines, CRUD |
-| `product` | `MongoDB` (`abc_product`) | 5430 | products and stock, CRUD; two seeded products (`LAMP-001` with 10 in stock, `CHAIR-001` with 0) |
-| `shipment` | `MongoDB` (`abc_shipment`) | 5440 | shipments of an order, CRUD |
+| `identity` | `EntityFrameworkCore` (SQL Server `Abc_Identity_Dev`) | 5400 | users CRUD, a public endpoint |
+| `order` | `EntityFrameworkCore` (PostgreSQL `Abc_Order_Dev`) | 5420 | orders with lines, CRUD |
+| `product` | `MongoDB` (`Abc_Product_Dev`) | 5430 | products and stock, CRUD; two seeded products (`LAMP-001` with 10 in stock, `CHAIR-001` with 0) |
+| `shipment` | `MongoDB` (`Abc_Shipment_Dev`) | 5440 | shipments of an order, CRUD |
 
 Every service has the same endpoints as the users (`create`, `get/{id}`, `paged-list`, `filter-list`, `search-list`, `PUT`, `DELETE`) under `/api/{service}-service/v1/commercial/...`, and the commercial gateway forwards them as
 `/order-service/v1/orders/...`, `/product-service/v1/products/...`, `/shipment-service/v1/shipments/...` ([ADR-0033](../docs/adr/0033-the-abc-services-crud-pattern.md)). A token is needed; `CreatedBy` / `UpdatedBy` are its `sub`. A database
-made before this change must be dropped (`drop database abc_order`); the MongoDB services need nothing.
+made before this change must be dropped (`drop database Abc_Order_Dev`); the MongoDB services need nothing.
 
 ```bash
 dotnet run --project samples/abc/service/order/Abc.OrderService.Http.Host         # http://localhost:5420
@@ -319,11 +319,17 @@ dotnet run --project samples/abc/service/shipment/Abc.ShipmentService.Http.Host 
 
 ### The history of the users (a second context on PostgreSQL)
 
-`HistoryDbContext` (PostgreSQL `abc_history`, `ConnectionStrings:EfCore-HistoryService`) keeps what happened to the users: the identity service writes a record for each create, update and delete, and the auth server writes a `login` record for every token it
+`HistoryDbContext` (PostgreSQL `Abc_History_Dev`, `ConnectionStrings:EfCore-HistoryService`) keeps what happened to the users: the identity service writes a record for each create, update and delete, and the auth server writes a `login` record for every token it
 issues ([ADR-0052](../docs/adr/0052-the-history-of-the-users.md)). The records have a CRUD of their own, like the users': `POST /api/identity-service/v1/commercial/user-histories/{get/{id}, paged-list, filter-list, search-list, create}`, `PUT`, `DELETE /{id}`
 (`IUserHistoryAppService`; the lists read only the columns of their DTO). Every context of a service has a properties class (`EfCoreIdentityDbProperties`, `EfCoreHistoryDbProperties`, `EfCoreOrderDbProperties`, `MongoProductDbProperties`,
 `MongoShipmentDbProperties`) with the table (or collection) prefix, the schema, the provider and the connection name: no setting says which provider runs ([ADR-0051](../docs/adr/0051-every-context-is-named-by-its-properties-class.md)).
 The connection strings are `EfCore-IdentityService` (SQL Server), `EfCore-HistoryService` (PostgreSQL), `EfCore-OrderService` (PostgreSQL), `Mongo-ProductService` and `Mongo-ShipmentService`.
+
+### Environments ([ADR-0055](../docs/adr/0055-environments-of-the-abc-sample.md))
+
+Every host has `appsettings.json` (what is the same everywhere) and `appsettings.development.json`, `.docker.json`, `.uat.json`, `.stage.json`, `.production.json` (what differs: urls, connection strings, RabbitMQ, Graylog, the services behind a gateway). The names are in small letters;
+`development` has the values of a developer's machine and is what `dotnet run` and the IDE use (`Properties/launchSettings.json`); the others have fake values (`*.abc.example.com`, `CHANGE_ME`) to be overridden by environment variables or a secret store. The databases are `Abc_<Context>_<Suffix>`
+with the suffix `Dev` (development and docker), `Uat`, `Stage` or `Prod`: `Abc_Identity_Dev` (SQL Server), `Abc_History_Dev`, `Abc_Order_Dev`, `Abc_ShipmentHistory_Dev` (PostgreSQL), `Abc_Product_Dev`, `Abc_Stock_Dev`, `Abc_Shipment_Dev` (MongoDB).
 
 ### The order flow ([ADR-0054](../docs/adr/0054-the-order-flow-through-events.md))
 
@@ -338,16 +344,16 @@ shipment --ShipmentCompletedEto-->  order      Confirmed -> Delivered, or Cancel
 
 `POST /api/order-service/v1/commercial/orders/create` with `{ "shippingAddress": "Ankara", "lines": [{ "productId": "...", "productName": "Desk Lamp", "unitPrice": 10, "quantity": 2 }] }`: a few seconds later the order is `Delivered`, the lamp has 2 less
 in stock, and there is a `delivered` record in the shipment history. An address with `fail` in it is returned by the (simulated) carrier and the order is cancelled; an out of stock product (the Office Chair has 0) cancels it at the stock check.
-The RabbitMQ management page (`localhost:15672`) shows the four queues `abc.events_<service>_<Event>`. The order has a `ShippingAddress` now: a database made before this change has to be dropped (`drop database abc_order`).
+The RabbitMQ management page (`localhost:15672`) shows the four queues `abc.events_<service>_<Event>`. The order has a `ShippingAddress` now: a database made before this change has to be dropped (`drop database Abc_Order_Dev`).
 
 ### More than one store in a service ([ADR-0053](../docs/adr/0053-more-than-one-store-in-a-service.md))
 
 | Service | Entity (store) | History (store) | Written when |
 |---|---|---|---|
-| identity | `User` (EF Core, SQL Server `abc_identity`) | `UserHistory` (EF Core, PostgreSQL `abc_history`) | a user is created, changed or deleted; the auth server issues a token (`login`) |
-| order | `Order` (EF Core, PostgreSQL `abc_order`) | | |
-| product | `Product` (MongoDB `Mongo-ProductService`, `abc_product`) | `ProductStockHistory` (MongoDB `Mongo-StockService`, `abc_stock`, registered under the key `stock`) | a product is created, or an update changes its stock |
-| shipment | `Shipment` (MongoDB `abc_shipment`, project `Abc.ShipmentService.MongoDB`) | `ShipmentHistory` (EF Core, PostgreSQL `abc_shipment_history`, project `Abc.ShipmentService.EntityFrameworkCore`) | a shipment is delivered (`delivered`) or returned (`failed`) |
+| identity | `User` (EF Core, SQL Server `Abc_Identity_Dev`) | `UserHistory` (EF Core, PostgreSQL `Abc_History_Dev`) | a user is created, changed or deleted; the auth server issues a token (`login`) |
+| order | `Order` (EF Core, PostgreSQL `Abc_Order_Dev`) | | |
+| product | `Product` (MongoDB `Mongo-ProductService`, `Abc_Product_Dev`) | `ProductStockHistory` (MongoDB `Mongo-StockService`, `Abc_Stock_Dev`, registered under the key `stock`) | a product is created, or an update changes its stock |
+| shipment | `Shipment` (MongoDB `Abc_Shipment_Dev`, project `Abc.ShipmentService.MongoDB`) | `ShipmentHistory` (EF Core, PostgreSQL `Abc_ShipmentHistory_Dev`, project `Abc.ShipmentService.EntityFrameworkCore`) | a shipment is delivered (`delivered`) or returned (`failed`) |
 
 Each history has the CRUD of its entity: `POST .../user-histories`, `.../product-stock-histories`, `.../shipment-histories` with `get/{id}`, `paged-list`, `filter-list`, `search-list`, `create`, then `PUT` and `DELETE /{id}`. The connection strings of the new stores are
 `Mongo-StockService` and `EfCore-ShipmentHistoryService`.
