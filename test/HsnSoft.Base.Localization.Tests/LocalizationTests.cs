@@ -186,6 +186,36 @@ public class LocalizationTests
         => new ServiceCollection().AddLogging().AddBaseLocalization(configuration, configure).BuildServiceProvider();
 
     [Fact]
+    public void FindIfPresent_AnswersLikeFind_AndNullForAKeyThatIsNotThere()
+    {
+        using ServiceProvider provider = Provider(options => options.AddEmbedded(Assembly.GetExecutingAssembly()));
+        IMessageLocalizer localizer = provider.GetRequiredService<IMessageLocalizer>();
+
+        Assert.Equal("Hello Ada", localizer.FindIfPresent("Test:Hello", "Ada"));
+        Assert.Null(localizer.FindIfPresent("No:Such"));
+    }
+
+    [Fact]
+    public void EveryValidationTextOfTheFramework_ExistsInAllThreeLanguages()
+    {
+        using ServiceProvider provider = Provider();
+        string[] keys = ["Required", "IsNotEmpty", "MaxLength", "MinLength", "Range", "NotNegative", "Email", "Phone", "Url", "Pattern", "Compare", "Length", "InvalidValue", "InvalidJson", "Failed"];
+
+        foreach (string language in new[] { "en", "tr", "ru" })
+        {
+            ILanguageAccessor accessor = provider.GetRequiredService<ILanguageAccessor>();
+            using (accessor.Use(language))
+            {
+                IMessageLocalizer localizer = provider.GetRequiredService<IMessageLocalizer>();
+                foreach (string key in keys)
+                {
+                    Assert.False(string.IsNullOrWhiteSpace(localizer.FindIfPresent("Validation:" + key)), $"{language}: Validation:{key}");
+                }
+            }
+        }
+    }
+
+    [Fact]
     public void TheMessageLocalizer_FindsInTheCurrentLanguage_WithTheArguments_AndNullWhenNoLanguageHasIt()
     {
         using ServiceProvider provider = Provider(options => options.AddEmbedded(Assembly.GetExecutingAssembly()));

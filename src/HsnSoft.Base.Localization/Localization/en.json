@@ -23,6 +23,14 @@
     "Validation:Range": "{0} must be between {1} and {2}.",
     "Validation:NotNegative": "{0} cannot be negative.",
     "Validation:UnknownSortField": "'{0}' is not a field to sort by ({1}).",
-    "Validation:UnknownSortDirection": "'{0}' is not a direction (asc or desc)."
+    "Validation:UnknownSortDirection": "'{0}' is not a direction (asc or desc).",
+    "Validation:Email": "{0} is not a valid e-mail address.",
+    "Validation:Phone": "{0} is not a valid phone number.",
+    "Validation:Url": "{0} is not a valid address.",
+    "Validation:Pattern": "{0} is not in the expected form.",
+    "Validation:Compare": "{0} must be the same as {1}.",
+    "Validation:Length": "{0} must be between {1} and {2} characters.",
+    "Validation:InvalidValue": "{0} has an invalid value.",
+    "Validation:InvalidJson": "The request is not valid JSON."
   }
 }

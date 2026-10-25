@@ -5,7 +5,6 @@ using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using HsnSoft.Base.AspNetCore.Responses;
 using HsnSoft.Base.Communication;
-using HsnSoft.Base.Localization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
@@ -13,7 +12,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
 namespace HsnSoft.Base.AspNetCore;
@@ -86,16 +84,8 @@ public static class WebApiServiceCollectionExtensions
 
     private static BadRequestObjectResult InvalidModelState(ActionContext context)
     {
-        IHostEnvironment environment = context.HttpContext.RequestServices.GetRequiredService<IHostEnvironment>();
-        System.Collections.Generic.List<string> messages = [context.HttpContext.RequestServices.GetService<IMessageLocalizer>()?.Find("Validation:Failed") ?? "Validation failed."];
-
-        // which field is wrong helps the developer; where the service runs for real the client is not told
-        if (!context.HttpContext.RequestServices.GetRequiredService<IOptions<ApiErrorOptions>>().Value.HidesDetails(environment))
-        {
-            messages.AddRange(context.ModelState
-                .Where(entry => entry.Value?.Errors.Count > 0)
-                .SelectMany(entry => entry.Value!.Errors.Select(error => $"{entry.Key}: {(string.IsNullOrWhiteSpace(error.ErrorMessage) ? "Invalid value." : error.ErrorMessage)}")));
-        }
+        // every field that is wrong, with why, in the language of the request: one message for each, told everywhere (they are written for the client)
+        System.Collections.Generic.List<string> messages = ModelStateTranslator.Translate(context);
 
         return new BadRequestObjectResult(new BaseResponse
         {

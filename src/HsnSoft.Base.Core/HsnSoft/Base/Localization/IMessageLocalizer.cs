@@ -8,4 +8,9 @@ public interface IMessageLocalizer
     /// <see langword="null"/> when no language has it, so the caller says what it has (the exception's own message).
     /// </summary>
     string? Find(string key, params object?[] args);
+
+    /// <summary>
+    /// The same, for a text that may well not exist (a label of a field that nobody translated): a key that is not there is not logged. A localizer that does not know the difference uses <see cref="Find"/>.
+    /// </summary>
+    string? FindIfPresent(string key, params object?[] args) => Find(key, args);
 }

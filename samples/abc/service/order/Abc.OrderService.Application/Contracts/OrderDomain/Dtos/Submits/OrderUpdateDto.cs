@@ -6,7 +6,7 @@ namespace Abc.OrderService.Application.Contracts.OrderDomain.Dtos.Submits;
 public sealed class OrderUpdateDto
 {
     [Required]
-    public Guid Id { get; set; }
+    public Guid? Id { get; set; }
 
     /// <summary>Pending, Confirmed, Shipped, Delivered or Cancelled; a delivered or cancelled order cannot change its status.</summary>
     [Required]

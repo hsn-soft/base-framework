@@ -6,7 +6,7 @@ namespace Abc.ShipmentService.Application.Contracts.ShipmentDomain.Dtos.Submits;
 public sealed class ShipmentUpdateDto
 {
     [Required]
-    public Guid Id { get; set; }
+    public Guid? Id { get; set; }
 
     [Required]
     [StringLength(ShipmentConsts.CarrierMaxLength)]

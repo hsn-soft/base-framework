@@ -56,3 +56,20 @@ public abstract class BaseServiceController : ApiControllerBase
     protected IStringLocalizer L => field ??= HttpContext.RequestServices.GetRequiredService<IStringLocalizer>();
 }
 ```
+
+## Validation of a request
+
+A request that has things wrong with it is answered **400**, `errorCode: validation_error`, with all of them at once ([ADR-0044](adr/0044-validation-of-requests.md)):
+
+```json
+{
+  "statusCode": 400,
+  "errorCode": "validation_error",
+  "statusMessages": ["Validation failed.", "UserName is required.", "Level must be between 1 and 10."]
+}
+```
+
+- `statusMessages` has the translated messages, one for each wrong field (the language of the request); there is no `payload` in an error. It is the same in every environment.
+- Attributes (`Required`, `StringLength`, `Range`, `EmailAddress`, `Phone`, `Url`, `RegularExpression`, `Compare`) are translated from the framework texts `Validation:*`; a value that cannot be read (a bad guid, a broken JSON) is `Validation:InvalidValue` / `Validation:InvalidJson`.
+- A value type that must be sent is nullable with `[Required]` (`Guid?`, `decimal?`, `bool?`), so a missing value is not the default one.
+- A rule of the DTO: `IValidatableObject` returning `ValidationRule.Failed(nameof(Email), "email_taken", Email)`. A rule of the data or the business: `ValidationErrors` in the application service, `errors.AddIf(taken, nameof(input.Sku), "The sku is taken.", "sku_taken", input.Sku); errors.ThrowIfAny();`.

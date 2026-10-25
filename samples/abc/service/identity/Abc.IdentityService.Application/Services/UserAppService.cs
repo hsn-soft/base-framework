@@ -73,8 +73,8 @@ public sealed class UserAppService(IRepository<User, Guid> users, IServiceProvid
     {
         ArgumentNullException.ThrowIfNull(input);
 
-        User user = await FindAsync(input.Id, cancellationToken).ConfigureAwait(false);
-        user.Update(input.Email, input.DisplayName, input.IsActive, input.Roles, input.Language);
+        User user = await FindAsync(input.Id.GetValueOrDefault(), cancellationToken).ConfigureAwait(false);
+        user.Update(input.Email, input.DisplayName, input.IsActive.GetValueOrDefault(), input.Roles, input.Language);
         await users.UpdateAsync(user, cancellationToken).ConfigureAwait(false);
     }
 

@@ -23,6 +23,14 @@
     "Validation:Range": "{0} {1} ile {2} arasında olmalı.",
     "Validation:NotNegative": "{0} negatif olamaz.",
     "Validation:UnknownSortField": "'{0}' ile sıralanamaz (sıralanabilen alanlar: {1}).",
-    "Validation:UnknownSortDirection": "'{0}' bir yön değil (asc veya desc)."
+    "Validation:UnknownSortDirection": "'{0}' bir yön değil (asc veya desc).",
+    "Validation:Email": "{0} geçerli bir e-posta adresi değil.",
+    "Validation:Phone": "{0} geçerli bir telefon numarası değil.",
+    "Validation:Url": "{0} geçerli bir adres değil.",
+    "Validation:Pattern": "{0} beklenen biçimde değil.",
+    "Validation:Compare": "{0} ile {1} aynı olmalı.",
+    "Validation:Length": "{0} {1} ile {2} karakter arasında olmalı.",
+    "Validation:InvalidValue": "{0} geçerli bir değer değil.",
+    "Validation:InvalidJson": "İstek geçerli bir JSON değil."
   }
 }

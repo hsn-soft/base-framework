@@ -221,22 +221,22 @@ public class WebApiTests
     }
 
     [Fact]
-    public async Task AValidationFailure_IsTheEnvelope_WithAnErrorCodeAndTheFieldsOutsideProduction()
+    public async Task AValidationFailure_IsTheEnvelope_WithAnErrorCode_AndTheFieldsInEveryEnvironment()
     {
         await using WebApplication development = await StartAsync("Development");
         await using WebApplication production = await StartAsync();
 
-        HttpResponseMessage inDevelopment = await development.GetTestClient().PostAsync("/api/answers/greet", new StringContent("""{"times":99}""", Encoding.UTF8, "application/json"));
-        HttpResponseMessage inProduction = await production.GetTestClient().PostAsync("/api/answers/greet", new StringContent("""{"times":99}""", Encoding.UTF8, "application/json"));
+        foreach (WebApplication app in new[] { development, production })
+        {
+            HttpResponseMessage response = await app.GetTestClient().PostAsync("/api/answers/greet", new StringContent("""{"times":99}""", Encoding.UTF8, "application/json"));
 
-        JsonElement shown = JsonDocument.Parse(await inDevelopment.Content.ReadAsStringAsync()).RootElement;
-        JsonElement hidden = JsonDocument.Parse(await inProduction.Content.ReadAsStringAsync()).RootElement;
-        Assert.Equal(HttpStatusCode.BadRequest, inDevelopment.StatusCode);
-        Assert.Equal("validation_error", shown.GetProperty("errorCode").GetString());
-        Assert.Contains(shown.GetProperty("statusMessages").EnumerateArray().Select(m => m.GetString()), m => m == "Name: Name is required.");
-        Assert.Equal("Validation failed.", shown.GetProperty("statusMessages")[0].GetString());
-        Assert.Single(hidden.GetProperty("statusMessages").EnumerateArray());
-        Assert.Equal("validation_error", hidden.GetProperty("errorCode").GetString());
+            JsonElement body = JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement;
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            Assert.Equal("validation_error", body.GetProperty("errorCode").GetString());
+            Assert.Equal("Validation failed.", body.GetProperty("statusMessages")[0].GetString());
+            Assert.Contains(body.GetProperty("statusMessages").EnumerateArray().Select(m => m.GetString()), m => m == "Name is required.");
+            Assert.Contains("Name is required.", body.GetProperty("statusMessages").EnumerateArray().Select(m => m.GetString()));
+        }
     }
 
     [Fact]

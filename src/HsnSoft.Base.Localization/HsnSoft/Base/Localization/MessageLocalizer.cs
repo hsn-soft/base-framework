@@ -28,6 +28,14 @@ public sealed partial class MessageLocalizer(LocalizationStore store, ILanguageA
         return Format(text, args);
     }
 
+    public string? FindIfPresent(string key, params object?[] args)
+    {
+        ArgumentNullException.ThrowIfNull(key);
+
+        string? text = store.Find(language.Current, key);
+        return text is null ? null : Format(text, args);
+    }
+
     [LoggerMessage(Level = LogLevel.Warning, Message = "The localization key {LocalizationKey} has no text in any language")]
     private static partial void LogMissing(ILogger logger, string localizationKey);
 

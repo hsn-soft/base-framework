@@ -17,9 +17,11 @@ public sealed class ProductCreateDto
     [StringLength(ProductConsts.DescriptionMaxLength)]
     public string? Description { get; set; }
 
+    [Required]
     [Range(0, 1_000_000)]
-    public decimal Price { get; set; }
+    public decimal? Price { get; set; }
 
+    [Required]
     [Range(0, int.MaxValue)]
-    public int Stock { get; set; }
+    public int? Stock { get; set; }
 }

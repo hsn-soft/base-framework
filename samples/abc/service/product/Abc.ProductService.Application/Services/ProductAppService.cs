@@ -57,7 +57,7 @@ public sealed class ProductAppService(IRepository<Product, Guid> products, IServ
             throw new ProductSkuDuplicateException(input.Sku.Trim());
         }
 
-        Product product = Product.Create(input.Name, input.Sku, input.Description, input.Price, input.Stock);
+        Product product = Product.Create(input.Name, input.Sku, input.Description, input.Price.GetValueOrDefault(), input.Stock.GetValueOrDefault());
         await products.AddAsync(product, cancellationToken).ConfigureAwait(false);
         return ToDto(product);
     }
@@ -66,8 +66,8 @@ public sealed class ProductAppService(IRepository<Product, Guid> products, IServ
     {
         ArgumentNullException.ThrowIfNull(input);
 
-        Product product = await FindAsync(input.Id, cancellationToken).ConfigureAwait(false);
-        product.Update(input.Name, input.Description, input.Price, input.Stock, input.IsActive);
+        Product product = await FindAsync(input.Id.GetValueOrDefault(), cancellationToken).ConfigureAwait(false);
+        product.Update(input.Name, input.Description, input.Price.GetValueOrDefault(), input.Stock.GetValueOrDefault(), input.IsActive.GetValueOrDefault());
         await products.UpdateAsync(product, cancellationToken).ConfigureAwait(false);
     }
 

@@ -6,7 +6,7 @@ namespace Abc.IdentityService.Application.Contracts.UserDomain.Dtos.Submits;
 public sealed class UserUpdateDto
 {
     [Required]
-    public Guid Id { get; set; }
+    public Guid? Id { get; set; }
 
     [Required]
     [EmailAddress]
@@ -17,7 +17,8 @@ public sealed class UserUpdateDto
     [StringLength(UserConsts.DisplayNameMaxLength)]
     public string DisplayName { get; set; } = string.Empty;
 
-    public bool IsActive { get; set; }
+    [Required]
+    public bool? IsActive { get; set; }
 
     /// <summary>The roles of the user after the change (<c>customer</c> when none is given).</summary>
     public List<string>? Roles { get; set; }

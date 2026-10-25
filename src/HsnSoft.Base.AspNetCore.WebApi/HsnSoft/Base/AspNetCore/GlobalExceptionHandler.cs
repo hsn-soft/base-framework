@@ -25,7 +25,7 @@ public sealed class GlobalExceptionHandler(
 
         // the answer is in the language of the request: the one the middleware set does not reach this outer layer
         using IDisposable? language = RequestLanguageScope.Begin(httpContext);
-        (int status, string? errorCode, System.Collections.Generic.List<string> messages) = mapper.Map(exception, environment);
+        ApiError error = mapper.Map(exception, environment);
 
         // the request log says how this request ended and why
         httpContext.Items[RequestLoggingMiddleware.HandledExceptionKey] = exception;
@@ -36,7 +36,7 @@ public sealed class GlobalExceptionHandler(
             return false;
         }
 
-        await writer.WriteErrorAsync(httpContext, status, messages, errorCode).ConfigureAwait(false);
+        await writer.WriteErrorAsync(httpContext, error.StatusCode, error.Messages, error.ErrorCode).ConfigureAwait(false);
         return true;
     }
 }

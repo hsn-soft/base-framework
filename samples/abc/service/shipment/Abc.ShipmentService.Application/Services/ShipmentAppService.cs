@@ -51,7 +51,7 @@ public sealed class ShipmentAppService(IRepository<Shipment, Guid> shipments, IS
     {
         ArgumentNullException.ThrowIfNull(input);
 
-        Shipment shipment = Shipment.Create(input.OrderId, input.Carrier, input.Address);
+        Shipment shipment = Shipment.Create(input.OrderId.GetValueOrDefault(), input.Carrier, input.Address);
         await shipments.AddAsync(shipment, cancellationToken).ConfigureAwait(false);
         return ToDto(shipment);
     }
@@ -60,7 +60,7 @@ public sealed class ShipmentAppService(IRepository<Shipment, Guid> shipments, IS
     {
         ArgumentNullException.ThrowIfNull(input);
 
-        Shipment shipment = await FindAsync(input.Id, cancellationToken).ConfigureAwait(false);
+        Shipment shipment = await FindAsync(input.Id.GetValueOrDefault(), cancellationToken).ConfigureAwait(false);
         shipment.Update(input.Carrier, input.Address, ParseStatus(input.Status) ?? throw new DomainException("Status is required.").WithKey("status_required"));
         await shipments.UpdateAsync(shipment, cancellationToken).ConfigureAwait(false);
     }

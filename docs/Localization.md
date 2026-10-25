@@ -96,3 +96,8 @@ Keep the stable code in the body too (`Status`): the client reacts to the code a
 ## In code
 
 `IMessageLocalizer.Find(key, args)` gives the text in the current language (`null` when there is none); the standard `IStringLocalizer` and `IStringLocalizer<T>` read the same texts (one set; the type does not matter).
+
+## The texts of a validation
+
+The framework JSON has `Validation:*` (`Required`, `MaxLength`, `MinLength`, `Range`, `Email`, `Phone`, `Url`, `Pattern`, `Compare`, `Length`, `InvalidValue`, `InvalidJson`, `Failed`) in en, tr and ru; a test keeps the three in step. The label of a field is `Field:<Dto>:<Property>`, then `Field:<Property>`, then the
+property name, and it is the first argument of the text. See [ADR-0044](adr/0044-validation-of-requests.md) and [WebApi.md](WebApi.md#validation-of-a-request).

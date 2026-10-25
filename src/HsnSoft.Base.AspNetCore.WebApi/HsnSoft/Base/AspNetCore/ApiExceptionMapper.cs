@@ -14,15 +14,24 @@ namespace HsnSoft.Base.AspNetCore;
 /// <summary>Decides what an exception means for the client: the status, the error code and the messages. Register your own to add the exceptions of a product.</summary>
 public interface IApiExceptionMapper
 {
-    (int StatusCode, string? ErrorCode, List<string> Messages) Map(Exception exception, IHostEnvironment environment);
+    ApiError Map(Exception exception, IHostEnvironment environment);
 }
+
+/// <summary>What the client is told of an exception: the status, the error code, the messages and the messages (for a request with fields that were wrong: one for each field).</summary>
+public sealed record ApiError(int StatusCode, string? ErrorCode, List<string> Messages);
 
 public sealed class ApiExceptionMapper(IStatusMessageProvider statusMessages, IOptions<ApiErrorOptions> errorOptions, IMessageLocalizer? localizer = null) : IApiExceptionMapper
 {
-    public (int StatusCode, string? ErrorCode, List<string> Messages) Map(Exception exception, IHostEnvironment environment)
+    public ApiError Map(Exception exception, IHostEnvironment environment)
     {
         ArgumentNullException.ThrowIfNull(exception);
         ArgumentNullException.ThrowIfNull(environment);
+
+        // every field that was wrong, each told in the language of the request
+        if (exception is ValidationFailedException failed)
+        {
+            return new ApiError(StatusCodes.Status400BadRequest, "validation_error", [localizer?.Find("Validation:Failed") ?? "Validation failed.", .. failed.Errors.Select(Say)]);
+        }
 
         (int status, string? errorCode, bool showsMessage) = exception switch
         {
@@ -59,8 +68,11 @@ public sealed class ApiExceptionMapper(IStatusMessageProvider statusMessages, IO
             }
         }
 
-        return (status, errorCode, messages);
+        return new ApiError(status, errorCode, messages);
     }
+
+    private string Say(ValidationError error)
+        => error.Key is { Length: > 0 } key && localizer?.Find(key, [.. error.Args ?? []]) is { } text ? text : error.Message;
 
     private string? Localized(Exception exception)
         => localizer is not null && exception is ILocalizableError { MessageKey: { Length: > 0 } key } error ? localizer.Find(key, [.. error.MessageArgs]) : null;

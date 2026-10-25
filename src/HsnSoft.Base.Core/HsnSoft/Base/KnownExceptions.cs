@@ -18,7 +18,7 @@ public static class KnownExceptions
         return exception switch
         {
             BaseHttpException http => http.HttpStatusCode < 500,
-            NotFoundException or BusinessRuleException or BusinessException or DomainException or ArgumentException or UnauthorizedAccessException => true,
+            NotFoundException or BusinessRuleException or BusinessException or DomainException or ValidationFailedException or ArgumentException or UnauthorizedAccessException => true,
             _ => false,
         };
     }

@@ -51,7 +51,7 @@ public sealed class OrderAppService(IRepository<Order, Guid> orders, IServicePro
     {
         ArgumentNullException.ThrowIfNull(input);
 
-        IEnumerable<OrderLine> lines = input.Lines.Select(line => OrderLine.Create(line.ProductId, line.ProductName, line.UnitPrice, line.Quantity));
+        IEnumerable<OrderLine> lines = input.Lines.Select(line => OrderLine.Create(line.ProductId.GetValueOrDefault(), line.ProductName, line.UnitPrice.GetValueOrDefault(), line.Quantity.GetValueOrDefault()));
         Order order = Order.Create(CurrentUser.UserName ?? string.Empty, input.Note, lines);
         await orders.AddAsync(order, cancellationToken).ConfigureAwait(false);
         return ToDto(order);
@@ -61,7 +61,7 @@ public sealed class OrderAppService(IRepository<Order, Guid> orders, IServicePro
     {
         ArgumentNullException.ThrowIfNull(input);
 
-        Order order = await FindAsync(input.Id, cancellationToken).ConfigureAwait(false);
+        Order order = await FindAsync(input.Id.GetValueOrDefault(), cancellationToken).ConfigureAwait(false);
         order.Update(ParseStatus(input.Status) ?? throw new DomainException("Status is required.").WithKey("status_required"), input.Note);
         await orders.UpdateAsync(order, cancellationToken).ConfigureAwait(false);
     }
