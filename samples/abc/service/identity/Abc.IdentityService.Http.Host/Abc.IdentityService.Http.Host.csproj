@@ -8,7 +8,6 @@
     <ItemGroup>
         <ProjectReference Include="..\..\..\shared\Abc.Shared.Hosting.Microservices\Abc.Shared.Hosting.Microservices.csproj" />
         <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.Logging.Serilog\HsnSoft.Base.Logging.Serilog.csproj" />
-        <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.EntityFrameworkCore.PostgreSql\HsnSoft.Base.EntityFrameworkCore.PostgreSql.csproj" />
     </ItemGroup>
 
     <ItemGroup>

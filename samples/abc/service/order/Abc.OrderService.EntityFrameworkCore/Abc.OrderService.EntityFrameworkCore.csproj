@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-    <!-- How the service keeps the domain: its DbContext and mappings. The database provider is chosen by the host. -->
+    <!-- How the service keeps the domain: its DbContext and mappings. The database provider (PostgreSQL) is registered here, with the repositories. -->
 
     <ItemGroup>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
@@ -9,6 +9,7 @@
     <ItemGroup>
         <ProjectReference Include="..\Abc.OrderService.Domain\Abc.OrderService.Domain.csproj" />
         <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.EntityFrameworkCore\HsnSoft.Base.EntityFrameworkCore.csproj" />
+        <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.EntityFrameworkCore.PostgreSql\HsnSoft.Base.EntityFrameworkCore.PostgreSql.csproj" />
     </ItemGroup>
 
 </Project>

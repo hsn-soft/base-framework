@@ -4,7 +4,6 @@ using Abc.ProductService.Http.Host.Security;
 using Abc.ProductService.MongoDB;
 using Abc.Shared.Hosting.Microservices;
 using HsnSoft.Base.Logging.Serilog;
-using HsnSoft.Base.MongoDB;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.Logging.AddBaseSerilog(builder.Configuration, "Abc.ProductService");
@@ -13,10 +12,9 @@ builder.Logging.AddBaseSerilog(builder.Configuration, "Abc.ProductService");
 builder.Services
     .AddAbcMicroservice(builder.Configuration, "Abc.ProductService API")
     .AddAbcEventBus(builder.Configuration)
-    .AddBaseMongo(builder.Configuration)
     .AddHttpContextAccessor()
     .AddScoped<ICurrentUser, HttpContextCurrentUser>()
-    .AddProductPersistence()
+    .AddProductPersistence(builder.Configuration)
     .AddProductApplication();
 
 WebApplication app = builder.Build();

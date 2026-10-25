@@ -1,6 +1,6 @@
 # ADR-0030: Every microservice has the same four projects; only the persistence project varies
 
-- **Status:** Accepted
+- **Status:** Accepted (the host no longer picks the database provider: the persistence project registers it, [ADR-0035](0035-the-persistence-project-registers-its-database.md))
 - **Date:** 2026-10-25
 
 ## Context

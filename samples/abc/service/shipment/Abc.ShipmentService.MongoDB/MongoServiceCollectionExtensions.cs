@@ -1,6 +1,8 @@
 using Abc.ShipmentService.Domain.ShipmentDomain.Repositories;
 using Abc.ShipmentService.MongoDB.Configurations;
 using Abc.ShipmentService.MongoDB.Repositories;
+using HsnSoft.Base.MongoDB;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Abc.ShipmentService.MongoDB;
@@ -8,12 +10,14 @@ namespace Abc.ShipmentService.MongoDB;
 public static class MongoServiceCollectionExtensions
 {
     /// <summary>
-    /// Registers the mappings and the repositories of the shipment service. The <c>IMongoDatabase</c> itself is registered by the host
-    /// (<c>AddBaseMongo</c>, connection string <c>ConnectionStrings:Mongo</c>).
+    /// Registers what the shipment service needs of MongoDB: the connection (<c>AddBaseMongo</c>, <c>ConnectionStrings:Mongo</c>, and its readiness check), the mappings and the repositories.
     /// </summary>
-    public static IServiceCollection AddShipmentPersistence(this IServiceCollection services)
+    public static IServiceCollection AddShipmentPersistence(this IServiceCollection services, IConfiguration configuration)
     {
         ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(configuration);
+
+        services.AddBaseMongo(configuration);
 
         ShipmentClassMap.Register();
         services.AddScoped<IShipmentRepository, MongoShipmentRepository>();

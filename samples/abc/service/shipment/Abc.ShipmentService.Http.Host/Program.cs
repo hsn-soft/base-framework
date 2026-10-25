@@ -4,7 +4,6 @@ using Abc.ShipmentService.Application.Security;
 using Abc.ShipmentService.Http.Host.Security;
 using Abc.ShipmentService.MongoDB;
 using HsnSoft.Base.Logging.Serilog;
-using HsnSoft.Base.MongoDB;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.Logging.AddBaseSerilog(builder.Configuration, "Abc.ShipmentService");
@@ -13,10 +12,9 @@ builder.Logging.AddBaseSerilog(builder.Configuration, "Abc.ShipmentService");
 builder.Services
     .AddAbcMicroservice(builder.Configuration, "Abc.ShipmentService API")
     .AddAbcEventBus(builder.Configuration)
-    .AddBaseMongo(builder.Configuration)
     .AddHttpContextAccessor()
     .AddScoped<ICurrentUser, HttpContextCurrentUser>()
-    .AddShipmentPersistence()
+    .AddShipmentPersistence(builder.Configuration)
     .AddShipmentApplication();
 
 WebApplication app = builder.Build();

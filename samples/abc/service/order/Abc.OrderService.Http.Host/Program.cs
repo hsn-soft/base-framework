@@ -5,7 +5,6 @@ using Abc.OrderService.EntityFrameworkCore.Context;
 using Abc.OrderService.Http.Host.Security;
 using Abc.Shared.Hosting.Microservices;
 using HsnSoft.Base.EntityFrameworkCore;
-using HsnSoft.Base.EntityFrameworkCore.PostgreSql;
 using HsnSoft.Base.Logging.Serilog;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -15,10 +14,9 @@ builder.Logging.AddBaseSerilog(builder.Configuration, "Abc.OrderService");
 builder.Services
     .AddAbcMicroservice(builder.Configuration, "Abc.OrderService API")
     .AddAbcEventBus(builder.Configuration)
-    .AddBasePostgres<OrderDbContext>(builder.Configuration)
     .AddHttpContextAccessor()
     .AddScoped<ICurrentUser, HttpContextCurrentUser>()
-    .AddOrderPersistence()
+    .AddOrderPersistence(builder.Configuration)
     .AddOrderApplication();
 
 WebApplication app = builder.Build();

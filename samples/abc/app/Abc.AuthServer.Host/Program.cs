@@ -1,9 +1,7 @@
 using Abc.AuthServer.Host.Security;
 using Abc.AuthServer.Host.Services;
 using Abc.IdentityService.EntityFrameworkCore;
-using Abc.IdentityService.EntityFrameworkCore.Context;
 using Abc.Shared.Hosting.Microservices;
-using HsnSoft.Base.EntityFrameworkCore.PostgreSql;
 using HsnSoft.Base.Logging.Serilog;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -11,8 +9,7 @@ builder.Logging.AddBaseSerilog(builder.Configuration, "Abc.AuthServer");
 
 builder.Services
     .AddAbcMicroservice(builder.Configuration, "Abc.AuthServer API")
-    .AddBasePostgres<IdentityDbContext>(builder.Configuration)
-    .AddIdentityPersistence()
+    .AddIdentityPersistence(builder.Configuration)
     .AddScoped<UserAuthenticator>()
     .AddSingleton<TokenService>();
 
