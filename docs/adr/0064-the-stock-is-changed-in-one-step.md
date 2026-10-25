@@ -2,6 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-10-26 (completes the set-based update of [ADR-0048](0048-bulk-and-set-based-changes.md) for MongoDB; applies to [ADR-0062](0062-a-kafka-consumer-for-every-service-and-event.md))
+- **Note:** [ADR-0066](0066-kafka-handles-fetchcount-messages-at-the-same-time.md): Kafka runs `fetchCount` handlers at the same time too, so Xyz uses it (product 10, order 5).
 
 ## Context
 

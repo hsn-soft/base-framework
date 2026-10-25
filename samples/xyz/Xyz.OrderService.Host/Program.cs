@@ -6,6 +6,7 @@ using Xyz.OrderService.Domain.OrderDomain.Entities;
 using Xyz.OrderService.EventHandlers;
 using Xyz.OrderService.Infrastructure;
 using Xyz.OrderService.Infrastructure.Context;
+using Xyz.Shared.Contracts.Events.Product;
 using Xyz.Shared.Hosting;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -15,7 +16,8 @@ builder.Logging.AddBaseSerilog(builder.Configuration, "Xyz.OrderService");
 builder.Services
     .AddXyzMicroservice(builder.Configuration, "Xyz.OrderService API", typeof(Order).Assembly)
     .AddXyzEventBus(builder.Configuration)
-    .AddEventHandlers(typeof(EventHandlersAssemblyMarker).Assembly)
+    // an event that is not named here is handled one message at a time; this one five at a time (each message changes its own order)
+    .AddEventHandlers(typeof(EventHandlersAssemblyMarker).Assembly, new Dictionary<string, ushort> { [nameof(OrderStockReservedEto)] = 5 })
     .AddOrderPersistence(builder.Configuration)
     .AddOrderApplication();
 

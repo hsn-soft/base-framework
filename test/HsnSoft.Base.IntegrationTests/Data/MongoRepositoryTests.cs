@@ -326,4 +326,18 @@ public sealed class MongoRepositoryTests : IAsyncLifetime
         await Assert.ThrowsAsync<ArgumentNullException>(() => read.ServiceProvider.GetRequiredService<IMongoRepository<Product, Guid>>().UpdateWhereAsync(null!, set => set.Inc(candidate => candidate.Price, 1)));
         await Assert.ThrowsAsync<ArgumentNullException>(() => read.ServiceProvider.GetRequiredService<IMongoRepository<Product, Guid>>().UpdateWhereAsync(candidate => true, null!));
     }
+
+    [Fact]
+    public async Task UpdateWhere_ChangesAnEntityWithoutAuditFieldsToo()
+    {
+        Tag tag = new(Guid.NewGuid(), "old");
+        await using AsyncServiceScope scope = Scope();
+        IMongoRepository<Tag, Guid> tags = scope.ServiceProvider.GetRequiredService<IMongoRepository<Tag, Guid>>();
+        await tags.AddAsync(tag);
+
+        long changed = await tags.UpdateWhereAsync(candidate => candidate.Id == tag.Id, set => set.Set(candidate => candidate.Label, "new"));
+
+        Assert.Equal(1, changed);
+        Assert.Equal("new", (await tags.FindAsync(tag.Id))!.Label);
+    }
 }

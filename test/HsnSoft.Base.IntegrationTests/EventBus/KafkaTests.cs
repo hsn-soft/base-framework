@@ -4,6 +4,7 @@ using HsnSoft.Base.EventBus.Kafka;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Logging.Abstractions;
 using Testcontainers.Kafka;
 
 namespace HsnSoft.Base.IntegrationTests.EventBus;
@@ -16,10 +17,11 @@ public sealed class KafkaTests : IAsyncLifetime
 
     public Task DisposeAsync() => _container.DisposeAsync().AsTask();
 
-    private Task<IHost> StartAsync(string exchange, Action<IServiceCollection> handlers, string? service = null, TimeSpan? shutdownTimeout = null)
+    private Task<IHost> StartAsync(string exchange, Action<IServiceCollection> handlers, string? service = null, TimeSpan? shutdownTimeout = null, int partitions = 1)
     {
         IConfiguration configuration = Support.Configuration(
             ("Kafka:BootstrapServers", _container.GetBootstrapAddress()),
+            ("Kafka:Partitions", partitions.ToString(System.Globalization.CultureInfo.InvariantCulture)),
             ("Kafka:EventBus:ExchangeName", exchange),
             ("Kafka:EventBus:ConsumerClientName", service ?? $"service-{Guid.NewGuid():N}"));
         return Support.StartHostAsync(services =>
@@ -161,5 +163,195 @@ public sealed class KafkaTests : IAsyncLifetime
 
         Assert.True(probe.Cancelled, "the handler was not cancelled after the shutdown timeout");
         Assert.False(probe.Completed);
+    }
+
+    [Fact]
+    public async Task FetchCount_IsHowManyMessagesOfTheEventAreHandledAtTheSameTime()
+    {
+        Recorder recorder = new();
+        using IHost host = await StartAsync($"it{Guid.NewGuid():N}", services =>
+        {
+            services.AddSingleton(recorder);
+            services.AddEventHandler<Pinged, SlowHandler>(fetchCount: 5);
+        });
+        IEventBus bus = host.Services.GetRequiredService<IEventBus>();
+
+        for (int number = 0; number < 15; number++)
+        {
+            await bus.PublishAsync(new Pinged($"message-{number}"));
+        }
+
+        await Support.EventuallyAsync(() => Task.FromResult(recorder.Received.Count == 15), "all the messages to be handled");
+        Assert.Equal(5, recorder.MaxRunning);
+        await host.StopAsync();
+    }
+
+    [Fact]
+    public async Task WithoutAFetchCount_MessagesAreHandledOneAtATime()
+    {
+        Recorder recorder = new();
+        using IHost host = await StartAsync($"it{Guid.NewGuid():N}", services =>
+        {
+            services.AddSingleton(recorder);
+            services.AddEventHandler<Pinged, SlowHandler>();
+        });
+        IEventBus bus = host.Services.GetRequiredService<IEventBus>();
+
+        for (int number = 0; number < 4; number++)
+        {
+            await bus.PublishAsync(new Pinged($"message-{number}"));
+        }
+
+        await Support.EventuallyAsync(() => Task.FromResult(recorder.Received.Count == 4), "all the messages to be handled");
+        Assert.Equal(1, recorder.MaxRunning);
+        await host.StopAsync();
+    }
+
+    [Fact]
+    public async Task WhatWasHandledAtTheSameTime_IsCommitted_AndIsNotReadAgainByTheNextRun()
+    {
+        string exchange = $"it{Guid.NewGuid():N}";
+        Recorder first = new();
+        using (IHost host = await StartAsync(exchange, services =>
+        {
+            services.AddSingleton(first);
+            services.AddEventHandler<Pinged, SlowHandler>(fetchCount: 5);
+        }, "same-service"))
+        {
+            IEventBus bus = host.Services.GetRequiredService<IEventBus>();
+            for (int number = 0; number < 12; number++)
+            {
+                await bus.PublishAsync(new Pinged($"message-{number}"));
+            }
+
+            await Support.EventuallyAsync(() => Task.FromResult(first.Received.Count == 12), "all the messages to be handled");
+            await host.StopAsync();
+        }
+
+        // the same service again, the same group: the offsets it committed are where it goes on
+        Recorder second = new();
+        using IHost again = await StartAsync(exchange, services =>
+        {
+            services.AddSingleton(second);
+            services.AddEventHandler<Pinged, SlowHandler>(fetchCount: 5);
+        }, "same-service");
+        await Task.Delay(TimeSpan.FromSeconds(8));
+
+        Assert.Empty(second.Received);
+        await again.StopAsync();
+    }
+
+    [Fact]
+    public async Task AMessageThatWasCancelledAtShutdown_IsReadAgainByTheNextRun()
+    {
+        string exchange = $"it{Guid.NewGuid():N}";
+        StopProbe probe = new();
+        using (IHost host = await StartAsync(exchange, services =>
+        {
+            services.AddSingleton(probe);
+            services.AddEventHandler<Pinged, LongRunningHandler>(fetchCount: 3);
+        }, "same-service", TimeSpan.FromMilliseconds(500)))
+        {
+            await host.Services.GetRequiredService<IEventBus>().PublishAsync(new Pinged("not finished in time"));
+            await probe.Started.Task.WaitAsync(TimeSpan.FromSeconds(30));
+            await host.StopAsync();
+        }
+
+        Assert.True(probe.Cancelled);
+
+        Recorder second = new();
+        using IHost again = await StartAsync(exchange, services =>
+        {
+            services.AddSingleton(second);
+            services.AddEventHandler<Pinged, RecordingHandler>();
+        }, "same-service");
+
+        await Support.EventuallyAsync(() => Task.FromResult(second.Received.Count == 1), "the message that was not committed to be read again");
+        Assert.Equal("not finished in time", second.Received.Single().Message.Text);
+        await again.StopAsync();
+    }
+
+    [Fact]
+    public async Task AnotherInstanceThatJoinsTheGroup_TakesPartitionsOver_WithoutAMessageBeingHandledTwiceOrLost()
+    {
+        string exchange = $"it{Guid.NewGuid():N}";
+        Recorder onA = new();
+        Recorder onB = new();
+        using IHost a = await StartAsync(exchange, services =>
+        {
+            services.AddSingleton(onA);
+            services.AddEventHandler<Pinged, SlowHandler>(fetchCount: 3);
+        }, "same-service", partitions: 2);
+        IEventBus bus = a.Services.GetRequiredService<IEventBus>();
+        for (int number = 0; number < 20; number++)
+        {
+            await bus.PublishAsync(new Pinged($"message-{number}"));
+        }
+
+        // the second instance joins while the first one is working: the group is rebalanced, what the first one is handling finishes and is committed before the partition moves
+        using IHost b = await StartAsync(exchange, services =>
+        {
+            services.AddSingleton(onB);
+            services.AddEventHandler<Pinged, SlowHandler>(fetchCount: 3);
+        }, "same-service", partitions: 2);
+
+        await Support.EventuallyAsync(() => Task.FromResult(onA.Received.Count + onB.Received.Count >= 20), "every message to be handled");
+        await Task.Delay(TimeSpan.FromSeconds(5));
+
+        string[] handled = [.. onA.Received.Concat(onB.Received).Select(envelope => envelope.Message.Text)];
+        Assert.Equal(20, handled.Length);
+        Assert.Equal(20, handled.Distinct().Count());
+        await a.StopAsync();
+        await b.StopAsync();
+    }
+
+    private sealed class CountingDispatcher : IEventDispatcher
+    {
+        public int Dispatched { get; private set; }
+
+        public Task DispatchAsync(string trimmedEventName, Type eventType, object messageEnvelope, CancellationToken cancellationToken = default)
+        {
+            Dispatched++;
+            return Task.CompletedTask;
+        }
+    }
+
+    [Fact]
+    public async Task AMessageThatCannotEvenBeMovedToTheDeadLetterTopic_FailsTheConsumer_IsNotCommitted_AndIsReadAgain()
+    {
+        string exchange = $"it{Guid.NewGuid():N}";
+        KafkaOptions kafka = new() { BootstrapServers = _container.GetBootstrapAddress() };
+        EventBusOptions bus = new() { ExchangeName = exchange, ConsumerClientName = "svc", ShutdownTimeout = TimeSpan.FromSeconds(5) };
+        IntegrationEventInfo info = new("Pinged", typeof(Pinged), 1);
+        string topic = KafkaTopology.TopicFor(bus, "Pinged");
+        string deadLetter = KafkaTopology.DeadLetterTopic(bus);
+        await KafkaTopology.EnsureTopicsAsync(kafka, [topic, deadLetter]);
+        using (IProducer<string, byte[]> producer = new ProducerBuilder<string, byte[]>(new ProducerConfig { BootstrapServers = kafka.BootstrapServers }).Build())
+        {
+            // not an envelope: the message cannot be read, so it has to go to the dead-letter topic
+            await producer.ProduceAsync(topic, new Message<string, byte[]> { Key = "k", Value = "this is not json"u8.ToArray() });
+        }
+
+        // a producer that cannot reach any broker: the message cannot be put on the dead-letter topic either
+        using IProducer<string, byte[]> unreachable = new ProducerBuilder<string, byte[]>(new ProducerConfig { BootstrapServers = "127.0.0.1:1", MessageTimeoutMs = 500 }).Build();
+        using CancellationTokenSource timeout = new(TimeSpan.FromMinutes(2));
+        InvalidOperationException failure = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => new KafkaEventConsumer(info, kafka, bus, new CountingDispatcher(), unreachable, deadLetter, NullLogger.Instance).RunAsync(timeout.Token));
+        Assert.IsType<ProduceException<string, byte[]>>(failure.InnerException);
+
+        // it was not committed: the same group reads it again, and now the dead-letter topic is there
+        using IProducer<string, byte[]> reachable = new ProducerBuilder<string, byte[]>(new ProducerConfig { BootstrapServers = kafka.BootstrapServers }).Build();
+        using CancellationTokenSource stop = new();
+        Task run = new KafkaEventConsumer(info, kafka, bus, new CountingDispatcher(), reachable, deadLetter, NullLogger.Instance).RunAsync(stop.Token);
+        using IConsumer<string, byte[]> probe = new ConsumerBuilder<string, byte[]>(new ConsumerConfig
+        {
+            BootstrapServers = kafka.BootstrapServers,
+            GroupId = $"probe-{Guid.NewGuid():N}",
+            AutoOffsetReset = AutoOffsetReset.Earliest,
+        }).Build();
+        probe.Subscribe(deadLetter);
+        await Support.EventuallyAsync(() => Task.FromResult(probe.Consume(TimeSpan.FromSeconds(1)) is not null), "the message to be read again and moved to the dead-letter topic");
+        await stop.CancelAsync();
+        await run.WaitAsync(TimeSpan.FromSeconds(30));
     }
 }

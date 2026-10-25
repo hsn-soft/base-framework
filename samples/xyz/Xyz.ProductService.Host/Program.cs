@@ -4,6 +4,7 @@ using Xyz.ProductService.Application;
 using Xyz.ProductService.Domain.ProductDomain.Entities;
 using Xyz.ProductService.EventHandlers;
 using Xyz.ProductService.Infrastructure;
+using Xyz.Shared.Contracts.Events.Order;
 using Xyz.Shared.Hosting;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -13,7 +14,8 @@ builder.Logging.AddBaseSerilog(builder.Configuration, "Xyz.ProductService");
 builder.Services
     .AddXyzMicroservice(builder.Configuration, "Xyz.ProductService API", typeof(Product).Assembly)
     .AddXyzEventBus(builder.Configuration)
-    .AddEventHandlers(typeof(EventHandlersAssemblyMarker).Assembly)
+    // ten orders are set aside at the same time: the stock is taken in one step of the database (IProductRepository), so the number at once does not change the result
+    .AddEventHandlers(typeof(EventHandlersAssemblyMarker).Assembly, new Dictionary<string, ushort> { [nameof(OrderCreatedEto)] = 10 })
     .AddProductPersistence(builder.Configuration)
     .AddProductStockPersistence(builder.Configuration)
     .AddProductApplication();

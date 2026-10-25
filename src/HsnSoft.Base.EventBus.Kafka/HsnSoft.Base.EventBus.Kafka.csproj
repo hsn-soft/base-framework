@@ -13,6 +13,11 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <!-- the consumer is exercised against a real broker by the integration tests -->
+        <InternalsVisibleTo Include="HsnSoft.Base.IntegrationTests" />
+    </ItemGroup>
+
+    <ItemGroup>
         <None Include="..\..\README.md" Pack="true" Visible="false" PackagePath="README.md" />
     </ItemGroup>
 

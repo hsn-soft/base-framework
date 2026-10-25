@@ -2,6 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-10-25 (changes how [ADR-0023](0023-event-bus.md) reads on Kafka)
+- **Note:** [ADR-0066](0066-kafka-handles-fetchcount-messages-at-the-same-time.md): a consumer handles `fetchCount` messages at the same time (one by default), not always one.
 - **Note:** [ADR-0063](0063-kafka-topics-are-named-after-the-exchange.md): the shared topic is `{ExchangeName}_{EventName}` now, not `{TopicPrefix}{EventName}`.
 
 ## Context
