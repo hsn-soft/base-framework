@@ -1,3 +1,7 @@
+using Abc.ShipmentService.Domain.CustomerDomain.Consts;
+using Abc.ShipmentService.Domain.CustomerDomain.Entities;
+using Abc.ShipmentService.Domain.PaymentDomain.Consts;
+using Abc.ShipmentService.Domain.PaymentDomain.Entities;
 using Abc.ShipmentService.Domain.ShipmentDomain.Consts;
 using Abc.ShipmentService.Domain.ShipmentDomain.Entities;
 using Abc.ShipmentService.MongoDB.Configurations;
@@ -21,6 +25,12 @@ public static class MongoServiceCollectionExtensions
 
         ShipmentClassMap.Register();
         services.AddMongoRepository<Shipment, Guid>(MongoShipmentDbProperties.CollectionPrefix + ShipmentConsts.CollectionName);
+
+        CustomerClassMap.Register();
+        services.AddMongoRepository<Customer, Guid>(MongoShipmentDbProperties.CollectionPrefix + CustomerConsts.CollectionName);
+
+        PaymentClassMap.Register();
+        services.AddMongoRepository<Payment, Guid>(MongoShipmentDbProperties.CollectionPrefix + PaymentConsts.CollectionName);
         return services;
     }
 }

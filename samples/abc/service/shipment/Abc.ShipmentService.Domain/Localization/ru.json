@@ -1,14 +1,24 @@
 {
   "culture": "ru",
   "texts": {
+    "customer_not_found": "Клиент {0} не найден.",
+    "customer_user_name_duplicate": "Клиент с именем пользователя '{0}' уже есть.",
+    "payment_amount_invalid": "Платёж должен быть на сумму больше нуля.",
+    "payment_not_found": "Платёж {0} не найден.",
+    "payment_status_final": "Платёж в статусе {0} не может стать {1}.",
+    "payment_status_invalid": "'{0}' не является статусом платежа (Pending, Succeeded, Failed, Refunded).",
+    "PaymentStatus:Failed": "Не удалось",
+    "PaymentStatus:Pending": "Ожидает",
+    "PaymentStatus:Refunded": "Возвращён",
+    "PaymentStatus:Succeeded": "Успешно",
     "shipment_history_not_found": "Запись истории отправки {0} не найдена.",
     "shipment_not_found": "Отправление {0} не найдено.",
     "shipment_order_required": "Для отправления нужен заказ.",
     "shipment_status_final": "Статус отправления в состоянии {0} изменить нельзя.",
     "shipment_status_invalid": "'{0}' не является статусом отправления (Preparing, InTransit, Delivered, Returned).",
-    "ShipmentStatus:Preparing": "Готовится",
-    "ShipmentStatus:InTransit": "В пути",
     "ShipmentStatus:Delivered": "Доставлено",
+    "ShipmentStatus:InTransit": "В пути",
+    "ShipmentStatus:Preparing": "Готовится",
     "ShipmentStatus:Returned": "Возвращено"
   }
 }

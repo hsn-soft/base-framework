@@ -1,14 +1,24 @@
 {
   "culture": "tr",
   "texts": {
+    "customer_not_found": "{0} numaralı müşteri bulunamadı.",
+    "customer_user_name_duplicate": "'{0}' kullanıcı adıyla bir müşteri var.",
+    "payment_amount_invalid": "Bir ödeme sıfırdan büyük bir tutar içindir.",
+    "payment_not_found": "{0} numaralı ödeme bulunamadı.",
+    "payment_status_final": "{0} durumundaki bir ödeme {1} olamaz.",
+    "payment_status_invalid": "'{0}' bir ödeme durumu değil (Pending, Succeeded, Failed, Refunded).",
+    "PaymentStatus:Failed": "Başarısız",
+    "PaymentStatus:Pending": "Bekliyor",
+    "PaymentStatus:Refunded": "İade edildi",
+    "PaymentStatus:Succeeded": "Başarılı",
     "shipment_history_not_found": "{0} numaralı sevkiyat geçmişi kaydı bulunamadı.",
     "shipment_not_found": "{0} numaralı gönderi bulunamadı.",
     "shipment_order_required": "Gönderi için bir sipariş gerekir.",
     "shipment_status_final": "Durumu {0} olan bir gönderinin durumu değiştirilemez.",
     "shipment_status_invalid": "'{0}' bir gönderi durumu değil (Preparing, InTransit, Delivered, Returned).",
-    "ShipmentStatus:Preparing": "Hazırlanıyor",
-    "ShipmentStatus:InTransit": "Yolda",
     "ShipmentStatus:Delivered": "Teslim edildi",
+    "ShipmentStatus:InTransit": "Yolda",
+    "ShipmentStatus:Preparing": "Hazırlanıyor",
     "ShipmentStatus:Returned": "İade edildi"
   }
 }

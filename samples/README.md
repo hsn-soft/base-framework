@@ -338,13 +338,14 @@ A signed-in customer (for example `alice`, of Acme, who gets her token from the 
 ```
 order    --OrderCreatedEto-->         product    stock of every line checked and set aside (stock history: "reserved")
 product  --OrderStockReservedEto-->   order      Pending -> Confirmed
-product  --OrderStockReservedEto-->   shipment   the shipment is made and sent (shipment history: delivered / failed)
+product  --OrderStockReservedEto-->   shipment   the customer is made when there is none, the payment is taken (Payment collection)
+shipment --PaymentProcessedEto-->     shipment   an internal event: paid -> the shipment is made and sent (shipment history: delivered / failed); declined -> nothing is sent
 product  --OrderStockRejectedEto-->   order      Cancelled with the reason
-shipment --ShipmentCompletedEto-->    order      Confirmed -> Delivered, or Cancelled ("delivery failed")
+shipment --ShipmentCompletedEto-->    order      Confirmed -> Delivered, or Cancelled ("not delivered": payment declined, or the carrier could not reach the address)
 ```
 
 `POST /api/order-service/v1/commercial/orders/create` with `{ "shippingAddress": "Ankara", "lines": [{ "productId": "...", "productName": "Desk Lamp", "unitPrice": 10, "quantity": 2 }] }`: a few seconds later the order is `Delivered`, the lamp has 2 less
-in stock, and there is a `delivered` record in the shipment history. An address with `fail` in it is returned by the (simulated) carrier and the order is cancelled; an out of stock product (the Office Chair has 0) cancels it at the stock check.
+in stock, and there is a `delivered` record in the shipment history. An address with `fail` in it is returned by the (simulated) carrier and the order is cancelled, one with `nopay` has its payment declined and nothing is sent ([ADR-0060](../docs/adr/0060-customer-payment-and-an-internal-event-in-the-shipment-service.md); the shipment service has `customers` and `payments` with a CRUD each); an out of stock product (the Office Chair has 0) cancels it at the stock check.
 The RabbitMQ management page (`localhost:15672`) shows the queues `ABC_<Service>_<Event>` (`ABC_ProductService_OrderCreated`). The events are in `Abc.Shared.Contracts/Events/<publishing service>/`, the handlers in the Host project of the service that handles them, `EventHandlers/<publishing service>/`. Who made the order (the tenant, the user, the roles) travels in the envelope of every message, and each handler runs as that user: the records the handlers write have `CreatedBy` and `UpdatedBy` ([ADR-0057](../docs/adr/0057-the-caller-of-a-message-and-publish-or-send.md)). The order has a `ShippingAddress` now: a database made before this change has to be dropped (`drop database Abc_Order_Dev`).
 
 ### More than one store in a service ([ADR-0053](../docs/adr/0053-more-than-one-store-in-a-service.md))

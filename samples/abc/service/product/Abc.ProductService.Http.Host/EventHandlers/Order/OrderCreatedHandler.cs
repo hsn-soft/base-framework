@@ -20,7 +20,7 @@ public sealed class OrderCreatedHandler(StockReservationService reservations, IE
         StockReservation reservation = await reservations.ReserveAsync(order.OrderId, order.Lines, cancellationToken).ConfigureAwait(false);
         if (reservation.IsReserved)
         {
-            await eventBus.PublishAsync(new OrderStockReservedEto(order.OrderId, order.ShippingAddress), cancellationToken: cancellationToken).ConfigureAwait(false);
+            await eventBus.PublishAsync(new OrderStockReservedEto(order.OrderId, order.CustomerUserName, order.ShippingAddress, reservation.TotalAmount), cancellationToken: cancellationToken).ConfigureAwait(false);
         }
         else
         {

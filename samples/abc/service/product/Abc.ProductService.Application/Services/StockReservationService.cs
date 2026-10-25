@@ -7,7 +7,7 @@ using HsnSoft.Base.Domain.Repositories;
 namespace Abc.ProductService.Application.Services;
 
 /// <summary>The answer of a stock check: the stock of every line was set aside, or nothing was and why.</summary>
-public sealed record StockReservation(bool IsReserved, string? Reason);
+public sealed record StockReservation(bool IsReserved, string? Reason, decimal TotalAmount = 0);
 
 /// <summary>
 /// Sets the stock of an order aside: every line is checked first (the product exists, is for sale and has enough), and only when all can be given is any taken, each with a record in the stock history. A line that an earlier attempt
@@ -21,16 +21,22 @@ public sealed class StockReservationService(IRepository<Product, Guid> products,
 
         List<(Product Product, int Quantity, string Reference)> toTake = [];
         List<string> problems = [];
+        decimal total = 0;
         foreach (IGrouping<Guid, OrderLineEto> line in lines.GroupBy(line => line.ProductId))
         {
             int quantity = line.Sum(item => item.Quantity);
             string reference = $"order:{orderId}:{line.Key}";
+            Product? product = await products.FindAsync(line.Key, cancellationToken).ConfigureAwait(false);
+            if (product is not null)
+            {
+                total += product.Price * quantity;
+            }
+
             if (await stockHistory.AnyAsync(history => history.Reference == reference && history.Reason == ProductStockHistoryConsts.Reserved, cancellationToken: cancellationToken).ConfigureAwait(false))
             {
                 continue;
             }
 
-            Product? product = await products.FindAsync(line.Key, cancellationToken).ConfigureAwait(false);
             if (product is null)
             {
                 problems.Add($"Product {line.Key} was not found.");
@@ -62,6 +68,6 @@ public sealed class StockReservationService(IRepository<Product, Guid> products,
             await stockHistory.AddAsync(ProductStockHistory.Record(product.Id, product.Name, before, product.Stock, ProductStockHistoryConsts.Reserved, $"order {orderId}", reference), cancellationToken).ConfigureAwait(false);
         }
 
-        return new StockReservation(true, null);
+        return new StockReservation(true, null, total);
     }
 }

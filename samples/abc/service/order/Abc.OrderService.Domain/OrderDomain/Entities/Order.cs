@@ -116,7 +116,7 @@ public sealed class Order : FullAuditedEntity<Guid>, IMultiTenant
         }
 
         Status = OrderStatus.Cancelled;
-        AppendNote($"Delivery failed: {reason ?? "the parcel was returned"}");
+        AppendNote($"Not delivered: {reason ?? "the parcel was returned"}");
     }
 
     private void AppendNote(string text)

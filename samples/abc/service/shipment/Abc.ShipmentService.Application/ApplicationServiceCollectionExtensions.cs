@@ -1,3 +1,5 @@
+using Abc.ShipmentService.Application.Contracts.CustomerDomain.Services;
+using Abc.ShipmentService.Application.Contracts.PaymentDomain.Services;
 using Abc.ShipmentService.Application.Contracts.ShipmentDomain.Services;
 using Abc.ShipmentService.Application.Contracts.ShipmentHistoryDomain.Services;
 using Abc.ShipmentService.Application.Services;
@@ -14,6 +16,9 @@ public static class ApplicationServiceCollectionExtensions
 
         services.AddScoped<IShipmentAppService, ShipmentAppService>();
         services.AddScoped<IShipmentHistoryAppService, ShipmentHistoryAppService>();
+        services.AddScoped<ICustomerAppService, CustomerAppService>();
+        services.AddScoped<IPaymentAppService, PaymentAppService>();
+        services.AddScoped<PaymentProcessor>();
         return services;
     }
 }
