@@ -1,0 +1,20 @@
+{
+  "culture": "en",
+  "texts": {
+    "Status:200": "Success",
+    "Status:201": "Created",
+    "Status:202": "Accepted",
+    "Status:204": "No content",
+    "Status:400": "Bad request.",
+    "Status:401": "Unauthorized.",
+    "Status:403": "Forbidden.",
+    "Status:404": "Resource not found.",
+    "Status:405": "Method not allowed.",
+    "Status:408": "Request timeout.",
+    "Status:415": "Unsupported media type.",
+    "Status:429": "Too many requests.",
+    "Status:Other": "Request failed.",
+    "Base:ErrorCode": "Error code: {0}",
+    "Validation:Failed": "Validation failed."
+  }
+}

@@ -86,17 +86,17 @@ public sealed class Product : ICreationAudited, IModificationAudited, ISoftDelet
         Name = Required(name, ProductConsts.NameMaxLength, nameof(Name));
         NormalizedName = Normalize(Name);
         Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim().Length > ProductConsts.DescriptionMaxLength
-            ? throw new DomainException($"Description is at most {ProductConsts.DescriptionMaxLength} characters.")
+            ? throw new DomainException($"Description is at most {ProductConsts.DescriptionMaxLength} characters.").WithKey("field_too_long", "Description", ProductConsts.DescriptionMaxLength)
             : description.Trim();
-        Price = price < 0 ? throw new DomainException("Price cannot be negative.") : price;
-        Stock = stock < 0 ? throw new DomainException("Stock cannot be negative.") : stock;
+        Price = price < 0 ? throw new DomainException("Price cannot be negative.").WithKey("field_negative", "Price") : price;
+        Stock = stock < 0 ? throw new DomainException("Stock cannot be negative.").WithKey("field_negative", "Stock") : stock;
     }
 
     private static string Required(string value, int maxLength, string name)
     {
         string text = value?.Trim() ?? string.Empty;
         return text.Length == 0 || text.Length > maxLength
-            ? throw new DomainException($"{name} is required and at most {maxLength} characters.")
+            ? throw new DomainException($"{name} is required and at most {maxLength} characters.").WithKey("field_required", name, maxLength)
             : text;
     }
 }

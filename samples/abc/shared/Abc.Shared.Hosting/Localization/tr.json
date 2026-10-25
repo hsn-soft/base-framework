@@ -1,0 +1,10 @@
+{
+  "culture": "tr",
+  "texts": {
+    "field_required": "{0} zorunludur ve en fazla {1} karakter olabilir.",
+    "field_too_long": "{0} en fazla {1} karakter olabilir.",
+    "field_negative": "{0} negatif olamaz.",
+    "status_required": "Durum zorunludur.",
+    "invalid_credentials": "Kullanıcı adı veya şifre hatalı."
+  }
+}

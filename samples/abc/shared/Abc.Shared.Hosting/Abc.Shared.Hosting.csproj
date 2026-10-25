@@ -6,6 +6,11 @@
     -->
 
     <ItemGroup>
+        <!-- the texts of this layer (Localization/en.json, tr.json, ru.json), read by the localization at start -->
+        <EmbeddedResource Include="Localization\*.json" />
+    </ItemGroup>
+
+    <ItemGroup>
         <!-- the public key every host checks tokens with (made with scripts/generate-rsa-keys.cs, not in git); copied next to the assemblies of the hosts -->
         <Content Include="public_key.xml" Condition="Exists('public_key.xml')" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
@@ -20,6 +25,7 @@
         <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.AspNetCore.WebApi\HsnSoft.Base.AspNetCore.WebApi.csproj" />
         <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.AspNetCore.Swashbuckle\HsnSoft.Base.AspNetCore.Swashbuckle.csproj" />
         <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.Authentication\HsnSoft.Base.Authentication.csproj" />
+        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.Localization\HsnSoft.Base.Localization.csproj" />
         <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.Caching.StackExchangeRedis\HsnSoft.Base.Caching.StackExchangeRedis.csproj" />
     </ItemGroup>
 

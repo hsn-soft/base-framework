@@ -21,4 +21,8 @@ public sealed class UserUpdateDto
 
     /// <summary>The roles of the user after the change (<c>customer</c> when none is given).</summary>
     public List<string>? Roles { get; set; }
+
+    /// <summary>The language the user is answered in; <c>en</c> when none is given.</summary>
+    [StringLength(UserConsts.LanguageMaxLength)]
+    public string? Language { get; set; }
 }

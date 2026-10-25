@@ -1,0 +1,9 @@
+{
+  "culture": "tr",
+  "texts": {
+    "shipment_not_found": "{0} numaralı gönderi bulunamadı.",
+    "shipment_order_required": "Gönderi için bir sipariş gerekir.",
+    "shipment_status_final": "Durumu {0} olan bir gönderinin durumu değiştirilemez.",
+    "shipment_status_invalid": "'{0}' bir gönderi durumu değil (Preparing, InTransit, Delivered, Returned)."
+  }
+}

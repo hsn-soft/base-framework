@@ -232,6 +232,19 @@ curl -X POST http://localhost:5600/identity-service/v1/users/check-user-name -H 
 
 Each gateway reaches only the endpoints of its own segment (the other one answers 404), and its Swagger UI (`/swagger`) shows the identity service's document with the gateway's paths.
 
+### Localization in Abc
+
+The answers are told in the language of the request: the `locale` claim of the token (a user has a `Language`: `admin` is `en`, `alice` is `tr`), else `Accept-Language`, else `en`; the languages are `en`, `tr`, `ru` ([ADR-0038](../docs/adr/0038-localization.md),
+[docs/Localization.md](../docs/Localization.md)). The texts are JSON files in `Abc.Shared.Hosting/Localization` (what several services say) and in `Localization` of each service's domain project (its errors), merged with the framework's, the innermost first. Try it:
+`POST /product-service/v1/products/get/{any id}` with alice's token answers in Turkish, with admin's in English (the `Accept-Language` header only counts without the claim); the login of an unknown user with `Accept-Language: ru` answers in Russian. The logs stay in English.
+
+### Tenants, audit and soft delete in Abc
+
+Every Abc entity (`User`, `Product`, `Order`, `Shipment`) has the audit fields (`CreatedBy`, `UpdatedBy`: the id of the user), soft delete (a delete marks the row; the lists do not show it) and a tenant ([ADR-0037](../docs/adr/0037-audit-soft-delete-and-tenants.md),
+[docs/EntityConcepts.md](../docs/EntityConcepts.md)). There are two tenants (`AbcTenants` in `Abc.Shared.Hosting`): the **system tenant** (`admin`: sees every tenant) and **Acme** (`alice`: sees only Acme's data, and the two seeded products are Acme's). The auth server puts
+`tenant_id` (and `is_system_tenant` for `admin`) in the token. A row made by a user gets the tenant of the token; a user name and a sku are unique in the whole system. A database made before this change must be dropped (new columns): `drop database abc_identity`,
+`abc_order`; the MongoDB ones (`abc_product`, `abc_shipment`) too, as their old documents lack the fields.
+
 ### The users of Abc
 
 The auth server (which only reads) and the identity service (which owns the database) share one PostgreSQL database (`ConnectionStrings:Postgres`, `abc_identity`). The identity service creates it on its first start and, when it has no user, adds `admin` / `admin123` and `alice` / `alice123`

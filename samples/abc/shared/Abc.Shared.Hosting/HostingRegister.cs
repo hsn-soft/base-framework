@@ -1,6 +1,7 @@
 using HsnSoft.Base.AspNetCore;
 using HsnSoft.Base.Authentication;
 using HsnSoft.Base.Caching.StackExchangeRedis;
+using HsnSoft.Base.Localization;
 using HsnSoft.Base.Logging;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
@@ -36,7 +37,8 @@ public static class HostingRegister
             .AddBaseLogging()
             .AddBaseRequestLogging(configuration)
             .AddBaseWebApi()
-            .AddBaseHealthChecks();
+            .AddBaseHealthChecks()
+            .AddBaseLocalization(configuration, options => options.AddEmbedded(typeof(AbcTenants).Assembly));   // the shared layer of the texts; a service adds its own after it
 
         if (swaggerBearerButton)
         {
@@ -79,6 +81,8 @@ public static class HostingRegister
             app.UseBaseAuthorization();
         }
 
+        // after the authentication: the language claim of the token is read
+        app.UseBaseLocalization();
         app.MapBaseHealth();
         return app;
     }

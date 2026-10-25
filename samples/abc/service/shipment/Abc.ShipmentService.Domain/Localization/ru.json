@@ -1,0 +1,9 @@
+{
+  "culture": "ru",
+  "texts": {
+    "shipment_not_found": "Отправление {0} не найдено.",
+    "shipment_order_required": "Для отправления нужен заказ.",
+    "shipment_status_final": "Статус отправления в состоянии {0} изменить нельзя.",
+    "shipment_status_invalid": "'{0}' не является статусом отправления (Preparing, InTransit, Delivered, Returned)."
+  }
+}

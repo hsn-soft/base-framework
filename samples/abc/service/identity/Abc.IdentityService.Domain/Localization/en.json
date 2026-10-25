@@ -1,0 +1,9 @@
+{
+  "culture": "en",
+  "texts": {
+    "user_not_found": "User {0} was not found.",
+    "user_name_duplicate": "The user name '{0}' is taken.",
+    "role_invalid": "A role is at least one and at most {0} characters, without a comma.",
+    "password_length": "The password is {0} to {1} characters."
+  }
+}

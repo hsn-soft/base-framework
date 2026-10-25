@@ -51,7 +51,7 @@ public sealed class UserAppService(IUserRepository users) : IUserAppService
             throw new UserUserNameDuplicateException(userName);
         }
 
-        User user = User.Create(userName, input.Email, input.DisplayName, input.Password, input.Roles);
+        User user = User.Create(userName, input.Email, input.DisplayName, input.Password, input.Roles, input.Language);
         await users.AddAsync(user, cancellationToken).ConfigureAwait(false);
         await users.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return ToDto(user);
@@ -71,7 +71,7 @@ public sealed class UserAppService(IUserRepository users) : IUserAppService
         ArgumentNullException.ThrowIfNull(input);
 
         User user = await FindAsync(input.Id, cancellationToken).ConfigureAwait(false);
-        user.Update(input.Email, input.DisplayName, input.IsActive, input.Roles);
+        user.Update(input.Email, input.DisplayName, input.IsActive, input.Roles, input.Language);
         await users.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
@@ -91,6 +91,7 @@ public sealed class UserAppService(IUserRepository users) : IUserAppService
         UserName = user.UserName,
         Email = user.Email,
         DisplayName = user.DisplayName,
+        Language = user.Language,
         Roles = user.Roles,
         IsActive = user.IsActive,
         TenantId = user.TenantId,

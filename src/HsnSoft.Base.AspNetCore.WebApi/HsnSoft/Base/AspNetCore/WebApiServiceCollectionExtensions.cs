@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using HsnSoft.Base.AspNetCore.Responses;
 using HsnSoft.Base.Communication;
+using HsnSoft.Base.Localization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
@@ -35,6 +36,8 @@ public static class WebApiServiceCollectionExtensions
             errors.Bind(configuration.GetSection(ApiErrorOptions.SectionName));
         }
 
+        services.AddOptions<RequestLanguageOptions>().Configure(options => configuration?.GetSection(RequestLanguageOptions.SectionName).Bind(options));
+        services.TryAddSingleton<IRequestLanguageResolver, RequestLanguageResolver>();
         services.TryAddSingleton<IStatusMessageProvider, StatusMessageProvider>();
         services.TryAddSingleton<IApiResponseWriter, ApiResponseWriter>();
         services.TryAddSingleton<IApiExceptionMapper, ApiExceptionMapper>();
@@ -84,7 +87,7 @@ public static class WebApiServiceCollectionExtensions
     private static BadRequestObjectResult InvalidModelState(ActionContext context)
     {
         IHostEnvironment environment = context.HttpContext.RequestServices.GetRequiredService<IHostEnvironment>();
-        System.Collections.Generic.List<string> messages = ["Validation failed."];
+        System.Collections.Generic.List<string> messages = [context.HttpContext.RequestServices.GetService<IMessageLocalizer>()?.Find("Validation:Failed") ?? "Validation failed."];
 
         // which field is wrong helps the developer; where the service runs for real the client is not told
         if (!context.HttpContext.RequestServices.GetRequiredService<IOptions<ApiErrorOptions>>().Value.HidesDetails(environment))
@@ -108,6 +111,7 @@ public static class WebApiServiceCollectionExtensions
     {
         HttpContext http = context.HttpContext;
         int status = http.Response.StatusCode;
+        using IDisposable? language = RequestLanguageScope.Begin(http);
         string message = http.RequestServices.GetRequiredService<IStatusMessageProvider>().GetMessage(status);
         await http.RequestServices.GetRequiredService<IApiResponseWriter>().WriteErrorAsync(http, status, [message], $"http_{status}").ConfigureAwait(false);
     }

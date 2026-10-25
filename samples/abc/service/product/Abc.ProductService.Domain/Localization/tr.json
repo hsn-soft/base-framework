@@ -1,0 +1,7 @@
+{
+  "culture": "tr",
+  "texts": {
+    "product_not_found": "{0} numaralı ürün bulunamadı.",
+    "product_sku_duplicate": "'{0}' stok kodu kullanılıyor."
+  }
+}

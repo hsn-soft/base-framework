@@ -29,7 +29,7 @@ from the code, and could undo one without knowing it was deliberate.
 - A new session starts from [docs/adr/README.md](README.md) (the root `CLAUDE.md` says so) and finds the rules and their reasons in minutes.
 - Writing an ADR is a small cost on every decision; it is accepted because the alternative is deciding the same thing again.
 - The reference documents may repeat a rule for the reader's convenience; the ADR is the authority and the reference document links to it.
-- Decisions taken before this ADR were written down afterwards (ADR-0002 to ADR-0036); their date is the day the decision was taken as best we know it (October 2026), and the ones whose history matters say how they changed.
+- Decisions taken before this ADR were written down afterwards (ADR-0002 to ADR-0038); their date is the day the decision was taken as best we know it (October 2026), and the ones whose history matters say how they changed.
 
 ## Related
 

@@ -3,6 +3,11 @@
     <!-- The heart of the identity service: its entities and rules. It depends on nothing but the framework's Core. -->
 
     <ItemGroup>
+        <!-- the texts of this layer (Localization/en.json, tr.json, ru.json), read by the localization at start -->
+        <EmbeddedResource Include="Localization\*.json" />
+    </ItemGroup>
+
+    <ItemGroup>
         <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.Core\HsnSoft.Base.Core.csproj" />
     </ItemGroup>
 

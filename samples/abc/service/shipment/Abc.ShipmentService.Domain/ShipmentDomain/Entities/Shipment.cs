@@ -62,7 +62,7 @@ public sealed class Shipment : ICreationAudited, IModificationAudited, ISoftDele
     {
         if (orderId == Guid.Empty)
         {
-            throw new DomainException("A shipment needs an order.");
+            throw new DomainException("A shipment needs an order.").WithKey("shipment_order_required");
         }
 
         Shipment shipment = new()
@@ -84,7 +84,7 @@ public sealed class Shipment : ICreationAudited, IModificationAudited, ISoftDele
     {
         if (Status is ShipmentStatus.Delivered or ShipmentStatus.Returned && status != Status)
         {
-            throw new DomainException($"A {Status.ToString().ToLowerInvariant()} shipment cannot change its status.");
+            throw new DomainException($"A {Status.ToString().ToLowerInvariant()} shipment cannot change its status.").WithKey("shipment_status_final", Status.ToString());
         }
 
         Change(carrier, address);
@@ -102,7 +102,7 @@ public sealed class Shipment : ICreationAudited, IModificationAudited, ISoftDele
     {
         string text = value?.Trim() ?? string.Empty;
         return text.Length == 0 || text.Length > maxLength
-            ? throw new DomainException($"{name} is required and at most {maxLength} characters.")
+            ? throw new DomainException($"{name} is required and at most {maxLength} characters.").WithKey("field_required", name, maxLength)
             : text;
     }
 }

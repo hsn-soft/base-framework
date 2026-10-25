@@ -5,7 +5,9 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using HsnSoft.Base.Communication;
+using HsnSoft.Base.Localization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace HsnSoft.Base.AspNetCore.Responses;
 
@@ -66,6 +68,13 @@ public sealed class ApiResponseWriter : IApiResponseWriter
         }
 
         context.Response.Clear();
+
+        // Clear took the header the middleware had set: it says in which language the error is told
+        if (context.RequestServices?.GetService<ILanguageAccessor>() is { } languages)
+        {
+            context.Response.Headers.ContentLanguage = languages.Current;
+        }
+
         context.Response.ContentType = "application/json; charset=utf-8";
         context.Response.StatusCode = statusCode;
         await context.Response.WriteAsync(json).ConfigureAwait(false);

@@ -1,5 +1,7 @@
+using System.Reflection;
 using HsnSoft.Base.EventBus;
 using HsnSoft.Base.EventBus.RabbitMQ;
+using HsnSoft.Base.Localization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,9 +14,11 @@ public static class MicroserviceRegister
     /// <param name="services">The service collection.</param>
     /// <param name="configuration">Holds <c>RequestLogging</c>, <c>Swagger</c>, <c>Jwt</c> and <c>ConnectionStrings:Redis</c>.</param>
     /// <param name="swaggerTitle">The title of the service's Swagger document.</param>
-    public static IServiceCollection AddAbcMicroservice(this IServiceCollection services, IConfiguration configuration, string swaggerTitle)
+    /// <param name="localizedAssemblies">The assemblies of the service that have texts (<c>Localization/en.json</c>, ...): the innermost layer, which wins over the shared one and the framework's.</param>
+    public static IServiceCollection AddAbcMicroservice(this IServiceCollection services, IConfiguration configuration, string swaggerTitle, params Assembly[] localizedAssemblies)
         => services
             .AddAbcHosting(configuration, swaggerTitle, authenticateUsers: true, swaggerBearerButton: true)
+            .AddBaseLocalization(configure: options => Array.ForEach(localizedAssemblies, assembly => options.AddEmbedded(assembly)))
             .AddAbcRedis(configuration);
 
     /// <summary>

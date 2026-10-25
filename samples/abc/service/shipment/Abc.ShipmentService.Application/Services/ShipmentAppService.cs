@@ -56,7 +56,7 @@ public sealed class ShipmentAppService(IShipmentRepository shipments) : IShipmen
         ArgumentNullException.ThrowIfNull(input);
 
         Shipment shipment = await FindAsync(input.Id, cancellationToken).ConfigureAwait(false);
-        shipment.Update(input.Carrier, input.Address, ParseStatus(input.Status) ?? throw new DomainException("Status is required."));
+        shipment.Update(input.Carrier, input.Address, ParseStatus(input.Status) ?? throw new DomainException("Status is required.").WithKey("status_required"));
         await shipments.UpdateAsync(shipment, cancellationToken).ConfigureAwait(false);
     }
 
@@ -74,7 +74,7 @@ public sealed class ShipmentAppService(IShipmentRepository shipments) : IShipmen
             ? null
             : Enum.TryParse(status.Trim(), ignoreCase: true, out ShipmentStatus parsed) && Enum.IsDefined(parsed)
                 ? parsed
-                : throw new DomainException($"'{status}' is not a status of a shipment (Preparing, InTransit, Delivered, Returned).");
+                : throw new DomainException($"'{status}' is not a status of a shipment (Preparing, InTransit, Delivered, Returned).").WithKey("shipment_status_invalid", status);
 
     private static ShipmentDto ToDto(Shipment shipment) => new()
     {

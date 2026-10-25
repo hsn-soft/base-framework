@@ -1,6 +1,6 @@
 # ADR-0036: `ICurrentUser` is the framework's; the JWT authentication registers it
 
-- **Status:** Accepted
+- **Status:** Accepted (its members are now `Id`, `UserName` and the tenant claims, [ADR-0037](0037-audit-soft-delete-and-tenants.md))
 - **Date:** 2026-10-25 (replaces the per-service `ICurrentUser` of [ADR-0033](0033-the-abc-services-crud-pattern.md))
 
 ## Context

@@ -11,4 +11,6 @@ public static class UserConsts
     public const int PasswordMaxLength = 128;
     public const int PasswordHashMaxLength = 512;
     public const int RoleMaxLength = 32;
+    public const int LanguageMaxLength = 8;
+    public const string DefaultLanguage = "en";
 }

@@ -8,6 +8,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\src\HsnSoft.Base.AspNetCore.WebApi\HsnSoft.Base.AspNetCore.WebApi.csproj" />
+        <ProjectReference Include="..\..\src\HsnSoft.Base.Localization\HsnSoft.Base.Localization.csproj" />
     </ItemGroup>
 
 </Project>

@@ -1,0 +1,9 @@
+{
+  "culture": "en",
+  "texts": {
+    "shipment_not_found": "Shipment {0} was not found.",
+    "shipment_order_required": "A shipment needs an order.",
+    "shipment_status_final": "A shipment that is {0} cannot change its status.",
+    "shipment_status_invalid": "'{0}' is not a status of a shipment (Preparing, InTransit, Delivered, Returned)."
+  }
+}

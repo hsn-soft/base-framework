@@ -1,0 +1,7 @@
+{
+  "culture": "ru",
+  "texts": {
+    "product_not_found": "Товар {0} не найден.",
+    "product_sku_duplicate": "Артикул '{0}' занят."
+  }
+}

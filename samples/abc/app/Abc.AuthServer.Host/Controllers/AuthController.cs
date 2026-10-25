@@ -47,7 +47,7 @@ public sealed class AuthController(UserAuthenticator authenticator, TokenService
     public async Task<TokenDto> LoginAsync([FromBody] LoginDto input, CancellationToken cancellationToken = default)
     {
         AuthenticatedUser user = await authenticator.AuthenticateAsync(input.Username, input.Password, cancellationToken)
-                                 ?? throw new BaseHttpException(StatusCodes.Status401Unauthorized, "Invalid credentials");
+                                 ?? throw new BaseHttpException(StatusCodes.Status401Unauthorized, "Invalid credentials").WithKey("invalid_credentials");
 
         AccessToken token = tokens.Issue(user);
         Logger.LogInformation("{Account} signed in", user.UserName);

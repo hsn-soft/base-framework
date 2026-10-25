@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using HsnSoft.Base.AspNetCore.Responses;
+using HsnSoft.Base.Localization;
 using HsnSoft.Base.Logging;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Hosting;
@@ -16,7 +17,7 @@ public interface IApiExceptionMapper
     (int StatusCode, string? ErrorCode, List<string> Messages) Map(Exception exception, IHostEnvironment environment);
 }
 
-public sealed class ApiExceptionMapper(IStatusMessageProvider statusMessages, IOptions<ApiErrorOptions> errorOptions) : IApiExceptionMapper
+public sealed class ApiExceptionMapper(IStatusMessageProvider statusMessages, IOptions<ApiErrorOptions> errorOptions, IMessageLocalizer? localizer = null) : IApiExceptionMapper
 {
     public (int StatusCode, string? ErrorCode, List<string> Messages) Map(Exception exception, IHostEnvironment environment)
     {
@@ -34,10 +35,12 @@ public sealed class ApiExceptionMapper(IStatusMessageProvider statusMessages, IO
         };
 
         // the text of an unexpected error may leak internals; the others are written for the client
-        List<string> messages = [showsMessage && !string.IsNullOrWhiteSpace(exception.Message) ? exception.Message : statusMessages.GetMessage(status)];
+        // what the client reads is in its language when the error names a text (the log keeps the message as it was written)
+        string? message = showsMessage ? Localized(exception) ?? (string.IsNullOrWhiteSpace(exception.Message) ? null : exception.Message) : null;
+        List<string> messages = [message ?? statusMessages.GetMessage(status)];
         if (!string.IsNullOrWhiteSpace(errorCode))
         {
-            messages.Add($"Error code: {errorCode}");
+            messages.Add(localizer?.Find("Base:ErrorCode", errorCode) ?? $"Error code: {errorCode}");
         }
 
         messages.AddRange(exception.Data.Cast<DictionaryEntry>().Select(entry => $"{entry.Key}: {entry.Value}"));
@@ -58,6 +61,9 @@ public sealed class ApiExceptionMapper(IStatusMessageProvider statusMessages, IO
 
         return (status, errorCode, messages);
     }
+
+    private string? Localized(Exception exception)
+        => localizer is not null && exception is ILocalizableError { MessageKey: { Length: > 0 } key } error ? localizer.Find(key, [.. error.MessageArgs]) : null;
 
     private static IEnumerable<string> InnerMessages(Exception? exception)
     {

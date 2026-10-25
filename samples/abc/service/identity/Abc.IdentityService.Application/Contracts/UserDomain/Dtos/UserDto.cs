@@ -10,6 +10,8 @@ public sealed class UserDto
 
     public string DisplayName { get; init; } = string.Empty;
 
+    public string Language { get; init; } = string.Empty;
+
     public IReadOnlyList<string> Roles { get; init; } = [];
 
     public bool IsActive { get; init; }

@@ -31,6 +31,9 @@ public sealed class User : ICreationAudited, IModificationAudited, ISoftDelete, 
 
     public string DisplayName { get; private set; } = string.Empty;
 
+    /// <summary>The language the user is answered in (<c>en</c>, <c>tr</c>, <c>ru</c>): the <c>locale</c> claim of the token. A language that is not supported is not an error; the request's own header decides then.</summary>
+    public string Language { get; private set; } = UserConsts.DefaultLanguage;
+
     /// <summary>What the password was made into by <see cref="PasswordHasher"/>; the password itself is never kept.</summary>
     public string PasswordHash { get; private set; } = string.Empty;
 
@@ -63,7 +66,7 @@ public sealed class User : ICreationAudited, IModificationAudited, ISoftDelete, 
 
     public void MarkDeleted(DateTimeOffset at, Guid? by) => (IsDeleted, DeletedAt, DeletedBy) = (true, at, by);
 
-    public static User Create(string userName, string email, string displayName, string password, IEnumerable<string>? roles)
+    public static User Create(string userName, string email, string displayName, string password, IEnumerable<string>? roles, string? language = null)
     {
         User user = new()
         {
@@ -73,7 +76,7 @@ public sealed class User : ICreationAudited, IModificationAudited, ISoftDelete, 
             PasswordHash = PasswordHasher.Hash(ValidPassword(password)),
         };
         user.NormalizedUserName = Normalize(user.UserName);
-        user.Change(email, displayName, roles);
+        user.Change(email, displayName, roles, language);
         return user;
     }
 
@@ -83,14 +86,15 @@ public sealed class User : ICreationAudited, IModificationAudited, ISoftDelete, 
     /// <summary>A user name or an email as it is compared and searched: trimmed, in capitals.</summary>
     public static string Normalize(string text) => text.Trim().ToUpperInvariant();
 
-    public void Update(string email, string displayName, bool isActive, IEnumerable<string>? roles)
+    public void Update(string email, string displayName, bool isActive, IEnumerable<string>? roles, string? language = null)
     {
-        Change(email, displayName, roles);
+        Change(email, displayName, roles, language);
         IsActive = isActive;
     }
 
-    private void Change(string email, string displayName, IEnumerable<string>? roles)
+    private void Change(string email, string displayName, IEnumerable<string>? roles, string? language)
     {
+        Language = string.IsNullOrWhiteSpace(language) ? UserConsts.DefaultLanguage : Required(language, UserConsts.LanguageMaxLength, nameof(Language)).ToLowerInvariant();
         Roles = NormalizeRoles(roles);
         Email = Required(email, UserConsts.EmailMaxLength, nameof(Email));
         NormalizedEmail = Normalize(Email);
@@ -101,20 +105,20 @@ public sealed class User : ICreationAudited, IModificationAudited, ISoftDelete, 
     {
         string[] normalized = [.. (roles ?? [UserRoles.Customer]).Select(role => role?.Trim().ToLowerInvariant() ?? string.Empty).Distinct()];
         return normalized.Any(role => role.Length == 0 || role.Length > UserConsts.RoleMaxLength || role.Contains(','))
-            ? throw new DomainException($"A role is at least one and at most {UserConsts.RoleMaxLength} characters, without a comma.")
+            ? throw new DomainException($"A role is at least one and at most {UserConsts.RoleMaxLength} characters, without a comma.").WithKey("role_invalid", UserConsts.RoleMaxLength)
             : normalized;
     }
 
     private static string ValidPassword(string password)
         => password is null || password.Length < UserConsts.PasswordMinLength || password.Length > UserConsts.PasswordMaxLength
-            ? throw new DomainException($"The password is {UserConsts.PasswordMinLength} to {UserConsts.PasswordMaxLength} characters.")
+            ? throw new DomainException($"The password is {UserConsts.PasswordMinLength} to {UserConsts.PasswordMaxLength} characters.").WithKey("password_length", UserConsts.PasswordMinLength, UserConsts.PasswordMaxLength)
             : password;
 
     private static string Required(string value, int maxLength, string name)
     {
         string text = value?.Trim() ?? string.Empty;
         return text.Length == 0 || text.Length > maxLength
-            ? throw new DomainException($"{name} is required and at most {maxLength} characters.")
+            ? throw new DomainException($"{name} is required and at most {maxLength} characters.").WithKey("field_required", name, maxLength)
             : text;
     }
 }

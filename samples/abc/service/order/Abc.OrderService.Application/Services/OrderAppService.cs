@@ -59,7 +59,7 @@ public sealed class OrderAppService(IOrderRepository orders, ICurrentUser curren
         ArgumentNullException.ThrowIfNull(input);
 
         Order order = await FindAsync(input.Id, cancellationToken).ConfigureAwait(false);
-        order.Update(ParseStatus(input.Status) ?? throw new DomainException("Status is required."), input.Note);
+        order.Update(ParseStatus(input.Status) ?? throw new DomainException("Status is required.").WithKey("status_required"), input.Note);
         await orders.UpdateAsync(order, cancellationToken).ConfigureAwait(false);
     }
 
@@ -77,7 +77,7 @@ public sealed class OrderAppService(IOrderRepository orders, ICurrentUser curren
             ? null
             : Enum.TryParse(status.Trim(), ignoreCase: true, out OrderStatus parsed) && Enum.IsDefined(parsed)
                 ? parsed
-                : throw new DomainException($"'{status}' is not a status of an order (Pending, Confirmed, Shipped, Delivered, Cancelled).");
+                : throw new DomainException($"'{status}' is not a status of an order (Pending, Confirmed, Shipped, Delivered, Cancelled).").WithKey("order_status_invalid", status);
 
     private static OrderDto ToDto(Order order) => new()
     {

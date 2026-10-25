@@ -21,6 +21,7 @@ public static class UserDomainConfiguration
             user.Property(entity => entity.Email).HasMaxLength(UserConsts.EmailMaxLength).IsRequired();
             user.Property(entity => entity.NormalizedEmail).HasMaxLength(UserConsts.EmailMaxLength).IsRequired();
             user.Property(entity => entity.DisplayName).HasMaxLength(UserConsts.DisplayNameMaxLength).IsRequired();
+            user.Property(entity => entity.Language).HasMaxLength(UserConsts.LanguageMaxLength).IsRequired();
             user.Property(entity => entity.PasswordHash).HasMaxLength(UserConsts.PasswordHashMaxLength).IsRequired();
 
             // the roles are one column of names with a comma between them (a role cannot have a comma, the user checks it)

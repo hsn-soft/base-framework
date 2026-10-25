@@ -1,4 +1,5 @@
 using Abc.OrderService.Application;
+using Abc.OrderService.Domain.OrderDomain.Entities;
 using Abc.OrderService.EntityFrameworkCore;
 using Abc.OrderService.EntityFrameworkCore.Context;
 using Abc.Shared.Hosting.Microservices;
@@ -10,7 +11,7 @@ builder.Logging.AddBaseSerilog(builder.Configuration, "Abc.OrderService");
 
 // what every Abc microservice has (logging, the web api shell, JWT, Swagger, health), then what this service has
 builder.Services
-    .AddAbcMicroservice(builder.Configuration, "Abc.OrderService API")
+    .AddAbcMicroservice(builder.Configuration, "Abc.OrderService API", typeof(Order).Assembly)
     .AddAbcEventBus(builder.Configuration)
     .AddOrderPersistence(builder.Configuration)
     .AddOrderApplication();

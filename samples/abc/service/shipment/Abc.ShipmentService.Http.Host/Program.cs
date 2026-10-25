@@ -1,5 +1,6 @@
 using Abc.Shared.Hosting.Microservices;
 using Abc.ShipmentService.Application;
+using Abc.ShipmentService.Domain.ShipmentDomain.Entities;
 using Abc.ShipmentService.MongoDB;
 using HsnSoft.Base.Logging.Serilog;
 
@@ -8,7 +9,7 @@ builder.Logging.AddBaseSerilog(builder.Configuration, "Abc.ShipmentService");
 
 // what every Abc microservice has (logging, the web api shell, JWT, Swagger, health), then what this service has
 builder.Services
-    .AddAbcMicroservice(builder.Configuration, "Abc.ShipmentService API")
+    .AddAbcMicroservice(builder.Configuration, "Abc.ShipmentService API", typeof(Shipment).Assembly)
     .AddAbcEventBus(builder.Configuration)
     .AddShipmentPersistence(builder.Configuration)
     .AddShipmentApplication();

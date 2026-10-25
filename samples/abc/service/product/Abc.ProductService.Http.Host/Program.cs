@@ -1,4 +1,5 @@
 using Abc.ProductService.Application;
+using Abc.ProductService.Domain.ProductDomain.Entities;
 using Abc.ProductService.MongoDB;
 using Abc.Shared.Hosting;
 using Abc.Shared.Hosting.Microservices;
@@ -9,7 +10,7 @@ builder.Logging.AddBaseSerilog(builder.Configuration, "Abc.ProductService");
 
 // what every Abc microservice has (logging, the web api shell, JWT, Swagger, health), then what this service has
 builder.Services
-    .AddAbcMicroservice(builder.Configuration, "Abc.ProductService API")
+    .AddAbcMicroservice(builder.Configuration, "Abc.ProductService API", typeof(Product).Assembly)
     .AddAbcEventBus(builder.Configuration)
     .AddProductPersistence(builder.Configuration)
     .AddProductApplication();

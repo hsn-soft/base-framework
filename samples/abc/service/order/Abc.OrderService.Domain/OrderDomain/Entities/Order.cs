@@ -64,7 +64,7 @@ public sealed class Order : ICreationAudited, IModificationAudited, ISoftDelete,
         string customer = customerUserName?.Trim() ?? string.Empty;
         if (customer.Length == 0 || customer.Length > OrderConsts.CustomerUserNameMaxLength)
         {
-            throw new DomainException("An order needs a signed-in customer.");
+            throw new DomainException("An order needs a signed-in customer.").WithKey("order_customer_required");
         }
 
         Order order = new()
@@ -77,7 +77,7 @@ public sealed class Order : ICreationAudited, IModificationAudited, ISoftDelete,
         order._lines.AddRange(lines ?? []);
         if (order._lines.Count == 0)
         {
-            throw new DomainException("An order has at least one line.");
+            throw new DomainException("An order has at least one line.").WithKey("order_lines_required");
         }
 
         order.TotalAmount = order._lines.Sum(line => line.Total);
@@ -93,7 +93,7 @@ public sealed class Order : ICreationAudited, IModificationAudited, ISoftDelete,
     {
         if (Status is OrderStatus.Delivered or OrderStatus.Cancelled && status != Status)
         {
-            throw new DomainException($"A {Status.ToString().ToLowerInvariant()} order cannot change its status.");
+            throw new DomainException($"A {Status.ToString().ToLowerInvariant()} order cannot change its status.").WithKey("order_status_final", Status.ToString());
         }
 
         Status = status;
@@ -103,7 +103,7 @@ public sealed class Order : ICreationAudited, IModificationAudited, ISoftDelete,
     private void SetNote(string? note)
     {
         Note = string.IsNullOrWhiteSpace(note) ? null : note.Trim().Length > OrderConsts.NoteMaxLength
-            ? throw new DomainException($"Note is at most {OrderConsts.NoteMaxLength} characters.")
+            ? throw new DomainException($"Note is at most {OrderConsts.NoteMaxLength} characters.").WithKey("field_too_long", "Note", OrderConsts.NoteMaxLength)
             : note.Trim();
     }
 }

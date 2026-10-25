@@ -84,4 +84,38 @@ public class ExceptionsTests
     }
 
     private sealed class DerivedBusinessException : BusinessException;
+
+    [Fact]
+    public void AnErrorThatNamesAText_KeepsItsMessage_AndCarriesTheKeyAndTheArguments()
+    {
+        NotFoundException notFound = new NotFoundException("order 7 is missing").WithKey("order_not_found", 7);
+        BusinessRuleException rule = new BusinessRuleException("not allowed").WithKey("not_allowed");
+        BaseHttpException http = new BaseHttpException(401, "no").WithKey("invalid_credentials", "a", "b");
+        DomainException domain = new DomainException("broken").WithKey("field_required", "Name", 64);
+
+        Assert.Equal("order 7 is missing", notFound.Message);
+        Assert.Equal("order_not_found", notFound.MessageKey);
+        Assert.Equal<object?>([7], [.. notFound.MessageArgs]);
+        Assert.Equal(("not_allowed", 0), (rule.MessageKey, rule.MessageArgs.Count));
+        Assert.Equal(("invalid_credentials", 2), (http.MessageKey, http.MessageArgs.Count));
+        Assert.Equal("field_required", domain.MessageKey);
+        Assert.Equal<object?>(["Name", 64], [.. domain.MessageArgs]);
+        Assert.All<ILocalizableError>([notFound, rule, http, domain], error => Assert.NotNull(error.MessageKey));
+    }
+
+    [Fact]
+    public void AnErrorWithoutAKey_HasNone_AndTheCodeOfABusinessExceptionIsItsKeyUnlessAnotherIsGiven()
+    {
+        Assert.Null(new DomainException("x").MessageKey);
+        Assert.Empty(new NotFoundException("x").MessageArgs);
+        Assert.Null(new BusinessException().MessageKey);
+
+        BusinessException coded = new("stock_empty", "the stock is empty");
+        Assert.Equal("stock_empty", coded.MessageKey);
+        Assert.Empty(coded.MessageArgs);
+
+        coded.WithKey("other_key", 1);
+        Assert.Equal("other_key", coded.MessageKey);
+        Assert.Equal<object?>([1], [.. coded.MessageArgs]);
+    }
 }

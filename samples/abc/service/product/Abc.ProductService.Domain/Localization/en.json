@@ -1,0 +1,7 @@
+{
+  "culture": "en",
+  "texts": {
+    "product_not_found": "Product {0} was not found.",
+    "product_sku_duplicate": "The sku '{0}' is taken."
+  }
+}

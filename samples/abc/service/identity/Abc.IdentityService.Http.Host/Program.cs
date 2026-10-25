@@ -1,4 +1,5 @@
 using Abc.IdentityService.Application;
+using Abc.IdentityService.Domain.UserDomain.Entities;
 using Abc.IdentityService.EntityFrameworkCore;
 using Abc.Shared.Hosting;
 using Abc.Shared.Hosting.Microservices;
@@ -9,7 +10,7 @@ builder.Logging.AddBaseSerilog(builder.Configuration, "Abc.IdentityService");
 
 // what every Abc microservice has (logging, the web api shell, JWT, Swagger, health), then what this service has
 builder.Services
-    .AddAbcMicroservice(builder.Configuration, "Abc.IdentityService API")
+    .AddAbcMicroservice(builder.Configuration, "Abc.IdentityService API", typeof(User).Assembly)
     .AddAbcEventBus(builder.Configuration)
     .AddIdentityPersistence(builder.Configuration)
     .AddIdentityApplication();

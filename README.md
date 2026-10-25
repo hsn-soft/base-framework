@@ -19,7 +19,7 @@ JWT, Swagger, a broker or a cache.
 
 | Package | Capability | Depends on |
 |---|---|---|
-| `HsnSoft.Base.Core` | Bare essentials: shared exceptions, health-check tag, startup retry, `ICurrentUser` | - |
+| `HsnSoft.Base.Core` | Bare essentials: shared exceptions, health-check tag, startup retry, `ICurrentUser`, the contracts of audit, soft delete, tenants and localization (`IMultiTenant`, `ISoftDelete`, `IMessageLocalizer`, ...) with their defaults | - |
 | `HsnSoft.Base.Logging` | Logger interfaces and models, masking of sensitive data, the settings every provider reads (`Logging:LogLevel` for the console, `PersistentLogger` for what is kept); independent of any logging library ([docs](docs/Logging.md)) | Core |
 | `HsnSoft.Base.Logging.Serilog` | Serilog provider: console, Graylog or file, Debug/Verbose stay in the console | Logging, Hosting |
 | `HsnSoft.Base.Hosting` | Generic Host workers: `PeriodicBackgroundService` | Core |
@@ -32,12 +32,13 @@ JWT, Swagger, a broker or a cache.
 | `HsnSoft.Base.EventBus.RabbitMQ` | RabbitMQ broker, wire and topology compatible with the production services | EventBus |
 | `HsnSoft.Base.EventBus.Kafka` | Kafka broker: producer, consumer group, dead-letter topic | EventBus |
 | `HsnSoft.Base.Caching.StackExchangeRedis` | `IDistributedCache`, connection, health check | Core |
-| `HsnSoft.Base.EntityFrameworkCore` | What the EF Core providers share: `DbContext` health check, startup schema creation | Core |
+| `HsnSoft.Base.EntityFrameworkCore` | What the EF Core providers share: `DbContext` health check, startup schema creation, `BaseDbContext` and the interceptor for audit, soft delete and tenants | Core |
 | `HsnSoft.Base.EntityFrameworkCore.PostgreSql` | PostgreSQL `DbContext` with retries | EntityFrameworkCore |
 | `HsnSoft.Base.EntityFrameworkCore.SqlServer` | SQL Server `DbContext` with retries | EntityFrameworkCore |
 | `HsnSoft.Base.BlobStoring` | `IBlobStore`: save, read and delete files in containers | Core |
 | `HsnSoft.Base.BlobStoring.Minio` | MinIO (S3) implementation of `IBlobStore`; Azure would be a sibling package | BlobStoring |
-| `HsnSoft.Base.MongoDB` | `IMongoDatabase` registration and health check | Core |
+| `HsnSoft.Base.Localization` | JSON texts embedded in the assemblies, merged from the innermost layer out, found by key in the language of the request | Core |
+| `HsnSoft.Base.MongoDB` | `IMongoDatabase` registration and health check, `MongoEntityConcepts` (audit, soft delete and tenants for repositories) | Core |
 | `HsnSoft.Base` | Name holder that references `HsnSoft.Base.Core` | Core |
 
 Abstractions and their implementations are separate packages (`EventBus` / `EventBus.RabbitMQ` / `EventBus.Kafka`, `BlobStoring` /

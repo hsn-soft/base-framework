@@ -1,0 +1,8 @@
+{
+  "culture": "tr",
+  "texts": {
+    "Test:Hello": "Merhaba {0}",
+    "Test:Only": "Sadece burada",
+    "Status:404": "Burada hiçbir şey yok"
+  }
+}

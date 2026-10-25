@@ -26,4 +26,8 @@ public sealed class UserCreateDto
 
     /// <summary>The roles (<c>admin</c>, <c>customer</c>); <c>customer</c> when none is given.</summary>
     public List<string>? Roles { get; set; }
+
+    /// <summary>The language the user is answered in (<c>en</c>, <c>tr</c>, <c>ru</c>); <c>en</c> when none is given.</summary>
+    [StringLength(UserConsts.LanguageMaxLength)]
+    public string? Language { get; set; }
 }

@@ -23,6 +23,8 @@ public sealed class GlobalExceptionHandler(
         ArgumentNullException.ThrowIfNull(httpContext);
         ArgumentNullException.ThrowIfNull(exception);
 
+        // the answer is in the language of the request: the one the middleware set does not reach this outer layer
+        using IDisposable? language = RequestLanguageScope.Begin(httpContext);
         (int status, string? errorCode, System.Collections.Generic.List<string> messages) = mapper.Map(exception, environment);
 
         // the request log says how this request ended and why

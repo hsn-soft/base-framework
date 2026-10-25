@@ -1,0 +1,20 @@
+{
+  "culture": "tr",
+  "texts": {
+    "Status:200": "Başarılı",
+    "Status:201": "Oluşturuldu",
+    "Status:202": "Kabul edildi",
+    "Status:204": "İçerik yok",
+    "Status:400": "Geçersiz istek.",
+    "Status:401": "Yetkisiz.",
+    "Status:403": "Erişim yasak.",
+    "Status:404": "Kaynak bulunamadı.",
+    "Status:405": "Yöntem desteklenmiyor.",
+    "Status:408": "İstek zaman aşımına uğradı.",
+    "Status:415": "Desteklenmeyen ortam türü.",
+    "Status:429": "Çok fazla istek.",
+    "Status:Other": "İstek başarısız oldu.",
+    "Base:ErrorCode": "Hata kodu: {0}",
+    "Validation:Failed": "Doğrulama başarısız."
+  }
+}
