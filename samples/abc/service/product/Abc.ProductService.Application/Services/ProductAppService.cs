@@ -9,7 +9,7 @@ using Abc.ProductService.Domain.ProductDomain.Repositories;
 
 namespace Abc.ProductService.Application.Services;
 
-public sealed class ProductAppService(IProductRepository products) : IProductAppService
+public sealed class ProductAppService(IProductRepository products, IServiceProvider services) : ApplicationServiceBase(services), IProductAppService
 {
     public async Task<ProductDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
         => ToDto(await FindAsync(id, cancellationToken).ConfigureAwait(false));

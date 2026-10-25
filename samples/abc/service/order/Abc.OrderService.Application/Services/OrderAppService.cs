@@ -7,13 +7,10 @@ using Abc.OrderService.Domain.OrderDomain.Entities;
 using Abc.OrderService.Domain.OrderDomain.Exceptions;
 using Abc.OrderService.Domain.OrderDomain.Repositories;
 using HsnSoft.Base;
-using HsnSoft.Base.Localization;
-
-using HsnSoft.Base.Security;
 
 namespace Abc.OrderService.Application.Services;
 
-public sealed class OrderAppService(IOrderRepository orders, ICurrentUser currentUser, IMessageLocalizer localizer) : IOrderAppService
+public sealed class OrderAppService(IOrderRepository orders, IServiceProvider services) : ApplicationServiceBase(services), IOrderAppService
 {
     public async Task<OrderDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
         => ToDto(await FindAsync(id, cancellationToken).ConfigureAwait(false));
@@ -50,7 +47,7 @@ public sealed class OrderAppService(IOrderRepository orders, ICurrentUser curren
         ArgumentNullException.ThrowIfNull(input);
 
         IEnumerable<OrderLine> lines = input.Lines.Select(line => OrderLine.Create(line.ProductId, line.ProductName, line.UnitPrice, line.Quantity));
-        Order order = Order.Create(currentUser.UserName ?? string.Empty, input.Note, lines);
+        Order order = Order.Create(CurrentUser.UserName ?? string.Empty, input.Note, lines);
         await orders.AddAsync(order, cancellationToken).ConfigureAwait(false);
         return ToDto(order);
     }
@@ -85,7 +82,7 @@ public sealed class OrderAppService(IOrderRepository orders, ICurrentUser curren
         Id = order.Id,
         CustomerUserName = order.CustomerUserName,
         Status = order.Status.ToString(),
-        StatusText = localizer.Get($"OrderStatus:{order.Status}"),
+        StatusText = L[$"OrderStatus:{order.Status}"].Value,
         Note = order.Note,
         TotalAmount = order.TotalAmount,
         Lines = [.. order.Lines.Select(line => new OrderLineDto { ProductId = line.ProductId, ProductName = line.ProductName, UnitPrice = line.UnitPrice, Quantity = line.Quantity, Total = line.Total })],

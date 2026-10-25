@@ -79,11 +79,13 @@ The first argument of each text is the name of the parameter. The framework has 
 
 ## A translated text in a response body
 
-An application service asks for `IMessageLocalizer`, a controller has `L` (the standard `IStringLocalizer`, in the base controller of the service); both read the one set of texts in the language of the request:
+An application service has `L` (the standard `IStringLocalizer`, in the `ApplicationServiceBase` of the service, [ADR-0041](adr/0041-application-service-base-in-the-framework.md)) and so has a controller (in its base controller); code with neither asks for `IMessageLocalizer`. All read the one set of texts in the language of the request:
 
 ```csharp
-// application service
-StatusText = localizer.Get($"OrderStatus:{order.Status}"),     // Get gives the key when no language has the text; Find gives null
+// application service (ApplicationServiceBase: L, Logger, CurrentUser, CurrentTenant)
+StatusText = L[$"OrderStatus:{order.Status}"].Value,         // the key comes back when no language has the text
+
+// code with no L: IMessageLocalizer.Get gives the key too, Find gives null
 
 // controller (base controller: L, CurrentUser, CurrentTenant, Logger)
 return Ok(new { label = L["OrderStatus:Pending"].Value });

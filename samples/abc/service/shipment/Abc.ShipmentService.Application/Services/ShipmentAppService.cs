@@ -7,11 +7,10 @@ using Abc.ShipmentService.Domain.ShipmentDomain.Entities;
 using Abc.ShipmentService.Domain.ShipmentDomain.Exceptions;
 using Abc.ShipmentService.Domain.ShipmentDomain.Repositories;
 using HsnSoft.Base;
-using HsnSoft.Base.Localization;
 
 namespace Abc.ShipmentService.Application.Services;
 
-public sealed class ShipmentAppService(IShipmentRepository shipments, IMessageLocalizer localizer) : IShipmentAppService
+public sealed class ShipmentAppService(IShipmentRepository shipments, IServiceProvider services) : ApplicationServiceBase(services), IShipmentAppService
 {
     public async Task<ShipmentDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
         => ToDto(await FindAsync(id, cancellationToken).ConfigureAwait(false));
@@ -85,7 +84,7 @@ public sealed class ShipmentAppService(IShipmentRepository shipments, IMessageLo
         Carrier = shipment.Carrier,
         Address = shipment.Address,
         Status = shipment.Status.ToString(),
-        StatusText = localizer.Get($"ShipmentStatus:{shipment.Status}"),
+        StatusText = L[$"ShipmentStatus:{shipment.Status}"].Value,
         TenantId = shipment.TenantId,
         CreatedAt = shipment.CreatedAt,
         CreatedBy = shipment.CreatedBy,

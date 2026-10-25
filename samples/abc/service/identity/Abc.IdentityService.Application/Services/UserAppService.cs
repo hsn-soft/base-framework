@@ -9,7 +9,7 @@ using Abc.IdentityService.Domain.UserDomain.Repositories;
 
 namespace Abc.IdentityService.Application.Services;
 
-public sealed class UserAppService(IUserRepository users) : IUserAppService
+public sealed class UserAppService(IUserRepository users, IServiceProvider services) : ApplicationServiceBase(services), IUserAppService
 {
     public async Task<UserDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
         => ToDto(await FindAsync(id, cancellationToken).ConfigureAwait(false));
