@@ -7,12 +7,13 @@ using Abc.OrderService.Domain.OrderDomain.Entities;
 using Abc.OrderService.Domain.OrderDomain.Exceptions;
 using Abc.OrderService.Domain.OrderDomain.Repositories;
 using HsnSoft.Base;
+using HsnSoft.Base.Localization;
 
 using HsnSoft.Base.Security;
 
 namespace Abc.OrderService.Application.Services;
 
-public sealed class OrderAppService(IOrderRepository orders, ICurrentUser currentUser) : IOrderAppService
+public sealed class OrderAppService(IOrderRepository orders, ICurrentUser currentUser, IMessageLocalizer localizer) : IOrderAppService
 {
     public async Task<OrderDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
         => ToDto(await FindAsync(id, cancellationToken).ConfigureAwait(false));
@@ -79,11 +80,12 @@ public sealed class OrderAppService(IOrderRepository orders, ICurrentUser curren
                 ? parsed
                 : throw new DomainException($"'{status}' is not a status of an order (Pending, Confirmed, Shipped, Delivered, Cancelled).").WithKey("order_status_invalid", status);
 
-    private static OrderDto ToDto(Order order) => new()
+    private OrderDto ToDto(Order order) => new()
     {
         Id = order.Id,
         CustomerUserName = order.CustomerUserName,
         Status = order.Status.ToString(),
+        StatusText = localizer.Get($"OrderStatus:{order.Status}"),
         Note = order.Note,
         TotalAmount = order.TotalAmount,
         Lines = [.. order.Lines.Select(line => new OrderLineDto { ProductId = line.ProductId, ProductName = line.ProductName, UnitPrice = line.UnitPrice, Quantity = line.Quantity, Total = line.Total })],

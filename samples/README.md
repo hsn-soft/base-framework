@@ -236,7 +236,7 @@ Each gateway reaches only the endpoints of its own segment (the other one answer
 
 The answers are told in the language of the request: the `locale` claim of the token (a user has a `Language`: `admin` is `en`, `alice` is `tr`), else `Accept-Language`, else `en`; the languages are `en`, `tr`, `ru` ([ADR-0038](../docs/adr/0038-localization.md),
 [docs/Localization.md](../docs/Localization.md)). The texts are JSON files in `Abc.Shared.Hosting/Localization` (what several services say) and in `Localization` of each service's domain project (its errors), merged with the framework's, the innermost first. Try it:
-`POST /product-service/v1/products/get/{any id}` with alice's token answers in Turkish, with admin's in English (the `Accept-Language` header only counts without the claim); the login of an unknown user with `Accept-Language: ru` answers in Russian. The logs stay in English.
+`POST /product-service/v1/products/get/{any id}` with alice's token answers in Turkish, with admin's in English (the `Accept-Language` header only counts without the claim); the login of an unknown user with `Accept-Language: ru` answers in Russian. The logs stay in English. The public endpoint `GET /identity-service/v1/users/welcome` (public gateway, no token) greets in the language of the header: `Accept-Language: tr` answers "Hoş geldiniz", `ru` "Добро пожаловать", anything else "Welcome".
 
 ### Tenants, audit and soft delete in Abc
 

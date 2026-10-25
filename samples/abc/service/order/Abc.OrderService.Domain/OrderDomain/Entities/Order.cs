@@ -102,8 +102,6 @@ public sealed class Order : ICreationAudited, IModificationAudited, ISoftDelete,
 
     private void SetNote(string? note)
     {
-        Note = string.IsNullOrWhiteSpace(note) ? null : note.Trim().Length > OrderConsts.NoteMaxLength
-            ? throw new DomainException($"Note is at most {OrderConsts.NoteMaxLength} characters.").WithKey("field_too_long", "Note", OrderConsts.NoteMaxLength)
-            : note.Trim();
+        Note = string.IsNullOrWhiteSpace(note) ? null : Guard.Length(note.Trim(), nameof(Note), OrderConsts.NoteMaxLength);
     }
 }

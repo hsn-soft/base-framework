@@ -15,6 +15,12 @@
     "Status:429": "Too many requests.",
     "Status:Other": "Request failed.",
     "Base:ErrorCode": "Error code: {0}",
-    "Validation:Failed": "Validation failed."
+    "Validation:Failed": "Validation failed.",
+    "Validation:Required": "{0} is required.",
+    "Validation:IsNotEmpty": "{0} must not be empty.",
+    "Validation:MaxLength": "{0} is at most {1} characters.",
+    "Validation:MinLength": "{0} is at least {1} characters.",
+    "Validation:Range": "{0} must be between {1} and {2}.",
+    "Validation:NotNegative": "{0} cannot be negative."
   }
 }

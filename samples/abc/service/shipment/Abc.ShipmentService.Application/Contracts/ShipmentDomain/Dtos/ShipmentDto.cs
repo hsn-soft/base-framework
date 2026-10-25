@@ -15,6 +15,9 @@ public sealed class ShipmentDto
     /// <summary>Preparing, InTransit, Delivered or Returned.</summary>
     public string Status { get; init; } = string.Empty;
 
+    /// <summary>The status in the language of the request (translated by the application service).</summary>
+    public string StatusText { get; init; } = string.Empty;
+
     public Guid TenantId { get; init; }
 
     public DateTimeOffset CreatedAt { get; init; }

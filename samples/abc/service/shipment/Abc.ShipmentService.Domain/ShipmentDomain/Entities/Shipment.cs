@@ -93,16 +93,8 @@ public sealed class Shipment : ICreationAudited, IModificationAudited, ISoftDele
 
     private void Change(string carrier, string address)
     {
-        Carrier = Required(carrier, ShipmentConsts.CarrierMaxLength, nameof(Carrier));
+        Carrier = Guard.NotNullOrWhiteSpace(carrier, nameof(Carrier), ShipmentConsts.CarrierMaxLength);
         NormalizedCarrier = Normalize(Carrier);
-        Address = Required(address, ShipmentConsts.AddressMaxLength, nameof(Address));
-    }
-
-    private static string Required(string value, int maxLength, string name)
-    {
-        string text = value?.Trim() ?? string.Empty;
-        return text.Length == 0 || text.Length > maxLength
-            ? throw new DomainException($"{name} is required and at most {maxLength} characters.").WithKey("field_required", name, maxLength)
-            : text;
+        Address = Guard.NotNullOrWhiteSpace(address, nameof(Address), ShipmentConsts.AddressMaxLength);
     }
 }

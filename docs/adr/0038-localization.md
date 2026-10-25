@@ -1,6 +1,6 @@
 # ADR-0038: Localization: embedded JSON texts, merged from the innermost layer out, in the language of the request
 
-- **Status:** Accepted
+- **Status:** Accepted (see also [ADR-0039](0039-guard-and-translating-a-response-body.md): `Guard`, and translating a text in a response body)
 - **Date:** 2026-10-25
 
 ## Context

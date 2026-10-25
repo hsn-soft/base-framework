@@ -62,6 +62,35 @@ throw new BusinessException("product_sku_duplicate", $"The sku '{sku}' is taken.
 
 `NotFoundException`, `BusinessRuleException`, `DomainException`, `BaseHttpException` and `BusinessException` have `WithKey`; a `BusinessException` without it uses its error code as the key (with no arguments). The failures of the service (5xx) are not translated.
 
+## Checking a value in the domain: `Guard`
+
+`Guard` (Core) checks and fails with a `DomainException` that names a text, so the domain never asks for one ([ADR-0039](adr/0039-guard-and-translating-a-response-body.md)):
+
+```csharp
+Name = Guard.NotNullOrWhiteSpace(name, nameof(Name), maxLength: 128);    // trimmed; Validation:Required / MaxLength / MinLength
+Description = Guard.Length(description, nameof(Description), 1024);
+Price = Guard.NotNegative(price, nameof(Price));                          // Validation:NotNegative
+Quantity = Guard.Range(quantity, nameof(Quantity), 1, int.MaxValue);      // Validation:Range
+ProductId = Guard.NotDefault<Guid>(productId, nameof(ProductId));         // Validation:Required for null or Guid.Empty
+Lines = Guard.NotNullOrEmpty(lines, nameof(Lines));                       // Validation:IsNotEmpty
+```
+
+The first argument of each text is the name of the parameter. The framework has the texts in `en`, `tr`, `ru`.
+
+## A translated text in a response body
+
+An application service asks for `IMessageLocalizer`, a controller has `L` (the standard `IStringLocalizer`, in the base controller of the service); both read the one set of texts in the language of the request:
+
+```csharp
+// application service
+StatusText = localizer.Get($"OrderStatus:{order.Status}"),     // Get gives the key when no language has the text; Find gives null
+
+// controller (base controller: L, CurrentUser, CurrentTenant, Logger)
+return Ok(new { label = L["OrderStatus:Pending"].Value });
+```
+
+Keep the stable code in the body too (`Status`): the client reacts to the code and shows the text.
+
 ## In code
 
 `IMessageLocalizer.Find(key, args)` gives the text in the current language (`null` when there is none); the standard `IStringLocalizer` and `IStringLocalizer<T>` read the same texts (one set; the type does not matter).

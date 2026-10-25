@@ -7,10 +7,11 @@ using Abc.ShipmentService.Domain.ShipmentDomain.Entities;
 using Abc.ShipmentService.Domain.ShipmentDomain.Exceptions;
 using Abc.ShipmentService.Domain.ShipmentDomain.Repositories;
 using HsnSoft.Base;
+using HsnSoft.Base.Localization;
 
 namespace Abc.ShipmentService.Application.Services;
 
-public sealed class ShipmentAppService(IShipmentRepository shipments) : IShipmentAppService
+public sealed class ShipmentAppService(IShipmentRepository shipments, IMessageLocalizer localizer) : IShipmentAppService
 {
     public async Task<ShipmentDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
         => ToDto(await FindAsync(id, cancellationToken).ConfigureAwait(false));
@@ -76,7 +77,7 @@ public sealed class ShipmentAppService(IShipmentRepository shipments) : IShipmen
                 ? parsed
                 : throw new DomainException($"'{status}' is not a status of a shipment (Preparing, InTransit, Delivered, Returned).").WithKey("shipment_status_invalid", status);
 
-    private static ShipmentDto ToDto(Shipment shipment) => new()
+    private ShipmentDto ToDto(Shipment shipment) => new()
     {
         Id = shipment.Id,
         OrderId = shipment.OrderId,
@@ -84,6 +85,7 @@ public sealed class ShipmentAppService(IShipmentRepository shipments) : IShipmen
         Carrier = shipment.Carrier,
         Address = shipment.Address,
         Status = shipment.Status.ToString(),
+        StatusText = localizer.Get($"ShipmentStatus:{shipment.Status}"),
         TenantId = shipment.TenantId,
         CreatedAt = shipment.CreatedAt,
         CreatedBy = shipment.CreatedBy,

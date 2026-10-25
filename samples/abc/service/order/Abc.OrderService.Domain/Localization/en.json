@@ -6,9 +6,10 @@
     "order_lines_required": "An order has at least one line.",
     "order_status_final": "An order that is {0} cannot change its status.",
     "order_status_invalid": "'{0}' is not a status of an order (Pending, Confirmed, Shipped, Delivered, Cancelled).",
-    "order_line_product_name": "The product name of a line is required and at most {0} characters.",
-    "order_line_product_required": "A line needs a product.",
-    "order_line_price_negative": "The unit price of a line cannot be negative.",
-    "order_line_quantity_min": "The quantity of a line is at least 1."
+    "OrderStatus:Pending": "Pending",
+    "OrderStatus:Confirmed": "Confirmed",
+    "OrderStatus:Shipped": "Shipped",
+    "OrderStatus:Delivered": "Delivered",
+    "OrderStatus:Cancelled": "Cancelled"
   }
 }

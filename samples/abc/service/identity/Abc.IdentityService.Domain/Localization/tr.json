@@ -4,6 +4,6 @@
     "user_not_found": "{0} numaralı kullanıcı bulunamadı.",
     "user_name_duplicate": "'{0}' kullanıcı adı kullanılıyor.",
     "role_invalid": "Bir rol en az bir, en fazla {0} karakter olmalı ve virgül içermemeli.",
-    "password_length": "Şifre {0} ile {1} karakter arasında olmalı."
+    "welcome": "Hoş geldiniz"
   }
 }

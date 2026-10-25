@@ -71,9 +71,9 @@ public sealed class User : ICreationAudited, IModificationAudited, ISoftDelete, 
         User user = new()
         {
             Id = Guid.CreateVersion7(),
-            UserName = Required(userName, UserConsts.UserNameMaxLength, nameof(UserName)),
+            UserName = Guard.NotNullOrWhiteSpace(userName, nameof(UserName), UserConsts.UserNameMaxLength),
             IsActive = true,
-            PasswordHash = PasswordHasher.Hash(ValidPassword(password)),
+            PasswordHash = PasswordHasher.Hash(Guard.Length(password, nameof(password), UserConsts.PasswordMaxLength, UserConsts.PasswordMinLength)!),
         };
         user.NormalizedUserName = Normalize(user.UserName);
         user.Change(email, displayName, roles, language);
@@ -94,11 +94,11 @@ public sealed class User : ICreationAudited, IModificationAudited, ISoftDelete, 
 
     private void Change(string email, string displayName, IEnumerable<string>? roles, string? language)
     {
-        Language = string.IsNullOrWhiteSpace(language) ? UserConsts.DefaultLanguage : Required(language, UserConsts.LanguageMaxLength, nameof(Language)).ToLowerInvariant();
+        Language = string.IsNullOrWhiteSpace(language) ? UserConsts.DefaultLanguage : Guard.NotNullOrWhiteSpace(language, nameof(Language), UserConsts.LanguageMaxLength).ToLowerInvariant();
         Roles = NormalizeRoles(roles);
-        Email = Required(email, UserConsts.EmailMaxLength, nameof(Email));
+        Email = Guard.NotNullOrWhiteSpace(email, nameof(Email), UserConsts.EmailMaxLength);
         NormalizedEmail = Normalize(Email);
-        DisplayName = Required(displayName, UserConsts.DisplayNameMaxLength, nameof(DisplayName));
+        DisplayName = Guard.NotNullOrWhiteSpace(displayName, nameof(DisplayName), UserConsts.DisplayNameMaxLength);
     }
 
     private static string[] NormalizeRoles(IEnumerable<string>? roles)
@@ -107,18 +107,5 @@ public sealed class User : ICreationAudited, IModificationAudited, ISoftDelete, 
         return normalized.Any(role => role.Length == 0 || role.Length > UserConsts.RoleMaxLength || role.Contains(','))
             ? throw new DomainException($"A role is at least one and at most {UserConsts.RoleMaxLength} characters, without a comma.").WithKey("role_invalid", UserConsts.RoleMaxLength)
             : normalized;
-    }
-
-    private static string ValidPassword(string password)
-        => password is null || password.Length < UserConsts.PasswordMinLength || password.Length > UserConsts.PasswordMaxLength
-            ? throw new DomainException($"The password is {UserConsts.PasswordMinLength} to {UserConsts.PasswordMaxLength} characters.").WithKey("password_length", UserConsts.PasswordMinLength, UserConsts.PasswordMaxLength)
-            : password;
-
-    private static string Required(string value, int maxLength, string name)
-    {
-        string text = value?.Trim() ?? string.Empty;
-        return text.Length == 0 || text.Length > maxLength
-            ? throw new DomainException($"{name} is required and at most {maxLength} characters.").WithKey("field_required", name, maxLength)
-            : text;
     }
 }

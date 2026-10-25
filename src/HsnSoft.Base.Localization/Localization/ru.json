@@ -15,6 +15,12 @@
     "Status:429": "Слишком много запросов.",
     "Status:Other": "Запрос не выполнен.",
     "Base:ErrorCode": "Код ошибки: {0}",
-    "Validation:Failed": "Ошибка проверки данных."
+    "Validation:Failed": "Ошибка проверки данных.",
+    "Validation:Required": "{0} обязательно.",
+    "Validation:IsNotEmpty": "{0} не может быть пустым.",
+    "Validation:MaxLength": "{0} не длиннее {1} символов.",
+    "Validation:MinLength": "{0} не короче {1} символов.",
+    "Validation:Range": "{0} должно быть от {1} до {2}.",
+    "Validation:NotNegative": "{0} не может быть отрицательным."
   }
 }

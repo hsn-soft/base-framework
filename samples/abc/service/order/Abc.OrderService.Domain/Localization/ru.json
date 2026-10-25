@@ -6,9 +6,10 @@
     "order_lines_required": "В заказе должна быть хотя бы одна позиция.",
     "order_status_final": "Статус заказа в состоянии {0} изменить нельзя.",
     "order_status_invalid": "'{0}' не является статусом заказа (Pending, Confirmed, Shipped, Delivered, Cancelled).",
-    "order_line_product_name": "Название товара в позиции обязательно, не более {0} символов.",
-    "order_line_product_required": "Для позиции нужен товар.",
-    "order_line_price_negative": "Цена за единицу в позиции не может быть отрицательной.",
-    "order_line_quantity_min": "Количество в позиции не меньше 1."
+    "OrderStatus:Pending": "В ожидании",
+    "OrderStatus:Confirmed": "Подтверждён",
+    "OrderStatus:Shipped": "Отправлен",
+    "OrderStatus:Delivered": "Доставлен",
+    "OrderStatus:Cancelled": "Отменён"
   }
 }

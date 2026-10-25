@@ -1,9 +1,6 @@
 {
   "culture": "en",
   "texts": {
-    "field_required": "{0} is required and at most {1} characters.",
-    "field_too_long": "{0} is at most {1} characters.",
-    "field_negative": "{0} cannot be negative.",
     "status_required": "The status is required.",
     "invalid_credentials": "Invalid user name or password."
   }

@@ -65,7 +65,7 @@ public sealed class Product : ICreationAudited, IModificationAudited, ISoftDelet
         Product product = new()
         {
             Id = Guid.CreateVersion7(),
-            Sku = Normalize(Required(sku, ProductConsts.SkuMaxLength, nameof(Sku))),
+            Sku = Normalize(Guard.NotNullOrWhiteSpace(sku, nameof(Sku), ProductConsts.SkuMaxLength)),
             IsActive = true,
         };
         product.Change(name, description, price, stock);
@@ -83,20 +83,10 @@ public sealed class Product : ICreationAudited, IModificationAudited, ISoftDelet
 
     private void Change(string name, string? description, decimal price, int stock)
     {
-        Name = Required(name, ProductConsts.NameMaxLength, nameof(Name));
+        Name = Guard.NotNullOrWhiteSpace(name, nameof(Name), ProductConsts.NameMaxLength);
         NormalizedName = Normalize(Name);
-        Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim().Length > ProductConsts.DescriptionMaxLength
-            ? throw new DomainException($"Description is at most {ProductConsts.DescriptionMaxLength} characters.").WithKey("field_too_long", "Description", ProductConsts.DescriptionMaxLength)
-            : description.Trim();
-        Price = price < 0 ? throw new DomainException("Price cannot be negative.").WithKey("field_negative", "Price") : price;
-        Stock = stock < 0 ? throw new DomainException("Stock cannot be negative.").WithKey("field_negative", "Stock") : stock;
-    }
-
-    private static string Required(string value, int maxLength, string name)
-    {
-        string text = value?.Trim() ?? string.Empty;
-        return text.Length == 0 || text.Length > maxLength
-            ? throw new DomainException($"{name} is required and at most {maxLength} characters.").WithKey("field_required", name, maxLength)
-            : text;
+        Description = string.IsNullOrWhiteSpace(description) ? null : Guard.Length(description.Trim(), nameof(Description), ProductConsts.DescriptionMaxLength);
+        Price = Guard.NotNegative(price, nameof(Price));
+        Stock = Guard.NotNegative(stock, nameof(Stock));
     }
 }

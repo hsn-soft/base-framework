@@ -9,6 +9,9 @@ public sealed class OrderDto
     /// <summary>Pending, Confirmed, Shipped, Delivered or Cancelled.</summary>
     public string Status { get; init; } = string.Empty;
 
+    /// <summary>The status in the language of the request (translated by the application service).</summary>
+    public string StatusText { get; init; } = string.Empty;
+
     public string? Note { get; init; }
 
     public decimal TotalAmount { get; init; }
