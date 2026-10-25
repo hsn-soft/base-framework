@@ -35,10 +35,10 @@ public sealed partial class KafkaSubscriber(
             return;
         }
 
-        string deadLetterTopic = KafkaTopology.DeadLetterTopic(_options);
+        string deadLetterTopic = KafkaTopology.DeadLetterTopic(_eventBusOptions);
         IntegrationEventInfo[] events = [.. _subscriptions.Events];
 
-        await KafkaTopology.EnsureTopicsAsync(_options, events.Select(info => KafkaTopology.TopicFor(_options, info.EventName)).Append(deadLetterTopic)).ConfigureAwait(false);
+        await KafkaTopology.EnsureTopicsAsync(_options, events.Select(info => KafkaTopology.TopicFor(_eventBusOptions, info.EventName)).Append(deadLetterTopic)).ConfigureAwait(false);
 
         // consuming blocks a thread, so each consumer runs on one of its own and not on the one that started the host
         using IProducer<string, byte[]> deadLetters = new ProducerBuilder<string, byte[]>(new ProducerConfig { BootstrapServers = _options.BootstrapServers }).Build();
@@ -47,7 +47,7 @@ public sealed partial class KafkaSubscriber(
 
     private async Task ConsumeLoopAsync(IntegrationEventInfo info, IProducer<string, byte[]> deadLetters, string deadLetterTopic, CancellationToken stoppingToken)
     {
-        string topic = KafkaTopology.TopicFor(_options, info.EventName);
+        string topic = KafkaTopology.TopicFor(_eventBusOptions, info.EventName);
         string group = KafkaTopology.GroupFor(_eventBusOptions, info.EventName);
         using IConsumer<string, byte[]> consumer = new ConsumerBuilder<string, byte[]>(new ConsumerConfig
         {

@@ -11,6 +11,7 @@ namespace HsnSoft.Base.EventBus.Kafka;
 public sealed class KafkaEventBus : EventBusBase, IDisposable
 {
     private readonly KafkaOptions _kafkaOptions;
+    private readonly EventBusOptions _eventBusOptions;
     private readonly Lazy<IProducer<string, byte[]>> _producer;
     private readonly ConcurrentDictionary<string, bool> _knownTopics = new();
 
@@ -22,6 +23,7 @@ public sealed class KafkaEventBus : EventBusBase, IDisposable
         : base(envelopeFactory, options, logger)
     {
         _kafkaOptions = kafkaOptions.Value;
+        _eventBusOptions = options.Value;
         _producer = new Lazy<IProducer<string, byte[]>>(() => new ProducerBuilder<string, byte[]>(new ProducerConfig
         {
             BootstrapServers = _kafkaOptions.BootstrapServers,
@@ -38,7 +40,7 @@ public sealed class KafkaEventBus : EventBusBase, IDisposable
             throw new NotSupportedException($"Kafka publishes to the topic of the event, which every consumer group reads: a message cannot be sent to one service ('{request.TargetService}').");
         }
 
-        string topic = _kafkaOptions.TopicPrefix + request.EventName;
+        string topic = KafkaTopology.TopicFor(_eventBusOptions, request.EventName);
         if (!_knownTopics.ContainsKey(topic))
         {
             await KafkaTopology.EnsureTopicsAsync(_kafkaOptions, [topic]).ConfigureAwait(false);

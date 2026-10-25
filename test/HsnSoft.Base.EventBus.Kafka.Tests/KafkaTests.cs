@@ -21,19 +21,26 @@ public class KafkaTests
         var options = new KafkaOptions();
 
         Assert.Equal("localhost:9092", options.BootstrapServers);
-        Assert.Equal("hsnsoft.", options.TopicPrefix);
         Assert.Equal(1, options.Partitions);
         Assert.Equal((short)1, options.ReplicationFactor);
     }
 
-    [Fact]
-    public void Topics_AreNamedAfterThePrefixAndTheEvent()
+    [Theory]
+    [InlineData("XYZ", "OrderCreated", "XYZ_OrderCreated")]
+    [InlineData("XYZ", "OrderCreatedEto", "XYZ_OrderCreated")]
+    [InlineData("", "OrderCreated", "OrderCreated")]
+    public void Topics_AreNamedAfterTheExchangeAndTheEventWithoutItsSuffix(string exchange, string eventName, string expected)
     {
-        var options = new KafkaOptions { TopicPrefix = "acme." };
+        EventBusOptions options = new() { ExchangeName = exchange };
 
-        Assert.Equal("acme.OrderPlaced", KafkaTopology.TopicFor(options, "OrderPlaced"));
-        Assert.Equal("acme.dead-letter", KafkaTopology.DeadLetterTopic(options));
+        Assert.Equal(expected, KafkaTopology.TopicFor(options, eventName));
     }
+
+    [Theory]
+    [InlineData("XYZ", "XYZ_dead-letter")]
+    [InlineData("", "dead-letter")]
+    public void TheDeadLetterTopic_IsNamedAfterTheExchange(string exchange, string expected)
+        => Assert.Equal(expected, KafkaTopology.DeadLetterTopic(new EventBusOptions { ExchangeName = exchange }));
 
     [Fact]
     public void Registration_BindsTheSection_AndNamesTheService()
@@ -41,14 +48,12 @@ public class KafkaTests
         IServiceCollection services = new ServiceCollection().AddLogging().AddKafkaEventBus(
             Configuration(
                 ("Kafka:BootstrapServers", "broker:9093"),
-                ("Kafka:TopicPrefix", "acme."),
                 ("Kafka:EventBus:ExchangeName", "acme"),
                 ("Kafka:EventBus:ConsumerClientName", "order-service")),
             options => options.MaxHandlerAttempts = 7);
         using ServiceProvider provider = services.BuildServiceProvider();
 
         Assert.Equal("broker:9093", provider.GetRequiredService<IOptions<KafkaOptions>>().Value.BootstrapServers);
-        Assert.Equal("acme.", provider.GetRequiredService<IOptions<KafkaOptions>>().Value.TopicPrefix);
         Assert.Equal("acme_order-service", provider.GetRequiredService<IOptions<EventBusOptions>>().Value.ConsumerClientInfo);
         Assert.Equal(7, provider.GetRequiredService<IOptions<EventBusOptions>>().Value.MaxHandlerAttempts);
         Assert.IsType<KafkaEventBus>(provider.GetRequiredService<IEventBus>());

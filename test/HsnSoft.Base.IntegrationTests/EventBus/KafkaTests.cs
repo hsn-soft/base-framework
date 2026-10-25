@@ -16,12 +16,11 @@ public sealed class KafkaTests : IAsyncLifetime
 
     public Task DisposeAsync() => _container.DisposeAsync().AsTask();
 
-    private Task<IHost> StartAsync(string prefix, Action<IServiceCollection> handlers, string? service = null)
+    private Task<IHost> StartAsync(string exchange, Action<IServiceCollection> handlers, string? service = null)
     {
         IConfiguration configuration = Support.Configuration(
             ("Kafka:BootstrapServers", _container.GetBootstrapAddress()),
-            ("Kafka:TopicPrefix", prefix),
-            ("Kafka:EventBus:ExchangeName", "it"),
+            ("Kafka:EventBus:ExchangeName", exchange),
             ("Kafka:EventBus:ConsumerClientName", service ?? $"service-{Guid.NewGuid():N}"));
         return Support.StartHostAsync(services =>
         {
@@ -38,7 +37,7 @@ public sealed class KafkaTests : IAsyncLifetime
     public async Task PublishedEvent_ReachesTheHandler_AndTheServiceIsReady()
     {
         var recorder = new Recorder();
-        using IHost host = await StartAsync($"it{Guid.NewGuid():N}.", services =>
+        using IHost host = await StartAsync($"it{Guid.NewGuid():N}", services =>
         {
             services.AddSingleton(recorder);
             services.AddEventHandler<Pinged, RecordingHandler>();
@@ -55,8 +54,8 @@ public sealed class KafkaTests : IAsyncLifetime
     [Fact]
     public async Task EventTheHandlerCannotHandle_EndsInTheDeadLetterTopic()
     {
-        string prefix = $"it{Guid.NewGuid():N}.";
-        using IHost host = await StartAsync(prefix, services => services.AddEventHandler<Pinged, FailingHandler>());
+        string exchange = $"it{Guid.NewGuid():N}";
+        using IHost host = await StartAsync(exchange, services => services.AddEventHandler<Pinged, FailingHandler>());
         string text = $"doomed-{Guid.NewGuid():N}";
         await host.Services.GetRequiredService<IEventBus>().PublishAsync(new Pinged(text));
 
@@ -66,13 +65,13 @@ public sealed class KafkaTests : IAsyncLifetime
             GroupId = $"probe-{Guid.NewGuid():N}",
             AutoOffsetReset = AutoOffsetReset.Earliest,
         }).Build();
-        consumer.Subscribe($"{prefix}dead-letter");
+        consumer.Subscribe($"{exchange}_dead-letter");
 
         await Support.EventuallyAsync(() =>
         {
             ConsumeResult<string, byte[]> message = consumer.Consume(TimeSpan.FromSeconds(1));
             return Task.FromResult(message is not null && System.Text.Encoding.UTF8.GetString(message.Message.Value).Contains(text, StringComparison.Ordinal)
-                                   && System.Text.Encoding.UTF8.GetString(message.Message.Headers.GetLastBytes("x-original-topic")) == $"{prefix}Pinged");
+                                   && System.Text.Encoding.UTF8.GetString(message.Message.Headers.GetLastBytes("x-original-topic")) == $"{exchange}_Pinged");
         }, "the message on the dead-letter topic");
         await host.StopAsync();
     }
@@ -80,15 +79,15 @@ public sealed class KafkaTests : IAsyncLifetime
     [Fact]
     public async Task TwoServices_ReadTheSameEventEachWithItsOwnOffset()
     {
-        string prefix = $"it{Guid.NewGuid():N}.";
+        string exchange = $"it{Guid.NewGuid():N}";
         Recorder first = new();
         Recorder second = new();
-        using IHost aaa = await StartAsync(prefix, services =>
+        using IHost aaa = await StartAsync(exchange, services =>
         {
             services.AddSingleton(first);
             services.AddEventHandler<Pinged, RecordingHandler>();
         }, "aaa_service");
-        using IHost bbb = await StartAsync(prefix, services =>
+        using IHost bbb = await StartAsync(exchange, services =>
         {
             services.AddSingleton(second);
             services.AddEventHandler<Pinged, RecordingHandler>();
@@ -106,7 +105,7 @@ public sealed class KafkaTests : IAsyncLifetime
     {
         Recorder recorder = new();
         BlockedGate gate = new();
-        using IHost host = await StartAsync($"it{Guid.NewGuid():N}.", services =>
+        using IHost host = await StartAsync($"it{Guid.NewGuid():N}", services =>
         {
             services.AddSingleton(recorder);
             services.AddSingleton(gate);

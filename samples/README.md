@@ -9,7 +9,7 @@ so the two show that the framework fits more than one product. What differs:
 | Gateways | commercial and public (and two web apps) | **one commercial gateway** (with a Redis rate limit) |
 | Layers of a service | class libraries (Domain, Application, EntityFrameworkCore/MongoDB, Http.Host) | **folders of the Host project** (`Domain`, `Application`, `Infrastructure`, `Controllers`, `EventHandlers`) |
 | Databases | SQL Server, PostgreSQL, MongoDB | **PostgreSQL only** (a service with two stores has two contexts on two databases) |
-| Message broker | RabbitMQ (exchange `ABC`) | **Kafka** (topics `xyz.<Event>`, one consumer group per service and event, `XYZ_<Service>_<Event>`) |
+| Message broker | RabbitMQ (exchange `ABC`) | **Kafka** (topics `XYZ_<Event>`, one consumer group per service and event, `XYZ_<Service>_<Event>`) |
 | Redis | rate limit (gateway), refresh tokens | the same: rate limit in the gateway (`Xyz.Shared/RateLimiting`), refresh tokens in the auth server |
 | Shared code | several `Abc.Shared.*` projects | one project, `Xyz.Shared` (hosting, gateway shell, event contracts, rate limit) |
 

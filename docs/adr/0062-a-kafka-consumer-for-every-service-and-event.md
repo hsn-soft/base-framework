@@ -2,6 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-10-25 (changes how [ADR-0023](0023-event-bus.md) reads on Kafka)
+- **Note:** [ADR-0063](0063-kafka-topics-are-named-after-the-exchange.md): the shared topic is `{ExchangeName}_{EventName}` now, not `{TopicPrefix}{EventName}`.
 
 ## Context
 
