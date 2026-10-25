@@ -28,6 +28,7 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
+| [0048](0048-bulk-and-set-based-changes.md) | Many entities at once, and changes made without loading | Accepted | 2026-10-25 |
 | [0047](0047-relational-provider-chosen-by-a-setting.md) | The relational provider is chosen by a setting | Accepted | 2026-10-25 |
 | [0046](0046-dto-projection-without-a-mapper.md) | A DTO is read by a projection made from the DTO, without a mapper | Accepted | 2026-10-25 |
 | [0045](0045-repository-levels-relational-and-document.md) | The repository has levels: a common contract, one interface and one implementation for each kind of store | Accepted | 2026-10-25 |

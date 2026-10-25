@@ -253,4 +253,125 @@ public sealed class EfCoreRepositoryTests : IAsyncLifetime, IDisposable
 
     [Fact]
     public void TheRegistration_RejectsNull() => Assert.Throws<ArgumentNullException>(() => ((IServiceCollection)null!).AddEfCoreRepository<RepositoryContext, Item, Guid>());
+
+    private static IEfCoreRepository<Item, Guid> EfItems(AsyncServiceScope scope) => scope.ServiceProvider.GetRequiredService<IEfCoreRepository<Item, Guid>>();
+
+    private async Task<Item[]> AllAsync(bool ignoreFilters)
+    {
+        await using AsyncServiceScope scope = _provider.CreateAsyncScope();
+        RepositoryContext db = scope.ServiceProvider.GetRequiredService<RepositoryContext>();
+        return await (ignoreFilters ? db.Items.IgnoreQueryFilters() : db.Items).AsNoTracking().OrderBy(item => item.Name).ToArrayAsync();
+    }
+
+    [Fact]
+    public async Task ManyEntitiesAreAdded_UpdatedAndDeleted_InOneGo_WithTheConcepts()
+    {
+        Item[] items = [new("a", 1), new("b", 2), new("c", 3)];
+        await using (AsyncServiceScope scope = _provider.CreateAsyncScope())
+        {
+            await Items(scope).AddManyAsync(items);
+            await Items(scope).AddManyAsync([]);
+        }
+
+        Item[] added = await AllAsync(false);
+        Assert.Equal(["a", "b", "c"], added.Select(item => item.Name));
+        Assert.All(added, item => Assert.Equal((_user.Id, s_tenantA), (item.CreatedBy, item.TenantId)));
+
+        await using (AsyncServiceScope scope = _provider.CreateAsyncScope())
+        {
+            Item tracked = (await Items(scope).FindAsync(item => item.Name == "a"))!;
+            tracked.Price = 10;
+            Item detached = added.Single(item => item.Name == "b");
+            detached.Price = 20;
+            await Items(scope).UpdateManyAsync([tracked, detached]);
+        }
+
+        Assert.Equal([10, 20, 3], (await AllAsync(false)).Select(item => item.Price));
+
+        await using (AsyncServiceScope scope = _provider.CreateAsyncScope())
+        {
+            await Items(scope).DeleteManyAsync(await Items(scope).GetListAsync(new ListQueryOptions<Item> { Filter = item => item.Price < 15 }));
+        }
+
+        Assert.Equal(["b"], (await AllAsync(false)).Select(item => item.Name));
+        Assert.Equal(3, (await AllAsync(true)).Length);
+        await using AsyncServiceScope check = _provider.CreateAsyncScope();
+        await Assert.ThrowsAsync<ArgumentNullException>(() => Items(check).AddManyAsync(null!));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => Items(check).UpdateManyAsync(null!));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => Items(check).DeleteManyAsync(null!));
+    }
+
+    [Fact]
+    public async Task DeleteWhere_MarksWhatMatches_WithoutLoadingIt_AndLeavesTheOthersAlone()
+    {
+        await SeedAsync(5);
+        _user.TenantId = s_tenantB;
+        await using (AsyncServiceScope other = _provider.CreateAsyncScope())
+        {
+            await Items(other).AddAsync(new Item("item-01", 1));
+        }
+
+        _user.TenantId = s_tenantA;
+        long deleted;
+        await using (AsyncServiceScope scope = _provider.CreateAsyncScope())
+        {
+            deleted = await Items(scope).DeleteWhereAsync(item => item.Price <= 30);
+            Assert.Equal(0, await Items(scope).DeleteWhereAsync(item => item.Price <= 30));
+        }
+
+        Assert.Equal(3, deleted);
+        Assert.Equal(["item-04", "item-05"], (await AllAsync(false)).Select(item => item.Name));
+        Item[] everything = await AllAsync(true);
+        Item[] marked = [.. everything.Where(item => item.IsDeleted)];
+        Assert.Equal(3, marked.Length);
+        Assert.All(marked, item => Assert.Equal((_user.Id, true, s_tenantA), (item.DeletedBy, item.DeletedAt.HasValue, item.TenantId)));
+        Assert.All(marked, item => Assert.Equal(_user.Id, item.UpdatedBy));
+        Assert.Contains(everything, item => item.TenantId == s_tenantB && !item.IsDeleted);
+        await using AsyncServiceScope check = _provider.CreateAsyncScope();
+        await Assert.ThrowsAsync<ArgumentNullException>(() => Items(check).DeleteWhereAsync(null!));
+    }
+
+    [Fact]
+    public async Task DeleteWhere_RemovesWhatCannotBeSoftDeleted()
+    {
+        await using AsyncServiceScope scope = _provider.CreateAsyncScope();
+        IRepository<Counter, int> counters = scope.ServiceProvider.GetRequiredService<IRepository<Counter, int>>();
+        await counters.AddManyAsync([new Counter(1) { Value = 1 }, new Counter(2) { Value = 2 }, new Counter(3) { Value = 3 }]);
+
+        long deleted = await counters.DeleteWhereAsync(counter => counter.Value >= 2);
+
+        Assert.Equal(2, deleted);
+        Assert.Equal(1, await counters.CountAsync());
+    }
+
+    [Fact]
+    public async Task UpdateWhere_ChangesTheNamedProperties_AndWritesTheAuditFields()
+    {
+        await SeedAsync(4);
+        await using (AsyncServiceScope scope = _provider.CreateAsyncScope())
+        {
+            int changed = await EfItems(scope).UpdateWhereAsync(item => item.Price >= 30, set => set.SetProperty(item => item.Name, "changed"));
+
+            Assert.Equal(2, changed);
+        }
+
+        Item[] items = await AllAsync(false);
+        Assert.Equal(["changed", "changed", "item-01", "item-02"], items.Select(item => item.Name));
+        Assert.All(items.Where(item => item.Name == "changed"), item => Assert.Equal(_user.Id, item.UpdatedBy));
+        await using AsyncServiceScope check = _provider.CreateAsyncScope();
+        await Assert.ThrowsAsync<ArgumentNullException>(() => EfItems(check).UpdateWhereAsync(null!, set => { }));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => EfItems(check).UpdateWhereAsync(item => true, null!));
+    }
+
+    [Fact]
+    public async Task UpdateWhere_OnAnEntityWithoutAuditFields_ChangesOnlyWhatIsNamed()
+    {
+        await using AsyncServiceScope scope = _provider.CreateAsyncScope();
+        IEfCoreRepository<Counter, int> counters = scope.ServiceProvider.GetRequiredService<IEfCoreRepository<Counter, int>>();
+        await counters.AddAsync(new Counter(9) { Value = 1 });
+
+        await counters.UpdateWhereAsync(counter => counter.Id == 9, set => set.SetProperty(counter => counter.Value, 5));
+
+        Assert.Equal(5, (await counters.GetListAsync(new ListQueryOptions<Counter>())).Single().Value);
+    }
 }

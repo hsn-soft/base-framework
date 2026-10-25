@@ -6,6 +6,12 @@ namespace HsnSoft.Base.Auditing;
 /// <summary>The default <see cref="IAuditPropertySetter"/>. Without a current user (a worker, a seed) the user fields are <see langword="null"/>.</summary>
 public sealed class AuditPropertySetter(TimeProvider clock, ICurrentUser? currentUser = null) : IAuditPropertySetter
 {
+    public AuditStamp Stamp()
+    {
+        (DateTimeOffset now, Guid? by) = Now();
+        return new AuditStamp(now, by);
+    }
+
     public void SetCreation(object entity)
     {
         ArgumentNullException.ThrowIfNull(entity);

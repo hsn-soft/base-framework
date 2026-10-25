@@ -35,7 +35,7 @@ public sealed class GetProductsPaged : PagedDataRequestDto { public string? Name
 
 ## The repository (`IRepository<TEntity, TKey>`)
 
-`IReadOnlyRepository` (`FindAsync(id | predicate)`, `AnyAsync(predicate, ignoreFilters)`, `CountAsync`, `GetListAsync(ListQueryOptions)`, `GetPagedListAsync(PagedQueryOptions)`, and the same for a DTO: `FindAsync<TDto>`, `GetListAsync<TDto>`, `GetPagedListAsync<TDto>`) and `IRepository` (`AddAsync`, `UpdateAsync`, `DeleteAsync`); what only one kind of store does is on its own interface (`IEfCoreRepository`, [ADR-0045](adr/0045-repository-levels-relational-and-document.md)). Registered with `AddEfCoreRepository<TContext, TEntity, TKey>()` or
+`IReadOnlyRepository` (`FindAsync(id | predicate)`, `AnyAsync(predicate, ignoreFilters)`, `CountAsync`, `GetListAsync(ListQueryOptions)`, `GetPagedListAsync(PagedQueryOptions)`, and the same for a DTO: `FindAsync<TDto>`, `GetListAsync<TDto>`, `GetPagedListAsync<TDto>`) and `IRepository` (`AddAsync`, `UpdateAsync`, `DeleteAsync`, the same for many: `AddManyAsync`, `UpdateManyAsync`, `DeleteManyAsync`, and `DeleteWhereAsync(filter)`, which deletes every match without loading it and writes the soft delete and the audit fields as one by one would, [ADR-0048](adr/0048-bulk-and-set-based-changes.md)); what only one kind of store does is on its own interface (`IEfCoreRepository`, [ADR-0045](adr/0045-repository-levels-relational-and-document.md)). Registered with `AddEfCoreRepository<TContext, TEntity, TKey>()` or
 `AddMongoRepository<TEntity, TKey>("collection")`; soft-deleted and other tenants' entities are never found, except by `AnyAsync(..., ignoreFilters: true)` (a value that is unique in the whole store). Each method that changes saves.
 
 An application service builds the filter and asks:
@@ -61,7 +61,7 @@ A client sends `"price desc, name"`; a field that is not in `Fields` is refused 
 
 ### Stores
 
-- **EF Core:** `EfCoreRepository<TContext, TEntity, TKey>`; derive it for a method of your own (`class EfCoreUserRepository(IdentityDbContext db) : EfCoreRepository<IdentityDbContext, User, Guid>(db), IUserRepository`). `IEfCoreRepository<,>` adds the reads with an `include` (`query => query.Include(order => order.Lines)`); nothing is joined unless one says so.
+- **EF Core:** `EfCoreRepository<TContext, TEntity, TKey>`; derive it for a method of your own (`class EfCoreUserRepository(IdentityDbContext db) : EfCoreRepository<IdentityDbContext, User, Guid>(db), IUserRepository`). `IEfCoreRepository<,>` adds `UpdateWhereAsync(filter, set => set.SetProperty(...))` (one statement, audit fields written) and the reads with an `include` (`query => query.Include(order => order.Lines)`); nothing is joined unless one says so.
 
 The relational database is a setting: `services.AddBaseEfCore<IdentityDbContext>(configuration, providers => providers.UsePostgres().UseSqlServer())` registers the context on the provider that `Database:Provider` names (`postgres`, `sqlserver`) with its connection string (`ConnectionStrings:Postgres`, `ConnectionStrings:SqlServer`); the application code does not change when it moves ([ADR-0047](adr/0047-relational-provider-chosen-by-a-setting.md)).
 

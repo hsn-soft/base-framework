@@ -228,6 +228,18 @@ public class EntityConceptsTests
     }
 
     [Fact]
+    public void TheStamp_IsTheTimeAndTheUserOfAChangeMadeNow()
+    {
+        Guid user = Guid.NewGuid();
+
+        AuditStamp stamp = new AuditPropertySetter(new FixedClock(s_t1), new FakeUser { Id = user }).Stamp();
+        AuditStamp anonymous = new AuditPropertySetter(new FixedClock(s_t2)).Stamp();
+
+        Assert.Equal(new AuditStamp(s_t1, user), stamp);
+        Assert.Equal(new AuditStamp(s_t2, null), anonymous);
+    }
+
+    [Fact]
     public void TheRegistration_WorksWithoutACurrentUser()
     {
         using ServiceProvider provider = new ServiceCollection().AddBaseEntityConcepts().BuildServiceProvider();

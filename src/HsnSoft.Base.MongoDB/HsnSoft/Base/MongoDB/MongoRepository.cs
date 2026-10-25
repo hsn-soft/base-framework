@@ -124,6 +124,73 @@ public class MongoRepository<TEntity, TKey>(IMongoDatabase database, MongoEntity
         return Concepts.SoftDeleted(entity) ? ReplaceAsync(entity, cancellationToken) : Collection.DeleteOneAsync(Builders<TEntity>.Filter.Eq(IdField, entity.Id), cancellationToken);
     }
 
+    public async Task AddManyAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(entities);
+
+        List<TEntity> list = [.. entities];
+        foreach (TEntity entity in list)
+        {
+            Concepts.Created(entity);
+        }
+
+        if (list.Count > 0)
+        {
+            await Collection.InsertManyAsync(list, cancellationToken: cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    public async Task UpdateManyAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(entities);
+
+        List<WriteModel<TEntity>> models = [];
+        foreach (TEntity entity in entities)
+        {
+            Concepts.Modified(entity);
+            models.Add(new ReplaceOneModel<TEntity>(Builders<TEntity>.Filter.Eq(IdField, entity.Id), entity));
+        }
+
+        await WriteAsync(models, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task DeleteManyAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(entities);
+
+        // an entity that can be soft deleted is marked and replaced; any other is removed
+        List<WriteModel<TEntity>> models = [];
+        foreach (TEntity entity in entities)
+        {
+            FilterDefinition<TEntity> byId = Builders<TEntity>.Filter.Eq(IdField, entity.Id);
+            models.Add(Concepts.SoftDeleted(entity) ? new ReplaceOneModel<TEntity>(byId, entity) : new DeleteOneModel<TEntity>(byId));
+        }
+
+        await WriteAsync(models, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<long> DeleteWhereAsync(Expression<Func<TEntity, bool>> filter, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(filter);
+
+        FilterDefinition<TEntity> matched = Concepts.Visible(Builders<TEntity>.Filter.Where(filter));
+        if (!typeof(ISoftDelete).IsAssignableFrom(typeof(TEntity)))
+        {
+            return (await Collection.DeleteManyAsync(matched, cancellationToken).ConfigureAwait(false)).DeletedCount;
+        }
+
+        // nothing is loaded here: the marks that SoftDeleted writes on an entity are written by the update
+        return (await Collection.UpdateManyAsync(matched, Concepts.Deletion<TEntity>(), cancellationToken: cancellationToken).ConfigureAwait(false)).ModifiedCount;
+    }
+
+    private async Task WriteAsync(List<WriteModel<TEntity>> models, CancellationToken cancellationToken)
+    {
+        if (models.Count > 0)
+        {
+            await Collection.BulkWriteAsync(models, cancellationToken: cancellationToken).ConfigureAwait(false);
+        }
+    }
+
     private async Task ReplaceAsync(TEntity entity, CancellationToken cancellationToken)
         => await Collection.ReplaceOneAsync(Builders<TEntity>.Filter.Eq(IdField, entity.Id), entity, cancellationToken: cancellationToken).ConfigureAwait(false);
 

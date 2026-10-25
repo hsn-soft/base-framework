@@ -230,4 +230,73 @@ public sealed class MongoRepositoryTests : IAsyncLifetime
         await Assert.ThrowsAsync<ArgumentNullException>(() => products.GetListAsync<ProductDto>(null!));
         await Assert.ThrowsAsync<ArgumentNullException>(() => products.GetPagedListAsync<ProductDto>(null!));
     }
+
+    [Fact]
+    public async Task ManyEntities_AreAddedUpdatedAndDeleted_InOneGo_OnARealMongoDb()
+    {
+        await using AsyncServiceScope scope = Scope();
+        IRepository<Product, Guid> products = Products(scope);
+        Product[] items = [new("a", 1), new("b", 2), new("c", 3)];
+
+        await products.AddManyAsync(items);
+        await products.AddManyAsync([]);
+        IReadOnlyList<Product> added = await products.GetListAsync(new ListQueryOptions<Product> { Sort = s_sort.Parse("name", "name") });
+        Assert.Equal(["a", "b", "c"], added.Select(product => product.Name));
+        Assert.All(added, product => Assert.Equal((_user.Id, s_tenantA), (product.CreatedBy, product.TenantId)));
+
+        foreach (Product product in added)
+        {
+            product.Price *= 10;
+        }
+
+        await products.UpdateManyAsync(added);
+        await products.UpdateManyAsync([]);
+        Assert.Equal([10, 20, 30], (await products.GetListAsync(new ListQueryOptions<Product> { Sort = s_sort.Parse("name", "name") })).Select(product => product.Price));
+
+        await products.DeleteManyAsync(added.Where(product => product.Price < 25));
+        await products.DeleteManyAsync([]);
+        Assert.Equal(["c"], (await products.GetListAsync(new ListQueryOptions<Product>())).Select(product => product.Name));
+        Assert.True(await products.AnyAsync(product => product.Name == "a", ignoreFilters: true));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => products.AddManyAsync(null!));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => products.UpdateManyAsync(null!));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => products.DeleteManyAsync(null!));
+    }
+
+    [Fact]
+    public async Task DeleteWhere_MarksWhatMatches_WithoutLoadingIt_AndOnlyInTheTenantOfTheCaller()
+    {
+        await SeedAsync(5);
+        _user.TenantId = s_tenantB;
+        await using (AsyncServiceScope other = Scope())
+        {
+            await Products(other).AddAsync(new Product("item-01", 1));
+        }
+
+        _user.TenantId = s_tenantA;
+        await using AsyncServiceScope scope = Scope();
+        IRepository<Product, Guid> products = Products(scope);
+
+        long deleted = await products.DeleteWhereAsync(product => product.Price <= 30);
+
+        Assert.Equal(3, deleted);
+        Assert.Equal(0, await products.DeleteWhereAsync(product => product.Price <= 30));
+        Assert.Equal(["item-04", "item-05"], (await products.GetListAsync(new ListQueryOptions<Product> { Sort = s_sort.Parse("name", "name") })).Select(product => product.Name));
+        IMongoCollection<Product> collection = scope.ServiceProvider.GetRequiredService<IMongoDatabase>().GetCollection<Product>("products");
+        List<Product> marked = await collection.Find(product => product.IsDeleted).ToListAsync();
+        Assert.Equal(3, marked.Count);
+        Assert.All(marked, product => Assert.Equal((_user.Id, true, _user.Id), (product.DeletedBy, product.DeletedAt.HasValue, product.UpdatedBy)));
+        Assert.Equal(1, await collection.CountDocumentsAsync(product => product.TenantId == s_tenantB && !product.IsDeleted));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => products.DeleteWhereAsync(null!));
+    }
+
+    [Fact]
+    public async Task DeleteWhere_RemovesWhatCannotBeSoftDeleted()
+    {
+        await using AsyncServiceScope scope = Scope();
+        IRepository<Tag, Guid> tags = scope.ServiceProvider.GetRequiredService<IRepository<Tag, Guid>>();
+        await tags.AddManyAsync([new Tag(Guid.NewGuid(), "x"), new Tag(Guid.NewGuid(), "y"), new Tag(Guid.NewGuid(), "z")]);
+
+        Assert.Equal(2, await tags.DeleteWhereAsync(tag => tag.Label != "x"));
+        Assert.Equal(1, await tags.CountAsync());
+    }
 }

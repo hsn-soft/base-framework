@@ -4,10 +4,13 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
+using HsnSoft.Base.Auditing;
 using HsnSoft.Base.Domain.Entities;
 using HsnSoft.Base.Domain.Repositories;
 using HsnSoft.Base.Domain.Sorting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace HsnSoft.Base.EntityFrameworkCore;
@@ -155,6 +158,91 @@ public class EfCoreRepository<TContext, TEntity, TKey>(TContext db) : IEfCoreRep
 
         Set.Remove(entity);
         await Db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task AddManyAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(entities);
+
+        await Set.AddRangeAsync(entities, cancellationToken).ConfigureAwait(false);
+        await Db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task UpdateManyAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(entities);
+
+        foreach (TEntity entity in entities)
+        {
+            if (Db.Entry(entity).State == EntityState.Detached)
+            {
+                Set.Update(entity);
+            }
+        }
+
+        await Db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task DeleteManyAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(entities);
+
+        Set.RemoveRange(entities);
+        await Db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<long> DeleteWhereAsync(Expression<Func<TEntity, bool>> filter, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(filter);
+
+        IQueryable<TEntity> matched = Set.Where(filter);
+        if (!typeof(ISoftDelete).IsAssignableFrom(typeof(TEntity)))
+        {
+            return await matched.ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        // the change tracker would mark each entity (ISoftDelete), but nothing is loaded here: the same marks are written by the statement
+        AuditStamp stamp = Db.GetService<IAuditPropertySetter>().Stamp();
+        return await matched.ExecuteUpdateAsync(
+            setters =>
+            {
+                SetValue(setters, nameof(ISoftDelete.IsDeleted), true);
+                SetValue(setters, nameof(ISoftDelete.DeletedAt), (DateTimeOffset?)stamp.At);
+                SetValue(setters, nameof(ISoftDelete.DeletedBy), stamp.By);
+                Modified(setters, stamp);
+            },
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    public Task<int> UpdateWhereAsync(Expression<Func<TEntity, bool>> filter, Action<UpdateSettersBuilder<TEntity>> setters, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(filter);
+        ArgumentNullException.ThrowIfNull(setters);
+
+        AuditStamp stamp = Db.GetService<IAuditPropertySetter>().Stamp();
+        return Set.Where(filter).ExecuteUpdateAsync(
+            builder =>
+            {
+                setters(builder);
+                Modified(builder, stamp);
+            },
+            cancellationToken);
+    }
+
+    // IModificationAudited: written by the statement, as the change tracker would write them
+    private static void Modified(UpdateSettersBuilder<TEntity> setters, AuditStamp stamp)
+    {
+        if (typeof(IModificationAudited).IsAssignableFrom(typeof(TEntity)))
+        {
+            SetValue(setters, nameof(IModificationAudited.UpdatedAt), stamp.At);
+            SetValue(setters, nameof(IModificationAudited.UpdatedBy), stamp.By);
+        }
+    }
+
+    private static void SetValue<TProperty>(UpdateSettersBuilder<TEntity> setters, string property, TProperty value)
+    {
+        ParameterExpression entity = Expression.Parameter(typeof(TEntity), "entity");
+        setters.SetProperty(Expression.Lambda<Func<TEntity, TProperty>>(Expression.Property(entity, property), entity), value);
     }
 
     private IQueryable<TEntity> Narrowed(ListQueryOptions<TEntity> options, Func<IQueryable<TEntity>, IQueryable<TEntity>>? include)

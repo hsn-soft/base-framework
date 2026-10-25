@@ -47,6 +47,28 @@ public sealed class MongoEntityConcepts(IAuditPropertySetter audit, ICurrentTena
         }
     }
 
+    /// <summary>
+    /// The update that marks every document it is applied to as deleted (<see cref="ISoftDelete"/>, and the modification fields), for a delete that loads nothing: what <see cref="SoftDeleted"/> does to an entity, written by the database.
+    /// </summary>
+    public UpdateDefinition<T> Deletion<T>()
+    {
+        UpdateDefinitionBuilder<T> builder = Builders<T>.Update;
+        AuditStamp stamp = audit.Stamp();
+        List<UpdateDefinition<T>> sets =
+        [
+            builder.Set(nameof(ISoftDelete.IsDeleted), true),
+            builder.Set(nameof(ISoftDelete.DeletedAt), (DateTimeOffset?)stamp.At),
+            builder.Set(nameof(ISoftDelete.DeletedBy), stamp.By),
+        ];
+        if (typeof(IModificationAudited).IsAssignableFrom(typeof(T)))
+        {
+            sets.Add(builder.Set(nameof(IModificationAudited.UpdatedAt), stamp.At));
+            sets.Add(builder.Set(nameof(IModificationAudited.UpdatedBy), stamp.By));
+        }
+
+        return builder.Combine(sets);
+    }
+
     /// <summary>Before a replace: the modification fields.</summary>
     public void Modified(object entity)
     {

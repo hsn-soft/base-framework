@@ -51,4 +51,19 @@ public interface IRepository<TEntity, TKey> : IReadOnlyRepository<TEntity, TKey>
 
     /// <summary>Deletes the entity; an <see cref="ISoftDelete"/> entity is marked as deleted and stays.</summary>
     Task DeleteAsync(TEntity entity, CancellationToken cancellationToken = default);
+
+    /// <summary>Adds all the entities in one go (one round trip, or as few as the store needs): all are added or none.</summary>
+    Task AddManyAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default);
+
+    /// <summary>Saves the changes of the entities, in one go. An entity that <c>FindAsync</c> or a list returned is saved by what changed in it, any other whole.</summary>
+    Task UpdateManyAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default);
+
+    /// <summary>Deletes the entities, in one go (soft delete as <see cref="DeleteAsync"/>).</summary>
+    Task DeleteManyAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Deletes every entity the filter matches without loading them, and says how many there were. An <see cref="ISoftDelete"/> entity is marked as deleted, with its time and user, as <see cref="DeleteAsync"/> does; the audit fields of
+    /// the change are written too. What the caller may not see (the deleted, the other tenants') is not matched.
+    /// </summary>
+    Task<long> DeleteWhereAsync(Expression<Func<TEntity, bool>> filter, CancellationToken cancellationToken = default);
 }
