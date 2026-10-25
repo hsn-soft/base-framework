@@ -40,3 +40,19 @@ JSON is camel case, without nulls, enums as text. A string a request leaves out 
 the services answer does not wrap their answers again: the filter only touches the results of its own controllers.
 
 The request and response logs are described in [Logging.md](Logging.md); in a system with a gateway they belong to the gateway.
+
+## The base controller
+
+`ApiControllerBase` (`HsnSoft.Base.AspNetCore`) is a `ControllerBase` with `Logger`, `CurrentUser` and `CurrentTenant`, found from the services of the request when first used: a controller needs no constructor for them. A service derives its own base controller from it and adds what
+is its own: the area, the authorization, `[Produces]`, `[ApiController]` and `L` (the localizer; [ADR-0040](adr/0040-api-controller-base-in-the-framework.md)):
+
+```csharp
+[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+[Produces("application/json")]
+[Area("order-service")]
+[ApiController]
+public abstract class BaseServiceController : ApiControllerBase
+{
+    protected IStringLocalizer L => field ??= HttpContext.RequestServices.GetRequiredService<IStringLocalizer>();
+}
+```

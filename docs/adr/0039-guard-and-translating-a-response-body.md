@@ -1,6 +1,6 @@
 # ADR-0039: `Guard` for the checks of the domain, and translating a text in a response body
 
-- **Status:** Accepted
+- **Status:** Accepted (`Logger`, `CurrentUser` and `CurrentTenant` of the base controller are now the framework's `ApiControllerBase`, [ADR-0040](0040-api-controller-base-in-the-framework.md); `L` stays in the service)
 - **Date:** 2026-10-25 (adds to [ADR-0038](0038-localization.md))
 
 ## Context
