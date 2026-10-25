@@ -81,6 +81,8 @@ public sealed class SampleUpdate : IValidatableObject
     [Required]
     public SampleAddress? Address { get; set; }
 
+    public SampleAddress? BillingAddress { get; set; }
+
     /// <summary>A list that must have at least one item (<c>[MinLength]</c>) and no blank item (<c>[NoBlankItems]</c>).</summary>
     [MinLength(1)]
     [NoBlankItems]
@@ -139,7 +141,7 @@ public sealed class SampleUpdateTests
     [Fact]
     public async Task EveryRuleAnswers_InTheLanguageOfTheRequest()
     {
-        const string bad = """{"id":"00000000-0000-0000-0000-000000000000","name":"  ","description":" ","email":"nope","phone":"x","sku":"a b","price":-5,"quantity":0,"kind":99,"emailAgain":"other","address":{"city":""},"tags":["a",""]}""";
+        const string bad = """{"id":"00000000-0000-0000-0000-000000000000","name":"  ","description":" ","email":"nope","phone":"x","sku":"a b","price":-5,"quantity":0,"kind":99,"emailAgain":"other","address":{"city":""},"billingAddress":{"city":" "},"tags":["a",""]}""";
 
         (HttpStatusCode status, string[] messages) = await PutAsync(bad, "tr");
 
@@ -151,6 +153,7 @@ public sealed class SampleUpdateTests
         Assert.Contains("Kind geçerli bir değer değil.", messages);
         Assert.Contains("Tags boş eleman içeremez.", messages);
         Assert.Contains("Quantity 1 ile 10000 arasında olmalı.", messages);
+        Assert.Contains("City zorunludur.", messages);
     }
 
     [Fact]

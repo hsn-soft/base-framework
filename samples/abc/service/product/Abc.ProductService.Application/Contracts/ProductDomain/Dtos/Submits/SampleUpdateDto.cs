@@ -9,6 +9,7 @@ public enum SampleKind
     Premium = 2,
 }
 
+/// <summary>An inner class checks its own fields (its attributes, its own <c>IValidatableObject</c>); whoever holds it only says whether it may be missing.</summary>
 public sealed class SampleAddressDto
 {
     [Required]
@@ -70,9 +71,12 @@ public sealed class SampleUpdateDto : IValidatableObject
     [Compare(nameof(Email))]
     public string? EmailAgain { get; set; }
 
-    /// <summary>An object: <c>[Required]</c> is needed to refuse <c>null</c> (a non-nullable type is not required by itself); the fields inside are checked too, as <c>Address.City</c>.</summary>
+    /// <summary>An object that must be sent: the holder only refuses <c>null</c> with <c>[Required]</c> (a non-nullable type is not required by itself); the fields inside are checked by the rules of <see cref="SampleAddressDto"/> and told with its own texts.</summary>
     [Required]
     public SampleAddressDto? Address { get; set; }
+
+    /// <summary>An object that may be missing: no <c>[Required]</c>. When it is sent, its own rules run. The city of the two addresses has the same name, so the same message is told once.</summary>
+    public SampleAddressDto? BillingAddress { get; set; }
 
     /// <summary>A list that must have at least one item (<c>[MinLength]</c>) and no blank item (<c>[NoBlankItems]</c>).</summary>
     [MinLength(1)]
