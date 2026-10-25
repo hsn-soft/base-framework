@@ -23,6 +23,7 @@ public sealed class UserUpdateDto : IValidatableObject
     public bool? IsActive { get; set; }
 
     /// <summary>The roles of the user after the change (<c>customer</c> when none is given).</summary>
+    [NoBlankItems]
     public List<string>? Roles { get; set; }
 
     /// <summary>The language the user is answered in; <c>en</c> when none is given.</summary>

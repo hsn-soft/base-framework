@@ -199,7 +199,7 @@ public class LocalizationTests
     public void EveryValidationTextOfTheFramework_ExistsInAllThreeLanguages()
     {
         using ServiceProvider provider = Provider();
-        string[] keys = ["Required", "IsNotEmpty", "MaxLength", "MinLength", "Range", "NotNegative", "Email", "Phone", "Url", "Pattern", "Compare", "Length", "InvalidValue", "InvalidJson", "Failed"];
+        string[] keys = ["Required", "IsNotEmpty", "MaxLength", "MinLength", "Range", "NotNegative", "Email", "Phone", "Url", "Pattern", "Compare", "Length", "ItemsNotBlank", "InvalidValue", "InvalidJson", "Failed"];
 
         foreach (string language in new[] { "en", "tr", "ru" })
         {

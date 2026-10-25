@@ -30,6 +30,7 @@
     "Validation:Pattern": "{0} is not in the expected form.",
     "Validation:Compare": "{0} must be the same as {1}.",
     "Validation:Length": "{0} must be between {1} and {2} characters.",
+    "Validation:ItemsNotBlank": "{0} must not have an empty item.",
     "Validation:InvalidValue": "{0} has an invalid value.",
     "Validation:InvalidJson": "The request is not valid JSON."
   }

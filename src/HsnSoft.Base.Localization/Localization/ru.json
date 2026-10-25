@@ -30,6 +30,7 @@
     "Validation:Pattern": "{0} имеет неверный формат.",
     "Validation:Compare": "{0} должно совпадать с {1}.",
     "Validation:Length": "{0} должно содержать от {1} до {2} символов.",
+    "Validation:ItemsNotBlank": "{0} не может содержать пустой элемент.",
     "Validation:InvalidValue": "{0} имеет недопустимое значение.",
     "Validation:InvalidJson": "Запрос не является корректным JSON."
   }

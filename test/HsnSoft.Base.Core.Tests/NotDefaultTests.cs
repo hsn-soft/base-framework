@@ -20,3 +20,32 @@ public class NotDefaultTests
         Assert.True(attribute.IsValid(DayOfWeek.Monday));
     }
 }
+
+public class BlankValueTests
+{
+    [Theory]
+    [InlineData(null, true)]
+    [InlineData("a", true)]
+    [InlineData("", false)]
+    [InlineData("   ", false)]
+    public void ATextThatIsGiven_IsNotBlank(string? value, bool valid)
+        => Assert.Equal(valid, new NotWhiteSpaceAttribute().IsValid(value));
+
+    [Fact]
+    public void NotWhiteSpace_RefusesAValueThatIsNotText() => Assert.False(new NotWhiteSpaceAttribute().IsValid(5));
+
+    [Fact]
+    public void NoBlankItems_LooksAtEveryItem()
+    {
+        NoBlankItemsAttribute attribute = new();
+
+        Assert.True(attribute.IsValid(null));
+        Assert.True(attribute.IsValid("a plain text"));
+        Assert.True(attribute.IsValid(new List<string>()));
+        Assert.True(attribute.IsValid(new List<string> { "a", "b" }));
+        Assert.False(attribute.IsValid(new List<string> { "a", "" }));
+        Assert.False(attribute.IsValid(new List<string> { "a", " " }));
+        Assert.False(attribute.IsValid(new List<string?> { null }));
+        Assert.False(attribute.IsValid(new List<object> { 1 }));
+    }
+}

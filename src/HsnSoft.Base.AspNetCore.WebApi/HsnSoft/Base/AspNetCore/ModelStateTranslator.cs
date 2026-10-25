@@ -72,6 +72,8 @@ internal static class ModelStateTranslator
     private static (string Key, object?[] Args)? Of(ValidationAttribute attribute, string label) => attribute switch
     {
         RequiredAttribute => ("Validation:Required", [label]),
+        NotWhiteSpaceAttribute => ("Validation:IsNotEmpty", [label]),
+        NoBlankItemsAttribute => ("Validation:ItemsNotBlank", [label]),
         NotDefaultAttribute => ("Validation:InvalidValue", [label]),
         StringLengthAttribute { MinimumLength: 0 } length => ("Validation:MaxLength", [label, length.MaximumLength]),
         StringLengthAttribute length => ("Validation:Length", [label, length.MinimumLength, length.MaximumLength]),

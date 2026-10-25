@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using Abc.IdentityService.Domain.UserDomain.Consts;
+using HsnSoft.Base;
 using HsnSoft.Base.Logging.Masking;
 
 namespace Abc.IdentityService.Application.Contracts.UserDomain.Dtos.Submits;
@@ -25,6 +26,7 @@ public sealed class UserCreateDto : IValidatableObject
     public string Password { get; set; } = string.Empty;
 
     /// <summary>The roles (<c>admin</c>, <c>customer</c>); <c>customer</c> when none is given.</summary>
+    [NoBlankItems]
     public List<string>? Roles { get; set; }
 
     /// <summary>The language the user is answered in (<c>en</c>, <c>tr</c>, <c>ru</c>); <c>en</c> when none is given.</summary>

@@ -26,6 +26,12 @@ public sealed class SignUp : IValidatableObject
     [Range(1, 10)]
     public int? Level { get; set; }
 
+    [NotWhiteSpace]
+    public string? Nickname { get; set; }
+
+    [NoBlankItems]
+    public List<string>? Roles { get; set; }
+
     public List<SignUpLine> Lines { get; set; } = [];
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
@@ -195,5 +201,19 @@ public sealed class ValidationAnswersTests
         (_, JsonElement body) = await PostAsync(app, "/api/validation/sign-up", """{"userName":"ada","email":"a@b.co","tenantId":"00000000-0000-0000-0000-000000000000"}""");
 
         Assert.Equal(["Validation failed.", "TenantId has an invalid value."], Messages(body));
+    }
+
+    [Fact]
+    public async Task ABlankNickname_AndABlankRole_AreTold_ButAMissingOneIsNot()
+    {
+        await using WebApplication app = await StartAsync("Production");
+
+        (_, JsonElement blank) = await PostAsync(app, "/api/validation/sign-up", """{"userName":"ada","email":"a@b.co","tenantId":"6f0e1d52-1d9e-4f0b-8f0a-2b8d6f1a9c11","nickname":"  ","roles":["admin",""]}""");
+        (HttpStatusCode status, _) = await PostAsync(app, "/api/validation/sign-up", """{"userName":"ada","email":"a@b.co","tenantId":"6f0e1d52-1d9e-4f0b-8f0a-2b8d6f1a9c11"}""");
+
+        Assert.Equal(3, Messages(blank).Length);
+        Assert.Contains("Nickname must not be empty.", Messages(blank));
+        Assert.Contains("Roles must not have an empty item.", Messages(blank));
+        Assert.Equal(HttpStatusCode.OK, status);
     }
 }

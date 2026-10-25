@@ -30,6 +30,7 @@
     "Validation:Pattern": "{0} beklenen biçimde değil.",
     "Validation:Compare": "{0} ile {1} aynı olmalı.",
     "Validation:Length": "{0} {1} ile {2} karakter arasında olmalı.",
+    "Validation:ItemsNotBlank": "{0} boş eleman içeremez.",
     "Validation:InvalidValue": "{0} geçerli bir değer değil.",
     "Validation:InvalidJson": "İstek geçerli bir JSON değil."
   }
