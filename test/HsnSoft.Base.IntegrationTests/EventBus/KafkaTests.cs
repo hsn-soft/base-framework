@@ -16,13 +16,13 @@ public sealed class KafkaTests : IAsyncLifetime
 
     public Task DisposeAsync() => _container.DisposeAsync().AsTask();
 
-    private Task<IHost> StartAsync(string prefix, Action<IServiceCollection> handlers)
+    private Task<IHost> StartAsync(string prefix, Action<IServiceCollection> handlers, string? service = null)
     {
         IConfiguration configuration = Support.Configuration(
             ("Kafka:BootstrapServers", _container.GetBootstrapAddress()),
             ("Kafka:TopicPrefix", prefix),
             ("Kafka:EventBus:ExchangeName", "it"),
-            ("Kafka:EventBus:ConsumerClientName", $"service-{Guid.NewGuid():N}"));
+            ("Kafka:EventBus:ConsumerClientName", service ?? $"service-{Guid.NewGuid():N}"));
         return Support.StartHostAsync(services =>
         {
             services.AddKafkaEventBus(configuration, options =>
@@ -74,6 +74,55 @@ public sealed class KafkaTests : IAsyncLifetime
             return Task.FromResult(message is not null && System.Text.Encoding.UTF8.GetString(message.Message.Value).Contains(text, StringComparison.Ordinal)
                                    && System.Text.Encoding.UTF8.GetString(message.Message.Headers.GetLastBytes("x-original-topic")) == $"{prefix}Pinged");
         }, "the message on the dead-letter topic");
+        await host.StopAsync();
+    }
+
+    [Fact]
+    public async Task TwoServices_ReadTheSameEventEachWithItsOwnOffset()
+    {
+        string prefix = $"it{Guid.NewGuid():N}.";
+        Recorder first = new();
+        Recorder second = new();
+        using IHost aaa = await StartAsync(prefix, services =>
+        {
+            services.AddSingleton(first);
+            services.AddEventHandler<Pinged, RecordingHandler>();
+        }, "aaa_service");
+        using IHost bbb = await StartAsync(prefix, services =>
+        {
+            services.AddSingleton(second);
+            services.AddEventHandler<Pinged, RecordingHandler>();
+        }, "bbb_service");
+
+        await aaa.Services.GetRequiredService<IEventBus>().PublishAsync(new Pinged("for both"));
+
+        await Support.EventuallyAsync(() => Task.FromResult(first.Received.Count == 1 && second.Received.Count == 1), "both services to handle the event");
+        await aaa.StopAsync();
+        await bbb.StopAsync();
+    }
+
+    [Fact]
+    public async Task ASlowEvent_DoesNotHoldBackAnotherOneOfTheSameService()
+    {
+        Recorder recorder = new();
+        BlockedGate gate = new();
+        using IHost host = await StartAsync($"it{Guid.NewGuid():N}.", services =>
+        {
+            services.AddSingleton(recorder);
+            services.AddSingleton(gate);
+            services.AddEventHandler<Pinged, BlockedHandler>();
+            services.AddEventHandler<Ponged, FollowUpHandler>();
+        });
+        IEventBus bus = host.Services.GetRequiredService<IEventBus>();
+
+        await bus.PublishAsync(new Pinged("stuck"));
+        await bus.PublishAsync(new Ponged("passes by"));
+
+        await Support.EventuallyAsync(() => Task.FromResult(recorder.Followed.Count == 1), "the other event to be handled while the first one waits");
+        Assert.Empty(recorder.Received);
+
+        gate.Released.SetResult();
+        await Support.EventuallyAsync(() => Task.FromResult(recorder.Received.Count == 1), "the first event to be handled once it is released");
         await host.StopAsync();
     }
 }

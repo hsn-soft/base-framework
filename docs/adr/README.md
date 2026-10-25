@@ -28,6 +28,7 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
+| [0062](0062-a-kafka-consumer-for-every-service-and-event.md) | A Kafka consumer, in a group of its own, for every service and event | Accepted | 2026-10-25 |
 | [0061](0061-the-xyz-sample-beside-abc.md) | The Xyz sample beside Abc | Accepted | 2026-10-25 |
 | [0060](0060-customer-payment-and-an-internal-event-in-the-shipment-service.md) | Customer, payment and an internal event in the shipment service | Accepted | 2026-10-25 |
 | [0059](0059-where-events-and-their-handlers-live.md) | Where the events and their handlers live | Accepted | 2026-10-25 |

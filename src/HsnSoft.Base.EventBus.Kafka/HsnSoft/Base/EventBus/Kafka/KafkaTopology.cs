@@ -11,6 +11,9 @@ internal static class KafkaTopology
 {
     public static string TopicFor(KafkaOptions options, string eventName) => options.TopicPrefix + eventName;
 
+    /// <summary>The consumer group of a service for an event, named like the RabbitMQ queue of the same service and event: every service reads an event at its own pace, with its own offset.</summary>
+    public static string GroupFor(EventBusOptions options, string eventName) => $"{options.ConsumerClientInfo}_{EventNames.Trim(options, eventName)}";
+
     public static string DeadLetterTopic(KafkaOptions options) => options.TopicPrefix + "dead-letter";
 
     /// <summary>

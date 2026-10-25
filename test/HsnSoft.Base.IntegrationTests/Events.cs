@@ -117,3 +117,18 @@ public sealed class ReQueuedHandler(Recorder recorder) : IIntegrationEventHandle
         return Task.CompletedTask;
     }
 }
+
+/// <summary>Takes a long time over a <see cref="Pinged"/> and keeps its caller waiting until it is released.</summary>
+public sealed class BlockedHandler(Recorder recorder, BlockedGate gate) : IIntegrationEventHandler<Pinged>
+{
+    public async Task HandleAsync(MessageEnvelope<Pinged> envelope, CancellationToken cancellationToken)
+    {
+        await gate.Released.Task.WaitAsync(cancellationToken);
+        recorder.Received.Enqueue(envelope);
+    }
+}
+
+public sealed class BlockedGate
+{
+    public TaskCompletionSource Released { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+}

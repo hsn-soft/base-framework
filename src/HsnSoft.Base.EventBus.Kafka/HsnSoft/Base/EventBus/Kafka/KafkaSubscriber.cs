@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -12,9 +11,9 @@ using Microsoft.Extensions.Options;
 namespace HsnSoft.Base.EventBus.Kafka;
 
 /// <summary>
-/// Joins the consumer group named after the service, reads the topic of every subscribed event one message at a time and gives
-/// each to the <see cref="IEventDispatcher"/>. A message the dispatcher gives up on is copied to the dead-letter topic, then
-/// the offset moves on. Offsets are committed only after a message is dealt with, so a crash re-delivers it.
+/// Reads the topic of every subscribed event with a consumer of its own, in a consumer group of its own (<c>{ExchangeName}_{ConsumerClientName}_{EventName}</c>, the name of the queue the RabbitMQ bus makes for the same service and
+/// event): the offsets of the events, and of the services that handle the same event, are independent, and a slow handler of one event does not hold the others back. A consumer reads one message at a time and gives it to the
+/// <see cref="IEventDispatcher"/>. A message the dispatcher gives up on is copied to the dead-letter topic, then the offset moves on. Offsets are committed only after a message is dealt with, so a crash re-delivers it.
 /// </summary>
 public sealed partial class KafkaSubscriber(
     IEventBusSubscriptionManager subscriptions,
@@ -36,29 +35,30 @@ public sealed partial class KafkaSubscriber(
             return;
         }
 
-        Dictionary<string, IntegrationEventInfo> byTopic = _subscriptions.Events.ToDictionary(info => KafkaTopology.TopicFor(_options, info.EventName));
         string deadLetterTopic = KafkaTopology.DeadLetterTopic(_options);
+        IntegrationEventInfo[] events = [.. _subscriptions.Events];
 
-        await KafkaTopology.EnsureTopicsAsync(_options, byTopic.Keys.Append(deadLetterTopic)).ConfigureAwait(false);
+        await KafkaTopology.EnsureTopicsAsync(_options, events.Select(info => KafkaTopology.TopicFor(_options, info.EventName)).Append(deadLetterTopic)).ConfigureAwait(false);
 
-        // consuming blocks a thread, so it must not run on the one that started the host
-        await Task.Run(() => ConsumeLoopAsync(byTopic, deadLetterTopic, stoppingToken), CancellationToken.None).ConfigureAwait(false);
+        // consuming blocks a thread, so each consumer runs on one of its own and not on the one that started the host
+        using IProducer<string, byte[]> deadLetters = new ProducerBuilder<string, byte[]>(new ProducerConfig { BootstrapServers = _options.BootstrapServers }).Build();
+        await Task.WhenAll(events.Select(info => Task.Run(() => ConsumeLoopAsync(info, deadLetters, deadLetterTopic, stoppingToken), CancellationToken.None))).ConfigureAwait(false);
     }
 
-    private async Task ConsumeLoopAsync(Dictionary<string, IntegrationEventInfo> byTopic, string deadLetterTopic, CancellationToken stoppingToken)
+    private async Task ConsumeLoopAsync(IntegrationEventInfo info, IProducer<string, byte[]> deadLetters, string deadLetterTopic, CancellationToken stoppingToken)
     {
+        string topic = KafkaTopology.TopicFor(_options, info.EventName);
+        string group = KafkaTopology.GroupFor(_eventBusOptions, info.EventName);
         using IConsumer<string, byte[]> consumer = new ConsumerBuilder<string, byte[]>(new ConsumerConfig
         {
             BootstrapServers = _options.BootstrapServers,
-            GroupId = _eventBusOptions.ConsumerClientInfo,
+            GroupId = group,
             EnableAutoCommit = false,
             AutoOffsetReset = AutoOffsetReset.Earliest,
         }).Build();
-        using IProducer<string, byte[]> deadLetters = new ProducerBuilder<string, byte[]>(new ProducerConfig { BootstrapServers = _options.BootstrapServers }).Build();
 
-        consumer.Subscribe(byTopic.Keys);
-        string topics = string.Join(", ", byTopic.Keys);
-        LogListening(_logger, _eventBusOptions.ConsumerClientInfo, topics);
+        consumer.Subscribe(topic);
+        LogListening(_logger, group, topic);
 
         try
         {
@@ -67,7 +67,6 @@ public sealed partial class KafkaSubscriber(
                 ConsumeResult<string, byte[]> result = consumer.Consume(stoppingToken);
                 try
                 {
-                    IntegrationEventInfo info = byTopic[result.Topic];
                     object envelope = EventSerializer.DeserializeEnvelope(result.Message.Value, info.EventType);
                     await _dispatcher.DispatchAsync(info.EventName, info.EventType, envelope, stoppingToken).ConfigureAwait(false);
                 }
@@ -95,8 +94,8 @@ public sealed partial class KafkaSubscriber(
         }
     }
 
-    [LoggerMessage(EventId = 4501, EventName = "KAFKA_SUBSCRIBER_LISTENING", Level = LogLevel.Information, Message = "{Service} listens to topics {Topics}")]
-    private static partial void LogListening(ILogger logger, string service, string topics);
+    [LoggerMessage(EventId = 4501, EventName = "KAFKA_SUBSCRIBER_LISTENING", Level = LogLevel.Information, Message = "{Group} listens to topic {Topic}")]
+    private static partial void LogListening(ILogger logger, string group, string topic);
 
     [LoggerMessage(EventId = 4502, EventName = "KAFKA_SUBSCRIBER_DEAD_LETTERED", Level = LogLevel.Error, Message = "A message from {Topic} could not be handled, moving it to the dead-letter topic")]
     private static partial void LogDeadLettered(ILogger logger, Exception exception, string topic);

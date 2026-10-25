@@ -13,7 +13,7 @@ public static class KafkaServiceCollectionExtensions
     /// <c>AddEventHandler</c>, and a readiness health check.
     /// </summary>
     /// <param name="services">The service collection.</param>
-    /// <param name="configuration">Holds the <c>Kafka</c> section (<see cref="KafkaOptions"/>) and the <c>Kafka:EventBus</c> section (<see cref="EventBusOptions"/>; the consumer group is its <c>ConsumerClientInfo</c>).</param>
+    /// <param name="configuration">Holds the <c>Kafka</c> section (<see cref="KafkaOptions"/>) and the <c>Kafka:EventBus</c> section (<see cref="EventBusOptions"/>; the consumer group of an event is its <c>ConsumerClientInfo</c> and the event name).</param>
     /// <param name="configureEventBus">Optional code to set <see cref="EventBusOptions"/>; runs after the configuration is read.</param>
     public static IServiceCollection AddKafkaEventBus(
         this IServiceCollection services,

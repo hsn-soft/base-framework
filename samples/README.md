@@ -9,7 +9,7 @@ so the two show that the framework fits more than one product. What differs:
 | Gateways | commercial and public (and two web apps) | **one commercial gateway** (with a Redis rate limit) |
 | Layers of a service | class libraries (Domain, Application, EntityFrameworkCore/MongoDB, Http.Host) | **folders of the Host project** (`Domain`, `Application`, `Infrastructure`, `Controllers`, `EventHandlers`) |
 | Databases | SQL Server, PostgreSQL, MongoDB | **PostgreSQL only** (a service with two stores has two contexts on two databases) |
-| Message broker | RabbitMQ (exchange `ABC`) | **Kafka** (topics `xyz.<Event>`, consumer groups `XYZ_<Service>`) |
+| Message broker | RabbitMQ (exchange `ABC`) | **Kafka** (topics `xyz.<Event>`, one consumer group per service and event, `XYZ_<Service>_<Event>`) |
 | Redis | rate limit (gateway), refresh tokens | the same: rate limit in the gateway (`Xyz.Shared/RateLimiting`), refresh tokens in the auth server |
 | Shared code | several `Abc.Shared.*` projects | one project, `Xyz.Shared` (hosting, gateway shell, event contracts, rate limit) |
 
@@ -43,7 +43,7 @@ The same as in Abc ([ADR-0054](../docs/adr/0054-the-order-flow-through-events.md
 4. The order becomes `Confirmed`/`Delivered`, or `Cancelled` with the reason. The address of the order picks the outcome: any address is delivered, `nopay` is a declined payment, `fail` a parcel the carrier cannot reach.
 
 The caller of a message (tenant, user, roles) travels in its envelope and a handler runs as that user ([ADR-0057](../docs/adr/0057-the-caller-of-a-message-and-publish-or-send.md)), so the audit fields of what a handler writes are the user's. Kafka has no queue per service, so a message
-cannot be *sent* to one service there (`SendAsync` throws `NotSupportedException`); every Xyz event is published to its topic and each consumer group reads it. Events live in `Xyz.Shared/Contracts/Events/<publishing service>`, their handlers in the Host of the handling service
+cannot be *sent* to one service there (`SendAsync` throws `NotSupportedException`); every Xyz event is published to its topic and each service reads it with a consumer group of its own. Events live in `Xyz.Shared/Contracts/Events/<publishing service>`, their handlers in the Host of the handling service
 (`EventHandlers/<publishing service>`, `EventHandlers/Internal`) ([ADR-0059](../docs/adr/0059-where-events-and-their-handlers-live.md)).
 
 ## Run it

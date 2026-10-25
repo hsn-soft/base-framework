@@ -4,6 +4,26 @@ namespace HsnSoft.Base.EventBus.Kafka.Tests;
 
 public class KafkaTopologyTests
 {
+    [Theory]
+    [InlineData("XYZ", "OrderService", "OrderCreated", "XYZ_OrderService_OrderCreated")]
+    [InlineData("XYZ", "ShipmentService", "OrderCreatedEto", "XYZ_ShipmentService_OrderCreated")]
+    [InlineData("", "OrderService", "OrderCreated", "OrderService_OrderCreated")]
+    public void TheGroupOfAService_IsNamedLikeItsRabbitMqQueueForTheEvent(string exchange, string service, string eventName, string expected)
+    {
+        EventBusOptions options = new() { ExchangeName = exchange, ConsumerClientName = service };
+
+        Assert.Equal(expected, KafkaTopology.GroupFor(options, eventName));
+    }
+
+    [Fact]
+    public void TwoServices_HaveGroupsOfTheirOwnForTheSameEvent()
+    {
+        EventBusOptions order = new() { ExchangeName = "XYZ", ConsumerClientName = "OrderService" };
+        EventBusOptions product = new() { ExchangeName = "XYZ", ConsumerClientName = "ProductService" };
+
+        Assert.NotEqual(KafkaTopology.GroupFor(order, "OrderCreated"), KafkaTopology.GroupFor(product, "OrderCreated"));
+    }
+
     [Fact]
     public async Task ABrokerThatAnswersLate_IsTriedAgain()
     {
