@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <Import Project="..\..\common.props" />
+
+    <PropertyGroup>
+        <AssemblyName>HsnSoft.Base.EventBus.MongoDB</AssemblyName>
+        <PackageId>HsnSoft.Base.EventBus.MongoDB</PackageId>
+        <RootNamespace />
+        <Title>HsnSoft Base Framework Event Inbox on MongoDB</Title>
+        <Description>The inbox of a service on MongoDB: a message that comes twice is handled once. Opt in per service with AddEventInbox, on the database of the service.</Description>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageTags>HsnSoft Base Framework EventBus Inbox MongoDB</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="..\..\README.md" Pack="true" Visible="false" PackagePath="README.md" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="MongoDB.Driver" Version="3.13.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\HsnSoft.Base.EventBus\HsnSoft.Base.EventBus.csproj" />
+        <ProjectReference Include="..\HsnSoft.Base.MongoDB\HsnSoft.Base.MongoDB.csproj" />
+    </ItemGroup>
+
+</Project>

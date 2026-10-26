@@ -10,6 +10,7 @@
         <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.EntityFrameworkCore\HsnSoft.Base.EntityFrameworkCore.csproj" />
         <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.EntityFrameworkCore.PostgreSql\HsnSoft.Base.EntityFrameworkCore.PostgreSql.csproj" />
         <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.EntityFrameworkCore.SqlServer\HsnSoft.Base.EntityFrameworkCore.SqlServer.csproj" />
+        <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.EventBus.EntityFrameworkCore\HsnSoft.Base.EventBus.EntityFrameworkCore.csproj" />
     </ItemGroup>
 
     <ItemGroup>

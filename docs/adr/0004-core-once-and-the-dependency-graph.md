@@ -29,6 +29,8 @@ referenced it in its own way, and sibling references multiplied: restores slowed
 | `AspNetCore.SwaggerGateway` | Swashbuckle |
 | `EventBus` | Core |
 | `EventBus.RabbitMQ`, `EventBus.Kafka` | EventBus |
+| `EventBus.EntityFrameworkCore` | EventBus, EntityFrameworkCore |
+| `EventBus.MongoDB` | EventBus, MongoDB |
 | `Caching.StackExchangeRedis` | Core |
 | `EntityFrameworkCore` | Core |
 | `EntityFrameworkCore.PostgreSql`, `EntityFrameworkCore.SqlServer` | EntityFrameworkCore |

@@ -1,8 +1,10 @@
 using Abc.IdentityService.Application;
 using Abc.IdentityService.Domain.UserDomain.Entities;
 using Abc.IdentityService.EntityFrameworkCore;
+using Abc.IdentityService.EntityFrameworkCore.Context;
 using Abc.Shared.Hosting;
 using Abc.Shared.Hosting.Microservices;
+using HsnSoft.Base.EventBus.EntityFrameworkCore;
 using HsnSoft.Base.Logging.Serilog;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -14,6 +16,7 @@ builder.Services
     .AddAbcEventBus(builder.Configuration)
     .AddIdentityPersistence(builder.Configuration)
     .AddIdentityHistoryPersistence(builder.Configuration)
+    .AddEventInbox<IdentityDbContext>()
     .AddIdentityApplication();
 
 WebApplication app = builder.Build();

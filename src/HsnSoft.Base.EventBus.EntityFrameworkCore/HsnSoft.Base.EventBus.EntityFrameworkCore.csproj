@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <Import Project="..\..\common.props" />
+
+    <PropertyGroup>
+        <AssemblyName>HsnSoft.Base.EventBus.EntityFrameworkCore</AssemblyName>
+        <PackageId>HsnSoft.Base.EventBus.EntityFrameworkCore</PackageId>
+        <RootNamespace />
+        <Title>HsnSoft Base Framework Event Inbox on EF Core</Title>
+        <Description>The inbox of a service on EF Core: a message that comes twice is handled once. Opt in per service with AddEventInbox, on the context of the service.</Description>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageTags>HsnSoft Base Framework EventBus Inbox EntityFrameworkCore</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="..\..\README.md" Pack="true" Visible="false" PackagePath="README.md" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="$(MicrosoftEntityFrameworkCorePackageVersion)" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\HsnSoft.Base.EntityFrameworkCore\HsnSoft.Base.EntityFrameworkCore.csproj" />
+        <ProjectReference Include="..\HsnSoft.Base.EventBus\HsnSoft.Base.EventBus.csproj" />
+    </ItemGroup>
+
+</Project>

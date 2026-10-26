@@ -7,6 +7,7 @@ using Abc.Shared.Contracts.Events.Product;
 using Abc.Shared.Hosting.Microservices;
 using HsnSoft.Base.EntityFrameworkCore;
 using HsnSoft.Base.EventBus;
+using HsnSoft.Base.EventBus.EntityFrameworkCore;
 using HsnSoft.Base.Logging.Serilog;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -19,6 +20,7 @@ builder.Services
     // an event that is not named here is handled one message at a time; this one five at a time (each message changes its own order)
     .AddEventHandlers(typeof(EventHandlersAssemblyMarker).Assembly, new Dictionary<string, ushort> { [nameof(OrderStockReservedEto)] = 5 })
     .AddOrderPersistence(builder.Configuration)
+    .AddEventInbox<OrderDbContext>()
     .AddOrderApplication();
 
 WebApplication app = builder.Build();

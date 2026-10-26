@@ -27,7 +27,9 @@
         <ProjectReference Include="..\..\src\HsnSoft.Base.Caching.StackExchangeRedis\HsnSoft.Base.Caching.StackExchangeRedis.csproj" />
         <ProjectReference Include="..\..\src\HsnSoft.Base.EntityFrameworkCore.PostgreSql\HsnSoft.Base.EntityFrameworkCore.PostgreSql.csproj" />
         <ProjectReference Include="..\..\src\HsnSoft.Base.EntityFrameworkCore.SqlServer\HsnSoft.Base.EntityFrameworkCore.SqlServer.csproj" />
+        <ProjectReference Include="..\..\src\HsnSoft.Base.EventBus.EntityFrameworkCore\HsnSoft.Base.EventBus.EntityFrameworkCore.csproj" />
         <ProjectReference Include="..\..\src\HsnSoft.Base.EventBus.Kafka\HsnSoft.Base.EventBus.Kafka.csproj" />
+        <ProjectReference Include="..\..\src\HsnSoft.Base.EventBus.MongoDB\HsnSoft.Base.EventBus.MongoDB.csproj" />
         <ProjectReference Include="..\..\src\HsnSoft.Base.EventBus.RabbitMQ\HsnSoft.Base.EventBus.RabbitMQ.csproj" />
         <ProjectReference Include="..\..\src\HsnSoft.Base.MongoDB\HsnSoft.Base.MongoDB.csproj" />
     </ItemGroup>

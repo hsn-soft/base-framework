@@ -33,6 +33,8 @@ JWT, Swagger, a broker or a cache.
 | `HsnSoft.Base.EventBus` | Event bus core: message envelope, handlers, dispatcher, naming, publish retry ([docs](docs/EventBus.md)) | Core |
 | `HsnSoft.Base.EventBus.RabbitMQ` | RabbitMQ broker, wire and topology compatible with the production services | EventBus |
 | `HsnSoft.Base.EventBus.Kafka` | Kafka broker: producer, consumer group, dead-letter topic | EventBus |
+| `HsnSoft.Base.EventBus.EntityFrameworkCore` | The inbox of a service on EF Core, opt in per service: a message that comes twice is handled once ([docs](docs/EventBus.md#the-inbox-a-message-that-comes-twice-is-handled-once)) | EventBus, EntityFrameworkCore |
+| `HsnSoft.Base.EventBus.MongoDB` | The inbox of a service on MongoDB, opt in per service | EventBus, MongoDB |
 | `HsnSoft.Base.Caching.StackExchangeRedis` | `IDistributedCache`, connection, health check | Core |
 | `HsnSoft.Base.EntityFrameworkCore` | What the EF Core providers share: `DbContext` health check, startup schema creation, `BaseDbContext` and the interceptor for audit, soft delete and tenants, the generic repository (`EfCoreRepository`) | Core, Ddd.Domain |
 | `HsnSoft.Base.EntityFrameworkCore.PostgreSql` | PostgreSQL `DbContext` with retries | EntityFrameworkCore |

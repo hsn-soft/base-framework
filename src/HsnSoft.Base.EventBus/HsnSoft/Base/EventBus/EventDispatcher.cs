@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using HsnSoft.Base.Domain.Entities.Events;
+using HsnSoft.Base.EventBus.Inbox;
 using HsnSoft.Base.Logging;
 using HsnSoft.Base.Logging.Masking;
 using HsnSoft.Base.Security;
@@ -42,7 +43,8 @@ public sealed partial class EventDispatcher(
     IEventBusSubscriptionManager subscriptions,
     IOptions<EventBusOptions> options,
     ILogger<EventDispatcher> logger,
-    ILogMasker? masker = null) : IEventDispatcher
+    ILogMasker? masker = null,
+    InboxEnabled? inbox = null) : IEventDispatcher
 {
     /// <summary>Set in the <c>Data</c> of an exception whose Error the dispatcher has logged already (<c>CONSUME_EVENT_ERROR</c>).</summary>
     public const string ErrorLoggedKey = "HsnSoft.Base.EventBus.ErrorLogged";
@@ -58,6 +60,7 @@ public sealed partial class EventDispatcher(
     private readonly EventBusOptions _options = options.Value;
     private readonly ILogger<EventDispatcher> _logger = logger;
     private readonly ILogMasker? _masker = masker;
+    private readonly bool _inbox = inbox is not null;
 
     public async Task DispatchAsync(string trimmedEventName, Type eventType, object messageEnvelope, CancellationToken cancellationToken = default)
     {
@@ -123,6 +126,12 @@ public sealed partial class EventDispatcher(
             LogStarted(_logger, from, to);
         }
 
+        // a service with an inbox handles a message once: a delivery of one that was handled (or is being handled) is left alone
+        if (_inbox && !await TryStartInboxAsync(trimmedEventName, envelope, from, to, cancellationToken).ConfigureAwait(false))
+        {
+            return;
+        }
+
         AttemptCounter attempts = new();
         try
         {
@@ -146,6 +155,7 @@ public sealed partial class EventDispatcher(
                 LogRejected(_logger, from, to, handlerNames, watch.ElapsedMilliseconds, exception.Message);
             }
 
+            await EndInboxAsync(envelope, error: null, cancellationToken).ConfigureAwait(false);
             return;
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
@@ -160,12 +170,56 @@ public sealed partial class EventDispatcher(
 
             // the broker project reports the failure to the error client; the Error is already written, it must not be written twice
             exception.Data[ErrorLoggedKey] = true;
+            await EndInboxAsync(envelope, exception.Message, cancellationToken).ConfigureAwait(false);
             throw;
         }
 
+        await EndInboxAsync(envelope, error: null, cancellationToken).ConfigureAwait(false);
         using (_logger.BeginScope(s_consumeEnd))
         {
             LogHandled(_logger, from, to, handlerNames, watch.ElapsedMilliseconds);
+        }
+    }
+
+    // false when the message is not to be handled: it was handled before, or another handling holds it, or it failed too often
+    private async Task<bool> TryStartInboxAsync(string eventName, ParentMessageEnvelope envelope, string from, string to, CancellationToken cancellationToken)
+    {
+        AsyncServiceScope scope = _scopeFactory.CreateAsyncScope();
+        await using (scope.ConfigureAwait(false))
+        {
+            InboxStart start = await scope.ServiceProvider.GetRequiredService<IInboxStore>().TryStartAsync(envelope.MessageId, eventName, envelope.CorrelationId, cancellationToken).ConfigureAwait(false);
+            switch (start)
+            {
+                case InboxStart.Started:
+                    return true;
+                case InboxStart.AlreadyHandled:
+                    LogInboxAlreadyHandled(_logger, from, to);
+                    break;
+                case InboxStart.InProgress:
+                    LogInboxInProgress(_logger, from, to);
+                    break;
+                default:
+                    LogInboxRetryLimit(_logger, from, to);
+                    break;
+            }
+
+            return false;
+        }
+    }
+
+    // the handling ended: handled (or the application said no) when there is no error, failed with it otherwise; a handling cut short by a shutdown never gets here and stays Started until its lease runs out
+    private async Task EndInboxAsync(ParentMessageEnvelope envelope, string? error, CancellationToken cancellationToken)
+    {
+        if (!_inbox)
+        {
+            return;
+        }
+
+        AsyncServiceScope scope = _scopeFactory.CreateAsyncScope();
+        await using (scope.ConfigureAwait(false))
+        {
+            IInboxStore store = scope.ServiceProvider.GetRequiredService<IInboxStore>();
+            await (error is null ? store.CompleteAsync(envelope.MessageId, cancellationToken) : store.FailAsync(envelope.MessageId, error, cancellationToken)).ConfigureAwait(false);
         }
     }
 
@@ -251,6 +305,15 @@ public sealed partial class EventDispatcher(
 
     [LoggerMessage(EventId = 2004, EventName = "CONSUME_EVENT_REJECTED", Level = LogLevel.Warning, Message = "{From} -> {To}: {Handler} rejected the message after {ElapsedMs} ms: {Reason}")]
     private static partial void LogRejected(ILogger logger, string from, string to, string handler, long elapsedMs, string reason);
+
+    [LoggerMessage(EventId = 2005, EventName = "CONSUME_EVENT_INBOX_ALREADY_HANDLED", Level = LogLevel.Information, Message = "{From} -> {To}: the message was handled before, it is left alone")]
+    private static partial void LogInboxAlreadyHandled(ILogger logger, string from, string to);
+
+    [LoggerMessage(EventId = 2006, EventName = "CONSUME_EVENT_INBOX_IN_PROGRESS", Level = LogLevel.Warning, Message = "{From} -> {To}: another handling holds the message and its lease has not run out, this delivery is left alone")]
+    private static partial void LogInboxInProgress(ILogger logger, string from, string to);
+
+    [LoggerMessage(EventId = 2007, EventName = "CONSUME_EVENT_INBOX_RETRY_LIMIT", Level = LogLevel.Warning, Message = "{From} -> {To}: the message failed more often than the inbox allows, it is left to the error queue")]
+    private static partial void LogInboxRetryLimit(ILogger logger, string from, string to);
 
     [LoggerMessage(EventId = 2003, EventName = "CONSUME_EVENT_RETRY", Level = LogLevel.Warning, Message = "{Handler} failed on {EventName}, attempt {Attempt}/{Max}")]
     private static partial void LogAttemptFailed(ILogger logger, Exception exception, string handler, string eventName, int attempt, int max);

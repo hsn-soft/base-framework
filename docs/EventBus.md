@@ -101,6 +101,32 @@ unmasked is written. `LogMessageBody` above is a different switch: the raw body,
 `MaxHandlerAttempts` (default 1) can make the framework retry a handler before it counts as failed; the services in production leave
 retrying to their handlers.
 
+## The inbox: a message that comes twice is handled once
+
+A broker delivers at least once, so a message can come twice (a crash after the handler, before the acknowledgement; a message put back from the error queue). A service that must not handle it twice opts in to the **inbox**: it is a record, in the service's own database, of the messages
+it received, keyed by the id of the message. A service that does not call `AddEventInbox` has no inbox and pays nothing for it ([ADR-0067](adr/0067-the-event-inbox-is-opt-in-and-a-decorator.md)).
+
+```csharp
+// the model of the context: modelBuilder.ConfigureEventInbox(prefix + "InboxMessage", schema);
+builder.Services
+    .AddEventHandlers(typeof(EventHandlersAssemblyMarker).Assembly)
+    .AddEventInbox<OrderDbContext>();      // EventBus.EntityFrameworkCore; options: MaxRetryCount (4), ProcessingLease (2 minutes); on MongoDB: .AddEventInbox("InboxMessage")
+```
+
+The dispatcher asks the inbox before the handler and tells it how the handling ended. The handler is not changed and knows nothing of the inbox.
+
+| The inbox says | What happens |
+|---|---|
+| `Started` (a new message, or one taken again) | the handler runs; handled (or the application said no to it): `Completed`; failed after its attempts: `Failed` with the reason, the error goes on to the error queue |
+| `AlreadyHandled` | the handler does not run, the message is acknowledged (`CONSUME_EVENT_INBOX_ALREADY_HANDLED`, Information) |
+| `InProgress` | another handling holds the message and its lease (`ProcessingLease`) has not run out: left alone (Warning) |
+| `RetryLimitReached` | the message failed more than `MaxRetryCount` times: left to the error queue (Warning) |
+| the inbox cannot be asked (the database is down) | the delivery fails and is reported like a failed handler: **the message is not dropped** |
+
+A message is taken by inserting its row (the id is the key, so of two deliveries at once one insert wins); a row that failed, or whose handling died (a `Started` row older than the lease), is taken again by one `UPDATE ... WHERE` (the status and the lease are in the
+condition), so two deliveries cannot both take it. What the inbox does **not** do: the row and the changes of the handler are two transactions, so a handler that crashes between its own commit and `Completed` is run again when the message comes back (after the lease): a handler
+must still stand it. Rows are kept (clean up old `Completed` ones as the service sees fit). On EF Core (SQL Server, PostgreSQL: `EventBus.EntityFrameworkCore`, `AddEventInbox<TContext>()`) and on MongoDB (`EventBus.MongoDB`, `AddEventInbox(collectionName)`).
+
 ## Product side
 
 The framework leaves these to the product's Shared project, because they know products:

@@ -221,6 +221,10 @@ The commercial gateway also maps `/auth-server/v1/...` to the auth server. Every
 the service behind it are one chain in the logs (the pages and the service share one `CorrelationId` in Graylog; the gateway stays silent for what a service logged). The sign-in of the commercial
 application lasts as long as the token (15 minutes); when the token is no longer accepted the page signs out and says so. The web applications answer pages, so they do not use `Abc.Shared.Hosting` (its web api shell answers `BaseResponse`).
 
+### The inbox in Abc ([ADR-0067](../docs/adr/0067-the-event-inbox-is-opt-in-and-a-decorator.md))
+
+The identity service (SQL Server), the order service (PostgreSQL) and the product service (MongoDB) have an inbox (`AddEventInbox<...DbContext>()`, or `AddEventInbox("InboxMessage")` on MongoDB; the table or collection `InboxMessage` in their own databases): a message that comes twice is handled once there. The shipment service has none, and the Xyz system does not use the inbox at all.
+
 ### Redis and RabbitMQ in Abc
 
 Every Abc microservice (and the auth server) and the commercial gateway are connected to **Redis** (`ConnectionStrings:Redis`, key prefix `abc:`); the four services (identity, order, product, shipment) are also connected to the **RabbitMQ** event bus (exchange `ABC`, the

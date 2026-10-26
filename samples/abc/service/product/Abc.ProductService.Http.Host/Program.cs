@@ -6,6 +6,7 @@ using Abc.Shared.Contracts.Events.Order;
 using Abc.Shared.Hosting;
 using Abc.Shared.Hosting.Microservices;
 using HsnSoft.Base.EventBus;
+using HsnSoft.Base.EventBus.MongoDB;
 using HsnSoft.Base.Logging.Serilog;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -19,6 +20,8 @@ builder.Services
     .AddEventHandlers(typeof(EventHandlersAssemblyMarker).Assembly, new Dictionary<string, ushort> { [nameof(OrderCreatedEto)] = 10 })
     .AddProductPersistence(builder.Configuration)
     .AddProductStockPersistence(builder.Configuration)
+    // the inbox of the service (in its database, with the collections of the products): a message that comes twice is handled once
+    .AddEventInbox(MongoProductDbProperties.CollectionPrefix + "InboxMessage")
     .AddProductApplication();
 
 WebApplication app = builder.Build();
