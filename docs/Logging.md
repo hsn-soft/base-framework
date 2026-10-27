@@ -5,12 +5,13 @@ How to use the logging of the framework and what its logs look like. **Why it is
 [0019](adr/0019-log-fields-pipeline.md) (the fields), [0020](adr/0020-failure-logged-once.md) (failures), [0021](adr/0021-sensitive-data-by-attributes.md) (sensitive data).
 
 The framework packages (EventBus, RabbitMQ, Kafka, PostgreSQL, MongoDB, ...) do not know which logging library a product uses. They write through `Microsoft.Extensions.Logging`
-(`ILogger<T>`, `[LoggerMessage]`), and the product decides where the logs go: Serilog and Graylog in one service, NLog in another. Two packages help with that; both are optional.
+(`ILogger<T>`, `[LoggerMessage]`), and the product decides where the logs go: Serilog and Graylog in one service, NLog in another. These packages help with that; all are optional.
 
 | Package | What it is |
 |---|---|
 | `HsnSoft.Base.Logging` | Independent of any logging library: `IAppConsoleLogger` (console only), the settings every provider reads (`Logging:LogLevel` for the console, the `PersistentLogger` section for what is kept), masking of sensitive data. |
 | `HsnSoft.Base.Logging.Serilog` | Serilog as the provider: the console, the persistent sink (Graylog, or a file), the routing rules, the self-healing Graylog sink. |
+| `HsnSoft.Base.Logging.NLog` | NLog as the provider, with the same settings, console and file lines and fields: `builder.Logging.AddBaseNLog(builder.Configuration, "OrderService")` instead of `AddBaseSerilog`. |
 
 ## Using it (Serilog)
 
@@ -169,19 +170,21 @@ Debug (console only), its warnings and errors as they are, so a connection the c
 
 The `ConsumeStart` log carries the message (envelope and event, masked) as `MessageBody`; the raw body is only logged with `EventBusOptions.LogMessageBody` (see [EventBus.md](EventBus.md)).
 
-## Another provider (NLog, ...)
+## NLog, and another provider
 
-A provider has to do what `HsnSoft.Base.Logging.Serilog` does, with its own tools: read `PersistentLoggerOptions.FromConfiguration`,
-write to the console what `ConsoleLevels` says, keep what `PersistentLevelRules` does not let through (Debug/Trace) and the `ConsoleOnly.` categories out of the persistent target, and mask
-`[SensitiveData]` properties. In NLog that is a rule order, sketched here (not run in this repository):
+`AddBaseNLog` reads the same settings as `AddBaseSerilog` and gives the same result, so a service moves from one to the other by changing one call ([ADR-0076](adr/0076-more-providers-and-the-rules-every-provider-shares.md)):
 
-```xml
-<rules>
-  <logger name="*" minlevel="Trace" writeTo="console" />
-  <logger name="ConsoleOnly.*" final="true" />
-  <logger name="*" minlevel="Info" writeTo="graylog" />
-</rules>
+```csharp
+builder.Logging.AddBaseNLog(builder.Configuration, "OrderService");   // console: Logging:LogLevel; kept: PersistentLogger (Graylog over HTTP, or a file)
 ```
+
+- The console line and the file line are the ones of the Serilog provider; the persistent log has the same fields (`LogType`, `MessageType`, `Facility`, the scope properties such as `CorrelationId`), an object logged with `{@Object}` as the one field holding its masked JSON, text cut at `MaxPersistentFieldLength`.
+- `[SensitiveData]` is masked in the fields **and** in the message (NLog would write an `{@Object}` into the message whole, so the message is rendered from the template here).
+- Graylog is written by a background queue that sends again what failed (GELF over HTTP, `http://address:port/gelf`), so `GrayLog:SinkRefreshIntervalMinutes` is not used. `PersistentLogger:IsSelfLogActive` shows NLog's own errors.
+- The service has its own NLog factory: the global `LogManager` is not touched and an `nlog.config` is not read; `AddBaseNLog(configuration, name, nlog => nlog.AddRule(...))` adds a target of the product.
+
+A provider for another library does what these two do, with its own tools, and uses the rules of `HsnSoft.Base.Logging` that both share: `LogShape` (the type of a log from its category, the `Facility` from an event name, the noise fields), `LogRouting` (the console and the persistent sink, from level and category) and
+`SensitiveDataTree` (an object as a tree with the secrets masked, to convert to the library's own values).
 
 ## Moving from the previous framework
 

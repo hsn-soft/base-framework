@@ -25,8 +25,7 @@ internal static class SerilogRouting
             : string.Empty;
 
     /// <summary>Logs of the console logger (<c>IAppConsoleLogger</c>) are never persistent.</summary>
-    internal static bool IsConsoleOnly(LogEvent logEvent)
-        => SourceContext(logEvent).StartsWith(LogCategories.ConsoleOnlyPrefix, StringComparison.Ordinal);
+    internal static bool IsConsoleOnly(LogEvent logEvent) => LogRouting.IsConsoleOnly(SourceContext(logEvent));
 
     internal static LogLevel ToLogLevel(LogEventLevel level) => level switch
     {
@@ -39,18 +38,17 @@ internal static class SerilogRouting
     };
 
     /// <summary>The console shows a log when its level reaches what <c>Logging:LogLevel</c> says for its category (nothing at all for <c>None</c>).</summary>
-    internal static bool ForConsole(LogEvent logEvent, LogLevelRules rules) => ToLogLevel(logEvent.Level) >= rules.For(SourceContext(logEvent));
+    internal static bool ForConsole(LogEvent logEvent, LogLevelRules rules) => LogRouting.ForConsole(ToLogLevel(logEvent.Level), SourceContext(logEvent), rules);
 
     /// <summary>
     /// The persistent sink (Graylog, file) gets a log when its level reaches what <see cref="PersistentLevelRules"/> says for its category (never below Information, so
     /// Debug and Verbose logs stay in the console whatever the configuration says) and it is not for the console only.
     /// </summary>
     internal static bool ForPersistent(LogEvent logEvent, PersistentLevelRules rules)
-        => !IsConsoleOnly(logEvent) && ToLogLevel(logEvent.Level) >= rules.For(SourceContext(logEvent), IsPlatform(logEvent));
+        => LogRouting.ForPersistent(ToLogLevel(logEvent.Level), SourceContext(logEvent), LogTypeOf(logEvent), rules);
 
-    /// <summary>A log of the platform (ASP.NET Core, a driver, ...): the <c>LogType</c> every log has when it reaches a sink.</summary>
-    internal static bool IsPlatform(LogEvent logEvent)
-        => logEvent.Properties.TryGetValue(LogFields.LogType, out LogEventPropertyValue? type) && type is ScalarValue { Value: LogTypes.PlatformLog };
+    private static string LogTypeOf(LogEvent logEvent)
+        => logEvent.Properties.TryGetValue(LogFields.LogType, out LogEventPropertyValue? type) && type is ScalarValue { Value: string text } ? text : string.Empty;
 
     /// <summary>The name shown next to the level: the console logger's own name, the structured logger's, or the host's.</summary>
     internal static string LoggerName(LogEvent logEvent, string hostName)

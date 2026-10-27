@@ -11,7 +11,7 @@ namespace HsnSoft.Base.Logging.Serilog;
 /// </summary>
 internal sealed class FacilityEnricher : ILogEventEnricher
 {
-    internal const string FacilityProperty = "Facility";
+    internal const string FacilityProperty = LogShape.FacilityField;
 
     public void Enrich(LogEvent logEvent, ILogEventPropertyFactory propertyFactory)
     {
@@ -31,8 +31,7 @@ internal sealed class FacilityEnricher : ILogEventEnricher
             : null;
 
     // only the SCREAMING_SNAKE_CASE names are facilities; the names the platform gives its events (ExecutedEndpoint) are not
-    private static string? FacilityName(string? eventName)
-        => eventName is not null && eventName.All(character => character is (>= 'A' and <= 'Z') or (>= '0' and <= '9') or '_') ? eventName : null;
+    private static string? FacilityName(string? eventName) => LogShape.FacilityName(eventName);
 
     private static string? Text(LogEventPropertyValue? value)
         => value is ScalarValue { Value: string { Length: > 0 } text } ? text : null;

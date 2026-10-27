@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 using Serilog.Core;
 using Serilog.Events;
@@ -16,12 +15,9 @@ namespace HsnSoft.Base.Logging.Serilog;
 /// <param name="appNamespace">The start of the categories of the application (<c>Hhs</c>).</param>
 internal sealed class LogShapeEnricher(string appNamespace) : ILogEventEnricher
 {
-    internal const string MessageTypeProperty = "MessageType";
-    internal const string StructuredMessage = "Structured";
-    internal const string ArgsMessage = "Args";
-
-    private const string FrameworkNamespace = "HsnSoft.Base";
-    private const string SharedNamespacePart = "Shared";
+    internal const string MessageTypeProperty = LogShape.MessageTypeField;
+    internal const string StructuredMessage = LogShape.StructuredMessage;
+    internal const string ArgsMessage = LogShape.ArgsMessage;
 
     public void Enrich(LogEvent logEvent, ILogEventPropertyFactory propertyFactory)
     {
@@ -29,30 +25,7 @@ internal sealed class LogShapeEnricher(string appNamespace) : ILogEventEnricher
         logEvent.AddPropertyIfAbsent(propertyFactory.CreateProperty(MessageTypeProperty, IsStructured(logEvent) ? StructuredMessage : ArgsMessage));
     }
 
-    internal string LogType(string category)
-    {
-        // a log without a category is written by the application itself (the static Log); the console logger's category is the application's too
-        if (category.Length == 0 || category.StartsWith(LogCategories.ConsoleOnlyPrefix, StringComparison.Ordinal))
-        {
-            return LogTypes.AppLog;
-        }
-
-        if (StartsWithCategory(category, FrameworkNamespace))
-        {
-            return LogTypes.FrameworkLog;
-        }
-
-        if (StartsWithCategory(category, $"{appNamespace}.{SharedNamespacePart}"))
-        {
-            return LogTypes.SharedLog;
-        }
-
-        return StartsWithCategory(category, appNamespace) ? LogTypes.AppLog : LogTypes.PlatformLog;
-    }
-
-    // "Hhs" is the category "Hhs" and everything below it, not "HhsExtras"
-    private static bool StartsWithCategory(string category, string prefix)
-        => category.StartsWith(prefix, StringComparison.Ordinal) && (category.Length == prefix.Length || category[prefix.Length] == '.');
+    internal string LogType(string category) => LogShape.LogType(category, appNamespace);
 
     private static bool IsStructured(LogEvent logEvent)
         => logEvent.Properties.Any(property => property.Key != "EventId" && property.Value is StructureValue or DictionaryValue);

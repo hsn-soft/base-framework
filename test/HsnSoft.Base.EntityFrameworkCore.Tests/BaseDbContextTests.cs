@@ -139,6 +139,19 @@ public sealed class BaseDbContextTests : IAsyncLifetime, IDisposable
     }
 
     [Fact]
+    public async Task ASynchronousSave_GetsTheAuditFieldsToo()
+    {
+        await using (AsyncServiceScope scope = Scope())
+        {
+            Db(scope).Notes.Add(new Note { Text = "first" });
+            Db(scope).SaveChanges();
+        }
+
+        await using AsyncServiceScope read = Scope();
+        Assert.Equal(s_userA, (await Db(read).Notes.SingleAsync()).CreatedBy);
+    }
+
+    [Fact]
     public async Task AChangedEntity_GetsTheModificationFields_WithTheUserWhoChangedIt()
     {
         await using (AsyncServiceScope scope = Scope())

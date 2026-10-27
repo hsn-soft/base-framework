@@ -22,6 +22,7 @@ JWT, Swagger, a broker or a cache.
 | `HsnSoft.Base.Core` | Bare essentials: shared exceptions, health-check tag, startup retry, `ICurrentUser`, `ApplicationService` (logger and current user for the application layer), `Guard` (checks of the domain), the contracts of soft delete and localization (`ISoftDelete`, `IMessageLocalizer`, ...) with their defaults | - |
 | `HsnSoft.Base.Logging` | Logger interfaces and models, masking of sensitive data, the settings every provider reads (`Logging:LogLevel` for the console, `PersistentLogger` for what is kept); independent of any logging library ([docs](docs/Logging.md)) | Core |
 | `HsnSoft.Base.Logging.Serilog` | Serilog provider: console, Graylog or file, Debug/Verbose stay in the console | Logging, Hosting |
+| `HsnSoft.Base.Logging.NLog` | NLog provider with the same settings, routing, fields and masking as the Serilog one: console, Graylog (GELF over HTTP) or file ([ADR-0076](docs/adr/0076-more-providers-and-the-rules-every-provider-shares.md)) | Logging |
 | `HsnSoft.Base.Hosting` | Generic Host workers: `PeriodicBackgroundService` | Core |
 | `HsnSoft.Base.Auditing` | Who made a record and when, who changed it last, who deleted it: the audit contracts an entity and its DTO share (`IAuditedObject`, `IFullAuditedObject`, ...), the marks an entity takes (`IMarkCreated`, ...) and the setter that fills them with the clock and the current user ([docs](docs/EntityConcepts.md)) | Core |
 | `HsnSoft.Base.Data` | What every data store shares whatever the database: the switch of the data filters (soft delete, tenants, ...) that follows the flow of the code (`IDataFilter`) | Core |
@@ -46,14 +47,17 @@ JWT, Swagger, a broker or a cache.
 | `HsnSoft.Base.EntityFrameworkCore` | What the EF Core providers share: `DbContext` health check, startup schema creation, `BaseDbContext` and the interceptor for audit and soft delete, the generic repository (`EfCoreRepository`) | Ddd.Domain |
 | `HsnSoft.Base.EntityFrameworkCore.PostgreSql` | PostgreSQL `DbContext` with retries | EntityFrameworkCore |
 | `HsnSoft.Base.EntityFrameworkCore.SqlServer` | SQL Server `DbContext` with retries | EntityFrameworkCore |
+| `HsnSoft.Base.EntityFrameworkCore.MySql` | MySQL `DbContext` with retries (Oracle's `MySql.EntityFrameworkCore`) | EntityFrameworkCore |
 | `HsnSoft.Base.BlobStoring` | `IBlobStore`: save, read and delete files in containers | Core |
-| `HsnSoft.Base.BlobStoring.Minio` | MinIO (S3) implementation of `IBlobStore`; Azure would be a sibling package | BlobStoring |
+| `HsnSoft.Base.BlobStoring.Minio` | MinIO (S3) implementation of `IBlobStore` | BlobStoring |
+| `HsnSoft.Base.BlobStoring.Azure` | Azure Blob Storage implementation of `IBlobStore` (a connection string, or the identity of the host) | BlobStoring |
+| `HsnSoft.Base.BlobStoring.Aws` | Amazon S3 implementation of `IBlobStore` (the role of the host; a `ServiceUrl` for any store with the S3 API) | BlobStoring |
 | `HsnSoft.Base.Localization` | JSON texts embedded in the assemblies, merged from the innermost layer out, found by key in the language of the request | Core |
 | `HsnSoft.Base.MongoDB` | `IMongoDatabase` registration and health check, `MongoEntityConcepts` (audit and soft delete for repositories), the generic repository (`MongoRepository`) | Ddd.Domain |
 | `HsnSoft.Base` | Name holder that references `HsnSoft.Base.Core` | Core |
 
 Abstractions and their implementations are separate packages (`EventBus` / `EventBus.RabbitMQ` / `EventBus.Kafka`, `BlobStoring` /
-`BlobStoring.Minio`), so a product picks the broker or the storage per service and can change it with one registration. A package never depends on a sibling it does not need. Anything only one product needs (the Xyz gateway's rate
+`BlobStoring.Minio` / `.Azure` / `.Aws`, `Logging.Serilog` / `.NLog`), so a product picks the broker or the storage per service and can change it with one registration. A package never depends on a sibling it does not need. Anything only one product needs (the Xyz gateway's rate
 limit, for example) is that product's shared code, not a framework package.
 
 ## Tests

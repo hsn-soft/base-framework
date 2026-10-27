@@ -28,6 +28,7 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
+| [0076](0076-more-providers-and-the-rules-every-provider-shares.md) | More providers (NLog, Azure, AWS, MySQL), and the rules every logging provider shares | Accepted | 2026-10-27 |
 | [0075](0075-rules-of-the-framework-project-files.md) | The rules of the project files of the framework (a living list) | Accepted | 2026-10-27 |
 | [0074](0074-multitenancy-is-a-package-of-its-own.md) | Multitenancy is a package of its own, and a service that does not want tenants does not get them | Accepted | 2026-10-27 |
 | [0073](0073-auditing-and-data-are-packages-of-their-own.md) | Auditing and Data are packages of their own | Accepted | 2026-10-27 |

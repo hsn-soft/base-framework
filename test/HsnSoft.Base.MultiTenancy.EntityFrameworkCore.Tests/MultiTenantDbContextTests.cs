@@ -205,6 +205,19 @@ public sealed class MultiTenantDbContextTests : IAsyncLifetime, IDisposable
     }
 
     [Fact]
+    public async Task ASynchronousSave_GivesTheTenantToo()
+    {
+        await using (AsyncServiceScope scope = Scope())
+        {
+            Db(scope).Docs.Add(new Doc());
+            Db(scope).SaveChanges();
+        }
+
+        await using AsyncServiceScope read = Scope();
+        Assert.Equal([s_tenantA], await Db(read).Docs.Select(doc => doc.TenantId).ToListAsync());
+    }
+
+    [Fact]
     public async Task AnEntityWithoutTheTenantConcept_IsNotFilteredByTenant()
     {
         await using AsyncServiceScope scope = Scope();

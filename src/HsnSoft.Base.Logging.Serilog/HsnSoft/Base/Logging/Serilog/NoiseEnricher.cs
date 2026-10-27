@@ -11,9 +11,7 @@ namespace HsnSoft.Base.Logging.Serilog;
 /// </summary>
 internal sealed class NoiseEnricher : ILogEventEnricher
 {
-    internal const string ConnectionId = nameof(ConnectionId);
-
-    private static readonly string[] s_notForAppLogs = ["ActionId", "ActionName", "ParentId", "RequestId", "RequestPath", "SpanId"];
+    internal const string ConnectionId = LogShape.ConnectionIdField;
 
     public void Enrich(LogEvent logEvent, ILogEventPropertyFactory propertyFactory)
     {
@@ -24,19 +22,9 @@ internal sealed class NoiseEnricher : ILogEventEnricher
             return;
         }
 
-        if (logType is LogTypes.FrameworkLog or LogTypes.PlatformLog)
+        foreach (string field in LogShape.NoiseFields(logType))
         {
-            foreach (string field in LogFields.WhoFields)
-            {
-                logEvent.RemovePropertyIfPresent(field);
-            }
-        }
-        else if (logType is LogTypes.AppLog or LogTypes.SharedLog)
-        {
-            foreach (string field in s_notForAppLogs)
-            {
-                logEvent.RemovePropertyIfPresent(field);
-            }
+            logEvent.RemovePropertyIfPresent(field);
         }
     }
 }

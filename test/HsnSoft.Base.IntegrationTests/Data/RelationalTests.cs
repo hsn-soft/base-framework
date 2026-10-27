@@ -1,4 +1,5 @@
 using HsnSoft.Base.EntityFrameworkCore;
+using HsnSoft.Base.EntityFrameworkCore.MySql;
 using HsnSoft.Base.EntityFrameworkCore.PostgreSql;
 using HsnSoft.Base.EntityFrameworkCore.SqlServer;
 using Microsoft.EntityFrameworkCore;
@@ -6,6 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Testcontainers.MsSql;
+using Testcontainers.MySql;
 using Testcontainers.PostgreSql;
 
 namespace HsnSoft.Base.IntegrationTests.Data;
@@ -75,5 +77,21 @@ public sealed class SqlServerTests : IAsyncLifetime
     {
         IConfiguration configuration = Support.Configuration(("ConnectionStrings:SqlServer", _container.GetConnectionString()));
         return RelationalChecks.AssertWorksAsync(services => services.AddBaseSqlServer<ItemContext>(configuration));
+    }
+}
+
+public sealed class MySqlTests : IAsyncLifetime
+{
+    private readonly MySqlContainer _container = new MySqlBuilder("mysql:8.4").Build();
+
+    public Task InitializeAsync() => _container.StartAsync();
+
+    public Task DisposeAsync() => _container.DisposeAsync().AsTask();
+
+    [Fact]
+    public Task DbContext_CreatesItsSchema_StoresRows_AndTheServiceIsReady()
+    {
+        IConfiguration configuration = Support.Configuration(("ConnectionStrings:MySql", _container.GetConnectionString()));
+        return RelationalChecks.AssertWorksAsync(services => services.AddBaseMySql<ItemContext>(configuration));
     }
 }

@@ -10,6 +10,8 @@ namespace HsnSoft.Base.EntityFrameworkCore;
 /// <summary>The names of the providers of the framework: what the <c>Provider</c> of a context's properties class says.</summary>
 public static class EfCoreProviderNames
 {
+    public const string MySql = "mysql";
+
     public const string Postgres = "postgres";
 
     public const string SqlServer = "sqlserver";

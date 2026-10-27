@@ -1,235 +1,31 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using HsnSoft.Base.Logging.Masking;
 using Serilog.Core;
 using Serilog.Events;
 
 namespace HsnSoft.Base.Logging.Serilog;
 
+/// <summary>
+/// Destructures an object that is logged with <c>{@Object}</c> the way <see cref="SensitiveDataTree"/> says (what is secret already masked), as Serilog values: the tree is the same for every logging library, only
+/// its conversion is Serilog's.
+/// </summary>
 public sealed class SensitiveDataDestructuringPolicy : IDestructuringPolicy
 {
-    public bool TryDestructure(
-        object value,
-        ILogEventPropertyValueFactory propertyValueFactory,
-        out LogEventPropertyValue result)
+    public bool TryDestructure(object value, ILogEventPropertyValueFactory propertyValueFactory, out LogEventPropertyValue result)
     {
-        result = DestructureValue(
-            value,
-            propertyValueFactory,
-            new HashSet<object>(ReferenceEqualityComparer.Instance));
-
+        result = Convert(SensitiveDataTree.Build(value), propertyValueFactory);
         return true;
     }
 
-    private LogEventPropertyValue DestructureValue(
-        object? value,
-        ILogEventPropertyValueFactory factory,
-        HashSet<object> visited)
-    {
-        if (value is null)
-            return new ScalarValue(null);
-
-        Type type = value.GetType();
-
-        if (IsSimpleType(type))
-            return factory.CreatePropertyValue(value, destructureObjects: false);
-
-        if (!type.IsValueType)
+    private static LogEventPropertyValue Convert(MaskedNode node, ILogEventPropertyValueFactory factory)
+        => node switch
         {
-            if (!visited.Add(value))
-                return new ScalarValue($"[CyclicRef:{type.Name}]");
-        }
+            MaskedScalar { Value: null } => new ScalarValue(null),
 
-        if (TryHandleDictionary(value, factory, visited, out LogEventPropertyValue? dictionaryResult))
-            return dictionaryResult;
-
-        if (TryHandleEnumerable(value, factory, visited, out LogEventPropertyValue? enumerableResult))
-            return enumerableResult;
-
-        var properties = new List<LogEventProperty>();
-
-        foreach (PropertyInfo prop in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
-        {
-            if (!prop.CanRead)
-                continue;
-
-            object? propValue;
-            try
-            {
-                propValue = prop.GetValue(value);
-            }
-            catch
-            {
-                continue;
-            }
-
-            SensitiveDataAttribute? sensitiveAttr = prop.GetCustomAttribute<SensitiveDataAttribute>();
-
-            LogEventPropertyValue propLogValue = sensitiveAttr != null
-                ? MaskPropertyValue(propValue, prop.PropertyType, sensitiveAttr)
-                : DestructureValue(propValue, factory, visited);
-
-            properties.Add(new LogEventProperty(prop.Name, propLogValue));
-        }
-
-        return new StructureValue(properties, type.Name);
-    }
-
-    private static LogEventPropertyValue MaskPropertyValue(
-        object? propValue,
-        Type propertyType,
-        SensitiveDataAttribute attribute)
-    {
-        if (propValue is null)
-            return new ScalarValue(null);
-
-        if (propertyType == typeof(string))
-        {
-            string? masked = MaskingHelper.MaskByAttribute(propValue.ToString(), attribute);
-            return new ScalarValue(masked);
-        }
-
-        if (TryHandleMaskedDictionary(propValue, attribute, out LogEventPropertyValue? dictionaryResult))
-            return dictionaryResult;
-
-        if (TryHandleMaskedEnumerable(propValue, propertyType, attribute, out LogEventPropertyValue? sequenceResult))
-            return sequenceResult;
-
-        // string olmayan, ama attribute eklenmiş diğer tiplerde fallback
-        string? fallback = MaskingHelper.MaskByAttribute(propValue.ToString(), attribute);
-        return new ScalarValue(fallback);
-    }
-
-    private bool TryHandleDictionary(
-        object value,
-        ILogEventPropertyValueFactory factory,
-        HashSet<object> visited,
-        out LogEventPropertyValue result)
-    {
-        result = null!;
-
-        if (value is not IDictionary dictionary)
-            return false;
-
-        var elements = new List<KeyValuePair<ScalarValue, LogEventPropertyValue>>();
-
-        foreach (DictionaryEntry entry in dictionary)
-        {
-            var key = new ScalarValue(entry.Key.ToString());
-            LogEventPropertyValue val = DestructureValue(entry.Value, factory, visited);
-            elements.Add(new KeyValuePair<ScalarValue, LogEventPropertyValue>(key, val));
-        }
-
-        result = new DictionaryValue(elements);
-        return true;
-    }
-
-    private static bool TryHandleMaskedDictionary(
-        object value,
-        SensitiveDataAttribute attribute,
-        out LogEventPropertyValue result)
-    {
-        result = null!;
-
-        if (value is not IDictionary dictionary)
-            return false;
-
-        var elements = new List<KeyValuePair<ScalarValue, LogEventPropertyValue>>();
-
-        foreach (DictionaryEntry entry in dictionary)
-        {
-            string? key = entry.Key.ToString();
-            string? raw = entry.Value?.ToString();
-            string? masked = MaskingHelper.MaskByAttribute(raw, attribute);
-
-            elements.Add(new KeyValuePair<ScalarValue, LogEventPropertyValue>(
-                new ScalarValue(key),
-                new ScalarValue(masked)));
-        }
-
-        result = new DictionaryValue(elements);
-        return true;
-    }
-
-    private bool TryHandleEnumerable(
-        object value,
-        ILogEventPropertyValueFactory factory,
-        HashSet<object> visited,
-        out LogEventPropertyValue result)
-    {
-        result = null!;
-
-        if (value is not IEnumerable enumerable)
-            return false;
-
-        var items = new List<LogEventPropertyValue>();
-
-        foreach (object? item in enumerable)
-        {
-            items.Add(DestructureValue(item, factory, visited));
-        }
-
-        result = new SequenceValue(items);
-        return true;
-    }
-
-    private static bool TryHandleMaskedEnumerable(
-        object value,
-        Type propertyType,
-        SensitiveDataAttribute attribute,
-        out LogEventPropertyValue result)
-    {
-        result = null!;
-
-        if (value is string)
-            return false;
-
-        if (value is not IEnumerable enumerable)
-            return false;
-
-        Type? elementType = GetEnumerableElementType(propertyType);
-        if (elementType != typeof(string))
-            return false;
-
-        var items = new List<LogEventPropertyValue>();
-
-        foreach (object? item in enumerable)
-        {
-            string? masked = MaskingHelper.MaskByAttribute(item?.ToString(), attribute);
-            items.Add(new ScalarValue(masked));
-        }
-
-        result = new SequenceValue(items);
-        return true;
-    }
-
-    private static Type? GetEnumerableElementType(Type type)
-    {
-        if (type.IsArray)
-            return type.GetElementType();
-
-        if (type.IsGenericType)
-            return type.GetGenericArguments().FirstOrDefault();
-
-        Type? enumerableInterface = type
-            .GetInterfaces()
-            .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>));
-
-        return enumerableInterface?.GetGenericArguments().FirstOrDefault();
-    }
-
-    private static bool IsSimpleType(Type type)
-    {
-        return type.IsPrimitive
-               || type.IsEnum
-               || type == typeof(string)
-               || type == typeof(decimal)
-               || type == typeof(DateTime)
-               || type == typeof(DateTimeOffset)
-               || type == typeof(Guid)
-               || type == typeof(TimeSpan);
-    }
+            // a plain value is a value of Serilog's own, as Serilog makes it
+            MaskedScalar { Value: { } plain } => factory.CreatePropertyValue(plain, destructureObjects: false),
+            MaskedStructure structure => new StructureValue(structure.Properties.Select(property => new LogEventProperty(property.Key, Convert(property.Value, factory))), structure.TypeName),
+            MaskedDictionary dictionary => new DictionaryValue(dictionary.Entries.Select(entry => new System.Collections.Generic.KeyValuePair<ScalarValue, LogEventPropertyValue>(new ScalarValue(entry.Key), Convert(entry.Value, factory)))),
+            _ => new SequenceValue(((MaskedSequence)node).Items.Select(item => Convert(item, factory))),
+        };
 }

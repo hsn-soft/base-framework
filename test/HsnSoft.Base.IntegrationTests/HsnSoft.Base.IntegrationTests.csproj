@@ -13,24 +13,30 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.13" />
+        <PackageReference Include="Testcontainers.Azurite" Version="4.16.0" />
         <PackageReference Include="Testcontainers.Kafka" Version="4.16.0" />
         <PackageReference Include="Testcontainers.Minio" Version="4.15.0" />
         <PackageReference Include="Testcontainers.MongoDb" Version="4.16.0" />
         <PackageReference Include="Testcontainers.MsSql" Version="4.16.0" />
+        <PackageReference Include="Testcontainers.MySql" Version="4.16.0" />
         <PackageReference Include="Testcontainers.PostgreSql" Version="4.16.0" />
         <PackageReference Include="Testcontainers.RabbitMq" Version="4.16.0" />
         <PackageReference Include="Testcontainers.Redis" Version="4.16.0" />
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\src\HsnSoft.Base.BlobStoring.Aws\HsnSoft.Base.BlobStoring.Aws.csproj" />
+        <ProjectReference Include="..\..\src\HsnSoft.Base.BlobStoring.Azure\HsnSoft.Base.BlobStoring.Azure.csproj" />
         <ProjectReference Include="..\..\src\HsnSoft.Base.BlobStoring.Minio\HsnSoft.Base.BlobStoring.Minio.csproj" />
         <ProjectReference Include="..\..\src\HsnSoft.Base.Caching.StackExchangeRedis\HsnSoft.Base.Caching.StackExchangeRedis.csproj" />
+        <ProjectReference Include="..\..\src\HsnSoft.Base.EntityFrameworkCore.MySql\HsnSoft.Base.EntityFrameworkCore.MySql.csproj" />
         <ProjectReference Include="..\..\src\HsnSoft.Base.EntityFrameworkCore.PostgreSql\HsnSoft.Base.EntityFrameworkCore.PostgreSql.csproj" />
         <ProjectReference Include="..\..\src\HsnSoft.Base.EntityFrameworkCore.SqlServer\HsnSoft.Base.EntityFrameworkCore.SqlServer.csproj" />
         <ProjectReference Include="..\..\src\HsnSoft.Base.EventBus.EntityFrameworkCore\HsnSoft.Base.EventBus.EntityFrameworkCore.csproj" />
         <ProjectReference Include="..\..\src\HsnSoft.Base.EventBus.Kafka\HsnSoft.Base.EventBus.Kafka.csproj" />
         <ProjectReference Include="..\..\src\HsnSoft.Base.EventBus.MongoDB\HsnSoft.Base.EventBus.MongoDB.csproj" />
         <ProjectReference Include="..\..\src\HsnSoft.Base.EventBus.RabbitMQ\HsnSoft.Base.EventBus.RabbitMQ.csproj" />
+        <ProjectReference Include="..\..\src\HsnSoft.Base.Logging.NLog\HsnSoft.Base.Logging.NLog.csproj" />
         <ProjectReference Include="..\..\src\HsnSoft.Base.MongoDB\HsnSoft.Base.MongoDB.csproj" />
         <ProjectReference Include="..\..\src\HsnSoft.Base.MultiTenancy.MongoDB\HsnSoft.Base.MultiTenancy.MongoDB.csproj" />
     </ItemGroup>
