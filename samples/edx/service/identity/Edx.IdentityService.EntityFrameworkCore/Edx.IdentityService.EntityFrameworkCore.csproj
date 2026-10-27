@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!--
+        How the identity service keeps the domain: its DbContext and mappings, on SQL Server (the provider is registered here, with the repositories). The auth server references this project too: it reads
+        the users of the identity service from the same database to sign them in.
+    -->
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.Authorization\HsnSoft.Base.Authorization.csproj" />
+        <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.EntityFrameworkCore.SqlServer\HsnSoft.Base.EntityFrameworkCore.SqlServer.csproj" />
+        <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.MultiTenancy.EntityFrameworkCore\HsnSoft.Base.MultiTenancy.EntityFrameworkCore.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Edx.IdentityService.Domain\Edx.IdentityService.Domain.csproj" />
+    </ItemGroup>
+
+</Project>

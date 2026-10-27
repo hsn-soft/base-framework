@@ -171,6 +171,12 @@ public sealed class RequestLoggingFilesTests
             await context.Response.BodyWriter.WriteAsync(s_pdf);
             await context.Response.BodyWriter.FlushAsync();
         });
+        app.MapGet("/download/pipe-unflushed", async context =>
+        {
+            // what a gRPC call does: the message is written to the pipe and the call ends, with no flush of its own
+            context.Response.ContentType = "application/grpc";
+            await context.Response.BodyWriter.WriteAsync(s_pdf);
+        });
         app.MapGet("/json", () => Results.Text("""{"a":1}""", "application/json"));
         app.MapGet("/json-big", () => Results.Text("""{"a":"%s"}""".Replace("%s", new string('x', 600 * 1024), StringComparison.Ordinal), "application/json"));
         app.MapGet("/json-gzip", context =>
@@ -273,6 +279,33 @@ public sealed class RequestLoggingFilesTests
         await rig.Client.GetAsync("/download/pipe");
 
         Assert.Equal((long)s_pdf.Length, rig.Response.Properties["FileBytes"]);
+    }
+
+    [Fact]
+    public async Task WhatIsWrittenToThePipeWithoutAFlush_StillReachesTheClient()
+    {
+        await using Rig rig = await StartAsync();
+
+        byte[] body = await (await rig.Client.GetAsync("/download/pipe-unflushed")).Content.ReadAsByteArrayAsync();
+
+        Assert.Equal(s_pdf, body);
+    }
+
+    [Fact]
+    public async Task ResponseBodyTee_FlushWriterAsync_SendsWhatWaitsInTheWriter_AndDoesNothingWithoutOne()
+    {
+        FakeBody inner = new();
+        ResponseBodyTee tee = new(inner, () => false, maxCapture: 10);
+        await tee.FlushWriterAsync();
+
+        IHttpResponseBodyFeature feature = tee;
+        new byte[] { 1, 2, 3 }.CopyTo(feature.Writer.GetMemory(3));
+        feature.Writer.Advance(3);
+        Assert.Equal(0, tee.Count);
+        await tee.FlushWriterAsync();
+
+        Assert.Equal(3, tee.Count);
+        Assert.Equal([1, 2, 3], inner.Written.ToArray());
     }
 
     [Fact]

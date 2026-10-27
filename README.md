@@ -34,6 +34,7 @@ JWT, Swagger, a broker or a cache.
 | `HsnSoft.Base.MultiTenancy.EntityFrameworkCore` | `MultiTenantDbContext` (the tenant filter) and the interceptor that gives a new entity the tenant | EntityFrameworkCore, MultiTenancy |
 | `HsnSoft.Base.MultiTenancy.MongoDB` | The tenant filter and the tenant of a new document for the MongoDB repositories | MongoDB, MultiTenancy |
 | `HsnSoft.Base.Authentication` | JWT bearer authentication (a shared key, or the RSA public key of the auth server), claim names and `ClaimsPrincipal` helpers | Core |
+| `HsnSoft.Base.Authorization` | Permissions: `[PermissionAuthorize]` on an endpoint, the checker for an operation or a limit on a value, the grants read from the distributed cache under a scope (the tenant) ([docs](docs/Authorization.md)) | Core |
 | `HsnSoft.Base.AspNetCore` | Health endpoints (`/health/live`, `/health/ready`) | Core |
 | `HsnSoft.Base.AspNetCore.WebApi` | Controllers, every answer in one `BaseResponse` type (results, validation, exceptions), global exception handler, `ApiControllerBase` (logger and current user), request/response logging ([docs](docs/WebApi.md)) | AspNetCore |
 | `HsnSoft.Base.AspNetCore.Swashbuckle` | Swagger document and UI (Swashbuckle), Bearer or OAuth2 button, off in production-like environments ([docs](docs/Swagger.md)) | AspNetCore |

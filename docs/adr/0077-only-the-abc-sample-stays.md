@@ -1,6 +1,7 @@
 # ADR-0077: Only the Abc sample stays
 
 - **Status:** Accepted
+- **Note:** [ADR-0078](0078-the-edx-sample-a-file-intake-system.md) adds the Edx sample, the first of the "other samples" this ADR leaves room for.
 - **Date:** 2026-10-27 (supersedes [ADR-0061](0061-the-xyz-sample-beside-abc.md); changes the sample folders of [ADR-0006](0006-repository-and-solution-layout.md))
 
 ## Context

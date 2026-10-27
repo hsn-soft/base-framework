@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!--
+        What a gateway of the Edx system has, on top of Edx.Shared.Hosting: the route registry that builds the reverse proxy, the
+        limits of the public network, and the Swagger that shows the services behind the gateway.
+    -->
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+        <PackageReference Include="Yarp.ReverseProxy" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.AspNetCore.SwaggerGateway\HsnSoft.Base.AspNetCore.SwaggerGateway.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Edx.Shared.Hosting\Edx.Shared.Hosting.csproj" />
+    </ItemGroup>
+
+</Project>

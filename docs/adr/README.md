@@ -28,6 +28,10 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
+| [0081](0081-permissions-a-package-grants-in-the-cache-and-one-service-that-manages-them.md) | Permissions: one framework package, the grants kept in the distributed cache, one service that manages them | Accepted | 2026-10-27 |
+| [0080](0080-edx-identity-tenants-roles-and-signing-in-by-tenant.md) | The Edx identity service: tenants, roles, and signing in by the code of the tenant | Accepted | 2026-10-27 |
+| [0079](0079-grpc-and-wcf-are-entry-points-of-a-host.md) | gRPC and WCF are entry points of a host, not framework packages | Accepted | 2026-10-27 |
+| [0078](0078-the-edx-sample-a-file-intake-system.md) | The Edx sample: a system that takes files from customers | Accepted | 2026-10-27 |
 | [0077](0077-only-the-abc-sample-stays.md) | Only the Abc sample stays | Accepted | 2026-10-27 |
 | [0076](0076-more-providers-and-the-rules-every-provider-shares.md) | More providers (NLog, Azure, AWS, MySQL), and the rules every logging provider shares | Accepted | 2026-10-27 |
 | [0075](0075-rules-of-the-framework-project-files.md) | The rules of the project files of the framework (a living list) | Accepted | 2026-10-27 |

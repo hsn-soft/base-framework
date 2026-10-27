@@ -1,10 +1,18 @@
 # Samples
 
-The one sample system of the repository is **Abc**: an event-driven microservice system (an identity service, an auth server, order, product and shipment services, two gateways and two web apps) on the `HsnSoft.Base.*` framework. What references what is in
-[abc/REFERENCES.md](abc/REFERENCES.md). The Xyz, Def and Agt samples were removed ([ADR-0077](../docs/adr/0077-only-the-abc-sample-stays.md)); the packages they alone used are still covered by the framework's own unit and integration tests, and a product with other choices is composed
+There are two sample systems. **Abc** is an event-driven microservice system (an identity service, an auth server, order, product and shipment services, two gateways and two web apps) on the `HsnSoft.Base.*` framework. What references what is in
+[abc/REFERENCES.md](abc/REFERENCES.md). **Edx** is a system that takes files from customers (tenants): an identity service (SQL Server), an auth server, an **intake service** (zips of XML or of tables, and a request model, through REST, gRPC or WCF, kept in MinIO with the folder
+hierarchy in MongoDB, every record announced on Kafka), an **invoice service** (keeps a few facts about each file) and one gateway ([edx/REFERENCES.md](edx/REFERENCES.md), [ADR-0078](../docs/adr/0078-the-edx-sample-a-file-intake-system.md)). The Xyz, Def and Agt samples were removed ([ADR-0077](../docs/adr/0077-only-the-abc-sample-stays.md)); the packages they alone used are still covered by the framework's own unit and integration tests, and a product with other choices is composed
 from the packages it wants (see [docs/Logging.md](../docs/Logging.md), [ADR-0076](../docs/adr/0076-more-providers-and-the-rules-every-provider-shares.md)).
 
 ## Run it
+
+**Edx:** the hosts use SQL Server, MongoDB, Redis, Kafka and MinIO (`localhost:9100`) on their local ports. MinIO needs a user: `Minio__AccessKey` and `Minio__SecretKey` in the environment or in an ignored `samples/edx/.env`. The keys of the tokens are made first
+(`dotnet run scripts/generate-rsa-keys.cs -- samples/edx/app/Edx.AuthServer.Host/private_key.xml samples/edx/shared/Edx.Shared.Hosting/public_key.xml`). `samples/edx/run-all.sh` starts the hosts (the gateway listens on 5600 for REST and WCF, on 5601 for gRPC) and `samples/edx/smoke-test.sh` runs what a
+customer does and checks how each step ends. Sign in with `POST /auth-server/v1/auth/login` and `{ "tenant": "veriban", "username": "operator", "password": "..." }`; the sample users and their (development) passwords are in `appsettings.development.json` of the identity service: system tenant `admin`, `user`; `veriban` `admin`, `operator`;
+`bilgera` `admin`, `manager`. What each role may call is a **permission** (`[PermissionAuthorize]`, [docs/Authorization.md](../docs/Authorization.md)): the identity service keeps the grants and the services read them from Redis; the starting grants are `DefaultPermissionGrants`, and a tenant's admin changes them with `PUT roles/{id}/permissions`.
+
+**Abc:**
 
 The hosts use the local infrastructure on its default ports (PostgreSQL, SQL Server, MongoDB, Redis, RabbitMQ). `samples/abc/run-all.sh` builds and starts the hosts of the order flow (Ctrl+C stops them; `PersistentLogger__IsGrayLogActive=true` sends the logs to Graylog) and
 `samples/abc/smoke-test.sh` runs the three outcomes of an order through the commercial gateway and checks how each ends. The keys of the tokens are made first ([The keys of the Abc tokens](#the-keys-of-the-abc-tokens)).

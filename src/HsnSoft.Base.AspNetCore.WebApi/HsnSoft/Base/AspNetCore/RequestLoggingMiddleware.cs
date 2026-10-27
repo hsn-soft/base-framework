@@ -134,6 +134,7 @@ public sealed partial class RequestLoggingMiddleware(
         finally
         {
             watch.Stop();
+            await responseBytes.FlushWriterAsync().ConfigureAwait(false);
             string? responseBody = responseBytes.Body is { } text ? MaskBody(text, context.Items.TryGetValue(ResponseShapeKey, out object? shape) ? shape as Type : null, _options.MaxResponseBodyLength) : null;
             WriteResponseLog(context, from, to, watch.ElapsedMilliseconds, responseBody, requestBytes.Count, responseBytes.Count, failure);
             request.Body = originalRequestBody;
@@ -238,6 +239,7 @@ public sealed partial class RequestLoggingMiddleware(
         finally
         {
             watch.Stop();
+            await responseBytes.FlushWriterAsync().ConfigureAwait(false);
 
             // an answer without a body starts after this middleware is done: then the sign is still in the headers
             if (!loggedByService && !response.HasStarted && response.Headers.Remove(_options.LoggedByHeader))

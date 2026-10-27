@@ -2,6 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-10-25 (changes how [ADR-0023](0023-event-bus.md) reads on Kafka)
+- **Note:** [ADR-0078](0078-the-edx-sample-a-file-intake-system.md): the Edx sample runs on Kafka again, with this consumer.
 - **Note:** [ADR-0077](0077-only-the-abc-sample-stays.md): the Xyz sample, which showed this, was removed; the Kafka consumer is covered by its tests.
 - **Note:** [ADR-0066](0066-kafka-handles-fetchcount-messages-at-the-same-time.md): a consumer handles `fetchCount` messages at the same time (one by default), not always one.
 - **Note:** [ADR-0063](0063-kafka-topics-are-named-after-the-exchange.md): the shared topic is `{ExchangeName}_{EventName}` now, not `{TopicPrefix}{EventName}`.

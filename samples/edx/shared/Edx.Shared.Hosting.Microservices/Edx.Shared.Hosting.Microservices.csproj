@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!--
+        What every Edx microservice shares on top of Edx.Shared.Hosting: it reads the bearer token, its endpoints need it, its Swagger has the button for it, it checks what its callers may do (permissions, kept by the identity service and read from Redis) and it talks to the other microservices through Kafka (when it asks for it).
+        Only the microservices reference this project: the auth server and the gateway use Edx.Shared.Hosting / Edx.Shared.Hosting.Gateways and so never reach the broker.
+    -->
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.Authorization\HsnSoft.Base.Authorization.csproj" />
+        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.EventBus.Kafka\HsnSoft.Base.EventBus.Kafka.csproj" />
+        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.MultiTenancy\HsnSoft.Base.MultiTenancy.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Edx.Shared.Helper\Edx.Shared.Helper.csproj" />
+        <ProjectReference Include="..\Edx.Shared.Hosting\Edx.Shared.Hosting.csproj" />
+    </ItemGroup>
+
+</Project>

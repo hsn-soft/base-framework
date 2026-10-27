@@ -11,6 +11,7 @@
 | [`DddBuildingBlocks.md`](DddBuildingBlocks.md) | The entity base classes, the DTOs of paging and the generic repository with its safe sorting |
 | [`EntityConcepts.md`](EntityConcepts.md) | Audit fields, soft delete and tenants of an entity: the interfaces, the current user, the tenant packages, the filters, EF Core and MongoDB |
 | [`Localization.md`](Localization.md) | The texts the client reads in its language: the JSON files, the layers, how the language is chosen, naming a text in an error |
+| [`Authorization.md`](Authorization.md) | Permissions: the attribute, the checker, the three kinds, who has what, where the grants are kept, the Edx identity service's endpoints |
 | [`Swagger.md`](Swagger.md) | Swagger for a service and for a gateway |
 
 The reference documents say **how to use** something; the ADRs say **why** it is that way. When a rule is in both, the ADR is the authority.

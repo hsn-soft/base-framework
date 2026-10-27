@@ -131,6 +131,18 @@ internal sealed class ResponseBodyTee(IHttpResponseBodyFeature inner, Func<bool>
 
     public void DisableBuffering() => inner.DisableBuffering();
 
+    /// <summary>
+    /// Sends what was written through <see cref="IHttpResponseBodyFeature.Writer"/> and is still waiting in its buffer (gRPC writes a message there and ends the call without a flush of its own). It has to be
+    /// done before the original body feature is put back: after that nothing would ever flush this writer, and the answer would go out without its body.
+    /// </summary>
+    public async ValueTask FlushWriterAsync()
+    {
+        if (_writer is not null)
+        {
+            await _writer.FlushAsync().ConfigureAwait(false);
+        }
+    }
+
     public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();
 
     public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
