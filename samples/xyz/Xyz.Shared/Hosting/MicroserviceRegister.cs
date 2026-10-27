@@ -2,6 +2,7 @@ using System.Reflection;
 using HsnSoft.Base.EventBus;
 using HsnSoft.Base.EventBus.Kafka;
 using HsnSoft.Base.Localization;
+using HsnSoft.Base.MultiTenancy;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,16 +20,18 @@ public static class MicroserviceRegister
         => services
             .AddXyzHosting(configuration, swaggerTitle, authenticateUsers: true, swaggerBearerButton: true)
             .AddBaseLocalization(configure: options => Array.ForEach(localizedAssemblies, assembly => options.AddEmbedded(assembly)))
-            .AddXyzRedis(configuration);
+            .AddXyzRedis(configuration)
+            .AddBaseTenantClaims();
 
     /// <summary>
     /// Connects a service to the Kafka event bus of the system (sections <c>Kafka</c> and <c>Kafka:EventBus</c>: the topic prefix <c>xyz.</c> and the name of the service as consumer (<c>OrderService</c>, ...), which is its consumer group) and makes the
-    /// events it publishes carry who started the chain (<see cref="XyzEventHeaderProvider"/>). The service adds its handlers with <c>AddEventHandler</c>. The auth server uses it as the others do.
+    /// events it publishes carry who started the chain (<see cref="XyzEventHeaderProvider"/>) and in which tenant. The service adds its handlers with <c>AddEventHandler</c>. The auth server uses it as the others do.
     /// </summary>
     public static IServiceCollection AddXyzEventBus(this IServiceCollection services, IConfiguration configuration)
         => services
             .AddHttpContextAccessor()
             .AddSingleton<IEventHeaderProvider, XyzEventHeaderProvider>()
+            .AddBaseTenantEventBus()
             .AddKafkaEventBus(configuration);
 
     /// <summary>The shared middleware (see <see cref="HostingRegister.UseXyzHosting"/>); the service then maps its controllers with <c>MapControllers()</c>.</summary>

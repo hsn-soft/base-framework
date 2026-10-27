@@ -1,10 +1,11 @@
-using HsnSoft.Base.MultiTenancy;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace HsnSoft.Base.Data.Tests;
 
 public class DataFilterTests
 {
+    private interface IOtherFilter;
+
     [Fact]
     public void FiltersAreOn_UntilAScopeTurnsThemOff_AndTheScopeRestoresThem()
     {
@@ -14,7 +15,7 @@ public class DataFilterTests
         using (filter.Disable<ISoftDelete>())
         {
             Assert.False(filter.IsEnabled<ISoftDelete>());
-            Assert.True(filter.IsEnabled<IMultiTenant>());
+            Assert.True(filter.IsEnabled<IOtherFilter>());
 
             using (filter.Enable<ISoftDelete>())
             {

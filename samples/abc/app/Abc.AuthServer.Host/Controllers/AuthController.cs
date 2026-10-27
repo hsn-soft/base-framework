@@ -7,6 +7,7 @@ using Abc.IdentityService.Domain.UserHistoryDomain.Entities;
 using HsnSoft.Base;
 using HsnSoft.Base.Domain.Repositories;
 using HsnSoft.Base.Logging.Masking;
+using HsnSoft.Base.MultiTenancy;
 using HsnSoft.Base.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -41,7 +42,7 @@ public sealed class MeDto
 }
 
 [Route("api/auth-server/v1/commercial/auth")]
-public sealed class AuthController(UserAuthenticator authenticator, TokenService tokens, IRepository<UserHistory, Guid> histories) : BaseServiceController
+public sealed class AuthController(UserAuthenticator authenticator, TokenService tokens, IRepository<UserHistory, Guid> histories, ICurrentTenant tenant) : BaseServiceController
 {
     /// <summary>The one open endpoint: a user name and a password (of a user of the identity service) for an access token.</summary>
     [AllowAnonymous]
@@ -55,7 +56,8 @@ public sealed class AuthController(UserAuthenticator authenticator, TokenService
         AccessToken token = tokens.Issue(user);
 
         // every token that is issued is written to the history of the identity service (its own database); nobody is signed in yet, so the record is written as the user who signs in (the audit fields and the tenant are theirs)
-        using (ActingUser.Use(new UserContext(user.Id, user.UserName, user.Roles, user.TenantId, user.IsSystemTenant)))
+        using (tenant.Change(user.TenantId, user.IsSystemTenant))
+        using (ActingUser.Use(new UserContext(user.Id, user.UserName, user.Roles)))
         {
             await histories.AddAsync(UserHistory.Record(user.Id, user.UserName, UserHistoryConsts.Login), cancellationToken);
         }

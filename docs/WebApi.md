@@ -43,7 +43,7 @@ The request and response logs are described in [Logging.md](Logging.md); in a sy
 
 ## The base controller
 
-`ApiControllerBase` (`HsnSoft.Base.AspNetCore`) is a `ControllerBase` with `Logger`, `CurrentUser` and `CurrentTenant`, found from the services of the request when first used: a controller needs no constructor for them. A service derives its own base controller from it and adds what
+`ApiControllerBase` (`HsnSoft.Base.AspNetCore`) is a `ControllerBase` with `Logger` and `CurrentUser`, found from the services of the request when first used: a controller needs no constructor for them. A service derives its own base controller from it and adds what
 is its own: the area, the authorization, `[Produces]`, `[ApiController]` and `L` (the localizer; [ADR-0040](adr/0040-api-controller-base-in-the-framework.md)):
 
 ```csharp

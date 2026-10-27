@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 
@@ -23,15 +22,6 @@ internal sealed class HttpContextCurrentUser(IHttpContextAccessor accessor) : IC
     public Guid? Id => SignedIn ? ReadGuid(BaseClaimTypes.Id) : Acting?.Id;
 
     public string? UserName => SignedIn ? Principal?.GetUserId() : Acting?.UserName;
-
-    public Guid? TenantId => SignedIn ? ReadGuid(BaseClaimTypes.TenantId) : Acting?.TenantId;
-
-    public bool IsSystemTenant => SignedIn
-        ? string.Equals(Principal?.FindFirst(BaseClaimTypes.IsSystemTenant)?.Value, "true", StringComparison.OrdinalIgnoreCase)
-        : Acting?.IsSystemTenant ?? false;
-
-    public IReadOnlyList<Guid> AllowedTenantIds
-        => [.. (Principal?.FindAll(BaseClaimTypes.AllowedTenantId) ?? []).Select(claim => Guid.TryParse(claim.Value, out Guid id) ? id : (Guid?)null).OfType<Guid>()];
 
     public IReadOnlyList<string> Roles => SignedIn ? [.. Principal!.GetRoles()] : Acting?.Roles ?? [];
 

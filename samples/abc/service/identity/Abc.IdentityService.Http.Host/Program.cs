@@ -7,9 +7,11 @@ using Abc.Shared.Hosting.Microservices;
 using Abc.Shared.Localization;
 using HsnSoft.Base.AspNetCore;
 using HsnSoft.Base.Caching.StackExchangeRedis;
+using HsnSoft.Base.EventBus;
 using HsnSoft.Base.EventBus.EntityFrameworkCore;
 using HsnSoft.Base.Localization;
 using HsnSoft.Base.Logging.Serilog;
+using HsnSoft.Base.MultiTenancy;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.Logging.AddBaseSerilog(builder.Configuration, "Abc.IdentityService");
@@ -21,6 +23,9 @@ builder.Services
     .AddBaseRedis(builder.Configuration)
     .AddAbcMicroservice(builder.Configuration, "Abc.IdentityService API")
     .AddAbcEventBus(builder.Configuration)
+    // this service has tenants: the tenant of a request is the one of its token, and it travels with the messages
+    .AddBaseTenantClaims()
+    .AddBaseTenantEventBus()
     .AddIdentityPersistence(builder.Configuration)
     .AddIdentityHistoryPersistence(builder.Configuration)
     .AddEventInbox<IdentityDbContext>()

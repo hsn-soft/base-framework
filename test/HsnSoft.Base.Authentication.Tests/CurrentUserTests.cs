@@ -18,30 +18,16 @@ public class CurrentUserTests
     public void TheCurrentUser_IsWhatTheTokenOfTheRequestSays()
     {
         Guid id = Guid.NewGuid();
-        Guid tenant = Guid.NewGuid();
-        Guid other = Guid.NewGuid();
         using ServiceProvider provider = Build();
         provider.GetRequiredService<IHttpContextAccessor>().HttpContext = new DefaultHttpContext
         {
-            User = new ClaimsPrincipal(new ClaimsIdentity(
-                [
-                    new Claim("sub", "alice"),
-                    new Claim("user_id", id.ToString()),
-                    new Claim("tenant_id", tenant.ToString()),
-                    new Claim("is_system_tenant", "TRUE"),
-                    new Claim("allowed_tenant_id", other.ToString()),
-                    new Claim("allowed_tenant_id", "not-a-guid"),
-                ],
-                "Bearer")),
+            User = new ClaimsPrincipal(new ClaimsIdentity([new Claim("sub", "alice"), new Claim("user_id", id.ToString())], "Bearer")),
         };
 
         ICurrentUser user = provider.GetRequiredService<ICurrentUser>();
 
         Assert.Equal("alice", user.UserName);
         Assert.Equal(id, user.Id);
-        Assert.Equal(tenant, user.TenantId);
-        Assert.True(user.IsSystemTenant);
-        Assert.Equal([other], user.AllowedTenantIds);
         Assert.True(user.IsAuthenticated);
     }
 
@@ -55,9 +41,6 @@ public class CurrentUserTests
 
         Assert.Null(user.Id);
         Assert.Null(user.UserName);
-        Assert.Null(user.TenantId);
-        Assert.False(user.IsSystemTenant);
-        Assert.Empty(user.AllowedTenantIds);
         Assert.False(user.IsAuthenticated);
     }
 
@@ -70,9 +53,6 @@ public class CurrentUserTests
 
         Assert.Null(user.Id);
         Assert.Null(user.UserName);
-        Assert.Null(user.TenantId);
-        Assert.False(user.IsSystemTenant);
-        Assert.Empty(user.AllowedTenantIds);
         Assert.False(user.IsAuthenticated);
     }
 
@@ -80,16 +60,14 @@ public class CurrentUserTests
     public void WithoutARequest_TheCurrentUser_IsTheOneTheCodeActsAs()
     {
         Guid id = Guid.NewGuid();
-        Guid tenant = Guid.NewGuid();
         using ServiceProvider provider = Build();
         ICurrentUser user = provider.GetRequiredService<ICurrentUser>();
 
-        using (ActingUser.Use(new UserContext(id, "alice", ["customer", "support"], tenant, true)))
+        using (ActingUser.Use(new UserContext(id, "alice", ["customer", "support"])))
         {
             Assert.True(user.IsAuthenticated);
-            Assert.Equal((id, "alice", tenant, true), (user.Id, user.UserName, user.TenantId, user.IsSystemTenant));
+            Assert.Equal((id, "alice"), (user.Id, user.UserName));
             Assert.Equal(["customer", "support"], user.Roles);
-            Assert.Empty(user.AllowedTenantIds);
         }
 
         Assert.False(user.IsAuthenticated);
@@ -107,11 +85,9 @@ public class CurrentUserTests
         };
         ICurrentUser user = provider.GetRequiredService<ICurrentUser>();
 
-        using (ActingUser.Use(new UserContext(Guid.NewGuid(), "alice", ["customer"], Guid.NewGuid(), true)))
+        using (ActingUser.Use(new UserContext(Guid.NewGuid(), "alice", ["customer"])))
         {
             Assert.Equal((id, "bob"), (user.Id, user.UserName));
-            Assert.Null(user.TenantId);
-            Assert.False(user.IsSystemTenant);
             Assert.Equal(["admin"], user.Roles);
         }
     }
@@ -121,7 +97,7 @@ public class CurrentUserTests
     {
         using ServiceProvider provider = Build();
 
-        using (ActingUser.Use(new UserContext(null, null, [], Guid.NewGuid(), false)))
+        using (ActingUser.Use(new UserContext(null, null, [])))
         {
             Assert.False(provider.GetRequiredService<ICurrentUser>().IsAuthenticated);
         }
@@ -143,11 +119,5 @@ public class CurrentUserTests
         public Guid? Id => null;
 
         public string? UserName => "worker";
-
-        public Guid? TenantId => null;
-
-        public bool IsSystemTenant => false;
-
-        public IReadOnlyList<Guid> AllowedTenantIds => [];
     }
 }

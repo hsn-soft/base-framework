@@ -21,6 +21,7 @@ public static class MongoServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(configuration);
 
         services.AddBaseMongo(configuration, MongoProductDbProperties.ConnectionStringName);
+        services.AddBaseMultiTenancyMongo();
 
         ProductClassMap.Register();
         services.AddScoped<IProductRepository>(provider => new MongoProductRepository(

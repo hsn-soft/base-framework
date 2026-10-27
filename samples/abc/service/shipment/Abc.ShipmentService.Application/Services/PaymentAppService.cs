@@ -98,7 +98,6 @@ public sealed class PaymentAppService(IRepository<Payment, Guid> payments, IServ
         StatusText = L[$"PaymentStatus:{payment.Status}"].Value,
         Reference = payment.Reference,
         FailureReason = payment.FailureReason,
-        TenantId = payment.TenantId,
         CreatedAt = payment.CreatedAt,
         CreatedBy = payment.CreatedBy,
         UpdatedAt = payment.UpdatedAt,

@@ -117,7 +117,6 @@ public sealed class ShipmentAppService(IRepository<Shipment, Guid> shipments, IR
         Address = shipment.Address,
         Status = shipment.Status.ToString(),
         StatusText = L[$"ShipmentStatus:{shipment.Status}"].Value,
-        TenantId = shipment.TenantId,
         CreatedAt = shipment.CreatedAt,
         CreatedBy = shipment.CreatedBy,
         UpdatedAt = shipment.UpdatedAt,

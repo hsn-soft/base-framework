@@ -1,4 +1,3 @@
-using HsnSoft.Base.MultiTenancy;
 using HsnSoft.Base.Reflection;
 using HsnSoft.Base.Text;
 
@@ -6,35 +5,6 @@ namespace HsnSoft.Base.Core.Tests;
 
 public class BuildingBlocksTests
 {
-    private sealed class WithPrivateSetter : IMultiTenant
-    {
-        public Guid TenantId { get; private set; }
-    }
-
-    private sealed class WithoutSetter : IMultiTenant
-    {
-        public Guid TenantId => Guid.Empty;
-    }
-
-    [Fact]
-    public void TheTenantAssigner_WritesAPrivateSetter_OnlyWhenThereIsNoTenantYet()
-    {
-        Guid first = Guid.NewGuid();
-        WithPrivateSetter entity = new();
-
-        TenantAssigner.Assign(entity, first);
-        TenantAssigner.Assign(entity, Guid.NewGuid());
-
-        Assert.Equal(first, entity.TenantId);
-    }
-
-    [Fact]
-    public void TheTenantAssigner_SaysWhenThereIsNoSetter_AndRejectsNull()
-    {
-        Assert.Throws<InvalidOperationException>(() => TenantAssigner.Assign(new WithoutSetter(), Guid.NewGuid()));
-        Assert.Throws<ArgumentNullException>(() => TenantAssigner.Assign(null!, Guid.NewGuid()));
-    }
-
     [Theory]
     [InlineData("  Müller ", "MULLER", "muller")]
     [InlineData("Çiğdem", "CIGDEM", "cigdem")]

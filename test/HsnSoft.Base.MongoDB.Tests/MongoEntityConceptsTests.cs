@@ -1,6 +1,5 @@
 using HsnSoft.Base.Auditing;
 using HsnSoft.Base.Data;
-using HsnSoft.Base.MultiTenancy;
 using HsnSoft.Base.Security;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,13 +11,8 @@ namespace HsnSoft.Base.MongoDB.Tests;
 
 public class MongoEntityConceptsTests
 {
-    private static readonly Guid s_tenantA = new("11111111-1111-1111-1111-111111111111");
-    private static readonly Guid s_tenantB = new("22222222-2222-2222-2222-222222222222");
-
-    public sealed class Full : IFullAuditedObject, IMarkCreated, IMarkModified, IMarkDeleted, IMultiTenant
+    public sealed class Full : IFullAuditedObject, IMarkCreated, IMarkModified, IMarkDeleted
     {
-        public Guid TenantId { get; set; }
-
         public DateTimeOffset CreatedAt { get; set; }
 
         public Guid? CreatedBy { get; set; }
@@ -52,12 +46,6 @@ public class MongoEntityConceptsTests
         public Guid? Id { get; init; }
 
         public string? UserName => null;
-
-        public Guid? TenantId { get; init; }
-
-        public bool IsSystemTenant { get; init; }
-
-        public IReadOnlyList<Guid> AllowedTenantIds { get; init; } = [];
     }
 
     private static ServiceProvider Build(FakeUser? user = null)
@@ -75,29 +63,15 @@ public class MongoEntityConceptsTests
         => filter.Render(new RenderArgs<T>(BsonSerializer.SerializerRegistry.GetSerializer<T>(), BsonSerializer.SerializerRegistry)).ToJson(new global::MongoDB.Bson.IO.JsonWriterSettings { OutputMode = global::MongoDB.Bson.IO.JsonOutputMode.CanonicalExtendedJson });
 
     [Fact]
-    public void AQuery_HidesTheDeleted_AndTheTenantsTheCallerMayNotSee()
+    public void AQuery_HidesTheDeleted_AndASwitchedOffFilterIsNotApplied()
     {
-        using ServiceProvider provider = Build(new FakeUser { Id = Guid.NewGuid(), TenantId = s_tenantA, AllowedTenantIds = [s_tenantB] });
-
-        FilterDefinition<Full> filter = provider.GetRequiredService<MongoEntityConcepts>().Visible(Builders<Full>.Filter.Eq(entity => entity.CreatedBy, null));
-        string json = Render(filter);
-
-        Assert.Contains("\"IsDeleted\" : false", json, StringComparison.Ordinal);
-        Assert.Contains("TenantId", json, StringComparison.Ordinal);
-        Assert.Contains("CreatedBy", json, StringComparison.Ordinal);
-        Assert.Contains("EREREREREREREREREREREQ==", json, StringComparison.Ordinal); // tenant A, standard binary
-        Assert.Contains("IiIiIiIiIiIiIiIiIiIiIg==", json, StringComparison.Ordinal); // tenant B
-    }
-
-    [Fact]
-    public void TheSystemTenant_IsNotNarrowedByTenant_AndASwitchedOffFilterIsNotApplied()
-    {
-        using ServiceProvider provider = Build(new FakeUser { TenantId = s_tenantA, IsSystemTenant = true });
+        using ServiceProvider provider = Build(new FakeUser { Id = Guid.NewGuid() });
         MongoEntityConcepts concepts = provider.GetRequiredService<MongoEntityConcepts>();
 
-        string system = Render(concepts.Visible<Full>());
-        Assert.DoesNotContain("TenantId", system, StringComparison.Ordinal);
-        Assert.Contains("IsDeleted", system, StringComparison.Ordinal);
+        string json = Render(concepts.Visible(Builders<Full>.Filter.Eq(entity => entity.CreatedBy, null)));
+        Assert.Contains("\"IsDeleted\" : false", json, StringComparison.Ordinal);
+        Assert.Contains("CreatedBy", json, StringComparison.Ordinal);
+        Assert.DoesNotContain("TenantId", json, StringComparison.Ordinal);
 
         using (provider.GetRequiredService<IDataFilter>().Disable<ISoftDelete>())
         {
@@ -106,13 +80,31 @@ public class MongoEntityConceptsTests
     }
 
     [Fact]
-    public void WithoutATenant_NothingOfATenantMatches()
+    public void AConceptOfAPackage_NarrowsTheQuery_AndWritesIntoAnInsertedDocument()
     {
-        using ServiceProvider provider = Build();
+        IServiceCollection services = new ServiceCollection().AddLogging().AddSingleton<IMongoEntityConcept, MarkingConcept>();
+        using ServiceProvider provider = services.AddBaseMongo(new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?> { ["ConnectionStrings:Mongo"] = "mongodb://localhost:27099/acme" }).Build()).BuildServiceProvider();
+        MongoEntityConcepts concepts = provider.GetRequiredService<MongoEntityConcepts>();
+        Plain plain = new();
 
-        string json = Render(provider.GetRequiredService<MongoEntityConcepts>().Visible<Full>());
+        string json = Render(concepts.Visible<Plain>());
+        concepts.Created(plain);
 
-        Assert.Contains("\"TenantId\" : { \"$in\" : [] }", json, StringComparison.Ordinal);
+        Assert.Contains("Name", json, StringComparison.Ordinal);
+        Assert.Equal("created", plain.Name);
+    }
+
+    private sealed class MarkingConcept : IMongoEntityConcept
+    {
+        public FilterDefinition<T>? Visible<T>() => typeof(T) == typeof(Plain) ? Builders<T>.Filter.Eq("Name", "visible") : null;
+
+        public void Created(object entity)
+        {
+            if (entity is Plain plain)
+            {
+                plain.Name = "created";
+            }
+        }
     }
 
     [Fact]
@@ -126,27 +118,24 @@ public class MongoEntityConceptsTests
     }
 
     [Fact]
-    public void AnInsert_GetsTheAuditFields_AndTheTenant_AnAnEntityWithATenantKeepsIt()
+    public void AnInsert_GetsTheAuditFields()
     {
         Guid user = Guid.NewGuid();
-        using ServiceProvider provider = Build(new FakeUser { Id = user, TenantId = s_tenantA });
+        using ServiceProvider provider = Build(new FakeUser { Id = user });
         MongoEntityConcepts concepts = provider.GetRequiredService<MongoEntityConcepts>();
         Full fresh = new();
-        Full owned = new() { TenantId = s_tenantB };
 
         concepts.Created(fresh);
-        concepts.Created(owned);
         concepts.Created(new Plain());
 
-        Assert.Equal((user, user, s_tenantA), (fresh.CreatedBy, fresh.UpdatedBy, fresh.TenantId));
-        Assert.Equal(s_tenantB, owned.TenantId);
+        Assert.Equal((user, user), (fresh.CreatedBy, fresh.UpdatedBy));
     }
 
     [Fact]
     public void AReplace_IsAModification()
     {
         Guid user = Guid.NewGuid();
-        using ServiceProvider provider = Build(new FakeUser { Id = user, TenantId = s_tenantA });
+        using ServiceProvider provider = Build(new FakeUser { Id = user });
         Full entity = new();
 
         provider.GetRequiredService<MongoEntityConcepts>().Modified(entity);
@@ -159,7 +148,7 @@ public class MongoEntityConceptsTests
     public void ADelete_IsSoftForAnISoftDeleteEntity_AndRealForAnyOther()
     {
         Guid user = Guid.NewGuid();
-        using ServiceProvider provider = Build(new FakeUser { Id = user, TenantId = s_tenantA });
+        using ServiceProvider provider = Build(new FakeUser { Id = user });
         MongoEntityConcepts concepts = provider.GetRequiredService<MongoEntityConcepts>();
         Full entity = new();
 

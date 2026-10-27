@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using HsnSoft.Base.Auditing;
-using HsnSoft.Base.MultiTenancy;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -12,10 +11,9 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 namespace HsnSoft.Base.EntityFrameworkCore;
 
 /// <summary>
-/// Does the concepts of the framework when a context saves: the audit fields (<see cref="IAuditPropertySetter"/>) of an added or changed entity, the tenant of an added
-/// <see cref="IMultiTenant"/> entity that has none (the current tenant's), and the soft delete: the deletion of an <see cref="ISoftDelete"/> entity becomes an update that marks it deleted.
+/// Does the concepts of the framework when a context saves: the audit fields (<see cref="IAuditPropertySetter"/>) of an added or changed entity, and the soft delete: the deletion of an <see cref="ISoftDelete"/> entity becomes an update that marks it deleted.
 /// </summary>
-public sealed class BaseEntityInterceptor(IAuditPropertySetter audit, ICurrentTenant tenant) : SaveChangesInterceptor
+public sealed class BaseEntityInterceptor(IAuditPropertySetter audit) : SaveChangesInterceptor
 {
     public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
     {
@@ -46,12 +44,6 @@ public sealed class BaseEntityInterceptor(IAuditPropertySetter audit, ICurrentTe
             {
                 case EntityState.Added:
                     audit.SetCreation(entry.Entity);
-                    if (entry.Entity is IMultiTenant { TenantId: var tenantId } && tenantId == Guid.Empty && tenant.Id is { } current)
-                    {
-                        // the entity has no method for it: the property is written through the change tracker, whatever its setter
-                        entry.Property(nameof(IMultiTenant.TenantId)).CurrentValue = current;
-                    }
-
                     break;
                 case EntityState.Modified:
                     audit.SetModification(entry.Entity);

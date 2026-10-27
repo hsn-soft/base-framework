@@ -12,6 +12,7 @@ using HsnSoft.Base.EventBus;
 using HsnSoft.Base.EventBus.MongoDB;
 using HsnSoft.Base.Localization;
 using HsnSoft.Base.Logging.Serilog;
+using HsnSoft.Base.MultiTenancy;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.Logging.AddBaseSerilog(builder.Configuration, "Abc.ProductService");
@@ -23,6 +24,9 @@ builder.Services
     .AddBaseRedis(builder.Configuration)
     .AddAbcMicroservice(builder.Configuration, "Abc.ProductService API")
     .AddAbcEventBus(builder.Configuration)
+    // this service has tenants: the tenant of a request is the one of its token, and it travels with the messages
+    .AddBaseTenantClaims()
+    .AddBaseTenantEventBus()
     // ten orders are set aside at the same time: the stock is taken in one step of the database (IProductRepository), so the number at once does not change the result
     .AddEventHandlers(typeof(EventHandlersAssemblyMarker).Assembly, new Dictionary<string, ushort> { [nameof(OrderCreatedEto)] = 10 })
     .AddProductPersistence(builder.Configuration)

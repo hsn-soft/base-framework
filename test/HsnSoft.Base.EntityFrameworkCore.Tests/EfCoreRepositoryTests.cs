@@ -15,7 +15,8 @@ public sealed class EfCoreRepositoryTests : IAsyncLifetime, IDisposable
     private static readonly Guid s_tenantB = Guid.NewGuid();
 
     private readonly SqliteConnection _connection = new("Data Source=:memory:");
-    private readonly FakeUser _user = new() { Id = Guid.NewGuid(), TenantId = s_tenantA };
+    private readonly FakeUser _user = new() { Id = Guid.NewGuid() };
+    private readonly FakeTenant _tenant = new() { TenantId = s_tenantA };
     private ServiceProvider _provider = null!;
 
     public sealed class Item(string name, int price) : FullAuditedEntity<Guid>(Guid.NewGuid()), IMultiTenant
@@ -33,7 +34,7 @@ public sealed class EfCoreRepositoryTests : IAsyncLifetime, IDisposable
     }
 
     public sealed class RepositoryContext(DbContextOptions<RepositoryContext> options, HsnSoft.Base.Data.IDataFilter? dataFilter = null, ICurrentTenant? currentTenant = null)
-        : BaseDbContext(options, dataFilter, currentTenant)
+        : MultiTenantDbContext(options, dataFilter, currentTenant)
     {
         public DbSet<Item> Items => Set<Item>();
 
@@ -46,6 +47,17 @@ public sealed class EfCoreRepositoryTests : IAsyncLifetime, IDisposable
         }
     }
 
+    private sealed class FakeTenant : ITenantSource
+    {
+        public Guid? TenantId { get; set; }
+
+        public bool IsSystemTenant { get; set; }
+
+        public IReadOnlyList<Guid> AllowedTenantIds { get; set; } = [];
+
+        public TenantContext? Current => new(TenantId, IsSystemTenant, AllowedTenantIds);
+    }
+
     private sealed class FakeUser : ICurrentUser
     {
         public bool IsAuthenticated => Id.HasValue;
@@ -53,19 +65,13 @@ public sealed class EfCoreRepositoryTests : IAsyncLifetime, IDisposable
         public Guid? Id { get; set; }
 
         public string? UserName => null;
-
-        public Guid? TenantId { get; set; }
-
-        public bool IsSystemTenant { get; set; }
-
-        public IReadOnlyList<Guid> AllowedTenantIds { get; set; } = [];
     }
 
     public async Task InitializeAsync()
     {
         await _connection.OpenAsync();
         ServiceCollection services = new();
-        services.AddLogging().AddSingleton<ICurrentUser>(_user).AddBaseEntityFramework();
+        services.AddLogging().AddSingleton<ICurrentUser>(_user).AddSingleton<ITenantSource>(_tenant).AddBaseEntityFramework().AddBaseMultiTenancyEntityFramework();
         services.AddDbContext<RepositoryContext>((provider, options) => options.UseSqlite(_connection).UseBaseEntityConcepts(provider));
         services.AddEfCoreRepository<RepositoryContext, Item, Guid>().AddEfCoreRepository<RepositoryContext, Counter, int>();
         _provider = services.BuildServiceProvider();
@@ -206,14 +212,14 @@ public sealed class EfCoreRepositoryTests : IAsyncLifetime, IDisposable
             await Items(scope).AddAsync(mine);
         }
 
-        _user.TenantId = s_tenantB;
+        _tenant.TenantId = s_tenantB;
         await using (AsyncServiceScope other = _provider.CreateAsyncScope())
         {
             Assert.Null(await Items(other).FindAsync(mine.Id));
             Assert.Equal(0, await Items(other).CountAsync());
         }
 
-        _user.TenantId = s_tenantA;
+        _tenant.TenantId = s_tenantA;
         await using AsyncServiceScope again = _provider.CreateAsyncScope();
         await Items(again).DeleteAsync((await Items(again).FindAsync(mine.Id))!);
         Assert.Null(await Items(again).FindAsync(mine.Id));
@@ -305,13 +311,13 @@ public sealed class EfCoreRepositoryTests : IAsyncLifetime, IDisposable
     public async Task DeleteWhere_MarksWhatMatches_WithoutLoadingIt_AndLeavesTheOthersAlone()
     {
         await SeedAsync(5);
-        _user.TenantId = s_tenantB;
+        _tenant.TenantId = s_tenantB;
         await using (AsyncServiceScope other = _provider.CreateAsyncScope())
         {
             await Items(other).AddAsync(new Item("item-01", 1));
         }
 
-        _user.TenantId = s_tenantA;
+        _tenant.TenantId = s_tenantA;
         long deleted;
         await using (AsyncServiceScope scope = _provider.CreateAsyncScope())
         {

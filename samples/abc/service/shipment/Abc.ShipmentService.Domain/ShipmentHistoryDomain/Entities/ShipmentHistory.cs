@@ -1,7 +1,6 @@
 using Abc.ShipmentService.Domain.ShipmentHistoryDomain.Consts;
 using HsnSoft.Base;
 using HsnSoft.Base.Domain.Entities;
-using HsnSoft.Base.MultiTenancy;
 
 namespace Abc.ShipmentService.Domain.ShipmentHistoryDomain.Entities;
 
@@ -9,7 +8,7 @@ namespace Abc.ShipmentService.Domain.ShipmentHistoryDomain.Entities;
 /// How a delivery ended, kept in the shipment history database (EF Core, PostgreSQL; the shipments are in MongoDB): delivered, or failed. Who recorded it and when come from <see cref="FullAuditedEntity{TKey}"/> (the soft delete too).
 /// The shipment is only referenced by its id and its tracking number: the history is in another database than the shipments.
 /// </summary>
-public sealed class ShipmentHistory : FullAuditedEntity<Guid>, IMultiTenant
+public sealed class ShipmentHistory : FullAuditedEntity<Guid>
 {
     // for EF Core
     private ShipmentHistory()
@@ -26,8 +25,6 @@ public sealed class ShipmentHistory : FullAuditedEntity<Guid>, IMultiTenant
     public string Outcome { get; private set; } = string.Empty;
 
     public string? Note { get; private set; }
-
-    public Guid TenantId { get; private set; }
 
     public static ShipmentHistory Record(Guid shipmentId, Guid orderId, string trackingNumber, string outcome, string? note = null)
     {

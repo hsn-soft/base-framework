@@ -10,6 +10,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\src\HsnSoft.Base.EntityFrameworkCore\HsnSoft.Base.EntityFrameworkCore.csproj" />
+        <ProjectReference Include="..\..\src\HsnSoft.Base.MultiTenancy.EntityFrameworkCore\HsnSoft.Base.MultiTenancy.EntityFrameworkCore.csproj" />
     </ItemGroup>
 
 </Project>

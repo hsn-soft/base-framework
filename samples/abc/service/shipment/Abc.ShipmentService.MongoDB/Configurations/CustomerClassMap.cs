@@ -25,7 +25,6 @@ public static class CustomerClassMap
             map.MapProperty(customer => customer.Email);
             map.MapProperty(customer => customer.Phone);
             map.MapProperty(customer => customer.Address);
-            map.MapProperty(customer => customer.TenantId);
         });
     }
 }

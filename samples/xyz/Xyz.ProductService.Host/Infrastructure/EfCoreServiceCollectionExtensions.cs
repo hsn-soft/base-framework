@@ -20,6 +20,7 @@ public static class EfCoreServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(configuration);
 
         services.AddBaseEfCore<ProductDbContext>(configuration, providers => providers.UsePostgres(), EfCoreProductDbProperties.Provider, EfCoreProductDbProperties.ConnectionStringName);
+        services.AddBaseMultiTenancyEntityFramework();
         services.AddScoped<IProductRepository, EfCoreProductRepository>();
         return services.AddScoped<IRepository<Product, Guid>>(provider => provider.GetRequiredService<IProductRepository>());
     }
@@ -34,6 +35,7 @@ public static class EfCoreServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(configuration);
 
         services.AddBaseEfCore<StockDbContext>(configuration, providers => providers.UsePostgres(), EfCoreStockDbProperties.Provider, EfCoreStockDbProperties.ConnectionStringName);
+        services.AddBaseMultiTenancyEntityFramework();
         return services.AddEfCoreRepository<StockDbContext, ProductStockHistory, Guid>();
     }
 }

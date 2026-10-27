@@ -15,6 +15,4 @@ public sealed class CustomerDto : AuditedEntityDto<Guid>
     public string? Phone { get; init; }
 
     public string? Address { get; init; }
-
-    public Guid TenantId { get; init; }
 }

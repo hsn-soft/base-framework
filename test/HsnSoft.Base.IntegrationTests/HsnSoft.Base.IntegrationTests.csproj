@@ -32,6 +32,7 @@
         <ProjectReference Include="..\..\src\HsnSoft.Base.EventBus.MongoDB\HsnSoft.Base.EventBus.MongoDB.csproj" />
         <ProjectReference Include="..\..\src\HsnSoft.Base.EventBus.RabbitMQ\HsnSoft.Base.EventBus.RabbitMQ.csproj" />
         <ProjectReference Include="..\..\src\HsnSoft.Base.MongoDB\HsnSoft.Base.MongoDB.csproj" />
+        <ProjectReference Include="..\..\src\HsnSoft.Base.MultiTenancy.MongoDB\HsnSoft.Base.MultiTenancy.MongoDB.csproj" />
     </ItemGroup>
 
 </Project>

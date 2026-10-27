@@ -20,7 +20,6 @@ public static class ShipmentHistoryDomainConfiguration
             history.Property(entity => entity.Note).HasMaxLength(ShipmentHistoryConsts.NoteMaxLength);
             history.HasIndex(entity => entity.ShipmentId);
             history.HasIndex(entity => entity.OrderId);
-            history.HasIndex(entity => entity.TenantId);
         });
     }
 }

@@ -1,7 +1,6 @@
 using HsnSoft.Base.Auditing;
 using HsnSoft.Base.Data;
 using HsnSoft.Base.Domain.Entities;
-using HsnSoft.Base.MultiTenancy;
 using HsnSoft.Base.Security;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -16,12 +15,6 @@ public class EntityConceptsRegistrationTests
         public Guid? Id { get; init; }
 
         public string? UserName => null;
-
-        public Guid? TenantId { get; init; }
-
-        public bool IsSystemTenant { get; init; }
-
-        public IReadOnlyList<Guid> AllowedTenantIds { get; init; } = [];
     }
 
     private sealed class FixedClock(DateTimeOffset now) : TimeProvider
@@ -44,7 +37,7 @@ public class EntityConceptsRegistrationTests
     {
         Guid user = Guid.NewGuid();
         ServiceCollection services = new();
-        services.AddSingleton<ICurrentUser>(new FakeUser { Id = user, TenantId = Guid.NewGuid() });
+        services.AddSingleton<ICurrentUser>(new FakeUser { Id = user });
         services.AddSingleton<TimeProvider>(new FixedClock(s_t1));
 
         using ServiceProvider provider = services.AddBaseEntityConcepts().BuildServiceProvider();
@@ -52,8 +45,7 @@ public class EntityConceptsRegistrationTests
         Product product = new();
         provider.GetRequiredService<IAuditPropertySetter>().SetCreation(product);
         Assert.Equal((s_t1, user), (product.CreatedAt, product.CreatedBy));
-        Assert.True(provider.GetRequiredService<IDataFilter>().IsEnabled<IMultiTenant>());
-        Assert.True(provider.GetRequiredService<ICurrentTenant>().IsAvailable);
+        Assert.True(provider.GetRequiredService<IDataFilter>().IsEnabled<ISoftDelete>());
         Assert.Throws<ArgumentNullException>(() => ((IServiceCollection)null!).AddBaseEntityConcepts());
     }
 
@@ -66,7 +58,6 @@ public class EntityConceptsRegistrationTests
         provider.GetRequiredService<IAuditPropertySetter>().SetCreation(product);
 
         Assert.Null(product.CreatedBy);
-        Assert.False(provider.GetRequiredService<ICurrentTenant>().IsAvailable);
     }
 
     [Fact]

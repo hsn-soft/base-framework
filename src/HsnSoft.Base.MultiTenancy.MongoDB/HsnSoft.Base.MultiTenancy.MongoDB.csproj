@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <Import Project="..\..\common.props" />
+
+    <PropertyGroup>
+        <AssemblyName>HsnSoft.Base.MultiTenancy.MongoDB</AssemblyName>
+        <PackageId>HsnSoft.Base.MultiTenancy.MongoDB</PackageId>
+        <RootNamespace />
+        <Title>HsnSoft.Base Framework MultiTenancy MongoDB</Title>
+        <Description>Tenants on MongoDB: the repositories of a service with tenants show a caller only the tenants it may see, and a new document gets the tenant of the request.</Description>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageTags>HsnSoft Base Framework MultiTenancy MongoDB</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="..\..\README.md" Pack="true" Visible="false" PackagePath="README.md" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\HsnSoft.Base.MongoDB\HsnSoft.Base.MongoDB.csproj" />
+        <ProjectReference Include="..\HsnSoft.Base.MultiTenancy\HsnSoft.Base.MultiTenancy.csproj" />
+    </ItemGroup>
+
+</Project>

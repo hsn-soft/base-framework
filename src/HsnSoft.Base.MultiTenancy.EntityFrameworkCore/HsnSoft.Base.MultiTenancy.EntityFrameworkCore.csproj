@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <Import Project="..\..\common.props" />
+
+    <PropertyGroup>
+        <AssemblyName>HsnSoft.Base.MultiTenancy.EntityFrameworkCore</AssemblyName>
+        <PackageId>HsnSoft.Base.MultiTenancy.EntityFrameworkCore</PackageId>
+        <RootNamespace />
+        <Title>HsnSoft.Base Framework MultiTenancy EntityFrameworkCore</Title>
+        <Description>Tenants on Entity Framework Core: the context of a service with tenants (MultiTenantDbContext) shows a caller only the tenants it may see, and a new entity gets the tenant of the request.</Description>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageTags>HsnSoft Base Framework MultiTenancy EntityFrameworkCore</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="..\..\README.md" Pack="true" Visible="false" PackagePath="README.md" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\HsnSoft.Base.EntityFrameworkCore\HsnSoft.Base.EntityFrameworkCore.csproj" />
+        <ProjectReference Include="..\HsnSoft.Base.MultiTenancy\HsnSoft.Base.MultiTenancy.csproj" />
+    </ItemGroup>
+
+</Project>

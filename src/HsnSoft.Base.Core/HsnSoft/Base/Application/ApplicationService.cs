@@ -1,5 +1,4 @@
 using System;
-using HsnSoft.Base.MultiTenancy;
 using HsnSoft.Base.Security;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -7,7 +6,7 @@ using Microsoft.Extensions.Logging;
 namespace HsnSoft.Base.Application;
 
 /// <summary>
-/// What every application service has at hand: <see cref="Logger"/>, <see cref="CurrentUser"/> and <see cref="CurrentTenant"/>, found from the services the first time they are used (the same as the base controller
+/// What every application service has at hand: <see cref="Logger"/>, and <see cref="CurrentUser"/>, found from the services the first time they are used (the same as the base controller
 /// of a web api). A service derives its own base from this one and adds what is its own (a localizer); the application service passes the <see cref="IServiceProvider"/> it is given up the chain, and asks for
 /// everything else in its constructor.
 /// </summary>
@@ -23,9 +22,6 @@ public abstract class ApplicationService(IServiceProvider services)
     /// </summary>
     protected ILogger Logger => field ??= ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger(GetType());
 
-    /// <summary>Who is making the request: its id, user name and tenant. Without a request (a worker) there is no user.</summary>
+    /// <summary>Who is making the request: its id and user name. Without a request (a worker) there is no user.</summary>
     protected ICurrentUser CurrentUser => field ??= ServiceProvider.GetRequiredService<ICurrentUser>();
-
-    /// <summary>The tenant of the request, and the ones it may see.</summary>
-    protected ICurrentTenant CurrentTenant => field ??= ServiceProvider.GetRequiredService<ICurrentTenant>();
 }

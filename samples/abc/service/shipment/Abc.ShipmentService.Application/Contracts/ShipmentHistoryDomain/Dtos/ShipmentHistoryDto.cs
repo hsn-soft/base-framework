@@ -13,6 +13,4 @@ public sealed class ShipmentHistoryDto : AuditedEntityDto<Guid>
     public string Outcome { get; init; } = string.Empty;
 
     public string? Note { get; init; }
-
-    public Guid TenantId { get; init; }
 }

@@ -26,7 +26,6 @@ public static class PaymentClassMap
             map.MapProperty(payment => payment.Status).SetSerializer(new EnumSerializer<PaymentStatus>(BsonType.String));
             map.MapProperty(payment => payment.Reference);
             map.MapProperty(payment => payment.FailureReason);
-            map.MapProperty(payment => payment.TenantId);
         });
     }
 }

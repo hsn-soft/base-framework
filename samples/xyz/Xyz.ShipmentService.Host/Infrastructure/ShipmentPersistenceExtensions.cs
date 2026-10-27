@@ -19,6 +19,7 @@ public static class ShipmentPersistenceExtensions
         ArgumentNullException.ThrowIfNull(configuration);
 
         services.AddBaseEfCore<ShipmentDbContext>(configuration, providers => providers.UsePostgres(), EfCoreShipmentDbProperties.Provider, EfCoreShipmentDbProperties.ConnectionStringName);
+        services.AddBaseMultiTenancyEntityFramework();
         return services
             .AddEfCoreRepository<ShipmentDbContext, Shipment, Guid>()
             .AddEfCoreRepository<ShipmentDbContext, Customer, Guid>()

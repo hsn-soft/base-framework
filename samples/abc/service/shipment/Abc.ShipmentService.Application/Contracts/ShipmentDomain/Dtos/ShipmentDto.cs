@@ -18,6 +18,4 @@ public sealed class ShipmentDto : AuditedEntityDto<Guid>
     /// <summary>The status in the language of the request (translated by the application service).</summary>
     public string StatusText { get; init; } = string.Empty;
 
-    public Guid TenantId { get; init; }
-
 }

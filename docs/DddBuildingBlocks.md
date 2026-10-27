@@ -5,7 +5,7 @@ What a service does not write itself ([ADR-0042](adr/0042-ddd-domain-and-applica
 ## Entities (`HsnSoft.Base.Ddd.Domain`)
 
 ```csharp
-public sealed class Product : FullAuditedEntity<Guid>, IMultiTenant       // audit + soft delete from the base; the tenant is explicit
+public sealed class Product : FullAuditedEntity<Guid>, IMultiTenant       // audit + soft delete from the base; the tenant is explicit (only a service with tenants: HsnSoft.Base.MultiTenancy)
 {
     private Product() { }                                                 // for the store
     public string Name { get; private set; } = string.Empty;

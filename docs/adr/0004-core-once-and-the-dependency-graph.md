@@ -2,6 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-10-22
+- **Note:** [ADR-0074](0074-multitenancy-is-a-package-of-its-own.md): five `MultiTenancy` packages (the tenants and where they come from, the token, the event bus, EF Core, MongoDB); `Core` has no tenant.
 - **Note:** [ADR-0073](0073-auditing-and-data-are-packages-of-their-own.md): `Auditing` and `Data` are packages of their own on `Core`; `Ddd.Domain` is on them.
 
 ## Context
@@ -25,6 +26,11 @@ referenced it in its own way, and sibling references multiplied: restores slowed
 | `Hosting` | Core |
 | `Auditing` | Core |
 | `Data` | Core |
+| `MultiTenancy` | - (the DI abstractions only) |
+| `MultiTenancy.Authentication` | MultiTenancy |
+| `MultiTenancy.EventBus` | EventBus, MultiTenancy |
+| `MultiTenancy.EntityFrameworkCore` | EntityFrameworkCore, MultiTenancy |
+| `MultiTenancy.MongoDB` | MongoDB, MultiTenancy |
 | `Ddd.Domain` | Auditing, Data |
 | `Ddd.Application` | Ddd.Domain |
 | `Authentication` | Core |

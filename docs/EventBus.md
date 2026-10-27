@@ -37,9 +37,11 @@ await eventBus.SendAsync(new ShipOrderEto(id), toService: "shipment-service");  
 `PublishAsync` is what almost everything is: something happened, whoever cares subscribes. `SendAsync` is for the message that asks one service to do something
 (and for putting a failed message back to the consumer that failed); the queue is made if it is not there yet. Kafka has no such place for a message and refuses it.
 
-**Who is calling travels in the envelope, not in the message.** The tenant, the user and the roles of whoever started the chain are put in the envelope when a message is
-published (from `ICurrentUser`, or from the message being handled), and the dispatcher runs the handler **as that user** (`ActingUser`): `ICurrentUser` and `ICurrentTenant` answer
-in the handler as in a controller, so the query filters and the audit fields (`CreatedBy`, `UpdatedBy`) work without the handler doing anything. A message needs no `TenantId` of its own.
+**Who is calling travels in the envelope, not in the message.** The user and the roles of whoever started the chain are put in the envelope when a message is
+published (from `ICurrentUser`, or from the message being handled), and the dispatcher runs the handler **as that user** (`ActingUser`): `ICurrentUser` answers
+in the handler as in a controller, so the audit fields (`CreatedBy`, `UpdatedBy`) work without the handler doing anything. **The tenant travels as two headers** (`TenantId`, `IsSystemTenant`) that `HsnSoft.Base.MultiTenancy.EventBus` (`AddBaseTenantEventBus()`)
+writes and whose `IEventHandlerScope` runs the handler in the tenant of the message, so the tenant filters work in the handler too ([ADR-0074](adr/0074-multitenancy-is-a-package-of-its-own.md)); a service without tenants does not have the package and still passes the headers on to the messages it causes.
+A message needs no `TenantId` of its own. `IEventHandlerScope` is the hook for anything else a package must open around a handler (a scoped service, begun before the handler and disposed after, each attempt).
 
 Inbox (a message is handled once) and outbox (a message is published with the change that caused it) are **optional**: the event bus knows neither; a service that needs them
 adds them ([ADR-0057](adr/0057-the-caller-of-a-message-and-publish-or-send.md)).
@@ -54,11 +56,11 @@ One flat JSON object, property names as the C# properties (PascalCase); reading 
 
 ```json
 { "HopLevel": 2, "ReQueuedCount": 0, "MessageId": "…", "MessageTime": "…Z", "CorrelationId": "…", "Producer": "order-service",
-  "TenantId": "…", "IsSystemTenant": false, "UserId": "…", "UserName": "alice", "UserRoles": ["customer"],
+  "UserId": "…", "UserName": "alice", "UserRoles": ["customer"], "TenantId": "…",
   "ParentMessageId": "…", "ClientChannel": "mobile", "Message": { "OrderId": "…" } }
 ```
 
-`TenantId`, `IsSystemTenant`, `UserId`, `UserName` and `UserRoles` are properties of the envelope (the caller of the chain). `ClientChannel`, `ClientVersion`, `ClientLat`, `ClientLong` and anything else
+`UserId`, `UserName` and `UserRoles` are properties of the envelope (the caller of the chain). `TenantId` (and `IsSystemTenant`, when it is `true`), `ClientChannel`, `ClientVersion`, `ClientLat`, `ClientLong` and anything else
 a product puts next to them are **headers** (`envelope.GetHeader("ClientChannel")`, `SetHeader`): the framework carries them from a message to the ones it causes and does not interpret them;
 the product names them and fills them through `IEventHeaderProvider`.
 
@@ -145,7 +147,7 @@ The framework leaves these to the product's Shared project, because they know pr
 | `eventBus.Subscribe<TEvent, THandler>(fetchCount)` at startup, `UseEventBus(assembly, fetchCounts)` | `AddEventHandler<TEvent, THandler>(fetchCount)` / `AddEventHandlers(assembly, fetchCounts)`; a hosted service starts the consumers and stops them |
 | `HandleAsync(MessageEnvelope<T> @event)` | `HandleAsync(MessageEnvelope<T> envelope, CancellationToken)` |
 | `PublishAsync(eventMessage, parentMessage, correlationId, isExchangeEvent, isReQueuePublish)` | `PublishAsync(eventMessage, parentMessage, correlationId, cancellationToken)` to every service; `SendAsync(eventMessage, toService, ..., isReQueuePublish, cancellationToken)` to one service (no `isExchangeEvent` flag) |
-| `MessageEnvelope.UserId`, `UserRoles`, `Client*` | `TenantId`, `IsSystemTenant`, `UserId`, `UserName`, `UserRoles` are properties of the envelope, filled from `ICurrentUser`; `Client*` are headers (`GetHeader`), filled by an `IEventHeaderProvider` |
+| `MessageEnvelope.UserId`, `UserRoles`, `Client*` | `UserId`, `UserName`, `UserRoles` are properties of the envelope, filled from `ICurrentUser`; `TenantId`, `IsSystemTenant` and `Client*` are headers (`GetHeader`), filled by an `IEventHeaderProvider` (the tenant by `MultiTenancy.EventBus`) |
 | `IEventBusLogger` with persisted log models | `ILogger`: `PRODUCE_EVENT_*` / `CONSUME_EVENT_*` event names, and `CorrelationId`, `MessageId`, `EventName` in the log scope |
 | `RabbitMqConnectionSettings`, `RabbitMqEventBusConfig : EventBusConfig` | `RabbitMqConnectionSettings` (same section), `EventBusOptions` (same section and property names) and `RabbitMqEventBusConfig` for the RabbitMQ tuning |
 | `IEventBusSubscriptionManager.AddSubscription` / `Clear` | registration is done through the container |

@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Abc.OrderService.EntityFrameworkCore.Context;
 
 public sealed class OrderDbContext(DbContextOptions<OrderDbContext> options, IDataFilter? dataFilter = null, ICurrentTenant? currentTenant = null)
-    : BaseDbContext(options, dataFilter, currentTenant)
+    : MultiTenantDbContext(options, dataFilter, currentTenant)
 {
     public DbSet<Order> Orders => Set<Order>();
 

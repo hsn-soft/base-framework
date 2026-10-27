@@ -8,7 +8,7 @@ using Xyz.OrderService.Infrastructure.Configurations;
 namespace Xyz.OrderService.Infrastructure.Context;
 
 public sealed class OrderDbContext(DbContextOptions<OrderDbContext> options, IDataFilter? dataFilter = null, ICurrentTenant? currentTenant = null)
-    : BaseDbContext(options, dataFilter, currentTenant)
+    : MultiTenantDbContext(options, dataFilter, currentTenant)
 {
     public DbSet<Order> Orders => Set<Order>();
 

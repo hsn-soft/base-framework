@@ -1,32 +1,30 @@
 using System;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Reflection;
 using HsnSoft.Base.Data;
-using HsnSoft.Base.MultiTenancy;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace HsnSoft.Base.EntityFrameworkCore;
 
 /// <summary>
-/// The DbContext of a service that has entities with the concepts of the framework: it puts the query filters of <see cref="ISoftDelete"/> (the deleted ones are not seen) and
-/// <see cref="IMultiTenant"/> (only the tenants the caller may see) on the entities that have them, and switches them with <see cref="IDataFilter"/> and <see cref="ICurrentTenant"/>.
-/// The audit fields, the tenant of a new entity and the soft delete of a deleted one are done on save by <see cref="BaseEntityInterceptor"/> (registered by the database provider).
+/// The DbContext of a service that has entities with the concepts of the framework: it puts the query filter of <see cref="ISoftDelete"/> (the deleted ones are not seen) on the entities that have it, and
+/// switches it with <see cref="IDataFilter"/>. The audit fields and the soft delete of a deleted entity are done on save by <see cref="BaseEntityInterceptor"/> (registered by the database provider).
+/// A service with tenants derives from <c>MultiTenantDbContext</c> of <c>HsnSoft.Base.MultiTenancy.EntityFrameworkCore</c>, which adds the tenant filter through <see cref="ConfigureEntityFilters{TEntity}"/>.
 /// Override <see cref="ConfigureModel"/> for the mappings, not <c>OnModelCreating</c>: the filters are put on after them.
 /// </summary>
-public abstract class BaseDbContext(DbContextOptions options, IDataFilter? dataFilter = null, ICurrentTenant? currentTenant = null) : DbContext(options)
+public abstract class BaseDbContext(DbContextOptions options, IDataFilter? dataFilter = null) : DbContext(options)
 {
-    private static readonly MethodInfo s_configureFilter = typeof(BaseDbContext).GetMethod(nameof(ConfigureFilters), BindingFlags.Instance | BindingFlags.NonPublic)!;
+    /// <summary>The name of the query filter of <see cref="ISoftDelete"/> (the filters are named, so a package can add its own beside it).</summary>
+    protected const string SoftDeleteFilterName = "SoftDelete";
 
-    // read by the query filters (EF turns them into parameters of the query of this context)
-    private bool SoftDeleteFilterEnabled => dataFilter?.IsEnabled<ISoftDelete>() ?? true;
+    private static readonly MethodInfo s_configureFilter = typeof(BaseDbContext).GetMethod(nameof(ConfigureEntityFilters), BindingFlags.Instance | BindingFlags.NonPublic)!;
 
-    private bool TenantFilterEnabled => dataFilter?.IsEnabled<IMultiTenant>() ?? true;
+    /// <summary>The switch of the filters, for the filters a derived context adds (EF turns what a filter reads from the context into parameters of the query).</summary>
+    protected IDataFilter? DataFilter { get; } = dataFilter;
 
-    private bool SeesEveryTenant => currentTenant?.IsSystemTenant ?? false;
-
-    private Guid[] VisibleTenantIds => currentTenant is null ? [] : [.. currentTenant.AllowedTenantIds];
+    // read by the query filter (EF turns it into a parameter of the query of this context)
+    private bool SoftDeleteFilterEnabled => DataFilter?.IsEnabled<ISoftDelete>() ?? true;
 
     /// <summary>The mappings of the service.</summary>
     protected abstract void ConfigureModel(ModelBuilder modelBuilder);
@@ -43,37 +41,16 @@ public abstract class BaseDbContext(DbContextOptions options, IDataFilter? dataF
         }
     }
 
-    private void ConfigureFilters<TEntity>(ModelBuilder modelBuilder)
+    /// <summary>
+    /// Puts the query filters on <typeparamref name="TEntity"/> (every root entity of the model): the one of <see cref="ISoftDelete"/> here. A derived context adds its own, each under a name of its own,
+    /// after calling this.
+    /// </summary>
+    protected virtual void ConfigureEntityFilters<TEntity>(ModelBuilder modelBuilder)
         where TEntity : class
     {
-        Expression<Func<TEntity, bool>>? filter = null;
         if (typeof(ISoftDelete).IsAssignableFrom(typeof(TEntity)))
         {
-            filter = entity => !SoftDeleteFilterEnabled || !EF.Property<bool>(entity, nameof(ISoftDelete.IsDeleted));
+            modelBuilder.Entity<TEntity>().HasQueryFilter(SoftDeleteFilterName, entity => !SoftDeleteFilterEnabled || !EF.Property<bool>(entity, nameof(ISoftDelete.IsDeleted)));
         }
-
-        if (typeof(IMultiTenant).IsAssignableFrom(typeof(TEntity)))
-        {
-            Expression<Func<TEntity, bool>> tenant = entity => !TenantFilterEnabled || SeesEveryTenant || VisibleTenantIds.Contains(EF.Property<Guid>(entity, nameof(IMultiTenant.TenantId)));
-            filter = filter is null ? tenant : And(filter, tenant);
-        }
-
-        if (filter is not null)
-        {
-            modelBuilder.Entity<TEntity>().HasQueryFilter(filter);
-        }
-    }
-
-    private static Expression<Func<T, bool>> And<T>(Expression<Func<T, bool>> left, Expression<Func<T, bool>> right)
-    {
-        ParameterExpression parameter = Expression.Parameter(typeof(T));
-        Expression leftBody = new ParameterReplacer(left.Parameters[0], parameter).Visit(left.Body);
-        Expression rightBody = new ParameterReplacer(right.Parameters[0], parameter).Visit(right.Body);
-        return Expression.Lambda<Func<T, bool>>(Expression.AndAlso(leftBody, rightBody), parameter);
-    }
-
-    private sealed class ParameterReplacer(ParameterExpression from, ParameterExpression to) : ExpressionVisitor
-    {
-        protected override Expression VisitParameter(ParameterExpression node) => node == from ? to : base.VisitParameter(node);
     }
 }

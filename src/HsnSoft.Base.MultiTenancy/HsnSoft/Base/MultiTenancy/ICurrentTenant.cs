@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace HsnSoft.Base.MultiTenancy;
 
 /// <summary>
-/// The tenant of the request: what the token says (<c>tenant_id</c>, <c>is_system_tenant</c>, <c>allowed_tenant_id</c>) unless code changed it with <see cref="Change"/>
+/// The tenant of the request: what an <see cref="ITenantSource"/> says (the token of a request, the envelope of a message) unless code changed it with <see cref="Change"/>
 /// (a seed, a worker). The system tenant sees every tenant; anyone else sees the tenants in <see cref="AllowedTenantIds"/>, which always has its own.
 /// </summary>
 public interface ICurrentTenant

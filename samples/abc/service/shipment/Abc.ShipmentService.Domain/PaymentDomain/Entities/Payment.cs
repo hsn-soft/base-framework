@@ -1,15 +1,14 @@
 using Abc.ShipmentService.Domain.PaymentDomain.Consts;
 using HsnSoft.Base;
 using HsnSoft.Base.Domain.Entities;
-using HsnSoft.Base.MultiTenancy;
 
 namespace Abc.ShipmentService.Domain.PaymentDomain.Entities;
 
 /// <summary>
 /// The payment of an order: what was asked of a customer and how it ended. A payment is made <see cref="PaymentStatus.Pending"/> and ends as <see cref="PaymentStatus.Succeeded"/> or <see cref="PaymentStatus.Failed"/>; a succeeded one can be
-/// <see cref="PaymentStatus.Refunded"/>. The audit fields and the soft delete come from <see cref="FullAuditedEntity{TKey}"/>; the tenant is kept here and given by the persistence.
+/// <see cref="PaymentStatus.Refunded"/>. The audit fields and the soft delete come from <see cref="FullAuditedEntity{TKey}"/>.
 /// </summary>
-public sealed class Payment : FullAuditedEntity<Guid>, IMultiTenant
+public sealed class Payment : FullAuditedEntity<Guid>
 {
     // for the database driver
     private Payment()
@@ -32,8 +31,6 @@ public sealed class Payment : FullAuditedEntity<Guid>, IMultiTenant
 
     /// <summary>Why it failed.</summary>
     public string? FailureReason { get; private set; }
-
-    public Guid TenantId { get; private set; }
 
     public static Payment Create(Guid orderId, Guid customerId, decimal amount, string? currency = null)
     {

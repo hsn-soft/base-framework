@@ -19,7 +19,8 @@ public sealed class MongoRepositoryTests : IAsyncLifetime
     private static readonly Guid s_tenantB = Guid.NewGuid();
 
     private readonly MongoDbContainer _container = new MongoDbBuilder("mongo:7.0").Build();
-    private readonly FakeUser _user = new() { Id = Guid.NewGuid(), TenantId = s_tenantA };
+    private readonly FakeUser _user = new() { Id = Guid.NewGuid() };
+    private readonly FakeTenant _tenant = new() { TenantId = s_tenantA };
     private IHost _host = null!;
 
     public sealed class Product(string name, int price) : FullAuditedEntity<Guid>(Guid.NewGuid()), IMultiTenant
@@ -44,12 +45,17 @@ public sealed class MongoRepositoryTests : IAsyncLifetime
         public Guid? Id { get; set; }
 
         public string? UserName => null;
+    }
 
+    private sealed class FakeTenant : ITenantSource
+    {
         public Guid? TenantId { get; set; }
 
         public bool IsSystemTenant { get; set; }
 
         public IReadOnlyList<Guid> AllowedTenantIds { get; set; } = [];
+
+        public TenantContext? Current => new(TenantId, IsSystemTenant, AllowedTenantIds);
     }
 
     private static readonly SortFields<Product> s_sort = new SortFields<Product>().Add("name", product => product.Name).Add("price", product => product.Price);
@@ -62,7 +68,9 @@ public sealed class MongoRepositoryTests : IAsyncLifetime
         IConfiguration configuration = Support.Configuration(("ConnectionStrings:Mongo", url));
         _host = await Support.StartHostAsync(services => services
             .AddSingleton<ICurrentUser>(_user)
+            .AddSingleton<ITenantSource>(_tenant)
             .AddBaseMongo(configuration)
+            .AddBaseMultiTenancyMongo()
             .AddMongoRepository<Product, Guid>("products")
             .AddMongoRepository<Tag, Guid>("tags"));
     }
@@ -168,14 +176,14 @@ public sealed class MongoRepositoryTests : IAsyncLifetime
             Assert.Equal(25, await Products(scope).CountAsync());
         }
 
-        _user.TenantId = s_tenantB;
+        _tenant.TenantId = s_tenantB;
         await using (AsyncServiceScope scope = Scope())
         {
             Assert.Equal(0, await Products(scope).CountAsync());
             Assert.Empty(await Products(scope).GetListAsync(new ListQueryOptions<Product>()));
         }
 
-        _user.TenantId = s_tenantA;
+        _tenant.TenantId = s_tenantA;
     }
 
     [Fact]
@@ -266,13 +274,13 @@ public sealed class MongoRepositoryTests : IAsyncLifetime
     public async Task DeleteWhere_MarksWhatMatches_WithoutLoadingIt_AndOnlyInTheTenantOfTheCaller()
     {
         await SeedAsync(5);
-        _user.TenantId = s_tenantB;
+        _tenant.TenantId = s_tenantB;
         await using (AsyncServiceScope other = Scope())
         {
             await Products(other).AddAsync(new Product("item-01", 1));
         }
 
-        _user.TenantId = s_tenantA;
+        _tenant.TenantId = s_tenantA;
         await using AsyncServiceScope scope = Scope();
         IRepository<Product, Guid> products = Products(scope);
 

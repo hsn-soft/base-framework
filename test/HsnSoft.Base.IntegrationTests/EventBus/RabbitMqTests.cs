@@ -218,7 +218,7 @@ public sealed class RabbitMqTests(RabbitMqFixture fixture) : IClassFixture<Rabbi
         using JsonDocument document = JsonDocument.Parse(Text(message));
         JsonElement root = document.RootElement;
         // Flow is the one property the framework added to the production shape (where the message was published from, for the logs); readers ignore what they do not know
-        string[] expected = ["CorrelationId", "Flow", "HopLevel", "IsSystemTenant", "Message", "MessageId", "MessageTime", "ParentMessageId", "Producer", "ReQueuedCount", "TraceUser"];
+        string[] expected = ["CorrelationId", "Flow", "HopLevel", "Message", "MessageId", "MessageTime", "ParentMessageId", "Producer", "ReQueuedCount", "TraceUser"];
         string[] actual = [.. root.EnumerateObject().Select(property => property.Name).Order(StringComparer.Ordinal)];
         Assert.Equal(expected, actual);
         Assert.Equal("corr-shape", root.GetProperty("CorrelationId").GetString());

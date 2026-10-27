@@ -2,21 +2,22 @@ using System;
 using System.Collections.Generic;
 using HsnSoft.Base.Auditing;
 using HsnSoft.Base.Data;
-using HsnSoft.Base.MultiTenancy;
 using MongoDB.Driver;
 
 namespace HsnSoft.Base.MongoDB;
 
 /// <summary>
 /// What the repositories of a MongoDB service do for the concepts of the framework, as MongoDB has no change tracking to do it on save: <see cref="Visible{T}"/> adds the filters of
-/// <see cref="ISoftDelete"/> and <see cref="IMultiTenant"/> to a query, and <see cref="Created"/>, <see cref="Modified"/> and <see cref="SoftDeleted"/> fill the audit fields and the tenant before a write.
-/// The filters read the elements <c>IsDeleted</c> and <c>TenantId</c>, which is what a class map that maps the properties by name gives.
+/// <see cref="ISoftDelete"/> and the filters of the <see cref="IMongoEntityConcept"/> services (the tenants) to a query, and <see cref="Created"/>, <see cref="Modified"/> and <see cref="SoftDeleted"/> fill the audit fields
+/// and what the concepts write (the tenant) before a write. The filters read the elements <c>IsDeleted</c> and <c>TenantId</c>, which is what a class map that maps the properties by name gives.
 /// </summary>
-public sealed class MongoEntityConcepts(IAuditPropertySetter audit, ICurrentTenant tenant, IDataFilter filters)
+public sealed class MongoEntityConcepts(IAuditPropertySetter audit, IDataFilter filters, IEnumerable<IMongoEntityConcept>? concepts = null)
 {
+    private readonly IMongoEntityConcept[] _concepts = [.. concepts ?? []];
+
     /// <summary>
-    /// <paramref name="where"/> (or everything) narrowed to what the caller may see: the deleted entities are left out, and so are the ones of tenants the caller may not see
-    /// (nothing is seen without a tenant, unless it is the system tenant). A filter that <see cref="IDataFilter"/> switched off is not applied.
+    /// <paramref name="where"/> (or everything) narrowed to what the caller may see: the deleted entities are left out, and so are the ones of tenants the caller may not see (when the service has tenants).
+    /// A filter that <see cref="IDataFilter"/> switched off is not applied.
     /// </summary>
     public FilterDefinition<T> Visible<T>(FilterDefinition<T>? where = null)
     {
@@ -27,23 +28,26 @@ public sealed class MongoEntityConcepts(IAuditPropertySetter audit, ICurrentTena
             parts.Add(builder.Eq(nameof(ISoftDelete.IsDeleted), false));
         }
 
-        if (typeof(IMultiTenant).IsAssignableFrom(typeof(T)) && filters.IsEnabled<IMultiTenant>() && !tenant.IsSystemTenant)
+        foreach (IMongoEntityConcept concept in _concepts)
         {
-            parts.Add(builder.In(nameof(IMultiTenant.TenantId), tenant.AllowedTenantIds));
+            if (concept.Visible<T>() is { } part)
+            {
+                parts.Add(part);
+            }
         }
 
         return builder.And(parts);
     }
 
-    /// <summary>Before an insert: the creation fields and, for an <see cref="IMultiTenant"/> entity without a tenant, the current tenant.</summary>
+    /// <summary>Before an insert: the creation fields and what the concepts write (the current tenant of an entity without one).</summary>
     public void Created(object entity)
     {
         ArgumentNullException.ThrowIfNull(entity);
 
         audit.SetCreation(entity);
-        if (entity is IMultiTenant multiTenant && tenant.Id is { } current)
+        foreach (IMongoEntityConcept concept in _concepts)
         {
-            TenantAssigner.Assign(multiTenant, current);
+            concept.Created(entity);
         }
     }
 

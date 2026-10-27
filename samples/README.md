@@ -42,7 +42,7 @@ The same as in Abc ([ADR-0054](../docs/adr/0054-the-order-flow-through-events.md
 3. The shipment service makes the customer when there is none, takes the payment and publishes the internal `PaymentProcessedEto`; its handler sends the parcel and publishes `ShipmentCompletedEto`.
 4. The order becomes `Confirmed`/`Delivered`, or `Cancelled` with the reason. The address of the order picks the outcome: any address is delivered, `nopay` is a declined payment, `fail` a parcel the carrier cannot reach.
 
-The caller of a message (tenant, user, roles) travels in its envelope and a handler runs as that user ([ADR-0057](../docs/adr/0057-the-caller-of-a-message-and-publish-or-send.md)), so the audit fields of what a handler writes are the user's. Kafka has no queue per service, so a message
+The caller of a message (user, roles in its envelope, the tenant in its headers) travels with it and a handler runs as that user, in that tenant ([ADR-0057](../docs/adr/0057-the-caller-of-a-message-and-publish-or-send.md), [ADR-0074](../docs/adr/0074-multitenancy-is-a-package-of-its-own.md)), so the audit fields of what a handler writes are the user's. Kafka has no queue per service, so a message
 cannot be *sent* to one service there (`SendAsync` throws `NotSupportedException`); every Xyz event is published to its topic and each service reads it with a consumer group of its own. Events live in `Xyz.Shared/Contracts/Events/<publishing service>`, their handlers in the Host of the handling service
 (`EventHandlers/<publishing service>`, `EventHandlers/Internal`) ([ADR-0059](../docs/adr/0059-where-events-and-their-handlers-live.md)).
 
@@ -178,7 +178,7 @@ The answers are told in the language of the request: the `locale` claim of the t
 
 ### Tenants, audit and soft delete in Abc
 
-Every Abc entity (`User`, `Product`, `Order`, `Shipment`) has the audit fields (`CreatedBy`, `UpdatedBy`: the id of the user), soft delete (a delete marks the row; the lists do not show it) and a tenant ([ADR-0037](../docs/adr/0037-audit-soft-delete-and-tenants.md),
+Every Abc entity has the audit fields (`CreatedBy`, `UpdatedBy`: the id of the user) and soft delete (a delete marks the row; the lists do not show it); the entities of the identity, order and product services have a tenant too, and **the shipment service has none** (a service takes the tenants it wants, [ADR-0074](../docs/adr/0074-multitenancy-is-a-package-of-its-own.md)) ([ADR-0037](../docs/adr/0037-audit-soft-delete-and-tenants.md),
 [docs/EntityConcepts.md](../docs/EntityConcepts.md)). There are two tenants (`AbcTenants` in `Abc.Shared.Helper`): the **system tenant** (`admin`: sees every tenant) and **Acme** (`alice`: sees only Acme's data, and the two seeded products are Acme's). The auth server puts
 `tenant_id` (and `is_system_tenant` for `admin`) in the token. A row made by a user gets the tenant of the token; a user name and a sku are unique in the whole system. A database made before this change must be dropped (new columns): `drop database Abc_Identity_Dev`,
 `Abc_Order_Dev`; the MongoDB ones (`Abc_Product_Dev`, `Abc_Shipment_Dev`) too, as their old documents lack the fields.
@@ -245,27 +245,27 @@ The shared projects build on the framework only; a service takes from them what 
 | Project | Abc.Shared.* | Own projects | Framework (HsnSoft.Base.*) |
 |---|---|---|---|
 | `Abc.IdentityService.Application` | `Contracts` | `IdentityService.Domain` | `Ddd.Application` |
-| `Abc.IdentityService.Domain` | `Helper`, `Localization` | - | `Ddd.Domain` |
-| `Abc.IdentityService.EntityFrameworkCore` | - | `IdentityService.Domain` | `EntityFrameworkCore.PostgreSql`, `EntityFrameworkCore.SqlServer`, `EventBus.EntityFrameworkCore` |
-| `Abc.IdentityService.Http.Host` | `Hosting.Microservices` | `IdentityService.Application`, `IdentityService.EntityFrameworkCore` | `Caching.StackExchangeRedis` |
+| `Abc.IdentityService.Domain` | `Helper`, `Localization` | - | `Ddd.Domain`, `MultiTenancy` |
+| `Abc.IdentityService.EntityFrameworkCore` | - | `IdentityService.Domain` | `EntityFrameworkCore.PostgreSql`, `EntityFrameworkCore.SqlServer`, `EventBus.EntityFrameworkCore`, `MultiTenancy.EntityFrameworkCore` |
+| `Abc.IdentityService.Http.Host` | `Hosting.Microservices` | `IdentityService.Application`, `IdentityService.EntityFrameworkCore` | `Caching.StackExchangeRedis`, `MultiTenancy.Authentication`, `MultiTenancy.EventBus` |
 
 **OrderService**
 
 | Project | Abc.Shared.* | Own projects | Framework (HsnSoft.Base.*) |
 |---|---|---|---|
 | `Abc.OrderService.Application` | `Contracts` | `OrderService.Domain` | `Ddd.Application` |
-| `Abc.OrderService.Domain` | `Helper`, `Localization` | - | `Ddd.Domain` |
-| `Abc.OrderService.EntityFrameworkCore` | - | `OrderService.Domain` | `EntityFrameworkCore.PostgreSql`, `EventBus.EntityFrameworkCore` |
-| `Abc.OrderService.Http.Host` | `Hosting.Microservices` | `OrderService.Application`, `OrderService.EntityFrameworkCore` | `Caching.StackExchangeRedis` |
+| `Abc.OrderService.Domain` | `Helper`, `Localization` | - | `Ddd.Domain`, `MultiTenancy` |
+| `Abc.OrderService.EntityFrameworkCore` | - | `OrderService.Domain` | `EntityFrameworkCore.PostgreSql`, `EventBus.EntityFrameworkCore`, `MultiTenancy.EntityFrameworkCore` |
+| `Abc.OrderService.Http.Host` | `Hosting.Microservices` | `OrderService.Application`, `OrderService.EntityFrameworkCore` | `Caching.StackExchangeRedis`, `MultiTenancy.Authentication`, `MultiTenancy.EventBus` |
 
 **ProductService**
 
 | Project | Abc.Shared.* | Own projects | Framework (HsnSoft.Base.*) |
 |---|---|---|---|
 | `Abc.ProductService.Application` | `Contracts` | `ProductService.Domain` | `Ddd.Application` |
-| `Abc.ProductService.Domain` | `Helper`, `Localization` | - | `Ddd.Domain` |
-| `Abc.ProductService.Http.Host` | `Hosting.Microservices` | `ProductService.Application`, `ProductService.MongoDB` | `Caching.StackExchangeRedis` |
-| `Abc.ProductService.MongoDB` | - | `ProductService.Domain` | `EventBus.MongoDB`, `MongoDB` |
+| `Abc.ProductService.Domain` | `Helper`, `Localization` | - | `Ddd.Domain`, `MultiTenancy` |
+| `Abc.ProductService.Http.Host` | `Hosting.Microservices` | `ProductService.Application`, `ProductService.MongoDB` | `Caching.StackExchangeRedis`, `MultiTenancy.Authentication`, `MultiTenancy.EventBus` |
+| `Abc.ProductService.MongoDB` | - | `ProductService.Domain` | `EventBus.MongoDB`, `MongoDB`, `MultiTenancy.MongoDB` |
 
 **ShipmentService**
 
@@ -283,7 +283,7 @@ The shared projects build on the framework only; a service takes from them what 
 |---|---|---|---|
 | `Abc.Gateway.Commercial.Host` | `Hosting.Gateways` | - | `Caching.StackExchangeRedis` |
 | `Abc.Gateway.Public.Host` | `Hosting.Gateways` | - | - |
-| `Abc.AuthServer.Host` | `Helper`, `Hosting.Microservices`, `Localization` | `IdentityService.EntityFrameworkCore` | `Caching.StackExchangeRedis` |
+| `Abc.AuthServer.Host` | `Helper`, `Hosting.Microservices`, `Localization` | `IdentityService.EntityFrameworkCore` | `Caching.StackExchangeRedis`, `MultiTenancy.Authentication` |
 | `Abc.CommercialWeb.Host` | - | - | `AspNetCore.WebApi`, `Logging.Serilog` |
 | `Abc.PublicWeb.Host` | - | - | `AspNetCore.WebApi`, `Logging.Serilog` |
 

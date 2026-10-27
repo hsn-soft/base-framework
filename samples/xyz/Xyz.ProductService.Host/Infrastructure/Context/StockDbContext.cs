@@ -9,7 +9,7 @@ namespace Xyz.ProductService.Infrastructure.Context;
 
 /// <summary>The second context of the product service, on its own database: the history of the stock of the products.</summary>
 public sealed class StockDbContext(DbContextOptions<StockDbContext> options, IDataFilter? dataFilter = null, ICurrentTenant? currentTenant = null)
-    : BaseDbContext(options, dataFilter, currentTenant)
+    : MultiTenantDbContext(options, dataFilter, currentTenant)
 {
     public DbSet<ProductStockHistory> StockHistories => Set<ProductStockHistory>();
 

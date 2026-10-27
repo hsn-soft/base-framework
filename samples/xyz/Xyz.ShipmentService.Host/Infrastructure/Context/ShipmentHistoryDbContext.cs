@@ -9,7 +9,7 @@ namespace Xyz.ShipmentService.Infrastructure.Context;
 
 /// <summary>The relational context of a service whose shipments are in MongoDB: how the deliveries ended, on PostgreSQL.</summary>
 public sealed class ShipmentHistoryDbContext(DbContextOptions<ShipmentHistoryDbContext> options, IDataFilter? dataFilter = null, ICurrentTenant? currentTenant = null)
-    : BaseDbContext(options, dataFilter, currentTenant)
+    : MultiTenantDbContext(options, dataFilter, currentTenant)
 {
     public DbSet<ShipmentHistory> ShipmentHistories => Set<ShipmentHistory>();
 

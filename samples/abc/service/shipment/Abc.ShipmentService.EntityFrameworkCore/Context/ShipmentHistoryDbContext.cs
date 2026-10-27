@@ -2,14 +2,13 @@ using Abc.ShipmentService.Domain.ShipmentHistoryDomain.Entities;
 using Abc.ShipmentService.EntityFrameworkCore.Configurations;
 using HsnSoft.Base.Data;
 using HsnSoft.Base.EntityFrameworkCore;
-using HsnSoft.Base.MultiTenancy;
 using Microsoft.EntityFrameworkCore;
 
 namespace Abc.ShipmentService.EntityFrameworkCore.Context;
 
 /// <summary>The relational context of a service whose shipments are in MongoDB: how the deliveries ended, on PostgreSQL.</summary>
-public sealed class ShipmentHistoryDbContext(DbContextOptions<ShipmentHistoryDbContext> options, IDataFilter? dataFilter = null, ICurrentTenant? currentTenant = null)
-    : BaseDbContext(options, dataFilter, currentTenant)
+public sealed class ShipmentHistoryDbContext(DbContextOptions<ShipmentHistoryDbContext> options, IDataFilter? dataFilter = null)
+    : BaseDbContext(options, dataFilter)
 {
     public DbSet<ShipmentHistory> ShipmentHistories => Set<ShipmentHistory>();
 

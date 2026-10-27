@@ -17,6 +17,7 @@ public static class EfCoreServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(configuration);
 
         services.AddBaseEfCore<ShipmentHistoryDbContext>(configuration, providers => providers.UsePostgres(), EfCoreShipmentHistoryDbProperties.Provider, EfCoreShipmentHistoryDbProperties.ConnectionStringName);
+        services.AddBaseMultiTenancyEntityFramework();
         return services.AddEfCoreRepository<ShipmentHistoryDbContext, ShipmentHistory, Guid>();
     }
 

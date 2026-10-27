@@ -90,11 +90,6 @@ public sealed partial class EventDispatcher(
             scopeValues["UserId"] = envelope.UserId;
         }
 
-        if (envelope.TenantId is not null)
-        {
-            scopeValues["TenantId"] = envelope.TenantId;
-        }
-
         if (envelope.UserRoles is { Count: > 0 })
         {
             scopeValues["UserRoles"] = LogFields.Text(string.Join(',', envelope.UserRoles), 256);
@@ -260,11 +255,27 @@ public sealed partial class EventDispatcher(
                     // do not run the handler on the thread that delivered the message
                     await Task.Yield();
 
-                    // the handler runs as the caller of the chain (the user and the tenant of whoever started it), so the audit fields and the query filters work as in a request
-                    using (EventContext.Use(envelope))
-                    using (ActingUser.Use(envelope.HasCaller ? new UserContext(envelope.UserId, envelope.UserName, envelope.UserRoles ?? [], envelope.TenantId, envelope.IsSystemTenant) : null))
+                    // the handler runs as the caller of the chain (the user of whoever started it), so the audit fields work as in a request; what a package adds (the tenant) is opened by its IEventHandlerScope
+                    List<IDisposable> opened = [];
+                    try
                     {
-                        await s_invokers.GetOrAdd(eventType, CreateInvoker)(instance, messageEnvelope, cancellationToken).ConfigureAwait(false);
+                        foreach (IEventHandlerScope handlerScope in scope.ServiceProvider.GetServices<IEventHandlerScope>())
+                        {
+                            opened.Add(handlerScope.Begin(envelope));
+                        }
+
+                        using (EventContext.Use(envelope))
+                        using (ActingUser.Use(envelope.HasCaller ? new UserContext(envelope.UserId, envelope.UserName, envelope.UserRoles ?? []) : null))
+                        {
+                            await s_invokers.GetOrAdd(eventType, CreateInvoker)(instance, messageEnvelope, cancellationToken).ConfigureAwait(false);
+                        }
+                    }
+                    finally
+                    {
+                        for (int index = opened.Count - 1; index >= 0; index--)
+                        {
+                            opened[index].Dispose();
+                        }
                     }
                 }
 

@@ -89,7 +89,7 @@ public sealed class CustomerAppService(IRepository<Customer, Guid> customers, IS
     private async Task<Customer> FindAsync(Guid id, CancellationToken cancellationToken)
         => await customers.FindAsync(id, cancellationToken).ConfigureAwait(false) ?? throw CustomerNotFound.For(id);
 
-    // a user name is unique in the tenant: a deleted customer's name is taken too
+    // a user name is unique: a deleted customer's name is taken too
     private Task<bool> IsTakenAsync(string userName, CancellationToken cancellationToken)
     {
         string normalized = StringHelper.Normalize(userName);

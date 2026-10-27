@@ -115,9 +115,7 @@ public sealed class EventDispatcherTests : IDisposable
         (EventDispatcher dispatcher, _, ListLogger<EventDispatcher> logger) = CreateRecording();
         MessageEnvelope<SampleEto> envelope = NewEnvelope();
         Guid user = Guid.NewGuid();
-        Guid tenant = Guid.NewGuid();
         envelope.UserId = user;
-        envelope.TenantId = tenant;
         envelope.UserRoles = ["admin", "customer"];
         envelope.SetHeader("ClientChannel", "mobile");
         envelope.SetHeader("ClientVersion", "3.2.1");
@@ -129,7 +127,6 @@ public sealed class EventDispatcherTests : IDisposable
 
         IReadOnlyDictionary<string, object?> scope = logger.Scopes[0];
         Assert.Equal(user, scope["UserId"]);
-        Assert.Equal(tenant, scope["TenantId"]);
         Assert.Equal("admin,customer", scope["UserRoles"]);
         Assert.Equal("mobile", scope["ClientChannel"]);
         Assert.Equal("3.2.1", scope["ClientVersion"]);
@@ -144,15 +141,65 @@ public sealed class EventDispatcherTests : IDisposable
         (EventDispatcher dispatcher, RecordingHandler handler, _) = CreateRecording();
         MessageEnvelope<SampleEto> envelope = NewEnvelope();
         Guid user = Guid.NewGuid();
-        Guid tenant = Guid.NewGuid();
-        (envelope.UserId, envelope.UserName, envelope.UserRoles, envelope.TenantId, envelope.IsSystemTenant) = (user, "alice", ["customer"], tenant, true);
+        (envelope.UserId, envelope.UserName, envelope.UserRoles) = (user, "alice", ["customer"]);
 
         await dispatcher.DispatchAsync("Sample", typeof(SampleEto), envelope);
 
         HsnSoft.Base.Security.UserContext acting = Assert.IsType<HsnSoft.Base.Security.UserContext>(handler.ActingUserDuringHandling);
-        Assert.Equal((user, "alice", tenant, true), (acting.Id, acting.UserName, acting.TenantId, acting.IsSystemTenant));
+        Assert.Equal((user, "alice"), (acting.Id, acting.UserName));
         Assert.Equal(["customer"], acting.Roles);
         Assert.Null(HsnSoft.Base.Security.ActingUser.Current);
+    }
+
+    private sealed class RecordingScope(List<string> events, string name, bool failToBegin = false) : IEventHandlerScope
+    {
+        public IDisposable Begin(ParentMessageEnvelope envelope)
+        {
+            events.Add($"begin {name} {envelope.MessageId != Guid.Empty}");
+            return failToBegin ? throw new InvalidOperationException("cannot begin") : new Ending(events, name);
+        }
+
+        private sealed class Ending(List<string> events, string name) : IDisposable
+        {
+            public void Dispose() => events.Add($"end {name}");
+        }
+    }
+
+    [Fact]
+    public async Task TheScopesOfThePackages_AreOpenedAroundTheHandler_AndClosedInReverse_EvenWhenItFails()
+    {
+        List<string> events = [];
+        (EventDispatcher dispatcher, _, _) = Create(services =>
+        {
+            services.AddSingleton<RecordingHandler>(_ => new RecordingHandler { FailTimes = 1 });
+            services.AddEventHandler<SampleEto, RecordingHandler>();
+            services.AddScoped<IEventHandlerScope>(_ => new RecordingScope(events, "first"));
+            services.AddScoped<IEventHandlerScope>(_ => new RecordingScope(events, "second"));
+        }, maxHandlerAttempts: 2);
+
+        await dispatcher.DispatchAsync("Sample", typeof(SampleEto), NewEnvelope());
+
+        // the first attempt fails, the second succeeds: each attempt opens and closes its own scopes
+        string[] attempt = ["begin first True", "begin second True", "end second", "end first"];
+        Assert.Equal([.. attempt, .. attempt], events);
+    }
+
+    [Fact]
+    public async Task AScopeThatCannotBegin_ClosesTheOnesBeforeIt_AndTheMessageIsNotHandled()
+    {
+        List<string> events = [];
+        (EventDispatcher dispatcher, ServiceProvider provider, _) = Create(services =>
+        {
+            services.AddSingleton<RecordingHandler>();
+            services.AddEventHandler<SampleEto, RecordingHandler>();
+            services.AddScoped<IEventHandlerScope>(_ => new RecordingScope(events, "first"));
+            services.AddScoped<IEventHandlerScope>(_ => new RecordingScope(events, "broken", failToBegin: true));
+        });
+
+        await Assert.ThrowsAnyAsync<Exception>(() => dispatcher.DispatchAsync("Sample", typeof(SampleEto), NewEnvelope()));
+
+        Assert.Equal(["begin first True", "begin broken True", "end first"], events);
+        Assert.Equal(0, provider.GetRequiredService<RecordingHandler>().Calls);
     }
 
     [Fact]
@@ -160,7 +207,7 @@ public sealed class EventDispatcherTests : IDisposable
     {
         (EventDispatcher dispatcher, RecordingHandler handler, _) = CreateRecording();
 
-        using (HsnSoft.Base.Security.ActingUser.Use(new HsnSoft.Base.Security.UserContext(Guid.NewGuid(), "someone", [], null, false)))
+        using (HsnSoft.Base.Security.ActingUser.Use(new HsnSoft.Base.Security.UserContext(Guid.NewGuid(), "someone", [])))
         {
             await dispatcher.DispatchAsync("Sample", typeof(SampleEto), NewEnvelope());
 

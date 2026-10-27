@@ -11,7 +11,7 @@ namespace Xyz.ShipmentService.Infrastructure.Context;
 
 /// <summary>The shipments, the customers and the payments of the shipment service, in PostgreSQL.</summary>
 public sealed class ShipmentDbContext(DbContextOptions<ShipmentDbContext> options, IDataFilter? dataFilter = null, ICurrentTenant? currentTenant = null)
-    : BaseDbContext(options, dataFilter, currentTenant)
+    : MultiTenantDbContext(options, dataFilter, currentTenant)
 {
     public DbSet<Shipment> Shipments => Set<Shipment>();
 

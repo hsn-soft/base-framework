@@ -26,7 +26,6 @@ public static class ShipmentClassMap
             map.MapProperty(shipment => shipment.NormalizedCarrier);
             map.MapProperty(shipment => shipment.Address);
             map.MapProperty(shipment => shipment.Status).SetSerializer(new EnumSerializer<ShipmentStatus>(BsonType.String));
-            map.MapProperty(shipment => shipment.TenantId);
         });
     }
 }

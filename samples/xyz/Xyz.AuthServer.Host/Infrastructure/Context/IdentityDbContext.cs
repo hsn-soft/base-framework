@@ -8,7 +8,7 @@ using Xyz.AuthServer.Infrastructure.Configurations;
 namespace Xyz.AuthServer.Infrastructure.Context;
 
 public sealed class IdentityDbContext(DbContextOptions<IdentityDbContext> options, IDataFilter? dataFilter = null, ICurrentTenant? currentTenant = null)
-    : BaseDbContext(options, dataFilter, currentTenant)
+    : MultiTenantDbContext(options, dataFilter, currentTenant)
 {
     public DbSet<User> Users => Set<User>();
 

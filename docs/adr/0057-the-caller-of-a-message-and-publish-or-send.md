@@ -2,6 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-10-25 (changes [ADR-0023](0023-event-bus.md) and [ADR-0054](0054-the-order-flow-through-events.md); the samples owe nothing to the event bus of the previous framework, which was a source of ideas)
+- **Note:** [ADR-0074](0074-multitenancy-is-a-package-of-its-own.md): the tenant is no longer a property of the envelope but two headers (`TenantId`, `IsSystemTenant`) that `HsnSoft.Base.MultiTenancy.EventBus` writes and reads; `ActingUser` has no tenant.
 
 ## Context
 

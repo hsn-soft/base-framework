@@ -23,6 +23,7 @@ public static class EfCoreServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(configuration);
 
         services.AddBaseEfCore<IdentityDbContext>(configuration, providers => providers.UseSqlServer(), EfCoreIdentityDbProperties.Provider, EfCoreIdentityDbProperties.ConnectionStringName);
+        services.AddBaseMultiTenancyEntityFramework();
 
         services.AddScoped<IUserRepository, EfCoreUserRepository>();
         services.AddScoped<IRepository<User, Guid>>(provider => provider.GetRequiredService<IUserRepository>());
@@ -39,6 +40,7 @@ public static class EfCoreServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(configuration);
 
         services.AddBaseEfCore<HistoryDbContext>(configuration, providers => providers.UsePostgres(), EfCoreHistoryDbProperties.Provider, EfCoreHistoryDbProperties.ConnectionStringName);
+        services.AddBaseMultiTenancyEntityFramework();
         return services.AddEfCoreRepository<HistoryDbContext, UserHistory, Guid>();
     }
 }

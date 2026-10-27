@@ -12,14 +12,15 @@ external NuGet package). The rules are [ADR-0028](../../docs/adr/0028-shared-hos
 
 | Project | Required | Optional |
 |---|---|---|
-| **Domain** | `HsnSoft.Base.Ddd.Domain` | `Abc.Shared.Helper`, `Abc.Shared.Localization` |
+| **Domain** | `HsnSoft.Base.Ddd.Domain` | `Abc.Shared.Helper`, `Abc.Shared.Localization`, `HsnSoft.Base.MultiTenancy` (entities with tenants) |
 | **Application** | `HsnSoft.Base.Ddd.Application`, `Abc.Shared.Contracts`, its Domain | - |
-| **Infrastructure, EF Core** | its Domain, a provider of `HsnSoft.Base.EntityFrameworkCore` (it brings the base package) | `EntityFrameworkCore.PostgreSql`, `EntityFrameworkCore.SqlServer` (at least one), `EventBus.EntityFrameworkCore` (the inbox) |
-| **Infrastructure, MongoDB** | its Domain, `HsnSoft.Base.MongoDB` | `EventBus.MongoDB` (the inbox) |
-| **Host** | `Abc.Shared.Hosting.Microservices`, its Application, its infrastructure projects | what it chooses for itself: `HsnSoft.Base.Caching.StackExchangeRedis` (the texts in several languages come with the Domain's shared texts) |
+| **Infrastructure, EF Core** | its Domain, a provider of `HsnSoft.Base.EntityFrameworkCore` (it brings the base package) | `EntityFrameworkCore.PostgreSql`, `EntityFrameworkCore.SqlServer` (at least one), `EventBus.EntityFrameworkCore` (the inbox), `MultiTenancy.EntityFrameworkCore` (tenants) |
+| **Infrastructure, MongoDB** | its Domain, `HsnSoft.Base.MongoDB` | `EventBus.MongoDB` (the inbox), `MultiTenancy.MongoDB` (tenants) |
+| **Host** | `Abc.Shared.Hosting.Microservices`, its Application, its infrastructure projects | what it chooses for itself: `HsnSoft.Base.Caching.StackExchangeRedis`, and for tenants `MultiTenancy.Authentication` and `MultiTenancy.EventBus` (the texts in several languages come with the Domain's shared texts) |
 
   An Application project has no external package of its own: the dependency-injection and localization abstractions come with the framework's projects, and `Microsoft.EntityFrameworkCore.Relational` comes with `HsnSoft.Base.EntityFrameworkCore`
   ([ADR-0070](../../docs/adr/0070-a-framework-package-brings-what-its-api-exposes.md)). A Host references only what it chooses for itself (the cache): the logger comes through the hosting, the texts in several languages through its Domain.
+- **Tenants are a choice of the service** ([ADR-0074](../../docs/adr/0074-multitenancy-is-a-package-of-its-own.md)): the identity, order and product services have them (their Domain, their infrastructure and their Host reference the `MultiTenancy` packages); **the shipment service has none** and references none of them, and the shared hosting projects know nothing of tenants.
 - The **auth server** is a host that works on the users of the identity service: `Hosting.Microservices`, `Helper`, `Localization`, `Caching.StackExchangeRedis` (its choice) and the identity infrastructure project.
 - A **gateway** references `Hosting.Gateways` only (the commercial one also chooses Redis); neither has texts of its own, so neither chooses the localization.
 
@@ -90,6 +91,8 @@ The order service is the example; the others have the same shape (what differs i
 ```
 Abc.OrderService.Http.Host
 ├── HsnSoft.Base.Caching.StackExchangeRedis   (framework)
+├── HsnSoft.Base.MultiTenancy.Authentication   (framework)
+├── HsnSoft.Base.MultiTenancy.EventBus   (framework)
 ├── Abc.Shared.Hosting.Microservices
 │   ├── HsnSoft.Base.EventBus.RabbitMQ   (framework)
 │   └── Abc.Shared.Hosting
@@ -103,6 +106,7 @@ Abc.OrderService.Http.Host
 │   │   └── HsnSoft.Base.EventBus   (framework)
 │   └── Abc.OrderService.Domain
 │       ├── HsnSoft.Base.Ddd.Domain   (framework)
+│       ├── HsnSoft.Base.MultiTenancy   (framework)
 │       ├── Abc.Shared.Helper
 │       │   └── HsnSoft.Base.Core   (framework)
 │       └── Abc.Shared.Localization
@@ -110,8 +114,10 @@ Abc.OrderService.Http.Host
 └── Abc.OrderService.EntityFrameworkCore
     ├── HsnSoft.Base.EntityFrameworkCore.PostgreSql   (framework)
     ├── HsnSoft.Base.EventBus.EntityFrameworkCore   (framework)
+    ├── HsnSoft.Base.MultiTenancy.EntityFrameworkCore   (framework)
     └── Abc.OrderService.Domain
         ├── HsnSoft.Base.Ddd.Domain   (framework)
+        ├── HsnSoft.Base.MultiTenancy   (framework)
         ├── Abc.Shared.Helper
         │   └── HsnSoft.Base.Core   (framework)
         └── Abc.Shared.Localization
@@ -136,6 +142,8 @@ SQL Server for the users and PostgreSQL for the history (two contexts, one proje
 ```
 Abc.IdentityService.Http.Host
 ├── HsnSoft.Base.Caching.StackExchangeRedis   (framework)
+├── HsnSoft.Base.MultiTenancy.Authentication   (framework)
+├── HsnSoft.Base.MultiTenancy.EventBus   (framework)
 ├── Abc.Shared.Hosting.Microservices
 │   ├── HsnSoft.Base.EventBus.RabbitMQ   (framework)
 │   └── Abc.Shared.Hosting
@@ -149,6 +157,7 @@ Abc.IdentityService.Http.Host
 │   │   └── HsnSoft.Base.EventBus   (framework)
 │   └── Abc.IdentityService.Domain
 │       ├── HsnSoft.Base.Ddd.Domain   (framework)
+│       ├── HsnSoft.Base.MultiTenancy   (framework)
 │       ├── Abc.Shared.Helper
 │       │   └── HsnSoft.Base.Core   (framework)
 │       └── Abc.Shared.Localization
@@ -157,8 +166,10 @@ Abc.IdentityService.Http.Host
     ├── HsnSoft.Base.EntityFrameworkCore.PostgreSql   (framework)
     ├── HsnSoft.Base.EntityFrameworkCore.SqlServer   (framework)
     ├── HsnSoft.Base.EventBus.EntityFrameworkCore   (framework)
+    ├── HsnSoft.Base.MultiTenancy.EntityFrameworkCore   (framework)
     └── Abc.IdentityService.Domain
         ├── HsnSoft.Base.Ddd.Domain   (framework)
+        ├── HsnSoft.Base.MultiTenancy   (framework)
         ├── Abc.Shared.Helper
         │   └── HsnSoft.Base.Core   (framework)
         └── Abc.Shared.Localization
@@ -172,6 +183,8 @@ MongoDB for the products and for the stock history (its own database), the inbox
 ```
 Abc.ProductService.Http.Host
 ├── HsnSoft.Base.Caching.StackExchangeRedis   (framework)
+├── HsnSoft.Base.MultiTenancy.Authentication   (framework)
+├── HsnSoft.Base.MultiTenancy.EventBus   (framework)
 ├── Abc.Shared.Hosting.Microservices
 │   ├── HsnSoft.Base.EventBus.RabbitMQ   (framework)
 │   └── Abc.Shared.Hosting
@@ -185,6 +198,7 @@ Abc.ProductService.Http.Host
 │   │   └── HsnSoft.Base.EventBus   (framework)
 │   └── Abc.ProductService.Domain
 │       ├── HsnSoft.Base.Ddd.Domain   (framework)
+│       ├── HsnSoft.Base.MultiTenancy   (framework)
 │       ├── Abc.Shared.Helper
 │       │   └── HsnSoft.Base.Core   (framework)
 │       └── Abc.Shared.Localization
@@ -192,8 +206,10 @@ Abc.ProductService.Http.Host
 └── Abc.ProductService.MongoDB
     ├── HsnSoft.Base.EventBus.MongoDB   (framework)
     ├── HsnSoft.Base.MongoDB   (framework)
+    ├── HsnSoft.Base.MultiTenancy.MongoDB   (framework)
     └── Abc.ProductService.Domain
         ├── HsnSoft.Base.Ddd.Domain   (framework)
+        ├── HsnSoft.Base.MultiTenancy   (framework)
         ├── Abc.Shared.Helper
         │   └── HsnSoft.Base.Core   (framework)
         └── Abc.Shared.Localization
@@ -280,6 +296,7 @@ Abc.Gateway.Public.Host
 ```
 Abc.AuthServer.Host
 ├── HsnSoft.Base.Caching.StackExchangeRedis   (framework)
+├── HsnSoft.Base.MultiTenancy.Authentication   (framework)
 ├── Abc.Shared.Helper
 │   └── HsnSoft.Base.Core   (framework)
 ├── Abc.Shared.Hosting.Microservices
@@ -295,8 +312,10 @@ Abc.AuthServer.Host
     ├── HsnSoft.Base.EntityFrameworkCore.PostgreSql   (framework)
     ├── HsnSoft.Base.EntityFrameworkCore.SqlServer   (framework)
     ├── HsnSoft.Base.EventBus.EntityFrameworkCore   (framework)
+    ├── HsnSoft.Base.MultiTenancy.EntityFrameworkCore   (framework)
     └── Abc.IdentityService.Domain
         ├── HsnSoft.Base.Ddd.Domain   (framework)
+        ├── HsnSoft.Base.MultiTenancy   (framework)
         ├── Abc.Shared.Helper
         │   └── HsnSoft.Base.Core   (framework)
         └── Abc.Shared.Localization

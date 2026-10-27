@@ -1,16 +1,15 @@
 using Abc.ShipmentService.Domain.CustomerDomain.Consts;
 using HsnSoft.Base;
 using HsnSoft.Base.Domain.Entities;
-using HsnSoft.Base.MultiTenancy;
 using HsnSoft.Base.Text;
 
 namespace Abc.ShipmentService.Domain.CustomerDomain.Entities;
 
 /// <summary>
 /// Whom a parcel and its payment are for. The shipment service makes one when an order of a user it does not know yet reaches it, and keeps it: the data of the person is the shipment service's own, not the identity service's.
-/// The audit fields and the soft delete come from <see cref="FullAuditedEntity{TKey}"/>; the tenant is kept here and given by the persistence.
+/// The audit fields and the soft delete come from <see cref="FullAuditedEntity{TKey}"/>.
 /// </summary>
-public sealed class Customer : FullAuditedEntity<Guid>, IMultiTenant
+public sealed class Customer : FullAuditedEntity<Guid>
 {
     // for the database driver
     private Customer()
@@ -37,8 +36,6 @@ public sealed class Customer : FullAuditedEntity<Guid>, IMultiTenant
 
     /// <summary>Where the parcels go by default (the address of the last order, for a customer made from an order).</summary>
     public string? Address { get; private set; }
-
-    public Guid TenantId { get; private set; }
 
     public static Customer Create(string userName, string fullName, string? email, string? phone, string? address, Guid? userId = null)
     {

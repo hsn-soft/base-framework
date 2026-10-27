@@ -29,6 +29,7 @@
         <ProjectReference Include="..\..\..\src\HsnSoft.Base.EntityFrameworkCore\HsnSoft.Base.EntityFrameworkCore.csproj" />
         <ProjectReference Include="..\..\..\src\HsnSoft.Base.EntityFrameworkCore.PostgreSql\HsnSoft.Base.EntityFrameworkCore.PostgreSql.csproj" />
         <ProjectReference Include="..\..\..\src\HsnSoft.Base.Logging.Serilog\HsnSoft.Base.Logging.Serilog.csproj" />
+        <ProjectReference Include="..\..\..\src\HsnSoft.Base.MultiTenancy.EntityFrameworkCore\HsnSoft.Base.MultiTenancy.EntityFrameworkCore.csproj" />
     </ItemGroup>
 
     <ItemGroup>

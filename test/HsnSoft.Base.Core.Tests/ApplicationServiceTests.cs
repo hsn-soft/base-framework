@@ -1,5 +1,4 @@
 using HsnSoft.Base.Application;
-using HsnSoft.Base.MultiTenancy;
 using HsnSoft.Base.Security;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -14,8 +13,6 @@ public class ApplicationServiceTests
 
         public ICurrentUser TheUser => CurrentUser;
 
-        public ICurrentTenant TheTenant => CurrentTenant;
-
         public IServiceProvider TheServices => ServiceProvider;
     }
 
@@ -26,25 +23,17 @@ public class ApplicationServiceTests
         public Guid? Id => null;
 
         public string? UserName => "alice";
-
-        public Guid? TenantId => null;
-
-        public bool IsSystemTenant => false;
-
-        public IReadOnlyList<Guid> AllowedTenantIds => [];
     }
 
     [Fact]
-    public void TheLoggerTheUserAndTheTenant_AreFoundFromTheServices_AndKept()
+    public void TheLoggerAndTheUser_AreFoundFromTheServices_AndKept()
     {
-        using ServiceProvider provider = new ServiceCollection().AddLogging().AddSingleton<ICurrentUser, FixedUser>().AddSingleton<ICurrentTenant, CurrentTenant>().BuildServiceProvider();
+        using ServiceProvider provider = new ServiceCollection().AddLogging().AddSingleton<ICurrentUser, FixedUser>().BuildServiceProvider();
         Sample service = new(provider);
 
         Assert.Equal("alice", service.TheUser.UserName);
         Assert.Same(service.TheUser, service.TheUser);
         Assert.Same(service.TheLogger, service.TheLogger);
-        Assert.Same(service.TheTenant, service.TheTenant);
-        Assert.False(service.TheTenant.IsAvailable);
         Assert.Same(provider, service.TheServices);
     }
 
@@ -56,7 +45,6 @@ public class ApplicationServiceTests
         using ServiceProvider empty = new ServiceCollection().BuildServiceProvider();
         Sample service = new(empty);
         Assert.Throws<InvalidOperationException>(() => service.TheUser);
-        Assert.Throws<InvalidOperationException>(() => service.TheTenant);
         Assert.Throws<InvalidOperationException>(() => service.TheLogger);
     }
 }

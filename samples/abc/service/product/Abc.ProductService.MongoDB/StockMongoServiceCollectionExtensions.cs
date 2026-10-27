@@ -21,6 +21,7 @@ public static class StockMongoServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(configuration);
 
         services.AddBaseMongo(configuration, MongoStockDbProperties.ConnectionStringName, MongoStockDbProperties.ServiceKey);
+        services.AddBaseMultiTenancyMongo();
 
         ProductStockHistoryClassMap.Register();
         services.AddMongoRepository<ProductStockHistory, Guid>(MongoStockDbProperties.CollectionPrefix + ProductStockHistoryConsts.CollectionName, MongoStockDbProperties.ServiceKey);

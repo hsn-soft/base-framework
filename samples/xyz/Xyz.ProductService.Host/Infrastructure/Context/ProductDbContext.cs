@@ -9,7 +9,7 @@ namespace Xyz.ProductService.Infrastructure.Context;
 
 /// <summary>The products of the product service, in PostgreSQL.</summary>
 public sealed class ProductDbContext(DbContextOptions<ProductDbContext> options, IDataFilter? dataFilter = null, ICurrentTenant? currentTenant = null)
-    : BaseDbContext(options, dataFilter, currentTenant)
+    : MultiTenantDbContext(options, dataFilter, currentTenant)
 {
     public DbSet<Product> Products => Set<Product>();
 

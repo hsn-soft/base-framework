@@ -18,6 +18,7 @@ public static class EfCoreServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(configuration);
 
         services.AddBaseEfCore<OrderDbContext>(configuration, providers => providers.UsePostgres(), EfCoreOrderDbProperties.Provider, EfCoreOrderDbProperties.ConnectionStringName);
+        services.AddBaseMultiTenancyEntityFramework();
 
         services.AddEfCoreRepository<OrderDbContext, Order, Guid>();
         return services;

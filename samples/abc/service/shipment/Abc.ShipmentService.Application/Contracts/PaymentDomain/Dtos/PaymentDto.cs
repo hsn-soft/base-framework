@@ -21,6 +21,4 @@ public sealed class PaymentDto : AuditedEntityDto<Guid>
     public string? Reference { get; init; }
 
     public string? FailureReason { get; init; }
-
-    public Guid TenantId { get; init; }
 }

@@ -13,6 +13,7 @@ using HsnSoft.Base.EventBus;
 using HsnSoft.Base.EventBus.EntityFrameworkCore;
 using HsnSoft.Base.Localization;
 using HsnSoft.Base.Logging.Serilog;
+using HsnSoft.Base.MultiTenancy;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.Logging.AddBaseSerilog(builder.Configuration, "Abc.OrderService");
@@ -24,6 +25,9 @@ builder.Services
     .AddBaseRedis(builder.Configuration)
     .AddAbcMicroservice(builder.Configuration, "Abc.OrderService API")
     .AddAbcEventBus(builder.Configuration)
+    // this service has tenants: the tenant of a request is the one of its token, and it travels with the messages
+    .AddBaseTenantClaims()
+    .AddBaseTenantEventBus()
     // an event that is not named here is handled one message at a time; this one five at a time (each message changes its own order)
     .AddEventHandlers(typeof(EventHandlersAssemblyMarker).Assembly, new Dictionary<string, ushort> { [nameof(OrderStockReservedEto)] = 5 })
     .AddOrderPersistence(builder.Configuration)

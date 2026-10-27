@@ -33,6 +33,8 @@
         <ProjectReference Include="..\..\..\src\HsnSoft.Base.EventBus.Kafka\HsnSoft.Base.EventBus.Kafka.csproj" />
         <ProjectReference Include="..\..\..\src\HsnSoft.Base.Localization\HsnSoft.Base.Localization.csproj" />
         <ProjectReference Include="..\..\..\src\HsnSoft.Base.Logging\HsnSoft.Base.Logging.csproj" />
+        <ProjectReference Include="..\..\..\src\HsnSoft.Base.MultiTenancy.Authentication\HsnSoft.Base.MultiTenancy.Authentication.csproj" />
+        <ProjectReference Include="..\..\..\src\HsnSoft.Base.MultiTenancy.EventBus\HsnSoft.Base.MultiTenancy.EventBus.csproj" />
     </ItemGroup>
 
 </Project>

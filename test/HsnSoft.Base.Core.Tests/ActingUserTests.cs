@@ -1,11 +1,10 @@
-using HsnSoft.Base.MultiTenancy;
 using HsnSoft.Base.Security;
 
 namespace HsnSoft.Base.Core.Tests;
 
 public class ActingUserTests
 {
-    private static UserContext User(string name) => new(Guid.NewGuid(), name, [], Guid.NewGuid(), false);
+    private static UserContext User(string name) => new(Guid.NewGuid(), name, []);
 
     [Fact]
     public void NobodyActs_UntilAScopeIsOpen_AndTheBeforeComesBack()
@@ -54,23 +53,6 @@ public class ActingUserTests
         Assert.Null(await Task.Run(() => ActingUser.Current));
     }
 
-    [Fact]
-    public void TheCurrentTenant_FollowsTheCurrentUser_WhichAnActingUserAnswers()
-    {
-        Guid tenant = Guid.NewGuid();
-        ActingCurrentUser user = new();
-        CurrentTenant currentTenant = new(user);
-        Assert.False(currentTenant.IsAvailable);
-
-        using (ActingUser.Use(new UserContext(Guid.NewGuid(), "alice", [], tenant, false)))
-        {
-            Assert.Equal(tenant, currentTenant.Id);
-            Assert.Equal([tenant], currentTenant.AllowedTenantIds);
-        }
-
-        Assert.False(currentTenant.IsAvailable);
-    }
-
     private sealed class ActingCurrentUser : ICurrentUser
     {
         public bool IsAuthenticated => ActingUser.Current?.Id is not null;
@@ -78,12 +60,6 @@ public class ActingUserTests
         public Guid? Id => ActingUser.Current?.Id;
 
         public string? UserName => ActingUser.Current?.UserName;
-
-        public Guid? TenantId => ActingUser.Current?.TenantId;
-
-        public bool IsSystemTenant => ActingUser.Current?.IsSystemTenant ?? false;
-
-        public IReadOnlyList<Guid> AllowedTenantIds => [];
     }
 
     [Fact]

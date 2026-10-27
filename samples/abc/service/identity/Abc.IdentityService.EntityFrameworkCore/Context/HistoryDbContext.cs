@@ -9,7 +9,7 @@ namespace Abc.IdentityService.EntityFrameworkCore.Context;
 
 /// <summary>The second context of the identity service, on its own database (and, in the sample, its own provider): what happened to the users.</summary>
 public sealed class HistoryDbContext(DbContextOptions<HistoryDbContext> options, IDataFilter? dataFilter = null, ICurrentTenant? currentTenant = null)
-    : BaseDbContext(options, dataFilter, currentTenant)
+    : MultiTenantDbContext(options, dataFilter, currentTenant)
 {
     public DbSet<UserHistory> UserHistories => Set<UserHistory>();
 

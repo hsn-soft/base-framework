@@ -18,15 +18,6 @@ public interface ICurrentUser
     /// <summary>The user name (the <c>sub</c> claim).</summary>
     string? UserName { get; }
 
-    /// <summary>The tenant of the user (the <c>tenant_id</c> claim).</summary>
-    Guid? TenantId { get; }
-
-    /// <summary>Whether the user belongs to the system tenant, which sees every tenant (the <c>is_system_tenant</c> claim).</summary>
-    bool IsSystemTenant { get; }
-
-    /// <summary>The other tenants the user may see (the <c>allowed_tenant_id</c> claims).</summary>
-    IReadOnlyList<Guid> AllowedTenantIds { get; }
-
     /// <summary>The roles of the user (the <c>role</c> claims).</summary>
     IReadOnlyList<string> Roles => [];
 }

@@ -14,7 +14,7 @@ namespace HsnSoft.Base.MongoDB;
 public static class MongoServiceCollectionExtensions
 {
     /// <summary>
-    /// Registers <see cref="IMongoClient"/>, the <see cref="IMongoDatabase"/> named in the connection string, <see cref="MongoEntityConcepts"/> (audit fields, soft delete and tenants for the repositories) and a readiness
+    /// Registers <see cref="IMongoClient"/>, the <see cref="IMongoDatabase"/> named in the connection string, <see cref="MongoEntityConcepts"/> (audit fields and soft delete for the repositories; tenants are AddBaseMultiTenancyMongo of HsnSoft.Base.MultiTenancy.MongoDB) and a readiness
     /// health check. Guids are stored as standard (UUID) binary values.
     /// </summary>
     /// <param name="services">The service collection.</param>

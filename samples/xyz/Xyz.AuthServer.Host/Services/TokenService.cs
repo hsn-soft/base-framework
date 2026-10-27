@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using System.Security.Cryptography;
 using HsnSoft.Base.Authentication;
+using HsnSoft.Base.MultiTenancy;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
@@ -51,14 +52,14 @@ public sealed class TokenService : IDisposable
             new("user_id", user.Id.ToString()),
             new("name", user.DisplayName),
             new("email", user.Email),
-            new("tenant_id", user.TenantId.ToString()),
+            new(TenantClaimTypes.TenantId, user.TenantId.ToString()),
             new("locale", user.Language),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString("N")),
             .. user.Roles.Select(role => new Claim("role", role)),
         ];
         if (user.IsSystemTenant)
         {
-            claims.Add(new Claim("is_system_tenant", "true"));
+            claims.Add(new Claim(TenantClaimTypes.IsSystemTenant, "true"));
         }
 
         string accessToken = new JsonWebTokenHandler().CreateToken(new SecurityTokenDescriptor

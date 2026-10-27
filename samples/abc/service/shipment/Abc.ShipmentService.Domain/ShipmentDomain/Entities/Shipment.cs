@@ -1,16 +1,15 @@
 using Abc.ShipmentService.Domain.ShipmentDomain.Consts;
 using HsnSoft.Base;
 using HsnSoft.Base.Domain.Entities;
-using HsnSoft.Base.MultiTenancy;
 using HsnSoft.Base.Text;
 
 namespace Abc.ShipmentService.Domain.ShipmentDomain.Entities;
 
 /// <summary>
 /// A parcel on its way to the customer of an order.
-/// The audit fields and the soft delete come from <see cref="FullAuditedEntity{TKey}"/>; the tenant is kept here and given by the persistence.
+/// The audit fields and the soft delete come from <see cref="FullAuditedEntity{TKey}"/>.
 /// </summary>
-public sealed class Shipment : FullAuditedEntity<Guid>, IMultiTenant
+public sealed class Shipment : FullAuditedEntity<Guid>
 {
     // for the database driver
     private Shipment()
@@ -31,8 +30,6 @@ public sealed class Shipment : FullAuditedEntity<Guid>, IMultiTenant
     public string Address { get; private set; } = string.Empty;
 
     public ShipmentStatus Status { get; private set; }
-
-    public Guid TenantId { get; private set; }
 
     public static Shipment Create(Guid orderId, string carrier, string address)
     {
