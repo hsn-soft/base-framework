@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-    <!-- The heart of the identity service: its entities and rules. It depends on nothing but the framework's Core and Ddd.Domain. -->
+    <!-- The heart of the identity service: its entities and rules. It depends on nothing but the framework's Core and Ddd.Domain, and the shared helpers and texts of the Abc services. -->
 
     <ItemGroup>
         <!-- the texts of this layer (Localization/en.json, tr.json, ru.json), read by the localization at start -->
@@ -9,6 +9,12 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.Ddd.Domain\HsnSoft.Base.Ddd.Domain.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <!-- what every part of the system can use (the tenants), and the texts several Abc services say (the layer between the framework's and the service's own) -->
+        <ProjectReference Include="..\..\..\shared\Abc.Shared.Helper\Abc.Shared.Helper.csproj" />
+        <ProjectReference Include="..\..\..\shared\Abc.Shared.Localization\Abc.Shared.Localization.csproj" />
     </ItemGroup>
 
 </Project>

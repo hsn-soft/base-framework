@@ -173,13 +173,13 @@ The entities derive from `FullAuditedEntity<Guid>` (and implement `IMultiTenant`
 ### Localization in Abc
 
 The answers are told in the language of the request: the `locale` claim of the token (a user has a `Language`: `admin` is `en`, `alice` is `tr`), else `Accept-Language`, else `en`; the languages are `en`, `tr`, `ru` ([ADR-0038](../docs/adr/0038-localization.md),
-[docs/Localization.md](../docs/Localization.md)). The texts are JSON files in `Abc.Shared.Hosting/Localization` (what several services say) and in `Localization` of each service's domain project (its errors), merged with the framework's, the innermost first. Try it:
+[docs/Localization.md](../docs/Localization.md)). The texts are in three layers, merged with the innermost first: the framework's, the project `Abc.Shared.Localization` (what several services say, in `en`, `tr`, `ru`: [ADR-0068](../docs/adr/0068-the-shared-texts-of-a-product-are-a-project-of-their-own.md)), and `Localization` of each service's domain project (its own errors). A host chooses its localization itself ([ADR-0072](../docs/adr/0072-a-host-chooses-its-localization-and-its-cache.md)): the hosting projects know nothing of it. A microservice (and the auth server) makes one call, `AddBaseLocalization(configuration, options => options.AddAbcSharedTexts().AddEmbedded(typeof(Product).Assembly))`, and `app.UseBaseLocalization()` after `UseAbcMicroservice()`; the Domain project of a service references the shared texts, the gateways have no texts of their own and do not choose it. Try it:
 `POST /product-service/v1/products/get/{any id}` with alice's token answers in Turkish, with admin's in English (the `Accept-Language` header only counts without the claim); the login of an unknown user with `Accept-Language: ru` answers in Russian. The logs stay in English. The public endpoint `GET /identity-service/v1/users/welcome` (public gateway, no token) greets in the language of the header: `Accept-Language: tr` answers "Hoş geldiniz", `ru` "Добро пожаловать", anything else "Welcome".
 
 ### Tenants, audit and soft delete in Abc
 
 Every Abc entity (`User`, `Product`, `Order`, `Shipment`) has the audit fields (`CreatedBy`, `UpdatedBy`: the id of the user), soft delete (a delete marks the row; the lists do not show it) and a tenant ([ADR-0037](../docs/adr/0037-audit-soft-delete-and-tenants.md),
-[docs/EntityConcepts.md](../docs/EntityConcepts.md)). There are two tenants (`AbcTenants` in `Abc.Shared.Hosting`): the **system tenant** (`admin`: sees every tenant) and **Acme** (`alice`: sees only Acme's data, and the two seeded products are Acme's). The auth server puts
+[docs/EntityConcepts.md](../docs/EntityConcepts.md)). There are two tenants (`AbcTenants` in `Abc.Shared.Helper`): the **system tenant** (`admin`: sees every tenant) and **Acme** (`alice`: sees only Acme's data, and the two seeded products are Acme's). The auth server puts
 `tenant_id` (and `is_system_tenant` for `admin`) in the token. A row made by a user gets the tenant of the token; a user name and a sku are unique in the whole system. A database made before this change must be dropped (new columns): `drop database Abc_Identity_Dev`,
 `Abc_Order_Dev`; the MongoDB ones (`Abc_Product_Dev`, `Abc_Shipment_Dev`) too, as their old documents lack the fields.
 
@@ -224,6 +224,70 @@ application lasts as long as the token (15 minutes); when the token is no longer
 ### The inbox in Abc ([ADR-0067](../docs/adr/0067-the-event-inbox-is-opt-in-and-a-decorator.md))
 
 The identity service (SQL Server), the order service (PostgreSQL) and the product service (MongoDB) have an inbox (`AddEventInbox<...DbContext>()`, or `AddEventInbox("InboxMessage")` on MongoDB; the table or collection `InboxMessage` in their own databases): a message that comes twice is handled once there. The shipment service has none, and the Xyz system does not use the inbox at all.
+
+### Who references what in Abc ([ADR-0069](../docs/adr/0069-who-references-which-shared-project-in-abc.md))
+
+The shared projects build on the framework only; a service takes from them what each of its layers needs, a host adds what it wants for itself (the shared texts, say). Every reference below is read from the project files.
+
+**The shared projects**
+
+| Project | Abc.Shared.* | Own projects | Framework (HsnSoft.Base.*) |
+|---|---|---|---|
+| `Abc.Shared.Helper` | - | - | `Core` |
+| `Abc.Shared.Contracts` | - | - | `EventBus` |
+| `Abc.Shared.Localization` | - | - | `Localization` |
+| `Abc.Shared.Hosting` | - | - | `AspNetCore.Swashbuckle`, `AspNetCore.WebApi`, `Authentication`, `Logging.Serilog` |
+| `Abc.Shared.Hosting.Microservices` | `Hosting` | - | `EventBus.RabbitMQ` |
+| `Abc.Shared.Hosting.Gateways` | `Hosting` | - | `AspNetCore.SwaggerGateway` |
+
+**IdentityService**
+
+| Project | Abc.Shared.* | Own projects | Framework (HsnSoft.Base.*) |
+|---|---|---|---|
+| `Abc.IdentityService.Application` | `Contracts` | `IdentityService.Domain` | `Ddd.Application` |
+| `Abc.IdentityService.Domain` | `Helper`, `Localization` | - | `Ddd.Domain` |
+| `Abc.IdentityService.EntityFrameworkCore` | - | `IdentityService.Domain` | `EntityFrameworkCore.PostgreSql`, `EntityFrameworkCore.SqlServer`, `EventBus.EntityFrameworkCore` |
+| `Abc.IdentityService.Http.Host` | `Hosting.Microservices` | `IdentityService.Application`, `IdentityService.EntityFrameworkCore` | `Caching.StackExchangeRedis` |
+
+**OrderService**
+
+| Project | Abc.Shared.* | Own projects | Framework (HsnSoft.Base.*) |
+|---|---|---|---|
+| `Abc.OrderService.Application` | `Contracts` | `OrderService.Domain` | `Ddd.Application` |
+| `Abc.OrderService.Domain` | `Helper`, `Localization` | - | `Ddd.Domain` |
+| `Abc.OrderService.EntityFrameworkCore` | - | `OrderService.Domain` | `EntityFrameworkCore.PostgreSql`, `EventBus.EntityFrameworkCore` |
+| `Abc.OrderService.Http.Host` | `Hosting.Microservices` | `OrderService.Application`, `OrderService.EntityFrameworkCore` | `Caching.StackExchangeRedis` |
+
+**ProductService**
+
+| Project | Abc.Shared.* | Own projects | Framework (HsnSoft.Base.*) |
+|---|---|---|---|
+| `Abc.ProductService.Application` | `Contracts` | `ProductService.Domain` | `Ddd.Application` |
+| `Abc.ProductService.Domain` | `Helper`, `Localization` | - | `Ddd.Domain` |
+| `Abc.ProductService.Http.Host` | `Hosting.Microservices` | `ProductService.Application`, `ProductService.MongoDB` | `Caching.StackExchangeRedis` |
+| `Abc.ProductService.MongoDB` | - | `ProductService.Domain` | `EventBus.MongoDB`, `MongoDB` |
+
+**ShipmentService**
+
+| Project | Abc.Shared.* | Own projects | Framework (HsnSoft.Base.*) |
+|---|---|---|---|
+| `Abc.ShipmentService.Application` | `Contracts` | `ShipmentService.Domain` | `Ddd.Application` |
+| `Abc.ShipmentService.Domain` | `Helper`, `Localization` | - | `Ddd.Domain` |
+| `Abc.ShipmentService.EntityFrameworkCore` | - | `ShipmentService.Domain` | `EntityFrameworkCore.PostgreSql` |
+| `Abc.ShipmentService.Http.Host` | `Hosting.Microservices` | `ShipmentService.Application`, `ShipmentService.EntityFrameworkCore`, `ShipmentService.MongoDB` | `Caching.StackExchangeRedis` |
+| `Abc.ShipmentService.MongoDB` | - | `ShipmentService.Domain` | `MongoDB` |
+
+**Gateways and apps**
+
+| Project | Abc.Shared.* | Own projects | Framework (HsnSoft.Base.*) |
+|---|---|---|---|
+| `Abc.Gateway.Commercial.Host` | `Hosting.Gateways` | - | `Caching.StackExchangeRedis` |
+| `Abc.Gateway.Public.Host` | `Hosting.Gateways` | - | - |
+| `Abc.AuthServer.Host` | `Helper`, `Hosting.Microservices`, `Localization` | `IdentityService.EntityFrameworkCore` | `Caching.StackExchangeRedis` |
+| `Abc.CommercialWeb.Host` | - | - | `AspNetCore.WebApi`, `Logging.Serilog` |
+| `Abc.PublicWeb.Host` | - | - | `AspNetCore.WebApi`, `Logging.Serilog` |
+
+The web apps (`CommercialWeb`, `PublicWeb`) are pages that call the gateways over HTTP and use no shared Abc project. The reference trees (a microservice, a gateway, the auth server, each shared project) are in [samples/abc/REFERENCES.md](abc/REFERENCES.md).
 
 ### Redis and RabbitMQ in Abc
 

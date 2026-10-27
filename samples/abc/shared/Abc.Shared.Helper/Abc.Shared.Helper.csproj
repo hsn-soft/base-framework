@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!--
+        What every part of the Abc system can use, whatever it is (a domain, an application, a host): its constants and small helpers, nothing that needs a web host or a store. It builds on the framework's Core and nothing else.
+        The ids of the two tenants of the sample are here.
+    -->
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.Core\HsnSoft.Base.Core.csproj" />
+    </ItemGroup>
+
+</Project>

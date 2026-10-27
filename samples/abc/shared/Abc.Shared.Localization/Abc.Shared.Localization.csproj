@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!--
+        The texts that more than one Abc service (or a host that is not a service) says, in every language of the system: the middle layer between the texts of the framework and the texts of a service. The framework knows no product,
+        a service's own errors are in its Domain project (Localization/); what several of them say is here.
+    -->
+
+    <ItemGroup>
+        <!-- the texts of this layer (Localization/en.json, tr.json, ru.json), read by the localization at start -->
+        <EmbeddedResource Include="Localization\*.json" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.Localization\HsnSoft.Base.Localization.csproj" />
+    </ItemGroup>
+
+</Project>

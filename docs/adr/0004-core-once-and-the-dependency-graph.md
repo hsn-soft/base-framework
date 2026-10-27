@@ -24,8 +24,8 @@ referenced it in its own way, and sibling references multiplied: restores slowed
 | `Hosting` | Core |
 | `Authentication` | Core |
 | `AspNetCore` | Core |
-| `AspNetCore.WebApi` | Core |
-| `AspNetCore.Swashbuckle` | Core |
+| `AspNetCore.WebApi` | AspNetCore |
+| `AspNetCore.Swashbuckle` | AspNetCore |
 | `AspNetCore.SwaggerGateway` | Swashbuckle |
 | `EventBus` | Core |
 | `EventBus.RabbitMQ`, `EventBus.Kafka` | EventBus |

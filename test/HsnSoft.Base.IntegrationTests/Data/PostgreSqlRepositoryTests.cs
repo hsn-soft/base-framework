@@ -34,7 +34,7 @@ public sealed class PostgreSqlRepositoryTests : IAsyncLifetime
         await _container.StartAsync();
         _host = await Support.StartHostAsync(services => services
             .AddBaseEntityFramework()
-            .AddDbContext<PartContext>((provider, options) => options.UseNpgsql(_container.GetConnectionString()).UseBaseEntityConcepts(provider))
+            .AddDbContext<PartContext>((provider, options) => options.UseNpgsql(_container.GetConnectionString() + ";Timeout=60;Command Timeout=60").UseBaseEntityConcepts(provider))
             .AddEfCoreRepository<PartContext, Part, Guid>());
         await _host.Services.EnsureDatabaseCreatedAsync<PartContext>();
     }

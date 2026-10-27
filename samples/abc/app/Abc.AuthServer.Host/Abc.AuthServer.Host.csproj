@@ -11,11 +11,14 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.Logging.Serilog\HsnSoft.Base.Logging.Serilog.csproj" />
+        <!-- the cache the host chose -->
+        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.Caching.StackExchangeRedis\HsnSoft.Base.Caching.StackExchangeRedis.csproj" />
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\shared\Abc.Shared.Helper\Abc.Shared.Helper.csproj" />
         <ProjectReference Include="..\..\shared\Abc.Shared.Hosting.Microservices\Abc.Shared.Hosting.Microservices.csproj" />
+        <ProjectReference Include="..\..\shared\Abc.Shared.Localization\Abc.Shared.Localization.csproj" />
     </ItemGroup>
 
     <ItemGroup>

@@ -2,6 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-10-25
+- **Note:** [ADR-0072](0072-a-host-chooses-its-localization-and-its-cache.md): Redis is not registered by `AddAbcRedis` of the hosting any more; each host that wants it calls the framework's `AddBaseRedis` and references the Redis package itself (the microservices, the auth server and the commercial gateway still do).
 
 ## Context
 

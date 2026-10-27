@@ -20,7 +20,7 @@ public sealed class PostgreSqlInboxTests : IAsyncLifetime
     {
         await _container.StartAsync();
         _host = await Support.StartHostAsync(services => services
-            .AddDbContext<InboxTestContext>(options => options.UseNpgsql(_container.GetConnectionString()))
+            .AddDbContext<InboxTestContext>(options => options.UseNpgsql(_container.GetConnectionString() + ";Timeout=60;Command Timeout=60"))
             .AddEventInbox<InboxTestContext>(options => options.MaxRetryCount = 5));
         await using AsyncServiceScope scope = _host.Services.CreateAsyncScope();
         await scope.ServiceProvider.GetRequiredService<InboxTestContext>().Database.EnsureCreatedAsync();
@@ -80,5 +80,17 @@ public sealed class PostgreSqlInboxTests : IAsyncLifetime
         InboxStart[] starts = await Task.WhenAll(Enumerable.Range(0, 10).Select(_ => InScope(store => store.TryStartAsync(id, "OrderCreated", null))));
 
         Assert.All(starts, start => Assert.Equal(InboxStart.AlreadyHandled, start));
+    }
+
+    [Fact]
+    public async Task AnInsertThatFailsForAnotherReasonThanTheRowBeingThere_IsThrown_NotTakenForASecondDelivery()
+    {
+        // a rule of the table that this message breaks: the insert fails and no row is there, so it is not a duplicate
+        await using (AsyncServiceScope scope = _host.Services.CreateAsyncScope())
+        {
+            await scope.ServiceProvider.GetRequiredService<InboxTestContext>().Database.ExecuteSqlRawAsync("ALTER TABLE \"InboxMessage\" ADD CONSTRAINT no_poison CHECK (\"EventName\" <> 'Poison')");
+        }
+
+        await Assert.ThrowsAsync<DbUpdateException>(() => InScope(store => store.TryStartAsync(Guid.NewGuid(), "Poison", null)));
     }
 }

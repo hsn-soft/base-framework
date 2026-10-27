@@ -160,3 +160,14 @@ public sealed class LongRunningHandler(StopProbe probe) : IIntegrationEventHandl
         }
     }
 }
+
+/// <summary>Works on a <see cref="Pinged"/> and takes no notice of its cancellation: what a handler that is stuck does.</summary>
+public sealed class StubbornHandler(StopProbe probe) : IIntegrationEventHandler<Pinged>
+{
+    public async Task HandleAsync(MessageEnvelope<Pinged> envelope, CancellationToken cancellationToken)
+    {
+        probe.Started.SetResult();
+        await Task.Delay(TimeSpan.FromSeconds(6), CancellationToken.None);
+        probe.Completed = true;
+    }
+}

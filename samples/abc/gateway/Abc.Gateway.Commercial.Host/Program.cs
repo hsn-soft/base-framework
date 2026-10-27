@@ -1,5 +1,5 @@
-using Abc.Shared.Hosting;
 using Abc.Shared.Hosting.Gateways;
+using HsnSoft.Base.Caching.StackExchangeRedis;
 using HsnSoft.Base.Logging.Serilog;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -8,7 +8,7 @@ builder.WebHost.ConfigureAbcGatewayKestrel();
 
 builder.Services
     .AddAbcGateway(builder.Configuration, "Abc.Gateway.Commercial API", authenticateUsers: true)
-    .AddAbcRedis(builder.Configuration);
+    .AddBaseRedis(builder.Configuration);
 
 WebApplication app = builder.Build();
 

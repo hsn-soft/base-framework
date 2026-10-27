@@ -3,13 +3,7 @@
     <!-- What the service does: its use cases, on top of the domain. -->
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
-        <PackageReference Include="Microsoft.Extensions.Localization.Abstractions" />
-    </ItemGroup>
-
-    <ItemGroup>
         <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.Ddd.Application\HsnSoft.Base.Ddd.Application.csproj" />
-        <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.EventBus\HsnSoft.Base.EventBus.csproj" />
     </ItemGroup>
 
     <ItemGroup>

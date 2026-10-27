@@ -354,4 +354,25 @@ public sealed class KafkaTests : IAsyncLifetime
         await stop.CancelAsync();
         await run.WaitAsync(TimeSpan.FromSeconds(30));
     }
+
+    [Fact]
+    public async Task AHandlerThatTakesNoNoticeOfItsCancellation_IsNotWaitedForBeyondTheShutdownTimeout()
+    {
+        StopProbe probe = new();
+        using IHost host = await StartAsync($"it{Guid.NewGuid():N}", services =>
+        {
+            services.AddSingleton(probe);
+            services.AddEventHandler<Pinged, StubbornHandler>();
+        }, shutdownTimeout: TimeSpan.FromMilliseconds(300));
+        await host.Services.GetRequiredService<IEventBus>().PublishAsync(new Pinged("stuck for good"));
+        await probe.Started.Task.WaitAsync(TimeSpan.FromSeconds(30));
+
+        System.Diagnostics.Stopwatch watch = System.Diagnostics.Stopwatch.StartNew();
+        await host.StopAsync();
+        watch.Stop();
+
+        // the handler needs six seconds and does not listen: the service stops when the timeout has passed, not when the handler is done
+        Assert.True(watch.Elapsed < TimeSpan.FromSeconds(4), $"the service waited {watch.Elapsed.TotalSeconds:0.0} s for a handler that was stuck");
+        Assert.False(probe.Completed);
+    }
 }

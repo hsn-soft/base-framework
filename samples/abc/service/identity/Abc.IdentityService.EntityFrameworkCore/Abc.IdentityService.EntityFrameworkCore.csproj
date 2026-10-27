@@ -3,11 +3,6 @@
     <!-- How the identity service keeps the domain: its DbContext and mappings. The database provider (PostgreSQL) is registered here, with the repositories. -->
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.EntityFrameworkCore\HsnSoft.Base.EntityFrameworkCore.csproj" />
         <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.EntityFrameworkCore.PostgreSql\HsnSoft.Base.EntityFrameworkCore.PostgreSql.csproj" />
         <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.EntityFrameworkCore.SqlServer\HsnSoft.Base.EntityFrameworkCore.SqlServer.csproj" />
         <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.EventBus.EntityFrameworkCore\HsnSoft.Base.EventBus.EntityFrameworkCore.csproj" />

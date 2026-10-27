@@ -6,7 +6,8 @@
     -->
 
     <ItemGroup>
-        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.Logging.Serilog\HsnSoft.Base.Logging.Serilog.csproj" />
+        <!-- the cache the host chose -->
+        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.Caching.StackExchangeRedis\HsnSoft.Base.Caching.StackExchangeRedis.csproj" />
     </ItemGroup>
 
     <ItemGroup>

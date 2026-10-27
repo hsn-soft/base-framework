@@ -1,7 +1,5 @@
-using System.Reflection;
 using HsnSoft.Base.EventBus;
 using HsnSoft.Base.EventBus.RabbitMQ;
-using HsnSoft.Base.Localization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,14 +10,11 @@ namespace Abc.Shared.Hosting.Microservices;
 public static class MicroserviceRegister
 {
     /// <param name="services">The service collection.</param>
-    /// <param name="configuration">Holds <c>RequestLogging</c>, <c>Swagger</c>, <c>Jwt</c> and <c>ConnectionStrings:Redis</c>.</param>
+    /// <param name="configuration">Holds <c>RequestLogging</c>, <c>Swagger</c> and <c>Jwt</c>.</param>
     /// <param name="swaggerTitle">The title of the service's Swagger document.</param>
-    /// <param name="localizedAssemblies">The assemblies of the service that have texts (<c>Localization/en.json</c>, ...): the innermost layer, which wins over the shared one and the framework's.</param>
-    public static IServiceCollection AddAbcMicroservice(this IServiceCollection services, IConfiguration configuration, string swaggerTitle, params Assembly[] localizedAssemblies)
-        => services
-            .AddAbcHosting(configuration, swaggerTitle, authenticateUsers: true, swaggerBearerButton: true)
-            .AddBaseLocalization(configure: options => Array.ForEach(localizedAssemblies, assembly => options.AddEmbedded(assembly)))
-            .AddAbcRedis(configuration);
+    /// <remarks>What a service may do without (its texts in several languages, Redis) it chooses itself: <c>AddBaseLocalization</c> and <c>UseBaseLocalization</c>, <c>AddBaseRedis</c>.</remarks>
+    public static IServiceCollection AddAbcMicroservice(this IServiceCollection services, IConfiguration configuration, string swaggerTitle)
+        => services.AddAbcHosting(configuration, swaggerTitle, authenticateUsers: true, swaggerBearerButton: true);
 
     /// <summary>
     /// Connects a service to the RabbitMQ event bus of the system (sections <c>RabbitMq:Connection</c> and <c>RabbitMq:EventBus</c>: the exchange <c>ABC</c> and the client name of the service (<c>IdentityService</c>, <c>OrderService</c>, ...)) and makes the

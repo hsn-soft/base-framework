@@ -1,4 +1,4 @@
-namespace Abc.Shared.Hosting;
+namespace Abc.Shared.Helper;
 
 /// <summary>
 /// The tenants of the Abc sample, which are fixed so every service knows them without asking: the system tenant (its users see every tenant) and one company, Acme. A real system

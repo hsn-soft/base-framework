@@ -147,4 +147,15 @@ public sealed class MongoInboxTests : IAsyncLifetime
 
         await Assert.ThrowsAnyAsync<Exception>(() => store.TryStartAsync(Guid.NewGuid(), "OrderCreated", null));
     }
+
+    [Fact]
+    public async Task AnInsertThatFailsForAnotherReasonThanTheDocumentBeingThere_IsThrown_NotTakenForASecondDelivery()
+    {
+        // a rule of the collection that this message breaks: the insert fails and no document is there, so it is not a duplicate
+        IMongoDatabase database = _host.Services.GetRequiredService<IMongoDatabase>();
+        await database.CreateCollectionAsync("PickyInbox", new CreateCollectionOptions<InboxMessage> { Validator = new FilterDefinitionBuilder<InboxMessage>().Ne(message => message.EventName, "Poison") });
+        MongoInboxStore picky = new(database.GetCollection<InboxMessage>("PickyInbox"), Microsoft.Extensions.Options.Options.Create(new EventInboxOptions()));
+
+        await Assert.ThrowsAsync<MongoWriteException>(() => picky.TryStartAsync(Guid.NewGuid(), "Poison", null));
+    }
 }

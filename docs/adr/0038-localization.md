@@ -2,6 +2,7 @@
 
 - **Status:** Accepted (see also [ADR-0039](0039-guard-and-translating-a-response-body.md): `Guard`, and translating a text in a response body)
 - **Date:** 2026-10-25
+- **Note:** [ADR-0068](0068-the-shared-texts-of-a-product-are-a-project-of-their-own.md): the shared layer of the Abc sample is the project `Abc.Shared.Localization`, no longer a folder of `Abc.Shared.Hosting`.
 
 ## Context
 

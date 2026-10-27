@@ -1,7 +1,7 @@
 using Abc.IdentityService.Domain.UserDomain.Entities;
 using Abc.IdentityService.Domain.UserDomain.Repositories;
 using Abc.IdentityService.Domain.UserDomain.Security;
-using Abc.Shared.Hosting;
+using Abc.Shared.Helper;
 
 namespace Abc.AuthServer.Host.Security;
 

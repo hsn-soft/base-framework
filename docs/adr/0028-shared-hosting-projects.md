@@ -2,6 +2,9 @@
 
 - **Status:** Accepted
 - **Date:** 2026-10-25
+- **Note:** [ADR-0072](0072-a-host-chooses-its-localization-and-its-cache.md): `Abc.Shared.Hosting` and `Abc.Shared.Hosting.Microservices` no longer register the localization or Redis (`AddAbcRedis` is gone, `AddAbcMicroservice` has no `localizedAssemblies`): a host chooses them.
+- **Note:** [ADR-0069](0069-who-references-which-shared-project-in-abc.md): the rule of who references which Abc shared project (Helper, Contracts, Localization, Hosting); `AbcTenants` is in `Abc.Shared.Helper` now.
+- **Note:** [ADR-0068](0068-the-shared-texts-of-a-product-are-a-project-of-their-own.md): the shared texts moved out of `Abc.Shared.Hosting` into `Abc.Shared.Localization`; the hosting projects do not reference it, a host that wants the texts adds the reference and the layer itself.
 
 ## Context
 

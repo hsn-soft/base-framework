@@ -32,8 +32,8 @@ All the texts are merged into one dictionary per language, **outermost layer fir
 | Layer | Where | Registered by |
 |---|---|---|
 | framework | `HsnSoft.Base.Localization/Localization` (`Status:*`, `Base:ErrorCode`, `Validation:Failed`) | `AddBaseLocalization` |
-| shared | `Abc.Shared.Hosting/Localization` (what several services say: `field_required`, `invalid_credentials`) | `AddAbcHosting` |
-| service | `Abc.XService.Domain/Localization` (its errors: `product_not_found`) | `AddAbcMicroservice(config, title, typeof(Product).Assembly)` |
+| shared | `Abc.Shared.Localization/Localization` (what several services say: `status_required`, `invalid_credentials`; a project of its own, [ADR-0068](adr/0068-the-shared-texts-of-a-product-are-a-project-of-their-own.md)) | the host: `AddBaseLocalization(configuration, options => options.AddAbcSharedTexts()...)` ([ADR-0072](adr/0072-a-host-chooses-its-localization-and-its-cache.md)) |
+| service | `Abc.XService.Domain/Localization` (its errors: `product_not_found`) | the same call: `options.AddAbcSharedTexts().AddEmbedded(typeof(Product).Assembly)` |
 
 ```csharp
 services.AddBaseLocalization(configuration, options => options.AddEmbedded(typeof(SomeTypeOfTheAssembly).Assembly));   // each call adds its layer after the earlier ones
@@ -47,7 +47,7 @@ A key that is not in the current language is looked up in the default language; 
 2. the **`Accept-Language` header**: the supported language with the highest quality;
 3. the **default language**.
 
-`app.UseBaseLocalization()` (after `UseAuthentication`; the Abc hosts do it in `UseAbcHosting`) sets it for the rest of the pipeline and answers the `Content-Language` header. The exception handler and the status pages work out the language themselves.
+`app.UseBaseLocalization()` (after `UseAuthentication`; an Abc host that chose localization calls it right after `UseAbcMicroservice()`, which reads the token) sets it for the rest of the pipeline and answers the `Content-Language` header. The exception handler and the status pages work out the language themselves.
 The language is a short code (`ILanguageAccessor.Current`), not a `CultureInfo`, so it works with `InvariantGlobalization`.
 
 ## Naming a text in an error

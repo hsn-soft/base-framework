@@ -28,6 +28,11 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
+| [0072](0072-a-host-chooses-its-localization-and-its-cache.md) | A host chooses its localization and its cache | Accepted | 2026-10-27 |
+| [0071](0071-the-aspnetcore-layer-packages-build-on-aspnetcore.md) | The `AspNetCore` layer packages (`WebApi`, `Swashbuckle`) build on `AspNetCore` | Accepted | 2026-10-27 |
+| [0070](0070-a-framework-package-brings-what-its-api-exposes.md) | A framework package brings what its API exposes | Accepted | 2026-10-26 |
+| [0069](0069-who-references-which-shared-project-in-abc.md) | Who references which shared project in Abc | Accepted | 2026-10-26 |
+| [0068](0068-the-shared-texts-of-a-product-are-a-project-of-their-own.md) | The shared texts of a product are a project of their own | Accepted | 2026-10-26 |
 | [0067](0067-the-event-inbox-is-opt-in-and-a-decorator.md) | The event inbox is opt-in and a decorator of the dispatcher | Accepted | 2026-10-26 |
 | [0066](0066-kafka-handles-fetchcount-messages-at-the-same-time.md) | Kafka handles `fetchCount` messages at the same time | Accepted | 2026-10-26 |
 | [0065](0065-the-consumers-outlive-their-own-failures.md) | The consumers outlive their own failures | Accepted | 2026-10-26 |

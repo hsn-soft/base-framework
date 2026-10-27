@@ -6,10 +6,6 @@
     -->
 
     <ItemGroup>
-        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.Logging.Serilog\HsnSoft.Base.Logging.Serilog.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
         <ProjectReference Include="..\..\shared\Abc.Shared.Hosting.Gateways\Abc.Shared.Hosting.Gateways.csproj" />
     </ItemGroup>
 

@@ -1,8 +1,5 @@
-using HsnSoft.Base.Application;
 using HsnSoft.Base.AspNetCore;
 using HsnSoft.Base.Authentication;
-using HsnSoft.Base.Caching.StackExchangeRedis;
-using HsnSoft.Base.Localization;
 using HsnSoft.Base.Logging;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
@@ -43,9 +40,7 @@ public static class HostingRegister
             .AddBaseLogging()
             .AddBaseRequestLogging(configuration)
             .AddBaseWebApi()
-            .AddBaseHealthChecks()
-            .AddBasePaging(configuration)
-            .AddBaseLocalization(configuration, options => options.AddEmbedded(typeof(AbcTenants).Assembly));   // the shared layer of the texts; a service adds its own after it
+            .AddBaseHealthChecks();
 
         if (swaggerBearerButton)
         {
@@ -65,13 +60,6 @@ public static class HostingRegister
     }
 
     /// <summary>
-    /// Connects the host to Redis: <c>IDistributedCache</c>, the raw connection and a readiness check (<c>ConnectionStrings:Redis</c>, and <c>Redis:InstanceName</c>, <c>abc:</c> for every Abc host so the keys
-    /// of the system have one prefix). Every microservice and the commercial gateway have it; the host decides, as the public gateway does not.
-    /// </summary>
-    public static IServiceCollection AddAbcRedis(this IServiceCollection services, IConfiguration configuration)
-        => services.AddBaseRedis(configuration);
-
-    /// <summary>
     /// The middleware every Abc host has, in this order: the request log (outside the exception handler, so its response log has the status the client gets), the exception handling, Swagger,
     /// who the caller is and what the caller may do (when users are authenticated), and the health endpoints. The host maps its own endpoints after it.
     /// </summary>
@@ -88,8 +76,6 @@ public static class HostingRegister
             app.UseBaseAuthorization();
         }
 
-        // after the authentication: the language claim of the token is read
-        app.UseBaseLocalization();
         app.MapBaseHealth();
         return app;
     }
