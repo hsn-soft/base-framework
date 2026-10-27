@@ -74,6 +74,6 @@ public class EntityConceptsRegistrationTests
 
         Assert.True(product.IsDeleted);
         Assert.Equal((s_t1, user, s_t1), (product.DeletedAt, product.DeletedBy, product.UpdatedAt));
-        Assert.IsAssignableFrom<IFullAuditedObject>(product);
+        Assert.IsType<IFullAuditedObject>(product, exactMatch: false);
     }
 }

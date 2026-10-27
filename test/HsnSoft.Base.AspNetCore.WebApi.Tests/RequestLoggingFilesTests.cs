@@ -196,13 +196,13 @@ public sealed class RequestLoggingFilesTests
             await context.Request.Body.CopyToAsync(Stream.Null);
             if (headersOnly)
             {
-                context.Response.Headers["grpc-status"] = trailerStatus;
-                context.Response.Headers["grpc-message"] = trailerMessage;
+                context.Response.Headers.GrpcStatus = trailerStatus;
+                context.Response.Headers.GrpcMessage = trailerMessage;
             }
             else if (trailerStatus is not null)
             {
-                context.Features.Get<IHttpResponseTrailersFeature>()!.Trailers["grpc-status"] = trailerStatus;
-                context.Features.Get<IHttpResponseTrailersFeature>()!.Trailers["grpc-message"] = trailerMessage;
+                context.Features.Get<IHttpResponseTrailersFeature>()!.Trailers.GrpcStatus = trailerStatus;
+                context.Features.Get<IHttpResponseTrailersFeature>()!.Trailers.GrpcMessage = trailerMessage;
             }
 
             context.Response.ContentType = "application/grpc";

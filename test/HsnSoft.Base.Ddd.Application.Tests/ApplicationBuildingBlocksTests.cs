@@ -35,9 +35,9 @@ public class ApplicationBuildingBlocksTests
     {
         RowDto dto = new() { Id = Guid.NewGuid(), Name = "x", CreatedAt = DateTimeOffset.UnixEpoch, CreatedBy = Guid.NewGuid(), IsDeleted = true };
 
-        Assert.IsAssignableFrom<AuditedEntityDto<Guid>>(dto);
-        Assert.IsAssignableFrom<CreationAuditedEntityDto<Guid>>(dto);
-        Assert.IsAssignableFrom<IEntityDto<Guid>>(dto);
+        Assert.IsType<AuditedEntityDto<Guid>>(dto, exactMatch: false);
+        Assert.IsType<CreationAuditedEntityDto<Guid>>(dto, exactMatch: false);
+        Assert.IsType<IEntityDto<Guid>>(dto, exactMatch: false);
         Assert.True(dto.IsDeleted);
         Assert.Null(dto.DeletedBy);
         Assert.Null(dto.UpdatedBy);
@@ -49,10 +49,10 @@ public class ApplicationBuildingBlocksTests
         PagedDataRequestDto request = new();
 
         Assert.Equal((10, 1, null, null), (request.MaxResultCount, request.PageNumber, request.SortingText, request.SearchText));
-        Assert.IsAssignableFrom<IPagedDataRequest>(request);
-        Assert.IsAssignableFrom<ISearchDataRequest>(request);
-        Assert.IsAssignableFrom<ISortedDataRequest>(request);
-        Assert.IsAssignableFrom<ILimitedDataRequest>(request);
+        Assert.IsType<IPagedDataRequest>(request, exactMatch: false);
+        Assert.IsType<ISearchDataRequest>(request, exactMatch: false);
+        Assert.IsType<ISortedDataRequest>(request, exactMatch: false);
+        Assert.IsType<ILimitedDataRequest>(request, exactMatch: false);
     }
 
     [Theory]

@@ -82,7 +82,7 @@ internal static class BaseNLog
                 throw new InvalidOperationException($"{PersistentLoggerOptions.SectionName}:GrayLog:Address is required when {PersistentLoggerOptions.SectionName}:IsGrayLogActive is true.");
             }
 
-            return new GelfHttpTarget(options.GrayLog.Address, options.GrayLog.Port);
+            return new GelfHttpTarget(options.GrayLog.Address, options.GrayLog.Port, options.GrayLog.UseHttps);
         }
 
         return new FileTarget("base-file")

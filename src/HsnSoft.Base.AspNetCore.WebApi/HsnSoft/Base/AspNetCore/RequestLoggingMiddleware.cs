@@ -444,8 +444,8 @@ public sealed partial class RequestLoggingMiddleware(
 
             // an error before the first message is "trailers only": the status is in the headers
             IHeaderDictionary? trailers = context.Features.Get<IHttpResponseTrailersFeature>()?.Trailers;
-            string? status = context.Response.Headers["grpc-status"].FirstOrDefault() ?? trailers?["grpc-status"].FirstOrDefault();
-            string? message = context.Response.Headers["grpc-message"].FirstOrDefault() ?? trailers?["grpc-message"].FirstOrDefault();
+            string? status = context.Response.Headers.GrpcStatus.FirstOrDefault() ?? trailers?.GrpcStatus.FirstOrDefault();
+            string? message = context.Response.Headers.GrpcMessage.FirstOrDefault() ?? trailers?.GrpcMessage.FirstOrDefault();
             return int.TryParse(status, NumberStyles.None, CultureInfo.InvariantCulture, out int code) ? new GrpcResult(code, LogFields.Text(message, 200)) : null;
         }
     }

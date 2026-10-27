@@ -94,8 +94,13 @@ public sealed class RabbitMqClientLogTests
         using ServiceProvider provider = services.BuildServiceProvider();
         RabbitMqClientLogService service = new(provider.GetRequiredService<ILoggerFactory>());
 
-        await ((IHostedService)service).StartAsync(CancellationToken.None);
-        await ((IHostedService)service).StopAsync(CancellationToken.None);
-        service.Dispose();
+        Exception? failure = await Record.ExceptionAsync(async () =>
+        {
+            await ((IHostedService)service).StartAsync(CancellationToken.None);
+            await ((IHostedService)service).StopAsync(CancellationToken.None);
+            service.Dispose();
+        });
+
+        Assert.Null(failure);
     }
 }

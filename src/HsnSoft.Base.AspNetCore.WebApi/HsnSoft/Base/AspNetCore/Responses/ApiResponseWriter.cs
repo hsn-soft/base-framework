@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading;
 using System.Threading.Tasks;
 using HsnSoft.Base.Communication;
 using HsnSoft.Base.Localization;
@@ -77,6 +78,6 @@ public sealed class ApiResponseWriter : IApiResponseWriter
 
         context.Response.ContentType = "application/json; charset=utf-8";
         context.Response.StatusCode = statusCode;
-        await context.Response.WriteAsync(json).ConfigureAwait(false);
+        await context.Response.WriteAsync(json, CancellationToken.None).ConfigureAwait(false);
     }
 }

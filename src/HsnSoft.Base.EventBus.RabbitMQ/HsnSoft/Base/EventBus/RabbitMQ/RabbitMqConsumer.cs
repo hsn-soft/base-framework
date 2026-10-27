@@ -76,7 +76,7 @@ public sealed partial class RabbitMqConsumer(
         await _recoveryCts.CancelAsync().ConfigureAwait(false);
         if (_recoveryTask is not null)
         {
-            await Task.WhenAny(_recoveryTask, Task.Delay(TimeSpan.FromSeconds(5))).ConfigureAwait(false);
+            await Task.WhenAny(_recoveryTask, Task.Delay(TimeSpan.FromSeconds(5), CancellationToken.None)).ConfigureAwait(false);
         }
 
         // let the messages in flight finish; after the shutdown timeout their handlers are cancelled and the messages stay unacknowledged
@@ -84,7 +84,7 @@ public sealed partial class RabbitMqConsumer(
         while (_prefetch.CurrentCount < _eventInfo.FetchCount && DateTime.UtcNow < deadline)
         {
             LogWaitingForMessages(_logger, QueueName, _eventInfo.FetchCount - _prefetch.CurrentCount);
-            await Task.Delay(TimeSpan.FromMilliseconds(100)).ConfigureAwait(false);
+            await Task.Delay(TimeSpan.FromMilliseconds(100), CancellationToken.None).ConfigureAwait(false);
         }
 
         await _handlerCts.CancelAsync().ConfigureAwait(false);
@@ -100,7 +100,7 @@ public sealed partial class RabbitMqConsumer(
         {
             try
             {
-                await channel.CloseAsync().ConfigureAwait(false);
+                await channel.CloseAsync(CancellationToken.None).ConfigureAwait(false);
             }
             catch (Exception exception) when (exception is not OperationCanceledException)
             {
@@ -125,7 +125,7 @@ public sealed partial class RabbitMqConsumer(
 
         try
         {
-            await channel.BasicCancelAsync(_consumerTag).ConfigureAwait(false);
+            await channel.BasicCancelAsync(_consumerTag, noWait: false, CancellationToken.None).ConfigureAwait(false);
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
@@ -166,7 +166,7 @@ public sealed partial class RabbitMqConsumer(
             return;
         }
 
-        await _prefetch.WaitAsync().ConfigureAwait(false);
+        await _prefetch.WaitAsync(CancellationToken.None).ConfigureAwait(false);
         string eventName = "unknown";
         string message = string.Empty;
         try
@@ -298,15 +298,15 @@ public sealed partial class RabbitMqConsumer(
     }
 
     private Task AcknowledgeChannelAsync(ulong deliveryTag)
-        => EnsureChannelOrThrow().BasicAckAsync(deliveryTag, multiple: false).AsTask();
+        => EnsureChannelOrThrow().BasicAckAsync(deliveryTag, multiple: false, CancellationToken.None).AsTask();
 
     private async Task RequeueAfterDelayAsync(ulong deliveryTag)
     {
         LogRequeue(_logger, QueueName, _config.RequeueDelay.TotalSeconds);
-        await Task.Delay(_config.RequeueDelay).ConfigureAwait(false);
+        await Task.Delay(_config.RequeueDelay, CancellationToken.None).ConfigureAwait(false);
         try
         {
-            await EnsureChannelOrThrow().BasicNackAsync(deliveryTag, multiple: false, requeue: true).ConfigureAwait(false);
+            await EnsureChannelOrThrow().BasicNackAsync(deliveryTag, multiple: false, requeue: true, CancellationToken.None).ConfigureAwait(false);
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {

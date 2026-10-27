@@ -165,15 +165,15 @@ public class AuditPropertySetterTests
     {
         IFullAuditedObject full = new Shown();
 
-        Assert.IsAssignableFrom<IAuditedObject>(full);
-        Assert.IsAssignableFrom<ICreationAuditedObject>(full);
-        Assert.IsAssignableFrom<IModificationAuditedObject>(full);
-        Assert.IsAssignableFrom<IDeletionAuditedObject>(full);
-        Assert.IsAssignableFrom<IHasCreationTime>(full);
-        Assert.IsAssignableFrom<IMayHaveCreator>(full);
-        Assert.IsAssignableFrom<IHasModificationTime>(full);
-        Assert.IsAssignableFrom<IHasDeletionTime>(full);
-        Assert.IsAssignableFrom<ISoftDelete>(full);
+        Assert.IsType<IAuditedObject>(full, exactMatch: false);
+        Assert.IsType<ICreationAuditedObject>(full, exactMatch: false);
+        Assert.IsType<IModificationAuditedObject>(full, exactMatch: false);
+        Assert.IsType<IDeletionAuditedObject>(full, exactMatch: false);
+        Assert.IsType<IHasCreationTime>(full, exactMatch: false);
+        Assert.IsType<IMayHaveCreator>(full, exactMatch: false);
+        Assert.IsType<IHasModificationTime>(full, exactMatch: false);
+        Assert.IsType<IHasDeletionTime>(full, exactMatch: false);
+        Assert.IsType<ISoftDelete>(full, exactMatch: false);
     }
 
     [Fact]

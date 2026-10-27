@@ -180,7 +180,7 @@ builder.Logging.AddBaseNLog(builder.Configuration, "OrderService");   // console
 
 - The console line and the file line are the ones of the Serilog provider; the persistent log has the same fields (`LogType`, `MessageType`, `Facility`, the scope properties such as `CorrelationId`), an object logged with `{@Object}` as the one field holding its masked JSON, text cut at `MaxPersistentFieldLength`.
 - `[SensitiveData]` is masked in the fields **and** in the message (NLog would write an `{@Object}` into the message whole, so the message is rendered from the template here).
-- Graylog is written by a background queue that sends again what failed (GELF over HTTP, `http://address:port/gelf`), so `GrayLog:SinkRefreshIntervalMinutes` is not used. `PersistentLogger:IsSelfLogActive` shows NLog's own errors.
+- Graylog is written by a background queue that sends again what failed (GELF over HTTP, `{scheme}://address:port/gelf`: `http`, Graylog's own input, or `https` with `PersistentLogger:GrayLog:UseHttps` or an address that says `https://`), so `GrayLog:SinkRefreshIntervalMinutes` is not used. `PersistentLogger:IsSelfLogActive` shows NLog's own errors.
 - The service has its own NLog factory: the global `LogManager` is not touched and an `nlog.config` is not read; `AddBaseNLog(configuration, name, nlog => nlog.AddRule(...))` adds a target of the product.
 
 A provider for another library does what these two do, with its own tools, and uses the rules of `HsnSoft.Base.Logging` that both share: `LogShape` (the type of a log from its category, the `Facility` from an event name, the noise fields), `LogRouting` (the console and the persistent sink, from level and category) and

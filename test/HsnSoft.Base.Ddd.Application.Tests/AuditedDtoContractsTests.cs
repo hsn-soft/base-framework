@@ -17,10 +17,10 @@ public class AuditedDtoContractsTests
     [Fact]
     public void ADto_HasTheAuditContractOfItsLevel_TheSameOnesAsTheEntity()
     {
-        Assert.IsAssignableFrom<ICreationAuditedObject>(new CreatedDto());
-        Assert.IsAssignableFrom<IAuditedObject>(new ChangedDto());
-        Assert.IsAssignableFrom<IFullAuditedObject>(new FullDto());
-        Assert.IsAssignableFrom<IFullAuditedObject>(new Row());
+        Assert.IsType<ICreationAuditedObject>(new CreatedDto(), exactMatch: false);
+        Assert.IsType<IAuditedObject>(new ChangedDto(), exactMatch: false);
+        Assert.IsType<IFullAuditedObject>(new FullDto(), exactMatch: false);
+        Assert.IsType<IFullAuditedObject>(new Row(), exactMatch: false);
     }
 
     [Fact]

@@ -30,7 +30,7 @@ public class LoggerFacilityExtensionsTests
 
         logger.BeginFacility("ORDER_IMPORTED");
 
-        Assert.Equal("ORDER_IMPORTED", Assert.IsAssignableFrom<IDictionary<string, object>>(logger.Scope)[LogFields.Facility]);
+        Assert.Equal("ORDER_IMPORTED", Assert.IsType<IDictionary<string, object>>(logger.Scope, exactMatch: false)[LogFields.Facility]);
     }
 
     [Fact]

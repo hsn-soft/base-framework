@@ -74,6 +74,7 @@ public class PersistentLoggerOptionsTests
             ("MaxPersistentFieldLength", "1000"),
             ("GrayLog:Address", "http://graylog"),
             ("GrayLog:Port", "12345"),
+            ("GrayLog:UseHttps", "true"),
             ("GrayLog:SinkRefreshIntervalMinutes", "2"),
             ("LevelOverrides:Microsoft.AspNetCore", "Error"),
             ("LevelOverrides:MyApp", "Debug")));
@@ -86,6 +87,7 @@ public class PersistentLoggerOptionsTests
         Assert.Equal(1000, options.MaxPersistentFieldLength);
         Assert.Equal("http://graylog", options.GrayLog.Address);
         Assert.Equal(12345, options.GrayLog.Port);
+        Assert.True(options.GrayLog.UseHttps);
         Assert.Equal(2, options.GrayLog.SinkRefreshIntervalMinutes);
         Assert.Equal(LogLevel.Error, options.LevelOverrides["Microsoft.AspNetCore"]);
         Assert.Equal(LogLevel.Debug, options.LevelOverrides["MyApp"]);

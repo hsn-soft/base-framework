@@ -26,9 +26,9 @@ internal sealed partial class GelfHttpTarget : AsyncTaskTarget
     private readonly HttpClient _client;
     private readonly bool _disposeClient;
 
-    internal GelfHttpTarget(string address, int port, HttpClient? client = null, string? host = null)
+    internal GelfHttpTarget(string address, int port, bool useHttps = false, HttpClient? client = null, string? host = null)
     {
-        _address = new Uri($"http://{address}:{port.ToString(CultureInfo.InvariantCulture)}/gelf");
+        _address = Endpoint(address, port, useHttps);
         _host = host ?? Environment.MachineName;
         _client = client ?? new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
         _disposeClient = client is null;
@@ -37,6 +37,24 @@ internal sealed partial class GelfHttpTarget : AsyncTaskTarget
         RetryDelayMilliseconds = 500;
         TaskDelayMilliseconds = 200;
         BatchSize = 1;
+    }
+
+    /// <summary>The address of the GELF input: <c>{scheme}://address:port/gelf</c>, the scheme the address says, else <c>https</c> when asked for and <c>http</c> (Graylog's own input) otherwise.</summary>
+    internal static Uri Endpoint(string address, int port, bool useHttps)
+    {
+        string host = address;
+        string scheme = useHttps ? Uri.UriSchemeHttps : Uri.UriSchemeHttp;
+        foreach (string known in new[] { Uri.UriSchemeHttps, Uri.UriSchemeHttp })
+        {
+            string prefix = known + Uri.SchemeDelimiter;
+            if (address.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            {
+                (scheme, host) = (known, address[prefix.Length..].TrimEnd('/'));
+                break;
+            }
+        }
+
+        return new UriBuilder(scheme, host, port, "gelf").Uri;
     }
 
     protected override async Task WriteAsyncTask(LogEventInfo logEvent, CancellationToken cancellationToken)

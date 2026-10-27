@@ -112,6 +112,7 @@ public sealed class PersistentLoggerOptions
             MaxPersistentFieldLength = int.TryParse(section["MaxPersistentFieldLength"], CultureInfo.InvariantCulture, out int maxLength) && maxLength > 0 ? maxLength : 16 * 1024,
         };
         options.GrayLog.Address = section["GrayLog:Address"];
+        options.GrayLog.UseHttps = bool.TryParse(section["GrayLog:UseHttps"], out bool https) && https;
         options.GrayLog.Port = int.TryParse(section["GrayLog:Port"], CultureInfo.InvariantCulture, out int port) ? port : options.GrayLog.Port;
         options.GrayLog.SinkRefreshIntervalMinutes = int.TryParse(section["GrayLog:SinkRefreshIntervalMinutes"], CultureInfo.InvariantCulture, out int minutes) && minutes > 0
             ? minutes
@@ -151,6 +152,9 @@ public sealed class GrayLogOptions
     public string? Address { get; set; }
 
     public int Port { get; set; } = 12201;
+
+    /// <summary>Whether the GELF HTTP input is reached over TLS (<c>https</c>). Graylog's own HTTP input is plain <c>http</c> unless it was given a certificate; the NLog provider honours it (an address that says its scheme, <c>https://graylog</c>, wins).</summary>
+    public bool UseHttps { get; set; }
 
     /// <summary>How often the Graylog sink is rebuilt: a third-party sink can stay broken after a failed start, rebuilding it heals that.</summary>
     public int SinkRefreshIntervalMinutes { get; set; } = 5;

@@ -147,7 +147,7 @@ public sealed class AddBaseNLogTests : IDisposable
     [Fact]
     public void AGelfMessage_HasTheFieldsOfTheLog_WithTheNamesGraylogTakes()
     {
-        using GelfHttpTarget target = new("graylog.internal", 12201, new HttpClient(new RecordingHandler()), "host-1");
+        using GelfHttpTarget target = new("graylog.internal", 12201, false, new HttpClient(new RecordingHandler()), "host-1");
         LogEventInfo logEvent = new(global::NLog.LogLevel.Error, "Abc.X", "it failed") { Exception = new InvalidOperationException("boom"), TimeStamp = new DateTime(2026, 10, 27, 10, 0, 0, DateTimeKind.Utc) };
         logEvent.Properties["LogType"] = "AppLog";
         logEvent.Properties["Count"] = 3;
@@ -180,7 +180,7 @@ public sealed class AddBaseNLogTests : IDisposable
     [InlineData("Fatal", 2)]
     public void TheLevelOfAGelfMessage_IsTheSyslogLevel(string level, int syslog)
     {
-        using GelfHttpTarget target = new("graylog.internal", 12201, new HttpClient(new RecordingHandler()));
+        using GelfHttpTarget target = new("graylog.internal", 12201, false, new HttpClient(new RecordingHandler()));
 
         using System.Text.Json.JsonDocument document = System.Text.Json.JsonDocument.Parse(target.Message(new LogEventInfo(global::NLog.LogLevel.FromString(level), "x", string.Empty)));
 
@@ -194,15 +194,28 @@ public sealed class AddBaseNLogTests : IDisposable
     {
         GelfHttpTarget target = new("graylog.internal", 12201);
 
-        target.Dispose();
-        target.Dispose();
+        Exception? failure = Record.Exception(() =>
+        {
+            target.Dispose();
+            target.Dispose();
+        });
+
+        Assert.Null(failure);
     }
+
+    [Theory]
+    [InlineData("graylog.internal", false, "http://graylog.internal:12201/gelf")]
+    [InlineData("graylog.internal", true, "https://graylog.internal:12201/gelf")]
+    [InlineData("https://graylog.internal/", false, "https://graylog.internal:12201/gelf")]
+    [InlineData("HTTP://graylog.internal", true, "http://graylog.internal:12201/gelf")]
+    public void TheAddressOfGraylog_IsTheSchemeItSaysOrTheOneAskedFor(string address, bool useHttps, string expected)
+        => Assert.Equal(expected, GelfHttpTarget.Endpoint(address, 12201, useHttps).ToString());
 
     [Fact]
     public void TheLogsAreSentToGraylogInTheBackground_AndAFailedOneIsTriedAgain()
     {
         RecordingHandler handler = new() { Failures = 1 };
-        using GelfHttpTarget target = new("graylog.internal", 12201, new HttpClient(handler), "host-1");
+        using GelfHttpTarget target = new("graylog.internal", 12201, false, new HttpClient(handler), "host-1");
         LogFactory factory = new() { Configuration = new global::NLog.Config.LoggingConfiguration() };
         factory.Configuration.AddRule(global::NLog.LogLevel.Trace, global::NLog.LogLevel.Fatal, target);
         factory.ReconfigExistingLoggers();

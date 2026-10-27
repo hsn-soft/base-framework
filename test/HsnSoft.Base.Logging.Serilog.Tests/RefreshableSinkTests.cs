@@ -74,7 +74,7 @@ public class RefreshableSinkTests
 
         sink.Refresh();
 
-        sink.Emit(Events.Create(LogEventLevel.Information));
+        Assert.Null(Record.Exception(() => sink.Emit(Events.Create(LogEventLevel.Information))));
     }
 
     [Fact]

@@ -5,8 +5,11 @@ using HsnSoft.Base.Domain.Entities.Events;
 namespace HsnSoft.Base.EventBus.Tests;
 
 /// <summary>The wire format must stay the one the services in production write and read: flat, PascalCase.</summary>
-public class EnvelopeSerializationTests
+public partial class EnvelopeSerializationTests
 {
+    [System.Text.RegularExpressions.GeneratedRegex("\"ParentMessageId\"")]
+    private static partial System.Text.RegularExpressions.Regex ParentMessageIdProperty();
+
     // what the production framework writes (MessageEnvelope serialized with default System.Text.Json options)
     private const string ProductionJson = """
         {
@@ -201,7 +204,7 @@ public class EnvelopeSerializationTests
         string written = Encoding.UTF8.GetString(EventSerializer.Serialize(child));
         MessageEnvelope<SampleEto> read = (MessageEnvelope<SampleEto>)EventSerializer.DeserializeEnvelope(Bytes(written), typeof(SampleEto));
 
-        Assert.Equal(1, System.Text.RegularExpressions.Regex.Count(written, "\"ParentMessageId\""));
+        Assert.Equal(1, ParentMessageIdProperty().Count(written));
         Assert.Equal(parent.MessageId, read.ParentMessageId);
     }
 }

@@ -197,9 +197,14 @@ public sealed class SerilogSinksTests : IDisposable
             options.GrayLog.Port = 1;
         }));
 
-        sinks.Persistent.Emit(Event(LogEventLevel.Error, "nobody listens"));
-        sinks.Refreshable!.Refresh();
-        sinks.Refreshable.Dispose();
+        Exception? failure = Record.Exception(() =>
+        {
+            sinks.Persistent.Emit(Event(LogEventLevel.Error, "nobody listens"));
+            sinks.Refreshable!.Refresh();
+            sinks.Refreshable.Dispose();
+        });
+
+        Assert.Null(failure);
     }
 
     private static string ReadShared(string path)

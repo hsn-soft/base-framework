@@ -20,7 +20,7 @@ public static class RsaKeys
         try
         {
             // a public key can verify but not sign: say it now, not at the first token
-            rsa.SignData([], HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+            rsa.SignData([], HashAlgorithmName.SHA256, RSASignaturePadding.Pss);
             return rsa;
         }
         catch (CryptographicException exception)
