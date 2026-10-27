@@ -4,7 +4,7 @@ using HsnSoft.Base.Auditing;
 namespace HsnSoft.Base.Domain.Entities;
 
 /// <summary>An entity with the creation and the last change audited: the persistence calls <see cref="MarkModified"/> when it is added and every time it is changed.</summary>
-public abstract class AuditedEntity<TKey> : CreationAuditedEntity<TKey>, IModificationAudited
+public abstract class AuditedEntity<TKey> : CreationAuditedEntity<TKey>, IAuditedObject, IMarkModified
 {
     protected AuditedEntity()
     {

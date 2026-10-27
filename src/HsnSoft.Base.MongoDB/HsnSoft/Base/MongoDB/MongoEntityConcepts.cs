@@ -57,31 +57,31 @@ public sealed class MongoEntityConcepts(IAuditPropertySetter audit, ICurrentTena
         List<UpdateDefinition<T>> sets =
         [
             builder.Set(nameof(ISoftDelete.IsDeleted), true),
-            builder.Set(nameof(ISoftDelete.DeletedAt), (DateTimeOffset?)stamp.At),
-            builder.Set(nameof(ISoftDelete.DeletedBy), stamp.By),
+            builder.Set(nameof(IHasDeletionTime.DeletedAt), (DateTimeOffset?)stamp.At),
+            builder.Set(nameof(IDeletionAuditedObject.DeletedBy), stamp.By),
         ];
-        if (typeof(IModificationAudited).IsAssignableFrom(typeof(T)))
+        if (typeof(IModificationAuditedObject).IsAssignableFrom(typeof(T)))
         {
-            sets.Add(builder.Set(nameof(IModificationAudited.UpdatedAt), stamp.At));
-            sets.Add(builder.Set(nameof(IModificationAudited.UpdatedBy), stamp.By));
+            sets.Add(builder.Set(nameof(IModificationAuditedObject.UpdatedAt), stamp.At));
+            sets.Add(builder.Set(nameof(IModificationAuditedObject.UpdatedBy), stamp.By));
         }
 
         return builder.Combine(sets);
     }
 
-    /// <summary>The update with the modification fields (<see cref="IModificationAudited"/>) written beside it, for an update that loads nothing.</summary>
+    /// <summary>The update with the modification fields (<see cref="IModificationAuditedObject"/>) written beside it, for an update that loads nothing.</summary>
     public UpdateDefinition<T> Modification<T>(UpdateDefinition<T> update)
     {
         ArgumentNullException.ThrowIfNull(update);
 
-        if (!typeof(IModificationAudited).IsAssignableFrom(typeof(T)))
+        if (!typeof(IModificationAuditedObject).IsAssignableFrom(typeof(T)))
         {
             return update;
         }
 
         UpdateDefinitionBuilder<T> builder = Builders<T>.Update;
         AuditStamp stamp = audit.Stamp();
-        return builder.Combine(update, builder.Set(nameof(IModificationAudited.UpdatedAt), stamp.At), builder.Set(nameof(IModificationAudited.UpdatedBy), stamp.By));
+        return builder.Combine(update, builder.Set(nameof(IModificationAuditedObject.UpdatedAt), stamp.At), builder.Set(nameof(IModificationAuditedObject.UpdatedBy), stamp.By));
     }
 
     /// <summary>Before a replace: the modification fields.</summary>

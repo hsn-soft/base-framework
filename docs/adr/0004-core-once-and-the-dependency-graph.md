@@ -2,6 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-10-22
+- **Note:** [ADR-0073](0073-auditing-and-data-are-packages-of-their-own.md): `Auditing` and `Data` are packages of their own on `Core`; `Ddd.Domain` is on them.
 
 ## Context
 
@@ -22,6 +23,10 @@ referenced it in its own way, and sibling references multiplied: restores slowed
 | `Logging` | Core |
 | `Logging.Serilog` | Logging, Hosting |
 | `Hosting` | Core |
+| `Auditing` | Core |
+| `Data` | Core |
+| `Ddd.Domain` | Auditing, Data |
+| `Ddd.Application` | Ddd.Domain |
 | `Authentication` | Core |
 | `AspNetCore` | Core |
 | `AspNetCore.WebApi` | AspNetCore |
@@ -32,11 +37,11 @@ referenced it in its own way, and sibling references multiplied: restores slowed
 | `EventBus.EntityFrameworkCore` | EventBus, EntityFrameworkCore |
 | `EventBus.MongoDB` | EventBus, MongoDB |
 | `Caching.StackExchangeRedis` | Core |
-| `EntityFrameworkCore` | Core |
+| `EntityFrameworkCore` | Ddd.Domain |
 | `EntityFrameworkCore.PostgreSql`, `EntityFrameworkCore.SqlServer` | EntityFrameworkCore |
 | `BlobStoring` | Core |
 | `BlobStoring.Minio` | BlobStoring |
-| `MongoDB` | Core |
+| `MongoDB` | Ddd.Domain |
 | `HsnSoft.Base` | Core (a name holder, nothing else) |
 
 - **No cycles, and no package depends on a provider.** `WebApi` does not know Swagger; `Logging` does not know Serilog; `EventBus` does not know a broker.

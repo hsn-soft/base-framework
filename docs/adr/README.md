@@ -28,6 +28,7 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
+| [0073](0073-auditing-and-data-are-packages-of-their-own.md) | Auditing and Data are packages of their own | Accepted | 2026-10-27 |
 | [0072](0072-a-host-chooses-its-localization-and-its-cache.md) | A host chooses its localization and its cache | Accepted | 2026-10-27 |
 | [0071](0071-the-aspnetcore-layer-packages-build-on-aspnetcore.md) | The `AspNetCore` layer packages (`WebApi`, `Swashbuckle`) build on `AspNetCore` | Accepted | 2026-10-27 |
 | [0070](0070-a-framework-package-brings-what-its-api-exposes.md) | A framework package brings what its API exposes | Accepted | 2026-10-26 |

@@ -19,11 +19,13 @@ JWT, Swagger, a broker or a cache.
 
 | Package | Capability | Depends on |
 |---|---|---|
-| `HsnSoft.Base.Core` | Bare essentials: shared exceptions, health-check tag, startup retry, `ICurrentUser`, `ApplicationService` (logger, current user and tenant for the application layer), `Guard` (checks of the domain), the contracts of audit, soft delete, tenants and localization (`IMultiTenant`, `ISoftDelete`, `IMessageLocalizer`, ...) with their defaults | - |
+| `HsnSoft.Base.Core` | Bare essentials: shared exceptions, health-check tag, startup retry, `ICurrentUser`, `ApplicationService` (logger, current user and tenant for the application layer), `Guard` (checks of the domain), the contracts of soft delete, tenants and localization (`IMultiTenant`, `ISoftDelete`, `IMessageLocalizer`, ...) with their defaults | - |
 | `HsnSoft.Base.Logging` | Logger interfaces and models, masking of sensitive data, the settings every provider reads (`Logging:LogLevel` for the console, `PersistentLogger` for what is kept); independent of any logging library ([docs](docs/Logging.md)) | Core |
 | `HsnSoft.Base.Logging.Serilog` | Serilog provider: console, Graylog or file, Debug/Verbose stay in the console | Logging, Hosting |
 | `HsnSoft.Base.Hosting` | Generic Host workers: `PeriodicBackgroundService` | Core |
-| `HsnSoft.Base.Ddd.Domain` | The domain layer's building blocks: entity bases with audit and soft delete, the repository contract with paging, filtering and safe sorting | Core |
+| `HsnSoft.Base.Auditing` | Who made a record and when, who changed it last, who deleted it: the audit contracts an entity and its DTO share (`IAuditedObject`, `IFullAuditedObject`, ...), the marks an entity takes (`IMarkCreated`, ...) and the setter that fills them with the clock and the current user ([docs](docs/EntityConcepts.md)) | Core |
+| `HsnSoft.Base.Data` | What every data store shares whatever the database: the switch of the data filters (soft delete, tenants) that follows the flow of the code (`IDataFilter`) | Core |
+| `HsnSoft.Base.Ddd.Domain` | The domain layer's building blocks: entity bases with audit and soft delete, the repository contract with paging, filtering and safe sorting; registers the concepts of an entity (`AddBaseEntityConcepts`) | Auditing, Data |
 | `HsnSoft.Base.Ddd.Application` | The application layer's building blocks: the DTOs of an entity, of a list request and of its result; the paging model | Ddd.Domain |
 | `HsnSoft.Base.Authentication` | JWT bearer authentication (a shared key, or the RSA public key of the auth server), claim names and `ClaimsPrincipal` helpers | Core |
 | `HsnSoft.Base.AspNetCore` | Health endpoints (`/health/live`, `/health/ready`) | Core |
@@ -36,13 +38,13 @@ JWT, Swagger, a broker or a cache.
 | `HsnSoft.Base.EventBus.EntityFrameworkCore` | The inbox of a service on EF Core, opt in per service: a message that comes twice is handled once ([docs](docs/EventBus.md#the-inbox-a-message-that-comes-twice-is-handled-once)) | EventBus, EntityFrameworkCore |
 | `HsnSoft.Base.EventBus.MongoDB` | The inbox of a service on MongoDB, opt in per service | EventBus, MongoDB |
 | `HsnSoft.Base.Caching.StackExchangeRedis` | `IDistributedCache`, connection, health check | Core |
-| `HsnSoft.Base.EntityFrameworkCore` | What the EF Core providers share: `DbContext` health check, startup schema creation, `BaseDbContext` and the interceptor for audit, soft delete and tenants, the generic repository (`EfCoreRepository`) | Core, Ddd.Domain |
+| `HsnSoft.Base.EntityFrameworkCore` | What the EF Core providers share: `DbContext` health check, startup schema creation, `BaseDbContext` and the interceptor for audit, soft delete and tenants, the generic repository (`EfCoreRepository`) | Ddd.Domain |
 | `HsnSoft.Base.EntityFrameworkCore.PostgreSql` | PostgreSQL `DbContext` with retries | EntityFrameworkCore |
 | `HsnSoft.Base.EntityFrameworkCore.SqlServer` | SQL Server `DbContext` with retries | EntityFrameworkCore |
 | `HsnSoft.Base.BlobStoring` | `IBlobStore`: save, read and delete files in containers | Core |
 | `HsnSoft.Base.BlobStoring.Minio` | MinIO (S3) implementation of `IBlobStore`; Azure would be a sibling package | BlobStoring |
 | `HsnSoft.Base.Localization` | JSON texts embedded in the assemblies, merged from the innermost layer out, found by key in the language of the request | Core |
-| `HsnSoft.Base.MongoDB` | `IMongoDatabase` registration and health check, `MongoEntityConcepts` (audit, soft delete and tenants for repositories), the generic repository (`MongoRepository`) | Core, Ddd.Domain |
+| `HsnSoft.Base.MongoDB` | `IMongoDatabase` registration and health check, `MongoEntityConcepts` (audit, soft delete and tenants for repositories), the generic repository (`MongoRepository`) | Ddd.Domain |
 | `HsnSoft.Base` | Name holder that references `HsnSoft.Base.Core` | Core |
 
 Abstractions and their implementations are separate packages (`EventBus` / `EventBus.RabbitMQ` / `EventBus.Kafka`, `BlobStoring` /

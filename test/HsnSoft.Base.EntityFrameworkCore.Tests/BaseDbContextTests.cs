@@ -23,7 +23,7 @@ public sealed class BaseDbContextTests : IAsyncLifetime, IDisposable
         public string Product { get; set; } = string.Empty;
     }
 
-    public sealed class Note : ICreationAudited, IModificationAudited, ISoftDelete, IMultiTenant
+    public sealed class Note : IFullAuditedObject, IMarkCreated, IMarkModified, IMarkDeleted, IMultiTenant
     {
         private readonly List<Line> _lines = [];
 
@@ -59,7 +59,7 @@ public sealed class BaseDbContextTests : IAsyncLifetime, IDisposable
     }
 
     /// <summary>Only soft delete: no tenant.</summary>
-    public sealed class Tag : ISoftDelete
+    public sealed class Tag : IDeletionAuditedObject, IMarkDeleted
     {
         public int Id { get; set; }
 

@@ -1,16 +1,18 @@
 # Audit, soft delete and tenants of an entity
 
-Three concepts an entity can have, each one by an interface of `HsnSoft.Base.Core` that the entity implements. The persistence does the rest; the application code writes none of it
-([ADR-0037](adr/0037-audit-soft-delete-and-tenants.md)).
+Three concepts an entity can have, each one by interfaces that the entity implements: the audit contracts are in `HsnSoft.Base.Auditing`, soft delete and tenants in `HsnSoft.Base.Core` and the switch of the filters in `HsnSoft.Base.Data`.
+The persistence does the rest; the application code writes none of it ([ADR-0037](adr/0037-audit-soft-delete-and-tenants.md), [ADR-0073](adr/0073-auditing-and-data-are-packages-of-their-own.md)).
 
 | An entity that implements | Has | Done by the persistence |
 |---|---|---|
-| `ICreationAudited` | `CreatedAt`, `CreatedBy` | when it is added |
-| `IModificationAudited` | `UpdatedAt`, `UpdatedBy` | when it is added and every time it is changed |
-| `ISoftDelete` | `IsDeleted`, `DeletedAt`, `DeletedBy` | a delete marks it; the lists do not show it |
+| `ICreationAuditedObject` (`IHasCreationTime`, `IMayHaveCreator`) and `IMarkCreated` | `CreatedAt`, `CreatedBy` | when it is added |
+| `IModificationAuditedObject` (`IHasModificationTime`) and `IMarkModified` | `UpdatedAt`, `UpdatedBy` | when it is added and every time it is changed |
+| `ISoftDelete`, `IDeletionAuditedObject` (`IHasDeletionTime`) and `IMarkDeleted` | `IsDeleted`, `DeletedAt`, `DeletedBy` | a delete marks it; the lists do not show it |
 | `IMultiTenant` | `TenantId` | a new one gets the current tenant; a caller sees only the tenants it may |
 
-The entity keeps the fields with private setters and implements the `Mark...` methods (the base classes of [DddBuildingBlocks.md](DddBuildingBlocks.md) do it for the audit and the soft delete); the tenant is just `TenantId { get; private set; }`, which the persistence writes (`public void MarkCreated(DateTimeOffset at, Guid? by) => (CreatedAt, CreatedBy) = (at, by);`).
+`IAuditedObject` is the creation and the modification together, `IFullAuditedObject` all three. These are **shapes that only show the fields**: the DTO of an entity (`CreationAuditedEntityDto<TKey>`, `AuditedEntityDto<TKey>`, `FullAuditedEntityDto<TKey>`) implements the same
+ones as the entity, so one rule can read the audit fields of either. What only an entity takes are the marks (`IMarkCreated`, `IMarkModified`, `IMarkDeleted`): the entity keeps the fields with private setters and implements the `Mark...` methods (the base classes of
+[DddBuildingBlocks.md](DddBuildingBlocks.md) do it for the audit and the soft delete); the tenant is just `TenantId { get; private set; }`, which the persistence writes itself.
 **`CreatedBy`, `UpdatedBy` and `DeletedBy` are the id of the user** (`user_id` claim, a guid), `null` when nobody signed in did (a seed, a worker).
 
 ## Who and which tenant: `ICurrentUser` and `ICurrentTenant`

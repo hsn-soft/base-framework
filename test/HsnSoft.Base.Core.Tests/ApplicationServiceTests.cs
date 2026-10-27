@@ -37,7 +37,7 @@ public class ApplicationServiceTests
     [Fact]
     public void TheLoggerTheUserAndTheTenant_AreFoundFromTheServices_AndKept()
     {
-        using ServiceProvider provider = new ServiceCollection().AddLogging().AddSingleton<ICurrentUser, FixedUser>().AddBaseEntityConcepts().BuildServiceProvider();
+        using ServiceProvider provider = new ServiceCollection().AddLogging().AddSingleton<ICurrentUser, FixedUser>().AddSingleton<ICurrentTenant, CurrentTenant>().BuildServiceProvider();
         Sample service = new(provider);
 
         Assert.Equal("alice", service.TheUser.UserName);

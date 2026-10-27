@@ -17,12 +17,12 @@ public sealed class AuditPropertySetter(TimeProvider clock, ICurrentUser? curren
         ArgumentNullException.ThrowIfNull(entity);
 
         (DateTimeOffset now, Guid? by) = Now();
-        if (entity is ICreationAudited created)
+        if (entity is IMarkCreated created)
         {
             created.MarkCreated(now, by);
         }
 
-        if (entity is IModificationAudited modified)
+        if (entity is IMarkModified modified)
         {
             modified.MarkModified(now, by);
         }
@@ -32,7 +32,7 @@ public sealed class AuditPropertySetter(TimeProvider clock, ICurrentUser? curren
     {
         ArgumentNullException.ThrowIfNull(entity);
 
-        if (entity is IModificationAudited modified)
+        if (entity is IMarkModified modified)
         {
             (DateTimeOffset now, Guid? by) = Now();
             modified.MarkModified(now, by);
@@ -44,12 +44,12 @@ public sealed class AuditPropertySetter(TimeProvider clock, ICurrentUser? curren
         ArgumentNullException.ThrowIfNull(entity);
 
         (DateTimeOffset now, Guid? by) = Now();
-        if (entity is ISoftDelete { IsDeleted: false } deleted)
+        if (entity is IMarkDeleted deleted && entity is ISoftDelete { IsDeleted: false })
         {
             deleted.MarkDeleted(now, by);
         }
 
-        if (entity is IModificationAudited modified)
+        if (entity is IMarkModified modified)
         {
             modified.MarkModified(now, by);
         }

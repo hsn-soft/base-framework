@@ -17,7 +17,12 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\HsnSoft.Base.Core\HsnSoft.Base.Core.csproj" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="$(MicrosoftAspNetCorePackageVersion)" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\HsnSoft.Base.Auditing\HsnSoft.Base.Auditing.csproj" />
+        <ProjectReference Include="..\HsnSoft.Base.Data\HsnSoft.Base.Data.csproj" />
     </ItemGroup>
 
 </Project>

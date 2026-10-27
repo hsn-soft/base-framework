@@ -1,4 +1,5 @@
 using System;
+using HsnSoft.Base.Auditing;
 
 namespace HsnSoft.Base.Application.Dtos;
 
@@ -13,8 +14,8 @@ public abstract class EntityDto<TKey> : IEntityDto<TKey>
     public TKey Id { get; set; } = default!;
 }
 
-/// <summary>An entity that is shown with when and by whom it was made.</summary>
-public abstract class CreationAuditedEntityDto<TKey> : EntityDto<TKey>
+/// <summary>An entity that is shown with when and by whom it was made: the same contract (<see cref="ICreationAuditedObject"/>) as the entity has.</summary>
+public abstract class CreationAuditedEntityDto<TKey> : EntityDto<TKey>, ICreationAuditedObject
 {
     public DateTimeOffset CreatedAt { get; set; }
 
@@ -22,7 +23,7 @@ public abstract class CreationAuditedEntityDto<TKey> : EntityDto<TKey>
 }
 
 /// <summary>An entity that is shown with its creation and its last change.</summary>
-public abstract class AuditedEntityDto<TKey> : CreationAuditedEntityDto<TKey>
+public abstract class AuditedEntityDto<TKey> : CreationAuditedEntityDto<TKey>, IAuditedObject
 {
     public DateTimeOffset UpdatedAt { get; set; }
 
@@ -30,7 +31,7 @@ public abstract class AuditedEntityDto<TKey> : CreationAuditedEntityDto<TKey>
 }
 
 /// <summary>An entity that is shown with its deletion too (for the code that looks at the deleted ones; the lists do not show them).</summary>
-public abstract class FullAuditedEntityDto<TKey> : AuditedEntityDto<TKey>
+public abstract class FullAuditedEntityDto<TKey> : AuditedEntityDto<TKey>, IFullAuditedObject
 {
     public bool IsDeleted { get; set; }
 

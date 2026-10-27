@@ -207,8 +207,8 @@ public class EfCoreRepository<TContext, TEntity, TKey>(TContext db) : IEfCoreRep
             setters =>
             {
                 SetValue(setters, nameof(ISoftDelete.IsDeleted), true);
-                SetValue(setters, nameof(ISoftDelete.DeletedAt), (DateTimeOffset?)stamp.At);
-                SetValue(setters, nameof(ISoftDelete.DeletedBy), stamp.By);
+                SetValue(setters, nameof(IHasDeletionTime.DeletedAt), (DateTimeOffset?)stamp.At);
+                SetValue(setters, nameof(IDeletionAuditedObject.DeletedBy), stamp.By);
                 Modified(setters, stamp);
             },
             cancellationToken).ConfigureAwait(false);
@@ -229,13 +229,13 @@ public class EfCoreRepository<TContext, TEntity, TKey>(TContext db) : IEfCoreRep
             cancellationToken);
     }
 
-    // IModificationAudited: written by the statement, as the change tracker would write them
+    // IModificationAuditedObject: written by the statement, as the change tracker would write them
     private static void Modified(UpdateSettersBuilder<TEntity> setters, AuditStamp stamp)
     {
-        if (typeof(IModificationAudited).IsAssignableFrom(typeof(TEntity)))
+        if (typeof(IModificationAuditedObject).IsAssignableFrom(typeof(TEntity)))
         {
-            SetValue(setters, nameof(IModificationAudited.UpdatedAt), stamp.At);
-            SetValue(setters, nameof(IModificationAudited.UpdatedBy), stamp.By);
+            SetValue(setters, nameof(IModificationAuditedObject.UpdatedAt), stamp.At);
+            SetValue(setters, nameof(IModificationAuditedObject.UpdatedBy), stamp.By);
         }
     }
 

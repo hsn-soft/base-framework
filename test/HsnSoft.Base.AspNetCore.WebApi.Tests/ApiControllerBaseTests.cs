@@ -47,7 +47,7 @@ public sealed class ApiControllerBaseTests
     {
         WebApplicationBuilder builder = WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = "Production" });
         builder.WebHost.UseTestServer();
-        builder.Services.AddBaseWebApi().AddSingleton<ICurrentUser, FixedUser>().AddBaseEntityConcepts();
+        builder.Services.AddBaseWebApi().AddSingleton<ICurrentUser, FixedUser>().AddSingleton<ICurrentTenant, CurrentTenant>();
         builder.Services.AddControllers().AddApplicationPart(typeof(BaseSampleController).Assembly);
         await using WebApplication app = builder.Build();
         app.UseBaseExceptionHandling();

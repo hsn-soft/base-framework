@@ -4,7 +4,7 @@ using HsnSoft.Base.Auditing;
 namespace HsnSoft.Base.Domain.Entities;
 
 /// <summary>An entity that knows when it was made and by whom: the persistence calls <see cref="MarkCreated"/> when it is added.</summary>
-public abstract class CreationAuditedEntity<TKey> : Entity<TKey>, ICreationAudited
+public abstract class CreationAuditedEntity<TKey> : Entity<TKey>, ICreationAuditedObject, IMarkCreated
 {
     protected CreationAuditedEntity()
     {

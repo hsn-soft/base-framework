@@ -1,9 +1,10 @@
 using System;
+using HsnSoft.Base.Auditing;
 
 namespace HsnSoft.Base.Domain.Entities;
 
 /// <summary>An audited entity that is not removed when it is deleted: the persistence marks it (<see cref="MarkDeleted"/>) and the lists do not show it.</summary>
-public abstract class FullAuditedEntity<TKey> : AuditedEntity<TKey>, ISoftDelete
+public abstract class FullAuditedEntity<TKey> : AuditedEntity<TKey>, IFullAuditedObject, IMarkDeleted
 {
     protected FullAuditedEntity()
     {
