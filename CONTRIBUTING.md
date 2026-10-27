@@ -91,7 +91,7 @@ Rules to know:
 - Every public extension method that registers services has an XML doc comment saying what it registers and which configuration
   section it reads.
 - The references of a project file are in groups, one `ItemGroup` each, from the top down: external (NuGet, `FrameworkReference`), framework (`HsnSoft.Base.*`), shared (`<Product>.Shared.*`), own (the other projects of the service or product),
-  each in alphabetical order ([ADR-0043](docs/adr/0043-project-file-reference-order.md)). `python3 scripts/ci-check-csproj-order.py --fix` puts them in order; the CI and the detector check it.
+  each in alphabetical order ([ADR-0043](docs/adr/0043-project-file-reference-order.md)). `python3 scripts/ci-check-csproj-order.py --fix` puts them in order; the CI and the detector check it. In `src/` every package reaches `HsnSoft.Base.Core` and does not list a reference a sibling already brings, `Core` included ([ADR-0075](docs/adr/0075-rules-of-the-framework-project-files.md), `scripts/ci-check-framework-references.py`).
 - Do not commit secrets, tokens or real connection strings. Sample values live only under `samples/`.
 
 ## Adding a package

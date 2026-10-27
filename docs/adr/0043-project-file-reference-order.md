@@ -2,6 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-10-25
+- **Note:** [ADR-0075](0075-rules-of-the-framework-project-files.md) keeps this rule in the list of the rules of the project files.
 
 ## Context
 

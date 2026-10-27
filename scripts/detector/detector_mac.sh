@@ -93,6 +93,7 @@ stage restore "Restore" dotnet restore HsnSoft.Base.sln --verbosity minimal && R
 
 stage test-projects "Every package has a test project" ./scripts/ci-check-test-projects.sh
 stage csproj-order "Project file reference order" python3 scripts/ci-check-csproj-order.py
+stage framework-references "Framework project references" python3 scripts/ci-check-framework-references.py
 if [ "$RESTORED" = true ]; then
     stage format-cs "Format (C#)" format_cs
 else

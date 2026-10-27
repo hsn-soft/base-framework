@@ -117,6 +117,7 @@ $restored = Invoke-Stage "restore" "Restore" { dotnet restore HsnSoft.Base.sln -
 
 Invoke-Stage "test-projects" "Every package has a test project" { bash ./scripts/ci-check-test-projects.sh } | Out-Null
 Invoke-Stage "csproj-order" "Project file reference order" { & $python scripts/ci-check-csproj-order.py } | Out-Null
+Invoke-Stage "framework-references" "Framework project references" { & $python scripts/ci-check-framework-references.py } | Out-Null
 if ($restored)
 {
     Invoke-Stage "format-cs" "Format (C#)" {
