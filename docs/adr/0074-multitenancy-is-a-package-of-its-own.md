@@ -13,7 +13,7 @@ and not write the claims, and it worked, but it still carried the types, the con
 
 Everything about tenants moves out of the packages that do not need it into packages that do, and the packages that stay behave as before for a service without tenants.
 
-- **`HsnSoft.Base.MultiTenancy`** (on nothing but the DI abstractions) holds `IMultiTenant`, `ICurrentTenant` and `CurrentTenant`, `TenantAssigner`, `TenantContext` and `ITenantSource`, and `AddBaseMultiTenancy()`.
+- **`HsnSoft.Base.MultiTenancy`** (on `Core`) holds `IMultiTenant`, `ICurrentTenant` and `CurrentTenant`, `TenantAssigner`, `TenantContext` and `ITenantSource`, and `AddBaseMultiTenancy()`.
   `ICurrentTenant` no longer reads `ICurrentUser`: it reads the first **`ITenantSource`** that knows a tenant (a source answers `TenantContext?`), unless code acts as another tenant with `Change(...)`. Where the tenant comes from is a source, so the token and the message are two packages, not two cases in one.
 - **`HsnSoft.Base.MultiTenancy.Authentication`** (on `MultiTenancy`) is the source of a request: the claims `tenant_id`, `is_system_tenant` and `allowed_tenant_id` (`TenantClaimTypes`, which the auth server writes with), `AddBaseTenantClaims()`.
 - **`HsnSoft.Base.MultiTenancy.EventBus`** (on `EventBus` and `MultiTenancy`): the tenant travels with the messages as **headers** (`TenantId`, `IsSystemTenant`), written by an `IEventHeaderProvider` and read by an `IEventHandlerScope` that runs the handler in the tenant of the message
@@ -33,7 +33,7 @@ Everything about tenants moves out of the packages that do not need it into pack
 ## Consequences
 
 - A service without tenants has no tenant type, parameter or registration; the unique indexes and the DTOs are the service's own (the shipment's customer user name is unique in the whole service).
-- The graph of [ADR-0004](0004-core-once-and-the-dependency-graph.md) has five more rows. `Core` has no tenant, and `MultiTenancy` is the first package that does not reference `Core`: it needs nothing from it (the rule of ADR-0004 is about the types that several packages share, and nothing of `Core` is one of them for the tenants).
+- The graph of [ADR-0004](0004-core-once-and-the-dependency-graph.md) has five more rows. `Core` has no tenant, and `MultiTenancy` is on `Core` like every package at the root of a branch.
 - The envelope of a message from a service without tenants has no `IsSystemTenant` (it used to carry `false`); readers treat a missing one as `false`, as before.
 - A service with tenants adds three or four registrations it did not need to write before, and a reference per package: that is the price of choosing.
 - `ICurrentUser` implementations of a product (a test, a host) lose the three tenant members; the tenant of a test is an `ITenantSource`.

@@ -22,7 +22,6 @@
 
     <ItemGroup>
         <ProjectReference Include="..\HsnSoft.Base.AspNetCore.Swashbuckle\HsnSoft.Base.AspNetCore.Swashbuckle.csproj" />
-        <ProjectReference Include="..\HsnSoft.Base.Core\HsnSoft.Base.Core.csproj" />
     </ItemGroup>
 
 </Project>

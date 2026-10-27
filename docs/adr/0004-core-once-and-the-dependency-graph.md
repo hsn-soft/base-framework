@@ -26,7 +26,7 @@ referenced it in its own way, and sibling references multiplied: restores slowed
 | `Hosting` | Core |
 | `Auditing` | Core |
 | `Data` | Core |
-| `MultiTenancy` | - (the DI abstractions only) |
+| `MultiTenancy` | Core |
 | `MultiTenancy.Authentication` | MultiTenancy |
 | `MultiTenancy.EventBus` | EventBus, MultiTenancy |
 | `MultiTenancy.EntityFrameworkCore` | EntityFrameworkCore, MultiTenancy |

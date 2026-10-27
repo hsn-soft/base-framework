@@ -20,4 +20,8 @@
         <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="$(MicrosoftAspNetCorePackageVersion)" />
     </ItemGroup>
 
+    <ItemGroup>
+        <ProjectReference Include="..\HsnSoft.Base.Core\HsnSoft.Base.Core.csproj" />
+    </ItemGroup>
+
 </Project>
