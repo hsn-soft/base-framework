@@ -1,125 +1,18 @@
-# Xyz: the second system ([ADR-0061](../docs/adr/0061-the-xyz-sample-beside-abc.md))
+# Samples
 
-A second event-driven microservice system on the `HsnSoft.Base.*` framework, written **beside Abc** to do the same job (users, products, orders, shipments, customers, payments, histories, the same order flow) with other choices,
-so the two show that the framework fits more than one product. What differs:
-
-| | Abc | Xyz |
-|---|---|---|
-| Users | an identity service (CRUD) and an auth server that reads its database | **one auth server**: it keeps the users and their history and issues the tokens |
-| Gateways | commercial and public (and two web apps) | **one commercial gateway** (with a Redis rate limit) |
-| Layers of a service | class libraries (Domain, Application, EntityFrameworkCore/MongoDB, Http.Host) | **folders of the Host project** (`Domain`, `Application`, `Infrastructure`, `Controllers`, `EventHandlers`) |
-| Databases | SQL Server, PostgreSQL, MongoDB | **PostgreSQL only** (a service with two stores has two contexts on two databases) |
-| Message broker | RabbitMQ (exchange `ABC`) | **Kafka** (topics `XYZ_<Event>`, one consumer group per service and event, `XYZ_<Service>_<Event>`) |
-| Redis | rate limit (gateway), refresh tokens | the same: rate limit in the gateway (`Xyz.Shared/RateLimiting`), refresh tokens in the auth server |
-| Shared code | several `Abc.Shared.*` projects | one project, `Xyz.Shared` (hosting, gateway shell, event contracts, rate limit) |
-
-```
- client --> Xyz.Gateway.Commercial (5100) --> Xyz.AuthServer (5110)      users, user history, tokens (RS256), refresh tokens (Redis)
-                |   rate limit (Redis)  \--> Xyz.OrderService (5120)     orders                      --OrderCreatedEto-->
-                                         \--> Xyz.ProductService (5130)  products, stock history     <--OrderStockReserved/Rejected--
-                                          \-> Xyz.ShipmentService (5140) shipments, customers, payments, shipment history --ShipmentCompletedEto--> order
-```
-
-| Host | Port | Databases (PostgreSQL) | Notes |
-|---|---|---|---|
-| `Xyz.Gateway.Commercial.Host` | 5100 | - (Redis) | `/<service>/v1/...` is `/api/<service>/v1/commercial/...` of the service; routes are settings (`ReverseProxyRoutes`, `ServiceEndpoints`) |
-| `Xyz.AuthServer.Host` | 5110 | `Xyz_AuthServer_<E>`, `Xyz_AuthServerHistory_<E>` | `auth/login`, `auth/refresh`, `auth/logout`, `auth/me`; users CRUD; every token issued is written to the history as the user who signs in |
-| `Xyz.OrderService.Host` | 5120 | `Xyz_Order_<E>` | orders; handles the stock and shipment events |
-| `Xyz.ProductService.Host` | 5130 | `Xyz_Product_<E>`, `Xyz_Stock_<E>` | products; the stock history is a second context on its own database |
-| `Xyz.ShipmentService.Host` | 5140 | `Xyz_Shipment_<E>`, `Xyz_ShipmentHistory_<E>` | shipments, customers, payments; the payment and the parcel are two steps joined by an internal event |
-| `Xyz.Shared` | - | - | what the hosts share |
-
-`<E>` is `Dev`, `Stage`, `Uat` or `Prod`. The environments are the same five as in Abc (`development`, `docker`, `stage`, `uat`, `production`: `appsettings.<environment>.json` next to `appsettings.json`); only `development` has working values
-(local PostgreSQL `postgres`/`postgres`, Redis and Kafka on `localhost`), the others have example host names and `CHANGE_ME` passwords: real ones come from the environment or a secret store, never from a file in git.
-A context names its provider and connection string in code (`EfCore<Name>DbProperties`: `EfCoreProviderNames.Postgres`, `EfCore-OrderService`, ...), not in settings.
-
-## The order flow
-
-The same as in Abc ([ADR-0054](../docs/adr/0054-the-order-flow-through-events.md), [ADR-0060](../docs/adr/0060-customer-payment-and-an-internal-event-in-the-shipment-service.md)), over Kafka:
-
-1. `orders/create` saves the order `Pending` and publishes `OrderCreatedEto`.
-2. The product service sets the stock aside (and writes the stock history) and publishes `OrderStockReservedEto`, or `OrderStockRejectedEto`.
-3. The shipment service makes the customer when there is none, takes the payment and publishes the internal `PaymentProcessedEto`; its handler sends the parcel and publishes `ShipmentCompletedEto`.
-4. The order becomes `Confirmed`/`Delivered`, or `Cancelled` with the reason. The address of the order picks the outcome: any address is delivered, `nopay` is a declined payment, `fail` a parcel the carrier cannot reach.
-
-The caller of a message (user, roles in its envelope, the tenant in its headers) travels with it and a handler runs as that user, in that tenant ([ADR-0057](../docs/adr/0057-the-caller-of-a-message-and-publish-or-send.md), [ADR-0074](../docs/adr/0074-multitenancy-is-a-package-of-its-own.md)), so the audit fields of what a handler writes are the user's. Kafka has no queue per service, so a message
-cannot be *sent* to one service there (`SendAsync` throws `NotSupportedException`); every Xyz event is published to its topic and each service reads it with a consumer group of its own. Events live in `Xyz.Shared/Contracts/Events/<publishing service>`, their handlers in the Host of the handling service
-(`EventHandlers/<publishing service>`, `EventHandlers/Internal`) ([ADR-0059](../docs/adr/0059-where-events-and-their-handlers-live.md)).
+The one sample system of the repository is **Abc**: an event-driven microservice system (an identity service, an auth server, order, product and shipment services, two gateways and two web apps) on the `HsnSoft.Base.*` framework. What references what is in
+[abc/REFERENCES.md](abc/REFERENCES.md). The Xyz, Def and Agt samples were removed ([ADR-0077](../docs/adr/0077-only-the-abc-sample-stays.md)); the packages they alone used are still covered by the framework's own unit and integration tests, and a product with other choices is composed
+from the packages it wants (see [docs/Logging.md](../docs/Logging.md), [ADR-0076](../docs/adr/0076-more-providers-and-the-rules-every-provider-shares.md)).
 
 ## Run it
 
-The hosts use the local infrastructure on its default ports: PostgreSQL `5432`, Redis `6379`, Kafka `9092`. They create their own databases and topics and wait for a dependency that is still starting (a broker that does not answer yet is tried again).
-
-```bash
-dotnet run scripts/generate-rsa-keys.cs -- samples/xyz/Xyz.AuthServer.Host/private_key.xml samples/xyz/Xyz.Shared/Hosting/public_key.xml   # once; both files are git-ignored, never reuse a key of another system
-./samples/xyz/run-all.sh        # builds and starts the five hosts, Ctrl+C stops them
-./samples/xyz/smoke-test.sh     # in another terminal: logs in, refreshes, runs the four order outcomes through the gateway
-```
-
-Demo accounts (development database only): `alice` / `alice123` (customer, tenant Acme) and `admin` / `admin123` (admin, system tenant). Seeded products: `LAMP-001` (stock 10) and `CHAIR-001` (stock 0).
-
-```bash
-TOKEN=$(curl -s -X POST localhost:5100/auth-server/v1/auth/login -H 'Content-Type: application/json' \
-        -d '{"username":"alice","password":"alice123"}' | python3 -c 'import json,sys;print(json.load(sys.stdin)["payload"]["accessToken"])')
-curl -s -X POST localhost:5100/product-service/v1/products/paged-list -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d '{}'
-```
+The hosts use the local infrastructure on its default ports (PostgreSQL, SQL Server, MongoDB, Redis, RabbitMQ). `samples/abc/run-all.sh` builds and starts the hosts of the order flow (Ctrl+C stops them; `PersistentLogger__IsGrayLogActive=true` sends the logs to Graylog) and
+`samples/abc/smoke-test.sh` runs the three outcomes of an order through the commercial gateway and checks how each ends. The keys of the tokens are made first ([The keys of the Abc tokens](#the-keys-of-the-abc-tokens)).
 
 ## Logging
 
 Every host logs through `HsnSoft.Base.Logging.Serilog` (`PersistentLogger` section of its `appsettings.json`, see [docs/Logging.md](../docs/Logging.md)). The console gets everything from Debug up; Information and above go to **Graylog** when
-`PersistentLogger:IsGrayLogActive` is `true` (GELF HTTP input `127.0.0.1:12202`, the local `infra-graylog`), otherwise to `Logs/<service>.txt`. Every log carries `Solution` (`Xyz`, `Abc`, ...: the first part of the assembly name), so in Graylog `Solution:Xyz` finds the whole Xyz system.
-
-```bash
-PersistentLogger__IsGrayLogActive=true ./samples/xyz/run-all.sh      # without the variable: log files
-```
-
-## Agt.Scheduler.Host: an agent
-
-A second product ("Agt") with a different shape: no api, no authentication, no event bus. It takes **three** framework
-packages, `AspNetCore` (only for the health endpoints), `Hosting` (the worker base) and `MongoDB`; no JWT, Swagger, broker or cache
-package is loaded. Its output folder contains `HsnSoft.Base.AspNetCore/Core/Hosting/MongoDB` and the Mongo driver, nothing else.
-
-The ASP.NET Core host gives it the lifetime, configuration, logging and the health endpoints a platform probes
-(`/health/live`, `/health/ready` on port 5200). Every `Scheduler:PollIntervalSeconds` its worker (`RecentRecordsWorker`, built on
-`PeriodicBackgroundService`) looks into the MongoDB collection `sample_records` and writes the ids of the records created in the
-last `Scheduler:LookbackMinutes` minutes to its log. A failed run is logged and retried at the next tick.
-
-```bash
-dotnet run --project samples/agent/Agt.Scheduler.Host
-```
-```bash
-# in another terminal: add a record (other applications write them, the agent only reads)
-docker exec infra-mongo_container mongosh --quiet agt_scheduler \
-    --eval 'db.sample_records.insertOne({name: "demo", createdAt: new Date()})'
-```
-```
-info: Agt.Scheduler.Host.RecentRecordsWorker
-      1 record(s) created in the last 5 minute(s): 6ada9c4caa3b2dd7783d88b3
-```
-
-The documents must carry a `createdAt` date; the field name is part of the contract with the writers.
-
-## Def.Signer.Host: a monolith web api
-
-A third product ("Def"): one host that answers fast and does the slow work later. Packages: `AspNetCore`, `AspNetCore.WebApi`,
-`Caching.StackExchangeRedis`, `EventBus.Kafka`, `BlobStoring.Minio`, `EntityFrameworkCore.SqlServer`. There is no `Def.Shared`: one
-host has nothing to share, so it composes the framework in its own `Program.cs`.
-
-| Step | What happens |
-|---|---|
-| `POST /documents` | The `X-Api-Key` header is looked up in Redis (`def:apikey:{sha256 of the key}` -> owner; the keys are never stored). The request is published to Kafka (`def.SignRequested`) and answered with `202` and a request id. |
-| Consumer | `SignRequestedHandler` runs on the Kafka consumer group `signer`, takes `Signer:ProcessingDelay` (2 s, standing in for slow work), builds a JSON document and saves it to MinIO (`signer-documents/{owner}/{requestId}.json`). |
-| Metadata | The file's name, size and SHA-256 go to SQL Server (`documents`, unique on the request id, so a re-delivered message changes nothing). |
-| `GET /documents/{id}` | `404` while queued, then the metadata. `GET /documents/{id}/content` streams the JSON from MinIO. A caller only sees its own documents. |
-
-```bash
-dotnet run --project samples/def/Def.Signer.Host      # http://localhost:5300, sample keys: acme-sample-api-key, globex-sample-api-key
-curl -X POST localhost:5300/documents -H 'X-Api-Key: acme-sample-api-key' -H 'Content-Type: application/json' \
-     -d '{"title":"Contract","content":"hello"}'
-curl localhost:5300/documents/<requestId> -H 'X-Api-Key: acme-sample-api-key'
-```
-
-SQL Server needs about 2 GB of memory; a container limited to 1 GB restarts in a loop (error 17300 in its log).
+`PersistentLogger:IsGrayLogActive` is `true` (GELF HTTP input `127.0.0.1:12202`, the local `infra-graylog`), otherwise to `Logs/<service>.txt`. Every log carries `Solution` (`Abc`: the first part of the assembly name), so in Graylog `Solution:Abc` finds the whole system.
 
 ## Abc: the identity service (in the making)
 
@@ -223,7 +116,7 @@ application lasts as long as the token (15 minutes); when the token is no longer
 
 ### The inbox in Abc ([ADR-0067](../docs/adr/0067-the-event-inbox-is-opt-in-and-a-decorator.md))
 
-The identity service (SQL Server), the order service (PostgreSQL) and the product service (MongoDB) have an inbox (`AddEventInbox<...DbContext>()`, or `AddEventInbox("InboxMessage")` on MongoDB; the table or collection `InboxMessage` in their own databases): a message that comes twice is handled once there. The shipment service has none, and the Xyz system does not use the inbox at all.
+The identity service (SQL Server), the order service (PostgreSQL) and the product service (MongoDB) have an inbox (`AddEventInbox<...DbContext>()`, or `AddEventInbox("InboxMessage")` on MongoDB; the table or collection `InboxMessage` in their own databases): a message that comes twice is handled once there. The shipment service has none.
 
 ### Who references what in Abc ([ADR-0069](../docs/adr/0069-who-references-which-shared-project-in-abc.md))
 

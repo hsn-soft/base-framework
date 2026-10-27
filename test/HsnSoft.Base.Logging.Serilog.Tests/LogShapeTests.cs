@@ -53,7 +53,7 @@ public sealed class LogShapeTests
     [InlineData("Polly.Retry", "PlatformLog")]
     [InlineData("OrdersExtras.Thing", "PlatformLog")]
     [InlineData("HsnSoft.BaseCamp.Thing", "PlatformLog")]
-    [InlineData("Xyz.Other", "PlatformLog")]
+    [InlineData("Abcd.Other", "PlatformLog")]
     public void TheCategory_DecidesTheLogType(string category, string expected)
     {
         LogEvent logEvent = category.Length == 0 ? Enriched() : Enriched(Source(category));

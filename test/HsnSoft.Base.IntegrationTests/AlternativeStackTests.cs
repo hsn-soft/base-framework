@@ -18,7 +18,7 @@ using Testcontainers.MySql;
 namespace HsnSoft.Base.IntegrationTests;
 
 /// <summary>
-/// A service that makes other choices than the Abc and Xyz samples do (NLog instead of Serilog, Azure Blob Storage instead of MinIO, MySQL instead of PostgreSQL), composed from the framework packages alone: it logs, stores a row and a blob, and
+/// A service that makes other choices than the Abc sample does (NLog instead of Serilog, Azure Blob Storage instead of MinIO, MySQL instead of PostgreSQL), composed from the framework packages alone: it logs, stores a row and a blob, and
 /// answers its readiness, with the real services behind it. The packages of the other choices are not part of it (see the dependency graph in ADR-0004).
 /// </summary>
 public sealed class AlternativeStackTests : IAsyncLifetime

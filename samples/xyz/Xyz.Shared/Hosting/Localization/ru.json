@@ -1,7 +1,0 @@
-{
-  "culture": "ru",
-  "texts": {
-    "status_required": "Статус обязателен.",
-    "invalid_credentials": "Неверное имя пользователя или пароль."
-  }
-}

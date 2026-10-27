@@ -1,6 +1,6 @@
 # ADR-0061: The Xyz sample beside Abc
 
-- **Status:** Accepted
+- **Status:** Superseded by [ADR-0077](0077-only-the-abc-sample-stays.md) (the Xyz sample was removed)
 - **Date:** 2026-10-25
 - **Note:** [ADR-0063](0063-kafka-topics-are-named-after-the-exchange.md): the topics are `XYZ_<Event>`, not `xyz.<Event>`.
 

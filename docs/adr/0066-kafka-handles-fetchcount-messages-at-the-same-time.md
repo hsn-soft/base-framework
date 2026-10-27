@@ -2,6 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-10-26 (changes the one-message-at-a-time reading of [ADR-0062](0062-a-kafka-consumer-for-every-service-and-event.md); the two brokers now behave alike)
+- **Note:** [ADR-0077](0077-only-the-abc-sample-stays.md): the Xyz sample, which showed this, was removed; the Kafka consumer is covered by its tests.
 
 ## Context
 

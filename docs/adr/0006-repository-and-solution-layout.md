@@ -2,6 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-10-25
+- **Note:** [ADR-0077](0077-only-the-abc-sample-stays.md): `samples/xyz`, `samples/def` and `samples/agent` were removed; `samples/abc` is the one sample.
 
 ## Context
 

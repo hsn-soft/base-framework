@@ -60,7 +60,7 @@ def main() -> None:
     print("the writer of a log puts its fields on it, the enrichers add the common ones and `NoiseEnricher` removes what a type must not have (see")
     print("[Logging.md](Logging.md), *Fields and facility*, and [ADR-0019](adr/0019-log-fields-pipeline.md)). Regenerate it with `scripts/graylog-fields/generate.py` after a change to the fields.")
     print("`●` = every log of that type has it, `◐` = some do (it depends on the case: the user is known, there was an exception), empty = never, `?` = the run had no log of")
-    print("that type (a `SharedLog` is written by the shared library of a product: the rate limit of the Xyz samples writes one only when Redis is down), so nothing can be said.\n")
+    print("that type (a `SharedLog` is written by the shared library of a product: the framework has none, a product may), so nothing can be said.\n")
     print("Logs of this run: " + ", ".join(f"`{t}` {len(by_type[t])}" for t in TYPES) + "\n")
     print("| Alan | " + " | ".join(f"`{t}`" for t in TYPES) + " |")
     print("|---|" + ":-:|" * len(TYPES))

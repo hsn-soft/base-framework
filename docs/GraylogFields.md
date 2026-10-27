@@ -5,7 +5,7 @@ failed, a request the gateway answered itself, a file upload and download, the l
 the writer of a log puts its fields on it, the enrichers add the common ones and `NoiseEnricher` removes what a type must not have (see
 [Logging.md](Logging.md), *Fields and facility*, and [ADR-0019](adr/0019-log-fields-pipeline.md)). Regenerate it with `scripts/graylog-fields/generate.py` after a change to the fields.
 `●` = every log of that type has it, `◐` = some do (it depends on the case: the user is known, there was an exception), empty = never, `?` = the run had no log of
-that type (a `SharedLog` is written by the shared library of a product: the rate limit of the Xyz samples writes one only when Redis is down), so nothing can be said.
+that type (a `SharedLog` is written by the shared library of a product: the framework has none, a product may), so nothing can be said.
 
 Logs of this run: `HttpRequest` 12, `HttpResponse` 12, `HttpRequestResponse` 4, `ConsumeStart` 6, `ConsumeEnd` 6, `FrameworkLog` 29, `PlatformLog` 2, `SharedLog` 0, `AppLog` 8
 

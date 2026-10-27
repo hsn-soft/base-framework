@@ -28,6 +28,7 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
+| [0077](0077-only-the-abc-sample-stays.md) | Only the Abc sample stays | Accepted | 2026-10-27 |
 | [0076](0076-more-providers-and-the-rules-every-provider-shares.md) | More providers (NLog, Azure, AWS, MySQL), and the rules every logging provider shares | Accepted | 2026-10-27 |
 | [0075](0075-rules-of-the-framework-project-files.md) | The rules of the project files of the framework (a living list) | Accepted | 2026-10-27 |
 | [0074](0074-multitenancy-is-a-package-of-its-own.md) | Multitenancy is a package of its own, and a service that does not want tenants does not get them | Accepted | 2026-10-27 |
@@ -43,7 +44,7 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 | [0064](0064-the-stock-is-changed-in-one-step.md) | The stock is changed in one step of the store (an atomic update on MongoDB too) | Accepted | 2026-10-26 |
 | [0063](0063-kafka-topics-are-named-after-the-exchange.md) | Kafka topics are named after the exchange; the topic prefix setting is gone | Accepted | 2026-10-25 |
 | [0062](0062-a-kafka-consumer-for-every-service-and-event.md) | A Kafka consumer, in a group of its own, for every service and event | Accepted | 2026-10-25 |
-| [0061](0061-the-xyz-sample-beside-abc.md) | The Xyz sample beside Abc | Accepted | 2026-10-25 |
+| [0061](0061-the-xyz-sample-beside-abc.md) | The Xyz sample beside Abc | Superseded by [0077](0077-only-the-abc-sample-stays.md) | 2026-10-25 |
 | [0060](0060-customer-payment-and-an-internal-event-in-the-shipment-service.md) | Customer, payment and an internal event in the shipment service | Accepted | 2026-10-25 |
 | [0059](0059-where-events-and-their-handlers-live.md) | Where the events and their handlers live | Accepted | 2026-10-25 |
 | [0058](0058-names-on-the-broker-in-the-abc-sample.md) | The names on the broker in the Abc sample | Accepted | 2026-10-25 |

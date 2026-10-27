@@ -57,7 +57,7 @@ JWT, Swagger, a broker or a cache.
 | `HsnSoft.Base` | Name holder that references `HsnSoft.Base.Core` | Core |
 
 Abstractions and their implementations are separate packages (`EventBus` / `EventBus.RabbitMQ` / `EventBus.Kafka`, `BlobStoring` /
-`BlobStoring.Minio` / `.Azure` / `.Aws`, `Logging.Serilog` / `.NLog`), so a product picks the broker or the storage per service and can change it with one registration. A package never depends on a sibling it does not need. Anything only one product needs (the Xyz gateway's rate
+`BlobStoring.Minio` / `.Azure` / `.Aws`, `Logging.Serilog` / `.NLog`), so a product picks the broker or the storage per service and can change it with one registration. A package never depends on a sibling it does not need. Anything only one product needs (a product's gateway rate
 limit, for example) is that product's shared code, not a framework package.
 
 ## Tests
@@ -78,16 +78,16 @@ new provider.
 ## The product decides the composition
 
 The framework offers building blocks; the product's shared library chooses which ones its services use and in which order they
-are registered and run. `samples/xyz/Xyz.Shared` does it for a JWT-secured web api; `samples/agent/Agt.Scheduler.Host` is an agent that
-takes only three packages.
+are registered and run. `samples/abc/shared/Abc.Shared.Hosting` does it for a JWT-secured web api, and a host that needs less takes fewer packages
+(the gateways, for one, have no database or broker).
 
 ```csharp
 // product shared library: one composition for every service of the product
-public static IServiceCollection AddXyzApi(this IServiceCollection services, IConfiguration configuration)
+public static IServiceCollection AddAbcApi(this IServiceCollection services, IConfiguration configuration)
     => services.AddBaseWebApi().AddBaseSwaggerWithBearer("Orders API", "Enter a valid token", configuration).AddBaseHealthChecks()
                .AddBaseJwtAuthentication(configuration).AddBaseRedis(configuration);
 
-public static WebApplication UseXyzApi(this WebApplication app, Action<WebApplication>? beforeAuthorization = null)
+public static WebApplication UseAbcApi(this WebApplication app, Action<WebApplication>? beforeAuthorization = null)
 {
     app.UseBaseExceptionHandling(); app.UseBaseSwagger();
     app.UseBaseAuthentication(); beforeAuthorization?.Invoke(app); app.UseBaseAuthorization();
@@ -100,7 +100,7 @@ A service then adds its own store and broker:
 
 ```csharp
 builder.Services
-    .AddXyzApi(builder.Configuration)
+    .AddAbcApi(builder.Configuration)
     .AddBasePostgres<OrderDbContext>(builder.Configuration)
     .AddRabbitMqEventBus(builder.Configuration)
     .AddEventHandler<StockReserved, StockReservedHandler>();
