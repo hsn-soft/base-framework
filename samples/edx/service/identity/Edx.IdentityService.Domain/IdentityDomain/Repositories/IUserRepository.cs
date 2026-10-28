@@ -15,6 +15,12 @@ public interface IUserRepository : IRepository<User, Guid>
     /// </summary>
     Task<SignInInfo?> FindForSignInAsync(string tenantCode, string userName, CancellationToken cancellationToken = default);
 
+    /// <summary>Gives the user exactly these roles (the roles of the user's own tenant: the caller checked them).</summary>
+    Task SetRolesAsync(User user, IReadOnlyCollection<Role> roles, CancellationToken cancellationToken = default);
+
+    /// <summary>Whether any user has the role.</summary>
+    Task<bool> AnyUserInRoleAsync(Guid roleId, CancellationToken cancellationToken = default);
+
     /// <summary>The names of the roles of each of these users (a user without roles has an empty list).</summary>
     Task<IReadOnlyDictionary<Guid, IReadOnlyList<string>>> GetRoleNamesAsync(IReadOnlyCollection<Guid> userIds, CancellationToken cancellationToken = default);
 }

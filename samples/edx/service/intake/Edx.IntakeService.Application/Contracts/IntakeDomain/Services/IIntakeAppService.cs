@@ -1,31 +1,31 @@
 using Edx.IntakeService.Application.Contracts.IntakeDomain.Dtos;
 using Edx.IntakeService.Application.Contracts.IntakeDomain.Dtos.Filters;
 using Edx.IntakeService.Application.Contracts.IntakeDomain.Dtos.Submits;
-using Edx.IntakeService.Domain.StoredFileDomain.Entities;
+using Edx.Shared.Contracts.Invoicing;
 using HsnSoft.Base.Application.Dtos;
 
 namespace Edx.IntakeService.Application.Contracts.IntakeDomain.Services;
 
 /// <summary>
-/// What the service does, whatever the way a customer reaches it: REST, gRPC and WCF all call this, and only the Host knows which. Every file received is kept in the blob store, recorded (with its folders) in the
-/// database and said to the rest of the system by an event.
+/// What the service does, whatever the way a customer reaches it (REST, gRPC, WCF, or a page of the back office): an invoice is checked at once, kept in the blob store, put in the queue and announced to the invoice service. The answer is that it was queued; what became of it is read
+/// from the queue (by the id of the queue item, or by the uuid of the invoice).
 /// </summary>
 public interface IIntakeAppService
 {
-    /// <summary>Receives a zip of XML files (each well formed).</summary>
-    Task<StoredFileDto> ReceiveXmlArchiveAsync(string fileName, Stream content, IntakeChannel channel, CancellationToken cancellationToken = default);
+    /// <summary>Queues a zip with one file of the type given. Refused at once when the hash is not the zip's, the zip is not a zip with one file of that type, or the sender may not send this much.</summary>
+    Task<QueueItemDto> QueueFileAsync(InvoiceUploadDto input, Stream content, InvoiceChannelType channel, CancellationToken cancellationToken = default);
 
-    /// <summary>Receives a zip of text, CSV or Excel files.</summary>
-    Task<StoredFileDto> ReceiveTabularArchiveAsync(string fileName, Stream content, IntakeChannel channel, CancellationToken cancellationToken = default);
+    /// <summary>Queues the model of an invoice, kept as a JSON or an XML file.</summary>
+    Task<QueueItemDto> QueueModelAsync(InvoiceSubmissionDto model, ModelFormat format, InvoiceChannelType channel, CancellationToken cancellationToken = default);
 
-    /// <summary>Receives a model of the shared API and keeps it as a JSON or an XML file.</summary>
-    Task<StoredFileDto> ReceiveInvoiceModelAsync(InvoiceSubmissionDto model, ModelFormat format, IntakeChannel channel, CancellationToken cancellationToken = default);
+    Task<QueueItemDto> GetAsync(Guid id, CancellationToken cancellationToken = default);
 
-    Task<StoredFileDto> GetAsync(Guid id, CancellationToken cancellationToken = default);
+    /// <summary>What is in the queue of an invoice: when one of its items got through (a draft was made, or it is completed) that one, otherwise all of them, the newest first (the ones that failed or were rejected).</summary>
+    Task<List<QueueItemDto>> GetByInvoiceAsync(Guid invoiceId, CancellationToken cancellationToken = default);
 
-    Task<PagedDataResultDto<StoredFileDto>> GetPagedListAsync(GetStoredFilesPaged pagedInput, CancellationToken cancellationToken = default);
+    Task<PagedDataResultDto<QueueItemDto>> GetPagedListAsync(GetQueueItemsPaged pagedInput, CancellationToken cancellationToken = default);
 
-    /// <summary>The bytes of a file as they were received, with its name and content type.</summary>
+    /// <summary>The bytes of the queued file as they were received, with its name and content type.</summary>
     Task<StoredFileContent> OpenAsync(Guid id, CancellationToken cancellationToken = default);
 }
 

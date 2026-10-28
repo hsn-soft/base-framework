@@ -23,7 +23,11 @@ public sealed class IdentityDbContext(DbContextOptions<IdentityDbContext> option
 
     public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
 
-    public DbSet<UserPermission> UserPermissions => Set<UserPermission>();
+    public DbSet<RolePermissionConstraint> RolePermissionConstraints => Set<RolePermissionConstraint>();
+
+    public DbSet<Menu> Menus => Set<Menu>();
+
+    public DbSet<MenuPermissionMap> MenuPermissionMaps => Set<MenuPermissionMap>();
 
     protected override void ConfigureModel(ModelBuilder modelBuilder) => modelBuilder.ConfigureIdentityDomain();
 }

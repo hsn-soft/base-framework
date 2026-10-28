@@ -22,7 +22,12 @@ internal static class GrantMapping
 
         IReadOnlyList<Permission> found = await grants.FindActiveByCodesAsync(asked.Keys, cancellationToken).ConfigureAwait(false);
         Dictionary<string, Permission> byCode = found.ToDictionary(permission => permission.Code);
-        return [.. asked.Select(item => (byCode.GetValueOrDefault(item.Key) ?? throw PermissionNotFound.For(item.Key), item.Value))];
+        // a constraint has to have its value and any other permission must have none: said here, so a grant that is wrong stops the change before anything is written
+        return [.. asked.Select(item =>
+        {
+            Permission permission = byCode.GetValueOrDefault(item.Key) ?? throw PermissionNotFound.For(item.Key);
+            return (permission, permission.CheckValue(item.Value));
+        })];
     }
 
     public static List<GrantedPermissionDto> ToDtos(IReadOnlyList<GrantedPermission> granted)

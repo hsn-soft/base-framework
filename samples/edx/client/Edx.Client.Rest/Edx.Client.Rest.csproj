@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!-- The example of a customer's program that sends an invoice file to Edx over REST (see ../README.md). Nothing of Edx is referenced: it is only HTTP. -->
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+    </PropertyGroup>
+
+</Project>

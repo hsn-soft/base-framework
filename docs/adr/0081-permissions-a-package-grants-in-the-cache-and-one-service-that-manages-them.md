@@ -1,6 +1,8 @@
 # ADR-0081: Permissions: one framework package, the grants kept in the distributed cache, one service that manages them
 
 - **Status:** Accepted
+- **Note:** [ADR-0083](0083-permission-types-the-menu-and-constraints-that-must-be-given.md): the types are four (a page type was added), a constraint must be given (no more "no value is no limit"), constraints have a table of their own, and the sample has no grants to a user.
+- **Note:** [ADR-0082](0082-a-new-permission-is-granted-to-the-sample-roles-when-it-is-added.md): the starting grants are given when a permission is added, not only on an empty database.
 - **Date:** 2026-10-27
 
 ## Context

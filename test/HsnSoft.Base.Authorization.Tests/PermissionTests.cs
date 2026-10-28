@@ -276,6 +276,34 @@ public class PermissionTests
     }
 
     [Fact]
+    public async Task ARequiredConstraint_IsItsValue_Or403BeforeAnythingIsDone()
+    {
+        DistributedPermissionStore store = NewStore();
+        await store.SetAsync(null, new PermissionSubject(PermissionProviders.Role, "operator"), Grants((TestCodes.Limits.MaxBytes, "200"), (TestCodes.Limits.Deep.Flag, "yes"), (TestCodes.Files.Read, null)));
+        PermissionChecker checker = NewChecker(new FakeUser(), store);
+
+        Assert.Equal("200", await checker.RequireValueAsync(TestCodes.Limits.MaxBytes));
+        Assert.Equal(200L, await checker.RequireLongAsync(TestCodes.Limits.MaxBytes));
+        Assert.Equal(200m, await checker.RequireDecimalAsync(TestCodes.Limits.MaxBytes));
+        Assert.Equal(200, await checker.RequireIntAsync(TestCodes.Limits.MaxBytes));
+        foreach (Func<Task> call in new Func<Task>[]
+                 {
+                     () => checker.RequireValueAsync("constraint.x.nothing"),
+                     () => checker.RequireLongAsync("constraint.x.nothing"),
+                     () => checker.RequireDecimalAsync(TestCodes.Limits.Deep.Flag),
+                     () => checker.RequireIntAsync(TestCodes.Limits.Deep.Flag),
+                     () => checker.RequireLongAsync(TestCodes.Files.Read),
+                 })
+        {
+            BaseHttpException refused = await Assert.ThrowsAsync<BaseHttpException>(call);
+            Assert.Equal(403, refused.HttpStatusCode);
+            Assert.Equal("permission_constraint_not_granted", refused.MessageKey);
+        }
+
+        await Assert.ThrowsAsync<ArgumentNullException>(() => ((IPermissionChecker)null!).RequireValueAsync("x"));
+    }
+
+    [Fact]
     public void TheCatalog_ListsTheStringConstantsOfAClassAndOfTheClassesNestedInIt()
     {
         IReadOnlyList<string> codes = PermissionCatalog.CodesOf(typeof(TestCodes));

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Builds and starts the Edx hosts (identity service, auth server, intake service, invoice service, gateway) in the development environment. Ctrl+C stops them.
+# Builds and starts the Edx hosts (identity service, auth server, intake service (REST, gRPC and WCF hosts), invoice service, gateway) and the back office (Angular, http://localhost:4200; npm install is run once) in the development environment. Ctrl+C stops them.
 # The local infrastructure on its default ports is used: SQL Server, MongoDB, Redis, Kafka and MinIO (localhost:9100). MinIO needs a user: put it in samples/edx/.env (git ignores *.env):
 #   Minio__AccessKey=...
 #   Minio__SecretKey=...
@@ -20,6 +20,8 @@ hosts=(
   samples/edx/service/identity/Edx.IdentityService.Http.Host
   samples/edx/app/Edx.AuthServer.Host
   samples/edx/service/intake/Edx.IntakeService.Http.Host
+  samples/edx/service/intake/Edx.IntakeService.Grpc.Host
+  samples/edx/service/intake/Edx.IntakeService.Wcf.Host
   samples/edx/service/invoice/Edx.InvoiceService.Http.Host
   samples/edx/gateway/Edx.Gateway.Host
 )
@@ -33,4 +35,9 @@ trap 'kill 0' INT TERM
 for host in "${hosts[@]}"; do
   dotnet run --no-build --project "$host" 2>&1 | awk -v name="$(basename "$host")" '{ printf "[%s] %s\n", name, $0; fflush() }' &
 done
+
+# the back office: node and npm are needed; without them the hosts run without it
+if command -v npm >/dev/null 2>&1; then
+  (cd samples/edx/app/back-office && { [ -d node_modules ] || npm install --no-audit --no-fund; } && npm start 2>&1 | awk '{ printf "[back-office] %s\n", $0; fflush() }') &
+fi
 wait

@@ -46,4 +46,23 @@ public sealed class EfCoreUserRepository(IdentityDbContext db) : EfCoreRepositor
             .ToListAsync(cancellationToken).ConfigureAwait(false);
         return pairs.GroupBy(pair => pair.UserId).ToDictionary(group => group.Key, group => (IReadOnlyList<string>)[.. group.Select(pair => pair.Name).Order()]);
     }
+
+    public async Task SetRolesAsync(User user, IReadOnlyCollection<Role> roles, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(user);
+        ArgumentNullException.ThrowIfNull(roles);
+
+        List<UserRole> replacement = [.. roles.Select(role => UserRole.Create(user.Id, role.Id, user.TenantId))];
+        await Db.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
+        {
+            await using Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction transaction = await Db.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+            await Db.UserRoles.IgnoreQueryFilters().Where(link => link.UserId == user.Id).ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
+            Db.UserRoles.AddRange(replacement);
+            await Db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+        }).ConfigureAwait(false);
+    }
+
+    public Task<bool> AnyUserInRoleAsync(Guid roleId, CancellationToken cancellationToken = default)
+        => Db.UserRoles.IgnoreQueryFilters().AnyAsync(link => link.RoleId == roleId, cancellationToken);
 }

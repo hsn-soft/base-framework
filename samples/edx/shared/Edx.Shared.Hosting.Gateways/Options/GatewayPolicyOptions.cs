@@ -9,6 +9,15 @@ public sealed class GatewayPolicyOptions
     public string[] TrustedProxyIps { get; set; } = [];
 
     public KestrelPolicyOptions Kestrel { get; set; } = new();
+
+    /// <summary>The browsers that may call the gateway from another address (a back office in the browser): the origins that are answered. None, and no browser from another origin is.</summary>
+    public CorsPolicyOptions Cors { get; set; } = new();
+}
+
+public sealed class CorsPolicyOptions
+{
+    /// <summary>The origins (<c>http://localhost:4200</c>), exactly as the browser sends them.</summary>
+    public string[] AllowedOrigins { get; set; } = [];
 }
 
 public sealed class KestrelPolicyOptions

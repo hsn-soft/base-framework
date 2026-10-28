@@ -20,7 +20,7 @@ public sealed class PermissionAppService(IRepository<Permission, Guid> permissio
         ArgumentNullException.ThrowIfNull(filterInput);
 
         IReadOnlyList<Permission> found = await permissions.GetListAsync(filterInput.ToListOptions(Filter(filterInput), s_sorting, "code asc"), cancellationToken).ConfigureAwait(false);
-        return [.. found.Select(permission => new PermissionDto { Id = permission.Id, Code = permission.Code, Type = permission.Type.ToString(), Name = permission.Name, IsActive = permission.IsActive })];
+        return [.. found.Select(permission => new PermissionDto { Id = permission.Id, Code = permission.Code, Type = permission.Type.ToString(), Name = permission.Name, Description = permission.Description, IsActive = permission.IsActive })];
     }
 
     private static Expression<Func<Permission, bool>> Filter(GetPermissionsFilter input)

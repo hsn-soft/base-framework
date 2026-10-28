@@ -1,6 +1,6 @@
 # ADR-0079: gRPC and WCF are entry points of a host, not framework packages
 
-- **Status:** Accepted
+- **Status:** Accepted (the placement in the `Http.Host` is superseded by [ADR-0086](0086-the-intake-service-is-three-hosts-rest-grpc-and-wcf.md))
 - **Date:** 2026-10-27
 
 ## Context

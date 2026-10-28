@@ -22,9 +22,12 @@ public sealed class Role : CreationAuditedEntity<Guid>, IMultiTenant
 
     public Guid TenantId { get; private set; }
 
-    public static Role Create(string name)
+    public static Role Create(string name) => Create(Guid.CreateVersion7(), name);
+
+    /// <summary>A role with the id the caller chose (the sample's roles have ids of their own, see <c>EdxIdentityIds</c>).</summary>
+    public static Role Create(Guid id, string name)
     {
         string text = Guard.NotNullOrWhiteSpace(name, nameof(Name), IdentityConsts.NameMaxLength).ToLowerInvariant();
-        return new() { Id = Guid.CreateVersion7(), Name = text, NormalizedName = StringHelper.Normalize(text) };
+        return new() { Id = Guard.NotDefault<Guid>(id, nameof(Id)), Name = text, NormalizedName = StringHelper.Normalize(text) };
     }
 }

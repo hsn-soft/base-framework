@@ -1,7 +1,7 @@
-using Edx.IntakeService.Application.Archives;
 using Edx.IntakeService.Application.Contracts.IntakeDomain.Services;
 using Edx.IntakeService.Application.Services;
 using Edx.IntakeService.Application.Storage;
+using Edx.IntakeService.Application.Uploads;
 using HsnSoft.Base.Application;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,9 +26,10 @@ public static class ApplicationServiceCollectionExtensions
         services.AddBasePaging(configuration);
 
         services.AddSingleton(TimeProvider.System);
-        services.AddSingleton<ArchiveInspector>();
+        services.AddSingleton<UploadInspector>();
         services.AddScoped<StorageLayout>();
         services.AddScoped<IIntakeAppService, IntakeAppService>();
+        services.AddScoped<QueueUpdater>();
         return services;
     }
 }

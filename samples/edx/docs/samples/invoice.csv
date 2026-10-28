@@ -1,0 +1,3 @@
+invoiceNumber,issueDate,currency,supplierName,supplierTaxId,customerName,customerTaxId,description,quantity,unitPrice,vatRate
+INV-2026-0001,2026-10-28,TRY,Veriban Yazilim A.S.,1234567890,Ornek Musteri Ltd.,0987654321,Danismanlik hizmeti,2,150.00,20
+,,,,,,,Yazilim lisansi,1,420.50,20

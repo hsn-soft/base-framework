@@ -1,5 +1,9 @@
-using Edx.InvoiceService.Application.Contracts.ReceivedFileDomain.Services;
+using Edx.InvoiceService.Application.Contracts.InvoiceDomain.Services;
+using Edx.InvoiceService.Application.Contracts.InvoiceReportDomain.Services;
+using Edx.InvoiceService.Application.Importing;
 using Edx.InvoiceService.Application.Services;
+using Edx.InvoiceService.Application.Signing;
+using Edx.InvoiceService.Application.Storage;
 using HsnSoft.Base.Application;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,10 +18,17 @@ public static class ApplicationServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(configuration);
 
+        services.Configure<InvoiceStorageOptions>(configuration.GetSection(InvoiceStorageOptions.SectionName));
+        services.Configure<InvoiceImportOptions>(configuration.GetSection(InvoiceImportOptions.SectionName));
+
         // the most a client may ask for in a list (the Paging section)
         services.AddBasePaging(configuration);
 
-        services.AddScoped<IReceivedFileAppService, ReceivedFileAppService>();
+        services.AddSingleton(TimeProvider.System);
+        services.AddSingleton<IInvoiceSigner, FakeInvoiceSigner>();
+        services.AddScoped<InvoiceImportService>();
+        services.AddScoped<IInvoiceAppService, InvoiceAppService>();
+        services.AddScoped<IInvoiceReportAppService, InvoiceReportAppService>();
         return services;
     }
 }

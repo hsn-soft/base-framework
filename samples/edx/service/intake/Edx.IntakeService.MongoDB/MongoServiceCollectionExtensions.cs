@@ -1,8 +1,8 @@
+using Edx.IntakeService.Domain.QueueDomain.Consts;
+using Edx.IntakeService.Domain.QueueDomain.Entities;
 using Edx.IntakeService.Domain.StorageDomain.Consts;
 using Edx.IntakeService.Domain.StorageDomain.Entities;
 using Edx.IntakeService.Domain.StorageDomain.Repositories;
-using Edx.IntakeService.Domain.StoredFileDomain.Consts;
-using Edx.IntakeService.Domain.StoredFileDomain.Entities;
 using Edx.IntakeService.MongoDB.Configurations;
 using HsnSoft.Base.Domain.Repositories;
 using HsnSoft.Base.MongoDB;
@@ -26,12 +26,12 @@ public static class MongoServiceCollectionExtensions
         services.AddBaseMultiTenancyMongo();
 
         StorageFolderClassMap.Register();
-        StoredFileClassMap.Register();
+        QueueItemClassMap.Register();
         services.AddScoped<IStorageFolderRepository>(provider => new MongoStorageFolderRepository(
             provider.GetRequiredService<IMongoDatabase>(), provider.GetRequiredService<MongoEntityConcepts>(), MongoIntakeDbProperties.CollectionPrefix + StorageFolderConsts.CollectionName));
         services.AddScoped<IRepository<StorageFolder, Guid>>(provider => provider.GetRequiredService<IStorageFolderRepository>());
-        services.AddScoped<IRepository<StoredFile, Guid>>(provider => new MongoRepository<StoredFile, Guid>(
-            provider.GetRequiredService<IMongoDatabase>(), provider.GetRequiredService<MongoEntityConcepts>(), MongoIntakeDbProperties.CollectionPrefix + StoredFileConsts.CollectionName));
+        services.AddScoped<IRepository<QueueItem, Guid>>(provider => new MongoRepository<QueueItem, Guid>(
+            provider.GetRequiredService<IMongoDatabase>(), provider.GetRequiredService<MongoEntityConcepts>(), MongoIntakeDbProperties.CollectionPrefix + QueueItemConsts.CollectionName));
         return services;
     }
 }

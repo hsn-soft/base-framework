@@ -1,20 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
     <!--
-        The intake service of the Edx system: customers send their files and models here, in the way they can: REST (JSON, multipart), gRPC or WCF (SOAP). All three call the same application service. What every Edx
-        microservice has (logging, the web api shell, JWT, Swagger, health, Kafka) comes from Edx.Shared.Hosting.Microservices; the service adds its own parts here.
+        The intake service of the Edx system, its REST host: customers send their files and models here (JSON, multipart) and the back office queues, lists and downloads; it is the one that consumes the events of the invoice
+        service. The gRPC and WCF ways in are hosts of their own (Edx.IntakeService.Grpc.Host, Edx.IntakeService.Wcf.Host) over the same application service. What every Edx microservice has (logging, the web api shell, JWT,
+        Swagger, health, Kafka) comes from Edx.Shared.Hosting.Microservices; the service adds its own parts here.
     -->
-
-    <ItemGroup>
-        <Protobuf Include="Protos\intake.proto" GrpcServices="Server" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <!-- the protocols the customers may choose: gRPC and WCF are entry points of this host, beside the controllers (ADR-0079) -->
-        <PackageReference Include="CoreWCF.Http" />
-        <PackageReference Include="CoreWCF.Primitives" />
-        <PackageReference Include="Grpc.AspNetCore" />
-    </ItemGroup>
 
     <ItemGroup>
         <!-- the cache and the blob store the host chose -->

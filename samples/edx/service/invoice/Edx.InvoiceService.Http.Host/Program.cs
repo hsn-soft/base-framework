@@ -2,6 +2,7 @@ using Edx.InvoiceService.Application;
 using Edx.InvoiceService.Http.Host.EventHandlers;
 using Edx.InvoiceService.MongoDB;
 using Edx.Shared.Hosting.Microservices;
+using HsnSoft.Base.BlobStoring.Minio;
 using HsnSoft.Base.Caching.StackExchangeRedis;
 using HsnSoft.Base.EventBus;
 using HsnSoft.Base.EventBus.MongoDB;
@@ -24,6 +25,8 @@ builder.Services
     .AddInvoicePersistence(builder.Configuration)
     // the inbox of the service (in its database, with the collection of the records): a message that comes twice is handled once
     .AddEventInbox(MongoInvoiceDbProperties.CollectionPrefix + "InboxMessage")
+    // the store of the files: the same MinIO the intake service writes to (the container of this service is the Storage section)
+    .AddMinioBlobStoring(builder.Configuration)
     .AddInvoiceApplication(builder.Configuration);
 
 WebApplication app = builder.Build();

@@ -27,6 +27,7 @@ public static class EfCoreServiceCollectionExtensions
         services.AddScoped<IUserRepository, EfCoreUserRepository>();
         services.AddScoped<IRepository<User, Guid>>(provider => provider.GetRequiredService<IUserRepository>());
         services.AddScoped<IPermissionGrantRepository, EfCorePermissionGrantRepository>();
+        services.AddScoped<IMenuRepository, EfCoreMenuRepository>();
         services.AddEfCoreRepository<IdentityDbContext, Role, Guid>();
         services.AddEfCoreRepository<IdentityDbContext, Permission, Guid>();
         return services.AddEfCoreRepository<IdentityDbContext, Tenant, Guid>();

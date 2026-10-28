@@ -34,11 +34,14 @@ public sealed class User : CreationAuditedEntity<Guid>, IMultiTenant
 
     public Guid TenantId { get; private set; }
 
-    public static User Create(string userName, string email, string displayName, string password)
+    public static User Create(string userName, string email, string displayName, string password) => Create(Guid.CreateVersion7(), userName, email, displayName, password);
+
+    /// <summary>A user with the id the caller chose (the sample's users have ids of their own, see <c>EdxIdentityIds</c>).</summary>
+    public static User Create(Guid id, string userName, string email, string displayName, string password)
     {
         User user = new()
         {
-            Id = Guid.CreateVersion7(),
+            Id = Guard.NotDefault<Guid>(id, nameof(Id)),
             UserName = Guard.NotNullOrWhiteSpace(userName, nameof(UserName), IdentityConsts.UserNameMaxLength),
             Email = Guard.NotNullOrWhiteSpace(email, nameof(Email), IdentityConsts.EmailMaxLength),
             DisplayName = Guard.NotNullOrWhiteSpace(displayName, nameof(DisplayName), IdentityConsts.NameMaxLength),
@@ -48,5 +51,14 @@ public sealed class User : CreationAuditedEntity<Guid>, IMultiTenant
         user.NormalizedUserName = StringHelper.Normalize(user.UserName);
         user.NormalizedEmail = StringHelper.Normalize(user.Email);
         return user;
+    }
+
+    /// <summary>Changes what a user says of itself and whether it can sign in (the user name and the tenant stay).</summary>
+    public void Update(string email, string displayName, bool isActive)
+    {
+        Email = Guard.NotNullOrWhiteSpace(email, nameof(Email), IdentityConsts.EmailMaxLength);
+        NormalizedEmail = StringHelper.Normalize(Email);
+        DisplayName = Guard.NotNullOrWhiteSpace(displayName, nameof(DisplayName), IdentityConsts.NameMaxLength);
+        IsActive = isActive;
     }
 }

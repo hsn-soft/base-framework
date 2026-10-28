@@ -14,6 +14,8 @@ namespace Edx.Shared.Hosting.Gateways;
 /// <summary>The shell of every Edx gateway: the shared hosting, the Swagger of the services behind it, and the reverse proxy built from the route registry.</summary>
 public static class GatewayRegister
 {
+    private const string CorsPolicyName = "edx-gateway";
+
     /// <param name="services">The service collection.</param>
     /// <param name="configuration">Holds <c>ReverseProxyRoutes</c>, <c>ServiceEndpoints</c>, <c>SwaggerGateway</c>, <c>RequestLogging</c> (<c>Role</c> = <c>Gateway</c>) and, when users are authenticated, <c>Jwt</c>.</param>
     /// <param name="title">The title of the gateway's Swagger document.</param>
@@ -35,6 +37,18 @@ public static class GatewayRegister
             .AddBaseSwaggerGateway(configuration)   // the documents of the services, with the gateway's paths
             .Configure<GatewayPolicyOptions>(configuration.GetSection(GatewayPolicyOptions.SectionName));
         services.AddReverseProxy().LoadFromMemory(proxyRoutes, proxyClusters);
+
+        // a back office in a browser calls the gateway from its own address: those origins, and nobody else's, may
+        string[] origins = configuration.GetSection(GatewayPolicyOptions.SectionName).Get<GatewayPolicyOptions>()?.Cors.AllowedOrigins ?? [];
+        if (origins.Length > 0)
+        {
+            services.AddCors(cors => cors.AddPolicy(CorsPolicyName, policy => policy
+                .WithOrigins(origins)
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .WithExposedHeaders("X-Correlation-Id", "Content-Disposition")));
+        }
+
         return services;
     }
 
@@ -69,6 +83,13 @@ public static class GatewayRegister
         }
 
         app.UseForwardedHeaders(forwarded);
+
+        // before everything that asks who the caller is: a preflight of a browser carries no token
+        if (app.Configuration.GetSection(GatewayPolicyOptions.SectionName).Get<GatewayPolicyOptions>()?.Cors.AllowedOrigins is { Length: > 0 })
+        {
+            app.UseCors(CorsPolicyName);
+        }
+
         app.UseEdxHosting(authenticateUsers);
         app.MapReverseProxy();
         return app;

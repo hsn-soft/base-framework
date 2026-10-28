@@ -13,7 +13,7 @@ namespace Edx.IdentityService.Http.Host.Controllers;
 public sealed class PermissionsController(IPermissionAppService permissions) : BaseServiceController
 {
     [HttpPost("filter-list")]
-    [PermissionAuthorize(EdxEndpointPermissions.Identity.Permissions.FilterList)]
+    [PermissionAuthorize(EdxEndpointPermissions.Identity.Permissions.Read)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public Task<List<PermissionDto>> GetFilterListAsync([FromBody] GetPermissionsFilter filterInput, CancellationToken cancellationToken = default)
         => permissions.GetFilterListAsync(filterInput, cancellationToken);

@@ -29,6 +29,9 @@ await app.Services.EnsureIdentityDatabaseAsync();
 // the permissions of the catalogue (kept in step with the code), and the starting grants of the sample roles on a new database
 await app.Services.EnsurePermissionsAsync();
 
+// the four roles of every tenant and the users of the sample (what is missing), each role with its starting grants
+await app.Services.EnsureSampleIdentityAsync();
+
 app.UseEdxMicroservice();
 app.MapControllers();
 

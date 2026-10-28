@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<InvoiceSubmission xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="urn:edx:intake:invoice:v1">
+  <InvoiceId>7b0c6a3e-1d2f-4c5a-9e8b-0a1b2c3d4e5f</InvoiceId>
+  <InvoiceNumber>INV-2026-0001</InvoiceNumber>
+  <IssueDate>2026-10-28T00:00:00</IssueDate>
+  <Currency>TRY</Currency>
+  <SupplierName>Veriban Yazilim A.S.</SupplierName>
+  <SupplierTaxId>1234567890</SupplierTaxId>
+  <CustomerName>Ornek Musteri Ltd.</CustomerName>
+  <CustomerTaxId>0987654321</CustomerTaxId>
+  <Lines>
+    <InvoiceLine>
+      <Description>Danismanlik hizmeti</Description>
+      <Quantity>2</Quantity>
+      <UnitPrice>150.00</UnitPrice>
+      <VatRate>20</VatRate>
+    </InvoiceLine>
+    <InvoiceLine>
+      <Description>Yazilim lisansi</Description>
+      <Quantity>1</Quantity>
+      <UnitPrice>420.50</UnitPrice>
+      <VatRate>20</VatRate>
+    </InvoiceLine>
+  </Lines>
+</InvoiceSubmission>

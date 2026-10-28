@@ -1,5 +1,8 @@
-using Edx.InvoiceService.Domain.ReceivedFileDomain.Consts;
-using Edx.InvoiceService.Domain.ReceivedFileDomain.Entities;
+using Edx.InvoiceService.Domain.InvoiceDomain.Consts;
+using Edx.InvoiceService.Domain.InvoiceDomain.Entities;
+using Edx.InvoiceService.Domain.InvoiceDomain.Repositories;
+using Edx.InvoiceService.Domain.InvoiceReportDomain.Consts;
+using Edx.InvoiceService.Domain.InvoiceReportDomain.Entities;
 using Edx.InvoiceService.MongoDB.Configurations;
 using HsnSoft.Base.Domain.Repositories;
 using HsnSoft.Base.MongoDB;
@@ -22,9 +25,13 @@ public static class MongoServiceCollectionExtensions
         services.AddBaseMongo(configuration, MongoInvoiceDbProperties.ConnectionStringName);
         services.AddBaseMultiTenancyMongo();
 
-        ReceivedFileClassMap.Register();
-        services.AddScoped<IRepository<ReceivedFile, Guid>>(provider => new MongoRepository<ReceivedFile, Guid>(
-            provider.GetRequiredService<IMongoDatabase>(), provider.GetRequiredService<MongoEntityConcepts>(), MongoInvoiceDbProperties.CollectionPrefix + ReceivedFileConsts.CollectionName));
+        InvoiceClassMap.Register();
+        InvoiceReportClassMap.Register();
+        services.AddScoped<IInvoiceRepository>(provider => new MongoInvoiceRepository(
+            provider.GetRequiredService<IMongoDatabase>(), provider.GetRequiredService<MongoEntityConcepts>(), MongoInvoiceDbProperties.CollectionPrefix + InvoiceConsts.CollectionName));
+        services.AddScoped<IRepository<Invoice, Guid>>(provider => provider.GetRequiredService<IInvoiceRepository>());
+        services.AddScoped<IRepository<InvoiceReport, Guid>>(provider => new MongoRepository<InvoiceReport, Guid>(
+            provider.GetRequiredService<IMongoDatabase>(), provider.GetRequiredService<MongoEntityConcepts>(), MongoInvoiceDbProperties.CollectionPrefix + InvoiceReportConsts.CollectionName));
         return services;
     }
 }

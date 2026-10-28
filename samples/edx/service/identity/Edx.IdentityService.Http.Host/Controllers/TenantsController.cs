@@ -12,7 +12,7 @@ namespace Edx.IdentityService.Http.Host.Controllers;
 [Route("api/identity-service/v1/commercial/tenants")]
 public sealed class TenantsController(ITenantAppService tenants) : BaseServiceController
 {
-    [PermissionAuthorize(EdxEndpointPermissions.Identity.Tenants.FilterList)]
+    [PermissionAuthorize(EdxEndpointPermissions.Identity.Tenants.Read)]
     [HttpPost("filter-list")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public Task<List<TenantDto>> GetFilterListAsync([FromBody] GetTenantsFilter filterInput, CancellationToken cancellationToken = default)

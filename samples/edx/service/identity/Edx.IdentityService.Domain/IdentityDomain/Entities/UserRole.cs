@@ -18,5 +18,9 @@ public sealed class UserRole : IMultiTenant
     public Guid TenantId { get; private set; }
 
     public static UserRole Create(Guid userId, Guid roleId)
-        => new() { UserId = Guard.NotDefault<Guid>(userId, nameof(UserId)), RoleId = Guard.NotDefault<Guid>(roleId, nameof(RoleId)) };
+        => Create(userId, roleId, Guid.Empty);
+
+    /// <summary>A link made for a tenant that is not the current one (the caller sets it for a user of another tenant): the tenant is given and kept.</summary>
+    public static UserRole Create(Guid userId, Guid roleId, Guid tenantId)
+        => new() { UserId = Guard.NotDefault<Guid>(userId, nameof(UserId)), RoleId = Guard.NotDefault<Guid>(roleId, nameof(RoleId)), TenantId = tenantId };
 }

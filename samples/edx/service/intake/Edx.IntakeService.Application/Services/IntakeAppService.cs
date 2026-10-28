@@ -1,19 +1,19 @@
+using System.ComponentModel.DataAnnotations;
 using System.Linq.Expressions;
-using System.Runtime.Serialization;
-using System.Text;
+using System.Security.Cryptography;
 using System.Text.Json;
-using System.Xml;
-using Edx.IntakeService.Application.Archives;
 using Edx.IntakeService.Application.Contracts.IntakeDomain.Dtos;
 using Edx.IntakeService.Application.Contracts.IntakeDomain.Dtos.Filters;
 using Edx.IntakeService.Application.Contracts.IntakeDomain.Dtos.Submits;
 using Edx.IntakeService.Application.Contracts.IntakeDomain.Services;
 using Edx.IntakeService.Application.Storage;
+using Edx.IntakeService.Application.Uploads;
+using Edx.IntakeService.Domain.QueueDomain.Entities;
+using Edx.IntakeService.Domain.QueueDomain.Exceptions;
+using Edx.IntakeService.Domain.QueueDomain.Repositories;
 using Edx.IntakeService.Domain.StorageDomain.Entities;
-using Edx.IntakeService.Domain.StoredFileDomain.Entities;
-using Edx.IntakeService.Domain.StoredFileDomain.Exceptions;
-using Edx.IntakeService.Domain.StoredFileDomain.Repositories;
-using Edx.Shared.Contracts.Events.Intake;
+using Edx.Shared.Contracts.Events.Invoicing;
+using Edx.Shared.Contracts.Invoicing;
 using Edx.Shared.Helper;
 using HsnSoft.Base;
 using HsnSoft.Base.Application;
@@ -29,14 +29,14 @@ using Microsoft.Extensions.Options;
 namespace Edx.IntakeService.Application.Services;
 
 /// <summary>
-/// The use cases of the service. A file is received in this order: the folders of the hierarchy are made (a record, and an event, for each new one), the bytes are written to the blob store at the object name the layout gives, the
-/// record of the file is written, and the event of the record is published. There is no transaction over the store, the database and the broker: when the record cannot be written the bytes are taken out again, and when the event cannot be
-/// published the caller is told and the file stays recorded (an outbox would close that gap; the system does not have one yet).
+/// The use cases of the service. An invoice is queued in this order: it is checked (the fields, the hash, the zip), the folders of the hierarchy are made (a record, and an event, for each new one), the bytes are written to the blob store at the object name the layout gives, the
+/// queue item is written and the event of the queue item is published. There is no transaction over the store, the database and the broker: when the queue item cannot be written the bytes are taken out again, and when the event cannot be published the caller is told and the
+/// item stays in the queue (an outbox would close that gap; the system does not have one yet).
 /// </summary>
 public sealed class IntakeAppService(
-    IRepository<StoredFile, Guid> files,
+    IRepository<QueueItem, Guid> queue,
     StorageLayout layout,
-    ArchiveInspector inspector,
+    UploadInspector inspector,
     IBlobStore blobs,
     IEventBus eventBus,
     IPermissionChecker permissions,
@@ -48,84 +48,117 @@ public sealed class IntakeAppService(
     private const string ZipContentType = "application/zip";
     private static readonly JsonSerializerOptions s_json = new(JsonSerializerDefaults.Web) { WriteIndented = true };
 
-    public Task<StoredFileDto> ReceiveXmlArchiveAsync(string fileName, Stream content, IntakeChannel channel, CancellationToken cancellationToken = default)
-        => ReceiveArchiveAsync(FileKind.XmlArchive, ArchiveKind.Xml, fileName, content, channel, cancellationToken);
-
-    public Task<StoredFileDto> ReceiveTabularArchiveAsync(string fileName, Stream content, IntakeChannel channel, CancellationToken cancellationToken = default)
-        => ReceiveArchiveAsync(FileKind.TabularArchive, ArchiveKind.Tabular, fileName, content, channel, cancellationToken);
-
-    public async Task<StoredFileDto> ReceiveInvoiceModelAsync(InvoiceSubmissionDto model, ModelFormat format, IntakeChannel channel, CancellationToken cancellationToken = default)
+    public async Task<QueueItemDto> QueueFileAsync(InvoiceUploadDto input, Stream content, InvoiceChannelType channel, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(model);
-
-        // the number of the invoice names the file, so a customer finds it by the number it knows
-        string fileName = $"{FileNaming.Clean(model.InvoiceNumber)}.{(format == ModelFormat.Xml ? "xml" : "json")}";
-        using MemoryStream body = new(format == ModelFormat.Xml ? ToXml(model) : ToJson(model));
-        return await StoreAsync(
-            format == ModelFormat.Xml ? FileKind.ModelXml : FileKind.ModelJson,
-            channel,
-            fileName,
-            format == ModelFormat.Xml ? "application/xml" : "application/json",
-            body,
-            [],
-            cancellationToken).ConfigureAwait(false);
-    }
-
-    public async Task<StoredFileDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
-        => ToDto(await FindAsync(id, cancellationToken).ConfigureAwait(false), await CanSeeLocationAsync(cancellationToken).ConfigureAwait(false));
-
-    public async Task<PagedDataResultDto<StoredFileDto>> GetPagedListAsync(GetStoredFilesPaged pagedInput, CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(pagedInput);
-
-        PagedQueryResult<StoredFile> page = await files.GetPagedListAsync(
-            pagedInput.ToPagedOptions(Filter(pagedInput), StoredFileSorting.Fields, StoredFileSorting.Default), cancellationToken).ConfigureAwait(false);
-        bool location = await CanSeeLocationAsync(cancellationToken).ConfigureAwait(false);
-        return page.ToPagedDto(pagedInput, file => ToDto(file, location));
-    }
-
-    public async Task<StoredFileContent> OpenAsync(Guid id, CancellationToken cancellationToken = default)
-    {
-        StoredFile file = await FindAsync(id, cancellationToken).ConfigureAwait(false);
-
-        // the container and the object name are the ones the file was written with, not the ones of today's settings: a file stays readable after the settings move
-        Stream content = await blobs.OpenReadAsync(file.Container, file.ObjectName, cancellationToken).ConfigureAwait(false)
-                         ?? throw StoredFileNotFound.For(id);
-        return new StoredFileContent(content, file.FileName, file.ContentType);
-    }
-
-    private async Task<StoredFileDto> ReceiveArchiveAsync(FileKind kind, ArchiveKind archiveKind, string fileName, Stream content, IntakeChannel channel, CancellationToken cancellationToken)
-    {
+        ArgumentNullException.ThrowIfNull(input);
         ArgumentNullException.ThrowIfNull(content);
 
-        // the archive is read twice (looked into, then stored) and a zip is read from its end: it is kept in a temporary file that goes away when it is closed
+        // what the sender has to say of the zip: all of it, and a type a zip can hold
+        if (input.InvoiceId is not { } invoiceId || invoiceId == Guid.Empty || string.IsNullOrWhiteSpace(input.InvoiceNumber) || string.IsNullOrWhiteSpace(input.FileHash) || input.SourceType is not { } sourceType || sourceType == InvoiceSourceType.Model)
+        {
+            throw new InvalidUploadException(InvalidUploadException.FieldMissing, "The invoice id, the invoice number, the file hash and the source type (xml, csv, txt or xls) are required.");
+        }
+
+        // the zip is read twice (hashed, looked into) and a zip is read from its end: it is kept in a temporary file that goes away when it is closed
         FileStream spool = new(Path.Combine(Path.GetTempPath(), $"edx-intake-{Guid.NewGuid():N}.tmp"), FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None, 81920, FileOptions.Asynchronous | FileOptions.DeleteOnClose);
         await using (spool.ConfigureAwait(false))
         {
             await CopyLimitedAsync(content, spool, await UploadLimitAsync(cancellationToken).ConfigureAwait(false), cancellationToken).ConfigureAwait(false);
-            IReadOnlyList<ArchiveEntry> entries = inspector.Inspect(spool, archiveKind);
-            return await StoreAsync(kind, channel, fileName, ZipContentType, spool, entries, cancellationToken).ConfigureAwait(false);
+
+            spool.Position = 0;
+            string hash = Convert.ToHexString(await SHA256.HashDataAsync(spool, cancellationToken).ConfigureAwait(false)).ToLowerInvariant();
+            if (!hash.Equals(input.FileHash.Trim(), StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidUploadException(InvalidUploadException.HashMismatch, "The hash of the zip is not the one the sender gave: the file was changed on the way, or the hash is of something else (it is the SHA-256 of the zip).", hash);
+            }
+
+            UploadInspection inspection = inspector.Inspect(spool, sourceType);
+            return await StoreAsync(invoiceId, input.InvoiceNumber, sourceType, channel, hash, FileNaming.Clean(input.FileName), ZipContentType, spool, inspection.EntryName, cancellationToken).ConfigureAwait(false);
         }
     }
 
-    private async Task<StoredFileDto> StoreAsync(FileKind kind, IntakeChannel channel, string fileName, string contentType, Stream content, IReadOnlyList<ArchiveEntry> entries, CancellationToken cancellationToken)
+    public async Task<QueueItemDto> QueueModelAsync(InvoiceSubmissionDto model, ModelFormat format, InvoiceChannelType channel, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(model);
+
+        // a model that comes through gRPC or WCF is built by the entry point, so it is checked here, once, for all of them
+        List<ValidationResult> problems = [];
+        if (!Validator.TryValidateObject(model, new ValidationContext(model), problems, validateAllProperties: true))
+        {
+            throw new BusinessException("model_validation_failed", string.Join(" ", problems.Select(problem => problem.ErrorMessage))).WithKey("model_validation_failed");
+        }
+
+        byte[] bytes = format == ModelFormat.Xml ? InvoiceXml.Write(model) : JsonSerializer.SerializeToUtf8Bytes(model, s_json);
+        using MemoryStream body = new(bytes);
+        string hash = Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
+        string fileName = $"{FileNaming.Clean(model.InvoiceNumber)}.{(format == ModelFormat.Xml ? "xml" : "json")}";
+        return await StoreAsync(model.InvoiceId, model.InvoiceNumber, InvoiceSourceType.Model, channel, hash, fileName, format == ModelFormat.Xml ? "application/xml" : "application/json", body, null, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<QueueItemDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
+        => ToDto(await FindAsync(id, cancellationToken).ConfigureAwait(false), await CanSeeLocationAsync(cancellationToken).ConfigureAwait(false));
+
+    public async Task<List<QueueItemDto>> GetByInvoiceAsync(Guid invoiceId, CancellationToken cancellationToken = default)
+    {
+        IReadOnlyList<QueueItem> found = await queue.GetListAsync(
+            new ListQueryOptions<QueueItem> { Filter = item => item.InvoiceId == invoiceId, Sort = QueueItemSorting.Fields.Parse(null, QueueItemSorting.Default) }, cancellationToken).ConfigureAwait(false);
+        if (found.Count == 0)
+        {
+            throw QueueItemNotFound.ForInvoice(invoiceId);
+        }
+
+        // an invoice that got through is answered with the item that got through; the ones that failed before it are history
+        IReadOnlyList<QueueItem> answer = found.Any(item => item.IsSuccessful) ? [.. found.Where(item => item.IsSuccessful)] : found;
+        bool location = await CanSeeLocationAsync(cancellationToken).ConfigureAwait(false);
+        return [.. answer.Select(item => ToDto(item, location))];
+    }
+
+    public async Task<PagedDataResultDto<QueueItemDto>> GetPagedListAsync(GetQueueItemsPaged pagedInput, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(pagedInput);
+
+        PagedQueryResult<QueueItem> page = await queue.GetPagedListAsync(
+            pagedInput.ToPagedOptions(Filter(pagedInput), QueueItemSorting.Fields, QueueItemSorting.Default), cancellationToken).ConfigureAwait(false);
+        bool location = await CanSeeLocationAsync(cancellationToken).ConfigureAwait(false);
+        return page.ToPagedDto(pagedInput, item => ToDto(item, location));
+    }
+
+    public async Task<StoredFileContent> OpenAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        QueueItem item = await FindAsync(id, cancellationToken).ConfigureAwait(false);
+
+        // the container and the object name are the ones the file was written with, not the ones of today's settings: a file stays readable after the settings move
+        Stream content = await blobs.OpenReadAsync(item.Container, item.ObjectName, cancellationToken).ConfigureAwait(false) ?? throw QueueItemNotFound.For(id);
+        return new StoredFileContent(content, item.FileName, item.ContentType);
+    }
+
+    private async Task<QueueItemDto> StoreAsync(
+        Guid invoiceId,
+        string invoiceNumber,
+        InvoiceSourceType sourceType,
+        InvoiceChannelType channel,
+        string hash,
+        string fileName,
+        string contentType,
+        Stream content,
+        string? entryName,
+        CancellationToken cancellationToken)
     {
         DateTimeOffset receivedAt = time.GetUtcNow();
         StorageFolder folder = await layout.EnsureFolderAsync(receivedAt, cancellationToken).ConfigureAwait(false);
 
         Guid id = Guid.CreateVersion7();
-        string cleanName = FileNaming.Clean(fileName);
         string container = storage.Value.Container;
-        string objectName = layout.ObjectName(folder.Path, FileNaming.ObjectFileName(id, cleanName));
+        string objectName = layout.ObjectName(folder.Path, FileNaming.ObjectFileName(id, fileName));
 
         content.Position = 0;
         long size = content.Length;
         await blobs.SaveAsync(container, objectName, content, contentType, cancellationToken).ConfigureAwait(false);
 
-        StoredFile file = StoredFile.Create(id, kind, channel, cleanName, contentType, size, new StorageFolderRef(folder.Id, folder.Path), container, objectName, entries);
+        QueueItem item = QueueItem.Create(id, invoiceId, invoiceNumber.Trim(), intake.Value.ServiceName, sourceType, channel, hash, fileName, contentType, size, entryName, folder.Id, folder.Path, container, objectName, receivedAt);
         try
         {
-            await files.AddAsync(file, cancellationToken).ConfigureAwait(false);
+            await queue.AddAsync(item, cancellationToken).ConfigureAwait(false);
         }
         catch
         {
@@ -135,16 +168,16 @@ public sealed class IntakeAppService(
         }
 
         await eventBus.PublishAsync(
-            new FileStoredEto(file.Id, kind.ToString(), channel.ToString(), file.FileName, size, contentType, container, objectName, folder.Path, Math.Max(entries.Count, 1), receivedAt),
+            new InvoiceQueuedEto(item.Id, invoiceId, item.InvoiceNumber, item.ReceivedBy, sourceType, channel, hash, fileName, contentType, container, objectName, sourceType != InvoiceSourceType.Model, receivedAt),
             cancellationToken: cancellationToken).ConfigureAwait(false);
 
-        Logger.LogInformation("File {StoredFileId} ({FileKind}, {FileChannel}, {FileSizeBytes} bytes) was stored in {FolderPath}", file.Id, kind, channel, size, folder.Path);
-        return ToDto(file, await CanSeeLocationAsync(cancellationToken).ConfigureAwait(false));
+        Logger.LogInformation("Invoice {InvoiceId} ({InvoiceNumber}, {SourceType}, {ChannelType}, {SizeBytes} bytes) was queued as {QueueItemId}", invoiceId, item.InvoiceNumber, sourceType, channel, size, item.Id);
+        return ToDto(item, await CanSeeLocationAsync(cancellationToken).ConfigureAwait(false));
     }
 
-    // the most the caller may send: what the service allows, or less when the caller's role (or the caller) was given a limit (constraint.intake.upload.max-bytes)
+    // the most the caller may send: what the service allows, or less when the limit the caller's role was given is lower (constraint.intake.upload.max-bytes); a caller with no limit may send nothing (403)
     private async Task<long> UploadLimitAsync(CancellationToken cancellationToken)
-        => Math.Min(intake.Value.MaxUploadBytes, await permissions.GetLongAsync(EdxConstraintPermissions.Intake.UploadMaxBytes, cancellationToken).ConfigureAwait(false) ?? long.MaxValue);
+        => Math.Min(intake.Value.MaxUploadBytes, await permissions.RequireLongAsync(EdxConstraintPermissions.Intake.UploadMaxBytes, cancellationToken).ConfigureAwait(false));
 
     // where a file is kept (the container, the object name, the folder) is shown to who was granted the operation, and empty to everyone else
     private Task<bool> CanSeeLocationAsync(CancellationToken cancellationToken) => permissions.IsGrantedAsync(EdxOperationPermissions.Intake.FileStorageLocationView, cancellationToken);
@@ -159,42 +192,30 @@ public sealed class IntakeAppService(
             total += read;
             if (total > limit)
             {
-                throw new InvalidArchiveException(InvalidArchiveException.TooLarge, $"A file may weigh at most {limit} bytes.", limit);
+                throw new InvalidUploadException(InvalidUploadException.TooLarge, $"A file may weigh at most {limit} bytes.", limit);
             }
 
             await target.WriteAsync(buffer.AsMemory(0, read), cancellationToken).ConfigureAwait(false);
         }
     }
 
-    private static byte[] ToJson(InvoiceSubmissionDto model) => JsonSerializer.SerializeToUtf8Bytes(model, s_json);
-
-    // the same XML a WCF client puts on the wire (the data contract of the model)
-    private static byte[] ToXml(InvoiceSubmissionDto model)
-    {
-        using MemoryStream stream = new();
-        using (XmlWriter writer = XmlWriter.Create(stream, new XmlWriterSettings { Indent = true, Encoding = new UTF8Encoding(false) }))
-        {
-            new DataContractSerializer(typeof(InvoiceSubmissionDto)).WriteObject(writer, model);
-        }
-
-        return stream.ToArray();
-    }
-
-    private async Task<StoredFile> FindAsync(Guid id, CancellationToken cancellationToken)
-        => await files.FindAsync(id, cancellationToken).ConfigureAwait(false) ?? throw StoredFileNotFound.For(id);
+    private async Task<QueueItem> FindAsync(Guid id, CancellationToken cancellationToken)
+        => await queue.FindAsync(id, cancellationToken).ConfigureAwait(false) ?? throw QueueItemNotFound.For(id);
 
     // what the client gave narrows the list; what it left out does not
-    private static Expression<Func<StoredFile, bool>> Filter(GetStoredFilesPaged input)
+    private static Expression<Func<QueueItem, bool>> Filter(GetQueueItemsPaged input)
     {
-        string? name = string.IsNullOrWhiteSpace(input.FileName) ? null : input.FileName.Trim();
-        FileKind? kind = Parse<FileKind>(input.Kind, nameof(input.Kind));
-        IntakeChannel? channel = Parse<IntakeChannel>(input.Channel, nameof(input.Channel));
+        string? number = string.IsNullOrWhiteSpace(input.InvoiceNumber) ? null : input.InvoiceNumber.Trim();
         string? search = string.IsNullOrWhiteSpace(input.SearchText) ? null : input.SearchText.Trim();
-        return new FilterBuilder<StoredFile>()
-            .And(name is null ? null : file => file.FileName.Contains(name))
-            .And(search is null ? null : file => file.FileName.Contains(search) || file.FolderPath.Contains(search))
-            .And(kind is null ? null : file => file.Kind == kind.Value)
-            .And(channel is null ? null : file => file.Channel == channel.Value)
+        QueueStatus? status = Parse<QueueStatus>(input.Status, nameof(input.Status));
+        InvoiceSourceType? source = Parse<InvoiceSourceType>(input.SourceType, nameof(input.SourceType));
+        InvoiceChannelType? channel = Parse<InvoiceChannelType>(input.ChannelType, nameof(input.ChannelType));
+        return new FilterBuilder<QueueItem>()
+            .And(number is null ? null : item => item.InvoiceNumber.Contains(number))
+            .And(search is null ? null : item => item.InvoiceNumber.Contains(search) || item.FileName.Contains(search))
+            .And(status is null ? null : item => item.Status == status.Value)
+            .And(source is null ? null : item => item.SourceType == source.Value)
+            .And(channel is null ? null : item => item.ChannelType == channel.Value)
             .Build();
     }
 
@@ -206,20 +227,29 @@ public sealed class IntakeAppService(
                 ? value
                 : throw new BusinessException("filter_value_invalid", $"'{text}' is not a value of {field}.").WithKey("filter_value_invalid", field, text);
 
-    private static StoredFileDto ToDto(StoredFile file, bool showLocation) => new()
+    private static QueueItemDto ToDto(QueueItem item, bool showLocation) => new()
     {
-        Id = file.Id,
-        Kind = file.Kind.ToString(),
-        Channel = file.Channel.ToString(),
-        FileName = file.FileName,
-        ContentType = file.ContentType,
-        SizeBytes = file.SizeBytes,
-        FolderPath = showLocation ? file.FolderPath : string.Empty,
-        Container = showLocation ? file.Container : string.Empty,
-        ObjectName = showLocation ? file.ObjectName : string.Empty,
-        Entries = [.. file.Entries.Select(entry => new StoredFileEntryDto { Name = entry.Name, SizeBytes = entry.SizeBytes })],
-        TenantId = file.TenantId,
-        CreatedAt = file.CreatedAt,
-        CreatedBy = file.CreatedBy,
+        Id = item.Id,
+        InvoiceId = item.InvoiceId,
+        InvoiceNumber = item.InvoiceNumber,
+        SourceType = item.SourceType.ToString(),
+        ReceivedBy = item.ReceivedBy,
+        ChannelType = item.ChannelType.ToString(),
+        Status = item.Status.ToString(),
+        StatusReason = item.StatusReason,
+        StatusChangedAt = item.StatusChangedAt,
+        FileName = item.FileName,
+        FileHash = item.FileHash,
+        ContentType = item.ContentType,
+        SizeBytes = item.SizeBytes,
+        EntryName = item.EntryName,
+        FolderPath = showLocation ? item.FolderPath : string.Empty,
+        Container = showLocation ? item.Container : string.Empty,
+        ObjectName = showLocation ? item.ObjectName : string.Empty,
+        TenantId = item.TenantId,
+        CreatedAt = item.CreatedAt,
+        CreatedBy = item.CreatedBy,
+        UpdatedAt = item.UpdatedAt,
+        UpdatedBy = item.UpdatedBy,
     };
 }

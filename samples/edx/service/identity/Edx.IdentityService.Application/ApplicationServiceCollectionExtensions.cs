@@ -17,12 +17,13 @@ public static class ApplicationServiceCollectionExtensions
         // the most a client may ask for in a list (the Paging section)
         services.AddBasePaging(configuration);
 
+        services.AddSingleton(TimeProvider.System);
         services.AddScoped<IUserAppService, UserAppService>();
         services.AddScoped<IRoleAppService, RoleAppService>();
         services.AddScoped<ITenantAppService, TenantAppService>();
         services.AddScoped<IPermissionAppService, PermissionAppService>();
         services.AddScoped<IRolePermissionAppService, RolePermissionAppService>();
-        services.AddScoped<IUserPermissionAppService, UserPermissionAppService>();
+        services.AddScoped<IMenuAppService, MenuAppService>();
         services.AddScoped<ISessionPermissionAppService, SessionPermissionAppService>();
         services.AddScoped<PermissionCacheSynchronizer>();
         return services;
