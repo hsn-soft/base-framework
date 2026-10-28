@@ -35,6 +35,8 @@ public sealed partial class RabbitMqPersistentConnection : IRabbitMqPersistentCo
 
     public bool IsConnected => _connection is { IsOpen: true } && !_disposed;
 
+    private bool IsRecovering => !_disposed && _connection is { IsOpen: false, CloseReason.Initiator: not ShutdownInitiator.Application };
+
     public async Task<bool> TryConnectAsync(CancellationToken cancellationToken = default)
     {
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -44,6 +46,13 @@ public sealed partial class RabbitMqPersistentConnection : IRabbitMqPersistentCo
             if (IsConnected)
             {
                 return true;
+            }
+
+            // the client's automatic recovery is reconnecting this connection (it was lost, not closed by us): replacing it from here would orphan the channels and consumers it brings back at that very moment
+            if (IsRecovering)
+            {
+                LogRecovering(_logger);
+                return false;
             }
 
             await CloseConnectionAsync().ConfigureAwait(false);
@@ -77,11 +86,17 @@ public sealed partial class RabbitMqPersistentConnection : IRabbitMqPersistentCo
         }
     }
 
+    public Task<IChannel> CreatePublisherChannelAsync(CancellationToken cancellationToken = default)
+    {
+        IConnection connection = _connection is { IsOpen: true } open && !_disposed ? open : throw new RabbitMqNotConnectedException("No RabbitMQ connections are available to perform this action");
+        return connection.CreateChannelAsync(new CreateChannelOptions(publisherConfirmationsEnabled: true, publisherConfirmationTrackingEnabled: true), cancellationToken);
+    }
+
     public Task<IChannel> CreateModelAsync(ushort? consumerDispatchConcurrency = null, CancellationToken cancellationToken = default)
     {
         if (!IsConnected)
         {
-            throw new InvalidOperationException("No RabbitMQ connections are available to perform this action");
+            throw new RabbitMqNotConnectedException("No RabbitMQ connections are available to perform this action");
         }
 
         CreateChannelOptions? options = consumerDispatchConcurrency.HasValue
@@ -193,6 +208,9 @@ public sealed partial class RabbitMqPersistentConnection : IRabbitMqPersistentCo
         LogRecoveryFailed(_logger, args.Exception.Message);
         return Task.CompletedTask;
     }
+
+    [LoggerMessage(EventId = 4112, EventName = "RABBITMQ_CONNECTION_RECOVERING", Level = LogLevel.Debug, Message = "The RabbitMQ connection is being recovered by the client, it is not replaced")]
+    private static partial void LogRecovering(ILogger logger);
 
     [LoggerMessage(EventId = 4101, EventName = "RABBITMQ_CONNECTION_CONNECTING", Level = LogLevel.Information, Message = "RabbitMQ client is connecting to {HostName}:{Port}")]
     private static partial void LogConnecting(ILogger logger, string hostName, int port);

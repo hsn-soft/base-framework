@@ -40,8 +40,9 @@ public class RabbitMqConnectionTests
         (RabbitMqPersistentConnection connection, _) = Create();
 
         Assert.False(connection.IsConnected);
-        await Assert.ThrowsAsync<InvalidOperationException>(() => connection.CreateModelAsync());
-        await Assert.ThrowsAsync<InvalidOperationException>(() => connection.CreateModelAsync(4));
+        await Assert.ThrowsAsync<RabbitMqNotConnectedException>(() => connection.CreateModelAsync());
+        await Assert.ThrowsAsync<RabbitMqNotConnectedException>(() => connection.CreateModelAsync(4));
+        await Assert.ThrowsAsync<RabbitMqNotConnectedException>(() => connection.CreatePublisherChannelAsync());
     }
 
     [Fact]
@@ -181,6 +182,57 @@ public class RabbitMqConnectionTests
         Assert.Empty(first.Named("CloseAsync"));
         Assert.Single(first.Named("Dispose"));
         Assert.Empty(second.Named("CloseAsync"));
+    }
+
+    [Fact]
+    public async Task ConnectionTheClientIsRecovering_IsNotReplaced()
+    {
+        (RabbitMqPersistentConnection connection, ConnectionFactoryProxy factory, _) = CreateWithFactory();
+        ConnectionState first = Offer(factory);
+        await connection.TryConnectAsync();
+
+        // lost on its own: the client's automatic recovery brings the connection, its channels and consumers back
+        first.IsOpen = false;
+        first.CloseReason = new ShutdownEventArgs(ShutdownInitiator.Peer, 320, "CONNECTION_FORCED");
+        Offer(factory);
+
+        bool connected = await connection.TryConnectAsync();
+
+        Assert.False(connected);
+        Assert.Single(factory.Created);
+        Assert.Empty(first.Named("Dispose"));
+    }
+
+    [Fact]
+    public async Task ConnectionTheApplicationClosed_IsReplaced()
+    {
+        (RabbitMqPersistentConnection connection, ConnectionFactoryProxy factory, _) = CreateWithFactory();
+        ConnectionState first = Offer(factory);
+        await connection.TryConnectAsync();
+        first.IsOpen = false;
+        first.CloseReason = new ShutdownEventArgs(ShutdownInitiator.Application, 200, "Goodbye");
+        Offer(factory);
+
+        Assert.True(await connection.TryConnectAsync());
+        Assert.Equal(2, factory.Created.Count);
+    }
+
+    [Fact]
+    public async Task ConnectionRecoveredByTheClient_IsConnectedAgain_WithoutANewOne()
+    {
+        (RabbitMqPersistentConnection connection, ConnectionFactoryProxy factory, _) = CreateWithFactory();
+        ConnectionState first = Offer(factory);
+        await connection.TryConnectAsync();
+        first.IsOpen = false;
+        first.CloseReason = new ShutdownEventArgs(ShutdownInitiator.Library, 541, "socket error");
+        Assert.False(await connection.TryConnectAsync());
+
+        first.IsOpen = true;
+        first.CloseReason = null;
+
+        Assert.True(connection.IsConnected);
+        Assert.True(await connection.TryConnectAsync());
+        Assert.Single(factory.Created);
     }
 
     [Fact]

@@ -3,6 +3,7 @@ using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.EventBus.RabbitMQ.Connection;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
+using RabbitMQ.Client.Events;
 
 namespace HsnSoft.Base.EventBus.RabbitMQ.Tests;
 
@@ -98,6 +99,12 @@ public class ChannelProxy : DispatchProxy
         }
 
         Task? before = State.Before?.Invoke(call);
+        if (before is not null && args?.OfType<CancellationToken>().FirstOrDefault() is { CanBeCanceled: true } token)
+        {
+            // a held call ends when its token is cancelled, as a call to the broker does
+            before = before.WaitAsync(token);
+        }
+
         return ProxyResult.For(targetMethod.ReturnType, before, name == "BasicConsumeAsync" ? "consumer-tag" : null);
     }
 }
@@ -174,6 +181,9 @@ public sealed class ConnectionState
 
     public Exception? CloseFailure { get; set; }
 
+    /// <summary>Why the connection is closed, when it is; a connection lost on its own has a reason from the library or the peer.</summary>
+    public ShutdownEventArgs? CloseReason { get; set; }
+
     public ChannelState Channel { get; } = new();
 
     public IReadOnlyList<ChannelCall> Named(string name) => [.. Calls.Where(call => call.Name == name)];
@@ -199,6 +209,8 @@ public class ConnectionProxy : DispatchProxy
         {
             case "get_IsOpen":
                 return State.IsOpen;
+            case "get_CloseReason":
+                return State.CloseReason;
             case "get_Endpoint":
                 return new AmqpTcpEndpoint("fake-host");
             case "CreateChannelAsync":
@@ -283,6 +295,14 @@ public sealed class FakeConnection : IRabbitMqPersistentConnection
 
         IsConnected = ConnectSucceeds;
         return Task.FromResult(IsConnected);
+    }
+
+    public int PublisherChannels { get; private set; }
+
+    public Task<IChannel> CreatePublisherChannelAsync(CancellationToken cancellationToken = default)
+    {
+        PublisherChannels++;
+        return CreateModelAsync(null, cancellationToken);
     }
 
     public Task<IChannel> CreateModelAsync(ushort? consumerDispatchConcurrency = null, CancellationToken cancellationToken = default)

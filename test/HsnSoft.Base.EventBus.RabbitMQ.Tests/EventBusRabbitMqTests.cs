@@ -114,9 +114,89 @@ public class EventBusRabbitMqTests
     {
         FakeConnection connection = new() { IsConnected = false, ConnectSucceeds = false };
 
-        InvalidOperationException failure = await Assert.ThrowsAsync<InvalidOperationException>(() => NewBus(connection).PublishAsync(new SampleEto("a", 1)));
+        Connection.RabbitMqNotConnectedException failure = await Assert.ThrowsAsync<Connection.RabbitMqNotConnectedException>(() => NewBus(connection).PublishAsync(new SampleEto("a", 1)));
 
         Assert.Contains("could not be established", failure.Message, StringComparison.Ordinal);
+    }
+
+    private static T Uninitialized<T>() => (T)System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(typeof(T));
+
+    [Fact]
+    public async Task Publishing_UsesAChannelWithConfirms_ForAnEventAndForASend()
+    {
+        FakeConnection connection = new();
+        EventBusRabbitMq bus = NewBus(connection);
+
+        await bus.PublishAsync(new SampleEto("a", 1));
+        await bus.SendAsync(new SampleEto("b", 2), "ShipmentService");
+
+        Assert.Equal(2, connection.PublisherChannels);
+    }
+
+    [Fact]
+    public async Task AnEventNoQueueTook_IsNotAnError_AndIsNotRetried()
+    {
+        FakeConnection connection = new();
+        ChannelState returned = new() { Failure = call => call.Name == "BasicPublishAsync" ? Uninitialized<PublishReturnException>() : null };
+        connection.QueueChannelState(returned);
+
+        await NewBus(connection).PublishAsync(new SampleEto("a", 1));
+
+        Assert.Single(connection.Channels);
+        Assert.Single(returned.Named("BasicPublishAsync"));
+    }
+
+    [Fact]
+    public async Task AMessageTheBrokerNacks_IsRetried()
+    {
+        FakeConnection connection = new();
+        int nacks = 1;
+        connection.QueueChannelState(new ChannelState { Failure = call => call.Name == "BasicPublishAsync" && nacks-- > 0 ? Uninitialized<PublishException>() : null });
+
+        await NewBus(connection).PublishAsync(new SampleEto("a", 1));
+
+        Assert.Equal(2, connection.Channels.Count);
+        Assert.Single(connection.Channels[1].Named("BasicPublishAsync"));
+    }
+
+    [Fact]
+    public async Task ABrokerThatNeverConfirms_TimesOut_AndTheNextTryPublishes()
+    {
+        FakeConnection connection = new();
+        TaskCompletionSource never = new();
+        connection.QueueChannelState(new ChannelState { Before = call => call.Name == "BasicPublishAsync" ? never.Task : null });
+        EventBusOptions options = NewOptions();
+        options.PublishTimeout = TimeSpan.FromMilliseconds(100);
+
+        await NewBus(connection, options).PublishAsync(new SampleEto("a", 1));
+
+        Assert.Equal(2, connection.Channels.Count);
+        Assert.Single(connection.Channels[1].Named("BasicPublishAsync"));
+    }
+
+    [Fact]
+    public async Task ABrokerThatNeverConfirms_IsATimeout_WhenEveryTryRunsOut()
+    {
+        FakeConnection connection = new();
+        TaskCompletionSource never = new();
+        connection.QueueChannelState(new ChannelState { Before = call => call.Name == "BasicPublishAsync" ? never.Task : null });
+        connection.QueueChannelState(new ChannelState { Before = call => call.Name == "BasicPublishAsync" ? never.Task : null });
+        connection.QueueChannelState(new ChannelState { Before = call => call.Name == "BasicPublishAsync" ? never.Task : null });
+        EventBusOptions options = NewOptions();
+        options.PublishTimeout = TimeSpan.FromMilliseconds(50);
+
+        await Assert.ThrowsAsync<TimeoutException>(() => NewBus(connection, options).PublishAsync(new SampleEto("a", 1)));
+    }
+
+    [Fact]
+    public async Task ACallerThatCancels_IsNotATimeout()
+    {
+        FakeConnection connection = new();
+        TaskCompletionSource never = new();
+        connection.QueueChannelState(new ChannelState { Before = call => call.Name == "BasicPublishAsync" ? never.Task : null });
+        using CancellationTokenSource cancel = new(TimeSpan.FromMilliseconds(100));
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => NewBus(connection).PublishAsync(new SampleEto("a", 1), cancellationToken: cancel.Token));
     }
 
     [Fact]

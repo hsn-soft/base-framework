@@ -1,5 +1,6 @@
 using System.Net.Sockets;
 using HsnSoft.Base.Domain.Entities.Events;
+using HsnSoft.Base.EventBus.RabbitMQ.Connection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client.Exceptions;
@@ -134,7 +135,7 @@ public class FailedEventNotifierTests
         Assert.Equal(1, connected.ConnectCalls);
 
         FakeConnection unreachable = new() { IsConnected = false, ConnectSucceeds = false };
-        await Assert.ThrowsAsync<InvalidOperationException>(() => NewNotifier(unreachable).NotifyDirectAsync("x", null, null, null));
+        await Assert.ThrowsAsync<RabbitMqNotConnectedException>(() => NewNotifier(unreachable).NotifyDirectAsync("x", null, null, null));
     }
 
     [Fact]

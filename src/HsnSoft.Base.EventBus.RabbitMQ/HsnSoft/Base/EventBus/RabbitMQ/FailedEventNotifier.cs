@@ -1,5 +1,4 @@
 using System;
-using System.Net.Sockets;
 using System.Reflection;
 using System.Text;
 using System.Threading;
@@ -9,7 +8,6 @@ using HsnSoft.Base.EventBus.RabbitMQ.Connection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
-using RabbitMQ.Client.Exceptions;
 
 namespace HsnSoft.Base.EventBus.RabbitMQ;
 
@@ -72,7 +70,7 @@ public sealed partial class FailedEventNotifier(
 
         if (!_connection.IsConnected)
         {
-            throw new InvalidOperationException("RabbitMQ connection could not be established.");
+            throw new RabbitMqNotConnectedException();
         }
 
         FailedEto failed = new(errorMessage, failedEnvelope?.MessageTime.ToUniversalTime(), failedMessage, failedTypeName);
@@ -83,17 +81,20 @@ public sealed partial class FailedEventNotifier(
 
         LogNotifying(_logger, queueName, envelope.MessageId);
         await PublishRetry.ExecuteAsync(
-            async () =>
-            {
-                IChannel channel = await _connection.CreateModelAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
-                await using (channel.ConfigureAwait(false))
+            () => RabbitMqPublisher.WithConfirmTimeoutAsync(
+                async limit =>
                 {
-                    await RabbitMqPublisher.PublishToQueueAsync(channel, queueName, RabbitMqPublisher.Properties(envelope.MessageId, envelope.CorrelationId), body, cancellationToken).ConfigureAwait(false);
-                }
-            },
+                    IChannel channel = await _connection.CreatePublisherChannelAsync(limit).ConfigureAwait(false);
+                    await using (channel.ConfigureAwait(false))
+                    {
+                        await RabbitMqPublisher.PublishToQueueAsync(channel, queueName, RabbitMqPublisher.Properties(envelope.MessageId, envelope.CorrelationId), body, limit).ConfigureAwait(false);
+                    }
+                },
+                _options.PublishTimeout,
+                cancellationToken),
             _options.PublishRetryCount,
             _options.PublishRetryBaseDelay,
-            exception => exception is BrokerUnreachableException or SocketException,
+            RabbitMqPublisher.IsTransient,
             (exception, delay, retry) => LogNotifyRetry(_logger, exception, queueName, retry, delay.TotalSeconds),
             cancellationToken).ConfigureAwait(false);
     }

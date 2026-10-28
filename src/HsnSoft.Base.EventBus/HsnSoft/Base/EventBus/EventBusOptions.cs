@@ -50,6 +50,9 @@ public sealed class EventBusOptions
     /// <summary>The pause before publish retry <c>n</c> is <c>2^n * PublishRetryBaseDelay</c>.</summary>
     public TimeSpan PublishRetryBaseDelay { get; set; } = TimeSpan.FromSeconds(1);
 
+    /// <summary>How long a publisher waits for the broker to confirm one message (RabbitMQ publisher confirms); running out of it is a failed try, which is repeated like an unreachable broker.</summary>
+    public TimeSpan PublishTimeout { get; set; } = TimeSpan.FromSeconds(30);
+
     /// <summary>How long a stopping service waits for the messages being handled and published to finish.</summary>
     public TimeSpan ShutdownTimeout { get; set; } = TimeSpan.FromSeconds(30);
 

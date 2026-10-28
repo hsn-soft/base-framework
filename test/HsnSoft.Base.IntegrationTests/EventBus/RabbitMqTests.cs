@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using DotNet.Testcontainers.Containers;
 using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.EventBus;
 using HsnSoft.Base.EventBus.RabbitMQ;
@@ -82,10 +83,14 @@ public sealed class RabbitMqTests(RabbitMqFixture fixture) : IClassFixture<Rabbi
             ("RabbitMq:EventBus:RequeueDelay", "00:00:00.1"),
             ("RabbitMq:EventBus:RecoveryProbeInterval", "00:00:00.2"));
 
-    private async Task<RunningHost> StartAsync(string exchange, Action<IServiceCollection> handlers, IConfiguration? configuration = null)
+    private async Task<RunningHost> StartAsync(string exchange, Action<IServiceCollection> handlers, IConfiguration? configuration = null, Action<EventBusOptions>? configureOptions = null)
         => new(await Support.StartHostAsync(services =>
         {
-            services.AddRabbitMqEventBus(configuration ?? Configuration(exchange), configureEventBus: options => options.PublishRetryBaseDelay = TimeSpan.FromMilliseconds(100));
+            services.AddRabbitMqEventBus(configuration ?? Configuration(exchange), configureEventBus: options =>
+            {
+                options.PublishRetryBaseDelay = TimeSpan.FromMilliseconds(100);
+                configureOptions?.Invoke(options);
+            });
             handlers(services);
         }));
 
@@ -142,6 +147,29 @@ public sealed class RabbitMqTests(RabbitMqFixture fixture) : IClassFixture<Rabbi
         Assert.Null(envelope.ParentMessageId);
         Assert.NotEqual(Guid.Empty, envelope.MessageId);
         Assert.Equal(HealthStatus.Healthy, (await Support.ReadyReportAsync(host.Services)).Status);
+    }
+
+    [Fact]
+    public async Task AnEventNobodyListensTo_IsNotAnError_AndAPublishThatIsConfirmedStillReaches()
+    {
+        string exchange = NewExchange();
+        await using RunningHost publisher = await StartAsync(exchange, _ => { });
+        IEventBus bus = publisher.Services.GetRequiredService<IEventBus>();
+
+        // no queue is bound yet: the broker returns the message, which is told in the log but is not a failure of the publisher
+        await bus.PublishAsync(new Pinged("nobody"));
+
+        Recorder recorder = new();
+        await using RunningHost subscriber = await StartAsync(exchange, services =>
+        {
+            services.AddSingleton(recorder);
+            services.AddEventHandler<Pinged, RecordingHandler>();
+        });
+        await bus.PublishAsync(new Pinged("somebody"));
+
+        await Support.EventuallyAsync(() => Has(recorder.Received), "the event to reach the queue that is bound now");
+        recorder.Received.TryPeek(out MessageEnvelope<Pinged>? envelope);
+        Assert.Equal("somebody", envelope!.Message.Text);
     }
 
     [Fact]
@@ -395,6 +423,32 @@ public sealed class RabbitMqTests(RabbitMqFixture fixture) : IClassFixture<Rabbi
         QueueDeclareOk work = await channel.QueueDeclarePassiveAsync($"{exchange}_it-service_Pinged");
         Assert.Equal(0u, work.MessageCount);
         Assert.Equal(0u, work.ConsumerCount);
+    }
+
+    [Fact]
+    public async Task APublishDuringTheRecovery_WaitsForTheClientToRecover_AndTheConsumerStaysOnItsConnection()
+    {
+        string exchange = NewExchange();
+        Recorder recorder = new();
+        await using RunningHost host = await StartAsync(exchange, services =>
+        {
+            services.AddSingleton(recorder);
+            services.AddEventHandler<Pinged, RecordingHandler>();
+        }, configureOptions: options => options.PublishRetryCount = 8);
+        IEventBus bus = host.Services.GetRequiredService<IEventBus>();
+        await bus.PublishAsync(new Pinged("before"));
+        await Support.EventuallyAsync(() => Has(recorder.Received), "the first message");
+
+        await fixture.Container.ExecAsync(["rabbitmqctl", "close_all_connections", "recovery test"]);
+
+        // one publish, no loop of the caller: it is repeated until the client has recovered the connection, and it does not replace the connection the client is recovering
+        await bus.PublishAsync(new Pinged("during"));
+
+        await Support.EventuallyAsync(() => Task.FromResult(recorder.Received.Count == 2), "the message published during the recovery to reach the consumer that was recovered");
+        await Task.Delay(TimeSpan.FromSeconds(2));
+        Assert.Equal(2, recorder.Received.Count);
+        ExecResult connections = await fixture.Container.ExecAsync(["rabbitmqctl", "list_connections", "name"]);
+        Assert.Equal(1, connections.Stdout.Split('\n', StringSplitOptions.RemoveEmptyEntries).Count(line => line.Contains("->", StringComparison.Ordinal)));
     }
 
     [Fact]
