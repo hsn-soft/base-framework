@@ -40,6 +40,7 @@ public sealed partial class RabbitMqConsumer(
     private readonly RabbitMqEventBusConfig _config = config;
     private readonly ILogger _logger = logger;
     private readonly IntegrationEventInfo _eventInfo = eventInfo;
+    private const int MaxTrackedMessages = 10_000;
     private readonly SemaphoreSlim _prefetch = new(eventInfo.FetchCount, eventInfo.FetchCount);
     private readonly SemaphoreSlim _recoveryGate = new(1, 1);
     private readonly Lock _channelLock = new();
@@ -50,6 +51,7 @@ public sealed partial class RabbitMqConsumer(
     private string _consumerTag = "no-active-consumer";
     private bool _disposed;
     private bool _consumerCancelled;
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, (int Count, DateTime Seen)> _timeouts = new();
 
     public string QueueName { get; } = EventNameHelper.GetConsumerClientEventQueueName(options, eventInfo.EventName);
 
@@ -199,6 +201,14 @@ public sealed partial class RabbitMqConsumer(
             }
             catch (TimeoutException exception)
             {
+                if (TimedOutTooOften(args))
+                {
+                    // a message whose handler keeps timing out would hold a place of the consumer for ever: it counts as failed
+                    LogTimeoutLimit(_logger, QueueName, _config.MaxTimeoutRequeues);
+                    await ReportFailureAsync(args.DeliveryTag, eventName, message, exception).ConfigureAwait(false);
+                    return;
+                }
+
                 LogTimeout(_logger, QueueName, exception.Message);
                 await RequeueAfterDelayAsync(args.DeliveryTag).ConfigureAwait(false);
                 return;
@@ -215,6 +225,7 @@ public sealed partial class RabbitMqConsumer(
                 return;
             }
 
+            ForgetTimeouts(args);
             await AcknowledgeAsync(args.DeliveryTag).ConfigureAwait(false);
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
@@ -225,6 +236,48 @@ public sealed partial class RabbitMqConsumer(
         finally
         {
             _prefetch.Release();
+        }
+    }
+
+    // counts this timeout of the message; true when it has timed out more often than allowed (the count is then forgotten, the message leaves the queue)
+    private bool TimedOutTooOften(BasicDeliverEventArgs args)
+    {
+        string? id = args.BasicProperties.MessageId;
+        if (_config.MaxTimeoutRequeues <= 0 || string.IsNullOrEmpty(id))
+        {
+            return false;
+        }
+
+        // the memory of the counts is bounded: when it is full what is old is dropped, and when that is not enough everything is
+        if (_timeouts.Count >= MaxTrackedMessages)
+        {
+            DateTime limit = DateTime.UtcNow.AddHours(-1);
+            foreach (KeyValuePair<string, (int Count, DateTime Seen)> entry in _timeouts.Where(entry => entry.Value.Seen < limit))
+            {
+                _timeouts.TryRemove(entry.Key, out _);
+            }
+
+            if (_timeouts.Count >= MaxTrackedMessages)
+            {
+                _timeouts.Clear();
+            }
+        }
+
+        (int count, _) = _timeouts.AddOrUpdate(id, _ => (1, DateTime.UtcNow), (_, old) => (old.Count + 1, DateTime.UtcNow));
+        if (count <= _config.MaxTimeoutRequeues)
+        {
+            return false;
+        }
+
+        _timeouts.TryRemove(id, out _);
+        return true;
+    }
+
+    private void ForgetTimeouts(BasicDeliverEventArgs args)
+    {
+        if (!string.IsNullOrEmpty(args.BasicProperties.MessageId))
+        {
+            _timeouts.TryRemove(args.BasicProperties.MessageId, out _);
         }
     }
 
@@ -492,6 +545,9 @@ public sealed partial class RabbitMqConsumer(
 
     [LoggerMessage(EventId = 4015, EventName = "RABBITMQ_CONSUMER_RECOVERY_FAILED", Level = LogLevel.Error, Message = "{Queue}: the channel could not be recovered, trying again: {Error}")]
     private static partial void LogRecoveryFailed(ILogger logger, string queue, string error);
+
+    [LoggerMessage(EventId = 4018, EventName = "RABBITMQ_CONSUMER_TIMEOUT_LIMIT", Level = LogLevel.Error, Message = "{Queue}: the handler of a message timed out more than {Limit} times, it counts as failed and is reported")]
+    private static partial void LogTimeoutLimit(ILogger logger, string queue, int limit);
 
     [LoggerMessage(EventId = 4017, EventName = "RABBITMQ_CONSUMER_CANCELLED_BY_BROKER", Level = LogLevel.Warning, Message = "{Queue}: the broker cancelled the consumer, the channel will be rebuilt")]
     private static partial void LogConsumerCancelled(ILogger logger, string queue);

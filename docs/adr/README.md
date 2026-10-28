@@ -28,6 +28,7 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
+| [0101](0101-a-message-whose-handler-keeps-timing-out-counts-as-failed.md) | A RabbitMQ message whose handler keeps timing out counts as failed after a limit | Accepted | 2026-10-28 |
 | [0100](0100-a-connection-the-client-is-recovering-is-not-replaced.md) | A connection the RabbitMQ client is recovering is never replaced from outside | Accepted | 2026-10-28 |
 | [0099](0099-rabbitmq-publishes-with-confirms-and-a-timeout.md) | RabbitMQ publishes with confirms and a timeout; what is worth repeating is one list | Accepted | 2026-10-28 |
 | [0098](0098-a-message-another-handling-holds-is-put-back-not-acknowledged.md) | A message another handling holds is put back, never acknowledged | Accepted | 2026-10-28 |

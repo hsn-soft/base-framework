@@ -40,8 +40,8 @@ public sealed class RabbitMqConsumerTests : IAsyncDisposable
 
         public required AsyncEventingBasicConsumer Basic { get; init; }
 
-        public Task Deliver(string json = ValidMessage, ulong tag = 1, string exchange = "HHS", string routingKey = "Sample")
-            => Basic.HandleBasicDeliverAsync("consumer-tag", tag, false, exchange, routingKey, new BasicProperties(), Encoding.UTF8.GetBytes(json));
+        public Task Deliver(string json = ValidMessage, ulong tag = 1, string exchange = "HHS", string routingKey = "Sample", string? messageId = null)
+            => Basic.HandleBasicDeliverAsync("consumer-tag", tag, false, exchange, routingKey, new BasicProperties { MessageId = messageId }, Encoding.UTF8.GetBytes(json));
 
         public IReadOnlyList<ChannelCall> Acks => Channel.Named("BasicAckAsync");
 
@@ -294,6 +294,58 @@ public sealed class RabbitMqConsumerTests : IAsyncDisposable
         Assert.Empty(rig.Acks);
         Assert.Equal([3UL, false, true], Assert.Single(rig.Nacks).Args.Take(3));
         Assert.Contains(rig.Logger.Entries, entry => entry.Message.Contains("TIMEOUT", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task AMessageWhoseHandlerKeepsTimingOut_CountsAsFailedAfterTheLimit()
+    {
+        Rig rig = await StartAsync(configureConfig: config => config.MaxTimeoutRequeues = 2);
+        rig.Dispatcher.Behavior = () => throw new TimeoutException("too slow");
+
+        await rig.Deliver(tag: 1, messageId: "m-1");
+        await rig.Deliver(tag: 2, messageId: "m-1");
+        Assert.Empty(rig.Notifier.Notified);
+        Assert.Equal(2, rig.Nacks.Count);
+
+        await rig.Deliver(tag: 3, messageId: "m-1");
+
+        Assert.Single(rig.Notifier.Notified);
+        Assert.Equal(3UL, Assert.Single(rig.Acks).Args[0]);
+        Assert.Equal(2, rig.Nacks.Count);
+        Assert.Contains(rig.Logger.Entries, entry => entry.Message.Contains("timed out more than 2", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task ATimeoutCount_IsPerMessage_AndIsForgottenWhenTheMessageIsHandled()
+    {
+        Rig rig = await StartAsync(configureConfig: config => config.MaxTimeoutRequeues = 1);
+        bool fail = true;
+        rig.Dispatcher.Behavior = () => fail ? throw new TimeoutException("too slow") : Task.CompletedTask;
+
+        await rig.Deliver(tag: 1, messageId: "m-1");
+        await rig.Deliver(tag: 2, messageId: "m-2");
+        fail = false;
+        await rig.Deliver(tag: 3, messageId: "m-1");
+        fail = true;
+        await rig.Deliver(tag: 4, messageId: "m-1");
+
+        // each message timed out once (the limit), m-1 was handled in between and started again: nothing is reported
+        Assert.Empty(rig.Notifier.Notified);
+        Assert.Equal([1UL, 2UL, 4UL], rig.Nacks.Select(nack => (ulong)nack.Args[0]!));
+    }
+
+    [Fact]
+    public async Task ATimeoutWithoutAMessageId_IsPutBackWithoutALimit()
+    {
+        Rig rig = await StartAsync(configureConfig: config => config.MaxTimeoutRequeues = 1);
+        rig.Dispatcher.Behavior = () => throw new TimeoutException("too slow");
+
+        await rig.Deliver(tag: 1);
+        await rig.Deliver(tag: 2);
+        await rig.Deliver(tag: 3);
+
+        Assert.Empty(rig.Notifier.Notified);
+        Assert.Equal(3, rig.Nacks.Count);
     }
 
     [Fact]
