@@ -121,13 +121,32 @@ The dispatcher asks the inbox before the handler and tells it how the handling e
 |---|---|
 | `Started` (a new message, or one taken again) | the handler runs; handled (or the application said no to it): `Completed`; failed after its attempts: `Failed` with the reason, the error goes on to the error queue |
 | `AlreadyHandled` | the handler does not run, the message is acknowledged (`CONSUME_EVENT_INBOX_ALREADY_HANDLED`, Information) |
-| `InProgress` | another handling holds the message and its lease (`ProcessingLease`) has not run out: left alone (Warning) |
+| `InProgress` | another handling holds the message and its lease (`ProcessingLease`) has not run out: **not acknowledged**; RabbitMQ puts it back after `RequeueDelay`, Kafka asks again after `InProgressRetryDelay`, until the other handling ends or its lease runs out ([ADR-0098](adr/0098-a-message-another-handling-holds-is-put-back-not-acknowledged.md)) |
 | `RetryLimitReached` | the message failed more than `MaxRetryCount` times: left to the error queue (Warning) |
 | the inbox cannot be asked (the database is down) | the delivery fails and is reported like a failed handler: **the message is not dropped** |
 
 A message is taken by inserting its row (the id is the key, so of two deliveries at once one insert wins); a row that failed, or whose handling died (a `Started` row older than the lease), is taken again by one `UPDATE ... WHERE` (the status and the lease are in the
 condition), so two deliveries cannot both take it. What the inbox does **not** do: the row and the changes of the handler are two transactions, so a handler that crashes between its own commit and `Completed` is run again when the message comes back (after the lease): a handler
-must still stand it. Rows are kept (clean up old `Completed` ones as the service sees fit). On EF Core (SQL Server, PostgreSQL: `EventBus.EntityFrameworkCore`, `AddEventInbox<TContext>()`) and on MongoDB (`EventBus.MongoDB`, `AddEventInbox(collectionName)`).
+must still stand it. Rows are kept until the service asks for the cleanup (below). On EF Core (SQL Server, PostgreSQL: `EventBus.EntityFrameworkCore`, `AddEventInbox<TContext>()`) and on MongoDB (`EventBus.MongoDB`, `AddEventInbox(collectionName)`).
+
+### Forgetting old messages
+
+The table (or collection) only grows unless the service asks for the cleanup, which removes the **`Completed`** rows older than `RetentionPeriod` ([ADR-0102](adr/0102-the-inbox-cleanup-is-opt-in-and-needs-no-coordination-between-instances.md)). A started or failed row is never removed.
+
+```csharp
+builder.Services
+    .AddEventInbox<OrderDbContext>()
+    .AddEventInboxCleanup<OrderDbContext>(configuration);   // on MongoDB: .AddEventInboxCleanup("InboxMessage", configuration: configuration)
+```
+
+```json
+"EventInbox": { "Cleanup": { "RetentionPeriod": "7.00:00:00", "Interval": "01:00:00", "BatchSize": 1000 } }
+```
+
+- **Relational databases:** a worker, run by every instance of the service, removes the rows a batch at a time; instances need no coordination (two that pick the same rows delete each once). `ConfigureEventInbox` adds an index on `Status, ProcessedAt`, so the next migration of the service creates it.
+- **MongoDB:** a TTL index on `ProcessedAt` that only `Completed` documents are in, made at start (changed in place when the retention changes); the server removes the documents, nothing runs in the service. `Interval` is not used.
+- `RetentionPeriod` of `00:00:00` turns it off. **Keep it longer than the broker keeps messages** (Kafka: 7 days by default): a copy that comes after its row was removed is handled again.
+- A service that does not call `AddEventInboxCleanup` has no worker; one that cleans in the database itself (a job of the database) does not need it.
 
 ## Product side
 

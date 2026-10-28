@@ -21,6 +21,9 @@ public static class InboxModelBuilderExtensions
             inbox.Property(message => message.CorrelationId).HasMaxLength(InboxMessage.CorrelationIdMaxLength);
             inbox.Property(message => message.Status).HasMaxLength(InboxMessage.StatusMaxLength).IsRequired();
             inbox.Property(message => message.Error).HasMaxLength(InboxMessage.ErrorMaxLength);
+
+            // what the cleanup looks for: the handled rows that are old
+            inbox.HasIndex(message => new { message.Status, message.ProcessedAt });
         });
         return modelBuilder;
     }

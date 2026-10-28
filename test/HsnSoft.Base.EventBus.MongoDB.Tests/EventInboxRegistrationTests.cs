@@ -36,6 +36,26 @@ public sealed class EventInboxRegistrationTests
     }
 
     [Fact]
+    public void TheCleanup_IsARegistrationOfItsOwn_WithItsSettings()
+    {
+        IMongoDatabase database = new MongoClient("mongodb://localhost:1").GetDatabase("unit");
+        ServiceCollection services = new();
+        services.AddSingleton(database);
+        services.AddSingleton(typeof(Microsoft.Extensions.Logging.ILogger<>), typeof(Microsoft.Extensions.Logging.Abstractions.NullLogger<>));
+        services.AddEventInbox();
+        using (ServiceProvider without = services.BuildServiceProvider())
+        {
+            Assert.Empty(without.GetServices<Microsoft.Extensions.Hosting.IHostedService>());
+        }
+
+        services.AddEventInboxCleanup(configure: options => options.RetentionPeriod = TimeSpan.FromDays(30));
+        using ServiceProvider provider = services.BuildServiceProvider();
+
+        Assert.IsType<MongoInboxRetention>(Assert.Single(provider.GetServices<Microsoft.Extensions.Hosting.IHostedService>()));
+        Assert.Equal(TimeSpan.FromDays(30), provider.GetRequiredService<Microsoft.Extensions.Options.IOptions<EventInboxCleanupOptions>>().Value.RetentionPeriod);
+    }
+
+    [Fact]
     public void TheMistakes_AreToldWithTheirParameter()
     {
         Assert.Throws<ArgumentNullException>(() => EventInboxServiceCollectionExtensions.AddEventInbox(null!));

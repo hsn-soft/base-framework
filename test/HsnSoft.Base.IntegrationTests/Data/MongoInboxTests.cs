@@ -3,6 +3,9 @@ using HsnSoft.Base.EventBus.MongoDB;
 using HsnSoft.Base.MongoDB;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using Testcontainers.MongoDb;
 
@@ -157,5 +160,42 @@ public sealed class MongoInboxTests : IAsyncLifetime
         MongoInboxStore picky = new(database.GetCollection<InboxMessage>("PickyInbox"), Microsoft.Extensions.Options.Options.Create(new EventInboxOptions()));
 
         await Assert.ThrowsAsync<MongoWriteException>(() => picky.TryStartAsync(Guid.NewGuid(), "Poison", null));
+    }
+
+    private async Task<BsonDocument> RetentionIndex()
+    {
+        IMongoCollection<InboxMessage> collection = _host.Services.GetRequiredService<IMongoDatabase>().GetCollection<InboxMessage>("InboxMessage");
+        List<BsonDocument> indexes = await (await collection.Indexes.ListAsync()).ToListAsync();
+        return indexes.SingleOrDefault(index => index["name"] == "inbox_processed_ttl") ?? [];
+    }
+
+    [Fact]
+    public async Task TheRetentionIndex_IsMadeAtStart_ChangedInPlace_AndMongoRemovesOnlyHandledDocuments()
+    {
+        IMongoCollection<InboxMessage> collection = _host.Services.GetRequiredService<IMongoDatabase>().GetCollection<InboxMessage>("InboxMessage");
+        DateTime now = DateTime.UtcNow;
+        InboxMessage Document(string status, TimeSpan ago) => new() { Id = Guid.NewGuid(), EventName = "E", Status = status, StartedAt = now - ago, CreatedAt = now - ago, ProcessedAt = status == InboxStatuses.Completed ? now - ago : null };
+        InboxMessage oldHandled = Document(InboxStatuses.Completed, TimeSpan.FromDays(3));
+        InboxMessage recentHandled = Document(InboxStatuses.Completed, TimeSpan.FromHours(1));
+        InboxMessage oldStarted = Document(InboxStatuses.Started, TimeSpan.FromDays(3));
+        await collection.InsertManyAsync([oldHandled, recentHandled, oldStarted]);
+
+        // a service that asks for the cleanup: MongoDB removes by itself, and the retention can be changed later
+        MongoInboxRetention first = new(collection, Options.Create(new EventInboxCleanupOptions { RetentionPeriod = TimeSpan.FromDays(7) }), NullLogger<MongoInboxRetention>.Instance);
+        await first.StartAsync(CancellationToken.None);
+        await Support.EventuallyAsync(async () => (await RetentionIndex()).Contains("expireAfterSeconds"), "the retention index");
+        Assert.Equal(7 * 86400, (await RetentionIndex())["expireAfterSeconds"].ToInt64());
+        Assert.Equal(InboxStatuses.Completed, (await RetentionIndex())["partialFilterExpression"]["Status"].AsString);
+        await first.StopAsync(CancellationToken.None);
+
+        MongoInboxRetention second = new(collection, Options.Create(new EventInboxCleanupOptions { RetentionPeriod = TimeSpan.FromDays(2) }), NullLogger<MongoInboxRetention>.Instance);
+        await second.StartAsync(CancellationToken.None);
+        await Support.EventuallyAsync(async () => (await RetentionIndex())["expireAfterSeconds"].ToInt64() == 2 * 86400, "the retention to be changed in place");
+        await second.StopAsync(CancellationToken.None);
+
+        // the server removes what is handled and older than the retention (its pass is once a minute); a started document is never removed
+        await Support.EventuallyAsync(async () => await collection.CountDocumentsAsync(row => row.Id == oldHandled.Id) == 0, "MongoDB to remove the old handled document", TimeSpan.FromMinutes(3));
+        Assert.Equal(1, await collection.CountDocumentsAsync(row => row.Id == recentHandled.Id));
+        Assert.Equal(1, await collection.CountDocumentsAsync(row => row.Id == oldStarted.Id));
     }
 }

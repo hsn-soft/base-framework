@@ -1,6 +1,8 @@
 using System;
 using HsnSoft.Base.EventBus.Inbox;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 
@@ -31,5 +33,31 @@ public static class EventInboxServiceCollectionExtensions
         return services.AddScoped<IInboxStore>(provider => new MongoInboxStore(
             (serviceKey is null ? provider.GetRequiredService<IMongoDatabase>() : provider.GetRequiredKeyedService<IMongoDatabase>(serviceKey)).GetCollection<InboxMessage>(collectionName),
             provider.GetRequiredService<IOptions<EventInboxOptions>>()));
+    }
+
+    /// <summary>
+    /// Makes MongoDB forget the messages the service handled long ago (<see cref="EventInboxCleanupOptions"/>, section <c>EventInbox:Cleanup</c> when <paramref name="configuration"/> is given): a TTL index on the inbox collection, made at start,
+    /// so MongoDB removes them itself and no instance runs anything. Without this call the collection only grows.
+    /// </summary>
+    public static IServiceCollection AddEventInboxCleanup(this IServiceCollection services, string collectionName = "InboxMessage", string? serviceKey = null, IConfiguration? configuration = null, Action<EventInboxCleanupOptions>? configure = null)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentException.ThrowIfNullOrWhiteSpace(collectionName);
+
+        OptionsBuilder<EventInboxCleanupOptions> builder = services.AddOptions<EventInboxCleanupOptions>();
+        if (configuration is not null)
+        {
+            builder.Bind(configuration.GetSection(EventInboxCleanupOptions.SectionName));
+        }
+
+        if (configure is not null)
+        {
+            builder.Configure(configure);
+        }
+
+        return services.AddHostedService(provider => new MongoInboxRetention(
+            (serviceKey is null ? provider.GetRequiredService<IMongoDatabase>() : provider.GetRequiredKeyedService<IMongoDatabase>(serviceKey)).GetCollection<InboxMessage>(collectionName),
+            provider.GetRequiredService<IOptions<EventInboxCleanupOptions>>(),
+            provider.GetRequiredService<ILogger<MongoInboxRetention>>()));
     }
 }
