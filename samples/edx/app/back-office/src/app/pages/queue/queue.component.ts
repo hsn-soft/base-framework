@@ -9,7 +9,7 @@ import { SessionService } from '../../core/session.service';
 const statusText: Record<string, string> = { Queued: 'Kuyrukta', DraftCreated: 'Taslak oluştu', Rejected: 'Reddedildi', Failed: 'Hatalı', Completed: 'Tamamlandı' };
 const statusClass: Record<string, string> = { Queued: 'warn', DraftCreated: 'warn', Rejected: 'danger', Failed: 'danger', Completed: 'ok' };
 
-/** The queue of the intake service: every invoice that was sent, how it was sent and what became of it (a failed or a rejected one says why). The file as it was received can be downloaded by who has the permission. */
+/** The queue of the firm invoice integration: every invoice that was sent, how it was sent and what became of it (a failed or a rejected one says why). The file as it was received can be downloaded by who has the permission. */
 @Component({
   selector: 'app-queue',
   imports: [FormsModule, DatePipe, DecimalPipe],
@@ -116,7 +116,7 @@ export class QueueComponent implements OnInit {
 
   protected async download(item: QueueItem): Promise<void> {
     try {
-      const blob = await firstValueFrom(this.api.getFile(`intake-service/v1/queue/${item.id}/download`));
+      const blob = await firstValueFrom(this.api.getFile(`firm-invoice-service/v1/queue/${item.id}/download`));
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -132,7 +132,7 @@ export class QueueComponent implements OnInit {
     this.error.set(null);
     try {
       const result = await firstValueFrom(
-        this.api.post<Paged<QueueItem>>('intake-service/v1/queue/paged-list', {
+        this.api.post<Paged<QueueItem>>('firm-invoice-service/v1/queue/paged-list', {
           pageNumber: this.page(),
           maxResultCount: this.size,
           invoiceNumber: this.number || null,

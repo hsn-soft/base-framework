@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Builds and starts the Edx hosts (identity service, auth server, intake service (REST, gRPC and WCF hosts), invoice service, gateway) and the back office (Angular, http://localhost:4200; npm install is run once) in the development environment. Ctrl+C stops them.
+# Builds and starts the Edx hosts (identity service, auth server, the firm invoice integration (REST, gRPC and WCF hosts), invoice service, signer service, the GİB invoice integration (REST and WCF hosts), the mock GİB center, gateway) and the back office (Angular, http://localhost:4200; npm install is run once) in the development environment. Ctrl+C stops them.
 # The local infrastructure on its default ports is used: SQL Server, MongoDB, Redis, Kafka and MinIO (localhost:9100). MinIO needs a user: put it in samples/edx/.env (git ignores *.env):
 #   Minio__AccessKey=...
 #   Minio__SecretKey=...
@@ -19,10 +19,14 @@ fi
 hosts=(
   samples/edx/service/identity/Edx.IdentityService.Http.Host
   samples/edx/app/Edx.AuthServer.Host
-  samples/edx/service/intake/Edx.IntakeService.Http.Host
-  samples/edx/service/intake/Edx.IntakeService.Grpc.Host
-  samples/edx/service/intake/Edx.IntakeService.Wcf.Host
+  samples/edx/integration/firm-invoice/Edx.Integration.FirmInvoice.Http.Host
+  samples/edx/integration/firm-invoice/Edx.Integration.FirmInvoice.Grpc.Host
+  samples/edx/integration/firm-invoice/Edx.Integration.FirmInvoice.Wcf.Host
   samples/edx/service/invoice/Edx.InvoiceService.Http.Host
+  samples/edx/service/signer/Edx.SignerService.Http.Host
+  samples/edx/integration/gib-invoice/Edx.Integration.GibInvoice.Http.Host
+  samples/edx/integration/gib-invoice/Edx.Integration.GibInvoice.Wcf.Host
+  samples/edx/mock/Edx.Mock.Center.Wcf.Host
   samples/edx/gateway/Edx.Gateway.Host
 )
 

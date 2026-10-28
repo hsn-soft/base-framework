@@ -57,6 +57,32 @@ export interface InvoiceLine {
 
 export type InvoiceStatus = 'Processing' | 'Failed' | 'DraftCreated' | 'Rejected' | 'Approved' | 'Signed';
 
+/** Where the envelope of an invoice is (a summary: the envelope itself is the GİB invoice integration's). */
+export type EnvelopeState = 'None' | 'ToSend' | 'Sent' | 'Delivered' | 'Refused' | 'Failed';
+
+/** One step in the life of an invoice: its status changed, or its envelope did. */
+export interface InvoiceHistoryEntry {
+  kind: 'Status' | 'Envelope';
+  value: string;
+  at: string;
+  by?: string | null;
+  note?: string | null;
+}
+
+/** The answer of the receiver to a commercial invoice (the shape only). */
+export interface InvoiceResponse {
+  kind: 'Accepted' | 'Rejected';
+  documentNumber: string;
+  documentUuid: string;
+  at: string;
+  note?: string | null;
+  envelopeId?: string | null;
+  envelopeState?: string | null;
+  envelopeStatusCode?: number | null;
+  envelopeStatusText?: string | null;
+  envelopeStatusAt?: string | null;
+}
+
 /** One record of an invoice (it is sent again after a failure, and each time is a record). */
 export interface Invoice {
   id: string;
@@ -67,6 +93,7 @@ export interface Invoice {
   channelType: string;
   status: InvoiceStatus;
   isLive: boolean;
+  profile?: string | null;
   failureStage?: string | null;
   failureReason?: string | null;
   statusChangedAt: string;
@@ -79,6 +106,14 @@ export interface Invoice {
   lines: InvoiceLine[];
   total?: number | null;
   rejectionReason?: string | null;
+  envelopeId?: string | null;
+  envelopeState: EnvelopeState;
+  envelopeStatusCode?: number | null;
+  envelopeStatusText?: string | null;
+  envelopeNote?: string | null;
+  envelopeStatusAt?: string | null;
+  history: InvoiceHistoryEntry[];
+  responses: InvoiceResponse[];
   tenantId: string;
 }
 
@@ -101,17 +136,99 @@ export interface QueueItem {
   createdAt: string;
 }
 
-/** The model of an invoice, as the create page sends it (the same one a customer sends through the API). */
+/** The model of an invoice, as the create page sends it (the same one a customer sends through the API). The supplier is the tenant itself. */
 export interface InvoiceModel {
   invoiceId: string;
   invoiceNumber: string;
   issueDate: string;
   currency: string;
-  supplierName: string;
-  supplierTaxId?: string | null;
   customerName: string;
-  customerTaxId?: string | null;
-  lines: { description: string; quantity: number; unitPrice: number; vatRate: number }[];
+  customerTaxId: string;
+  customerTaxOffice?: string | null;
+  customerDistrict: string;
+  customerCity: string;
+  customerCountry?: string | null;
+  invoiceProfile?: 'TEMELFATURA' | 'TICARIFATURA';
+  lines: { description: string; quantity: number; unitCode?: string | null; unitPrice: number; vatRate: number }[];
+}
+
+/** An invoice that was issued to the tenant (it came in at its post box). */
+export interface PurchaseInvoice {
+  id: string;
+  invoiceUuid: string;
+  envelopeId: string;
+  profile: string;
+  number: string;
+  issueDate: string;
+  currency: string;
+  supplierRegisterNumber: string;
+  supplierName: string;
+  customerRegisterNumber: string;
+  customerName: string;
+  lineCount: number;
+  taxExclusiveAmount?: number | null;
+  taxInclusiveAmount?: number | null;
+  payableAmount?: number | null;
+  receivedAt: string;
+  /** What the center says of the envelope the invoice came in (1200, 1220, 1300...). */
+  envelopeStatusCode: number;
+  envelopeStatusText: string;
+  envelopeStatusAt: string;
+  history: InvoiceHistoryEntry[];
+  responses: InvoiceResponse[];
+}
+
+/** An envelope the integration service handed to the center. */
+export interface OutboundEnvelope {
+  id: string;
+  envelopeId: string;
+  kind: 'Invoice' | 'SystemResponse';
+  state: 'ToSend' | 'Sent' | 'Delivered' | 'Refused' | 'Failed';
+  statusCode: number;
+  statusDescription: string;
+  failureStage?: string | null;
+  failureReason?: string | null;
+  senderAlias: string;
+  receiverAlias: string;
+  receiverRegisterNumber: string;
+  receiverTitle: string;
+  invoiceNumber?: string | null;
+  referenceEnvelopeId?: string | null;
+  sendCount: number;
+  createdAt: string;
+  statusChangedAt: string;
+  history: EnvelopeEvent[];
+}
+
+/** One thing that happened to an envelope (a code of the center, or what the integration did). */
+export interface EnvelopeEvent {
+  at: string;
+  code: number;
+  text: string;
+  source: 'Local' | 'Send' | 'Center' | 'Poll' | 'PostBox';
+  note?: string | null;
+}
+
+/** An envelope the center delivered to the post box of the tenant. */
+export interface InboundEnvelope {
+  id: string;
+  envelopeId: string;
+  state: 'Queued' | 'Accepted' | 'Refused' | 'Applied' | 'Ignored';
+  statusCode: number;
+  statusDescription: string;
+  documentType?: string | null;
+  senderAlias?: string | null;
+  senderRegisterNumber?: string | null;
+  senderTitle?: string | null;
+  receiverAlias?: string | null;
+  invoiceNumber?: string | null;
+  referenceEnvelopeId?: string | null;
+  receivedAt: string;
+  processedAt?: string | null;
+  centerStatusCode?: number | null;
+  centerStatusDescription?: string | null;
+  centerStatusAt?: string | null;
+  history: EnvelopeEvent[];
 }
 
 export interface InvoiceReport {

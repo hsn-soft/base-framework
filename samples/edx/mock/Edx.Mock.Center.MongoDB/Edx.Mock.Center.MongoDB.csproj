@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!-- How the mock center keeps its domain: two MongoDB collections, the participants and the envelope queue. The connection is registered by the host (AddBaseMongo). -->
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.MongoDB\HsnSoft.Base.MongoDB.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Edx.Mock.Center.Domain\Edx.Mock.Center.Domain.csproj" />
+    </ItemGroup>
+
+</Project>

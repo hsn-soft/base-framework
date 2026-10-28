@@ -8,7 +8,7 @@ using Edx.Client.Wcf;
 
 // Sends one invoice file to Edx over WCF (SOAP): zips it (the file is not zipped yet), gives the SHA-256 of the zip and sends it as the bytes of the message.
 //   dotnet run -- <file> <invoice-number> [invoice-uuid]
-// Settings (environment): EDX_GATEWAY (default http://localhost:5600), EDX_TENANT, EDX_USER, EDX_PASSWORD. A zip may weigh what a SOAP message may (100 MB at most); a bigger one goes over REST or gRPC.
+// Settings (environment): EDX_GATEWAY (where the token comes from, default http://localhost:5600), EDX_FIRM_INVOICE_WCF (the firm invoice integration is reached directly, default http://localhost:5512), EDX_TENANT, EDX_USER, EDX_PASSWORD. A zip may weigh what a SOAP message may (100 MB at most); a bigger one goes over REST or gRPC.
 if (args.Length < 2)
 {
     Console.Error.WriteLine("Usage: Edx.Client.Wcf <file> <invoice-number> [invoice-uuid]");
@@ -19,6 +19,7 @@ string path = args[0];
 string invoiceNumber = args[1];
 Guid invoiceId = args.Length > 2 ? Guid.Parse(args[2]) : Guid.NewGuid();
 string gateway = Environment.GetEnvironmentVariable("EDX_GATEWAY") ?? "http://localhost:5600";
+string firmInvoice = Environment.GetEnvironmentVariable("EDX_FIRM_INVOICE_WCF") ?? "http://localhost:5512";
 
 // 1. who am I: a token of the tenant's user (it is a REST call: WCF only carries the token afterwards)
 using HttpClient http = new() { BaseAddress = new Uri(gateway) };
@@ -45,8 +46,8 @@ request.FileHash = Convert.ToHexStringLower(SHA256.HashData(request.Content));
 
 // 3. the call: the token goes in the HTTP header Authorization
 BasicHttpBinding binding = new() { MaxReceivedMessageSize = 200 * 1024 * 1024, SendTimeout = TimeSpan.FromMinutes(5) };
-ChannelFactory<IIntakeService> factory = new(binding, new EndpointAddress(new Uri(new Uri(gateway), "intake-service/wcf/intake.svc")));
-IIntakeService service = factory.CreateChannel();
+ChannelFactory<IFirmInvoiceService> factory = new(binding, new EndpointAddress(new Uri(new Uri(firmInvoice), "wcf/firm-invoice.svc")));
+IFirmInvoiceService service = factory.CreateChannel();
 try
 {
     using OperationContextScope scope = new((IContextChannel)service);
@@ -58,7 +59,7 @@ try
     Console.WriteLine($"queued: {result.QueueId} ({result.InvoiceNumber}, {result.SourceType}, {result.Status})");
     return 0;
 }
-catch (FaultException<IntakeFault> fault)
+catch (FaultException<FirmInvoiceFault> fault)
 {
     Console.Error.WriteLine($"{fault.Detail.Code}: {fault.Detail.Message}");
     return 1;

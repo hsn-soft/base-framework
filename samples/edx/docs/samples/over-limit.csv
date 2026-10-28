@@ -1,2 +1,2 @@
-invoiceNumber,issueDate,currency,supplierName,supplierTaxId,customerName,customerTaxId,description,quantity,unitPrice,vatRate
-INV-2026-0004,2026-10-28,TRY,Veriban Yazilim A.S.,1234567890,Ornek Musteri Ltd.,0987654321,Buyuk proje,1,5000000.00,20
+invoiceNumber,issueDate,currency,customerName,customerTaxId,customerTaxOffice,customerDistrict,customerCity,customerCountry,description,quantity,unitCode,unitPrice,vatRate
+ABC2026000000004,2026-10-28,TRY,Bilgera Bilisim A.S.,1234567802,Cankaya,Cankaya,Ankara,Türkiye,Buyuk proje,1,C62,5000000.00,20

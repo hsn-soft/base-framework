@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
     <!--
-        The invoice service of the Edx system: a web api that takes the invoices of the intake service in: it handles the event of every queued invoice (copies, unpacks and checks the file, makes the draft), lets a person approve or reject the draft and signs the approved one. The invoices are in its own database, the files in its own container of the blob store. What every Edx microservice
+        The invoice service of the Edx system: a web api that takes the invoices of the firm invoice integration in: it handles the event of every queued invoice (copies, unpacks and checks the file, makes the draft), lets a person approve or reject the draft (the signer service signs the approved one). The invoices are in its own database, the files in its own container of the blob store. What every Edx microservice
         has (logging, the web api shell, JWT, Swagger, health, Kafka) comes from Edx.Shared.Hosting.Microservices; the service adds its own parts here.
     -->
 

@@ -20,15 +20,16 @@ public sealed class InvoiceLine
     /// <summary>The VAT rate in percent (<c>20</c>).</summary>
     public decimal VatRate { get; private set; }
 
-    /// <summary>Quantity times price, with the VAT, to two decimals.</summary>
-    public decimal Total => Math.Round(Quantity * UnitPrice * (1 + (VatRate / 100)), 2, MidpointRounding.AwayFromZero);
+    /// <summary>What the line amounts to, with its VAT, as the invoice document says it (each line's amount and tax are rounded to two decimals).</summary>
+    public decimal Total { get; private set; }
 
-    public static InvoiceLine Of(string description, decimal quantity, decimal unitPrice, decimal vatRate)
+    public static InvoiceLine Of(string description, decimal quantity, decimal unitPrice, decimal vatRate, decimal total)
         => new()
         {
             Description = Guard.NotNullOrWhiteSpace(description, nameof(Description), InvoiceConsts.DescriptionMaxLength),
             Quantity = Guard.Range(quantity, nameof(Quantity), 0.0001m, 1_000_000_000m),
             UnitPrice = Guard.Range(unitPrice, nameof(UnitPrice), 0m, 1_000_000_000m),
             VatRate = Guard.Range(vatRate, nameof(VatRate), 0m, 100m),
+            Total = Guard.Range(total, nameof(Total), 0m, 100_000_000_000m),
         };
 }

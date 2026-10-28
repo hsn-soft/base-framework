@@ -25,7 +25,7 @@ builder.Services
     .AddInvoicePersistence(builder.Configuration)
     // the inbox of the service (in its database, with the collection of the records): a message that comes twice is handled once
     .AddEventInbox(MongoInvoiceDbProperties.CollectionPrefix + "InboxMessage")
-    // the store of the files: the same MinIO the intake service writes to (the container of this service is the Storage section)
+    // the store of the files: the same MinIO the firm invoice integration writes to (the container of this service is the Storage section)
     .AddMinioBlobStoring(builder.Configuration)
     .AddInvoiceApplication(builder.Configuration);
 

@@ -2,7 +2,7 @@ namespace Edx.InvoiceService.Domain.InvoiceDomain.Consts;
 
 public static class InvoiceConsts
 {
-    public const string CollectionName = "Invoice";
+    public const string CollectionName = "SalesInvoice";
 
     public const int NumberMaxLength = 64;
     public const int NameMaxLength = 200;

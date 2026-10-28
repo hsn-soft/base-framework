@@ -45,6 +45,18 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/invoices/invoices.component').then((m) => m.InvoicesComponent),
       },
       {
+        path: 'purchase-invoices',
+        canActivate: [menuGuard],
+        data: { menu: 'invoice-management.purchase' },
+        loadComponent: () => import('./pages/purchase-invoices/purchase-invoices.component').then((m) => m.PurchaseInvoicesComponent),
+      },
+      {
+        path: 'envelopes',
+        canActivate: [menuGuard],
+        data: { menu: 'integration.envelopes' },
+        loadComponent: () => import('./pages/envelopes/envelopes.component').then((m) => m.EnvelopesComponent),
+      },
+      {
         path: 'invoice-reports',
         canActivate: [menuGuard],
         data: { menu: 'invoice-management.reports' },

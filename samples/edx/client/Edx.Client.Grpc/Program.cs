@@ -8,7 +8,7 @@ using Grpc.Net.Client;
 
 // Sends one invoice file to Edx over gRPC: zips it (the file is not zipped yet), gives the SHA-256 of the zip and streams it in chunks.
 //   dotnet run -- <file> <invoice-number> [invoice-uuid]
-// Settings (environment): EDX_GATEWAY (the REST address, for the token; default http://localhost:5600), EDX_GRPC (default http://localhost:5601), EDX_TENANT, EDX_USER, EDX_PASSWORD.
+// Settings (environment): EDX_GATEWAY (the REST address, for the token; default http://localhost:5600), EDX_FIRM_INVOICE_GRPC (the firm invoice integration is reached directly; default http://localhost:5511), EDX_TENANT, EDX_USER, EDX_PASSWORD.
 if (args.Length < 2)
 {
     Console.Error.WriteLine("Usage: Edx.Client.Grpc <file> <invoice-number> [invoice-uuid]");
@@ -37,8 +37,8 @@ byte[] zip = Zip(path);
 string hash = Convert.ToHexStringLower(SHA256.HashData(zip));
 
 // 3. the upload: the first message is the header, the next ones carry the bytes of the zip
-using GrpcChannel channel = GrpcChannel.ForAddress(Environment.GetEnvironmentVariable("EDX_GRPC") ?? "http://localhost:5601");
-Intake.IntakeClient client = new(channel);
+using GrpcChannel channel = GrpcChannel.ForAddress(Environment.GetEnvironmentVariable("EDX_FIRM_INVOICE_GRPC") ?? "http://localhost:5511");
+FirmInvoiceService.FirmInvoiceServiceClient client = new(channel);
 Metadata headers = new() { { "authorization", $"Bearer {token}" } };
 try
 {

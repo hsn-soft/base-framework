@@ -1,8 +1,8 @@
 using Edx.InvoiceService.Application.Contracts.InvoiceDomain.Services;
 using Edx.InvoiceService.Application.Contracts.InvoiceReportDomain.Services;
+using Edx.InvoiceService.Application.Contracts.PurchaseInvoiceDomain.Services;
 using Edx.InvoiceService.Application.Importing;
 using Edx.InvoiceService.Application.Services;
-using Edx.InvoiceService.Application.Signing;
 using Edx.InvoiceService.Application.Storage;
 using HsnSoft.Base.Application;
 using Microsoft.Extensions.Configuration;
@@ -25,9 +25,11 @@ public static class ApplicationServiceCollectionExtensions
         services.AddBasePaging(configuration);
 
         services.AddSingleton(TimeProvider.System);
-        services.AddSingleton<IInvoiceSigner, FakeInvoiceSigner>();
         services.AddScoped<InvoiceImportService>();
-        services.AddScoped<IInvoiceAppService, InvoiceAppService>();
+        services.AddScoped<ISalesInvoiceAppService, SalesInvoiceAppService>();
+        services.AddScoped<IPurchaseInvoiceAppService, PurchaseInvoiceAppService>();
+        services.AddScoped<PurchaseInvoiceReceiver>();
+        services.AddScoped<SalesInvoiceAnswerReceiver>();
         services.AddScoped<IInvoiceReportAppService, InvoiceReportAppService>();
         return services;
     }

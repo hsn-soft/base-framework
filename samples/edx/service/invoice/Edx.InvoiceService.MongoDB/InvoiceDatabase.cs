@@ -2,6 +2,8 @@ using Edx.InvoiceService.Domain.InvoiceDomain.Consts;
 using Edx.InvoiceService.Domain.InvoiceDomain.Entities;
 using Edx.InvoiceService.Domain.InvoiceReportDomain.Consts;
 using Edx.InvoiceService.Domain.InvoiceReportDomain.Entities;
+using Edx.InvoiceService.Domain.PurchaseInvoiceDomain.Consts;
+using Edx.InvoiceService.Domain.PurchaseInvoiceDomain.Entities;
 using HsnSoft.Base.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
@@ -21,17 +23,26 @@ public static class InvoiceDatabase
 
             // At most one record of an invoice is live (being processed, a draft, approved or signed), by its uuid and by its number, in a tenant; a failed or a rejected record, and a deleted one, are not in these indexes, so they stay
             // and the same uuid and the same number can come again. The store decides when two arrive at the same time (the one that loses gets a duplicate key).
-            FilterDefinition<Invoice> live = Builders<Invoice>.Filter.And(Builders<Invoice>.Filter.Eq(invoice => invoice.IsLive, true), Builders<Invoice>.Filter.Eq(invoice => invoice.IsDeleted, false));
-            await database.GetCollection<Invoice>(MongoInvoiceDbProperties.CollectionPrefix + InvoiceConsts.CollectionName).Indexes.CreateManyAsync(
+            FilterDefinition<SalesInvoice> live = Builders<SalesInvoice>.Filter.And(Builders<SalesInvoice>.Filter.Eq(invoice => invoice.IsLive, true), Builders<SalesInvoice>.Filter.Eq(invoice => invoice.IsDeleted, false));
+            await database.GetCollection<SalesInvoice>(MongoInvoiceDbProperties.CollectionPrefix + InvoiceConsts.CollectionName).Indexes.CreateManyAsync(
                 [
-                    new CreateIndexModel<Invoice>(
-                        Builders<Invoice>.IndexKeys.Ascending(invoice => invoice.TenantId).Ascending(invoice => invoice.InvoiceId),
-                        new CreateIndexOptions<Invoice> { Unique = true, Name = "uq_live_invoice_id", PartialFilterExpression = live }),
-                    new CreateIndexModel<Invoice>(
-                        Builders<Invoice>.IndexKeys.Ascending(invoice => invoice.TenantId).Ascending(invoice => invoice.NormalizedNumber),
-                        new CreateIndexOptions<Invoice> { Unique = true, Name = "uq_live_invoice_number", PartialFilterExpression = live }),
-                    new CreateIndexModel<Invoice>(Builders<Invoice>.IndexKeys.Ascending(invoice => invoice.TenantId).Descending(invoice => invoice.StatusChangedAt)),
-                    new CreateIndexModel<Invoice>(Builders<Invoice>.IndexKeys.Ascending(invoice => invoice.TenantId).Ascending(invoice => invoice.InvoiceId).Descending(invoice => invoice.StatusChangedAt)),
+                    new CreateIndexModel<SalesInvoice>(
+                        Builders<SalesInvoice>.IndexKeys.Ascending(invoice => invoice.TenantId).Ascending(invoice => invoice.InvoiceId),
+                        new CreateIndexOptions<SalesInvoice> { Unique = true, Name = "uq_live_invoice_id", PartialFilterExpression = live }),
+                    new CreateIndexModel<SalesInvoice>(
+                        Builders<SalesInvoice>.IndexKeys.Ascending(invoice => invoice.TenantId).Ascending(invoice => invoice.NormalizedNumber),
+                        new CreateIndexOptions<SalesInvoice> { Unique = true, Name = "uq_live_invoice_number", PartialFilterExpression = live }),
+                    new CreateIndexModel<SalesInvoice>(Builders<SalesInvoice>.IndexKeys.Ascending(invoice => invoice.TenantId).Descending(invoice => invoice.StatusChangedAt)),
+                    new CreateIndexModel<SalesInvoice>(Builders<SalesInvoice>.IndexKeys.Ascending(invoice => invoice.TenantId).Ascending(invoice => invoice.InvoiceId).Descending(invoice => invoice.StatusChangedAt)),
+                ],
+                cancellationToken).ConfigureAwait(false);
+
+            // a purchase invoice is kept once by its uuid in a tenant; they are listed by tenant, newest first
+            await database.GetCollection<PurchaseInvoice>(MongoInvoiceDbProperties.CollectionPrefix + PurchaseInvoiceConsts.CollectionName).Indexes.CreateManyAsync(
+                [
+                    new CreateIndexModel<PurchaseInvoice>(Builders<PurchaseInvoice>.IndexKeys.Ascending(invoice => invoice.TenantId).Ascending(invoice => invoice.InvoiceUuid), new CreateIndexOptions { Unique = true }),
+                    new CreateIndexModel<PurchaseInvoice>(Builders<PurchaseInvoice>.IndexKeys.Ascending(invoice => invoice.TenantId).Descending(invoice => invoice.ReceivedAt)),
+                    new CreateIndexModel<PurchaseInvoice>(Builders<PurchaseInvoice>.IndexKeys.Ascending(invoice => invoice.TenantId).Ascending(invoice => invoice.EnvelopeId)),
                 ],
                 cancellationToken).ConfigureAwait(false);
 

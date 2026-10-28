@@ -81,20 +81,21 @@ item are in the map, with what each is to it (`MenuPermissionRelationType`): `Vi
 
 ## Every kind at work: the Edx invoices and invoice reports
 
-`InvoicesController` / `InvoiceAppService` and `InvoiceReportsController` / `InvoiceReportAppService` of the invoice service (and the controllers of the intake service) are the example (MongoDB, one tenant's data each). Invoices are not made by an endpoint of the invoice service: they are sent through the intake service and come out of its queue as drafts
+`SalesInvoicesController` / `SalesInvoiceAppService` (the *Satış faturaları* page, `/sales-invoices`) and `InvoiceReportsController` / `InvoiceReportAppService` of the invoice service (and the controllers of the firm invoice integration) are the example (MongoDB, one tenant's data each). Invoices are not made by an endpoint of the invoice service: they are sent through the firm invoice integration and come out of its queue as drafts
 ([ADR-0085](adr/0085-the-edx-invoice-pipeline-queue-import-draft-approve-sign.md)); a person approves or rejects them.
 
 | Where | Permission | What it decides |
 |---|---|---|
-| menu | `page.invoice.view`, `page.invoice-draft.view`, `page.invoice-create.view`, `page.invoice-upload.view`, `page.queue.view`, `page.invoice-report.view` | the item and the page |
-| attribute of the action | `endpoint.intake.upload`, `.submit-model` (the API: REST, gRPC, WCF); `endpoint.intake-back-office.upload`, `.create` (the pages); `endpoint.queue.read`, `.download` | whether the role may send an invoice and read its queue (403) |
+| menu | `page.invoice.view`, `page.invoice-draft.view`, `page.invoice-create.view`, `page.invoice-upload.view`, `page.queue.view`, `page.invoice-report.view`, `page.purchase-invoice.view`, `page.integration-envelope.view` | the item and the page |
+| attribute of the action | `endpoint.firm-invoice.upload`, `.submit-model` (the API: REST, gRPC, WCF); `endpoint.firm-invoice-back-office.upload`, `.create` (the pages); `endpoint.queue.read`, `.download` | whether the role may send an invoice and read its queue (403) |
 | | `endpoint.invoice.read`, `.approve`, `.reject`, `.xml`; `endpoint.invoice-report.read`, `.generate`, `.delete` | whether the role may call the action (403) |
+| | `endpoint.purchase-invoice.read`, `.xml`, `.respond` (answer a commercial invoice: accept or refuse, [ADR-0097](adr/0097-the-commercial-invoice-and-its-answer.md)) (the invoices that came in, [ADR-0088](adr/0088-the-edx-invoice-is-a-ubl-tr-document.md)); `endpoint.integration.envelopes.read` (the envelopes of the integration service, [ADR-0089](adr/0089-the-edx-integration-service-sender-unit-and-post-box.md)) | whether the role may read them (403) |
 | when the answer is built | operation `operation.invoice.price.view` | the prices and the total are in the answer, or `null` |
 | | operation `operation.invoice.tax-id.view` | the tax ids are in the answer, or left out |
 | | operation `operation.invoice-report.total.view` | what a report amounts to, or `null` |
 | inside `GetXml` | the two operations above | the XML holds both, so a role without one is refused (403) |
 | inside the reads | constraint `constraint.invoice.max-view-amount` | the list holds the invoices up to it, an invoice above it is not found; no constraint, 403 |
-| inside the upload | constraint `constraint.intake.upload.max-bytes` | the zip may not weigh more (400, `upload_too_large`); no constraint, 403 |
+| inside the upload | constraint `constraint.firm-invoice.upload.max-bytes` | the zip may not weigh more (400, `upload_too_large`); no constraint, 403 |
 | inside the import | constraint `constraint.invoice.max-create-amount` | checked on the draft **as the sender** (the event carries who sent it): over it the invoice fails at the stage `Limit` |
 | inside `Approve` | constraint `constraint.invoice.max-approve-amount` | the invoice may not amount to more (400, `invoice_total_over_limit`); no constraint, 403 |
 | inside the reports | constraint `constraint.invoice-report.max-days` | the reports of the last days only, and a period no longer than that (400, `invoice_report_period_over_limit`) |

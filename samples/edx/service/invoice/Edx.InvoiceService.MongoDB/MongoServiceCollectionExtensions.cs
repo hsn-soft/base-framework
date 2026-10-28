@@ -3,6 +3,9 @@ using Edx.InvoiceService.Domain.InvoiceDomain.Entities;
 using Edx.InvoiceService.Domain.InvoiceDomain.Repositories;
 using Edx.InvoiceService.Domain.InvoiceReportDomain.Consts;
 using Edx.InvoiceService.Domain.InvoiceReportDomain.Entities;
+using Edx.InvoiceService.Domain.PurchaseInvoiceDomain.Consts;
+using Edx.InvoiceService.Domain.PurchaseInvoiceDomain.Entities;
+using Edx.InvoiceService.Domain.PurchaseInvoiceDomain.Repositories;
 using Edx.InvoiceService.MongoDB.Configurations;
 using HsnSoft.Base.Domain.Repositories;
 using HsnSoft.Base.MongoDB;
@@ -25,11 +28,15 @@ public static class MongoServiceCollectionExtensions
         services.AddBaseMongo(configuration, MongoInvoiceDbProperties.ConnectionStringName);
         services.AddBaseMultiTenancyMongo();
 
-        InvoiceClassMap.Register();
+        SalesInvoiceClassMap.Register();
         InvoiceReportClassMap.Register();
-        services.AddScoped<IInvoiceRepository>(provider => new MongoInvoiceRepository(
+        PurchaseInvoiceClassMap.Register();
+        services.AddScoped<ISalesInvoiceRepository>(provider => new MongoSalesInvoiceRepository(
             provider.GetRequiredService<IMongoDatabase>(), provider.GetRequiredService<MongoEntityConcepts>(), MongoInvoiceDbProperties.CollectionPrefix + InvoiceConsts.CollectionName));
-        services.AddScoped<IRepository<Invoice, Guid>>(provider => provider.GetRequiredService<IInvoiceRepository>());
+        services.AddScoped<IRepository<SalesInvoice, Guid>>(provider => provider.GetRequiredService<ISalesInvoiceRepository>());
+        services.AddScoped<IPurchaseInvoiceRepository>(provider => new MongoPurchaseInvoiceRepository(
+            provider.GetRequiredService<IMongoDatabase>(), provider.GetRequiredService<MongoEntityConcepts>(), MongoInvoiceDbProperties.CollectionPrefix + PurchaseInvoiceConsts.CollectionName));
+        services.AddScoped<IRepository<PurchaseInvoice, Guid>>(provider => provider.GetRequiredService<IPurchaseInvoiceRepository>());
         services.AddScoped<IRepository<InvoiceReport, Guid>>(provider => new MongoRepository<InvoiceReport, Guid>(
             provider.GetRequiredService<IMongoDatabase>(), provider.GetRequiredService<MongoEntityConcepts>(), MongoInvoiceDbProperties.CollectionPrefix + InvoiceReportConsts.CollectionName));
         return services;

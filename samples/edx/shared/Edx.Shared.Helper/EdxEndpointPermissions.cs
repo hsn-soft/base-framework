@@ -41,19 +41,19 @@ public static class EdxEndpointPermissions
         }
     }
 
-    public static class Intake
+    public static class FirmInvoice
     {
         /// <summary>Send a zip with an invoice file to the API (REST, gRPC, WCF).</summary>
-        public const string Upload = "endpoint.intake.upload";
+        public const string Upload = "endpoint.firm-invoice.upload";
 
         /// <summary>Send the model of an invoice to the API.</summary>
-        public const string SubmitModel = "endpoint.intake.submit-model";
+        public const string SubmitModel = "endpoint.firm-invoice.submit-model";
 
         /// <summary>The upload page of the back office.</summary>
-        public const string BackOfficeUpload = "endpoint.intake-back-office.upload";
+        public const string BackOfficeUpload = "endpoint.firm-invoice-back-office.upload";
 
         /// <summary>The create page of the back office.</summary>
-        public const string BackOfficeCreate = "endpoint.intake-back-office.create";
+        public const string BackOfficeCreate = "endpoint.firm-invoice-back-office.create";
     }
 
     public static class Queue
@@ -74,11 +74,31 @@ public static class EdxEndpointPermissions
             public const string Xml = "endpoint.invoice.xml";
         }
 
+        public static class PurchaseInvoices
+        {
+            public const string Read = "endpoint.purchase-invoice.read";
+
+            /// <summary>Read the XML of an invoice that was issued to the tenant: it holds what the operations hide, so it needs those operations too.</summary>
+            public const string Xml = "endpoint.purchase-invoice.xml";
+
+            /// <summary>Answer a commercial invoice that was issued to the tenant: accept it or refuse it.</summary>
+            public const string Respond = "endpoint.purchase-invoice.respond";
+        }
+
         public static class InvoiceReports
         {
             public const string Read = "endpoint.invoice-report.read";
             public const string Generate = "endpoint.invoice-report.generate";
             public const string Delete = "endpoint.invoice-report.delete";
+        }
+    }
+
+    public static class Integration
+    {
+        public static class Envelopes
+        {
+            /// <summary>Read the envelopes the integration service sent to the center and took from it.</summary>
+            public const string Read = "endpoint.integration-envelope.read";
         }
     }
 }

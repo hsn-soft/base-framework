@@ -10,8 +10,8 @@ do the same thing, and only the REST host has a reason to carry the rest of the 
 
 ## Decision
 
-**The intake service is three hosts over the same Application, Domain and MongoDB projects:** `Edx.IntakeService.Http.Host` (REST, the back office's routes, the queue endpoints, **and the handlers of the events that carry the flow on**: the queue follows what the invoice service says), `Edx.IntakeService.Grpc.Host` (`intake.proto`, HTTP/2 only) and `Edx.IntakeService.Wcf.Host` (CoreWCF at
-`/wcf/intake.svc`, `AllowSynchronousIO` on). **All three do the same upload** through `IntakeAppService`: the zip checked in memory, one correct file, a queue item in the database with **`ReceivedBy`** (the host's `Intake:ServiceName`: `Edx.IntakeService.Http`, `.Grpc`, `.Wcf`) and the event published. The gRPC and WCF hosts **consume no event**; their only purpose is another way in
+**The intake service is three hosts over the same Application, Domain and MongoDB projects:** `Edx.Integration.FirmInvoice.Http.Host` (REST, the back office's routes, the queue endpoints, **and the handlers of the events that carry the flow on**: the queue follows what the invoice service says), `Edx.Integration.FirmInvoice.Grpc.Host` (`intake.proto`, HTTP/2 only) and `Edx.Integration.FirmInvoice.Wcf.Host` (CoreWCF at
+`/wcf/intake.svc`, `AllowSynchronousIO` on). **All three do the same upload** through `IntakeAppService`: the zip checked in memory, one correct file, a queue item in the database with **`ReceivedBy`** (the host's `Intake:ServiceName`: `Edx.Integration.FirmInvoice.Http`, `.Grpc`, `.Wcf`) and the event published. The gRPC and WCF hosts **consume no event**; their only purpose is another way in
 for a client. The back office calls the REST host: it is the only one with pages' routes and the one a browser can call.
 
 Each host has its own settings (port, log file, Kafka client name), the gateway has a cluster for each (`intake-cluster`, `intake-grpc-cluster`, `intake-wcf-cluster`) and the `back-office/` routes go to the REST host. Customer examples for the three ways in are in `samples/edx/client`.
@@ -24,4 +24,4 @@ Each host has its own settings (port, log file, Kafka client name), the gateway 
 
 ## Related
 
-[ADR-0079](0079-grpc-and-wcf-are-entry-points-of-a-host.md), [ADR-0085](0085-the-edx-invoice-pipeline-queue-import-draft-approve-sign.md); `samples/edx/service/intake`, `samples/edx/client`.
+[ADR-0079](0079-grpc-and-wcf-are-entry-points-of-a-host.md), [ADR-0085](0085-the-edx-invoice-pipeline-queue-import-draft-approve-sign.md); `samples/edx/integration/firm-invoice`, `samples/edx/client`.

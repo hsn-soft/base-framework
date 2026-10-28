@@ -1,17 +1,19 @@
 using System.Globalization;
 using Edx.Shared.Contracts.Invoicing;
+using Edx.Shared.Efatura.Ubl;
 
 namespace Edx.InvoiceService.Application.Importing;
 
 /// <summary>
 /// An invoice as a table: a header row, then a row for each line of the invoice, which says the header of the invoice again (a CSV or a sheet has no other way to keep two things in one table). The columns are
-/// <c>invoiceNumber, issueDate, currency, supplierName, supplierTaxId, customerName, customerTaxId, description, quantity, unitPrice, vatRate</c> (any order, any case). The header of the invoice is the one of the first row; a later row may leave it
-/// empty, and may not say another one. A date is <c>yyyy-MM-dd</c>, a decimal has a dot.
+/// <c>invoiceNumber, issueDate, currency, customerName, customerTaxId, customerTaxOffice, customerDistrict, customerCity, customerCountry, description, quantity, unitCode, unitPrice, vatRate</c> (any order, any case; the tax office, the country and the unit may be left out). The header of the invoice is the one of
+/// the first row; a later row may leave it empty, and may not say another one. A date is <c>yyyy-MM-dd</c>, a decimal has a dot. There is no supplier: the invoice is the tenant's.
 /// </summary>
 internal static class InvoiceTable
 {
-    private static readonly string[] s_required = ["invoiceNumber", "issueDate", "currency", "supplierName", "customerName", "description", "quantity", "unitPrice", "vatRate"];
-    private static readonly string[] s_optional = ["supplierTaxId", "customerTaxId"];
+    private static readonly string[] s_required = ["invoiceNumber", "issueDate", "currency", "customerName", "customerTaxId", "customerDistrict", "customerCity", "description", "quantity", "unitPrice", "vatRate"];
+    private static readonly string[] s_optional = ["customerTaxOffice", "customerCountry", "unitCode", "invoiceProfile"];
+    private static readonly string[] s_headerNames = ["invoiceNumber", "issueDate", "currency", "customerName", "customerTaxId", "customerTaxOffice", "customerDistrict", "customerCity", "customerCountry", "invoiceProfile"];
 
     public static InvoiceSubmissionDto Read(IReadOnlyList<IReadOnlyList<string>> rows, Guid invoiceId)
     {
@@ -20,20 +22,14 @@ internal static class InvoiceTable
             throw new InvoiceFileException("The file is empty: it needs a header row and a row for each line of the invoice.");
         }
 
-        Dictionary<string, int> columns = [];
+        Dictionary<string, int> known = new(StringComparer.OrdinalIgnoreCase);
         for (int index = 0; index < rows[0].Count; index++)
         {
             string name = rows[0][index].Trim();
             if (name.Length > 0)
             {
-                columns[name] = index;
+                known[name] = index;
             }
-        }
-
-        Dictionary<string, int> known = new(StringComparer.OrdinalIgnoreCase);
-        foreach (KeyValuePair<string, int> column in columns)
-        {
-            known[column.Key] = column.Value;
         }
 
         string[] missing = [.. s_required.Where(name => !known.ContainsKey(name))];
@@ -44,19 +40,18 @@ internal static class InvoiceTable
 
         string Cell(IReadOnlyList<string> row, string name) => known.TryGetValue(name, out int index) && index < row.Count ? row[index].Trim() : string.Empty;
 
-        string[] headerNames = ["invoiceNumber", "issueDate", "currency", "supplierName", "supplierTaxId", "customerName", "customerTaxId"];
         List<string[]> data = [.. rows.Skip(1).Where(row => row.Any(cell => !string.IsNullOrWhiteSpace(cell))).Select(row => (string[])[.. row])];
         if (data.Count == 0)
         {
             throw new InvoiceFileException("The file has a header row and no line: an invoice needs at least one.");
         }
 
-        Dictionary<string, string> header = headerNames.ToDictionary(name => name, name => Cell(data[0], name), StringComparer.Ordinal);
+        Dictionary<string, string> header = s_headerNames.ToDictionary(name => name, name => Cell(data[0], name), StringComparer.Ordinal);
         List<InvoiceLineDto> lines = [];
         for (int index = 0; index < data.Count; index++)
         {
             int rowNumber = index + 2;
-            foreach (string name in headerNames)
+            foreach (string name in s_headerNames)
             {
                 string value = Cell(data[index], name);
                 if (index > 0 && value.Length > 0 && !string.Equals(value, header[name], StringComparison.Ordinal))
@@ -65,29 +60,36 @@ internal static class InvoiceTable
                 }
             }
 
-            lines.Add(new InvoiceLineDto
-            {
-                Description = Cell(data[index], "description"),
-                Quantity = Number(Cell(data[index], "quantity"), "quantity", rowNumber),
-                UnitPrice = Number(Cell(data[index], "unitPrice"), "unitPrice", rowNumber),
-                VatRate = Number(Cell(data[index], "vatRate"), "vatRate", rowNumber),
-            });
+            lines.Add(Line(Cell(data[index], "description"), Cell(data[index], "quantity"), Cell(data[index], "unitCode"), Cell(data[index], "unitPrice"), Cell(data[index], "vatRate"), rowNumber));
         }
 
-        return Build(invoiceId, header["invoiceNumber"], header["issueDate"], header["currency"], header["supplierName"], header["supplierTaxId"], header["customerName"], header["customerTaxId"], lines);
+        return Build(invoiceId, header["invoiceNumber"], header["issueDate"], header["currency"], header["customerName"], header["customerTaxId"], header["customerTaxOffice"], header["customerDistrict"], header["customerCity"], header["customerCountry"], header["invoiceProfile"], lines);
     }
 
-    public static InvoiceSubmissionDto Build(Guid invoiceId, string number, string issueDate, string currency, string supplierName, string supplierTaxId, string customerName, string customerTaxId, List<InvoiceLineDto> lines)
+    public static InvoiceLineDto Line(string description, string quantity, string unitCode, string unitPrice, string vatRate, int row)
+        => new()
+        {
+            Description = description,
+            Quantity = Number(quantity, "quantity", row),
+            UnitCode = unitCode.Length == 0 ? null : unitCode,
+            UnitPrice = Number(unitPrice, "unitPrice", row),
+            VatRate = Number(vatRate, "vatRate", row),
+        };
+
+    public static InvoiceSubmissionDto Build(Guid invoiceId, string number, string issueDate, string currency, string customerName, string customerTaxId, string customerTaxOffice, string customerDistrict, string customerCity, string customerCountry, string invoiceProfile, List<InvoiceLineDto> lines)
         => new()
         {
             InvoiceId = invoiceId,
             InvoiceNumber = number,
             IssueDate = Date(issueDate),
             Currency = currency,
-            SupplierName = supplierName,
-            SupplierTaxId = supplierTaxId.Length == 0 ? null : supplierTaxId,
             CustomerName = customerName,
-            CustomerTaxId = customerTaxId.Length == 0 ? null : customerTaxId,
+            CustomerTaxId = customerTaxId,
+            CustomerTaxOffice = customerTaxOffice.Length == 0 ? null : customerTaxOffice,
+            CustomerDistrict = customerDistrict,
+            CustomerCity = customerCity,
+            CustomerCountry = customerCountry.Length == 0 ? null : customerCountry,
+            InvoiceProfile = invoiceProfile.Length == 0 ? UblInvoiceBuilder.ProfileId : invoiceProfile.ToUpperInvariant(),
             Lines = lines,
         };
 

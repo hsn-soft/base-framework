@@ -1,13 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-    <!-- The example of a customer's program that sends an invoice file to Edx over gRPC (see ../README.md). The contract is the proto file the Edx team gives: Protos/intake.proto. -->
+    <!-- The example of a customer's program that sends an invoice file to Edx over gRPC (see ../README.md). The contract is the proto file the Edx team gives: Protos/firm_invoice.proto. -->
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
     </PropertyGroup>
 
     <ItemGroup>
-        <Protobuf Include="Protos\intake.proto" GrpcServices="Client" />
+        <Protobuf Include="Protos\firm_invoice.proto" GrpcServices="Client" />
     </ItemGroup>
 
     <ItemGroup>

@@ -6,7 +6,7 @@ using System.Text.Json;
 
 // Sends one invoice file to Edx over REST: zips it (the file is not zipped yet), gives the SHA-256 of the zip and uploads it.
 //   dotnet run -- <file> <invoice-number> [invoice-uuid]
-// Settings (environment): EDX_GATEWAY (default http://localhost:5600), EDX_TENANT, EDX_USER, EDX_PASSWORD.
+// Settings (environment): EDX_GATEWAY (where the token comes from, default http://localhost:5600), EDX_FIRM_INVOICE_REST (the firm invoice integration is reached directly, default http://localhost:5510), EDX_TENANT, EDX_USER, EDX_PASSWORD.
 if (args.Length < 2)
 {
     Console.Error.WriteLine("Usage: Edx.Client.Rest <file> <invoice-number> [invoice-uuid]");
@@ -17,6 +17,7 @@ string path = args[0];
 string invoiceNumber = args[1];
 Guid invoiceId = args.Length > 2 ? Guid.Parse(args[2]) : Guid.NewGuid();
 string gateway = Environment.GetEnvironmentVariable("EDX_GATEWAY") ?? "http://localhost:5600";
+string firmInvoice = Environment.GetEnvironmentVariable("EDX_FIRM_INVOICE_REST") ?? "http://localhost:5510";
 
 using HttpClient http = new() { BaseAddress = new Uri(gateway), Timeout = TimeSpan.FromMinutes(5) };
 
@@ -46,7 +47,7 @@ form.Add(new StringContent(invoiceNumber), "invoiceNumber");
 form.Add(new StringContent(hash), "fileHash");
 form.Add(new StringContent(sourceType), "sourceType");
 
-using HttpRequestMessage request = new(HttpMethod.Post, "intake-service/v1/archives/upload") { Content = form };
+using HttpRequestMessage request = new(HttpMethod.Post, new Uri(new Uri(firmInvoice), "api/firm-invoice-service/v1/commercial/archives/upload")) { Content = form };
 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
 using HttpResponseMessage response = await http.SendAsync(request);
 Console.WriteLine($"{(int)response.StatusCode} {response.StatusCode}");

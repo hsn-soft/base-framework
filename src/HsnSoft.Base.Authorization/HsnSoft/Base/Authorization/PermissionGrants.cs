@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace HsnSoft.Base.Authorization;
 
 /// <summary>
-/// What one subject (a user, a role, in a scope) was granted: the codes of the permissions, and for the ones that limit a value (a constraint, <c>constraint.intake.upload.max-bytes</c>) the value too; a permission that only
+/// What one subject (a user, a role, in a scope) was granted: the codes of the permissions, and for the ones that limit a value (a constraint, <c>constraint.firm-invoice.upload.max-bytes</c>) the value too; a permission that only
 /// opens something has none.
 /// </summary>
 public sealed class PermissionGrants(IReadOnlyDictionary<string, string?> entries)

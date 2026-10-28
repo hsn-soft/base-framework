@@ -15,7 +15,7 @@ public sealed class InvoiceStateException : BusinessException
 {
     public const string Code = "invoice_wrong_state";
 
-    public InvoiceStateException(Guid id, InvoiceStatus status, string what)
+    public InvoiceStateException(Guid id, SalesInvoiceStatus status, string what)
         : base(Code, $"Invoice {id} is {status}: it cannot be {what} now.") => WithKey(Code, id, status.ToString(), what);
 }
 

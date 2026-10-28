@@ -17,6 +17,7 @@ public static class MenuCatalog
 {
     public const string InvoiceEntry = "invoice-entry";
     public const string InvoiceManagement = "invoice-management";
+    public const string Integration = "integration";
     public const string IdentityManagement = "identity-management";
 
     public static IReadOnlyList<MenuDefinition> BackOffice { get; } =
@@ -26,26 +27,35 @@ public static class MenuCatalog
         new(
             $"{InvoiceEntry}.create", MenuNodeType.Leaf, "Fatura oluştur", "/invoice-create", "create", 10, InvoiceEntry,
             Visibility(EdxPagePermissions.InvoiceCreate.View),
-            Required(EdxEndpointPermissions.Intake.BackOfficeCreate),
+            Required(EdxEndpointPermissions.FirmInvoice.BackOfficeCreate),
             Constraint(EdxConstraintPermissions.Invoice.MaxCreateAmount)),
         new(
             $"{InvoiceEntry}.upload", MenuNodeType.Leaf, "Dosya yükle", "/invoice-upload", "upload", 20, InvoiceEntry,
             Visibility(EdxPagePermissions.InvoiceUpload.View),
-            Required(EdxEndpointPermissions.Intake.BackOfficeUpload),
-            Constraint(EdxConstraintPermissions.Intake.UploadMaxBytes),
+            Required(EdxEndpointPermissions.FirmInvoice.BackOfficeUpload),
+            Constraint(EdxConstraintPermissions.FirmInvoice.UploadMaxBytes),
             Constraint(EdxConstraintPermissions.Invoice.MaxCreateAmount)),
         new(
             $"{InvoiceEntry}.queue", MenuNodeType.Leaf, "Kuyruk", "/queue", "queue", 30, InvoiceEntry,
             Visibility(EdxPagePermissions.Queue.View),
             Required(EdxEndpointPermissions.Queue.Read),
             Action(EdxEndpointPermissions.Queue.Download),
-            Operation(EdxOperationPermissions.Intake.FileStorageLocationView)),
+            Operation(EdxOperationPermissions.FirmInvoice.FileStorageLocationView)),
         new(InvoiceManagement, MenuNodeType.Node, "Fatura yönetimi", null, "invoice", 30, null),
         new(
-            $"{InvoiceManagement}.invoices", MenuNodeType.Leaf, "Faturalar", "/invoices", "invoice", 10, InvoiceManagement,
+            $"{InvoiceManagement}.invoices", MenuNodeType.Leaf, "Satış faturaları", "/invoices", "invoice", 10, InvoiceManagement,
             Visibility(EdxPagePermissions.Invoice.View),
             Required(EdxEndpointPermissions.Invoice.Invoices.Read),
             Action(EdxEndpointPermissions.Invoice.Invoices.Xml),
+            Operation(EdxOperationPermissions.Invoice.PriceView),
+            Operation(EdxOperationPermissions.Invoice.TaxIdView),
+            Constraint(EdxConstraintPermissions.Invoice.MaxViewAmount)),
+        new(
+            $"{InvoiceManagement}.purchase", MenuNodeType.Leaf, "Alış faturaları", "/purchase-invoices", "purchase", 15, InvoiceManagement,
+            Visibility(EdxPagePermissions.PurchaseInvoice.View),
+            Required(EdxEndpointPermissions.Invoice.PurchaseInvoices.Read),
+            Action(EdxEndpointPermissions.Invoice.PurchaseInvoices.Xml),
+            Action(EdxEndpointPermissions.Invoice.PurchaseInvoices.Respond),
             Operation(EdxOperationPermissions.Invoice.PriceView),
             Operation(EdxOperationPermissions.Invoice.TaxIdView),
             Constraint(EdxConstraintPermissions.Invoice.MaxViewAmount)),
@@ -68,8 +78,13 @@ public static class MenuCatalog
             Action(EdxEndpointPermissions.Invoice.InvoiceReports.Delete),
             Operation(EdxOperationPermissions.InvoiceReport.TotalView),
             Constraint(EdxConstraintPermissions.InvoiceReport.MaxDays)),
-        new("caption.administration", MenuNodeType.Caption, "Yönetim", null, null, 40, null),
-        new(IdentityManagement, MenuNodeType.Node, "Kimlik yönetimi", null, "identity", 50, null),
+        new(Integration, MenuNodeType.Node, "Entegrasyon", null, "integration", 40, null),
+        new(
+            $"{Integration}.envelopes", MenuNodeType.Leaf, "Zarflar", "/envelopes", "envelope", 10, Integration,
+            Visibility(EdxPagePermissions.IntegrationEnvelope.View),
+            Required(EdxEndpointPermissions.Integration.Envelopes.Read)),
+        new("caption.administration", MenuNodeType.Caption, "Yönetim", null, null, 50, null),
+        new(IdentityManagement, MenuNodeType.Node, "Kimlik yönetimi", null, "identity", 60, null),
         new(
             $"{IdentityManagement}.users", MenuNodeType.Leaf, "Kullanıcılar", "/identity/users", "users", 10, IdentityManagement,
             Visibility(EdxPagePermissions.Users.View),

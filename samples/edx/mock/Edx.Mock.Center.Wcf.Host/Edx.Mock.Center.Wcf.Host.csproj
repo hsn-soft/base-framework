@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <!--
+        The mock GİB center of the Edx system: a WCF service (MTOM, the contract of the real center: sendDocument and getApplicationResponse) that a sender's integrator hands its envelopes to. It queues them, analyzes them (zip, header, who the sender and the receiver are,
+        whether the sender may send from the alias), tells the sender what became of them (a system response) and delivers them to the post box of the receiver, which answers with a system response of its own. The envelopes are in the blob store, the participants and the queue in MongoDB.
+    -->
+
+    <ItemGroup>
+        <PackageReference Include="CoreWCF.Http" />
+        <PackageReference Include="CoreWCF.Primitives" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.BlobStoring.Minio\HsnSoft.Base.BlobStoring.Minio.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\shared\Edx.Shared.Efatura\Edx.Shared.Efatura.csproj" />
+        <ProjectReference Include="..\..\shared\Edx.Shared.Hosting\Edx.Shared.Hosting.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Edx.Mock.Center.MongoDB\Edx.Mock.Center.MongoDB.csproj" />
+    </ItemGroup>
+
+</Project>

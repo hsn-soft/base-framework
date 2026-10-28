@@ -28,6 +28,17 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
+| [0097](0097-the-commercial-invoice-and-its-answer.md) | The commercial invoice (TICARIFATURA) and the answer of its receiver | Accepted | 2026-10-28 |
+| [0096](0096-the-edx-invoice-container-layout.md) | The layout of the storage: a work folder, then everything of a tenant together, and the same folders in both queues | Accepted | 2026-10-28 |
+| [0095](0095-the-word-intake-is-firm-invoice.md) | "Intake" is "FirmInvoice" everywhere: routes, contracts, permissions, settings and code | Accepted | 2026-10-28 |
+| [0094](0094-the-edx-sales-invoice-and-its-envelope-are-two-statuses.md) | A sales invoice and its envelope have two statuses; the envelope belongs to the GİB invoice integration | Accepted | 2026-10-28 |
+| [0093](0093-the-mock-center-envelope-holds-up-to-1000-invoices-and-is-asked-by-uuid.md) | In the mock center an envelope is the post: up to 1000 invoices for one post box; its status is asked by uuid; system envelopes are off | Accepted | 2026-10-28 |
+| [0092](0092-the-edx-signer-is-a-service-of-its-own.md) | The Edx signer is a service of its own: `Edx.SignerService.Http.Host` | Accepted | 2026-10-28 |
+| [0091](0091-the-edx-integrations-are-reached-directly-the-services-through-the-gateway.md) | The Edx integrations are reached directly; the services are reached through the gateway | Accepted | 2026-10-28 |
+| [0090](0090-edx-services-are-named-integration-firm-invoice-and-integration-gib-invoice.md) | The Edx integration services are named by what they integrate: `Edx.Integration.FirmInvoice.*` and `Edx.Integration.GibInvoice.*` | Accepted | 2026-10-28 |
+| [0089](0089-the-edx-integration-service-sender-unit-and-post-box.md) | The Edx integration service is the sender unit and the post box of the customers | Accepted | 2026-10-28 |
+| [0088](0088-the-edx-invoice-is-a-ubl-tr-document.md) | The Edx invoice is a UBL-TR 1.2.1 document, made from the customer's file and checked against the schema | Accepted | 2026-10-28 |
+| [0087](0087-the-edx-mock-gib-center.md) | The Edx mock GİB center: a WCF service with the contract and the checks of the real one | Accepted | 2026-10-28 |
 | [0086](0086-the-intake-service-is-three-hosts-rest-grpc-and-wcf.md) | The intake service is three hosts: REST, gRPC and WCF | Accepted | 2026-10-28 |
 | [0085](0085-the-edx-invoice-pipeline-queue-import-draft-approve-sign.md) | The Edx invoice pipeline: queue, import, draft, approve, sign | Accepted | 2026-10-28 |
 | [0084](0084-the-edx-back-office-an-angular-app-that-asks-the-services-what-the-user-may-do.md) | The Edx back office: an Angular app that asks the services what the user may do | Accepted | 2026-10-28 |

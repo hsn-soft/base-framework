@@ -7,14 +7,14 @@ import { QueueItem } from '../../core/models';
 
 const sourceTypes: Record<string, string> = { xml: 'Xml', txt: 'Txt', csv: 'Csv', xls: 'Xls', xlsx: 'Xls' };
 
-/** The SHA-256 of the bytes, in lowercase hex: what the intake service checks the zip against. */
+/** The SHA-256 of the bytes, in lowercase hex: what the firm invoice integration checks the zip against. */
 async function sha256(bytes: ArrayBuffer): Promise<string> {
   const digest = await crypto.subtle.digest('SHA-256', bytes);
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
 /**
- * The upload page: a zip with one invoice file (xml, txt, csv, xls or xlsx) is sent to the intake service (`back-office/upload`) with the uuid and the number of the invoice, the type of the file and the SHA-256 of the zip, which the page computes. Only a zip
+ * The upload page: a zip with one invoice file (xml, txt, csv, xls or xlsx) is sent to the firm invoice integration (`back-office/upload`) with the uuid and the number of the invoice, the type of the file and the SHA-256 of the zip, which the page computes. Only a zip
  * is accepted, as for a customer's API. The type is guessed from the name of the zip (`invoice.csv.zip`) and can be changed.
  */
 @Component({
@@ -104,7 +104,7 @@ export class InvoiceUploadComponent {
       form.append('invoiceNumber', this.number.trim());
       form.append('fileHash', hash);
       form.append('sourceType', this.sourceType);
-      this.queued.set(await firstValueFrom(this.api.postForm<QueueItem>('intake-service/v1/back-office/upload', form)));
+      this.queued.set(await firstValueFrom(this.api.postForm<QueueItem>('firm-invoice-service/v1/back-office/upload', form)));
       this.invoiceId = crypto.randomUUID();
     } catch (error) {
       this.error.set(toApiError(error).text);

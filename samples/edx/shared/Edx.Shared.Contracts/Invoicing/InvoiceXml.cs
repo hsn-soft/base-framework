@@ -6,7 +6,7 @@ using System.Xml.Schema;
 namespace Edx.Shared.Contracts.Invoicing;
 
 /// <summary>
-/// The XML of an invoice: the data contract of <see cref="InvoiceSubmissionDto"/> (<c>urn:edx:intake:invoice:v1</c>), which is what a WCF client puts on the wire, what a model kept as XML is, what an XML file of an invoice has to be and what the draft of an invoice is. <see cref="Read"/> checks a document against
+/// The XML of an invoice: the data contract of <see cref="InvoiceSubmissionDto"/> (<c>urn:edx:firm-invoice:invoice:v1</c>), which is what a WCF client puts on the wire, what a model kept as XML is, what an XML file of an invoice has to be and what the draft of an invoice is. <see cref="Read"/> checks a document against
 /// the schema of the contract (made from the contract itself, so the schema and the class cannot differ) before it reads it, so a document that does not follow the schema is told what is wrong with it.
 /// </summary>
 public static class InvoiceXml

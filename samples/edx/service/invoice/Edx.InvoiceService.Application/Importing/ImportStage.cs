@@ -6,7 +6,7 @@ public static class ImportStage
     /// <summary>The invoice could not be taken: another record of it is live, or its number is another invoice's.</summary>
     public const string Claim = "Claim";
 
-    /// <summary>The file could not be read from the store of the intake service, or is not what the intake service said.</summary>
+    /// <summary>The file could not be read from the store of the firm invoice integration, or is not what the firm invoice integration said.</summary>
     public const string Fetch = "Fetch";
 
     /// <summary>The zip could not be opened, or does not hold the one file.</summary>
@@ -20,4 +20,7 @@ public static class ImportStage
 
     /// <summary>The draft could not be made.</summary>
     public const string Convert = "Convert";
+
+    /// <summary>The signed invoice did not reach its receiver (see <c>InvoiceDeliveryFailedEto</c> for where).</summary>
+    public const string Delivery = "Delivery";
 }

@@ -134,7 +134,7 @@ export class InvoiceDraftsComponent implements OnInit {
   protected async showXml(invoice: Invoice): Promise<void> {
     this.error.set(null);
     try {
-      const blob = await firstValueFrom(this.api.getFile(`invoice-service/v1/invoices/${invoice.id}/xml`));
+      const blob = await firstValueFrom(this.api.getFile(`invoice-service/v1/sales-invoices/${invoice.id}/xml`));
       this.xml.set({ title: `${invoice.number} taslak XML`, text: await blob.text() });
     } catch (error) {
       this.error.set(await this.blobError(error));
@@ -144,7 +144,7 @@ export class InvoiceDraftsComponent implements OnInit {
   protected async approve(invoice: Invoice): Promise<void> {
     this.error.set(null);
     try {
-      await firstValueFrom(this.api.post(`invoice-service/v1/invoices/${invoice.id}/approve`));
+      await firstValueFrom(this.api.post(`invoice-service/v1/sales-invoices/${invoice.id}/approve`));
       await this.load();
     } catch (error) {
       this.error.set(toApiError(error).text);
@@ -163,7 +163,7 @@ export class InvoiceDraftsComponent implements OnInit {
       return;
     }
     try {
-      await firstValueFrom(this.api.post(`invoice-service/v1/invoices/${invoice.id}/reject`, { reason: this.reason.trim() }));
+      await firstValueFrom(this.api.post(`invoice-service/v1/sales-invoices/${invoice.id}/reject`, { reason: this.reason.trim() }));
       this.rejecting.set(null);
       await this.load();
     } catch (error) {
@@ -175,7 +175,7 @@ export class InvoiceDraftsComponent implements OnInit {
     this.error.set(null);
     try {
       const result = await firstValueFrom(
-        this.api.post<Paged<Invoice>>('invoice-service/v1/invoices/paged-list', { pageNumber: this.page(), maxResultCount: this.size, status: 'DraftCreated' }),
+        this.api.post<Paged<Invoice>>('invoice-service/v1/sales-invoices/paged-list', { pageNumber: this.page(), maxResultCount: this.size, status: 'DraftCreated' }),
       );
       this.items.set(result.items);
       this.total.set(result.dataTotalCount);

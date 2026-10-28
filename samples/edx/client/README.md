@@ -1,17 +1,17 @@
 # Edx customer examples
 
 Three small console programs a customer can start from. Each one takes **one invoice file that is not zipped yet** (`.xml`, `.txt`, `.csv`, `.xls` or `.xlsx`), makes the zip **in memory** (one file in it), computes the **SHA-256 of the zip** and sends it to the Edx
-intake service with the uuid and the number of the invoice, in the way the customer's system can speak:
+firm invoice integration with the uuid and the number of the invoice, in the way the customer's system can speak:
 
-| Program | Protocol | Through the gateway |
+| Program | Protocol | Reached directly (the token comes from the gateway, `http://localhost:5600`) |
 |---|---|---|
-| [Edx.Client.Rest](Edx.Client.Rest) | REST (multipart form) | `POST /intake-service/v1/archives/upload` (`http://localhost:5600`) |
-| [Edx.Client.Grpc](Edx.Client.Grpc) | gRPC (client stream) | `edx.intake.v1.Intake/UploadInvoiceFile` (`http://localhost:5601`, HTTP/2) |
-| [Edx.Client.Wcf](Edx.Client.Wcf) | WCF / SOAP | `POST /intake-service/wcf/intake.svc` (`http://localhost:5600`), WSDL at `?wsdl` |
+| [Edx.Client.Rest](Edx.Client.Rest) | REST (multipart form) | `POST /api/firm-invoice-service/v1/commercial/archives/upload` (`http://localhost:5510`) |
+| [Edx.Client.Grpc](Edx.Client.Grpc) | gRPC (client stream) | `edx.firm_invoice.v1.FirmInvoice/UploadInvoiceFile` (`http://localhost:5511`, HTTP/2) |
+| [Edx.Client.Wcf](Edx.Client.Wcf) | WCF / SOAP | `POST /wcf/firm-invoice.svc` (`http://localhost:5512`), WSDL at `?wsdl` |
 
-Whatever the way, the rules are the same (the intake service checks them before it answers): the file is a **zip with exactly one file**, the type of that file (`sourceType`) matches its extension, the hash is the **SHA-256 (hex) of the zip**, the invoice has a
+Whatever the way, the rules are the same (the firm invoice integration checks them before it answers): the file is a **zip with exactly one file**, the type of that file (`sourceType`) matches its extension, the hash is the **SHA-256 (hex) of the zip**, the invoice has a
 **uuid** (`invoiceId`) and a **number** (`invoiceNumber`), and the zip is not bigger than the service accepts. The answer says the invoice was **queued**; what became of it (draft created, rejected, failed, completed) is read from the queue
-(`POST /intake-service/v1/queue/get/{queueId}` or `.../queue/by-invoice/{invoiceId}`) or seen on the queue page of the back office.
+(`POST /api/firm-invoice-service/v1/commercial/queue/get/{queueId}` or `.../queue/by-invoice/{invoiceId}` on `http://localhost:5510`) or seen on the queue page of the back office.
 
 An invoice that is already a draft, approved or signed is not taken again (send another invoice number); one that failed or was rejected may be sent again with the same uuid, which replaces it.
 
@@ -21,20 +21,20 @@ The programs need a user of the customer's tenant (the sample users are in `serv
 
 ```bash
 export EDX_TENANT=veriban EDX_USER=operator EDX_PASSWORD='<the password of that user>'
-# optional: EDX_GATEWAY (default http://localhost:5600), EDX_GRPC (default http://localhost:5601)
+# optional: EDX_GATEWAY (the token, default http://localhost:5600), EDX_FIRM_INVOICE_REST (:5510), EDX_FIRM_INVOICE_GRPC (:5511), EDX_FIRM_INVOICE_WCF (:5512)
 
 cd samples/edx/client/Edx.Client.Rest      # or Edx.Client.Grpc, or Edx.Client.Wcf
-dotnet run -- ./invoice.csv INV-2026-0001                       # a new uuid is made
-dotnet run -- ./invoice.csv INV-2026-0001 7b0c6a3e-...-4f1e     # or the one the customer's system has
+dotnet run -- ./invoice.csv ABC2026000000001                       # a new uuid is made
+dotnet run -- ./invoice.csv ABC2026000000001 7b0c6a3e-...-4f1e     # or the one the customer's system has
 ```
 
 Samples of the files are in [../docs](../docs). A token is taken first (`POST /auth-server/v1/auth/login` with the tenant code, the user name and the password) and goes in the header `Authorization: Bearer <token>` of every call (in the
-`authorization` metadata for gRPC). The user's role must have the permission of the endpoint (`endpoint.intake.upload`) and the constraint `constraint.intake.upload.max-bytes` that says how big a zip it may send.
+`authorization` metadata for gRPC). The user's role must have the permission of the endpoint (`endpoint.firm-invoice.upload`) and the constraint `constraint.firm-invoice.upload.max-bytes` that says how big a zip it may send.
 
 ## What a customer needs of Edx
 
 * REST: nothing but HTTP.
-* gRPC: the proto file ([Edx.Client.Grpc/Protos/intake.proto](Edx.Client.Grpc/Protos/intake.proto)) and `Grpc.Net.Client`, `Google.Protobuf`, `Grpc.Tools`.
+* gRPC: the proto file ([Edx.Client.Grpc/Protos/firm_invoice.proto](Edx.Client.Grpc/Protos/firm_invoice.proto)) and `Grpc.Net.Client`, `Google.Protobuf`, `Grpc.Tools`.
 * WCF: the WSDL (or the contract below) and `System.ServiceModel.Http`. A SOAP message carries the zip as base64, so a WCF customer sends what a message may weigh (100 MB at most); a bigger zip goes over REST or gRPC, which stream it.
 
 ## The code
@@ -50,7 +50,7 @@ using System.Text.Json;
 
 // Sends one invoice file to Edx over REST: zips it (the file is not zipped yet), gives the SHA-256 of the zip and uploads it.
 //   dotnet run -- <file> <invoice-number> [invoice-uuid]
-// Settings (environment): EDX_GATEWAY (default http://localhost:5600), EDX_TENANT, EDX_USER, EDX_PASSWORD.
+// Settings (environment): EDX_GATEWAY (where the token comes from, default http://localhost:5600), EDX_FIRM_INVOICE_REST (the firm invoice integration is reached directly, default http://localhost:5510), EDX_TENANT, EDX_USER, EDX_PASSWORD.
 if (args.Length < 2)
 {
     Console.Error.WriteLine("Usage: Edx.Client.Rest <file> <invoice-number> [invoice-uuid]");
@@ -61,6 +61,7 @@ string path = args[0];
 string invoiceNumber = args[1];
 Guid invoiceId = args.Length > 2 ? Guid.Parse(args[2]) : Guid.NewGuid();
 string gateway = Environment.GetEnvironmentVariable("EDX_GATEWAY") ?? "http://localhost:5600";
+string firmInvoice = Environment.GetEnvironmentVariable("EDX_FIRM_INVOICE_REST") ?? "http://localhost:5510";
 
 using HttpClient http = new() { BaseAddress = new Uri(gateway), Timeout = TimeSpan.FromMinutes(5) };
 
@@ -90,7 +91,7 @@ form.Add(new StringContent(invoiceNumber), "invoiceNumber");
 form.Add(new StringContent(hash), "fileHash");
 form.Add(new StringContent(sourceType), "sourceType");
 
-using HttpRequestMessage request = new(HttpMethod.Post, "intake-service/v1/archives/upload") { Content = form };
+using HttpRequestMessage request = new(HttpMethod.Post, new Uri(new Uri(firmInvoice), "api/firm-invoice-service/v1/commercial/archives/upload")) { Content = form };
 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
 using HttpResponseMessage response = await http.SendAsync(request);
 Console.WriteLine($"{(int)response.StatusCode} {response.StatusCode}");
@@ -135,7 +136,7 @@ using Grpc.Net.Client;
 
 // Sends one invoice file to Edx over gRPC: zips it (the file is not zipped yet), gives the SHA-256 of the zip and streams it in chunks.
 //   dotnet run -- <file> <invoice-number> [invoice-uuid]
-// Settings (environment): EDX_GATEWAY (the REST address, for the token; default http://localhost:5600), EDX_GRPC (default http://localhost:5601), EDX_TENANT, EDX_USER, EDX_PASSWORD.
+// Settings (environment): EDX_GATEWAY (the REST address, for the token; default http://localhost:5600), EDX_FIRM_INVOICE_GRPC (the firm invoice integration is reached directly; default http://localhost:5511), EDX_TENANT, EDX_USER, EDX_PASSWORD.
 if (args.Length < 2)
 {
     Console.Error.WriteLine("Usage: Edx.Client.Grpc <file> <invoice-number> [invoice-uuid]");
@@ -164,8 +165,8 @@ byte[] zip = Zip(path);
 string hash = Convert.ToHexStringLower(SHA256.HashData(zip));
 
 // 3. the upload: the first message is the header, the next ones carry the bytes of the zip
-using GrpcChannel channel = GrpcChannel.ForAddress(Environment.GetEnvironmentVariable("EDX_GRPC") ?? "http://localhost:5601");
-Intake.IntakeClient client = new(channel);
+using GrpcChannel channel = GrpcChannel.ForAddress(Environment.GetEnvironmentVariable("EDX_FIRM_INVOICE_GRPC") ?? "http://localhost:5511");
+FirmInvoiceService.FirmInvoiceServiceClient client = new(channel);
 Metadata headers = new() { { "authorization", $"Bearer {token}" } };
 try
 {
@@ -223,7 +224,7 @@ static byte[] Zip(string file)
 }
 ```
 
-### WCF: `Edx.Client.Wcf/Program.cs` and `IntakeContract.cs`
+### WCF: `Edx.Client.Wcf/Program.cs` and `FirmInvoiceContract.cs`
 
 ```csharp
 using System.IO.Compression;
@@ -236,7 +237,7 @@ using Edx.Client.Wcf;
 
 // Sends one invoice file to Edx over WCF (SOAP): zips it (the file is not zipped yet), gives the SHA-256 of the zip and sends it as the bytes of the message.
 //   dotnet run -- <file> <invoice-number> [invoice-uuid]
-// Settings (environment): EDX_GATEWAY (default http://localhost:5600), EDX_TENANT, EDX_USER, EDX_PASSWORD. A zip may weigh what a SOAP message may (100 MB at most); a bigger one goes over REST or gRPC.
+// Settings (environment): EDX_GATEWAY (where the token comes from, default http://localhost:5600), EDX_FIRM_INVOICE_WCF (the firm invoice integration is reached directly, default http://localhost:5512), EDX_TENANT, EDX_USER, EDX_PASSWORD. A zip may weigh what a SOAP message may (100 MB at most); a bigger one goes over REST or gRPC.
 if (args.Length < 2)
 {
     Console.Error.WriteLine("Usage: Edx.Client.Wcf <file> <invoice-number> [invoice-uuid]");
@@ -247,6 +248,7 @@ string path = args[0];
 string invoiceNumber = args[1];
 Guid invoiceId = args.Length > 2 ? Guid.Parse(args[2]) : Guid.NewGuid();
 string gateway = Environment.GetEnvironmentVariable("EDX_GATEWAY") ?? "http://localhost:5600";
+string firmInvoice = Environment.GetEnvironmentVariable("EDX_FIRM_INVOICE_WCF") ?? "http://localhost:5512";
 
 // 1. who am I: a token of the tenant's user (it is a REST call: WCF only carries the token afterwards)
 using HttpClient http = new() { BaseAddress = new Uri(gateway) };
@@ -273,8 +275,8 @@ request.FileHash = Convert.ToHexStringLower(SHA256.HashData(request.Content));
 
 // 3. the call: the token goes in the HTTP header Authorization
 BasicHttpBinding binding = new() { MaxReceivedMessageSize = 200 * 1024 * 1024, SendTimeout = TimeSpan.FromMinutes(5) };
-ChannelFactory<IIntakeService> factory = new(binding, new EndpointAddress(new Uri(new Uri(gateway), "intake-service/wcf/intake.svc")));
-IIntakeService service = factory.CreateChannel();
+ChannelFactory<IFirmInvoiceService> factory = new(binding, new EndpointAddress(new Uri(new Uri(firmInvoice), "wcf/firm-invoice.svc")));
+IFirmInvoiceService service = factory.CreateChannel();
 try
 {
     using OperationContextScope scope = new((IContextChannel)service);
@@ -286,7 +288,7 @@ try
     Console.WriteLine($"queued: {result.QueueId} ({result.InvoiceNumber}, {result.SourceType}, {result.Status})");
     return 0;
 }
-catch (FaultException<IntakeFault> fault)
+catch (FaultException<FirmInvoiceFault> fault)
 {
     Console.Error.WriteLine($"{fault.Detail.Code}: {fault.Detail.Message}");
     return 1;
@@ -332,17 +334,17 @@ using System.ServiceModel;
 
 namespace Edx.Client.Wcf;
 
-// The contract of the Edx intake service, as its WSDL (…/intake-service/wcf/intake.svc?wsdl) says; a customer may generate it with dotnet-svcutil instead of writing it.
-internal static class IntakeNames
+// The contract of the Edx firm invoice integration, as its WSDL (…/wcf/firm-invoice.svc?wsdl) says; a customer may generate it with dotnet-svcutil instead of writing it.
+internal static class FirmInvoiceNames
 {
-    public const string Namespace = "urn:edx:intake:v1";
+    public const string Namespace = "urn:edx:firm-invoice:v1";
 }
 
-[ServiceContract(Name = "IntakeService", Namespace = IntakeNames.Namespace)]
-internal interface IIntakeService
+[ServiceContract(Name = "FirmInvoiceService", Namespace = FirmInvoiceNames.Namespace)]
+internal interface IFirmInvoiceService
 {
     [OperationContract(Name = "UploadInvoiceFile")]
-    [FaultContract(typeof(IntakeFault))]
+    [FaultContract(typeof(FirmInvoiceFault))]
     Task<QueueItemResult> UploadInvoiceFileAsync(InvoiceFileUploadRequest request);
 }
 
@@ -355,7 +357,7 @@ internal enum InvoiceSourceType
     Xls = 5,
 }
 
-[DataContract(Name = "InvoiceFileUploadRequest", Namespace = IntakeNames.Namespace)]
+[DataContract(Name = "InvoiceFileUploadRequest", Namespace = FirmInvoiceNames.Namespace)]
 internal sealed class InvoiceFileUploadRequest
 {
     [DataMember(Order = 1, IsRequired = true)]
@@ -377,7 +379,7 @@ internal sealed class InvoiceFileUploadRequest
     public byte[] Content { get; set; } = [];
 }
 
-[DataContract(Name = "QueueItemResult", Namespace = IntakeNames.Namespace)]
+[DataContract(Name = "QueueItemResult", Namespace = FirmInvoiceNames.Namespace)]
 internal sealed class QueueItemResult
 {
     [DataMember(Order = 1)]
@@ -411,8 +413,8 @@ internal sealed class QueueItemResult
     public Guid TenantId { get; set; }
 }
 
-[DataContract(Name = "IntakeFault", Namespace = IntakeNames.Namespace)]
-internal sealed class IntakeFault
+[DataContract(Name = "FirmInvoiceFault", Namespace = FirmInvoiceNames.Namespace)]
+internal sealed class FirmInvoiceFault
 {
     [DataMember(Order = 1)]
     public string Code { get; set; } = string.Empty;

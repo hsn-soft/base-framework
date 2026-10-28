@@ -35,10 +35,10 @@ public static class DefaultPermissionGrants
 
     private static readonly string[] s_makeInvoices =
     [
-        EdxEndpointPermissions.Intake.Upload,
-        EdxEndpointPermissions.Intake.SubmitModel,
-        EdxEndpointPermissions.Intake.BackOfficeUpload,
-        EdxEndpointPermissions.Intake.BackOfficeCreate,
+        EdxEndpointPermissions.FirmInvoice.Upload,
+        EdxEndpointPermissions.FirmInvoice.SubmitModel,
+        EdxEndpointPermissions.FirmInvoice.BackOfficeUpload,
+        EdxEndpointPermissions.FirmInvoice.BackOfficeCreate,
     ];
 
     private static readonly string[] s_queue = [EdxEndpointPermissions.Queue.Read, EdxEndpointPermissions.Queue.Download];
@@ -47,6 +47,14 @@ public static class DefaultPermissionGrants
 
     private static readonly string[] s_approval = [EdxEndpointPermissions.Invoice.Invoices.Approve, EdxEndpointPermissions.Invoice.Invoices.Reject, EdxEndpointPermissions.Invoice.Invoices.Xml];
 
+    private static readonly string[] s_purchases = [EdxEndpointPermissions.Invoice.PurchaseInvoices.Read];
+
+    private static readonly string[] s_purchaseXml = [EdxEndpointPermissions.Invoice.PurchaseInvoices.Xml];
+
+    private static readonly string[] s_purchaseRespond = [EdxEndpointPermissions.Invoice.PurchaseInvoices.Respond];
+
+    private static readonly string[] s_integration = [EdxEndpointPermissions.Integration.Envelopes.Read];
+
     private static readonly string[] s_reports = [EdxEndpointPermissions.Invoice.InvoiceReports.Generate, EdxEndpointPermissions.Invoice.InvoiceReports.Delete];
 
     /// <summary>The grants of a role of a tenant (by the code of the tenant and the name of the role), each as the code and its value (a constraint's; none for the others); nothing for a role that is not named here.</summary>
@@ -54,26 +62,27 @@ public static class DefaultPermissionGrants
         => roleName switch
         {
             EdxRoles.Admin => Make(
-                [Limit(EdxConstraintPermissions.Intake.UploadMaxBytes, Megabyte100), Limit(EdxConstraintPermissions.Invoice.MaxViewAmount, Largest), Limit(EdxConstraintPermissions.Invoice.MaxCreateAmount, "999999999"), Limit(EdxConstraintPermissions.Invoice.MaxApproveAmount, "999999999"), Limit(EdxConstraintPermissions.InvoiceReport.MaxDays, "3650")],
+                [Limit(EdxConstraintPermissions.FirmInvoice.UploadMaxBytes, Megabyte100), Limit(EdxConstraintPermissions.Invoice.MaxViewAmount, Largest), Limit(EdxConstraintPermissions.Invoice.MaxCreateAmount, "999999999"), Limit(EdxConstraintPermissions.Invoice.MaxApproveAmount, "999999999"), Limit(EdxConstraintPermissions.InvoiceReport.MaxDays, "3650")],
                 [
                     EdxPagePermissions.Invoice.View, EdxPagePermissions.InvoiceDraft.View, EdxPagePermissions.InvoiceCreate.View, EdxPagePermissions.InvoiceUpload.View, EdxPagePermissions.Queue.View, EdxPagePermissions.InvoiceReport.View, EdxPagePermissions.Users.View, EdxPagePermissions.Roles.View,
+                    EdxPagePermissions.PurchaseInvoice.View, EdxPagePermissions.IntegrationEnvelope.View,
                 ],
-                s_identityReads, s_identityWrites, s_makeInvoices, s_queue, s_reads, s_approval, s_reports,
-                [EdxOperationPermissions.Identity.UserEmailView, EdxOperationPermissions.Intake.FileStorageLocationView, EdxOperationPermissions.Invoice.PriceView, EdxOperationPermissions.Invoice.TaxIdView, EdxOperationPermissions.InvoiceReport.TotalView]),
+                s_identityReads, s_identityWrites, s_makeInvoices, s_queue, s_reads, s_approval, s_reports, s_purchases, s_purchaseXml, s_purchaseRespond, s_integration,
+                [EdxOperationPermissions.Identity.UserEmailView, EdxOperationPermissions.FirmInvoice.FileStorageLocationView, EdxOperationPermissions.Invoice.PriceView, EdxOperationPermissions.Invoice.TaxIdView, EdxOperationPermissions.InvoiceReport.TotalView]),
             EdxRoles.Manager => Make(
                 [Limit(EdxConstraintPermissions.Invoice.MaxViewAmount, "100000"), Limit(EdxConstraintPermissions.Invoice.MaxApproveAmount, "50000"), Limit(EdxConstraintPermissions.InvoiceReport.MaxDays, "90")],
-                [EdxPagePermissions.Invoice.View, EdxPagePermissions.InvoiceDraft.View, EdxPagePermissions.Queue.View, EdxPagePermissions.InvoiceReport.View, EdxPagePermissions.Users.View],
-                s_queue, s_reads, s_approval, [EdxEndpointPermissions.Identity.Users.Read, EdxEndpointPermissions.Identity.Roles.Read],
-                [EdxOperationPermissions.Identity.UserEmailView, EdxOperationPermissions.Intake.FileStorageLocationView, EdxOperationPermissions.Invoice.PriceView, EdxOperationPermissions.Invoice.TaxIdView, EdxOperationPermissions.InvoiceReport.TotalView]),
+                [EdxPagePermissions.Invoice.View, EdxPagePermissions.InvoiceDraft.View, EdxPagePermissions.Queue.View, EdxPagePermissions.InvoiceReport.View, EdxPagePermissions.Users.View, EdxPagePermissions.PurchaseInvoice.View, EdxPagePermissions.IntegrationEnvelope.View],
+                s_queue, s_reads, s_approval, s_purchases, s_purchaseXml, s_purchaseRespond, s_integration, [EdxEndpointPermissions.Identity.Users.Read, EdxEndpointPermissions.Identity.Roles.Read],
+                [EdxOperationPermissions.Identity.UserEmailView, EdxOperationPermissions.FirmInvoice.FileStorageLocationView, EdxOperationPermissions.Invoice.PriceView, EdxOperationPermissions.Invoice.TaxIdView, EdxOperationPermissions.InvoiceReport.TotalView]),
             EdxRoles.Operator => Make(
-                [Limit(EdxConstraintPermissions.Intake.UploadMaxBytes, Megabyte20), Limit(EdxConstraintPermissions.Invoice.MaxViewAmount, "1000"), Limit(EdxConstraintPermissions.Invoice.MaxCreateAmount, "1000"), Limit(EdxConstraintPermissions.InvoiceReport.MaxDays, "30")],
-                [EdxPagePermissions.Invoice.View, EdxPagePermissions.InvoiceCreate.View, EdxPagePermissions.InvoiceUpload.View, EdxPagePermissions.Queue.View, EdxPagePermissions.InvoiceReport.View],
-                s_makeInvoices, s_queue, s_reads,
-                [EdxOperationPermissions.Intake.FileStorageLocationView, EdxOperationPermissions.Invoice.PriceView]),
+                [Limit(EdxConstraintPermissions.FirmInvoice.UploadMaxBytes, Megabyte20), Limit(EdxConstraintPermissions.Invoice.MaxViewAmount, "1000"), Limit(EdxConstraintPermissions.Invoice.MaxCreateAmount, "1000"), Limit(EdxConstraintPermissions.InvoiceReport.MaxDays, "30")],
+                [EdxPagePermissions.Invoice.View, EdxPagePermissions.InvoiceCreate.View, EdxPagePermissions.InvoiceUpload.View, EdxPagePermissions.Queue.View, EdxPagePermissions.InvoiceReport.View, EdxPagePermissions.PurchaseInvoice.View],
+                s_makeInvoices, s_queue, s_reads, s_purchases,
+                [EdxOperationPermissions.FirmInvoice.FileStorageLocationView, EdxOperationPermissions.Invoice.PriceView]),
             EdxRoles.User => Make(
                 [Limit(EdxConstraintPermissions.Invoice.MaxViewAmount, "100000"), Limit(EdxConstraintPermissions.InvoiceReport.MaxDays, "30")],
-                [EdxPagePermissions.Invoice.View, EdxPagePermissions.Queue.View, EdxPagePermissions.InvoiceReport.View],
-                [EdxEndpointPermissions.Queue.Read], s_reads,
+                [EdxPagePermissions.Invoice.View, EdxPagePermissions.Queue.View, EdxPagePermissions.InvoiceReport.View, EdxPagePermissions.PurchaseInvoice.View],
+                [EdxEndpointPermissions.Queue.Read], s_reads, s_purchases,
                 [EdxOperationPermissions.Invoice.PriceView]),
             _ => [],
         };

@@ -14,12 +14,27 @@ public static class MicroserviceRegister
     /// <param name="services">The service collection.</param>
     /// <param name="configuration">Holds <c>RequestLogging</c>, <c>Swagger</c> and <c>Jwt</c>.</param>
     /// <param name="swaggerTitle">The title of the service's Swagger document.</param>
-    /// <remarks>What a service may do without (Redis) it chooses itself: <c>AddBaseRedis</c>.</remarks>
+    /// <remarks>
+    /// What a service may do without (Redis) it chooses itself: <c>AddBaseRedis</c>. A service a browser calls <b>directly</b> (the two integrations are not behind the gateway, which is what lets the back office call the others) says which origins may in
+    /// <c>Cors:AllowedOrigins</c>; without it no origin is allowed.
+    /// </remarks>
     public static IServiceCollection AddEdxMicroservice(this IServiceCollection services, IConfiguration configuration, string swaggerTitle)
-        => services.AddEdxHosting(configuration, swaggerTitle, authenticateUsers: true, swaggerBearerButton: true);
+    {
+        string[] origins = AllowedOrigins(configuration);
+        if (origins.Length > 0)
+        {
+            services.AddCors(cors => cors.AddPolicy(CorsPolicyName, policy => policy
+                .WithOrigins(origins)
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .WithExposedHeaders("X-Correlation-Id", "Content-Disposition")));
+        }
+
+        return services.AddEdxHosting(configuration, swaggerTitle, authenticateUsers: true, swaggerBearerButton: true);
+    }
 
     /// <summary>
-    /// Connects a service to the Kafka event bus of the system (sections <c>Kafka</c> and <c>Kafka:EventBus</c>: the exchange <c>EDX</c>, which names the topics, and the client name of the service (<c>IntakeService</c>, <c>InvoiceService</c>)) and makes the
+    /// Connects a service to the Kafka event bus of the system (sections <c>Kafka</c> and <c>Kafka:EventBus</c>: the exchange <c>EDX</c>, which names the topics, and the client name of the service (<c>IntegrationFirmInvoiceApi</c>, <c>IntegrationGibInvoiceApi</c>, <c>InvoiceService</c>, <c>SignerService</c>: an integration's is named by what it integrates and the host that runs it)) and makes the
     /// events it publishes carry who started the chain (<see cref="EdxEventHeaderProvider"/>). The service adds its handlers with <c>AddEventHandler</c>. The auth server and the gateway do not use it: only the microservices reach Kafka.
     /// </summary>
     public static IServiceCollection AddEdxEventBus(this IServiceCollection services, IConfiguration configuration)
@@ -39,5 +54,16 @@ public static class MicroserviceRegister
 
     /// <summary>The shared middleware (see <see cref="HostingRegister.UseEdxHosting"/>); the service then maps its endpoints (<c>MapControllers()</c>, and what else it speaks).</summary>
     public static WebApplication UseEdxMicroservice(this WebApplication app)
-        => app.UseEdxHosting(authenticateUsers: true);
+    {
+        if (AllowedOrigins(app.Configuration).Length > 0)
+        {
+            app.UseCors(CorsPolicyName);
+        }
+
+        return app.UseEdxHosting(authenticateUsers: true);
+    }
+
+    private const string CorsPolicyName = "edx-microservice";
+
+    private static string[] AllowedOrigins(IConfiguration configuration) => configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 }

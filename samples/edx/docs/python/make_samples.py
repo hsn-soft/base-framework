@@ -12,10 +12,10 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 SAMPLES = os.path.join(HERE, "..", "samples")
 ZIPS = os.path.join(HERE, "..", "zips")
 
-HEADER = ["invoiceNumber", "issueDate", "currency", "supplierName", "supplierTaxId", "customerName", "customerTaxId", "description", "quantity", "unitPrice", "vatRate"]
+HEADER = ["invoiceNumber", "issueDate", "currency", "customerName", "customerTaxId", "customerTaxOffice", "customerDistrict", "customerCity", "customerCountry", "description", "quantity", "unitCode", "unitPrice", "vatRate"]
 ROWS = [
-    ["INV-2026-0001", "2026-10-28", "TRY", "Veriban Yazilim A.S.", "1234567890", "Ornek Musteri Ltd.", "0987654321", "Danismanlik hizmeti", "2", "150.00", "20"],
-    ["", "", "", "", "", "", "", "Yazilim lisansi", "1", "420.50", "20"],
+    ["ABC2026000000001", "2026-10-28", "TRY", "Bilgera Bilisim A.S.", "1234567802", "Cankaya", "Cankaya", "Ankara", "Türkiye", "Danismanlik hizmeti", "2", "C62", "150.00", "20"],
+    ["", "", "", "", "", "", "", "", "", "Yazilim lisansi", "1", "C62", "420.50", "20"],
 ]
 
 

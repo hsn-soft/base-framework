@@ -1,14 +1,16 @@
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
+using System.Xml;
+using System.Xml.Linq;
 using Edx.Shared.Contracts.Invoicing;
 using ExcelDataReader;
 
 namespace Edx.InvoiceService.Application.Importing;
 
 /// <summary>
-/// Reads the file of an invoice into the model of an invoice, whatever its form: XML (the schema of the data contract, <see cref="InvoiceXml"/>), CSV, TXT (<c>H|...</c> for the header and <c>L|...</c> for a line), a sheet (XLS or XLSX, the first one, the
-/// columns of <see cref="InvoiceTable"/>), or the model a client sent as JSON or XML. A file that does not follow its form is told what is wrong (<see cref="InvoiceFileException"/>).
+/// Reads the file of an invoice into the model of an invoice: CSV, TXT (<c>H|...</c> for the header and <c>L|...</c> for a line), a sheet (XLS or XLSX, the first one, the columns of <see cref="InvoiceTable"/>), or the model a client sent as JSON or XML. A file that does not follow its form is told what is
+/// wrong (<see cref="InvoiceFileException"/>). An XML file is not read into the model: it is a UBL-TR invoice already, and <see cref="ParseUbl"/> reads it as a document.
 /// </summary>
 public static class InvoiceFileParser
 {
@@ -16,7 +18,7 @@ public static class InvoiceFileParser
 
     static InvoiceFileParser() => Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-    /// <param name="source">The form of the file.</param>
+    /// <param name="source">The form of the file (not <see cref="InvoiceSourceType.Xml"/>: see <see cref="ParseUbl"/>).</param>
     /// <param name="content">Its bytes.</param>
     /// <param name="fileName">Its name: a model is JSON or XML by its extension.</param>
     /// <param name="invoiceId">The uuid of the invoice, which a table or a text file does not carry.</param>
@@ -26,16 +28,32 @@ public static class InvoiceFileParser
 
         return source switch
         {
-            InvoiceSourceType.Xml => ParseXml(content),
             InvoiceSourceType.Csv => InvoiceTable.Read(ReadCsv(Encoding.UTF8.GetString(content)), invoiceId),
             InvoiceSourceType.Txt => ParseText(Encoding.UTF8.GetString(content), invoiceId),
             InvoiceSourceType.Xls => InvoiceTable.Read(ReadSheet(content), invoiceId),
-            InvoiceSourceType.Model => fileName.EndsWith(".xml", StringComparison.OrdinalIgnoreCase) ? ParseXml(content) : ParseJson(content),
-            _ => throw new InvoiceFileException($"The type {source} of file is not known."),
+            InvoiceSourceType.Model => fileName.EndsWith(".xml", StringComparison.OrdinalIgnoreCase) ? ParseModelXml(content) : ParseJson(content),
+            _ => throw new InvoiceFileException($"The type {source} of file is not read into the model."),
         };
     }
 
-    private static InvoiceSubmissionDto ParseXml(byte[] content)
+    /// <summary>Reads an XML file as a UBL document (no DTD, no external entity); what the schema says of it is checked by the caller.</summary>
+    public static XElement ParseUbl(byte[] content)
+    {
+        ArgumentNullException.ThrowIfNull(content);
+
+        try
+        {
+            using MemoryStream stream = new(content, writable: false);
+            using XmlReader reader = XmlReader.Create(stream, new XmlReaderSettings { DtdProcessing = DtdProcessing.Prohibit, XmlResolver = null });
+            return XDocument.Load(reader).Root ?? throw new InvoiceFileException("The XML has no root element.");
+        }
+        catch (XmlException exception)
+        {
+            throw new InvoiceFileException($"The XML is not well formed: {exception.Message}");
+        }
+    }
+
+    private static InvoiceSubmissionDto ParseModelXml(byte[] content)
     {
         try
         {
@@ -59,7 +77,7 @@ public static class InvoiceFileParser
         }
     }
 
-    // H|number|date|currency|supplier|supplierTaxId|customer|customerTaxId, then L|description|quantity|unitPrice|vatRate for each line; empty lines and lines that start with # are left
+    // H|number|date|currency|customer|customerTaxId|taxOffice|district|city|country[|invoiceProfile], then L|description|quantity|unitCode|unitPrice|vatRate for each line; empty lines and lines that start with # are left
     private static InvoiceSubmissionDto ParseText(string text, Guid invoiceId)
     {
         string[]? header = null;
@@ -68,7 +86,7 @@ public static class InvoiceFileParser
         foreach (string raw in text.Split('\n'))
         {
             number++;
-            string line = raw.Trim('\r', '﻿');
+            string line = raw.Trim('\r', '\uFEFF');
             if (string.IsNullOrWhiteSpace(line) || line.StartsWith('#'))
             {
                 continue;
@@ -80,18 +98,12 @@ public static class InvoiceFileParser
                 case "H" when header is not null:
                     throw new InvoiceFileException($"Line {number}: an invoice has one H line.");
                 case "H":
-                    header = parts.Length == 8 ? parts : throw new InvoiceFileException($"Line {number}: an H line has 8 parts (H|number|date|currency|supplier|supplierTaxId|customer|customerTaxId).");
+                    header = parts.Length is 10 or 11 ? parts : throw new InvoiceFileException($"Line {number}: an H line has 10 parts, or 11 with the profile at the end (H|number|date|currency|customer|customerTaxId|taxOffice|district|city|country|invoiceProfile).");
                     break;
                 case "L":
-                    lines.Add(parts.Length == 5
-                        ? new InvoiceLineDto
-                        {
-                            Description = parts[1],
-                            Quantity = InvoiceTable.Number(parts[2], "quantity", number),
-                            UnitPrice = InvoiceTable.Number(parts[3], "unitPrice", number),
-                            VatRate = InvoiceTable.Number(parts[4], "vatRate", number),
-                        }
-                        : throw new InvoiceFileException($"Line {number}: an L line has 5 parts (L|description|quantity|unitPrice|vatRate)."));
+                    lines.Add(parts.Length == 6
+                        ? InvoiceTable.Line(parts[1], parts[2], parts[3], parts[4], parts[5], number)
+                        : throw new InvoiceFileException($"Line {number}: an L line has 6 parts (L|description|quantity|unitCode|unitPrice|vatRate)."));
                     break;
                 default:
                     throw new InvoiceFileException($"Line {number}: a line starts with H or L, not '{parts[0]}'.");
@@ -100,7 +112,7 @@ public static class InvoiceFileParser
 
         return header is null
             ? throw new InvoiceFileException("The file has no H line.")
-            : InvoiceTable.Build(invoiceId, header[1], header[2], header[3], header[4], header[5], header[6], header[7], lines);
+            : InvoiceTable.Build(invoiceId, header[1], header[2], header[3], header[4], header[5], header[6], header[7], header[8], header[9], header.Length == 11 ? header[10] : string.Empty, lines);
     }
 
     // CSV as RFC 4180 says: commas, fields in quotes may hold commas, line breaks and a doubled quote

@@ -31,6 +31,16 @@ public static class EdxPagePermissions
         public const string View = "page.queue.view";
     }
 
+    public static class PurchaseInvoice
+    {
+        public const string View = "page.purchase-invoice.view";
+    }
+
+    public static class IntegrationEnvelope
+    {
+        public const string View = "page.integration-envelope.view";
+    }
+
     public static class InvoiceReport
     {
         public const string View = "page.invoice-report.view";

@@ -14,6 +14,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\..\shared\Edx.Shared.Contracts\Edx.Shared.Contracts.csproj" />
+        <ProjectReference Include="..\..\..\shared\Edx.Shared.Efatura\Edx.Shared.Efatura.csproj" />
     </ItemGroup>
 
     <ItemGroup>

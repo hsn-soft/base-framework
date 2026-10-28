@@ -11,10 +11,10 @@ public static class EdxOperationPermissions
         public const string UserEmailView = "operation.users.email.view";
     }
 
-    public static class Intake
+    public static class FirmInvoice
     {
         /// <summary>See where the file of a queue item is kept (the container, the object name and the folder), not only that it was received.</summary>
-        public const string FileStorageLocationView = "operation.intake.file.storage-location.view";
+        public const string FileStorageLocationView = "operation.firm-invoice.file.storage-location.view";
     }
 
     public static class Invoice

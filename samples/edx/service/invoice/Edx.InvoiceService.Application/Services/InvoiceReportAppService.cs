@@ -16,7 +16,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Edx.InvoiceService.Application.Services;
 
-public sealed class InvoiceReportAppService(IRepository<InvoiceReport, Guid> reports, IInvoiceRepository invoices, IPermissionChecker permissions, TimeProvider time, IServiceProvider services)
+public sealed class InvoiceReportAppService(IRepository<InvoiceReport, Guid> reports, ISalesInvoiceRepository invoices, IPermissionChecker permissions, TimeProvider time, IServiceProvider services)
     : ApplicationService(services), IInvoiceReportAppService
 {
     public async Task<InvoiceReportDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
@@ -53,14 +53,14 @@ public sealed class InvoiceReportAppService(IRepository<InvoiceReport, Guid> rep
 
         // what the invoices of the period say: all of the tenant's, whatever the caller may see of them one by one (a report is a summary, not a list). A system with many invoices asks the store to add them up; the sample reads the two fields it needs.
         string currency = input.Currency.Trim().ToUpperInvariant();
-        IReadOnlyList<(decimal Total, InvoiceStatus Status)> found = [.. (await invoices.GetListAsync(
-            new ListQueryOptions<Invoice> { Filter = invoice => invoice.IsLive && invoice.IssueDate >= start && invoice.IssueDate <= end && invoice.Currency == currency },
+        IReadOnlyList<(decimal Total, SalesInvoiceStatus Status)> found = [.. (await invoices.GetListAsync(
+            new ListQueryOptions<SalesInvoice> { Filter = invoice => invoice.IsLive && invoice.IssueDate >= start && invoice.IssueDate <= end && invoice.Currency == currency },
             invoice => new { invoice.Total, invoice.Status },
             cancellationToken).ConfigureAwait(false)).Select(item => (item.Total.GetValueOrDefault(), item.Status))];
 
         // the invoices that are live (a draft, approved or signed) count; the approved ones are those that were approved, signed or not yet
         InvoiceReport report = InvoiceReport.Generate(
-            start, end, currency, found.Count, found.Count(item => item.Status is InvoiceStatus.Approved or InvoiceStatus.Signed), found.Sum(item => item.Total), time.GetUtcNow());
+            start, end, currency, found.Count, found.Count(item => item.Status is SalesInvoiceStatus.Approved or SalesInvoiceStatus.Signed), found.Sum(item => item.Total), time.GetUtcNow());
         await reports.AddAsync(report, cancellationToken).ConfigureAwait(false);
         Logger.LogInformation("Invoice report {InvoiceReportId} was made for {ReportPeriod}: {InvoiceCount} invoices", report.Id, report.Name, report.InvoiceCount);
         return ToDto(report, await CanSeeTotalAsync(cancellationToken).ConfigureAwait(false));

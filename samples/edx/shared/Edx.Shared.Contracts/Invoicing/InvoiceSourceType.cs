@@ -6,7 +6,7 @@ public enum InvoiceSourceType
     /// <summary>The request model of the shared API (JSON or XML), made in a client or in the create page of the back office.</summary>
     Model = 1,
 
-    /// <summary>An XML file in the data contract of the model (<c>urn:edx:intake:invoice:v1</c>).</summary>
+    /// <summary>An XML file in the data contract of the model (<c>urn:edx:firm-invoice:invoice:v1</c>).</summary>
     Xml = 2,
 
     /// <summary>A text file: a header line (<c>H|...</c>) and a line (<c>L|...</c>) for each item, with <c>|</c> between the fields.</summary>

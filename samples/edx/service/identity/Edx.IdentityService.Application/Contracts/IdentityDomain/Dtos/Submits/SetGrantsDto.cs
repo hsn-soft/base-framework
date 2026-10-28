@@ -12,7 +12,7 @@ public sealed class SetGrantsDto
 
 public sealed class GrantInputDto
 {
-    /// <summary>The code of the permission (<c>endpoint.intake.files.get</c>).</summary>
+    /// <summary>The code of the permission (<c>endpoint.firm-invoice.files.get</c>).</summary>
     [Required]
     [StringLength(300)]
     public string Code { get; set; } = string.Empty;

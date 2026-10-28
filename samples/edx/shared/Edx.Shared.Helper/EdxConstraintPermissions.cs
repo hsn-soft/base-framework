@@ -6,10 +6,10 @@ namespace Edx.Shared.Helper;
 /// </summary>
 public static class EdxConstraintPermissions
 {
-    public static class Intake
+    public static class FirmInvoice
     {
-        /// <summary>The most bytes one upload of the caller may weigh; never more than <c>Intake:MaxUploadBytes</c>.</summary>
-        public const string UploadMaxBytes = "constraint.intake.upload.max-bytes";
+        /// <summary>The most bytes one upload of the caller may weigh; never more than <c>FirmInvoice:MaxUploadBytes</c>.</summary>
+        public const string UploadMaxBytes = "constraint.firm-invoice.upload.max-bytes";
     }
 
     public static class Invoice
