@@ -71,4 +71,25 @@ public class KafkaTopologyTests
 
         Assert.Equal(1, calls);
     }
+
+    [Fact]
+    public async Task ARetryThatWaits_EndsWhenTheCallerGivesUp()
+    {
+        using CancellationTokenSource stopping = new();
+        int calls = 0;
+
+        Task retry = KafkaTopology.RetryAsync(
+            () =>
+            {
+                calls++;
+                stopping.CancelAfter(50);
+                throw new KafkaException(new Error(ErrorCode.Local_Transport));
+            },
+            attempts: 10,
+            TimeSpan.FromMinutes(5),
+            stopping.Token);
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => retry.WaitAsync(TimeSpan.FromSeconds(10)));
+        Assert.Equal(1, calls);
+    }
 }

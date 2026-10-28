@@ -15,7 +15,7 @@ internal sealed class KafkaHealthCheck(IOptions<KafkaOptions> options) : IHealth
     {
         try
         {
-            using IAdminClient admin = new AdminClientBuilder(new AdminClientConfig { BootstrapServers = _options.BootstrapServers }).Build();
+            using IAdminClient admin = new AdminClientBuilder(_options.Apply(new AdminClientConfig())).Build();
             admin.GetMetadata(TimeSpan.FromSeconds(3));
             return Task.FromResult(HealthCheckResult.Healthy());
         }

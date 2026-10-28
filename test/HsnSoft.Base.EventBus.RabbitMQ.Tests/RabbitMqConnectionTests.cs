@@ -236,6 +236,53 @@ public class RabbitMqConnectionTests
     }
 
     [Fact]
+    public void WithoutTls_TheConnectionIsNotEncrypted_AndWithItItChecksTheCertificateOfTheBroker()
+    {
+        Assert.False(RabbitMqConnectionFactory.Create(new RabbitMqConnectionSettings(), automaticRecovery: true).Ssl.Enabled);
+
+        ConnectionFactory secured = RabbitMqConnectionFactory.Create(
+            new RabbitMqConnectionSettings { HostName = "rabbit.internal", Port = 5671, UseTls = true, ClientCertificatePath = "/certs/client.pfx", ClientCertificatePassword = "secret" },
+            automaticRecovery: true);
+
+        Assert.True(secured.Ssl.Enabled);
+        Assert.Equal("rabbit.internal", secured.Ssl.ServerName);
+        Assert.Equal(System.Security.Authentication.SslProtocols.Tls12 | System.Security.Authentication.SslProtocols.Tls13, secured.Ssl.Version);
+        Assert.Equal(("/certs/client.pfx", "secret"), (secured.Ssl.CertPath, secured.Ssl.CertPassphrase));
+        Assert.Equal("broker.example.com", RabbitMqConnectionFactory.Create(new RabbitMqConnectionSettings { UseTls = true, TlsServerName = "broker.example.com" }, automaticRecovery: true).Ssl.ServerName);
+    }
+
+    [Fact]
+    public void TheHealthCheckConnection_HasTheSameSecurityButNoRecovery()
+    {
+        ConnectionFactory check = RabbitMqConnectionFactory.Create(new RabbitMqConnectionSettings { UseTls = true }, automaticRecovery: false);
+
+        Assert.True(check.Ssl.Enabled);
+        Assert.False(check.AutomaticRecoveryEnabled);
+        Assert.True(RabbitMqConnectionFactory.Create(new RabbitMqConnectionSettings(), automaticRecovery: true).AutomaticRecoveryEnabled);
+    }
+
+    [Theory]
+    [InlineData("rabbit.prod", "guest", "guest", true)]
+    [InlineData("localhost", "guest", "guest", false)]
+    [InlineData("rabbit.prod", "orders", "secret", false)]
+    public async Task TheDefaultCredentials_AreWarnedAboutOnlyAgainstABrokerThatIsNotLocal(string host, string user, string password, bool warned)
+    {
+        ConnectionFactoryProxy factory = ConnectionFactoryProxy.Create(out IConnectionFactory connectionFactory);
+        ListLogger<RabbitMqPersistentConnection> logger = new();
+        RabbitMqConnectionSettings settings = FastSettings();
+        settings.HostName = host;
+        settings.UserName = user;
+        settings.Password = password;
+        RabbitMqPersistentConnection connection = new(Options.Create(settings), logger, connectionFactory);
+        Offer(factory);
+
+        await connection.TryConnectAsync();
+
+        Assert.Equal(warned, logger.Entries.Any(entry => entry.Level == LogLevel.Warning && entry.Message.Contains("default guest credentials", StringComparison.Ordinal)));
+        Assert.DoesNotContain(logger.Entries, entry => entry.Message.Contains(password, StringComparison.Ordinal) && password != "guest");
+    }
+
+    [Fact]
     public async Task BrokerThatIsStillStarting_IsRetried()
     {
         (RabbitMqPersistentConnection connection, ConnectionFactoryProxy factory, ListLogger<RabbitMqPersistentConnection> logger) = CreateWithFactory();

@@ -17,13 +17,21 @@ public sealed class KafkaTests : IAsyncLifetime
 
     public Task DisposeAsync() => _container.DisposeAsync().AsTask();
 
-    private Task<IHost> StartAsync(string exchange, Action<IServiceCollection> handlers, string? service = null, TimeSpan? shutdownTimeout = null, int partitions = 1, TimeSpan? inProgressRetryDelay = null)
+    private Task<IHost> StartAsync(string exchange, Action<IServiceCollection> handlers, string? service = null, TimeSpan? shutdownTimeout = null, int partitions = 1, TimeSpan? inProgressRetryDelay = null, string? maxPollInterval = null)
     {
-        IConfiguration configuration = Support.Configuration(
+        List<(string Key, string? Value)> settings =
+        [
             ("Kafka:BootstrapServers", _container.GetBootstrapAddress()),
             ("Kafka:Partitions", partitions.ToString(System.Globalization.CultureInfo.InvariantCulture)),
             ("Kafka:EventBus:ExchangeName", exchange),
-            ("Kafka:EventBus:ConsumerClientName", service ?? $"service-{Guid.NewGuid():N}"));
+            ("Kafka:EventBus:ConsumerClientName", service ?? $"service-{Guid.NewGuid():N}"),
+        ];
+        if (maxPollInterval is not null)
+        {
+            settings.Add(("Kafka:MaxPollInterval", maxPollInterval));
+        }
+
+        IConfiguration configuration = Support.Configuration([.. settings]);
         return Support.StartHostAsync(services =>
         {
             services.AddKafkaEventBus(configuration, options =>
@@ -35,6 +43,15 @@ public sealed class KafkaTests : IAsyncLifetime
             });
             handlers(services);
         });
+    }
+
+    [Fact]
+    public async Task AMaxPollIntervalNotLongerThanTheShutdownTimeout_StopsTheServiceAtStart()
+    {
+        // a consumer waits the shutdown timeout for what it handles when partitions move, and would be taken out of its group meanwhile: the misconfiguration stops the host (the default of a failed background service)
+        using IHost host = await StartAsync($"it{Guid.NewGuid():N}", services => services.AddEventHandler<Pinged, RecordingHandler>(), maxPollInterval: "00:00:10");
+
+        await Support.EventuallyAsync(() => Task.FromResult(host.Services.GetRequiredService<IHostApplicationLifetime>().ApplicationStopping.IsCancellationRequested), "the host to be stopped by the failed subscriber", TimeSpan.FromSeconds(30));
     }
 
     [Fact]

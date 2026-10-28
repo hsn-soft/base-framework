@@ -23,4 +23,16 @@ public sealed class RabbitMqConnectionSettings
 
     /// <summary>How long closing the connection may take (it waits for the callbacks still running) before it is given up.</summary>
     public TimeSpan ConnectionCloseTimeout { get; set; } = TimeSpan.FromSeconds(10);
+
+    /// <summary>Encrypts the connection (TLS 1.2 or 1.3) and checks the certificate of the broker. Without it the credentials and every message are sent unencrypted: turn it on outside a closed network, and use port 5671.</summary>
+    public bool UseTls { get; set; }
+
+    /// <summary>The name the certificate of the broker is issued to; defaults to <see cref="HostName"/>.</summary>
+    public string? TlsServerName { get; set; }
+
+    /// <summary>The certificate (a PKCS#12 file) the client presents, when the broker asks for one (mutual TLS).</summary>
+    public string? ClientCertificatePath { get; set; }
+
+    /// <summary>A secret: keep it out of the settings file (environment, secret store).</summary>
+    public string? ClientCertificatePassword { get; set; }
 }

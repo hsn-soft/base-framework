@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Confluent.Kafka;
 using Confluent.Kafka.Admin;
@@ -23,13 +24,15 @@ internal static class KafkaTopology
     /// Creates the topics that do not exist yet; a topic that already exists is fine. A broker that cannot be reached yet (it is starting, or the first address of its name does not answer) is tried again, so a host that starts
     /// beside its broker does not stop on the first refusal.
     /// </summary>
-    public static Task EnsureTopicsAsync(KafkaOptions options, IEnumerable<string> topics)
-        => RetryAsync(() => CreateTopicsAsync(options, topics), attempts: 10, TimeSpan.FromSeconds(2));
+    public static Task EnsureTopicsAsync(KafkaOptions options, IEnumerable<string> topics, CancellationToken cancellationToken = default)
+        => RetryAsync(() => CreateTopicsAsync(options, topics), attempts: 10, TimeSpan.FromSeconds(2), cancellationToken);
 
-    internal static async Task RetryAsync(Func<Task> action, int attempts, TimeSpan delay)
+    // a stopping service (or a caller that gave up) does not wait for the next try
+    internal static async Task RetryAsync(Func<Task> action, int attempts, TimeSpan delay, CancellationToken cancellationToken = default)
     {
         for (int attempt = 1; ; attempt++)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             try
             {
                 await action().ConfigureAwait(false);
@@ -37,14 +40,14 @@ internal static class KafkaTopology
             }
             catch (KafkaException) when (attempt < attempts)
             {
-                await Task.Delay(delay).ConfigureAwait(false);
+                await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
             }
         }
     }
 
     private static async Task CreateTopicsAsync(KafkaOptions options, IEnumerable<string> topics)
     {
-        using IAdminClient admin = new AdminClientBuilder(new AdminClientConfig { BootstrapServers = options.BootstrapServers }).Build();
+        using IAdminClient admin = new AdminClientBuilder(options.Apply(new AdminClientConfig())).Build();
         IEnumerable<TopicSpecification> specifications = topics.Distinct().Select(topic => new TopicSpecification
         {
             Name = topic,

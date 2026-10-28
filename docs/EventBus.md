@@ -88,7 +88,7 @@ persistent, `mandatory`.
 | The broker is not reachable while publishing | Retried `PublishRetryCount` times (default 5) with `2^n` seconds between tries. |
 | The connection is cut | The client reconnects and recovers channels and consumers; a consumer whose channel dies alone rebuilds it. |
 | A step of the framework fails before the handler (RabbitMQ) | The message is reported like a failed handler (error client's queue) and taken off the queue; the consumer goes on with the next one. |
-| The consumer fails on its own (Kafka: the broker cannot be read, an offset cannot be committed) | It is logged (`KAFKA_SUBSCRIBER_CONSUMER_FAILED`), the consumer of that event is built again after `Kafka:RecoveryDelay` (5 s); the other events and the host are not touched, and the message that was not committed is read again. |
+| The consumer fails on its own (Kafka: the broker cannot be read, an offset cannot be committed) | It is logged (`KAFKA_SUBSCRIBER_CONSUMER_FAILED`), the consumer of that event is built again after `Kafka:RecoveryDelay` (5 s, doubling with every failure in a row up to `Kafka:RecoveryMaxDelay`, 60 s; [ADR-0104](adr/0104-kafka-consumers-back-off-and-state-their-group-timeouts.md)); the other events and the host are not touched, and the message that was not committed is read again. |
 | The service stops | Each consumer is cancelled on the broker first (no new messages), then finishes the messages it is handling (up to `EventBusOptions.ShutdownTimeout`, 30 s) before the channel is closed; what is not finished stays unacknowledged and is delivered again. On Kafka the consumer of each event reads no new message once the service stops and lets the messages it is handling finish (up to the same `ShutdownTimeout`; its handler is cancelled after it, and the message, not committed, is handled again later). With `fetchCount` 10 on RabbitMQ all ten are waited for. In Kubernetes the times add up, they do not nest: a stopping pod spends its `preStop` (the time the endpoints need to forget it), then the consumers drain (up to `EventBusOptions.ShutdownTimeout`, in parallel for all events; the host stops the other hosted services in the same phase, bounded by `HostOptions.ShutdownTimeout`), then the bus waits for the messages it is publishing (up to `ShutdownTimeout` again, when the container is disposed). `terminationGracePeriodSeconds` has to cover all of it: with a `preStop` of 10 s and both timeouts at 30 s, 90 s (the default of 30 s kills the pod in the middle; so does `stop_grace_period` of a compose file). |
 
 `EventBusOptions.LogMessageBody` (default `false`) decides whether the whole message body is written to the logs: the Debug log of a
@@ -102,6 +102,19 @@ unmasked is written. `LogMessageBody` above is a different switch: the raw body,
 
 `MaxHandlerAttempts` (default 1) can make the framework retry a handler before it counts as failed; the services in production leave
 retrying to their handlers.
+
+`Kafka:MaxPollInterval` (5 min) is how long a consumer may go without reading before the broker gives its partitions to another instance: it must be longer than `ShutdownTimeout` (the service refuses to start otherwise) and than your slowest handler; `Kafka:SessionTimeout` (45 s) is the heartbeat limit.
+
+## A secure connection
+
+Both brokers are plaintext by default; outside a closed network turn the security on with settings ([ADR-0103](adr/0103-brokers-are-reached-with-tls-and-sasl-when-the-settings-say-so.md)), and keep the passwords in the environment or a secret store, not in the file:
+
+```json
+"RabbitMq": { "Connection": { "HostName": "rabbit.example.com", "Port": 5671, "UseTls": true, "UserName": "orders" } },   // Password from the environment: RabbitMq__Connection__Password
+"Kafka":    { "BootstrapServers": "kafka.example.com:9093", "SecurityProtocol": "SaslSsl", "SaslMechanism": "ScramSha512", "SaslUsername": "orders" }   // SaslPassword from the environment
+```
+
+RabbitMQ also has `TlsServerName` (when the certificate is issued to another name than the host) and `ClientCertificatePath` / `ClientCertificatePassword` (mutual TLS); Kafka has `SslCaLocation`, `SslCertificateLocation`, `SslKeyLocation` and `SslKeyPassword`. A connection with the default `guest` login to a host that is not local is logged as a warning.
 
 ## The inbox: a message that comes twice is handled once
 

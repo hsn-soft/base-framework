@@ -57,6 +57,10 @@ public sealed partial class RabbitMqPersistentConnection : IRabbitMqPersistentCo
 
             await CloseConnectionAsync().ConfigureAwait(false);
             LogConnecting(_logger, _settings.HostName, _settings.Port);
+            if (_settings is { UserName: "guest", Password: "guest" } && !IsLocal(_settings.HostName))
+            {
+                LogDefaultCredentials(_logger, _settings.HostName);
+            }
 
             IConnection? connection = null;
             await PublishRetry.ExecuteAsync(
@@ -155,22 +159,7 @@ public sealed partial class RabbitMqPersistentConnection : IRabbitMqPersistentCo
         }
     }
 
-    private static ConnectionFactory CreateFactory(RabbitMqConnectionSettings settings)
-        => new()
-        {
-            HostName = settings.HostName,
-            Port = settings.Port,
-            UserName = settings.UserName,
-            Password = settings.Password,
-            VirtualHost = settings.VirtualHost,
-            // the client reconnects forever by itself and recovers channels and consumers
-            AutomaticRecoveryEnabled = true,
-            TopologyRecoveryEnabled = true,
-            NetworkRecoveryInterval = TimeSpan.FromSeconds(10),
-            RequestedHeartbeat = TimeSpan.FromSeconds(60),
-            HandshakeContinuationTimeout = TimeSpan.FromMinutes(2),
-            ContinuationTimeout = TimeSpan.FromMinutes(2),
-        };
+    private static ConnectionFactory CreateFactory(RabbitMqConnectionSettings settings) => RabbitMqConnectionFactory.Create(settings, automaticRecovery: true);
 
     internal Task OnCallbackExceptionAsync(object sender, CallbackExceptionEventArgs args)
     {
@@ -211,6 +200,12 @@ public sealed partial class RabbitMqPersistentConnection : IRabbitMqPersistentCo
 
     [LoggerMessage(EventId = 4112, EventName = "RABBITMQ_CONNECTION_RECOVERING", Level = LogLevel.Debug, Message = "The RabbitMQ connection is being recovered by the client, it is not replaced")]
     private static partial void LogRecovering(ILogger logger);
+
+    // the broker refuses guest from another machine by default; one that accepts it is open to anybody who knows the default
+    private static bool IsLocal(string host) => host is "localhost" or "127.0.0.1" or "::1";
+
+    [LoggerMessage(EventId = 4113, EventName = "RABBITMQ_CONNECTION_DEFAULT_CREDENTIALS", Level = LogLevel.Warning, Message = "RabbitMQ at {HostName} is reached with the default guest credentials: set RabbitMq:Connection:UserName and Password")]
+    private static partial void LogDefaultCredentials(ILogger logger, string hostName);
 
     [LoggerMessage(EventId = 4101, EventName = "RABBITMQ_CONNECTION_CONNECTING", Level = LogLevel.Information, Message = "RabbitMQ client is connecting to {HostName}:{Port}")]
     private static partial void LogConnecting(ILogger logger, string hostName, int port);

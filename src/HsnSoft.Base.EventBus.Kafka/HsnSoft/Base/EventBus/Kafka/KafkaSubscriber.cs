@@ -34,13 +34,19 @@ public sealed partial class KafkaSubscriber(
             return;
         }
 
+        // a consumer is taken out of its group when it does not read for MaxPollInterval; while it waits for what it handles at shutdown it does not read
+        if (_options.MaxPollInterval <= _eventBusOptions.ShutdownTimeout)
+        {
+            throw new InvalidOperationException($"Kafka:MaxPollInterval ({_options.MaxPollInterval}) must be longer than the shutdown timeout of the event bus ({_eventBusOptions.ShutdownTimeout}).");
+        }
+
         string deadLetterTopic = KafkaTopology.DeadLetterTopic(_eventBusOptions);
         IntegrationEventInfo[] events = [.. _subscriptions.Events];
 
-        await KafkaTopology.EnsureTopicsAsync(_options, events.Select(info => KafkaTopology.TopicFor(_eventBusOptions, info.EventName)).Append(deadLetterTopic)).ConfigureAwait(false);
+        await KafkaTopology.EnsureTopicsAsync(_options, events.Select(info => KafkaTopology.TopicFor(_eventBusOptions, info.EventName)).Append(deadLetterTopic), stoppingToken).ConfigureAwait(false);
 
         // consuming blocks a thread, so each consumer runs on one of its own and not on the one that started the host
-        using IProducer<string, byte[]> deadLetters = new ProducerBuilder<string, byte[]>(new ProducerConfig { BootstrapServers = _options.BootstrapServers }).Build();
+        using IProducer<string, byte[]> deadLetters = new ProducerBuilder<string, byte[]>(_options.Apply(new ProducerConfig())).Build();
         await Task.WhenAll(events.Select(info => Task.Run(() => ConsumeLoopAsync(info, deadLetters, deadLetterTopic, stoppingToken), CancellationToken.None))).ConfigureAwait(false);
     }
 
@@ -49,7 +55,8 @@ public sealed partial class KafkaSubscriber(
         => KafkaRecovery.RunAsync(
             cancellationToken => ConsumeAsync(info, deadLetters, deadLetterTopic, cancellationToken),
             _options.RecoveryDelay,
-            exception => LogConsumerFailed(_logger, exception, KafkaTopology.GroupFor(_eventBusOptions, info.EventName), _options.RecoveryDelay.TotalSeconds),
+            _options.RecoveryMaxDelay,
+            (exception, delay) => LogConsumerFailed(_logger, exception, KafkaTopology.GroupFor(_eventBusOptions, info.EventName), delay.TotalSeconds),
             stoppingToken);
 
     private Task ConsumeAsync(IntegrationEventInfo info, IProducer<string, byte[]> deadLetters, string deadLetterTopic, CancellationToken stoppingToken)

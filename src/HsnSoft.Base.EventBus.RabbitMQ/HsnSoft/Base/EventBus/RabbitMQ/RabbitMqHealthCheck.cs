@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using HsnSoft.Base.EventBus.RabbitMQ.Configs;
+using HsnSoft.Base.EventBus.RabbitMQ.Connection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
@@ -11,15 +12,7 @@ namespace HsnSoft.Base.EventBus.RabbitMQ;
 /// <summary>Ready when a fresh connection to the broker can be opened (so it also works for a service that has not published or consumed anything yet).</summary>
 public sealed class RabbitMqHealthCheck(IOptions<RabbitMqConnectionSettings> settings) : IHealthCheck
 {
-    private readonly ConnectionFactory _connectionFactory = new()
-    {
-        HostName = settings.Value.HostName,
-        Port = settings.Value.Port,
-        UserName = settings.Value.UserName,
-        Password = settings.Value.Password,
-        VirtualHost = settings.Value.VirtualHost,
-        RequestedHeartbeat = TimeSpan.FromSeconds(60),
-    };
+    private readonly ConnectionFactory _connectionFactory = RabbitMqConnectionFactory.Create(settings.Value, automaticRecovery: false);
 
     public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
     {

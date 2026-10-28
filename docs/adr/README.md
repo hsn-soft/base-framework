@@ -28,6 +28,8 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
+| [0104](0104-kafka-consumers-back-off-and-state-their-group-timeouts.md) | Kafka consumers back off when they fail and state their group timeouts | Accepted | 2026-10-29 |
+| [0103](0103-brokers-are-reached-with-tls-and-sasl-when-the-settings-say-so.md) | The brokers are reached with TLS and SASL when the settings say so, through one place per broker | Accepted | 2026-10-28 |
 | [0102](0102-the-inbox-cleanup-is-opt-in-and-needs-no-coordination-between-instances.md) | The inbox cleanup is opt-in and needs no coordination between instances | Accepted | 2026-10-28 |
 | [0101](0101-a-message-whose-handler-keeps-timing-out-counts-as-failed.md) | A RabbitMQ message whose handler keeps timing out counts as failed after a limit | Accepted | 2026-10-28 |
 | [0100](0100-a-connection-the-client-is-recovering-is-not-replaced.md) | A connection the RabbitMQ client is recovering is never replaced from outside | Accepted | 2026-10-28 |

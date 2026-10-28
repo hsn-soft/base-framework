@@ -37,13 +37,14 @@ internal sealed partial class KafkaEventConsumer(
         string group = KafkaTopology.GroupFor(eventBusOptions, info.EventName);
         int fetchCount = Math.Max((int)info.FetchCount, 1);
         using SemaphoreSlim slots = new(fetchCount, fetchCount);
-        using IConsumer<string, byte[]> consumer = new ConsumerBuilder<string, byte[]>(new ConsumerConfig
+        using IConsumer<string, byte[]> consumer = new ConsumerBuilder<string, byte[]>(options.Apply(new ConsumerConfig
         {
-            BootstrapServers = options.BootstrapServers,
             GroupId = group,
+            SessionTimeoutMs = (int)options.SessionTimeout.TotalMilliseconds,
+            MaxPollIntervalMs = (int)options.MaxPollInterval.TotalMilliseconds,
             EnableAutoCommit = false,
             AutoOffsetReset = AutoOffsetReset.Earliest,
-        })
+        }))
             .SetPartitionsRevokedHandler((revoking, partitions) => Revoked(revoking, partitions.Select(partition => partition.TopicPartition)))
             .SetPartitionsLostHandler((_, partitions) => _tracker.Forget(partitions.Select(partition => partition.TopicPartition)))
             .Build();

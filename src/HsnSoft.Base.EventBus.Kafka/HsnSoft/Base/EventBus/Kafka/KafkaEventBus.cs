@@ -24,12 +24,11 @@ public sealed class KafkaEventBus : EventBusBase, IDisposable
     {
         _kafkaOptions = kafkaOptions.Value;
         _eventBusOptions = options.Value;
-        _producer = new Lazy<IProducer<string, byte[]>>(() => new ProducerBuilder<string, byte[]>(new ProducerConfig
+        _producer = new Lazy<IProducer<string, byte[]>>(() => new ProducerBuilder<string, byte[]>(_kafkaOptions.Apply(new ProducerConfig
         {
-            BootstrapServers = _kafkaOptions.BootstrapServers,
             Acks = Acks.All,
             EnableIdempotence = true,
-        }).Build());
+        })).Build());
     }
 
     protected override async Task TransmitAsync(PublishRequest request, CancellationToken cancellationToken)
@@ -43,7 +42,7 @@ public sealed class KafkaEventBus : EventBusBase, IDisposable
         string topic = KafkaTopology.TopicFor(_eventBusOptions, request.EventName);
         if (!_knownTopics.ContainsKey(topic))
         {
-            await KafkaTopology.EnsureTopicsAsync(_kafkaOptions, [topic]).ConfigureAwait(false);
+            await KafkaTopology.EnsureTopicsAsync(_kafkaOptions, [topic], cancellationToken).ConfigureAwait(false);
             _knownTopics[topic] = true;
         }
 
