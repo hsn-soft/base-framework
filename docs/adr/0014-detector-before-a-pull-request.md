@@ -23,7 +23,6 @@ The pre-push hook stops at the unit tests. The pull request's CI also checks for
 
 - A full run takes about two minutes (most of it the integration tests) and needs the .NET SDK, git, python3 and Docker.
 - The detector is a second place that must be kept in step with the workflow; it is the price of finding problems locally.
-- It does not run the samples (see [ADR-0010](0010-integration-tests-with-testcontainers.md)); after a change that affects them, run `samples/xyz/run-all.sh` and `smoke-test.sh` by hand.
 
 ## Related
 

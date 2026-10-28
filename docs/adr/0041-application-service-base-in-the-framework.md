@@ -1,7 +1,7 @@
 # ADR-0041: `ApplicationService` is the framework's; the application services of a service derive from its base
 
 - **Status:** Accepted
-- **Date:** 2026-10-25 (extends [ADR-0040](0040-api-controller-base-in-the-framework.md) to the application layer; replaces the `IMessageLocalizer` and `ICurrentUser` of the Abc application services of [ADR-0039](0039-guard-and-translating-a-response-body.md))
+- **Date:** 2026-10-25 (extends [ADR-0040](0040-api-controller-base-in-the-framework.md) to the application layer; replaces the `IMessageLocalizer` and `ICurrentUser` of the application services of [ADR-0039](0039-guard-and-translating-a-response-body.md))
 
 ## Context
 

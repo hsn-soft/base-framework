@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
     <!--
-        The WCF (SOAP) way into the firm invoice integration (ADR-0079), for the customers whose systems speak it: a basic HTTP binding at /wcf/firm-invoice.svc with a WSDL. A host of its own, because CoreWCF reads its messages
+        The WCF (SOAP) way into the firm invoice integration (ADR-0027), for the customers whose systems speak it: a basic HTTP binding at /wcf/firm-invoice.svc with a WSDL. A host of its own, because CoreWCF reads its messages
         synchronously (AllowSynchronousIO) and the rest of the service should not; it calls the same application service the REST host does, publishes the events of what it queued and consumes none.
     -->
 

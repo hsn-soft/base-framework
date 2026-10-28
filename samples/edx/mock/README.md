@@ -1,6 +1,6 @@
 # The mock GİB center
 
-A stand-in for the e-invoice center ([ADR-0087](../../../docs/adr/0087-the-edx-mock-gib-center.md)); the guides it follows are in [../docs/einvoice](../docs/einvoice). Only the **e-invoice** is handled (invoice, application response, system response).
+A stand-in for the e-invoice center ([ADR-0035](../../docs/adr/0035-the-edx-mock-gib-center.md)); the guides it follows are in [../docs/einvoice](../docs/einvoice). Only the **e-invoice** is handled (invoice, application response, system response).
 
 ```
 sender unit ── 1 SENDERENVELOPE (invoice) ──▶ CENTER ── 3 SENDERENVELOPE, as it came ──▶ post box
@@ -26,13 +26,13 @@ has, the receiver has the address · the documents are of the kind the envelope 
 center still holds). **Not done:** schematron rules (not in the package), verification of the signature, user envelopes, the other documents of the e-invoice family.
 
 **An envelope is the post:** it holds up to 1000 documents (`Center:MaxDocumentsPerEnvelope`), all for the post box it is addressed to (an invoice for another customer is refused, 1181). The status is kept on the envelope, not on its invoices, and is asked for with the uuid of the envelope (`getApplicationResponse`). **System envelopes are off** by default (`Center:SendSystemResponses`): the sender
-asks, and the center asks the post box for its answer ([ADR-0093](../../../docs/adr/0093-the-mock-center-envelope-holds-up-to-1000-invoices-and-is-asked-by-uuid.md)).
+asks, and the center asks the post box for its answer ([ADR-0041](../../docs/adr/0041-the-mock-center-envelope-holds-up-to-1000-invoices-and-is-asked-by-uuid.md)).
 
 ## Who is registered (settings `Participants`)
 
 | VKN | Participant | Aliases | Served by |
 |---|---|---|---|
-| `1234567801` | Veriban | `urn:mail:veriban_gb@veriban.example` (sender unit), `urn:mail:veriban_pk@veriban.example` (post box) | the post box of Edx (the WCF host of the integration service, [ADR-0089](../../../docs/adr/0089-the-edx-integration-service-sender-unit-and-post-box.md)), `http://localhost:5541/EFatura/` |
+| `1234567801` | Veriban | `urn:mail:veriban_gb@veriban.example` (sender unit), `urn:mail:veriban_pk@veriban.example` (post box) | the post box of Edx (the WCF host of the integration service, [ADR-0037](../../docs/adr/0037-the-edx-integration-service-sender-unit-and-post-box.md)), `http://localhost:5541/EFatura/` |
 | `1234567802` | Bilgera | `urn:mail:bilgera_gb@bilgera.example`, `urn:mail:bilgera_pk@bilgera.example` | the same |
 | `1234567803` | a customer of another integrator | `urn:mail:diger_pk@diger.example` | `http://localhost:5800/EFatura/` (not there: the delivery is tried again) |
 | `9999999999` | the center | `urn:mail:defaultgb@merkez.efatura.mock` | itself |
@@ -52,6 +52,6 @@ ASPNETCORE_ENVIRONMENT=development dotnet run --project samples/edx/mock/Edx.Moc
 
 cd samples/edx/mock/tools
 dotnet run stub-postbox.cs                 # a post box on :5541 that takes what the center delivers and answers it (SILENT=1: the center has to ask)
-dotnet run send-batch.cs -- 1000 ok            # one envelope with 1000 invoices for one post box (1001, or `5 mixed` for a wrong receiver, are refused: [ADR-0093](../../../docs/adr/0093-the-mock-center-envelope-holds-up-to-1000-invoices-and-is-asked-by-uuid.md))
+dotnet run send-batch.cs -- 1000 ok            # one envelope with 1000 invoices for one post box (1001, or `5 mixed` for a wrong receiver, are refused: [ADR-0041](../../docs/adr/0041-the-mock-center-envelope-holds-up-to-1000-invoices-and-is-asked-by-uuid.md))
 dotnet run send-invoice.cs                 # a sender unit: sends a sample invoice of the UBL-TR package and follows its status  (… -- - - - nosig | badxml: a refused one)
 ```

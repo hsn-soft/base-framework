@@ -13,7 +13,7 @@ and we wanted to know what exactly can break a pull request.
 `.github/workflows/net-core-build-and-test.yml` (`.NETCore Build & Test`) runs on pull requests into `dev` (opened, synchronized, reopened), on pushes to `dev` (the state of `dev` is what the README badge shows) and by hand.
 A new push to a pull request cancels its previous run; pushes to `dev` always finish. Three jobs:
 
-1. **Build And Unit Test** (Ubuntu): every package has a unit test project (`ci-check-test-projects.sh`) -> restore -> **format check C#** (`dotnet format whitespace` and `style --verify-no-changes --severity info`) ->
+1. **Build And Unit Test** (Ubuntu): every package has a unit test project (`ci-check-test-project-exist.sh`) -> restore -> **format check C#** (`dotnet format whitespace` and `style --verify-no-changes --severity info`) ->
    **format check JSON** (`format-json.cs --all --check`) -> **build Release, warnings are errors** -> unit tests with coverage. The test results are uploaded.
 2. **Integration Test** (Ubuntu, Docker): `run-tests.sh integration` with coverage.
 3. **Coverage Gate** (needs both): merges the coverage and fails below `COVERAGE_THRESHOLD` (see [ADR-0011](0011-coverage-gate.md)).
@@ -38,7 +38,6 @@ A new push to a pull request cancels its previous run; pushes to `dev` always fi
 
 - A warning left in the code fails the pull request even if the code works; that is intended.
 - Adding a CI step means adding it to the detector and to this table.
-- The CI cannot run the samples (see [ADR-0010](0010-integration-tests-with-testcontainers.md)).
 
 ## Related
 

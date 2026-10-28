@@ -1,6 +1,6 @@
 namespace Edx.Integration.FirmInvoice.Grpc.Host;
 
-/// <summary>The gRPC service of the firm invoice integration: an entry point and nothing more, the application service it calls does not know gRPC (the framework has no package for it: ADR-0079).</summary>
+/// <summary>The gRPC service of the firm invoice integration: an entry point and nothing more, the application service it calls does not know gRPC (the framework has no package for it: ADR-0027).</summary>
 public static class FirmInvoiceGrpcRegister
 {
     public static IServiceCollection AddFirmInvoiceGrpc(this IServiceCollection services)

@@ -14,9 +14,6 @@ wire, a retry that never reconnects are only found against the real service. Moc
   **Testcontainers**; the tests need a running Docker and nothing else installed.
 - Containers are heavy, so test parallelization is **disabled** for this assembly (`DisableTestParallelization`): one test class after the other.
 - A new provider's pull request includes its integration tests.
-- **The samples are not run by CI or by the detector, only built.** Running them needs the whole local infrastructure and several processes. This has a cost we accepted knowingly: bugs that only appear when the
-  hosts run together (a body read synchronously when a service is unreachable, a `[property: Required]` on a record) were found by running the samples against the local Graylog and by `smoke-test.sh`, not by the tests.
-  Such a bug gets a unit or integration test as well once it is understood.
 
 ## Consequences
 

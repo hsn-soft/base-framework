@@ -47,13 +47,13 @@ jobs:
                         ${{ runner.os }}-nuget
 
             -   name: Every Package Has Unit Tests
-                run: ./scripts/ci-check-test-projects.sh
+                run: ./scripts/ci-check-test-project-exist.sh
 
             -   name: Project File Reference Order
-                run: python3 scripts/ci-check-csproj-order.py
+                run: python3 scripts/ci-force-csproj-order.py
 
             -   name: Framework Project References
-                run: python3 scripts/ci-check-framework-references.py
+                run: python3 scripts/ci-force-framework-references-rules.py
 
             -   name: Restore Dependencies
                 run: dotnet restore --verbosity minimal --configfile NuGet.Config

@@ -1,4 +1,4 @@
-# ADR-0056: Tables and collections are named like the entity
+# ADR-0017: Tables and collections are named like the entity
 
 - **Status:** Accepted
 - **Date:** 2026-10-25
@@ -10,7 +10,7 @@ The tables and the collections of the Abc sample had names in small letters with
 ## Decision
 
 - **A table or a collection is named like its entity: in Pascal case, singular, the words joined** (`User`, `UserHistory`, `Order`, `OrderLine`, `Product`, `ProductStockHistory`, `Shipment`, `ShipmentHistory`). The name is a constant of the domain (`UserConsts.TableName`, `ProductConsts.CollectionName`, ...); the table prefix and schema
-  (ADR-0050) and the collection prefix (ADR-0051) are put in front by the persistence project.
+  (framework ADR-0050) and the collection prefix (ADR-0012) are put in front by the persistence project.
 
 ## Consequences
 
@@ -19,4 +19,4 @@ The tables and the collections of the Abc sample had names in small letters with
 
 ## Related
 
-[ADR-0050](0050-a-context-has-a-properties-class-for-its-database.md), [ADR-0055](0055-environments-of-the-abc-sample.md).
+[framework ADR-0050](../../../docs/adr/0050-a-context-has-a-properties-class-for-its-database.md), [ADR-0016](0016-environments-of-the-abc-sample.md).

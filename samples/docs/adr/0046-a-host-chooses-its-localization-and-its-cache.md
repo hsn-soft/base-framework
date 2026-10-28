@@ -1,7 +1,7 @@
-# ADR-0072: A host chooses its localization and its cache
+# ADR-0046: A host chooses its localization and its cache
 
 - **Status:** Accepted
-- **Date:** 2026-10-27 (changes [ADR-0028](0028-shared-hosting-projects.md), [ADR-0034](0034-redis-and-rabbitmq-in-the-abc-hosts.md) and the way a host asks for [ADR-0068](0068-the-shared-texts-of-a-product-are-a-project-of-their-own.md))
+- **Date:** 2026-10-27 (changes [ADR-0003](0003-shared-hosting-projects.md), [ADR-0009](0009-redis-and-rabbitmq-in-the-abc-hosts.md) and the way a host asks for [ADR-0023](0023-the-shared-texts-of-a-product-are-a-project-of-their-own.md))
 
 ## Context
 
@@ -24,4 +24,4 @@ the projects that carry them (`HsnSoft.Base.Localization`, `HsnSoft.Base.Caching
 
 ## Related
 
-[ADR-0028](0028-shared-hosting-projects.md), [ADR-0034](0034-redis-and-rabbitmq-in-the-abc-hosts.md), [ADR-0038](0038-localization.md), [ADR-0068](0068-the-shared-texts-of-a-product-are-a-project-of-their-own.md), [ADR-0069](0069-who-references-which-shared-project-in-abc.md).
+[ADR-0003](0003-shared-hosting-projects.md), [ADR-0009](0009-redis-and-rabbitmq-in-the-abc-hosts.md), [framework ADR-0038](../../../docs/adr/0038-localization.md), [ADR-0023](0023-the-shared-texts-of-a-product-are-a-project-of-their-own.md), [ADR-0024](0024-who-references-which-shared-project-in-abc.md).

@@ -1,11 +1,11 @@
 # ADR-0042: `Ddd.Domain` and `Ddd.Application`: entity bases, DTO bases, and the generic repository
 
 - **Status:** Accepted (the repository part is extended by [ADR-0045](0045-repository-levels-relational-and-document.md) and [ADR-0046](0046-dto-projection-without-a-mapper.md): `Include` left the common options)
-- **Date:** 2026-10-25 (adds to [ADR-0030](0030-microservice-project-pattern.md), [ADR-0033](0033-the-abc-services-crud-pattern.md), [ADR-0037](0037-audit-soft-delete-and-tenants.md))
+- **Date:** 2026-10-25 (adds to [ADR-0037](0037-audit-soft-delete-and-tenants.md))
 
 ## Context
 
-Every Abc service wrote the same things again: the audit and soft delete members of its entity (about 25 lines), the four DTO classes of paging, a repository with `GetList`, `Count`, `Search` and a filter record, and an `if` chain that built the filter. The system before the rewrite (hhs, on the `HsnSoft.Base.Ddd.Domain` and
+Every service wrote the same things again: the audit and soft delete members of its entity (about 25 lines), the four DTO classes of paging, a repository with `GetList`, `Count`, `Search` and a filter record, and an `if` chain that built the filter. The system before the rewrite (hhs, on the `HsnSoft.Base.Ddd.Domain` and
 `HsnSoft.Base.Ddd.Application` packages) had them once in the framework: `AuditedEntity<Guid>`, `PagedDataRequestDto`, `PagedDataResultDto`, `FilterBuilder`, the repository with query options. They are taken back, smaller and with the faults left out.
 
 ## Decision
@@ -27,9 +27,9 @@ Every Abc service wrote the same things again: the audit and soft delete members
 
 - An entity is `class Product : FullAuditedEntity<Guid>, IMultiTenant` with its business members; a service's repository, filter record and four DTO classes are gone, and an application service builds a filter and calls the repository.
 - The responses of the lists changed: a page has `dataTotalCount`, `pageTotalCount`, `resultDataStartNumber`, `resultDataEndNumber`; a request has `pageNumber`, `maxResultCount`, `sortingText`, `searchText`.
-- The domain project depends on `Ddd.Domain` (and, through it, Core); ADR-0030's "nothing but Core" is replaced by "Core and Ddd.Domain".
+- The domain project depends on `Ddd.Domain` (and, through it, Core).
 - A relational store loads what the query says (`Include`); a document store ignores `Include`.
 
 ## Related
 
-[ADR-0030](0030-microservice-project-pattern.md), [ADR-0033](0033-the-abc-services-crud-pattern.md), [ADR-0037](0037-audit-soft-delete-and-tenants.md), [ADR-0041](0041-application-service-base-in-the-framework.md), [`docs/DddBuildingBlocks.md`](../DddBuildingBlocks.md).
+[ADR-0037](0037-audit-soft-delete-and-tenants.md), [ADR-0041](0041-application-service-base-in-the-framework.md), [`docs/DddBuildingBlocks.md`](../DddBuildingBlocks.md).

@@ -1,13 +1,13 @@
 # Abc: the references of the projects
 
-What references what in the Abc sample, read from the project files (a line `HsnSoft.Base.X (framework)` is a package of the framework, where the tree stops, its own graph is in [ADR-0004](../../docs/adr/0004-core-once-and-the-dependency-graph.md); `[Name]` is an
-external NuGet package). The rules are [ADR-0028](../../docs/adr/0028-shared-hosting-projects.md), [ADR-0068](../../docs/adr/0068-the-shared-texts-of-a-product-are-a-project-of-their-own.md), [ADR-0069](../../docs/adr/0069-who-references-which-shared-project-in-abc.md) and
-[ADR-0070](../../docs/adr/0070-a-framework-package-brings-what-its-api-exposes.md).
+What references what in the Abc sample, read from the project files (a line `HsnSoft.Base.X (framework)` is a package of the framework, where the tree stops, its own graph is in [framework ADR-0004](../../docs/adr/0004-core-once-and-the-dependency-graph.md); `[Name]` is an
+external NuGet package). The rules are [ADR-0003](../docs/adr/0003-shared-hosting-projects.md), [ADR-0023](../docs/adr/0023-the-shared-texts-of-a-product-are-a-project-of-their-own.md), [ADR-0024](../docs/adr/0024-who-references-which-shared-project-in-abc.md) and
+[framework ADR-0070](../../docs/adr/0070-a-framework-package-brings-what-its-api-exposes.md).
 
 ## The rules
 
 - A **shared project** has one concern and builds on the framework only (`Helper` on `Core`, `Contracts` on `EventBus`, `Localization` on `Localization`, `Hosting` on the framework projects it composes and the logger the Abc hosts use (`Logging.Serilog`), `Hosting.Microservices` and
-  `Hosting.Gateways` on `Hosting`). `Hosting` knows nothing of a service's layers (no `Ddd.Application`, no paging) and chooses neither the languages nor the cache of a host (no `Localization`, no `Redis`): a host chooses them itself ([ADR-0072](../../docs/adr/0072-a-host-chooses-its-localization-and-its-cache.md)).
+  `Hosting.Gateways` on `Hosting`). `Hosting` knows nothing of a service's layers (no `Ddd.Application`, no paging) and chooses neither the languages nor the cache of a host (no `Localization`, no `Redis`): a host chooses them itself ([ADR-0046](../docs/adr/0046-a-host-chooses-its-localization-and-its-cache.md)).
 - A **microservice** is a Domain, an Application and one or more persistence (infrastructure) class libraries, and a Host. **Required** means every service has it, **optional** that a service takes it when it needs it:
 
 | Project | Required | Optional |
@@ -19,8 +19,8 @@ external NuGet package). The rules are [ADR-0028](../../docs/adr/0028-shared-hos
 | **Host** | `Abc.Shared.Hosting.Microservices`, its Application, its infrastructure projects | what it chooses for itself: `HsnSoft.Base.Caching.StackExchangeRedis`, and for tenants `MultiTenancy.Authentication` and `MultiTenancy.EventBus` (the texts in several languages come with the Domain's shared texts) |
 
   An Application project has no external package of its own: the dependency-injection and localization abstractions come with the framework's projects, and `Microsoft.EntityFrameworkCore.Relational` comes with `HsnSoft.Base.EntityFrameworkCore`
-  ([ADR-0070](../../docs/adr/0070-a-framework-package-brings-what-its-api-exposes.md)). A Host references only what it chooses for itself (the cache): the logger comes through the hosting, the texts in several languages through its Domain.
-- **Tenants are a choice of the service** ([ADR-0074](../../docs/adr/0074-multitenancy-is-a-package-of-its-own.md)): the identity, order and product services have them (their Domain, their infrastructure and their Host reference the `MultiTenancy` packages); **the shipment service has none** and references none of them, and the shared hosting projects know nothing of tenants.
+  ([framework ADR-0070](../../docs/adr/0070-a-framework-package-brings-what-its-api-exposes.md)). A Host references only what it chooses for itself (the cache): the logger comes through the hosting, the texts in several languages through its Domain.
+- **Tenants are a choice of the service** ([framework ADR-0074](../../docs/adr/0074-multitenancy-is-a-package-of-its-own.md)): the identity, order and product services have them (their Domain, their infrastructure and their Host reference the `MultiTenancy` packages); **the shipment service has none** and references none of them, and the shared hosting projects know nothing of tenants.
 - The **auth server** is a host that works on the users of the identity service: `Hosting.Microservices`, `Helper`, `Localization`, `Caching.StackExchangeRedis` (its choice) and the identity infrastructure project.
 - A **gateway** references `Hosting.Gateways` only (the commercial one also chooses Redis); neither has texts of its own, so neither chooses the localization.
 

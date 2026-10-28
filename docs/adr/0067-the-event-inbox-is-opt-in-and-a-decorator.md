@@ -17,7 +17,6 @@ the services and implemented per database. Two problems: a service that did not 
 - **How a message is taken:** insert its row (the id of the message is the key). If the insert fails and the row is **not** there, the failure is thrown and the delivery fails like a failed handler: the message is not dropped because the inbox could not be asked. If the row is there: `Completed` is
   `AlreadyHandled`; `Failed` under `MaxRetryCount`, or `Started` past `ProcessingLease`, is taken again by one `UPDATE ... WHERE` (so of any number of deliveries at once, one wins); otherwise `InProgress` or `RetryLimitReached`. No provider-specific upsert and no duplicate-key detection is needed.
 - **The retry stays in the services.** The inbox only lets a failed message be handled again when it comes back (the error client puts it back) and counts it; whether an error is worth retrying, the delays and the workers that retry an operation are the service's own.
-- **In the Abc sample:** the identity service (SQL Server), the order service (PostgreSQL) and the product service (MongoDB) use the inbox (a table or collection `InboxMessage`, in their own databases); the shipment service does not, and the Xyz system does not use it at all.
 
 ## Consequences
 
@@ -29,4 +28,4 @@ the services and implemented per database. Two problems: a service that did not 
 
 ## Related
 
-[ADR-0003](0003-abstractions-separate-from-providers.md), [ADR-0023](0023-event-bus.md), [ADR-0065](0065-the-consumers-outlive-their-own-failures.md), [ADR-0064](0064-the-stock-is-changed-in-one-step.md).
+[ADR-0003](0003-abstractions-separate-from-providers.md), [ADR-0023](0023-event-bus.md), [ADR-0065](0065-the-consumers-outlive-their-own-failures.md).

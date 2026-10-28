@@ -1,7 +1,7 @@
 # Edx back office
 
 An Angular 19 application (standalone components, signals, lazy routes, plain CSS) for the people of the Edx system: the invoices, the invoice reports, and the users and roles with what each role is granted. It talks only to the gateway (`src/app/core/config.ts`, `http://localhost:5600`).
-Why it is built this way: [ADR-0084](../../../../docs/adr/0084-the-edx-back-office-an-angular-app-that-asks-the-services-what-the-user-may-do.md); the permissions it shows: [docs/Authorization.md](../../../../docs/Authorization.md).
+Why it is built this way: [ADR-0032](../../../docs/adr/0032-the-edx-back-office-an-angular-app-that-asks-the-services-what-the-user-may-do.md); the permissions it shows: [docs/Authorization.md](../../../../docs/Authorization.md).
 
 ```
 npm install

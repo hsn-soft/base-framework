@@ -2,8 +2,6 @@
 
 - **Status:** Accepted
 - **Date:** 2026-10-25 (changes how [ADR-0023](0023-event-bus.md) reads on Kafka)
-- **Note:** [ADR-0078](0078-the-edx-sample-a-file-intake-system.md): the Edx sample runs on Kafka again, with this consumer.
-- **Note:** [ADR-0077](0077-only-the-abc-sample-stays.md): the Xyz sample, which showed this, was removed; the Kafka consumer is covered by its tests.
 - **Note:** [ADR-0066](0066-kafka-handles-fetchcount-messages-at-the-same-time.md): a consumer handles `fetchCount` messages at the same time (one by default), not always one.
 - **Note:** [ADR-0063](0063-kafka-topics-are-named-after-the-exchange.md): the shared topic is `{ExchangeName}_{EventName}` now, not `{TopicPrefix}{EventName}`.
 
@@ -28,10 +26,7 @@ service, and the offsets of the events were one commit of one group. The RabbitM
 - **Stopping:** a stopping service reads no new message, but the one a consumer is handling is let finish; its handler is cancelled only when `EventBusOptions.ShutdownTimeout` has passed (the message is then not committed and is handled again later), as on RabbitMQ. A first version cancelled the handler as soon as the host stopped; an
   integration test (a real Kafka, a handler of three seconds) showed it and covers both ways.
 
-## Known gap
-
-The reservation is not atomic over the products and their history (two databases): a crash between taking the stock and writing the history record lets the next attempt take it again. Closing it needs a transaction or an outbox, which is still to be discussed. [ADR-0064](0064-the-stock-is-changed-in-one-step.md) made the take of the stock atomic; this gap is one of those that stay.
 
 ## Related
 
-[ADR-0023](0023-event-bus.md), [ADR-0057](0057-the-caller-of-a-message-and-publish-or-send.md), [ADR-0061](0061-the-xyz-sample-beside-abc.md).
+[ADR-0023](0023-event-bus.md), [ADR-0057](0057-the-caller-of-a-message-and-publish-or-send.md).

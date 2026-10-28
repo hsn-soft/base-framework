@@ -6,7 +6,7 @@
     -->
 
     <ItemGroup>
-        <!-- the private key that signs the tokens (made with scripts/generate-rsa-keys.cs, a secret, not in git) -->
+        <!-- the private key that signs the tokens (made with samples/scripts/generate-rsa-keys.cs, a secret, not in git) -->
         <Content Include="private_key.xml" Condition="Exists('private_key.xml')" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
 

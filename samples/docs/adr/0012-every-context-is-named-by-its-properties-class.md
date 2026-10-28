@@ -1,12 +1,12 @@
-# ADR-0051: Every context of a sample is named by its properties class; the provider setting is gone
+# ADR-0012: Every context of a sample is named by its properties class; the provider setting is gone
 
 - **Status:** Accepted
-- **Date:** 2026-10-25 (changes [ADR-0047](0047-relational-provider-chosen-by-a-setting.md); completes [ADR-0050](0050-a-context-has-a-properties-class-for-its-database.md))
-- **Note:** [ADR-0061](0061-the-xyz-sample-beside-abc.md): the health check of a second context on the same provider is named `<provider>-<Context>`, so two PostgreSQL contexts can live in one host.
+- **Date:** 2026-10-25 (changes [framework ADR-0047](../../../docs/adr/0047-relational-provider-chosen-by-a-setting.md); completes [framework ADR-0050](../../../docs/adr/0050-a-context-has-a-properties-class-for-its-database.md))
+- **Note:** [ADR-0021](0021-the-xyz-sample-beside-abc.md): the health check of a second context on the same provider is named `<provider>-<Context>`, so two PostgreSQL contexts can live in one host.
 
 ## Context
 
-ADR-0050 gave the contexts of the identity service a properties class and left the setting `Database:Provider` for the other services, so two ways to say the same thing lived side by side. The maintainer's rule: what is done in one sample is done in all of them; no sample is left behind.
+framework ADR-0050 gave the contexts of the identity service a properties class and left the setting `Database:Provider` for the other services, so two ways to say the same thing lived side by side. The maintainer's rule: what is done in one sample is done in all of them; no sample is left behind.
 
 ## Decision
 
@@ -23,4 +23,4 @@ ADR-0050 gave the contexts of the identity service a properties class and left t
 
 ## Related
 
-[ADR-0050](0050-a-context-has-a-properties-class-for-its-database.md), [ADR-0047](0047-relational-provider-chosen-by-a-setting.md), [ADR-0035](0035-the-persistence-project-registers-its-database.md).
+[framework ADR-0050](../../../docs/adr/0050-a-context-has-a-properties-class-for-its-database.md), [framework ADR-0047](../../../docs/adr/0047-relational-provider-chosen-by-a-setting.md), [ADR-0010](0010-the-persistence-project-registers-its-database.md).

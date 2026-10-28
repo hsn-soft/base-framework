@@ -1,4 +1,4 @@
-# ADR-0089: The Edx integration service is the sender unit and the post box of the customers
+# ADR-0037: The Edx integration service is the sender unit and the post box of the customers
 
 - **Status:** Accepted
 - **Date:** 2026-10-28
@@ -6,11 +6,11 @@
 ## Context
 
 A signed invoice has to reach the center, and an invoice the center delivers for a customer has to reach that customer. In the real system an integrator does both with one **sender unit** (*gönderici birim*, alias `gb`) per customer, which wraps invoices into envelopes and hands them to the center, and one **post box** (*posta kutusu*, alias `pk`) per customer, a WCF service the center calls to deliver envelopes
-([ADR-0087](0087-the-edx-mock-gib-center.md)). The invoice service must not know the protocol; it only needs to say "this invoice is signed" and hear "it was delivered" or "it was not".
+([ADR-0035](0035-the-edx-mock-gib-center.md)). The invoice service must not know the protocol; it only needs to say "this invoice is signed" and hear "it was delivered" or "it was not".
 
 ## Decision
 
-**A service of its own, `samples/edx/integration/gib-invoice`**, with two hosts: `Edx.Integration.GibInvoice.Http.Host` (the **sender unit**: the workers, the event handlers and the REST pages of the envelopes) and `Edx.Integration.GibInvoice.Wcf.Host` (the **post box**: `EFaturaPortType` of `Edx.Shared.Efatura`, which the center calls). Like the intake hosts ([ADR-0086](0086-the-intake-service-is-three-hosts-rest-grpc-and-wcf.md)) they share the application layer and the MongoDB database;
+**A service of its own, `samples/edx/integration/gib-invoice`**, with two hosts: `Edx.Integration.GibInvoice.Http.Host` (the **sender unit**: the workers, the event handlers and the REST pages of the envelopes) and `Edx.Integration.GibInvoice.Wcf.Host` (the **post box**: `EFaturaPortType` of `Edx.Shared.Efatura`, which the center calls). Like the intake hosts ([ADR-0034](0034-the-intake-service-is-three-hosts-rest-grpc-and-wcf.md)) they share the application layer and the MongoDB database;
 only the Http host runs the workers and handles events.
 
 - **Events are the only link with the invoice service.** `InvoiceSignedEto` (invoice service → integration) starts the work; `InvoiceSentEto(RecordId, InvoiceId, EnvelopeId)`, `InvoiceDeliveredEto(…, StatusCode)` and `InvoiceDeliveryFailedEto(RecordId, InvoiceId, EnvelopeId?, Stage, StatusCode, Reason)` (integration → invoice, which moves the invoice and the queue item) and
@@ -31,4 +31,4 @@ only the Http host runs the workers and handles events.
 
 ## Related
 
-[ADR-0085](0085-the-edx-invoice-pipeline-queue-import-draft-approve-sign.md), [ADR-0086](0086-the-intake-service-is-three-hosts-rest-grpc-and-wcf.md), [ADR-0087](0087-the-edx-mock-gib-center.md), [ADR-0088](0088-the-edx-invoice-is-a-ubl-tr-document.md); `samples/edx/integration/gib-invoice`, `samples/edx/shared/Edx.Shared.Efatura`.
+[ADR-0033](0033-the-edx-invoice-pipeline-queue-import-draft-approve-sign.md), [ADR-0034](0034-the-intake-service-is-three-hosts-rest-grpc-and-wcf.md), [ADR-0035](0035-the-edx-mock-gib-center.md), [ADR-0036](0036-the-edx-invoice-is-a-ubl-tr-document.md); `samples/edx/integration/gib-invoice`, `samples/edx/shared/Edx.Shared.Efatura`.

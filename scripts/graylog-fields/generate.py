@@ -2,7 +2,7 @@
 """
 Writes docs/GraylogFields.md: which fields each log type has, MEASURED from the logs of one run in Graylog (not declared anywhere in the code).
 
-Run the samples against Graylog with a build number of your own (`BUILD_NUMBER=tbl123 PersistentLogger__IsGrayLogActive=true ...`: the build number is
+Run a system built on the framework against Graylog with a build number of your own (`BUILD_NUMBER=tbl123 PersistentLogger__IsGrayLogActive=true ...`: the build number is
 the `Version` field of every log), exercise every scenario, then:
 
     GRAYLOG_USER=... GRAYLOG_PASSWORD=... scripts/graylog-fields/generate.py tbl123 > docs/GraylogFields.md
@@ -55,8 +55,8 @@ def main() -> None:
     only = lambda log_type: [f"`{field}`" for field in fields if owners[field] == [log_type]]
 
     print("# The fields of a log in Graylog\n")
-    print(f"What each type of log has, **measured** from the logs of one real run of the samples (`Version:{run}`: a good order, a 400, a 500, a message that")
-    print("failed, a request the gateway answered itself, a file upload and download, the log examples of the Abc identity service). Nothing in the code declares it:")
+    print(f"What each type of log has, **measured** from the logs of one real run of a system built on the framework (`Version:{run}`: a good order, a 400, a 500, a message that")
+    print("failed, a request the gateway answered itself, a file upload and download, a service with log examples). Nothing in the code declares it:")
     print("the writer of a log puts its fields on it, the enrichers add the common ones and `NoiseEnricher` removes what a type must not have (see")
     print("[Logging.md](Logging.md), *Fields and facility*, and [ADR-0019](adr/0019-log-fields-pipeline.md)). Regenerate it with `scripts/graylog-fields/generate.py` after a change to the fields.")
     print("`●` = every log of that type has it, `◐` = some do (it depends on the case: the user is known, there was an exception), empty = never, `?` = the run had no log of")

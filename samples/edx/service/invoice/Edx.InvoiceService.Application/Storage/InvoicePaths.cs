@@ -2,7 +2,7 @@ using System.Globalization;
 
 namespace Edx.InvoiceService.Application.Storage;
 
-/// <summary>Where the invoice service keeps the documents of a tenant in its container: everything of a tenant is under <c>{tenant}/</c> (the ids are uuids without dashes, the month has two digits). See ADR-0096.</summary>
+/// <summary>Where the invoice service keeps the documents of a tenant in its container: everything of a tenant is under <c>{tenant}/</c> (the ids are uuids without dashes, the month has two digits). See ADR-0044.</summary>
 internal static class InvoicePaths
 {
     /// <summary>The unsigned answer to a purchase invoice, until it is signed.</summary>

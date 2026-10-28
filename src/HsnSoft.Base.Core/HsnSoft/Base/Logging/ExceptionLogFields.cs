@@ -35,7 +35,7 @@ public static class ExceptionLogFields
     }
 
     /// <summary>
-    /// Where it started, as <c>Solution:Abc|Assembly:Abc.OrderService.Http.Host|File:OrdersController.cs|Line:92</c>: the place in the code of the first
+    /// Where it started, as <c>Solution:Acme|Assembly:Acme.OrderService.Http.Host|File:OrdersController.cs|Line:92</c>: the place in the code of the first
     /// frame that has a source file, looking at the innermost exception (the cause) first. Without symbols there is no file: the method is told
     /// instead, and an exception that was never thrown has only its type.
     /// </summary>

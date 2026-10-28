@@ -11,7 +11,7 @@ Merging half a rewrite into `dev` would put an unfinished framework on the line 
 
 ## Decision
 
-- **All the work of the rewrite is collected on `feat/new-framework`.** It contains every earlier branch (they are its ancestors; they are only pointers now and are not worked on). New work, including the samples, the documents and the
+- **All the work of the rewrite is collected on `feat/new-framework`.** It contains every earlier branch (they are its ancestors; they are only pointers now and are not worked on). New work, including the documents and the
   ADRs, is committed there.
 - **`feat/new-framework` is not merged into `dev` until the whole new framework exists**: every package is ported and tested (the Kafka and Azure Service Bus brokers are the ones still open, see [ADR-0023](0023-event-bus.md)). Until then `dev`
   and `rel/nuget` stay as they are, so what the services use is not disturbed.

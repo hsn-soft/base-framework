@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
     <!--
-        The gRPC way into the firm invoice integration (ADR-0079): a client streams a zip in chunks or sends a model, and the host calls the same application service the REST host does. A host of its own, because it listens on HTTP/2
+        The gRPC way into the firm invoice integration (ADR-0027): a client streams a zip in chunks or sends a model, and the host calls the same application service the REST host does. A host of its own, because it listens on HTTP/2
         and has its own scaling; it publishes the events of what it queued and consumes none.
     -->
 

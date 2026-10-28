@@ -6,7 +6,7 @@ using Edx.Integration.FirmInvoice.Application.Storage;
 
 namespace Edx.Integration.FirmInvoice.Wcf.Host;
 
-/// <summary>The WCF endpoint of the firm invoice integration: an entry point and nothing more, the application service it calls does not know WCF (the framework has no package for it: ADR-0079).</summary>
+/// <summary>The WCF endpoint of the firm invoice integration: an entry point and nothing more, the application service it calls does not know WCF (the framework has no package for it: ADR-0027).</summary>
 public static class FirmInvoiceWcfRegister
 {
     // a message is the file in base64, a third bigger, and the envelope around it

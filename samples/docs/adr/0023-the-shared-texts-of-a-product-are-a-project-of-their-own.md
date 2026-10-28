@@ -1,12 +1,12 @@
-# ADR-0068: The shared texts of a product are a project of their own
+# ADR-0023: The shared texts of a product are a project of their own
 
 - **Status:** Accepted
-- **Date:** 2026-10-26 (follows [ADR-0038](0038-localization.md) and [ADR-0028](0028-shared-hosting-projects.md); the production system keeps them in `Hhs.Shared.Localization`)
-- **Note:** [ADR-0072](0072-a-host-chooses-its-localization-and-its-cache.md): the host makes one `AddBaseLocalization` call with the shared texts and its own (no longer before `AddAbcMicroservice`, which does not touch the localization) and calls `UseBaseLocalization()` itself.
+- **Date:** 2026-10-26 (follows [framework ADR-0038](../../../docs/adr/0038-localization.md) and [ADR-0003](0003-shared-hosting-projects.md); the production system keeps them in `Hhs.Shared.Localization`)
+- **Note:** [ADR-0046](0046-a-host-chooses-its-localization-and-its-cache.md): the host makes one `AddBaseLocalization` call with the shared texts and its own (no longer before `AddAbcMicroservice`, which does not touch the localization) and calls `UseBaseLocalization()` itself.
 
 ## Context
 
-The texts a service says come in three layers, merged with the innermost first ([ADR-0038](0038-localization.md)): the framework's (`Status:*`, `Validation:*`), what several services of the product say, and the errors of each service. In the Abc sample the middle layer was two files of
+The texts a service says come in three layers, merged with the innermost first ([framework ADR-0038](../../../docs/adr/0038-localization.md)): the framework's (`Status:*`, `Validation:*`), what several services of the product say, and the errors of each service. In the Abc sample the middle layer was two files of
 `Abc.Shared.Hosting` (`Localization/{en,tr,ru}.json`), a project about the composition of the hosts, with two texts. The production system has a project for it, `Hhs.Shared.Localization`, so a language file of the product is found in one place and changed without touching the hosts.
 
 ## Decision
@@ -26,4 +26,4 @@ The texts a service says come in three layers, merged with the innermost first (
 
 ## Related
 
-[ADR-0038](0038-localization.md), [ADR-0028](0028-shared-hosting-projects.md), [ADR-0002](0002-one-package-one-capability.md).
+[framework ADR-0038](../../../docs/adr/0038-localization.md), [ADR-0003](0003-shared-hosting-projects.md), [framework ADR-0002](../../../docs/adr/0002-one-package-one-capability.md).

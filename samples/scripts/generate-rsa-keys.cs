@@ -1,7 +1,7 @@
-// Makes an RSA key pair for the tokens of a sample system: the private key signs (only the auth server has it), the public key checks (every host has it).
+// Makes an RSA key pair for the tokens of a system: the private key signs (only the auth server has it), the public key checks (every host has it).
 //
-//   dotnet run scripts/generate-rsa-keys.cs -- <private-key-file> <public-key-file>
-//   dotnet run scripts/generate-rsa-keys.cs -- samples/abc/app/Abc.AuthServer.Host/private_key.xml samples/abc/shared/Abc.Shared.Hosting/public_key.xml
+//   dotnet run samples/scripts/generate-rsa-keys.cs -- <private-key-file> <public-key-file>
+//   dotnet run samples/scripts/generate-rsa-keys.cs -- samples/abc/app/Abc.AuthServer.Host/private_key.xml samples/abc/shared/Abc.Shared.Hosting/public_key.xml
 //
 // Both files are the XML of RSA.ToXmlString (2048 bits). It refuses to overwrite a file that exists. The private key is a secret: git ignores `private_key.xml`, never commit one.
 // Runs with only the .NET SDK, so it is the same on every platform.
@@ -9,7 +9,7 @@ using System.Security.Cryptography;
 
 if (args.Length != 2)
 {
-    Console.Error.WriteLine("Usage: dotnet run scripts/generate-rsa-keys.cs -- <private-key-file> <public-key-file>");
+    Console.Error.WriteLine("Usage: dotnet run samples/scripts/generate-rsa-keys.cs -- <private-key-file> <public-key-file>");
     return 2;
 }
 

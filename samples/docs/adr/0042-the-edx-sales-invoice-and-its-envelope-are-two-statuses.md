@@ -1,4 +1,4 @@
-# ADR-0094: A sales invoice and its envelope have two statuses; the envelope belongs to the GİB invoice integration
+# ADR-0042: A sales invoice and its envelope have two statuses; the envelope belongs to the GİB invoice integration
 
 - **Status:** Accepted
 - **Date:** 2026-10-28
@@ -6,7 +6,7 @@
 ## Context
 
 The invoice entity of the invoice service had one status that carried two lives: the invoice's (processing, draft, approved, signed) and its envelope's (sent, delivered, delivery failed). A back-office user lists the sales invoices and wants both the invoice status and the envelope status, and for the invoices that came in the status of their envelopes at the center.
-The first model of the sender side (the `eds` services) kept five near-identical envelope entities and about twelve status bytes on the invoice row. The center keeps the status on the **envelope** (one of the codes of Ek-2), never on its invoices; an envelope holds up to 1000 invoices of one post box ([ADR-0093](0093-the-mock-center-envelope-holds-up-to-1000-invoices-and-is-asked-by-uuid.md)).
+The first model of the sender side (the `eds` services) kept five near-identical envelope entities and about twelve status bytes on the invoice row. The center keeps the status on the **envelope** (one of the codes of Ek-2), never on its invoices; an envelope holds up to 1000 invoices of one post box ([ADR-0041](0041-the-mock-center-envelope-holds-up-to-1000-invoices-and-is-asked-by-uuid.md)).
 
 ## Decision
 
@@ -29,4 +29,4 @@ The first model of the sender side (the `eds` services) kept five near-identical
 
 ## Related
 
-[ADR-0085](0085-the-edx-invoice-pipeline-queue-import-draft-approve-sign.md), [ADR-0088](0088-the-edx-invoice-is-a-ubl-tr-document.md), [ADR-0089](0089-the-edx-integration-service-sender-unit-and-post-box.md), [ADR-0093](0093-the-mock-center-envelope-holds-up-to-1000-invoices-and-is-asked-by-uuid.md); `samples/edx/service/invoice`, `samples/edx/integration/gib-invoice`.
+[ADR-0033](0033-the-edx-invoice-pipeline-queue-import-draft-approve-sign.md), [ADR-0036](0036-the-edx-invoice-is-a-ubl-tr-document.md), [ADR-0037](0037-the-edx-integration-service-sender-unit-and-post-box.md), [ADR-0041](0041-the-mock-center-envelope-holds-up-to-1000-invoices-and-is-asked-by-uuid.md); `samples/edx/service/invoice`, `samples/edx/integration/gib-invoice`.

@@ -14,11 +14,11 @@ into the framework, into the shared projects or into another service, meant read
 - **The references of a project go in groups, one `<ItemGroup>` for each kind, from the top down: external, framework, shared, own.**
   1. **external:** `FrameworkReference` and the `PackageReference`s that are not ours (`Microsoft.*`, `Yarp.ReverseProxy`, `Newtonsoft.Json`, ...);
   2. **framework:** `HsnSoft.Base.*` (a `ProjectReference` to `src/` here, a `PackageReference` in a product repository);
-  3. **shared:** `<Product>.Shared.*` (`Abc.Shared.Hosting`, `Hhs.Shared.Helper`);
-  4. **own:** everything else, the other projects of the service or of the product (`Abc.IdentityService.Domain`).
+  3. **shared:** `<Product>.Shared.*` (`{Product}.Shared.Hosting`, `Hhs.Shared.Helper`);
+  4. **own:** everything else, the other projects of the service or of the product (`{Product}.IdentityService.Domain`).
 - **Inside a group the items are in alphabetical order** of the name of the package or of the project (a `FrameworkReference` first). A comment that stands above an item stays with it.
 - **Groups of files come before the references:** `Content`, `EmbeddedResource`, `None`, `Using` keep their own groups above the reference groups. A project with nothing of a kind has no group of it.
-- **It is checked, not remembered:** `scripts/ci-check-csproj-order.py` finds a project that breaks the rule (the CI runs it, and the detector as `Project file reference order`) and `--fix` rewrites the project files into it.
+- **It is checked, not remembered:** `scripts/ci-force-csproj-order.py` finds a project that breaks the rule (the CI runs it, and the detector as `Project file reference order`) and `--fix` rewrites the project files into it.
 
 ## Consequences
 
@@ -27,4 +27,4 @@ into the framework, into the shared projects or into another service, meant read
 
 ## Related
 
-[ADR-0030](0030-microservice-project-pattern.md), [ADR-0028](0028-shared-hosting-projects.md), [CONTRIBUTING.md](../../CONTRIBUTING.md).
+[CONTRIBUTING.md](../../CONTRIBUTING.md).

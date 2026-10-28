@@ -1,7 +1,7 @@
 # The fields of a log in Graylog
 
-What each type of log has, **measured** from the logs of one real run of the samples (`Version:tbl004922`: a good order, a 400, a 500, a message that
-failed, a request the gateway answered itself, a file upload and download, the log examples of the Abc identity service). Nothing in the code declares it:
+What each type of log has, **measured** from the logs of one real run of a system built on the framework (`Version:tbl004922`: a good order, a 400, a 500, a message that
+failed, a request the gateway answered itself, a file upload and download, a service with log examples). Nothing in the code declares it:
 the writer of a log puts its fields on it, the enrichers add the common ones and `NoiseEnricher` removes what a type must not have (see
 [Logging.md](Logging.md), *Fields and facility*, and [ADR-0019](adr/0019-log-fields-pipeline.md)). Regenerate it with `scripts/graylog-fields/generate.py` after a change to the fields.
 `●` = every log of that type has it, `◐` = some do (it depends on the case: the user is known, there was an exception), empty = never, `?` = the run had no log of

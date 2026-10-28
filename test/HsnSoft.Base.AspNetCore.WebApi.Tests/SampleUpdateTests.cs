@@ -9,7 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace HsnSoft.Base.AspNetCore.WebApi.Tests;
 
-// a copy of SampleUpdateDto of the Abc product service, to show what a client is told for each rule
+// a DTO that uses every rule, to show what a client is told for each rule
 public enum SampleKind
 {
     Standard = 1,

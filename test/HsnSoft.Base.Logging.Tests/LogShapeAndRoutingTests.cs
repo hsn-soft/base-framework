@@ -10,18 +10,18 @@ public class LogShapeAndRoutingTests
     [InlineData("ConsoleOnly.Startup", "AppLog")]
     [InlineData("HsnSoft.Base.EventBus.EventDispatcher", "FrameworkLog")]
     [InlineData("HsnSoft.Base", "FrameworkLog")]
-    [InlineData("Abc.Shared.Hosting.Thing", "SharedLog")]
-    [InlineData("Abc.OrderService.Application.OrderAppService", "AppLog")]
-    [InlineData("Abc", "AppLog")]
-    [InlineData("AbcExtras.Thing", "PlatformLog")]
+    [InlineData("Acme.Shared.Hosting.Thing", "SharedLog")]
+    [InlineData("Acme.OrderService.Application.OrderAppService", "AppLog")]
+    [InlineData("Acme", "AppLog")]
+    [InlineData("AcmeExtras.Thing", "PlatformLog")]
     [InlineData("Microsoft.AspNetCore.Routing", "PlatformLog")]
     public void TheTypeOfALog_IsToldFromItsCategory(string category, string expected)
-        => Assert.Equal(expected, LogShape.LogType(category, "Abc"));
+        => Assert.Equal(expected, LogShape.LogType(category, "Acme"));
 
     [Fact]
     public void TheTypeNeedsACategoryAndAnApplicationNamespace()
     {
-        Assert.Throws<ArgumentNullException>(() => LogShape.LogType(null!, "Abc"));
+        Assert.Throws<ArgumentNullException>(() => LogShape.LogType(null!, "Acme"));
         Assert.Throws<ArgumentException>(() => LogShape.LogType("x", " "));
     }
 
@@ -49,8 +49,8 @@ public class LogShapeAndRoutingTests
     {
         LogLevelRules rules = new(LogLevel.Information, [new("Microsoft", LogLevel.Warning)]);
 
-        Assert.True(LogRouting.ForConsole(LogLevel.Information, "Abc.Thing", rules));
-        Assert.False(LogRouting.ForConsole(LogLevel.Debug, "Abc.Thing", rules));
+        Assert.True(LogRouting.ForConsole(LogLevel.Information, "Acme.Thing", rules));
+        Assert.False(LogRouting.ForConsole(LogLevel.Debug, "Acme.Thing", rules));
         Assert.False(LogRouting.ForConsole(LogLevel.Information, "Microsoft.AspNetCore", rules));
         Assert.True(LogRouting.ForConsole(LogLevel.Warning, "Microsoft.AspNetCore", rules));
         Assert.Throws<ArgumentNullException>(() => LogRouting.ForConsole(LogLevel.Error, "x", null!));
@@ -61,13 +61,13 @@ public class LogShapeAndRoutingTests
     {
         PersistentLevelRules rules = new(new PersistentLoggerOptions { LogLevel = LogLevel.Information, PlatformMinimumLevel = LogLevel.Warning });
 
-        Assert.True(LogRouting.ForPersistent(LogLevel.Information, "Abc.Thing", LogTypes.AppLog, rules));
-        Assert.False(LogRouting.ForPersistent(LogLevel.Debug, "Abc.Thing", LogTypes.AppLog, rules));
+        Assert.True(LogRouting.ForPersistent(LogLevel.Information, "Acme.Thing", LogTypes.AppLog, rules));
+        Assert.False(LogRouting.ForPersistent(LogLevel.Debug, "Acme.Thing", LogTypes.AppLog, rules));
         Assert.False(LogRouting.ForPersistent(LogLevel.Information, "Microsoft.AspNetCore", LogTypes.PlatformLog, rules));
         Assert.True(LogRouting.ForPersistent(LogLevel.Warning, "Microsoft.AspNetCore", LogTypes.PlatformLog, rules));
         Assert.False(LogRouting.ForPersistent(LogLevel.Critical, "ConsoleOnly.Startup", LogTypes.AppLog, rules));
         Assert.True(LogRouting.IsConsoleOnly("ConsoleOnly.Startup"));
-        Assert.False(LogRouting.IsConsoleOnly("Abc"));
+        Assert.False(LogRouting.IsConsoleOnly("Acme"));
         Assert.Throws<ArgumentNullException>(() => LogRouting.ForPersistent(LogLevel.Error, "x", "AppLog", null!));
         Assert.Throws<ArgumentNullException>(() => LogRouting.IsConsoleOnly(null!));
     }

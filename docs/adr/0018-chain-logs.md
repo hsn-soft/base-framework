@@ -22,7 +22,7 @@ and who talked to whom. The old request/response logging middleware did part of 
   `Reason` and `ExceptionType` from YARP's forwarder error feature (read by name, no YARP dependency), else the text of the status.
 - **Contents:** request: method, `RequestPath`, query, selected headers, client address and `ForwardedFor`, `RequestBytes`, `ContentType`, the user (`UserId`, `UserRoles`) when authenticated, the client headers; response:
   `Status`, `ResponseBytes`, headers, `ErrorCode`, the exception fields (ADR-0020), files (`Files`, `FileCount`, `FileBytes`), `GrpcStatus`. **Bodies are logged only for JSON, within limits, masked** ([ADR-0021](0021-sensitive-data-by-attributes.md));
-  the sample gateway does not log bodies. Paths such as `/health`, `/swagger`, `/openapi` are not logged (`ExcludedPaths`). Lengths are bounded (`MaxUrlLength`, `MaxHeadersLength`, body limits) and cut text is marked.
+  Paths such as `/health`, `/swagger`, `/openapi` are not logged (`ExcludedPaths`). Lengths are bounded (`MaxUrlLength`, `MaxHeadersLength`, body limits) and cut text is marked.
 - **A message**: `ConsumeStart` carries the message it started with (`MessageBody`: the envelope and the event together, masked, on by default `EventBusOptions.LogConsumedMessage`, cut at `MaxLoggedMessageLength`, left out when no
   masker is registered); `ConsumeEnd` has the result; the who-fields come from the envelope headers.
 

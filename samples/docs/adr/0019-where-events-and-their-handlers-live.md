@@ -1,7 +1,7 @@
-# ADR-0059: Where the events and their handlers live
+# ADR-0019: Where the events and their handlers live
 
 - **Status:** Accepted
-- **Date:** 2026-10-25 (changes the places of [ADR-0054](0054-the-order-flow-through-events.md))
+- **Date:** 2026-10-25 (changes the places of [ADR-0015](0015-the-order-flow-through-events.md))
 
 ## Decision
 
@@ -18,4 +18,4 @@
 
 ## Related
 
-[ADR-0054](0054-the-order-flow-through-events.md), [ADR-0057](0057-the-caller-of-a-message-and-publish-or-send.md), [ADR-0030](0030-microservice-project-pattern.md).
+[ADR-0015](0015-the-order-flow-through-events.md), [framework ADR-0057](../../../docs/adr/0057-the-caller-of-a-message-and-publish-or-send.md), [ADR-0005](0005-microservice-project-pattern.md).

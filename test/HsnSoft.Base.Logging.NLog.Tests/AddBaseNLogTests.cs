@@ -35,16 +35,16 @@ public sealed class AddBaseNLogTests : IDisposable
     public void ThePersistentLogs_GoToTheFile_WhenGraylogIsOff_AndTheFileHasTheLineOfTheFramework()
     {
         string path = Path.Combine(_directory, "logs.txt");
-        using (ServiceProvider provider = Build(Configuration(("PersistentLogger:FilePath", path), ("PersistentLogger:AppNamespace", "Abc"))))
+        using (ServiceProvider provider = Build(Configuration(("PersistentLogger:FilePath", path), ("PersistentLogger:AppNamespace", "Acme"))))
         {
-            Microsoft.Extensions.Logging.ILogger logger = provider.GetRequiredService<ILoggerFactory>().CreateLogger("Abc.Orders.OrderService");
+            Microsoft.Extensions.Logging.ILogger logger = provider.GetRequiredService<ILoggerFactory>().CreateLogger("Acme.Orders.OrderService");
             logger.LogInformation("Order {OrderId} was made", 42);
             logger.LogError(new InvalidOperationException("boom"), "It failed");
         }
 
         string text = File.ReadAllText(path);
-        Assert.Contains("INF] OrderService [Abc.Orders.OrderService] | Order 42 was made", text, StringComparison.Ordinal);
-        Assert.Contains("ERR] OrderService [Abc.Orders.OrderService] | It failed", text, StringComparison.Ordinal);
+        Assert.Contains("INF] OrderService [Acme.Orders.OrderService] | Order 42 was made", text, StringComparison.Ordinal);
+        Assert.Contains("ERR] OrderService [Acme.Orders.OrderService] | It failed", text, StringComparison.Ordinal);
         Assert.Contains("InvalidOperationException: boom", text, StringComparison.Ordinal);
     }
 
@@ -109,11 +109,11 @@ public sealed class AddBaseNLogTests : IDisposable
             new[] { global::NLog.LogLevel.Trace, global::NLog.LogLevel.Debug, global::NLog.LogLevel.Info, global::NLog.LogLevel.Warn, global::NLog.LogLevel.Error, global::NLog.LogLevel.Fatal }.Select(BaseNLog.ToLogLevel));
 
         string[] codes = [.. new[] { global::NLog.LogLevel.Trace, global::NLog.LogLevel.Debug, global::NLog.LogLevel.Info, global::NLog.LogLevel.Warn, global::NLog.LogLevel.Error, global::NLog.LogLevel.Fatal }
-            .Select(level => NLogText.Console(new LogEventInfo(level, "Abc.X", "m"), "Host").Split(']')[0].Split(' ')[^1])];
+            .Select(level => NLogText.Console(new LogEventInfo(level, "Acme.X", "m"), "Host").Split(']')[0].Split(' ')[^1])];
         Assert.Equal(["TRC", "DBG", "INF", "WRN", "ERR", "FTL"], codes);
-        Assert.Contains("] Host | m", NLogText.Console(new LogEventInfo(global::NLog.LogLevel.Info, "Abc.X", "m"), "Host"), StringComparison.Ordinal);
+        Assert.Contains("] Host | m", NLogText.Console(new LogEventInfo(global::NLog.LogLevel.Info, "Acme.X", "m"), "Host"), StringComparison.Ordinal);
         Assert.Contains("] Startup | m", NLogText.Console(new LogEventInfo(global::NLog.LogLevel.Info, "ConsoleOnly.Startup", "m"), "Host"), StringComparison.Ordinal);
-        Assert.Contains("] Host [Abc.X] | m", NLogText.File(new LogEventInfo(global::NLog.LogLevel.Info, "Abc.X", "m"), "Host"), StringComparison.Ordinal);
+        Assert.Contains("] Host [Acme.X] | m", NLogText.File(new LogEventInfo(global::NLog.LogLevel.Info, "Acme.X", "m"), "Host"), StringComparison.Ordinal);
     }
 
     private sealed class RecordingHandler : HttpMessageHandler
@@ -148,7 +148,7 @@ public sealed class AddBaseNLogTests : IDisposable
     public void AGelfMessage_HasTheFieldsOfTheLog_WithTheNamesGraylogTakes()
     {
         using GelfHttpTarget target = new("graylog.internal", 12201, false, new HttpClient(new RecordingHandler()), "host-1");
-        LogEventInfo logEvent = new(global::NLog.LogLevel.Error, "Abc.X", "it failed") { Exception = new InvalidOperationException("boom"), TimeStamp = new DateTime(2026, 10, 27, 10, 0, 0, DateTimeKind.Utc) };
+        LogEventInfo logEvent = new(global::NLog.LogLevel.Error, "Acme.X", "it failed") { Exception = new InvalidOperationException("boom"), TimeStamp = new DateTime(2026, 10, 27, 10, 0, 0, DateTimeKind.Utc) };
         logEvent.Properties["LogType"] = "AppLog";
         logEvent.Properties["Count"] = 3;
         logEvent.Properties["Ratio"] = 0.5;
@@ -220,7 +220,7 @@ public sealed class AddBaseNLogTests : IDisposable
         factory.Configuration.AddRule(global::NLog.LogLevel.Trace, global::NLog.LogLevel.Fatal, target);
         factory.ReconfigExistingLoggers();
 
-        factory.GetLogger("Abc.X").Info("hello");
+        factory.GetLogger("Acme.X").Info("hello");
         factory.Flush(TimeSpan.FromSeconds(10));
         factory.Shutdown();
 

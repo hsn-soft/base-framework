@@ -1,4 +1,4 @@
-# ADR-0090: The Edx integration services are named by what they integrate: `Edx.Integration.FirmInvoice.*` and `Edx.Integration.GibInvoice.*`
+# ADR-0038: The Edx integration services are named by what they integrate: `Edx.Integration.FirmInvoice.*` and `Edx.Integration.GibInvoice.*`
 
 - **Status:** Accepted
 - **Date:** 2026-10-28
@@ -20,9 +20,9 @@ Namespaces follow the project names, and so do the service names the hosts repor
 
 ## Consequences
 
-- The paths and project names in [ADR-0085](0085-the-edx-invoice-pipeline-queue-import-draft-approve-sign.md) to [ADR-0089](0089-the-edx-integration-service-sender-unit-and-post-box.md) were updated to the new names; their decisions are unchanged. The solution folders, `run-all.sh`, the smoke test, the references and the documents are in step.
+- The paths and project names in [ADR-0033](0033-the-edx-invoice-pipeline-queue-import-draft-approve-sign.md) to [ADR-0037](0037-the-edx-integration-service-sender-unit-and-post-box.md) were updated to the new names; their decisions are unchanged. The solution folders, `run-all.sh`, the smoke test, the references and the documents are in step.
 - A later integration is a new folder and a new set of projects in the same pattern.
 
 ## Related
 
-[ADR-0086](0086-the-intake-service-is-three-hosts-rest-grpc-and-wcf.md), [ADR-0089](0089-the-edx-integration-service-sender-unit-and-post-box.md).
+[ADR-0034](0034-the-intake-service-is-three-hosts-rest-grpc-and-wcf.md), [ADR-0037](0037-the-edx-integration-service-sender-unit-and-post-box.md).

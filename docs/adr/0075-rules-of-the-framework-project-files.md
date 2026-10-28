@@ -19,8 +19,8 @@ did not reach `Core` at all. The order of the references (ADR-0043) is already a
 
 ## Checks
 
-- Rules 1 and 2: `scripts/ci-check-framework-references.py`, which breaks the CI build (the step `Framework Project References`) and the detector (`Framework project references`) the way a missing test project does; it names the project, the rule and the reference to fix. It was run against projects that break each rule and fails on every one.
-- Rule 3: `scripts/ci-check-csproj-order.py` (`--fix` rewrites the files).
+- Rules 1 and 2: `scripts/ci-force-framework-references-rules.py`, which breaks the CI build (the step `Framework Project References`) and the detector (`Framework project references`) the way a missing test project does; it names the project, the rule and the reference to fix. It was run against projects that break each rule and fails on every one.
+- Rule 3: `scripts/ci-force-csproj-order.py` (`--fix` rewrites the files).
 
 ## Consequences
 

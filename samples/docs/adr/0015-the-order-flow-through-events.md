@@ -1,7 +1,7 @@
-# ADR-0054: The order flow runs through events: order, product, shipment, order
+# ADR-0015: The order flow runs through events: order, product, shipment, order
 
-- **Status:** Accepted (the events and the tenant handling changed: [ADR-0057](0057-the-caller-of-a-message-and-publish-or-send.md); the names on the broker: [ADR-0058](0058-names-on-the-broker-in-the-abc-sample.md); where they live: [ADR-0059](0059-where-events-and-their-handlers-live.md))
-- **Date:** 2026-10-25 (uses [ADR-0053](0053-more-than-one-store-in-a-service.md); the event bus is the one of the framework, RabbitMQ)
+- **Status:** Accepted (the events and the tenant handling changed: [framework ADR-0057](../../../docs/adr/0057-the-caller-of-a-message-and-publish-or-send.md); the names on the broker: [ADR-0018](0018-names-on-the-broker-in-the-abc-sample.md); where they live: [ADR-0019](0019-where-events-and-their-handlers-live.md))
+- **Date:** 2026-10-25 (uses [ADR-0014](0014-more-than-one-store-in-a-service.md); the event bus is the one of the framework, RabbitMQ)
 
 ## Context
 
@@ -25,4 +25,4 @@ The services of the Abc sample had CRUDs and histories but did not talk to each 
 
 ## Related
 
-[ADR-0053](0053-more-than-one-store-in-a-service.md), [ADR-0052](0052-the-history-of-the-users.md), [ADR-0033](0033-the-abc-services-crud-pattern.md).
+[ADR-0014](0014-more-than-one-store-in-a-service.md), [ADR-0013](0013-the-history-of-the-users.md), [ADR-0008](0008-the-abc-services-crud-pattern.md).

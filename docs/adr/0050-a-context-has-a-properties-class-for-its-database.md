@@ -1,18 +1,18 @@
 # ADR-0050: A context has a properties class that says where and on what its data is
 
-- **Status:** Accepted (the overload that read the setting was removed: [ADR-0051](0051-every-context-is-named-by-its-properties-class.md))
-- **Date:** 2026-10-25 (adds to [ADR-0047](0047-relational-provider-chosen-by-a-setting.md); [ADR-0049](0049-abc-databases-and-provider-references.md) is changed by it for the identity service)
+- **Status:** Accepted (the overload that read the setting was removed, see the decision below)
+- **Date:** 2026-10-25 (adds to [ADR-0047](0047-relational-provider-chosen-by-a-setting.md))
 
 ## Context
 
-A service can have more than one context, each on its own database and, as the sample of the identity service shows, its own provider: the users on SQL Server, the history of what happened to them on PostgreSQL. One setting `Database:Provider` cannot name two providers, and a table prefix, a schema and the name of a connection string
+A service can have more than one context, each on its own database and its own provider: the users on SQL Server, the history of what happened to them on PostgreSQL. One setting `Database:Provider` cannot name two providers, and a table prefix, a schema and the name of a connection string
 belong to the context, not to the host that runs it. The old system had a static class for this (`EfCoreIdentityDbProperties`: `DbTablePrefix`, `DbSchema`, `ConnectionStringName`).
 
 ## Decision
 
 - **Each context of a service has a static properties class in its persistence project** (`EfCoreIdentityDbProperties`, `EfCoreHistoryDbProperties`): `DbTablePrefix`, `DbSchema`, `Provider` (one of `EfCoreProviderNames`) and the constant `ConnectionStringName` (`EfCore-IdentityService`, `EfCore-HistoryService`). The mappings read the prefix
   and the schema (`ToTable(prefix + name, schema)`); the registration reads the provider and the connection name. They are in the code of the service, **not in its settings**.
-- **`AddBaseEfCore<TContext>(configuration, providers, provider, connectionName)`** registers a context on the provider and the connection string the code names. The overload of ADR-0047 (the provider by the setting `Database:Provider`) stays for a service that wants the setting.
+- **`AddBaseEfCore<TContext>(configuration, providers, provider, connectionName)`** registers a context on the provider and the connection string the code names. **The setting `Database:Provider` and the overload that read it are removed:** the provider and the connection name are said by the code. `AddBasePostgres` and `AddBaseSqlServer` stay as the call of a service with one database, with a connection name of their own, and `IEfCoreProvider` no longer has a connection name.
 - **One registration method for each context** (`AddIdentityPersistence`, `AddIdentityHistoryPersistence`), so a host registers the contexts it needs: the auth server reads the users and has no history.
 - **The persistence project references the provider packages of every context it has:** the identity project, SQL Server and PostgreSQL.
 
@@ -23,4 +23,4 @@ belong to the context, not to the host that runs it. The old system had a static
 
 ## Related
 
-[ADR-0047](0047-relational-provider-chosen-by-a-setting.md), [ADR-0049](0049-abc-databases-and-provider-references.md), [ADR-0045](0045-repository-levels-relational-and-document.md).
+[ADR-0047](0047-relational-provider-chosen-by-a-setting.md), [ADR-0045](0045-repository-levels-relational-and-document.md).

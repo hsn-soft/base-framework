@@ -6,7 +6,7 @@
   3. when it has exactly one reference, that one is Core, or a project that reaches Core;
   4. never lists a reference that another one it lists already brings (a sibling that a sibling brings).
 
-Usage: scripts/ci-check-framework-references.py [--src <directory of the framework projects>]
+Usage: scripts/ci-force-framework-references-rules.py [--src <directory of the framework projects>]
 Exit code 1 and the offending projects (with the rule they break) when a rule is broken.
 """
 import glob

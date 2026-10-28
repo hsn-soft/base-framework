@@ -1,11 +1,11 @@
-# ADR-0032: The auth server reads the users of the identity service; the author of a row is the `sub` of the token
+# ADR-0007: The auth server reads the users of the identity service; the author of a row is the `sub` of the token
 
-- **Status:** Accepted (`CreatedBy`/`UpdatedBy` are now the id of the user, and the token has tenant claims, [ADR-0037](0037-audit-soft-delete-and-tenants.md); the database is SQL Server now, [ADR-0049](0049-abc-databases-and-provider-references.md))
-- **Date:** 2026-10-25 (replaces the user list in the `Auth` section of [ADR-0029](0029-one-auth-server-issues-the-token.md))
+- **Status:** Accepted (`CreatedBy`/`UpdatedBy` are now the id of the user, and the token has tenant claims, [framework ADR-0037](../../../docs/adr/0037-audit-soft-delete-and-tenants.md); the database is SQL Server now, [ADR-0011](0011-abc-databases-and-provider-references.md))
+- **Date:** 2026-10-25 (replaces the user list in the `Auth` section of [ADR-0004](0004-one-auth-server-issues-the-token.md))
 
 ## Context
 
-The auth server of ADR-0029 knew two users from its `Auth` settings, with the passwords in clear text, while the identity service has the real users. Two lists of people, and a sample that
+The auth server of ADR-0004 knew two users from its `Auth` settings, with the passwords in clear text, while the identity service has the real users. Two lists of people, and a sample that
 shows a password in a settings file, is not what a system is built like.
 
 ## Decision
@@ -30,4 +30,4 @@ shows a password in a settings file, is not what a system is built like.
 
 ## Related
 
-[ADR-0029](0029-one-auth-server-issues-the-token.md), [ADR-0031](0031-jwt-signed-with-an-rsa-private-key.md), [ADR-0030](0030-microservice-project-pattern.md), `samples/README.md`.
+[ADR-0004](0004-one-auth-server-issues-the-token.md), [ADR-0006](0006-jwt-signed-with-an-rsa-private-key.md), [ADR-0005](0005-microservice-project-pattern.md), `samples/README.md`.

@@ -2,7 +2,6 @@
 
 - **Status:** Accepted
 - **Date:** 2026-10-26 (changes the one-message-at-a-time reading of [ADR-0062](0062-a-kafka-consumer-for-every-service-and-event.md); the two brokers now behave alike)
-- **Note:** [ADR-0077](0077-only-the-abc-sample-stays.md): the Xyz sample, which showed this, was removed; the Kafka consumer is covered by its tests.
 
 ## Context
 
@@ -20,10 +19,10 @@ and read the next. A topic with a thousand messages was worked through at the sp
 
 ## Consequences
 
-- The two brokers have the same `fetchCount`, the same graceful stop and the same failure handling, and the samples use it the same way (Abc and Xyz: the product service handles ten `OrderCreated` at the same time, the order service five `OrderStockReserved`).
+- The two brokers have the same `fetchCount`, the same graceful stop and the same failure handling.
 - A consumer that handles long messages must still poll within `max.poll.interval.ms` (5 minutes): it polls while handlers run, but not while every place is taken by a handler that is stuck for longer than that.
 - Tests (a real Kafka): the number at the same time is exactly `fetchCount`; one without; what was handled together is committed and not read again; a message cancelled at shutdown is read again; a second instance that joins takes partitions over without a message handled twice or lost. `OffsetTracker` is covered by unit tests.
 
 ## Related
 
-[ADR-0062](0062-a-kafka-consumer-for-every-service-and-event.md), [ADR-0064](0064-the-stock-is-changed-in-one-step.md), [ADR-0065](0065-the-consumers-outlive-their-own-failures.md), [ADR-0023](0023-event-bus.md).
+[ADR-0062](0062-a-kafka-consumer-for-every-service-and-event.md), [ADR-0065](0065-the-consumers-outlive-their-own-failures.md), [ADR-0023](0023-event-bus.md).

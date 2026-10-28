@@ -61,7 +61,7 @@ public sealed class Harness : IDisposable
     public Harness(Action<PersistentLoggerOptions>? configure = null, string loggerName = "Host", Action<global::NLog.Config.LoggingConfiguration>? configureNLog = null)
     {
         // what is not about the level of the console sees everything in it
-        PersistentLoggerOptions options = new() { ConsoleLevels = new LogLevelRules(Microsoft.Extensions.Logging.LogLevel.Trace), AppNamespace = "Abc" };
+        PersistentLoggerOptions options = new() { ConsoleLevels = new LogLevelRules(Microsoft.Extensions.Logging.LogLevel.Trace), AppNamespace = "Acme" };
         configure?.Invoke(options);
         BaseNLogSetup setup = BaseNLog.Create(options, loggerName, configureNLog, Console, Persistent);
         Shape = setup.Shape;

@@ -5,7 +5,7 @@
 
 ## Context
 
-A project of a product that uses a framework type needs the packages that type's signature mentions. The Abc services listed some of them themselves: `Microsoft.EntityFrameworkCore.Relational` in each EF Core project (for `ToTable` and the like), the dependency-injection and localization abstractions in each Application
+A project of a product that uses a framework type needs the packages that type's signature mentions. Services listed some of them themselves: `Microsoft.EntityFrameworkCore.Relational` in each EF Core project (for `ToTable` and the like), the dependency-injection and localization abstractions in each Application
 project, `HsnSoft.Base.EntityFrameworkCore` beside the provider that already references it, `HsnSoft.Base.EventBus` beside the contracts that already bring it. Every service repeated the list, and a new service had to know it.
 
 ## Decision
@@ -18,10 +18,10 @@ project, `HsnSoft.Base.EntityFrameworkCore` beside the provider that already ref
 
 ## Consequences
 
-- The project files of the services say what they use, not what their dependencies need (the table is in `samples/abc/REFERENCES.md`).
+- The project files of the services say what they use, not what their dependencies need.
 - The EF Core base package now depends on the relational package: a non-relational EF provider would need its own base. Every provider of the framework (SQL Server, PostgreSQL, and the MySQL and Oracle that may come) is relational, so this costs nothing today.
 - An Application project that needs `IStringLocalizer` relies on its Domain referencing the shared texts (optional there) or on referencing the framework's localization package itself.
 
 ## Related
 
-[ADR-0003](0003-abstractions-separate-from-providers.md), [ADR-0004](0004-core-once-and-the-dependency-graph.md), [ADR-0069](0069-who-references-which-shared-project-in-abc.md).
+[ADR-0003](0003-abstractions-separate-from-providers.md), [ADR-0004](0004-core-once-and-the-dependency-graph.md).

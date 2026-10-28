@@ -85,7 +85,7 @@ The results are written to `TestResults/detector/` (git ignores it); each run st
 | Unit / integration tests | run the failing project alone: `dotnet test test/<Project>` |
 | Coverage gate | the log lists the lines nobody ran (`not covered: file:line`); add a test |
 | Every package has a test project | add `test/<Package>.Tests` |
-| Project file reference order | `python3 scripts/ci-check-csproj-order.py --fix` puts the references in order |
+| Project file reference order | `python3 scripts/ci-force-csproj-order.py --fix` puts the references in order |
 | Framework project references | a package of `src/` must reach `Core` and must not list what a sibling brings (ADR-0075): fix the `ProjectReference` the message names |
 
 Like the CI, the test scripts stop at the first failing test project, so the counts of a failed run only cover the projects that ran.

@@ -26,7 +26,7 @@ The previous framework had a `Auditing` project: read-only contracts (`ICreation
 
 - An entity and its DTO share the audit contract, so one rule (a sort, a filter, a screen) reads the audit fields of either (tested: one function reads the `CreatedAt` and `CreatedBy` of an entity and of its DTO).
 - `Core` has no audit and no data filter; a product that wants neither does not get them. The graph of ADR-0004 has two more rows.
-- `ICreationAudited` and `IModificationAudited` are gone; an entity that implemented them implements the shapes and the marks (the base classes do it for the ones that derive from them: the samples did not change).
+- `ICreationAudited` and `IModificationAudited` are gone; an entity that implemented them implements the shapes and the marks (the base classes do it for the ones that derive from them).
 - The tests of the setter, of the filter and of the registration of the concepts moved with the code (`Auditing.Tests`, `Data.Tests`, `Ddd.Domain.Tests`).
 
 ## Related

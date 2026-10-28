@@ -1,11 +1,11 @@
-# ADR-0095: "Intake" is "FirmInvoice" everywhere: routes, contracts, permissions, settings and code
+# ADR-0043: "Intake" is "FirmInvoice" everywhere: routes, contracts, permissions, settings and code
 
 - **Status:** Accepted
 - **Date:** 2026-10-28
 
 ## Context
 
-[ADR-0090](0090-edx-services-are-named-integration-firm-invoice-and-integration-gib-invoice.md) renamed the projects of the intake service to `Edx.Integration.FirmInvoice.*` but left the word *intake* in the public routes, the gRPC and WCF contracts, the permission codes, the settings and the code (`IntakeAppService`, `intake-service`, `endpoint.intake.upload`, `edx.intake.v1`). The same thing was called two names, which confused readers.
+[ADR-0038](0038-edx-services-are-named-integration-firm-invoice-and-integration-gib-invoice.md) renamed the projects of the intake service to `Edx.Integration.FirmInvoice.*` but left the word *intake* in the public routes, the gRPC and WCF contracts, the permission codes, the settings and the code (`IntakeAppService`, `intake-service`, `endpoint.intake.upload`, `edx.intake.v1`). The same thing was called two names, which confused readers.
 The mock center's `EnvelopeIntake` (the center taking in an envelope) is another thing and keeps its name.
 
 ## Decision
@@ -18,7 +18,7 @@ The word *intake* is replaced by *firm invoice* in every name of the firm invoic
 - **Settings:** the section `FirmInvoice` (`FirmInvoice:ServiceName`, `FirmInvoice:MaxUploadBytes`) and the connection string `Mongo-FirmInvoiceService`.
 - **Code:** `FirmInvoiceAppService`, `FirmInvoiceOptions`, `MongoFirmInvoiceDbProperties`, `AddFirmInvoicePersistence`, the folders `FirmInvoiceDomain` and `Events/FirmInvoice`.
 
-This supersedes the "what is not renamed" part of ADR-0090 (and the route names of [ADR-0091](0091-the-edx-integrations-are-reached-directly-the-services-through-the-gateway.md)). Older ADRs keep the words they were written with.
+This supersedes the "what is not renamed" part of ADR-0038 (and the route names of [ADR-0039](0039-the-edx-integrations-are-reached-directly-the-services-through-the-gateway.md)). Older ADRs keep the words they were written with.
 
 ## Consequences
 
@@ -27,4 +27,4 @@ This supersedes the "what is not renamed" part of ADR-0090 (and the route names 
 
 ## Related
 
-[ADR-0086](0086-the-intake-service-is-three-hosts-rest-grpc-and-wcf.md), [ADR-0090](0090-edx-services-are-named-integration-firm-invoice-and-integration-gib-invoice.md), [ADR-0091](0091-the-edx-integrations-are-reached-directly-the-services-through-the-gateway.md).
+[ADR-0034](0034-the-intake-service-is-three-hosts-rest-grpc-and-wcf.md), [ADR-0038](0038-edx-services-are-named-integration-firm-invoice-and-integration-gib-invoice.md), [ADR-0039](0039-the-edx-integrations-are-reached-directly-the-services-through-the-gateway.md).

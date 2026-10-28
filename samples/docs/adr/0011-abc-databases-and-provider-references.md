@@ -1,11 +1,11 @@
-# ADR-0049: The Abc services' databases, and a project references only the provider it uses
+# ADR-0011: The Abc services' databases, and a project references only the provider it uses
 
-- **Status:** Accepted (the settings of the identity databases changed: [ADR-0050](0050-a-context-has-a-properties-class-for-its-database.md))
-- **Date:** 2026-10-25 (changes the database of the identity service of [ADR-0032](0032-the-auth-server-reads-the-users-of-the-identity-service.md); uses [ADR-0047](0047-relational-provider-chosen-by-a-setting.md))
+- **Status:** Accepted (the settings of the identity databases changed: [framework ADR-0050](../../../docs/adr/0050-a-context-has-a-properties-class-for-its-database.md))
+- **Date:** 2026-10-25 (changes the database of the identity service of [ADR-0007](0007-the-auth-server-reads-the-users-of-the-identity-service.md); uses [framework ADR-0047](../../../docs/adr/0047-relational-provider-chosen-by-a-setting.md))
 
 ## Context
 
-The identity service ran on PostgreSQL like the order service. The maintainer wants the sample to show both relational providers: the identity service on SQL Server and the order service on PostgreSQL. While the provider became a setting (ADR-0047) the persistence projects were given both provider
+The identity service ran on PostgreSQL like the order service. The maintainer wants the sample to show both relational providers: the identity service on SQL Server and the order service on PostgreSQL. While the provider became a setting (framework ADR-0047) the persistence projects were given both provider
 packages; a service that runs on one provider should not carry the other.
 
 ## Decision
@@ -22,4 +22,4 @@ packages; a service that runs on one provider should not carry the other.
 
 ## Related
 
-[ADR-0047](0047-relational-provider-chosen-by-a-setting.md), [ADR-0032](0032-the-auth-server-reads-the-users-of-the-identity-service.md), [ADR-0035](0035-the-persistence-project-registers-its-database.md).
+[framework ADR-0047](../../../docs/adr/0047-relational-provider-chosen-by-a-setting.md), [ADR-0007](0007-the-auth-server-reads-the-users-of-the-identity-service.md), [ADR-0010](0010-the-persistence-project-registers-its-database.md).

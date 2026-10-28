@@ -1,11 +1,11 @@
 # ADR-0036: `ICurrentUser` is the framework's; the JWT authentication registers it
 
 - **Status:** Accepted (its members are now `Id`, `UserName` and the tenant claims, [ADR-0037](0037-audit-soft-delete-and-tenants.md))
-- **Date:** 2026-10-25 (replaces the per-service `ICurrentUser` of [ADR-0033](0033-the-abc-services-crud-pattern.md))
+- **Date:** 2026-10-25 (replaces the per-service `ICurrentUser`)
 
 ## Context
 
-ADR-0033 had each service define an `ICurrentUser` in its application layer and implement it in its host with `IHttpContextAccessor`, and the host's `Program.cs` register both (`AddHttpContextAccessor`, `AddScoped<ICurrentUser, ...>`). That is four copies of the same
+Each service had defined an `ICurrentUser` in its application layer and implement it in its host with `IHttpContextAccessor`, and the host's `Program.cs` register both (`AddHttpContextAccessor`, `AddScoped<ICurrentUser, ...>`). That is four copies of the same
 interface and class, and two lines in every host that have nothing to do with what the host is.
 
 ## Decision
@@ -17,9 +17,9 @@ interface and class, and two lines in every host that have nothing to do with wh
 ## Consequences
 
 - One interface and one implementation for every service; a new service does nothing to have it.
-- The name is the framework's `UserId` (the claim `sub` is the user name in Abc), not `UserName`.
+- The name is the framework's `UserId`, not `UserName`.
 - The roles are not on it yet (`ClaimsPrincipal.GetRoles()` reads them where there is a principal); they are added when a use case needs them.
 
 ## Related
 
-[ADR-0033](0033-the-abc-services-crud-pattern.md), [ADR-0032](0032-the-auth-server-reads-the-users-of-the-identity-service.md), [ADR-0031](0031-jwt-signed-with-an-rsa-private-key.md).
+[ADR-0037](0037-audit-soft-delete-and-tenants.md).

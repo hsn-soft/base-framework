@@ -1,7 +1,7 @@
-# ADR-0055: The environments of the Abc sample, and the names of its databases
+# ADR-0016: The environments of the Abc sample, and the names of its databases
 
 - **Status:** Accepted
-- **Date:** 2026-10-25 (changes the settings of [ADR-0051](0051-every-context-is-named-by-its-properties-class.md) and the database names of [ADR-0049](0049-abc-databases-and-provider-references.md), [ADR-0050](0050-a-context-has-a-properties-class-for-its-database.md) and [ADR-0053](0053-more-than-one-store-in-a-service.md))
+- **Date:** 2026-10-25 (changes the settings of [ADR-0012](0012-every-context-is-named-by-its-properties-class.md) and the database names of [ADR-0011](0011-abc-databases-and-provider-references.md), [framework ADR-0050](../../../docs/adr/0050-a-context-has-a-properties-class-for-its-database.md) and [ADR-0014](0014-more-than-one-store-in-a-service.md))
 
 ## Context
 
@@ -25,4 +25,4 @@ Every host of the Abc sample (the gateways, the microservices, the auth server, 
 
 ## Related
 
-[ADR-0051](0051-every-context-is-named-by-its-properties-class.md), [ADR-0053](0053-more-than-one-store-in-a-service.md), [ADR-0031](0031-rsa-keys-of-the-samples.md).
+[ADR-0012](0012-every-context-is-named-by-its-properties-class.md), [ADR-0014](0014-more-than-one-store-in-a-service.md), [ADR-0006](0006-jwt-signed-with-an-rsa-private-key.md).

@@ -34,8 +34,8 @@ environment, so no `if (!IsHostProduction())` is repeated in `Program.cs`. The `
 Swagger is a call, not a layer: `HsnSoft.Base.AspNetCore.WebApi` does not know it, so a host that never calls `AddBaseSwagger...` and `UseBaseSwagger` has no Swagger, and no other package notices. Two ways to leave it out of a host:
 
 - **By settings** (the project still references Swashbuckle): `"Swagger": { "Enabled": false }` in the host's settings; it is registered and serves nothing, whatever the environment.
-- **By composition** (the project does not reference it): the host does not call it. That decision is the product's shared hosting project's: where it calls Swagger for every host (the Abc shared shell does), a host cannot opt out without a parameter in it
-  (`AddAbcHosting(..., useSwagger: false)`, as there already is for `authenticateUsers`) or without moving the two calls out of the shell into the hosts, so each host chooses. Then the gateway that wants the UI of its services calls `AddBaseSwaggerGateway` and the one that does not calls nothing.
+- **By composition** (the project does not reference it): the host does not call it. That decision is the product's shared hosting project's: where it calls Swagger for every host, a host cannot opt out without a parameter in it
+  (`Add{Product}Hosting(..., useSwagger: false)`, as there already is for `authenticateUsers`) or without moving the two calls out of the shell into the hosts, so each host chooses. Then the gateway that wants the UI of its services calls `AddBaseSwaggerGateway` and the one that does not calls nothing.
 
 ## A gateway and its services
 

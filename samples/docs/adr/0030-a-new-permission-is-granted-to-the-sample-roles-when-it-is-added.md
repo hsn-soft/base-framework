@@ -1,19 +1,19 @@
-# ADR-0082: A new permission is granted to the sample roles when it is added
+# ADR-0030: A new permission is granted to the sample roles when it is added
 
 - **Status:** Accepted
-- **Note:** [ADR-0083](0083-permission-types-the-menu-and-constraints-that-must-be-given.md): the starting grants cover four types and the constraints are in their own table.
-- **Date:** 2026-10-27 (changes how the starting grants of [ADR-0081](0081-permissions-a-package-grants-in-the-cache-and-one-service-that-manages-them.md) are given)
+- **Note:** [framework ADR-0083](../../../docs/adr/0083-four-permission-types-and-constraints-that-must-be-given.md): the starting grants cover four types and the constraints are in their own table.
+- **Date:** 2026-10-27 (changes how the starting grants of [framework ADR-0081](../../../docs/adr/0081-permissions-one-framework-package-and-the-grants-in-the-distributed-cache.md) are given)
 
 ## Context
 
-ADR-0081 gave the sample roles their starting grants once, on a database that had no grants. The invoices (every kind of permission at work) added permissions to a system whose database already existed: nobody was granted them, and the only way to try them was to drop the database.
+framework ADR-0081 gave the sample roles their starting grants once, on a database that had no grants. The invoices (every kind of permission at work) added permissions to a system whose database already existed: nobody was granted them, and the only way to try them was to drop the database.
 A real system has the same need: a release adds permissions, and the roles that should have them from the start have to get them without taking back what an administrator took away.
 
 ## Decision
 
 - **`EnsurePermissionsAsync` grants a permission to the roles `DefaultPermissionGrants` names it for at the moment it adds that permission to the catalogue**, and never again. The first start adds every permission, so it gives every starting grant; a later release that adds a permission gives only the grants of that one.
 - A permission that was added before is left alone: a grant an administrator removed stays removed, and one added stays added.
-- The rest of ADR-0081 stands: the table in `DefaultPermissionGrants` is a starting point of the sample, not a rule, and a real system's roles are managed through the endpoints.
+- The rest of framework ADR-0081 stands: the table in `DefaultPermissionGrants` is a starting point of the sample, not a rule, and a real system's roles are managed through the endpoints.
 
 ## Consequences
 
@@ -22,4 +22,4 @@ A real system has the same need: a release adds permissions, and the roles that 
 
 ## Related
 
-[ADR-0081](0081-permissions-a-package-grants-in-the-cache-and-one-service-that-manages-them.md), [docs/Authorization.md](../Authorization.md).
+[framework ADR-0081](../../../docs/adr/0081-permissions-one-framework-package-and-the-grants-in-the-distributed-cache.md), [docs/Authorization.md](../Authorization.md).

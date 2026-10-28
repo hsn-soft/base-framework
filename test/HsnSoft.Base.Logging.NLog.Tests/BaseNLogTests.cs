@@ -38,10 +38,10 @@ public sealed class BaseNLogTests
     {
         using Harness harness = new();
 
-        harness.Logger("Abc.Thing").LogDebug("debug");
-        harness.Logger("Abc.Thing").LogTrace("trace");
+        harness.Logger("Acme.Thing").LogDebug("debug");
+        harness.Logger("Acme.Thing").LogTrace("trace");
         harness.Logger("ConsoleOnly.Startup").LogCritical("for the console");
-        harness.Logger("Abc.Thing").LogError("error");
+        harness.Logger("Acme.Thing").LogError("error");
 
         Assert.Equal(4, harness.Console.Events.Count);
         Assert.Equal(["error"], harness.Persistent.Events.Select(logEvent => logEvent.Message));
@@ -53,8 +53,8 @@ public sealed class BaseNLogTests
     {
         using Harness harness = new(options => options.ConsoleLevels = new LogLevelRules(Microsoft.Extensions.Logging.LogLevel.Information, [new("Microsoft", Microsoft.Extensions.Logging.LogLevel.Warning)]));
 
-        harness.Logger("Abc.Thing").LogInformation("shown");
-        harness.Logger("Abc.Thing").LogDebug("hidden");
+        harness.Logger("Acme.Thing").LogInformation("shown");
+        harness.Logger("Acme.Thing").LogDebug("hidden");
         harness.Logger("Microsoft.AspNetCore").LogInformation("hidden too");
         harness.Logger("Microsoft.AspNetCore").LogWarning("shown too");
 
@@ -64,8 +64,8 @@ public sealed class BaseNLogTests
     [Fact]
     public void ThePersistentLog_HasTheFieldsOfTheFramework_AndNoNoise()
     {
-        using Harness harness = new(options => (options.AppNamespace, options.Version) = ("Abc", "1.2.3"), loggerName: "OrderService");
-        Microsoft.Extensions.Logging.ILogger logger = harness.Logger("Abc.OrderService.Application.OrderAppService");
+        using Harness harness = new(options => (options.AppNamespace, options.Version) = ("Acme", "1.2.3"), loggerName: "OrderService");
+        Microsoft.Extensions.Logging.ILogger logger = harness.Logger("Acme.OrderService.Application.OrderAppService");
 
         using (logger.BeginScope(new Dictionary<string, object?> { ["CorrelationId"] = "c1", ["RequestPath"] = "/orders", ["ConnectionId"] = "x" }))
         {
@@ -91,7 +91,7 @@ public sealed class BaseNLogTests
     {
         using Harness harness = new();
 
-        harness.Logger("Abc.Thing").LogInformation("Signed in {@Account} as {Name}", new Account { Name = "alice", Password = "secret" }, "alice");
+        harness.Logger("Acme.Thing").LogInformation("Signed in {@Account} as {Name}", new Account { Name = "alice", Password = "secret" }, "alice");
 
         LogEventInfo shaped = Assert.Single(harness.Persistent.Events);
         Assert.Equal("""{"Name":"alice","Password":"***"}""", Property(shaped, "Account"));
@@ -105,7 +105,7 @@ public sealed class BaseNLogTests
     public void ALongText_IsCut_AndAFacilityThatIsAlreadyThere_IsKept()
     {
         using Harness harness = new(options => options.MaxPersistentFieldLength = 40);
-        Microsoft.Extensions.Logging.ILogger logger = harness.Logger("Abc.Thing");
+        Microsoft.Extensions.Logging.ILogger logger = harness.Logger("Acme.Thing");
 
         using (logger.BeginScope(new Dictionary<string, object?> { ["Facility"] = "MY_FACILITY", ["LogType"] = "RequestLog" }))
         {
@@ -124,7 +124,7 @@ public sealed class BaseNLogTests
     {
         using Harness harness = new();
 
-        harness.Logger("Abc.Thing").LogError(new InvalidOperationException("boom"), "Failed {Labels} at {Address}", new Dictionary<string, string> { ["a"] = "b" }, new Uri("http://x/y"));
+        harness.Logger("Acme.Thing").LogError(new InvalidOperationException("boom"), "Failed {Labels} at {Address}", new Dictionary<string, string> { ["a"] = "b" }, new Uri("http://x/y"));
 
         LogEventInfo shaped = Assert.Single(harness.Persistent.Events);
         Assert.Equal("""{"a":"b"}""", Property(shaped, "Labels"));
@@ -137,7 +137,7 @@ public sealed class BaseNLogTests
     [Fact]
     public void TheShapingWithoutALoggerName_TakesTheLogAsTheApplications()
     {
-        using Harness harness = new(options => options.AppNamespace = "Abc");
+        using Harness harness = new(options => options.AppNamespace = "Acme");
 
         LogEventInfo shaped = harness.Shape.Shape(new LogEventInfo(global::NLog.LogLevel.Info, null, "no category"));
 
@@ -152,8 +152,8 @@ public sealed class BaseNLogTests
         CaptureTarget own = new();
         using Harness harness = new(configureNLog: configuration => configuration.AddRule(global::NLog.LogLevel.Warn, global::NLog.LogLevel.Fatal, own));
 
-        harness.Logger("Abc.Thing").LogInformation("not for it");
-        harness.Logger("Abc.Thing").LogWarning("for it");
+        harness.Logger("Acme.Thing").LogInformation("not for it");
+        harness.Logger("Acme.Thing").LogWarning("for it");
 
         Assert.Equal(["for it"], own.Events.Select(logEvent => logEvent.Message));
     }

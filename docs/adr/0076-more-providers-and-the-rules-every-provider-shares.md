@@ -1,7 +1,7 @@
 # ADR-0076: More providers (NLog, Azure, AWS, MySQL), and the rules every logging provider shares
 
 - **Status:** Accepted
-- **Date:** 2026-10-27 (follows [ADR-0003](0003-abstractions-separate-from-providers.md) and [ADR-0072](0072-a-host-chooses-its-localization-and-its-cache.md); changes where the rules of the Serilog provider live)
+- **Date:** 2026-10-27 (follows [ADR-0003](0003-abstractions-separate-from-providers.md); changes where the rules of the Serilog provider live)
 
 ## Context
 
@@ -31,4 +31,4 @@ The framework offered one logging provider (Serilog), one blob store (MinIO) and
 
 ## Related
 
-[ADR-0003](0003-abstractions-separate-from-providers.md), [ADR-0004](0004-core-once-and-the-dependency-graph.md), [ADR-0015](0015-logging-architecture.md), [ADR-0017](0017-two-places-two-levels.md), [ADR-0021](0021-sensitive-data-by-attributes.md), [ADR-0072](0072-a-host-chooses-its-localization-and-its-cache.md), [ADR-0074](0074-multitenancy-is-a-package-of-its-own.md), [`docs/Logging.md`](../Logging.md).
+[ADR-0003](0003-abstractions-separate-from-providers.md), [ADR-0004](0004-core-once-and-the-dependency-graph.md), [ADR-0015](0015-logging-architecture.md), [ADR-0017](0017-two-places-two-levels.md), [ADR-0021](0021-sensitive-data-by-attributes.md), [ADR-0074](0074-multitenancy-is-a-package-of-its-own.md), [`docs/Logging.md`](../Logging.md).

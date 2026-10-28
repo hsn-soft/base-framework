@@ -48,7 +48,7 @@ builder.Logging.AddBaseSerilog(builder.Configuration, "OrderService"); // everyt
 
 ## The log types
 
-Every log in Graylog has a `Solution` (the first part of the assembly name: `Hhs`, `Abc`), an `Assembly` (`Hhs.AuthServer.Http.Host`: which service, auth server or agent wrote it), a `Version` (the build that wrote it: the
+Every log in Graylog has a `Solution` (the first part of the assembly name: `Hhs`, `Acme`), an `Assembly` (`Hhs.AuthServer.Http.Host`: which service, auth server or agent wrote it), a `Version` (the build that wrote it: the
 environment variable `BUILD_NUMBER`, which the CI of the services sets to the image tag `{yyMMddHHmm}-sha-{git short sha}`; else `PersistentLogger:Version`, else the version of the entry assembly: with it the `Line` of a failure
 is read in the code that ran) and a `LogType`:
 
@@ -132,7 +132,7 @@ A failure is logged **once**: a request that ends in a 500 is the `HttpResponse`
 is a `CONSUME_EVENT_RETRY` Warning, and what follows a failed message (`RABBITMQ_CONSUMER_MOVED_TO_ERROR_QUEUE`, which names the error queue) is its consequence, not a second Error. A known error (a 4xx, a rejected message) is a Warning without a stack.
 Besides `ExceptionType`, every log of a failure has:
 
-- `ExceptionIdentifier`: where it was thrown, like `Solution:Abc|Assembly:Abc.OrderService.Http.Host|File:OrdersController.cs|Line:92`: the first place with a source file in the code of the application that runs, looking at the innermost exception
+- `ExceptionIdentifier`: where it was thrown, like `Solution:Acme|Assembly:Acme.OrderService.Http.Host|File:OrdersController.cs|Line:92`: the first place with a source file in the code of the application that runs, looking at the innermost exception
   first, so a throw deep inside a library is reported where the application called it. It needs the symbols (`.pdb`) next to the assemblies, which `dotnet publish` copies; without them the method is told, and an exception that was never
   thrown has only its type. Use `throw;`, not `throw ex;`, which resets the line. It has no length limit.
 - `Reason`: the message of the exception and of every exception inside it joined with `" >> "` (`outer >> middle >> inner`), up to 8192 characters.

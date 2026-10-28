@@ -41,7 +41,7 @@ using (currentTenant.Change(tenantId))            // a seed, a worker: work as t
 ```
 
 **The system tenant sees every tenant; anyone else sees its own and the ones in `allowed_tenant_id`; with no tenant nothing of a tenant is seen.** A service without tenants does not reference any of this: its entities have no `TenantId`, its context derives from
-`BaseDbContext`, and a message that crosses it keeps the tenant headers for the services after it (the Abc shipment service is such a service).
+`BaseDbContext`, and a message that crosses it keeps the tenant headers for the services after it.
 
 ## The filters, and switching them off: `IDataFilter`
 

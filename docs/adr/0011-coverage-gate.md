@@ -14,7 +14,7 @@ says "this line ran in a test" regardless of which kind.
 - **`scripts/ci-check-coverage.py <threshold> <reports...>` merges the reports line by line: a line is covered when any report covered it**, and fails when the merged line coverage of `src` is below the threshold.
 - **The threshold is 99 %** and lives in one place, the `COVERAGE_THRESHOLD` environment variable of the workflow; the detector reads it from there so it cannot drift. Raise it as coverage grows; **do not lower it**.
 - New code comes with tests; code that cannot be tested is a design question first, a coverage exclusion last (and an exclusion needs a reason in the code).
-- Local SonarQube analysis (`scripts/sonar/`) is for looking at the quality dashboard; it excludes `test/`, `samples/` and `scripts/` and is not part of CI. Its token is a secret kept in an ignored `.env`, never committed.
+- Local SonarQube analysis (`scripts/sonar/`) is for looking at the quality dashboard; it excludes `test/` and `scripts/` and is not part of CI. Its token is a secret kept in an ignored `.env`, never committed.
 
 ## Consequences
 

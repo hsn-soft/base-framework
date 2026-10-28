@@ -1,8 +1,8 @@
-# ADR-0034: Redis and RabbitMQ in the Abc hosts
+# ADR-0009: Redis and RabbitMQ in the Abc hosts
 
 - **Status:** Accepted
 - **Date:** 2026-10-25
-- **Note:** [ADR-0072](0072-a-host-chooses-its-localization-and-its-cache.md): Redis is not registered by `AddAbcRedis` of the hosting any more; each host that wants it calls the framework's `AddBaseRedis` and references the Redis package itself (the microservices, the auth server and the commercial gateway still do).
+- **Note:** [ADR-0046](0046-a-host-chooses-its-localization-and-its-cache.md): Redis is not registered by `AddAbcRedis` of the hosting any more; each host that wants it calls the framework's `AddBaseRedis` and references the Redis package itself (the microservices, the auth server and the commercial gateway still do).
 
 ## Context
 
@@ -26,4 +26,4 @@ The Abc hosts have their databases; the system also needs a cache and an event b
 
 ## Related
 
-[ADR-0028](0028-shared-hosting-projects.md), [ADR-0030](0030-microservice-project-pattern.md), [ADR-0033](0033-the-abc-services-crud-pattern.md), `samples/README.md`.
+[ADR-0003](0003-shared-hosting-projects.md), [ADR-0005](0005-microservice-project-pattern.md), [ADR-0008](0008-the-abc-services-crud-pattern.md), `samples/README.md`.

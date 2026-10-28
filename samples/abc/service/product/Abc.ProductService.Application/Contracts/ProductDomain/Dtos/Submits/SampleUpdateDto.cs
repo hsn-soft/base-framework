@@ -18,7 +18,7 @@ public sealed class SampleAddressDto
 }
 
 /// <summary>
-/// A model of an update DTO that uses every rule of the framework (ADR-0044). It is not used by the service: copy the parts you need.
+/// A model of an update DTO that uses every rule of the framework (framework ADR-0044). It is not used by the service: copy the parts you need.
 /// Every message the client gets is translated (en, tr, ru) and listed in <c>statusMessages</c>, one for each wrong field.
 /// </summary>
 public sealed class SampleUpdateDto : IValidatableObject

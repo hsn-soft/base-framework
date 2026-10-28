@@ -72,9 +72,9 @@ dotnet sonarscanner begin \
     /d:sonar.token="$SONAR_TOKEN" \
     /d:sonar.cs.vstest.reportsPaths="$TEST_OUTPUT/**/*.trx" \
     /d:sonar.cs.opencover.reportsPaths="$TEST_OUTPUT/**/coverage.opencover.xml" \
-    /d:sonar.coverage.exclusions="test/**,samples/**,scripts/**,**/Migrations/**,**/*Test*.cs,**/*Test*/**,**/tmp/**,**/Tmp/**,**/TMP/**" \
+    /d:sonar.coverage.exclusions="test/**,scripts/**,**/Migrations/**,**/*Test*.cs,**/*Test*/**,**/tmp/**,**/Tmp/**,**/TMP/**" \
     /d:sonar.inclusions="**/*.cs,**/*.js,**/*.css" \
-    /d:sonar.exclusions="test/**,samples/**,scripts/**,**/Migrations/**,**/*Test*.cs,**/*Test*/**,**/tmp/**,**/Tmp/**,**/TMP/**,**/data/**,**/logs/**,**/sample/**"
+    /d:sonar.exclusions="test/**,scripts/**,**/Migrations/**,**/*Test*.cs,**/*Test*/**,**/tmp/**,**/Tmp/**,**/TMP/**,**/data/**,**/logs/**,**/sample/**"
 echo
 
 info "## DOTNET RESTORE --------------------------------------------------------------"

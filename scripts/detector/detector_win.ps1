@@ -115,9 +115,9 @@ $testArgs = @("--no-build", "--configuration", "Release", "--verbosity", "minima
 Write-Info "## STAGES ----------------------------------------------------------------------"
 $restored = Invoke-Stage "restore" "Restore" { dotnet restore HsnSoft.Base.sln --verbosity minimal }
 
-Invoke-Stage "test-projects" "Every package has a test project" { bash ./scripts/ci-check-test-projects.sh } | Out-Null
-Invoke-Stage "csproj-order" "Project file reference order" { & $python scripts/ci-check-csproj-order.py } | Out-Null
-Invoke-Stage "framework-references" "Framework project references" { & $python scripts/ci-check-framework-references.py } | Out-Null
+Invoke-Stage "test-projects" "Every package has a test project" { bash ./scripts/ci-check-test-project-exist.sh } | Out-Null
+Invoke-Stage "csproj-order" "Project file reference order" { & $python scripts/ci-force-csproj-order.py } | Out-Null
+Invoke-Stage "framework-references" "Framework project references" { & $python scripts/ci-force-framework-references-rules.py } | Out-Null
 if ($restored)
 {
     Invoke-Stage "format-cs" "Format (C#)" {

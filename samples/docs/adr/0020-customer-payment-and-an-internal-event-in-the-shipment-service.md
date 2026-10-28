@@ -1,7 +1,7 @@
-# ADR-0060: Customer, payment and an internal event in the shipment service
+# ADR-0020: Customer, payment and an internal event in the shipment service
 
 - **Status:** Accepted
-- **Date:** 2026-10-25 (extends [ADR-0054](0054-the-order-flow-through-events.md); uses [ADR-0059](0059-where-events-and-their-handlers-live.md))
+- **Date:** 2026-10-25 (extends [ADR-0015](0015-the-order-flow-through-events.md); uses [ADR-0019](0019-where-events-and-their-handlers-live.md))
 
 ## Context
 
@@ -24,4 +24,4 @@ The shipment service sent a parcel as soon as the stock was set aside. A real or
 
 ## Related
 
-[ADR-0054](0054-the-order-flow-through-events.md), [ADR-0059](0059-where-events-and-their-handlers-live.md), [ADR-0053](0053-more-than-one-store-in-a-service.md).
+[ADR-0015](0015-the-order-flow-through-events.md), [ADR-0019](0019-where-events-and-their-handlers-live.md), [ADR-0014](0014-more-than-one-store-in-a-service.md).

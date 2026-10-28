@@ -1,8 +1,8 @@
-# ADR-0061: The Xyz sample beside Abc
+# ADR-0021: The Xyz sample beside Abc
 
-- **Status:** Superseded by [ADR-0077](0077-only-the-abc-sample-stays.md) (the Xyz sample was removed)
+- **Status:** Superseded by [ADR-0025](0025-only-the-abc-sample-stays.md) (the Xyz sample was removed)
 - **Date:** 2026-10-25
-- **Note:** [ADR-0063](0063-kafka-topics-are-named-after-the-exchange.md): the topics are `XYZ_<Event>`, not `xyz.<Event>`.
+- **Note:** [framework ADR-0063](../../../docs/adr/0063-kafka-topics-are-named-after-the-exchange.md): the topics are `XYZ_<Event>`, not `xyz.<Event>`.
 
 ## Context
 
@@ -16,9 +16,9 @@ The first Xyz sample was a small order system written before the framework had i
   - one **commercial gateway** (YARP from the route registry, Redis rate limit through `UseXyzGateway(beforeProxy)`);
   - the layers of a service are **folders of its Host project** (`Domain`, `Application`, `Infrastructure`, `Controllers`, `EventHandlers`), namespaces `Xyz.<Service>.<Layer>`; one `Xyz.Shared` project instead of the several `Abc.Shared.*` (hosting, gateway shell, event contracts, rate limit);
   - **PostgreSQL only**: a service with two stores has two contexts on two databases (`Xyz_<Context>_<Dev|Stage|Uat|Prod>`; product: products and stock history, shipment: shipments/customers/payments and shipment history, auth server: users and user history);
-  - **Kafka** with the exchange name `XYZ`: topics `XYZ_<Event>`, one consumer group per service and event (`XYZ_<Service>_<Event>`, [ADR-0062](0062-a-kafka-consumer-for-every-service-and-event.md)), one message at a time. `SendAsync` to one service stays unsupported on Kafka ([ADR-0057](0057-the-caller-of-a-message-and-publish-or-send.md)); Xyz publishes only.
+  - **Kafka** with the exchange name `XYZ`: topics `XYZ_<Event>`, one consumer group per service and event (`XYZ_<Service>_<Event>`, [framework ADR-0062](../../../docs/adr/0062-a-kafka-consumer-for-every-service-and-event.md)), one message at a time. `SendAsync` to one service stays unsupported on Kafka ([framework ADR-0057](../../../docs/adr/0057-the-caller-of-a-message-and-publish-or-send.md)); Xyz publishes only.
 - **Two framework gaps the sample showed were closed in the same change:** two contexts on the same provider in one host no longer collide on the name of their health check (the second is `<provider>-<Context>`), and the Kafka client tries again when the broker does not answer yet (topic creation retried 10 times, 2 s apart) instead of stopping the host on the first refusal.
-- The ports are 5100 (gateway), 5110 (auth server), 5120 order, 5130 product, 5140 shipment; the RSA key pair is made with `scripts/generate-rsa-keys.cs` and git-ignored, the key of Abc is never reused ([ADR-0031](0031-jwt-signed-with-an-rsa-private-key.md)).
+- The ports are 5100 (gateway), 5110 (auth server), 5120 order, 5130 product, 5140 shipment; the RSA key pair is made with `samples/scripts/generate-rsa-keys.cs` and git-ignored, the key of Abc is never reused ([ADR-0006](0006-jwt-signed-with-an-rsa-private-key.md)).
 
 ## Consequences
 
@@ -28,4 +28,4 @@ The first Xyz sample was a small order system written before the framework had i
 
 ## Related
 
-[ADR-0054](0054-the-order-flow-through-events.md), [ADR-0055](0055-environments-of-the-abc-sample.md), [ADR-0057](0057-the-caller-of-a-message-and-publish-or-send.md), [ADR-0059](0059-where-events-and-their-handlers-live.md), [ADR-0060](0060-customer-payment-and-an-internal-event-in-the-shipment-service.md).
+[ADR-0015](0015-the-order-flow-through-events.md), [ADR-0016](0016-environments-of-the-abc-sample.md), [framework ADR-0057](../../../docs/adr/0057-the-caller-of-a-message-and-publish-or-send.md), [ADR-0019](0019-where-events-and-their-handlers-live.md), [ADR-0020](0020-customer-payment-and-an-internal-event-in-the-shipment-service.md).

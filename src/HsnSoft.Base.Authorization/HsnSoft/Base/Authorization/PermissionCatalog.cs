@@ -6,7 +6,7 @@ using System.Reflection;
 namespace HsnSoft.Base.Authorization;
 
 /// <summary>
-/// The permissions of a system are the public string constants of its classes, nested by service and by controller (<c>EdxPermissions.FirmInvoice.Files.Read</c>): the code names the permission in the attribute of an endpoint and is the only list of them there is.
+/// The permissions of a system are the public string constants of its classes, nested by service and by controller (<c>ShopPermissions.Orders.Read</c>): the code names the permission in the attribute of an endpoint and is the only list of them there is.
 /// The service that manages the grants makes its catalogue from the same constants, so a permission an endpoint asks for is always one that can be granted.
 /// </summary>
 public static class PermissionCatalog

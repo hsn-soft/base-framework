@@ -4,12 +4,10 @@
     {
       "name": "format-cs-whitespace",
       "group": "pre-commit",
-      "command": "dotnet",
+      "command": "python3",
       "args": [
-        "format",
+        "scripts/format-staged.py",
         "whitespace",
-        "HsnSoft.Base.sln",
-        "--include",
         "${staged}"
       ],
       "include": [
@@ -19,15 +17,10 @@
     {
       "name": "format-cs-style",
       "group": "pre-commit",
-      "command": "dotnet",
+      "command": "python3",
       "args": [
-        "format",
+        "scripts/format-staged.py",
         "style",
-        "HsnSoft.Base.sln",
-        "--severity",
-        "info",
-        "--no-restore",
-        "--include",
         "${staged}"
       ],
       "include": [
@@ -67,16 +60,10 @@
     {
       "name": "check-cs-rules",
       "group": "pre-commit",
-      "command": "dotnet",
+      "command": "python3",
       "args": [
-        "format",
-        "style",
-        "HsnSoft.Base.sln",
-        "--severity",
-        "info",
-        "--no-restore",
-        "--verify-no-changes",
-        "--include",
+        "scripts/format-staged.py",
+        "verify-style",
         "${staged}"
       ],
       "include": [

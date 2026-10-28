@@ -23,7 +23,7 @@ does not exist for CI.
 - **Formatting is automatic:** the pre-commit hook formats the staged files and CI verifies (see [ADR-0013](0013-git-hooks.md), [ADR-0012](0012-ci-workflow-and-what-breaks-a-pull-request.md)).
   `scripts/format-json.cs` formats JSON the same way on every platform with only the .NET SDK.
 - Test names say what is expected (`MissingConnectionString_IsAnError`); one behaviour per test.
-- No secrets, tokens or real connection strings in the repository. Sample values live only under `samples/`.
+- No secrets, tokens or real connection strings in the repository.
 
 ## Consequences
 

@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-10-23
-- **Note:** [ADR-0061](0061-the-xyz-sample-beside-abc.md): the Kafka client retries the creation of topics while the broker does not answer, instead of stopping the host; [ADR-0062](0062-a-kafka-consumer-for-every-service-and-event.md): one consumer and group per service and event.
+- **Note:** the Kafka client retries the creation of topics while the broker does not answer, instead of stopping the host; [ADR-0062](0062-a-kafka-consumer-for-every-service-and-event.md): one consumer and group per service and event.
 
 ## Context
 

@@ -1,4 +1,4 @@
-# ADR-0096: The layout of the storage: a work folder, then everything of a tenant together, and the same folders in both queues
+# ADR-0044: The layout of the storage: a work folder, then everything of a tenant together, and the same folders in both queues
 
 - **Status:** Accepted
 - **Date:** 2026-10-28
@@ -9,7 +9,7 @@ The invoice service kept every step of an invoice in a folder of its own (`uploa
 
 ## Decision
 
-This supersedes the object paths of [ADR-0085](0085-the-edx-invoice-pipeline-queue-import-draft-approve-sign.md) and [ADR-0092](0092-the-edx-signer-is-a-service-of-its-own.md). The container of the invoice service (`edx-invoice`) holds **the work of the import in one folder and the invoices in folders by tenant**:
+This supersedes the object paths of [ADR-0033](0033-the-edx-invoice-pipeline-queue-import-draft-approve-sign.md) and [ADR-0040](0040-the-edx-signer-is-a-service-of-its-own.md). The container of the invoice service (`edx-invoice`) holds **the work of the import in one folder and the invoices in folders by tenant**:
 
 | Object | Who writes it, and when |
 |---|---|
@@ -34,4 +34,4 @@ Everything of a customer is under its `{tenant}` (its sales invoices, its purcha
 
 ## Related
 
-[ADR-0085](0085-the-edx-invoice-pipeline-queue-import-draft-approve-sign.md), [ADR-0092](0092-the-edx-signer-is-a-service-of-its-own.md); `samples/edx/service/invoice`.
+[ADR-0033](0033-the-edx-invoice-pipeline-queue-import-draft-approve-sign.md), [ADR-0040](0040-the-edx-signer-is-a-service-of-its-own.md); `samples/edx/service/invoice`.

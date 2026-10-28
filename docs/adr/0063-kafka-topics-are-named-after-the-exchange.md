@@ -2,11 +2,10 @@
 
 - **Status:** Accepted
 - **Date:** 2026-10-25 (changes the topic naming of [ADR-0023](0023-event-bus.md) and [ADR-0062](0062-a-kafka-consumer-for-every-service-and-event.md))
-- **Note:** [ADR-0077](0077-only-the-abc-sample-stays.md): the Xyz sample, which showed this, was removed; the Kafka consumer is covered by its tests.
 
 ## Context
 
-A Kafka topic was named `{Kafka:TopicPrefix}{EventName}` (`xyz.OrderCreated`) while the consumer group was named from the exchange (`XYZ_OrderService_OrderCreated`). Two settings said the same thing, the product (exchange) and the prefix, in two spellings, and the names of the
+A Kafka topic was named `{Kafka:TopicPrefix}{EventName}` (`shop.OrderCreated`) while the consumer group was named from the exchange (`SHOP_OrderService_OrderCreated`). Two settings said the same thing, the product (exchange) and the prefix, in two spellings, and the names of the
 topic, the group and the RabbitMQ queue did not read alike.
 
 ## Decision
@@ -18,9 +17,9 @@ topic, the group and the RabbitMQ queue did not read alike.
 ## Consequences
 
 - One setting names a product on the broker, as it does on RabbitMQ (`ABC_OrderService_OrderCreated` queue, `XYZ_OrderService_OrderCreated` group).
-- Topics of an earlier run (`xyz.*`) are not read any more; the samples are started from clean topics, groups and databases.
+- Topics of an earlier run (`shop.*`) are not read any more; a system is started from clean topics, groups and databases.
 - The integration tests isolate themselves with an exchange name of their own instead of a prefix.
 
 ## Related
 
-[ADR-0023](0023-event-bus.md), [ADR-0062](0062-a-kafka-consumer-for-every-service-and-event.md), [ADR-0061](0061-the-xyz-sample-beside-abc.md).
+[ADR-0023](0023-event-bus.md), [ADR-0062](0062-a-kafka-consumer-for-every-service-and-event.md).

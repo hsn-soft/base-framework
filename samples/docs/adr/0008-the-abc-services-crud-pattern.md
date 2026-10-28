@@ -1,7 +1,7 @@
-# ADR-0033: The CRUD pattern of the Abc services: order, product and shipment follow the identity service
+# ADR-0008: The CRUD pattern of the Abc services: order, product and shipment follow the identity service
 
-- **Status:** Accepted (the per-service `ICurrentUser` is replaced by the framework's, [ADR-0036](0036-icurrentuser-in-the-framework.md); the audit fields, soft delete and tenants are the framework's, [ADR-0037](0037-audit-soft-delete-and-tenants.md))
-- **Date:** 2026-10-25 (completes the skeletons of [ADR-0030](0030-microservice-project-pattern.md))
+- **Status:** Accepted (the per-service `ICurrentUser` is replaced by the framework's, [framework ADR-0036](../../../docs/adr/0036-icurrentuser-in-the-framework.md); the audit fields, soft delete and tenants are the framework's, [framework ADR-0037](../../../docs/adr/0037-audit-soft-delete-and-tenants.md))
+- **Date:** 2026-10-25 (completes the skeletons of [ADR-0005](0005-microservice-project-pattern.md))
 
 ## Context
 
@@ -18,7 +18,7 @@ four services read alike and a fifth is a copy.
   keeps its `SaveChanges` shape for now.)
 - **MongoDB mapping is in the persistence project** (`BsonClassMap` per entity, registered by `AddXPersistence`): the domain stays free of the driver. Enums are stored as text, money as `Decimal128`. A startup step makes the indexes
   (`EnsureProductDatabaseAsync`: the sku is unique; `EnsureShipmentDatabaseAsync`: the tracking number is unique, the order is looked up).
-- **Who did it:** every row has `CreatedBy` / `UpdatedBy`, the `sub` of the token, through an `ICurrentUser` of the application layer that the host answers from `HttpContext` (as in [ADR-0032](0032-the-auth-server-reads-the-users-of-the-identity-service.md)). An order's customer is the signed-in user.
+- **Who did it:** every row has `CreatedBy` / `UpdatedBy`, the `sub` of the token, through an `ICurrentUser` of the application layer that the host answers from `HttpContext` (as in [ADR-0007](0007-the-auth-server-reads-the-users-of-the-identity-service.md)). An order's customer is the signed-in user.
 - **Seed data only for the product service:** when its collection is empty, two products are added, `LAMP-001` with 10 in stock and `CHAIR-001` out of stock (0), written by `system`. The order and shipment services start empty.
 - **The commercial gateway forwards the three services** (`/order-service/v1`, `/product-service/v1`, `/shipment-service/v1` to `/api/{service}-service/v1/commercial`), with their health routes and their Swagger documents.
 - **Order and shipment status follow simple rules:** a status is sent as text; a delivered or cancelled order, and a delivered or returned shipment, cannot change its status; an order's lines cannot change once it is made.
@@ -32,4 +32,4 @@ four services read alike and a fifth is a copy.
 
 ## Related
 
-[ADR-0030](0030-microservice-project-pattern.md), [ADR-0026](0026-route-pattern-and-jwt-by-default.md), [ADR-0027](0027-gateway-route-registry.md), [ADR-0032](0032-the-auth-server-reads-the-users-of-the-identity-service.md), `samples/README.md`.
+[ADR-0005](0005-microservice-project-pattern.md), [framework ADR-0026](../../../docs/adr/0026-route-pattern-and-jwt-by-default.md), [ADR-0002](0002-gateways-per-audience.md), [ADR-0007](0007-the-auth-server-reads-the-users-of-the-identity-service.md), `samples/README.md`.

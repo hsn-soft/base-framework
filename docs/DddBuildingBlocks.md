@@ -63,7 +63,7 @@ A client sends `"price desc, name"`; a field that is not in `Fields` is refused 
 
 - **EF Core:** `EfCoreRepository<TContext, TEntity, TKey>`; derive it for a method of your own (`class EfCoreUserRepository(IdentityDbContext db) : EfCoreRepository<IdentityDbContext, User, Guid>(db), IUserRepository`). `IEfCoreRepository<,>` adds `UpdateWhereAsync(filter, set => set.SetProperty(...))` (one statement, audit fields written) and the reads with an `include` (`query => query.Include(order => order.Lines)`); nothing is joined unless one says so.
 
-The provider of a relational context is said by the code of the service, not by a setting: `services.AddBaseEfCore<IdentityDbContext>(configuration, providers => providers.UseSqlServer(), EfCoreIdentityDbProperties.Provider, EfCoreIdentityDbProperties.ConnectionStringName)`, where the properties class of the context also has its table prefix and schema ([ADR-0050](adr/0050-a-context-has-a-properties-class-for-its-database.md), [ADR-0051](adr/0051-every-context-is-named-by-its-properties-class.md)). The application code does not change when a context moves to another provider.
+The provider of a relational context is said by the code of the service, not by a setting: `services.AddBaseEfCore<OrdersDbContext>(configuration, providers => providers.UseSqlServer(), EfCoreOrdersDbProperties.Provider, EfCoreOrdersDbProperties.ConnectionStringName)`, where the properties class of the context also has its table prefix and schema ([ADR-0050](adr/0050-a-context-has-a-properties-class-for-its-database.md)). The application code does not change when a context moves to another provider.
 
 ### Reading a DTO without a mapper
 
@@ -71,7 +71,7 @@ The provider of a relational context is said by the code of the service, not by 
 - **MongoDB:** `MongoRepository<TEntity, TKey>`; call `MongoEntityMaps.RegisterBases<TKey>()` before the class maps of the entities (the driver wants the members of a base class mapped in its own map), and map only what is the entity's own
   (`map.MapProperty(p => p.Name)`, `TenantId`). `AddMongoRepository` calls it too. `IMongoRepository<,>` adds `UpdateWhereAsync(filter, set => set.Inc(p => p.Stock, -3))`: the check of the filter and the change are one statement of the database, audit fields written.
 
-### The change of a counter ([ADR-0064](adr/0064-the-stock-is-changed-in-one-step.md))
+### The change of a counter
 
 Two requests, or two copies of one message, can reach a service at once, and a broker may run several handlers of an event at the same time (`fetchCount`). A value that the code reads, checks and writes back (a stock) is then wrong; the service changes it in one step of the store
-(`UpdateWhereAsync` with the check in the filter, as `IProductRepository.TryTakeStockAsync` does in the samples).
+(`UpdateWhereAsync` with the check in the filter, as a `TryTakeStockAsync` of a product repository would).

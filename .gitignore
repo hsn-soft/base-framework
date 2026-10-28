@@ -464,7 +464,5 @@ logs/
 
 **/media/
 
-# RSA keys of the sample systems: the private key signs tokens and is a secret; make a pair with scripts/generate-rsa-keys.cs
+# A private key is a secret: never commit one
 private_key.xml
-samples/abc/shared/Abc.Shared.Hosting/public_key.xml
-samples/edx/shared/Edx.Shared.Hosting/public_key.xml

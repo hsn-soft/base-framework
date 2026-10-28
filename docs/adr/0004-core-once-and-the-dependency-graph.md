@@ -3,7 +3,7 @@
 - **Status:** Accepted
 - **Date:** 2026-10-22
 - **Note:** [ADR-0076](0076-more-providers-and-the-rules-every-provider-shares.md): `Logging.NLog` (on `Logging`), `BlobStoring.Azure` and `BlobStoring.Aws` (on `BlobStoring`), `EntityFrameworkCore.MySql` (on `EntityFrameworkCore`).
-- **Note:** [ADR-0075](0075-rules-of-the-framework-project-files.md): the rule that every package reaches `Core` and does not list it twice is a check (`scripts/ci-check-framework-references.py`) and is kept there.
+- **Note:** [ADR-0075](0075-rules-of-the-framework-project-files.md): the rule that every package reaches `Core` and does not list it twice is a check (`scripts/ci-force-framework-references-rules.py`) and is kept there.
 - **Note:** [ADR-0074](0074-multitenancy-is-a-package-of-its-own.md): five `MultiTenancy` packages (the tenants and where they come from, the token, the event bus, EF Core, MongoDB); `Core` has no tenant.
 - **Note:** [ADR-0073](0073-auditing-and-data-are-packages-of-their-own.md): `Auditing` and `Data` are packages of their own on `Core`; `Ddd.Domain` is on them.
 

@@ -5,13 +5,13 @@ The references of a project go in groups, one <ItemGroup> for each kind, top to 
 
   1. external   FrameworkReference and PackageReference of NuGet packages that are not ours (Microsoft.*, Yarp.ReverseProxy, Newtonsoft.Json)
   2. framework  HsnSoft.Base.*          (a ProjectReference to src/ or a PackageReference)
-  3. shared     <Product>.Shared.*      (Abc.Shared.Hosting, Hhs.Shared.Helper)
+  3. shared     <Product>.Shared.*      ({Product}.Shared.Hosting, Hhs.Shared.Helper)
   4. own        everything else         (the other projects of the same service or product)
 
 Inside a group the items are in alphabetical order of their names. Groups that hold something other than references
 (Content, EmbeddedResource, None...) come before the reference groups. A project with nothing of a kind has no group of it.
 
-Usage: scripts/ci-check-csproj-order.py [--fix] [project files...]   (without files: every *.csproj of the repository)
+Usage: scripts/ci-force-csproj-order.py [--fix] [project files...]   (without files: every *.csproj of the repository)
 """
 import os
 import re
@@ -149,7 +149,7 @@ def main() -> int:
     if not failed:
         print("The references of every project file are in order." if not fix else "Project files fixed.")
     else:
-        print("Run scripts/ci-check-csproj-order.py --fix to put them in order.")
+        print("Run scripts/ci-force-csproj-order.py --fix to put them in order.")
     return failed
 
 

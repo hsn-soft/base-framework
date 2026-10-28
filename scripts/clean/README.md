@@ -34,7 +34,7 @@ Matched by name anywhere under the repository:
 
 | Kind | Names | Why they exist |
 |---|---|---|
-| Build output | `bin/`, `obj/` | Compiled output and restore state of every project (framework, tests, samples) |
+| Build output | `bin/`, `obj/` | Compiled output and restore state of every project (framework, tests) |
 | Test results | `TestResults/` | `.trx` and coverage reports written by `run-tests.sh` and the Sonar scripts |
 | Test report files | `*.trx`, `coverage.cobertura.xml`, `coverage.opencover.xml` | The same reports, when a test run wrote them somewhere else |
 | SonarScanner | `.sonarqube/` | Temporary working folder of `dotnet sonarscanner` |

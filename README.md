@@ -63,7 +63,7 @@ limit, for example) is that product's shared code, not a framework package.
 
 ## Tests
 
-Every package has a unit test project (`test/<Package>.Tests`; `scripts/ci-check-test-projects.sh` fails the build when one is missing).
+Every package has a unit test project (`test/<Package>.Tests`; `scripts/ci-check-test-project-exist.sh` fails the build when one is missing).
 The code that only runs against a real service (brokers, databases, MinIO) is tested by `test/HsnSoft.Base.IntegrationTests`, which
 starts the services in Docker with Testcontainers.
 
@@ -79,16 +79,16 @@ new provider.
 ## The product decides the composition
 
 The framework offers building blocks; the product's shared library chooses which ones its services use and in which order they
-are registered and run. `samples/abc/shared/Abc.Shared.Hosting` does it for a JWT-secured web api, and a host that needs less takes fewer packages
+are registered and run. A product's shared hosting project does it for a JWT-secured web api, and a host that needs less takes fewer packages
 (the gateways, for one, have no database or broker).
 
 ```csharp
 // product shared library: one composition for every service of the product
-public static IServiceCollection AddAbcApi(this IServiceCollection services, IConfiguration configuration)
+public static IServiceCollection AddShopApi(this IServiceCollection services, IConfiguration configuration)
     => services.AddBaseWebApi().AddBaseSwaggerWithBearer("Orders API", "Enter a valid token", configuration).AddBaseHealthChecks()
                .AddBaseJwtAuthentication(configuration).AddBaseRedis(configuration);
 
-public static WebApplication UseAbcApi(this WebApplication app, Action<WebApplication>? beforeAuthorization = null)
+public static WebApplication UseShopApi(this WebApplication app, Action<WebApplication>? beforeAuthorization = null)
 {
     app.UseBaseExceptionHandling(); app.UseBaseSwagger();
     app.UseBaseAuthentication(); beforeAuthorization?.Invoke(app); app.UseBaseAuthorization();
@@ -101,7 +101,7 @@ A service then adds its own store and broker:
 
 ```csharp
 builder.Services
-    .AddAbcApi(builder.Configuration)
+    .AddShopApi(builder.Configuration)
     .AddBasePostgres<OrderDbContext>(builder.Configuration)
     .AddRabbitMqEventBus(builder.Configuration)
     .AddEventHandler<StockReserved, StockReservedHandler>();

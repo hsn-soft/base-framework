@@ -93,7 +93,7 @@ Each step prints a blue `[INFO]` banner, so you can see where a run is:
 
 Only the packages under `src/` count. These are left out of the analysis and of the coverage figure:
 
-- `test/**`, `samples/**` and `scripts/**` (tests, sample applications and tooling are not the product)
+- `test/**` and `scripts/**` (tests and tooling are not the product)
 - `**/Migrations/**`, `**/tmp/**`, files named `*Test*`
 - only `*.cs`, `*.js` and `*.css` files are inspected
 

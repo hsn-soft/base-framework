@@ -1,11 +1,11 @@
-# ADR-0091: The Edx integrations are reached directly; the services are reached through the gateway
+# ADR-0039: The Edx integrations are reached directly; the services are reached through the gateway
 
 - **Status:** Accepted
 - **Date:** 2026-10-28
 
 ## Context
 
-The gateway ([ADR-0078](0078-the-edx-sample-a-file-intake-system.md)) fronted every Edx host, the intake and integration hosts among them (REST, WCF and, on a second port, gRPC). The two integrations ([ADR-0090](0090-edx-services-are-named-integration-firm-invoice-and-integration-gib-invoice.md)) are different from the services: they face a party outside the system (the customers' programs, the center), speak three protocols (REST, gRPC, WCF) whose clients do not want a proxy
+The gateway ([ADR-0026](0026-the-edx-sample-a-file-intake-system.md)) fronted every Edx host, the intake and integration hosts among them (REST, WCF and, on a second port, gRPC). The two integrations ([ADR-0038](0038-edx-services-are-named-integration-firm-invoice-and-integration-gib-invoice.md)) are different from the services: they face a party outside the system (the customers' programs, the center), speak three protocols (REST, gRPC, WCF) whose clients do not want a proxy
 in between, move big files, and each has its own MongoDB, Redis and Kafka. The services (identity, invoice) and the auth server are what the back office and the integrations' own users reach through one front door.
 
 ## Decision
@@ -25,4 +25,4 @@ in between, move big files, and each has its own MongoDB, Redis and Kafka. The s
 
 ## Related
 
-[ADR-0078](0078-the-edx-sample-a-file-intake-system.md), [ADR-0086](0086-the-intake-service-is-three-hosts-rest-grpc-and-wcf.md), [ADR-0089](0089-the-edx-integration-service-sender-unit-and-post-box.md), [ADR-0090](0090-edx-services-are-named-integration-firm-invoice-and-integration-gib-invoice.md); `samples/edx/gateway`, `samples/edx/app/back-office/src/app/core/config.ts`.
+[ADR-0026](0026-the-edx-sample-a-file-intake-system.md), [ADR-0034](0034-the-intake-service-is-three-hosts-rest-grpc-and-wcf.md), [ADR-0037](0037-the-edx-integration-service-sender-unit-and-post-box.md), [ADR-0038](0038-edx-services-are-named-integration-firm-invoice-and-integration-gib-invoice.md); `samples/edx/gateway`, `samples/edx/app/back-office/src/app/core/config.ts`.

@@ -1,7 +1,7 @@
 # ADR-0037: Audit, soft delete and tenants of an entity
 
 - **Status:** Accepted (`IMultiTenant` has no `AssignTenant` now: the persistence writes `TenantId`; the entity bases are in `Ddd.Domain`, [ADR-0042](0042-ddd-domain-and-application-packages.md))
-- **Date:** 2026-10-25 (replaces the hand-written `CreatedBy`/`UpdatedBy` of [ADR-0033](0033-the-abc-services-crud-pattern.md) and the shape of `ICurrentUser` of [ADR-0036](0036-icurrentuser-in-the-framework.md))
+- **Date:** 2026-10-25 (replaces the hand-written `CreatedBy`/`UpdatedBy` and the shape of `ICurrentUser` of [ADR-0036](0036-icurrentuser-in-the-framework.md))
 - **Note:** [ADR-0074](0074-multitenancy-is-a-package-of-its-own.md): the tenants (`IMultiTenant`, `ICurrentTenant`, the filter, the claims, the envelope) are in the `HsnSoft.Base.MultiTenancy` packages; `ICurrentUser` has no tenant; a service chooses to have them.
 - **Note:** [ADR-0073](0073-auditing-and-data-are-packages-of-their-own.md): the audit contracts are in `HsnSoft.Base.Auditing` (read shapes `ICreationAuditedObject`, ..., marks `IMarkCreated`, ...; `ICreationAudited` and `IModificationAudited` are gone), `IDataFilter` in `HsnSoft.Base.Data`; `ISoftDelete` is only `IsDeleted` and stays in Core.
 
@@ -23,7 +23,6 @@ what depended on the old dependency-injection conventions, on `IScopeSubscriptio
   entities are kept). `AddBasePostgres` / `AddBaseSqlServer` register the interceptor.
 - **MongoDB:** no change tracking, so `MongoEntityConcepts` (registered by `AddBaseMongo`) is called by the repository: `Visible` for queries, `Created` / `Modified` before a write, `SoftDeleted` before a delete.
 - **Where they live:** the interfaces and the default implementations are in `HsnSoft.Base.Core` (registered by `AddBaseEntityConcepts`, which the database providers call); `ICurrentUser` is implemented by `HsnSoft.Base.Authentication`.
-- **In the Abc system:** the four entities (`User`, `Product`, `Order`, `Shipment`) have all four concepts. There are two tenants (`AbcTenants.System`, `AbcTenants.Acme`): `admin` is of the system tenant and `alice` of Acme; the auth server puts the claims in the token; the seeded products are Acme's.
   A unique value (a user name, a sku) is unique in the whole system, so the application checks it without the filters, and the auth server finds a user in every tenant (but not a deleted one).
 
 ## Consequences
@@ -36,4 +35,4 @@ what depended on the old dependency-injection conventions, on `IScopeSubscriptio
 
 ## Related
 
-[ADR-0033](0033-the-abc-services-crud-pattern.md), [ADR-0035](0035-the-persistence-project-registers-its-database.md), [ADR-0036](0036-icurrentuser-in-the-framework.md), [ADR-0032](0032-the-auth-server-reads-the-users-of-the-identity-service.md), [`docs/EntityConcepts.md`](../EntityConcepts.md).
+[ADR-0036](0036-icurrentuser-in-the-framework.md), [`docs/EntityConcepts.md`](../EntityConcepts.md).

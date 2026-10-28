@@ -1,6 +1,6 @@
-# ADR-0079: gRPC and WCF are entry points of a host, not framework packages
+# ADR-0027: gRPC and WCF are entry points of a host, not framework packages
 
-- **Status:** Accepted (the placement in the `Http.Host` is superseded by [ADR-0086](0086-the-intake-service-is-three-hosts-rest-grpc-and-wcf.md))
+- **Status:** Accepted (the placement in the `Http.Host` is superseded by [ADR-0034](0034-the-intake-service-is-three-hosts-rest-grpc-and-wcf.md))
 - **Date:** 2026-10-27
 
 ## Context
@@ -9,7 +9,7 @@ The Edx intake service has to be reachable by REST, gRPC and WCF (SOAP), because
 
 ## Decision
 
-**No new package. Both are entry points of the service's `Http.Host`, beside the controllers**, and call the same application service ([ADR-0041](0041-application-service-base-in-the-framework.md), [ADR-0078](0078-the-edx-sample-a-file-intake-system.md)).
+**No new package. Both are entry points of the service's `Http.Host`, beside the controllers**, and call the same application service ([framework ADR-0041](../../../docs/adr/0041-application-service-base-in-the-framework.md), [ADR-0026](0026-the-edx-sample-a-file-intake-system.md)).
 
 - **What is the framework's already works for them:** the JWT validation (`AddBaseJwtAuthentication`), the current user and the tenant (`HttpContext` carries both for a gRPC call and for a CoreWCF call), the request and response logs (the middleware already knows `application/grpc`, its trailers and its status), the health checks. A
   package would only wrap `AddGrpc` and `AddServiceModelServices`, and what is left (the exception to status mapping, the shape of the messages) is the product's own contract.
@@ -26,8 +26,8 @@ The Edx intake service has to be reachable by REST, gRPC and WCF (SOAP), because
 
 - A product that needs only one of the protocols references only that package; the framework carries neither.
 - The service has the `Grpc.AspNetCore` and `CoreWCF.*` references in its Host project only (`samples/Directory.Packages.props` has their versions); `Kestrel.AllowSynchronousIO` is on for WCF, which reads its messages synchronously, and so for the whole host.
-- A second product that wants the exception interceptor or the token check for WCF unchanged is the moment to move them into a package (ADR-0005).
+- A second product that wants the exception interceptor or the token check for WCF unchanged is the moment to move them into a package (framework ADR-0005).
 
 ## Related
 
-[ADR-0005](0005-where-code-lives.md), [ADR-0022](0022-web-api-answers.md), [ADR-0026](0026-route-pattern-and-jwt-by-default.md), [ADR-0027](0027-gateways-per-audience.md), [ADR-0078](0078-the-edx-sample-a-file-intake-system.md).
+[framework ADR-0005](../../../docs/adr/0005-where-code-lives.md), [framework ADR-0022](../../../docs/adr/0022-web-api-answers.md), [framework ADR-0026](../../../docs/adr/0026-route-pattern-and-jwt-by-default.md), [ADR-0002](0002-gateways-per-audience.md), [ADR-0026](0026-the-edx-sample-a-file-intake-system.md).

@@ -42,7 +42,7 @@ dotnet build
 ./scripts/run-tests.sh integration   # starts RabbitMQ, Kafka, Redis, MongoDB, PostgreSQL, SQL Server, MinIO (Testcontainers)
 ```
 
-- **Every package has a unit test project**, `test/<Package>.Tests`. `scripts/ci-check-test-projects.sh` fails the build when one is
+- **Every package has a unit test project**, `test/<Package>.Tests`. `scripts/ci-check-test-project-exist.sh` fails the build when one is
   missing.
 - **Every provider has integration tests** in `test/HsnSoft.Base.IntegrationTests`, against the real service.
 - **Coverage:** CI merges the coverage of both kinds of tests and fails below 99 % of the lines of `src`. New code comes with tests;
@@ -91,8 +91,8 @@ Rules to know:
 - Every public extension method that registers services has an XML doc comment saying what it registers and which configuration
   section it reads.
 - The references of a project file are in groups, one `ItemGroup` each, from the top down: external (NuGet, `FrameworkReference`), framework (`HsnSoft.Base.*`), shared (`<Product>.Shared.*`), own (the other projects of the service or product),
-  each in alphabetical order ([ADR-0043](docs/adr/0043-project-file-reference-order.md)). `python3 scripts/ci-check-csproj-order.py --fix` puts them in order; the CI and the detector check it. In `src/` every package reaches `HsnSoft.Base.Core` and does not list a reference a sibling already brings, `Core` included ([ADR-0075](docs/adr/0075-rules-of-the-framework-project-files.md), `scripts/ci-check-framework-references.py`).
-- Do not commit secrets, tokens or real connection strings. Sample values live only under `samples/`.
+  each in alphabetical order ([ADR-0043](docs/adr/0043-project-file-reference-order.md)). `python3 scripts/ci-force-csproj-order.py --fix` puts them in order; the CI and the detector check it. In `src/` every package reaches `HsnSoft.Base.Core` and does not list a reference a sibling already brings, `Core` included ([ADR-0075](docs/adr/0075-rules-of-the-framework-project-files.md), `scripts/ci-force-framework-references-rules.py`).
+- Do not commit secrets, tokens or real connection strings.
 
 ## Adding a package
 
@@ -100,8 +100,7 @@ Rules to know:
    (package id, description, tags, README).
 2. Add `test/HsnSoft.Base.<Name>.Tests/` (imports `common.test.props`; it can see the package's internals).
 3. For a provider (a broker, a database, a store), add integration tests to `test/HsnSoft.Base.IntegrationTests`.
-4. Add both to the solution, add a row to the package table in the root README, and, if it shows how products compose the
-   framework, use it in a sample under `samples/`.
+4. Add both to the solution and add a row to the package table in the root README.
 
 ## Trying a change in another service
 
@@ -115,4 +114,3 @@ reference the local build and be debugged against it. Details are at the top of 
 | `scripts/sonar/` | Local SonarQube analysis for Linux/macOS and Windows |
 | `scripts/detector/` | Runs the CI's checks on your machine before you open a pull request |
 | `scripts/clean/` | Deletes build output, test results and editor leftovers |
-| `samples/` | Example systems built only from the framework packages; see `samples/README.md` |

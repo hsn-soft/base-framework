@@ -7,7 +7,7 @@
 
 The services behind a gateway all expose controllers; the gateway routes by path. There is a gateway for the company's own (commercial) clients and, in the same way, one for the public, and a service must say which of them
 an endpoint is for. Without one pattern each service invented its own prefix, the gateway's routes could not be written once, and an endpoint could be left open by forgetting an attribute. The maintainer's production
-services already follow one pattern for nearly every endpoint, and the samples should show it.
+services already follow one pattern for nearly every endpoint.
 
 ## Decision
 
@@ -41,4 +41,4 @@ services already follow one pattern for nearly every endpoint, and the samples s
 
 ## Related
 
-[ADR-0005](0005-where-code-lives.md), [ADR-0022](0022-web-api-answers.md), [ADR-0024](0024-swagger.md), `samples/abc/service/identity` (`BaseServiceController`, `UsersController`).
+[ADR-0005](0005-where-code-lives.md), [ADR-0022](0022-web-api-answers.md), [ADR-0024](0024-swagger.md).

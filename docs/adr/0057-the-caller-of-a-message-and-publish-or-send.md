@@ -1,12 +1,12 @@
 # ADR-0057: The caller of a message is in the envelope; publish an event, send a command
 
 - **Status:** Accepted
-- **Date:** 2026-10-25 (changes [ADR-0023](0023-event-bus.md) and [ADR-0054](0054-the-order-flow-through-events.md); the samples owe nothing to the event bus of the previous framework, which was a source of ideas)
+- **Date:** 2026-10-25 (changes [ADR-0023](0023-event-bus.md); nothing is owed to the event bus of the previous framework, which was a source of ideas)
 - **Note:** [ADR-0074](0074-multitenancy-is-a-package-of-its-own.md): the tenant is no longer a property of the envelope but two headers (`TenantId`, `IsSystemTenant`) that `HsnSoft.Base.MultiTenancy.EventBus` writes and reads; `ActingUser` has no tenant.
 
 ## Context
 
-What a handler needs to act for the user who started a chain (the tenant, the user) was in the payload of the events (`TenantId` in every Abc event) or in a dictionary of headers that nothing read. A handler therefore ran as nobody: its audit fields (`CreatedBy`, `UpdatedBy`) were empty and it had to switch
+What a handler needs to act for the user who started a chain (the tenant, the user) was in the payload of the events (`TenantId` in every event) or in a dictionary of headers that nothing read. A handler therefore ran as nobody: its audit fields (`CreatedBy`, `UpdatedBy`) were empty and it had to switch
 the tenant by hand. A message was published either to every service or, with a flag, to a queue that was only ever the publisher's own.
 
 ## Decision
@@ -17,7 +17,6 @@ the tenant by hand. A message was published either to every service or, with a f
   (not as whoever happened to be acting). A seed, a worker or the auth server (which writes the login history as the user who signs in) uses the same scope. `ICurrentUser` has `Roles`.
 - **Publish an event, send a command:** `IEventBus.PublishAsync` goes to every service that listens (an event is something that happened, the publisher does not know who cares); `IEventBus.SendAsync(message, toService)` goes straight to the queue of one service, which is made if it is not there (a command asks one service to do
   something; a failed message is put back the same way). The `isExchangeEvent` flag is gone. Kafka has no place for a message to one service and refuses it.
-- **The Abc flow follows it:** the product service publishes what happened (`OrderStockReservedEto` or `OrderStockRejectedEto`); the order service and the shipment service each subscribe; nobody tells the shipment service to ship.
 - **Inbox and outbox are optional.** The event bus core knows neither; a service that needs them adds them as parts of their own (an inbox that makes a handler idempotent, an outbox that publishes with the change that caused the message), and one that does not carries nothing of them.
 
 ## Consequences
@@ -27,4 +26,4 @@ the tenant by hand. A message was published either to every service or, with a f
 
 ## Related
 
-[ADR-0023](0023-event-bus.md), [ADR-0054](0054-the-order-flow-through-events.md), [ADR-0037](0037-audit-soft-delete-and-tenants.md), [ADR-0045](0045-repository-levels-relational-and-document.md).
+[ADR-0023](0023-event-bus.md), [ADR-0037](0037-audit-soft-delete-and-tenants.md), [ADR-0045](0045-repository-levels-relational-and-document.md).

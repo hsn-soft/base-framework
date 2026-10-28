@@ -1,4 +1,4 @@
-# ADR-0084: The Edx back office: an Angular app that asks the services what the user may do
+# ADR-0032: The Edx back office: an Angular app that asks the services what the user may do
 
 - **Status:** Accepted
 - **Date:** 2026-10-28
@@ -6,7 +6,7 @@
 ## Context
 
 The Edx system needs a screen for its people: the invoices, the invoice reports, and the management of users, roles and what the roles are granted. The old system had a large Angular back office. A new one for a sample should show how a client lives with the permissions of
-[ADR-0083](0083-permission-types-the-menu-and-constraints-that-must-be-given.md), not repeat a template.
+[framework ADR-0083](../../../docs/adr/0083-four-permission-types-and-constraints-that-must-be-given.md), not repeat a template.
 
 ## Decision
 
@@ -25,4 +25,4 @@ The Edx system needs a screen for its people: the invoices, the invoice reports,
 
 ## Related
 
-[ADR-0027](0027-gateways-per-audience.md), [ADR-0078](0078-the-edx-sample-a-file-intake-system.md), [ADR-0083](0083-permission-types-the-menu-and-constraints-that-must-be-given.md).
+[ADR-0002](0002-gateways-per-audience.md), [ADR-0026](0026-the-edx-sample-a-file-intake-system.md), [framework ADR-0083](../../../docs/adr/0083-four-permission-types-and-constraints-that-must-be-given.md).

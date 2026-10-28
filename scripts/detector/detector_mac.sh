@@ -91,9 +91,9 @@ gate() { python3 scripts/ci-check-coverage.py "$THRESHOLD" $(reports unit) $(rep
 info "## STAGES ----------------------------------------------------------------------"
 stage restore "Restore" dotnet restore HsnSoft.Base.sln --verbosity minimal && RESTORED=true || RESTORED=false
 
-stage test-projects "Every package has a test project" ./scripts/ci-check-test-projects.sh
-stage csproj-order "Project file reference order" python3 scripts/ci-check-csproj-order.py
-stage framework-references "Framework project references" python3 scripts/ci-check-framework-references.py
+stage test-projects "Every package has a test project" ./scripts/ci-check-test-project-exist.sh
+stage csproj-order "Project file reference order" python3 scripts/ci-force-csproj-order.py
+stage framework-references "Framework project references" python3 scripts/ci-force-framework-references-rules.py
 if [ "$RESTORED" = true ]; then
     stage format-cs "Format (C#)" format_cs
 else

@@ -1,4 +1,4 @@
-# ADR-0087: The Edx mock GİB center: a WCF service with the contract and the checks of the real one
+# ADR-0035: The Edx mock GİB center: a WCF service with the contract and the checks of the real one
 
 - **Status:** Accepted
 - **Date:** 2026-10-28
@@ -40,4 +40,4 @@ responses (`POSTBOXENVELOPE`) and system responses (`SYSTEMENVELOPE`); the other
 
 ## Related
 
-[ADR-0079](0079-grpc-and-wcf-are-entry-points-of-a-host.md) (WCF in the samples), [ADR-0085](0085-the-edx-invoice-pipeline-queue-import-draft-approve-sign.md); `samples/edx/mock/README.md`, `samples/edx/docs/einvoice`.
+[ADR-0027](0027-grpc-and-wcf-are-entry-points-of-a-host.md) (WCF in the samples), [ADR-0033](0033-the-edx-invoice-pipeline-queue-import-draft-approve-sign.md); `samples/edx/mock/README.md`, `samples/edx/docs/einvoice`.
