@@ -119,7 +119,8 @@ internal sealed partial class KafkaEventConsumer(
                 object envelope = EventSerializer.DeserializeEnvelope(result.Message.Value, info.EventType);
                 await dispatcher.DispatchAsync(info.EventName, info.EventType, envelope, handlerToken).ConfigureAwait(false);
             }
-            catch (Exception exception) when (exception is not OperationCanceledException)
+            // a cancellation is the shutdown only when the token of the handlers says so; a handler that throws one by itself (a timed out HttpClient) is a failed message like any other, or its offset would never be completed and the partition never committed
+            catch (Exception exception) when (exception is not OperationCanceledException || !handlerToken.IsCancellationRequested)
             {
                 LogDeadLettered(logger, exception, result.Topic);
                 await deadLetters.ProduceAsync(deadLetterTopic, new Message<string, byte[]>

@@ -56,6 +56,13 @@ public sealed class FailingHandler : IIntegrationEventHandler<Pinged>
         => throw new InvalidOperationException("this handler always fails");
 }
 
+/// <summary>Fails with a cancellation that is not the shutdown (a timed out call of an <c>HttpClient</c> does the same).</summary>
+public sealed class SelfCancellingHandler : IIntegrationEventHandler<Pinged>
+{
+    public Task HandleAsync(MessageEnvelope<Pinged> envelope, CancellationToken cancellationToken)
+        => throw new TaskCanceledException("the call timed out");
+}
+
 /// <summary>Publishes a follow-up event without saying which message caused it: the chain must follow by itself.</summary>
 public sealed class ChainingHandler(Recorder recorder, IEventBus eventBus) : IIntegrationEventHandler<Pinged>
 {

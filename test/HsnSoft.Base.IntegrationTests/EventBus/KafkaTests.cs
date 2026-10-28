@@ -55,6 +55,42 @@ public sealed class KafkaTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task HandlerThatCancelsItself_EndsInTheDeadLetterTopic_AndTheOffsetIsCommitted()
+    {
+        string exchange = $"it{Guid.NewGuid():N}";
+        string service = $"service-{Guid.NewGuid():N}";
+        using IHost host = await StartAsync(exchange, services => services.AddEventHandler<Pinged, SelfCancellingHandler>(), service);
+        string text = $"timed-out-{Guid.NewGuid():N}";
+        await host.Services.GetRequiredService<IEventBus>().PublishAsync(new Pinged(text));
+
+        using IConsumer<string, byte[]> probe = new ConsumerBuilder<string, byte[]>(new ConsumerConfig
+        {
+            BootstrapServers = _container.GetBootstrapAddress(),
+            GroupId = $"probe-{Guid.NewGuid():N}",
+            AutoOffsetReset = AutoOffsetReset.Earliest,
+        }).Build();
+        probe.Subscribe($"{exchange}_dead-letter");
+        await Support.EventuallyAsync(() =>
+        {
+            ConsumeResult<string, byte[]> message = probe.Consume(TimeSpan.FromSeconds(1));
+            return Task.FromResult(message is not null && System.Text.Encoding.UTF8.GetString(message.Message.Value).Contains(text, StringComparison.Ordinal));
+        }, "the message on the dead-letter topic");
+
+        // the offset was completed: it is committed, so a service that starts again does not read the message again
+        await Support.EventuallyAsync(() =>
+        {
+            using IConsumer<string, byte[]> group = new ConsumerBuilder<string, byte[]>(new ConsumerConfig
+            {
+                BootstrapServers = _container.GetBootstrapAddress(),
+                GroupId = KafkaTopology.GroupFor(new EventBusOptions { ExchangeName = exchange, ConsumerClientName = service }, "Pinged"),
+            }).Build();
+            List<TopicPartitionOffset> committed = group.Committed([new TopicPartition($"{exchange}_Pinged", 0)], TimeSpan.FromSeconds(5));
+            return Task.FromResult(committed[0].Offset.Value >= 1);
+        }, "the offset of the message to be committed");
+        await host.StopAsync();
+    }
+
+    [Fact]
     public async Task EventTheHandlerCannotHandle_EndsInTheDeadLetterTopic()
     {
         string exchange = $"it{Guid.NewGuid():N}";
