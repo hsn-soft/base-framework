@@ -477,6 +477,33 @@ public sealed class RabbitMqConsumerTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task ConsumerTheBrokerCancels_OnAnOpenChannel_IsRebuilt()
+    {
+        Rig rig = await StartAsync();
+
+        // the queue was deleted or a node failed over: the channel stays open but nothing is delivered to it any more
+        await rig.Basic.HandleBasicCancelAsync("consumer-tag");
+        await EventBusRabbitMqTests.Until(() => rig.Connection.Channels.Count == 2 && rig.Connection.Channels[1].Named("BasicConsumeAsync").Count == 1);
+
+        Assert.Contains(rig.Logger.Entries, entry => entry.Message.Contains("broker cancelled the consumer", StringComparison.Ordinal));
+        Assert.Contains(rig.Logger.Entries, entry => entry.Message.Contains("died and was rebuilt", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task RebuildThatFailsAfterTheChannelWasCreated_ThrowsTheChannelAway_AndIsTriedAgain()
+    {
+        Rig rig = await StartAsync();
+        ChannelState failing = new() { Failure = call => call.Name == "BasicConsumeAsync" ? new InvalidOperationException("consume failed") : null };
+        rig.Connection.QueueChannelState(failing);
+
+        rig.Channel.IsClosed = true;
+
+        // the channel without a consumer is not kept as if it were alive: a third channel is made and consumed on
+        await EventBusRabbitMqTests.Until(() => rig.Connection.Channels.Count == 3 && rig.Connection.Channels[2].Named("BasicConsumeAsync").Count == 1);
+        Assert.Contains(rig.Logger.Entries, entry => entry.Message.Contains("could not be recovered", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public async Task RebuiltChannel_ReceivesMessages()
     {
         Rig rig = await StartAsync();

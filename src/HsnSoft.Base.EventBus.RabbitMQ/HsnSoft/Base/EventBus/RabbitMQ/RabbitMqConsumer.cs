@@ -49,6 +49,7 @@ public sealed partial class RabbitMqConsumer(
     private Task? _recoveryTask;
     private string _consumerTag = "no-active-consumer";
     private bool _disposed;
+    private bool _consumerCancelled;
 
     public string QueueName { get; } = EventNameHelper.GetConsumerClientEventQueueName(options, eventInfo.EventName);
 
@@ -154,6 +155,7 @@ public sealed partial class RabbitMqConsumer(
 
         AsyncEventingBasicConsumer consumer = new(channel);
         consumer.ReceivedAsync += OnReceivedAsync;
+        consumer.UnregisteredAsync += (_, _) => OnConsumerCancelledAsync(channel);
         channel.ChannelShutdownAsync += OnChannelShutdownAsync;
         _consumerTag = await channel.BasicConsumeAsync(QueueName, autoAck: false, consumer, cancellationToken).ConfigureAwait(false);
         LogSubscribed(_logger, QueueName, channel.ChannelNumber);
@@ -332,6 +334,18 @@ public sealed partial class RabbitMqConsumer(
         return channel;
     }
 
+    // the broker took the consumer away (the queue was deleted, a node failed over): the channel is open but nothing is delivered to it, so the recovery loop must rebuild it
+    private Task OnConsumerCancelledAsync(IChannel channel)
+    {
+        if (!_disposed && ReferenceEquals(_channel, channel))
+        {
+            Volatile.Write(ref _consumerCancelled, true);
+            LogConsumerCancelled(_logger, QueueName);
+        }
+
+        return Task.CompletedTask;
+    }
+
     private Task OnChannelShutdownAsync(object sender, ShutdownEventArgs args)
     {
         LogChannelShutdown(_logger, QueueName, args.ReplyText ?? "no reason given");
@@ -384,7 +398,7 @@ public sealed partial class RabbitMqConsumer(
     private bool IsChannelDead()
     {
         IChannel? channel = _channel;
-        return !_disposed && (channel is null || channel.IsClosed);
+        return !_disposed && (channel is null || channel.IsClosed || Volatile.Read(ref _consumerCancelled));
     }
 
     private async Task RebuildChannelAsync(CancellationToken cancellationToken)
@@ -395,10 +409,29 @@ public sealed partial class RabbitMqConsumer(
         {
             old = _channel;
             _channel = newChannel;
+            Volatile.Write(ref _consumerCancelled, false);
         }
 
         old?.Dispose();
-        await StartConsumingAsync(newChannel, cancellationToken).ConfigureAwait(false);
+        try
+        {
+            await StartConsumingAsync(newChannel, cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            // an open channel without a consumer would look alive and never be rebuilt: it is thrown away, so the next pass tries again
+            lock (_channelLock)
+            {
+                if (ReferenceEquals(_channel, newChannel))
+                {
+                    _channel = null;
+                }
+            }
+
+            newChannel.Dispose();
+            throw;
+        }
+
         LogChannelRebuilt(_logger, QueueName);
     }
 
@@ -459,6 +492,9 @@ public sealed partial class RabbitMqConsumer(
 
     [LoggerMessage(EventId = 4015, EventName = "RABBITMQ_CONSUMER_RECOVERY_FAILED", Level = LogLevel.Error, Message = "{Queue}: the channel could not be recovered, trying again: {Error}")]
     private static partial void LogRecoveryFailed(ILogger logger, string queue, string error);
+
+    [LoggerMessage(EventId = 4017, EventName = "RABBITMQ_CONSUMER_CANCELLED_BY_BROKER", Level = LogLevel.Warning, Message = "{Queue}: the broker cancelled the consumer, the channel will be rebuilt")]
+    private static partial void LogConsumerCancelled(ILogger logger, string queue);
 
     [LoggerMessage(EventId = 4016, EventName = "RABBITMQ_CONSUMER_CHANNEL_REBUILT", Level = LogLevel.Information, Message = "{Queue}: the channel died and was rebuilt")]
     private static partial void LogChannelRebuilt(ILogger logger, string queue);
