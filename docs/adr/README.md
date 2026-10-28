@@ -22,61 +22,28 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 | [0003](0003-abstractions-separate-from-providers.md) | Abstractions are separate from their providers | Accepted | 2026-10-22 |
 | [0004](0004-core-once-and-the-dependency-graph.md) | Packages reference `HsnSoft.Base.Core` once, and form this dependency graph | Accepted | 2026-10-22 |
 | [0005](0005-where-code-lives.md) | Where a piece of code lives: the framework, a product's shared project, or a service | Accepted | 2026-10-22 |
-| [0006](0006-repository-and-solution-layout.md) | Repository folders, the solution file and the sample systems | Accepted | 2026-10-25 |
+| [0006](0006-repository-folders-and-the-solution-file.md) | Repository folders and the solution file | Accepted | 2026-10-25 |
 
-## Services
+## Building blocks, products and hosts
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
-| [0097](0097-the-commercial-invoice-and-its-answer.md) | The commercial invoice (TICARIFATURA) and the answer of its receiver | Accepted | 2026-10-28 |
-| [0096](0096-the-edx-invoice-container-layout.md) | The layout of the storage: a work folder, then everything of a tenant together, and the same folders in both queues | Accepted | 2026-10-28 |
-| [0095](0095-the-word-intake-is-firm-invoice.md) | "Intake" is "FirmInvoice" everywhere: routes, contracts, permissions, settings and code | Accepted | 2026-10-28 |
-| [0094](0094-the-edx-sales-invoice-and-its-envelope-are-two-statuses.md) | A sales invoice and its envelope have two statuses; the envelope belongs to the GİB invoice integration | Accepted | 2026-10-28 |
-| [0093](0093-the-mock-center-envelope-holds-up-to-1000-invoices-and-is-asked-by-uuid.md) | In the mock center an envelope is the post: up to 1000 invoices for one post box; its status is asked by uuid; system envelopes are off | Accepted | 2026-10-28 |
-| [0092](0092-the-edx-signer-is-a-service-of-its-own.md) | The Edx signer is a service of its own: `Edx.SignerService.Http.Host` | Accepted | 2026-10-28 |
-| [0091](0091-the-edx-integrations-are-reached-directly-the-services-through-the-gateway.md) | The Edx integrations are reached directly; the services are reached through the gateway | Accepted | 2026-10-28 |
-| [0090](0090-edx-services-are-named-integration-firm-invoice-and-integration-gib-invoice.md) | The Edx integration services are named by what they integrate: `Edx.Integration.FirmInvoice.*` and `Edx.Integration.GibInvoice.*` | Accepted | 2026-10-28 |
-| [0089](0089-the-edx-integration-service-sender-unit-and-post-box.md) | The Edx integration service is the sender unit and the post box of the customers | Accepted | 2026-10-28 |
-| [0088](0088-the-edx-invoice-is-a-ubl-tr-document.md) | The Edx invoice is a UBL-TR 1.2.1 document, made from the customer's file and checked against the schema | Accepted | 2026-10-28 |
-| [0087](0087-the-edx-mock-gib-center.md) | The Edx mock GİB center: a WCF service with the contract and the checks of the real one | Accepted | 2026-10-28 |
-| [0086](0086-the-intake-service-is-three-hosts-rest-grpc-and-wcf.md) | The intake service is three hosts: REST, gRPC and WCF | Accepted | 2026-10-28 |
-| [0085](0085-the-edx-invoice-pipeline-queue-import-draft-approve-sign.md) | The Edx invoice pipeline: queue, import, draft, approve, sign | Accepted | 2026-10-28 |
-| [0084](0084-the-edx-back-office-an-angular-app-that-asks-the-services-what-the-user-may-do.md) | The Edx back office: an Angular app that asks the services what the user may do | Accepted | 2026-10-28 |
-| [0083](0083-permission-types-the-menu-and-constraints-that-must-be-given.md) | Four permission types, the menu as data with its permissions, and constraints that must be given | Accepted | 2026-10-28 |
-| [0082](0082-a-new-permission-is-granted-to-the-sample-roles-when-it-is-added.md) | A new permission is granted to the sample roles when it is added | Accepted | 2026-10-27 |
-| [0081](0081-permissions-a-package-grants-in-the-cache-and-one-service-that-manages-them.md) | Permissions: one framework package, the grants kept in the distributed cache, one service that manages them | Accepted | 2026-10-27 |
-| [0080](0080-edx-identity-tenants-roles-and-signing-in-by-tenant.md) | The Edx identity service: tenants, roles, and signing in by the code of the tenant | Accepted | 2026-10-27 |
-| [0079](0079-grpc-and-wcf-are-entry-points-of-a-host.md) | gRPC and WCF are entry points of a host, not framework packages | Accepted (the placement in `Http.Host` is superseded by [ADR-0086](0086-the-intake-service-is-three-hosts-rest-grpc-and-wcf.md)) | 2026-10-27 |
-| [0078](0078-the-edx-sample-a-file-intake-system.md) | The Edx sample: a system that takes files from customers | Accepted | 2026-10-27 |
-| [0077](0077-only-the-abc-sample-stays.md) | Only the Abc sample stays | Accepted | 2026-10-27 |
+| [0098](0098-a-message-another-handling-holds-is-put-back-not-acknowledged.md) | A message another handling holds is put back, never acknowledged | Accepted | 2026-10-28 |
+| [0083](0083-four-permission-types-and-constraints-that-must-be-given.md) | Four permission types and constraints that must be given | Accepted | 2026-10-28 |
+| [0081](0081-permissions-one-framework-package-and-the-grants-in-the-distributed-cache.md) | Permissions: one framework package and the grants kept in the distributed cache | Accepted | 2026-10-27 |
 | [0076](0076-more-providers-and-the-rules-every-provider-shares.md) | More providers (NLog, Azure, AWS, MySQL), and the rules every logging provider shares | Accepted | 2026-10-27 |
 | [0075](0075-rules-of-the-framework-project-files.md) | The rules of the project files of the framework (a living list) | Accepted | 2026-10-27 |
 | [0074](0074-multitenancy-is-a-package-of-its-own.md) | Multitenancy is a package of its own, and a service that does not want tenants does not get them | Accepted | 2026-10-27 |
 | [0073](0073-auditing-and-data-are-packages-of-their-own.md) | Auditing and Data are packages of their own | Accepted | 2026-10-27 |
-| [0072](0072-a-host-chooses-its-localization-and-its-cache.md) | A host chooses its localization and its cache | Accepted | 2026-10-27 |
 | [0071](0071-the-aspnetcore-layer-packages-build-on-aspnetcore.md) | The `AspNetCore` layer packages (`WebApi`, `Swashbuckle`) build on `AspNetCore` | Accepted | 2026-10-27 |
 | [0070](0070-a-framework-package-brings-what-its-api-exposes.md) | A framework package brings what its API exposes | Accepted | 2026-10-26 |
-| [0069](0069-who-references-which-shared-project-in-abc.md) | Who references which shared project in Abc | Accepted | 2026-10-26 |
-| [0068](0068-the-shared-texts-of-a-product-are-a-project-of-their-own.md) | The shared texts of a product are a project of their own | Accepted | 2026-10-26 |
 | [0067](0067-the-event-inbox-is-opt-in-and-a-decorator.md) | The event inbox is opt-in and a decorator of the dispatcher | Accepted | 2026-10-26 |
 | [0066](0066-kafka-handles-fetchcount-messages-at-the-same-time.md) | Kafka handles `fetchCount` messages at the same time | Accepted | 2026-10-26 |
 | [0065](0065-the-consumers-outlive-their-own-failures.md) | The consumers outlive their own failures | Accepted | 2026-10-26 |
-| [0064](0064-the-stock-is-changed-in-one-step.md) | The stock is changed in one step of the store (an atomic update on MongoDB too) | Accepted | 2026-10-26 |
 | [0063](0063-kafka-topics-are-named-after-the-exchange.md) | Kafka topics are named after the exchange; the topic prefix setting is gone | Accepted | 2026-10-25 |
 | [0062](0062-a-kafka-consumer-for-every-service-and-event.md) | A Kafka consumer, in a group of its own, for every service and event | Accepted | 2026-10-25 |
-| [0061](0061-the-xyz-sample-beside-abc.md) | The Xyz sample beside Abc | Superseded by [0077](0077-only-the-abc-sample-stays.md) | 2026-10-25 |
-| [0060](0060-customer-payment-and-an-internal-event-in-the-shipment-service.md) | Customer, payment and an internal event in the shipment service | Accepted | 2026-10-25 |
-| [0059](0059-where-events-and-their-handlers-live.md) | Where the events and their handlers live | Accepted | 2026-10-25 |
-| [0058](0058-names-on-the-broker-in-the-abc-sample.md) | The names on the broker in the Abc sample | Accepted | 2026-10-25 |
 | [0057](0057-the-caller-of-a-message-and-publish-or-send.md) | The caller of a message is in the envelope; publish an event, send a command | Accepted | 2026-10-25 |
-| [0056](0056-tables-and-collections-are-named-like-the-entity.md) | Tables and collections are named like the entity | Accepted | 2026-10-25 |
-| [0055](0055-environments-of-the-abc-sample.md) | The environments of the Abc sample, and the names of its databases | Accepted | 2026-10-25 |
-| [0054](0054-the-order-flow-through-events.md) | The order flow runs through events: order, product, shipment, order | Accepted | 2026-10-25 |
-| [0053](0053-more-than-one-store-in-a-service.md) | More than one store in a service: a second MongoDB under a key, a relational project beside a MongoDB one | Accepted | 2026-10-25 |
-| [0052](0052-the-history-of-the-users.md) | The history of the users: a CRUD of its own, written by the identity service and the auth server | Accepted | 2026-10-25 |
-| [0051](0051-every-context-is-named-by-its-properties-class.md) | Every context of a sample is named by its properties class; the provider setting is gone | Accepted | 2026-10-25 |
 | [0050](0050-a-context-has-a-properties-class-for-its-database.md) | A context has a properties class that says where and on what its data is | Accepted | 2026-10-25 |
-| [0049](0049-abc-databases-and-provider-references.md) | The Abc services' databases, and a project references only the provider it uses | Accepted | 2026-10-25 |
 | [0048](0048-bulk-and-set-based-changes.md) | Many entities at once, and changes made without loading | Accepted | 2026-10-25 |
 | [0047](0047-relational-provider-chosen-by-a-setting.md) | The relational provider is chosen by a setting | Accepted | 2026-10-25 |
 | [0046](0046-dto-projection-without-a-mapper.md) | A DTO is read by a projection made from the DTO, without a mapper | Accepted | 2026-10-25 |
@@ -90,15 +57,6 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 | [0038](0038-localization.md) | Localization: embedded JSON texts, merged from the innermost layer out, in the language of the request | Accepted | 2026-10-25 |
 | [0037](0037-audit-soft-delete-and-tenants.md) | Audit, soft delete and tenants of an entity | Accepted | 2026-10-25 |
 | [0036](0036-icurrentuser-in-the-framework.md) | `ICurrentUser` is the framework's; the JWT authentication registers it | Accepted | 2026-10-25 |
-| [0035](0035-the-persistence-project-registers-its-database.md) | The persistence project registers its database provider | Accepted | 2026-10-25 |
-| [0034](0034-redis-and-rabbitmq-in-the-abc-hosts.md) | Redis and RabbitMQ in the Abc hosts | Accepted | 2026-10-25 |
-| [0033](0033-the-abc-services-crud-pattern.md) | The CRUD pattern of the Abc services: order, product and shipment follow the identity service | Accepted | 2026-10-25 |
-| [0032](0032-the-auth-server-reads-the-users-of-the-identity-service.md) | The auth server reads the users of the identity service; the author of a row is the `sub` of the token | Accepted | 2026-10-25 |
-| [0031](0031-jwt-signed-with-an-rsa-private-key.md) | The JWT is signed with an RSA private key; the other hosts only have the public key | Accepted | 2026-10-25 |
-| [0030](0030-microservice-project-pattern.md) | Every microservice has the same four projects; only the persistence project varies | Accepted | 2026-10-25 |
-| [0029](0029-one-auth-server-issues-the-token.md) | One auth server issues the JWT; every other host only validates it | Accepted | 2026-10-25 |
-| [0028](0028-shared-hosting-projects.md) | A product's hosts share their composition in `{Product}.Shared.Hosting`, with one specialization per kind of host | Accepted | 2026-10-25 |
-| [0027](0027-gateways-per-audience.md) | One gateway per audience, built from a route registry; the gateway forwards, the services decide who may call | Accepted | 2026-10-25 |
 | [0026](0026-route-pattern-and-jwt-by-default.md) | Routes are `api/{area}/v1/{commercial|public}/{controller}`, and every endpoint needs a JWT unless it says otherwise | Accepted | 2026-10-25 |
 
 ## Branching
@@ -152,6 +110,6 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 - Port the Kafka consumer and add an Azure Service Bus project the same way as RabbitMQ ([ADR-0023](0023-event-bus.md)); bridge the Kafka client's logs to `ILogger`.
 - Show the `BaseResponse` envelope in the Swagger document ([ADR-0024](0024-swagger.md)).
 - A test that fixes the allowed fields per log type, and configurable per-type `RemoveFields`/`AddFields` ([ADR-0019](0019-log-fields-pipeline.md)).
-- A `SharedLog` in a measured run (the Xyz shared library logs only when Redis is down), so its column of `docs/GraylogFields.md` has data.
+- A `SharedLog` in a measured run (a product's shared library that logs only when Redis is down), so its column of `docs/GraylogFields.md` has data.
 - Revoke and rotate the SonarQube token that was once pasted in a conversation; keep tokens in `scripts/sonar/.env` only.
 - A **draft** pull request from `feat/new-framework` into `dev` (never merged until the framework is complete, [ADR-0025](0025-the-rewrite-lives-on-feat-new-framework.md)), to see the CI run on Linux for the first time.

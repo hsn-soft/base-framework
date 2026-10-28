@@ -17,7 +17,7 @@ public sealed class KafkaTests : IAsyncLifetime
 
     public Task DisposeAsync() => _container.DisposeAsync().AsTask();
 
-    private Task<IHost> StartAsync(string exchange, Action<IServiceCollection> handlers, string? service = null, TimeSpan? shutdownTimeout = null, int partitions = 1)
+    private Task<IHost> StartAsync(string exchange, Action<IServiceCollection> handlers, string? service = null, TimeSpan? shutdownTimeout = null, int partitions = 1, TimeSpan? inProgressRetryDelay = null)
     {
         IConfiguration configuration = Support.Configuration(
             ("Kafka:BootstrapServers", _container.GetBootstrapAddress()),
@@ -31,6 +31,7 @@ public sealed class KafkaTests : IAsyncLifetime
                 options.MaxHandlerAttempts = 2;
                 options.RetryDelay = TimeSpan.FromMilliseconds(10);
                 options.ShutdownTimeout = shutdownTimeout ?? options.ShutdownTimeout;
+                options.InProgressRetryDelay = inProgressRetryDelay ?? options.InProgressRetryDelay;
             });
             handlers(services);
         });
@@ -339,6 +340,40 @@ public sealed class KafkaTests : IAsyncLifetime
         Assert.Equal(20, handled.Distinct().Count());
         await a.StopAsync();
         await b.StopAsync();
+    }
+
+    private sealed class InProgressTwiceDispatcher(IEventDispatcher inner) : IEventDispatcher
+    {
+        public int Asked { get; private set; }
+
+        public Task DispatchAsync(string trimmedEventName, Type eventType, object messageEnvelope, CancellationToken cancellationToken = default)
+            => ++Asked <= 2 ? Task.FromException(new HsnSoft.Base.EventBus.Inbox.MessageInProgressException()) : inner.DispatchAsync(trimmedEventName, eventType, messageEnvelope, cancellationToken);
+    }
+
+    [Fact]
+    public async Task AMessageAnotherHandlingHolds_IsAskedForAgain_UntilItCanBeHandled_AndIsNotDeadLettered()
+    {
+        string exchange = $"it{Guid.NewGuid():N}";
+        Recorder recorder = new();
+        InProgressTwiceDispatcher? decorated = null;
+        using IHost host = await StartAsync(exchange, services =>
+        {
+            services.AddSingleton(recorder);
+            services.AddEventHandler<Pinged, RecordingHandler>();
+            ServiceDescriptor original = services.Single(descriptor => descriptor.ServiceType == typeof(IEventDispatcher));
+            services.Remove(original);
+            services.AddSingleton<IEventDispatcher>(provider =>
+            {
+                IEventDispatcher inner = (IEventDispatcher)(original.ImplementationInstance ?? (original.ImplementationFactory is { } factory ? factory(provider) : ActivatorUtilities.CreateInstance(provider, original.ImplementationType!)));
+                return decorated = new InProgressTwiceDispatcher(inner);
+            });
+        }, inProgressRetryDelay: TimeSpan.FromMilliseconds(100));
+        await host.Services.GetRequiredService<IEventBus>().PublishAsync(new Pinged("held"));
+
+        await Support.EventuallyAsync(() => Task.FromResult(recorder.Received.Count == 1), "the message to be handled once the other handling let go");
+        Assert.Equal("held", recorder.Received.Single().Message.Text);
+        Assert.True(decorated!.Asked >= 3);
+        await host.StopAsync();
     }
 
     private sealed class CountingDispatcher : IEventDispatcher

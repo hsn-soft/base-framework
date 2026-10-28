@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Confluent.Kafka;
+using HsnSoft.Base.EventBus.Inbox;
 using Microsoft.Extensions.Logging;
 
 namespace HsnSoft.Base.EventBus.Kafka;
@@ -117,7 +118,19 @@ internal sealed partial class KafkaEventConsumer(
             try
             {
                 object envelope = EventSerializer.DeserializeEnvelope(result.Message.Value, info.EventType);
-                await dispatcher.DispatchAsync(info.EventName, info.EventType, envelope, handlerToken).ConfigureAwait(false);
+                while (true)
+                {
+                    try
+                    {
+                        await dispatcher.DispatchAsync(info.EventName, info.EventType, envelope, handlerToken).ConfigureAwait(false);
+                        break;
+                    }
+                    catch (MessageInProgressException)
+                    {
+                        // another handling holds the message (it may be one that crashed): the offset is not completed, and the message is asked for again until that handling has ended or its lease has run out
+                        await Task.Delay(eventBusOptions.InProgressRetryDelay, handlerToken).ConfigureAwait(false);
+                    }
+                }
             }
             // a cancellation is the shutdown only when the token of the handlers says so; a handler that throws one by itself (a timed out HttpClient) is a failed message like any other, or its offset would never be completed and the partition never committed
             catch (Exception exception) when (exception is not OperationCanceledException || !handlerToken.IsCancellationRequested)

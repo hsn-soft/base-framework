@@ -1,5 +1,6 @@
 using System.Text;
 using HsnSoft.Base.Domain.Entities.Events;
+using HsnSoft.Base.EventBus.Inbox;
 using HsnSoft.Base.EventBus.RabbitMQ.Configs;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -293,6 +294,19 @@ public sealed class RabbitMqConsumerTests : IAsyncDisposable
         Assert.Empty(rig.Acks);
         Assert.Equal([3UL, false, true], Assert.Single(rig.Nacks).Args.Take(3));
         Assert.Contains(rig.Logger.Entries, entry => entry.Message.Contains("TIMEOUT", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task AMessageAnotherHandlingHolds_IsPutBackOnTheQueue_NotAcknowledgedAndNotReported()
+    {
+        Rig rig = await StartAsync();
+        rig.Dispatcher.Behavior = () => throw new MessageInProgressException();
+
+        await rig.Deliver(tag: 4);
+
+        Assert.Empty(rig.Notifier.Notified);
+        Assert.Empty(rig.Acks);
+        Assert.Equal([4UL, false, true], Assert.Single(rig.Nacks).Args.Take(3));
     }
 
     [Fact]

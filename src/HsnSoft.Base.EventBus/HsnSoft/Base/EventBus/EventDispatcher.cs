@@ -176,7 +176,7 @@ public sealed partial class EventDispatcher(
         }
     }
 
-    // false when the message is not to be handled: it was handled before, or another handling holds it, or it failed too often
+    // false when the message is not to be handled: it was handled before, or it failed too often; throws when another handling holds it (the delivery must come back)
     private async Task<bool> TryStartInboxAsync(string eventName, ParentMessageEnvelope envelope, string from, string to, CancellationToken cancellationToken)
     {
         AsyncServiceScope scope = _scopeFactory.CreateAsyncScope();
@@ -191,8 +191,9 @@ public sealed partial class EventDispatcher(
                     LogInboxAlreadyHandled(_logger, from, to);
                     break;
                 case InboxStart.InProgress:
+                    // not acknowledged: the handling that holds the message may have crashed, and its lease has to run out before this delivery can take it
                     LogInboxInProgress(_logger, from, to);
-                    break;
+                    throw new MessageInProgressException();
                 default:
                     LogInboxRetryLimit(_logger, from, to);
                     break;
@@ -320,10 +321,10 @@ public sealed partial class EventDispatcher(
     [LoggerMessage(EventId = 2005, EventName = "CONSUME_EVENT_INBOX_ALREADY_HANDLED", Level = LogLevel.Information, Message = "{From} -> {To}: the message was handled before, it is left alone")]
     private static partial void LogInboxAlreadyHandled(ILogger logger, string from, string to);
 
-    [LoggerMessage(EventId = 2006, EventName = "CONSUME_EVENT_INBOX_IN_PROGRESS", Level = LogLevel.Warning, Message = "{From} -> {To}: another handling holds the message and its lease has not run out, this delivery is left alone")]
+    [LoggerMessage(EventId = 2006, EventName = "CONSUME_EVENT_INBOX_IN_PROGRESS", Level = LogLevel.Warning, Message = "{From} -> {To}: another handling holds the message and its lease has not run out, this delivery is put back and tried again later")]
     private static partial void LogInboxInProgress(ILogger logger, string from, string to);
 
-    [LoggerMessage(EventId = 2007, EventName = "CONSUME_EVENT_INBOX_RETRY_LIMIT", Level = LogLevel.Warning, Message = "{From} -> {To}: the message failed more often than the inbox allows, it is left to the error queue")]
+    [LoggerMessage(EventId = 2007, EventName = "CONSUME_EVENT_INBOX_RETRY_LIMIT", Level = LogLevel.Warning, Message = "{From} -> {To}: the message failed more often than the inbox allows, this delivery is left alone (the error queue was told when it last failed)")]
     private static partial void LogInboxRetryLimit(ILogger logger, string from, string to);
 
     [LoggerMessage(EventId = 2003, EventName = "CONSUME_EVENT_RETRY", Level = LogLevel.Warning, Message = "{Handler} failed on {EventName}, attempt {Attempt}/{Max}")]

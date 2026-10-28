@@ -90,7 +90,6 @@ public sealed class EventDispatcherInboxTests : IDisposable
 
     [Theory]
     [InlineData(InboxStart.AlreadyHandled, LogLevel.Information)]
-    [InlineData(InboxStart.InProgress, LogLevel.Warning)]
     [InlineData(InboxStart.RetryLimitReached, LogLevel.Warning)]
     public async Task AMessageTheInboxDoesNotHand_IsLeftAlone_WithoutAnError(InboxStart start, LogLevel level)
     {
@@ -102,6 +101,19 @@ public sealed class EventDispatcherInboxTests : IDisposable
         Assert.Equal(0, handler.Calls);
         Assert.Equal(["start:Sample:corr"], inbox.Calls);
         Assert.Contains(logger.Entries, entry => entry.Level == level && entry.Message.Contains("left", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task AMessageAnotherHandlingHolds_IsNotLeftAlone_TheDeliveryThrowsSoTheBrokerBringsItBack()
+    {
+        (EventDispatcher dispatcher, RecordingHandler handler, FakeInbox inbox, ListLogger<EventDispatcher> logger) = Create();
+        inbox.Start = InboxStart.InProgress;
+
+        await Assert.ThrowsAsync<MessageInProgressException>(() => dispatcher.DispatchAsync("Sample", typeof(SampleEto), NewEnvelope()));
+
+        Assert.Equal(0, handler.Calls);
+        Assert.Equal(["start:Sample:corr"], inbox.Calls);
+        Assert.Contains(logger.Entries, entry => entry.Level == LogLevel.Warning && entry.Message.Contains("tried again", StringComparison.Ordinal));
     }
 
     [Fact]

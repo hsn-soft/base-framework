@@ -41,6 +41,9 @@ public sealed class EventBusOptions
     /// <summary>The pause before handler attempt <c>n + 1</c> is <c>n * RetryDelay</c>.</summary>
     public TimeSpan RetryDelay { get; set; } = TimeSpan.FromMilliseconds(200);
 
+    /// <summary>How long a consumer that reads many messages itself (Kafka) waits before it asks again for a message another handling holds (<see cref="HsnSoft.Base.EventBus.Inbox.MessageInProgressException"/>). RabbitMQ puts the message back after its own <c>RequeueDelay</c>.</summary>
+    public TimeSpan InProgressRetryDelay { get; set; } = TimeSpan.FromSeconds(5);
+
     /// <summary>How often publishing is repeated when the broker is unreachable, after the first try.</summary>
     public int PublishRetryCount { get; set; } = 5;
 

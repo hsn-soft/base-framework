@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using HsnSoft.Base.Domain.Entities.Events;
+using HsnSoft.Base.EventBus.Inbox;
 using HsnSoft.Base.EventBus.RabbitMQ.Configs;
 using HsnSoft.Base.EventBus.RabbitMQ.Connection;
 using HsnSoft.Base.Logging;
@@ -197,6 +198,12 @@ public sealed partial class RabbitMqConsumer(
             catch (TimeoutException exception)
             {
                 LogTimeout(_logger, QueueName, exception.Message);
+                await RequeueAfterDelayAsync(args.DeliveryTag).ConfigureAwait(false);
+                return;
+            }
+            catch (MessageInProgressException)
+            {
+                // another handling holds the message (it may be one that crashed): not acknowledged, put back until that handling has ended or its lease has run out
                 await RequeueAfterDelayAsync(args.DeliveryTag).ConfigureAwait(false);
                 return;
             }
