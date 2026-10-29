@@ -3,12 +3,6 @@
     <Import Project="..\..\common.test.props" />
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.13" />
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.13" />
-        <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.13" />
-    </ItemGroup>
-
-    <ItemGroup>
         <ProjectReference Include="..\..\src\HsnSoft.Base.EntityFrameworkCore.PostgreSql\HsnSoft.Base.EntityFrameworkCore.PostgreSql.csproj" />
     </ItemGroup>
 

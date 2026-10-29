@@ -1,4 +1,6 @@
 <Project>
+    <Import Project="$(MSBuildThisFileDirectory)common.versions.props" />
+
     <!--
         Shared settings of every test project under test/.
         Import it from the project file:  <Import Project="..\..\common.test.props" />
@@ -31,16 +33,23 @@
     </PropertyGroup>
 
     <ItemGroup Label="Test stack">
-        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.7.0" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
         <PackageReference Include="xunit" Version="2.9.3" />
-        <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5">
+        <PackageReference Include="xunit.runner.visualstudio" Version="4.0.1">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="coverlet.collector" Version="10.0.1">
+        <PackageReference Include="coverlet.collector" Version="10.1.0">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
+    </ItemGroup>
+
+    <!-- What nearly every test builds its own host with: the library packages bring only the abstractions, so a test that makes a container, a logger or a configuration needs these -->
+    <ItemGroup Label="Test host">
+        <PackageReference Include="Microsoft.Extensions.Configuration" Version="$(MicrosoftAspNetCorePackageVersion)" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="$(MicrosoftAspNetCorePackageVersion)" />
+        <PackageReference Include="Microsoft.Extensions.Logging" Version="$(MicrosoftAspNetCorePackageVersion)" />
     </ItemGroup>
 
     <ItemGroup>

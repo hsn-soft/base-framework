@@ -3,10 +3,6 @@
     <Import Project="..\..\common.test.props" />
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.13" />
-    </ItemGroup>
-
-    <ItemGroup>
         <ProjectReference Include="..\..\src\HsnSoft.Base.MultiTenancy.Authentication\HsnSoft.Base.MultiTenancy.Authentication.csproj" />
     </ItemGroup>
 
