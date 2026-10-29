@@ -10,7 +10,7 @@ forgetting something, and a fast test loop that needs no external service.
 
 ## Decision
 
-- **Every package under `src/` has `test/<Package>.Tests/`** (it imports `common.test.props` and can see the internals of its package). `scripts/ci-check-test-project-exist.sh` fails CI (and the
+- **Every package under `src/` has `test/<Package>.Tests/`** (it imports `common.test.props` and can see the internals of its package). `scripts/ci-detector/ci-check-test-project-exist.sh` fails CI (and the
   detector) when one is missing. The only exceptions are listed in the script with the reason: `HsnSoft.Base` (a name holder that only references Core) and `HsnSoft.Base.BlobStoring` (a single
   interface; its implementations are tested in the provider projects).
 - **Test kinds are told by project name, not by traits:** `*.Tests.csproj` are unit tests, `*.IntegrationTests.csproj` are integration tests (see [ADR-0010](0010-integration-tests-with-testcontainers.md)).
@@ -28,4 +28,4 @@ forgetting something, and a fast test loop that needs no external service.
 
 ## Related
 
-[ADR-0010](0010-integration-tests-with-testcontainers.md), [ADR-0011](0011-coverage-gate.md), `scripts/ci-check-test-project-exist.sh`, `scripts/run-tests.sh`.
+[ADR-0010](0010-integration-tests-with-testcontainers.md), [ADR-0011](0011-coverage-gate.md), `scripts/ci-detector/ci-check-test-project-exist.sh`, `scripts/run-tests.sh`.

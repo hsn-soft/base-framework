@@ -4,7 +4,7 @@
 The repository can have more than one solution. A file belongs to the solution in the deepest folder above it, and `dotnet format` only knows the files of the
 solution it is given, so each group of files is given to its own solution (a file of no solution is left alone).
 
-Usage: scripts/format-staged.py <whitespace|style|verify-style> <file>...
+Usage: scripts/ci-detector/format-staged.py <whitespace|style|verify-style> <file>...
   whitespace    dotnet format whitespace                              (rewrites the files)
   style         dotnet format style --severity info                   (rewrites the files)
   verify-style  dotnet format style --severity info --verify-no-changes   (a non-zero exit code when a file would change)

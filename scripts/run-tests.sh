@@ -27,7 +27,16 @@ if [ -z "$projects" ]; then
     exit 0
 fi
 
+elapsed() { printf '%dm %02ds' $(($1 / 60)) $(($1 % 60)); }
+
+total="$(printf '%s\n' "$projects" | wc -l | tr -d ' ')"
+number=0
+started=$SECONDS
 while IFS= read -r project; do
-    echo "==> $kind tests: $project"
+    number=$((number + 1))
+    echo "==> $kind tests $number/$total: $project (started $(date +%H:%M:%S))"
+    project_started=$SECONDS
     dotnet test "$project" "$@"
+    echo "==> $kind tests $number/$total: $(basename "$project" .csproj) completed in $(elapsed $((SECONDS - project_started))) ($(date +%H:%M:%S))"
 done <<< "$projects"
+echo "==> $kind tests: $total project(s) completed in $(elapsed $((SECONDS - started)))"

@@ -11,6 +11,12 @@ function Write-Info
     Write-Host "[INFO] $Message" -ForegroundColor Blue
 }
 
+function Format-Elapsed
+{
+    param([TimeSpan]$Span)
+    "{0}m {1:00}s" -f [int][math]::Floor($Span.TotalMinutes), $Span.Seconds
+}
+
 function Assert-LastExitCode
 {
     param([string]$Step)
@@ -44,10 +50,14 @@ $rootFolder = (Resolve-Path (Join-Path $PSScriptRoot "../..")).Path
 $testOutputDir = Join-Path $rootFolder "TestResults"
 $env:PATH += [IO.Path]::PathSeparator + (Join-Path $HOME ".dotnet/tools")
 Set-Location $rootFolder
+$startedAt = Get-Date
+
+# a clean screen for the run (only on a terminal, not when the output goes to a file)
+if (-not [Console]::IsOutputRedirected) { Clear-Host }
 
 " "
 Write-Info "================================================================================"
-Write-Info "== PROJECT FOLDER => '$rootFolder' START"
+Write-Info "== PROJECT FOLDER => '$rootFolder' START ($(Get-Date -Format HH:mm:ss))"
 Write-Info "================================================================================"
 " "
 Write-Info "## CHECKING THE ENVIRONMENT ----------------------------------------------------"
@@ -91,7 +101,7 @@ if (Test-Path $testOutputDir)
 }
 Write-Info "## TEST FOLDER CLEANING COMPLETED ----------------------------------------------"
 " "
-Write-Info "## SONAR SCANNER ANALYSIS ------------------------------------------------------"
+Write-Info "## SONAR SCANNER ANALYSIS STARTED ($(Get-Date -Format HH:mm:ss)) -----------------------------"
 dotnet sonarscanner begin `
     /k:"$sonarProjectKey" `
     /d:sonar.host.url="$sonarHostUrl" `
@@ -99,7 +109,7 @@ dotnet sonarscanner begin `
     /d:sonar.cs.vstest.reportsPaths="$testOutputDir/**/*.trx" `
     /d:sonar.cs.opencover.reportsPaths="$testOutputDir/**/coverage.opencover.xml" `
     /d:sonar.coverage.exclusions="test/**,scripts/**,**/Migrations/**,**/*Test*.cs,**/*Test*/**,**/tmp/**,**/Tmp/**,**/TMP/**" `
-    /d:sonar.inclusions="**/*.cs,**/*.js,**/*.css" `
+    /d:sonar.inclusions="src/**/*.cs,src/**/*.js,src/**/*.css" `
     /d:sonar.exclusions="test/**,scripts/**,**/Migrations/**,**/*Test*.cs,**/*Test*/**,**/tmp/**,**/Tmp/**,**/TMP/**,**/data/**,**/logs/**,**/sample/**"
 Assert-LastExitCode "sonarscanner begin"
 " "
@@ -112,32 +122,40 @@ dotnet build --no-restore --no-incremental --verbosity minimal -c Release -p:Tre
 Assert-LastExitCode "dotnet build"
 " "
 Write-Info "## DOTNET TEST -----------------------------------------------------------------"
-$testProjects = Get-ChildItem -Path (Join-Path $rootFolder "test") -Recurse -Filter *.csproj
+# the unit tests first, the integration tests (Docker, the slow ones) last: a broken unit test is found at once, not after the containers
+$allTestProjects = Get-ChildItem -Path (Join-Path $rootFolder "test") -Recurse -Filter *.csproj | Sort-Object FullName
+$testProjects = @($allTestProjects | Where-Object { $_.BaseName -notlike "*IntegrationTests" }) + @($allTestProjects | Where-Object { $_.BaseName -like "*IntegrationTests" })
+$number = 0
+$testsStartedAt = Get-Date
 foreach ($proj in $testProjects)
 {
+    $number++
     $projName = $proj.BaseName
     $outDir = Join-Path $testOutputDir $projName
     New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 
     " "
-    Write-Info "## TEST [ $projName ]"
+    Write-Info "## TEST $number/$($testProjects.Count) [ $projName ] STARTED ($(Get-Date -Format HH:mm:ss))"
     " "
+    $projectStartedAt = Get-Date
     dotnet test $proj.FullName `
         --no-build --no-restore --configuration Release `
         --settings (Join-Path $rootFolder "test/coverlet.runsettings") `
         --collect:"XPlat Code Coverage" `
         --results-directory $outDir `
-        --logger "trx;LogFileName=$projName.trx"
+        --logger "trx;LogFileName=$projName.trx" `
+        --logger "console;verbosity=normal"
     Assert-LastExitCode "tests of $projName"
+    Write-Info "## TEST $number/$($testProjects.Count) [ $projName ] COMPLETED in $(Format-Elapsed ((Get-Date) - $projectStartedAt))"
 }
 " "
-Write-Info "## DOTNET TEST COMPLETED -------------------------------------------------------"
+Write-Info "## DOTNET TEST COMPLETED in $(Format-Elapsed ((Get-Date) - $testsStartedAt)) ---------------------------------------"
 " "
 Write-Info "## SONAR SCANNER CHECKING RESULTS ----------------------------------------------"
 dotnet sonarscanner end /d:sonar.token="$env:SONAR_TOKEN"
 Assert-LastExitCode "sonarscanner end"
 " "
-Write-Info "## SONAR SCANNER ANALYSIS COMPLETED --------------------------------------------"
+Write-Info "## SONAR SCANNER ANALYSIS COMPLETED ($(Get-Date -Format HH:mm:ss), $(Format-Elapsed ((Get-Date) - $startedAt)) since the start) ---------"
 Write-Info "## DASHBOARD => $sonarHostUrl/dashboard?id=$sonarProjectKey"
 " "
 Write-Info "## SONAR OVERVIEW --------------------------------------------------------------"
@@ -193,6 +211,6 @@ else
 Write-Info "## SONAR OVERVIEW COMPLETED ----------------------------------------------------"
 " "
 Write-Info "================================================================================"
-Write-Info "== PROJECT FOLDER => '$rootFolder' FINISHED"
+Write-Info "== PROJECT FOLDER => '$rootFolder' FINISHED ($(Get-Date -Format HH:mm:ss), total $(Format-Elapsed ((Get-Date) - $startedAt)))"
 Write-Info "================================================================================"
 " "

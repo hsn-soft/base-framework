@@ -5,8 +5,8 @@ can start from a clean tree (after a branch switch, when a build behaves strange
 
 | File | For |
 |---|---|
-| `clean_mac.sh` | macOS, Linux (bash) |
-| `clean_win.ps1` | Windows (PowerShell 7; also works with `pwsh` on macOS/Linux) |
+| `cleaner_mac.sh` | macOS, Linux (bash) |
+| `cleaner_win.ps1` | Windows (PowerShell 7; also works with `pwsh` on macOS/Linux) |
 
 Your source code is never touched: the scripts only delete the names listed below, never look inside `.git`, and skip anything
 that contains a **committed** file (they say so: `Keeping '...' (it contains tracked files)`).
@@ -15,14 +15,14 @@ that contains a **committed** file (they say so: `Keeping '...' (it contains tra
 
 ```bash
 # macOS / Linux
-./scripts/clean/clean_mac.sh --dry-run    # only list what would be deleted
-./scripts/clean/clean_mac.sh              # delete
+./scripts/cleaner/cleaner_mac.sh --dry-run    # only list what would be deleted
+./scripts/cleaner/cleaner_mac.sh              # delete
 ```
 
 ```powershell
 # Windows
-./scripts/clean/clean_win.ps1 -DryRun
-./scripts/clean/clean_win.ps1
+./scripts/cleaner/cleaner_win.ps1 -DryRun
+./scripts/cleaner/cleaner_win.ps1
 ```
 
 Run it with `--dry-run` / `-DryRun` first when you want to see the list. After cleaning, the next `dotnet build` restores and

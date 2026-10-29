@@ -6,7 +6,7 @@
       "group": "pre-commit",
       "command": "python3",
       "args": [
-        "scripts/format-staged.py",
+        "scripts/ci-detector/format-staged.py",
         "whitespace",
         "${staged}"
       ],
@@ -19,7 +19,7 @@
       "group": "pre-commit",
       "command": "python3",
       "args": [
-        "scripts/format-staged.py",
+        "scripts/ci-detector/format-staged.py",
         "style",
         "${staged}"
       ],
@@ -33,7 +33,7 @@
       "command": "dotnet",
       "args": [
         "run",
-        "scripts/format-json.cs",
+        "scripts/ci-detector/format-json.cs",
         "--",
         "${staged}"
       ],
@@ -62,7 +62,7 @@
       "group": "pre-commit",
       "command": "python3",
       "args": [
-        "scripts/format-staged.py",
+        "scripts/ci-detector/format-staged.py",
         "verify-style",
         "${staged}"
       ],

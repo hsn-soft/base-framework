@@ -1,8 +1,8 @@
 # Pre-PR check (Windows / PowerShell 7): runs on your machine what the CI will run on the pull request, and shows one table of what
-# passed and where it would break. The Linux/macOS twin is detector_mac.sh; both run the same stages and print the same tables.
+# passed and where it would break. The Linux/macOS twin is ci_detector_mac.sh; both run the same stages and print the same tables.
 # See README.md in this folder. Needs: dotnet, git, python, bash (Git for Windows ships it) and, for the integration tests, Docker.
 #
-# Usage: ./scripts/detector/detector_win.ps1 [-SkipIntegration]
+# Usage: ./scripts/ci-detector/ci_detector_win.ps1 [-SkipIntegration]
 #   -SkipIntegration   do not run the integration tests (no Docker needed); the coverage gate is then skipped too
 #
 # Keep it in step with .github/workflows/net-core-build-and-test.yml: when a step is added there, add the stage here.
@@ -18,6 +18,14 @@ $out = Join-Path $root "TestResults/detector"
 $logs = Join-Path $out "logs"
 Set-Location $root
 
+function Format-Elapsed
+{
+    param([TimeSpan]$Span)
+    "{0}m {1:00}s" -f [int][math]::Floor($Span.TotalMinutes), $Span.Seconds
+}
+
+$detectorStartedAt = Get-Date
+
 function Write-Info
 {
     param([string]$Message)
@@ -27,9 +35,12 @@ function Write-Info
 $workflow = Get-Content (Join-Path $root ".github/workflows/net-core-build-and-test.yml") -Raw
 $threshold = if ($workflow -match "COVERAGE_THRESHOLD:\s*'([0-9.]+)'") { $Matches[1] } else { "99" }
 
+# a clean screen for the run (only on a terminal, not when the output goes to a file)
+if (-not [Console]::IsOutputRedirected) { Clear-Host }
+
 " "
 Write-Info "================================================================================"
-Write-Info "== DETECTOR => '$root' START"
+Write-Info "== DETECTOR => '$root' START ($(Get-Date -Format HH:mm:ss))"
 Write-Info "================================================================================"
 " "
 Write-Info "## CHECKING THE TOOLS ----------------------------------------------------------"
@@ -52,8 +63,24 @@ if ($missing)
 }
 " "
 
+# the CI starts from a clean checkout: so does the detector. The cleaning script lists what it deletes; that list goes to the log, the screen gets its summary.
+Write-Info "## CLEANING (build output, old test results, editor leftovers) -----------------"
+$cleanWatch = [Diagnostics.Stopwatch]::StartNew()
+$cleanLog = New-TemporaryFile
+& (Join-Path $root "scripts/cleaner/cleaner_win.ps1") *> $cleanLog.FullName
+if ($LASTEXITCODE -ne 0 -and $null -ne $LASTEXITCODE)
+{
+    Get-Content $cleanLog.FullName
+    Write-Host "The cleaning failed; fix the above and run again." -ForegroundColor Red
+    exit 2
+}
+$cleanSeconds = [int]$cleanWatch.Elapsed.TotalSeconds
+Get-Content $cleanLog.FullName | ForEach-Object { $_ -replace "\x1b\[[0-9;]*m", "" } | Where-Object { $_ -match 'item\(s\) to delete' } | ForEach-Object { "  $_" }
+" "
+
 if (Test-Path $out) { Remove-Item $out -Recurse -Force }
 New-Item -ItemType Directory -Force -Path $logs | Out-Null
+Move-Item $cleanLog.FullName (Join-Path $logs "clean.log")
 
 $script:results = New-Object System.Collections.Generic.List[object]
 
@@ -63,15 +90,37 @@ function Add-Result
     $script:results.Add([pscustomobject]@{ Name = $Name; Result = $Result; Time = $Time; Detail = $Detail })
 }
 
+Add-Result "Clean" "PASS" "${cleanSeconds}s" ""
+
 # Invoke-Stage: runs the script block, keeps its output in logs/<id>.log, records PASS/FAIL. Returns $true on PASS.
+# What is shown while a stage runs (its output goes to its log): a line for every test project that finished, a line for every test that passed
+# (with its time: the integration tests, which run for minutes) and every test that failed. [Console] writes to the terminal, which the redirection of the stage does not catch.
+$script:passed = 0
+function Show-Progress
+{
+    param([string]$Line)
+    if ($Line -match '^==> .* completed in ') { [Console]::WriteLine("      " + $Line.Substring(4)) }
+    elseif ($Line -match '^  Failed .*\]$') { [Console]::WriteLine("      " + $Line.Trim()) }
+    elseif ($Line -match '^  Passed (.*\])$')
+    {
+        $script:passed++
+        $shown = $Matches[1] -replace '^HsnSoft\.Base\.IntegrationTests\.', ''
+        if ($shown.Length -gt 110) { $shown = $shown.Substring(0, 110) }
+        [Console]::WriteLine(("      {0,3}  {1}" -f $script:passed, $shown))
+    }
+    $Line
+}
+
 function Invoke-Stage
 {
-    param([string]$Id, [string]$Title, [scriptblock]$Action)
-    Write-Host ("  {0,-36} " -f $Title) -NoNewline
+    param([string]$Id, [string]$Title, [scriptblock]$Action, [switch]$Live)
+    # a stage that shows its progress says that it is running on a line of its own; the result comes on a line of its own after the progress
+    if ($Live) { Write-Host ("  {0,-36} running" -f $Title) } else { Write-Host ("  {0,-36} " -f $Title) -NoNewline }
     $watch = [Diagnostics.Stopwatch]::StartNew()
     & $Action *> (Join-Path $logs "$Id.log")
     $ok = ($LASTEXITCODE -eq 0)
     $seconds = [int]$watch.Elapsed.TotalSeconds
+    if ($Live) { Write-Host ("  {0,-36} " -f $Title) -NoNewline }
     if ($ok)
     {
         Write-Host "PASS" -ForegroundColor Green -NoNewline
@@ -107,7 +156,7 @@ function Get-Reports
 function Get-Coverage
 {
     param([string[]]$Reports, [string]$Gate = "0")
-    & $python scripts/ci-check-coverage.py $Gate @Reports 2>$null
+    & $python scripts/ci-detector/ci-check-coverage.py $Gate @Reports 2>$null
 }
 
 $testArgs = @("--no-build", "--configuration", "Release", "--verbosity", "minimal", "--settings", "test/coverlet.runsettings", "--collect:XPlat Code Coverage", "--logger", "trx")
@@ -115,9 +164,9 @@ $testArgs = @("--no-build", "--configuration", "Release", "--verbosity", "minima
 Write-Info "## STAGES ----------------------------------------------------------------------"
 $restored = Invoke-Stage "restore" "Restore" { dotnet restore HsnSoft.Base.sln --verbosity minimal }
 
-Invoke-Stage "test-projects" "Every package has a test project" { bash ./scripts/ci-check-test-project-exist.sh } | Out-Null
-Invoke-Stage "csproj-order" "Project file reference order" { & $python scripts/ci-force-csproj-order.py } | Out-Null
-Invoke-Stage "framework-references" "Framework project references" { & $python scripts/ci-force-framework-references-rules.py } | Out-Null
+Invoke-Stage "test-projects" "Every package has a test project" { bash ./scripts/ci-detector/ci-check-test-project-exist.sh } | Out-Null
+Invoke-Stage "csproj-order" "Project file reference order" { & $python scripts/ci-detector/ci-force-csproj-order.py } | Out-Null
+Invoke-Stage "framework-references" "Framework project references" { & $python scripts/ci-detector/ci-force-framework-references-rules.py } | Out-Null
 if ($restored)
 {
     Invoke-Stage "format-cs" "Format (C#)" {
@@ -129,7 +178,7 @@ else
 {
     Skip-Stage "Format (C#)" "restore failed"
 }
-Invoke-Stage "format-json" "Format (JSON)" { dotnet run scripts/format-json.cs -- --all --check } | Out-Null
+Invoke-Stage "format-json" "Format (JSON)" { dotnet run scripts/ci-detector/format-json.cs -- --all --check } | Out-Null
 
 $built = $false
 if ($restored)
@@ -147,14 +196,14 @@ $unitOk = $false
 $integrationOk = $false
 if ($built)
 {
-    $unitOk = Invoke-Stage "unit" "Unit tests" { bash ./scripts/run-tests.sh unit @testArgs --results-directory (Join-Path $out "unit") }
+    $unitOk = Invoke-Stage "unit" "Unit tests" { $script:passed = 0; bash ./scripts/run-tests.sh unit @testArgs --results-directory (Join-Path $out "unit") 2>&1 | ForEach-Object { Show-Progress "$_" } } -Live
     if ($SkipIntegration)
     {
         Skip-Stage "Integration tests" "-SkipIntegration"
     }
     else
     {
-        $integrationOk = Invoke-Stage "integration" "Integration tests" { bash ./scripts/run-tests.sh integration @testArgs --results-directory (Join-Path $out "integration") }
+        $integrationOk = Invoke-Stage "integration" "Integration tests" { $script:passed = 0; bash ./scripts/run-tests.sh integration @testArgs --logger "console;verbosity=normal" --results-directory (Join-Path $out "integration") 2>&1 | ForEach-Object { Show-Progress "$_" } } -Live
     }
 }
 else
@@ -166,7 +215,7 @@ else
 $gateTitle = "Coverage gate (>= $threshold %)"
 if ($unitOk -and $integrationOk)
 {
-    Invoke-Stage "coverage" $gateTitle { & $python scripts/ci-check-coverage.py $threshold @(Get-Reports "unit") @(Get-Reports "integration") } | Out-Null
+    Invoke-Stage "coverage" $gateTitle { & $python scripts/ci-detector/ci-check-coverage.py $threshold @(Get-Reports "unit") @(Get-Reports "integration") } | Out-Null
 }
 elseif ($SkipIntegration)
 {
@@ -192,6 +241,7 @@ foreach ($row in $script:results)
     Write-Host ("{0,-9}" -f $row.Result) -ForegroundColor $color -NoNewline
     Write-Host (" {0,-7} {1}" -f $row.Time, $row.Detail)
 }
+Write-Host ("  {0,-38} {1,-9} {2}" -f "Total", "", (Format-Elapsed ((Get-Date) - $detectorStartedAt)))
 " "
 
 # totals from the .trx result files, which are the same in every language
@@ -263,7 +313,7 @@ else
 }
 " "
 Write-Info "================================================================================"
-Write-Info "== DETECTOR FINISHED"
+Write-Info "== DETECTOR FINISHED ($(Get-Date -Format HH:mm:ss), total $(Format-Elapsed ((Get-Date) - $detectorStartedAt)))"
 Write-Info "================================================================================"
 " "
 exit $code

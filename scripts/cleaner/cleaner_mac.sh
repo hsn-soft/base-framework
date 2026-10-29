@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Deletes build output, test results and editor/OS leftovers (Linux/macOS). The Windows twin is clean_win.ps1; both do the same
+# Deletes build output, test results and editor/OS leftovers (Linux/macOS). The Windows twin is cleaner_win.ps1; both do the same
 # steps and print the same messages. See README.md in this folder.
 #
-# Usage: ./scripts/clean/clean_mac.sh [--dry-run]
+# Usage: ./scripts/cleaner/cleaner_mac.sh [--dry-run]
 #   --dry-run   only list what would be deleted
 set -euo pipefail
 

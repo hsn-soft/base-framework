@@ -25,12 +25,17 @@ TEST_OUTPUT="$ROOT/TestResults"
 export PATH="$PATH:$HOME/.dotnet/tools"
 
 info() { printf '\033[34m[INFO] %s\033[0m\n' "$1"; }
+elapsed() { printf '%dm %02ds' $(($1 / 60)) $(($1 % 60)); }
+STARTED_AT=$SECONDS
 bar() { info "================================================================================"; }
 
 cd "$ROOT"
 
+# a clean screen for the run (only on a terminal, not when the output goes to a file)
+if [ -t 1 ]; then clear; fi
+
 echo; bar
-info "== PROJECT FOLDER => '$ROOT' START"
+info "== PROJECT FOLDER => '$ROOT' START ($(date +%H:%M:%S))"
 bar; echo
 
 info "## CHECKING THE ENVIRONMENT ----------------------------------------------------"
@@ -65,7 +70,7 @@ fi
 info "## TEST FOLDER CLEANING COMPLETED ----------------------------------------------"
 echo
 
-info "## SONAR SCANNER ANALYSIS ------------------------------------------------------"
+info "## SONAR SCANNER ANALYSIS STARTED ($(date +%H:%M:%S)) -----------------------------"
 dotnet sonarscanner begin \
     /k:"$SONAR_PROJECT_KEY" \
     /d:sonar.host.url="$SONAR_HOST_URL" \
@@ -73,7 +78,7 @@ dotnet sonarscanner begin \
     /d:sonar.cs.vstest.reportsPaths="$TEST_OUTPUT/**/*.trx" \
     /d:sonar.cs.opencover.reportsPaths="$TEST_OUTPUT/**/coverage.opencover.xml" \
     /d:sonar.coverage.exclusions="test/**,scripts/**,**/Migrations/**,**/*Test*.cs,**/*Test*/**,**/tmp/**,**/Tmp/**,**/TMP/**" \
-    /d:sonar.inclusions="**/*.cs,**/*.js,**/*.css" \
+    /d:sonar.inclusions="src/**/*.cs,src/**/*.js,src/**/*.css" \
     /d:sonar.exclusions="test/**,scripts/**,**/Migrations/**,**/*Test*.cs,**/*Test*/**,**/tmp/**,**/Tmp/**,**/TMP/**,**/data/**,**/logs/**,**/sample/**"
 echo
 
@@ -86,23 +91,40 @@ dotnet build --no-restore --no-incremental --verbosity minimal -c Release -p:Tre
 echo
 
 info "## DOTNET TEST -----------------------------------------------------------------"
+# the unit tests first, the integration tests (Docker, the slow ones) last: a broken unit test is found at once, not after the containers
+projects=()
+integration=()
 for project in "$ROOT"/test/*/*.csproj; do
+    case "$project" in
+        *IntegrationTests.csproj) integration+=("$project") ;;
+        *) projects+=("$project") ;;
+    esac
+done
+projects+=("${integration[@]}")
+total=${#projects[@]}
+number=0
+TESTS_STARTED_AT=$SECONDS
+for project in "${projects[@]}"; do
+    number=$((number + 1))
     name="$(basename "$project" .csproj)"
-    echo; info "## TEST [ $name ]"; echo
+    echo; info "## TEST $number/$total [ $name ] STARTED ($(date +%H:%M:%S))"; echo
+    project_started_at=$SECONDS
     dotnet test "$project" --no-build --no-restore -c Release \
         --settings "$ROOT/test/coverlet.runsettings" \
         --collect:"XPlat Code Coverage" \
         --results-directory "$TEST_OUTPUT/$name" \
-        --logger "trx;LogFileName=$name.trx"
+        --logger "trx;LogFileName=$name.trx" \
+        --logger "console;verbosity=normal"
+    info "## TEST $number/$total [ $name ] COMPLETED in $(elapsed $((SECONDS - project_started_at)))"
 done
 echo
-info "## DOTNET TEST COMPLETED -------------------------------------------------------"
+info "## DOTNET TEST COMPLETED in $(elapsed $((SECONDS - TESTS_STARTED_AT))) ---------------------------------------"
 echo
 
 info "## SONAR SCANNER CHECKING RESULTS ----------------------------------------------"
 dotnet sonarscanner end /d:sonar.token="$SONAR_TOKEN"
 echo
-info "## SONAR SCANNER ANALYSIS COMPLETED --------------------------------------------"
+info "## SONAR SCANNER ANALYSIS COMPLETED ($(date +%H:%M:%S), $(elapsed $((SECONDS - STARTED_AT))) since the start) ---------"
 info "## DASHBOARD => $SONAR_HOST_URL/dashboard?id=$SONAR_PROJECT_KEY"
 echo
 
@@ -160,5 +182,5 @@ info "## SONAR OVERVIEW COMPLETED ----------------------------------------------
 echo
 
 bar
-info "== PROJECT FOLDER => '$ROOT' FINISHED"
+info "== PROJECT FOLDER => '$ROOT' FINISHED ($(date +%H:%M:%S), total $(elapsed $((SECONDS - STARTED_AT))))"
 bar; echo

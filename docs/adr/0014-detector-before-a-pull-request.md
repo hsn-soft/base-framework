@@ -10,7 +10,7 @@ The pre-push hook stops at the unit tests. The pull request's CI also checks for
 
 ## Decision
 
-- **`scripts/detector/detector_mac.sh`** (macOS/Linux) and **`detector_win.ps1`** (Windows, PowerShell 7) run **the stages of the CI workflow, in the same order**, and print one table: restore, every package has a
+- **`scripts/ci-detector/ci_detector_mac.sh`** (macOS/Linux) and **`ci_detector_win.ps1`** (Windows, PowerShell 7) run **the stages of the CI workflow, in the same order**, and print one table: restore, every package has a
   test project, format (C#), format (JSON), build (Release, warnings are errors), unit tests, integration tests, coverage gate.
 - **A stage that could not run because an earlier one failed is SKIPPED, not shown as passed** (a failed restore skips format and build; a failed build skips the tests; the gate needs both kinds of tests).
 - It reads **test counts from the `.trx` files** and forces English `dotnet` output, so the numbers are right on any machine, and it reads the **threshold from the workflow** (`COVERAGE_THRESHOLD`) so it cannot drift.
@@ -26,4 +26,4 @@ The pre-push hook stops at the unit tests. The pull request's CI also checks for
 
 ## Related
 
-[ADR-0012](0012-ci-workflow-and-what-breaks-a-pull-request.md), [ADR-0013](0013-git-hooks.md), `scripts/detector/README.md`.
+[ADR-0012](0012-ci-workflow-and-what-breaks-a-pull-request.md), [ADR-0013](0013-git-hooks.md), `scripts/ci-detector/README.md`.

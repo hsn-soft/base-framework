@@ -18,7 +18,7 @@ into the framework, into the shared projects or into another service, meant read
   4. **own:** everything else, the other projects of the service or of the product (`{Product}.IdentityService.Domain`).
 - **Inside a group the items are in alphabetical order** of the name of the package or of the project (a `FrameworkReference` first). A comment that stands above an item stays with it.
 - **Groups of files come before the references:** `Content`, `EmbeddedResource`, `None`, `Using` keep their own groups above the reference groups. A project with nothing of a kind has no group of it.
-- **It is checked, not remembered:** `scripts/ci-force-csproj-order.py` finds a project that breaks the rule (the CI runs it, and the detector as `Project file reference order`) and `--fix` rewrites the project files into it.
+- **It is checked, not remembered:** `scripts/ci-detector/ci-force-csproj-order.py` finds a project that breaks the rule (the CI runs it, and the detector as `Project file reference order`) and `--fix` rewrites the project files into it.
 
 ## Consequences
 

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Pre-PR check (Linux/macOS): runs on your machine what the CI will run on the pull request, and shows one table of what passed and
-# where it would break. The Windows twin is detector_win.ps1; both run the same stages and print the same tables.
+# where it would break. The Windows twin is ci_detector_win.ps1; both run the same stages and print the same tables.
 # See README.md in this folder.
 #
-# Usage: ./scripts/detector/detector_mac.sh [--skip-integration]
+# Usage: ./scripts/ci-detector/ci_detector_mac.sh [--skip-integration]
 #   --skip-integration   do not run the integration tests (no Docker needed); the coverage gate is then skipped too
 #
 # Keep it in step with .github/workflows/net-core-build-and-test.yml: when a step is added there, add the stage here.
@@ -31,12 +31,17 @@ else
 fi
 info() { printf '%s[INFO] %s%s\n' "$BLUE" "$1" "$RESET"; }
 bar() { info "================================================================================"; }
+elapsed() { printf '%dm %02ds' $(($1 / 60)) $(($1 % 60)); }
+DETECTOR_STARTED=$SECONDS
 
 THRESHOLD="$(sed -n "s/.*COVERAGE_THRESHOLD: '\([0-9.]*\)'.*/\1/p" .github/workflows/net-core-build-and-test.yml | head -n 1)"
 THRESHOLD="${THRESHOLD:-99}"
 
+# a clean screen for the run (only on a terminal, not when the output goes to a file)
+if [ -t 1 ]; then clear; fi
+
 echo; bar
-info "== DETECTOR => '$ROOT' START"
+info "== DETECTOR => '$ROOT' START ($(date +%H:%M:%S))"
 bar; echo
 
 info "## CHECKING THE TOOLS ----------------------------------------------------------"
@@ -50,23 +55,41 @@ fi
 [ "$missing" = true ] && { echo "Fix the above and run again." >&2; exit 2; }
 echo
 
+# the CI starts from a clean checkout: so does the detector. The cleaning script lists what it deletes; that list goes to the log, the screen gets its summary.
+info "## CLEANING (build output, old test results, editor leftovers) -----------------"
+clean_started=$SECONDS
+clean_log="$(mktemp)"
+if ! "$ROOT/scripts/cleaner/cleaner_mac.sh" > "$clean_log" 2>&1; then
+    cat "$clean_log" >&2
+    echo "The cleaning failed; fix the above and run again." >&2
+    exit 2
+fi
+CLEAN_TOOK=$((SECONDS - clean_started))
+sed 's/\x1b\[[0-9;]*m//g' "$clean_log" | grep -E 'item\(s\) to delete' | sed 's/^/  /'
+echo
+
 rm -rf "$OUT"; mkdir -p "$LOGS"
+mv "$clean_log" "$LOGS/clean.log"
 
 NAMES=(); RESULTS=(); TIMES=(); DETAILS=()
 record() { NAMES+=("$1"); RESULTS+=("$2"); TIMES+=("$3"); DETAILS+=("$4"); }
+record "Clean" PASS "${CLEAN_TOOK}s" ""
 
 # stage <id> <title> <command...>: runs it, keeps its output in logs/<id>.log, records PASS/FAIL
 stage() {
     local id="$1" title="$2"; shift 2
-    printf '  %-36s ' "$title"
+    # a stage that shows its progress (LIVE=1) says that it is running on a line of its own; the result comes on a line of its own after the progress
+    if [ "${LIVE:-}" = 1 ]; then printf '  %-36s running\n' "$title"; else printf '  %-36s ' "$title"; fi
     local started=$SECONDS
     if "$@" > "$LOGS/$id.log" 2>&1; then
         local took=$((SECONDS - started))
+        [ "${LIVE:-}" = 1 ] && printf '  %-36s ' "$title"
         printf '%sPASS%s  (%ss)\n' "$GREEN" "$RESET" "$took"
         record "$title" PASS "${took}s" ""
         return 0
     fi
     local took=$((SECONDS - started))
+    [ "${LIVE:-}" = 1 ] && printf '  %-36s ' "$title"
     printf '%sFAIL%s  (%ss)\n' "$RED" "$RESET" "$took"
     record "$title" FAIL "${took}s" "TestResults/detector/logs/$id.log"
     return 1
@@ -77,29 +100,54 @@ format_cs() {
     dotnet format whitespace HsnSoft.Base.sln --verify-no-changes --no-restore &&
         dotnet format style HsnSoft.Base.sln --verify-no-changes --severity info --no-restore
 }
+# The output of a stage goes to its log; what is shown on the screen (fd 3, the terminal) is only the progress: a line for every test project that
+# finished, a line for every test that passed (with its time: the integration tests, which run for minutes) and every test that failed.
+exec 3>&1
+progress() {
+    local line passed=0 shown
+    while IFS= read -r line; do
+        case "$line" in
+            "==> "*" completed in "*) printf '      %s\n' "${line#==> }" >&3 ;;
+            "  Failed "*"]") printf '      %s\n' "$(printf '%s' "$line" | sed 's/^ *//')" >&3 ;;
+            "  Passed "*"]")
+                passed=$((passed + 1))
+                shown="${line#  Passed }"
+                shown="${shown#HsnSoft.Base.IntegrationTests.}"
+                printf '      %3d  %s\n' "$passed" "$(printf '%.110s' "$shown")" >&3 ;;
+        esac
+    done
+}
 run_unit() {
+    local code
     ./scripts/run-tests.sh unit --no-build --configuration Release --verbosity minimal \
-        --settings test/coverlet.runsettings --collect:"XPlat Code Coverage" --logger trx --results-directory "$OUT/unit"
+        --settings test/coverlet.runsettings --collect:"XPlat Code Coverage" --logger trx --results-directory "$OUT/unit" 2>&1 | tee >(progress)
+    code=${PIPESTATUS[0]}
+    sleep 0.3
+    return "$code"
 }
 run_integration() {
+    local code
     ./scripts/run-tests.sh integration --no-build --configuration Release --verbosity minimal \
-        --settings test/coverlet.runsettings --collect:"XPlat Code Coverage" --logger trx --results-directory "$OUT/integration"
+        --settings test/coverlet.runsettings --collect:"XPlat Code Coverage" --logger trx --logger "console;verbosity=normal" --results-directory "$OUT/integration" 2>&1 | tee >(progress)
+    code=${PIPESTATUS[0]}
+    sleep 0.3
+    return "$code"
 }
 reports() { find "$OUT/$1" -name coverage.cobertura.xml -not -path '*/In/*' 2>/dev/null; }
-gate() { python3 scripts/ci-check-coverage.py "$THRESHOLD" $(reports unit) $(reports integration); }
+gate() { python3 scripts/ci-detector/ci-check-coverage.py "$THRESHOLD" $(reports unit) $(reports integration); }
 
 info "## STAGES ----------------------------------------------------------------------"
 stage restore "Restore" dotnet restore HsnSoft.Base.sln --verbosity minimal && RESTORED=true || RESTORED=false
 
-stage test-projects "Every package has a test project" ./scripts/ci-check-test-project-exist.sh
-stage csproj-order "Project file reference order" python3 scripts/ci-force-csproj-order.py
-stage framework-references "Framework project references" python3 scripts/ci-force-framework-references-rules.py
+stage test-projects "Every package has a test project" ./scripts/ci-detector/ci-check-test-project-exist.sh
+stage csproj-order "Project file reference order" python3 scripts/ci-detector/ci-force-csproj-order.py
+stage framework-references "Framework project references" python3 scripts/ci-detector/ci-force-framework-references-rules.py
 if [ "$RESTORED" = true ]; then
     stage format-cs "Format (C#)" format_cs
 else
     skip format-cs "Format (C#)" "restore failed"
 fi
-stage format-json "Format (JSON)" dotnet run scripts/format-json.cs -- --all --check
+stage format-json "Format (JSON)" dotnet run scripts/ci-detector/format-json.cs -- --all --check
 
 BUILT=false
 if [ "$RESTORED" = true ]; then
@@ -111,11 +159,11 @@ fi
 
 UNIT_OK=false; INTEGRATION_OK=false
 if [ "$BUILT" = true ]; then
-    stage unit "Unit tests" run_unit && UNIT_OK=true
+    LIVE=1 stage unit "Unit tests" run_unit && UNIT_OK=true
     if [ "$SKIP_INTEGRATION" = true ]; then
         skip integration "Integration tests" "--skip-integration"
     else
-        stage integration "Integration tests" run_integration && INTEGRATION_OK=true
+        LIVE=1 stage integration "Integration tests" run_integration && INTEGRATION_OK=true
     fi
 else
     skip unit "Unit tests" "build did not pass"
@@ -145,6 +193,7 @@ for i in "${!NAMES[@]}"; do
     case "${RESULTS[$i]}" in PASS) color=$GREEN ;; FAIL) color=$RED ;; *) color=$YELLOW ;; esac
     printf '  %-38s %s%-9s%s %-7s %s\n' "${NAMES[$i]}" "$color" "${RESULTS[$i]}" "$RESET" "${TIMES[$i]}" "${DETAILS[$i]}"
 done
+printf '  %-38s %-9s %s\n' "Total" "" "$(elapsed $((SECONDS - DETECTOR_STARTED)))"
 echo
 
 # totals from the .trx result files, which are the same in every language
@@ -161,7 +210,7 @@ for path in glob.glob(sys.argv[1] + "/**/*.trx", recursive=True):
 print(total, passed, failed, skipped)
 PY
 }
-coverage_of() { python3 scripts/ci-check-coverage.py 0 $(reports "$1") 2>/dev/null | sed -n 's/^Line coverage: \(.*\) (threshold.*/\1/p'; }
+coverage_of() { python3 scripts/ci-detector/ci-check-coverage.py 0 $(reports "$1") 2>/dev/null | sed -n 's/^Line coverage: \(.*\) (threshold.*/\1/p'; }
 
 if [ -f "$LOGS/unit.log" ]; then
     info "## TESTS ----------------------------------------------------------------------"
@@ -178,7 +227,7 @@ if [ "$UNIT_OK" = true ]; then
     echo "  unit tests only        $(coverage_of unit)"
     [ "$INTEGRATION_OK" = true ] && echo "  integration tests only $(coverage_of integration)"
     if [ "$INTEGRATION_OK" = true ]; then
-        merged="$(python3 scripts/ci-check-coverage.py 0 $(reports unit) $(reports integration) | sed -n 's/^Line coverage: \(.*\) (threshold.*/\1/p')"
+        merged="$(python3 scripts/ci-detector/ci-check-coverage.py 0 $(reports unit) $(reports integration) | sed -n 's/^Line coverage: \(.*\) (threshold.*/\1/p')"
         echo "  merged (what CI gates) $merged   threshold ${THRESHOLD} %"
     fi
     echo
@@ -208,6 +257,6 @@ fi
 echo
 
 bar
-info "== DETECTOR FINISHED"
+info "== DETECTOR FINISHED ($(date +%H:%M:%S), total $(elapsed $((SECONDS - DETECTOR_STARTED))))"
 bar; echo
 exit "$code"

@@ -28,6 +28,9 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
+| [0107](0107-the-scripts-of-the-ci-and-the-detector-live-in-one-folder.md) | What the CI and the detector run lives in one folder; the cleaning script is `cleaner` | Accepted | 2026-10-29 |
+| [0106](0106-the-ci-reports-the-time-of-every-step-the-test-counts-and-the-coverage.md) | The CI reports the time of every step, the test counts and the coverage, and shows every test | Accepted | 2026-10-29 |
+| [0105](0105-shared-package-versions-in-one-file-and-a-common-test-host.md) | The versions of the shared dependencies are in one file that libraries and tests both import, and tests share a small test host | Accepted | 2026-10-29 |
 | [0104](0104-kafka-consumers-back-off-and-state-their-group-timeouts.md) | Kafka consumers back off when they fail and state their group timeouts | Accepted | 2026-10-29 |
 | [0103](0103-brokers-are-reached-with-tls-and-sasl-when-the-settings-say-so.md) | The brokers are reached with TLS and SASL when the settings say so, through one place per broker | Accepted | 2026-10-28 |
 | [0102](0102-the-inbox-cleanup-is-opt-in-and-needs-no-coordination-between-instances.md) | The inbox cleanup is opt-in and needs no coordination between instances | Accepted | 2026-10-28 |
@@ -75,7 +78,7 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
-| [0007](0007-build-settings-and-versioning.md) | Shared build settings, one version, and how a package is published | Accepted | 2026-10-22 |
+| [0007](0007-build-settings-and-versioning.md) | Shared build settings, one version, and how a package is published | Accepted (where the versions of the shared dependencies live is superseded by [ADR-0105](0105-shared-package-versions-in-one-file-and-a-common-test-host.md)) | 2026-10-22 |
 | [0008](0008-code-style-and-analyzers.md) | Code style: the `.editorconfig` is the only source, analyzers run in the build | Accepted | 2026-10-22 |
 | [0009](0009-unit-tests-every-package.md) | Every package has a unit test project, found by name | Accepted | 2026-10-22 |
 | [0010](0010-integration-tests-with-testcontainers.md) | Integration tests start the real services with Testcontainers | Accepted | 2026-10-22 |

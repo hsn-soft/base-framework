@@ -1,7 +1,7 @@
-# Deletes build output, test results and editor/OS leftovers (Windows / PowerShell 7). The Linux/macOS twin is clean_mac.sh; both do
+# Deletes build output, test results and editor/OS leftovers (Windows / PowerShell 7). The Linux/macOS twin is cleaner_mac.sh; both do
 # the same steps and print the same messages. See README.md in this folder.
 #
-# Usage: ./scripts/clean/clean_win.ps1 [-DryRun]
+# Usage: ./scripts/cleaner/cleaner_win.ps1 [-DryRun]
 #   -DryRun   only list what would be deleted
 param([switch]$DryRun)
 $ErrorActionPreference = "Stop"

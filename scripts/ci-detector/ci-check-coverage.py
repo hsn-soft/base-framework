@@ -19,10 +19,10 @@ def absolute_path(sources, filename):
     return os.path.normpath(os.path.join(sources[0], filename)) if sources else filename
 
 
-def main() -> int:
-    threshold = float(sys.argv[1])
+def merge_lines(paths):
+    """The lines of all the reports, as {(file, line): hits}: a line is covered when any report covered it."""
     lines = {}
-    for path in sys.argv[2:]:
+    for path in paths:
         root = ET.parse(path).getroot()
         sources = [source.text for source in root.iter("source") if source.text]
         for cls in root.iter("class"):
@@ -30,6 +30,12 @@ def main() -> int:
             for line in cls.iter("line"):
                 key = (filename, line.get("number"))
                 lines[key] = max(lines.get(key, 0), int(line.get("hits")))
+    return lines
+
+
+def main() -> int:
+    threshold = float(sys.argv[1])
+    lines = merge_lines(sys.argv[2:])
 
     total = len(lines)
     covered = sum(1 for hits in lines.values() if hits > 0)

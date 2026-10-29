@@ -12,7 +12,7 @@ needs manual setup is not installed.
 
 Hooks are managed with **Husky.Net** (`.husky/`, tool pinned in `.config/dotnet-tools.json`); the first build or restore installs them (`dotnet tool restore` + `dotnet husky install`).
 
-- **Pre-commit** (`task-runner.json`, group `pre-commit`, only on the staged files): `dotnet format whitespace` and `dotnet format style --severity info` on the staged `.cs` files, `scripts/format-json.cs` on the
+- **Pre-commit** (`task-runner.json`, group `pre-commit`, only on the staged files): `dotnet format whitespace` and `dotnet format style --severity info` on the staged `.cs` files, `scripts/ci-detector/format-json.cs` on the
   staged `.json` files (not `.vscode/`), then `git add` of what was formatted, then a final `dotnet format style --verify-no-changes` that **refuses the commit** if a rule that cannot be fixed automatically
   (a naming rule, for example) is still broken. It adds a few seconds to a commit.
 - **Pre-push** (group `pre-push`): a **Release build with warnings as errors** (`-p:TreatWarningsAsErrors=true`, as CI) and the **unit tests**; the push is refused if either fails, so a broken branch never reaches

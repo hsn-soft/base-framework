@@ -8,7 +8,7 @@ on your own machine: build, **all** tests (unit and integration) with coverage, 
 | `analysis_mac.sh` | Linux, macOS (bash) |
 | `analysis_win.ps1` | Windows (PowerShell 7; also works with `pwsh` on macOS/Linux) |
 
-The CI does not use them (CI gates coverage with `scripts/ci-check-coverage.py`). They are for looking at the code quality dashboard
+The CI does not use them (CI gates coverage with `scripts/ci-detector/ci-check-coverage.py`). They are for looking at the code quality dashboard
 while you work.
 
 ## What you need
@@ -86,7 +86,10 @@ Each step prints a blue `[INFO]` banner, so you can see where a run is:
 4. **`sonarscanner begin`**: tells the scanner where the test and coverage reports will be.
 5. **Restore and build** in `Release`.
 6. **Test every project under `test/`** with `test/coverlet.runsettings`, writing `.trx` results and OpenCover coverage to
-   `TestResults/<project>/`. A failing test stops the run, so you never upload half a picture.
+   `TestResults/<project>/`. The unit test projects run first and the integration tests (Docker, the slow ones) last, so a broken unit
+   test stops the run at once. Each project prints `TEST n/total [ name ] STARTED` and `COMPLETED in 1m 05s`, every test prints its own
+   result line as it ends, and the banners of the whole run carry the time and the total. A failing test stops the run, so you never
+   upload half a picture.
 7. **`sonarscanner end`**: uploads the sources, the issues the Roslyn analyzers found, and the results.
 
 ## What is analysed
@@ -95,7 +98,7 @@ Only the packages under `src/` count. These are left out of the analysis and of 
 
 - `test/**` and `scripts/**` (tests and tooling are not the product)
 - `**/Migrations/**`, `**/tmp/**`, files named `*Test*`
-- only `*.cs`, `*.js` and `*.css` files are inspected
+- only the `*.cs`, `*.js` and `*.css` files **under `src/`** are inspected (`/d:sonar.inclusions`): nothing else of the repository is looked at
 
 The exclusion lists are the `/d:sonar.exclusions` and `/d:sonar.coverage.exclusions` lines in both scripts; keep the two scripts in
 sync when you change one.

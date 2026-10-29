@@ -2,10 +2,10 @@
 # Fails when a package under src/ has no unit test project (test/<package>.Tests), so a new package cannot slip in untested.
 # A package that has nothing to execute is listed in EXEMPT with the reason.
 #
-# Usage: scripts/ci-check-test-project-exist.sh
+# Usage: scripts/ci-detector/ci-check-test-project-exist.sh
 set -euo pipefail
 
-cd "$(dirname "${BASH_SOURCE[0]}")/.."
+cd "$(dirname "${BASH_SOURCE[0]}")/../.."
 
 EXEMPT=(
     HsnSoft.Base              # name holder that only references HsnSoft.Base.Core

@@ -6,7 +6,7 @@
   3. when it has exactly one reference, that one is Core, or a project that reaches Core;
   4. never lists a reference that another one it lists already brings (a sibling that a sibling brings).
 
-Usage: scripts/ci-force-framework-references-rules.py [--src <directory of the framework projects>]
+Usage: scripts/ci-detector/ci-force-framework-references-rules.py [--src <directory of the framework projects>]
 Exit code 1 and the offending projects (with the rule they break) when a rule is broken.
 """
 import glob
@@ -66,7 +66,7 @@ def check(refs):
 
 
 def main(argv) -> int:
-    src = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src")
+    src = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "src")
     if "--src" in argv:
         src = argv[argv.index("--src") + 1]
     refs = project_references(src)

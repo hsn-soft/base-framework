@@ -21,7 +21,7 @@ does not exist for CI.
 - **Fix a warning, do not suppress it.** A narrow `#pragma` with a reason is allowed where the rule does not fit (a pass-through logger whose template is the caller's, a test stand-in for a third-party type);
   a project-wide `NoWarn` for code analysis is not.
 - **Formatting is automatic:** the pre-commit hook formats the staged files and CI verifies (see [ADR-0013](0013-git-hooks.md), [ADR-0012](0012-ci-workflow-and-what-breaks-a-pull-request.md)).
-  `scripts/format-json.cs` formats JSON the same way on every platform with only the .NET SDK.
+  `scripts/ci-detector/format-json.cs` formats JSON the same way on every platform with only the .NET SDK.
 - Test names say what is expected (`MissingConnectionString_IsAnError`); one behaviour per test.
 - No secrets, tokens or real connection strings in the repository.
 
