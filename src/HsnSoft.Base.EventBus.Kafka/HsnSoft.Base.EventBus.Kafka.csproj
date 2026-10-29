@@ -1,21 +1,31 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-    <Import Project="..\..\configureawait.props" />
     <Import Project="..\..\common.props" />
 
     <PropertyGroup>
-        <TargetFramework>net10.0</TargetFramework>
         <AssemblyName>HsnSoft.Base.EventBus.Kafka</AssemblyName>
         <PackageId>HsnSoft.Base.EventBus.Kafka</PackageId>
-        <AssetTargetFallback>$(AssetTargetFallback);portable-net45+win8+wp8+wpa81;</AssetTargetFallback>
-        <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
-        <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
-        <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
         <RootNamespace />
+        <Title>HsnSoft Base Framework Kafka Event Bus</Title>
+        <Description>Kafka implementation of the HsnSoft event bus: producer, background consumer with retry and dead-lettering, health check.</Description>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageTags>HsnSoft Base Framework EventBus Kafka</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Confluent.Kafka" Version="2.15.0" />
+        <!-- the consumer is exercised against a real broker by the integration tests -->
+        <InternalsVisibleTo Include="HsnSoft.Base.IntegrationTests" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="..\..\README.md" Pack="true" Visible="false" PackagePath="README.md" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Confluent.Kafka" Version="2.16.0" />
+        <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="$(MicrosoftAspNetCorePackageVersion)" />
+        <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="$(MicrosoftAspNetCorePackageVersion)" />
+        <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="$(MicrosoftAspNetCorePackageVersion)" />
     </ItemGroup>
 
     <ItemGroup>

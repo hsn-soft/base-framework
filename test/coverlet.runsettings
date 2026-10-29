@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shared coverage settings for local runs, CI and SonarQube. Scope: src only. -->
+<RunSettings>
+    <DataCollectionRunSettings>
+        <DataCollectors>
+            <DataCollector friendlyName="XPlat Code Coverage">
+                <Configuration>
+                    <Format>cobertura,opencover</Format>
+                    <Include>[HsnSoft.Base*]*</Include>
+                    <Exclude>[*Tests]*</Exclude>
+                    <ExcludeByFile>**/obj/**,**/*.g.cs,**/Migrations/**,**/*Tests.cs,**/tmp/**,**/Tmp/**</ExcludeByFile>
+                    <ExcludeByAttribute>GeneratedCodeAttribute,ExcludeFromCodeCoverageAttribute</ExcludeByAttribute>
+                </Configuration>
+            </DataCollector>
+        </DataCollectors>
+    </DataCollectionRunSettings>
+</RunSettings>

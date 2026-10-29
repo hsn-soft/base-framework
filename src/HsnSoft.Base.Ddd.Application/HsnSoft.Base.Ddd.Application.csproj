@@ -1,32 +1,28 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-    <Import Project="..\..\configureawait.props" />
     <Import Project="..\..\common.props" />
 
     <PropertyGroup>
-        <TargetFramework>net10.0</TargetFramework>
         <AssemblyName>HsnSoft.Base.Ddd.Application</AssemblyName>
         <PackageId>HsnSoft.Base.Ddd.Application</PackageId>
-        <AssetTargetFallback>$(AssetTargetFallback);portable-net45+win8+wp8+wpa81;</AssetTargetFallback>
-        <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
-        <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
-        <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
         <RootNamespace />
+        <Title>HsnSoft.Base Framework Ddd Application</Title>
+        <Description>The building blocks of the application layer of an HsnSoft service: the data transfer objects of an entity, of a list request (limit, sorting, search, page) and of its result, so no service writes them again.</Description>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageTags>HsnSoft Base Framework Ddd Application Dto Paging</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>
-        <EmbeddedResource Include="HsnSoft\Base\Application\Localization\**\*.json" />
-        <Content Remove="HsnSoft\Base\Application\Localization\**\*.json" />
+        <None Include="..\..\README.md" Pack="true" Visible="false" PackagePath="README.md" />
     </ItemGroup>
-    
+
     <ItemGroup>
-        <ProjectReference Include="..\HsnSoft.Base.Auditing\HsnSoft.Base.Auditing.csproj" />
-        <ProjectReference Include="..\HsnSoft.Base.Authorization\HsnSoft.Base.Authorization.csproj" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="$(MicrosoftAspNetCorePackageVersion)" />
+        <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="$(MicrosoftAspNetCorePackageVersion)" />
+    </ItemGroup>
+
+    <ItemGroup>
         <ProjectReference Include="..\HsnSoft.Base.Ddd.Domain\HsnSoft.Base.Ddd.Domain.csproj" />
-        <ProjectReference Include="..\HsnSoft.Base.Localization\HsnSoft.Base.Localization.csproj" />
-        <ProjectReference Include="..\HsnSoft.Base.ObjectMapping\HsnSoft.Base.ObjectMapping.csproj" />
-        <ProjectReference Include="..\HsnSoft.Base.Security\HsnSoft.Base.Security.csproj" />
-        <ProjectReference Include="..\HsnSoft.Base.Validation\HsnSoft.Base.Validation.csproj" />
     </ItemGroup>
 
 </Project>

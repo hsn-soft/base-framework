@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <Import Project="..\..\common.props" />
+
+    <PropertyGroup>
+        <AssemblyName>HsnSoft.Base.Logging.NLog</AssemblyName>
+        <PackageId>HsnSoft.Base.Logging.NLog</PackageId>
+        <RootNamespace />
+        <Title>HsnSoft Base Framework Logging NLog</Title>
+        <Description>NLog provider of the HsnSoft logging: the same settings, routing, fields and masking as the Serilog provider, written by NLog (console, Graylog or file).</Description>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageTags>HsnSoft Base Framework Logging NLog Graylog</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="..\..\README.md" Pack="true" Visible="false" PackagePath="README.md" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="NLog" Version="6.2.2" />
+      <PackageReference Include="NLog.Extensions.Logging" Version="6.2.2" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\HsnSoft.Base.Logging\HsnSoft.Base.Logging.csproj" />
+    </ItemGroup>
+
+</Project>

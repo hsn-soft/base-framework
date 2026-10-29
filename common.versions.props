@@ -1,0 +1,11 @@
+<Project>
+    <!--
+        The versions of the shared Microsoft dependencies, in one place: libraries (common.props) and tests (common.test.props) both import this file,
+        so moving to a new patch of ASP.NET Core or EF Core is one edit here. Never write these versions into a project file.
+    -->
+
+    <PropertyGroup Label="Package versions shared by the projects">
+        <MicrosoftAspNetCorePackageVersion>10.0.14</MicrosoftAspNetCorePackageVersion>
+        <MicrosoftEntityFrameworkCorePackageVersion>10.0.14</MicrosoftEntityFrameworkCorePackageVersion>
+    </PropertyGroup>
+</Project>

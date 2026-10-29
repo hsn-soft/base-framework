@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!-- The example of a customer's program that sends an invoice file to Edx over WCF (SOAP) (see ../README.md). The contract is written by hand here; a customer may generate it from the WSDL instead. -->
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="System.ServiceModel.Http" />
+        <PackageReference Include="System.ServiceModel.Primitives" />
+    </ItemGroup>
+
+</Project>

@@ -9,7 +9,7 @@ charset = utf-8
 end_of_line = lf
 indent_style = space
 indent_size = 4
-insert_final_newline = false
+insert_final_newline = true
 trim_trailing_whitespace = true
 dotnet_style_require_accessibility_modifiers=for_non_interface_members:warning
 
@@ -94,7 +94,7 @@ csharp_style_prefer_switch_expression = true:suggestion
 
 # Code quality
 dotnet_style_readonly_field = true:suggestion
-dotnet_code_quality_unused_parameters = non_public:suggestion
+dotnet_code_quality_unused_parameters = non_public
 
 # Expression-level preferences
 dotnet_style_object_initializer = true:suggestion
@@ -224,3 +224,20 @@ max_line_length = off
 trim_trailing_whitespace = false
 indent_style = space
 indent_size = 2
+
+
+# Unused code is a warning in the IDE and an error in CI (TreatWarningsAsErrors is on when GITHUB_ACTIONS=true)
+[*.cs]
+dotnet_diagnostic.IDE0005.severity = warning
+dotnet_diagnostic.IDE0051.severity = warning
+dotnet_diagnostic.IDE0052.severity = warning
+dotnet_diagnostic.IDE0059.severity = warning
+dotnet_diagnostic.IDE0060.severity = warning
+
+# Tests are named Method_Scenario_Expectation, underscores are fine there
+[test/**/*.cs]
+dotnet_diagnostic.CA1707.severity = none
+
+# CA1711 reserves the "EventHandler" suffix for delegates; IIntegrationEventHandler is an interface and the natural name
+[*.cs]
+dotnet_diagnostic.CA1711.severity = none

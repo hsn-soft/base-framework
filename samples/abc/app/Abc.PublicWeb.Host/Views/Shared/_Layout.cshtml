@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] - Abc</title>
+    <style>
+        body { font-family: system-ui, sans-serif; margin: 0; color: #1f2933; }
+        header { background: #243b53; padding: 12px 24px; display: flex; gap: 20px; align-items: center; }
+        header a, header button { color: #fff; text-decoration: none; background: none; border: 0; font: inherit; cursor: pointer; }
+        header strong { color: #9fb3c8; margin-right: 12px; }
+        main { max-width: 760px; margin: 24px auto; padding: 0 24px; }
+        .inline { display: inline; margin: 0; }
+        input, button.primary { padding: 8px 10px; font: inherit; }
+        table { border-collapse: collapse; width: 100%; } th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #d9e2ec; }
+        .error { color: #b42318; } .ok { color: #1a7f37; } .muted { color: #627d98; }
+    </style>
+</head>
+<body>
+<header>
+    <strong>Abc</strong>
+            <a href="/">Home</a>
+</header>
+<main>
+    @RenderBody()
+</main>
+</body>
+</html>

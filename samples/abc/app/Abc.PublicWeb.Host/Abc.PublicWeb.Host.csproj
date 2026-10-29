@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <!--
+        The public web application of the Abc system (MVC): pages for everyone, no sign-in. It never talks to a service directly: it calls the public gateway, which maps the
+        call to the service. It takes the framework's logging, request log and health, but not the web api shell: it answers pages, not BaseResponse.
+    -->
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.AspNetCore.WebApi\HsnSoft.Base.AspNetCore.WebApi.csproj" />
+        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.Logging.Serilog\HsnSoft.Base.Logging.Serilog.csproj" />
+    </ItemGroup>
+
+</Project>

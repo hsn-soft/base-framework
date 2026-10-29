@@ -1,7 +1,0 @@
-{
-  "culture": "zh-Hans",
-  "texts": {
-    "DisplayName:Base.Timing.Timezone": "时区",
-    "Description:Base.Timing.Timezone": "应用程序的时区"
-  }
-}

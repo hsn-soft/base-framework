@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!--
+        The contracts the Edx services share: the integration events that more than one service handles, in a folder for each service that publishes them (Events/FirmInvoice). An event only one service handles
+        is not here: it is in the Application project of that service. Only messages; no logic.
+    -->
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.EventBus\HsnSoft.Base.EventBus.csproj" />
+    </ItemGroup>
+
+</Project>

@@ -1,16 +1,12 @@
-using JetBrains.Annotations;
-
 namespace HsnSoft.Base.Domain.Entities.Events;
 
-public record ReQueuedEto(
-    [NotNull] string ReQueuedMessageEnvelopeConsumer,
-    [NotNull] object ReQueuedMessageObject,
-    [NotNull] string ReQueuedMessageTypeName
-) : IIntegrationEventMessage
-{
-    [NotNull] public string ReQueuedMessageEnvelopeConsumer { get; } = ReQueuedMessageEnvelopeConsumer;
-
-    [NotNull] public object ReQueuedMessageObject { get; } = ReQueuedMessageObject;
-
-    [NotNull] public string ReQueuedMessageTypeName { get; } = ReQueuedMessageTypeName;
-}
+/// <summary>
+/// Puts a failed message back to one consumer: published straight to that consumer's queue, which the consumer reads like any event.
+/// </summary>
+/// <param name="ReQueuedMessageEnvelopeConsumer">The consumer to give the message to: <c>{ExchangeName}_{ConsumerClientName}</c>.</param>
+/// <param name="ReQueuedMessageObject">The message to hand to its handler.</param>
+/// <param name="ReQueuedMessageTypeName">The type name of the message.</param>
+public sealed record ReQueuedEto(
+    string ReQueuedMessageEnvelopeConsumer,
+    object ReQueuedMessageObject,
+    string ReQueuedMessageTypeName) : IIntegrationEventMessage;

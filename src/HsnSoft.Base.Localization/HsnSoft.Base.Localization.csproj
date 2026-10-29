@@ -1,30 +1,35 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-    <Import Project="..\..\configureawait.props" />
     <Import Project="..\..\common.props" />
 
     <PropertyGroup>
-        <TargetFramework>net10.0</TargetFramework>
         <AssemblyName>HsnSoft.Base.Localization</AssemblyName>
         <PackageId>HsnSoft.Base.Localization</PackageId>
-        <AssetTargetFallback>$(AssetTargetFallback);portable-net45+win8+wp8+wpa81;</AssetTargetFallback>
-        <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
-        <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
-        <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
         <RootNamespace />
+        <Title>HsnSoft Base Framework Localization</Title>
+        <Description>Localization for HsnSoft services: JSON texts embedded in the assemblies, merged from the innermost layer (the service) to the outermost (the framework), found by key in the language of the request.</Description>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageTags>HsnSoft Base Framework Localization</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="$(MicrosoftAspNetCorePackageVersion)" />
+        <None Include="..\..\README.md" Pack="true" Visible="false" PackagePath="README.md" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\HsnSoft.Base.VirtualFileSystem\HsnSoft.Base.VirtualFileSystem.csproj" />
+        <!-- the texts of the framework itself: the status messages and the validation message of the web api answers -->
+        <EmbeddedResource Include="Localization\*.json" />
     </ItemGroup>
 
     <ItemGroup>
-        <None Remove="HsnSoft\Base\Localization\Resources\**\*.json" />
-        <EmbeddedResource Include="HsnSoft\Base\Localization\Resources\**\*.json" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="$(MicrosoftAspNetCorePackageVersion)" />
+        <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="$(MicrosoftAspNetCorePackageVersion)" />
+        <PackageReference Include="Microsoft.Extensions.Localization.Abstractions" Version="$(MicrosoftAspNetCorePackageVersion)" />
+        <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="$(MicrosoftAspNetCorePackageVersion)" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\HsnSoft.Base.Core\HsnSoft.Base.Core.csproj" />
     </ItemGroup>
 
 </Project>

@@ -1,0 +1,8 @@
+{
+  "culture": "en",
+  "texts": {
+    "Test:Hello": "Hello {0}",
+    "Test:Only": "Only here",
+    "Status:404": "Nothing here (the test layer)"
+  }
+}

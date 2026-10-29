@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <Import Project="..\..\common.props" />
+
+    <PropertyGroup>
+        <AssemblyName>HsnSoft.Base.MultiTenancy.EventBus</AssemblyName>
+        <PackageId>HsnSoft.Base.MultiTenancy.EventBus</PackageId>
+        <RootNamespace />
+        <Title>HsnSoft.Base Framework MultiTenancy EventBus</Title>
+        <Description>The tenant travels with the messages of a service that has tenants: it is written into the headers of every message a service publishes, and the handler of a message runs in the tenant of the message.</Description>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageTags>HsnSoft Base Framework MultiTenancy EventBus</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="..\..\README.md" Pack="true" Visible="false" PackagePath="README.md" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\HsnSoft.Base.EventBus\HsnSoft.Base.EventBus.csproj" />
+        <ProjectReference Include="..\HsnSoft.Base.MultiTenancy\HsnSoft.Base.MultiTenancy.csproj" />
+    </ItemGroup>
+
+</Project>

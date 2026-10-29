@@ -1,0 +1,2 @@
+invoiceNumber,issueDate,currency,customerName,customerTaxId,customerDistrict,customerCity,description,quantity,unitPrice
+ABC2026000000002,2026-10-28,TRY,Bilgera Bilisim A.S.,1234567802,Cankaya,Ankara,Danismanlik hizmeti,2,150.00

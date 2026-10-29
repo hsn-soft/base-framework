@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!--
+        What every host of the Abc system shares, a gateway or a microservice: logging, the answers of a web api, Swagger, health, and reading the bearer token. The framework knows no
+        product; this is Abc's own choice from it, in the order its hosts need. The gateways and the microservices build on it (Abc.Shared.Hosting.Gateways, Abc.Shared.Hosting.Microservices).
+    -->
+
+    <ItemGroup>
+        <!-- the public key every host checks tokens with (made with samples/scripts/generate-rsa-keys.cs, not in git); copied next to the assemblies of the hosts -->
+        <Content Include="public_key.xml" Condition="Exists('public_key.xml')" CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.AspNetCore.Swashbuckle\HsnSoft.Base.AspNetCore.Swashbuckle.csproj" />
+        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.AspNetCore.WebApi\HsnSoft.Base.AspNetCore.WebApi.csproj" />
+        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.Authentication\HsnSoft.Base.Authentication.csproj" />
+        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.Logging.Serilog\HsnSoft.Base.Logging.Serilog.csproj" />
+    </ItemGroup>
+
+</Project>

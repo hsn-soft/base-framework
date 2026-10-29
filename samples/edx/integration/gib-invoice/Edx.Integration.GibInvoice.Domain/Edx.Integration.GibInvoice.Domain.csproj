@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!-- The heart of the integration service: the envelopes it hands to the center and takes from it, and the list of the users it may send to. -->
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.Ddd.Domain\HsnSoft.Base.Ddd.Domain.csproj" />
+        <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.MultiTenancy\HsnSoft.Base.MultiTenancy.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\shared\Edx.Shared.Efatura\Edx.Shared.Efatura.csproj" />
+    </ItemGroup>
+
+</Project>

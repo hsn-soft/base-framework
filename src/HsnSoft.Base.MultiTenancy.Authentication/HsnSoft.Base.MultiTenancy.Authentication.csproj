@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <Import Project="..\..\common.props" />
+
+    <PropertyGroup>
+        <AssemblyName>HsnSoft.Base.MultiTenancy.Authentication</AssemblyName>
+        <PackageId>HsnSoft.Base.MultiTenancy.Authentication</PackageId>
+        <RootNamespace />
+        <Title>HsnSoft.Base Framework MultiTenancy Authentication</Title>
+        <Description>The tenant of a request from the claims of its token (tenant_id, is_system_tenant, allowed_tenant_id), and the names of those claims for the auth server that writes them.</Description>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageTags>HsnSoft Base Framework MultiTenancy Authentication Claims</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="..\..\README.md" Pack="true" Visible="false" PackagePath="README.md" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\HsnSoft.Base.MultiTenancy\HsnSoft.Base.MultiTenancy.csproj" />
+    </ItemGroup>
+
+</Project>

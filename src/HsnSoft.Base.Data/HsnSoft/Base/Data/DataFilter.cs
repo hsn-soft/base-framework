@@ -1,107 +1,34 @@
-﻿using System;
-using System.Collections.Concurrent;
+using System;
 using System.Collections.Generic;
 using System.Threading;
-using HsnSoft.Base.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 
 namespace HsnSoft.Base.Data;
 
-//TODO: Create a HsnSoft.Base.Data.Filtering namespace?
-public class DataFilter : IDataFilter, ISingletonDependency
+/// <summary>The default <see cref="IDataFilter"/>: every filter is on until a scope turns it off.</summary>
+public sealed class DataFilter : IDataFilter
 {
-    private readonly ConcurrentDictionary<Type, object> _filters;
-
-    private readonly IServiceProvider _serviceProvider;
-
-    public DataFilter(IServiceProvider serviceProvider)
-    {
-        _serviceProvider = serviceProvider;
-        _filters = new ConcurrentDictionary<Type, object>();
-    }
-
-    public IDisposable Enable<TFilter>()
-        where TFilter : class
-    {
-        return GetFilter<TFilter>().Enable();
-    }
-
-    public IDisposable Disable<TFilter>()
-        where TFilter : class
-    {
-        return GetFilter<TFilter>().Disable();
-    }
+    private readonly AsyncLocal<Dictionary<Type, bool>?> _states = new();
 
     public bool IsEnabled<TFilter>()
-        where TFilter : class
+        where TFilter : class => _states.Value?.GetValueOrDefault(typeof(TFilter), true) ?? true;
+
+    public IDisposable Enable<TFilter>()
+        where TFilter : class => Set(typeof(TFilter), true);
+
+    public IDisposable Disable<TFilter>()
+        where TFilter : class => Set(typeof(TFilter), false);
+
+    private Restore Set(Type filter, bool enabled)
     {
-        return GetFilter<TFilter>().IsEnabled;
+        Dictionary<Type, bool>? parent = _states.Value;
+
+        // a new dictionary each time: the scopes of other flows of the code keep theirs
+        _states.Value = new Dictionary<Type, bool>(parent ?? []) { [filter] = enabled };
+        return new Restore(() => _states.Value = parent);
     }
 
-    private IDataFilter<TFilter> GetFilter<TFilter>()
-        where TFilter : class
+    private sealed class Restore(Action restore) : IDisposable
     {
-        return _filters.GetOrAdd(
-            typeof(TFilter),
-            factory: () => _serviceProvider.GetRequiredService<IDataFilter<TFilter>>()
-        ) as IDataFilter<TFilter>;
-    }
-}
-
-public class DataFilter<TFilter> : IDataFilter<TFilter>
-    where TFilter : class
-{
-    private readonly AsyncLocal<DataFilterState> _filter;
-
-    private readonly BaseDataFilterOptions _options;
-
-    public DataFilter(IOptions<BaseDataFilterOptions> options)
-    {
-        _options = options.Value;
-        _filter = new AsyncLocal<DataFilterState>();
-    }
-
-    public bool IsEnabled
-    {
-        get
-        {
-            EnsureInitialized();
-            return _filter.Value.IsEnabled;
-        }
-    }
-
-    public IDisposable Enable()
-    {
-        if (IsEnabled)
-        {
-            return NullDisposable.Instance;
-        }
-
-        _filter.Value.IsEnabled = true;
-
-        return new DisposeAction(() => Disable());
-    }
-
-    public IDisposable Disable()
-    {
-        if (!IsEnabled)
-        {
-            return NullDisposable.Instance;
-        }
-
-        _filter.Value.IsEnabled = false;
-
-        return new DisposeAction(() => Enable());
-    }
-
-    private void EnsureInitialized()
-    {
-        if (_filter.Value != null)
-        {
-            return;
-        }
-
-        _filter.Value = _options.DefaultStates.GetOrDefault(typeof(TFilter))?.Clone() ?? new DataFilterState(true);
+        public void Dispose() => restore();
     }
 }

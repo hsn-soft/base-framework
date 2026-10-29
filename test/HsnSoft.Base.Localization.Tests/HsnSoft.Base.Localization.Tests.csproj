@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <Import Project="..\..\common.test.props" />
+
+    <ItemGroup>
+        <!-- a layer of texts of its own, to try AddEmbedded with -->
+        <EmbeddedResource Include="Localization\*.json" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\src\HsnSoft.Base.Localization\HsnSoft.Base.Localization.csproj" />
+    </ItemGroup>
+
+</Project>

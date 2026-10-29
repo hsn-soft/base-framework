@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <!--
+        The gateway of the Edx system: what a customer calls. It maps /firm-invoice-service/v1/... to /api/firm-invoice-service/v1/commercial/... of the service, passes the gRPC calls and the WCF (SOAP) calls through to the firm invoice integration, and
+        shows the documents of the services behind it. Everything it shares with the other hosts is in Edx.Shared.Hosting.Gateways (and Edx.Shared.Hosting). It reaches no broker.
+    -->
+
+    <ItemGroup>
+        <!-- the cache the host chose -->
+        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.Caching.StackExchangeRedis\HsnSoft.Base.Caching.StackExchangeRedis.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\shared\Edx.Shared.Hosting.Gateways\Edx.Shared.Hosting.Gateways.csproj" />
+    </ItemGroup>
+
+</Project>

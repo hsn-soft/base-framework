@@ -1,161 +1,59 @@
-﻿using HsnSoft.Base.Auditing.Contracts;
-using HsnSoft.Base.DependencyInjection;
-using HsnSoft.Base.Timing;
-using HsnSoft.Base.Users;
+using System;
+using HsnSoft.Base.Security;
 
 namespace HsnSoft.Base.Auditing;
 
-public class AuditPropertySetter : IAuditPropertySetter, ITransientDependency
+/// <summary>The default <see cref="IAuditPropertySetter"/>. Without a current user (a worker, a seed) the user fields are <see langword="null"/>.</summary>
+public sealed class AuditPropertySetter(TimeProvider clock, ICurrentUser? currentUser = null) : IAuditPropertySetter
 {
-    public AuditPropertySetter(ICurrentUser currentUser, IClock clock)
+    public AuditStamp Stamp()
     {
-        CurrentUser = currentUser;
-        Clock = clock;
+        (DateTimeOffset now, Guid? by) = Now();
+        return new AuditStamp(now, by);
     }
 
-    protected ICurrentUser CurrentUser { get; }
-    protected IClock Clock { get; }
-
-    public void SetCreationProperties(object targetObject)
+    public void SetCreation(object entity)
     {
-        SetCreationTime(targetObject);
-        SetCreatorId(targetObject);
-    }
+        ArgumentNullException.ThrowIfNull(entity);
 
-    public void SetModificationProperties(object targetObject)
-    {
-        SetLastModificationTime(targetObject);
-        SetLastModifierId(targetObject);
-    }
-
-    public void SetDeletionProperties(object targetObject)
-    {
-        SetDeletionTime(targetObject);
-        SetDeleterId(targetObject);
-    }
-
-    private void SetCreationTime(object targetObject)
-    {
-        if (targetObject is not IHasCreationTime objectWithCreationTime)
+        (DateTimeOffset now, Guid? by) = Now();
+        if (entity is IMarkCreated created)
         {
-            return;
+            created.MarkCreated(now, by);
         }
 
-        var now = Clock.Now;
-        ObjectHelper.TrySetProperty(objectWithCreationTime, x => x.CreationTime, () => now);
-        if (targetObject is IHasModificationTime objectWithModificationTime)
+        if (entity is IMarkModified modified)
         {
-            ObjectHelper.TrySetProperty(objectWithModificationTime, x => x.LastModificationTime, () => now);
+            modified.MarkModified(now, by);
         }
     }
 
-    private void SetCreatorId(object targetObject)
+    public void SetModification(object entity)
     {
-        if (targetObject is not IMayHaveCreator mayHaveCreatorObject)
+        ArgumentNullException.ThrowIfNull(entity);
+
+        if (entity is IMarkModified modified)
         {
-            return;
-        }
-
-        if (!CurrentUser.Id.HasValue)
-        {
-            ObjectHelper.TrySetProperty(mayHaveCreatorObject, x => x.CreatorId, () => null);
-            return;
-        }
-
-        // if (targetObject is IMultiTenant multiTenantEntity)
-        // {
-        //     if (multiTenantEntity.TenantId != CurrentUser.TenantId)
-        //     {
-        //         ObjectHelper.TrySetProperty(mayHaveCreatorObject, x => x.CreatorId, () => null);
-        //         return;
-        //     }
-        // }
-
-        // if (mayHaveCreatorObject.CreatorId.HasValue && mayHaveCreatorObject.CreatorId.Value != Guid.Empty)
-        // {
-        //     return;
-        // }
-
-        ObjectHelper.TrySetProperty(mayHaveCreatorObject, x => x.CreatorId, () => CurrentUser.Id);
-        SetLastModifierId(targetObject);
-    }
-
-    private void SetLastModificationTime(object targetObject)
-    {
-        if (targetObject is IHasModificationTime objectWithModificationTime)
-        {
-            ObjectHelper.TrySetProperty(objectWithModificationTime, x => x.LastModificationTime, () => Clock.Now);
+            (DateTimeOffset now, Guid? by) = Now();
+            modified.MarkModified(now, by);
         }
     }
 
-    private void SetLastModifierId(object targetObject)
+    public void SetDeletion(object entity)
     {
-        if (targetObject is not IModificationAuditedObject modificationAuditedObject)
+        ArgumentNullException.ThrowIfNull(entity);
+
+        (DateTimeOffset now, Guid? by) = Now();
+        if (entity is IMarkDeleted deleted && entity is ISoftDelete { IsDeleted: false })
         {
-            return;
+            deleted.MarkDeleted(now, by);
         }
 
-        if (!CurrentUser.Id.HasValue)
+        if (entity is IMarkModified modified)
         {
-            ObjectHelper.TrySetProperty(modificationAuditedObject, x => x.LastModifierId, () => null);
-            return;
-        }
-
-        // if (targetObject is IMultiTenant multiTenantEntity)
-        // {
-        //     if (multiTenantEntity.TenantId != CurrentUser.TenantId)
-        //     {
-        //         ObjectHelper.TrySetProperty(modificationAuditedObject, x => x.LastModifierId, () => null);
-        //         return;
-        //     }
-        // }
-
-        // if (modificationAuditedObject.LastModifierId.HasValue && modificationAuditedObject.LastModifierId.Value != Guid.Empty)
-        // {
-        //     return;
-        // }
-
-        ObjectHelper.TrySetProperty(modificationAuditedObject, x => x.LastModifierId, () => CurrentUser.Id);
-    }
-
-    private void SetDeletionTime(object targetObject)
-    {
-        if (targetObject is IHasDeletionTime objectWithDeletionTime)
-        {
-            if (objectWithDeletionTime.DeletionTime == null)
-            {
-                ObjectHelper.TrySetProperty(objectWithDeletionTime, x => x.DeletionTime, () => Clock.Now);
-            }
+            modified.MarkModified(now, by);
         }
     }
 
-    private void SetDeleterId(object targetObject)
-    {
-        if (targetObject is not IDeletionAuditedObject deletionAuditedObject)
-        {
-            return;
-        }
-
-        if (!CurrentUser.Id.HasValue)
-        {
-            ObjectHelper.TrySetProperty(deletionAuditedObject, x => x.DeleterId, () => null);
-            return;
-        }
-
-        // if (targetObject is IMultiTenant multiTenantEntity)
-        // {
-        //     if (multiTenantEntity.TenantId != CurrentUser.TenantId)
-        //     {
-        //         ObjectHelper.TrySetProperty(deletionAuditedObject, x => x.DeleterId, () => null);
-        //         return;
-        //     }
-        // }
-
-        // if (deletionAuditedObject.DeleterId.HasValue && deletionAuditedObject.DeleterId.Value != Guid.Empty)
-        // {
-        //     return;
-        // }
-
-        ObjectHelper.TrySetProperty(deletionAuditedObject, x => x.DeleterId, () => CurrentUser.Id);
-    }
+    private (DateTimeOffset Now, Guid? By) Now() => (clock.GetUtcNow(), currentUser?.Id);
 }

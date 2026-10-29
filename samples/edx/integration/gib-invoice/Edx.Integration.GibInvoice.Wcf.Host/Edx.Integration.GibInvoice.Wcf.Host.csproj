@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <!--
+        The WCF host of the integration service: the post box of the tenants, the service the center delivers its envelopes to (the contract of the real one: sendDocument and getApplicationResponse, MTOM). It only takes what the center delivers (checks the name, the MD5 and the uuid, keeps the
+        zip and queues the envelope) and tells what it has made of an envelope; the checks of the envelope, the events and the answer to the center are the work of the REST host (Edx.Integration.GibInvoice.Http.Host), so this host needs no event bus. It speaks to the center as the center
+        does to the integrators: without a token.
+    -->
+
+    <ItemGroup>
+        <PackageReference Include="CoreWCF.Http" />
+        <PackageReference Include="CoreWCF.Primitives" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.BlobStoring.Minio\HsnSoft.Base.BlobStoring.Minio.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\shared\Edx.Shared.Efatura\Edx.Shared.Efatura.csproj" />
+        <ProjectReference Include="..\..\..\shared\Edx.Shared.Hosting\Edx.Shared.Hosting.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Edx.Integration.GibInvoice.Application\Edx.Integration.GibInvoice.Application.csproj" />
+        <ProjectReference Include="..\Edx.Integration.GibInvoice.MongoDB\Edx.Integration.GibInvoice.MongoDB.csproj" />
+    </ItemGroup>
+
+</Project>

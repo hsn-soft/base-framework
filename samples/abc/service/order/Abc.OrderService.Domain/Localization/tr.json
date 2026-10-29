@@ -1,0 +1,15 @@
+{
+  "culture": "tr",
+  "texts": {
+    "order_not_found": "{0} numaralı sipariş bulunamadı.",
+    "order_customer_required": "Sipariş için giriş yapmış bir müşteri gerekir.",
+    "order_lines_required": "Bir siparişte en az bir kalem olmalı.",
+    "order_status_final": "Durumu {0} olan bir siparişin durumu değiştirilemez.",
+    "order_status_invalid": "'{0}' bir sipariş durumu değil (Pending, Confirmed, Shipped, Delivered, Cancelled).",
+    "OrderStatus:Pending": "Beklemede",
+    "OrderStatus:Confirmed": "Onaylandı",
+    "OrderStatus:Shipped": "Kargoya verildi",
+    "OrderStatus:Delivered": "Teslim edildi",
+    "OrderStatus:Cancelled": "İptal edildi"
+  }
+}

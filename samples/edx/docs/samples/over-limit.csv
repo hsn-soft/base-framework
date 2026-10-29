@@ -1,0 +1,2 @@
+invoiceNumber,issueDate,currency,customerName,customerTaxId,customerTaxOffice,customerDistrict,customerCity,customerCountry,description,quantity,unitCode,unitPrice,vatRate
+ABC2026000000004,2026-10-28,TRY,Bilgera Bilisim A.S.,1234567802,Cankaya,Cankaya,Ankara,Türkiye,Buyuk proje,1,C62,5000000.00,20

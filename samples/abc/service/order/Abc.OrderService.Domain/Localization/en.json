@@ -1,0 +1,15 @@
+{
+  "culture": "en",
+  "texts": {
+    "order_not_found": "Order {0} was not found.",
+    "order_customer_required": "An order needs a signed-in customer.",
+    "order_lines_required": "An order has at least one line.",
+    "order_status_final": "An order that is {0} cannot change its status.",
+    "order_status_invalid": "'{0}' is not a status of an order (Pending, Confirmed, Shipped, Delivered, Cancelled).",
+    "OrderStatus:Pending": "Pending",
+    "OrderStatus:Confirmed": "Confirmed",
+    "OrderStatus:Shipped": "Shipped",
+    "OrderStatus:Delivered": "Delivered",
+    "OrderStatus:Cancelled": "Cancelled"
+  }
+}

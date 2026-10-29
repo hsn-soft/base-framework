@@ -1,0 +1,25 @@
+@model CheckModel
+@{
+    ViewData["Title"] = "Home";
+}
+<h1>Pick your user name</h1>
+<form method="post" action="/" asp-antiforgery="true">
+    <input name="UserName" value="@Model.UserName" placeholder="user name" autofocus />
+    <button class="primary" type="submit">Check</button>
+</form>
+@if (Model.Error is not null)
+{
+    <p class="error">@Model.Error</p>
+}
+else if (Model.Result is not null)
+{
+    @if (Model.Result.IsAvailable)
+    {
+        <p class="ok"><strong>@Model.Result.UserName</strong> is free.</p>
+    }
+    else
+    {
+        <p class="error"><strong>@Model.Result.UserName</strong> is taken.</p>
+    }
+}
+<p class="muted">The page asks the public gateway (<code>/identity-service/v1/users/check-user-name</code>), which maps it to the public endpoint of the identity service.</p>

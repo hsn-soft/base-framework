@@ -1,10 +1,58 @@
 <Project>
+    <Import Project="$(MSBuildThisFileDirectory)common.versions.props" />
+
+    <!--
+        Shared settings of every test project under test/.
+        Import it from the project file:  <Import Project="..\..\common.test.props" />
+        Libraries use common.props instead.
+    -->
+
     <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
         <LangVersion>latest</LangVersion>
-        <NoWarn>$(NoWarn);CS1591;CS1998;CS0436</NoWarn>
-        <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
-        <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
-        <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
-        <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <Deterministic>true</Deterministic>
+        <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
+        <TreatWarningsAsErrors Condition="'$(ContinuousIntegrationBuild)' == 'true'">true</TreatWarningsAsErrors>
+        <!--
+            Keep these as warnings even when TreatWarningsAsErrors is on (CI), so a build does not break without a code change:
+            CS0618/CS0612       use of an [Obsolete] API (appears after a package or SDK upgrade)
+            NU1901-NU1904       known vulnerability reported for a dependency (appears when a new advisory is published)
+            Add a code here only when it should stay visible but must not fail the build.
+        -->
+        <WarningsNotAsErrors>$(WarningsNotAsErrors);CS0618;CS0612;NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
+        <IsPackable>false</IsPackable>
+        <IsTestProject>true</IsTestProject>
+        <!-- Needed by the build-time IDE0005 (unused usings) check; CS1591 is not interesting for tests -->
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <NoWarn>$(NoWarn);CS1591</NoWarn>
+        <!-- Run the .editorconfig code style rules and the quality analyzers during dotnet build, not only in the IDE -->
+        <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+        <AnalysisLevel>latest-recommended</AnalysisLevel>
     </PropertyGroup>
+
+    <ItemGroup Label="Test stack">
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
+        <PackageReference Include="xunit" Version="2.9.3" />
+        <PackageReference Include="xunit.runner.visualstudio" Version="4.0.1">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="coverlet.collector" Version="10.1.0">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+
+    <!-- What nearly every test builds its own host with: the library packages bring only the abstractions, so a test that makes a container, a logger or a configuration needs these -->
+    <ItemGroup Label="Test host">
+        <PackageReference Include="Microsoft.Extensions.Configuration" Version="$(MicrosoftAspNetCorePackageVersion)" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="$(MicrosoftAspNetCorePackageVersion)" />
+        <PackageReference Include="Microsoft.Extensions.Logging" Version="$(MicrosoftAspNetCorePackageVersion)" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Using Include="Xunit" />
+    </ItemGroup>
 </Project>

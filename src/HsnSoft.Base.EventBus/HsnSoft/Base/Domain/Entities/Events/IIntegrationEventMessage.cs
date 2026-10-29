@@ -1,6 +1,4 @@
 namespace HsnSoft.Base.Domain.Entities.Events;
 
-public interface IIntegrationEventMessage
-{
-    // Marker
-}
+/// <summary>Marks a type as a message that travels between services. Derive a type (record or class) per business fact.</summary>
+public interface IIntegrationEventMessage;

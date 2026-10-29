@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!-- The heart of the mock center: who is registered with it (participants and their aliases) and the envelopes it was handed (its queue). -->
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.Ddd.Domain\HsnSoft.Base.Ddd.Domain.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\shared\Edx.Shared.Efatura\Edx.Shared.Efatura.csproj" />
+    </ItemGroup>
+
+</Project>

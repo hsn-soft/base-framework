@@ -1,0 +1,19 @@
+@model LoginModel
+@{
+    ViewData["Title"] = "Sign in";
+}
+<h1>Sign in</h1>
+@if (Model.Expired)
+{
+    <p class="error">Your session has ended. Sign in again.</p>
+}
+@if (Model.Error is not null)
+{
+    <p class="error">@Model.Error</p>
+}
+<form method="post" action="/account/login" asp-antiforgery="true">
+    <p><label>User name<br /><input name="UserName" value="@Model.UserName" autofocus /></label></p>
+    <p><label>Password<br /><input name="Password" type="password" /></label></p>
+    <p><button class="primary" type="submit">Sign in</button></p>
+</form>
+<p class="muted">The sample users are in the <code>Auth</code> section of <code>Abc.AuthServer.Host</code> (<code>alice</code> / <code>alice123</code>).</p>

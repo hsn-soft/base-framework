@@ -1,15 +1,10 @@
 namespace HsnSoft.Base;
 
 /// <summary>
-/// Used to standardize soft deleting entities.
-/// Soft-delete entities are not actually deleted,
-/// marked as IsDeleted = true in the database,
-/// but can not be retrieved to the application normally.
+/// An entity that is not removed when it is deleted: it is marked as deleted, and the lists no longer show it (the query filter of the persistence;
+/// <c>IDataFilter</c> lets a piece of code see the deleted ones too). When and by whom it was deleted is kept by the audit contracts (<c>IHasDeletionTime</c>, <c>IDeletionAuditedObject</c> of <c>HsnSoft.Base.Auditing</c>).
 /// </summary>
 public interface ISoftDelete
 {
-    /// <summary>
-    /// Used to mark an Entity as 'Deleted'.
-    /// </summary>
     bool IsDeleted { get; }
 }

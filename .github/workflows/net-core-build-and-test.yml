@@ -1,39 +1,185 @@
 name: '.NETCore Build & Test'
 
+# The same steps run on a developer's machine with scripts/ci-detector/ (ci_detector_mac.sh, ci_detector_win.ps1): keep them in step.
+
 on:
     pull_request:
         branches: [ "dev" ]
         types: [ opened, synchronize, reopened ]
+    push:
+        branches: [ "dev" ]   # the state of dev (the main tracking branch) is what the README badge shows
+    workflow_dispatch:
+
+permissions:
+    contents: read
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    # Only supersede PR runs; every push to dev should finish and report
+    cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+    # Raise this as coverage grows; the PR fails when line coverage of src drops below it.
+    COVERAGE_THRESHOLD: '99'
 
 jobs:
-    build:
-        name: 'Build And Test JOB'
+    unit-tests:
+        name: 'Build And Unit Test JOB'
         runs-on: ubuntu-latest
 
         steps:
             -   name: Checkout Repository
-                uses: actions/checkout@v3
+                uses: actions/checkout@v4
                 with:
-                    fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+                    fetch-depth: 0
 
             -   name: Setup .NET
                 uses: actions/setup-dotnet@v4
                 with:
                     dotnet-version: '10.0.x'
 
-            -   name: Cache Search
-                uses: actions/cache@v3
+            -   name: Cache NuGet
+                uses: actions/cache@v4
                 with:
                     path: ~/.nuget/packages
-                    key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+                    key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'common.props', 'common.versions.props') }}
                     restore-keys: |
                         ${{ runner.os }}-nuget
 
+            -   name: Every Package Has Unit Tests
+                run: ./scripts/ci-detector/ci-check-test-project-exist.sh
+
+            -   name: Project File Reference Order
+                run: python3 scripts/ci-detector/ci-force-csproj-order.py
+
+            -   name: Framework Project References
+                run: python3 scripts/ci-detector/ci-force-framework-references-rules.py
+
             -   name: Restore Dependencies
-                run: dotnet restore --force --verbosity minimal --configfile NuGet.Config
+                run: ./scripts/ci-detector/ci-timed.sh timings/unit.txt "Restore" dotnet restore --verbosity minimal --configfile NuGet.Config
+
+            # The same rules the pre-commit hook fixes; this catches commits made without the hook (--no-verify, a missing install).
+            -   name: Format Check (C#)
+                run: >
+                    ./scripts/ci-detector/ci-timed.sh timings/unit.txt "Format check (C#)" bash -ec '
+                    dotnet format whitespace HsnSoft.Base.sln --verify-no-changes --no-restore;
+                    dotnet format style HsnSoft.Base.sln --verify-no-changes --severity info --no-restore'
+
+            -   name: Format Check (JSON)
+                run: ./scripts/ci-detector/ci-timed.sh timings/unit.txt "Format check (JSON)" dotnet run scripts/ci-detector/format-json.cs -- --all --check
 
             -   name: Build Solution
-                run: dotnet build --no-restore --no-incremental --verbosity minimal --configuration Release
+                run: ./scripts/ci-detector/ci-timed.sh timings/unit.txt "Build" dotnet build --no-restore --verbosity minimal --configuration Release
 
-            -   name: Test Solution
-                run: dotnet test --no-restore --no-build --verbosity minimal --configuration Release --filter "category!=integration"
+            -   name: Unit Tests With Coverage
+                run: >
+                    ./scripts/ci-detector/ci-timed.sh timings/unit.txt "Unit tests"
+                    ./scripts/run-tests.sh unit
+                    --no-restore --no-build --configuration Release --verbosity minimal
+                    --settings test/coverlet.runsettings
+                    --collect:"XPlat Code Coverage"
+                    --results-directory ./TestResults/unit
+                    --logger "trx;LogFilePrefix=unit"
+                    --logger "console;verbosity=normal"
+
+            -   name: Upload Test Results
+                if: always()
+                uses: actions/upload-artifact@v4
+                with:
+                    name: unit-test-results
+                    path: TestResults/unit
+
+            -   name: Upload Timings
+                if: always()
+                uses: actions/upload-artifact@v4
+                with:
+                    name: unit-timings
+                    path: timings
+                    if-no-files-found: ignore
+
+    integration-tests:
+        name: 'Integration Test JOB'
+        runs-on: ubuntu-latest   # Docker is available; Testcontainers starts the services the tests need.
+
+        steps:
+            -   name: Checkout Repository
+                uses: actions/checkout@v4
+
+            -   name: Setup .NET
+                uses: actions/setup-dotnet@v4
+                with:
+                    dotnet-version: '10.0.x'
+
+            -   name: Cache NuGet
+                uses: actions/cache@v4
+                with:
+                    path: ~/.nuget/packages
+                    key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'common.props', 'common.test.props', 'common.versions.props') }}
+                    restore-keys: |
+                        ${{ runner.os }}-nuget
+
+            -   name: Integration Tests With Coverage
+                run: >
+                    ./scripts/ci-detector/ci-timed.sh timings/integration.txt "Integration tests"
+                    ./scripts/run-tests.sh integration
+                    --configuration Release --verbosity minimal
+                    --settings test/coverlet.runsettings
+                    --collect:"XPlat Code Coverage"
+                    --logger "trx;LogFilePrefix=integration"
+                    --logger "console;verbosity=normal"
+                    --results-directory ./TestResults/integration
+
+            -   name: Upload Test Results
+                if: always()
+                uses: actions/upload-artifact@v4
+                with:
+                    name: integration-test-results
+                    path: TestResults/integration
+                    if-no-files-found: ignore
+
+            -   name: Upload Timings
+                if: always()
+                uses: actions/upload-artifact@v4
+                with:
+                    name: integration-timings
+                    path: timings
+                    if-no-files-found: ignore
+
+    coverage-gate:
+        name: 'Coverage Gate JOB'
+        runs-on: ubuntu-latest
+        needs: [ unit-tests, integration-tests ]
+
+        steps:
+            -   name: Checkout Repository
+                uses: actions/checkout@v4
+
+            -   name: Download Test Results
+                uses: actions/download-artifact@v4
+                with:
+                    pattern: '*-test-results'
+                    path: TestResults
+
+            # A line counts as covered when the unit or the integration tests ran it (the broker/database code is only reachable with the real service).
+            -   name: Coverage Gate
+                run: python3 scripts/ci-detector/ci-check-coverage.py "$COVERAGE_THRESHOLD" $(find TestResults -name 'coverage.cobertura.xml')
+
+    # The times of every step, the test counts and the coverage on one page, whether the run passed or not.
+    summary:
+        name: 'Summary JOB'
+        runs-on: ubuntu-latest
+        needs: [ unit-tests, integration-tests, coverage-gate ]
+        if: always()
+
+        steps:
+            -   name: Checkout Repository
+                uses: actions/checkout@v4
+
+            -   name: Download Results And Timings
+                uses: actions/download-artifact@v4
+                with:
+                    pattern: '*-{test-results,timings}'
+                    path: summary-input
+
+            -   name: Summary
+                run: python3 scripts/ci-detector/ci-summary.py summary-input summary-input

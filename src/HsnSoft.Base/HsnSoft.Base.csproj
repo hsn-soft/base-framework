@@ -1,16 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-    <Import Project="..\..\configureawait.props" />
     <Import Project="..\..\common.props" />
 
     <PropertyGroup>
-        <TargetFramework>net10.0</TargetFramework>
         <PackageId>HsnSoft.Base</PackageId>
-        <AssetTargetFallback>$(AssetTargetFallback);portable-net45+win8+wp8+wpa81;</AssetTargetFallback>
-        <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
-        <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
-        <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
         <RootNamespace />
+        <Description>HsnSoft Base Framework meta package. It contains no code and only references HsnSoft.Base.Core.</Description>
         <Title>HsnSoft Base Framework</Title>
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <PackageTags>HsnSoft Base Framework</PackageTags>

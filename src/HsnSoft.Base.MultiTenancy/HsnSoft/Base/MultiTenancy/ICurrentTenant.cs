@@ -1,31 +1,23 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using JetBrains.Annotations;
 
 namespace HsnSoft.Base.MultiTenancy;
 
+/// <summary>
+/// The tenant of the request: what an <see cref="ITenantSource"/> says (the token of a request, the envelope of a message) unless code changed it with <see cref="Change"/>
+/// (a seed, a worker). The system tenant sees every tenant; anyone else sees the tenants in <see cref="AllowedTenantIds"/>, which always has its own.
+/// </summary>
 public interface ICurrentTenant
 {
     bool IsAvailable { get; }
 
-    [CanBeNull] Guid? Id { get; }
-
-    [CanBeNull] string Normalized { get; }
+    Guid? Id { get; }
 
     bool IsSystemTenant { get; }
 
-    [NotNull] List<Guid> AllowedTenantIds { get; }
+    /// <summary>The tenants whose entities may be seen: the tenant itself and the ones the token allows.</summary>
+    IReadOnlyList<Guid> AllowedTenantIds { get; }
 
-    // [NotNull] List<Guid> AllowedCustomerIds { get; }
-
-    [NotNull] List<string> AllowedScopeKeys { get; }
-
-    IDisposable Change(
-        Guid? id,
-        bool isSystemTenant,
-        [CanBeNull] List<Guid> allowedTenantIds,
-        // [CanBeNull] List<Guid> allowedCustomerIds,
-        [CanBeNull] List<string> allowedScopeKeys,
-        [CanBeNull] string normalized = null
-    );
+    /// <summary>Acts as another tenant until the returned scope is disposed (it works across <c>await</c>; the previous tenant comes back).</summary>
+    IDisposable Change(Guid? id, bool isSystemTenant = false, IEnumerable<Guid>? allowedTenantIds = null);
 }

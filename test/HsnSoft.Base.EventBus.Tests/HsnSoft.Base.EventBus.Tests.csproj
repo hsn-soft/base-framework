@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <Import Project="..\..\common.test.props" />
+
+    <ItemGroup>
+        <!-- the production services copy an envelope with it (ApplicationServiceBase.SetParentIntegrationEvent) -->
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\src\HsnSoft.Base.EventBus\HsnSoft.Base.EventBus.csproj" />
+    </ItemGroup>
+
+</Project>

@@ -2,41 +2,33 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using HsnSoft.Base.EventBus.RabbitMQ.Configs;
+using HsnSoft.Base.EventBus.RabbitMQ.Connection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 
 namespace HsnSoft.Base.EventBus.RabbitMQ;
 
-public class RabbitMqHealthCheck(RabbitMqConnectionSettings conSettings) : IHealthCheck
+/// <summary>Ready when a fresh connection to the broker can be opened (so it also works for a service that has not published or consumed anything yet).</summary>
+public sealed class RabbitMqHealthCheck(IOptions<RabbitMqConnectionSettings> settings) : IHealthCheck
 {
-    private readonly ConnectionFactory _connectionFactory = new()
-    {
-        HostName = conSettings.HostName,
-        Port = conSettings.Port,
-        UserName = conSettings.UserName,
-        Password = conSettings.Password,
-        VirtualHost = conSettings.VirtualHost,
-        RequestedHeartbeat = TimeSpan.FromSeconds(60)
-    };
+    private readonly ConnectionFactory _connectionFactory = RabbitMqConnectionFactory.Create(settings.Value, automaticRecovery: false);
 
     public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
     {
-        bool connectionOpened = false;
-        string errorMessage = string.Empty;
         try
         {
-            await using var connection = await _connectionFactory.CreateConnectionAsync(cancellationToken);
-            if (connection is { IsOpen: true })
+            IConnection connection = await _connectionFactory.CreateConnectionAsync(cancellationToken).ConfigureAwait(false);
+            await using (connection.ConfigureAwait(false))
             {
-                connectionOpened = true;
+                // opening it is the check: the broker answered and accepted the credentials
             }
-        }
-        catch (Exception ex)
-        {
-            connectionOpened = false;
-            errorMessage = ex.Message;
-        }
 
-        return connectionOpened ? HealthCheckResult.Healthy(description: "RabbitMQ is ready") : HealthCheckResult.Unhealthy(description: errorMessage);
+            return HealthCheckResult.Healthy("RabbitMQ is ready");
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            return HealthCheckResult.Unhealthy(exception.Message);
+        }
     }
 }

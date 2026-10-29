@@ -1,153 +1,107 @@
 using System;
-using System.Net.Sockets;
-using System.Text.Json;
+using System.Reflection;
+using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using HsnSoft.Base.Domain.Entities.Events;
-using HsnSoft.Base.EventBus.Logging;
-using HsnSoft.Base.EventBus.RabbitMQ.Configs;
 using HsnSoft.Base.EventBus.RabbitMQ.Connection;
-using JetBrains.Annotations;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Polly;
 using RabbitMQ.Client;
-using RabbitMQ.Client.Exceptions;
 
 namespace HsnSoft.Base.EventBus.RabbitMQ;
 
 /// <summary>
-/// Publishes a FailedEto to this microservice's own error queue, notifying event-manager of a
-/// pre-handler (framework-level) dispatch failure. Extracted from RabbitMqConsumer so the same
-/// notification path is reusable by ReQueuedEtoHandler's redispatch failures too.
+/// Publishes a <see cref="FailedEto"/> to the queue of the error client (<c>{ExchangeName}_{ErrorClientName}_{EventName}</c>). It is
+/// separate from the event bus so the consumer can report a failure even when it has no handler for the message.
 /// </summary>
-public sealed class FailedEventNotifier(
-    IRabbitMqPersistentConnection persistentConnection,
-    IEventBusSubscriptionManager subscriptionsManager,
-    IOptions<RabbitMqEventBusConfig> rabbitMqEventBusConfigOptions,
-    IEventBusLogger logger
-) : IFailedEventNotifier
+public sealed partial class FailedEventNotifier(
+    IRabbitMqPersistentConnection connection,
+    IEventBusSubscriptionManager subscriptions,
+    EventEnvelopeFactory envelopeFactory,
+    IOptions<EventBusOptions> options,
+    ILogger<FailedEventNotifier> logger) : IFailedEventNotifier
 {
-    private readonly RabbitMqEventBusConfig _rabbitMqEventBusConfig = rabbitMqEventBusConfigOptions.Value;
+    private readonly IRabbitMqPersistentConnection _connection = connection;
+    private readonly IEventBusSubscriptionManager _subscriptions = subscriptions;
+    private readonly EventEnvelopeFactory _envelopeFactory = envelopeFactory;
+    private readonly EventBusOptions _options = options.Value;
+    private readonly ILogger<FailedEventNotifier> _logger = logger;
 
-    public async Task NotifyAsync(string errorMessage, string failedEventName, string failedMessageContent)
+    public async Task NotifyAsync(string errorMessage, string failedEventName, string failedMessageContent, CancellationToken cancellationToken = default)
     {
-        ParentMessageEnvelope failedEnvelopeInfo = null;
-        Type failedEventEnvelopeMessageType = null;
-        IIntegrationEventMessage failedMessageObject = null;
+        ArgumentNullException.ThrowIfNull(errorMessage);
+        ArgumentNullException.ThrowIfNull(failedEventName);
+        ArgumentNullException.ThrowIfNull(failedMessageContent);
+
+        ParentMessageEnvelope? failedEnvelope = null;
+        Type? eventType = null;
+        object? failedMessage = null;
         try
         {
-            dynamic failedEnvelope = JsonConvert.DeserializeObject<dynamic>(failedMessageContent);
-            failedEnvelopeInfo = ((JObject)failedEnvelope)?.ToObject<ParentMessageEnvelope>();
-
-            failedEventEnvelopeMessageType = subscriptionsManager.GetEventInfoByName(failedEventName)?.EventType;
-
-            var genericClass = typeof(MessageEnvelope<>);
-            var constructedClass = genericClass.MakeGenericType(failedEventEnvelopeMessageType!);
-            object failedEventEnvelope = System.Text.Json.JsonSerializer.Deserialize(failedMessageContent, constructedClass);
-
-            failedMessageObject = ((dynamic)failedEventEnvelope)?.Message;
+            byte[] body = Encoding.UTF8.GetBytes(failedMessageContent);
+            failedEnvelope = EventSerializer.DeserializeParent(body);
+            eventType = _subscriptions.GetEventInfoByName(failedEventName)?.EventType
+                        ?? throw new InvalidOperationException($"No event type is registered for '{failedEventName}'.");
+            object envelope = EventSerializer.DeserializeEnvelope(body, eventType);
+            failedMessage = envelope.GetType().GetProperty(nameof(MessageEnvelope<>.Message), BindingFlags.Public | BindingFlags.Instance)!.GetValue(envelope);
         }
-        catch (Exception e)
+        catch (Exception exception)
         {
-            errorMessage += ". FailedMessageContent convert operation error: " + e.Message;
+            errorMessage += ". FailedMessageContent convert operation error: " + exception.Message;
         }
 
-        await PublishFailedEtoAsync(errorMessage, failedEnvelopeInfo, failedEventEnvelopeMessageType?.Name, failedMessageObject);
+        await PublishFailedAsync(errorMessage, failedEnvelope, eventType?.Name, failedMessage, cancellationToken).ConfigureAwait(false);
     }
 
-    public async Task NotifyDirectAsync(string errorMessage, [CanBeNull] string failedMessageTypeName, [CanBeNull] object failedMessageObject, [CanBeNull] ParentMessageEnvelope parentContext)
+    public Task NotifyDirectAsync(string errorMessage, string? failedMessageTypeName, object? failedMessageObject, ParentMessageEnvelope? parentContext, CancellationToken cancellationToken = default)
     {
-        await PublishFailedEtoAsync(errorMessage, parentContext, failedMessageTypeName, failedMessageObject);
+        ArgumentNullException.ThrowIfNull(errorMessage);
+
+        return PublishFailedAsync(errorMessage, parentContext, failedMessageTypeName, failedMessageObject, cancellationToken);
     }
 
-    private async Task PublishFailedEtoAsync(string errorMessage, [CanBeNull] ParentMessageEnvelope failedEnvelopeInfo, [CanBeNull] string failedMessageTypeName, [CanBeNull] object failedMessageObject)
+    private async Task PublishFailedAsync(string errorMessage, ParentMessageEnvelope? failedEnvelope, string? failedTypeName, object? failedMessage, CancellationToken cancellationToken)
     {
-        if (!persistentConnection.IsConnected) await persistentConnection.TryConnectAsync();
-        if (!persistentConnection.IsConnected) throw new ConnectFailureException("", new Exception("Connection fail"));
-
-        var produceTime = DateTime.UtcNow;
-        var @event = new MessageEnvelope<FailedEto>
+        if (!_connection.IsConnected)
         {
-            ParentMessageId = failedEnvelopeInfo?.MessageId,
-            MessageId = Guid.CreateVersion7(),
-            MessageTime = produceTime,
-            Message = new FailedEto(
-                FailedReason: errorMessage,
-                FailedMessageEnvelopeTime: failedEnvelopeInfo?.MessageTime.ToUniversalTime(),
-                FailedMessageObject: failedMessageObject,
-                FailedMessageTypeName: failedMessageTypeName
-            ),
-            Producer = _rabbitMqEventBusConfig.ConsumerClientInfo,
-            CorrelationId = failedEnvelopeInfo?.CorrelationId,
-            UserId = failedEnvelopeInfo?.UserId,
-            UserRoles = failedEnvelopeInfo?.UserRoles,
-            ClientLat = failedEnvelopeInfo?.ClientLat,
-            ClientLong = failedEnvelopeInfo?.ClientLong,
-            ClientChannel = failedEnvelopeInfo?.ClientChannel,
-            ClientVersion = failedEnvelopeInfo?.ClientVersion,
-            HopLevel = failedEnvelopeInfo != null ? (ushort)(failedEnvelopeInfo.HopLevel + 1) : (ushort)1,
-            ReQueuedCount = failedEnvelopeInfo?.ReQueuedCount ?? 0
-        };
+            await _connection.TryConnectAsync(cancellationToken).ConfigureAwait(false);
+        }
 
-        string eventName = EventNameHelper.TrimEventName(_rabbitMqEventBusConfig, @event.Message.GetType().Name);
-        string consumerErrorQueueName = $"{_rabbitMqEventBusConfig.ErrorClientInfo}_{eventName}";
-
-        logger.LogWarning("{BrokerName} | PRODUCER {ClientInfo} EVENT [ {EventName} ] => MessageId [ {MessageId} ] STARTED",
-            "RabbitMQ", _rabbitMqEventBusConfig.ConsumerClientInfo, eventName, @event.MessageId.ToString());
-
-        var policy = Policy.Handle<BrokerUnreachableException>()
-            .Or<SocketException>()
-            .WaitAndRetryAsync(5, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), (ex, time) =>
-            {
-                logger.LogError("{BrokerName} | Could not publish failed event message : {Event} after {Timeout}s ({ExceptionMessage})",
-                    "RabbitMQ", failedMessageObject, $"{time.TotalSeconds:n1}", ex.Message);
-
-                // Persistent Log
-                logger.EventBusErrorLog(new ProduceMessageLogModel(
-                    LogId: Guid.CreateVersion7().ToString(),
-                    CorrelationId: @event.CorrelationId,
-                    Facility: nameof(EventBusLogFacility.PRODUCE_EVENT_ERROR),
-                    ProduceDateTimeUtc: produceTime,
-                    MessageLog: new MessageLogDetail(
-                        EventType: eventName,
-                        HopLevel: @event.HopLevel,
-                        ParentMessageId: @event.ParentMessageId,
-                        MessageId: @event.MessageId,
-                        MessageTime: @event.MessageTime,
-                        Message: @event.Message,
-                        UserId: @event.UserId,
-                        UserRoles: @event.UserRoles,
-                        ClientLat: @event.ClientLat,
-                        ClientLong: @event.ClientLong,
-                        ClientChannel: @event.ClientChannel,
-                        ClientVersion: @event.ClientVersion
-                    ),
-                    ProduceDetails: $"Message publish error: {ex.Message}"));
-            });
-
-        byte[] body = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(@event, @event.GetType(), new JsonSerializerOptions { WriteIndented = true });
-
-        await policy.ExecuteAsync(async () =>
+        if (!_connection.IsConnected)
         {
-            await using var publisherChannel = await persistentConnection.CreateModelAsync()!;
+            throw new RabbitMqNotConnectedException();
+        }
 
-            await publisherChannel.QueueDeclareAsync(
-                queue: consumerErrorQueueName,
-                durable: true,
-                exclusive: false,
-                autoDelete: false,
-                arguments: null);
+        FailedEto failed = new(errorMessage, failedEnvelope?.MessageTime.ToUniversalTime(), failedMessage, failedTypeName);
+        MessageEnvelope<FailedEto> envelope = _envelopeFactory.Create(failed, failedEnvelope, null, isReQueuePublish: false);
+        byte[] body = EventSerializer.Serialize(envelope);
+        string eventName = EventNames.For(_options, typeof(FailedEto));
+        string queueName = EventNameHelper.GetErrorEventQueueName(_options, eventName);
 
-            await publisherChannel.BasicPublishAsync(
-                exchange: "",
-                routingKey: consumerErrorQueueName,
-                mandatory: true,
-                basicProperties: new BasicProperties { DeliveryMode = DeliveryModes.Persistent },
-                body: body);
-        });
-
-        logger.LogWarning("{BrokerName} | PRODUCER {ClientInfo} EVENT [ {EventName} ] => MessageId [ {MessageId} ] COMPLETED",
-            "RabbitMQ", _rabbitMqEventBusConfig.ConsumerClientInfo, eventName, @event.MessageId.ToString());
+        LogNotifying(_logger, queueName, envelope.MessageId);
+        await PublishRetry.ExecuteAsync(
+            () => RabbitMqPublisher.WithConfirmTimeoutAsync(
+                async limit =>
+                {
+                    IChannel channel = await _connection.CreatePublisherChannelAsync(limit).ConfigureAwait(false);
+                    await using (channel.ConfigureAwait(false))
+                    {
+                        await RabbitMqPublisher.PublishToQueueAsync(channel, queueName, RabbitMqPublisher.Properties(envelope.MessageId, envelope.CorrelationId), body, limit).ConfigureAwait(false);
+                    }
+                },
+                _options.PublishTimeout,
+                cancellationToken),
+            _options.PublishRetryCount,
+            _options.PublishRetryBaseDelay,
+            RabbitMqPublisher.IsTransient,
+            (exception, delay, retry) => LogNotifyRetry(_logger, exception, queueName, retry, delay.TotalSeconds),
+            cancellationToken).ConfigureAwait(false);
     }
+
+    [LoggerMessage(EventId = 4201, EventName = "RABBITMQ_FAILED_EVENT_NOTIFYING", Level = LogLevel.Debug, Message = "Reporting a failed message to {Queue}, message {MessageId}")]
+    private static partial void LogNotifying(ILogger logger, string queue, Guid messageId);
+
+    [LoggerMessage(EventId = 4203, EventName = "RABBITMQ_FAILED_EVENT_NOTIFY_RETRY", Level = LogLevel.Error, Message = "Could not report the failed message to {Queue}: retry {Retry} after {DelaySeconds} s")]
+    private static partial void LogNotifyRetry(ILogger logger, Exception exception, string queue, int retry, double delaySeconds);
 }

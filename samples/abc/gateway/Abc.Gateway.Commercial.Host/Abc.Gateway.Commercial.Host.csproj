@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <!--
+        The commercial gateway of the Abc system: what a client of the commercial side calls. It maps /identity-service/v1/... to /api/identity-service/v1/commercial/... of the
+        service, and shows the documents of the services behind it. Everything it shares with the other gateway is in Abc.Shared.Hosting.Gateways (and, with the microservices, in Abc.Shared.Hosting).
+    -->
+
+    <ItemGroup>
+        <!-- the cache the host chose -->
+        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.Caching.StackExchangeRedis\HsnSoft.Base.Caching.StackExchangeRedis.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\shared\Abc.Shared.Hosting.Gateways\Abc.Shared.Hosting.Gateways.csproj" />
+    </ItemGroup>
+
+</Project>

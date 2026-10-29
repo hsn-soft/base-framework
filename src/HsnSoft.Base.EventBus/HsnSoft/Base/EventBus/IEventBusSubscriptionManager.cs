@@ -1,31 +1,38 @@
 using System;
 using System.Collections.Generic;
 using HsnSoft.Base.Domain.Entities.Events;
-using JetBrains.Annotations;
 
 namespace HsnSoft.Base.EventBus;
 
+/// <summary>
+/// Knows which events the service listens to and who handles them. A service has one handler per event: when several are registered
+/// for the same event name, the first wins and the others are ignored (that is how a service's own handler for an event replaces a
+/// shared default).
+/// </summary>
 public interface IEventBusSubscriptionManager
 {
-    Func<string, string> EventNameGetter { get; set; }
+    /// <summary>Turns a type name into an event name (removes the configured prefix and suffix).</summary>
+    Func<string, string> EventNameGetter { get; }
 
     bool IsEmpty { get; }
-    void Clear();
 
-    void AddSubscription<T, TH>(ushort fetchCount = 1) where T : IIntegrationEventMessage where TH : IIntegrationEventHandler<T>;
+    /// <summary>Every event the service listens to, in registration order.</summary>
+    IReadOnlyList<IntegrationEventInfo> Events { get; }
 
-    void AddSubscription(Type eventType, Type eventHandlerType, ushort fetchCount = 1);
+    bool HasSubscriptionsForEvent<T>()
+        where T : IIntegrationEventMessage;
 
-    bool HasSubscriptionsForEvent<T>() where T : IIntegrationEventMessage;
     bool HasSubscriptionsForEvent(string eventName);
 
-    IEnumerable<IntegrationEventHandlerInfo> GetHandlersForEvent<T>() where T : IIntegrationEventMessage;
+    IEnumerable<IntegrationEventHandlerInfo> GetHandlersForEvent<T>()
+        where T : IIntegrationEventMessage;
+
     IEnumerable<IntegrationEventHandlerInfo> GetHandlersForEvent(string eventName);
 
-    [CanBeNull]
-    IntegrationEventInfo GetEventInfoByName(string eventName);
+    IntegrationEventInfo? GetEventInfoByName(string eventName);
 
-    string GetEventKey<T>() where T : IIntegrationEventMessage;
+    string GetEventKey<T>()
+        where T : IIntegrationEventMessage;
 
     string GetEventKey(Type eventType);
 }

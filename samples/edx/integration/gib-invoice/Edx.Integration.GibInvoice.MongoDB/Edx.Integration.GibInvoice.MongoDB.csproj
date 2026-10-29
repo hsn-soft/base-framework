@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!-- How the service keeps its domain: its MongoDB collections, and the inbox of the events it handles. The connection is registered by the host (AddBaseMongo). -->
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.EventBus.MongoDB\HsnSoft.Base.EventBus.MongoDB.csproj" />
+        <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.MongoDB\HsnSoft.Base.MongoDB.csproj" />
+        <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.MultiTenancy.MongoDB\HsnSoft.Base.MultiTenancy.MongoDB.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Edx.Integration.GibInvoice.Domain\Edx.Integration.GibInvoice.Domain.csproj" />
+    </ItemGroup>
+
+</Project>

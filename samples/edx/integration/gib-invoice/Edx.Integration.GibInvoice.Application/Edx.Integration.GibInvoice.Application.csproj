@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!--
+        What the service does: its use cases, on top of the domain. It reads and keeps files through IBlobStore (the abstraction; the host chooses the store), talks to the center with the client of Edx.Shared.Efatura and says what it did through the event bus.
+    -->
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.BlobStoring\HsnSoft.Base.BlobStoring.csproj" />
+        <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.Ddd.Application\HsnSoft.Base.Ddd.Application.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\shared\Edx.Shared.Contracts\Edx.Shared.Contracts.csproj" />
+        <ProjectReference Include="..\..\..\shared\Edx.Shared.Efatura\Edx.Shared.Efatura.csproj" />
+        <ProjectReference Include="..\..\..\shared\Edx.Shared.Helper\Edx.Shared.Helper.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Edx.Integration.GibInvoice.Domain\Edx.Integration.GibInvoice.Domain.csproj" />
+    </ItemGroup>
+
+</Project>

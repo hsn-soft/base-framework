@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <!--
+        The signer service of the Edx system: a web api that signs the invoices a person approved. It handles the event of every approved invoice (reads the draft from the container of the invoice service, signs it, checks that the signed document still follows the UBL-TR schema, writes it) and tells the others it is signed. It has no database: what it
+        needs is in the event and in the blob store. What every Edx microservice has (logging, the web api shell, JWT, Swagger, health, Kafka) comes from Edx.Shared.Hosting.Microservices; the service adds its own parts here.
+    -->
+
+    <ItemGroup>
+        <!-- the blob store the host chose, and the tenant that travels with the messages -->
+        <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.BlobStoring.Minio\HsnSoft.Base.BlobStoring.Minio.csproj" />
+        <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.MultiTenancy.EventBus\HsnSoft.Base.MultiTenancy.EventBus.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\shared\Edx.Shared.Contracts\Edx.Shared.Contracts.csproj" />
+        <ProjectReference Include="..\..\..\shared\Edx.Shared.Efatura\Edx.Shared.Efatura.csproj" />
+        <ProjectReference Include="..\..\..\shared\Edx.Shared.Hosting.Microservices\Edx.Shared.Hosting.Microservices.csproj" />
+    </ItemGroup>
+
+</Project>

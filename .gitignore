@@ -366,8 +366,6 @@ MigrationBackup/
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
 
-# Fody - auto-generated XML schema
-FodyWeavers.xsd
 
 ##
 ## Visual studio for Mac
@@ -465,3 +463,6 @@ logs/
 *.env
 
 **/media/
+
+# A private key is a secret: never commit one
+private_key.xml

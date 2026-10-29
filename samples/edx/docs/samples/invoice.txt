@@ -1,0 +1,5 @@
+# H|number|date|currency|customer|customerTaxId|taxOffice|district|city|country
+H|ABC2026000000001|2026-10-28|TRY|Bilgera Bilisim A.S.|1234567802|Cankaya|Cankaya|Ankara|Türkiye
+# L|description|quantity|unitCode|unitPrice|vatRate
+L|Danismanlik hizmeti|2|C62|150.00|20
+L|Yazilim lisansi|1|C62|420.50|20

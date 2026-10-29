@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!--
+        What the Edx system shares of the e-invoice exchange with the (mock) GİB center: the WCF contract of the center (MTOM, XmlSerializer, `sendDocument` and `getApplicationResponse`, in the form CoreWCF serves it and in the form a client calls it), the envelope (a zip
+        with one StandardBusinessDocument: its header, the elements in it) and the system response (the answer about an envelope), with the status codes of the center. A host that serves the contract is the center or an integrator's post box; a host that calls it is
+        an integrator sending to the center, or the center sending to a post box. No logic of any product: the wire, the files and the codes.
+    -->
+
+    <ItemGroup>
+        <!-- the UBL-TR schemas of the invoice and of the application response (the xsdrt of the UBL-TR 1.2.1 package, kept in the docs): they are copied next to every application that references this project, as Schemas/ -->
+        <Content Include="..\..\docs\einvoice\UBLTR_1.2.1_Paketi\xsdrt\maindoc\UBL-Invoice-2.1.xsd" Link="Schemas\maindoc\UBL-Invoice-2.1.xsd" CopyToOutputDirectory="PreserveNewest" />
+        <Content Include="..\..\docs\einvoice\UBLTR_1.2.1_Paketi\xsdrt\maindoc\UBL-ApplicationResponse-2.1.xsd" Link="Schemas\maindoc\UBL-ApplicationResponse-2.1.xsd" CopyToOutputDirectory="PreserveNewest" />
+        <Content Include="..\..\docs\einvoice\UBLTR_1.2.1_Paketi\xsdrt\common\*.xsd" Link="Schemas\common\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="CoreWCF.Http" />
+        <PackageReference Include="CoreWCF.Primitives" />
+        <PackageReference Include="System.ServiceModel.Http" />
+        <PackageReference Include="System.ServiceModel.Primitives" />
+    </ItemGroup>
+
+</Project>

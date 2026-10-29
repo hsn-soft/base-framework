@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!-- The heart of the service: the invoices. It depends on the framework's Ddd.Domain and MultiTenancy, and the shared helpers of the Edx services. -->
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.Ddd.Domain\HsnSoft.Base.Ddd.Domain.csproj" />
+        <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.MultiTenancy\HsnSoft.Base.MultiTenancy.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\shared\Edx.Shared.Contracts\Edx.Shared.Contracts.csproj" />
+        <ProjectReference Include="..\..\..\shared\Edx.Shared.Helper\Edx.Shared.Helper.csproj" />
+    </ItemGroup>
+
+</Project>

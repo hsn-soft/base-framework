@@ -1,0 +1,40 @@
+# Local SonarQube. Requires the running infra-postgres and the external network (see infra compose).
+services:
+    infra-sonarqube:
+        container_name: infra-sonarqube_container
+        image: sonarqube:community
+        restart: unless-stopped
+        ulimits:
+            memlock:
+                soft: -1
+                hard: -1
+            nofile:
+                soft: 131072
+                hard: 131072
+        deploy:
+            resources:
+                limits:
+                    memory: 4g
+                    cpus: 1
+        environment:
+            SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: true
+            SONAR_JDBC_URL: jdbc:postgresql://infra-postgres:5432/sonarqube
+            SONAR_JDBC_USERNAME: postgres
+            SONAR_JDBC_PASSWORD: postgres
+            # login screen => username: admin, password: admin
+        volumes:
+            - $HOME/docker-volumes/infra/sonarqube/conf:/opt/sonarqube/conf
+            - $HOME/docker-volumes/infra/sonarqube/data:/opt/sonarqube/data
+            - $HOME/docker-volumes/infra/sonarqube/extensions:/opt/sonarqube/extensions
+            - $HOME/docker-volumes/infra/sonarqube/logs:/opt/sonarqube/logs
+            - $HOME/docker-volumes/infra/sonarqube/temp:/opt/sonarqube/temp
+        ports:
+            - "8031:9000"
+        networks:
+            - infra-network
+
+networks:
+    infra-network:
+        name: local.infrastructure-network
+        driver: bridge
+        external: true

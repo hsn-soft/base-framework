@@ -1,0 +1,28 @@
+{
+  "invoiceId": "7b0c6a3e-1d2f-4c5a-9e8b-0a1b2c3d4e5f",
+  "invoiceNumber": "ABC2026000000001",
+  "issueDate": "2026-10-28",
+  "currency": "TRY",
+  "customerName": "Bilgera Bilisim A.S.",
+  "customerTaxId": "1234567802",
+  "customerTaxOffice": "Cankaya",
+  "customerDistrict": "Cankaya",
+  "customerCity": "Ankara",
+  "customerCountry": "Türkiye",
+  "lines": [
+    {
+      "description": "Danismanlik hizmeti",
+      "quantity": 2,
+      "unitCode": "C62",
+      "unitPrice": 150.00,
+      "vatRate": 20
+    },
+    {
+      "description": "Yazilim lisansi",
+      "quantity": 1,
+      "unitCode": "C62",
+      "unitPrice": 420.50,
+      "vatRate": 20
+    }
+  ]
+}

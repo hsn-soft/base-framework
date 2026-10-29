@@ -1,0 +1,10 @@
+{
+  "culture": "ru",
+  "texts": {
+    "product_not_found": "Товар {0} не найден.",
+    "product_stock_history_not_found": "Запись истории остатков {0} не найдена.",
+    "product_not_active": "Товар {0} не продаётся.",
+    "product_stock_insufficient": "Товара {0} на складе {1}, запрошено {2}.",
+    "product_sku_duplicate": "Артикул '{0}' занят."
+  }
+}
