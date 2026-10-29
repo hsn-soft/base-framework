@@ -31,8 +31,8 @@ public sealed class AlternativeStackTests : IAsyncLifetime
 
     public async Task DisposeAsync()
     {
-        await _azurite.DisposeAsync();
-        await _mysql.DisposeAsync();
+        await Support.DisposeAsync(_azurite);
+        await Support.DisposeAsync(_mysql);
         if (Directory.Exists(_directory))
         {
             Directory.Delete(_directory, recursive: true);

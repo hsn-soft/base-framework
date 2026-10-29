@@ -24,7 +24,7 @@ public sealed class MySqlInboxTests : IAsyncLifetime
     public async Task DisposeAsync()
     {
         _host.Dispose();
-        await _container.DisposeAsync();
+        await Support.DisposeAsync(_container);
     }
 
     private async Task<T> InScope<T>(Func<IInboxStore, Task<T>> action)

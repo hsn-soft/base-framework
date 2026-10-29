@@ -42,7 +42,7 @@ public sealed class PostgreSqlRepositoryTests : IAsyncLifetime
     public async Task DisposeAsync()
     {
         _host.Dispose();
-        await _container.DisposeAsync();
+        await Support.DisposeAsync(_container);
     }
 
     private AsyncServiceScope Scope() => _host.Services.CreateAsyncScope();

@@ -92,7 +92,7 @@ public sealed partial class RabbitMqPersistentConnection : IRabbitMqPersistentCo
 
     public Task<IChannel> CreatePublisherChannelAsync(CancellationToken cancellationToken = default)
     {
-        IConnection connection = _connection is { IsOpen: true } open && !_disposed ? open : throw new RabbitMqNotConnectedException("No RabbitMQ connections are available to perform this action");
+        IConnection connection = _connection is { IsOpen: true } open && !_disposed ? open : throw new RabbitMqNotConnectedException();
         return connection.CreateChannelAsync(new CreateChannelOptions(publisherConfirmationsEnabled: true, publisherConfirmationTrackingEnabled: true), cancellationToken);
     }
 
@@ -100,7 +100,7 @@ public sealed partial class RabbitMqPersistentConnection : IRabbitMqPersistentCo
     {
         if (!IsConnected)
         {
-            throw new RabbitMqNotConnectedException("No RabbitMQ connections are available to perform this action");
+            throw new RabbitMqNotConnectedException();
         }
 
         CreateChannelOptions? options = consumerDispatchConcurrency.HasValue

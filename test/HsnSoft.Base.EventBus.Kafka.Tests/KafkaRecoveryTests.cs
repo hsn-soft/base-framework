@@ -115,12 +115,12 @@ public class KafkaRecoveryTests
         List<TimeSpan> waits = [];
 
         await KafkaRecovery.RunAsync(
-            async _ =>
+            async cancellationToken =>
             {
                 runs++;
                 if (runs == 3)
                 {
-                    await Task.Delay(80);
+                    await Task.Delay(80, cancellationToken);
                 }
 
                 if (runs < 4)

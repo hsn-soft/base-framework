@@ -12,14 +12,4 @@ public sealed class MessageInProgressException : Exception
         : base("Another handling holds the message and its lease has not run out.")
     {
     }
-
-    public MessageInProgressException(string message)
-        : base(message)
-    {
-    }
-
-    public MessageInProgressException(string message, Exception innerException)
-        : base(message, innerException)
-    {
-    }
 }

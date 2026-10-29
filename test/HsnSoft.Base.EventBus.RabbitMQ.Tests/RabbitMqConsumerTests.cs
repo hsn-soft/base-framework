@@ -335,6 +335,29 @@ public sealed class RabbitMqConsumerTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task TheMemoryOfTheTimeoutCounts_IsBounded_AndEmptiedWhenFull()
+    {
+        Rig rig = await StartAsync(configureConfig: config =>
+        {
+            config.MaxTimeoutRequeues = 2;
+            config.RequeueDelay = TimeSpan.Zero;
+        });
+        rig.Dispatcher.Behavior = () => throw new TimeoutException("too slow");
+
+        // m-0 has timed out twice, one more would report it; then 10 000 other messages fill the memory, which is emptied, so m-0 starts its count again
+        await rig.Deliver(tag: 1, messageId: "m-0");
+        await rig.Deliver(tag: 2, messageId: "m-0");
+        for (int number = 1; number <= 10_000; number++)
+        {
+            await rig.Deliver(tag: (ulong)(number + 2), messageId: $"other-{number}");
+        }
+
+        await rig.Deliver(tag: 20_000, messageId: "m-0");
+
+        Assert.Empty(rig.Notifier.Notified);
+    }
+
+    [Fact]
     public async Task ATimeoutWithoutAMessageId_IsPutBackWithoutALimit()
     {
         Rig rig = await StartAsync(configureConfig: config => config.MaxTimeoutRequeues = 1);

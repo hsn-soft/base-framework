@@ -25,7 +25,7 @@ public sealed class RabbitMqFixture : IAsyncLifetime
 
     public Task InitializeAsync() => Container.StartAsync();
 
-    public Task DisposeAsync() => Container.DisposeAsync().AsTask();
+    public Task DisposeAsync() => Support.DisposeAsync(Container);
 
     public async Task<IConnection> RawConnectionAsync()
         => await new ConnectionFactory { HostName = Host, Port = Port, UserName = "guest", Password = "guest" }.CreateConnectionAsync();

@@ -19,5 +19,5 @@ public sealed class AwsBlobTests : BlobStoreContractTests
         return await Support.StartHostAsync(services => services.AddAwsBlobStoring(configuration));
     }
 
-    protected override async Task StopAsync() => await _container.DisposeAsync();
+    protected override async Task StopAsync() => await Support.DisposeAsync(_container);
 }

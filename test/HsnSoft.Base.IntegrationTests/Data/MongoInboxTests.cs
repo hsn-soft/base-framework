@@ -13,7 +13,8 @@ namespace HsnSoft.Base.IntegrationTests.Data;
 
 public sealed class MongoInboxTests : IAsyncLifetime
 {
-    private readonly MongoDbContainer _container = new MongoDbBuilder("mongo:7.0").Build();
+    // the server looks for expired documents every minute by default; every second here, so the test that waits for it does not wait a minute
+    private readonly MongoDbContainer _container = new MongoDbBuilder("mongo:7.0").WithCommand("--setParameter", "ttlMonitorSleepSecs=1").Build();
     private IHost _host = null!;
 
     public async Task InitializeAsync()
@@ -29,7 +30,7 @@ public sealed class MongoInboxTests : IAsyncLifetime
     public async Task DisposeAsync()
     {
         _host.Dispose();
-        await _container.DisposeAsync();
+        await Support.DisposeAsync(_container);
     }
 
     private async Task<T> InScope<T>(Func<IInboxStore, Task<T>> action)
@@ -193,8 +194,8 @@ public sealed class MongoInboxTests : IAsyncLifetime
         await Support.EventuallyAsync(async () => (await RetentionIndex())["expireAfterSeconds"].ToInt64() == 2 * 86400, "the retention to be changed in place");
         await second.StopAsync(CancellationToken.None);
 
-        // the server removes what is handled and older than the retention (its pass is once a minute); a started document is never removed
-        await Support.EventuallyAsync(async () => await collection.CountDocumentsAsync(row => row.Id == oldHandled.Id) == 0, "MongoDB to remove the old handled document", TimeSpan.FromMinutes(3));
+        // the server removes what is handled and older than the retention (its pass is every second in this container); a started document is never removed
+        await Support.EventuallyAsync(async () => await collection.CountDocumentsAsync(row => row.Id == oldHandled.Id) == 0, "MongoDB to remove the old handled document", TimeSpan.FromSeconds(30));
         Assert.Equal(1, await collection.CountDocumentsAsync(row => row.Id == recentHandled.Id));
         Assert.Equal(1, await collection.CountDocumentsAsync(row => row.Id == oldStarted.Id));
     }

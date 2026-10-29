@@ -18,5 +18,5 @@ public sealed class MinioTests : BlobStoreContractTests
         return await Support.StartHostAsync(services => services.AddMinioBlobStoring(configuration));
     }
 
-    protected override async Task StopAsync() => await _container.DisposeAsync();
+    protected override async Task StopAsync() => await Support.DisposeAsync(_container);
 }

@@ -10,7 +10,7 @@ A handler that throws `TimeoutException` makes the consumer put the message back
 ## Decision
 
 - **`RabbitMqEventBusConfig.MaxTimeoutRequeues` (10, `0` = no limit):** the consumer counts the timeouts of a message by its `MessageId`; the first ten put it back, the next one counts as failed (`RABBITMQ_CONSUMER_TIMEOUT_LIMIT`, Error): it is reported to the error client and taken off the queue like any failed message (`ReportFailureAsync`).
-- The count is in the memory of the consumer (at most 10 000 messages; when it is full what is older than an hour is dropped, then everything) and is forgotten when the message is handled. A message that comes back to another instance, or after a restart, starts again: a limit per instance is enough to stop the loop, a shared count would need a store.
+- The count is in the memory of the consumer (at most 10 000 messages; when it is full it is emptied) and is forgotten when the message is handled. A message that comes back to another instance, or after a restart, starts again: a limit per instance is enough to stop the loop, a shared count would need a store.
 - A message without a `MessageId` (not published by the framework) is not counted and keeps the old behaviour.
 - **Not bounded on purpose:** a message put back because the error client could not be told (the broker is down for the notifier) must not be lost, so it waits for the broker; and `MessageInProgressException` ([ADR-0098](0098-a-message-another-handling-holds-is-put-back-not-acknowledged.md)) is bounded by the lease of the inbox.
 

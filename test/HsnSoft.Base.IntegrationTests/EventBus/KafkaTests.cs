@@ -15,7 +15,7 @@ public sealed class KafkaTests : IAsyncLifetime
 
     public Task InitializeAsync() => _container.StartAsync();
 
-    public Task DisposeAsync() => _container.DisposeAsync().AsTask();
+    public Task DisposeAsync() => Support.DisposeAsync(_container);
 
     private Task<IHost> StartAsync(string exchange, Action<IServiceCollection> handlers, string? service = null, TimeSpan? shutdownTimeout = null, int partitions = 1, TimeSpan? inProgressRetryDelay = null, string? maxPollInterval = null)
     {

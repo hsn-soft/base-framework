@@ -9,14 +9,4 @@ public sealed class RabbitMqNotConnectedException : InvalidOperationException
         : base("RabbitMQ connection could not be established.")
     {
     }
-
-    public RabbitMqNotConnectedException(string message)
-        : base(message)
-    {
-    }
-
-    public RabbitMqNotConnectedException(string message, Exception innerException)
-        : base(message, innerException)
-    {
-    }
 }

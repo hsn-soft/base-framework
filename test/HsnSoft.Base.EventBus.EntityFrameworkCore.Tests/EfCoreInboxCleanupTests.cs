@@ -11,7 +11,8 @@ namespace HsnSoft.Base.EventBus.EntityFrameworkCore.Tests;
 
 public sealed class EfCoreInboxCleanupTests : IAsyncLifetime
 {
-    private readonly SqliteConnection _connection = new("Data Source=:memory:");
+    // a file, not one in-memory connection: two workers at once each open their own connection, as two instances of a service do
+    private readonly string _file = Path.Combine(Path.GetTempPath(), $"inbox-cleanup-{Guid.NewGuid():N}.db");
     private ServiceProvider _provider = null!;
 
     public sealed class InboxContext(DbContextOptions<InboxContext> options) : DbContext(options)
@@ -19,23 +20,20 @@ public sealed class EfCoreInboxCleanupTests : IAsyncLifetime
         protected override void OnModelCreating(ModelBuilder modelBuilder) => modelBuilder.ConfigureEventInbox();
     }
 
-    public async Task InitializeAsync()
-    {
-        await _connection.OpenAsync();
-        await Start(options => options.BatchSize = 2);
-    }
+    public async Task InitializeAsync() => await Start(options => options.BatchSize = 2);
 
     public async Task DisposeAsync()
     {
         await _provider.DisposeAsync();
-        await _connection.DisposeAsync();
+        SqliteConnection.ClearAllPools();
+        File.Delete(_file);
     }
 
     private async Task Start(Action<EventInboxCleanupOptions> configure, IConfiguration? configuration = null)
     {
         ServiceCollection services = new();
         services.AddLogging();
-        services.AddDbContext<InboxContext>(options => options.UseSqlite(_connection));
+        services.AddDbContext<InboxContext>(options => options.UseSqlite($"Data Source={_file}"));
         services.AddEventInboxCleanup<InboxContext>(configuration, configure);
         _provider = services.BuildServiceProvider();
         await using AsyncServiceScope scope = _provider.CreateAsyncScope();
@@ -102,8 +100,8 @@ public sealed class EfCoreInboxCleanupTests : IAsyncLifetime
     public async Task ARetentionOfZero_TurnsTheCleanupOff()
     {
         await _provider.DisposeAsync();
-        await _connection.CloseAsync();
-        await _connection.OpenAsync();
+        SqliteConnection.ClearAllPools();
+        File.Delete(_file);
         await Start(options => options.RetentionPeriod = TimeSpan.Zero);
         Guid old = await AddRow(InboxStatuses.Completed, TimeSpan.FromDays(400));
 
@@ -143,8 +141,8 @@ public sealed class EfCoreInboxCleanupTests : IAsyncLifetime
             ["EventInbox:Cleanup:BatchSize"] = "50",
         }).Build();
         await _provider.DisposeAsync();
-        await _connection.CloseAsync();
-        await _connection.OpenAsync();
+        SqliteConnection.ClearAllPools();
+        File.Delete(_file);
         await Start(_ => { }, configuration);
 
         EventInboxCleanupOptions options = _provider.GetRequiredService<IOptions<EventInboxCleanupOptions>>().Value;
@@ -156,7 +154,7 @@ public sealed class EfCoreInboxCleanupTests : IAsyncLifetime
     public void WithoutTheCall_ThereIsNoWorker()
     {
         ServiceCollection services = new();
-        services.AddDbContext<InboxContext>(options => options.UseSqlite(_connection));
+        services.AddDbContext<InboxContext>(options => options.UseSqlite($"Data Source={_file}"));
         services.AddEventInbox<InboxContext>();
 
         using ServiceProvider provider = services.BuildServiceProvider();

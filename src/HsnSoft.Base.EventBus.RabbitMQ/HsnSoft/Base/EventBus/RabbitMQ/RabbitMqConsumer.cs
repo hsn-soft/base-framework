@@ -51,7 +51,7 @@ public sealed partial class RabbitMqConsumer(
     private string _consumerTag = "no-active-consumer";
     private bool _disposed;
     private bool _consumerCancelled;
-    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, (int Count, DateTime Seen)> _timeouts = new();
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, int> _timeouts = new();
 
     public string QueueName { get; } = EventNameHelper.GetConsumerClientEventQueueName(options, eventInfo.EventName);
 
@@ -248,22 +248,13 @@ public sealed partial class RabbitMqConsumer(
             return false;
         }
 
-        // the memory of the counts is bounded: when it is full what is old is dropped, and when that is not enough everything is
+        // the memory of the counts is bounded: when it is full it is emptied (a message that comes back after that starts its count again)
         if (_timeouts.Count >= MaxTrackedMessages)
         {
-            DateTime limit = DateTime.UtcNow.AddHours(-1);
-            foreach (KeyValuePair<string, (int Count, DateTime Seen)> entry in _timeouts.Where(entry => entry.Value.Seen < limit))
-            {
-                _timeouts.TryRemove(entry.Key, out _);
-            }
-
-            if (_timeouts.Count >= MaxTrackedMessages)
-            {
-                _timeouts.Clear();
-            }
+            _timeouts.Clear();
         }
 
-        (int count, _) = _timeouts.AddOrUpdate(id, _ => (1, DateTime.UtcNow), (_, old) => (old.Count + 1, DateTime.UtcNow));
+        int count = _timeouts.AddOrUpdate(id, 1, (_, old) => old + 1);
         if (count <= _config.MaxTimeoutRequeues)
         {
             return false;

@@ -78,7 +78,7 @@ public sealed class MongoRepositoryTests : IAsyncLifetime
     public async Task DisposeAsync()
     {
         _host.Dispose();
-        await _container.DisposeAsync();
+        await Support.DisposeAsync(_container);
     }
 
     private static void RegisterClassMaps()

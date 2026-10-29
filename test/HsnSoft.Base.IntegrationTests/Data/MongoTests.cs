@@ -14,7 +14,7 @@ public sealed class MongoTests : IAsyncLifetime
 
     public Task InitializeAsync() => _container.StartAsync();
 
-    public Task DisposeAsync() => _container.DisposeAsync().AsTask();
+    public Task DisposeAsync() => Support.DisposeAsync(_container);
 
     private sealed class Item
     {

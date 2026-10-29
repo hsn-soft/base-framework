@@ -54,7 +54,7 @@ public sealed class PostgreSqlTests : IAsyncLifetime
 
     public Task InitializeAsync() => _container.StartAsync();
 
-    public Task DisposeAsync() => _container.DisposeAsync().AsTask();
+    public Task DisposeAsync() => Support.DisposeAsync(_container);
 
     [Fact]
     public Task DbContext_CreatesItsSchema_StoresRows_AndTheServiceIsReady()
@@ -70,7 +70,7 @@ public sealed class SqlServerTests : IAsyncLifetime
 
     public Task InitializeAsync() => _container.StartAsync();
 
-    public Task DisposeAsync() => _container.DisposeAsync().AsTask();
+    public Task DisposeAsync() => Support.DisposeAsync(_container);
 
     [Fact]
     public Task DbContext_CreatesItsSchema_StoresRows_AndTheServiceIsReady()
@@ -86,7 +86,7 @@ public sealed class MySqlTests : IAsyncLifetime
 
     public Task InitializeAsync() => _container.StartAsync();
 
-    public Task DisposeAsync() => _container.DisposeAsync().AsTask();
+    public Task DisposeAsync() => Support.DisposeAsync(_container);
 
     [Fact]
     public Task DbContext_CreatesItsSchema_StoresRows_AndTheServiceIsReady()

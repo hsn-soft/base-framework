@@ -14,7 +14,7 @@ public sealed class RedisTests : IAsyncLifetime
 
     public Task InitializeAsync() => _container.StartAsync();
 
-    public Task DisposeAsync() => _container.DisposeAsync().AsTask();
+    public Task DisposeAsync() => Support.DisposeAsync(_container);
 
     [Fact]
     public async Task Cache_WritesUnderTheInstanceName_AndTheServiceIsReady()
