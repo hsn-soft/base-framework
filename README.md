@@ -116,3 +116,4 @@ builder.Services
 | `RabbitMq:Connection` (`HostName`, `Port`, `UserName`, `Password`, `VirtualHost`) and `RabbitMq:EventBus` (`ExchangeName`, `ConsumerClientName`, `ErrorClientName`, ...) | `AddRabbitMqEventBus` |
 | `Jwt` (`Issuer`, `Audience`, `Key`) | `AddBaseJwtAuthentication` |
 | `EventBusOptions` (retries, naming, timeouts), see [docs/EventBus.md](docs/EventBus.md) | `AddRabbitMqEventBus` |
+
