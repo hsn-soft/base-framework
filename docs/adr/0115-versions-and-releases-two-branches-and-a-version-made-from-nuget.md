@@ -13,7 +13,7 @@ said which commit a version was made from; and there was no pre-release to try a
 ### The version
 
 - **`common.props` has the base by hand: `<BaseVersion>2026.10</BaseVersion>`** (year.month, written by the owner). A build that is not a release is `2026.10.0-dev`.
-- **The number after the base is made by the release** (`scripts/release/next-version.py`): the highest **stable** number of the base that NuGet has for **any** package of the repository, plus one (zero when the base has none). A number that exists anywhere is never made again.
+- **The number after the base is made by the release** (`scripts/versioning/next-version.py`): the highest **stable** number of the base that NuGet has for **any** package of the repository, plus one (zero when the base has none). A number that exists anywhere is never made again.
   When a month changes, the owner changes the base (`2026.11`) and the number starts at 0.
 - **Regular: `2026.10.41`. Candidate: `2026.10.41-rc.<yyMMdd>.<run number>`**: the pre-release of the **next** stable number (a pre-release of 40 would sort below the published 40 and nobody would be offered it). The number of the run of the workflow always grows, so the candidates sort in the order they were made
   (a pull request number does not: #380 can be merged before #379); the pull requests are in the notes of the release.

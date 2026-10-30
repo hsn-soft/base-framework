@@ -1,7 +1,7 @@
 name: 'Deploy Global NuGet'
 
 # A push to rel/nuget-candidate publishes the pre-release of the next stable version (2026.10.41-rc.<yyMMdd>.<run>); a push to rel/nuget-regular publishes the stable version (2026.10.41).
-# The number after the base of the version (year.month, BaseVersion of common.props) is made from what NuGet has (scripts/release/next-version.py). Both branches take code only through a pull request
+# The number after the base of the version (year.month, BaseVersion of common.props) is made from what NuGet has (scripts/versioning/next-version.py). Both branches take code only through a pull request
 # (ADR-0115): the checks of the pull request (the pipeline of the CI, the rule of the source branch) ran before the merge, so here the code is built, its unit tests run, and it is packed and pushed.
 
 on:
@@ -49,7 +49,7 @@ jobs:
         id: version
         env:
           CHANNEL: ${{ github.ref_name == 'rel/nuget-regular' && 'regular' || 'candidate' }}
-        run: python3 scripts/release/next-version.py --channel "$CHANNEL" --run "${{ github.run_number }}"
+        run: python3 scripts/versioning/next-version.py --channel "$CHANNEL" --run "${{ github.run_number }}"
 
       - name: Restore Dependencies
         run: dotnet restore --force --verbosity minimal --configfile NuGet.Config

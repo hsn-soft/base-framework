@@ -30,7 +30,7 @@
     </PropertyGroup>
 
     <PropertyGroup Label="NuGet package">
-        <!-- The base of the version, year.month, is written here by hand; the number after it is made by the release (scripts/release/next-version.py, ADR-0115), which passes the whole version as -p:Version. -->
+        <!-- The base of the version, year.month, is written here by hand; the number after it is made by the release (scripts/versioning/next-version.py, ADR-0115), which passes the whole version as -p:Version. -->
         <BaseVersion>2026.10</BaseVersion>
         <Version>$(BaseVersion).0-dev</Version>
         <Authors>HsnSoft</Authors>

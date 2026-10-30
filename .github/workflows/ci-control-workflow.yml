@@ -60,9 +60,10 @@ jobs:
                 run: >
                     ./scripts/ci-detector/ci-timed.sh timings/rules-build.txt "Repository rules" bash -ec '
                     ./scripts/ci-detector/ci-check-test-project-exist.sh;
+                    ./scripts/ci-detector/ci-check-referenced-files.sh;
                     python3 scripts/ci-detector/ci-force-csproj-order.py;
                     python3 scripts/ci-detector/ci-force-framework-references-rules.py;
-                    python3 -m unittest discover -s scripts/release -p "test_*.py"'
+                    python3 -m unittest discover -s scripts/versioning -p "test_*.py"'
 
             -   name: Restore Dependencies
                 run: ./scripts/ci-detector/ci-timed.sh timings/rules-build.txt "Restore" dotnet restore --verbosity minimal --configfile NuGet.Config
