@@ -153,6 +153,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HsnSoft.Base.Authorization"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HsnSoft.Base.Authorization.Tests", "test\HsnSoft.Base.Authorization.Tests\HsnSoft.Base.Authorization.Tests.csproj", "{3BC9AB9E-4CC9-49A7-86ED-1163356CB1D8}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HsnSoft.Base.BlobStoring.Tests", "test\HsnSoft.Base.BlobStoring.Tests\HsnSoft.Base.BlobStoring.Tests.csproj", "{39A04DF8-B2F1-4D97-B9ED-28050E7780F1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -1039,6 +1041,18 @@ Global
 		{3BC9AB9E-4CC9-49A7-86ED-1163356CB1D8}.Release|x64.Build.0 = Release|Any CPU
 		{3BC9AB9E-4CC9-49A7-86ED-1163356CB1D8}.Release|x86.ActiveCfg = Release|Any CPU
 		{3BC9AB9E-4CC9-49A7-86ED-1163356CB1D8}.Release|x86.Build.0 = Release|Any CPU
+		{39A04DF8-B2F1-4D97-B9ED-28050E7780F1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{39A04DF8-B2F1-4D97-B9ED-28050E7780F1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{39A04DF8-B2F1-4D97-B9ED-28050E7780F1}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{39A04DF8-B2F1-4D97-B9ED-28050E7780F1}.Debug|x64.Build.0 = Debug|Any CPU
+		{39A04DF8-B2F1-4D97-B9ED-28050E7780F1}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{39A04DF8-B2F1-4D97-B9ED-28050E7780F1}.Debug|x86.Build.0 = Debug|Any CPU
+		{39A04DF8-B2F1-4D97-B9ED-28050E7780F1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{39A04DF8-B2F1-4D97-B9ED-28050E7780F1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{39A04DF8-B2F1-4D97-B9ED-28050E7780F1}.Release|x64.ActiveCfg = Release|Any CPU
+		{39A04DF8-B2F1-4D97-B9ED-28050E7780F1}.Release|x64.Build.0 = Release|Any CPU
+		{39A04DF8-B2F1-4D97-B9ED-28050E7780F1}.Release|x86.ActiveCfg = Release|Any CPU
+		{39A04DF8-B2F1-4D97-B9ED-28050E7780F1}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -1117,5 +1131,6 @@ Global
 		{EED8CEE1-EE20-4983-9C0A-729C0157B934} = {0C88DD14-F956-CE84-757C-A364CCF449FC}
 		{4B0712F4-4680-4B79-8584-96472EC4EEB9} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{3BC9AB9E-4CC9-49A7-86ED-1163356CB1D8} = {0C88DD14-F956-CE84-757C-A364CCF449FC}
+		{39A04DF8-B2F1-4D97-B9ED-28050E7780F1} = {0C88DD14-F956-CE84-757C-A364CCF449FC}
 	EndGlobalSection
 EndGlobal

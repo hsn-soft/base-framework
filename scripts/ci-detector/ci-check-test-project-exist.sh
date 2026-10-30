@@ -9,7 +9,6 @@ cd "$(dirname "${BASH_SOURCE[0]}")/../.."
 
 EXEMPT=(
     HsnSoft.Base              # name holder that only references HsnSoft.Base.Core
-    HsnSoft.Base.BlobStoring  # a single interface; its implementations are tested in the provider projects
 )
 
 missing=0

@@ -21,14 +21,8 @@ public sealed class AwsBlobStore(IAmazonS3 client) : IBlobStore
 
         await EnsureBucketAsync(container, cancellationToken).ConfigureAwait(false);
 
-        // S3 needs the size up front; buffer when the stream cannot tell it
-        Stream stream = content;
-        if (!content.CanSeek)
-        {
-            stream = new MemoryStream();
-            await content.CopyToAsync(stream, cancellationToken).ConfigureAwait(false);
-            stream.Position = 0;
-        }
+        // S3 needs the size up front: a stream that cannot tell it is copied first, in memory up to a megabyte and in a temporary file beyond
+        Stream stream = await SeekableContent.EnsureSeekableAsync(content, cancellationToken).ConfigureAwait(false);
 
         await using (stream.ConfigureAwait(false))
         {

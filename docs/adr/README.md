@@ -28,6 +28,7 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
+| [0112](0112-blob-reads-stream-and-uploads-that-cannot-seek-spill-to-disk.md) | Reading a blob streams it; a body that cannot seek goes to memory up to a megabyte and to a temporary file beyond | Accepted | 2026-10-30 |
 | [0111](0111-the-actions-of-the-workflows-run-on-node-24.md) | The actions of the workflows are on the first major version that runs on Node.js 24 | Accepted | 2026-10-30 |
 | [0110](0110-integration-tests-share-a-container-per-service-and-own-their-data.md) | The integration tests share a container per service and own their data; a test that breaks a container owns the container | Accepted | 2026-10-30 |
 | [0109](0109-the-ci-jobs-are-a-pipeline-built-once.md) | The CI jobs are a pipeline: the rules and the build first, the tests on what was built, the gate and the summary last | Accepted | 2026-10-30 |

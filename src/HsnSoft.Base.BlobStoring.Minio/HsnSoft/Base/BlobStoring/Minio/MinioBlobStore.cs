@@ -20,14 +20,8 @@ public sealed class MinioBlobStore(IMinioClient client) : IBlobStore
 
         await EnsureBucketAsync(container, cancellationToken).ConfigureAwait(false);
 
-        // S3 needs the size up front; buffer when the stream cannot tell it
-        Stream stream = content;
-        if (!content.CanSeek)
-        {
-            stream = new MemoryStream();
-            await content.CopyToAsync(stream, cancellationToken).ConfigureAwait(false);
-            stream.Position = 0;
-        }
+        // S3 needs the size up front: a stream that cannot tell it is copied first, in memory up to a megabyte and in a temporary file beyond
+        Stream stream = await SeekableContent.EnsureSeekableAsync(content, cancellationToken).ConfigureAwait(false);
 
         await using (stream.ConfigureAwait(false))
         {
@@ -41,26 +35,8 @@ public sealed class MinioBlobStore(IMinioClient client) : IBlobStore
         }
     }
 
-    public async Task<Stream?> OpenReadAsync(string container, string name, CancellationToken cancellationToken = default)
-    {
-        var buffer = new MemoryStream();
-        try
-        {
-            GetObjectArgs arguments = new GetObjectArgs()
-                .WithBucket(container)
-                .WithObject(name)
-                .WithCallbackStream((source, token) => source.CopyToAsync(buffer, token));
-            await _client.GetObjectAsync(arguments, cancellationToken).ConfigureAwait(false);
-        }
-        catch (Exception exception) when (exception is ObjectNotFoundException or BucketNotFoundException)
-        {
-            await buffer.DisposeAsync().ConfigureAwait(false);
-            return null;
-        }
-
-        buffer.Position = 0;
-        return buffer;
-    }
+    public Task<Stream?> OpenReadAsync(string container, string name, CancellationToken cancellationToken = default)
+        => MinioDownload.OpenAsync(_client, container, name, cancellationToken);
 
     public async Task DeleteAsync(string container, string name, CancellationToken cancellationToken = default)
     {
