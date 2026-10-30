@@ -1,6 +1,6 @@
 # HsnSoft Base Framework
 
-![build and test](https://img.shields.io/github/actions/workflow/status/hsn-soft/base-framework/ci-control-workflow.yml?branch=dev&style=flat-square&label=dev%20build%20and%20test)
+![build and test](https://img.shields.io/github/actions/workflow/status/hsn-soft/base-framework/ci-control-workflow.yml?branch=dev&style=flat-square&label=dev%20build%20and%20test%20(weekly))
 [![NuGet](https://img.shields.io/nuget/v/HsnSoft.Base.Core.svg?style=flat-square)](https://www.nuget.org/packages/HsnSoft.Base.Core)
 [![NuGet (with prereleases)](https://img.shields.io/nuget/vpre/HsnSoft.Base.Core.svg?style=flat-square)](https://www.nuget.org/packages/HsnSoft.Base.Core)
 [![NuGet Download](https://img.shields.io/nuget/dt/HsnSoft.Base.Core.svg?style=flat-square)](https://www.nuget.org/packages/HsnSoft.Base.Core)

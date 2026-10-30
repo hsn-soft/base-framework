@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using System.Text;
 using HsnSoft.Base.BlobStoring;
 using Microsoft.Extensions.DependencyInjection;
@@ -64,6 +65,98 @@ public abstract class BlobStoreContractTests : IAsyncLifetime
         public override void SetLength(long value) => throw new NotSupportedException();
 
         public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+    }
+
+    /// <summary>A stream that cannot seek and whose bytes are made as they are read: a large body that is not held anywhere.</summary>
+    private sealed class GeneratedStream(long length) : Stream
+    {
+        private long _position;
+
+        public override bool CanRead => true;
+
+        public override bool CanSeek => false;
+
+        public override bool CanWrite => false;
+
+        public override long Length => throw new NotSupportedException();
+
+        public override long Position
+        {
+            get => throw new NotSupportedException();
+            set => throw new NotSupportedException();
+        }
+
+        public override void Flush()
+        {
+        }
+
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            int toRead = (int)Math.Min(count, length - _position);
+            for (int index = 0; index < toRead; index++)
+            {
+                buffer[offset + index] = (byte)((_position + index) % 251);
+            }
+
+            _position += toRead;
+            return toRead;
+        }
+
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+
+        public override void SetLength(long value) => throw new NotSupportedException();
+
+        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+    }
+
+    private static byte[] ExpectedHash(long length)
+    {
+        using IncrementalHash hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+        byte[] chunk = new byte[1024 * 1024];
+        for (long position = 0; position < length; position += chunk.Length)
+        {
+            int count = (int)Math.Min(chunk.Length, length - position);
+            for (int index = 0; index < count; index++)
+            {
+                chunk[index] = (byte)((position + index) % 251);
+            }
+
+            hash.AppendData(chunk, 0, count);
+        }
+
+        return hash.GetHashAndReset();
+    }
+
+    [Fact]
+    public async Task ALargeStreamThatCannotSeek_IsSavedAndReadBack_AndLeavesNoTemporaryFile()
+    {
+        const long size = 48L * 1024 * 1024;
+        string bucket = NewBucket();
+        string[] before = Directory.GetFiles(Path.GetTempPath(), "hsnsoft-blob-*.tmp");
+
+        await Store.SaveAsync(bucket, "large.bin", new GeneratedStream(size), "application/octet-stream");
+
+        await using Stream stream = (await Store.OpenReadAsync(bucket, "large.bin"))!;
+        Assert.Equal(ExpectedHash(size), await SHA256.HashDataAsync(stream));
+        Assert.Equal(before, Directory.GetFiles(Path.GetTempPath(), "hsnsoft-blob-*.tmp"));
+    }
+
+    [Fact]
+    public async Task ALargeBlob_IsReadWhileItArrives_NotBufferedInMemory()
+    {
+        const long size = 96L * 1024 * 1024;
+        string bucket = NewBucket();
+        await Store.SaveAsync(bucket, "large.bin", new GeneratedStream(size), "application/octet-stream");
+
+        // opening it and reading a little: a store that read the whole object first would allocate its 96 MB (and the doubling of a buffer that grows) before the first byte
+        long allocatedBefore = GC.GetTotalAllocatedBytes(precise: false);
+        await using (Stream stream = (await Store.OpenReadAsync(bucket, "large.bin"))!)
+        {
+            await stream.ReadExactlyAsync(new byte[1024]);
+        }
+
+        long allocated = GC.GetTotalAllocatedBytes(precise: false) - allocatedBefore;
+        Assert.True(allocated < 32L * 1024 * 1024, $"opening and reading 1 KB of a 96 MB blob allocated {allocated / (1024 * 1024)} MB");
     }
 
     [Fact]
