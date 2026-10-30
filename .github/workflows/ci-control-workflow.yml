@@ -9,12 +9,14 @@ name: 'CI Control Workflow'
 # The first job restores and builds once; the next ones take what it built and only run their tests.
 # Only "CI Summary JOB" has to be a required check: a job skipped because one before it failed counts as passed for the protection of a branch, the summary does not.
 
+# When it runs (ADR-0113): on every pull request into dev, on Mondays at 03:00 UTC on dev (what the README badge shows, and what catches what changes with no push: an image that disappears, a package with a new advisory),
+# and by hand ("Run workflow", on dev). Not on a push to dev: dev only takes code through a pull request, whose run is the one that counts (the branch protection requires dev to be up to date before a merge).
 on:
     pull_request:
         branches: [ "dev" ]
         types: [ opened, synchronize, reopened ]
-    push:
-        branches: [ "dev" ]   # the state of dev (the main tracking branch) is what the README badge shows
+    schedule:
+        - cron: '0 3 * * 1'
     workflow_dispatch:
 
 permissions:
@@ -22,7 +24,7 @@ permissions:
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
-    # Only supersede PR runs; every push to dev should finish and report
+    # Only supersede PR runs (a newer push to the pull request); a scheduled or a manual run on dev always finishes and reports
     cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:

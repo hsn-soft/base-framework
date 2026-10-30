@@ -28,6 +28,7 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
+| [0113](0113-the-ci-runs-on-pull-requests-weekly-on-dev-and-by-hand.md) | The CI runs on pull requests, weekly on `dev` and by hand, not on every push to `dev` | Accepted | 2026-10-31 |
 | [0112](0112-blob-reads-stream-and-uploads-that-cannot-seek-spill-to-disk.md) | Reading a blob streams it; a body that cannot seek goes to memory up to a megabyte and to a temporary file beyond | Accepted | 2026-10-30 |
 | [0111](0111-the-actions-of-the-workflows-run-on-node-24.md) | The actions of the workflows are on the first major version that runs on Node.js 24 | Accepted | 2026-10-30 |
 | [0110](0110-integration-tests-share-a-container-per-service-and-own-their-data.md) | The integration tests share a container per service and own their data; a test that breaks a container owns the container | Accepted | 2026-10-30 |
@@ -88,7 +89,7 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 | [0009](0009-unit-tests-every-package.md) | Every package has a unit test project, found by name | Accepted | 2026-10-22 |
 | [0010](0010-integration-tests-with-testcontainers.md) | Integration tests start the real services with Testcontainers | Accepted | 2026-10-22 |
 | [0011](0011-coverage-gate.md) | The coverage gate merges unit and integration coverage and fails below 99 % of `src` | Accepted | 2026-10-22 |
-| [0012](0012-ci-workflow-and-what-breaks-a-pull-request.md) | The CI workflow, and what breaks a pull request | Accepted (the layout of the jobs is changed by [ADR-0109](0109-the-ci-jobs-are-a-pipeline-built-once.md)) | 2026-10-22 |
+| [0012](0012-ci-workflow-and-what-breaks-a-pull-request.md) | The CI workflow, and what breaks a pull request | Accepted (the layout of the jobs is changed by [ADR-0109](0109-the-ci-jobs-are-a-pipeline-built-once.md); when it runs by [ADR-0113](0113-the-ci-runs-on-pull-requests-weekly-on-dev-and-by-hand.md)) | 2026-10-22 |
 | [0013](0013-git-hooks.md) | Git hooks: format on commit, build and unit tests on push | Accepted | 2026-10-22 |
 | [0014](0014-detector-before-a-pull-request.md) | The detector runs the CI's checks on the developer's machine before a pull request | Accepted | 2026-10-23 |
 
