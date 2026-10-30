@@ -166,6 +166,7 @@ Write-Info "## STAGES ----------------------------------------------------------
 Invoke-Stage "test-projects" "Every package has a test project" { bash ./scripts/ci-detector/ci-check-test-project-exist.sh } | Out-Null
 Invoke-Stage "csproj-order" "Project file reference order" { & $python scripts/ci-detector/ci-force-csproj-order.py } | Out-Null
 Invoke-Stage "framework-references" "Framework project references" { & $python scripts/ci-detector/ci-force-framework-references-rules.py } | Out-Null
+Invoke-Stage "release-scripts" "Release scripts (their tests)" { & $python -m unittest discover -s scripts/release -p "test_*.py" } | Out-Null
 
 $restored = Invoke-Stage "restore" "Restore" { dotnet restore HsnSoft.Base.sln --verbosity minimal }
 if ($restored)

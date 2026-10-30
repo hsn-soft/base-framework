@@ -48,6 +48,7 @@ The stages are the ones of the CI workflow (`.github/workflows/ci-control-workfl
 | Every package has a test project | each package under `src/` has a `test/<Package>.Tests` | `Repository Rules` |
 | Project file reference order | the references of every project file are in order ([ADR-0043](../../docs/adr/0043-project-file-reference-order.md)) | `Repository Rules` |
 | Framework project references | every framework project reaches Core and lists nothing a sibling brings ([ADR-0075](../../docs/adr/0075-rules-of-the-framework-project-files.md)) | `Repository Rules` |
+| Release scripts (their tests) | the tests of `scripts/release/` (the version of a release) pass | `Repository Rules` |
 | Restore | the packages can be restored (once; nothing after it restores again) | `Restore Dependencies` |
 | Format (C#) | `dotnet format` whitespace and style rules find nothing to change | `Format Check (C#)` |
 | Format (JSON) | the JSON files are formatted | `Format Check (JSON)` |

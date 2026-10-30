@@ -13,7 +13,7 @@ name: 'CI Control Workflow'
 # and by hand ("Run workflow", on dev). Not on a push to dev: dev only takes code through a pull request, whose run is the one that counts (the branch protection requires dev to be up to date before a merge).
 on:
     pull_request:
-        branches: [ "dev" ]
+        branches: [ "dev", "rel/nuget-candidate", "rel/nuget-regular" ]   # the release branches too: what is published was tested by this pipeline first (ADR-0115)
         types: [ opened, synchronize, reopened ]
     schedule:
         - cron: '0 3 * * 1'
@@ -61,7 +61,8 @@ jobs:
                     ./scripts/ci-detector/ci-timed.sh timings/rules-build.txt "Repository rules" bash -ec '
                     ./scripts/ci-detector/ci-check-test-project-exist.sh;
                     python3 scripts/ci-detector/ci-force-csproj-order.py;
-                    python3 scripts/ci-detector/ci-force-framework-references-rules.py'
+                    python3 scripts/ci-detector/ci-force-framework-references-rules.py;
+                    python3 -m unittest discover -s scripts/release -p "test_*.py"'
 
             -   name: Restore Dependencies
                 run: ./scripts/ci-detector/ci-timed.sh timings/rules-build.txt "Restore" dotnet restore --verbosity minimal --configfile NuGet.Config

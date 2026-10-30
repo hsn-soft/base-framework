@@ -1,9 +1,14 @@
 name: 'Deploy Global NuGet'
 
+# A push to rel/nuget-candidate publishes the pre-release of the next stable version (2026.10.41-rc.<yyMMdd>.<run>); a push to rel/nuget-regular publishes the stable version (2026.10.41).
+# The number after the base of the version (year.month, BaseVersion of common.props) is made from what NuGet has (scripts/release/next-version.py). Both branches take code only through a pull request
+# (ADR-0115): the checks of the pull request (the pipeline of the CI, the rule of the source branch) ran before the merge, so here the code is built, its unit tests run, and it is packed and pushed.
+
 on:
   push:
     branches:
-      - rel/nuget
+      - rel/nuget-candidate
+      - rel/nuget-regular
 
 env:
   PACKAGE_OUTPUT_DIRECTORY: ${{ github.workspace }}/output
@@ -18,13 +23,13 @@ jobs:
     name: 'Global NuGet Deploy JOB'
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write   # the tag and the GitHub Release of the version
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v5
         with:
-          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+          fetch-depth: 0  # the tags are needed for the notes of the release
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
@@ -39,17 +44,45 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nuget
 
+      # What is published: regular on rel/nuget-regular, candidate on rel/nuget-candidate.
+      - name: Version
+        id: version
+        env:
+          CHANNEL: ${{ github.ref_name == 'rel/nuget-regular' && 'regular' || 'candidate' }}
+        run: python3 scripts/release/next-version.py --channel "$CHANNEL" --run "${{ github.run_number }}"
+
       - name: Restore Dependencies
         run: dotnet restore --force --verbosity minimal --configfile NuGet.Config
 
       - name: Build Solution
-        run: dotnet build --no-restore --no-incremental --verbosity minimal --configuration Release
+        run: dotnet build --no-restore --no-incremental --verbosity minimal --configuration Release -p:Version=${{ steps.version.outputs.version }}
 
       - name: Unit Tests
         run: ./scripts/run-tests.sh unit --no-restore --no-build --verbosity minimal --configuration Release
 
       - name: Pack Solution
-        run: dotnet pack --no-restore --no-build --configuration Release --output ${{ env.PACKAGE_OUTPUT_DIRECTORY }}
+        run: dotnet pack --no-restore --no-build --configuration Release --output ${{ env.PACKAGE_OUTPUT_DIRECTORY }} -p:Version=${{ steps.version.outputs.version }}
+
+      # Not a silent no-op: nothing packed, or a package of another version, stops the release before anything is pushed.
+      - name: Check The Packages
+        run: |
+          count="$(ls "${{ env.PACKAGE_OUTPUT_DIRECTORY }}"/*.nupkg | wc -l | tr -d ' ')"
+          other="$(ls "${{ env.PACKAGE_OUTPUT_DIRECTORY }}"/*.nupkg | grep -vc "\.${{ steps.version.outputs.version }}\.nupkg$" || true)"
+          echo "$count packages of version ${{ steps.version.outputs.version }}"
+          if [ "$count" -eq 0 ] || [ "$other" -ne 0 ]; then echo "::error::The packages are not all of version ${{ steps.version.outputs.version }}."; exit 1; fi
 
       - name: Push Packages
-        run: dotnet nuget push ${{ env.PACKAGE_OUTPUT_DIRECTORY }}/*.nupkg --skip-duplicate -k ${{ secrets.GLOBAL_NUGET_TOKEN }} -s ${{ env.GLOBAL_NUGET_SOURCE_URL }}
+        run: dotnet nuget push ${{ env.PACKAGE_OUTPUT_DIRECTORY }}/*.nupkg -k ${{ secrets.GLOBAL_NUGET_TOKEN }} -s ${{ env.GLOBAL_NUGET_SOURCE_URL }}
+
+      # The tag says which commit made the version; the release lists the pull requests since the last stable version (a pre-release for a candidate).
+      - name: Tag And Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+          PREVIOUS_TAG: ${{ steps.version.outputs.previous_tag }}
+          PRERELEASE: ${{ steps.version.outputs.is_prerelease }}
+        run: |
+          arguments=(--target "$GITHUB_SHA" --title "v$VERSION" --generate-notes --notes "NuGet: https://www.nuget.org/packages/HsnSoft.Base.Core/$VERSION")
+          if [ -n "$PREVIOUS_TAG" ] && git rev-parse -q --verify "refs/tags/$PREVIOUS_TAG" >/dev/null; then arguments+=(--notes-start-tag "$PREVIOUS_TAG"); fi
+          if [ "$PRERELEASE" = "true" ]; then arguments+=(--prerelease); fi
+          gh release create "v$VERSION" "${arguments[@]}"

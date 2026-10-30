@@ -12,11 +12,14 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 FEED="${LOCAL_FEED:-$HOME/nuget-local-feed}"
 cd "$ROOT"
 
-# Next patch version after the one in common.props, so the local build sorts above the last release:
-# 2026.10.40 -> 2026.10.41-local.<unix time>
-CURRENT="$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' common.props | head -n 1)"
-[ -n "$CURRENT" ] || { echo "Version not found in common.props" >&2; exit 1; }
-NEXT="${CURRENT%.*}.$(( ${CURRENT##*.} + 1 ))"
+# The next stable version (the base of common.props and the number after the highest stable one NuGet has, scripts/release/next-version.py), as a local pre-release, so the local build sorts above the last release:
+# 2026.10.40 on NuGet -> 2026.10.41-local.<unix time>. Without a network the number is 0 (2026.10.0-local.<unix time>), and the local build then sorts below the last release: say so.
+if NEXT="$(python3 scripts/release/next-version.py --channel regular 2>/dev/null)"; then
+    :
+else
+    NEXT="$(python3 scripts/release/next-version.py --channel regular --offline)"
+    echo "NOTE: NuGet could not be asked, the local version is based on number 0: raise it by hand if the service takes the last release." >&2
+fi
 VERSION="$NEXT-local.$(date +%s)"
 
 echo "==> Version: $VERSION"
