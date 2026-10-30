@@ -28,6 +28,7 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
+| [0115](0115-versions-and-releases-two-branches-and-a-version-made-from-nuget.md) | Versions and releases: a candidate branch and a regular branch, and a version made from what NuGet has | Accepted | 2026-10-31 |
 | [0114](0114-the-readme-badges-are-made-by-the-ci-and-published-to-their-own-branch.md) | The badges of the README are made by the CI and published to a branch of their own | Accepted | 2026-10-31 |
 | [0113](0113-the-ci-runs-on-pull-requests-weekly-on-dev-and-by-hand.md) | The CI runs on pull requests, weekly on `dev` and by hand, not on every push to `dev` | Accepted | 2026-10-31 |
 | [0112](0112-blob-reads-stream-and-uploads-that-cannot-seek-spill-to-disk.md) | Reading a blob streams it; a body that cannot seek goes to memory up to a megabyte and to a temporary file beyond | Accepted | 2026-10-30 |
@@ -85,7 +86,7 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
-| [0007](0007-build-settings-and-versioning.md) | Shared build settings, one version, and how a package is published | Accepted (where the versions of the shared dependencies live is superseded by [ADR-0105](0105-shared-package-versions-in-one-file-and-a-common-test-host.md)) | 2026-10-22 |
+| [0007](0007-build-settings-and-versioning.md) | Shared build settings, one version, and how a package is published | Accepted (where the versions of the shared dependencies live is superseded by [ADR-0105](0105-shared-package-versions-in-one-file-and-a-common-test-host.md); the version and the release by [ADR-0115](0115-versions-and-releases-two-branches-and-a-version-made-from-nuget.md)) | 2026-10-22 |
 | [0008](0008-code-style-and-analyzers.md) | Code style: the `.editorconfig` is the only source, analyzers run in the build | Accepted | 2026-10-22 |
 | [0009](0009-unit-tests-every-package.md) | Every package has a unit test project, found by name | Accepted | 2026-10-22 |
 | [0010](0010-integration-tests-with-testcontainers.md) | Integration tests start the real services with Testcontainers | Accepted | 2026-10-22 |

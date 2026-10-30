@@ -1,0 +1,42 @@
+name: 'CI Branch Rule'
+
+# Which branch may be merged into which (ADR-0115). GitHub cannot limit the source of a merge by itself, so every pull request into these branches runs this check, and the protection of each of them requires it:
+#   dev                  from feat/*, hotfix/* or bugfix/* only
+#   rel/nuget-candidate  from dev only
+#   rel/nuget-regular    from rel/nuget-candidate only (what is published as stable is a candidate that was published first)
+
+on:
+  pull_request:
+    branches: [ "dev", "rel/nuget-candidate", "rel/nuget-regular" ]
+    types: [ opened, reopened, synchronize, edited ]
+
+permissions:
+  contents: read
+
+jobs:
+  rule:
+    name: 'CI Branch Rule JOB'
+    runs-on: ubuntu-latest
+
+    steps:
+      # the names of the branches reach the script as environment variables, never inside the text of it: a branch name is written by whoever opens the pull request
+      - name: The Source Of The Pull Request
+        env:
+          BASE: ${{ github.base_ref }}
+          HEAD: ${{ github.head_ref }}
+          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          fail() { echo "::error::$1"; exit 1; }
+          [ "$HEAD_REPOSITORY" = "$REPOSITORY" ] || fail "The pull request comes from another repository ($HEAD_REPOSITORY)."
+          case "$BASE" in
+            dev)
+              [[ "$HEAD" =~ ^(feat|hotfix|bugfix)/.+ ]] || fail "Into dev only from feat/*, hotfix/* or bugfix/* (this one is from '$HEAD')." ;;
+            rel/nuget-candidate)
+              [ "$HEAD" = "dev" ] || fail "Into rel/nuget-candidate only from dev (this one is from '$HEAD')." ;;
+            rel/nuget-regular)
+              [ "$HEAD" = "rel/nuget-candidate" ] || fail "Into rel/nuget-regular only from rel/nuget-candidate (this one is from '$HEAD')." ;;
+            *)
+              fail "No rule for the branch '$BASE'." ;;
+          esac
+          echo "'$HEAD' into '$BASE': allowed."

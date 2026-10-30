@@ -13,6 +13,7 @@ The CI runs on the pull request, so a problem costs you a round trip: push, wait
 | `ci-summary.py` | the page at the end of a CI run: the time of every step, the test counts, the coverage; with `--badges <folder>` also the endpoint files of the README badges ([ADR-0114](../../docs/adr/0114-the-readme-badges-are-made-by-the-ci-and-published-to-their-own-branch.md)) |
 | `ci-publish-badges.sh` | publishes those files to the branch `badges` (a scheduled or manual run on `dev` only) |
 | `ci-check-test-project-exist.sh` | every package under `src/` has a test project under `test/` |
+| `ci-check-referenced-files.sh` | every `scripts/` path a workflow runs exists and is not ignored by `.gitignore` (a `[Rr]elease/` pattern once kept a whole folder out of a commit) |
 | `ci-timed.sh` | runs a CI step and records how long it took, for the summary |
 | `format-json.cs` | the JSON formatter and checker (see *Format* below) |
 | `format-staged.py` | formats the staged files of a commit (see *Format* below) |
@@ -48,6 +49,7 @@ The stages are the ones of the CI workflow (`.github/workflows/ci-control-workfl
 | Every package has a test project | each package under `src/` has a `test/<Package>.Tests` | `Repository Rules` |
 | Project file reference order | the references of every project file are in order ([ADR-0043](../../docs/adr/0043-project-file-reference-order.md)) | `Repository Rules` |
 | Framework project references | every framework project reaches Core and lists nothing a sibling brings ([ADR-0075](../../docs/adr/0075-rules-of-the-framework-project-files.md)) | `Repository Rules` |
+| Release scripts (their tests) | the tests of `scripts/versioning/` (the version of a release) pass | `Repository Rules` |
 | Restore | the packages can be restored (once; nothing after it restores again) | `Restore Dependencies` |
 | Format (C#) | `dotnet format` whitespace and style rules find nothing to change | `Format Check (C#)` |
 | Format (JSON) | the JSON files are formatted | `Format Check (JSON)` |

@@ -27,7 +27,7 @@ Thank you for helping with the HsnSoft Base Framework. This page is the short ve
    do not discover it on the pull request. See [scripts/ci-detector](scripts/ci-detector/README.md).
 3. Open the pull request against `dev`. The `.NETCore Build & Test` workflow must be green: build, unit tests, integration tests and
    the coverage gate.
-4. `rel/nuget` holds what is published to NuGet; pushing to it runs the deploy workflow. Do not open pull requests against it.
+4. `rel/nuget-candidate` (from `dev` only) and `rel/nuget-regular` (from `rel/nuget-candidate` only) are what is published to NuGet, a pre-release and a stable version; a merge into them runs the deploy workflow. Into `dev` only from `feat/*`, `hotfix/*` and `bugfix/*`. See [Releasing](docs/Releasing.md).
 
 Commit messages follow the Conventional Commits style used in the history: `feat:`, `fix:`, `refactor:`, `test:`, `ci:`, `style:`,
 `docs:`, with a short subject in the imperative.
