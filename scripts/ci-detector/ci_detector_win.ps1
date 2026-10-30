@@ -5,7 +5,7 @@
 # Usage: ./scripts/ci-detector/ci_detector_win.ps1 [-SkipIntegration]
 #   -SkipIntegration   do not run the integration tests (no Docker needed); the coverage gate is then skipped too
 #
-# Keep it in step with .github/workflows/net-core-build-and-test.yml: when a step is added there, add the stage here.
+# Keep it in step with .github/workflows/ci-control-workflow.yml: when a step is added there, add the stage here.
 param([switch]$SkipIntegration)
 $ErrorActionPreference = "Continue"
 
@@ -32,7 +32,7 @@ function Write-Info
     Write-Host "[INFO] $Message" -ForegroundColor Blue
 }
 
-$workflow = Get-Content (Join-Path $root ".github/workflows/net-core-build-and-test.yml") -Raw
+$workflow = Get-Content (Join-Path $root ".github/workflows/ci-control-workflow.yml") -Raw
 $threshold = if ($workflow -match "COVERAGE_THRESHOLD:\s*'([0-9.]+)'") { $Matches[1] } else { "99" }
 
 # a clean screen for the run (only on a terminal, not when the output goes to a file)

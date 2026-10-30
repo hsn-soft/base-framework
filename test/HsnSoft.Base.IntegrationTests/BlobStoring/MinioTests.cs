@@ -6,7 +6,7 @@ namespace HsnSoft.Base.IntegrationTests.BlobStoring;
 
 public sealed class MinioTests : BlobStoreContractTests
 {
-    private readonly MinioContainer _container = new MinioBuilder("minio/minio:RELEASE.2024-08-29T01-40-52Z").Build();
+    private readonly MinioContainer _container = new MinioBuilder(Support.MinioImage).Build();
 
     protected override async Task<IHost> StartAsync()
     {

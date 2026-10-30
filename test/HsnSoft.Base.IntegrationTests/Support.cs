@@ -11,6 +11,12 @@ namespace HsnSoft.Base.IntegrationTests;
 
 internal static class Support
 {
+    /// <summary>
+    /// The MinIO of the tests. MinIO no longer publishes its images where they were (Docker Hub refuses them, quay.io has no tag of them), so the image is the one Chainguard builds from the source (ADR-0108). It is not pinned: Chainguard keeps only the
+    /// latest build of an image, which is also why a run of the tests that fails on a new MinIO is a signal worth reading, not noise.
+    /// </summary>
+    public const string MinioImage = "cgr.dev/chainguard/minio:latest";
+
     private static readonly System.Text.RegularExpressions.Regex s_distress = new(
         @"out of memory|oomkilled|\bfatal\b|\bpanic\b|too many open files|slow query|no space left|""s"":""[EF]""",
         System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant,
