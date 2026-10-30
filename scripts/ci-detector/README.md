@@ -10,7 +10,8 @@ The CI runs on the pull request, so a problem costs you a round trip: push, wait
 | `ci-check-coverage.py` | the coverage gate: merges the coverage reports and fails below the threshold (`merge_lines` is also used by the summary) |
 | `ci-force-csproj-order.py` | the order of the references in a project file ([ADR-0043](../../docs/adr/0043-project-file-reference-order.md)); `--fix` puts them in order |
 | `ci-force-framework-references-rules.py` | the reference rules of the framework projects ([ADR-0075](../../docs/adr/0075-rules-of-the-framework-project-files.md)) |
-| `ci-summary.py` | the page at the end of a CI run: the time of every step, the test counts, the coverage |
+| `ci-summary.py` | the page at the end of a CI run: the time of every step, the test counts, the coverage; with `--badges <folder>` also the endpoint files of the README badges ([ADR-0114](../../docs/adr/0114-the-readme-badges-are-made-by-the-ci-and-published-to-their-own-branch.md)) |
+| `ci-publish-badges.sh` | publishes those files to the branch `badges` (a scheduled or manual run on `dev` only) |
 | `ci-check-test-project-exist.sh` | every package under `src/` has a test project under `test/` |
 | `ci-timed.sh` | runs a CI step and records how long it took, for the summary |
 | `format-json.cs` | the JSON formatter and checker (see *Format* below) |

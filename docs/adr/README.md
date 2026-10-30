@@ -28,6 +28,7 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
+| [0114](0114-the-readme-badges-are-made-by-the-ci-and-published-to-their-own-branch.md) | The badges of the README are made by the CI and published to a branch of their own | Accepted | 2026-10-31 |
 | [0113](0113-the-ci-runs-on-pull-requests-weekly-on-dev-and-by-hand.md) | The CI runs on pull requests, weekly on `dev` and by hand, not on every push to `dev` | Accepted | 2026-10-31 |
 | [0112](0112-blob-reads-stream-and-uploads-that-cannot-seek-spill-to-disk.md) | Reading a blob streams it; a body that cannot seek goes to memory up to a megabyte and to a temporary file beyond | Accepted | 2026-10-30 |
 | [0111](0111-the-actions-of-the-workflows-run-on-node-24.md) | The actions of the workflows are on the first major version that runs on Node.js 24 | Accepted | 2026-10-30 |
