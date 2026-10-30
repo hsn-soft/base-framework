@@ -455,7 +455,7 @@ $RECYCLE.BIN/
 !.vscode/launch.json
 !.vscode/extensions.json
 
-logs/
+logs*/
 
 # SonarQube
 .sonarqube/
@@ -466,5 +466,3 @@ logs/
 
 # A private key is a secret: never commit one
 private_key.xml
-
-error.txt
