@@ -9,13 +9,10 @@ using Testcontainers.Kafka;
 
 namespace HsnSoft.Base.IntegrationTests.EventBus;
 
-public sealed class KafkaTests : IAsyncLifetime
+[Collection(Collections.Kafka)]
+public sealed class KafkaTests(KafkaFixture kafkaServer)
 {
-    private readonly KafkaContainer _container = new KafkaBuilder("confluentinc/cp-kafka:7.8.0").Build();
-
-    public Task InitializeAsync() => _container.StartAsync();
-
-    public Task DisposeAsync() => Support.DisposeAsync(_container);
+    private KafkaContainer _container => kafkaServer.Container;
 
     private Task<IHost> StartAsync(string exchange, Action<IServiceCollection> handlers, string? service = null, TimeSpan? shutdownTimeout = null, int partitions = 1, TimeSpan? inProgressRetryDelay = null, string? maxPollInterval = null)
     {

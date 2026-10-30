@@ -3,7 +3,6 @@ using HsnSoft.Base.Domain.Repositories;
 using HsnSoft.Base.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Testcontainers.PostgreSql;
 
 namespace HsnSoft.Base.IntegrationTests.Data;
 
@@ -24,25 +23,27 @@ public sealed class PartContext(DbContextOptions<PartContext> options) : DbConte
     }
 }
 
-public sealed class PostgreSqlRepositoryTests : IAsyncLifetime
+[Collection(Collections.Postgres)]
+public sealed class PostgreSqlRepositoryTests(PostgresFixture postgres) : IAsyncLifetime
 {
-    private readonly PostgreSqlContainer _container = new PostgreSqlBuilder("postgres:16").Build();
+    private string _connection = null!;
     private IHost _host = null!;
 
     public async Task InitializeAsync()
     {
-        await _container.StartAsync();
+        // once: the options of the context are built for every scope, and every scope has to reach the same database
+        _connection = postgres.NewConnectionString();
         _host = await Support.StartHostAsync(services => services
             .AddBaseEntityFramework()
-            .AddDbContext<PartContext>((provider, options) => options.UseNpgsql(_container.GetConnectionString() + ";Timeout=60;Command Timeout=60").UseBaseEntityConcepts(provider))
+            .AddDbContext<PartContext>((provider, options) => options.UseNpgsql(_connection + ";Timeout=60;Command Timeout=60").UseBaseEntityConcepts(provider))
             .AddEfCoreRepository<PartContext, Part, Guid>());
         await _host.Services.EnsureDatabaseCreatedAsync<PartContext>();
     }
 
-    public async Task DisposeAsync()
+    public Task DisposeAsync()
     {
         _host.Dispose();
-        await Support.DisposeAsync(_container);
+        return Task.CompletedTask;
     }
 
     private AsyncServiceScope Scope() => _host.Services.CreateAsyncScope();

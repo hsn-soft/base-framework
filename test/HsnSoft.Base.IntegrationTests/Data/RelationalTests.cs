@@ -6,9 +6,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using Testcontainers.MsSql;
-using Testcontainers.MySql;
-using Testcontainers.PostgreSql;
 
 namespace HsnSoft.Base.IntegrationTests.Data;
 
@@ -48,50 +45,35 @@ internal static class RelationalChecks
     }
 }
 
-public sealed class PostgreSqlTests : IAsyncLifetime
+[Collection(Collections.Postgres)]
+public sealed class PostgreSqlTests(PostgresFixture postgres)
 {
-    private readonly PostgreSqlContainer _container = new PostgreSqlBuilder("postgres:16").Build();
-
-    public Task InitializeAsync() => _container.StartAsync();
-
-    public Task DisposeAsync() => Support.DisposeAsync(_container);
-
     [Fact]
     public Task DbContext_CreatesItsSchema_StoresRows_AndTheServiceIsReady()
     {
-        IConfiguration configuration = Support.Configuration(("ConnectionStrings:Postgres", _container.GetConnectionString()));
+        IConfiguration configuration = Support.Configuration(("ConnectionStrings:Postgres", postgres.NewConnectionString()));
         return RelationalChecks.AssertWorksAsync(services => services.AddBasePostgres<ItemContext>(configuration));
     }
 }
 
-public sealed class SqlServerTests : IAsyncLifetime
+[Collection(Collections.SqlServer)]
+public sealed class SqlServerTests(SqlServerFixture sqlServer)
 {
-    private readonly MsSqlContainer _container = new MsSqlBuilder("mcr.microsoft.com/mssql/server:2022-latest").Build();
-
-    public Task InitializeAsync() => _container.StartAsync();
-
-    public Task DisposeAsync() => Support.DisposeAsync(_container);
-
     [Fact]
     public Task DbContext_CreatesItsSchema_StoresRows_AndTheServiceIsReady()
     {
-        IConfiguration configuration = Support.Configuration(("ConnectionStrings:SqlServer", _container.GetConnectionString()));
+        IConfiguration configuration = Support.Configuration(("ConnectionStrings:SqlServer", sqlServer.NewConnectionString()));
         return RelationalChecks.AssertWorksAsync(services => services.AddBaseSqlServer<ItemContext>(configuration));
     }
 }
 
-public sealed class MySqlTests : IAsyncLifetime
+[Collection(Collections.MySql)]
+public sealed class MySqlTests(MySqlFixture mySql)
 {
-    private readonly MySqlContainer _container = new MySqlBuilder("mysql:8.4").Build();
-
-    public Task InitializeAsync() => _container.StartAsync();
-
-    public Task DisposeAsync() => Support.DisposeAsync(_container);
-
     [Fact]
     public Task DbContext_CreatesItsSchema_StoresRows_AndTheServiceIsReady()
     {
-        IConfiguration configuration = Support.Configuration(("ConnectionStrings:MySql", _container.GetConnectionString()));
+        IConfiguration configuration = Support.Configuration(("ConnectionStrings:MySql", mySql.NewConnectionString()));
         return RelationalChecks.AssertWorksAsync(services => services.AddBaseMySql<ItemContext>(configuration));
     }
 }

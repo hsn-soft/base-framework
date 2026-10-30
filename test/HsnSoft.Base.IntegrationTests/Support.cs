@@ -22,6 +22,12 @@ internal static class Support
         System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant,
         TimeSpan.FromSeconds(5));
 
+    // what a healthy container logs in the course of the tests and is not a sign of distress: EF Core probes the database a test asks for (a FATAL line of PostgreSQL) before it creates it
+    private static readonly System.Text.RegularExpressions.Regex s_expected = new(
+        @"FATAL:\s+database "".*"" does not exist",
+        System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant,
+        TimeSpan.FromSeconds(5));
+
     /// <summary>
     /// Removes a container, after saying how it ended up when something is wrong with it: it is not running any more (killed, out of memory) or its log has lines of distress (a fatal error, an out-of-memory, a slow query). A test that fails with a timeout
     /// because its database stood still leaves nothing else to look at once the container is gone. A healthy container says nothing.
@@ -50,7 +56,7 @@ internal static class Support
             findings.AddRange(
                 (stdout + "\n" + stderr)
                     .Split('\n', StringSplitOptions.RemoveEmptyEntries)
-                    .Where(line => s_distress.IsMatch(line))
+                    .Where(line => s_distress.IsMatch(line) && !s_expected.IsMatch(line))
                     .Select(line => line.Length > 300 ? line[..300] : line)
                     .Take(15));
 

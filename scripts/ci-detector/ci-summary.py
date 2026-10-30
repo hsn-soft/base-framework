@@ -32,7 +32,9 @@ def read_timings(directory):
                 steps.append((label, int(seconds)))
         if steps:
             jobs[os.path.splitext(os.path.basename(path))[0]] = steps
-    return jobs
+    # in the order of the pipeline
+    order = ["rules-build", "unit", "integration"]
+    return dict(sorted(jobs.items(), key=lambda item: order.index(item[0]) if item[0] in order else len(order)))
 
 
 def read_counts(directory, kind):
@@ -76,7 +78,11 @@ def main():
             out.append(f"| {job} | {label} | {minutes(seconds)} |")
         job_totals[job] = sum(seconds for _, seconds in steps)
     out.append("")
-    out.append("The jobs run at the same time: " + ", ".join(f"**{job}** {minutes(total)}" for job, total in job_totals.items()) + (f"; the run takes about **{minutes(max(job_totals.values()))}** plus the gate." if job_totals else "."))
+    if job_totals:
+        out.append(
+            "The jobs run one after the other: " + ", ".join(f"**{job}** {minutes(total)}" for job, total in job_totals.items())
+            + f"; the steps add up to **{minutes(sum(job_totals.values()))}** (the minutes of the runners are the sum of the jobs, each rounded up to a whole minute), plus the time each job takes to start and to pass the build on."
+        )
 
     out.append("")
     out.append("## Tests and coverage")

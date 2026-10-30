@@ -2,29 +2,30 @@ using HsnSoft.Base.Domain.Repositories;
 using HsnSoft.Base.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Testcontainers.MySql;
 
 namespace HsnSoft.Base.IntegrationTests.Data;
 
-public sealed class MySqlRepositoryTests : IAsyncLifetime
+[Collection(Collections.MySql)]
+public sealed class MySqlRepositoryTests(MySqlFixture mySql) : IAsyncLifetime
 {
-    private readonly MySqlContainer _container = new MySqlBuilder("mysql:8.4").Build();
+    private string _connection = null!;
     private IHost _host = null!;
 
     public async Task InitializeAsync()
     {
-        await _container.StartAsync();
+        // once: the options of the context are built for every scope, and every scope has to reach the same database
+        _connection = mySql.NewConnectionString();
         _host = await Support.StartHostAsync(services => services
             .AddBaseEntityFramework()
-            .AddDbContext<PartContext>((provider, options) => options.UseMySQL(_container.GetConnectionString() + ";Connection Timeout=60;Default Command Timeout=60").UseBaseEntityConcepts(provider))
+            .AddDbContext<PartContext>((provider, options) => options.UseMySQL(_connection + ";Connection Timeout=60;Default Command Timeout=60").UseBaseEntityConcepts(provider))
             .AddEfCoreRepository<PartContext, Part, Guid>());
         await _host.Services.EnsureDatabaseCreatedAsync<PartContext>();
     }
 
-    public async Task DisposeAsync()
+    public Task DisposeAsync()
     {
         _host.Dispose();
-        await Support.DisposeAsync(_container);
+        return Task.CompletedTask;
     }
 
     private AsyncServiceScope Scope() => _host.Services.CreateAsyncScope();

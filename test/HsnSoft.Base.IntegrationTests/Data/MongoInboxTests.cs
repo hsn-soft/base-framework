@@ -7,30 +7,28 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
-using Testcontainers.MongoDb;
 
 namespace HsnSoft.Base.IntegrationTests.Data;
 
-public sealed class MongoInboxTests : IAsyncLifetime
+[Collection(Collections.Mongo)]
+public sealed class MongoInboxTests(MongoFixture mongo) : IAsyncLifetime
 {
-    // the server looks for expired documents every minute by default; every second here, so the test that waits for it does not wait a minute
-    private readonly MongoDbContainer _container = new MongoDbBuilder("mongo:7.0").WithCommand("--setParameter", "ttlMonitorSleepSecs=1").Build();
+    private string _url = null!;
     private IHost _host = null!;
 
     public async Task InitializeAsync()
     {
-        await _container.StartAsync();
-        string url = new MongoUrlBuilder(_container.GetConnectionString()) { DatabaseName = "inbox", AuthenticationSource = "admin" }.ToString();
-        IConfiguration configuration = Support.Configuration(("ConnectionStrings:Mongo", url));
+        _url = mongo.NewUrl();
+        IConfiguration configuration = Support.Configuration(("ConnectionStrings:Mongo", _url));
         _host = await Support.StartHostAsync(services => services
             .AddBaseMongo(configuration)
             .AddEventInbox("InboxMessage", configure: options => options.MaxRetryCount = 2));
     }
 
-    public async Task DisposeAsync()
+    public Task DisposeAsync()
     {
         _host.Dispose();
-        await Support.DisposeAsync(_container);
+        return Task.CompletedTask;
     }
 
     private async Task<T> InScope<T>(Func<IInboxStore, Task<T>> action)
@@ -128,7 +126,7 @@ public sealed class MongoInboxTests : IAsyncLifetime
     public async Task AHandlingThatDied_IsTakenOverWhenItsLeaseHasRunOut()
     {
         using IHost shortLease = await Support.StartHostAsync(services => services
-            .AddBaseMongo(Support.Configuration(("ConnectionStrings:Mongo", new MongoUrlBuilder(_container.GetConnectionString()) { DatabaseName = "inbox", AuthenticationSource = "admin" }.ToString())))
+            .AddBaseMongo(Support.Configuration(("ConnectionStrings:Mongo", _url)))
             .AddEventInbox("InboxMessage", configure: options => options.ProcessingLease = TimeSpan.Zero));
         Guid id = Guid.NewGuid();
         await using (AsyncServiceScope scope = shortLease.Services.CreateAsyncScope())

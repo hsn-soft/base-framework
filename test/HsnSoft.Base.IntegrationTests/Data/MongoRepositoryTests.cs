@@ -9,16 +9,15 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
-using Testcontainers.MongoDb;
 
 namespace HsnSoft.Base.IntegrationTests.Data;
 
-public sealed class MongoRepositoryTests : IAsyncLifetime
+[Collection(Collections.Mongo)]
+public sealed class MongoRepositoryTests(MongoFixture mongo) : IAsyncLifetime
 {
     private static readonly Guid s_tenantA = Guid.NewGuid();
     private static readonly Guid s_tenantB = Guid.NewGuid();
 
-    private readonly MongoDbContainer _container = new MongoDbBuilder("mongo:7.0").Build();
     private readonly FakeUser _user = new() { Id = Guid.NewGuid() };
     private readonly FakeTenant _tenant = new() { TenantId = s_tenantA };
     private IHost _host = null!;
@@ -62,9 +61,8 @@ public sealed class MongoRepositoryTests : IAsyncLifetime
 
     public async Task InitializeAsync()
     {
-        await _container.StartAsync();
         RegisterClassMaps();
-        string url = new MongoUrlBuilder(_container.GetConnectionString()) { DatabaseName = "repo", AuthenticationSource = "admin" }.ToString();
+        string url = mongo.NewUrl();
         IConfiguration configuration = Support.Configuration(("ConnectionStrings:Mongo", url));
         _host = await Support.StartHostAsync(services => services
             .AddSingleton<ICurrentUser>(_user)
@@ -75,10 +73,10 @@ public sealed class MongoRepositoryTests : IAsyncLifetime
             .AddMongoRepository<Tag, Guid>("tags"));
     }
 
-    public async Task DisposeAsync()
+    public Task DisposeAsync()
     {
         _host.Dispose();
-        await Support.DisposeAsync(_container);
+        return Task.CompletedTask;
     }
 
     private static void RegisterClassMaps()
