@@ -240,6 +240,8 @@ jobs:
         runs-on: ubuntu-latest
         needs: [ rules-format-build, unit-tests, integration-tests, coverage-gate ]
         if: ${{ !cancelled() }}   # a run that a newer push cancelled does not report
+        permissions:
+            contents: write           # only to publish the badges to their own branch (ADR-0114); the step that does it never runs for a pull request
 
         steps:
             -   name: Checkout Repository
@@ -251,8 +253,18 @@ jobs:
                     pattern: '*-{test-results,timings}'
                     path: summary-input
 
+            # The numbers of the README badges, from what this run did. The result of the pipeline is known only from the jobs before this one.
             -   name: Summary
-                run: python3 scripts/ci-detector/ci-summary.py summary-input summary-input
+                env:
+                    PIPELINE_RESULT: ${{ (needs.rules-format-build.result == 'success' && needs.unit-tests.result == 'success' && needs.integration-tests.result == 'success' && needs.coverage-gate.result == 'success') && 'success' || 'failure' }}
+                run: python3 scripts/ci-detector/ci-summary.py summary-input summary-input --badges badges --result "$PIPELINE_RESULT"
+
+            # Only a scheduled or a manual run on dev makes the badges: a pull request must not change what the README says of dev.
+            -   name: Publish The Badges
+                if: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/dev' }}
+                env:
+                    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                run: ./scripts/ci-detector/ci-publish-badges.sh badges
 
             # The result of the pipeline: any job that did not succeed (failed, or skipped because one before it failed) fails this one, which is the only job a branch has to require.
             -   name: Result Of The Pipeline

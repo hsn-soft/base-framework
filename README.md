@@ -1,6 +1,15 @@
 # HsnSoft Base Framework
 
-![build and test](https://img.shields.io/github/actions/workflow/status/hsn-soft/base-framework/ci-control-workflow.yml?branch=dev&style=flat-square&label=dev%20build%20and%20test%20(weekly))
+**Development** (`dev`, checked every Monday and by hand; [what the badges say](docs/adr/0114-the-readme-badges-are-made-by-the-ci-and-published-to-their-own-branch.md))
+
+[![build and test](https://img.shields.io/github/actions/workflow/status/hsn-soft/base-framework/ci-control-workflow.yml?branch=dev&style=flat-square&label=build%20and%20test)](https://github.com/hsn-soft/base-framework/actions/workflows/ci-control-workflow.yml)
+[![coverage](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fhsn-soft%2Fbase-framework%2Fbadges%2Fcoverage.json&style=flat-square)](https://github.com/hsn-soft/base-framework/actions/workflows/ci-control-workflow.yml)
+[![unit tests](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fhsn-soft%2Fbase-framework%2Fbadges%2Funit-tests.json&style=flat-square)](https://github.com/hsn-soft/base-framework/actions/workflows/ci-control-workflow.yml)
+[![integration tests](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fhsn-soft%2Fbase-framework%2Fbadges%2Fintegration-tests.json&style=flat-square)](https://github.com/hsn-soft/base-framework/actions/workflows/ci-control-workflow.yml)
+[![checked](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fhsn-soft%2Fbase-framework%2Fbadges%2Fchecked.json&style=flat-square)](https://github.com/hsn-soft/base-framework/actions/workflows/ci-control-workflow.yml)
+
+**NuGet**
+
 [![NuGet](https://img.shields.io/nuget/v/HsnSoft.Base.Core.svg?style=flat-square)](https://www.nuget.org/packages/HsnSoft.Base.Core)
 [![NuGet (with prereleases)](https://img.shields.io/nuget/vpre/HsnSoft.Base.Core.svg?style=flat-square)](https://www.nuget.org/packages/HsnSoft.Base.Core)
 [![NuGet Download](https://img.shields.io/nuget/dt/HsnSoft.Base.Core.svg?style=flat-square)](https://www.nuget.org/packages/HsnSoft.Base.Core)
