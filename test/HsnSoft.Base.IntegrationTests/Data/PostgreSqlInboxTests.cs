@@ -2,7 +2,6 @@ using HsnSoft.Base.EventBus.EntityFrameworkCore;
 using HsnSoft.Base.EventBus.Inbox;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Testcontainers.PostgreSql;
 
 namespace HsnSoft.Base.IntegrationTests.Data;
 
@@ -11,25 +10,27 @@ public sealed class InboxTestContext(DbContextOptions<InboxTestContext> options)
     protected override void OnModelCreating(ModelBuilder modelBuilder) => modelBuilder.ConfigureEventInbox();
 }
 
-public sealed class PostgreSqlInboxTests : IAsyncLifetime
+[Collection(Collections.Postgres)]
+public sealed class PostgreSqlInboxTests(PostgresFixture postgres) : IAsyncLifetime
 {
-    private readonly PostgreSqlContainer _container = new PostgreSqlBuilder("postgres:16").Build();
+    private string _connection = null!;
     private IHost _host = null!;
 
     public async Task InitializeAsync()
     {
-        await _container.StartAsync();
+        // once: the options of the context are built for every scope, and every scope has to reach the same database
+        _connection = postgres.NewConnectionString();
         _host = await Support.StartHostAsync(services => services
-            .AddDbContext<InboxTestContext>(options => options.UseNpgsql(_container.GetConnectionString() + ";Timeout=60;Command Timeout=60"))
+            .AddDbContext<InboxTestContext>(options => options.UseNpgsql(_connection + ";Timeout=60;Command Timeout=60"))
             .AddEventInbox<InboxTestContext>(options => options.MaxRetryCount = 5));
         await using AsyncServiceScope scope = _host.Services.CreateAsyncScope();
         await scope.ServiceProvider.GetRequiredService<InboxTestContext>().Database.EnsureCreatedAsync();
     }
 
-    public async Task DisposeAsync()
+    public Task DisposeAsync()
     {
         _host.Dispose();
-        await Support.DisposeAsync(_container);
+        return Task.CompletedTask;
     }
 
     private async Task<T> InScope<T>(Func<IInboxStore, Task<T>> action)

@@ -1,22 +1,17 @@
 using HsnSoft.Base.BlobStoring.Azure;
 using Microsoft.Extensions.Configuration;
-using Testcontainers.Azurite;
 
 namespace HsnSoft.Base.IntegrationTests.BlobStoring;
 
 /// <summary>The Azure Blob Storage client against Azurite, the emulator of Microsoft.</summary>
-public sealed class AzureBlobTests : BlobStoreContractTests
+[Collection(Collections.Azurite)]
+public sealed class AzureBlobTests(AzuriteFixture azurite) : BlobStoreContractTests
 {
-    private readonly AzuriteContainer _container = new AzuriteBuilder("mcr.microsoft.com/azure-storage/azurite:3.35.0")
-        .WithCommand("--skipApiVersionCheck")
-        .Build();
-
     protected override async Task<IHost> StartAsync()
     {
-        await _container.StartAsync();
-        IConfiguration configuration = Support.Configuration(("AzureBlob:ConnectionString", _container.GetConnectionString()));
+        IConfiguration configuration = Support.Configuration(("AzureBlob:ConnectionString", azurite.Container.GetConnectionString()));
         return await Support.StartHostAsync(services => services.AddAzureBlobStoring(configuration));
     }
 
-    protected override async Task StopAsync() => await Support.DisposeAsync(_container);
+    protected override Task StopAsync() => Task.CompletedTask;
 }

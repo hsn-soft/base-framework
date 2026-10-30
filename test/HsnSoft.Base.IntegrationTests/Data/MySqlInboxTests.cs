@@ -2,29 +2,30 @@ using HsnSoft.Base.EventBus.EntityFrameworkCore;
 using HsnSoft.Base.EventBus.Inbox;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Testcontainers.MySql;
 
 namespace HsnSoft.Base.IntegrationTests.Data;
 
-public sealed class MySqlInboxTests : IAsyncLifetime
+[Collection(Collections.MySql)]
+public sealed class MySqlInboxTests(MySqlFixture mySql) : IAsyncLifetime
 {
-    private readonly MySqlContainer _container = new MySqlBuilder("mysql:8.4").Build();
+    private string _connection = null!;
     private IHost _host = null!;
 
     public async Task InitializeAsync()
     {
-        await _container.StartAsync();
+        // once: the options of the context are built for every scope, and every scope has to reach the same database
+        _connection = mySql.NewConnectionString();
         _host = await Support.StartHostAsync(services => services
-            .AddDbContext<InboxTestContext>(options => options.UseMySQL(_container.GetConnectionString() + ";Connection Timeout=60;Default Command Timeout=60"))
+            .AddDbContext<InboxTestContext>(options => options.UseMySQL(_connection + ";Connection Timeout=60;Default Command Timeout=60"))
             .AddEventInbox<InboxTestContext>(options => options.MaxRetryCount = 5));
         await using AsyncServiceScope scope = _host.Services.CreateAsyncScope();
         await scope.ServiceProvider.GetRequiredService<InboxTestContext>().Database.EnsureCreatedAsync();
     }
 
-    public async Task DisposeAsync()
+    public Task DisposeAsync()
     {
         _host.Dispose();
-        await Support.DisposeAsync(_container);
+        return Task.CompletedTask;
     }
 
     private async Task<T> InScope<T>(Func<IInboxStore, Task<T>> action)

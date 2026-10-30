@@ -12,8 +12,8 @@ job had already built, and the first job mixed checking the repository with test
 
 The jobs form a pipeline, each starting only when the ones it needs passed (`needs`), with these names:
 
-1. **`CI Rules, Format And Build JOB`** (`rules-format-build`): the rules of the repository (every package has unit tests, the order of the references, the framework reference rules), the format check (C# and JSON), restore, and **one build in Release with warnings as errors**; it ends the pipeline there when any of them fails. It then packs the build output and the restore state of every project (`src/*/bin/Release`, `src/*/obj`, `test/*/bin/Release`, `test/*/obj`)
-   into **one `.tgz` artifact** (one file, not thousands: uploading small files one by one is slow; kept one day).
+1. **`CI Rules, Format And Build JOB`** (`rules-format-build`): the rules of the repository (every package has unit tests, the order of the references, the framework reference rules), the format check (C# and JSON), restore, and **one build in Release with warnings as errors**; it ends the pipeline there when any of them fails. It then packs the build output of the **test projects** and the restore state of every project (`test/*/bin/Release`, `src/*/obj`, `test/*/obj`) into **one `.tar.zst` artifact** (one file, not thousands: uploading small files one by one is slow; zstd, because it packs in a third of the time of gzip and smaller; kept one day).
+   The `bin` of the libraries is left out on purpose: a test project holds copies of what it references, and every unit test project ran with all of them removed (checked).
 2. **`CI Check Unit Test JOB`** (`unit-tests`, needs 1): downloads that artifact, unpacks it where it was, runs `dotnet restore` (which only checks the packages from the cache) and runs the unit tests with `--no-restore --no-build`.
 3. **`CI Check Integration Test JOB`** (`integration-tests`, needs 2): the same hand-over, then the integration tests with `--no-restore --no-build`.
 4. **`CI Coverage Gate JOB`** (`coverage-gate`, needs 3): merges the coverage of both kinds of tests and fails the pipeline below the threshold.

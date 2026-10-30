@@ -78,15 +78,16 @@ jobs:
             -   name: Build Solution
                 run: ./scripts/ci-detector/ci-timed.sh timings/rules-build.txt "Build" dotnet build --no-restore --verbosity minimal --configuration Release -p:TreatWarningsAsErrors=true
 
-            # What the next jobs run on: the build output and the restore state of every project, in one file (thousands of small files are slow to upload one by one).
+            # What the next jobs run on: the build output of the test projects (which hold copies of what they reference, so the bin of the libraries is not needed) and the restore state of every
+            # project, in one file (thousands of small files are slow to upload one by one), compressed with zstd (a third of the time of gzip, and smaller).
             -   name: Pack The Build
-                run: ./scripts/ci-detector/ci-timed.sh timings/rules-build.txt "Pack the build" tar -czf build-output.tgz src/*/bin/Release src/*/obj test/*/bin/Release test/*/obj
+                run: ./scripts/ci-detector/ci-timed.sh timings/rules-build.txt "Pack the build" tar -I 'zstd -3 -T0' -cf build-output.tar.zst src/*/obj test/*/bin/Release test/*/obj
 
             -   name: Upload The Build
                 uses: actions/upload-artifact@v4
                 with:
                     name: build-output
-                    path: build-output.tgz
+                    path: build-output.tar.zst
                     retention-days: 1
                     compression-level: 0
 
@@ -127,7 +128,7 @@ jobs:
 
             # No second build: what the first job built is put back where it was, and the packages come from the cache (restore only checks them).
             -   name: Unpack The Build
-                run: ./scripts/ci-detector/ci-timed.sh timings/unit.txt "Unpack the build" bash -ec 'tar -xzf build-output.tgz && dotnet restore --verbosity minimal --configfile NuGet.Config'
+                run: ./scripts/ci-detector/ci-timed.sh timings/unit.txt "Unpack the build" bash -ec 'tar -I zstd -xf build-output.tar.zst && dotnet restore --verbosity minimal --configfile NuGet.Config'
 
             -   name: Unit Tests With Coverage
                 run: >
@@ -183,7 +184,7 @@ jobs:
                     name: build-output
 
             -   name: Unpack The Build
-                run: ./scripts/ci-detector/ci-timed.sh timings/integration.txt "Unpack the build" bash -ec 'tar -xzf build-output.tgz && dotnet restore --verbosity minimal --configfile NuGet.Config'
+                run: ./scripts/ci-detector/ci-timed.sh timings/integration.txt "Unpack the build" bash -ec 'tar -I zstd -xf build-output.tar.zst && dotnet restore --verbosity minimal --configfile NuGet.Config'
 
             -   name: Integration Tests With Coverage
                 run: >
