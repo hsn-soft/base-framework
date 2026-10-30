@@ -10,7 +10,7 @@ and we wanted to know what exactly can break a pull request.
 
 ## Decision
 
-`.github/workflows/net-core-build-and-test.yml` (`.NETCore Build & Test`) runs on pull requests into `dev` (opened, synchronized, reopened), on pushes to `dev` (the state of `dev` is what the README badge shows) and by hand.
+`.github/workflows/ci-control-workflow.yml` (`.NETCore Build & Test`) runs on pull requests into `dev` (opened, synchronized, reopened), on pushes to `dev` (the state of `dev` is what the README badge shows) and by hand.
 A new push to a pull request cancels its previous run; pushes to `dev` always finish. Three jobs:
 
 1. **Build And Unit Test** (Ubuntu): every package has a unit test project (`ci-check-test-project-exist.sh`) -> restore -> **format check C#** (`dotnet format whitespace` and `style --verify-no-changes --severity info`) ->

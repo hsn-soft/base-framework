@@ -466,3 +466,5 @@ logs/
 
 # A private key is a secret: never commit one
 private_key.xml
+
+error.txt

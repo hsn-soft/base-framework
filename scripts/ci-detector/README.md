@@ -39,7 +39,7 @@ scripts are bash scripts. The detector checks all of this first and says what is
 
 ## What it does
 
-The stages are the ones of the CI workflow (`.github/workflows/net-core-build-and-test.yml`), in the same order:
+The stages are the ones of the CI workflow (`.github/workflows/ci-control-workflow.yml`), in the same order:
 
 | Stage | What it checks | The same in the CI |
 | --- | --- | --- |
@@ -107,7 +107,7 @@ Like the CI, the test scripts stop at the first failing test project, so the cou
 ## When the CI changes
 
 The detector is a copy of the CI's steps, not the CI itself (the CI runs its jobs in parallel). When someone adds a step to
-`net-core-build-and-test.yml`, the same stage goes into **both** detector scripts, and the table above gets a row.
+`ci-control-workflow.yml`, the same stage goes into **both** detector scripts, and the table above gets a row.
 
 ## Format
 

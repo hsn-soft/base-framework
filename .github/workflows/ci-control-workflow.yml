@@ -1,4 +1,4 @@
-name: '.NETCore Build & Test'
+name: 'CI Control Workflow'
 
 # The same steps run on a developer's machine with scripts/ci-detector/ (ci_detector_mac.sh, ci_detector_win.ps1): keep them in step.
 

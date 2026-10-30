@@ -7,7 +7,7 @@ namespace HsnSoft.Base.IntegrationTests.BlobStoring;
 /// <summary>The Amazon S3 client against MinIO, which speaks the S3 API: the same requests an AWS bucket gets.</summary>
 public sealed class AwsBlobTests : BlobStoreContractTests
 {
-    private readonly MinioContainer _container = new MinioBuilder("minio/minio:RELEASE.2024-08-29T01-40-52Z").Build();
+    private readonly MinioContainer _container = new MinioBuilder(Support.MinioImage).Build();
 
     protected override async Task<IHost> StartAsync()
     {

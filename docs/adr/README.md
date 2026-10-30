@@ -28,6 +28,7 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
+| [0108](0108-the-minio-image-of-the-tests-is-built-from-source-by-chainguard.md) | The MinIO image of the integration tests is the one Chainguard builds | Accepted | 2026-10-30 |
 | [0107](0107-the-scripts-of-the-ci-and-the-detector-live-in-one-folder.md) | What the CI and the detector run lives in one folder; the cleaning script is `cleaner` | Accepted | 2026-10-29 |
 | [0106](0106-the-ci-reports-the-time-of-every-step-the-test-counts-and-the-coverage.md) | The CI reports the time of every step, the test counts and the coverage, and shows every test | Accepted | 2026-10-29 |
 | [0105](0105-shared-package-versions-in-one-file-and-a-common-test-host.md) | The versions of the shared dependencies are in one file that libraries and tests both import, and tests share a small test host | Accepted | 2026-10-29 |

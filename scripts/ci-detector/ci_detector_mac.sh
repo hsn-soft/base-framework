@@ -6,7 +6,7 @@
 # Usage: ./scripts/ci-detector/ci_detector_mac.sh [--skip-integration]
 #   --skip-integration   do not run the integration tests (no Docker needed); the coverage gate is then skipped too
 #
-# Keep it in step with .github/workflows/net-core-build-and-test.yml: when a step is added there, add the stage here.
+# Keep it in step with .github/workflows/ci-control-workflow.yml: when a step is added there, add the stage here.
 set -uo pipefail
 
 SKIP_INTEGRATION=false
@@ -34,7 +34,7 @@ bar() { info "==================================================================
 elapsed() { printf '%dm %02ds' $(($1 / 60)) $(($1 % 60)); }
 DETECTOR_STARTED=$SECONDS
 
-THRESHOLD="$(sed -n "s/.*COVERAGE_THRESHOLD: '\([0-9.]*\)'.*/\1/p" .github/workflows/net-core-build-and-test.yml | head -n 1)"
+THRESHOLD="$(sed -n "s/.*COVERAGE_THRESHOLD: '\([0-9.]*\)'.*/\1/p" .github/workflows/ci-control-workflow.yml | head -n 1)"
 THRESHOLD="${THRESHOLD:-99}"
 
 # a clean screen for the run (only on a terminal, not when the output goes to a file)
