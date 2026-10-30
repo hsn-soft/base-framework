@@ -36,17 +36,17 @@ jobs:
 
         steps:
             -   name: Checkout Repository
-                uses: actions/checkout@v4
+                uses: actions/checkout@v5
                 with:
                     fetch-depth: 0
 
             -   name: Setup .NET
-                uses: actions/setup-dotnet@v4
+                uses: actions/setup-dotnet@v5
                 with:
                     dotnet-version: '10.0.x'
 
             -   name: Cache NuGet
-                uses: actions/cache@v4
+                uses: actions/cache@v5
                 with:
                     path: ~/.nuget/packages
                     key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'common.props', 'common.test.props', 'common.versions.props') }}
@@ -84,7 +84,7 @@ jobs:
                 run: ./scripts/ci-detector/ci-timed.sh timings/rules-build.txt "Pack the build" tar -I 'zstd -3 -T0' -cf build-output.tar.zst src/*/obj test/*/bin/Release test/*/obj
 
             -   name: Upload The Build
-                uses: actions/upload-artifact@v4
+                uses: actions/upload-artifact@v6
                 with:
                     name: build-output
                     path: build-output.tar.zst
@@ -93,7 +93,7 @@ jobs:
 
             -   name: Upload Timings
                 if: always()
-                uses: actions/upload-artifact@v4
+                uses: actions/upload-artifact@v6
                 with:
                     name: rules-build-timings
                     path: timings
@@ -106,15 +106,15 @@ jobs:
 
         steps:
             -   name: Checkout Repository
-                uses: actions/checkout@v4
+                uses: actions/checkout@v5
 
             -   name: Setup .NET
-                uses: actions/setup-dotnet@v4
+                uses: actions/setup-dotnet@v5
                 with:
                     dotnet-version: '10.0.x'
 
             -   name: Cache NuGet
-                uses: actions/cache@v4
+                uses: actions/cache@v5
                 with:
                     path: ~/.nuget/packages
                     key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'common.props', 'common.test.props', 'common.versions.props') }}
@@ -122,7 +122,7 @@ jobs:
                         ${{ runner.os }}-nuget
 
             -   name: Download The Build
-                uses: actions/download-artifact@v4
+                uses: actions/download-artifact@v7
                 with:
                     name: build-output
 
@@ -143,14 +143,14 @@ jobs:
 
             -   name: Upload Test Results
                 if: always()
-                uses: actions/upload-artifact@v4
+                uses: actions/upload-artifact@v6
                 with:
                     name: unit-test-results
                     path: TestResults/unit
 
             -   name: Upload Timings
                 if: always()
-                uses: actions/upload-artifact@v4
+                uses: actions/upload-artifact@v6
                 with:
                     name: unit-timings
                     path: timings
@@ -163,15 +163,15 @@ jobs:
 
         steps:
             -   name: Checkout Repository
-                uses: actions/checkout@v4
+                uses: actions/checkout@v5
 
             -   name: Setup .NET
-                uses: actions/setup-dotnet@v4
+                uses: actions/setup-dotnet@v5
                 with:
                     dotnet-version: '10.0.x'
 
             -   name: Cache NuGet
-                uses: actions/cache@v4
+                uses: actions/cache@v5
                 with:
                     path: ~/.nuget/packages
                     key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'common.props', 'common.test.props', 'common.versions.props') }}
@@ -179,7 +179,7 @@ jobs:
                         ${{ runner.os }}-nuget
 
             -   name: Download The Build
-                uses: actions/download-artifact@v4
+                uses: actions/download-artifact@v7
                 with:
                     name: build-output
 
@@ -199,7 +199,7 @@ jobs:
 
             -   name: Upload Test Results
                 if: always()
-                uses: actions/upload-artifact@v4
+                uses: actions/upload-artifact@v6
                 with:
                     name: integration-test-results
                     path: TestResults/integration
@@ -207,7 +207,7 @@ jobs:
 
             -   name: Upload Timings
                 if: always()
-                uses: actions/upload-artifact@v4
+                uses: actions/upload-artifact@v6
                 with:
                     name: integration-timings
                     path: timings
@@ -220,10 +220,10 @@ jobs:
 
         steps:
             -   name: Checkout Repository
-                uses: actions/checkout@v4
+                uses: actions/checkout@v5
 
             -   name: Download Test Results
-                uses: actions/download-artifact@v4
+                uses: actions/download-artifact@v7
                 with:
                     pattern: '*-test-results'
                     path: TestResults
@@ -241,10 +241,10 @@ jobs:
 
         steps:
             -   name: Checkout Repository
-                uses: actions/checkout@v4
+                uses: actions/checkout@v5
 
             -   name: Download Results And Timings
-                uses: actions/download-artifact@v4
+                uses: actions/download-artifact@v7
                 with:
                     pattern: '*-{test-results,timings}'
                     path: summary-input
