@@ -44,14 +44,30 @@ The stages are the ones of the CI workflow (`.github/workflows/ci-control-workfl
 | Stage | What it checks | The same in the CI |
 | --- | --- | --- |
 | Clean | the detector starts from a clean tree, as the CI does: `scripts/cleaner/` deletes build output, old test results and editor leftovers (never source, never tracked files); its list is in `logs/clean.log`, the screen shows the count | the CI starts from a clean checkout |
-| Restore | the packages can be restored | `Restore Dependencies` |
-| Every package has a test project | each package under `src/` has a `test/<Package>.Tests` | `Every Package Has Unit Tests` |
+| Every package has a test project | each package under `src/` has a `test/<Package>.Tests` | `Repository Rules` |
+| Project file reference order | the references of every project file are in order ([ADR-0043](../../docs/adr/0043-project-file-reference-order.md)) | `Repository Rules` |
+| Framework project references | every framework project reaches Core and lists nothing a sibling brings ([ADR-0075](../../docs/adr/0075-rules-of-the-framework-project-files.md)) | `Repository Rules` |
+| Restore | the packages can be restored (once; nothing after it restores again) | `Restore Dependencies` |
 | Format (C#) | `dotnet format` whitespace and style rules find nothing to change | `Format Check (C#)` |
 | Format (JSON) | the JSON files are formatted | `Format Check (JSON)` |
-| Build | `Release`, a clean build, **warnings are errors** | `Build Solution` |
+| Build | `Release`, a clean build, **warnings are errors** (once; the tests run on this build) | `Build Solution` |
 | Unit tests | every `*.Tests` project, with coverage | `Unit Tests With Coverage` |
 | Integration tests | `*.IntegrationTests`, with coverage (Docker, Testcontainers) | `Integration Tests With Coverage` |
 | Coverage gate | unit and integration coverage merged; line coverage of `src` at or above the threshold | `Coverage Gate JOB` |
+
+## The jobs of the CI and the stages of the detector
+
+The CI is a pipeline of jobs ([ADR-0109](../../docs/adr/0109-the-ci-jobs-are-a-pipeline-built-once.md)); the detector is one process on one machine, so it runs the same stages one after the other:
+
+| CI job | Detector stages |
+| --- | --- |
+| `CI Rules, Format And Build JOB` | the three rule stages, Restore, Format (C#), Format (JSON), Build |
+| `CI Check Unit Test JOB` | Unit tests |
+| `CI Check Integration Test JOB` | Integration tests |
+| `CI Coverage Gate JOB` | Coverage gate |
+| `CI Summary JOB` | the table at the end: the time of every stage, the test counts, the coverage |
+
+The CI hands the build from one job to the next in an artifact; the detector simply keeps it in the folder. Neither restores or builds twice.
 
 The screen is cleared when the detector starts (only on a terminal), and the table ends with the **total time**; the start and the end line carry the time of the day.
 

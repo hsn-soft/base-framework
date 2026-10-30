@@ -162,11 +162,12 @@ function Get-Coverage
 $testArgs = @("--no-build", "--configuration", "Release", "--verbosity", "minimal", "--settings", "test/coverlet.runsettings", "--collect:XPlat Code Coverage", "--logger", "trx")
 
 Write-Info "## STAGES ----------------------------------------------------------------------"
-$restored = Invoke-Stage "restore" "Restore" { dotnet restore HsnSoft.Base.sln --verbosity minimal }
-
+# the rules of the repository need no restore (they read files), so they come first, as in the CI: a broken rule stops before the packages are fetched
 Invoke-Stage "test-projects" "Every package has a test project" { bash ./scripts/ci-detector/ci-check-test-project-exist.sh } | Out-Null
 Invoke-Stage "csproj-order" "Project file reference order" { & $python scripts/ci-detector/ci-force-csproj-order.py } | Out-Null
 Invoke-Stage "framework-references" "Framework project references" { & $python scripts/ci-detector/ci-force-framework-references-rules.py } | Out-Null
+
+$restored = Invoke-Stage "restore" "Restore" { dotnet restore HsnSoft.Base.sln --verbosity minimal }
 if ($restored)
 {
     Invoke-Stage "format-cs" "Format (C#)" {
