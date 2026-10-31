@@ -27,6 +27,9 @@ A review of the infrastructure packages for what happens in production (many pod
 - **The `Jwt` section is checked when the host starts** (`AddBaseJwtAuthentication`): a blank issuer or audience (no token would ever be accepted, and nothing says why), an HMAC key shorter than 32 bytes (the length was only written in a comment; a short key worked, a blank one failed at the first request), an RSA key of
   fewer than 2048 bits, a key file that is not there, or `AccessTokenMinutes` under 1 stops the host, with all the reasons in one message. The length of an HMAC key is counted in bytes.
 
+- **The Swagger gateway keeps one document for each service, not one for each address.** The cache key held the address of the gateway, which is the `Host` header of the request when `SwaggerGateway:PublicOrigin` is not set: a client that sends a new `Host` every time made a new entry (a whole document)
+  every time. What is kept is the document the service gave, under the key of the service; the address and the paths are put in for each request.
+
 ## Consequences
 
 - The connections to Redis of a system are halved (the test counts them on a real Redis: two for a host).
