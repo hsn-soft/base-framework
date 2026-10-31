@@ -343,6 +343,27 @@ public class LocalizationTests
         Assert.Contains("No:Such", logged[0], StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void TheMissingKeysThatAreRemembered_AreBounded_AndTheCapIsSaidOnce()
+    {
+        List<string> logged = [];
+        ServiceCollection services = new();
+        services.AddLogging(logging => logging.AddProvider(new CaptureProvider(logged)));
+        services.AddBaseLocalization();
+        using ServiceProvider provider = services.BuildServiceProvider();
+        IMessageLocalizer localizer = provider.GetRequiredService<IMessageLocalizer>();
+
+        // a client that makes up a new key for every request
+        for (int index = 0; index < MessageLocalizer.MaxReportedKeys + 500; index++)
+        {
+            localizer.Find($"Made:Up:{index}");
+        }
+
+        Assert.Equal(MessageLocalizer.MaxReportedKeys + 1, logged.Count);
+        Assert.Contains("not", logged[^1], StringComparison.Ordinal);
+        Assert.Contains("Made:Up:0", logged[0], StringComparison.Ordinal);
+    }
+
     private sealed class CaptureProvider(List<string> logged) : ILoggerProvider
     {
         public ILogger CreateLogger(string categoryName) => new CaptureLogger(logged);

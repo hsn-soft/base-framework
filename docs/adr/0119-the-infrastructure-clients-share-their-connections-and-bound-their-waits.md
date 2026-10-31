@@ -36,6 +36,9 @@ A review of the infrastructure packages for what happens in production (many pod
 - **NLog: the connection to Graylog is made again every two minutes and a Graylog that is not there is found in three seconds; the queue is bounded on purpose.** The target made its `HttpClient` with the defaults, which keep a connection for ever (a Graylog that moved was written to at the old address until the
   connection broke) and wait ten seconds for a connection to a Graylog that is down, which every log waits for before the next. The queue of logs that wait is 10 000 and drops the logs that do not fit (it did so already, by default, without saying it): a Graylog that is down for an hour costs logs, never the memory of the pods.
 
+- **Localization: the missing keys that are remembered are bounded** (1 000). A missing key is logged once, which needs a memory of the keys already logged; a key made of what a client sent (an error code taken from a request) made an entry for every value, for as long as the process lives. After
+  1 000 the later ones are neither remembered nor logged, and that is said once.
+
 ## Consequences
 
 - The connections to Redis of a system are halved (the test counts them on a real Redis: two for a host).
