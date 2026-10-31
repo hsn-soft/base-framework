@@ -312,6 +312,31 @@ public sealed class MongoStartupTests(MongoFixture mongo)
     }
 
     [Fact]
+    public async Task AHolderThatIsAliveRenewsItsLease_SoItKeepsTheLockForLongerThanTheLease()
+    {
+        MongoStartupLock startupLock = new(new MongoClient(mongo.NewUrl()).GetDatabase("locks"), lease: TimeSpan.FromSeconds(1), renew: TimeSpan.FromMilliseconds(250));
+        IAsyncDisposable holder = await startupLock.AcquireAsync("long", TimeSpan.FromSeconds(5), CancellationToken.None);
+
+        // two and a half leases later nobody has taken it over: it was renewed
+        await Task.Delay(TimeSpan.FromMilliseconds(2500));
+        await Assert.ThrowsAsync<TimeoutException>(() => startupLock.AcquireAsync("long", TimeSpan.FromMilliseconds(600), CancellationToken.None));
+        await holder.DisposeAsync();
+
+        await using IAsyncDisposable next = await startupLock.AcquireAsync("long", TimeSpan.FromSeconds(5), CancellationToken.None);
+    }
+
+    [Fact]
+    public void TheTimesOfTheLease_AreChecked()
+    {
+        IMongoDatabase database = new MongoClient(mongo.NewUrl()).GetDatabase("locks");
+
+        Assert.Throws<ArgumentNullException>(() => new MongoStartupLock(null!, TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(1)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new MongoStartupLock(database, TimeSpan.Zero, TimeSpan.FromSeconds(1)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new MongoStartupLock(database, TimeSpan.FromSeconds(3), TimeSpan.Zero));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new MongoStartupLock(database, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(3)));
+    }
+
+    [Fact]
     public async Task TheLock_IsHeldByOneAtATime_FreeAgainWhenItIsDisposed_AndTakenOverWhenItsLeaseEnds()
     {
         IMongoDatabase database = new MongoClient(mongo.NewUrl()).GetDatabase("locks");

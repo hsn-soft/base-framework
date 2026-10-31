@@ -28,6 +28,19 @@ public class RegistrationTests
     }
 
     [Fact]
+    public void TheProvider_ConfiguresAContextWithTheDefaults_WhenItIsAskedWithoutTheTuning()
+    {
+        EfCoreProviderOptions providers = new();
+        IEfCoreProvider provider = Assert.Single(providers.UseMySql().Providers);
+        DbContextOptionsBuilder builder = new();
+
+        provider.Configure(builder, "Host=localhost;Database=x");
+
+        Assert.True(builder.IsConfigured);
+        Assert.IsAssignableFrom<IStartupLockProvider>(provider);
+    }
+
+    [Fact]
     public void TheRetriesAndTheCommandTimeout_AreBoundedByDefault_AndAreTheSettingsOfTheSection()
     {
         using ServiceProvider bounded = new ServiceCollection().AddLogging().AddBaseMySql<TestContext>(Configuration("Server=localhost;Port=5499;Database=x;User=u;Password=p")).BuildServiceProvider();

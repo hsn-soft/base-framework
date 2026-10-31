@@ -28,6 +28,19 @@ public class RegistrationTests
     }
 
     [Fact]
+    public void TheProvider_ConfiguresAContextWithTheDefaults_WhenItIsAskedWithoutTheTuning()
+    {
+        EfCoreProviderOptions providers = new();
+        IEfCoreProvider provider = Assert.Single(providers.UsePostgres().Providers);
+        DbContextOptionsBuilder builder = new();
+
+        provider.Configure(builder, "Host=localhost;Database=x");
+
+        Assert.True(builder.IsConfigured);
+        Assert.IsAssignableFrom<IStartupLockProvider>(provider);
+    }
+
+    [Fact]
     public void TheRetriesAndTheCommandTimeout_AreBoundedByDefault_AndAreTheSettingsOfTheSection()
     {
         using ServiceProvider bounded = new ServiceCollection().AddLogging().AddBasePostgres<TestContext>(Configuration("Host=localhost;Port=5499;Database=x;Username=u;Password=p")).BuildServiceProvider();
