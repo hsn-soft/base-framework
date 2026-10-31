@@ -3,11 +3,9 @@ using Edx.Shared.Hosting.Gateways.Options;
 using HsnSoft.Base.AspNetCore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Yarp.ReverseProxy.Configuration;
 
 namespace Edx.Shared.Hosting.Gateways;
 
@@ -36,6 +34,17 @@ public static class GatewayRegister
             .AddEdxHosting(configuration, title, swaggerName: "gateway", authenticateUsers: authenticateUsers)
             .AddBaseSwaggerGateway(configuration)   // the documents of the services, with the gateway's paths
             .Configure<GatewayPolicyOptions>(configuration.GetSection(GatewayPolicyOptions.SectionName));
+        services.AddOptions<ForwardedHeadersOptions>().Configure<IOptions<GatewayPolicyOptions>>((forwarded, policy) =>
+        {
+            // the proxy in front of the gateway is trusted: the client address is the one it saw
+            foreach (string proxy in policy.Value.TrustedProxyIps)
+            {
+                if (IPAddress.TryParse(proxy, out IPAddress? address))
+                {
+                    forwarded.KnownProxies.Add(address);
+                }
+            }
+        });
         services.AddReverseProxy().LoadFromMemory(proxyRoutes, proxyClusters);
 
         // a back office in a browser calls the gateway from its own address: those origins, and nobody else's, may
@@ -71,18 +80,6 @@ public static class GatewayRegister
     public static WebApplication UseEdxGateway(this WebApplication app, bool authenticateUsers)
     {
         ArgumentNullException.ThrowIfNull(app);
-
-        // the client address is the one the trusted proxy in front of the gateway saw
-        ForwardedHeadersOptions forwarded = new() { ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto };
-        foreach (string proxy in app.Services.GetRequiredService<IOptions<GatewayPolicyOptions>>().Value.TrustedProxyIps)
-        {
-            if (IPAddress.TryParse(proxy, out IPAddress? address))
-            {
-                forwarded.KnownProxies.Add(address);
-            }
-        }
-
-        app.UseForwardedHeaders(forwarded);
 
         // before everything that asks who the caller is: a preflight of a browser carries no token
         if (app.Configuration.GetSection(GatewayPolicyOptions.SectionName).Get<GatewayPolicyOptions>()?.Cors.AllowedOrigins is { Length: > 0 })

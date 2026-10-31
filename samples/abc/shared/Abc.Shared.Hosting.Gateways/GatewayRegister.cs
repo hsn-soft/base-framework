@@ -3,11 +3,9 @@ using Abc.Shared.Hosting.Gateways.Options;
 using HsnSoft.Base.AspNetCore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Yarp.ReverseProxy.Configuration;
 
 namespace Abc.Shared.Hosting.Gateways;
 
@@ -34,6 +32,17 @@ public static class GatewayRegister
             .AddAbcHosting(configuration, title, swaggerName: "gateway", authenticateUsers: authenticateUsers)
             .AddBaseSwaggerGateway(configuration)   // the documents of the services, with the gateway's paths
             .Configure<GatewayPolicyOptions>(configuration.GetSection(GatewayPolicyOptions.SectionName));
+        services.AddOptions<ForwardedHeadersOptions>().Configure<IOptions<GatewayPolicyOptions>>((forwarded, policy) =>
+        {
+            // the proxy in front of the gateway is trusted: the client address is the one it saw
+            foreach (string proxy in policy.Value.TrustedProxyIps)
+            {
+                if (IPAddress.TryParse(proxy, out IPAddress? address))
+                {
+                    forwarded.KnownProxies.Add(address);
+                }
+            }
+        });
         services.AddReverseProxy().LoadFromMemory(proxyRoutes, proxyClusters);
         return services;
     }
@@ -58,17 +67,7 @@ public static class GatewayRegister
     {
         ArgumentNullException.ThrowIfNull(app);
 
-        // the client address is the one the trusted proxy in front of the gateway saw
-        ForwardedHeadersOptions forwarded = new() { ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto };
-        foreach (string proxy in app.Services.GetRequiredService<IOptions<GatewayPolicyOptions>>().Value.TrustedProxyIps)
-        {
-            if (IPAddress.TryParse(proxy, out IPAddress? address))
-            {
-                forwarded.KnownProxies.Add(address);
-            }
-        }
-
-        app.UseForwardedHeaders(forwarded);
+        // the first middleware of the hosting believes the proxies of Hosting:ForwardedHeaders and of GatewayPolicies:TrustedProxyIps
         app.UseAbcHosting(authenticateUsers);
         app.MapReverseProxy();
         return app;

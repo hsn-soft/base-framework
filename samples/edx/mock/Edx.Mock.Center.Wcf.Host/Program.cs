@@ -1,5 +1,3 @@
-using CoreWCF.Configuration;
-using CoreWCF.Description;
 using Edx.Mock.Center.MongoDB;
 using Edx.Mock.Center.Wcf.Host;
 using Edx.Mock.Center.Wcf.Host.Services;
@@ -8,9 +6,9 @@ using Edx.Shared.Efatura.Server;
 using Edx.Shared.Efatura.Wire;
 using Edx.Shared.Hosting;
 using HsnSoft.Base.BlobStoring.Minio;
-using HsnSoft.Base.Logging.Serilog;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+builder.AddBaseHosting();   // the .env file, the limits of Kestrel, the proxies and the time to stop: the section Hosting
 builder.Logging.AddBaseSerilog(builder.Configuration, "Edx.Mock.Center");
 
 CenterOptions center = builder.Configuration.GetSection(CenterOptions.SectionName).Get<CenterOptions>() ?? new CenterOptions();
@@ -42,15 +40,15 @@ builder.Services
     .AddServiceModelServices()
     .AddServiceModelMetadata();
 
-WebApplication app = builder.Build();
+// a failure to start (a setting that is missing, a database that cannot be prepared) is logged as critical and ends the process with the exit code 1
+return await builder.RunBaseAsync(async app =>
+{
+    await app.Services.SeedParticipantsAsync();
 
-await app.Services.SeedParticipantsAsync();
-
-app.UseEdxHosting(authenticateUsers: false);
-app.MapControllers();
-app.UseServiceModel(services => services
-    .AddService<CenterService>()
-    .AddServiceEndpoint<CenterService, IEFaturaPortType>(EFaturaServerBinding.Create(useTransportSecurity: false, center.MaxReceivedMessageSize), WireNames.CenterPath));
-app.Services.GetRequiredService<ServiceMetadataBehavior>().HttpGetEnabled = true;
-
-await app.RunAsync();
+    app.UseEdxHosting(authenticateUsers: false);
+    app.MapControllers();
+    app.UseServiceModel(services => services
+        .AddService<CenterService>()
+        .AddServiceEndpoint<CenterService, IEFaturaPortType>(EFaturaServerBinding.Create(useTransportSecurity: false, center.MaxReceivedMessageSize), WireNames.CenterPath));
+    app.Services.GetRequiredService<ServiceMetadataBehavior>().HttpGetEnabled = true;
+});

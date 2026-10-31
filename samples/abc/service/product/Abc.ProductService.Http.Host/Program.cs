@@ -1,20 +1,13 @@
 using Abc.ProductService.Application;
-using Abc.ProductService.Domain.ProductDomain.Entities;
 using Abc.ProductService.Http.Host.EventHandlers;
 using Abc.ProductService.MongoDB;
-using Abc.Shared.Contracts.Events.Order;
-using Abc.Shared.Helper;
 using Abc.Shared.Hosting.Microservices;
-using Abc.Shared.Localization;
-using HsnSoft.Base.AspNetCore;
 using HsnSoft.Base.Caching.StackExchangeRedis;
 using HsnSoft.Base.EventBus;
-using HsnSoft.Base.EventBus.MongoDB;
-using HsnSoft.Base.Localization;
-using HsnSoft.Base.Logging.Serilog;
 using HsnSoft.Base.MultiTenancy;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+builder.AddBaseHosting();   // the .env file, the port, the limits of Kestrel, the proxies and the time to stop: the section Hosting
 builder.Logging.AddBaseSerilog(builder.Configuration, "Abc.ProductService");
 
 // what every Abc microservice has (logging, the web api shell, JWT, Swagger, health), then what this service has
@@ -35,10 +28,10 @@ builder.Services
     .AddEventInbox(MongoProductDbProperties.CollectionPrefix + "InboxMessage")
     .AddProductApplication(builder.Configuration);
 
-WebApplication app = builder.Build();
-
-app.UseAbcMicroservice();
-app.UseBaseLocalization();   // after the caller is known (the hosting reads the token): the language is the one of the token, else of the header
-app.MapControllers();
-
-await app.RunAsync();
+// a failure to start (a setting that is missing, a database that cannot be prepared) is logged as critical and ends the process with the exit code 1
+return await builder.RunBaseAsync(app =>
+{
+    app.UseAbcMicroservice();
+    app.UseBaseLocalization();   // after the caller is known (the hosting reads the token): the language is the one of the token, else of the header
+    app.MapControllers();
+});
