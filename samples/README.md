@@ -15,6 +15,7 @@ customer does and checks how each step ends. Sign in with `POST /auth-server/v1/
 **Abc:**
 
 The hosts use the local infrastructure on its default ports (PostgreSQL, SQL Server, MongoDB, Redis, RabbitMQ). `samples/abc/run-all.sh` builds and starts the hosts of the order flow (Ctrl+C stops them; `PersistentLogger__IsGrayLogActive=true` sends the logs to Graylog) and
+**In containers:** `samples/abc/deploy/` has a Dockerfile, a compose file and Kubernetes manifests ([ADR-0047](docs/adr/0047-the-abc-system-runs-in-docker-compose-and-in-kubernetes.md)): `samples/abc/deploy/build-images.sh`, then `docker compose -f samples/abc/deploy/docker-compose.yml --env-file samples/abc/deploy/.env up -d` or `samples/abc/deploy/k8s-up.sh`; `samples/abc/deploy/k8s-test.sh` takes Redis and RabbitMQ away and shows what the probes do ([../docs/Health.md](../docs/Health.md)).
 `samples/abc/smoke-test.sh` runs the three outcomes of an order through the commercial gateway and checks how each ends. The keys of the tokens are made first ([The keys of the Abc tokens](#the-keys-of-the-abc-tokens)).
 
 ## Logging

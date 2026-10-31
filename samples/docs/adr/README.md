@@ -7,6 +7,7 @@ New ADR: copy the framework's [`0000-template.md`](../../../docs/adr/0000-templa
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
+| [0047](0047-the-abc-system-runs-in-docker-compose-and-in-kubernetes.md) | The Abc system runs in Docker Compose and in Kubernetes: one Dockerfile, secrets made by a script, the probes of the health endpoints, a test that takes dependencies away | Accepted | 2026-10-31 |
 | [0046](0046-a-host-chooses-its-localization-and-its-cache.md) | A host chooses its localization and its cache | Accepted | 2026-10-27 |
 | [0045](0045-the-commercial-invoice-and-its-answer.md) | The commercial invoice (TICARIFATURA) and the answer of its receiver | Accepted | 2026-10-28 |
 | [0044](0044-the-edx-invoice-container-layout.md) | The layout of the storage: a work folder, then everything of a tenant together, and the same folders in both queues | Accepted | 2026-10-28 |

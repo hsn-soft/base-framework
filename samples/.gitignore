@@ -1,3 +1,6 @@
 # The public keys of the sample systems (made with scripts/generate-rsa-keys.cs together with the private key, which the root .gitignore ignores)
 abc/shared/Abc.Shared.Hosting/public_key.xml
 edx/shared/Edx.Shared.Hosting/public_key.xml
+
+# the passwords of the compose file and the Kubernetes scripts (made by abc/deploy/make-env.sh)
+abc/deploy/.env

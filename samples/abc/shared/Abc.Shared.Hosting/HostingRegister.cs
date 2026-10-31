@@ -13,7 +13,7 @@ public static class HostingRegister
 {
     /// <summary>
     /// Registers what every Abc host shares: the masker and the console logger, the request and response logs (a gateway has <c>RequestLogging:Role</c> = <c>Gateway</c>), the
-    /// answers of a web api (<c>BaseResponse</c>, the exception handler), Swagger and the health checks, and, for a host that reads the bearer token, the JWT validation (section <c>Jwt</c>).
+    /// answers of a web api (<c>BaseResponse</c>, the exception handler), Swagger and the health checks (section <c>Health</c>), and, for a host that reads the bearer token, the JWT validation (section <c>Jwt</c>).
     /// </summary>
     /// <param name="services">The service collection.</param>
     /// <param name="configuration">Holds <c>RequestLogging</c>, <c>Swagger</c> and <c>Jwt</c>.</param>
@@ -40,7 +40,7 @@ public static class HostingRegister
             .AddBaseLogging()
             .AddBaseRequestLogging(configuration)
             .AddBaseWebApi()
-            .AddBaseHealthChecks();
+            .AddBaseHealthChecks(configuration);   // the checks of the packages this host has, the section Health (a check is switched off by its name)
 
         if (swaggerBearerButton)
         {

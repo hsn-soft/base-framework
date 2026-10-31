@@ -1,0 +1,459 @@
+# The hosts of the Abc system. What they have in common:
+#  - the environment `docker` of the hosts (appsettings.docker.json: the names of the services of this namespace, port 8080); the passwords come from the secret abc-secrets, made from deploy/.env;
+#  - the three probes of the health endpoints (docs/Health.md): the startup probe gives a start up to 3 minutes, the readiness probe takes a pod that cannot reach a dependency out of the traffic,
+#    the liveness probe asks only the process (a dependency that is down must not restart a pod); the timeout of a probe is longer than Health:CheckTimeout (5 s) so the answer says which check failed;
+#  - a stop that waits: Hosting:ShutdownTimeoutSeconds (30) + EventBus:ShutdownTimeout (30) + the preStop, so terminationGracePeriodSeconds is 80.
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: identity-service
+  labels: { app: identity-service }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: identity-service }
+  template:
+    metadata:
+      labels: { app: identity-service }
+    spec:
+      terminationGracePeriodSeconds: 80
+      containers:
+        - name: host
+          image: abc/identity-service:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom: { secretKeyRef: { name: abc-secrets, key: POSTGRES_PASSWORD } }
+            - name: SQLSERVER_PASSWORD
+              valueFrom: { secretKeyRef: { name: abc-secrets, key: SQLSERVER_PASSWORD } }
+            - name: RABBITMQ_PASSWORD
+              valueFrom: { secretKeyRef: { name: abc-secrets, key: RABBITMQ_PASSWORD } }
+            - name: ASPNETCORE_ENVIRONMENT
+              value: docker
+            - name: ConnectionStrings__Redis
+              value: redis:6379
+            - name: RabbitMq__Connection__Password
+              value: $(RABBITMQ_PASSWORD)
+            - name: ConnectionStrings__EfCore-IdentityService
+              value: "Server=sqlserver,1433;Database=Abc_Identity_Dev;User Id=sa;Password=$(SQLSERVER_PASSWORD);TrustServerCertificate=True"
+            - name: ConnectionStrings__EfCore-HistoryService
+              value: "Host=postgres;Port=5432;Database=Abc_History_Dev;Username=abc_app;Password=$(POSTGRES_PASSWORD)"
+          startupProbe:
+            httpGet: { path: /health/startup, port: 8080 }
+            periodSeconds: 3
+            timeoutSeconds: 7
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: { path: /health/ready, port: 8080 }
+            periodSeconds: 5
+            timeoutSeconds: 7
+            failureThreshold: 2
+          livenessProbe:
+            httpGet: { path: /health/live, port: 8080 }
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          lifecycle:
+            preStop:
+              exec: { command: ["sleep", "5"] }
+          resources:
+            requests: { cpu: 50m, memory: 128Mi }
+            limits: { memory: 512Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: identity-service
+spec:
+  selector: { app: identity-service }
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-server-service
+  labels: { app: auth-server-service }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: auth-server-service }
+  template:
+    metadata:
+      labels: { app: auth-server-service }
+    spec:
+      terminationGracePeriodSeconds: 80
+      containers:
+        - name: host
+          image: abc/auth-server-service:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom: { secretKeyRef: { name: abc-secrets, key: POSTGRES_PASSWORD } }
+            - name: SQLSERVER_PASSWORD
+              valueFrom: { secretKeyRef: { name: abc-secrets, key: SQLSERVER_PASSWORD } }
+            - name: ASPNETCORE_ENVIRONMENT
+              value: docker
+            - name: ConnectionStrings__Redis
+              value: redis:6379
+            - name: ConnectionStrings__EfCore-IdentityService
+              value: "Server=sqlserver,1433;Database=Abc_Identity_Dev;User Id=sa;Password=$(SQLSERVER_PASSWORD);TrustServerCertificate=True"
+            - name: ConnectionStrings__EfCore-HistoryService
+              value: "Host=postgres;Port=5432;Database=Abc_History_Dev;Username=abc_app;Password=$(POSTGRES_PASSWORD)"
+          volumeMounts:
+            - { name: private-key, mountPath: /app/private_key.xml, subPath: private_key.xml, readOnly: true }
+          startupProbe:
+            httpGet: { path: /health/startup, port: 8080 }
+            periodSeconds: 3
+            timeoutSeconds: 7
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: { path: /health/ready, port: 8080 }
+            periodSeconds: 5
+            timeoutSeconds: 7
+            failureThreshold: 2
+          livenessProbe:
+            httpGet: { path: /health/live, port: 8080 }
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          lifecycle:
+            preStop:
+              exec: { command: ["sleep", "5"] }
+          resources:
+            requests: { cpu: 50m, memory: 128Mi }
+            limits: { memory: 512Mi }
+      volumes:
+        - name: private-key
+          secret: { secretName: abc-auth-private-key }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-server-service
+spec:
+  selector: { app: auth-server-service }
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: product-service
+  labels: { app: product-service }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: product-service }
+  template:
+    metadata:
+      labels: { app: product-service }
+    spec:
+      terminationGracePeriodSeconds: 80
+      containers:
+        - name: host
+          image: abc/product-service:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: MONGO_PASSWORD
+              valueFrom: { secretKeyRef: { name: abc-secrets, key: MONGO_PASSWORD } }
+            - name: RABBITMQ_PASSWORD
+              valueFrom: { secretKeyRef: { name: abc-secrets, key: RABBITMQ_PASSWORD } }
+            - name: ASPNETCORE_ENVIRONMENT
+              value: docker
+            - name: ConnectionStrings__Redis
+              value: redis:6379
+            - name: RabbitMq__Connection__Password
+              value: $(RABBITMQ_PASSWORD)
+            - name: ConnectionStrings__Mongo-ProductService
+              value: "mongodb://abc_app:$(MONGO_PASSWORD)@mongo:27017/Abc_Product_Dev?authSource=admin"
+            - name: ConnectionStrings__Mongo-StockService
+              value: "mongodb://abc_app:$(MONGO_PASSWORD)@mongo:27017/Abc_Stock_Dev?authSource=admin"
+          startupProbe:
+            httpGet: { path: /health/startup, port: 8080 }
+            periodSeconds: 3
+            timeoutSeconds: 7
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: { path: /health/ready, port: 8080 }
+            periodSeconds: 5
+            timeoutSeconds: 7
+            failureThreshold: 2
+          livenessProbe:
+            httpGet: { path: /health/live, port: 8080 }
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          lifecycle:
+            preStop:
+              exec: { command: ["sleep", "5"] }
+          resources:
+            requests: { cpu: 50m, memory: 128Mi }
+            limits: { memory: 512Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: product-service
+spec:
+  selector: { app: product-service }
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shipment-service
+  labels: { app: shipment-service }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: shipment-service }
+  template:
+    metadata:
+      labels: { app: shipment-service }
+    spec:
+      terminationGracePeriodSeconds: 80
+      containers:
+        - name: host
+          image: abc/shipment-service:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom: { secretKeyRef: { name: abc-secrets, key: POSTGRES_PASSWORD } }
+            - name: MONGO_PASSWORD
+              valueFrom: { secretKeyRef: { name: abc-secrets, key: MONGO_PASSWORD } }
+            - name: RABBITMQ_PASSWORD
+              valueFrom: { secretKeyRef: { name: abc-secrets, key: RABBITMQ_PASSWORD } }
+            - name: ASPNETCORE_ENVIRONMENT
+              value: docker
+            - name: ConnectionStrings__Redis
+              value: redis:6379
+            - name: RabbitMq__Connection__Password
+              value: $(RABBITMQ_PASSWORD)
+            - name: ConnectionStrings__Mongo-ShipmentService
+              value: "mongodb://abc_app:$(MONGO_PASSWORD)@mongo:27017/Abc_Shipment_Dev?authSource=admin"
+            - name: ConnectionStrings__EfCore-ShipmentHistoryService
+              value: "Host=postgres;Port=5432;Database=Abc_ShipmentHistory_Dev;Username=abc_app;Password=$(POSTGRES_PASSWORD)"
+          startupProbe:
+            httpGet: { path: /health/startup, port: 8080 }
+            periodSeconds: 3
+            timeoutSeconds: 7
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: { path: /health/ready, port: 8080 }
+            periodSeconds: 5
+            timeoutSeconds: 7
+            failureThreshold: 2
+          livenessProbe:
+            httpGet: { path: /health/live, port: 8080 }
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          lifecycle:
+            preStop:
+              exec: { command: ["sleep", "5"] }
+          resources:
+            requests: { cpu: 50m, memory: 128Mi }
+            limits: { memory: 512Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: shipment-service
+spec:
+  selector: { app: shipment-service }
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-service
+  labels: { app: order-service }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: order-service }
+  template:
+    metadata:
+      labels: { app: order-service }
+    spec:
+      terminationGracePeriodSeconds: 80
+      containers:
+        - name: host
+          image: abc/order-service:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom: { secretKeyRef: { name: abc-secrets, key: POSTGRES_PASSWORD } }
+            - name: RABBITMQ_PASSWORD
+              valueFrom: { secretKeyRef: { name: abc-secrets, key: RABBITMQ_PASSWORD } }
+            - name: ASPNETCORE_ENVIRONMENT
+              value: docker
+            - name: ConnectionStrings__Redis
+              value: redis:6379
+            - name: RabbitMq__Connection__Password
+              value: $(RABBITMQ_PASSWORD)
+            - name: ConnectionStrings__EfCore-OrderService
+              value: "Host=postgres;Port=5432;Database=Abc_Order_Dev;Username=abc_app;Password=$(POSTGRES_PASSWORD)"
+          startupProbe:
+            httpGet: { path: /health/startup, port: 8080 }
+            periodSeconds: 3
+            timeoutSeconds: 7
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: { path: /health/ready, port: 8080 }
+            periodSeconds: 5
+            timeoutSeconds: 7
+            failureThreshold: 2
+          livenessProbe:
+            httpGet: { path: /health/live, port: 8080 }
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          lifecycle:
+            preStop:
+              exec: { command: ["sleep", "5"] }
+          resources:
+            requests: { cpu: 50m, memory: 128Mi }
+            limits: { memory: 512Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-service
+spec:
+  selector: { app: order-service }
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway-commercial
+  labels: { app: gateway-commercial }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: gateway-commercial }
+  template:
+    metadata:
+      labels: { app: gateway-commercial }
+    spec:
+      terminationGracePeriodSeconds: 80
+      containers:
+        - name: host
+          image: abc/gateway-commercial:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: docker
+            - name: ConnectionStrings__Redis
+              value: redis:6379
+          startupProbe:
+            httpGet: { path: /health/startup, port: 8080 }
+            periodSeconds: 3
+            timeoutSeconds: 7
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: { path: /health/ready, port: 8080 }
+            periodSeconds: 5
+            timeoutSeconds: 7
+            failureThreshold: 2
+          livenessProbe:
+            httpGet: { path: /health/live, port: 8080 }
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          lifecycle:
+            preStop:
+              exec: { command: ["sleep", "5"] }
+          resources:
+            requests: { cpu: 50m, memory: 128Mi }
+            limits: { memory: 512Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway-commercial
+spec:
+  type: LoadBalancer
+  selector: { app: gateway-commercial }
+  ports:
+    - port: 5500
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway-public
+  labels: { app: gateway-public }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: gateway-public }
+  template:
+    metadata:
+      labels: { app: gateway-public }
+    spec:
+      terminationGracePeriodSeconds: 80
+      containers:
+        - name: host
+          image: abc/gateway-public:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: docker
+          startupProbe:
+            httpGet: { path: /health/startup, port: 8080 }
+            periodSeconds: 3
+            timeoutSeconds: 7
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: { path: /health/ready, port: 8080 }
+            periodSeconds: 5
+            timeoutSeconds: 7
+            failureThreshold: 2
+          livenessProbe:
+            httpGet: { path: /health/live, port: 8080 }
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          lifecycle:
+            preStop:
+              exec: { command: ["sleep", "5"] }
+          resources:
+            requests: { cpu: 50m, memory: 128Mi }
+            limits: { memory: 512Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway-public
+spec:
+  type: LoadBalancer
+  selector: { app: gateway-public }
+  ports:
+    - port: 5600
+      targetPort: 8080
