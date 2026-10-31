@@ -3,7 +3,8 @@
 # The branch holds nothing but those files and is made (as an orphan, with no history of the code) the first time.
 #
 # Usage: scripts/ci-detector/ci-publish-badges.sh <folder with the .json files>
-# Run by the summary job of the CI on dev (a scheduled or a manual run), with the token of the run allowed to write (permissions: contents: write).
+# Run by the summary job of the CI on dev (a scheduled or a manual run) and on the two release branches (every push; their files start with candidate- or regular-), with the token
+# of the run allowed to write (permissions: contents: write). Only the files given are replaced: the badges of the other branches stay.
 set -euo pipefail
 
 source_dir="$(cd "${1:?folder with the badge files}" && pwd)"
@@ -26,7 +27,6 @@ else
     git -C "$work" rm -rfq . 2>/dev/null || true
 fi
 
-find "$work" -maxdepth 1 -name '*.json' -delete
 cp "$source_dir"/*.json "$work"/
 
 git -C "$work" config user.name "github-actions[bot]"
@@ -38,6 +38,14 @@ if git -C "$work" diff --cached --quiet; then
     exit 0
 fi
 
-git -C "$work" commit --quiet -m "badges: $(cat "$source_dir/checked.json" | sed -n 's/.*"message": "\([0-9]*\)".*/\1/p') (UTC)"
-git -C "$work" push --quiet origin "HEAD:refs/heads/$branch"
+checked_file="$(ls "$source_dir"/*checked.json | head -n 1)"
+checked="$(sed -n 's/.*"message": "\([0-9]*\)".*/\1/p' "$checked_file")"
+whose="$(basename "$checked_file" checked.json)"
+git -C "$work" commit --quiet -m "badges: ${whose%-}${whose:+ }$checked (UTC)"
+# two branches can finish together: when the push is refused because the other one was first, take its commit and push again
+for attempt in 1 2 3; do
+    git -C "$work" push --quiet origin "HEAD:refs/heads/$branch" && break
+    [ "$attempt" -eq 3 ] && { echo "::error::The badges could not be published."; exit 1; }
+    git -C "$work" pull --quiet --rebase origin "$branch"
+done
 echo "The badges were published to the branch $branch."
