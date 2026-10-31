@@ -3,9 +3,11 @@ using Edx.Integration.FirmInvoice.Application.Storage;
 using Edx.Integration.FirmInvoice.MongoDB;
 using Edx.Integration.FirmInvoice.Wcf.Host;
 using Edx.Shared.Hosting.Microservices;
+using HsnSoft.Base.AspNetCore;
 using HsnSoft.Base.BlobStoring.Minio;
 using HsnSoft.Base.Caching.StackExchangeRedis;
 using HsnSoft.Base.EventBus;
+using HsnSoft.Base.Logging.Serilog;
 using HsnSoft.Base.MultiTenancy;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);

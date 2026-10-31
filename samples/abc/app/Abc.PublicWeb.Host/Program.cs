@@ -1,5 +1,6 @@
 using Abc.PublicWeb.Host.Services;
 using HsnSoft.Base.AspNetCore;
+using HsnSoft.Base.Logging;
 using HsnSoft.Base.Logging.Serilog;
 using Microsoft.AspNetCore.Mvc;
 

@@ -1,9 +1,15 @@
 using Abc.Shared.Hosting.Microservices;
+using Abc.Shared.Localization;
 using Abc.ShipmentService.Application;
+using Abc.ShipmentService.Domain.ShipmentDomain.Entities;
 using Abc.ShipmentService.EntityFrameworkCore;
 using Abc.ShipmentService.Http.Host.EventHandlers;
 using Abc.ShipmentService.MongoDB;
+using HsnSoft.Base.AspNetCore;
 using HsnSoft.Base.Caching.StackExchangeRedis;
+using HsnSoft.Base.EventBus;
+using HsnSoft.Base.Localization;
+using HsnSoft.Base.Logging.Serilog;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.AddBaseHosting();   // the .env file, the port, the limits of Kestrel, the proxies and the time to stop: the section Hosting

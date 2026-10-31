@@ -62,11 +62,35 @@ public sealed partial class EventDispatcher(
     private readonly ILogMasker? _masker = masker;
     private readonly bool _inbox = inbox is not null;
 
+    // the places of the handlers of the whole service (EventBusOptions.MaxConcurrentHandlers); null: no limit
+    private readonly SemaphoreSlim? _places = options.Value.MaxConcurrentHandlers > 0 ? new SemaphoreSlim(options.Value.MaxConcurrentHandlers, options.Value.MaxConcurrentHandlers) : null;
+
     public async Task DispatchAsync(string trimmedEventName, Type eventType, object messageEnvelope, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(trimmedEventName);
         ArgumentNullException.ThrowIfNull(eventType);
         ArgumentNullException.ThrowIfNull(messageEnvelope);
+
+        if (_places is null)
+        {
+            await DispatchCoreAsync(trimmedEventName, eventType, messageEnvelope, cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
+        // waits for a place without holding a thread; a stop (the token) ends the wait
+        await _places.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            await DispatchCoreAsync(trimmedEventName, eventType, messageEnvelope, cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            _places.Release();
+        }
+    }
+
+    private async Task DispatchCoreAsync(string trimmedEventName, Type eventType, object messageEnvelope, CancellationToken cancellationToken)
+    {
 
         ParentMessageEnvelope envelope = (ParentMessageEnvelope)messageEnvelope;
         string scopeId = LogFields.NewId();

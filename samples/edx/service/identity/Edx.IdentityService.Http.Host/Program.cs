@@ -2,7 +2,9 @@ using Edx.IdentityService.Application;
 using Edx.IdentityService.EntityFrameworkCore;
 using Edx.IdentityService.Http.Host;
 using Edx.Shared.Hosting.Microservices;
+using HsnSoft.Base.AspNetCore;
 using HsnSoft.Base.Caching.StackExchangeRedis;
+using HsnSoft.Base.Logging.Serilog;
 using HsnSoft.Base.MultiTenancy;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);

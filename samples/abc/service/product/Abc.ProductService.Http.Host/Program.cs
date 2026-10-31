@@ -1,9 +1,17 @@
 using Abc.ProductService.Application;
+using Abc.ProductService.Domain.ProductDomain.Entities;
 using Abc.ProductService.Http.Host.EventHandlers;
 using Abc.ProductService.MongoDB;
+using Abc.Shared.Contracts.Events.Order;
+using Abc.Shared.Helper;
 using Abc.Shared.Hosting.Microservices;
+using Abc.Shared.Localization;
+using HsnSoft.Base.AspNetCore;
 using HsnSoft.Base.Caching.StackExchangeRedis;
 using HsnSoft.Base.EventBus;
+using HsnSoft.Base.EventBus.MongoDB;
+using HsnSoft.Base.Localization;
+using HsnSoft.Base.Logging.Serilog;
 using HsnSoft.Base.MultiTenancy;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);

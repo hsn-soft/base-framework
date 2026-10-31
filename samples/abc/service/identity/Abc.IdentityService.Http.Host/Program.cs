@@ -1,9 +1,16 @@
 using Abc.IdentityService.Application;
+using Abc.IdentityService.Domain.UserDomain.Entities;
 using Abc.IdentityService.EntityFrameworkCore;
 using Abc.IdentityService.EntityFrameworkCore.Context;
+using Abc.Shared.Helper;
 using Abc.Shared.Hosting.Microservices;
+using Abc.Shared.Localization;
+using HsnSoft.Base.AspNetCore;
 using HsnSoft.Base.Caching.StackExchangeRedis;
 using HsnSoft.Base.EventBus;
+using HsnSoft.Base.EventBus.EntityFrameworkCore;
+using HsnSoft.Base.Localization;
+using HsnSoft.Base.Logging.Serilog;
 using HsnSoft.Base.MultiTenancy;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);

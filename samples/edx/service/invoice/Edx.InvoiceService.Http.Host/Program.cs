@@ -2,9 +2,12 @@ using Edx.InvoiceService.Application;
 using Edx.InvoiceService.Http.Host.EventHandlers;
 using Edx.InvoiceService.MongoDB;
 using Edx.Shared.Hosting.Microservices;
+using HsnSoft.Base.AspNetCore;
 using HsnSoft.Base.BlobStoring.Minio;
 using HsnSoft.Base.Caching.StackExchangeRedis;
 using HsnSoft.Base.EventBus;
+using HsnSoft.Base.EventBus.MongoDB;
+using HsnSoft.Base.Logging.Serilog;
 using HsnSoft.Base.MultiTenancy;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);

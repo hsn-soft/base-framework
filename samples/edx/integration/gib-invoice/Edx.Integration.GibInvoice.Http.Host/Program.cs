@@ -3,9 +3,12 @@ using Edx.Integration.GibInvoice.Http.Host.EventHandlers;
 using Edx.Integration.GibInvoice.Http.Host.Workers;
 using Edx.Integration.GibInvoice.MongoDB;
 using Edx.Shared.Hosting.Microservices;
+using HsnSoft.Base.AspNetCore;
 using HsnSoft.Base.BlobStoring.Minio;
 using HsnSoft.Base.Caching.StackExchangeRedis;
 using HsnSoft.Base.EventBus;
+using HsnSoft.Base.EventBus.MongoDB;
+using HsnSoft.Base.Logging.Serilog;
 using HsnSoft.Base.MultiTenancy;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);

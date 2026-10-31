@@ -27,6 +27,33 @@ public class MongoOptionsTests
     }
 
     [Fact]
+    public void ThePool_KeepsTheDriversDefaults_UnlessTheOptionsSetIt()
+    {
+        MongoClientSettings driver = MongoClientSettings.FromUrl(new MongoUrl("mongodb://mongo:27017/orders"));
+
+        MongoClientSettings byDefault = new MongoOptions().Apply("mongodb://mongo:27017/orders");
+        MongoClientSettings set = new MongoOptions { MaxConnectionPoolSize = 300, MinConnectionPoolSize = 20, WaitQueueTimeout = TimeSpan.FromSeconds(7) }.Apply("mongodb://mongo:27017/orders");
+
+        Assert.Equal(driver.MaxConnectionPoolSize, byDefault.MaxConnectionPoolSize);
+        Assert.Equal(driver.MinConnectionPoolSize, byDefault.MinConnectionPoolSize);
+        Assert.Equal(driver.WaitQueueTimeout, byDefault.WaitQueueTimeout);
+        Assert.Equal(300, set.MaxConnectionPoolSize);
+        Assert.Equal(20, set.MinConnectionPoolSize);
+        Assert.Equal(TimeSpan.FromSeconds(7), set.WaitQueueTimeout);
+    }
+
+    [Fact]
+    public void ThePoolOptionsOfTheConnectionString_AreTheConnectionStrings()
+    {
+        MongoClientSettings settings = new MongoOptions { MaxConnectionPoolSize = 300, MinConnectionPoolSize = 20, WaitQueueTimeout = TimeSpan.FromSeconds(7) }
+            .Apply("mongodb://mongo:27017/orders?maxPoolSize=50&minPoolSize=5&waitQueueTimeoutMS=1000");
+
+        Assert.Equal(50, settings.MaxConnectionPoolSize);
+        Assert.Equal(5, settings.MinConnectionPoolSize);
+        Assert.Equal(TimeSpan.FromSeconds(1), settings.WaitQueueTimeout);
+    }
+
+    [Fact]
     public void TheSection_SetsTheWaitsOfTheClient()
     {
         IConfiguration configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>

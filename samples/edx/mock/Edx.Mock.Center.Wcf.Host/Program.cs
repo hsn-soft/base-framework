@@ -1,3 +1,5 @@
+using CoreWCF.Configuration;
+using CoreWCF.Description;
 using Edx.Mock.Center.MongoDB;
 using Edx.Mock.Center.Wcf.Host;
 using Edx.Mock.Center.Wcf.Host.Services;
@@ -5,7 +7,9 @@ using Edx.Mock.Center.Wcf.Host.Workers;
 using Edx.Shared.Efatura.Server;
 using Edx.Shared.Efatura.Wire;
 using Edx.Shared.Hosting;
+using HsnSoft.Base.AspNetCore;
 using HsnSoft.Base.BlobStoring.Minio;
+using HsnSoft.Base.Logging.Serilog;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.AddBaseHosting();   // the .env file, the limits of Kestrel, the proxies and the time to stop: the section Hosting

@@ -3,9 +3,12 @@ using Edx.Integration.FirmInvoice.Application.Storage;
 using Edx.Integration.FirmInvoice.Http.Host.EventHandlers;
 using Edx.Integration.FirmInvoice.MongoDB;
 using Edx.Shared.Hosting.Microservices;
+using HsnSoft.Base.AspNetCore;
 using HsnSoft.Base.BlobStoring.Minio;
 using HsnSoft.Base.Caching.StackExchangeRedis;
 using HsnSoft.Base.EventBus;
+using HsnSoft.Base.EventBus.MongoDB;
+using HsnSoft.Base.Logging.Serilog;
 using HsnSoft.Base.MultiTenancy;
 using Microsoft.AspNetCore.Http.Features;
 

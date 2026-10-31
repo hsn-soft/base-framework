@@ -1,5 +1,6 @@
 using HsnSoft.Base.AspNetCore;
 using HsnSoft.Base.Authentication;
+using HsnSoft.Base.Logging;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

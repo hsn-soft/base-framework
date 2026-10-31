@@ -1,8 +1,10 @@
 using Edx.Shared.Hosting.Microservices;
 using Edx.SignerService.Http.Host.EventHandlers;
 using Edx.SignerService.Http.Host.Signing;
+using HsnSoft.Base.AspNetCore;
 using HsnSoft.Base.BlobStoring.Minio;
 using HsnSoft.Base.EventBus;
+using HsnSoft.Base.Logging.Serilog;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.AddBaseHosting();   // the .env file, the limits of Kestrel, the proxies and the time to stop: the section Hosting

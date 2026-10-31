@@ -1,10 +1,14 @@
+using CoreWCF.Configuration;
+using CoreWCF.Description;
 using Edx.Integration.GibInvoice.Application;
 using Edx.Integration.GibInvoice.Application.Options;
 using Edx.Integration.GibInvoice.MongoDB;
 using Edx.Integration.GibInvoice.Wcf.Host;
 using Edx.Shared.Efatura.Server;
 using Edx.Shared.Hosting;
+using HsnSoft.Base.AspNetCore;
 using HsnSoft.Base.BlobStoring.Minio;
+using HsnSoft.Base.Logging.Serilog;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.AddBaseHosting();   // the .env file, the limits of Kestrel, the proxies and the time to stop: the section Hosting

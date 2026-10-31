@@ -20,6 +20,15 @@ public sealed class MongoOptions
     /// <summary>How long a read or a write on a connection may wait (the longest a query or a command can be silent); a connection that does not answer in this time is broken. Default 2 minutes.</summary>
     public TimeSpan SocketTimeout { get; set; } = TimeSpan.FromMinutes(2);
 
+    /// <summary>The most connections the client opens to one server (the driver: 100). Many handlers at once ask for more than this and wait for a connection; the service sets it with <c>EventBus:MaxConcurrentHandlers</c> in mind. Null: the driver's.</summary>
+    public int? MaxConnectionPoolSize { get; set; }
+
+    /// <summary>The connections kept open to one server (the driver: 0), so a burst does not wait for them to be opened. Null: the driver's.</summary>
+    public int? MinConnectionPoolSize { get; set; }
+
+    /// <summary>How long a request waits for a free connection of the pool before it fails (the driver: 2 minutes); a pool that is too small shows as this error. Null: the driver's.</summary>
+    public TimeSpan? WaitQueueTimeout { get; set; }
+
     /// <summary>The settings of the client for <paramref name="connectionString"/>, with the waits of these options for the ones the connection string does not say.</summary>
     public MongoClientSettings Apply(string connectionString)
     {
@@ -40,6 +49,21 @@ public sealed class MongoOptions
         if (!Names(text, "socketTimeout"))
         {
             settings.SocketTimeout = SocketTimeout;
+        }
+
+        if (MaxConnectionPoolSize is { } max && !Names(text, "maxPoolSize"))
+        {
+            settings.MaxConnectionPoolSize = max;
+        }
+
+        if (MinConnectionPoolSize is { } min && !Names(text, "minPoolSize"))
+        {
+            settings.MinConnectionPoolSize = min;
+        }
+
+        if (WaitQueueTimeout is { } wait && !Names(text, "waitQueueTimeout"))
+        {
+            settings.WaitQueueTimeout = wait;
         }
 
         return settings;
