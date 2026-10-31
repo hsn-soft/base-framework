@@ -7,6 +7,7 @@ New ADR: copy the framework's [`0000-template.md`](../../../docs/adr/0000-templa
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
+| [0055](0055-the-identity-seeds-are-seeders.md) | The identity seeds are seeders | Accepted | 2026-11-01 |
 | [0054](0054-the-program-chooses-health-and-the-event-bus-with-its-handlers-and-swagger-is-in-the-settings.md) | `Program.cs` chooses the health endpoints and the event bus (with its handlers), and each service has its Swagger settings | Accepted | 2026-11-01 |
 | [0053](0053-each-service-has-its-own-audience-and-the-program-says-how-it-authenticates.md) | Each service has its own audience, and `Program.cs` says how it authenticates and authorizes | Accepted | 2026-10-31 |
 | [0052](0052-the-hosts-start-with-add-base-hosting-and-run-base-async.md) | The hosts of both samples start with `AddBaseHosting`, end with `RunBaseAsync`, and write their limits in their settings | Accepted | 2026-10-31 |

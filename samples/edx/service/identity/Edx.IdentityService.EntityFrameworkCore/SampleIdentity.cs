@@ -4,8 +4,6 @@ using Edx.Shared.Helper;
 using HsnSoft.Base.MultiTenancy;
 using HsnSoft.Base.Text;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 
 namespace Edx.IdentityService.EntityFrameworkCore;
 
@@ -16,11 +14,8 @@ public static class SampleIdentity
     /// development database, never the code's), the user having the role of its name. A role that is made now gets its starting grants (<see cref="DefaultPermissionGrants"/>); a role and a user that exist (found by name in the tenant) are left as they are, so what an administrator changed is not
     /// undone. The ids of what is made are the ones of <see cref="EdxIdentityIds"/>. Run it after <c>EnsurePermissionsAsync</c>, which makes the permissions the grants name.
     /// </summary>
-    internal static async Task EnsureSampleIdentityAsync(IServiceProvider services, CancellationToken cancellationToken)
+    internal static async Task EnsureSampleIdentityAsync(IdentityDbContext db, ICurrentTenant currentTenant, IReadOnlyList<SeedUser> seed, CancellationToken cancellationToken)
     {
-        IdentityDbContext db = services.GetRequiredService<IdentityDbContext>();
-        ICurrentTenant currentTenant = services.GetRequiredService<ICurrentTenant>();
-        IReadOnlyList<SeedUser> seed = services.GetRequiredService<IOptions<IdentitySeedOptions>>().Value.Users;
         Dictionary<string, Permission> permissions = await db.Permissions.ToDictionaryAsync(permission => permission.Code, cancellationToken).ConfigureAwait(false);
 
         foreach ((Guid tenantId, string code, _) in IdentityDatabase.s_tenants)

@@ -67,3 +67,22 @@ A step that needs to be run by hand (a tool, a test) can use the same rules with
 | MongoDB | a lease document in `_startup_locks` (a minute, renewed every twenty seconds) | the lease ends |
 
 A provider that has no lock (a provider written for a service) runs the step without one: it is only retried.
+
+## Seeders: the data a database starts with
+
+An `IDataSeeder` writes a piece of the starting data (the tenants, the catalogue of permissions, the first administrator, the data of a sample). `AddDataSeeder<TSeeder>(connectionName)` makes it a step of the database, so it runs
+on the host that owns the database, one pod at a time under the lock, in the order the seeders were added and after `AddSchemaStartupStep`; the container makes it in a scope of its own, so it takes what it needs in its constructor.
+
+```csharp
+services.AddSchemaStartupStep<IdentityDbContext>(connection)
+        .AddDataSeeder<TenantsSeeder>(connection)          // in this order
+        .AddDataSeeder<SampleIdentitySeeder>(connection);
+
+internal sealed class TenantsSeeder(IdentityDbContext db) : IDataSeeder
+{
+    public async Task SeedAsync(CancellationToken cancellationToken) { /* add what is not there; running it twice changes nothing */ }
+}
+```
+
+A seeder is written to be run again (every pod that gets the lock after the first, every start): it checks what is there and adds only what is not. An environment that must not have a seeder (the people of a sample, in production)
+lists it by the name of its class: `Seeding:Disabled:0 = SampleIdentitySeeder`. See [ADR-0125](adr/0125-the-data-a-database-starts-with-is-written-by-seeders-that-are-steps-of-the-database.md).
