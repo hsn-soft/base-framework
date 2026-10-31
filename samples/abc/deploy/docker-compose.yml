@@ -1,109 +1,63 @@
-# The Abc system on one machine: the infrastructure and the seven hosts, in the `docker` environment of the hosts (appsettings.docker.json: the names of this network, port 8080).
-#   samples/abc/deploy/make-env.sh && samples/abc/deploy/build-images.sh
-#   docker compose -f samples/abc/deploy/docker-compose.yml --env-file samples/abc/deploy/.env up -d
-# The passwords come from deploy/.env (made by make-env.sh, not committed); the connection strings below put them into what the hosts read.
-# The commercial gateway is on localhost:5500, the public one on localhost:5600.
+# The Abc system in Docker, the environment `docker`: the nine hosts, nothing else. The infrastructure (PostgreSQL, SQL Server, MongoDB, Redis, RabbitMQ, Graylog) is the one on this machine, the one the hosts
+# use in development, reached as host.docker.internal; the databases are the ones of development too (Abc_*_Dev).
+#   samples/abc/deploy/deploy.sh docker        # builds the images, renders the settings, and runs this file
+# The settings of each host are appsettings.docker.json with the passwords put in (render-settings.sh), mounted over the file of the image. The commercial gateway is on localhost:5500, the public one on
+# localhost:5600, the web apps on 5700 and 5800.
 name: abc
 
 x-host: &host
   restart: unless-stopped
-  environment: &host-environment
+  environment:
     ASPNETCORE_ENVIRONMENT: docker
-    ConnectionStrings__Redis: redis:6379
-    RabbitMq__Connection__Password: ${RABBITMQ_PASSWORD}
-  depends_on: &host-depends
-    redis: { condition: service_healthy }
-    rabbitmq: { condition: service_healthy }
 
 services:
-  postgres:
-    image: postgres:16
-    environment: { POSTGRES_USER: abc_app, POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}" }
-    healthcheck: { test: ["CMD-SHELL", "pg_isready -U abc_app"], interval: 5s, timeout: 3s, retries: 20 }
-  sqlserver:
-    image: mcr.microsoft.com/mssql/server:2022-latest
-    environment: { ACCEPT_EULA: "Y", MSSQL_SA_PASSWORD: "${SQLSERVER_PASSWORD}", MSSQL_MEMORY_LIMIT_MB: "1536" }
-    healthcheck:
-      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -Q 'SELECT 1' || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 20
-  mongo:
-    image: mongo:7.0
-    environment: { MONGO_INITDB_ROOT_USERNAME: abc_app, MONGO_INITDB_ROOT_PASSWORD: "${MONGO_PASSWORD}" }
-    healthcheck: { test: ["CMD-SHELL", "mongosh --quiet --eval 'db.adminCommand(\"ping\").ok' || exit 1"], interval: 5s, timeout: 5s, retries: 20 }
-  redis:
-    image: redis:7
-    healthcheck: { test: ["CMD", "redis-cli", "ping"], interval: 5s, timeout: 3s, retries: 20 }
-  rabbitmq:
-    image: rabbitmq:4
-    environment: { RABBITMQ_DEFAULT_USER: abc, RABBITMQ_DEFAULT_PASS: "${RABBITMQ_PASSWORD}" }
-    healthcheck: { test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"], interval: 5s, timeout: 10s, retries: 20 }
-
   identity-service:
     <<: *host
     image: abc/identity-service:dev
-    environment:
-      <<: *host-environment
-      ConnectionStrings__EfCore-IdentityService: "Server=sqlserver,1433;Database=Abc_Identity_Dev;User Id=sa;Password=${SQLSERVER_PASSWORD};TrustServerCertificate=True"
-      ConnectionStrings__EfCore-HistoryService: "Host=postgres;Port=5432;Database=Abc_History_Dev;Username=abc_app;Password=${POSTGRES_PASSWORD}"
-    depends_on:
-      <<: *host-depends
-      postgres: { condition: service_healthy }
-      sqlserver: { condition: service_healthy }
+    volumes:
+      - ./.rendered/docker/identity-service.json:/app/appsettings.docker.json:ro
   auth-server-service:
     <<: *host
     image: abc/auth-server-service:dev
-    environment:
-      <<: *host-environment
-      ConnectionStrings__EfCore-IdentityService: "Server=sqlserver,1433;Database=Abc_Identity_Dev;User Id=sa;Password=${SQLSERVER_PASSWORD};TrustServerCertificate=True"
-      ConnectionStrings__EfCore-HistoryService: "Host=postgres;Port=5432;Database=Abc_History_Dev;Username=abc_app;Password=${POSTGRES_PASSWORD}"
     volumes:
+      - ./.rendered/docker/auth-server-service.json:/app/appsettings.docker.json:ro
       - ../app/Abc.AuthServer.Host/private_key.xml:/app/private_key.xml:ro   # the private key is not in the image
-    depends_on:
-      <<: *host-depends
-      postgres: { condition: service_healthy }
-      sqlserver: { condition: service_healthy }
   product-service:
     <<: *host
     image: abc/product-service:dev
-    environment:
-      <<: *host-environment
-      ConnectionStrings__Mongo-ProductService: "mongodb://abc_app:${MONGO_PASSWORD}@mongo:27017/Abc_Product_Dev?authSource=admin"
-      ConnectionStrings__Mongo-StockService: "mongodb://abc_app:${MONGO_PASSWORD}@mongo:27017/Abc_Stock_Dev?authSource=admin"
-    depends_on:
-      <<: *host-depends
-      mongo: { condition: service_healthy }
+    volumes:
+      - ./.rendered/docker/product-service.json:/app/appsettings.docker.json:ro
   shipment-service:
     <<: *host
     image: abc/shipment-service:dev
-    environment:
-      <<: *host-environment
-      ConnectionStrings__Mongo-ShipmentService: "mongodb://abc_app:${MONGO_PASSWORD}@mongo:27017/Abc_Shipment_Dev?authSource=admin"
-      ConnectionStrings__EfCore-ShipmentHistoryService: "Host=postgres;Port=5432;Database=Abc_ShipmentHistory_Dev;Username=abc_app;Password=${POSTGRES_PASSWORD}"
-    depends_on:
-      <<: *host-depends
-      mongo: { condition: service_healthy }
-      postgres: { condition: service_healthy }
+    volumes:
+      - ./.rendered/docker/shipment-service.json:/app/appsettings.docker.json:ro
   order-service:
     <<: *host
     image: abc/order-service:dev
-    environment:
-      <<: *host-environment
-      ConnectionStrings__EfCore-OrderService: "Host=postgres;Port=5432;Database=Abc_Order_Dev;Username=abc_app;Password=${POSTGRES_PASSWORD}"
-    depends_on:
-      <<: *host-depends
-      postgres: { condition: service_healthy }
-
+    volumes:
+      - ./.rendered/docker/order-service.json:/app/appsettings.docker.json:ro
   gateway-commercial:
-    restart: unless-stopped
+    <<: *host
     image: abc/gateway-commercial:dev
-    environment: { ASPNETCORE_ENVIRONMENT: docker, ConnectionStrings__Redis: "redis:6379" }
+    volumes:
+      - ./.rendered/docker/gateway-commercial.json:/app/appsettings.docker.json:ro
     ports: ["5500:8080"]
-    depends_on: [redis, identity-service, auth-server-service, product-service, shipment-service, order-service]
   gateway-public:
-    restart: unless-stopped
+    <<: *host
     image: abc/gateway-public:dev
-    environment: { ASPNETCORE_ENVIRONMENT: docker }
+    volumes:
+      - ./.rendered/docker/gateway-public.json:/app/appsettings.docker.json:ro
     ports: ["5600:8080"]
-    depends_on: [identity-service]
+  commercial-web:
+    <<: *host
+    image: abc/commercial-web:dev
+    volumes:
+      - ./.rendered/docker/commercial-web.json:/app/appsettings.docker.json:ro
+    ports: ["5700:8080"]
+  public-web:
+    <<: *host
+    image: abc/public-web:dev
+    volumes:
+      - ./.rendered/docker/public-web.json:/app/appsettings.docker.json:ro
+    ports: ["5800:8080"]

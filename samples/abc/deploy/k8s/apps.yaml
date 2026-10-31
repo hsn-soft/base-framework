@@ -1,8 +1,10 @@
-# The hosts of the Abc system. What they have in common:
-#  - the environment `docker` of the hosts (appsettings.docker.json: the names of the services of this namespace, port 8080); the passwords come from the secret abc-secrets, made from deploy/.env;
-#  - the three probes of the health endpoints (docs/Health.md): the startup probe gives a start up to 3 minutes, the readiness probe takes a pod that cannot reach a dependency out of the traffic,
-#    the liveness probe asks only the process (a dependency that is down must not restart a pod); the timeout of a probe is longer than Health:CheckTimeout (5 s) so the answer says which check failed;
-#  - a stop that waits: Hosting:ShutdownTimeoutSeconds (30) + EventBus:ShutdownTimeout (30) + the preStop, so terminationGracePeriodSeconds is 80.
+# The hosts of the Abc system in an environment of the cluster (uat, production): deploy.sh puts the environment into the words between double underscores and applies it.
+#  - Two pods of each host. The infrastructure is the one on this machine (host.docker.internal), the same for every environment: an environment is told apart by its databases (Abc_*_Uat, Abc_*_Prod),
+#    the prefix of its Redis keys and the virtual host of its events (see appsettings.<environment>.json).
+#  - The settings of a host are the secret settings-<host> (appsettings.<environment>.json with the passwords put in, mounted over the file of the image).
+#  - The three probes of the health endpoints (docs/Health.md): the startup probe gives a start up to 3 minutes, the readiness probe takes a pod that cannot reach a dependency out of the traffic, the liveness
+#    probe asks only the process; the timeout of a probe is longer than Health:CheckTimeout (5 s).
+#  - A stop that waits: Hosting:ShutdownTimeoutSeconds (30) + EventBus:ShutdownTimeout (30) + the preStop, so terminationGracePeriodSeconds is 80; a pod is replaced one at a time (maxUnavailable 0).
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -10,7 +12,9 @@ metadata:
   name: identity-service
   labels: { app: identity-service }
 spec:
-  replicas: 1
+  replicas: __REPLICAS__
+  strategy:
+    rollingUpdate: { maxUnavailable: 0, maxSurge: 1 }
   selector:
     matchLabels: { app: identity-service }
   template:
@@ -25,22 +29,10 @@ spec:
           ports:
             - containerPort: 8080
           env:
-            - name: POSTGRES_PASSWORD
-              valueFrom: { secretKeyRef: { name: abc-secrets, key: POSTGRES_PASSWORD } }
-            - name: SQLSERVER_PASSWORD
-              valueFrom: { secretKeyRef: { name: abc-secrets, key: SQLSERVER_PASSWORD } }
-            - name: RABBITMQ_PASSWORD
-              valueFrom: { secretKeyRef: { name: abc-secrets, key: RABBITMQ_PASSWORD } }
             - name: ASPNETCORE_ENVIRONMENT
-              value: docker
-            - name: ConnectionStrings__Redis
-              value: redis:6379
-            - name: RabbitMq__Connection__Password
-              value: $(RABBITMQ_PASSWORD)
-            - name: ConnectionStrings__EfCore-IdentityService
-              value: "Server=sqlserver,1433;Database=Abc_Identity_Dev;User Id=sa;Password=$(SQLSERVER_PASSWORD);TrustServerCertificate=True"
-            - name: ConnectionStrings__EfCore-HistoryService
-              value: "Host=postgres;Port=5432;Database=Abc_History_Dev;Username=abc_app;Password=$(POSTGRES_PASSWORD)"
+              value: __ENVIRONMENT__
+          volumeMounts:
+            - { name: settings, mountPath: /app/appsettings.__ENVIRONMENT__.json, subPath: appsettings.__ENVIRONMENT__.json, readOnly: true }
           startupProbe:
             httpGet: { path: /health/startup, port: 8080 }
             periodSeconds: 3
@@ -62,6 +54,9 @@ spec:
           resources:
             requests: { cpu: 50m, memory: 128Mi }
             limits: { memory: 512Mi }
+      volumes:
+        - name: settings
+          secret: { secretName: settings-identity-service }
 ---
 apiVersion: v1
 kind: Service
@@ -79,7 +74,9 @@ metadata:
   name: auth-server-service
   labels: { app: auth-server-service }
 spec:
-  replicas: 1
+  replicas: __REPLICAS__
+  strategy:
+    rollingUpdate: { maxUnavailable: 0, maxSurge: 1 }
   selector:
     matchLabels: { app: auth-server-service }
   template:
@@ -94,19 +91,10 @@ spec:
           ports:
             - containerPort: 8080
           env:
-            - name: POSTGRES_PASSWORD
-              valueFrom: { secretKeyRef: { name: abc-secrets, key: POSTGRES_PASSWORD } }
-            - name: SQLSERVER_PASSWORD
-              valueFrom: { secretKeyRef: { name: abc-secrets, key: SQLSERVER_PASSWORD } }
             - name: ASPNETCORE_ENVIRONMENT
-              value: docker
-            - name: ConnectionStrings__Redis
-              value: redis:6379
-            - name: ConnectionStrings__EfCore-IdentityService
-              value: "Server=sqlserver,1433;Database=Abc_Identity_Dev;User Id=sa;Password=$(SQLSERVER_PASSWORD);TrustServerCertificate=True"
-            - name: ConnectionStrings__EfCore-HistoryService
-              value: "Host=postgres;Port=5432;Database=Abc_History_Dev;Username=abc_app;Password=$(POSTGRES_PASSWORD)"
+              value: __ENVIRONMENT__
           volumeMounts:
+            - { name: settings, mountPath: /app/appsettings.__ENVIRONMENT__.json, subPath: appsettings.__ENVIRONMENT__.json, readOnly: true }
             - { name: private-key, mountPath: /app/private_key.xml, subPath: private_key.xml, readOnly: true }
           startupProbe:
             httpGet: { path: /health/startup, port: 8080 }
@@ -130,6 +118,8 @@ spec:
             requests: { cpu: 50m, memory: 128Mi }
             limits: { memory: 512Mi }
       volumes:
+        - name: settings
+          secret: { secretName: settings-auth-server-service }
         - name: private-key
           secret: { secretName: abc-auth-private-key }
 ---
@@ -149,7 +139,9 @@ metadata:
   name: product-service
   labels: { app: product-service }
 spec:
-  replicas: 1
+  replicas: __REPLICAS__
+  strategy:
+    rollingUpdate: { maxUnavailable: 0, maxSurge: 1 }
   selector:
     matchLabels: { app: product-service }
   template:
@@ -164,20 +156,10 @@ spec:
           ports:
             - containerPort: 8080
           env:
-            - name: MONGO_PASSWORD
-              valueFrom: { secretKeyRef: { name: abc-secrets, key: MONGO_PASSWORD } }
-            - name: RABBITMQ_PASSWORD
-              valueFrom: { secretKeyRef: { name: abc-secrets, key: RABBITMQ_PASSWORD } }
             - name: ASPNETCORE_ENVIRONMENT
-              value: docker
-            - name: ConnectionStrings__Redis
-              value: redis:6379
-            - name: RabbitMq__Connection__Password
-              value: $(RABBITMQ_PASSWORD)
-            - name: ConnectionStrings__Mongo-ProductService
-              value: "mongodb://abc_app:$(MONGO_PASSWORD)@mongo:27017/Abc_Product_Dev?authSource=admin"
-            - name: ConnectionStrings__Mongo-StockService
-              value: "mongodb://abc_app:$(MONGO_PASSWORD)@mongo:27017/Abc_Stock_Dev?authSource=admin"
+              value: __ENVIRONMENT__
+          volumeMounts:
+            - { name: settings, mountPath: /app/appsettings.__ENVIRONMENT__.json, subPath: appsettings.__ENVIRONMENT__.json, readOnly: true }
           startupProbe:
             httpGet: { path: /health/startup, port: 8080 }
             periodSeconds: 3
@@ -199,6 +181,9 @@ spec:
           resources:
             requests: { cpu: 50m, memory: 128Mi }
             limits: { memory: 512Mi }
+      volumes:
+        - name: settings
+          secret: { secretName: settings-product-service }
 ---
 apiVersion: v1
 kind: Service
@@ -216,7 +201,9 @@ metadata:
   name: shipment-service
   labels: { app: shipment-service }
 spec:
-  replicas: 1
+  replicas: __REPLICAS__
+  strategy:
+    rollingUpdate: { maxUnavailable: 0, maxSurge: 1 }
   selector:
     matchLabels: { app: shipment-service }
   template:
@@ -231,22 +218,10 @@ spec:
           ports:
             - containerPort: 8080
           env:
-            - name: POSTGRES_PASSWORD
-              valueFrom: { secretKeyRef: { name: abc-secrets, key: POSTGRES_PASSWORD } }
-            - name: MONGO_PASSWORD
-              valueFrom: { secretKeyRef: { name: abc-secrets, key: MONGO_PASSWORD } }
-            - name: RABBITMQ_PASSWORD
-              valueFrom: { secretKeyRef: { name: abc-secrets, key: RABBITMQ_PASSWORD } }
             - name: ASPNETCORE_ENVIRONMENT
-              value: docker
-            - name: ConnectionStrings__Redis
-              value: redis:6379
-            - name: RabbitMq__Connection__Password
-              value: $(RABBITMQ_PASSWORD)
-            - name: ConnectionStrings__Mongo-ShipmentService
-              value: "mongodb://abc_app:$(MONGO_PASSWORD)@mongo:27017/Abc_Shipment_Dev?authSource=admin"
-            - name: ConnectionStrings__EfCore-ShipmentHistoryService
-              value: "Host=postgres;Port=5432;Database=Abc_ShipmentHistory_Dev;Username=abc_app;Password=$(POSTGRES_PASSWORD)"
+              value: __ENVIRONMENT__
+          volumeMounts:
+            - { name: settings, mountPath: /app/appsettings.__ENVIRONMENT__.json, subPath: appsettings.__ENVIRONMENT__.json, readOnly: true }
           startupProbe:
             httpGet: { path: /health/startup, port: 8080 }
             periodSeconds: 3
@@ -268,6 +243,9 @@ spec:
           resources:
             requests: { cpu: 50m, memory: 128Mi }
             limits: { memory: 512Mi }
+      volumes:
+        - name: settings
+          secret: { secretName: settings-shipment-service }
 ---
 apiVersion: v1
 kind: Service
@@ -285,7 +263,9 @@ metadata:
   name: order-service
   labels: { app: order-service }
 spec:
-  replicas: 1
+  replicas: __REPLICAS__
+  strategy:
+    rollingUpdate: { maxUnavailable: 0, maxSurge: 1 }
   selector:
     matchLabels: { app: order-service }
   template:
@@ -300,18 +280,10 @@ spec:
           ports:
             - containerPort: 8080
           env:
-            - name: POSTGRES_PASSWORD
-              valueFrom: { secretKeyRef: { name: abc-secrets, key: POSTGRES_PASSWORD } }
-            - name: RABBITMQ_PASSWORD
-              valueFrom: { secretKeyRef: { name: abc-secrets, key: RABBITMQ_PASSWORD } }
             - name: ASPNETCORE_ENVIRONMENT
-              value: docker
-            - name: ConnectionStrings__Redis
-              value: redis:6379
-            - name: RabbitMq__Connection__Password
-              value: $(RABBITMQ_PASSWORD)
-            - name: ConnectionStrings__EfCore-OrderService
-              value: "Host=postgres;Port=5432;Database=Abc_Order_Dev;Username=abc_app;Password=$(POSTGRES_PASSWORD)"
+              value: __ENVIRONMENT__
+          volumeMounts:
+            - { name: settings, mountPath: /app/appsettings.__ENVIRONMENT__.json, subPath: appsettings.__ENVIRONMENT__.json, readOnly: true }
           startupProbe:
             httpGet: { path: /health/startup, port: 8080 }
             periodSeconds: 3
@@ -333,6 +305,9 @@ spec:
           resources:
             requests: { cpu: 50m, memory: 128Mi }
             limits: { memory: 512Mi }
+      volumes:
+        - name: settings
+          secret: { secretName: settings-order-service }
 ---
 apiVersion: v1
 kind: Service
@@ -350,7 +325,9 @@ metadata:
   name: gateway-commercial
   labels: { app: gateway-commercial }
 spec:
-  replicas: 1
+  replicas: __REPLICAS__
+  strategy:
+    rollingUpdate: { maxUnavailable: 0, maxSurge: 1 }
   selector:
     matchLabels: { app: gateway-commercial }
   template:
@@ -366,9 +343,9 @@ spec:
             - containerPort: 8080
           env:
             - name: ASPNETCORE_ENVIRONMENT
-              value: docker
-            - name: ConnectionStrings__Redis
-              value: redis:6379
+              value: __ENVIRONMENT__
+          volumeMounts:
+            - { name: settings, mountPath: /app/appsettings.__ENVIRONMENT__.json, subPath: appsettings.__ENVIRONMENT__.json, readOnly: true }
           startupProbe:
             httpGet: { path: /health/startup, port: 8080 }
             periodSeconds: 3
@@ -390,6 +367,9 @@ spec:
           resources:
             requests: { cpu: 50m, memory: 128Mi }
             limits: { memory: 512Mi }
+      volumes:
+        - name: settings
+          secret: { secretName: settings-gateway-commercial }
 ---
 apiVersion: v1
 kind: Service
@@ -399,7 +379,7 @@ spec:
   type: LoadBalancer
   selector: { app: gateway-commercial }
   ports:
-    - port: 5500
+    - port: __PORT_GATEWAY_COMMERCIAL__
       targetPort: 8080
 ---
 apiVersion: apps/v1
@@ -408,7 +388,9 @@ metadata:
   name: gateway-public
   labels: { app: gateway-public }
 spec:
-  replicas: 1
+  replicas: __REPLICAS__
+  strategy:
+    rollingUpdate: { maxUnavailable: 0, maxSurge: 1 }
   selector:
     matchLabels: { app: gateway-public }
   template:
@@ -424,7 +406,9 @@ spec:
             - containerPort: 8080
           env:
             - name: ASPNETCORE_ENVIRONMENT
-              value: docker
+              value: __ENVIRONMENT__
+          volumeMounts:
+            - { name: settings, mountPath: /app/appsettings.__ENVIRONMENT__.json, subPath: appsettings.__ENVIRONMENT__.json, readOnly: true }
           startupProbe:
             httpGet: { path: /health/startup, port: 8080 }
             periodSeconds: 3
@@ -446,6 +430,9 @@ spec:
           resources:
             requests: { cpu: 50m, memory: 128Mi }
             limits: { memory: 512Mi }
+      volumes:
+        - name: settings
+          secret: { secretName: settings-gateway-public }
 ---
 apiVersion: v1
 kind: Service
@@ -455,5 +442,131 @@ spec:
   type: LoadBalancer
   selector: { app: gateway-public }
   ports:
-    - port: 5600
+    - port: __PORT_GATEWAY_PUBLIC__
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: commercial-web
+  labels: { app: commercial-web }
+spec:
+  replicas: __REPLICAS__
+  strategy:
+    rollingUpdate: { maxUnavailable: 0, maxSurge: 1 }
+  selector:
+    matchLabels: { app: commercial-web }
+  template:
+    metadata:
+      labels: { app: commercial-web }
+    spec:
+      terminationGracePeriodSeconds: 80
+      containers:
+        - name: host
+          image: abc/commercial-web:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: __ENVIRONMENT__
+          volumeMounts:
+            - { name: settings, mountPath: /app/appsettings.__ENVIRONMENT__.json, subPath: appsettings.__ENVIRONMENT__.json, readOnly: true }
+          startupProbe:
+            httpGet: { path: /health/startup, port: 8080 }
+            periodSeconds: 3
+            timeoutSeconds: 7
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: { path: /health/ready, port: 8080 }
+            periodSeconds: 5
+            timeoutSeconds: 7
+            failureThreshold: 2
+          livenessProbe:
+            httpGet: { path: /health/live, port: 8080 }
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          lifecycle:
+            preStop:
+              exec: { command: ["sleep", "5"] }
+          resources:
+            requests: { cpu: 50m, memory: 128Mi }
+            limits: { memory: 512Mi }
+      volumes:
+        - name: settings
+          secret: { secretName: settings-commercial-web }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: commercial-web
+spec:
+  type: LoadBalancer
+  selector: { app: commercial-web }
+  ports:
+    - port: __PORT_COMMERCIAL_WEB__
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: public-web
+  labels: { app: public-web }
+spec:
+  replicas: __REPLICAS__
+  strategy:
+    rollingUpdate: { maxUnavailable: 0, maxSurge: 1 }
+  selector:
+    matchLabels: { app: public-web }
+  template:
+    metadata:
+      labels: { app: public-web }
+    spec:
+      terminationGracePeriodSeconds: 80
+      containers:
+        - name: host
+          image: abc/public-web:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: __ENVIRONMENT__
+          volumeMounts:
+            - { name: settings, mountPath: /app/appsettings.__ENVIRONMENT__.json, subPath: appsettings.__ENVIRONMENT__.json, readOnly: true }
+          startupProbe:
+            httpGet: { path: /health/startup, port: 8080 }
+            periodSeconds: 3
+            timeoutSeconds: 7
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: { path: /health/ready, port: 8080 }
+            periodSeconds: 5
+            timeoutSeconds: 7
+            failureThreshold: 2
+          livenessProbe:
+            httpGet: { path: /health/live, port: 8080 }
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          lifecycle:
+            preStop:
+              exec: { command: ["sleep", "5"] }
+          resources:
+            requests: { cpu: 50m, memory: 128Mi }
+            limits: { memory: 512Mi }
+      volumes:
+        - name: settings
+          secret: { secretName: settings-public-web }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: public-web
+spec:
+  type: LoadBalancer
+  selector: { app: public-web }
+  ports:
+    - port: __PORT_PUBLIC_WEB__
       targetPort: 8080

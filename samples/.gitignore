@@ -4,3 +4,4 @@ edx/shared/Edx.Shared.Hosting/public_key.xml
 
 # the passwords of the compose file and the Kubernetes scripts (made by abc/deploy/make-env.sh)
 abc/deploy/.env
+abc/deploy/.rendered/

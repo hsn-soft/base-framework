@@ -1,0 +1,11 @@
+# The hosts of the Abc system: name (the image abc/<name>:dev, the service of the cluster and of the compose network) | folder under samples/abc | assembly | what it is
+# A line that starts with # is a comment. build-images.sh, render-settings.sh and the manifests use this list.
+identity-service|service/identity/Abc.IdentityService.Http.Host|Abc.IdentityService.Http.Host|service
+auth-server-service|app/Abc.AuthServer.Host|Abc.AuthServer.Host|auth
+product-service|service/product/Abc.ProductService.Http.Host|Abc.ProductService.Http.Host|service
+shipment-service|service/shipment/Abc.ShipmentService.Http.Host|Abc.ShipmentService.Http.Host|service
+order-service|service/order/Abc.OrderService.Http.Host|Abc.OrderService.Http.Host|service
+gateway-commercial|gateway/Abc.Gateway.Commercial.Host|Abc.Gateway.Commercial.Host|gateway
+gateway-public|gateway/Abc.Gateway.Public.Host|Abc.Gateway.Public.Host|gateway
+commercial-web|app/Abc.CommercialWeb.Host|Abc.CommercialWeb.Host|web
+public-web|app/Abc.PublicWeb.Host|Abc.PublicWeb.Host|web
