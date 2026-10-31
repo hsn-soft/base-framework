@@ -11,11 +11,14 @@ production) and nothing for the commands themselves. A developer wants the comma
 
 ## Decision
 
-- **`EntityFramework:LogCommands`** (default false) and **`Mongo:LogCommands`** (default false) say whether the commands that run are logged. For EF Core it sets the level of the category of the commands (Information when on, Warning when off); the rule is
-  more specific than the ones of `Logging:LogLevel`, so the setting is the word, and **a command that fails is an Error and is logged either way**. For MongoDB the framework logs one line per command from the events of the driver: the command, the database
+- **`EntityFramework:LogCommands`** (default false) and **`Mongo:LogCommands`** (default false) say whether the commands that run are logged. For EF Core, when it is off the context ignores the event of an executed command (`ConfigureWarnings(... Ignore(RelationalEventId.CommandExecuted))`), so EF Core does not raise it and no
+  provider of logs can show it, and **a command that fails is another event (an Error) and is logged either way**. For MongoDB the framework logs one line per command from the events of the driver: the command, the database
   and collection and how long it took (a failed one is a Warning with the error); the driver's own commands (the handshake, the heartbeat) are left out.
 - **What is in a command is never logged:** not the values of EF's parameters (sensitive-data logging stays off) and not the document of a MongoDB command. They are data.
 - A host without logging has no log of the Mongo commands (the option needs an `ILoggerFactory`).
+
+A first version set the level of the category with a logging filter. It held in a unit test and did **not** hold in a pod: the Serilog provider of the framework has a rule of its own that opens its level wide, and a rule of a
+provider beats a rule of a category. The event is therefore switched off where it is raised, and the test runs real commands with such a provider rule present.
 
 ## Consequences
 

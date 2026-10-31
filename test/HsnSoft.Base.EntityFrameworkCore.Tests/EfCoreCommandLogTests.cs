@@ -20,27 +20,29 @@ public sealed class EfCoreCommandLogTests
 
     private sealed class Memory : ILoggerProvider
     {
-        public List<LogLevel> Levels { get; } = [];
+        public List<(string Category, LogLevel Level)> Entries { get; } = [];
 
-        public ILogger CreateLogger(string categoryName) => new Logger(this);
+        public ILogger CreateLogger(string categoryName) => new Logger(this, categoryName);
 
         public void Dispose()
         {
         }
 
-        private sealed class Logger(Memory owner) : ILogger
+        private sealed class Logger(Memory owner, string category) : ILogger
         {
             public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
 
             public bool IsEnabled(LogLevel logLevel) => true;
 
-            public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) => owner.Levels.Add(logLevel);
+            public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) => owner.Entries.Add((category, logLevel));
         }
     }
 
-    private static List<LogLevel> Written(string? logCommands, string? configured = null)
+    // the commands that the context runs, as the log of a host with a provider that has a rule of its own sees them (the Serilog provider of the framework has one that opens its level wide, which a rule of a category does not beat)
+    private static async Task<List<(string Category, LogLevel Level)>> Written(string? logCommands, bool failing = false)
     {
-        Dictionary<string, string?> settings = new() { ["ConnectionStrings:EfCore-A"] = "Data Source=a.db" };
+        string file = Path.Combine(Path.GetTempPath(), $"efcommandlog-{Guid.NewGuid():N}.db");
+        Dictionary<string, string?> settings = new() { ["ConnectionStrings:EfCore-A"] = $"Data Source={file}" };
         if (logCommands is not null)
         {
             settings["EntityFramework:LogCommands"] = logCommands;
@@ -51,37 +53,49 @@ public sealed class EfCoreCommandLogTests
         ServiceCollection services = new();
         services.AddLogging(logging =>
         {
-            // what Logging:LogLevel:Microsoft.EntityFrameworkCore says, as the host reads it
-            if (configured is not null)
-            {
-                logging.AddFilter("Microsoft.EntityFrameworkCore", Enum.Parse<LogLevel>(configured));
-            }
-
+            logging.SetMinimumLevel(LogLevel.Trace);
             logging.AddProvider(memory);
+            logging.AddFilter<Memory>(null, LogLevel.Trace);
         });
         services.AddBaseEfCore<CommandContext>(configuration, providers => providers.Add(new Sqlite()), "sqlite", "EfCore-A");
-        using ServiceProvider provider = services.BuildServiceProvider();
+        await using ServiceProvider provider = services.BuildServiceProvider();
+        try
+        {
+            using IServiceScope scope = provider.CreateScope();
+            CommandContext context = scope.ServiceProvider.GetRequiredService<CommandContext>();
+            if (failing)
+            {
+                await Assert.ThrowsAnyAsync<Exception>(() => context.Database.ExecuteSqlRawAsync("select * from nowhere"));
+            }
+            else
+            {
+                await context.Database.ExecuteSqlRawAsync("create table t (id integer)");
+            }
+        }
+        finally
+        {
+            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+            File.Delete(file);
+        }
 
-        ILogger logger = provider.GetRequiredService<ILoggerFactory>().CreateLogger(Category);
-        logger.Log(LogLevel.Information, new EventId(1), "executed", null, (text, _) => text);
-        logger.Log(LogLevel.Error, new EventId(2), "failed", null, (text, _) => text);
-        return memory.Levels;
+        return memory.Entries;
     }
 
     [Fact]
-    public void TheCommandsThatRun_AreNotLoggedByDefault_ButAFailedOneIs()
-        => Assert.Equal([LogLevel.Error], Written(null));
+    public async Task TheCommandsThatRun_AreNotLoggedByDefault()
+        => Assert.DoesNotContain(await Written(null), entry => entry.Category == Category && entry.Level == LogLevel.Information);
 
     [Fact]
-    public void TheSetting_TurnsTheLogOfTheCommandsOn()
-        => Assert.Equal([LogLevel.Information, LogLevel.Error], Written("true"));
+    public async Task TheSetting_TurnsTheLogOfTheCommandsOn()
+        => Assert.Contains(await Written("true"), entry => entry.Category == Category && entry.Level == LogLevel.Information);
 
     [Fact]
-    public void TheSetting_IsTheWord_WhateverTheLogLevelsSay()
-    {
-        Assert.Equal([LogLevel.Error], Written("false", "Information"));
-        Assert.Equal([LogLevel.Information, LogLevel.Error], Written("true", "Warning"));
-    }
+    public async Task TheSettingFalse_IsTheSameAsNone()
+        => Assert.DoesNotContain(await Written("false"), entry => entry.Category == Category && entry.Level == LogLevel.Information);
+
+    [Fact]
+    public async Task ACommandThatFails_IsLoggedWhateverTheSettingSays()
+        => Assert.Contains(await Written(null, failing: true), entry => entry.Category == Category && entry.Level == LogLevel.Error);
 
     [Fact]
     public void TheOptions_DoNotLogCommandsByDefault() => Assert.False(new EfCoreOptions().LogCommands);

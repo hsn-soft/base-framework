@@ -21,7 +21,7 @@ public sealed class EfCoreOptions
 
     /// <summary>
     /// Whether the commands that run are logged (the log of EF Core of category <c>Microsoft.EntityFrameworkCore.Database.Command</c>, at Information: the text of the command and how long it took). Off by default: a busy service writes a line
-    /// for every query. A command that <b>fails</b> is logged whatever this says. The values of the parameters are never in the log (they are data).
+    /// for every query; when it is off EF Core does not raise the event at all, so it is off for every provider of logs. A command that <b>fails</b> is logged whatever this says. The values of the parameters are never in the log (they are data).
     /// </summary>
     public bool LogCommands { get; set; }
 
