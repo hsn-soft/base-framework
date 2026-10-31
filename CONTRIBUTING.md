@@ -1,7 +1,7 @@
 # Contributing
 
 Thank you for helping with the HsnSoft Base Framework. This page is the short version of how we work; the root
-[README](README.md) explains what the packages are.
+[README](README.md) says what the framework is, and [docs/Overview.md](docs/Overview.md) explains what the packages are.
 
 ## Ground rules
 
@@ -27,7 +27,7 @@ Thank you for helping with the HsnSoft Base Framework. This page is the short ve
    do not discover it on the pull request. See [scripts/ci-detector](scripts/ci-detector/README.md).
 3. Open the pull request against `dev`. The `.NETCore Build & Test` workflow must be green: build, unit tests, integration tests and
    the coverage gate.
-4. `rel/nuget` holds what is published to NuGet; pushing to it runs the deploy workflow. Do not open pull requests against it.
+4. `rel/nuget-candidate` (from `dev` only) and `rel/nuget-regular` (from `rel/nuget-candidate` only) are what is published to NuGet, a pre-release and a stable version; a merge into them runs the deploy workflow. Into `dev` only from `feat/*`, `hotfix/*` and `bugfix/*`. See [Releasing](docs/Releasing.md).
 
 Commit messages follow the Conventional Commits style used in the history: `feat:`, `fix:`, `refactor:`, `test:`, `ci:`, `style:`,
 `docs:`, with a short subject in the imperative.
@@ -100,7 +100,7 @@ Rules to know:
    (package id, description, tags, README).
 2. Add `test/HsnSoft.Base.<Name>.Tests/` (imports `common.test.props`; it can see the package's internals). Package versions are never written in a project file: use `$(MicrosoftAspNetCorePackageVersion)` / `$(MicrosoftEntityFrameworkCorePackageVersion)` (`common.versions.props`, [ADR-0105](docs/adr/0105-shared-package-versions-in-one-file-and-a-common-test-host.md)).
 3. For a provider (a broker, a database, a store), add integration tests to `test/HsnSoft.Base.IntegrationTests`.
-4. Add both to the solution and add a row to the package table in the root README.
+4. Add both to the solution and add a row to the package table in [docs/Overview.md](docs/Overview.md).
 
 ## Trying a change in another service
 
