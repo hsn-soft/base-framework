@@ -33,6 +33,9 @@ A review of the infrastructure packages for what happens in production (many pod
 - **Serilog: the sink that was replaced a moment ago is flushed when the application stops.** The Graylog sink is rebuilt every few minutes (a broken one would otherwise stay broken), and the old one lives on for ten seconds so what it is still sending is not lost; but the timer that disposes it does not live
   to fire when the application ends in those ten seconds, and the sink sends its batch only when it is disposed, so that batch was lost. Disposing the sink now disposes the ones that are waiting too, and a refresh after that builds nothing.
 
+- **NLog: the connection to Graylog is made again every two minutes and a Graylog that is not there is found in three seconds; the queue is bounded on purpose.** The target made its `HttpClient` with the defaults, which keep a connection for ever (a Graylog that moved was written to at the old address until the
+  connection broke) and wait ten seconds for a connection to a Graylog that is down, which every log waits for before the next. The queue of logs that wait is 10 000 and drops the logs that do not fit (it did so already, by default, without saying it): a Graylog that is down for an hour costs logs, never the memory of the pods.
+
 ## Consequences
 
 - The connections to Redis of a system are halved (the test counts them on a real Redis: two for a host).
