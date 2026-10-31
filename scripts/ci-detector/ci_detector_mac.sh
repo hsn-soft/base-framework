@@ -139,8 +139,10 @@ gate() { python3 scripts/ci-detector/ci-check-coverage.py "$THRESHOLD" $(reports
 info "## STAGES ----------------------------------------------------------------------"
 # the rules of the repository need no restore (they read files), so they come first, as in the CI: a broken rule stops before the packages are fetched
 stage test-projects "Every package has a test project" ./scripts/ci-detector/ci-check-test-project-exist.sh
+stage referenced-files "Scripts of the workflows are in git" ./scripts/ci-detector/ci-check-referenced-files.sh
 stage csproj-order "Project file reference order" python3 scripts/ci-detector/ci-force-csproj-order.py
 stage framework-references "Framework project references" python3 scripts/ci-detector/ci-force-framework-references-rules.py
+stage release-scripts "Release scripts (their tests)" python3 -m unittest discover -s scripts/versioning -p "test_*.py"
 
 stage restore "Restore" dotnet restore HsnSoft.Base.sln --verbosity minimal && RESTORED=true || RESTORED=false
 if [ "$RESTORED" = true ]; then

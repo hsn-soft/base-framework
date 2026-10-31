@@ -126,3 +126,4 @@ builder.Services
 | `Jwt` (`Issuer`, `Audience`, `Key`) | `AddBaseJwtAuthentication` |
 | `EventBusOptions` (retries, naming, timeouts), see [docs/EventBus.md](docs/EventBus.md) | `AddRabbitMqEventBus` |
 
+
