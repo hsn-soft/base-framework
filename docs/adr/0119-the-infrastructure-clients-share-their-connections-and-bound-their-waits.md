@@ -30,6 +30,9 @@ A review of the infrastructure packages for what happens in production (many pod
 - **The Swagger gateway keeps one document for each service, not one for each address.** The cache key held the address of the gateway, which is the `Host` header of the request when `SwaggerGateway:PublicOrigin` is not set: a client that sends a new `Host` every time made a new entry (a whole document)
   every time. What is kept is the document the service gave, under the key of the service; the address and the paths are put in for each request.
 
+- **Serilog: the sink that was replaced a moment ago is flushed when the application stops.** The Graylog sink is rebuilt every few minutes (a broken one would otherwise stay broken), and the old one lives on for ten seconds so what it is still sending is not lost; but the timer that disposes it does not live
+  to fire when the application ends in those ten seconds, and the sink sends its batch only when it is disposed, so that batch was lost. Disposing the sink now disposes the ones that are waiting too, and a refresh after that builds nothing.
+
 ## Consequences
 
 - The connections to Redis of a system are halved (the test counts them on a real Redis: two for a host).
