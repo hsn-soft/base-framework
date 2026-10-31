@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using HsnSoft.Base.Hosting;
 using Microsoft.Extensions.Caching.StackExchangeRedis;
 using Microsoft.Extensions.Configuration;
@@ -12,7 +13,7 @@ namespace HsnSoft.Base.Caching.StackExchangeRedis;
 public static class RedisServiceCollectionExtensions
 {
     /// <summary>
-    /// Registers <c>IDistributedCache</c>, the raw <see cref="IConnectionMultiplexer"/> and a readiness health check.
+    /// Registers <c>IDistributedCache</c>, the raw <see cref="IConnectionMultiplexer"/> (the cache works on it: one connection of the service) and a readiness health check.
     /// </summary>
     /// <param name="services">The service collection.</param>
     /// <param name="configuration">Holds <c>ConnectionStrings:{connectionName}</c> and the optional <c>Redis</c> section (<see cref="RedisOptions"/>).</param>
@@ -28,10 +29,14 @@ public static class RedisServiceCollectionExtensions
         services.Configure<RedisOptions>(configuration.GetSection("Redis"));
 
         services.AddStackExchangeRedisCache(_ => { });
-        services.AddOptions<RedisCacheOptions>().Configure<IOptions<RedisOptions>>((cache, redis) =>
+        services.AddOptions<RedisCacheOptions>().Configure<IOptions<RedisOptions>, IServiceProvider>((cache, redis, provider) =>
         {
             cache.Configuration = connectionString;
             cache.InstanceName = redis.Value.InstanceName;
+
+            // the cache works on the connection of the service: one multiplexer, which is two connections to Redis, not two multiplexers (four connections in every pod), and the readiness check looks at the connection the
+            // cache uses (two would have two states). The cache closes it when it is disposed, which the container does at the end, with the rest of the singletons: nothing uses Redis after that
+            cache.ConnectionMultiplexerFactory = () => Task.FromResult(provider.GetRequiredService<IConnectionMultiplexer>());
         });
 
         services.TryAddSingleton<IConnectionMultiplexer>(_ =>
