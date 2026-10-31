@@ -28,6 +28,7 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
+| [0122](0122-a-service-has-its-own-audiences-and-chooses-authentication-and-authorization.md) | A service has its own audience, the token has a list, the issuer is checked outside Development, and authentication and authorization are choices | Accepted | 2026-10-31 |
 | [0121](0121-a-process-knows-who-it-is-and-the-thread-pool-minimum-is-a-setting.md) | A process knows who it is (`AppInfo`, `GET /`), the minimum of the thread pool is a setting, and the handlers of the event bus have a limit | Accepted | 2026-10-31 |
 | [0120](0120-the-host-takes-its-settings-from-one-section-and-starts-safely.md) | The host takes its limits and proxies from one section, reads a `.env` file, and starts safely | Accepted | 2026-10-31 |
 | [0119](0119-the-infrastructure-clients-share-their-connections-and-bound-their-waits.md) | The infrastructure clients share their connections, bound their waits and retry only what is safe to retry | Accepted | 2026-10-31 |

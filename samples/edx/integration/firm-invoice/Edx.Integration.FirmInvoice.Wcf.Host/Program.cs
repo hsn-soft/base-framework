@@ -2,8 +2,10 @@ using Edx.Integration.FirmInvoice.Application;
 using Edx.Integration.FirmInvoice.Application.Storage;
 using Edx.Integration.FirmInvoice.MongoDB;
 using Edx.Integration.FirmInvoice.Wcf.Host;
+using Edx.Shared.Hosting;
 using Edx.Shared.Hosting.Microservices;
 using HsnSoft.Base.AspNetCore;
+using HsnSoft.Base.Authentication;
 using HsnSoft.Base.BlobStoring.Minio;
 using HsnSoft.Base.Caching.StackExchangeRedis;
 using HsnSoft.Base.EventBus;
@@ -26,6 +28,8 @@ builder.WebHost.ConfigureKestrel(options =>
 builder.Services
     .AddBaseRedis(builder.Configuration)
     .AddEdxMicroservice(builder.Configuration, "Edx.Integration.FirmInvoice WCF")
+    .AddEdxAuthentication(builder.Configuration)
+    .AddEdxAuthorization()
     .AddEdxEventBus(builder.Configuration)
     .AddBaseTenantClaims()
     .AddEdxPermissions(builder.Configuration)
@@ -39,5 +43,7 @@ builder.Services
 return await builder.RunBaseAsync(app =>
 {
     app.UseEdxMicroservice();
+    app.UseBaseAuthentication();
+    app.UseBaseAuthorization();
     app.UseFirmInvoiceWcf();
 });

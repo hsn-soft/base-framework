@@ -2,8 +2,10 @@ using Edx.Integration.FirmInvoice.Application;
 using Edx.Integration.FirmInvoice.Application.Storage;
 using Edx.Integration.FirmInvoice.Http.Host.EventHandlers;
 using Edx.Integration.FirmInvoice.MongoDB;
+using Edx.Shared.Hosting;
 using Edx.Shared.Hosting.Microservices;
 using HsnSoft.Base.AspNetCore;
+using HsnSoft.Base.Authentication;
 using HsnSoft.Base.BlobStoring.Minio;
 using HsnSoft.Base.Caching.StackExchangeRedis;
 using HsnSoft.Base.EventBus;
@@ -25,6 +27,8 @@ builder.Services.Configure<FormOptions>(options => options.MultipartBodyLengthLi
 builder.Services
     .AddBaseRedis(builder.Configuration)
     .AddEdxMicroservice(builder.Configuration, "Edx.Integration.FirmInvoice API")
+    .AddEdxAuthentication(builder.Configuration)
+    .AddEdxAuthorization()
     .AddEdxEventBus(builder.Configuration)
     // this service has tenants: the tenant of a request is the one of its token, and it travels with the messages it publishes
     .AddBaseTenantClaims()
@@ -42,5 +46,7 @@ builder.Services
 return await builder.RunBaseAsync(app =>
 {
     app.UseEdxMicroservice();
+    app.UseBaseAuthentication();
+    app.UseBaseAuthorization();
     app.MapControllers();
 });

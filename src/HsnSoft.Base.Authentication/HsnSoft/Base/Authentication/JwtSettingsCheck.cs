@@ -31,6 +31,11 @@ internal static class JwtSettingsCheck
             problems.Add("Jwt:Audience is empty: no token would be accepted");
         }
 
+        if (settings.ClockSkewSeconds is < 0 or > 300)
+        {
+            problems.Add($"Jwt:ClockSkewSeconds is {settings.ClockSkewSeconds}: it must be between 0 and 300");
+        }
+
         if (!string.IsNullOrWhiteSpace(settings.PublicKeyFile))
         {
             using RSA rsa = RsaKeys.LoadPublic(settings.PublicKeyFile);

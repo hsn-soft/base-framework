@@ -2,8 +2,10 @@ using Edx.Integration.FirmInvoice.Application;
 using Edx.Integration.FirmInvoice.Application.Storage;
 using Edx.Integration.FirmInvoice.Grpc.Host;
 using Edx.Integration.FirmInvoice.MongoDB;
+using Edx.Shared.Hosting;
 using Edx.Shared.Hosting.Microservices;
 using HsnSoft.Base.AspNetCore;
+using HsnSoft.Base.Authentication;
 using HsnSoft.Base.BlobStoring.Minio;
 using HsnSoft.Base.Caching.StackExchangeRedis;
 using HsnSoft.Base.EventBus;
@@ -22,6 +24,8 @@ builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = 
 builder.Services
     .AddBaseRedis(builder.Configuration)
     .AddEdxMicroservice(builder.Configuration, "Edx.Integration.FirmInvoice gRPC")
+    .AddEdxAuthentication(builder.Configuration)
+    .AddEdxAuthorization()
     .AddEdxEventBus(builder.Configuration)
     .AddBaseTenantClaims()
     .AddEdxPermissions(builder.Configuration)
@@ -35,5 +39,7 @@ builder.Services
 return await builder.RunBaseAsync(app =>
 {
     app.UseEdxMicroservice();
+    app.UseBaseAuthentication();
+    app.UseBaseAuthorization();
     app.MapFirmInvoiceGrpc();
 });

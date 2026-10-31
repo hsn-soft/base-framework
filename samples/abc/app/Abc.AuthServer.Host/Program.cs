@@ -2,9 +2,11 @@ using Abc.AuthServer.Host.Security;
 using Abc.AuthServer.Host.Services;
 using Abc.IdentityService.EntityFrameworkCore;
 using Abc.Shared.Helper;
+using Abc.Shared.Hosting;
 using Abc.Shared.Hosting.Microservices;
 using Abc.Shared.Localization;
 using HsnSoft.Base.AspNetCore;
+using HsnSoft.Base.Authentication;
 using HsnSoft.Base.Caching.StackExchangeRedis;
 using HsnSoft.Base.Localization;
 using HsnSoft.Base.Logging.Serilog;
@@ -18,6 +20,8 @@ builder.Services
     .AddBaseLocalization(builder.Configuration, options => options.AddAbcSharedTexts())
     .AddBaseRedis(builder.Configuration)
     .AddAbcMicroservice(builder.Configuration, "Abc.AuthServer API")
+    .AddAbcAuthentication(builder.Configuration)
+    .AddAbcAuthorization()
     .AddIdentityPersistence(builder.Configuration, AbcTenants.System, AbcTenants.Acme)
     .AddIdentityHistoryPersistence(builder.Configuration)
     .AddScoped<UserAuthenticator>()
@@ -30,6 +34,8 @@ return await builder.RunBaseAsync(app =>
     _ = app.Services.GetRequiredService<TokenService>();
 
     app.UseAbcMicroservice();
+    app.UseBaseAuthentication();
+    app.UseBaseAuthorization();
     app.UseBaseLocalization();   // after the caller is known (the hosting reads the token): the language is the one of the token, else of the header
     app.MapControllers();
 });

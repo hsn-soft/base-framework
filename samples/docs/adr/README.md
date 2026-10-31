@@ -7,6 +7,7 @@ New ADR: copy the framework's [`0000-template.md`](../../../docs/adr/0000-templa
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
+| [0053](0053-each-service-has-its-own-audience-and-the-program-says-how-it-authenticates.md) | Each service has its own audience, and `Program.cs` says how it authenticates and authorizes | Accepted | 2026-10-31 |
 | [0052](0052-the-hosts-start-with-add-base-hosting-and-run-base-async.md) | The hosts of both samples start with `AddBaseHosting`, end with `RunBaseAsync`, and write their limits in their settings | Accepted | 2026-10-31 |
 | [0051](0051-the-http-host-of-a-service-owns-its-databases.md) | The REST host of a service owns its databases (`SeedStartupConnections`); the other hosts own none | Accepted | 2026-10-31 |
 | [0050](0050-edx-has-the-same-environments-with-a-broker-bucket-and-build-for-each.md) | Edx has the same environments, with a Kafka broker, MinIO buckets and an Angular build for each | Accepted | 2026-10-31 |

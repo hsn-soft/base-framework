@@ -4,9 +4,11 @@ using Abc.OrderService.EntityFrameworkCore;
 using Abc.OrderService.EntityFrameworkCore.Context;
 using Abc.OrderService.Http.Host.EventHandlers;
 using Abc.Shared.Contracts.Events.Product;
+using Abc.Shared.Hosting;
 using Abc.Shared.Hosting.Microservices;
 using Abc.Shared.Localization;
 using HsnSoft.Base.AspNetCore;
+using HsnSoft.Base.Authentication;
 using HsnSoft.Base.Caching.StackExchangeRedis;
 using HsnSoft.Base.EventBus;
 using HsnSoft.Base.EventBus.EntityFrameworkCore;
@@ -24,6 +26,8 @@ builder.Services
     .AddBaseLocalization(builder.Configuration, options => options.AddAbcSharedTexts().AddEmbedded(typeof(Order).Assembly))
     .AddBaseRedis(builder.Configuration)
     .AddAbcMicroservice(builder.Configuration, "Abc.OrderService API")
+    .AddAbcAuthentication(builder.Configuration)
+    .AddAbcAuthorization()
     .AddAbcEventBus(builder.Configuration)
     // this service has tenants: the tenant of a request is the one of its token, and it travels with the messages
     .AddBaseTenantClaims()
@@ -38,6 +42,8 @@ builder.Services
 return await builder.RunBaseAsync(app =>
 {
     app.UseAbcMicroservice();
+    app.UseBaseAuthentication();
+    app.UseBaseAuthorization();
     app.UseBaseLocalization();   // after the caller is known (the hosting reads the token): the language is the one of the token, else of the header
     app.MapControllers();
 });

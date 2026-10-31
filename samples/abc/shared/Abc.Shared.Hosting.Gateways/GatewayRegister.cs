@@ -16,11 +16,7 @@ public static class GatewayRegister
     /// <param name="services">The service collection.</param>
     /// <param name="configuration">Holds <c>ReverseProxyRoutes</c>, <c>ServiceEndpoints</c>, <c>SwaggerGateway</c>, <c>RequestLogging</c> (<c>Role</c> = <c>Gateway</c>) and, when users are authenticated, <c>Jwt</c>.</param>
     /// <param name="title">The title of the gateway's Swagger document.</param>
-    /// <param name="authenticateUsers">
-    /// Whether the gateway reads the bearer token, so its own logs know the user (the commercial gateway). It does not reject anyone: the services decide who may
-    /// call what, as every endpoint of a service needs a token unless it says otherwise.
-    /// </param>
-    public static IServiceCollection AddAbcGateway(this IServiceCollection services, IConfiguration configuration, string title, bool authenticateUsers)
+    public static IServiceCollection AddAbcGateway(this IServiceCollection services, IConfiguration configuration, string title)
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(configuration);
@@ -30,7 +26,7 @@ public static class GatewayRegister
         (IReadOnlyList<RouteConfig> proxyRoutes, IReadOnlyList<ClusterConfig> proxyClusters) = ReverseProxyConfigBuilder.Build(routes, endpoints);
 
         services
-            .AddAbcHosting(configuration, title, swaggerName: "gateway", authenticateUsers: authenticateUsers)
+            .AddAbcHosting(configuration, title, swaggerName: "gateway")
             .AddBaseSwaggerGateway(configuration)   // the documents of the services, with the gateway's paths
             .Configure<GatewayPolicyOptions>(configuration.GetSection(GatewayPolicyOptions.SectionName));
         services.AddOptions<ForwardedHeadersOptions>().Configure<IOptions<GatewayPolicyOptions>>((forwarded, policy) =>
@@ -64,12 +60,12 @@ public static class GatewayRegister
         });
     }
 
-    public static WebApplication UseAbcGateway(this WebApplication app, bool authenticateUsers)
+    public static WebApplication UseAbcGateway(this WebApplication app)
     {
         ArgumentNullException.ThrowIfNull(app);
 
         // the first middleware of the hosting believes the proxies of Hosting:ForwardedHeaders and of GatewayPolicies:TrustedProxyIps
-        app.UseAbcHosting(authenticateUsers);
+        app.UseAbcHosting();
         app.MapReverseProxy();
         return app;
     }

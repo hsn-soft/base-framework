@@ -1,8 +1,10 @@
 using Edx.IdentityService.Application;
 using Edx.IdentityService.EntityFrameworkCore;
 using Edx.IdentityService.Http.Host;
+using Edx.Shared.Hosting;
 using Edx.Shared.Hosting.Microservices;
 using HsnSoft.Base.AspNetCore;
+using HsnSoft.Base.Authentication;
 using HsnSoft.Base.Caching.StackExchangeRedis;
 using HsnSoft.Base.Logging.Serilog;
 using HsnSoft.Base.MultiTenancy;
@@ -15,6 +17,8 @@ builder.Logging.AddBaseSerilog(builder.Configuration, "Edx.IdentityService");
 builder.Services
     .AddBaseRedis(builder.Configuration)
     .AddEdxMicroservice(builder.Configuration, "Edx.IdentityService API")
+    .AddEdxAuthentication(builder.Configuration)
+    .AddEdxAuthorization()
     // this service has tenants: the tenant of a request is the one of its token
     .AddBaseTenantClaims()
     .AddEdxPermissions(builder.Configuration)
@@ -27,5 +31,7 @@ builder.Services
 return await builder.RunBaseAsync(app =>
 {
     app.UseEdxMicroservice();
+    app.UseBaseAuthentication();
+    app.UseBaseAuthorization();
     app.MapControllers();
 });

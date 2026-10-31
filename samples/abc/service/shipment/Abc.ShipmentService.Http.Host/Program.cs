@@ -1,3 +1,4 @@
+using Abc.Shared.Hosting;
 using Abc.Shared.Hosting.Microservices;
 using Abc.Shared.Localization;
 using Abc.ShipmentService.Application;
@@ -6,6 +7,7 @@ using Abc.ShipmentService.EntityFrameworkCore;
 using Abc.ShipmentService.Http.Host.EventHandlers;
 using Abc.ShipmentService.MongoDB;
 using HsnSoft.Base.AspNetCore;
+using HsnSoft.Base.Authentication;
 using HsnSoft.Base.Caching.StackExchangeRedis;
 using HsnSoft.Base.EventBus;
 using HsnSoft.Base.Localization;
@@ -21,6 +23,8 @@ builder.Services
     .AddBaseLocalization(builder.Configuration, options => options.AddAbcSharedTexts().AddEmbedded(typeof(Shipment).Assembly))
     .AddBaseRedis(builder.Configuration)
     .AddAbcMicroservice(builder.Configuration, "Abc.ShipmentService API")
+    .AddAbcAuthentication(builder.Configuration)
+    .AddAbcAuthorization()
     .AddAbcEventBus(builder.Configuration)
     .AddEventHandlers(typeof(EventHandlersAssemblyMarker).Assembly)
     .AddShipmentPersistence(builder.Configuration)
@@ -31,6 +35,8 @@ builder.Services
 return await builder.RunBaseAsync(app =>
 {
     app.UseAbcMicroservice();
+    app.UseBaseAuthentication();
+    app.UseBaseAuthorization();
     app.UseBaseLocalization();   // after the caller is known (the hosting reads the token): the language is the one of the token, else of the header
     app.MapControllers();
 });

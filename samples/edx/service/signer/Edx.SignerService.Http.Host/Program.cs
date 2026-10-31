@@ -1,7 +1,9 @@
+using Edx.Shared.Hosting;
 using Edx.Shared.Hosting.Microservices;
 using Edx.SignerService.Http.Host.EventHandlers;
 using Edx.SignerService.Http.Host.Signing;
 using HsnSoft.Base.AspNetCore;
+using HsnSoft.Base.Authentication;
 using HsnSoft.Base.BlobStoring.Minio;
 using HsnSoft.Base.EventBus;
 using HsnSoft.Base.Logging.Serilog;
@@ -13,6 +15,8 @@ builder.Logging.AddBaseSerilog(builder.Configuration, "Edx.SignerService");
 // what every Edx microservice has (logging, the web api shell, JWT, Swagger, health, Kafka), then what this service has: no database, no Redis (it has no endpoint that needs a permission), the store of the files and the tenant of the messages
 builder.Services
     .AddEdxMicroservice(builder.Configuration, "Edx.SignerService API")
+    .AddEdxAuthentication(builder.Configuration)
+    .AddEdxAuthorization()
     .AddEdxEventBus(builder.Configuration)
     .AddBaseTenantEventBus()
     .AddEventHandlers(typeof(EventHandlersAssemblyMarker).Assembly)
@@ -26,5 +30,7 @@ builder.Services
 return await builder.RunBaseAsync(app =>
 {
     app.UseEdxMicroservice();
+    app.UseBaseAuthentication();
+    app.UseBaseAuthorization();
     app.MapControllers();
 });

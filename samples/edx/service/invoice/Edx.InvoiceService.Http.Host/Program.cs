@@ -1,8 +1,10 @@
 using Edx.InvoiceService.Application;
 using Edx.InvoiceService.Http.Host.EventHandlers;
 using Edx.InvoiceService.MongoDB;
+using Edx.Shared.Hosting;
 using Edx.Shared.Hosting.Microservices;
 using HsnSoft.Base.AspNetCore;
+using HsnSoft.Base.Authentication;
 using HsnSoft.Base.BlobStoring.Minio;
 using HsnSoft.Base.Caching.StackExchangeRedis;
 using HsnSoft.Base.EventBus;
@@ -18,6 +20,8 @@ builder.Logging.AddBaseSerilog(builder.Configuration, "Edx.InvoiceService");
 builder.Services
     .AddBaseRedis(builder.Configuration)
     .AddEdxMicroservice(builder.Configuration, "Edx.InvoiceService API")
+    .AddEdxAuthentication(builder.Configuration)
+    .AddEdxAuthorization()
     .AddEdxEventBus(builder.Configuration)
     // this service has tenants: the tenant of a request is the one of its token, and it travels with the messages
     .AddBaseTenantClaims()
@@ -35,5 +39,7 @@ builder.Services
 return await builder.RunBaseAsync(app =>
 {
     app.UseEdxMicroservice();
+    app.UseBaseAuthentication();
+    app.UseBaseAuthorization();
     app.MapControllers();
 });

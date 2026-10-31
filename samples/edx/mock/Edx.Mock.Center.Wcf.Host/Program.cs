@@ -24,7 +24,7 @@ builder.WebHost.ConfigureKestrel(options =>
 
 // the shell every Edx host has, without a token: the center is open, as the one of GİB is to the integrators that know its address
 builder.Services
-    .AddEdxHosting(builder.Configuration, "Edx.Mock.Center", authenticateUsers: false)
+    .AddEdxHosting(builder.Configuration, "Edx.Mock.Center")
     .Configure<CenterOptions>(builder.Configuration.GetSection(CenterOptions.SectionName))
     .AddCenterPersistence(builder.Configuration)
     .AddMinioBlobStoring(builder.Configuration)
@@ -49,7 +49,7 @@ return await builder.RunBaseAsync(async app =>
 {
     await app.Services.SeedParticipantsAsync();
 
-    app.UseEdxHosting(authenticateUsers: false);
+    app.UseEdxHosting();
     app.MapControllers();
     app.UseServiceModel(services => services
         .AddService<CenterService>()
