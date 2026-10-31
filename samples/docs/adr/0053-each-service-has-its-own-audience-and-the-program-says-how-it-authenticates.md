@@ -6,7 +6,7 @@
 ## Decision
 
 - Every host that checks tokens has its own `Jwt:Audience` (one string; the `aud` of the token is the list): `abc-order`, `abc-product`, `abc-shipment`, `abc-identity`, `abc-gateway` (Edx: `edx-signer`, `edx-identity`, `edx-invoice`, `edx-integration-gib-invoice`,
-  `edx-integration-firm-invoice`, `edx-gateway`); the auth server accepts `abc-auth`/`edx-auth` and **issues** every audience of its system (`Jwt:IssuedAudiences`). `TokenService.Issue(user, audiences)` can be told fewer.
+  `edx-integration-firm-invoice`, `edx-gateway`); the auth server accepts `abc-auth`/`edx-auth` and **issues** every audience of its system, its own included (a token must be good for its endpoints too) (`Jwt:IssuedAudiences`). `TokenService.Issue(user, audiences)` can be told fewer.
 - `Program.cs` of a host says what it has: `AddAbcAuthentication` and `AddAbcAuthorization` (`AddEdx…`) with the matching `UseBaseAuthentication` and `UseBaseAuthorization`. The commercial gateways only authenticate (the
   user is in their logs; the services decide who may do what); the public gateway and the hosts open to their callers (the WCF host of the mock and of the GIB integration) have neither. The Edx services that grant by permission add
   `AddEdxPermissions` as before.
