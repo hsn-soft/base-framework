@@ -210,3 +210,113 @@ public sealed class EfCoreStartupTests : IDisposable
         await Assert.ThrowsAsync<ArgumentNullException>(() => services.RunScopedContextStepAsync<StartupContext>("x", null!));
     }
 }
+
+public sealed class EfCoreTransactionTests : IDisposable
+{
+    private sealed class Entry
+    {
+        public int Id { get; set; }
+
+        public string Text { get; set; } = string.Empty;
+    }
+
+    private sealed class EntryContext(DbContextOptions<EntryContext> options) : DbContext(options)
+    {
+        public DbSet<Entry> Entries => Set<Entry>();
+    }
+
+    private readonly string _file = Path.Combine(Path.GetTempPath(), $"transactions-{Guid.NewGuid():N}.db");
+
+    public void Dispose()
+    {
+        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+        File.Delete(_file);
+    }
+
+    private async Task<(ServiceProvider Services, EntryContext Context)> BuildAsync()
+    {
+        ServiceProvider services = new ServiceCollection().AddLogging().AddDbContext<EntryContext>(options => options.UseSqlite($"Data Source={_file}")).BuildServiceProvider();
+        EntryContext context = services.CreateScope().ServiceProvider.GetRequiredService<EntryContext>();
+        await context.Database.EnsureCreatedAsync();
+        return (services, context);
+    }
+
+    [Fact]
+    public async Task TheWork_IsCommittedAsOne_AndItsResultIsReturned()
+    {
+        (ServiceProvider services, EntryContext context) = await BuildAsync();
+        await using (services)
+        {
+            int result = await context.ExecuteInTransactionAsync(async cancellationToken =>
+            {
+                context.Entries.Add(new Entry { Text = "one" });
+                await context.SaveChangesAsync(cancellationToken);
+                context.Entries.Add(new Entry { Text = "two" });
+                await context.SaveChangesAsync(cancellationToken);
+                return 42;
+            });
+
+            Assert.Equal(42, result);
+            await using AsyncServiceScope scope = services.CreateAsyncScope();
+            Assert.Equal(2, await scope.ServiceProvider.GetRequiredService<EntryContext>().Entries.CountAsync());
+        }
+    }
+
+    [Fact]
+    public async Task WhenTheWorkThrows_NothingOfItIsKept_AndTheExceptionIsTheWorks()
+    {
+        (ServiceProvider services, EntryContext context) = await BuildAsync();
+        await using (services)
+        {
+            await Assert.ThrowsAsync<InvalidOperationException>(() => context.ExecuteInTransactionAsync(async cancellationToken =>
+            {
+                context.Entries.Add(new Entry { Text = "lost" });
+                await context.SaveChangesAsync(cancellationToken);
+                throw new InvalidOperationException("after the first save");
+            }));
+
+            await using AsyncServiceScope scope = services.CreateAsyncScope();
+            Assert.Equal(0, await scope.ServiceProvider.GetRequiredService<EntryContext>().Entries.CountAsync());
+        }
+    }
+
+    [Fact]
+    public async Task AUnitOfWorkThatReturnsNothing_IsTheSame()
+    {
+        (ServiceProvider services, EntryContext context) = await BuildAsync();
+        await using (services)
+        {
+            await context.ExecuteInTransactionAsync(async cancellationToken =>
+            {
+                context.Entries.Add(new Entry { Text = "one" });
+                await context.SaveChangesAsync(cancellationToken);
+            });
+
+            await using AsyncServiceScope scope = services.CreateAsyncScope();
+            Assert.Equal(1, await scope.ServiceProvider.GetRequiredService<EntryContext>().Entries.CountAsync());
+        }
+    }
+
+    [Fact]
+    public async Task NullArguments_AreRejected()
+    {
+        (ServiceProvider services, EntryContext context) = await BuildAsync();
+        await using (services)
+        {
+            await Assert.ThrowsAsync<ArgumentNullException>(() => DbContextExtensions.ExecuteInTransactionAsync<int>(null!, _ => Task.FromResult(1)));
+            await Assert.ThrowsAsync<ArgumentNullException>(() => context.ExecuteInTransactionAsync<int>(null!));
+            await Assert.ThrowsAsync<ArgumentNullException>(() => context.ExecuteInTransactionAsync((Func<CancellationToken, Task>)null!));
+        }
+    }
+
+    [Fact]
+    public void TheOptions_AreBoundedByDefault()
+    {
+        EfCoreOptions options = new();
+
+        Assert.Equal(3, options.MaxRetryCount);
+        Assert.Equal(TimeSpan.FromSeconds(5), options.MaxRetryDelay);
+        Assert.Equal(30, options.CommandTimeoutSeconds);
+        Assert.Equal(2, new EfCoreOptions { CommandTimeout = TimeSpan.FromMilliseconds(1500) }.CommandTimeoutSeconds);
+    }
+}

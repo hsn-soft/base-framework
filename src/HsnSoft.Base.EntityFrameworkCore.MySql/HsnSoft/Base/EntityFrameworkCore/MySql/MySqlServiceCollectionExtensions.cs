@@ -33,8 +33,17 @@ public static class MySqlServiceCollectionExtensions
 
         public string Name => EfCoreProviderNames.MySql;
 
-        public void Configure(DbContextOptionsBuilder options, string connectionString)
-            => options.UseMySQL(connectionString, mysql => mysql.EnableRetryOnFailure());
+        public void Configure(DbContextOptionsBuilder options, string connectionString) => Configure(options, connectionString, new EfCoreOptions());
+
+        public void Configure(DbContextOptionsBuilder options, string connectionString, EfCoreOptions tuning)
+            => options.UseMySQL(connectionString, mysql =>
+            {
+                mysql.CommandTimeout(tuning.CommandTimeoutSeconds);
+                if (tuning.MaxRetryCount > 0)
+                {
+                    mysql.EnableRetryOnFailure(tuning.MaxRetryCount, tuning.MaxRetryDelay, null);
+                }
+            });
 
         public IStartupLock CreateStartupLock(string connectionString) => new MySqlStartupLock(connectionString);
     }

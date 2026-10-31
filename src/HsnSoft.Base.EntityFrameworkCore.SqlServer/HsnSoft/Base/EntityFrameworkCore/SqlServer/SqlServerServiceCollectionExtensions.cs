@@ -33,8 +33,17 @@ public static class SqlServerServiceCollectionExtensions
 
         public string Name => EfCoreProviderNames.SqlServer;
 
-        public void Configure(DbContextOptionsBuilder options, string connectionString)
-            => options.UseSqlServer(connectionString, sql => sql.EnableRetryOnFailure());
+        public void Configure(DbContextOptionsBuilder options, string connectionString) => Configure(options, connectionString, new EfCoreOptions());
+
+        public void Configure(DbContextOptionsBuilder options, string connectionString, EfCoreOptions tuning)
+            => options.UseSqlServer(connectionString, sql =>
+            {
+                sql.CommandTimeout(tuning.CommandTimeoutSeconds);
+                if (tuning.MaxRetryCount > 0)
+                {
+                    sql.EnableRetryOnFailure(tuning.MaxRetryCount, tuning.MaxRetryDelay, null);
+                }
+            });
 
         public IStartupLock CreateStartupLock(string connectionString) => new SqlServerStartupLock(connectionString);
     }

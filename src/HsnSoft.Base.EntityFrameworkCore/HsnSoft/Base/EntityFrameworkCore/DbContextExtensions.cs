@@ -108,4 +108,42 @@ public static class DbContextExtensions
             ? services.RunStartupStepAsync(name, Run)
             : services.RunDatabaseStepAsync(context.ConnectionName, name, Run);
     }
+
+    /// <summary>
+    /// Runs <paramref name="work"/> in a transaction in a way that works with the retries of the context: a transaction that the code starts itself (<c>Database.BeginTransactionAsync</c>) is refused by a retrying strategy, so the strategy
+    /// runs the whole unit instead, and **runs it again from its start when the commands fail in a way that may pass**. So the work must be safe to run again: it reads what it needs inside, and does not use entities that were tracked
+    /// before it began. Everything it saves is committed together, or none of it when it throws.
+    /// </summary>
+    /// <typeparam name="TResult">What the work returns.</typeparam>
+    /// <param name="context">The context.</param>
+    /// <param name="work">The unit of work; it calls <c>SaveChangesAsync</c> as often as it needs.</param>
+    /// <param name="cancellationToken">Ends the attempt.</param>
+    public static async Task<TResult> ExecuteInTransactionAsync<TResult>(this DbContext context, Func<CancellationToken, Task<TResult>> work, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        ArgumentNullException.ThrowIfNull(work);
+
+        return await context.Database.CreateExecutionStrategy().ExecuteAsync(async token =>
+        {
+            Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction transaction = await context.Database.BeginTransactionAsync(token).ConfigureAwait(false);
+            await using (transaction.ConfigureAwait(false))
+            {
+                TResult result = await work(token).ConfigureAwait(false);
+                await transaction.CommitAsync(token).ConfigureAwait(false);
+                return result;
+            }
+        }, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>The same for a unit of work that returns nothing.</summary>
+    public static Task ExecuteInTransactionAsync(this DbContext context, Func<CancellationToken, Task> work, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(work);
+
+        return context.ExecuteInTransactionAsync<bool>(async token =>
+        {
+            await work(token).ConfigureAwait(false);
+            return true;
+        }, cancellationToken);
+    }
 }
