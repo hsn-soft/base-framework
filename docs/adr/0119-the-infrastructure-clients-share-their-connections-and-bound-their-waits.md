@@ -24,9 +24,13 @@ A review of the infrastructure packages for what happens in production (many pod
   30 seconds, and `MaxRetryCount: 0` turns the retries off. **A transaction started by the code is refused by a retrying strategy** (it was measured: the first command in it throws), so `ExecuteInTransactionAsync` runs a unit of work in a transaction through the strategy: the whole unit is run again from its
   start when its commands fail in a way that may pass, which is why the work must be safe to run again (it reads what it needs inside it).
 
+- **The `Jwt` section is checked when the host starts** (`AddBaseJwtAuthentication`): a blank issuer or audience (no token would ever be accepted, and nothing says why), an HMAC key shorter than 32 bytes (the length was only written in a comment; a short key worked, a blank one failed at the first request), an RSA key of
+  fewer than 2048 bits, a key file that is not there, or `AccessTokenMinutes` under 1 stops the host, with all the reasons in one message. The length of an HMAC key is counted in bytes.
+
 ## Consequences
 
 - The connections to Redis of a system are halved (the test counts them on a real Redis: two for a host).
+- A host with a weak or incomplete `Jwt` section does not start any more: the settings of every host of the samples were already right.
 - A request to a database that is down fails after about ten seconds of retries instead of about a minute; a service that needs a transaction calls `ExecuteInTransactionAsync` and not `BeginTransactionAsync`.
 - A request to MongoDB that waits on a dead connection ends in at most two minutes (the connection is dropped and the driver tries again), and one that finds no server in ten seconds.
 - A service that makes its own use of Redis after the cache is disposed would find the connection closed: at the end of the process only.

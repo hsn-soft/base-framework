@@ -17,7 +17,7 @@ public static class JwtServiceCollectionExtensions
     /// JWT bearer validation (issuer, audience, signature, lifetime) and the <see cref="BasePolicies.Authenticated"/> policy, and <see cref="ICurrentUser"/> (the user of the request).
     /// Claims keep their token names: the user name is <c>sub</c>, roles are <c>role</c>. Add your own policies with
     /// <c>services.AddAuthorizationBuilder()</c>. Tokens are checked with the shared <c>Jwt:Key</c> (HMAC) or, when <c>Jwt:PublicKeyFile</c> is given, with that RSA public key (RS256 only):
-    /// a missing or unreadable key file stops the application when it starts.
+    /// a section that is not usable (an empty issuer or audience, an HMAC key shorter than 32 bytes, a missing, unreadable or too small (under 2048 bits) RSA key file) stops the application when it starts, with the reasons.
     /// </summary>
     /// <param name="services">The service collection.</param>
     /// <param name="configuration">Holds the <c>Jwt</c> section (<see cref="JwtOptions"/>).</param>
@@ -32,11 +32,8 @@ public static class JwtServiceCollectionExtensions
         services.AddHttpContextAccessor();
         services.TryAddSingleton<ICurrentUser, HttpContextCurrentUser>();
 
-        // a key file that is not there is found now, not at the first request
-        if (configuration.GetSection("Jwt").Get<JwtOptions>()?.PublicKeyFile is { Length: > 0 } publicKeyFile)
-        {
-            RsaKeys.LoadPublic(publicKeyFile).Dispose();
-        }
+        // a section that is wrong (no issuer or audience, a key that is too short, a key file that is not there or is too weak) is found now, not at the first request, or never
+        JwtSettingsCheck.Ensure(configuration.GetSection("Jwt").Get<JwtOptions>() ?? new JwtOptions());
 
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
         services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
