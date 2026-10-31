@@ -11,10 +11,13 @@ name: 'CI Control Workflow'
 
 # When it runs (ADR-0113): on every pull request into dev, on Mondays at 03:00 UTC on dev (what the README badge shows, and what catches what changes with no push: an image that disappears, a package with a new advisory),
 # and by hand ("Run workflow", on dev). Not on a push to dev: dev only takes code through a pull request, whose run is the one that counts (the branch protection requires dev to be up to date before a merge).
+# On the two release branches it runs on every push, never on a pull request (ADR-0116): the run is of the commit that is published, its numbers are the badges of that release, and a red run is the signal.
 on:
     pull_request:
-        branches: [ "dev", "rel/nuget-candidate", "rel/nuget-regular" ]   # the release branches too: what is published was tested by this pipeline first (ADR-0115)
+        branches: [ "dev" ]
         types: [ opened, synchronize, reopened ]
+    push:
+        branches: [ "rel/nuget-candidate", "rel/nuget-regular" ]
     schedule:
         - cron: '0 3 * * 1'
     workflow_dispatch:
@@ -256,14 +259,16 @@ jobs:
                     path: summary-input
 
             # The numbers of the README badges, from what this run did. The result of the pipeline is known only from the jobs before this one.
+            # dev has the badges with no prefix, each release branch its own (candidate-coverage.json, regular-coverage.json, ...).
             -   name: Summary
                 env:
+                    BADGE_PREFIX: ${{ github.ref == 'refs/heads/rel/nuget-candidate' && 'candidate-' || github.ref == 'refs/heads/rel/nuget-regular' && 'regular-' || '' }}
                     PIPELINE_RESULT: ${{ (needs.rules-format-build.result == 'success' && needs.unit-tests.result == 'success' && needs.integration-tests.result == 'success' && needs.coverage-gate.result == 'success') && 'success' || 'failure' }}
-                run: python3 scripts/ci-detector/ci-summary.py summary-input summary-input --badges badges --result "$PIPELINE_RESULT"
+                run: python3 scripts/ci-detector/ci-summary.py summary-input summary-input --badges badges --badge-prefix "$BADGE_PREFIX" --result "$PIPELINE_RESULT"
 
-            # Only a scheduled or a manual run on dev makes the badges: a pull request must not change what the README says of dev.
+            # Only a scheduled or a manual run on dev, or a push to a release branch, makes the badges: a pull request must not change what the README says. A failed run publishes too: its badge is red.
             -   name: Publish The Badges
-                if: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/dev' }}
+                if: ${{ github.event_name != 'pull_request' && (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/rel/nuget-candidate' || github.ref == 'refs/heads/rel/nuget-regular') }}
                 env:
                     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                 run: ./scripts/ci-detector/ci-publish-badges.sh badges

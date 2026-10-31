@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 """Prints the summary of a CI run: how long each step took, how many tests passed, and the line coverage.
 
-Usage: ci-summary.py <timings dir> <test results dir> [--badges <dir> [--result <success|failure>]]
+Usage: ci-summary.py <timings dir> <test results dir> [--badges <dir> [--badge-prefix <prefix>] [--result <success|failure>]]
 
   <timings dir>       the files written by ci-timed.sh, one per job (unit.txt, integration.txt): "label=seconds" lines
   <test results dir>  the downloaded test results of the jobs: .trx files (the counts) and coverage.cobertura.xml files (the coverage)
 
   --badges <dir>      also writes the endpoint files of the README badges there (shields.io "endpoint" JSON): coverage.json, unit-tests.json,
-                      integration-tests.json and checked.json (the time of the check as yyyyMMddHHmm, UTC); the colors say whether the numbers are good
+                      integration-tests.json, ci-time.json (the minutes the steps of the run took) and checked.json (the time of the check as yyyyMMddHHmm, UTC);
+                      the colors say whether the numbers are good
+  --badge-prefix <p>  put before the name of each file ("candidate-" makes candidate-coverage.json): the release branches have their own badges (ADR-0116)
   --result <status>   how the pipeline ended; "failure" makes the "checked" badge red (the default is "success")
 
 The summary goes to the log and, on GitHub Actions, to the page of the run (GITHUB_STEP_SUMMARY). It never fails the run: it only reports.
@@ -70,13 +72,13 @@ def read_coverage(directory):
     return sum(1 for hits in lines.values() if hits > 0), len(lines)
 
 
-def write_badges(directory, results, result):
+def write_badges(directory, results, result, prefix, seconds):
     """The endpoint files of the badges of the README: shields.io reads them from the branch they are published to."""
     threshold = float(os.environ.get("COVERAGE_THRESHOLD", "99"))
     os.makedirs(directory, exist_ok=True)
 
     def badge(name, label, message, color):
-        with open(os.path.join(directory, name + ".json"), "w", encoding="utf-8") as handle:
+        with open(os.path.join(directory, prefix + name + ".json"), "w", encoding="utf-8") as handle:
             json.dump({"schemaVersion": 1, "label": label, "message": message, "color": color}, handle)
 
     coverage = read_coverage(results)
@@ -95,6 +97,8 @@ def write_badges(directory, results, result):
         else:
             badge(f"{kind}-tests", label, f"{passed} passed", "brightgreen")
 
+    badge("ci-time", "CI time", minutes(seconds), "blue")
+
     # when the numbers above were checked, to the minute (UTC): the badges are not made by every merge
     checked = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%d%H%M")
     badge("checked", "checked (UTC)", checked, "blue" if result == "success" else "red")
@@ -105,6 +109,7 @@ def main():
     parser.add_argument("timings")
     parser.add_argument("results")
     parser.add_argument("--badges")
+    parser.add_argument("--badge-prefix", default="")
     parser.add_argument("--result", default="success", choices=["success", "failure"])
     arguments = parser.parse_args()
     timings = read_timings(arguments.timings)
@@ -149,7 +154,7 @@ def main():
         with open(summary, "a", encoding="utf-8") as handle:
             handle.write(text + "\n")
     if arguments.badges:
-        write_badges(arguments.badges, results, arguments.result)
+        write_badges(arguments.badges, results, arguments.result, arguments.badge_prefix, sum(job_totals.values()))
     return 0
 
 
