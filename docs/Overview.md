@@ -106,6 +106,8 @@ builder.Services
 | `Redis:InstanceName` | key prefix, e.g. `myproduct:` |
 | `RabbitMq:Connection` (`HostName`, `Port`, `UserName`, `Password`, `VirtualHost`) and `RabbitMq:EventBus` (`ExchangeName`, `ConsumerClientName`, `ErrorClientName`, ...) | `AddRabbitMqEventBus` |
 | `Jwt` (`Issuer`, `Audience`, `Key`) | `AddBaseJwtAuthentication` |
+| `Mongo` (`ServerSelectionTimeout`, `ConnectTimeout`, `SocketTimeout`; the connection string's own options win), see [ADR-0119](adr/0119-the-infrastructure-clients-share-their-connections-and-bound-their-waits.md) | `AddBaseMongo` |
+| `AwsS3` / `Minio` (`TimeoutSeconds`, `AwsS3:MaxErrorRetry`; not set: the client's own) | `AddAwsBlobStoring`, `AddMinioBlobStoring` |
 | `EventBusOptions` (retries, naming, timeouts), see [docs/EventBus.md](EventBus.md) | `AddRabbitMqEventBus` |
 
 

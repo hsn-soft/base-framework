@@ -33,6 +33,7 @@ public static class MongoServiceCollectionExtensions
         string connectionString = configuration.GetConnectionString(connectionName)
                                ?? throw new InvalidOperationException($"ConnectionStrings:{connectionName} is required.");
         var url = new MongoUrl(connectionString);
+        MongoOptions options = configuration.GetSection(MongoOptions.SectionName).Get<MongoOptions>() ?? new MongoOptions();
         string databaseName = url.DatabaseName
                            ?? throw new InvalidOperationException($"ConnectionStrings:{connectionName} must contain a database name.");
 
@@ -45,13 +46,13 @@ public static class MongoServiceCollectionExtensions
         if (serviceKey is not null)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(serviceKey);
-            services.TryAddKeyedSingleton<IMongoClient>(serviceKey, (_, _) => new MongoClient(MongoClientSettings.FromUrl(url)));
+            services.TryAddKeyedSingleton<IMongoClient>(serviceKey, (_, _) => new MongoClient(options.Apply(connectionString)));
             services.TryAddKeyedSingleton<IMongoDatabase>(serviceKey, (provider, key) => provider.GetRequiredKeyedService<IMongoClient>(key).GetDatabase(databaseName));
             services.AddHealthChecks().Add(new HealthCheckRegistration($"mongo-{serviceKey}", provider => new MongoHealthCheck(provider.GetRequiredKeyedService<IMongoDatabase>(serviceKey)), failureStatus: null, tags: [HealthCheckTags.Ready]));
             return services;
         }
 
-        services.TryAddSingleton<IMongoClient>(_ => new MongoClient(MongoClientSettings.FromUrl(url)));
+        services.TryAddSingleton<IMongoClient>(_ => new MongoClient(options.Apply(connectionString)));
         services.TryAddSingleton(provider => provider.GetRequiredService<IMongoClient>().GetDatabase(databaseName));
         services.AddHealthChecks().AddCheck<MongoHealthCheck>("mongo", tags: [HealthCheckTags.Ready]);
         return services;
