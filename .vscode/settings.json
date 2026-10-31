@@ -14,5 +14,6 @@
     "editor.defaultFormatter": "vscode.json-language-features",
     "editor.tabSize": 2
   },
-  "dotnet.defaultSolution": "HsnSoft.Base.sln"
+  "dotnet.defaultSolution": "HsnSoft.Base.sln",
+  "python.terminal.useEnvFile": true
 }

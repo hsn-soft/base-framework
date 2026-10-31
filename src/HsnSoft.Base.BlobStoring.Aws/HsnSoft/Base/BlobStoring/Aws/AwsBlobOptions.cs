@@ -18,4 +18,13 @@ public sealed class AwsBlobOptions
 
     /// <summary>Put the bucket in the path (<c>http://host/bucket/key</c>) instead of the host name, which an S3-compatible store on one address needs. Default <see langword="false"/> (it is on when <see cref="ServiceUrl"/> is given and this is not set).</summary>
     public bool? ForcePathStyle { get; set; }
+
+    /// <summary>
+    /// How long one request may take **in all**, an upload or a download included (a stored file of 160 MB did not finish in 2 seconds, and a slow connection takes minutes for a large one). Not set: the SDK's own, which has no limit,
+    /// so a call to a server that does not answer waits for ever. Set it to what the largest file you store needs at the slowest connection you expect, plus some; the request is then ended and the call fails.
+    /// </summary>
+    public int? TimeoutSeconds { get; set; }
+
+    /// <summary>How many times a request that failed in a way that may pass (a throttled request, a 5xx, a broken connection) is tried again, with a growing wait. Not set: the SDK's (2).</summary>
+    public int? MaxErrorRetry { get; set; }
 }

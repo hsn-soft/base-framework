@@ -4,8 +4,8 @@ using Edx.Integration.GibInvoice.Domain.EnvelopeDomain.Consts;
 using Edx.Integration.GibInvoice.Domain.EnvelopeDomain.Entities;
 using Edx.Integration.GibInvoice.Domain.EnvelopeDomain.Repositories;
 using Edx.Integration.GibInvoice.MongoDB.Configurations;
+using HsnSoft.Base.Data;
 using HsnSoft.Base.Domain.Repositories;
-using HsnSoft.Base.Hosting;
 using HsnSoft.Base.MongoDB;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -36,6 +36,7 @@ public static class MongoServiceCollectionExtensions
         services.AddScoped<IExchangeUserRepository>(provider => new MongoExchangeUserRepository(
             provider.GetRequiredService<IMongoDatabase>(), provider.GetRequiredService<MongoEntityConcepts>(), MongoIntegrationDbProperties.CollectionPrefix + MongoIntegrationDbProperties.ExchangeUserCollectionName));
         services.AddScoped<IRepository<ExchangeUser, Guid>>(provider => provider.GetRequiredService<IExchangeUserRepository>());
+        services.AddDatabaseStartupStep(MongoIntegrationDbProperties.ConnectionStringName, "Integration collections", EnsureIntegrationCollections);
         return services;
     }
 
@@ -43,35 +44,30 @@ public static class MongoServiceCollectionExtensions
     /// Makes the indexes: an envelope is known by its uuid, once (unique, in each direction), the workers find theirs by state, the invoices that were handed over by the record of the invoice service, and a user of the list by its register number (unique).
     /// MongoDB creates the database and the collections when the first document is written.
     /// </summary>
-    public static Task EnsureIntegrationDatabaseAsync(this IServiceProvider services)
+    internal static async Task EnsureIntegrationCollections(IServiceProvider services, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(services);
+        IMongoDatabase database = services.GetRequiredService<IMongoDatabase>();
 
-        return services.RunStartupStepAsync("Integration collections", async cancellationToken =>
-        {
-            IMongoDatabase database = services.GetRequiredService<IMongoDatabase>();
+        await database.GetCollection<OutboundEnvelope>(MongoIntegrationDbProperties.CollectionPrefix + EnvelopeConsts.OutboundCollectionName).Indexes.CreateManyAsync(
+            [
+                new CreateIndexModel<OutboundEnvelope>(Builders<OutboundEnvelope>.IndexKeys.Ascending(envelope => envelope.EnvelopeId), new CreateIndexOptions { Unique = true }),
+                new CreateIndexModel<OutboundEnvelope>(Builders<OutboundEnvelope>.IndexKeys.Ascending(envelope => envelope.State).Ascending(envelope => envelope.NextSendAt)),
+                new CreateIndexModel<OutboundEnvelope>(Builders<OutboundEnvelope>.IndexKeys.Ascending(envelope => envelope.TenantId).Descending(envelope => envelope.CreatedAt)),
+                new CreateIndexModel<OutboundEnvelope>(Builders<OutboundEnvelope>.IndexKeys.Ascending(envelope => envelope.InvoiceRecordId)),
+            ],
+            cancellationToken).ConfigureAwait(false);
 
-            await database.GetCollection<OutboundEnvelope>(MongoIntegrationDbProperties.CollectionPrefix + EnvelopeConsts.OutboundCollectionName).Indexes.CreateManyAsync(
-                [
-                    new CreateIndexModel<OutboundEnvelope>(Builders<OutboundEnvelope>.IndexKeys.Ascending(envelope => envelope.EnvelopeId), new CreateIndexOptions { Unique = true }),
-                    new CreateIndexModel<OutboundEnvelope>(Builders<OutboundEnvelope>.IndexKeys.Ascending(envelope => envelope.State).Ascending(envelope => envelope.NextSendAt)),
-                    new CreateIndexModel<OutboundEnvelope>(Builders<OutboundEnvelope>.IndexKeys.Ascending(envelope => envelope.TenantId).Descending(envelope => envelope.CreatedAt)),
-                    new CreateIndexModel<OutboundEnvelope>(Builders<OutboundEnvelope>.IndexKeys.Ascending(envelope => envelope.InvoiceRecordId)),
-                ],
-                cancellationToken).ConfigureAwait(false);
+        await database.GetCollection<InboundEnvelope>(MongoIntegrationDbProperties.CollectionPrefix + EnvelopeConsts.InboundCollectionName).Indexes.CreateManyAsync(
+            [
+                new CreateIndexModel<InboundEnvelope>(Builders<InboundEnvelope>.IndexKeys.Ascending(envelope => envelope.EnvelopeId), new CreateIndexOptions { Unique = true }),
+                new CreateIndexModel<InboundEnvelope>(Builders<InboundEnvelope>.IndexKeys.Ascending(envelope => envelope.State).Ascending(envelope => envelope.ReceivedAt)),
+                new CreateIndexModel<InboundEnvelope>(Builders<InboundEnvelope>.IndexKeys.Ascending(envelope => envelope.TenantId).Descending(envelope => envelope.ReceivedAt)),
+                new CreateIndexModel<InboundEnvelope>(Builders<InboundEnvelope>.IndexKeys.Ascending(envelope => envelope.InvoiceUuid)),
+            ],
+            cancellationToken).ConfigureAwait(false);
 
-            await database.GetCollection<InboundEnvelope>(MongoIntegrationDbProperties.CollectionPrefix + EnvelopeConsts.InboundCollectionName).Indexes.CreateManyAsync(
-                [
-                    new CreateIndexModel<InboundEnvelope>(Builders<InboundEnvelope>.IndexKeys.Ascending(envelope => envelope.EnvelopeId), new CreateIndexOptions { Unique = true }),
-                    new CreateIndexModel<InboundEnvelope>(Builders<InboundEnvelope>.IndexKeys.Ascending(envelope => envelope.State).Ascending(envelope => envelope.ReceivedAt)),
-                    new CreateIndexModel<InboundEnvelope>(Builders<InboundEnvelope>.IndexKeys.Ascending(envelope => envelope.TenantId).Descending(envelope => envelope.ReceivedAt)),
-                    new CreateIndexModel<InboundEnvelope>(Builders<InboundEnvelope>.IndexKeys.Ascending(envelope => envelope.InvoiceUuid)),
-                ],
-                cancellationToken).ConfigureAwait(false);
-
-            await database.GetCollection<ExchangeUser>(MongoIntegrationDbProperties.CollectionPrefix + MongoIntegrationDbProperties.ExchangeUserCollectionName).Indexes.CreateOneAsync(
-                new CreateIndexModel<ExchangeUser>(Builders<ExchangeUser>.IndexKeys.Ascending(user => user.RegisterNumber), new CreateIndexOptions { Unique = true }),
-                cancellationToken: cancellationToken).ConfigureAwait(false);
-        });
+        await database.GetCollection<ExchangeUser>(MongoIntegrationDbProperties.CollectionPrefix + MongoIntegrationDbProperties.ExchangeUserCollectionName).Indexes.CreateOneAsync(
+            new CreateIndexModel<ExchangeUser>(Builders<ExchangeUser>.IndexKeys.Ascending(user => user.RegisterNumber), new CreateIndexOptions { Unique = true }),
+            cancellationToken: cancellationToken).ConfigureAwait(false);
     }
 }

@@ -30,14 +30,27 @@ internal sealed partial class GelfHttpTarget : AsyncTaskTarget
     {
         _address = Endpoint(address, port, useHttps);
         _host = host ?? Environment.MachineName;
-        _client = client ?? new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
+        _client = client ?? new HttpClient(CreateHandler()) { Timeout = TimeSpan.FromSeconds(10) };
         _disposeClient = client is null;
         Name = "base-graylog";
         RetryCount = 2;
         RetryDelayMilliseconds = 500;
         TaskDelayMilliseconds = 200;
         BatchSize = 1;
+
+        // the queue is bounded and says what it does when it is full: a log is dropped, never the memory of the application grown (a Graylog that is down for an hour must not take the pods with it)
+        QueueLimit = MaxQueuedLogs;
+        OverflowAction = global::NLog.Targets.Wrappers.AsyncTargetWrapperOverflowAction.Discard;
     }
+
+    /// <summary>How many logs wait to be sent; more than that are dropped while Graylog does not keep up or is not there.</summary>
+    internal const int MaxQueuedLogs = 10_000;
+
+    /// <summary>
+    /// The connection to Graylog: it is made again every two minutes (the default keeps a connection for ever, so a Graylog that moved to another address, a pod that was replaced, was written to at the old one until it broke), and a Graylog that is not there
+    /// is found in three seconds and not in the ten of the whole request, which a log waits for before the next is sent.
+    /// </summary>
+    internal static SocketsHttpHandler CreateHandler() => new() { PooledConnectionLifetime = TimeSpan.FromMinutes(2), ConnectTimeout = TimeSpan.FromSeconds(3) };
 
     /// <summary>The address of the GELF input: <c>{scheme}://address:port/gelf</c>, the scheme the address says, else <c>https</c> when asked for and <c>http</c> (Graylog's own input) otherwise.</summary>
     internal static Uri Endpoint(string address, int port, bool useHttps)

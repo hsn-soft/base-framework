@@ -3,9 +3,11 @@ using Abc.IdentityService.Domain.UserDomain.Entities;
 using Abc.IdentityService.EntityFrameworkCore;
 using Abc.IdentityService.EntityFrameworkCore.Context;
 using Abc.Shared.Helper;
+using Abc.Shared.Hosting;
 using Abc.Shared.Hosting.Microservices;
 using Abc.Shared.Localization;
 using HsnSoft.Base.AspNetCore;
+using HsnSoft.Base.Authentication;
 using HsnSoft.Base.Caching.StackExchangeRedis;
 using HsnSoft.Base.EventBus;
 using HsnSoft.Base.EventBus.EntityFrameworkCore;
@@ -14,6 +16,7 @@ using HsnSoft.Base.Logging.Serilog;
 using HsnSoft.Base.MultiTenancy;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+builder.AddBaseHosting();   // the .env file, the port, the limits of Kestrel, the proxies and the time to stop: the section Hosting
 builder.Logging.AddBaseSerilog(builder.Configuration, "Abc.IdentityService");
 
 // what every Abc microservice has (logging, the web api shell, JWT, Swagger, health), then what this service has
@@ -22,23 +25,23 @@ builder.Services
     .AddBaseLocalization(builder.Configuration, options => options.AddAbcSharedTexts().AddEmbedded(typeof(User).Assembly))
     .AddBaseRedis(builder.Configuration)
     .AddAbcMicroservice(builder.Configuration, "Abc.IdentityService API")
+    .AddAbcAuthentication(builder.Configuration)
+    .AddAbcAuthorization()
     .AddAbcEventBus(builder.Configuration)
     // this service has tenants: the tenant of a request is the one of its token, and it travels with the messages
     .AddBaseTenantClaims()
     .AddBaseTenantEventBus()
-    .AddIdentityPersistence(builder.Configuration)
+    .AddIdentityPersistence(builder.Configuration, AbcTenants.System, AbcTenants.Acme)
     .AddIdentityHistoryPersistence(builder.Configuration)
     .AddEventInbox<IdentityDbContext>()
     .AddIdentityApplication(builder.Configuration);
 
-WebApplication app = builder.Build();
-
-// the schema, and two users to sign in as when there is none: admin of the system tenant, alice of Acme (the auth server reads the same database)
-await app.Services.EnsureIdentityDatabaseAsync(AbcTenants.System, AbcTenants.Acme);
-await app.Services.EnsureHistoryDatabaseAsync();
-
-app.UseAbcMicroservice();
-app.UseBaseLocalization();   // after the caller is known (the hosting reads the token): the language is the one of the token, else of the header
-app.MapControllers();
-
-await app.RunAsync();
+// a failure to start (a setting that is missing, a database that cannot be prepared) is logged as critical and ends the process with the exit code 1
+return await builder.RunBaseAsync(app =>
+{
+    app.UseAbcMicroservice();
+    app.UseBaseAuthentication();
+    app.UseBaseAuthorization();
+    app.UseBaseLocalization();   // after the caller is known (the hosting reads the token): the language is the one of the token, else of the header
+    app.MapControllers();
+});

@@ -1,0 +1,63 @@
+# The Abc system in Docker, the environment `docker`: the nine hosts, nothing else. The infrastructure (PostgreSQL, SQL Server, MongoDB, Redis, RabbitMQ, Graylog) is the one on this machine, the one the hosts
+# use in development, reached as host.docker.internal; the databases are the ones of development too (Abc_*_Dev).
+#   samples/abc/deploy/deploy.sh docker        # builds the images, renders the settings, and runs this file
+# The settings of each host are appsettings.docker.json with the passwords put in (render-settings.sh), mounted over the file of the image. The commercial gateway is on localhost:5500, the public one on
+# localhost:5600, the web apps on 5700 and 5800.
+name: abc
+
+x-host: &host
+  restart: unless-stopped
+  environment:
+    ASPNETCORE_ENVIRONMENT: docker
+
+services:
+  identity-service:
+    <<: *host
+    image: abc/identity-service:dev
+    volumes:
+      - ./.rendered/docker/identity-service.json:/app/appsettings.docker.json:ro
+  auth-server-service:
+    <<: *host
+    image: abc/auth-server-service:dev
+    volumes:
+      - ./.rendered/docker/auth-server-service.json:/app/appsettings.docker.json:ro
+      - ../app/Abc.AuthServer.Host/private_key.xml:/app/private_key.xml:ro   # the private key is not in the image
+  product-service:
+    <<: *host
+    image: abc/product-service:dev
+    volumes:
+      - ./.rendered/docker/product-service.json:/app/appsettings.docker.json:ro
+  shipment-service:
+    <<: *host
+    image: abc/shipment-service:dev
+    volumes:
+      - ./.rendered/docker/shipment-service.json:/app/appsettings.docker.json:ro
+  order-service:
+    <<: *host
+    image: abc/order-service:dev
+    volumes:
+      - ./.rendered/docker/order-service.json:/app/appsettings.docker.json:ro
+  gateway-commercial:
+    <<: *host
+    image: abc/gateway-commercial:dev
+    volumes:
+      - ./.rendered/docker/gateway-commercial.json:/app/appsettings.docker.json:ro
+    ports: ["5500:8080"]
+  gateway-public:
+    <<: *host
+    image: abc/gateway-public:dev
+    volumes:
+      - ./.rendered/docker/gateway-public.json:/app/appsettings.docker.json:ro
+    ports: ["5600:8080"]
+  commercial-web:
+    <<: *host
+    image: abc/commercial-web:dev
+    volumes:
+      - ./.rendered/docker/commercial-web.json:/app/appsettings.docker.json:ro
+    ports: ["5700:8080"]
+  public-web:
+    <<: *host
+    image: abc/public-web:dev
+    volumes:
+      - ./.rendered/docker/public-web.json:/app/appsettings.docker.json:ro
+    ports: ["5800:8080"]

@@ -30,7 +30,7 @@ public static class MicroserviceRegister
                 .WithExposedHeaders("X-Correlation-Id", "Content-Disposition")));
         }
 
-        return services.AddEdxHosting(configuration, swaggerTitle, authenticateUsers: true, swaggerBearerButton: true);
+        return services.AddEdxHosting(configuration, swaggerTitle, swaggerBearerButton: true);
     }
 
     /// <summary>
@@ -60,7 +60,7 @@ public static class MicroserviceRegister
             app.UseCors(CorsPolicyName);
         }
 
-        return app.UseEdxHosting(authenticateUsers: true);
+        return app.UseEdxHosting();
     }
 
     private const string CorsPolicyName = "edx-microservice";

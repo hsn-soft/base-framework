@@ -1,5 +1,7 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
+using HsnSoft.Base.Data;
 using HsnSoft.Base.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -43,21 +45,105 @@ public static class DbContextExtensions
     }
 
     /// <summary>
-    /// Creates the database schema of <typeparamref name="TContext"/> if it does not exist, waiting for the database to accept
-    /// connections. Use migrations instead for a schema that evolves.
+    /// A startup step that creates the database schema of <typeparamref name="TContext"/> if it does not exist (<see cref="DatabaseStartupServiceCollectionExtensions.AddDatabaseStartupStep"/>): add it to the persistence of a
+    /// service, before the steps that seed it. Use migrations instead for a schema that evolves.
+    /// </summary>
+    public static IServiceCollection AddSchemaStartupStep<TContext>(this IServiceCollection services, string connectionName)
+        where TContext : DbContext
+    {
+        ArgumentNullException.ThrowIfNull(services);
+
+        return services.AddDatabaseStartupStep(connectionName, $"{typeof(TContext).Name} schema", async (scope, cancellationToken) =>
+            await scope.GetRequiredService<TContext>().Database.EnsureCreatedAsync(cancellationToken).ConfigureAwait(false));
+    }
+
+    /// <summary>
+    /// Creates the database schema of <typeparamref name="TContext"/> if it does not exist, waiting for the database to accept connections. Use migrations instead for a schema that evolves. For a context that was
+    /// registered with <c>AddBaseEfCore</c> it is a database step (<see cref="DatabaseStartupSteps.RunDatabaseStepAsync"/>): only the host that owns the database does it (<c>SeedStartupConnections</c>), and the pods of that host
+    /// one at a time, under the lock of the database.
     /// </summary>
     public static Task EnsureDatabaseCreatedAsync<TContext>(this IServiceProvider services)
         where TContext : DbContext
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        return services.RunStartupStepAsync($"{typeof(TContext).Name} schema", async cancellationToken =>
+        return services.RunContextStepAsync<TContext>($"{typeof(TContext).Name} schema", async (context, cancellationToken) =>
+            await context.Database.EnsureCreatedAsync(cancellationToken).ConfigureAwait(false));
+    }
+
+    /// <summary>
+    /// Runs a step that prepares the database of <typeparamref name="TContext"/> (its seed data, ...) with the context in a scope of its own, as a database step: only the host that owns the database does it, the pods of that host
+    /// one at a time, and it is tried again while the database is not there. <see cref="EnsureDatabaseCreatedAsync{TContext}"/> is the first of them; the steps of a service that follow it use this one.
+    /// </summary>
+    public static Task RunContextStepAsync<TContext>(this IServiceProvider services, string name, Func<TContext, CancellationToken, Task> step)
+        where TContext : DbContext
+    {
+        ArgumentNullException.ThrowIfNull(step);
+
+        return services.RunScopedContextStepAsync<TContext>(name, (scopeServices, cancellationToken) => step(scopeServices.GetRequiredService<TContext>(), cancellationToken));
+    }
+
+    /// <summary>
+    /// The same as <see cref="RunContextStepAsync{TContext}"/> for a step that needs more of the scope than the context (the current tenant, the options): it gets the services of the scope it runs in, which is
+    /// the one of <typeparamref name="TContext"/> and of whatever else it asks for.
+    /// </summary>
+    public static Task RunScopedContextStepAsync<TContext>(this IServiceProvider services, string name, Func<IServiceProvider, CancellationToken, Task> step)
+        where TContext : DbContext
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        ArgumentNullException.ThrowIfNull(step);
+
+        async Task Run(CancellationToken cancellationToken)
         {
             AsyncServiceScope scope = services.CreateAsyncScope();
             await using (scope.ConfigureAwait(false))
             {
-                await scope.ServiceProvider.GetRequiredService<TContext>().Database.EnsureCreatedAsync(cancellationToken).ConfigureAwait(false);
+                await step(scope.ServiceProvider, cancellationToken).ConfigureAwait(false);
             }
-        });
+        }
+
+        StartupContext<TContext>? context = services.GetService<StartupContext<TContext>>();
+        return context is null
+            ? services.RunStartupStepAsync(name, Run)
+            : services.RunDatabaseStepAsync(context.ConnectionName, name, Run);
+    }
+
+    /// <summary>
+    /// Runs <paramref name="work"/> in a transaction in a way that works with the retries of the context: a transaction that the code starts itself (<c>Database.BeginTransactionAsync</c>) is refused by a retrying strategy, so the strategy
+    /// runs the whole unit instead, and **runs it again from its start when the commands fail in a way that may pass**. So the work must be safe to run again: it reads what it needs inside, and does not use entities that were tracked
+    /// before it began. Everything it saves is committed together, or none of it when it throws.
+    /// </summary>
+    /// <typeparam name="TResult">What the work returns.</typeparam>
+    /// <param name="context">The context.</param>
+    /// <param name="work">The unit of work; it calls <c>SaveChangesAsync</c> as often as it needs.</param>
+    /// <param name="cancellationToken">Ends the attempt.</param>
+    public static async Task<TResult> ExecuteInTransactionAsync<TResult>(this DbContext context, Func<CancellationToken, Task<TResult>> work, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        ArgumentNullException.ThrowIfNull(work);
+
+        return await context.Database.CreateExecutionStrategy().ExecuteAsync(async token =>
+        {
+            Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction transaction = await context.Database.BeginTransactionAsync(token).ConfigureAwait(false);
+            await using (transaction.ConfigureAwait(false))
+            {
+                TResult result = await work(token).ConfigureAwait(false);
+                await transaction.CommitAsync(token).ConfigureAwait(false);
+                return result;
+            }
+        }, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>The same for a unit of work that returns nothing.</summary>
+    public static Task ExecuteInTransactionAsync(this DbContext context, Func<CancellationToken, Task> work, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(work);
+
+        return context.ExecuteInTransactionAsync<bool>(async token =>
+        {
+            await work(token).ConfigureAwait(false);
+            return true;
+        }, cancellationToken);
     }
 }

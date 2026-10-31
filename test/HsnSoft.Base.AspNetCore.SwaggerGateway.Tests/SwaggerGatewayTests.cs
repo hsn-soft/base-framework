@@ -153,6 +153,29 @@ public class SwaggerGatewayTests
     }
 
     [Fact]
+    public async Task WhateverHostTheClientSends_OneDocumentIsKept_AndEachAnswerHasTheHostItWasAskedWith()
+    {
+        Services services = new();
+        await using WebApplication app = await StartAsync(services);
+        HttpClient client = app.GetTestClient();
+
+        string[] urls = new string[50];
+        for (int index = 0; index < urls.Length; index++)
+        {
+            using HttpRequestMessage request = new(HttpMethod.Get, "/swagger/services/orders/swagger.json");
+            request.Headers.Host = $"client-{index}.example.com";
+            using HttpResponseMessage response = await client.SendAsync(request);
+            urls[index] = JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement.GetProperty("servers")[0].GetProperty("url").GetString()!;
+        }
+
+        // the cache of a client who sends a new Host each time would have grown by one document each; it has the one document of the service
+        Assert.Single(services.Requests);
+        Assert.Equal(1, ((Microsoft.Extensions.Caching.Memory.MemoryCache)app.Services.GetRequiredService<Microsoft.Extensions.Caching.Memory.IMemoryCache>()).Count);
+        Assert.Equal("http://client-0.example.com", urls[0]);
+        Assert.Equal("http://client-49.example.com", urls[49]);
+    }
+
+    [Fact]
     public async Task ATemporaryFailure_IsTriedAgain_ThenTheDocumentIsServed()
     {
         Services services = new();

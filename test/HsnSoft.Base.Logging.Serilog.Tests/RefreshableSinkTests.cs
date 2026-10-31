@@ -118,6 +118,83 @@ public class RefreshableSinkTests
     }
 
     [Fact]
+    public void Dispose_AlsoDisposesTheReplacedSinksStillWaitingOutTheirDelay_SoTheirBatchesAreSent()
+    {
+        List<DisposableSink> built = [];
+        RefreshableSink sink = new(
+            () =>
+            {
+                DisposableSink next = new();
+                built.Add(next);
+                return next;
+            },
+            TimeSpan.FromHours(1));
+
+        sink.Refresh();
+        sink.Refresh();
+        Assert.False(built[0].Disposed);
+        Assert.False(built[1].Disposed);
+
+        // the application stops: nobody is left to wait for the hour
+        sink.Dispose();
+
+        Assert.All(built, one => Assert.True(one.Disposed));
+    }
+
+    [Fact]
+    public async Task ASinkThatWasDisposedWithTheRest_IsNotDisposedAgainWhenItsDelayEnds()
+    {
+        List<DisposableSink> built = [];
+        RefreshableSink sink = new(
+            () =>
+            {
+                DisposableSink next = new();
+                built.Add(next);
+                return next;
+            },
+            TimeSpan.FromMilliseconds(150));
+
+        sink.Refresh();
+        sink.Dispose();
+        await Task.Delay(400);
+
+        Assert.All(built, one => Assert.Equal(1, one.Disposals));
+    }
+
+    [Fact]
+    public void AfterDispose_NothingIsBuiltAndDisposeAgainChangesNothing()
+    {
+        int built = 0;
+        RefreshableSink sink = new(() =>
+        {
+            built++;
+            return new DisposableSink();
+        });
+
+        sink.Dispose();
+        sink.Refresh();
+        sink.Dispose();
+
+        Assert.Equal(1, built);
+    }
+
+    [Fact]
+    public void ASinkReplacedWhileTheApplicationStops_IsDisposedAtOnce()
+    {
+        // the swap lost the race with Dispose: what the old sink holds is sent now, not left for a timer that will not fire
+        DisposableSink first = new();
+        DisposableSink second = new();
+        int calls = 0;
+        RefreshableSink sink = new(() => calls++ == 0 ? first : second, TimeSpan.FromHours(1));
+
+        sink.Refresh();
+        sink.Dispose();
+
+        Assert.True(first.Disposed);
+        Assert.True(second.Disposed);
+    }
+
+    [Fact]
     public async Task RefreshService_RebuildsTheSinkOnASchedule_NotAtStart()
     {
         int built = 0;

@@ -1,9 +1,11 @@
-/** The gateway of the Edx system: the identity, auth and invoice services are reached through it (REST, JSON). Change it for another environment. */
-export const API_BASE = 'http://localhost:5600';
+import { environment } from '../../environments/environment';
+
+/** The gateway of the Edx system: the identity, auth and invoice services are reached through it (REST, JSON). The address is the one of the environment the application is built for (src/environments). */
+export const API_BASE = environment.apiBase;
 
 /** The firm invoice integration (what customers send in) and the GİB invoice integration (the center's side) are not behind the gateway: the back office calls their REST hosts directly. */
-export const FIRM_INVOICE_BASE = 'http://localhost:5510';
-export const GIB_INVOICE_BASE = 'http://localhost:5540';
+export const FIRM_INVOICE_BASE = environment.firmInvoiceBase;
+export const GIB_INVOICE_BASE = environment.gibInvoiceBase;
 
 /**
  * The address of a call. A path is written as `service/v1/...` (the way the gateway names it); the two integrations answer on their own address and under the routes of their controllers

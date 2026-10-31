@@ -1,0 +1,15 @@
+# The hosts of the Edx system: name (the image edx/<name>:dev, the service of the cluster and of the compose network) | folder under samples/edx | assembly | kind | port of the health probes | ports on localhost (docker,uat,production)
+# kind: service (an ASP.NET Core host), auth (a service that has the private key of the tokens), gateway, spa (the Angular back office: the image is built for an environment, edx/back-office:<environment>)
+# The ports on localhost are the ones to reach the host from outside (the gateway, the back office, the customers' entry points: the firm invoice REST, gRPC and WCF hosts; the GIB REST host the back office calls; the mock center). A line that starts with # is a comment.
+identity-service|service/identity/Edx.IdentityService.Http.Host|Edx.IdentityService.Http.Host|service|8080|-
+auth-server-service|app/Edx.AuthServer.Host|Edx.AuthServer.Host|auth|8080|-
+invoice-service|service/invoice/Edx.InvoiceService.Http.Host|Edx.InvoiceService.Http.Host|service|8080|-
+signer-service|service/signer/Edx.SignerService.Http.Host|Edx.SignerService.Http.Host|service|8080|-
+integration-firm-http|integration/firm-invoice/Edx.Integration.FirmInvoice.Http.Host|Edx.Integration.FirmInvoice.Http.Host|service|8080|6510,6610,6710
+integration-firm-grpc|integration/firm-invoice/Edx.Integration.FirmInvoice.Grpc.Host|Edx.Integration.FirmInvoice.Grpc.Host|service|8081|6511,6611,6711
+integration-firm-wcf|integration/firm-invoice/Edx.Integration.FirmInvoice.Wcf.Host|Edx.Integration.FirmInvoice.Wcf.Host|service|8080|6512,6612,6712
+integration-gib-http|integration/gib-invoice/Edx.Integration.GibInvoice.Http.Host|Edx.Integration.GibInvoice.Http.Host|service|8080|6540,6640,6740
+integration-gib-wcf|integration/gib-invoice/Edx.Integration.GibInvoice.Wcf.Host|Edx.Integration.GibInvoice.Wcf.Host|service|8080|-
+mock-center|mock/Edx.Mock.Center.Wcf.Host|Edx.Mock.Center.Wcf.Host|service|8080|6520,6620,6720
+gateway|gateway/Edx.Gateway.Host|Edx.Gateway.Host|gateway|8080|6500,6600,6700
+back-office|app/back-office|-|spa|8080|6501,6601,6701

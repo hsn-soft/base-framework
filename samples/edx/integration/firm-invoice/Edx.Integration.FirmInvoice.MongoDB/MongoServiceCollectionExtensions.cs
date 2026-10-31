@@ -4,6 +4,7 @@ using Edx.Integration.FirmInvoice.Domain.StorageDomain.Consts;
 using Edx.Integration.FirmInvoice.Domain.StorageDomain.Entities;
 using Edx.Integration.FirmInvoice.Domain.StorageDomain.Repositories;
 using Edx.Integration.FirmInvoice.MongoDB.Configurations;
+using HsnSoft.Base.Data;
 using HsnSoft.Base.Domain.Repositories;
 using HsnSoft.Base.MongoDB;
 using Microsoft.Extensions.Configuration;
@@ -32,6 +33,7 @@ public static class MongoServiceCollectionExtensions
         services.AddScoped<IRepository<StorageFolder, Guid>>(provider => provider.GetRequiredService<IStorageFolderRepository>());
         services.AddScoped<IRepository<QueueItem, Guid>>(provider => new MongoRepository<QueueItem, Guid>(
             provider.GetRequiredService<IMongoDatabase>(), provider.GetRequiredService<MongoEntityConcepts>(), MongoFirmInvoiceDbProperties.CollectionPrefix + QueueItemConsts.CollectionName));
+        services.AddDatabaseStartupStep(MongoFirmInvoiceDbProperties.ConnectionStringName, "FirmInvoice collections", FirmInvoiceDatabase.EnsureFirmInvoiceCollections);
         return services;
     }
 }

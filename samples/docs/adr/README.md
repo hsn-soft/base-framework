@@ -7,6 +7,13 @@ New ADR: copy the framework's [`0000-template.md`](../../../docs/adr/0000-templa
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
+| [0053](0053-each-service-has-its-own-audience-and-the-program-says-how-it-authenticates.md) | Each service has its own audience, and `Program.cs` says how it authenticates and authorizes | Accepted | 2026-10-31 |
+| [0052](0052-the-hosts-start-with-add-base-hosting-and-run-base-async.md) | The hosts of both samples start with `AddBaseHosting`, end with `RunBaseAsync`, and write their limits in their settings | Accepted | 2026-10-31 |
+| [0051](0051-the-http-host-of-a-service-owns-its-databases.md) | The REST host of a service owns its databases (`SeedStartupConnections`); the other hosts own none | Accepted | 2026-10-31 |
+| [0050](0050-edx-has-the-same-environments-with-a-broker-bucket-and-build-for-each.md) | Edx has the same environments, with a Kafka broker, MinIO buckets and an Angular build for each | Accepted | 2026-10-31 |
+| [0049](0049-the-environments-of-the-samples-are-development-docker-uat-and-production.md) | The environments are development, docker, uat and production, on the infrastructure of this machine, told apart by their databases, Redis prefix and exchange | Accepted | 2026-10-31 |
+| [0048](0048-each-sample-has-its-own-solution.md) | Each sample has its own solution | Accepted | 2026-10-31 |
+| [0047](0047-the-abc-system-runs-in-docker-compose-and-in-kubernetes.md) | The Abc system runs in Docker Compose and in Kubernetes: one Dockerfile, secrets made by a script, the probes of the health endpoints, a test that takes dependencies away | Accepted (the environments and the infrastructure of the deployments are superseded by [ADR-0049](0049-the-environments-of-the-samples-are-development-docker-uat-and-production.md)) | 2026-10-31 |
 | [0046](0046-a-host-chooses-its-localization-and-its-cache.md) | A host chooses its localization and its cache | Accepted | 2026-10-27 |
 | [0045](0045-the-commercial-invoice-and-its-answer.md) | The commercial invoice (TICARIFATURA) and the answer of its receiver | Accepted | 2026-10-28 |
 | [0044](0044-the-edx-invoice-container-layout.md) | The layout of the storage: a work folder, then everything of a tenant together, and the same folders in both queues | Accepted | 2026-10-28 |
@@ -37,7 +44,7 @@ New ADR: copy the framework's [`0000-template.md`](../../../docs/adr/0000-templa
 | [0019](0019-where-events-and-their-handlers-live.md) | Where the events and their handlers live | Accepted | 2026-10-25 |
 | [0018](0018-names-on-the-broker-in-the-abc-sample.md) | The names on the broker in the Abc sample | Accepted | 2026-10-25 |
 | [0017](0017-tables-and-collections-are-named-like-the-entity.md) | Tables and collections are named like the entity | Accepted | 2026-10-25 |
-| [0016](0016-environments-of-the-abc-sample.md) | The environments of the Abc sample, and the names of its databases | Accepted | 2026-10-25 |
+| [0016](0016-environments-of-the-abc-sample.md) | The environments of the Abc sample, and the names of its databases | Accepted (the environments, `stage` and the settings of the deployments are superseded by [ADR-0049](0049-the-environments-of-the-samples-are-development-docker-uat-and-production.md); the names of the databases stay) | 2026-10-25 |
 | [0015](0015-the-order-flow-through-events.md) | The order flow runs through events: order, product, shipment, order | Accepted (the events and the tenant handling changed: [framework ADR-0057](../../../docs/adr/0057-the-caller-of-a-message-and-publish-or-send.md); the names on the broker: [ADR-0018](0018-names-on-the-broker-in-the-abc-sample.md); where they live: [ADR-0019](0019-where-events-and-their-handlers-live.md)) | 2026-10-25 |
 | [0014](0014-more-than-one-store-in-a-service.md) | More than one store in a service: a second MongoDB under a key, a relational project beside a MongoDB one | Accepted | 2026-10-25 |
 | [0013](0013-the-history-of-the-users.md) | The history of the users: a CRUD of its own, written by the identity service and the auth server | Accepted | 2026-10-25 |

@@ -1,0 +1,18 @@
+# Everything is left out, then what the Abc hosts need is let in.
+*
+
+!NuGet.Config
+!common.props
+!common.versions.props
+!src/**
+!samples/Directory.Build.props
+!samples/Directory.Packages.props
+!samples/abc/**
+
+# what a build or a run leaves
+**/bin
+**/obj
+**/Logs
+
+# secrets: the private key is a secret of the auth server, mounted at run time
+**/private_key.xml

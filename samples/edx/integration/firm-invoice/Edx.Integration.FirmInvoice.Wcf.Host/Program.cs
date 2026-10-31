@@ -2,7 +2,10 @@ using Edx.Integration.FirmInvoice.Application;
 using Edx.Integration.FirmInvoice.Application.Storage;
 using Edx.Integration.FirmInvoice.MongoDB;
 using Edx.Integration.FirmInvoice.Wcf.Host;
+using Edx.Shared.Hosting;
 using Edx.Shared.Hosting.Microservices;
+using HsnSoft.Base.AspNetCore;
+using HsnSoft.Base.Authentication;
 using HsnSoft.Base.BlobStoring.Minio;
 using HsnSoft.Base.Caching.StackExchangeRedis;
 using HsnSoft.Base.EventBus;
@@ -10,6 +13,7 @@ using HsnSoft.Base.Logging.Serilog;
 using HsnSoft.Base.MultiTenancy;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+builder.AddBaseHosting();   // the .env file, the limits of Kestrel, the proxies and the time to stop: the section Hosting
 builder.Logging.AddBaseSerilog(builder.Configuration, "Edx.Integration.FirmInvoice.Wcf");
 
 // the biggest file is a setting of the service (FirmInvoice:MaxUploadBytes); WCF reads its messages synchronously, which is why this host is not the REST one
@@ -24,6 +28,8 @@ builder.WebHost.ConfigureKestrel(options =>
 builder.Services
     .AddBaseRedis(builder.Configuration)
     .AddEdxMicroservice(builder.Configuration, "Edx.Integration.FirmInvoice WCF")
+    .AddEdxAuthentication(builder.Configuration)
+    .AddEdxAuthorization()
     .AddEdxEventBus(builder.Configuration)
     .AddBaseTenantClaims()
     .AddEdxPermissions(builder.Configuration)
@@ -33,9 +39,11 @@ builder.Services
     .AddFirmInvoiceApplication(builder.Configuration)
     .AddFirmInvoiceWcf();
 
-WebApplication app = builder.Build();
-
-app.UseEdxMicroservice();
-app.UseFirmInvoiceWcf();
-
-await app.RunAsync();
+// a failure to start (a setting that is missing, a database that cannot be prepared) is logged as critical and ends the process with the exit code 1
+return await builder.RunBaseAsync(app =>
+{
+    app.UseEdxMicroservice();
+    app.UseBaseAuthentication();
+    app.UseBaseAuthorization();
+    app.UseFirmInvoiceWcf();
+});

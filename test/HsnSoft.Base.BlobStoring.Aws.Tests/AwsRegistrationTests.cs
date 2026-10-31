@@ -1,3 +1,4 @@
+using Amazon.Runtime;
 using Amazon.S3;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,6 +23,22 @@ public class AwsRegistrationTests
         AwsBlobOptions options = provider.GetRequiredService<IOptions<AwsBlobOptions>>().Value;
 
         Assert.Equal(("eu-central-1", "http://s3.internal:9000", "key", "secret", false), (options.Region, options.ServiceUrl, options.AccessKey, options.SecretKey, options.ForcePathStyle));
+    }
+
+    [Fact]
+    public void TheTimeoutAndTheRetries_AreTheSdksOwn_UntilTheyAreSet()
+    {
+        using ServiceProvider unset = Build(("AwsS3:Region", "eu-central-1"));
+        using ServiceProvider set = Build(("AwsS3:Region", "eu-central-1"), ("AwsS3:TimeoutSeconds", "600"), ("AwsS3:MaxErrorRetry", "5"));
+
+        IClientConfig plain = unset.GetRequiredService<IAmazonS3>().Config;
+        IClientConfig configured = set.GetRequiredService<IAmazonS3>().Config;
+
+        // no total time for a request is set unless the service says so: an upload of a large file would be cut by one
+        Assert.True(plain.Timeout > TimeSpan.FromDays(1));
+        Assert.Equal(2, plain.MaxErrorRetry);
+        Assert.Equal(TimeSpan.FromSeconds(600), configured.Timeout);
+        Assert.Equal(5, configured.MaxErrorRetry);
     }
 
     [Fact]

@@ -1,0 +1,572 @@
+# The hosts of the Abc system in an environment of the cluster (uat, production): deploy.sh puts the environment into the words between double underscores and applies it.
+#  - Two pods of each host. The infrastructure is the one on this machine (host.docker.internal), the same for every environment: an environment is told apart by its databases (Abc_*_Uat, Abc_*_Prod),
+#    the prefix of its Redis keys and the virtual host of its events (see appsettings.<environment>.json).
+#  - The settings of a host are the secret settings-<host> (appsettings.<environment>.json with the passwords put in, mounted over the file of the image).
+#  - The three probes of the health endpoints (docs/Health.md): the startup probe gives a start up to 3 minutes, the readiness probe takes a pod that cannot reach a dependency out of the traffic, the liveness
+#    probe asks only the process; the timeout of a probe is longer than Health:CheckTimeout (5 s).
+#  - A stop that waits: Hosting:ShutdownTimeoutSeconds (30) + EventBus:ShutdownTimeout (30) + the preStop, so terminationGracePeriodSeconds is 80; a pod is replaced one at a time (maxUnavailable 0).
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: identity-service
+  labels: { app: identity-service }
+spec:
+  replicas: __REPLICAS__
+  strategy:
+    rollingUpdate: { maxUnavailable: 0, maxSurge: 1 }
+  selector:
+    matchLabels: { app: identity-service }
+  template:
+    metadata:
+      labels: { app: identity-service }
+    spec:
+      terminationGracePeriodSeconds: 80
+      containers:
+        - name: host
+          image: abc/identity-service:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: __ENVIRONMENT__
+          volumeMounts:
+            - { name: settings, mountPath: /app/appsettings.__ENVIRONMENT__.json, subPath: appsettings.__ENVIRONMENT__.json, readOnly: true }
+          startupProbe:
+            httpGet: { path: /health/startup, port: 8080 }
+            periodSeconds: 3
+            timeoutSeconds: 7
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: { path: /health/ready, port: 8080 }
+            periodSeconds: 5
+            timeoutSeconds: 7
+            failureThreshold: 2
+          livenessProbe:
+            httpGet: { path: /health/live, port: 8080 }
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          lifecycle:
+            preStop:
+              exec: { command: ["sleep", "5"] }
+          resources:
+            requests: { cpu: 50m, memory: 128Mi }
+            limits: { memory: 512Mi }
+      volumes:
+        - name: settings
+          secret: { secretName: settings-identity-service }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: identity-service
+spec:
+  selector: { app: identity-service }
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-server-service
+  labels: { app: auth-server-service }
+spec:
+  replicas: __REPLICAS__
+  strategy:
+    rollingUpdate: { maxUnavailable: 0, maxSurge: 1 }
+  selector:
+    matchLabels: { app: auth-server-service }
+  template:
+    metadata:
+      labels: { app: auth-server-service }
+    spec:
+      terminationGracePeriodSeconds: 80
+      containers:
+        - name: host
+          image: abc/auth-server-service:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: __ENVIRONMENT__
+          volumeMounts:
+            - { name: settings, mountPath: /app/appsettings.__ENVIRONMENT__.json, subPath: appsettings.__ENVIRONMENT__.json, readOnly: true }
+            - { name: private-key, mountPath: /app/private_key.xml, subPath: private_key.xml, readOnly: true }
+          startupProbe:
+            httpGet: { path: /health/startup, port: 8080 }
+            periodSeconds: 3
+            timeoutSeconds: 7
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: { path: /health/ready, port: 8080 }
+            periodSeconds: 5
+            timeoutSeconds: 7
+            failureThreshold: 2
+          livenessProbe:
+            httpGet: { path: /health/live, port: 8080 }
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          lifecycle:
+            preStop:
+              exec: { command: ["sleep", "5"] }
+          resources:
+            requests: { cpu: 50m, memory: 128Mi }
+            limits: { memory: 512Mi }
+      volumes:
+        - name: settings
+          secret: { secretName: settings-auth-server-service }
+        - name: private-key
+          secret: { secretName: abc-auth-private-key }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-server-service
+spec:
+  selector: { app: auth-server-service }
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: product-service
+  labels: { app: product-service }
+spec:
+  replicas: __REPLICAS__
+  strategy:
+    rollingUpdate: { maxUnavailable: 0, maxSurge: 1 }
+  selector:
+    matchLabels: { app: product-service }
+  template:
+    metadata:
+      labels: { app: product-service }
+    spec:
+      terminationGracePeriodSeconds: 80
+      containers:
+        - name: host
+          image: abc/product-service:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: __ENVIRONMENT__
+          volumeMounts:
+            - { name: settings, mountPath: /app/appsettings.__ENVIRONMENT__.json, subPath: appsettings.__ENVIRONMENT__.json, readOnly: true }
+          startupProbe:
+            httpGet: { path: /health/startup, port: 8080 }
+            periodSeconds: 3
+            timeoutSeconds: 7
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: { path: /health/ready, port: 8080 }
+            periodSeconds: 5
+            timeoutSeconds: 7
+            failureThreshold: 2
+          livenessProbe:
+            httpGet: { path: /health/live, port: 8080 }
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          lifecycle:
+            preStop:
+              exec: { command: ["sleep", "5"] }
+          resources:
+            requests: { cpu: 50m, memory: 128Mi }
+            limits: { memory: 512Mi }
+      volumes:
+        - name: settings
+          secret: { secretName: settings-product-service }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: product-service
+spec:
+  selector: { app: product-service }
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shipment-service
+  labels: { app: shipment-service }
+spec:
+  replicas: __REPLICAS__
+  strategy:
+    rollingUpdate: { maxUnavailable: 0, maxSurge: 1 }
+  selector:
+    matchLabels: { app: shipment-service }
+  template:
+    metadata:
+      labels: { app: shipment-service }
+    spec:
+      terminationGracePeriodSeconds: 80
+      containers:
+        - name: host
+          image: abc/shipment-service:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: __ENVIRONMENT__
+          volumeMounts:
+            - { name: settings, mountPath: /app/appsettings.__ENVIRONMENT__.json, subPath: appsettings.__ENVIRONMENT__.json, readOnly: true }
+          startupProbe:
+            httpGet: { path: /health/startup, port: 8080 }
+            periodSeconds: 3
+            timeoutSeconds: 7
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: { path: /health/ready, port: 8080 }
+            periodSeconds: 5
+            timeoutSeconds: 7
+            failureThreshold: 2
+          livenessProbe:
+            httpGet: { path: /health/live, port: 8080 }
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          lifecycle:
+            preStop:
+              exec: { command: ["sleep", "5"] }
+          resources:
+            requests: { cpu: 50m, memory: 128Mi }
+            limits: { memory: 512Mi }
+      volumes:
+        - name: settings
+          secret: { secretName: settings-shipment-service }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: shipment-service
+spec:
+  selector: { app: shipment-service }
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-service
+  labels: { app: order-service }
+spec:
+  replicas: __REPLICAS__
+  strategy:
+    rollingUpdate: { maxUnavailable: 0, maxSurge: 1 }
+  selector:
+    matchLabels: { app: order-service }
+  template:
+    metadata:
+      labels: { app: order-service }
+    spec:
+      terminationGracePeriodSeconds: 80
+      containers:
+        - name: host
+          image: abc/order-service:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: __ENVIRONMENT__
+          volumeMounts:
+            - { name: settings, mountPath: /app/appsettings.__ENVIRONMENT__.json, subPath: appsettings.__ENVIRONMENT__.json, readOnly: true }
+          startupProbe:
+            httpGet: { path: /health/startup, port: 8080 }
+            periodSeconds: 3
+            timeoutSeconds: 7
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: { path: /health/ready, port: 8080 }
+            periodSeconds: 5
+            timeoutSeconds: 7
+            failureThreshold: 2
+          livenessProbe:
+            httpGet: { path: /health/live, port: 8080 }
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          lifecycle:
+            preStop:
+              exec: { command: ["sleep", "5"] }
+          resources:
+            requests: { cpu: 50m, memory: 128Mi }
+            limits: { memory: 512Mi }
+      volumes:
+        - name: settings
+          secret: { secretName: settings-order-service }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-service
+spec:
+  selector: { app: order-service }
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway-commercial
+  labels: { app: gateway-commercial }
+spec:
+  replicas: __REPLICAS__
+  strategy:
+    rollingUpdate: { maxUnavailable: 0, maxSurge: 1 }
+  selector:
+    matchLabels: { app: gateway-commercial }
+  template:
+    metadata:
+      labels: { app: gateway-commercial }
+    spec:
+      terminationGracePeriodSeconds: 80
+      containers:
+        - name: host
+          image: abc/gateway-commercial:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: __ENVIRONMENT__
+          volumeMounts:
+            - { name: settings, mountPath: /app/appsettings.__ENVIRONMENT__.json, subPath: appsettings.__ENVIRONMENT__.json, readOnly: true }
+          startupProbe:
+            httpGet: { path: /health/startup, port: 8080 }
+            periodSeconds: 3
+            timeoutSeconds: 7
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: { path: /health/ready, port: 8080 }
+            periodSeconds: 5
+            timeoutSeconds: 7
+            failureThreshold: 2
+          livenessProbe:
+            httpGet: { path: /health/live, port: 8080 }
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          lifecycle:
+            preStop:
+              exec: { command: ["sleep", "5"] }
+          resources:
+            requests: { cpu: 50m, memory: 128Mi }
+            limits: { memory: 512Mi }
+      volumes:
+        - name: settings
+          secret: { secretName: settings-gateway-commercial }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway-commercial
+spec:
+  type: LoadBalancer
+  selector: { app: gateway-commercial }
+  ports:
+    - port: __PORT_GATEWAY_COMMERCIAL__
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway-public
+  labels: { app: gateway-public }
+spec:
+  replicas: __REPLICAS__
+  strategy:
+    rollingUpdate: { maxUnavailable: 0, maxSurge: 1 }
+  selector:
+    matchLabels: { app: gateway-public }
+  template:
+    metadata:
+      labels: { app: gateway-public }
+    spec:
+      terminationGracePeriodSeconds: 80
+      containers:
+        - name: host
+          image: abc/gateway-public:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: __ENVIRONMENT__
+          volumeMounts:
+            - { name: settings, mountPath: /app/appsettings.__ENVIRONMENT__.json, subPath: appsettings.__ENVIRONMENT__.json, readOnly: true }
+          startupProbe:
+            httpGet: { path: /health/startup, port: 8080 }
+            periodSeconds: 3
+            timeoutSeconds: 7
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: { path: /health/ready, port: 8080 }
+            periodSeconds: 5
+            timeoutSeconds: 7
+            failureThreshold: 2
+          livenessProbe:
+            httpGet: { path: /health/live, port: 8080 }
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          lifecycle:
+            preStop:
+              exec: { command: ["sleep", "5"] }
+          resources:
+            requests: { cpu: 50m, memory: 128Mi }
+            limits: { memory: 512Mi }
+      volumes:
+        - name: settings
+          secret: { secretName: settings-gateway-public }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway-public
+spec:
+  type: LoadBalancer
+  selector: { app: gateway-public }
+  ports:
+    - port: __PORT_GATEWAY_PUBLIC__
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: commercial-web
+  labels: { app: commercial-web }
+spec:
+  replicas: __REPLICAS__
+  strategy:
+    rollingUpdate: { maxUnavailable: 0, maxSurge: 1 }
+  selector:
+    matchLabels: { app: commercial-web }
+  template:
+    metadata:
+      labels: { app: commercial-web }
+    spec:
+      terminationGracePeriodSeconds: 80
+      containers:
+        - name: host
+          image: abc/commercial-web:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: __ENVIRONMENT__
+          volumeMounts:
+            - { name: settings, mountPath: /app/appsettings.__ENVIRONMENT__.json, subPath: appsettings.__ENVIRONMENT__.json, readOnly: true }
+          startupProbe:
+            httpGet: { path: /health/startup, port: 8080 }
+            periodSeconds: 3
+            timeoutSeconds: 7
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: { path: /health/ready, port: 8080 }
+            periodSeconds: 5
+            timeoutSeconds: 7
+            failureThreshold: 2
+          livenessProbe:
+            httpGet: { path: /health/live, port: 8080 }
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          lifecycle:
+            preStop:
+              exec: { command: ["sleep", "5"] }
+          resources:
+            requests: { cpu: 50m, memory: 128Mi }
+            limits: { memory: 512Mi }
+      volumes:
+        - name: settings
+          secret: { secretName: settings-commercial-web }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: commercial-web
+spec:
+  type: LoadBalancer
+  selector: { app: commercial-web }
+  ports:
+    - port: __PORT_COMMERCIAL_WEB__
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: public-web
+  labels: { app: public-web }
+spec:
+  replicas: __REPLICAS__
+  strategy:
+    rollingUpdate: { maxUnavailable: 0, maxSurge: 1 }
+  selector:
+    matchLabels: { app: public-web }
+  template:
+    metadata:
+      labels: { app: public-web }
+    spec:
+      terminationGracePeriodSeconds: 80
+      containers:
+        - name: host
+          image: abc/public-web:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: __ENVIRONMENT__
+          volumeMounts:
+            - { name: settings, mountPath: /app/appsettings.__ENVIRONMENT__.json, subPath: appsettings.__ENVIRONMENT__.json, readOnly: true }
+          startupProbe:
+            httpGet: { path: /health/startup, port: 8080 }
+            periodSeconds: 3
+            timeoutSeconds: 7
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: { path: /health/ready, port: 8080 }
+            periodSeconds: 5
+            timeoutSeconds: 7
+            failureThreshold: 2
+          livenessProbe:
+            httpGet: { path: /health/live, port: 8080 }
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          lifecycle:
+            preStop:
+              exec: { command: ["sleep", "5"] }
+          resources:
+            requests: { cpu: 50m, memory: 128Mi }
+            limits: { memory: 512Mi }
+      volumes:
+        - name: settings
+          secret: { secretName: settings-public-web }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: public-web
+spec:
+  type: LoadBalancer
+  selector: { app: public-web }
+  ports:
+    - port: __PORT_PUBLIC_WEB__
+      targetPort: 8080

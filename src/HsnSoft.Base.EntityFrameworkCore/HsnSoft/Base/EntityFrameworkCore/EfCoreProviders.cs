@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using HsnSoft.Base.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,7 +25,20 @@ public interface IEfCoreProvider
     string Name { get; }
 
     void Configure(DbContextOptionsBuilder options, string connectionString);
+
+    /// <summary>Configures the context and says how long it waits and how often it retries (<see cref="EfCoreOptions"/>). A provider that does not know them configures the context as before.</summary>
+    void Configure(DbContextOptionsBuilder options, string connectionString, EfCoreOptions tuning) => Configure(options, connectionString);
 }
+
+/// <summary>What a provider offers when it can lock its server for the startup steps of a database (<see cref="IStartupLock"/>): the three providers of the framework do.</summary>
+public interface IStartupLockProvider
+{
+    IStartupLock CreateStartupLock(string connectionString);
+}
+
+/// <summary>The name of the connection string of the database of a context: what the startup steps of the context (<c>EnsureDatabaseCreatedAsync</c>) lock and ask the ownership of.</summary>
+public sealed record StartupContext<TContext>(string ConnectionName)
+    where TContext : DbContext;
 
 /// <summary>The providers a service offers; the provider of a context is named by the code of the service (<c>AddBaseEfCore</c>).</summary>
 public sealed class EfCoreProviderOptions
@@ -67,10 +81,15 @@ public static class EfCoreProviderServiceCollectionExtensions
         string connectionString = configuration.GetConnectionString(connectionName)
                                ?? throw new InvalidOperationException($"ConnectionStrings:{connectionName} is required (the provider is {selected.Name}).");
 
+        EfCoreOptions tuning = configuration.GetSection(EfCoreOptions.SectionName).Get<EfCoreOptions>() ?? new EfCoreOptions();
+
         services.AddBaseEntityFramework();
+        // who prepares this database (SeedStartupConnections) and how it is locked while the pods of the owner do it
+        services.AddStartupDatabase(configuration, connectionName, _ => (selected as IStartupLockProvider)?.CreateStartupLock(connectionString));
+        services.AddSingleton(new StartupContext<TContext>(connectionName));
         services.AddDbContext<TContext>((serviceProvider, builder) =>
         {
-            selected.Configure(builder, connectionString);
+            selected.Configure(builder, connectionString, tuning);
             builder.UseBaseEntityConcepts(serviceProvider);
         });
 
