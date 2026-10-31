@@ -24,6 +24,7 @@ builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = 
 builder.Services
     .AddBaseRedis(builder.Configuration)
     .AddEdxMicroservice(builder.Configuration, "Edx.Integration.FirmInvoice gRPC")
+    .AddBaseHealthChecks(builder.Configuration)   // /health/live, /startup and /ready: leave it out and the service has none
     .AddEdxAuthentication(builder.Configuration)
     .AddEdxAuthorization()
     .AddEdxEventBus(builder.Configuration)
@@ -39,6 +40,7 @@ builder.Services
 return await builder.RunBaseAsync(app =>
 {
     app.UseEdxMicroservice();
+    app.MapBaseHealth();
     app.UseBaseAuthentication();
     app.UseBaseAuthorization();
     app.MapFirmInvoiceGrpc();

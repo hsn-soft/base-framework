@@ -19,6 +19,12 @@ public sealed class EfCoreOptions
     /// <summary>How long one command may run before it is ended. Default 30 seconds (the one of the providers); a service with a long report sets a longer one for that context.</summary>
     public TimeSpan CommandTimeout { get; set; } = TimeSpan.FromSeconds(30);
 
+    /// <summary>
+    /// Whether the commands that run are logged (the log of EF Core of category <c>Microsoft.EntityFrameworkCore.Database.Command</c>, at Information: the text of the command and how long it took). Off by default: a busy service writes a line
+    /// for every query. A command that <b>fails</b> is logged whatever this says. The values of the parameters are never in the log (they are data).
+    /// </summary>
+    public bool LogCommands { get; set; }
+
     /// <summary>The command timeout in whole seconds, as the providers take it.</summary>
     public int CommandTimeoutSeconds => (int)Math.Ceiling(CommandTimeout.TotalSeconds);
 }

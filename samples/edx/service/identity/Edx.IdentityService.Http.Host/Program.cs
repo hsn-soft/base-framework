@@ -17,6 +17,7 @@ builder.Logging.AddBaseSerilog(builder.Configuration, "Edx.IdentityService");
 builder.Services
     .AddBaseRedis(builder.Configuration)
     .AddEdxMicroservice(builder.Configuration, "Edx.IdentityService API")
+    .AddBaseHealthChecks(builder.Configuration)   // /health/live, /startup and /ready: leave it out and the service has none
     .AddEdxAuthentication(builder.Configuration)
     .AddEdxAuthorization()
     // this service has tenants: the tenant of a request is the one of its token
@@ -31,6 +32,7 @@ builder.Services
 return await builder.RunBaseAsync(app =>
 {
     app.UseEdxMicroservice();
+    app.MapBaseHealth();
     app.UseBaseAuthentication();
     app.UseBaseAuthorization();
     app.MapControllers();

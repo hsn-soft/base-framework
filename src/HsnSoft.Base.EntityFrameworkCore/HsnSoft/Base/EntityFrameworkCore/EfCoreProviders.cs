@@ -5,6 +5,7 @@ using HsnSoft.Base.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace HsnSoft.Base.EntityFrameworkCore;
 
@@ -84,6 +85,8 @@ public static class EfCoreProviderServiceCollectionExtensions
         EfCoreOptions tuning = configuration.GetSection(EfCoreOptions.SectionName).Get<EfCoreOptions>() ?? new EfCoreOptions();
 
         services.AddBaseEntityFramework();
+        // the commands that run: a rule of the category of the commands is more specific than the ones of Logging:LogLevel, so it is the word (a failed command is an Error and is logged either way)
+        services.AddLogging(logging => logging.AddFilter(CommandLogCategory, tuning.LogCommands ? LogLevel.Information : LogLevel.Warning));
         // who prepares this database (SeedStartupConnections) and how it is locked while the pods of the owner do it
         services.AddStartupDatabase(configuration, connectionName, _ => (selected as IStartupLockProvider)?.CreateStartupLock(connectionString));
         services.AddSingleton(new StartupContext<TContext>(connectionName));
@@ -98,6 +101,9 @@ public static class EfCoreProviderServiceCollectionExtensions
         services.AddSingleton(new HealthCheckName(selected.Name));
         return services.AddDbContextHealthCheck<TContext>(nameTaken ? $"{selected.Name}-{typeof(TContext).Name}" : selected.Name);
     }
+
+    /// <summary>The category EF Core logs the commands it runs under.</summary>
+    internal const string CommandLogCategory = "Microsoft.EntityFrameworkCore.Database.Command";
 
     private sealed record HealthCheckName(string Value);
 

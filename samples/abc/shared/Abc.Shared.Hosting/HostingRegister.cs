@@ -12,7 +12,7 @@ public static class HostingRegister
 {
     /// <summary>
     /// Registers what every Abc host shares: the masker and the console logger, the request and response logs (a gateway has <c>RequestLogging:Role</c> = <c>Gateway</c>), the
-    /// answers of a web api (<c>BaseResponse</c>, the exception handler), Swagger and the health checks (section <c>Health</c>). Who the caller is and what the caller may do are the choice of the host: <c>AddAbcAuthentication</c> and <c>AddAbcAuthorization</c> (<c>AddEdxAuthentication</c> and <c>AddEdxAuthorization</c>).
+    /// answers of a web api (<c>BaseResponse</c>, the exception handler), Swagger. The health endpoints (<c>AddBaseHealthChecks</c>, <c>MapBaseHealth</c>), who the caller is and what the caller may do are the choice of the host: <c>AddAbcAuthentication</c> and <c>AddAbcAuthorization</c> (<c>AddEdxAuthentication</c> and <c>AddEdxAuthorization</c>).
     /// </summary>
     /// <param name="services">The service collection.</param>
     /// <param name="configuration">Holds <c>RequestLogging</c>, <c>Swagger</c> and <c>Jwt</c>.</param>
@@ -32,8 +32,7 @@ public static class HostingRegister
         services
             .AddBaseLogging()
             .AddBaseRequestLogging(configuration)
-            .AddBaseWebApi()
-            .AddBaseHealthChecks(configuration);   // the checks of the packages this host has, the section Health (a check is switched off by its name)
+            .AddBaseWebApi();
 
         if (swaggerBearerButton)
         {
@@ -72,7 +71,6 @@ public static class HostingRegister
         app.UseBaseRequestLogging();
         app.UseBaseExceptionHandling();
         app.UseBaseSwagger();
-        app.MapBaseHealth();
         app.MapBaseInfo();   // GET /: the service, the instance, the environment and the version
         return app;
     }

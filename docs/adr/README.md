@@ -28,6 +28,7 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
+| [0124](0124-the-commands-sent-to-a-database-are-logged-only-when-a-setting-says-so.md) | The commands sent to a database are logged only when a setting says so | Accepted | 2026-11-01 |
 | [0123](0123-the-pre-commit-style-format-builds-the-solution-first.md) | The pre-commit style format builds the solution first, so a using that is needed is never removed | Accepted | 2026-11-01 |
 | [0122](0122-a-service-has-its-own-audiences-and-chooses-authentication-and-authorization.md) | A service has its own audience, the token has a list, the issuer is checked outside Development, and authentication and authorization are choices | Accepted | 2026-10-31 |
 | [0121](0121-a-process-knows-who-it-is-and-the-thread-pool-minimum-is-a-setting.md) | A process knows who it is (`AppInfo`, `GET /`), the minimum of the thread pool is a setting, and the handlers of the event bus have a limit | Accepted | 2026-10-31 |

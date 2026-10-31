@@ -20,20 +20,20 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.AddBaseHosting();   // the .env file, the port, the limits of Kestrel, the proxies and the time to stop: the section Hosting
 builder.Logging.AddBaseSerilog(builder.Configuration, "Abc.ProductService");
 
-// what every Abc microservice has (logging, the web api shell, JWT, Swagger, health), then what this service has
+// what every Abc microservice has (logging, the web api shell, Swagger), then what this service chooses (health, authentication, authorization, the event bus, tenants) and has
 builder.Services
     // the texts in the languages of the system, outermost layer first: the framework's (always), the Abc services', this service's own
     .AddBaseLocalization(builder.Configuration, options => options.AddAbcSharedTexts().AddEmbedded(typeof(Product).Assembly))
     .AddBaseRedis(builder.Configuration)
     .AddAbcMicroservice(builder.Configuration, "Abc.ProductService API")
+    .AddBaseHealthChecks(builder.Configuration)   // /health/live, /startup and /ready: leave it out and the service has none
     .AddAbcAuthentication(builder.Configuration)
     .AddAbcAuthorization()
-    .AddAbcEventBus(builder.Configuration)
+    .AddAbcEventBus(builder.Configuration, typeof(EventHandlersAssemblyMarker).Assembly, new Dictionary<string, ushort> { [nameof(OrderCreatedEto)] = 10 })
     // this service has tenants: the tenant of a request is the one of its token, and it travels with the messages
     .AddBaseTenantClaims()
     .AddBaseTenantEventBus()
     // ten orders are set aside at the same time: the stock is taken in one step of the database (IProductRepository), so the number at once does not change the result
-    .AddEventHandlers(typeof(EventHandlersAssemblyMarker).Assembly, new Dictionary<string, ushort> { [nameof(OrderCreatedEto)] = 10 })
     .AddProductPersistence(builder.Configuration, AbcTenants.Acme)
     .AddProductStockPersistence(builder.Configuration)
     // the inbox of the service (in its database, with the collections of the products): a message that comes twice is handled once
@@ -44,6 +44,7 @@ builder.Services
 return await builder.RunBaseAsync(app =>
 {
     app.UseAbcMicroservice();
+    app.MapBaseHealth();
     app.UseBaseAuthentication();
     app.UseBaseAuthorization();
     app.UseBaseLocalization();   // after the caller is known (the hosting reads the token): the language is the one of the token, else of the header

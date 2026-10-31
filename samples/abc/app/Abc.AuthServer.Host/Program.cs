@@ -20,6 +20,7 @@ builder.Services
     .AddBaseLocalization(builder.Configuration, options => options.AddAbcSharedTexts())
     .AddBaseRedis(builder.Configuration)
     .AddAbcMicroservice(builder.Configuration, "Abc.AuthServer API")
+    .AddBaseHealthChecks(builder.Configuration)   // /health/live, /startup and /ready: leave it out and the service has none
     .AddAbcAuthentication(builder.Configuration)
     .AddAbcAuthorization()
     .AddIdentityPersistence(builder.Configuration, AbcTenants.System, AbcTenants.Acme)
@@ -34,6 +35,7 @@ return await builder.RunBaseAsync(app =>
     _ = app.Services.GetRequiredService<TokenService>();
 
     app.UseAbcMicroservice();
+    app.MapBaseHealth();
     app.UseBaseAuthentication();
     app.UseBaseAuthorization();
     app.UseBaseLocalization();   // after the caller is known (the hosting reads the token): the language is the one of the token, else of the header

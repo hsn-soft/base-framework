@@ -12,6 +12,7 @@ builder.WebHost.ConfigureEdxGatewayKestrel();
 
 builder.Services
     .AddEdxGateway(builder.Configuration, "Edx.Gateway API")
+    .AddBaseHealthChecks(builder.Configuration)   // /health/live, /startup and /ready: leave it out and the service has none
     .AddEdxAuthentication(builder.Configuration)
     .AddBaseRedis(builder.Configuration);
 
@@ -19,5 +20,6 @@ builder.Services
 return await builder.RunBaseAsync(app =>
 {
     app.UseEdxGateway();
+    app.MapBaseHealth();
     app.UseBaseAuthentication();   // the user is known to the logs of the gateway; the services decide who may do what
 });
