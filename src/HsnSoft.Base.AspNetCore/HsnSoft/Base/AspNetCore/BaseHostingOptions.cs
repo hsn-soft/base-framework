@@ -11,6 +11,9 @@ public sealed class BaseHostingOptions
     /// <summary>How long a stopping host waits for its hosted services (the consumers of the event bus finish the messages they handle). The terminationGracePeriodSeconds of the pod has to cover it. Default: 30 seconds.</summary>
     public int ShutdownTimeoutSeconds { get; set; } = 30;
 
+    /// <summary>The thread pool of the process.</summary>
+    public BaseThreadPoolOptions ThreadPool { get; set; } = new();
+
     /// <summary>What Kestrel accepts.</summary>
     public BaseKestrelOptions Kestrel { get; set; } = new();
 
@@ -60,4 +63,17 @@ public sealed class BaseForwardedHeadersOptions
 
     /// <summary>How many proxies are believed in a chain. Default: 1.</summary>
     public int ForwardLimit { get; set; } = 1;
+}
+
+/// <summary>
+/// The threads the pool has ready (section <c>Hosting:ThreadPool</c>). The pool starts with as many threads as there are cores and adds one every half second when all are busy; a service that blocks
+/// threads (a synchronous call, a lock) or has many consumers waits for those threads while it is busy. A value is only ever <b>raised</b>: a minimum lower than the one in force is ignored.
+/// </summary>
+public sealed class BaseThreadPoolOptions
+{
+    /// <summary>The worker threads ready at once; null leaves the default (the number of cores).</summary>
+    public int? MinWorkerThreads { get; set; }
+
+    /// <summary>The threads for completion ports (I/O) ready at once; null leaves the default.</summary>
+    public int? MinCompletionPortThreads { get; set; }
 }

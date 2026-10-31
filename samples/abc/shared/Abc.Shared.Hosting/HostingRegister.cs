@@ -72,6 +72,7 @@ public static class HostingRegister
         }
 
         app.MapBaseHealth();
+        app.MapBaseInfo();   // GET /: the service, the instance, the environment and the version
         return app;
     }
 }

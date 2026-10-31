@@ -45,7 +45,7 @@ public static class GatewayRegister
                 }
             }
         });
-        services.AddReverseProxy().LoadFromMemory(proxyRoutes, proxyClusters);
+        services.AddReverseProxy().LoadFromMemory((IReadOnlyList<Yarp.ReverseProxy.Configuration.RouteConfig>)proxyRoutes, (IReadOnlyList<Yarp.ReverseProxy.Configuration.ClusterConfig>)proxyClusters);
 
         // a back office in a browser calls the gateway from its own address: those origins, and nobody else's, may
         string[] origins = configuration.GetSection(GatewayPolicyOptions.SectionName).Get<GatewayPolicyOptions>()?.Cors.AllowedOrigins ?? [];

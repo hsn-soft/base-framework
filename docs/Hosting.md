@@ -21,6 +21,7 @@ return await builder.RunBaseAsync(app =>
   "Urls": "http://localhost:5420",
   "Hosting": {
     "ShutdownTimeoutSeconds": 30,
+    "ThreadPool": { "MinWorkerThreads": 32, "MinCompletionPortThreads": 32 },
     "Kestrel": {
       "MaxRequestBodySize": 30000000,
       "MaxRequestBufferSize": 1048576,
@@ -39,6 +40,20 @@ return await builder.RunBaseAsync(app =>
 - A Kestrel value that is not set keeps Kestrel's default (the values above are the defaults); a body limit of `0` is no limit.
 - `ShutdownTimeoutSeconds` has to be shorter than the `terminationGracePeriodSeconds` of the pod.
 - **Forwarded headers** are believed only from the listed proxies or networks. With both lists empty only a proxy on the same machine is believed.
+
+## Who this instance is: `AppInfo` and `GET /`
+
+`AddBaseHosting` makes an `AppInfo` (service, instance, environment, version, start) and registers it; `MapBaseInfo()` answers it at `GET /` for anyone, as JSON:
+
+```json
+{ "name": "Abc.OrderService.Http.Host", "id": "abc-order-7d9f-x2k", "environment": "uat", "version": "2026.10.41", "startedAt": "2026-10-31T20:00:00+00:00" }
+```
+
+`name` is `Service:Name` (else the name of the application), `id` is `APP_ID`, else `POD_NAME`, else `HOSTNAME` (a pod sets `POD_NAME` from its own name), `version` is `BUILD_NUMBER` (else the version of the assembly).
+
+## The thread pool
+
+`Hosting:ThreadPool` raises the minimum threads the pool has ready (`MinWorkerThreads`, `MinCompletionPortThreads`); a value lower than the one in force is ignored and the maximum is never touched.
 
 ## The `.env` file
 

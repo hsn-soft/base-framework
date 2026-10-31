@@ -1,10 +1,14 @@
 using System;
 using System.Linq;
 using System.Net;
+using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -35,10 +39,41 @@ public static class BaseHostingExtensions
             Apply(limits, kestrel.Limits);
         });
 
+        ApplyThreadPool(options.ThreadPool);
+        builder.Services.AddSingleton(AppInfo.Create(builder.Environment, builder.Configuration["Service:Name"]));
         builder.Services.AddOptions<BaseHostingOptions>().Bind(builder.Configuration.GetSection(BaseHostingOptions.SectionName));
         builder.Services.Configure<HostOptions>(host => host.ShutdownTimeout = TimeSpan.FromSeconds(options.ShutdownTimeoutSeconds));
         builder.Services.Configure<ForwardedHeadersOptions>(forwarded => Apply(options.ForwardedHeaders, forwarded));
         return builder;
+    }
+
+    /// <summary>
+    /// Maps <c>GET /</c>: who this instance is (<see cref="AppInfo"/>: the service, the instance, the environment, the version, the start), for anyone who can reach it, a person with a browser or a probe of a platform. It says nothing a
+    /// log does not; the address is the root of the service, so a service that has a page there maps its own instead.
+    /// </summary>
+    public static IEndpointRouteBuilder MapBaseInfo(this IEndpointRouteBuilder endpoints)
+    {
+        ArgumentNullException.ThrowIfNull(endpoints);
+
+        endpoints.MapGet("/", (AppInfo info) => Results.Json(info, new JsonSerializerOptions(JsonSerializerDefaults.Web))).AllowAnonymous().ExcludeFromDescription();
+        return endpoints;
+    }
+
+    /// <summary>The minimum threads of the pool, raised to the settings; a value lower than the one in force is left alone. Returns what is in force after it.</summary>
+    /// <param name="options">The settings.</param>
+    public static (int Worker, int CompletionPort) ApplyThreadPool(BaseThreadPoolOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        ThreadPool.GetMinThreads(out int worker, out int completion);
+        int wantedWorker = Math.Max(worker, options.MinWorkerThreads ?? 0);
+        int wantedCompletion = Math.Max(completion, options.MinCompletionPortThreads ?? 0);
+        if ((wantedWorker != worker || wantedCompletion != completion) && ThreadPool.SetMinThreads(wantedWorker, wantedCompletion))
+        {
+            return (wantedWorker, wantedCompletion);
+        }
+
+        return (worker, completion);
     }
 
     /// <summary>

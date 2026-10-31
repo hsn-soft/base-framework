@@ -43,7 +43,7 @@ public static class GatewayRegister
                 }
             }
         });
-        services.AddReverseProxy().LoadFromMemory(proxyRoutes, proxyClusters);
+        services.AddReverseProxy().LoadFromMemory((IReadOnlyList<Yarp.ReverseProxy.Configuration.RouteConfig>)proxyRoutes, (IReadOnlyList<Yarp.ReverseProxy.Configuration.ClusterConfig>)proxyClusters);
         return services;
     }
 

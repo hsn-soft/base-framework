@@ -10,3 +10,4 @@
   `GatewayPolicies:TrustedProxyIps` to the same options, so the client address is believed once, from one place.
 - The microservices, the integration hosts, the mock and the auth servers write the limits of Kestrel and the forwarded headers they run with in `Hosting` of `appsettings.json`; the port is `Urls` of each environment's settings
   (a specific port in development, `http://+:8080` in docker, uat and production). The gateways keep their own policy for the limits of the public network.
+- The shared hosting of both samples maps `GET /` (`MapBaseInfo`, *framework ADR-0121*) next to the health endpoints, and the services write `Hosting:ThreadPool` (32 and 32) in their settings.
