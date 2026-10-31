@@ -3,6 +3,7 @@
 | Where | What |
 |---|---|
 | [`adr/`](adr/README.md) | **Architecture decision records**: why the repository is the way it is. Start with [the index](adr/README.md). Every architecture decision is added there when it is taken. |
+| [`Overview.md`](Overview.md) | The packages (one capability each) and what each depends on, how a product composes them, the tests and the configuration. The text that was in the root README |
 | [`Releasing.md`](Releasing.md) | How a version gets to NuGet: the versions, the branches (`dev` → `rel/nuget-candidate` → `rel/nuget-regular`), what to do for a candidate, a stable version, a new month and an urgent fix |
 | [`Logging.md`](Logging.md) | The logging model: the log types, the chain logs, the fields, facilities, where each decision is made |
 | [`LogLevels.md`](LogLevels.md) | What each level setting changes and where a log of each level can be seen (console, Graylog, file) |
@@ -16,4 +17,4 @@
 | [`Swagger.md`](Swagger.md) | Swagger for a service and for a gateway |
 
 The reference documents say **how to use** something; the ADRs say **why** it is that way. When a rule is in both, the ADR is the authority.
-Other documents: the root [README](../README.md) (the packages), [CONTRIBUTING](../CONTRIBUTING.md) (how we work), `scripts/*/README.md` (the tools).
+Other documents: the root [README](../README.md) (what the framework is, the badges), [CONTRIBUTING](../CONTRIBUTING.md) (how we work), `scripts/*/README.md` (the tools).

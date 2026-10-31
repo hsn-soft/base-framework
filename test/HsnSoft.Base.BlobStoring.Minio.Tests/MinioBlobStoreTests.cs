@@ -81,7 +81,7 @@ public class MinioBlobStoreTests
     }
 
     /// <summary>The body of an object: its bytes are made as they are read, and how many were made is known.</summary>
-    private sealed class Body(long length, long failAfter = -1) : Stream
+    private sealed class Body(long length, long failAfter = -1, ManualResetEventSlim? failGate = null) : Stream
     {
         private long _made;
 
@@ -109,6 +109,8 @@ public class MinioBlobStoreTests
         {
             if (failAfter >= 0 && _made >= failAfter)
             {
+                // the failure comes once the test has the stream: a body that fails before the opener looked at the first bytes fails the opening, not a read
+                failGate?.Wait(TimeSpan.FromSeconds(30));
                 throw new IOException("the connection to the store broke");
             }
 
@@ -270,8 +272,10 @@ public class MinioBlobStoreTests
     [Fact]
     public async Task AFailureAfterTheFirstBytes_IsThrownByTheRead_NotHidden()
     {
-        (MinioBlobStore store, _) = StoreWith(async (callback, token) => await callback(new Body(10_000_000, failAfter: 200_000), token));
+        using ManualResetEventSlim opened = new();
+        (MinioBlobStore store, _) = StoreWith(async (callback, token) => await callback(new Body(10_000_000, failAfter: 200_000, opened), token));
         await using Stream stream = (await store.OpenReadAsync("b", "o"))!;
+        opened.Set();
 
         await Assert.ThrowsAsync<IOException>(async () =>
         {

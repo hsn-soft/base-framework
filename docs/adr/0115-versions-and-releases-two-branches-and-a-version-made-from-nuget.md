@@ -1,6 +1,6 @@
 # ADR-0115: Versions and releases: a candidate branch and a regular branch, and a version made from what NuGet has
 
-- **Status:** Accepted
+- **Status:** Accepted (the pipeline on the pull requests into the release branches is superseded by [ADR-0116](0116-the-release-branches-run-the-ci-on-a-push-and-have-their-own-badges.md): it runs on the push)
 - **Date:** 2026-10-31 (replaces how the version is kept and how a release is made in [ADR-0007](0007-build-settings-and-versioning.md))
 
 ## Context
