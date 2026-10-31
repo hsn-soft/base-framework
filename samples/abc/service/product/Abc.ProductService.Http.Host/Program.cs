@@ -29,17 +29,13 @@ builder.Services
     .AddBaseTenantEventBus()
     // ten orders are set aside at the same time: the stock is taken in one step of the database (IProductRepository), so the number at once does not change the result
     .AddEventHandlers(typeof(EventHandlersAssemblyMarker).Assembly, new Dictionary<string, ushort> { [nameof(OrderCreatedEto)] = 10 })
-    .AddProductPersistence(builder.Configuration)
+    .AddProductPersistence(builder.Configuration, AbcTenants.Acme)
     .AddProductStockPersistence(builder.Configuration)
     // the inbox of the service (in its database, with the collections of the products): a message that comes twice is handled once
     .AddEventInbox(MongoProductDbProperties.CollectionPrefix + "InboxMessage")
     .AddProductApplication(builder.Configuration);
 
 WebApplication app = builder.Build();
-
-// the indexes, and two products of Acme to try the service with when there is none
-await app.Services.EnsureProductDatabaseAsync(AbcTenants.Acme);
-await app.Services.EnsureProductStockDatabaseAsync();
 
 app.UseAbcMicroservice();
 app.UseBaseLocalization();   // after the caller is known (the hosting reads the token): the language is the one of the token, else of the header

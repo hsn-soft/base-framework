@@ -28,10 +28,6 @@ builder.Services
 
 WebApplication app = builder.Build();
 
-// the indexes of the shipments
-await app.Services.EnsureShipmentDatabaseAsync();
-await app.Services.EnsureShipmentHistoryDatabaseAsync();
-
 app.UseAbcMicroservice();
 app.UseBaseLocalization();   // after the caller is known (the hosting reads the token): the language is the one of the token, else of the header
 app.MapControllers();

@@ -26,16 +26,12 @@ builder.Services
     // this service has tenants: the tenant of a request is the one of its token, and it travels with the messages
     .AddBaseTenantClaims()
     .AddBaseTenantEventBus()
-    .AddIdentityPersistence(builder.Configuration)
+    .AddIdentityPersistence(builder.Configuration, AbcTenants.System, AbcTenants.Acme)
     .AddIdentityHistoryPersistence(builder.Configuration)
     .AddEventInbox<IdentityDbContext>()
     .AddIdentityApplication(builder.Configuration);
 
 WebApplication app = builder.Build();
-
-// the schema, and two users to sign in as when there is none: admin of the system tenant, alice of Acme (the auth server reads the same database)
-await app.Services.EnsureIdentityDatabaseAsync(AbcTenants.System, AbcTenants.Acme);
-await app.Services.EnsureHistoryDatabaseAsync();
 
 app.UseAbcMicroservice();
 app.UseBaseLocalization();   // after the caller is known (the hosting reads the token): the language is the one of the token, else of the header

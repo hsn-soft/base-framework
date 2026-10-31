@@ -38,9 +38,6 @@ builder.Services
 
 WebApplication app = builder.Build();
 
-// the indexes of the collections
-await app.Services.EnsureFirmInvoiceDatabaseAsync();
-
 app.UseEdxMicroservice();
 app.MapControllers();
 

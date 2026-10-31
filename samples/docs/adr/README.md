@@ -7,6 +7,7 @@ New ADR: copy the framework's [`0000-template.md`](../../../docs/adr/0000-templa
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
+| [0051](0051-the-http-host-of-a-service-owns-its-databases.md) | The REST host of a service owns its databases (`SeedStartupConnections`); the other hosts own none | Accepted | 2026-10-31 |
 | [0050](0050-edx-has-the-same-environments-with-a-broker-bucket-and-build-for-each.md) | Edx has the same environments, with a Kafka broker, MinIO buckets and an Angular build for each | Accepted | 2026-10-31 |
 | [0049](0049-the-environments-of-the-samples-are-development-docker-uat-and-production.md) | The environments are development, docker, uat and production, on the infrastructure of this machine, told apart by their databases, Redis prefix and exchange | Accepted | 2026-10-31 |
 | [0048](0048-each-sample-has-its-own-solution.md) | Each sample has its own solution | Accepted | 2026-10-31 |

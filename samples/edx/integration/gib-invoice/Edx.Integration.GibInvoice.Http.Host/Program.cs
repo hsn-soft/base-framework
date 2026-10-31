@@ -37,9 +37,6 @@ builder.Services
 
 WebApplication app = builder.Build();
 
-// the indexes of the collections
-await app.Services.EnsureIntegrationDatabaseAsync();
-
 app.UseEdxMicroservice();
 app.MapControllers();
 

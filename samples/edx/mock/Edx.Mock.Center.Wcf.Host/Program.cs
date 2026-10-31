@@ -44,7 +44,6 @@ builder.Services
 
 WebApplication app = builder.Build();
 
-await app.Services.EnsureCenterDatabaseAsync();
 await app.Services.SeedParticipantsAsync();
 
 app.UseEdxHosting(authenticateUsers: false);

@@ -8,7 +8,6 @@ using Abc.Shared.Hosting.Microservices;
 using Abc.Shared.Localization;
 using HsnSoft.Base.AspNetCore;
 using HsnSoft.Base.Caching.StackExchangeRedis;
-using HsnSoft.Base.EntityFrameworkCore;
 using HsnSoft.Base.EventBus;
 using HsnSoft.Base.EventBus.EntityFrameworkCore;
 using HsnSoft.Base.Localization;
@@ -35,8 +34,6 @@ builder.Services
     .AddOrderApplication(builder.Configuration);
 
 WebApplication app = builder.Build();
-
-await app.Services.EnsureDatabaseCreatedAsync<OrderDbContext>();
 
 app.UseAbcMicroservice();
 app.UseBaseLocalization();   // after the caller is known (the hosting reads the token): the language is the one of the token, else of the header

@@ -19,14 +19,8 @@ public static class EfCoreServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(configuration);
 
         services.AddBaseEfCore<ShipmentHistoryDbContext>(configuration, providers => providers.UsePostgres(), EfCoreShipmentHistoryDbProperties.Provider, EfCoreShipmentHistoryDbProperties.ConnectionStringName);
-        return services.AddEfCoreRepository<ShipmentHistoryDbContext, ShipmentHistory, Guid>();
-    }
-
-    /// <summary>Creates the shipment history database and its table when they are not there.</summary>
-    public static Task EnsureShipmentHistoryDatabaseAsync(this IServiceProvider services)
-    {
-        ArgumentNullException.ThrowIfNull(services);
-
-        return services.EnsureDatabaseCreatedAsync<ShipmentHistoryDbContext>();
+        services.AddEfCoreRepository<ShipmentHistoryDbContext, ShipmentHistory, Guid>();
+        // the database and its table are made when the host starts, by the host that owns it (SeedStartupConnections)
+        return services.AddSchemaStartupStep<ShipmentHistoryDbContext>(EfCoreShipmentHistoryDbProperties.ConnectionStringName);
     }
 }

@@ -1,6 +1,7 @@
 using Abc.AuthServer.Host.Security;
 using Abc.AuthServer.Host.Services;
 using Abc.IdentityService.EntityFrameworkCore;
+using Abc.Shared.Helper;
 using Abc.Shared.Hosting.Microservices;
 using Abc.Shared.Localization;
 using HsnSoft.Base.AspNetCore;
@@ -16,7 +17,7 @@ builder.Services
     .AddBaseLocalization(builder.Configuration, options => options.AddAbcSharedTexts())
     .AddBaseRedis(builder.Configuration)
     .AddAbcMicroservice(builder.Configuration, "Abc.AuthServer API")
-    .AddIdentityPersistence(builder.Configuration)
+    .AddIdentityPersistence(builder.Configuration, AbcTenants.System, AbcTenants.Acme)
     .AddIdentityHistoryPersistence(builder.Configuration)
     .AddScoped<UserAuthenticator>()
     .AddSingleton<TokenService>();
