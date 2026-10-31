@@ -28,6 +28,7 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
+| [0126](0126-the-endpoints-a-scheduler-calls-are-authenticated-by-a-key-the-host-requires.md) | The endpoints a scheduler calls are authenticated by a key the host requires | Accepted | 2026-11-01 |
 | [0125](0125-the-data-a-database-starts-with-is-written-by-seeders-that-are-steps-of-the-database.md) | The data a database starts with is written by seeders, which are steps of the database | Accepted | 2026-11-01 |
 | [0124](0124-the-commands-sent-to-a-database-are-logged-only-when-a-setting-says-so.md) | The commands sent to a database are logged only when a setting says so | Accepted | 2026-11-01 |
 | [0123](0123-the-pre-commit-style-format-builds-the-solution-first.md) | The pre-commit style format builds the solution first, so a using that is needed is never removed | Accepted | 2026-11-01 |

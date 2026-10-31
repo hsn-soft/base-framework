@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Puts the passwords into the settings of an environment: for each host, appsettings.<environment>.json with CHANGE_ME replaced by the password from deploy/.env (a SQL Server connection string gets
-# SQLSERVER_PASSWORD, a PostgreSQL one POSTGRES_PASSWORD), written to deploy/.rendered/<environment>/<host>.json (git ignores it). The committed files are the one place of the settings of an environment;
+# SQLSERVER_PASSWORD, a PostgreSQL one POSTGRES_PASSWORD, Scheduler:ApiKey the SCHEDULER_API_KEY that the scheduler and the services it calls share), written to deploy/.rendered/<environment>/<host>.json (git ignores it). The committed files are the one place of the settings of an environment;
 # the container gets the rendered file in place of the one in the image (compose: a bind mount; Kubernetes: a secret).
 # Usage: samples/abc/deploy/render-settings.sh docker|uat|production
 set -euo pipefail
@@ -23,6 +23,8 @@ def fill(value, where):
         return value.replace("CHANGE_ME", secrets["SQLSERVER_PASSWORD"])
     if value.startswith("Host="):
         return value.replace("CHANGE_ME", secrets["POSTGRES_PASSWORD"])
+    if where.endswith(":Scheduler:ApiKey"):
+        return value.replace("CHANGE_ME", secrets["SCHEDULER_API_KEY"])
     sys.exit(f"{where}: CHANGE_ME in a value that has no known password")
 
 def walk(node, where):

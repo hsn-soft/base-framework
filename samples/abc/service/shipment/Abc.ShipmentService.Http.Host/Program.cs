@@ -25,6 +25,8 @@ builder.Services
     .AddBaseHealthChecks(builder.Configuration)   // /health/live, /startup and /ready: leave it out and the service has none
     .AddAbcAuthentication(builder.Configuration)
     .AddAbcAuthorization()
+    // the scheduler of the system calls the jobs of this service (JobsController) with its key: Scheduler:ApiKey, from the environment or the .env file, and the service does not start without it
+    .AddBaseSchedulerAuth(builder.Configuration)
     .AddAbcEventBus(builder.Configuration, typeof(EventHandlersAssemblyMarker).Assembly)
     .AddShipmentPersistence(builder.Configuration)
     .AddShipmentHistoryPersistence(builder.Configuration)

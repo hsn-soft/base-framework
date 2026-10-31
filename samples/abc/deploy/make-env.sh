@@ -26,6 +26,12 @@ PY
     echo "Made $env_file"
 fi
 
+# the key of the scheduler: the one secret that the scheduler and the services it calls share (Scheduler:ApiKey); made when it is not in deploy/.env yet, never overwritten
+if ! grep -q '^SCHEDULER_API_KEY=' "$env_file"; then
+    echo "SCHEDULER_API_KEY=$(openssl rand -hex 32)" >> "$env_file"
+    echo "Added SCHEDULER_API_KEY to $env_file"
+fi
+
 private=samples/abc/app/Abc.AuthServer.Host/private_key.xml
 public=samples/abc/shared/Abc.Shared.Hosting/public_key.xml
 if [ ! -f "$private" ] || [ ! -f "$public" ]; then

@@ -7,6 +7,7 @@ New ADR: copy the framework's [`0000-template.md`](../../../docs/adr/0000-templa
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
+| [0056](0056-the-abc-scheduler-calls-the-jobs-of-the-services.md) | The Abc scheduler calls the jobs of the services | Accepted | 2026-11-01 |
 | [0055](0055-the-identity-seeds-are-seeders.md) | The identity seeds are seeders | Accepted | 2026-11-01 |
 | [0054](0054-the-program-chooses-health-and-the-event-bus-with-its-handlers-and-swagger-is-in-the-settings.md) | `Program.cs` chooses the health endpoints and the event bus (with its handlers), and each service has its Swagger settings | Accepted | 2026-11-01 |
 | [0053](0053-each-service-has-its-own-audience-and-the-program-says-how-it-authenticates.md) | Each service has its own audience, and `Program.cs` says how it authenticates and authorizes | Accepted | 2026-10-31 |

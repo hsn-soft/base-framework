@@ -570,3 +570,56 @@ spec:
   ports:
     - port: __PORT_PUBLIC_WEB__
       targetPort: 8080
+---
+# The scheduler: ONE pod, never two (two would call every job twice), and a rollout stops the old pod before it starts the new one (Recreate), so a job is never called by both. It only calls out, so it has no Service.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scheduler
+  labels: { app: scheduler }
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels: { app: scheduler }
+  template:
+    metadata:
+      labels: { app: scheduler }
+    spec:
+      terminationGracePeriodSeconds: 50
+      containers:
+        - name: host
+          image: abc/scheduler:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: __ENVIRONMENT__
+          volumeMounts:
+            - { name: settings, mountPath: /app/appsettings.__ENVIRONMENT__.json, subPath: appsettings.__ENVIRONMENT__.json, readOnly: true }
+          startupProbe:
+            httpGet: { path: /health/startup, port: 8080 }
+            periodSeconds: 3
+            timeoutSeconds: 7
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: { path: /health/ready, port: 8080 }
+            periodSeconds: 5
+            timeoutSeconds: 7
+            failureThreshold: 2
+          livenessProbe:
+            httpGet: { path: /health/live, port: 8080 }
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          lifecycle:
+            preStop:
+              exec: { command: ["sleep", "5"] }
+          resources:
+            requests: { cpu: 20m, memory: 64Mi }
+            limits: { memory: 256Mi }
+      volumes:
+        - name: settings
+          secret: { secretName: settings-scheduler }
