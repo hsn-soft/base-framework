@@ -7,7 +7,7 @@
         <PackageId>HsnSoft.Base.Data</PackageId>
         <RootNamespace />
         <Title>HsnSoft Base Framework Data</Title>
-        <Description>What every data store of an HsnSoft service shares, whatever the database: the switch of the data filters (soft delete, tenants) that follows the flow of the code.</Description>
+        <Description>What every data store of an HsnSoft service shares, whatever the database: the switch of the data filters (soft delete, tenants) that follows the flow of the code, and who prepares a database at startup (one host, one pod at a time).</Description>
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <PackageTags>HsnSoft Base Framework Data Filter</PackageTags>
     </PropertyGroup>
@@ -17,7 +17,9 @@
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="$(MicrosoftAspNetCorePackageVersion)" />
         <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="$(MicrosoftAspNetCorePackageVersion)" />
+        <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="$(MicrosoftAspNetCorePackageVersion)" />
     </ItemGroup>
 
     <ItemGroup>

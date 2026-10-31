@@ -1,4 +1,5 @@
 using System;
+using HsnSoft.Base.Data;
 using HsnSoft.Base.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -39,6 +40,8 @@ public static class MongoServiceCollectionExtensions
 
         services.AddBaseEntityConcepts();
         services.TryAddSingleton<MongoEntityConcepts>();
+        // who prepares this database (SeedStartupConnections) and how it is locked while the pods of the owner do it
+        services.AddStartupDatabase(configuration, connectionName, provider => new MongoStartupLock(serviceKey is null ? provider.GetRequiredService<IMongoDatabase>() : provider.GetRequiredKeyedService<IMongoDatabase>(serviceKey)));
         if (serviceKey is not null)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(serviceKey);

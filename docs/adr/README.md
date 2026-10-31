@@ -28,6 +28,7 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
+| [0118](0118-a-database-is-prepared-by-the-host-that-owns-it-one-pod-at-a-time.md) | A database is prepared by the host that owns it, one pod at a time, under a lock of the database | Accepted | 2026-10-31 |
 | [0117](0117-the-health-endpoints-are-live-startup-and-ready-and-answer-with-the-checks.md) | The health endpoints are live, startup and ready, and answer with the checks | Accepted | 2026-10-31 |
 | [0116](0116-the-release-branches-run-the-ci-on-a-push-and-have-their-own-badges.md) | The release branches run the CI on a push, and have badges of their own | Accepted | 2026-10-31 |
 | [0115](0115-versions-and-releases-two-branches-and-a-version-made-from-nuget.md) | Versions and releases: a candidate branch and a regular branch, and a version made from what NuGet has | Accepted (the run on their pull requests is superseded by [ADR-0116](0116-the-release-branches-run-the-ci-on-a-push-and-have-their-own-badges.md)) | 2026-10-31 |

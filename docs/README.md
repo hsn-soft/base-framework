@@ -4,6 +4,7 @@
 |---|---|
 | [`adr/`](adr/README.md) | **Architecture decision records**: why the repository is the way it is. Start with [the index](adr/README.md). Every architecture decision is added there when it is taken. |
 | [`Overview.md`](Overview.md) | The packages (one capability each) and what each depends on, how a product composes them, the tests and the configuration. The text that was in the root README |
+| [`DatabaseStartup.md`](DatabaseStartup.md) | Who prepares a database at startup (`SeedStartupConnections`), the steps (`RunDatabaseStepAsync`, `RunContextStepAsync`), and the lock of each database that keeps the pods of a host from meeting |
 | [`Health.md`](Health.md) | The health endpoints (`/health/live`, `/health/startup`, `/health/ready`), the checks of the packages, the settings, the probes of Kubernetes |
 | [`Releasing.md`](Releasing.md) | How a version gets to NuGet: the versions, the branches (`dev` → `rel/nuget-candidate` → `rel/nuget-regular`), what to do for a candidate, a stable version, a new month and an urgent fix |
 | [`Logging.md`](Logging.md) | The logging model: the log types, the chain logs, the fields, facilities, where each decision is made |

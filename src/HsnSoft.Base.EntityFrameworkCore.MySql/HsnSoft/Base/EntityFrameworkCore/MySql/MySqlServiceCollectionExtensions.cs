@@ -1,4 +1,5 @@
 using System;
+using HsnSoft.Base.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,7 +27,7 @@ public static class MySqlServiceCollectionExtensions
         return providers.Add(MySqlProvider.Instance);
     }
 
-    private sealed class MySqlProvider : IEfCoreProvider
+    private sealed class MySqlProvider : IEfCoreProvider, IStartupLockProvider
     {
         public static readonly MySqlProvider Instance = new();
 
@@ -34,5 +35,7 @@ public static class MySqlServiceCollectionExtensions
 
         public void Configure(DbContextOptionsBuilder options, string connectionString)
             => options.UseMySQL(connectionString, mysql => mysql.EnableRetryOnFailure());
+
+        public IStartupLock CreateStartupLock(string connectionString) => new MySqlStartupLock(connectionString);
     }
 }
