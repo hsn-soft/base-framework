@@ -28,6 +28,7 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
+| [0130](0130-nuget-packages-are-pushed-with-trusted-publishing-not-an-api-key.md) | The packages are pushed to NuGet with trusted publishing (`NuGet/login`, a key that lives for the run), not with a long-lived API key | Accepted | 2026-11-01 |
 | [0129](0129-an-entity-is-isolated-by-its-tenant-or-by-its-scope-never-both.md) | An entity is isolated by its tenant or by its scope (subscription), never both | Accepted | 2026-11-01 |
 | [0128](0128-the-tenants-that-a-tenant-sees-are-the-ones-under-it-by-a-path-of-ids.md) | The tenants that a tenant sees are the ones under it, by a path of ids | Accepted | 2026-11-01 |
 | [0127](0127-the-brokers-clients-do-not-take-the-pool-nor-open-a-connection-per-message-or-probe.md) | The brokers' clients do not take the thread pool, nor open a channel per message or a client per probe | Accepted | 2026-11-01 |
@@ -42,7 +43,7 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 | [0118](0118-a-database-is-prepared-by-the-host-that-owns-it-one-pod-at-a-time.md) | A database is prepared by the host that owns it, one pod at a time, under a lock of the database | Accepted | 2026-10-31 |
 | [0117](0117-the-health-endpoints-are-live-startup-and-ready-and-answer-with-the-checks.md) | The health endpoints are live, startup and ready, and answer with the checks | Accepted | 2026-10-31 |
 | [0116](0116-the-release-branches-run-the-ci-on-a-push-and-have-their-own-badges.md) | The release branches run the CI on a push, and have badges of their own | Accepted | 2026-10-31 |
-| [0115](0115-versions-and-releases-two-branches-and-a-version-made-from-nuget.md) | Versions and releases: a candidate branch and a regular branch, and a version made from what NuGet has | Accepted (the run on their pull requests is superseded by [ADR-0116](0116-the-release-branches-run-the-ci-on-a-push-and-have-their-own-badges.md)) | 2026-10-31 |
+| [0115](0115-versions-and-releases-two-branches-and-a-version-made-from-nuget.md) | Versions and releases: a candidate branch and a regular branch, and a version made from what NuGet has | Accepted (the run on their pull requests is superseded by [ADR-0116](0116-the-release-branches-run-the-ci-on-a-push-and-have-their-own-badges.md), and the key of the push by [ADR-0130](0130-nuget-packages-are-pushed-with-trusted-publishing-not-an-api-key.md): none is kept) | 2026-10-31 |
 | [0114](0114-the-readme-badges-are-made-by-the-ci-and-published-to-their-own-branch.md) | The badges of the README are made by the CI and published to a branch of their own | Accepted | 2026-10-31 |
 | [0113](0113-the-ci-runs-on-pull-requests-weekly-on-dev-and-by-hand.md) | The CI runs on pull requests, weekly on `dev` and by hand, not on every push to `dev` | Accepted | 2026-10-31 |
 | [0112](0112-blob-reads-stream-and-uploads-that-cannot-seek-spill-to-disk.md) | Reading a blob streams it; a body that cannot seek goes to memory up to a megabyte and to a temporary file beyond | Accepted | 2026-10-30 |
