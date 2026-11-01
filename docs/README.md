@@ -2,7 +2,7 @@
 
 | Where | What |
 |---|---|
-| [`adr/`](adr/README.md) | **Architecture decision records**: why the repository is the way it is. Start with [the index](adr/README.md). Every architecture decision is added there when it is taken. |
+| [`adr/`](adr/README.md) | **Architecture decision records**: a short guide to the decisions relevant to a task; the [full catalog](adr/INDEX.md) lists every ADR. |
 | [`Overview.md`](Overview.md) | The packages (one capability each) and what each depends on, how a product composes them, the tests and the configuration. The text that was in the root README |
 | [`DatabaseStartup.md`](DatabaseStartup.md) | Who prepares a database at startup (`SeedStartupConnections`), the steps (`RunDatabaseStepAsync`, `RunContextStepAsync`), and the lock of each database that keeps the pods of a host from meeting |
 | [`Health.md`](Health.md) | The health endpoints (`/health/live`, `/health/startup`, `/health/ready`), the checks of the packages, the settings, the probes of Kubernetes |
