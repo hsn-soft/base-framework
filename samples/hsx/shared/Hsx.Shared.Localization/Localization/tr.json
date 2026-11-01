@@ -1,0 +1,7 @@
+{
+  "culture": "tr",
+  "texts": {
+    "status_required": "Durum zorunludur.",
+    "invalid_credentials": "Kullanıcı adı veya şifre hatalı."
+  }
+}

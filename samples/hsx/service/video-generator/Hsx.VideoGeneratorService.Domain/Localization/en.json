@@ -1,0 +1,7 @@
+{
+  "culture": "en",
+  "texts": {
+    "scope_not_allowed": "The scope '{0}' is not one of yours.",
+    "video_request_not_found": "VideoRequest {0} was not found."
+  }
+}

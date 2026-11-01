@@ -1,0 +1,22 @@
+{
+  "culture": "en",
+  "texts": {
+    "app_role_name_duplicate": "A role named '{0}' exists.",
+    "app_role_not_deletable": "The role '{0}' is static or has users and cannot be deleted.",
+    "app_role_not_found": "Role {0} was not found.",
+    "app_user_email_duplicate": "A user with the email '{0}' exists.",
+    "app_user_not_found": "User {0} was not found.",
+    "app_user_user_name_duplicate": "A user named '{0}' exists.",
+    "company_name_duplicate": "A company with the name '{0}' exists.",
+    "company_not_found": "Company {0} was not found.",
+    "customer_domain_duplicate": "A customer with the domain '{0}' exists.",
+    "customer_not_found": "Customer {0} was not found.",
+    "scope_not_allowed": "The scope '{0}' is not one of yours.",
+    "subscription_not_allowed": "The subscription {0} is not one of the tenant's.",
+    "subscription_not_found": "Subscription {0} was not found.",
+    "tenant_loop": "A tenant cannot be put under itself or under one of its own tenants.",
+    "tenant_name_duplicate": "A tenant named '{0}' exists.",
+    "tenant_not_empty": "A tenant that has tenants or users under it is not deleted.",
+    "tenant_not_found": "Tenant {0} was not found."
+  }
+}

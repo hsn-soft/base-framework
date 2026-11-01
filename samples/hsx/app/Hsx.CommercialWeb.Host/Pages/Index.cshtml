@@ -1,0 +1,13 @@
+@page "/"
+@model IndexModel
+@{
+    ViewData["Title"] = "Home";
+}
+<h1>Hsx Commercial</h1>
+<p>Signed in as <strong>@User.Identity!.Name</strong>. What the access token says about what this user may see:</p>
+<table>
+    <tr><th>Tenant</th><td><code>@Model.TenantId</code> @(Model.IsSystem ? "(system tenant: no isolation)" : "")</td></tr>
+    <tr><th>Roles</th><td>@string.Join(", ", Model.Roles)</td></tr>
+    <tr><th>Tenants under it (<code>allowed_tenant_id</code>)</th><td>@if (Model.AllowedTenants.Count == 0) { <span class="muted">none</span> } else { @foreach (string id in Model.AllowedTenants) { <div><code>@id</code></div> } }</td></tr>
+    <tr><th>Scopes (<code>allowed_scope_key</code>)</th><td>@if (Model.ScopeKeys.Count == 0) { <span class="muted">none</span> } else { @foreach (string key in Model.ScopeKeys) { <div><code>@key</code></div> } }</td></tr>
+</table>
