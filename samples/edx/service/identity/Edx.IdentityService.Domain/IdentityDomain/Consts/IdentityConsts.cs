@@ -14,6 +14,9 @@ public static class IdentityConsts
 
     public const int CodeMaxLength = 64;
     public const int NameMaxLength = 128;
+
+    /// <summary>The path of a tenant in the tree of tenants (<c>TenantAccessPath</c>): thirty levels of 33 characters.</summary>
+    public const int AccessPathMaxLength = 1000;
     public const int UserNameMaxLength = 64;
     public const int EmailMaxLength = 256;
     public const int PasswordMinLength = 6;

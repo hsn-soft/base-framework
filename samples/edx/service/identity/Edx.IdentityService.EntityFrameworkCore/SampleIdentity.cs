@@ -18,7 +18,7 @@ public static class SampleIdentity
     {
         Dictionary<string, Permission> permissions = await db.Permissions.ToDictionaryAsync(permission => permission.Code, cancellationToken).ConfigureAwait(false);
 
-        foreach ((Guid tenantId, string code, _) in IdentityDatabase.s_tenants)
+        foreach ((Guid tenantId, string code, _, _) in IdentityDatabase.s_tenants)
         {
             // everything is made as the tenant it belongs to: its rows get its id
             using (currentTenant.Change(tenantId, isSystemTenant: tenantId == EdxTenants.System))

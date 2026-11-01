@@ -28,6 +28,7 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
+| [0128](0128-the-tenants-that-a-tenant-sees-are-the-ones-under-it-by-a-path-of-ids.md) | The tenants that a tenant sees are the ones under it, by a path of ids | Accepted | 2026-11-01 |
 | [0127](0127-the-brokers-clients-do-not-take-the-pool-nor-open-a-connection-per-message-or-probe.md) | The brokers' clients do not take the thread pool, nor open a channel per message or a client per probe | Accepted | 2026-11-01 |
 | [0126](0126-the-endpoints-a-scheduler-calls-are-authenticated-by-a-key-the-host-requires.md) | The endpoints a scheduler calls are authenticated by a key the host requires | Accepted | 2026-11-01 |
 | [0125](0125-the-data-a-database-starts-with-is-written-by-seeders-that-are-steps-of-the-database.md) | The data a database starts with is written by seeders, which are steps of the database | Accepted | 2026-11-01 |

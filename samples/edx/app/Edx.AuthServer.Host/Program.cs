@@ -19,6 +19,7 @@ builder.Services
     .AddEdxAuthentication(builder.Configuration)
     .AddEdxAuthorization()
     .AddIdentityPersistence(builder.Configuration)
+    .Configure<TenantTokenOptions>(builder.Configuration.GetSection(TenantTokenOptions.SectionName))
     .AddScoped<UserAuthenticator>()
     .AddSingleton<TokenService>();
 

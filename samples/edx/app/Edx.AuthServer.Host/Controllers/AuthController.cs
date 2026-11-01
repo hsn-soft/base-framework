@@ -4,6 +4,7 @@ using Edx.AuthServer.Host.Security;
 using Edx.AuthServer.Host.Services;
 using HsnSoft.Base;
 using HsnSoft.Base.Logging.Masking;
+using HsnSoft.Base.MultiTenancy;
 using HsnSoft.Base.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -40,6 +41,9 @@ public sealed class MeDto
 
     public Guid? TenantId { get; init; }
 
+    /// <summary>The tenants under the tenant of the caller that it may see besides its own.</summary>
+    public IReadOnlyCollection<Guid> AllowedTenantIds { get; init; } = [];
+
     public IReadOnlyCollection<string> Roles { get; init; } = [];
 }
 
@@ -67,6 +71,7 @@ public sealed class AuthController(UserAuthenticator authenticator, TokenService
     {
         Subject = User.GetUserId(),
         TenantId = Guid.TryParse(User.FindFirst("tenant_id")?.Value, out Guid tenantId) ? tenantId : null,
+        AllowedTenantIds = [.. User.FindAll(TenantClaimTypes.AllowedTenantId).Select(claim => Guid.TryParse(claim.Value, out Guid id) ? id : Guid.Empty).Where(id => id != Guid.Empty)],
         Roles = [.. User.GetRoles()],
     };
 }
