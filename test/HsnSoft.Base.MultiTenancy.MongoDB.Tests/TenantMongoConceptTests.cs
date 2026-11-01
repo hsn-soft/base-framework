@@ -18,6 +18,18 @@ public class TenantMongoConceptTests
         public Guid TenantId { get; set; }
     }
 
+    public sealed class Scoped : IScopeSubscription
+    {
+        public string ScopeKey { get; set; } = string.Empty;
+    }
+
+    public sealed class Both : IMultiTenant, IScopeSubscription
+    {
+        public Guid TenantId { get; set; }
+
+        public string ScopeKey { get; set; } = string.Empty;
+    }
+
     public sealed class Plain
     {
         public string? Name { get; set; }
@@ -124,5 +136,56 @@ public class TenantMongoConceptTests
         Assert.Throws<ArgumentNullException>(() => ((IServiceCollection)null!).AddBaseMultiTenancyMongo());
         using ServiceProvider provider = Build(new TenantContext(s_tenantA));
         Assert.Throws<ArgumentNullException>(() => provider.GetServices<IMongoEntityConcept>().Single().Created(null!));
+    }
+
+    [Fact]
+    public void AQueryOfAScopedDocument_IsNarrowedToTheScopeKeysOfTheToken_AndNotByTenant()
+    {
+        using ServiceProvider provider = Build(new TenantContext(s_tenantA, AllowedScopeKeys: ["abc:video", "abc:text"]));
+
+        string json = Render(provider.GetRequiredService<MongoEntityConcepts>().Visible<Scoped>());
+
+        Assert.Contains("\"ScopeKey\" : { \"$in\" : [\"abc:video\", \"abc:text\"] }", json, StringComparison.Ordinal);
+        Assert.DoesNotContain("TenantId", json, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void WithoutScopeKeys_NothingOfAScopeMatches_TheSystemTenantSeesEveryScope_AndASwitchedOffFilterIsNotApplied()
+    {
+        using ServiceProvider none = Build(new TenantContext(s_tenantA));
+        Assert.Contains("\"ScopeKey\" : { \"$in\" : [] }", Render(none.GetRequiredService<MongoEntityConcepts>().Visible<Scoped>()), StringComparison.Ordinal);
+
+        using ServiceProvider system = Build(new TenantContext(s_tenantA, IsSystemTenant: true));
+        Assert.DoesNotContain("ScopeKey", Render(system.GetRequiredService<MongoEntityConcepts>().Visible<Scoped>()), StringComparison.Ordinal);
+
+        using ServiceProvider ordinary = Build(new TenantContext(s_tenantA, AllowedScopeKeys: ["abc:video"]));
+        using (ordinary.GetRequiredService<IDataFilter>().Disable<IScopeSubscription>())
+        {
+            Assert.DoesNotContain("ScopeKey", Render(ordinary.GetRequiredService<MongoEntityConcepts>().Visible<Scoped>()), StringComparison.Ordinal);
+        }
+    }
+
+    [Fact]
+    public void TheTwoFilters_AreSwitchedOffEachOnItsOwn()
+    {
+        using ServiceProvider provider = Build(new TenantContext(s_tenantA, AllowedScopeKeys: ["abc:video"]));
+        IDataFilter filters = provider.GetRequiredService<IDataFilter>();
+        MongoEntityConcepts concepts = provider.GetRequiredService<MongoEntityConcepts>();
+
+        using (filters.Disable<IMultiTenant>())
+        {
+            Assert.DoesNotContain("TenantId", Render(concepts.Visible<Owned>()), StringComparison.Ordinal);
+            Assert.Contains("ScopeKey", Render(concepts.Visible<Scoped>()), StringComparison.Ordinal);
+        }
+    }
+
+    [Fact]
+    public void ADocumentThatIsBothTenantAndScope_IsRefused()
+    {
+        using ServiceProvider provider = Build(new TenantContext(s_tenantA));
+
+        InvalidOperationException failure = Assert.Throws<InvalidOperationException>(() => provider.GetRequiredService<MongoEntityConcepts>().Visible<Both>());
+
+        Assert.Contains("Both is both IMultiTenant and IScopeSubscription", failure.Message, StringComparison.Ordinal);
     }
 }

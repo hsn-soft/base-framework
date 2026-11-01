@@ -33,6 +33,26 @@ public class CurrentTenantTests
     }
 
     [Fact]
+    public void TheScopeKeys_AreWhatTheSourceSays_WithoutBlanksOrRepeats_AndAChangeBringsItsOwn()
+    {
+        CurrentTenant tenant = new([new FakeSource(new TenantContext(Guid.NewGuid(), AllowedScopeKeys: ["abc:video", " ", "abc:video", "abc:text"]))]);
+
+        Assert.Equal(["abc:video", "abc:text"], tenant.AllowedScopeKeys);
+        using (tenant.Change(Guid.NewGuid(), allowedScopeKeys: ["xyz:audio"]))
+        {
+            Assert.Equal(["xyz:audio"], tenant.AllowedScopeKeys);
+        }
+
+        Assert.Equal(["abc:video", "abc:text"], tenant.AllowedScopeKeys);
+        using (tenant.Change(Guid.NewGuid()))
+        {
+            Assert.Empty(tenant.AllowedScopeKeys);
+        }
+
+        Assert.Empty(new CurrentTenant().AllowedScopeKeys);
+    }
+
+    [Fact]
     public void TheFirstSourceThatKnowsATenantWins()
     {
         Guid second = Guid.NewGuid();
