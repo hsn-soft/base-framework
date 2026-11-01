@@ -18,6 +18,10 @@ public static class IdentityDomainConfiguration
             tenant.Property(entity => entity.Code).HasMaxLength(IdentityConsts.CodeMaxLength).IsRequired();
             tenant.Property(entity => entity.Name).HasMaxLength(IdentityConsts.NameMaxLength).IsRequired();
             tenant.HasIndex(entity => entity.Code).IsUnique();
+            tenant.Property(entity => entity.AccessPath).HasMaxLength(IdentityConsts.AccessPathMaxLength).IsRequired();
+            // the tenants under a tenant are the ones whose path starts with its own: one range of this index
+            tenant.HasIndex(entity => entity.AccessPath);
+            tenant.HasIndex(entity => entity.ParentId);
         });
 
         modelBuilder.Entity<Role>(role =>

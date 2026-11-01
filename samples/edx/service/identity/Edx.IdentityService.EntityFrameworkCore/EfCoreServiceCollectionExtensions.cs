@@ -34,11 +34,14 @@ public static class EfCoreServiceCollectionExtensions
         services.AddEfCoreRepository<IdentityDbContext, Tenant, Guid>();
 
         // when the host starts, in this order, by the host that owns the database (SeedStartupConnections; the auth server, which reads it, does not): the schema, the tenants, the permissions of the catalogue (the roles
-        // are given their starting grants when they are made, so the permissions come first), then the roles and the users of the sample
+        // are given their starting grants when they are made, so the permissions come first), then the roles and the users of the sample (the seeders, `IDataSeeder`: one that must not run in an environment is listed in `Seeding:Disabled`)
         string connection = EfCoreIdentityDbProperties.ConnectionStringName;
         services.AddSchemaStartupStep<IdentityDbContext>(connection);
-        services.AddDatabaseStartupStep(connection, "IdentityDbContext tenants", IdentityDatabase.EnsureTenantsAsync);
-        services.AddDatabaseStartupStep(connection, "IdentityDbContext permissions", PermissionDatabase.EnsurePermissionsAsync);
-        return services.AddDatabaseStartupStep(connection, "IdentityDbContext sample identity", SampleIdentity.EnsureSampleIdentityAsync);
+        services.AddScoped<ITenantRepository, EfCoreTenantRepository>();
+        return services
+            .AddDataSeeder<TenantTreeColumnsSeeder>(connection)
+            .AddDataSeeder<TenantsSeeder>(connection)
+            .AddDataSeeder<PermissionsSeeder>(connection)
+            .AddDataSeeder<SampleIdentitySeeder>(connection);
     }
 }

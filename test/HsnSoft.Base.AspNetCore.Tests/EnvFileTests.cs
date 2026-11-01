@@ -62,25 +62,24 @@ public class EnvFileTests
     }
 
     [Fact]
-    public void WithoutAPath_TheFileOfTheCurrentFolderIsRead()
+    public void WithoutAPath_TheFileOfTheCurrentFolderIsFound_ThenTheOneOfTheApplication()
     {
-        string folder = Directory.CreateTempSubdirectory().FullName;
-        string previous = Directory.GetCurrentDirectory();
-        File.WriteAllText(Path.Combine(folder, ".env"), "Env_File_Test_C=here\n");
-        Directory.SetCurrentDirectory(folder);
+        string current = Directory.CreateTempSubdirectory().FullName;
+        string application = Directory.CreateTempSubdirectory().FullName;
         try
         {
-            var builder = new ConfigurationBuilder();
+            Assert.Null(EnvFile.FindFile(current, application));
 
-            string? read = builder.AddBaseEnvFile();
+            File.WriteAllText(Path.Combine(application, ".env"), "A=1\n");
+            Assert.Equal(Path.Combine(application, ".env"), EnvFile.FindFile(current, application));
 
-            Assert.NotNull(read);
-            Assert.Equal("here", builder.Build()["Env_File_Test_C"]);
+            File.WriteAllText(Path.Combine(current, ".env"), "A=2\n");
+            Assert.Equal(Path.Combine(current, ".env"), EnvFile.FindFile(current, application));
         }
         finally
         {
-            Directory.SetCurrentDirectory(previous);
-            Directory.Delete(folder, true);
+            Directory.Delete(current, true);
+            Directory.Delete(application, true);
         }
     }
 

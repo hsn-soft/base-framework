@@ -1,4 +1,4 @@
-# The Abc system in Docker, the environment `docker`: the nine hosts, nothing else. The infrastructure (PostgreSQL, SQL Server, MongoDB, Redis, RabbitMQ, Graylog) is the one on this machine, the one the hosts
+# The Abc system in Docker, the environment `docker`: the ten hosts (the scheduler among them), nothing else. The infrastructure (PostgreSQL, SQL Server, MongoDB, Redis, RabbitMQ, Graylog) is the one on this machine, the one the hosts
 # use in development, reached as host.docker.internal; the databases are the ones of development too (Abc_*_Dev).
 #   samples/abc/deploy/deploy.sh docker        # builds the images, renders the settings, and runs this file
 # The settings of each host are appsettings.docker.json with the passwords put in (render-settings.sh), mounted over the file of the image. The commercial gateway is on localhost:5500, the public one on
@@ -61,3 +61,8 @@ services:
     volumes:
       - ./.rendered/docker/public-web.json:/app/appsettings.docker.json:ro
     ports: ["5800:8080"]
+  scheduler:
+    <<: *host
+    image: abc/scheduler:dev
+    volumes:
+      - ./.rendered/docker/scheduler.json:/app/appsettings.docker.json:ro

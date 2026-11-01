@@ -12,14 +12,14 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.AddBaseHosting();   // the .env file, the limits of Kestrel, the proxies and the time to stop: the section Hosting
 builder.Logging.AddBaseSerilog(builder.Configuration, "Edx.SignerService");
 
-// what every Edx microservice has (logging, the web api shell, JWT, Swagger, health, Kafka), then what this service has: no database, no Redis (it has no endpoint that needs a permission), the store of the files and the tenant of the messages
+// what every Edx microservice has (logging, the web api shell, Swagger), then what this service chooses (health, authentication, authorization, Kafka) and has: no database, no Redis (it has no endpoint that needs a permission), the store of the files and the tenant of the messages
 builder.Services
     .AddEdxMicroservice(builder.Configuration, "Edx.SignerService API")
+    .AddBaseHealthChecks(builder.Configuration)   // /health/live, /startup and /ready: leave it out and the service has none
     .AddEdxAuthentication(builder.Configuration)
     .AddEdxAuthorization()
-    .AddEdxEventBus(builder.Configuration)
+    .AddEdxEventBus(builder.Configuration, typeof(EventHandlersAssemblyMarker).Assembly)
     .AddBaseTenantEventBus()
-    .AddEventHandlers(typeof(EventHandlersAssemblyMarker).Assembly)
     // the store of the files: the same MinIO the invoice service writes to (the container comes with the event)
     .AddMinioBlobStoring(builder.Configuration)
     .AddSingleton(TimeProvider.System)
@@ -30,6 +30,7 @@ builder.Services
 return await builder.RunBaseAsync(app =>
 {
     app.UseEdxMicroservice();
+    app.MapBaseHealth();
     app.UseBaseAuthentication();
     app.UseBaseAuthorization();
     app.MapControllers();

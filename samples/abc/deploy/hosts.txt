@@ -9,3 +9,4 @@ gateway-commercial|gateway/Abc.Gateway.Commercial.Host|Abc.Gateway.Commercial.Ho
 gateway-public|gateway/Abc.Gateway.Public.Host|Abc.Gateway.Public.Host|gateway
 commercial-web|app/Abc.CommercialWeb.Host|Abc.CommercialWeb.Host|web
 public-web|app/Abc.PublicWeb.Host|Abc.PublicWeb.Host|web
+scheduler|app/Abc.Scheduler.Host|Abc.Scheduler.Host|scheduler

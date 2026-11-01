@@ -337,3 +337,15 @@ Abc.PublicWeb.Host
 ├── HsnSoft.Base.AspNetCore.WebApi   (framework)
 └── HsnSoft.Base.Logging.Serilog   (framework)
 ```
+
+### Abc.Scheduler.Host
+
+The scheduler calls the jobs of the services over HTTP on cron schedules: it uses no shared Abc project, only the framework (the header names of the scheduler, its health and its own logger) and Quartz.
+
+```
+Abc.Scheduler.Host
+├── HsnSoft.Base.AspNetCore.WebApi   (framework)
+├── HsnSoft.Base.Logging.Serilog   (framework)
+├── [Quartz]
+└── [Quartz.Extensions.Hosting]
+```

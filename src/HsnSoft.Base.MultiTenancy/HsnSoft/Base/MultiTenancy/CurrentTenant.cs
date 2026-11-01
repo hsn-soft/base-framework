@@ -27,10 +27,12 @@ public sealed class CurrentTenant(IEnumerable<ITenantSource>? sources = null) : 
         }
     }
 
-    public IDisposable Change(Guid? id, bool isSystemTenant = false, IEnumerable<Guid>? allowedTenantIds = null)
+    public IReadOnlyList<string> AllowedScopeKeys => [.. (Resolve()?.AllowedScopeKeys ?? []).Where(key => !string.IsNullOrWhiteSpace(key)).Distinct(StringComparer.Ordinal)];
+
+    public IDisposable Change(Guid? id, bool isSystemTenant = false, IEnumerable<Guid>? allowedTenantIds = null, IEnumerable<string>? allowedScopeKeys = null)
     {
         TenantContext? parent = _scope.Value;
-        _scope.Value = new TenantContext(id, isSystemTenant, [.. allowedTenantIds ?? []]);
+        _scope.Value = new TenantContext(id, isSystemTenant, [.. allowedTenantIds ?? []], [.. allowedScopeKeys ?? []]);
         return new Restore(() => _scope.Value = parent);
     }
 

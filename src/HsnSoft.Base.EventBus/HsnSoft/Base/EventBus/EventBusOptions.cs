@@ -60,6 +60,12 @@ public sealed class EventBusOptions
     /// </summary>
     public int MaxConcurrentHandlers { get; set; }
 
+    /// <summary>
+    /// How many publisher channels RabbitMQ keeps open between messages (each publish uses one, one at a time, and gives it back once the broker confirmed). A channel opened and closed for every message costs two round trips and churn on the broker; the pool
+    /// keeps at most this many idle ones (a burst opens more, and what is over is closed). 0 is no pool: a channel for each message. Default 4. Kafka does not use it.
+    /// </summary>
+    public int PublisherChannelPoolSize { get; set; } = 4;
+
     /// <summary>How long a stopping service waits for the messages being handled and published to finish.</summary>
     public TimeSpan ShutdownTimeout { get; set; } = TimeSpan.FromSeconds(30);
 

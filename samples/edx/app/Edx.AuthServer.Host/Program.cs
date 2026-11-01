@@ -15,9 +15,11 @@ builder.Logging.AddBaseSerilog(builder.Configuration, "Edx.AuthServer");
 builder.Services
     .AddBaseRedis(builder.Configuration)
     .AddEdxHosting(builder.Configuration, "Edx.AuthServer API", swaggerBearerButton: true)
+    .AddBaseHealthChecks(builder.Configuration)   // /health/live, /startup and /ready: leave it out and the service has none
     .AddEdxAuthentication(builder.Configuration)
     .AddEdxAuthorization()
     .AddIdentityPersistence(builder.Configuration)
+    .Configure<TenantTokenOptions>(builder.Configuration.GetSection(TenantTokenOptions.SectionName))
     .AddScoped<UserAuthenticator>()
     .AddSingleton<TokenService>();
 
@@ -28,6 +30,7 @@ return await builder.RunBaseAsync(app =>
     _ = app.Services.GetRequiredService<TokenService>();
 
     app.UseEdxHosting();
+    app.MapBaseHealth();
     app.UseBaseAuthentication();
     app.UseBaseAuthorization();
     app.MapControllers();

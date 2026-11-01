@@ -18,6 +18,9 @@ public interface ICurrentTenant
     /// <summary>The tenants whose entities may be seen: the tenant itself and the ones the token allows.</summary>
     IReadOnlyList<Guid> AllowedTenantIds { get; }
 
+    /// <summary>The scopes (subscriptions) whose <see cref="IScopeSubscription"/> entities may be seen: the keys the token lists. The system tenant sees every scope.</summary>
+    IReadOnlyList<string> AllowedScopeKeys { get; }
+
     /// <summary>Acts as another tenant until the returned scope is disposed (it works across <c>await</c>; the previous tenant comes back).</summary>
-    IDisposable Change(Guid? id, bool isSystemTenant = false, IEnumerable<Guid>? allowedTenantIds = null);
+    IDisposable Change(Guid? id, bool isSystemTenant = false, IEnumerable<Guid>? allowedTenantIds = null, IEnumerable<string>? allowedScopeKeys = null);
 }

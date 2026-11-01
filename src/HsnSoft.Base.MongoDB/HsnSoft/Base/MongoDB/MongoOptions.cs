@@ -1,4 +1,5 @@
 using System;
+using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 
 namespace HsnSoft.Base.MongoDB;
@@ -29,8 +30,13 @@ public sealed class MongoOptions
     /// <summary>How long a request waits for a free connection of the pool before it fails (the driver: 2 minutes); a pool that is too small shows as this error. Null: the driver's.</summary>
     public TimeSpan? WaitQueueTimeout { get; set; }
 
-    /// <summary>The settings of the client for <paramref name="connectionString"/>, with the waits of these options for the ones the connection string does not say.</summary>
-    public MongoClientSettings Apply(string connectionString)
+    /// <summary>
+    /// Whether the commands sent to MongoDB are logged: the command, the database and collection and how long it took (or the error). Off by default: a busy service sends thousands. The document of a command is never written (it is data).
+    /// </summary>
+    public bool LogCommands { get; set; }
+
+    /// <summary>The settings of the client for <paramref name="connectionString"/>, with the waits of these options for the ones the connection string does not say, and the log of the commands when <see cref="LogCommands"/> is on and <paramref name="log"/> is given.</summary>
+    public MongoClientSettings Apply(string connectionString, ILogger? log = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(connectionString);
 
@@ -64,6 +70,12 @@ public sealed class MongoOptions
         if (WaitQueueTimeout is { } wait && !Names(text, "waitQueueTimeout"))
         {
             settings.WaitQueueTimeout = wait;
+        }
+
+        if (LogCommands && log is not null)
+        {
+            MongoCommandLog commands = new(log);
+            settings.ClusterConfigurator = commands.Subscribe;
         }
 
         return settings;

@@ -26,6 +26,7 @@ builder.WebHost.ConfigureKestrel(options =>
 // the shell every Edx host has, without a token: the center calls the post box as an integrator is called, by its address
 builder.Services
     .AddEdxHosting(builder.Configuration, "Edx.Integration.GibInvoice WCF")
+    .AddBaseHealthChecks(builder.Configuration)   // /health/live, /startup and /ready: leave it out and the service has none
     .AddIntegrationPersistence(builder.Configuration)
     .AddMinioBlobStoring(builder.Configuration)
     .AddIntegrationPostBox(builder.Configuration)
@@ -38,6 +39,7 @@ builder.Services
 return await builder.RunBaseAsync(app =>
 {
     app.UseEdxHosting();
+    app.MapBaseHealth();
     app.UseServiceModel(services => services
         .AddService<PostBoxService>()
         .AddServiceEndpoint<PostBoxService, IEFaturaPortType>(EFaturaServerBinding.Create(useTransportSecurity: false, center.MaxMessageSize), "/EFatura/"));

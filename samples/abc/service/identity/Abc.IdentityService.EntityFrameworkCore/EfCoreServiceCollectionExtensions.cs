@@ -29,10 +29,10 @@ public static class EfCoreServiceCollectionExtensions
         services.AddScoped<IUserRepository, EfCoreUserRepository>();
         services.AddScoped<IRepository<User, Guid>>(provider => provider.GetRequiredService<IUserRepository>());
 
-        // when the host starts: the schema, then two users to sign in as. Only the host that owns the database does it (SeedStartupConnections): the auth server, which reads it, does not.
+        // when the host starts: the schema, then two users to sign in as (the seeder, `IDataSeeder`: `Seeding:Disabled` lists it where it must not run). Only the host that owns the database does it (SeedStartupConnections): the auth server, which reads it, does not.
         services.AddSchemaStartupStep<IdentityDbContext>(EfCoreIdentityDbProperties.ConnectionStringName);
-        services.AddDatabaseStartupStep(EfCoreIdentityDbProperties.ConnectionStringName, "IdentityDbContext seed", (scope, cancellationToken) => IdentityDatabase.SeedUsersAsync(scope, systemTenantId, companyTenantId, cancellationToken));
-        return services;
+        services.AddSingleton(new IdentitySeedTenants(systemTenantId, companyTenantId));
+        return services.AddDataSeeder<IdentityUsersSeeder>(EfCoreIdentityDbProperties.ConnectionStringName);
     }
 
     /// <summary>

@@ -11,4 +11,7 @@ public static class TenantClaimTypes
 
     /// <summary>A tenant, besides its own, that the user may see (a guid); one claim per tenant.</summary>
     public const string AllowedTenantId = "allowed_tenant_id";
+
+    /// <summary>A scope (a subscription) whose entities the user may see (<see cref="IScopeSubscription"/>); one claim per scope key.</summary>
+    public const string AllowedScopeKey = "allowed_scope_key";
 }

@@ -421,13 +421,13 @@ public sealed class KafkaTests(KafkaFixture kafkaServer)
         using IProducer<string, byte[]> unreachable = new ProducerBuilder<string, byte[]>(new ProducerConfig { BootstrapServers = "127.0.0.1:1", MessageTimeoutMs = 500 }).Build();
         using CancellationTokenSource timeout = new(TimeSpan.FromMinutes(2));
         InvalidOperationException failure = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => new KafkaEventConsumer(info, kafka, bus, new CountingDispatcher(), unreachable, deadLetter, NullLogger.Instance).RunAsync(timeout.Token));
+            () => Task.Factory.StartNew(() => new KafkaEventConsumer(info, kafka, bus, new CountingDispatcher(), unreachable, deadLetter, NullLogger.Instance).Run(timeout.Token), CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default));
         Assert.IsType<ProduceException<string, byte[]>>(failure.InnerException);
 
         // it was not committed: the same group reads it again, and now the dead-letter topic is there
         using IProducer<string, byte[]> reachable = new ProducerBuilder<string, byte[]>(new ProducerConfig { BootstrapServers = kafka.BootstrapServers }).Build();
         using CancellationTokenSource stop = new();
-        Task run = new KafkaEventConsumer(info, kafka, bus, new CountingDispatcher(), reachable, deadLetter, NullLogger.Instance).RunAsync(stop.Token);
+        Task run = Task.Factory.StartNew(() => new KafkaEventConsumer(info, kafka, bus, new CountingDispatcher(), reachable, deadLetter, NullLogger.Instance).Run(stop.Token), CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
         using IConsumer<string, byte[]> probe = new ConsumerBuilder<string, byte[]>(new ConsumerConfig
         {
             BootstrapServers = kafka.BootstrapServers,

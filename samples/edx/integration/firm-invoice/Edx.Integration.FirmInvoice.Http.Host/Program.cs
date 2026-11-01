@@ -23,18 +23,18 @@ long maxUpload = FirmInvoiceOptions.MaxUploadBytesOf(builder.Configuration);
 builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = maxUpload + (1024 * 1024));
 builder.Services.Configure<FormOptions>(options => options.MultipartBodyLengthLimit = maxUpload + (1024 * 1024));
 
-// what every Edx microservice has (logging, the web api shell, JWT, Swagger, health, Kafka), then what this service has
+// what every Edx microservice has (logging, the web api shell, Swagger), then what this service chooses (health, authentication, authorization, Kafka) and has
 builder.Services
     .AddBaseRedis(builder.Configuration)
     .AddEdxMicroservice(builder.Configuration, "Edx.Integration.FirmInvoice API")
+    .AddBaseHealthChecks(builder.Configuration)   // /health/live, /startup and /ready: leave it out and the service has none
     .AddEdxAuthentication(builder.Configuration)
     .AddEdxAuthorization()
-    .AddEdxEventBus(builder.Configuration)
+    .AddEdxEventBus(builder.Configuration, typeof(EventHandlersAssemblyMarker).Assembly)
     // this service has tenants: the tenant of a request is the one of its token, and it travels with the messages it publishes
     .AddBaseTenantClaims()
     .AddEdxPermissions(builder.Configuration)
     .AddBaseTenantEventBus()
-    .AddEventHandlers(typeof(EventHandlersAssemblyMarker).Assembly)
     .AddFirmInvoicePersistence(builder.Configuration)
     // the inbox of the service (in its database, with the collections of the queue): a message that comes twice is handled once
     .AddEventInbox(MongoFirmInvoiceDbProperties.CollectionPrefix + "InboxMessage")
@@ -46,6 +46,7 @@ builder.Services
 return await builder.RunBaseAsync(app =>
 {
     app.UseEdxMicroservice();
+    app.MapBaseHealth();
     app.UseBaseAuthentication();
     app.UseBaseAuthorization();
     app.MapControllers();

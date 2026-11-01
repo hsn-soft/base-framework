@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using HsnSoft.Base.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -90,6 +91,12 @@ public static class EfCoreProviderServiceCollectionExtensions
         services.AddDbContext<TContext>((serviceProvider, builder) =>
         {
             selected.Configure(builder, connectionString, tuning);
+            if (!tuning.LogCommands)
+            {
+                // the commands that run are not logged (EfCoreOptions.LogCommands): EF Core does not raise the event, so no provider of logs can show it (a filter of the category would not hold against a provider that has a rule of its own); a failed command is another event and is logged
+                builder.ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.CommandExecuted));
+            }
+
             builder.UseBaseEntityConcepts(serviceProvider);
         });
 

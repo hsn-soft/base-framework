@@ -47,6 +47,8 @@ public sealed class TokenService : IDisposable
             new(TenantClaimTypes.TenantId, user.TenantId.ToString()),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString("N")),
             .. user.Roles.Select(role => new Claim("role", role)),
+            // the tenants under the tenant of the user, which its users see besides their own (the tenant of the user is always allowed, so it is not listed)
+            .. user.AllowedTenantIds.Select(tenantId => new Claim(TenantClaimTypes.AllowedTenantId, tenantId.ToString())),
         ];
         if (user.IsSystemTenant)
         {
