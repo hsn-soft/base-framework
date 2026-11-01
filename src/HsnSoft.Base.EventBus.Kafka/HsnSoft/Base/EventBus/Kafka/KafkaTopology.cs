@@ -21,11 +21,13 @@ internal static class KafkaTopology
     private static string Named(EventBusOptions options, string name) => string.IsNullOrWhiteSpace(options.ExchangeName) ? name : $"{options.ExchangeName}_{name}";
 
     /// <summary>
-    /// Creates the topics that do not exist yet; a topic that already exists is fine. A broker that cannot be reached yet (it is starting, or the first address of its name does not answer) is tried again, so a host that starts
+    /// Creates the topics that do not exist yet (unless <see cref="KafkaOptions.CreateTopics"/> is off); a topic that already exists is fine. A broker that cannot be reached yet (it is starting, or the first address of its name does not answer) is tried again, so a host that starts
     /// beside its broker does not stop on the first refusal.
     /// </summary>
     public static Task EnsureTopicsAsync(KafkaOptions options, IEnumerable<string> topics, CancellationToken cancellationToken = default)
-        => RetryAsync(() => CreateTopicsAsync(options, topics), attempts: 10, TimeSpan.FromSeconds(2), cancellationToken);
+        => !options.CreateTopics
+            ? Task.CompletedTask   // the platform made them (Kafka:CreateTopics)
+            : RetryAsync(() => CreateTopicsAsync(options, topics), attempts: 10, TimeSpan.FromSeconds(2), cancellationToken);
 
     // a stopping service (or a caller that gave up) does not wait for the next try
     internal static async Task RetryAsync(Func<Task> action, int attempts, TimeSpan delay, CancellationToken cancellationToken = default)

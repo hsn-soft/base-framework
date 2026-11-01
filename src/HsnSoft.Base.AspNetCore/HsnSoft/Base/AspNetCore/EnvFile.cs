@@ -22,7 +22,7 @@ public static class EnvFile
     {
         ArgumentNullException.ThrowIfNull(configuration);
 
-        string? file = path ?? FindFile();
+        string? file = path ?? FindFile(Directory.GetCurrentDirectory(), AppContext.BaseDirectory);
         if (file is null || !File.Exists(file))
         {
             return null;
@@ -80,9 +80,10 @@ public static class EnvFile
         }
     }
 
-    private static string? FindFile()
+    /// <summary>The <c>.env</c> file of the current folder, else of the folder of the application; null when there is none.</summary>
+    internal static string? FindFile(string currentDirectory, string applicationDirectory)
     {
-        foreach (string folder in new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory })
+        foreach (string folder in new[] { currentDirectory, applicationDirectory })
         {
             string candidate = Path.Combine(folder, ".env");
             if (File.Exists(candidate))

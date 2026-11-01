@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.Sockets;
 using System.Threading;
@@ -37,10 +38,14 @@ internal static class RabbitMqPublisher
     /// To the exchange, with the event name as routing key: every service that bound a queue to the event gets a copy. <c>false</c> when no queue took it (nobody listens to the event yet): an event nobody
     /// subscribed to is not a failure of the publisher, but it is not delivered, and the caller says so.
     /// </summary>
-    internal static async Task<bool> PublishToExchangeAsync(IChannel channel, string exchangeName, string eventName, BasicProperties properties, byte[] body, CancellationToken cancellationToken)
+    internal static async Task<bool> PublishToExchangeAsync(IChannel channel, string exchangeName, string eventName, BasicProperties properties, byte[] body, CancellationToken cancellationToken, ISet<string>? declared = null)
     {
-        // the exchange is declared with every publish so the first publisher can start before anybody else
-        await channel.ExchangeDeclareAsync(exchangeName, ExchangeType.Direct, cancellationToken: cancellationToken).ConfigureAwait(false);
+        // the exchange is declared so the first publisher can start before anybody else; once for each channel of a pool is enough (an exchange that went away closes the channel, which is then not used again and the publish is tried on a new one)
+        if (declared is null || declared.Add($"exchange:{exchangeName}"))
+        {
+            await channel.ExchangeDeclareAsync(exchangeName, ExchangeType.Direct, cancellationToken: cancellationToken).ConfigureAwait(false);
+        }
+
         try
         {
             await channel.BasicPublishAsync(exchangeName, eventName, mandatory: true, properties, body, cancellationToken).ConfigureAwait(false);
@@ -53,9 +58,13 @@ internal static class RabbitMqPublisher
     }
 
     /// <summary>Straight to one queue through the default exchange; the queue is created if it does not exist.</summary>
-    internal static async Task PublishToQueueAsync(IChannel channel, string queueName, BasicProperties properties, byte[] body, CancellationToken cancellationToken)
+    internal static async Task PublishToQueueAsync(IChannel channel, string queueName, BasicProperties properties, byte[] body, CancellationToken cancellationToken, ISet<string>? declared = null)
     {
-        await channel.QueueDeclareAsync(queueName, durable: true, exclusive: false, autoDelete: false, arguments: null, cancellationToken: cancellationToken).ConfigureAwait(false);
+        if (declared is null || declared.Add($"queue:{queueName}"))
+        {
+            await channel.QueueDeclareAsync(queueName, durable: true, exclusive: false, autoDelete: false, arguments: null, cancellationToken: cancellationToken).ConfigureAwait(false);
+        }
+
         await channel.BasicPublishAsync(string.Empty, queueName, mandatory: true, properties, body, cancellationToken).ConfigureAwait(false);
     }
 
