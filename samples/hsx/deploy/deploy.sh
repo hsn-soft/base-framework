@@ -12,9 +12,9 @@ environment="${1:?docker, uat or production}"
 build=true; [ "${2:-}" = "--no-build" ] && build=false
 
 case "$environment" in
-    docker) ;;
-    uat) namespace=hsx-uat; ports=(7210 7310) ;;
-    production) namespace=hsx-prod; ports=(7220 7320) ;;
+    docker) vhost=hsx ;;
+    uat) namespace=hsx-uat; ports=(7210 7310); vhost=hsx-uat ;;
+    production) namespace=hsx-prod; ports=(7220 7320); vhost=hsx-prod ;;
     *) echo "unknown environment '$environment' (docker, uat or production)" >&2; exit 2 ;;
 esac
 
@@ -22,7 +22,7 @@ samples/hsx/deploy/make-env.sh
 $build && samples/hsx/deploy/build-images.sh
 samples/hsx/deploy/render-settings.sh "$environment"
 # the events of an environment are on a virtual host of their own (hsx for development and docker, hsx-uat, hsx-prod)
-samples/hsx/deploy/ensure-rabbitmq-vhost.sh "$(case "$environment" in docker) echo hsx ;; uat) echo hsx-uat ;; production) echo hsx-prod ;; esac)"
+samples/hsx/deploy/ensure-rabbitmq-vhost.sh "$vhost"
 
 if [ "$environment" = docker ]; then
     docker compose -f samples/hsx/deploy/docker-compose.yml up -d --force-recreate
