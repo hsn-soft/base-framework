@@ -7,6 +7,10 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\..\shared\Hsx.Shared.Contracts\Hsx.Shared.Contracts.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
         <ProjectReference Include="..\Hsx.TextNormalizerService.Domain\Hsx.TextNormalizerService.Domain.csproj" />
     </ItemGroup>
 

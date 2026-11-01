@@ -9,6 +9,7 @@
         <!-- the cache the host chose, and the tenant of a request from its token -->
         <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.Caching.StackExchangeRedis\HsnSoft.Base.Caching.StackExchangeRedis.csproj" />
         <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.MultiTenancy.Authentication\HsnSoft.Base.MultiTenancy.Authentication.csproj" />
+        <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.MultiTenancy.EventBus\HsnSoft.Base.MultiTenancy.EventBus.csproj" />
     </ItemGroup>
 
     <ItemGroup>

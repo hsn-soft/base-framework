@@ -4,7 +4,7 @@
 #   samples/hsx/deploy/deploy.sh uat          Kubernetes of Docker Desktop, namespace hsx-uat, two pods of each host (databases Hsx_*_Uat)
 #   samples/hsx/deploy/deploy.sh production   Kubernetes of Docker Desktop, namespace hsx-prod, two pods of each host (databases Hsx_*_Prod)
 # Add --no-build to use the images that are there. What it does: the secrets (make-env.sh), the images (build-images.sh), the settings of the environment with the passwords put in (render-settings.sh), then the
-# deployment. The infrastructure is the one on this machine, so it has to be running (PostgreSQL, MongoDB, Redis).
+# deployment. The infrastructure is the one on this machine, so it has to be running (PostgreSQL, MongoDB, Redis, RabbitMQ).
 # Ports on localhost (commercial gateway, commercial web): development 7200 7300; docker 7200 7300 (the same: stop the development hosts first); uat 7210 7310; production 7220 7320.
 set -euo pipefail
 cd "$(dirname "$0")/../../.."
@@ -21,6 +21,8 @@ esac
 samples/hsx/deploy/make-env.sh
 $build && samples/hsx/deploy/build-images.sh
 samples/hsx/deploy/render-settings.sh "$environment"
+# the events of an environment are on a virtual host of their own (hsx for development and docker, hsx-uat, hsx-prod)
+samples/hsx/deploy/ensure-rabbitmq-vhost.sh "$(case "$environment" in docker) echo hsx ;; uat) echo hsx-uat ;; production) echo hsx-prod ;; esac)"
 
 if [ "$environment" = docker ]; then
     docker compose -f samples/hsx/deploy/docker-compose.yml up -d --force-recreate

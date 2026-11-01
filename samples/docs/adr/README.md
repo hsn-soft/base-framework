@@ -7,6 +7,7 @@ New ADR: copy the framework's [`0000-template.md`](../../../docs/adr/0000-templa
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
+| [0060](0060-the-hhs-rewrite-in-hsx-the-order-and-what-is-decided.md) | The hhs rewrite in Hsx: the core first, events on RabbitMQ with a virtual host for each environment, the settings of each service its own, the customers' web out | Accepted | 2026-11-01 |
 | [0059](0059-hsx-has-two-mongodb-services-and-the-four-environments.md) | Hsx has the text normalizer and the video generator on MongoDB, and the development, docker, uat and production environments | Accepted | 2026-11-01 |
 | [0058](0058-hsx-imitates-hhs-to-test-the-new-framework.md) | Hsx imitates the hhs system (identity and content, auth server, gateway, Razor web) to test that the new framework can do what the old one did | Accepted | 2026-11-01 |
 | [0057](0057-techsummus-sees-its-customers-through-a-tree-of-tenants.md) | Techsummus sees its customers through a tree of tenants | Accepted | 2026-11-01 |
