@@ -1,9 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 using HsnSoft.Base.Application.Dtos;
 
-namespace Hsx.ContentService.Application.Contracts.CustomerVpSettingDomain.Dtos.Filters;
+namespace Hsx.ContentService.Application.Contracts.CustomerContentVpSettingDomain.Dtos.Filters;
 
-public sealed class GetCustomerVpSettingsPaged : PagedDataRequestDto
+public sealed class GetCustomerContentVpSettingsPaged : PagedDataRequestDto
 {
     /// <summary>A part of the scope key.</summary>
     [StringLength(100)]

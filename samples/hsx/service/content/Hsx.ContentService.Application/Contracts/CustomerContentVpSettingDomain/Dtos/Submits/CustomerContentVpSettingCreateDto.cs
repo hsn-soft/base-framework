@@ -1,16 +1,16 @@
 using System.ComponentModel.DataAnnotations;
-using Hsx.ContentService.Domain.CustomerVpSettingDomain.Consts;
+using Hsx.ContentService.Domain.CustomerContentVpSettingDomain.Consts;
 
-namespace Hsx.ContentService.Application.Contracts.CustomerVpSettingDomain.Dtos.Submits;
+namespace Hsx.ContentService.Application.Contracts.CustomerContentVpSettingDomain.Dtos.Submits;
 
-public sealed class CustomerVpSettingCreateDto
+public sealed class CustomerContentVpSettingCreateDto
 {
     [Required]
-    [StringLength(CustomerVpSettingConsts.ScopeKeyMaxLength)]
+    [StringLength(CustomerContentVpSettingConsts.ScopeKeyMaxLength)]
     public string? ScopeKey { get; set; }
 
     [Required]
-    [StringLength(CustomerVpSettingConsts.DomainNameMaxLength)]
+    [StringLength(CustomerContentVpSettingConsts.DomainNameMaxLength)]
     public string? DomainName { get; set; }
 
     [Required]

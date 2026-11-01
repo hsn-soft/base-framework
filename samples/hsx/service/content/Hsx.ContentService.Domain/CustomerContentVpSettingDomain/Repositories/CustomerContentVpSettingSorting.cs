@@ -1,14 +1,14 @@
 using HsnSoft.Base.Domain.Sorting;
-using Hsx.ContentService.Domain.CustomerVpSettingDomain.Entities;
+using Hsx.ContentService.Domain.CustomerContentVpSettingDomain.Entities;
 
-namespace Hsx.ContentService.Domain.CustomerVpSettingDomain.Repositories;
+namespace Hsx.ContentService.Domain.CustomerContentVpSettingDomain.Repositories;
 
 /// <summary>The fields a list of customer vp settings may be sorted by and the sorting when it sends none.</summary>
-public static class CustomerVpSettingSorting
+public static class CustomerContentVpSettingSorting
 {
     public const string Default = "domainName asc";
 
-    public static readonly SortFields<CustomerVpSetting> Fields = new SortFields<CustomerVpSetting>()
+    public static readonly SortFields<CustomerContentVpSetting> Fields = new SortFields<CustomerContentVpSetting>()
         .Add("domainName", entity => entity.NormalizedDomainName)
         .Add("createdAt", entity => entity.CreatedAt);
 }

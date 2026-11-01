@@ -5,7 +5,7 @@
     "analysis_content_not_found": "{0} numaralı kayıt bulunamadı (AnalysisContent).",
     "customer_content_not_found": "{0} numaralı kayıt bulunamadı (CustomerContent).",
     "customer_content_visit_not_found": "{0} numaralı kayıt bulunamadı (CustomerContentVisit).",
-    "customer_vp_setting_not_found": "{0} numaralı kayıt bulunamadı (CustomerVpSetting).",
+    "customer_content_vp_setting_not_found": "{0} numaralı kayıt bulunamadı (CustomerContentVpSetting).",
     "scope_not_allowed": "'{0}' kapsamı sizin kapsamlarınızdan biri değil."
   }
 }

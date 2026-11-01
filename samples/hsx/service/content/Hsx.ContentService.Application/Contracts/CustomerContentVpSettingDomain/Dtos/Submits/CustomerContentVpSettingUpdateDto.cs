@@ -1,10 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 using HsnSoft.Base;
 
-namespace Hsx.ContentService.Application.Contracts.CustomerVpSettingDomain.Dtos.Submits;
+namespace Hsx.ContentService.Application.Contracts.CustomerContentVpSettingDomain.Dtos.Submits;
 
 /// <summary>What can be changed of a customer vp setting.</summary>
-public sealed class CustomerVpSettingUpdateDto
+public sealed class CustomerContentVpSettingUpdateDto
 {
     [Required]
     [NotDefault]

@@ -2,17 +2,17 @@ using HsnSoft.Base;
 using HsnSoft.Base.Domain.Entities;
 using HsnSoft.Base.MultiTenancy;
 using HsnSoft.Base.Text;
-using Hsx.ContentService.Domain.CustomerVpSettingDomain.Consts;
+using Hsx.ContentService.Domain.CustomerContentVpSettingDomain.Consts;
 
-namespace Hsx.ContentService.Domain.CustomerVpSettingDomain.Entities;
+namespace Hsx.ContentService.Domain.CustomerContentVpSettingDomain.Entities;
 
 /// <summary>
 /// The settings of the video platform of a customer: its domain, whether it is blocked and the limits of its daily videos. It is seen by its scope key.
 /// </summary>
-public sealed class CustomerVpSetting : FullAuditedEntity<Guid>, IScopeSubscription
+public sealed class CustomerContentVpSetting : FullAuditedEntity<Guid>, IScopeSubscription
 {
     // for EF Core
-    private CustomerVpSetting()
+    private CustomerContentVpSetting()
     {
     }
 
@@ -31,13 +31,13 @@ public sealed class CustomerVpSetting : FullAuditedEntity<Guid>, IScopeSubscript
 
     public bool IsAnalysisSourcesEnabled { get; private set; }
 
-    public static CustomerVpSetting Create(string scopeKey, string domainName, bool isBlocked, int dailyDirectVideoGenerationLimit, int dailyTrendVideoGenerationLimit, int dailyAnalysisVideoGenerationLimit, bool isAnalysisSourcesEnabled)
+    public static CustomerContentVpSetting Create(string scopeKey, string domainName, bool isBlocked, int dailyDirectVideoGenerationLimit, int dailyTrendVideoGenerationLimit, int dailyAnalysisVideoGenerationLimit, bool isAnalysisSourcesEnabled)
     {
-        CustomerVpSetting entity = new()
+        CustomerContentVpSetting entity = new()
         {
             Id = Guid.CreateVersion7(),
-            ScopeKey = Guard.NotNullOrWhiteSpace(scopeKey, nameof(ScopeKey), CustomerVpSettingConsts.ScopeKeyMaxLength).Trim(),
-            DomainName = Guard.NotNullOrWhiteSpace(domainName, nameof(DomainName), CustomerVpSettingConsts.DomainNameMaxLength).Trim()
+            ScopeKey = Guard.NotNullOrWhiteSpace(scopeKey, nameof(ScopeKey), CustomerContentVpSettingConsts.ScopeKeyMaxLength).Trim(),
+            DomainName = Guard.NotNullOrWhiteSpace(domainName, nameof(DomainName), CustomerContentVpSettingConsts.DomainNameMaxLength).Trim()
         };
         entity.NormalizedDomainName = StringHelper.Normalize(entity.DomainName);
         entity.Update(isBlocked, dailyDirectVideoGenerationLimit, dailyTrendVideoGenerationLimit, dailyAnalysisVideoGenerationLimit, isAnalysisSourcesEnabled);

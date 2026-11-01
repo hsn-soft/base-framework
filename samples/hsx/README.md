@@ -15,9 +15,19 @@ samples/hsx/smoke-test.sh     # what each demo user sees through the gateway (72
 
 The web app is `http://localhost:7300`. Demo users (password `Hsx-Demo-123`): `system-admin@hsx.local`, `admin@techsummus.hsx.local`, `admin@pixel.hsx.local`, `admin@acme.hsx.local`. The home page shows what the token of the signed-in user lists (`allowed_tenant_id`, `allowed_scope_key`).
 
+## Changing a schema (identity, content)
+
+The PostgreSQL services use EF Core migrations, applied when the host starts ([framework ADR-0131](../../docs/adr/0131-a-schema-that-evolves-is-migrated-by-a-startup-step.md)). After a change of an entity or its configuration:
+
+```
+dotnet ef migrations add <Name> --project samples/hsx/service/content/Hsx.ContentService.EntityFrameworkCore --output-dir Migrations
+```
+
+The MongoDB services (text normalizer, video generator) have no migrations: a collection is made when it is first written and the indexes by a start step.
+
 ## Environments
 
 `samples/hsx/run-all.sh` is development. `samples/hsx/deploy/deploy.sh docker|uat|production` builds the images and deploys the seven hosts (Docker Compose, or the Kubernetes of Docker Desktop in `hsx-uat` and `hsx-prod`, two pods of each); `undeploy.sh <environment>` takes it away and `test.sh uat|production` tries the health probes. The gateway and the web app are on 7200 7300 (development and docker), 7210 7310 (uat), 7220 7320 (production); the databases are `Hsx_*_Dev`, `_Uat`, `_Prod`. `smoke-test.sh http://localhost:7210` runs the same checks against an environment.
 
-Endpoints: `POST /{identity-service|content-service}/v1/{tenants|app-users|app-roles|companies|customers|subscriptions|customer-contents|analysis-contents|analysis-content-items|customer-content-visits|customer-vp-settings}/{get/{id}|paged-list|create}`, `PUT` (update) and `DELETE /{id}`, through the gateway.
+Endpoints: `POST /{identity-service|content-service}/v1/{tenants|app-users|app-roles|companies|customers|subscriptions|customer-contents|analysis-contents|analysis-content-items|customer-content-visits|customer-content-vp-settings}/{get/{id}|paged-list|create}`, `PUT` (update) and `DELETE /{id}`, through the gateway.
 The text normalizer and the video generator: `/text-normalizer-service/v1/customer-content-normalized-requests/...` and `/video-generator-service/v1/video-requests/...` with the same calls.

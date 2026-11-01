@@ -43,8 +43,8 @@ public static class EfCoreServiceCollectionExtensions
         services.AddScoped<ITenantRepository, EfCoreTenantRepository>();
         services.AddScoped<ISignInRepository, EfCoreSignInRepository>();
 
-        // the schema is made when the host starts, by the host that owns the database (SeedStartupConnections)
-        services.AddSchemaStartupStep<IdentityDbContext>(EfCoreIdentityDbProperties.ConnectionStringName);
+        // the schema is migrated when the host starts, by the host that owns the database (SeedStartupConnections): the migrations of this project, in their order
+        services.AddMigrationStartupStep<IdentityDbContext>(EfCoreIdentityDbProperties.ConnectionStringName);
         services.AddDataSeeder<SampleIdentitySeeder>(EfCoreIdentityDbProperties.ConnectionStringName);   // the demo tenants, customer, subscriptions, roles and users (off with Seeding:Disabled)
         return services;
     }

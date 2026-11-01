@@ -5,7 +5,7 @@ using Hsx.ContentService.Domain.AnalysisContentDomain.Entities;
 using Hsx.ContentService.Domain.AnalysisContentItemDomain.Entities;
 using Hsx.ContentService.Domain.CustomerContentDomain.Entities;
 using Hsx.ContentService.Domain.CustomerContentVisitDomain.Entities;
-using Hsx.ContentService.Domain.CustomerVpSettingDomain.Entities;
+using Hsx.ContentService.Domain.CustomerContentVpSettingDomain.Entities;
 using Hsx.ContentService.EntityFrameworkCore.Configurations;
 using Microsoft.EntityFrameworkCore;
 
@@ -22,7 +22,7 @@ public sealed class ContentDbContext(DbContextOptions<ContentDbContext> options,
 
     public DbSet<CustomerContentVisit> CustomerContentVisits => Set<CustomerContentVisit>();
 
-    public DbSet<CustomerVpSetting> CustomerVpSettings => Set<CustomerVpSetting>();
+    public DbSet<CustomerContentVpSetting> CustomerContentVpSettings => Set<CustomerContentVpSetting>();
 
     protected override void ConfigureModel(ModelBuilder modelBuilder)
     {
@@ -30,6 +30,6 @@ public sealed class ContentDbContext(DbContextOptions<ContentDbContext> options,
         modelBuilder.ConfigureAnalysisContentDomain();
         modelBuilder.ConfigureAnalysisContentItemDomain();
         modelBuilder.ConfigureCustomerContentVisitDomain();
-        modelBuilder.ConfigureCustomerVpSettingDomain();
+        modelBuilder.ConfigureCustomerContentVpSettingDomain();
     }
 }

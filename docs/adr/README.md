@@ -28,6 +28,7 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
+| [0131](0131-a-schema-that-evolves-is-migrated-by-a-startup-step.md) | A schema that evolves is migrated by a startup step (`AddMigrationStartupStep`, one pod at a time under the lock), instead of the schema step | Accepted | 2026-11-01 |
 | [0130](0130-nuget-packages-are-pushed-with-trusted-publishing-not-an-api-key.md) | The packages are pushed to NuGet with trusted publishing (`NuGet/login`, a key that lives for the run), not with a long-lived API key | Accepted | 2026-11-01 |
 | [0129](0129-an-entity-is-isolated-by-its-tenant-or-by-its-scope-never-both.md) | An entity is isolated by its tenant or by its scope (subscription), never both | Accepted | 2026-11-01 |
 | [0128](0128-the-tenants-that-a-tenant-sees-are-the-ones-under-it-by-a-path-of-ids.md) | The tenants that a tenant sees are the ones under it, by a path of ids | Accepted | 2026-11-01 |

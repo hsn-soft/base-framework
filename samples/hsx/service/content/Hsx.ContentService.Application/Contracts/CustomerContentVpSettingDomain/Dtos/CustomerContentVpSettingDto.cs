@@ -1,8 +1,8 @@
 using HsnSoft.Base.Application.Dtos;
 
-namespace Hsx.ContentService.Application.Contracts.CustomerVpSettingDomain.Dtos;
+namespace Hsx.ContentService.Application.Contracts.CustomerContentVpSettingDomain.Dtos;
 
-public sealed class CustomerVpSettingDto : AuditedEntityDto<Guid>
+public sealed class CustomerContentVpSettingDto : AuditedEntityDto<Guid>
 {
     public string ScopeKey { get; init; } = string.Empty;
     public string DomainName { get; init; } = string.Empty;
