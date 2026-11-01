@@ -7,6 +7,7 @@ New ADR: copy the framework's [`0000-template.md`](../../../docs/adr/0000-templa
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
+| [0058](0058-hsx-imitates-hhs-to-test-the-new-framework.md) | Hsx imitates the hhs system (identity and content, auth server, gateway, Razor web) to test that the new framework can do what the old one did | Accepted | 2026-11-01 |
 | [0057](0057-techsummus-sees-its-customers-through-a-tree-of-tenants.md) | Techsummus sees its customers through a tree of tenants | Accepted | 2026-11-01 |
 | [0056](0056-the-abc-scheduler-calls-the-jobs-of-the-services.md) | The Abc scheduler calls the jobs of the services | Accepted | 2026-11-01 |
 | [0055](0055-the-identity-seeds-are-seeders.md) | The identity seeds are seeders | Accepted | 2026-11-01 |

@@ -1,0 +1,14 @@
+@page "/contents"
+@model ContentsModel
+@{
+    ViewData["Title"] = "Contents";
+}
+<h1>Contents</h1>
+<p class="muted">@Model.Data.DataTotalCount found: what this user's token lets it see.</p>
+<table>
+    <tr><th>Key</th><th>Slug</th><th>Scope</th><th>Video</th></tr>
+    @foreach (ContentItem item in Model.Data.Items)
+    {
+        <tr><td>@item.ContentKey</td><td>@item.SlugKey</td><td><code>@item.ScopeKey</code></td><td>@item.VideoStatus</td></tr>
+    }
+</table>

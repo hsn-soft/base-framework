@@ -7,3 +7,8 @@ abc/deploy/.env
 abc/deploy/.rendered/
 edx/deploy/.env
 edx/deploy/.rendered/
+
+hsx/deploy/.env
+hsx/deploy/.rendered/
+hsx/app/Hsx.AuthServer.Host/private_key.xml
+hsx/shared/Hsx.Shared.Hosting/public_key.xml

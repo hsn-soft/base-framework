@@ -1,0 +1,22 @@
+{
+  "culture": "ru",
+  "texts": {
+    "app_role_name_duplicate": "Роль с именем '{0}' уже существует.",
+    "app_role_not_deletable": "Роль '{0}' статична или имеет пользователей и не может быть удалена.",
+    "app_role_not_found": "Роль {0} не найдена.",
+    "app_user_email_duplicate": "Пользователь с email '{0}' уже существует.",
+    "app_user_not_found": "Пользователь {0} не найден.",
+    "app_user_user_name_duplicate": "Пользователь с именем '{0}' уже существует.",
+    "company_name_duplicate": "Такая запись уже существует: '{0}'.",
+    "company_not_found": "Запись не найдена: {0}.",
+    "customer_domain_duplicate": "Такая запись уже существует: '{0}'.",
+    "customer_not_found": "Запись не найдена: {0}.",
+    "scope_not_allowed": "Область '{0}' вам недоступна.",
+    "subscription_not_allowed": "Подписка {0} не принадлежит арендатору.",
+    "subscription_not_found": "Запись не найдена: {0}.",
+    "tenant_loop": "Арендатора нельзя поместить под самого себя или под его арендаторов.",
+    "tenant_name_duplicate": "Арендатор с именем '{0}' уже существует.",
+    "tenant_not_empty": "Арендатор, у которого есть арендаторы или пользователи, не удаляется.",
+    "tenant_not_found": "Арендатор {0} не найден."
+  }
+}
