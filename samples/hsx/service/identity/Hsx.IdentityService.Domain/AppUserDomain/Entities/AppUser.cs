@@ -38,6 +38,15 @@ public sealed class AppUser : FullAuditedEntity<Guid>, IMultiTenant
 
     public DateTimeOffset? LastLoginAt { get; private set; }
 
+    /// <summary>How many sign-ins failed since the last one that worked; the persistence counts them in one command (<see cref="Repositories.ISignInRepository"/>), so two failures at once are both counted.</summary>
+    public int FailedLoginCount { get; private set; }
+
+    /// <summary>Until when the user is locked out after too many failed sign-ins; nothing when it is not.</summary>
+    public DateTimeOffset? LockoutEndAt { get; private set; }
+
+    /// <summary>Whether the user is locked out at <paramref name="now"/>.</summary>
+    public bool IsLockedOut(DateTimeOffset now) => LockoutEndAt is { } end && end > now;
+
     public static AppUser Create(string userName, string email, string displayName, string password, string? languageCode)
     {
         AppUser user = new()

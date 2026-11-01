@@ -14,6 +14,7 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.AddBaseHosting();   // the .env file, the port, the limits of Kestrel, the proxies and the time to stop: the section Hosting
 builder.Logging.AddBaseSerilog(builder.Configuration, "Hsx.AuthServer");
 
+builder.Services.Configure<AuthServerOptions>(builder.Configuration.GetSection(AuthServerOptions.SectionName));
 builder.Services
     // the texts in the languages of the system: the framework's and the shared ones (the text of a wrong password)
     .AddBaseLocalization(builder.Configuration, options => options.AddHsxSharedTexts())

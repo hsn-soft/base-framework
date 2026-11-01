@@ -25,3 +25,12 @@ public sealed class AppUserUserNameDuplicateException : BusinessException
     public AppUserUserNameDuplicateException(string userName)
         : base(Code, $"A user named '{userName}' exists.") => WithKey(Code, userName);
 }
+
+/// <summary>The current password given to change the password is not the user's.</summary>
+public sealed class AppUserWrongPasswordException : BusinessException
+{
+    public const string Code = "app_user_wrong_password";
+
+    public AppUserWrongPasswordException()
+        : base(Code, "The current password is wrong.") => WithKey(Code);
+}

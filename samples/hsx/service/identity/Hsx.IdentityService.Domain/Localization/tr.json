@@ -1,12 +1,14 @@
 {
   "culture": "tr",
   "texts": {
+    "app_password_policy_violation": "Şifre kiracının kurallarına uymuyor: {0}.",
     "app_role_name_duplicate": "'{0}' adında bir rol zaten var.",
     "app_role_not_deletable": "'{0}' rolü statik veya kullanıcıları var, silinemez.",
     "app_role_not_found": "{0} numaralı rol bulunamadı.",
     "app_user_email_duplicate": "'{0}' e-postasına sahip bir kullanıcı zaten var.",
     "app_user_not_found": "{0} numaralı kullanıcı bulunamadı.",
     "app_user_user_name_duplicate": "'{0}' adında bir kullanıcı zaten var.",
+    "app_user_wrong_password": "Mevcut şifre yanlış.",
     "company_name_duplicate": "'{0}' değerine sahip bir kayıt zaten var (Company.Name).",
     "company_not_found": "{0} numaralı kayıt bulunamadı (Company).",
     "customer_domain_duplicate": "'{0}' değerine sahip bir kayıt zaten var (Customer.Domain).",

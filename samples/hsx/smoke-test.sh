@@ -48,4 +48,36 @@ crud() { # route, body
 }
 crud text-normalizer-service/v1/customer-content-normalized-requests "{\"scopeKey\":\"$scope\",\"customerContentId\":\"$(uuidgen)\",\"domainName\":\"demo.example.com\",\"contentKey\":\"smoke\",\"status\":\"Created\",\"currentMilestone\":\"Start\",\"retryCount\":0}"
 crud video-generator-service/v1/video-requests "{\"scopeKey\":\"$scope\",\"refContentId\":\"$(uuidgen)\",\"refContentType\":\"CustomerContent\",\"status\":\"Created\",\"currentMilestone\":\"Start\",\"mediaInputJson\":\"{}\",\"videoProviderKey\":\"creatomate\",\"retryCount\":0}"
+
+# the sign-in: the password policy, the lockout, the refresh token and the change of a password, each with a user made for it (and deleted after)
+as_user() { curl -s -X POST "$gateway/auth-server/v1/auth/login" -H 'Content-Type: application/json' -d "{\"email\":\"$1\",\"password\":\"$2\"}" -o /dev/null -w '%{http_code}'; }
+make_user() { # name, password -> id
+  curl -s -X POST "$gateway/identity-service/v1/app-users/create" -H "Authorization: Bearer $techsummus" -H 'Content-Type: application/json' -d "{\"userName\":\"$1\",\"email\":\"$1@techsummus.hsx.local\",\"displayName\":\"$1\",\"password\":\"$2\"}" | json payload.id
+}
+weak=$(curl -s -X POST "$gateway/identity-service/v1/app-users/create" -H "Authorization: Bearer $techsummus" -H 'Content-Type: application/json' -d '{"userName":"weak","email":"weak@techsummus.hsx.local","displayName":"weak","password":"abcdefgh"}' | json errorCode)
+check "a password that breaks the policy" "$weak" app_password_policy_violation
+
+good='Passw0rd!x'
+locked=$(make_user smokelock "$good")
+for _ in 1 2 3 4 5; do as_user smokelock@techsummus.hsx.local wrong-password > /dev/null; done
+check "the right password of a locked-out user" "$(as_user smokelock@techsummus.hsx.local "$good")" 401
+curl -s -o /dev/null -X DELETE "$gateway/identity-service/v1/app-users/$locked" -H "Authorization: Bearer $techsummus"
+
+changer=$(make_user smokechange "$good")
+mine=$(curl -s -X POST "$gateway/auth-server/v1/auth/login" -H 'Content-Type: application/json' -d "{\"email\":\"smokechange@techsummus.hsx.local\",\"password\":\"$good\"}" | json payload.accessToken)
+change() { curl -s -o /dev/null -w '%{http_code}' -X PUT "$gateway/identity-service/v1/my-account/password" -H "Authorization: Bearer $mine" -H 'Content-Type: application/json' -d "{\"currentPassword\":\"$1\",\"newPassword\":\"$2\"}"; }
+check "a change with a wrong current password" "$(change wrong-password 'N3wPassword!')" 400
+check "a change of the password" "$(change "$good" 'N3wPassword!')" 204
+check "the new password signs in" "$(as_user smokechange@techsummus.hsx.local 'N3wPassword!')" 200
+check "the old password does not" "$(as_user smokechange@techsummus.hsx.local "$good")" 401
+
+jar=$(mktemp); first=$(mktemp)
+curl -s -c "$jar" -X POST "$gateway/auth-server/v1/auth/login" -H 'Content-Type: application/json' -d '{"email":"smokechange@techsummus.hsx.local","password":"N3wPassword!","offlineAccess":true}' -o /dev/null
+cp "$jar" "$first"
+refresh() { curl -s -b "$1" -c "$1" -X POST "$gateway/auth-server/v1/auth/token-refresh" -o /dev/null -w '%{http_code}'; }
+check "a refresh token gives a new access token" "$(refresh "$jar")" 200
+check "the same refresh token a second time" "$(refresh "$first")" 401
+check "and the one that took its place ended with it" "$(refresh "$jar")" 401
+rm -f "$jar" "$first"
+curl -s -o /dev/null -X DELETE "$gateway/identity-service/v1/app-users/$changer" -H "Authorization: Bearer $techsummus"
 [ "$failures" -eq 0 ] && echo "all as expected" || exit 1

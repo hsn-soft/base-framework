@@ -6,6 +6,10 @@ using Hsx.IdentityService.Domain.AppRoleSubscriptionDomain.Entities;
 using Hsx.IdentityService.Domain.AppUserDomain.Entities;
 using Hsx.IdentityService.Domain.AppUserDomain.Repositories;
 using Hsx.IdentityService.Domain.AppUserRoleDomain.Entities;
+using Hsx.IdentityService.Domain.AuthLoginAuditDomain.Entities;
+using Hsx.IdentityService.Domain.AuthPasswordPolicyDomain.Entities;
+using Hsx.IdentityService.Domain.AuthPasswordPolicyDomain.Repositories;
+using Hsx.IdentityService.Domain.AuthRefreshTokenDomain.Repositories;
 using Hsx.IdentityService.Domain.CompanyDomain.Entities;
 using Hsx.IdentityService.Domain.CustomerDomain.Entities;
 using Hsx.IdentityService.Domain.SubscriptionDomain.Entities;
@@ -39,9 +43,13 @@ public static class EfCoreServiceCollectionExtensions
         services.AddEfCoreRepository<IdentityDbContext, AppRole, Guid>();
         services.AddEfCoreRepository<IdentityDbContext, AppUserRole, Guid>();
         services.AddEfCoreRepository<IdentityDbContext, AppRoleSubscription, Guid>();
+        services.AddEfCoreRepository<IdentityDbContext, AuthPasswordPolicy, Guid>();
+        services.AddEfCoreRepository<IdentityDbContext, AuthLoginAudit, Guid>();
 
         services.AddScoped<ITenantRepository, EfCoreTenantRepository>();
         services.AddScoped<ISignInRepository, EfCoreSignInRepository>();
+        services.AddScoped<IRefreshTokenStore, EfCoreRefreshTokenStore>();
+        services.AddScoped<IPasswordPolicyProvider, EfCorePasswordPolicyProvider>();
 
         // the schema is migrated when the host starts, by the host that owns the database (SeedStartupConnections): the migrations of this project, in their order
         services.AddMigrationStartupStep<IdentityDbContext>(EfCoreIdentityDbProperties.ConnectionStringName);

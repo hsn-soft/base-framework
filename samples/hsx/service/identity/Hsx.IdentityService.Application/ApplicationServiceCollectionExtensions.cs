@@ -3,6 +3,7 @@ using Hsx.IdentityService.Application.Contracts.AppRoleDomain.Services;
 using Hsx.IdentityService.Application.Contracts.AppUserDomain.Services;
 using Hsx.IdentityService.Application.Contracts.CompanyDomain.Services;
 using Hsx.IdentityService.Application.Contracts.CustomerDomain.Services;
+using Hsx.IdentityService.Application.Contracts.MyAccountDomain.Services;
 using Hsx.IdentityService.Application.Contracts.SubscriptionDomain.Services;
 using Hsx.IdentityService.Application.Contracts.TenantDomain.Services;
 using Hsx.IdentityService.Application.Services;
@@ -25,6 +26,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<ICustomerAppService, CustomerAppService>();
         services.AddScoped<ISubscriptionAppService, SubscriptionAppService>();
         services.AddScoped<ITenantAppService, TenantAppService>();
+        services.AddScoped<IMyAccountAppService, MyAccountAppService>();
         services.AddScoped<IAppUserAppService, AppUserAppService>();
         services.AddScoped<IAppRoleAppService, AppRoleAppService>();
         return services;

@@ -1,12 +1,14 @@
 {
   "culture": "ru",
   "texts": {
+    "app_password_policy_violation": "Пароль не соответствует правилам арендатора: {0}.",
     "app_role_name_duplicate": "Роль с именем '{0}' уже существует.",
     "app_role_not_deletable": "Роль '{0}' статична или имеет пользователей и не может быть удалена.",
     "app_role_not_found": "Роль {0} не найдена.",
     "app_user_email_duplicate": "Пользователь с email '{0}' уже существует.",
     "app_user_not_found": "Пользователь {0} не найден.",
     "app_user_user_name_duplicate": "Пользователь с именем '{0}' уже существует.",
+    "app_user_wrong_password": "Текущий пароль неверен.",
     "company_name_duplicate": "Такая запись уже существует: '{0}'.",
     "company_not_found": "Запись не найдена: {0}.",
     "customer_domain_duplicate": "Такая запись уже существует: '{0}'.",

@@ -14,10 +14,12 @@ using Hsx.IdentityService.Domain.AppUserDomain.Entities;
 using Hsx.IdentityService.Domain.AppUserDomain.Exceptions;
 using Hsx.IdentityService.Domain.AppUserDomain.Repositories;
 using Hsx.IdentityService.Domain.AppUserRoleDomain.Entities;
+using Hsx.IdentityService.Domain.AuthPasswordPolicyDomain;
+using Hsx.IdentityService.Domain.AuthPasswordPolicyDomain.Repositories;
 
 namespace Hsx.IdentityService.Application.Services;
 
-public sealed class AppUserAppService(IRepository<AppUser, Guid> users, IRepository<AppUserRole, Guid> userRoles, IRepository<AppRole, Guid> roles, IServiceProvider services) : ApplicationServiceBase(services), IAppUserAppService
+public sealed class AppUserAppService(IRepository<AppUser, Guid> users, IRepository<AppUserRole, Guid> userRoles, IRepository<AppRole, Guid> roles, IPasswordPolicyProvider policies, IServiceProvider services) : ApplicationServiceBase(services), IAppUserAppService
 {
     public async Task<AppUserDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
         => await users.FindAsync<AppUserDto>(id, cancellationToken: cancellationToken).ConfigureAwait(false) ?? throw AppUserNotFound.For(id);
@@ -52,6 +54,7 @@ public sealed class AppUserAppService(IRepository<AppUser, Guid> users, IReposit
             throw new AppUserUserNameDuplicateException(userName);
         }
 
+        await EnsurePasswordAsync(tenantId ?? throw new InvalidOperationException("A user is made in a tenant: the caller has none."), input.Password!, cancellationToken).ConfigureAwait(false);
         AppUser created = AppUser.Create(userName, email, input.DisplayName!, input.Password!, input.LanguageCode);
         await users.AddAsync(created, cancellationToken).ConfigureAwait(false);
         return await GetAsync(created.Id, cancellationToken).ConfigureAwait(false);
@@ -79,6 +82,7 @@ public sealed class AppUserAppService(IRepository<AppUser, Guid> users, IReposit
         ArgumentNullException.ThrowIfNull(input);
 
         AppUser user = await FindAsync(input.Id.GetValueOrDefault(), cancellationToken).ConfigureAwait(false);
+        await EnsurePasswordAsync(user.TenantId, input.Password!, cancellationToken).ConfigureAwait(false);
         user.SetPassword(input.Password!);
         await users.UpdateAsync(user, cancellationToken).ConfigureAwait(false);
     }
@@ -120,6 +124,16 @@ public sealed class AppUserAppService(IRepository<AppUser, Guid> users, IReposit
         Guid userId = user.Id;
         await userRoles.DeleteWhereAsync(link => link.UserId == userId, cancellationToken).ConfigureAwait(false);
         await users.DeleteAsync(user, cancellationToken).ConfigureAwait(false);
+    }
+
+    // the password keeps the rules of the tenant of the user, not the ones of the caller
+    private async Task EnsurePasswordAsync(Guid tenantId, string password, CancellationToken cancellationToken)
+    {
+        IReadOnlyList<string> broken = (await policies.GetRulesAsync(tenantId, cancellationToken).ConfigureAwait(false)).Check(password);
+        if (broken.Count > 0)
+        {
+            throw new PasswordPolicyViolationException(broken);
+        }
     }
 
     private async Task<AppUser> FindAsync(Guid id, CancellationToken cancellationToken)
