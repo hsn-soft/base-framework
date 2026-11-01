@@ -1,0 +1,50 @@
+# The Hsx system in Docker, the environment `docker`: the seven hosts, nothing else. The infrastructure (PostgreSQL, MongoDB, Redis) is the one on this machine, the one the hosts use in development, reached as
+# host.docker.internal; the databases are the ones of development too (Hsx_*_Dev).
+#   samples/hsx/deploy/deploy.sh docker        # builds the images, renders the settings, and runs this file
+# The settings of each host are appsettings.docker.json with the passwords put in (render-settings.sh), mounted over the file of the image. The commercial gateway is on localhost:7200, the web app on 7300.
+name: hsx
+
+x-host: &host
+  restart: unless-stopped
+  environment:
+    ASPNETCORE_ENVIRONMENT: docker
+
+services:
+  identity-service:
+    <<: *host
+    image: hsx/identity-service:dev
+    volumes:
+      - ./.rendered/docker/identity-service.json:/app/appsettings.docker.json:ro
+  auth-server-service:
+    <<: *host
+    image: hsx/auth-server-service:dev
+    volumes:
+      - ./.rendered/docker/auth-server-service.json:/app/appsettings.docker.json:ro
+      - ../app/Hsx.AuthServer.Host/private_key.xml:/app/private_key.xml:ro   # the private key is not in the image
+  content-service:
+    <<: *host
+    image: hsx/content-service:dev
+    volumes:
+      - ./.rendered/docker/content-service.json:/app/appsettings.docker.json:ro
+  text-normalizer-service:
+    <<: *host
+    image: hsx/text-normalizer-service:dev
+    volumes:
+      - ./.rendered/docker/text-normalizer-service.json:/app/appsettings.docker.json:ro
+  video-generator-service:
+    <<: *host
+    image: hsx/video-generator-service:dev
+    volumes:
+      - ./.rendered/docker/video-generator-service.json:/app/appsettings.docker.json:ro
+  gateway-commercial:
+    <<: *host
+    image: hsx/gateway-commercial:dev
+    volumes:
+      - ./.rendered/docker/gateway-commercial.json:/app/appsettings.docker.json:ro
+    ports: ["7200:8080"]
+  commercial-web:
+    <<: *host
+    image: hsx/commercial-web:dev
+    volumes:
+      - ./.rendered/docker/commercial-web.json:/app/appsettings.docker.json:ro
+    ports: ["7300:8080"]

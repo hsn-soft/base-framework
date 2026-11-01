@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!-- The heart of the service: its entities and rules. It depends on nothing but the framework's Core, Ddd.Domain and MultiTenancy, and the shared helpers and texts of the Hsx services. -->
+
+    <ItemGroup>
+        <!-- the texts of this layer (Localization/en.json, tr.json), read by the localization at start -->
+        <EmbeddedResource Include="Localization\*.json" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.Ddd.Domain\HsnSoft.Base.Ddd.Domain.csproj" />
+        <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.MultiTenancy\HsnSoft.Base.MultiTenancy.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\shared\Hsx.Shared.Helper\Hsx.Shared.Helper.csproj" />
+        <ProjectReference Include="..\..\..\shared\Hsx.Shared.Localization\Hsx.Shared.Localization.csproj" />
+    </ItemGroup>
+
+</Project>

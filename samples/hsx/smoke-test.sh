@@ -32,4 +32,20 @@ see system-admin@hsx.local 4 4 6
 see admin@techsummus.hsx.local 2 2 3
 see admin@pixel.hsx.local 1 1 3
 see admin@acme.hsx.local 1 1 0
+# the text normalizer and the video generator: a request is made in the scope of Techsummus, seen by Techsummus and the system tenant and not by Pixel, then deleted (their data is in MongoDB)
+login() { curl -s -X POST "$gateway/auth-server/v1/auth/login" -H 'Content-Type: application/json' -d "{\"email\":\"$1\",\"password\":\"$password\"}" | json payload.accessToken; }
+count() { curl -s -X POST "$gateway/$2/paged-list" -H "Authorization: Bearer $1" -H 'Content-Type: application/json' -d '{"maxResultCount":100}' | json payload.dataTotalCount; }
+techsummus=$(login admin@techsummus.hsx.local); pixel=$(login admin@pixel.hsx.local); system=$(login system-admin@hsx.local)
+scope=$(curl -s -X POST "$gateway/content-service/v1/customer-contents/paged-list" -H "Authorization: Bearer $techsummus" -H 'Content-Type: application/json' -d '{}' | json payload.items.0.scopeKey)
+crud() { # route, body
+  local id
+  id=$(curl -s -X POST "$gateway/$1/create" -H "Authorization: Bearer $techsummus" -H 'Content-Type: application/json' -d "$2" | json payload.id)
+  check "$1 created" "$([ -n "$id" ] && echo yes)" yes
+  check "$1 Techsummus" "$(count "$techsummus" "$1")" 1
+  check "$1 Pixel" "$(count "$pixel" "$1")" 0
+  check "$1 system" "$(count "$system" "$1")" 1
+  check "$1 deleted" "$(curl -s -o /dev/null -w '%{http_code}' -X DELETE "$gateway/$1/$id" -H "Authorization: Bearer $techsummus")" 204
+}
+crud text-normalizer-service/v1/customer-content-normalized-requests "{\"scopeKey\":\"$scope\",\"customerContentId\":\"$(uuidgen)\",\"domainName\":\"demo.example.com\",\"contentKey\":\"smoke\",\"status\":\"Created\",\"currentMilestone\":\"Start\",\"retryCount\":0}"
+crud video-generator-service/v1/video-requests "{\"scopeKey\":\"$scope\",\"refContentId\":\"$(uuidgen)\",\"refContentType\":\"CustomerContent\",\"status\":\"Created\",\"currentMilestone\":\"Start\",\"mediaInputJson\":\"{}\",\"videoProviderKey\":\"creatomate\",\"retryCount\":0}"
 [ "$failures" -eq 0 ] && echo "all as expected" || exit 1
