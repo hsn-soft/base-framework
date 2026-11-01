@@ -1,7 +1,7 @@
 using Abc.ProductService.Domain.ProductStockHistoryDomain.Consts;
 using Abc.ProductService.Domain.ProductStockHistoryDomain.Entities;
 using Abc.ProductService.MongoDB.Configurations;
-using HsnSoft.Base.Hosting;
+using HsnSoft.Base.Data;
 using HsnSoft.Base.MongoDB;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,24 +25,20 @@ public static class StockMongoServiceCollectionExtensions
 
         ProductStockHistoryClassMap.Register();
         services.AddMongoRepository<ProductStockHistory, Guid>(MongoStockDbProperties.CollectionPrefix + ProductStockHistoryConsts.CollectionName, MongoStockDbProperties.ServiceKey);
+        services.AddDatabaseStartupStep(MongoStockDbProperties.ConnectionStringName, "Product stock history collection", EnsureProductStockCollection);
         return services;
     }
 
     /// <summary>Makes the indexes of the stock history (the product, the tenant, the time). MongoDB creates the database and the collection when the first record is written.</summary>
-    public static Task EnsureProductStockDatabaseAsync(this IServiceProvider services)
+    internal static async Task EnsureProductStockCollection(IServiceProvider services, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(services);
-
-        return services.RunStartupStepAsync("Product stock history collection", async cancellationToken =>
-        {
-            IMongoCollection<ProductStockHistory> histories = services.GetRequiredKeyedService<IMongoDatabase>(MongoStockDbProperties.ServiceKey)
-                .GetCollection<ProductStockHistory>(MongoStockDbProperties.CollectionPrefix + ProductStockHistoryConsts.CollectionName);
-            await histories.Indexes.CreateManyAsync(
-                [
-                    new CreateIndexModel<ProductStockHistory>(Builders<ProductStockHistory>.IndexKeys.Ascending(history => history.ProductId).Descending(history => history.CreatedAt)),
-                    new CreateIndexModel<ProductStockHistory>(Builders<ProductStockHistory>.IndexKeys.Ascending(history => history.TenantId)),
-                ],
-                cancellationToken).ConfigureAwait(false);
-        });
+        IMongoCollection<ProductStockHistory> histories = services.GetRequiredKeyedService<IMongoDatabase>(MongoStockDbProperties.ServiceKey)
+            .GetCollection<ProductStockHistory>(MongoStockDbProperties.CollectionPrefix + ProductStockHistoryConsts.CollectionName);
+        await histories.Indexes.CreateManyAsync(
+            [
+                new CreateIndexModel<ProductStockHistory>(Builders<ProductStockHistory>.IndexKeys.Ascending(history => history.ProductId).Descending(history => history.CreatedAt)),
+                new CreateIndexModel<ProductStockHistory>(Builders<ProductStockHistory>.IndexKeys.Ascending(history => history.TenantId)),
+            ],
+            cancellationToken).ConfigureAwait(false);
     }
 }

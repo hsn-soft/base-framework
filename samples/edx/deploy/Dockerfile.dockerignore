@@ -1,0 +1,23 @@
+# Everything is left out, then what the Edx hosts need is let in.
+*
+
+!NuGet.Config
+!common.props
+!common.versions.props
+!src/**
+!samples/Directory.Build.props
+!samples/Directory.Packages.props
+!samples/edx/**
+
+# what a build or a run leaves (the back office is built outside, see Dockerfile.back-office)
+**/bin
+**/obj
+**/Logs
+samples/edx/app/back-office
+# the XSD of the e-invoice packages are part of the build of Edx.Shared.Efatura; the rest of docs is not
+samples/edx/docs/python
+samples/edx/docs/samples
+samples/edx/docs/zips
+
+# secrets: the private key is a secret of the auth server, mounted at run time
+**/private_key.xml

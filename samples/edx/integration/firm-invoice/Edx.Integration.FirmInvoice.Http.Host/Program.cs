@@ -2,7 +2,10 @@ using Edx.Integration.FirmInvoice.Application;
 using Edx.Integration.FirmInvoice.Application.Storage;
 using Edx.Integration.FirmInvoice.Http.Host.EventHandlers;
 using Edx.Integration.FirmInvoice.MongoDB;
+using Edx.Shared.Hosting;
 using Edx.Shared.Hosting.Microservices;
+using HsnSoft.Base.AspNetCore;
+using HsnSoft.Base.Authentication;
 using HsnSoft.Base.BlobStoring.Minio;
 using HsnSoft.Base.Caching.StackExchangeRedis;
 using HsnSoft.Base.EventBus;
@@ -12,6 +15,7 @@ using HsnSoft.Base.MultiTenancy;
 using Microsoft.AspNetCore.Http.Features;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+builder.AddBaseHosting();   // the .env file, the limits of Kestrel, the proxies and the time to stop: the section Hosting
 builder.Logging.AddBaseSerilog(builder.Configuration, "Edx.Integration.FirmInvoice");
 
 // the biggest file is a setting of the service (FirmInvoice:MaxUploadBytes): Kestrel and the multipart form allow it, whatever the gateway in front allows
@@ -19,16 +23,18 @@ long maxUpload = FirmInvoiceOptions.MaxUploadBytesOf(builder.Configuration);
 builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = maxUpload + (1024 * 1024));
 builder.Services.Configure<FormOptions>(options => options.MultipartBodyLengthLimit = maxUpload + (1024 * 1024));
 
-// what every Edx microservice has (logging, the web api shell, JWT, Swagger, health, Kafka), then what this service has
+// what every Edx microservice has (logging, the web api shell, Swagger), then what this service chooses (health, authentication, authorization, Kafka) and has
 builder.Services
     .AddBaseRedis(builder.Configuration)
     .AddEdxMicroservice(builder.Configuration, "Edx.Integration.FirmInvoice API")
-    .AddEdxEventBus(builder.Configuration)
+    .AddBaseHealthChecks(builder.Configuration)   // /health/live, /startup and /ready: leave it out and the service has none
+    .AddEdxAuthentication(builder.Configuration)
+    .AddEdxAuthorization()
+    .AddEdxEventBus(builder.Configuration, typeof(EventHandlersAssemblyMarker).Assembly)
     // this service has tenants: the tenant of a request is the one of its token, and it travels with the messages it publishes
     .AddBaseTenantClaims()
     .AddEdxPermissions(builder.Configuration)
     .AddBaseTenantEventBus()
-    .AddEventHandlers(typeof(EventHandlersAssemblyMarker).Assembly)
     .AddFirmInvoicePersistence(builder.Configuration)
     // the inbox of the service (in its database, with the collections of the queue): a message that comes twice is handled once
     .AddEventInbox(MongoFirmInvoiceDbProperties.CollectionPrefix + "InboxMessage")
@@ -36,12 +42,12 @@ builder.Services
     .AddMinioBlobStoring(builder.Configuration)
     .AddFirmInvoiceApplication(builder.Configuration);
 
-WebApplication app = builder.Build();
-
-// the indexes of the collections
-await app.Services.EnsureFirmInvoiceDatabaseAsync();
-
-app.UseEdxMicroservice();
-app.MapControllers();
-
-await app.RunAsync();
+// a failure to start (a setting that is missing, a database that cannot be prepared) is logged as critical and ends the process with the exit code 1
+return await builder.RunBaseAsync(app =>
+{
+    app.UseEdxMicroservice();
+    app.MapBaseHealth();
+    app.UseBaseAuthentication();
+    app.UseBaseAuthorization();
+    app.MapControllers();
+});

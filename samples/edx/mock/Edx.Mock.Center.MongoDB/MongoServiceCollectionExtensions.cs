@@ -1,8 +1,8 @@
 using Edx.Mock.Center.Domain.Envelopes;
 using Edx.Mock.Center.Domain.Participants;
 using Edx.Mock.Center.MongoDB.Configurations;
+using HsnSoft.Base.Data;
 using HsnSoft.Base.Domain.Repositories;
-using HsnSoft.Base.Hosting;
 using HsnSoft.Base.MongoDB;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,27 +26,23 @@ public static class MongoServiceCollectionExtensions
         services.AddScoped<IEnvelopeQueueRepository>(provider => new MongoEnvelopeQueueRepository(
             provider.GetRequiredService<IMongoDatabase>(), provider.GetRequiredService<MongoEntityConcepts>(), MongoCenterDbProperties.CollectionPrefix + MongoCenterDbProperties.EnvelopeCollection));
         services.AddScoped<IRepository<EnvelopeQueueItem, Guid>>(provider => provider.GetRequiredService<IEnvelopeQueueRepository>());
+        services.AddDatabaseStartupStep(MongoCenterDbProperties.ConnectionStringName, "Center collections", EnsureCenterCollections);
         return services;
     }
 
     /// <summary>Makes the indexes: a participant is found by its register number (unique), an envelope by its uuid (unique, which is what refuses the same envelope twice) and the workers find theirs by stage.</summary>
-    public static Task EnsureCenterDatabaseAsync(this IServiceProvider services)
+    internal static async Task EnsureCenterCollections(IServiceProvider services, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(services);
-
-        return services.RunStartupStepAsync("Center collections", async cancellationToken =>
-        {
-            IMongoDatabase database = services.GetRequiredService<IMongoDatabase>();
-            await database.GetCollection<Participant>(MongoCenterDbProperties.CollectionPrefix + MongoCenterDbProperties.ParticipantCollection).Indexes.CreateOneAsync(
-                new CreateIndexModel<Participant>(Builders<Participant>.IndexKeys.Ascending(participant => participant.RegisterNumber), new CreateIndexOptions { Unique = true }),
-                cancellationToken: cancellationToken).ConfigureAwait(false);
-            await database.GetCollection<EnvelopeQueueItem>(MongoCenterDbProperties.CollectionPrefix + MongoCenterDbProperties.EnvelopeCollection).Indexes.CreateManyAsync(
-                [
-                    new CreateIndexModel<EnvelopeQueueItem>(Builders<EnvelopeQueueItem>.IndexKeys.Ascending(item => item.EnvelopeId), new CreateIndexOptions { Unique = true }),
-                    new CreateIndexModel<EnvelopeQueueItem>(Builders<EnvelopeQueueItem>.IndexKeys.Ascending(item => item.Stage).Ascending(item => item.NextSendAt)),
-                    new CreateIndexModel<EnvelopeQueueItem>(Builders<EnvelopeQueueItem>.IndexKeys.Ascending(item => item.DocumentKeys)),
-                ],
-                cancellationToken).ConfigureAwait(false);
-        });
+        IMongoDatabase database = services.GetRequiredService<IMongoDatabase>();
+        await database.GetCollection<Participant>(MongoCenterDbProperties.CollectionPrefix + MongoCenterDbProperties.ParticipantCollection).Indexes.CreateOneAsync(
+            new CreateIndexModel<Participant>(Builders<Participant>.IndexKeys.Ascending(participant => participant.RegisterNumber), new CreateIndexOptions { Unique = true }),
+            cancellationToken: cancellationToken).ConfigureAwait(false);
+        await database.GetCollection<EnvelopeQueueItem>(MongoCenterDbProperties.CollectionPrefix + MongoCenterDbProperties.EnvelopeCollection).Indexes.CreateManyAsync(
+            [
+                new CreateIndexModel<EnvelopeQueueItem>(Builders<EnvelopeQueueItem>.IndexKeys.Ascending(item => item.EnvelopeId), new CreateIndexOptions { Unique = true }),
+                new CreateIndexModel<EnvelopeQueueItem>(Builders<EnvelopeQueueItem>.IndexKeys.Ascending(item => item.Stage).Ascending(item => item.NextSendAt)),
+                new CreateIndexModel<EnvelopeQueueItem>(Builders<EnvelopeQueueItem>.IndexKeys.Ascending(item => item.DocumentKeys)),
+            ],
+            cancellationToken).ConfigureAwait(false);
     }
 }

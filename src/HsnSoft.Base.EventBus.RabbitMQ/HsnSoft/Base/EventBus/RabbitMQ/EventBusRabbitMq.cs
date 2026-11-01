@@ -20,6 +20,8 @@ public sealed partial class EventBusRabbitMq(
 {
     private readonly IRabbitMqPersistentConnection _connection = connection;
     private readonly ILogger<EventBusRabbitMq> _logger = logger;
+    // the channels of the publishers, kept open between messages (EventBusOptions.PublisherChannelPoolSize)
+    private readonly PublisherChannelPool _channels = new(connection.CreatePublisherChannelAsync, options.Value.PublisherChannelPoolSize);
     private int _publishing;
     private bool _disposed;
 
@@ -43,13 +45,13 @@ public sealed partial class EventBusRabbitMq(
             await RabbitMqPublisher.WithConfirmTimeoutAsync(
                 async limit =>
                 {
-                    IChannel channel = await _connection.CreatePublisherChannelAsync(limit).ConfigureAwait(false);
-                    await using (channel.ConfigureAwait(false))
+                    PublisherChannelLease lease = await _channels.RentAsync(limit).ConfigureAwait(false);
+                    await using (lease.ConfigureAwait(false))
                     {
                         BasicProperties properties = RabbitMqPublisher.Properties(request.Envelope.MessageId, request.Envelope.CorrelationId);
                         if (request.TargetService is null)
                         {
-                            if (!await RabbitMqPublisher.PublishToExchangeAsync(channel, Settings.ExchangeName, request.EventName, properties, request.Body, limit).ConfigureAwait(false))
+                            if (!await RabbitMqPublisher.PublishToExchangeAsync(lease.Channel, Settings.ExchangeName, request.EventName, properties, request.Body, limit, lease.Declared).ConfigureAwait(false))
                             {
                                 LogUnroutable(_logger, request.EventName, request.Envelope.MessageId);
                             }
@@ -57,8 +59,11 @@ public sealed partial class EventBusRabbitMq(
                         else
                         {
                             // straight to the queue the service reads the event from: nobody else gets it
-                            await RabbitMqPublisher.PublishToQueueAsync(channel, EventNameHelper.GetConsumerClientEventQueueName(Settings, request.TargetService, request.EventName), properties, request.Body, limit).ConfigureAwait(false);
+                            await RabbitMqPublisher.PublishToQueueAsync(lease.Channel, EventNameHelper.GetConsumerClientEventQueueName(Settings, request.TargetService, request.EventName), properties, request.Body, limit, lease.Declared).ConfigureAwait(false);
                         }
+
+                        // confirmed (or returned as unroutable): the channel is in a known state and is kept for the next message; on any failure it is closed instead
+                        lease.Succeed();
                     }
                 },
                 Settings.PublishTimeout,
@@ -85,6 +90,8 @@ public sealed partial class EventBusRabbitMq(
             LogWaitingForPublishers(_logger);
             await Task.Delay(TimeSpan.FromMilliseconds(100)).ConfigureAwait(false);
         }
+
+        await _channels.DisposeAsync().ConfigureAwait(false);
     }
 
     [LoggerMessage(EventId = 4402, EventName = "RABBITMQ_BUS_UNROUTABLE", Level = LogLevel.Warning, Message = "{EventName} ({MessageId}) was not delivered: no queue is bound to it (no service listens to the event yet)")]

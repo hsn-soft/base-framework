@@ -83,6 +83,51 @@ public class KafkaTests
     }
 
     [Fact]
+    public async Task TheHealthCheck_IsOneInstance_ForEveryProbe_AndAnswersUnhealthyEachTime()
+    {
+        IServiceCollection services = new ServiceCollection().AddLogging().AddKafkaEventBus(Configuration());
+        using ServiceProvider provider = services.BuildServiceProvider();
+
+        Assert.Same(provider.GetRequiredService<KafkaHealthCheck>(), provider.GetRequiredService<KafkaHealthCheck>());
+        KafkaHealthCheck check = new(Options.Create(new KafkaOptions { BootstrapServers = "127.0.0.1:1" }));
+        for (int probe = 0; probe < 3; probe++)
+        {
+            Assert.Equal(HealthStatus.Unhealthy, (await check.CheckHealthAsync(new HealthCheckContext())).Status);
+        }
+
+        check.Dispose();
+        check.Dispose();   // twice is fine
+        await Assert.ThrowsAsync<ObjectDisposedException>(() => check.CheckHealthAsync(new HealthCheckContext()));
+    }
+
+    [Fact]
+    public async Task ACheckThatIsCancelled_StopsWaitingForTheBrokers()
+    {
+        using KafkaHealthCheck check = new(Options.Create(new KafkaOptions { BootstrapServers = "127.0.0.1:1" }));
+        using CancellationTokenSource cancelled = new();
+        await cancelled.CancelAsync();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => check.CheckHealthAsync(new HealthCheckContext(), cancelled.Token));
+    }
+
+    [Fact]
+    public async Task Subscriber_WithARevokeTimeoutLongerThanThePollInterval_DoesNotStart()
+    {
+        InMemoryEventBusSubscriptionManager subscriptions = new([new EventSubscription(typeof(OrderPlaced), typeof(object), 1)], Options.Create(new EventBusOptions()), NullLogger<InMemoryEventBusSubscriptionManager>.Instance);
+        var subscriber = new KafkaSubscriber(
+            subscriptions,
+            new EventDispatcher(new ServiceCollection().BuildServiceProvider().GetRequiredService<IServiceScopeFactory>(), subscriptions, Options.Create(new EventBusOptions()), NullLogger<EventDispatcher>.Instance),
+            Options.Create(new KafkaOptions { MaxPollInterval = TimeSpan.FromSeconds(20), RevokeTimeout = TimeSpan.FromSeconds(30) }),
+            Options.Create(new EventBusOptions { ShutdownTimeout = TimeSpan.FromSeconds(5) }),
+            NullLogger<KafkaSubscriber>.Instance);
+
+        await subscriber.StartAsync(CancellationToken.None).WaitAsync(TimeSpan.FromSeconds(5));
+        InvalidOperationException failure = await Assert.ThrowsAsync<InvalidOperationException>(() => subscriber.ExecuteTask!);
+
+        Assert.Contains("Kafka:RevokeTimeout", failure.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task Subscriber_WithoutSubscriptions_ReturnsImmediately()
     {
         InMemoryEventBusSubscriptionManager subscriptions = new([], Options.Create(new EventBusOptions()), NullLogger<InMemoryEventBusSubscriptionManager>.Instance);

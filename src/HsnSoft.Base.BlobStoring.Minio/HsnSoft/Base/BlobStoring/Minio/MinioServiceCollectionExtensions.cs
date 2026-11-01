@@ -22,11 +22,11 @@ public static class MinioServiceCollectionExtensions
         services.TryAddSingleton<IMinioClient>(provider =>
         {
             MinioOptions options = provider.GetRequiredService<IOptions<MinioOptions>>().Value;
-            return new MinioClient()
+            IMinioClient builder = new MinioClient()
                 .WithEndpoint(options.Endpoint)
                 .WithCredentials(options.AccessKey, options.SecretKey)
-                .WithSSL(options.UseSsl)
-                .Build();
+                .WithSSL(options.UseSsl);
+            return (options.TimeoutSeconds is { } timeout ? builder.WithTimeout(timeout * 1000) : builder).Build();
         });
         services.TryAddSingleton<IBlobStore, MinioBlobStore>();
         services.AddHealthChecks().AddCheck<MinioHealthCheck>("minio", tags: [HealthCheckTags.Ready]);

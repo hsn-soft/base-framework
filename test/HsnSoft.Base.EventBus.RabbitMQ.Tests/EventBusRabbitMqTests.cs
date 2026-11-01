@@ -49,6 +49,9 @@ public class EventBusRabbitMqTests
         Assert.Equal(new SampleEto("a", 1), envelope.Message);
         Assert.Equal(envelope.MessageId.ToString(), properties.MessageId);
         Assert.Empty(channel.Named("QueueDeclareAsync"));
+        // the channel is kept for the next message (EventBusOptions.PublisherChannelPoolSize) and closed when the bus is
+        Assert.False(channel.IsClosed);
+        await bus.DisposeAsync();
         Assert.True(channel.IsClosed);
     }
 
@@ -130,7 +133,8 @@ public class EventBusRabbitMqTests
         await bus.PublishAsync(new SampleEto("a", 1));
         await bus.SendAsync(new SampleEto("b", 2), "ShipmentService");
 
-        Assert.Equal(2, connection.PublisherChannels);
+        // one channel with confirms, kept between the two messages
+        Assert.Equal(1, connection.PublisherChannels);
     }
 
     [Fact]

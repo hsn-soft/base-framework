@@ -19,6 +19,7 @@
     <ItemGroup>
         <PackageReference Include="Microsoft.EntityFrameworkCore" Version="$(MicrosoftEntityFrameworkCorePackageVersion)" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="$(MicrosoftEntityFrameworkCorePackageVersion)" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="$(MicrosoftAspNetCorePackageVersion)" />
         <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="$(MicrosoftAspNetCorePackageVersion)" />
     </ItemGroup>
 

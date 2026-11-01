@@ -53,14 +53,13 @@ public sealed class EfCoreUserRepository(IdentityDbContext db) : EfCoreRepositor
         ArgumentNullException.ThrowIfNull(roles);
 
         List<UserRole> replacement = [.. roles.Select(role => UserRole.Create(user.Id, role.Id, user.TenantId))];
-        await Db.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
+        // the retrying strategy of the context runs the whole unit again when a command fails in a way that may pass
+        await Db.ExecuteInTransactionAsync(async token =>
         {
-            await using Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction transaction = await Db.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
-            await Db.UserRoles.IgnoreQueryFilters().Where(link => link.UserId == user.Id).ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
+            await Db.UserRoles.IgnoreQueryFilters().Where(link => link.UserId == user.Id).ExecuteDeleteAsync(token).ConfigureAwait(false);
             Db.UserRoles.AddRange(replacement);
-            await Db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
-        }).ConfigureAwait(false);
+            await Db.SaveChangesAsync(token).ConfigureAwait(false);
+        }, cancellationToken).ConfigureAwait(false);
     }
 
     public Task<bool> AnyUserInRoleAsync(Guid roleId, CancellationToken cancellationToken = default)

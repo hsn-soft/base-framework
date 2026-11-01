@@ -15,7 +15,7 @@ esac
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
-# What is considered garbage. Names, matched anywhere under the repository (never inside .git).
+# What is considered garbage. Names, matched anywhere under the repository (never inside .git, and never inside node_modules: the packages of Node have folders called bin that they need).
 DIRECTORIES=(bin obj TestResults .sonarqube .vs)
 FILES=(.DS_Store Thumbs.db '*.user' '*.suo' '*.trx' coverage.cobertura.xml coverage.opencover.xml)
 
@@ -39,8 +39,8 @@ while IFS= read -r path; do
     [ -n "$path" ] && targets+=("$path")
 done < <(
     {
-        find . -name .git -prune -o -type d \( -false "${dir_expr[@]}" \) -print -prune
-        find . -name .git -prune -o \( -type d \( -false "${dir_expr[@]}" \) \) -prune -o -type f \( -false "${file_expr[@]}" \) -print
+        find . \( -name .git -o -name node_modules \) -prune -o -type d \( -false "${dir_expr[@]}" \) -print -prune
+        find . \( -name .git -o -name node_modules \) -prune -o \( -type d \( -false "${dir_expr[@]}" \) \) -prune -o -type f \( -false "${file_expr[@]}" \) -print
     } | sort
 )
 

@@ -23,6 +23,10 @@ public sealed class TokenService : IDisposable
     public TokenService(IOptions<JwtOptions> jwt)
     {
         _jwt = jwt.Value;
+        if (_jwt.IssuedAudiences.Count == 0)
+        {
+            throw new InvalidOperationException("Jwt:IssuedAudiences is required: a token names the services it may be sent to, and a token with no audience is accepted by none.");
+        }
 
         // loaded when the host starts (see Program.cs): a missing key is found now, not at the first login
         _privateKey = RsaKeys.LoadPrivate(_jwt.PrivateKeyFile ?? throw new InvalidOperationException("Jwt:PrivateKeyFile is required: the auth server signs the tokens with it."));
@@ -30,7 +34,8 @@ public sealed class TokenService : IDisposable
 
     public void Dispose() => _privateKey.Dispose();
 
-    public AccessToken Issue(AuthenticatedUser user)
+    /// <summary>Issues the token of <paramref name="user"/>. <paramref name="audiences"/> are the services the token may be sent to (<c>aud</c>): the ones of <c>Jwt:IssuedAudiences</c> when they are not given, so a client that may reach fewer services is given fewer.</summary>
+    public AccessToken Issue(AuthenticatedUser user, IReadOnlyCollection<string>? audiences = null)
     {
         JwtOptions settings = _jwt;
         List<Claim> claims =
@@ -42,6 +47,8 @@ public sealed class TokenService : IDisposable
             new(TenantClaimTypes.TenantId, user.TenantId.ToString()),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString("N")),
             .. user.Roles.Select(role => new Claim("role", role)),
+            // the tenants under the tenant of the user, which its users see besides their own (the tenant of the user is always allowed, so it is not listed)
+            .. user.AllowedTenantIds.Select(tenantId => new Claim(TenantClaimTypes.AllowedTenantId, tenantId.ToString())),
         ];
         if (user.IsSystemTenant)
         {
@@ -51,7 +58,7 @@ public sealed class TokenService : IDisposable
         string token = new JsonWebTokenHandler().CreateToken(new SecurityTokenDescriptor
         {
             Issuer = settings.Issuer,
-            Audience = settings.Audience,
+            Claims = new Dictionary<string, object> { [JwtRegisteredClaimNames.Aud] = (audiences is { Count: > 0 } ? audiences : settings.IssuedAudiences).ToArray() },
             Subject = new ClaimsIdentity(claims),
             Expires = DateTime.UtcNow.AddMinutes(settings.AccessTokenMinutes),
             SigningCredentials = new SigningCredentials(new RsaSecurityKey(_privateKey), SecurityAlgorithms.RsaSha256),

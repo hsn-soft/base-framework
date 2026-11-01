@@ -2,12 +2,26 @@
 
 `HsnSoft.Base.Authorization` lets an endpoint ask for a **permission** and the code ask what the caller may do. Why it is this way: [ADR-0081](adr/0081-permissions-one-framework-package-and-the-grants-in-the-distributed-cache.md), [ADR-0083](adr/0083-four-permission-types-and-constraints-that-must-be-given.md).
 
+## Who the caller is: the token
+
+`AddBaseJwtAuthentication` checks the bearer token; `AddBaseAuthorization` adds the standard policies. A host that reads tokens but authorizes nothing (a gateway) calls the first only; a host that is open to its callers calls neither ([ADR-0122](adr/0122-a-service-has-its-own-audiences-and-chooses-authentication-and-authorization.md)).
+
+```json
+"Jwt": { "Issuer": "abc-auth", "Audience": "abc-order", "PublicKeyFile": "public_key.xml", "ValidateIssuer": null, "ClockSkewSeconds": 30 }
+```
+
+- **`Audience`** is the name of *this host*: the `aud` claim of a token may be a list, and the token is accepted when the list has this audience. Every service has its own, so a client whose token does not name a service cannot call it (the
+  gateways multiply; a client reaches the services whose audience its token has). The host that issues tokens lists what it puts into the `aud` of a token in **`IssuedAudiences`** (and may be told fewer for a client that reaches fewer services).
+- **The issuer** is checked in every environment except Development; `ValidateIssuer` (true/false) says it for an environment.
+- **`ClockSkewSeconds`** (default 30, at most 300) is the difference of two clocks that is forgiven when the lifetime of a token is checked.
+
 ## In a service
 
 ```csharp
 builder.Services
     .AddBaseRedis(configuration)                       // an IDistributedCache: where the grants are read from
     .AddBaseJwtAuthentication(configuration)           // ICurrentUser: the user and its roles
+    .AddBaseAuthorization()                            // the standard policies ([Authorize], BasePolicies.Authenticated)
     .AddBasePermissions(configuration)                 // the attribute, the handler, the checker, the store
     .AddPermissionScope<TenantPermissionScope>();      // only when the product has scopes (the tenant)
 ```

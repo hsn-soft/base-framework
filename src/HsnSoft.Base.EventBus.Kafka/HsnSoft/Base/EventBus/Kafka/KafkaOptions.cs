@@ -23,6 +23,18 @@ public sealed class KafkaOptions
     /// </summary>
     public TimeSpan MaxPollInterval { get; set; } = TimeSpan.FromMinutes(5);
 
+    /// <summary>
+    /// How long a consumer waits, when partitions are taken away from it (another instance joined the group), for the messages it is handling to finish and be committed before it gives the partitions up. The consumer does not read meanwhile, so
+    /// this must be shorter than <see cref="MaxPollInterval"/>. A handling that is still running after it is not waited for any longer: its message is read again by the new owner (the inbox makes that harmless). Default 30 seconds.
+    /// </summary>
+    public TimeSpan RevokeTimeout { get; set; } = TimeSpan.FromSeconds(30);
+
+    /// <summary>
+    /// Whether the service creates the topics it reads and writes when it starts (<see cref="Partitions"/>, <see cref="ReplicationFactor"/>). On by default, for development and the first start of a system. A platform that makes its topics itself (with the partitions its load needs)
+    /// turns it off: a service that creates a topic with one partition by mistake cannot be undone without losing the topic.
+    /// </summary>
+    public bool CreateTopics { get; set; } = true;
+
     /// <summary>Partitions of a topic the library has to create.</summary>
     public int Partitions { get; set; } = 1;
 

@@ -4,6 +4,11 @@
 |---|---|
 | [`adr/`](adr/README.md) | **Architecture decision records**: why the repository is the way it is. Start with [the index](adr/README.md). Every architecture decision is added there when it is taken. |
 | [`Overview.md`](Overview.md) | The packages (one capability each) and what each depends on, how a product composes them, the tests and the configuration. The text that was in the root README |
+| [`DatabaseStartup.md`](DatabaseStartup.md) | Who prepares a database at startup (`SeedStartupConnections`), the steps (`RunDatabaseStepAsync`, `RunContextStepAsync`), and the lock of each database that keeps the pods of a host from meeting |
+| [`Health.md`](Health.md) | The health endpoints (`/health/live`, `/health/startup`, `/health/ready`), the checks of the packages, the settings, the probes of Kubernetes |
+| [`Hosting.md`](Hosting.md) | The settings of the host (`Hosting`, `Urls`), the limits of Kestrel, the proxies, the `.env` file, the settings a service requires, a start that logs its failure |
+| [`MultiTenancy.md`](MultiTenancy.md) | Tenants that see other tenants: the tree, `TenantAccessPath`, the list in the token and its limit |
+| [`Scheduler.md`](Scheduler.md) | The endpoints a scheduler calls: `[SchedulerAuth]`, the key (`Scheduler:ApiKey`) the host requires, the headers of a job |
 | [`Releasing.md`](Releasing.md) | How a version gets to NuGet: the versions, the branches (`dev` → `rel/nuget-candidate` → `rel/nuget-regular`), what to do for a candidate, a stable version, a new month and an urgent fix |
 | [`Logging.md`](Logging.md) | The logging model: the log types, the chain logs, the fields, facilities, where each decision is made |
 | [`LogLevels.md`](LogLevels.md) | What each level setting changes and where a log of each level can be seen (console, Graylog, file) |

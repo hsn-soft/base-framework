@@ -509,6 +509,45 @@ public sealed class RabbitMqTests(RabbitMqFixture fixture) : IClassFixture<Rabbi
     }
 
     [Fact]
+    public async Task TheReadinessProbe_OpensNoConnectionOfItsOwn_HoweverOftenItIsAsked()
+    {
+        string exchange = NewExchange();
+        await using RunningHost host = await StartAsync(exchange, services =>
+        {
+            services.AddSingleton(new Recorder());
+            services.AddEventHandler<Pinged, RecordingHandler>();
+        });
+
+        // a probe every few seconds, in every pod, once showed thousands of connections on the broker
+        for (int probe = 0; probe < 200; probe++)
+        {
+            Assert.Equal(HealthStatus.Healthy, (await Support.ReadyReportAsync(host.Services)).Status);
+        }
+
+        ExecResult connections = await fixture.Container.ExecAsync(["rabbitmqctl", "list_connections", "name"]);
+        Assert.Equal(1, connections.Stdout.Split('\n', StringSplitOptions.RemoveEmptyEntries).Count(line => line.Contains("->", StringComparison.Ordinal)));
+    }
+
+    [Fact]
+    public async Task TheReadinessProbe_FollowsTheConnection_OutAndBackIn()
+    {
+        string exchange = NewExchange();
+        await using RunningHost host = await StartAsync(exchange, services =>
+        {
+            services.AddSingleton(new Recorder());
+            services.AddEventHandler<Pinged, RecordingHandler>();
+        });
+        Assert.Equal(HealthStatus.Healthy, (await Support.ReadyReportAsync(host.Services)).Status);
+
+        await fixture.Container.ExecAsync(["rabbitmqctl", "close_all_connections", "probe test"]);
+
+        // the client recovers the connection by itself; the probe never replaces it, so it ends healthy again with the one connection
+        await Support.EventuallyAsync(async () => (await Support.ReadyReportAsync(host.Services)).Status == HealthStatus.Healthy, "the probe to be healthy again");
+        ExecResult connections = await fixture.Container.ExecAsync(["rabbitmqctl", "list_connections", "name"]);
+        Assert.Equal(1, connections.Stdout.Split('\n', StringSplitOptions.RemoveEmptyEntries).Count(line => line.Contains("->", StringComparison.Ordinal)));
+    }
+
+    [Fact]
     public async Task BrokerThatCannotBeReached_FailsTheStartOfTheService()
     {
         string exchange = NewExchange();

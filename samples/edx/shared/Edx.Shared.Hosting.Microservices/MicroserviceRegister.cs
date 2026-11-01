@@ -1,3 +1,4 @@
+using System.Reflection;
 using Edx.Shared.Helper;
 using HsnSoft.Base.Authorization;
 using HsnSoft.Base.EventBus;
@@ -30,18 +31,21 @@ public static class MicroserviceRegister
                 .WithExposedHeaders("X-Correlation-Id", "Content-Disposition")));
         }
 
-        return services.AddEdxHosting(configuration, swaggerTitle, authenticateUsers: true, swaggerBearerButton: true);
+        return services.AddEdxHosting(configuration, swaggerTitle, swaggerBearerButton: true);
     }
 
     /// <summary>
     /// Connects a service to the Kafka event bus of the system (sections <c>Kafka</c> and <c>Kafka:EventBus</c>: the exchange <c>EDX</c>, which names the topics, and the client name of the service (<c>IntegrationFirmInvoiceApi</c>, <c>IntegrationGibInvoiceApi</c>, <c>InvoiceService</c>, <c>SignerService</c>: an integration's is named by what it integrates and the host that runs it)) and makes the
-    /// events it publishes carry who started the chain (<see cref="EdxEventHeaderProvider"/>). The service adds its handlers with <c>AddEventHandler</c>. The auth server and the gateway do not use it: only the microservices reach Kafka.
+    /// events it publishes carry who started the chain (<see cref="EdxEventHeaderProvider"/>). The handlers of the service are every handler of the assembly it names (<paramref name="handlers"/>, found by scanning; none for a service that only publishes) and <paramref name="fetchCounts"/> says how many messages of an event are handled at the same time (by the name of the event; one when it is not named). The auth server and the gateway do not use it: only the microservices reach Kafka.
     /// </summary>
-    public static IServiceCollection AddEdxEventBus(this IServiceCollection services, IConfiguration configuration)
-        => services
+    public static IServiceCollection AddEdxEventBus(this IServiceCollection services, IConfiguration configuration, Assembly? handlers = null, IReadOnlyDictionary<string, ushort>? fetchCounts = null)
+    {
+        services
             .AddHttpContextAccessor()
             .AddSingleton<IEventHeaderProvider, EdxEventHeaderProvider>()
             .AddKafkaEventBus(configuration);
+        return handlers is null ? services : services.AddEventHandlers(handlers, fetchCounts);
+    }
 
     /// <summary>
     /// Turns on <c>[PermissionAuthorize]</c> in the service: what the caller (the user, and its roles) was granted is read from the store the identity service writes (section <c>Permissions</c>; the host has Redis, <c>AddBaseRedis</c>), under the scope of the tenant of the
@@ -60,7 +64,7 @@ public static class MicroserviceRegister
             app.UseCors(CorsPolicyName);
         }
 
-        return app.UseEdxHosting(authenticateUsers: true);
+        return app.UseEdxHosting();
     }
 
     private const string CorsPolicyName = "edx-microservice";

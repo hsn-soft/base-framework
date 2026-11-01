@@ -94,24 +94,56 @@ public class RabbitMqRegistrationTests
     }
 
     [Fact]
-    public async Task HealthCheck_IsUnhealthy_WhenTheBrokerCannotBeReached()
+    public async Task HealthCheck_IsHealthy_ByTheConnectionTheServiceHas_AndOpensNoOther()
     {
-        RabbitMqHealthCheck check = new(Options.Create(new RabbitMqConnectionSettings { HostName = "127.0.0.1", Port = 1 }));
+        FakeConnection connection = new() { IsConnected = true };
 
-        HealthCheckResult result = await check.CheckHealthAsync(new HealthCheckContext());
+        HealthCheckResult result = await new RabbitMqHealthCheck(connection).CheckHealthAsync(new HealthCheckContext());
+
+        Assert.Equal(HealthStatus.Healthy, result.Status);
+        Assert.Equal(0, connection.ConnectCalls);
+    }
+
+    [Fact]
+    public async Task HealthCheck_ConnectsTheOneConnectionOfAServiceThatHasNotConnectedYet()
+    {
+        FakeConnection connection = new() { IsConnected = false, ConnectSucceeds = true };
+
+        HealthCheckResult result = await new RabbitMqHealthCheck(connection).CheckHealthAsync(new HealthCheckContext());
+
+        Assert.Equal(HealthStatus.Healthy, result.Status);
+        Assert.Equal(1, connection.ConnectCalls);
+    }
+
+    [Fact]
+    public async Task HealthCheck_IsUnhealthy_WhenTheConnectionIsLostAndNotBackYet()
+    {
+        FakeConnection connection = new() { IsConnected = false, ConnectSucceeds = false };
+
+        HealthCheckResult result = await new RabbitMqHealthCheck(connection).CheckHealthAsync(new HealthCheckContext());
 
         Assert.Equal(HealthStatus.Unhealthy, result.Status);
         Assert.False(string.IsNullOrEmpty(result.Description));
     }
 
     [Fact]
+    public async Task HealthCheck_IsUnhealthy_WhenTheBrokerCannotBeReached_AndTheDescriptionHasNoAddress()
+    {
+        FakeConnection connection = new() { IsConnected = false, ConnectFailure = new InvalidOperationException("broker-7.internal:5672 refused") };
+
+        HealthCheckResult result = await new RabbitMqHealthCheck(connection).CheckHealthAsync(new HealthCheckContext());
+
+        Assert.Equal(HealthStatus.Unhealthy, result.Status);
+        Assert.DoesNotContain("broker-7", result.Description);
+        Assert.Same(connection.ConnectFailure, result.Exception);
+    }
+
+    [Fact]
     public async Task HealthCheck_PassesCancellationOn()
     {
-        RabbitMqHealthCheck check = new(Options.Create(new RabbitMqConnectionSettings { HostName = "127.0.0.1", Port = 1 }));
-        using CancellationTokenSource cancelled = new();
-        await cancelled.CancelAsync();
+        FakeConnection connection = new() { IsConnected = false, ConnectFailure = new OperationCanceledException() };
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => check.CheckHealthAsync(new HealthCheckContext(), cancelled.Token));
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => new RabbitMqHealthCheck(connection).CheckHealthAsync(new HealthCheckContext()));
     }
 
     [Fact]

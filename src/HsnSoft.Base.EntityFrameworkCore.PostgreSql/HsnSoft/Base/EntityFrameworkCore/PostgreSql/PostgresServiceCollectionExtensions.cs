@@ -1,4 +1,5 @@
 using System;
+using HsnSoft.Base.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,13 +27,24 @@ public static class PostgresServiceCollectionExtensions
         return providers.Add(PostgresProvider.Instance);
     }
 
-    private sealed class PostgresProvider : IEfCoreProvider
+    private sealed class PostgresProvider : IEfCoreProvider, IStartupLockProvider
     {
         public static readonly PostgresProvider Instance = new();
 
         public string Name => EfCoreProviderNames.Postgres;
 
-        public void Configure(DbContextOptionsBuilder options, string connectionString)
-            => options.UseNpgsql(connectionString, npgsql => npgsql.EnableRetryOnFailure());
+        public void Configure(DbContextOptionsBuilder options, string connectionString) => Configure(options, connectionString, new EfCoreOptions());
+
+        public void Configure(DbContextOptionsBuilder options, string connectionString, EfCoreOptions tuning)
+            => options.UseNpgsql(connectionString, npgsql =>
+            {
+                npgsql.CommandTimeout(tuning.CommandTimeoutSeconds);
+                if (tuning.MaxRetryCount > 0)
+                {
+                    npgsql.EnableRetryOnFailure(tuning.MaxRetryCount, tuning.MaxRetryDelay, null);
+                }
+            });
+
+        public IStartupLock CreateStartupLock(string connectionString) => new PostgresStartupLock(connectionString);
     }
 }
