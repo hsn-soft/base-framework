@@ -1,0 +1,11 @@
+{
+  "culture": "tr",
+  "texts": {
+    "analysis_content_item_not_found": "{0} numaralı kayıt bulunamadı (AnalysisContentItem).",
+    "analysis_content_not_found": "{0} numaralı kayıt bulunamadı (AnalysisContent).",
+    "customer_content_not_found": "{0} numaralı kayıt bulunamadı (CustomerContent).",
+    "customer_content_visit_not_found": "{0} numaralı kayıt bulunamadı (CustomerContentVisit).",
+    "customer_vp_setting_not_found": "{0} numaralı kayıt bulunamadı (CustomerVpSetting).",
+    "scope_not_allowed": "'{0}' kapsamı sizin kapsamlarınızdan biri değil."
+  }
+}

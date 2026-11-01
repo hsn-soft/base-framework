@@ -1,0 +1,22 @@
+{
+  "culture": "tr",
+  "texts": {
+    "app_role_name_duplicate": "'{0}' adında bir rol zaten var.",
+    "app_role_not_deletable": "'{0}' rolü statik veya kullanıcıları var, silinemez.",
+    "app_role_not_found": "{0} numaralı rol bulunamadı.",
+    "app_user_email_duplicate": "'{0}' e-postasına sahip bir kullanıcı zaten var.",
+    "app_user_not_found": "{0} numaralı kullanıcı bulunamadı.",
+    "app_user_user_name_duplicate": "'{0}' adında bir kullanıcı zaten var.",
+    "company_name_duplicate": "'{0}' değerine sahip bir kayıt zaten var (Company.Name).",
+    "company_not_found": "{0} numaralı kayıt bulunamadı (Company).",
+    "customer_domain_duplicate": "'{0}' değerine sahip bir kayıt zaten var (Customer.Domain).",
+    "customer_not_found": "{0} numaralı kayıt bulunamadı (Customer).",
+    "scope_not_allowed": "'{0}' kapsamı sizin kapsamlarınızdan biri değil.",
+    "subscription_not_allowed": "{0} aboneliği bu kiracıya ait değil.",
+    "subscription_not_found": "{0} numaralı kayıt bulunamadı (Subscription).",
+    "tenant_loop": "Bir kiracı kendi altına veya kendi kiracılarının altına konamaz.",
+    "tenant_name_duplicate": "'{0}' adında bir kiracı zaten var.",
+    "tenant_not_empty": "Altında kiracı veya kullanıcı olan kiracı silinemez.",
+    "tenant_not_found": "{0} numaralı kiracı bulunamadı."
+  }
+}

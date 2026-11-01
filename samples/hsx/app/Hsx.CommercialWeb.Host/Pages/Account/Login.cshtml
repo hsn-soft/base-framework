@@ -1,0 +1,20 @@
+@page "/account/login"
+@model LoginModel
+@{
+    ViewData["Title"] = "Sign in";
+}
+<h1>Sign in</h1>
+@if (Model.Expired)
+{
+    <p class="error">Your session has ended. Sign in again.</p>
+}
+@if (Model.Error is not null)
+{
+    <p class="error">@Model.Error</p>
+}
+<form method="post">
+    <p><label>Email<br /><input name="Email" type="email" value="@Model.Email" autofocus /></label></p>
+    <p><label>Password<br /><input name="Password" type="password" /></label></p>
+    <p><button class="primary" type="submit">Sign in</button></p>
+</form>
+<p class="muted">The demo users are made by the identity service: <code>admin@techsummus.hsx.local</code>, <code>admin@pixel.hsx.local</code>, <code>admin@acme.hsx.local</code>, <code>system-admin@hsx.local</code>; the password is <code>Hsx-Demo-123</code>.</p>

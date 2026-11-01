@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!-- What every Hsx microservice shares on top of Hsx.Shared.Hosting: it reads the bearer token, its endpoints need it, its Swagger has the button for it, and it is connected to Redis; with the event bus (RabbitMQ) when it asks for it. -->
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.EventBus.RabbitMQ\HsnSoft.Base.EventBus.RabbitMQ.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Hsx.Shared.Hosting\Hsx.Shared.Hosting.csproj" />
+    </ItemGroup>
+
+</Project>

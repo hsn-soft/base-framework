@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!-- What the service does: its use cases, on top of the domain. -->
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.Ddd.Application\HsnSoft.Base.Ddd.Application.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Hsx.ContentService.Domain\Hsx.ContentService.Domain.csproj" />
+    </ItemGroup>
+
+</Project>
