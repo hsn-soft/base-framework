@@ -19,4 +19,5 @@ When performing Git operations (commit, push, or opening a PR), follow [CONTRIBU
 - Run `dotnet format` and `./scripts/ci-detector/ci_detector_mac.sh` before calling a change done.
 - Add new projects to the matching `src` or `test` solution folder; read the solution first (ADR-0006).
 - Keep project references in the groups and order in ADR-0043. Every `src/` project reaches Core and must not repeat a sibling-transitive reference (ADR-0075).
-- Write documents and code comments in English. Never store real credentials or connection strings; use the environment or an ignored `.env`.
+- Write documents and code comments in English; the maintainer talks Turkish in conversation, so answer in Turkish.
+- Work in `samples/` follows `samples/CLAUDE.md`; decisions about a sample are `samples/docs/adr/` (their own numbering, not the catalog here). The current large effort there is `samples/hsx`, the rebuild of hhs. Never store real credentials or connection strings; use the environment or an ignored `.env`.

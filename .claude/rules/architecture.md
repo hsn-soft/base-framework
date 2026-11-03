@@ -16,10 +16,8 @@ paths:
 - Put code in the framework only when it is product-independent. Use `docs/Overview.md` as the package/dependency map; do not create a parallel catalog.
 - Keep domain/application abstractions independent of persistence providers. Repository contracts must not expose provider contexts, `IQueryable`, or eager-loading details; follow the existing store-specific repository and projection patterns.
 - Database provider configuration belongs to each context's properties class; do not revive the superseded `Database:Provider` setting.
-- When adding a package, first confirm it is a product-neutral, independently useful capability or provider. Add `src/HsnSoft.Base.<Name>/` using `common.props`, package metadata and README; add `test/HsnSoft.Base.<Name>.Tests/` using `common.test.props`; add provider integration coverage when it talks to a real external service; update `docs/Overview.md` and the solution in the same change.
-- A package that exposes a public API type from another package must declare the appropriate dependency, but must not declare a sibling dependency already brought transitively. Every framework package must reach Core exactly once through the graph.
+- To add a package or a provider, use the `add-package` or `add-provider` skill.
 - Order `.csproj` references in separate alphabetized groups: external NuGet/FrameworkReference, framework (`HsnSoft.Base.*`), product shared (`<Product>.Shared.*`), then own projects. Use the repository fixer/checks; do not reorder by preference.
-- Samples demonstrate realistic product compositions; they are not a reason to combine providers or add framework dependencies. Keep sample-specific code, docs and ADRs inside `samples/`; framework projects and docs must not depend on samples.
-- When adding any project or folder, follow ADR-0006 and add projects by hand to the appropriate `src` or `test` folder in `HsnSoft.Base.sln`.
+- Samples are consumers, never a reason to combine providers or add framework dependencies; their rules are in `repository-layout.md` and `samples/CLAUDE.md`.
 
 Relevant decisions: ADR-0002–0006, ADR-0042–0046, ADR-0050, ADR-0070–0075. ADR-0050 supersedes the provider-selection setting from ADR-0047. See also `CONTRIBUTING.md` (Adding a package) and `docs/Overview.md`.

@@ -14,8 +14,8 @@ paths:
 - In library code use explicit `using` directives, explicit types except where the type is obvious from construction, `ConfigureAwait(false)` on awaits, and `ArgumentNullException.ThrowIfNull` at public entry points.
 - Emit logs through `ILogger` and `[LoggerMessage]` source-generated methods. Do not add a competing logging abstraction.
 - Public service-registration extension methods need XML documentation that states what is registered and which configuration section is read.
-- Keep project references in separate, alphabetized groups: external NuGet, framework (`HsnSoft.Base.*`), product shared projects, then own projects. Never hard-code centrally managed package versions; use `common.versions.props`.
+- Never hard-code centrally managed package versions; use `common.versions.props`. The groups and the order of project references are in [architecture.md](architecture.md).
 - Preserve the pre-commit style formatter's build-before-format order so compile-dependent `using` directives are not removed.
-- Before changing a project file, apply the architecture constraints in [architecture.md](architecture.md) and the living rules in ADR-0075.
+- Before changing a project file, apply the living rules in ADR-0075.
 
 Relevant decisions: ADR-0007–0008, ADR-0043, ADR-0075–0076, ADR-0105, ADR-0123.
