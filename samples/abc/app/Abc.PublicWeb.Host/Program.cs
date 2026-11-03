@@ -1,5 +1,6 @@
 using Abc.PublicWeb.Host.Services;
 using HsnSoft.Base.AspNetCore;
+using HsnSoft.Base.Http;
 using HsnSoft.Base.Logging;
 using HsnSoft.Base.Logging.Serilog;
 using Microsoft.AspNetCore.Mvc;
@@ -15,11 +16,10 @@ builder.Services
     .AddHttpContextAccessor();
 builder.Services.AddControllersWithViews(options => options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute()));
 
-// every call to the public gateway carries the correlation id of the page being served
-builder.Services.AddTransient<GatewayRequestHandler>();
+// every call to the public gateway carries the correlation id of the page being served; the page only reads, so a POST that failed is tried again
 builder.Services
-    .AddHttpClient<GatewayClient>(client => client.BaseAddress = new Uri(builder.Configuration["Gateway:BaseUrl"] ?? throw new InvalidOperationException("Gateway:BaseUrl is required.")))
-    .AddHttpMessageHandler<GatewayRequestHandler>();
+    .AddHttpClient<GatewayClient>()
+    .AddBaseHttpClientDefaults(builder.Configuration, "Gateway", options => options.RetryUnsafeMethods = true);
 
 // a failure to start (a setting that is missing, a database that cannot be prepared) is logged as critical and ends the process with the exit code 1
 return await builder.RunBaseAsync(app =>

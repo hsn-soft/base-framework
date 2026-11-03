@@ -50,10 +50,11 @@ public class ExtensionsTests
     [Fact]
     public void JoinAsString_JoinsAnyItems()
     {
-        Assert.Equal("1, 2, 3", new[] { 1, 2, 3 }.JoinAsString(", "));
+        int[] numbers = [1, 2, 3];
+        Assert.Equal("1, 2, 3", numbers.JoinAsString(", "));
         Assert.Equal(string.Empty, Array.Empty<string>().JoinAsString(","));
         Assert.Throws<ArgumentNullException>(() => ((IEnumerable<int>)null!).JoinAsString(","));
-        Assert.Throws<ArgumentNullException>(() => new[] { 1 }.JoinAsString(null!));
+        Assert.Throws<ArgumentNullException>(() => numbers.JoinAsString(null!));
     }
 
     [Fact]

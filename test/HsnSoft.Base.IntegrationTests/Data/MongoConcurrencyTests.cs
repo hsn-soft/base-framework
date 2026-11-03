@@ -58,7 +58,7 @@ public sealed class MongoConcurrencyTests(MongoFixture mongo) : IAsyncLifetime
         return Task.CompletedTask;
     }
 
-    private IRepository<Memo, Guid> Memos(AsyncServiceScope scope) => scope.ServiceProvider.GetRequiredService<IRepository<Memo, Guid>>();
+    private static IRepository<Memo, Guid> Memos(AsyncServiceScope scope) => scope.ServiceProvider.GetRequiredService<IRepository<Memo, Guid>>();
 
     private async Task<Memo> AddAsync(string title)
     {

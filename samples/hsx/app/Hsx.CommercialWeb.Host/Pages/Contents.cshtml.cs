@@ -1,3 +1,4 @@
+using HsnSoft.Base;
 using Hsx.CommercialWeb.Host.Models;
 using Hsx.CommercialWeb.Host.Services;
 using Microsoft.AspNetCore.Authentication;
@@ -17,7 +18,7 @@ public sealed class ContentsModel(GatewayClient gateway) : PageModel
             Data = await gateway.ListContentsAsync(null, cancellationToken);
             return Page();
         }
-        catch (GatewayUnauthorizedException)
+        catch (BaseHttpException exception) when (exception.HttpStatusCode == 401)
         {
             // the token expired or is not accepted: the sign-in is over
             await HttpContext.SignOutAsync();

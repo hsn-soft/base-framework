@@ -1,4 +1,6 @@
 using Abc.PublicWeb.Host.Models;
+using HsnSoft.Base;
+using HsnSoft.Base.Http;
 
 namespace Abc.PublicWeb.Host.Services;
 
@@ -7,13 +9,13 @@ public sealed class GatewayClient(HttpClient http)
 {
     public async Task<UserNameAvailability?> CheckUserNameAsync(string userName, CancellationToken cancellationToken)
     {
-        using HttpResponseMessage response = await http.PostAsJsonAsync("/identity-service/v1/users/check-user-name", new { userName }, cancellationToken).ConfigureAwait(false);
-        if (!response.IsSuccessStatusCode)
+        try
+        {
+            return await http.PostPayloadAsync<UserNameAvailability>("/identity-service/v1/users/check-user-name", new { userName }, cancellationToken).ConfigureAwait(false);
+        }
+        catch (BaseHttpException exception) when (exception.HttpStatusCode < 500)
         {
             return null;
         }
-
-        ApiResponse<UserNameAvailability>? body = await response.Content.ReadFromJsonAsync<ApiResponse<UserNameAvailability>>(cancellationToken).ConfigureAwait(false);
-        return body?.Payload;
     }
 }

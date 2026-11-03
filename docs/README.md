@@ -19,6 +19,7 @@
 | [`EntityConcepts.md`](EntityConcepts.md) | Audit fields, soft delete and tenants of an entity: the interfaces, the current user, the tenant packages, the filters, EF Core and MongoDB |
 | [`Localization.md`](Localization.md) | The texts the client reads in its language: the JSON files, the layers, how the language is chosen, naming a text in an error |
 | [`Authorization.md`](Authorization.md) | Permissions: the attribute, the checker, the three kinds, who has what, where the grants are kept |
+| [`HttpClient.md`](HttpClient.md) | Calling another service: the defaults of a client (correlation id, timeouts, retries that do not repeat a write, circuit breaker), the token relay, the guard against calls to the inside of the network, reading a `BaseResponse` |
 | [`Swagger.md`](Swagger.md) | Swagger for a service and for a gateway |
 | [`old-framework/`](old-framework/README.md) | **The old framework, project by project**: why each old package is or is not in the new tree, the verdict on its design, the gaps still open (with priorities) and the decisions waiting for the maintainer |
 
