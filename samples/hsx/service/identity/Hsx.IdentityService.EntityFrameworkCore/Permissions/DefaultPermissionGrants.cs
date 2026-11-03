@@ -52,6 +52,34 @@ public static class DefaultPermissionGrants
         HsxEndpointPermissions.VideoGenerator.VideoRequests.Read,
     ];
 
+    // the system operator: the work of selling (resellers, the catalogue, the sales) and the demo content, with what is needed to see the results; no deletes, no grants, no roles of its own
+    private static readonly string[] s_systemOperator =
+    [
+        HsxPagePermissions.Identity.Tenants.View,
+        HsxPagePermissions.Identity.Users.View,
+        HsxPagePermissions.Identity.Companies.View,
+        HsxPagePermissions.Identity.Customers.View,
+        HsxPagePermissions.Identity.Subscriptions.View,
+        HsxPagePermissions.Content.CustomerContents.View,
+        HsxEndpointPermissions.Identity.Tenants.Read,
+        HsxEndpointPermissions.Identity.TenantManagement.CreateReseller,
+        HsxEndpointPermissions.Identity.AppUsers.Read,
+        HsxEndpointPermissions.Identity.AppRoles.Read,
+        HsxEndpointPermissions.Identity.Companies.Read,
+        HsxEndpointPermissions.Identity.Companies.Create,
+        HsxEndpointPermissions.Identity.Customers.Read,
+        HsxEndpointPermissions.Identity.Customers.Create,
+        HsxEndpointPermissions.Identity.Subscriptions.Read,
+        HsxEndpointPermissions.Identity.Subscriptions.Create,
+        HsxEndpointPermissions.Identity.Subscriptions.Transfer,
+        HsxEndpointPermissions.Content.CustomerContents.Read,
+        HsxEndpointPermissions.Content.CustomerContents.Create,
+    ];
+
+    /// <summary>The codes the role of this name and type is granted: the system operator has a set of its own, any other role the set of its type.</summary>
+    public static IReadOnlyList<string> ForRole(AppRoleType roleType, string roleName)
+        => roleType == AppRoleType.System && roleName == HsxRoles.SystemOperator ? s_systemOperator : For(roleType);
+
     /// <summary>The codes a role of this type is granted.</summary>
     public static IReadOnlyList<string> For(AppRoleType roleType)
         => roleType switch

@@ -3,6 +3,7 @@ using Hsx.IdentityService.Domain.AppRoleDomain.Entities;
 using Hsx.IdentityService.Domain.PermissionDomain.Entities;
 using Hsx.IdentityService.Domain.PermissionDomain.Repositories;
 using Hsx.IdentityService.EntityFrameworkCore.Context;
+using Hsx.IdentityService.EntityFrameworkCore.Permissions;
 using Microsoft.EntityFrameworkCore;
 
 namespace Hsx.IdentityService.EntityFrameworkCore.Repositories;
@@ -30,6 +31,20 @@ internal sealed class EfCorePermissionGrantRepository(IdentityDbContext db) : IP
             .Where(grant => roleIds.Contains(grant.RoleId))
             .Join(db.Permissions.Where(permission => permission.IsActive), grant => grant.PermissionId, permission => permission.Id, (_, permission) => new GrantedPermission(permission.Code, permission.Type))
             .ToListAsync(cancellationToken).ConfigureAwait(false));
+    }
+
+    public async Task GrantStartingSetAsync(AppRole role, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(role);
+
+        if (role.RoleType is not (AppRoleType.Company or AppRoleType.Customer))
+        {
+            return;
+        }
+
+        IReadOnlyList<string> codes = DefaultPermissionGrants.ForRole(role.RoleType, role.Name);
+        List<Permission> permissions = await db.Permissions.Where(permission => permission.IsActive && codes.Contains(permission.Code)).ToListAsync(cancellationToken).ConfigureAwait(false);
+        await ReplaceRoleGrantsAsync(role, permissions, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task ReplaceRoleGrantsAsync(AppRole role, IReadOnlyList<Permission> grants, CancellationToken cancellationToken = default)

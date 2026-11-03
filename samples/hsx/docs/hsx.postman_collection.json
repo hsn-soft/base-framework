@@ -1,0 +1,1406 @@
+{
+  "info": {
+    "name": "Hsx demo scenario",
+    "description": "The tenant model of Hsx, step by step through the commercial gateway (samples/hsx/demo-scenario.sh does the same in one go). Run the folders in order. Set 'run' to any new value to run it again (names stay taken after a delete).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "gateway",
+      "value": "http://localhost:7200"
+    },
+    {
+      "key": "password",
+      "value": "Hsx-Demo-123"
+    },
+    {
+      "key": "run",
+      "value": "1"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. System operator",
+      "item": [
+        {
+          "name": "Sign in as the system operator",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway}}/auth-server/v1/auth/login",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "auth-server",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"system-operator@hsx.local\",\n  \"password\": \"{{password}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('ok', () => pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]));",
+                  "pm.collectionVariables.set('operatorToken', body.payload.accessToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create a reseller (tenant + Admin role + first admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{operatorToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway}}/identity-service/v1/tenant-management/resellers/create",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "identity-service",
+                "v1",
+                "tenant-management",
+                "resellers",
+                "create"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Demo Reseller {{run}}\",\n  \"name\": \"demo-reseller-{{run}}\",\n  \"adminUser\": {\n    \"userName\": \"admin\",\n    \"email\": \"admin-{{run}}@reseller.hsx.local\",\n    \"displayName\": \"Demo Reseller Admin\",\n    \"password\": \"{{password}}\"\n  }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('ok', () => pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]));",
+                  "pm.collectionVariables.set('tenantId', body.payload.tenantId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create a company",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{operatorToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway}}/identity-service/v1/companies/create",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "identity-service",
+                "v1",
+                "companies",
+                "create"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Demo Company {{run}}\",\n  \"name\": \"demo-company-{{run}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('ok', () => pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]));",
+                  "pm.collectionVariables.set('companyId', body.payload.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create the first customer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{operatorToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway}}/identity-service/v1/customers/create",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "identity-service",
+                "v1",
+                "customers",
+                "create"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"companyId\": \"{{companyId}}\",\n  \"domain\": \"first-{{run}}.example.com\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('ok', () => pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]));",
+                  "pm.collectionVariables.set('customer1Id', body.payload.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create the second customer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{operatorToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway}}/identity-service/v1/customers/create",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "identity-service",
+                "v1",
+                "customers",
+                "create"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"companyId\": \"{{companyId}}\",\n  \"domain\": \"second-{{run}}.example.com\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('ok', () => pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]));",
+                  "pm.collectionVariables.set('customer2Id', body.payload.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sell the video platform to the first customer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{operatorToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway}}/identity-service/v1/subscriptions/create",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "identity-service",
+                "v1",
+                "subscriptions",
+                "create"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenantId\": \"{{tenantId}}\",\n  \"customerId\": \"{{customer1Id}}\",\n  \"productType\": \"VideoPlatform\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('ok', () => pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]));",
+                  "pm.collectionVariables.set('scope1', body.payload.scopeKey);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sell the video platform to the second customer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{operatorToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway}}/identity-service/v1/subscriptions/create",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "identity-service",
+                "v1",
+                "subscriptions",
+                "create"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenantId\": \"{{tenantId}}\",\n  \"customerId\": \"{{customer2Id}}\",\n  \"productType\": \"VideoPlatform\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('ok', () => pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]));",
+                  "pm.collectionVariables.set('scope2', body.payload.scopeKey);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Demo content 1 of the first customer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{operatorToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway}}/content-service/v1/customer-contents/create",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "content-service",
+                "v1",
+                "customer-contents",
+                "create"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"scopeKey\": \"{{scope1}}\",\n  \"contentKey\": \"demo-page-1\",\n  \"slugKey\": \"demo-page-1\",\n  \"normalizeStatus\": \"Completed\",\n  \"videoStatus\": \"Ready\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Demo content 2 of the first customer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{operatorToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway}}/content-service/v1/customer-contents/create",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "content-service",
+                "v1",
+                "customer-contents",
+                "create"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"scopeKey\": \"{{scope1}}\",\n  \"contentKey\": \"demo-page-2\",\n  \"slugKey\": \"demo-page-2\",\n  \"normalizeStatus\": \"Completed\",\n  \"videoStatus\": \"Ready\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Demo content 3 of the first customer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{operatorToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway}}/content-service/v1/customer-contents/create",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "content-service",
+                "v1",
+                "customer-contents",
+                "create"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"scopeKey\": \"{{scope1}}\",\n  \"contentKey\": \"demo-page-3\",\n  \"slugKey\": \"demo-page-3\",\n  \"normalizeStatus\": \"Completed\",\n  \"videoStatus\": \"Ready\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Demo content 1 of the second customer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{operatorToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway}}/content-service/v1/customer-contents/create",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "content-service",
+                "v1",
+                "customer-contents",
+                "create"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"scopeKey\": \"{{scope2}}\",\n  \"contentKey\": \"demo-page-1\",\n  \"slugKey\": \"demo-page-1\",\n  \"normalizeStatus\": \"Completed\",\n  \"videoStatus\": \"Ready\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Demo content 2 of the second customer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{operatorToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway}}/content-service/v1/customer-contents/create",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "content-service",
+                "v1",
+                "customer-contents",
+                "create"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"scopeKey\": \"{{scope2}}\",\n  \"contentKey\": \"demo-page-2\",\n  \"slugKey\": \"demo-page-2\",\n  \"normalizeStatus\": \"Completed\",\n  \"videoStatus\": \"Ready\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Demo content 3 of the second customer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{operatorToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway}}/content-service/v1/customer-contents/create",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "content-service",
+                "v1",
+                "customer-contents",
+                "create"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"scopeKey\": \"{{scope2}}\",\n  \"contentKey\": \"demo-page-3\",\n  \"slugKey\": \"demo-page-3\",\n  \"normalizeStatus\": \"Completed\",\n  \"videoStatus\": \"Ready\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Administrator of the reseller",
+      "item": [
+        {
+          "name": "Sign in as the reseller administrator",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway}}/auth-server/v1/auth/login",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "auth-server",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin-{{run}}@reseller.hsx.local\",\n  \"password\": \"{{password}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('ok', () => pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]));",
+                  "pm.collectionVariables.set('adminToken', body.payload.accessToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Company role (bound to the company)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway}}/identity-service/v1/app-roles/create",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "identity-service",
+                "v1",
+                "app-roles",
+                "create"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"company-role-{{run}}\",\n  \"roleType\": \"Company\",\n  \"companyId\": \"{{companyId}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('ok', () => pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]));",
+                  "pm.collectionVariables.set('companyRoleId', body.payload.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Company user",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway}}/identity-service/v1/app-users/create",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "identity-service",
+                "v1",
+                "app-users",
+                "create"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userName\": \"company-person\",\n  \"email\": \"company-person-{{run}}@reseller.hsx.local\",\n  \"displayName\": \"Company person\",\n  \"password\": \"{{password}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('ok', () => pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]));",
+                  "pm.collectionVariables.set('companyUserId', body.payload.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Give the company user the role",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway}}/identity-service/v1/app-users/roles",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "identity-service",
+                "v1",
+                "app-users",
+                "roles"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{companyUserId}}\",\n  \"roleIds\": [\n    \"{{companyRoleId}}\"\n  ]\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Customer role of the first customer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway}}/identity-service/v1/app-roles/create",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "identity-service",
+                "v1",
+                "app-roles",
+                "create"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"customer1-role-{{run}}\",\n  \"roleType\": \"Customer\",\n  \"customerId\": \"{{customer1Id}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('ok', () => pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]));",
+                  "pm.collectionVariables.set('customer1RoleId', body.payload.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Customer user of the first customer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway}}/identity-service/v1/app-users/create",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "identity-service",
+                "v1",
+                "app-users",
+                "create"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userName\": \"customer1-person\",\n  \"email\": \"customer1-person-{{run}}@reseller.hsx.local\",\n  \"displayName\": \"Customer 1 person\",\n  \"password\": \"{{password}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('ok', () => pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]));",
+                  "pm.collectionVariables.set('customer1UserId', body.payload.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Give the first customer user the role",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway}}/identity-service/v1/app-users/roles",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "identity-service",
+                "v1",
+                "app-users",
+                "roles"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{customer1UserId}}\",\n  \"roleIds\": [\n    \"{{customer1RoleId}}\"\n  ]\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Customer role of the second customer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway}}/identity-service/v1/app-roles/create",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "identity-service",
+                "v1",
+                "app-roles",
+                "create"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"customer2-role-{{run}}\",\n  \"roleType\": \"Customer\",\n  \"customerId\": \"{{customer2Id}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('ok', () => pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]));",
+                  "pm.collectionVariables.set('customer2RoleId', body.payload.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Customer user of the second customer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway}}/identity-service/v1/app-users/create",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "identity-service",
+                "v1",
+                "app-users",
+                "create"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userName\": \"customer2-person\",\n  \"email\": \"customer2-person-{{run}}@reseller.hsx.local\",\n  \"displayName\": \"Customer 2 person\",\n  \"password\": \"{{password}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('ok', () => pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]));",
+                  "pm.collectionVariables.set('customer2UserId', body.payload.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Give the second customer user the role",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway}}/identity-service/v1/app-users/roles",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "identity-service",
+                "v1",
+                "app-users",
+                "roles"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{customer2UserId}}\",\n  \"roleIds\": [\n    \"{{customer2RoleId}}\"\n  ]\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. What each person sees (wait a few seconds after step 2: the services read new roles from the permission store)",
+      "item": [
+        {
+          "name": "Sign in as the reseller administrator",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway}}/auth-server/v1/auth/login",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "auth-server",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin-{{run}}@reseller.hsx.local\",\n  \"password\": \"{{password}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('ok', () => pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]));",
+                  "pm.collectionVariables.set('adminToken', body.payload.accessToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "My subscriptions: the reseller administrator",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway}}/identity-service/v1/me/subscriptions/get",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "identity-service",
+                "v1",
+                "me",
+                "subscriptions",
+                "get"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            }
+          }
+        },
+        {
+          "name": "Contents: the reseller administrator (administrator and company user 6, each customer user 3)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway}}/content-service/v1/customer-contents/paged-list",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "content-service",
+                "v1",
+                "customer-contents",
+                "paged-list"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"maxResultCount\": 100\n}"
+            }
+          }
+        },
+        {
+          "name": "Sign in as the company user",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway}}/auth-server/v1/auth/login",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "auth-server",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"company-person-{{run}}@reseller.hsx.local\",\n  \"password\": \"{{password}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('ok', () => pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]));",
+                  "pm.collectionVariables.set('companyToken', body.payload.accessToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "My subscriptions: the company user",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{companyToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway}}/identity-service/v1/me/subscriptions/get",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "identity-service",
+                "v1",
+                "me",
+                "subscriptions",
+                "get"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            }
+          }
+        },
+        {
+          "name": "Contents: the company user (administrator and company user 6, each customer user 3)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{companyToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway}}/content-service/v1/customer-contents/paged-list",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "content-service",
+                "v1",
+                "customer-contents",
+                "paged-list"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"maxResultCount\": 100\n}"
+            }
+          }
+        },
+        {
+          "name": "Sign in as the first customer user",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway}}/auth-server/v1/auth/login",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "auth-server",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"customer1-person-{{run}}@reseller.hsx.local\",\n  \"password\": \"{{password}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('ok', () => pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]));",
+                  "pm.collectionVariables.set('customer1Token', body.payload.accessToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "My subscriptions: the first customer user",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer1Token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway}}/identity-service/v1/me/subscriptions/get",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "identity-service",
+                "v1",
+                "me",
+                "subscriptions",
+                "get"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            }
+          }
+        },
+        {
+          "name": "Contents: the first customer user (administrator and company user 6, each customer user 3)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer1Token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway}}/content-service/v1/customer-contents/paged-list",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "content-service",
+                "v1",
+                "customer-contents",
+                "paged-list"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"maxResultCount\": 100\n}"
+            }
+          }
+        },
+        {
+          "name": "Sign in as the second customer user",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway}}/auth-server/v1/auth/login",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "auth-server",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"customer2-person-{{run}}@reseller.hsx.local\",\n  \"password\": \"{{password}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('ok', () => pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]));",
+                  "pm.collectionVariables.set('customer2Token', body.payload.accessToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "My subscriptions: the second customer user",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer2Token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway}}/identity-service/v1/me/subscriptions/get",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "identity-service",
+                "v1",
+                "me",
+                "subscriptions",
+                "get"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            }
+          }
+        },
+        {
+          "name": "Contents: the second customer user (administrator and company user 6, each customer user 3)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer2Token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway}}/content-service/v1/customer-contents/paged-list",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "content-service",
+                "v1",
+                "customer-contents",
+                "paged-list"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"maxResultCount\": 100\n}"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

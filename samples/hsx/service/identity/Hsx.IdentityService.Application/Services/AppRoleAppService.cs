@@ -13,6 +13,7 @@ using Hsx.IdentityService.Domain.AppRoleDomain.Exceptions;
 using Hsx.IdentityService.Domain.AppRoleDomain.Repositories;
 using Hsx.IdentityService.Domain.AppRoleSubscriptionDomain.Entities;
 using Hsx.IdentityService.Domain.AppUserRoleDomain.Entities;
+using Hsx.IdentityService.Domain.PermissionDomain.Repositories;
 using Hsx.IdentityService.Domain.SubscriptionDomain.Entities;
 using Hsx.IdentityService.Domain.SubscriptionDomain.Repositories;
 
@@ -24,6 +25,7 @@ public sealed class AppRoleAppService(
     IRepository<AppUserRole, Guid> userRoles,
     IRepository<Subscription, Guid> subscriptions,
     ISubscriptionManager subscriptionManager,
+    IPermissionGrantRepository grants,
     PermissionCacheSynchronizer synchronizer,
     IServiceProvider services) : ApplicationServiceBase(services), IAppRoleAppService
 {
@@ -72,7 +74,8 @@ public sealed class AppRoleAppService(
 
         AppRole created = AppRole.Create(name, type, input.CompanyId, input.CustomerId);
         await roles.AddAsync(created, cancellationToken).ConfigureAwait(false);
-        await synchronizer.SyncRoleAsync(created, cancellationToken).ConfigureAwait(false);   // an entry with nothing in it, so the role is known to the store
+        await grants.GrantStartingSetAsync(created, cancellationToken).ConfigureAwait(false);   // a Company or Customer role reads the data of its products from the start; any other starts with nothing
+        await synchronizer.SyncRoleAsync(created, cancellationToken).ConfigureAwait(false);   // so the role is known to the store, with its grants
         await subscriptionManager.LinkRoleAsync(created.Id, cancellationToken).ConfigureAwait(false);   // the sales of the tenant that its type matches
         return await GetAsync(created.Id, cancellationToken).ConfigureAwait(false);
     }

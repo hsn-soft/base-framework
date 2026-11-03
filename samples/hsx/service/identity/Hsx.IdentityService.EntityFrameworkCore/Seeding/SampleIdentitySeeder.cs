@@ -17,7 +17,7 @@ namespace Hsx.IdentityService.EntityFrameworkCore.Seeding;
 
 /// <summary>
 /// The tenants, the catalogue, the sales, the roles and the users of the sample (hsx/docs/TenancyModel.md). The system tenant and three resellers (tech-summus, audio-time, epartner); the company <c>ilbak</c> with its customer <c>cnbce</c>, which the system tenant defines; three sales of the
-/// customer, one product each by a reseller of its own (audio-time the video platform, tech-summus the podcast, epartner the e-invoice), recorded as the system tenant records them. Each reseller has an administrator (a Tenant role, which sees all of its sales); audio-time also has a Company role
+/// customer, one product each by a reseller of its own (audio-time the video platform, tech-summus the podcast, epartner the e-invoice), recorded as the system tenant records them. The system tenant has an administrator and an operator (who sells and cannot do the rest). Each reseller has an administrator (a Tenant role, which sees all of its sales); audio-time also has a Company role
 /// bound to ilbak and a Customer role bound to cnbce, each with a user: the first sees what audio-time sold to ilbak, the second what it sold to cnbce. Run again, it adds only what is missing.
 /// </summary>
 internal sealed class SampleIdentitySeeder(IdentityDbContext db, ICurrentTenant currentTenant, ISubscriptionManager subscriptions) : IDataSeeder
@@ -48,6 +48,7 @@ internal sealed class SampleIdentitySeeder(IdentityDbContext db, ICurrentTenant 
 
         // the administrator of each tenant first (a role that exists when a sale is recorded is given it), then the sales
         await EnsureUserAsync(system, "admin", "system-admin@hsx.local", "System Admin", HsxRoles.SystemAdmin, AppRoleType.System, null, null, cancellationToken).ConfigureAwait(false);
+        await EnsureUserAsync(system, "operator", "system-operator@hsx.local", "System Operator", HsxRoles.SystemOperator, AppRoleType.System, null, null, cancellationToken).ConfigureAwait(false);
         await EnsureUserAsync(techSummus, "admin", "admin@tech-summus.hsx.local", "Tech Summus Admin", HsxRoles.Admin, AppRoleType.Tenant, null, null, cancellationToken).ConfigureAwait(false);
         await EnsureUserAsync(audioTime, "admin", "admin@audio-time.hsx.local", "Audio Time Admin", HsxRoles.Admin, AppRoleType.Tenant, null, null, cancellationToken).ConfigureAwait(false);
         await EnsureUserAsync(ePartner, "admin", "admin@epartner.hsx.local", "ePartner Admin", HsxRoles.Admin, AppRoleType.Tenant, null, null, cancellationToken).ConfigureAwait(false);

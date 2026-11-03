@@ -48,7 +48,7 @@ public static class PermissionDatabase
     /// <summary>The permissions a role starts with, as rows to add: what <see cref="DefaultPermissionGrants"/> names for its type, found in the catalogue.</summary>
     internal static async Task<List<RolePermission>> StartingGrantsAsync(IdentityDbContext db, AppRole role, CancellationToken cancellationToken)
     {
-        IReadOnlyList<string> codes = DefaultPermissionGrants.For(role.RoleType);
+        IReadOnlyList<string> codes = DefaultPermissionGrants.ForRole(role.RoleType, role.Name);
         List<Permission> permissions = await db.Permissions.Where(permission => permission.IsActive && codes.Contains(permission.Code)).ToListAsync(cancellationToken).ConfigureAwait(false);
         return [.. permissions.Select(permission => RolePermission.Grant(role, permission))];
     }
@@ -64,7 +64,7 @@ public static class PermissionDatabase
         List<AppRole> roles = await db.AppRoles.IgnoreQueryFilters().ToListAsync(cancellationToken).ConfigureAwait(false);
         foreach (AppRole role in roles)
         {
-            foreach (string code in DefaultPermissionGrants.For(role.RoleType).Where(addedByCode.ContainsKey))
+            foreach (string code in DefaultPermissionGrants.ForRole(role.RoleType, role.Name).Where(addedByCode.ContainsKey))
             {
                 db.RolePermissions.Add(RolePermission.Grant(role, addedByCode[code]));
             }

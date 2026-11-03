@@ -7,5 +7,8 @@ public static class HsxRoles
     public const string SystemAdmin = "SystemAdmin";
 
     /// <summary>The role of the administrator of a reseller: it manages what is its tenant's and sees all of its sales.</summary>
+    /// <summary>The system tenant's role for the person who runs the day-to-day work: makes resellers, companies, customers and sales and puts demo content in, and nothing else (a System role with a smaller set of grants than <see cref="SystemAdmin"/>).</summary>
+    public const string SystemOperator = "SystemOperator";
+
     public const string Admin = "Admin";
 }

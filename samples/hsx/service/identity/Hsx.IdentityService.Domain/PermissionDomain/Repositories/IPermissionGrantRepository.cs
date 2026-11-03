@@ -23,6 +23,9 @@ public interface IPermissionGrantRepository
     /// <summary>What the user has altogether: the grants of its roles.</summary>
     Task<IReadOnlyList<GrantedPermission>> GetEffectiveGrantsAsync(Guid userId, CancellationToken cancellationToken = default);
 
+    /// <summary>Gives a role that was just made what its kind starts with (a Company or a Customer role reads the data of its products; any other role starts with nothing and is granted through the grants endpoint).</summary>
+    Task GrantStartingSetAsync(AppRole role, CancellationToken cancellationToken = default);
+
     Task ReplaceRoleGrantsAsync(AppRole role, IReadOnlyList<Permission> grants, CancellationToken cancellationToken = default);
 
     /// <summary>Every role of every tenant, with what it was granted (nothing for a role that has no grants).</summary>
