@@ -53,7 +53,7 @@ public sealed class AnswersController : ControllerBase
     public IActionResult AsJsonEnvelope() => new JsonResult(new BaseResponse { StatusCode = 200, StatusMessages = ["mine"] });
 
     [HttpGet("status")]
-    public IActionResult OnlyAStatus() => StatusCode(StatusCodes.Status409Conflict);
+    public IActionResult OnlyAStatus() => StatusCode(StatusCodes.Status418ImATeapot);
 
     [HttpGet("no-content")]
     public IActionResult NoContentAnswer() => NoContent();
@@ -166,7 +166,7 @@ public class WebApiTests
 
     [Theory]
     [InlineData("/api/answers/created", HttpStatusCode.Created, 201, "Created")]
-    [InlineData("/api/answers/status", HttpStatusCode.Conflict, 409, "Request failed.")]
+    [InlineData("/api/answers/status", (HttpStatusCode)418, 418, "Request failed.")]
     [InlineData("/api/answers/nothing", HttpStatusCode.OK, 200, "Success")]
     [InlineData("/api/answers/json", HttpStatusCode.OK, 200, "Success")]
     public async Task EveryKindOfResult_ArrivesInTheEnvelope(string path, HttpStatusCode expected, int statusCode, string message)

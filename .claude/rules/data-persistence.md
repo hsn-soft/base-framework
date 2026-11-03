@@ -23,4 +23,4 @@ paths:
 - Keep database command logging opt-in and infrastructure waits/retries bounded and safe to retry. Do not log sensitive data.
 - Integration tests use real databases, own their data, and follow the shared Testcontainers lifecycle. Read [DatabaseStartup.md](../../docs/DatabaseStartup.md) and [EntityConcepts.md](../../docs/EntityConcepts.md) for implementation detail.
 
-Relevant decisions: ADR-0004, ADR-0037, ADR-0042, ADR-0045–0048, ADR-0050, ADR-0067, ADR-0073–0075, ADR-0102, ADR-0105, ADR-0110, ADR-0118–0119, ADR-0124–0125, ADR-0128–0131.
+Relevant decisions: ADR-0004, ADR-0037, ADR-0042, ADR-0045–0048, ADR-0050, ADR-0067, ADR-0073–0075, ADR-0102, ADR-0105, ADR-0110, ADR-0118–0119, ADR-0124–0125, ADR-0128–0131, ADR-0136.

@@ -108,20 +108,42 @@ public class MongoRepository<TEntity, TKey>(IMongoDatabase database, MongoEntity
         return Collection.InsertOneAsync(entity, cancellationToken: cancellationToken);
     }
 
-    public Task UpdateAsync(TEntity entity, CancellationToken cancellationToken = default)
+    public async Task UpdateAsync(TEntity entity, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(entity);
 
-        Concepts.Modified(entity);
-        return ReplaceAsync(entity, cancellationToken);
+        // an entity with a stamp is replaced only where the stored document still has the stamp its caller saw
+        string? seen = Concepts.Modified(entity);
+        ReplaceOneResult result = await Collection.ReplaceOneAsync(MongoEntityConcepts.Matching<TEntity>(IdField, entity.Id!, seen), entity, cancellationToken: cancellationToken).ConfigureAwait(false);
+        if (seen is not null && result.MatchedCount == 0)
+        {
+            throw ConcurrencyConflict.For(typeof(TEntity).Name);
+        }
     }
 
-    public Task DeleteAsync(TEntity entity, CancellationToken cancellationToken = default)
+    public async Task DeleteAsync(TEntity entity, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(entity);
 
-        // an entity that can be soft deleted is marked and replaced; any other is removed
-        return Concepts.SoftDeleted(entity) ? ReplaceAsync(entity, cancellationToken) : Collection.DeleteOneAsync(Builders<TEntity>.Filter.Eq(IdField, entity.Id), cancellationToken);
+        // an entity that can be soft deleted is marked and replaced; any other is removed; an entity with a stamp is only where the document still has the stamp its caller saw
+        if (Concepts.SoftDeleted(entity))
+        {
+            string? seen = Concepts.Modified(entity);
+            ReplaceOneResult replaced = await Collection.ReplaceOneAsync(MongoEntityConcepts.Matching<TEntity>(IdField, entity.Id!, seen), entity, cancellationToken: cancellationToken).ConfigureAwait(false);
+            if (seen is not null && replaced.MatchedCount == 0)
+            {
+                throw ConcurrencyConflict.For(typeof(TEntity).Name);
+            }
+
+            return;
+        }
+
+        string? stamp = entity is IHasConcurrencyStamp { ConcurrencyStamp: { Length: > 0 } carried } ? carried : null;
+        DeleteResult deleted = await Collection.DeleteOneAsync(MongoEntityConcepts.Matching<TEntity>(IdField, entity.Id!, stamp), cancellationToken).ConfigureAwait(false);
+        if (stamp is not null && deleted.DeletedCount == 0)
+        {
+            throw ConcurrencyConflict.For(typeof(TEntity).Name);
+        }
     }
 
     public async Task AddManyAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
@@ -145,13 +167,22 @@ public class MongoRepository<TEntity, TKey>(IMongoDatabase database, MongoEntity
         ArgumentNullException.ThrowIfNull(entities);
 
         List<WriteModel<TEntity>> models = [];
+        int stamped = 0;
         foreach (TEntity entity in entities)
         {
-            Concepts.Modified(entity);
-            models.Add(new ReplaceOneModel<TEntity>(Builders<TEntity>.Filter.Eq(IdField, entity.Id), entity));
+            string? seen = Concepts.Modified(entity);
+            stamped += seen is null ? 0 : 1;
+            models.Add(new ReplaceOneModel<TEntity>(MongoEntityConcepts.Matching<TEntity>(IdField, entity.Id!, seen), entity));
         }
 
-        await WriteAsync(models, cancellationToken).ConfigureAwait(false);
+        if (models.Count > 0)
+        {
+            BulkWriteResult<TEntity> result = await Collection.BulkWriteAsync(models, cancellationToken: cancellationToken).ConfigureAwait(false);
+            if (stamped > 0 && result.MatchedCount < models.Count)
+            {
+                throw ConcurrencyConflict.For(typeof(TEntity).Name);
+            }
+        }
     }
 
     public async Task DeleteManyAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
@@ -160,13 +191,23 @@ public class MongoRepository<TEntity, TKey>(IMongoDatabase database, MongoEntity
 
         // an entity that can be soft deleted is marked and replaced; any other is removed
         List<WriteModel<TEntity>> models = [];
+        int stamped = 0;
         foreach (TEntity entity in entities)
         {
-            FilterDefinition<TEntity> byId = Builders<TEntity>.Filter.Eq(IdField, entity.Id);
-            models.Add(Concepts.SoftDeleted(entity) ? new ReplaceOneModel<TEntity>(byId, entity) : new DeleteOneModel<TEntity>(byId));
+            string? seen = Concepts.SoftDeleted(entity) ? Concepts.Modified(entity) : entity is IHasConcurrencyStamp { ConcurrencyStamp: { Length: > 0 } carried } ? carried : null;
+            stamped += seen is null ? 0 : 1;
+            FilterDefinition<TEntity> matching = MongoEntityConcepts.Matching<TEntity>(IdField, entity.Id!, seen);
+            models.Add(entity is ISoftDelete ? new ReplaceOneModel<TEntity>(matching, entity) : new DeleteOneModel<TEntity>(matching));
         }
 
-        await WriteAsync(models, cancellationToken).ConfigureAwait(false);
+        if (models.Count > 0)
+        {
+            BulkWriteResult<TEntity> result = await Collection.BulkWriteAsync(models, cancellationToken: cancellationToken).ConfigureAwait(false);
+            if (stamped > 0 && result.MatchedCount + result.DeletedCount < models.Count)
+            {
+                throw ConcurrencyConflict.For(typeof(TEntity).Name);
+            }
+        }
     }
 
     public async Task<long> DeleteWhereAsync(Expression<Func<TEntity, bool>> filter, CancellationToken cancellationToken = default)
@@ -191,17 +232,6 @@ public class MongoRepository<TEntity, TKey>(IMongoDatabase database, MongoEntity
         FilterDefinition<TEntity> matched = Concepts.Visible(Builders<TEntity>.Filter.Where(filter));
         return (await Collection.UpdateManyAsync(matched, Concepts.Modification(update(Builders<TEntity>.Update)), cancellationToken: cancellationToken).ConfigureAwait(false)).MatchedCount;
     }
-
-    private async Task WriteAsync(List<WriteModel<TEntity>> models, CancellationToken cancellationToken)
-    {
-        if (models.Count > 0)
-        {
-            await Collection.BulkWriteAsync(models, cancellationToken: cancellationToken).ConfigureAwait(false);
-        }
-    }
-
-    private async Task ReplaceAsync(TEntity entity, CancellationToken cancellationToken)
-        => await Collection.ReplaceOneAsync(Builders<TEntity>.Filter.Eq(IdField, entity.Id), entity, cancellationToken: cancellationToken).ConfigureAwait(false);
 
     private static FilterDefinition<TEntity> Narrowed(Expression<Func<TEntity, bool>>? filter)
         => filter is null ? Builders<TEntity>.Filter.Empty : Builders<TEntity>.Filter.Where(filter);

@@ -229,9 +229,14 @@ public class EfCoreRepository<TContext, TEntity, TKey>(TContext db) : IEfCoreRep
             cancellationToken);
     }
 
-    // IModificationAuditedObject: written by the statement, as the change tracker would write them
+    // IModificationAuditedObject and the stamp of IHasConcurrencyStamp: written by the statement, as the change tracker would write them (an entity read before is then stale)
     private static void Modified(UpdateSettersBuilder<TEntity> setters, AuditStamp stamp)
     {
+        if (typeof(IHasConcurrencyStamp).IsAssignableFrom(typeof(TEntity)))
+        {
+            SetValue(setters, nameof(IHasConcurrencyStamp.ConcurrencyStamp), ConcurrencyStamps.New());
+        }
+
         if (typeof(IModificationAuditedObject).IsAssignableFrom(typeof(TEntity)))
         {
             SetValue(setters, nameof(IModificationAuditedObject.UpdatedAt), stamp.At);

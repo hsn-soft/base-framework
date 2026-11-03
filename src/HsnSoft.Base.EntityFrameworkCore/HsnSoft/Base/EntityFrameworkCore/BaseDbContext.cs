@@ -1,7 +1,10 @@
 using System;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 using HsnSoft.Base.Data;
+using HsnSoft.Base.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 
@@ -26,6 +29,34 @@ public abstract class BaseDbContext(DbContextOptions options, IDataFilter? dataF
     // read by the query filter (EF turns it into a parameter of the query of this context)
     private bool SoftDeleteFilterEnabled => DataFilter?.IsEnabled<ISoftDelete>() ?? true;
 
+    public override int SaveChanges(bool acceptAllChangesOnSuccess)
+    {
+        try
+        {
+            return base.SaveChanges(acceptAllChangesOnSuccess);
+        }
+        catch (DbUpdateConcurrencyException exception)
+        {
+            throw ConflictOf(exception);
+        }
+    }
+
+    public override async Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken).ConfigureAwait(false);
+        }
+        catch (DbUpdateConcurrencyException exception)
+        {
+            throw ConflictOf(exception);
+        }
+    }
+
+    // a row that is not as the entity saw it (changed, or removed) is the same answer to the client: 409
+    private static BaseHttpException ConflictOf(DbUpdateConcurrencyException exception)
+        => ConcurrencyConflict.For(exception.Entries.Count > 0 ? exception.Entries[0].Metadata.ClrType.Name : "The record");
+
     /// <summary>The mappings of the service.</summary>
     protected abstract void ConfigureModel(ModelBuilder modelBuilder);
 
@@ -34,6 +65,17 @@ public abstract class BaseDbContext(DbContextOptions options, IDataFilter? dataF
         ArgumentNullException.ThrowIfNull(modelBuilder);
 
         ConfigureModel(modelBuilder);
+
+        // the stamp of an entity that is protected from a lost update is the token the save is checked against
+        foreach (IMutableEntityType entityType in modelBuilder.Model.GetEntityTypes().Where(type => type.BaseType is null && !type.IsOwned() && typeof(IHasConcurrencyStamp).IsAssignableFrom(type.ClrType)))
+        {
+            IMutableProperty? stamp = entityType.FindProperty(nameof(IHasConcurrencyStamp.ConcurrencyStamp));
+            if (stamp is not null)
+            {
+                stamp.IsConcurrencyToken = true;
+                stamp.SetMaxLength(ConcurrencyStamps.MaxLength);
+            }
+        }
 
         foreach (IMutableEntityType entityType in modelBuilder.Model.GetEntityTypes().Where(type => type.BaseType is null && !type.IsOwned()))
         {

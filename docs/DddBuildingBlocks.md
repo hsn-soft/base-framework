@@ -16,6 +16,7 @@ public sealed class Product : FullAuditedEntity<Guid>, IMultiTenant       // aud
 ```
 
 `Entity<TKey>` (the id), `CreationAuditedEntity<TKey>` (+ `CreatedAt`, `CreatedBy`), `AuditedEntity<TKey>` (+ `UpdatedAt`, `UpdatedBy`), `FullAuditedEntity<TKey>` (+ soft delete). An entity that needs none of it derives from `Entity<TKey>`.
+An entity that people edit at the same time adds `IHasConcurrencyStamp`: a change made after the caller read it is a 409 instead of a silent overwrite ([ADR-0136](adr/0136-an-entity-is-protected-from-a-lost-update-by-an-opt-in-stamp.md)).
 See [EntityConcepts.md](EntityConcepts.md) for what the persistence does with the interfaces.
 
 ## DTOs (`HsnSoft.Base.Ddd.Application`)

@@ -43,6 +43,17 @@ using (currentTenant.Change(tenantId))            // a seed, a worker: work as t
 **The system tenant sees every tenant; anyone else sees its own and the ones in `allowed_tenant_id`; with no tenant nothing of a tenant is seen.** A service without tenants does not reference any of this: its entities have no `TenantId`, its context derives from
 `BaseDbContext`, and a message that crosses it keeps the tenant headers for the services after it.
 
+## Protection from a lost update: `IHasConcurrencyStamp`
+
+An entity that people edit at the same time opts in with `IHasConcurrencyStamp` (`HsnSoft.Base.Ddd.Domain`, [ADR-0136](adr/0136-an-entity-is-protected-from-a-lost-update-by-an-opt-in-stamp.md)):
+
+```csharp
+public string ConcurrencyStamp { get; private set; } = ConcurrencyStamps.New();
+public void SetConcurrencyStamp(string stamp) => ConcurrencyStamp = stamp;
+```
+
+The persistence gives a changed entity a new stamp and refuses a change whose stamp is not the stored one. The DTO carries the stamp to the client and the update gives it back: the application service calls `entity.SetConcurrencyStamp(input.ConcurrencyStamp)` before saving. A refused change is a **409** (`ConcurrencyConflict`, the text `Concurrency:Conflict`): changed or removed by someone else; the client reads again and retries. Without a stamp from the client, only a change between the load and the save is found. EF Core (`BaseDbContext` and `BaseEntityInterceptor`) and the MongoDB repository both do it, for an update, a delete and the bulk variants; a statement that changes rows without loading them (`UpdateWhereAsync`) writes a new stamp too.
+
 ## The filters, and switching them off: `IDataFilter`
 
 The filters (`ISoftDelete`, and `IMultiTenant` for a service with tenants) are on. Code that must see more turns one off for a while, and the scope ends with the `using` (it follows the flow of the code, across `await`):
