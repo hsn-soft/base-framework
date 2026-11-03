@@ -20,6 +20,7 @@
 | [`Localization.md`](Localization.md) | The texts the client reads in its language: the JSON files, the layers, how the language is chosen, naming a text in an error |
 | [`Authorization.md`](Authorization.md) | Permissions: the attribute, the checker, the three kinds, who has what, where the grants are kept |
 | [`Swagger.md`](Swagger.md) | Swagger for a service and for a gateway |
+| [`old-framework/`](old-framework/README.md) | **The old framework, project by project**: why each old package is or is not in the new tree, the verdict on its design, the gaps still open (with priorities) and the decisions waiting for the maintainer |
 
 The reference documents say **how to use** something; the ADRs say **why** it is that way. When a rule is in both, the ADR is the authority.
 Other documents: the root [README](../README.md) (what the framework is, the badges), [CONTRIBUTING](../CONTRIBUTING.md) (how we work), `scripts/*/README.md` (the tools).
