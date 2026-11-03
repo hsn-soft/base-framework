@@ -1,9 +1,11 @@
 using HsnSoft.Base.Application.Dtos;
+using HsnSoft.Base.Authorization;
 using Hsx.IdentityService.Application.Contracts.AppUserDomain.Dtos;
 using Hsx.IdentityService.Application.Contracts.AppUserDomain.Dtos.Filters;
 using Hsx.IdentityService.Application.Contracts.AppUserDomain.Dtos.Submits;
 using Hsx.IdentityService.Application.Contracts.AppUserDomain.Services;
 using Hsx.IdentityService.Http.Host.Controllers.Base;
+using Hsx.Shared.Helper;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Hsx.IdentityService.Http.Host.Controllers;
@@ -12,16 +14,21 @@ namespace Hsx.IdentityService.Http.Host.Controllers;
 public sealed class AppUsersController(IAppUserAppService appUserAppService) : BaseServiceController
 {
     [HttpPost("get/{id:guid}")]
+    [PermissionAuthorize(HsxEndpointPermissions.Identity.AppUsers.Read)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public Task<AppUserDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
         => appUserAppService.GetAsync(id, cancellationToken);
 
     [HttpPost("paged-list")]
+
+    [PermissionAuthorize(HsxEndpointPermissions.Identity.AppUsers.Read)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public Task<PagedDataResultDto<AppUserDto>> GetPagedListAsync([FromBody] GetAppUsersPaged pagedInput, CancellationToken cancellationToken = default)
         => appUserAppService.GetPagedListAsync(pagedInput, cancellationToken);
 
     [HttpPost("create")]
+
+    [PermissionAuthorize(HsxEndpointPermissions.Identity.AppUsers.Create)]
     [ProducesResponseType(StatusCodes.Status201Created)]
     public async Task<IActionResult> CreateAsync([FromBody] AppUserCreateDto input, CancellationToken cancellationToken = default)
     {
@@ -30,6 +37,8 @@ public sealed class AppUsersController(IAppUserAppService appUserAppService) : B
     }
 
     [HttpPut]
+
+    [PermissionAuthorize(HsxEndpointPermissions.Identity.AppUsers.Update)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> UpdateAsync([FromBody] AppUserUpdateDto input, CancellationToken cancellationToken = default)
     {
@@ -38,6 +47,8 @@ public sealed class AppUsersController(IAppUserAppService appUserAppService) : B
     }
 
     [HttpPut("password")]
+
+    [PermissionAuthorize(HsxEndpointPermissions.Identity.AppUsers.SetPassword)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> SetPasswordAsync([FromBody] AppUserSetPasswordDto input, CancellationToken cancellationToken = default)
     {
@@ -46,11 +57,15 @@ public sealed class AppUsersController(IAppUserAppService appUserAppService) : B
     }
 
     [HttpPost("roles/{id:guid}")]
+
+    [PermissionAuthorize(HsxEndpointPermissions.Identity.AppUsers.Read)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public Task<List<Guid>> GetRoleIdsAsync(Guid id, CancellationToken cancellationToken = default)
         => appUserAppService.GetRoleIdsAsync(id, cancellationToken);
 
     [HttpPut("roles")]
+
+    [PermissionAuthorize(HsxEndpointPermissions.Identity.AppUsers.SetRoles)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> SetRolesAsync([FromBody] AppUserSetRolesDto input, CancellationToken cancellationToken = default)
     {
@@ -59,6 +74,8 @@ public sealed class AppUsersController(IAppUserAppService appUserAppService) : B
     }
 
     [HttpDelete("{id:guid}")]
+
+    [PermissionAuthorize(HsxEndpointPermissions.Identity.AppUsers.Delete)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {

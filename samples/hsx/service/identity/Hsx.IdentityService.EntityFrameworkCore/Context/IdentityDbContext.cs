@@ -10,6 +10,8 @@ using Hsx.IdentityService.Domain.AuthPasswordPolicyDomain.Entities;
 using Hsx.IdentityService.Domain.AuthRefreshTokenDomain.Entities;
 using Hsx.IdentityService.Domain.CompanyDomain.Entities;
 using Hsx.IdentityService.Domain.CustomerDomain.Entities;
+using Hsx.IdentityService.Domain.MenuDomain.Entities;
+using Hsx.IdentityService.Domain.PermissionDomain.Entities;
 using Hsx.IdentityService.Domain.SubscriptionDomain.Entities;
 using Hsx.IdentityService.Domain.TenantDomain.Entities;
 using Hsx.IdentityService.EntityFrameworkCore.Configurations;
@@ -36,6 +38,14 @@ public sealed class IdentityDbContext(DbContextOptions<IdentityDbContext> option
 
     public DbSet<AppRoleSubscription> AppRoleSubscriptions => Set<AppRoleSubscription>();
 
+    public DbSet<Permission> Permissions => Set<Permission>();
+
+    public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
+
+    public DbSet<Menu> Menus => Set<Menu>();
+
+    public DbSet<MenuPermissionMap> MenuPermissionMaps => Set<MenuPermissionMap>();
+
     public DbSet<AuthPasswordPolicy> AuthPasswordPolicies => Set<AuthPasswordPolicy>();
 
     public DbSet<AuthRefreshToken> AuthRefreshTokens => Set<AuthRefreshToken>();
@@ -52,6 +62,8 @@ public sealed class IdentityDbContext(DbContextOptions<IdentityDbContext> option
         modelBuilder.ConfigureAppRoleDomain();
         modelBuilder.ConfigureAppUserRoleDomain();
         modelBuilder.ConfigureAppRoleSubscriptionDomain();
+        modelBuilder.ConfigurePermissionDomain();
+        modelBuilder.ConfigureMenuDomain();
         modelBuilder.ConfigureAuthPasswordPolicyDomain();
         modelBuilder.ConfigureAuthRefreshTokenDomain();
         modelBuilder.ConfigureAuthLoginAuditDomain();

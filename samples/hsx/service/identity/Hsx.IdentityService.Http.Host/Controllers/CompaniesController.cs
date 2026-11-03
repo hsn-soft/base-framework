@@ -1,9 +1,11 @@
 using HsnSoft.Base.Application.Dtos;
+using HsnSoft.Base.Authorization;
 using Hsx.IdentityService.Application.Contracts.CompanyDomain.Dtos;
 using Hsx.IdentityService.Application.Contracts.CompanyDomain.Dtos.Filters;
 using Hsx.IdentityService.Application.Contracts.CompanyDomain.Dtos.Submits;
 using Hsx.IdentityService.Application.Contracts.CompanyDomain.Services;
 using Hsx.IdentityService.Http.Host.Controllers.Base;
+using Hsx.Shared.Helper;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Hsx.IdentityService.Http.Host.Controllers;
@@ -13,16 +15,21 @@ namespace Hsx.IdentityService.Http.Host.Controllers;
 public sealed class CompaniesController(ICompanyAppService companyAppService) : BaseServiceController
 {
     [HttpPost("get/{id:guid}")]
+    [PermissionAuthorize(HsxEndpointPermissions.Identity.Companies.Read)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public Task<CompanyDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
         => companyAppService.GetAsync(id, cancellationToken);
 
     [HttpPost("paged-list")]
+
+    [PermissionAuthorize(HsxEndpointPermissions.Identity.Companies.Read)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public Task<PagedDataResultDto<CompanyDto>> GetPagedListAsync([FromBody] GetCompaniesPaged pagedInput, CancellationToken cancellationToken = default)
         => companyAppService.GetPagedListAsync(pagedInput, cancellationToken);
 
     [HttpPost("create")]
+
+    [PermissionAuthorize(HsxEndpointPermissions.Identity.Companies.Create)]
     [ProducesResponseType(StatusCodes.Status201Created)]
     public async Task<IActionResult> CreateAsync([FromBody] CompanyCreateDto input, CancellationToken cancellationToken = default)
     {
@@ -31,6 +38,8 @@ public sealed class CompaniesController(ICompanyAppService companyAppService) : 
     }
 
     [HttpPut]
+
+    [PermissionAuthorize(HsxEndpointPermissions.Identity.Companies.Update)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> UpdateAsync([FromBody] CompanyUpdateDto input, CancellationToken cancellationToken = default)
     {
@@ -39,6 +48,8 @@ public sealed class CompaniesController(ICompanyAppService companyAppService) : 
     }
 
     [HttpDelete("{id:guid}")]
+
+    [PermissionAuthorize(HsxEndpointPermissions.Identity.Companies.Delete)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {

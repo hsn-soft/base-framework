@@ -22,6 +22,7 @@ public sealed class AppRoleAppService(
     IRepository<AppRoleSubscription, Guid> roleSubscriptions,
     IRepository<AppUserRole, Guid> userRoles,
     IRepository<Subscription, Guid> subscriptions,
+    PermissionCacheSynchronizer synchronizer,
     IServiceProvider services) : ApplicationServiceBase(services), IAppRoleAppService
 {
     public async Task<AppRoleDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
@@ -52,6 +53,7 @@ public sealed class AppRoleAppService(
         await EnsureAllowedAsync(wanted, cancellationToken).ConfigureAwait(false);
         AppRole created = AppRole.Create(name);
         await roles.AddAsync(created, cancellationToken).ConfigureAwait(false);
+        await synchronizer.SyncRoleAsync(created, cancellationToken).ConfigureAwait(false);   // an entry with nothing in it, so the role is known to the store
         await roleSubscriptions.AddManyAsync(wanted.Select(subscriptionId => AppRoleSubscription.Create(created.Id, subscriptionId)), cancellationToken).ConfigureAwait(false);
         return await GetAsync(created.Id, cancellationToken).ConfigureAwait(false);
     }
@@ -70,8 +72,17 @@ public sealed class AppRoleAppService(
             throw new AppRoleNameDuplicateException(name);
         }
 
+        string oldName = role.Name;
         role.Update(name);
         await roles.UpdateAsync(role, cancellationToken).ConfigureAwait(false);
+
+        // the grants are found by the name of the role: the entry under the old name goes and the one under the new name is written
+        if (!string.Equals(oldName, role.Name, StringComparison.Ordinal))
+        {
+            await synchronizer.RemoveRoleAsync(role.TenantId, oldName, cancellationToken).ConfigureAwait(false);
+        }
+
+        await synchronizer.SyncRoleAsync(role, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task<List<Guid>> GetSubscriptionIdsAsync(Guid id, CancellationToken cancellationToken = default)
@@ -107,6 +118,7 @@ public sealed class AppRoleAppService(
 
         await roleSubscriptions.DeleteWhereAsync(link => link.RoleId == roleId, cancellationToken).ConfigureAwait(false);
         await roles.DeleteAsync(role, cancellationToken).ConfigureAwait(false);
+        await synchronizer.RemoveRoleAsync(role.TenantId, role.Name, cancellationToken).ConfigureAwait(false);
     }
 
     private async Task<AppRole> FindAsync(Guid id, CancellationToken cancellationToken)

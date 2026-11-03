@@ -7,6 +7,7 @@ New ADR: copy the framework's [`0000-template.md`](../../../docs/adr/0000-templa
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
+| [0062](0062-the-permissions-and-the-menu-of-hsx-are-the-codes-and-live-in-the-identity-service.md) | The permissions and the menu of Hsx are in the code; the identity service keeps them, every endpoint asks for its permission | Accepted | 2026-11-01 |
 | [0061](0061-administration-is-part-of-the-identity-service-and-the-auth-server-reads-its-database.md) | Administration (permissions, menu) is part of the identity service; the auth server reads the identity database directly | Accepted | 2026-11-01 |
 | [0060](0060-the-hhs-rewrite-in-hsx-the-order-and-what-is-decided.md) | The hhs rewrite in Hsx: the core first, events on RabbitMQ with a virtual host for each environment, the settings of each service its own, the customers' web out | Accepted | 2026-11-01 |
 | [0059](0059-hsx-has-two-mongodb-services-and-the-four-environments.md) | Hsx has the text normalizer and the video generator on MongoDB, and the development, docker, uat and production environments | Accepted | 2026-11-01 |

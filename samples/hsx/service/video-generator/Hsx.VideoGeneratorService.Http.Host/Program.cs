@@ -26,7 +26,8 @@ builder.Services
     .AddBaseHealthChecks(builder.Configuration)   // /health/live, /startup and /ready: leave it out and the service has none
     .AddHsxAuthentication(builder.Configuration)
     .AddHsxAuthorization()
-    // the events of the system on RabbitMQ (the exchange HSX, this service's own queues, its handlers are the ones of EventHandlers/)
+    .AddHsxPermissions(builder.Configuration)   // [PermissionAuthorize]: what the roles were granted is read from the store the identity service writes
+                                                // the events of the system on RabbitMQ (the exchange HSX, this service's own queues, its handlers are the ones of EventHandlers/)
     .AddHsxEventBus(builder.Configuration, typeof(EventHandlersAssemblyMarker).Assembly)
     // the tenant of a request, the tenants under it and the scopes it may see are what the claims of its token say
     .AddBaseTenantClaims()

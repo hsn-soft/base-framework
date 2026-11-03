@@ -3,6 +3,7 @@
     <!-- What the service does: its use cases, on top of the domain. -->
 
     <ItemGroup>
+        <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.Authorization\HsnSoft.Base.Authorization.csproj" />
         <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.Ddd.Application\HsnSoft.Base.Ddd.Application.csproj" />
     </ItemGroup>
 

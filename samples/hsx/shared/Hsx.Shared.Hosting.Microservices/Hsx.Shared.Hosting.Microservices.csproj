@@ -7,10 +7,13 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.Authorization\HsnSoft.Base.Authorization.csproj" />
         <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.EventBus.RabbitMQ\HsnSoft.Base.EventBus.RabbitMQ.csproj" />
+        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.MultiTenancy\HsnSoft.Base.MultiTenancy.csproj" />
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\Hsx.Shared.Helper\Hsx.Shared.Helper.csproj" />
         <ProjectReference Include="..\Hsx.Shared.Hosting\Hsx.Shared.Hosting.csproj" />
     </ItemGroup>
 

@@ -1,9 +1,11 @@
 using HsnSoft.Base.Application.Dtos;
+using HsnSoft.Base.Authorization;
 using Hsx.IdentityService.Application.Contracts.CustomerDomain.Dtos;
 using Hsx.IdentityService.Application.Contracts.CustomerDomain.Dtos.Filters;
 using Hsx.IdentityService.Application.Contracts.CustomerDomain.Dtos.Submits;
 using Hsx.IdentityService.Application.Contracts.CustomerDomain.Services;
 using Hsx.IdentityService.Http.Host.Controllers.Base;
+using Hsx.Shared.Helper;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Hsx.IdentityService.Http.Host.Controllers;
@@ -13,16 +15,21 @@ namespace Hsx.IdentityService.Http.Host.Controllers;
 public sealed class CustomersController(ICustomerAppService customerAppService) : BaseServiceController
 {
     [HttpPost("get/{id:guid}")]
+    [PermissionAuthorize(HsxEndpointPermissions.Identity.Customers.Read)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public Task<CustomerDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
         => customerAppService.GetAsync(id, cancellationToken);
 
     [HttpPost("paged-list")]
+
+    [PermissionAuthorize(HsxEndpointPermissions.Identity.Customers.Read)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public Task<PagedDataResultDto<CustomerDto>> GetPagedListAsync([FromBody] GetCustomersPaged pagedInput, CancellationToken cancellationToken = default)
         => customerAppService.GetPagedListAsync(pagedInput, cancellationToken);
 
     [HttpPost("create")]
+
+    [PermissionAuthorize(HsxEndpointPermissions.Identity.Customers.Create)]
     [ProducesResponseType(StatusCodes.Status201Created)]
     public async Task<IActionResult> CreateAsync([FromBody] CustomerCreateDto input, CancellationToken cancellationToken = default)
     {
@@ -31,6 +38,8 @@ public sealed class CustomersController(ICustomerAppService customerAppService) 
     }
 
     [HttpDelete("{id:guid}")]
+
+    [PermissionAuthorize(HsxEndpointPermissions.Identity.Customers.Delete)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {

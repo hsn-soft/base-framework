@@ -15,6 +15,10 @@ samples/hsx/smoke-test.sh     # what each demo user sees through the gateway (72
 
 The web app is `http://localhost:7300`. Demo users (password `Hsx-Demo-123`): `system-admin@hsx.local`, `admin@techsummus.hsx.local`, `admin@pixel.hsx.local`, `admin@acme.hsx.local`. The home page shows what the token of the signed-in user lists (`allowed_tenant_id`, `allowed_scope_key`).
 
+## Permissions and the menu
+
+Every endpoint asks for a permission ([ADR-0062](../docs/adr/0062-the-permissions-and-the-menu-of-hsx-are-the-codes-and-live-in-the-identity-service.md)). The constants are in `shared/Hsx.Shared.Helper` (`HsxEndpointPermissions`, `HsxPagePermissions`); the menu and what each page needs are `MenuCatalog` of the identity service; the roles `SystemAdmin` and `Admin` start with `DefaultPermissionGrants`. `POST /identity-service/v1/me/menus` is the menu of the caller, `PUT /identity-service/v1/app-roles/{id}/permissions` sets what a role may do.
+
 ## Changing a schema (identity, content)
 
 The PostgreSQL services use EF Core migrations, applied when the host starts ([framework ADR-0131](../../docs/adr/0131-a-schema-that-evolves-is-migrated-by-a-startup-step.md)). After a change of an entity or its configuration:

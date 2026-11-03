@@ -9,6 +9,7 @@ using Hsx.IdentityService.Domain.CustomerDomain.Entities;
 using Hsx.IdentityService.Domain.SubscriptionDomain.Entities;
 using Hsx.IdentityService.Domain.TenantDomain.Entities;
 using Hsx.IdentityService.EntityFrameworkCore.Context;
+using Hsx.IdentityService.EntityFrameworkCore.Permissions;
 using Hsx.Shared.Helper;
 using Microsoft.EntityFrameworkCore;
 
@@ -47,10 +48,10 @@ internal sealed class SampleIdentitySeeder(IdentityDbContext db, ICurrentTenant 
         Subscription techsummusSale = await EnsureSubscriptionAsync(techsummus.Id, ProductTypes.VideoPlatform, cancellationToken).ConfigureAwait(false);
         Subscription pixelSale = await EnsureSubscriptionAsync(pixel.Id, ProductTypes.VerticalVideo, cancellationToken).ConfigureAwait(false);
 
-        await EnsureUserAsync(system, "admin", "system-admin@hsx.local", "System Admin", "SystemAdmin", null, cancellationToken).ConfigureAwait(false);
-        await EnsureUserAsync(techsummus, "admin", "admin@techsummus.hsx.local", "Techsummus Admin", "Admin", techsummusSale, cancellationToken).ConfigureAwait(false);
-        await EnsureUserAsync(pixel, "admin", "admin@pixel.hsx.local", "Pixel Admin", "Admin", pixelSale, cancellationToken).ConfigureAwait(false);
-        await EnsureUserAsync(acme, "admin", "admin@acme.hsx.local", "Acme Admin", "Admin", null, cancellationToken).ConfigureAwait(false);
+        await EnsureUserAsync(system, "admin", "system-admin@hsx.local", "System Admin", HsxRoles.SystemAdmin, null, cancellationToken).ConfigureAwait(false);
+        await EnsureUserAsync(techsummus, "admin", "admin@techsummus.hsx.local", "Techsummus Admin", HsxRoles.Admin, techsummusSale, cancellationToken).ConfigureAwait(false);
+        await EnsureUserAsync(pixel, "admin", "admin@pixel.hsx.local", "Pixel Admin", HsxRoles.Admin, pixelSale, cancellationToken).ConfigureAwait(false);
+        await EnsureUserAsync(acme, "admin", "admin@acme.hsx.local", "Acme Admin", HsxRoles.Admin, null, cancellationToken).ConfigureAwait(false);
     }
 
     private async Task<Tenant> EnsureTenantAsync(Guid id, TenantTypes type, string title, string name, Tenant? parent, CancellationToken cancellationToken)
@@ -89,6 +90,10 @@ internal sealed class SampleIdentitySeeder(IdentityDbContext db, ICurrentTenant 
         {
             role = AppRole.Create(roleName, isStatic: true);
             db.AppRoles.Add(role);
+            await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+            // a role starts with what the code says its name is granted
+            db.RolePermissions.AddRange(await PermissionDatabase.StartingGrantsAsync(db, role, cancellationToken).ConfigureAwait(false));
             await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
 

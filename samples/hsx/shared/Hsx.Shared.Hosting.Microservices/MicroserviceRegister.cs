@@ -1,6 +1,8 @@
 using System.Reflection;
+using HsnSoft.Base.Authorization;
 using HsnSoft.Base.EventBus;
 using HsnSoft.Base.EventBus.RabbitMQ;
+using Hsx.Shared.Helper;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,6 +31,15 @@ public static class MicroserviceRegister
             .AddRabbitMqEventBus(configuration);
         return handlers is null ? services : services.AddEventHandlers(handlers, fetchCounts);
     }
+
+    /// <summary>
+    /// Turns on <c>[PermissionAuthorize]</c> in the service: what the caller (the user, and its roles) was granted is read from the store the identity service writes (section <c>Permissions</c>; the host has Redis, <c>AddBaseRedis</c>), under the tenant of the
+    /// request, because the roles of a tenant are its own (<see cref="HsxPermissionScopes"/>). The tenant is the one <c>AddBaseTenantClaims</c> gives the host.
+    /// </summary>
+    public static IServiceCollection AddHsxPermissions(this IServiceCollection services, IConfiguration configuration)
+        => services
+            .AddBasePermissions(configuration)
+            .AddPermissionScope<TenantPermissionScope>();
 
     /// <summary>The shared middleware (see <see cref="HostingRegister.UseHsxHosting"/>); the service then maps its controllers with <c>MapControllers()</c>.</summary>
     public static WebApplication UseHsxMicroservice(this WebApplication app)

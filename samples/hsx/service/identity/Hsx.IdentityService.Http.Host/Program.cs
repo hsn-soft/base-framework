@@ -7,6 +7,7 @@ using HsnSoft.Base.MultiTenancy;
 using Hsx.IdentityService.Application;
 using Hsx.IdentityService.Domain.CompanyDomain.Entities;
 using Hsx.IdentityService.EntityFrameworkCore;
+using Hsx.IdentityService.Http.Host;
 using Hsx.Shared.Hosting;
 using Hsx.Shared.Hosting.Microservices;
 using Hsx.Shared.Localization;
@@ -24,10 +25,12 @@ builder.Services
     .AddBaseHealthChecks(builder.Configuration)   // /health/live, /startup and /ready: leave it out and the service has none
     .AddHsxAuthentication(builder.Configuration)
     .AddHsxAuthorization()
-    // the tenant of a request, the tenants under it and the scopes it may see are what the claims of its token say
+    .AddHsxPermissions(builder.Configuration)   // [PermissionAuthorize]: what the roles were granted is read from the store the identity service writes
+                                                // the tenant of a request, the tenants under it and the scopes it may see are what the claims of its token say
     .AddBaseTenantClaims()
     .AddIdentityPersistence(builder.Configuration)
-    .AddIdentityApplication(builder.Configuration);
+    .AddIdentityApplication(builder.Configuration)
+    .AddHostedService<PermissionCacheSyncService>();   // the grants of the roles are written to the store at start and every few minutes
 
 // a failure to start (a setting that is missing, a database that cannot be prepared) is logged as critical and ends the process with the exit code 1
 return await builder.RunBaseAsync(app =>

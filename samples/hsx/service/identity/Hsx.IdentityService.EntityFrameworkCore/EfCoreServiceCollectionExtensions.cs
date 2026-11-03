@@ -12,6 +12,9 @@ using Hsx.IdentityService.Domain.AuthPasswordPolicyDomain.Repositories;
 using Hsx.IdentityService.Domain.AuthRefreshTokenDomain.Repositories;
 using Hsx.IdentityService.Domain.CompanyDomain.Entities;
 using Hsx.IdentityService.Domain.CustomerDomain.Entities;
+using Hsx.IdentityService.Domain.MenuDomain.Repositories;
+using Hsx.IdentityService.Domain.PermissionDomain.Entities;
+using Hsx.IdentityService.Domain.PermissionDomain.Repositories;
 using Hsx.IdentityService.Domain.SubscriptionDomain.Entities;
 using Hsx.IdentityService.Domain.TenantDomain.Entities;
 using Hsx.IdentityService.Domain.TenantDomain.Repositories;
@@ -43,16 +46,20 @@ public static class EfCoreServiceCollectionExtensions
         services.AddEfCoreRepository<IdentityDbContext, AppRole, Guid>();
         services.AddEfCoreRepository<IdentityDbContext, AppUserRole, Guid>();
         services.AddEfCoreRepository<IdentityDbContext, AppRoleSubscription, Guid>();
+        services.AddEfCoreRepository<IdentityDbContext, Permission, Guid>();
         services.AddEfCoreRepository<IdentityDbContext, AuthPasswordPolicy, Guid>();
         services.AddEfCoreRepository<IdentityDbContext, AuthLoginAudit, Guid>();
 
         services.AddScoped<ITenantRepository, EfCoreTenantRepository>();
         services.AddScoped<ISignInRepository, EfCoreSignInRepository>();
+        services.AddScoped<IPermissionGrantRepository, EfCorePermissionGrantRepository>();
+        services.AddScoped<IMenuRepository, EfCoreMenuRepository>();
         services.AddScoped<IRefreshTokenStore, EfCoreRefreshTokenStore>();
         services.AddScoped<IPasswordPolicyProvider, EfCorePasswordPolicyProvider>();
 
         // the schema is migrated when the host starts, by the host that owns the database (SeedStartupConnections): the migrations of this project, in their order
         services.AddMigrationStartupStep<IdentityDbContext>(EfCoreIdentityDbProperties.ConnectionStringName);
+        services.AddDataSeeder<PermissionsSeeder>(EfCoreIdentityDbProperties.ConnectionStringName);   // the permissions of the code and the menu, before the roles that are granted them
         services.AddDataSeeder<SampleIdentitySeeder>(EfCoreIdentityDbProperties.ConnectionStringName);   // the demo tenants, customer, subscriptions, roles and users (off with Seeding:Disabled)
         return services;
     }
