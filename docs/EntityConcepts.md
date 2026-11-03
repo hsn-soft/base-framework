@@ -52,7 +52,7 @@ public string ConcurrencyStamp { get; private set; } = ConcurrencyStamps.New();
 public void SetConcurrencyStamp(string stamp) => ConcurrencyStamp = stamp;
 ```
 
-The persistence gives a changed entity a new stamp and refuses a change whose stamp is not the stored one. The DTO carries the stamp to the client and the update gives it back: the application service calls `entity.SetConcurrencyStamp(input.ConcurrencyStamp)` before saving. A refused change is a **409** (`ConcurrencyConflict`, the text `Concurrency:Conflict`): changed or removed by someone else; the client reads again and retries. Without a stamp from the client, only a change between the load and the save is found. EF Core (`BaseDbContext` and `BaseEntityInterceptor`) and the MongoDB repository both do it, for an update, a delete and the bulk variants; a statement that changes rows without loading them (`UpdateWhereAsync`) writes a new stamp too.
+The persistence gives a changed entity a new stamp and refuses a change whose stamp is not the stored one. The DTO carries the stamp to the client and the update gives it back: the application service calls `entity.SetConcurrencyStamp(input.ConcurrencyStamp)` before saving. A refused change is a **409**, and so is an update or a delete of an entity that is **not there any more**, whether it has a stamp or not (in EF Core and in MongoDB alike) (`ConcurrencyConflict`, the text `Concurrency:Conflict`): changed or removed by someone else; the client reads again and retries. Without a stamp from the client, only a change between the load and the save is found. EF Core (`BaseDbContext` and `BaseEntityInterceptor`) and the MongoDB repository both do it, for an update, a delete and the bulk variants; a statement that changes rows without loading them (`UpdateWhereAsync`) writes a new stamp too.
 
 ## The filters, and switching them off: `IDataFilter`
 
@@ -79,6 +79,8 @@ The filters are named (`SoftDelete`, `MultiTenant`), so each can be ignored on i
 
 `BaseDbContext` puts the query filter on the entities that have the concept. `BaseEntityInterceptor` fills the audit fields on save and turns the delete of an `ISoftDelete` entity into an update
 (what the entity owns is kept with it). `IgnoreQueryFilters()` shows everything (add `!IsDeleted` when the deleted must stay hidden).
+
+**MySQL keeps the microseconds.** The MySQL provider of Oracle writes a `DateTimeOffset` with no fractions of a second, so the audit fields would lose what is after the second. A `BaseDbContext` on MySQL keeps every time as a UTC `datetime(6)` (a conversion and a column type, both by convention). A table made before it has `datetime` columns and needs its columns changed (`datetime(6)`) by a migration.
 
 ## MongoDB
 

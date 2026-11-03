@@ -115,7 +115,7 @@ public class MongoRepository<TEntity, TKey>(IMongoDatabase database, MongoEntity
         // an entity with a stamp is replaced only where the stored document still has the stamp its caller saw
         string? seen = Concepts.Modified(entity);
         ReplaceOneResult result = await Collection.ReplaceOneAsync(MongoEntityConcepts.Matching<TEntity>(IdField, entity.Id!, seen), entity, cancellationToken: cancellationToken).ConfigureAwait(false);
-        if (seen is not null && result.MatchedCount == 0)
+        if (result.MatchedCount == 0)
         {
             throw ConcurrencyConflict.For(typeof(TEntity).Name);
         }
@@ -130,7 +130,7 @@ public class MongoRepository<TEntity, TKey>(IMongoDatabase database, MongoEntity
         {
             string? seen = Concepts.Modified(entity);
             ReplaceOneResult replaced = await Collection.ReplaceOneAsync(MongoEntityConcepts.Matching<TEntity>(IdField, entity.Id!, seen), entity, cancellationToken: cancellationToken).ConfigureAwait(false);
-            if (seen is not null && replaced.MatchedCount == 0)
+            if (replaced.MatchedCount == 0)
             {
                 throw ConcurrencyConflict.For(typeof(TEntity).Name);
             }
@@ -140,7 +140,7 @@ public class MongoRepository<TEntity, TKey>(IMongoDatabase database, MongoEntity
 
         string? stamp = entity is IHasConcurrencyStamp { ConcurrencyStamp: { Length: > 0 } carried } ? carried : null;
         DeleteResult deleted = await Collection.DeleteOneAsync(MongoEntityConcepts.Matching<TEntity>(IdField, entity.Id!, stamp), cancellationToken).ConfigureAwait(false);
-        if (stamp is not null && deleted.DeletedCount == 0)
+        if (deleted.DeletedCount == 0)
         {
             throw ConcurrencyConflict.For(typeof(TEntity).Name);
         }
@@ -167,18 +167,16 @@ public class MongoRepository<TEntity, TKey>(IMongoDatabase database, MongoEntity
         ArgumentNullException.ThrowIfNull(entities);
 
         List<WriteModel<TEntity>> models = [];
-        int stamped = 0;
         foreach (TEntity entity in entities)
         {
             string? seen = Concepts.Modified(entity);
-            stamped += seen is null ? 0 : 1;
             models.Add(new ReplaceOneModel<TEntity>(MongoEntityConcepts.Matching<TEntity>(IdField, entity.Id!, seen), entity));
         }
 
         if (models.Count > 0)
         {
             BulkWriteResult<TEntity> result = await Collection.BulkWriteAsync(models, cancellationToken: cancellationToken).ConfigureAwait(false);
-            if (stamped > 0 && result.MatchedCount < models.Count)
+            if (result.MatchedCount < models.Count)
             {
                 throw ConcurrencyConflict.For(typeof(TEntity).Name);
             }
@@ -191,11 +189,9 @@ public class MongoRepository<TEntity, TKey>(IMongoDatabase database, MongoEntity
 
         // an entity that can be soft deleted is marked and replaced; any other is removed
         List<WriteModel<TEntity>> models = [];
-        int stamped = 0;
         foreach (TEntity entity in entities)
         {
             string? seen = Concepts.SoftDeleted(entity) ? Concepts.Modified(entity) : entity is IHasConcurrencyStamp { ConcurrencyStamp: { Length: > 0 } carried } ? carried : null;
-            stamped += seen is null ? 0 : 1;
             FilterDefinition<TEntity> matching = MongoEntityConcepts.Matching<TEntity>(IdField, entity.Id!, seen);
             models.Add(entity is ISoftDelete ? new ReplaceOneModel<TEntity>(matching, entity) : new DeleteOneModel<TEntity>(matching));
         }
@@ -203,7 +199,7 @@ public class MongoRepository<TEntity, TKey>(IMongoDatabase database, MongoEntity
         if (models.Count > 0)
         {
             BulkWriteResult<TEntity> result = await Collection.BulkWriteAsync(models, cancellationToken: cancellationToken).ConfigureAwait(false);
-            if (stamped > 0 && result.MatchedCount + result.DeletedCount < models.Count)
+            if (result.MatchedCount + result.DeletedCount < models.Count)
             {
                 throw ConcurrencyConflict.For(typeof(TEntity).Name);
             }

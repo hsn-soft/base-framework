@@ -68,7 +68,7 @@ Verdict key: sound, over-coupled, flawed, superseded. Gap: priority, or None.
 | AspNetCore.Mvc, Mvc.UI, UI, UI.Navigation | dropped (menu is data in Hsx) | dead code or superseded | None |
 | Swashbuckle, Serilog | see above | | |
 | Http.Client, PuppeTeer | missing | see above | Medium-High, Medium |
-| Old tests, Dockerfile, six workflows, scripts, props | see report 5 | | CodeQL: Medium |
+| Old tests, Dockerfile, six workflows, scripts, props | see report 5 | | None |
 
 ## What was decided and done (2026-11-03)
 
@@ -80,7 +80,6 @@ The list below was gone through one item at a time with the maintainer; each don
 | `PuppeTeer` | Written as a framework package: scraping, PDF, screenshot, with the policy and the safe defaults | [ADR-0141](../adr/0141-a-rendered-page-is-an-untrusted-caller-and-the-browser-is-a-pool-with-limits.md), [Browser](../Browser.md) |
 | Outbox | **Not built**; the risk is accepted and recorded | [ADR-0133](../adr/0133-what-is-not-brought-back-from-the-old-framework-and-the-risks-we-accept.md) |
 | `EventBus.Azure` | **Not planned**; the open item is closed (ADR-0025 was already superseded by ADR-0132, so it blocks nothing) | ADR-0133 |
-| CodeQL | **Left open** | ADR-0133, the open items of the catalog |
 | Optimistic concurrency | Written: `IHasConcurrencyStamp` in EF Core and MongoDB, a conflict is a 409 | [ADR-0136](../adr/0136-an-entity-is-protected-from-a-lost-update-by-an-opt-in-stamp.md) |
 | Wire changes (`UserRoles`, `Producer`) | No mix of old and new services; recorded | ADR-0133 |
 | `BlobStoring.FileSystem` | Written: plain names only, atomic streamed writes | [ADR-0140](../adr/0140-the-blob-store-on-the-local-disk-takes-only-plain-names-and-writes-atomically.md) |
@@ -91,10 +90,11 @@ The list below was gone through one item at a time with the maintainer; each don
 | Kafka message size | `MessageMaxBytes`, `FetchMaxBytes`, `MaxPartitionFetchBytes` | [EventBus](../EventBus.md) |
 | CA2007, central package versions | `ConfigureAwait(false)` is an error in `src/`; versions are in `Directory.Packages.props` | [ADR-0134](../adr/0134-package-versions-are-managed-centrally-and-a-library-awaits-with-configureawait-false.md) |
 | Benchmarks | `benchmarks/HsnSoft.Base.Benchmarks` | [ADR-0142](../adr/0142-the-hot-paths-are-measured-by-benchmarks-that-are-not-tests.md) |
+| The 69 repository tests of the old framework | Read scenario by scenario against the new tests ([2026-11-03 follow-up](#the-69-repository-tests-of-the-old-framework)): the new suite had run on SQLite only (PostgreSQL, MySQL and SQL Server had one scenario each); it now runs on all three real databases and on MongoDB, and it found two defects, both fixed | `RepositoryScenarioTests.cs`, `MongoRepositoryTests.cs` |
 | `LogMasker` fallback | Checked: an object that cannot be masked is replaced by a text that says so (never logged raw); a text that is not JSON has no structure to look into and is kept as it is | `LogMasker.cs` |
 | `Swagger.md` and the catalog | The wrong dependency sentence and the stale Kafka item are corrected | commit of ADR-0133 |
 
-Still the maintainer's: revoke the old Sonar token that is in the history of `dev-backup`; CodeQL.
+Still the maintainer's: revoke the old Sonar token that is in the history of `dev-backup`.
 
 ## What the new framework is missing or should check, in order
 
@@ -106,7 +106,6 @@ Still the maintainer's: revoke the old Sonar token that is in the history of `de
 
 2. **Outbox for "save, then publish".** The new tree has an inbox (ADR-0067) and no outbox. hhs's own code calls the loss a known gap; `samples/hsx/docs/hhs-analysis.md` says "not needed". The two disagree; decide before Hsx writes its first chain. Shape: an opt-in decorator like the inbox, with EF Core and MongoDB providers.
 3. **PuppeTeer**: framework package versus a class in the Hsx text normalizer; scraping only, or PDF and screenshot too. Any package must change the defaults listed above.
-4. **CodeQL** was lost with the old workflows. The motto says secure.
 5. **`EventBus.Azure`**: implement it (native dead letters, topic as the exchange), or supersede ADR-0023 and ADR-0025, which make it a condition for merging `feat/new-framework` into `dev`.
 
 **Low-Medium**
@@ -128,4 +127,22 @@ The old script `analysis_sonar.ps1` has a **hard-coded Sonar token, twice, in th
 
 ## Decisions for the maintainer
 
-The reports end with their own lists (about 35 questions). The ones that decide the next work: build `Http.Client` and with what limits; outbox yes or no; where `PuppeTeer` lives; `EventBus.Azure` or superseding ADR-0025; optimistic concurrency; whether to bring back CodeQL; whether a mixed rollout of old and new services exists.
+The reports end with their own lists (about 35 questions). The ones that decide the next work: build `Http.Client` and with what limits; outbox yes or no; where `PuppeTeer` lives; `EventBus.Azure` or superseding ADR-0025; optimistic concurrency; whether a mixed rollout of old and new services exists.
+
+## The 69 repository tests of the old framework
+
+The old `test/HsnSoft.Base.Test.Unit` held 35 scenarios for each of the EF Core and the MongoDB repository (all `[Trait("category", "integration")]`, so the old CI never ran them; they ran on PostgreSQL and MongoDB). Read one by one against the new tests, with the new contract in mind (`FindAsync` returns `null` where `GetByIdAsync` threw, `ListQueryOptions` and `PagedQueryOptions` replace the order-by lambdas, no `GetSingle`):
+
+| Old scenario | New |
+|---|---|
+| Get by id, found and not found | `FindAsync(id)`: the entity, or `null` (by design, ADR-0045) |
+| Get single / single or default / first or default, found, not found, **duplicates** | `FindAsync(predicate)` takes one and never throws on duplicates; the first of an order is a sorted list with `MaxResultCount = 1`. **Not tested before; now tested** (every database) |
+| Get list, get page list, **empty and not empty** | Not empty was tested on SQLite only; **empty store, filter, sort, page two and the total are now tested on PostgreSQL, MySQL, SQL Server and MongoDB** |
+| Count and exists, empty and not empty | The same: now on every real store, also with a filter put together by `FilterBuilder` (`And`, `Or`, `AnyOf`) |
+| Insert, insert many | `AddAsync`, `AddManyAsync`: on every real store |
+| Update by id / update / update many, found | `UpdateAsync` (tracked and detached), `UpdateManyAsync`: on every real store |
+| **Update, delete, update many and delete many of an entity that is not found: throws** | **A 409 in every store.** EF Core always did it (through the concurrency exception); **MongoDB silently did nothing, and now answers 409 too** (defect 1) |
+| Delete by id, delete by id list | `DeleteAsync`, `DeleteManyAsync`, `DeleteWhereAsync` (which says how many it marked): on every real store |
+| **A whole entity read back equals the one saved, to the millisecond** (`ShouldBeEquivalentToWithMilliseconds`) | Was not tested on a real store. **Now tested on all four, and MySQL failed it: the audit times lost everything after the second** (defect 2, fixed by keeping every time as a `datetime(6)` on MySQL) |
+
+Two scenarios of the old suite have no equivalent on purpose: `GetSingle` (an entity that is more than one is the caller's problem, not an exception of the repository) and the exceptions of a missing entity on a read (`null` is the answer).

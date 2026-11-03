@@ -152,7 +152,6 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 ## Open items (not decided or not done)
 
 - Bridge the Kafka client's logs to `ILogger` (the Kafka consumer is ported; Azure Service Bus is not planned, [ADR-0133](0133-what-is-not-brought-back-from-the-old-framework-and-the-risks-we-accept.md)).
-- CodeQL, which the old workflows ran, is not decided ([ADR-0133](0133-what-is-not-brought-back-from-the-old-framework-and-the-risks-we-accept.md)).
 - Show the `BaseResponse` envelope in the Swagger document ([ADR-0024](0024-swagger.md)).
 - A test that fixes the allowed fields per log type, and configurable per-type `RemoveFields`/`AddFields` ([ADR-0019](0019-log-fields-pipeline.md)).
 - A `SharedLog` in a measured run (a product's shared library that logs only when Redis is down), so its column of `docs/GraylogFields.md` has data.

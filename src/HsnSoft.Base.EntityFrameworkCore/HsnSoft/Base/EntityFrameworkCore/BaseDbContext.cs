@@ -21,6 +21,8 @@ public abstract class BaseDbContext(DbContextOptions options, IDataFilter? dataF
     /// <summary>The name of the query filter of <see cref="ISoftDelete"/> (the filters are named, so a package can add its own beside it).</summary>
     protected const string SoftDeleteFilterName = "SoftDelete";
 
+    private const string MySqlProviderName = "MySql.EntityFrameworkCore";
+
     private static readonly MethodInfo s_configureFilter = typeof(BaseDbContext).GetMethod(nameof(ConfigureEntityFilters), BindingFlags.Instance | BindingFlags.NonPublic)!;
 
     /// <summary>The switch of the filters, for the filters a derived context adds (EF turns what a filter reads from the context into parameters of the query).</summary>
@@ -56,6 +58,24 @@ public abstract class BaseDbContext(DbContextOptions options, IDataFilter? dataF
     // a row that is not as the entity saw it (changed, or removed) is the same answer to the client: 409
     private static BaseHttpException ConflictOf(DbUpdateConcurrencyException exception)
         => ConcurrencyConflict.For(exception.Entries.Count > 0 ? exception.Entries[0].Metadata.ClrType.Name : "The record");
+
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+    {
+        ArgumentNullException.ThrowIfNull(configurationBuilder);
+
+        base.ConfigureConventions(configurationBuilder);
+
+        // the MySQL provider of Oracle writes a DateTimeOffset with no fractions of a second, so the audit fields (and every other time) lose what is after the second: a time is kept as a UTC datetime with microseconds
+        if (Database.ProviderName == MySqlProviderName)
+        {
+            configurationBuilder.Properties<DateTimeOffset>().HaveConversion<DateTimeOffsetAsUtcDateTime>().HaveColumnType("datetime(6)");
+            configurationBuilder.Properties<DateTime>().HaveColumnType("datetime(6)");
+        }
+    }
+
+    private sealed class DateTimeOffsetAsUtcDateTime() : Microsoft.EntityFrameworkCore.Storage.ValueConversion.ValueConverter<DateTimeOffset, DateTime>(
+        value => value.UtcDateTime,
+        value => new DateTimeOffset(DateTime.SpecifyKind(value, DateTimeKind.Utc)));
 
     /// <summary>The mappings of the service.</summary>
     protected abstract void ConfigureModel(ModelBuilder modelBuilder);

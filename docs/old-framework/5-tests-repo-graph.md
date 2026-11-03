@@ -12,7 +12,7 @@ Evidence: old tree extracted from `dev-backup` to a scratch copy (46 `src` proje
 | `Test.Api.Helper`, `Test.Api.Hosting` | dropped (were empty `Class1`; Hosting only held Swashbuckle+Serilog refs) | flawed (dead scaffolding) | None |
 | `common.props`, `common.test.props`, `configureawait.props` | `common.props`, `common.test.props`, `common.versions.props` (no Fody) | improved | Low: ConfigureAwait is a convention, not enforced |
 | Dockerfile (build+test+pack+push in one image) | `.github/workflows/ci-control-workflow.yml`, `deploy-global-nuget.yml`, `scripts/pack-local.sh` | superseded | None |
-| 6 workflows (build-test, codecov, codeql, sonarqube, deploy-global, publish-github) | 3 workflows (`ci-branch-rule`, `ci-control-workflow`, `deploy-global-nuget`) | improved, with two lost items | Medium: CodeQL; Low: GitHub Packages dev feed |
+| 6 workflows (build-test, codecov, codeql, sonarqube, deploy-global, publish-github) | 3 workflows (`ci-branch-rule`, `ci-control-workflow`, `deploy-global-nuget`) | improved, with one lost item | Low: GitHub Packages dev feed |
 | `analysis_sonar.ps1`, `clear_bin_obj.ps1` | `scripts/sonar/*`, `scripts/cleaner/*` | improved (token no longer in the script) | None |
 | CONTRIBUTING (a single word) / README (badges+1 paragraph) | CONTRIBUTING, `docs/` (18 references), 130+ ADRs, `.claude/rules` | improved | None |
 | Old dependency graph | new graph | old graph clearly violated the motto in 9 places (section 4) | n/a |
@@ -95,7 +95,7 @@ No longer covers or does differently:
 | `Dockerfile` | one image that restores, builds, tests (with the broken filter), packs with `-dev.<run>` suffix and pushes to GitHub Packages; secrets via `--mount=type=secret` (good) but then written to files `./nuget_secret`, `./version_number` in a layer; copies only `common.props`, `configureawait.props` | CI workflow + `deploy-global-nuget.yml` + `scripts/pack-local.sh` | Improved: build once, artifacts shared across jobs, no secret in image layers. Lost: automatic dev-feed publish to GitHub Packages (`publish-github-nuget.yml`, triggered on branch `DEVELOPMENT`). Low priority; `pack-local.sh` covers local consumption. |
 | `.github/workflows/net-core-build-and-test.yml` | PR to `dev`: restore, build, test with the broken filter | `ci-control-workflow.yml` | Improved: rules, format, Release build with warnings as errors, unit then integration tests, coverage gate 99 %, summary job, badges branch, Node 24 actions (ADR-0111), weekly schedule, release branches on push (ADR-0113, 0116). |
 | `analyze-codecov.yml` | codecov upload; used `dotnet-version: 9.0.x` while projects target net10.0 (it could not even build); same broken filter | coverage gate (`ci-check-coverage.py`) + badges (ADR-0114) | Improved. Lost: Codecov.io hosted trend graph (README badge was codecov). Replaced by own badge data on `badges` branch. |
-| `analyze-codeql.yml` | CodeQL on branch `RELEASE` (legacy name) and weekly cron | none found in `.github/workflows/` | **Lost.** Static security analysis (SAST) is not in the new CI. Motto says "secure". Medium: re-add CodeQL as a scheduled/release job (needs an ADR). |
+| `analyze-codeql.yml` | CodeQL on branch `RELEASE` (legacy name) and weekly cron | none found in `.github/workflows/` | Not wanted (maintainer decision of 2026-11-03). Was: re-add CodeQL as a scheduled/release job (needs an ADR). |
 | `analyze-sonarqube.yml` | SonarCloud on `RELEASE`; `dotnet-version: 9.0.x` (wrong SDK) | `scripts/sonar/analysis_{mac.sh,win.ps1}` + `docker/sonarqube.compose.yml` (local only; README says CI does not use them) | Cloud SonarQube analysis dropped on purpose (inferred: replaced by the coverage gate and analyzers). |
 | `deploy-global-nuget.yml` | push to `rel/nuget`: build, test (broken filter), pack, push to nuget.org | `deploy-global-nuget.yml` (rewritten; `rel/nuget-candidate`, `rel/nuget-regular`) + `scripts/versioning/next-version.py` + `Releasing.md` | Improved: candidate/stable, computed version, tests. Maintainer-only (ADR-0132). |
 | `publish-github-nuget.yml` | `docker build` for branch `DEVELOPMENT` using `kzrnm/get-net-sdk-project-versions-action` to read the version | none | Lost on purpose probably; Low. |
@@ -184,7 +184,7 @@ Per-package "transitive packages" (old): leaf `Security` 21; `Timing` 26; `Ddd.D
 
 ## Open questions for the maintainer
 
-1. **CodeQL / SAST.** The old repo had CodeQL; the new CI has none. Should a scheduled CodeQL (or equivalent) job be added (needs a new ADR)? Motto includes "secure".
+1. ~~CodeQL / SAST~~: closed, not wanted (maintainer decision of 2026-11-03).
 2. **Revoke the old Sonar token.** `sqp_…(redacted)` is in `dev-backup` history (`analysis_sonar.ps1`). Confirm it is revoked and decide whether `dev-backup` should be rewritten or left as an archive.
 3. **ConfigureAwait enforcement.** Replace Fody with an analyzer rule (`CA2007` as a warning for `src` only), or keep it purely as a convention?
 4. **Central package management.** Move third-party versions of `src` into `Directory.Packages.props` (samples already use one), or keep per-csproj versions plus `common.versions.props`?

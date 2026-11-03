@@ -24,7 +24,6 @@ The old framework (the branch `dev-backup`) was read project by project against 
 - **No outbox.** An event published after the data was saved can be lost if the process dies between the commit and the publish. The publisher retries a failed publish ([ADR-0023](0023-event-bus.md)) and a consumer is protected from a message that comes twice by the inbox ([ADR-0067](0067-the-event-inbox-is-opt-in-and-a-decorator.md)), but a lost event is not recovered by the framework. A product whose events must not be lost reconciles by a job that compares its data with what was published. This is the position of the Hsx analysis ("outbox: not needed", `samples/hsx/docs/hhs-analysis.md`); the old hhs code names it a known gap, and the decision is that it stays one. An outbox decorator, built like the inbox, can be added without changing the bus if a product needs it.
 - **The wire is not compatible with the old services.** The `UserRoles` header is a JSON array (it was a comma-joined text) and `Producer` is the name of the client (it was `Exchange_Client`). Old and new services are not run together; the new framework does not keep compatibility with the old one.
 
-**Open:** CodeQL, which the old workflows ran and the new ones do not, is not decided.
 
 ## Consequences
 
