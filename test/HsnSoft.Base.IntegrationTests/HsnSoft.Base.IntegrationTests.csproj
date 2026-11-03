@@ -12,16 +12,16 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.Extensions.Hosting" Version="$(MicrosoftAspNetCorePackageVersion)" />
-        <PackageReference Include="Testcontainers.Azurite" Version="4.16.0" />
-        <PackageReference Include="Testcontainers.Kafka" Version="4.16.0" />
-        <PackageReference Include="Testcontainers.Minio" Version="4.15.0" />
-        <PackageReference Include="Testcontainers.MongoDb" Version="4.16.0" />
-        <PackageReference Include="Testcontainers.MsSql" Version="4.16.0" />
-        <PackageReference Include="Testcontainers.MySql" Version="4.16.0" />
-        <PackageReference Include="Testcontainers.PostgreSql" Version="4.16.0" />
-        <PackageReference Include="Testcontainers.RabbitMq" Version="4.16.0" />
-        <PackageReference Include="Testcontainers.Redis" Version="4.16.0" />
+        <PackageReference Include="Microsoft.Extensions.Hosting" />
+        <PackageReference Include="Testcontainers.Azurite" />
+        <PackageReference Include="Testcontainers.Kafka" />
+        <PackageReference Include="Testcontainers.Minio" />
+        <PackageReference Include="Testcontainers.MongoDb" />
+        <PackageReference Include="Testcontainers.MsSql" />
+        <PackageReference Include="Testcontainers.MySql" />
+        <PackageReference Include="Testcontainers.PostgreSql" />
+        <PackageReference Include="Testcontainers.RabbitMq" />
+        <PackageReference Include="Testcontainers.Redis" />
     </ItemGroup>
 
     <ItemGroup>

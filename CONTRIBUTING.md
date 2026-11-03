@@ -101,7 +101,7 @@ Rules to know:
 
 1. Create `src/HsnSoft.Base.<Name>/` with a project that imports `common.props` and follows the layout of an existing package
    (package id, description, tags, README).
-2. Add `test/HsnSoft.Base.<Name>.Tests/` (imports `common.test.props`; it can see the package's internals). Package versions are never written in a project file: use `$(MicrosoftAspNetCorePackageVersion)` / `$(MicrosoftEntityFrameworkCorePackageVersion)` (`common.versions.props`, [ADR-0105](docs/adr/0105-shared-package-versions-in-one-file-and-a-common-test-host.md)).
+2. Add `test/HsnSoft.Base.<Name>.Tests/` (imports `common.test.props`; it can see the package's internals). Package versions are never written in a project file: add a `PackageVersion` to `Directory.Packages.props` and reference the package without a version ([ADR-0134](docs/adr/0134-package-versions-are-managed-centrally-and-a-library-awaits-with-configureawait-false.md)).
 3. For a provider (a broker, a database, a store), add integration tests to `test/HsnSoft.Base.IntegrationTests`.
 4. Add both to the solution and add a row to the package table in [docs/Overview.md](docs/Overview.md).
 

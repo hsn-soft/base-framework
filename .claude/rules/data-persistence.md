@@ -16,7 +16,7 @@ paths:
 
 - Keep store-neutral data filters and domain contracts separate from persistence providers. A service opts into a provider; a provider must not force unrelated stores or capabilities on consumers.
 - Keep repository contracts free of `IQueryable`, database contexts and provider-specific eager-loading APIs. Use the existing relational/document repository layers and DTO projection patterns.
-- Use the context's properties class for its database configuration; the old `Database:Provider` selector is superseded. Shared provider versions belong in `common.versions.props`.
+- Use the context's properties class for its database configuration; the old `Database:Provider` selector is superseded. Shared provider versions belong in `Directory.Packages.props`.
 - Apply audit, soft-delete, and tenant concepts through the established entity concepts and persistence interceptors/filters. Enforce tenant-or-scope isolation, never both.
 - Only the host that owns a database prepares it. Preserve the per-database startup lock and ordered startup steps. Use `AddMigrationStartupStep` for evolving schemas rather than adding migrations to the schema-creation step.
 - Register seeders as ordered, idempotent database startup steps after schema setup. Preserve the lock and the `Seeding:Disabled` opt-out.

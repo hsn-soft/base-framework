@@ -3,7 +3,7 @@
 
 !NuGet.Config
 !common.props
-!common.versions.props
+!Directory.Packages.props
 !src/**
 !samples/Directory.Build.props
 !samples/Directory.Packages.props

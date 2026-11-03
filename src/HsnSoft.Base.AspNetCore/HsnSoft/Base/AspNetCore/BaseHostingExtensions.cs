@@ -138,15 +138,15 @@ public static class BaseHostingExtensions
         {
             app = builder.Build();
             CheckRequiredSettings(app);
-            await configure(app);
-            await app.RunAsync();
+            await configure(app).ConfigureAwait(false);
+            await app.RunAsync().ConfigureAwait(false);
             return 0;
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
             if (app is null)
             {
-                await Console.Error.WriteLineAsync($"The host could not be built: {exception}");
+                await Console.Error.WriteLineAsync($"The host could not be built: {exception}").ConfigureAwait(false);
             }
             else
             {
@@ -159,7 +159,7 @@ public static class BaseHostingExtensions
         {
             if (app is not null)
             {
-                await app.DisposeAsync();   // the logger providers flush what they hold, the failure above among it
+                await app.DisposeAsync().ConfigureAwait(false);   // the logger providers flush what they hold, the failure above among it
             }
         }
     }

@@ -1,6 +1,6 @@
 # ADR-0105: The versions of the shared dependencies are in one file that libraries and tests both import, and tests share a small test host
 
-- **Status:** Accepted
+- **Status:** Accepted (where the versions live is superseded by [ADR-0134](0134-package-versions-are-managed-centrally-and-a-library-awaits-with-configureawait-false.md); the common test host stands)
 - **Date:** 2026-10-29 (changes where the versions of [ADR-0007](0007-build-settings-and-versioning.md) live)
 
 ## Context

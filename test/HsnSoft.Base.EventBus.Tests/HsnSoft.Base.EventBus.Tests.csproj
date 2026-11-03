@@ -4,7 +4,7 @@
 
     <ItemGroup>
         <!-- the production services copy an envelope with it (ApplicationServiceBase.SetParentIntegrationEvent) -->
-        <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+        <PackageReference Include="Newtonsoft.Json" />
     </ItemGroup>
 
     <ItemGroup>
