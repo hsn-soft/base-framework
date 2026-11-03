@@ -25,6 +25,7 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 | [0006](0006-repository-folders-and-the-solution-file.md) | Repository folders and the solution file | Accepted | 2026-10-25 |
 | [0133](0133-what-is-not-brought-back-from-the-old-framework-and-the-risks-we-accept.md) | What is not brought back from the old framework, and the risks we accept (no outbox, no Azure Service Bus, no Sqlite, no distributed lock, no old-wire compatibility) | Accepted | 2026-11-03 |
 | [0134](0134-package-versions-are-managed-centrally-and-a-library-awaits-with-configureawait-false.md) | Package versions are managed centrally in `Directory.Packages.props`, and a library awaits with `ConfigureAwait(false)` by rule (CA2007 is an error in `src/`) | Accepted | 2026-11-03 |
+| [0135](0135-permissions-are-asked-without-a-web-framework-and-the-endpoint-layer-is-its-own-package.md) | The permission checker needs no web framework, and the endpoint layer is its own package (`Authorization.AspNetCore`) | Accepted | 2026-11-03 |
 
 ## Building blocks, products and hosts
 

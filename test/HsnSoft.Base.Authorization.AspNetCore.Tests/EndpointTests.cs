@@ -11,7 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace HsnSoft.Base.Authorization.Tests;
+namespace HsnSoft.Base.Authorization.AspNetCore.Tests;
 
 /// <summary>The attribute on a real endpoint: signed in with a role that was granted, signed in with one that was not, and not signed in.</summary>
 public class EndpointTests

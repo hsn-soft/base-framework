@@ -2,7 +2,7 @@
 paths:
   - "src/HsnSoft.Base.AspNetCore*/**"
   - "src/HsnSoft.Base.Authentication/**"
-  - "src/HsnSoft.Base.Authorization/**"
+  - "src/HsnSoft.Base.Authorization*/**"
   - "src/HsnSoft.Base.MultiTenancy.Authentication/**"
   - "docs/WebApi.md"
   - "docs/Authorization.md"
@@ -21,4 +21,4 @@ paths:
 - Host setup, health endpoints and process identity: the infrastructure-hosting rule.
 - Read the matching feature reference (`WebApi.md`, `Authorization.md`, `Swagger.md`, `Health.md`, or `Hosting.md`) and relevant ADRs before changing public HTTP behavior.
 
-Relevant decisions: ADR-0022, ADR-0024, ADR-0026, ADR-0039–0041, ADR-0044, ADR-0071, ADR-0081, ADR-0083, ADR-0117, ADR-0120–0122, ADR-0126.
+Relevant decisions: ADR-0022, ADR-0024, ADR-0026, ADR-0039–0041, ADR-0044, ADR-0071, ADR-0081, ADR-0083, ADR-0117, ADR-0120–0122, ADR-0126, ADR-0135.

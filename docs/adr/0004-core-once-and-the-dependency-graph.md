@@ -38,6 +38,7 @@ referenced it in its own way, and sibling references multiplied: restores slowed
 | `Ddd.Application` | Ddd.Domain |
 | `Authentication` | Core |
 | `Authorization` | Core |
+| `Authorization.AspNetCore` | Authorization |
 | `AspNetCore` | Core |
 | `AspNetCore.WebApi` | AspNetCore |
 | `AspNetCore.Swashbuckle` | AspNetCore |
