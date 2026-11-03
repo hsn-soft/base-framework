@@ -1,4 +1,6 @@
+using System.Net;
 using HsnSoft.Base.Collections;
+using HsnSoft.Base.Net;
 using HsnSoft.Base.Text;
 
 namespace HsnSoft.Base.Extensions.Tests;
@@ -105,5 +107,36 @@ public class ExtensionsTests
         Assert.Throws<ArgumentNullException>(() => ((ICollection<string>)null!).GetOrAdd(name => true, () => "x"));
         Assert.Throws<ArgumentNullException>(() => names.GetOrAdd(null!, () => "x"));
         Assert.Throws<ArgumentNullException>(() => names.GetOrAdd(name => true, null!));
+    }
+
+    [Theory]
+    [InlineData("8.8.8.8", true)]
+    [InlineData("2606:4700:4700::1111", true)]
+    [InlineData("127.0.0.1", false)]
+    [InlineData("10.0.0.1", false)]
+    [InlineData("169.254.169.254", false)]
+    [InlineData("192.168.0.1", false)]
+    [InlineData("::1", false)]
+    [InlineData("fd00::1", false)]
+    [InlineData("::ffff:10.0.0.1", false)]
+    [InlineData("224.0.0.1", false)]
+    public void AnAddress_IsPublic_OnlyWhenItIsOfTheInternet(string address, bool expected)
+    {
+        Assert.Equal(expected, PublicAddress.IsPublic(IPAddress.Parse(address)));
+        Assert.Throws<ArgumentNullException>(() => PublicAddress.IsPublic(null!));
+    }
+
+    [Theory]
+    [InlineData("files.example.com", "files.example.com", true)]
+    [InlineData("FILES.example.com", "files.EXAMPLE.com", true)]
+    [InlineData("eu.cdn.example.com", "*.example.com", true)]
+    [InlineData("example.com", "*.example.com", false)]
+    [InlineData("evilexample.com", "*.example.com", false)]
+    [InlineData("other.com", "files.example.com", false)]
+    public void AHostPattern_IsAnExactNameOrTheNamesUnderADomain(string host, string pattern, bool expected)
+    {
+        Assert.Equal(expected, HostPattern.Matches(host, pattern));
+        Assert.Throws<ArgumentNullException>(() => HostPattern.Matches(null!, pattern));
+        Assert.Throws<ArgumentNullException>(() => HostPattern.Matches(host, null!));
     }
 }

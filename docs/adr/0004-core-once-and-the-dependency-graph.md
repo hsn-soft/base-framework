@@ -37,9 +37,11 @@ referenced it in its own way, and sibling references multiplied: restores slowed
 | `Ddd.Domain` | Auditing, Data |
 | `Ddd.Application` | Ddd.Domain |
 | `Authentication` | Core |
+| `Browser` | Extensions |
+| `Browser.Puppeteer` | Browser |
 | `BlobStoring.FileSystem` | BlobStoring |
 | `Extensions` | Core |
-| `Http.Client` | Core |
+| `Http.Client` | Extensions |
 | `Authorization` | Core |
 | `Authorization.AspNetCore` | Authorization |
 | `AspNetCore` | Core |

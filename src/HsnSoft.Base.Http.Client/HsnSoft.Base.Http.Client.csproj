@@ -21,7 +21,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\HsnSoft.Base.Core\HsnSoft.Base.Core.csproj" />
+        <ProjectReference Include="..\HsnSoft.Base.Extensions\HsnSoft.Base.Extensions.csproj" />
     </ItemGroup>
 
 </Project>
