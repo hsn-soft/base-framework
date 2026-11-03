@@ -1,6 +1,6 @@
 # ADR-0063: Companies, customers and subscriptions belong to the tenant that made them, and the tenant management makes them
 
-- **Status:** Accepted
+- **Status:** Superseded by [ADR-0064](0064-who-owns-a-record-in-hsx-tenant-scope-neither-and-how-a-sale-moves-between-resellers.md) (companies and customers are a global catalogue the system tenant writes, and so are the sales)
 - **Date:** 2026-11-03 (applies [ADR-0061](0061-administration-is-part-of-the-identity-service-and-the-auth-server-reads-its-database.md), [framework ADR-0128](../../../docs/adr/0128-the-tenants-that-a-tenant-sees-are-the-ones-under-it-by-a-path-of-ids.md) and [ADR-0129](../../../docs/adr/0129-an-entity-is-isolated-by-its-tenant-or-by-its-scope-never-both.md))
 
 ## Decision

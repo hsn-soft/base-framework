@@ -6,6 +6,6 @@ public static class HsxRoles
     /// <summary>The role of the people who run the system (the system tenant): it can do everything.</summary>
     public const string SystemAdmin = "SystemAdmin";
 
-    /// <summary>The role of the administrator of a reseller or of an account: it manages what is its tenant's, and sees the tree of tenants without changing it.</summary>
+    /// <summary>The role of the administrator of a reseller: it manages what is its tenant's and sees all of its sales.</summary>
     public const string Admin = "Admin";
 }

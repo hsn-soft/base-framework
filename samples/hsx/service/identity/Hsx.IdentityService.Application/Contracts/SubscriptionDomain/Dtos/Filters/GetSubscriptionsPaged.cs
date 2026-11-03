@@ -8,6 +8,9 @@ public sealed class GetSubscriptionsPaged : PagedDataRequestDto
     /// <summary>Only the reseller tenant id.</summary>
     public Guid? TenantId { get; set; }
 
+    /// <summary>Only the ended ones (the history) or only the ones that go on; all when it is not given.</summary>
+    public bool? IsEnded { get; set; }
+
     /// <summary>Only the company id.</summary>
     public Guid? CompanyId { get; set; }
 

@@ -12,6 +12,9 @@ public interface IRefreshTokenStore
     /// </summary>
     Task<(Guid UserId, string NewToken)?> RotateAsync(string token, TimeSpan lifetime, CancellationToken cancellationToken = default);
 
+    /// <summary>Revokes every token of these users (their roles lost a subscription): they have to sign in again to get a new access token; the one they hold ends by itself.</summary>
+    Task RevokeForUsersAsync(IReadOnlyCollection<Guid> userIds, CancellationToken cancellationToken = default);
+
     /// <summary>Revokes a token (the user signs out); nothing when there is no such token.</summary>
     Task RevokeAsync(string token, CancellationToken cancellationToken = default);
 }

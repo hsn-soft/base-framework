@@ -53,16 +53,6 @@ public sealed class AppRolesController(IAppRoleAppService appRoleAppService) : B
     public Task<List<Guid>> GetSubscriptionIdsAsync(Guid id, CancellationToken cancellationToken = default)
         => appRoleAppService.GetSubscriptionIdsAsync(id, cancellationToken);
 
-    [HttpPut("subscriptions")]
-
-    [PermissionAuthorize(HsxEndpointPermissions.Identity.AppRoles.SetSubscriptions)]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<IActionResult> SetSubscriptionsAsync([FromBody] AppRoleSetSubscriptionsDto input, CancellationToken cancellationToken = default)
-    {
-        await appRoleAppService.SetSubscriptionsAsync(input, cancellationToken);
-        return NoContent();
-    }
-
     [HttpDelete("{id:guid}")]
 
     [PermissionAuthorize(HsxEndpointPermissions.Identity.AppRoles.Delete)]

@@ -51,6 +51,15 @@ internal sealed class EfCoreRefreshTokenStore(IdentityDbContext db) : IRefreshTo
         return (found.UserId, next);
     }
 
+    public async Task RevokeForUsersAsync(IReadOnlyCollection<Guid> userIds, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(userIds);
+
+        DateTimeOffset now = TimeProvider.System.GetUtcNow();
+        await db.AuthRefreshTokens.Where(candidate => userIds.Contains(candidate.UserId) && candidate.RevokedAt == null)
+            .ExecuteUpdateAsync(set => set.SetProperty(candidate => candidate.RevokedAt, now), cancellationToken).ConfigureAwait(false);
+    }
+
     public async Task RevokeAsync(string token, CancellationToken cancellationToken = default)
     {
         string hash = Hash(token);

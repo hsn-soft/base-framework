@@ -32,6 +32,7 @@ public sealed class CompanyAppService(IRepository<Company, Guid> repository, ISe
     public async Task<CompanyDto> CreateAsync(CompanyCreateDto input, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(input);
+        EnsureSystemTenant();
 
         string name = input.Name!.Trim();
         if (await NameTakenAsync(name, cancellationToken).ConfigureAwait(false))
@@ -47,6 +48,7 @@ public sealed class CompanyAppService(IRepository<Company, Guid> repository, ISe
     public async Task UpdateAsync(CompanyUpdateDto input, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(input);
+        EnsureSystemTenant();
 
         Company entity = await FindAsync(input.Id.GetValueOrDefault(), cancellationToken).ConfigureAwait(false);
         entity.Update(input.Title!);
@@ -54,7 +56,10 @@ public sealed class CompanyAppService(IRepository<Company, Guid> repository, ISe
     }
 
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
-        => await repository.DeleteAsync(await FindAsync(id, cancellationToken).ConfigureAwait(false), cancellationToken).ConfigureAwait(false);
+    {
+        EnsureSystemTenant();
+        await repository.DeleteAsync(await FindAsync(id, cancellationToken).ConfigureAwait(false), cancellationToken).ConfigureAwait(false);
+    }
 
     private async Task<Company> FindAsync(Guid id, CancellationToken cancellationToken)
         => await repository.FindAsync(id, cancellationToken).ConfigureAwait(false) ?? throw CompanyNotFound.For(id);

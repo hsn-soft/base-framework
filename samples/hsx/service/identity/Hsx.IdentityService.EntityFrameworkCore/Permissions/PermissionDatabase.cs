@@ -19,7 +19,7 @@ public static class PermissionDatabase
 
     /// <summary>
     /// Keeps the tables of the permissions and of the menu in step with the code at every start. A permission that is new is added, one that is not in the code any more is made inactive (nothing is deleted: grants name it), one that came back is active again.
-    /// What is added now is granted to the roles that <see cref="DefaultPermissionGrants"/> names it for; one that was added before is never granted again, so what the administrator of a tenant took away stays taken away. Then the menu: the items of
+    /// What is added now is granted to the roles whose type <see cref="DefaultPermissionGrants"/> names it for; one that was added before is never granted again, so what the administrator of a tenant took away stays taken away. Then the menu: the items of
     /// <see cref="MenuCatalog"/> are added or brought up to date with their permissions (<c>MenuPermissionMap</c>), and an item that is not in the code any more is made inactive. Run it before the roles are made, which are granted their starting grants then.
     /// </summary>
     internal static async Task EnsurePermissionsAsync(IdentityDbContext db, TimeProvider time, CancellationToken cancellationToken)
@@ -45,10 +45,10 @@ public static class PermissionDatabase
         await EnsureMenusAsync(db, time.GetUtcNow(), cancellationToken).ConfigureAwait(false);
     }
 
-    /// <summary>The permissions the role of this name starts with, as rows to add: what <see cref="DefaultPermissionGrants"/> names, found in the catalogue.</summary>
+    /// <summary>The permissions a role starts with, as rows to add: what <see cref="DefaultPermissionGrants"/> names for its type, found in the catalogue.</summary>
     internal static async Task<List<RolePermission>> StartingGrantsAsync(IdentityDbContext db, AppRole role, CancellationToken cancellationToken)
     {
-        IReadOnlyList<string> codes = DefaultPermissionGrants.For(role.Name);
+        IReadOnlyList<string> codes = DefaultPermissionGrants.For(role.RoleType);
         List<Permission> permissions = await db.Permissions.Where(permission => permission.IsActive && codes.Contains(permission.Code)).ToListAsync(cancellationToken).ConfigureAwait(false);
         return [.. permissions.Select(permission => RolePermission.Grant(role, permission))];
     }
@@ -64,7 +64,7 @@ public static class PermissionDatabase
         List<AppRole> roles = await db.AppRoles.IgnoreQueryFilters().ToListAsync(cancellationToken).ConfigureAwait(false);
         foreach (AppRole role in roles)
         {
-            foreach (string code in DefaultPermissionGrants.For(role.Name).Where(addedByCode.ContainsKey))
+            foreach (string code in DefaultPermissionGrants.For(role.RoleType).Where(addedByCode.ContainsKey))
             {
                 db.RolePermissions.Add(RolePermission.Grant(role, addedByCode[code]));
             }

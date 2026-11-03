@@ -10,6 +10,7 @@ using Hsx.IdentityService.Domain.AuthPasswordPolicyDomain.Repositories;
 using Hsx.IdentityService.Domain.TenantDomain.Entities;
 using Hsx.IdentityService.Domain.TenantDomain.Repositories;
 using Hsx.Shared.Helper;
+using Microsoft.Extensions.Options;
 
 namespace Hsx.AuthServer.Host.Security;
 
@@ -37,7 +38,8 @@ public sealed class UserAuthenticator(
     ISignInRepository signIn,
     ITenantRepository tenants,
     IPasswordPolicyProvider policies,
-    IRepository<AuthLoginAudit, Guid> audits)
+    IRepository<AuthLoginAudit, Guid> audits,
+    IOptions<AuthServerOptions> options)
 {
     /// <summary>The most ids a claim list may hold: a token that carries more is too big for a header, so such a tenant is given scope keys instead.</summary>
     public const int MaxClaimValues = 50;
@@ -100,9 +102,10 @@ public sealed class UserAuthenticator(
 
         // the system tenant is under no isolation, so it lists nothing; any other tenant sees its own and the tenants under it
         IReadOnlyList<Guid> descendants = isSystem ? [] : await tenants.GetDescendantIdsAsync(tenant, cancellationToken).ConfigureAwait(false);
-        if (descendants.Count > MaxClaimValues || info.ScopeKeys.Count > MaxClaimValues)
+        int maxScopeKeys = options.Value.MaxScopeKeysInToken;
+        if (descendants.Count > MaxClaimValues || (maxScopeKeys > 0 && info.ScopeKeys.Count > maxScopeKeys))
         {
-            throw new BaseHttpException(422, $"The token would list more than {MaxClaimValues} tenants or scopes.").WithKey("token_too_large");
+            throw new BaseHttpException(422, $"The token would list more than {MaxClaimValues} tenants or {maxScopeKeys} scopes.").WithKey("token_too_large");
         }
 
         return new AuthenticatedUser(user.Id, user.UserName, user.DisplayName, user.Email, info.Roles, tenant.Id, isSystem, user.LanguageCode ?? "en", descendants, info.ScopeKeys);

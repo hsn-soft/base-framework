@@ -56,4 +56,18 @@ public sealed class SubscriptionsController(ISubscriptionAppService subscription
         await subscriptionAppService.DeleteAsync(id, cancellationToken);
         return NoContent();
     }
+
+    /// <summary>Passes the sale to another reseller: the old subscription ends and a new one starts for it (the system tenant only).</summary>
+    [HttpPut("transfer")]
+    [PermissionAuthorize(HsxEndpointPermissions.Identity.Subscriptions.Transfer)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public Task<SubscriptionDto> TransferAsync([FromBody] SubscriptionTransferDto input, CancellationToken cancellationToken = default)
+        => subscriptionAppService.TransferAsync(input, cancellationToken);
+
+    /// <summary>The companies, the customers and the products in the subscriptions the caller sees, to filter them by.</summary>
+    [HttpPost("filters")]
+    [PermissionAuthorize(HsxEndpointPermissions.Identity.Subscriptions.Read)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public Task<SubscriptionFiltersDto> GetFiltersAsync(CancellationToken cancellationToken = default)
+        => subscriptionAppService.GetFiltersAsync(cancellationToken);
 }

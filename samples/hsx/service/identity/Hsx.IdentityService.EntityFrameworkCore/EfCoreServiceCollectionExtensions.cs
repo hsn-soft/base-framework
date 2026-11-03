@@ -16,6 +16,7 @@ using Hsx.IdentityService.Domain.MenuDomain.Repositories;
 using Hsx.IdentityService.Domain.PermissionDomain.Entities;
 using Hsx.IdentityService.Domain.PermissionDomain.Repositories;
 using Hsx.IdentityService.Domain.SubscriptionDomain.Entities;
+using Hsx.IdentityService.Domain.SubscriptionDomain.Repositories;
 using Hsx.IdentityService.Domain.TenantDomain.Entities;
 using Hsx.IdentityService.Domain.TenantDomain.Repositories;
 using Hsx.IdentityService.EntityFrameworkCore.Context;
@@ -52,6 +53,7 @@ public static class EfCoreServiceCollectionExtensions
 
         services.AddScoped<ITenantRepository, EfCoreTenantRepository>();
         services.AddScoped<ITenantProvisioner, EfCoreTenantProvisioner>();
+        services.AddScoped<ISubscriptionManager, EfCoreSubscriptionManager>();
         services.AddScoped<ISignInRepository, EfCoreSignInRepository>();
         services.AddScoped<IPermissionGrantRepository, EfCorePermissionGrantRepository>();
         services.AddScoped<IMenuRepository, EfCoreMenuRepository>();

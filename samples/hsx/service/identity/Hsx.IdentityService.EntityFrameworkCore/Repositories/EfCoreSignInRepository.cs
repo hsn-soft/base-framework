@@ -52,7 +52,7 @@ internal sealed class EfCoreSignInRepository(IdentityDbContext db) : ISignInRepo
         List<string> scopeKeys = await (
             from link in db.AppRoleSubscriptions.IgnoreQueryFilters().AsNoTracking()
             join subscription in db.Subscriptions.IgnoreQueryFilters().AsNoTracking() on link.SubscriptionId equals subscription.Id
-            where roleIds.Contains(link.RoleId) && !subscription.IsBlocked && (subscription.ValidTo == null || subscription.ValidTo > DateTimeOffset.UtcNow)
+            where roleIds.Contains(link.RoleId) && subscription.EndedAt == null && !subscription.IsBlocked && (subscription.ValidTo == null || subscription.ValidTo > DateTimeOffset.UtcNow)
             select subscription.ScopeKey).Distinct().ToListAsync(cancellationToken).ConfigureAwait(false);
         return new SignInInfo(user, tenant, roles, scopeKeys);
     }

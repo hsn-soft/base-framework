@@ -70,7 +70,10 @@ public static class AppRoleDomainConfiguration
             entity.Property(e => e.Id).ValueGeneratedNever();
             entity.Property(e => e.Name).HasMaxLength(AppRoleConsts.NameMaxLength).IsRequired();
             entity.Property(e => e.NormalizedName).HasMaxLength(AppRoleConsts.NameMaxLength).IsRequired();
+            entity.Property(e => e.RoleType).HasConversion<string>().HasMaxLength(20).IsRequired();
             entity.HasIndex(e => new { e.TenantId, e.NormalizedName }).IsUnique();
+            entity.HasIndex(e => e.CompanyId);
+            entity.HasIndex(e => e.CustomerId);
         });
     }
 }

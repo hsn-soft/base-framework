@@ -49,7 +49,6 @@ public static class MenuCatalog
             Required(HsxEndpointPermissions.Identity.RolePermissions.Read),
             Action(HsxEndpointPermissions.Identity.AppRoles.Create),
             Action(HsxEndpointPermissions.Identity.AppRoles.Update),
-            Action(HsxEndpointPermissions.Identity.AppRoles.SetSubscriptions),
             Action(HsxEndpointPermissions.Identity.RolePermissions.Update),
             Action(HsxEndpointPermissions.Identity.AppRoles.Delete)),
         new(
@@ -57,7 +56,6 @@ public static class MenuCatalog
             Visibility(HsxPagePermissions.Identity.Companies.View),
             Required(HsxEndpointPermissions.Identity.Companies.Read),
             Action(HsxEndpointPermissions.Identity.Companies.Create),
-            Action(HsxEndpointPermissions.Identity.TenantManagement.CreateCompany),
             Action(HsxEndpointPermissions.Identity.Companies.Update),
             Action(HsxEndpointPermissions.Identity.Companies.Delete)),
         new(
@@ -65,7 +63,6 @@ public static class MenuCatalog
             Visibility(HsxPagePermissions.Identity.Customers.View),
             Required(HsxEndpointPermissions.Identity.Customers.Read),
             Action(HsxEndpointPermissions.Identity.Customers.Create),
-            Action(HsxEndpointPermissions.Identity.TenantManagement.CreateCustomer),
             Action(HsxEndpointPermissions.Identity.Customers.Update),
             Action(HsxEndpointPermissions.Identity.Customers.Delete)),
         new(
@@ -73,8 +70,8 @@ public static class MenuCatalog
             Visibility(HsxPagePermissions.Identity.Subscriptions.View),
             Required(HsxEndpointPermissions.Identity.Subscriptions.Read),
             Action(HsxEndpointPermissions.Identity.Subscriptions.Create),
-            Action(HsxEndpointPermissions.Identity.TenantManagement.SellSubscription),
             Action(HsxEndpointPermissions.Identity.Subscriptions.Update),
+            Action(HsxEndpointPermissions.Identity.Subscriptions.Transfer),
             Action(HsxEndpointPermissions.Identity.Subscriptions.Delete)),
         new("caption.video-platform", MenuNodeType.Caption, "Ürünler", null, null, 30, null),
         new(VideoPlatform, MenuNodeType.Node, "Video platformu", null, "video", 40, null),

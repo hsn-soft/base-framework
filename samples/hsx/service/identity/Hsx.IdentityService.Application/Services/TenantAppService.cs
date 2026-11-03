@@ -37,6 +37,7 @@ public sealed class TenantAppService(IRepository<Tenant, Guid> tenants, ITenantR
     public async Task<TenantDto> CreateAsync(TenantCreateDto input, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(input);
+        EnsureSystemTenant();
 
         Tenant? parent = null;
         if (input.ParentId is { } parentId)
@@ -63,6 +64,7 @@ public sealed class TenantAppService(IRepository<Tenant, Guid> tenants, ITenantR
     public async Task UpdateAsync(TenantUpdateDto input, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(input);
+        EnsureSystemTenant();
 
         Tenant tenant = await FindVisibleAsync(input.Id.GetValueOrDefault(), cancellationToken).ConfigureAwait(false);
         tenant.Update(input.Title!, input.IsActive);
@@ -72,6 +74,7 @@ public sealed class TenantAppService(IRepository<Tenant, Guid> tenants, ITenantR
     public async Task MoveAsync(TenantMoveDto input, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(input);
+        EnsureSystemTenant();
 
         Tenant tenant = await FindVisibleAsync(input.Id.GetValueOrDefault(), cancellationToken).ConfigureAwait(false);
         Tenant? newParent = input.NewParentId is { } parentId ? await FindVisibleAsync(parentId, cancellationToken).ConfigureAwait(false) : null;
@@ -85,6 +88,7 @@ public sealed class TenantAppService(IRepository<Tenant, Guid> tenants, ITenantR
 
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
+        EnsureSystemTenant();
         Tenant tenant = await FindVisibleAsync(id, cancellationToken).ConfigureAwait(false);
         if (await tree.HasChildrenAsync(id, cancellationToken).ConfigureAwait(false) || await users.AnyAsync(user => user.TenantId == id, ignoreFilters: true, cancellationToken).ConfigureAwait(false))
         {

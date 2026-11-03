@@ -30,7 +30,7 @@ public sealed class MySubscriptionAppService(
         // the token names what the caller may see, whichever reseller sold it: the tenant filter is off for this read, and the scope keys are the filter
         using (dataFilter.Disable<IMultiTenant>())
         {
-            IReadOnlyList<Subscription> found = await subscriptions.GetListAsync(new ListQueryOptions<Subscription> { Filter = subscription => system || keys.Contains(subscription.ScopeKey) }, cancellationToken).ConfigureAwait(false);
+            IReadOnlyList<Subscription> found = await subscriptions.GetListAsync(new ListQueryOptions<Subscription> { Filter = subscription => subscription.EndedAt == null && (system || keys.Contains(subscription.ScopeKey)) }, cancellationToken).ConfigureAwait(false);
             Guid[] customerIds = [.. found.Select(subscription => subscription.CustomerId).Distinct()];
             Guid[] companyIds = [.. found.Select(subscription => subscription.CompanyId).Distinct()];
             Guid[] tenantIds = [.. found.Select(subscription => subscription.TenantId).Distinct()];

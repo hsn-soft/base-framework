@@ -14,6 +14,7 @@ using Hsx.IdentityService.Domain.AppRoleDomain.Repositories;
 using Hsx.IdentityService.Domain.AppRoleSubscriptionDomain.Entities;
 using Hsx.IdentityService.Domain.AppUserRoleDomain.Entities;
 using Hsx.IdentityService.Domain.SubscriptionDomain.Entities;
+using Hsx.IdentityService.Domain.SubscriptionDomain.Repositories;
 
 namespace Hsx.IdentityService.Application.Services;
 
@@ -22,6 +23,7 @@ public sealed class AppRoleAppService(
     IRepository<AppRoleSubscription, Guid> roleSubscriptions,
     IRepository<AppUserRole, Guid> userRoles,
     IRepository<Subscription, Guid> subscriptions,
+    ISubscriptionManager subscriptionManager,
     PermissionCacheSynchronizer synchronizer,
     IServiceProvider services) : ApplicationServiceBase(services), IAppRoleAppService
 {
@@ -49,12 +51,29 @@ public sealed class AppRoleAppService(
             throw new AppRoleNameDuplicateException(name);
         }
 
-        HashSet<Guid> wanted = [.. input.SubscriptionIds ?? []];
-        await EnsureAllowedAsync(wanted, cancellationToken).ConfigureAwait(false);
-        AppRole created = AppRole.Create(name);
+        AppRoleType type = input.RoleType.GetValueOrDefault();
+
+        // the roles of the system tenant are System roles and the roles of a reseller are not: the type says which data, and the system tenant sees all of it already
+        if (CurrentTenant.IsSystemTenant != (type == AppRoleType.System))
+        {
+            throw new AppRoleTypeInvalidException(CurrentTenant.IsSystemTenant ? "The roles of the system tenant are System roles." : "A reseller has no System role.");
+        }
+
+        // a reseller names only a company or a customer that is in its own subscriptions (it knows no other): the subscriptions are isolated by their tenant
+        if (type == AppRoleType.Company && !await subscriptions.AnyAsync(subscription => subscription.CompanyId == input.CompanyId, ignoreFilters: false, cancellationToken).ConfigureAwait(false))
+        {
+            throw new AppRoleTypeInvalidException("The company is not in a subscription of the tenant.");
+        }
+
+        if (type == AppRoleType.Customer && !await subscriptions.AnyAsync(subscription => subscription.CustomerId == input.CustomerId, ignoreFilters: false, cancellationToken).ConfigureAwait(false))
+        {
+            throw new AppRoleTypeInvalidException("The customer is not in a subscription of the tenant.");
+        }
+
+        AppRole created = AppRole.Create(name, type, input.CompanyId, input.CustomerId);
         await roles.AddAsync(created, cancellationToken).ConfigureAwait(false);
         await synchronizer.SyncRoleAsync(created, cancellationToken).ConfigureAwait(false);   // an entry with nothing in it, so the role is known to the store
-        await roleSubscriptions.AddManyAsync(wanted.Select(subscriptionId => AppRoleSubscription.Create(created.Id, subscriptionId)), cancellationToken).ConfigureAwait(false);
+        await subscriptionManager.LinkRoleAsync(created.Id, cancellationToken).ConfigureAwait(false);   // the sales of the tenant that its type matches
         return await GetAsync(created.Id, cancellationToken).ConfigureAwait(false);
     }
 
@@ -92,21 +111,6 @@ public sealed class AppRoleAppService(
         return [.. (await roleSubscriptions.GetListAsync(new ListQueryOptions<AppRoleSubscription> { Filter = link => link.RoleId == roleId }, cancellationToken).ConfigureAwait(false)).Select(link => link.SubscriptionId)];
     }
 
-    public async Task SetSubscriptionsAsync(AppRoleSetSubscriptionsDto input, CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(input);
-
-        AppRole role = await FindAsync(input.Id.GetValueOrDefault(), cancellationToken).ConfigureAwait(false);
-        Guid roleId = role.Id;
-        HashSet<Guid> wanted = [.. input.SubscriptionIds!];
-        await EnsureAllowedAsync(wanted, cancellationToken).ConfigureAwait(false);
-
-        IReadOnlyList<AppRoleSubscription> current = await roleSubscriptions.GetListAsync(new ListQueryOptions<AppRoleSubscription> { Filter = link => link.RoleId == roleId }, cancellationToken).ConfigureAwait(false);
-        await roleSubscriptions.DeleteManyAsync(current.Where(link => !wanted.Contains(link.SubscriptionId)), cancellationToken).ConfigureAwait(false);
-        HashSet<Guid> have = [.. current.Select(link => link.SubscriptionId)];
-        await roleSubscriptions.AddManyAsync(wanted.Where(subscriptionId => !have.Contains(subscriptionId)).Select(subscriptionId => AppRoleSubscription.Create(roleId, subscriptionId)), cancellationToken).ConfigureAwait(false);
-    }
-
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
         AppRole role = await FindAsync(id, cancellationToken).ConfigureAwait(false);
@@ -123,18 +127,6 @@ public sealed class AppRoleAppService(
 
     private async Task<AppRole> FindAsync(Guid id, CancellationToken cancellationToken)
         => await roles.FindAsync(id, cancellationToken).ConfigureAwait(false) ?? throw AppRoleNotFound.For(id);
-
-    // a role is given only the subscriptions that were sold by the tenant of the caller or a tenant under it (the system tenant gives any): a subscription is isolated by its tenant, so one of another reseller is not found, and so is not its to give
-    private async Task EnsureAllowedAsync(HashSet<Guid> subscriptionIds, CancellationToken cancellationToken)
-    {
-        foreach (Guid subscriptionId in subscriptionIds)
-        {
-            if (!await subscriptions.AnyAsync(subscription => subscription.Id == subscriptionId, ignoreFilters: false, cancellationToken).ConfigureAwait(false))
-            {
-                throw new SubscriptionNotAllowedException(subscriptionId);
-            }
-        }
-    }
 
     private static Expression<Func<AppRole, bool>> Filter(string? searchText, string? name)
     {

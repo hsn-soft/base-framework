@@ -1,5 +1,4 @@
 using System.Linq.Expressions;
-using HsnSoft.Base;
 using HsnSoft.Base.Application;
 using HsnSoft.Base.Application.Dtos;
 using HsnSoft.Base.Domain.Repositories;
@@ -9,8 +8,9 @@ using Hsx.IdentityService.Application.Contracts.SubscriptionDomain.Dtos;
 using Hsx.IdentityService.Application.Contracts.SubscriptionDomain.Dtos.Filters;
 using Hsx.IdentityService.Application.Contracts.SubscriptionDomain.Dtos.Submits;
 using Hsx.IdentityService.Application.Contracts.SubscriptionDomain.Services;
+using Hsx.IdentityService.Domain.AuthRefreshTokenDomain.Repositories;
+using Hsx.IdentityService.Domain.CompanyDomain.Entities;
 using Hsx.IdentityService.Domain.CustomerDomain.Entities;
-using Hsx.IdentityService.Domain.CustomerDomain.Exceptions;
 using Hsx.IdentityService.Domain.SubscriptionDomain.Entities;
 using Hsx.IdentityService.Domain.SubscriptionDomain.Exceptions;
 using Hsx.IdentityService.Domain.SubscriptionDomain.Repositories;
@@ -18,7 +18,16 @@ using Hsx.Shared.Helper;
 
 namespace Hsx.IdentityService.Application.Services;
 
-public sealed class SubscriptionAppService(IRepository<Subscription, Guid> repository, IRepository<Customer, Guid> customers, IServiceProvider services) : ApplicationServiceBase(services), ISubscriptionAppService
+/// <summary>
+/// The sales. A subscription belongs to the reseller that sells it (the filter of the tenant: a reseller sees its own and the ones of the tenants under it), but only the system tenant records, changes, ends and passes them on; the manager does it with the roles' links in one transaction.
+/// </summary>
+public sealed class SubscriptionAppService(
+    IRepository<Subscription, Guid> repository,
+    IRepository<Customer, Guid> customers,
+    IRepository<Company, Guid> companies,
+    ISubscriptionManager manager,
+    IRefreshTokenStore refreshTokens,
+    IServiceProvider services) : ApplicationServiceBase(services), ISubscriptionAppService
 {
     // the lists read the fields of the DTO only (the select is made from it, no mapper): the entity is loaded only to be changed
     public async Task<SubscriptionDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
@@ -29,55 +38,80 @@ public sealed class SubscriptionAppService(IRepository<Subscription, Guid> repos
         ArgumentNullException.ThrowIfNull(pagedInput);
 
         PagedQueryResult<SubscriptionDto> page = await repository.GetPagedListAsync<SubscriptionDto>(
-            pagedInput.ToPagedOptions(Filter(pagedInput.SearchText, pagedInput.TenantId, pagedInput.CompanyId, pagedInput.CustomerId, pagedInput.ProductType), SubscriptionSorting.Fields, SubscriptionSorting.Default), cancellationToken: cancellationToken).ConfigureAwait(false);
+            pagedInput.ToPagedOptions(Filter(pagedInput.SearchText, pagedInput.TenantId, pagedInput.IsEnded, pagedInput.CompanyId, pagedInput.CustomerId, pagedInput.ProductType), SubscriptionSorting.Fields, SubscriptionSorting.Default), cancellationToken: cancellationToken).ConfigureAwait(false);
         return page.ToPagedDto(pagedInput);
     }
 
     public async Task<SubscriptionDto> CreateAsync(SubscriptionCreateDto input, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(input);
+        EnsureSystemTenant();
 
-        // the customer has to be one the caller sees (it is isolated by its tenant), and the subscription is of the company the customer is of
-        Guid customerId = input.CustomerId.GetValueOrDefault();
-        Customer customer = await customers.FindAsync(customerId, cancellationToken).ConfigureAwait(false) ?? throw CustomerNotFound.For(customerId);
-        if (customer.CompanyId != input.CompanyId.GetValueOrDefault())
-        {
-            throw new BaseHttpException(400, "The customer is not of this company.").WithKey("subscription_company_mismatch", customerId);
-        }
-
-        // a reseller sells as itself; the system tenant names the reseller it sells for
-        Guid tenantId = CurrentTenant.IsSystemTenant
-            ? input.TenantId ?? throw new BaseHttpException(400, "The system tenant names the reseller that sells.").WithKey("subscription_tenant_required")
-            : input.TenantId is { } named && named != CurrentTenant.Id
-                ? throw new BaseHttpException(403, "A tenant sells only as itself.").WithKey("subscription_tenant_not_allowed", named)
-                : CurrentTenant.Id ?? throw new BaseHttpException(403, "The caller has no tenant.").WithKey("subscription_tenant_required");
-        Subscription entity = Subscription.Create(tenantId, input.CompanyId.GetValueOrDefault(), input.CustomerId.GetValueOrDefault(), input.ProductType.GetValueOrDefault(), input.ValidTo, input.IsBlocked, input.SettingsJson);
-        await repository.AddAsync(entity, cancellationToken).ConfigureAwait(false);
-        return await GetAsync(entity.Id, cancellationToken).ConfigureAwait(false);
+        Subscription sold = await manager.SellAsync(input.TenantId.GetValueOrDefault(), input.CustomerId.GetValueOrDefault(), input.ProductType.GetValueOrDefault(), input.ValidTo, input.SettingsJson, cancellationToken).ConfigureAwait(false);
+        return await GetAsync(sold.Id, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task UpdateAsync(SubscriptionUpdateDto input, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(input);
+        EnsureSystemTenant();
 
         Subscription entity = await FindAsync(input.Id.GetValueOrDefault(), cancellationToken).ConfigureAwait(false);
+        if (entity.IsEnded)
+        {
+            throw new SubscriptionEndedException(entity.Id);
+        }
+
         entity.Update(input.ValidTo, input.IsBlocked, input.SettingsJson);
         await repository.UpdateAsync(entity, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
-        => await repository.DeleteAsync(await FindAsync(id, cancellationToken).ConfigureAwait(false), cancellationToken).ConfigureAwait(false);
+    {
+        EnsureSystemTenant();
+
+        SubscriptionChange ended = await manager.EndAsync(id, cancellationToken).ConfigureAwait(false);
+        await refreshTokens.RevokeForUsersAsync(ended.UsersToSignOut, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<SubscriptionDto> TransferAsync(SubscriptionTransferDto input, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+        EnsureSystemTenant();
+
+        // the users of the roles that had the old subscription lose it: their sessions end (the access token they hold ends by itself)
+        SubscriptionChange change = await manager.TransferAsync(input.Id.GetValueOrDefault(), input.TenantId.GetValueOrDefault(), cancellationToken).ConfigureAwait(false);
+        await refreshTokens.RevokeForUsersAsync(change.UsersToSignOut, cancellationToken).ConfigureAwait(false);
+        return await GetAsync(change.Subscription.Id, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<SubscriptionFiltersDto> GetFiltersAsync(CancellationToken cancellationToken = default)
+    {
+        // the subscriptions the caller sees (the filter of the tenant); the catalogue has no filter, so the companies and the customers are read by the ids that are in them
+        IReadOnlyList<Subscription> seen = await repository.GetListAsync(new ListQueryOptions<Subscription>(), cancellationToken).ConfigureAwait(false);
+        Guid[] companyIds = [.. seen.Select(subscription => subscription.CompanyId).Distinct()];
+        Guid[] customerIds = [.. seen.Select(subscription => subscription.CustomerId).Distinct()];
+        IReadOnlyList<Company> foundCompanies = await companies.GetListAsync(new ListQueryOptions<Company> { Filter = company => companyIds.Contains(company.Id) }, cancellationToken).ConfigureAwait(false);
+        IReadOnlyList<Customer> foundCustomers = await customers.GetListAsync(new ListQueryOptions<Customer> { Filter = customer => customerIds.Contains(customer.Id) }, cancellationToken).ConfigureAwait(false);
+        return new SubscriptionFiltersDto
+        {
+            Companies = [.. foundCompanies.OrderBy(company => company.Title, StringComparer.Ordinal).Select(company => new FilterCompanyDto { Id = company.Id, Title = company.Title })],
+            Customers = [.. foundCustomers.OrderBy(customer => customer.Domain, StringComparer.Ordinal).Select(customer => new FilterCustomerDto { Id = customer.Id, CompanyId = customer.CompanyId, Domain = customer.Domain })],
+            Products = [.. seen.Select(subscription => subscription.ProductType).Distinct().Order()],
+        };
+    }
 
     private async Task<Subscription> FindAsync(Guid id, CancellationToken cancellationToken)
         => await repository.FindAsync(id, cancellationToken).ConfigureAwait(false) ?? throw SubscriptionNotFound.For(id);
 
     // what the client gave narrows the list; what it left out does not
-    private static Expression<Func<Subscription, bool>> Filter(string? searchText, Guid? tenantId, Guid? companyId, Guid? customerId, ProductTypes? productType)
+    private static Expression<Func<Subscription, bool>> Filter(string? searchText, Guid? tenantId, bool? isEnded, Guid? companyId, Guid? customerId, ProductTypes? productType)
     {
         string? search = Normalized(searchText);
         return new FilterBuilder<Subscription>()
             .And(search is null ? null : entity => entity.ScopeKey.Contains(search))
             .And(tenantId is null ? null : entity => entity.TenantId == tenantId.Value)
+            .And(isEnded is null ? null : entity => (entity.EndedAt != null) == isEnded.Value)
             .And(companyId is null ? null : entity => entity.CompanyId == companyId.Value)
             .And(customerId is null ? null : entity => entity.CustomerId == customerId.Value)
             .And(productType is null ? null : entity => entity.ProductType == productType.Value)

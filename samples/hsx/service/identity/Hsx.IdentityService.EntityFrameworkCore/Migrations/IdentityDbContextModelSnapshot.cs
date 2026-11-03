@@ -27,10 +27,16 @@ namespace Hsx.IdentityService.EntityFrameworkCore.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("CompanyId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("CustomerId")
                         .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset?>("DeletedAt")
@@ -55,6 +61,11 @@ namespace Hsx.IdentityService.EntityFrameworkCore.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
 
+                    b.Property<string>("RoleType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid");
 
@@ -65,6 +76,10 @@ namespace Hsx.IdentityService.EntityFrameworkCore.Migrations
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CompanyId");
+
+                    b.HasIndex("CustomerId");
 
                     b.HasIndex("TenantId", "NormalizedName")
                         .IsUnique();
@@ -330,9 +345,6 @@ namespace Hsx.IdentityService.EntityFrameworkCore.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid?>("AccountTenantId")
-                        .HasColumnType("uuid");
-
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -357,9 +369,6 @@ namespace Hsx.IdentityService.EntityFrameworkCore.Migrations
                         .IsRequired()
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uuid");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -412,9 +421,6 @@ namespace Hsx.IdentityService.EntityFrameworkCore.Migrations
                         .IsRequired()
                         .HasMaxLength(253)
                         .HasColumnType("character varying(253)");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -599,6 +605,9 @@ namespace Hsx.IdentityService.EntityFrameworkCore.Migrations
                     b.Property<Guid?>("DeletedBy")
                         .HasColumnType("uuid");
 
+                    b.Property<DateTimeOffset?>("EndedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<bool>("IsBlocked")
                         .HasColumnType("boolean");
 
@@ -643,6 +652,10 @@ namespace Hsx.IdentityService.EntityFrameworkCore.Migrations
                     b.HasIndex("ProductType");
 
                     b.HasIndex("TenantId");
+
+                    b.HasIndex("CustomerId", "ProductType")
+                        .IsUnique()
+                        .HasFilter("\"EndedAt\" IS NULL AND NOT \"IsDeleted\"");
 
                     b.ToTable("Subscription", (string)null);
                 });

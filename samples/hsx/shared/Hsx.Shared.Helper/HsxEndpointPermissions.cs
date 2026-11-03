@@ -60,9 +60,6 @@ public static class HsxEndpointPermissions
 
             /// <summary>Delete.</summary>
             public const string Delete = "endpoint.app-roles.delete";
-
-            /// <summary>Give a role exactly these subscriptions.</summary>
-            public const string SetSubscriptions = "endpoint.app-roles.set-subscriptions";
         }
 
         public static class Companies
@@ -108,6 +105,9 @@ public static class HsxEndpointPermissions
 
             /// <summary>Delete.</summary>
             public const string Delete = "endpoint.subscriptions.delete";
+
+            /// <summary>Pass a sale to another reseller (the system tenant only).</summary>
+            public const string Transfer = "endpoint.subscriptions.transfer";
         }
 
         public static class Permissions
@@ -129,15 +129,6 @@ public static class HsxEndpointPermissions
         {
             /// <summary>Make a reseller (the system tenant only).</summary>
             public const string CreateReseller = "endpoint.tenant-management.create-reseller";
-
-            /// <summary>Make a company of a reseller with the account tenant of its people.</summary>
-            public const string CreateCompany = "endpoint.tenant-management.create-company";
-
-            /// <summary>Add the customer of a company.</summary>
-            public const string CreateCustomer = "endpoint.tenant-management.create-customer";
-
-            /// <summary>Sell a product to a customer.</summary>
-            public const string SellSubscription = "endpoint.tenant-management.sell-subscription";
         }
     }
 

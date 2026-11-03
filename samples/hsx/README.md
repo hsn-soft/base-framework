@@ -13,7 +13,11 @@ samples/hsx/run-all.sh        # the identity and content services make their dat
 samples/hsx/smoke-test.sh     # what each demo user sees through the gateway (7200)
 ```
 
-The web app is `http://localhost:7300`. Demo users (password `Hsx-Demo-123`): `system-admin@hsx.local`, `admin@techsummus.hsx.local`, `admin@pixel.hsx.local`, `admin@acme.hsx.local`. The home page shows what the token of the signed-in user lists (`allowed_tenant_id`, `allowed_scope_key`).
+The web app is `http://localhost:7300`. Demo users (password `Hsx-Demo-123`): `system-admin@hsx.local`, `admin@tech-summus.hsx.local`, `admin@audio-time.hsx.local`, `admin@epartner.hsx.local`, `ilbak-admin@audio-time.hsx.local`, `cnbce-admin@audio-time.hsx.local`. The home page shows what the token of the signed-in user lists (`allowed_tenant_id`, `allowed_scope_key`).
+
+## Tenants, companies, customers and subscriptions
+
+[docs/TenancyModel.md](docs/TenancyModel.md) is the model and the checklist for a new entity ([ADR-0064](../docs/adr/0064-who-owns-a-record-in-hsx-tenant-scope-neither-and-how-a-sale-moves-between-resellers.md)): the system tenant writes the companies, the customers and the sales; a reseller sees its own sales; a role has a type (System, Tenant, Company, Customer); a sale passes from a reseller to another by ending and starting.
 
 ## Permissions and the menu
 
