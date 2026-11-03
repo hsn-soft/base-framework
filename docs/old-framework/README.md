@@ -70,6 +70,32 @@ Verdict key: sound, over-coupled, flawed, superseded. Gap: priority, or None.
 | Http.Client, PuppeTeer | missing | see above | Medium-High, Medium |
 | Old tests, Dockerfile, six workflows, scripts, props | see report 5 | | CodeQL: Medium |
 
+## What was decided and done (2026-11-03)
+
+The list below was gone through one item at a time with the maintainer; each done item is one commit and, where it is a lasting rule, an ADR.
+
+| Item | Decision | Where |
+|---|---|---|
+| `Http.Client` | Written: correlation id, retries that do not repeat a write, token only to its hosts, SSRF guard, `BaseResponse` read; the three gateway clients of the samples use it | [ADR-0138](../adr/0138-a-call-to-another-service-has-a-correlation-id-safe-retries-and-a-token-that-goes-only-where-it-is-for.md), [HttpClient](../HttpClient.md) |
+| `PuppeTeer` | Written as a framework package: scraping, PDF, screenshot, with the policy and the safe defaults | [ADR-0141](../adr/0141-a-rendered-page-is-an-untrusted-caller-and-the-browser-is-a-pool-with-limits.md), [Browser](../Browser.md) |
+| Outbox | **Not built**; the risk is accepted and recorded | [ADR-0133](../adr/0133-what-is-not-brought-back-from-the-old-framework-and-the-risks-we-accept.md) |
+| `EventBus.Azure` | **Not planned**; the open item is closed (ADR-0025 was already superseded by ADR-0132, so it blocks nothing) | ADR-0133 |
+| CodeQL | **Left open** | ADR-0133, the open items of the catalog |
+| Optimistic concurrency | Written: `IHasConcurrencyStamp` in EF Core and MongoDB, a conflict is a 409 | [ADR-0136](../adr/0136-an-entity-is-protected-from-a-lost-update-by-an-opt-in-stamp.md) |
+| Wire changes (`UserRoles`, `Producer`) | No mix of old and new services; recorded | ADR-0133 |
+| `BlobStoring.FileSystem` | Written: plain names only, atomic streamed writes | [ADR-0140](../adr/0140-the-blob-store-on-the-local-disk-takes-only-plain-names-and-writes-atomically.md) |
+| Sqlite, distributed lock, Mongo sessions, dev feed | **Not done**, with the reasons | ADR-0133 |
+| Helpers of the old `Core` | Only what a consumer used came back: text keys in `Core`, `FilterBuilder.Or/AnyOf`, and the package `Extensions` (Base64, collections, `PublicAddress`, `HostPattern`) | [ADR-0137](../adr/0137-the-helpers-of-the-old-core-come-back-only-when-a-consumer-used-them.md) |
+| Authorization and ASP.NET | Split: the checker needs no web framework, `Authorization.AspNetCore` has the endpoint layer | [ADR-0135](../adr/0135-permissions-are-asked-without-a-web-framework-and-the-endpoint-layer-is-its-own-package.md) |
+| Security headers and CORS | `UseBaseSecurityHeaders()` and `Hosting:Cors` | [ADR-0139](../adr/0139-the-host-writes-security-headers-and-names-the-origins-that-may-call-it.md), [Hosting](../Hosting.md) |
+| Kafka message size | `MessageMaxBytes`, `FetchMaxBytes`, `MaxPartitionFetchBytes` | [EventBus](../EventBus.md) |
+| CA2007, central package versions | `ConfigureAwait(false)` is an error in `src/`; versions are in `Directory.Packages.props` | [ADR-0134](../adr/0134-package-versions-are-managed-centrally-and-a-library-awaits-with-configureawait-false.md) |
+| Benchmarks | `benchmarks/HsnSoft.Base.Benchmarks` | [ADR-0142](../adr/0142-the-hot-paths-are-measured-by-benchmarks-that-are-not-tests.md) |
+| `LogMasker` fallback | Checked: an object that cannot be masked is replaced by a text that says so (never logged raw); a text that is not JSON has no structure to look into and is kept as it is | `LogMasker.cs` |
+| `Swagger.md` and the catalog | The wrong dependency sentence and the stale Kafka item are corrected | commit of ADR-0133 |
+
+Still the maintainer's: revoke the old Sonar token that is in the history of `dev-backup`; CodeQL.
+
 ## What the new framework is missing or should check, in order
 
 **Medium-High**

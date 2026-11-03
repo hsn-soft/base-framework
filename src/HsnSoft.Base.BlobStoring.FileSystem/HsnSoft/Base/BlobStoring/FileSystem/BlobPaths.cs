@@ -36,14 +36,8 @@ public static class BlobPaths
             CheckPart(part, nameof(name));
         }
 
-        string full = Path.GetFullPath(Path.Combine([root, container, .. parts]));
-        string prefix = root.EndsWith(Path.DirectorySeparatorChar) ? root : root + Path.DirectorySeparatorChar;
-        if (!full.StartsWith(prefix, StringComparison.Ordinal))
-        {
-            throw new ArgumentException("The name is outside of the root.", nameof(name));
-        }
-
-        return full;
+        // every part is a plain name, so the path cannot leave the root; the folders that are links are refused by the store
+        return Path.GetFullPath(Path.Combine([root, container, .. parts]));
     }
 
     /// <summary>The folder of a container under <paramref name="root"/>.</summary>

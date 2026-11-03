@@ -109,6 +109,38 @@ public sealed class ChromeRenderingTests : IDisposable
     }
 
     [Fact]
+    public async Task AProxyAndMoreArguments_AreGivenToChrome()
+    {
+        if (Renderer(options =>
+        {
+            options.ProxyServer = "http://127.0.0.1:9";
+            options.ExtraArguments.Add("--lang=en-US");
+        }) is not { } renderer)
+        {
+            return;
+        }
+
+        await using (renderer)
+        {
+            RenderedPage page = await renderer.GetPageAsync(BrowserRequest.FromHtml("<html><body>no network needed</body></html>"));
+
+            Assert.Contains("no network needed", page.Html, StringComparison.Ordinal);
+        }
+    }
+
+    [Fact]
+    public async Task AStepThatFindsItsPageGone_IsLogged_AndAnythingElseIsNot_Swallowed()
+    {
+        await using PuppeteerBrowserRenderer renderer = new(Options.Create(new PuppeteerOptions { ExecutablePath = "/nowhere/chrome" }), NullLogger<PuppeteerBrowserRenderer>.Instance);
+
+        await renderer.GuardedAsync(() => throw new InvalidOperationException("the page is gone"));
+        await renderer.GuardedAsync(() => throw new ObjectDisposedException("browser"));
+        await renderer.GuardedAsync(() => throw new OperationCanceledException());
+
+        await Assert.ThrowsAsync<FormatException>(() => renderer.GuardedAsync(() => throw new FormatException("not a case of a page that is gone")));
+    }
+
+    [Fact]
     public async Task APage_IsReadAfterItsScriptsRan_WithItsTitleStatusAndPlace()
     {
         if (Renderer() is not { } renderer)

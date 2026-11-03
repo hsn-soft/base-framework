@@ -139,34 +139,30 @@ public sealed partial class PuppeteerBrowserRenderer : IBrowserRenderer, IAsyncD
 
         using CancellationTokenSource linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _stopping.Token);
         linked.CancelAfter(TimeSpan.FromSeconds(request.TimeoutSeconds ?? _options.OperationTimeoutSeconds));
+        bool placed = false;
         try
         {
             if (!await _slots.WaitAsync(TimeSpan.FromSeconds(_options.WaitForPageSeconds), linked.Token).ConfigureAwait(false))
             {
                 throw new TimeoutException($"No place among the {_options.MaxConcurrentPages} pages was free for {_options.WaitForPageSeconds} seconds.");
             }
-        }
-        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested && !_stopping.IsCancellationRequested)
-        {
-            throw new TimeoutException("The call took longer than its time.");
-        }
 
-        Interlocked.Increment(ref _active);
-        try
-        {
+            placed = true;
+            Interlocked.Increment(ref _active);
             IBrowser browser = await BrowserAsync(linked.Token).ConfigureAwait(false);
             IPage page = await browser.NewPageAsync().ConfigureAwait(false);
             try
             {
-                return await WithTimeout(RenderAsync(page, request, take, linked.Token), linked.Token, cancellationToken).ConfigureAwait(false);
+                return await RenderAsync(page, request, take, linked.Token).WaitAsync(linked.Token).ConfigureAwait(false);
             }
             finally
             {
-                await ClosePageAsync(page).ConfigureAwait(false);
+                await GuardedAsync(() => page.CloseAsync()).ConfigureAwait(false);
             }
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested && !_stopping.IsCancellationRequested)
         {
+            // the time of the call ended, in the queue, in the start of Chrome or in the page
             throw new TimeoutException("The call took longer than its time.");
         }
         catch (Exception exception) when (exception is not (OperationCanceledException or TimeoutException or ArgumentException or ObjectDisposedException or BrowserException))
@@ -175,21 +171,11 @@ public sealed partial class PuppeteerBrowserRenderer : IBrowserRenderer, IAsyncD
         }
         finally
         {
-            Interlocked.Decrement(ref _active);
-            _slots.Release();
-        }
-    }
-
-    // a call that goes past its time is ended even where the browser does not look at the token
-    private static async Task<T> WithTimeout<T>(Task<T> work, CancellationToken limit, CancellationToken caller)
-    {
-        try
-        {
-            return await work.WaitAsync(limit).ConfigureAwait(false);
-        }
-        catch (OperationCanceledException) when (limit.IsCancellationRequested && !caller.IsCancellationRequested)
-        {
-            throw new TimeoutException("The call took longer than its time.");
+            if (placed)
+            {
+                Interlocked.Decrement(ref _active);
+                _slots.Release();
+            }
         }
     }
 
@@ -231,9 +217,8 @@ public sealed partial class PuppeteerBrowserRenderer : IBrowserRenderer, IAsyncD
         return await take(page, response).ConfigureAwait(false);
     }
 
-    private async Task DecideAsync(IRequest request, CancellationToken cancellationToken)
-    {
-        try
+    private Task DecideAsync(IRequest request, CancellationToken cancellationToken)
+        => GuardedAsync(async () =>
         {
             if (await _policy.AllowsAsync(request.Url, cancellationToken).ConfigureAwait(false))
             {
@@ -244,13 +229,7 @@ public sealed partial class PuppeteerBrowserRenderer : IBrowserRenderer, IAsyncD
                 LogBlocked(_logger, new Uri(request.Url, UriKind.RelativeOrAbsolute).Host);
                 await request.AbortAsync(RequestAbortErrorCode.BlockedByClient).ConfigureAwait(false);
             }
-        }
-        catch (Exception exception) when (exception is PuppeteerException or OperationCanceledException or InvalidOperationException)
-        {
-            // the page is gone or the call ended: there is nothing to decide any more
-            LogDecisionFailed(_logger, exception);
-        }
-    }
+        });
 
     private static WaitUntilNavigation WaitFor(WaitCondition condition) => condition switch
     {
@@ -333,28 +312,23 @@ public sealed partial class PuppeteerBrowserRenderer : IBrowserRenderer, IAsyncD
         }
     }
 
-    private async Task ClosePageAsync(IPage page)
-    {
-        try
-        {
-            await page.CloseAsync().ConfigureAwait(false);
-        }
-        catch (Exception exception) when (exception is PuppeteerException or InvalidOperationException or ObjectDisposedException)
-        {
-            LogDecisionFailed(_logger, exception);
-        }
-    }
-
-    private async Task CloseAsync(IBrowser browser)
-    {
-        try
+    private Task CloseAsync(IBrowser browser)
+        => GuardedAsync(async () =>
         {
             await browser.CloseAsync().ConfigureAwait(false);
             await browser.DisposeAsync().ConfigureAwait(false);
-        }
-        catch (Exception exception) when (exception is PuppeteerException or InvalidOperationException or ObjectDisposedException)
+        });
+
+    /// <summary>Does a step that may find its page or browser already gone (the page closed, Chrome ended): that is logged and is not an error.</summary>
+    internal async Task GuardedAsync(Func<Task> step)
+    {
+        try
         {
-            LogDecisionFailed(_logger, exception);
+            await step().ConfigureAwait(false);
+        }
+        catch (Exception exception) when (exception is PuppeteerException or OperationCanceledException or InvalidOperationException or ObjectDisposedException)
+        {
+            LogGone(_logger, exception);
         }
     }
 
@@ -368,7 +342,7 @@ public sealed partial class PuppeteerBrowserRenderer : IBrowserRenderer, IAsyncD
     private static partial void LogBlocked(ILogger logger, string host);
 
     [LoggerMessage(Level = LogLevel.Debug, Message = "The browser ended a request or a page that was already gone")]
-    private static partial void LogDecisionFailed(ILogger logger, Exception exception);
+    private static partial void LogGone(ILogger logger, Exception exception);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "The browser renderer stopped with {Pages} pages still being rendered")]
     private static partial void LogDrainTimeout(ILogger logger, int pages);

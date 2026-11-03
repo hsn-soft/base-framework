@@ -81,6 +81,16 @@ public class HttpClientTests
     }
 
     [Fact]
+    public async Task ASuccessWhoseBodyIsNotJson_HasNoPayload()
+    {
+        Fake text = new(_ => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("hello", Encoding.UTF8, "text/plain") });
+        Fake broken = new(_ => Json(HttpStatusCode.OK, "{ not json"));
+
+        Assert.Null(await ClientOf(text).GetPayloadAsync<Item>("/x"));
+        Assert.Null(await ClientOf(broken).GetPayloadAsync<Item>("/x"));
+    }
+
+    [Fact]
     public async Task AFailure_IsATypedException_WithTheStatusTheMessagesAndTheErrorCode()
     {
         Fake fake = new(_ => Json(HttpStatusCode.BadRequest, """{"statusCode":400,"statusMessages":["Validation failed.","Name is required."],"errorCode":"validation_error"}"""));
@@ -222,6 +232,14 @@ public class HttpClientTests
         services.AddHttpClient("c").AddBaseHttpClientDefaults(Config([.. settings, ("G:BaseUrl", "https://gateway.test"), ("G:RetryDelayMilliseconds", "1")]), "G").ConfigurePrimaryHttpMessageHandler(() => fake);
         ServiceProvider provider = services.BuildServiceProvider();
         return (provider.GetRequiredService<IHttpClientFactory>().CreateClient("c"), fake);
+    }
+
+    [Fact]
+    public void TheWindowOfTheBreaker_IsWidenedToCoverTwoAttempts()
+    {
+        (HttpClient client, _) = Pipeline(_ => new HttpResponseMessage(HttpStatusCode.OK), ("G:AttemptTimeoutSeconds", "40"), ("G:TotalTimeoutSeconds", "120"));
+
+        Assert.NotNull(client);
     }
 
     [Fact]

@@ -248,4 +248,22 @@ public sealed class EfCoreConcurrencyTests : IAsyncLifetime, IDisposable
         seen.Title = "stale";
         AssertConflict(await Assert.ThrowsAsync<BaseHttpException>(() => Docs(reader).UpdateAsync(seen)));
     }
+
+    [Fact]
+    public async Task ASynchronousSave_OfAStaleEntity_Is409Too()
+    {
+        Doc doc = await AddDocAsync();
+        await using AsyncServiceScope first = _provider.CreateAsyncScope();
+        await using AsyncServiceScope second = _provider.CreateAsyncScope();
+        ConcurrencyContext ofFirst = first.ServiceProvider.GetRequiredService<ConcurrencyContext>();
+        ConcurrencyContext ofSecond = second.ServiceProvider.GetRequiredService<ConcurrencyContext>();
+        Doc loadedByFirst = ofFirst.Docs.Single(candidate => candidate.Id == doc.Id);
+        Doc loadedBySecond = ofSecond.Docs.Single(candidate => candidate.Id == doc.Id);
+
+        loadedByFirst.Title = "first wins";
+        ofFirst.SaveChanges();
+        loadedBySecond.Title = "second loses";
+
+        AssertConflict(Assert.Throws<BaseHttpException>(() => ofSecond.SaveChanges()));
+    }
 }

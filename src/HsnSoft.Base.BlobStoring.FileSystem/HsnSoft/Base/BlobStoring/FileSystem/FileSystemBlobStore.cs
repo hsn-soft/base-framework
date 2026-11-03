@@ -55,7 +55,8 @@ public sealed class FileSystemBlobStore : IBlobStore
         }
         catch
         {
-            TryDelete(temporary);
+            // what was written so far is removed; a temporary file that is not there is not an error
+            File.Delete(temporary);
             throw;
         }
     }
@@ -63,20 +64,14 @@ public sealed class FileSystemBlobStore : IBlobStore
     public Task<Stream?> OpenReadAsync(string container, string name, CancellationToken cancellationToken = default)
     {
         string path = BlobPaths.Resolve(RootPath, container, name);
-        string? folder = Path.GetDirectoryName(path);
-        if (folder is null || !File.Exists(path))
-        {
-            return Task.FromResult<Stream?>(null);
-        }
-
-        EnsureNoLinks(folder);
+        EnsureNoLinks(Path.GetDirectoryName(path)!);
         try
         {
             return Task.FromResult<Stream?>(new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, BufferSize, FileOptions.Asynchronous | FileOptions.SequentialScan));
         }
         catch (Exception exception) when (exception is FileNotFoundException or DirectoryNotFoundException)
         {
-            // deleted between the check and the open
+            // there is no such blob (a blob that is deleted while it is opened is the same answer)
             return Task.FromResult<Stream?>(null);
         }
     }
@@ -105,22 +100,6 @@ public sealed class FileSystemBlobStore : IBlobStore
             }
 
             current = Path.GetDirectoryName(current)!;
-        }
-    }
-
-    private static void TryDelete(string path)
-    {
-        try
-        {
-            File.Delete(path);
-        }
-        catch (IOException)
-        {
-            // what could not be removed is a temporary file with a name of its own; the next write does not touch it
-        }
-        catch (UnauthorizedAccessException)
-        {
-            // the same
         }
     }
 }

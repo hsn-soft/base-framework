@@ -37,6 +37,10 @@ public class BrowserContractTests
         => Assert.Equal(expected, await Policy().AllowsAsync(url));
 
     [Fact]
+    public async Task AHostThatCannotBeLookedUp_IsNotAllowed()
+        => Assert.False(await Policy().AllowsAsync($"http://{new string('a', 70)}.example/"));
+
+    [Fact]
     public async Task WithPrivateNetworksAllowed_TheInsideIsReachable_ButTheSchemesAreStillChecked()
     {
         BrowserUrlPolicy policy = Policy(options => options.AllowPrivateNetworks = true);
