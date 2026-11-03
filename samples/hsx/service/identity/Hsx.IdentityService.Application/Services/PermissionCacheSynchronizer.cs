@@ -19,6 +19,10 @@ public sealed class PermissionCacheSynchronizer(IPermissionGrantRepository grant
         await WriteAsync(role.TenantId, role.Name, granted, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>The same for a role known by its id, its tenant and its name (the administrator role of a tenant that was just made).</summary>
+    public async Task SyncRoleAsync(Guid roleId, Guid tenantId, string roleName, CancellationToken cancellationToken = default)
+        => await WriteAsync(tenantId, roleName, await grants.GetRoleGrantsAsync(roleId, cancellationToken).ConfigureAwait(false), cancellationToken).ConfigureAwait(false);
+
     /// <summary>Takes the entry of a role away (the role was deleted, or it has another name now): its grants under that name are nothing.</summary>
     public Task RemoveRoleAsync(Guid tenantId, string roleName, CancellationToken cancellationToken = default)
         => store.RemoveAsync(HsxPermissionScopes.ForTenant(tenantId), new PermissionSubject(PermissionProviders.Role, roleName), cancellationToken);

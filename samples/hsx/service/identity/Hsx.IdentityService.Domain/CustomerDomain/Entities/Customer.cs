@@ -1,5 +1,6 @@
 using HsnSoft.Base;
 using HsnSoft.Base.Domain.Entities;
+using HsnSoft.Base.MultiTenancy;
 using HsnSoft.Base.Text;
 using Hsx.IdentityService.Domain.CustomerDomain.Consts;
 
@@ -8,12 +9,15 @@ namespace Hsx.IdentityService.Domain.CustomerDomain.Entities;
 /// <summary>
 /// A customer of a company, known by its domain (<c>abc.example.com</c>). The data of a customer is shown to a tenant by the subscriptions it sold to the customer.
 /// </summary>
-public sealed class Customer : FullAuditedEntity<Guid>
+public sealed class Customer : FullAuditedEntity<Guid>, IMultiTenant
 {
     // for EF Core
     private Customer()
     {
     }
+
+    /// <summary>The tenant that made the customer (the persistence gives it).</summary>
+    public Guid TenantId { get; private set; }
 
     public Guid CompanyId { get; private set; }
 

@@ -330,6 +330,9 @@ namespace Hsx.IdentityService.EntityFrameworkCore.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("AccountTenantId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -354,6 +357,9 @@ namespace Hsx.IdentityService.EntityFrameworkCore.Migrations
                         .IsRequired()
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -406,6 +412,9 @@ namespace Hsx.IdentityService.EntityFrameworkCore.Migrations
                         .IsRequired()
                         .HasMaxLength(253)
                         .HasColumnType("character varying(253)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -601,9 +610,6 @@ namespace Hsx.IdentityService.EntityFrameworkCore.Migrations
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)");
 
-                    b.Property<Guid>("ResellerTenantId")
-                        .HasColumnType("uuid");
-
                     b.Property<string>("ScopeKey")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -612,6 +618,9 @@ namespace Hsx.IdentityService.EntityFrameworkCore.Migrations
                     b.Property<string>("SettingsJson")
                         .HasMaxLength(4000)
                         .HasColumnType("character varying(4000)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -633,7 +642,7 @@ namespace Hsx.IdentityService.EntityFrameworkCore.Migrations
 
                     b.HasIndex("ProductType");
 
-                    b.HasIndex("ResellerTenantId");
+                    b.HasIndex("TenantId");
 
                     b.ToTable("Subscription", (string)null);
                 });

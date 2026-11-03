@@ -6,7 +6,7 @@ namespace Hsx.IdentityService.Application.Contracts.SubscriptionDomain.Dtos.Filt
 public sealed class GetSubscriptionsPaged : PagedDataRequestDto
 {
     /// <summary>Only the reseller tenant id.</summary>
-    public Guid? ResellerTenantId { get; set; }
+    public Guid? TenantId { get; set; }
 
     /// <summary>Only the company id.</summary>
     public Guid? CompanyId { get; set; }

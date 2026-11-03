@@ -51,6 +51,7 @@ public static class EfCoreServiceCollectionExtensions
         services.AddEfCoreRepository<IdentityDbContext, AuthLoginAudit, Guid>();
 
         services.AddScoped<ITenantRepository, EfCoreTenantRepository>();
+        services.AddScoped<ITenantProvisioner, EfCoreTenantProvisioner>();
         services.AddScoped<ISignInRepository, EfCoreSignInRepository>();
         services.AddScoped<IPermissionGrantRepository, EfCorePermissionGrantRepository>();
         services.AddScoped<IMenuRepository, EfCoreMenuRepository>();

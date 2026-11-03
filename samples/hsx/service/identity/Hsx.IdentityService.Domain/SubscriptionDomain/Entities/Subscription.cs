@@ -1,21 +1,23 @@
 using HsnSoft.Base;
 using HsnSoft.Base.Domain.Entities;
+using HsnSoft.Base.MultiTenancy;
 using Hsx.IdentityService.Domain.SubscriptionDomain.Consts;
 using Hsx.Shared.Helper;
 
 namespace Hsx.IdentityService.Domain.SubscriptionDomain.Entities;
 
 /// <summary>
-/// A product that a reseller tenant sold to a customer. Its scope key (<c>{customerId}:{product}</c>) is what the data of the product is shown by.
+/// A product that a reseller tenant sold to a customer: it belongs to that tenant (<see cref="TenantId"/>), which sees it with the tenants under it. Its scope key (<c>{customerId}:{product}</c>) is what the data of the product is shown by.
 /// </summary>
-public sealed class Subscription : FullAuditedEntity<Guid>
+public sealed class Subscription : FullAuditedEntity<Guid>, IMultiTenant
 {
     // for EF Core
     private Subscription()
     {
     }
 
-    public Guid ResellerTenantId { get; private set; }
+    /// <summary>The reseller that sold it.</summary>
+    public Guid TenantId { get; private set; }
 
     public Guid CompanyId { get; private set; }
 
@@ -33,12 +35,12 @@ public sealed class Subscription : FullAuditedEntity<Guid>
 
     public string? SettingsJson { get; private set; }
 
-    public static Subscription Create(Guid resellerTenantId, Guid companyId, Guid customerId, ProductTypes productType, DateTimeOffset? validTo, bool isBlocked, string? settingsJson)
+    public static Subscription Create(Guid tenantId, Guid companyId, Guid customerId, ProductTypes productType, DateTimeOffset? validTo, bool isBlocked, string? settingsJson)
     {
         Subscription entity = new()
         {
             Id = Guid.CreateVersion7(),
-            ResellerTenantId = Guard.NotDefault<Guid>(resellerTenantId, nameof(ResellerTenantId)),
+            TenantId = Guard.NotDefault<Guid>(tenantId, nameof(TenantId)),
             CompanyId = Guard.NotDefault<Guid>(companyId, nameof(CompanyId)),
             CustomerId = Guard.NotDefault<Guid>(customerId, nameof(CustomerId)),
             ProductType = productType,

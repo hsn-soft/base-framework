@@ -7,9 +7,8 @@ namespace Hsx.IdentityService.Application.Contracts.SubscriptionDomain.Dtos.Subm
 
 public sealed class SubscriptionCreateDto
 {
-    [Required]
-    [NotDefault]
-    public Guid? ResellerTenantId { get; set; }
+    /// <summary>The reseller that sells it. Only the system tenant names one; any other tenant sells as itself.</summary>
+    public Guid? TenantId { get; set; }
 
     [Required]
     [NotDefault]

@@ -18,7 +18,7 @@ public static class SubscriptionDomainConfiguration
             entity.Property(e => e.ProductType).HasConversion<string>().HasMaxLength(30).IsRequired();
             entity.Property(e => e.ScopeKey).HasMaxLength(SubscriptionConsts.ScopeKeyMaxLength).IsRequired();
             entity.Property(e => e.SettingsJson).HasMaxLength(SubscriptionConsts.SettingsJsonMaxLength);
-            entity.HasIndex(e => e.ResellerTenantId);
+            entity.HasIndex(e => e.TenantId);
             entity.HasIndex(e => e.CompanyId);
             entity.HasIndex(e => e.CustomerId);
             entity.HasIndex(e => e.ProductType);

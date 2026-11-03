@@ -124,14 +124,12 @@ public sealed class AppRoleAppService(
     private async Task<AppRole> FindAsync(Guid id, CancellationToken cancellationToken)
         => await roles.FindAsync(id, cancellationToken).ConfigureAwait(false) ?? throw AppRoleNotFound.For(id);
 
-    // a role is given only the subscriptions that were sold by the tenant of the caller or a tenant under it (the system tenant gives any): a subscription of another reseller is not its to give
+    // a role is given only the subscriptions that were sold by the tenant of the caller or a tenant under it (the system tenant gives any): a subscription is isolated by its tenant, so one of another reseller is not found, and so is not its to give
     private async Task EnsureAllowedAsync(HashSet<Guid> subscriptionIds, CancellationToken cancellationToken)
     {
-        Guid[] resellers = [.. CurrentTenant.AllowedTenantIds];
-        bool system = CurrentTenant.IsSystemTenant;
         foreach (Guid subscriptionId in subscriptionIds)
         {
-            if (!await subscriptions.AnyAsync(subscription => subscription.Id == subscriptionId && (system || resellers.Contains(subscription.ResellerTenantId)), ignoreFilters: false, cancellationToken).ConfigureAwait(false))
+            if (!await subscriptions.AnyAsync(subscription => subscription.Id == subscriptionId, ignoreFilters: false, cancellationToken).ConfigureAwait(false))
             {
                 throw new SubscriptionNotAllowedException(subscriptionId);
             }

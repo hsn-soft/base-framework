@@ -124,6 +124,21 @@ public static class HsxEndpointPermissions
             /// <summary>Update.</summary>
             public const string Update = "endpoint.role-permissions.update";
         }
+
+        public static class TenantManagement
+        {
+            /// <summary>Make a reseller (the system tenant only).</summary>
+            public const string CreateReseller = "endpoint.tenant-management.create-reseller";
+
+            /// <summary>Make a company of a reseller with the account tenant of its people.</summary>
+            public const string CreateCompany = "endpoint.tenant-management.create-company";
+
+            /// <summary>Add the customer of a company.</summary>
+            public const string CreateCustomer = "endpoint.tenant-management.create-customer";
+
+            /// <summary>Sell a product to a customer.</summary>
+            public const string SellSubscription = "endpoint.tenant-management.sell-subscription";
+        }
     }
 
     public static class Content

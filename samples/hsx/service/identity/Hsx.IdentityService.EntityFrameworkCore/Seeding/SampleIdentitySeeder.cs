@@ -29,21 +29,26 @@ internal sealed class SampleIdentitySeeder(IdentityDbContext db, ICurrentTenant 
         Tenant pixel = await EnsureTenantAsync(HsxTenants.Pixel, TenantTypes.Reseller, "Pixel", HsxTenants.PixelName, null, cancellationToken).ConfigureAwait(false);
         Tenant acme = await EnsureTenantAsync(HsxTenants.Acme, TenantTypes.Account, "Acme", HsxTenants.AcmeName, techsummus, cancellationToken).ConfigureAwait(false);
 
-        if (!await db.Companies.AnyAsync(company => company.Id == HsxSeed.CompanyId, cancellationToken).ConfigureAwait(false))
+        // the demo company and customer belong to Techsummus (the tenant that made them); Acme is the account tenant of the company. Pixel sells the same customer another product with a subscription of its own
+        using (currentTenant.Change(techsummus.Id))
         {
-            Company company = Company.Create("Demo Company", HsxSeed.CompanyName);
-            SetId(company, HsxSeed.CompanyId);
-            db.Companies.Add(company);
-        }
+            if (!await db.Companies.IgnoreQueryFilters().AnyAsync(company => company.Id == HsxSeed.CompanyId, cancellationToken).ConfigureAwait(false))
+            {
+                Company company = Company.Create("Demo Company", HsxSeed.CompanyName);
+                SetId(company, HsxSeed.CompanyId);
+                company.LinkAccountTenant(acme.Id);
+                db.Companies.Add(company);
+            }
 
-        if (!await db.Customers.AnyAsync(customer => customer.Id == HsxSeed.CustomerId, cancellationToken).ConfigureAwait(false))
-        {
-            Customer customer = Customer.Create(HsxSeed.CompanyId, HsxSeed.CustomerDomain);
-            SetId(customer, HsxSeed.CustomerId);
-            db.Customers.Add(customer);
-        }
+            if (!await db.Customers.IgnoreQueryFilters().AnyAsync(customer => customer.Id == HsxSeed.CustomerId, cancellationToken).ConfigureAwait(false))
+            {
+                Customer customer = Customer.Create(HsxSeed.CompanyId, HsxSeed.CustomerDomain);
+                SetId(customer, HsxSeed.CustomerId);
+                db.Customers.Add(customer);
+            }
 
-        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        }
 
         Subscription techsummusSale = await EnsureSubscriptionAsync(techsummus.Id, ProductTypes.VideoPlatform, cancellationToken).ConfigureAwait(false);
         Subscription pixelSale = await EnsureSubscriptionAsync(pixel.Id, ProductTypes.VerticalVideo, cancellationToken).ConfigureAwait(false);
@@ -69,7 +74,7 @@ internal sealed class SampleIdentitySeeder(IdentityDbContext db, ICurrentTenant 
 
     private async Task<Subscription> EnsureSubscriptionAsync(Guid resellerId, ProductTypes product, CancellationToken cancellationToken)
     {
-        Subscription? subscription = await db.Subscriptions.FirstOrDefaultAsync(candidate => candidate.ResellerTenantId == resellerId && candidate.CustomerId == HsxSeed.CustomerId && candidate.ProductType == product, cancellationToken).ConfigureAwait(false);
+        Subscription? subscription = await db.Subscriptions.IgnoreQueryFilters().FirstOrDefaultAsync(candidate => candidate.TenantId == resellerId && candidate.CustomerId == HsxSeed.CustomerId && candidate.ProductType == product, cancellationToken).ConfigureAwait(false);
         if (subscription is null)
         {
             subscription = Subscription.Create(resellerId, HsxSeed.CompanyId, HsxSeed.CustomerId, product, null, false, null);

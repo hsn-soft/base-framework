@@ -5,7 +5,8 @@ namespace Hsx.IdentityService.Application.Contracts.SubscriptionDomain.Dtos;
 
 public sealed class SubscriptionDto : AuditedEntityDto<Guid>
 {
-    public Guid ResellerTenantId { get; init; }
+    /// <summary>The reseller that sold it.</summary>
+    public Guid TenantId { get; init; }
     public Guid CompanyId { get; init; }
     public Guid CustomerId { get; init; }
     public ProductTypes ProductType { get; init; }
