@@ -35,6 +35,7 @@ builder.Services
 return await builder.RunBaseAsync(app =>
 {
     app.UseBaseForwardedHeaders();
+    app.UseBaseSecurityHeaders();
     app.UseBaseRequestLogging();   // outside the exception page: the response log has the status the client gets
     if (!app.Environment.IsDevelopment())
     {

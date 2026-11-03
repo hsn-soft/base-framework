@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace HsnSoft.Base.AspNetCore;
 
@@ -19,6 +20,104 @@ public sealed class BaseHostingOptions
 
     /// <summary>The proxies a request comes through.</summary>
     public BaseForwardedHeadersOptions ForwardedHeaders { get; set; } = new();
+
+    /// <summary>The headers that make a browser safer with the answers of this host.</summary>
+    public BaseSecurityHeadersOptions SecurityHeaders { get; set; } = new();
+
+    /// <summary>The browsers of other origins that may call this host.</summary>
+    public BaseCorsOptions Cors { get; set; } = new();
+}
+
+/// <summary>
+/// The security headers of every answer (section <c>Hosting:SecurityHeaders</c>), written by <see cref="BaseHostingExtensions.UseBaseSecurityHeaders"/>: what a browser does with the answer (not guess its type, not show it in a frame, not send the address
+/// of the page along, use https). A header the answer already has is left as it is. An empty text leaves a header out.
+/// </summary>
+public sealed class BaseSecurityHeadersOptions
+{
+    /// <summary>Whether the headers are written. Default: true.</summary>
+    public bool Enabled { get; set; } = true;
+
+    /// <summary><c>X-Frame-Options</c>: <c>DENY</c> (default) or <c>SAMEORIGIN</c>; empty for none (a page that is meant to be framed).</summary>
+    public string FrameOptions { get; set; } = "DENY";
+
+    /// <summary><c>Referrer-Policy</c>. Default: <c>no-referrer</c>; empty for none.</summary>
+    public string ReferrerPolicy { get; set; } = "no-referrer";
+
+    /// <summary>
+    /// <c>Strict-Transport-Security</c>: how long a browser must use https only, in seconds (default 31 536 000, one year); 0 for no header. It is only written on an https request and outside Development, so a machine that is not served
+    /// over https is never locked out.
+    /// </summary>
+    public int HstsMaxAgeSeconds { get; set; } = 31_536_000;
+
+    /// <summary>Whether the subdomains are included in the HSTS promise. Default: false.</summary>
+    public bool HstsIncludeSubDomains { get; set; }
+
+    /// <summary><c>Content-Security-Policy</c>: none by default (a web api needs none); a host with pages sets what its pages load (<c>default-src 'self'</c>).</summary>
+    public string ContentSecurityPolicy { get; set; } = string.Empty;
+
+    /// <summary><c>Permissions-Policy</c>: none by default (<c>camera=(), microphone=()</c>).</summary>
+    public string PermissionsPolicy { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Which browsers of other origins may call this host (section <c>Hosting:Cors</c>). With no origin listed there is no cross-origin policy at all (the default), so no other origin may. The origins are named: a wildcard cannot be used with
+/// credentials, and the host does not start with such a setting.
+/// </summary>
+public sealed class BaseCorsOptions
+{
+    /// <summary>The name of the policy.</summary>
+    public const string PolicyName = "HsnSoftBaseCors";
+
+    /// <summary>The origins that may call (<c>https://backoffice.example.com</c>, no path); <c>*</c> for any, which cannot go with <see cref="AllowCredentials"/>.</summary>
+    public List<string> AllowedOrigins { get; set; } = [];
+
+    /// <summary>The methods that may be used. Default: GET, POST, PUT, PATCH, DELETE.</summary>
+    public List<string> AllowedMethods { get; set; } = ["GET", "POST", "PUT", "PATCH", "DELETE"];
+
+    /// <summary>The request headers that may be sent. Default: Authorization, Content-Type, X-Correlation-Id, Accept-Language.</summary>
+    public List<string> AllowedHeaders { get; set; } = ["Authorization", "Content-Type", "X-Correlation-Id", "Accept-Language"];
+
+    /// <summary>The answer headers the page may read. Default: X-Correlation-Id, Content-Disposition.</summary>
+    public List<string> ExposedHeaders { get; set; } = ["X-Correlation-Id", "Content-Disposition"];
+
+    /// <summary>Whether cookies and the authorization of the browser are sent. Default: false.</summary>
+    public bool AllowCredentials { get; set; }
+
+    /// <summary>How long a browser keeps the answer to its preflight, in seconds. Default: 600.</summary>
+    public int PreflightMaxAgeSeconds { get; set; } = 600;
+
+    /// <summary>The origins in the form the policy compares (no trailing slash); a setting that cannot be right is an <see cref="InvalidOperationException"/>, at the start.</summary>
+    public IReadOnlyList<string> NormalizedOrigins()
+    {
+        List<string> origins = [];
+        foreach (string origin in AllowedOrigins.Where(origin => !string.IsNullOrWhiteSpace(origin)).Select(origin => origin.Trim()))
+        {
+            if (origin == "*")
+            {
+                if (AllowCredentials)
+                {
+                    throw new InvalidOperationException("Hosting:Cors: '*' cannot be used with AllowCredentials; name the origins.");
+                }
+
+                origins.Add(origin);
+                continue;
+            }
+
+            if (!Uri.TryCreate(origin, UriKind.Absolute, out Uri? uri) || uri.Scheme is not ("http" or "https") || uri.AbsolutePath != "/" || uri.Query.Length > 0 || uri.Fragment.Length > 0 || uri.UserInfo.Length > 0)
+            {
+                throw new InvalidOperationException($"Hosting:Cors: '{origin}' is not an origin (scheme, host and port, no path), for example https://backoffice.example.com.");
+            }
+
+            origins.Add(uri.GetLeftPart(UriPartial.Authority));
+        }
+
+        if (PreflightMaxAgeSeconds is < 0 or > 86_400)
+        {
+            throw new InvalidOperationException("Hosting:Cors: PreflightMaxAgeSeconds must be between 0 and 86400.");
+        }
+
+        return origins;
+    }
 }
 
 /// <summary>The limits of Kestrel (section <c>Hosting:Kestrel</c>). A value that is not set keeps the default of Kestrel (shown in the comment).</summary>

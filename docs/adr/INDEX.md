@@ -29,6 +29,7 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 | [0136](0136-an-entity-is-protected-from-a-lost-update-by-an-opt-in-stamp.md) | An entity is protected from a lost update by an opt-in stamp (`IHasConcurrencyStamp`), in EF Core and in MongoDB; a conflict is a 409 | Accepted | 2026-11-03 |
 | [0137](0137-the-helpers-of-the-old-core-come-back-only-when-a-consumer-used-them.md) | The helpers of the old `Core` come back only when a consumer used them: text keys in `Core`, the rest in `Extensions` | Accepted | 2026-11-03 |
 | [0138](0138-a-call-to-another-service-has-a-correlation-id-safe-retries-and-a-token-that-goes-only-where-it-is-for.md) | A call to another service has the correlation id, safe retries and a token that goes only where it is for (`Http.Client`) | Accepted | 2026-11-03 |
+| [0139](0139-the-host-writes-security-headers-and-names-the-origins-that-may-call-it.md) | The host writes security headers and names the origins that may call it (`UseBaseSecurityHeaders`, `Hosting:Cors`) | Accepted | 2026-11-03 |
 
 ## Building blocks, products and hosts
 

@@ -29,7 +29,7 @@ JWT, Swagger, a broker or a cache.
 | `HsnSoft.Base.Authentication` | JWT bearer authentication (a shared key, or the RSA public key of the auth server), claim names and `ClaimsPrincipal` helpers | Core |
 | `HsnSoft.Base.Authorization` | Permissions without a web framework: the checker for an operation or a limit on a value, the grants read from the distributed cache under a scope (the tenant) ([docs](Authorization.md)) | Core |
 | `HsnSoft.Base.Authorization.AspNetCore` | `[PermissionAuthorize]` on an endpoint: the policy, the handler and `AddBasePermissions` ([ADR-0135](adr/0135-permissions-are-asked-without-a-web-framework-and-the-endpoint-layer-is-its-own-package.md)) | Authorization |
-| `HsnSoft.Base.AspNetCore` | Health endpoints (`/health/live`, `/health/ready`) | Core |
+| `HsnSoft.Base.AspNetCore` | Health endpoints (`/health/live`, `/health/ready`), the host (limits, proxies, security headers, CORS: [docs](Hosting.md)) | Core |
 | `HsnSoft.Base.AspNetCore.WebApi` | Controllers, every answer in one `BaseResponse` type (results, validation, exceptions), global exception handler, `ApiControllerBase` (logger and current user), request/response logging ([docs](WebApi.md)) | AspNetCore |
 | `HsnSoft.Base.AspNetCore.Swashbuckle` | Swagger document and UI (Swashbuckle), Bearer or OAuth2 button, off in production-like environments ([docs](Swagger.md)) | AspNetCore |
 | `HsnSoft.Base.AspNetCore.SwaggerGateway` | One Swagger UI for a gateway and the services behind it: their documents, with the gateway's address and paths ([docs](Swagger.md)) | Swashbuckle |
