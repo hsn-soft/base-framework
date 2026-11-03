@@ -45,6 +45,7 @@ dotnet build
 ./scripts/run-tests.sh integration   # starts RabbitMQ, Kafka, Redis, MongoDB, PostgreSQL, SQL Server, MinIO (Testcontainers)
 ```
 
+- **The hot paths are measured, not tested**: `benchmarks/HsnSoft.Base.Benchmarks` (BenchmarkDotNet) is run by hand before and after a change that touches one of them: `dotnet run -c Release --project benchmarks/HsnSoft.Base.Benchmarks -- --filter "*Masking*"` ([ADR-0142](docs/adr/0142-the-hot-paths-are-measured-by-benchmarks-that-are-not-tests.md)). It is built with the solution and is not part of the CI.
 - **Every package has a unit test project**, `test/<Package>.Tests`. `scripts/ci-detector/ci-check-test-project-exist.sh` fails the build when one is
   missing.
 - **Every provider has integration tests** in `test/HsnSoft.Base.IntegrationTests`, against the real service.

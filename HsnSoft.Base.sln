@@ -179,6 +179,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HsnSoft.Base.Browser.Tests"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HsnSoft.Base.Browser.Puppeteer.Tests", "test\HsnSoft.Base.Browser.Puppeteer.Tests\HsnSoft.Base.Browser.Puppeteer.Tests.csproj", "{BBCE6FC3-7EC7-49DF-97A2-54D4F92B6905}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "benchmarks", "benchmarks", "{66320409-64EC-F7C5-3DEF-65E7510DAAD1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HsnSoft.Base.Benchmarks", "benchmarks\HsnSoft.Base.Benchmarks\HsnSoft.Base.Benchmarks.csproj", "{6DC78188-6449-4446-AB9F-CCB814C7641D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -1221,6 +1225,18 @@ Global
 		{BBCE6FC3-7EC7-49DF-97A2-54D4F92B6905}.Release|x64.Build.0 = Release|Any CPU
 		{BBCE6FC3-7EC7-49DF-97A2-54D4F92B6905}.Release|x86.ActiveCfg = Release|Any CPU
 		{BBCE6FC3-7EC7-49DF-97A2-54D4F92B6905}.Release|x86.Build.0 = Release|Any CPU
+		{6DC78188-6449-4446-AB9F-CCB814C7641D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6DC78188-6449-4446-AB9F-CCB814C7641D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6DC78188-6449-4446-AB9F-CCB814C7641D}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{6DC78188-6449-4446-AB9F-CCB814C7641D}.Debug|x64.Build.0 = Debug|Any CPU
+		{6DC78188-6449-4446-AB9F-CCB814C7641D}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{6DC78188-6449-4446-AB9F-CCB814C7641D}.Debug|x86.Build.0 = Debug|Any CPU
+		{6DC78188-6449-4446-AB9F-CCB814C7641D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6DC78188-6449-4446-AB9F-CCB814C7641D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6DC78188-6449-4446-AB9F-CCB814C7641D}.Release|x64.ActiveCfg = Release|Any CPU
+		{6DC78188-6449-4446-AB9F-CCB814C7641D}.Release|x64.Build.0 = Release|Any CPU
+		{6DC78188-6449-4446-AB9F-CCB814C7641D}.Release|x86.ActiveCfg = Release|Any CPU
+		{6DC78188-6449-4446-AB9F-CCB814C7641D}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -1312,5 +1328,6 @@ Global
 		{9D851474-2176-4E93-9E74-032A46D2A40B} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{DE3E2FE7-9CC4-489A-86DA-8BBC6E725191} = {0C88DD14-F956-CE84-757C-A364CCF449FC}
 		{BBCE6FC3-7EC7-49DF-97A2-54D4F92B6905} = {0C88DD14-F956-CE84-757C-A364CCF449FC}
+		{6DC78188-6449-4446-AB9F-CCB814C7641D} = {66320409-64EC-F7C5-3DEF-65E7510DAAD1}
 	EndGlobalSection
 EndGlobal
