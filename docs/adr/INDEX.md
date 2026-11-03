@@ -27,6 +27,7 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 | [0134](0134-package-versions-are-managed-centrally-and-a-library-awaits-with-configureawait-false.md) | Package versions are managed centrally in `Directory.Packages.props`, and a library awaits with `ConfigureAwait(false)` by rule (CA2007 is an error in `src/`) | Accepted | 2026-11-03 |
 | [0135](0135-permissions-are-asked-without-a-web-framework-and-the-endpoint-layer-is-its-own-package.md) | The permission checker needs no web framework, and the endpoint layer is its own package (`Authorization.AspNetCore`) | Accepted | 2026-11-03 |
 | [0136](0136-an-entity-is-protected-from-a-lost-update-by-an-opt-in-stamp.md) | An entity is protected from a lost update by an opt-in stamp (`IHasConcurrencyStamp`), in EF Core and in MongoDB; a conflict is a 409 | Accepted | 2026-11-03 |
+| [0137](0137-the-helpers-of-the-old-core-come-back-only-when-a-consumer-used-them.md) | The helpers of the old `Core` come back only when a consumer used them: text keys in `Core`, the rest in `Extensions` | Accepted | 2026-11-03 |
 
 ## Building blocks, products and hosts
 

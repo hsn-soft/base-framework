@@ -14,6 +14,7 @@ JWT, Swagger, a broker or a cache.
 | `HsnSoft.Base.Logging` | Logger interfaces and models, masking of sensitive data, the settings every provider reads (`Logging:LogLevel` for the console, `PersistentLogger` for what is kept); independent of any logging library ([docs](Logging.md)) | Core |
 | `HsnSoft.Base.Logging.Serilog` | Serilog provider: console, Graylog or file, Debug/Verbose stay in the console | Logging, Hosting |
 | `HsnSoft.Base.Logging.NLog` | NLog provider with the same settings, routing, fields and masking as the Serilog one: console, Graylog (GELF over HTTP) or file ([ADR-0076](adr/0076-more-providers-and-the-rules-every-provider-shares.md)) | Logging |
+| `HsnSoft.Base.Extensions` | Small helpers the base library does not have: Base64 text (standard and URL-safe) and a few collection extensions ([ADR-0137](adr/0137-the-helpers-of-the-old-core-come-back-only-when-a-consumer-used-them.md)) | Core |
 | `HsnSoft.Base.Hosting` | Generic Host workers: `PeriodicBackgroundService` | Core |
 | `HsnSoft.Base.Auditing` | Who made a record and when, who changed it last, who deleted it: the audit contracts an entity and its DTO share (`IAuditedObject`, `IFullAuditedObject`, ...), the marks an entity takes (`IMarkCreated`, ...) and the setter that fills them with the clock and the current user ([docs](EntityConcepts.md)) | Core |
 | `HsnSoft.Base.Data` | What every data store shares whatever the database: the switch of the data filters (soft delete, tenants, ...) that follows the flow of the code (`IDataFilter`) | Core |
