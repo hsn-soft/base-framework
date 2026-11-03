@@ -37,6 +37,9 @@ referenced it in its own way, and sibling references multiplied: restores slowed
 | `Ddd.Domain` | Auditing, Data |
 | `Ddd.Application` | Ddd.Domain |
 | `Authentication` | Core |
+| `Concurrency` | Core |
+| `Concurrency.StackExchangeRedis` | Concurrency |
+| `Concurrency.AspNetCore` | Concurrency |
 | `Browser` | Extensions |
 | `Browser.Puppeteer` | Browser |
 | `BlobStoring.FileSystem` | BlobStoring |

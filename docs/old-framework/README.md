@@ -83,7 +83,8 @@ The list below was gone through one item at a time with the maintainer; each don
 | Optimistic concurrency | Written: `IHasConcurrencyStamp` in EF Core and MongoDB, a conflict is a 409 | [ADR-0136](../adr/0136-an-entity-is-protected-from-a-lost-update-by-an-opt-in-stamp.md) |
 | Wire changes (`UserRoles`, `Producer`) | No mix of old and new services; recorded | ADR-0133 |
 | `BlobStoring.FileSystem` | Written: plain names only, atomic streamed writes | [ADR-0140](../adr/0140-the-blob-store-on-the-local-disk-takes-only-plain-names-and-writes-atomically.md) |
-| Sqlite, distributed lock, Mongo sessions, dev feed | **Not done**, with the reasons | ADR-0133 |
+| Sqlite, Mongo sessions, dev feed | **Not done**, with the reasons | ADR-0133 |
+| Distributed lock | First recorded as not wanted, then **corrected**: what is needed is a limit on how many run at once in every pod, and it is built (a limit of 1 is a lock) | [ADR-0143](../adr/0143-a-limit-on-how-many-run-at-once-holds-across-every-pod.md), [Concurrency](../Concurrency.md) |
 | Helpers of the old `Core` | Only what a consumer used came back: text keys in `Core`, `FilterBuilder.Or/AnyOf`, and the package `Extensions` (Base64, collections, `PublicAddress`, `HostPattern`) | [ADR-0137](../adr/0137-the-helpers-of-the-old-core-come-back-only-when-a-consumer-used-them.md) |
 | Authorization and ASP.NET | Split: the checker needs no web framework, `Authorization.AspNetCore` has the endpoint layer | [ADR-0135](../adr/0135-permissions-are-asked-without-a-web-framework-and-the-endpoint-layer-is-its-own-package.md) |
 | Security headers and CORS | `UseBaseSecurityHeaders()` and `Hosting:Cors` | [ADR-0139](../adr/0139-the-host-writes-security-headers-and-names-the-origins-that-may-call-it.md), [Hosting](../Hosting.md) |

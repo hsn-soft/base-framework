@@ -33,6 +33,7 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 | [0140](0140-the-blob-store-on-the-local-disk-takes-only-plain-names-and-writes-atomically.md) | The blob store on the local disk takes only plain names and writes atomically (`BlobStoring.FileSystem`) | Accepted | 2026-11-03 |
 | [0141](0141-a-rendered-page-is-an-untrusted-caller-and-the-browser-is-a-pool-with-limits.md) | A rendered page is an untrusted caller, and the browser is a pool with limits (`Browser`, `Browser.Puppeteer`) | Accepted | 2026-11-03 |
 | [0142](0142-the-hot-paths-are-measured-by-benchmarks-that-are-not-tests.md) | The hot paths are measured by benchmarks that are not tests (`benchmarks/`) | Accepted | 2026-11-03 |
+| [0143](0143-a-limit-on-how-many-run-at-once-holds-across-every-pod.md) | A limit on how many run at once holds across every pod (`Concurrency`, `Concurrency.StackExchangeRedis`, `Concurrency.AspNetCore`) | Accepted | 2026-11-03 |
 
 ## Building blocks, products and hosts
 

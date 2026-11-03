@@ -20,6 +20,9 @@ JWT, Swagger, a broker or a cache.
 | `HsnSoft.Base.Http.Client` | Calls to another service: the correlation id, retries that do not repeat a write, timeouts and a circuit breaker, a bearer token that goes only to the hosts it is for, a guard against calls to the inside of the network, the `BaseResponse` read into its payload ([docs](HttpClient.md)) | Extensions |
 | `HsnSoft.Base.Hosting` | Generic Host workers: `PeriodicBackgroundService` | Core |
 | `HsnSoft.Base.Auditing` | Who made a record and when, who changed it last, who deleted it: the audit contracts an entity and its DTO share (`IAuditedObject`, `IFullAuditedObject`, ...), the marks an entity takes (`IMarkCreated`, ...) and the setter that fills them with the clock and the current user ([docs](EntityConcepts.md)) | Core |
+| `HsnSoft.Base.Concurrency` | How many run at once in every pod: a named semaphore with leases that end by themselves, and the in-memory limiter ([docs](Concurrency.md)) | Core |
+| `HsnSoft.Base.Concurrency.StackExchangeRedis` | The limiter for a cluster on Redis: one atomic script, the clock of Redis | Concurrency |
+| `HsnSoft.Base.Concurrency.AspNetCore` | `[ConcurrencyLimit]` and `RequireConcurrencyLimit`: 429 with `Retry-After` when the places are taken | Concurrency |
 | `HsnSoft.Base.Data` | What every data store shares whatever the database: the switch of the data filters (soft delete, tenants, ...) that follows the flow of the code (`IDataFilter`) | Core |
 | `HsnSoft.Base.Ddd.Domain` | The domain layer's building blocks: entity bases with audit and soft delete, the repository contract with paging, filtering and safe sorting; registers the concepts of an entity (`AddBaseEntityConcepts`) | Auditing, Data |
 | `HsnSoft.Base.Ddd.Application` | The application layer's building blocks: the DTOs of an entity, of a list request and of its result; the paging model | Ddd.Domain |

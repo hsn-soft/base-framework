@@ -29,6 +29,7 @@
         <ProjectReference Include="..\..\src\HsnSoft.Base.BlobStoring.Azure\HsnSoft.Base.BlobStoring.Azure.csproj" />
         <ProjectReference Include="..\..\src\HsnSoft.Base.BlobStoring.Minio\HsnSoft.Base.BlobStoring.Minio.csproj" />
         <ProjectReference Include="..\..\src\HsnSoft.Base.Caching.StackExchangeRedis\HsnSoft.Base.Caching.StackExchangeRedis.csproj" />
+        <ProjectReference Include="..\..\src\HsnSoft.Base.Concurrency.StackExchangeRedis\HsnSoft.Base.Concurrency.StackExchangeRedis.csproj" />
         <ProjectReference Include="..\..\src\HsnSoft.Base.EntityFrameworkCore.MySql\HsnSoft.Base.EntityFrameworkCore.MySql.csproj" />
         <ProjectReference Include="..\..\src\HsnSoft.Base.EntityFrameworkCore.PostgreSql\HsnSoft.Base.EntityFrameworkCore.PostgreSql.csproj" />
         <ProjectReference Include="..\..\src\HsnSoft.Base.EntityFrameworkCore.SqlServer\HsnSoft.Base.EntityFrameworkCore.SqlServer.csproj" />

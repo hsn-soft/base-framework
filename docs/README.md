@@ -4,6 +4,7 @@
 |---|---|
 | [`adr/`](adr/README.md) | **Architecture decision records**: a short guide to the decisions relevant to a task; the [full catalog](adr/INDEX.md) lists every ADR. |
 | [`Overview.md`](Overview.md) | The packages (one capability each) and what each depends on, how a product composes them, the tests and the configuration. The text that was in the root README |
+| [`Concurrency.md`](Concurrency.md) | How many run at once in every pod: `[ConcurrencyLimit]`, the limiter in code, the lease, the settings, how the Redis limiter works |
 | [`DatabaseStartup.md`](DatabaseStartup.md) | Who prepares a database at startup (`SeedStartupConnections`), the steps (`RunDatabaseStepAsync`, `RunContextStepAsync`), and the lock of each database that keeps the pods of a host from meeting |
 | [`Health.md`](Health.md) | The health endpoints (`/health/live`, `/health/startup`, `/health/ready`), the checks of the packages, the settings, the probes of Kubernetes |
 | [`Hosting.md`](Hosting.md) | The settings of the host (`Hosting`, `Urls`), the limits of Kestrel, the proxies, the `.env` file, the settings a service requires, a start that logs its failure |
