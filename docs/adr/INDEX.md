@@ -23,6 +23,7 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 | [0004](0004-core-once-and-the-dependency-graph.md) | Packages reference `HsnSoft.Base.Core` once, and form this dependency graph | Accepted | 2026-10-22 |
 | [0005](0005-where-code-lives.md) | Where a piece of code lives: the framework, a product's shared project, or a service | Accepted | 2026-10-22 |
 | [0006](0006-repository-folders-and-the-solution-file.md) | Repository folders and the solution file | Accepted | 2026-10-25 |
+| [0133](0133-what-is-not-brought-back-from-the-old-framework-and-the-risks-we-accept.md) | What is not brought back from the old framework, and the risks we accept (no outbox, no Azure Service Bus, no Sqlite, no distributed lock, no old-wire compatibility) | Accepted | 2026-11-03 |
 
 ## Building blocks, products and hosts
 
@@ -141,7 +142,8 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 
 ## Open items (not decided or not done)
 
-- Port the Kafka consumer and add an Azure Service Bus project the same way as RabbitMQ ([ADR-0023](0023-event-bus.md)); bridge the Kafka client's logs to `ILogger`.
+- Bridge the Kafka client's logs to `ILogger` (the Kafka consumer is ported; Azure Service Bus is not planned, [ADR-0133](0133-what-is-not-brought-back-from-the-old-framework-and-the-risks-we-accept.md)).
+- CodeQL, which the old workflows ran, is not decided ([ADR-0133](0133-what-is-not-brought-back-from-the-old-framework-and-the-risks-we-accept.md)).
 - Show the `BaseResponse` envelope in the Swagger document ([ADR-0024](0024-swagger.md)).
 - A test that fixes the allowed fields per log type, and configurable per-type `RemoveFields`/`AddFields` ([ADR-0019](0019-log-fields-pipeline.md)).
 - A `SharedLog` in a measured run (a product's shared library that logs only when Redis is down), so its column of `docs/GraylogFields.md` has data.
