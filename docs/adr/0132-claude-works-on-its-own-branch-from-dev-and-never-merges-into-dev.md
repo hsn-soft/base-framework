@@ -22,6 +22,7 @@ an unfinished `dev` cannot publish. What the rule was meant to say is **who may 
 
 - The root `CLAUDE.md`, the git rule and the release skill say this; the open item "a draft pull request from `feat/new-framework`" of the catalog is dropped, since Claude does not open pull requests.
 - ADR-0025 is superseded as a whole: its single long-lived branch and its ban on merging into `dev` no longer apply; its ban on stacked branches is kept above.
+- `.claude/settings.json` denies the commands that would break it (`gh pr create` and `gh pr merge`, switching to `dev` or a release branch, pushing to them), so the rule does not rest on the text alone.
 - The CI still runs on pull requests into `dev` ([ADR-0012](0012-ci-workflow-and-what-breaks-a-pull-request.md)): a push to Claude's branch runs nothing until the maintainer opens the pull request, so the detector runs locally first ([ADR-0014](0014-detector-before-a-pull-request.md)).
 
 ## Related
