@@ -28,6 +28,7 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
+| [0132](0132-claude-works-on-its-own-branch-from-dev-and-never-merges-into-dev.md) | Claude works on its own branch cut from `dev` and never opens a pull request into `dev` or merges into it | Accepted | 2026-11-03 |
 | [0131](0131-a-schema-that-evolves-is-migrated-by-a-startup-step.md) | A schema that evolves is migrated by a startup step (`AddMigrationStartupStep`, one pod at a time under the lock), instead of the schema step | Accepted | 2026-11-01 |
 | [0130](0130-nuget-packages-are-pushed-with-trusted-publishing-not-an-api-key.md) | The packages are pushed to NuGet with trusted publishing (`NuGet/login`, a key that lives for the run), not with a long-lived API key | Accepted | 2026-11-01 |
 | [0129](0129-an-entity-is-isolated-by-its-tenant-or-by-its-scope-never-both.md) | An entity is isolated by its tenant or by its scope (subscription), never both | Accepted | 2026-11-01 |
@@ -96,7 +97,7 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
-| [0025](0025-the-rewrite-lives-on-feat-new-framework.md) | The rewrite lives on `feat/new-framework` and is not merged into `dev` until the whole framework exists | Accepted | 2026-10-25 |
+| [0025](0025-the-rewrite-lives-on-feat-new-framework.md) | The rewrite lives on `feat/new-framework` and is not merged into `dev` until the whole framework exists | Superseded by [ADR-0132](0132-claude-works-on-its-own-branch-from-dev-and-never-merges-into-dev.md) | 2026-10-25 |
 
 ## Build, tests, CI and the developer workflow
 
@@ -145,4 +146,3 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 - A test that fixes the allowed fields per log type, and configurable per-type `RemoveFields`/`AddFields` ([ADR-0019](0019-log-fields-pipeline.md)).
 - A `SharedLog` in a measured run (a product's shared library that logs only when Redis is down), so its column of `docs/GraylogFields.md` has data.
 - Revoke and rotate the SonarQube token that was once pasted in a conversation; keep tokens in `scripts/sonar/.env` only.
-- A **draft** pull request from `feat/new-framework` into `dev` (never merged until the framework is complete, [ADR-0025](0025-the-rewrite-lives-on-feat-new-framework.md)), to see the CI run on Linux for the first time.

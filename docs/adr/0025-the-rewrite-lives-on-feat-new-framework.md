@@ -1,6 +1,6 @@
 # ADR-0025: The rewrite lives on `feat/new-framework` and is not merged into `dev` until the whole framework exists
 
-- **Status:** Accepted
+- **Status:** Superseded by [ADR-0132](0132-claude-works-on-its-own-branch-from-dev-and-never-merges-into-dev.md) (the rewrite is merged into `dev` by the maintainer's pull requests; what remains of this rule is who may merge)
 - **Date:** 2026-10-25
 
 ## Context

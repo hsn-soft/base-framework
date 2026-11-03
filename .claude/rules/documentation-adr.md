@@ -14,4 +14,4 @@ paths:
 - Before documenting behavior, check the owning implementation and related ADRs. Keep examples and package/dependency claims consistent with `docs/Overview.md`.
 - Decisions about a sample are written in `samples/docs/adr/` with their own numbering (not in the catalog here); see `samples/CLAUDE.md`.
 
-See [the ADR guide](../../docs/adr/README.md) and [documentation map](../../docs/README.md). Relevant decisions: ADR-0001, ADR-0005–0006, ADR-0025.
+See [the ADR guide](../../docs/adr/README.md) and [documentation map](../../docs/README.md). Relevant decisions: ADR-0001, ADR-0005–0006.

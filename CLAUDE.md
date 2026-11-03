@@ -14,7 +14,7 @@ When performing Git operations (commit, push, or opening a PR), follow [CONTRIBU
 
 ## Repository rules
 
-- The rewrite stays on `feat/new-framework` and must not be merged into `dev` until complete (ADR-0025); do not create stacked branches.
+- Claude works on a `feat/...` branch of its own, cut from `dev`; it may commit and push to that branch, and it never opens a pull request into `dev` or a release branch, never merges into `dev` or `rel/*`, and never pushes to them: the maintainer does (ADR-0132). Do not stack branches. When the maintainer says a push stays with them, commit and do not push.
 - Record each new architecture decision in the same change: copy [the ADR template](docs/adr/0000-template.md) and add a row to [the full catalog](docs/adr/INDEX.md). Never rewrite a decision; supersede it with a new ADR.
 - Run `dotnet format` and `./scripts/ci-detector/ci_detector_mac.sh` before calling a change done.
 - Add new projects to the matching `src` or `test` solution folder; read the solution first (ADR-0006).

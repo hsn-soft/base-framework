@@ -11,7 +11,7 @@ Start with the task area; read only the listed ADRs that affect the change. Use 
 | Package boundaries, dependencies, or code location | [Overview](../Overview.md), ADR-0002–0006, ADR-0070, ADR-0075 |
 | Build, tests, formatting, hooks, or CI | [Contributing](../../CONTRIBUTING.md), [CI detector](../../scripts/ci-detector/README.md), ADR-0007–0014, ADR-0109, ADR-0123 |
 | A feature or package behavior | Its reference document in [`docs/`](../README.md), then the related ADRs listed in the [catalog](INDEX.md) |
-| Branches, pull requests, or releases | [Releasing](../Releasing.md), [Contributing](../../CONTRIBUTING.md), ADR-0025, ADR-0115–0116, ADR-0130 |
+| Branches, pull requests, or releases | [Releasing](../Releasing.md), [Contributing](../../CONTRIBUTING.md), ADR-0115–0116, ADR-0130, ADR-0132 |
 | A sample (`abc`, `edx`, `hsx`) | [`samples/CLAUDE.md`](../../samples/CLAUDE.md); its decisions are [`samples/docs/adr/`](../../samples/docs/adr/README.md), numbered on their own |
 | Adding a package or repository folder | [Contributing](../../CONTRIBUTING.md), ADR-0006, and the relevant package rules above |
 
