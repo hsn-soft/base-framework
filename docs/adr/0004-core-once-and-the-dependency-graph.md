@@ -37,6 +37,7 @@ referenced it in its own way, and sibling references multiplied: restores slowed
 | `Ddd.Domain` | Auditing, Data |
 | `Ddd.Application` | Ddd.Domain |
 | `Authentication` | Core |
+| `BlobStoring.FileSystem` | BlobStoring |
 | `Extensions` | Core |
 | `Http.Client` | Core |
 | `Authorization` | Core |

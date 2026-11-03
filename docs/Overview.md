@@ -44,6 +44,7 @@ JWT, Swagger, a broker or a cache.
 | `HsnSoft.Base.EntityFrameworkCore.SqlServer` | SQL Server `DbContext` with retries | EntityFrameworkCore |
 | `HsnSoft.Base.EntityFrameworkCore.MySql` | MySQL `DbContext` with retries (Oracle's `MySql.EntityFrameworkCore`) | EntityFrameworkCore |
 | `HsnSoft.Base.BlobStoring` | `IBlobStore`: save, read and delete files in containers | Core |
+| `HsnSoft.Base.BlobStoring.FileSystem` | Local disk implementation of `IBlobStore` for development and single-node deployments: atomic writes, names that cannot leave the root ([ADR-0140](adr/0140-the-blob-store-on-the-local-disk-takes-only-plain-names-and-writes-atomically.md)) | BlobStoring |
 | `HsnSoft.Base.BlobStoring.Minio` | MinIO (S3) implementation of `IBlobStore` | BlobStoring |
 | `HsnSoft.Base.BlobStoring.Azure` | Azure Blob Storage implementation of `IBlobStore` (a connection string, or the identity of the host) | BlobStoring |
 | `HsnSoft.Base.BlobStoring.Aws` | Amazon S3 implementation of `IBlobStore` (the role of the host; a `ServiceUrl` for any store with the S3 API) | BlobStoring |
