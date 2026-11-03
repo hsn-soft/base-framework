@@ -23,7 +23,7 @@ feat/*  hotfix/*  bugfix/*  ──PR──►  dev  ──PR──►  rel/nuget
                                           tag v…-rc… + GitHub pre-release    tag v2026.10.41 + GitHub Release
 ```
 
-Each arrow is a pull request; nothing else may be merged into a branch (`CI Branch Rule JOB` refuses it). Nothing is published when a pull request is opened, only when it is merged; the merge (the push) also runs the pipeline of the CI, and its numbers are the badges of that release in the README (a red run means what was published failed a check).
+Each arrow is a pull request opened and merged by the maintainer: Claude (the AI assistant) works on a branch of its own cut from `dev`, may push it, and never opens or merges a pull request into `dev` or into a release branch ([ADR-0132](adr/0132-claude-works-on-its-own-branch-from-dev-and-never-merges-into-dev.md)). Nothing else may be merged into a branch (`CI Branch Rule JOB` refuses it). Nothing is published when a pull request is opened, only when it is merged; the merge (the push) also runs the pipeline of the CI, and its numbers are the badges of that release in the README (a red run means what was published failed a check).
 
 ## To release
 

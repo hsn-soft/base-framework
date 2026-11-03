@@ -29,6 +29,9 @@ Thank you for helping with the HsnSoft Base Framework. This page is the short ve
    the coverage gate.
 4. `rel/nuget-candidate` (from `dev` only) and `rel/nuget-regular` (from `rel/nuget-candidate` only) are what is published to NuGet, a pre-release and a stable version; a merge into them runs the deploy workflow. Into `dev` only from `feat/*`, `hotfix/*` and `bugfix/*`. See [Releasing](docs/Releasing.md).
 
+**Work done by Claude (the AI assistant)** follows [ADR-0132](docs/adr/0132-claude-works-on-its-own-branch-from-dev-and-never-merges-into-dev.md) and the root [`CLAUDE.md`](CLAUDE.md): it works on its own `feat/...` branch cut from `dev`, commits and pushes there, and never opens a pull request into `dev` or a release branch, merges into
+them, or pushes to them. You open and merge the pull request (steps 2 to 4 above are yours for its work), and the release pull requests below.
+
 Commit messages follow the Conventional Commits style used in the history: `feat:`, `fix:`, `refactor:`, `test:`, `ci:`, `style:`,
 `docs:`, with a short subject in the imperative.
 
