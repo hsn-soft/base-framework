@@ -91,5 +91,11 @@ public sealed class BaseEntityInterceptor(IAuditPropertySetter audit) : SaveChan
 
         entry.State = EntityState.Modified;
         audit.SetDeletion(entry.Entity);
+
+        // an entity that is only ISoftDelete (a base without the deletion audit fields) has nothing that marks it, so it is marked through its property
+        if (entry.Entity is ISoftDelete { IsDeleted: false } && entry.Entity is not IMarkDeleted)
+        {
+            entry.Property(nameof(ISoftDelete.IsDeleted)).CurrentValue = true;
+        }
     }
 }

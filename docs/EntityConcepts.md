@@ -10,6 +10,8 @@ The persistence does the rest; the application code writes none of it ([ADR-0037
 | `ISoftDelete`, `IDeletionAuditedObject` (`IHasDeletionTime`) and `IMarkDeleted` | `IsDeleted`, `DeletedAt`, `DeletedBy` | a delete marks it; the lists do not show it |
 | `IMultiTenant` (`HsnSoft.Base.MultiTenancy`) | `TenantId` | a new one gets the current tenant; a caller sees only the tenants it may |
 
+The soft delete is an interface of its own: an entity of any audit level (`Entity`, `CreationAuditedEntity`, `AuditedEntity`) takes `ISoftDelete` with `public bool IsDeleted { get; private set; }`, and a delete marks it. `FullAuditedEntity` is the one that also keeps when and by whom it was deleted (`IMarkDeleted`).
+
 `IAuditedObject` is the creation and the modification together, `IFullAuditedObject` all three. These are **shapes that only show the fields**: the DTO of an entity (`CreationAuditedEntityDto<TKey>`, `AuditedEntityDto<TKey>`, `FullAuditedEntityDto<TKey>`) implements the same
 ones as the entity, so one rule can read the audit fields of either. What only an entity takes are the marks (`IMarkCreated`, `IMarkModified`, `IMarkDeleted`): the entity keeps the fields with private setters and implements the `Mark...` methods (the base classes of
 [DddBuildingBlocks.md](DddBuildingBlocks.md) do it for the audit and the soft delete); the tenant is just `TenantId { get; private set; }`, which the persistence writes itself.
