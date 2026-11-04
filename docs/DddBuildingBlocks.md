@@ -23,6 +23,7 @@ See [EntityConcepts.md](EntityConcepts.md) for what the persistence does with th
 
 | For | Derive from | Has |
 |---|---|---|
+| every response | `IBaseDto` (marker) | what a service sends, found by its type (ADR-0147): the entity DTOs and the list results have it; a request does not have to |
 | a response of an entity | `EntityDto<TKey>`, `AuditedEntityDto<TKey>`, `FullAuditedEntityDto<TKey>` | `Id`, `CreatedAt/By`, `UpdatedAt/By`, the deletion |
 | a list with at most N | `LimitedDataRequestDto` | `MaxResultCount` (10; at most `Paging:MaxResultCountLimit`, 100) |
 | a sorted list | `SortedAndLimitedDataRequestDto` | + `SortingText` (`"name asc, price desc"`) |

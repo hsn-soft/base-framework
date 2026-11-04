@@ -37,6 +37,7 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 | [0144](0144-the-source-of-every-pull-request-has-a-known-branch-name.md) | Which branch may be merged into which: the rules of the source branch of a pull request (general, then those of each release branch); supersedes the source rules of ADR-0115 | Accepted | 2026-11-04 |
 | [0145](0145-an-enum-has-a-key-and-a-name-through-the-display-attribute.md) | An enum has a key and a name through the Display attribute: `ToPrompt`, `ToDisplayName`, `ToEnumFromPrompt` in `Extensions` | Accepted | 2026-11-04 |
 | [0146](0146-several-repository-calls-run-as-one-unit-of-work-through-iunitofwork.md) | Several repository calls run as one unit of work through `IUnitOfWork` (`EfCoreUnitOfWork`), never through a context | Accepted | 2026-11-04 |
+| [0147](0147-a-response-is-an-ibasedto-so-a-response-is-found-by-its-type-not-by-a-name.md) | A response is an `IBaseDto`, so a response is found by its type and not by a name | Accepted | 2026-11-04 |
 
 ## Building blocks, products and hosts
 

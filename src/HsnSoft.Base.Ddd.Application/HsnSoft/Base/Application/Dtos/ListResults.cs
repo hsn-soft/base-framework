@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace HsnSoft.Base.Application.Dtos;
 
-public interface IListDataResult<T>
+public interface IListDataResult<T> : IBaseDto
 {
     IReadOnlyList<T> Items { get; set; }
 }
