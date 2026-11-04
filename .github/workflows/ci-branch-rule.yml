@@ -1,9 +1,12 @@
 name: 'CI Branch Rule'
 
-# Which branch may be merged into which (ADR-0115). GitHub cannot limit the source of a merge by itself, so every pull request runs this check (into any branch), and the protection of each branch requires it. First, the source of ANY pull request must have a known name: dev, master, rel/*, feat/*, hotfix/* or bugfix/* (anything else cannot be merged). Then, into these branches:
-#   dev                  from feat/*, hotfix/* or bugfix/* only
-#   rel/nuget-candidate  from dev only
-#   rel/nuget-regular    from rel/nuget-candidate only (what is published as stable is a candidate that was published first)
+# Which branch may be merged into which (ADR-0144). GitHub cannot limit the source of a merge by itself, so every pull request, into any branch, runs this check, and the protection of each branch requires it.
+# 1. The source must be dev, master, feat/*, bugfix/*, hotfix/* or rel/*; any other name cannot be merged.
+# 2. Into dev or master: from feat/*, bugfix/*, hotfix/* or rel/*.
+# 3. Into a release branch (rel/*): from bugfix/*, hotfix/* or rel/*, and, as the specific rules of a release branch (the flow of the repository), also:
+#   rel/nuget-candidate  also from dev
+#   rel/nuget-regular    also from dev or rel/nuget-candidate
+# A release branch with no specific rule takes only what rule 3 says. Another branch (not dev, master or rel/*) takes any source of a known name.
 
 on:
   pull_request:
@@ -28,17 +31,16 @@ jobs:
         run: |
           fail() { echo "::error::$1"; exit 1; }
           [ "$HEAD_REPOSITORY" = "$REPOSITORY" ] || fail "The pull request comes from another repository ($HEAD_REPOSITORY)."
-          [[ "$HEAD" =~ ^(dev|master|rel/.+|feat/.+|hotfix/.+|bugfix/.+)$ ]] || fail "The source branch '$HEAD' has no known name: only dev, master, rel/*, feat/*, hotfix/* and bugfix/* may be the source of a pull request."
+          [[ "$HEAD" =~ ^(dev|master|feat/.+|bugfix/.+|hotfix/.+|rel/.+)$ ]] || fail "The source branch '$HEAD' has no known name: only dev, master, feat/*, bugfix/*, hotfix/* and rel/* may be the source of a pull request."
           case "$BASE" in
-            dev)
-              [[ "$HEAD" =~ ^(feat|hotfix|bugfix)/.+ ]] || fail "Into dev only from feat/*, hotfix/* or bugfix/* (this one is from '$HEAD')." ;;
-            rel/nuget-candidate)
-              [ "$HEAD" = "dev" ] || fail "Into rel/nuget-candidate only from dev (this one is from '$HEAD')." ;;
-            rel/nuget-regular)
-              [ "$HEAD" = "rel/nuget-candidate" ] || fail "Into rel/nuget-regular only from rel/nuget-candidate (this one is from '$HEAD')." ;;
+            dev|master)
+              [[ "$HEAD" =~ ^(feat|bugfix|hotfix|rel)/.+ ]] || fail "Into $BASE only from feat/*, bugfix/*, hotfix/* or rel/* (this one is from '$HEAD')." ;;
             rel/*)
-              fail "No rule for the release branch '$BASE': add one here before it takes a pull request." ;;
-            *)
-              echo "No rule for the source of '$BASE' beyond the name of the source branch." ;;
+              extra=""
+              case "$BASE" in
+            rel/nuget-candidate) extra="|dev" ;;
+            rel/nuget-regular) extra="|dev|rel/nuget-candidate" ;;
+              esac
+              [[ "$HEAD" =~ ^((bugfix|hotfix|rel)/.+$extra)$ ]] || fail "Into the release branch $BASE only from bugfix/*, hotfix/* or rel/*${extra:+ (also ${extra#|})} (this one is from '$HEAD')." ;;
           esac
           echo "'$HEAD' into '$BASE': allowed."

@@ -40,4 +40,4 @@ The run says in which step. Nothing is pushed before the packages are checked; i
 
 ## An urgent fix
 
-`hotfix/*` → `dev` → `rel/nuget-candidate` → `rel/nuget-regular`, the same way (the pipeline runs on the pull request into dev and on each push). There is no way from `dev` to regular: stable is always a candidate that was published first.
+`hotfix/*` → `dev` → `rel/nuget-candidate` → `rel/nuget-regular`, the same way (the pipeline runs on the pull request into dev and on each push). The branch rule (ADR-0144) also lets `dev` go into `rel/nuget-regular` directly; the usual way is still through the candidate.
