@@ -34,6 +34,7 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 | [0141](0141-a-rendered-page-is-an-untrusted-caller-and-the-browser-is-a-pool-with-limits.md) | A rendered page is an untrusted caller, and the browser is a pool with limits (`Browser`, `Browser.Puppeteer`) | Accepted | 2026-11-03 |
 | [0142](0142-the-hot-paths-are-measured-by-benchmarks-that-are-not-tests.md) | The hot paths are measured by benchmarks that are not tests (`benchmarks/`) | Accepted | 2026-11-03 |
 | [0143](0143-a-limit-on-how-many-run-at-once-holds-across-every-pod.md) | A limit on how many run at once holds across every pod (`Concurrency`, `Concurrency.StackExchangeRedis`, `Concurrency.AspNetCore`) | Accepted | 2026-11-03 |
+| [0144](0144-the-source-of-every-pull-request-has-a-known-branch-name.md) | The source branch of every pull request has a known name (dev, master, rel/*, feat/*, hotfix/*, bugfix/*) | Accepted | 2026-11-04 |
 
 ## Building blocks, products and hosts
 
