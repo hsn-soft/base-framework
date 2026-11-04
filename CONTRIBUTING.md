@@ -3,6 +3,8 @@
 Thank you for helping with the HsnSoft Base Framework. This page is the short version of how we work; the root
 [README](README.md) says what the framework is, and [docs/Overview.md](docs/Overview.md) explains what the packages are.
 
+The branches and which of them may be merged into which: [docs/BranchRules.md](docs/BranchRules.md).
+
 ## Ground rules
 
 - **One package, one capability.** An application takes only the packages it needs. Do not add a dependency "because it is

@@ -1,6 +1,7 @@
 ---
 paths:
   - "docs/Releasing.md"
+  - "docs/BranchRules.md"
   - ".github/workflows/**"
   - "scripts/versioning/**"
 ---
@@ -14,6 +15,7 @@ paths:
 - Before opening a PR, run `./scripts/ci-detector/ci_detector_mac.sh` (Windows: `./scripts/ci-detector/ci_detector_win.ps1`). `--skip-integration` / `-SkipIntegration` is an incomplete interim check, not the final PR check.
 - Keep release flow as `dev` → `rel/nuget-candidate` → `rel/nuget-regular`; stable releases come from the candidate branch. Set the release `BaseVersion` as prescribed, then use the repository's scripts to derive candidate/patch versions from NuGet; do not hand-edit each package's version.
 - Release branches run CI on pushes. Preserve the release/deploy workflow and its trusted NuGet publishing through OIDC; never add a long-lived NuGet API key.
+- The merge table (which source may go into which target, with the special rules of the publishing branches) is [docs/BranchRules.md](../../docs/BranchRules.md); change it together with `ci-branch-rule.yml` and the ADR.
 - Update [docs/Releasing.md](../../docs/Releasing.md) and the relevant ADR when release behavior changes.
 
 Relevant decisions: ADR-0013–0014, ADR-0113–0116, ADR-0130, ADR-0132.
