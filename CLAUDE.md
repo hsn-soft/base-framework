@@ -15,6 +15,7 @@ When performing Git operations (commit, push, or opening a PR), follow [CONTRIBU
 ## Repository rules
 
 - Claude works on a `feat/...` branch of its own, cut from `dev`; it may commit and push to that branch, and it never opens a pull request into `dev` or a release branch, never merges into `dev` or `rel/*`, and never pushes to them: the maintainer does (ADR-0132). Do not stack branches. When the maintainer says a push stays with them, commit and do not push.
+- What runs at the commit, the push and the pull request, and the scripts that run every check, is the table in [docs/Checks.md](docs/Checks.md); run the detector and `dotnet format` from it before calling a change done.
 - Which branch may be merged into which is the table in [docs/BranchRules.md](docs/BranchRules.md) (enforced by `ci-branch-rule.yml`): use it to choose the target of a branch and when a rule changes, update the table, the workflow and the ADR together.
 - Record each new architecture decision in the same change: copy [the ADR template](docs/adr/0000-template.md) and add a row to [the full catalog](docs/adr/INDEX.md). Never rewrite a decision; supersede it with a new ADR.
 - Run `dotnet format` and `./scripts/ci-detector/ci_detector_mac.sh` before calling a change done.

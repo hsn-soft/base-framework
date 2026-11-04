@@ -10,6 +10,7 @@
 | [`Hosting.md`](Hosting.md) | The settings of the host (`Hosting`, `Urls`), the limits of Kestrel, the proxies, the `.env` file, the settings a service requires, a start that logs its failure |
 | [`MultiTenancy.md`](MultiTenancy.md) | Tenants that see other tenants: the tree, `TenantAccessPath`, the list in the token and its limit |
 | [`Scheduler.md`](Scheduler.md) | The endpoints a scheduler calls: `[SchedulerAuth]`, the key (`Scheduler:ApiKey`) the host requires, the headers of a job |
+| [`Checks.md`](Checks.md) | What runs before a commit, before a push and on a pull request, as a table, and the scripts to run every check yourself |
 | [`BranchRules.md`](BranchRules.md) | Which branch may be merged into which: the table of sources and targets, and the special rules of the release branches that publish |
 | [`Releasing.md`](Releasing.md) | How a version gets to NuGet: the versions, the branches (`dev` → `rel/nuget-candidate` → `rel/nuget-regular`), what to do for a candidate, a stable version, a new month and an urgent fix |
 | [`Logging.md`](Logging.md) | The logging model: the log types, the chain logs, the fields, facilities, where each decision is made |
