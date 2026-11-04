@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using System.Net;
 using HsnSoft.Base.Collections;
 using HsnSoft.Base.Net;
@@ -138,5 +139,48 @@ public class ExtensionsTests
         Assert.Equal(expected, HostPattern.Matches(host, pattern));
         Assert.Throws<ArgumentNullException>(() => HostPattern.Matches(null!, pattern));
         Assert.Throws<ArgumentNullException>(() => HostPattern.Matches(host, null!));
+    }
+
+    public enum Product
+    {
+        Unknown = 0,
+
+        [Display(Name = "Video Platform", Prompt = "vp")]
+        VideoPlatform = 11,
+
+        [Display(Name = "E-Invoice", Prompt = "e-invoice")]
+        EInvoice = 14,
+
+        PlainMember = 20,
+
+        HTTPServer = 21,
+    }
+
+    [Theory]
+    [InlineData(Product.VideoPlatform, "vp", "Video Platform")]
+    [InlineData(Product.EInvoice, "e-invoice", "E-Invoice")]
+    [InlineData(Product.PlainMember, "plain-member", "PlainMember")]
+    [InlineData(Product.HTTPServer, "http-server", "HTTPServer")]
+    [InlineData(Product.Unknown, "unknown", "Unknown")]
+    public void AMemberHasAKeyAndAName(Product product, string prompt, string name)
+    {
+        Assert.Equal(prompt, product.ToPrompt());
+        Assert.Equal(name, product.ToDisplayName());
+        Assert.Equal(product, prompt.ToEnumFromPrompt<Product>());
+        Assert.Equal(product, prompt.ToUpperInvariant().ToEnumFromPrompt<Product>());
+    }
+
+    [Fact]
+    public void AValueThatIsNotAMember_IsItsNumber_AndAKeyThatIsNotOne_IsRefused()
+    {
+        Assert.Equal("99", ((Product)99).ToPrompt());
+        Assert.Equal("99", ((Product)99).ToDisplayName());
+        Assert.False(((string?)null).TryToEnumFromPrompt(out Product none));
+        Assert.Equal(Product.Unknown, none);
+        Assert.False(" ".TryToEnumFromPrompt(out Product _));
+        Assert.False("nope".TryToEnumFromPrompt(out Product _));
+        Assert.True(" vp ".TryToEnumFromPrompt(out Product found));
+        Assert.Equal(Product.VideoPlatform, found);
+        Assert.Throws<ArgumentException>(() => "nope".ToEnumFromPrompt<Product>());
     }
 }
