@@ -21,7 +21,7 @@ public static class TenantDomainConfiguration
             entity.ToTable(EfCoreIdentityDbProperties.DbTablePrefix + TenantConsts.TableName, EfCoreIdentityDbProperties.DbSchema);
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Id).ValueGeneratedNever();
-            entity.Property(e => e.TenantType).HasConversion<string>().HasMaxLength(30).IsRequired();
+            entity.Property(e => e.TenantType).IsRequired();
             entity.Property(e => e.Title).HasMaxLength(TenantConsts.TitleMaxLength).IsRequired();
             entity.Property(e => e.Name).HasMaxLength(TenantConsts.NameMaxLength).IsRequired();
             entity.Property(e => e.NormalizedName).HasMaxLength(TenantConsts.NameMaxLength).IsRequired();
@@ -70,7 +70,7 @@ public static class AppRoleDomainConfiguration
             entity.Property(e => e.Id).ValueGeneratedNever();
             entity.Property(e => e.Name).HasMaxLength(AppRoleConsts.NameMaxLength).IsRequired();
             entity.Property(e => e.NormalizedName).HasMaxLength(AppRoleConsts.NameMaxLength).IsRequired();
-            entity.Property(e => e.RoleType).HasConversion<string>().HasMaxLength(20).IsRequired();
+            entity.Property(e => e.RoleType).IsRequired();
             entity.HasIndex(e => new { e.TenantId, e.NormalizedName }).IsUnique();
             entity.HasIndex(e => e.CompanyId);
             entity.HasIndex(e => e.CustomerId);

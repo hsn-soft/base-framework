@@ -15,7 +15,7 @@ public static class SubscriptionDomainConfiguration
             entity.ToTable(EfCoreIdentityDbProperties.DbTablePrefix + SubscriptionConsts.TableName, EfCoreIdentityDbProperties.DbSchema);
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Id).ValueGeneratedNever();
-            entity.Property(e => e.ProductType).HasConversion<string>().HasMaxLength(30).IsRequired();
+            entity.Property(e => e.ProductType).IsRequired();
             entity.Property(e => e.ScopeKey).HasMaxLength(SubscriptionConsts.ScopeKeyMaxLength).IsRequired();
             entity.Property(e => e.SettingsJson).HasMaxLength(SubscriptionConsts.SettingsJsonMaxLength);
             entity.HasIndex(e => e.TenantId);

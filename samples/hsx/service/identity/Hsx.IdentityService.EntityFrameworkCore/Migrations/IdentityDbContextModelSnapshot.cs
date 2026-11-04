@@ -61,10 +61,8 @@ namespace Hsx.IdentityService.EntityFrameworkCore.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
 
-                    b.Property<string>("RoleType")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                    b.Property<int>("RoleType")
+                        .HasColumnType("integer");
 
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid");
@@ -443,10 +441,8 @@ namespace Hsx.IdentityService.EntityFrameworkCore.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("ChannelType")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                    b.Property<int>("ChannelType")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Code")
                         .IsRequired()
@@ -456,10 +452,8 @@ namespace Hsx.IdentityService.EntityFrameworkCore.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("DockType")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                    b.Property<int>("DockType")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Icon")
                         .HasMaxLength(64)
@@ -468,10 +462,8 @@ namespace Hsx.IdentityService.EntityFrameworkCore.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("NodeType")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                    b.Property<int>("NodeType")
+                        .HasColumnType("integer");
 
                     b.Property<Guid?>("ParentId")
                         .HasColumnType("uuid");
@@ -509,10 +501,8 @@ namespace Hsx.IdentityService.EntityFrameworkCore.Migrations
                     b.Property<Guid>("PermissionId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("RelationType")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                    b.Property<int>("RelationType")
+                        .HasColumnType("integer");
 
                     b.Property<int>("SortOrder")
                         .HasColumnType("integer");
@@ -549,10 +539,8 @@ namespace Hsx.IdentityService.EntityFrameworkCore.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");
 
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -614,10 +602,8 @@ namespace Hsx.IdentityService.EntityFrameworkCore.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("ProductType")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("character varying(30)");
+                    b.Property<int>("ProductType")
+                        .HasColumnType("integer");
 
                     b.Property<string>("ScopeKey")
                         .IsRequired()
@@ -701,10 +687,8 @@ namespace Hsx.IdentityService.EntityFrameworkCore.Migrations
                     b.Property<Guid?>("ParentId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("TenantType")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("character varying(30)");
+                    b.Property<int>("TenantType")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Title")
                         .IsRequired()

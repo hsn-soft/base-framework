@@ -7,6 +7,7 @@ New ADR: copy the framework's [`0000-template.md`](../../../docs/adr/0000-templa
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
+| [0065](0065-the-samples-store-an-enum-by-its-number-in-their-relational-databases.md) | The samples store an enum by its number in their relational databases (Hsx has a migration that converts the rows) | Accepted | 2026-11-05 |
 | [0064](0064-who-owns-a-record-in-hsx-tenant-scope-neither-and-how-a-sale-moves-between-resellers.md) | Who owns a record in Hsx (tenant, scope or neither), the system tenant writes the sales, role types, and how a sale moves between resellers | Accepted | 2026-11-03 |
 | [0063](0063-companies-customers-and-subscriptions-belong-to-the-tenant-that-made-them.md) | Companies, customers and subscriptions belong to the tenant that made them; the tenant management makes them in one transaction | Superseded by [ADR-0064](0064-who-owns-a-record-in-hsx-tenant-scope-neither-and-how-a-sale-moves-between-resellers.md) | 2026-11-03 |
 | [0062](0062-the-permissions-and-the-menu-of-hsx-are-the-codes-and-live-in-the-identity-service.md) | The permissions and the menu of Hsx are in the code; the identity service keeps them, every endpoint asks for its permission | Accepted | 2026-11-01 |

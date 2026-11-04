@@ -19,7 +19,7 @@ public static class PermissionDomainConfiguration
             permission.HasKey(entity => entity.Id);
             permission.Property(entity => entity.Id).ValueGeneratedNever();
             permission.Property(entity => entity.Code).HasMaxLength(PermissionConsts.CodeMaxLength).IsRequired();
-            permission.Property(entity => entity.Type).HasConversion<string>().HasMaxLength(20).IsRequired();
+            permission.Property(entity => entity.Type).IsRequired();
             permission.Property(entity => entity.Name).HasMaxLength(PermissionConsts.NameMaxLength).IsRequired();
             permission.Property(entity => entity.Description).HasMaxLength(PermissionConsts.DescriptionMaxLength);
             permission.HasIndex(entity => entity.Code).IsUnique();
@@ -51,9 +51,9 @@ public static class MenuDomainConfiguration
             menu.Property(entity => entity.Title).HasMaxLength(MenuConsts.TitleMaxLength).IsRequired();
             menu.Property(entity => entity.Route).HasMaxLength(MenuConsts.RouteMaxLength);
             menu.Property(entity => entity.Icon).HasMaxLength(MenuConsts.IconMaxLength);
-            menu.Property(entity => entity.ChannelType).HasConversion<string>().HasMaxLength(20).IsRequired();
-            menu.Property(entity => entity.DockType).HasConversion<string>().HasMaxLength(20).IsRequired();
-            menu.Property(entity => entity.NodeType).HasConversion<string>().HasMaxLength(20).IsRequired();
+            menu.Property(entity => entity.ChannelType).IsRequired();
+            menu.Property(entity => entity.DockType).IsRequired();
+            menu.Property(entity => entity.NodeType).IsRequired();
             menu.HasIndex(entity => entity.Code).IsUnique();
             menu.HasOne<Menu>().WithMany().HasForeignKey(entity => entity.ParentId).OnDelete(DeleteBehavior.NoAction);
         });
@@ -63,7 +63,7 @@ public static class MenuDomainConfiguration
             map.ToTable(EfCoreIdentityDbProperties.DbTablePrefix + MenuConsts.MenuPermissionMapTable, EfCoreIdentityDbProperties.DbSchema);
             map.HasKey(entity => entity.Id);
             map.Property(entity => entity.Id).ValueGeneratedNever();
-            map.Property(entity => entity.RelationType).HasConversion<string>().HasMaxLength(20).IsRequired();
+            map.Property(entity => entity.RelationType).IsRequired();
             map.HasIndex(entity => new { entity.MenuId, entity.PermissionId }).IsUnique();
             map.HasOne<Menu>().WithMany().HasForeignKey(entity => entity.MenuId).OnDelete(DeleteBehavior.Cascade);
             map.HasOne<Permission>().WithMany().HasForeignKey(entity => entity.PermissionId).OnDelete(DeleteBehavior.NoAction);

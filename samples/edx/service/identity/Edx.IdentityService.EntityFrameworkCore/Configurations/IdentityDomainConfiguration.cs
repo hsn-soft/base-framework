@@ -69,7 +69,7 @@ public static class IdentityDomainConfiguration
             permission.Property(entity => entity.Description).HasMaxLength(IdentityConsts.PermissionDescriptionMaxLength);
 
             // the type is kept as its name, so a person reading the table understands it
-            permission.Property(entity => entity.Type).HasConversion<string>().HasMaxLength(16).IsRequired();
+            permission.Property(entity => entity.Type).IsRequired();
             permission.HasIndex(entity => entity.Code).IsUnique();
         });
 
@@ -105,9 +105,9 @@ public static class IdentityDomainConfiguration
             menu.Property(entity => entity.Title).HasMaxLength(IdentityConsts.MenuTitleMaxLength).IsRequired();
             menu.Property(entity => entity.Route).HasMaxLength(IdentityConsts.MenuRouteMaxLength);
             menu.Property(entity => entity.Icon).HasMaxLength(IdentityConsts.MenuIconMaxLength);
-            menu.Property(entity => entity.ChannelType).HasConversion<string>().HasMaxLength(16).IsRequired();
-            menu.Property(entity => entity.DockType).HasConversion<string>().HasMaxLength(16).IsRequired();
-            menu.Property(entity => entity.NodeType).HasConversion<string>().HasMaxLength(16).IsRequired();
+            menu.Property(entity => entity.ChannelType).IsRequired();
+            menu.Property(entity => entity.DockType).IsRequired();
+            menu.Property(entity => entity.NodeType).IsRequired();
             menu.HasIndex(entity => entity.Code).IsUnique();
             menu.HasOne<Menu>().WithMany().HasForeignKey(entity => entity.ParentId).OnDelete(DeleteBehavior.NoAction);
         });
@@ -117,7 +117,7 @@ public static class IdentityDomainConfiguration
             map.ToTable(EfCoreIdentityDbProperties.DbTablePrefix + IdentityConsts.MenuPermissionMapTable, EfCoreIdentityDbProperties.DbSchema);
             map.HasKey(entity => entity.Id);
             map.Property(entity => entity.Id).ValueGeneratedNever();
-            map.Property(entity => entity.RelationType).HasConversion<string>().HasMaxLength(16).IsRequired();
+            map.Property(entity => entity.RelationType).IsRequired();
             map.HasIndex(entity => new { entity.MenuId, entity.PermissionId }).IsUnique();
             map.HasOne<Menu>().WithMany().HasForeignKey(entity => entity.MenuId).OnDelete(DeleteBehavior.Cascade);
             map.HasOne<Permission>().WithMany().HasForeignKey(entity => entity.PermissionId).OnDelete(DeleteBehavior.NoAction);

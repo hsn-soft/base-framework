@@ -20,7 +20,8 @@ paths:
 - Apply audit, soft-delete, and tenant concepts through the established entity concepts and persistence interceptors/filters. Enforce tenant-or-scope isolation, never both.
 - Only the host that owns a database prepares it. Preserve the per-database startup lock and ordered startup steps. Use `AddMigrationStartupStep` for evolving schemas rather than adding migrations to the schema-creation step.
 - Register seeders as ordered, idempotent database startup steps after schema setup. Preserve the lock and the `Seeding:Disabled` opt-out.
+- Store an enum of a relational model by its number: no `HasConversion<string>()` or converter to text, no max length for it (ADR-0148). A document store keeps what its serializer says.
 - Keep database command logging opt-in and infrastructure waits/retries bounded and safe to retry. Do not log sensitive data.
 - Integration tests use real databases, own their data, and follow the shared Testcontainers lifecycle. Read [DatabaseStartup.md](../../docs/DatabaseStartup.md) and [EntityConcepts.md](../../docs/EntityConcepts.md) for implementation detail.
 
-Relevant decisions: ADR-0004, ADR-0037, ADR-0042, ADR-0045–0048, ADR-0050, ADR-0067, ADR-0073–0075, ADR-0102, ADR-0105, ADR-0110, ADR-0118–0119, ADR-0124–0125, ADR-0128–0131, ADR-0136.
+Relevant decisions: ADR-0004, ADR-0037, ADR-0042, ADR-0045–0048, ADR-0050, ADR-0067, ADR-0073–0075, ADR-0102, ADR-0105, ADR-0110, ADR-0118–0119, ADR-0124–0125, ADR-0128–0131, ADR-0136, ADR-0148.

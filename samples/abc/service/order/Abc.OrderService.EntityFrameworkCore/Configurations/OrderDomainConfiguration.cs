@@ -18,7 +18,7 @@ public static class OrderDomainConfiguration
             order.Property(entity => entity.Id).ValueGeneratedNever();
             order.Property(entity => entity.CustomerUserName).HasMaxLength(OrderConsts.CustomerUserNameMaxLength).IsRequired();
             order.Property(entity => entity.NormalizedCustomerUserName).HasMaxLength(OrderConsts.CustomerUserNameMaxLength).IsRequired();
-            order.Property(entity => entity.Status).HasConversion<string>().HasMaxLength(20).IsRequired();
+            order.Property(entity => entity.Status).IsRequired();
             order.Property(entity => entity.Note).HasMaxLength(OrderConsts.NoteMaxLength);
             order.Property(entity => entity.TotalAmount).HasPrecision(18, 2);
             order.HasIndex(entity => entity.NormalizedCustomerUserName);
