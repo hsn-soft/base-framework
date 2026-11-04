@@ -40,4 +40,4 @@ The run says in which step. Nothing is pushed before the packages are checked; i
 
 ## An urgent fix
 
-`hotfix/*` → `dev` → `rel/nuget-candidate` → `rel/nuget-regular`, the same way (the pipeline runs on the pull request into dev and on each push). The branch rule (ADR-0144) also lets `dev` go into `rel/nuget-regular` directly; the usual way is still through the candidate.
+`hotfix/*` → `dev` → `rel/nuget-candidate` → `rel/nuget-regular`, the same way (the pipeline runs on the pull request into dev and on each push). The branch rule (ADR-0144) lets `dev` or `master` go into `rel/nuget-regular` directly (and `rel/nuget-candidate`); the usual way is still through the candidate. Nothing else may go into the two publishing branches.

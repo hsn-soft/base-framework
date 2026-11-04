@@ -27,7 +27,7 @@ Thank you for helping with the HsnSoft Base Framework. This page is the short ve
    do not discover it on the pull request. See [scripts/ci-detector](scripts/ci-detector/README.md).
 3. Open the pull request against `dev`. The `.NETCore Build & Test` workflow must be green: build, unit tests, integration tests and
    the coverage gate.
-4. `rel/nuget-candidate` (from `dev`) and `rel/nuget-regular` (from `dev` or `rel/nuget-candidate`; both also take `bugfix/*`, `hotfix/*` and `rel/*`) are what is published to NuGet, a pre-release and a stable version; a merge into them runs the deploy workflow. Into `dev` or `master` from `feat/*`, `bugfix/*`, `hotfix/*` and `rel/*` ([ADR-0144](docs/adr/0144-the-source-of-every-pull-request-has-a-known-branch-name.md)). See [Releasing](docs/Releasing.md).
+4. `rel/nuget-candidate` (only from `dev` or `master`) and `rel/nuget-regular` (only from `dev`, `master` or `rel/nuget-candidate`) are what is published to NuGet, a pre-release and a stable version; a merge into them runs the deploy workflow. Into `dev` or `master` from `feat/*`, `bugfix/*`, `hotfix/*` and `rel/*` ([ADR-0144](docs/adr/0144-the-source-of-every-pull-request-has-a-known-branch-name.md)). See [Releasing](docs/Releasing.md).
 
 **Work done by Claude (the AI assistant)** follows [ADR-0132](docs/adr/0132-claude-works-on-its-own-branch-from-dev-and-never-merges-into-dev.md) and the root [`CLAUDE.md`](CLAUDE.md): it works on its own `feat/...` branch cut from `dev`, commits and pushes there, and never opens a pull request into `dev` or a release branch, merges into
 them, or pushes to them. You open and merge the pull request (steps 2 to 4 above are yours for its work), and the release pull requests below.

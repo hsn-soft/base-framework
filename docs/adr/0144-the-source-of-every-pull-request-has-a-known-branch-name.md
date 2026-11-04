@@ -13,14 +13,14 @@ The `CI Branch Rule` workflow runs on **every pull request, into any branch**, a
 
 1. **The name of the source** is `dev`, `master`, `feat/*`, `bugfix/*`, `hotfix/*` or `rel/*`; any other name cannot be merged.
 2. **Into `dev` or `master`**: from `feat/*`, `bugfix/*`, `hotfix/*` or `rel/*`.
-3. **Into a release branch (`rel/*`)**: from `bugfix/*`, `hotfix/*` or `rel/*`; and, as the **specific rules** of a release branch (the flow of the repository), also: `rel/nuget-candidate` from `dev`; `rel/nuget-regular` from `dev` (and from `rel/nuget-candidate`, which `rel/*` already allows). A release branch with no specific rule takes only what the general rule says, so a new `rel/*` needs no change to the workflow to take a fix.
+3. **Into a release branch (`rel/*`)**: from `bugfix/*`, `hotfix/*` or `rel/*`, unless the branch has a specific rule. The **specific rules** of the release branches that publish (the flow of the repository) **replace** the general one: `rel/nuget-candidate` takes only `dev` or `master`; `rel/nuget-regular` takes only `dev`, `master` or `rel/nuget-candidate`. A release branch with no specific rule takes what the general rule says, so a new `rel/*` needs no change to the workflow to take a fix.
 4. Another target (not `dev`, `master` or `rel/*`) takes any source of a known name.
 
 A pull request whose check fails cannot be merged once the protection of the branch requires `CI Branch Rule JOB` (a GitHub setting of the maintainer). The same rules are written in `hhs-shared` and the HHS services, each with the specific rules of its own release branches.
 
 ## Consequences
 
-A branch name always says what the branch is for; a new release branch works at once. `rel/nuget-regular` may now take `dev` directly, so ADR-0115's sentence that stable is always a candidate published first no longer holds as a rule: the maintainer chooses the flow, and the check only allows both. A branch that does not start with one of the prefixes has to be renamed before its pull request can be merged.
+A branch name always says what the branch is for; a new release branch works at once. `rel/nuget-regular` may now take `dev` or `master` directly, so ADR-0115's sentence that stable is always a candidate published first no longer holds as a rule: the maintainer chooses the flow, and the check only allows these. A fix branch (`hotfix/*`, `bugfix/*`) cannot go straight into a publishing branch: it goes through `dev` or `master`. A branch that does not start with one of the prefixes has to be renamed before its pull request can be merged.
 
 ## Related
 

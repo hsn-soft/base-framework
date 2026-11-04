@@ -3,10 +3,11 @@ name: 'CI Branch Rule'
 # Which branch may be merged into which (ADR-0144). GitHub cannot limit the source of a merge by itself, so every pull request, into any branch, runs this check, and the protection of each branch requires it.
 # 1. The source must be dev, master, feat/*, bugfix/*, hotfix/* or rel/*; any other name cannot be merged.
 # 2. Into dev or master: from feat/*, bugfix/*, hotfix/* or rel/*.
-# 3. Into a release branch (rel/*): from bugfix/*, hotfix/* or rel/*, and, as the specific rules of a release branch (the flow of the repository), also:
-#   rel/nuget-candidate  also from dev
-#   rel/nuget-regular    also from dev or rel/nuget-candidate
-# A release branch with no specific rule takes only what rule 3 says. Another branch (not dev, master or rel/*) takes any source of a known name.
+# 3. Into a release branch (rel/*): from bugfix/*, hotfix/* or rel/*.
+# 4. The specific release branches (the flow of the repository) have rules of their own, which replace rule 3:
+#      rel/nuget-candidate  only from dev, master
+#      rel/nuget-regular    only from dev, master, rel/nuget-candidate
+# Another branch (not dev, master or rel/*) takes any source of a known name.
 
 on:
   pull_request:
@@ -35,11 +36,14 @@ jobs:
           case "$BASE" in
             dev|master)
               [[ "$HEAD" =~ ^(feat|bugfix|hotfix|rel)/.+ ]] || fail "Into $BASE only from feat/*, bugfix/*, hotfix/* or rel/* (this one is from '$HEAD')." ;;
+            rel/nuget-candidate)
+              [[ "$HEAD" =~ ^(dev|master)$ ]] || fail "Into rel/nuget-candidate only from dev, master (this one is from '$HEAD')." ;;
+            rel/nuget-regular)
+              [[ "$HEAD" =~ ^(dev|master|rel/nuget-candidate)$ ]] || fail "Into rel/nuget-regular only from dev, master, rel/nuget-candidate (this one is from '$HEAD')." ;;
             rel/*)
               extra=""
               case "$BASE" in
-            rel/nuget-candidate) extra="|dev" ;;
-            rel/nuget-regular) extra="|dev|rel/nuget-candidate" ;;
+                *) ;;
               esac
               [[ "$HEAD" =~ ^((bugfix|hotfix|rel)/.+$extra)$ ]] || fail "Into the release branch $BASE only from bugfix/*, hotfix/* or rel/*${extra:+ (also ${extra#|})} (this one is from '$HEAD')." ;;
           esac
