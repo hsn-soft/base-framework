@@ -55,7 +55,10 @@ public static class BaseHostingExtensions
             {
                 if (origins.Contains("*"))
                 {
+                    // 'any origin' is an explicit choice of the settings (the origin '*'), and a cross-origin call that carries credentials is not what it allows: the browser refuses credentials with it
+#pragma warning disable S5122 // the setting names '*' on purpose; nothing is allowed by default (no origin, no policy)
                     policy.AllowAnyOrigin();
+#pragma warning restore S5122
                 }
                 else
                 {

@@ -64,7 +64,7 @@ public class DataSeederTests
         return services.BuildServiceProvider();
     }
 
-    private static Task StartingAsync(IServiceProvider services) => Assert.IsAssignableFrom<IHostedLifecycleService>(Assert.Single(services.GetServices<IHostedService>())).StartingAsync(CancellationToken.None);
+    private static Task StartingAsync(IServiceProvider services) => Assert.IsType<IHostedLifecycleService>(Assert.Single(services.GetServices<IHostedService>()), exactMatch: false).StartingAsync(CancellationToken.None);
 
     [Fact]
     public async Task TheSeeders_RunAfterTheSchema_InTheOrderTheyWereAdded_EachInTheLockOfTheDatabase_WithWhatTheyTake()

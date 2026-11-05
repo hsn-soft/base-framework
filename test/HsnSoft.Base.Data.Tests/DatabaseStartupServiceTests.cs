@@ -44,7 +44,7 @@ public class DatabaseStartupServiceTests
         return services.BuildServiceProvider();
     }
 
-    private static Task StartingAsync(IServiceProvider services) => Assert.IsAssignableFrom<IHostedLifecycleService>(Assert.Single(services.GetServices<IHostedService>())).StartingAsync(CancellationToken.None);
+    private static Task StartingAsync(IServiceProvider services) => Assert.IsType<IHostedLifecycleService>(Assert.Single(services.GetServices<IHostedService>()), exactMatch: false).StartingAsync(CancellationToken.None);
 
     [Fact]
     public async Task TheSteps_RunInTheOrderTheyWereAdded_EachInItsDatabaseLock_AndInAScopeOfItsOwn()
@@ -104,7 +104,7 @@ public class DatabaseStartupServiceTests
         await using ServiceProvider services = Build(log, null, collection => collection
             .AddDatabaseStartupStep("Db-A", "one", (_, _) => Task.CompletedTask)
             .AddDatabaseStartupStep("Db-A", "two", (_, _) => Task.CompletedTask));
-        IHostedLifecycleService service = Assert.IsAssignableFrom<IHostedLifecycleService>(Assert.Single(services.GetServices<IHostedService>()));
+        IHostedLifecycleService service = Assert.IsType<IHostedLifecycleService>(Assert.Single(services.GetServices<IHostedService>()), exactMatch: false);
 
         await service.StartAsync(CancellationToken.None);
         await service.StartedAsync(CancellationToken.None);

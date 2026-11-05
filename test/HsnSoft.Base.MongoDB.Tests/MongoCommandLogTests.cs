@@ -109,6 +109,6 @@ public class MongoCommandLogTests
     {
         MongoCommandLog log = new(new Memory());
 
-        log.Subscribe(new global::MongoDB.Driver.Core.Configuration.ClusterBuilder());
+        Assert.Null(Record.Exception(() => log.Subscribe(new global::MongoDB.Driver.Core.Configuration.ClusterBuilder())));
     }
 }

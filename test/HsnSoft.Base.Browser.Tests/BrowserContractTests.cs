@@ -114,6 +114,6 @@ public class BrowserContractTests
         Assert.Equal((1280, 800), (request.ViewportWidth, request.ViewportHeight));
         Assert.Equal((PaperFormat.A4, false, true, 10), (new PdfOptions().Format, new PdfOptions().Landscape, new PdfOptions().PrintBackground, new PdfOptions().MarginMillimeters));
         Assert.Equal((ImageFormat.Png, 80, false), (new ScreenshotOptions().Format, new ScreenshotOptions().Quality, new ScreenshotOptions().FullPage));
-        Assert.IsAssignableFrom<BrowserException>(new BrowserBlockedException("x"));
+        Assert.IsType<BrowserException>(new BrowserBlockedException("x"), exactMatch: false);
     }
 }

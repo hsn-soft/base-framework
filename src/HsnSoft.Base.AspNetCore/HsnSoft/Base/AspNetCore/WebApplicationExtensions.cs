@@ -106,6 +106,6 @@ public static class WebApplicationExtensions
                     error = includeErrors ? entry.Value.Exception?.Message : null,
                 }),
             },
-            s_json));
+            s_json), context.RequestAborted);
     }
 }
