@@ -286,9 +286,12 @@ public sealed class KafkaTests(KafkaFixture kafkaServer)
             services.AddSingleton(second);
             services.AddEventHandler<Pinged, SlowHandler>(fetchCount: 5);
         }, "same-service");
-        await Task.Delay(TimeSpan.FromSeconds(8));
 
-        Assert.Empty(second.Received);
+        // one partition keeps the order: a message published now is read after anything that would be read again, so when it is the only one handled the old ones were not (no waiting for a quiet time that may be too short)
+        await again.Services.GetRequiredService<IEventBus>().PublishAsync(new Pinged("after-the-restart"));
+        await Support.EventuallyAsync(() => Task.FromResult(!second.Received.IsEmpty), "the message published after the restart to be handled");
+
+        Assert.Equal(["after-the-restart"], second.Received.Select(envelope => envelope.Message.Text));
         await again.StopAsync();
     }
 

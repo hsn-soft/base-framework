@@ -67,10 +67,10 @@ public sealed class EfCoreInboxCleanupTests : IAsyncLifetime
 
     private IHostedService Worker() => _provider.GetServices<IHostedService>().Single();
 
-    private static async Task RunOnce(IHostedService worker, Func<Task<bool>> done)
+    private static async Task RunOnce(IHostedService worker, Func<Task<bool>> done, int attempts = 100)
     {
         await worker.StartAsync(CancellationToken.None);
-        for (int attempt = 0; attempt < 100 && !await done(); attempt++)
+        for (int attempt = 0; attempt < attempts && !await done(); attempt++)
         {
             await Task.Delay(50);
         }
@@ -105,7 +105,7 @@ public sealed class EfCoreInboxCleanupTests : IAsyncLifetime
         await Start(options => options.RetentionPeriod = TimeSpan.Zero);
         Guid old = await AddRow(InboxStatuses.Completed, TimeSpan.FromDays(400));
 
-        await RunOnce(Worker(), () => Task.FromResult(false));
+        await RunOnce(Worker(), () => Task.FromResult(false), attempts: 6);   // nothing is waited for: the cleanup runs at the start when it is on, so a third of a second is the proof that it is off
 
         Assert.Contains(old, await Ids());
     }
