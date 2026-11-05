@@ -46,7 +46,7 @@ done < <(
 
 kept=0
 selected=()
-for path in "${targets[@]}"; do
+for path in ${targets[@]+"${targets[@]}"}; do
     # never delete something that is committed
     if [ -n "$(git ls-files -- "$path" 2>/dev/null | head -n 1)" ]; then
         echo "Keeping '$path' (it contains tracked files)"
@@ -61,10 +61,10 @@ echo
 
 if [ "$DRY_RUN" = true ]; then
     info "## DRY RUN: NOTHING IS DELETED -------------------------------------------------"
-    for path in "${selected[@]}"; do echo "would delete $path"; done
+    for path in ${selected[@]+"${selected[@]}"}; do echo "would delete $path"; done
 else
     info "## DELETING --------------------------------------------------------------------"
-    for path in "${selected[@]}"; do
+    for path in ${selected[@]+"${selected[@]}"}; do
         rm -rf -- "$path"
         echo "deleted $path"
     done
