@@ -13,6 +13,7 @@ paths:
 - Centralize host limits and proxy settings in the existing hosting options. Trust forwarded headers only from configured proxies/networks, validate required settings at startup, and preserve safe startup failure behavior.
 - Preserve the distinction between liveness, startup, and readiness checks. A dependency outage must not accidentally make a liveness probe fail.
 - Preserve process identity (`AppInfo`), the configured thread-pool minimum, and the cross-event handler concurrency limit.
+- A product's shared hosting is in layers (ADR-0151): the core (logging only), the kind of host (`.Http` for web hosts, `.Gateways`, `.Microservices`, `.Agents`), and what a host chooses (broker, cache, database, texts) referenced only by the host that uses it.
 - Read [Hosting.md](../../docs/Hosting.md) and [Health.md](../../docs/Health.md) before changing host options, client lifetime, health checks, or startup behavior.
 
-Relevant decisions: ADR-0117, ADR-0119–0121, ADR-0127.
+Relevant decisions: ADR-0117, ADR-0119–0121, ADR-0127, ADR-0151.

@@ -39,7 +39,7 @@ public sealed class CustomerContentVpSetting : FullAuditedEntity<Guid>, IScopeSu
             ScopeKey = Guard.NotNullOrWhiteSpace(scopeKey, nameof(ScopeKey), CustomerContentVpSettingConsts.ScopeKeyMaxLength).Trim(),
             DomainName = Guard.NotNullOrWhiteSpace(domainName, nameof(DomainName), CustomerContentVpSettingConsts.DomainNameMaxLength).Trim()
         };
-        entity.NormalizedDomainName = StringHelper.Normalize(entity.DomainName);
+        entity.NormalizedDomainName = Guard.NotNullOrWhiteSpace(StringHelper.Normalize(entity.DomainName), nameof(NormalizedDomainName));
         entity.Update(isBlocked, dailyDirectVideoGenerationLimit, dailyTrendVideoGenerationLimit, dailyAnalysisVideoGenerationLimit, isAnalysisSourcesEnabled);
         return entity;
     }

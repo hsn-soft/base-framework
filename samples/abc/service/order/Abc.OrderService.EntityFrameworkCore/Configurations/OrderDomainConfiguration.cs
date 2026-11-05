@@ -12,7 +12,10 @@ public static class OrderDomainConfiguration
 
         modelBuilder.Entity<Order>(order =>
         {
-            order.ToTable(EfCoreOrderDbProperties.DbTablePrefix + OrderConsts.TableName, EfCoreOrderDbProperties.DbSchema);
+            order.ToTable(EfCoreOrderDbProperties.DbTablePrefix + OrderConsts.TableName, EfCoreOrderDbProperties.DbSchema, table =>
+            {
+                table.HasCheckConstraint("CK_Order_NormalizedCustomerUserName_NotEmpty", "\"NormalizedCustomerUserName\" <> ''");
+            });
             order.HasKey(entity => entity.Id);
             order.Property(entity => entity.ShippingAddress).HasMaxLength(OrderConsts.ShippingAddressMaxLength).IsRequired();
             order.Property(entity => entity.Id).ValueGeneratedNever();

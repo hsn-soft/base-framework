@@ -163,3 +163,5 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 - A test that fixes the allowed fields per log type, and configurable per-type `RemoveFields`/`AddFields` ([ADR-0019](0019-log-fields-pipeline.md)).
 - A `SharedLog` in a measured run (a product's shared library that logs only when Redis is down), so its column of `docs/GraylogFields.md` has data.
 - Revoke and rotate the SonarQube token that was once pasted in a conversation; keep tokens in `scripts/sonar/.env` only.
+| [0150](0150-a-normalized-field-is-never-empty-is-unique-in-its-set-and-is-checked-before-the-database.md) | A normalized field is never empty, is unique in its set, and is checked before the database | Accepted | 2026-11-05 |
+| [0151](0151-the-shared-hosting-of-a-product-is-in-layers-a-core-then-the-kind-of-host-then-what-a-host-chooses.md) | The shared hosting of a product is in layers: a core, then the kind of host, then what a host chooses | Accepted | 2026-11-05 |

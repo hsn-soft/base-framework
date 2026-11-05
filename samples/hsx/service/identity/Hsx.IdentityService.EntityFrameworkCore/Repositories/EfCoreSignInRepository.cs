@@ -1,4 +1,3 @@
-using HsnSoft.Base.Text;
 using Hsx.IdentityService.Domain.AppUserDomain.Entities;
 using Hsx.IdentityService.Domain.AppUserDomain.Repositories;
 using Hsx.IdentityService.Domain.TenantDomain.Entities;
@@ -12,10 +11,9 @@ namespace Hsx.IdentityService.EntityFrameworkCore.Repositories;
 /// </summary>
 internal sealed class EfCoreSignInRepository(IdentityDbContext db) : ISignInRepository
 {
-    public async Task<SignInInfo?> FindByEmailAsync(string email, CancellationToken cancellationToken = default)
+    public async Task<SignInInfo?> FindByEmailAsync(string normalizedEmail, CancellationToken cancellationToken = default)
     {
-        string normalized = StringHelper.Normalize(email);
-        AppUser? user = await db.AppUsers.IgnoreQueryFilters().AsNoTracking().FirstOrDefaultAsync(candidate => candidate.NormalizedEmail == normalized, cancellationToken).ConfigureAwait(false);
+        AppUser? user = await db.AppUsers.IgnoreQueryFilters().AsNoTracking().FirstOrDefaultAsync(candidate => candidate.NormalizedEmail == normalizedEmail, cancellationToken).ConfigureAwait(false);
         return user is null ? null : await LoadAsync(user, cancellationToken).ConfigureAwait(false);
     }
 

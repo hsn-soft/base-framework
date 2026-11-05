@@ -1,5 +1,5 @@
-using Edx.Shared.Hosting;
 using Edx.Shared.Hosting.Gateways;
+using Edx.Shared.Hosting.Http;
 using HsnSoft.Base.AspNetCore;
 using HsnSoft.Base.Authentication;
 using HsnSoft.Base.Caching.StackExchangeRedis;

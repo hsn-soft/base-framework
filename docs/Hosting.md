@@ -14,6 +14,10 @@ return await builder.RunBaseAsync(app =>
 });
 ```
 
+## The shared hosting of a product
+
+A product that has several hosts keeps their composition in shared hosting projects, in layers (ADR-0151): `{Product}.Shared.Hosting` has what every host has (the logging) and no ASP.NET; `.Http` has what every web host has (the web api shell, Swagger, the bearer token) and the gateways, microservices and gRPC services build on it; an agent has `.Agents` on the core; and the message broker, Redis, a database and the texts of several languages are referenced only by the host that uses them, so a host without a broker does not restore one.
+
 ## Settings
 
 ```json

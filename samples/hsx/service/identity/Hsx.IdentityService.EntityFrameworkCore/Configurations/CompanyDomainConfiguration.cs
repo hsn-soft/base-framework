@@ -12,7 +12,10 @@ public static class CompanyDomainConfiguration
 
         modelBuilder.Entity<Company>(entity =>
         {
-            entity.ToTable(EfCoreIdentityDbProperties.DbTablePrefix + CompanyConsts.TableName, EfCoreIdentityDbProperties.DbSchema);
+            entity.ToTable(EfCoreIdentityDbProperties.DbTablePrefix + CompanyConsts.TableName, EfCoreIdentityDbProperties.DbSchema, table =>
+            {
+                table.HasCheckConstraint("CK_Company_NormalizedName_NotEmpty", "\"NormalizedName\" <> ''");
+            });
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Id).ValueGeneratedNever();
             entity.Property(e => e.Title).HasMaxLength(CompanyConsts.TitleMaxLength).IsRequired();

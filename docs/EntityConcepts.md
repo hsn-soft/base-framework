@@ -89,6 +89,10 @@ The filters are named (`SoftDelete`, `MultiTenant`), so each can be ignored on i
 MongoDB has no change tracking, so the repository asks `MongoEntityConcepts` (registered by `AddBaseMongo`): `Visible(filter)` adds the filters to a query, `Created(entity)`, `Modified(entity)` before a write, and
 `SoftDeleted(entity)` before a delete (`true`: replace the document, it was marked; `false`: delete it). The filters read the elements `IsDeleted` and `TenantId`, so map the properties under their names. What a package adds (the tenants of `MultiTenancy.MongoDB`) is an `IMongoEntityConcept` that `MongoEntityConcepts` asks on every query and insert.
 
+## Enums and normalized fields
+
+An enum is stored by its number: the model has no converter to text (ADR-0148), and every member has its number written and never changed. A text that a list compares has a `Normalized...` twin made by `StringHelper.Normalize` (ADR-0149); the twin is never empty (the entity refuses it, the column is required, a check `<> ''`), it is unique in the set the service identifies the row by (a tenant and a name, for a row of a tenant), the application asks the repository for a duplicate before the database does and answers the business exception, and a query matches an `Id` or the normalized field: the application normalizes the input and a repository method takes `normalizedEmail`, not `email` (ADR-0150).
+
 ## Not done
 
 A unique index still counts the deleted rows and the other tenants' rows (a user name or a sku is unique in the whole system); the application checks it without the filters to answer a business error. Cascades

@@ -1,4 +1,4 @@
-using Abc.Shared.Hosting;
+using Abc.Shared.Hosting.Http;
 using Abc.Shared.Hosting.Microservices;
 using Abc.Shared.Localization;
 using Abc.ShipmentService.Application;

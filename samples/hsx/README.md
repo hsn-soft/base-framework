@@ -8,7 +8,7 @@ A copy of the *shape* of the hhs system, built on the new framework ([ADR-0058](
 PostgreSQL, MongoDB and Redis of the local infrastructure on their default ports. Make the keys of the tokens first:
 
 ```
-dotnet run samples/scripts/generate-rsa-keys.cs -- samples/hsx/app/Hsx.AuthServer.Host/private_key.xml samples/hsx/shared/Hsx.Shared.Hosting/public_key.xml
+dotnet run samples/scripts/generate-rsa-keys.cs -- samples/hsx/app/Hsx.AuthServer.Host/private_key.xml samples/hsx/shared/Hsx.Shared.Hosting.Http/public_key.xml
 samples/hsx/run-all.sh        # the identity and content services make their databases (Hsx_Identity_Dev, Hsx_Content_Dev) and the demo data
 samples/hsx/smoke-test.sh     # what each demo user sees through the gateway (7200)
 ```

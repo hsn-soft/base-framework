@@ -195,7 +195,10 @@ namespace Hsx.ContentService.EntityFrameworkCore.Migrations
 
                     b.HasIndex("ScopeKey");
 
-                    b.ToTable("CustomerContent", (string)null);
+                    b.ToTable("CustomerContent", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_CustomerContent_NormalizedContentKey_NotEmpty", "\"NormalizedContentKey\" <> ''");
+                        });
                 });
 
             modelBuilder.Entity("Hsx.ContentService.Domain.CustomerContentVisitDomain.Entities.CustomerContentVisit", b =>
@@ -290,7 +293,10 @@ namespace Hsx.ContentService.EntityFrameworkCore.Migrations
 
                     b.HasIndex("ScopeKey");
 
-                    b.ToTable("CustomerContentVpSetting", (string)null);
+                    b.ToTable("CustomerContentVpSetting", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_CustomerContentVpSetting_NormalizedDomainName_NotEmpty", "\"NormalizedDomainName\" <> ''");
+                        });
                 });
 #pragma warning restore 612, 618
         }

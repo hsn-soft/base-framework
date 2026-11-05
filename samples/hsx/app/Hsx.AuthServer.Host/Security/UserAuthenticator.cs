@@ -1,5 +1,6 @@
 using HsnSoft.Base;
 using HsnSoft.Base.Domain.Repositories;
+using HsnSoft.Base.Text;
 using Hsx.IdentityService.Domain.AppUserDomain.Entities;
 using Hsx.IdentityService.Domain.AppUserDomain.Repositories;
 using Hsx.IdentityService.Domain.AppUserDomain.Security;
@@ -50,7 +51,7 @@ public sealed class UserAuthenticator(
     /// <summary>The user, or <see langword="null"/> when the email is unknown, the user or its tenant is not active, the user is locked out or the password is wrong (the caller cannot tell which).</summary>
     public async Task<AuthenticatedUser?> AuthenticateAsync(string email, string password, SignInOrigin origin, CancellationToken cancellationToken = default)
     {
-        SignInInfo? info = await signIn.FindByEmailAsync(email, cancellationToken).ConfigureAwait(false);
+        SignInInfo? info = await signIn.FindByEmailAsync(StringHelper.Normalize(email), cancellationToken).ConfigureAwait(false);
         bool passwordMatches = PasswordHasher.Verify(info?.User.PasswordHash ?? s_unknownUserHash, password);
         if (info is null)
         {

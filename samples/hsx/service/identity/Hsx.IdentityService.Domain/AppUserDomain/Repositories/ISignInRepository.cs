@@ -10,7 +10,7 @@ public sealed record SignInInfo(AppUser User, Tenant Tenant, IReadOnlyList<strin
 public interface ISignInRepository
 {
     /// <summary>The user with this email (compared without regard to case) with its tenant, roles and scope keys; nothing when there is no such user.</summary>
-    Task<SignInInfo?> FindByEmailAsync(string email, CancellationToken cancellationToken = default);
+    Task<SignInInfo?> FindByEmailAsync(string normalizedEmail, CancellationToken cancellationToken = default);
 
     /// <summary>The same for a user whose id is known (a refresh token names its user).</summary>
     Task<SignInInfo?> FindByIdAsync(Guid userId, CancellationToken cancellationToken = default);

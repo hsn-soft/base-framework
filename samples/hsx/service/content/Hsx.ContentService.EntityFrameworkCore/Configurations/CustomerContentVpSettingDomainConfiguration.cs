@@ -12,7 +12,10 @@ public static class CustomerContentVpSettingDomainConfiguration
 
         modelBuilder.Entity<CustomerContentVpSetting>(entity =>
         {
-            entity.ToTable(EfCoreContentDbProperties.DbTablePrefix + CustomerContentVpSettingConsts.TableName, EfCoreContentDbProperties.DbSchema);
+            entity.ToTable(EfCoreContentDbProperties.DbTablePrefix + CustomerContentVpSettingConsts.TableName, EfCoreContentDbProperties.DbSchema, table =>
+            {
+                table.HasCheckConstraint("CK_CustomerContentVpSetting_NormalizedDomainName_NotEmpty", "\"NormalizedDomainName\" <> ''");
+            });
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Id).ValueGeneratedNever();
             entity.Property(e => e.ScopeKey).HasMaxLength(CustomerContentVpSettingConsts.ScopeKeyMaxLength).IsRequired();

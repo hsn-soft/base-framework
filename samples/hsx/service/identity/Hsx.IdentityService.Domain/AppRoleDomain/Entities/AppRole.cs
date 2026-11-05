@@ -61,6 +61,6 @@ public sealed class AppRole : FullAuditedEntity<Guid>, IMultiTenant
     public void Update(string name)
     {
         Name = Guard.NotNullOrWhiteSpace(name, nameof(Name), AppRoleConsts.NameMaxLength).Trim();
-        NormalizedName = StringHelper.Normalize(Name);
+        NormalizedName = Guard.NotNullOrWhiteSpace(StringHelper.Normalize(Name), nameof(NormalizedName));
     }
 }

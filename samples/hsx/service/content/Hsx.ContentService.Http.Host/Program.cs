@@ -9,7 +9,7 @@ using Hsx.ContentService.Application;
 using Hsx.ContentService.Domain.CustomerContentDomain.Entities;
 using Hsx.ContentService.EntityFrameworkCore;
 using Hsx.ContentService.Http.Host.EventHandlers;
-using Hsx.Shared.Hosting;
+using Hsx.Shared.Hosting.Http;
 using Hsx.Shared.Hosting.Microservices;
 using Hsx.Shared.Localization;
 

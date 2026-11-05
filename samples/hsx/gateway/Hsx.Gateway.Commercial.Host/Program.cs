@@ -2,8 +2,8 @@ using HsnSoft.Base.AspNetCore;
 using HsnSoft.Base.Authentication;
 using HsnSoft.Base.Caching.StackExchangeRedis;
 using HsnSoft.Base.Logging.Serilog;
-using Hsx.Shared.Hosting;
 using Hsx.Shared.Hosting.Gateways;
+using Hsx.Shared.Hosting.Http;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.AddBaseHosting();   // the .env file, the port, the limits of Kestrel, the proxies and the time to stop: the section Hosting

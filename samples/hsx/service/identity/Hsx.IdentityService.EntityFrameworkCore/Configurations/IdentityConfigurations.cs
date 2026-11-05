@@ -18,7 +18,10 @@ public static class TenantDomainConfiguration
 
         modelBuilder.Entity<Tenant>(entity =>
         {
-            entity.ToTable(EfCoreIdentityDbProperties.DbTablePrefix + TenantConsts.TableName, EfCoreIdentityDbProperties.DbSchema);
+            entity.ToTable(EfCoreIdentityDbProperties.DbTablePrefix + TenantConsts.TableName, EfCoreIdentityDbProperties.DbSchema, table =>
+            {
+                table.HasCheckConstraint("CK_Tenant_NormalizedName_NotEmpty", "\"NormalizedName\" <> ''");
+            });
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Id).ValueGeneratedNever();
             entity.Property(e => e.TenantType).IsRequired();
@@ -41,7 +44,11 @@ public static class AppUserDomainConfiguration
 
         modelBuilder.Entity<AppUser>(entity =>
         {
-            entity.ToTable(EfCoreIdentityDbProperties.DbTablePrefix + AppUserConsts.TableName, EfCoreIdentityDbProperties.DbSchema);
+            entity.ToTable(EfCoreIdentityDbProperties.DbTablePrefix + AppUserConsts.TableName, EfCoreIdentityDbProperties.DbSchema, table =>
+            {
+                table.HasCheckConstraint("CK_AppUser_NormalizedUserName_NotEmpty", "\"NormalizedUserName\" <> ''");
+                table.HasCheckConstraint("CK_AppUser_NormalizedEmail_NotEmpty", "\"NormalizedEmail\" <> ''");
+            });
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Id).ValueGeneratedNever();
             entity.Property(e => e.UserName).HasMaxLength(AppUserConsts.UserNameMaxLength).IsRequired();
@@ -65,7 +72,10 @@ public static class AppRoleDomainConfiguration
 
         modelBuilder.Entity<AppRole>(entity =>
         {
-            entity.ToTable(EfCoreIdentityDbProperties.DbTablePrefix + AppRoleConsts.TableName, EfCoreIdentityDbProperties.DbSchema);
+            entity.ToTable(EfCoreIdentityDbProperties.DbTablePrefix + AppRoleConsts.TableName, EfCoreIdentityDbProperties.DbSchema, table =>
+            {
+                table.HasCheckConstraint("CK_AppRole_NormalizedName_NotEmpty", "\"NormalizedName\" <> ''");
+            });
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Id).ValueGeneratedNever();
             entity.Property(e => e.Name).HasMaxLength(AppRoleConsts.NameMaxLength).IsRequired();

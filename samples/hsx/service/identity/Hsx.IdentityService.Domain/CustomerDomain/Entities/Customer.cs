@@ -28,7 +28,7 @@ public sealed class Customer : FullAuditedEntity<Guid>
             CompanyId = Guard.NotDefault<Guid>(companyId, nameof(CompanyId)),
             Domain = Guard.NotNullOrWhiteSpace(domain, nameof(Domain), CustomerConsts.DomainMaxLength).Trim()
         };
-        entity.NormalizedDomain = StringHelper.Normalize(entity.Domain);
+        entity.NormalizedDomain = Guard.NotNullOrWhiteSpace(StringHelper.Normalize(entity.Domain), nameof(NormalizedDomain));
         return entity;
     }
 }

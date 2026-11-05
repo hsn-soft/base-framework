@@ -44,7 +44,7 @@ public sealed class Tenant : FullAuditedEntity<Guid>
             Name = Guard.NotNullOrWhiteSpace(name, nameof(Name), TenantConsts.NameMaxLength).Trim().ToLowerInvariant(),
             IsActive = true,
         };
-        tenant.NormalizedName = StringHelper.Normalize(tenant.Name);
+        tenant.NormalizedName = Guard.NotNullOrWhiteSpace(StringHelper.Normalize(tenant.Name), nameof(NormalizedName));
         tenant.Update(title, true);
         tenant.PlaceUnder(parent);
         return tenant;

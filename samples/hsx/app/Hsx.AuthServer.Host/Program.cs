@@ -6,7 +6,7 @@ using HsnSoft.Base.Logging.Serilog;
 using Hsx.AuthServer.Host.Security;
 using Hsx.AuthServer.Host.Services;
 using Hsx.IdentityService.EntityFrameworkCore;
-using Hsx.Shared.Hosting;
+using Hsx.Shared.Hosting.Http;
 using Hsx.Shared.Hosting.Microservices;
 using Hsx.Shared.Localization;
 

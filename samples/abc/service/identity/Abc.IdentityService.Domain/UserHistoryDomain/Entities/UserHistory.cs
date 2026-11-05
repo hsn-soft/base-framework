@@ -46,7 +46,7 @@ public sealed class UserHistory : FullAuditedEntity<Guid>, IMultiTenant
             UserName = Guard.NotNullOrWhiteSpace(userName, nameof(UserName), UserHistoryConsts.UserNameMaxLength),
             TenantId = tenantId ?? Guid.Empty,
         };
-        history.NormalizedUserName = StringHelper.Normalize(history.UserName);
+        history.NormalizedUserName = Guard.NotNullOrWhiteSpace(StringHelper.Normalize(history.UserName), nameof(NormalizedUserName));
         history.Change(action, note);
         return history;
     }

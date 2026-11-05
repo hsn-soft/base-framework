@@ -26,7 +26,10 @@ public static class IdentityDomainConfiguration
 
         modelBuilder.Entity<Role>(role =>
         {
-            role.ToTable(EfCoreIdentityDbProperties.DbTablePrefix + IdentityConsts.RoleTable, EfCoreIdentityDbProperties.DbSchema);
+            role.ToTable(EfCoreIdentityDbProperties.DbTablePrefix + IdentityConsts.RoleTable, EfCoreIdentityDbProperties.DbSchema, table =>
+            {
+                table.HasCheckConstraint("CK_Role_NormalizedName_NotEmpty", "\"NormalizedName\" <> ''");
+            });
             role.HasKey(entity => entity.Id);
             role.Property(entity => entity.Id).ValueGeneratedNever();
             role.Property(entity => entity.Name).HasMaxLength(IdentityConsts.NameMaxLength).IsRequired();
@@ -38,7 +41,11 @@ public static class IdentityDomainConfiguration
 
         modelBuilder.Entity<User>(user =>
         {
-            user.ToTable(EfCoreIdentityDbProperties.DbTablePrefix + IdentityConsts.UserTable, EfCoreIdentityDbProperties.DbSchema);
+            user.ToTable(EfCoreIdentityDbProperties.DbTablePrefix + IdentityConsts.UserTable, EfCoreIdentityDbProperties.DbSchema, table =>
+            {
+                table.HasCheckConstraint("CK_User_NormalizedUserName_NotEmpty", "\"NormalizedUserName\" <> ''");
+                table.HasCheckConstraint("CK_User_NormalizedEmail_NotEmpty", "\"NormalizedEmail\" <> ''");
+            });
             user.HasKey(entity => entity.Id);
             user.Property(entity => entity.Id).ValueGeneratedNever();
             user.Property(entity => entity.UserName).HasMaxLength(IdentityConsts.UserNameMaxLength).IsRequired();

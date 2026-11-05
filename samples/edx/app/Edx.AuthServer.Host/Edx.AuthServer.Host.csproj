@@ -18,7 +18,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\shared\Edx.Shared.Helper\Edx.Shared.Helper.csproj" />
-        <ProjectReference Include="..\..\shared\Edx.Shared.Hosting\Edx.Shared.Hosting.csproj" />
+        <ProjectReference Include="..\..\shared\Edx.Shared.Hosting.Http\Edx.Shared.Hosting.Http.csproj" />
     </ItemGroup>
 
     <ItemGroup>

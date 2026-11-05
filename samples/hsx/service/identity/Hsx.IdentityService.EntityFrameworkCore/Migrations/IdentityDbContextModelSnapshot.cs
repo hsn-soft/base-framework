@@ -82,7 +82,10 @@ namespace Hsx.IdentityService.EntityFrameworkCore.Migrations
                     b.HasIndex("TenantId", "NormalizedName")
                         .IsUnique();
 
-                    b.ToTable("AppRole", (string)null);
+                    b.ToTable("AppRole", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_AppRole_NormalizedName_NotEmpty", "\"NormalizedName\" <> ''");
+                        });
                 });
 
             modelBuilder.Entity("Hsx.IdentityService.Domain.AppRoleSubscriptionDomain.Entities.AppRoleSubscription", b =>
@@ -192,7 +195,12 @@ namespace Hsx.IdentityService.EntityFrameworkCore.Migrations
                     b.HasIndex("TenantId", "NormalizedUserName")
                         .IsUnique();
 
-                    b.ToTable("AppUser", (string)null);
+                    b.ToTable("AppUser", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_AppUser_NormalizedEmail_NotEmpty", "\"NormalizedEmail\" <> ''");
+
+                            t.HasCheckConstraint("CK_AppUser_NormalizedUserName_NotEmpty", "\"NormalizedUserName\" <> ''");
+                        });
                 });
 
             modelBuilder.Entity("Hsx.IdentityService.Domain.AppUserRoleDomain.Entities.AppUserRole", b =>
@@ -384,7 +392,10 @@ namespace Hsx.IdentityService.EntityFrameworkCore.Migrations
                     b.HasIndex("NormalizedName")
                         .IsUnique();
 
-                    b.ToTable("Company", (string)null);
+                    b.ToTable("Company", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Company_NormalizedName_NotEmpty", "\"NormalizedName\" <> ''");
+                        });
                 });
 
             modelBuilder.Entity("Hsx.IdentityService.Domain.CustomerDomain.Entities.Customer", b =>
@@ -433,7 +444,10 @@ namespace Hsx.IdentityService.EntityFrameworkCore.Migrations
                     b.HasIndex("NormalizedDomain")
                         .IsUnique();
 
-                    b.ToTable("Customer", (string)null);
+                    b.ToTable("Customer", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Customer_NormalizedDomain_NotEmpty", "\"NormalizedDomain\" <> ''");
+                        });
                 });
 
             modelBuilder.Entity("Hsx.IdentityService.Domain.MenuDomain.Entities.Menu", b =>
@@ -710,7 +724,10 @@ namespace Hsx.IdentityService.EntityFrameworkCore.Migrations
 
                     b.HasIndex("ParentId");
 
-                    b.ToTable("Tenant", (string)null);
+                    b.ToTable("Tenant", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Tenant_NormalizedName_NotEmpty", "\"NormalizedName\" <> ''");
+                        });
                 });
 
             modelBuilder.Entity("Hsx.IdentityService.Domain.MenuDomain.Entities.Menu", b =>

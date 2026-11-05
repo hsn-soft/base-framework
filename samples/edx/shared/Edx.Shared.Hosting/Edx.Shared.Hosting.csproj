@@ -1,23 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <!--
-        What every host of the Edx system shares, a gateway, the auth server or a microservice: logging, the answers of a web api, Swagger, health, and reading the bearer token. It reaches no broker: Kafka is the microservices' (Edx.Shared.Hosting.Microservices). The framework knows no
-        product; this is Edx's own choice from it, in the order its hosts need. The gateways and the microservices build on it (Edx.Shared.Hosting.Gateways, Edx.Shared.Hosting.Microservices).
+        What every host of the Edx system shares, whatever it is (a web host, a gateway, a microservice, an agent): the logging, and nothing of ASP.NET, a token or a database. The web hosts build on Edx.Shared.Hosting.Http;
+        the message broker, the cache and a database are the choice of each host (framework ADR-0151, sample ADR-0067).
     -->
 
     <ItemGroup>
-        <!-- the public key every host checks tokens with (made with samples/scripts/generate-rsa-keys.cs, not in git); copied next to the assemblies of the hosts -->
-        <Content Include="public_key.xml" Condition="Exists('public_key.xml')" CopyToOutputDirectory="PreserveNewest" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <FrameworkReference Include="Microsoft.AspNetCore.App" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.AspNetCore.Swashbuckle\HsnSoft.Base.AspNetCore.Swashbuckle.csproj" />
-        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.AspNetCore.WebApi\HsnSoft.Base.AspNetCore.WebApi.csproj" />
-        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.Authentication\HsnSoft.Base.Authentication.csproj" />
         <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.Logging.Serilog\HsnSoft.Base.Logging.Serilog.csproj" />
     </ItemGroup>
 

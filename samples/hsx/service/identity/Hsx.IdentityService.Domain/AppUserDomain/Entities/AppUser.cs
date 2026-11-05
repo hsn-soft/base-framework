@@ -55,7 +55,7 @@ public sealed class AppUser : FullAuditedEntity<Guid>, IMultiTenant
             UserName = Guard.NotNullOrWhiteSpace(userName, nameof(UserName), AppUserConsts.UserNameMaxLength).Trim(),
             IsActive = true,
         };
-        user.NormalizedUserName = StringHelper.Normalize(user.UserName);
+        user.NormalizedUserName = Guard.NotNullOrWhiteSpace(StringHelper.Normalize(user.UserName), nameof(NormalizedUserName));
         user.Update(email, displayName, languageCode, true);
         user.SetPassword(password);
         return user;
@@ -64,7 +64,7 @@ public sealed class AppUser : FullAuditedEntity<Guid>, IMultiTenant
     public void Update(string email, string displayName, string? languageCode, bool isActive)
     {
         Email = Guard.NotNullOrWhiteSpace(email, nameof(Email), AppUserConsts.EmailMaxLength).Trim();
-        NormalizedEmail = StringHelper.Normalize(Email);
+        NormalizedEmail = Guard.NotNullOrWhiteSpace(StringHelper.Normalize(Email), nameof(NormalizedEmail));
         DisplayName = Guard.NotNullOrWhiteSpace(displayName, nameof(DisplayName), AppUserConsts.DisplayNameMaxLength).Trim();
         LanguageCode = string.IsNullOrWhiteSpace(languageCode) ? null : Guard.Length(languageCode.Trim().ToLowerInvariant(), nameof(LanguageCode), AppUserConsts.LanguageCodeMaxLength);
         IsActive = isActive;

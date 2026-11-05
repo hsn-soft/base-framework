@@ -27,7 +27,7 @@ public sealed class Company : FullAuditedEntity<Guid>
             Id = Guid.CreateVersion7(),
             Name = Guard.NotNullOrWhiteSpace(name, nameof(Name), CompanyConsts.NameMaxLength).Trim()
         };
-        entity.NormalizedName = StringHelper.Normalize(entity.Name);
+        entity.NormalizedName = Guard.NotNullOrWhiteSpace(StringHelper.Normalize(entity.Name), nameof(NormalizedName));
         entity.Update(title);
         return entity;
     }

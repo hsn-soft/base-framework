@@ -5,7 +5,7 @@ using HsnSoft.Base.EventBus;
 using HsnSoft.Base.Localization;
 using HsnSoft.Base.Logging.Serilog;
 using HsnSoft.Base.MultiTenancy;
-using Hsx.Shared.Hosting;
+using Hsx.Shared.Hosting.Http;
 using Hsx.Shared.Hosting.Microservices;
 using Hsx.Shared.Localization;
 using Hsx.VideoGeneratorService.Application;

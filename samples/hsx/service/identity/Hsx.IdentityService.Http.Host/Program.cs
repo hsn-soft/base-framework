@@ -8,7 +8,7 @@ using Hsx.IdentityService.Application;
 using Hsx.IdentityService.Domain.CompanyDomain.Entities;
 using Hsx.IdentityService.EntityFrameworkCore;
 using Hsx.IdentityService.Http.Host;
-using Hsx.Shared.Hosting;
+using Hsx.Shared.Hosting.Http;
 using Hsx.Shared.Hosting.Microservices;
 using Hsx.Shared.Localization;
 

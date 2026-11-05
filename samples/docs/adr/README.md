@@ -7,6 +7,8 @@ New ADR: copy the framework's [`0000-template.md`](../../../docs/adr/0000-templa
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
+| [0067](0067-the-shared-hosting-of-a-sample-is-in-layers.md) | The shared hosting of a sample is in layers: the logging in `Shared.Hosting`, the web host in `Shared.Hosting.Http` | Accepted | 2026-11-05 |
+| [0066](0066-the-samples-follow-the-rules-of-the-normalized-fields.md) | The samples follow the rules of the normalized fields (never empty, checked, repositories take the normalized text) | Accepted | 2026-11-05 |
 | [0065](0065-the-samples-store-an-enum-by-its-number-in-their-relational-databases.md) | The samples store an enum by its number in their relational databases (Hsx has a migration that converts the rows) | Accepted | 2026-11-05 |
 | [0064](0064-who-owns-a-record-in-hsx-tenant-scope-neither-and-how-a-sale-moves-between-resellers.md) | Who owns a record in Hsx (tenant, scope or neither), the system tenant writes the sales, role types, and how a sale moves between resellers | Accepted | 2026-11-03 |
 | [0063](0063-companies-customers-and-subscriptions-belong-to-the-tenant-that-made-them.md) | Companies, customers and subscriptions belong to the tenant that made them; the tenant management makes them in one transaction | Superseded by [ADR-0064](0064-who-owns-a-record-in-hsx-tenant-scope-neither-and-how-a-sale-moves-between-resellers.md) | 2026-11-03 |
