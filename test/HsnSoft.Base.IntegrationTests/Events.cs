@@ -145,9 +145,14 @@ public sealed class StopProbe
 {
     public TaskCompletionSource Started { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
+    /// <summary>Set when a handler saw its cancellation. A test waits for it (bounded), it does not read a flag right after the stop: the cancellation reaches the handler on its own thread, a moment after the stop returned.</summary>
+    public TaskCompletionSource CancelledSignal { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
     public bool Completed { get; set; }
 
     public bool Cancelled { get; set; }
+
+    public Task WaitUntilCancelledAsync() => CancelledSignal.Task.WaitAsync(TimeSpan.FromSeconds(30));
 }
 
 public sealed class LongRunningHandler(StopProbe probe) : IIntegrationEventHandler<Pinged>
@@ -163,6 +168,7 @@ public sealed class LongRunningHandler(StopProbe probe) : IIntegrationEventHandl
         catch (OperationCanceledException)
         {
             probe.Cancelled = true;
+            probe.CancelledSignal.TrySetResult();
             throw;
         }
     }
