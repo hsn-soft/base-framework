@@ -156,7 +156,12 @@ public class RefreshableSinkTests
 
         sink.Refresh();
         sink.Dispose();
-        await Task.Delay(400);
+
+        // the old sink is disposed when the grace time has passed: wait for that, not for a number of milliseconds a slow runner may overrun
+        for (int i = 0; i < 1000 && !built.All(one => one.Disposals == 1); i++)
+        {
+            await Task.Delay(10);
+        }
 
         Assert.All(built, one => Assert.Equal(1, one.Disposals));
     }
