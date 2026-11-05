@@ -8,6 +8,10 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\..\shared\Hsx.Shared.Contracts\Hsx.Shared.Contracts.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
         <ProjectReference Include="..\Hsx.IdentityService.Domain\Hsx.IdentityService.Domain.csproj" />
     </ItemGroup>
 

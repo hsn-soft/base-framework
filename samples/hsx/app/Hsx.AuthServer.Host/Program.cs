@@ -23,7 +23,7 @@ builder.Services
     .AddBaseHealthChecks(builder.Configuration)   // /health/live, /startup and /ready: leave it out and the service has none
     .AddHsxAuthentication(builder.Configuration)
     .AddHsxAuthorization()
-    .AddIdentityPersistence(builder.Configuration)
+    .AddServiceEfCoreDatabaseConfiguration(builder.Configuration)   // the repositories of the identity database; the host that owns it (the identity service, SeedStartupConnections) prepares it, this one does not
     .AddScoped<UserAuthenticator>()
     .AddSingleton<TokenService>();
 

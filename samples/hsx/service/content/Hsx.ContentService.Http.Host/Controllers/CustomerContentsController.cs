@@ -5,7 +5,7 @@ using Hsx.ContentService.Application.Contracts.CustomerContentDomain.Dtos.Filter
 using Hsx.ContentService.Application.Contracts.CustomerContentDomain.Dtos.Submits;
 using Hsx.ContentService.Application.Contracts.CustomerContentDomain.Services;
 using Hsx.ContentService.Http.Host.Controllers.Base;
-using Hsx.Shared.Helper;
+using Hsx.Shared.Contracts.Permissions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Hsx.ContentService.Http.Host.Controllers;
@@ -15,21 +15,21 @@ namespace Hsx.ContentService.Http.Host.Controllers;
 public sealed class CustomerContentsController(ICustomerContentAppService customerContentAppService) : BaseServiceController
 {
     [HttpPost("get/{id:guid}")]
-    [PermissionAuthorize(HsxEndpointPermissions.Content.CustomerContents.Read)]
+    [PermissionAuthorize(ContentPermissions.Endpoints.CustomerContents.Read)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public Task<CustomerContentDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
         => customerContentAppService.GetAsync(id, cancellationToken);
 
     [HttpPost("paged-list")]
 
-    [PermissionAuthorize(HsxEndpointPermissions.Content.CustomerContents.Read)]
+    [PermissionAuthorize(ContentPermissions.Endpoints.CustomerContents.Read)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public Task<PagedDataResultDto<CustomerContentDto>> GetPagedListAsync([FromBody] GetCustomerContentsPaged pagedInput, CancellationToken cancellationToken = default)
         => customerContentAppService.GetPagedListAsync(pagedInput, cancellationToken);
 
     [HttpPost("create")]
 
-    [PermissionAuthorize(HsxEndpointPermissions.Content.CustomerContents.Create)]
+    [PermissionAuthorize(ContentPermissions.Endpoints.CustomerContents.Create)]
     [ProducesResponseType(StatusCodes.Status201Created)]
     public async Task<IActionResult> CreateAsync([FromBody] CustomerContentCreateDto input, CancellationToken cancellationToken = default)
     {
@@ -39,7 +39,7 @@ public sealed class CustomerContentsController(ICustomerContentAppService custom
 
     [HttpPut]
 
-    [PermissionAuthorize(HsxEndpointPermissions.Content.CustomerContents.Update)]
+    [PermissionAuthorize(ContentPermissions.Endpoints.CustomerContents.Update)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> UpdateAsync([FromBody] CustomerContentUpdateDto input, CancellationToken cancellationToken = default)
     {
@@ -49,7 +49,7 @@ public sealed class CustomerContentsController(ICustomerContentAppService custom
 
     [HttpDelete("{id:guid}")]
 
-    [PermissionAuthorize(HsxEndpointPermissions.Content.CustomerContents.Delete)]
+    [PermissionAuthorize(ContentPermissions.Endpoints.CustomerContents.Delete)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {

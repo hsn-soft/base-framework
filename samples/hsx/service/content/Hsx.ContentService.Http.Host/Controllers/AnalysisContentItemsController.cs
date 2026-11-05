@@ -5,7 +5,7 @@ using Hsx.ContentService.Application.Contracts.AnalysisContentItemDomain.Dtos.Fi
 using Hsx.ContentService.Application.Contracts.AnalysisContentItemDomain.Dtos.Submits;
 using Hsx.ContentService.Application.Contracts.AnalysisContentItemDomain.Services;
 using Hsx.ContentService.Http.Host.Controllers.Base;
-using Hsx.Shared.Helper;
+using Hsx.Shared.Contracts.Permissions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Hsx.ContentService.Http.Host.Controllers;
@@ -15,21 +15,21 @@ namespace Hsx.ContentService.Http.Host.Controllers;
 public sealed class AnalysisContentItemsController(IAnalysisContentItemAppService analysisContentItemAppService) : BaseServiceController
 {
     [HttpPost("get/{id:guid}")]
-    [PermissionAuthorize(HsxEndpointPermissions.Content.AnalysisContentItems.Read)]
+    [PermissionAuthorize(ContentPermissions.Endpoints.AnalysisContentItems.Read)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public Task<AnalysisContentItemDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
         => analysisContentItemAppService.GetAsync(id, cancellationToken);
 
     [HttpPost("paged-list")]
 
-    [PermissionAuthorize(HsxEndpointPermissions.Content.AnalysisContentItems.Read)]
+    [PermissionAuthorize(ContentPermissions.Endpoints.AnalysisContentItems.Read)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public Task<PagedDataResultDto<AnalysisContentItemDto>> GetPagedListAsync([FromBody] GetAnalysisContentItemsPaged pagedInput, CancellationToken cancellationToken = default)
         => analysisContentItemAppService.GetPagedListAsync(pagedInput, cancellationToken);
 
     [HttpPost("create")]
 
-    [PermissionAuthorize(HsxEndpointPermissions.Content.AnalysisContentItems.Create)]
+    [PermissionAuthorize(ContentPermissions.Endpoints.AnalysisContentItems.Create)]
     [ProducesResponseType(StatusCodes.Status201Created)]
     public async Task<IActionResult> CreateAsync([FromBody] AnalysisContentItemCreateDto input, CancellationToken cancellationToken = default)
     {
@@ -39,7 +39,7 @@ public sealed class AnalysisContentItemsController(IAnalysisContentItemAppServic
 
     [HttpPut]
 
-    [PermissionAuthorize(HsxEndpointPermissions.Content.AnalysisContentItems.Update)]
+    [PermissionAuthorize(ContentPermissions.Endpoints.AnalysisContentItems.Update)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> UpdateAsync([FromBody] AnalysisContentItemUpdateDto input, CancellationToken cancellationToken = default)
     {
@@ -49,7 +49,7 @@ public sealed class AnalysisContentItemsController(IAnalysisContentItemAppServic
 
     [HttpDelete("{id:guid}")]
 
-    [PermissionAuthorize(HsxEndpointPermissions.Content.AnalysisContentItems.Delete)]
+    [PermissionAuthorize(ContentPermissions.Endpoints.AnalysisContentItems.Delete)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {

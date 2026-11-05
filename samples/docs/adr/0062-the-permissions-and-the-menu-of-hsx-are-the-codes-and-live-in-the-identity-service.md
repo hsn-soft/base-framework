@@ -2,6 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-11-01 (applies [ADR-0061](0061-administration-is-part-of-the-identity-service-and-the-auth-server-reads-its-database.md); the model is the one of Edx, [framework ADR-0122](../../../docs/adr/0122-a-service-has-its-own-audiences-and-chooses-authentication-and-authorization.md) and `docs/Authorization.md`)
+- **Note:** [ADR-0068](0068-hsx-follows-the-production-identity-the-business-is-the-same.md): the permission codes moved from `HsxPagePermissions` and `HsxEndpointPermissions` (`Hsx.Shared.Helper`) to one class for each service in `Hsx.Shared.Contracts/Permissions` (`IdentityPermissions.Pages`, `.Endpoints`, `.Operations`, `.Constraints`) with the catalog `HsxPermissionCatalog`; the codes themselves are the same
 
 ## Decision
 

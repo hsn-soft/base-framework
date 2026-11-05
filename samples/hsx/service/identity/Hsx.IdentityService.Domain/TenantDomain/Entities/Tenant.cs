@@ -2,8 +2,8 @@ using HsnSoft.Base;
 using HsnSoft.Base.Domain.Entities;
 using HsnSoft.Base.MultiTenancy;
 using HsnSoft.Base.Text;
+using Hsx.IdentityService.Domain.Enums;
 using Hsx.IdentityService.Domain.TenantDomain.Consts;
-using Hsx.Shared.Helper;
 
 namespace Hsx.IdentityService.Domain.TenantDomain.Entities;
 
@@ -11,12 +11,14 @@ namespace Hsx.IdentityService.Domain.TenantDomain.Entities;
 /// The system itself, a reseller that sells the products, or an account under a reseller. The tenants are a tree: a tenant sees its own data and the data of the tenants under it. It is not <c>IMultiTenant</c>: it is what the tenants are, so
 /// there is no tenant filter on it; the application service shows a tenant the ones under it, and the system tenant all of them. The audit fields and the soft delete come from <see cref="FullAuditedEntity{TKey}"/>.
 /// </summary>
-public sealed class Tenant : FullAuditedEntity<Guid>
+public sealed class Tenant : AuditedEntity<Guid>, ISoftDelete
 {
     // for EF Core
     private Tenant()
     {
     }
+
+    public bool IsDeleted { get; private set; }
 
     public TenantTypes TenantType { get; private set; }
 
@@ -33,9 +35,11 @@ public sealed class Tenant : FullAuditedEntity<Guid>
     public Guid? ParentId { get; private set; }
 
     /// <summary>Where the tenant is in the tree: the ids from the root down to it, <c>/{root}/{parent}/{tenant}/</c> (<see cref="TenantAccessPath"/>). The tenants a tenant may see are the ones whose path starts with its own.</summary>
-    public string AccessPath { get; private set; } = string.Empty;
+    public string NormalizedAccessPath { get; private set; } = string.Empty;
 
-    public static Tenant Create(Guid? id, TenantTypes tenantType, string title, string name, Tenant? parent = null)
+    // navigations: a collection is empty when it is not loaded, never null; a single one is null when it is not loaded
+
+    public static Tenant Create(TenantTypes tenantType, string title, string name, Tenant? parent = null, Guid? id = null)
     {
         Tenant tenant = new()
         {
@@ -44,7 +48,7 @@ public sealed class Tenant : FullAuditedEntity<Guid>
             Name = Guard.NotNullOrWhiteSpace(name, nameof(Name), TenantConsts.NameMaxLength).Trim().ToLowerInvariant(),
             IsActive = true,
         };
-        tenant.NormalizedName = Guard.NotNullOrWhiteSpace(StringHelper.Normalize(tenant.Name), nameof(NormalizedName));
+        tenant.NormalizedName = Guard.NotNullOrWhiteSpace(StringHelper.Normalize(tenant.Name), nameof(NormalizedName), TenantConsts.NameMaxLength);
         tenant.Update(title, true);
         tenant.PlaceUnder(parent);
         return tenant;
@@ -60,10 +64,10 @@ public sealed class Tenant : FullAuditedEntity<Guid>
     public void PlaceUnder(Tenant? parent)
     {
         ParentId = parent?.Id;
-        AccessPath = parent is null ? TenantAccessPath.Root(Id) : TenantAccessPath.Child(parent.AccessPath, Id);
+        NormalizedAccessPath = parent is null ? TenantAccessPath.Root(Id) : TenantAccessPath.Child(parent.NormalizedAccessPath, Id);
     }
 
     /// <summary>Sets the path of a tenant that moved with its parent (<see cref="TenantAccessPath.Move"/>).</summary>
-    public void SetAccessPath(string path)
-        => AccessPath = TenantAccessPath.IsValid(path) ? path : throw new ArgumentException($"'{path}' is not the path of a tenant.", nameof(path));
+    public void SetNormalizedAccessPath(string path)
+        => NormalizedAccessPath = TenantAccessPath.IsValid(path) ? path : throw new ArgumentException($"'{path}' is not the path of a tenant.", nameof(path));
 }

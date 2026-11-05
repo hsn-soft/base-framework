@@ -1,3 +1,4 @@
+using HsnSoft.Base;
 using HsnSoft.Base.Domain.Entities;
 using HsnSoft.Base.MultiTenancy;
 
@@ -17,9 +18,9 @@ public sealed class AuthPasswordPolicy : Entity<Guid>, IMultiTenant
 
     public bool RequireDigit { get; private set; }
 
-    public bool RequireLower { get; private set; }
+    public bool RequireLowercase { get; private set; }
 
-    public bool RequireUpper { get; private set; }
+    public bool RequireUppercase { get; private set; }
 
     public bool RequireNonAlphanumeric { get; private set; }
 
@@ -27,9 +28,9 @@ public sealed class AuthPasswordPolicy : Entity<Guid>, IMultiTenant
 
     public int LockoutMinutes { get; private set; }
 
-    public static AuthPasswordPolicy Create(PasswordRules rules)
+    public static AuthPasswordPolicy Create(PasswordRules rules, Guid? id = null)
     {
-        AuthPasswordPolicy policy = new() { Id = Guid.CreateVersion7() };
+        AuthPasswordPolicy policy = new() { Id = id is { } given ? Guard.NotDefault<Guid>(given, nameof(Id)) : Guid.CreateVersion7() };
         policy.Change(rules);
         return policy;
     }
@@ -43,12 +44,12 @@ public sealed class AuthPasswordPolicy : Entity<Guid>, IMultiTenant
 
         MinLength = rules.MinLength;
         RequireDigit = rules.RequireDigit;
-        RequireLower = rules.RequireLower;
-        RequireUpper = rules.RequireUpper;
+        RequireLowercase = rules.RequireLowercase;
+        RequireUppercase = rules.RequireUppercase;
         RequireNonAlphanumeric = rules.RequireNonAlphanumeric;
         MaxFailedLoginCount = rules.MaxFailedLoginCount;
         LockoutMinutes = rules.LockoutMinutes;
     }
 
-    public PasswordRules ToRules() => new(MinLength, RequireDigit, RequireLower, RequireUpper, RequireNonAlphanumeric, MaxFailedLoginCount, LockoutMinutes);
+    public PasswordRules ToRules() => new(MinLength, RequireDigit, RequireLowercase, RequireUppercase, RequireNonAlphanumeric, MaxFailedLoginCount, LockoutMinutes);
 }

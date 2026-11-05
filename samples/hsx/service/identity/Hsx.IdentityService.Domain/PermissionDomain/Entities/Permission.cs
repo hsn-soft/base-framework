@@ -1,7 +1,9 @@
 using System.Text.RegularExpressions;
 using HsnSoft.Base;
 using HsnSoft.Base.Domain.Entities;
+using Hsx.IdentityService.Domain.Enums;
 using Hsx.IdentityService.Domain.PermissionDomain.Consts;
+using Hsx.IdentityService.Domain.PermissionDomain.Exceptions;
 
 namespace Hsx.IdentityService.Domain.PermissionDomain.Entities;
 
@@ -29,10 +31,12 @@ public sealed partial class Permission : Entity<Guid>
 
     public bool IsActive { get; private set; }
 
-    public static Permission Create(string code, string? name = null, string? description = null)
+    // navigations: a collection is empty when it is not loaded, never null; a single one is null when it is not loaded
+
+    public static Permission Create(string code, string? name = null, string? description = null, Guid? id = null)
         => new()
         {
-            Id = Guid.CreateVersion7(),
+            Id = id is { } given ? Guard.NotDefault<Guid>(given, nameof(Id)) : Guid.CreateVersion7(),
             Code = Valid(code),
             Type = TypeOf(code),
             Name = string.IsNullOrWhiteSpace(name) ? code : Guard.Length(name.Trim(), nameof(Name), PermissionConsts.NameMaxLength)!,
@@ -46,6 +50,7 @@ public sealed partial class Permission : Entity<Guid>
         {
             "page" => PermissionType.Page,
             "endpoint" => PermissionType.Endpoint,
+            "constraint" => PermissionType.Constraint,
             _ => PermissionType.Operation,
         };
 
@@ -53,12 +58,21 @@ public sealed partial class Permission : Entity<Guid>
 
     public void Deactivate() => IsActive = false;
 
+    /// <summary>The value a grant of this permission carries: a constraint must have one, any other permission must have none.</summary>
+    public string? CheckValue(string? value)
+    {
+        string? text = string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+        return Type == PermissionType.Constraint
+            ? text is null ? throw new PermissionValueRequiredException(Code) : Guard.Length(text, nameof(value), PermissionConsts.ValueMaxLength)
+            : text is null ? null : throw new PermissionValueNotAllowedException(Code);
+    }
+
     private static string Valid(string code)
     {
         string text = Guard.NotNullOrWhiteSpace(code, nameof(Code), PermissionConsts.CodeMaxLength);
-        return CodePattern().IsMatch(text) ? text : throw new DomainException($"'{text}' is not a permission code: {{page|endpoint|operation}}.{{resource}}.{{action}} in small letters, digits and dashes.").WithKey("permission_code_invalid", text);
+        return CodePattern().IsMatch(text) ? text : throw new DomainException($"'{text}' is not a permission code: {{page|endpoint|operation|constraint}}.{{resource}}.{{action}} in small letters, digits and dashes.").WithKey("permission_code_invalid", text);
     }
 
-    [GeneratedRegex(@"^(page|endpoint|operation)(\.[a-z0-9]+(-[a-z0-9]+)*){2,}$", RegexOptions.CultureInvariant)]
+    [GeneratedRegex(@"^(page|endpoint|operation|constraint)(\.[a-z0-9]+(-[a-z0-9]+)*){2,}$", RegexOptions.CultureInvariant)]
     private static partial Regex CodePattern();
 }

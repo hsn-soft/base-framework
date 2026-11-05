@@ -1,5 +1,5 @@
 using HsnSoft.Base.Application.Dtos;
-using Hsx.IdentityService.Domain.AppRoleDomain.Entities;
+using Hsx.IdentityService.Domain.Enums;
 
 namespace Hsx.IdentityService.Application.Contracts.AppRoleDomain.Dtos;
 

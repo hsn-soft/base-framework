@@ -5,7 +5,7 @@ using Hsx.ContentService.Application.Contracts.CustomerContentVisitDomain.Dtos.F
 using Hsx.ContentService.Application.Contracts.CustomerContentVisitDomain.Dtos.Submits;
 using Hsx.ContentService.Application.Contracts.CustomerContentVisitDomain.Services;
 using Hsx.ContentService.Http.Host.Controllers.Base;
-using Hsx.Shared.Helper;
+using Hsx.Shared.Contracts.Permissions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Hsx.ContentService.Http.Host.Controllers;
@@ -15,21 +15,21 @@ namespace Hsx.ContentService.Http.Host.Controllers;
 public sealed class CustomerContentVisitsController(ICustomerContentVisitAppService customerContentVisitAppService) : BaseServiceController
 {
     [HttpPost("get/{id:guid}")]
-    [PermissionAuthorize(HsxEndpointPermissions.Content.CustomerContentVisits.Read)]
+    [PermissionAuthorize(ContentPermissions.Endpoints.CustomerContentVisits.Read)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public Task<CustomerContentVisitDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
         => customerContentVisitAppService.GetAsync(id, cancellationToken);
 
     [HttpPost("paged-list")]
 
-    [PermissionAuthorize(HsxEndpointPermissions.Content.CustomerContentVisits.Read)]
+    [PermissionAuthorize(ContentPermissions.Endpoints.CustomerContentVisits.Read)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public Task<PagedDataResultDto<CustomerContentVisitDto>> GetPagedListAsync([FromBody] GetCustomerContentVisitsPaged pagedInput, CancellationToken cancellationToken = default)
         => customerContentVisitAppService.GetPagedListAsync(pagedInput, cancellationToken);
 
     [HttpPost("create")]
 
-    [PermissionAuthorize(HsxEndpointPermissions.Content.CustomerContentVisits.Create)]
+    [PermissionAuthorize(ContentPermissions.Endpoints.CustomerContentVisits.Create)]
     [ProducesResponseType(StatusCodes.Status201Created)]
     public async Task<IActionResult> CreateAsync([FromBody] CustomerContentVisitCreateDto input, CancellationToken cancellationToken = default)
     {
@@ -39,7 +39,7 @@ public sealed class CustomerContentVisitsController(ICustomerContentVisitAppServ
 
     [HttpDelete("{id:guid}")]
 
-    [PermissionAuthorize(HsxEndpointPermissions.Content.CustomerContentVisits.Delete)]
+    [PermissionAuthorize(ContentPermissions.Endpoints.CustomerContentVisits.Delete)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {

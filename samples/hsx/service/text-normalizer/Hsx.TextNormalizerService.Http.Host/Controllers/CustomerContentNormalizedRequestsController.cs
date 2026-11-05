@@ -1,6 +1,6 @@
 using HsnSoft.Base.Application.Dtos;
 using HsnSoft.Base.Authorization;
-using Hsx.Shared.Helper;
+using Hsx.Shared.Contracts.Permissions;
 using Hsx.TextNormalizerService.Application.Contracts.CustomerContentNormalizedRequestDomain.Dtos;
 using Hsx.TextNormalizerService.Application.Contracts.CustomerContentNormalizedRequestDomain.Dtos.Filters;
 using Hsx.TextNormalizerService.Application.Contracts.CustomerContentNormalizedRequestDomain.Dtos.Submits;
@@ -15,21 +15,21 @@ namespace Hsx.TextNormalizerService.Http.Host.Controllers;
 public sealed class CustomerContentNormalizedRequestsController(ICustomerContentNormalizedRequestAppService customerContentNormalizedRequestAppService) : BaseServiceController
 {
     [HttpPost("get/{id:guid}")]
-    [PermissionAuthorize(HsxEndpointPermissions.TextNormalizer.CustomerContentNormalizedRequests.Read)]
+    [PermissionAuthorize(TextNormalizerPermissions.Endpoints.CustomerContentNormalizedRequests.Read)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public Task<CustomerContentNormalizedRequestDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
         => customerContentNormalizedRequestAppService.GetAsync(id, cancellationToken);
 
     [HttpPost("paged-list")]
 
-    [PermissionAuthorize(HsxEndpointPermissions.TextNormalizer.CustomerContentNormalizedRequests.Read)]
+    [PermissionAuthorize(TextNormalizerPermissions.Endpoints.CustomerContentNormalizedRequests.Read)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public Task<PagedDataResultDto<CustomerContentNormalizedRequestDto>> GetPagedListAsync([FromBody] GetCustomerContentNormalizedRequestsPaged pagedInput, CancellationToken cancellationToken = default)
         => customerContentNormalizedRequestAppService.GetPagedListAsync(pagedInput, cancellationToken);
 
     [HttpPost("create")]
 
-    [PermissionAuthorize(HsxEndpointPermissions.TextNormalizer.CustomerContentNormalizedRequests.Create)]
+    [PermissionAuthorize(TextNormalizerPermissions.Endpoints.CustomerContentNormalizedRequests.Create)]
     [ProducesResponseType(StatusCodes.Status201Created)]
     public async Task<IActionResult> CreateAsync([FromBody] CustomerContentNormalizedRequestCreateDto input, CancellationToken cancellationToken = default)
     {
@@ -39,7 +39,7 @@ public sealed class CustomerContentNormalizedRequestsController(ICustomerContent
 
     [HttpPut]
 
-    [PermissionAuthorize(HsxEndpointPermissions.TextNormalizer.CustomerContentNormalizedRequests.Update)]
+    [PermissionAuthorize(TextNormalizerPermissions.Endpoints.CustomerContentNormalizedRequests.Update)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> UpdateAsync([FromBody] CustomerContentNormalizedRequestUpdateDto input, CancellationToken cancellationToken = default)
     {
@@ -49,7 +49,7 @@ public sealed class CustomerContentNormalizedRequestsController(ICustomerContent
 
     [HttpDelete("{id:guid}")]
 
-    [PermissionAuthorize(HsxEndpointPermissions.TextNormalizer.CustomerContentNormalizedRequests.Delete)]
+    [PermissionAuthorize(TextNormalizerPermissions.Endpoints.CustomerContentNormalizedRequests.Delete)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {

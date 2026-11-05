@@ -14,9 +14,13 @@ namespace Hsx.AuthServer.Host.Controllers;
 
 public sealed class LoginDto
 {
+    /// <summary>The tenant the user belongs to (its name): an email or a user name is unique only inside a tenant.</summary>
     [Required]
-    [EmailAddress]
-    public string Email { get; set; } = string.Empty;
+    public string Tenant { get; set; } = string.Empty;
+
+    /// <summary>The email or the user name of the user.</summary>
+    [Required]
+    public string Account { get; set; } = string.Empty;
 
     [Required]
     [SensitiveData]
@@ -44,18 +48,18 @@ public sealed class MeDto
 }
 
 [Route("api/auth-server/v1/commercial/auth")]
-public sealed class AuthController(UserAuthenticator authenticator, TokenService tokens, IRefreshTokenStore refreshTokens, IOptions<AuthServerOptions> options) : BaseServiceController
+public sealed class AuthController(UserAuthenticator authenticator, TokenService tokens, IAuthRefreshTokenRepository refreshTokens, IOptions<AuthServerOptions> options) : BaseServiceController
 {
     private readonly AuthServerOptions _options = options.Value;
 
-    /// <summary>An email and a password (of a user of the identity service) for an access token; with <c>OfflineAccess</c> a refresh token comes too, in a cookie.</summary>
+    /// <summary>A tenant, an account (an email or a user name) and a password (of a user of the identity service) for an access token; with <c>OfflineAccess</c> a refresh token comes too, in a cookie.</summary>
     [AllowAnonymous]
     [HttpPost("login")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<TokenDto> LoginAsync([FromBody] LoginDto input, CancellationToken cancellationToken = default)
     {
         SignInOrigin origin = new(HttpContext.Connection.RemoteIpAddress?.ToString(), Request.Headers.UserAgent.ToString());
-        AuthenticatedUser user = await authenticator.AuthenticateAsync(input.Email, input.Password, origin, cancellationToken)
+        AuthenticatedUser user = await authenticator.AuthenticateAsync(input.Tenant, input.Account, input.Password, origin, cancellationToken)
                                  ?? throw new BaseHttpException(StatusCodes.Status401Unauthorized, "Invalid credentials").WithKey("invalid_credentials");
 
         if (input.OfflineAccess)

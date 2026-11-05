@@ -32,13 +32,13 @@ public sealed record AuthenticatedUser(
 public sealed record SignInOrigin(string? IpAddress, string? UserAgent);
 
 /// <summary>
-/// Checks an email and a password against the users of the identity service (the same database; the auth server writes only what a sign-in changes: the count of failures, the lockout, the audit) and works out what the user may see: the
+/// Checks a tenant, an account (an email or a user name) and a password against the users of the identity service (the same database; the auth server writes only what a sign-in changes: the count of failures, the lockout, the audit) and works out what the user may see: the
 /// tenants under its own and the scopes of its subscriptions. Every attempt is written to the audit, with why it failed; the caller is only told that it did.
 /// </summary>
 public sealed class UserAuthenticator(
-    ISignInRepository signIn,
+    IAppUserRepository signIn,
     ITenantRepository tenants,
-    IPasswordPolicyProvider policies,
+    IAuthPasswordPolicyRepository policies,
     IRepository<AuthLoginAudit, Guid> audits,
     IOptions<AuthServerOptions> options)
 {
@@ -49,9 +49,10 @@ public sealed class UserAuthenticator(
     private static readonly string s_unknownUserHash = PasswordHasher.Hash("not-a-password-of-anyone");
 
     /// <summary>The user, or <see langword="null"/> when the email is unknown, the user or its tenant is not active, the user is locked out or the password is wrong (the caller cannot tell which).</summary>
-    public async Task<AuthenticatedUser?> AuthenticateAsync(string email, string password, SignInOrigin origin, CancellationToken cancellationToken = default)
+    public async Task<AuthenticatedUser?> AuthenticateAsync(string tenantName, string account, string password, SignInOrigin origin, CancellationToken cancellationToken = default)
     {
-        SignInInfo? info = await signIn.FindByEmailAsync(StringHelper.Normalize(email), cancellationToken).ConfigureAwait(false);
+        string email = account;
+        SignInInfo? info = await FindAsync(tenantName, account, cancellationToken).ConfigureAwait(false);
         bool passwordMatches = PasswordHasher.Verify(info?.User.PasswordHash ?? s_unknownUserHash, password);
         if (info is null)
         {
@@ -61,6 +62,13 @@ public sealed class UserAuthenticator(
 
         AppUser user = info.User;
         if (!user.IsActive || !info.Tenant.IsActive)
+        {
+            await AuditAsync(email, info.Tenant.Id, user.Id, AuthLoginAuditConsts.Reasons.NotActive, origin, cancellationToken).ConfigureAwait(false);
+            return null;
+        }
+
+        // a temporary password that is over signs in no more: the user needs a new one from an administrator
+        if (user.IsTemporaryPasswordExpired(DateTimeOffset.UtcNow))
         {
             await AuditAsync(email, info.Tenant.Id, user.Id, AuthLoginAuditConsts.Reasons.NotActive, origin, cancellationToken).ConfigureAwait(false);
             return null;
@@ -84,6 +92,27 @@ public sealed class UserAuthenticator(
         await signIn.RecordSuccessAsync(user.Id, cancellationToken).ConfigureAwait(false);
         await AuditAsync(email, info.Tenant.Id, user.Id, null, origin, cancellationToken).ConfigureAwait(false);
         return await BuildAsync(info, cancellationToken).ConfigureAwait(false);
+    }
+
+    // the sign-in names the tenant (an email or a user name is unique only inside one): what was typed is normalized here, the repository compares the normalized columns (identity ADR-0024)
+    private async Task<SignInInfo?> FindAsync(string tenantName, string account, CancellationToken cancellationToken)
+    {
+        string normalizedTenant = StringHelper.Normalize(tenantName);
+        string normalizedAccount = StringHelper.Normalize(account);
+        if (normalizedTenant.Length == 0 || normalizedAccount.Length == 0)
+        {
+            return null;
+        }
+
+        Tenant? tenant = (await tenants.GetListAsync(new ListQueryOptions<Tenant> { Filter = candidate => candidate.NormalizedName == normalizedTenant, MaxResultCount = 1 }, cancellationToken: cancellationToken).ConfigureAwait(false)).FirstOrDefault();
+        if (tenant is null)
+        {
+            return null;
+        }
+
+        return account.Contains('@', StringComparison.Ordinal)
+            ? await signIn.FindByEmailAsync(tenant.Id, normalizedAccount, cancellationToken).ConfigureAwait(false)
+            : await signIn.FindByUserNameAsync(tenant.Id, normalizedAccount, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>The user of a refresh token, with what its token says now (its roles and subscriptions may have changed since it signed in); <see langword="null"/> when it is gone, not active or locked out.</summary>
@@ -113,5 +142,5 @@ public sealed class UserAuthenticator(
     }
 
     private Task AuditAsync(string email, Guid? tenantId, Guid? userId, string? failureReason, SignInOrigin origin, CancellationToken cancellationToken)
-        => audits.AddAsync(AuthLoginAudit.Record(email, tenantId, userId, failureReason is null, failureReason, origin.IpAddress, origin.UserAgent, DateTimeOffset.UtcNow), cancellationToken);
+        => audits.AddAsync(AuthLoginAudit.Record(email, tenantId, userId, failureReason is null, failureReason, origin.IpAddress, origin.UserAgent), cancellationToken);
 }

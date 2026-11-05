@@ -6,8 +6,6 @@ namespace Hsx.IdentityService.Application.Services;
 
 public sealed class SessionPermissionAppService(IPermissionGrantRepository grants, IServiceProvider services) : ApplicationServiceBase(services), ISessionPermissionAppService
 {
-    public async Task<List<GrantedPermissionDto>> GetMineAsync(CancellationToken cancellationToken = default)
-        => CurrentUser.Id is { } id
-            ? GrantMapping.ToDtos(await grants.GetEffectiveGrantsAsync(id, cancellationToken).ConfigureAwait(false))
-            : [];
+    public async Task<MyPermissionsDto> GetMineAsync(CancellationToken cancellationToken = default)
+        => new() { Grants = CurrentUser.Id is { } id ? GrantMapping.ToDtos(await grants.GetEffectiveGrantsAsync(id, cancellationToken).ConfigureAwait(false)) : [] };
 }

@@ -4,8 +4,8 @@ using Hsx.IdentityService.Domain.AuthLoginAuditDomain.Consts;
 
 namespace Hsx.IdentityService.Domain.AuthLoginAuditDomain.Entities;
 
-/// <summary>A sign-in that was tried, and how it ended: who (the email the caller gave, and the user and its tenant when there is one), whether it worked, why not, and where from. It is written for every attempt and never changed.</summary>
-public sealed class AuthLoginAudit : Entity<Guid>
+/// <summary>A sign-in that was tried, and how it ended: who (the user name or email the caller gave, and the user and its tenant when there is one), whether it worked, why not, and where from. It is written for every attempt and never changed.</summary>
+public sealed class AuthLoginAudit : CreationAuditedEntity<Guid>
 {
     // for EF Core
     private AuthLoginAudit()
@@ -16,7 +16,7 @@ public sealed class AuthLoginAudit : Entity<Guid>
 
     public Guid? UserId { get; private set; }
 
-    public string Email { get; private set; } = string.Empty;
+    public string UserNameOrEmail { get; private set; } = string.Empty;
 
     public bool IsSuccess { get; private set; }
 
@@ -26,20 +26,17 @@ public sealed class AuthLoginAudit : Entity<Guid>
 
     public string? UserAgent { get; private set; }
 
-    public DateTimeOffset CreatedAt { get; private set; }
-
-    public static AuthLoginAudit Record(string email, Guid? tenantId, Guid? userId, bool isSuccess, string? failureReason, string? ipAddress, string? userAgent, DateTimeOffset now)
+    public static AuthLoginAudit Record(string userNameOrEmail, Guid? tenantId, Guid? userId, bool isSuccess, string? failureReason, string? ipAddress, string? userAgent, Guid? id = null)
         => new()
         {
-            Id = Guid.CreateVersion7(),
+            Id = id is { } given ? Guard.NotDefault<Guid>(given, nameof(Id)) : Guid.CreateVersion7(),
             TenantId = tenantId,
             UserId = userId,
-            Email = Guard.NotNullOrWhiteSpace(email, nameof(Email), AuthLoginAuditConsts.EmailMaxLength).Trim(),
+            UserNameOrEmail = Guard.NotNullOrWhiteSpace(userNameOrEmail, nameof(UserNameOrEmail), AuthLoginAuditConsts.UserNameOrEmailMaxLength).Trim(),
             IsSuccess = isSuccess,
             FailureReason = failureReason,
             IpAddress = Cut(ipAddress, AuthLoginAuditConsts.IpAddressMaxLength),
             UserAgent = Cut(userAgent, AuthLoginAuditConsts.UserAgentMaxLength),
-            CreatedAt = now,
         };
 
     // what comes from the caller is cut, not refused: an audit that cannot be written because of a long header is a hole in the audit

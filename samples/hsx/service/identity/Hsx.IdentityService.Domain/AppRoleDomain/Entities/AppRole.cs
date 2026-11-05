@@ -3,18 +3,24 @@ using HsnSoft.Base.Domain.Entities;
 using HsnSoft.Base.MultiTenancy;
 using HsnSoft.Base.Text;
 using Hsx.IdentityService.Domain.AppRoleDomain.Consts;
+using Hsx.IdentityService.Domain.AppRoleSubscriptionDomain.Entities;
+using Hsx.IdentityService.Domain.AppUserRoleDomain.Entities;
+using Hsx.IdentityService.Domain.Enums;
+using Hsx.IdentityService.Domain.PermissionDomain.Entities;
 
 namespace Hsx.IdentityService.Domain.AppRoleDomain.Entities;
 
 /// <summary>
 /// A role of a tenant. The subscriptions a role has (<c>AppRoleSubscription</c>) are what its users may see of the products: the scope keys of those subscriptions go into their token. The tenant is kept here and given by the persistence.
 /// </summary>
-public sealed class AppRole : FullAuditedEntity<Guid>, IMultiTenant
+public sealed class AppRole : AuditedEntity<Guid>, ISoftDelete, IMultiTenant
 {
     // for EF Core
     private AppRole()
     {
     }
+
+    public bool IsDeleted { get; private set; }
 
     public Guid TenantId { get; private set; }
 
@@ -34,9 +40,16 @@ public sealed class AppRole : FullAuditedEntity<Guid>, IMultiTenant
     /// <summary>The customer a <see cref="AppRoleType.Customer"/> role names; nothing for any other type.</summary>
     public Guid? CustomerId { get; private set; }
 
+    // navigations: a collection is empty when it is not loaded, never null; a single one is null when it is not loaded
+    public ICollection<AppUserRole> UserRoles { get; } = [];
+    public ICollection<AppRoleSubscription> Subscriptions { get; } = [];
+    public ICollection<AppRolePermission> Permissions { get; } = [];
+
+    public ICollection<AppRolePermissionConstraint> PermissionConstraints { get; } = [];
+
     /// <summary>A role of a type. A <see cref="AppRoleType.Company"/> role names a company and a <see cref="AppRoleType.Customer"/> role a customer; no other type names either.</summary>
     /// <exception cref="Exceptions.AppRoleTypeInvalidException">The type and what it names do not go together.</exception>
-    public static AppRole Create(string name, AppRoleType roleType, Guid? companyId = null, Guid? customerId = null, bool isStatic = false)
+    public static AppRole Create(string name, AppRoleType roleType, Guid? companyId = null, Guid? customerId = null, bool isStatic = false, Guid? id = null)
     {
         if (!Enum.IsDefined(roleType))
         {
@@ -53,7 +66,7 @@ public sealed class AppRole : FullAuditedEntity<Guid>, IMultiTenant
             throw new Exceptions.AppRoleTypeInvalidException(roleType == AppRoleType.Customer ? "A customer role names a customer." : "Only a customer role names a customer.");
         }
 
-        AppRole role = new() { Id = Guid.CreateVersion7(), IsStatic = isStatic, RoleType = roleType, CompanyId = companyId, CustomerId = customerId };
+        AppRole role = new() { Id = id is { } given ? Guard.NotDefault<Guid>(given, nameof(Id)) : Guid.CreateVersion7(), IsStatic = isStatic, RoleType = roleType, CompanyId = companyId, CustomerId = customerId };
         role.Update(name);
         return role;
     }
@@ -61,6 +74,6 @@ public sealed class AppRole : FullAuditedEntity<Guid>, IMultiTenant
     public void Update(string name)
     {
         Name = Guard.NotNullOrWhiteSpace(name, nameof(Name), AppRoleConsts.NameMaxLength).Trim();
-        NormalizedName = Guard.NotNullOrWhiteSpace(StringHelper.Normalize(Name), nameof(NormalizedName));
+        NormalizedName = Guard.NotNullOrWhiteSpace(StringHelper.Normalize(Name), nameof(NormalizedName), AppRoleConsts.NameMaxLength);
     }
 }

@@ -3,7 +3,7 @@ namespace Hsx.IdentityService.Domain.AuthPasswordPolicyDomain.Entities;
 /// <summary>
 /// What a tenant asks of a password and of a sign-in: the length and the kinds of characters, how many failed sign-ins lock the user and for how long. A tenant that has no policy of its own has <see cref="Default"/>.
 /// </summary>
-public sealed record PasswordRules(int MinLength, bool RequireDigit, bool RequireLower, bool RequireUpper, bool RequireNonAlphanumeric, int MaxFailedLoginCount, int LockoutMinutes)
+public sealed record PasswordRules(int MinLength, bool RequireDigit, bool RequireLowercase, bool RequireUppercase, bool RequireNonAlphanumeric, int MaxFailedLoginCount, int LockoutMinutes)
 {
     public static PasswordRules Default { get; } = new(8, true, true, true, false, 5, 15);
 
@@ -23,12 +23,12 @@ public sealed record PasswordRules(int MinLength, bool RequireDigit, bool Requir
             broken.Add("digit");
         }
 
-        if (RequireLower && !password.Any(char.IsLower))
+        if (RequireLowercase && !password.Any(char.IsLower))
         {
             broken.Add("lower");
         }
 
-        if (RequireUpper && !password.Any(char.IsUpper))
+        if (RequireUppercase && !password.Any(char.IsUpper))
         {
             broken.Add("upper");
         }

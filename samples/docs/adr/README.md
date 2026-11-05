@@ -7,6 +7,7 @@ New ADR: copy the framework's [`0000-template.md`](../../../docs/adr/0000-templa
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
+| [0068](0068-hsx-follows-the-production-identity-the-business-is-the-same.md) | Hsx follows the production identity: the business that is in both is the same (the sign-in names the tenant, temporary passwords, the permission catalog from the contracts) | Accepted | 2026-11-05 |
 | [0067](0067-the-shared-hosting-of-a-sample-is-in-layers.md) | The shared hosting of a sample is in layers: the logging in `Shared.Hosting`, the web host in `Shared.Hosting.Http` | Accepted | 2026-11-05 |
 | [0066](0066-the-samples-follow-the-rules-of-the-normalized-fields.md) | The samples follow the rules of the normalized fields (never empty, checked, repositories take the normalized text) | Accepted | 2026-11-05 |
 | [0065](0065-the-samples-store-an-enum-by-its-number-in-their-relational-databases.md) | The samples store an enum by its number in their relational databases (Hsx has a migration that converts the rows) | Accepted | 2026-11-05 |

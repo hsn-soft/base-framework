@@ -10,9 +10,9 @@ using Hsx.IdentityService.Application.Contracts.CustomerDomain.Dtos.Submits;
 using Hsx.IdentityService.Application.Contracts.CustomerDomain.Services;
 using Hsx.IdentityService.Domain.CompanyDomain.Entities;
 using Hsx.IdentityService.Domain.CompanyDomain.Exceptions;
+using Hsx.IdentityService.Domain.CustomerDomain.Consts;
 using Hsx.IdentityService.Domain.CustomerDomain.Entities;
 using Hsx.IdentityService.Domain.CustomerDomain.Exceptions;
-using Hsx.IdentityService.Domain.CustomerDomain.Repositories;
 
 namespace Hsx.IdentityService.Application.Services;
 
@@ -22,7 +22,7 @@ public sealed class CustomerAppService(IRepository<Customer, Guid> repository, I
     public async Task<CustomerDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
         => await repository.FindAsync<CustomerDto>(id, cancellationToken: cancellationToken).ConfigureAwait(false) ?? throw CustomerNotFound.For(id);
 
-    public async Task<PagedDataResultDto<CustomerDto>> GetPagedListAsync(GetCustomersPaged pagedInput, CancellationToken cancellationToken = default)
+    public async Task<PagedDataResultDto<CustomerDto>> GetPagedListAsync(GetCustomersPagedDto pagedInput, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(pagedInput);
 
@@ -53,10 +53,12 @@ public sealed class CustomerAppService(IRepository<Customer, Guid> repository, I
         return await GetAsync(entity.Id, cancellationToken).ConfigureAwait(false);
     }
 
-    public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<CustomerDto> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
         EnsureSystemTenant();
+        CustomerDto deleted = await GetAsync(id, cancellationToken).ConfigureAwait(false);
         await repository.DeleteAsync(await FindAsync(id, cancellationToken).ConfigureAwait(false), cancellationToken).ConfigureAwait(false);
+        return deleted;
     }
 
     private async Task<Customer> FindAsync(Guid id, CancellationToken cancellationToken)

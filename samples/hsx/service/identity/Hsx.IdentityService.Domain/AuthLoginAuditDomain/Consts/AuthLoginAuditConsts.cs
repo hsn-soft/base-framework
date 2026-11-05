@@ -2,9 +2,9 @@ namespace Hsx.IdentityService.Domain.AuthLoginAuditDomain.Consts;
 
 public static class AuthLoginAuditConsts
 {
-    public const string TableName = "AuthLoginAudit";
+    public const string TableName = "AuthLoginAudits";
 
-    public const int EmailMaxLength = 256;
+    public const int UserNameOrEmailMaxLength = 256;
 
     public const int ReasonMaxLength = 64;
 

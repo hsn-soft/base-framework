@@ -7,6 +7,17 @@
 set -uo pipefail
 gateway="${1:-http://localhost:7200}"
 password="Hsx-Demo-123"
+tenant_of() { # email -> the tenant it signs in to (the sample's emails say it; the first administrator of a made reseller is the tenant's own name)
+  case "$1" in
+    system-*@hsx.local) echo system-tenant ;;
+    *@tech-summus.hsx.local) echo tech-summus ;;
+    *@audio-time.hsx.local) echo audio-time ;;
+    *@epartner.hsx.local) echo epartner ;;
+    *@reseller.hsx.local) echo "demo-reseller-${run:-0}" ;;
+    *@hsx.local) echo "${1%@hsx.local}" ;;
+  esac
+}
+login_body() { printf '{"tenant":"%s","account":"%s","password":"%s"%s}' "$(tenant_of "$1")" "$1" "$2" "${3:-}"; }
 run=$(date +%s)
 
 json() { python3 -c "import json,sys; d=json.load(sys.stdin)
@@ -15,13 +26,13 @@ for key in sys.argv[1].split('.'):
 print('' if d is None else d)" "$1"; }
 post() { curl -s -X POST "$gateway/$2" -H "Authorization: Bearer $1" -H 'Content-Type: application/json' -d "$3"; }
 put() { curl -s -o /dev/null -w '%{http_code}' -X PUT "$gateway/$2" -H "Authorization: Bearer $1" -H 'Content-Type: application/json' -d "$3"; }
-login() { curl -s -X POST "$gateway/auth-server/v1/auth/login" -H 'Content-Type: application/json' -d "{\"email\":\"$1\",\"password\":\"$password\"}" | json payload.accessToken; }
+login() { curl -s -X POST "$gateway/auth-server/v1/auth/login" -H 'Content-Type: application/json' -d "$(login_body "$1" "$password")" | json payload.accessToken; }
 need() { [ -n "$2" ] || { echo "FAILED: $1" >&2; exit 1; }; echo "ok  $1"; }
 
 operator=$(login system-operator@hsx.local); need "the system operator signs in" "$operator"
 
 # the reseller, with its administrator role and its first administrator
-reseller_body="{\"title\":\"Demo Reseller $run\",\"name\":\"demo-reseller-$run\",\"adminUser\":{\"userName\":\"admin\",\"email\":\"admin-$run@reseller.hsx.local\",\"displayName\":\"Demo Reseller Admin\",\"password\":\"$password\"}}"
+reseller_body="{\"title\":\"Demo Reseller $run\",\"name\":\"demo-reseller-$run\",\"adminUser\":{\"userName\":\"admin\",\"email\":\"admin-$run@reseller.hsx.local\",\"displayName\":\"Demo Reseller Admin\"}}"
 reseller=$(post "$operator" identity-service/v1/tenant-management/resellers/create "$reseller_body")
 tenant_id=$(echo "$reseller" | json payload.tenantId); need "a reseller (tenant $tenant_id)" "$tenant_id"
 
@@ -31,8 +42,8 @@ customer1=$(post "$operator" identity-service/v1/customers/create "{\"companyId\
 customer2=$(post "$operator" identity-service/v1/customers/create "{\"companyId\":\"$company_id\",\"domain\":\"second-$run.example.com\"}" | json payload.id); need "the second customer" "$customer2"
 
 # the sales: the video platform to both customers by the reseller
-scope1=$(post "$operator" identity-service/v1/subscriptions/create "{\"tenantId\":\"$tenant_id\",\"customerId\":\"$customer1\",\"productType\":\"VideoPlatform\"}" | json payload.scopeKey); need "the video platform sold to the first customer ($scope1)" "$scope1"
-scope2=$(post "$operator" identity-service/v1/subscriptions/create "{\"tenantId\":\"$tenant_id\",\"customerId\":\"$customer2\",\"productType\":\"VideoPlatform\"}" | json payload.scopeKey); need "the video platform sold to the second customer ($scope2)" "$scope2"
+sale1=$(post "$operator" identity-service/v1/subscriptions/create "{\"tenantId\":\"$tenant_id\",\"customerId\":\"$customer1\",\"productType\":\"VideoPlatform\"}" | json payload.id); need "the video platform sold to the first customer" "$sale1"; scope1="${customer1//-/}:vp"   # the scope key of a sale is the customer and the product (ScopeKeyHelper)
+sale2=$(post "$operator" identity-service/v1/subscriptions/create "{\"tenantId\":\"$tenant_id\",\"customerId\":\"$customer2\",\"productType\":\"VideoPlatform\"}" | json payload.id); need "the video platform sold to the second customer" "$sale2"; scope2="${customer2//-/}:vp"   # the scope key of a sale is the customer and the product (ScopeKeyHelper)
 
 # demo contents under each scope key (the system tenant may write under any)
 for scope in "$scope1" "$scope2"; do
@@ -48,10 +59,10 @@ admin=$(login "admin-$run@reseller.hsx.local"); need "the administrator of the r
 make_person() { # name, role body -> signs the user in later as $1-$run@reseller.hsx.local
   local role user
   role=$(post "$admin" identity-service/v1/app-roles/create "$2" | json payload.id); [ -n "$role" ] || { echo "FAILED: role $1" >&2; exit 1; }
-  user=$(post "$admin" identity-service/v1/app-users/create "{\"userName\":\"$1\",\"email\":\"$1-$run@reseller.hsx.local\",\"displayName\":\"$1\",\"password\":\"$password\"}" | json payload.id); [ -n "$user" ] || { echo "FAILED: user $1" >&2; exit 1; }
+  user=$(post "$admin" identity-service/v1/app-users/create "{\"userName\":\"$1\",\"email\":\"$1-$run@reseller.hsx.local\",\"displayName\":\"$1\"}" | json payload.id); [ -n "$user" ] || { echo "FAILED: user $1" >&2; exit 1; }
   roles_body="{\"id\":\"$user\",\"roleIds\":[\"$role\"]}"   # a body is a variable first: bash 3.2 (macOS) splits a quoted body written inside "$( ... )"
   status=$(put "$admin" identity-service/v1/app-users/roles "$roles_body")
-  [ "$status" = 204 ] || { echo "FAILED: roles of $1 ($status)" >&2; exit 1; }
+  [ "$status" = 200 ] || { echo "FAILED: roles of $1 ($status)" >&2; exit 1; }
   echo "ok  $1 (a user with its own role)"
 }
 make_person company-person "{\"name\":\"company-role-$run\",\"roleType\":\"Company\",\"companyId\":\"$company_id\"}"
@@ -62,7 +73,7 @@ echo
 echo "What each of them sees (a role made just now is known to the services once they read the permission store again, so the script asks until the contents are there):"
 for who in "admin-$run" "company-person-$run" "customer1-person-$run" "customer2-person-$run"; do
   token=$(login "$who@reseller.hsx.local")
-  subs=$(post "$token" identity-service/v1/me/subscriptions/get "{}" | python3 -c "import json,sys; d=json.load(sys.stdin)['payload']; print(', '.join(sorted(i['customerDomain'] + ' ' + i['productType'] for i in d)))")
+  subs=$(post "$token" identity-service/v1/me/subscriptions/get "{}" | python3 -c "import json,sys; d=json.load(sys.stdin)['payload']['items']; print(', '.join(sorted(i['customerDomain'] + ' ' + i['productType'] for i in d)))")
   contents=""
   for _ in $(seq 1 60); do
     contents=$(post "$token" content-service/v1/customer-contents/paged-list '{"maxResultCount":100}' 2>/dev/null | json payload.dataTotalCount 2>/dev/null)

@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-    <!-- What every Hsx microservice shares on top of Hsx.Shared.Hosting: it reads the bearer token, its endpoints need it, its Swagger has the button for it, and it is connected to Redis; with the event bus (RabbitMQ) when it asks for it. -->
+    <!-- What every Hsx microservice shares on top of Hsx.Shared.Hosting: it reads the bearer token, its endpoints need it, its Swagger has the button for it and it asks for the permissions (with the tenant claims) when it needs them. The event bus (Hsx.Shared.Hosting.EventBus), Redis and a database are the service's own choice and its own reference (sample ADR-0068). -->
 
     <ItemGroup>
         <FrameworkReference Include="Microsoft.AspNetCore.App" />
@@ -8,8 +8,8 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.Authorization.AspNetCore\HsnSoft.Base.Authorization.AspNetCore.csproj" />
-        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.EventBus.RabbitMQ\HsnSoft.Base.EventBus.RabbitMQ.csproj" />
         <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.MultiTenancy\HsnSoft.Base.MultiTenancy.csproj" />
+        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.MultiTenancy.Authentication\HsnSoft.Base.MultiTenancy.Authentication.csproj" />
     </ItemGroup>
 
     <ItemGroup>

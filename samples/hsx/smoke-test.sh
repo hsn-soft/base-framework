@@ -10,6 +10,17 @@ gateway="${1:-http://localhost:7200}"
 read_only=false; [ "${2:-}" = read-only ] && read_only=true   # read-only: what each demo user sees, and nothing is made (the checks that follow make tenants, users, roles and contents, which stay in the database)
 password="Hsx-Demo-123"
 failures=0
+tenant_of() { # email -> the tenant it signs in to (the sample's emails say it; the first administrator of a made reseller is the tenant's own name)
+  case "$1" in
+    system-*@hsx.local) echo system-tenant ;;
+    *@tech-summus.hsx.local) echo tech-summus ;;
+    *@audio-time.hsx.local) echo audio-time ;;
+    *@epartner.hsx.local) echo epartner ;;
+    *@reseller.hsx.local) echo "demo-reseller-${run:-0}" ;;
+    *@hsx.local) echo "${1%@hsx.local}" ;;
+  esac
+}
+login_body() { printf '{"tenant":"%s","account":"%s","password":"%s"%s}' "$(tenant_of "$1")" "$1" "$2" "${3:-}"; }
 
 json() { python3 -c "import json,sys; d=json.load(sys.stdin)
 for key in sys.argv[1].split('.'):
@@ -22,7 +33,7 @@ check() { # description, actual, expected (an empty expectation is the answer "n
 
 see() { # email, expected tenants, expected users, expected contents
   local token tenants users contents
-  token=$(curl -s -X POST "$gateway/auth-server/v1/auth/login" -H 'Content-Type: application/json' -d "{\"email\":\"$1\",\"password\":\"$password\"}" | json payload.accessToken)
+  token=$(curl -s -X POST "$gateway/auth-server/v1/auth/login" -H 'Content-Type: application/json' -d "$(login_body "$1" "$password")" | json payload.accessToken)
   [ -n "$token" ] || { echo "FAIL login $1"; failures=$((failures + 1)); return; }
   list() { curl -s -X POST "$gateway/$1/paged-list" -H "Authorization: Bearer $token" -H 'Content-Type: application/json' -d '{"maxResultCount":100}' | json payload.dataTotalCount; }
   [ "$2" = "-" ] || check "$1 tenants" "$(list identity-service/v1/tenants)" "$2"
@@ -39,7 +50,7 @@ see cnbce-admin@audio-time.hsx.local - - 3
 if $read_only; then [ "$failures" -eq 0 ] && echo "all as expected (read-only)" || exit 1; exit 0; fi
 
 # the text normalizer and the video generator: a request is made in the scope of audio-time, seen by audio-time and the system tenant and not by tech-summus, then deleted (their data is in MongoDB)
-login() { curl -s -X POST "$gateway/auth-server/v1/auth/login" -H 'Content-Type: application/json' -d "{\"email\":\"$1\",\"password\":\"$password\"}" | json payload.accessToken; }
+login() { curl -s -X POST "$gateway/auth-server/v1/auth/login" -H 'Content-Type: application/json' -d "$(login_body "$1" "$password")" | json payload.accessToken; }
 count() { curl -s -X POST "$gateway/$2/paged-list" -H "Authorization: Bearer $1" -H 'Content-Type: application/json' -d '{"maxResultCount":100}' | json payload.dataTotalCount; }
 techsummus=$(login admin@audio-time.hsx.local); pixel=$(login admin@tech-summus.hsx.local); system=$(login system-admin@hsx.local)
 scope=$(curl -s -X POST "$gateway/content-service/v1/customer-contents/paged-list" -H "Authorization: Bearer $techsummus" -H 'Content-Type: application/json' -d '{}' | json payload.items.0.scopeKey)
@@ -59,29 +70,28 @@ crud video-generator-service/v1/video-requests "{\"scopeKey\":\"$scope\",\"refCo
 run=$(date +%s)
 
 # the sign-in: the password policy, the lockout, the refresh token and the change of a password, each with a user made for it (and deleted after)
-as_user() { curl -s -X POST "$gateway/auth-server/v1/auth/login" -H 'Content-Type: application/json' -d "{\"email\":\"$1\",\"password\":\"$2\"}" -o /dev/null -w '%{http_code}'; }
-make_user() { # name, password -> id
-  curl -s -X POST "$gateway/identity-service/v1/app-users/create" -H "Authorization: Bearer $techsummus" -H 'Content-Type: application/json' -d "{\"userName\":\"$1\",\"email\":\"$1@audio-time.hsx.local\",\"displayName\":\"$1\",\"password\":\"$2\"}" | json payload.id
+as_user() { curl -s -X POST "$gateway/auth-server/v1/auth/login" -H 'Content-Type: application/json' -d "$(login_body "$1" "$2")" -o /dev/null -w '%{http_code}'; }
+make_user() { # name, password (the temporary one) -> id
+  curl -s -X POST "$gateway/identity-service/v1/app-users/create" -H "Authorization: Bearer $techsummus" -H 'Content-Type: application/json' -d "{\"userName\":\"$1\",\"email\":\"$1@audio-time.hsx.local\",\"displayName\":\"$1\"}" | json payload.id
 }
-weak=$(curl -s -X POST "$gateway/identity-service/v1/app-users/create" -H "Authorization: Bearer $techsummus" -H 'Content-Type: application/json' -d '{"userName":"weak","email":"weak@audio-time.hsx.local","displayName":"weak","password":"abcdefgh"}' | json errorCode)
-check "a password that breaks the policy" "$weak" app_password_policy_violation
 
-good='Passw0rd!x'
+good="$password"   # the temporary password of the sample (Identity:TemporaryPassword:SamplePassword: the sample has no notification service to send one)
 locked=$(make_user "smokelock$run" "$good")
 for _ in 1 2 3 4 5; do as_user smokelock${run}@audio-time.hsx.local wrong-password > /dev/null; done
 check "the right password of a locked-out user" "$(as_user smokelock${run}@audio-time.hsx.local "$good")" 401
 curl -s -o /dev/null -X DELETE "$gateway/identity-service/v1/app-users/$locked" -H "Authorization: Bearer $techsummus"
 
 changer=$(make_user "smokechange$run" "$good")
-mine=$(curl -s -X POST "$gateway/auth-server/v1/auth/login" -H 'Content-Type: application/json' -d "{\"email\":\"smokechange${run}@audio-time.hsx.local\",\"password\":\"$good\"}" | json payload.accessToken)
+mine=$(curl -s -X POST "$gateway/auth-server/v1/auth/login" -H 'Content-Type: application/json' -d "$(login_body "smokechange${run}@audio-time.hsx.local" "$good")" | json payload.accessToken)
 change() { curl -s -o /dev/null -w '%{http_code}' -X PUT "$gateway/identity-service/v1/my-account/password" -H "Authorization: Bearer $mine" -H 'Content-Type: application/json' -d "{\"currentPassword\":\"$1\",\"newPassword\":\"$2\"}"; }
 check "a change with a wrong current password" "$(change wrong-password 'N3wPassword!')" 400
-check "a change of the password" "$(change "$good" 'N3wPassword!')" 204
+check "a new password that breaks the policy" "$(change "$good" 'abcdefgh')" 400
+check "a change of the password" "$(change "$good" 'N3wPassword!')" 200
 check "the new password signs in" "$(as_user smokechange${run}@audio-time.hsx.local 'N3wPassword!')" 200
 check "the old password does not" "$(as_user smokechange${run}@audio-time.hsx.local "$good")" 401
 
 jar=$(mktemp); first=$(mktemp)
-curl -s -c "$jar" -X POST "$gateway/auth-server/v1/auth/login" -H 'Content-Type: application/json' -d "{\"email\":\"smokechange${run}@audio-time.hsx.local\",\"password\":\"N3wPassword!\",\"offlineAccess\":true}" -o /dev/null
+curl -s -c "$jar" -X POST "$gateway/auth-server/v1/auth/login" -H 'Content-Type: application/json' -d "$(login_body "smokechange${run}@audio-time.hsx.local" "N3wPassword!" ",\"offlineAccess\":true")" -o /dev/null
 cp "$jar" "$first"
 refresh() { curl -s -b "$1" -c "$1" -X POST "$gateway/auth-server/v1/auth/token-refresh" -o /dev/null -w '%{http_code}'; }
 check "a refresh token gives a new access token" "$(refresh "$jar")" 200
@@ -91,19 +101,20 @@ rm -f "$jar" "$first"
 curl -s -o /dev/null -X DELETE "$gateway/identity-service/v1/app-users/$changer" -H "Authorization: Bearer $techsummus"
 
 # the menu and the permissions: the menu of a user holds what its roles let it see; a role with nothing granted sees nothing and is refused by every endpoint; what is granted opens the page and (when the services have read the store again) the endpoint
-menu_codes() { curl -s -X POST "$gateway/identity-service/v1/me/menus" -H "Authorization: Bearer $1" -H 'Content-Type: application/json' | python3 -c "import json,sys; d=json.load(sys.stdin)['payload']; print(' '.join(i['code'] for i in d))"; }
+menu_codes() { curl -s -X POST "$gateway/identity-service/v1/me/menus" -H "Authorization: Bearer $1" -H 'Content-Type: application/json' | python3 -c "import json,sys; d=json.load(sys.stdin)['payload']['items']; print(' '.join(i['code'] for i in d))"; }
 check "the menu of the administrator of a reseller" "$(menu_codes "$techsummus" | tr ' ' '\n' | grep -c -E '^(administration|video-platform)$')" 2
 check "the menu of the system tenant" "$(menu_codes "$system" | tr ' ' '\n' | grep -c -E '^(administration|video-platform)$')" 2
 
 viewer_role=$(curl -s -X POST "$gateway/identity-service/v1/app-roles/create" -H "Authorization: Bearer $techsummus" -H 'Content-Type: application/json' -d "{\"name\":\"smokeviewer$run\",\"roleType\":\"Tenant\"}" | json payload.id)
 viewer=$(make_user "smokeviewer$run" "$good")
 curl -s -o /dev/null -X PUT "$gateway/identity-service/v1/app-users/roles" -H "Authorization: Bearer $techsummus" -H 'Content-Type: application/json' -d "{\"id\":\"$viewer\",\"roleIds\":[\"$viewer_role\"]}"
-viewer_token=$(curl -s -X POST "$gateway/auth-server/v1/auth/login" -H 'Content-Type: application/json' -d "{\"email\":\"smokeviewer${run}@audio-time.hsx.local\",\"password\":\"$good\"}" | json payload.accessToken)
+curl -s -o /dev/null -X PUT "$gateway/identity-service/v1/app-roles/$viewer_role/permissions" -H "Authorization: Bearer $techsummus" -H 'Content-Type: application/json' -d '{"grants":[]}'   # a role starts with the grants of its type (identity ADR-0019): nothing is taken from it by default, so the test takes all away
+viewer_token=$(curl -s -X POST "$gateway/auth-server/v1/auth/login" -H 'Content-Type: application/json' -d "$(login_body "smokeviewer${run}@audio-time.hsx.local" "$good")" | json payload.accessToken)
 users_status() { curl -s -o /dev/null -w '%{http_code}' -X POST "$gateway/identity-service/v1/app-users/paged-list" -H "Authorization: Bearer $viewer_token" -H 'Content-Type: application/json' -d '{}'; }
 check "a role with nothing granted: the menu" "$(menu_codes "$viewer_token")" ""
 check "a role with nothing granted: an endpoint" "$(users_status)" 403
-check "a permission that does not exist" "$(curl -s -o /dev/null -w '%{http_code}' -X PUT "$gateway/identity-service/v1/app-roles/$viewer_role/permissions" -H "Authorization: Bearer $techsummus" -H 'Content-Type: application/json' -d '{"codes":["endpoint.nothing.here"]}')" 404
-check "granting the page and the read" "$(curl -s -o /dev/null -w '%{http_code}' -X PUT "$gateway/identity-service/v1/app-roles/$viewer_role/permissions" -H "Authorization: Bearer $techsummus" -H 'Content-Type: application/json' -d '{"codes":["page.users.view","endpoint.app-users.read"]}')" 204
+check "a permission that does not exist" "$(curl -s -o /dev/null -w '%{http_code}' -X PUT "$gateway/identity-service/v1/app-roles/$viewer_role/permissions" -H "Authorization: Bearer $techsummus" -H 'Content-Type: application/json' -d '{"grants":[{"code":"endpoint.nothing.here"}]}')" 404
+check "granting the page and the read" "$(curl -s -o /dev/null -w '%{http_code}' -X PUT "$gateway/identity-service/v1/app-roles/$viewer_role/permissions" -H "Authorization: Bearer $techsummus" -H 'Content-Type: application/json' -d '{"grants":[{"code":"page.users.view"},{"code":"endpoint.app-users.read"}]}')" 200
 check "the granted page is in the menu" "$(menu_codes "$viewer_token" | tr ' ' '\n' | grep -c -x administration)" 1
 status=403
 for _ in $(seq 1 45); do status=$(users_status); [ "$status" = 200 ] && break; sleep 1; done   # the services keep what they read of the store for Permissions:CacheSeconds
@@ -117,7 +128,7 @@ put() { curl -s -X PUT "$gateway/$2" -H "Authorization: Bearer $1" -H 'Content-T
 code() { curl -s -o /dev/null -w '%{http_code}' -X POST "$gateway/$2" -H "Authorization: Bearer $1" -H 'Content-Type: application/json' -d "$3"; }
 tm=identity-service/v1/tenant-management/resellers/create
 mk_reseller() { # suffix -> body
-  echo "{\"title\":\"Smoke Reseller $1\",\"name\":\"smoke$1$run\",\"adminUser\":{\"userName\":\"admin\",\"email\":\"smoke$1$run@hsx.local\",\"displayName\":\"Smoke $1\",\"password\":\"$password\"}}"
+  echo "{\"title\":\"Smoke Reseller $1\",\"name\":\"smoke$1$run\",\"adminUser\":{\"userName\":\"admin\",\"email\":\"smoke$1$run@hsx.local\",\"displayName\":\"Smoke $1\"}}"
 }
 body_a=$(mk_reseller a); body_b=$(mk_reseller b)
 check "a reseller is not made by a reseller" "$(code "$techsummus" $tm "$body_a")" 403
@@ -154,14 +165,14 @@ check "the filters hold the companies and customers of its own subscriptions" "$
 role_body="{\"name\":\"smokecompanyrole$run\",\"roleType\":\"Company\",\"companyId\":\"$company_id\"}"
 role_id=$(post "$token_a" identity-service/v1/app-roles/create "$role_body" | json payload.id)
 check "a company role of a company the reseller sells to" "$([ -n "$role_id" ] && echo yes)" yes
-check "its subscriptions were linked by the system" "$(post "$token_a" "identity-service/v1/app-roles/subscriptions/$role_id" "{}" | python3 -c "import json,sys; print(len(json.load(sys.stdin)['payload']))")" 1
+check "its subscriptions were linked by the system" "$(post "$token_a" "identity-service/v1/app-roles/subscriptions/$role_id" "{}" | python3 -c "import json,sys; print(len(json.load(sys.stdin)['payload']['subscriptionIds']))")" 1
 foreign="{\"name\":\"smokeforeign$run\",\"roleType\":\"Company\",\"companyId\":\"$(uuidgen)\"}"
 check "a company role of a company the reseller does not sell to" "$(code "$token_a" identity-service/v1/app-roles/create "$foreign")" 400
 check "a system role is not made by a reseller" "$(code "$token_a" identity-service/v1/app-roles/create "{\"name\":\"smokesys$run\",\"roleType\":\"System\"}")" 400
 
 # the transfer: the old subscription ends, a new one starts for the other reseller, the old reseller keeps seeing it, its people are signed out of the refresh
 jar=$(mktemp)
-curl -s -c "$jar" -X POST "$gateway/auth-server/v1/auth/login" -H 'Content-Type: application/json' -d "{\"email\":\"smokea$run@hsx.local\",\"password\":\"$password\",\"offlineAccess\":true}" -o /dev/null
+curl -s -c "$jar" -X POST "$gateway/auth-server/v1/auth/login" -H 'Content-Type: application/json' -d "$(login_body "smokea$run@hsx.local" "$password" ",\"offlineAccess\":true")" -o /dev/null
 transfer_body="{\"id\":\"$sale_id\",\"tenantId\":\"$tenant_b\"}"
 check "a transfer is not made by a reseller" "$(curl -s -o /dev/null -w '%{http_code}' -X PUT "$gateway/identity-service/v1/subscriptions/transfer" -H "Authorization: Bearer $token_a" -H 'Content-Type: application/json' -d "$transfer_body")" 403
 moved=$(put "$system" identity-service/v1/subscriptions/transfer "$transfer_body")
@@ -171,7 +182,7 @@ check "the new reseller has both of its subscriptions" "$(count "$token_b" ident
 check "the old reseller keeps seeing the ended one" "$(count "$token_a" identity-service/v1/subscriptions)" 1
 check "the refresh token of the old reseller is revoked" "$(curl -s -b "$jar" -c "$jar" -X POST "$gateway/auth-server/v1/auth/token-refresh" -o /dev/null -w '%{http_code}')" 401
 rm -f "$jar"
-check "the company role is linked to the new subscription only" "$(post "$token_a" "identity-service/v1/app-roles/subscriptions/$role_id" "{}" | python3 -c "import json,sys; print(len(json.load(sys.stdin)['payload']))")" 0
+check "the company role is linked to the new subscription only" "$(post "$token_a" "identity-service/v1/app-roles/subscriptions/$role_id" "{}" | python3 -c "import json,sys; print(len(json.load(sys.stdin)['payload']['subscriptionIds']))")" 0
 mine=$(post "$techsummus" identity-service/v1/me/subscriptions/get "{}")
-check "my subscriptions: what the token names" "$(echo "$mine" | python3 -c "import json,sys; d=json.load(sys.stdin)['payload']; print(len(d), d[0]['customerDomain'], d[0]['productType'])")" "1 cnbce.com VideoPlatform"
+check "my subscriptions: what the token names" "$(echo "$mine" | python3 -c "import json,sys; d=json.load(sys.stdin)['payload']['items']; print(len(d), d[0]['customerDomain'], d[0]['productType'])")" "1 cnbce.com VideoPlatform"
 [ "$failures" -eq 0 ] && echo "all as expected" || exit 1

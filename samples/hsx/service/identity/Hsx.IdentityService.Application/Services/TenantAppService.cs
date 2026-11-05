@@ -1,5 +1,4 @@
 using System.Linq.Expressions;
-using HsnSoft.Base;
 using HsnSoft.Base.Application;
 using HsnSoft.Base.Application.Dtos;
 using HsnSoft.Base.Domain.Repositories;
@@ -10,10 +9,11 @@ using Hsx.IdentityService.Application.Contracts.TenantDomain.Dtos.Filters;
 using Hsx.IdentityService.Application.Contracts.TenantDomain.Dtos.Submits;
 using Hsx.IdentityService.Application.Contracts.TenantDomain.Services;
 using Hsx.IdentityService.Domain.AppUserDomain.Entities;
+using Hsx.IdentityService.Domain.Enums;
+using Hsx.IdentityService.Domain.TenantDomain.Consts;
 using Hsx.IdentityService.Domain.TenantDomain.Entities;
 using Hsx.IdentityService.Domain.TenantDomain.Exceptions;
 using Hsx.IdentityService.Domain.TenantDomain.Repositories;
-using Hsx.Shared.Helper;
 
 namespace Hsx.IdentityService.Application.Services;
 
@@ -25,7 +25,7 @@ public sealed class TenantAppService(IRepository<Tenant, Guid> tenants, ITenantR
         return (CurrentTenant.IsSystemTenant || visible.Contains(id) ? await tenants.FindAsync<TenantDto>(id, cancellationToken: cancellationToken).ConfigureAwait(false) : null) ?? throw TenantNotFound.For(id);
     }
 
-    public async Task<PagedDataResultDto<TenantDto>> GetPagedListAsync(GetTenantsPaged pagedInput, CancellationToken cancellationToken = default)
+    public async Task<PagedDataResultDto<TenantDto>> GetPagedListAsync(GetTenantsPagedDto pagedInput, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(pagedInput);
 
@@ -44,24 +44,20 @@ public sealed class TenantAppService(IRepository<Tenant, Guid> tenants, ITenantR
         {
             parent = await FindVisibleAsync(parentId, cancellationToken).ConfigureAwait(false);
         }
-        else if (!CurrentTenant.IsSystemTenant)
-        {
-            // only the system tenant makes a tenant at the root of the tree
-            throw new BaseHttpException(403, "Only the system tenant makes a tenant at the root.").WithKey("tenant_root_forbidden");
-        }
 
         string name = input.Name!.Trim().ToLowerInvariant();
-        if (await tenants.AnyAsync(tenant => tenant.NormalizedName == StringHelper.Normalize(name), ignoreFilters: true, cancellationToken).ConfigureAwait(false))
+        string normalizedName = StringHelper.Normalize(name);
+        if (await tenants.AnyAsync(tenant => tenant.NormalizedName == normalizedName, ignoreFilters: true, cancellationToken).ConfigureAwait(false))
         {
             throw new TenantNameDuplicateException(name);
         }
 
-        Tenant created = Tenant.Create(null, input.TenantType!.Value, input.Title!, name, parent);
+        Tenant created = Tenant.Create(input.TenantType!.Value, input.Title!, name, parent);
         await tenants.AddAsync(created, cancellationToken).ConfigureAwait(false);
         return await GetAsync(created.Id, cancellationToken).ConfigureAwait(false);
     }
 
-    public async Task UpdateAsync(TenantUpdateDto input, CancellationToken cancellationToken = default)
+    public async Task<TenantDto> UpdateAsync(TenantUpdateDto input, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(input);
         EnsureSystemTenant();
@@ -69,24 +65,21 @@ public sealed class TenantAppService(IRepository<Tenant, Guid> tenants, ITenantR
         Tenant tenant = await FindVisibleAsync(input.Id.GetValueOrDefault(), cancellationToken).ConfigureAwait(false);
         tenant.Update(input.Title!, input.IsActive);
         await tenants.UpdateAsync(tenant, cancellationToken).ConfigureAwait(false);
+        return await GetAsync(tenant.Id, cancellationToken).ConfigureAwait(false);
     }
 
-    public async Task MoveAsync(TenantMoveDto input, CancellationToken cancellationToken = default)
+    public async Task<TenantDto> MoveAsync(TenantMoveDto input, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(input);
         EnsureSystemTenant();
 
         Tenant tenant = await FindVisibleAsync(input.Id.GetValueOrDefault(), cancellationToken).ConfigureAwait(false);
         Tenant? newParent = input.NewParentId is { } parentId ? await FindVisibleAsync(parentId, cancellationToken).ConfigureAwait(false) : null;
-        if (newParent is null && !CurrentTenant.IsSystemTenant)
-        {
-            throw new BaseHttpException(403, "Only the system tenant puts a tenant at the root.").WithKey("tenant_root_forbidden");
-        }
-
         await tree.MoveAsync(tenant, newParent, cancellationToken).ConfigureAwait(false);
+        return await GetAsync(tenant.Id, cancellationToken).ConfigureAwait(false);
     }
 
-    public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<TenantDto> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
         EnsureSystemTenant();
         Tenant tenant = await FindVisibleAsync(id, cancellationToken).ConfigureAwait(false);
@@ -95,7 +88,9 @@ public sealed class TenantAppService(IRepository<Tenant, Guid> tenants, ITenantR
             throw new TenantNotEmptyException(id);
         }
 
+        TenantDto deleted = await GetAsync(id, cancellationToken).ConfigureAwait(false);
         await tenants.DeleteAsync(tenant, cancellationToken).ConfigureAwait(false);
+        return deleted;
     }
 
     // the tenants of the caller's token (itself and the ones under it); the system tenant sees them all

@@ -5,55 +5,36 @@ using Hsx.IdentityService.Application.Contracts.CompanyDomain.Dtos.Filters;
 using Hsx.IdentityService.Application.Contracts.CompanyDomain.Dtos.Submits;
 using Hsx.IdentityService.Application.Contracts.CompanyDomain.Services;
 using Hsx.IdentityService.Http.Host.Controllers.Base;
-using Hsx.Shared.Helper;
+using Hsx.Shared.Contracts.Permissions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Hsx.IdentityService.Http.Host.Controllers;
 
-/// <summary>The companies: every action only calls the application service, which holds the rules.</summary>
 [Route("api/identity-service/v1/commercial/companies")]
-public sealed class CompaniesController(ICompanyAppService companyAppService) : BaseServiceController
+public sealed class CompaniesController(ICompanyAppService companies) : BaseServiceController
 {
     [HttpPost("get/{id:guid}")]
-    [PermissionAuthorize(HsxEndpointPermissions.Identity.Companies.Read)]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [PermissionAuthorize(IdentityPermissions.Endpoints.Companies.Read)]
     public Task<CompanyDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
-        => companyAppService.GetAsync(id, cancellationToken);
+        => companies.GetAsync(id, cancellationToken);
 
     [HttpPost("paged-list")]
-
-    [PermissionAuthorize(HsxEndpointPermissions.Identity.Companies.Read)]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    public Task<PagedDataResultDto<CompanyDto>> GetPagedListAsync([FromBody] GetCompaniesPaged pagedInput, CancellationToken cancellationToken = default)
-        => companyAppService.GetPagedListAsync(pagedInput, cancellationToken);
+    [PermissionAuthorize(IdentityPermissions.Endpoints.Companies.Read)]
+    public Task<PagedDataResultDto<CompanyDto>> GetPagedListAsync([FromBody] GetCompaniesPagedDto pagedInput, CancellationToken cancellationToken = default)
+        => companies.GetPagedListAsync(pagedInput, cancellationToken);
 
     [HttpPost("create")]
-
-    [PermissionAuthorize(HsxEndpointPermissions.Identity.Companies.Create)]
-    [ProducesResponseType(StatusCodes.Status201Created)]
-    public async Task<IActionResult> CreateAsync([FromBody] CompanyCreateDto input, CancellationToken cancellationToken = default)
-    {
-        CompanyDto created = await companyAppService.CreateAsync(input, cancellationToken);
-        return CreatedAtAction(nameof(GetAsync), new { id = created.Id }, created);
-    }
+    [PermissionAuthorize(IdentityPermissions.Endpoints.Companies.Create)]
+    public Task<CompanyDto> CreateAsync([FromBody] CompanyCreateDto input, CancellationToken cancellationToken = default)
+        => companies.CreateAsync(input, cancellationToken);
 
     [HttpPut]
-
-    [PermissionAuthorize(HsxEndpointPermissions.Identity.Companies.Update)]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<IActionResult> UpdateAsync([FromBody] CompanyUpdateDto input, CancellationToken cancellationToken = default)
-    {
-        await companyAppService.UpdateAsync(input, cancellationToken);
-        return NoContent();
-    }
+    [PermissionAuthorize(IdentityPermissions.Endpoints.Companies.Update)]
+    public Task<CompanyDto> UpdateAsync([FromBody] CompanyUpdateDto input, CancellationToken cancellationToken = default)
+        => companies.UpdateAsync(input, cancellationToken);
 
     [HttpDelete("{id:guid}")]
-
-    [PermissionAuthorize(HsxEndpointPermissions.Identity.Companies.Delete)]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<IActionResult> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
-    {
-        await companyAppService.DeleteAsync(id, cancellationToken);
-        return NoContent();
-    }
+    [PermissionAuthorize(IdentityPermissions.Endpoints.Companies.Delete)]
+    public Task<CompanyDto> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+        => companies.DeleteAsync(id, cancellationToken);
 }

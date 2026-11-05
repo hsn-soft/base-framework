@@ -8,9 +8,9 @@ using Hsx.IdentityService.Application.Contracts.CompanyDomain.Dtos;
 using Hsx.IdentityService.Application.Contracts.CompanyDomain.Dtos.Filters;
 using Hsx.IdentityService.Application.Contracts.CompanyDomain.Dtos.Submits;
 using Hsx.IdentityService.Application.Contracts.CompanyDomain.Services;
+using Hsx.IdentityService.Domain.CompanyDomain.Consts;
 using Hsx.IdentityService.Domain.CompanyDomain.Entities;
 using Hsx.IdentityService.Domain.CompanyDomain.Exceptions;
-using Hsx.IdentityService.Domain.CompanyDomain.Repositories;
 
 namespace Hsx.IdentityService.Application.Services;
 
@@ -20,7 +20,7 @@ public sealed class CompanyAppService(IRepository<Company, Guid> repository, ISe
     public async Task<CompanyDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
         => await repository.FindAsync<CompanyDto>(id, cancellationToken: cancellationToken).ConfigureAwait(false) ?? throw CompanyNotFound.For(id);
 
-    public async Task<PagedDataResultDto<CompanyDto>> GetPagedListAsync(GetCompaniesPaged pagedInput, CancellationToken cancellationToken = default)
+    public async Task<PagedDataResultDto<CompanyDto>> GetPagedListAsync(GetCompaniesPagedDto pagedInput, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(pagedInput);
 
@@ -45,7 +45,7 @@ public sealed class CompanyAppService(IRepository<Company, Guid> repository, ISe
         return await GetAsync(entity.Id, cancellationToken).ConfigureAwait(false);
     }
 
-    public async Task UpdateAsync(CompanyUpdateDto input, CancellationToken cancellationToken = default)
+    public async Task<CompanyDto> UpdateAsync(CompanyUpdateDto input, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(input);
         EnsureSystemTenant();
@@ -53,12 +53,15 @@ public sealed class CompanyAppService(IRepository<Company, Guid> repository, ISe
         Company entity = await FindAsync(input.Id.GetValueOrDefault(), cancellationToken).ConfigureAwait(false);
         entity.Update(input.Title!);
         await repository.UpdateAsync(entity, cancellationToken).ConfigureAwait(false);
+        return await GetAsync(entity.Id, cancellationToken).ConfigureAwait(false);
     }
 
-    public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<CompanyDto> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
         EnsureSystemTenant();
+        CompanyDto deleted = await GetAsync(id, cancellationToken).ConfigureAwait(false);
         await repository.DeleteAsync(await FindAsync(id, cancellationToken).ConfigureAwait(false), cancellationToken).ConfigureAwait(false);
+        return deleted;
     }
 
     private async Task<Company> FindAsync(Guid id, CancellationToken cancellationToken)

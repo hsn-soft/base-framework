@@ -1,5 +1,5 @@
 using HsnSoft.Base.Application.Dtos;
-using Hsx.Shared.Helper;
+using Hsx.IdentityService.Domain.Enums;
 
 namespace Hsx.IdentityService.Application.Contracts.TenantDomain.Dtos;
 
@@ -8,7 +8,7 @@ public sealed class TenantDto : AuditedEntityDto<Guid>
     public Guid? ParentId { get; init; }
 
     /// <summary>Where the tenant is in the tree: <c>/{root}/{parent}/{tenant}/</c>.</summary>
-    public string AccessPath { get; init; } = string.Empty;
+    public string NormalizedAccessPath { get; init; } = string.Empty;
 
     public TenantTypes TenantType { get; init; }
 

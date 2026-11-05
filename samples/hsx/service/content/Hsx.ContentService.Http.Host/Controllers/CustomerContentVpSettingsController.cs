@@ -5,7 +5,7 @@ using Hsx.ContentService.Application.Contracts.CustomerContentVpSettingDomain.Dt
 using Hsx.ContentService.Application.Contracts.CustomerContentVpSettingDomain.Dtos.Submits;
 using Hsx.ContentService.Application.Contracts.CustomerContentVpSettingDomain.Services;
 using Hsx.ContentService.Http.Host.Controllers.Base;
-using Hsx.Shared.Helper;
+using Hsx.Shared.Contracts.Permissions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Hsx.ContentService.Http.Host.Controllers;
@@ -15,21 +15,21 @@ namespace Hsx.ContentService.Http.Host.Controllers;
 public sealed class CustomerContentVpSettingsController(ICustomerContentVpSettingAppService customerContentVpSettingAppService) : BaseServiceController
 {
     [HttpPost("get/{id:guid}")]
-    [PermissionAuthorize(HsxEndpointPermissions.Content.CustomerContentVpSettings.Read)]
+    [PermissionAuthorize(ContentPermissions.Endpoints.CustomerContentVpSettings.Read)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public Task<CustomerContentVpSettingDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
         => customerContentVpSettingAppService.GetAsync(id, cancellationToken);
 
     [HttpPost("paged-list")]
 
-    [PermissionAuthorize(HsxEndpointPermissions.Content.CustomerContentVpSettings.Read)]
+    [PermissionAuthorize(ContentPermissions.Endpoints.CustomerContentVpSettings.Read)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public Task<PagedDataResultDto<CustomerContentVpSettingDto>> GetPagedListAsync([FromBody] GetCustomerContentVpSettingsPaged pagedInput, CancellationToken cancellationToken = default)
         => customerContentVpSettingAppService.GetPagedListAsync(pagedInput, cancellationToken);
 
     [HttpPost("create")]
 
-    [PermissionAuthorize(HsxEndpointPermissions.Content.CustomerContentVpSettings.Create)]
+    [PermissionAuthorize(ContentPermissions.Endpoints.CustomerContentVpSettings.Create)]
     [ProducesResponseType(StatusCodes.Status201Created)]
     public async Task<IActionResult> CreateAsync([FromBody] CustomerContentVpSettingCreateDto input, CancellationToken cancellationToken = default)
     {
@@ -39,7 +39,7 @@ public sealed class CustomerContentVpSettingsController(ICustomerContentVpSettin
 
     [HttpPut]
 
-    [PermissionAuthorize(HsxEndpointPermissions.Content.CustomerContentVpSettings.Update)]
+    [PermissionAuthorize(ContentPermissions.Endpoints.CustomerContentVpSettings.Update)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> UpdateAsync([FromBody] CustomerContentVpSettingUpdateDto input, CancellationToken cancellationToken = default)
     {
@@ -49,7 +49,7 @@ public sealed class CustomerContentVpSettingsController(ICustomerContentVpSettin
 
     [HttpDelete("{id:guid}")]
 
-    [PermissionAuthorize(HsxEndpointPermissions.Content.CustomerContentVpSettings.Delete)]
+    [PermissionAuthorize(ContentPermissions.Endpoints.CustomerContentVpSettings.Delete)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
