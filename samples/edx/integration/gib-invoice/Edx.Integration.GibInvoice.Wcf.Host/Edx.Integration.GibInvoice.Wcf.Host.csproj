@@ -17,7 +17,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\..\shared\Edx.Shared.Efatura\Edx.Shared.Efatura.csproj" />
-        <ProjectReference Include="..\..\..\shared\Edx.Shared.Hosting\Edx.Shared.Hosting.csproj" />
+        <ProjectReference Include="..\..\..\shared\Edx.Shared.Hosting.Http\Edx.Shared.Hosting.Http.csproj" />
     </ItemGroup>
 
     <ItemGroup>

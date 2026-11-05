@@ -13,8 +13,9 @@
     <p class="error">@Model.Error</p>
 }
 <form method="post">
-    <p><label>Email<br /><input name="Email" type="email" value="@Model.Email" autofocus /></label></p>
+    <p><label>Tenant<br /><input name="Tenant" value="@Model.Tenant" autofocus /></label></p>
+    <p><label>Email or user name<br /><input name="Account" value="@Model.Account" /></label></p>
     <p><label>Password<br /><input name="Password" type="password" /></label></p>
     <p><button class="primary" type="submit">Sign in</button></p>
 </form>
-<p class="muted">The demo users are made by the identity service: <code>admin@techsummus.hsx.local</code>, <code>admin@pixel.hsx.local</code>, <code>admin@acme.hsx.local</code>, <code>system-admin@hsx.local</code>; the password is <code>Hsx-Demo-123</code>.</p>
+<p class="muted">The demo users are made by the identity service (tenant, then account): <code>system-tenant</code> <code>system-admin@hsx.local</code>; <code>tech-summus</code> <code>admin@tech-summus.hsx.local</code>; <code>audio-time</code> <code>admin@audio-time.hsx.local</code>, <code>ilbak-admin@audio-time.hsx.local</code>, <code>cnbce-admin@audio-time.hsx.local</code>; <code>epartner</code> <code>admin@epartner.hsx.local</code>; the password is <code>Hsx-Demo-123</code>.</p>

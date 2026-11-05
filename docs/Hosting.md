@@ -14,6 +14,10 @@ return await builder.RunBaseAsync(app =>
 });
 ```
 
+## The shared hosting of a product
+
+A product that has several hosts keeps their composition in shared hosting projects, in layers (ADR-0151): `{Product}.Shared.Hosting` has what every host has (the logging) and no ASP.NET; `.Http` has what every web host has (the web api shell, Swagger, the bearer token) and the gateways, microservices and gRPC services build on it; an agent has `.Agents` on the core; and the message broker, Redis, a database and the texts of several languages are referenced only by the host that uses them, so a host without a broker does not restore one.
+
 ## Settings
 
 ```json
@@ -40,6 +44,36 @@ return await builder.RunBaseAsync(app =>
 - A Kestrel value that is not set keeps Kestrel's default (the values above are the defaults); a body limit of `0` is no limit.
 - `ShutdownTimeoutSeconds` has to be shorter than the `terminationGracePeriodSeconds` of the pod.
 - **Forwarded headers** are believed only from the listed proxies or networks. With both lists empty only a proxy on the same machine is believed.
+
+## Security headers: `UseBaseSecurityHeaders()`
+
+`app.UseBaseSecurityHeaders()` (after `UseBaseForwardedHeaders()`, so the scheme is the one the browser used) writes the headers that make a browser safer with every answer, from `Hosting:SecurityHeaders` ([ADR-0139](adr/0139-the-host-writes-security-headers-and-names-the-origins-that-may-call-it.md)); a header the answer already has is left alone, and an empty text leaves a header out:
+
+```json
+"Hosting": { "SecurityHeaders": {
+  "Enabled": true, "FrameOptions": "DENY", "ReferrerPolicy": "no-referrer",
+  "HstsMaxAgeSeconds": 31536000, "HstsIncludeSubDomains": false,
+  "ContentSecurityPolicy": "", "PermissionsPolicy": ""
+} }
+```
+
+`X-Content-Type-Options: nosniff` is always written. **`Strict-Transport-Security` is only written on an https request and outside Development** (0 for none). A host with pages sets `ContentSecurityPolicy` to what its pages load; a web api needs none.
+
+## Which browsers may call: `Hosting:Cors` and `UseBaseCors()`
+
+By default **no other origin may call** the host. Name the origins and `AddBaseHosting` registers the policy; `app.UseBaseCors()` (after the routing, before the authentication) applies it (nothing is done when no origin is listed):
+
+```json
+"Hosting": { "Cors": {
+  "AllowedOrigins": [ "https://backoffice.example.com" ],
+  "AllowedMethods": [ "GET", "POST", "PUT", "PATCH", "DELETE" ],
+  "AllowedHeaders": [ "Authorization", "Content-Type", "X-Correlation-Id", "Accept-Language" ],
+  "ExposedHeaders": [ "X-Correlation-Id", "Content-Disposition" ],
+  "AllowCredentials": false, "PreflightMaxAgeSeconds": 600
+} }
+```
+
+An origin is a scheme, a host and a port with no path; `*` is any origin and **cannot go with `AllowCredentials`**. A setting that cannot be right stops the start with an error that names it.
 
 ## Who this instance is: `AppInfo` and `GET /`
 

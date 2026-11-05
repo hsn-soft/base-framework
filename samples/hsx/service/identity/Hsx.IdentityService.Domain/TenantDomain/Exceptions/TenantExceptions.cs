@@ -11,26 +11,26 @@ public static class TenantNotFound
 /// <summary>There is a tenant with this name already.</summary>
 public sealed class TenantNameDuplicateException : BusinessException
 {
-    public const string Code = "tenant_name_duplicate";
+    public const string ErrorKey = "tenant_name_duplicate";
 
     public TenantNameDuplicateException(string name)
-        : base(Code, $"A tenant named '{name}' exists.") => WithKey(Code, name);
+        : base(ErrorKey, $"A tenant named '{name}' exists.") => WithKey(ErrorKey, name);
 }
 
 /// <summary>A tenant cannot be put under itself or under one of the tenants under it (the tree would have a loop).</summary>
 public sealed class TenantLoopException : BusinessException
 {
-    public const string Code = "tenant_loop";
+    public const string ErrorKey = "tenant_loop";
 
     public TenantLoopException()
-        : base(Code, "A tenant cannot be put under itself or under one of its own tenants.") => WithKey(Code);
+        : base(ErrorKey, "A tenant cannot be put under itself or under one of its own tenants.") => WithKey(ErrorKey);
 }
 
 /// <summary>A tenant that has tenants or users under it is not deleted.</summary>
 public sealed class TenantNotEmptyException : BusinessException
 {
-    public const string Code = "tenant_not_empty";
+    public const string ErrorKey = "tenant_not_empty";
 
     public TenantNotEmptyException(Guid id)
-        : base(Code, $"Tenant {id} has tenants or users and cannot be deleted.") => WithKey(Code, id);
+        : base(ErrorKey, $"Tenant {id} has tenants or users and cannot be deleted.") => WithKey(ErrorKey, id);
 }

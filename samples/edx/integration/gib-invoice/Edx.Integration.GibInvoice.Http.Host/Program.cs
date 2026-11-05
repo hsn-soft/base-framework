@@ -2,7 +2,7 @@ using Edx.Integration.GibInvoice.Application;
 using Edx.Integration.GibInvoice.Http.Host.EventHandlers;
 using Edx.Integration.GibInvoice.Http.Host.Workers;
 using Edx.Integration.GibInvoice.MongoDB;
-using Edx.Shared.Hosting;
+using Edx.Shared.Hosting.Http;
 using Edx.Shared.Hosting.Microservices;
 using HsnSoft.Base.AspNetCore;
 using HsnSoft.Base.Authentication;

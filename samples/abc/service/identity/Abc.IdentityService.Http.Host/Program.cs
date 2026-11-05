@@ -3,7 +3,7 @@ using Abc.IdentityService.Domain.UserDomain.Entities;
 using Abc.IdentityService.EntityFrameworkCore;
 using Abc.IdentityService.EntityFrameworkCore.Context;
 using Abc.Shared.Helper;
-using Abc.Shared.Hosting;
+using Abc.Shared.Hosting.Http;
 using Abc.Shared.Hosting.Microservices;
 using Abc.Shared.Localization;
 using HsnSoft.Base.AspNetCore;

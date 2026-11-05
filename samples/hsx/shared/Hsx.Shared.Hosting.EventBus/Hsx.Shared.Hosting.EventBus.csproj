@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!-- The RabbitMQ event bus of the Hsx system, for the microservice that publishes or handles events: its own project, because a microservice may have no message broker at all. What the client says about itself goes into the events it causes. -->
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.EventBus.RabbitMQ\HsnSoft.Base.EventBus.RabbitMQ.csproj" />
+    </ItemGroup>
+
+</Project>

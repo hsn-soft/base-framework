@@ -25,7 +25,7 @@ PY
 fi
 
 private=samples/hsx/app/Hsx.AuthServer.Host/private_key.xml
-public=samples/hsx/shared/Hsx.Shared.Hosting/public_key.xml
+public=samples/hsx/shared/Hsx.Shared.Hosting.Http/public_key.xml
 if [ ! -f "$private" ] || [ ! -f "$public" ]; then
     rm -f "$private" "$public"
     dotnet run samples/scripts/generate-rsa-keys.cs -- "$private" "$public"

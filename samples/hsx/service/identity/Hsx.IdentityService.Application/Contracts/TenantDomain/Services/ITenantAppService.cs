@@ -11,16 +11,16 @@ public interface ITenantAppService
     /// <exception cref="HsnSoft.Base.NotFoundException">There is no such tenant, or the caller may not see it.</exception>
     Task<TenantDto> GetAsync(Guid id, CancellationToken cancellationToken = default);
 
-    Task<PagedDataResultDto<TenantDto>> GetPagedListAsync(GetTenantsPaged pagedInput, CancellationToken cancellationToken = default);
+    Task<PagedDataResultDto<TenantDto>> GetPagedListAsync(GetTenantsPagedDto pagedInput, CancellationToken cancellationToken = default);
 
     /// <exception cref="Hsx.IdentityService.Domain.TenantDomain.Exceptions.TenantNameDuplicateException">There is a tenant with this name.</exception>
     Task<TenantDto> CreateAsync(TenantCreateDto input, CancellationToken cancellationToken = default);
 
-    Task UpdateAsync(TenantUpdateDto input, CancellationToken cancellationToken = default);
+    Task<TenantDto> UpdateAsync(TenantUpdateDto input, CancellationToken cancellationToken = default);
 
     /// <exception cref="Hsx.IdentityService.Domain.TenantDomain.Exceptions.TenantLoopException">The new parent is the tenant or under it.</exception>
-    Task MoveAsync(TenantMoveDto input, CancellationToken cancellationToken = default);
+    Task<TenantDto> MoveAsync(TenantMoveDto input, CancellationToken cancellationToken = default);
 
     /// <exception cref="Hsx.IdentityService.Domain.TenantDomain.Exceptions.TenantNotEmptyException">The tenant has tenants or users.</exception>
-    Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<TenantDto> DeleteAsync(Guid id, CancellationToken cancellationToken = default);
 }

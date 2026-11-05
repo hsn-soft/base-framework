@@ -48,8 +48,8 @@ public sealed class User : CreationAuditedEntity<Guid>, IMultiTenant
             PasswordHash = PasswordHasher.Hash(Guard.Length(password, nameof(password), IdentityConsts.PasswordMaxLength, IdentityConsts.PasswordMinLength)!),
             IsActive = true,
         };
-        user.NormalizedUserName = StringHelper.Normalize(user.UserName);
-        user.NormalizedEmail = StringHelper.Normalize(user.Email);
+        user.NormalizedUserName = Guard.NotNullOrWhiteSpace(StringHelper.Normalize(user.UserName), nameof(NormalizedUserName));
+        user.NormalizedEmail = Guard.NotNullOrWhiteSpace(StringHelper.Normalize(user.Email), nameof(NormalizedEmail));
         return user;
     }
 
@@ -57,7 +57,7 @@ public sealed class User : CreationAuditedEntity<Guid>, IMultiTenant
     public void Update(string email, string displayName, bool isActive)
     {
         Email = Guard.NotNullOrWhiteSpace(email, nameof(Email), IdentityConsts.EmailMaxLength);
-        NormalizedEmail = StringHelper.Normalize(Email);
+        NormalizedEmail = Guard.NotNullOrWhiteSpace(StringHelper.Normalize(Email), nameof(NormalizedEmail));
         DisplayName = Guard.NotNullOrWhiteSpace(displayName, nameof(DisplayName), IdentityConsts.NameMaxLength);
         IsActive = isActive;
     }

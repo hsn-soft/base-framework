@@ -1,6 +1,6 @@
 # ADR-0115: Versions and releases: a candidate branch and a regular branch, and a version made from what NuGet has
 
-- **Status:** Accepted (the pipeline on the pull requests into the release branches is superseded by [ADR-0116](0116-the-release-branches-run-the-ci-on-a-push-and-have-their-own-badges.md): it runs on the push; the API key of the push is superseded by [ADR-0130](0130-nuget-packages-are-pushed-with-trusted-publishing-not-an-api-key.md): trusted publishing, no key is kept)
+- **Status:** Accepted (the source rules of the branches are superseded by [ADR-0144](0144-the-source-of-every-pull-request-has-a-known-branch-name.md); the pipeline on the pull requests into the release branches is superseded by [ADR-0116](0116-the-release-branches-run-the-ci-on-a-push-and-have-their-own-badges.md): it runs on the push; the API key of the push is superseded by [ADR-0130](0130-nuget-packages-are-pushed-with-trusted-publishing-not-an-api-key.md): trusted publishing, no key is kept)
 - **Date:** 2026-10-31 (replaces how the version is kept and how a release is made in [ADR-0007](0007-build-settings-and-versioning.md))
 
 ## Context

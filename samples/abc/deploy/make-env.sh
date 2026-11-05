@@ -33,7 +33,7 @@ if ! grep -q '^SCHEDULER_API_KEY=' "$env_file"; then
 fi
 
 private=samples/abc/app/Abc.AuthServer.Host/private_key.xml
-public=samples/abc/shared/Abc.Shared.Hosting/public_key.xml
+public=samples/abc/shared/Abc.Shared.Hosting.Http/public_key.xml
 if [ ! -f "$private" ] || [ ! -f "$public" ]; then
     rm -f "$private" "$public"
     dotnet run samples/scripts/generate-rsa-keys.cs -- "$private" "$public"

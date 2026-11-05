@@ -1,5 +1,6 @@
 using System.Reflection;
 using Edx.Shared.Helper;
+using Edx.Shared.Hosting.Http;
 using HsnSoft.Base.Authorization;
 using HsnSoft.Base.EventBus;
 using HsnSoft.Base.EventBus.Kafka;
@@ -31,7 +32,7 @@ public static class MicroserviceRegister
                 .WithExposedHeaders("X-Correlation-Id", "Content-Disposition")));
         }
 
-        return services.AddEdxHosting(configuration, swaggerTitle, swaggerBearerButton: true);
+        return services.AddEdxHttpHosting(configuration, swaggerTitle, swaggerBearerButton: true);
     }
 
     /// <summary>
@@ -56,7 +57,7 @@ public static class MicroserviceRegister
             .AddBasePermissions(configuration)
             .AddPermissionScope<TenantPermissionScope>();
 
-    /// <summary>The shared middleware (see <see cref="HostingRegister.UseEdxHosting"/>); the service then maps its endpoints (<c>MapControllers()</c>, and what else it speaks).</summary>
+    /// <summary>The shared middleware (see <see cref="HttpHostingRegister.UseEdxHttpHosting"/>); the service then maps its endpoints (<c>MapControllers()</c>, and what else it speaks).</summary>
     public static WebApplication UseEdxMicroservice(this WebApplication app)
     {
         if (AllowedOrigins(app.Configuration).Length > 0)
@@ -64,7 +65,7 @@ public static class MicroserviceRegister
             app.UseCors(CorsPolicyName);
         }
 
-        return app.UseEdxHosting();
+        return app.UseEdxHttpHosting();
     }
 
     private const string CorsPolicyName = "edx-microservice";

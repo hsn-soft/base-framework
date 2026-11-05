@@ -12,7 +12,10 @@ public static class UserHistoryDomainConfiguration
 
         modelBuilder.Entity<UserHistory>(history =>
         {
-            history.ToTable(EfCoreHistoryDbProperties.DbTablePrefix + UserHistoryConsts.TableName, EfCoreHistoryDbProperties.DbSchema);
+            history.ToTable(EfCoreHistoryDbProperties.DbTablePrefix + UserHistoryConsts.TableName, EfCoreHistoryDbProperties.DbSchema, table =>
+            {
+                table.HasCheckConstraint("CK_UserHistory_NormalizedUserName_NotEmpty", "\"NormalizedUserName\" <> ''");
+            });
             history.HasKey(entity => entity.Id);
             history.Property(entity => entity.Id).ValueGeneratedNever();
             history.Property(entity => entity.UserName).HasMaxLength(UserHistoryConsts.UserNameMaxLength).IsRequired();

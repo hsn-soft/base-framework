@@ -3,7 +3,7 @@ using HsnSoft.Base.Auditing;
 
 namespace HsnSoft.Base.Application.Dtos;
 
-public interface IEntityDto<TKey>
+public interface IEntityDto<TKey> : IBaseDto
 {
     TKey Id { get; set; }
 }

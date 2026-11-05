@@ -1,68 +1,55 @@
 using HsnSoft.Base.Application.Dtos;
+using HsnSoft.Base.Authorization;
 using Hsx.IdentityService.Application.Contracts.AppUserDomain.Dtos;
 using Hsx.IdentityService.Application.Contracts.AppUserDomain.Dtos.Filters;
 using Hsx.IdentityService.Application.Contracts.AppUserDomain.Dtos.Submits;
 using Hsx.IdentityService.Application.Contracts.AppUserDomain.Services;
 using Hsx.IdentityService.Http.Host.Controllers.Base;
+using Hsx.Shared.Contracts.Permissions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Hsx.IdentityService.Http.Host.Controllers;
 
 [Route("api/identity-service/v1/commercial/app-users")]
-public sealed class AppUsersController(IAppUserAppService appUserAppService) : BaseServiceController
+public sealed class AppUsersController(IAppUserAppService appUsers) : BaseServiceController
 {
     [HttpPost("get/{id:guid}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [PermissionAuthorize(IdentityPermissions.Endpoints.AppUsers.Read)]
     public Task<AppUserDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
-        => appUserAppService.GetAsync(id, cancellationToken);
+        => appUsers.GetAsync(id, cancellationToken);
 
     [HttpPost("paged-list")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    public Task<PagedDataResultDto<AppUserDto>> GetPagedListAsync([FromBody] GetAppUsersPaged pagedInput, CancellationToken cancellationToken = default)
-        => appUserAppService.GetPagedListAsync(pagedInput, cancellationToken);
+    [PermissionAuthorize(IdentityPermissions.Endpoints.AppUsers.Read)]
+    public Task<PagedDataResultDto<AppUserDto>> GetPagedListAsync([FromBody] GetAppUsersPagedDto pagedInput, CancellationToken cancellationToken = default)
+        => appUsers.GetPagedListAsync(pagedInput, cancellationToken);
 
     [HttpPost("create")]
-    [ProducesResponseType(StatusCodes.Status201Created)]
-    public async Task<IActionResult> CreateAsync([FromBody] AppUserCreateDto input, CancellationToken cancellationToken = default)
-    {
-        AppUserDto created = await appUserAppService.CreateAsync(input, cancellationToken);
-        return CreatedAtAction(nameof(GetAsync), new { id = created.Id }, created);
-    }
+    [PermissionAuthorize(IdentityPermissions.Endpoints.AppUsers.Create)]
+    public Task<AppUserDto> CreateAsync([FromBody] AppUserCreateDto input, CancellationToken cancellationToken = default)
+        => appUsers.CreateAsync(input, cancellationToken);
 
     [HttpPut]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<IActionResult> UpdateAsync([FromBody] AppUserUpdateDto input, CancellationToken cancellationToken = default)
-    {
-        await appUserAppService.UpdateAsync(input, cancellationToken);
-        return NoContent();
-    }
-
-    [HttpPut("password")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<IActionResult> SetPasswordAsync([FromBody] AppUserSetPasswordDto input, CancellationToken cancellationToken = default)
-    {
-        await appUserAppService.SetPasswordAsync(input, cancellationToken);
-        return NoContent();
-    }
+    [PermissionAuthorize(IdentityPermissions.Endpoints.AppUsers.Update)]
+    public Task<AppUserDto> UpdateAsync([FromBody] AppUserUpdateDto input, CancellationToken cancellationToken = default)
+        => appUsers.UpdateAsync(input, cancellationToken);
 
     [HttpPost("roles/{id:guid}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    public Task<List<Guid>> GetRoleIdsAsync(Guid id, CancellationToken cancellationToken = default)
-        => appUserAppService.GetRoleIdsAsync(id, cancellationToken);
+    [PermissionAuthorize(IdentityPermissions.Endpoints.AppUsers.Read)]
+    public Task<AppUserRolesDto> GetRolesAsync(Guid id, CancellationToken cancellationToken = default)
+        => appUsers.GetRolesAsync(id, cancellationToken);
 
     [HttpPut("roles")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<IActionResult> SetRolesAsync([FromBody] AppUserSetRolesDto input, CancellationToken cancellationToken = default)
-    {
-        await appUserAppService.SetRolesAsync(input, cancellationToken);
-        return NoContent();
-    }
+    [PermissionAuthorize(IdentityPermissions.Endpoints.AppUsers.SetRoles)]
+    public Task<AppUserRolesDto> SetRolesAsync([FromBody] AppUserSetRolesDto input, CancellationToken cancellationToken = default)
+        => appUsers.SetRolesAsync(input, cancellationToken);
+
+    [HttpPut("temporary-password")]
+    [PermissionAuthorize(IdentityPermissions.Endpoints.AppUsers.SetPassword)]
+    public Task<TemporaryPasswordIssuedDto> IssueTemporaryPasswordAsync([FromBody] IssueTemporaryPasswordDto input, CancellationToken cancellationToken = default)
+        => appUsers.IssueTemporaryPasswordAsync(input, cancellationToken);
 
     [HttpDelete("{id:guid}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<IActionResult> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
-    {
-        await appUserAppService.DeleteAsync(id, cancellationToken);
-        return NoContent();
-    }
+    [PermissionAuthorize(IdentityPermissions.Endpoints.AppUsers.Delete)]
+    public Task<AppUserDto> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+        => appUsers.DeleteAsync(id, cancellationToken);
 }

@@ -1,7 +1,7 @@
 using Edx.InvoiceService.Application;
 using Edx.InvoiceService.Http.Host.EventHandlers;
 using Edx.InvoiceService.MongoDB;
-using Edx.Shared.Hosting;
+using Edx.Shared.Hosting.Http;
 using Edx.Shared.Hosting.Microservices;
 using HsnSoft.Base.AspNetCore;
 using HsnSoft.Base.Authentication;

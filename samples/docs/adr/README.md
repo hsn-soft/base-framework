@@ -7,6 +7,15 @@ New ADR: copy the framework's [`0000-template.md`](../../../docs/adr/0000-templa
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
+| [0068](0068-hsx-follows-the-production-identity-the-business-is-the-same.md) | Hsx follows the production identity: the business that is in both is the same (the sign-in names the tenant, temporary passwords, the permission catalog from the contracts) | Accepted | 2026-11-05 |
+| [0067](0067-the-shared-hosting-of-a-sample-is-in-layers.md) | The shared hosting of a sample is in layers: the logging in `Shared.Hosting`, the web host in `Shared.Hosting.Http` | Accepted | 2026-11-05 |
+| [0066](0066-the-samples-follow-the-rules-of-the-normalized-fields.md) | The samples follow the rules of the normalized fields (never empty, checked, repositories take the normalized text) | Accepted | 2026-11-05 |
+| [0065](0065-the-samples-store-an-enum-by-its-number-in-their-relational-databases.md) | The samples store an enum by its number in their relational databases (Hsx has a migration that converts the rows) | Accepted | 2026-11-05 |
+| [0064](0064-who-owns-a-record-in-hsx-tenant-scope-neither-and-how-a-sale-moves-between-resellers.md) | Who owns a record in Hsx (tenant, scope or neither), the system tenant writes the sales, role types, and how a sale moves between resellers | Accepted | 2026-11-03 |
+| [0063](0063-companies-customers-and-subscriptions-belong-to-the-tenant-that-made-them.md) | Companies, customers and subscriptions belong to the tenant that made them; the tenant management makes them in one transaction | Superseded by [ADR-0064](0064-who-owns-a-record-in-hsx-tenant-scope-neither-and-how-a-sale-moves-between-resellers.md) | 2026-11-03 |
+| [0062](0062-the-permissions-and-the-menu-of-hsx-are-the-codes-and-live-in-the-identity-service.md) | The permissions and the menu of Hsx are in the code; the identity service keeps them, every endpoint asks for its permission | Accepted | 2026-11-01 |
+| [0061](0061-administration-is-part-of-the-identity-service-and-the-auth-server-reads-its-database.md) | Administration (permissions, menu) is part of the identity service; the auth server reads the identity database directly | Accepted | 2026-11-01 |
+| [0060](0060-the-hhs-rewrite-in-hsx-the-order-and-what-is-decided.md) | The hhs rewrite in Hsx: the core first, events on RabbitMQ with a virtual host for each environment, the settings of each service its own, the customers' web out | Accepted | 2026-11-01 |
 | [0059](0059-hsx-has-two-mongodb-services-and-the-four-environments.md) | Hsx has the text normalizer and the video generator on MongoDB, and the development, docker, uat and production environments | Accepted | 2026-11-01 |
 | [0058](0058-hsx-imitates-hhs-to-test-the-new-framework.md) | Hsx imitates the hhs system (identity and content, auth server, gateway, Razor web) to test that the new framework can do what the old one did | Accepted | 2026-11-01 |
 | [0057](0057-techsummus-sees-its-customers-through-a-tree-of-tenants.md) | Techsummus sees its customers through a tree of tenants | Accepted | 2026-11-01 |

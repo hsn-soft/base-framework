@@ -41,7 +41,7 @@ public sealed class CustomerContent : FullAuditedEntity<Guid>, IScopeSubscriptio
             ScopeKey = Guard.NotNullOrWhiteSpace(scopeKey, nameof(ScopeKey), CustomerContentConsts.ScopeKeyMaxLength).Trim(),
             ContentKey = Guard.NotNullOrWhiteSpace(contentKey, nameof(ContentKey), CustomerContentConsts.ContentKeyMaxLength).Trim()
         };
-        entity.NormalizedContentKey = StringHelper.Normalize(entity.ContentKey);
+        entity.NormalizedContentKey = Guard.NotNullOrWhiteSpace(StringHelper.Normalize(entity.ContentKey), nameof(NormalizedContentKey));
         entity.Update(slugKey, normalizeStatus, videoStatus, videoCdnUrl, currentMilestone, lastError);
         return entity;
     }

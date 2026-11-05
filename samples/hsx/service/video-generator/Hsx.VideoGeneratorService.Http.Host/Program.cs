@@ -1,14 +1,16 @@
 using HsnSoft.Base.AspNetCore;
 using HsnSoft.Base.Authentication;
 using HsnSoft.Base.Caching.StackExchangeRedis;
+using HsnSoft.Base.EventBus;
 using HsnSoft.Base.Localization;
 using HsnSoft.Base.Logging.Serilog;
-using HsnSoft.Base.MultiTenancy;
-using Hsx.Shared.Hosting;
+using Hsx.Shared.Hosting.EventBus;
+using Hsx.Shared.Hosting.Http;
 using Hsx.Shared.Hosting.Microservices;
 using Hsx.Shared.Localization;
 using Hsx.VideoGeneratorService.Application;
 using Hsx.VideoGeneratorService.Domain.VideoRequestDomain.Entities;
+using Hsx.VideoGeneratorService.Http.Host.EventHandlers;
 using Hsx.VideoGeneratorService.MongoDB;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -24,8 +26,10 @@ builder.Services
     .AddBaseHealthChecks(builder.Configuration)   // /health/live, /startup and /ready: leave it out and the service has none
     .AddHsxAuthentication(builder.Configuration)
     .AddHsxAuthorization()
-    // the tenant of a request, the tenants under it and the scopes it may see are what the claims of its token say
-    .AddBaseTenantClaims()
+    .AddHsxPermissions(builder.Configuration)   // [PermissionAuthorize]: what the roles were granted is read from the store the identity service writes
+                                                // the events of the system on RabbitMQ (the exchange HSX, this service's own queues, its handlers are the ones of EventHandlers/)
+    .AddHsxEventBus(builder.Configuration, typeof(EventHandlersAssemblyMarker).Assembly)
+    .AddBaseTenantEventBus()
     .AddVideoGeneratorPersistence(builder.Configuration)
     .AddVideoGeneratorApplication(builder.Configuration);
 

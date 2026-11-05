@@ -40,7 +40,8 @@ internal sealed class MinioDownload : Stream
         Task download = Task.Run(() => CopyAsync(client, container, name, pipe.Writer, stop.Token), CancellationToken.None);
 
         // while this call waits, the caller's token ends the download; once the stream is returned, the stream owns it (disposing it ends the download)
-        await using CancellationTokenRegistration registration = cancellationToken.Register(stop.Cancel);
+        CancellationTokenRegistration registration = cancellationToken.Register(stop.Cancel);
+        await using System.Runtime.CompilerServices.ConfiguredAsyncDisposable disposeRegistration = registration.ConfigureAwait(false);
         try
         {
             ReadResult first = await pipe.Reader.ReadAsync(stop.Token).ConfigureAwait(false);

@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!--
+        The contracts the Hsx services share: the permission codes of each service (Permissions, one class for each service and the catalog of all) and the integration events that more than one service handles, in a folder for each service that publishes them (Events/Content, Events/TextNormalizer, Events/VideoGenerator, Events/Common). An event only one service handles
+        is not here: it is in the Application project of that service (Contracts/Events). Only messages; no logic. Every event of a content carries its scope key and what it is about (<c>RefContentId</c> and <c>RefContentType</c>): the tenant
+        travels in the envelope, the scope key is part of the message ([framework ADR-0129](../../../docs/adr/0129-an-entity-is-isolated-by-its-tenant-or-by-its-scope-never-both.md)).
+    -->
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.Authorization\HsnSoft.Base.Authorization.csproj" />
+        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.EventBus\HsnSoft.Base.EventBus.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Hsx.Shared.Helper\Hsx.Shared.Helper.csproj" />
+    </ItemGroup>
+
+</Project>

@@ -17,9 +17,9 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="AWSSDK.S3" Version="4.0.104.7" />
-        <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="$(MicrosoftAspNetCorePackageVersion)" />
-        <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="$(MicrosoftAspNetCorePackageVersion)" />
+        <PackageReference Include="AWSSDK.S3" />
+        <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" />
+        <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
     </ItemGroup>
 
     <ItemGroup>

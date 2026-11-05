@@ -50,7 +50,7 @@ public sealed class Order : FullAuditedEntity<Guid>, IMultiTenant
         {
             Id = Guid.CreateVersion7(),
             CustomerUserName = customer,
-            NormalizedCustomerUserName = StringHelper.Normalize(customer),
+            NormalizedCustomerUserName = Guard.NotNullOrWhiteSpace(StringHelper.Normalize(customer), nameof(NormalizedCustomerUserName)),
             ShippingAddress = Guard.NotNullOrWhiteSpace(shippingAddress, nameof(ShippingAddress), OrderConsts.ShippingAddressMaxLength),
             Status = OrderStatus.Pending,
         };

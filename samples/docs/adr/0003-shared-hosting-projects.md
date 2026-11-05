@@ -2,6 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-10-25
+- **Note:** [ADR-0067](0067-the-shared-hosting-of-a-sample-is-in-layers.md): `Abc.Shared.Hosting` has the logging only; the web composition (`AddAbcHttpHosting`, the token) moved to `Abc.Shared.Hosting.Http`, and `.Gateways` and `.Microservices` build on it (the same for Edx and Hsx)
 - **Note:** [ADR-0046](0046-a-host-chooses-its-localization-and-its-cache.md): `Abc.Shared.Hosting` and `Abc.Shared.Hosting.Microservices` no longer register the localization or Redis (`AddAbcRedis` is gone, `AddAbcMicroservice` has no `localizedAssemblies`): a host chooses them.
 - **Note:** [ADR-0024](0024-who-references-which-shared-project-in-abc.md): the rule of who references which Abc shared project (Helper, Contracts, Localization, Hosting); `AbcTenants` is in `Abc.Shared.Helper` now.
 - **Note:** [ADR-0023](0023-the-shared-texts-of-a-product-are-a-project-of-their-own.md): the shared texts moved out of `Abc.Shared.Hosting` into `Abc.Shared.Localization`; the hosting projects do not reference it, a host that wants the texts adds the reference and the layer itself.

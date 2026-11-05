@@ -4,7 +4,7 @@ using Abc.OrderService.EntityFrameworkCore;
 using Abc.OrderService.EntityFrameworkCore.Context;
 using Abc.OrderService.Http.Host.EventHandlers;
 using Abc.Shared.Contracts.Events.Product;
-using Abc.Shared.Hosting;
+using Abc.Shared.Hosting.Http;
 using Abc.Shared.Hosting.Microservices;
 using Abc.Shared.Localization;
 using HsnSoft.Base.AspNetCore;

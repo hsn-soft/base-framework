@@ -28,6 +28,14 @@ public sealed class EfCoreRepositoryTests : IAsyncLifetime, IDisposable
         public Guid TenantId { get; private set; }
     }
 
+    /// <summary>Audited and softly deleted, but with no deletion audit fields: <c>ISoftDelete</c> alone.</summary>
+    public sealed class Note(string text) : AuditedEntity<Guid>(Guid.NewGuid()), ISoftDelete
+    {
+        public string Text { get; set; } = text;
+
+        public bool IsDeleted { get; private set; }
+    }
+
     public sealed class Counter(int id) : Entity<int>(id)
     {
         public int Value { get; set; }
@@ -40,10 +48,13 @@ public sealed class EfCoreRepositoryTests : IAsyncLifetime, IDisposable
 
         public DbSet<Counter> Counters => Set<Counter>();
 
+        public DbSet<Note> Notes => Set<Note>();
+
         protected override void ConfigureModel(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Item>().Property(item => item.Id).ValueGeneratedNever();
             modelBuilder.Entity<Counter>().Property(counter => counter.Id).ValueGeneratedNever();
+            modelBuilder.Entity<Note>().Property(note => note.Id).ValueGeneratedNever();
         }
     }
 
@@ -73,7 +84,7 @@ public sealed class EfCoreRepositoryTests : IAsyncLifetime, IDisposable
         ServiceCollection services = new();
         services.AddLogging().AddSingleton<ICurrentUser>(_user).AddSingleton<ITenantSource>(_tenant).AddBaseEntityFramework().AddBaseMultiTenancyEntityFramework();
         services.AddDbContext<RepositoryContext>((provider, options) => options.UseSqlite(_connection).UseBaseEntityConcepts(provider));
-        services.AddEfCoreRepository<RepositoryContext, Item, Guid>().AddEfCoreRepository<RepositoryContext, Counter, int>();
+        services.AddEfCoreRepository<RepositoryContext, Item, Guid>().AddEfCoreRepository<RepositoryContext, Counter, int>().AddEfCoreRepository<RepositoryContext, Note, Guid>();
         _provider = services.BuildServiceProvider();
         await using AsyncServiceScope scope = _provider.CreateAsyncScope();
         await scope.ServiceProvider.GetRequiredService<RepositoryContext>().Database.EnsureCreatedAsync();
@@ -379,5 +390,22 @@ public sealed class EfCoreRepositoryTests : IAsyncLifetime, IDisposable
         await counters.UpdateWhereAsync(counter => counter.Id == 9, set => set.SetProperty(counter => counter.Value, 5));
 
         Assert.Equal(5, (await counters.GetListAsync(new ListQueryOptions<Counter>())).Single().Value);
+    }
+
+    [Fact]
+    public async Task AnEntityThatIsOnlySoftDelete_IsMarkedWhenItIsDeleted_AndHiddenFromTheLists()
+    {
+        Note note = new("remember");
+        await using (AsyncServiceScope scope = _provider.CreateAsyncScope())
+        {
+            IRepository<Note, Guid> notes = scope.ServiceProvider.GetRequiredService<IRepository<Note, Guid>>();
+            await notes.AddAsync(note);
+            await notes.DeleteAsync(note);
+
+            Assert.True(note.IsDeleted);
+            Assert.Null(await notes.FindAsync(note.Id));
+            Assert.Equal(0, await notes.CountAsync());
+            Assert.True(await notes.AnyAsync(candidate => candidate.Id == note.Id, ignoreFilters: true));
+        }
     }
 }

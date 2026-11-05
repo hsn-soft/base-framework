@@ -58,6 +58,33 @@ public static class DbContextExtensions
     }
 
     /// <summary>
+    /// A startup step that brings the database of <typeparamref name="TContext"/> to the last of its migrations (<see cref="MigrateDatabaseAsync{TContext}"/>), and makes the database when it is not there: the step of a service whose schema
+    /// <b>changes</b> (<see cref="AddSchemaStartupStep{TContext}"/> makes the tables of a database that is not there and adds nothing to one that is). Add it to the persistence of a service, before the steps that seed it, in place of the schema step, never with it.
+    /// </summary>
+    public static IServiceCollection AddMigrationStartupStep<TContext>(this IServiceCollection services, string connectionName)
+        where TContext : DbContext
+    {
+        ArgumentNullException.ThrowIfNull(services);
+
+        return services.AddDatabaseStartupStep(connectionName, $"{typeof(TContext).Name} migrations", async (scope, cancellationToken) =>
+            await scope.GetRequiredService<TContext>().Database.MigrateAsync(cancellationToken).ConfigureAwait(false));
+    }
+
+    /// <summary>
+    /// Applies the migrations of <typeparamref name="TContext"/> that the database has not had yet, in their order (it makes the database first when it is not there), waiting for the database to accept connections. A database step like
+    /// <see cref="EnsureDatabaseCreatedAsync{TContext}"/>: only the host that owns the database does it, the pods of that host one at a time, under the lock of the database, so two pods never run the same migration. Running it again changes
+    /// nothing.
+    /// </summary>
+    public static Task MigrateDatabaseAsync<TContext>(this IServiceProvider services)
+        where TContext : DbContext
+    {
+        ArgumentNullException.ThrowIfNull(services);
+
+        return services.RunContextStepAsync<TContext>($"{typeof(TContext).Name} migrations", async (context, cancellationToken) =>
+            await context.Database.MigrateAsync(cancellationToken).ConfigureAwait(false));
+    }
+
+    /// <summary>
     /// Creates the database schema of <typeparamref name="TContext"/> if it does not exist, waiting for the database to accept connections. Use migrations instead for a schema that evolves. For a context that was
     /// registered with <c>AddBaseEfCore</c> it is a database step (<see cref="DatabaseStartupSteps.RunDatabaseStepAsync"/>): only the host that owns the database does it (<c>SeedStartupConnections</c>), and the pods of that host
     /// one at a time, under the lock of the database.

@@ -1,6 +1,7 @@
 using Edx.IdentityService.Domain.IdentityDomain.Repositories;
 using Edx.IdentityService.Domain.IdentityDomain.Security;
 using Edx.Shared.Helper;
+using HsnSoft.Base.Text;
 using Microsoft.Extensions.Options;
 
 namespace Edx.AuthServer.Host.Security;
@@ -29,7 +30,8 @@ public sealed class UserAuthenticator(IUserRepository users, ITenantRepository t
     /// <summary>The user, or <see langword="null"/> when the tenant or the name is unknown, the tenant or the user is not active or the password is wrong (the caller cannot tell which).</summary>
     public async Task<AuthenticatedUser?> AuthenticateAsync(string tenantCode, string userName, string password, CancellationToken cancellationToken = default)
     {
-        SignInInfo? found = await users.FindForSignInAsync(tenantCode, userName, cancellationToken).ConfigureAwait(false);
+        // the repository compares the normalized columns: what was typed is normalized here (the code of a tenant is the normalized text in small letters)
+        SignInInfo? found = await users.FindForSignInAsync(StringHelper.Normalize(tenantCode).ToLowerInvariant(), StringHelper.Normalize(userName), cancellationToken).ConfigureAwait(false);
         bool passwordMatches = PasswordHasher.Verify(found?.User.PasswordHash ?? s_unknownUserHash, password);
         if (found is not { Tenant.IsActive: true, User.IsActive: true } || !passwordMatches)
         {

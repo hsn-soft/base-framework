@@ -3,7 +3,7 @@ using Hsx.ContentService.Application.Contracts.AnalysisContentDomain.Services;
 using Hsx.ContentService.Application.Contracts.AnalysisContentItemDomain.Services;
 using Hsx.ContentService.Application.Contracts.CustomerContentDomain.Services;
 using Hsx.ContentService.Application.Contracts.CustomerContentVisitDomain.Services;
-using Hsx.ContentService.Application.Contracts.CustomerVpSettingDomain.Services;
+using Hsx.ContentService.Application.Contracts.CustomerContentVpSettingDomain.Services;
 using Hsx.ContentService.Application.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,7 +24,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<IAnalysisContentAppService, AnalysisContentAppService>();
         services.AddScoped<IAnalysisContentItemAppService, AnalysisContentItemAppService>();
         services.AddScoped<ICustomerContentVisitAppService, CustomerContentVisitAppService>();
-        services.AddScoped<ICustomerVpSettingAppService, CustomerVpSettingAppService>();
+        services.AddScoped<ICustomerContentVpSettingAppService, CustomerContentVpSettingAppService>();
         return services;
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text.Json;
@@ -44,6 +45,31 @@ public static class BaseHostingExtensions
         builder.Services.AddOptions<BaseHostingOptions>().Bind(builder.Configuration.GetSection(BaseHostingOptions.SectionName));
         builder.Services.Configure<HostOptions>(host => host.ShutdownTimeout = TimeSpan.FromSeconds(options.ShutdownTimeoutSeconds));
         builder.Services.Configure<ForwardedHeadersOptions>(forwarded => Apply(options.ForwardedHeaders, forwarded));
+
+        // the origins that may call from a browser: none unless the settings name them (a setting that cannot be right stops the start)
+        IReadOnlyList<string> origins = options.Cors.NormalizedOrigins();
+        if (origins.Count > 0)
+        {
+            BaseCorsOptions cors = options.Cors;
+            builder.Services.AddCors(setup => setup.AddPolicy(BaseCorsOptions.PolicyName, policy =>
+            {
+                if (origins.Contains("*"))
+                {
+                    policy.AllowAnyOrigin();
+                }
+                else
+                {
+                    policy.WithOrigins([.. origins]);
+                }
+
+                policy.WithMethods([.. cors.AllowedMethods]).WithHeaders([.. cors.AllowedHeaders]).WithExposedHeaders([.. cors.ExposedHeaders]).SetPreflightMaxAge(TimeSpan.FromSeconds(cors.PreflightMaxAgeSeconds));
+                if (cors.AllowCredentials)
+                {
+                    policy.AllowCredentials();
+                }
+            }));
+        }
+
         return builder;
     }
 
@@ -93,6 +119,66 @@ public static class BaseHostingExtensions
     }
 
     /// <summary>
+    /// Writes the security headers of <c>Hosting:SecurityHeaders</c> on every answer (<see cref="BaseSecurityHeadersOptions"/>): <c>X-Content-Type-Options: nosniff</c>, <c>X-Frame-Options</c>, <c>Referrer-Policy</c>, <c>Strict-Transport-Security</c> (on https, outside
+    /// Development) and, when the settings give them, <c>Content-Security-Policy</c> and <c>Permissions-Policy</c>. A header the answer already has is left as it is. Put it early, after <see cref="UseBaseForwardedHeaders"/> (the scheme the browser used).
+    /// </summary>
+    public static WebApplication UseBaseSecurityHeaders(this WebApplication app)
+    {
+        ArgumentNullException.ThrowIfNull(app);
+
+        BaseSecurityHeadersOptions options = app.Services.GetRequiredService<IOptions<BaseHostingOptions>>().Value.SecurityHeaders;
+        if (!options.Enabled)
+        {
+            return app;
+        }
+
+        bool development = app.Environment.IsDevelopment();
+        app.Use((context, next) =>
+        {
+            context.Response.OnStarting(() =>
+            {
+                IHeaderDictionary headers = context.Response.Headers;
+                headers.TryAdd("X-Content-Type-Options", "nosniff");
+                TryAdd(headers, "X-Frame-Options", options.FrameOptions);
+                TryAdd(headers, "Referrer-Policy", options.ReferrerPolicy);
+                TryAdd(headers, "Content-Security-Policy", options.ContentSecurityPolicy);
+                TryAdd(headers, "Permissions-Policy", options.PermissionsPolicy);
+                if (!development && context.Request.IsHttps && options.HstsMaxAgeSeconds > 0)
+                {
+                    TryAdd(headers, "Strict-Transport-Security", $"max-age={options.HstsMaxAgeSeconds}{(options.HstsIncludeSubDomains ? "; includeSubDomains" : string.Empty)}");
+                }
+
+                return Task.CompletedTask;
+            });
+            return next(context);
+        });
+        return app;
+    }
+
+    /// <summary>
+    /// Lets the browsers of <c>Hosting:Cors:AllowedOrigins</c> call (<see cref="BaseCorsOptions"/>); nothing is done when no origin is listed. Put it after the routing and before the authentication, as <c>UseCors</c> goes.
+    /// </summary>
+    public static WebApplication UseBaseCors(this WebApplication app)
+    {
+        ArgumentNullException.ThrowIfNull(app);
+
+        if (app.Services.GetRequiredService<IOptions<BaseHostingOptions>>().Value.Cors.NormalizedOrigins().Count > 0)
+        {
+            app.UseCors(BaseCorsOptions.PolicyName);
+        }
+
+        return app;
+    }
+
+    private static void TryAdd(IHeaderDictionary headers, string name, string value)
+    {
+        if (!string.IsNullOrWhiteSpace(value))
+        {
+            headers.TryAdd(name, value);
+        }
+    }
+
+    /// <summary>
     /// Settings the service cannot start without (an API key, an address): <see cref="RunBaseAsync(WebApplicationBuilder, Action{WebApplication})"/> stops it before it listens, with one error that names every one that is missing (never a value).
     /// A package or a service adds its own.
     /// </summary>
@@ -138,15 +224,15 @@ public static class BaseHostingExtensions
         {
             app = builder.Build();
             CheckRequiredSettings(app);
-            await configure(app);
-            await app.RunAsync();
+            await configure(app).ConfigureAwait(false);
+            await app.RunAsync().ConfigureAwait(false);
             return 0;
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
             if (app is null)
             {
-                await Console.Error.WriteLineAsync($"The host could not be built: {exception}");
+                await Console.Error.WriteLineAsync($"The host could not be built: {exception}").ConfigureAwait(false);
             }
             else
             {
@@ -159,7 +245,7 @@ public static class BaseHostingExtensions
         {
             if (app is not null)
             {
-                await app.DisposeAsync();   // the logger providers flush what they hold, the failure above among it
+                await app.DisposeAsync().ConfigureAwait(false);   // the logger providers flush what they hold, the failure above among it
             }
         }
     }

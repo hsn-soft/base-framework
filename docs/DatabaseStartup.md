@@ -57,6 +57,16 @@ What happens when the host starts:
 
 A step that needs to be run by hand (a tool, a test) can use the same rules without the host: `await services.RunDatabaseStepAsync("EfCore-OrderService", "name", async cancellationToken => { ... })`, and for a context `EnsureDatabaseCreatedAsync<TContext>()`, `RunContextStepAsync<TContext>` and `RunScopedContextStepAsync<TContext>`.
 
+### A schema that changes: migrations
+
+`AddSchemaStartupStep` makes the tables of a database that is **not there** and does nothing to one that is (it is `EnsureCreated`), so a table added later, a column or a rename never reaches a database that exists. A service whose schema changes uses **`AddMigrationStartupStep<TContext>(connection)`
+instead** (never both): it applies the migrations of the context that the database has not had, in their order, and makes the database first when it is not there. It is a step like the others: only the host that owns the database, one pod at a time under the lock, so two pods never run the same migration, and it runs again
+without changing anything. By hand: `services.MigrateDatabaseAsync<TContext>()`.
+
+The migrations are the service's: they live in the project of its context (`dotnet ef migrations add <Name> --project <the persistence project> --startup-project <a host>`; the context needs the options `AddBaseEfCore` gives it, so the tool starts from a host or from an `IDesignTimeDbContextFactory` of the project), are
+committed with the change that needs them, and the model snapshot is what EF compares the model with (a model that changed without a migration stops the migration, which is what is wanted). A database that was made by `AddSchemaStartupStep` has no history of migrations: the first migration would fail on a table that exists, so such a
+database is made again, or its history is filled by hand once ([ADR-0131](adr/0131-a-schema-that-evolves-is-migrated-by-a-startup-step.md)).
+
 ## The locks
 
 | Database | Lock | A pod that dies |

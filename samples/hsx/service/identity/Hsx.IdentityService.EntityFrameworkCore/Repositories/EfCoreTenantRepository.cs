@@ -1,47 +1,55 @@
+using HsnSoft.Base.Domain.Repositories;
+using HsnSoft.Base.EntityFrameworkCore;
 using HsnSoft.Base.MultiTenancy;
 using Hsx.IdentityService.Domain.TenantDomain.Entities;
 using Hsx.IdentityService.Domain.TenantDomain.Exceptions;
 using Hsx.IdentityService.Domain.TenantDomain.Repositories;
 using Hsx.IdentityService.EntityFrameworkCore.Context;
-using Microsoft.EntityFrameworkCore;
 
 namespace Hsx.IdentityService.EntityFrameworkCore.Repositories;
 
-internal sealed class EfCoreTenantRepository(IdentityDbContext db) : ITenantRepository
+internal sealed class EfCoreTenantRepository(IdentityServiceDbContext db) : EfCoreRepository<IdentityServiceDbContext, Tenant, Guid>(db), ITenantRepository
 {
     public async Task<IReadOnlyList<Guid>> GetDescendantIdsAsync(Tenant tenant, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(tenant);
 
-        string path = tenant.AccessPath;
+        string path = tenant.NormalizedAccessPath;
         Guid id = tenant.Id;
-        return await db.Tenants.AsNoTracking()
-            .Where(candidate => candidate.AccessPath.StartsWith(path) && candidate.Id != id && candidate.IsActive)
-            .Select(candidate => candidate.Id)
-            .ToListAsync(cancellationToken).ConfigureAwait(false);
+        IReadOnlyList<IdRow> ids = await GetListAsync(
+            new ListQueryOptions<Tenant> { Filter = candidate => candidate.NormalizedAccessPath.StartsWith(path) && candidate.Id != id && candidate.IsActive },
+            selector: candidate => new IdRow(candidate.Id),
+            cancellationToken).ConfigureAwait(false);
+        return [.. ids.Select(row => row.Id)];
     }
 
     public Task<bool> HasChildrenAsync(Guid tenantId, CancellationToken cancellationToken = default)
-        => db.Tenants.AnyAsync(candidate => candidate.ParentId == tenantId, cancellationToken);
+        => AnyAsync(candidate => candidate.ParentId == tenantId, cancellationToken: cancellationToken);
 
     public async Task MoveAsync(Tenant tenant, Tenant? newParent, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(tenant);
 
-        string oldPath = tenant.AccessPath;
-        if (newParent is not null && TenantAccessPath.IsSelfOrDescendantOf(newParent.AccessPath, oldPath))
+        string oldPath = tenant.NormalizedAccessPath;
+        if (newParent is not null && TenantAccessPath.IsSelfOrDescendantOf(newParent.NormalizedAccessPath, oldPath))
         {
             throw new TenantLoopException();
         }
 
-        List<Tenant> moving = await db.Tenants.Where(candidate => candidate.AccessPath.StartsWith(oldPath)).ToListAsync(cancellationToken).ConfigureAwait(false);
         tenant.PlaceUnder(newParent);
-        string newPath = tenant.AccessPath;
-        foreach (Tenant under in moving.Where(candidate => candidate.Id != tenant.Id))
-        {
-            under.SetAccessPath(TenantAccessPath.Move(under.AccessPath, oldPath, newPath));
-        }
+        string newPath = tenant.NormalizedAccessPath;
+        Guid id = tenant.Id;
+        Guid? parentId = newParent?.Id;
 
-        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        // an expression that goes to the database cannot use the span form of Substring
+#pragma warning disable CA1845
+        // one command: the tenant gets its parent and every path under the old one gets the new start, together
+        await UpdateWhereAsync(
+            candidate => candidate.NormalizedAccessPath.StartsWith(oldPath),
+            set => set
+                .SetProperty(candidate => candidate.NormalizedAccessPath, candidate => newPath + candidate.NormalizedAccessPath.Substring(oldPath.Length))
+                .SetProperty(candidate => candidate.ParentId, candidate => candidate.Id == id ? parentId : candidate.ParentId),
+            cancellationToken).ConfigureAwait(false);
+#pragma warning restore CA1845
     }
 }

@@ -17,6 +17,22 @@ public class BuildingBlocksTests
         Assert.Equal(minimized, StringHelper.Minimize(text));
     }
 
+    [Theory]
+    [InlineData("ıİ", "ii", "II")]
+    [InlineData("öçşğü", "ocsgu", "OCSGU")]
+    [InlineData("ÖÇŞĞÜ", "ocsgu", "OCSGU")]
+    [InlineData("ISPARTA ılık İzmir", "isparta ilik izmir", "ISPARTAILIKIZMIR")]
+    [InlineData("Tech Summus A.Ş.", "tech summus a.s.", "TECHSUMMUSA.S.")]
+    [InlineData("  ali.veli+x@Örnek-Firma_1.com  ", "ali.veli+x@ornek-firma_1.com", "ALI.VELI+X@ORNEK-FIRMA_1.COM")]
+    [InlineData("a b\tc\n(d)/e,f;g:h'i\"j#k$l%m&n*o=p", "a b\tc\n(d)/e,f;g:h'i\"j#k$l%m&n*o=p", "ABCDEFGHIJKLMNOP")]
+    [InlineData("Łódź Øre Đ straße 日本 12", "lodz ore d strasse 日本 12", "LODZOREDSTRASSE12")]
+    [InlineData("   ", "", "")]
+    public void Normalize_ChangesTheTurkishLettersFirst_AndKeepsOnlyCapitalsDigitsAndTheFewMarks(string text, string minimized, string normalized)
+    {
+        Assert.Equal(normalized, StringHelper.Normalize(text));
+        Assert.Equal(minimized, StringHelper.Minimize(text));
+    }
+
     private sealed record Item(string Name, int Price);
 
     [Fact]
@@ -39,4 +55,59 @@ public class BuildingBlocksTests
     [Fact]
     public void AFilterWithNoPart_MatchesEverything()
         => Assert.True(new FilterBuilder<Item>().And(null).Build().Compile()(new Item("x", 1)));
+
+    [Theory]
+    [InlineData("Acme Corp. 2", false, "", "AcmeCorp.2")]
+    [InlineData("a b-c.d_e", false, "_", "a_b-c.d_e")]
+    [InlineData("ali@acme.com", false, "", "aliacme.com")]
+    [InlineData("ali+tag@acme.com", true, "", "ali+tag@acme.com")]
+    [InlineData("Şirket", false, "_", "_irket")]
+    [InlineData("\u0141odz", false, "_", "_odz")]
+    [InlineData("  ", false, "_", "")]
+    [InlineData(null, false, "_", "")]
+    public void ReplaceInvalidChars_KeepsOnlyAsciiLettersDigitsAndTheFewMarks(string? text, bool isEmail, string replacement, string expected)
+        => Assert.Equal(expected, StringHelper.ReplaceInvalidChars(text, isEmail, replacement));
+
+    [Theory]
+    [InlineData("Çanakkale", '_', "canakkale")]
+    [InlineData("Acme Corp.", '_', "acme_corp.")]
+    [InlineData("  Hello  World!  ", '-', "hello--world")]
+    [InlineData("ISPARTA ılık Łódź Øre Đ", '_', "isparta_ilik_lodz_ore_d")]
+    [InlineData("---", '-', "")]
+    [InlineData(null, '_', "")]
+    public void SlugKeyNormalize_MakesAKeyOfAName(string? value, char separator, string expected)
+        => Assert.Equal(expected, StringHelper.SlugKeyNormalize(value, separator));
+
+    [Fact]
+    public void SlugKeyNormalize_UsesAnUnderscoreByDefault()
+        => Assert.Equal("a_b", StringHelper.SlugKeyNormalize("A B"));
+
+    [Fact]
+    public void TheFilterBuilder_OrsAPartIntoWhatWasAdded_AndAPartThatIsNullIsLeftOut()
+    {
+        Func<Item, bool> filter = new FilterBuilder<Item>()
+            .Or(item => item.Name == "a")
+            .Or(null)
+            .Or(item => item.Price > 100)
+            .Build().Compile();
+
+        Assert.True(filter(new Item("a", 1)));
+        Assert.True(filter(new Item("b", 500)));
+        Assert.False(filter(new Item("b", 1)));
+    }
+
+    [Fact]
+    public void AnyOf_PutsTheAlternativesTogether_ForAnd()
+    {
+        System.Linq.Expressions.Expression<Func<Item, bool>>? name = FilterBuilder.AnyOf<Item>(item => item.Name.Contains('x', StringComparison.Ordinal), null, item => item.Name.Contains('y', StringComparison.Ordinal));
+        Func<Item, bool> filter = new FilterBuilder<Item>().And(name).And(item => item.Price < 10).Build().Compile();
+
+        Assert.True(filter(new Item("xa", 1)));
+        Assert.True(filter(new Item("ya", 1)));
+        Assert.False(filter(new Item("za", 1)));
+        Assert.False(filter(new Item("xa", 50)));
+        Assert.Null(FilterBuilder.AnyOf<Item>(null, null));
+        Assert.Null(FilterBuilder.AnyOf<Item>());
+        Assert.Throws<ArgumentNullException>(() => FilterBuilder.AnyOf<Item>(null!));
+    }
 }

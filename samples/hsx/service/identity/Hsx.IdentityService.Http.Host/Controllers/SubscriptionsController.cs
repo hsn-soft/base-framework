@@ -1,48 +1,50 @@
 using HsnSoft.Base.Application.Dtos;
+using HsnSoft.Base.Authorization;
 using Hsx.IdentityService.Application.Contracts.SubscriptionDomain.Dtos;
 using Hsx.IdentityService.Application.Contracts.SubscriptionDomain.Dtos.Filters;
 using Hsx.IdentityService.Application.Contracts.SubscriptionDomain.Dtos.Submits;
 using Hsx.IdentityService.Application.Contracts.SubscriptionDomain.Services;
 using Hsx.IdentityService.Http.Host.Controllers.Base;
+using Hsx.Shared.Contracts.Permissions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Hsx.IdentityService.Http.Host.Controllers;
 
-/// <summary>The subscriptions: every action only calls the application service, which holds the rules.</summary>
 [Route("api/identity-service/v1/commercial/subscriptions")]
-public sealed class SubscriptionsController(ISubscriptionAppService subscriptionAppService) : BaseServiceController
+public sealed class SubscriptionsController(ISubscriptionAppService subscriptions) : BaseServiceController
 {
     [HttpPost("get/{id:guid}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [PermissionAuthorize(IdentityPermissions.Endpoints.Subscriptions.Read)]
     public Task<SubscriptionDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
-        => subscriptionAppService.GetAsync(id, cancellationToken);
+        => subscriptions.GetAsync(id, cancellationToken);
 
     [HttpPost("paged-list")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    public Task<PagedDataResultDto<SubscriptionDto>> GetPagedListAsync([FromBody] GetSubscriptionsPaged pagedInput, CancellationToken cancellationToken = default)
-        => subscriptionAppService.GetPagedListAsync(pagedInput, cancellationToken);
+    [PermissionAuthorize(IdentityPermissions.Endpoints.Subscriptions.Read)]
+    public Task<PagedDataResultDto<SubscriptionDto>> GetPagedListAsync([FromBody] GetSubscriptionsPagedDto pagedInput, CancellationToken cancellationToken = default)
+        => subscriptions.GetPagedListAsync(pagedInput, cancellationToken);
+
+    [HttpPost("filters")]
+    [PermissionAuthorize(IdentityPermissions.Endpoints.Subscriptions.Read)]
+    public Task<SubscriptionFiltersDto> GetFiltersAsync(CancellationToken cancellationToken = default)
+        => subscriptions.GetFiltersAsync(cancellationToken);
 
     [HttpPost("create")]
-    [ProducesResponseType(StatusCodes.Status201Created)]
-    public async Task<IActionResult> CreateAsync([FromBody] SubscriptionCreateDto input, CancellationToken cancellationToken = default)
-    {
-        SubscriptionDto created = await subscriptionAppService.CreateAsync(input, cancellationToken);
-        return CreatedAtAction(nameof(GetAsync), new { id = created.Id }, created);
-    }
+    [PermissionAuthorize(IdentityPermissions.Endpoints.Subscriptions.Create)]
+    public Task<SubscriptionDto> CreateAsync([FromBody] SubscriptionCreateDto input, CancellationToken cancellationToken = default)
+        => subscriptions.CreateAsync(input, cancellationToken);
 
     [HttpPut]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<IActionResult> UpdateAsync([FromBody] SubscriptionUpdateDto input, CancellationToken cancellationToken = default)
-    {
-        await subscriptionAppService.UpdateAsync(input, cancellationToken);
-        return NoContent();
-    }
+    [PermissionAuthorize(IdentityPermissions.Endpoints.Subscriptions.Update)]
+    public Task<SubscriptionDto> UpdateAsync([FromBody] SubscriptionUpdateDto input, CancellationToken cancellationToken = default)
+        => subscriptions.UpdateAsync(input, cancellationToken);
+
+    [HttpPut("transfer")]
+    [PermissionAuthorize(IdentityPermissions.Endpoints.Subscriptions.Transfer)]
+    public Task<SubscriptionDto> TransferAsync([FromBody] SubscriptionTransferDto input, CancellationToken cancellationToken = default)
+        => subscriptions.TransferAsync(input, cancellationToken);
 
     [HttpDelete("{id:guid}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<IActionResult> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
-    {
-        await subscriptionAppService.DeleteAsync(id, cancellationToken);
-        return NoContent();
-    }
+    [PermissionAuthorize(IdentityPermissions.Endpoints.Subscriptions.Delete)]
+    public Task<SubscriptionDto> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+        => subscriptions.DeleteAsync(id, cancellationToken);
 }

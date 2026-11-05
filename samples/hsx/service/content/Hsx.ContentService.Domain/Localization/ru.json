@@ -5,7 +5,7 @@
     "analysis_content_not_found": "Запись не найдена: {0}.",
     "customer_content_not_found": "Запись не найдена: {0}.",
     "customer_content_visit_not_found": "Запись не найдена: {0}.",
-    "customer_vp_setting_not_found": "Запись не найдена: {0}.",
+    "customer_content_vp_setting_not_found": "Запись не найдена: {0}.",
     "scope_not_allowed": "Область '{0}' вам недоступна."
   }
 }

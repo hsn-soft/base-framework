@@ -11,6 +11,7 @@
     "Status:404": "Kaynak bulunamadı.",
     "Status:405": "Yöntem desteklenmiyor.",
     "Status:408": "İstek zaman aşımına uğradı.",
+    "Status:409": "Çakışma.",
     "Status:415": "Desteklenmeyen ortam türü.",
     "Status:429": "Çok fazla istek.",
     "Status:Other": "İstek başarısız oldu.",
@@ -32,6 +33,7 @@
     "Validation:Length": "{0} {1} ile {2} karakter arasında olmalı.",
     "Validation:ItemsNotBlank": "{0} boş eleman içeremez.",
     "Validation:InvalidValue": "{0} geçerli bir değer değil.",
-    "Validation:InvalidJson": "İstek geçerli bir JSON değil."
+    "Validation:InvalidJson": "İstek geçerli bir JSON değil.",
+    "Concurrency:Conflict": "{0} siz okuduktan sonra başkası tarafından değiştirildi veya silindi. Yeniden okuyup tekrar deneyin."
   }
 }

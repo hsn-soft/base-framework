@@ -1,13 +1,15 @@
 using HsnSoft.Base.AspNetCore;
 using HsnSoft.Base.Authentication;
 using HsnSoft.Base.Caching.StackExchangeRedis;
+using HsnSoft.Base.EventBus;
 using HsnSoft.Base.Localization;
 using HsnSoft.Base.Logging.Serilog;
-using HsnSoft.Base.MultiTenancy;
 using Hsx.ContentService.Application;
 using Hsx.ContentService.Domain.CustomerContentDomain.Entities;
 using Hsx.ContentService.EntityFrameworkCore;
-using Hsx.Shared.Hosting;
+using Hsx.ContentService.Http.Host.EventHandlers;
+using Hsx.Shared.Hosting.EventBus;
+using Hsx.Shared.Hosting.Http;
 using Hsx.Shared.Hosting.Microservices;
 using Hsx.Shared.Localization;
 
@@ -24,8 +26,10 @@ builder.Services
     .AddBaseHealthChecks(builder.Configuration)   // /health/live, /startup and /ready: leave it out and the service has none
     .AddHsxAuthentication(builder.Configuration)
     .AddHsxAuthorization()
-    // the tenant of a request, the tenants under it and the scopes it may see are what the claims of its token say
-    .AddBaseTenantClaims()
+    .AddHsxPermissions(builder.Configuration)   // [PermissionAuthorize]: what the roles were granted is read from the store the identity service writes
+                                                // the events of the system on RabbitMQ (the exchange HSX, this service's own queues, its handlers are the ones of EventHandlers/)
+    .AddHsxEventBus(builder.Configuration, typeof(EventHandlersAssemblyMarker).Assembly)
+    .AddBaseTenantEventBus()
     .AddContentPersistence(builder.Configuration)
     .AddContentApplication(builder.Configuration);
 

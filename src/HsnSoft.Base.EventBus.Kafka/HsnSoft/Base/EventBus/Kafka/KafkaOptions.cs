@@ -41,6 +41,18 @@ public sealed class KafkaOptions
     /// <summary>Replication factor of a topic the library has to create.</summary>
     public short ReplicationFactor { get; set; } = 1;
 
+    /// <summary>
+    /// The largest message a producer sends, in bytes (the dead letter producer too); <see langword="null"/> keeps the default of the client (about 1 MB). An event that carries a large body needs it raised, **together with** <see cref="MaxPartitionFetchBytes"/>
+    /// and <see cref="FetchMaxBytes"/> of the consumers and the <c>message.max.bytes</c> of the brokers and the <c>max.message.bytes</c> of the topic: a message that one of them refuses never arrives, and a consumer whose fetch is smaller than a message stalls on it.
+    /// </summary>
+    public int? MessageMaxBytes { get; set; }
+
+    /// <summary>The most a consumer fetches from the brokers at once, in bytes; <see langword="null"/> keeps the default of the client (about 50 MB). It has to be at least <see cref="MaxPartitionFetchBytes"/>.</summary>
+    public int? FetchMaxBytes { get; set; }
+
+    /// <summary>The most a consumer fetches from one partition at once, in bytes; <see langword="null"/> keeps the default of the client (about 1 MB). It has to be at least the largest message of the topic, or the consumer stalls on it.</summary>
+    public int? MaxPartitionFetchBytes { get; set; }
+
     /// <summary>How the client talks to the brokers. <see cref="Confluent.Kafka.SecurityProtocol.Plaintext"/> sends everything, credentials included, unencrypted: use <c>Ssl</c> or <c>SaslSsl</c> outside a closed network.</summary>
     public SecurityProtocol SecurityProtocol { get; set; } = SecurityProtocol.Plaintext;
 
@@ -63,6 +75,9 @@ public sealed class KafkaOptions
     /// <summary>A secret: keep it out of the settings file.</summary>
     public string? SslKeyPassword { get; set; }
 
+    private static int Positive(int value, string name)
+        => value > 0 ? value : throw new InvalidOperationException($"Kafka:{name} must be greater than zero.");
+
     /// <summary>Puts the connection settings (the servers and the security) into the configuration of a producer, a consumer or an admin client: every client of the library is made with this, so none of them is left unencrypted.</summary>
     internal T Apply<T>(T config)
         where T : ClientConfig
@@ -80,6 +95,25 @@ public sealed class KafkaOptions
         config.SslCertificateLocation = SslCertificateLocation ?? config.SslCertificateLocation;
         config.SslKeyLocation = SslKeyLocation ?? config.SslKeyLocation;
         config.SslKeyPassword = SslKeyPassword ?? config.SslKeyPassword;
+        switch (config)
+        {
+            case ProducerConfig producer when MessageMaxBytes is { } messageMaxBytes:
+                producer.MessageMaxBytes = Positive(messageMaxBytes, nameof(MessageMaxBytes));
+                break;
+            case ConsumerConfig consumer:
+                if (FetchMaxBytes is { } fetchMaxBytes)
+                {
+                    consumer.FetchMaxBytes = Positive(fetchMaxBytes, nameof(FetchMaxBytes));
+                }
+
+                if (MaxPartitionFetchBytes is { } maxPartitionFetchBytes)
+                {
+                    consumer.MaxPartitionFetchBytes = Positive(maxPartitionFetchBytes, nameof(MaxPartitionFetchBytes));
+                }
+
+                break;
+        }
+
         return config;
     }
 }

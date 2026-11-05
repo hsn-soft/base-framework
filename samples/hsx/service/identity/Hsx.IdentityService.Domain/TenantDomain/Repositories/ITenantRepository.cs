@@ -1,9 +1,10 @@
+using HsnSoft.Base.Domain.Repositories;
 using Hsx.IdentityService.Domain.TenantDomain.Entities;
 
 namespace Hsx.IdentityService.Domain.TenantDomain.Repositories;
 
 /// <summary>What is asked of the tree of tenants.</summary>
-public interface ITenantRepository
+public interface ITenantRepository : IRepository<Tenant, Guid>
 {
     /// <summary>
     /// The tenants under this one, at any depth, <b>without</b> the tenant itself (its own id is always allowed): the ones whose path starts with the path of the tenant. They are what the token of a user of the tenant lets it see besides its own

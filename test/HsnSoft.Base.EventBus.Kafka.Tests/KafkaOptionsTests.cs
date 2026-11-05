@@ -47,4 +47,42 @@ public class KafkaOptionsTests
         Assert.Equal("kept", config.SaslUsername);
         Assert.Equal(Acks.All, config.Acks);
     }
+
+    [Fact]
+    public void TheSizeOfAMessage_ReachesTheProducerAndTheConsumerThatReadIt()
+    {
+        KafkaOptions options = new() { MessageMaxBytes = 20_000_000, FetchMaxBytes = 60_000_000, MaxPartitionFetchBytes = 25_000_000 };
+
+        ProducerConfig producer = options.Apply(new ProducerConfig());
+        ConsumerConfig consumer = options.Apply(new ConsumerConfig());
+
+        Assert.Equal(20_000_000, producer.MessageMaxBytes);
+        Assert.Equal(60_000_000, consumer.FetchMaxBytes);
+        Assert.Equal(25_000_000, consumer.MaxPartitionFetchBytes);
+    }
+
+    [Fact]
+    public void WithNoSizeInTheSettings_TheClientsKeepTheirDefaults()
+    {
+        KafkaOptions options = new();
+
+        Assert.Null(options.Apply(new ProducerConfig()).MessageMaxBytes);
+        Assert.Null(options.Apply(new ConsumerConfig()).FetchMaxBytes);
+        Assert.Null(options.Apply(new ConsumerConfig()).MaxPartitionFetchBytes);
+    }
+
+    [Theory]
+    [InlineData(0, null, null)]
+    [InlineData(null, -1, null)]
+    [InlineData(null, null, 0)]
+    public void ASizeThatIsNotPositive_IsAnError(int? message, int? fetch, int? partition)
+    {
+        KafkaOptions options = new() { MessageMaxBytes = message, FetchMaxBytes = fetch, MaxPartitionFetchBytes = partition };
+
+        Assert.Throws<InvalidOperationException>(() =>
+        {
+            options.Apply(new ProducerConfig());
+            options.Apply(new ConsumerConfig());
+        });
+    }
 }
