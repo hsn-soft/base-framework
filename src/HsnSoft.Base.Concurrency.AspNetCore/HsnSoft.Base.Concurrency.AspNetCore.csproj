@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <Import Project="..\..\common.props" />
+
+    <PropertyGroup>
+        <AssemblyName>HsnSoft.Base.Concurrency.AspNetCore</AssemblyName>
+        <PackageId>HsnSoft.Base.Concurrency.AspNetCore</PackageId>
+        <RootNamespace />
+        <Title>HsnSoft Base Framework Concurrency AspNetCore</Title>
+        <Description>The concurrency limit on an endpoint: [ConcurrencyLimit] for a controller action and RequireConcurrencyLimit for a minimal api; when the places are taken the answer is 429 with Retry-After.</Description>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageTags>HsnSoft Base Framework Concurrency AspNetCore Limit</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="..\..\README.md" Pack="true" Visible="false" PackagePath="README.md" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\HsnSoft.Base.Concurrency\HsnSoft.Base.Concurrency.csproj" />
+    </ItemGroup>
+
+</Project>

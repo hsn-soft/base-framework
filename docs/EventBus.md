@@ -116,6 +116,8 @@ uses one admin client for all the probes, not one per probe.
 
 `Kafka:MaxPollInterval` (5 min) is how long a consumer may go without reading before the broker gives its partitions to another instance: it must be longer than `ShutdownTimeout` (the service refuses to start otherwise) and than your slowest handler; `Kafka:SessionTimeout` (45 s) is the heartbeat limit.
 
+**Large events.** The clients keep their defaults for the size of a message (about 1 MB for a producer and for a partition fetch). An event with a large body raises `Kafka:MessageMaxBytes` (producers, the dead letter producer too), `Kafka:MaxPartitionFetchBytes` and `Kafka:FetchMaxBytes` (consumers) **together** with the `message.max.bytes` of the brokers and the `max.message.bytes` of the topic: a message that one of them refuses never arrives, and a consumer whose partition fetch is smaller than a message stalls on it. The old framework set all of them to 50 MB; here none is changed unless the settings say so.
+
 ## A secure connection
 
 Both brokers are plaintext by default; outside a closed network turn the security on with settings ([ADR-0103](adr/0103-brokers-are-reached-with-tls-and-sasl-when-the-settings-say-so.md)), and keep the passwords in the environment or a secret store, not in the file:

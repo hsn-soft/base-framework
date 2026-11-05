@@ -7,7 +7,7 @@
         <PackageId>HsnSoft.Base.Authorization</PackageId>
         <RootNamespace />
         <Title>HsnSoft Base Framework Authorization</Title>
-        <Description>Permission based authorization: the [PermissionAuthorize] attribute, the checker that asks what the user and the roles of the user were granted (in a distributed cache a service fills), and the values a role may be limited by.</Description>
+        <Description>Permission based authorization without a web framework: the checker that asks what the user and the roles of the user were granted (in a distributed cache a service fills), and the values a role may be limited by. The [PermissionAuthorize] attribute for an endpoint is in HsnSoft.Base.Authorization.AspNetCore.</Description>
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <PackageTags>HsnSoft Base Framework Authorization Permissions</PackageTags>
     </PropertyGroup>
@@ -17,7 +17,8 @@
     </ItemGroup>
 
     <ItemGroup>
-        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+        <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
+        <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
     </ItemGroup>
 
     <ItemGroup>

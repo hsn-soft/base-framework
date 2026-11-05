@@ -7,14 +7,15 @@ using Microsoft.EntityFrameworkCore;
 namespace Hsx.ContentService.EntityFrameworkCore.Seeding;
 
 /// <summary>
-/// Demo contents of the one demo customer, under the scope keys of its two subscriptions (the video platform Techsummus sold and the vertical video Pixel sold; the identity service puts the same keys into the tokens). Run again, it adds only
+/// Demo contents of the one demo customer, under the scope key of its video platform subscription (the one audio-time sold; the identity service puts the same key into the tokens). Run again, it adds only
 /// what is missing.
 /// </summary>
 internal sealed class SampleContentSeeder(ContentDbContext db) : IDataSeeder
 {
     public async Task SeedAsync(CancellationToken cancellationToken)
     {
-        foreach ((string scope, string prefix) in new[] { (HsxSeed.VideoPlatformScope, "vp"), (HsxSeed.VerticalVideoScope, "cc") })
+        string scope = HsxSeed.VideoPlatformScope;
+        const string prefix = "vp";
         {
             for (int i = 1; i <= 3; i++)
             {

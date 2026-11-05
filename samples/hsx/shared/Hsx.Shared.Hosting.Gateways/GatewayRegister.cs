@@ -1,6 +1,7 @@
 using System.Net;
 using HsnSoft.Base.AspNetCore;
 using Hsx.Shared.Hosting.Gateways.Options;
+using Hsx.Shared.Hosting.Http;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -26,7 +27,7 @@ public static class GatewayRegister
         (IReadOnlyList<RouteConfig> proxyRoutes, IReadOnlyList<ClusterConfig> proxyClusters) = ReverseProxyConfigBuilder.Build(routes, endpoints);
 
         services
-            .AddHsxHosting(configuration, title, swaggerName: "gateway")
+            .AddHsxHttpHosting(configuration, title, swaggerName: "gateway")
             .AddBaseSwaggerGateway(configuration)   // the documents of the services, with the gateway's paths
             .Configure<GatewayPolicyOptions>(configuration.GetSection(GatewayPolicyOptions.SectionName));
         services.AddOptions<ForwardedHeadersOptions>().Configure<IOptions<GatewayPolicyOptions>>((forwarded, policy) =>
@@ -65,7 +66,7 @@ public static class GatewayRegister
         ArgumentNullException.ThrowIfNull(app);
 
         // the first middleware of the hosting believes the proxies of Hosting:ForwardedHeaders and of GatewayPolicies:TrustedProxyIps
-        app.UseHsxHosting();
+        app.UseHsxHttpHosting();
         app.MapReverseProxy();
         return app;
     }

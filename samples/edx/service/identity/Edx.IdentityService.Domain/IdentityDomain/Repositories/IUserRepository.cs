@@ -13,7 +13,7 @@ public interface IUserRepository : IRepository<User, Guid>
     /// The user of the tenant that has this code with this name (compared without regard to case), with the tenant and the names of its roles; nothing when the tenant or the user is not there. Nobody is signed in
     /// yet, so the tenant filters are not what decides: the code the caller gave names the tenant, and only its users are looked at.
     /// </summary>
-    Task<SignInInfo?> FindForSignInAsync(string tenantCode, string userName, CancellationToken cancellationToken = default);
+    Task<SignInInfo?> FindForSignInAsync(string normalizedTenantCode, string normalizedUserName, CancellationToken cancellationToken = default);
 
     /// <summary>Gives the user exactly these roles (the roles of the user's own tenant: the caller checked them).</summary>
     Task SetRolesAsync(User user, IReadOnlyCollection<Role> roles, CancellationToken cancellationToken = default);

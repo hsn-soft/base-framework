@@ -241,7 +241,7 @@ public sealed class SalesInvoice : FullAuditedEntity<Guid>, IMultiTenant
             Id = Guid.CreateVersion7(),
             InvoiceId = Guard.NotDefault<Guid>(invoiceId, nameof(InvoiceId)),
             Number = text,
-            NormalizedNumber = StringHelper.Normalize(text),
+            NormalizedNumber = Guard.NotNullOrWhiteSpace(StringHelper.Normalize(text), nameof(NormalizedNumber)),
             QueueId = queueId,
             SourceType = sourceType,
             ChannelType = channelType,

@@ -5,7 +5,7 @@
     "analysis_content_not_found": "AnalysisContent {0} was not found.",
     "customer_content_not_found": "CustomerContent {0} was not found.",
     "customer_content_visit_not_found": "CustomerContentVisit {0} was not found.",
-    "customer_vp_setting_not_found": "CustomerVpSetting {0} was not found.",
+    "customer_content_vp_setting_not_found": "CustomerContentVpSetting {0} was not found.",
     "scope_not_allowed": "The scope '{0}' is not one of yours."
   }
 }

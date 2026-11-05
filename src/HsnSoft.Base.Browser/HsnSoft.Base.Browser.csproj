@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <Import Project="..\..\common.props" />
+
+    <PropertyGroup>
+        <AssemblyName>HsnSoft.Base.Browser</AssemblyName>
+        <PackageId>HsnSoft.Base.Browser</PackageId>
+        <RootNamespace />
+        <Title>HsnSoft.Base Framework Browser</Title>
+        <Description>A web browser as a service of the application, without naming one: the page after its scripts ran, a page as a PDF and a page as an image, from an address or from HTML, with the policy that keeps a rendered page from reaching the inside of the network.</Description>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageTags>HsnSoft Base Framework Browser Pdf Screenshot Scraping</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="..\..\README.md" Pack="true" Visible="false" PackagePath="README.md" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\HsnSoft.Base.Extensions\HsnSoft.Base.Extensions.csproj" />
+    </ItemGroup>
+
+</Project>

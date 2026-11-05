@@ -1,7 +1,7 @@
 # Swagger
 
-`HsnSoft.Base.AspNetCore.Swashbuckle` serves the Swagger document and its UI (Swashbuckle) with one call to register and one to use. It depends only
-on `HsnSoft.Base.Core`; `HsnSoft.Base.AspNetCore.WebApi` does not know it, so a service takes Swagger only if it wants it.
+`HsnSoft.Base.AspNetCore.Swashbuckle` serves the Swagger document and its UI (Swashbuckle) with one call to register and one to use. It depends on
+`HsnSoft.Base.AspNetCore` (and through it on Core, [ADR-0071](adr/0071-the-aspnetcore-layer-packages-build-on-aspnetcore.md)); `HsnSoft.Base.AspNetCore.WebApi` does not know it, so a service takes Swagger only if it wants it.
 
 ```csharp
 // registering

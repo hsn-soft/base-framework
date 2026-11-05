@@ -6,3 +6,8 @@ dotnet_diagnostic.CA1716.severity = none
 # LoggerMessage source generators are a performance optimisation, not needed here
 dotnet_diagnostic.CA1848.severity = none
 dotnet_diagnostic.CA1873.severity = none
+
+# The migrations of EF Core are made by the tool (dotnet ef migrations add): they are not edited for style
+[**/Migrations/*.cs]
+generated_code = true
+dotnet_analyzer_diagnostic.severity = none

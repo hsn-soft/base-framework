@@ -3,6 +3,8 @@
 Thank you for helping with the HsnSoft Base Framework. This page is the short version of how we work; the root
 [README](README.md) says what the framework is, and [docs/Overview.md](docs/Overview.md) explains what the packages are.
 
+What runs at the commit, the push and the pull request, and how to run it yourself: [docs/Checks.md](docs/Checks.md). The branches and which of them may be merged into which: [docs/BranchRules.md](docs/BranchRules.md).
+
 ## Ground rules
 
 - **One package, one capability.** An application takes only the packages it needs. Do not add a dependency "because it is
@@ -27,7 +29,10 @@ Thank you for helping with the HsnSoft Base Framework. This page is the short ve
    do not discover it on the pull request. See [scripts/ci-detector](scripts/ci-detector/README.md).
 3. Open the pull request against `dev`. The `.NETCore Build & Test` workflow must be green: build, unit tests, integration tests and
    the coverage gate.
-4. `rel/nuget-candidate` (from `dev` only) and `rel/nuget-regular` (from `rel/nuget-candidate` only) are what is published to NuGet, a pre-release and a stable version; a merge into them runs the deploy workflow. Into `dev` only from `feat/*`, `hotfix/*` and `bugfix/*`. See [Releasing](docs/Releasing.md).
+4. `rel/nuget-candidate` (only from `dev` or `master`) and `rel/nuget-regular` (only from `dev`, `master` or `rel/nuget-candidate`) are what is published to NuGet, a pre-release and a stable version; a merge into them runs the deploy workflow. Into `dev` or `master` from `feat/*`, `bugfix/*`, `hotfix/*` and `rel/*` ([ADR-0144](docs/adr/0144-the-source-of-every-pull-request-has-a-known-branch-name.md)). See [Releasing](docs/Releasing.md).
+
+**Work done by Claude (the AI assistant)** follows [ADR-0132](docs/adr/0132-claude-works-on-its-own-branch-from-dev-and-never-merges-into-dev.md) and the root [`CLAUDE.md`](CLAUDE.md): it works on its own `feat/...` branch cut from `dev`, commits and pushes there, and never opens a pull request into `dev` or a release branch, merges into
+them, or pushes to them. You open and merge the pull request (steps 2 to 4 above are yours for its work), and the release pull requests below.
 
 Commit messages follow the Conventional Commits style used in the history: `feat:`, `fix:`, `refactor:`, `test:`, `ci:`, `style:`,
 `docs:`, with a short subject in the imperative.
@@ -42,6 +47,7 @@ dotnet build
 ./scripts/run-tests.sh integration   # starts RabbitMQ, Kafka, Redis, MongoDB, PostgreSQL, SQL Server, MinIO (Testcontainers)
 ```
 
+- **The hot paths are measured, not tested**: `benchmarks/HsnSoft.Base.Benchmarks` (BenchmarkDotNet) is run by hand before and after a change that touches one of them: `dotnet run -c Release --project benchmarks/HsnSoft.Base.Benchmarks -- --filter "*Masking*"` ([ADR-0142](docs/adr/0142-the-hot-paths-are-measured-by-benchmarks-that-are-not-tests.md)). It is built with the solution and is not part of the CI.
 - **Every package has a unit test project**, `test/<Package>.Tests`. `scripts/ci-detector/ci-check-test-project-exist.sh` fails the build when one is
   missing.
 - **Every provider has integration tests** in `test/HsnSoft.Base.IntegrationTests`, against the real service.
@@ -98,7 +104,7 @@ Rules to know:
 
 1. Create `src/HsnSoft.Base.<Name>/` with a project that imports `common.props` and follows the layout of an existing package
    (package id, description, tags, README).
-2. Add `test/HsnSoft.Base.<Name>.Tests/` (imports `common.test.props`; it can see the package's internals). Package versions are never written in a project file: use `$(MicrosoftAspNetCorePackageVersion)` / `$(MicrosoftEntityFrameworkCorePackageVersion)` (`common.versions.props`, [ADR-0105](docs/adr/0105-shared-package-versions-in-one-file-and-a-common-test-host.md)).
+2. Add `test/HsnSoft.Base.<Name>.Tests/` (imports `common.test.props`; it can see the package's internals). Package versions are never written in a project file: add a `PackageVersion` to `Directory.Packages.props` and reference the package without a version ([ADR-0134](docs/adr/0134-package-versions-are-managed-centrally-and-a-library-awaits-with-configureawait-false.md)).
 3. For a provider (a broker, a database, a store), add integration tests to `test/HsnSoft.Base.IntegrationTests`.
 4. Add both to the solution and add a row to the package table in [docs/Overview.md](docs/Overview.md).
 

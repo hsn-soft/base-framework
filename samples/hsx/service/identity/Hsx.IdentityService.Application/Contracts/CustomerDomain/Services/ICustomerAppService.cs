@@ -11,10 +11,10 @@ public interface ICustomerAppService
     /// <exception cref="HsnSoft.Base.NotFoundException">There is no such customer.</exception>
     Task<CustomerDto> GetAsync(Guid id, CancellationToken cancellationToken = default);
 
-    Task<PagedDataResultDto<CustomerDto>> GetPagedListAsync(GetCustomersPaged pagedInput, CancellationToken cancellationToken = default);
+    Task<PagedDataResultDto<CustomerDto>> GetPagedListAsync(GetCustomersPagedDto pagedInput, CancellationToken cancellationToken = default);
 
     Task<CustomerDto> CreateAsync(CustomerCreateDto input, CancellationToken cancellationToken = default);
 
     /// <exception cref="HsnSoft.Base.NotFoundException">There is no such customer.</exception>
-    Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<CustomerDto> DeleteAsync(Guid id, CancellationToken cancellationToken = default);
 }

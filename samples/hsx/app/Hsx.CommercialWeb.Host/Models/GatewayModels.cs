@@ -1,15 +1,5 @@
 namespace Hsx.CommercialWeb.Host.Models;
 
-/// <summary>The answer of every Hsx service, as the gateway forwards it (<c>BaseResponse</c>): the data is in <see cref="Payload"/>.</summary>
-public sealed class ApiResponse<T>
-{
-    public int StatusCode { get; init; }
-
-    public List<string> StatusMessages { get; init; } = [];
-
-    public T? Payload { get; init; }
-}
-
 public sealed class Paged<T>
 {
     public List<T> Items { get; init; } = [];

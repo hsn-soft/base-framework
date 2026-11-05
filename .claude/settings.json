@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "deny": [
+      "Bash(gh pr create:*)",
+      "Bash(gh pr merge:*)",
+      "Bash(gh pr ready:*)",
+      "Bash(git checkout dev:*)",
+      "Bash(git switch dev:*)",
+      "Bash(git checkout rel/nuget-candidate:*)",
+      "Bash(git switch rel/nuget-candidate:*)",
+      "Bash(git checkout rel/nuget-regular:*)",
+      "Bash(git switch rel/nuget-regular:*)",
+      "Bash(git push origin dev:*)",
+      "Bash(git push origin HEAD:dev:*)",
+      "Bash(git push origin HEAD:refs/heads/dev:*)",
+      "Bash(git push origin rel/nuget-candidate:*)",
+      "Bash(git push origin rel/nuget-regular:*)",
+      "Bash(git push origin HEAD:rel/nuget-candidate:*)",
+      "Bash(git push origin HEAD:rel/nuget-regular:*)"
+    ]
+  }
+}

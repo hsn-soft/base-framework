@@ -125,4 +125,25 @@ public class DomainBuildingBlocksTests
         Assert.Equal(10, PagedQueryOptions<Product>.DefaultPageSize);
         Assert.Equal(("a", 3), (new PagedQueryResult<string>(["a"], 3).Items[0], (int)new PagedQueryResult<string>(["a"], 3).TotalCount));
     }
+
+    [Fact]
+    public void AStamp_IsNewEachTime_AndFitsItsColumn()
+    {
+        string first = ConcurrencyStamps.New();
+
+        Assert.NotEqual(first, ConcurrencyStamps.New());
+        Assert.InRange(first.Length, 1, ConcurrencyStamps.MaxLength);
+    }
+
+    [Fact]
+    public void AConflict_Is409_AndNamesTheEntity()
+    {
+        BaseHttpException conflict = ConcurrencyConflict.For("Order");
+
+        Assert.Equal(409, conflict.HttpStatusCode);
+        Assert.Equal("Concurrency:Conflict", conflict.MessageKey);
+        Assert.Equal(["Order"], conflict.MessageArgs);
+        Assert.Equal("Order was changed or removed by someone else after it was read.", conflict.Message);
+        Assert.Throws<ArgumentException>(() => ConcurrencyConflict.For(" "));
+    }
 }

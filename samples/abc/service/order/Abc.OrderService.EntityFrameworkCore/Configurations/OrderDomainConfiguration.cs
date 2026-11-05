@@ -12,13 +12,16 @@ public static class OrderDomainConfiguration
 
         modelBuilder.Entity<Order>(order =>
         {
-            order.ToTable(EfCoreOrderDbProperties.DbTablePrefix + OrderConsts.TableName, EfCoreOrderDbProperties.DbSchema);
+            order.ToTable(EfCoreOrderDbProperties.DbTablePrefix + OrderConsts.TableName, EfCoreOrderDbProperties.DbSchema, table =>
+            {
+                table.HasCheckConstraint("CK_Order_NormalizedCustomerUserName_NotEmpty", "\"NormalizedCustomerUserName\" <> ''");
+            });
             order.HasKey(entity => entity.Id);
             order.Property(entity => entity.ShippingAddress).HasMaxLength(OrderConsts.ShippingAddressMaxLength).IsRequired();
             order.Property(entity => entity.Id).ValueGeneratedNever();
             order.Property(entity => entity.CustomerUserName).HasMaxLength(OrderConsts.CustomerUserNameMaxLength).IsRequired();
             order.Property(entity => entity.NormalizedCustomerUserName).HasMaxLength(OrderConsts.CustomerUserNameMaxLength).IsRequired();
-            order.Property(entity => entity.Status).HasConversion<string>().HasMaxLength(20).IsRequired();
+            order.Property(entity => entity.Status).IsRequired();
             order.Property(entity => entity.Note).HasMaxLength(OrderConsts.NoteMaxLength);
             order.Property(entity => entity.TotalAmount).HasPrecision(18, 2);
             order.HasIndex(entity => entity.NormalizedCustomerUserName);

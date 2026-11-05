@@ -10,6 +10,8 @@ The persistence does the rest; the application code writes none of it ([ADR-0037
 | `ISoftDelete`, `IDeletionAuditedObject` (`IHasDeletionTime`) and `IMarkDeleted` | `IsDeleted`, `DeletedAt`, `DeletedBy` | a delete marks it; the lists do not show it |
 | `IMultiTenant` (`HsnSoft.Base.MultiTenancy`) | `TenantId` | a new one gets the current tenant; a caller sees only the tenants it may |
 
+The soft delete is an interface of its own: an entity of any audit level (`Entity`, `CreationAuditedEntity`, `AuditedEntity`) takes `ISoftDelete` with `public bool IsDeleted { get; private set; }`, and a delete marks it. `FullAuditedEntity` is the one that also keeps when and by whom it was deleted (`IMarkDeleted`).
+
 `IAuditedObject` is the creation and the modification together, `IFullAuditedObject` all three. These are **shapes that only show the fields**: the DTO of an entity (`CreationAuditedEntityDto<TKey>`, `AuditedEntityDto<TKey>`, `FullAuditedEntityDto<TKey>`) implements the same
 ones as the entity, so one rule can read the audit fields of either. What only an entity takes are the marks (`IMarkCreated`, `IMarkModified`, `IMarkDeleted`): the entity keeps the fields with private setters and implements the `Mark...` methods (the base classes of
 [DddBuildingBlocks.md](DddBuildingBlocks.md) do it for the audit and the soft delete); the tenant is just `TenantId { get; private set; }`, which the persistence writes itself.
@@ -43,6 +45,17 @@ using (currentTenant.Change(tenantId))            // a seed, a worker: work as t
 **The system tenant sees every tenant; anyone else sees its own and the ones in `allowed_tenant_id`; with no tenant nothing of a tenant is seen.** A service without tenants does not reference any of this: its entities have no `TenantId`, its context derives from
 `BaseDbContext`, and a message that crosses it keeps the tenant headers for the services after it.
 
+## Protection from a lost update: `IHasConcurrencyStamp`
+
+An entity that people edit at the same time opts in with `IHasConcurrencyStamp` (`HsnSoft.Base.Ddd.Domain`, [ADR-0136](adr/0136-an-entity-is-protected-from-a-lost-update-by-an-opt-in-stamp.md)):
+
+```csharp
+public string ConcurrencyStamp { get; private set; } = ConcurrencyStamps.New();
+public void SetConcurrencyStamp(string stamp) => ConcurrencyStamp = stamp;
+```
+
+The persistence gives a changed entity a new stamp and refuses a change whose stamp is not the stored one. The DTO carries the stamp to the client and the update gives it back: the application service calls `entity.SetConcurrencyStamp(input.ConcurrencyStamp)` before saving. A refused change is a **409**, and so is an update or a delete of an entity that is **not there any more**, whether it has a stamp or not (in EF Core and in MongoDB alike) (`ConcurrencyConflict`, the text `Concurrency:Conflict`): changed or removed by someone else; the client reads again and retries. Without a stamp from the client, only a change between the load and the save is found. EF Core (`BaseDbContext` and `BaseEntityInterceptor`) and the MongoDB repository both do it, for an update, a delete and the bulk variants; a statement that changes rows without loading them (`UpdateWhereAsync`) writes a new stamp too.
+
 ## The filters, and switching them off: `IDataFilter`
 
 The filters (`ISoftDelete`, and `IMultiTenant` for a service with tenants) are on. Code that must see more turns one off for a while, and the scope ends with the `using` (it follows the flow of the code, across `await`):
@@ -69,10 +82,16 @@ The filters are named (`SoftDelete`, `MultiTenant`), so each can be ignored on i
 `BaseDbContext` puts the query filter on the entities that have the concept. `BaseEntityInterceptor` fills the audit fields on save and turns the delete of an `ISoftDelete` entity into an update
 (what the entity owns is kept with it). `IgnoreQueryFilters()` shows everything (add `!IsDeleted` when the deleted must stay hidden).
 
+**MySQL keeps the microseconds.** The MySQL provider of Oracle writes a `DateTimeOffset` with no fractions of a second, so the audit fields would lose what is after the second. A `BaseDbContext` on MySQL keeps every time as a UTC `datetime(6)` (a conversion and a column type, both by convention). A table made before it has `datetime` columns and needs its columns changed (`datetime(6)`) by a migration.
+
 ## MongoDB
 
 MongoDB has no change tracking, so the repository asks `MongoEntityConcepts` (registered by `AddBaseMongo`): `Visible(filter)` adds the filters to a query, `Created(entity)`, `Modified(entity)` before a write, and
 `SoftDeleted(entity)` before a delete (`true`: replace the document, it was marked; `false`: delete it). The filters read the elements `IsDeleted` and `TenantId`, so map the properties under their names. What a package adds (the tenants of `MultiTenancy.MongoDB`) is an `IMongoEntityConcept` that `MongoEntityConcepts` asks on every query and insert.
+
+## Enums and normalized fields
+
+An enum is stored by its number: the model has no converter to text (ADR-0148), and every member has its number written and never changed. A text that a list compares has a `Normalized...` twin made by `StringHelper.Normalize` (ADR-0149); the twin is never empty (the entity refuses it, the column is required, a check `<> ''`), it is unique in the set the service identifies the row by (a tenant and a name, for a row of a tenant), the application asks the repository for a duplicate before the database does and answers the business exception, and a query matches an `Id` or the normalized field: the application normalizes the input and a repository method takes `normalizedEmail`, not `email` (ADR-0150).
 
 ## Not done
 

@@ -1,5 +1,6 @@
 using System.Net;
 using Edx.Shared.Hosting.Gateways.Options;
+using Edx.Shared.Hosting.Http;
 using HsnSoft.Base.AspNetCore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -28,7 +29,7 @@ public static class GatewayRegister
         (IReadOnlyList<RouteConfig> proxyRoutes, IReadOnlyList<ClusterConfig> proxyClusters) = ReverseProxyConfigBuilder.Build(routes, endpoints);
 
         services
-            .AddEdxHosting(configuration, title, swaggerName: "gateway")
+            .AddEdxHttpHosting(configuration, title, swaggerName: "gateway")
             .AddBaseSwaggerGateway(configuration)   // the documents of the services, with the gateway's paths
             .Configure<GatewayPolicyOptions>(configuration.GetSection(GatewayPolicyOptions.SectionName));
         services.AddOptions<ForwardedHeadersOptions>().Configure<IOptions<GatewayPolicyOptions>>((forwarded, policy) =>
@@ -84,7 +85,7 @@ public static class GatewayRegister
             app.UseCors(CorsPolicyName);
         }
 
-        app.UseEdxHosting();
+        app.UseEdxHttpHosting();
         app.MapReverseProxy();
         return app;
     }

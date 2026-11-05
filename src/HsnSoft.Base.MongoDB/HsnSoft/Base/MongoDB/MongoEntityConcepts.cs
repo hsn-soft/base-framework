@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using HsnSoft.Base.Auditing;
 using HsnSoft.Base.Data;
+using HsnSoft.Base.Domain.Entities;
 using MongoDB.Driver;
 
 namespace HsnSoft.Base.MongoDB;
@@ -45,6 +46,11 @@ public sealed class MongoEntityConcepts(IAuditPropertySetter audit, IDataFilter 
         ArgumentNullException.ThrowIfNull(entity);
 
         audit.SetCreation(entity);
+        if (entity is IHasConcurrencyStamp { ConcurrencyStamp: not { Length: > 0 } } stamped)
+        {
+            stamped.SetConcurrencyStamp(ConcurrencyStamps.New());
+        }
+
         foreach (IMongoEntityConcept concept in _concepts)
         {
             concept.Created(entity);
@@ -70,6 +76,11 @@ public sealed class MongoEntityConcepts(IAuditPropertySetter audit, IDataFilter 
             sets.Add(builder.Set(nameof(IModificationAuditedObject.UpdatedBy), stamp.By));
         }
 
+        if (typeof(IHasConcurrencyStamp).IsAssignableFrom(typeof(T)))
+        {
+            sets.Add(builder.Set(nameof(IHasConcurrencyStamp.ConcurrencyStamp), ConcurrencyStamps.New()));
+        }
+
         return builder.Combine(sets);
     }
 
@@ -78,22 +89,55 @@ public sealed class MongoEntityConcepts(IAuditPropertySetter audit, IDataFilter 
     {
         ArgumentNullException.ThrowIfNull(update);
 
-        if (!typeof(IModificationAuditedObject).IsAssignableFrom(typeof(T)))
+        bool audited = typeof(IModificationAuditedObject).IsAssignableFrom(typeof(T));
+        bool stamped = typeof(IHasConcurrencyStamp).IsAssignableFrom(typeof(T));
+        if (!audited && !stamped)
         {
             return update;
         }
 
         UpdateDefinitionBuilder<T> builder = Builders<T>.Update;
-        AuditStamp stamp = audit.Stamp();
-        return builder.Combine(update, builder.Set(nameof(IModificationAuditedObject.UpdatedAt), stamp.At), builder.Set(nameof(IModificationAuditedObject.UpdatedBy), stamp.By));
+        List<UpdateDefinition<T>> parts = [update];
+        if (audited)
+        {
+            AuditStamp stamp = audit.Stamp();
+            parts.Add(builder.Set(nameof(IModificationAuditedObject.UpdatedAt), stamp.At));
+            parts.Add(builder.Set(nameof(IModificationAuditedObject.UpdatedBy), stamp.By));
+        }
+
+        if (stamped)
+        {
+            parts.Add(builder.Set(nameof(IHasConcurrencyStamp.ConcurrencyStamp), ConcurrencyStamps.New()));
+        }
+
+        return builder.Combine(parts);
     }
 
-    /// <summary>Before a replace: the modification fields.</summary>
-    public void Modified(object entity)
+    /// <summary>
+    /// Before a replace: the modification fields, and a new stamp for an <see cref="IHasConcurrencyStamp"/> entity. Returns the stamp the entity carried (the one its caller saw), which the replace must find in the stored document, or
+    /// <see langword="null"/> for an entity without a stamp.
+    /// </summary>
+    public string? Modified(object entity)
     {
         ArgumentNullException.ThrowIfNull(entity);
 
         audit.SetModification(entity);
+        if (entity is not IHasConcurrencyStamp stamped)
+        {
+            return null;
+        }
+
+        string? seen = stamped.ConcurrencyStamp is { Length: > 0 } ? stamped.ConcurrencyStamp : null;
+        stamped.SetConcurrencyStamp(ConcurrencyStamps.New());
+        return seen;
+    }
+
+    /// <summary>The filter that finds a document by its key and, when the caller gave the stamp it saw, by that stamp.</summary>
+    public static FilterDefinition<TEntity> Matching<TEntity>(string idField, object id, string? seenStamp)
+    {
+        FilterDefinitionBuilder<TEntity> builder = Builders<TEntity>.Filter;
+        FilterDefinition<TEntity> byId = builder.Eq(idField, id);
+        return seenStamp is null ? byId : builder.And(byId, builder.Eq(nameof(IHasConcurrencyStamp.ConcurrencyStamp), seenStamp));
     }
 
     /// <summary>

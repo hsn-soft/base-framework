@@ -64,7 +64,7 @@ public sealed class Shipment : FullAuditedEntity<Guid>
     private void Change(string carrier, string address)
     {
         Carrier = Guard.NotNullOrWhiteSpace(carrier, nameof(Carrier), ShipmentConsts.CarrierMaxLength);
-        NormalizedCarrier = StringHelper.Normalize(Carrier);
+        NormalizedCarrier = Guard.NotNullOrWhiteSpace(StringHelper.Normalize(Carrier), nameof(NormalizedCarrier));
         Address = Guard.NotNullOrWhiteSpace(address, nameof(Address), ShipmentConsts.AddressMaxLength);
     }
 }

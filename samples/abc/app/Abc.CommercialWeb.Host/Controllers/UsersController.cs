@@ -1,5 +1,6 @@
 using Abc.CommercialWeb.Host.Models;
 using Abc.CommercialWeb.Host.Services;
+using HsnSoft.Base;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
@@ -17,7 +18,7 @@ public sealed class UsersController(GatewayClient gateway) : Controller
         {
             return View(new UsersModel { Search = search, Users = await gateway.ListUsersAsync(search, cancellationToken) });
         }
-        catch (GatewayUnauthorizedException)
+        catch (BaseHttpException exception) when (exception.HttpStatusCode == 401)
         {
             // the token is no longer good: the sign-in ends here, and the user is told why
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);

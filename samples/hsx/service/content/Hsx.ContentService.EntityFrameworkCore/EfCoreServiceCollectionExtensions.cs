@@ -5,7 +5,7 @@ using Hsx.ContentService.Domain.AnalysisContentDomain.Entities;
 using Hsx.ContentService.Domain.AnalysisContentItemDomain.Entities;
 using Hsx.ContentService.Domain.CustomerContentDomain.Entities;
 using Hsx.ContentService.Domain.CustomerContentVisitDomain.Entities;
-using Hsx.ContentService.Domain.CustomerVpSettingDomain.Entities;
+using Hsx.ContentService.Domain.CustomerContentVpSettingDomain.Entities;
 using Hsx.ContentService.EntityFrameworkCore.Context;
 using Hsx.ContentService.EntityFrameworkCore.Seeding;
 using Microsoft.Extensions.Configuration;
@@ -29,10 +29,10 @@ public static class EfCoreServiceCollectionExtensions
         services.AddEfCoreRepository<ContentDbContext, AnalysisContent, Guid>();
         services.AddEfCoreRepository<ContentDbContext, AnalysisContentItem, Guid>();
         services.AddEfCoreRepository<ContentDbContext, CustomerContentVisit, Guid>();
-        services.AddEfCoreRepository<ContentDbContext, CustomerVpSetting, Guid>();
+        services.AddEfCoreRepository<ContentDbContext, CustomerContentVpSetting, Guid>();
 
-        // the schema is made when the host starts, by the host that owns the database (SeedStartupConnections)
-        services.AddSchemaStartupStep<ContentDbContext>(EfCoreContentDbProperties.ConnectionStringName);
+        // the schema is migrated when the host starts, by the host that owns the database (SeedStartupConnections): the migrations of this project, in their order
+        services.AddMigrationStartupStep<ContentDbContext>(EfCoreContentDbProperties.ConnectionStringName);
         services.AddDataSeeder<SampleContentSeeder>(EfCoreContentDbProperties.ConnectionStringName);   // demo contents of the demo customer (off with Seeding:Disabled)
         return services;
     }

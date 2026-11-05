@@ -7,6 +7,10 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\..\shared\Hsx.Shared.Contracts\Hsx.Shared.Contracts.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
         <ProjectReference Include="..\Hsx.ContentService.Domain\Hsx.ContentService.Domain.csproj" />
     </ItemGroup>
 

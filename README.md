@@ -31,5 +31,7 @@
 HsnSoft Base Framework is a complete infrastructure based on the ASP.NET Core to create modern web applications and APIs by following the software development best practices and the latest technologies.
 
 - **[Overview](docs/Overview.md)**: the packages (one capability each), how a product composes them, the tests and the configuration.
-- **[Documentation](docs/README.md)**: the reference documents and the [architecture decision records](docs/adr/README.md), why the repository is the way it is.
+- **[Documentation](docs/README.md)**: the reference documents and the [architecture decision guide](docs/adr/README.md), with the [full ADR catalog](docs/adr/INDEX.md).
 - **[Releasing](docs/Releasing.md)** and **[Contributing](CONTRIBUTING.md)**: how a version gets to NuGet, and how we work.
+- **[What runs when](docs/Checks.md)**: the checks of the commit, the push and the pull request, and the scripts to run them yourself.
+- **[Branch rules](docs/BranchRules.md)**: which branch may be merged into which (a table; the decision is [ADR-0144](docs/adr/0144-the-source-of-every-pull-request-has-a-known-branch-name.md)).

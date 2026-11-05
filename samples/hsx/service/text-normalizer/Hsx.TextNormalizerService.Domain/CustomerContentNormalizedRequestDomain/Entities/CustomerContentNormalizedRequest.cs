@@ -49,7 +49,7 @@ public sealed class CustomerContentNormalizedRequest : FullAuditedEntity<Guid>, 
             DomainName = Guard.NotNullOrWhiteSpace(domainName, nameof(DomainName), CustomerContentNormalizedRequestConsts.DomainNameMaxLength).Trim(),
             ContentKey = Guard.NotNullOrWhiteSpace(contentKey, nameof(ContentKey), CustomerContentNormalizedRequestConsts.ContentKeyMaxLength).Trim()
         };
-        entity.NormalizedContentKey = StringHelper.Normalize(entity.ContentKey);
+        entity.NormalizedContentKey = Guard.NotNullOrWhiteSpace(StringHelper.Normalize(entity.ContentKey), nameof(NormalizedContentKey));
         entity.CorrelationId = Optional(correlationId, nameof(CorrelationId), CustomerContentNormalizedRequestConsts.CorrelationIdMaxLength);
         entity.Update(status, currentMilestone, scrapingStatus, outlineStatus, retryCount, lastError);
         return entity;

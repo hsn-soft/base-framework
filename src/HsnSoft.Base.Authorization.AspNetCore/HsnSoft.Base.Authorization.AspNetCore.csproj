@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <Import Project="..\..\common.props" />
+
+    <PropertyGroup>
+        <AssemblyName>HsnSoft.Base.Authorization.AspNetCore</AssemblyName>
+        <PackageId>HsnSoft.Base.Authorization.AspNetCore</PackageId>
+        <RootNamespace />
+        <Title>HsnSoft Base Framework Authorization for ASP.NET Core</Title>
+        <Description>Permission based authorization for an ASP.NET Core endpoint: the [PermissionAuthorize] attribute, the policy and the handler that ask the permission checker of HsnSoft.Base.Authorization.</Description>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageTags>HsnSoft Base Framework Authorization Permissions AspNetCore</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="..\..\README.md" Pack="true" Visible="false" PackagePath="README.md" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\HsnSoft.Base.Authorization\HsnSoft.Base.Authorization.csproj" />
+    </ItemGroup>
+
+</Project>

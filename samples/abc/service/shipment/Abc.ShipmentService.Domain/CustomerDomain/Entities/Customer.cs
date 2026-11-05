@@ -45,7 +45,7 @@ public sealed class Customer : FullAuditedEntity<Guid>
             UserId = userId,
             UserName = Guard.NotNullOrWhiteSpace(userName, nameof(UserName), CustomerConsts.UserNameMaxLength).Trim(),
         };
-        customer.NormalizedUserName = StringHelper.Normalize(customer.UserName);
+        customer.NormalizedUserName = Guard.NotNullOrWhiteSpace(StringHelper.Normalize(customer.UserName), nameof(NormalizedUserName));
         customer.Update(fullName, email, phone, address);
         return customer;
     }
@@ -53,7 +53,7 @@ public sealed class Customer : FullAuditedEntity<Guid>
     public void Update(string fullName, string? email, string? phone, string? address)
     {
         FullName = Guard.NotNullOrWhiteSpace(fullName, nameof(FullName), CustomerConsts.FullNameMaxLength).Trim();
-        NormalizedFullName = StringHelper.Normalize(FullName);
+        NormalizedFullName = Guard.NotNullOrWhiteSpace(StringHelper.Normalize(FullName), nameof(NormalizedFullName));
         Email = Optional(email, nameof(Email), CustomerConsts.EmailMaxLength);
         Phone = Optional(phone, nameof(Phone), CustomerConsts.PhoneMaxLength);
         Address = Optional(address, nameof(Address), CustomerConsts.AddressMaxLength);

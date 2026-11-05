@@ -11,13 +11,13 @@ public interface ICompanyAppService
     /// <exception cref="HsnSoft.Base.NotFoundException">There is no such company.</exception>
     Task<CompanyDto> GetAsync(Guid id, CancellationToken cancellationToken = default);
 
-    Task<PagedDataResultDto<CompanyDto>> GetPagedListAsync(GetCompaniesPaged pagedInput, CancellationToken cancellationToken = default);
+    Task<PagedDataResultDto<CompanyDto>> GetPagedListAsync(GetCompaniesPagedDto pagedInput, CancellationToken cancellationToken = default);
 
     Task<CompanyDto> CreateAsync(CompanyCreateDto input, CancellationToken cancellationToken = default);
 
     /// <exception cref="HsnSoft.Base.NotFoundException">There is no such company.</exception>
-    Task UpdateAsync(CompanyUpdateDto input, CancellationToken cancellationToken = default);
+    Task<CompanyDto> UpdateAsync(CompanyUpdateDto input, CancellationToken cancellationToken = default);
 
     /// <exception cref="HsnSoft.Base.NotFoundException">There is no such company.</exception>
-    Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<CompanyDto> DeleteAsync(Guid id, CancellationToken cancellationToken = default);
 }

@@ -35,7 +35,7 @@ public sealed class Tenant : Entity<Guid>
         Tenant tenant = new()
         {
             Id = Guard.NotDefault<Guid>(id, nameof(Id)),
-            Code = StringHelper.Normalize(Guard.NotNullOrWhiteSpace(code, nameof(Code), IdentityConsts.CodeMaxLength)).ToLowerInvariant(),
+            Code = Guard.NotNullOrWhiteSpace(StringHelper.Normalize(Guard.NotNullOrWhiteSpace(code, nameof(Code), IdentityConsts.CodeMaxLength)), nameof(Code)).ToLowerInvariant(),
             Name = Guard.NotNullOrWhiteSpace(name, nameof(Name), IdentityConsts.NameMaxLength),
             IsActive = true,
         };

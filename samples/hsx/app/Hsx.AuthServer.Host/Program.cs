@@ -6,7 +6,7 @@ using HsnSoft.Base.Logging.Serilog;
 using Hsx.AuthServer.Host.Security;
 using Hsx.AuthServer.Host.Services;
 using Hsx.IdentityService.EntityFrameworkCore;
-using Hsx.Shared.Hosting;
+using Hsx.Shared.Hosting.Http;
 using Hsx.Shared.Hosting.Microservices;
 using Hsx.Shared.Localization;
 
@@ -14,6 +14,7 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.AddBaseHosting();   // the .env file, the port, the limits of Kestrel, the proxies and the time to stop: the section Hosting
 builder.Logging.AddBaseSerilog(builder.Configuration, "Hsx.AuthServer");
 
+builder.Services.Configure<AuthServerOptions>(builder.Configuration.GetSection(AuthServerOptions.SectionName));
 builder.Services
     // the texts in the languages of the system: the framework's and the shared ones (the text of a wrong password)
     .AddBaseLocalization(builder.Configuration, options => options.AddHsxSharedTexts())
@@ -22,7 +23,7 @@ builder.Services
     .AddBaseHealthChecks(builder.Configuration)   // /health/live, /startup and /ready: leave it out and the service has none
     .AddHsxAuthentication(builder.Configuration)
     .AddHsxAuthorization()
-    .AddIdentityPersistence(builder.Configuration)
+    .AddServiceEfCoreDatabaseConfiguration(builder.Configuration)   // the repositories of the identity database; the host that owns it (the identity service, SeedStartupConnections) prepares it, this one does not
     .AddScoped<UserAuthenticator>()
     .AddSingleton<TokenService>();
 

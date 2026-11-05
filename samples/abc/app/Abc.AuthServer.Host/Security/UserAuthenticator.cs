@@ -2,6 +2,7 @@ using Abc.IdentityService.Domain.UserDomain.Entities;
 using Abc.IdentityService.Domain.UserDomain.Repositories;
 using Abc.IdentityService.Domain.UserDomain.Security;
 using Abc.Shared.Helper;
+using HsnSoft.Base.Text;
 
 namespace Abc.AuthServer.Host.Security;
 
@@ -17,7 +18,8 @@ public sealed class UserAuthenticator(IUserRepository users)
     /// <summary>The user, or <see langword="null"/> when the name is unknown, the user is not active or the password is wrong (the caller cannot tell which).</summary>
     public async Task<AuthenticatedUser?> AuthenticateAsync(string userName, string password, CancellationToken cancellationToken = default)
     {
-        User? user = await users.FindByUserNameAsync(userName, cancellationToken).ConfigureAwait(false);
+        // the repository compares the normalized column: what was typed is normalized here (ŞaSaN is SASAN)
+        User? user = await users.FindByUserNameAsync(StringHelper.Normalize(userName), cancellationToken).ConfigureAwait(false);
         bool passwordMatches = PasswordHasher.Verify(user?.PasswordHash ?? s_unknownUserHash, password);
         return user is { IsActive: true } && passwordMatches
             ? new AuthenticatedUser(user.Id, user.UserName, user.DisplayName, user.Email, user.Roles, user.TenantId, user.TenantId == AbcTenants.System, user.Language)

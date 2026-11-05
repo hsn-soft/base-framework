@@ -12,7 +12,10 @@ public static class CustomerContentDomainConfiguration
 
         modelBuilder.Entity<CustomerContent>(entity =>
         {
-            entity.ToTable(EfCoreContentDbProperties.DbTablePrefix + CustomerContentConsts.TableName, EfCoreContentDbProperties.DbSchema);
+            entity.ToTable(EfCoreContentDbProperties.DbTablePrefix + CustomerContentConsts.TableName, EfCoreContentDbProperties.DbSchema, table =>
+            {
+                table.HasCheckConstraint("CK_CustomerContent_NormalizedContentKey_NotEmpty", "\"NormalizedContentKey\" <> ''");
+            });
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Id).ValueGeneratedNever();
             entity.Property(e => e.ScopeKey).HasMaxLength(CustomerContentConsts.ScopeKeyMaxLength).IsRequired();

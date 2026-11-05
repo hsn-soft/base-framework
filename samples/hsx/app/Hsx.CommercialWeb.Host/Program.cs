@@ -1,4 +1,5 @@
 using HsnSoft.Base.AspNetCore;
+using HsnSoft.Base.Http;
 using HsnSoft.Base.Logging;
 using HsnSoft.Base.Logging.Serilog;
 using Hsx.CommercialWeb.Host.Services;
@@ -27,16 +28,19 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 });
 builder.Services.AddAuthorization();
 
-// every call to the commercial gateway carries the correlation id of the page being served and the token of the signed-in user
-builder.Services.AddTransient<GatewayRequestHandler>();
+// every call to the commercial gateway carries the correlation id of the page being served and the token of the signed-in user (only to the host of the gateway); the page only reads, so a POST that failed is tried again
 builder.Services
-    .AddHttpClient<GatewayClient>(client => client.BaseAddress = new Uri(builder.Configuration["Gateway:BaseUrl"] ?? throw new InvalidOperationException("Gateway:BaseUrl is required.")))
-    .AddHttpMessageHandler<GatewayRequestHandler>();
+    .AddHttpClient<GatewayClient>()
+    .AddBaseHttpClientDefaults(builder.Configuration, "Gateway", options => options.RetryUnsafeMethods = true)
+    .AddBearerTokenRelay(
+        services => services.GetRequiredService<IHttpContextAccessor>().HttpContext?.User.FindFirst("access_token")?.Value,
+        new Uri(builder.Configuration["Gateway:BaseUrl"] ?? throw new InvalidOperationException("Gateway:BaseUrl is required.")).Host);
 
 // a failure to start (a setting that is missing, a database that cannot be prepared) is logged as critical and ends the process with the exit code 1
 return await builder.RunBaseAsync(app =>
 {
     app.UseBaseForwardedHeaders();
+    app.UseBaseSecurityHeaders();
     app.UseBaseRequestLogging();   // outside the exception page: the response log has the status the client gets
     if (!app.Environment.IsDevelopment())
     {

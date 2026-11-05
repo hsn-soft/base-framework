@@ -1,6 +1,6 @@
 # Authorization
 
-`HsnSoft.Base.Authorization` lets an endpoint ask for a **permission** and the code ask what the caller may do. Why it is this way: [ADR-0081](adr/0081-permissions-one-framework-package-and-the-grants-in-the-distributed-cache.md), [ADR-0083](adr/0083-four-permission-types-and-constraints-that-must-be-given.md).
+`HsnSoft.Base.Authorization` lets the code ask what the caller may do (it needs no web framework), and `HsnSoft.Base.Authorization.AspNetCore` lets an endpoint ask for a **permission** with an attribute ([ADR-0135](adr/0135-permissions-are-asked-without-a-web-framework-and-the-endpoint-layer-is-its-own-package.md)): a host that protects endpoints references the second; an application layer or a worker that only asks references the first and registers `AddBasePermissionChecker(configuration)`. Why it is this way: [ADR-0081](adr/0081-permissions-one-framework-package-and-the-grants-in-the-distributed-cache.md), [ADR-0083](adr/0083-four-permission-types-and-constraints-that-must-be-given.md).
 
 ## Who the caller is: the token
 
@@ -22,7 +22,7 @@ builder.Services
     .AddBaseRedis(configuration)                       // an IDistributedCache: where the grants are read from
     .AddBaseJwtAuthentication(configuration)           // ICurrentUser: the user and its roles
     .AddBaseAuthorization()                            // the standard policies ([Authorize], BasePolicies.Authenticated)
-    .AddBasePermissions(configuration)                 // the attribute, the handler, the checker, the store
+    .AddBasePermissions(configuration)                 // the attribute, the handler, the checker, the store (AspNetCore layer)
     .AddPermissionScope<TenantPermissionScope>();      // only when the product has scopes (the tenant)
 ```
 

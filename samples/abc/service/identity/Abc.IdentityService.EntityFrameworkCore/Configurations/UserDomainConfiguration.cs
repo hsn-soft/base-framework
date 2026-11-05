@@ -13,7 +13,11 @@ public static class UserDomainConfiguration
 
         modelBuilder.Entity<User>(user =>
         {
-            user.ToTable(EfCoreIdentityDbProperties.DbTablePrefix + UserConsts.TableName, EfCoreIdentityDbProperties.DbSchema);
+            user.ToTable(EfCoreIdentityDbProperties.DbTablePrefix + UserConsts.TableName, EfCoreIdentityDbProperties.DbSchema, table =>
+            {
+                table.HasCheckConstraint("CK_User_NormalizedUserName_NotEmpty", "\"NormalizedUserName\" <> ''");
+                table.HasCheckConstraint("CK_User_NormalizedEmail_NotEmpty", "\"NormalizedEmail\" <> ''");
+            });
             user.HasKey(entity => entity.Id);
             user.Property(entity => entity.Id).ValueGeneratedNever();
             user.Property(entity => entity.UserName).HasMaxLength(UserConsts.UserNameMaxLength).IsRequired();

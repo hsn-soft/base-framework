@@ -1,5 +1,7 @@
+using HsnSoft.Base;
 using HsnSoft.Base.Domain.Entities;
 using HsnSoft.Base.MultiTenancy;
+using Hsx.IdentityService.Domain.AppRoleDomain.Entities;
 
 namespace Hsx.IdentityService.Domain.AppUserRoleDomain.Entities;
 
@@ -17,5 +19,8 @@ public sealed class AppUserRole : Entity<Guid>, IMultiTenant
 
     public Guid RoleId { get; private set; }
 
-    public static AppUserRole Create(Guid userId, Guid roleId) => new() { Id = Guid.CreateVersion7(), UserId = userId, RoleId = roleId };
+    // navigations: a collection is empty when it is not loaded, never null; a single one is null when it is not loaded
+    public AppRole? Role { get; }
+
+    public static AppUserRole Create(Guid userId, Guid roleId, Guid? id = null) => new() { Id = id is { } given ? Guard.NotDefault<Guid>(given, nameof(Id)) : Guid.CreateVersion7(), UserId = userId, RoleId = roleId };
 }

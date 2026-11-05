@@ -1,4 +1,6 @@
 using HsnSoft.Base.Application.Dtos;
+using HsnSoft.Base.Authorization;
+using Hsx.Shared.Contracts.Permissions;
 using Hsx.VideoGeneratorService.Application.Contracts.VideoRequestDomain.Dtos;
 using Hsx.VideoGeneratorService.Application.Contracts.VideoRequestDomain.Dtos.Filters;
 using Hsx.VideoGeneratorService.Application.Contracts.VideoRequestDomain.Dtos.Submits;
@@ -13,16 +15,21 @@ namespace Hsx.VideoGeneratorService.Http.Host.Controllers;
 public sealed class VideoRequestsController(IVideoRequestAppService videoRequestAppService) : BaseServiceController
 {
     [HttpPost("get/{id:guid}")]
+    [PermissionAuthorize(VideoGeneratorPermissions.Endpoints.VideoRequests.Read)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public Task<VideoRequestDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
         => videoRequestAppService.GetAsync(id, cancellationToken);
 
     [HttpPost("paged-list")]
+
+    [PermissionAuthorize(VideoGeneratorPermissions.Endpoints.VideoRequests.Read)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public Task<PagedDataResultDto<VideoRequestDto>> GetPagedListAsync([FromBody] GetVideoRequestsPaged pagedInput, CancellationToken cancellationToken = default)
         => videoRequestAppService.GetPagedListAsync(pagedInput, cancellationToken);
 
     [HttpPost("create")]
+
+    [PermissionAuthorize(VideoGeneratorPermissions.Endpoints.VideoRequests.Create)]
     [ProducesResponseType(StatusCodes.Status201Created)]
     public async Task<IActionResult> CreateAsync([FromBody] VideoRequestCreateDto input, CancellationToken cancellationToken = default)
     {
@@ -31,6 +38,8 @@ public sealed class VideoRequestsController(IVideoRequestAppService videoRequest
     }
 
     [HttpPut]
+
+    [PermissionAuthorize(VideoGeneratorPermissions.Endpoints.VideoRequests.Update)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> UpdateAsync([FromBody] VideoRequestUpdateDto input, CancellationToken cancellationToken = default)
     {
@@ -39,6 +48,8 @@ public sealed class VideoRequestsController(IVideoRequestAppService videoRequest
     }
 
     [HttpDelete("{id:guid}")]
+
+    [PermissionAuthorize(VideoGeneratorPermissions.Endpoints.VideoRequests.Delete)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {

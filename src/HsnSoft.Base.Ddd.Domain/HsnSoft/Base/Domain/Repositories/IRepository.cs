@@ -46,10 +46,10 @@ public interface IRepository<TEntity, TKey> : IReadOnlyRepository<TEntity, TKey>
 {
     Task AddAsync(TEntity entity, CancellationToken cancellationToken = default);
 
-    /// <summary>Saves the changes of an entity that <c>FindAsync</c> returned.</summary>
+    /// <summary>Saves the changes of an entity that <c>FindAsync</c> returned. An entity that is not there any more (removed by someone else) is a 409, as is one whose stamp is not the stored one (<c>IHasConcurrencyStamp</c>), in every store.</summary>
     Task UpdateAsync(TEntity entity, CancellationToken cancellationToken = default);
 
-    /// <summary>Deletes the entity; an <see cref="ISoftDelete"/> entity is marked as deleted and stays.</summary>
+    /// <summary>Deletes the entity; an <see cref="ISoftDelete"/> entity is marked as deleted and stays. An entity that is not there any more is a 409, in every store.</summary>
     Task DeleteAsync(TEntity entity, CancellationToken cancellationToken = default);
 
     /// <summary>Adds all the entities in one go (one round trip, or as few as the store needs): all are added or none.</summary>

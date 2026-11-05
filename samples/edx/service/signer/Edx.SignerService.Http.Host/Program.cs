@@ -1,4 +1,4 @@
-using Edx.Shared.Hosting;
+using Edx.Shared.Hosting.Http;
 using Edx.Shared.Hosting.Microservices;
 using Edx.SignerService.Http.Host.EventHandlers;
 using Edx.SignerService.Http.Host.Signing;

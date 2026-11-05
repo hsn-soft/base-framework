@@ -2,7 +2,7 @@ using Edx.Integration.FirmInvoice.Application;
 using Edx.Integration.FirmInvoice.Application.Storage;
 using Edx.Integration.FirmInvoice.MongoDB;
 using Edx.Integration.FirmInvoice.Wcf.Host;
-using Edx.Shared.Hosting;
+using Edx.Shared.Hosting.Http;
 using Edx.Shared.Hosting.Microservices;
 using HsnSoft.Base.AspNetCore;
 using HsnSoft.Base.Authentication;

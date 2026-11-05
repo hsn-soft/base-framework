@@ -1,6 +1,7 @@
-using System.Reflection;
-using HsnSoft.Base.EventBus;
-using HsnSoft.Base.EventBus.RabbitMQ;
+using HsnSoft.Base.Authorization;
+using HsnSoft.Base.MultiTenancy;
+using Hsx.Shared.Helper;
+using Hsx.Shared.Hosting.Http;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,22 +16,19 @@ public static class MicroserviceRegister
     /// <param name="swaggerTitle">The title of the service's Swagger document.</param>
     /// <remarks>What a service may do without (its texts in several languages, Redis) it chooses itself: <c>AddBaseLocalization</c> and <c>UseBaseLocalization</c>, <c>AddBaseRedis</c>.</remarks>
     public static IServiceCollection AddHsxMicroservice(this IServiceCollection services, IConfiguration configuration, string swaggerTitle)
-        => services.AddHsxHosting(configuration, swaggerTitle, swaggerBearerButton: true);
+        => services.AddHsxHttpHosting(configuration, swaggerTitle, swaggerBearerButton: true);
 
     /// <summary>
-    /// Connects a service to the RabbitMQ event bus of the system (sections <c>RabbitMq:Connection</c> and <c>RabbitMq:EventBus</c>: the exchange <c>HSX</c> and the client name of the service (<c>IdentityService</c>, <c>OrderService</c>, ...)) and makes the
-    /// events it publishes carry who started the chain (<see cref="HsxEventHeaderProvider"/>). The handlers of the service are every handler of the assembly it names (<paramref name="handlers"/>, found by scanning; none for a service that only publishes) and <paramref name="fetchCounts"/> says how many messages of an event are handled at the same time (by the name of the event; one when it is not named). The auth server does not use it.
+    /// Turns on <c>[PermissionAuthorize]</c> in the service: what the caller (the user, and its roles) was granted is read from the store the identity service writes (section <c>Permissions</c>; the host has Redis, <c>AddBaseRedis</c>), under the tenant of the
+    /// request, because the roles of a tenant are its own (<see cref="HsxPermissionScopes"/>). The tenant, the tenants under it and the scopes it may see are what the claims of the token say (<c>AddBaseTenantClaims</c>, which this call adds: the Hsx system is multi-tenant, so every service that checks permissions needs them, and the host does not repeat it).
     /// </summary>
-    public static IServiceCollection AddHsxEventBus(this IServiceCollection services, IConfiguration configuration, Assembly? handlers = null, IReadOnlyDictionary<string, ushort>? fetchCounts = null)
-    {
-        services
-            .AddHttpContextAccessor()
-            .AddSingleton<IEventHeaderProvider, HsxEventHeaderProvider>()
-            .AddRabbitMqEventBus(configuration);
-        return handlers is null ? services : services.AddEventHandlers(handlers, fetchCounts);
-    }
+    public static IServiceCollection AddHsxPermissions(this IServiceCollection services, IConfiguration configuration)
+        => services
+            .AddBaseTenantClaims()
+            .AddBasePermissions(configuration)
+            .AddPermissionScope<TenantPermissionScope>();
 
-    /// <summary>The shared middleware (see <see cref="HostingRegister.UseHsxHosting"/>); the service then maps its controllers with <c>MapControllers()</c>.</summary>
+    /// <summary>The shared middleware (see <see cref="HttpHostingRegister.UseHsxHttpHosting"/>); the service then maps its controllers with <c>MapControllers()</c>.</summary>
     public static WebApplication UseHsxMicroservice(this WebApplication app)
-        => app.UseHsxHosting();
+        => app.UseHsxHttpHosting();
 }
