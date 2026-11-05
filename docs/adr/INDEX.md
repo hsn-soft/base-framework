@@ -167,3 +167,4 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 | [0151](0151-the-shared-hosting-of-a-product-is-in-layers-a-core-then-the-kind-of-host-then-what-a-host-chooses.md) | The shared hosting of a product is in layers: a core, then the kind of host, then what a host chooses | Accepted | 2026-11-05 |
 | [0152](0152-the-ci-has-no-weekly-run.md) | The CI has no weekly run | Accepted | 2026-11-05 |
 | [0153](0153-the-ci-does-not-run-on-the-release-branches.md) | The CI does not run on the release branches | Accepted | 2026-11-05 |
+| [0154](0154-the-wait-conditions-of-the-puppeteer-renderer-follow-what-the-library-supports.md) | The wait conditions of the Puppeteer renderer follow what the library supports | Accepted | 2026-11-05 |
