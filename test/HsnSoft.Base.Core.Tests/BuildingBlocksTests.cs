@@ -17,6 +17,22 @@ public class BuildingBlocksTests
         Assert.Equal(minimized, StringHelper.Minimize(text));
     }
 
+    [Theory]
+    [InlineData("ıİ", "ii", "II")]
+    [InlineData("öçşğü", "ocsgu", "OCSGU")]
+    [InlineData("ÖÇŞĞÜ", "ocsgu", "OCSGU")]
+    [InlineData("ISPARTA ılık İzmir", "isparta ilik izmir", "ISPARTAILIKIZMIR")]
+    [InlineData("Tech Summus A.Ş.", "tech summus a.s.", "TECHSUMMUSA.S.")]
+    [InlineData("  ali.veli+x@Örnek-Firma_1.com  ", "ali.veli+x@ornek-firma_1.com", "ALI.VELI+X@ORNEK-FIRMA_1.COM")]
+    [InlineData("a b\tc\n(d)/e,f;g:h'i\"j#k$l%m&n*o=p", "a b\tc\n(d)/e,f;g:h'i\"j#k$l%m&n*o=p", "ABCDEFGHIJKLMNOP")]
+    [InlineData("Łódź Øre Đ straße 日本 12", "lodz ore d strasse 日本 12", "LODZOREDSTRASSE12")]
+    [InlineData("   ", "", "")]
+    public void Normalize_ChangesTheTurkishLettersFirst_AndKeepsOnlyCapitalsDigitsAndTheFewMarks(string text, string minimized, string normalized)
+    {
+        Assert.Equal(normalized, StringHelper.Normalize(text));
+        Assert.Equal(minimized, StringHelper.Minimize(text));
+    }
+
     private sealed record Item(string Name, int Price);
 
     [Fact]

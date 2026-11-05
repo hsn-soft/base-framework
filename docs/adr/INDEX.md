@@ -39,6 +39,7 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 | [0146](0146-several-repository-calls-run-as-one-unit-of-work-through-iunitofwork.md) | Several repository calls run as one unit of work through `IUnitOfWork` (`EfCoreUnitOfWork`), never through a context | Accepted | 2026-11-04 |
 | [0147](0147-a-response-is-an-ibasedto-so-a-response-is-found-by-its-type-not-by-a-name.md) | A response is an `IBaseDto`, so a response is found by its type and not by a name | Accepted | 2026-11-04 |
 | [0148](0148-an-enum-is-stored-by-its-number-in-a-relational-database-never-by-its-name.md) | An enum is stored by its number in a relational database, never by its name | Accepted | 2026-11-05 |
+| [0149](0149-normalize-changes-the-turkish-letters-first-and-keeps-only-capitals-digits-and-a-few-marks.md) | `StringHelper.Normalize` changes the Turkish letters first and keeps only capitals, digits and `@ . - _ +` | Accepted | 2026-11-05 |
 
 ## Building blocks, products and hosts
 
