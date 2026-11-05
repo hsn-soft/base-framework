@@ -236,6 +236,13 @@ public class RabbitMqConnectionTests
     }
 
     [Fact]
+    public void TheClientRecoversALostConnection_EveryTenSecondsByDefault_AndAsOftenAsTheSettingsSay()
+    {
+        Assert.Equal(TimeSpan.FromSeconds(10), RabbitMqConnectionFactory.Create(new RabbitMqConnectionSettings(), automaticRecovery: true).NetworkRecoveryInterval);
+        Assert.Equal(TimeSpan.FromSeconds(1), RabbitMqConnectionFactory.Create(new RabbitMqConnectionSettings { NetworkRecoveryInterval = TimeSpan.FromSeconds(1) }, automaticRecovery: true).NetworkRecoveryInterval);
+    }
+
+    [Fact]
     public void WithoutTls_TheConnectionIsNotEncrypted_AndWithItItChecksTheCertificateOfTheBroker()
     {
         Assert.False(RabbitMqConnectionFactory.Create(new RabbitMqConnectionSettings(), automaticRecovery: true).Ssl.Enabled);

@@ -29,7 +29,7 @@ public class SecurityHeadersAndCorsTests
         app.MapGet("/", () => "ok");
         app.MapGet("/framed", (HttpContext context) =>
         {
-            context.Response.Headers["X-Frame-Options"] = "SAMEORIGIN";
+            context.Response.Headers.XFrameOptions = "SAMEORIGIN";
             return "framed";
         });
         await app.StartAsync();

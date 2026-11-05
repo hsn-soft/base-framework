@@ -72,10 +72,13 @@ public class KafkaTests
         Assert.Contains("ready", registration.Tags);
     }
 
+    // the client keeps trying to connect until the wait for the metadata ends (three seconds by default, for each probe): the tests prove the answer, not the wait, so it is short here
+    private static readonly TimeSpan s_unreachableWait = TimeSpan.FromMilliseconds(300);
+
     [Fact]
     public async Task HealthCheck_IsUnhealthy_WhenTheBrokersCannotBeReached()
     {
-        var check = new KafkaHealthCheck(Options.Create(new KafkaOptions { BootstrapServers = "127.0.0.1:1" }));
+        var check = new KafkaHealthCheck(Options.Create(new KafkaOptions { BootstrapServers = "127.0.0.1:1" }), s_unreachableWait);
 
         HealthCheckResult result = await check.CheckHealthAsync(new HealthCheckContext());
 
@@ -89,7 +92,7 @@ public class KafkaTests
         using ServiceProvider provider = services.BuildServiceProvider();
 
         Assert.Same(provider.GetRequiredService<KafkaHealthCheck>(), provider.GetRequiredService<KafkaHealthCheck>());
-        KafkaHealthCheck check = new(Options.Create(new KafkaOptions { BootstrapServers = "127.0.0.1:1" }));
+        KafkaHealthCheck check = new(Options.Create(new KafkaOptions { BootstrapServers = "127.0.0.1:1" }), s_unreachableWait);
         for (int probe = 0; probe < 3; probe++)
         {
             Assert.Equal(HealthStatus.Unhealthy, (await check.CheckHealthAsync(new HealthCheckContext())).Status);
@@ -103,7 +106,7 @@ public class KafkaTests
     [Fact]
     public async Task ACheckThatIsCancelled_StopsWaitingForTheBrokers()
     {
-        using KafkaHealthCheck check = new(Options.Create(new KafkaOptions { BootstrapServers = "127.0.0.1:1" }));
+        using KafkaHealthCheck check = new(Options.Create(new KafkaOptions { BootstrapServers = "127.0.0.1:1" }), s_unreachableWait);
         using CancellationTokenSource cancelled = new();
         await cancelled.CancelAsync();
 

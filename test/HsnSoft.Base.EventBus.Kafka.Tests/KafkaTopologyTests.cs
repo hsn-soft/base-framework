@@ -99,7 +99,10 @@ public class KafkaTopologyTests
         KafkaOptions options = new() { BootstrapServers = "127.0.0.1:1", CreateTopics = false };
 
         // a broker that cannot be reached would be tried ten times over twenty seconds: with the creation off it is not even asked
-        await KafkaTopology.EnsureTopicsAsync(options, ["XYZ_OrderCreated"]).WaitAsync(TimeSpan.FromSeconds(2));
+        Task ensured = KafkaTopology.EnsureTopicsAsync(options, ["XYZ_OrderCreated"]);
+        await ensured.WaitAsync(TimeSpan.FromSeconds(2));
+
+        Assert.True(ensured.IsCompletedSuccessfully);
     }
 
     [Fact]

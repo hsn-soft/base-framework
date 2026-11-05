@@ -11,9 +11,11 @@ namespace HsnSoft.Base.EventBus.Kafka;
 /// Asks the brokers for their metadata with <b>one</b> admin client that lives as long as the host (a probe runs every few seconds on every pod: a client of its own for each would connect to the brokers each time, and the brokers would show a connection
 /// per probe). The client reconnects by itself when a broker goes away, so a check made after the brokers came back is healthy again. The answer of the brokers is waited for on a thread of the pool, so a probe that is cancelled does not wait for it.
 /// </summary>
-internal sealed class KafkaHealthCheck(IOptions<KafkaOptions> options) : IHealthCheck, IDisposable
+internal sealed class KafkaHealthCheck(IOptions<KafkaOptions> options, TimeSpan? metadataTimeout = null) : IHealthCheck, IDisposable
 {
-    private static readonly TimeSpan s_metadataTimeout = TimeSpan.FromSeconds(3);
+    private static readonly TimeSpan s_defaultMetadataTimeout = TimeSpan.FromSeconds(3);
+
+    private readonly TimeSpan _metadataTimeout = metadataTimeout ?? s_defaultMetadataTimeout;
 
     private readonly KafkaOptions _options = options.Value;
     private readonly Lock _lock = new();
@@ -25,7 +27,7 @@ internal sealed class KafkaHealthCheck(IOptions<KafkaOptions> options) : IHealth
         try
         {
             IAdminClient admin = Admin();
-            await Task.Run(() => admin.GetMetadata(s_metadataTimeout), CancellationToken.None).WaitAsync(cancellationToken).ConfigureAwait(false);
+            await Task.Run(() => admin.GetMetadata(_metadataTimeout), CancellationToken.None).WaitAsync(cancellationToken).ConfigureAwait(false);
             return HealthCheckResult.Healthy();
         }
         catch (KafkaException exception)

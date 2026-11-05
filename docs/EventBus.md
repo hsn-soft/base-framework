@@ -22,6 +22,8 @@ services
 }
 ```
 
+`Connection:NetworkRecoveryInterval` (ten seconds by default) is how long the client waits between two tries to recover a connection it lost; it reconnects by itself, forever, and recovers its channels and consumers. A test shortens it.
+
 ```csharp
 public sealed record OrderPlacedEto(Guid OrderId) : IIntegrationEventMessage;
 

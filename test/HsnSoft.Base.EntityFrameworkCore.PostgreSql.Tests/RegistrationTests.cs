@@ -37,7 +37,7 @@ public class RegistrationTests
         provider.Configure(builder, "Host=localhost;Database=x");
 
         Assert.True(builder.IsConfigured);
-        Assert.IsAssignableFrom<IStartupLockProvider>(provider);
+        Assert.IsType<IStartupLockProvider>(provider, exactMatch: false);
     }
 
     [Fact]

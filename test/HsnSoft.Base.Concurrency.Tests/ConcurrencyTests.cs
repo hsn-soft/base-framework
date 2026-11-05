@@ -67,12 +67,30 @@ public class ConcurrencyTests
     }
 
     [Fact]
+    public async Task WhileTheMaximumHoldTheNames_EveryOtherCallerIsRefused_AtOnce()
+    {
+        InMemoryConcurrencyLimiter limiter = new();
+        IConcurrencyLease?[] holders = [.. await Task.WhenAll(Enumerable.Range(0, 3).Select(async _ => await limiter.TryAcquireAsync("hammer", 3, s_minute)))];
+        Assert.All(holders, holder => Assert.NotNull(holder));
+
+        // the contention is made here, not hoped for (a runner with two cores may run 200 callers one after the other): the places are taken while the callers come
+        IConcurrencyLease?[] others = await Task.WhenAll(Enumerable.Range(0, 200).Select(_ => Task.Run(async () => await limiter.TryAcquireAsync("hammer", 3, s_minute))));
+
+        Assert.All(others, lease => Assert.Null(lease));
+        foreach (IConcurrencyLease? holder in holders)
+        {
+            await holder!.DisposeAsync();
+        }
+
+        Assert.NotNull(await limiter.TryAcquireAsync("hammer", 3, s_minute));
+    }
+
+    [Fact]
     public async Task WhateverTheNumberOfCallersAtOnce_NeverMoreThanTheMaximumHoldAtTheSameTime()
     {
         InMemoryConcurrencyLimiter limiter = new();
         int running = 0;
         int highest = 0;
-        int refused = 0;
 
         await Task.WhenAll(Enumerable.Range(0, 200).Select(_ => Task.Run(async () =>
         {
@@ -81,7 +99,6 @@ public class ConcurrencyTests
                 IConcurrencyLease? lease = await limiter.TryAcquireAsync("hammer", 3, s_minute);
                 if (lease is null)
                 {
-                    Interlocked.Increment(ref refused);
                     continue;
                 }
 
@@ -99,8 +116,8 @@ public class ConcurrencyTests
             }
         })));
 
+        // how many were refused depends on how the runner schedules the callers, so it is not asserted (the test above makes the contention): what is is that no more than three were ever inside
         Assert.InRange(highest, 1, 3);
-        Assert.True(refused > 0);
         Assert.Equal(0, running);
     }
 
