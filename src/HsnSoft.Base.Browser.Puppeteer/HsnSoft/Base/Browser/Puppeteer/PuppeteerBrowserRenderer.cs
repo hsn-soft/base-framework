@@ -105,7 +105,7 @@ public sealed partial class PuppeteerBrowserRenderer : IBrowserRenderer, IAsyncD
         DateTimeOffset until = DateTimeOffset.UtcNow.AddSeconds(_options.ShutdownTimeoutSeconds);
         while (ActivePages > 0 && DateTimeOffset.UtcNow < until)
         {
-            await Task.Delay(50).ConfigureAwait(false);
+            await Task.Delay(50, CancellationToken.None).ConfigureAwait(false);   // not the token of the shutdown: it is cancelled already, and the pages are given the time of the settings
         }
 
         if (ActivePages > 0)

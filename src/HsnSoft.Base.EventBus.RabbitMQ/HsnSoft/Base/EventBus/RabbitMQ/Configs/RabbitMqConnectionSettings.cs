@@ -21,6 +21,9 @@ public sealed class RabbitMqConnectionSettings
     /// <summary>The pause before connection retry <c>n</c> is <c>2^n * ConnectionRetryBaseDelay</c>.</summary>
     public TimeSpan ConnectionRetryBaseDelay { get; set; } = TimeSpan.FromSeconds(1);
 
+    /// <summary>How long the client waits between two tries to recover a connection that was lost (it reconnects by itself, forever, and recovers its channels and consumers). Short for a test; ten seconds is a pause a broker that restarts can bear.</summary>
+    public TimeSpan NetworkRecoveryInterval { get; set; } = TimeSpan.FromSeconds(10);
+
     /// <summary>How long closing the connection may take (it waits for the callbacks still running) before it is given up.</summary>
     public TimeSpan ConnectionCloseTimeout { get; set; } = TimeSpan.FromSeconds(10);
 

@@ -105,7 +105,7 @@ public sealed class MongoStartupLock : IStartupLock
             _stop.Dispose();
             try
             {
-                await _locks.DeleteOneAsync(Mine).ConfigureAwait(false);
+                await _locks.DeleteOneAsync(Mine, CancellationToken.None).ConfigureAwait(false);   // not the token that stopped the renewing: it is cancelled, and the lease is given up all the same
             }
             catch (MongoException)
             {

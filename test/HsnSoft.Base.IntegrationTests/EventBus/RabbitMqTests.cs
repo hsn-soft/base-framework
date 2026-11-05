@@ -77,6 +77,7 @@ public sealed class RabbitMqTests(RabbitMqFixture fixture) : IClassFixture<Rabbi
             ("RabbitMq:Connection:Port", port ?? fixture.Port.ToString(System.Globalization.CultureInfo.InvariantCulture)),
             ("RabbitMq:Connection:ConnectionRetryCount", "1"),
             ("RabbitMq:Connection:ConnectionRetryBaseDelay", "00:00:00.1"),
+            ("RabbitMq:Connection:NetworkRecoveryInterval", "00:00:01"),   // the client recovers a lost connection every second instead of every ten: the recovery tests do not wait for the default
             ("RabbitMq:EventBus:ExchangeName", exchange),
             ("RabbitMq:EventBus:ConsumerClientName", "it-service"),
             ("RabbitMq:EventBus:ErrorClientName", "it-error"),

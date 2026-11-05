@@ -10,6 +10,7 @@ description: "Use when adding or improving unit tests or integration tests for H
 - Write unit tests for deterministic behavior, public contracts, validation, boundary conditions, errors, and regressions. Unit tests must not require Docker or live infrastructure; use the repository's existing fakes and fixtures.
 - Write integration tests when behavior crosses a real broker, database, cache, or blob-storage boundary. Provider integration coverage is required and must exercise the real service through `test/HsnSoft.Base.IntegrationTests` and Testcontainers.
 - A coverage percentage is only a gate. Assert meaningful behavior and expected outcomes; do not add tests solely to execute lines.
+- **The CI runner has two cores and is slower than your machine: a test must not depend on timing or on how callers interleave** (no `Task.Delay` followed by an assertion that something happened: wait for the condition with a bounded poll or a `TaskCompletionSource`; make a collision by holding the places in the test, never by hoping a hammer collides; assert an elapsed time only as a generous upper bound). The rule is in [testing-ci.md](../../rules/testing-ci.md).
 
 ## Procedure
 
