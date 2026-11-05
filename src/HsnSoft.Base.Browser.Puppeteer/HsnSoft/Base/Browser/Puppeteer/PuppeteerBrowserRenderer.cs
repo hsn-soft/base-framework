@@ -205,7 +205,13 @@ public sealed partial class PuppeteerBrowserRenderer : IBrowserRenderer, IAsyncD
         }
         else
         {
-            await page.SetContentAsync(request.Html!, new SetContentOptions { WaitUntil = navigation.WaitUntil, Timeout = navigation.Timeout }).ConfigureAwait(false);
+            // SetContent does not support the network-idle conditions (PuppeteerSharp ignores them, and upstream never made them work); the load event comes after DOMContentLoaded, so it
+            // stands for both of the page conditions, and the network idle is waited for apart, as the library says (it hung for the whole time of the call on a slow CI runner).
+            await page.SetContentAsync(request.Html!, new SetContentOptions { WaitUntil = [WaitUntilNavigation.Load], Timeout = navigation.Timeout }).ConfigureAwait(false);
+            if (request.WaitUntil == WaitCondition.NetworkIdle)
+            {
+                await page.WaitForNetworkIdleAsync(new WaitForNetworkIdleOptions { Timeout = navigation.Timeout }).ConfigureAwait(false);
+            }
         }
 
         if (request.WaitForSelector is not null)

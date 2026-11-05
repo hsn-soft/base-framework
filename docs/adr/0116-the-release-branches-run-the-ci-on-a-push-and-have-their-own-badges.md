@@ -1,6 +1,6 @@
 # ADR-0116: The release branches run the CI on a push, and have badges of their own
 
-- **Status:** Accepted
+- **Status:** Superseded by [ADR-0153](0153-the-ci-does-not-run-on-the-release-branches.md) (the release branches no longer run the pipeline nor have badges; the protection rule that `rel/*` does not require `CI Summary JOB` stands)
 - **Date:** 2026-10-31 (supersedes the run on pull requests into the release branches in [ADR-0115](0115-versions-and-releases-two-branches-and-a-version-made-from-nuget.md); adds to [ADR-0114](0114-the-readme-badges-are-made-by-the-ci-and-published-to-their-own-branch.md))
 
 ## Context
