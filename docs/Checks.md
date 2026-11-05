@@ -17,9 +17,9 @@ You need the .NET 10 SDK, git, python3 and bash; Docker for the integration test
 | **Before a commit** (pre-commit hook) | your machine, on the **staged** files only | formats the staged C# (whitespace, then style) and JSON, adds the formatted files back to the commit, and fails the commit if a style rule is still broken | seconds | `dotnet husky run --group pre-commit` |
 | **Before a push** (pre-push hook) | your machine | a `Release` build of the solution with **warnings as errors**, then **all the unit tests** | about a minute | `dotnet husky run --group pre-push` |
 | **Pull request** into `dev` | GitHub Actions | the branch rule, and the whole pipeline below | several minutes | `./scripts/ci-detector/ci_detector_mac.sh` |
-| Pull request into a release branch | GitHub Actions | the branch rule only (the pipeline runs on the push, below) | seconds | read [Branch rules](BranchRules.md) |
-| **Push to `rel/nuget-candidate` or `rel/nuget-regular`** | GitHub Actions | the pipeline (the run of the commit that is published) **and** the publishing to NuGet (`deploy-global-nuget.yml`) | several minutes | - |
-| **Every Monday** (and by hand) | GitHub Actions | the pipeline on `dev`: it catches what changes with no push and feeds the README badges | several minutes | - |
+| Pull request into a release branch | GitHub Actions | the branch rule only (the pipeline already ran on the pull request into `dev`) | seconds | read [Branch rules](BranchRules.md) |
+| **Push to `rel/nuget-candidate` or `rel/nuget-regular`** | GitHub Actions | the publishing to NuGet (`deploy-global-nuget.yml`: build, unit tests, pack, push); the pipeline does not run | several minutes | - |
+| By hand (*Run workflow* on `dev`) | GitHub Actions | the pipeline on `dev`: it catches what changes with no push and feeds the README badges | several minutes | - |
 
 `HUSKY=0` skips the hooks. It is an emergency bypass and it does **not** count as a check: the pull request runs the same rules again.
 
@@ -59,4 +59,4 @@ The stages, the options and the logs of the detector are in [the detector guide]
 2. `./scripts/ci-detector/ci_detector_mac.sh` and wait for **"Every stage passed"**
 3. Check the source and the target of the pull request in the [branch rules](BranchRules.md)
 
-The reasons are in [ADR-0109](adr/0109-the-ci-jobs-are-a-pipeline-built-once.md), [ADR-0113](adr/0113-the-ci-runs-on-pull-requests-weekly-on-dev-and-by-hand.md), [ADR-0116](adr/0116-the-release-branches-run-the-ci-on-a-push-and-have-their-own-badges.md) and [ADR-0144](adr/0144-the-source-of-every-pull-request-has-a-known-branch-name.md).
+The reasons are in [ADR-0109](adr/0109-the-ci-jobs-are-a-pipeline-built-once.md), [ADR-0113](adr/0113-the-ci-runs-on-pull-requests-weekly-on-dev-and-by-hand.md), [ADR-0116](adr/0116-the-release-branches-run-the-ci-on-a-push-and-have-their-own-badges.md) and [ADR-0144](adr/0144-the-source-of-every-pull-request-has-a-known-branch-name.md) and [ADR-0152](adr/0152-the-ci-has-no-weekly-run.md) and [ADR-0153](adr/0153-the-ci-does-not-run-on-the-release-branches.md).
