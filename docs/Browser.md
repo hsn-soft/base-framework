@@ -15,7 +15,7 @@ RenderedPage page = await renderer.GetPageAsync(BrowserRequest.FromUrl(new Uri(a
 byte[] png = await renderer.ScreenshotAsync(BrowserRequest.FromUrl(new Uri(address)), new ScreenshotOptions { FullPage = true }, cancellationToken);
 ```
 
-A request has an address (http or https) **or** HTML, not both, and may set the wait condition (`Load`, `DomContentLoaded`, `NetworkIdle`), a selector to wait for, a timeout (1 to 600 seconds), the viewport, a user agent and headers. A page that cannot be rendered is a `BrowserException`, an address the policy refuses as the page itself is a `BrowserBlockedException`, a call that took longer than its time is a `TimeoutException`.
+A request has an address (http or https) **or** HTML, not both, and may set the wait condition (`Load`, `DomContentLoaded`, `NetworkIdle`), a selector to wait for, a timeout (1 to 600 seconds), the viewport, a user agent and headers. **With HTML, the wait condition is met in two steps** ([ADR-0154](adr/0154-the-wait-conditions-of-the-puppeteer-renderer-follow-what-the-library-supports.md)): `SetContent` waits for `load` (which comes after `DOMContentLoaded`, so it stands for `Load` and `DomContentLoaded`), and `NetworkIdle` is then waited for apart with `WaitForNetworkIdleAsync`, because PuppeteerSharp ignores the network-idle values in `SetContent` and the wait hung until the timeout of the call on a slow CI runner. With an address the condition goes to `GoToAsync` as it is. A page that cannot be rendered is a `BrowserException`, an address the policy refuses as the page itself is a `BrowserBlockedException`, a call that took longer than its time is a `TimeoutException`.
 
 ## The policy: what a page may load
 

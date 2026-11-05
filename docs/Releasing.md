@@ -27,7 +27,7 @@ Each arrow is a pull request opened and merged by the maintainer: Claude (the AI
 
 ## To release
 
-1. **A candidate**: open a pull request from `dev` into `rel/nuget-candidate` (merge method: merge commit). When `CI Branch Rule JOB` is green (the pipeline runs after the merge, on the push), merge it: the candidate is published. Try it in a service (`2026.10.41-rc.…`, with pre-releases on).
+1. **A candidate**: open a pull request from `dev` into `rel/nuget-candidate` (merge method: merge commit). When `CI Branch Rule JOB` is green (the pipeline already ran on the pull request into `dev`), merge it: the candidate is published. Try it in a service (`2026.10.41-rc.…`, with pre-releases on).
 2. **The stable version**: open a pull request from `rel/nuget-candidate` into `rel/nuget-regular` and merge it: `2026.10.41` is published, with its tag and release.
 
 ## To start a new base (a new month)
@@ -40,4 +40,4 @@ The run says in which step. Nothing is pushed before the packages are checked; i
 
 ## An urgent fix
 
-`hotfix/*` → `dev` → `rel/nuget-candidate` → `rel/nuget-regular`, the same way (the pipeline runs on the pull request into dev and on each push). The branch rule (ADR-0144) lets `dev` or `master` go into `rel/nuget-regular` directly (and `rel/nuget-candidate`); the usual way is still through the candidate. Nothing else may go into the two publishing branches.
+`hotfix/*` → `dev` → `rel/nuget-candidate` → `rel/nuget-regular`, the same way (the pipeline runs on the pull request into dev). The branch rule (ADR-0144) lets `dev` or `master` go into `rel/nuget-regular` directly (and `rel/nuget-candidate`); the usual way is still through the candidate. Nothing else may go into the two publishing branches.
