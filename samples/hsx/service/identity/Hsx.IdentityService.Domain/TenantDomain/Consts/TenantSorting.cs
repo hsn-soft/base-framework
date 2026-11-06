@@ -1,5 +1,5 @@
-using Hsx.IdentityService.Domain.TenantDomain.Entities;
 using HsnSoft.Base.Domain.Sorting;
+using Hsx.IdentityService.Domain.TenantDomain.Entities;
 
 namespace Hsx.IdentityService.Domain.TenantDomain.Consts;
 

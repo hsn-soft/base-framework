@@ -1,6 +1,7 @@
 using HsnSoft.Base.Application;
 using Hsx.IdentityService.Application.Contracts.AppRoleDomain.Services;
 using Hsx.IdentityService.Application.Contracts.AppUserDomain.Services;
+using Hsx.IdentityService.Application.Contracts.AuthLoginAuditDomain.Services;
 using Hsx.IdentityService.Application.Contracts.CompanyDomain.Services;
 using Hsx.IdentityService.Application.Contracts.CustomerDomain.Services;
 using Hsx.IdentityService.Application.Contracts.MenuDomain.Services;
@@ -37,6 +38,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<IAppRoleAppService, AppRoleAppService>();
         services.AddScoped<IAppUserAppService, AppUserAppService>();
         services.AddScoped<IMyAccountAppService, MyAccountAppService>();
+        services.AddScoped<IAuthLoginAuditAppService, AuthLoginAuditAppService>();
         services.AddScoped<ISubscriptionAppService, SubscriptionAppService>();
         services.AddScoped<IPermissionAppService, PermissionAppService>();
         services.AddScoped<IRolePermissionAppService, RolePermissionAppService>();

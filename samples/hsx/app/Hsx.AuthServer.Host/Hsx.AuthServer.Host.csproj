@@ -11,8 +11,9 @@
     </ItemGroup>
 
     <ItemGroup>
-        <!-- the cache the host chose -->
+        <!-- the cache the host chose, the contract (the DTOs) and the claims of the tenants a token carries -->
         <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.Caching.StackExchangeRedis\HsnSoft.Base.Caching.StackExchangeRedis.csproj" />
+        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.Ddd.Application\HsnSoft.Base.Ddd.Application.csproj" />
         <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.MultiTenancy.Authentication\HsnSoft.Base.MultiTenancy.Authentication.csproj" />
     </ItemGroup>
 

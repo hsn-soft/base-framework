@@ -1,5 +1,6 @@
 using HsnSoft.Base;
 using HsnSoft.Base.Domain.Entities;
+using HsnSoft.Base.Text;
 using Hsx.IdentityService.Domain.AuthLoginAuditDomain.Consts;
 
 namespace Hsx.IdentityService.Domain.AuthLoginAuditDomain.Entities;
@@ -18,6 +19,9 @@ public sealed class AuthLoginAudit : CreationAuditedEntity<Guid>
 
     public string UserNameOrEmail { get; private set; } = string.Empty;
 
+    /// <summary>The twin the list searches (<c>StringHelper.Normalize</c>). Unlike the other normalized fields it may be empty (a name of letters the normalizing drops): the audit is written for every attempt, and an empty twin matches no search.</summary>
+    public string NormalizedUserNameOrEmail { get; private set; } = string.Empty;
+
     public bool IsSuccess { get; private set; }
 
     public string? FailureReason { get; private set; }
@@ -33,6 +37,7 @@ public sealed class AuthLoginAudit : CreationAuditedEntity<Guid>
             TenantId = tenantId,
             UserId = userId,
             UserNameOrEmail = Guard.NotNullOrWhiteSpace(userNameOrEmail, nameof(UserNameOrEmail), AuthLoginAuditConsts.UserNameOrEmailMaxLength).Trim(),
+            NormalizedUserNameOrEmail = StringHelper.Normalize(userNameOrEmail),
             IsSuccess = isSuccess,
             FailureReason = failureReason,
             IpAddress = Cut(ipAddress, AuthLoginAuditConsts.IpAddressMaxLength),

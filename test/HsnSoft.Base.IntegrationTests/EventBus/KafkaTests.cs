@@ -212,7 +212,8 @@ public sealed class KafkaTests(KafkaFixture kafkaServer)
 
         await host.StopAsync();
 
-        Assert.True(probe.Cancelled, "the handler was not cancelled after the shutdown timeout");
+        // the shutdown timeout and the wait of the stop end at the same time: the handler is told a moment after the stop returned, so it is waited for (a limit, not a delay)
+        await probe.WaitUntilCancelledAsync();
         Assert.False(probe.Completed);
     }
 
@@ -311,7 +312,7 @@ public sealed class KafkaTests(KafkaFixture kafkaServer)
             await host.StopAsync();
         }
 
-        Assert.True(probe.Cancelled);
+        await probe.WaitUntilCancelledAsync();
 
         Recorder second = new();
         using IHost again = await StartAsync(exchange, services =>

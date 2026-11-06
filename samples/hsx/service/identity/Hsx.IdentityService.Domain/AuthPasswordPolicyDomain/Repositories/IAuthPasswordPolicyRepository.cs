@@ -1,5 +1,5 @@
-using Hsx.IdentityService.Domain.AuthPasswordPolicyDomain.Entities;
 using HsnSoft.Base.Domain.Repositories;
+using Hsx.IdentityService.Domain.AuthPasswordPolicyDomain.Entities;
 
 namespace Hsx.IdentityService.Domain.AuthPasswordPolicyDomain.Repositories;
 

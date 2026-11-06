@@ -1,7 +1,7 @@
-using Hsx.IdentityService.Domain.AppRoleDomain.Entities;
 using HsnSoft.Base;
 using HsnSoft.Base.Domain.Entities;
 using HsnSoft.Base.MultiTenancy;
+using Hsx.IdentityService.Domain.AppRoleDomain.Entities;
 
 namespace Hsx.IdentityService.Domain.PermissionDomain.Entities;
 

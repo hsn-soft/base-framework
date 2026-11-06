@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
-using Hsx.IdentityService.Domain.AppUserDomain.Consts;
 using HsnSoft.Base.Logging.Masking;
+using Hsx.IdentityService.Domain.AppUserDomain.Consts;
 
 namespace Hsx.IdentityService.Application.Contracts.MyAccountDomain.Dtos.Submits;
 
