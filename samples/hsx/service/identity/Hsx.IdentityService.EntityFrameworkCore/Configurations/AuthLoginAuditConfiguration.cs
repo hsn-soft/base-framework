@@ -16,6 +16,7 @@ public static class AuthLoginAuditConfiguration
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Id).ValueGeneratedNever();
             entity.Property(e => e.UserNameOrEmail).HasMaxLength(AuthLoginAuditConsts.UserNameOrEmailMaxLength).IsRequired();
+            entity.Property(e => e.NormalizedUserNameOrEmail).HasMaxLength(AuthLoginAuditConsts.UserNameOrEmailMaxLength).IsRequired();
             entity.Property(e => e.FailureReason).HasMaxLength(AuthLoginAuditConsts.ReasonMaxLength);
             entity.Property(e => e.IpAddress).HasMaxLength(AuthLoginAuditConsts.IpAddressMaxLength);
             entity.Property(e => e.UserAgent).HasMaxLength(AuthLoginAuditConsts.UserAgentMaxLength);

@@ -1,7 +1,7 @@
-using Hsx.IdentityService.Domain.Enums;
-using Hsx.IdentityService.Domain.MenuDomain.Consts;
 using HsnSoft.Base;
 using HsnSoft.Base.Domain.Entities;
+using Hsx.IdentityService.Domain.Enums;
+using Hsx.IdentityService.Domain.MenuDomain.Consts;
 
 namespace Hsx.IdentityService.Domain.MenuDomain.Entities;
 

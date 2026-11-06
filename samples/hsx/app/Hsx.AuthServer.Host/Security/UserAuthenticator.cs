@@ -104,7 +104,8 @@ public sealed class UserAuthenticator(
             return null;
         }
 
-        Tenant? tenant = (await tenants.GetListAsync(new ListQueryOptions<Tenant> { Filter = candidate => candidate.NormalizedName == normalizedTenant, MaxResultCount = 1 }, cancellationToken: cancellationToken).ConfigureAwait(false)).FirstOrDefault();
+        IReadOnlyList<Tenant> found = await tenants.GetListAsync(new ListQueryOptions<Tenant> { Filter = candidate => candidate.NormalizedName == normalizedTenant, MaxResultCount = 1 }, cancellationToken: cancellationToken).ConfigureAwait(false);
+        Tenant? tenant = found.Count > 0 ? found[0] : null;
         if (tenant is null)
         {
             return null;
