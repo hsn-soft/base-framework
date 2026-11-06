@@ -46,7 +46,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"tenant\": \"system-tenant\",\n  \"account\": \"system-operator@hsx.local\"\n}"
+              "raw": "{\n  \"clientId\": \"hsx-web\",\n  \"tenant\": \"system-tenant\",\n  \"account\": \"system-operator@hsx.local\"\n}"
             }
           },
           "event": [
@@ -555,7 +555,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"tenant\": \"demo-reseller-{{run}}\",\n  \"account\": \"admin-{{run}}@reseller.hsx.local\"\n}"
+              "raw": "{\n  \"clientId\": \"hsx-web\",\n  \"tenant\": \"demo-reseller-{{run}}\",\n  \"account\": \"admin-{{run}}@reseller.hsx.local\"\n}"
             }
           },
           "event": [
@@ -1000,7 +1000,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"tenant\": \"demo-reseller-{{run}}\",\n  \"account\": \"admin-{{run}}@reseller.hsx.local\"\n}"
+              "raw": "{\n  \"clientId\": \"hsx-web\",\n  \"tenant\": \"demo-reseller-{{run}}\",\n  \"account\": \"admin-{{run}}@reseller.hsx.local\"\n}"
             }
           },
           "event": [
@@ -1106,7 +1106,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"tenant\": \"demo-reseller-{{run}}\",\n  \"account\": \"company-person-{{run}}@reseller.hsx.local\"\n}"
+              "raw": "{\n  \"clientId\": \"hsx-web\",\n  \"tenant\": \"demo-reseller-{{run}}\",\n  \"account\": \"company-person-{{run}}@reseller.hsx.local\"\n}"
             }
           },
           "event": [
@@ -1212,7 +1212,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"tenant\": \"demo-reseller-{{run}}\",\n  \"account\": \"customer1-person-{{run}}@reseller.hsx.local\"\n}"
+              "raw": "{\n  \"clientId\": \"hsx-web\",\n  \"tenant\": \"demo-reseller-{{run}}\",\n  \"account\": \"customer1-person-{{run}}@reseller.hsx.local\"\n}"
             }
           },
           "event": [
@@ -1318,7 +1318,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"tenant\": \"demo-reseller-{{run}}\",\n  \"account\": \"customer2-person-{{run}}@reseller.hsx.local\"\n}"
+              "raw": "{\n  \"clientId\": \"hsx-web\",\n  \"tenant\": \"demo-reseller-{{run}}\",\n  \"account\": \"customer2-person-{{run}}@reseller.hsx.local\"\n}"
             }
           },
           "event": [

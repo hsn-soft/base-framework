@@ -6,30 +6,15 @@ using Hsx.IdentityService.Domain.AppUserDomain.Repositories;
 using Hsx.IdentityService.Domain.AppUserDomain.Security;
 using Hsx.IdentityService.Domain.AuthLoginAuditDomain.Consts;
 using Hsx.IdentityService.Domain.AuthLoginAuditDomain.Entities;
+using Hsx.IdentityService.Domain.AuthLoginAuditDomain.Repositories;
 using Hsx.IdentityService.Domain.AuthPasswordPolicyDomain.Entities;
 using Hsx.IdentityService.Domain.AuthPasswordPolicyDomain.Repositories;
+using Hsx.IdentityService.Domain.Enums;
 using Hsx.IdentityService.Domain.TenantDomain.Entities;
 using Hsx.IdentityService.Domain.TenantDomain.Repositories;
-using Hsx.Shared.Helper;
 using Microsoft.Extensions.Options;
 
 namespace Hsx.AuthServer.Host.Security;
-
-/// <summary>Who signed in: what goes into the claims of the token. <paramref name="AllowedTenantIds"/> are the tenants under the tenant of the user; <paramref name="ScopeKeys"/> are the keys of the subscriptions of its roles.</summary>
-public sealed record AuthenticatedUser(
-    Guid Id,
-    string UserName,
-    string DisplayName,
-    string Email,
-    IReadOnlyList<string> Roles,
-    Guid TenantId,
-    bool IsSystemTenant,
-    string Language,
-    IReadOnlyList<Guid> AllowedTenantIds,
-    IReadOnlyList<string> ScopeKeys);
-
-/// <summary>Where a sign-in came from, for the audit.</summary>
-public sealed record SignInOrigin(string? IpAddress, string? UserAgent);
 
 /// <summary>
 /// Checks a tenant, an account (an email or a user name) and a password against the users of the identity service (the same database; the auth server writes only what a sign-in changes: the count of failures, the lockout, the audit) and works out what the user may see: the
@@ -39,7 +24,7 @@ public sealed class UserAuthenticator(
     IAppUserRepository signIn,
     ITenantRepository tenants,
     IAuthPasswordPolicyRepository policies,
-    IRepository<AuthLoginAudit, Guid> audits,
+    IAuthLoginAuditRepository audits,
     IOptions<AuthServerOptions> options)
 {
     /// <summary>The most ids a claim list may hold: a token that carries more is too big for a header, so such a tenant is given scope keys instead.</summary>
@@ -129,7 +114,7 @@ public sealed class UserAuthenticator(
     {
         AppUser user = info.User;
         Tenant tenant = info.Tenant;
-        bool isSystem = tenant.Id == HsxTenants.System;
+        bool isSystem = tenant.TenantType == TenantTypes.System;
 
         // the system tenant is under no isolation, so it lists nothing; any other tenant sees its own and the tenants under it
         IReadOnlyList<Guid> descendants = isSystem ? [] : await tenants.GetDescendantIdsAsync(tenant, cancellationToken).ConfigureAwait(false);
@@ -139,7 +124,7 @@ public sealed class UserAuthenticator(
             throw new BaseHttpException(422, $"The token would list more than {MaxClaimValues} tenants or {maxScopeKeys} scopes.").WithKey("token_too_large");
         }
 
-        return new AuthenticatedUser(user.Id, user.UserName, user.DisplayName, user.Email, info.Roles, tenant.Id, isSystem, user.LanguageCode ?? "en", descendants, info.ScopeKeys);
+        return new AuthenticatedUser(user.Id, user.UserName, user.DisplayName, user.Email, info.Roles, tenant.Id, isSystem, user.LanguageCode ?? "en", descendants, info.ScopeKeys, user.TemporaryPasswordExpiresAt is not null);
     }
 
     private Task AuditAsync(string email, Guid? tenantId, Guid? userId, string? failureReason, SignInOrigin origin, CancellationToken cancellationToken)

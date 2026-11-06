@@ -7,6 +7,7 @@ New ADR: copy the framework's [`0000-template.md`](../../../docs/adr/0000-templa
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
+| [0070](0070-hsx-has-the-clients-the-token-of-a-machine-and-the-protection-of-the-auth-server.md) | Hsx has the clients, the token of a machine and the protection of the auth server | Accepted | 2026-11-06 |
 | [0069](0069-hsx-reads-the-sign-in-audit-log-as-the-production-identity-does.md) | Hsx reads the sign-in audit log as the production identity does | Accepted | 2026-11-06 |
 | [0068](0068-hsx-follows-the-production-identity-the-business-is-the-same.md) | Hsx follows the production identity: the business that is in both is the same (the sign-in names the tenant, temporary passwords, the permission catalog from the contracts) | Accepted | 2026-11-05 |
 | [0067](0067-the-shared-hosting-of-a-sample-is-in-layers.md) | The shared hosting of a sample is in layers: the logging in `Shared.Hosting`, the web host in `Shared.Hosting.Http` | Accepted | 2026-11-05 |

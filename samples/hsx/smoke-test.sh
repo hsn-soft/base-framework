@@ -20,7 +20,7 @@ tenant_of() { # email -> the tenant it signs in to (the sample's emails say it; 
     *@hsx.local) echo "${1%@hsx.local}" ;;
   esac
 }
-login_body() { printf '{"tenant":"%s","account":"%s","password":"%s"%s}' "$(tenant_of "$1")" "$1" "$2" "${3:-}"; }
+login_body() { printf '{"clientId":"hsx-web","tenant":"%s","account":"%s","password":"%s"%s}' "$(tenant_of "$1")" "$1" "$2" "${3:-}"; }
 
 json() { python3 -c "import json,sys; d=json.load(sys.stdin)
 for key in sys.argv[1].split('.'):
@@ -93,7 +93,7 @@ check "the old password does not" "$(as_user smokechange${run}@audio-time.hsx.lo
 jar=$(mktemp); first=$(mktemp)
 curl -s -c "$jar" -X POST "$gateway/auth-server/v1/auth/login" -H 'Content-Type: application/json' -d "$(login_body "smokechange${run}@audio-time.hsx.local" "N3wPassword!" ",\"offlineAccess\":true")" -o /dev/null
 cp "$jar" "$first"
-refresh() { curl -s -b "$1" -c "$1" -X POST "$gateway/auth-server/v1/auth/token-refresh" -o /dev/null -w '%{http_code}'; }
+refresh() { curl -s -b "$1" -c "$1" -X POST "$gateway/auth-server/v1/auth/token-refresh" -H 'Content-Type: application/json' -d '{"clientId":"hsx-web"}' -o /dev/null -w '%{http_code}'; }
 check "a refresh token gives a new access token" "$(refresh "$jar")" 200
 check "the same refresh token a second time" "$(refresh "$first")" 401
 check "and the one that took its place ended with it" "$(refresh "$jar")" 401
@@ -180,9 +180,20 @@ new_id=$(echo "$moved" | json payload.id)
 check "a transfer starts a new subscription" "$([ -n "$new_id" ] && [ "$new_id" != "$sale_id" ] && echo yes)" yes
 check "the new reseller has both of its subscriptions" "$(count "$token_b" identity-service/v1/subscriptions)" 2
 check "the old reseller keeps seeing the ended one" "$(count "$token_a" identity-service/v1/subscriptions)" 1
-check "the refresh token of the old reseller is revoked" "$(curl -s -b "$jar" -c "$jar" -X POST "$gateway/auth-server/v1/auth/token-refresh" -o /dev/null -w '%{http_code}')" 401
+check "the refresh token of the old reseller is revoked" "$(curl -s -b "$jar" -c "$jar" -X POST "$gateway/auth-server/v1/auth/token-refresh" -H 'Content-Type: application/json' -d '{"clientId":"hsx-web"}' -o /dev/null -w '%{http_code}')" 401
 rm -f "$jar"
 check "the company role is linked to the new subscription only" "$(post "$token_a" "identity-service/v1/app-roles/subscriptions/$role_id" "{}" | python3 -c "import json,sys; print(len(json.load(sys.stdin)['payload']['subscriptionIds']))")" 0
 mine=$(post "$techsummus" identity-service/v1/me/subscriptions/get "{}")
 check "my subscriptions: what the token names" "$(echo "$mine" | python3 -c "import json,sys; d=json.load(sys.stdin)['payload']['items']; print(len(d), d[0]['customerDomain'], d[0]['productType'])")" "1 cnbce.com VideoPlatform"
+
+# the clients of the auth server (samples ADR-0070): a user signs in through a client, a machine asks for a token of its own with a secret, a token reaches only the audiences of its client
+site_secret="hsx-site-demo-secret"   # the demo secret of the client hsx-site (its hash is in the settings of the auth server)
+token_endpoint="$gateway/auth-server/v1/auth/token"
+check "a sign-in through a client that is not known" "$(curl -s -o /dev/null -w '%{http_code}' -X POST "$gateway/auth-server/v1/auth/login" -H 'Content-Type: application/json' -d "$(login_body "smokea$run@hsx.local" "$password" | sed 's/hsx-web/nobody/')")" 401
+check "a machine with a wrong secret" "$(curl -s -o /dev/null -w '%{http_code}' -X POST "$token_endpoint" -H 'Content-Type: application/json' -d '{"clientId":"hsx-site","clientSecret":"not-the-secret"}')" 401
+check "a public client is not a machine" "$(curl -s -o /dev/null -w '%{http_code}' -X POST "$token_endpoint" -H 'Content-Type: application/json' -d '{"clientId":"hsx-web"}')" 403
+check "a machine may not sign a user in" "$(curl -s -o /dev/null -w '%{http_code}' -X POST "$gateway/auth-server/v1/auth/login" -H 'Content-Type: application/json' -d "$(login_body "smokea$run@hsx.local" "$password" | sed "s/\"hsx-web\"/\"hsx-site\",\"clientSecret\":\"$site_secret\"/")")" 403
+site_token=$(curl -s -X POST "$token_endpoint" -H 'Content-Type: application/json' -d "{\"clientId\":\"hsx-site\",\"clientSecret\":\"$site_secret\"}" | json payload.accessToken)
+check "a machine gets a token of its own" "$([ -n "$site_token" ] && echo yes)" yes
+check "the token of a machine has no audience of the identity service" "$(code "$site_token" identity-service/v1/tenants/paged-list '{}')" 401
 [ "$failures" -eq 0 ] && echo "all as expected" || exit 1

@@ -34,10 +34,11 @@ public sealed class TokenService : IDisposable
 
     public void Dispose() => _privateKey.Dispose();
 
-    /// <summary>Issues the token of <paramref name="user"/>. <paramref name="audiences"/> are the services the token may be sent to (<c>aud</c>): the ones of <c>Jwt:IssuedAudiences</c> when they are not given, so a client that may reach fewer services is given fewer.</summary>
-    public AccessToken Issue(AuthenticatedUser user, IReadOnlyCollection<string>? audiences = null)
+    /// <summary>Issues the token of <paramref name="user"/>. <paramref name="audiences"/> are the services the token may be sent to (<c>aud</c>): the ones of <c>Jwt:IssuedAudiences</c> when they are not given, so a client that may reach fewer services is given fewer; <paramref name="accessTokenMinutes"/> is how long it lives (<c>Jwt:AccessTokenMinutes</c> when it is not given).</summary>
+    public AccessToken Issue(AuthenticatedUser user, IReadOnlyCollection<string>? audiences = null, int? accessTokenMinutes = null)
     {
-        JwtOptions settings = _jwt;
+        ArgumentNullException.ThrowIfNull(user);
+
         List<Claim> claims =
         [
             new("sub", user.UserName),
@@ -58,14 +59,28 @@ public sealed class TokenService : IDisposable
             claims.Add(new Claim(TenantClaimTypes.IsSystemTenant, "true"));
         }
 
+        return Sign(claims, audiences, accessTokenMinutes);
+    }
+
+    /// <summary>Issues the token of a client itself (no user): <c>sub</c> and <c>client_id</c> are the client, and there is no tenant, no role and no scope key, so a service that asks for a permission refuses it; one that asks only for a valid token with its audience lets it in.</summary>
+    public AccessToken IssueForClient(string clientId, IReadOnlyCollection<string>? audiences = null, int? accessTokenMinutes = null)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(clientId);
+
+        return Sign([new Claim("sub", clientId), new Claim("client_id", clientId), new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString("N"))], audiences, accessTokenMinutes);
+    }
+
+    private AccessToken Sign(List<Claim> claims, IReadOnlyCollection<string>? audiences, int? accessTokenMinutes)
+    {
+        int minutes = accessTokenMinutes is > 0 ? accessTokenMinutes.Value : _jwt.AccessTokenMinutes;
         string token = new JsonWebTokenHandler().CreateToken(new SecurityTokenDescriptor
         {
-            Issuer = settings.Issuer,
-            Claims = new Dictionary<string, object> { [JwtRegisteredClaimNames.Aud] = (audiences is { Count: > 0 } ? audiences : settings.IssuedAudiences).ToArray() },
+            Issuer = _jwt.Issuer,
+            Claims = new Dictionary<string, object> { [JwtRegisteredClaimNames.Aud] = (audiences is { Count: > 0 } ? audiences : _jwt.IssuedAudiences).ToArray() },
             Subject = new ClaimsIdentity(claims),
-            Expires = DateTime.UtcNow.AddMinutes(settings.AccessTokenMinutes),
+            Expires = DateTime.UtcNow.AddMinutes(minutes),
             SigningCredentials = new SigningCredentials(new RsaSecurityKey(_privateKey), SecurityAlgorithms.RsaSha256),
         });
-        return new AccessToken(token, settings.AccessTokenMinutes * 60);
+        return new AccessToken(token, minutes * 60);
     }
 }
