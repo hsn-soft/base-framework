@@ -40,6 +40,7 @@
         <ProjectReference Include="..\..\src\HsnSoft.Base.Logging.NLog\HsnSoft.Base.Logging.NLog.csproj" />
         <ProjectReference Include="..\..\src\HsnSoft.Base.MongoDB\HsnSoft.Base.MongoDB.csproj" />
         <ProjectReference Include="..\..\src\HsnSoft.Base.MultiTenancy.MongoDB\HsnSoft.Base.MultiTenancy.MongoDB.csproj" />
+        <ProjectReference Include="..\..\src\HsnSoft.Base.RateLimiting.StackExchangeRedis\HsnSoft.Base.RateLimiting.StackExchangeRedis.csproj" />
     </ItemGroup>
 
 </Project>
