@@ -47,13 +47,10 @@ public sealed partial class AuthAppService(
         AuthenticatedUser user = await authenticator.AuthenticateAsync(input.Tenant, input.Account, input.Password, origin, cancellationToken).ConfigureAwait(false)
                                  ?? throw new BaseHttpException(StatusCodes.Status401Unauthorized, "Invalid credentials").WithKey("invalid_credentials");
 
-        if (input.OfflineAccess)
-        {
-            SetRefreshCookie(await refreshTokens.IssueAsync(user.Id, user.TenantId, Lifetime, cancellationToken).ConfigureAwait(false));
-        }
+        string? refreshToken = input.OfflineAccess ? await refreshTokens.IssueAsync(user.Id, user.TenantId, Lifetime, cancellationToken).ConfigureAwait(false) : null;
 
         // a sign-in is written to the audit by the authenticator (who, from where, and why it failed), so it is not logged again
-        return ToDto(tokens.Issue(user, audiences, client.AccessTokenMinutes), user);
+        return ToDto(tokens.Issue(user, audiences, client.AccessTokenMinutes), user, Deliver(client, refreshToken));
     }
 
     public async Task<TokenDto> RefreshAsync(RefreshDto input, CancellationToken cancellationToken = default)
@@ -67,17 +64,21 @@ public sealed partial class AuthAppService(
         }
 
         List<string> audiences = AudiencesOf(client, input.Audiences);
-        string? token = Http.Request.Cookies[_options.RefreshCookieName];
+        // a client has one way: the cookie of a browser, or the body of a mobile application (a token in the other place is not looked at)
+        string? token = client.RefreshTokenInBody ? input.RefreshToken : Http.Request.Cookies[_options.RefreshCookieName];
         (Guid UserId, string NewToken)? rotated = string.IsNullOrEmpty(token) ? null : await refreshTokens.RotateAsync(token, Lifetime, cancellationToken).ConfigureAwait(false);
         AuthenticatedUser? user = rotated is { } found ? await authenticator.FindForRefreshAsync(found.UserId, cancellationToken).ConfigureAwait(false) : null;
         if (rotated is null || user is null)
         {
-            RemoveRefreshCookieWhenAnswered();
+            if (!client.RefreshTokenInBody)
+            {
+                RemoveRefreshCookieWhenAnswered();
+            }
+
             throw new BaseHttpException(StatusCodes.Status401Unauthorized, "Invalid refresh token").WithKey("invalid_refresh_token");
         }
 
-        SetRefreshCookie(rotated.Value.NewToken);
-        return ToDto(tokens.Issue(user, audiences, client.AccessTokenMinutes), user);
+        return ToDto(tokens.Issue(user, audiences, client.AccessTokenMinutes), user, Deliver(client, rotated.Value.NewToken));
     }
 
     public Task<TokenDto> ClientTokenAsync(ClientTokenRequestDto input, CancellationToken cancellationToken = default)
@@ -94,9 +95,10 @@ public sealed partial class AuthAppService(
         return Task.FromResult(new TokenDto { AccessToken = token.Value, ExpiresIn = token.ExpiresInSeconds });
     }
 
-    public async Task<LogoutResultDto> LogoutAsync(CancellationToken cancellationToken = default)
+    public async Task<LogoutResultDto> LogoutAsync(LogoutDto? input, CancellationToken cancellationToken = default)
     {
-        string? token = Http.Request.Cookies[_options.RefreshCookieName];
+        // the token of the body (a mobile application) or else the cookie of the browser; a sign-out names no client, so it takes either
+        string? token = string.IsNullOrEmpty(input?.RefreshToken) ? Http.Request.Cookies[_options.RefreshCookieName] : input.RefreshToken;
         bool hadToken = !string.IsNullOrEmpty(token);
         if (hadToken)
         {
@@ -148,8 +150,25 @@ public sealed partial class AuthAppService(
         return [.. asked.Distinct()];
     }
 
-    private static TokenDto ToDto(AccessToken token, AuthenticatedUser user)
-        => new() { AccessToken = token.Value, ExpiresIn = token.ExpiresInSeconds, PasswordChangeRequired = user.PasswordChangeRequired };
+    private static TokenDto ToDto(AccessToken token, AuthenticatedUser user, string? refreshToken = null)
+        => new() { AccessToken = token.Value, ExpiresIn = token.ExpiresInSeconds, PasswordChangeRequired = user.PasswordChangeRequired, RefreshToken = refreshToken };
+
+    // a refresh token goes where the client keeps it: into the cookie (nothing is returned for the body), or back to the body of the answer; nothing when there is none
+    private string? Deliver(ClientOptions client, string? refreshToken)
+    {
+        if (refreshToken is null)
+        {
+            return null;
+        }
+
+        if (client.RefreshTokenInBody)
+        {
+            return refreshToken;
+        }
+
+        SetRefreshCookie(refreshToken);
+        return null;
+    }
 
     // an error answer is written from scratch (the response is cleared, the headers set so far are lost), so the cookie of a refresh token that is not valid any more is removed when the answer starts
     private void RemoveRefreshCookieWhenAnswered()

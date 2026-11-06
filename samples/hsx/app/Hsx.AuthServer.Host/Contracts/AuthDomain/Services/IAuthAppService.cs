@@ -18,7 +18,8 @@ public interface IAuthAppService
     /// <exception cref="HsnSoft.Base.BaseHttpException">The client is not known or does not prove itself (401 <c>invalid_client</c>), may not ask for a token for itself (403 <c>grant_not_allowed</c>) or asks for an audience it has not (400 <c>audience_not_allowed</c>).</exception>
     Task<TokenDto> ClientTokenAsync(ClientTokenRequestDto input, CancellationToken cancellationToken = default);
 
-    Task<LogoutResultDto> LogoutAsync(CancellationToken cancellationToken = default);
+    /// <summary>Ends the refresh token of the body (a client that keeps it there) or else of the cookie, and removes the cookie.</summary>
+    Task<LogoutResultDto> LogoutAsync(LogoutDto? input, CancellationToken cancellationToken = default);
 
     Task<MeDto> GetMeAsync(CancellationToken cancellationToken = default);
 }

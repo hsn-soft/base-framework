@@ -32,8 +32,8 @@ public sealed class AuthController(IAuthAppService auth) : BaseServiceController
 
     [AllowAnonymous]
     [HttpPost("logout")]
-    public Task<LogoutResultDto> LogoutAsync(CancellationToken cancellationToken = default)
-        => auth.LogoutAsync(cancellationToken);
+    public Task<LogoutResultDto> LogoutAsync([FromBody] LogoutDto? input = null, CancellationToken cancellationToken = default)
+        => auth.LogoutAsync(input, cancellationToken);
 
     [HttpGet("me")]
     public Task<MeDto> GetMeAsync(CancellationToken cancellationToken = default)

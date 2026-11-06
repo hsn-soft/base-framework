@@ -196,4 +196,14 @@ check "a machine may not sign a user in" "$(curl -s -o /dev/null -w '%{http_code
 site_token=$(curl -s -X POST "$token_endpoint" -H 'Content-Type: application/json' -d "{\"clientId\":\"hsx-site\",\"clientSecret\":\"$site_secret\"}" | json payload.accessToken)
 check "a machine gets a token of its own" "$([ -n "$site_token" ] && echo yes)" yes
 check "the token of a machine has no audience of the identity service" "$(code "$site_token" identity-service/v1/tenants/paged-list '{}')" 401
+# no tenant is the system tenant (the people who run the system leave it blank), and a mobile application keeps its refresh token in the body (samples ADR-0071)
+blank_token=$(curl -s -X POST "$gateway/auth-server/v1/auth/login" -H 'Content-Type: application/json' -d "{\"clientId\":\"hsx-web\",\"account\":\"system-operator@hsx.local\",\"password\":\"$password\"}" | json payload.accessToken)
+check "a sign-in with no tenant is the system tenant" "$([ -n "$blank_token" ] && echo yes)" yes
+mobile_login=$(curl -s -X POST "$gateway/auth-server/v1/auth/login" -H 'Content-Type: application/json' -d "$(login_body "smokea$run@hsx.local" "$password" ",\"offlineAccess\":true" | sed 's/hsx-web/hsx-mobile/')")
+mobile_refresh=$(echo "$mobile_login" | json payload.refreshToken)
+check "a mobile client gets its refresh token in the body" "$([ -n "$mobile_refresh" ] && echo yes)" yes
+refresh_in_body() { curl -s -X POST "$gateway/auth-server/v1/auth/token-refresh" -H 'Content-Type: application/json' -d "{\"clientId\":\"hsx-mobile\",\"refreshToken\":\"$1\"}"; }
+mobile_next=$(refresh_in_body "$mobile_refresh" | json payload.refreshToken)
+check "the refresh through the body gives a new refresh token" "$([ -n "$mobile_next" ] && [ "$mobile_next" != "$mobile_refresh" ] && echo yes)" yes
+check "a refresh token of the body is used once" "$(curl -s -o /dev/null -w '%{http_code}' -X POST "$gateway/auth-server/v1/auth/token-refresh" -H 'Content-Type: application/json' -d "{\"clientId\":\"hsx-mobile\",\"refreshToken\":\"$mobile_refresh\"}")" 401
 [ "$failures" -eq 0 ] && echo "all as expected" || exit 1

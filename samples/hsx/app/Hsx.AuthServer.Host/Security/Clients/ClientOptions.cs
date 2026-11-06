@@ -31,6 +31,12 @@ public sealed class ClientOptions
     /// <summary>Whether a user who signs in through this client may ask for a refresh token (the cookie).</summary>
     public bool AllowOfflineAccess { get; set; }
 
+    /// <summary>
+    /// Where the refresh token of a user who signs in through this client travels: <see langword="false"/> in an HttpOnly cookie (a browser: the page never sees it), <see langword="true"/> in the body of the answer and of the next request (a mobile application, which keeps it in its secure
+    /// storage and has no cookie jar to rely on). Needs <see cref="AllowOfflineAccess"/>. A client has one way, never both.
+    /// </summary>
+    public bool RefreshTokenInBody { get; set; }
+
     /// <summary>How long the access token lives, in minutes; 0 is the value of <c>Jwt:AccessTokenMinutes</c>.</summary>
     public int AccessTokenMinutes { get; set; }
 }

@@ -34,7 +34,7 @@ public sealed class UserAuthenticator(
     private static readonly string s_unknownUserHash = PasswordHasher.Hash("not-a-password-of-anyone");
 
     /// <summary>The user, or <see langword="null"/> when the email is unknown, the user or its tenant is not active, the user is locked out or the password is wrong (the caller cannot tell which).</summary>
-    public async Task<AuthenticatedUser?> AuthenticateAsync(string tenantName, string account, string password, SignInOrigin origin, CancellationToken cancellationToken = default)
+    public async Task<AuthenticatedUser?> AuthenticateAsync(string? tenantName, string account, string password, SignInOrigin origin, CancellationToken cancellationToken = default)
     {
         string email = account;
         SignInInfo? info = await FindAsync(tenantName, account, cancellationToken).ConfigureAwait(false);
@@ -80,16 +80,20 @@ public sealed class UserAuthenticator(
     }
 
     // the sign-in names the tenant (an email or a user name is unique only inside one): what was typed is normalized here, the repository compares the normalized columns (identity ADR-0024)
-    private async Task<SignInInfo?> FindAsync(string tenantName, string account, CancellationToken cancellationToken)
+    private async Task<SignInInfo?> FindAsync(string? tenantName, string account, CancellationToken cancellationToken)
     {
-        string normalizedTenant = StringHelper.Normalize(tenantName);
+        // no tenant named (a blank one too) is the system tenant; a name that has nothing left after normalizing is not a tenant and is refused before the database
+        bool system = string.IsNullOrWhiteSpace(tenantName);
+        string normalizedTenant = system ? string.Empty : StringHelper.Normalize(tenantName!);
         string normalizedAccount = StringHelper.Normalize(account);
-        if (normalizedTenant.Length == 0 || normalizedAccount.Length == 0)
+        if ((!system && normalizedTenant.Length == 0) || normalizedAccount.Length == 0)
         {
             return null;
         }
 
-        IReadOnlyList<Tenant> found = await tenants.GetListAsync(new ListQueryOptions<Tenant> { Filter = candidate => candidate.NormalizedName == normalizedTenant, MaxResultCount = 1 }, cancellationToken: cancellationToken).ConfigureAwait(false);
+        IReadOnlyList<Tenant> found = await tenants.GetListAsync(
+            new ListQueryOptions<Tenant> { Filter = system ? candidate => candidate.TenantType == TenantTypes.System : candidate => candidate.NormalizedName == normalizedTenant, MaxResultCount = 1 },
+            cancellationToken: cancellationToken).ConfigureAwait(false);
         Tenant? tenant = found.Count > 0 ? found[0] : null;
         if (tenant is null)
         {

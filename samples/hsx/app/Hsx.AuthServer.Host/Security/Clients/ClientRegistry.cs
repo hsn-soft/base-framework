@@ -105,6 +105,11 @@ public sealed class ClientRegistry
             }
         }
 
+        if (client.RefreshTokenInBody && !client.AllowOfflineAccess)
+        {
+            throw new InvalidOperationException($"{where} keeps the refresh token in the body (RefreshTokenInBody) and does not allow a refresh token (AllowOfflineAccess).");
+        }
+
         if (client.AccessTokenMinutes < 0)
         {
             throw new InvalidOperationException($"{where} has AccessTokenMinutes below zero ({client.AccessTokenMinutes.ToString(CultureInfo.InvariantCulture)}).");
