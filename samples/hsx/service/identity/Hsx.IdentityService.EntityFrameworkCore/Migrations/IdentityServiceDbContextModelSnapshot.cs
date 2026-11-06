@@ -260,6 +260,11 @@ namespace Hsx.IdentityService.EntityFrameworkCore.Migrations
                     b.Property<bool>("IsSuccess")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("NormalizedUserNameOrEmail")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
                     b.Property<Guid?>("TenantId")
                         .HasColumnType("uuid");
 

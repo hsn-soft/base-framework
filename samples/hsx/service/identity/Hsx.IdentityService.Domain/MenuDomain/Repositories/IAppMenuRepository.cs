@@ -1,6 +1,6 @@
+using HsnSoft.Base.Domain.Repositories;
 using Hsx.IdentityService.Domain.Enums;
 using Hsx.IdentityService.Domain.MenuDomain.Entities;
-using HsnSoft.Base.Domain.Repositories;
 
 namespace Hsx.IdentityService.Domain.MenuDomain.Repositories;
 

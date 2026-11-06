@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <Import Project="..\..\common.props" />
+
+    <PropertyGroup>
+        <AssemblyName>HsnSoft.Base.RateLimiting.StackExchangeRedis</AssemblyName>
+        <PackageId>HsnSoft.Base.RateLimiting.StackExchangeRedis</PackageId>
+        <RootNamespace />
+        <Title>HsnSoft Base Framework RateLimiting StackExchangeRedis</Title>
+        <Description>Redis implementation of the HsnSoft rate limiter: one atomic script per request and the clock of Redis, so the limit of a caller holds across every pod.</Description>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageTags>HsnSoft Base Framework RateLimiting Redis Throttle</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="..\..\README.md" Pack="true" Visible="false" PackagePath="README.md" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="StackExchange.Redis" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\HsnSoft.Base.RateLimiting\HsnSoft.Base.RateLimiting.csproj" />
+    </ItemGroup>
+
+</Project>

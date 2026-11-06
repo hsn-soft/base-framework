@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
+using HsnSoft.Base;
 using Hsx.IdentityService.Domain.AppRoleDomain.Consts;
 using Hsx.IdentityService.Domain.Enums;
-using HsnSoft.Base;
 
 namespace Hsx.IdentityService.Application.Contracts.AppRoleDomain.Dtos.Submits;
 

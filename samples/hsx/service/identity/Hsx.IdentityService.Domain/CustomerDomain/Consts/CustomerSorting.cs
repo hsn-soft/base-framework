@@ -1,5 +1,5 @@
-using Hsx.IdentityService.Domain.CustomerDomain.Entities;
 using HsnSoft.Base.Domain.Sorting;
+using Hsx.IdentityService.Domain.CustomerDomain.Entities;
 
 namespace Hsx.IdentityService.Domain.CustomerDomain.Consts;
 

@@ -1,5 +1,5 @@
-using Hsx.IdentityService.Domain.AuthRefreshTokenDomain.Entities;
 using HsnSoft.Base.Domain.Repositories;
+using Hsx.IdentityService.Domain.AuthRefreshTokenDomain.Entities;
 namespace Hsx.IdentityService.Domain.AuthRefreshTokenDomain.Repositories;
 
 /// <summary>What the refresh tokens of the auth server are kept with. Only the hash of a token is stored.</summary>

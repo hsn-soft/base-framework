@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
-using Hsx.IdentityService.Domain.Enums;
 using HsnSoft.Base.Application.Dtos;
+using Hsx.IdentityService.Domain.Enums;
 
 namespace Hsx.IdentityService.Application.Contracts.TenantDomain.Dtos.Filters;
 

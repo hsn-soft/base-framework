@@ -17,7 +17,7 @@ tenant_of() { # email -> the tenant it signs in to (the sample's emails say it; 
     *@hsx.local) echo "${1%@hsx.local}" ;;
   esac
 }
-login_body() { printf '{"tenant":"%s","account":"%s","password":"%s"%s}' "$(tenant_of "$1")" "$1" "$2" "${3:-}"; }
+login_body() { printf '{"clientId":"hsx-web","tenant":"%s","account":"%s","password":"%s"%s}' "$(tenant_of "$1")" "$1" "$2" "${3:-}"; }
 run=$(date +%s)
 
 json() { python3 -c "import json,sys; d=json.load(sys.stdin)

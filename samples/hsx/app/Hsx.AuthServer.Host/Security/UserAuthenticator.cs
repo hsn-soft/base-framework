@@ -6,30 +6,15 @@ using Hsx.IdentityService.Domain.AppUserDomain.Repositories;
 using Hsx.IdentityService.Domain.AppUserDomain.Security;
 using Hsx.IdentityService.Domain.AuthLoginAuditDomain.Consts;
 using Hsx.IdentityService.Domain.AuthLoginAuditDomain.Entities;
+using Hsx.IdentityService.Domain.AuthLoginAuditDomain.Repositories;
 using Hsx.IdentityService.Domain.AuthPasswordPolicyDomain.Entities;
 using Hsx.IdentityService.Domain.AuthPasswordPolicyDomain.Repositories;
+using Hsx.IdentityService.Domain.Enums;
 using Hsx.IdentityService.Domain.TenantDomain.Entities;
 using Hsx.IdentityService.Domain.TenantDomain.Repositories;
-using Hsx.Shared.Helper;
 using Microsoft.Extensions.Options;
 
 namespace Hsx.AuthServer.Host.Security;
-
-/// <summary>Who signed in: what goes into the claims of the token. <paramref name="AllowedTenantIds"/> are the tenants under the tenant of the user; <paramref name="ScopeKeys"/> are the keys of the subscriptions of its roles.</summary>
-public sealed record AuthenticatedUser(
-    Guid Id,
-    string UserName,
-    string DisplayName,
-    string Email,
-    IReadOnlyList<string> Roles,
-    Guid TenantId,
-    bool IsSystemTenant,
-    string Language,
-    IReadOnlyList<Guid> AllowedTenantIds,
-    IReadOnlyList<string> ScopeKeys);
-
-/// <summary>Where a sign-in came from, for the audit.</summary>
-public sealed record SignInOrigin(string? IpAddress, string? UserAgent);
 
 /// <summary>
 /// Checks a tenant, an account (an email or a user name) and a password against the users of the identity service (the same database; the auth server writes only what a sign-in changes: the count of failures, the lockout, the audit) and works out what the user may see: the
@@ -39,7 +24,7 @@ public sealed class UserAuthenticator(
     IAppUserRepository signIn,
     ITenantRepository tenants,
     IAuthPasswordPolicyRepository policies,
-    IRepository<AuthLoginAudit, Guid> audits,
+    IAuthLoginAuditRepository audits,
     IOptions<AuthServerOptions> options)
 {
     /// <summary>The most ids a claim list may hold: a token that carries more is too big for a header, so such a tenant is given scope keys instead.</summary>
@@ -49,7 +34,7 @@ public sealed class UserAuthenticator(
     private static readonly string s_unknownUserHash = PasswordHasher.Hash("not-a-password-of-anyone");
 
     /// <summary>The user, or <see langword="null"/> when the email is unknown, the user or its tenant is not active, the user is locked out or the password is wrong (the caller cannot tell which).</summary>
-    public async Task<AuthenticatedUser?> AuthenticateAsync(string tenantName, string account, string password, SignInOrigin origin, CancellationToken cancellationToken = default)
+    public async Task<AuthenticatedUser?> AuthenticateAsync(string? tenantName, string account, string password, SignInOrigin origin, CancellationToken cancellationToken = default)
     {
         string email = account;
         SignInInfo? info = await FindAsync(tenantName, account, cancellationToken).ConfigureAwait(false);
@@ -95,16 +80,21 @@ public sealed class UserAuthenticator(
     }
 
     // the sign-in names the tenant (an email or a user name is unique only inside one): what was typed is normalized here, the repository compares the normalized columns (identity ADR-0024)
-    private async Task<SignInInfo?> FindAsync(string tenantName, string account, CancellationToken cancellationToken)
+    private async Task<SignInInfo?> FindAsync(string? tenantName, string account, CancellationToken cancellationToken)
     {
-        string normalizedTenant = StringHelper.Normalize(tenantName);
+        // no tenant named (a blank one too) is the system tenant; a name that has nothing left after normalizing is not a tenant and is refused before the database
+        bool system = string.IsNullOrWhiteSpace(tenantName);
+        string normalizedTenant = system ? string.Empty : StringHelper.Normalize(tenantName!);
         string normalizedAccount = StringHelper.Normalize(account);
-        if (normalizedTenant.Length == 0 || normalizedAccount.Length == 0)
+        if ((!system && normalizedTenant.Length == 0) || normalizedAccount.Length == 0)
         {
             return null;
         }
 
-        Tenant? tenant = (await tenants.GetListAsync(new ListQueryOptions<Tenant> { Filter = candidate => candidate.NormalizedName == normalizedTenant, MaxResultCount = 1 }, cancellationToken: cancellationToken).ConfigureAwait(false)).FirstOrDefault();
+        IReadOnlyList<Tenant> found = await tenants.GetListAsync(
+            new ListQueryOptions<Tenant> { Filter = system ? candidate => candidate.TenantType == TenantTypes.System : candidate => candidate.NormalizedName == normalizedTenant, MaxResultCount = 1 },
+            cancellationToken: cancellationToken).ConfigureAwait(false);
+        Tenant? tenant = found.Count > 0 ? found[0] : null;
         if (tenant is null)
         {
             return null;
@@ -128,7 +118,7 @@ public sealed class UserAuthenticator(
     {
         AppUser user = info.User;
         Tenant tenant = info.Tenant;
-        bool isSystem = tenant.Id == HsxTenants.System;
+        bool isSystem = tenant.TenantType == TenantTypes.System;
 
         // the system tenant is under no isolation, so it lists nothing; any other tenant sees its own and the tenants under it
         IReadOnlyList<Guid> descendants = isSystem ? [] : await tenants.GetDescendantIdsAsync(tenant, cancellationToken).ConfigureAwait(false);
@@ -138,7 +128,7 @@ public sealed class UserAuthenticator(
             throw new BaseHttpException(422, $"The token would list more than {MaxClaimValues} tenants or {maxScopeKeys} scopes.").WithKey("token_too_large");
         }
 
-        return new AuthenticatedUser(user.Id, user.UserName, user.DisplayName, user.Email, info.Roles, tenant.Id, isSystem, user.LanguageCode ?? "en", descendants, info.ScopeKeys);
+        return new AuthenticatedUser(user.Id, user.UserName, user.DisplayName, user.Email, info.Roles, tenant.Id, isSystem, user.LanguageCode ?? "en", descendants, info.ScopeKeys, user.TemporaryPasswordExpiresAt is not null);
     }
 
     private Task AuditAsync(string email, Guid? tenantId, Guid? userId, string? failureReason, SignInOrigin origin, CancellationToken cancellationToken)
