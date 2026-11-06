@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <Import Project="..\..\common.props" />
+
+    <PropertyGroup>
+        <AssemblyName>HsnSoft.Base.RateLimiting.AspNetCore</AssemblyName>
+        <PackageId>HsnSoft.Base.RateLimiting.AspNetCore</PackageId>
+        <RootNamespace />
+        <Title>HsnSoft Base Framework RateLimiting AspNetCore</Title>
+        <Description>The rate limit on an endpoint and on a host: [RateLimit] for a controller action, RequireRateLimit for a minimal api and UseBaseRateLimiting for every request of one address; a request over the limit is answered 429 with Retry-After.</Description>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageTags>HsnSoft Base Framework RateLimiting AspNetCore Throttle</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="..\..\README.md" Pack="true" Visible="false" PackagePath="README.md" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\HsnSoft.Base.RateLimiting\HsnSoft.Base.RateLimiting.csproj" />
+    </ItemGroup>
+
+</Project>

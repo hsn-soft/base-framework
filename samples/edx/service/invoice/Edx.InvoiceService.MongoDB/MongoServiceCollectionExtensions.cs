@@ -7,6 +7,7 @@ using Edx.InvoiceService.Domain.PurchaseInvoiceDomain.Consts;
 using Edx.InvoiceService.Domain.PurchaseInvoiceDomain.Entities;
 using Edx.InvoiceService.Domain.PurchaseInvoiceDomain.Repositories;
 using Edx.InvoiceService.MongoDB.Configurations;
+using HsnSoft.Base.Data;
 using HsnSoft.Base.Domain.Repositories;
 using HsnSoft.Base.MongoDB;
 using Microsoft.Extensions.Configuration;
@@ -39,6 +40,7 @@ public static class MongoServiceCollectionExtensions
         services.AddScoped<IRepository<PurchaseInvoice, Guid>>(provider => provider.GetRequiredService<IPurchaseInvoiceRepository>());
         services.AddScoped<IRepository<InvoiceReport, Guid>>(provider => new MongoRepository<InvoiceReport, Guid>(
             provider.GetRequiredService<IMongoDatabase>(), provider.GetRequiredService<MongoEntityConcepts>(), MongoInvoiceDbProperties.CollectionPrefix + InvoiceReportConsts.CollectionName));
+        services.AddDatabaseStartupStep(MongoInvoiceDbProperties.ConnectionStringName, "Invoice collections", InvoiceDatabase.EnsureInvoiceCollections);
         return services;
     }
 }

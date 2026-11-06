@@ -2,7 +2,6 @@ using Edx.IdentityService.Domain.IdentityDomain.Entities;
 using Edx.IdentityService.Domain.IdentityDomain.Repositories;
 using Edx.IdentityService.EntityFrameworkCore.Context;
 using HsnSoft.Base.EntityFrameworkCore;
-using HsnSoft.Base.Text;
 using Microsoft.EntityFrameworkCore;
 
 namespace Edx.IdentityService.EntityFrameworkCore.Repositories;
@@ -10,19 +9,17 @@ namespace Edx.IdentityService.EntityFrameworkCore.Repositories;
 /// <summary>The users in SQL Server: what <see cref="EfCoreRepository{TContext, TEntity, TKey}"/> does for any entity, the roles of users, and the lookup the auth server signs in with.</summary>
 public sealed class EfCoreUserRepository(IdentityDbContext db) : EfCoreRepository<IdentityDbContext, User, Guid>(db), IUserRepository
 {
-    public async Task<SignInInfo?> FindForSignInAsync(string tenantCode, string userName, CancellationToken cancellationToken = default)
+    public async Task<SignInInfo?> FindForSignInAsync(string normalizedTenantCode, string normalizedUserName, CancellationToken cancellationToken = default)
     {
-        string code = StringHelper.Normalize(tenantCode).ToLowerInvariant();
-        Tenant? tenant = await Db.Tenants.AsNoTracking().FirstOrDefaultAsync(entity => entity.Code == code, cancellationToken).ConfigureAwait(false);
+        Tenant? tenant = await Db.Tenants.AsNoTracking().FirstOrDefaultAsync(entity => entity.Code == normalizedTenantCode, cancellationToken).ConfigureAwait(false);
         if (tenant is null)
         {
             return null;
         }
 
         // nobody is signed in yet, so the tenant filter has no tenant to filter by: the tenant the caller named is looked in, by its id, on purpose
-        string name = StringHelper.Normalize(userName);
         User? user = await Db.Users.IgnoreQueryFilters().AsNoTracking()
-            .FirstOrDefaultAsync(entity => entity.TenantId == tenant.Id && entity.NormalizedUserName == name, cancellationToken).ConfigureAwait(false);
+            .FirstOrDefaultAsync(entity => entity.TenantId == tenant.Id && entity.NormalizedUserName == normalizedUserName, cancellationToken).ConfigureAwait(false);
         if (user is null)
         {
             return null;
@@ -53,14 +50,13 @@ public sealed class EfCoreUserRepository(IdentityDbContext db) : EfCoreRepositor
         ArgumentNullException.ThrowIfNull(roles);
 
         List<UserRole> replacement = [.. roles.Select(role => UserRole.Create(user.Id, role.Id, user.TenantId))];
-        await Db.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
+        // the retrying strategy of the context runs the whole unit again when a command fails in a way that may pass
+        await Db.ExecuteInTransactionAsync(async token =>
         {
-            await using Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction transaction = await Db.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
-            await Db.UserRoles.IgnoreQueryFilters().Where(link => link.UserId == user.Id).ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
+            await Db.UserRoles.IgnoreQueryFilters().Where(link => link.UserId == user.Id).ExecuteDeleteAsync(token).ConfigureAwait(false);
             Db.UserRoles.AddRange(replacement);
-            await Db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
-        }).ConfigureAwait(false);
+            await Db.SaveChangesAsync(token).ConfigureAwait(false);
+        }, cancellationToken).ConfigureAwait(false);
     }
 
     public Task<bool> AnyUserInRoleAsync(Guid roleId, CancellationToken cancellationToken = default)

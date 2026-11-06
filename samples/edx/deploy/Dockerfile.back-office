@@ -1,0 +1,7 @@
+# The Angular back office as static files behind nginx. It is built for an environment first (build-images.sh runs `ng build --configuration <environment>` in samples/edx/app/back-office: the address of the
+# gateway is in the build), and this image only carries the result:
+#   docker build -f samples/edx/deploy/Dockerfile.back-office -t edx/back-office:uat <a folder with nginx.conf and site/ (the result of the build)>
+FROM nginx:1.27-alpine
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY site /usr/share/nginx/html
+EXPOSE 8080

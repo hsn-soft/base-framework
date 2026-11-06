@@ -10,14 +10,14 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.Authorization\HsnSoft.Base.Authorization.csproj" />
+        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.Authorization.AspNetCore\HsnSoft.Base.Authorization.AspNetCore.csproj" />
         <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.EventBus.Kafka\HsnSoft.Base.EventBus.Kafka.csproj" />
         <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.MultiTenancy\HsnSoft.Base.MultiTenancy.csproj" />
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\Edx.Shared.Helper\Edx.Shared.Helper.csproj" />
-        <ProjectReference Include="..\Edx.Shared.Hosting\Edx.Shared.Hosting.csproj" />
+        <ProjectReference Include="..\Edx.Shared.Hosting.Http\Edx.Shared.Hosting.Http.csproj" />
     </ItemGroup>
 
 </Project>

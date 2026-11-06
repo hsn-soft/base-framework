@@ -43,6 +43,7 @@ public sealed class StatusMessageProvider(IMessageLocalizer? localizer = null) :
         404 => "Resource not found.",
         405 => "Method not allowed.",
         408 => "Request timeout.",
+        409 => "Conflict.",
         415 => "Unsupported media type.",
         429 => "Too many requests.",
         500 => "INTERNAL_SERVER_ERROR",

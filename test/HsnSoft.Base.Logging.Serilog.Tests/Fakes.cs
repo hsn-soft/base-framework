@@ -43,9 +43,15 @@ public sealed class DisposableSink : ILogEventSink, IDisposable
 
     public bool Disposed { get; private set; }
 
+    public int Disposals { get; private set; }
+
     public void Emit(LogEvent logEvent) => Events.Add(logEvent);
 
-    public void Dispose() => Disposed = true;
+    public void Dispose()
+    {
+        Disposed = true;
+        Disposals++;
+    }
 }
 
 internal static class Events

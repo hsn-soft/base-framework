@@ -1,4 +1,5 @@
 using System;
+using HsnSoft.Base.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,13 +27,24 @@ public static class SqlServerServiceCollectionExtensions
         return providers.Add(SqlServerProvider.Instance);
     }
 
-    private sealed class SqlServerProvider : IEfCoreProvider
+    private sealed class SqlServerProvider : IEfCoreProvider, IStartupLockProvider
     {
         public static readonly SqlServerProvider Instance = new();
 
         public string Name => EfCoreProviderNames.SqlServer;
 
-        public void Configure(DbContextOptionsBuilder options, string connectionString)
-            => options.UseSqlServer(connectionString, sql => sql.EnableRetryOnFailure());
+        public void Configure(DbContextOptionsBuilder options, string connectionString) => Configure(options, connectionString, new EfCoreOptions());
+
+        public void Configure(DbContextOptionsBuilder options, string connectionString, EfCoreOptions tuning)
+            => options.UseSqlServer(connectionString, sql =>
+            {
+                sql.CommandTimeout(tuning.CommandTimeoutSeconds);
+                if (tuning.MaxRetryCount > 0)
+                {
+                    sql.EnableRetryOnFailure(tuning.MaxRetryCount, tuning.MaxRetryDelay, null);
+                }
+            });
+
+        public IStartupLock CreateStartupLock(string connectionString) => new SqlServerStartupLock(connectionString);
     }
 }

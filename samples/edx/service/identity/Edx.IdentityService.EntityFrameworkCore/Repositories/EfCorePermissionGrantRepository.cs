@@ -1,6 +1,7 @@
 using Edx.IdentityService.Domain.IdentityDomain.Entities;
 using Edx.IdentityService.Domain.IdentityDomain.Repositories;
 using Edx.IdentityService.EntityFrameworkCore.Context;
+using HsnSoft.Base.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace Edx.IdentityService.EntityFrameworkCore.Repositories;
@@ -51,17 +52,15 @@ public sealed class EfCorePermissionGrantRepository(IdentityDbContext db) : IPer
         List<RolePermission> plain = [.. grants.Where(grant => grant.Permission.Type != PermissionType.Constraint).Select(grant => RolePermission.Grant(role, grant.Permission))];
         List<RolePermissionConstraint> constraints = [.. grants.Where(grant => grant.Permission.Type == PermissionType.Constraint).Select(grant => RolePermissionConstraint.Grant(role, grant.Permission, grant.Value))];
 
-        // the strategy that retries a failed connection has to run the whole transaction as one unit
-        await db.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
+        // the strategy that retries a failed connection runs the whole unit again, so it is one unit
+        await db.ExecuteInTransactionAsync(async token =>
         {
-            await using Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction transaction = await db.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
-            await db.RolePermissions.IgnoreQueryFilters().Where(grant => grant.RoleId == role.Id).ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
-            await db.RolePermissionConstraints.IgnoreQueryFilters().Where(grant => grant.RoleId == role.Id).ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
+            await db.RolePermissions.IgnoreQueryFilters().Where(grant => grant.RoleId == role.Id).ExecuteDeleteAsync(token).ConfigureAwait(false);
+            await db.RolePermissionConstraints.IgnoreQueryFilters().Where(grant => grant.RoleId == role.Id).ExecuteDeleteAsync(token).ConfigureAwait(false);
             db.RolePermissions.AddRange(plain);
             db.RolePermissionConstraints.AddRange(constraints);
-            await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
-        }).ConfigureAwait(false);
+            await db.SaveChangesAsync(token).ConfigureAwait(false);
+        }, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task<IReadOnlyList<SubjectGrants>> GetAllRoleSubjectsAsync(CancellationToken cancellationToken = default)

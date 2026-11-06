@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <Import Project="..\..\common.props" />
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <AssemblyName>HsnSoft.Base.Benchmarks</AssemblyName>
+        <RootNamespace>HsnSoft.Base.Benchmarks</RootNamespace>
+        <IsPackable>false</IsPackable>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <NoWarn>$(NoWarn);CS1591;CA1822</NoWarn>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="BenchmarkDotNet" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\src\HsnSoft.Base.BlobStoring.FileSystem\HsnSoft.Base.BlobStoring.FileSystem.csproj" />
+        <ProjectReference Include="..\..\src\HsnSoft.Base.Browser\HsnSoft.Base.Browser.csproj" />
+        <ProjectReference Include="..\..\src\HsnSoft.Base.Ddd.Domain\HsnSoft.Base.Ddd.Domain.csproj" />
+        <ProjectReference Include="..\..\src\HsnSoft.Base.EventBus\HsnSoft.Base.EventBus.csproj" />
+        <ProjectReference Include="..\..\src\HsnSoft.Base.Logging\HsnSoft.Base.Logging.csproj" />
+    </ItemGroup>
+
+</Project>

@@ -1,9 +1,11 @@
 using System;
+using HsnSoft.Base.Data;
 using HsnSoft.Base.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Serializers;
@@ -32,6 +34,7 @@ public static class MongoServiceCollectionExtensions
         string connectionString = configuration.GetConnectionString(connectionName)
                                ?? throw new InvalidOperationException($"ConnectionStrings:{connectionName} is required.");
         var url = new MongoUrl(connectionString);
+        MongoOptions options = configuration.GetSection(MongoOptions.SectionName).Get<MongoOptions>() ?? new MongoOptions();
         string databaseName = url.DatabaseName
                            ?? throw new InvalidOperationException($"ConnectionStrings:{connectionName} must contain a database name.");
 
@@ -39,18 +42,23 @@ public static class MongoServiceCollectionExtensions
 
         services.AddBaseEntityConcepts();
         services.TryAddSingleton<MongoEntityConcepts>();
+        // who prepares this database (SeedStartupConnections) and how it is locked while the pods of the owner do it
+        services.AddStartupDatabase(configuration, connectionName, provider => new MongoStartupLock(serviceKey is null ? provider.GetRequiredService<IMongoDatabase>() : provider.GetRequiredKeyedService<IMongoDatabase>(serviceKey)));
         if (serviceKey is not null)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(serviceKey);
-            services.TryAddKeyedSingleton<IMongoClient>(serviceKey, (_, _) => new MongoClient(MongoClientSettings.FromUrl(url)));
+            services.TryAddKeyedSingleton<IMongoClient>(serviceKey, (provider, _) => new MongoClient(options.Apply(connectionString, CommandLog(provider))));
             services.TryAddKeyedSingleton<IMongoDatabase>(serviceKey, (provider, key) => provider.GetRequiredKeyedService<IMongoClient>(key).GetDatabase(databaseName));
             services.AddHealthChecks().Add(new HealthCheckRegistration($"mongo-{serviceKey}", provider => new MongoHealthCheck(provider.GetRequiredKeyedService<IMongoDatabase>(serviceKey)), failureStatus: null, tags: [HealthCheckTags.Ready]));
             return services;
         }
 
-        services.TryAddSingleton<IMongoClient>(_ => new MongoClient(MongoClientSettings.FromUrl(url)));
+        services.TryAddSingleton<IMongoClient>(provider => new MongoClient(options.Apply(connectionString, CommandLog(provider))));
         services.TryAddSingleton(provider => provider.GetRequiredService<IMongoClient>().GetDatabase(databaseName));
         services.AddHealthChecks().AddCheck<MongoHealthCheck>("mongo", tags: [HealthCheckTags.Ready]);
         return services;
     }
+
+    // a host without logging has no log of the commands
+    private static ILogger? CommandLog(IServiceProvider provider) => provider.GetService<ILoggerFactory>()?.CreateLogger("HsnSoft.Base.MongoDB.Commands");
 }

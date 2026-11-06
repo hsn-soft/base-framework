@@ -21,6 +21,7 @@ public static class EfCoreServiceCollectionExtensions
         services.AddBaseMultiTenancyEntityFramework();
 
         services.AddEfCoreRepository<OrderDbContext, Order, Guid>();
-        return services;
+        // the schema is made when the host starts, by the host that owns the database (SeedStartupConnections)
+        return services.AddSchemaStartupStep<OrderDbContext>(EfCoreOrderDbProperties.ConnectionStringName);
     }
 }

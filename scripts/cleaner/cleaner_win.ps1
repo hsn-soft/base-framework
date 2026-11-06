@@ -14,7 +14,7 @@ function Write-Info
 
 $rootFolder = (Resolve-Path (Join-Path $PSScriptRoot "../..")).Path
 
-# What is considered garbage. Names, matched anywhere under the repository (never inside .git).
+# What is considered garbage. Names, matched anywhere under the repository (never inside .git, and never inside node_modules: the packages of Node have folders called bin that they need).
 $directories = @("bin", "obj", "TestResults", ".sonarqube", ".vs")
 $files = @(".DS_Store", "Thumbs.db", "*.user", "*.suo", "*.trx", "coverage.cobertura.xml", "coverage.opencover.xml")
 
@@ -35,7 +35,7 @@ while ($stack.Count -gt 0)
     $current = $stack.Pop()
     foreach ($item in Get-ChildItem -LiteralPath $current -Force)
     {
-        if ($item.FullName -eq $gitFolder)
+        if ($item.FullName -eq $gitFolder -or ($item.PSIsContainer -and $item.Name -eq "node_modules"))
         {
             continue
         }

@@ -20,6 +20,8 @@ mono_crash.*
 [Dd]ebug/
 [Dd]ebugPublic/
 [Rr]elease/
+# the release skill of Claude is a tracked folder named release
+!/.claude/skills/release/
 [Rr]eleases/
 x64/
 x86/

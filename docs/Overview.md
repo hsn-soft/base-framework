@@ -14,8 +14,18 @@ JWT, Swagger, a broker or a cache.
 | `HsnSoft.Base.Logging` | Logger interfaces and models, masking of sensitive data, the settings every provider reads (`Logging:LogLevel` for the console, `PersistentLogger` for what is kept); independent of any logging library ([docs](Logging.md)) | Core |
 | `HsnSoft.Base.Logging.Serilog` | Serilog provider: console, Graylog or file, Debug/Verbose stay in the console | Logging, Hosting |
 | `HsnSoft.Base.Logging.NLog` | NLog provider with the same settings, routing, fields and masking as the Serilog one: console, Graylog (GELF over HTTP) or file ([ADR-0076](adr/0076-more-providers-and-the-rules-every-provider-shares.md)) | Logging |
+| `HsnSoft.Base.Browser` | A browser as a service: the page after its scripts ran, a PDF, an image; the policy that keeps a rendered page from the inside of the network ([docs](Browser.md)) | Extensions |
+| `HsnSoft.Base.Browser.Puppeteer` | Chrome (PuppeteerSharp) implementation of the browser: a pool of pages with limits, the sandbox on, the Chrome never downloaded | Browser |
+| `HsnSoft.Base.Extensions` | Small helpers the base library does not have: Base64 text (standard and URL-safe), a few collection extensions, and the key and the name of an enum member from its `Display` attribute ([ADR-0137](adr/0137-the-helpers-of-the-old-core-come-back-only-when-a-consumer-used-them.md), [ADR-0145](adr/0145-an-enum-has-a-key-and-a-name-through-the-display-attribute.md)) | Core |
+| `HsnSoft.Base.Http.Client` | Calls to another service: the correlation id, retries that do not repeat a write, timeouts and a circuit breaker, a bearer token that goes only to the hosts it is for, a guard against calls to the inside of the network, the `BaseResponse` read into its payload ([docs](HttpClient.md)) | Extensions |
 | `HsnSoft.Base.Hosting` | Generic Host workers: `PeriodicBackgroundService` | Core |
 | `HsnSoft.Base.Auditing` | Who made a record and when, who changed it last, who deleted it: the audit contracts an entity and its DTO share (`IAuditedObject`, `IFullAuditedObject`, ...), the marks an entity takes (`IMarkCreated`, ...) and the setter that fills them with the clock and the current user ([docs](EntityConcepts.md)) | Core |
+| `HsnSoft.Base.Concurrency` | How many run at once in every pod: a named semaphore with leases that end by themselves, and the in-memory limiter ([docs](Concurrency.md)) | Core |
+| `HsnSoft.Base.Concurrency.StackExchangeRedis` | The limiter for a cluster on Redis: one atomic script, the clock of Redis | Concurrency |
+| `HsnSoft.Base.Concurrency.AspNetCore` | `[ConcurrencyLimit]` and `RequireConcurrencyLimit`: 429 with `Retry-After` when the places are taken | Concurrency |
+| `HsnSoft.Base.RateLimiting` | How many requests a caller may make in a window, in every pod: a counter per caller, and the in-memory limiter ([docs](RateLimiting.md)) | Core |
+| `HsnSoft.Base.RateLimiting.StackExchangeRedis` | The limiter for a cluster on Redis: one atomic script per request, the clock of Redis | RateLimiting |
+| `HsnSoft.Base.RateLimiting.AspNetCore` | `[RateLimit]`, `RequireRateLimit` and `UseBaseRateLimiting`: 429 with `Retry-After` when a caller is over its limit | RateLimiting |
 | `HsnSoft.Base.Data` | What every data store shares whatever the database: the switch of the data filters (soft delete, tenants, ...) that follows the flow of the code (`IDataFilter`) | Core |
 | `HsnSoft.Base.Ddd.Domain` | The domain layer's building blocks: entity bases with audit and soft delete, the repository contract with paging, filtering and safe sorting; registers the concepts of an entity (`AddBaseEntityConcepts`) | Auditing, Data |
 | `HsnSoft.Base.Ddd.Application` | The application layer's building blocks: the DTOs of an entity, of a list request and of its result; the paging model | Ddd.Domain |
@@ -25,8 +35,9 @@ JWT, Swagger, a broker or a cache.
 | `HsnSoft.Base.MultiTenancy.EntityFrameworkCore` | `MultiTenantDbContext` (the tenant filter) and the interceptor that gives a new entity the tenant | EntityFrameworkCore, MultiTenancy |
 | `HsnSoft.Base.MultiTenancy.MongoDB` | The tenant filter and the tenant of a new document for the MongoDB repositories | MongoDB, MultiTenancy |
 | `HsnSoft.Base.Authentication` | JWT bearer authentication (a shared key, or the RSA public key of the auth server), claim names and `ClaimsPrincipal` helpers | Core |
-| `HsnSoft.Base.Authorization` | Permissions: `[PermissionAuthorize]` on an endpoint, the checker for an operation or a limit on a value, the grants read from the distributed cache under a scope (the tenant) ([docs](Authorization.md)) | Core |
-| `HsnSoft.Base.AspNetCore` | Health endpoints (`/health/live`, `/health/ready`) | Core |
+| `HsnSoft.Base.Authorization` | Permissions without a web framework: the checker for an operation or a limit on a value, the grants read from the distributed cache under a scope (the tenant) ([docs](Authorization.md)) | Core |
+| `HsnSoft.Base.Authorization.AspNetCore` | `[PermissionAuthorize]` on an endpoint: the policy, the handler and `AddBasePermissions` ([ADR-0135](adr/0135-permissions-are-asked-without-a-web-framework-and-the-endpoint-layer-is-its-own-package.md)) | Authorization |
+| `HsnSoft.Base.AspNetCore` | Health endpoints (`/health/live`, `/health/ready`), the host (limits, proxies, security headers, CORS: [docs](Hosting.md)) | Core |
 | `HsnSoft.Base.AspNetCore.WebApi` | Controllers, every answer in one `BaseResponse` type (results, validation, exceptions), global exception handler, `ApiControllerBase` (logger and current user), request/response logging ([docs](WebApi.md)) | AspNetCore |
 | `HsnSoft.Base.AspNetCore.Swashbuckle` | Swagger document and UI (Swashbuckle), Bearer or OAuth2 button, off in production-like environments ([docs](Swagger.md)) | AspNetCore |
 | `HsnSoft.Base.AspNetCore.SwaggerGateway` | One Swagger UI for a gateway and the services behind it: their documents, with the gateway's address and paths ([docs](Swagger.md)) | Swashbuckle |
@@ -41,6 +52,7 @@ JWT, Swagger, a broker or a cache.
 | `HsnSoft.Base.EntityFrameworkCore.SqlServer` | SQL Server `DbContext` with retries | EntityFrameworkCore |
 | `HsnSoft.Base.EntityFrameworkCore.MySql` | MySQL `DbContext` with retries (Oracle's `MySql.EntityFrameworkCore`) | EntityFrameworkCore |
 | `HsnSoft.Base.BlobStoring` | `IBlobStore`: save, read and delete files in containers | Core |
+| `HsnSoft.Base.BlobStoring.FileSystem` | Local disk implementation of `IBlobStore` for development and single-node deployments: atomic writes, names that cannot leave the root ([ADR-0140](adr/0140-the-blob-store-on-the-local-disk-takes-only-plain-names-and-writes-atomically.md)) | BlobStoring |
 | `HsnSoft.Base.BlobStoring.Minio` | MinIO (S3) implementation of `IBlobStore` | BlobStoring |
 | `HsnSoft.Base.BlobStoring.Azure` | Azure Blob Storage implementation of `IBlobStore` (a connection string, or the identity of the host) | BlobStoring |
 | `HsnSoft.Base.BlobStoring.Aws` | Amazon S3 implementation of `IBlobStore` (the role of the host; a `ServiceUrl` for any store with the S3 API) | BlobStoring |
@@ -105,7 +117,10 @@ builder.Services
 | `ConnectionStrings:Redis` / `Postgres` / `Mongo` | the matching `AddBase...` registration (the name is a parameter) |
 | `Redis:InstanceName` | key prefix, e.g. `myproduct:` |
 | `RabbitMq:Connection` (`HostName`, `Port`, `UserName`, `Password`, `VirtualHost`) and `RabbitMq:EventBus` (`ExchangeName`, `ConsumerClientName`, `ErrorClientName`, ...) | `AddRabbitMqEventBus` |
-| `Jwt` (`Issuer`, `Audience`, `Key`) | `AddBaseJwtAuthentication` |
+| `Jwt` (`Issuer`, `Audience`, `Key` or `PublicKeyFile`, `ValidateIssuer`, `ClockSkewSeconds`) | `AddBaseJwtAuthentication` |
+| `Mongo` (`ServerSelectionTimeout`, `ConnectTimeout`, `SocketTimeout`, `MaxConnectionPoolSize`, `MinConnectionPoolSize`, `WaitQueueTimeout`, `LogCommands`; the connection string's own options win), see [ADR-0119](adr/0119-the-infrastructure-clients-share-their-connections-and-bound-their-waits.md) | `AddBaseMongo` |
+| `EntityFramework` (`MaxRetryCount`, `MaxRetryDelay`, `CommandTimeout`, `LogCommands`), see [ADR-0119](adr/0119-the-infrastructure-clients-share-their-connections-and-bound-their-waits.md) | `AddBaseEfCore`, `AddBasePostgres`, `AddBaseSqlServer`, `AddBaseMySql` |
+| `AwsS3` / `Minio` (`TimeoutSeconds`, `AwsS3:MaxErrorRetry`; not set: the client's own) | `AddAwsBlobStoring`, `AddMinioBlobStoring` |
 | `EventBusOptions` (retries, naming, timeouts), see [docs/EventBus.md](EventBus.md) | `AddRabbitMqEventBus` |
 
 

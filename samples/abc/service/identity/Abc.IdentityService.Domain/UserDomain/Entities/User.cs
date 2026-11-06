@@ -51,7 +51,7 @@ public sealed class User : FullAuditedEntity<Guid>, IMultiTenant
             IsActive = true,
             PasswordHash = PasswordHasher.Hash(Guard.Length(password, nameof(password), UserConsts.PasswordMaxLength, UserConsts.PasswordMinLength)!),
         };
-        user.NormalizedUserName = StringHelper.Normalize(user.UserName);
+        user.NormalizedUserName = Guard.NotNullOrWhiteSpace(StringHelper.Normalize(user.UserName), nameof(NormalizedUserName));
         user.Change(email, displayName, roles, language);
         return user;
     }
@@ -70,7 +70,7 @@ public sealed class User : FullAuditedEntity<Guid>, IMultiTenant
         Language = string.IsNullOrWhiteSpace(language) ? UserConsts.DefaultLanguage : Guard.NotNullOrWhiteSpace(language, nameof(Language), UserConsts.LanguageMaxLength).ToLowerInvariant();
         Roles = NormalizeRoles(roles);
         Email = Guard.NotNullOrWhiteSpace(email, nameof(Email), UserConsts.EmailMaxLength);
-        NormalizedEmail = StringHelper.Normalize(Email);
+        NormalizedEmail = Guard.NotNullOrWhiteSpace(StringHelper.Normalize(Email), nameof(NormalizedEmail));
         DisplayName = Guard.NotNullOrWhiteSpace(displayName, nameof(DisplayName), UserConsts.DisplayNameMaxLength);
     }
 

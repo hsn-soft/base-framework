@@ -15,7 +15,7 @@ esac
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
-# What is considered garbage. Names, matched anywhere under the repository (never inside .git).
+# What is considered garbage. Names, matched anywhere under the repository (never inside .git, and never inside node_modules: the packages of Node have folders called bin that they need).
 DIRECTORIES=(bin obj TestResults .sonarqube .vs)
 FILES=(.DS_Store Thumbs.db '*.user' '*.suo' '*.trx' coverage.cobertura.xml coverage.opencover.xml)
 
@@ -39,14 +39,14 @@ while IFS= read -r path; do
     [ -n "$path" ] && targets+=("$path")
 done < <(
     {
-        find . -name .git -prune -o -type d \( -false "${dir_expr[@]}" \) -print -prune
-        find . -name .git -prune -o \( -type d \( -false "${dir_expr[@]}" \) \) -prune -o -type f \( -false "${file_expr[@]}" \) -print
+        find . \( -name .git -o -name node_modules \) -prune -o -type d \( -false "${dir_expr[@]}" \) -print -prune
+        find . \( -name .git -o -name node_modules \) -prune -o \( -type d \( -false "${dir_expr[@]}" \) \) -prune -o -type f \( -false "${file_expr[@]}" \) -print
     } | sort
 )
 
 kept=0
 selected=()
-for path in "${targets[@]}"; do
+for path in ${targets[@]+"${targets[@]}"}; do
     # never delete something that is committed
     if [ -n "$(git ls-files -- "$path" 2>/dev/null | head -n 1)" ]; then
         echo "Keeping '$path' (it contains tracked files)"
@@ -61,10 +61,10 @@ echo
 
 if [ "$DRY_RUN" = true ]; then
     info "## DRY RUN: NOTHING IS DELETED -------------------------------------------------"
-    for path in "${selected[@]}"; do echo "would delete $path"; done
+    for path in ${selected[@]+"${selected[@]}"}; do echo "would delete $path"; done
 else
     info "## DELETING --------------------------------------------------------------------"
-    for path in "${selected[@]}"; do
+    for path in ${selected[@]+"${selected[@]}"}; do
         rm -rf -- "$path"
         echo "deleted $path"
     done

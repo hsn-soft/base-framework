@@ -1,0 +1,9 @@
+# The hosts of the Hsx system: name (the image hsx/<name>:dev, the service of the cluster and of the compose network) | folder under samples/hsx | assembly | what it is
+# A line that starts with # is a comment. build-images.sh, render-settings.sh and the manifests use this list.
+identity-service|service/identity/Hsx.IdentityService.Http.Host|Hsx.IdentityService.Http.Host|service
+auth-server-service|app/Hsx.AuthServer.Host|Hsx.AuthServer.Host|auth
+content-service|service/content/Hsx.ContentService.Http.Host|Hsx.ContentService.Http.Host|service
+text-normalizer-service|service/text-normalizer/Hsx.TextNormalizerService.Http.Host|Hsx.TextNormalizerService.Http.Host|service
+video-generator-service|service/video-generator/Hsx.VideoGeneratorService.Http.Host|Hsx.VideoGeneratorService.Http.Host|service
+gateway-commercial|gateway/Hsx.Gateway.Commercial.Host|Hsx.Gateway.Commercial.Host|gateway
+commercial-web|app/Hsx.CommercialWeb.Host|Hsx.CommercialWeb.Host|web

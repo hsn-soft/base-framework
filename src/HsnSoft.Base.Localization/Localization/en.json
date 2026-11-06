@@ -11,6 +11,7 @@
     "Status:404": "Resource not found.",
     "Status:405": "Method not allowed.",
     "Status:408": "Request timeout.",
+    "Status:409": "Conflict.",
     "Status:415": "Unsupported media type.",
     "Status:429": "Too many requests.",
     "Status:Other": "Request failed.",
@@ -32,6 +33,7 @@
     "Validation:Length": "{0} must be between {1} and {2} characters.",
     "Validation:ItemsNotBlank": "{0} must not have an empty item.",
     "Validation:InvalidValue": "{0} has an invalid value.",
-    "Validation:InvalidJson": "The request is not valid JSON."
+    "Validation:InvalidJson": "The request is not valid JSON.",
+    "Concurrency:Conflict": "{0} was changed or removed by someone else after you read it. Read it again and retry."
   }
 }

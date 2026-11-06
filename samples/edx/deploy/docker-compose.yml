@@ -1,0 +1,86 @@
+# The Edx system in Docker, the environment `docker`: the hosts and the back office, nothing else. The infrastructure (SQL Server, MongoDB, Redis, Kafka, MinIO, Graylog) is the one on this machine, the one the
+# hosts use in development: reached as host.docker.internal, and Kafka by its name on the network of the infrastructure (the broker advertises it to the containers of that network, so it needs no change). The
+# databases are the ones of development too (Edx_*_Dev), and the bucket of MinIO.
+#   samples/edx/deploy/deploy.sh docker        # builds the images, renders the settings, and runs this file
+# The settings of each host are appsettings.docker.json with the secrets put in (render-settings.sh), mounted over the file of the image.
+# On localhost: gateway 6500, back office 6501, firm invoice REST 6510, gRPC 6511, WCF 6512, mock center 6520, GIB REST 6540.
+name: edx
+
+x-host: &host
+  restart: unless-stopped
+  environment:
+    ASPNETCORE_ENVIRONMENT: docker
+  networks: [default, infrastructure]
+
+services:
+  identity-service:
+    <<: *host
+    image: edx/identity-service:dev
+    volumes:
+      - ./.rendered/docker/identity-service.json:/app/appsettings.docker.json:ro
+  auth-server-service:
+    <<: *host
+    image: edx/auth-server-service:dev
+    volumes:
+      - ./.rendered/docker/auth-server-service.json:/app/appsettings.docker.json:ro
+      - ../app/Edx.AuthServer.Host/private_key.xml:/app/private_key.xml:ro   # the private key is not in the image
+  invoice-service:
+    <<: *host
+    image: edx/invoice-service:dev
+    volumes:
+      - ./.rendered/docker/invoice-service.json:/app/appsettings.docker.json:ro
+  signer-service:
+    <<: *host
+    image: edx/signer-service:dev
+    volumes:
+      - ./.rendered/docker/signer-service.json:/app/appsettings.docker.json:ro
+  integration-firm-http:
+    <<: *host
+    image: edx/integration-firm-http:dev
+    volumes:
+      - ./.rendered/docker/integration-firm-http.json:/app/appsettings.docker.json:ro
+    ports: ["6510:8080"]
+  integration-firm-grpc:
+    <<: *host
+    image: edx/integration-firm-grpc:dev
+    volumes:
+      - ./.rendered/docker/integration-firm-grpc.json:/app/appsettings.docker.json:ro
+    ports: ["6511:8080"]
+  integration-firm-wcf:
+    <<: *host
+    image: edx/integration-firm-wcf:dev
+    volumes:
+      - ./.rendered/docker/integration-firm-wcf.json:/app/appsettings.docker.json:ro
+    ports: ["6512:8080"]
+  integration-gib-http:
+    <<: *host
+    image: edx/integration-gib-http:dev
+    volumes:
+      - ./.rendered/docker/integration-gib-http.json:/app/appsettings.docker.json:ro
+    ports: ["6540:8080"]
+  integration-gib-wcf:
+    <<: *host
+    image: edx/integration-gib-wcf:dev
+    volumes:
+      - ./.rendered/docker/integration-gib-wcf.json:/app/appsettings.docker.json:ro
+  mock-center:
+    <<: *host
+    image: edx/mock-center:dev
+    volumes:
+      - ./.rendered/docker/mock-center.json:/app/appsettings.docker.json:ro
+    ports: ["6520:8080"]
+  gateway:
+    <<: *host
+    image: edx/gateway:dev
+    volumes:
+      - ./.rendered/docker/gateway.json:/app/appsettings.docker.json:ro
+    ports: ["6500:8080"]
+  back-office:
+    restart: unless-stopped
+    image: edx/back-office:docker
+    ports: ["6501:8080"]
+
+networks:
+  infrastructure:
+    name: local.infrastructure-network
+    external: true

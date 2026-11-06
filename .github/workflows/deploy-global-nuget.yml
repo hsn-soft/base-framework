@@ -24,6 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write   # the tag and the GitHub Release of the version
+      id-token: write   # the OIDC token that NuGet exchanges for a short-lived API key (trusted publishing, ADR-0130)
 
     steps:
       - name: Checkout Repository
@@ -40,7 +41,7 @@ jobs:
         uses: actions/cache@v5
         with:
           path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'common.props', 'common.test.props', 'common.versions.props') }}
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'common.props', 'common.test.props', 'Directory.Packages.props') }}
           restore-keys: |
             ${{ runner.os }}-nuget
 
@@ -71,8 +72,15 @@ jobs:
           echo "$count packages of version ${{ steps.version.outputs.version }}"
           if [ "$count" -eq 0 ] || [ "$other" -ne 0 ]; then echo "::error::The packages are not all of version ${{ steps.version.outputs.version }}."; exit 1; fi
 
+      # No API key is kept: NuGet checks who runs this workflow (the repository, the workflow file, ADR-0130) and gives a key that works for an hour. It is asked for just before the push, after the long steps.
+      - name: NuGet Login (Trusted Publishing)
+        id: nuget-login
+        uses: NuGet/login@v1
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
       - name: Push Packages
-        run: dotnet nuget push ${{ env.PACKAGE_OUTPUT_DIRECTORY }}/*.nupkg -k ${{ secrets.GLOBAL_NUGET_TOKEN }} -s ${{ env.GLOBAL_NUGET_SOURCE_URL }}
+        run: dotnet nuget push ${{ env.PACKAGE_OUTPUT_DIRECTORY }}/*.nupkg -k ${{ steps.nuget-login.outputs.NUGET_API_KEY }} -s ${{ env.GLOBAL_NUGET_SOURCE_URL }}
 
       # The tag says which commit made the version; the release lists the pull requests since the last stable version (a pre-release for a candidate).
       - name: Tag And Release

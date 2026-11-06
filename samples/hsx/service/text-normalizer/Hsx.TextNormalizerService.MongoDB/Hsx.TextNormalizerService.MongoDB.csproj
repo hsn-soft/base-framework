@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!-- How the service keeps the domain: its MongoDB collections. The connection is registered by the persistence extension (AddBaseMongo). -->
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.MongoDB\HsnSoft.Base.MongoDB.csproj" />
+        <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.MultiTenancy.MongoDB\HsnSoft.Base.MultiTenancy.MongoDB.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Hsx.TextNormalizerService.Domain\Hsx.TextNormalizerService.Domain.csproj" />
+    </ItemGroup>
+
+</Project>

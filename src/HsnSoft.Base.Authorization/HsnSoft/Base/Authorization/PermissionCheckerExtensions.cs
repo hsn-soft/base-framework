@@ -2,7 +2,6 @@ using System;
 using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 
 namespace HsnSoft.Base.Authorization;
 
@@ -61,5 +60,5 @@ public static class PermissionCheckerExtensions
         => int.TryParse(await checker.RequireValueAsync(permission, cancellationToken).ConfigureAwait(false), NumberStyles.Integer, CultureInfo.InvariantCulture, out int value) ? value : throw NotGranted(permission);
 
     private static BaseHttpException NotGranted(string permission)
-        => new BaseHttpException(StatusCodes.Status403Forbidden, $"The constraint '{permission}' was not granted.").WithKey("permission_constraint_not_granted", permission);
+        => new BaseHttpException(403, $"The constraint '{permission}' was not granted.").WithKey("permission_constraint_not_granted", permission);
 }

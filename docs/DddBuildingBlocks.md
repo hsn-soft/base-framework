@@ -16,12 +16,14 @@ public sealed class Product : FullAuditedEntity<Guid>, IMultiTenant       // aud
 ```
 
 `Entity<TKey>` (the id), `CreationAuditedEntity<TKey>` (+ `CreatedAt`, `CreatedBy`), `AuditedEntity<TKey>` (+ `UpdatedAt`, `UpdatedBy`), `FullAuditedEntity<TKey>` (+ soft delete). An entity that needs none of it derives from `Entity<TKey>`.
+An entity that people edit at the same time adds `IHasConcurrencyStamp`: a change made after the caller read it is a 409 instead of a silent overwrite ([ADR-0136](adr/0136-an-entity-is-protected-from-a-lost-update-by-an-opt-in-stamp.md)).
 See [EntityConcepts.md](EntityConcepts.md) for what the persistence does with the interfaces.
 
 ## DTOs (`HsnSoft.Base.Ddd.Application`)
 
 | For | Derive from | Has |
 |---|---|---|
+| every response | `IBaseDto` (marker) | what a service sends, found by its type (ADR-0147): the entity DTOs and the list results have it; a request does not have to |
 | a response of an entity | `EntityDto<TKey>`, `AuditedEntityDto<TKey>`, `FullAuditedEntityDto<TKey>` | `Id`, `CreatedAt/By`, `UpdatedAt/By`, the deletion |
 | a list with at most N | `LimitedDataRequestDto` | `MaxResultCount` (10; at most `Paging:MaxResultCountLimit`, 100) |
 | a sorted list | `SortedAndLimitedDataRequestDto` | + `SortingText` (`"name asc, price desc"`) |
@@ -36,6 +38,8 @@ public sealed class GetProductsPaged : PagedDataRequestDto { public string? Name
 ## The repository (`IRepository<TEntity, TKey>`)
 
 `IReadOnlyRepository` (`FindAsync(id | predicate)`, `AnyAsync(predicate, ignoreFilters)`, `CountAsync`, `GetListAsync(ListQueryOptions)`, `GetPagedListAsync(PagedQueryOptions)`, and the same for a DTO: `FindAsync<TDto>`, `GetListAsync<TDto>`, `GetPagedListAsync<TDto>`) and `IRepository` (`AddAsync`, `UpdateAsync`, `DeleteAsync`, the same for many: `AddManyAsync`, `UpdateManyAsync`, `DeleteManyAsync`, and `DeleteWhereAsync(filter)`, which deletes every match without loading it and writes the soft delete and the audit fields as one by one would, [ADR-0048](adr/0048-bulk-and-set-based-changes.md)); what only one kind of store does is on its own interface (`IEfCoreRepository`, [ADR-0045](adr/0045-repository-levels-relational-and-document.md)). Registered with `AddEfCoreRepository<TContext, TEntity, TKey>()` or
+
+**Several calls as one transaction.** A repository saves with every call. An operation that writes several entities and must be all or nothing runs in `IUnitOfWork.ExecuteAsync(work)` (EF Core: `AddEfCoreUnitOfWork<TContext>()`): what the work saved through the repositories is committed together, or none of it when it throws. The work may run again after a retry of the persistence, so it reads what it needs inside it. A domain service depends on the repositories and on this, never on a context ([ADR-0146](adr/0146-several-repository-calls-run-as-one-unit-of-work-through-iunitofwork.md)).
 `AddMongoRepository<TEntity, TKey>("collection")`; soft-deleted and other tenants' entities are never found, except by `AnyAsync(..., ignoreFilters: true)` (a value that is unique in the whole store). Each method that changes saves.
 
 An application service builds the filter and asks:

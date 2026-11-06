@@ -15,7 +15,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Abc.Shared.Hosting\Abc.Shared.Hosting.csproj" />
+        <ProjectReference Include="..\Abc.Shared.Hosting.Http\Abc.Shared.Hosting.Http.csproj" />
     </ItemGroup>
 
 </Project>

@@ -23,11 +23,11 @@ feat/*  hotfix/*  bugfix/*  ──PR──►  dev  ──PR──►  rel/nuget
                                           tag v…-rc… + GitHub pre-release    tag v2026.10.41 + GitHub Release
 ```
 
-Each arrow is a pull request; nothing else may be merged into a branch (`CI Branch Rule JOB` refuses it). Nothing is published when a pull request is opened, only when it is merged; the merge (the push) also runs the pipeline of the CI, and its numbers are the badges of that release in the README (a red run means what was published failed a check).
+Each arrow is a pull request opened and merged by the maintainer: Claude (the AI assistant) works on a branch of its own cut from `dev`, may push it, and never opens or merges a pull request into `dev` or into a release branch ([ADR-0132](adr/0132-claude-works-on-its-own-branch-from-dev-and-never-merges-into-dev.md)). Nothing else may be merged into a branch (`CI Branch Rule JOB` refuses it). Nothing is published when a pull request is opened, only when it is merged; the merge (the push) also runs the pipeline of the CI, and its numbers are the badges of that release in the README (a red run means what was published failed a check).
 
 ## To release
 
-1. **A candidate**: open a pull request from `dev` into `rel/nuget-candidate` (merge method: merge commit). When `CI Branch Rule JOB` is green (the pipeline runs after the merge, on the push), merge it: the candidate is published. Try it in a service (`2026.10.41-rc.…`, with pre-releases on).
+1. **A candidate**: open a pull request from `dev` into `rel/nuget-candidate` (merge method: merge commit). When `CI Branch Rule JOB` is green (the pipeline already ran on the pull request into `dev`), merge it: the candidate is published. Try it in a service (`2026.10.41-rc.…`, with pre-releases on).
 2. **The stable version**: open a pull request from `rel/nuget-candidate` into `rel/nuget-regular` and merge it: `2026.10.41` is published, with its tag and release.
 
 ## To start a new base (a new month)
@@ -40,4 +40,4 @@ The run says in which step. Nothing is pushed before the packages are checked; i
 
 ## An urgent fix
 
-`hotfix/*` → `dev` → `rel/nuget-candidate` → `rel/nuget-regular`, the same way (the pipeline runs on the pull request into dev and on each push). There is no way from `dev` to regular: stable is always a candidate that was published first.
+`hotfix/*` → `dev` → `rel/nuget-candidate` → `rel/nuget-regular`, the same way (the pipeline runs on the pull request into dev). The branch rule (ADR-0144) lets `dev` or `master` go into `rel/nuget-regular` directly (and `rel/nuget-candidate`); the usual way is still through the candidate. Nothing else may go into the two publishing branches.

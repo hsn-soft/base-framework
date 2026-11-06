@@ -100,7 +100,7 @@ public sealed class PurchaseInvoice : FullAuditedEntity<Guid>, IMultiTenant
             InvoiceUuid = Guard.NotDefault<Guid>(invoiceUuid, nameof(InvoiceUuid)),
             EnvelopeId = envelopeId,
             Number = Guard.NotNullOrWhiteSpace(number, nameof(Number), PurchaseInvoiceConsts.NumberMaxLength),
-            NormalizedNumber = StringHelper.Normalize(number),
+            NormalizedNumber = Guard.NotNullOrWhiteSpace(StringHelper.Normalize(number), nameof(NormalizedNumber)),
             IssueDate = issueDate.Date,
             Currency = Guard.NotNullOrWhiteSpace(currency, nameof(Currency), 3).ToUpperInvariant(),
             Profile = Guard.NotNullOrWhiteSpace(profile, nameof(Profile), 16),

@@ -53,6 +53,19 @@ public sealed class EventBusOptions
     /// <summary>How long a publisher waits for the broker to confirm one message (RabbitMQ publisher confirms); running out of it is a failed try, which is repeated like an unreachable broker.</summary>
     public TimeSpan PublishTimeout { get; set; } = TimeSpan.FromSeconds(30);
 
+    /// <summary>
+    /// How many messages the service handles at the same moment, whatever their events (every event has its own <c>FetchCount</c>, and a service with many events adds them up). A message that arrives when the limit is reached waits
+    /// for a place without holding a thread; it is not lost and the broker still counts it as taken. It keeps what the handlers share (the connections of a database, the threads, a CPU) from being asked for more than they have.
+    /// 0 or less: no limit, the sum of the <c>FetchCount</c> of the events.
+    /// </summary>
+    public int MaxConcurrentHandlers { get; set; }
+
+    /// <summary>
+    /// How many publisher channels RabbitMQ keeps open between messages (each publish uses one, one at a time, and gives it back once the broker confirmed). A channel opened and closed for every message costs two round trips and churn on the broker; the pool
+    /// keeps at most this many idle ones (a burst opens more, and what is over is closed). 0 is no pool: a channel for each message. Default 4. Kafka does not use it.
+    /// </summary>
+    public int PublisherChannelPoolSize { get; set; } = 4;
+
     /// <summary>How long a stopping service waits for the messages being handled and published to finish.</summary>
     public TimeSpan ShutdownTimeout { get; set; } = TimeSpan.FromSeconds(30);
 

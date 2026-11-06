@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!--
+        What every host of the Hsx system shares, whatever it is (a web host, a gateway, a microservice, an agent): the logging, and nothing of ASP.NET, a token or a database. The web hosts build on Hsx.Shared.Hosting.Http;
+        the message broker, the cache and a database are the choice of each host (framework ADR-0151, sample ADR-0067).
+    -->
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.Logging.Serilog\HsnSoft.Base.Logging.Serilog.csproj" />
+    </ItemGroup>
+
+</Project>

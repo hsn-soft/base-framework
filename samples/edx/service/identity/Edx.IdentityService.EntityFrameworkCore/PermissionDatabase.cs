@@ -3,7 +3,6 @@ using Edx.IdentityService.EntityFrameworkCore.Context;
 using Edx.Shared.Helper;
 using HsnSoft.Base.Authorization;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Edx.IdentityService.EntityFrameworkCore;
 
@@ -23,34 +22,27 @@ public static class PermissionDatabase
     /// added now is granted to the sample roles that <see cref="DefaultPermissionGrants"/> names it for; one that was added before is never granted again, so what a tenant's administrator took away stays taken away. Then the menu: the items of <see cref="MenuCatalog"/> are
     /// added or brought up to date with their permissions (<c>MenuPermissionMap</c>), and an item that is not in the code any more is made inactive. Run it after <c>EnsureIdentityDatabaseAsync</c>, which makes the roles.
     /// </summary>
-    public static async Task EnsurePermissionsAsync(this IServiceProvider services, CancellationToken cancellationToken = default)
+    internal static async Task EnsurePermissionsAsync(IdentityDbContext db, TimeProvider time, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(services);
-
-        AsyncServiceScope scope = services.CreateAsyncScope();
-        await using (scope.ConfigureAwait(false))
+        List<Permission> known = await db.Permissions.ToListAsync(cancellationToken).ConfigureAwait(false);
+        HashSet<string> codes = [.. CatalogCodes];
+        List<Permission> added = [.. codes.Except(known.Select(permission => permission.Code)).Select(code => Permission.Create(code))];
+        db.Permissions.AddRange(added);
+        foreach (Permission permission in known)
         {
-            IdentityDbContext db = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
-            List<Permission> known = await db.Permissions.ToListAsync(cancellationToken).ConfigureAwait(false);
-            HashSet<string> codes = [.. CatalogCodes];
-            List<Permission> added = [.. codes.Except(known.Select(permission => permission.Code)).Select(code => Permission.Create(code))];
-            db.Permissions.AddRange(added);
-            foreach (Permission permission in known)
+            if (codes.Contains(permission.Code))
             {
-                if (codes.Contains(permission.Code))
-                {
-                    permission.Activate();
-                }
-                else
-                {
-                    permission.Deactivate();
-                }
+                permission.Activate();
             }
-
-            await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-            await GrantAddedAsync(db, added, cancellationToken).ConfigureAwait(false);
-            await EnsureMenusAsync(db, scope.ServiceProvider.GetRequiredService<TimeProvider>().GetUtcNow(), cancellationToken).ConfigureAwait(false);
+            else
+            {
+                permission.Deactivate();
+            }
         }
+
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        await GrantAddedAsync(db, added, cancellationToken).ConfigureAwait(false);
+        await EnsureMenusAsync(db, time.GetUtcNow(), cancellationToken).ConfigureAwait(false);
     }
 
     private static async Task GrantAddedAsync(IdentityDbContext db, List<Permission> added, CancellationToken cancellationToken)

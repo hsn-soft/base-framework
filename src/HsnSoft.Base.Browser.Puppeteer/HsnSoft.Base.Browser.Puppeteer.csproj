@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <Import Project="..\..\common.props" />
+
+    <PropertyGroup>
+        <AssemblyName>HsnSoft.Base.Browser.Puppeteer</AssemblyName>
+        <PackageId>HsnSoft.Base.Browser.Puppeteer</PackageId>
+        <RootNamespace />
+        <Title>HsnSoft Base Framework Browser Puppeteer</Title>
+        <Description>Chrome (PuppeteerSharp) implementation of the HsnSoft browser: a few pages at a time, a browser that is started when it is first needed and again when it is gone, a sandbox that is on, a certificate that is checked, and every address a page loads decided by the policy.</Description>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageTags>HsnSoft Base Framework Browser Puppeteer Chrome Pdf Screenshot</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="..\..\README.md" Pack="true" Visible="false" PackagePath="README.md" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" />
+        <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
+        <PackageReference Include="PuppeteerSharp" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\HsnSoft.Base.Browser\HsnSoft.Base.Browser.csproj" />
+    </ItemGroup>
+
+</Project>

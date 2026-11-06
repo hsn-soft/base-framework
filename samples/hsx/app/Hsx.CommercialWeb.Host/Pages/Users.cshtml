@@ -1,0 +1,14 @@
+@page "/users"
+@model UsersModel
+@{
+    ViewData["Title"] = "Users";
+}
+<h1>Users</h1>
+<p class="muted">@Model.Data.DataTotalCount found: what this user's token lets it see.</p>
+<table>
+    <tr><th>Email</th><th>Name</th><th>Tenant</th><th>Active</th></tr>
+    @foreach (UserItem item in Model.Data.Items)
+    {
+        <tr><td>@item.Email</td><td>@item.DisplayName</td><td><code>@item.TenantId</code></td><td>@item.IsActive</td></tr>
+    }
+</table>

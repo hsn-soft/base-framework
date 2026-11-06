@@ -8,7 +8,7 @@ can start from a clean tree (after a branch switch, when a build behaves strange
 | `cleaner_mac.sh` | macOS, Linux (bash) |
 | `cleaner_win.ps1` | Windows (PowerShell 7; also works with `pwsh` on macOS/Linux) |
 
-Your source code is never touched: the scripts only delete the names listed below, never look inside `.git`, and skip anything
+Your source code is never touched: the scripts only delete the names listed below, never look inside `.git` or `node_modules` (the packages of Node have folders called `bin` that they need to run), and skip anything
 that contains a **committed** file (they say so: `Keeping '...' (it contains tracked files)`).
 
 ## How to run

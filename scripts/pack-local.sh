@@ -28,7 +28,7 @@ echo "==> Feed:    $FEED"
 mkdir -p "$FEED"
 
 echo "==> Cleaning previous local packages"
-rm -f "$FEED"/*-local.*.nupkg "$FEED"/*-local.*.snupkg
+rm -f "$FEED"/HsnSoft.Base.*-local.*.nupkg "$FEED"/HsnSoft.Base.*-local.*.snupkg   # only the framework: the feed is shared with the local build of the HHS shared packages
 # NuGet caches every restored version under ~/.nuget/packages/<id>/<version>; drop the old local ones
 for dir in "$HOME"/.nuget/packages/hsnsoft.base*/; do
     [ -d "$dir" ] || continue

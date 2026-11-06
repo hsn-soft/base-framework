@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace HsnSoft.Base.Authorization;
 
-/// <summary>Asks what the current caller was granted. Use it in code that needs more than the <see cref="PermissionAuthorizeAttribute"/> of an endpoint: an operation inside an action, a value that limits what the caller may do.</summary>
+/// <summary>Asks what the current caller was granted. Use it in code that needs more than the <c>[PermissionAuthorize]</c> attribute of an endpoint (<c>HsnSoft.Base.Authorization.AspNetCore</c>): an operation inside an action, a value that limits what the caller may do.</summary>
 public interface IPermissionChecker
 {
     /// <summary>Whether the caller, or one of its roles, was granted the permission. A caller that is not signed in was granted nothing.</summary>

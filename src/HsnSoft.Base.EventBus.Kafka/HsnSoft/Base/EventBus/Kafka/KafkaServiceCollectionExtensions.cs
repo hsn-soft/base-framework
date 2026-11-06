@@ -29,6 +29,8 @@ public static class KafkaServiceCollectionExtensions
 
         services.TryAddSingleton<IEventBus, KafkaEventBus>();
         services.AddHostedService<KafkaSubscriber>();
+        // one instance, so one admin client for every probe; the container disposes it when the host stops
+        services.TryAddSingleton<KafkaHealthCheck>();
         services.AddHealthChecks().AddCheck<KafkaHealthCheck>("kafka", tags: [HealthCheckTags.Ready]);
         return services;
     }

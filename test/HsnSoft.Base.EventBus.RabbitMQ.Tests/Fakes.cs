@@ -274,9 +274,32 @@ public sealed class FakeConnection : IRabbitMqPersistentConnection
 
     public Exception? ConnectFailure { get; set; }
 
-    public List<ChannelState> Channels { get; } = [];
+    // the consumer creates channels on its own thread while a test reads them: a List that is added to and read at the same time can show its new Count before the item is there (a null), so a reader gets a copy taken under the lock
+    private readonly Lock _gate = new();
+    private readonly List<ChannelState> _channels = [];
+    private readonly List<ushort?> _dispatchConcurrencies = [];
 
-    public List<ushort?> DispatchConcurrencies { get; } = [];
+    public IReadOnlyList<ChannelState> Channels
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return [.. _channels];
+            }
+        }
+    }
+
+    public IReadOnlyList<ushort?> DispatchConcurrencies
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return [.. _dispatchConcurrencies];
+            }
+        }
+    }
 
     public Exception? CreateChannelFailure { get; set; }
 
@@ -307,7 +330,11 @@ public sealed class FakeConnection : IRabbitMqPersistentConnection
 
     public Task<IChannel> CreateModelAsync(ushort? consumerDispatchConcurrency = null, CancellationToken cancellationToken = default)
     {
-        DispatchConcurrencies.Add(consumerDispatchConcurrency);
+        lock (_gate)
+        {
+            _dispatchConcurrencies.Add(consumerDispatchConcurrency);
+        }
+
         if (ChannelsToFail > 0)
         {
             ChannelsToFail--;
@@ -315,7 +342,11 @@ public sealed class FakeConnection : IRabbitMqPersistentConnection
         }
 
         ChannelState state = _states.Count > 0 ? _states.Dequeue() : new ChannelState();
-        Channels.Add(state);
+        lock (_gate)
+        {
+            _channels.Add(state);
+        }
+
         return Task.FromResult(ChannelProxy.Create(state));
     }
 

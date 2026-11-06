@@ -28,6 +28,6 @@ public sealed class Role : CreationAuditedEntity<Guid>, IMultiTenant
     public static Role Create(Guid id, string name)
     {
         string text = Guard.NotNullOrWhiteSpace(name, nameof(Name), IdentityConsts.NameMaxLength).ToLowerInvariant();
-        return new() { Id = Guard.NotDefault<Guid>(id, nameof(Id)), Name = text, NormalizedName = StringHelper.Normalize(text) };
+        return new() { Id = Guard.NotDefault<Guid>(id, nameof(Id)), Name = text, NormalizedName = Guard.NotNullOrWhiteSpace(StringHelper.Normalize(text), nameof(NormalizedName)) };
     }
 }

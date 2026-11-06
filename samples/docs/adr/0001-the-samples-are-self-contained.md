@@ -12,7 +12,7 @@ docs named sample classes. A reader of the framework had to know which part was 
 
 **`samples/` is written as if the rest of the repository did not know it.** Everything that concerns a sample is inside `samples/`; nothing outside it names a sample (the framework docs use generic examples).
 
-- **Own solution:** `samples/Samples.sln` lists the sample projects; `HsnSoft.Base.sln` lists only `src` and `test`. The framework's CI, pre-push hook and detector do not build samples; `samples/check.sh` restores, verifies the format and builds them.
+- **Own solution:** `samples/Samples.sln` lists the sample projects (replaced by one solution for each sample, [ADR-0048](0048-each-sample-has-its-own-solution.md)); `HsnSoft.Base.sln` lists only `src` and `test`. The framework's CI, pre-push hook and detector do not build samples; `samples/check.sh` restores, verifies the format and builds them.
 - **Own build settings:** `samples/Directory.Build.props` and `samples/Directory.Packages.props`.
 - **Own documents:** `samples/docs/` (guides) and `samples/docs/adr/` (decisions, numbered from 0001 here, in the form of the framework's ADRs).
 - **Own scripts and ignore rules:** `samples/scripts/`, `samples/.gitignore`.

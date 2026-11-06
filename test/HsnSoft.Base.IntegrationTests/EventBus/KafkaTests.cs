@@ -212,7 +212,8 @@ public sealed class KafkaTests(KafkaFixture kafkaServer)
 
         await host.StopAsync();
 
-        Assert.True(probe.Cancelled, "the handler was not cancelled after the shutdown timeout");
+        // the shutdown timeout and the wait of the stop end at the same time: the handler is told a moment after the stop returned, so it is waited for (a limit, not a delay)
+        await probe.WaitUntilCancelledAsync();
         Assert.False(probe.Completed);
     }
 
@@ -286,9 +287,12 @@ public sealed class KafkaTests(KafkaFixture kafkaServer)
             services.AddSingleton(second);
             services.AddEventHandler<Pinged, SlowHandler>(fetchCount: 5);
         }, "same-service");
-        await Task.Delay(TimeSpan.FromSeconds(8));
 
-        Assert.Empty(second.Received);
+        // one partition keeps the order: a message published now is read after anything that would be read again, so when it is the only one handled the old ones were not (no waiting for a quiet time that may be too short)
+        await again.Services.GetRequiredService<IEventBus>().PublishAsync(new Pinged("after-the-restart"));
+        await Support.EventuallyAsync(() => Task.FromResult(!second.Received.IsEmpty), "the message published after the restart to be handled");
+
+        Assert.Equal(["after-the-restart"], second.Received.Select(envelope => envelope.Message.Text));
         await again.StopAsync();
     }
 
@@ -308,7 +312,7 @@ public sealed class KafkaTests(KafkaFixture kafkaServer)
             await host.StopAsync();
         }
 
-        Assert.True(probe.Cancelled);
+        await probe.WaitUntilCancelledAsync();
 
         Recorder second = new();
         using IHost again = await StartAsync(exchange, services =>
@@ -421,13 +425,13 @@ public sealed class KafkaTests(KafkaFixture kafkaServer)
         using IProducer<string, byte[]> unreachable = new ProducerBuilder<string, byte[]>(new ProducerConfig { BootstrapServers = "127.0.0.1:1", MessageTimeoutMs = 500 }).Build();
         using CancellationTokenSource timeout = new(TimeSpan.FromMinutes(2));
         InvalidOperationException failure = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => new KafkaEventConsumer(info, kafka, bus, new CountingDispatcher(), unreachable, deadLetter, NullLogger.Instance).RunAsync(timeout.Token));
+            () => Task.Factory.StartNew(() => new KafkaEventConsumer(info, kafka, bus, new CountingDispatcher(), unreachable, deadLetter, NullLogger.Instance).Run(timeout.Token), CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default));
         Assert.IsType<ProduceException<string, byte[]>>(failure.InnerException);
 
         // it was not committed: the same group reads it again, and now the dead-letter topic is there
         using IProducer<string, byte[]> reachable = new ProducerBuilder<string, byte[]>(new ProducerConfig { BootstrapServers = kafka.BootstrapServers }).Build();
         using CancellationTokenSource stop = new();
-        Task run = new KafkaEventConsumer(info, kafka, bus, new CountingDispatcher(), reachable, deadLetter, NullLogger.Instance).RunAsync(stop.Token);
+        Task run = Task.Factory.StartNew(() => new KafkaEventConsumer(info, kafka, bus, new CountingDispatcher(), reachable, deadLetter, NullLogger.Instance).Run(stop.Token), CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
         using IConsumer<string, byte[]> probe = new ConsumerBuilder<string, byte[]>(new ConsumerConfig
         {
             BootstrapServers = kafka.BootstrapServers,

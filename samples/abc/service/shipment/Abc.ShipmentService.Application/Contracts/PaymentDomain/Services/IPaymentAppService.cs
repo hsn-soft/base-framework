@@ -18,6 +18,9 @@ public interface IPaymentAppService
     /// <summary>The payments of the orders (the order and the amount), shown briefly; the text is an order id.</summary>
     Task<List<PaymentSearchDto>> GetSearchListAsync(GetPaymentsSearch searchInput, CancellationToken cancellationToken = default);
 
+    /// <summary>How many payments there are in each status, now.</summary>
+    Task<PaymentSummaryDto> GetSummaryAsync(CancellationToken cancellationToken = default);
+
     Task<PaymentDto> CreateAsync(PaymentCreateDto input, CancellationToken cancellationToken = default);
 
     /// <exception cref="HsnSoft.Base.NotFoundException">There is no such payment.</exception>

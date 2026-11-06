@@ -27,6 +27,18 @@ public class MinioRegistrationTests
     }
 
     [Fact]
+    public void TheTimeout_IsNotSetUntilTheServiceSetsIt_AndTheClientIsBuiltEitherWay()
+    {
+        using ServiceProvider unset = new ServiceCollection().AddLogging().AddMinioBlobStoring(Configuration(("Minio:AccessKey", "key"), ("Minio:SecretKey", "secret"))).BuildServiceProvider();
+        using ServiceProvider set = new ServiceCollection().AddLogging().AddMinioBlobStoring(Configuration(("Minio:AccessKey", "key"), ("Minio:SecretKey", "secret"), ("Minio:TimeoutSeconds", "600"))).BuildServiceProvider();
+
+        Assert.Null(unset.GetRequiredService<IOptions<MinioOptions>>().Value.TimeoutSeconds);
+        Assert.Equal(600, set.GetRequiredService<IOptions<MinioOptions>>().Value.TimeoutSeconds);
+        Assert.NotNull(unset.GetRequiredService<IMinioClient>());
+        Assert.NotNull(set.GetRequiredService<IMinioClient>());
+    }
+
+    [Fact]
     public void Options_HaveSafeDefaults()
     {
         var options = new MinioOptions();

@@ -5,6 +5,7 @@ using Abc.ShipmentService.Domain.PaymentDomain.Entities;
 using Abc.ShipmentService.Domain.ShipmentDomain.Consts;
 using Abc.ShipmentService.Domain.ShipmentDomain.Entities;
 using Abc.ShipmentService.MongoDB.Configurations;
+using HsnSoft.Base.Data;
 using HsnSoft.Base.MongoDB;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -31,6 +32,7 @@ public static class MongoServiceCollectionExtensions
 
         PaymentClassMap.Register();
         services.AddMongoRepository<Payment, Guid>(MongoShipmentDbProperties.CollectionPrefix + PaymentConsts.CollectionName);
+        services.AddDatabaseStartupStep(MongoShipmentDbProperties.ConnectionStringName, "Shipment collection", ShipmentDatabase.EnsureShipmentCollections);
         return services;
     }
 }

@@ -25,7 +25,7 @@ internal static class RabbitMqConnectionFactory
             // the client reconnects forever by itself and recovers channels and consumers
             factory.AutomaticRecoveryEnabled = true;
             factory.TopologyRecoveryEnabled = true;
-            factory.NetworkRecoveryInterval = TimeSpan.FromSeconds(10);
+            factory.NetworkRecoveryInterval = settings.NetworkRecoveryInterval;
             factory.HandshakeContinuationTimeout = TimeSpan.FromMinutes(2);
             factory.ContinuationTimeout = TimeSpan.FromMinutes(2);
         }

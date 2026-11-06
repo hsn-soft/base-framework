@@ -1,6 +1,6 @@
 # ADR-0113: The CI runs on pull requests, weekly on `dev` and by hand, not on every push to `dev`
 
-- **Status:** Accepted
+- **Status:** Accepted (the weekly run is removed by [ADR-0152](0152-the-ci-has-no-weekly-run.md); the rest stands)
 - **Date:** 2026-10-31 (changes when the workflow of [ADR-0012](0012-ci-workflow-and-what-breaks-a-pull-request.md) runs)
 
 ## Context

@@ -92,4 +92,25 @@ public class KafkaTopologyTests
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => retry.WaitAsync(TimeSpan.FromSeconds(10)));
         Assert.Equal(1, calls);
     }
+
+    [Fact]
+    public async Task WithTopicCreationOff_NothingIsAskedOfTheBrokers()
+    {
+        KafkaOptions options = new() { BootstrapServers = "127.0.0.1:1", CreateTopics = false };
+
+        // a broker that cannot be reached would be tried ten times over twenty seconds: with the creation off it is not even asked
+        Task ensured = KafkaTopology.EnsureTopicsAsync(options, ["XYZ_OrderCreated"]);
+        await ensured.WaitAsync(TimeSpan.FromSeconds(2));
+
+        Assert.True(ensured.IsCompletedSuccessfully);
+    }
+
+    [Fact]
+    public void TheTopicsAreCreatedByDefault_AndTheRevokeTimeoutIsThirtySeconds()
+    {
+        KafkaOptions options = new();
+
+        Assert.True(options.CreateTopics);
+        Assert.Equal(TimeSpan.FromSeconds(30), options.RevokeTimeout);
+    }
 }

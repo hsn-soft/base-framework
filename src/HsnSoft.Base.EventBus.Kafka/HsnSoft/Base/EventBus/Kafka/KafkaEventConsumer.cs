@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -30,8 +31,13 @@ internal sealed partial class KafkaEventConsumer(
     private readonly Lock _flightLock = new();
     private readonly List<Task> _inFlight = [];
     private Exception? _failure;
+    private volatile bool _closing;
 
-    public async Task RunAsync(CancellationToken stoppingToken)
+    /// <summary>
+    /// Reads until the host stops. It is a <b>blocking</b> loop (the consumer of the client is used by the one thread that reads), so the caller gives it a thread of its own (<see cref="TaskCreationOptions.LongRunning"/>): a service with a hundred events
+    /// would otherwise hold a hundred threads of the pool in <c>Consume</c> and starve everything that needs one.
+    /// </summary>
+    public void Run(CancellationToken stoppingToken)
     {
         string topic = KafkaTopology.TopicFor(eventBusOptions, info.EventName);
         string group = KafkaTopology.GroupFor(eventBusOptions, info.EventName);
@@ -54,7 +60,7 @@ internal sealed partial class KafkaEventConsumer(
 
         // a stopping service reads no new message, but the ones it is handling are let finish: their handlers are cancelled only when the shutdown timeout has passed (and the messages are then read again, as they were not committed)
         using CancellationTokenSource handlerCts = new();
-        await using CancellationTokenRegistration stopping = stoppingToken.Register(() => handlerCts.CancelAfter(eventBusOptions.ShutdownTimeout));
+        using CancellationTokenRegistration stopping = stoppingToken.Register(() => handlerCts.CancelAfter(eventBusOptions.ShutdownTimeout));
 
         try
         {
@@ -64,7 +70,7 @@ internal sealed partial class KafkaEventConsumer(
                 ThrowIfAHandlingFailed();
 
                 // every place is taken: look at what finished meanwhile
-                if (!await slots.WaitAsync(TimeSpan.FromMilliseconds(100), stoppingToken).ConfigureAwait(false))
+                if (!slots.Wait(TimeSpan.FromMilliseconds(100), stoppingToken))
                 {
                     continue;
                 }
@@ -96,7 +102,9 @@ internal sealed partial class KafkaEventConsumer(
         }
         finally
         {
-            await DrainAsync().ConfigureAwait(false);
+            // what is handled is waited for here, once, up to the shutdown timeout; Close then gives the partitions up, which calls Revoked, and that must not wait for the same handlings again
+            _closing = true;
+            Drain(eventBusOptions.ShutdownTimeout);
             try
             {
                 Commit(consumer);
@@ -174,7 +182,13 @@ internal sealed partial class KafkaEventConsumer(
     // partitions are taken away (another instance joined the group): what is being handled finishes and is committed first, so the new owner does not read it again
     private void Revoked(IConsumer<string, byte[]> consumer, IEnumerable<TopicPartition> partitions)
     {
-        DrainAsync().GetAwaiter().GetResult();
+        // the consumer does not read while it waits (the heartbeat goes on, so it stays in the group); how long is Kafka:RevokeTimeout, shorter than the poll interval
+        List<TopicPartition> revoked = [.. partitions];
+        Stopwatch watch = Stopwatch.StartNew();
+        bool finished = _closing || Drain(options.RevokeTimeout);
+        long elapsed = watch.ElapsedMilliseconds;
+        string group = KafkaTopology.GroupFor(eventBusOptions, info.EventName);
+        LogRevoked(logger, group, revoked.Count, elapsed, finished);
         try
         {
             Commit(consumer);
@@ -184,7 +198,7 @@ internal sealed partial class KafkaEventConsumer(
             LogCommitFailed(logger, exception, KafkaTopology.GroupFor(eventBusOptions, info.EventName));
         }
 
-        _tracker.Forget(partitions);
+        _tracker.Forget(revoked);
     }
 
     private void Track(Task handling)
@@ -196,7 +210,8 @@ internal sealed partial class KafkaEventConsumer(
         }
     }
 
-    private async Task DrainAsync()
+    // waits (this thread is the one of the consumer, not one of the pool) for what is being handled; false when it is not all finished in time: what still runs is not waited for any longer and is not committed
+    private bool Drain(TimeSpan timeout)
     {
         Task[] running;
         lock (_flightLock)
@@ -204,14 +219,7 @@ internal sealed partial class KafkaEventConsumer(
             running = [.. _inFlight.Where(task => !task.IsCompleted)];
         }
 
-        try
-        {
-            await Task.WhenAll(running).WaitAsync(eventBusOptions.ShutdownTimeout).ConfigureAwait(false);
-        }
-        catch (TimeoutException)
-        {
-            // what is still running is not waited for any longer; it is not committed
-        }
+        return Task.WaitAll(running, timeout);
     }
 
     private void ThrowIfAHandlingFailed()
@@ -227,6 +235,9 @@ internal sealed partial class KafkaEventConsumer(
 
     [LoggerMessage(EventId = 4502, EventName = "KAFKA_SUBSCRIBER_DEAD_LETTERED", Level = LogLevel.Error, Message = "A message from {Topic} could not be handled, moving it to the dead-letter topic")]
     private static partial void LogDeadLettered(ILogger logger, Exception exception, string topic);
+
+    [LoggerMessage(EventId = 4505, EventName = "KAFKA_SUBSCRIBER_REVOKED", Level = LogLevel.Information, Message = "{Group}: {Partitions} partition(s) were taken away; the handlings were waited for {Elapsed} ms (all finished: {Finished})")]
+    private static partial void LogRevoked(ILogger logger, string group, int partitions, long elapsed, bool finished);
 
     [LoggerMessage(EventId = 4504, EventName = "KAFKA_SUBSCRIBER_COMMIT_FAILED", Level = LogLevel.Warning, Message = "{Group}: the offsets could not be committed, the messages are read again")]
     private static partial void LogCommitFailed(ILogger logger, Exception exception, string group);

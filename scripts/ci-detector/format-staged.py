@@ -8,6 +8,10 @@ Usage: scripts/ci-detector/format-staged.py <whitespace|style|verify-style> <fil
   whitespace    dotnet format whitespace                              (rewrites the files)
   style         dotnet format style --severity info                   (rewrites the files)
   verify-style  dotnet format style --severity info --verify-no-changes   (a non-zero exit code when a file would change)
+
+The style rules (IDE0005, an unnecessary using) need the references of the projects to be resolved: where the build output is not there (a clean, the CI detector, a fresh clone)
+`dotnet format` cannot find the namespaces of the other projects and takes every using of them for unnecessary, and removes it, which breaks the build. So the solution is built first
+(a restore and a build; a no-op where nothing changed) and, when it does not build, nothing is formatted.
 """
 import os
 import subprocess
@@ -43,6 +47,11 @@ def main() -> int:
 
     status = 0
     for solution, group in groups.items():
+        if mode != "whitespace":
+            built = subprocess.run(["dotnet", "build", solution, "--nologo", "--verbosity", "quiet", "-p:TreatWarningsAsErrors=false"], check=False, capture_output=True, text=True)
+            if built.returncode != 0:
+                print(f"{solution} does not build, so its style cannot be formatted (the usings would be taken for unnecessary); fix the build first:\n" + "\n".join(built.stdout.splitlines()[-15:]), file=sys.stderr)
+                return built.returncode
         command = [part.replace("{sln}", solution) for part in commands[mode]] + group
         code = subprocess.run(command, check=False).returncode
         status = status or code

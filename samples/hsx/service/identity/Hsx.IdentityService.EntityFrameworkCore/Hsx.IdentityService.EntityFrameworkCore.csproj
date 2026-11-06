@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!-- How the service keeps the domain: its DbContext and mappings. The database provider (PostgreSQL) is registered here, with the repositories. -->
+
+    <ItemGroup>
+        <!-- the tool of the migrations (dotnet ef) reads the project; nothing of it goes to the host -->
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.Authorization\HsnSoft.Base.Authorization.csproj" />
+        <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.EntityFrameworkCore.PostgreSql\HsnSoft.Base.EntityFrameworkCore.PostgreSql.csproj" />
+        <ProjectReference Include="..\..\..\..\..\src\HsnSoft.Base.MultiTenancy.EntityFrameworkCore\HsnSoft.Base.MultiTenancy.EntityFrameworkCore.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Hsx.IdentityService.Domain\Hsx.IdentityService.Domain.csproj" />
+    </ItemGroup>
+
+</Project>

@@ -1,5 +1,6 @@
 using HsnSoft.Base.Auditing;
 using HsnSoft.Base.Data;
+using HsnSoft.Base.Domain.Entities;
 using HsnSoft.Base.Security;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -32,6 +33,19 @@ public class MongoEntityConceptsTests
         public void MarkModified(DateTimeOffset at, Guid? by) => (UpdatedAt, UpdatedBy) = (at, by);
 
         public void MarkDeleted(DateTimeOffset at, Guid? by) => (IsDeleted, DeletedAt, DeletedBy) = (true, at, by);
+    }
+
+    public sealed class Stamped : IModificationAuditedObject, IMarkModified, IHasConcurrencyStamp
+    {
+        public DateTimeOffset UpdatedAt { get; set; }
+
+        public Guid? UpdatedBy { get; set; }
+
+        public string ConcurrencyStamp { get; private set; } = string.Empty;
+
+        public void MarkModified(DateTimeOffset at, Guid? by) => (UpdatedAt, UpdatedBy) = (at, by);
+
+        public void SetConcurrencyStamp(string stamp) => ConcurrencyStamp = stamp;
     }
 
     public sealed class Plain
@@ -168,5 +182,69 @@ public class MongoEntityConceptsTests
         Assert.Throws<ArgumentNullException>(() => concepts.Created(null!));
         Assert.Throws<ArgumentNullException>(() => concepts.Modified(null!));
         Assert.Throws<ArgumentNullException>(() => concepts.SoftDeleted(null!));
+    }
+
+    [Fact]
+    public void AnAddedEntityWithoutAStamp_GetsOne_AndOneThatHasItKeepsIt()
+    {
+        using ServiceProvider provider = Build(new FakeUser { Id = Guid.NewGuid() });
+        MongoEntityConcepts concepts = provider.GetRequiredService<MongoEntityConcepts>();
+        Stamped fresh = new();
+        Stamped given = new();
+        given.SetConcurrencyStamp("kept");
+
+        concepts.Created(fresh);
+        concepts.Created(given);
+
+        Assert.NotEmpty(fresh.ConcurrencyStamp);
+        Assert.Equal("kept", given.ConcurrencyStamp);
+    }
+
+    [Fact]
+    public void AReplace_ReturnsTheStampTheCallerSaw_AndGivesTheEntityANewOne()
+    {
+        using ServiceProvider provider = Build(new FakeUser { Id = Guid.NewGuid() });
+        MongoEntityConcepts concepts = provider.GetRequiredService<MongoEntityConcepts>();
+        Stamped entity = new();
+        entity.SetConcurrencyStamp("seen");
+
+        string? seen = concepts.Modified(entity);
+
+        Assert.Equal("seen", seen);
+        Assert.NotEqual("seen", entity.ConcurrencyStamp);
+        Assert.Null(concepts.Modified(new Stamped()));
+        Assert.Null(concepts.Modified(new Plain()));
+        Assert.Null(concepts.Modified(new Full()));
+    }
+
+    [Fact]
+    public void TheFilterOfAReplace_FindsTheStampOnlyWhenTheCallerGaveOne()
+    {
+        string id = Guid.NewGuid().ToString();
+
+        string withStamp = Render(MongoEntityConcepts.Matching<Stamped>("Id", id, "seen"));
+        string without = Render(MongoEntityConcepts.Matching<Stamped>("Id", id, null));
+
+        Assert.Contains("ConcurrencyStamp", withStamp, StringComparison.Ordinal);
+        Assert.Contains("seen", withStamp, StringComparison.Ordinal);
+        Assert.DoesNotContain("ConcurrencyStamp", without, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AnUpdateThatLoadsNothing_WritesANewStamp_ForAnEntityThatHasOne()
+    {
+        using ServiceProvider provider = Build(new FakeUser { Id = Guid.NewGuid() });
+        MongoEntityConcepts concepts = provider.GetRequiredService<MongoEntityConcepts>();
+        UpdateDefinition<Stamped> own = Builders<Stamped>.Update.Set("Name", "x");
+        IBsonSerializer<Stamped> serializer = BsonSerializer.SerializerRegistry.GetSerializer<Stamped>();
+        RenderArgs<Stamped> args = new(serializer, BsonSerializer.SerializerRegistry);
+
+        string stamped = concepts.Modification(own).Render(args).ToJson();
+        string deletion = concepts.Deletion<Stamped>().Render(args).ToJson();
+        string plain = concepts.Modification(Builders<Plain>.Update.Set("Name", "x")).Render(new RenderArgs<Plain>(BsonSerializer.SerializerRegistry.GetSerializer<Plain>(), BsonSerializer.SerializerRegistry)).ToJson();
+
+        Assert.Contains("ConcurrencyStamp", stamped, StringComparison.Ordinal);
+        Assert.Contains("ConcurrencyStamp", deletion, StringComparison.Ordinal);
+        Assert.DoesNotContain("ConcurrencyStamp", plain, StringComparison.Ordinal);
     }
 }

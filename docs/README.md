@@ -2,8 +2,17 @@
 
 | Where | What |
 |---|---|
-| [`adr/`](adr/README.md) | **Architecture decision records**: why the repository is the way it is. Start with [the index](adr/README.md). Every architecture decision is added there when it is taken. |
+| [`adr/`](adr/README.md) | **Architecture decision records**: a short guide to the decisions relevant to a task; the [full catalog](adr/INDEX.md) lists every ADR. |
 | [`Overview.md`](Overview.md) | The packages (one capability each) and what each depends on, how a product composes them, the tests and the configuration. The text that was in the root README |
+| [`RateLimiting.md`](RateLimiting.md) | How many requests a caller may make in every pod: `[RateLimit]`, `UseBaseRateLimiting`, the window, the settings, when the store is gone, how the Redis limiter works |
+| [`Concurrency.md`](Concurrency.md) | How many run at once in every pod: `[ConcurrencyLimit]`, the limiter in code, the lease, the settings, how the Redis limiter works |
+| [`DatabaseStartup.md`](DatabaseStartup.md) | Who prepares a database at startup (`SeedStartupConnections`), the steps (`RunDatabaseStepAsync`, `RunContextStepAsync`), and the lock of each database that keeps the pods of a host from meeting |
+| [`Health.md`](Health.md) | The health endpoints (`/health/live`, `/health/startup`, `/health/ready`), the checks of the packages, the settings, the probes of Kubernetes |
+| [`Hosting.md`](Hosting.md) | The settings of the host (`Hosting`, `Urls`), the limits of Kestrel, the proxies, the `.env` file, the settings a service requires, a start that logs its failure |
+| [`MultiTenancy.md`](MultiTenancy.md) | Tenants that see other tenants: the tree, `TenantAccessPath`, the list in the token and its limit |
+| [`Scheduler.md`](Scheduler.md) | The endpoints a scheduler calls: `[SchedulerAuth]`, the key (`Scheduler:ApiKey`) the host requires, the headers of a job |
+| [`Checks.md`](Checks.md) | What runs before a commit, before a push and on a pull request, as a table, and the scripts to run every check yourself |
+| [`BranchRules.md`](BranchRules.md) | Which branch may be merged into which: the table of sources and targets, and the special rules of the release branches that publish |
 | [`Releasing.md`](Releasing.md) | How a version gets to NuGet: the versions, the branches (`dev` → `rel/nuget-candidate` → `rel/nuget-regular`), what to do for a candidate, a stable version, a new month and an urgent fix |
 | [`Logging.md`](Logging.md) | The logging model: the log types, the chain logs, the fields, facilities, where each decision is made |
 | [`LogLevels.md`](LogLevels.md) | What each level setting changes and where a log of each level can be seen (console, Graylog, file) |
@@ -14,7 +23,10 @@
 | [`EntityConcepts.md`](EntityConcepts.md) | Audit fields, soft delete and tenants of an entity: the interfaces, the current user, the tenant packages, the filters, EF Core and MongoDB |
 | [`Localization.md`](Localization.md) | The texts the client reads in its language: the JSON files, the layers, how the language is chosen, naming a text in an error |
 | [`Authorization.md`](Authorization.md) | Permissions: the attribute, the checker, the three kinds, who has what, where the grants are kept |
+| [`Browser.md`](Browser.md) | A browser as a service: the contract (a page after its scripts, a PDF, an image), the policy that keeps a rendered page from the inside of the network, the Chrome provider and its settings |
+| [`HttpClient.md`](HttpClient.md) | Calling another service: the defaults of a client (correlation id, timeouts, retries that do not repeat a write, circuit breaker), the token relay, the guard against calls to the inside of the network, reading a `BaseResponse` |
 | [`Swagger.md`](Swagger.md) | Swagger for a service and for a gateway |
+| [`old-framework/`](old-framework/README.md) | **The old framework, project by project**: why each old package is or is not in the new tree, the verdict on its design, the gaps still open (with priorities) and the decisions waiting for the maintainer |
 
 The reference documents say **how to use** something; the ADRs say **why** it is that way. When a rule is in both, the ADR is the authority.
 Other documents: the root [README](../README.md) (what the framework is, the badges), [CONTRIBUTING](../CONTRIBUTING.md) (how we work), `scripts/*/README.md` (the tools).

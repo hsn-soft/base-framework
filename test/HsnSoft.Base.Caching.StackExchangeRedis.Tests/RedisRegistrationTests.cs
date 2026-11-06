@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Options;
+using StackExchange.Redis;
 
 namespace HsnSoft.Base.Caching.StackExchangeRedis.Tests;
 
@@ -46,6 +47,26 @@ public class RedisRegistrationTests
 
         Assert.Equal("redis", registration.Name);
         Assert.Contains("ready", registration.Tags);
+    }
+
+    [Fact]
+    public async Task TheCache_WorksOnTheConnectionOfTheService_NotOnOneOfItsOwn()
+    {
+        IConnectionMultiplexer connection = System.Reflection.DispatchProxy.Create<IConnectionMultiplexer, NoConnection>();
+        IServiceCollection services = new ServiceCollection().AddLogging().AddSingleton(connection);
+        services.AddBaseRedis(Configuration(("ConnectionStrings:Redis", "localhost:6390")));
+        using ServiceProvider provider = services.BuildServiceProvider();
+
+        RedisCacheOptions cache = provider.GetRequiredService<IOptions<RedisCacheOptions>>().Value;
+
+        Assert.NotNull(cache.ConnectionMultiplexerFactory);
+        Assert.Same(connection, await cache.ConnectionMultiplexerFactory());
+    }
+
+    /// <summary>A connection nobody uses: the test only asks which one the cache is given.</summary>
+    public class NoConnection : System.Reflection.DispatchProxy
+    {
+        protected override object? Invoke(System.Reflection.MethodInfo? targetMethod, object?[]? args) => throw new NotSupportedException();
     }
 
     [Fact]

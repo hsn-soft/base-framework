@@ -53,7 +53,7 @@ public sealed class ProductStockHistory : FullAuditedEntity<Guid>, IMultiTenant
             NewStock = Guard.NotNegative(newStock, nameof(NewStock)),
         };
         history.Change = history.NewStock - history.OldStock;
-        history.NormalizedProductName = StringHelper.Normalize(history.ProductName);
+        history.NormalizedProductName = Guard.NotNullOrWhiteSpace(StringHelper.Normalize(history.ProductName), nameof(NormalizedProductName));
         history.Reference = string.IsNullOrWhiteSpace(reference) ? null : Guard.Length(reference.Trim(), nameof(Reference), ProductStockHistoryConsts.ReferenceMaxLength);
         history.Describe(reason, note);
         return history;

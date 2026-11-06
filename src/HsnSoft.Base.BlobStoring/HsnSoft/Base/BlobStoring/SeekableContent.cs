@@ -43,7 +43,7 @@ public static class SeekableContent
                     break;
                 }
 
-                memory.Write(buffer, 0, read);
+                await memory.WriteAsync(buffer.AsMemory(0, read), cancellationToken).ConfigureAwait(false);
             }
 
             if (ended)

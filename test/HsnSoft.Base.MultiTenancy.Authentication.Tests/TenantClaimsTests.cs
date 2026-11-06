@@ -75,8 +75,25 @@ public class TenantClaimsTests
     }
 
     [Fact]
+    public void TheScopeKeys_AreTheClaimsOfTheToken_WithBlankOnesLeftOut()
+    {
+        using ServiceProvider provider = Build();
+        provider.GetRequiredService<IHttpContextAccessor>().HttpContext = new DefaultHttpContext
+        {
+            User = Signed(
+                new Claim(TenantClaimTypes.TenantId, Guid.NewGuid().ToString()),
+                new Claim(TenantClaimTypes.AllowedScopeKey, "abc:video"),
+                new Claim(TenantClaimTypes.AllowedScopeKey, "abc:text"),
+                new Claim(TenantClaimTypes.AllowedScopeKey, "abc:video"),
+                new Claim(TenantClaimTypes.AllowedScopeKey, "  ")),
+        };
+
+        Assert.Equal(["abc:video", "abc:text"], provider.GetRequiredService<ICurrentTenant>().AllowedScopeKeys);
+    }
+
+    [Fact]
     public void TheClaimNames_AreTheShortJwtNames()
     {
-        Assert.Equal(["tenant_id", "is_system_tenant", "allowed_tenant_id"], [TenantClaimTypes.TenantId, TenantClaimTypes.IsSystemTenant, TenantClaimTypes.AllowedTenantId]);
+        Assert.Equal(["tenant_id", "is_system_tenant", "allowed_tenant_id", "allowed_scope_key"], [TenantClaimTypes.TenantId, TenantClaimTypes.IsSystemTenant, TenantClaimTypes.AllowedTenantId, TenantClaimTypes.AllowedScopeKey]);
     }
 }

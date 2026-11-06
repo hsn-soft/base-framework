@@ -31,6 +31,7 @@ public class JwtServiceCollectionExtensionsTests
             .AddLogging()
             .AddRouting()   // the authorization middleware needs the routing services
             .AddBaseJwtAuthentication(configuration)
+            .AddBaseAuthorization()
             .BuildServiceProvider();
     }
 
@@ -67,6 +68,8 @@ public class JwtServiceCollectionExtensionsTests
 
         Assert.Equal(string.Empty, options.Issuer);
         Assert.Equal(string.Empty, options.Audience);
+        Assert.Null(options.ValidateIssuer);
+        Assert.Equal(30, options.ClockSkewSeconds);
         Assert.Equal(string.Empty, options.Key);
         Assert.Equal(15, options.AccessTokenMinutes);
     }

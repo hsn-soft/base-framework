@@ -1,0 +1,754 @@
+# The hosts of the Edx system in an environment of the cluster (uat, production): deploy.sh puts the environment into the words between double underscores and applies it.
+#  - Two pods of each host. The infrastructure is the one on this machine (host.docker.internal), except Kafka, which has a broker for each environment (uat: host.docker.internal:9192, production: 9292):
+#    an environment is told apart by its databases (Edx_*_Uat, Edx_*_Prod), the prefix of its Redis keys, the buckets of MinIO and its broker (see appsettings.<environment>.json).
+#  - The settings of a host are the secret settings-<host> (appsettings.<environment>.json with the secrets put in, mounted over the file of the image). The back office has none: its build has the addresses.
+#  - The three probes of the health endpoints (docs/Health.md): the startup probe gives a start up to 3 minutes, the readiness probe takes a pod that cannot reach a dependency out of the traffic, the liveness
+#    probe asks only the process; the timeout of a probe is longer than Health:CheckTimeout (5 s). The gRPC host answers its probes on its own HTTP/1 port, 8081 (its port 8080 is HTTP/2 only).
+#  - A stop that waits: Hosting:ShutdownTimeoutSeconds (30) + EventBus:ShutdownTimeout (30) + the preStop, so terminationGracePeriodSeconds is 80; a pod is replaced one at a time (maxUnavailable 0).
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: identity-service
+  labels: { app: identity-service }
+spec:
+  replicas: __REPLICAS__
+  strategy:
+    rollingUpdate: { maxUnavailable: 0, maxSurge: 1 }
+  selector:
+    matchLabels: { app: identity-service }
+  template:
+    metadata:
+      labels: { app: identity-service }
+    spec:
+      terminationGracePeriodSeconds: 80
+      containers:
+        - name: host
+          image: edx/identity-service:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: __ENVIRONMENT__
+          volumeMounts:
+            - { name: settings, mountPath: /app/appsettings.__ENVIRONMENT__.json, subPath: appsettings.__ENVIRONMENT__.json, readOnly: true }
+          startupProbe:
+            httpGet: { path: /health/startup, port: 8080 }
+            periodSeconds: 3
+            timeoutSeconds: 7
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: { path: /health/ready, port: 8080 }
+            periodSeconds: 5
+            timeoutSeconds: 7
+            failureThreshold: 2
+          livenessProbe:
+            httpGet: { path: /health/live, port: 8080 }
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          lifecycle:
+            preStop:
+              exec: { command: ["sleep", "5"] }
+          resources:
+            requests: { cpu: 50m, memory: 64Mi }
+            limits: { memory: 512Mi }
+      volumes:
+        - name: settings
+          secret: { secretName: settings-identity-service }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: identity-service
+spec:
+  selector: { app: identity-service }
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-server-service
+  labels: { app: auth-server-service }
+spec:
+  replicas: __REPLICAS__
+  strategy:
+    rollingUpdate: { maxUnavailable: 0, maxSurge: 1 }
+  selector:
+    matchLabels: { app: auth-server-service }
+  template:
+    metadata:
+      labels: { app: auth-server-service }
+    spec:
+      terminationGracePeriodSeconds: 80
+      containers:
+        - name: host
+          image: edx/auth-server-service:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: __ENVIRONMENT__
+          volumeMounts:
+            - { name: settings, mountPath: /app/appsettings.__ENVIRONMENT__.json, subPath: appsettings.__ENVIRONMENT__.json, readOnly: true }
+            - { name: private-key, mountPath: /app/private_key.xml, subPath: private_key.xml, readOnly: true }
+          startupProbe:
+            httpGet: { path: /health/startup, port: 8080 }
+            periodSeconds: 3
+            timeoutSeconds: 7
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: { path: /health/ready, port: 8080 }
+            periodSeconds: 5
+            timeoutSeconds: 7
+            failureThreshold: 2
+          livenessProbe:
+            httpGet: { path: /health/live, port: 8080 }
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          lifecycle:
+            preStop:
+              exec: { command: ["sleep", "5"] }
+          resources:
+            requests: { cpu: 50m, memory: 64Mi }
+            limits: { memory: 512Mi }
+      volumes:
+        - name: settings
+          secret: { secretName: settings-auth-server-service }
+        - name: private-key
+          secret: { secretName: edx-auth-private-key }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-server-service
+spec:
+  selector: { app: auth-server-service }
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: invoice-service
+  labels: { app: invoice-service }
+spec:
+  replicas: __REPLICAS__
+  strategy:
+    rollingUpdate: { maxUnavailable: 0, maxSurge: 1 }
+  selector:
+    matchLabels: { app: invoice-service }
+  template:
+    metadata:
+      labels: { app: invoice-service }
+    spec:
+      terminationGracePeriodSeconds: 80
+      containers:
+        - name: host
+          image: edx/invoice-service:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: __ENVIRONMENT__
+          volumeMounts:
+            - { name: settings, mountPath: /app/appsettings.__ENVIRONMENT__.json, subPath: appsettings.__ENVIRONMENT__.json, readOnly: true }
+          startupProbe:
+            httpGet: { path: /health/startup, port: 8080 }
+            periodSeconds: 3
+            timeoutSeconds: 7
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: { path: /health/ready, port: 8080 }
+            periodSeconds: 5
+            timeoutSeconds: 7
+            failureThreshold: 2
+          livenessProbe:
+            httpGet: { path: /health/live, port: 8080 }
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          lifecycle:
+            preStop:
+              exec: { command: ["sleep", "5"] }
+          resources:
+            requests: { cpu: 50m, memory: 64Mi }
+            limits: { memory: 512Mi }
+      volumes:
+        - name: settings
+          secret: { secretName: settings-invoice-service }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: invoice-service
+spec:
+  selector: { app: invoice-service }
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: signer-service
+  labels: { app: signer-service }
+spec:
+  replicas: __REPLICAS__
+  strategy:
+    rollingUpdate: { maxUnavailable: 0, maxSurge: 1 }
+  selector:
+    matchLabels: { app: signer-service }
+  template:
+    metadata:
+      labels: { app: signer-service }
+    spec:
+      terminationGracePeriodSeconds: 80
+      containers:
+        - name: host
+          image: edx/signer-service:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: __ENVIRONMENT__
+          volumeMounts:
+            - { name: settings, mountPath: /app/appsettings.__ENVIRONMENT__.json, subPath: appsettings.__ENVIRONMENT__.json, readOnly: true }
+          startupProbe:
+            httpGet: { path: /health/startup, port: 8080 }
+            periodSeconds: 3
+            timeoutSeconds: 7
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: { path: /health/ready, port: 8080 }
+            periodSeconds: 5
+            timeoutSeconds: 7
+            failureThreshold: 2
+          livenessProbe:
+            httpGet: { path: /health/live, port: 8080 }
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          lifecycle:
+            preStop:
+              exec: { command: ["sleep", "5"] }
+          resources:
+            requests: { cpu: 50m, memory: 64Mi }
+            limits: { memory: 512Mi }
+      volumes:
+        - name: settings
+          secret: { secretName: settings-signer-service }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: signer-service
+spec:
+  selector: { app: signer-service }
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: integration-firm-http
+  labels: { app: integration-firm-http }
+spec:
+  replicas: __REPLICAS__
+  strategy:
+    rollingUpdate: { maxUnavailable: 0, maxSurge: 1 }
+  selector:
+    matchLabels: { app: integration-firm-http }
+  template:
+    metadata:
+      labels: { app: integration-firm-http }
+    spec:
+      terminationGracePeriodSeconds: 80
+      containers:
+        - name: host
+          image: edx/integration-firm-http:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: __ENVIRONMENT__
+          volumeMounts:
+            - { name: settings, mountPath: /app/appsettings.__ENVIRONMENT__.json, subPath: appsettings.__ENVIRONMENT__.json, readOnly: true }
+          startupProbe:
+            httpGet: { path: /health/startup, port: 8080 }
+            periodSeconds: 3
+            timeoutSeconds: 7
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: { path: /health/ready, port: 8080 }
+            periodSeconds: 5
+            timeoutSeconds: 7
+            failureThreshold: 2
+          livenessProbe:
+            httpGet: { path: /health/live, port: 8080 }
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          lifecycle:
+            preStop:
+              exec: { command: ["sleep", "5"] }
+          resources:
+            requests: { cpu: 50m, memory: 64Mi }
+            limits: { memory: 512Mi }
+      volumes:
+        - name: settings
+          secret: { secretName: settings-integration-firm-http }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: integration-firm-http
+spec:
+  type: LoadBalancer
+  selector: { app: integration-firm-http }
+  ports:
+    - port: __PORT_INTEGRATION_FIRM_HTTP__
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: integration-firm-grpc
+  labels: { app: integration-firm-grpc }
+spec:
+  replicas: __REPLICAS__
+  strategy:
+    rollingUpdate: { maxUnavailable: 0, maxSurge: 1 }
+  selector:
+    matchLabels: { app: integration-firm-grpc }
+  template:
+    metadata:
+      labels: { app: integration-firm-grpc }
+    spec:
+      terminationGracePeriodSeconds: 80
+      containers:
+        - name: host
+          image: edx/integration-firm-grpc:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+            - containerPort: 8081
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: __ENVIRONMENT__
+          volumeMounts:
+            - { name: settings, mountPath: /app/appsettings.__ENVIRONMENT__.json, subPath: appsettings.__ENVIRONMENT__.json, readOnly: true }
+          startupProbe:
+            httpGet: { path: /health/startup, port: 8081 }
+            periodSeconds: 3
+            timeoutSeconds: 7
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: { path: /health/ready, port: 8081 }
+            periodSeconds: 5
+            timeoutSeconds: 7
+            failureThreshold: 2
+          livenessProbe:
+            httpGet: { path: /health/live, port: 8081 }
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          lifecycle:
+            preStop:
+              exec: { command: ["sleep", "5"] }
+          resources:
+            requests: { cpu: 50m, memory: 64Mi }
+            limits: { memory: 512Mi }
+      volumes:
+        - name: settings
+          secret: { secretName: settings-integration-firm-grpc }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: integration-firm-grpc
+spec:
+  type: LoadBalancer
+  selector: { app: integration-firm-grpc }
+  ports:
+    - port: __PORT_INTEGRATION_FIRM_GRPC__
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: integration-firm-wcf
+  labels: { app: integration-firm-wcf }
+spec:
+  replicas: __REPLICAS__
+  strategy:
+    rollingUpdate: { maxUnavailable: 0, maxSurge: 1 }
+  selector:
+    matchLabels: { app: integration-firm-wcf }
+  template:
+    metadata:
+      labels: { app: integration-firm-wcf }
+    spec:
+      terminationGracePeriodSeconds: 80
+      containers:
+        - name: host
+          image: edx/integration-firm-wcf:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: __ENVIRONMENT__
+          volumeMounts:
+            - { name: settings, mountPath: /app/appsettings.__ENVIRONMENT__.json, subPath: appsettings.__ENVIRONMENT__.json, readOnly: true }
+          startupProbe:
+            httpGet: { path: /health/startup, port: 8080 }
+            periodSeconds: 3
+            timeoutSeconds: 7
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: { path: /health/ready, port: 8080 }
+            periodSeconds: 5
+            timeoutSeconds: 7
+            failureThreshold: 2
+          livenessProbe:
+            httpGet: { path: /health/live, port: 8080 }
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          lifecycle:
+            preStop:
+              exec: { command: ["sleep", "5"] }
+          resources:
+            requests: { cpu: 50m, memory: 64Mi }
+            limits: { memory: 512Mi }
+      volumes:
+        - name: settings
+          secret: { secretName: settings-integration-firm-wcf }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: integration-firm-wcf
+spec:
+  type: LoadBalancer
+  selector: { app: integration-firm-wcf }
+  ports:
+    - port: __PORT_INTEGRATION_FIRM_WCF__
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: integration-gib-http
+  labels: { app: integration-gib-http }
+spec:
+  replicas: __REPLICAS__
+  strategy:
+    rollingUpdate: { maxUnavailable: 0, maxSurge: 1 }
+  selector:
+    matchLabels: { app: integration-gib-http }
+  template:
+    metadata:
+      labels: { app: integration-gib-http }
+    spec:
+      terminationGracePeriodSeconds: 80
+      containers:
+        - name: host
+          image: edx/integration-gib-http:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: __ENVIRONMENT__
+          volumeMounts:
+            - { name: settings, mountPath: /app/appsettings.__ENVIRONMENT__.json, subPath: appsettings.__ENVIRONMENT__.json, readOnly: true }
+          startupProbe:
+            httpGet: { path: /health/startup, port: 8080 }
+            periodSeconds: 3
+            timeoutSeconds: 7
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: { path: /health/ready, port: 8080 }
+            periodSeconds: 5
+            timeoutSeconds: 7
+            failureThreshold: 2
+          livenessProbe:
+            httpGet: { path: /health/live, port: 8080 }
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          lifecycle:
+            preStop:
+              exec: { command: ["sleep", "5"] }
+          resources:
+            requests: { cpu: 50m, memory: 64Mi }
+            limits: { memory: 512Mi }
+      volumes:
+        - name: settings
+          secret: { secretName: settings-integration-gib-http }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: integration-gib-http
+spec:
+  type: LoadBalancer
+  selector: { app: integration-gib-http }
+  ports:
+    - port: __PORT_INTEGRATION_GIB_HTTP__
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: integration-gib-wcf
+  labels: { app: integration-gib-wcf }
+spec:
+  replicas: __REPLICAS__
+  strategy:
+    rollingUpdate: { maxUnavailable: 0, maxSurge: 1 }
+  selector:
+    matchLabels: { app: integration-gib-wcf }
+  template:
+    metadata:
+      labels: { app: integration-gib-wcf }
+    spec:
+      terminationGracePeriodSeconds: 80
+      containers:
+        - name: host
+          image: edx/integration-gib-wcf:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: __ENVIRONMENT__
+          volumeMounts:
+            - { name: settings, mountPath: /app/appsettings.__ENVIRONMENT__.json, subPath: appsettings.__ENVIRONMENT__.json, readOnly: true }
+          startupProbe:
+            httpGet: { path: /health/startup, port: 8080 }
+            periodSeconds: 3
+            timeoutSeconds: 7
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: { path: /health/ready, port: 8080 }
+            periodSeconds: 5
+            timeoutSeconds: 7
+            failureThreshold: 2
+          livenessProbe:
+            httpGet: { path: /health/live, port: 8080 }
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          lifecycle:
+            preStop:
+              exec: { command: ["sleep", "5"] }
+          resources:
+            requests: { cpu: 50m, memory: 64Mi }
+            limits: { memory: 512Mi }
+      volumes:
+        - name: settings
+          secret: { secretName: settings-integration-gib-wcf }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: integration-gib-wcf
+spec:
+  selector: { app: integration-gib-wcf }
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mock-center
+  labels: { app: mock-center }
+spec:
+  replicas: __REPLICAS__
+  strategy:
+    rollingUpdate: { maxUnavailable: 0, maxSurge: 1 }
+  selector:
+    matchLabels: { app: mock-center }
+  template:
+    metadata:
+      labels: { app: mock-center }
+    spec:
+      terminationGracePeriodSeconds: 80
+      containers:
+        - name: host
+          image: edx/mock-center:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: __ENVIRONMENT__
+          volumeMounts:
+            - { name: settings, mountPath: /app/appsettings.__ENVIRONMENT__.json, subPath: appsettings.__ENVIRONMENT__.json, readOnly: true }
+          startupProbe:
+            httpGet: { path: /health/startup, port: 8080 }
+            periodSeconds: 3
+            timeoutSeconds: 7
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: { path: /health/ready, port: 8080 }
+            periodSeconds: 5
+            timeoutSeconds: 7
+            failureThreshold: 2
+          livenessProbe:
+            httpGet: { path: /health/live, port: 8080 }
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          lifecycle:
+            preStop:
+              exec: { command: ["sleep", "5"] }
+          resources:
+            requests: { cpu: 50m, memory: 64Mi }
+            limits: { memory: 512Mi }
+      volumes:
+        - name: settings
+          secret: { secretName: settings-mock-center }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mock-center
+spec:
+  type: LoadBalancer
+  selector: { app: mock-center }
+  ports:
+    - port: __PORT_MOCK_CENTER__
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+  labels: { app: gateway }
+spec:
+  replicas: __REPLICAS__
+  strategy:
+    rollingUpdate: { maxUnavailable: 0, maxSurge: 1 }
+  selector:
+    matchLabels: { app: gateway }
+  template:
+    metadata:
+      labels: { app: gateway }
+    spec:
+      terminationGracePeriodSeconds: 80
+      containers:
+        - name: host
+          image: edx/gateway:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: __ENVIRONMENT__
+          volumeMounts:
+            - { name: settings, mountPath: /app/appsettings.__ENVIRONMENT__.json, subPath: appsettings.__ENVIRONMENT__.json, readOnly: true }
+          startupProbe:
+            httpGet: { path: /health/startup, port: 8080 }
+            periodSeconds: 3
+            timeoutSeconds: 7
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: { path: /health/ready, port: 8080 }
+            periodSeconds: 5
+            timeoutSeconds: 7
+            failureThreshold: 2
+          livenessProbe:
+            httpGet: { path: /health/live, port: 8080 }
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          lifecycle:
+            preStop:
+              exec: { command: ["sleep", "5"] }
+          resources:
+            requests: { cpu: 50m, memory: 64Mi }
+            limits: { memory: 512Mi }
+      volumes:
+        - name: settings
+          secret: { secretName: settings-gateway }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway
+spec:
+  type: LoadBalancer
+  selector: { app: gateway }
+  ports:
+    - port: __PORT_GATEWAY__
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: back-office
+  labels: { app: back-office }
+spec:
+  replicas: __REPLICAS__
+  strategy:
+    rollingUpdate: { maxUnavailable: 0, maxSurge: 1 }
+  selector:
+    matchLabels: { app: back-office }
+  template:
+    metadata:
+      labels: { app: back-office }
+    spec:
+      terminationGracePeriodSeconds: 80
+      containers:
+        - name: host
+          image: edx/back-office:__ENVIRONMENT__
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          startupProbe:
+            httpGet: { path: /health/startup, port: 8080 }
+            periodSeconds: 3
+            timeoutSeconds: 7
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: { path: /health/ready, port: 8080 }
+            periodSeconds: 5
+            timeoutSeconds: 7
+            failureThreshold: 2
+          livenessProbe:
+            httpGet: { path: /health/live, port: 8080 }
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          lifecycle:
+            preStop:
+              exec: { command: ["sleep", "5"] }
+          resources:
+            requests: { cpu: 50m, memory: 64Mi }
+            limits: { memory: 128Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: back-office
+spec:
+  type: LoadBalancer
+  selector: { app: back-office }
+  ports:
+    - port: __PORT_BACK_OFFICE__
+      targetPort: 8080

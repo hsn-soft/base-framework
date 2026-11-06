@@ -1,5 +1,4 @@
 <Project>
-    <Import Project="$(MSBuildThisFileDirectory)common.versions.props" />
 
     <!--
         Shared settings of every library (NuGet package) project under src/.

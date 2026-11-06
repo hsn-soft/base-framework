@@ -22,6 +22,8 @@ services
 }
 ```
 
+`Connection:NetworkRecoveryInterval` (ten seconds by default) is how long the client waits between two tries to recover a connection it lost; it reconnects by itself, forever, and recovers its channels and consumers. A test shortens it.
+
 ```csharp
 public sealed record OrderPlacedEto(Guid OrderId) : IIntegrationEventMessage;
 
@@ -103,7 +105,20 @@ unmasked is written. `LogMessageBody` above is a different switch: the raw body,
 `MaxHandlerAttempts` (default 1) can make the framework retry a handler before it counts as failed; the services in production leave
 retrying to their handlers.
 
+`MaxConcurrentHandlers` (default 0, no limit) is how many messages the service handles at the same moment *whatever their events*: every event has its own `FetchCount`, and a service with many events adds them up. A message that
+arrives when all places are taken waits for one (without holding a thread, and a stop of the service ends the wait). Set it with the pools of what the handlers share in mind: the connections of the database (`Max Pool Size` of a
+connection string, `Mongo:MaxConnectionPoolSize`), the threads (`Hosting:ThreadPool`) and Redis.
+
+`PublisherChannelPoolSize` (default 4, RabbitMQ only) is how many publisher channels are kept open between messages: a publish takes one for itself (one publisher at a time on a channel), gives it back once the broker confirmed, and the exchange or queue is declared once per
+channel. A channel on which a publish failed, or that is not open any more, is closed and not used again; a burst opens more channels than the pool keeps and the rest are closed. 0 is a channel for each message.
+
+**Kafka:** `Kafka:CreateTopics` (default true) says whether the service creates the topics it uses when it starts (`Partitions`, `ReplicationFactor`); a platform that makes its topics itself turns it off. When partitions are taken from a consumer (another instance joined the group) it
+waits up to `Kafka:RevokeTimeout` (30 s) for what it is handling to finish and be committed; the wait is logged. Each consumer reads on a thread of its own, not one of the pool (a hundred events hold a hundred threads that would otherwise be taken from everything else), and the health check
+uses one admin client for all the probes, not one per probe.
+
 `Kafka:MaxPollInterval` (5 min) is how long a consumer may go without reading before the broker gives its partitions to another instance: it must be longer than `ShutdownTimeout` (the service refuses to start otherwise) and than your slowest handler; `Kafka:SessionTimeout` (45 s) is the heartbeat limit.
+
+**Large events.** The clients keep their defaults for the size of a message (about 1 MB for a producer and for a partition fetch). An event with a large body raises `Kafka:MessageMaxBytes` (producers, the dead letter producer too), `Kafka:MaxPartitionFetchBytes` and `Kafka:FetchMaxBytes` (consumers) **together** with the `message.max.bytes` of the brokers and the `max.message.bytes` of the topic: a message that one of them refuses never arrives, and a consumer whose partition fetch is smaller than a message stalls on it. The old framework set all of them to 50 MB; here none is changed unless the settings say so.
 
 ## A secure connection
 

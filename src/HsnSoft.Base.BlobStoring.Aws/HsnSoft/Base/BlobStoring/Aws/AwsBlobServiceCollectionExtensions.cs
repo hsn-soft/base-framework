@@ -27,7 +27,7 @@ public static class AwsBlobServiceCollectionExtensions
         return services;
     }
 
-    private static AmazonS3Client CreateClient(AwsBlobOptions options)
+    internal static AmazonS3Client CreateClient(AwsBlobOptions options)
     {
         bool custom = !string.IsNullOrWhiteSpace(options.ServiceUrl);
         AmazonS3Config config = new()
@@ -38,6 +38,16 @@ public static class AwsBlobServiceCollectionExtensions
             RequestChecksumCalculation = RequestChecksumCalculation.WHEN_REQUIRED,
             ResponseChecksumValidation = ResponseChecksumValidation.WHEN_REQUIRED,
         };
+        if (options.TimeoutSeconds is { } timeout)
+        {
+            config.Timeout = TimeSpan.FromSeconds(timeout);
+        }
+
+        if (options.MaxErrorRetry is { } retries)
+        {
+            config.MaxErrorRetry = retries;
+        }
+
         if (custom)
         {
             config.ServiceURL = options.ServiceUrl;

@@ -22,7 +22,8 @@ internal sealed class HttpContextTenantSource(IHttpContextAccessor accessor) : I
             IReadOnlyList<Guid> allowed = [.. principal.FindAll(TenantClaimTypes.AllowedTenantId).Select(claim => Guid.TryParse(claim.Value, out Guid id) ? id : (Guid?)null).OfType<Guid>()];
             Guid? tenant = Guid.TryParse(principal.FindFirst(TenantClaimTypes.TenantId)?.Value, out Guid own) ? own : null;
             bool isSystem = string.Equals(principal.FindFirst(TenantClaimTypes.IsSystemTenant)?.Value, "true", StringComparison.OrdinalIgnoreCase);
-            return new TenantContext(tenant, isSystem, allowed);
+            IReadOnlyList<string> scopes = [.. principal.FindAll(TenantClaimTypes.AllowedScopeKey).Select(claim => claim.Value).Where(value => !string.IsNullOrWhiteSpace(value))];
+            return new TenantContext(tenant, isSystem, allowed, scopes);
         }
     }
 }

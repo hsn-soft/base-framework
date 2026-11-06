@@ -7,6 +7,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.AspNetCore.WebApi\HsnSoft.Base.AspNetCore.WebApi.csproj" />
+        <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.Http.Client\HsnSoft.Base.Http.Client.csproj" />
         <ProjectReference Include="..\..\..\..\src\HsnSoft.Base.Logging.Serilog\HsnSoft.Base.Logging.Serilog.csproj" />
     </ItemGroup>
 

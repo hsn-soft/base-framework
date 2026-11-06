@@ -35,9 +35,9 @@ public sealed partial class KafkaSubscriber(
         }
 
         // a consumer is taken out of its group when it does not read for MaxPollInterval; while it waits for what it handles at shutdown it does not read
-        if (_options.MaxPollInterval <= _eventBusOptions.ShutdownTimeout)
+        if (_options.MaxPollInterval <= _eventBusOptions.ShutdownTimeout || _options.MaxPollInterval <= _options.RevokeTimeout)
         {
-            throw new InvalidOperationException($"Kafka:MaxPollInterval ({_options.MaxPollInterval}) must be longer than the shutdown timeout of the event bus ({_eventBusOptions.ShutdownTimeout}).");
+            throw new InvalidOperationException($"Kafka:MaxPollInterval ({_options.MaxPollInterval}) must be longer than the shutdown timeout of the event bus ({_eventBusOptions.ShutdownTimeout}) and than Kafka:RevokeTimeout ({_options.RevokeTimeout}).");
         }
 
         string deadLetterTopic = KafkaTopology.DeadLetterTopic(_eventBusOptions);
@@ -45,9 +45,9 @@ public sealed partial class KafkaSubscriber(
 
         await KafkaTopology.EnsureTopicsAsync(_options, events.Select(info => KafkaTopology.TopicFor(_eventBusOptions, info.EventName)).Append(deadLetterTopic), stoppingToken).ConfigureAwait(false);
 
-        // consuming blocks a thread, so each consumer runs on one of its own and not on the one that started the host
+        // consuming blocks a thread, so each consumer runs on one of its own (see ConsumeAsync) and not on the one that started the host
         using IProducer<string, byte[]> deadLetters = new ProducerBuilder<string, byte[]>(_options.Apply(new ProducerConfig())).Build();
-        await Task.WhenAll(events.Select(info => Task.Run(() => ConsumeLoopAsync(info, deadLetters, deadLetterTopic, stoppingToken), CancellationToken.None))).ConfigureAwait(false);
+        await Task.WhenAll(events.Select(info => ConsumeLoopAsync(info, deadLetters, deadLetterTopic, stoppingToken))).ConfigureAwait(false);
     }
 
     // a consumer that fails on its own (the broker could not be read, an offset could not be committed) is built again after a pause, so one failure does not stop the host and the other events with it
@@ -59,8 +59,13 @@ public sealed partial class KafkaSubscriber(
             (exception, delay) => LogConsumerFailed(_logger, exception, KafkaTopology.GroupFor(_eventBusOptions, info.EventName), delay.TotalSeconds),
             stoppingToken);
 
+    // the loop blocks (Consume), so it has a thread of its own and does not take one of the pool
     private Task ConsumeAsync(IntegrationEventInfo info, IProducer<string, byte[]> deadLetters, string deadLetterTopic, CancellationToken stoppingToken)
-        => new KafkaEventConsumer(info, _options, _eventBusOptions, _dispatcher, deadLetters, deadLetterTopic, _logger).RunAsync(stoppingToken);
+        => Task.Factory.StartNew(
+            () => new KafkaEventConsumer(info, _options, _eventBusOptions, _dispatcher, deadLetters, deadLetterTopic, _logger).Run(stoppingToken),
+            CancellationToken.None,
+            TaskCreationOptions.LongRunning,
+            TaskScheduler.Default);
 
     [LoggerMessage(EventId = 4503, EventName = "KAFKA_SUBSCRIBER_CONSUMER_FAILED", Level = LogLevel.Error, Message = "{Group}: the consumer failed, it starts again in {Seconds} s")]
     private static partial void LogConsumerFailed(ILogger logger, Exception exception, string group, double seconds);

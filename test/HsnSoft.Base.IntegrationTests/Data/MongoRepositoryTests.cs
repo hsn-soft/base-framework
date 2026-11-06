@@ -4,6 +4,7 @@ using HsnSoft.Base.Domain.Repositories;
 using HsnSoft.Base.Domain.Sorting;
 using HsnSoft.Base.MongoDB;
 using HsnSoft.Base.MultiTenancy;
+using HsnSoft.Base.Reflection;
 using HsnSoft.Base.Security;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -345,5 +346,95 @@ public sealed class MongoRepositoryTests(MongoFixture mongo) : IAsyncLifetime
 
         Assert.Equal(1, changed);
         Assert.Equal("new", (await tags.FindAsync(tag.Id))!.Label);
+    }
+
+    // ---------------------------------------------------------------- the scenarios of the old repository tests, written again for the new contract
+
+    [Fact]
+    public async Task InAStoreWithNothingInIt_EveryReadAnswersNothing()
+    {
+        await using AsyncServiceScope scope = Scope();
+        IRepository<Product, Guid> products = Products(scope);
+
+        Assert.Null(await products.FindAsync(Guid.NewGuid()));
+        Assert.Null(await products.FindAsync(product => product.Name == "nothing"));
+        Assert.Empty(await products.GetListAsync(new ListQueryOptions<Product>()));
+        PagedQueryResult<Product> page = await products.GetPagedListAsync(new PagedQueryOptions<Product>());
+        Assert.Empty(page.Items);
+        Assert.Equal(0, page.TotalCount);
+        Assert.Equal(0, await products.CountAsync());
+        Assert.False(await products.AnyAsync(product => product.Name == "nothing"));
+    }
+
+    [Fact]
+    public async Task AnEntity_ComesBackAsItWentIn_WithItsAuditFieldsToTheMillisecond()
+    {
+        Product added = new("roundtrip", 41);
+        await using (AsyncServiceScope scope = Scope())
+        {
+            await Products(scope).AddAsync(added);
+        }
+
+        await using AsyncServiceScope read = Scope();
+        Product found = (await Products(read).FindAsync(added.Id))!;
+
+        Assert.Equal((added.Id, "roundtrip", 41, added.CreatedBy, s_tenantA), (found.Id, found.Name, found.Price, found.CreatedBy, found.TenantId));
+        Assert.NotNull(added.CreatedBy);
+        Assert.InRange((found.CreatedAt - added.CreatedAt).Duration(), TimeSpan.Zero, TimeSpan.FromMilliseconds(1));
+    }
+
+    [Fact]
+    public async Task EntitiesWithTheSameName_AreNotAnError_AndASortedLimitOfOneIsTheFirstOfThem()
+    {
+        await using (AsyncServiceScope seed = Scope())
+        {
+            await Products(seed).AddManyAsync([new Product("same", 18), new Product("same", 61), new Product("same", 35)]);
+        }
+
+        await using AsyncServiceScope scope = Scope();
+        IReadOnlyList<Product> oldest = await Products(scope).GetListAsync(new ListQueryOptions<Product> { Filter = product => product.Name == "same", Sort = s_sort.Parse("price desc", "price"), MaxResultCount = 1 });
+
+        Assert.NotNull(await Products(scope).FindAsync(product => product.Name == "same"));
+        Assert.Equal(61, Assert.Single(oldest).Price);
+    }
+
+    [Fact]
+    public async Task AFilterPutTogetherFromParts_IsTranslatedByTheDocumentStore_LikeAnyOther()
+    {
+        await SeedAsync(25);
+        await using AsyncServiceScope scope = Scope();
+        System.Linq.Expressions.Expression<Func<Product, bool>>? either = FilterBuilder.AnyOf<Product>(product => product.Name == "item-03", null, product => product.Price >= 240);
+        System.Linq.Expressions.Expression<Func<Product, bool>> built = new FilterBuilder<Product>().And(product => product.Name.StartsWith("item-")).And(either).Build();
+        System.Linq.Expressions.Expression<Func<Product, bool>> ored = new FilterBuilder<Product>().And(product => product.Name == "item-01").Or(product => product.Name == "item-02").Build();
+
+        IReadOnlyList<Product> chosen = await Products(scope).GetListAsync(new ListQueryOptions<Product> { Filter = built, Sort = s_sort.Parse("price", "price") });
+
+        Assert.Equal(["item-03", "item-24", "item-25"], chosen.Select(product => product.Name));
+        Assert.Equal(2, await Products(scope).CountAsync(ored));
+    }
+
+    [Fact]
+    public async Task AnEntityThatIsNotThere_IsA409_ToUpdateAndToDelete_OneAtATimeAndInBulk()
+    {
+        Product neverSaved = new("never", 1);
+        await using AsyncServiceScope scope = Scope();
+        IRepository<Product, Guid> products = Products(scope);
+
+        foreach (Func<Task> call in new Func<Task>[]
+        {
+            () => products.UpdateAsync(neverSaved),
+            () => products.DeleteAsync(neverSaved),
+            () => products.UpdateManyAsync([neverSaved]),
+            () => products.DeleteManyAsync([neverSaved]),
+        })
+        {
+            BaseHttpException conflict = await Assert.ThrowsAsync<BaseHttpException>(call);
+            Assert.Equal(409, conflict.HttpStatusCode);
+        }
+
+        Tag tag = new(Guid.NewGuid(), "plain");
+        IRepository<Tag, Guid> tags = scope.ServiceProvider.GetRequiredService<IRepository<Tag, Guid>>();
+        Assert.Equal(409, (await Assert.ThrowsAsync<BaseHttpException>(() => tags.DeleteAsync(tag))).HttpStatusCode);
+        Assert.Equal(409, (await Assert.ThrowsAsync<BaseHttpException>(() => tags.DeleteManyAsync([tag]))).HttpStatusCode);
     }
 }

@@ -72,14 +72,62 @@ public class KafkaTests
         Assert.Contains("ready", registration.Tags);
     }
 
+    // the client keeps trying to connect until the wait for the metadata ends (three seconds by default, for each probe): the tests prove the answer, not the wait, so it is short here
+    private static readonly TimeSpan s_unreachableWait = TimeSpan.FromMilliseconds(300);
+
     [Fact]
     public async Task HealthCheck_IsUnhealthy_WhenTheBrokersCannotBeReached()
     {
-        var check = new KafkaHealthCheck(Options.Create(new KafkaOptions { BootstrapServers = "127.0.0.1:1" }));
+        var check = new KafkaHealthCheck(Options.Create(new KafkaOptions { BootstrapServers = "127.0.0.1:1" }), s_unreachableWait);
 
         HealthCheckResult result = await check.CheckHealthAsync(new HealthCheckContext());
 
         Assert.Equal(HealthStatus.Unhealthy, result.Status);
+    }
+
+    [Fact]
+    public async Task TheHealthCheck_IsOneInstance_ForEveryProbe_AndAnswersUnhealthyEachTime()
+    {
+        IServiceCollection services = new ServiceCollection().AddLogging().AddKafkaEventBus(Configuration());
+        using ServiceProvider provider = services.BuildServiceProvider();
+
+        Assert.Same(provider.GetRequiredService<KafkaHealthCheck>(), provider.GetRequiredService<KafkaHealthCheck>());
+        KafkaHealthCheck check = new(Options.Create(new KafkaOptions { BootstrapServers = "127.0.0.1:1" }), s_unreachableWait);
+        for (int probe = 0; probe < 3; probe++)
+        {
+            Assert.Equal(HealthStatus.Unhealthy, (await check.CheckHealthAsync(new HealthCheckContext())).Status);
+        }
+
+        check.Dispose();
+        check.Dispose();   // twice is fine
+        await Assert.ThrowsAsync<ObjectDisposedException>(() => check.CheckHealthAsync(new HealthCheckContext()));
+    }
+
+    [Fact]
+    public async Task ACheckThatIsCancelled_StopsWaitingForTheBrokers()
+    {
+        using KafkaHealthCheck check = new(Options.Create(new KafkaOptions { BootstrapServers = "127.0.0.1:1" }), s_unreachableWait);
+        using CancellationTokenSource cancelled = new();
+        await cancelled.CancelAsync();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => check.CheckHealthAsync(new HealthCheckContext(), cancelled.Token));
+    }
+
+    [Fact]
+    public async Task Subscriber_WithARevokeTimeoutLongerThanThePollInterval_DoesNotStart()
+    {
+        InMemoryEventBusSubscriptionManager subscriptions = new([new EventSubscription(typeof(OrderPlaced), typeof(object), 1)], Options.Create(new EventBusOptions()), NullLogger<InMemoryEventBusSubscriptionManager>.Instance);
+        var subscriber = new KafkaSubscriber(
+            subscriptions,
+            new EventDispatcher(new ServiceCollection().BuildServiceProvider().GetRequiredService<IServiceScopeFactory>(), subscriptions, Options.Create(new EventBusOptions()), NullLogger<EventDispatcher>.Instance),
+            Options.Create(new KafkaOptions { MaxPollInterval = TimeSpan.FromSeconds(20), RevokeTimeout = TimeSpan.FromSeconds(30) }),
+            Options.Create(new EventBusOptions { ShutdownTimeout = TimeSpan.FromSeconds(5) }),
+            NullLogger<KafkaSubscriber>.Instance);
+
+        await subscriber.StartAsync(CancellationToken.None).WaitAsync(TimeSpan.FromSeconds(5));
+        InvalidOperationException failure = await Assert.ThrowsAsync<InvalidOperationException>(() => subscriber.ExecuteTask!);
+
+        Assert.Contains("Kafka:RevokeTimeout", failure.Message, StringComparison.Ordinal);
     }
 
     [Fact]

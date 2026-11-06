@@ -12,7 +12,7 @@ using Microsoft.Extensions.Options;
 
 namespace HsnSoft.Base.AspNetCore;
 
-/// <summary>Fetches the document of a service from its internal address and shows it as the gateway's: its address and its paths.</summary>
+/// <summary>Fetches the document of a service from its internal address (and keeps it for a while) and shows it as the gateway's: its address and its paths.</summary>
 internal sealed partial class SwaggerDocumentRewriter(
     IHttpClientFactory httpClientFactory,
     IMemoryCache cache,
@@ -27,15 +27,16 @@ internal sealed partial class SwaggerDocumentRewriter(
 
     public async Task<string> GetAsync(SwaggerServiceDefinition service, string gatewayOrigin, CancellationToken cancellationToken)
     {
-        string cacheKey = $"swagger-gateway::{service.Key}::{gatewayOrigin}";
-        if (cache.TryGetValue(cacheKey, out string? cached) && cached is not null)
+        // what is kept is the document the service gave, one for each service: the address of the gateway comes from the Host header of the request when it is not set, and a key made of it would be one entry for
+        // every value a client cares to send. The rewriting is done for each request (it is a small document and the UI is opened by people).
+        string cacheKey = $"swagger-gateway::{service.Key}";
+        if (!cache.TryGetValue(cacheKey, out string? document) || document is null)
         {
-            return cached;
+            document = await FetchAsync(service, cancellationToken).ConfigureAwait(false);
+            cache.Set(cacheKey, document, TimeSpan.FromSeconds(_options.CacheDurationSeconds));
         }
 
-        string json = Rewrite(await FetchAsync(service, cancellationToken).ConfigureAwait(false), service, gatewayOrigin);
-        cache.Set(cacheKey, json, TimeSpan.FromSeconds(_options.CacheDurationSeconds));
-        return json;
+        return Rewrite(document, service, gatewayOrigin);
     }
 
     private async Task<string> FetchAsync(SwaggerServiceDefinition service, CancellationToken cancellationToken)

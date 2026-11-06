@@ -41,7 +41,7 @@ public sealed class Product : FullAuditedEntity<Guid>, IMultiTenant
         Product product = new()
         {
             Id = Guid.CreateVersion7(),
-            Sku = StringHelper.Normalize(Guard.NotNullOrWhiteSpace(sku, nameof(Sku), ProductConsts.SkuMaxLength)),
+            Sku = Guard.NotNullOrWhiteSpace(StringHelper.Normalize(Guard.NotNullOrWhiteSpace(sku, nameof(Sku), ProductConsts.SkuMaxLength)), nameof(Sku)),
             IsActive = true,
         };
         product.Change(name, description, price, stock);
@@ -57,7 +57,7 @@ public sealed class Product : FullAuditedEntity<Guid>, IMultiTenant
     private void Change(string name, string? description, decimal price, int stock)
     {
         Name = Guard.NotNullOrWhiteSpace(name, nameof(Name), ProductConsts.NameMaxLength);
-        NormalizedName = StringHelper.Normalize(Name);
+        NormalizedName = Guard.NotNullOrWhiteSpace(StringHelper.Normalize(Name), nameof(NormalizedName));
         Description = string.IsNullOrWhiteSpace(description) ? null : Guard.Length(description.Trim(), nameof(Description), ProductConsts.DescriptionMaxLength);
         Price = Guard.NotNegative(price, nameof(Price));
         Stock = Guard.NotNegative(stock, nameof(Stock));

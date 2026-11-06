@@ -1,0 +1,74 @@
+<Project>
+    <!--
+        Central package management: the version of every NuGet package that the projects under src/ and test/ use is written here, and only here.
+        A project file has a PackageReference with no Version. The two Microsoft families that move together (ASP.NET Core and EF Core) are
+        properties, so a new patch is one edit. The samples have their own file (samples/Directory.Packages.props) and are not affected by this one.
+        See ADR-0134.
+    -->
+    <PropertyGroup>
+        <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+        <MicrosoftAspNetCorePackageVersion>10.0.14</MicrosoftAspNetCorePackageVersion>
+        <MicrosoftEntityFrameworkCorePackageVersion>10.0.14</MicrosoftEntityFrameworkCorePackageVersion>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageVersion Include="AWSSDK.S3" Version="4.0.104.7" />
+        <PackageVersion Include="Azure.Identity" Version="1.21.0" />
+        <PackageVersion Include="Azure.Storage.Blobs" Version="12.30.1" />
+        <PackageVersion Include="BenchmarkDotNet" Version="0.15.4" />
+        <PackageVersion Include="Confluent.Kafka" Version="2.16.0" />
+        <PackageVersion Include="coverlet.collector" Version="10.1.0" />
+        <PackageVersion Include="DeepCloner" Version="0.10.4" />
+        <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="$(MicrosoftAspNetCorePackageVersion)" />
+        <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="$(MicrosoftAspNetCorePackageVersion)" />
+        <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="$(MicrosoftEntityFrameworkCorePackageVersion)" />
+        <PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="$(MicrosoftEntityFrameworkCorePackageVersion)" />
+        <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="$(MicrosoftEntityFrameworkCorePackageVersion)" />
+        <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="$(MicrosoftEntityFrameworkCorePackageVersion)" />
+        <PackageVersion Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="$(MicrosoftAspNetCorePackageVersion)" />
+        <PackageVersion Include="Microsoft.Extensions.Configuration" Version="$(MicrosoftAspNetCorePackageVersion)" />
+        <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="$(MicrosoftAspNetCorePackageVersion)" />
+        <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="$(MicrosoftAspNetCorePackageVersion)" />
+        <PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="$(MicrosoftAspNetCorePackageVersion)" />
+        <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="$(MicrosoftAspNetCorePackageVersion)" />
+        <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="$(MicrosoftAspNetCorePackageVersion)" />
+        <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="$(MicrosoftAspNetCorePackageVersion)" />
+        <PackageVersion Include="Microsoft.Extensions.Hosting" Version="$(MicrosoftAspNetCorePackageVersion)" />
+        <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="$(MicrosoftAspNetCorePackageVersion)" />
+        <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.5.0" />
+        <PackageVersion Include="Microsoft.Extensions.Localization.Abstractions" Version="$(MicrosoftAspNetCorePackageVersion)" />
+        <PackageVersion Include="Microsoft.Extensions.Logging" Version="$(MicrosoftAspNetCorePackageVersion)" />
+        <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="$(MicrosoftAspNetCorePackageVersion)" />
+        <PackageVersion Include="Microsoft.Extensions.Options" Version="$(MicrosoftAspNetCorePackageVersion)" />
+        <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="$(MicrosoftAspNetCorePackageVersion)" />
+        <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
+        <PackageVersion Include="Minio" Version="7.0.0" />
+        <PackageVersion Include="MongoDB.Driver" Version="3.13.0" />
+        <PackageVersion Include="MySql.EntityFrameworkCore" Version="10.0.12" />
+        <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
+        <PackageVersion Include="NLog" Version="6.2.2" />
+        <PackageVersion Include="NLog.Extensions.Logging" Version="6.2.2" />
+        <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
+        <PackageVersion Include="PuppeteerSharp" Version="25.8.0" />
+        <PackageVersion Include="RabbitMQ.Client" Version="7.2.2" />
+        <PackageVersion Include="Serilog" Version="4.4.0" />
+        <PackageVersion Include="Serilog.Extensions.Logging" Version="10.0.0" />
+        <PackageVersion Include="Serilog.Sinks.Console" Version="6.1.1" />
+        <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
+        <PackageVersion Include="Serilog.Sinks.Graylog" Version="3.1.1" />
+        <PackageVersion Include="StackExchange.Redis" Version="3.4.20" />
+        <PackageVersion Include="Swashbuckle.AspNetCore" Version="10.3.1" />
+        <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.14" />
+        <PackageVersion Include="Testcontainers.Azurite" Version="4.16.0" />
+        <PackageVersion Include="Testcontainers.Kafka" Version="4.16.0" />
+        <PackageVersion Include="Testcontainers.Minio" Version="4.15.0" />
+        <PackageVersion Include="Testcontainers.MongoDb" Version="4.16.0" />
+        <PackageVersion Include="Testcontainers.MsSql" Version="4.16.0" />
+        <PackageVersion Include="Testcontainers.MySql" Version="4.16.0" />
+        <PackageVersion Include="Testcontainers.PostgreSql" Version="4.16.0" />
+        <PackageVersion Include="Testcontainers.RabbitMq" Version="4.16.0" />
+        <PackageVersion Include="Testcontainers.Redis" Version="4.16.0" />
+        <PackageVersion Include="xunit" Version="2.9.3" />
+        <PackageVersion Include="xunit.runner.visualstudio" Version="4.0.1" />
+    </ItemGroup>
+</Project>

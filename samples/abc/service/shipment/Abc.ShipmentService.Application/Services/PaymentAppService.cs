@@ -48,6 +48,16 @@ public sealed class PaymentAppService(IRepository<Payment, Guid> payments, IServ
         return [.. found.Select(payment => new PaymentSearchDto { Id = payment.Id, OrderId = payment.OrderId, Amount = payment.Amount, Status = payment.Status.ToString() })];
     }
 
+    public async Task<PaymentSummaryDto> GetSummaryAsync(CancellationToken cancellationToken = default)
+        => new()
+        {
+            Pending = await payments.CountAsync(payment => payment.Status == PaymentStatus.Pending, cancellationToken).ConfigureAwait(false),
+            Succeeded = await payments.CountAsync(payment => payment.Status == PaymentStatus.Succeeded, cancellationToken).ConfigureAwait(false),
+            Failed = await payments.CountAsync(payment => payment.Status == PaymentStatus.Failed, cancellationToken).ConfigureAwait(false),
+            Refunded = await payments.CountAsync(payment => payment.Status == PaymentStatus.Refunded, cancellationToken).ConfigureAwait(false),
+            At = DateTimeOffset.UtcNow,
+        };
+
     public async Task<PaymentDto> CreateAsync(PaymentCreateDto input, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(input);
