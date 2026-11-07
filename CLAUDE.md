@@ -12,6 +12,18 @@ For multi-step work, use the matching on-demand skill under [`.claude/skills/`](
 
 When performing Git operations (commit, push, or opening a PR), follow [CONTRIBUTING.md](CONTRIBUTING.md) and explicitly consult [the Git/release rule](.claude/rules/git-release.md); Git operations do not necessarily touch a file path that activates that rule automatically.
 
+## Definition of done
+
+A change is done when every line below that applies has been done **in the same change**, not later:
+
+1. **Decision.** A new rule other code must follow, or a consequential choice between alternatives, is an ADR (next number, a row in `docs/adr/INDEX.md`); a changed decision is a new ADR that supersedes the old one, which gets a status note. A rule Claude has to keep is also a line in the matching `.claude/rules/*.md` (or a new rule file with its `paths`) that cites the ADR.
+2. **Documents.** What the change touches is written where it is owned: the project and dependency map (`docs/Overview.md`), `README.md`, `docs/Checks.md`, `docs/Releasing.md`, `docs/BranchRules.md`, the feature reference in `docs/`. A new script, workflow, endpoint or setting is documented where a developer will look for it; a new setting has its values in every `appsettings.{environment}.json` (never a real secret) and, if it needs a credential, `.env.example`.
+3. **Tests.** Unit tests for every new or changed behavior, with the boundary and error cases; integration tests (a real host, Testcontainers) when the change crosses a database, broker, cache or HTTP boundary or composes a host; a test that reads the settings when the settings of several files have to agree. No test depends on time, cores, order or ports: a positive assertion waits for the condition (bounded) and a clock is a `TimeProvider` (see `testing-ci.md`).
+4. **Scripts and workflows.** A script or a workflow change keeps the detector and the CI in step (`docs/Checks.md`); a script a person runs by `source` works in bash and in zsh.
+5. **Checks.** Run `dotnet format` and the detector (or the check script of the repository) and read the result **from the log file** (a long run writes to a file, never to a pipe that a child process can keep open).
+6. **Other repositories.** A rule or a fix that holds in more than one repository (the framework, the shared libraries, the services, the apps, the gateway, the samples) is applied to each of them, or the change says why not.
+7. **Report.** Say what was done and what was not (a test not run, a version that waits for a release); commit on the own `feat/` branch and never push to `dev` or `rel/*`.
+
 ## Repository rules
 
 - Claude works on a `feat/...` branch of its own, cut from `dev`; it may commit and push to that branch, and it never opens a pull request into `dev` or a release branch, never merges into `dev` or `rel/*`, and never pushes to them: the maintainer does (ADR-0132). Do not stack branches. When the maintainer says a push stays with them, commit and do not push.
