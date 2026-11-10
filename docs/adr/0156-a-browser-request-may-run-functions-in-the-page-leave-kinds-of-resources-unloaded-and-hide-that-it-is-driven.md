@@ -1,6 +1,6 @@
 # ADR-0156: A browser request may run functions in the page, leave kinds of resources unloaded and hide that it is driven
 
-- **Status:** Accepted (builds on [ADR-0141](0141-a-browser-is-a-service-with-a-pool-and-a-policy.md) and [ADR-0154](0154-the-wait-conditions-of-the-puppeteer-renderer-follow-what-the-library-supports.md))
+- **Status:** Accepted (builds on [ADR-0141](0141-a-rendered-page-is-an-untrusted-caller-and-the-browser-is-a-pool-with-limits.md) and [ADR-0154](0154-the-wait-conditions-of-the-puppeteer-renderer-follow-what-the-library-supports.md))
 - **Date:** 2026-11-10
 
 ## Context
@@ -20,4 +20,4 @@ An application reads a page by the function it names, as the previous system did
 
 ## Related
 
-[ADR-0141](0141-a-browser-is-a-service-with-a-pool-and-a-policy.md), [ADR-0154](0154-the-wait-conditions-of-the-puppeteer-renderer-follow-what-the-library-supports.md).
+[ADR-0141](0141-a-rendered-page-is-an-untrusted-caller-and-the-browser-is-a-pool-with-limits.md), [ADR-0154](0154-the-wait-conditions-of-the-puppeteer-renderer-follow-what-the-library-supports.md).
