@@ -116,4 +116,35 @@ public class BrowserContractTests
         Assert.Equal((ImageFormat.Png, 80, false), (new ScreenshotOptions().Format, new ScreenshotOptions().Quality, new ScreenshotOptions().FullPage));
         Assert.IsType<BrowserException>(new BrowserBlockedException("x"), exactMatch: false);
     }
+
+    // ---------------------------------------------------------------- what a request may ask for beyond the page
+
+    [Fact]
+    public void ARequest_LoadsEverythingAndRunsNothing_UntilItSaysOtherwise()
+    {
+        BrowserRequest request = BrowserRequest.FromUrl(new Uri("https://8.8.8.8/"));
+
+        Assert.Equal((BrowserResources.None, false, false, null), (request.BlockedResources, request.DisableCache, request.Stealth, request.Scripts));
+    }
+
+    [Fact]
+    public void AScriptHasANameAndASource()
+    {
+        BrowserRequest valid = BrowserRequest.FromHtml("<p/>") with { Scripts = new Dictionary<string, string> { ["title"] = "() => ['x']" } };
+
+        valid.Validate();
+        Assert.Throws<ArgumentException>(() => (valid with { Scripts = new Dictionary<string, string> { [" "] = "() => 1" } }).Validate());
+        Assert.Throws<ArgumentException>(() => (valid with { Scripts = new Dictionary<string, string> { ["title"] = " " } }).Validate());
+    }
+
+    [Fact]
+    public void AScriptThatWorked_HasItsValue_AndOneThatFailed_HasItsReason()
+    {
+        ScriptResult worked = new(System.Text.Json.JsonDocument.Parse("[1]").RootElement, null);
+        ScriptResult failed = new(null, "it threw");
+
+        Assert.Equal((true, false), (worked.IsSuccess, failed.IsSuccess));
+        Assert.Null(new RenderedPage("<p/>", null, 200, "t").ScriptResults);
+    }
 }
+

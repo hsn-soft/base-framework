@@ -169,3 +169,4 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 | [0153](0153-the-ci-does-not-run-on-the-release-branches.md) | The CI does not run on the release branches | Accepted | 2026-11-05 |
 | [0154](0154-the-wait-conditions-of-the-puppeteer-renderer-follow-what-the-library-supports.md) | The wait conditions of the Puppeteer renderer follow what the library supports | Accepted | 2026-11-05 |
 | [0155](0155-a-rate-limit-holds-across-every-pod-and-answers-429.md) | A rate limit holds across every pod and answers 429 (`RateLimiting`) | Accepted | 2026-11-06 |
+| [0156](0156-a-browser-request-may-run-functions-in-the-page-leave-kinds-of-resources-unloaded-and-hide-that-it-is-driven.md) | A browser request may run functions in the page, leave kinds of resources unloaded and hide that it is driven (`Browser`) | Accepted | 2026-11-10 |

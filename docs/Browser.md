@@ -17,6 +17,21 @@ byte[] png = await renderer.ScreenshotAsync(BrowserRequest.FromUrl(new Uri(addre
 
 A request has an address (http or https) **or** HTML, not both, and may set the wait condition (`Load`, `DomContentLoaded`, `NetworkIdle`), a selector to wait for, a timeout (1 to 600 seconds), the viewport, a user agent and headers. **With HTML, the wait condition is met in two steps** ([ADR-0154](adr/0154-the-wait-conditions-of-the-puppeteer-renderer-follow-what-the-library-supports.md)): `SetContent` waits for `load` (which comes after `DOMContentLoaded`, so it stands for `Load` and `DomContentLoaded`), and `NetworkIdle` is then waited for apart with `WaitForNetworkIdleAsync`, because PuppeteerSharp ignores the network-idle values in `SetContent` and the wait hung until the timeout of the call on a slow CI runner. With an address the condition goes to `GoToAsync` as it is. A page that cannot be rendered is a `BrowserException`, an address the policy refuses as the page itself is a `BrowserBlockedException`, a call that took longer than its time is a `TimeoutException`.
 
+## Functions in the page, resources left unloaded, stealth (ADR-0156)
+
+```csharp
+RenderedPage page = await renderer.GetPageAsync(BrowserRequest.FromUrl(address) with
+{
+    BlockedResources = BrowserResources.Media | BrowserResources.Fonts | BrowserResources.Stylesheets,   // the document is always loaded
+    Stealth = true,        // the page is told, before its scripts run, that its browser is not driven (an address only)
+    DisableCache = true,
+    Scripts = new Dictionary<string, string> { ["title"] = "() => Array.from(document.querySelectorAll('h1'), e => e.innerText)" },
+});
+JsonElement? titles = page.ScriptResults!["title"].Value;   // or .Error: a function that fails does not fail the call, nor the ones after it
+```
+
+A function has no argument, runs in the page after it is ready, in the order of the dictionary, and returns what can be written as JSON (`undefined` is no value). It is the caller's own code: never put a customer's input into one. The policy decides first; the flags only refuse more.
+
 ## The policy: what a page may load
 
 A rendered page runs scripts and fetches what it names, so an address that came from outside can make the browser call the inside of the network (the cloud metadata address, a database, another service). **Every request of the page, the redirects and what its scripts fetch included, goes through `BrowserUrlPolicy`**, and the address of the page itself is checked before a page is opened:
@@ -35,7 +50,7 @@ A browser resolves a name again when it connects, so a name that changes its ans
 | `DisableSandbox` | `false` | `--no-sandbox`. Chrome refuses to start as root with its sandbox; a container that runs as root has to turn it on, and then the page it renders can reach the machine: run the container as a user that is not root where you can |
 | `DisableDevShmUsage` | `false` | For a container whose `/dev/shm` is small (Docker gives 64 MB) |
 | `IgnoreCertificateErrors` | `false` | Development only |
-| `ProxyServer`, `ExtraArguments` | none | A proxy for every request; more arguments for Chrome |
+| `ProxyServer`, `ProxyUserName`, `ProxyPassword`, `ExtraArguments` | none | A proxy for every request and the user and password it asks for (secrets: from the environment, never in a settings file); more arguments for Chrome |
 | `MaxConcurrentPages` | 4 | The others wait |
 | `WaitForPageSeconds` | 30 | How long a call waits for a place before it is a `TimeoutException` |
 | `OperationTimeoutSeconds` | 60 | The time of a whole call (the request can set its own) |
