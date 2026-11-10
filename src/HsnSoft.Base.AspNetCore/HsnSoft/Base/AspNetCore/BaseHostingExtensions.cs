@@ -239,7 +239,15 @@ public static class BaseHostingExtensions
             }
             else
             {
-                s_failed(app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("HsnSoft.Base.AspNetCore.Startup"), exception);
+                try
+                {
+                    s_failed(app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("HsnSoft.Base.AspNetCore.Startup"), exception);
+                }
+                catch (ObjectDisposedException)
+                {
+                    // a host that fails to start (a setting that is checked at start, a hosted service that throws) has disposed its services, its loggers among them: the reason goes to the standard error and is not lost
+                    await Console.Error.WriteLineAsync($"The host failed to start: {exception}").ConfigureAwait(false);
+                }
             }
 
             return 1;
