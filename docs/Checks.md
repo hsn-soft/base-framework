@@ -8,7 +8,7 @@ For developers and for Claude. Three places check your work, each a little later
 dotnet tool restore        # Husky.Net, pinned in .config/dotnet-tools.json
 dotnet husky install       # puts the git hooks in place (.husky/pre-commit, .husky/pre-push)
 ```
-You need the .NET 10 SDK, git, python3 and bash; Docker for the integration tests. The detector checks this and says what is missing.
+You need the .NET 11 SDK, git, python3 and bash; Docker for the integration tests. The detector checks this and says what is missing.
 
 ## What runs when
 

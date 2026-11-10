@@ -1,6 +1,6 @@
 # Working in this repository
 
-HsnSoft Base Framework is a .NET 10 repository of small, single-capability NuGet packages and their tests. The package/dependency map is [docs/Overview.md](docs/Overview.md); the documentation map is [docs/README.md](docs/README.md).
+HsnSoft Base Framework is a .NET 11 repository of small, single-capability NuGet packages and their tests. The package/dependency map is [docs/Overview.md](docs/Overview.md); the documentation map is [docs/README.md](docs/README.md).
 
 ## Load only task-relevant context
 

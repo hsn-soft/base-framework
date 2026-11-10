@@ -6,16 +6,23 @@ public class CalculatorTests
     [InlineData(1, 2, 3)]
     [InlineData(-1, -2, -3)]
     [InlineData(-5, 5, 0)]
-    [InlineData(0.1, 0.2, 0.3)] // exact, unlike double
     public void Add_ReturnsSum(decimal left, decimal right, decimal expected)
         => Assert.Equal(expected, Calculator.Add(left, right));
+
+    // A decimal literal, not InlineData(0.1): the attribute holds a double, and a double is not exactly 0.1 (since .NET 11 it is converted without rounding).
+    [Fact]
+    public void Add_IsExactForDecimalFractions()
+        => Assert.Equal(0.3m, Calculator.Add(0.1m, 0.2m));
 
     [Theory]
     [InlineData(5, 3, 2)]
     [InlineData(3, 5, -2)]
-    [InlineData(0.3, 0.1, 0.2)]
     public void Subtract_ReturnsDifference(decimal left, decimal right, decimal expected)
         => Assert.Equal(expected, Calculator.Subtract(left, right));
+
+    [Fact]
+    public void Subtract_IsExactForDecimalFractions()
+        => Assert.Equal(0.2m, Calculator.Subtract(0.3m, 0.1m));
 
     [Theory]
     [InlineData(3, 4, 12)]

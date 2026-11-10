@@ -8,8 +8,9 @@ public static class MaskingHelper
 {
     private const int DefaultMaskSize = 5;
 
-    private static readonly HashSet<string> s_sensitiveKeys = new(StringComparer.OrdinalIgnoreCase)
-    {
+    private static readonly HashSet<string> s_sensitiveKeys =
+    [
+        with(StringComparer.OrdinalIgnoreCase),
         "password",
         "pwd",
         "pass",
@@ -24,7 +25,7 @@ public static class MaskingHelper
         "authorization",
         "apikey",
         "api_key"
-    };
+    ];
 
     private static bool IsSensitiveKey(string? key) => !string.IsNullOrWhiteSpace(key) && s_sensitiveKeys.Contains(key);
 
@@ -49,12 +50,12 @@ public static class MaskingHelper
         var builder = new StringBuilder();
 
         if (attribute.ShowFirst > 0)
-            builder.Append(currentPropertyValue[..attribute.ShowFirst]);
+            builder.Append(currentPropertyValue, 0, attribute.ShowFirst);
 
-        builder.Append(new string(GetMaskChar(attribute), maskSize));
+        builder.Append(GetMaskChar(attribute), maskSize);
 
         if (attribute.ShowLast > 0)
-            builder.Append(currentPropertyValue[(propertySize - attribute.ShowLast)..]);
+            builder.Append(currentPropertyValue, propertySize - attribute.ShowLast, attribute.ShowLast);
 
         return builder.ToString();
     }

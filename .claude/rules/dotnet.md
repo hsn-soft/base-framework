@@ -9,7 +9,7 @@ paths:
 
 # .NET implementation rules
 
-- Target the repository's .NET 10 conventions and import the shared build properties used by neighboring projects. `.editorconfig` is the formatting and analyzer authority; do not introduce competing style configuration.
+- Target the repository's .NET 11 conventions and import the shared build properties used by neighboring projects. `.editorconfig` is the formatting and analyzer authority; do not introduce competing style configuration.
 - Keep nullable analysis and analyzers enabled, fix warnings rather than suppressing them, and preserve the repository's warnings-as-errors build.
 - In library code use explicit `using` directives, explicit types except where the type is obvious from construction, `ConfigureAwait(false)` on awaits, and `ArgumentNullException.ThrowIfNull` at public entry points.
 - Emit logs through `ILogger` and `[LoggerMessage]` source-generated methods. Do not add a competing logging abstraction.

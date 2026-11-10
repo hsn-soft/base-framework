@@ -1,5 +1,4 @@
 using System.IO.Compression;
-using System.Net.Http.Json;
 using System.Security.Cryptography;
 using System.ServiceModel;
 using System.ServiceModel.Channels;

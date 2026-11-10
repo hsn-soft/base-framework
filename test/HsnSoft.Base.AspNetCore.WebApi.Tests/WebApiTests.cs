@@ -144,7 +144,7 @@ public class WebApiTests
     {
         HttpResponseMessage response = await app.GetTestClient().GetAsync(path);
         string text = await response.Content.ReadAsStringAsync();
-        return (response.StatusCode, text.Length == 0 ? default : JsonDocument.Parse(text).RootElement.Clone());
+        return (response.StatusCode, text.Length == 0 ? default : JsonElement.Parse(text).Clone());
     }
 
     [Fact]
@@ -216,7 +216,7 @@ public class WebApiTests
         HttpResponseMessage file = await client.GetAsync("/api/answers/file");
 
         Assert.Equal(418, (int)problem.StatusCode);
-        Assert.Equal("teapot", JsonDocument.Parse(await problem.Content.ReadAsStringAsync()).RootElement.GetProperty("title").GetString());
+        Assert.Equal("teapot", JsonElement.Parse(await problem.Content.ReadAsStringAsync()).GetProperty("title").GetString());
         Assert.Equal("bytes", await file.Content.ReadAsStringAsync());
     }
 
@@ -230,7 +230,7 @@ public class WebApiTests
         {
             HttpResponseMessage response = await app.GetTestClient().PostAsync("/api/answers/greet", new StringContent("""{"times":99}""", Encoding.UTF8, "application/json"));
 
-            JsonElement body = JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement;
+            JsonElement body = JsonElement.Parse(await response.Content.ReadAsStringAsync());
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
             Assert.Equal("validation_error", body.GetProperty("errorCode").GetString());
             Assert.Equal("Validation failed.", body.GetProperty("statusMessages")[0].GetString());
@@ -376,7 +376,7 @@ public class WebApiTests
         HttpResponseMessage response = await app.GetTestClient().SendAsync(request);
 
         // the trace the caller (a gateway) continues, so the logs of every service it passed through can be found with it
-        Assert.Equal("0af7651916cd43dd8448eb211c80319c", JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement.GetProperty("traceId").GetString());
+        Assert.Equal("0af7651916cd43dd8448eb211c80319c", JsonElement.Parse(await response.Content.ReadAsStringAsync()).GetProperty("traceId").GetString());
     }
 
     [Fact]
@@ -408,7 +408,7 @@ public class WebApiTests
 
         string json = await app.GetTestClient().GetStringAsync("/minimal-color");
 
-        Assert.Equal("Red", JsonDocument.Parse(json).RootElement.GetProperty("color").GetString());
+        Assert.Equal("Red", JsonElement.Parse(json).GetProperty("color").GetString());
     }
 
     [Fact]

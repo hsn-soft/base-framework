@@ -1,6 +1,6 @@
 # ADR-0007: Shared build settings, one version, and how a package is published
 
-- **Status:** Accepted
+- **Status:** Accepted (the target framework `net10.0` is superseded by ADR-0157: `net11.0`)
 - **Date:** 2026-10-22
 
 ## Context
@@ -10,7 +10,7 @@ pick; a warning that is only a warning on a developer's machine becomes a failur
 
 ## Decision
 
-- **`common.props`** (libraries under `src/`) and **`common.test.props`** (tests under `test/`) hold the shared settings: `net10.0`, `LangVersion latest`, `Nullable enable`, deterministic builds, generated XML
+- **`common.props`** (libraries under `src/`) and **`common.test.props`** (tests under `test/`) hold the shared settings: `net11.0` (see ADR-0157), `LangVersion latest`, `Nullable enable`, deterministic builds, generated XML
   documentation, `EnforceCodeStyleInBuild`, `AnalysisLevel latest-recommended`, NuGet metadata (authors, license, icon, symbols in the package). A project imports one of them and adds only its id, description and tags.
   Tests also get `InternalsVisibleTo` for `<Project>.Tests` through `common.props`, so a unit test project can see the internals of its package.
 - **Warnings are errors in CI** (`TreatWarningsAsErrors` when `GITHUB_ACTIONS` is true) and in the pre-push hook and the detector (`-p:TreatWarningsAsErrors=true`), so a warning that would break the pull

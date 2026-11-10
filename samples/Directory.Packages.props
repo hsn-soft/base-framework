@@ -16,9 +16,9 @@
         <PackageVersion Include="Quartz" Version="3.18.1" />
         <PackageVersion Include="Quartz.Extensions.Hosting" Version="3.18.1" />
         <PackageVersion Include="Yarp.ReverseProxy" Version="2.3.0" />
-        <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.13" />
-        <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.14" />
-        <PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.13" />
-        <PackageVersion Include="Microsoft.Extensions.Localization.Abstractions" Version="10.0.13" />
+        <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="11.0.0" />
+        <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="11.0.0-rc.3.26522.148" />
+        <PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="11.0.0-rc.3.26522.148" />
+        <PackageVersion Include="Microsoft.Extensions.Localization.Abstractions" Version="11.0.0" />
     </ItemGroup>
 </Project>

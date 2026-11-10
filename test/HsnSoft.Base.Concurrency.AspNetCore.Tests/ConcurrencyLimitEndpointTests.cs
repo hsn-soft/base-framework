@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Json;
 using HsnSoft.Base.Communication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc;

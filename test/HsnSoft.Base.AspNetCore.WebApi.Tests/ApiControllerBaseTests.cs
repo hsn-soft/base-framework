@@ -46,7 +46,7 @@ public sealed class ApiControllerBaseTests
         await app.StartAsync();
 
         HttpResponseMessage response = await app.GetTestClient().GetAsync("/api/base-sample/who");
-        JsonElement payload = JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement.GetProperty("payload");
+        JsonElement payload = JsonElement.Parse(await response.Content.ReadAsStringAsync()).GetProperty("payload");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal("alice", payload.GetProperty("user").GetString());

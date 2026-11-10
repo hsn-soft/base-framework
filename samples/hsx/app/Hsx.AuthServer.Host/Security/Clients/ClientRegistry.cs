@@ -27,7 +27,7 @@ public sealed class ClientRegistry
 
         _time = time ?? throw new ArgumentNullException(nameof(time));
         List<ClientOptions> clients = configuration.GetSection(SectionName).Get<List<ClientOptions>>() ?? [];
-        _clients = new Dictionary<string, ClientOptions>(StringComparer.OrdinalIgnoreCase);
+        _clients = [with(StringComparer.OrdinalIgnoreCase)];
         foreach (ClientOptions client in clients)
         {
             Validate(client, jwt.Value.IssuedAudiences);

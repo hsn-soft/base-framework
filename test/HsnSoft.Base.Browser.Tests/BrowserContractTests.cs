@@ -140,7 +140,7 @@ public class BrowserContractTests
     [Fact]
     public void AScriptThatWorked_HasItsValue_AndOneThatFailed_HasItsReason()
     {
-        ScriptResult worked = new(System.Text.Json.JsonDocument.Parse("[1]").RootElement, null);
+        ScriptResult worked = new(System.Text.Json.JsonElement.Parse("[1]"), null);
         ScriptResult failed = new(null, "it threw");
 
         Assert.Equal((true, false), (worked.IsSuccess, failed.IsSuccess));

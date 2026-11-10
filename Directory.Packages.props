@@ -7,8 +7,8 @@
     -->
     <PropertyGroup>
         <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-        <MicrosoftAspNetCorePackageVersion>10.0.14</MicrosoftAspNetCorePackageVersion>
-        <MicrosoftEntityFrameworkCorePackageVersion>10.0.14</MicrosoftEntityFrameworkCorePackageVersion>
+        <MicrosoftAspNetCorePackageVersion>11.0.0</MicrosoftAspNetCorePackageVersion>
+        <MicrosoftEntityFrameworkCorePackageVersion>11.0.0-rc.3.26522.148</MicrosoftEntityFrameworkCorePackageVersion>
     </PropertyGroup>
 
     <ItemGroup>
@@ -44,11 +44,11 @@
         <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
         <PackageVersion Include="Minio" Version="7.0.0" />
         <PackageVersion Include="MongoDB.Driver" Version="3.13.0" />
-        <PackageVersion Include="MySql.EntityFrameworkCore" Version="10.0.12" />
+        <PackageVersion Include="MySql.EntityFrameworkCore" Version="11.0.0-preview" />
         <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
         <PackageVersion Include="NLog" Version="6.2.2" />
         <PackageVersion Include="NLog.Extensions.Logging" Version="6.2.2" />
-        <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
+        <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="11.0.0-rc.3" />
         <PackageVersion Include="PuppeteerSharp" Version="25.8.0" />
         <PackageVersion Include="RabbitMQ.Client" Version="7.2.2" />
         <PackageVersion Include="Serilog" Version="4.4.0" />
@@ -58,7 +58,7 @@
         <PackageVersion Include="Serilog.Sinks.Graylog" Version="3.1.1" />
         <PackageVersion Include="StackExchange.Redis" Version="3.4.20" />
         <PackageVersion Include="Swashbuckle.AspNetCore" Version="10.3.1" />
-        <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.14" />
+        <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="11.0.0" />
         <PackageVersion Include="Testcontainers.Azurite" Version="4.16.0" />
         <PackageVersion Include="Testcontainers.Kafka" Version="4.16.0" />
         <PackageVersion Include="Testcontainers.Minio" Version="4.15.0" />
