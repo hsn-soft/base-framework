@@ -120,7 +120,7 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
-| [0007](0007-build-settings-and-versioning.md) | Shared build settings, one version, and how a package is published | Accepted (where the versions of the shared dependencies live is superseded by [ADR-0105](0105-shared-package-versions-in-one-file-and-a-common-test-host.md); the version and the release by [ADR-0115](0115-versions-and-releases-two-branches-and-a-version-made-from-nuget.md)) | 2026-10-22 |
+| [0007](0007-build-settings-and-versioning.md) | Shared build settings, one version, and how a package is published | Accepted (where the versions of the shared dependencies live is superseded by [ADR-0105](0105-shared-package-versions-in-one-file-and-a-common-test-host.md); the version and the release by [ADR-0115](0115-versions-and-releases-two-branches-and-a-version-made-from-nuget.md); the target framework by [ADR-0157](0157-the-framework-targets-net11-and-its-first-release-of-the-month-is-a-candidate.md)) | 2026-10-22 |
 | [0008](0008-code-style-and-analyzers.md) | Code style: the `.editorconfig` is the only source, analyzers run in the build | Accepted | 2026-10-22 |
 | [0009](0009-unit-tests-every-package.md) | Every package has a unit test project, found by name | Accepted | 2026-10-22 |
 | [0010](0010-integration-tests-with-testcontainers.md) | Integration tests start the real services with Testcontainers | Accepted | 2026-10-22 |
@@ -169,3 +169,5 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 | [0153](0153-the-ci-does-not-run-on-the-release-branches.md) | The CI does not run on the release branches | Accepted | 2026-11-05 |
 | [0154](0154-the-wait-conditions-of-the-puppeteer-renderer-follow-what-the-library-supports.md) | The wait conditions of the Puppeteer renderer follow what the library supports | Accepted | 2026-11-05 |
 | [0155](0155-a-rate-limit-holds-across-every-pod-and-answers-429.md) | A rate limit holds across every pod and answers 429 (`RateLimiting`) | Accepted | 2026-11-06 |
+| [0156](0156-a-browser-request-may-run-functions-in-the-page-leave-kinds-of-resources-unloaded-and-hide-that-it-is-driven.md) | A browser request may run functions in the page, leave kinds of resources unloaded and hide that it is driven (`Browser`) | Accepted | 2026-11-10 |
+| [0157](0157-the-framework-targets-net11-and-its-first-release-of-the-month-is-a-candidate.md) | The framework targets net11.0 and the 2026.11 base is released as a candidate first | Accepted | 2026-11-10 |

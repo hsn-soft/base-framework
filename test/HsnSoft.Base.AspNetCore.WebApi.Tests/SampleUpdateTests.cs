@@ -124,7 +124,7 @@ public sealed class SampleUpdateTests
         request.Headers.TryAddWithoutValidation("Accept-Language", language);
         HttpResponseMessage response = await app.GetTestClient().SendAsync(request);
         string text = await response.Content.ReadAsStringAsync();
-        JsonElement body = JsonDocument.Parse(text).RootElement;
+        JsonElement body = JsonElement.Parse(text);
         return (response.StatusCode, body.TryGetProperty("statusMessages", out JsonElement messages) ? [.. messages.EnumerateArray().Select(m => m.GetString()!)] : []);
     }
 

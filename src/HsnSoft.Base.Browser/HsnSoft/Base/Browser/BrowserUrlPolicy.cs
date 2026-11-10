@@ -29,7 +29,7 @@ public sealed class BrowserUrlPolicy(BrowserUrlPolicyOptions options)
     private static readonly TimeSpan s_remember = TimeSpan.FromSeconds(60);
     private const int MaxHosts = 1000;
 
-    private readonly Dictionary<string, (bool Allowed, DateTimeOffset Until)> _hosts = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, (bool Allowed, DateTimeOffset Until)> _hosts = [with(StringComparer.OrdinalIgnoreCase)];
     private readonly Lock _gate = new();
 
     /// <summary>Whether the browser may load <paramref name="url"/>.</summary>

@@ -27,7 +27,7 @@ public sealed record MaskedSequence(IReadOnlyList<MaskedNode> Items) : MaskedNod
 /// </summary>
 public static class SensitiveDataTree
 {
-    public static MaskedNode Build(object? value) => Build(value, new HashSet<object>(ReferenceEqualityComparer.Instance));
+    public static MaskedNode Build(object? value) => Build(value, [with(ReferenceEqualityComparer.Instance)]);
 
     /// <summary>Whether a value is written as it is (a number, a text, a date, an id, an enum) and not taken apart.</summary>
     public static bool IsSimple(Type type)

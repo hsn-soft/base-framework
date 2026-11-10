@@ -67,7 +67,7 @@ public static class EnumExtensions
         {
             Dictionary<TEnum, string> prompts = [];
             Dictionary<TEnum, string> names = [];
-            Dictionary<string, TEnum> values = new(StringComparer.OrdinalIgnoreCase);
+            Dictionary<string, TEnum> values = [with(StringComparer.OrdinalIgnoreCase)];
 
             foreach (FieldInfo field in typeof(TEnum).GetFields(BindingFlags.Public | BindingFlags.Static))
             {

@@ -18,7 +18,7 @@ public sealed class RateLimitOptions
     public bool FailOpen { get; set; }
 
     /// <summary>The limits that the settings change, by name (<c>sign-in</c>); what is not here is what the code says.</summary>
-    public Dictionary<string, RateLimitSetting> Limits { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    public Dictionary<string, RateLimitSetting> Limits { get; set; } = [with(StringComparer.OrdinalIgnoreCase)];
 
     /// <summary>The permits and the window of <paramref name="name"/>: the settings win over what the code said.</summary>
     public (int Permits, TimeSpan Window) Resolve(string name, int codePermits, int codeWindowSeconds)

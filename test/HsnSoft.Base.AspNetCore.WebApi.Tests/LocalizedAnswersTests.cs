@@ -120,7 +120,7 @@ public sealed class LocalizedAnswersTests
 
         HttpResponseMessage response = await app.GetTestClient().SendAsync(request);
         string text = await response.Content.ReadAsStringAsync();
-        return (response, text.Length == 0 ? default : JsonDocument.Parse(text).RootElement.Clone());
+        return (response, text.Length == 0 ? default : JsonElement.Parse(text).Clone());
     }
 
     private static string Message(JsonElement body, int index = 0) => body.GetProperty("statusMessages")[index].GetString()!;

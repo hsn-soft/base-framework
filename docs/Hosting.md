@@ -96,5 +96,5 @@ are accepted, `#` starts a comment); `Scheduler__ApiKey` means `Scheduler:ApiKey
 
 ## A start that fails says why
 
-`RunBaseAsync` builds the host, checks the settings named with `RequireBaseSettings` (one error with every missing key, never a value), runs the host, and logs a failure of any of these as **critical**
+`RunBaseAsync` builds the host, checks the settings named with `RequireBaseSettings` (one error with every missing key, never a value), runs the host, and logs a failure of any of these as **critical** A host that fails while it starts (a setting checked at start with `ValidateOnStart`, a hosted service that throws) has disposed its services, loggers included, so that reason is written to the standard error and the call still returns 1.
 once, flushes the logs and returns the exit code 1, so the platform restarts the pod and the reason is in the logs.
