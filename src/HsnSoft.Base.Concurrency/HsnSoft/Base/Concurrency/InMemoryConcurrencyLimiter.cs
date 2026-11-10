@@ -13,7 +13,7 @@ namespace HsnSoft.Base.Concurrency;
 public sealed class InMemoryConcurrencyLimiter(TimeProvider? time = null) : IConcurrencyLimiter
 {
     private readonly TimeProvider _time = time ?? TimeProvider.System;
-    private readonly Dictionary<string, Dictionary<Guid, DateTimeOffset>> _holders = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, Dictionary<Guid, DateTimeOffset>> _holders = [with(StringComparer.Ordinal)];
     private readonly Lock _gate = new();
 
     public ValueTask<IConcurrencyLease?> TryAcquireAsync(string name, int maxConcurrent, TimeSpan leaseTime, CancellationToken cancellationToken = default)

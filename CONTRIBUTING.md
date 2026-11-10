@@ -39,7 +39,7 @@ Commit messages follow the Conventional Commits style used in the history: `feat
 
 ## Building and testing
 
-You need the .NET 10 SDK, and Docker for the integration tests.
+You need the .NET 11 SDK, and Docker for the integration tests.
 
 ```bash
 dotnet build

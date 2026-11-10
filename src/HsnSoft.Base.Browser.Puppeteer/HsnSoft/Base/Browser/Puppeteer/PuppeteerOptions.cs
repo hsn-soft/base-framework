@@ -29,6 +29,12 @@ public sealed class PuppeteerOptions
     /// <summary>A proxy every request of the browser goes through (<c>http://proxy.internal:3128</c>).</summary>
     public string? ProxyServer { get; set; }
 
+    /// <summary>The user name the proxy asks for (a secret: from the environment, never in a settings file). Used only with <see cref="ProxyServer"/>.</summary>
+    public string? ProxyUserName { get; set; }
+
+    /// <summary>The password the proxy asks for (a secret: from the environment, never in a settings file).</summary>
+    public string? ProxyPassword { get; set; }
+
     /// <summary>More arguments for Chrome.</summary>
     public IList<string> ExtraArguments { get; } = [];
 
