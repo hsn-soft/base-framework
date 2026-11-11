@@ -1,5 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
+    <PropertyGroup>
+        <RootNamespace>Edx.IdentityService</RootNamespace>
+    </PropertyGroup>
+
     <!--
         The identity service of the Edx system: a web api on the tenants, the users and the roles (SQL Server). What every Edx microservice has (logging, the web api shell, JWT, Swagger, health) comes from
         Edx.Shared.Hosting.Microservices; it has no events to publish or handle, so it does not connect to Kafka.

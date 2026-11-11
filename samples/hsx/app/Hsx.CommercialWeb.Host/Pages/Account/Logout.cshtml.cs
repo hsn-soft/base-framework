@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace Hsx.CommercialWeb.Host.Pages.Account;
+namespace Hsx.CommercialWeb.Pages.Account;
 
 public sealed class LogoutModel : PageModel
 {

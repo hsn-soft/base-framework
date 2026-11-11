@@ -1,4 +1,4 @@
-namespace Hsx.AuthServer.Host.Security.RateLimiting;
+namespace Hsx.AuthServer.Security.RateLimiting;
 
 /// <summary>
 /// The section <c>Auth:RateLimits</c>: how many requests one address may make in a minute (ADR-0018). The address is the one the proxies of <c>Hosting:ForwardedHeaders</c> say the caller has. The limits are of one instance: a deployment with several pods lets each count its own.

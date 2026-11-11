@@ -1,7 +1,7 @@
 using HsnSoft.Base.Application.Dtos;
 using HsnSoft.Base.Logging.Masking;
 
-namespace Hsx.AuthServer.Host.Contracts.AuthDomain.Dtos;
+namespace Hsx.AuthServer.Contracts.AuthDomain.Dtos;
 
 public sealed class TokenDto : IBaseDto
 {

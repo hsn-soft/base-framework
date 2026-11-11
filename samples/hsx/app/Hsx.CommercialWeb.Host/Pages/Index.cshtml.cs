@@ -1,7 +1,7 @@
-using Hsx.CommercialWeb.Host.Services;
+using Hsx.CommercialWeb.Services;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace Hsx.CommercialWeb.Host.Pages;
+namespace Hsx.CommercialWeb.Pages;
 
 public sealed class IndexModel : PageModel
 {

@@ -2,11 +2,11 @@ using Abc.ShipmentService.Application.Contracts.ShipmentDomain.Dtos;
 using Abc.ShipmentService.Application.Contracts.ShipmentDomain.Dtos.Filters;
 using Abc.ShipmentService.Application.Contracts.ShipmentDomain.Dtos.Submits;
 using Abc.ShipmentService.Application.Contracts.ShipmentDomain.Services;
-using Abc.ShipmentService.Http.Host.Controllers.Base;
+using Abc.ShipmentService.Controllers.Base;
 using HsnSoft.Base.Application.Dtos;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Abc.ShipmentService.Http.Host.Controllers;
+namespace Abc.ShipmentService.Controllers;
 
 /// <summary>The shipments: every action only calls the application service, which holds the rules.</summary>
 [Route("api/shipment-service/v1/commercial/shipments")]

@@ -1,7 +1,7 @@
 using Edx.Shared.Hosting.Http;
 using Edx.Shared.Hosting.Microservices;
-using Edx.SignerService.Http.Host.EventHandlers;
-using Edx.SignerService.Http.Host.Signing;
+using Edx.SignerService.EventHandlers;
+using Edx.SignerService.Signing;
 using HsnSoft.Base.AspNetCore;
 using HsnSoft.Base.Authentication;
 using HsnSoft.Base.BlobStoring.Minio;

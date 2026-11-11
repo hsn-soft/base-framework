@@ -6,7 +6,7 @@ using HsnSoft.Base.Hosting;
 using HsnSoft.Base.MultiTenancy;
 using Microsoft.Extensions.Options;
 
-namespace Edx.Integration.GibInvoice.Http.Host.Workers;
+namespace Edx.Integration.GibInvoice.Workers;
 
 /// <summary>
 /// What every worker of the service does the same way: it works in a scope of its own, as the system tenant (it takes the envelopes of every tenant; a worker has no request to take the tenant from), and leaves it to the services it calls to act as the tenant of an envelope when they say something

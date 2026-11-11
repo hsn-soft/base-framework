@@ -71,6 +71,52 @@
       ]
     },
     {
+      "name": "check-host-namespaces",
+      "group": "pre-commit",
+      "command": "python3",
+      "args": [
+        "scripts/ci-detector/ci-check-host-namespaces.py"
+      ],
+      "include": [
+        "**/*.cs",
+        "**/*.cshtml",
+        "**/*.csproj",
+        "**/*.proto"
+      ]
+    },
+    {
+      "name": "check-test-projects",
+      "group": "pre-push",
+      "command": "bash",
+      "args": [
+        "scripts/ci-detector/ci-check-test-project-exist.sh"
+      ]
+    },
+    {
+      "name": "check-referenced-files",
+      "group": "pre-push",
+      "command": "bash",
+      "args": [
+        "scripts/ci-detector/ci-check-referenced-files.sh"
+      ]
+    },
+    {
+      "name": "check-csproj-order",
+      "group": "pre-push",
+      "command": "python3",
+      "args": [
+        "scripts/ci-detector/ci-force-csproj-order.py"
+      ]
+    },
+    {
+      "name": "check-project-references",
+      "group": "pre-push",
+      "command": "python3",
+      "args": [
+        "scripts/ci-detector/ci-force-framework-references-rules.py"
+      ]
+    },
+    {
       "name": "build",
       "group": "pre-push",
       "command": "dotnet",

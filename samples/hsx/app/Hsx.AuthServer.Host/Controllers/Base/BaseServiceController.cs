@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
 
-namespace Hsx.AuthServer.Host.Controllers.Base;
+namespace Hsx.AuthServer.Controllers.Base;
 
 /// <summary>
 /// What every controller of the auth server is: a web api controller of the area <c>auth-server</c> that answers JSON and needs a valid JWT bearer token

@@ -1,4 +1,4 @@
-namespace Hsx.CommercialWeb.Host.Models;
+namespace Hsx.CommercialWeb.Models;
 
 public sealed class Paged<T>
 {

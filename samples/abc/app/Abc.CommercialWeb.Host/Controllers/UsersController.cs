@@ -1,12 +1,12 @@
-using Abc.CommercialWeb.Host.Models;
-using Abc.CommercialWeb.Host.Services;
+using Abc.CommercialWeb.Models;
+using Abc.CommercialWeb.Services;
 using HsnSoft.Base;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Abc.CommercialWeb.Host.Controllers;
+namespace Abc.CommercialWeb.Controllers;
 
 [Authorize]
 public sealed class UsersController(GatewayClient gateway) : Controller

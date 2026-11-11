@@ -1,13 +1,13 @@
-using Hsx.AuthServer.Host.Contracts.AuthDomain.Dtos;
-using Hsx.AuthServer.Host.Contracts.AuthDomain.Dtos.Submits;
-using Hsx.AuthServer.Host.Contracts.AuthDomain.Services;
-using Hsx.AuthServer.Host.Controllers.Base;
-using Hsx.AuthServer.Host.Security.RateLimiting;
+using Hsx.AuthServer.Contracts.AuthDomain.Dtos;
+using Hsx.AuthServer.Contracts.AuthDomain.Dtos.Submits;
+using Hsx.AuthServer.Contracts.AuthDomain.Services;
+using Hsx.AuthServer.Controllers.Base;
+using Hsx.AuthServer.Security.RateLimiting;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 
-namespace Hsx.AuthServer.Host.Controllers;
+namespace Hsx.AuthServer.Controllers;
 
 [Route("api/auth-server/v1/commercial/auth")]
 public sealed class AuthController(IAuthAppService auth) : BaseServiceController

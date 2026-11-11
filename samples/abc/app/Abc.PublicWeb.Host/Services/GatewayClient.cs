@@ -1,8 +1,8 @@
-using Abc.PublicWeb.Host.Models;
+using Abc.PublicWeb.Models;
 using HsnSoft.Base;
 using HsnSoft.Base.Http;
 
-namespace Abc.PublicWeb.Host.Services;
+namespace Abc.PublicWeb.Services;
 
 /// <summary>The calls of the public web application to the public gateway: <c>/identity-service/v1/...</c>, mapped to the <c>public</c> endpoints of the service.</summary>
 public sealed class GatewayClient(HttpClient http)

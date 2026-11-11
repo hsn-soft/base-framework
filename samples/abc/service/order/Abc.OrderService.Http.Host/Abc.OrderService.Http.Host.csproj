@@ -1,5 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
+    <PropertyGroup>
+        <RootNamespace>Abc.OrderService</RootNamespace>
+    </PropertyGroup>
+
     <!--
         The order service of the Abc system: a web api. What every Abc microservice has (logging, the web api shell, JWT, Swagger, health) comes from
         Abc.Shared.Hosting.Microservices; the service adds its own parts here, step by step.

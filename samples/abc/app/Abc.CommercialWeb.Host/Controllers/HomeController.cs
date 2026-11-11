@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 
-namespace Abc.CommercialWeb.Host.Controllers;
+namespace Abc.CommercialWeb.Controllers;
 
 public sealed class HomeController : Controller
 {

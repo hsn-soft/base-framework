@@ -4,7 +4,7 @@ using Edx.Shared.Efatura;
 using Edx.Shared.Efatura.Envelope;
 using Edx.Shared.Efatura.Server;
 
-namespace Edx.Mock.Center.Wcf.Host.Services;
+namespace Edx.Mock.Center.Services;
 
 /// <summary>
 /// What <c>sendDocument</c> and <c>getApplicationResponse</c> do. An envelope is handed over with its name (<c>{uuid}.zip</c>) and its MD5: the name has to be a uuid and a zip, the hash has to be the zip's, and the uuid must not be in the center already; then the zip is kept

@@ -10,7 +10,7 @@ using Hsx.Shared.Hosting.Microservices;
 using Hsx.Shared.Localization;
 using Hsx.VideoGeneratorService.Application;
 using Hsx.VideoGeneratorService.Domain.VideoRequestDomain.Entities;
-using Hsx.VideoGeneratorService.Http.Host.EventHandlers;
+using Hsx.VideoGeneratorService.EventHandlers;
 using Hsx.VideoGeneratorService.MongoDB;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);

@@ -1,11 +1,11 @@
 using Abc.ShipmentService.Application.Contracts.PaymentDomain.Dtos;
 using Abc.ShipmentService.Application.Contracts.PaymentDomain.Services;
-using Abc.ShipmentService.Http.Host.Controllers.Base;
+using Abc.ShipmentService.Controllers.Base;
 using HsnSoft.Base.AspNetCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Abc.ShipmentService.Http.Host.Controllers;
+namespace Abc.ShipmentService.Controllers;
 
 /// <summary>
 /// The jobs of the shipment service, called by the scheduler of the system (<c>Abc.Scheduler.Host</c>, by the list of jobs in its settings). The caller is not a user, so there is no token: the key of the scheduler

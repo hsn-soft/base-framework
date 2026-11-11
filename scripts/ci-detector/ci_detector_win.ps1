@@ -166,6 +166,7 @@ Write-Info "## STAGES ----------------------------------------------------------
 Invoke-Stage "test-projects" "Every package has a test project" { bash ./scripts/ci-detector/ci-check-test-project-exist.sh } | Out-Null
 Invoke-Stage "referenced-files" "Scripts of the workflows are in git" { bash ./scripts/ci-detector/ci-check-referenced-files.sh } | Out-Null
 Invoke-Stage "csproj-order" "Project file reference order" { & $python scripts/ci-detector/ci-force-csproj-order.py } | Out-Null
+Invoke-Stage "host-namespaces" "Host root namespaces" { & $python scripts/ci-detector/ci-check-host-namespaces.py } | Out-Null
 Invoke-Stage "framework-references" "Framework project references" { & $python scripts/ci-detector/ci-force-framework-references-rules.py } | Out-Null
 Invoke-Stage "release-scripts" "Release scripts (their tests)" { & $python -m unittest discover -s scripts/versioning -p "test_*.py" } | Out-Null
 

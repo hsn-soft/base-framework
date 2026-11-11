@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace Hsx.CommercialWeb.Host.Pages;
+namespace Hsx.CommercialWeb.Pages;
 
 public sealed class ErrorModel : PageModel
 {

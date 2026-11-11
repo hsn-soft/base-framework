@@ -9,7 +9,7 @@ using HsnSoft.Base.Authorization;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 
-namespace Edx.Integration.FirmInvoice.Wcf.Host;
+namespace Edx.Integration.FirmInvoice;
 
 /// <summary>
 /// The WCF entry point. WCF has no part in the authentication of the host, so each call asks the JWT scheme who the caller is (the token is in the HTTP header, as for every other entry point) before anything else; what it

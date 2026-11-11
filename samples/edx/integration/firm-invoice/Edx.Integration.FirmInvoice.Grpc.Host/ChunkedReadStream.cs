@@ -1,6 +1,6 @@
 using Grpc.Core;
 
-namespace Edx.Integration.FirmInvoice.Grpc.Host;
+namespace Edx.Integration.FirmInvoice;
 
 /// <summary>The bytes of an upload that came as the messages of a gRPC stream, read as one stream (the first message, the header, has been read already).</summary>
 internal sealed class ChunkedReadStream(IAsyncStreamReader<UploadChunk> source) : Stream

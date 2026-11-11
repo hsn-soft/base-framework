@@ -1,5 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
+    <PropertyGroup>
+        <RootNamespace>Abc.AuthServer</RootNamespace>
+    </PropertyGroup>
+
     <!--
         The auth server of the Abc system: a web api that checks a user name and a password against the users of the identity service (the same database) and issues the JWT access token every other Abc host validates (the Jwt section is the same everywhere).
         It is a microservice like the others: what every Abc microservice has comes from Abc.Shared.Hosting.Microservices.

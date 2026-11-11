@@ -1,9 +1,9 @@
 using Edx.Shared.Contracts.Events.Invoicing;
-using Edx.SignerService.Http.Host.Signing;
+using Edx.SignerService.Signing;
 using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.EventBus;
 
-namespace Edx.SignerService.Http.Host.EventHandlers.Invoicing;
+namespace Edx.SignerService.EventHandlers.Invoicing;
 
 /// <summary>A person answered a commercial invoice that came in (in the invoice service): this service signs the answer.</summary>
 public sealed class PurchaseAnswerRequestedHandler(InvoiceSigningService signing) : IIntegrationEventHandler<PurchaseAnswerRequestedEto>

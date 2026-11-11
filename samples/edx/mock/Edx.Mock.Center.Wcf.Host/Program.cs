@@ -1,9 +1,9 @@
 using CoreWCF.Configuration;
 using CoreWCF.Description;
+using Edx.Mock.Center;
 using Edx.Mock.Center.MongoDB;
-using Edx.Mock.Center.Wcf.Host;
-using Edx.Mock.Center.Wcf.Host.Services;
-using Edx.Mock.Center.Wcf.Host.Workers;
+using Edx.Mock.Center.Services;
+using Edx.Mock.Center.Workers;
 using Edx.Shared.Efatura.Server;
 using Edx.Shared.Efatura.Wire;
 using Edx.Shared.Hosting.Http;

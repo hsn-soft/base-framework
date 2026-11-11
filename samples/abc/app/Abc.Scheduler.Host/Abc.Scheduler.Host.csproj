@@ -1,5 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
+    <PropertyGroup>
+        <RootNamespace>Abc.Scheduler</RootNamespace>
+    </PropertyGroup>
+
     <!--
         The scheduler of the Abc system: it calls the jobs of the services (endpoints that say [SchedulerAuth]) on the cron schedules of its settings, with the key of the scheduler. It does the cron and the call, the services do the work.
         It is a host with a health endpoint and a Quartz worker, no web api of its own. One instance only: two would call every job twice.

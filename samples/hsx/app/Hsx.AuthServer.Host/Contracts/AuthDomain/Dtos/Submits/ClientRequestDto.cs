@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using HsnSoft.Base.Logging.Masking;
 
-namespace Hsx.AuthServer.Host.Contracts.AuthDomain.Dtos.Submits;
+namespace Hsx.AuthServer.Contracts.AuthDomain.Dtos.Submits;
 
 /// <summary>What every request for a token says about the application that asks: who it is, its secret when it has one, and (optionally) the services it wants the token for.</summary>
 public abstract class ClientRequestDto

@@ -2,11 +2,11 @@ using HsnSoft.Base.Authorization;
 using Hsx.IdentityService.Application.Contracts.PermissionDomain.Dtos;
 using Hsx.IdentityService.Application.Contracts.PermissionDomain.Dtos.Submits;
 using Hsx.IdentityService.Application.Contracts.PermissionDomain.Services;
-using Hsx.IdentityService.Http.Host.Controllers.Base;
+using Hsx.IdentityService.Controllers.Base;
 using Hsx.Shared.Contracts.Permissions;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Hsx.IdentityService.Http.Host.Controllers;
+namespace Hsx.IdentityService.Controllers;
 
 [Route("api/identity-service/v1/commercial/app-roles/{roleId:guid}/permissions")]
 public sealed class RolePermissionsController(IRolePermissionAppService rolePermissions) : BaseServiceController
