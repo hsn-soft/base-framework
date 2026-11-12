@@ -5,10 +5,10 @@ using Hsx.VideoGeneratorService.Application.Contracts.VideoRequestDomain.Dtos;
 using Hsx.VideoGeneratorService.Application.Contracts.VideoRequestDomain.Dtos.Filters;
 using Hsx.VideoGeneratorService.Application.Contracts.VideoRequestDomain.Dtos.Submits;
 using Hsx.VideoGeneratorService.Application.Contracts.VideoRequestDomain.Services;
-using Hsx.VideoGeneratorService.Http.Host.Controllers.Base;
+using Hsx.VideoGeneratorService.Controllers.Base;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Hsx.VideoGeneratorService.Http.Host.Controllers;
+namespace Hsx.VideoGeneratorService.Controllers;
 
 /// <summary>The video requests: every action only calls the application service, which holds the rules.</summary>
 [Route("api/video-generator-service/v1/commercial/video-requests")]

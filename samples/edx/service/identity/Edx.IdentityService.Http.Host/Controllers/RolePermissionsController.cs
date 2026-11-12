@@ -1,12 +1,12 @@
 using Edx.IdentityService.Application.Contracts.IdentityDomain.Dtos;
 using Edx.IdentityService.Application.Contracts.IdentityDomain.Dtos.Submits;
 using Edx.IdentityService.Application.Contracts.IdentityDomain.Services;
-using Edx.IdentityService.Http.Host.Controllers.Base;
+using Edx.IdentityService.Controllers.Base;
 using Edx.Shared.Helper;
 using HsnSoft.Base.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Edx.IdentityService.Http.Host.Controllers;
+namespace Edx.IdentityService.Controllers;
 
 /// <summary>What the roles are granted. A tenant's administrator changes the grants of its own roles; the system tenant's, any tenant's.</summary>
 [Route("api/identity-service/v1/commercial/roles/{roleId:guid}/permissions")]

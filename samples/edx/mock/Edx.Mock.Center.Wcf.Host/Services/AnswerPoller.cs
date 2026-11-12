@@ -5,7 +5,7 @@ using Edx.Shared.Efatura.Client;
 using Edx.Shared.Efatura.Envelope;
 using Microsoft.Extensions.Options;
 
-namespace Edx.Mock.Center.Wcf.Host.Services;
+namespace Edx.Mock.Center.Services;
 
 /// <summary>
 /// The center does not wait for ever for the post box to answer. An envelope that was delivered and is still 1220 (the post box has not sent its system response) is asked about, after a while, with the <c>getApplicationResponse</c> of the post box (integrators serve it too, for this):

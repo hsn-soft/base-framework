@@ -2,7 +2,7 @@ using System.Runtime.Serialization;
 using CoreWCF;
 using Edx.Shared.Contracts.Invoicing;
 
-namespace Edx.Integration.FirmInvoice.Wcf.Host;
+namespace Edx.Integration.FirmInvoice;
 
 /// <summary>The names the WCF contract is known by to its clients (they come out in the WSDL).</summary>
 public static class FirmInvoiceWcfNames

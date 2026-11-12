@@ -1,6 +1,6 @@
 using Abc.ProductService.Application;
 using Abc.ProductService.Domain.ProductDomain.Entities;
-using Abc.ProductService.Http.Host.EventHandlers;
+using Abc.ProductService.EventHandlers;
 using Abc.ProductService.MongoDB;
 using Abc.Shared.Contracts.Events.Order;
 using Abc.Shared.Helper;

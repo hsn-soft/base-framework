@@ -1,8 +1,8 @@
-using Abc.PublicWeb.Host.Models;
-using Abc.PublicWeb.Host.Services;
+using Abc.PublicWeb.Models;
+using Abc.PublicWeb.Services;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Abc.PublicWeb.Host.Controllers;
+namespace Abc.PublicWeb.Controllers;
 
 public sealed class HomeController(GatewayClient gateway) : Controller
 {

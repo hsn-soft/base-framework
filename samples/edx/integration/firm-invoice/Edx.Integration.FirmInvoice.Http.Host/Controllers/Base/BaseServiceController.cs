@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Edx.Integration.FirmInvoice.Http.Host.Controllers.Base;
+namespace Edx.Integration.FirmInvoice.Controllers.Base;
 
 /// <summary>
 /// What every controller of the firm invoice integration is: a web api controller of the area <c>firm-invoice-service</c> that answers JSON and needs a valid JWT bearer token

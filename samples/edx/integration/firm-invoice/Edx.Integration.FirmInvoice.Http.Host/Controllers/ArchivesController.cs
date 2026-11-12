@@ -1,13 +1,13 @@
 using Edx.Integration.FirmInvoice.Application.Contracts.FirmInvoiceDomain.Dtos;
 using Edx.Integration.FirmInvoice.Application.Contracts.FirmInvoiceDomain.Services;
-using Edx.Integration.FirmInvoice.Http.Host.Controllers.Base;
-using Edx.Integration.FirmInvoice.Http.Host.Controllers.Forms;
+using Edx.Integration.FirmInvoice.Controllers.Base;
+using Edx.Integration.FirmInvoice.Controllers.Forms;
 using Edx.Shared.Contracts.Invoicing;
 using Edx.Shared.Helper;
 using HsnSoft.Base.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Edx.Integration.FirmInvoice.Http.Host.Controllers;
+namespace Edx.Integration.FirmInvoice.Controllers;
 
 /// <summary>The zips a customer sends over REST: a form with the zip (<c>file</c>), the uuid and the number of the invoice, the SHA-256 of the zip and the type of the file in it. The answer is that it was queued (or why it was not); the queue says what became of it.</summary>
 [Route("api/firm-invoice-service/v1/commercial/archives")]

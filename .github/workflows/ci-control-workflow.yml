@@ -61,6 +61,7 @@ jobs:
                     ./scripts/ci-detector/ci-check-test-project-exist.sh;
                     ./scripts/ci-detector/ci-check-referenced-files.sh;
                     python3 scripts/ci-detector/ci-force-csproj-order.py;
+                    python3 scripts/ci-detector/ci-check-host-namespaces.py;
                     python3 scripts/ci-detector/ci-force-framework-references-rules.py;
                     python3 -m unittest discover -s scripts/versioning -p "test_*.py"'
 

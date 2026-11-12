@@ -141,6 +141,7 @@ info "## STAGES ----------------------------------------------------------------
 stage test-projects "Every package has a test project" ./scripts/ci-detector/ci-check-test-project-exist.sh
 stage referenced-files "Scripts of the workflows are in git" ./scripts/ci-detector/ci-check-referenced-files.sh
 stage csproj-order "Project file reference order" python3 scripts/ci-detector/ci-force-csproj-order.py
+stage host-namespaces "Host root namespaces" python3 scripts/ci-detector/ci-check-host-namespaces.py
 stage framework-references "Framework project references" python3 scripts/ci-detector/ci-force-framework-references-rules.py
 stage release-scripts "Release scripts (their tests)" python3 -m unittest discover -s scripts/versioning -p "test_*.py"
 

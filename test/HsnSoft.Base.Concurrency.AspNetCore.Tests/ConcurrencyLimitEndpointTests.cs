@@ -36,8 +36,35 @@ public sealed class WorkController(WorkGate gate) : ControllerBase
     [ConcurrencyLimit("fails", 1)]
     public string Fails() => throw new InvalidOperationException("the endpoint failed");
 
+    // the action publishes an event: the first event takes the place (here the test does what the header provider of the event bus does)
+    [HttpGet("hand-off")]
+    [ConcurrencyLimit("hand", 1, HandOff = true)]
+    public string HandOff([FromServices] HandoffBox box)
+    {
+        box.Taken = ConcurrencyHandoffContext.TryTake();
+        return "published";
+    }
+
+    [HttpGet("hand-off-nothing")]
+    [ConcurrencyLimit("hand-nothing", 1, HandOff = true)]
+    public string HandOffNothing() => "nothing was published";
+
+    [HttpGet("hand-off-fails")]
+    [ConcurrencyLimit("hand-fails", 1, HandOff = true)]
+    public string HandOffFails([FromServices] HandoffBox box)
+    {
+        box.Taken = ConcurrencyHandoffContext.TryTake();
+        throw new InvalidOperationException("the broker refused the event");
+    }
+
     [HttpGet("free")]
     public string Free() => "free";
+}
+
+/// <summary>What an action handed over (the place a published event took).</summary>
+public sealed class HandoffBox
+{
+    public ConcurrencyHandoff? Taken { get; set; }
 }
 
 /// <summary>Holds the requests that are inside an endpoint until the test lets them go.</summary>
@@ -68,7 +95,7 @@ public class ConcurrencyLimitEndpointTests
         builder.WebHost.UseTestServer();
         builder.Configuration.AddInMemoryCollection(settings ?? []);
         WorkGate gate = new();
-        builder.Services.AddSingleton(gate).AddInMemoryConcurrencyLimiter(builder.Configuration);
+        builder.Services.AddSingleton(gate).AddSingleton<HandoffBox>().AddInMemoryConcurrencyLimiter(builder.Configuration);
         builder.Services.AddControllers().AddApplicationPart(typeof(WorkController).Assembly);
         WebApplication app = builder.Build();
         app.MapControllers();
@@ -77,6 +104,11 @@ public class ConcurrencyLimitEndpointTests
             await work.EnterAsync();
             return "minimal";
         }).RequireConcurrencyLimit("minimal", 1);
+        app.MapGet("/minimal-hand-off", (HandoffBox box) =>
+        {
+            box.Taken = ConcurrencyHandoffContext.TryTake();
+            return "published";
+        }).RequireConcurrencyLimit("minimal-hand", 1, handOff: true);
         await app.StartAsync();
         return (app, gate);
     }
@@ -205,6 +237,75 @@ public class ConcurrencyLimitEndpointTests
             ConcurrencyLimitAttribute attribute = new("x", 1) { LeaseSeconds = 5 };
             Assert.Equal(("x", 1, 5), (attribute.Name, attribute.Max, attribute.LeaseSeconds));
             await Assert.ThrowsAsync<ArgumentNullException>(() => attribute.OnResourceExecutionAsync(null!, null!));
+        }
+    }
+
+    [Fact]
+    public async Task WithHandOff_ThePlaceIsNotGivenBackWithTheAnswer_TheOneWhoGetsItsHolderGivesItBack()
+    {
+        (WebApplication app, _) = await StartAsync();
+        await using (app)
+        {
+            HttpClient client = app.GetTestClient();
+            HandoffBox box = app.Services.GetRequiredService<HandoffBox>();
+
+            HttpResponseMessage first = await client.GetAsync("/api/hand-off");
+            ConcurrencyHandoff handoff = box.Taken!;
+            HttpResponseMessage whileHeld = await client.GetAsync("/api/hand-off");   // the answer was written, and the place is still held: the job is still working
+
+            Assert.Equal((HttpStatusCode.OK, HttpStatusCode.TooManyRequests), (first.StatusCode, whileHeld.StatusCode));
+            Assert.Equal("hand", handoff.Name);
+
+            // the handler of the event ends: it gives the place back by the holder
+            await app.Services.GetRequiredService<IConcurrencyLimiter>().Attach(handoff.Name, handoff.Holder).DisposeAsync();
+            Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/api/hand-off")).StatusCode);
+        }
+    }
+
+    [Fact]
+    public async Task WithHandOff_WhenNoEventTookThePlace_ItIsGivenBackWithTheAnswer()
+    {
+        (WebApplication app, _) = await StartAsync();
+        await using (app)
+        {
+            HttpClient client = app.GetTestClient();
+
+            Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/api/hand-off-nothing")).StatusCode);
+            Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/api/hand-off-nothing")).StatusCode);   // nothing was handed over: nothing is held
+        }
+    }
+
+    [Fact]
+    public async Task WithHandOff_WhenTheActionFailsAfterTheEventTookThePlace_ItIsGivenBack_ForTheEventMayNotHaveLeft()
+    {
+        (WebApplication app, _) = await StartAsync();
+        await using (app)
+        {
+            HttpClient client = app.GetTestClient();
+
+            // the test server lets the failure of the action through (it has no error page): a 429 would be an answer, not an exception
+            await Assert.ThrowsAsync<InvalidOperationException>(() => client.GetAsync("/api/hand-off-fails"));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => client.GetAsync("/api/hand-off-fails"));   // the second ran: the first did not keep the place
+            Assert.NotNull(app.Services.GetRequiredService<HandoffBox>().Taken);
+        }
+    }
+
+    [Fact]
+    public async Task WithHandOff_AMinimalApiEndpointDoesTheSame()
+    {
+        (WebApplication app, _) = await StartAsync();
+        await using (app)
+        {
+            HttpClient client = app.GetTestClient();
+            HandoffBox box = app.Services.GetRequiredService<HandoffBox>();
+
+            HttpResponseMessage first = await client.GetAsync("/minimal-hand-off");
+            ConcurrencyHandoff handoff = box.Taken!;
+            HttpResponseMessage whileHeld = await client.GetAsync("/minimal-hand-off");
+            await app.Services.GetRequiredService<IConcurrencyLimiter>().Attach(handoff.Name, handoff.Holder).DisposeAsync();
+
+            Assert.Equal((HttpStatusCode.OK, HttpStatusCode.TooManyRequests), (first.StatusCode, whileHeld.StatusCode));
+            Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/minimal-hand-off")).StatusCode);
         }
     }
 }

@@ -131,4 +131,28 @@ public sealed class RedisConcurrencyTests(RedisFixture redis) : IAsyncLifetime
         Assert.Null(await limiter.TryAcquireAsync("registered", 1, TimeSpan.FromSeconds(30)));
         Assert.IsType<RedisConcurrencyLimiter>(limiter);
     }
+
+    [Fact]
+    public async Task APlaceTakenByOnePod_IsGivenBackByAnotherPod_WhichGetsItsHolder_AndNeverFreesAPlaceItDoesNotOwn()
+    {
+        string prefix = Prefix();
+        IConcurrencyLimiter endpointPod = await PodAsync(prefix);
+        IConcurrencyLimiter handlerPod = await PodAsync(prefix);
+
+        // the endpoint of one pod takes the place and hands it over (its holder travels with an event); the handler of another pod keeps it alive and gives it back
+        IConcurrencyLease taken = (await endpointPod.TryAcquireAsync("nightly-job", 1, TimeSpan.FromSeconds(30)))!;
+        IConcurrencyLease attached = handlerPod.Attach("nightly-job", taken.Holder);
+
+        Assert.Null(await endpointPod.TryAcquireAsync("nightly-job", 1, TimeSpan.FromSeconds(30)));
+        Assert.True(await attached.RenewAsync(TimeSpan.FromSeconds(30)));
+        await attached.DisposeAsync();
+        IConcurrencyLease next = (await endpointPod.TryAcquireAsync("nightly-job", 1, TimeSpan.FromSeconds(30)))!;   // the place is free for the next run
+
+        // a late holder (the same message delivered again) owns nothing: it cannot renew, and giving it back leaves the next run's place alone
+        IConcurrencyLease late = handlerPod.Attach("nightly-job", taken.Holder);
+        Assert.False(await late.RenewAsync(TimeSpan.FromSeconds(30)));
+        await late.DisposeAsync();
+        Assert.Null(await endpointPod.TryAcquireAsync("nightly-job", 1, TimeSpan.FromSeconds(30)));
+        Assert.NotEqual(taken.Holder, next.Holder);
+    }
 }

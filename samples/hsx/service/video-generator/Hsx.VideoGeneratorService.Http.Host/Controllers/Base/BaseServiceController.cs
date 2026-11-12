@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
 
-namespace Hsx.VideoGeneratorService.Http.Host.Controllers.Base;
+namespace Hsx.VideoGeneratorService.Controllers.Base;
 
 /// <summary>
 /// What every controller of the video generator service is: a web api controller of the area <c>video-generator-service</c> that answers JSON and needs a valid JWT bearer token (a controller that must be open says so with <c>[AllowAnonymous]</c>).

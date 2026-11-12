@@ -1,7 +1,7 @@
 using Edx.IdentityService.Application.Services;
 using HsnSoft.Base.Hosting;
 
-namespace Edx.IdentityService.Http.Host;
+namespace Edx.IdentityService;
 
 /// <summary>
 /// Writes the grants of every role and user to the store the services read, when the service starts and then every <c>Permissions:SyncMinutes</c> (5). A change is written at once by the endpoint that made it; this is what makes it right

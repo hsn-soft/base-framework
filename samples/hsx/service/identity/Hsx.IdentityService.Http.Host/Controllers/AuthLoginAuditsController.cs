@@ -3,11 +3,11 @@ using HsnSoft.Base.Authorization;
 using Hsx.IdentityService.Application.Contracts.AuthLoginAuditDomain.Dtos;
 using Hsx.IdentityService.Application.Contracts.AuthLoginAuditDomain.Dtos.Filters;
 using Hsx.IdentityService.Application.Contracts.AuthLoginAuditDomain.Services;
-using Hsx.IdentityService.Http.Host.Controllers.Base;
+using Hsx.IdentityService.Controllers.Base;
 using Hsx.Shared.Contracts.Permissions;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Hsx.IdentityService.Http.Host.Controllers;
+namespace Hsx.IdentityService.Controllers;
 
 [Route("api/identity-service/v1/commercial/audit-logs/logins")]
 public sealed class AuthLoginAuditsController(IAuthLoginAuditAppService loginAudits) : BaseServiceController

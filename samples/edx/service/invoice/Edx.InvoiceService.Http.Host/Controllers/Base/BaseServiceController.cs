@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Edx.InvoiceService.Http.Host.Controllers.Base;
+namespace Edx.InvoiceService.Controllers.Base;
 
 /// <summary>
 /// What every controller of the invoice service is: a web api controller of the area <c>invoice-service</c> that answers JSON and needs a valid JWT bearer token

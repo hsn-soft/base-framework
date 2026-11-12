@@ -1,4 +1,4 @@
-namespace Edx.SignerService.Http.Host.Signing;
+namespace Edx.SignerService.Signing;
 
 /// <summary>Signs the UBL-TR invoice of an approved draft (XAdES-BES, enveloped, in the extension of the document). The real signer (a financial seal, a certificate) is this service; the sample has <see cref="FakeInvoiceSigner"/> in its place, and the host chooses.</summary>
 public interface IInvoiceSigner

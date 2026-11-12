@@ -4,11 +4,11 @@ using Hsx.IdentityService.Application.Contracts.CustomerDomain.Dtos;
 using Hsx.IdentityService.Application.Contracts.CustomerDomain.Dtos.Filters;
 using Hsx.IdentityService.Application.Contracts.CustomerDomain.Dtos.Submits;
 using Hsx.IdentityService.Application.Contracts.CustomerDomain.Services;
-using Hsx.IdentityService.Http.Host.Controllers.Base;
+using Hsx.IdentityService.Controllers.Base;
 using Hsx.Shared.Contracts.Permissions;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Hsx.IdentityService.Http.Host.Controllers;
+namespace Hsx.IdentityService.Controllers;
 
 [Route("api/identity-service/v1/commercial/customers")]
 public sealed class CustomersController(ICustomerAppService customers) : BaseServiceController

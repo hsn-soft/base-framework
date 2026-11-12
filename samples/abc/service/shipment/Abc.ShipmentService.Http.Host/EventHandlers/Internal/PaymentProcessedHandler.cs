@@ -8,7 +8,7 @@ using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.Domain.Repositories;
 using HsnSoft.Base.EventBus;
 
-namespace Abc.ShipmentService.Http.Host.EventHandlers.Internal;
+namespace Abc.ShipmentService.EventHandlers.Internal;
 
 /// <summary>
 /// The payment of an order was processed (an event of this service, <see cref="PaymentProcessedEto"/>). When it succeeded: makes the shipment and sends it (the carrier is simulated: the parcel is delivered, unless the address says <c>fail</c>, which the

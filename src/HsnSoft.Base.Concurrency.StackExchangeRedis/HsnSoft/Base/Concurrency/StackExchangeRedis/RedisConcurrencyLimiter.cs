@@ -53,11 +53,21 @@ public sealed class RedisConcurrencyLimiter(IConnectionMultiplexer redis, IOptio
         return (long)taken == 1 ? new Lease(redis, key, name, holder) : null;
     }
 
+    public IConcurrencyLease Attach(string name, string holder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        ArgumentException.ThrowIfNullOrWhiteSpace(holder);
+
+        return new Lease(redis, KeyOf(name), name, holder);
+    }
+
     private string KeyOf(string name) => $"{_options.KeyPrefix}:{name}";
 
     private sealed class Lease(IConnectionMultiplexer redis, string key, string name, string holder) : IConcurrencyLease
     {
         public string Name => name;
+
+        public string Holder => holder;
 
         public async ValueTask<bool> RenewAsync(TimeSpan leaseTime, CancellationToken cancellationToken = default)
         {

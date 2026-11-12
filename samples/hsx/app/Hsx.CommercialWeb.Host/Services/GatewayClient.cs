@@ -1,8 +1,8 @@
 using HsnSoft.Base;
 using HsnSoft.Base.Http;
-using Hsx.CommercialWeb.Host.Models;
+using Hsx.CommercialWeb.Models;
 
-namespace Hsx.CommercialWeb.Host.Services;
+namespace Hsx.CommercialWeb.Services;
 
 /// <summary>The calls of the commercial web application to the commercial gateway: <c>/auth-server/v1/...</c>, <c>/identity-service/v1/...</c> and <c>/content-service/v1/...</c>; the gateway maps them to the services. A call that the gateway refuses is a <see cref="BaseHttpException"/> with its status (401: the token is no longer good).</summary>
 public sealed class GatewayClient(HttpClient http)

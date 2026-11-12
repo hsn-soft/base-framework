@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using ApplicationModelFormat = Edx.Integration.FirmInvoice.Application.Contracts.FirmInvoiceDomain.Dtos.Submits.ModelFormat;
 
-namespace Edx.Integration.FirmInvoice.Grpc.Host;
+namespace Edx.Integration.FirmInvoice;
 
 /// <summary>The gRPC entry point: it turns what came on the wire into what the application service takes, calls it, and turns the queue item back. The rules are the application service's, the same as for REST and WCF.</summary>
 [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -31,7 +31,7 @@ public sealed class FirmInvoiceGrpcService(IFirmInvoiceAppService firmInvoice) :
             InvoiceId = Guid.TryParse(header.InvoiceId, out Guid invoiceId) ? invoiceId : null,
             InvoiceNumber = header.InvoiceNumber,
             FileHash = header.FileHash,
-            SourceType = header.SourceType == Edx.Integration.FirmInvoice.Grpc.Host.SourceType.Unspecified ? null : (InvoiceSourceType)(int)header.SourceType,
+            SourceType = header.SourceType == Edx.Integration.FirmInvoice.SourceType.Unspecified ? null : (InvoiceSourceType)(int)header.SourceType,
             FileName = header.FileName,
         };
         await using ChunkedReadStream content = new(requestStream);

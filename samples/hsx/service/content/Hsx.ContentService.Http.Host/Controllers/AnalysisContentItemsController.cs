@@ -4,11 +4,11 @@ using Hsx.ContentService.Application.Contracts.AnalysisContentItemDomain.Dtos;
 using Hsx.ContentService.Application.Contracts.AnalysisContentItemDomain.Dtos.Filters;
 using Hsx.ContentService.Application.Contracts.AnalysisContentItemDomain.Dtos.Submits;
 using Hsx.ContentService.Application.Contracts.AnalysisContentItemDomain.Services;
-using Hsx.ContentService.Http.Host.Controllers.Base;
+using Hsx.ContentService.Controllers.Base;
 using Hsx.Shared.Contracts.Permissions;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Hsx.ContentService.Http.Host.Controllers;
+namespace Hsx.ContentService.Controllers;
 
 /// <summary>The analysis content items: every action only calls the application service, which holds the rules.</summary>
 [Route("api/content-service/v1/commercial/analysis-content-items")]

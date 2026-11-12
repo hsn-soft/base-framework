@@ -4,11 +4,11 @@ using Hsx.ContentService.Application.Contracts.CustomerContentDomain.Dtos;
 using Hsx.ContentService.Application.Contracts.CustomerContentDomain.Dtos.Filters;
 using Hsx.ContentService.Application.Contracts.CustomerContentDomain.Dtos.Submits;
 using Hsx.ContentService.Application.Contracts.CustomerContentDomain.Services;
-using Hsx.ContentService.Http.Host.Controllers.Base;
+using Hsx.ContentService.Controllers.Base;
 using Hsx.Shared.Contracts.Permissions;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Hsx.ContentService.Http.Host.Controllers;
+namespace Hsx.ContentService.Controllers;
 
 /// <summary>The customer contents: every action only calls the application service, which holds the rules.</summary>
 [Route("api/content-service/v1/commercial/customer-contents")]

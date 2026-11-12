@@ -1,6 +1,6 @@
 using Quartz;
 
-namespace Abc.Scheduler.Host;
+namespace Abc.Scheduler;
 
 /// <summary>The settings of the scheduler (section <c>Scheduler</c>): the key it calls with, where the services are and which jobs it calls when.</summary>
 internal sealed class SchedulerSettings

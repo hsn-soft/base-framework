@@ -1,7 +1,7 @@
-using Hsx.AuthServer.Host.Contracts.AuthDomain.Dtos;
-using Hsx.AuthServer.Host.Contracts.AuthDomain.Dtos.Submits;
+using Hsx.AuthServer.Contracts.AuthDomain.Dtos;
+using Hsx.AuthServer.Contracts.AuthDomain.Dtos.Submits;
 
-namespace Hsx.AuthServer.Host.Contracts.AuthDomain.Services;
+namespace Hsx.AuthServer.Contracts.AuthDomain.Services;
 
 /// <summary>What the auth server does: signs a user in, gives a new access token for a refresh token, signs it out, and says who the token is of. The refresh token is a cookie of the request and the response, which the service reads and sets.</summary>
 public interface IAuthAppService

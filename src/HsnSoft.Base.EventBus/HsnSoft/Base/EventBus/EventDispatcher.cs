@@ -44,7 +44,8 @@ public sealed partial class EventDispatcher(
     IOptions<EventBusOptions> options,
     ILogger<EventDispatcher> logger,
     ILogMasker? masker = null,
-    InboxEnabled? inbox = null) : IEventDispatcher
+    InboxEnabled? inbox = null,
+    IEnumerable<IEventHandlingObserver>? observers = null) : IEventDispatcher
 {
     /// <summary>Set in the <c>Data</c> of an exception whose Error the dispatcher has logged already (<c>CONSUME_EVENT_ERROR</c>).</summary>
     public const string ErrorLoggedKey = "HsnSoft.Base.EventBus.ErrorLogged";
@@ -61,6 +62,7 @@ public sealed partial class EventDispatcher(
     private readonly ILogger<EventDispatcher> _logger = logger;
     private readonly ILogMasker? _masker = masker;
     private readonly bool _inbox = inbox is not null;
+    private readonly IEventHandlingObserver[] _observers = [.. observers ?? []];
 
     // the places of the handlers of the whole service (EventBusOptions.MaxConcurrentHandlers); null: no limit
     private readonly SemaphoreSlim? _places = options.Value.MaxConcurrentHandlers > 0 ? new SemaphoreSlim(options.Value.MaxConcurrentHandlers, options.Value.MaxConcurrentHandlers) : null;
@@ -151,6 +153,45 @@ public sealed partial class EventDispatcher(
             return;
         }
 
+        // the observers of the whole handling (a place of a concurrency limit that the message carries is kept alive and given back): they begin here, after the inbox let the message in, and are told how it ended
+        EventHandlingOutcome? outcome = null;
+        IAsyncDisposable[] companions = await StartObserversAsync(envelope, cancellationToken).ConfigureAwait(false);
+        try
+        {
+            outcome = await HandleAsync(trimmedEventName, eventType, messageEnvelope, envelope, handlers, handlerNames, from, to, watch, cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            outcome = EventHandlingOutcome.Failed;
+            throw;
+        }
+        finally
+        {
+            // a shutdown (the token) has no outcome: the message comes back, and what keeps the handling company stops with it
+            foreach (IAsyncDisposable companion in companions)
+            {
+                await companion.DisposeAsync().ConfigureAwait(false);
+            }
+
+            if (outcome is { } ended)
+            {
+                await EndObserversAsync(envelope, ended).ConfigureAwait(false);
+            }
+        }
+    }
+
+    private async Task<EventHandlingOutcome> HandleAsync(
+        string trimmedEventName,
+        Type eventType,
+        object messageEnvelope,
+        ParentMessageEnvelope envelope,
+        IReadOnlyList<IntegrationEventHandlerInfo> handlers,
+        string handlerNames,
+        string from,
+        string to,
+        Stopwatch watch,
+        CancellationToken cancellationToken)
+    {
         AttemptCounter attempts = new();
         try
         {
@@ -175,7 +216,7 @@ public sealed partial class EventDispatcher(
             }
 
             await EndInboxAsync(envelope, error: null, cancellationToken).ConfigureAwait(false);
-            return;
+            return EventHandlingOutcome.Rejected;
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
@@ -197,6 +238,51 @@ public sealed partial class EventDispatcher(
         using (_logger.BeginScope(s_consumeEnd))
         {
             LogHandled(_logger, from, to, handlerNames, watch.ElapsedMilliseconds);
+        }
+
+        return EventHandlingOutcome.Handled;
+    }
+
+    // an observer that fails never fails the handling: it is logged
+    private async Task<IAsyncDisposable[]> StartObserversAsync(ParentMessageEnvelope envelope, CancellationToken cancellationToken)
+    {
+        if (_observers.Length == 0)
+        {
+            return [];
+        }
+
+        List<IAsyncDisposable> companions = [];
+        foreach (IEventHandlingObserver observer in _observers)
+        {
+            try
+            {
+                if (await observer.StartedAsync(envelope, cancellationToken).ConfigureAwait(false) is { } companion)
+                {
+                    companions.Add(companion);
+                }
+            }
+            catch (Exception exception) when (exception is not OperationCanceledException)
+            {
+                LogObserverFailed(_logger, exception, observer.GetType().Name, "started");
+            }
+        }
+
+        return [.. companions];
+    }
+
+    // the end is told even when the host is stopping (the work is done, whatever the token says), so a place is not kept for a message that is finished
+    private async Task EndObserversAsync(ParentMessageEnvelope envelope, EventHandlingOutcome outcome)
+    {
+        foreach (IEventHandlingObserver observer in _observers)
+        {
+            try
+            {
+                await observer.EndedAsync(envelope, outcome, CancellationToken.None).ConfigureAwait(false);
+            }
+            catch (Exception exception)
+            {
+                LogObserverFailed(_logger, exception, observer.GetType().Name, "ended");
+            }
         }
     }
 
@@ -350,6 +436,9 @@ public sealed partial class EventDispatcher(
 
     [LoggerMessage(EventId = 2007, EventName = "CONSUME_EVENT_INBOX_RETRY_LIMIT", Level = LogLevel.Warning, Message = "{From} -> {To}: the message failed more often than the inbox allows, this delivery is left alone (the error queue was told when it last failed)")]
     private static partial void LogInboxRetryLimit(ILogger logger, string from, string to);
+
+    [LoggerMessage(EventId = 2008, EventName = "CONSUME_EVENT_OBSERVER_ERROR", Level = LogLevel.Error, Message = "The observer {Observer} failed when the handling {Moment}: the handling goes on")]
+    private static partial void LogObserverFailed(ILogger logger, Exception exception, string observer, string moment);
 
     [LoggerMessage(EventId = 2003, EventName = "CONSUME_EVENT_RETRY", Level = LogLevel.Warning, Message = "{Handler} failed on {EventName}, attempt {Attempt}/{Max}")]
     private static partial void LogAttemptFailed(ILogger logger, Exception exception, string handler, string eventName, int attempt, int max);

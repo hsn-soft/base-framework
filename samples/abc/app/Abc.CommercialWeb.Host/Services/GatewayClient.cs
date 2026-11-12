@@ -1,8 +1,8 @@
-using Abc.CommercialWeb.Host.Models;
+using Abc.CommercialWeb.Models;
 using HsnSoft.Base;
 using HsnSoft.Base.Http;
 
-namespace Abc.CommercialWeb.Host.Services;
+namespace Abc.CommercialWeb.Services;
 
 /// <summary>The calls of the commercial web application to the commercial gateway: <c>/auth-server/v1/...</c> and <c>/identity-service/v1/...</c>; the gateway maps them to the services. A call that the gateway refuses is a <see cref="BaseHttpException"/> with its status (401: the token is no longer good).</summary>
 public sealed class GatewayClient(HttpClient http)

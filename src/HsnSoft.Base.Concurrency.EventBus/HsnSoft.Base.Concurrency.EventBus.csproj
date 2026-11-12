@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <Import Project="..\..\common.props" />
+
+    <PropertyGroup>
+        <AssemblyName>HsnSoft.Base.Concurrency.EventBus</AssemblyName>
+        <PackageId>HsnSoft.Base.Concurrency.EventBus</PackageId>
+        <RootNamespace />
+        <Title>HsnSoft Base Framework Concurrency EventBus</Title>
+        <Description>A place of a concurrency limit travels with an event: an endpoint takes it and answers at once, the handler of the event keeps it alive while it works and gives it back when it ends (a job of the scheduler that does not overlap itself and does not hold a request open).</Description>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageTags>HsnSoft Base Framework Concurrency EventBus Limit Job</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="..\..\README.md" Pack="true" Visible="false" PackagePath="README.md" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\HsnSoft.Base.Concurrency\HsnSoft.Base.Concurrency.csproj" />
+        <ProjectReference Include="..\HsnSoft.Base.EventBus\HsnSoft.Base.EventBus.csproj" />
+    </ItemGroup>
+
+</Project>

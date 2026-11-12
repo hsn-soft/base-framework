@@ -1,5 +1,5 @@
-using Abc.AuthServer.Host.Security;
-using Abc.AuthServer.Host.Services;
+using Abc.AuthServer.Security;
+using Abc.AuthServer.Services;
 using Abc.IdentityService.EntityFrameworkCore;
 using Abc.Shared.Helper;
 using Abc.Shared.Hosting.Http;

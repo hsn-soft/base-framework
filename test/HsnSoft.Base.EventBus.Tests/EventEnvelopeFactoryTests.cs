@@ -202,4 +202,21 @@ public class EventEnvelopeFactoryTests
 
         Assert.Equal(user, envelope.UserId);
     }
+
+    [Fact]
+    public void ALocalHeader_BelongsToOneMessage_AndIsNotPassedOnToTheMessagesItCauses()
+    {
+        MessageEnvelope<SampleEto> parent = NewFactory().Create(s_message, null, null, isReQueuePublish: false);
+        parent.SetHeader("Local-ConcurrencyHolder", "abc");
+        parent.SetHeader("local-other", "x");
+        parent.SetHeader("ClientChannel", "web");
+
+        MessageEnvelope<SampleEto> child = NewFactory().Create(s_message, parent, null, isReQueuePublish: false);
+
+        Assert.Equal("web", child.GetHeader("ClientChannel"));   // the others are passed on
+        Assert.Null(child.GetHeader("Local-ConcurrencyHolder"));
+        Assert.Null(child.GetHeader("local-other"));   // the prefix is not case sensitive
+        Assert.Equal("abc", parent.GetHeader("Local-ConcurrencyHolder"));
+        Assert.Equal("Local-", ParentMessageEnvelope.LocalHeaderPrefix);
+    }
 }

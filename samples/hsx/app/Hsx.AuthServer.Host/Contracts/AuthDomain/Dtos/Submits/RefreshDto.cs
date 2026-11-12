@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using HsnSoft.Base.Logging.Masking;
 
-namespace Hsx.AuthServer.Host.Contracts.AuthDomain.Dtos.Submits;
+namespace Hsx.AuthServer.Contracts.AuthDomain.Dtos.Submits;
 
 /// <summary>A new access token for a refresh token, through a client (the one the user signed in through or another that allows it): the token is in the cookie, or in <see cref="RefreshToken"/> for a client that keeps it in the body.</summary>
 public sealed class RefreshDto : ClientRequestDto

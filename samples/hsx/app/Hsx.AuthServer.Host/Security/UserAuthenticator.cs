@@ -14,7 +14,7 @@ using Hsx.IdentityService.Domain.TenantDomain.Entities;
 using Hsx.IdentityService.Domain.TenantDomain.Repositories;
 using Microsoft.Extensions.Options;
 
-namespace Hsx.AuthServer.Host.Security;
+namespace Hsx.AuthServer.Security;
 
 /// <summary>
 /// Checks a tenant, an account (an email or a user name) and a password against the users of the identity service (the same database; the auth server writes only what a sign-in changes: the count of failures, the lockout, the audit) and works out what the user may see: the

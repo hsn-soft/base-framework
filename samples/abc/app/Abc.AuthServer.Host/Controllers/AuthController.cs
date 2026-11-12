@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
-using Abc.AuthServer.Host.Controllers.Base;
-using Abc.AuthServer.Host.Security;
-using Abc.AuthServer.Host.Services;
+using Abc.AuthServer.Controllers.Base;
+using Abc.AuthServer.Security;
+using Abc.AuthServer.Services;
 using Abc.IdentityService.Domain.UserHistoryDomain.Consts;
 using Abc.IdentityService.Domain.UserHistoryDomain.Entities;
 using HsnSoft.Base;
@@ -12,7 +12,7 @@ using HsnSoft.Base.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Abc.AuthServer.Host.Controllers;
+namespace Abc.AuthServer.Controllers;
 
 public sealed class LoginDto
 {
