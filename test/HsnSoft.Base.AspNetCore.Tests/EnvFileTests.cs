@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 
 namespace HsnSoft.Base.AspNetCore.Tests;
@@ -49,6 +50,32 @@ public class EnvFileTests
         finally
         {
             Environment.SetEnvironmentVariable("Env_File_Test_B", null);
+            Directory.Delete(folder, true);
+        }
+    }
+
+    [Fact]
+    public void InAWebApplication_TheFileStillOverridesTheSettingsFilesOfTheApplication_ButNotItsVariables()
+    {
+        // a web application builder has several sources of variables (the prefixed ones of the host come first, before appsettings.json): the file has to go below the last one
+        string folder = Directory.CreateTempSubdirectory().FullName;
+        string path = Path.Combine(folder, ".env");
+        File.WriteAllText(Path.Combine(folder, "appsettings.json"), "{ \"EnvFileWeb\": { \"A\": \"from-settings\", \"B\": \"from-settings\", \"Empty\": \"\" } }");
+        File.WriteAllText(path, "EnvFileWeb__A=from-file\nEnvFileWeb__B=from-file\nEnvFileWeb__Empty=from-file\n");
+        Environment.SetEnvironmentVariable("EnvFileWeb__B", "from-variable");
+        try
+        {
+            WebApplicationBuilder builder = WebApplication.CreateBuilder(new WebApplicationOptions { ContentRootPath = folder });
+
+            builder.Configuration.AddBaseEnvFile(path);
+
+            Assert.Equal("from-file", builder.Configuration["EnvFileWeb:A"]);
+            Assert.Equal("from-file", builder.Configuration["EnvFileWeb:Empty"]);   // an empty key of appsettings.json is a placeholder, and the file fills it
+            Assert.Equal("from-variable", builder.Configuration["EnvFileWeb:B"]);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("EnvFileWeb__B", null);
             Directory.Delete(folder, true);
         }
     }
