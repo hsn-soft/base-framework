@@ -19,6 +19,12 @@ public record ParentMessageEnvelope
     /// </summary>
     public const string FlowHeader = "Flow";
 
+    /// <summary>
+    /// A header whose name starts with this belongs to <b>one message</b>: it describes what that message needs (a place of a concurrency limit that its handler gives back) and is <b>not</b> passed on to the messages its handler publishes.
+    /// Every other header is (the caller, the client, what a product adds).
+    /// </summary>
+    public const string LocalHeaderPrefix = "Local-";
+
     /// <summary>How many messages deep the chain is: 1 for a message nobody caused, the cause's level + 1 otherwise.</summary>
     public ushort HopLevel { get; set; }
 
@@ -103,9 +109,11 @@ public record ParentMessageEnvelope
         => string.Equals(name, "Message", StringComparison.OrdinalIgnoreCase)
            || string.Equals(name, "ParentMessageId", StringComparison.OrdinalIgnoreCase);
 
-    /// <summary>The headers worth passing on to a message this one causes (not <see cref="FlowHeader"/>: every message says where it comes from itself).</summary>
+    /// <summary>The headers worth passing on to a message this one causes (not <see cref="FlowHeader"/>: every message says where it comes from itself; not the <see cref="LocalHeaderPrefix">local</see> ones: they are of this message only).</summary>
     internal IEnumerable<KeyValuePair<string, JsonElement>> HeadersToInherit()
         => Headers is null
             ? []
-            : Headers.Where(header => !IsEnvelopeProperty(header.Key) && !string.Equals(header.Key, FlowHeader, StringComparison.OrdinalIgnoreCase));
+            : Headers.Where(header => !IsEnvelopeProperty(header.Key)
+                                      && !string.Equals(header.Key, FlowHeader, StringComparison.OrdinalIgnoreCase)
+                                      && !header.Key.StartsWith(LocalHeaderPrefix, StringComparison.OrdinalIgnoreCase));
 }

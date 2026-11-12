@@ -111,4 +111,14 @@ public static class EventBusServiceCollectionExtensions
         services.AddSingleton<IEventHeaderProvider, TProvider>();
         return services;
     }
+
+    /// <summary>Registers an observer of the whole handling of a message (see <see cref="IEventHandlingObserver"/>).</summary>
+    public static IServiceCollection AddEventHandlingObserver<TObserver>(this IServiceCollection services)
+        where TObserver : class, IEventHandlingObserver
+    {
+        ArgumentNullException.ThrowIfNull(services);
+
+        services.AddSingleton<IEventHandlingObserver, TObserver>();
+        return services;
+    }
 }
