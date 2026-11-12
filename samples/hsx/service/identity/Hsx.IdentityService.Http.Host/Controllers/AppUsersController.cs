@@ -4,11 +4,11 @@ using Hsx.IdentityService.Application.Contracts.AppUserDomain.Dtos;
 using Hsx.IdentityService.Application.Contracts.AppUserDomain.Dtos.Filters;
 using Hsx.IdentityService.Application.Contracts.AppUserDomain.Dtos.Submits;
 using Hsx.IdentityService.Application.Contracts.AppUserDomain.Services;
-using Hsx.IdentityService.Http.Host.Controllers.Base;
+using Hsx.IdentityService.Controllers.Base;
 using Hsx.Shared.Contracts.Permissions;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Hsx.IdentityService.Http.Host.Controllers;
+namespace Hsx.IdentityService.Controllers;
 
 [Route("api/identity-service/v1/commercial/app-users")]
 public sealed class AppUsersController(IAppUserAppService appUsers) : BaseServiceController

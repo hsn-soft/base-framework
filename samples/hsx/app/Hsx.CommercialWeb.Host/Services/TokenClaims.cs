@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.WebUtilities;
 
-namespace Hsx.CommercialWeb.Host.Services;
+namespace Hsx.CommercialWeb.Services;
 
 /// <summary>Reads what the access token says about the signed-in user, to show it (the page does not trust it for anything: the services check the token).</summary>
 public static class TokenClaims

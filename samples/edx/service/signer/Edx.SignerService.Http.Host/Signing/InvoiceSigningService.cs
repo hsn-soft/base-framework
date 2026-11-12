@@ -4,7 +4,7 @@ using Edx.Shared.Efatura.Ubl;
 using HsnSoft.Base.BlobStoring;
 using HsnSoft.Base.EventBus;
 
-namespace Edx.SignerService.Http.Host.Signing;
+namespace Edx.SignerService.Signing;
 
 /// <summary>
 /// Signs an approved invoice: reads the draft the event names, signs it as the supplier, checks that what goes to the center still follows the UBL-TR schema (signature and all: a signer that makes a document the center refuses is a failure of this service, not of the invoice), writes it in the signed place of the

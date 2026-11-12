@@ -4,7 +4,7 @@ using Edx.Shared.Helper;
 using HsnSoft.Base.Text;
 using Microsoft.Extensions.Options;
 
-namespace Edx.AuthServer.Host.Security;
+namespace Edx.AuthServer.Security;
 
 /// <summary>Who signed in: what goes into the claims of the token.</summary>
 public sealed record AuthenticatedUser(Guid Id, string UserName, string DisplayName, string Email, IReadOnlyList<string> Roles, Guid TenantId, bool IsSystemTenant, IReadOnlyList<Guid> AllowedTenantIds);

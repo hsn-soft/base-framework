@@ -1,4 +1,4 @@
-namespace Hsx.AuthServer.Host.Security.Clients;
+namespace Hsx.AuthServer.Security.Clients;
 
 /// <summary>The hash of one secret of a client, and when it stops being accepted (nothing: it does not).</summary>
 public sealed class ClientSecretOptions

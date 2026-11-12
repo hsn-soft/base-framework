@@ -2,11 +2,11 @@ using Abc.ShipmentService.Application.Contracts.ShipmentHistoryDomain.Dtos;
 using Abc.ShipmentService.Application.Contracts.ShipmentHistoryDomain.Dtos.Filters;
 using Abc.ShipmentService.Application.Contracts.ShipmentHistoryDomain.Dtos.Submits;
 using Abc.ShipmentService.Application.Contracts.ShipmentHistoryDomain.Services;
-using Abc.ShipmentService.Http.Host.Controllers.Base;
+using Abc.ShipmentService.Controllers.Base;
 using HsnSoft.Base.Application.Dtos;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Abc.ShipmentService.Http.Host.Controllers;
+namespace Abc.ShipmentService.Controllers;
 
 /// <summary>The history of the shipments (kept in its own database, with EF Core on PostgreSQL): every action only calls the application service, which holds the rules.</summary>
 [Route("api/shipment-service/v1/commercial/shipment-histories")]

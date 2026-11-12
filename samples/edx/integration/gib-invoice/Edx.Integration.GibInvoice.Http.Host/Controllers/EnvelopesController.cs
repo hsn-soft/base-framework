@@ -1,13 +1,13 @@
 using Edx.Integration.GibInvoice.Application.Contracts.EnvelopeDomain.Dtos;
 using Edx.Integration.GibInvoice.Application.Contracts.EnvelopeDomain.Dtos.Filters;
 using Edx.Integration.GibInvoice.Application.Contracts.EnvelopeDomain.Services;
-using Edx.Integration.GibInvoice.Http.Host.Controllers.Base;
+using Edx.Integration.GibInvoice.Controllers.Base;
 using Edx.Shared.Helper;
 using HsnSoft.Base.Application.Dtos;
 using HsnSoft.Base.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Edx.Integration.GibInvoice.Http.Host.Controllers;
+namespace Edx.Integration.GibInvoice.Controllers;
 
 /// <summary>The envelopes of the tenant, in both directions: what was handed to the center for it (invoices, and the answers of its post box) and what the center delivered to its post box (invoices for it, system responses about its envelopes). A caller sees its own tenant's.</summary>
 [Route("api/integration-service/v1/commercial/envelopes")]

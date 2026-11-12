@@ -2,7 +2,7 @@ using System.Diagnostics;
 using HsnSoft.Base.AspNetCore;
 using Quartz;
 
-namespace Abc.Scheduler.Host;
+namespace Abc.Scheduler;
 
 /// <summary>
 /// One run of a job: the call of an endpoint of a service with the key of the scheduler, the id of the run (also the correlation id, so the logs of the job and of what it caused are one chain) and the name of the job. A run that fails

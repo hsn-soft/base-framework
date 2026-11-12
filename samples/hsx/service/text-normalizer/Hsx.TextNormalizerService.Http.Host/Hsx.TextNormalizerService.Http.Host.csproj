@@ -1,5 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
+    <PropertyGroup>
+        <RootNamespace>Hsx.TextNormalizerService</RootNamespace>
+    </PropertyGroup>
+
     <!--
         The text normalizer service of the Hsx system: a web api. What every Hsx microservice has (logging, the web api shell, Swagger) comes from
         Hsx.Shared.Hosting.Microservices; the service chooses and adds its own parts here.

@@ -3,7 +3,7 @@ using Edx.Shared.Contracts.Events.Invoicing;
 using HsnSoft.Base.Domain.Entities.Events;
 using HsnSoft.Base.EventBus;
 
-namespace Edx.Integration.FirmInvoice.Http.Host.EventHandlers.Invoicing;
+namespace Edx.Integration.FirmInvoice.EventHandlers.Invoicing;
 
 /// <summary>The invoice service could not take an invoice in: the queue item is marked failed, with where and why. It runs as the user who sent the invoice, in its tenant (the envelope says who).</summary>
 public sealed class InvoiceImportFailedHandler(QueueUpdater queue) : IIntegrationEventHandler<InvoiceImportFailedEto>

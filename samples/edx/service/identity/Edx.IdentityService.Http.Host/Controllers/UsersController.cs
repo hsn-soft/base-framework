@@ -2,13 +2,13 @@ using Edx.IdentityService.Application.Contracts.IdentityDomain.Dtos;
 using Edx.IdentityService.Application.Contracts.IdentityDomain.Dtos.Filters;
 using Edx.IdentityService.Application.Contracts.IdentityDomain.Dtos.Submits;
 using Edx.IdentityService.Application.Contracts.IdentityDomain.Services;
-using Edx.IdentityService.Http.Host.Controllers.Base;
+using Edx.IdentityService.Controllers.Base;
 using Edx.Shared.Helper;
 using HsnSoft.Base.Application.Dtos;
 using HsnSoft.Base.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Edx.IdentityService.Http.Host.Controllers;
+namespace Edx.IdentityService.Controllers;
 
 /// <summary>The users: a customer's user sees and manages its own tenant's, a user of the system tenant all. Every action only calls the application service.</summary>
 [Route("api/identity-service/v1/commercial/users")]

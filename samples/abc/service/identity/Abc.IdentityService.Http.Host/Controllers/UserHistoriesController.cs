@@ -2,11 +2,11 @@ using Abc.IdentityService.Application.Contracts.UserHistoryDomain.Dtos;
 using Abc.IdentityService.Application.Contracts.UserHistoryDomain.Dtos.Filters;
 using Abc.IdentityService.Application.Contracts.UserHistoryDomain.Dtos.Submits;
 using Abc.IdentityService.Application.Contracts.UserHistoryDomain.Services;
-using Abc.IdentityService.Http.Host.Controllers.Base;
+using Abc.IdentityService.Controllers.Base;
 using HsnSoft.Base.Application.Dtos;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Abc.IdentityService.Http.Host.Controllers;
+namespace Abc.IdentityService.Controllers;
 
 /// <summary>The history of the users (kept in its own database): every action only calls the application service, which holds the rules.</summary>
 [Route("api/identity-service/v1/commercial/user-histories")]

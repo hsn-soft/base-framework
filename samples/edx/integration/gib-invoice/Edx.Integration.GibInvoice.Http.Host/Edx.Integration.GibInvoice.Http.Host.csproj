@@ -1,5 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
+    <PropertyGroup>
+        <RootNamespace>Edx.Integration.GibInvoice</RootNamespace>
+    </PropertyGroup>
+
     <!--
         The integration service of the Edx system, its REST host: the tenants' side of the e-invoice exchange with the center. It makes the envelope of every invoice that was signed and hands it to the center (the sender unit), follows what becomes of it, checks the envelopes the post box took
         from the center (invoices for the tenants, system responses about their envelopes) and answers them, keeps the list of the users it may send to, and lists the envelopes for the back office. The WCF service the center delivers to is a host of its own

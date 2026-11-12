@@ -2,11 +2,11 @@ using Abc.IdentityService.Application.Contracts.UserDomain.Dtos;
 using Abc.IdentityService.Application.Contracts.UserDomain.Dtos.Filters;
 using Abc.IdentityService.Application.Contracts.UserDomain.Dtos.Submits;
 using Abc.IdentityService.Application.Contracts.UserDomain.Services;
-using Abc.IdentityService.Http.Host.Controllers.Base;
+using Abc.IdentityService.Controllers.Base;
 using HsnSoft.Base.Application.Dtos;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Abc.IdentityService.Http.Host.Controllers;
+namespace Abc.IdentityService.Controllers;
 
 /// <summary>The users: every action only calls the application service, which holds the rules.</summary>
 [Route("api/identity-service/v1/commercial/users")]

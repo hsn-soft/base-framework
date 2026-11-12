@@ -1,5 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
+    <PropertyGroup>
+        <RootNamespace>Edx.AuthServer</RootNamespace>
+    </PropertyGroup>
+
     <!--
         The auth server of the Edx system: a web api that checks a tenant, a user name and a password against the users of the identity service (the same database) and issues the JWT access token every other Edx host validates (the Jwt section is the same everywhere).
         It is built on Edx.Shared.Hosting and not on the microservices' shell: it does not reach Kafka, which is the microservices' alone.

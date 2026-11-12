@@ -4,7 +4,7 @@ using Abc.IdentityService.Domain.UserDomain.Security;
 using Abc.Shared.Helper;
 using HsnSoft.Base.Text;
 
-namespace Abc.AuthServer.Host.Security;
+namespace Abc.AuthServer.Security;
 
 /// <summary>Who signed in: what goes into the claims of the token.</summary>
 public sealed record AuthenticatedUser(Guid Id, string UserName, string DisplayName, string Email, IReadOnlyList<string> Roles, Guid TenantId, bool IsSystemTenant, string Language);

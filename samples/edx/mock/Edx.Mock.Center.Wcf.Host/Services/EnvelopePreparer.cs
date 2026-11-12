@@ -4,7 +4,7 @@ using Edx.Shared.Efatura;
 using Edx.Shared.Efatura.Envelope;
 using Microsoft.Extensions.Options;
 
-namespace Edx.Mock.Center.Wcf.Host.Services;
+namespace Edx.Mock.Center.Services;
 
 /// <summary>
 /// What follows the analysis (integration guide, 4.4.1). An invoice or an application response gets a **system response** to its sender, which says what the analysis found (taken, 1200, or refused with the code); one that was taken is then delivered, as it came, to the address of the receiver. A

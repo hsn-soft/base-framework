@@ -15,7 +15,7 @@ You need the .NET 11 SDK, git, python3 and bash; Docker for the integration test
 | Step | Where | What runs | Time | Run it by hand |
 |---|---|---|---|---|
 | **Before a commit** (pre-commit hook) | your machine, on the **staged** files only | formats the staged C# (whitespace, then style) and JSON, adds the formatted files back to the commit, and fails the commit if a style rule is still broken | seconds | `dotnet husky run --group pre-commit` |
-| **Before a push** (pre-push hook) | your machine | a `Release` build of the solution with **warnings as errors**, then **all the unit tests** | about a minute | `dotnet husky run --group pre-push` |
+| **Before a push** (pre-push hook) | your machine | the repository rules (every package has a test project, the referenced files exist, the references of the project files are in order and follow the rules, the root namespaces of the hosts follow their rule: `check-test-projects`, `check-referenced-files`, `check-csproj-order`, `check-project-references`, `check-host-namespaces`), then a `Release` build of the solution with **warnings as errors**, then **all the unit tests** | about a minute | `dotnet husky run --group pre-push` |
 | **Pull request** into `dev` | GitHub Actions | the branch rule, and the whole pipeline below | several minutes | `./scripts/ci-detector/ci_detector_mac.sh` |
 | Pull request into a release branch | GitHub Actions | the branch rule only (the pipeline already ran on the pull request into `dev`) | seconds | read [Branch rules](BranchRules.md) |
 | **Push to `rel/nuget-candidate` or `rel/nuget-regular`** | GitHub Actions | the publishing to NuGet (`deploy-global-nuget.yml`: build, unit tests, pack, push); the pipeline does not run | several minutes | - |
@@ -46,6 +46,7 @@ One job after the other (a failure stops the ones after it); the first job build
 | run the unit tests | `./scripts/run-tests.sh unit` (`--filter "FullyQualifiedName~Name"` to select; `--configuration Release --no-build` after a build) |
 | run the integration tests | `./scripts/run-tests.sh integration` (Docker must run) |
 | put the references of a project file in order | `python3 scripts/ci-detector/ci-force-csproj-order.py --fix` |
+| check the root namespaces of the hosts | `python3 scripts/ci-detector/ci-check-host-namespaces.py` |
 | check the references between projects | `python3 scripts/ci-detector/ci-force-project-references-rules.py` |
 | test the versioning scripts | `python3 -m unittest discover -s scripts/versioning -p "test_*.py"` |
 | clean the build output (a branch switch, a strange build) | `./scripts/cleaner/cleaner_mac.sh --dry-run`, then without `--dry-run` |
