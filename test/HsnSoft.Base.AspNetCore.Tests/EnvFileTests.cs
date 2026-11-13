@@ -81,6 +81,32 @@ public class EnvFileTests
     }
 
     [Fact]
+    public void InAWebApplication_TheFileOverridesTheSettingsFileOfTheEnvironmentToo()
+    {
+        // a developer points the application at the own infrastructure (another port of Redis) in the ignored .env and never edits the committed appsettings.Development.json: the file is above that one too
+        string folder = Directory.CreateTempSubdirectory().FullName;
+        string path = Path.Combine(folder, ".env");
+        File.WriteAllText(Path.Combine(folder, "appsettings.json"), "{ \"EnvFileDev\": { \"Redis\": \"from-settings\", \"Other\": \"from-settings\" } }");
+        File.WriteAllText(Path.Combine(folder, "appsettings.Development.json"), "{ \"EnvFileDev\": { \"Redis\": \"localhost:6379\", \"Other\": \"from-development\" } }");
+        File.WriteAllText(path, "EnvFileDev__Redis=localhost:26379\n");
+        try
+        {
+            WebApplicationBuilder builder = WebApplication.CreateBuilder(new WebApplicationOptions { ContentRootPath = folder, EnvironmentName = "Development" });
+
+            Assert.Equal("localhost:6379", builder.Configuration["EnvFileDev:Redis"]);   // before the file: the committed value of the environment
+
+            builder.Configuration.AddBaseEnvFile(path);
+
+            Assert.Equal("localhost:26379", builder.Configuration["EnvFileDev:Redis"]);
+            Assert.Equal("from-development", builder.Configuration["EnvFileDev:Other"]);   // what the file does not name keeps the value of the environment
+        }
+        finally
+        {
+            Directory.Delete(folder, true);
+        }
+    }
+
+    [Fact]
     public void AMissingFile_IsNotAnError()
     {
         var builder = new ConfigurationBuilder();
