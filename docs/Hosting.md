@@ -91,7 +91,7 @@ An origin is a scheme, a host and a port with no path; `*` is any origin and **c
 
 ## The `.env` file
 
-`AddBaseHosting` reads `.env` from the current folder, then from the folder of the application. It is below the environment variables and above the settings files (`appsettings*.json`), so a key the settings file has as an empty placeholder is filled by the `.env`; a variable of the platform always wins. A line is `KEY=value` (`export` and quotes
+`AddBaseHosting` reads `.env` from the current folder, then from the folder of the application. It is below the environment variables and above the settings files (`appsettings*.json`, `appsettings.<Environment>.json` too), so a key the settings file has as an empty placeholder is filled by the `.env`, and a developer points the application at the own infrastructure (another port of Redis, another database) in the ignored `.env` without editing a committed settings file; a variable of the platform always wins. A line is `KEY=value` (`export` and quotes
 are accepted, `#` starts a comment); `Scheduler__ApiKey` means `Scheduler:ApiKey`. Never commit one with real values: it is for a developer's machine and a mounted secret.
 
 ## A start that fails says why
