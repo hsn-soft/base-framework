@@ -43,9 +43,11 @@ A key that is not in the current language is looked up in the default language; 
 
 ## Which language
 
-1. the **`locale` claim** of the token (`Localization:LanguageClaim`), when it is a supported language (`tr-TR` is `tr`);
-2. the **`Accept-Language` header**: the supported language with the highest quality;
-3. the **default language**.
+1. the **`Accept-Language` header**: the supported language with the highest quality (`tr-TR` is `tr`);
+2. the **`locale` claim** of the token (`Localization:LanguageClaim`), when it is a supported language;
+3. the **default language** (`en`).
+
+A value outside `Localization:SupportedLanguages` (`en`, `tr`, `ru`) is the same as no value, in the header and in the token (ADR-0160).
 
 `app.UseBaseLocalization()` (after `UseAuthentication`; a host that chose localization calls it right after the call that reads the token) sets it for the rest of the pipeline and answers the `Content-Language` header. The exception handler and the status pages work out the language themselves.
 The language is a short code (`ILanguageAccessor.Current`), not a `CultureInfo`, so it works with `InvariantGlobalization`.

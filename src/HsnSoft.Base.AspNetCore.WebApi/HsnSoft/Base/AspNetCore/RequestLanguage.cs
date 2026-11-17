@@ -24,8 +24,8 @@ public sealed class RequestLanguageOptions
 public interface IRequestLanguageResolver
 {
     /// <summary>
-    /// The language claim of the token when the user has one that is supported; else the first supported language of the <c>Accept-Language</c> header (the highest quality first);
-    /// else the default language.
+    /// The first supported language of the <c>Accept-Language</c> header (the highest quality first); else the language claim of the token when it is a supported one; else the default
+    /// language. A language that is not supported is the same as none, in the header and in the token.
     /// </summary>
     string Resolve(HttpContext context);
 }
@@ -39,11 +39,7 @@ public sealed class RequestLanguageResolver(IServiceProvider services, IOptions<
         // asked for here, not at the construction: a host without localization has this registered too and never calls it
         ILanguageAccessor languages = services.GetRequiredService<ILanguageAccessor>();
 
-        if (languages.Normalize(context.User.FindFirst(options.Value.LanguageClaim)?.Value) is { } fromToken)
-        {
-            return fromToken;
-        }
-
+        // the header the caller sent for this very request comes first; what it names that is not supported (de, a tag that is no language) counts as no header
         RequestHeaders headers = context.Request.GetTypedHeaders();
         foreach (StringWithQualityHeaderValue preference in headers.AcceptLanguage.OrderByDescending(language => language.Quality ?? 1.0))
         {
@@ -56,6 +52,12 @@ public sealed class RequestLanguageResolver(IServiceProvider services, IOptions<
             {
                 return fromHeader;
             }
+        }
+
+        // then the language the user chose (the claim), when it is supported
+        if (languages.Normalize(context.User.FindFirst(options.Value.LanguageClaim)?.Value) is { } fromToken)
+        {
+            return fromToken;
         }
 
         return languages.DefaultLanguage;
@@ -96,7 +98,7 @@ internal static class RequestLanguageScope
 public static class RequestLanguageExtensions
 {
     /// <summary>
-    /// Answers each request in its language: the language claim of the token, else the <c>Accept-Language</c> header, else the default language. Put it after the authentication, so
+    /// Answers each request in its language: the supported language of the <c>Accept-Language</c> header, else the language claim of the token, else the default language. Put it after the authentication, so
     /// the claim is there. It does nothing when <c>AddBaseLocalization</c> was not called.
     /// </summary>
     public static IApplicationBuilder UseBaseLocalization(this IApplicationBuilder app)
