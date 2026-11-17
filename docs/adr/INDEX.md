@@ -105,7 +105,7 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 | [0041](0041-application-service-base-in-the-framework.md) | `ApplicationService` is the framework's; the application services of a service derive from its base | Accepted | 2026-10-25 |
 | [0040](0040-api-controller-base-in-the-framework.md) | `ApiControllerBase` is the framework's; a service's base controller derives from it | Accepted | 2026-10-25 |
 | [0039](0039-guard-and-translating-a-response-body.md) | `Guard` for the checks of the domain, and translating a text in a response body | Accepted | 2026-10-25 |
-| [0038](0038-localization.md) | Localization: embedded JSON texts, merged from the innermost layer out, in the language of the request | Accepted | 2026-10-25 |
+| [0038](0038-localization.md) | Localization: embedded JSON texts, merged from the innermost layer out, in the language of the request | Accepted (the order of the language: [0160](0160-the-header-of-the-request-chooses-the-language-before-the-claim-of-the-token.md)) | 2026-10-25 |
 | [0037](0037-audit-soft-delete-and-tenants.md) | Audit, soft delete and tenants of an entity | Accepted | 2026-10-25 |
 | [0036](0036-icurrentuser-in-the-framework.md) | `ICurrentUser` is the framework's; the JWT authentication registers it | Accepted | 2026-10-25 |
 | [0026](0026-route-pattern-and-jwt-by-default.md) | Routes are `api/{area}/v1/{commercial|public}/{controller}`, and every endpoint needs a JWT unless it says otherwise | Accepted | 2026-10-25 |
@@ -173,3 +173,4 @@ New ADR: copy [0000-template.md](0000-template.md) to `NNNN-short-title.md` (the
 | [0157](0157-the-framework-targets-net11-and-its-first-release-of-the-month-is-a-candidate.md) | The framework targets net11.0 and the 2026.11 base is released as a candidate first | Accepted | 2026-11-10 |
 | [0158](0158-the-root-namespace-of-a-host-is-the-name-of-its-project-without-the-host-suffix.md) | The root namespace of a host is the name of its project without the host suffix | Accepted | 2026-11-11 |
 | [0159](0159-a-place-of-a-concurrency-limit-is-handed-over-with-an-event-so-a-job-answers-at-once-and-is-over-when-its-handler-is.md) | A place of a concurrency limit is handed over with an event, so a job answers at once and is over when its handler is | Accepted | 2026-11-12 |
+| [0160](0160-the-header-of-the-request-chooses-the-language-before-the-claim-of-the-token.md) | The header of the request chooses the language before the claim of the token | Accepted | 2026-11-17 |
