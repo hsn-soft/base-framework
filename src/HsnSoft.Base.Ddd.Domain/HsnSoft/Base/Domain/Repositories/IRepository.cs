@@ -44,21 +44,36 @@ public interface IReadOnlyRepository<TEntity, TKey>
 public interface IRepository<TEntity, TKey> : IReadOnlyRepository<TEntity, TKey>
     where TEntity : class, IEntity<TKey>
 {
-    Task AddAsync(TEntity entity, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Adds the entity and saves it, and gives it back: <b>the same instance</b>, now what the store holds (the key the store made for it, the audit fields, the stamp, the tenant), so a caller that answers with it needs no second read. An entity
+    /// whose key is empty (<c>Guid.Empty</c>) gets one from the store; one that has a key keeps it.
+    /// </summary>
+    Task<TEntity> AddAsync(TEntity entity, CancellationToken cancellationToken = default);
 
-    /// <summary>Saves the changes of an entity that <c>FindAsync</c> returned. An entity that is not there any more (removed by someone else) is a 409, as is one whose stamp is not the stored one (<c>IHasConcurrencyStamp</c>), in every store.</summary>
-    Task UpdateAsync(TEntity entity, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Saves the changes of an entity that <c>FindAsync</c> returned (the entities of a list are not followed), and says what it did: <see cref="WriteOutcome.NotModified"/> when nothing in it differs from what was read (nothing is written, the stamp and the audit fields stay: not an error, the caller decides what
+    /// it means) or <see cref="WriteOutcome.Modified"/>. An entity that <c>FindAsync</c> did not return is saved whole, so it is always modified. A record that is not there any more is a <see cref="RepositoryFailure.NotFound"/> (404), one whose stamp
+    /// (<c>IHasConcurrencyStamp</c>) is not the stored one a <see cref="RepositoryFailure.ConcurrencyConflict"/> (409), as a <see cref="RepositoryException"/>, in every store.
+    /// </summary>
+    Task<WriteOutcome> UpdateAsync(TEntity entity, CancellationToken cancellationToken = default);
 
-    /// <summary>Deletes the entity; an <see cref="ISoftDelete"/> entity is marked as deleted and stays. An entity that is not there any more is a 409, in every store.</summary>
+    /// <summary>Deletes the entity; an <see cref="ISoftDelete"/> entity is marked as deleted and stays. A record that is not there any more is a <see cref="RepositoryFailure.NotFound"/> (404) and one that is not current a <see cref="RepositoryFailure.ConcurrencyConflict"/> (409), as a <see cref="RepositoryException"/>, in every store.</summary>
     Task DeleteAsync(TEntity entity, CancellationToken cancellationToken = default);
 
-    /// <summary>Adds all the entities in one go (one round trip, or as few as the store needs): all are added or none.</summary>
+    /// <summary>
+    /// Adds all the entities in one go (one round trip, or as few as the store needs): <b>all are added or none</b>. A relational store does it in one transaction; a document store without a transaction adds them in order and, if one fails, removes the ones it
+    /// had added (best effort: use a unit of work for a guarantee). The entities are the same instances, saved. See <see cref="AddAsync"/> for the keys.
+    /// </summary>
     Task AddManyAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default);
 
-    /// <summary>Saves the changes of the entities, in one go. An entity that <c>FindAsync</c> or a list returned is saved by what changed in it, any other whole.</summary>
-    Task UpdateManyAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Saves the changes of the entities, in one go, and says how many of them were written: an entity that <c>FindAsync</c> returned is saved by what changed in it (and left alone, <see cref="WriteResult.NotModified"/>, when nothing did), any other (one of a list too) whole.
+    /// <b>One record that is not there or not current fails the write</b> with a <see cref="RepositoryException"/> that lists every such record (<see cref="RepositoryException.Ids"/>). A relational store writes nothing then; a document store without a transaction has written the
+    /// others (each document is atomic): run it in a unit of work to write all or none.
+    /// </summary>
+    Task<WriteResult> UpdateManyAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default);
 
-    /// <summary>Deletes the entities, in one go (soft delete as <see cref="DeleteAsync"/>).</summary>
+    /// <summary>Deletes the entities, in one go (soft delete as <see cref="DeleteAsync"/>). One record that is not there or not current fails the delete with a <see cref="RepositoryException"/> that lists every such record, with the same guarantee as <see cref="UpdateManyAsync"/>.</summary>
     Task DeleteManyAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default);
 
     /// <summary>

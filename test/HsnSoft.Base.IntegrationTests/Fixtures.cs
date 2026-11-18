@@ -66,6 +66,15 @@ public sealed class MongoFixture : ContainerFixture<MongoDbContainer>
     public string NewUrl() => new MongoUrlBuilder(Container.GetConnectionString()) { DatabaseName = $"t{Guid.NewGuid():N}", AuthenticationSource = "admin" }.ToString();
 }
 
+/// <summary>A MongoDB that is a replica set (of one member): the only kind that has transactions. The tests of the transactions of the repository use it; the others use the standalone <see cref="MongoFixture"/>.</summary>
+public sealed class MongoReplicaSetFixture : ContainerFixture<MongoDbContainer>
+{
+    protected override MongoDbContainer Create() => new MongoDbBuilder("mongo:7.0").WithReplicaSet().Build();
+
+    /// <summary>The url of a database no other test has.</summary>
+    public string NewUrl() => new MongoUrlBuilder(Container.GetConnectionString()) { DatabaseName = $"t{Guid.NewGuid():N}", AuthenticationSource = "admin" }.ToString();
+}
+
 public sealed class RedisFixture : ContainerFixture<RedisContainer>
 {
     protected override RedisContainer Create() => new RedisBuilder("redis:7").Build();
@@ -93,6 +102,7 @@ public static class Collections
     public const string MySql = "mysql";
     public const string SqlServer = "sqlserver";
     public const string Mongo = "mongo";
+    public const string MongoReplicaSet = "mongo-replica-set";
     public const string Redis = "redis";
     public const string Minio = "minio";
     public const string Azurite = "azurite";
@@ -110,6 +120,9 @@ public sealed class SqlServerCollection : ICollectionFixture<SqlServerFixture>;
 
 [CollectionDefinition(Collections.Mongo)]
 public sealed class MongoCollection : ICollectionFixture<MongoFixture>;
+
+[CollectionDefinition(Collections.MongoReplicaSet)]
+public sealed class MongoReplicaSetCollection : ICollectionFixture<MongoReplicaSetFixture>;
 
 [CollectionDefinition(Collections.Redis)]
 public sealed class RedisCollection : ICollectionFixture<RedisFixture>;
