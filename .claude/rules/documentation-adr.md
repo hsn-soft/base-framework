@@ -12,6 +12,7 @@ paths:
 - Record a new rule other code must follow or a consequential choice between alternatives in a new ADR in the same change. Copy `docs/adr/0000-template.md`, use the next number, and update `docs/adr/INDEX.md`.
 - Never edit an ADR to silently change its decision. Add a new ADR that supersedes it, mark the old ADR accordingly, and explain the consequences.
 - Before documenting behavior, check the owning implementation and related ADRs. Keep examples and package/dependency claims consistent with `docs/Overview.md`.
+- `docs/HowItWorks.md` says what the project is for, how it is used and how it relates to the other parts of the system; `docs/Host.md` (where the project has a host) says what the host answers and its settings. A change of what the project does, of who calls it or what it calls, of an endpoint or of a setting is an edit of them **in the same change**, so a new session understands the project without reading the whole repository.
 - Decisions about a sample are written in `samples/docs/adr/` with their own numbering (not in the catalog here); see `samples/CLAUDE.md`.
 
 See [the ADR guide](../../docs/adr/README.md) and [documentation map](../../docs/README.md). Relevant decisions: ADR-0001, ADR-0005–0006.

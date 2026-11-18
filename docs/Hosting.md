@@ -85,6 +85,10 @@ An origin is a scheme, a host and a port with no path; `*` is any origin and **c
 
 `name` is `Service:Name` (else the name of the application), `id` is `APP_ID`, else `POD_NAME`, else `HOSTNAME` (a pod sets `POD_NAME` from its own name), `version` is `BUILD_NUMBER` (else the version of the assembly).
 
+## Nothing for a search engine: `MapBaseRobots()`
+
+A host that is open to the internet and has nothing for a search engine (a gateway, an auth server, a host of scripts, a login page) calls `MapBaseRobots()`: `GET /robots.txt` answers `User-agent: *` and `Disallow: /` as plain text, for anyone. It is a request to well-behaved crawlers, **not a protection**: what must not be reached needs authentication. A host that wants to be crawled does not call it, and maps its own file. A host that has no server code (a single page app behind nginx) answers the same text from its own configuration ([ADR-0161](adr/0161-a-host-open-to-the-internet-that-has-nothing-for-a-search-engine-answers-robots-with-one-call.md)).
+
 ## The thread pool
 
 `Hosting:ThreadPool` raises the minimum threads the pool has ready (`MinWorkerThreads`, `MinCompletionPortThreads`); a value lower than the one in force is ignored and the maximum is never touched.

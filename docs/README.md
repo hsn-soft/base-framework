@@ -3,6 +3,7 @@
 | Where | What |
 |---|---|
 | [`adr/`](adr/README.md) | **Architecture decision records**: a short guide to the decisions relevant to a task; the [full catalog](adr/INDEX.md) lists every ADR. |
+| [`HowItWorks.md`](HowItWorks.md) | **Read first.** What it is for, how it is used, how it relates to the other parts of the system, what is fixed and what is a setting or data |
 | [`Overview.md`](Overview.md) | The packages (one capability each) and what each depends on, how a product composes them, the tests and the configuration. The text that was in the root README |
 | [`RateLimiting.md`](RateLimiting.md) | How many requests a caller may make in every pod: `[RateLimit]`, `UseBaseRateLimiting`, the window, the settings, when the store is gone, how the Redis limiter works |
 | [`Concurrency.md`](Concurrency.md) | How many run at once in every pod: `[ConcurrencyLimit]`, the limiter in code, the lease, the settings, how the Redis limiter works |

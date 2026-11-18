@@ -98,6 +98,7 @@ Only the packages under `src/` count. These are left out of the analysis and of 
 
 - `test/**` and `scripts/**` (tests and tooling are not the product)
 - `**/Migrations/**`, `**/tmp/**`, files named `*Test*`
+- `**/*.js`, `**/*.css` and `**/node_modules/**`: the analysis is for the C# of the repository, not for script and style files
 - only the `*.cs`, `*.js` and `*.css` files **under `src/`** are inspected (`/d:sonar.inclusions`): nothing else of the repository is looked at
 
 The exclusion lists are the `/d:sonar.exclusions` and `/d:sonar.coverage.exclusions` lines in both scripts; keep the two scripts in
