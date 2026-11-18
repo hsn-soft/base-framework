@@ -16,12 +16,22 @@ public sealed class Person(string name, int age) : FullAuditedEntity<Guid>(Guid.
     public int Age { get; set; } = age;
 }
 
+public sealed class Handle(Guid id, string name) : Entity<Guid>(id)
+{
+    public string Name { get; set; } = name;
+}
+
 public sealed class PersonContext(DbContextOptions<PersonContext> options, HsnSoft.Base.Data.IDataFilter? dataFilter = null) : BaseDbContext(options, dataFilter)
 {
     public DbSet<Person> People => Set<Person>();
 
+    public DbSet<Handle> Handles => Set<Handle>();
+
     protected override void ConfigureModel(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<Handle>().Property(handle => handle.Id).ValueGeneratedNever();
+        modelBuilder.Entity<Handle>().Property(handle => handle.Name).HasMaxLength(100);
+        modelBuilder.Entity<Handle>().HasIndex(handle => handle.Name).IsUnique().HasDatabaseName("ux_handle_name");
         modelBuilder.Entity<Person>().Property(person => person.Id).ValueGeneratedNever();
     }
 }
@@ -42,7 +52,8 @@ public abstract class RepositoryScenarios : IAsyncLifetime
             .AddSingleton<ICurrentUser>(new Caller())
             .AddBaseEntityFramework()
             .AddDbContext<PersonContext>((provider, options) => UseProvider(options).UseBaseEntityConcepts(provider))
-            .AddEfCoreRepository<PersonContext, Person, Guid>());
+            .AddEfCoreRepository<PersonContext, Person, Guid>()
+            .AddEfCoreRepository<PersonContext, Handle, Guid>());
         await _host.Services.EnsureDatabaseCreatedAsync<PersonContext>();
     }
 
@@ -199,7 +210,7 @@ public abstract class RepositoryScenarios : IAsyncLifetime
     }
 
     [Fact]
-    public async Task AnEntityThatIsNotThere_IsA409_ToUpdateAndToDelete_OneAtATimeAndInBulk()
+    public async Task AnEntityThatIsNotThere_IsA404_NotFound_ToUpdateAndToDelete_OneAtATimeAndInBulk()
     {
         Person tracked = (await SeedAsync("gone", 1))[0];
         await using (AsyncServiceScope remover = Scope())
@@ -221,9 +232,113 @@ public abstract class RepositoryScenarios : IAsyncLifetime
             () => people.DeleteManyAsync([neverSaved]),
         })
         {
-            BaseHttpException conflict = await Assert.ThrowsAsync<BaseHttpException>(call);
-            Assert.Equal(409, conflict.HttpStatusCode);
+            RepositoryException gone = await Assert.ThrowsAsync<RepositoryException>(call);
+            Assert.Equal((404, RepositoryFailure.NotFound, nameof(Person)), (gone.HttpStatusCode, gone.Failure, gone.EntityName));
+            Assert.Equal(neverSaved.Id.ToString(), Assert.Single(gone.Ids));
         }
+    }
+
+    private static IRepository<Handle, Guid> Handles(AsyncServiceScope scope) => scope.ServiceProvider.GetRequiredService<IRepository<Handle, Guid>>();
+
+    [Fact]
+    public async Task AValueThatAnotherRecordHas_IsADuplicateKey_409_NamingTheIndex_OnEveryProvider()
+    {
+        await using (AsyncServiceScope seed = Scope())
+        {
+            await Handles(seed).AddAsync(new Handle(Guid.NewGuid(), "dup-one"));
+        }
+
+        // a scope for each call: what a write that failed left in the change tracker is not for the next one to save (a request has a scope of its own)
+        await using AsyncServiceScope first = Scope();
+        RepositoryException add = await Assert.ThrowsAsync<RepositoryException>(() => Handles(first).AddAsync(new Handle(Guid.NewGuid(), "dup-one")));
+        await using AsyncServiceScope second = Scope();
+        RepositoryException many = await Assert.ThrowsAsync<RepositoryException>(() => Handles(second).AddManyAsync([new Handle(Guid.NewGuid(), "dup-two"), new Handle(Guid.NewGuid(), "dup-one")]));
+        await using AsyncServiceScope third = Scope();
+        Handle other = await Handles(third).AddAsync(new Handle(Guid.NewGuid(), "dup-three"));
+        other.Name = "dup-one";
+        RepositoryException update = await Assert.ThrowsAsync<RepositoryException>(() => Handles(third).UpdateAsync(other));
+
+        foreach (RepositoryException failed in new[] { add, many, update })
+        {
+            Assert.Equal((RepositoryFailure.DuplicateKey, 409, RepositoryException.DuplicateCode, nameof(Handle)), (failed.Failure, failed.HttpStatusCode, failed.ErrorCode, failed.EntityName));
+            Assert.Contains("ux_handle_name", failed.Constraint, StringComparison.OrdinalIgnoreCase);   // the name of the index, as each database says it
+            Assert.DoesNotContain("dup-one", failed.Message, StringComparison.Ordinal);                // the value is not told
+        }
+
+        await using AsyncServiceScope check = Scope();
+        Assert.Equal(0, await Handles(check).CountAsync(handle => handle.Name == "dup-two"));   // the batch was rolled back
+    }
+
+    [Fact]
+    public async Task AddAsync_GivesBackTheSameInstance_AndAKeyForAnEntityThatHasNone()
+    {
+        Person person = new("same-instance", 30);
+        await using AsyncServiceScope scope = Scope();
+
+        Person added = await People(scope).AddAsync(person);
+
+        Assert.Same(person, added);
+        Assert.NotNull(added.CreatedBy);
+        Assert.NotEqual(default, added.CreatedAt);
+    }
+
+    [Fact]
+    public async Task AddManyAsync_IsAllOrNone_InOneTransaction()
+    {
+        await using AsyncServiceScope scope = Scope();
+        List<Person> batch = [new("all-or-none-1", 1), new("all-or-none-2", 2), new(null!, 3)];   // the third has no name: the database refuses the row
+
+        await Assert.ThrowsAnyAsync<DbUpdateException>(() => People(scope).AddManyAsync(batch));
+
+        await using AsyncServiceScope check = Scope();
+        Assert.Equal(0, await People(check).CountAsync(person => person.Name.StartsWith("all-or-none")));   // the two good rows are not there either
+    }
+
+    [Fact]
+    public async Task UpdateAsync_AndUpdateManyAsync_SayWhatChanged_AndWriteNothingForWhatDidNot()
+    {
+        List<Person> seeded = await SeedAsync("outcome", 3);
+        await using AsyncServiceScope scope = Scope();
+        Person one = (await People(scope).FindAsync(seeded[0].Id))!;
+        Person two = (await People(scope).FindAsync(seeded[1].Id))!;
+        Person three = (await People(scope).FindAsync(seeded[2].Id))!;
+
+        Assert.Equal(WriteOutcome.NotModified, await People(scope).UpdateAsync(one));
+        one.Age = 99;
+        Assert.Equal(WriteOutcome.Modified, await People(scope).UpdateAsync(one));
+        two.Age = 98;
+        WriteResult result = await People(scope).UpdateManyAsync([one, two, three]);   // one was just written, two changed, three did not
+
+        Assert.Equal((3, 1, 2), (result.Requested, result.Modified, result.NotModified));
+        await using AsyncServiceScope check = Scope();
+        Assert.Equal((99, 98, 3), ((await People(check).FindAsync(seeded[0].Id))!.Age, (await People(check).FindAsync(seeded[1].Id))!.Age, (await People(check).FindAsync(seeded[2].Id))!.Age));
+    }
+
+    [Fact]
+    public async Task UpdateManyAsync_WithOneRecordGone_FailsAll_NamesIt_AndWritesNone()
+    {
+        List<Person> seeded = await SeedAsync("many-gone", 3);
+        await using AsyncServiceScope scope = Scope();
+        List<Person> found = [];
+        foreach (Person person in seeded)
+        {
+            found.Add((await People(scope).FindAsync(person.Id))!);
+        }
+
+        await using (AsyncServiceScope other = Scope())
+        {
+            // removed for good (a soft delete leaves the row, and an entity with no stamp cannot tell): the row is not there at all
+            await other.ServiceProvider.GetRequiredService<PersonContext>().People.IgnoreQueryFilters().Where(person => person.Id == seeded[1].Id).ExecuteDeleteAsync();
+        }
+
+        found.ForEach(person => person.Age = 77);
+        RepositoryException failed = await Assert.ThrowsAsync<RepositoryException>(() => People(scope).UpdateManyAsync(found));
+
+        Assert.Equal((RepositoryFailure.NotFound, 404), (failed.Failure, failed.HttpStatusCode));
+        Assert.Equal(seeded[1].Id.ToString(), Assert.Single(failed.Ids));
+        await using AsyncServiceScope check = Scope();
+        Assert.Equal(1, (await People(check).FindAsync(seeded[0].Id))!.Age);   // nothing was written: one transaction, rolled back
+        Assert.Equal(3, (await People(check).FindAsync(seeded[2].Id))!.Age);
     }
 
     [Fact]

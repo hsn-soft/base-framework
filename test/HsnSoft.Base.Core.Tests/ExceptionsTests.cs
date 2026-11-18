@@ -42,6 +42,29 @@ public class ExceptionsTests
         Assert.Equal("v", withInner.WithData("k", "v").Data["k"]);
     }
 
+    private sealed class CustomHttpException() : BaseHttpException(422, "custom");
+
+    [Fact]
+    public void BaseHttpException_HasNoCodeUntilItIsGivenOne_AndACodeCannotBeBlank()
+    {
+        BaseHttpException exception = new(409);
+
+        Assert.Null(exception.ErrorCode);
+        Assert.Same(exception, exception.WithCode("concurrency_conflict"));
+        Assert.Equal("concurrency_conflict", exception.ErrorCode);
+        Assert.Throws<ArgumentException>(() => exception.WithCode(" "));
+        Assert.Throws<ArgumentNullException>(() => exception.WithCode(null!));
+    }
+
+    [Fact]
+    public void ABaseHttpException_CanBeDerivedFrom_AndIsStillKnown()
+    {
+        CustomHttpException exception = new();
+
+        Assert.Equal(422, exception.HttpStatusCode);
+        Assert.True(KnownExceptions.IsKnown(exception));
+    }
+
     [Fact]
     public void BaseHttpException_CarriesItsStatus()
     {

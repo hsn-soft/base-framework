@@ -39,7 +39,7 @@ public sealed class ApiExceptionMapper(IStatusMessageProvider statusMessages, IO
             NotFoundException => (StatusCodes.Status404NotFound, null, true),
             ArgumentException or BusinessRuleException or DomainException or BadHttpRequestException => (StatusCodes.Status400BadRequest, null, true),
             BusinessException business => (StatusCodes.Status400BadRequest, business.ErrorCode, true),
-            BaseHttpException http => (http.HttpStatusCode, null, true),
+            BaseHttpException http => (http.HttpStatusCode, http.ErrorCode, true),
             _ => (StatusCodes.Status500InternalServerError, null, false),
         };
 

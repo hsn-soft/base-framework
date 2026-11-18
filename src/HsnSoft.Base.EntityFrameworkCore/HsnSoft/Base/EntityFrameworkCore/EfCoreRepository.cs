@@ -131,15 +131,17 @@ public class EfCoreRepository<TContext, TEntity, TKey>(TContext db) : IEfCoreRep
         return (Sorted(Narrowed(options, include), options).Skip((Math.Max(options.PageNumber, 1) - 1) * pageSize).Take(pageSize), total);
     }
 
-    public async Task AddAsync(TEntity entity, CancellationToken cancellationToken = default)
+    public async Task<TEntity> AddAsync(TEntity entity, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(entity);
 
+        EntityKeys.EnsureKey(entity);
         await Set.AddAsync(entity, cancellationToken).ConfigureAwait(false);
-        await Db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        await SaveAsync(cancellationToken).ConfigureAwait(false);
+        return entity;   // the same instance: the context filled what the database made (the audit fields, the stamp), so the caller needs no second read
     }
 
-    public async Task UpdateAsync(TEntity entity, CancellationToken cancellationToken = default)
+    public async Task<WriteOutcome> UpdateAsync(TEntity entity, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(entity);
 
@@ -149,7 +151,8 @@ public class EfCoreRepository<TContext, TEntity, TKey>(TContext db) : IEfCoreRep
             Set.Update(entity);
         }
 
-        await Db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        // nothing changed: the context sends nothing and the audit fields and the stamp stay (a row that is gone is found only when something is written)
+        return await SaveAsync(cancellationToken).ConfigureAwait(false) > 0 ? WriteOutcome.Modified : WriteOutcome.NotModified;
     }
 
     public async Task DeleteAsync(TEntity entity, CancellationToken cancellationToken = default)
@@ -157,22 +160,25 @@ public class EfCoreRepository<TContext, TEntity, TKey>(TContext db) : IEfCoreRep
         ArgumentNullException.ThrowIfNull(entity);
 
         Set.Remove(entity);
-        await Db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        await SaveAsync(cancellationToken).ConfigureAwait(false);
     }
 
     public async Task AddManyAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(entities);
 
-        await Set.AddRangeAsync(entities, cancellationToken).ConfigureAwait(false);
-        await Db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        List<TEntity> list = [.. entities];
+        list.ForEach(entity => EntityKeys.EnsureKey(entity));
+        await Set.AddRangeAsync(list, cancellationToken).ConfigureAwait(false);
+        await SaveAsync(cancellationToken).ConfigureAwait(false);   // one SaveChanges is one transaction: all are added or none
     }
 
-    public async Task UpdateManyAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
+    public async Task<WriteResult> UpdateManyAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(entities);
 
-        foreach (TEntity entity in entities)
+        List<TEntity> list = [.. entities];
+        foreach (TEntity entity in list)
         {
             if (Db.Entry(entity).State == EntityState.Detached)
             {
@@ -180,7 +186,11 @@ public class EfCoreRepository<TContext, TEntity, TKey>(TContext db) : IEfCoreRep
             }
         }
 
-        await Db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        // the entities whose own row changed (what the context found: it is asked before it saves, and saves nothing for the others)
+        Db.ChangeTracker.DetectChanges();
+        int modified = list.Count(entity => Db.Entry(entity).State is EntityState.Modified or EntityState.Added or EntityState.Deleted);
+        int written = await SaveAsync(cancellationToken).ConfigureAwait(false);   // one SaveChanges is one transaction: all are written or none
+        return new WriteResult(list.Count, modified == 0 && written > 0 ? 1 : modified);
     }
 
     public async Task DeleteManyAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
@@ -188,7 +198,25 @@ public class EfCoreRepository<TContext, TEntity, TKey>(TContext db) : IEfCoreRep
         ArgumentNullException.ThrowIfNull(entities);
 
         Set.RemoveRange(entities);
-        await Db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        await SaveAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    // a context that is not a BaseDbContext does not turn the answer of EF into a RepositoryException: it is done here
+    private async Task<int> SaveAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await Db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (DbUpdateConcurrencyException exception)
+        {
+            throw await ConcurrencyFailures.OfAsync(exception, cancellationToken).ConfigureAwait(false);
+        }
+        catch (DbUpdateException exception) when (UniqueViolations.TryRead(exception, out string? constraint))
+        {
+            // another record has the value of a unique key or index: one answer for every provider (the value that is duplicated is not in it)
+            throw RepositoryException.Duplicate(typeof(TEntity).Name, constraint, exception);
+        }
     }
 
     public async Task<long> DeleteWhereAsync(Expression<Func<TEntity, bool>> filter, CancellationToken cancellationToken = default)
