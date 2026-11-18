@@ -108,9 +108,9 @@ dotnet sonarscanner begin `
     /d:sonar.token="$env:SONAR_TOKEN" `
     /d:sonar.cs.vstest.reportsPaths="$testOutputDir/**/*.trx" `
     /d:sonar.cs.opencover.reportsPaths="$testOutputDir/**/coverage.opencover.xml" `
-    /d:sonar.coverage.exclusions="test/**,scripts/**,**/Migrations/**,**/*Test*.cs,**/*Test*/**,**/tmp/**,**/Tmp/**,**/TMP/**" `
+    /d:sonar.coverage.exclusions="test/**,scripts/**,**/Migrations/**,**/*Test*.cs,**/*Test*/**,**/tmp/**,**/Tmp/**,**/TMP/**,**/*.js,**/*.css,**/node_modules/**" `
     /d:sonar.inclusions="src/**/*.cs,src/**/*.js,src/**/*.css" `
-    /d:sonar.exclusions="test/**,scripts/**,**/Migrations/**,**/*Test*.cs,**/*Test*/**,**/tmp/**,**/Tmp/**,**/TMP/**,**/data/**,**/logs/**,**/sample/**"
+    /d:sonar.exclusions="test/**,scripts/**,**/Migrations/**,**/*Test*.cs,**/*Test*/**,**/tmp/**,**/Tmp/**,**/TMP/**,**/*.js,**/*.css,**/node_modules/**,**/data/**,**/logs/**,**/sample/**"
 Assert-LastExitCode "sonarscanner begin"
 " "
 Write-Info "## DOTNET RESTORE --------------------------------------------------------------"
