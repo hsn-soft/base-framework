@@ -90,6 +90,23 @@ public class AppInfoTests
     }
 
     [Fact]
+    public async Task RobotsTxt_DisallowsEverything_ForAnyoneAsPlainText()
+    {
+        WebApplicationBuilder builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseTestServer();
+        builder.AddBaseHosting();
+        await using WebApplication app = builder.Build();
+        app.MapBaseRobots();
+        await app.StartAsync();
+
+        HttpResponseMessage response = await app.GetTestClient().GetAsync("/robots.txt");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("text/plain", response.Content.Headers.ContentType?.MediaType);
+        Assert.Equal("User-agent: *\nDisallow: /\n", await response.Content.ReadAsStringAsync());
+    }
+
+    [Fact]
     public void TheThreadPool_IsOnlyRaised()
     {
         ThreadPool.GetMinThreads(out int worker, out int completion);
@@ -106,6 +123,7 @@ public class AppInfoTests
     {
         Assert.Throws<ArgumentNullException>(() => AppInfo.Create(null!));
         Assert.Throws<ArgumentNullException>(() => BaseHostingExtensions.MapBaseInfo(null!));
+        Assert.Throws<ArgumentNullException>(() => BaseHostingExtensions.MapBaseRobots(null!));
         Assert.Throws<ArgumentNullException>(() => BaseHostingExtensions.ApplyThreadPool(null!));
     }
 }

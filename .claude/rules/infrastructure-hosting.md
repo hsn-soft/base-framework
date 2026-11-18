@@ -20,4 +20,5 @@ paths:
 - A host that is open to the internet limits how often one caller may ask (`RateLimiting`, ADR-0155): `[RateLimit]` on the endpoints where a password or a secret is guessed and `UseBaseRateLimiting` after `UseBaseForwardedHeaders`, with the Redis limiter in a cluster (the in-memory one counts per pod). The limiters throw when the store is gone and a host fails unless `RateLimiting:FailOpen` is set; a refused request is counted and does not lengthen the window; the address is the one the listed proxies give. Tests move the time with a `TimeProvider`, never by waiting.
 - Read [Hosting.md](../../docs/Hosting.md) and [Health.md](../../docs/Health.md) before changing host options, client lifetime, health checks, or startup behavior.
 
-Relevant decisions: ADR-0117, ADR-0119–0121, ADR-0127, ADR-0143, ADR-0151, ADR-0155.
+- **A host open to the internet that has nothing for a search engine calls `MapBaseRobots()`** (`Disallow: /` as plain text), as it calls `MapBaseHealth()`; it is a request to crawlers, not a protection, and a host with no server code answers the same text from its own configuration (ADR-0161).
+Relevant decisions: ADR-0117, ADR-0119–0121, ADR-0127, ADR-0143, ADR-0151, ADR-0155, ADR-0161.

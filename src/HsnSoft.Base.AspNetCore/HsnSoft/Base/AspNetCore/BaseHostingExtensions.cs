@@ -88,6 +88,19 @@ public static class BaseHostingExtensions
         return endpoints;
     }
 
+    /// <summary>
+    /// Maps <c>GET /robots.txt</c> with <c>User-agent: *</c> and <c>Disallow: /</c>: a host that is open to the internet and has nothing for a search engine (a gateway, an auth server,
+    /// a host of scripts) tells the crawlers so. It is a request to well-behaved crawlers, not a protection: what must not be reached needs authentication. A host that wants to be crawled
+    /// does not call it and maps its own file.
+    /// </summary>
+    public static IEndpointRouteBuilder MapBaseRobots(this IEndpointRouteBuilder endpoints)
+    {
+        ArgumentNullException.ThrowIfNull(endpoints);
+
+        endpoints.MapGet("/robots.txt", () => Results.Text("User-agent: *\nDisallow: /\n")).AllowAnonymous().ExcludeFromDescription();
+        return endpoints;
+    }
+
     /// <summary>The minimum threads of the pool, raised to the settings; a value lower than the one in force is left alone. Returns what is in force after it.</summary>
     /// <param name="options">The settings.</param>
     public static (int Worker, int CompletionPort) ApplyThreadPool(BaseThreadPoolOptions options)
