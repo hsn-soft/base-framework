@@ -8,6 +8,7 @@ Start with the task area; read only the listed ADRs that affect the change. Use 
 
 | Task | Start with |
 |---|---|
+| **What the project is for, how it is used, who calls it and what it calls** | [How it works](../HowItWorks.md) |
 | Package boundaries, dependencies, or code location | [Overview](../Overview.md), ADR-0002–0006, ADR-0070, ADR-0075 |
 | Build, tests, formatting, hooks, or CI | [Contributing](../../CONTRIBUTING.md), [CI detector](../../scripts/ci-detector/README.md), ADR-0007–0014, ADR-0109, ADR-0123 |
 | A feature or package behavior | Its reference document in [`docs/`](../README.md), then the related ADRs listed in the [catalog](INDEX.md) |
