@@ -34,6 +34,8 @@
     "Validation:ItemsNotBlank": "{0} boş eleman içeremez.",
     "Validation:InvalidValue": "{0} geçerli bir değer değil.",
     "Validation:InvalidJson": "İstek geçerli bir JSON değil.",
-    "Concurrency:Conflict": "{0} siz okuduktan sonra başkası tarafından değiştirildi veya silindi. Yeniden okuyup tekrar deneyin."
+    "Concurrency:Conflict": "{0} siz okuduktan sonra başkası tarafından değiştirildi veya silindi. Yeniden okuyup tekrar deneyin.",
+    "Repository:NotFound": "{0} bulunamadı. Hiç var olmadı ya da siz okuduktan sonra başkası tarafından silindi. Listeyi yenileyip tekrar deneyin.",
+    "Repository:Duplicate": "Başka bir {0} aynı benzersiz değere sahip. Değeri değiştirip tekrar deneyin."
   }
 }

@@ -1,6 +1,6 @@
 # ADR-0146: Several repository calls run as one unit of work through `IUnitOfWork`, never through a context
 
-- **Status:** Accepted
+- **Status:** Accepted; MongoDB has its own unit of work ([ADR-0163](0163-mongodb-transactions-are-a-unit-of-work-and-a-write-of-many-without-one-is-all-or-none-as-far-as-a-document-store-can.md))
 - **Date:** 2026-11-04
 
 ## Context
