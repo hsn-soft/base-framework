@@ -25,13 +25,43 @@ public static class EntityProjection
         where TDto : class
         => Cache<TEntity, TDto>.Selector;
 
+    /// <summary>
+    /// Whether every field of <typeparamref name="TDto"/> is a property of <typeparamref name="TEntity"/> itself: no path through another object (<c>CustomerName</c> from <c>Customer.Name</c>) and no list of objects. Only then can an entity in memory be
+    /// turned into the DTO (<see cref="ToDto{TEntity, TDto}"/>) with no read: what a path reaches is not loaded in an entity that was just made.
+    /// </summary>
+    public static bool IsFlat<TEntity, TDto>()
+        where TEntity : class
+        where TDto : class
+        => Cache<TEntity, TDto>.Flat;
+
+    /// <summary>
+    /// The DTO of an entity that is in memory (the one a repository gave back from <c>AddAsync</c>), made by the rules of <see cref="For{TEntity, TDto}"/> and without a read of the store: this is how a service answers a create or an update in one round trip.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">The DTO reaches another object or a list (<see cref="IsFlat{TEntity, TDto}"/> is false): what it reaches is not in the entity, so the service reads the DTO from the store instead.</exception>
+    public static TDto ToDto<TEntity, TDto>(TEntity entity)
+        where TEntity : class
+        where TDto : class
+    {
+        ArgumentNullException.ThrowIfNull(entity);
+
+        return Cache<TEntity, TDto>.Flat
+            ? Cache<TEntity, TDto>.Mapper(entity)
+            : throw new InvalidOperationException($"{typeof(TDto).Name} reaches another object or a list of {typeof(TEntity).Name}, which an entity in memory does not have: read the DTO from the repository (FindAsync<{typeof(TDto).Name}>) instead.");
+    }
+
     private static class Cache<TEntity, TDto>
         where TEntity : class
         where TDto : class
     {
         private static readonly Lazy<Expression<Func<TEntity, TDto>>> s_selector = new(Build);
+        private static readonly Lazy<Func<TEntity, TDto>> s_mapper = new(() => s_selector.Value.Compile());
+        private static readonly Lazy<bool> s_flat = new(() => new FlatCheck().IsFlat(s_selector.Value));
 
         public static Expression<Func<TEntity, TDto>> Selector => s_selector.Value;
+
+        public static Func<TEntity, TDto> Mapper => s_mapper.Value;
+
+        public static bool Flat => s_flat.Value;
 
         private static Expression<Func<TEntity, TDto>> Build()
         {
@@ -166,5 +196,47 @@ public static class EntityProjection
         return target.IsAssignableFrom(list) && typeof(IEnumerable).IsAssignableFrom(target)
             ? sequence => Expression.Call(typeof(Enumerable), nameof(Enumerable.ToList), [item], sequence)
             : null;
+    }
+}
+
+// a selector is flat when it reads only properties of its parameter: no member of a member, no method (the Select of a list), no object made inside an object
+sealed file class FlatCheck : ExpressionVisitor
+{
+    private bool _flat = true;
+    private bool _insideRoot;
+
+    public bool IsFlat(LambdaExpression selector)
+    {
+        Visit(selector.Body);
+        return _flat;
+    }
+
+    protected override Expression VisitMemberInit(MemberInitExpression node)
+    {
+        if (_insideRoot)
+        {
+            _flat = false;   // an object inside the DTO
+            return node;
+        }
+
+        _insideRoot = true;
+        return base.VisitMemberInit(node);
+    }
+
+    protected override Expression VisitMember(MemberExpression node)
+    {
+        if (node.Expression is not (ParameterExpression or null))
+        {
+            _flat = false;   // a path: a member of a member
+            return node;
+        }
+
+        return base.VisitMember(node);
+    }
+
+    protected override Expression VisitMethodCall(MethodCallExpression node)
+    {
+        _flat = false;
+        return node;
     }
 }
