@@ -30,13 +30,14 @@ builder.Logging.AddBaseSerilog(builder.Configuration, "OrderService"); // everyt
   "AppNamespace": "Hhs",
   "IsGrayLogActive": true,
   "GrayLog": { "Address": "http://graylog", "Port": 12201, "SinkRefreshIntervalMinutes": 5 },
+  "IsFileLogActive": false,
   "FilePath": "Logs/logs.txt",
   "IsSelfLogActive": false,
   "LevelOverrides": { "Microsoft.AspNetCore": "Error" }
 }
 ```
 
-- **The console** is told by `Logging:LogLevel` (a default and a level per namespace), **what is kept** (Graylog, or the file `FilePath` when `IsGrayLogActive` is `false`) by `PersistentLogger:LogLevel` and
+- **The console** is told by `Logging:LogLevel` (a default and a level per namespace), **what is kept** (Graylog when `IsGrayLogActive` is `true`; with Graylog off, the file `FilePath` when `IsFileLogActive` is `true`, which it is by default in the Development environment only, and nothing otherwise: the console is then the only place, [ADR-0164](adr/0164-the-file-log-is-on-by-default-in-the-development-environment-only-and-isfilelogactive-turns-it-on-or-off.md)) by `PersistentLogger:LogLevel` and
   `LevelOverrides`, never below Information. What each setting changes, where a log of each level can be seen and settings for the usual cases are in **[LogLevels.md](LogLevels.md)**.
 - `AddBaseSerilog` removes the other logging providers, opens the filter of `Microsoft.Extensions.Logging` (Serilog decides, per place) and, unless you pass `replaceGlobalLogger: false`, assigns Serilog's static `Log.Logger`.
 - The file is rolled daily and kept 30 days. The Graylog sink is rebuilt every `SinkRefreshIntervalMinutes` (a third-party sink can stay broken after a failed start); the replaced sink lives on for ten seconds so what it

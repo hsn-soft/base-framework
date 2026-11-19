@@ -1,6 +1,6 @@
 # ADR-0017: The console and what is kept have separate levels
 
-- **Status:** Accepted
+- **Status:** Accepted (the file is written only in the Development environment: [ADR-0164](0164-the-file-log-is-on-by-default-in-the-development-environment-only-and-isfilelogactive-turns-it-on-or-off.md))
 - **Date:** 2026-10-25 (supersedes a single `FrameworkLogger:LogLevel` that set the console)
 
 ## Context

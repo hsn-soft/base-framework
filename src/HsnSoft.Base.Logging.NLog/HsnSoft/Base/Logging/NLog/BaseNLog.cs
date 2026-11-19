@@ -85,6 +85,11 @@ internal static class BaseNLog
             return new GelfHttpTarget(options.GrayLog.Address, options.GrayLog.Port, options.GrayLog.UseHttps);
         }
 
+        if (!options.WritesFile)
+        {
+            return new NullTarget("base-none");   // the file is written when IsFileLogActive is on (by default in Development only): otherwise the console is the only place when Graylog is off
+        }
+
         return new FileTarget("base-file")
         {
             FileName = options.FilePath,
