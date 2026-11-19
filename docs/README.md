@@ -21,6 +21,7 @@
 | [`WebApi.md`](WebApi.md) | The web api answers: `BaseResponse`, exceptions, what a client learns of a 500 |
 | [`EventBus.md`](EventBus.md) | The event bus: envelope, wire format, the RabbitMQ topology, failure handling |
 | [`DddBuildingBlocks.md`](DddBuildingBlocks.md) | The entity base classes, the DTOs of paging and the generic repository with its safe sorting |
+| [`DtoProjection.md`](DtoProjection.md) | How a DTO is filled from an entity by the select: the name rules and paths (`CompanyName`), the selector you write for a custom value, `ToDto` for a write |
 | [`EntityConcepts.md`](EntityConcepts.md) | Audit fields, soft delete and tenants of an entity: the interfaces, the current user, the tenant packages, the filters, EF Core and MongoDB |
 | [`Localization.md`](Localization.md) | The texts the client reads in its language: the JSON files, the layers, how the language is chosen, naming a text in an error |
 | [`Authorization.md`](Authorization.md) | Permissions: the attribute, the checker, the three kinds, who has what, where the grants are kept |
