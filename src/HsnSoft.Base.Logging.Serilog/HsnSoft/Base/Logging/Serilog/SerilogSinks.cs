@@ -27,8 +27,12 @@ internal sealed record SerilogSinks(ILogEventSink Console, ILogEventSink Persist
             return new SerilogSinks(plain, graylog, graylog);
         }
 
-        return new SerilogSinks(plain, FileSink(options), null);
+        // the file is written when Graylog is off and IsFileLogActive is on (by default in the Development environment only: a container has a read only file system,
+        // and a file in it is lost with it); otherwise the console is the only place
+        return new SerilogSinks(plain, options.WritesFile ? FileSink(options) : NoSink(), null);
     }
+
+    private static Logger NoSink() => new LoggerConfiguration().MinimumLevel.Verbose().CreateLogger();
 
     private static Logger ConsoleSink(string template)
         => new LoggerConfiguration()
