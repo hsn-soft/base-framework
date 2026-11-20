@@ -1,6 +1,6 @@
 # ADR-0007: Shared build settings, one version, and how a package is published
 
-- **Status:** Accepted (the target framework `net10.0` is superseded by ADR-0157: `net11.0`)
+- **Status:** Accepted (the target framework `net10.0` is superseded by ADR-0157: `net11.0`; the list of warnings kept as warnings gains `NU5104` in ADR-0166)
 - **Date:** 2026-10-22
 
 ## Context
@@ -14,7 +14,7 @@ pick; a warning that is only a warning on a developer's machine becomes a failur
   documentation, `EnforceCodeStyleInBuild`, `AnalysisLevel latest-recommended`, NuGet metadata (authors, license, icon, symbols in the package). A project imports one of them and adds only its id, description and tags.
   Tests also get `InternalsVisibleTo` for `<Project>.Tests` through `common.props`, so a unit test project can see the internals of its package.
 - **Warnings are errors in CI** (`TreatWarningsAsErrors` when `GITHUB_ACTIONS` is true) and in the pre-push hook and the detector (`-p:TreatWarningsAsErrors=true`), so a warning that would break the pull
-  request breaks the push. Kept as warnings even then, so a build does not break without a code change: `CS0618`/`CS0612` (use of an obsolete API after an upgrade) and `NU1901`-`NU1904` (a new vulnerability advisory).
+  request breaks the push. Kept as warnings even then, so a build does not break without a code change: `CS0618`/`CS0612` (use of an obsolete API after an upgrade) and `NU1901`-`NU1904` (a new vulnerability advisory) and `NU5104` (a stable package with a pre-release dependency, ADR-0166).
 - **One version for every package**, in `common.props` (`<Version>2026.10.40</Version>`: year.month.patch). All packages are released together; there is no per-package version.
 - **Versions of shared dependencies** are properties in `common.props` (`MicrosoftAspNetCorePackageVersion`, `MicrosoftEntityFrameworkCorePackageVersion`) so a framework upgrade is one edit. The framework projects manage their own versions (no central package management).
 - **Publishing:** pushing to `rel/nuget` runs `deploy-global-nuget.yml`: restore, a clean Release build, the unit tests, `dotnet pack`, `dotnet nuget push --skip-duplicate` with the secret `GLOBAL_NUGET_TOKEN`.
