@@ -32,10 +32,22 @@ public sealed class AddBaseNLogTests : IDisposable
             .BuildServiceProvider();
 
     [Fact]
+    public void OutsideDevelopment_WithoutGraylog_NoFileIsMade_AndTheConsoleStillLogs()
+    {
+        string path = Path.Combine(_directory, "logs.txt");
+        using (ServiceProvider provider = Build(Configuration(("environment", "docker"), ("PersistentLogger:FilePath", path))))
+        {
+            provider.GetRequiredService<ILoggerFactory>().CreateLogger("Acme.Orders").LogError("only for the console");
+        }
+
+        Assert.False(File.Exists(path));
+    }
+
+    [Fact]
     public void ThePersistentLogs_GoToTheFile_WhenGraylogIsOff_AndTheFileHasTheLineOfTheFramework()
     {
         string path = Path.Combine(_directory, "logs.txt");
-        using (ServiceProvider provider = Build(Configuration(("PersistentLogger:FilePath", path), ("PersistentLogger:AppNamespace", "Acme"))))
+        using (ServiceProvider provider = Build(Configuration(("environment", "Development"), ("PersistentLogger:FilePath", path), ("PersistentLogger:AppNamespace", "Acme"))))
         {
             Microsoft.Extensions.Logging.ILogger logger = provider.GetRequiredService<ILoggerFactory>().CreateLogger("Acme.Orders.OrderService");
             logger.LogInformation("Order {OrderId} was made", 42);

@@ -19,6 +19,8 @@ public class PersistentLoggerOptionsTests
         Assert.Equal(LogLevel.Warning, options.PlatformMinimumLevel);
         Assert.Null(options.AppNamespace);
         Assert.False(options.IsGrayLogActive);
+        Assert.False(options.IsFileLogActive);
+        Assert.False(options.WritesFile);
         Assert.False(options.IsSelfLogActive);
         Assert.Equal("Logs/logs.txt", options.FilePath);
         Assert.Equal(16384, options.MaxPersistentFieldLength);
@@ -26,6 +28,52 @@ public class PersistentLoggerOptionsTests
         Assert.Equal(12201, options.GrayLog.Port);
         Assert.Equal(5, options.GrayLog.SinkRefreshIntervalMinutes);
         Assert.Empty(options.LevelOverrides);
+    }
+
+    private static IConfiguration Environment(string key, string? value, params (string Key, string Value)[] persistent)
+        => new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?> { [key] = value }.Concat(persistent.ToDictionary(x => $"PersistentLogger:{x.Key}", x => (string?)x.Value))).Build();
+
+    [Theory]
+    [InlineData("environment", "Development", true)]
+    [InlineData("environment", "development", true)]
+    [InlineData("environment", " Development ", true)]
+    [InlineData("ASPNETCORE_ENVIRONMENT", "Development", true)]
+    [InlineData("DOTNET_ENVIRONMENT", "Development", true)]
+    [InlineData("environment", "docker", false)]
+    [InlineData("environment", "k8s", false)]
+    [InlineData("environment", "Production", false)]
+    [InlineData("environment", "test", false)]
+    [InlineData("environment", "", false)]
+    public void WithNoSetting_TheFileIsActiveInTheDevelopmentEnvironmentOnly(string key, string value, bool development)
+    {
+        PersistentLoggerOptions options = PersistentLoggerOptions.FromConfiguration(Environment(key, value));
+
+        Assert.Equal(development, options.IsFileLogActive);
+        Assert.Equal(development, options.WritesFile);   // Graylog is off
+    }
+
+    [Theory]
+    [InlineData("docker", "true", true)]    // an environment that asks for the file gets it
+    [InlineData("k8s", "True", true)]
+    [InlineData("Development", "false", false)]   // and the file can be turned off where it is the default
+    [InlineData("Development", "no", true)]       // a value that is not true or false keeps the default of the environment
+    [InlineData("docker", "no", false)]
+    public void TheSettingDecidesTheFile_WhenItIsGiven(string environment, string setting, bool active)
+    {
+        PersistentLoggerOptions options = PersistentLoggerOptions.FromConfiguration(Environment("environment", environment, ("IsFileLogActive", setting)));
+
+        Assert.Equal(active, options.IsFileLogActive);
+        Assert.Equal(active, options.WritesFile);
+    }
+
+    [Fact]
+    public void WithoutAnEnvironment_TheFileIsNotActive_AndGraylogOnNeverWritesTheFile()
+    {
+        Assert.False(PersistentLoggerOptions.FromConfiguration(Configuration()).WritesFile);
+        PersistentLoggerOptions graylog = PersistentLoggerOptions.FromConfiguration(Environment("environment", "Development", ("IsGrayLogActive", "true"), ("IsFileLogActive", "true")));
+
+        Assert.True(graylog.IsFileLogActive);
+        Assert.False(graylog.WritesFile);   // Graylog or the file, never both
     }
 
     [Theory]
@@ -127,6 +175,8 @@ public class PersistentLoggerOptionsTests
             ("LevelOverrides:Microsoft", "loud")));
 
         Assert.False(options.IsGrayLogActive);
+        Assert.False(options.IsFileLogActive);
+        Assert.False(options.WritesFile);
         Assert.False(options.IsSelfLogActive);
         Assert.Equal("Logs/logs.txt", options.FilePath);
         Assert.Equal(12201, options.GrayLog.Port);

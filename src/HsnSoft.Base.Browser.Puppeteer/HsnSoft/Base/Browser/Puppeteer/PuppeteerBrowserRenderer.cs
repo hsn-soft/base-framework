@@ -49,6 +49,7 @@ public sealed partial class PuppeteerBrowserRenderer : IBrowserRenderer, IAsyncD
     private readonly ILogger<PuppeteerBrowserRenderer> _logger;
     private readonly SemaphoreSlim _slots;
     private readonly SemaphoreSlim _launch = new(1, 1);
+    private readonly BrowserExecutable _executable;
     private readonly CancellationTokenSource _stopping = new();
     private IBrowser? _browser;
     private int _rendered;
@@ -56,6 +57,11 @@ public sealed partial class PuppeteerBrowserRenderer : IBrowserRenderer, IAsyncD
     private int _disposed;
 
     public PuppeteerBrowserRenderer(IOptions<PuppeteerOptions> options, ILogger<PuppeteerBrowserRenderer> logger)
+        : this(options, logger, null)
+    {
+    }
+
+    internal PuppeteerBrowserRenderer(IOptions<PuppeteerOptions> options, ILogger<PuppeteerBrowserRenderer> logger, BrowserExecutable? executable)
     {
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(logger);
@@ -63,6 +69,7 @@ public sealed partial class PuppeteerBrowserRenderer : IBrowserRenderer, IAsyncD
         _options = options.Value;
         _options.Validate();
         _logger = logger;
+        _executable = executable ?? new BrowserExecutable(_options, logger);
         _slots = new SemaphoreSlim(_options.MaxConcurrentPages, _options.MaxConcurrentPages);
         BrowserUrlPolicyOptions policy = new() { AllowPrivateNetworks = _options.AllowPrivateNetworks };
         foreach (string host in _options.AllowedHosts)
@@ -152,6 +159,7 @@ public sealed partial class PuppeteerBrowserRenderer : IBrowserRenderer, IAsyncD
         _stopping.Dispose();
         _slots.Dispose();
         _launch.Dispose();
+        _executable.Dispose();
     }
 
     private async Task<T> RunAsync<T>(BrowserRequest request, Func<IPage, IResponse?, Task<T>> take, CancellationToken cancellationToken)
@@ -380,10 +388,11 @@ public sealed partial class PuppeteerBrowserRenderer : IBrowserRenderer, IAsyncD
         }
 
         arguments.AddRange(_options.ExtraArguments);
+        string executablePath = await _executable.ResolveAsync(cancellationToken).ConfigureAwait(false);
         LaunchOptions launch = new()
         {
             Headless = true,
-            ExecutablePath = _options.ExecutablePath,
+            ExecutablePath = executablePath,
             Args = [.. arguments],
             AcceptInsecureCerts = _options.IgnoreCertificateErrors,
             Timeout = (int)TimeSpan.FromSeconds(_options.OperationTimeoutSeconds).TotalMilliseconds,

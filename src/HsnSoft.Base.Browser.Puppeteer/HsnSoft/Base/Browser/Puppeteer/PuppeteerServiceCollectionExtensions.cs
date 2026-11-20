@@ -12,7 +12,7 @@ public static class PuppeteerServiceCollectionExtensions
     /// Registers the Chrome <see cref="IBrowserRenderer"/> (one for the whole application, closed when the host stops) and a readiness check (the Chrome is there). Chrome is not started until the first page is rendered.
     /// </summary>
     /// <param name="services">The service collection.</param>
-    /// <param name="configuration">Holds the <c>Browser</c> section (<see cref="PuppeteerOptions"/>): <c>ExecutablePath</c> is required.</param>
+    /// <param name="configuration">Holds the <c>Browser</c> section (<see cref="PuppeteerOptions"/>): <c>ExecutablePath</c> is required unless <c>DownloadWhenMissing</c> is on.</param>
     public static IServiceCollection AddPuppeteerBrowser(this IServiceCollection services, IConfiguration configuration)
     {
         ArgumentNullException.ThrowIfNull(services);

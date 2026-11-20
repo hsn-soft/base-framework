@@ -110,7 +110,7 @@ public sealed class SerilogSinksTests : IDisposable
 
     private PersistentLoggerOptions Options(Action<PersistentLoggerOptions>? configure = null)
     {
-        PersistentLoggerOptions options = new() { FilePath = Path.Combine(_directory, "app.txt") };
+        PersistentLoggerOptions options = new() { FilePath = Path.Combine(_directory, "app.txt"), IsFileLogActive = true };   // the file is written when it is asked for
         configure?.Invoke(options);
         return options;
     }
@@ -129,6 +129,34 @@ public sealed class SerilogSinksTests : IDisposable
         Assert.Contains("written to the file", content, StringComparison.Ordinal);
         Assert.Contains("My.Source", content, StringComparison.Ordinal);
         Assert.Null(sinks.Refreshable);
+    }
+
+    [Fact]
+    public void WithoutGraylog_AndTheFileNotActive_NothingIsWritten_AndNoFileIsMade()
+    {
+        SerilogSinks sinks = SerilogSinks.Create(Options(options => options.IsFileLogActive = false));
+
+        sinks.Persistent.Emit(Event(LogEventLevel.Error, "only the console has this"));
+        (sinks.Persistent as IDisposable)?.Dispose();
+
+        Assert.Empty(Directory.GetFiles(_directory));
+        Assert.Null(sinks.Refreshable);
+    }
+
+    [Fact]
+    public void WithGraylog_TheFileSettingDoesNotMatter_NoFileIsMade()
+    {
+        SerilogSinks sinks = SerilogSinks.Create(Options(options =>
+        {
+            options.IsGrayLogActive = true;
+            options.IsFileLogActive = true;
+            options.GrayLog.Address = "http://127.0.0.1";
+            options.GrayLog.Port = 1;
+        }));
+
+        Assert.NotNull(sinks.Refreshable);
+        (sinks.Persistent as IDisposable)?.Dispose();
+        Assert.Empty(Directory.GetFiles(_directory));
     }
 
     [Fact]

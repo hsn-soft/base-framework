@@ -46,6 +46,7 @@ public sealed class AlternativeStackTests : IAsyncLifetime
         IConfiguration configuration = Support.Configuration(
             ("ConnectionStrings:MySql", _mysql.GetConnectionString()),
             ("AzureBlob:ConnectionString", _azurite.GetConnectionString()),
+            ("PersistentLogger:IsFileLogActive", "true"),   // the file is not written outside the Development environment unless it is asked for
             ("PersistentLogger:FilePath", logFile),
             ("PersistentLogger:AppNamespace", "Acme"));
 
